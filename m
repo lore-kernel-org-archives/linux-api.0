@@ -1,39 +1,56 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH 1/4] vfs: vfs-level fiemap interface
-Date: Tue, 7 Oct 2008 16:31:09 -0400
-Message-ID: <20081007203109.GA25653@infradead.org>
-References: <48EA55AC.2060102@hp.com> <20081006210706.GB8139@mit.edu> <20081007101207.GA10406@infradead.org> <20081007130008.GA3503@shareable.org> <20081007130218.GA4316@infradead.org> <20081007132436.GC3503@shareable.org> <20081007132854.GA15953@infradead.org> <20081007154523.GA15929@mit.edu> <48EB87DE.4090607@hp.com> <20081007185219.GD15929@mit.edu>
+From: "Michael Kerrisk" <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Subject: Re: [PATCH v2] proc: show personality via /proc/pid/personality
+Date: Wed, 8 Oct 2008 04:45:22 +0200
+Message-ID: <cfd18e0f0810071945j4ebbe366qdf2e98fe3d0306eb@mail.gmail.com>
+References: <20081002211424.GJ10632@outflux.net>
+	 <20081004145149.52c34ee7@infradead.org>
+	 <20081004220220.GK10632@outflux.net>
+	 <20081004164239.0c1483a4@infradead.org>
+	 <20081005004233.GL10632@outflux.net>
+	 <20081004174843.6fe48a8e@infradead.org>
+	 <20081005091120.GA21003@x200.localdomain>
+	 <20081005101438.GR10632@outflux.net>
+	 <517f3f820810070639q549ed2a1pe297e45108dfa007@mail.gmail.com>
+	 <20081007161422.GD10357@outflux.net>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20081007161422.GD10357-oSa+0FWJbaXR7s880joybQ@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20081007185219.GD15929-3s7WtUTddSA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Theodore Tso <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: jim owens <jowens-VXdhtT5mjnY@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jamie Lokier <jamie-yetKDKU6eevNLxjTenLetw@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>, Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <kees.cook-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 07, 2008 at 02:52:19PM -0400, Theodore Tso wrote:
-> Right, thanks.  This time in proper English.  :-)
-> 
->     * FIEMAP_EXTENT_ENCODED
-> 
->     This extent does not consist of plain filesystem blocks but is
->     encoded (e.g. encrypted or compressed).  Reading the data in this
->     extent via I/O to the block device will have undefined results.
-> 
->     Note that it is *always* undefined to try to update the data
->     in-place by writing to the indicated location without the
->     assistance of the filesystem, or to access the data using the
->     information returned by the FIEMAP interface while the filesystem
->     is mounted.  In other words, user applications may only read the
->     extent data via I/O to the block device while the filesystem is
->     unmounted, and then only if the FIEMAP_EXTENT_ENCODED flag is
->     clear; user applications must not try reading or writing to the
->     filesystem via the block device under any other circumstances.
+Hi Kees,
 
-Looks good!
+On Tue, Oct 7, 2008 at 6:14 PM, Kees Cook <kees.cook-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+> Hi Michael,
+>
+> On Tue, Oct 07, 2008 at 03:39:26PM +0200, Michael Kerrisk wrote:
+>> On Sun, Oct 5, 2008 at 12:14 PM, Kees Cook <kees.cook-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+>> > Make process personality flags visible in /proc.  Since a process's
+>> > personality is potentially sensitive (e.g. READ_IMPLIES_EXEC), make this
+>> > file only readable by the process owner.
+>>
+>> Please CC userland interface changes to linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>
+> Sure, I'd be happy to do that for future stuff.  I don't see this email
+> address mentioned anywhere in the kernel tree.  It seems like this is
+> useful information that should go in either MAINTAINERS or better yet
+> Documentation/SubmittingPatches for it to be discoverable by future
+> patch-senders -- and somewhere that I can look it up easily later.  :)
 
+It's there, but only as of a few days ago.
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+git://git.kernel.org/pub/scm/docs/man-pages/man-pages.git
+man-pages online: http://www.kernel.org/doc/man-pages/online_pages.html
+Found a bug? http://www.kernel.org/doc/man-pages/reporting_bugs.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
