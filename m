@@ -1,424 +1,593 @@
-From: "Michael Kerrisk" <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Subject: Re: [RFC patch 0/3] signals: add rt_tgsigqueueinfo syscall V2
-Date: Wed, 8 Oct 2008 11:49:27 +0200
-Message-ID: <cfd18e0f0810080249v5b09df84n292acd62b79e6d45@mail.gmail.com>
-References: <20081001095204.343984413@linutronix.de>
-	 <cfd18e0f0810010757j7a9f6deaj47a06f30e371af1e@mail.gmail.com>
-	 <alpine.LFD.1.10.0810021055400.5549@apollo.tec.linutronix.de>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: [PATCH 1/4] vfs: vfs-level fiemap interface
+Date: Wed,  8 Oct 2008 21:48:30 -0400
+Message-ID: <1223516913-17612-2-git-send-email-tytso@mit.edu>
+References: <1223516913-17612-1-git-send-email-tytso@mit.edu>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.LFD.1.10.0810021055400.5549-dbfLifZv8x0yMciVaGeJ0d53zsg1cpMQ@public.gmane.org>
-Content-Disposition: inline
+In-Reply-To: <1223516913-17612-1-git-send-email-tytso-3s7WtUTddSA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-6lXkIZvqkOAvJsYlp49lxw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Subrata Modak <subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Thomas,
+From: Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>
+
+Basic vfs-level fiemap infrastructure, which sets up a new ->fiemap
+inode operation.
+
+Userspace can get extent information on a file via fiemap ioctl. As input,
+the fiemap ioctl takes a struct fiemap which includes an array of struct
+fiemap_extent (fm_extents). Size of the extent array is passed as
+fm_extent_count and number of extents returned will be written into
+fm_mapped_extents. Offset and length fields on the fiemap structure
+(fm_start, fm_length) describe a logical range which will be searched for
+extents. All extents returned will at least partially contain this range.
+The actual extent offsets and ranges returned will be unmodified from their
+offset and range on-disk.
+
+The fiemap ioctl returns '0' on success. On error, -1 is returned and errno
+is set. If errno is equal to EBADR, then fm_flags will contain those flags
+which were passed in which the kernel did not understand. On all other
+errors, the contents of fm_extents is undefined.
+
+As fiemap evolved, there have been many authors of the vfs patch. As far as
+I can tell, the list includes:
+Kalpak Shah <kalpak.shah-xsfywfwIY+M@public.gmane.org>
+Andreas Dilger <adilger-xsfywfwIY+M@public.gmane.org>
+Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>
+
+Signed-off-by: Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>
+Signed-off-by: "Theodore Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
+Cc: Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ Documentation/filesystems/fiemap.txt |  228 ++++++++++++++++++++++++++++++++++
+ fs/ioctl.c                           |  155 +++++++++++++++++++++++
+ include/linux/fiemap.h               |   64 ++++++++++
+ include/linux/fs.h                   |   18 +++
+ 4 files changed, 465 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/filesystems/fiemap.txt
+ create mode 100644 include/linux/fiemap.h
+
+diff --git a/Documentation/filesystems/fiemap.txt b/Documentation/filesystems/fiemap.txt
+new file mode 100644
+index 0000000..1e3defc
+--- /dev/null
++++ b/Documentation/filesystems/fiemap.txt
+@@ -0,0 +1,228 @@
++============
++Fiemap Ioctl
++============
++
++The fiemap ioctl is an efficient method for userspace to get file
++extent mappings. Instead of block-by-block mapping (such as bmap), fiemap
++returns a list of extents.
++
++
++Request Basics
++--------------
++
++A fiemap request is encoded within struct fiemap:
++
++struct fiemap {
++	__u64	fm_start;	 /* logical offset (inclusive) at
++				  * which to start mapping (in) */
++	__u64	fm_length;	 /* logical length of mapping which
++				  * userspace cares about (in) */
++	__u32	fm_flags;	 /* FIEMAP_FLAG_* flags for request (in/out) */
++	__u32	fm_mapped_extents; /* number of extents that were
++				    * mapped (out) */
++	__u32	fm_extent_count; /* size of fm_extents array (in) */
++	__u32	fm_reserved;
++	struct fiemap_extent fm_extents[0]; /* array of mapped extents (out) */
++};
++
++
++fm_start, and fm_length specify the logical range within the file
++which the process would like mappings for. Extents returned mirror
++those on disk - that is, the logical offset of the 1st returned extent
++may start before fm_start, and the range covered by the last returned
++extent may end after fm_length. All offsets and lengths are in bytes.
++
++Certain flags to modify the way in which mappings are looked up can be
++set in fm_flags. If the kernel doesn't understand some particular
++flags, it will return EBADR and the contents of fm_flags will contain
++the set of flags which caused the error. If the kernel is compatible
++with all flags passed, the contents of fm_flags will be unmodified.
++It is up to userspace to determine whether rejection of a particular
++flag is fatal to it's operation. This scheme is intended to allow the
++fiemap interface to grow in the future but without losing
++compatibility with old software.
++
++fm_extent_count specifies the number of elements in the fm_extents[] array
++that can be used to return extents.  If fm_extent_count is zero, then the
++fm_extents[] array is ignored (no extents will be returned), and the
++fm_mapped_extents count will hold the number of extents needed in
++fm_extents[] to hold the file's current mapping.  Note that there is
++nothing to prevent the file from changing between calls to FIEMAP.
++
++The following flags can be set in fm_flags:
++
++* FIEMAP_FLAG_SYNC
++If this flag is set, the kernel will sync the file before mapping extents.
++
++* FIEMAP_FLAG_XATTR
++If this flag is set, the extents returned will describe the inodes
++extended attribute lookup tree, instead of it's data tree.
++
++
++Extent Mapping
++--------------
++
++Extent information is returned within the embedded fm_extents array
++which userspace must allocate along with the fiemap structure. The
++number of elements in the fiemap_extents[] array should be passed via
++fm_extent_count. The number of extents mapped by kernel will be
++returned via fm_mapped_extents. If the number of fiemap_extents
++allocated is less than would be required to map the requested range,
++the maximum number of extents that can be mapped in the fm_extent[]
++array will be returned and fm_mapped_extents will be equal to
++fm_extent_count. In that case, the last extent in the array will not
++complete the requested range and will not have the FIEMAP_EXTENT_LAST
++flag set (see the next section on extent flags).
++
++Each extent is described by a single fiemap_extent structure as
++returned in fm_extents.
++
++struct fiemap_extent {
++	__u64	fe_logical;  /* logical offset in bytes for the start of
++			      * the extent */
++	__u64	fe_physical; /* physical offset in bytes for the start
++			      * of the extent */
++	__u64	fe_length;   /* length in bytes for the extent */
++	__u64	fe_reserved64[2];
++	__u32	fe_flags;    /* FIEMAP_EXTENT_* flags for this extent */
++	__u32	fe_reserved[3];
++};
++
++All offsets and lengths are in bytes and mirror those on disk.  It is valid
++for an extents logical offset to start before the request or it's logical
++length to extend past the request.  Unless FIEMAP_EXTENT_NOT_ALIGNED is
++returned, fe_logical, fe_physical, and fe_length will be aligned to the
++block size of the file system.  With the exception of extents flagged as
++FIEMAP_EXTENT_MERGED, adjacent extents will not be merged.
++
++The fe_flags field contains flags which describe the extent returned.
++A special flag, FIEMAP_EXTENT_LAST is always set on the last extent in
++the file so that the process making fiemap calls can determine when no
++more extents are available, without having to call the ioctl again.
++
++Some flags are intentionally vague and will always be set in the
++presence of other more specific flags. This way a program looking for
++a general property does not have to know all existing and future flags
++which imply that property.
++
++For example, if FIEMAP_EXTENT_DATA_INLINE or FIEMAP_EXTENT_DATA_TAIL
++are set, FIEMAP_EXTENT_NOT_ALIGNED will also be set. A program looking
++for inline or tail-packed data can key on the specific flag. Software
++which simply cares not to try operating on non-aligned extents
++however, can just key on FIEMAP_EXTENT_NOT_ALIGNED, and not have to
++worry about all present and future flags which might imply unaligned
++data. Note that the opposite is not true - it would be valid for
++FIEMAP_EXTENT_NOT_ALIGNED to appear alone.
++
++* FIEMAP_EXTENT_LAST
++This is the last extent in the file. A mapping attempt past this
++extent will return nothing.
++
++* FIEMAP_EXTENT_UNKNOWN
++The location of this extent is currently unknown. This may indicate
++the data is stored on an inaccessible volume or that no storage has
++been allocated for the file yet.
++
++* FIEMAP_EXTENT_DELALLOC
++  - This will also set FIEMAP_EXTENT_UNKNOWN.
++Delayed allocation - while there is data for this extent, it's
++physical location has not been allocated yet.
++
++* FIEMAP_EXTENT_ENCODED
++This extent does not consist of plain filesystem blocks but is
++encoded (e.g. encrypted or compressed).  Reading the data in this
++extent via I/O to the block device will have undefined results.
++
++Note that it is *always* undefined to try to update the data
++in-place by writing to the indicated location without the
++assistance of the filesystem, or to access the data using the
++information returned by the FIEMAP interface while the filesystem
++is mounted.  In other words, user applications may only read the
++extent data via I/O to the block device while the filesystem is
++unmounted, and then only if the FIEMAP_EXTENT_ENCODED flag is
++clear; user applications must not try reading or writing to the
++filesystem via the block device under any other circumstances.
++
++* FIEMAP_EXTENT_DATA_ENCRYPTED
++  - This will also set FIEMAP_EXTENT_ENCODED
++The data in this extent has been encrypted by the file system.
++
++* FIEMAP_EXTENT_NOT_ALIGNED
++Extent offsets and length are not guaranteed to be block aligned.
++
++* FIEMAP_EXTENT_DATA_INLINE
++  This will also set FIEMAP_EXTENT_NOT_ALIGNED
++Data is located within a meta data block.
++
++* FIEMAP_EXTENT_DATA_TAIL
++  This will also set FIEMAP_EXTENT_NOT_ALIGNED
++Data is packed into a block with data from other files.
++
++* FIEMAP_EXTENT_UNWRITTEN
++Unwritten extent - the extent is allocated but it's data has not been
++initialized.  This indicates the extent's data will be all zero if read
++through the filesystem but the contents are undefined if read directly from
++the device.
++
++* FIEMAP_EXTENT_MERGED
++This will be set when a file does not support extents, i.e., it uses a block
++based addressing scheme.  Since returning an extent for each block back to
++userspace would be highly inefficient, the kernel will try to merge most
++adjacent blocks into 'extents'.
++
++
++VFS -> File System Implementation
++---------------------------------
++
++File systems wishing to support fiemap must implement a ->fiemap callback on
++their inode_operations structure. The fs ->fiemap call is responsible for
++defining it's set of supported fiemap flags, and calling a helper function on
++each discovered extent:
++
++struct inode_operations {
++       ...
++
++       int (*fiemap)(struct inode *, struct fiemap_extent_info *, u64 start,
++                     u64 len);
++
++->fiemap is passed struct fiemap_extent_info which describes the
++fiemap request:
++
++struct fiemap_extent_info {
++	unsigned int fi_flags;		/* Flags as passed from user */
++	unsigned int fi_extents_mapped;	/* Number of mapped extents */
++	unsigned int fi_extents_max;	/* Size of fiemap_extent array */
++	struct fiemap_extent *fi_extents_start;	/* Start of fiemap_extent array */
++};
++
++It is intended that the file system should not need to access any of this
++structure directly.
++
++
++Flag checking should be done at the beginning of the ->fiemap callback via the
++fiemap_check_flags() helper:
++
++int fiemap_check_flags(struct fiemap_extent_info *fieinfo, u32 fs_flags);
++
++The struct fieinfo should be passed in as recieved from ioctl_fiemap(). The
++set of fiemap flags which the fs understands should be passed via fs_flags. If
++fiemap_check_flags finds invalid user flags, it will place the bad values in
++fieinfo->fi_flags and return -EBADR. If the file system gets -EBADR, from
++fiemap_check_flags(), it should immediately exit, returning that error back to
++ioctl_fiemap().
++
++
++For each extent in the request range, the file system should call
++the helper function, fiemap_fill_next_extent():
++
++int fiemap_fill_next_extent(struct fiemap_extent_info *info, u64 logical,
++			    u64 phys, u64 len, u32 flags, u32 dev);
++
++fiemap_fill_next_extent() will use the passed values to populate the
++next free extent in the fm_extents array. 'General' extent flags will
++automatically be set from specific flags on behalf of the calling file
++system so that the userspace API is not broken.
++
++fiemap_fill_next_extent() returns 0 on success, and 1 when the
++user-supplied fm_extents array is full. If an error is encountered
++while copying the extent to user memory, -EFAULT will be returned.
+diff --git a/fs/ioctl.c b/fs/ioctl.c
+index 7db32b3..045d960 100644
+--- a/fs/ioctl.c
++++ b/fs/ioctl.c
+@@ -16,6 +16,9 @@
+ 
+ #include <asm/ioctls.h>
+ 
++/* So that the fiemap access checks can't overflow on 32 bit machines. */
++#define FIEMAP_MAX_EXTENTS	(UINT_MAX / sizeof(struct fiemap_extent))
++
+ /**
+  * vfs_ioctl - call filesystem specific ioctl methods
+  * @filp:	open file to invoke ioctl method on
+@@ -71,6 +74,156 @@ static int ioctl_fibmap(struct file *filp, int __user *p)
+ 	return put_user(res, p);
+ }
+ 
++/**
++ * fiemap_fill_next_extent - Fiemap helper function
++ * @fieinfo:	Fiemap context passed into ->fiemap
++ * @logical:	Extent logical start offset, in bytes
++ * @phys:	Extent physical start offset, in bytes
++ * @len:	Extent length, in bytes
++ * @flags:	FIEMAP_EXTENT flags that describe this extent
++ *
++ * Called from file system ->fiemap callback. Will populate extent
++ * info as passed in via arguments and copy to user memory. On
++ * success, extent count on fieinfo is incremented.
++ *
++ * Returns 0 on success, -errno on error, 1 if this was the last
++ * extent that will fit in user array.
++ */
++#define SET_UNKNOWN_FLAGS	(FIEMAP_EXTENT_DELALLOC)
++#define SET_NO_UNMOUNTED_IO_FLAGS	(FIEMAP_EXTENT_DATA_ENCRYPTED)
++#define SET_NOT_ALIGNED_FLAGS	(FIEMAP_EXTENT_DATA_TAIL|FIEMAP_EXTENT_DATA_INLINE)
++int fiemap_fill_next_extent(struct fiemap_extent_info *fieinfo, u64 logical,
++			    u64 phys, u64 len, u32 flags)
++{
++	struct fiemap_extent extent;
++	struct fiemap_extent *dest = fieinfo->fi_extents_start;
++
++	/* only count the extents */
++	if (fieinfo->fi_extents_max == 0) {
++		fieinfo->fi_extents_mapped++;
++		return (flags & FIEMAP_EXTENT_LAST) ? 1 : 0;
++	}
++
++	if (fieinfo->fi_extents_mapped >= fieinfo->fi_extents_max)
++		return 1;
++
++	if (flags & SET_UNKNOWN_FLAGS)
++		flags |= FIEMAP_EXTENT_UNKNOWN;
++	if (flags & SET_NO_UNMOUNTED_IO_FLAGS)
++		flags |= FIEMAP_EXTENT_ENCODED;
++	if (flags & SET_NOT_ALIGNED_FLAGS)
++		flags |= FIEMAP_EXTENT_NOT_ALIGNED;
++
++	memset(&extent, 0, sizeof(extent));
++	extent.fe_logical = logical;
++	extent.fe_physical = phys;
++	extent.fe_length = len;
++	extent.fe_flags = flags;
++
++	dest += fieinfo->fi_extents_mapped;
++	if (copy_to_user(dest, &extent, sizeof(extent)))
++		return -EFAULT;
++
++	fieinfo->fi_extents_mapped++;
++	if (fieinfo->fi_extents_mapped == fieinfo->fi_extents_max)
++		return 1;
++	return (flags & FIEMAP_EXTENT_LAST) ? 1 : 0;
++}
++EXPORT_SYMBOL(fiemap_fill_next_extent);
++
++/**
++ * fiemap_check_flags - check validity of requested flags for fiemap
++ * @fieinfo:	Fiemap context passed into ->fiemap
++ * @fs_flags:	Set of fiemap flags that the file system understands
++ *
++ * Called from file system ->fiemap callback. This will compute the
++ * intersection of valid fiemap flags and those that the fs supports. That
++ * value is then compared against the user supplied flags. In case of bad user
++ * flags, the invalid values will be written into the fieinfo structure, and
++ * -EBADR is returned, which tells ioctl_fiemap() to return those values to
++ * userspace. For this reason, a return code of -EBADR should be preserved.
++ *
++ * Returns 0 on success, -EBADR on bad flags.
++ */
++int fiemap_check_flags(struct fiemap_extent_info *fieinfo, u32 fs_flags)
++{
++	u32 incompat_flags;
++
++	incompat_flags = fieinfo->fi_flags & ~(FIEMAP_FLAGS_COMPAT & fs_flags);
++	if (incompat_flags) {
++		fieinfo->fi_flags = incompat_flags;
++		return -EBADR;
++	}
++	return 0;
++}
++EXPORT_SYMBOL(fiemap_check_flags);
++
++static int fiemap_check_ranges(struct super_block *sb,
++			       u64 start, u64 len, u64 *new_len)
++{
++	*new_len = len;
++
++	if (len == 0)
++		return -EINVAL;
++
++	if (start > sb->s_maxbytes)
++		return -EFBIG;
++
++	/*
++	 * Shrink request scope to what the fs can actually handle.
++	 */
++	if ((len > sb->s_maxbytes) ||
++	    (sb->s_maxbytes - len) < start)
++		*new_len = sb->s_maxbytes - start;
++
++	return 0;
++}
++
++static int ioctl_fiemap(struct file *filp, unsigned long arg)
++{
++	struct fiemap fiemap;
++	struct fiemap_extent_info fieinfo = { 0, };
++	struct inode *inode = filp->f_path.dentry->d_inode;
++	struct super_block *sb = inode->i_sb;
++	u64 len;
++	int error;
++
++	if (!inode->i_op->fiemap)
++		return -EOPNOTSUPP;
++
++	if (copy_from_user(&fiemap, (struct fiemap __user *)arg,
++			   sizeof(struct fiemap)))
++		return -EFAULT;
++
++	if (fiemap.fm_extent_count > FIEMAP_MAX_EXTENTS)
++		return -EINVAL;
++
++	error = fiemap_check_ranges(sb, fiemap.fm_start, fiemap.fm_length,
++				    &len);
++	if (error)
++		return error;
++
++	fieinfo.fi_flags = fiemap.fm_flags;
++	fieinfo.fi_extents_max = fiemap.fm_extent_count;
++	fieinfo.fi_extents_start = (struct fiemap_extent *)(arg + sizeof(fiemap));
++
++	if (fiemap.fm_extent_count != 0 &&
++	    !access_ok(VERIFY_WRITE, fieinfo.fi_extents_start,
++		       fieinfo.fi_extents_max * sizeof(struct fiemap_extent)))
++		return -EFAULT;
++
++	if (fieinfo.fi_flags & FIEMAP_FLAG_SYNC)
++		filemap_write_and_wait(inode->i_mapping);
++
++	error = inode->i_op->fiemap(inode, &fieinfo, fiemap.fm_start, len);
++	fiemap.fm_flags = fieinfo.fi_flags;
++	fiemap.fm_mapped_extents = fieinfo.fi_extents_mapped;
++	if (copy_to_user((char *)arg, &fiemap, sizeof(fiemap)))
++		error = -EFAULT;
++
++	return error;
++}
++
+ static int file_ioctl(struct file *filp, unsigned int cmd,
+ 		unsigned long arg)
+ {
+@@ -80,6 +233,8 @@ static int file_ioctl(struct file *filp, unsigned int cmd,
+ 	switch (cmd) {
+ 	case FIBMAP:
+ 		return ioctl_fibmap(filp, p);
++	case FS_IOC_FIEMAP:
++		return ioctl_fiemap(filp, arg);
+ 	case FIGETBSZ:
+ 		return put_user(inode->i_sb->s_blocksize, p);
+ 	case FIONREAD:
+diff --git a/include/linux/fiemap.h b/include/linux/fiemap.h
+new file mode 100644
+index 0000000..671decb
+--- /dev/null
++++ b/include/linux/fiemap.h
+@@ -0,0 +1,64 @@
++/*
++ * FS_IOC_FIEMAP ioctl infrastructure.
++ *
++ * Some portions copyright (C) 2007 Cluster File Systems, Inc
++ *
++ * Authors: Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>
++ *          Kalpak Shah <kalpak.shah-xsfywfwIY+M@public.gmane.org>
++ *          Andreas Dilger <adilger-xsfywfwIY+M@public.gmane.org>
++ */
++
++#ifndef _LINUX_FIEMAP_H
++#define _LINUX_FIEMAP_H
++
++struct fiemap_extent {
++	__u64 fe_logical;  /* logical offset in bytes for the start of
++			    * the extent from the beginning of the file */
++	__u64 fe_physical; /* physical offset in bytes for the start
++			    * of the extent from the beginning of the disk */
++	__u64 fe_length;   /* length in bytes for this extent */
++	__u64 fe_reserved64[2];
++	__u32 fe_flags;    /* FIEMAP_EXTENT_* flags for this extent */
++	__u32 fe_reserved[3];
++};
++
++struct fiemap {
++	__u64 fm_start;		/* logical offset (inclusive) at
++				 * which to start mapping (in) */
++	__u64 fm_length;	/* logical length of mapping which
++				 * userspace wants (in) */
++	__u32 fm_flags;		/* FIEMAP_FLAG_* flags for request (in/out) */
++	__u32 fm_mapped_extents;/* number of extents that were mapped (out) */
++	__u32 fm_extent_count;  /* size of fm_extents array (in) */
++	__u32 fm_reserved;
++	struct fiemap_extent fm_extents[0]; /* array of mapped extents (out) */
++};
++
++#define FIEMAP_MAX_OFFSET	(~0ULL)
++
++#define FIEMAP_FLAG_SYNC	0x00000001 /* sync file data before map */
++#define FIEMAP_FLAG_XATTR	0x00000002 /* map extended attribute tree */
++
++#define FIEMAP_FLAGS_COMPAT	(FIEMAP_FLAG_SYNC | FIEMAP_FLAG_XATTR)
++
++#define FIEMAP_EXTENT_LAST		0x00000001 /* Last extent in file. */
++#define FIEMAP_EXTENT_UNKNOWN		0x00000002 /* Data location unknown. */
++#define FIEMAP_EXTENT_DELALLOC		0x00000004 /* Location still pending.
++						    * Sets EXTENT_UNKNOWN. */
++#define FIEMAP_EXTENT_ENCODED		0x00000008 /* Data can not be read
++						    * while fs is unmounted */
++#define FIEMAP_EXTENT_DATA_ENCRYPTED	0x00000080 /* Data is encrypted by fs.
++						    * Sets EXTENT_NO_BYPASS. */
++#define FIEMAP_EXTENT_NOT_ALIGNED	0x00000100 /* Extent offsets may not be
++						    * block aligned. */
++#define FIEMAP_EXTENT_DATA_INLINE	0x00000200 /* Data mixed with metadata.
++						    * Sets EXTENT_NOT_ALIGNED.*/
++#define FIEMAP_EXTENT_DATA_TAIL		0x00000400 /* Multiple files in block.
++						    * Sets EXTENT_NOT_ALIGNED.*/
++#define FIEMAP_EXTENT_UNWRITTEN		0x00000800 /* Space allocated, but
++						    * no data (i.e. zero). */
++#define FIEMAP_EXTENT_MERGED		0x00001000 /* File does not natively
++						    * support extents. Result
++						    * merged for efficiency. */
++
++#endif /* _LINUX_FIEMAP_H */
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 580b513..194fb23 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -231,6 +231,7 @@ extern int dir_notify_enable;
+ #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
+ #define	FS_IOC_GETVERSION		_IOR('v', 1, long)
+ #define	FS_IOC_SETVERSION		_IOW('v', 2, long)
++#define FS_IOC_FIEMAP			_IOWR('f', 11, struct fiemap)
+ #define FS_IOC32_GETFLAGS		_IOR('f', 1, int)
+ #define FS_IOC32_SETFLAGS		_IOW('f', 2, int)
+ #define FS_IOC32_GETVERSION		_IOR('v', 1, int)
+@@ -291,6 +292,7 @@ extern int dir_notify_enable;
+ #include <linux/mutex.h>
+ #include <linux/capability.h>
+ #include <linux/semaphore.h>
++#include <linux/fiemap.h>
+ 
+ #include <asm/atomic.h>
+ #include <asm/byteorder.h>
+@@ -1179,6 +1181,20 @@ extern void dentry_unhash(struct dentry *dentry);
+ extern int file_permission(struct file *, int);
+ 
+ /*
++ * VFS FS_IOC_FIEMAP helper definitions.
++ */
++struct fiemap_extent_info {
++	unsigned int fi_flags;		/* Flags as passed from user */
++	unsigned int fi_extents_mapped;	/* Number of mapped extents */
++	unsigned int fi_extents_max;	/* Size of fiemap_extent array */
++	struct fiemap_extent *fi_extents_start; /* Start of fiemap_extent
++						 * array */
++};
++int fiemap_fill_next_extent(struct fiemap_extent_info *info, u64 logical,
++			    u64 phys, u64 len, u32 flags);
++int fiemap_check_flags(struct fiemap_extent_info *fieinfo, u32 fs_flags);
++
++/*
+  * File types
+  *
+  * NOTE! These match bits 12..15 of stat.st_mode
+@@ -1287,6 +1303,8 @@ struct inode_operations {
+ 	void (*truncate_range)(struct inode *, loff_t, loff_t);
+ 	long (*fallocate)(struct inode *inode, int mode, loff_t offset,
+ 			  loff_t len);
++	int (*fiemap)(struct inode *, struct fiemap_extent_info *, u64 start,
++		      u64 len);
+ };
+ 
+ struct seq_file;
+-- 
+1.5.6.1.205.ge2c7.dirty
 
-On Thu, Oct 2, 2008 at 10:57 AM, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> wrote:
-> On Wed, 1 Oct 2008, Michael Kerrisk wrote:
->> [CC+=linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org]
->>
->> On Wed, Oct 1, 2008 at 12:01 PM, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> wrote:
->> > Changes vs. V1: compat_sys_rt_sigqueueinfo implemented. Thanks Roland !
->> >
->> > sys_kill has a counterpart sys_tgkill which allows to send signals to
->> > a particular thread. sys_rt_sigqueueinfo is lacking such a counterpart.
->> >
->> > Aside of the asymetry it is a show stopper for migrating applications
->> > from other unix-alike RTOSes.
->> >
->> > The following patch series implements rt_tgsigqueueinfo and hooks it
->> > up for x86.
->>
->> This is an excellent candidate for CCing to the new linux-api@vger
->> (http://thread.gmane.org/gmane.linux.ltp/5658/), since it is an API
->> change.
->
-> Oops, yes forgot about that.
->
->> > Find below the raw documentation.
->>
->> Thanks -- I'll work that up into a man page when this gets closer to release.
->
-> I'll send out test code later this week - once I get a breather from
-> bugs and regressions again.
-
-So I've done some testing of this interface (I've substantially
-revised the test programs that I sent yesterday, and have included
-them again below).
-
-Two potential issues that I see, both of which relate to
-inconsistencies with rt_sigqueueinfo():
-
-1) With rt_siqueueinfo(), we can get the PID (TGID) of the sender,
-which enables the receiver of the signal to know who the sender was,
-and perhaps use that information to (for example) send a signal in the
-other direction.
-
-With rt_tgsigqueueinfo(), we don't quite have that ability: all that
-the receiver gets is the TGID of the sender, not the TID.  This means
-that we can't (for example) send a signal back to the precise thread
-that signaled us. I'm not sure if this matters or not (but perhaps it
-might when sender and receiver are in the same process?).  I'm also
-not sure whether we want to do anything about this (i.e., extending
-siginfo_t to include a si_tid field), but I wanted to point out this
-assymetry w.r.t. to rt_sigqueueinfo(), in case you had not considered
-it.
-
-2) With rt_sigqueueinfo(), we can specify the si_pid and and si_uid
-fields that should be sent to the receiver.  This is not possible with
-rt_tgsigqueueinfo(), which always supplied the caller';s PID and UID
-in the si_pid and si_uid fields sent to the receiver.  See the
-following, created using my test programs below (the 111 & 222
-arguments to t_*sigqueueinfo set the si_pid and si_uid fields in the
-siginfo_t given to the *sigqueueinfo() syscall):
-
-$ ./multithread_sig_receiver 0
-Main: TGID = 11711; TID = 11711
-Main: blocked signals
-Thread 1: PID = 11711; TID = 11712
-Thread 1: about to wait for signals
-Thread 0: about to wait for signals
-                        $ ./t_rt_sigqueueinfo 11711 44 1 -1 111 222
-                        My PID is 11714
-Thread 0: got signal: si_signo=44 si_code=-1 si_pid=111 si_uid=222
-si_value.sival_int=1
-                        $ ./t_rt_tgsigqueueinfo 11711 11712 44 1 -1 111 222
-                        My PID is 11715
-Thread 1: got signal: si_signo=44 si_code=-1 si_pid=11715 si_uid=1000
-si_value.sival_int=1
-
-The problem is the different code paths taken by
-rt_tgsigqueueinfo()/tgkill() versus rt_sigqueueinfo():
-
-sys_rt_sigqueueinfo()  sys_tgkill()                sys_rt_sigqueueinfo()
-        |                   |                              |
-        v                   v                              v
-do_rt_sigqueueinfo()   do_tkill()                  kill_proc_info()
-        |                   |                              |
-        |                   v                              v
-        +------------> do_send_specific()          kill_pid_info()
-                            |                              |
-                            v                              v
-                       specific_send_sig_info()    group_send_sig_info()
-                            |                              |
-                            |                              v
-                            |                      __group_send_sig_info()
-                            |                              |
-                            |                              v
-                            +--------------------> send_signal()
-
-And in do_send_specifc() there are the lines:
-
-        info->si_pid = task_tgid_vnr(current);
-        info->si_uid = current->uid;
-
-I suspect this should be fixed to be consistent with sigqueueinfo().
-
-Cheers,
-
-Michael
-
-=====
-
-/*#* multithread_sig_receiver.c
-
-   Copyright 2008, Linux Foundation;
-   written by Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-*/
-#define _GNU_SOURCE
-#include <sys/syscall.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <signal.h>
-#include <pthread.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                        } while (0)
-
-#define errExitEN(en, msg) \
-                        do { errno = en; perror(msg); \
-                             exit(EXIT_FAILURE); } while (0)
-
-static sigset_t test_sigs;
-
-struct thread_arg {
-    int   thread_num;
-    char *argv_string;
-};
-
-static pid_t
-gettid(void)
-{
-    return syscall(SYS_gettid);
-}
-
-#if 0
-static void
-handler(int sig, siginfo_t *si, void *uc)
-{
-    printf("PID = %ld; TID = %ld; caught signal %d: \n",
-            (long) getpid(), (long) gettid(), sig);
-    printf("%p\n", si);
-    printf("si_signo=%d ", si->si_signo);
-    printf("si_code=%d ", si->si_code);
-    printf("si_pid=%ld ", (long) si->si_pid);
-    printf("si_uid=%ld ", (long) si->si_uid);
-    printf("si_value.sival_int=%d\n", si->si_value.sival_int);
-}
-#endif
-
-static void
-wait_for_signals(int tnum)
-{
-    siginfo_t si;
-
-    printf("Thread %d: about to wait for signals\n", tnum);
-
-    for (;;) {
-        if (sigwaitinfo(&test_sigs, &si) == -1)
-            errExit("sigwaitinfo");
-        printf("Thread %d: got signal: ", tnum);
-        printf("si_signo=%d ", si.si_signo);
-        printf("si_code=%d ", si.si_code);
-        printf("si_pid=%ld ", (long) si.si_pid);
-        printf("si_uid=%ld ", (long) si.si_uid);
-        printf("si_value.sival_int=%d\n", si.si_value.sival_int);
-    }
-} /* wait_for_signals */
-
-
-static void *
-threadFunc(void *arg)
-{
-    struct thread_arg *ta = (struct thread_arg *) arg;
-    int nsecs;
-
-    printf("Thread %d: PID = %ld; TID = %ld\n", ta->thread_num,
-            (long) getpid(), (long) gettid());
-
-    nsecs = atoi(ta->argv_string);
-
-    if (nsecs > 0) {
-        printf("Thread %d: sleeping\n", ta->thread_num);
-        sleep(nsecs);
-        printf("Thread %d: finished sleeping\n", ta->thread_num);
-    }
-
-    wait_for_signals(ta->thread_num);
-    return NULL;        /* NOTREACHED */
-} /* threadFunc */
-
-
-#define MAX_ARGS 1000
-
-int
-main(int argc, char *argv[])
-{
-    pthread_t t;
-    int s, j;
-//    struct sigaction sa;
-    struct thread_arg ta[MAX_ARGS];
-    sigset_t new;
-
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <nsecs>...\n", argv[0]);
-        fprintf(stderr, "Each <nsecs> argument causes a separate "
-                "thread to be created;\n");
-        fprintf(stderr, "The thread sleeps <nsecs> seconds before "
-                "accepting signals with sigwaitinfo()\n");
-
-        fprintf(stderr, "\n");
-        exit(EXIT_SUCCESS);
-    }
-
-    if (argc > MAX_ARGS) {
-        fprintf(stderr, "Too many arguments\n");
-        exit(EXIT_SUCCESS);
-    }
-
-    sigemptyset(&test_sigs);
-    for (s = 1; s < NSIG; s++)
-        if (s != SIGINT && s != SIGQUIT && s != SIGTERM)
-            sigaddset(&test_sigs, s);
-
-    sigemptyset(&new);
-    if (sigprocmask(SIG_SETMASK, &new, NULL) == -1)
-        errExit("sigprocmask");
-
-#if 0
-    for (s = 1; s < NSIG; s++) {
-        if (sigismember(&test_sigs, s)) {
-            sa.sa_flags = SA_SIGINFO;
-            sa.sa_sigaction = handler;
-            sigemptyset(&sa.sa_mask);
-            if (sigaction(s, &sa, NULL) == -1 && errno != EINVAL)
-                errExit("sigaction");
-        }
-    }
-    printf("Established handler for signals\n");
-#endif
-
-    printf("Main: TGID = %ld; TID = %ld\n",
-            (long) getpid(), (long) gettid());
-
-    s = pthread_sigmask(SIG_SETMASK, &test_sigs, NULL);
-    if (s != 0)
-        errExit("pthread_sigmask");
-    printf("Main: blocked signals\n");
-
-    for (j = 0; j + 1 < argc; j++) {
-        ta[j].thread_num = j + 1;
-        ta[j].argv_string = argv[j + 1];
-
-        s = pthread_create(&t, NULL, threadFunc, &ta[j]);
-        if (s != 0)
-            errExitEN(s, "pthread_create");
-    }
-
-    wait_for_signals(0);
-} /* main */
-
-=====
-
-/*#* t_rt_tgsigqueueinfo.c
-
-   Copyright 2008, Linux Foundation;
-   written by Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-*/
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
-#include <sys/types.h>
-
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                        } while (0)
-
-#if defined(__i386__)
-#define SYS_rt_tgsigqueueinfo 333
-#endif
-
-static int
-rt_tgsigqueueinfo(pid_t tgid, pid_t tid, int sig, siginfo_t *si)
-{
-    return syscall(SYS_rt_tgsigqueueinfo, tgid, tid, sig, si);
-}
-
-
-int
-main(int argc, char *argv[])
-{
-    pid_t tgid, tid;
-    siginfo_t si;
-    int sig, val;
-
-    if (argc < 5) {
-        fprintf(stderr, "Usage: %s <tgid> <tid> <sig> <val> "
-                "[<si_code> [<si_pid [<si_uid>]]]\n", argv[0]);
-        exit(EXIT_SUCCESS);
-    }
-
-    printf("My PID is %ld\n", (long) getpid());
-
-    tgid = atoi(argv[1]);
-    tid = atoi(argv[2]);
-    sig = atoi(argv[3]);
-    val = atoi(argv[4]);
-
-    si.si_signo = sig + 1;
-    si.si_code = (argc > 5) ? atoi(argv[5]) : SI_QUEUE;
-    si.si_pid = (argc > 6) ? atoi(argv[6]) : getpid();
-    si.si_uid = (argc > 7) ? atoi(argv[7]) : getuid();
-    si.si_value.sival_int = val;
-
-    /*
-    printf("Sending: si.si_signo = %d, si.si_code = %d, "
-            "si.si_pid = %ld, si.si_uid = %ld\n",
-            si.si_signo, si.si_code, (long) si.si_pid, (long) si.si_uid);
-    */
-    if (rt_tgsigqueueinfo(tgid, tid, sig, &si) == -1)
-        errExit("rt_tgsigqueueinfo");
-
-    exit(EXIT_SUCCESS);
-} /* main */
-
-=====
-
-/*#* t_rt_sigqueueinfo.c
-
-   Copyright 2008, Linux Foundation;
-   written by Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-*/
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
-#include <sys/types.h>
-
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                        } while (0)
-
-static int
-rt_sigqueueinfo(pid_t tgid, int sig, siginfo_t *si)
-{
-    return syscall(SYS_rt_sigqueueinfo, tgid, sig, si);
-}
-
-
-int
-main(int argc, char *argv[])
-{
-    pid_t tgid;
-    siginfo_t si;
-    int sig, val;
-
-    if (argc < 4) {
-        fprintf(stderr, "Usage: %s <tgid> <sig> <val> "
-                "[<si_code> [<si_pid [<si_uid>]]]\n", argv[0]);
-        exit(EXIT_SUCCESS);
-    }
-
-    printf("My PID is %ld\n", (long) getpid());
-
-    tgid = atoi(argv[1]);
-    sig = atoi(argv[2]);
-    val = atoi(argv[3]);
-
-    si.si_signo = sig + 1;
-    si.si_code = (argc > 4) ? atoi(argv[4]) : SI_QUEUE;
-    si.si_pid = (argc > 5) ? atoi(argv[5]) : getpid();
-    si.si_uid = (argc > 6) ? atoi(argv[6]) : getuid();
-    si.si_value.sival_int = val;
-
-    /*
-    printf("Sending: si.si_signo = %d, si.si_code = %d, "
-            "si.si_pid = %ld, si.si_uid = %ld\n",
-            si.si_signo, si.si_code, (long) si.si_pid, (long) si.si_uid);
-    */
-    if (rt_sigqueueinfo(tgid, sig, &si) == -1)
-        errExit("rt_sigqueueinfo");
-
-    exit(EXIT_SUCCESS);
-} /* main */
-
-=====
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
