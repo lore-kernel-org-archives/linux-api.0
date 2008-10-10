@@ -1,160 +1,106 @@
-From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] proc: remove kernel.maps_protect sysctl
-Date: Fri, 10 Oct 2008 03:34:06 +0400
-Message-ID: <20081009233406.GA17625@x200.localdomain>
+From: "Michael Kerrisk" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: splice vs O_APPEND
+Date: Fri, 10 Oct 2008 12:23:58 +0200
+Message-ID: <517f3f820810100323l1cc4c361g25f17ebc1461b6bb@mail.gmail.com>
+References: <E1Knx26-0003ds-Ch@pomaz-ex.szeredi.hu>
+	 <alpine.LFD.2.00.0810090830170.3210@nehalem.linux-foundation.org>
+	 <E1Knxzm-0003y2-Jy@pomaz-ex.szeredi.hu>
+	 <alpine.LFD.2.00.0810090908200.3210@nehalem.linux-foundation.org>
+	 <E1KnyOw-00044y-K4@pomaz-ex.szeredi.hu>
+	 <alpine.LFD.2.00.0810091218300.3210@nehalem.linux-foundation.org>
+	 <E1Ko1Xu-0004vP-EX@pomaz-ex.szeredi.hu>
+	 <alpine.LFD.2.00.0810091411520.3210@nehalem.linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.LFD.2.00.0810091411520.3210-nfNrOhbfy2R17+2ddN/4kux8cNe9sq/dYPYVAmT7z5s@public.gmane.org>
 Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: kees.cook-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-	[added to proc.git]
+Hey Linus,
 
-commit b8f3039ba6e44e04f5eca64435c4c6a61e2db59f
-Author: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Date:   Fri Oct 10 03:27:16 2008 +0400
+On Thu, Oct 9, 2008 at 11:14 PM, Linus Torvalds
+<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+>
+>
+> On Thu, 9 Oct 2008, Miklos Szeredi wrote:
+>>
+>> The thing is, the append-only attribute is absolutely useless without
+>> being able to depend on it.  So in that sense I think the IS_APPEND
+>> issue is important, and I'm fine with your original proposal for that
+>> (except we don't need the IS_IMMUTABLE check).
+>
+> Heh. In the meantime, I had grown to hate that more complex patch.
+>
+> So because I do see your point with IS_APPEND (being different from
+> O_APPEND), but because I also think that O_APPEND itself is a gray and
+> murky area, I just committed the following. I doubt anybody will ever even
+> notice it, but while I think it's all debatable, we might as well debate
+> it with this in place. I do agree that it's "safer" behaviour.
 
-    proc: remove kernel.maps_protect
-    
-    After commit 831830b5a2b5d413407adf380ef62fe17d6fcbf2 aka
-    "restrict reading from /proc/<pid>/maps to those who share ->mm or can ptrace"
-    sysctl stopped being relevant because commit moved security checks from ->show
-    time to ->start time (mm_for_maps()).
-    
-    Signed-off-by: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-    Acked-by: Kees Cook <kees.cook-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Please do CC linux-api@vger (and if you are kind, me, in case
+something needs to go into man-pages) on interface changes.
 
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index f566ad9..63ed861 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -1332,13 +1332,6 @@ determine whether or not they are still functioning properly.
- Because the NMI watchdog shares registers with oprofile, by disabling the NMI
- watchdog, oprofile may have more registers to utilize.
- 
--maps_protect
--------------
--
--Enables/Disables the protection of the per-process proc entries "maps" and
--"smaps".  When enabled, the contents of these files are visible only to
--readers that are allowed to ptrace() the given process.
--
- msgmni
- ------
- 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index c1332dd..b5918ae 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -148,9 +148,6 @@ static unsigned int pid_entry_count_dirs(const struct pid_entry *entries,
- 	return count;
- }
- 
--int maps_protect;
--EXPORT_SYMBOL(maps_protect);
--
- static struct fs_struct *get_fs_struct(struct task_struct *task)
- {
- 	struct fs_struct *fs;
-diff --git a/fs/proc/internal.h b/fs/proc/internal.h
-index 32e7c28..9413e78 100644
---- a/fs/proc/internal.h
-+++ b/fs/proc/internal.h
-@@ -45,8 +45,6 @@ do {						\
- extern int nommu_vma_show(struct seq_file *, struct vm_area_struct *);
- #endif
- 
--extern int maps_protect;
--
- extern int proc_tid_stat(struct seq_file *m, struct pid_namespace *ns,
- 				struct pid *pid, struct task_struct *task);
- extern int proc_tgid_stat(struct seq_file *m, struct pid_namespace *ns,
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 73d1891..4806830 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -210,9 +210,6 @@ static int show_map(struct seq_file *m, void *v)
- 	dev_t dev = 0;
- 	int len;
- 
--	if (maps_protect && !ptrace_may_access(task, PTRACE_MODE_READ))
--		return -EACCES;
--
- 	if (file) {
- 		struct inode *inode = vma->vm_file->f_path.dentry->d_inode;
- 		dev = inode->i_sb->s_dev;
-@@ -742,22 +739,11 @@ const struct file_operations proc_pagemap_operations = {
- #ifdef CONFIG_NUMA
- extern int show_numa_map(struct seq_file *m, void *v);
- 
--static int show_numa_map_checked(struct seq_file *m, void *v)
--{
--	struct proc_maps_private *priv = m->private;
--	struct task_struct *task = priv->task;
--
--	if (maps_protect && !ptrace_may_access(task, PTRACE_MODE_READ))
--		return -EACCES;
--
--	return show_numa_map(m, v);
--}
--
- static const struct seq_operations proc_pid_numa_maps_op = {
-         .start  = m_start,
-         .next   = m_next,
-         .stop   = m_stop,
--        .show   = show_numa_map_checked
-+        .show   = show_numa_map,
- };
- 
- static int numa_maps_open(struct inode *inode, struct file *file)
-diff --git a/fs/proc/task_nommu.c b/fs/proc/task_nommu.c
-index 5d84e71..219bd79 100644
---- a/fs/proc/task_nommu.c
-+++ b/fs/proc/task_nommu.c
-@@ -110,11 +110,6 @@ int task_statm(struct mm_struct *mm, int *shared, int *text,
- static int show_map(struct seq_file *m, void *_vml)
- {
- 	struct vm_list_struct *vml = _vml;
--	struct proc_maps_private *priv = m->private;
--	struct task_struct *task = priv->task;
--
--	if (maps_protect && !ptrace_may_access(task, PTRACE_MODE_READ))
--		return -EACCES;
- 
- 	return nommu_vma_show(m, vml->vma);
- }
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 50ec088..cc3e0d7 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -80,7 +80,6 @@ extern int pid_max_min, pid_max_max;
- extern int sysctl_drop_caches;
- extern int percpu_pagelist_fraction;
- extern int compat_log;
--extern int maps_protect;
- extern int latencytop_enabled;
- extern int sysctl_nr_open_min, sysctl_nr_open_max;
- #ifdef CONFIG_RCU_TORTURE_TEST
-@@ -810,16 +809,6 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler	= &proc_dointvec,
- 	},
- #endif
--#ifdef CONFIG_PROC_FS
--	{
--		.ctl_name       = CTL_UNNUMBERED,
--		.procname       = "maps_protect",
--		.data           = &maps_protect,
--		.maxlen         = sizeof(int),
--		.mode           = 0644,
--		.proc_handler   = &proc_dointvec,
--	},
--#endif
- 	{
- 		.ctl_name	= CTL_UNNUMBERED,
- 		.procname	= "poweroff_cmd",
+Cheers,
+
+Michael
+
+> ---
+> commit a05b4085484ac45558810e4c5928e5a291c20f65
+> Author: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> Date:   Thu Oct 9 14:04:54 2008 -0700
+>
+>    Don't allow splice() to files opened with O_APPEND
+>
+>    This is debatable, but while we're debating it, let's disallow the
+>    combination of splice and an O_APPEND destination.
+>
+>    It's not entirely clear what the semantics of O_APPEND should be, and
+>    POSIX apparently expects pwrite() to ignore O_APPEND, for example.  So
+>    we could make up any semantics we want, including the old ones.
+>
+>    But Miklos convinced me that we should at least give it some thought,
+>    and that accepting writes at arbitrary offsets is wrong at least for
+>    IS_APPEND() files (which always have O_APPEND set, even if the reverse
+>    isn't true: you can obviously have O_APPEND set on a regular file).
+>
+>    So disallow O_APPEND entirely for now.  I doubt anybody cares, and this
+>    way we have one less gray area to worry about.
+>
+>    Reported-and-argued-for-by: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
+>    Cc: Jens Axboe <ens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+>    Signed-off-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+>
+> diff --git a/fs/splice.c b/fs/splice.c
+> index 1bbc6f4..a1e701c 100644
+> --- a/fs/splice.c
+> +++ b/fs/splice.c
+> @@ -898,6 +898,9 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+>        if (unlikely(!(out->f_mode & FMODE_WRITE)))
+>                return -EBADF;
+>
+> +       if (unlikely(out->f_flags & O_APPEND))
+> +               return -EINVAL;
+> +
+>        ret = rw_verify_area(WRITE, out, ppos, len);
+>        if (unlikely(ret < 0))
+>                return ret;
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+
+
+
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/ Found a documentation bug?
+http://www.kernel.org/doc/man-pages/reporting_bugs.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
