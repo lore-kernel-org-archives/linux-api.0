@@ -1,193 +1,61 @@
-From: "Michael Kerrisk" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/9] Create syscalls: sys_checkpoint, sys_restart
-Date: Fri, 17 Oct 2008 15:01:43 -0500
-Message-ID: <517f3f820810171301s44d90d2ub4560a37ad9b4ea7@mail.gmail.com>
-References: <20081016181414.934C4FCC@kernel> <20081016181415.B63AF0FA@kernel>
+From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] Document kernel taint flags properly
+Date: Fri, 17 Oct 2008 15:55:15 -0700
+Message-ID: <20081017225515.GA14133@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20081016181415.B63AF0FA@kernel>
 Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Randy Dunlap <rdunlap-/UHa2rfvQTnk1uMJSBkQmQ@public.gmane.org>
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hey Dave,
+From: Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>
 
-Please CC linux-api with new syscall patches.
+This fills in the documentation for all of the current kernel taint
+flags, and fixes the number for TAINT_CRAP, which was incorrectly
+described.
 
-Cheers,
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Randy Dunlap <rdunlap-/UHa2rfvQTnk1uMJSBkQmQ@public.gmane.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>
 
-Michael
+---
+ Documentation/sysctl/kernel.txt |   24 +++++++++++++++++-------
+ 1 file changed, 17 insertions(+), 7 deletions(-)
 
-On Thu, Oct 16, 2008 at 1:14 PM, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org> wrote:
->
-> From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
->
-> Create trivial sys_checkpoint and sys_restore system calls. They will
-> enable to checkpoint and restart an entire container, to and from a
-> checkpoint image file descriptor.
->
-> The syscalls take a file descriptor (for the image file) and flags as
-> arguments. For sys_checkpoint the first argument identifies the target
-> container; for sys_restart it will identify the checkpoint image.
->
-> Signed-off-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-> Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> ---
->
->  linux-2.6.git-dave/arch/x86/kernel/syscall_table_32.S |    2
->  linux-2.6.git-dave/checkpoint/Kconfig                 |   11 ++++
->  linux-2.6.git-dave/checkpoint/Makefile                |    5 ++
->  linux-2.6.git-dave/checkpoint/sys.c                   |   41 ++++++++++++++++++
->  linux-2.6.git-dave/include/asm-x86/unistd_32.h        |    2
->  linux-2.6.git-dave/include/linux/syscalls.h           |    2
->  linux-2.6.git-dave/init/Kconfig                       |    2
->  linux-2.6.git-dave/kernel/sys_ni.c                    |    4 +
->  8 files changed, 69 insertions(+)
->
-> diff -puN arch/x86/kernel/syscall_table_32.S~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart arch/x86/kernel/syscall_table_32.S
-> --- linux-2.6.git/arch/x86/kernel/syscall_table_32.S~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart   2008-10-16 10:53:33.000000000 -0700
-> +++ linux-2.6.git-dave/arch/x86/kernel/syscall_table_32.S       2008-10-16 10:53:33.000000000 -0700
-> @@ -332,3 +332,5 @@ ENTRY(sys_call_table)
->        .long sys_dup3                  /* 330 */
->        .long sys_pipe2
->        .long sys_inotify_init1
-> +       .long sys_checkpoint
-> +       .long sys_restart
-> diff -puN /dev/null checkpoint/Kconfig
-> --- /dev/null   2008-09-02 09:40:19.000000000 -0700
-> +++ linux-2.6.git-dave/checkpoint/Kconfig       2008-10-16 10:53:33.000000000 -0700
-> @@ -0,0 +1,11 @@
-> +config CHECKPOINT_RESTART
-> +       prompt "Enable checkpoint/restart (EXPERIMENTAL)"
-> +       def_bool n
-> +       depends on X86_32 && EXPERIMENTAL
-> +       help
-> +         Application checkpoint/restart is the ability to save the
-> +         state of a running application so that it can later resume
-> +         its execution from the time at which it was checkpointed.
-> +
-> +         Turning this option on will enable checkpoint and restart
-> +         functionality in the kernel.
-> diff -puN /dev/null checkpoint/Makefile
-> --- /dev/null   2008-09-02 09:40:19.000000000 -0700
-> +++ linux-2.6.git-dave/checkpoint/Makefile      2008-10-16 10:53:33.000000000 -0700
-> @@ -0,0 +1,5 @@
-> +#
-> +# Makefile for linux checkpoint/restart.
-> +#
-> +
-> +obj-$(CONFIG_CHECKPOINT_RESTART) += sys.o
-> diff -puN /dev/null checkpoint/sys.c
-> --- /dev/null   2008-09-02 09:40:19.000000000 -0700
-> +++ linux-2.6.git-dave/checkpoint/sys.c 2008-10-16 10:53:33.000000000 -0700
-> @@ -0,0 +1,41 @@
-> +/*
-> + *  Generic container checkpoint-restart
-> + *
-> + *  Copyright (C) 2008 Oren Laadan
-> + *
-> + *  This file is subject to the terms and conditions of the GNU General Public
-> + *  License.  See the file COPYING in the main directory of the Linux
-> + *  distribution for more details.
-> + */
-> +
-> +#include <linux/sched.h>
-> +#include <linux/kernel.h>
-> +
-> +/**
-> + * sys_checkpoint - checkpoint a container
-> + * @pid: pid of the container init(1) process
-> + * @fd: file to which dump the checkpoint image
-> + * @flags: checkpoint operation flags
-> + *
-> + * Returns positive identifier on success, 0 when returning from restart
-> + * or negative value on error
-> + */
-> +asmlinkage long sys_checkpoint(pid_t pid, int fd, unsigned long flags)
-> +{
-> +       pr_debug("sys_checkpoint not implemented yet\n");
-> +       return -ENOSYS;
-> +}
-> +/**
-> + * sys_restart - restart a container
-> + * @crid: checkpoint image identifier
-> + * @fd: file from which read the checkpoint image
-> + * @flags: restart operation flags
-> + *
-> + * Returns negative value on error, or otherwise returns in the realm
-> + * of the original checkpoint
-> + */
-> +asmlinkage long sys_restart(int crid, int fd, unsigned long flags)
-> +{
-> +       pr_debug("sys_restart not implemented yet\n");
-> +       return -ENOSYS;
-> +}
-> diff -puN include/asm-x86/unistd_32.h~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart include/asm-x86/unistd_32.h
-> --- linux-2.6.git/include/asm-x86/unistd_32.h~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart  2008-10-16 10:53:33.000000000 -0700
-> +++ linux-2.6.git-dave/include/asm-x86/unistd_32.h      2008-10-16 10:53:33.000000000 -0700
-> @@ -338,6 +338,8 @@
->  #define __NR_dup3              330
->  #define __NR_pipe2             331
->  #define __NR_inotify_init1     332
-> +#define __NR_checkpoint                333
-> +#define __NR_restart           334
->
->  #ifdef __KERNEL__
->
-> diff -puN include/linux/syscalls.h~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart include/linux/syscalls.h
-> --- linux-2.6.git/include/linux/syscalls.h~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart     2008-10-16 10:53:33.000000000 -0700
-> +++ linux-2.6.git-dave/include/linux/syscalls.h 2008-10-16 10:53:33.000000000 -0700
-> @@ -622,6 +622,8 @@ asmlinkage long sys_timerfd_gettime(int
->  asmlinkage long sys_eventfd(unsigned int count);
->  asmlinkage long sys_eventfd2(unsigned int count, int flags);
->  asmlinkage long sys_fallocate(int fd, int mode, loff_t offset, loff_t len);
-> +asmlinkage long sys_checkpoint(pid_t pid, int fd, unsigned long flags);
-> +asmlinkage long sys_restart(int crid, int fd, unsigned long flags);
->
->  int kernel_execve(const char *filename, char *const argv[], char *const envp[]);
->
-> diff -puN init/Kconfig~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart init/Kconfig
-> --- linux-2.6.git/init/Kconfig~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart 2008-10-16 10:53:33.000000000 -0700
-> +++ linux-2.6.git-dave/init/Kconfig     2008-10-16 10:53:33.000000000 -0700
-> @@ -779,6 +779,8 @@ config MARKERS
->
->  source "arch/Kconfig"
->
-> +source "checkpoint/Kconfig"
-> +
->  endmenu                # General setup
->
->  config HAVE_GENERIC_DMA_COHERENT
-> diff -puN kernel/sys_ni.c~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart kernel/sys_ni.c
-> --- linux-2.6.git/kernel/sys_ni.c~v6_PATCH_1_9_Create_syscalls-_sys_checkpoint_sys_restart      2008-10-16 10:53:33.000000000 -0700
-> +++ linux-2.6.git-dave/kernel/sys_ni.c  2008-10-16 10:53:33.000000000 -0700
-> @@ -169,3 +169,7 @@ cond_syscall(compat_sys_timerfd_settime)
->  cond_syscall(compat_sys_timerfd_gettime);
->  cond_syscall(sys_eventfd);
->  cond_syscall(sys_eventfd2);
-> +
-> +/* checkpoint/restart */
-> +cond_syscall(sys_checkpoint);
-> +cond_syscall(sys_restart);
-> _
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
->
-
-
-
--- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/ Found a documentation bug?
-http://www.kernel.org/doc/man-pages/reporting_bugs.html
+--- a/Documentation/sysctl/kernel.txt
++++ b/Documentation/sysctl/kernel.txt
+@@ -363,11 +363,21 @@ tainted: 
+ Non-zero if the kernel has been tainted.  Numeric values, which
+ can be ORed together:
+ 
+-  1 - A module with a non-GPL license has been loaded, this
+-      includes modules with no license.
+-      Set by modutils >= 2.4.9 and module-init-tools.
+-  2 - A module was force loaded by insmod -f.
+-      Set by modutils >= 2.4.9 and module-init-tools.
+-  4 - Unsafe SMP processors: SMP with CPUs not designed for SMP.
+- 64 - A module from drivers/staging was loaded.
++   1 - A module with a non-GPL license has been loaded, this
++       includes modules with no license.
++       Set by modutils >= 2.4.9 and module-init-tools.
++   2 - A module was force loaded by insmod -f.
++       Set by modutils >= 2.4.9 and module-init-tools.
++   4 - Unsafe SMP processors: SMP with CPUs not designed for SMP.
++   8 - A module was forcefully unloaded from the system by rmmod -f.
++  16 - A hardware machine check error occured on the system.
++  32 - A bad page was discovered on the system.
++  64 - The user has asked that the system be marked "tainted".  This
++       could be because they are running software that directly modifies
++       the hardware, or for other reasons.
++ 128 - The system has died.
++ 256 - The ACPI DSDT has been overridden with one supplied by the user
++        instead of using the one provided by the hardware.
++ 512 - A kernel warning has occurred.
++1024 - A module from drivers/staging was loaded.
+ 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
