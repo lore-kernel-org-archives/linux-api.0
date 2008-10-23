@@ -1,105 +1,68 @@
-From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Subject: Re: [RFC v7][PATCH 2/9] General infrastructure for checkpoint	restart
-Date: Wed, 22 Oct 2008 14:32:51 -0400
-Message-ID: <48FF71D3.8060505@cs.columbia.edu>
-References: <1224481237-4892-1-git-send-email-orenl@cs.columbia.edu> <1224481237-4892-3-git-send-email-orenl@cs.columbia.edu> <20081021124130.a002e838.akpm@linux-foundation.org> <20081021202410.GA10423@us.ibm.com> <48FE82DF.6030005@cs.columbia.edu> <20081022152804.GA23821@us.ibm.com> <48FF4EB2.5060206@cs.columbia.edu> <20081022170325.GA4908@us.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20081022170325.GA4908-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+From: Daniel Gollub <dgollub-l3A5Bk7waGM@public.gmane.org>
+Subject: [patch 0/3] [RFC] kernel/glibc mismatch of "readlink" syscall?
+Date: Thu, 23 Oct 2008 16:50:55 +0200
+Message-ID: <20081023145054.998439866@marvin.suse.de>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Hi,
+
+found something which looks for me like a kernel/glibc syscall mismatch. At
+least the parameter list of "readlink" is different in the kernel compared to
+glibc, POSIX and linux-man-pages. I'm not quite sure if this difference was
+intended or not ... 
+
+man 3p readlink:
+ssize_t readlink(const char *restrict path, char *restrict buf, size_t bufsize);
+
+http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html:
+size_t readlink(const char *restrict path, char *restrict buf, size_t bufsize);
+
+glibc (/usr/include/unistd.h):
+size_t readlink (__const char *__restrict __path, char *__restrict __buf, size_t
+
+man 2 readlink:
+ssize_t readlink(const char *path, char *buf, size_t bufsiz);
+                                              ^^^^^^
+linux-2.6/include/linux/syscalls.h:
+asmlinkage long sys_readlink(const char __user *path, char __user *buf, int
+		bufsiz);                                                ^^^
 
 
-Serge E. Hallyn wrote:
-> Quoting Oren Laadan (orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org):
->>
->> Serge E. Hallyn wrote:
->>> Quoting Oren Laadan (orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org):
->>> Just thinking aloud...
->>>
->>> Is read mode appropriate?  The user can edit the statefile and restart
->>> it.  Admittedly the restart code should then do all the appropriate
->>> checks for recreating resources, but I'm having a hard time thinking
->>> through this straight.
->>>
->>> Let's say hallyn is running passwd.  ruid=500,euid=0.  He quickly
->>> checkpoints.  Then he restarts.  Will restart say "ok, the /bin/passwd
->>> binary is setuid 0 so let hallyn take euid=0 for this?"  I guess not.
->>> But are there other resources for which this is harder to get right?
->> I'd say that checkpoint and restart are separate.
->>
->> In checkpoint, you read the state and save it somewhere; you don't
->> modify anything in the target task (container). This equivalent to
->> ptrace read-mode. If you could do ptrace, you could save all that
->> state. In fact, you could save it in a format that is suitable for
->> a future restart ... (or just forge one !)
-> 
-> Yeah, that's convincing.
-> 
->> In restart, we either don't trust the user and keep everything to
->> be done with her credentials, of we trust the root user and allow
->> all operations (like loading a kernel module).
->>
->> We can actually have both modes of operations. How to decide that
->> we trust the user is a separate question:  one option is to have
->> both checkpoint and restart executables setuid - checkpoint will
->> sign (in user space) the output image, and restart (in user space)
->> will validate the signature, before passing it to the kenrel. Surely
->> there are other ways...
-> 
-> Makes sense.
-> 
-> ...
-> 
->>> Hmm, so do you think we just always use the caller's credentials?
->> Nope, since we will fail to restart in many cases. We will need a way
->> to move from caller's credentials to saved credentials, and even from
->> caller's credentials to privileged credentials (e.g. to reopen a file
->> that was created by a setuid program prior to dropping privileges).
-> 
-> Can we agree to worry about that much much later? :)  Would you agree
+All readlink prototypes, expect the one in the kernel, have an unsigned
+buffer size. Even the readlink(2) man-page, which also describes an error
+statement like this:
 
-Definitely. Even more so - I believe that's a user-space issue :)
+EINVAL bufsiz is not positive.
 
-> that for the majority of use-cases, restarting with caller's credentials
-> will work?  Or am I wrong about that?
+Note: the same man-page defined bufsiz as type of size_t (unsigned).
 
-That depends on your target audience. For HPC you're probably right.
-For server applications this may not be the case (e.g. apache needs
-a privileged port, and then it drops privileges).
+While reviewing LTP i discovered that the "readlink03" syscall test contains a 
+testcase to do a functional error-path test for "EINVAL bufsiz is not positive".
+This testcase is using the glibc readlink() interface, which cause a unsigned
+cast of the value "-1" and let the testcase fail (actually due to gcc/glibc
+fortify checks and cause a __chk_fail()).
 
-I agree that we may safely (...) defer this discussion until the
-implementation gets much beefier.
+Before workarounding the testcase, or not applying -D_FORTIFY_SOURCE=2 on LTP
+build, i try to understand if there is any reason for this mismatch between
+kernel and glibc/POSIX. Regarding the man-page, i'm quite certain this was a
+copy&paste-error by coping the prototype from the POSIX man-page.
 
-> 
->> To do that, we will need to agree on a way to escalate/change the
->> credentials. This however belongs to user-space (and then the binaries
->> for checkpoint/restart will be setuid themselves).
-> 
-> Ok those are less scary, and I have no problem with those.
-> 
->> There will also be the issue of mapping credentials: a user A may have
->> one UID/GID on once system and another UID/GID on another system, and
->> we may want to do the conversion. This, too, can be done in user space
->> prior to restart by using an appropriate filter through the checkpoint
->> stream.
-> 
-> User namespaces may help here too.  So user A can create a new user
-> namespace and restart as user B in that namespace.  But right now that
-> sounds like overkill.
+Even sys_readlinkat(), which got introduced a long time after sys_readlink(),
+got a signed buffer size. Intended?
 
-Indeed, virtualization is probably the solution. Here, too, I think
-it's safe to defer the discussion.
+In the rare case all this was unintended, find patches for kernel, man-pages
+and LTP to change the kernel readlink syscall interface to a unsigned buffer
+size.
 
-Oren.
+Thoughts?
 
-
+best regards,
+Daniel
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
