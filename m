@@ -1,66 +1,49 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: Re: [RFC v7][PATCH 2/9] General infrastructure for	checkpoint	restart
-Date: Mon, 27 Oct 2008 17:51:20 -0400
-Message-ID: <490637D8.4080404@cs.columbia.edu>
-References: <1224481237-4892-1-git-send-email-orenl@cs.columbia.edu>	 <1224481237-4892-3-git-send-email-orenl@cs.columbia.edu>	 <20081021124130.a002e838.akpm@linux-foundation.org>	 <20081021202410.GA10423@us.ibm.com>	<48FE82DF.6030005@cs.columbia.edu>	 <20081022152804.GA23821@us.ibm.com>	<48FF4EB2.5060206@cs.columbia.edu>	 <87tzayh27r.wl%peter@chubb.wattle.id.au> <49059FED.4030202@cs.columbia.edu>	 <1225125752.12673.79.camel@nimitz> <4905F648.4030402@cs.columbia.edu> <1225140705.5115.40.camel@enoch>
+From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC v7][PATCH 2/9] General infrastructure for checkpoint
+	restart
+Date: Mon, 27 Oct 2008 15:09:33 -0700
+Message-ID: <1225145373.12673.125.camel@nimitz>
+References: <1224481237-4892-1-git-send-email-orenl@cs.columbia.edu>
+	 <1224481237-4892-3-git-send-email-orenl@cs.columbia.edu>
+	 <20081021124130.a002e838.akpm@linux-foundation.org>
+	 <20081021202410.GA10423@us.ibm.com>	<48FE82DF.6030005@cs.columbia.edu>
+	 <20081022152804.GA23821@us.ibm.com>	<48FF4EB2.5060206@cs.columbia.edu>
+	 <87tzayh27r.wl%peter@chubb.wattle.id.au> <49059FED.4030202@cs.columbia.edu>
+		 <1225125752.12673.79.camel@nimitz> <4905F648.4030402@cs.columbia.edu>
+	 <1225140705.5115.40.camel@enoch> <490637D8.4080404@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753381AbYJ0Vv5@vger.kernel.org>
-In-Reply-To: <1225140705.5115.40.camel@enoch>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matt Helsley <matthltc@us.ibm.com>
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, hpa@zytor.com, mingo@elte.hu, torvalds@linux-foundation.org, Peter Chubb <peterc@gelato.unsw.edu.au>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <490637D8.4080404-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Cc: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Peter Chubb <peterc-M3ycANVxPotyL3EAZA59ERCuuivNXqWP@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-Matt Helsley wrote:
-> On Mon, 2008-10-27 at 13:11 -0400, Oren Laadan wrote:
->> Dave Hansen wrote:
->>> On Mon, 2008-10-27 at 07:03 -0400, Oren Laadan wrote:
->>>>> In our implementation, we simply refused to checkpoint setid
->>>> programs.
->>>>
->>>> True. And this works very well for HPC applications.
->>>>
->>>> However, it doesn't work so well for server applications, for
->>>> instance.
->>>>
->>>> Also, you could use file system snapshotting to ensure that the file
->>>> system view does not change, and still face the same issue.
->>>>
->>>> So I'm perfectly ok with deferring this discussion to a later time :)
->>> Oren, is this a good place to stick a process_deny_checkpoint()?  Both
->>> so we refuse to checkpoint, and document this as something that has to
->>> be addressed later?
->> why refuse to checkpoint ?
+On Mon, 2008-10-27 at 17:51 -0400, Oren Laadan wrote:
+> >       Instead, how about a flag to sys_checkpoint() -- DO_RISKY_CHECKPOINT --
+> > which checkpoints despite !may_checkpoint?
 > 
-> 	If most setuid programs hold privileged resources for extended periods
-> of time after dropping privileges then it seems like a good idea to
-> refuse to checkpoint. Restart of those programs would be quite
-> unreliable unless/until we find a nice solution.
+> I also agree with Matt - so we have a quorum :)
 > 
->> if I'm root, and I want to checkpoint, and later restart, my sshd server
->> (assuming we support listening sockets) - then why not ?
->> we can just let it be, and have the restart fail (if it isn't root that
->> does the restart); perhaps add something like warn_checkpoint() (similar
->> to deny, but only warns) ?
+> so just to clarify: sys_checkpoint() is to fail (with what error ?) if the
+> deny-checkpoint test fails.
 > 
-> 	How will folks not specializing in checkpoint/restart know when to use
-> this as opposed to deny?
-> 
-> 	Instead, how about a flag to sys_checkpoint() -- DO_RISKY_CHECKPOINT --
-> which checkpoints despite !may_checkpoint?
+> however, if the user is risky, she can specify CR_CHECKPOINT_RISKY to force
+> an attempt to checkpoint as is.
 
-I also agree with Matt - so we have a quorum :)
+This sounds like an awful lot of policy to determine *inside* the
+kernel.  Everybody is going to have a different definition of risky, so
+this scheme will work for approximately 5 minutes until it gets
+patched. :)
 
-so just to clarify: sys_checkpoint() is to fail (with what error ?) if the
-deny-checkpoint test fails.
+Is it possible to enhance our interface such that users might have some
+kind of choice on these matters?
 
-however, if the user is risky, she can specify CR_CHECKPOINT_RISKY to force
-an attempt to checkpoint as is.
+-- Dave
 
-does this sound right ?
-
-Oren.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
