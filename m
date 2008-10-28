@@ -1,47 +1,68 @@
-From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC v7][PATCH 2/9] General infrastructure for checkpoint
-	restart
-Date: Mon, 27 Oct 2008 15:09:33 -0700
-Message-ID: <1225145373.12673.125.camel@nimitz>
-References: <1224481237-4892-1-git-send-email-orenl@cs.columbia.edu>
-	 <1224481237-4892-3-git-send-email-orenl@cs.columbia.edu>
-	 <20081021124130.a002e838.akpm@linux-foundation.org>
-	 <20081021202410.GA10423@us.ibm.com>	<48FE82DF.6030005@cs.columbia.edu>
-	 <20081022152804.GA23821@us.ibm.com>	<48FF4EB2.5060206@cs.columbia.edu>
-	 <87tzayh27r.wl%peter@chubb.wattle.id.au> <49059FED.4030202@cs.columbia.edu>
-		 <1225125752.12673.79.camel@nimitz> <4905F648.4030402@cs.columbia.edu>
-	 <1225140705.5115.40.camel@enoch> <490637D8.4080404@cs.columbia.edu>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH] reintroduce accept4
+Date: Mon, 27 Oct 2008 20:41:35 -0700
+Message-ID: <20081027204135.a139704e.akpm@linux-foundation.org>
+References: <200810261641.m9QGfotr024285@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <490637D8.4080404-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+In-Reply-To: <200810261641.m9QGfotr024285-sQhldQRnEDHy+ZiRM8QlFPXAX3CI6PSWQQ4Iyu8u01E@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Cc: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Peter Chubb <peterc-M3ycANVxPotyL3EAZA59ERCuuivNXqWP@public.gmane.org>
+To: Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2008-10-27 at 17:51 -0400, Oren Laadan wrote:
-> >       Instead, how about a flag to sys_checkpoint() -- DO_RISKY_CHECKPOINT --
-> > which checkpoints despite !may_checkpoint?
-> 
-> I also agree with Matt - so we have a quorum :)
-> 
-> so just to clarify: sys_checkpoint() is to fail (with what error ?) if the
-> deny-checkpoint test fails.
-> 
-> however, if the user is risky, she can specify CR_CHECKPOINT_RISKY to force
-> an attempt to checkpoint as is.
+(cc linux-api)
 
-This sounds like an awful lot of policy to determine *inside* the
-kernel.  Everybody is going to have a different definition of risky, so
-this scheme will work for approximately 5 minutes until it gets
-patched. :)
+(cc linux-arch)
 
-Is it possible to enhance our interface such that users might have some
-kind of choice on these matters?
+On Sun, 26 Oct 2008 12:41:50 -0400 Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
--- Dave
+> This patch reintroduces accept4, replacing paccept.  It's easy to see that
+> the patch only removes code and then redirects existing code away from the
+> removed functions.  Since the paccept code sans signal handling was never
+> in question I think there is no reason to quarantine the patch first.
+
+I'll confess to not having a clue what's going on here.
+
+What is accept4() and why do I want one?  Sigh.  Hopefully others have
+been following more closely and have some context.
+
+> I've updated the test program which now looks as follows:
+
+> 
+> #include <fcntl.h>
+> #include <pthread.h>
+> #include <stdio.h>
+> #include <unistd.h>
+> #include <netinet/in.h>
+> #include <sys/socket.h>
+> #include <sys/syscall.h>
+> 
+> #ifdef __x86_64__
+> #define __NR_accept4 288
+> #define SOCK_CLOEXEC O_CLOEXEC
+> #elif __i386__
+> #define SYS_ACCEPT4     18
+> #define USE_SOCKETCALL 1
+> #define SOCK_CLOEXEC O_CLOEXEC
+> #else
+
+Well.  This doesn't actually agree with the kernel patch.
+
+>
+> ...
+>
+>  arch/x86/include/asm/unistd_64.h |    4 -
+>  include/linux/net.h              |    6 --
+>  include/linux/syscalls.h         |    3 -
+>  kernel/sys_ni.c                  |    2 
+>  net/compat.c                     |   50 ++----------------------
+>  net/socket.c                     |   80 ++++-----------------------------------
+
+I'd suggest that i386 is sufficiently common to warrant its inclusion
+in the initial patch.
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
