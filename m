@@ -1,73 +1,58 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH] reintroduce accept4
-Date: Mon, 27 Oct 2008 21:52:49 -0700
-Message-ID: <20081027215249.dca00b6b.akpm@linux-foundation.org>
-References: <200810261641.m9QGfotr024285@hs20-bc2-1.build.redhat.com>
-	<20081027204135.a139704e.akpm@linux-foundation.org>
-	<490693A3.9070805@redhat.com>
+From: "Andries E. Brouwer" <Andries.Brouwer-rh8NL+sEX9E@public.gmane.org>
+Subject: Re: [patch 0/3] [RFC] kernel/glibc mismatch of "readlink" syscall?
+Date: Tue, 28 Oct 2008 10:11:48 +0100
+Message-ID: <20081027204509.GA27111@ub>
+References: <20081023145054.998439866@marvin.suse.de> <cfd18e0f0810241553x77194611o11655a89871dc210@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <490693A3.9070805-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <cfd18e0f0810241553x77194611o11655a89871dc210-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Daniel Gollub <dgollub-l3A5Bk7waGM@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, "A.E. Brouwer" <aeb-ek1Qb6IBo2Pz+pZb47iToQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-(really does cc linux-arch this time)
+On Fri, Oct 24, 2008 at 05:53:25PM -0500, Michael Kerrisk wrote:
 
-On Mon, 27 Oct 2008 21:22:59 -0700 Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
+> Hi Daniel,
 > 
-> Andrew Morton wrote:
-> > I'll confess to not having a clue what's going on here.
+> On Thu, Oct 23, 2008 at 9:50 AM, Daniel Gollub <dgollub-l3A5Bk7waGM@public.gmane.org> wrote:
+>>
+>> found something which looks for me like a kernel/glibc syscall mismatch.
+>>
+>> The standard and the manpages and glibc have
+>> ssize_t readlink(..., size_t bufsize);
+>>
+>> But the kernel has
+>>
+>> linux-2.6/include/linux/syscalls.h:
+>> asmlinkage long sys_readlink(..., int bufsiz);
+>>
+>> All readlink prototypes, expect the one in the kernel, have an unsigned
+>> buffer size.
 > 
-> It has been discussed at length.
+> I agree; the inconsistency is strange.
 
-That's of little use to people trying to understand the git commit.
+Hmm. I am inclined not to agree. There is no reason to expect
+any particular relation between the kernel prototype of sys_foo
+(if such a function exists)
+and the user space prototype of the foo() C-library function.
 
-And it's of little use to people who write the documentation. 
-Hopefully Michael has been following this closely enough to get by with
-what we have here (ie: nothing).
+The POSIX standard, man-pages, libc include files document the
+userspace / libc interface, not the system call interface.
+The system call interface is mostly undocumented.
 
-And it's of little use to people who are trying to review this patch
-and who haven't followed this alleged lengthy discussion. (ie: me)
+The kernel prototype is chosen for kernel-internal or historical reasons.
 
-And it's of little use to people who write for sites such as lwn.net,
-http://kernelnewbies.org/LinuxChanges etc.
+Andries
 
-This is not some personal weekend hack project.  It is the Linux
-kernel, used by millions around the world.
 
->  accept created file descriptors and we
-> need flags for tis.
-> 
-> >> #elif __i386__
-> >> #define SYS_ACCEPT4     18
-> >> #define USE_SOCKETCALL 1
-> >> #define SOCK_CLOEXEC O_CLOEXEC
-> >> #else
-> > 
-> > Well.  This doesn't actually agree with the kernel patch.
-> 
-> What doesn't agree?
-> 
-> 
-> > I'd suggest that i386 is sufficiently common to warrant its inclusion
-> > in the initial patch.
-> 
-> The x86 code is included.  x86 uses socketcall instead of a syscall.
+sys_ppc32.c:
+/* Note: it is necessary to treat bufsiz as an unsigned int ... */
+asmlinkage long compat_sys_readlink(..., u32 bufsiz)
 
-<wonders why arch/x86/include/asm/unistd_64.h defines
-__ARCH_WANT_SYS_SOCKETCALL but doesn't wire up sys_socketcall()>
-
-> I changed all paccept occurrences in the tree, not just x86-64.
-
-OK, that covered a lot of architectures.
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
