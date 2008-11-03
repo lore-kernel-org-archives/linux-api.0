@@ -1,72 +1,159 @@
-From: Daniel Gollub <dgollub-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [patch 0/3] [RFC] kernel/glibc mismatch of "readlink" syscall?
-Date: Fri, 31 Oct 2008 16:37:23 +0100
-Message-ID: <200810311637.25371.dgollub@suse.de>
-References: <20081023145054.998439866@marvin.suse.de> <cfd18e0f0810241553x77194611o11655a89871dc210@mail.gmail.com> <20081031160248.2b95d0e8@desktop.khms.westfalen.de>
+From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC v8][PATCH 09/12] Dump open file descriptors
+Date: Mon, 3 Nov 2008 14:57:41 -0600
+Message-ID: <20081103205741.GA27841@us.ibm.com>
+References: <1225374675-22850-1-git-send-email-orenl@cs.columbia.edu> <1225374675-22850-10-git-send-email-orenl@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20081031160248.2b95d0e8-r49W/1Cwd2f9tVrXfjCyDJqJBGhVce5bs0AfqQuZ5sE@public.gmane.org>
 Content-Disposition: inline
+In-Reply-To: <1225374675-22850-10-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kai Henningsen <kai.extern-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, "A.E. Brouwer" <aeb-ek1Qb6IBo2Pz+pZb47iToQ@public.gmane.org>
+To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Friday 31 October 2008 16:02:48 Kai Henningsen wrote:
-> Am Fri, 24 Oct 2008 17:53:25 -0500
->
-> schrieb "Michael Kerrisk" <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>:
-> > Hi Daniel,
-> >
-> > On Thu, Oct 23, 2008 at 9:50 AM, Daniel Gollub <dgollub-l3A5Bk7waGM@public.gmane.org>
-> >
-> > wrote:
-> > > EINVAL bufsiz is not positive.
-> >
-> > The EINVAL error was added to man-pages-1.18 in 1997 (even though, =
-as
-> > you note, the type was "size_t"). =A0I suspect (this was well befor=
-e I
-> > had any association with man-pages) that was done to reflect kernel
-> > reality (since one could bypass glibc invoke the syscall directly),
-> > but obviously it is inconsistent with the prototype.
->
-> Actually, it's not inconsistent as described, though perhaps that is
-> unintentional. "Not positive" isn't the same as "negative", as zero
-> isn't positive either, and zero is certainly a possible value of an
-> unsigned type
+I'm still trying to figure out the cause of my BUG at dcache.c:666,
+so as I walk through the code a few more nitpicks:
 
-True.
+Quoting Oren Laadan (orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org):
+> +int cr_scan_fds(struct files_struct *files, int **fdtable)
+> +{
+> +	struct fdtable *fdt;
+> +	int *fds;
+> +	int i, n = 0;
+> +	int tot = CR_DEFAULT_FDTABLE;
+> +
+> +	fds = kmalloc(tot * sizeof(*fds), GFP_KERNEL);
+> +	if (!fds)
+> +		return -ENOMEM;
+> +
+> +	/*
+> +	 * We assume that the target task is frozen (or that we checkpoint
+> +	 * ourselves), so we can safely proceed after krealloc() from where
+> +	 * we left off; in the worst cases restart will fail.
+> +	 */
+> +
+> +	spin_lock(&files->file_lock);
+> +	rcu_read_lock();
+> +	fdt = files_fdtable(files);
+> +	for (i = 0; i < fdt->max_fds; i++) {
+> +		if (!fcheck_files(files, i))
+> +			continue;
+> +		if (n == tot) {
+> +			/*
+> +			 * fcheck_files() is safe with drop/re-acquire
+> +			 * of the lock, because it tests:  fd < max_fds
+> +			 */
+> +			spin_unlock(&files->file_lock);
+> +			rcu_read_unlock();
+> +			tot *= 2;	/* won't overflow: kmalloc will fail */
+> +			fds = krealloc(fds, tot * sizeof(*fds), GFP_KERNEL);
+> +			if (!fds) {
+> +				kfree(fds);
 
-But there is still the problem for the ltp syscall test "readlink03", w=
-hen=20
-using the glibc "readlink" interface, by calling readlink with a buffer=
- size=20
-of "-1".
+If !fds kfree(fds)  :)
 
-Calling "-1" seems to be a valid code/error-path in the linux syscall=20
-"readlink", since there is a check for less-equal zero.
+> +				return -ENOMEM;
+> +			}
+> +			rcu_read_lock();
+> +			spin_lock(&files->file_lock);
+> +		}
+> +		fds[n++] = i;
+> +	}
+> +	rcu_read_unlock();
+> +	spin_unlock(&files->file_lock);
+> +
+> +	*fdtable = fds;
+> +	return n;
+> +}
+> +static int
+> +cr_write_fd_ent(struct cr_ctx *ctx, struct files_struct *files, int fd)
+> +{
+> +	struct cr_hdr h;
+> +	struct cr_hdr_fd_ent *hh = cr_hbuf_get(ctx, sizeof(*hh));
+> +	struct file *file = NULL;
+> +	struct fdtable *fdt;
+> +	int objref, new, ret;
+> +	int coe = 0;	/* avoid gcc warning */
+> +
+> +	rcu_read_lock();
+> +	fdt = files_fdtable(files);
+> +	file = fcheck_files(files, fd);
+> +	if (file) {
+> +		coe = FD_ISSET(fd, fdt->close_on_exec);
+> +		get_file(file);
+> +	}
+> +	rcu_read_unlock();
+> +
+> +	/* sanity check (although this shouldn't happen) */
+> +	if (!file) {
+> +		ret = -EBADF;
 
-But the less zero, condition can't be reached via the glibc "readlink"=20
-interface since this would cause fortify-check to fail (when buliding w=
-ith -
-D_FORITFY_SOURCE=3D2).
+(As mentioned on irc - and probably already fixed in your v9 - you to an
+fput(NULL) in this case which will bomb)
 
-To "workaround" the fortify check, by not compiling the testcase with -
-D_FORTIFY_SOURCE=3D2, or trying to test the linux readlink interface by=
- calling=20
-directly syscall() in the testcase ... both suggestion are just workaro=
-unds -=20
-no real solutions.
+> +		goto out;
+> +	}
+> +
+> +	new = cr_obj_add_ptr(ctx, file, &objref, CR_OBJ_FILE, 0);
+> +	cr_debug("fd %d objref %d file %p c-o-e %d)\n", fd, objref, file, coe);
+> +
+> +	if (new < 0) {
+> +		ret = new;
+> +		goto out;
+> +	}
+> +
+> +	h.type = CR_HDR_FD_ENT;
+> +	h.len = sizeof(*hh);
+> +	h.parent = 0;
+> +
+> +	hh->objref = objref;
+> +	hh->fd = fd;
+> +	hh->close_on_exec = coe;
+> +
+> +	ret = cr_write_obj(ctx, &h, hh);
+> +	if (ret < 0)
+> +		goto out;
+> +
+> +	/* new==1 if-and-only-if file was newly added to hash */
+> +	if (new)
+> +		ret = cr_write_fd_data(ctx, file, objref);
+> +
+> +out:
+> +	cr_hbuf_put(ctx, sizeof(*hh));
+> +	fput(file);
+> +	return ret;
+> +}
+> +
+> +int cr_write_files(struct cr_ctx *ctx, struct task_struct *t)
+> +{
+> +	struct cr_hdr h;
+> +	struct cr_hdr_files *hh = cr_hbuf_get(ctx, sizeof(*hh));
+> +	struct files_struct *files;
+> +	int *fdtable;
+> +	int nfds, n, ret;
+> +
+> +	h.type = CR_HDR_FILES;
+> +	h.len = sizeof(*hh);
+> +	h.parent = task_pid_vnr(t);
+> +
+> +	files = get_files_struct(t);
+> +
+> +	nfds = cr_scan_fds(files, &fdtable);
+> +	if (nfds < 0) {
+> +		put_files_struct(files);
 
-We could also just remove the testcase of buffer size "-1".
+need a cr_hbuf_put()
 
-The problem is still, how to test the "readlink" syscall in LTP?
+> +		return nfds;
+> +	}
+> +
 
-best regards,
-Daniel
+(Cause of my BUG() doesn't appear to be here :( )
+
+thanks,
+-serge
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
