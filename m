@@ -1,74 +1,89 @@
-From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Subject: Re: [RFC v8][PATCH 05/12] x86 support for checkpoint/restart
-Date: Tue, 04 Nov 2008 10:32:26 -0500
-Message-ID: <49106B0A.8010205@cs.columbia.edu>
-References: <1225374675-22850-1-git-send-email-orenl@cs.columbia.edu>	 <1225374675-22850-6-git-send-email-orenl@cs.columbia.edu> <1225791016.5940.33.camel@noir.spf.cl.nec.co.jp>
+From: Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Subject: Re: [patch 0/3] [RFC] kernel/glibc mismatch of "readlink"
+	syscall?
+Date: Tue, 04 Nov 2008 11:20:38 -0500
+Message-ID: <49107656.2060101@gmail.com>
+References: <20081023145054.998439866@marvin.suse.de>
+	<cfd18e0f0810241553x77194611o11655a89871dc210@mail.gmail.com>
+	<20081031160248.2b95d0e8@desktop.khms.westfalen.de>
+	<200810311637.25371.dgollub@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1225791016.5940.33.camel-eKIOortEDzKlX1Gi5MogR0v2NXO6HgA6@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Masahiko Takahashi <m-takahashi-kvZsz0w9TrB8UrSeD/g0lQ@public.gmane.org>
-Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+Return-path: <ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <200810311637.25371.dgollub-l3A5Bk7waGM@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
+	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=ltp-list>
+List-Post: <mailto:ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
+	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Daniel Gollub <dgollub-l3A5Bk7waGM@public.gmane.org>
+Cc: ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "A.E. Brouwer" <aeb-ek1Qb6IBo2Pz+pZb47iToQ@public.gmane.org>, Kai Henningsen <kai.extern-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Daniel,
 
-
-Masahiko Takahashi wrote:
-> Hi Oren,
+Daniel Gollub wrote:
+> On Friday 31 October 2008 16:02:48 Kai Henningsen wrote:
+>> Am Fri, 24 Oct 2008 17:53:25 -0500
+>>
+>> schrieb "Michael Kerrisk" <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>:
+>>> Hi Daniel,
+>>>
+>>> On Thu, Oct 23, 2008 at 9:50 AM, Daniel Gollub <dgollub-l3A5Bk7waGM@public.gmane.org>
+>>>
+>>> wrote:
+>>>> EINVAL bufsiz is not positive.
+>>> The EINVAL error was added to man-pages-1.18 in 1997 (even though, as
+>>> you note, the type was "size_t").  I suspect (this was well before I
+>>> had any association with man-pages) that was done to reflect kernel
+>>> reality (since one could bypass glibc invoke the syscall directly),
+>>> but obviously it is inconsistent with the prototype.
+>> Actually, it's not inconsistent as described, though perhaps that is
+>> unintentional. "Not positive" isn't the same as "negative", as zero
+>> isn't positive either, and zero is certainly a possible value of an
+>> unsigned type
 > 
-> I'm now trying to port your patchset to x86_64, and find a tiny
-> inconsistency issue.
-> 
-> 
-> On 2008-10-30 at 09:51 -0400, Oren Laadan wrote:
->> +/* dump the thread_struct of a given task */
->> +int cr_write_thread(struct cr_ctx *ctx, struct task_struct *t)
->> +{
->> +	struct cr_hdr h;
->> +	struct cr_hdr_thread *hh = cr_hbuf_get(ctx, sizeof(*hh));
->> +	struct thread_struct *thread;
->> +	struct desc_struct *desc;
->> +	int ntls = 0;
->> +	int n, ret;
->> +
->> +	h.type = CR_HDR_THREAD;
->> +	h.len = sizeof(*hh);
->> +	h.parent = task_pid_vnr(t);
->> +
->> +	thread = &t->thread;
->> +
->> +	/* calculate no. of TLS entries that follow */
->> +	desc = thread->tls_array;
->> +	for (n = GDT_ENTRY_TLS_ENTRIES; n > 0; n--, desc++) {
->> +		if (desc->a || desc->b)
->> +			ntls++;
->> +	}
->> +
->> +	hh->gdt_entry_tls_entries = GDT_ENTRY_TLS_ENTRIES;
->> +	hh->sizeof_tls_array = sizeof(thread->tls_array);
->> +	hh->ntls = ntls;
->> +
->> +	ret = cr_write_obj(ctx, &h, hh);
->> +	cr_hbuf_put(ctx, sizeof(*hh));
->> +	if (ret < 0)
->> +		return ret;
-> 
-> Please add
->    if (ntls == 0)
->             return ret;
-> because, in restart phase, reading TLS entries from the image file
-> is skipped if hh->ntls == 0, which may incur inconsistency and fail
-> to restart.
-> 
+> True.
 
-Will fix, thanks.
+So, at this stage I don't plan to make any change to man-pages.
+(Let me know if you think this is the wrong course.)
 
-Oren.
+> But there is still the problem for the ltp syscall test "readlink03", when 
+> using the glibc "readlink" interface, by calling readlink with a buffer size 
+> of "-1".
+> 
+> Calling "-1" seems to be a valid code/error-path in the linux syscall 
+> "readlink", since there is a check for less-equal zero.
+> 
+> But the less zero, condition can't be reached via the glibc "readlink" 
+> interface since this would cause fortify-check to fail (when buliding with -
+> D_FORITFY_SOURCE=2).
+> 
+> To "workaround" the fortify check, by not compiling the testcase with -
+> D_FORTIFY_SOURCE=2, or trying to test the linux readlink interface by calling 
+> directly syscall() in the testcase ... both suggestion are just workarounds - 
+> no real solutions.
+> 
+> We could also just remove the testcase of buffer size "-1".
+> 
+> The problem is still, how to test the "readlink" syscall in LTP?
 
+I'd say: remove this test.  And add one for bufsiz==0 if there isn't one
+already.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+git://git.kernel.org/pub/scm/docs/man-pages/man-pages.git
+man-pages online: http://www.kernel.org/doc/man-pages/online_pages.html
+Found a bug? http://www.kernel.org/doc/man-pages/reporting_bugs.html
+
+-------------------------------------------------------------------------
+This SF.Net email is sponsored by the Moblin Your Move Developer's challenge
+Build the coolest Linux based applications with Moblin SDK & win great prizes
+Grand prize is a trip for two to an Open Source event anywhere in the world
+http://moblin-contest.org/redirect.php?banner_id=100&url=/
