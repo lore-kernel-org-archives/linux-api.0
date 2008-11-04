@@ -1,160 +1,146 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v8][PATCH 09/12] Dump open file descriptors
-Date: Mon, 3 Nov 2008 14:57:41 -0600
-Message-ID: <20081103205741.GA27841@us.ibm.com>
-References: <1225374675-22850-1-git-send-email-orenl@cs.columbia.edu> <1225374675-22850-10-git-send-email-orenl@cs.columbia.edu>
+From: Masahiko Takahashi <m-takahashi@ex.jp.nec.com>
+Subject: Re: [RFC v8][PATCH 05/12] x86 support for checkpoint/restart
+Date: Tue, 04 Nov 2008 18:30:16 +0900
+Message-ID: <1225791016.5940.33.camel@noir.spf.cl.nec.co.jp>
+References: <1225374675-22850-1-git-send-email-orenl@cs.columbia.edu>
+	 <1225374675-22850-6-git-send-email-orenl@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1225374675-22850-10-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1225374675-22850-6-git-send-email-orenl@cs.columbia.edu>
+Sender: owner-linux-mm@kvack.org
+To: Oren Laadan <orenl@cs.columbia.edu>
+Cc: Linus Torvalds <torvalds@osdl.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-I'm still trying to figure out the cause of my BUG at dcache.c:666,
-so as I walk through the code a few more nitpicks:
+Hi Oren,
 
-Quoting Oren Laadan (orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org):
-> +int cr_scan_fds(struct files_struct *files, int **fdtable)
-> +{
-> +	struct fdtable *fdt;
-> +	int *fds;
-> +	int i, n = 0;
-> +	int tot = CR_DEFAULT_FDTABLE;
-> +
-> +	fds = kmalloc(tot * sizeof(*fds), GFP_KERNEL);
-> +	if (!fds)
-> +		return -ENOMEM;
-> +
-> +	/*
-> +	 * We assume that the target task is frozen (or that we checkpoint
-> +	 * ourselves), so we can safely proceed after krealloc() from where
-> +	 * we left off; in the worst cases restart will fail.
-> +	 */
-> +
-> +	spin_lock(&files->file_lock);
-> +	rcu_read_lock();
-> +	fdt = files_fdtable(files);
-> +	for (i = 0; i < fdt->max_fds; i++) {
-> +		if (!fcheck_files(files, i))
-> +			continue;
-> +		if (n == tot) {
-> +			/*
-> +			 * fcheck_files() is safe with drop/re-acquire
-> +			 * of the lock, because it tests:  fd < max_fds
-> +			 */
-> +			spin_unlock(&files->file_lock);
-> +			rcu_read_unlock();
-> +			tot *= 2;	/* won't overflow: kmalloc will fail */
-> +			fds = krealloc(fds, tot * sizeof(*fds), GFP_KERNEL);
-> +			if (!fds) {
-> +				kfree(fds);
+I'm now trying to port your patchset to x86_64, and find a tiny
+inconsistency issue.
 
-If !fds kfree(fds)  :)
 
-> +				return -ENOMEM;
-> +			}
-> +			rcu_read_lock();
-> +			spin_lock(&files->file_lock);
-> +		}
-> +		fds[n++] = i;
-> +	}
-> +	rcu_read_unlock();
-> +	spin_unlock(&files->file_lock);
-> +
-> +	*fdtable = fds;
-> +	return n;
-> +}
-> +static int
-> +cr_write_fd_ent(struct cr_ctx *ctx, struct files_struct *files, int fd)
+On 2008-10-30 at 09:51 -0400, Oren Laadan wrote:
+> +/* dump the thread_struct of a given task */
+> +int cr_write_thread(struct cr_ctx *ctx, struct task_struct *t)
 > +{
 > +	struct cr_hdr h;
-> +	struct cr_hdr_fd_ent *hh = cr_hbuf_get(ctx, sizeof(*hh));
-> +	struct file *file = NULL;
-> +	struct fdtable *fdt;
-> +	int objref, new, ret;
-> +	int coe = 0;	/* avoid gcc warning */
+> +	struct cr_hdr_thread *hh = cr_hbuf_get(ctx, sizeof(*hh));
+> +	struct thread_struct *thread;
+> +	struct desc_struct *desc;
+> +	int ntls = 0;
+> +	int n, ret;
 > +
-> +	rcu_read_lock();
-> +	fdt = files_fdtable(files);
-> +	file = fcheck_files(files, fd);
-> +	if (file) {
-> +		coe = FD_ISSET(fd, fdt->close_on_exec);
-> +		get_file(file);
-> +	}
-> +	rcu_read_unlock();
-> +
-> +	/* sanity check (although this shouldn't happen) */
-> +	if (!file) {
-> +		ret = -EBADF;
-
-(As mentioned on irc - and probably already fixed in your v9 - you to an
-fput(NULL) in this case which will bomb)
-
-> +		goto out;
-> +	}
-> +
-> +	new = cr_obj_add_ptr(ctx, file, &objref, CR_OBJ_FILE, 0);
-> +	cr_debug("fd %d objref %d file %p c-o-e %d)\n", fd, objref, file, coe);
-> +
-> +	if (new < 0) {
-> +		ret = new;
-> +		goto out;
-> +	}
-> +
-> +	h.type = CR_HDR_FD_ENT;
-> +	h.len = sizeof(*hh);
-> +	h.parent = 0;
-> +
-> +	hh->objref = objref;
-> +	hh->fd = fd;
-> +	hh->close_on_exec = coe;
-> +
-> +	ret = cr_write_obj(ctx, &h, hh);
-> +	if (ret < 0)
-> +		goto out;
-> +
-> +	/* new==1 if-and-only-if file was newly added to hash */
-> +	if (new)
-> +		ret = cr_write_fd_data(ctx, file, objref);
-> +
-> +out:
-> +	cr_hbuf_put(ctx, sizeof(*hh));
-> +	fput(file);
-> +	return ret;
-> +}
-> +
-> +int cr_write_files(struct cr_ctx *ctx, struct task_struct *t)
-> +{
-> +	struct cr_hdr h;
-> +	struct cr_hdr_files *hh = cr_hbuf_get(ctx, sizeof(*hh));
-> +	struct files_struct *files;
-> +	int *fdtable;
-> +	int nfds, n, ret;
-> +
-> +	h.type = CR_HDR_FILES;
+> +	h.type = CR_HDR_THREAD;
 > +	h.len = sizeof(*hh);
 > +	h.parent = task_pid_vnr(t);
 > +
-> +	files = get_files_struct(t);
+> +	thread = &t->thread;
 > +
-> +	nfds = cr_scan_fds(files, &fdtable);
-> +	if (nfds < 0) {
-> +		put_files_struct(files);
-
-need a cr_hbuf_put()
-
-> +		return nfds;
+> +	/* calculate no. of TLS entries that follow */
+> +	desc = thread->tls_array;
+> +	for (n = GDT_ENTRY_TLS_ENTRIES; n > 0; n--, desc++) {
+> +		if (desc->a || desc->b)
+> +			ntls++;
 > +	}
 > +
+> +	hh->gdt_entry_tls_entries = GDT_ENTRY_TLS_ENTRIES;
+> +	hh->sizeof_tls_array = sizeof(thread->tls_array);
+> +	hh->ntls = ntls;
+> +
+> +	ret = cr_write_obj(ctx, &h, hh);
+> +	cr_hbuf_put(ctx, sizeof(*hh));
+> +	if (ret < 0)
+> +		return ret;
 
-(Cause of my BUG() doesn't appear to be here :( )
+Please add
+   if (ntls == 0)
+            return ret;
+because, in restart phase, reading TLS entries from the image file
+is skipped if hh->ntls == 0, which may incur inconsistency and fail
+to restart.
 
-thanks,
--serge
+> +	/* for simplicity dump the entire array, cherry-pick upon restart */
+> +	ret = cr_kwrite(ctx, thread->tls_array, sizeof(thread->tls_array));
+> +
+> +	cr_debug("ntls %d\n", ntls);
+> +
+> +	/* IGNORE RESTART BLOCKS FOR NOW ... */
+> +
+> +	return ret;
+> +}
+(snip)
+> +/* read the thread_struct into the current task */
+> +int cr_read_thread(struct cr_ctx *ctx)
+> +{
+> +	struct cr_hdr_thread *hh = cr_hbuf_get(ctx, sizeof(*hh));
+> +	struct task_struct *t = current;
+> +	struct thread_struct *thread = &t->thread;
+> +	int parent, ret;
+> +
+> +	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_THREAD);
+> +	if (parent < 0) {
+> +		ret = parent;
+> +		goto out;
+> +	}
+> +
+> +	ret = -EINVAL;
+> +
+> +#if 0	/* activate when containers are used */
+> +	if (parent != task_pid_vnr(t))
+> +		goto out;
+> +#endif
+> +	cr_debug("ntls %d\n", hh->ntls);
+> +
+> +	if (hh->gdt_entry_tls_entries != GDT_ENTRY_TLS_ENTRIES ||
+> +	    hh->sizeof_tls_array != sizeof(thread->tls_array) ||
+> +	    hh->ntls < 0 || hh->ntls > GDT_ENTRY_TLS_ENTRIES)
+> +		goto out;
+> +
+> +	if (hh->ntls > 0) {
+> +		struct desc_struct *desc;
+> +		int size, cpu;
+> +
+> +		/*
+> +		 * restore TLS by hand: why convert to struct user_desc if
+> +		 * sys_set_thread_entry() will convert it back ?
+> +		 */
+> +
+> +		size = sizeof(*desc) * GDT_ENTRY_TLS_ENTRIES;
+> +		desc = kmalloc(size, GFP_KERNEL);
+> +		if (!desc)
+> +			return -ENOMEM;
+> +
+> +		ret = cr_kread(ctx, desc, size);
+> +		if (ret >= 0) {
+> +			/*
+> +			 * FIX: add sanity checks (eg. that values makes
+> +			 * sense, that we don't overwrite old values, etc
+> +			 */
+> +			cpu = get_cpu();
+> +			memcpy(thread->tls_array, desc, size);
+> +			load_TLS(thread, cpu);
+> +			put_cpu();
+> +		}
+> +		kfree(desc);
+> +	}
+> +
+> +	ret = 0;
+> + out:
+> +	cr_hbuf_put(ctx, sizeof(*hh));
+> +	return ret;
+> +}
+
+
+Thanks,
+
+Masahiko.
+
+---
+Masahiko Takahashi / m-takahashi@ex.jp.nec.com
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
