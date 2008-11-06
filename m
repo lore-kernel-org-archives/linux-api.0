@@ -1,71 +1,177 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
-Subject: Re: [RFC v8][PATCH 0/12] Kernel based checkpoint/restart
-Date: Tue, 4 Nov 2008 15:38:05 -0600
-Message-ID: <20081104213805.GA14737@us.ibm.com>
-References: <1225374675-22850-1-git-send-email-orenl@cs.columbia.edu>
+From: "Michael Kerrisk" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [patch 1/2][RFC] add socketat syscall
+Date: Thu, 6 Nov 2008 08:22:38 -0500
+Message-ID: <517f3f820811060522i7b3518aen47907a34b38adee9@mail.gmail.com>
+References: <20081031215602.655672481@fr.ibm.com>
+	 <20081031215900.810348746@fr.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756728AbYKDVig@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20081031215900.810348746-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1225374675-22850-1-git-send-email-orenl@cs.columbia.edu>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oren Laadan <orenl@cs.columbia.edu>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Lezcano <dlezcano-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
+Cc: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, vivien.chappelier-L+G57L1VLRbR7s880joybQ@public.gmane.org, andreas.aaen-546VmZ+UeKYX2WXlbB3fKg@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Oren Laadan (orenl@cs.columbia.edu):
-> Basic checkpoint-restart [C/R]: v8 adds support for "external" checkpoint
-> and improves documentation. Older announcements below.
+Hi Daniel,
 
-Finally!
+Please CC linux-api on API/ABI changes.
 
->From 8edab186b605f7dddd612e581204f1ad8fd766be Mon Sep 17 00:00:00 2001
-From: Serge Hallyn <serue@us.ibm.com>
-Date: Tue, 4 Nov 2008 15:28:01 -0600
-Subject: [PATCH 1/1] cr: fix use of __d_path()
+See Documentation/SubmitChecklist and
+http://thread.gmane.org/gmane.linux.ltp/5658.
 
-__d_path():
-	1. should be used under dcache_lock
-	2. can change root->{mnt,dentry} without changing refcounts
-The second point was the cause of my BUGs.  The ctx->root was passed
-in, and do_checkpoint() had taken a path_get on the vfsroot.  So now
-at cleanup it was doing path_put() using another mnt+dentry.
+Thanks,
 
-(Why they are different, I'm not sure - but my guess would be that
-stdin or stdout is inherited from the parent task in parent mntns,
-hence file->mnt is different from root->mnt as it's a different
-namespace.)
+Michael
 
-Signed-off-by: Serge Hallyn <serue@us.ibm.com>
----
- checkpoint/checkpoint.c |   13 ++++++++++++-
- 1 files changed, 12 insertions(+), 1 deletions(-)
+On Fri, Oct 31, 2008 at 4:56 PM, Daniel Lezcano <dlezcano-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org> wrote:
+> This patch adds the socketat syscall which allows to specify in
+> which network namespace we want to create a socket. The network
+> namespace destination is referred by a socket fd previously opened
+> in the destination network namespace.
+>
+> Signed-off-by: Daniel Lezcano <dlezcano-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
+> ---
+>  arch/x86/include/asm/unistd_32.h   |    1
+>  arch/x86/include/asm/unistd_64.h   |    3 +-
+>  arch/x86/kernel/syscall_table_32.S |    1
+>  include/linux/syscalls.h           |    1
+>  kernel/sys_ni.c                    |    1
+>  net/socket.c                       |   45 +++++++++++++++++++++++++++++++++++++
+>  6 files changed, 51 insertions(+), 1 deletion(-)
+>
+> Index: net-next-2.6/arch/x86/include/asm/unistd_32.h
+> ===================================================================
+> --- net-next-2.6.orig/arch/x86/include/asm/unistd_32.h
+> +++ net-next-2.6/arch/x86/include/asm/unistd_32.h
+> @@ -338,6 +338,7 @@
+>  #define __NR_dup3              330
+>  #define __NR_pipe2             331
+>  #define __NR_inotify_init1     332
+> +#define __NR_socketat           333
+>
+>  #ifdef __KERNEL__
+>
+> Index: net-next-2.6/arch/x86/include/asm/unistd_64.h
+> ===================================================================
+> --- net-next-2.6.orig/arch/x86/include/asm/unistd_64.h
+> +++ net-next-2.6/arch/x86/include/asm/unistd_64.h
+> @@ -653,7 +653,8 @@ __SYSCALL(__NR_dup3, sys_dup3)
+>  __SYSCALL(__NR_pipe2, sys_pipe2)
+>  #define __NR_inotify_init1                     294
+>  __SYSCALL(__NR_inotify_init1, sys_inotify_init1)
+> -
+> +#define __NR_socketat                           295
+> +__SYSCALL(__NR_socketat, sys_socketat)
+>
+>  #ifndef __NO_STUBS
+>  #define __ARCH_WANT_OLD_READDIR
+> Index: net-next-2.6/arch/x86/kernel/syscall_table_32.S
+> ===================================================================
+> --- net-next-2.6.orig/arch/x86/kernel/syscall_table_32.S
+> +++ net-next-2.6/arch/x86/kernel/syscall_table_32.S
+> @@ -332,3 +332,4 @@ ENTRY(sys_call_table)
+>        .long sys_dup3                  /* 330 */
+>        .long sys_pipe2
+>        .long sys_inotify_init1
+> +       .long sys_socketat
+> Index: net-next-2.6/net/socket.c
+> ===================================================================
+> --- net-next-2.6.orig/net/socket.c
+> +++ net-next-2.6/net/socket.c
+> @@ -1253,6 +1253,51 @@ out_release:
+>        return retval;
+>  }
+>
+> +asmlinkage long sys_socketat(int fd, int family, int type, int protocol)
+> +{
+> +       int retval, fput_needed;
+> +       struct socket *sock;
+> +       struct socket *sockat;
+> +       struct net *net;
+> +       int flags;
+> +
+> +       /* Check the SOCK_* constants for consistency.  */
+> +       BUILD_BUG_ON(SOCK_CLOEXEC != O_CLOEXEC);
+> +       BUILD_BUG_ON((SOCK_MAX | SOCK_TYPE_MASK) != SOCK_TYPE_MASK);
+> +       BUILD_BUG_ON(SOCK_CLOEXEC & SOCK_TYPE_MASK);
+> +       BUILD_BUG_ON(SOCK_NONBLOCK & SOCK_TYPE_MASK);
+> +
+> +       flags = type & ~SOCK_TYPE_MASK;
+> +       if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
+> +               return -EINVAL;
+> +       type &= SOCK_TYPE_MASK;
+> +
+> +       if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
+> +               flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
+> +
+> +       sock = sockfd_lookup_light(fd, &retval, &fput_needed);
+> +       if (!sock)
+> +               goto out;
+> +
+> +       net = sock_net(sock->sk);
+> +
+> +       retval = __sock_create(net, family, type, protocol, &sockat, 0);
+> +       if (retval)
+> +               goto out_fput;
+> +
+> +       retval = sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
+> +       if (retval < 0)
+> +               goto out_release;
+> +out_fput:
+> +       fput_light(sock->file, fput_needed);
+> +out:
+> +       return retval;
+> +
+> +out_release:
+> +       sock_release(sockat);
+> +       goto out;
+> +}
+> +
+>  /*
+>  *     Create a pair of connected sockets.
+>  */
+> Index: net-next-2.6/include/linux/syscalls.h
+> ===================================================================
+> --- net-next-2.6.orig/include/linux/syscalls.h
+> +++ net-next-2.6/include/linux/syscalls.h
+> @@ -423,6 +423,7 @@ asmlinkage long sys_recvfrom(int, void _
+>                                struct sockaddr __user *, int __user *);
+>  asmlinkage long sys_recvmsg(int fd, struct msghdr __user *msg, unsigned flags);
+>  asmlinkage long sys_socket(int, int, int);
+> +asmlinkage long sys_socketat(int, int, int, int);
+>  asmlinkage long sys_socketpair(int, int, int, int __user *);
+>  asmlinkage long sys_socketcall(int call, unsigned long __user *args);
+>  asmlinkage long sys_listen(int, int);
+> Index: net-next-2.6/kernel/sys_ni.c
+> ===================================================================
+> --- net-next-2.6.orig/kernel/sys_ni.c
+> +++ net-next-2.6/kernel/sys_ni.c
+> @@ -40,6 +40,7 @@ cond_syscall(sys_send);
+>  cond_syscall(sys_recvfrom);
+>  cond_syscall(sys_recv);
+>  cond_syscall(sys_socket);
+> +cond_syscall(sys_socketat);
+>  cond_syscall(sys_setsockopt);
+>  cond_syscall(compat_sys_setsockopt);
+>  cond_syscall(sys_getsockopt);
+>
+> --
+> _______________________________________________
+> Containers mailing list
+> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> https://lists.linux-foundation.org/mailman/listinfo/containers
+>
 
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index 173b637..7f0c1e7 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -70,9 +70,20 @@ static char *
- cr_fill_fname(struct path *path, struct path *root, char *buf, int *n)
- {
- 	char *fname;
-+	struct path root2;
-+
-+	root2.mnt = root->mnt;
-+	root2.dentry = root->dentry;
- 
- 	BUG_ON(!buf);
--	fname = __d_path(path, root, buf, *n);
-+	spin_lock(&dcache_lock);
-+	fname = __d_path(path, &root2, buf, *n);
-+	spin_unlock(&dcache_lock);
-+	if (root2.mnt != root->mnt)
-+		printk(KERN_NOTICE "%s: mnt changed\n", __func__);
-+	if (root2.dentry != root->dentry)
-+		printk(KERN_NOTICE "%s: dentry changed\n", __func__);
-+	fname = buf+10;
- 	if (!IS_ERR(fname))
- 		*n = (buf + (*n) - fname);
- 	return fname;
+
+
 -- 
-1.5.6.3
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/ Found a documentation bug?
+http://www.kernel.org/doc/man-pages/reporting_bugs.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
