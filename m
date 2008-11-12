@@ -1,14 +1,15 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v9][PATCH 00/13] Kernel based checkpoint/restart
-Date: Tue, 11 Nov 2008 23:03:19 -0600
-Message-ID: <20081112050319.GA3687@us.ibm.com>
-References: <1226335060-7061-1-git-send-email-orenl@cs.columbia.edu>
+From: Vivien Chappelier <vivien.chappelier-L+G57L1VLRbR7s880joybQ@public.gmane.org>
+Subject: Re: [patch 1/2][RFC] add socketat syscall
+Date: Wed, 12 Nov 2008 11:33:54 +0100
+Message-ID: <491AB112.1030806@thomson.net>
+References: <20081031215602.655672481@fr.ibm.com>	<20081031215900.810348746@fr.ibm.com>	<517f3f820811060522i7b3518aen47907a34b38adee9@mail.gmail.com>	<cfd18e0f0811060746l77fbe6fel83402ba543fccb38@mail.gmail.com>
+	<491318DC.4000300@fr.ibm.com> <49143263.1040604@fr.ibm.com>
+	<49143594.8030109@fr.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1226335060-7061-1-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+In-Reply-To: <49143594.8030109-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
 List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
@@ -18,77 +19,37 @@ List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+To: Daniel Lezcano <dlezcano-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Cedric Le Goater <clg-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Subrata Modak <subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Oren Laadan (orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org):
-> Checkpoint-restart (c/r): v9 adds support for multiple processes.
-> (rebase to v2.6.28-rc3).
-> 
-> We'd like to see these make their way into -mm. All comments have
-> been addressed in this version. Please pull at least the first 11
-> patches, as they are similar to before.
+Hi,
 
-With the trivial fix to patch 5 I sent earlier, I've been running the
-following e2loop.sh for a few hours with no problems (the counter is at
-2412).  Also did 500 concurrent checkpoints of the same process.
+   The socketat() option is fine but only solves half of the problem. I 
+also need to be able to change the default namespace of a process to 
+join an existing network namespace.
 
-Oren, can you re-post an updated patch 5?
+   My use case is the following (embedded router): I have two separate 
+networks, one with internet access running standard applications and 
+routing LAN traffic, one with access to the operator network only and 
+running dedicated applications such as software upgrade or telephony 
+software. These two networks have to be totally separate and I need the 
+ability to run applications and open sockets in any of these networks or 
+even both. With the current proposal, I could have init or some 
+additional daemon create the two namespaces and ask it to fork and exec 
+the applications I want to run so that it can give the open socket to 
+its child. However this solution is not very practical nor elegant 
+compared to the chvrf approach.
 
-Andrew, would you mind (once Oren reposts patch 5) giving the
-first 11 patches a chance in -mm?
+   The fs solution proposed by Eric to name, create, and remove network 
+namespaces is fine. IMHO using the filesystem to create sockets would be 
+a bad option as the filename would need to be parsed for every protocol 
+etc.. So combining the filesystem idea with the socketat() syscall is a 
+good way of solving both issues. In this case, each namespace would be 
+represented with a single file and we could also give the fd obtained by 
+opening this file as the socketat() argument. I also prefer extending 
+socket() as was suggested previously rather than adding a new syscall, 
+but this is up to the syscall API maintainers to decide.
 
-thanks,
--serge
-
-===============
-e2loop.sh:
-===============
-cnt=1
-/usr/src/ns_exec -m /root/e2 &
-while [ 1 ]; do
-        /usr/src/cr `pidof e2` o.$cnt
-        kill -9 `pidof e2`
-        echo 5 > /root/e2out
-        cntin=`cat /root/e2out`
-        echo "i reset e2out to $cntin"
-        #/usr/src/rstr < /root/o.$cnt &
-        /usr/src/ns_exec -m /usr/src/rstr /root/o.$cnt &
-        cnt=$((cnt+1))
-        sleep 10
-        cntin=`cat /root/e2out`
-        echo "cnt is $cnt, e2out has $cntin"
-done
-
-===============
-e2.c:
-===============
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-int main()
-{
-	int cnt=0;
-	FILE *f;
-	char fnam[20];
-
-	close(0); close(1); close(2); close(3);
-	f = fopen("e2out", "r");
-	if (!f)
-		cnt = 1;
-	else {
-		fscanf(f, "%d", &cnt);
-		fclose(f);
-	}
-	for (;;) {
-		sleep(5);
-		f = fopen("e2out", "w");
-		if (!f)
-			return 1;
-		fprintf(f, "%d", ++cnt);
-		fclose(f);
-	}
-	return 0;
-}
+regards,
+Vivien.
