@@ -1,56 +1,50 @@
-From: Vivien Chappelier <vivien.chappelier-L+G57L1VLRbR7s880joybQ@public.gmane.org>
-Subject: Re: [patch 1/2][RFC] add socketat syscall
-Date: Wed, 12 Nov 2008 16:59:57 +0100
-Message-ID: <491AFD7D.4080505@thomson.net>
-References: <20081031215602.655672481@fr.ibm.com>	<20081031215900.810348746@fr.ibm.com>	<517f3f820811060522i7b3518aen47907a34b38adee9@mail.gmail.com>	<cfd18e0f0811060746l77fbe6fel83402ba543fccb38@mail.gmail.com>	<491318DC.4000300@fr.ibm.com> <49143263.1040604@fr.ibm.com>	<49143594.8030109@fr.ibm.com> <491AB112.1030806@thomson.net> <m1vdutotky.fsf@frodo.ebiederm.org>
+From: "Fred ." <eldmannen-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: /net
+Date: Thu, 13 Nov 2008 02:25:33 +0100
+Message-ID: <f188924b0811121725o2e99574as3362c9a7b9348b08@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <m1vdutotky.fsf-B27657KtZYmhTnVgQlOflh2eb7JE58TQ@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Daniel Lezcano <dlezcano-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>, Cedric Le Goater <clg-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Subrata Modak <subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andreas B Aaen <andreas.aaen-546VmZ+UeKYX2WXlbB3fKg@public.gmane.org>
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Plan 9 has a /net directory.
 
-> I'm trying to get a feel.  What kind of applications do you have for which
-> you are changing the default network namespace aka chvrf?
->   
-    No problem to detail a bit more. We are working on products for 
-telephony operators that generally need both a classical 'user' access 
-to the internet and a priviledged 'services' access to the operator network.
 
-    My first example is a cable modem (CM), IP phone (eMTA) and router. 
-The DOCSIS and PacketCable standards require this product to have 
-separate networks for each of these features, bridged together at the 
-MAC level, so that it behaves exactly as three separate boxes from the 
-operator's network point of view. So we have:
-- default network namespace '0' for the router and standard Linux 
-applications that need internet access.
-- network namespace '1' for the CM
-- network namespace '2' for the eMTA
-- a bridge connecting the CM interface, eMTA interface and router 
-WAN-side interface together
-    Basically, the CM application is run in a chvrf context and performs 
-its DHCP and TFTP requests on the operator network using the CM MAC 
-address. The same way, the eMTA application is run in its own network 
-for its DHCP, TFTP and all the VOIP related traffic (MGCP signaling and 
-RTP voice traffic) using the eMTA MAC address. The CM network is also 
-used for firmware upgrade.
+/net is the API for all TCP/IP, and it can be used even with scripts
+or shell tools, writing data to control files to write and read
+connections. Relevant sub-directories like /net/tcp and /net/udp are
+used to interface to prospective protocols. You can implement a NAT by
+mounting a /net from a perimeter machine with a public IP, while
+connecting to it from an internal network of private IP addresses,
+using the Plan 9 protocol 9P in the internal network. Or you can
+implement a VPN by mounting a /net directory from a remote gateway,
+using secured 9P over the public Internet.
 
-    A second example is a product mixing an internet browser and a set 
-top box-like access to the operator's TV network. In this case, the 
-operator's network for internet and TV use separate VLANs and DHCP 
-requests on each network may provide IP addresses in the same subnet. So 
-in this case, one DHCP client and the TV player are run in chvrf context.
+Here would be an example of using union (a stack) directories in /net:
+just like inheritance in OOP, you can take one (possibly remote)
+/special directory and bind another local special directory on top of
+that, adding some new control files and hiding others. The union
+directory now is like a child object instance of the original parent.
+The functionality of the original can be partially modified. Consider
+the /net file system. If you modify or hide its /net/udp sub-directory
+you may control or extend the UDP interface with local filter
+processes, still leaving the original /net/tcp running intact, perhaps
+in a remote machine. Note that name space is per process: if you give
+an untrusted application a limited, modified /net union directory, you
+restrict its access to the net.
 
-    I hope it clarifies our use case a bit more and why we need and use 
-the VRF feature.
+All this makes it easy to combine "objects" or file systems written in
+different languages on different systems, while using standard naming,
+access control and security of the file system, largely transparently
+to the programmer.
 
-regards,
-Vivien.
+
+I saw that Linux implemented many things from Plan 9 such as /proc,
+union mounts, etc. Will Linux also implement /net ?
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
