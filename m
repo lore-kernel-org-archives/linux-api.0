@@ -1,44 +1,56 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v9][PATCH 12/13] Checkpoint multiple processes
-Date: Thu, 13 Nov 2008 21:41:30 -0600
-Message-ID: <20081114034130.GA14171@us.ibm.com>
-References: <1226335060-7061-1-git-send-email-orenl@cs.columbia.edu> <1226335060-7061-13-git-send-email-orenl@cs.columbia.edu>
+From: "Michael Kerrisk" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] reintroduce accept4
+Date: Fri, 14 Nov 2008 10:24:06 -0500
+Message-ID: <517f3f820811140724x43fcc114o434b384fbeb6449e@mail.gmail.com>
+References: <200810261641.m9QGfotr024285@hs20-bc2-1.build.redhat.com>
+	 <517f3f820811131351l1305b2d2u43ab4e0601d97f93@mail.gmail.com>
+	 <20081113140541.23754cad.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20081113140541.23754cad.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1226335060-7061-13-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, oleg-6lXkIZvqkOAvJsYlp49lxw@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, alan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Oren Laadan (orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org):
-> Checkpointing of multiple processes works by recording the tasks tree
-> structure below a given task (usually this task is the container init).
-> 
-> For a given task, do a DFS scan of the tasks tree and collect them
-> into an array (keeping a reference to each task). Using DFS simplifies
-> the recreation of tasks either in user space or kernel space. For each
-> task collected, test if it can be checkpointed, and save its pid, tgid,
-> and ppid.
-> 
-> The actual work is divided into two passes: a first scan counts the
-> tasks, then memory is allocated and a second scan fills the array.
-> 
-> The logic is suitable for creation of processes during restart either
-> in userspace or by the kernel.
-> 
-> Currently we ignore threads and zombies, as well as session ids.
-> 
-> Signed-off-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+>> Andrew, you noted a lack of explanation accompanying the original
+>> patch.  Here's something to fill the gap, and which may be suitable
+>> for the changelog.
+>>
+>> ==
+>> Introduce a new accept4() system call.  The addition of this system
+>> call matches analogous changes in 2.6.27 (dup3(), evenfd2(),
+>> signalfd4(), inotify_init1(), epoll_create1(), pipe2()) which added
+>> new system calls that differed from analogous traditional system calls
+>> in adding a flags argument that can be used to access additional
+>> functionality. The accept4() system call is exactly the same as
+>> accept(), except that it adds a flags bit-mask argument.  Two flags
+>> are initially implemented.  (Most of the new system calls in 2.6.27
+>> also had both of these flags.)  SOCK_CLOEXEC causes the close-on-exec
+>> (FD_CLOEXEC) flag to be enabled for the new file descriptor returned
+>> by accept4().  This is a useful security feature to avoid leaking
+>> information in a multithreaded program where one thread is doing an
+>> accept() at the same time as another thread is doing a fork() plus
+>> exec().  (More details here:
+>> http://udrepper.livejournal.com/20407.html "Secure File Descriptor
+>> Handling", Ulrich Drepper)  The other flag is SOCK_NONBLOCK, which
+>> causes the O_NONBLOCK flag to be enabled on the new open file
+>> description created by accept4().  (This flag is merely a convenience,
+>> saving the use of additional calls fcntl(F_GETFL) and fcntl (F_SETFL)
+>> to achieve the same result.)
+>
+> I replaced the existing changelog with the above (plus some paragraph
+> breaks ;)).  Will add the new test app when it comes along.
 
-Looks good.
+Git allows paragraph breaks in changelogs?!  You gotta love technology ;-).
 
-Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-
-thanks,
--serge
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/ Found a documentation bug?
+http://www.kernel.org/doc/man-pages/reporting_bugs.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
