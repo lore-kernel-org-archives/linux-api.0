@@ -1,25 +1,33 @@
-From: =?utf-8?q?Pawe=C5=82_Sikora?= <pluto-PIIpFW8S9c0@public.gmane.org>
-Subject: Re: /net
-Date: Fri, 14 Nov 2008 18:47:47 +0100
-Message-ID: <200811141847.48066.pluto@agmk.net>
-References: <f188924b0811121725o2e99574as3362c9a7b9348b08@mail.gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 0/2] Shared flags
+Date: Sat, 15 Nov 2008 06:39:38 -0500
+Message-ID: <20081115113938.GA26576@infradead.org>
+References: <49183DF9.9010003@etersoft.ru> <20081111085211.GB2323@infradead.org> <20081111100940.GA8968@shareable.org> <20081111111428.GA18228@infradead.org> <491BFCBA.80208@etersoft.ru> <20081113092554.GA3004@infradead.org> <20081114033712.GL2055@shareable.org>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <f188924b0811121725o2e99574as3362c9a7b9348b08-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Fred ." <eldmannen-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20081114033712.GL2055@shareable.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jamie Lokier <jamie@shareable.org>
+Cc: Christoph Hellwig <hch@infradead.org>, Pavel Shilovsky <piastry@etersoft.ru>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 13 of November 2008 02:25:33 you wrote:
-> Plan 9 has a /net directory.
+On Fri, Nov 14, 2008 at 03:37:12AM +0000, Jamie Lokier wrote:
+> A generic mount option is currently used for mandatory locking - this
+> is very similar.
+> 
+> The only different I see, for security, is with mandatory locking a
+> process which doesn't want to get stuck can check the permission bits
+> before opening a file.  But I'm not aware of anything actually doing this.
 
-autofs machinery also uses /net directory...
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+More importantly the admin can do it.  And mandatory locking doesn't
+mean you can't remove something, with would be a complete nightmare.  It
+also doesn't apply to directories, which from my reading of the patch
+this one would do.  But yeah, doing the read/write part as as a special
+case of mandlock on open might make some sense, but I'm still not too
+convinced.
+
+That more I think about these option the less I like the idea, it's just
+going to cause a lot of problems to help with some wine issues that
+hasn't even been explained yet.
