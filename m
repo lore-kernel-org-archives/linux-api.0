@@ -1,13 +1,24 @@
 From: akpm@linux-foundation.org
-Subject: [patch 05/35] reintroduce accept4
-Date: Wed, 19 Nov 2008 15:36:14 -0800
-Message-ID: <200811192336.mAJNaE3R030021@imap1.linux-foundation.org>
+Subject: - reintroduce-accept4.patch removed from -mm tree
+Date: Thu, 20 Nov 2008 12:42:18 -0800
+Message-ID: <200811202042.mAKKgIDw006843@imap1.linux-foundation.org>
 Return-path: <linux-arch-owner@vger.kernel.org>
 Sender: linux-arch-owner@vger.kernel.org
-To: torvalds@linux-foundation.org
-Cc: akpm@linux-foundation.org, drepper@redhat.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, mtk.manpages@gmail.com
+To: drepper@redhat.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, mtk.manpages@gmail.com, mm-commits@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+
+The patch titled
+     reintroduce accept4
+has been removed from the -mm tree.  Its filename was
+     reintroduce-accept4.patch
+
+This patch was dropped because it was merged into mainline or a subsystem tree
+
+The current -mm tree may be found at http://userweb.kernel.org/~akpm/mmotm/
+
+------------------------------------------------------
+Subject: reintroduce accept4
 From: Ulrich Drepper <drepper@redhat.com>
 
 Introduce a new accept4() system call.  The addition of this system call
@@ -540,3 +551,9 @@ diff -puN net/socket.c~reintroduce-accept4 net/socket.c
  	default:
  		err = -EINVAL;
 _
+
+Patches currently in -mm which might be from drepper@redhat.com are
+
+origin.patch
+inotify-fix-type-errors-in-interfaces.patch
+elf-implement-at_random-for-glibc-prng-seeding.patch
