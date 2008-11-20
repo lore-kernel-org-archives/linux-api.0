@@ -1,63 +1,66 @@
-From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
-Subject: Re: [patch 05/35] reintroduce accept4
-Date: Fri, 21 Nov 2008 08:20:55 +0100 (CET)
-Message-ID: <Pine.LNX.4.64.0811210819070.12975@anakin>
-References: <200811192336.mAJNaE3R030021@imap1.linux-foundation.org>
- <Pine.LNX.4.64.0811202259360.12975@anakin>
- <alpine.LFD.2.00.0811201412040.21698@nehalem.linux-foundation.org>
+From: Pavel Machek <pavel-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [take 3] Use pid in inotify events.
+Date: Thu, 20 Nov 2008 14:09:03 +0100
+Message-ID: <20081120130902.GA1408@ucw.cz>
+References: <acdcfe7e0811081035l56eedf05x8b3b7ee2fc01eee6@mail.gmail.com> <20081116232450.GA13547@ioremap.net> <cfd18e0f0811170859w1d3f903ej1d5626f2d2bf4496@mail.gmail.com> <20081117171508.GA564@ioremap.net> <cfd18e0f0811170923q6b72bd0fn9d319bbceb8fa6a@mail.gmail.com> <20081117175212.GA2224@ioremap.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.LFD.2.00.0811201412040.21698-nfNrOhbfy2R17+2ddN/4kux8cNe9sq/dYPYVAmT7z5s@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20081117175212.GA2224-i6C2adt8DTjR7s880joybQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Evgeniy Polyakov <zbr-i6C2adt8DTjR7s880joybQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Robert Love <rlove-L7G0xEPcOZbYtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 20 Nov 2008, Linus Torvalds wrote:
-> On Thu, 20 Nov 2008, Geert Uytterhoeven wrote:
-> > On Wed, 19 Nov 2008, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
-> > > From: Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > > 
-> > > Introduce a new accept4() system call.  The addition of this system call
+On Mon 2008-11-17 20:52:12, Evgeniy Polyakov wrote:
+> On Mon, Nov 17, 2008 at 12:23:01PM -0500, Michael Kerrisk (mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org) wrote:
+> > > Cookie was created to store information used to somehow connect events to
+> > > each other. PID does that from another angle than rename.
 > > 
-> > > /* test_accept4.c
-> > 
-> > > #ifdef __x86_64__
-> > > #define SYS_accept4 288
-> > > #elif __i386__
-> >         ^^^^^^^^
-> > 	defined(__i386__)
-> > 
-> > > #define USE_SOCKETCALL 1
-> > > #define SYS_ACCEPT4 18
-> > > #else
-> > > #error "Sorry -- don't know the syscall # on this architecture"
-> > > #endif
-> > 
-> > Anyway, it's just a test program. Succeeded on m68k using socketcall.
+> > Yes, but it does it in an inconsistent, incomplete way.
 > 
-> It _should_ work even without the 'defined()'. Didn't it?
+> It was not my decision, I can not argue if it could be good, bad, perfect
+> or shine. It is what we have, and I'm trying to extend it not breaking
+> other things up.
+> 
+> > > Extending
+> > > (rewriting userspace event processing part) events is a solution for the
+> > > new project,
+> > 
+> > Not quite sure of your point here.  Whatever change is made, userspace
+> > apps will need to be trained to understand the interface.
+> 
+> I mean kernel event generation side will have to be rewritten: new
+> event structures, new members, new field usage scenario and so on.
+> 
+> > > while existing patch (where all security concerns are
+> > > resolved) is a minimum functionality extension.
+> > 
+> > It is a minimum functionality extension that serves the needs of one
+> > or a few projects, while dirtying the design for all users.
+> 
+> Yes, this is a minimum functionality extension, which breaks nothing.
+> That's why it is a good idea, but I agree that there may be better than
+> just a good idea and implementation :)
 
-Yes it worked.
+Breaks nothing?!
 
-> Unknown symbols should expand to '0' in preprocessor value evaluation. Of 
-> course, the compiler may warn about the practice, but it shouldn't be 
-> technically wrong.
+Introducing ugly hack with broken permission check we have to maintain
+forever seems like way too much breakage for 14 lines.
 
-gcc 4.4 complains:
-http://www.cyrius.com/journal/gcc/gcc-4.4-preprocessor-errors
+> And I actually answered, that this may be a good idea for the new
+> project. Although if things work right now no one will ever try to
+> change it. It does not work in my case, so I need to invent as simple
+> as possible way to fix it.
 
-Gr{oetje,eeting}s,
+'as simple diff as possible' is pretty bad criterium for kernel
+merges.
 
-						Geert
-
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-							    -- Linus Torvalds
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
