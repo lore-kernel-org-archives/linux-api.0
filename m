@@ -1,260 +1,109 @@
-From: Evgeniy Polyakov <zbr-i6C2adt8DTjR7s880joybQ@public.gmane.org>
-Subject: [take2] Inotify: nested attributes test application.
-Date: Tue, 25 Nov 2008 22:44:20 +0300
-Message-ID: <20081125194420.GA24835@ioremap.net>
-References: <20081125194234.GA24449@ioremap.net>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH] Display active jiffie timers in /proc/timer_list
+Date: Tue, 25 Nov 2008 22:36:48 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0811252224430.3235@localhost.localdomain>
+References: <20081121221113.GA13566@tsunami.ccur.com> <517f3f820811250806n33850ea8ua8e203347c0f7ba6@mail.gmail.com> <20081125185740.GA21806@tsunami.ccur.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="mYCpIKhGyMATD0i+"
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20081125194234.GA24449-i6C2adt8DTjR7s880joybQ@public.gmane.org>
+In-Reply-To: <20081125185740.GA21806-jPwT5PJblzyhckIl5yWhCw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: John McCutchan <john-jueV0HHMeujJJrXXpGQQMAC/G2K4zDHf@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Robert Love <rlove-L7G0xEPcOZbYtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Pavel Machek <pavel-AlSwsSmVLrQ@public.gmane.org>, David Newall <davidn-KzQzY1MbaKjAHznzqCTclw@public.gmane.org>
+To: Joe Korty <joe.korty-oXJCJecloQs@public.gmane.org>
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Joe,
 
---mYCpIKhGyMATD0i+
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+On Tue, 25 Nov 2008, Joe Korty wrote:
+> Add to /proc/timer_list a display of the active jiffie timers.
+> 
+> Tested on i386 and x86_64, with 'less /proc/timer_list' and
+> through SysRq-Q.
+> 
+> Signed-off-by: Joe Korty <joe.korty-oXJCJecloQs@public.gmane.org>
+> 
+> Index: 2.6.28-rc6/kernel/timer.c
+> ===================================================================
+> --- 2.6.28-rc6.orig/kernel/timer.c	2008-11-25 11:59:07.000000000 -0500
+> +++ 2.6.28-rc6/kernel/timer.c	2008-11-25 13:49:05.000000000 -0500
+> @@ -36,6 +36,8 @@
+>  #include <linux/syscalls.h>
+>  #include <linux/delay.h>
+>  #include <linux/tick.h>
+> +#include <linux/proc_fs.h>
+> +#include <linux/seq_file.h>
+>  #include <linux/kallsyms.h>
+>  
+>  #include <asm/uaccess.h>
+> @@ -1568,6 +1570,87 @@
+>  	open_softirq(TIMER_SOFTIRQ, run_timer_softirq);
+>  }
+>  
+> +#if defined(CONFIG_PROC_FS) || defined(CONFIG_MAGIC_SYSRQ)
 
-$ ./iotest -h
-Usage: ./iotest -f path -t <tid> -p <pid> -i <io details> -n <name> -h <help>
+This belongs into kernel/time/timer_list.c and there is no need to
+copy that code around.
 
-$ ./iotest -f /tmp/ -t -i
-2008-11-25 22:40:30.201286 pid: 1928, tid: 1928, name: /tmp/, wd: 1, mask: 303, attributes: pid: 0, tid: 1, io: 1, name: 0.
-event: 2, wd: 1, cookie: 0, len: 36.
-	tid: 1672.
-	io details: start: 0, size: 0.
+> +void print_cpu_jtimers(struct seq_file *m, int cpu)
+> +{
+> +	int i;
+> +	struct tvec_base *base = per_cpu(tvec_bases, cpu);
+> +
+> +	SEQ_printf(m, "active jiffie timers:\n");
+> +	spin_lock_irq(&base->lock);
 
-$ echo qwe11 > /tmp/test
+Yuck. We really do _NOT_ stop everything just to print timers. Check
+the hrtimer print code in timer_list.c
 
--- 
-	Evgeniy Polyakov
+> Index: 2.6.28-rc6/kernel/time/timer_list.c
+> ===================================================================
+> --- 2.6.28-rc6.orig/kernel/time/timer_list.c	2008-11-25 11:59:07.000000000 -0500
+> +++ 2.6.28-rc6/kernel/time/timer_list.c	2008-11-25 13:47:30.000000000 -0500
+> @@ -17,6 +17,7 @@
+>  #include <linux/seq_file.h>
+>  #include <linux/kallsyms.h>
+>  #include <linux/tick.h>
+> +#include <linux/jiffies.h>
+>  
+>  #include <asm/uaccess.h>
+>  
+> @@ -139,6 +140,7 @@
+>  		SEQ_printf(m, " clock %d:\n", i);
+>  		print_base(m, cpu_base->clock_base + i, now);
+>  	}
+> +
 
---mYCpIKhGyMATD0i+
-Content-Type: text/x-csrc; charset=us-ascii
-Content-Disposition: attachment; filename="iotest.c"
+random whitespace change
 
-/*
- * 2007+ Copyright (c) Evgeniy Polyakov <johnpol-9fLWQ3dKdXwox3rIn2DAYQ@public.gmane.org>
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
+>  #define P(x) \
+>  	SEQ_printf(m, "  .%-15s: %Lu\n", #x, \
+>  		   (unsigned long long)(cpu_base->x))
+> @@ -176,9 +178,11 @@
+>  		P(last_jiffies);
+>  		P(next_jiffies);
+>  		P_ns(idle_expires);
+> -		SEQ_printf(m, "jiffies: %Lu\n",
+> +		SEQ_printf(m, "jiffies: %llu (0x%llx)\n",
+> +			   (unsigned long long)jiffies,
+>  			   (unsigned long long)jiffies);
 
-#define _GNU_SOURCE
-#define __USE_FILE_OFFSET64
-#define __USE_LARGEFILE64
-#define _FILE_OFFSET_BITS	64
+The exact purpose of this change ?
 
-#include <sys/ioctl.h>
-#include <sys/time.h>
+> @@ -286,7 +290,7 @@
+>  {
+>  	struct proc_dir_entry *pe;
+>  
+> -	pe = proc_create("timer_list", 0644, NULL, &timer_list_fops);
+> +	pe = proc_create("timer_list", 0444, NULL, &timer_list_fops);
+>  	if (!pe)
+>  		return -ENOMEM;
+>  	return 0;
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <time.h>
-#include <stdarg.h>
+Correct, but unrelated $subject. Separate patch please. 
 
-#include <linux/types.h>
-#include <linux/inotify.h>
-#include <linux/unistd.h>
+Thanks,
 
-#include <asm/unistd.h>
-
-extern int inotify_add_watch(int __fd, const char *__name, unsigned int __mask);
-
-void iotest_log(const char *f, ...)
-{
-	char str[64];
-	struct tm tm;
-	struct timeval tv;
-	va_list ap;
-
-	gettimeofday(&tv, NULL);
-	localtime_r((time_t *)&tv.tv_sec, &tm);
-	strftime(str, sizeof(str), "%F %R:%S", &tm);
-
-	fprintf(stderr, "%s.%lu ", str, tv.tv_usec);
-
-	va_start(ap, f);
-	vfprintf(stderr, f, ap);
-	va_end(ap);
-
-	fflush(stderr);
-}
-
-#define iotest_err(f, a...) iotest_log(f ": %s [%d].\n", ##a, strerror(errno), errno)
-
-static void iotest_usage(char *p)
-{
-	fprintf(stderr, "Usage: %s -f path -t <tid> -p <pid> -i <io details> -n <name> -h <help>\n", p);
-}
-
-int main(int argc, char *argv[])
-{
-	int fd, ch, err;
-	int tid, pid, io, name, wd;
-	char *file;
-	unsigned int mask;
-	char buf[4096];
-	void *data;
-	struct inotify_event *e;
-	struct inotify_attribute *a;
-	struct inotify_io_details *det;
-	unsigned int id;
-
-	file = NULL;
-	tid = 0;
-	pid = 0;
-	io = 0;
-	name = 0;
-
-	while ((ch = getopt(argc, argv, "f:tpinh")) != -1) {
-		switch (ch) {
-			case 'f':
-				file = optarg;
-				break;
-			case 't':
-				tid = 1;
-				break;
-			case 'p':
-				pid = 1;
-				break;
-			case 'i':
-				io = 1;
-				break;
-			case 'n':
-				name = 1;
-				break;
-			case 'h':
-			default:
-				iotest_usage(argv[0]);
-				return -1;
-		}
-	}
-
-	if (!file) {
-		fprintf(stderr, "You have to provide file to watch IO against.\n");
-		iotest_usage(argv[0]);
-		return -1;
-	}
-
-	fd = syscall(__NR_inotify_init1, IN_ATTRS);
-	if (fd < 0) {
-		iotest_err("Failed to call inotify_init1");
-		return -1;
-	}
-
-	if (tid) {
-		id = INOTIFY_ATTR_TID;
-		err = ioctl(fd, TIOCSETD, &id, 4);
-		if (err) {
-			iotest_err("Failed to setup TID attribute");
-			return err;
-		}
-	}
-	
-	if (pid) {
-		id = INOTIFY_ATTR_PID;
-		err = ioctl(fd, TIOCSETD, &id, 4);
-		if (err) {
-			iotest_err("Failed to setup PID attribute");
-			return err;
-		}
-	}
-	
-	if (io) {
-		id = INOTIFY_ATTR_IO;
-		err = ioctl(fd, TIOCSETD, &id, 4);
-		if (err) {
-			iotest_err("Failed to setup IO attribute");
-			return err;
-		}
-	}
-	
-	if (name) {
-		id = INOTIFY_ATTR_NAME;
-		err = ioctl(fd, TIOCSETD, &id, 4);
-		if (err) {
-			iotest_err("Failed to setup name attribute");
-			return err;
-		}
-	}
-
-	mask = IN_MODIFY | IN_CREATE | IN_DELETE | IN_ACCESS;
-	wd = inotify_add_watch(fd, file, mask);
-	if (wd < 0) {
-		iotest_err("Failed to add %x watch for file '%s'", mask, file);
-		return -1;
-	}
-
-	iotest_log("pid: %d, tid: %d, name: %s, wd: %d, mask: %x, attributes: "
-			"pid: %d, tid: %d, io: %d, name: %d.\n",
-			getpid(), syscall(__NR_gettid), file, wd, mask,
-			pid, tid, io, name);
-
-	while (1) {
-		sleep(5);
-		data = buf;
-		err = read(fd, buf, sizeof(buf));
-		if (err <= 0) {
-			iotest_err("Failed to read event");
-			return err;
-		}
-
-		e = data;
-		printf("event: %x, wd: %d, cookie: %u, len: %u.\n", e->mask, e->wd, e->cookie, e->len);
-
-		data += sizeof(struct inotify_event);
-		while (e->len) {
-			a = data;
-
-			switch (a->id) {
-				case INOTIFY_ATTR_PID:
-					id = *(unsigned int *)a->data;
-					printf("       pid: %u.\n", id);
-					break;
-				case INOTIFY_ATTR_TID:
-					id = *(unsigned int *)a->data;
-					printf("       tid: %u.\n", id);
-					break;
-				case INOTIFY_ATTR_IO:
-					det = (struct inotify_io_details *)a->data;
-					printf("       io details: start: %llu, size: %llu.\n",
-							(unsigned long long)det->start,
-							(unsigned long long)det->size);
-					break;
-				case INOTIFY_ATTR_NAME:
-					printf("       name: %s.\n", (char *)a->data);
-					break;
-				default:
-					printf("       unsupported id: %u, size: %u.\n", a->id, a->size);
-					break;
-			}
-
-			data += a->size + sizeof(struct inotify_attribute);
-			e->len -= a->size + sizeof(struct inotify_attribute);
-		}
-	}
-
-	close(fd);
-	return 0;
-}
-
-
---mYCpIKhGyMATD0i+--
+	tglx
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
