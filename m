@@ -1,129 +1,177 @@
-From: Joe Korty <joe.korty-oXJCJecloQs@public.gmane.org>
-Subject: [PATCH] ABI Documentation for /proc/timer_list
-Date: Wed, 26 Nov 2008 16:06:13 -0500
-Message-ID: <20081126210613.GA20529@tsunami.ccur.com>
-References: <20081121221113.GA13566@tsunami.ccur.com> <517f3f820811250806n33850ea8ua8e203347c0f7ba6@mail.gmail.com> <20081125185740.GA21806@tsunami.ccur.com> <20081126164845.GA17394@tsunami.ccur.com> <20081126170715.GA28422@kroah.com> <20081126173410.GA17879@tsunami.ccur.com> <20081126173931.GA1636@kroah.com>
-Reply-To: Joe Korty <joe.korty-oXJCJecloQs@public.gmane.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Subject: [RFC v10][PATCH 00/13] Kernel based checkpoint/restart
+Date: Wed, 26 Nov 2008 20:04:31 -0500
+Message-ID: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20081126173931.GA1636-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Document /proc/timer_list ABI.
+Checkpoint-restart (c/r): fixes a couple of bugs and a DoS issue
+(tested against v2.6.28-rc3).
 
-This documents all of /timer_list, including the extension
-adding jiffie timers, as proposed in the patch:
+We'd like these to make it into -mm. This version addresses the
+last of the known bugs. Please pull at least the first 11 patches,
+as they are similar to before.
 
-   [PATCH] Display active jiffie timers in /proc/timer_list, v2 
+Patches 1-11 are stable, providing self- and external- c/r of a
+single process.
+Patches 12 and 13 are newer, adding support for c/r of multiple
+processes.
 
-Signed-off-by: Joe Korty <joe.korty-oXJCJecloQs@public.gmane.org>
+The git tree tracking v10, branch 'ckpt-v10' (and older versions):
+	git://git.ncl.cs.columbia.edu/pub/git/linux-cr.git
 
-Index: 2.6.28-rc6/Documentation/ABI/stable/procfs-timer_list
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ 2.6.28-rc6/Documentation/ABI/stable/procfs-timer_list	2008-11-26 15:55:04.000000000 -0500
-@@ -0,0 +1,96 @@
-+What:		/proc/timer_list
-+Date:		November 2008
-+Contact:	Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
-+		Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-+		Joe Korty <joe.korty-oXJCJecloQs@public.gmane.org>
-+Revision-Rate:	Moderate
-+At-Revision:	0.5
-+Description:
-+		/proc/timer_list displays most everything about every kind
-+		of timer, and some things about time too.
-+
-+		The contents of this file should be expected to change,
-+		as the data displayed corresponds directly to various
-+		kernel-internal data structures.  For this reason, the first
-+		line contains the file revision.  It is the responsibility
-+		of this file's maintainers to bump the revision each time a
-+		kernel is released having incompatible changes in this file.
-+
-+		Section Overview
-+		----------------
-+		The file contains several somewhat independent sections.
-+
-+		The first section contains a few lines of global info.
-+		Examples: file version id, #clock types in the kernel,
-+		#nsecs since boot.
-+
-+		The second section is organized per-cpu.  Each cpu subsection
-+		in turn contains several sub-subsections which are, in order
-+		of appearance:
-+
-+		   The contents of the data structures associated with each
-+		   clock (CLOCK_REALTIME, CLOCK_MONOTONIC, etc) on this cpu.
-+		   Examples: base, index, resolution, get_timer, offset.
-+		   Under each of these clocks is, in turn, a display of all
-+		   the active high resolution timers queued to that clock.
-+		   Example: all lines beginning with '#'.
-+
-+		   The contents of per-cpu timer data fields not associated
-+		   with a particular clock type (ie, shared by both clocks or
-+		   not associated with any clock). Examples: expires_next,
-+		   hres_active, nr_event, nohz_mode, all things idle_*,
-+		   tick_stopped, last_jiffies, next_jiffies.
-+
-+		   A display of low resolution (ie, jiffie) timer wheel
-+		   data.  Examples: base, running_timer, timer_jiffies.
-+		   Also under this section is a display, one per line, of
-+		   each active jiffie timer queued to this cpu.  Examples:
-+		   All lines under an 'active jiffie timers' section that
-+		   begin with a number.
-+
-+		The third and final section describes each 'tick device'
-+		known to the kernel.  A tick device is a piece of hardware
-+		capable of generating periodic and/or one shot interrupts
-+		under software control, and thus is capable of generating
-+		the interrupts needed to expire the various active timers at
-+		their given expiration times.  Examples: hpet, pit, lapic.
-+
-+		Hires Timer Layout
-+		------------------
-+		High resolution timers are displayed on lines that begin
-+		with a '#' and always appear under one of the many sections
-+		labeled 'active timers'.  There is an 'active timers'
-+		section for every cpu and every clock.
-+
-+		The fields of a hrtimer, spread out over two lines, are:
-+
-+		line 1 fields:
-+		  1 - unique hrtimer index (#0, #1, #2, etc)
-+		  2 - kernel address of the hrtimer data structure
-+		      in question
-+		  3 - function to be called when timer expires
-+		  4 - timer state (eg, S:01), avail states, OR-able:
-+		      0 - inactive
-+		      1 - enqueued
-+		      2 - callback
-+		      4 - pending
-+		      8 - migrate
-+		  5 - function which created the timer
-+		  6 - process name & pid which created the timer
-+
-+		line 2 fields:
-+		  1 - absolute expiration time, range format (start - end)
-+		  2 - relative expiration time, range format (start - end)
-+
-+		Lowres Timer Layout
-+		-------------------
-+		Low resolution timers are displayed one-per-line under
-+		sections labeled 'active jiffie timers'.  There is one such
-+		section per cpu.  A lowres timer has the following fields:
-+
-+		  1 - #jiffies remaining until timer expires
-+		  2 - function to be called on expiration
-+		  3 - data value to be given to the above function on
-+		      expiration
-+		  4 - function which created this timer
-+		  5 - name & pid of the process that created this timer
+Restarting multiple processes requires 'mktree' userspace tool:
+	git://git.ncl.cs.columbia.edu/pub/git/user-cr.git
+
+Oren.
+
+
+--
+Why do we want it?  It allows containers to be moved between physical
+machines' kernels in the same way that VMWare can move VMs between
+physical machines' hypervisors.  There are currently at least two
+out-of-tree implementations of this in the commercial world (IBM's
+Metacluster and Parallels' OpenVZ/Virtuozzo) and several in the academic
+world like Zap.
+
+Why do we need it in mainline now?  Because we already have plenty of
+out-of-tree ones, and  want to know what an in-tree one will be like.   :)  
+What *I* want right now is the extra review and scrutiny that comes with
+a mainline submission to make sure we're not going in a direction
+contrary to the community.
+
+This only supports pretty simple apps.  But, I trust Ingo when he says:
+>> > > Generally, if something works for simple apps already (in a robust, 
+>> > > compatible and supportable way) and users find it "very cool", then 
+>> > > support for more complex apps is not far in the future.  but if you
+>> > > want to support more complex apps straight away, it takes forever and
+>> > > gets ugly.
+
+We're *certainly* going to be changing the ABI (which is the format of
+the checkpoint).  I'd like to follow the model that we used for
+ext4-dev, which is to make it very clear that this is a development-only
+feature for now.  Perhaps we do that by making the interface only
+available through debugfs or something similar for now.  Or, reserving
+the syscall numbers but require some runtime switch to be thrown before
+they can be used.  I'm open to suggestions here.
+--
+
+--
+Todo:
+- Add support for x86-64 and improve ABI
+- Refine or change syscall interface
+- Handle multiple namespaces in a container (e.g. save the filesystem
+  namespaces state with the file descriptors)
+- Security (without CAPS_SYS_ADMIN files restore may fail)
+
+Changelog:
+
+[2008-Nov-26] v10:
+  - Grab vfs root of container init, rather than current process
+  - Acquire dcache_lock around call to __d_path() in cr_fill_name()
+  - Force end-of-string in cr_read_string() (fix possible DoS)
+  - Introduce cr_write_buffer(), cr_read_buffer() and cr_read_buf_type()
+
+[2008-Nov-10] v9:
+  - Support multiple processes c/r
+  - Extend checkpoint header with archtiecture dependent header 
+  - Misc bug fixes (see individual changelogs)
+  - Rebase to v2.6.28-rc3.
+
+[2008-Oct-29] v8:
+  - Support "external" checkpoint
+  - Include Dave Hansen's 'deny-checkpoint' patch
+  - Split docs in Documentation/checkpoint/..., and improve contents
+
+[2008-Oct-17] v7:
+  - Fix save/restore state of FPU
+  - Fix argument given to kunmap_atomic() in memory dump/restore
+
+[2008-Oct-07] v6:
+  - Balance all calls to cr_hbuf_get() with matching cr_hbuf_put()
+    (even though it's not really needed)
+  - Add assumptions and what's-missing to documentation
+  - Misc fixes and cleanups
+
+[2008-Sep-11] v5:
+  - Config is now 'def_bool n' by default
+  - Improve memory dump/restore code (following Dave Hansen's comments)
+  - Change dump format (and code) to allow chunks of <vaddrs, pages>
+    instead of one long list of each
+  - Fix use of follow_page() to avoid faulting in non-present pages
+  - Memory restore now maps user pages explicitly to copy data into them,
+    instead of reading directly to user space; got rid of mprotect_fixup()
+  - Remove preempt_disable() when restoring debug registers
+  - Rename headers files s/ckpt/checkpoint/
+  - Fix misc bugs in files dump/restore
+  - Fixes and cleanups on some error paths
+  - Fix misc coding style
+
+[2008-Sep-09] v4:
+  - Various fixes and clean-ups
+  - Fix calculation of hash table size
+  - Fix header structure alignment
+  - Use stand list_... for cr_pgarr
+
+[2008-Aug-29] v3:
+  - Various fixes and clean-ups
+  - Use standard hlist_... for hash table
+  - Better use of standard kmalloc/kfree
+
+[2008-Aug-20] v2:
+  - Added Dump and restore of open files (regular and directories)
+  - Added basic handling of shared objects, and improve handling of
+    'parent tag' concept
+  - Added documentation
+  - Improved ABI, 64bit padding for image data
+  - Improved locking when saving/restoring memory
+  - Added UTS information to header (release, version, machine)
+  - Cleanup extraction of filename from a file pointer
+  - Refactor to allow easier reviewing
+  - Remove requirement for CAPS_SYS_ADMIN until we come up with a
+    security policy (this means that file restore may fail)
+  - Other cleanup and response to comments for v1
+
+[2008-Jul-29] v1:
+  - Initial version: support a single task with address space of only
+    private anonymous or file-mapped VMAs; syscalls ignore pid/crid
+    argument and act on current process.
+
+--
+At the containers mini-conference before OLS, the consensus among
+all the stakeholders was that doing checkpoint/restart in the kernel
+as much as possible was the best approach.  With this approach, the
+kernel will export a relatively opaque 'blob' of data to userspace
+which can then be handed to the new kernel at restore time.
+
+This is different than what had been proposed before, which was
+that a userspace application would be responsible for collecting
+all of this data.  We were also planning on adding lots of new,
+little kernel interfaces for all of the things that needed
+checkpointing.  This unites those into a single, grand interface.
+
+The 'blob' will contain copies of select portions of kernel
+structures such as vmas and mm_structs.  It will also contain
+copies of the actual memory that the process uses.  Any changes
+in this blob's format between kernel revisions can be handled by
+an in-userspace conversion program.
+
+This is a similar approach to virtually all of the commercial
+checkpoint/restart products out there, as well as the research
+project Zap.
+
+These patches basically serialize internel kernel state and write
+it out to a file descriptor.  The checkpoint and restore are done
+with two new system calls: sys_checkpoint and sys_restart.
+
+In this incarnation, they can only work checkpoint and restore a
+single task. The task's address space may consist of only private,
+simple vma's - anonymous or file-mapped. The open files may consist
+of only simple files and directories.
+--
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
