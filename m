@@ -1,47 +1,69 @@
-From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC v10][PATCH 09/13] Restore open file descriprtors
-Date: Mon, 01 Dec 2008 13:07:31 -0800
-Message-ID: <1228165651.2971.99.camel@nimitz>
-References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>
-	 <1227747884-14150-10-git-send-email-orenl@cs.columbia.edu>
-	 <20081128112745.GR28946@ZenIV.linux.org.uk>
-	 <1228159324.2971.74.camel@nimitz>  <49344C11.6090204@cs.columbia.edu>
-	 <1228164873.2971.95.camel@nimitz>  <49345086.4@cs.columbia.edu>
+From: Oren Laadan <orenl@cs.columbia.edu>
+Subject: Re: [RFC v10][PATCH 08/13] Dump open file descriptors
+Date: Mon, 01 Dec 2008 16:20:05 -0500
+Message-ID: <49345505.5050104@cs.columbia.edu>
+References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>	 <1227747884-14150-9-git-send-email-orenl@cs.columbia.edu>	 <20081128101919.GO28946@ZenIV.linux.org.uk>	 <1228153645.2971.36.camel@nimitz>  <493447DD.7010102@cs.columbia.edu> <1228164679.2971.91.camel@nimitz>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <49345086.4-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1228164679.2971.91.camel@nimitz>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@linux.vnet.ibm.com>
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2008-12-01 at 16:00 -0500, Oren Laadan wrote:
-> > Is that sufficient?  It seems like we're depending on the fd's reference
-> > to the 'struct file' to keep it valid in the hash.  If something happens
-> > to the fd (like the other thread messing with it) the 'struct file' can
-> > still go away.
-> > 
-> > Shouldn't we do another get_file() for the hash's reference?
+
+
+Dave Hansen wrote:
+> On Mon, 2008-12-01 at 15:23 -0500, Oren Laadan wrote:
+>> Verifying that the size doesn't change does not ensure that the table's
+>> contents remained the same, so we can still end up with obsolete data.
 > 
-> When a shared object is inserted to the hash we automatically take another
-> reference to it (according to its type) for as long as it remains in the
-> hash. See:  'cr_obj_ref_grab()' and 'cr_obj_ref_drop()'.  So by moving that
-> call higher up, we protect the struct file.
+> With the realloc() scheme, we have virtually no guarantees about how the
+> fdtable that we read relates to the source.  All that we know is that
+> the n'th fd was at this value at *some* time.
+> 
+> Using the scheme that I just suggested (and you evidently originally
+> used) at least guarantees that we have an atomic copy of the fdtable.
 
-That's kinda (and by kinda I mean really) disgusting.  Hiding that two
-levels deep in what is effectively the hash table code where no one will
-ever see it is really bad.  It also makes you lazy thinking that the
-hash code will just know how to take references on whatever you give to
-it.
+It doesn't matter if the fdtable changes while we scan the fd's or
+after we're done scanning the fd's, does it ?  the end result is the
+same - inconsistency.
 
-I think cr_obj_ref_grab() is hideous obfuscation and needs to die.
-Let's just do the get_file() directly, please.
+> Why is this done in two steps?  It first grabs a list of fd numbers
+> which needs to be validated, then goes back and turns those into 'struct
+> file's which it saves off.  Is there a problem with doing that
+> fd->'struct file' conversion under the files->file_lock?
 
--- Dave
+Again, say we get all the struct file for all those fd's. Now we have to
+drop the lock, and start processing the struct files. So what if at this
+point the fdtable changes ?  we still end up with potentially inconsistent
+state.
+
+We can do it atomically or non-atomically, I couldn't care less.
+
+My argument is the following:
+1) Ideally, the state should not change while we are checkpointing
+2) If the state changes, then the behavior is undefined (but the kernel
+   should not crash, of course).
+3) It should be the userspace responsibility to ensure that (1) holds
+   (for instance, that all tasks sharing these resources are frozen
+   during the checkpoint)
+
+#2 will be an uncommon event - a programmer/user/administrator mistake.
+Kernel may help enforce this rule, but catching all such cases will be
+expensive as it means looping through all tasks for each new resource.
+
+As a first step, we can ensure that all threads of a process are frozen
+at checkpoint time (and prevent unfreeze until checkpoint is over). But
+that will not cover a clone() with CLONE_FS. And this will be the same
+for other namespaces later.
+
+Oren.
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
