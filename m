@@ -1,50 +1,47 @@
-From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Subject: Re: [RFC v10][PATCH 09/13] Restore open file descriprtors
-Date: Mon, 01 Dec 2008 16:00:54 -0500
-Message-ID: <49345086.4@cs.columbia.edu>
-References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>	 <1227747884-14150-10-git-send-email-orenl@cs.columbia.edu>	 <20081128112745.GR28946@ZenIV.linux.org.uk>	 <1228159324.2971.74.camel@nimitz>  <49344C11.6090204@cs.columbia.edu> <1228164873.2971.95.camel@nimitz>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [RFC v10][PATCH 08/13] Dump open file descriptors
+Date: Mon, 1 Dec 2008 13:02:09 -0800 (PST)
+Message-ID: <alpine.LFD.2.00.0812011258390.3256@nehalem.linux-foundation.org>
+References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>  <1227747884-14150-9-git-send-email-orenl@cs.columbia.edu>  <20081128101919.GO28946@ZenIV.linux.org.uk>  <1228153645.2971.36.camel@nimitz>  <493447DD.7010102@cs.columbia.edu>
+ <1228164679.2971.91.camel@nimitz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1228164873.2971.95.camel@nimitz>
+In-Reply-To: <1228164679.2971.91.camel@nimitz>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
 
-Dave Hansen wrote:
-> On Mon, 2008-12-01 at 15:41 -0500, Oren Laadan wrote:
->>>>> +   fd = cr_attach_file(file);      /* no need to cleanup 'file' below */
->>>>> +   if (fd < 0) {
->>>>> +           filp_close(file, NULL);
->>>>> +           ret = fd;
->>>>> +           goto out;
->>>>> +   }
->>>>> +
->>>>> +   /* register new <objref, file> tuple in hash table */
->>>>> +   ret = cr_obj_add_ref(ctx, file, parent, CR_OBJ_FILE, 0);
->>>>> +   if (ret < 0)
->>>>> +           goto out;
->>>> Who said that file still exists at that point?
->> Correct. This call should move higher up befor ethe call to cr_attach_file()
+On Mon, 1 Dec 2008, Dave Hansen wrote:
 > 
-> Is that sufficient?  It seems like we're depending on the fd's reference
-> to the 'struct file' to keep it valid in the hash.  If something happens
-> to the fd (like the other thread messing with it) the 'struct file' can
-> still go away.
-> 
-> Shouldn't we do another get_file() for the hash's reference?
+> Why is this done in two steps?  It first grabs a list of fd numbers
+> which needs to be validated, then goes back and turns those into 'struct
+> file's which it saves off.  Is there a problem with doing that
+> fd->'struct file' conversion under the files->file_lock?
 
-When a shared object is inserted to the hash we automatically take another
-reference to it (according to its type) for as long as it remains in the
-hash. See:  'cr_obj_ref_grab()' and 'cr_obj_ref_drop()'.  So by moving that
-call higher up, we protect the struct file.
+Umm, why do we even worry about this?
 
-Oren.
+Wouldn't it be much better to make sure that all other threads are 
+stopped before we snapshot, and if we cannot account for some thread (ie 
+there's some elevated count in the fs/files/mm structures that we cannot 
+see from the threads we've stopped), just refuse to dump.
 
+There is no sane dump from a multi-threaded app that shares resources 
+without that kind of serialization _anyway_, so why even try?
+
+In other words: any races in dumping are fundamental _bugs_ in the dumping 
+at a much higher level. There's absolutely no point in trying to make 
+something like "dump open fd's" be race-free, because if there are other 
+people that are actively accessing the 'files' structure concurrently, you 
+had a much more fundamental bug in the first place!
+
+So do things more like the core-dumping does: make sure that all other 
+threads are quiescent first!
+
+			Linus
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
