@@ -1,57 +1,82 @@
-From: Matt Mackall <mpm@selenic.com>
-Subject: Re: [RESEND][PATCH] Add /proc/mempool to display mempool usage
-Date: Mon, 01 Dec 2008 13:13:31 -0600
-Message-ID: <1228158811.3196.88.camel@calx>
-References: <1227980689.6354.24.camel@localhost.localdomain>
-	 <20081129214207.GA6747@x200.localdomain> <20081129234907.GA2340@kroah.com>
-	 <20081201101245.0a2f3123.randy.dunlap@oracle.com>
+From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC v10][PATCH 09/13] Restore open file descriprtors
+Date: Mon, 01 Dec 2008 11:22:04 -0800
+Message-ID: <1228159324.2971.74.camel@nimitz>
+References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>
+	 <1227747884-14150-10-git-send-email-orenl@cs.columbia.edu>
+	 <20081128112745.GR28946@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20081201101245.0a2f3123.randy.dunlap@oracle.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Randy Dunlap <randy.dunlap@oracle.com>
-Cc: Greg KH <greg@kroah.com>, Alexey Dobriyan <adobriyan@gmail.com>, Remi Colinet <remi.colinet@gmail.com>, linux-kernel@vger.kernel.org, akpm@osdl.org, torvalds@osdl.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20081128112745.GR28946-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2008-12-01 at 10:12 -0800, Randy Dunlap wrote:
-> On Sat, 29 Nov 2008 15:49:07 -0800 Greg KH wrote:
+On Fri, 2008-11-28 at 11:27 +0000, Al Viro wrote:
+> On Wed, Nov 26, 2008 at 08:04:40PM -0500, Oren Laadan wrote:
+> > +/**
+> > + * cr_attach_get_file - attach (and get) lonely file ptr to a file descriptor
+> > + * @file: lonely file pointer
+> > + */
+> > +static int cr_attach_get_file(struct file *file)
+> > +{
+> > +	int fd = get_unused_fd_flags(0);
+> > +
+> > +	if (fd >= 0) {
+> > +		fsnotify_open(file->f_path.dentry);
+> > +		fd_install(fd, file);
+> > +		get_file(file);
+> > +	}
+> > +	return fd;
+> > +}
 > 
-> > On Sun, Nov 30, 2008 at 12:42:07AM +0300, Alexey Dobriyan wrote:
-> > > On Sat, Nov 29, 2008 at 06:44:49PM +0100, Remi Colinet wrote:
-> > > > This patch add a new /proc/mempool file in order to display mempool usage.
-> > > > 
-> > > > The feature can be disabled with CONFIG_PROC_MEMPOOL=N during kernel
-> > > > configuration.
-> > > 
-> > > We're NOT adding config option per proc file.
-> > > 
-> > > And can we, please, freeze /proc for not per-process stuff and open debugfs
-> > > for random stuff, please?
-> > 
-> > debugfs has been open for random stuff since the day it was added to the
-> > tree :)
-> > 
-> > Feel free to put this kind of thing there instead of proc.
+> What happens if another thread closes the descriptor in question between
+> fd_install() and get_file()?
+
+You're just saying to flip the get_file() and fd_install()?
+
+> > +	fd = cr_attach_file(file);	/* no need to cleanup 'file' below */
+> > +	if (fd < 0) {
+> > +		filp_close(file, NULL);
+> > +		ret = fd;
+> > +		goto out;
+> > +	}
+> > +
+> > +	/* register new <objref, file> tuple in hash table */
+> > +	ret = cr_obj_add_ref(ctx, file, parent, CR_OBJ_FILE, 0);
+> > +	if (ret < 0)
+> > +		goto out;
 > 
-> Do distros ship with debugfs enabled?
-> The problem with using debugfs is that it is very optional IMO.
+> Who said that file still exists at that point?
 
-The problem with debugfs is that it claims to not be an ABI but it is
-lying. Distributions ship tools that depend on portions of debugfs. And
-they also ship debugfs in their kernel. So it is effectively the same
-as /proc, except with the 1.0-era everything-goes attitude rather than
-the 2.6-era we-should-really-think-about-this one.
+Ahhh.  We're depending on the 'struct file' reference that comes from
+the fd table.  That's why there is supposedly "no need to cleanup 'file'
+below".  But, some other thread can come along and close() the fd, which
+will __fput() our poor 'struct file' and will make it go away.  Next
+time we go and pull it out of the hash table, we go boom.
 
-Pushing stuff from procfs to debugfs is thus just setting us up for pain
-down the road. Don't do it. In five years, we'll discover we can't turn
-debugfs off or even clean it up because too much relies on it.
+As a quick fix, I think we can just take another get_file() here.  But,
+as Al notes, there are some much larger issues that we face with the
+fd_table and multi-thread access.  They haven't "mattered" to us so far
+because we assume everything is either single-threaded or frozen.
+Sounds like Al isn't comfortable with this being integrated until a much
+more detailed look has been taken.
 
-If you think that debugfs is NOT an ABI, then I'm sure you'll be happy
-to ack my patch entitled 'gratuitously break usbmon to remind folks that
-debugfs is not an ABI'.
+> BTW, there are shitloads of races here - references to fd and struct file *
+> are mixed in a way that breaks *badly* if descriptor table is played with
+> by another thread.
 
--- 
-Mathematics is the supreme nostalgia of our time.
+One of the things about this that bothers me is that it shares too
+little with existing VFS code.  It calls into a ton of existing stuff
+but doesn't refactor anything that is currently there.  Surely there are
+some common bits somewhere in the VFS that could be consolidated here.  
 
+-- Dave
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
