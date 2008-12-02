@@ -1,72 +1,61 @@
-From: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [RESEND][PATCH] Add /proc/mempool to display mempool usage
-Date: Mon, 01 Dec 2008 16:20:34 -0600
-Message-ID: <1228170034.3196.107.camel@calx>
-References: <1227980689.6354.24.camel@localhost.localdomain>
-	 <20081129214207.GA6747@x200.localdomain> <20081129234907.GA2340@kroah.com>
-	 <20081201101245.0a2f3123.randy.dunlap@oracle.com>
-	 <1228158811.3196.88.camel@calx>
-	 <20081201120210.1ed16bd5.akpm@linux-foundation.org>
-	 <84144f020812011207q29fe4b3fq11a9e55f171cf743@mail.gmail.com>
-	 <alpine.LFD.2.00.0812011210030.3256@nehalem.linux-foundation.org>
-	 <84144f020812011402v3cb3ab24pf5cb6310f2d00c5b@mail.gmail.com>
+From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC v10][PATCH 09/13] Restore open file descriprtors
+Date: Mon, 01 Dec 2008 17:12:06 -0800
+Message-ID: <1228180326.2971.128.camel@nimitz>
+References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>
+	 <1227747884-14150-10-git-send-email-orenl@cs.columbia.edu>
+	 <20081128112745.GR28946@ZenIV.linux.org.uk>
+	 <1228159324.2971.74.camel@nimitz> <49344C11.6090204@cs.columbia.edu>
+	 <1228164873.2971.95.camel@nimitz>  <49345086.4@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <84144f020812011402v3cb3ab24pf5cb6310f2d00c5b-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <49345086.4-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pekka Enberg <penberg-bbCR+/B0CizivPeTLB3BmA@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, remi.colinet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2008-12-02 at 00:02 +0200, Pekka Enberg wrote:
-> Hi Linus,
->=20
-> On Mon, 1 Dec 2008, Pekka Enberg wrote:
-> >> Hmm, I thought Documentation/ABI/ was supposed to tell us what's a=
-n
-> >> ABI you can depend on and what's not. I mean, you shouldn't be
-> >> depending on anything but the interfaces documented in
-> >> Documentation/ABI/stable/, no?
->=20
-> On Mon, Dec 1, 2008 at 10:12 PM, Linus Torvalds
-> <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> > Who is the f*cking MORON that thinks that "documentation" has any m=
-eaning
-> > what-so-ever?
->=20
-> Me, I suppose. At least that's the impression I got when being asked
-> to document any new kmemtrace debugfs files, for example.
->=20
-> On Mon, Dec 1, 2008 at 10:12 PM, Linus Torvalds
-> <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> > The fact that something is documented (whether correctly or not) ha=
-s
-> > absolutely _zero_ impact on anything at all. What makes something a=
-n ABI
-> > is that it's useful and available. The only way something isn't an =
-ABI is
-> > by _explicitly_ making sure that it's not available even by mistake=
- in a
-> > stable form for binary use.
->=20
-> OK, but why do we have those different ABI "stages" in
-> Documentation/ABI then? The README file there seems to contradict wha=
-t
-> you say. Or maybe I'm reading it wrong...
+On Mon, 2008-12-01 at 16:00 -0500, Oren Laadan wrote:
+> Dave Hansen wrote:
+> > On Mon, 2008-12-01 at 15:41 -0500, Oren Laadan wrote:
+> >>>>> +   fd = cr_attach_file(file);      /* no need to cleanup 'file' below */
+> >>>>> +   if (fd < 0) {
+> >>>>> +           filp_close(file, NULL);
+> >>>>> +           ret = fd;
+> >>>>> +           goto out;
+> >>>>> +   }
+> >>>>> +
+> >>>>> +   /* register new <objref, file> tuple in hash table */
+> >>>>> +   ret = cr_obj_add_ref(ctx, file, parent, CR_OBJ_FILE, 0);
+> >>>>> +   if (ret < 0)
+> >>>>> +           goto out;
+> >>>> Who said that file still exists at that point?
+> >> Correct. This call should move higher up befor ethe call to cr_attach_file()
+> > 
+> > Is that sufficient?  It seems like we're depending on the fd's reference
+> > to the 'struct file' to keep it valid in the hash.  If something happens
+> > to the fd (like the other thread messing with it) the 'struct file' can
+> > still go away.
+> > 
+> > Shouldn't we do another get_file() for the hash's reference?
+> 
+> When a shared object is inserted to the hash we automatically take another
+> reference to it (according to its type) for as long as it remains in the
+> hash. See:  'cr_obj_ref_grab()' and 'cr_obj_ref_drop()'.  So by moving that
+> call higher up, we protect the struct file.
 
-If the terrain and the map do not agree, follow the terrain. =E2=80=93 =
-Swedish
-army manual.
+We also need to document that we depend on this reference in the hash to
+keep the object around.  Take a look at cr_read_fd_data().  Once that
+cr_attach_file() has been performed, the only thing keeping the 'file'
+around is the hash reference.  If someone happened to remove it from the
+hash, the vfs_llseek() below would be bogus.
 
-If code uses a public interface and we break that interface, we will ge=
-t
-unhappy users. Putting stuff in debugfs/ in a released kernel makes it
-public. That's the terrain.
+I don't know how we document that the hash is one-way: writes only and
+no later deletions.
 
---=20
-Mathematics is the supreme nostalgia of our time.
+-- Dave
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
