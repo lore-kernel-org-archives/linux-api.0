@@ -1,59 +1,101 @@
 From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Subject: Re: [RFC v10][PATCH 09/13] Restore open file descriprtors
-Date: Mon, 01 Dec 2008 17:12:06 -0800
-Message-ID: <1228180326.2971.128.camel@nimitz>
+Date: Mon, 01 Dec 2008 17:31:08 -0800
+Message-ID: <1228181468.2971.146.camel@nimitz>
 References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>
 	 <1227747884-14150-10-git-send-email-orenl@cs.columbia.edu>
 	 <20081128112745.GR28946@ZenIV.linux.org.uk>
 	 <1228159324.2971.74.camel@nimitz> <49344C11.6090204@cs.columbia.edu>
-	 <1228164873.2971.95.camel@nimitz>  <49345086.4@cs.columbia.edu>
+	 <1228164873.2971.95.camel@nimitz> <49345086.4@cs.columbia.edu>
+	 <1228165651.2971.99.camel@nimitz>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <49345086.4-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+In-Reply-To: <1228165651.2971.99.camel@nimitz>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2008-12-01 at 16:00 -0500, Oren Laadan wrote:
-> Dave Hansen wrote:
-> > On Mon, 2008-12-01 at 15:41 -0500, Oren Laadan wrote:
-> >>>>> +   fd = cr_attach_file(file);      /* no need to cleanup 'file' below */
-> >>>>> +   if (fd < 0) {
-> >>>>> +           filp_close(file, NULL);
-> >>>>> +           ret = fd;
-> >>>>> +           goto out;
-> >>>>> +   }
-> >>>>> +
-> >>>>> +   /* register new <objref, file> tuple in hash table */
-> >>>>> +   ret = cr_obj_add_ref(ctx, file, parent, CR_OBJ_FILE, 0);
-> >>>>> +   if (ret < 0)
-> >>>>> +           goto out;
-> >>>> Who said that file still exists at that point?
-> >> Correct. This call should move higher up befor ethe call to cr_attach_file()
-> > 
-> > Is that sufficient?  It seems like we're depending on the fd's reference
-> > to the 'struct file' to keep it valid in the hash.  If something happens
-> > to the fd (like the other thread messing with it) the 'struct file' can
-> > still go away.
-> > 
-> > Shouldn't we do another get_file() for the hash's reference?
+On Mon, 2008-12-01 at 13:07 -0800, Dave Hansen wrote:
+> > When a shared object is inserted to the hash we automatically take another
+> > reference to it (according to its type) for as long as it remains in the
+> > hash. See:  'cr_obj_ref_grab()' and 'cr_obj_ref_drop()'.  So by moving that
+> > call higher up, we protect the struct file.
 > 
-> When a shared object is inserted to the hash we automatically take another
-> reference to it (according to its type) for as long as it remains in the
-> hash. See:  'cr_obj_ref_grab()' and 'cr_obj_ref_drop()'.  So by moving that
-> call higher up, we protect the struct file.
+> That's kinda (and by kinda I mean really) disgusting.  Hiding that two
+> levels deep in what is effectively the hash table code where no one will
+> ever see it is really bad.  It also makes you lazy thinking that the
+> hash code will just know how to take references on whatever you give to
+> it.
+> 
+> I think cr_obj_ref_grab() is hideous obfuscation and needs to die.
+> Let's just do the get_file() directly, please.
 
-We also need to document that we depend on this reference in the hash to
-keep the object around.  Take a look at cr_read_fd_data().  Once that
-cr_attach_file() has been performed, the only thing keeping the 'file'
-around is the hash reference.  If someone happened to remove it from the
-hash, the vfs_llseek() below would be bogus.
+Well, I at least see why you need it now.  The objhash thing is trying
+to be a pretty generic hash implementation and it does need to free the
+references up when it is destroyed.  Instead of keeping a "hash of
+files" and a "hash of pipes" or other shared objects, there's just a
+single hash for everything.
 
-I don't know how we document that the hash is one-way: writes only and
-no later deletions.
+One alternative here would be to have an ops-style release function that
+gets called instead of what we have now:
+        
+        static void cr_obj_ref_drop(struct cr_objref *obj)
+        {
+                switch (obj->type) {
+                case CR_OBJ_FILE:
+                        fput((struct file *) obj->ptr);
+                        break;
+                default:
+                        BUG();
+                }
+        }
+        
+        static void cr_obj_ref_grab(struct cr_objref *obj)
+        {
+                switch (obj->type) {
+                case CR_OBJ_FILE:
+                        get_file((struct file *) obj->ptr);
+                        break;
+                default:
+                        BUG();
+                }
+        }
+
+That would make it something like:
+
+struct cr_obj_ops {
+	int type;
+	void (*release)(struct cr_objref *obj);
+};
+
+void cr_release_file(struct cr_objref *obj)
+{
+	struct file *file = obj->ptr;
+	put_file(file);
+}
+
+struct cr_obj_ops cr_file_ops = {
+	.type = CR_OBJ_FILE,
+	.release = cr_release_file,
+};
+
+
+And the add operation becomes:
+
+	get_file(file);
+	new = cr_obj_add_ptr(ctx, file, &objref, &cr_file_ops, 0);
+
+with 'cr_file_ops' basically replacing the CR_OBJ_FILE that got passed
+before.
+
+I like that because it only obfuscates what truly needs to be abstracted
+out: the release side.  Hiding that get_file() is really tricky.
+
+But, I guess we could also just kill cr_obj_ref_grab(), do the
+get_file() explicitly and still keep cr_obj_ref_drop() as it is now.
 
 -- Dave
 
