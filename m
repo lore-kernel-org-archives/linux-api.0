@@ -1,81 +1,90 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [RESEND][PATCH] Add /proc/mempool to display mempool usage
-Date: Mon, 1 Dec 2008 18:54:30 -0800 (PST)
-Message-ID: <alpine.LFD.2.00.0812011843340.3256@nehalem.linux-foundation.org>
-References: <1227980689.6354.24.camel@localhost.localdomain>  <20081129214207.GA6747@x200.localdomain>  <20081129234907.GA2340@kroah.com>  <20081201101245.0a2f3123.randy.dunlap@oracle.com>  <1228158811.3196.88.camel@calx>  <20081201120210.1ed16bd5.akpm@linux-foundation.org>
-  <84144f020812011207q29fe4b3fq11a9e55f171cf743@mail.gmail.com>  <alpine.LFD.2.00.0812011210030.3256@nehalem.linux-foundation.org> <84144f020812011402v3cb3ab24pf5cb6310f2d00c5b@mail.gmail.com>
+From: Geoffrey McRae <geoff-vBxYYoWeDNDby3iVrkZq2A@public.gmane.org>
+Subject: New security functions?
+Date: Tue, 02 Dec 2008 13:30:59 +1100
+Message-ID: <1228185059.11192.35.camel@lappy.spacevs.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <84144f020812011402v3cb3ab24pf5cb6310f2d00c5b-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pekka Enberg <penberg-bbCR+/B0CizivPeTLB3BmA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, remi.colinet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Hi All,
 
+Let me first apologise if I am posting this to the wrong mailing list, I
+have never done any official kernel hacking before, so I am a little
+lost as to where I should send things.
 
-On Tue, 2 Dec 2008, Pekka Enberg wrote:
-> 
-> OK, but why do we have those different ABI "stages" in
-> Documentation/ABI then? The README file there seems to contradict what
-> you say. Or maybe I'm reading it wrong...
+I am a self taught programmer working in many languages for over 15
+years now. I have been writing a server management system much like
+cPanel, but far superiour in many ways.
 
-I think that whole Documentation/ABI stuff is utter tosh, and should just 
-be thrown out, whenever it talks about interfaces that are _not_ ABI's.
+I am trying to solve the problem of the overhead of forking a new
+process for each HTTP request, and the problem of running the HTTP
+server as the user's uid/gid.
 
-IOW, it's fine to document things that are actually supposed to be stable, 
-but:
+After many weeks of experimenting, I have decided the only way to solve
+this problem, while keeping high performance would be to use the FastCGI
+approach of pre-forking and re-using processes for requests, but, with
+the added feature of being able to change the uid/gid of the process
+before re-using it.
 
- - assuming that non-documentation means that it's not an ABI is bogus
-   and wrong.
+I have added a new function to the kernel that allows the changing of
+another processes uid/gid, now before you think, woah, thats
+dangerous... there is a level of protection. The new function will only
+allow changing of a child processes uid (ie, a forked process).
 
- - explicitly documenting something as "not an ABI" is wrongheaded and 
-   stupid, because it's meaningless and only sets people up for being 
-   disappointed later.
+With this new function it is possible to change a forked processes uid
+after the forked process has dropped its permissions.
 
-So yeah, I think we might as well remove the "testing" one. Right now it 
-can act in two ways:
+This works, and quite well, but I am unsure of the security implications
+of it. Ofcourse, you would not allow the child that is executing un-safe
+code from asking the parent to set its uid, and the parent would have
+some checking to ensure that the child is never set to root, or
+something silly.
 
- - as documentation on how to use it (ie as "stable").
+This would ensure the child NEVER has root level permissions, only the
+parent does, so it would be very secure for the child to run un-safe
+code as it would be running in the user's context, and the child would
+not communicate with the parent, so no risk of buffer overflows or code
+injection AFAIK.
 
-   This is fine, but then it shouldn't be called "testing", should it?
+The only drawback I can forsee is that the application would have to run
+as root so it can change its child's permissions. It would be nice if we
+could make the application call another new function that enables the
+new function for only a certain range of uids after the application has
+dropped root permissions. eg...
 
- - as an excuse for whining later when it _did_ get used, and people break 
-   exported ABI's, and we need to revert the breakage.
+=========================================================
+// set the range the uid is allowed to be in (1000, 9999)
+enable_setpresuid(1000, 9999);
 
-   And this is the one that I don't think is valid. No amount of 
-   documentation will ever make something less stable.
+// become the www-data user
+setresuid(www-data, www-data, www-data);
 
-So as far as I'm concerned, "testing" should either go away (as a way to 
-discourage people from even _knowing_ about the things, and hoping that 
-they never get used), or it should be moved to "stable".
+// fork a child and change its uid
+child = fork();
+if (child == 0) {
+	//wait for our uid to be set
+	//do stuff
+	return 0;
+} else {
+	//change the child's uid
+	setpresuid(child, 1000, 1000, 1000);
 
-And in the end, nothing is ever totally black-and-white or quite that 
-simple, but that's the mindset you should have.
+	//make the child do stuff
+}
+=========================================================
 
-Finally, when it comes to documentation as a bigger issue:
+Anyway, this is my idea, there is a bit more info and a patch for a
+debian kernel at: http://www.spacevs.com/rambles/setuid.php
 
- - wrong documentation is irrelevant. It doesn't matter if the 
-   documentation says "X", when the code does "Y".
+I have realised since my folly of not using the latest kernel from git
+and I am now implementing this to see how well it can work.
 
-   If people rely on "Y", then pointing at the docs and saying "but you 
-   should never have relied on it, because teh docs say X" is totally and 
-   utterly bogus. The _documentation_ was wrong. Don't ever use incorrect 
-   documentation as an excuse. 
+-Geoffrey McRae
 
-Too many people seem to think that documentation is the "final" argument. 
-It's not. Not even close. It's a hint and a help, but it's _secondary_ to 
-code. Anybody who doesn't understand that should never be allowed to write 
-code (or documentation, for that matte).
-
-[ The same is true of assert()'s in code too - I've seen too many damn 
-  asserts that were simply _wrong_, and then when they triggered, people 
-  would always blindly assume that the assert() was right, and try to 
-  change the code to suit. For some reason people have a hard time asking 
-  themselves whether perhaps the bug was in the assertion itself. ]
-
-			Linus
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
