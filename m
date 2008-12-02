@@ -1,104 +1,81 @@
-From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC v10][PATCH 09/13] Restore open file descriprtors
-Date: Mon, 01 Dec 2008 17:31:08 -0800
-Message-ID: <1228181468.2971.146.camel@nimitz>
-References: <1227747884-14150-1-git-send-email-orenl@cs.columbia.edu>
-	 <1227747884-14150-10-git-send-email-orenl@cs.columbia.edu>
-	 <20081128112745.GR28946@ZenIV.linux.org.uk>
-	 <1228159324.2971.74.camel@nimitz> <49344C11.6090204@cs.columbia.edu>
-	 <1228164873.2971.95.camel@nimitz> <49345086.4@cs.columbia.edu>
-	 <1228165651.2971.99.camel@nimitz>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [RESEND][PATCH] Add /proc/mempool to display mempool usage
+Date: Mon, 1 Dec 2008 18:54:30 -0800 (PST)
+Message-ID: <alpine.LFD.2.00.0812011843340.3256@nehalem.linux-foundation.org>
+References: <1227980689.6354.24.camel@localhost.localdomain>  <20081129214207.GA6747@x200.localdomain>  <20081129234907.GA2340@kroah.com>  <20081201101245.0a2f3123.randy.dunlap@oracle.com>  <1228158811.3196.88.camel@calx>  <20081201120210.1ed16bd5.akpm@linux-foundation.org>
+  <84144f020812011207q29fe4b3fq11a9e55f171cf743@mail.gmail.com>  <alpine.LFD.2.00.0812011210030.3256@nehalem.linux-foundation.org> <84144f020812011402v3cb3ab24pf5cb6310f2d00c5b@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1228165651.2971.99.camel@nimitz>
+In-Reply-To: <84144f020812011402v3cb3ab24pf5cb6310f2d00c5b-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Pekka Enberg <penberg-bbCR+/B0CizivPeTLB3BmA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, remi.colinet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2008-12-01 at 13:07 -0800, Dave Hansen wrote:
-> > When a shared object is inserted to the hash we automatically take another
-> > reference to it (according to its type) for as long as it remains in the
-> > hash. See:  'cr_obj_ref_grab()' and 'cr_obj_ref_drop()'.  So by moving that
-> > call higher up, we protect the struct file.
+
+
+On Tue, 2 Dec 2008, Pekka Enberg wrote:
 > 
-> That's kinda (and by kinda I mean really) disgusting.  Hiding that two
-> levels deep in what is effectively the hash table code where no one will
-> ever see it is really bad.  It also makes you lazy thinking that the
-> hash code will just know how to take references on whatever you give to
-> it.
-> 
-> I think cr_obj_ref_grab() is hideous obfuscation and needs to die.
-> Let's just do the get_file() directly, please.
+> OK, but why do we have those different ABI "stages" in
+> Documentation/ABI then? The README file there seems to contradict what
+> you say. Or maybe I'm reading it wrong...
 
-Well, I at least see why you need it now.  The objhash thing is trying
-to be a pretty generic hash implementation and it does need to free the
-references up when it is destroyed.  Instead of keeping a "hash of
-files" and a "hash of pipes" or other shared objects, there's just a
-single hash for everything.
+I think that whole Documentation/ABI stuff is utter tosh, and should just 
+be thrown out, whenever it talks about interfaces that are _not_ ABI's.
 
-One alternative here would be to have an ops-style release function that
-gets called instead of what we have now:
-        
-        static void cr_obj_ref_drop(struct cr_objref *obj)
-        {
-                switch (obj->type) {
-                case CR_OBJ_FILE:
-                        fput((struct file *) obj->ptr);
-                        break;
-                default:
-                        BUG();
-                }
-        }
-        
-        static void cr_obj_ref_grab(struct cr_objref *obj)
-        {
-                switch (obj->type) {
-                case CR_OBJ_FILE:
-                        get_file((struct file *) obj->ptr);
-                        break;
-                default:
-                        BUG();
-                }
-        }
+IOW, it's fine to document things that are actually supposed to be stable, 
+but:
 
-That would make it something like:
+ - assuming that non-documentation means that it's not an ABI is bogus
+   and wrong.
 
-struct cr_obj_ops {
-	int type;
-	void (*release)(struct cr_objref *obj);
-};
+ - explicitly documenting something as "not an ABI" is wrongheaded and 
+   stupid, because it's meaningless and only sets people up for being 
+   disappointed later.
 
-void cr_release_file(struct cr_objref *obj)
-{
-	struct file *file = obj->ptr;
-	put_file(file);
-}
+So yeah, I think we might as well remove the "testing" one. Right now it 
+can act in two ways:
 
-struct cr_obj_ops cr_file_ops = {
-	.type = CR_OBJ_FILE,
-	.release = cr_release_file,
-};
+ - as documentation on how to use it (ie as "stable").
 
+   This is fine, but then it shouldn't be called "testing", should it?
 
-And the add operation becomes:
+ - as an excuse for whining later when it _did_ get used, and people break 
+   exported ABI's, and we need to revert the breakage.
 
-	get_file(file);
-	new = cr_obj_add_ptr(ctx, file, &objref, &cr_file_ops, 0);
+   And this is the one that I don't think is valid. No amount of 
+   documentation will ever make something less stable.
 
-with 'cr_file_ops' basically replacing the CR_OBJ_FILE that got passed
-before.
+So as far as I'm concerned, "testing" should either go away (as a way to 
+discourage people from even _knowing_ about the things, and hoping that 
+they never get used), or it should be moved to "stable".
 
-I like that because it only obfuscates what truly needs to be abstracted
-out: the release side.  Hiding that get_file() is really tricky.
+And in the end, nothing is ever totally black-and-white or quite that 
+simple, but that's the mindset you should have.
 
-But, I guess we could also just kill cr_obj_ref_grab(), do the
-get_file() explicitly and still keep cr_obj_ref_drop() as it is now.
+Finally, when it comes to documentation as a bigger issue:
 
--- Dave
+ - wrong documentation is irrelevant. It doesn't matter if the 
+   documentation says "X", when the code does "Y".
 
+   If people rely on "Y", then pointing at the docs and saying "but you 
+   should never have relied on it, because teh docs say X" is totally and 
+   utterly bogus. The _documentation_ was wrong. Don't ever use incorrect 
+   documentation as an excuse. 
+
+Too many people seem to think that documentation is the "final" argument. 
+It's not. Not even close. It's a hint and a help, but it's _secondary_ to 
+code. Anybody who doesn't understand that should never be allowed to write 
+code (or documentation, for that matte).
+
+[ The same is true of assert()'s in code too - I've seen too many damn 
+  asserts that were simply _wrong_, and then when they triggered, people 
+  would always blindly assume that the assert() was right, and try to 
+  change the code to suit. For some reason people have a hard time asking 
+  themselves whether perhaps the bug was in the assertion itself. ]
+
+			Linus
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
