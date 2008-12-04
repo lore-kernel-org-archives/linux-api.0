@@ -1,39 +1,220 @@
-From: Evgeniy Polyakov <zbr-i6C2adt8DTjR7s880joybQ@public.gmane.org>
-Subject: Re: [take2] Inotify: nested attributes support.
-Date: Thu, 4 Dec 2008 12:09:00 +0300
-Message-ID: <20081204090900.GA4615@ioremap.net>
-References: <20081125194234.GA24449@ioremap.net> <20081125162434.4feacbbf.akpm@linux-foundation.org> <20081126074239.GA17525@ioremap.net> <20081126001538.4b1c7c99.akpm@linux-foundation.org> <20081126082936.GB17525@ioremap.net> <20081204084309.GA2072@elf.ucw.cz>
+From: "Michael Kerrisk" <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Subject: Re: [PATCH 1/1] Userspace I/O (UIO): Documentatin for userspace DMA support
+Date: Thu, 4 Dec 2008 08:14:41 -0500
+Message-ID: <cfd18e0f0812040514r45f8f74dh63be0d68567b8e60@mail.gmail.com>
+References: <208aa0f00812032053w5efb99dbk94511b0f8c1f0925@mail.gmail.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <208aa0f00812032053w5efb99dbk94511b0f8c1f0925-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20081204084309.GA2072-I/5MKhXcvmPrBKCeMvbIDA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Machek <pavel-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, john-jueV0HHMeujJJrXXpGQQMAC/G2K4zDHf@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, rlove-L7G0xEPcOZbYtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davidn-KzQzY1MbaKjAHznzqCTclw@public.gmane.org, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Edward Estabrook <edward.estabrook.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg KH <gregkh-l3A5Bk7waGM@public.gmane.org>, hjk-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, edward_estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 04, 2008 at 09:43:10AM +0100, Pavel Machek (pavel-AlSwsSmVLrQ@public.gmane.org) wrote:
-> Actually, does the kernel even know who initiated the i/o?
-> 
-> Take two threads, both mapping /etc/something , both of them writing
-> through the mmap. Kernel sees dirty pages so it writes them back, but
-> which thread is repsonsible for the write?
+Edward,
 
-It depends. If write will be done with write() syscall, caller will be
-stored. Otherwise inotify does not hook into page fault code afaics.
+A few small comments below
 
-> > > And how does this work give that pids are (no longer) system-wide unique?
-> > 
-> > It gets pids from the caller's task_struct (via current), so its data is
-> > as unique as process calling getpid() or syscall(__NR_gettid).
-> 
-> What happens on mmap()?
+On Wed, Dec 3, 2008 at 11:53 PM, Edward Estabrook
+<edward.estabrook.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> From: Edward Estabrook <Edward_Estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org>
+>
+> Here is a patch updating the Userspace IO documentation to
+> detail support to dynamically allocate and use coherent DMA
+> from userspace.  This patch applies against 2.6.28-rc6.
+>
+> The gist of this implementation is to overload uio's mmap
 
-mmap() syscall is not processed by inotify.
+Sometimes you write "uio", sometimes "UIO".  Use just one?
+
+> functionality to allocate
+> and map a new DMA region on demand.  The bus-specific DMA address as returned by
+> dma_alloc_coherent() is made available to userspace in the 1st long
+> word
+
+Perhaps use a clearer term than "long word"?  Maybe '8 bytes'?
+
+> of the newly
+> created region (as well as through the conventional 'addr' file in sysfs).
+>
+> The kernel-api change is that passing an offset value of 0xFFFFF000UL to a uio
+
+s/api/API/
+
+> device's mmap() operation will dynamically allocate a DMA region.  This cannot
+> break existing code as the previous UIO code only allowed a maximum of 5
+> mappings.
+>
+> To allocate a DMA region you use the following:
+> /* Pass this magic number to mmap as offset to
+>  * dynamically allocate a chunk of memory */
+> #define DMA_MEM_ALLOCATE_MMAP_OFFSET 0xFFFFF000UL
+>
+> void* memory = mmap (NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED,
+>                     fd, DMA_MEM_ALLOCATE_MMAP_OFFSET);
+> u_int64_t *addr = *(u_int64_t *) memory;
+>
+> where 'size' is the size in bytes of the region you want and fd is the
+
+s/fd/'fd'/  (consistent with 'size')
+
+> opened /dev/uioN file.
+>
+> Allocation occurs in page sized pieces by design to ensure that
+
+s/page sized pieces/page-sized pieces/
+
+> buffers are page-aligned.
+>
+> Memory is released when the uio_unregister_device() is called.
+
+
+Cheers,
+
+Michael
+
+> Signed-off-by: Edward Estabrook <Edward_Estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org>
+> ---
+> --- linux-2.6.28-rc6/Documentation/DocBook/uio-howto.tmpl.orig  2008-12-03
+> 12:03:43.000000000 -0800
+> +++ linux-2.6.28-rc6/Documentation/DocBook/uio-howto.tmpl       2008-12-03
+> 13:11:53.000000000 -0800
+> @@ -42,6 +42,12 @@ GPL version 2.
+>
+>  <revhistory>
+>        <revision>
+> +       <revnumber>0.6</revnumber>
+> +       <date>2008-12-03</date>
+> +       <authorinitials>ee</authorinitials>
+> +       <revremark>Added description of DMA control.</revremark>
+> +       </revision>
+> +       <revision>
+>        <revnumber>0.5</revnumber>
+>        <date>2008-05-22</date>
+>        <authorinitials>hjk</authorinitials>
+> @@ -284,11 +290,17 @@ interested in translating it, please ema
+>        require access to more than one PCI memory region in a driver.
+>  </para>
+>  <para>
+> +       Each UIO device can also dynamically allocate coherent DMA
+> +       memory regions and map these to userspace.  Once created they
+> +       can be mapped like any other UIO memory region.
+> +</para>
+> +<para>
+>        Each mapping has its own directory in sysfs, the first mapping
+>        appears as <filename>/sys/class/uio/uioX/maps/map0/</filename>.
+>        Subsequent mappings create directories <filename>map1/</filename>,
+> -       <filename>map2/</filename>, and so on. These directories will only
+> -       appear if the size of the mapping is not 0.
+> +       <filename>map2/</filename>, and so on. These directories will
+> +       appear even if the size of the mapping is 0 to accommodate dynamically
+> +       created DMA mappings.
+>  </para>
+>  <para>
+>        Each <filename>mapX/</filename> directory contains two read-only files
+> @@ -318,6 +330,24 @@ interested in translating it, please ema
+>  offset = N * getpagesize();
+>  </programlisting>
+>
+> +<para>
+> +       From userspace a DMA region may be dynamically allocated and mapped
+> +       via the <function>mmap()</function> call by specifying the size of the
+> +       region in bytes in the <varname>length</varname> parameter and setting
+> +       <varname>offset = 0xFFFFF000</varname>.
+> +</para>
+> +<para>
+> +       The bus-specific DMA address as required to configure hardware DMA
+> +       registers will be stored in the first long word of the resulting mapped
+> +       region.
+> +</para>
+> +<programlisting format="linespecific">
+> +#define DMA_MEM_ALLOCATE_MMAP_OFFSET 0xFFFFF000UL
+> +void* memory = mmap (NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED,
+> +                    fd, DMA_MEM_ALLOCATE_MMAP_OFFSET);
+> +u_int64_t *addr = *(u_int64_t *) memory;
+> +</programlisting>
+> +
+>  </sect1>
+>  </chapter>
+>
+> @@ -572,6 +602,50 @@ to set up sysfs files for this mapping.
+>        </para>
+>  </sect1>
+>
+> +<sect1 id="dma_region_mmap">
+> +<title>Allocating DMA region with mmap()</title>
+> +       <para>
+> +       To allocate and map a DMA memory region you use
+> +       use <function>mmap()</function>.  You may create as
+> +       many regions as system resources allow by repeated use of
+> +       <function>mmap()</function>.
+> +       </para>
+> +       <para>
+> +       Specify the size of the desired region, in bytes, in the
+> +       <varname>length</varname> parameter and set
+> +       <varname>offset = 0xFFFFF000</varname>.  The region size will
+> +       be rounded up to a multiple of page size to ensure proper
+> +       alignment.
+> +       </para>
+> +       <para>
+> +       The bus-specific DMA address is stored in the first long word of the
+> +       resulting mapped region.  The newly assigned memory index N is
+> +       returned in the second long word of the resulting mapped region.  This
+> +       index is only required if the userspace driver needs to unmap and
+> +       then later remap the DMA region as the single call to
+> +       <function>mmap()</function> is sufficient to both allocate and map the
+> +       region.
+> +       </para>
+> +       <para>
+> +       Since every memory mapping has its own directory in sysfs
+> +       <filename>/sys/class/uio/uioX/maps/mapN/</filename> will be created
+> +       where N is the dynamically generated index of the mapping just
+> +       allocated.
+> +       </para>
+> +       <para>
+> +       Dynamically allocated DMA regions remain available for use
+> +       until <function>uio_unregister_device()</function> is called, at
+> +       which point the memory is released.
+> +       </para>
+> +<programlisting format="linespecific">
+> +       #define DMA_MEM_ALLOCATE_MMAP_OFFSET 0xFFFFF000UL
+> +       void* memory = mmap (NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED,
+> +                            fd, DMA_MEM_ALLOCATE_MMAP_OFFSET);
+> +       u_int64_t *addr = *(u_int64_t *) memory;
+> +</programlisting>
+> +
+> +</sect1>
+> +
+>  <sect1 id="wait_for_interrupts">
+>  <title>Waiting for interrupts</title>
+>        <para>
+> @@ -583,7 +657,7 @@ to set up sysfs files for this mapping.
+>        attention because an error occured.
+>        </para>
+>        <para>
+> -       <filename>/dev/uioX</filename> is a read-only file. A
+> +       <filename>/dev/uioX</filename> is a read-write file. A
+>        <function>read()</function> will always block until an
+>        interrupt occurs. There is only one legal value for the
+>        <varname>count</varname> parameter of
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+
+
 
 -- 
-	Evgeniy Polyakov
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+git://git.kernel.org/pub/scm/docs/man-pages/man-pages.git
+man-pages online: http://www.kernel.org/doc/man-pages/online_pages.html
+Found a bug? http://www.kernel.org/doc/man-pages/reporting_bugs.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
