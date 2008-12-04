@@ -1,211 +1,104 @@
 From: "Michael Kerrisk" <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Subject: Re: [PATCH 1/1] Userspace I/O (UIO): Documentatin for userspace DMA support
-Date: Thu, 4 Dec 2008 08:14:41 -0500
-Message-ID: <cfd18e0f0812040514r45f8f74dh63be0d68567b8e60@mail.gmail.com>
-References: <208aa0f00812032053w5efb99dbk94511b0f8c1f0925@mail.gmail.com>
+Subject: Re: [RESEND][PATCH] Add /proc/mempool to display mempool usage
+Date: Thu, 4 Dec 2008 11:02:31 -0500
+Message-ID: <cfd18e0f0812040802m378ea52of906b4d1bb4401ed@mail.gmail.com>
+References: <1227980689.6354.24.camel@localhost.localdomain>
+	 <20081129214207.GA6747@x200.localdomain>
+	 <20081129234907.GA2340@kroah.com>
+	 <20081201101245.0a2f3123.randy.dunlap@oracle.com>
+	 <1228158811.3196.88.camel@calx>
+	 <20081201120210.1ed16bd5.akpm@linux-foundation.org>
+	 <84144f020812011207q29fe4b3fq11a9e55f171cf743@mail.gmail.com>
+	 <alpine.LFD.2.00.0812011210030.3256@nehalem.linux-foundation.org>
+	 <84144f020812011402v3cb3ab24pf5cb6310f2d00c5b@mail.gmail.com>
+	 <alpine.LFD.2.00.0812011843340.3256@nehalem.linux-foundation.org>
 Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <208aa0f00812032053w5efb99dbk94511b0f8c1f0925-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <alpine.LFD.2.00.0812011843340.3256-nfNrOhbfy2R17+2ddN/4kux8cNe9sq/dYPYVAmT7z5s@public.gmane.org>
 Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Edward Estabrook <edward.estabrook.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg KH <gregkh-l3A5Bk7waGM@public.gmane.org>, hjk-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, edward_estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Pekka Enberg <penberg-bbCR+/B0CizivPeTLB3BmA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, remi.colinet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Edward,
-
-A few small comments below
-
-On Wed, Dec 3, 2008 at 11:53 PM, Edward Estabrook
-<edward.estabrook.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> From: Edward Estabrook <Edward_Estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org>
+On Mon, Dec 1, 2008 at 9:54 PM, Linus Torvalds
+<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
 >
-> Here is a patch updating the Userspace IO documentation to
-> detail support to dynamically allocate and use coherent DMA
-> from userspace.  This patch applies against 2.6.28-rc6.
 >
-> The gist of this implementation is to overload uio's mmap
-
-Sometimes you write "uio", sometimes "UIO".  Use just one?
-
-> functionality to allocate
-> and map a new DMA region on demand.  The bus-specific DMA address as returned by
-> dma_alloc_coherent() is made available to userspace in the 1st long
-> word
-
-Perhaps use a clearer term than "long word"?  Maybe '8 bytes'?
-
-> of the newly
-> created region (as well as through the conventional 'addr' file in sysfs).
+> On Tue, 2 Dec 2008, Pekka Enberg wrote:
+>>
+>> OK, but why do we have those different ABI "stages" in
+>> Documentation/ABI then? The README file there seems to contradict what
+>> you say. Or maybe I'm reading it wrong...
 >
-> The kernel-api change is that passing an offset value of 0xFFFFF000UL to a uio
-
-s/api/API/
-
-> device's mmap() operation will dynamically allocate a DMA region.  This cannot
-> break existing code as the previous UIO code only allowed a maximum of 5
-> mappings.
+> I think that whole Documentation/ABI stuff is utter tosh, and should just
+> be thrown out, whenever it talks about interfaces that are _not_ ABI's.
 >
-> To allocate a DMA region you use the following:
-> /* Pass this magic number to mmap as offset to
->  * dynamically allocate a chunk of memory */
-> #define DMA_MEM_ALLOCATE_MMAP_OFFSET 0xFFFFF000UL
+> IOW, it's fine to document things that are actually supposed to be stable,
+> but:
 >
-> void* memory = mmap (NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED,
->                     fd, DMA_MEM_ALLOCATE_MMAP_OFFSET);
-> u_int64_t *addr = *(u_int64_t *) memory;
+>  - assuming that non-documentation means that it's not an ABI is bogus
+>   and wrong.
+
+Agreed.  (When so much is much is undocumented anyway, there is no way
+that lack of documentation can be used to signal "this is not an ABI.)
+
+>  - explicitly documenting something as "not an ABI" is wrongheaded and
+>   stupid, because it's meaningless and only sets people up for being
+>   disappointed later.
+
+Agreed.
+
+[...]
+
+> Finally, when it comes to documentation as a bigger issue:
 >
-> where 'size' is the size in bytes of the region you want and fd is the
-
-s/fd/'fd'/  (consistent with 'size')
-
-> opened /dev/uioN file.
+>  - wrong documentation is irrelevant. It doesn't matter if the
+>   documentation says "X", when the code does "Y".
 >
-> Allocation occurs in page sized pieces by design to ensure that
+>   If people rely on "Y", then pointing at the docs and saying "but you
+>   should never have relied on it, because teh docs say X" is totally and
+>   utterly bogus. The _documentation_ was wrong. Don't ever use incorrect
+>   documentation as an excuse.
 
-s/page sized pieces/page-sized pieces/
+Agreed.
 
-> buffers are page-aligned.
->
-> Memory is released when the uio_unregister_device() is called.
+> Too many people seem to think that documentation is the "final" argument.
+> It's not. Not even close. It's a hint and a help, but it's _secondary_ to
+> code. Anybody who doesn't understand that should never be allowed to write
+> code (or documentation, for that matte).
 
+While clearly documentation is not the final answer, I think you
+undervalue it somewhat, and I think it's worth mentioning two specific
+points.  Documentation may be secondary to code, but it can help a
+lot, especially if:
+
+* The documentation is done at the same time as the code (by the
+developer, or by someone working with the developer).  This typically
+makes the developer think more about the code they are writing.  It
+also gives others to more quickly understand the code with the aim of
+reviewing the code and/or API design, and perhaps testing it.  There
+simply isn't enough review and testing going on, and documentation can
+make a real difference there, IMO.
+
+*  While the "but you should never have relied on it, because the docs
+say X" argument may not hold, there is one important way that I think
+documentation can still help: explicitly saying that "the behavior is
+unspecified around point X, and other code should not rely on a
+specific behavior".  This legitimately allows developers to change the
+behavior around point X in the future.  (I made the point at LPC, if
+you force users to read the code behind an API, then you end up
+creating a "tight spec", since they will do exactly what the code
+permits.  In this sense, documentation can be used to "loosen" the
+spec.)
 
 Cheers,
 
 Michael
 
-> Signed-off-by: Edward Estabrook <Edward_Estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org>
-> ---
-> --- linux-2.6.28-rc6/Documentation/DocBook/uio-howto.tmpl.orig  2008-12-03
-> 12:03:43.000000000 -0800
-> +++ linux-2.6.28-rc6/Documentation/DocBook/uio-howto.tmpl       2008-12-03
-> 13:11:53.000000000 -0800
-> @@ -42,6 +42,12 @@ GPL version 2.
->
->  <revhistory>
->        <revision>
-> +       <revnumber>0.6</revnumber>
-> +       <date>2008-12-03</date>
-> +       <authorinitials>ee</authorinitials>
-> +       <revremark>Added description of DMA control.</revremark>
-> +       </revision>
-> +       <revision>
->        <revnumber>0.5</revnumber>
->        <date>2008-05-22</date>
->        <authorinitials>hjk</authorinitials>
-> @@ -284,11 +290,17 @@ interested in translating it, please ema
->        require access to more than one PCI memory region in a driver.
->  </para>
->  <para>
-> +       Each UIO device can also dynamically allocate coherent DMA
-> +       memory regions and map these to userspace.  Once created they
-> +       can be mapped like any other UIO memory region.
-> +</para>
-> +<para>
->        Each mapping has its own directory in sysfs, the first mapping
->        appears as <filename>/sys/class/uio/uioX/maps/map0/</filename>.
->        Subsequent mappings create directories <filename>map1/</filename>,
-> -       <filename>map2/</filename>, and so on. These directories will only
-> -       appear if the size of the mapping is not 0.
-> +       <filename>map2/</filename>, and so on. These directories will
-> +       appear even if the size of the mapping is 0 to accommodate dynamically
-> +       created DMA mappings.
->  </para>
->  <para>
->        Each <filename>mapX/</filename> directory contains two read-only files
-> @@ -318,6 +330,24 @@ interested in translating it, please ema
->  offset = N * getpagesize();
->  </programlisting>
->
-> +<para>
-> +       From userspace a DMA region may be dynamically allocated and mapped
-> +       via the <function>mmap()</function> call by specifying the size of the
-> +       region in bytes in the <varname>length</varname> parameter and setting
-> +       <varname>offset = 0xFFFFF000</varname>.
-> +</para>
-> +<para>
-> +       The bus-specific DMA address as required to configure hardware DMA
-> +       registers will be stored in the first long word of the resulting mapped
-> +       region.
-> +</para>
-> +<programlisting format="linespecific">
-> +#define DMA_MEM_ALLOCATE_MMAP_OFFSET 0xFFFFF000UL
-> +void* memory = mmap (NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED,
-> +                    fd, DMA_MEM_ALLOCATE_MMAP_OFFSET);
-> +u_int64_t *addr = *(u_int64_t *) memory;
-> +</programlisting>
-> +
->  </sect1>
->  </chapter>
->
-> @@ -572,6 +602,50 @@ to set up sysfs files for this mapping.
->        </para>
->  </sect1>
->
-> +<sect1 id="dma_region_mmap">
-> +<title>Allocating DMA region with mmap()</title>
-> +       <para>
-> +       To allocate and map a DMA memory region you use
-> +       use <function>mmap()</function>.  You may create as
-> +       many regions as system resources allow by repeated use of
-> +       <function>mmap()</function>.
-> +       </para>
-> +       <para>
-> +       Specify the size of the desired region, in bytes, in the
-> +       <varname>length</varname> parameter and set
-> +       <varname>offset = 0xFFFFF000</varname>.  The region size will
-> +       be rounded up to a multiple of page size to ensure proper
-> +       alignment.
-> +       </para>
-> +       <para>
-> +       The bus-specific DMA address is stored in the first long word of the
-> +       resulting mapped region.  The newly assigned memory index N is
-> +       returned in the second long word of the resulting mapped region.  This
-> +       index is only required if the userspace driver needs to unmap and
-> +       then later remap the DMA region as the single call to
-> +       <function>mmap()</function> is sufficient to both allocate and map the
-> +       region.
-> +       </para>
-> +       <para>
-> +       Since every memory mapping has its own directory in sysfs
-> +       <filename>/sys/class/uio/uioX/maps/mapN/</filename> will be created
-> +       where N is the dynamically generated index of the mapping just
-> +       allocated.
-> +       </para>
-> +       <para>
-> +       Dynamically allocated DMA regions remain available for use
-> +       until <function>uio_unregister_device()</function> is called, at
-> +       which point the memory is released.
-> +       </para>
-> +<programlisting format="linespecific">
-> +       #define DMA_MEM_ALLOCATE_MMAP_OFFSET 0xFFFFF000UL
-> +       void* memory = mmap (NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED,
-> +                            fd, DMA_MEM_ALLOCATE_MMAP_OFFSET);
-> +       u_int64_t *addr = *(u_int64_t *) memory;
-> +</programlisting>
-> +
-> +</sect1>
-> +
->  <sect1 id="wait_for_interrupts">
->  <title>Waiting for interrupts</title>
->        <para>
-> @@ -583,7 +657,7 @@ to set up sysfs files for this mapping.
->        attention because an error occured.
->        </para>
->        <para>
-> -       <filename>/dev/uioX</filename> is a read-only file. A
-> +       <filename>/dev/uioX</filename> is a read-write file. A
->        <function>read()</function> will always block until an
->        interrupt occurs. There is only one legal value for the
->        <varname>count</varname> parameter of
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
 
 
 
