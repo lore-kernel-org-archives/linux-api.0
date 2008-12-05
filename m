@@ -1,27 +1,182 @@
-From: David Thomas <dthoma34-4GNroTWusrE@public.gmane.org>
-Subject: your mailbox is over its size limit(relpy to systemaccount-EMRzualFZlQ@public.gmane.org)
-Date: Thu, 4 Dec 2008 18:29:11 -0500
-Message-ID: <8316F45CCD2B5C40948AB2F80BB91C91185F74A197@JHEMTEXVS3.win.ad.jhu.edu>
+From: Randy Dunlap <randy.dunlap@oracle.com>
+Subject: Re: [PATCH] ABI Documentation for /proc/timer_list, v2
+Date: Fri, 05 Dec 2008 09:12:18 -0800
+Message-ID: <493960F2.6070102@oracle.com>
+References: <20081121221113.GA13566@tsunami.ccur.com> <517f3f820811250806n33850ea8ua8e203347c0f7ba6@mail.gmail.com> <20081125185740.GA21806@tsunami.ccur.com> <20081126164845.GA17394@tsunami.ccur.com> <20081126170715.GA28422@kroah.com> <20081126173410.GA17879@tsunami.ccur.com> <20081126173931.GA1636@kroah.com> <20081126210613.GA20529@tsunami.ccur.com> <cfd18e0f0811281337j57166b4cv54e05296a779252e@mail.gmail.com> <20081201181106.GA18320@tsunami.ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756257AbYLERQY@vger.kernel.org>
+In-Reply-To: <20081201181106.GA18320@tsunami.ccur.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joe Korty <joe.korty@ccur.com>
+Cc: "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, Greg KH <greg@kroah.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>, Alexey Dobriyan <adobriyan@gmail.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+Joe Korty wrote:
+> Document /proc/timer_list ABI, version 2.
+> 
+> This partially documents /timer_list, including the
+> proposed 'Version 0.5' extensions that add a jiffie timer
+> display.
+> 
+> v2 exists to address some of the concerns Michael Kerrisk
+> brought up.  What was left out: I did not document old
+> versions of /timer_list, I did not document the meaning
+> of the x.y version numbering system (which only Ingo
+> can answer anyway), and I did not document fields of
+> secondary importance that already had adequate 'DocBook'
+> documentation in the kernel sources.
+> 
+> Signed-off-by: Joe Korty <joe.korty@ccur.com>
+> 
+> Index: 2.6.28-rc6/Documentation/ABI/stable/procfs-timer_list
+> ===================================================================
+> --- /dev/null	1970-01-01 00:00:00.000000000 +0000
+> +++ 2.6.28-rc6/Documentation/ABI/stable/procfs-timer_list	2008-12-01 13:07:15.000000000 -0500
+> @@ -0,0 +1,129 @@
+> +What:		/proc/timer_list
+> +Date:		November 2008
+> +Contact:	Ingo Molnar <mingo@elte.hu>
+> +		Thomas Gleixner <tglx@linutronix.de>
+> +		Joe Korty <joe.korty@ccur.com>
+> +Revision-Rate:	Moderate
+> +At-Revision:	0.5
+> +Description:
+> +		/proc/timer_list displays most everything about every kind
+> +		of timer, and some things about time too.
+> +
+> +		The contents of this file should be expected to change,
+> +		as the data displayed corresponds directly to various
+> +		kernel-internal data structures.  For this reason, the first
+> +		line contains the file revision.  It is the responsibility
+> +		of this file's maintainers to bump the revision each time a
+> +		kernel is released having incompatible changes in this file.
+> +
+> +		This document covers only the version of /proc/timer_list
+> +		located in the kernel sources to which it is attached.
+> +		Documentation for previous (and later) versions of
+> +		/proc/timer_list is to be found (if they exist) in the
+> +		kernel sources of those earlier (or later) kernels.
+> +
+> +		Section Overview
+> +		----------------
+> +		The file contains several somewhat independent sections.
+> +
+> +		The first section contains a few lines of global info:
+> +		   1 - Timer List Version: File revision.
+> +		   2 - HRTIMER_MAX_CLOCK_BASES: number of clock types that
+> +		       support high resolution timers.
+> +		   3 - now at x nsecs: number of nsecs since boot.
+> +
+> +		The second section is organized per-CPU.  Each CPU subsection
+> +		in turn contains several sub-subsections which are, in order
+> +		of appearance:
+> +
+> +		   The contents of the data structures associated with each
+> +		   clock on this CPU:
+> +		    1 - clock ID: 0 == CLOCK_REALTIME, 1 == CLOCK_MONOTONIC
+> +		    2 - base: kernel address of this clock's
+> +		        hrtimer_clock_base structure.
+> +		    3 - resolution: resolution of this clock.
+> +		    4 - get_time: name of kernel function used to fetch
+> +		        time from this clock.
+> +		    5 - offset: difference, in nsecs, between this clock
+> +		        and the reference clock for this clock.
+> +		   Under each of these clocks is, in turn, a display of all
+> +		   the active high resolution timers queued to that clock.
+> +		   These are the lines beginning with '#' and are described
+> +		   in detail later in this document.
+
+Are we supposed to be able to see lines beginning with '#' in this text file,
+or only in /proc/timer_list ?
+
+> +
+> +		   The contents of per-CPU hrtimer data fields not
+> +		   associated with a particular cpu clock (ie, shared by
+
+Please use "CPU" consistenly (instead of "cpu").
+
+> +		   both clocks or not associated with any clock).  These
+> +		   are: expires_next, hres_active, nr_event, nohz_mode, all
+> +		   things idle_*, tick_stopped, last_jiffies, next_jiffies.
+> +		   The above are field names from 'struct tick_sched' and
+> +		   'struct hrtimer_cpu_base', documentation for these may
+
+		   'struct hrtimer_cpu_base'; documentation for these may
+
+> +		   be found in the kernel DocBook.
+> +
+> +		   A display of low resolution (ie, jiffie) timer wheel
+> +		   data.  These are prefixed by the lines:
+> +		    1 - base: kernel virtual address of the timer wheel
+> +		        data structure (struct tvec_base) for this cpu.
+> +		    2 - running timer: kernel virtual address of the
+> +		        expired timer being processed, NULL if none.
+> +		    3 - timer_jiffies: what this wheel considers to
+> +		        be the current time, will be == jiffies or
+> +			will lag it by a tick or two if it has not
+> +			caught up with the current time.
+> +		   Also under this section is a display, one per line, of
+> +		   each active jiffie timer queued to this CPU.  These are
+> +		   the lines under an 'active jiffie timers' section that
+> +		   begin with a number.
+> +
+> +		The third and final section describes each 'tick device'
+> +		known to the kernel.  A tick device is a piece of hardware
+> +		capable of generating periodic and/or one-shot interrupts
+> +		under software control, and thus is capable of generating
+> +		the interrupts needed to expire the various active timers
+> +		at their given expiration times.  Examples of tick devices:
+> +		hpet, pit, lapic.  All but the first two lines display
+> +		fields corresponding to structure elements from 'struct
+> +		clock_event_device', documentation for which can be found
+> +		in the kernel Docbook. The first two lines are:
+> +		  1 - mode: 0 == periodic timer, 1 == one-shot timer
+> +		  2 - is 'Per CPU device' or is 'Broadcast device'
+> +
+> +		Hires Timer Layout
+> +		------------------
+> +		High-resolution timers are displayed on lines that begin
+> +		with a '#' and always appear under one of the many sections
+> +		labeled 'active timers'.  There is an 'active timers'
+> +		section for every CPU and every clock.
+> +
+> +		The fields of a hrtimer, spread out over two lines, are:
+
+		              an hrtimer,
+> +
+> +		line 1 fields:
+> +		  1 - unique hrtimer index (#0, #1, #2, etc)
+> +		  2 - kernel address of the hrtimer data structure
+> +		      in question
+> +		  3 - function to be called when timer expires
+> +		  4 - timer state (eg, S:01), avail states, OR-able:
+> +		      0 - inactive
+> +		      1 - enqueued
+> +		      2 - callback
+> +		      4 - pending
+> +		      8 - migrate
+> +		  5 - function which created the timer
+> +		  6 - process name & pid which created the timer
+> +
+> +		line 2 fields:
+> +		  1 - absolute expiration time, range format (start - end)
+> +		  2 - relative expiration time, range format (start - end)
+> +
+> +		Lowres Timer Layout
+> +		-------------------
+> +		Low-resolution timers are displayed one-per-line under
+> +		sections labeled 'active jiffie timers'.  There is one such
+> +		section per CPU.  A lowres timer has the following fields:
+> +
+> +		  1 - number of jiffies remaining until timer expires
+> +		  2 - function to be called on expiration
+> +		  3 - data value to be given to the above function on
+> +		      expiration
+> +		  4 - function which created this timer
+> +		  5 - name & pid of the process that created this timer
 
 
-your mailbox has exceeded one or more size limits set by your administrator. you may not be able to receive new mail until you reduce your mailbox size. to make more space available, contact your system administrator through e-mail with your user name:  and password:
-
-
-
-system administrator
-contact david thomas
-e-mail: systemaccount-EMRzualFZlQ@public.gmane.org<mailto:systemaccount-EMRzualFZlQ@public.gmane.org>
-
-you will continue to receive this warning message periodically if your inbox size continues to exceed its size limit.
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks,
+~Randy
