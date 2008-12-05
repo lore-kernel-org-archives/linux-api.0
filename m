@@ -1,671 +1,495 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [RFC v11][PATCH 06/13] Restore memory address space
-Date: Fri,  5 Dec 2008 12:31:15 -0500
-Message-ID: <1228498282-11804-7-git-send-email-orenl@cs.columbia.edu>
+From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Subject: [RFC v11][PATCH 13/13] Restart multiple processes
+Date: Fri,  5 Dec 2008 12:31:22 -0500
+Message-ID: <1228498282-11804-14-git-send-email-orenl__49922.8600216613$1228498964$gmane$org@cs.columbia.edu>
 References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>
-Sender: owner-linux-mm@kvack.org
-Cc: containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Linux Torvalds <torvalds@osdl.org>, Thomas Gleixner <tglx@linutronix.de>, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, MinChan Kim <minchan.kim@gmail.com>, arnd@arndb.de, jeremy@goop.org, Oren Laadan <orenl@cs.columbia.edu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1228498282-11804-1-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, MinChan Kim <minchan.kim-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, jeremy-TSDbQ3PG+2Y@public.gmane.org, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Restoring the memory address space begins with nuking the existing one
-of the current process, and then reading the VMA state and contents.
-Call do_mmap_pgoffset() for each VMA and then read in the data.
+Restarting of multiple processes expects all restarting tasks to call
+sys_restart(). Once inside the system call, each task will restart
+itself at the same order that they were saved. The internals of the
+syscall will take care of in-kernel synchronization bewteen tasks.
 
-Changelog[v9]:
-  - Introduce cr_ctx_checkpoint() for checkpoint-specific ctx setup
+This patch does _not_ create the task tree in the kernel. Instead it
+assumes that all tasks are created in some way and then invoke the
+restart syscall. You can use the userspace mktree.c program to do
+that.
 
-Changelog[v7]:
-  - Fix argument given to kunmap_atomic() in memory dump/restore
+The init task (*) has a special role: it allocates the restart context
+(ctx), and coordinates the operation. In particular, it first waits
+until all participating tasks enter the kernel, and provides them the
+common restart context. Once everyone in ready, it begins to restart
+itself.
 
-Changelog[v6]:
-  - Balance all calls to cr_hbuf_get() with matching cr_hbuf_put()
-    (even though it's not really needed)
+In contrast, the other tasks enter the kernel, locate the init task (*)
+and grab its restart context, and then wait for their turn to restore.
 
-Changelog[v5]:
-  - Improve memory restore code (following Dave Hansen's comments)
-  - Change dump format (and code) to allow chunks of <vaddrs, pages>
-    instead of one long list of each
-  - Memory restore now maps user pages explicitly to copy data into them,
-    instead of reading directly to user space; got rid of mprotect_fixup()
+When a task (init or not) completes its restart, it hands the control
+over to the next in line, by waking that task.
 
-Changelog[v4]:
-  - Use standard list_... for cr_pgarr
+An array of pids (the one saved during the checkpoint) is used to
+synchronize the operation. The first task in the array is the init
+task (*). The restart context (ctx) maintain a "current position" in
+the array, which indicates which task is currently active. Once the
+currently active task completes its own restart, it increments that
+position and wakes up the next task.
 
+Restart assumes that userspace provides meaningful data, otherwise
+it's garbage-in-garbage-out. In this case, the syscall may block
+indefinitely, but in TASK_INTERRUPTIBLE, so the user can ctrl-c or
+otherwise kill the stray restarting tasks.
 
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
-Acked-by: Serge Hallyn <serue@us.ibm.com>
-Signed-off-by: Dave Hansen <dave@linux.vnet.ibm.com>
+In terms of security, restart runs as the user the invokes it, so it
+will not allow a user to do more than is otherwise permitted by the
+usual system semantics and policy.
+
+Currently we ignore threads and zombies, as well as session ids.
+Add support for multiple processes
+
+(*) For containers, restart should be called inside a fresh container
+by the init task of that container. However, it is also possible to
+restart applications not necessarily inside a container, and without
+restoring the original pids of the processes (that is, provided that
+the application can tolerate such behavior). This is useful to allow
+multi-process restart of tasks not isolated inside a container, and
+also for debugging.
+
+Signed-off-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- arch/x86/include/asm/checkpoint_hdr.h |    5 +
- arch/x86/mm/restart.c                 |   64 ++++++-
- checkpoint/Makefile                   |    2 +-
- checkpoint/checkpoint_arch.h          |    2 +
- checkpoint/checkpoint_mem.h           |    5 +
- checkpoint/restart.c                  |   51 +++++
- checkpoint/rstr_mem.c                 |  384 +++++++++++++++++++++++++++++++++
- include/linux/checkpoint.h            |    4 +
- 8 files changed, 514 insertions(+), 3 deletions(-)
- create mode 100644 checkpoint/rstr_mem.c
+ checkpoint/restart.c       |  214 +++++++++++++++++++++++++++++++++++++++++++-
+ checkpoint/sys.c           |   34 ++++++--
+ include/linux/checkpoint.h |   23 ++++-
+ include/linux/sched.h      |    1 +
+ 4 files changed, 258 insertions(+), 14 deletions(-)
 
-diff --git a/arch/x86/include/asm/checkpoint_hdr.h b/arch/x86/include/asm/checkpoint_hdr.h
-index 33f4c70..d13db9b 100644
---- a/arch/x86/include/asm/checkpoint_hdr.h
-+++ b/arch/x86/include/asm/checkpoint_hdr.h
-@@ -87,4 +87,9 @@ struct cr_hdr_mm_context {
- 	__s16 nldt;
- } __attribute__((aligned(8)));
+diff --git a/checkpoint/restart.c b/checkpoint/restart.c
+index f4f737d..24392ee 100644
+--- a/checkpoint/restart.c
++++ b/checkpoint/restart.c
+@@ -10,6 +10,7 @@
  
-+#ifdef __KERNEL__
-+/* misc prototypes from kernel (not defined elsewhere) */
-+asmlinkage int sys_modify_ldt(int func, void __user *ptr, unsigned long bytecount);
-+#endif
-+
- #endif /* __ASM_X86_CKPT_HDR__H */
-diff --git a/arch/x86/mm/restart.c b/arch/x86/mm/restart.c
-index 45ad790..ab68b2f 100644
---- a/arch/x86/mm/restart.c
-+++ b/arch/x86/mm/restart.c
-@@ -52,8 +52,10 @@ int cr_read_thread(struct cr_ctx *ctx)
- 
- 		size = sizeof(*desc) * GDT_ENTRY_TLS_ENTRIES;
- 		desc = kmalloc(size, GFP_KERNEL);
--		if (!desc)
--			return -ENOMEM;
-+		if (!desc) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
- 
- 		ret = cr_kread(ctx, desc, size);
- 		if (ret >= 0) {
-@@ -230,3 +232,61 @@ int cr_read_head_arch(struct cr_ctx *ctx)
- 
+ #include <linux/version.h>
+ #include <linux/sched.h>
++#include <linux/wait.h>
+ #include <linux/file.h>
+ #include <linux/magic.h>
+ #include <linux/checkpoint.h>
+@@ -276,30 +277,235 @@ static int cr_read_task(struct cr_ctx *ctx)
  	return ret;
  }
-+
-+int cr_read_mm_context(struct cr_ctx *ctx, struct mm_struct *mm, int rparent)
+ 
++/* cr_read_tree - read the tasks tree into the checkpoint context */
++static int cr_read_tree(struct cr_ctx *ctx)
 +{
-+	struct cr_hdr_mm_context *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	int n, parent, ret = -EINVAL;
++	struct cr_hdr_tree *hh = cr_hbuf_get(ctx, sizeof(*hh));
++	int parent, size, ret = -EINVAL;
 +
-+	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_MM_CONTEXT);
-+	cr_debug("parent %d rparent %d nldt %d\n", parent, rparent, hh->nldt);
++	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_TREE);
 +	if (parent < 0) {
 +		ret = parent;
 +		goto out;
-+	}
-+	if (parent != rparent)
++	} else if (parent != 0)
 +		goto out;
 +
-+	if (hh->nldt < 0 || hh->ldt_entry_size != LDT_ENTRY_SIZE)
++	if (hh->tasks_nr < 0)
 +		goto out;
 +
-+	/*
-+	 * to utilize the syscall modify_ldt() we first convert the data
-+	 * in the checkpoint image from 'struct desc_struct' to 'struct
-+	 * user_desc' with reverse logic of include/asm/desc.h:fill_ldt()
-+	 */
++	ctx->pids_nr = hh->tasks_nr;
++	size = sizeof(*ctx->pids_arr) * ctx->pids_nr;
++	if (size < 0)		/* overflow ? */
++		goto out;
 +
-+	for (n = 0; n < hh->nldt; n++) {
-+		struct user_desc info;
-+		struct desc_struct desc;
-+		mm_segment_t old_fs;
-+
-+		ret = cr_kread(ctx, &desc, LDT_ENTRY_SIZE);
-+		if (ret < 0)
-+			goto out;
-+
-+		info.entry_number = n;
-+		info.base_addr = desc.base0 | (desc.base1 << 16);
-+		info.limit = desc.limit0;
-+		info.seg_32bit = desc.d;
-+		info.contents = desc.type >> 2;
-+		info.read_exec_only = (desc.type >> 1) ^ 1;
-+		info.limit_in_pages = desc.g;
-+		info.seg_not_present = desc.p ^ 1;
-+		info.useable = desc.avl;
-+
-+		old_fs = get_fs();
-+		set_fs(get_ds());
-+		ret = sys_modify_ldt(1, (struct user_desc __user *) &info,
-+				     sizeof(info));
-+		set_fs(old_fs);
-+
-+		if (ret < 0)
-+			goto out;
++	ctx->pids_arr = kmalloc(size, GFP_KERNEL);
++	if (!ctx->pids_arr) {
++		ret = -ENOMEM;
++		goto out;
 +	}
-+
-+	ret = 0;
++	ret = cr_kread(ctx, ctx->pids_arr, size);
 + out:
 +	cr_hbuf_put(ctx, sizeof(*hh));
 +	return ret;
 +}
-diff --git a/checkpoint/Makefile b/checkpoint/Makefile
-index 3a0df6d..ac35033 100644
---- a/checkpoint/Makefile
-+++ b/checkpoint/Makefile
-@@ -3,4 +3,4 @@
- #
- 
- obj-$(CONFIG_CHECKPOINT_RESTART) += sys.o checkpoint.o restart.o \
--		ckpt_mem.o
-+		ckpt_mem.o rstr_mem.o
-diff --git a/checkpoint/checkpoint_arch.h b/checkpoint/checkpoint_arch.h
-index f06c7eb..39c8224 100644
---- a/checkpoint/checkpoint_arch.h
-+++ b/checkpoint/checkpoint_arch.h
-@@ -9,3 +9,5 @@ extern int cr_write_mm_context(struct cr_ctx *ctx,
- extern int cr_read_head_arch(struct cr_ctx *ctx);
- extern int cr_read_thread(struct cr_ctx *ctx);
- extern int cr_read_cpu(struct cr_ctx *ctx);
-+extern int cr_read_mm_context(struct cr_ctx *ctx,
-+			      struct mm_struct *mm, int parent);
-diff --git a/checkpoint/checkpoint_mem.h b/checkpoint/checkpoint_mem.h
-index 85546f4..85a5cf3 100644
---- a/checkpoint/checkpoint_mem.h
-+++ b/checkpoint/checkpoint_mem.h
-@@ -38,4 +38,9 @@ static inline int cr_pgarr_is_full(struct cr_pgarr *pgarr)
- 	return (pgarr->nr_used == CR_PGARR_TOTAL);
- }
- 
-+static inline int cr_pgarr_nr_free(struct cr_pgarr *pgarr)
++
++static int cr_wait_task(struct cr_ctx *ctx)
 +{
-+	return CR_PGARR_TOTAL - pgarr->nr_used;
++	pid_t pid = task_pid_vnr(current);
++
++	cr_debug("pid %d waiting\n", pid);
++	return wait_event_interruptible(ctx->waitq, ctx->pids_active == pid);
 +}
 +
- #endif /* _CHECKPOINT_CKPT_MEM_H_ */
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index d74d755..d90c28a 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -120,6 +120,44 @@ int cr_read_string(struct cr_ctx *ctx, char *str, int len)
- 	return ret;
- }
- 
-+/**
-+ * cr_read_fname - read a file name
-+ * @ctx: checkpoint context
-+ * @fname: buffer
-+ * @n: buffer length
-+ */
-+int cr_read_fname(struct cr_ctx *ctx, char *fname, int flen)
++static int cr_next_task(struct cr_ctx *ctx)
 +{
-+	return cr_read_buf_type(ctx, fname, &flen, CR_HDR_FNAME);
-+}
++	struct task_struct *tsk;
 +
-+/**
-+ * cr_read_open_fname - read a file name and open a file
-+ * @ctx: checkpoint context
-+ * @flags: file flags
-+ * @mode: file mode
-+ */
-+struct file *cr_read_open_fname(struct cr_ctx *ctx, int flags, int mode)
-+{
-+	struct file *file;
-+	char *fname;
-+	int ret;
++	ctx->pids_pos++;
 +
-+	fname = kmalloc(PATH_MAX, GFP_KERNEL);
-+	if (!fname)
-+		return ERR_PTR(-ENOMEM);
++	cr_debug("pids_pos %d %d\n", ctx->pids_pos, ctx->pids_nr);
++	if (ctx->pids_pos == ctx->pids_nr) {
++		complete(&ctx->complete);
++		return 0;
++	}
 +
-+	ret = cr_read_fname(ctx, fname, PATH_MAX);
-+	cr_debug("fname '%s' flags %#x mode %#x\n", fname, flags, mode);
-+	if (ret >= 0)
-+		file = filp_open(fname, flags, mode);
-+	else
-+		file = ERR_PTR(ret);
++	ctx->pids_active = ctx->pids_arr[ctx->pids_pos].vpid;
 +
-+	kfree(fname);
-+	return file;
-+}
++	cr_debug("pids_next %d\n", ctx->pids_active);
 +
- /* read the checkpoint header */
- static int cr_read_head(struct cr_ctx *ctx)
- {
-@@ -219,6 +257,10 @@ static int cr_read_task(struct cr_ctx *ctx)
- 	cr_debug("task_struct: ret %d\n", ret);
- 	if (ret < 0)
- 		goto out;
-+	ret = cr_read_mm(ctx);
-+	cr_debug("memory: ret %d\n", ret);
-+	if (ret < 0)
-+		goto out;
- 	ret = cr_read_thread(ctx);
- 	cr_debug("thread: ret %d\n", ret);
- 	if (ret < 0)
-@@ -230,10 +272,19 @@ static int cr_read_task(struct cr_ctx *ctx)
- 	return ret;
- }
- 
-+/* setup restart-specific parts of ctx */
-+static int cr_ctx_restart(struct cr_ctx *ctx)
-+{
++	rcu_read_lock();
++	tsk = find_task_by_pid_ns(ctx->pids_active, ctx->root_nsproxy->pid_ns);
++	if (tsk)
++		wake_up_process(tsk);
++	rcu_read_unlock();
++
++	if (!tsk) {
++		ctx->pids_err = -ESRCH;
++		complete(&ctx->complete);
++		return -ESRCH;
++	}
++
 +	return 0;
 +}
 +
- int do_restart(struct cr_ctx *ctx, pid_t pid)
++/* FIXME: this should be per container */
++DECLARE_WAIT_QUEUE_HEAD(cr_restart_waitq);
++
++static int do_restart_task(struct cr_ctx *ctx, pid_t pid)
++{
++	struct task_struct *root_task;
++	int ret;
++
++	rcu_read_lock();
++	root_task = find_task_by_pid_ns(pid, current->nsproxy->pid_ns);
++	if (root_task)
++		get_task_struct(root_task);
++	rcu_read_unlock();
++
++	if (!root_task)
++		return -EINVAL;
++
++	/*
++	 * wait for container init to initialize the restart context, then
++	 * grab a reference to that context, and if we're the last task to
++	 * do it, notify the container init.
++	 */
++	ret = wait_event_interruptible(cr_restart_waitq,
++				       root_task->checkpoint_ctx);
++	if (ret < 0)
++		goto out;
++
++	task_lock(root_task);
++	ctx = root_task->checkpoint_ctx;
++	if (ctx)
++		cr_ctx_get(ctx);
++	task_unlock(root_task);
++
++	if (!ctx) {
++		ret = -EAGAIN;
++		goto out;
++	}
++
++	if (atomic_dec_and_test(&ctx->tasks_count))
++		complete(&ctx->complete);
++
++	/* wait for our turn, do the restore, and tell next task in line */
++	ret = cr_wait_task(ctx);
++	if (ret < 0)
++		goto out;
++	ret = cr_read_task(ctx);
++	if (ret < 0)
++		goto out;
++	ret = cr_next_task(ctx);
++
++ out:
++	cr_ctx_put(ctx);
++	put_task_struct(root_task);
++	return ret;
++}
++
++static int cr_wait_all_tasks_start(struct cr_ctx *ctx)
++{
++	int ret;
++
++	if (ctx->pids_nr == 1)
++		return 0;
++
++	init_completion(&ctx->complete);
++	current->checkpoint_ctx = ctx;
++
++	wake_up_all(&cr_restart_waitq);
++
++	ret = wait_for_completion_interruptible(&ctx->complete);
++	if (ret < 0)
++		return ret;
++
++	task_lock(current);
++	current->checkpoint_ctx = NULL;
++	task_unlock(current);
++
++	return 0;
++}
++
++static int cr_wait_all_tasks_finish(struct cr_ctx *ctx)
++{
++	int ret;
++
++	if (ctx->pids_nr == 1)
++		return 0;
++
++	init_completion(&ctx->complete);
++
++	ret = cr_next_task(ctx);
++	if (ret < 0)
++		return ret;
++
++	ret = wait_for_completion_interruptible(&ctx->complete);
++	if (ret < 0)
++		return ret;
++
++	return 0;
++}
++
+ /* setup restart-specific parts of ctx */
+ static int cr_ctx_restart(struct cr_ctx *ctx, pid_t pid)
+ {
++	ctx->root_pid = pid;
++	ctx->root_task = current;
++	ctx->root_nsproxy = current->nsproxy;
++
++	get_task_struct(ctx->root_task);
++	get_nsproxy(ctx->root_nsproxy);
++
++	atomic_set(&ctx->tasks_count, ctx->pids_nr - 1);
++
+ 	return 0;
+ }
+ 
+-int do_restart(struct cr_ctx *ctx, pid_t pid)
++static int do_restart_root(struct cr_ctx *ctx, pid_t pid)
  {
  	int ret;
  
-+	ret = cr_ctx_restart(ctx);
++	ret = cr_read_head(ctx);
 +	if (ret < 0)
 +		goto out;
- 	ret = cr_read_head(ctx);
++	ret = cr_read_tree(ctx);
++	if (ret < 0)
++		goto out;
++
+ 	ret = cr_ctx_restart(ctx, pid);
  	if (ret < 0)
  		goto out;
-diff --git a/checkpoint/rstr_mem.c b/checkpoint/rstr_mem.c
-new file mode 100644
-index 0000000..6713f4f
---- /dev/null
-+++ b/checkpoint/rstr_mem.c
-@@ -0,0 +1,384 @@
-+/*
-+ *  Restart memory contents
-+ *
-+ *  Copyright (C) 2008 Oren Laadan
-+ *
-+ *  This file is subject to the terms and conditions of the GNU General Public
-+ *  License.  See the file COPYING in the main directory of the Linux
-+ *  distribution for more details.
-+ */
+-	ret = cr_read_head(ctx);
 +
-+#include <linux/kernel.h>
-+#include <linux/sched.h>
-+#include <linux/fcntl.h>
-+#include <linux/file.h>
-+#include <linux/fs.h>
-+#include <linux/pagemap.h>
-+#include <linux/mm_types.h>
-+#include <linux/mman.h>
-+#include <linux/mm.h>
-+#include <linux/err.h>
-+#include <linux/checkpoint.h>
-+#include <linux/checkpoint_hdr.h>
++	/* wait for all other tasks to enter do_restart_task() */
++	ret = cr_wait_all_tasks_start(ctx);
+ 	if (ret < 0)
+ 		goto out;
 +
-+#include "checkpoint_arch.h"
-+#include "checkpoint_mem.h"
+ 	ret = cr_read_task(ctx);
+ 	if (ret < 0)
+ 		goto out;
+-	ret = cr_read_tail(ctx);
 +
-+/*
-+ * Unlike checkpoint, restart is executed in the context of each restarting
-+ * process: vma regions are restored via a call to mmap(), and the data is
-+ * read into the address space of the current process.
-+ */
++	/* wait for all other tasks to complete do_restart_task() */
++	ret = cr_wait_all_tasks_finish(ctx);
+ 	if (ret < 0)
+ 		goto out;
+ 
+-	/* on success, adjust the return value if needed [TODO] */
++	ret = cr_read_tail(ctx);
 +
+  out:
+ 	return ret;
+ }
 +
-+/**
-+ * cr_read_pages_vaddrs - read addresses of pages to page-array chain
-+ * @ctx - restart context
-+ * @nr_pages - number of address to read
-+ */
-+static int cr_read_pages_vaddrs(struct cr_ctx *ctx, unsigned long nr_pages)
++int do_restart(struct cr_ctx *ctx, pid_t pid)
 +{
-+	struct cr_pgarr *pgarr;
-+	unsigned long *vaddrp;
-+	int nr, ret;
-+
-+	while (nr_pages) {
-+		pgarr = cr_pgarr_current(ctx);
-+		if (!pgarr)
-+			return -ENOMEM;
-+		nr = cr_pgarr_nr_free(pgarr);
-+		if (nr > nr_pages)
-+			nr = nr_pages;
-+		vaddrp = &pgarr->vaddrs[pgarr->nr_used];
-+		ret = cr_kread(ctx, vaddrp, nr * sizeof(unsigned long));
-+		if (ret < 0)
-+			return ret;
-+		pgarr->nr_used += nr;
-+		nr_pages -= nr;
-+	}
-+	return 0;
-+}
-+
-+static int cr_page_read(struct cr_ctx *ctx, struct page *page, char *buf)
-+{
-+	void *ptr;
 +	int ret;
 +
-+	ret = cr_kread(ctx, buf, PAGE_SIZE);
-+	if (ret < 0)
-+		return ret;
-+
-+	ptr = kmap_atomic(page, KM_USER1);
-+	memcpy(ptr, buf, PAGE_SIZE);
-+	kunmap_atomic(ptr, KM_USER1);
-+
-+	return 0;
-+}
-+
-+/**
-+ * cr_read_pages_contents - read in data of pages in page-array chain
-+ * @ctx - restart context
-+ */
-+static int cr_read_pages_contents(struct cr_ctx *ctx)
-+{
-+	struct mm_struct *mm = current->mm;
-+	struct cr_pgarr *pgarr;
-+	unsigned long *vaddrs;
-+	char *buf;
-+	int i, ret = 0;
-+
-+	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	down_read(&mm->mmap_sem);
-+	list_for_each_entry_reverse(pgarr, &ctx->pgarr_list, list) {
-+		vaddrs = pgarr->vaddrs;
-+		for (i = 0; i < pgarr->nr_used; i++) {
-+			struct page *page;
-+
-+			ret = get_user_pages(current, mm, vaddrs[i],
-+					     1, 1, 1, &page, NULL);
-+			if (ret < 0)
-+				goto out;
-+
-+			ret = cr_page_read(ctx, page, buf);
-+			page_cache_release(page);
-+
-+			if (ret < 0)
-+				goto out;
-+		}
-+	}
-+
-+ out:
-+	up_read(&mm->mmap_sem);
-+	kfree(buf);
-+	return 0;
-+}
-+
-+/**
-+ * cr_read_private_vma_contents - restore contents of a VMA with private memory
-+ * @ctx - restart context
-+ *
-+ * Reads a header that specifies how many pages will follow, then reads
-+ * a list of virtual addresses into ctx->pgarr_list page-array chain,
-+ * followed by the actual contents of the corresponding pages. Iterates
-+ * these steps until reaching a header specifying "0" pages, which marks
-+ * the end of the contents.
-+ */
-+static int cr_read_private_vma_contents(struct cr_ctx *ctx)
-+{
-+	struct cr_hdr_pgarr *hh;
-+	unsigned long nr_pages;
-+	int parent, ret = 0;
-+
-+	while (1) {
-+		hh = cr_hbuf_get(ctx, sizeof(*hh));
-+		parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_PGARR);
-+		if (parent != 0) {
-+			if (parent < 0)
-+				ret = parent;
-+			else
-+				ret = -EINVAL;
-+			cr_hbuf_put(ctx, sizeof(*hh));
-+			break;
-+		}
-+
-+		cr_debug("nr_pages %ld\n", (unsigned long) hh->nr_pages);
-+
-+		nr_pages = hh->nr_pages;
-+		cr_hbuf_put(ctx, sizeof(*hh));
-+
-+		if (!nr_pages)
-+			break;
-+
-+		ret = cr_read_pages_vaddrs(ctx, nr_pages);
-+		if (ret < 0)
-+			break;
-+		ret = cr_read_pages_contents(ctx);
-+		if (ret < 0)
-+			break;
-+		cr_pgarr_reset_all(ctx);
-+	}
-+
-+	return ret;
-+}
-+
-+/**
-+ * cr_calc_map_prot_bits - convert vm_flags to mmap protection
-+ * orig_vm_flags: source vm_flags
-+ */
-+static unsigned long cr_calc_map_prot_bits(unsigned long orig_vm_flags)
-+{
-+	unsigned long vm_prot = 0;
-+
-+	if (orig_vm_flags & VM_READ)
-+		vm_prot |= PROT_READ;
-+	if (orig_vm_flags & VM_WRITE)
-+		vm_prot |= PROT_WRITE;
-+	if (orig_vm_flags & VM_EXEC)
-+		vm_prot |= PROT_EXEC;
-+	if (orig_vm_flags & PROT_SEM)   /* only (?) with IPC-SHM  */
-+		vm_prot |= PROT_SEM;
-+
-+	return vm_prot;
-+}
-+
-+/**
-+ * cr_calc_map_flags_bits - convert vm_flags to mmap flags
-+ * orig_vm_flags: source vm_flags
-+ */
-+static unsigned long cr_calc_map_flags_bits(unsigned long orig_vm_flags)
-+{
-+	unsigned long vm_flags = 0;
-+
-+	vm_flags = MAP_FIXED;
-+	if (orig_vm_flags & VM_GROWSDOWN)
-+		vm_flags |= MAP_GROWSDOWN;
-+	if (orig_vm_flags & VM_DENYWRITE)
-+		vm_flags |= MAP_DENYWRITE;
-+	if (orig_vm_flags & VM_EXECUTABLE)
-+		vm_flags |= MAP_EXECUTABLE;
-+	if (orig_vm_flags & VM_MAYSHARE)
-+		vm_flags |= MAP_SHARED;
++	if (ctx)
++		ret = do_restart_root(ctx, pid);
 +	else
-+		vm_flags |= MAP_PRIVATE;
++		ret = do_restart_task(ctx, pid);
 +
-+	return vm_flags;
-+}
-+
-+static int cr_read_vma(struct cr_ctx *ctx, struct mm_struct *mm)
-+{
-+	struct cr_hdr_vma *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	unsigned long vm_size, vm_start, vm_flags, vm_prot, vm_pgoff;
-+	unsigned long addr;
-+	struct file *file = NULL;
-+	int parent, ret = -EINVAL;
-+
-+	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_VMA);
-+	if (parent < 0) {
-+		ret = parent;
-+		goto err;
-+	} else if (parent != 0)
-+		goto err;
-+
-+	cr_debug("vma %#lx-%#lx type %d\n", (unsigned long) hh->vm_start,
-+		 (unsigned long) hh->vm_end, (int) hh->vma_type);
-+
-+	if (hh->vm_end < hh->vm_start)
-+		goto err;
-+
-+	vm_start = hh->vm_start;
-+	vm_pgoff = hh->vm_pgoff;
-+	vm_size = hh->vm_end - hh->vm_start;
-+	vm_prot = cr_calc_map_prot_bits(hh->vm_flags);
-+	vm_flags = cr_calc_map_flags_bits(hh->vm_flags);
-+
-+	switch (hh->vma_type) {
-+
-+	case CR_VMA_ANON:		/* anonymous private mapping */
-+		if (vm_flags & VM_SHARED)
-+			goto err;
-+		/*
-+		 * vm_pgoff for anonymous mapping is the "global" page
-+		 * offset (namely from addr 0x0), so we force a zero
-+		 */
-+		vm_pgoff = 0;
-+		break;
-+
-+	case CR_VMA_FILE:		/* private mapping from a file */
-+		if (vm_flags & VM_SHARED)
-+			goto err;
-+		/*
-+		 * for private mapping using 'read-only' is sufficient
-+		 */
-+		file = cr_read_open_fname(ctx, O_RDONLY, 0);
-+		if (IS_ERR(file)) {
-+			ret = PTR_ERR(file);
-+			goto err;
-+		}
-+		break;
-+
-+	default:
-+		goto err;
-+
-+	}
-+
-+	cr_hbuf_put(ctx, sizeof(*hh));
-+
-+	down_write(&mm->mmap_sem);
-+	addr = do_mmap_pgoff(file, vm_start, vm_size,
-+			     vm_prot, vm_flags, vm_pgoff);
-+	up_write(&mm->mmap_sem);
-+	cr_debug("size %#lx prot %#lx flag %#lx pgoff %#lx => %#lx\n",
-+		 vm_size, vm_prot, vm_flags, vm_pgoff, addr);
-+
-+	/* the file (if opened) is now referenced by the vma */
-+	if (file)
-+		filp_close(file, NULL);
-+
-+	if (IS_ERR((void *) addr))
-+		return PTR_ERR((void *) addr);
-+
-+	/*
-+	 * CR_VMA_ANON: read in memory as is
-+	 * CR_VMA_FILE: read in memory as is
-+	 * (more to follow ...)
-+	 */
-+
-+	switch (hh->vma_type) {
-+	case CR_VMA_ANON:
-+	case CR_VMA_FILE:
-+		/* standard case: read the data into the memory */
-+		ret = cr_read_private_vma_contents(ctx);
-+		break;
-+	}
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	cr_debug("vma retval %d\n", ret);
-+	return 0;
-+
-+ err:
-+	cr_hbuf_put(ctx, sizeof(*hh));
++	/* on success, adjust the return value if needed [TODO] */
 +	return ret;
 +}
+diff --git a/checkpoint/sys.c b/checkpoint/sys.c
+index 121c979..188dbe3 100644
+--- a/checkpoint/sys.c
++++ b/checkpoint/sys.c
+@@ -145,6 +145,8 @@ static void cr_task_arr_free(struct cr_ctx *ctx)
+ 
+ static void cr_ctx_free(struct cr_ctx *ctx)
+ {
++	BUG_ON(atomic_read(&ctx->refcount));
 +
-+static int cr_destroy_mm(struct mm_struct *mm)
+ 	if (ctx->file)
+ 		fput(ctx->file);
+ 
+@@ -163,6 +165,8 @@ static void cr_ctx_free(struct cr_ctx *ctx)
+ 	if (ctx->root_task)
+ 		put_task_struct(ctx->root_task);
+ 
++	kfree(ctx->pids_arr);
++
+ 	kfree(ctx);
+ }
+ 
+@@ -177,7 +181,9 @@ static struct cr_ctx *cr_ctx_alloc(int fd, unsigned long flags)
+ 
+ 	ctx->flags = flags;
+ 
++	atomic_set(&ctx->refcount, 0);
+ 	INIT_LIST_HEAD(&ctx->pgarr_list);
++	init_waitqueue_head(&ctx->waitq);
+ 
+ 	err = -EBADF;
+ 	ctx->file = fget(fd);
+@@ -192,6 +198,7 @@ static struct cr_ctx *cr_ctx_alloc(int fd, unsigned long flags)
+ 	if (cr_objhash_alloc(ctx) < 0)
+ 		goto err;
+ 
++	atomic_inc(&ctx->refcount);
+ 	return ctx;
+ 
+  err:
+@@ -199,6 +206,17 @@ static struct cr_ctx *cr_ctx_alloc(int fd, unsigned long flags)
+ 	return ERR_PTR(err);
+ }
+ 
++void cr_ctx_get(struct cr_ctx *ctx)
 +{
-+	struct vm_area_struct *vmnext = mm->mmap;
-+	struct vm_area_struct *vma;
-+	int ret;
-+
-+	while (vmnext) {
-+		vma = vmnext;
-+		vmnext = vmnext->vm_next;
-+		ret = do_munmap(mm, vma->vm_start, vma->vm_end-vma->vm_start);
-+		if (ret < 0) {
-+			pr_debug("c/r: restart failed do_munmap (%d)\n", ret);
-+			return ret;
-+		}
-+	}
-+	return 0;
++	atomic_inc(&ctx->refcount);
 +}
 +
-+int cr_read_mm(struct cr_ctx *ctx)
++void cr_ctx_put(struct cr_ctx *ctx)
 +{
-+	struct cr_hdr_mm *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	struct mm_struct *mm;
-+	int nr, parent, ret;
-+
-+	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_MM);
-+	if (parent < 0) {
-+		ret = parent;
-+		goto out;
-+	}
-+
-+	ret = -EINVAL;
-+#if 0	/* activate when containers are used */
-+	if (parent != task_pid_vnr(current))
-+		goto out;
-+#endif
-+	cr_debug("map_count %d\n", hh->map_count);
-+
-+	/* XXX need more sanity checks */
-+	if (hh->start_code > hh->end_code ||
-+	    hh->start_data > hh->end_data || hh->map_count < 0)
-+		goto out;
-+
-+	mm = current->mm;
-+
-+	/* point of no return -- destruct current mm */
-+	down_write(&mm->mmap_sem);
-+	ret = cr_destroy_mm(mm);
-+	if (ret < 0) {
-+		up_write(&mm->mmap_sem);
-+		goto out;
-+	}
-+	mm->start_code = hh->start_code;
-+	mm->end_code = hh->end_code;
-+	mm->start_data = hh->start_data;
-+	mm->end_data = hh->end_data;
-+	mm->start_brk = hh->start_brk;
-+	mm->brk = hh->brk;
-+	mm->start_stack = hh->start_stack;
-+	mm->arg_start = hh->arg_start;
-+	mm->arg_end = hh->arg_end;
-+	mm->env_start = hh->env_start;
-+	mm->env_end = hh->env_end;
-+	up_write(&mm->mmap_sem);
-+
-+	/* FIX: need also mm->flags */
-+
-+	for (nr = hh->map_count; nr; nr--) {
-+		ret = cr_read_vma(ctx, mm);
-+		if (ret < 0)
-+			goto out;
-+	}
-+
-+	ret = cr_read_mm_context(ctx, mm, hh->objref);
-+ out:
-+	cr_hbuf_put(ctx, sizeof(*hh));
-+	return ret;
++	if (ctx && atomic_dec_and_test(&ctx->refcount))
++		cr_ctx_free(ctx);
 +}
++
+ /**
+  * sys_checkpoint - checkpoint a container
+  * @pid: pid of the container init(1) process
+@@ -226,7 +244,7 @@ asmlinkage long sys_checkpoint(pid_t pid, int fd, unsigned long flags)
+ 	if (!ret)
+ 		ret = ctx->crid;
+ 
+-	cr_ctx_free(ctx);
++	cr_ctx_put(ctx);
+ 	return ret;
+ }
+ 
+@@ -241,7 +259,7 @@ asmlinkage long sys_checkpoint(pid_t pid, int fd, unsigned long flags)
+  */
+ asmlinkage long sys_restart(int crid, int fd, unsigned long flags)
+ {
+-	struct cr_ctx *ctx;
++	struct cr_ctx *ctx = NULL;
+ 	pid_t pid;
+ 	int ret;
+ 
+@@ -249,15 +267,17 @@ asmlinkage long sys_restart(int crid, int fd, unsigned long flags)
+ 	if (flags)
+ 		return -EINVAL;
+ 
+-	ctx = cr_ctx_alloc(fd, flags | CR_CTX_RSTR);
+-	if (IS_ERR(ctx))
+-		return PTR_ERR(ctx);
+-
+ 	/* FIXME: for now, we use 'crid' as a pid */
+ 	pid = (pid_t) crid;
+ 
++	if (pid == task_pid_vnr(current))
++		ctx = cr_ctx_alloc(fd, flags | CR_CTX_RSTR);
++
++	if (IS_ERR(ctx))
++		return PTR_ERR(ctx);
++
+ 	ret = do_restart(ctx, pid);
+ 
+-	cr_ctx_free(ctx);
++	cr_ctx_put(ctx);
+ 	return ret;
+ }
 diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index 4e97f9f..ab1b215 100644
+index 2504717..b32c0a7 100644
 --- a/include/linux/checkpoint.h
 +++ b/include/linux/checkpoint.h
-@@ -58,6 +58,10 @@ extern int cr_read_buf_type(struct cr_ctx *ctx, void *buf, int *len, int type);
- extern int cr_read_buffer(struct cr_ctx *ctx, void *buf, int *len);
- extern int cr_read_string(struct cr_ctx *ctx, char *str, int len);
+@@ -13,10 +13,11 @@
+ #include <linux/fs.h>
+ #include <linux/path.h>
+ #include <linux/sched.h>
++#include <asm/atomic.h>
  
-+extern int cr_read_fname(struct cr_ctx *ctx, char *fname, int n);
-+extern struct file *cr_read_open_fname(struct cr_ctx *ctx,
-+				       int flags, int mode);
+ #ifdef CONFIG_CHECKPOINT_RESTART
+ 
+-#define CR_VERSION  2
++#define CR_VERSION  3
+ 
+ struct cr_ctx {
+ 	int crid;		/* unique checkpoint id */
+@@ -34,14 +35,27 @@ struct cr_ctx {
+ 	void *hbuf;		/* temporary buffer for headers */
+ 	int hpos;		/* position in headers buffer */
+ 
+-	struct task_struct **tasks_arr;	/* array of all tasks in container */
+-	int tasks_nr;			/* size of tasks array */
++	atomic_t refcount;
+ 
+ 	struct cr_objhash *objhash;	/* hash for shared objects */
+ 
+ 	struct list_head pgarr_list;	/* page array to dump VMA contents */
+ 
+ 	struct path fs_mnt;	/* container root (FIXME) */
 +
- extern int do_checkpoint(struct cr_ctx *ctx, pid_t pid);
- extern int cr_write_mm(struct cr_ctx *ctx, struct task_struct *t);
++	/* [multi-process checkpoint] */
++	struct task_struct **tasks_arr; /* array of all tasks [checkpoint] */
++	int tasks_nr;                   /* size of tasks array */
++
++	/* [multi-process restart] */
++	struct cr_hdr_pids *pids_arr;	/* array of all pids [restart] */
++	int pids_nr;			/* size of pids array */
++	int pids_pos;			/* position pids array */
++	int pids_err;			/* error occured ? */
++	pid_t pids_active;		/* pid of (next) active task */
++	atomic_t tasks_count;		/* sync of restarting tasks */
++	struct completion complete;	/* sync of restarting tasks */
++	wait_queue_head_t waitq;	/* sync of restarting tasks */
+ };
+ 
+ /* cr_ctx: flags */
+@@ -54,6 +68,9 @@ extern int cr_kread(struct cr_ctx *ctx, void *buf, int count);
+ extern void *cr_hbuf_get(struct cr_ctx *ctx, int n);
+ extern void cr_hbuf_put(struct cr_ctx *ctx, int n);
+ 
++extern void cr_ctx_get(struct cr_ctx *ctx);
++extern void cr_ctx_put(struct cr_ctx *ctx);
++
+ /* shared objects handling */
+ 
+ enum {
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index faa2ec6..0150e90 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1359,6 +1359,7 @@ struct task_struct {
+ 
+ #ifdef CONFIG_CHECKPOINT_RESTART
+ 	atomic_t may_checkpoint;
++	struct cr_ctx *checkpoint_ctx;
+ #endif
+ };
  
 -- 
 1.5.4.3
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
