@@ -1,34 +1,98 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v11][PATCH 00/13] Kernel based checkpoint/restart
-Date: Tue, 9 Dec 2008 13:42:20 -0600
-Message-ID: <20081209194220.GA20101@us.ibm.com>
-References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>
+From: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH] - support inheritance of mlocks across fork/exec V2
+Date: Tue, 09 Dec 2008 14:41:36 -0600
+Message-ID: <1228855296.3726.113.camel@calx>
+References: <1227561707.6937.61.camel@lts-notebook>
+	 <20081125152651.b4c3c18f.akpm@linux-foundation.org>
+	 <1228331069.6693.73.camel@lts-notebook>
+	 <20081206220729.042a926e.akpm@linux-foundation.org>
+	 <1228770337.31442.44.camel@lts-notebook>  <1228771985.3726.32.camel@calx>
+	 <1228851652.6379.58.camel@lts-notebook>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1228498282-11804-1-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+In-Reply-To: <1228851652.6379.58.camel@lts-notebook>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, MinChan Kim <minchan.kim-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, jeremy-TSDbQ3PG+2Y@public.gmane.org
+To: Lee Schermerhorn <Lee.Schermerhorn-VXdhtT5mjnY@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hugh-DTz5qymZ9yRBDgjK7y7TUQ@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Oren Laadan (orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org):
-> Checkpoint-restart (c/r): fixed races in file handling (comments from
-> from Al Viro). Updated and tested against v2.6.28-rc7 (feaf384...)
+On Tue, 2008-12-09 at 14:40 -0500, Lee Schermerhorn wrote:
+> On Mon, 2008-12-08 at 15:33 -0600, Matt Mackall wrote:
+> > On Mon, 2008-12-08 at 16:05 -0500, Lee Schermerhorn wrote:
+> > > > > In support of a "lock prefix command"--e.g., mlock <cmd>
+> > > <args> ...
+> > > > > Analogous to taskset(1) for cpu affinity or numactl(8) for numa memory
+> > > > > policy.
+> > > > > 
+> > > > > Together with patches to keep mlocked pages off the LRU, this will
+> > > > > allow users/admins to lock down applications without modifying them,
+> > > > > if their RLIMIT_MEMLOCK is sufficiently large, keeping their pages
+> > > > > off the LRU and out of consideration for reclaim.
+> > > > > 
+> > > > > Potentially useful, as well, in real-time environments to force
+> > > > > prefaulting and residency for applications that don't mlock themselves.
+> > 
+> > This is a bit scary to me. Privilege and mode inheritance across
+> > processes is the root of many nasty surprises, security and otherwise.
 > 
-> We'd like these to make it into -mm. This version addresses the
-> last of the known bugs. Please pull at least the first 11 patches,
-> as they are similar to before.
+> Hi, Matt:
+> 
+> Could you explain more about this issue?  I believe that the patch
+> doesn't provide any privileges or capabilities that a process doesn't
+> already have.  It just allows one to cause a process and, optionally,
+> its descendants, to behave as if one had modified the sources to invoke
+> mlockall() directly.  It is still subject to each individual task's
+> resource limits.  At least, that was my intent.  
 
-So far I'm finding no regressions and checkpoint/restart is working
-perfectly for me.
+Again, it's about inheriting *something* across processes. This
+historically creates surprises. When the thing being inherited is a
+privilege, the surprises are security holes. I can't tell you what the
+surprises are, only that I expect there to be some.
 
-Andrew, any chance of getting this round into -mm for some extra
-testing?
+mlockall is not a privilege in itself, but it is a non-standard mode of
+operation that most processes are not designed for or expecting, and it
+does relate to the handling of a finite resource with system stability
+implications. If the thing that turns on this mode is buried inside some
+poorly written app that decides it needs to mlockall somewhere, the
+'surprise' can occur far away - in the child of a child of a thread an
+hour later. And the surprise can be fatal - all memory eaten up, because
+our process just happened to run without an rlimit.
 
-thanks,
--serge
+I've seen this with RT. An app temporarily elevates itself to RT, and
+unrelatedly forks another process. The second short-lived process kicks
+off a daemon that sometime later consumes all CPU in a busy loop (in
+this case waiting on I/O that never happens because everything else is
+shut out).
+
+Doing it as a container parameter means that you explicitly recognize
+that 'everything in the container' gets this mode. And you've probably
+also given a thought to 'how big is this container' and the like as
+well.
+
+> As far as "what I'm trying to do":  I see this as exactly like using
+> taskset to set the cpu affinity of a task, or numactl to set the task
+> mempolicy without modifying the source.
+
+Oh sure, I completely get that and I think it's a useful notion. And I
+think the above analogous interfaces have more or less the same issues,
+except that mlockall is a much older and more widely used API.
+Containers are a better match here too, but the above predate
+containers.
+
+>   If one had access to the
+> program source and wouldn't, e.g., void a support contract by modifying
+> it, one could just insert the calls into the source itself.
+
+Huh? We would of course set up a container 'from the outside'. By
+comparison, your mlockall() call traditionally operates from 'from the
+inside', and you're proposing to add a flag and a helper program that
+makes it work 'from the outside' too. Which is a bit hackish.
+
+-- 
+Mathematics is the supreme nostalgia of our time.
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
