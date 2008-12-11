@@ -1,97 +1,63 @@
-From: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH] - support inheritance of mlocks across fork/exec V2
-Date: Tue, 09 Dec 2008 14:41:36 -0600
-Message-ID: <1228855296.3726.113.camel@calx>
-References: <1227561707.6937.61.camel@lts-notebook>
-	 <20081125152651.b4c3c18f.akpm@linux-foundation.org>
-	 <1228331069.6693.73.camel@lts-notebook>
-	 <20081206220729.042a926e.akpm@linux-foundation.org>
-	 <1228770337.31442.44.camel@lts-notebook>  <1228771985.3726.32.camel@calx>
-	 <1228851652.6379.58.camel@lts-notebook>
+From: "Hans J. Koch" <hjk-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH 1/1] Userspace I/O (UIO): Add support for userspace DMA
+	(corrected)
+Date: Thu, 11 Dec 2008 01:33:41 +0100
+Message-ID: <20081211003340.GB3078@local>
+References: <208aa0f00812031751n27a75d21h8747054651639463@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1228851652.6379.58.camel@lts-notebook>
+Content-Disposition: inline
+In-Reply-To: <208aa0f00812031751n27a75d21h8747054651639463-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Lee Schermerhorn <Lee.Schermerhorn-VXdhtT5mjnY@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hugh-DTz5qymZ9yRBDgjK7y7TUQ@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Edward Estabrook <edward.estabrook.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hjk-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, gregkh-l3A5Bk7waGM@public.gmane.org, edward.estabrook-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, edward_estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2008-12-09 at 14:40 -0500, Lee Schermerhorn wrote:
-> On Mon, 2008-12-08 at 15:33 -0600, Matt Mackall wrote:
-> > On Mon, 2008-12-08 at 16:05 -0500, Lee Schermerhorn wrote:
-> > > > > In support of a "lock prefix command"--e.g., mlock <cmd>
-> > > <args> ...
-> > > > > Analogous to taskset(1) for cpu affinity or numactl(8) for numa memory
-> > > > > policy.
-> > > > > 
-> > > > > Together with patches to keep mlocked pages off the LRU, this will
-> > > > > allow users/admins to lock down applications without modifying them,
-> > > > > if their RLIMIT_MEMLOCK is sufficiently large, keeping their pages
-> > > > > off the LRU and out of consideration for reclaim.
-> > > > > 
-> > > > > Potentially useful, as well, in real-time environments to force
-> > > > > prefaulting and residency for applications that don't mlock themselves.
-> > 
-> > This is a bit scary to me. Privilege and mode inheritance across
-> > processes is the root of many nasty surprises, security and otherwise.
+On Wed, Dec 03, 2008 at 05:51:30PM -0800, Edward Estabrook wrote:
+> From: Edward Estabrook <Edward_Estabrook-+2HdxjxtzLdBDgjK7y7TUQ@public.gmane.org>
 > 
-> Hi, Matt:
-> 
-> Could you explain more about this issue?  I believe that the patch
-> doesn't provide any privileges or capabilities that a process doesn't
-> already have.  It just allows one to cause a process and, optionally,
-> its descendants, to behave as if one had modified the sources to invoke
-> mlockall() directly.  It is still subject to each individual task's
-> resource limits.  At least, that was my intent.  
+> Here is a patch that adds the ability to dynamically allocate and use
+> coherent DMA
+> from userspace by extending the Userspace IO driver.  This patch applies against
+> 2.6.28-rc6.
 
-Again, it's about inheriting *something* across processes. This
-historically creates surprises. When the thing being inherited is a
-privilege, the surprises are security holes. I can't tell you what the
-surprises are, only that I expect there to be some.
+Hi Edward,
+sorry I didn't answer sooner. It was not lack of interest in your work, I
+just had to think about it (and had quite a lot of other work, too).
+I consider your idea of having DMA coherent memory allocatable from userspace
+a valid demand. However, the interface should be implemented differently.
 
-mlockall is not a privilege in itself, but it is a non-standard mode of
-operation that most processes are not designed for or expecting, and it
-does relate to the handling of a finite resource with system stability
-implications. If the thing that turns on this mode is buried inside some
-poorly written app that decides it needs to mlockall somewhere, the
-'surprise' can occur far away - in the child of a child of a thread an
-hour later. And the surprise can be fatal - all memory eaten up, because
-our process just happened to run without an rlimit.
+As a general requirement, all information you need to pass to userspace has
+to go through sysfs. This is a UIO design decision and should not be changed
+lightly. Please don't fill information into the allocated memory.
 
-I've seen this with RT. An app temporarily elevates itself to RT, and
-unrelatedly forks another process. The second short-lived process kicks
-off a daemon that sometime later consumes all CPU in a busy loop (in
-this case waiting on I/O that never happens because everything else is
-shut out).
+We shouldn't mix dynamically allocated DMA regions with the already existing
+static memory mappings. There should be an extra directory, maybe called
+/sys/class/uio/uioN/dyn_dma_mem/ containing information about this kind of
+DMA memory. This directory would not exist by default, it's only created if
+some user actually allocates such memory.
 
-Doing it as a container parameter means that you explicitly recognize
-that 'everything in the container' gets this mode. And you've probably
-also given a thought to 'how big is this container' and the like as
-well.
+In the UIO core, these mappings should be handled with a dynamic list, not
+a static array. The number of possible mappings has to be limited to a
+sensible maximum, maybe 50 or 100. The code handling the existing static
+mappings could mostly stay as-is.
 
-> As far as "what I'm trying to do":  I see this as exactly like using
-> taskset to set the cpu affinity of a task, or numactl to set the task
-> mempolicy without modifying the source.
+Userspace can allocate new DMA memory by using some magic number as the offset
+parameter of mmap() like you suggested. However, this magic should be just one
+of the bits 16..31 (e.g. 0x00010000) to have other bits available for future
+extensions.
 
-Oh sure, I completely get that and I think it's a useful notion. And I
-think the above analogous interfaces have more or less the same issues,
-except that mlockall is a much older and more widely used API.
-Containers are a better match here too, but the above predate
-containers.
+I think you should also reconsider the way you unmap the memory. It's certainly
+right to unmap everything when the device is unregistered, but I think there's
+more to think about:
+- Should the memory be freed as soon as all users have the device closed?
+- What happens if a user calls munmap() on such a mapping?
 
->   If one had access to the
-> program source and wouldn't, e.g., void a support contract by modifying
-> it, one could just insert the calls into the source itself.
+I'm looking forward to your next version.
 
-Huh? We would of course set up a container 'from the outside'. By
-comparison, your mlockall() call traditionally operates from 'from the
-inside', and you're proposing to add a flag and a helper program that
-makes it work 'from the outside' too. Which is a bit hackish.
-
--- 
-Mathematics is the supreme nostalgia of our time.
+Thanks,
+Hans
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
