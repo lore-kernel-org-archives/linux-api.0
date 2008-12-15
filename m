@@ -1,69 +1,37 @@
-From: Patrick Ohly <patrick.ohly-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH 09/12] clocksource: allow usage independent of
-	timekeeping.c
-Date: Mon, 15 Dec 2008 17:45:00 +0100
-Message-ID: <1229359500.18038.234.camel@ecld0pohly>
-References: <1229352899-31330-1-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-2-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-3-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-4-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-5-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-6-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-7-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-8-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-9-git-send-email-patrick.ohly@intel.com>
-	 <1229352899-31330-10-git-send-email-patrick.ohly@intel.com>
-	 <1229358410.8699.13.camel@jstultz-laptop>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH v3 0/3] preadv & pwritev syscalls.
+Date: Mon, 15 Dec 2008 12:02:04 -0800 (PST)
+Message-ID: <20081215.120204.257704544.davem@davemloft.net>
+References: <1229340977-24345-1-git-send-email-kraxel@redhat.com>
+	<20081215160311.GA23153@linux-mips.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1229358410.8699.13.camel@jstultz-laptop>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20081215160311.GA23153@linux-mips.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: ralf@linux-mips.org
+Cc: kraxel@redhat.com, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2008-12-15 at 16:26 +0000, John Stultz wrote:
-[cyclecounter/timecounter]
-> Nice. The cyclecounter struct can work as a good base that I can shift
-> the clocksource bits over to as I clean that up.
+From: Ralf Baechle <ralf@linux-mips.org>
+Date: Mon, 15 Dec 2008 16:03:11 +0000
+
+> On Mon, Dec 15, 2008 at 12:36:14PM +0100, Gerd Hoffmann wrote:
 > 
-> We will probably want to split this out down the road, but for now its
-> small enough and related enough that I think its fine in the
-> clocksource.h/c.
+> > Next revision of the patch series, with the alignment issue fixed by
+> > swapping the last two arguments as suggested by arch maintainers.
+> > 
+> > I've dropped the now-obsolete wrappers for mips.  Ralf, please
+> > double-check.
 > 
-> Also since Magnus has been working on it, does enable/disable accessors
-> in the cyclecounter struct make sense for your hardware as well?
+> It fixes the alignment issue but still won't work; on MIPS 32-bit userspace
+> will pass the 64-bit argument in two registers but the 64-bit kernel code
+> will assume it to be passed in a single registers.
 
-I don't think so. The usage model of the cyclecounter is that the
-hardware is owned by someone who initializes and controls it, including
-enable/disable. The abstract API with the read method is just there so
-that common utility code can access the hardware in a uniform way.
+Same on 32-bit sparc, and I assume 32-bit powerpc as well.
 
-For example, the igb driver owns and uses the NIC time register.
-Disabling the NIC timer should be done together with disabling the NIC.
-This is different from traditional clocksources which are independent
-and controlled by the timing subsystem.
+> I'm surprised this works for x86; does x86-64 code really expect 64-bit
+> arguments as 2 32-bit arguments?
 
-> Also the corner cases on overflows (how we manage the state, should
-> reads be deferred for too long) will need to be addressed, but I guess
-> we can solve that when it becomes an issue. Just to be clear: none of
-> the hardware you're submitting this round has wrapping issues?
-
-It has 64 bit registers, so there is indeed no wrapping issue.
-
-> Otherwise,
-> Acked-by: John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-
-Thanks, will add that.
-
-Can you (or someone else) also look at clocksync.[ch]? David wanted to
-have that independently reviewed, too, before including it in
-netdev-next.
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Args get pushed onto the stack, so perhaps it works by accident :)
