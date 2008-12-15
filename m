@@ -1,57 +1,33 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: Re: [PATCH v3 0/3] preadv & pwritev syscalls.
-Date: Mon, 15 Dec 2008 21:57:24 +0100
-Message-ID: <4946C4B4.1020605@redhat.com>
-References: <1229340977-24345-1-git-send-email-kraxel@redhat.com> <20081215160311.GA23153@linux-mips.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20081215160311.GA23153@linux-mips.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Ralf Baechle <ralf@linux-mips.org>
-Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Subject: Re: [RFC PATCH 02/12] net: infrastructure for hardware time stamping
+Date: Tue, 16 Dec 2008 08:53:25 +1100
+Message-ID: <E1LCLNV-0001EW-CN@gondolin.me.apana.org.au>
+References: <1229352899-31330-3-git-send-email-patrick.ohly@intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1229352899-31330-3-git-send-email-patrick.ohly-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, patrick.ohly-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Ralf Baechle wrote:
-> On Mon, Dec 15, 2008 at 12:36:14PM +0100, Gerd Hoffmann wrote:
-> 
->> Next revision of the patch series, with the alignment issue fixed by
->> swapping the last two arguments as suggested by arch maintainers.
->>
->> I've dropped the now-obsolete wrappers for mips.  Ralf, please
->> double-check.
-> 
-> It fixes the alignment issue but still won't work; on MIPS 32-bit userspace
-> will pass the 64-bit argument in two registers but the 64-bit kernel code
-> will assume it to be passed in a single registers.  It'd be ugly but passing
-> a pointer to a 64-bit argument would solve the issue; something like this:
->
-> sys_preadv(unsigned long fd, const struct iovec __user *vec,
->                   unsigned long vlen, loff_t __user *pos);
-> compat_sys_preadv(unsigned long fd, const struct compat_iovec __user *vec,
->                   unsigned long vlen, loff_t __user *pos);
+Patrick Ohly <patrick.ohly-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> @@ -305,6 +406,8 @@ struct sk_buff {
+>                                ipvs_property:1,
+>                                peeked:1,
+>                                nf_trace:1;
+> +       /* not all of the bits in optional are used */
+> +       __u8                    optional;
+>        __be16                  protocol;
 
-Suggestion from the s390 front was to explicitly pass high and low part
-of pos as two arguments.  A bit ugly too, but should work fine as well
-and it avoids the user pointer dereference.  What do you think about this?
+You do reliase that this is going to grow the sk_buff by at least
+4 bytes and not 1?
 
-> sys_splice uses loff_t __user * arguments as well and that's why it's
-> doesn't need any compat wrapper.
-
-Well, avoiding the compat wrapper altogether unfortunately isn't going
-to work because struct iovec looks different in 32 and 64 bit.
-
-> I'm surprised this works for x86; does x86-64 code really expect 64-bit
-> arguments as 2 32-bit arguments?
-
-Args are passed on the stack, not in registers.
-
-> Patch 1/3 looks like it's a bug fix and you may want to submit this
-> separate from the remainder of the series for 2.6.28?
-
-Yep, it is a separate bugfix.  Spotted by Christoph while reviewing v1,
-but there are no other dependencies to this patch series.
-
-cheers,
-  Gerd
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
