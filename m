@@ -1,49 +1,84 @@
-From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 0/3] preadv & pwritev syscalls.
-Date: Tue, 16 Dec 2008 22:34:49 +0100
-Message-ID: <49481EF9.3090304@redhat.com>
-References: <1229340977-24345-1-git-send-email-kraxel@redhat.com> <20081215160311.GA23153@linux-mips.org> <4946C4B4.1020605@redhat.com> <20081216160502.GA15331@linux-mips.org> <4947DBFA.9050108@redhat.com> <20081216170209.GC410@bombadil.infradead.org>
+From: Mike Waychison <mikew@google.com>
+Subject: Re: [RFC v11][PATCH 03/13] General infrastructure for checkpoint
+ restart
+Date: Tue, 16 Dec 2008 13:54:28 -0800
+Message-ID: <49482394.10006@google.com>
+References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu> <1228498282-11804-4-git-send-email-orenl@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20081216170209.GC410-PfSpb0PWhxZc2C7mugBRk2EX/6BAtgUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kyle McMartin <kyle-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1228498282-11804-4-git-send-email-orenl@cs.columbia.edu>
+Sender: owner-linux-mm@kvack.org
+To: Oren Laadan <orenl@cs.columbia.edu>
+Cc: jeremy@goop.org, arnd@arndb.de, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, Linux Torvalds <torvalds@osdl.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-Kyle McMartin wrote:
-> On Tue, Dec 16, 2008 at 05:48:58PM +0100, Gerd Hoffmann wrote:
->> i.e. the ordering of the splitted argument depends on the os endianness?
->> What is the reason for this?
-> 
-> Eh? The splitting will occur at the C ABI level, not as a result of
-> glibc (though, it could be done that way if you really wanted, but then
-> you're just moving the wrapper up the chain.)
+Oren Laadan wrote:
+> diff --git a/checkpoint/sys.c b/checkpoint/sys.c
+> index 375129c..bd14ef9 100644
+> --- a/checkpoint/sys.c
+> +++ b/checkpoint/sys.c
 
-Ah, ok.  You'll just declare 64bit arg for userspace, gcc splits it into
-two 32bit in native byte order, and then the kernel picks up the two
-32bit values and has to reassemble them correctly, right?
+> +/*
+> + * During checkpoint and restart the code writes outs/reads in data
+> + * to/from the checkpoint image from/to a temporary buffer (ctx->hbuf).
+> + * Because operations can be nested, use cr_hbuf_get() to reserve space
+> + * in the buffer, then cr_hbuf_put() when you no longer need that space.
+> + */
 
-The application-visible API must be compatible to the existing
-implementations, i.e. this ...
+This seems a bit over-kill for buffer management no?  The only large 
+header seems to be cr_hdr_head and the blowup comes from utsinfo string 
+data (which could easily be moved out to be in it's own CR_HDR_STRING 
+blocks).
 
-   pread(long fd, struct iovec *vec, long vlen, off_t pos);
+Wouldn't it be easier to use stack-local storage than balancing the 
+cr_hbuf_get/put routines?
 
-... prototype with the unaligned 64bit pos argument (in 32compat case).
-
-Looks like there is no way around wrapping stuff then for the archs
-wanting aligned 64bit values.  The only choice we have is to do the
-wrap-o-magic in glibc or in the kernel.
-
-I'd tend handle the wrapping in kernel space then because it is less
-confusing and we have to wrap only in case the ABI for $arch requires it.
-
-Comments?
-
-  Gerd
+> +
+> +/*
+> + * ctx->hbuf is used to hold headers and data of known (or bound),
+> + * static sizes. In some cases, multiple headers may be allocated in
+> + * a nested manner. The size should accommodate all headers, nested
+> + * or not, on all archs.
+> + */
+> +#define CR_HBUF_TOTAL  (8 * 4096)
+> +
+> +/**
+> + * cr_hbuf_get - reserve space on the hbuf
+> + * @ctx: checkpoint context
+> + * @n: number of bytes to reserve
+> + *
+> + * Returns pointer to reserved space
+> + */
+> +void *cr_hbuf_get(struct cr_ctx *ctx, int n)
+> +{
+> +	void *ptr;
+> +
+> +	/*
+> +	 * Since requests depend on logic and static header sizes (not on
+> +	 * user data), space should always suffice, unless someone either
+> +	 * made a structure bigger or call path deeper than expected.
+> +	 */
+> +	BUG_ON(ctx->hpos + n > CR_HBUF_TOTAL);
+> +	ptr = ctx->hbuf + ctx->hpos;
+> +	ctx->hpos += n;
+> +	return ptr;
+> +}
+> +
+> +/**
+> + * cr_hbuf_put - unreserve space on the hbuf
+> + * @ctx: checkpoint context
+> + * @n: number of bytes to reserve
+> + */
+> +void cr_hbuf_put(struct cr_ctx *ctx, int n)
+> +{
+> +	BUG_ON(ctx->hpos < n);
+> +	ctx->hpos -= n;
+> +}
+> +
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
