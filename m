@@ -1,52 +1,110 @@
-From: Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 0/3] preadv & pwritev syscalls.
-Date: Tue, 16 Dec 2008 23:39:09 +0100
-Message-ID: <20081216223909.GB5584@osiris.boeblingen.de.ibm.com>
-References: <1229340977-24345-1-git-send-email-kraxel@redhat.com> <20081215160311.GA23153@linux-mips.org> <4946C4B4.1020605@redhat.com> <20081216160502.GA15331@linux-mips.org> <4947DBFA.9050108@redhat.com> <20081216170209.GC410@bombadil.infradead.org> <49481EF9.3090304@redhat.com>
+From: Mike Waychison <mikew@google.com>
+Subject: Re: [RFC v11][PATCH 03/13] General infrastructure for checkpoint
+ restart
+Date: Tue, 16 Dec 2008 14:43:32 -0800
+Message-ID: <49482F14.1040407@google.com>
+References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>	 <1228498282-11804-4-git-send-email-orenl@cs.columbia.edu>	 <49482394.10006@google.com> <1229465641.17206.350.camel@nimitz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <49481EF9.3090304-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Kyle McMartin <kyle-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1229465641.17206.350.camel@nimitz>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@linux.vnet.ibm.com>
+Cc: Oren Laadan <orenl@cs.columbia.edu>, jeremy@goop.org, arnd@arndb.de, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Linux Torvalds <torvalds@osdl.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 16, 2008 at 10:34:49PM +0100, Gerd Hoffmann wrote:
-> Kyle McMartin wrote:
-> > On Tue, Dec 16, 2008 at 05:48:58PM +0100, Gerd Hoffmann wrote:
-> >> i.e. the ordering of the splitted argument depends on the os endianness?
-> >> What is the reason for this?
-> > 
-> > Eh? The splitting will occur at the C ABI level, not as a result of
-> > glibc (though, it could be done that way if you really wanted, but then
-> > you're just moving the wrapper up the chain.)
+Dave Hansen wrote:
+> On Tue, 2008-12-16 at 13:54 -0800, Mike Waychison wrote:
+>> Oren Laadan wrote:
+>>> diff --git a/checkpoint/sys.c b/checkpoint/sys.c
+>>> index 375129c..bd14ef9 100644
+>>> --- a/checkpoint/sys.c
+>>> +++ b/checkpoint/sys.c
+>>> +/*
+>>> + * During checkpoint and restart the code writes outs/reads in data
+>>> + * to/from the checkpoint image from/to a temporary buffer (ctx->hbuf).
+>>> + * Because operations can be nested, use cr_hbuf_get() to reserve space
+>>> + * in the buffer, then cr_hbuf_put() when you no longer need that space.
+>>> + */
+>> This seems a bit over-kill for buffer management no?  The only large 
+>> header seems to be cr_hdr_head and the blowup comes from utsinfo string 
+>> data (which could easily be moved out to be in it's own CR_HDR_STRING 
+>> blocks).
+>>
+>> Wouldn't it be easier to use stack-local storage than balancing the 
+>> cr_hbuf_get/put routines?
 > 
-> Ah, ok.  You'll just declare 64bit arg for userspace, gcc splits it into
-> two 32bit in native byte order, and then the kernel picks up the two
-> 32bit values and has to reassemble them correctly, right?
+> I've asked the same question, so I'll give you Oren's response that I
+> remember:
 > 
-> The application-visible API must be compatible to the existing
-> implementations, i.e. this ...
+> cr_hbuf_get/put() are more of an API that we can use later.  For now,
+> those buffers really are temporary.  But, in a case where we want to do
+> a really fast checkpoint (to reduce "downtime" during the checkpoint) we
+> store the image entirely in kernel memory to be written out later.
 > 
->    pread(long fd, struct iovec *vec, long vlen, off_t pos);
-> 
-> ... prototype with the unaligned 64bit pos argument (in 32compat case).
-> 
-> Looks like there is no way around wrapping stuff then for the archs
-> wanting aligned 64bit values.  The only choice we have is to do the
-> wrap-o-magic in glibc or in the kernel.
-> 
-> I'd tend handle the wrapping in kernel space then because it is less
-> confusing and we have to wrap only in case the ABI for $arch requires it.
-> 
-> Comments?
 
-Please do it just the way that Arnd suggested: explicitly pass the upper
-and lower part of loff_t as separate arguments.
-It's the most simple approach.
+Hmm, if I'm understanding you correctly, adding ref counts explicitly 
+(like you suggest below)  would be used to let a lower layer defer 
+writes.  Seems like this could be just as easily done with explicits 
+kmallocs and transferring ownership of the allocated memory to the 
+in-kernel representation handling layer below (which in turn queues the 
+data structures for writes).
+
+Any such layer would probably need to hold references to objects 
+enqueued for write-out, so they will still a full cleanup path in case 
+of success/error/abort (which means that any advantage of creating a 
+pool of allocations for O(1) cleanup disappears).
+
+Reference counting these guys doesn't have a clear advantage to me. 
+They seem to have a pretty linear lifetime.
+
+> In that case, cr_hbuf_put() stops doing anything at all because we keep
+> the memory around.
+> 
+> cr_hbuf_get() becomes, "I need some memory to write some checkpointy
+> things into".
+> 
+> cr_hbuf_put() becomes, "I'm done with this for now, only keep it if
+> someone else needs it."
+> 
+> This might all be a lot clearer if we just kept some more explicit
+> accounting around about who is using the objects.  Something like:
+> 
+> struct cr_buf {
+> 	struct kref ref;
+> 	int size;
+> 	char buf[0];
+> };
+> 
+> /* replaces cr_hbuf_get() */
+> struct cr_buf *alloc_cr_buf(int size, gfp_t flags)
+> {
+> 	struct cr_buf *buf;
+> 
+> 	buf = kmalloc(sizeof(cr_buf) + size, flags);
+> 	if (!buf)
+> 		return NULL;
+> 	buf->ref = 1; /* or whatever */
+> 	buf->size = size;
+> 	return buf;
+> }
+> 
+> int cr_kwrite(struct cr_buf *buf)
+> {
+> 	if (writing_checkpoint_now) {
+> 		// or whatever this write call was...
+> 		vfs_write(&buf->buf[0], buf->size);
+> 	} else if (deferring_write) {		
+> 		kref_get(buf->kref);
+> 	}
+> }
+> 
+> -- Dave
+> 
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
