@@ -1,42 +1,208 @@
-From: Kyle McMartin <kyle@infradead.org>
-Subject: Re: [PATCH v3 0/3] preadv & pwritev syscalls.
-Date: Tue, 16 Dec 2008 12:02:09 -0500
-Message-ID: <20081216170209.GC410@bombadil.infradead.org>
-References: <1229340977-24345-1-git-send-email-kraxel@redhat.com> <20081215160311.GA23153@linux-mips.org> <4946C4B4.1020605@redhat.com> <20081216160502.GA15331@linux-mips.org> <4947DBFA.9050108@redhat.com>
+From: Dave Hansen <dave@linux.vnet.ibm.com>
+Subject: Re: [RFC v11][PATCH 00/13] Kernel based checkpoint/restart
+Date: Tue, 16 Dec 2008 10:43:32 -0800
+Message-ID: <1229453012.17206.322.camel@nimitz>
+References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4947DBFA.9050108@redhat.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Gerd Hoffmann <kraxel@redhat.com>
-Cc: Ralf Baechle <ralf@linux-mips.org>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>
+Sender: owner-linux-mm@kvack.org
+To: akpm <akpm@linuxfoundation.org>
+Cc: containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Linux Torvalds <torvalds@osdl.org>, Thomas Gleixner <tglx@linutronix.de>, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, MinChan Kim <minchan.kim@gmail.com>, arnd@arndb.de, jeremy@goop.org, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 16, 2008 at 05:48:58PM +0100, Gerd Hoffmann wrote:
-> i.e. the ordering of the splitted argument depends on the os endianness?
-> What is the reason for this?
+Andrew,
+
+I just realized that you weren't cc'd on these when they were posted.
+
+Can we give them a run in -mm?  As far as I know, all review comments
+have been addressed and there's nothing outstanding.
+
+On Fri, 2008-12-05 at 12:31 -0500, Oren Laadan wrote:
+> Checkpoint-restart (c/r): fixed races in file handling (comments from
+> from Al Viro). Updated and tested against v2.6.28-rc7 (feaf384...)
 > 
-
-Eh? The splitting will occur at the C ABI level, not as a result of
-glibc (though, it could be done that way if you really wanted, but then
-you're just moving the wrapper up the chain.)
-
-A 64-bit value on a 32-bit machine will look like, in a register pair,
-like it looks in memory, with MSB/LSB ordering.
-
-> I'd prefer to have the ordering coded explicitly instead, like this:
+> We'd like these to make it into -mm. This version addresses the
+> last of the known bugs. Please pull at least the first 11 patches,
+> as they are similar to before.
 > 
-> asmlinkage int compat_sys_pwritev(unsigned long fd,
->        const struct compat_iovec __user *vec, unsigned long vlen,
->        unsigned pos_low, unsigned pos_high)
-> {
-> 	loff_t pos = pos_low | (loff_t)pos_high << 32;
->         [ ... ]
+> Patches 1-11 are stable, providing self- and external- c/r of a
+> single process.
+> Patches 12 and 13 are newer, adding support for c/r of multiple
+> processes.
 > 
+> The git tree tracking v11, branch 'ckpt-v11' (and older versions):
+> 	git://git.ncl.cs.columbia.edu/pub/git/linux-cr.git
+> 
+> Restarting multiple processes requires 'mktree' userspace tool:
+> 	git://git.ncl.cs.columbia.edu/pub/git/user-cr.git
+> 
+> Oren.
+> 
+> 
+> --
+> Why do we want it?  It allows containers to be moved between physical
+> machines' kernels in the same way that VMWare can move VMs between
+> physical machines' hypervisors.  There are currently at least two
+> out-of-tree implementations of this in the commercial world (IBM's
+> Metacluster and Parallels' OpenVZ/Virtuozzo) and several in the academic
+> world like Zap.
+> 
+> Why do we need it in mainline now?  Because we already have plenty of
+> out-of-tree ones, and  want to know what an in-tree one will be like.   :)  
+> What *I* want right now is the extra review and scrutiny that comes with
+> a mainline submission to make sure we're not going in a direction
+> contrary to the community.
+> 
+> This only supports pretty simple apps.  But, I trust Ingo when he says:
+> >> > > Generally, if something works for simple apps already (in a robust, 
+> >> > > compatible and supportable way) and users find it "very cool", then 
+> >> > > support for more complex apps is not far in the future.  but if you
+> >> > > want to support more complex apps straight away, it takes forever and
+> >> > > gets ugly.
+> 
+> We're *certainly* going to be changing the ABI (which is the format of
+> the checkpoint).  I'd like to follow the model that we used for
+> ext4-dev, which is to make it very clear that this is a development-only
+> feature for now.  Perhaps we do that by making the interface only
+> available through debugfs or something similar for now.  Or, reserving
+> the syscall numbers but require some runtime switch to be thrown before
+> they can be used.  I'm open to suggestions here.
+> --
+> 
+> --
+> Todo:
+> - Add support for x86-64 and improve ABI
+> - Refine or change syscall interface
+> - Handle multiple namespaces in a container (e.g. save the filesystem
+>   namespaces state with the file descriptors)
+> - Security (without CAPS_SYS_ADMIN files restore may fail)
+> 
+> Changelog:
+> 
+> [2008-Dec-05] v11:
+>   - Use contents of 'init->fs->root' instead of pointing to it
+>   - Ignore symlinks (there is no such thing as an open symlink)
+>   - cr_scan_fds() retries from scratch if it hits size limits
+>   - Add missing test for VM_MAYSHARE when dumping memory
+>   - Improve documentation about: behavior when tasks aren't fronen,
+>     life span of the object hash, references to objects in the hash
+> 
+> [2008-Nov-26] v10:
+>   - Grab vfs root of container init, rather than current process
+>   - Acquire dcache_lock around call to __d_path() in cr_fill_name()
+>   - Force end-of-string in cr_read_string() (fix possible DoS)
+>   - Introduce cr_write_buffer(), cr_read_buffer() and cr_read_buf_type()
+> 
+> [2008-Nov-10] v9:
+>   - Support multiple processes c/r
+>   - Extend checkpoint header with archtiecture dependent header 
+>   - Misc bug fixes (see individual changelogs)
+>   - Rebase to v2.6.28-rc3.
+> 
+> [2008-Oct-29] v8:
+>   - Support "external" checkpoint
+>   - Include Dave Hansen's 'deny-checkpoint' patch
+>   - Split docs in Documentation/checkpoint/..., and improve contents
+> 
+> [2008-Oct-17] v7:
+>   - Fix save/restore state of FPU
+>   - Fix argument given to kunmap_atomic() in memory dump/restore
+> 
+> [2008-Oct-07] v6:
+>   - Balance all calls to cr_hbuf_get() with matching cr_hbuf_put()
+>     (even though it's not really needed)
+>   - Add assumptions and what's-missing to documentation
+>   - Misc fixes and cleanups
+> 
+> [2008-Sep-11] v5:
+>   - Config is now 'def_bool n' by default
+>   - Improve memory dump/restore code (following Dave Hansen's comments)
+>   - Change dump format (and code) to allow chunks of <vaddrs, pages>
+>     instead of one long list of each
+>   - Fix use of follow_page() to avoid faulting in non-present pages
+>   - Memory restore now maps user pages explicitly to copy data into them,
+>     instead of reading directly to user space; got rid of mprotect_fixup()
+>   - Remove preempt_disable() when restoring debug registers
+>   - Rename headers files s/ckpt/checkpoint/
+>   - Fix misc bugs in files dump/restore
+>   - Fixes and cleanups on some error paths
+>   - Fix misc coding style
+> 
+> [2008-Sep-09] v4:
+>   - Various fixes and clean-ups
+>   - Fix calculation of hash table size
+>   - Fix header structure alignment
+>   - Use stand list_... for cr_pgarr
+> 
+> [2008-Aug-29] v3:
+>   - Various fixes and clean-ups
+>   - Use standard hlist_... for hash table
+>   - Better use of standard kmalloc/kfree
+> 
+> [2008-Aug-20] v2:
+>   - Added Dump and restore of open files (regular and directories)
+>   - Added basic handling of shared objects, and improve handling of
+>     'parent tag' concept
+>   - Added documentation
+>   - Improved ABI, 64bit padding for image data
+>   - Improved locking when saving/restoring memory
+>   - Added UTS information to header (release, version, machine)
+>   - Cleanup extraction of filename from a file pointer
+>   - Refactor to allow easier reviewing
+>   - Remove requirement for CAPS_SYS_ADMIN until we come up with a
+>     security policy (this means that file restore may fail)
+>   - Other cleanup and response to comments for v1
+> 
+> [2008-Jul-29] v1:
+>   - Initial version: support a single task with address space of only
+>     private anonymous or file-mapped VMAs; syscalls ignore pid/crid
+>     argument and act on current process.
+> 
+> --
+> At the containers mini-conference before OLS, the consensus among
+> all the stakeholders was that doing checkpoint/restart in the kernel
+> as much as possible was the best approach.  With this approach, the
+> kernel will export a relatively opaque 'blob' of data to userspace
+> which can then be handed to the new kernel at restore time.
+> 
+> This is different than what had been proposed before, which was
+> that a userspace application would be responsible for collecting
+> all of this data.  We were also planning on adding lots of new,
+> little kernel interfaces for all of the things that needed
+> checkpointing.  This unites those into a single, grand interface.
+> 
+> The 'blob' will contain copies of select portions of kernel
+> structures such as vmas and mm_structs.  It will also contain
+> copies of the actual memory that the process uses.  Any changes
+> in this blob's format between kernel revisions can be handled by
+> an in-userspace conversion program.
+> 
+> This is a similar approach to virtually all of the commercial
+> checkpoint/restart products out there, as well as the research
+> project Zap.
+> 
+> These patches basically serialize internel kernel state and write
+> it out to a file descriptor.  The checkpoint and restore are done
+> with two new system calls: sys_checkpoint and sys_restart.
+> 
+> In this incarnation, they can only work checkpoint and restore a
+> single task. The task's address space may consist of only private,
+> simple vma's - anonymous or file-mapped. The open files may consist
+> of only simple files and directories.
+> --
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- Dave
 
-Sadly this isn't possible without a wrapper unless you can guarantee
-it was passed low high instead of high low. Unless you munge it in
-userspace, you can't.
-
-regards, Kyle
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
