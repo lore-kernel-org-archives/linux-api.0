@@ -1,57 +1,155 @@
-From: Jiri Pirko <jpirko@redhat.com>
-Subject: Re: [PATCH, RESEND2] getrusage: fill ru_maxrss value
-Date: Wed, 17 Dec 2008 15:52:39 +0100
-Message-ID: <20081217155239.77e58da0@psychotron.englab.brq.redhat.com>
-References: <20081217194646.F677.KOSAKI.MOTOHIRO@jp.fujitsu.com>
-	<20081217124256.46883fae@psychotron.englab.brq.redhat.com>
-	<20081217204607.FF25.KOSAKI.MOTOHIRO@jp.fujitsu.com>
+From: Oren Laadan <orenl@cs.columbia.edu>
+Subject: Re: [RFC v11][PATCH 04/13] x86 support for checkpoint/restart
+Date: Wed, 17 Dec 2008 10:23:36 -0500
+Message-ID: <49491978.20609@cs.columbia.edu>
+References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu> <1228498282-11804-5-git-send-email-orenl@cs.columbia.edu> <494861CA.8000403@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753704AbYLQOxd@vger.kernel.org>
-In-Reply-To: <20081217204607.FF25.KOSAKI.MOTOHIRO@jp.fujitsu.com>
-Sender: linux-kernel-owner@vger.kernel.org
-Cc: kosaki.motohiro@jp.fujitsu.com, linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@googlemail.com>, linux-api@vger.kernel.org, Hugh Dickins <hugh@veritas.com>, jlim@sgi.com
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <494861CA.8000403@google.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Waychison <mikew@google.com>
+Cc: jeremy@goop.org, arnd@arndb.de, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, Linux Torvalds <torvalds@osdl.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 17 Dec 2008 21:03:27 +0900 (JST)
-KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com> wrote:
 
-> > > > This patch makes ->ru_maxrss value in struct rusage filled accordingly to
-> > > > rss hiwater mark. This struct is filled as a parameter to
-> > > > getrusage syscall. ->ru_maxrss value is set to pages which might be correct
-> > > > as "time" application converts it to KBs.
-> > > 
-> > > Why?
-> > > if kernel convert to KB, glibc don't need any change.
-> > Where exactly glibc is working with this as KBs? I can't find that place.
-> > 
-> > I looked into sources of time util and maxrss is showed this way:
-> > fprintf (fp, "%lu", ptok ((UL) resp->ru.ru_maxrss));
-> > ptok() actually does pages_to_KB conversion. If we convert to KB in
-> > kernel, this code must be changed.
-> 
-> Ah, you talked about /usr/bin/time? sorry, I misunderstood a bit.
-> Why time need number of pages?
-> 
-> In general, getrusage()::ru_maxrss is bsd compatibility feature.
-> as far as possible, the same syscall spec is better.
-> and bsd use KB unit.
-Oh you are right. Now I searched it in FreeBSD kernel. They goes like this:
-rss = pgtok(vmspace_resident_count(vm));
-if (ru->ru_maxrss < rss)
-	ru->ru_maxrss = rss;
 
-Seems pretty reasonable to stick with the same behavior. Then I really
-do not understand why /usr/bin/time does the conversion.
-FreeBSD /usr/bin/time is very different and much simpler and (of
-course) does not do this conversion.
+Mike Waychison wrote:
+> Oren Laadan wrote:
+>> Add logic to save and restore architecture specific state, including
+>> thread-specific state, CPU registers and FPU state.
+>>
+>> In addition, architecture capabilities are saved in an architecure
+>> specific extension of the header (cr_hdr_head_arch); Currently this
+>> includes only FPU capabilities.
+>>
+>> Currently only x86-32 is supported. Compiling on x86-64 will trigger
+>> an explicit error.
+>>
 
-So I suggest to change the patch to fill KB instead of pages and
-change /usr/bin/time to not do the conversion. What do you think?
+[...]
+
+>> +
+>> +    hh->gdt_entry_tls_entries = GDT_ENTRY_TLS_ENTRIES;
+>> +    hh->sizeof_tls_array = sizeof(thread->tls_array);
+>> +    hh->ntls = ntls;
+>> +
+>> +    ret = cr_write_obj(ctx, &h, hh);
+>> +    cr_hbuf_put(ctx, sizeof(*hh));
+>> +    if (ret < 0)
+>> +        return ret;
+>> +
+>> +    cr_debug("ntls %d\n", ntls);
+>> +    if (ntls == 0)
+>> +        return 0;
+>> +
+>> +    /* for simplicity dump the entire array, cherry-pick upon restart */
+>> +    ret = cr_kwrite(ctx, thread->tls_array, sizeof(thread->tls_array));
 > 
-> if time command has reasonable reason, I can agree current design.
-> but is there?
+> Again, the the TLS descriptors in the GDT should be called out an not
+> tied to the in-kernel representation.
+
+True. I'll add a 'FIXME' comment.
+
+However, I'm yet to see a case where this breaks among x86_32, and I'm no
+expert in that area to tell whether it could. (Moving from x86_32 to x86_64
+is another story, and will require some compatibility layer anyway).
+
 > 
+>> +
+>> +    /* IGNORE RESTART BLOCKS FOR NOW ... */
+
+[...]
+
+>> +static int cr_write_cpu_fpu(struct cr_ctx *ctx, struct task_struct *t)
+>> +{
+>> +    void *xstate_buf = cr_hbuf_get(ctx, xstate_size);
+>> +
+>> +    /* i387 + MMU + SSE logic */
+>> +    preempt_disable();    /* needed it (t == current) */
+>> +
+>> +    /*
+>> +     * normally, no need to unlazy_fpu(), since TS_USEDFPU flag
+>> +     * have been cleared when task was context-switched out...
+>> +     * except if we are in process context, in which case we do
+>> +     */
+>> +    if (t == current && (task_thread_info(t)->status & TS_USEDFPU))
+>> +        unlazy_fpu(current);
+>> +
+>> +    memcpy(xstate_buf, t->thread.xstate, xstate_size);
 > 
+> This is probably better off being very deliberate about what registers
+> we are dumping from a traceability and compatibility point of view?
+
+Same here.
+
 > 
+>> +    preempt_enable();    /* needed it (t == current) */
+>> +
+>> +    return cr_kwrite(ctx, xstate_buf, xstate_size);
+> 
+> Missed cr_huf_put()
+
+Ooops ... will fix.
+
+> 
+>> +}
+>> +
+>> +#endif    /* CONFIG_X86_64 */
+
+[...]
+
+>> +        /*
+>> +         * restore TLS by hand: why convert to struct user_desc if
+>> +         * sys_set_thread_entry() will convert it back ?
+>> +         */
+>> +
+>> +        size = sizeof(*desc) * GDT_ENTRY_TLS_ENTRIES;
+>> +        desc = kmalloc(size, GFP_KERNEL);
+>> +        if (!desc)
+> 
+> cr_hbuf_put() here.
+
+Will fix.
+
+> 
+>> +            return -ENOMEM;
+>> +
+>> +        ret = cr_kread(ctx, desc, size);
+>> +        if (ret >= 0) {
+> 
+> if (ret == 0)
+
+Right.
+
+> 
+>> +            /*
+>> +             * FIX: add sanity checks (eg. that values makes
+>> +             * sense, that we don't overwrite old values, etc
+>> +             */
+>> +            cpu = get_cpu();
+>> +            memcpy(thread->tls_array, desc, size);
+>> +            load_TLS(thread, cpu);
+>> +            put_cpu();
+>> +        }
+>> +        kfree(desc);
+>> +    }
+>> +
+>> +    ret = 0;
+>> + out:
+>> +    cr_hbuf_put(ctx, sizeof(*hh));
+>> +    return ret;
+>> +}
+
+[...]
+
+Thanks for the review !
+
+Oren.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
