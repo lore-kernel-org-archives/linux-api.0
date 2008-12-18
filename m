@@ -1,234 +1,68 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: [PATCH v4 2/3] Add preadv and pwritev system calls.
-Date: Thu, 18 Dec 2008 12:42:21 +0100
-Message-ID: <1229600542-11585-3-git-send-email-kraxel@redhat.com>
-References: <1229600542-11585-1-git-send-email-kraxel@redhat.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1229600542-11585-1-git-send-email-kraxel@redhat.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
-Cc: aarcange@redhat.com, Gerd Hoffmann <kraxel@redhat.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH v4 2/3] Add preadv and pwritev system calls.
+Date: Thu, 18 Dec 2008 13:34:33 +0100
+Message-ID: <200812181334.33719.arnd@arndb.de>
+References: <1229600542-11585-1-git-send-email-kraxel@redhat.com> <1229600542-11585-3-git-send-email-kraxel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1229600542-11585-3-git-send-email-kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds preadv and pwritev system calls.  These syscalls are a
-pretty straightforward combination of pread and readv (same for write).
-They are quite useful for doing vectored I/O in threaded applications.
-Using lseek+readv instead opens race windows you'll have to plug with
-locking.
+On Thursday 18 December 2008, Gerd Hoffmann wrote:
+> This prototype has one problem though:  On 32bit archs is the (64bit)
+> offset argument unaligned, which the syscall ABI of several archs
+> doesn't allow to do.  At least s390 needs a wrapper in glibc to handle
+> this.  As we'll need a wrappers in glibc anyway I've decided to push
+> problem to glibc entriely and use a syscall prototype which works
+> without arch-specific wrappers inside the kernel:  The offset argument
+> is explicitly splitted into two 32bit values.
 
-Other systems have such system calls too, for example NetBSD, check
-here: http://www.daemon-systems.org/man/preadv.2.html
+Obviously, the interface looks good to me now.
 
-The application-visible interface provided by glibc should look like
-this to be compatible to the existing implementations in the *BSD family:
+Please remember to add the function prototypes to
+include/linux/syscalls.h.
 
-  ssize_t preadv(int d, const struct iovec *iov, int iovcnt, off_t offset);
-  ssize_t pwritev(int d, const struct iovec *iov, int iovcnt, off_t offset);
+> +asmlinkage ssize_t
+> +compat_sys_preadv(unsigned long fd, const struct compat_iovec __user *vec,
+> +                  unsigned long vlen, u32 pos_high, u32 pos_low)
+> +{
+> +        loff_t pos = ((loff_t)pos_high << 32) | pos_low;
 
-This prototype has one problem though:  On 32bit archs is the (64bit)
-offset argument unaligned, which the syscall ABI of several archs
-doesn't allow to do.  At least s390 needs a wrapper in glibc to handle
-this.  As we'll need a wrappers in glibc anyway I've decided to push
-problem to glibc entriely and use a syscall prototype which works
-without arch-specific wrappers inside the kernel:  The offset argument
-is explicitly splitted into two 32bit values.
+This is whitespace damaged, as are the other four functions in the
+same place.
 
-The patch sports the actual system call implementation and the windup in
-the x86 system call tables.  Other archs follow as separate patches.
+> +	struct file *file;
+> +	ssize_t ret = -EBADF;
+> +
+> +	if (pos < 0)
+> +		return -EINVAL;
+> +
+> +	file = fget(fd);
+> +	if (!file)
+> +		return -EBADF;
 
-Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
----
- arch/x86/ia32/ia32entry.S          |    2 +
- arch/x86/include/asm/unistd_32.h   |    2 +
- arch/x86/include/asm/unistd_64.h   |    4 ++
- arch/x86/kernel/syscall_table_32.S |    2 +
- fs/compat.c                        |   63 ++++++++++++++++++++++++++++++++++++
- fs/read_write.c                    |   50 ++++++++++++++++++++++++++++
- 6 files changed, 123 insertions(+), 0 deletions(-)
+Any reason for using fget() here, but fget_light() in sys_preadv?
 
-diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
-index 256b00b..9a8501b 100644
---- a/arch/x86/ia32/ia32entry.S
-+++ b/arch/x86/ia32/ia32entry.S
-@@ -826,4 +826,6 @@ ia32_sys_call_table:
- 	.quad sys_dup3			/* 330 */
- 	.quad sys_pipe2
- 	.quad sys_inotify_init1
-+	.quad compat_sys_preadv
-+	.quad compat_sys_pwritev
- ia32_syscall_end:
-diff --git a/arch/x86/include/asm/unistd_32.h b/arch/x86/include/asm/unistd_32.h
-index f2bba78..6e72d74 100644
---- a/arch/x86/include/asm/unistd_32.h
-+++ b/arch/x86/include/asm/unistd_32.h
-@@ -338,6 +338,8 @@
- #define __NR_dup3		330
- #define __NR_pipe2		331
- #define __NR_inotify_init1	332
-+#define __NR_preadv		333
-+#define __NR_pwritev		334
- 
- #ifdef __KERNEL__
- 
-diff --git a/arch/x86/include/asm/unistd_64.h b/arch/x86/include/asm/unistd_64.h
-index d2e415e..f818294 100644
---- a/arch/x86/include/asm/unistd_64.h
-+++ b/arch/x86/include/asm/unistd_64.h
-@@ -653,6 +653,10 @@ __SYSCALL(__NR_dup3, sys_dup3)
- __SYSCALL(__NR_pipe2, sys_pipe2)
- #define __NR_inotify_init1			294
- __SYSCALL(__NR_inotify_init1, sys_inotify_init1)
-+#define __NR_preadv				295
-+__SYSCALL(__NR_preadv, sys_preadv)
-+#define __NR_pwritev				296
-+__SYSCALL(__NR_pwritev, sys_pwritev)
- 
- 
- #ifndef __NO_STUBS
-diff --git a/arch/x86/kernel/syscall_table_32.S b/arch/x86/kernel/syscall_table_32.S
-index d44395f..a1a5506 100644
---- a/arch/x86/kernel/syscall_table_32.S
-+++ b/arch/x86/kernel/syscall_table_32.S
-@@ -332,3 +332,5 @@ ENTRY(sys_call_table)
- 	.long sys_dup3			/* 330 */
- 	.long sys_pipe2
- 	.long sys_inotify_init1
-+	.long sys_preadv
-+	.long sys_pwritev
-diff --git a/fs/compat.c b/fs/compat.c
-index aab2234..00e18aa 100644
---- a/fs/compat.c
-+++ b/fs/compat.c
-@@ -1220,6 +1220,69 @@ out:
- 	return ret;
- }
- 
-+asmlinkage ssize_t
-+compat_sys_preadv(unsigned long fd, const struct compat_iovec __user *vec,
-+                  unsigned long vlen, u32 pos_high, u32 pos_low)
-+{
-+        loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	struct file *file;
-+	ssize_t ret = -EBADF;
-+
-+	if (pos < 0)
-+		return -EINVAL;
-+
-+	file = fget(fd);
-+	if (!file)
-+		return -EBADF;
-+
-+	if (!(file->f_mode & FMODE_READ))
-+		goto out;
-+
-+	ret = -EINVAL;
-+	if (!file->f_op || (!file->f_op->aio_read && !file->f_op->read))
-+		goto out;
-+
-+	ret = compat_do_readv_writev(READ, file, vec, vlen, &pos);
-+
-+out:
-+	if (ret > 0)
-+		add_rchar(current, ret);
-+	inc_syscr(current);
-+	fput(file);
-+	return ret;
-+}
-+
-+asmlinkage ssize_t
-+compat_sys_pwritev(unsigned long fd, const struct compat_iovec __user *vec,
-+                   unsigned long vlen, u32 pos_high, u32 pos_low)
-+{
-+        loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	struct file *file;
-+	ssize_t ret = -EBADF;
-+
-+	if (pos < 0)
-+		return -EINVAL;
-+
-+	file = fget(fd);
-+	if (!file)
-+		return -EBADF;
-+	if (!(file->f_mode & FMODE_WRITE))
-+		goto out;
-+
-+	ret = -EINVAL;
-+	if (!file->f_op || (!file->f_op->aio_write && !file->f_op->write))
-+		goto out;
-+
-+	ret = compat_do_readv_writev(WRITE, file, vec, vlen, &pos);
-+
-+out:
-+	if (ret > 0)
-+		add_wchar(current, ret);
-+	inc_syscw(current);
-+	fput(file);
-+	return ret;
-+}
-+
- asmlinkage long
- compat_sys_vmsplice(int fd, const struct compat_iovec __user *iov32,
- 		    unsigned int nr_segs, unsigned int flags)
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 969a6d9..27779d0 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -701,6 +701,56 @@ sys_writev(unsigned long fd, const struct iovec __user *vec, unsigned long vlen)
- 	return ret;
- }
- 
-+asmlinkage ssize_t sys_preadv(unsigned long fd, const struct iovec __user *vec,
-+                              unsigned long vlen, u32 pos_high, u32 pos_low)
-+{
-+        loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	struct file *file;
-+	ssize_t ret = -EBADF;
-+	int fput_needed;
-+
-+	if (pos < 0)
-+		return -EINVAL;
-+
-+	file = fget_light(fd, &fput_needed);
-+	if (file) {
-+		ret = -ESPIPE;
-+		if (file->f_mode & FMODE_PREAD)
-+			ret = vfs_readv(file, vec, vlen, &pos);
-+		fput_light(file, fput_needed);
-+	}
-+
-+	if (ret > 0)
-+		add_rchar(current, ret);
-+	inc_syscr(current);
-+	return ret;
-+}
-+
-+asmlinkage ssize_t sys_pwritev(unsigned long fd, const struct iovec __user *vec,
-+                               unsigned long vlen, u32 pos_high, u32 pos_low)
-+{
-+        loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	struct file *file;
-+	ssize_t ret = -EBADF;
-+	int fput_needed;
-+
-+	if (pos < 0)
-+		return -EINVAL;
-+
-+	file = fget_light(fd, &fput_needed);
-+	if (file) {
-+		ret = -ESPIPE;
-+		if (file->f_mode & FMODE_PWRITE)
-+			ret = vfs_writev(file, vec, vlen, &pos);
-+		fput_light(file, fput_needed);
-+	}
-+
-+	if (ret > 0)
-+		add_wchar(current, ret);
-+	inc_syscw(current);
-+	return ret;
-+}
-+
- static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
- 			   size_t count, loff_t max)
- {
--- 
-1.5.6.5
+> +	if (!(file->f_mode & FMODE_READ))
+> +		goto out;
+> +
+> +	ret = -EINVAL;
+> +	if (!file->f_op || (!file->f_op->aio_read && !file->f_op->read))
+> +		goto out;
+
+Maybe this logic could get moved into a compat_readv() function,
+similar to vfs_readv(). The advantage would be that we can make
+the native and compat paths more similar.
+
+	Arnd <><
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
