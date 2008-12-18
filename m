@@ -1,7 +1,7 @@
 From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Subject: Re: [RFC v11][PATCH 05/13] Dump memory address space
-Date: Thu, 18 Dec 2008 07:05:20 -0800
-Message-ID: <1229612720.17206.505.camel@nimitz>
+Date: Thu, 18 Dec 2008 07:54:36 -0800
+Message-ID: <1229615676.17206.518.camel@nimitz>
 References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>
 	 <1228498282-11804-6-git-send-email-orenl@cs.columbia.edu>
 	 <4949B4ED.9060805@google.com>  <494A2F94.2090800@cs.columbia.edu>
@@ -16,49 +16,67 @@ Cc: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, jeremy-TSDbQ
 List-Id: linux-api@vger.kernel.org
 
 On Thu, 2008-12-18 at 06:10 -0500, Oren Laadan wrote:
-> >> +    mutex_lock(&mm->context.lock);
-> >> +
-> >> +    hh->ldt_entry_size = LDT_ENTRY_SIZE;
-> >> +    hh->nldt = mm->context.size;
-> >> +
-> >> +    cr_debug("nldt %d\n", hh->nldt);
-> >> +
-> >> +    ret = cr_write_obj(ctx, &h, hh);
-> >> +    cr_hbuf_put(ctx, sizeof(*hh));
-> >> +    if (ret < 0)
-> >> +        goto out;
-> >> +
-> >> +    ret = cr_kwrite(ctx, mm->context.ldt,
-> >> +            mm->context.size * LDT_ENTRY_SIZE);
+> >> +    for (i = pgarr->nr_used; i--; /**/)
+> >> +        page_cache_release(pgarr->pages[i]);
 > > 
-> > Do we really want to emit anything under lock?  I realize that this
-> > patch goes and does a ton of writes with mmap_sem held for read -- is
-> > this ok?
+> > This is sorta hard to read (and non-intuitive).  Is it easier to do:
+> > 
+> > for (i = 0; i < pgarr->nr_used; i++)
+> >     page_cache_release(pgarr->pages[i]);
+> > 
+> > It shouldn't matter what order you release the pages in..
 > 
-> Because all tasks in the container must be frozen during the checkpoint,
-> there is no performance penalty for keeping the locks. Although the object
-> should not change in the interim anyways, the locks protects us from, e.g.
-> the task unfreezing somehow, or being killed by the OOM killer, or any
-> other change incurred from the "outside world" (even future code).
-> 
-> Put in other words - in the long run it is safer to assume that the
-> underlying object may otherwise change.
-> 
-> (If we want to drop the lock here before cr_kwrite(), we need to copy the
-> data to a temporary buffer first. If we also want to drop mmap_sem(), we
-> need to be more careful with following the vma's.)
-> 
-> Do you see a reason to not keeping the locks ?
+> Was meant to avoid a dereference to 'pgarr->nr_used' in the comparison.
+> (though I doubt if the performance impact is at all visible)
 
-Mike, although we're doing writes of the checkpoint file here, the *mm*
-access is read-only.  We only need really mmap_sem for write if we're
-creating new VMAs, which we only do on restore.  Was there an action
-taken on the mm that would require a write that we missed?
+That's a bit to aggressive an optimization.  You two piqued my
+curiosity, so I tried a little experiment with this .c file:
 
-Oren, I never considered the locking overhead, either.  The fact that
-the processes are frozen is very, very important here.  The code is fine
-as it stands because this *is* a very simple way to do it.  But, this
-probably deserves a comment. 
+extern void bar(int i);
+
+struct s {
+        int *array;
+        int size;
+};
+
+extern struct s *s;
+void foo(void)
+{
+        int i;
+#ifdef OREN
+        for (i = s->size; i--; )
+#else
+        for (i = 0; i < s->size; i++)
+#endif
+                bar(s->array[i]);
+}
+
+for O in "" -O -O1 -O2 -O3 -Os; do
+	gcc -DOREN $O -c f1.c -o oren.o;
+	gcc $O -c f1.c -o mike.o;
+	echo -n Oren:; objdump -d oren.o | grep ret;
+	echo -n Mike:; objdump -d mike.o | grep ret;
+done
+
+Smaller numbers are better, and indicate the size of that function,
+basically:
+
+Oren:  38:	c3                   	ret    
+Mike:  3b:	c3                   	ret    
+Oren:  44:	c3                   	ret    
+Mike:  36:	c3                   	ret    
+Oren:  44:	c3                   	ret    
+Mike:  36:	c3                   	ret    
+Oren:  43:	c3                   	ret    
+Mike:  34:	c3                   	ret    
+Oren:  43:	c3                   	ret    
+Mike:  34:	c3                   	ret    
+Oren:  3a:	c3                   	ret    
+Mike:  2a:	c3                   	ret    
+
+gcc version 4.2.4 (Ubuntu 4.2.4-1ubuntu3).  In all but the unoptimized
+case, Mike's version wins.  Readability, and icache footprint all in one
+package!
 
 -- Dave
 
