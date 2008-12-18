@@ -1,51 +1,69 @@
-From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+From: Oren Laadan <orenl@cs.columbia.edu>
 Subject: Re: [RFC v11][PATCH 05/13] Dump memory address space
-Date: Thu, 18 Dec 2008 10:21:39 -0800
-Message-ID: <1229624499.17206.576.camel@nimitz>
-References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>
-	 <1228498282-11804-6-git-send-email-orenl@cs.columbia.edu>
-	 <4949B4ED.9060805@google.com> <494A2F94.2090800@cs.columbia.edu>
-	 <494A9350.1060309@google.com>
+Date: Thu, 18 Dec 2008 15:00:27 -0500
+Message-ID: <494AABDB.80408@cs.columbia.edu>
+References: <1228498282-11804-1-git-send-email-orenl@cs.columbia.edu>	 <1228498282-11804-6-git-send-email-orenl@cs.columbia.edu>	 <4949B4ED.9060805@google.com>  <494A2F94.2090800@cs.columbia.edu> <1229615676.17206.518.camel@nimitz>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <494A9350.1060309-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, jeremy-TSDbQ3PG+2Y@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linux Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1229615676.17206.518.camel@nimitz>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@linux.vnet.ibm.com>
+Cc: Mike Waychison <mikew@google.com>, jeremy@goop.org, arnd@arndb.de, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Linux Torvalds <torvalds@osdl.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2008-12-18 at 10:15 -0800, Mike Waychison wrote:
+
+
+Dave Hansen wrote:
+> On Thu, 2008-12-18 at 06:10 -0500, Oren Laadan wrote:
+>>>> +    for (i = pgarr->nr_used; i--; /**/)
+>>>> +        page_cache_release(pgarr->pages[i]);
+>>> This is sorta hard to read (and non-intuitive).  Is it easier to do:
+>>>
+>>> for (i = 0; i < pgarr->nr_used; i++)
+>>>     page_cache_release(pgarr->pages[i]);
+>>>
+>>> It shouldn't matter what order you release the pages in..
+>> Was meant to avoid a dereference to 'pgarr->nr_used' in the comparison.
+>> (though I doubt if the performance impact is at all visible)
 > 
-> >>> +    pgarr = kzalloc(sizeof(*pgarr), GFP_KERNEL);
-> >>> +    if (!pgarr)
-> >>> +        return NULL;
-> >>> +
-> >>> +    pgarr->vaddrs = kmalloc(CR_PGARR_TOTAL * sizeof(unsigned
-> long),
-> >> You used PAGE_SIZE / sizeof(void *) above.   Why not
-> __get_free_page()?
-> > 
-> > Hahaha .. well, it's a guaranteed method to keep Dave Hansen from
-> > barking about not using kmalloc ...
-> > 
-> > Personally I prefer __get_free_page() here, but not enough to keep
-> > arguing with him. Let me know when the two of you settle it :)
+> That's a bit to aggressive an optimization.  You two piqued my
+> curiosity, so I tried a little experiment with this .c file:
 > 
-> Alright, I just wasn't sure if it had been considered.
+> extern void bar(int i);
+> 
+> struct s {
+>         int *array;
+>         int size;
+> };
+> 
+> extern struct s *s;
+> void foo(void)
+> {
+>         int i;
+> #ifdef OREN
+>         for (i = s->size; i--; )
+> #else
+>         for (i = 0; i < s->size; i++)
+> #endif
+>                 bar(s->array[i]);
+> }
+> 
+> for O in "" -O -O1 -O2 -O3 -Os; do
+> 	gcc -DOREN $O -c f1.c -o oren.o;
+> 	gcc $O -c f1.c -o mike.o;
+> 	echo -n Oren:; objdump -d oren.o | grep ret;
+> 	echo -n Mike:; objdump -d mike.o | grep ret;
+> done
 
-__get_free_page() sucks.  It doesn't do cool stuff like redzoning when
-you have slab debugging turned on.  :)
+For what it's worth, the idea was to improve time... (not code length).
+I changed the code anyway (in response to another comment).
 
-I would personally suggest never using __get_free_page() unless you
-truly need a *PAGE*.  That's an aligned, and PAGE_SIZE chunk.  If you
-don't need alignment, or don't literally need a 'struct page', don't use
-it.
-
--- Dave
+Oren.
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
