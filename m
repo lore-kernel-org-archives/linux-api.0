@@ -1,38 +1,72 @@
-From: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
-Subject: Re: [PATCH, RESEND2] getrusage: fill ru_maxrss value
-Date: Thu, 18 Dec 2008 11:50:09 +0900 (JST)
-Message-ID: <20081218111608.615F.KOSAKI.MOTOHIRO@jp.fujitsu.com>
-References: <20081217204607.FF25.KOSAKI.MOTOHIRO@jp.fujitsu.com> <20081217155239.77e58da0@psychotron.englab.brq.redhat.com>
+From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC][PATCH] SEND_SIG_NOINFO: Set si_pid to tgid instead of pid
+Date: Wed, 17 Dec 2008 19:58:23 -0800
+Message-ID: <20081218035823.GA21062@us.ibm.com>
+References: <20081217020601.GB2866@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753847AbYLRCuh@vger.kernel.org>
-In-Reply-To: <20081217155239.77e58da0@psychotron.englab.brq.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jiri Pirko <jpirko@redhat.com>
-Cc: kosaki.motohiro@jp.fujitsu.com, linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@googlemail.com>, linux-api@vger.kernel.org, Hugh Dickins <hugh@veritas.com>, jlim@sgi.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20081217020601.GB2866-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: daniel-nym3zxDgnZcAvxtiuMwx3w@public.gmane.org, bastian-yyjItF7Rl6lg9hUCZPvPmw@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-> > Ah, you talked about /usr/bin/time? sorry, I misunderstood a bit.
-> > Why time need number of pages?
-> > 
-> > In general, getrusage()::ru_maxrss is bsd compatibility feature.
-> > as far as possible, the same syscall spec is better.
-> > and bsd use KB unit.
-> Oh you are right. Now I searched it in FreeBSD kernel. They goes like this:
-> rss = pgtok(vmspace_resident_count(vm));
-> if (ru->ru_maxrss < rss)
-> 	ru->ru_maxrss = rss;
-> 
-> Seems pretty reasonable to stick with the same behavior. Then I really
-> do not understand why /usr/bin/time does the conversion.
 
-me too ;-)
+Ccing linux-api for the user-visible changes per Roland's suggestion.
+Not sure if the current behavior is documented somewhere. but should
+the new behavior be documented in pipe(7) and prctl(2) ?
 
-> FreeBSD /usr/bin/time is very different and much simpler and (of
-> course) does not do this conversion.
-> 
-> So I suggest to change the patch to fill KB instead of pages and
-> change /usr/bin/time to not do the conversion. What do you think?
+This patch was recently added to -mm tree.
 
-Makes really much sense. thanks!!
+Sukadev
+
+Sukadev Bhattiprolu [sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org] wrote:
+| 
+| From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+| Date: Tue, 16 Dec 2008 17:07:17 -0800
+| Subject: [PATCH] SEND_SIG_NOINFO: Set si_pid to tgid instead of pid
+| 
+| POSIX requires the si_pid to be the process id of the sender, so ->si_pid
+| should really be set to 'tgid'. This change does have following changes
+| in behavior:
+| 
+| 	- When sending pdeath_signal on re-parent to a sub-thread, ->si_pid
+| 	  cannot be used to identify the thread that did the re-parent since
+| 	  it will now show the tgid instead of thread id.
+| 
+| 	- A multi-threaded application that expects to find the specific
+| 	  thread that encountered a SIGPIPE using the ->si_pid will now
+| 	  break.
+| 
+| Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+| ---
+|  kernel/signal.c |    2 +-
+|  1 files changed, 1 insertions(+), 1 deletions(-)
+| 
+| diff --git a/kernel/signal.c b/kernel/signal.c
+| index d11e5f8..700d767 100644
+| --- a/kernel/signal.c
+| +++ b/kernel/signal.c
+| @@ -856,7 +856,7 @@ static int send_signal(int sig, struct siginfo *info, struct task_struct *t,
+|  			q->info.si_signo = sig;
+|  			q->info.si_errno = 0;
+|  			q->info.si_code = SI_USER;
+| -			q->info.si_pid = task_pid_nr_ns(current,
+| +			q->info.si_pid = task_tgid_nr_ns(current,
+|  							task_active_pid_ns(t));
+|  			q->info.si_uid = current_uid();
+|  			break;
+| -- 
+| 1.5.2.5
+| 
+| --
+| To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+| the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+| More majordomo info at  http://vger.kernel.org/majordomo-info.html
+| Please read the FAQ at  http://www.tux.org/lkml/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
