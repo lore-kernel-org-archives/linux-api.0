@@ -1,46 +1,29 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: [PATCH v4 1/3] Add missing accounting calls to compat_sys_{readv,writev}.
-Date: Thu, 18 Dec 2008 12:42:20 +0100
-Message-ID: <1229600542-11585-2-git-send-email-kraxel@redhat.com>
-References: <1229600542-11585-1-git-send-email-kraxel@redhat.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1229600542-11585-1-git-send-email-kraxel@redhat.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
-Cc: aarcange@redhat.com, Gerd Hoffmann <kraxel@redhat.com>
+From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v4 0/3] System call design: preadv & pwritev.
+Date: Thu, 18 Dec 2008 12:42:19 +0100
+Message-ID: <1229600542-11585-1-git-send-email-kraxel@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[ Note: unrelated bugfix spotted during preadv review,
-  included for completeness, akpm picked it into -mm already. ]
+  Hi folks,
 
-Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
----
- fs/compat.c |    6 ++++++
- 1 files changed, 6 insertions(+), 0 deletions(-)
+Guess I have your attention now thanks to LWN ;)
 
-diff --git a/fs/compat.c b/fs/compat.c
-index e5f49f5..aab2234 100644
---- a/fs/compat.c
-+++ b/fs/compat.c
-@@ -1187,6 +1187,9 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsign
- 	ret = compat_do_readv_writev(READ, file, vec, vlen, &file->f_pos);
- 
- out:
-+	if (ret > 0)
-+		add_rchar(current, ret);
-+	inc_syscr(current);
- 	fput(file);
- 	return ret;
- }
-@@ -1210,6 +1213,9 @@ compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec, unsig
- 	ret = compat_do_readv_writev(WRITE, file, vec, vlen, &file->f_pos);
- 
- out:
-+	if (ret > 0)
-+		add_wchar(current, ret);
-+	inc_syscw(current);
- 	fput(file);
- 	return ret;
- }
--- 
-1.5.6.5
+Next round of the preadv & pwritev patch series, hopefully finally
+solving the architecture issues.  I've decided to go with the suggestion
+from the s390 guys:  split the 64bit offset into two explicitly coded
+32bit halves.  The syscall prototype should work now for all archs
+without (in-kernel) wrappers.  glibc must wrap the syscalls though to
+hide that split from the applications.  But there is no way around glibc
+wrappers anyway, so I think that is sensible decision.
+
+cheers,
+  Gerd
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
