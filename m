@@ -1,16 +1,16 @@
 From: y@redhat.com
 Subject: [Patch v5 4/6] Add preadv and pwritev system calls.
 Date: Fri, 19 Dec 2008 16:58:23 +0100
-Message-ID: <6605.62747293643$1229702454@news.gmane.org>
+Message-ID: <26256.1663090766$1229702457@news.gmane.org>
 References: <1229702305-23027-1-git-send-email-y>
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1229702305-23027-1-git-send-email-y>
-Sender: linux-arch-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
-Cc: aarcange@redhat.com, Gerd Hoffmann <kraxel@redhat.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Gerd Hoffmann <kraxel@redhat.com>
+From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
 This patch adds preadv and pwritev system calls.  These syscalls are a
 pretty straightforward combination of pread and readv (same for write).
@@ -38,7 +38,7 @@ is explicitly splitted into two 32bit values.
 The patch sports the actual system call implementation and the windup in
 the x86 system call tables.  Other archs follow as separate patches.
 
-Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Signed-off-by: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
  arch/x86/ia32/ia32entry.S          |    2 +
  arch/x86/include/asm/unistd_32.h   |    2 +
@@ -230,3 +230,8 @@ index 04fb47b..39b80b1 100644
  asmlinkage long sys_chdir(const char __user *filename);
 -- 
 1.5.6.5
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
