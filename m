@@ -1,9 +1,9 @@
 From: y@redhat.com
-Subject: [Patch v5 3/6] create compat_writev()
-Date: Fri, 19 Dec 2008 16:58:22 +0100
-Message-ID: <4140.23761773041$1229702502@news.gmane.org>
+Subject: [Patch v5 1/6] Add missing accounting calls to compat_sys_{readv,writev}.
+Date: Fri, 19 Dec 2008 16:58:20 +0100
+Message-ID: <27068.7220422134$1229702505@news.gmane.org>
 References: <1229702305-23027-1-git-send-email-y>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751893AbYLSP7q@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752070AbYLSP7S@vger.kernel.org>
 In-Reply-To: <1229702305-23027-1-git-send-email-y>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
@@ -12,67 +12,37 @@ List-Id: linux-api@vger.kernel.org
 
 From: Gerd Hoffmann <kraxel@redhat.com>
 
-Factor out some code from compat_sys_writev() which can be shared with the
-upcoming compat_sys_pwritev().
+[ Note: unrelated bugfix spotted during preadv review,
+  included for completeness, akpm picked it into -mm already. ]
 
 Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
 ---
- fs/compat.c |   25 +++++++++++++++++--------
- 1 files changed, 17 insertions(+), 8 deletions(-)
+ fs/compat.c |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
 diff --git a/fs/compat.c b/fs/compat.c
-index 361cb7d..1ca314f 100644
+index e5f49f5..aab2234 100644
 --- a/fs/compat.c
 +++ b/fs/compat.c
-@@ -1202,15 +1202,11 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsign
- 	return ret;
- }
- 
--asmlinkage ssize_t
--compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec, unsigned long vlen)
-+static size_t compat_writev(struct file *file, const struct compat_iovec __user *vec,
-+                            unsigned long vlen, loff_t *pos)
- {
--	struct file *file;
- 	ssize_t ret = -EBADF;
- 
--	file = fget(fd);
--	if (!file)
--		return -EBADF;
- 	if (!(file->f_mode & FMODE_WRITE))
- 		goto out;
- 
-@@ -1218,16 +1214,29 @@ compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec, unsig
- 	if (!file->f_op || (!file->f_op->aio_write && !file->f_op->write))
- 		goto out;
- 
--	ret = compat_do_readv_writev(WRITE, file, vec, vlen, &file->f_pos);
-+	ret = compat_do_readv_writev(WRITE, file, vec, vlen, pos);
+@@ -1187,6 +1187,9 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsign
+ 	ret = compat_do_readv_writev(READ, file, vec, vlen, &file->f_pos);
  
  out:
- 	if (ret > 0)
- 		add_wchar(current, ret);
- 	inc_syscw(current);
--	fput(file);
++	if (ret > 0)
++		add_rchar(current, ret);
++	inc_syscr(current);
+ 	fput(file);
  	return ret;
  }
+@@ -1210,6 +1213,9 @@ compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec, unsig
+ 	ret = compat_do_readv_writev(WRITE, file, vec, vlen, &file->f_pos);
  
-+asmlinkage ssize_t
-+compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec, unsigned long vlen)
-+{
-+	struct file *file;
-+	ssize_t ret;
-+
-+	file = fget(fd);
-+	if (!file)
-+		return -EBADF;
-+	ret = compat_writev(file, vec, vlen, &file->f_pos);
-+        fput(file);
-+        return ret;
-+}
-+
- asmlinkage long
- compat_sys_vmsplice(int fd, const struct compat_iovec __user *iov32,
- 		    unsigned int nr_segs, unsigned int flags)
+ out:
++	if (ret > 0)
++		add_wchar(current, ret);
++	inc_syscw(current);
+ 	fput(file);
+ 	return ret;
+ }
 -- 
 1.5.6.5
