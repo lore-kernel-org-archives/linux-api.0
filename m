@@ -1,7 +1,7 @@
 From: y@redhat.com
-Subject: [Patch v5 1/6] Add missing accounting calls to compat_sys_{readv,writev}.
-Date: Fri, 19 Dec 2008 16:58:20 +0100
-Message-ID: <37931.756504304$1229702443@news.gmane.org>
+Subject: [Patch v5 2/6] create compat_readv()
+Date: Fri, 19 Dec 2008 16:58:21 +0100
+Message-ID: <18791.6208095432$1229702444@news.gmane.org>
 References: <1229702305-23027-1-git-send-email-y>
 Return-path: <linux-arch-owner@vger.kernel.org>
 In-Reply-To: <1229702305-23027-1-git-send-email-y>
@@ -12,35 +12,61 @@ List-Id: linux-api@vger.kernel.org
 
 From: Gerd Hoffmann <kraxel@redhat.com>
 
-[ Note: unrelated bugfix spotted during preadv review,
-  included for completeness, akpm picked it into -mm already. ]
+Factor out some code from compat_sys_readv() which can be shared with the
+upcoming compat_sys_preadv().
 
 Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
 ---
- fs/compat.c |    6 ++++++
- 1 files changed, 6 insertions(+), 0 deletions(-)
+ fs/compat.c |   24 ++++++++++++++++--------
+ 1 files changed, 16 insertions(+), 8 deletions(-)
 
 diff --git a/fs/compat.c b/fs/compat.c
-index e5f49f5..aab2234 100644
+index aab2234..361cb7d 100644
 --- a/fs/compat.c
 +++ b/fs/compat.c
-@@ -1187,6 +1187,9 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsign
- 	ret = compat_do_readv_writev(READ, file, vec, vlen, &file->f_pos);
- 
- out:
-+	if (ret > 0)
-+		add_rchar(current, ret);
-+	inc_syscr(current);
- 	fput(file);
+@@ -1167,16 +1167,11 @@ out:
  	return ret;
  }
-@@ -1210,6 +1213,9 @@ compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec, unsig
- 	ret = compat_do_readv_writev(WRITE, file, vec, vlen, &file->f_pos);
+ 
+-asmlinkage ssize_t
+-compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsigned long vlen)
++static size_t compat_readv(struct file *file, const struct compat_iovec __user *vec,
++                           unsigned long vlen, loff_t *pos)
+ {
+-	struct file *file;
+ 	ssize_t ret = -EBADF;
+ 
+-	file = fget(fd);
+-	if (!file)
+-		return -EBADF;
+-
+ 	if (!(file->f_mode & FMODE_READ))
+ 		goto out;
+ 
+@@ -1184,12 +1179,25 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsign
+ 	if (!file->f_op || (!file->f_op->aio_read && !file->f_op->read))
+ 		goto out;
+ 
+-	ret = compat_do_readv_writev(READ, file, vec, vlen, &file->f_pos);
++	ret = compat_do_readv_writev(READ, file, vec, vlen, pos);
  
  out:
-+	if (ret > 0)
-+		add_wchar(current, ret);
-+	inc_syscw(current);
+ 	if (ret > 0)
+ 		add_rchar(current, ret);
+ 	inc_syscr(current);
++	return ret;
++}
++
++asmlinkage ssize_t
++compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsigned long vlen)
++{
++	struct file *file;
++	ssize_t ret;
++
++	file = fget(fd);
++	if (!file)
++		return -EBADF;
++	ret = compat_readv(file, vec, vlen, &file->f_pos);
  	fput(file);
  	return ret;
  }
