@@ -1,35 +1,44 @@
-From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 0/6] Add preadv & pwritev system calls.
-Date: Fri, 19 Dec 2008 17:21:03 +0100
-Message-ID: <494BC9EF.60107@redhat.com>
-References: <1229702305-23027-1-git-send-email-y>
+From: Randy Dunlap <randy.dunlap@oracle.com>
+Subject: Re: [PATCH 1/1] Userspace I/O (UIO): Documentatin for userspace DMA
+ support
+Date: Mon, 22 Dec 2008 11:14:02 -0800
+Message-ID: <20081222111402.4e6f2b96.randy.dunlap@oracle.com>
+References: <208aa0f00812032053w5efb99dbk94511b0f8c1f0925@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1229702305-23027-1-git-send-email-y>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754683AbYLVTOq@vger.kernel.org>
+In-Reply-To: <208aa0f00812032053w5efb99dbk94511b0f8c1f0925@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Edward Estabrook <edward.estabrook.lkml@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Greg KH <gregkh@suse.de>, hjk@linutronix.de, edward_estabrook@agilent.com
 List-Id: linux-api@vger.kernel.org
 
-y@redhat.com wrote:
-> From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+On Wed, 3 Dec 2008 20:53:27 -0800 Edward Estabrook wrote:
 
-Damn, acked git-send-email prompting for the email addr with 'y' instead
-of just tapping enter.
+> --- linux-2.6.28-rc6/Documentation/DocBook/uio-howto.tmpl.orig	2008-12-03
+> 12:03:43.000000000 -0800
+> +++ linux-2.6.28-rc6/Documentation/DocBook/uio-howto.tmpl	2008-12-03
+> 13:11:53.000000000 -0800
+> @@ -572,6 +602,50 @@ to set up sysfs files for this mapping.
+>  	</para>
+>  </sect1>
+> 
+> +<sect1 id="dma_region_mmap">
+> +<title>Allocating DMA region with mmap()</title>
 
-The bad thing is that 'reply' doesn't work.
+          Allocating a DMA region with mmap()
 
-The good thing is that git-send-email added my address to every mail
-sent out, so you should be able to figure nevertheless.
+> +	<para>
+> +	To allocate and map a DMA memory region you use
 
-Really time for some vacation days.
+duplicate "use use".  Instead of dropping the second one, make it "the".
 
-Happy x-mas everybody and sorry for the inconvenience,
+> +	use <function>mmap()</function>.  You may create as
+> +	many regions as system resources allow by repeated use of
+> +	<function>mmap()</function>.
+> +	</para>
 
-  Gerd
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+---
+~Randy
