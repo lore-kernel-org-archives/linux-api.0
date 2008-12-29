@@ -1,336 +1,68 @@
-From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Subject: [RFC v12][PATCH 10/14] Restore open file descriprtors
-Date: Mon, 29 Dec 2008 04:16:23 -0500
-Message-ID: <1230542187-10434-11-git-send-email-orenl@cs.columbia.edu>
+From: Oren Laadan <orenl@cs.columbia.edu>
+Subject: [RFC v12][PATCH 03/14] Make file_pos_read/write() public
+Date: Mon, 29 Dec 2008 04:16:16 -0500
+Message-ID: <1230542187-10434-4-git-send-email-orenl@cs.columbia.edu>
 References: <1230542187-10434-1-git-send-email-orenl@cs.columbia.edu>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1230542187-10434-1-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1230542187-10434-1-git-send-email-orenl@cs.columbia.edu>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Mike Waychison <mikew@google.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-Restore open file descriptors: for each FD read 'struct cr_hdr_fd_ent'
-and lookup objref in the hash table; if not found (first occurence), read
-in 'struct cr_hdr_fd_data', create a new FD and register in the hash.
-Otherwise attach the file pointer from the hash as an FD.
-
-This patch only handles basic FDs - regular files, directories and also
-symbolic links.
-
-Changelog[v12]:
-  - Replace obsolete cr_debug() with pr_debug()
-
-Changelog[v6]:
-  - Balance all calls to cr_hbuf_get() with matching cr_hbuf_put()
-    (even though it's not really needed)
-
-Signed-off-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
-Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+These two are used in the next patch when calling vfs_read/write()
 ---
- checkpoint/Makefile        |    2 +-
- checkpoint/restart.c       |    4 +
- checkpoint/rstr_file.c     |  248 ++++++++++++++++++++++++++++++++++++++++++++
- include/linux/checkpoint.h |    1 +
- 4 files changed, 254 insertions(+), 1 deletions(-)
- create mode 100644 checkpoint/rstr_file.c
+ fs/read_write.c    |   10 ----------
+ include/linux/fs.h |   10 ++++++++++
+ 2 files changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/checkpoint/Makefile b/checkpoint/Makefile
-index 7496695..88bbc10 100644
---- a/checkpoint/Makefile
-+++ b/checkpoint/Makefile
-@@ -3,4 +3,4 @@
- #
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 969a6d9..dda4eab 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -346,16 +346,6 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
  
- obj-$(CONFIG_CHECKPOINT_RESTART) += sys.o checkpoint.o restart.o objhash.o \
--		ckpt_mem.o rstr_mem.o ckpt_file.o
-+		ckpt_mem.o rstr_mem.o ckpt_file.o rstr_file.o
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index 536d017..ece05b7 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -261,6 +261,10 @@ static int cr_read_task(struct cr_ctx *ctx)
- 	pr_debug("memory: ret %d\n", ret);
- 	if (ret < 0)
- 		goto out;
-+	ret = cr_read_files(ctx);
-+	pr_debug("files: ret %d\n", ret);
-+	if (ret < 0)
-+		goto out;
- 	ret = cr_read_thread(ctx);
- 	pr_debug("thread: ret %d\n", ret);
- 	if (ret < 0)
-diff --git a/checkpoint/rstr_file.c b/checkpoint/rstr_file.c
-new file mode 100644
-index 0000000..f44b081
---- /dev/null
-+++ b/checkpoint/rstr_file.c
-@@ -0,0 +1,248 @@
-+/*
-+ *  Checkpoint file descriptors
-+ *
-+ *  Copyright (C) 2008 Oren Laadan
-+ *
-+ *  This file is subject to the terms and conditions of the GNU General Public
-+ *  License.  See the file COPYING in the main directory of the Linux
-+ *  distribution for more details.
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/sched.h>
-+#include <linux/fs.h>
-+#include <linux/file.h>
-+#include <linux/fdtable.h>
-+#include <linux/fsnotify.h>
-+#include <linux/syscalls.h>
-+#include <linux/checkpoint.h>
-+#include <linux/checkpoint_hdr.h>
-+
-+#include "checkpoint_file.h"
-+
-+static int cr_close_all_fds(struct files_struct *files)
-+{
-+	int *fdtable;
-+	int nfds;
-+
-+	nfds = cr_scan_fds(files, &fdtable);
-+	if (nfds < 0)
-+		return nfds;
-+	while (nfds--)
-+		sys_close(fdtable[nfds]);
-+	kfree(fdtable);
-+	return 0;
-+}
-+
-+/**
-+ * cr_attach_file - attach a lonely file ptr to a file descriptor
-+ * @file: lonely file pointer
-+ */
-+static int cr_attach_file(struct file *file)
-+{
-+	int fd = get_unused_fd_flags(0);
-+
-+	if (fd >= 0) {
-+		fsnotify_open(file->f_path.dentry);
-+		fd_install(fd, file);
-+	}
-+	return fd;
-+}
-+
-+/**
-+ * cr_attach_get_file - attach (and get) lonely file ptr to a file descriptor
-+ * @file: lonely file pointer
-+ */
-+static int cr_attach_get_file(struct file *file)
-+{
-+	int fd = get_unused_fd_flags(0);
-+
-+	if (fd >= 0) {
-+		fsnotify_open(file->f_path.dentry);
-+		get_file(file);
-+		fd_install(fd, file);
-+	}
-+	return fd;
-+}
-+
-+#define CR_SETFL_MASK (O_APPEND|O_NONBLOCK|O_NDELAY|FASYNC|O_DIRECT|O_NOATIME)
-+
-+/* cr_read_fd_data - restore the state of a given file pointer */
-+static int
-+cr_read_fd_data(struct cr_ctx *ctx, struct files_struct *files, int rparent)
-+{
-+	struct cr_hdr_fd_data *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	struct file *file;
-+	int parent, ret;
-+	int fd = 0;	/* pacify gcc warning */
-+
-+	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_FD_DATA);
-+	pr_debug("rparent %d parent %d flags %#x mode %#x how %d\n",
-+		 rparent, parent, hh->f_flags, hh->f_mode, hh->fd_type);
-+	if (parent < 0) {
-+		ret = parent;
-+		goto out;
-+	}
-+
-+	ret = -EINVAL;
-+
-+	if (parent != rparent)
-+		goto out;
-+
-+	/* FIX: more sanity checks on f_flags, f_mode etc */
-+
-+	switch (hh->fd_type) {
-+	case CR_FD_FILE:
-+	case CR_FD_DIR:
-+		file = cr_read_open_fname(ctx, hh->f_flags, hh->f_mode);
-+		break;
-+	default:
-+		goto out;
-+	}
-+
-+	if (IS_ERR(file)) {
-+		ret = PTR_ERR(file);
-+		goto out;
-+	}
-+
-+	/* FIX: need to restore uid, gid, owner etc */
-+
-+	/* adding <objref,file> to the hash will keep a reference to it */
-+	ret = cr_obj_add_ref(ctx, file, parent, CR_OBJ_FILE, 0);
-+	if (ret < 0) {
-+		filp_close(file, NULL);
-+		goto out;
-+	}
-+
-+	fd = cr_attach_file(file);	/* no need to cleanup 'file' below */
-+	if (fd < 0) {
-+		ret = fd;
-+		filp_close(file, NULL);
-+		goto out;
-+	}
-+
-+	ret = sys_fcntl(fd, F_SETFL, hh->f_flags & CR_SETFL_MASK);
-+	if (ret < 0)
-+		goto out;
-+	ret = vfs_llseek(file, hh->f_pos, SEEK_SET);
-+	if (ret == -ESPIPE)	/* ignore error on non-seekable files */
-+		ret = 0;
-+
-+	ret = 0;
-+ out:
-+	cr_hbuf_put(ctx, sizeof(*hh));
-+	return ret < 0 ? ret : fd;
-+}
-+
-+/**
-+ * cr_read_fd_ent - restore the state of a given file descriptor
-+ * @ctx: checkpoint context
-+ * @files: files_struct pointer
-+ * @parent: parent objref
-+ *
-+ * Restores the state of a file descriptor; looks up the objref (in the
-+ * header) in the hash table, and if found picks the matching file and
-+ * use it; otherwise calls cr_read_fd_data to restore the file too.
-+ */
-+static int
-+cr_read_fd_ent(struct cr_ctx *ctx, struct files_struct *files, int rparent)
-+{
-+	struct cr_hdr_fd_ent *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	struct file *file;
-+	int newfd, parent, ret;
-+
-+	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_FD_ENT);
-+	pr_debug("rparent %d parent %d ref %d fd %d c.o.e %d\n",
-+		 rparent, parent, hh->objref, hh->fd, hh->close_on_exec);
-+	if (parent < 0) {
-+		ret = parent;
-+		goto out;
-+	}
-+
-+	ret = -EINVAL;
-+
-+	if (parent != rparent)
-+		goto out;
-+	if (hh->objref <= 0)
-+		goto out;
-+
-+	file = cr_obj_get_by_ref(ctx, hh->objref, CR_OBJ_FILE);
-+	if (IS_ERR(file)) {
-+		ret = PTR_ERR(file);
-+		goto out;
-+	}
-+
-+	if (file) {
-+		/* reuse file descriptor found in the hash table */
-+		newfd = cr_attach_get_file(file);
-+	} else {
-+		/* create new file pointer (and register in hash table) */
-+		newfd = cr_read_fd_data(ctx, files, hh->objref);
-+	}
-+
-+	if (newfd < 0) {
-+		ret = newfd;
-+		goto out;
-+	}
-+
-+	pr_debug("newfd got %d wanted %d\n", newfd, hh->fd);
-+
-+	/* if newfd isn't desired fd then reposition it */
-+	if (newfd != hh->fd) {
-+		ret = sys_dup2(newfd, hh->fd);
-+		if (ret < 0)
-+			goto out;
-+		sys_close(newfd);
-+	}
-+
-+	if (hh->close_on_exec)
-+		set_close_on_exec(hh->fd, 1);
-+
-+	ret = 0;
-+ out:
-+	cr_hbuf_put(ctx, sizeof(*hh));
-+	return ret;
-+}
-+
-+int cr_read_files(struct cr_ctx *ctx)
-+{
-+	struct cr_hdr_files *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	struct files_struct *files = current->files;
-+	int i, parent, ret;
-+
-+	parent = cr_read_obj_type(ctx, hh, sizeof(*hh), CR_HDR_FILES);
-+	if (parent < 0) {
-+		ret = parent;
-+		goto out;
-+	}
-+
-+	ret = -EINVAL;
-+#if 0	/* activate when containers are used */
-+	if (parent != task_pid_vnr(current))
-+		goto out;
-+#endif
-+	pr_debug("objref %d nfds %d\n", hh->objref, hh->nfds);
-+	if (hh->objref < 0 || hh->nfds < 0)
-+		goto out;
-+
-+	if (hh->nfds > sysctl_nr_open) {
-+		ret = -EMFILE;
-+		goto out;
-+	}
-+
-+	/* point of no return -- close all file descriptors */
-+	ret = cr_close_all_fds(files);
-+	if (ret < 0)
-+		goto out;
-+
-+	for (i = 0; i < hh->nfds; i++) {
-+		ret = cr_read_fd_ent(ctx, files, hh->objref);
-+		if (ret < 0)
-+			break;
-+	}
-+
-+	ret = 0;
-+ out:
-+	cr_hbuf_put(ctx, sizeof(*hh));
-+	return ret;
-+}
-diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index 59cc515..ea9ab4c 100644
---- a/include/linux/checkpoint.h
-+++ b/include/linux/checkpoint.h
-@@ -89,6 +89,7 @@ extern int cr_write_files(struct cr_ctx *ctx, struct task_struct *t);
+ EXPORT_SYMBOL(vfs_write);
  
- extern int do_restart(struct cr_ctx *ctx, pid_t pid);
- extern int cr_read_mm(struct cr_ctx *ctx);
-+extern int cr_read_files(struct cr_ctx *ctx);
+-static inline loff_t file_pos_read(struct file *file)
+-{
+-	return file->f_pos;
+-}
+-
+-static inline void file_pos_write(struct file *file, loff_t pos)
+-{
+-	file->f_pos = pos;
+-}
+-
+ asmlinkage ssize_t sys_read(unsigned int fd, char __user * buf, size_t count)
+ {
+ 	struct file *file;
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 4a853ef..39a54b9 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1344,6 +1344,16 @@ ssize_t rw_copy_check_uvector(int type, const struct iovec __user * uvector,
+ 				struct iovec *fast_pointer,
+ 				struct iovec **ret_pointer);
  
- #ifdef pr_fmt
- #undef pr_fmt
++static inline loff_t file_pos_read(struct file *file)
++{
++	return file->f_pos;
++}
++
++static inline void file_pos_write(struct file *file, loff_t pos)
++{
++	file->f_pos = pos;
++}
++
+ extern ssize_t vfs_read(struct file *, char __user *, size_t, loff_t *);
+ extern ssize_t vfs_write(struct file *, const char __user *, size_t, loff_t *);
+ extern ssize_t vfs_readv(struct file *, const struct iovec __user *,
 -- 
 1.5.4.3
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
