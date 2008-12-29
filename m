@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [RFC v12][PATCH 09/14] Dump open file descriptors
-Date: Mon, 29 Dec 2008 04:16:22 -0500
-Message-ID: <1230542187-10434-10-git-send-email-orenl@cs.columbia.edu>
+Subject: [RFC v12][PATCH 13/14] Checkpoint multiple processes
+Date: Mon, 29 Dec 2008 04:16:26 -0500
+Message-ID: <1230542187-10434-14-git-send-email-orenl@cs.columbia.edu>
 References: <1230542187-10434-1-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1230542187-10434-1-git-send-email-orenl@cs.columbia.edu>
@@ -10,423 +10,386 @@ To: Andrew Morton <akpm@linux-foundation.org>
 Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Mike Waychison <mikew@google.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-Dump the files_struct of a task with 'struct cr_hdr_files', followed by
-all open file descriptors. Because the 'struct file' corresponding to an
-FD can be shared, each they are assigned an objref and registered in the
-object hash. A reference to the 'file *' is kept for as long as it lives
-in the hash (the hash is only cleaned up at the end of the checkpoint).
+Checkpointing of multiple processes works by recording the tasks tree
+structure below a given task (usually this task is the container init).
 
-For each open FD there is a 'struct cr_hdr_fd_ent' with the FD, its
-close-on-exec property, and the objref of the corresponding 'file *'.
-If the FD is to be saved (first time) then this is followed by a
-'struct cr_hdr_fd_data' with the FD state. Then will come the next FD
-and so on.
+For a given task, do a DFS scan of the tasks tree and collect them
+into an array (keeping a reference to each task). Using DFS simplifies
+the recreation of tasks either in user space or kernel space. For each
+task collected, test if it can be checkpointed, and save its pid, tgid,
+and ppid.
 
-Recall that it is assumed that all tasks possibly sharing the file table
-are frozen. If this assumption breaks, then the behavior is *undefined*:
-checkpoint may fail, or restart from the resulting image file will fail.
+The actual work is divided into two passes: a first scan counts the
+tasks, then memory is allocated and a second scan fills the array.
 
-This patch only handles basic FDs - regular files, directories.
+The logic is suitable for creation of processes during restart either
+in userspace or by the kernel.
+
+Currently we ignore threads and zombies, as well as session ids.
 
 Changelog[v12]:
   - Replace obsolete cr_debug() with pr_debug()
 
-Changelog[v11]:
-  - Discard handling of opened symlinks (there is no such thing)
-  - cr_scan_fds() retries from scratch if hits size limits
-
-Changelog[v9]:
-  - Fix a couple of leaks in cr_write_files()
-  - Drop useless kfree from cr_scan_fds()
-
-Changelog[v8]:
-  - initialize 'coe' to workaround gcc false warning
-
-Changelog[v6]:
-  - Balance all calls to cr_hbuf_get() with matching cr_hbuf_put()
-    (even though it's not really needed)
-
 Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 Acked-by: Serge Hallyn <serue@us.ibm.com>
-Signed-off-by: Dave Hansen <dave@linux.vnet.ibm.com>
 ---
- arch/x86/include/asm/checkpoint_hdr.h |    2 +-
- checkpoint/Makefile                   |    2 +-
- checkpoint/checkpoint.c               |    4 +
- checkpoint/checkpoint_file.h          |   17 +++
- checkpoint/ckpt_file.c                |  224 +++++++++++++++++++++++++++++++++
- include/linux/checkpoint.h            |    3 +-
- include/linux/checkpoint_hdr.h        |   31 +++++-
- 7 files changed, 279 insertions(+), 4 deletions(-)
- create mode 100644 checkpoint/checkpoint_file.h
- create mode 100644 checkpoint/ckpt_file.c
+ checkpoint/checkpoint.c        |  228 +++++++++++++++++++++++++++++++++++++---
+ checkpoint/sys.c               |   16 +++
+ include/linux/checkpoint.h     |    3 +
+ include/linux/checkpoint_hdr.h |   13 ++-
+ 4 files changed, 243 insertions(+), 17 deletions(-)
 
-diff --git a/arch/x86/include/asm/checkpoint_hdr.h b/arch/x86/include/asm/checkpoint_hdr.h
-index 6185548..43f21e4 100644
---- a/arch/x86/include/asm/checkpoint_hdr.h
-+++ b/arch/x86/include/asm/checkpoint_hdr.h
-@@ -15,7 +15,7 @@
- /*
-  * To maintain compatibility between 32-bit and 64-bit architecture flavors,
-  * keep data 64-bit aligned: use padding for structure members, and use
-- * __attribute__ ((aligned (8))) for the entire structure.
-+ * __attribute__((aligned (8))) for the entire structure.
-  *
-  * Quoting Arnd Bergmann:
-  *   "This structure has an odd multiple of 32-bit members, which means
-diff --git a/checkpoint/Makefile b/checkpoint/Makefile
-index 9843fb9..7496695 100644
---- a/checkpoint/Makefile
-+++ b/checkpoint/Makefile
-@@ -3,4 +3,4 @@
- #
- 
- obj-$(CONFIG_CHECKPOINT_RESTART) += sys.o checkpoint.o restart.o objhash.o \
--		ckpt_mem.o rstr_mem.o
-+		ckpt_mem.o rstr_mem.o ckpt_file.o
 diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index 5c47184..dd0f527 100644
+index 35e3c6b..fbcd9eb 100644
 --- a/checkpoint/checkpoint.c
 +++ b/checkpoint/checkpoint.c
-@@ -233,6 +233,10 @@ static int cr_write_task(struct cr_ctx *ctx, struct task_struct *t)
- 	pr_debug("memory: ret %d\n", ret);
+@@ -226,19 +226,6 @@ static int cr_write_task(struct cr_ctx *ctx, struct task_struct *t)
+ {
+ 	int ret;
+ 
+-	/* TODO: verity that the task is frozen (unless self) */
+-
+-	if (t->state == TASK_DEAD) {
+-		pr_warning("c/r: task may not be in state TASK_DEAD\n");
+-		return -EAGAIN;
+-	}
+-
+-	if (!atomic_read(&t->may_checkpoint)) {
+-		pr_warning("c/r: task %d may not checkpoint\n",
+-			   task_pid_vnr(t));
+-		return -EBUSY;
+-	}
+-
+ 	ret = cr_write_task_struct(ctx, t);
+ 	pr_debug("task_struct: ret %d\n", ret);
  	if (ret < 0)
- 		goto out;
-+	ret = cr_write_files(ctx, t);
-+	pr_debug("files: ret %d\n", ret);
-+	if (ret < 0)
-+		goto out;
- 	ret = cr_write_thread(ctx, t);
- 	pr_debug("thread: ret %d\n", ret);
- 	if (ret < 0)
-diff --git a/checkpoint/checkpoint_file.h b/checkpoint/checkpoint_file.h
-new file mode 100644
-index 0000000..9dc3eba
---- /dev/null
-+++ b/checkpoint/checkpoint_file.h
-@@ -0,0 +1,17 @@
-+#ifndef _CHECKPOINT_CKPT_FILE_H_
-+#define _CHECKPOINT_CKPT_FILE_H_
-+/*
-+ *  Checkpoint file descriptors
-+ *
-+ *  Copyright (C) 2008 Oren Laadan
-+ *
-+ *  This file is subject to the terms and conditions of the GNU General Public
-+ *  License.  See the file COPYING in the main directory of the Linux
-+ *  distribution for more details.
-+ */
-+
-+#include <linux/fdtable.h>
-+
-+int cr_scan_fds(struct files_struct *files, int **fdtable);
-+
-+#endif /* _CHECKPOINT_CKPT_FILE_H_ */
-diff --git a/checkpoint/ckpt_file.c b/checkpoint/ckpt_file.c
-new file mode 100644
-index 0000000..e3097ac
---- /dev/null
-+++ b/checkpoint/ckpt_file.c
-@@ -0,0 +1,224 @@
-+/*
-+ *  Checkpoint file descriptors
-+ *
-+ *  Copyright (C) 2008 Oren Laadan
-+ *
-+ *  This file is subject to the terms and conditions of the GNU General Public
-+ *  License.  See the file COPYING in the main directory of the Linux
-+ *  distribution for more details.
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/sched.h>
-+#include <linux/file.h>
-+#include <linux/fdtable.h>
-+#include <linux/checkpoint.h>
-+#include <linux/checkpoint_hdr.h>
-+
-+#include "checkpoint_file.h"
-+
-+#define CR_DEFAULT_FDTABLE  256		/* an initial guess */
-+
-+/**
-+ * cr_scan_fds - scan file table and construct array of open fds
-+ * @files: files_struct pointer
-+ * @fdtable: (output) array of open fds
-+ *
-+ * Returns the number of open fds found, and also the file table
-+ * array via *fdtable. The caller should free the array.
-+ *
-+ * The caller must validate the file descriptors collected in the
-+ * array before using them, e.g. by using fcheck_files(), in case
-+ * the task's fdtable changes in the meantime.
-+ */
-+int cr_scan_fds(struct files_struct *files, int **fdtable)
+@@ -261,6 +248,205 @@ static int cr_write_task(struct cr_ctx *ctx, struct task_struct *t)
+ 	return ret;
+ }
+ 
++/* dump all tasks in ctx->tasks_arr[] */
++static int cr_write_all_tasks(struct cr_ctx *ctx)
 +{
-+	struct fdtable *fdt;
-+	int *fds = NULL;
-+	int i, n;
-+	int tot = CR_DEFAULT_FDTABLE;
++	int n, ret = 0;
 +
-+	/*
-+	 * We assume that all tasks possibly sharing the file table are
-+	 * frozen (or we our a single process and we checkpoint ourselves).
-+	 * Therefore, we can safely proceed after krealloc() from where we
-+	 * left off. Otherwise the file table may be modified by another
-+	 * task after we scan it. The behavior is this case is undefined,
-+	 * and either and either checkpoint or restart will likely fail.
-+	 */
-+ retry:
-+	fds = krealloc(fds, tot * sizeof(*fds), GFP_KERNEL);
-+	if (!fds)
-+		return -ENOMEM;
-+
-+	spin_lock(&files->file_lock);
-+	rcu_read_lock();
-+	fdt = files_fdtable(files);
-+	for (n = 0, i = 0; i < fdt->max_fds; i++) {
-+		if (!fcheck_files(files, i))
-+			continue;
-+		if (n == tot) {
-+			spin_unlock(&files->file_lock);
-+			rcu_read_unlock();
-+			tot *= 2;	/* won't overflow: kmalloc will fail */
-+			goto retry;
-+		}
-+		fds[n++] = i;
++	for (n = 0; n < ctx->tasks_nr; n++) {
++		pr_debug("dumping task #%d\n", n);
++		ret = cr_write_task(ctx, ctx->tasks_arr[n]);
++		if (ret < 0)
++			break;
 +	}
-+	rcu_read_unlock();
-+	spin_unlock(&files->file_lock);
 +
-+	*fdtable = fds;
-+	return n;
++	return ret;
 +}
 +
-+/* cr_write_fd_data - dump the state of a given file pointer */
-+static int cr_write_fd_data(struct cr_ctx *ctx, struct file *file, int parent)
++static int cr_may_checkpoint_task(struct task_struct *t, struct cr_ctx *ctx)
 +{
-+	struct cr_hdr h;
-+	struct cr_hdr_fd_data *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	struct dentry *dent = file->f_dentry;
-+	struct inode *inode = dent->d_inode;
-+	enum fd_type fd_type;
-+	int ret;
++	pr_debug("check %d\n", task_pid_nr_ns(t, ctx->root_nsproxy->pid_ns));
 +
-+	h.type = CR_HDR_FD_DATA;
-+	h.len = sizeof(*hh);
-+	h.parent = parent;
-+
-+	hh->f_flags = file->f_flags;
-+	hh->f_mode = file->f_mode;
-+	hh->f_pos = file->f_pos;
-+	hh->f_version = file->f_version;
-+	/* FIX: need also file->uid, file->gid, file->f_owner, etc */
-+
-+	switch (inode->i_mode & S_IFMT) {
-+	case S_IFREG:
-+		fd_type = CR_FD_FILE;
-+		break;
-+	case S_IFDIR:
-+		fd_type = CR_FD_DIR;
-+		break;
-+	default:
-+		cr_hbuf_put(ctx, sizeof(*hh));
-+		return -EBADF;
++	if (t->state == TASK_DEAD) {
++		pr_warning("c/r: task %d is TASK_DEAD\n", task_pid_vnr(t));
++		return -EAGAIN;
 +	}
 +
-+	/* FIX: check if the file/dir/link is unlinked */
-+	hh->fd_type = fd_type;
++	if (!atomic_read(&t->may_checkpoint)) {
++		pr_warning("c/r: task %d uncheckpointable\n", task_pid_vnr(t));
++		return -EBUSY;
++	}
++
++	if (!ptrace_may_access(t, PTRACE_MODE_READ))
++		return -EPERM;
++
++	/* FIXME: verify that the task is frozen (unless self) */
++
++	/* FIXME: change this for nested containers */
++	if (task_nsproxy(t) != ctx->root_nsproxy)
++		return -EPERM;
++
++	return 0;
++}
++
++#define CR_HDR_PIDS_CHUNK	256
++
++static int cr_write_pids(struct cr_ctx *ctx)
++{
++	struct cr_hdr_pids *hh;
++	struct pid_namespace *ns;
++	struct task_struct *task;
++	struct task_struct **tasks_arr;
++	int tasks_nr, n, ret = 0, pos = 0;
++
++	ns = ctx->root_nsproxy->pid_ns;
++	tasks_arr = ctx->tasks_arr;
++	tasks_nr = ctx->tasks_nr;
++
++	hh = cr_hbuf_get(ctx, sizeof(*hh) * CR_HDR_PIDS_CHUNK);
++
++	while (tasks_nr > 0) {
++		rcu_read_lock();
++		for (n = min(tasks_nr, CR_HDR_PIDS_CHUNK); n; n--) {
++			task = tasks_arr[pos];
++
++			/* is this task cool ? */
++			ret = cr_may_checkpoint_task(task, ctx);
++			if (ret < 0) {
++				rcu_read_unlock();
++				goto out;
++			}
++			hh[pos].vpid = task_pid_nr_ns(task, ns);
++			hh[pos].vtgid = task_tgid_nr_ns(task, ns);
++			hh[pos].vppid = task_tgid_nr_ns(task->real_parent, ns);
++			pr_debug("task[%d]: vpid %d vtgid %d parent %d\n", pos,
++				 hh[pos].vpid, hh[pos].vtgid, hh[pos].vppid);
++			pos++;
++		}
++		rcu_read_unlock();
++
++		n = min(tasks_nr, CR_HDR_PIDS_CHUNK);
++		ret = cr_kwrite(ctx, hh, n * sizeof(*hh));
++		if (ret < 0)
++			break;
++
++		tasks_nr -= n;
++	}
++ out:
++	cr_hbuf_put(ctx, sizeof(*hh));
++	return ret;
++}
++
++/* count number of tasks in tree (and optionally fill pid's in array) */
++static int cr_tree_count_tasks(struct cr_ctx *ctx)
++{
++	struct task_struct *root = ctx->root_task;
++	struct task_struct *task = root;
++	struct task_struct *parent = NULL;
++	struct task_struct **tasks_arr = ctx->tasks_arr;
++	int tasks_nr = ctx->tasks_nr;
++	int nr = 0;
++
++	read_lock(&tasklist_lock);
++
++	/* count tasks via DFS scan of the tree */
++	while (1) {
++		if (tasks_arr) {
++			/* unlikely, but ... */
++			if (nr == tasks_nr)
++				return -EBUSY;	/* cleanup in cr_ctx_free() */
++			tasks_arr[nr] = task;
++			get_task_struct(task);
++		}
++
++		nr++;
++
++		/* if has children - proceed with child */
++		if (!list_empty(&task->children)) {
++			parent = task;
++			task = list_entry(task->children.next,
++					  struct task_struct, sibling);
++			continue;
++		}
++
++		while (task != root) {
++			/* if has sibling - proceed with sibling */
++			if (!list_is_last(&task->sibling, &parent->children)) {
++				task = list_entry(task->sibling.next,
++						  struct task_struct, sibling);
++				break;
++			}
++
++			/* else, trace back to parent and proceed */
++			task = parent;
++			parent = parent->real_parent;
++		}
++
++		if (task == root)
++			break;
++	}
++
++	read_unlock(&tasklist_lock);
++	return nr;
++}
++
++/*
++ * cr_build_tree - scan the tasks tree in DFS order and fill in array
++ * @ctx: checkpoint context
++ *
++ * Using DFS order simplifies the restart logic to re-create the tasks.
++ *
++ * On success, ctx->tasks_arr will be allocated and populated with all
++ * tasks (reference taken), and ctx->tasks_nr will hold the total count.
++ * The array is cleaned up by cr_ctx_free().
++ */
++static int cr_build_tree(struct cr_ctx *ctx)
++{
++	int n, m;
++
++	/* count tasks (no side effects) */
++	n = cr_tree_count_tasks(ctx);
++
++	ctx->tasks_nr = n;
++	ctx->tasks_arr = kzalloc(n * sizeof(*ctx->tasks_arr), GFP_KERNEL);
++	if (!ctx->tasks_arr)
++		return -ENOMEM;
++
++	/* count again (now will fill array) */
++	m = cr_tree_count_tasks(ctx);
++
++	/* unlikely, but ... (cleanup in cr_ctx_free) */
++	if (m < 0)
++		return m;
++	else if (m != n)
++		return -EBUSY;
++
++	return 0;
++}
++
++/* dump the array that describes the tasks tree */
++static int cr_write_tree(struct cr_ctx *ctx)
++{
++	struct cr_hdr h;
++	struct cr_hdr_tree *hh;
++	int ret;
++
++	h.type = CR_HDR_TREE;
++	h.len = sizeof(*hh);
++	h.parent = 0;
++
++	hh = cr_hbuf_get(ctx, sizeof(*hh));
++	hh->tasks_nr = ctx->tasks_nr;
 +
 +	ret = cr_write_obj(ctx, &h, hh);
 +	cr_hbuf_put(ctx, sizeof(*hh));
 +	if (ret < 0)
 +		return ret;
 +
-+	return cr_write_fname(ctx, &file->f_path, &ctx->fs_mnt);
-+}
-+
-+/**
-+ * cr_write_fd_ent - dump the state of a given file descriptor
-+ * @ctx: checkpoint context
-+ * @files: files_struct pointer
-+ * @fd: file descriptor
-+ *
-+ * Saves the state of the file descriptor; looks up the actual file
-+ * pointer in the hash table, and if found saves the matching objref,
-+ * otherwise calls cr_write_fd_data to dump the file pointer too.
-+ */
-+static int
-+cr_write_fd_ent(struct cr_ctx *ctx, struct files_struct *files, int fd)
-+{
-+	struct cr_hdr h;
-+	struct cr_hdr_fd_ent *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	struct file *file;
-+	struct fdtable *fdt;
-+	int objref, new, ret;
-+	int coe = 0;	/* avoid gcc warning */
-+
-+	rcu_read_lock();
-+	fdt = files_fdtable(files);
-+	file = fcheck_files(files, fd);
-+	if (file) {
-+		coe = FD_ISSET(fd, fdt->close_on_exec);
-+		get_file(file);
-+	}
-+	rcu_read_unlock();
-+
-+	/* sanity check (although this shouldn't happen) */
-+	if (!file) {
-+		ret = -EBADF;
-+		goto out;
-+	}
-+
-+	/* adding 'file' to the hash will keep a reference to it */
-+	new = cr_obj_add_ptr(ctx, file, &objref, CR_OBJ_FILE, 0);
-+	pr_debug("fd %d objref %d file %p c-o-e %d)\n", fd, objref, file, coe);
-+
-+	if (new < 0) {
-+		ret = new;
-+		goto out;
-+	}
-+
-+	h.type = CR_HDR_FD_ENT;
-+	h.len = sizeof(*hh);
-+	h.parent = 0;
-+
-+	hh->objref = objref;
-+	hh->fd = fd;
-+	hh->close_on_exec = coe;
-+
-+	ret = cr_write_obj(ctx, &h, hh);
-+	if (ret < 0)
-+		goto out;
-+
-+	/* new==1 if-and-only-if file was newly added to hash */
-+	if (new)
-+		ret = cr_write_fd_data(ctx, file, objref);
-+
-+out:
-+	cr_hbuf_put(ctx, sizeof(*hh));
-+	if (file)
-+		fput(file);
++	ret = cr_write_pids(ctx);
 +	return ret;
 +}
 +
-+int cr_write_files(struct cr_ctx *ctx, struct task_struct *t)
-+{
-+	struct cr_hdr h;
-+	struct cr_hdr_files *hh = cr_hbuf_get(ctx, sizeof(*hh));
-+	struct files_struct *files;
-+	int *fdtable = NULL;
-+	int nfds, n, ret;
+ static int cr_get_container(struct cr_ctx *ctx, pid_t pid)
+ {
+ 	struct task_struct *task = NULL;
+@@ -278,7 +464,7 @@ static int cr_get_container(struct cr_ctx *ctx, pid_t pid)
+ 	if (!task)
+ 		goto out;
+ 
+-#if 0	/* enable to use containers */
++#if 0	/* enable with containers */
+ 	if (!is_container_init(task)) {
+ 		err = -EINVAL;
+ 		goto out;
+@@ -300,7 +486,7 @@ static int cr_get_container(struct cr_ctx *ctx, pid_t pid)
+ 	if (!nsproxy)
+ 		goto out;
+ 
+-	/* TODO: verify that the container is frozen */
++	/* FIXME: verify that the container is frozen */
+ 
+ 	ctx->root_task = task;
+ 	ctx->root_nsproxy = nsproxy;
+@@ -348,12 +534,22 @@ int do_checkpoint(struct cr_ctx *ctx, pid_t pid)
+ 	ret = cr_ctx_checkpoint(ctx, pid);
+ 	if (ret < 0)
+ 		goto out;
 +
-+	h.type = CR_HDR_FILES;
-+	h.len = sizeof(*hh);
-+	h.parent = task_pid_vnr(t);
-+
-+	files = get_files_struct(t);
-+
-+	nfds = cr_scan_fds(files, &fdtable);
-+	if (nfds < 0) {
-+		ret = nfds;
-+		goto out;
-+	}
-+
-+	hh->objref = 0;	/* will be meaningful with multiple processes */
-+	hh->nfds = nfds;
-+
-+	ret = cr_write_obj(ctx, &h, hh);
-+	cr_hbuf_put(ctx, sizeof(*hh));
++	ret = cr_build_tree(ctx);
 +	if (ret < 0)
 +		goto out;
 +
-+	pr_debug("nfds %d\n", nfds);
-+	for (n = 0; n < nfds; n++) {
-+		ret = cr_write_fd_ent(ctx, files, fdtable[n]);
-+		if (ret < 0)
-+			break;
-+	}
+ 	ret = cr_write_head(ctx);
+ 	if (ret < 0)
+ 		goto out;
+-	ret = cr_write_task(ctx, ctx->root_task);
++	ret = cr_write_tree(ctx);
+ 	if (ret < 0)
+ 		goto out;
 +
-+ out:
-+	kfree(fdtable);
-+	put_files_struct(files);
-+	return ret;
++	ret = cr_write_all_tasks(ctx);
++	if (ret < 0)
++		goto out;
++
+ 	ret = cr_write_tail(ctx);
+ 	if (ret < 0)
+ 		goto out;
+diff --git a/checkpoint/sys.c b/checkpoint/sys.c
+index 4a51ed3..0436ef3 100644
+--- a/checkpoint/sys.c
++++ b/checkpoint/sys.c
+@@ -152,6 +152,19 @@ void cr_hbuf_put(struct cr_ctx *ctx, int n)
+  * restart operation, and persists until the operation is completed.
+  */
+ 
++static void cr_task_arr_free(struct cr_ctx *ctx)
++{
++	int n;
++
++	for (n = 0; n < ctx->tasks_nr; n++) {
++		if (ctx->tasks_arr[n]) {
++			put_task_struct(ctx->tasks_arr[n]);
++			ctx->tasks_arr[n] = NULL;
++		}
++	}
++	kfree(ctx->tasks_arr);
 +}
++
+ static void cr_ctx_free(struct cr_ctx *ctx)
+ {
+ 	if (ctx->file)
+@@ -164,6 +177,9 @@ static void cr_ctx_free(struct cr_ctx *ctx)
+ 	cr_pgarr_free(ctx);
+ 	cr_objhash_free(ctx);
+ 
++	if (ctx->tasks_arr)
++		cr_task_arr_free(ctx);
++
+ 	if (ctx->root_nsproxy)
+ 		put_nsproxy(ctx->root_nsproxy);
+ 	if (ctx->root_task)
 diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index 0ad4940..59cc515 100644
+index e867b95..86fcec9 100644
 --- a/include/linux/checkpoint.h
 +++ b/include/linux/checkpoint.h
-@@ -13,7 +13,7 @@
- #include <linux/path.h>
- #include <linux/fs.h>
+@@ -34,6 +34,9 @@ struct cr_ctx {
+ 	void *hbuf;		/* temporary buffer for headers */
+ 	int hpos;		/* position in headers buffer */
  
--#define CR_VERSION  1
-+#define CR_VERSION  2
++	struct task_struct **tasks_arr;	/* array of all tasks in container */
++	int tasks_nr;			/* size of tasks array */
++
+ 	struct cr_objhash *objhash;	/* hash for shared objects */
  
- struct cr_ctx {
- 	int crid;		/* unique checkpoint id */
-@@ -85,6 +85,7 @@ extern struct file *cr_read_open_fname(struct cr_ctx *ctx,
- 
- extern int do_checkpoint(struct cr_ctx *ctx, pid_t pid);
- extern int cr_write_mm(struct cr_ctx *ctx, struct task_struct *t);
-+extern int cr_write_files(struct cr_ctx *ctx, struct task_struct *t);
- 
- extern int do_restart(struct cr_ctx *ctx, pid_t pid);
- extern int cr_read_mm(struct cr_ctx *ctx);
+ 	struct list_head pgarr_list;	/* page array to dump VMA contents */
 diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index f3997da..cf6a637 100644
+index cf6a637..6dc739f 100644
 --- a/include/linux/checkpoint_hdr.h
 +++ b/include/linux/checkpoint_hdr.h
-@@ -17,7 +17,7 @@
- /*
-  * To maintain compatibility between 32-bit and 64-bit architecture flavors,
-  * keep data 64-bit aligned: use padding for structure members, and use
-- * __attribute__ ((aligned (8))) for the entire structure.
-+ * __attribute__((aligned (8))) for the entire structure.
-  *
-  * Quoting Arnd Bergmann:
-  *   "This structure has an odd multiple of 32-bit members, which means
-@@ -54,6 +54,10 @@ enum {
- 	CR_HDR_PGARR,
- 	CR_HDR_MM_CONTEXT,
+@@ -45,7 +45,8 @@ enum {
+ 	CR_HDR_STRING,
+ 	CR_HDR_FNAME,
  
-+	CR_HDR_FILES = 301,
-+	CR_HDR_FD_ENT,
-+	CR_HDR_FD_DATA,
-+
- 	CR_HDR_TAIL = 5001
- };
+-	CR_HDR_TASK = 101,
++	CR_HDR_TREE = 101,
++	CR_HDR_TASK,
+ 	CR_HDR_THREAD,
+ 	CR_HDR_CPU,
  
-@@ -116,4 +120,29 @@ struct cr_hdr_pgarr {
- 	__u64 nr_pages;		/* number of pages to saved */
+@@ -81,6 +82,16 @@ struct cr_hdr_tail {
+ 	__u64 magic;
  } __attribute__((aligned(8)));
  
-+struct cr_hdr_files {
-+	__u32 objref;		/* identifier for shared objects */
-+	__u32 nfds;
++struct cr_hdr_tree {
++	__u32 tasks_nr;
 +} __attribute__((aligned(8)));
 +
-+struct cr_hdr_fd_ent {
-+	__u32 objref;		/* identifier for shared objects */
-+	__s32 fd;
-+	__u32 close_on_exec;
++struct cr_hdr_pids {
++	__s32 vpid;
++	__s32 vtgid;
++	__s32 vppid;
 +} __attribute__((aligned(8)));
 +
-+/* fd types */
-+enum  fd_type {
-+	CR_FD_FILE = 1,
-+	CR_FD_DIR,
-+};
-+
-+struct cr_hdr_fd_data {
-+	__u16 fd_type;
-+	__u16 f_mode;
-+	__u32 f_flags;
-+	__u64 f_pos;
-+	__u64 f_version;
-+} __attribute__((aligned(8)));
-+
- #endif /* _CHECKPOINT_CKPT_HDR_H_ */
+ struct cr_hdr_task {
+ 	__u32 state;
+ 	__u32 exit_state;
 -- 
 1.5.4.3
 
