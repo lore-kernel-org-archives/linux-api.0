@@ -1,70 +1,194 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [patch 260/266] loop: add ioctl to resize a loop device
-Date: Tue, 6 Jan 2009 16:04:14 -0800
-Message-ID: <20090106160414.b165d452.akpm@linux-foundation.org>
-References: <200901062243.n06Mh7HR004493@imap1.linux-foundation.org>
-	<alpine.LFD.2.00.0901061554140.8799@localhost.localdomain>
+From: Oren Laadan <orenl@cs.columbia.edu>
+Subject: Re: [RFC v12][PATCH 14/14] Restart multiple processes
+Date: Tue, 06 Jan 2009 22:20:59 -0500
+Message-ID: <49641F9B.9020803@cs.columbia.edu>
+References: <1230542187-10434-1-git-send-email-orenl@cs.columbia.edu> <1230542187-10434-15-git-send-email-orenl@cs.columbia.edu> <20090104201957.GA12725@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.LFD.2.00.0901061554140.8799-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: hooanon05-/E1597aS9LR3+QwDJ9on6Q@public.gmane.org, akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tomas-VOkecuvH9Oc@public.gmane.org, util-linux-ng-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20090104201957.GA12725@us.ibm.com>
+Sender: owner-linux-mm@kvack.org
+To: "Serge E. Hallyn" <serue@us.ibm.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Mike Waychison <mikew@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 6 Jan 2009 15:58:19 -0800 (PST)
-Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+
+
+Serge E. Hallyn wrote:
+> Quoting Oren Laadan (orenl@cs.columbia.edu):
+>> Restarting of multiple processes expects all restarting tasks to call
+>> sys_restart(). Once inside the system call, each task will restart
+>> itself at the same order that they were saved. The internals of the
+>> syscall will take care of in-kernel synchronization bewteen tasks.
+
+[...]
+
+> Thanks, Oren.
+> 
+> Acked-by: Serge Hallyn <serue@us.ibm.com>
+> 
+> with a few comments below.
+
+Thanks for the comments.
+
+[...]
+
+>> +/* FIXME: this should be per container */
+>> +DECLARE_WAIT_QUEUE_HEAD(cr_restart_waitq);
+>> +
+>> +static int do_restart_task(struct cr_ctx *ctx, pid_t pid)
+> 
+> Passing ctx in here, when it is always NULL, is just a bit
+> confusing, and, since you goto out and cr_ctx_put(ctx) without
+> initializing ctx, you make verifying that that's ok a step
+> harder.
+> 
+> Do you intend to ever pass in non-NULL in later patches?
+
+Yes; for instance I expect Andrey's create-tasks-in-kernel patch
+(when ready) to eventually have each thread call do_restart_task().
+I also liked the symmetry with do_restart_root()...
+
+You are correct that it's confusing now, so I'll take it out.
 
 > 
+>> +{
+>> +	struct task_struct *root_task;
+>> +	int ret;
+>> +
+>> +	rcu_read_lock();
+>> +	root_task = find_task_by_pid_ns(pid, current->nsproxy->pid_ns);
+>> +	if (root_task)
+>> +		get_task_struct(root_task);
+>> +	rcu_read_unlock();
+>> +
+>> +	if (!root_task)
+>> +		return -EINVAL;
+>> +
+>> +	/*
+>> +	 * wait for container init to initialize the restart context, then
+>> +	 * grab a reference to that context, and if we're the last task to
+>> +	 * do it, notify the container init.
+>> +	 */
+>> +	ret = wait_event_interruptible(cr_restart_waitq,
+>> +				       root_task->checkpoint_ctx);
 > 
-> On Tue, 6 Jan 2009, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
-> > 
-> > Add the ability to 'resize' the loop device on the fly.
+> Would seem more sensible to do the above using the ctx which
+> you grabbed under task_lock(root_task) next.  Your whole
+> locking of root_task->checkpoint_ctx seems haphazard (see below).
+
+At this point 'root_task->checkpoint_ctx' may still be NULL if the
+container init did not yet initialize it. That's why we first wait
+for it to become non-NULL.
+
+The code solves a coordination problem between the container init and
+the other tasks, given that:
+a) the order in which they call sys_restart() is unknown
+b) the container init creates a 'ctx' that is to be used by everyone
+
+The container init simply (1) allocates a shared 'ctx' and makes it
+visible via 'root_task->chcekpoint_ctx', then waits for all tasks to
+grab it (thus, be ready to restart), then initiates the restart chain,
+and finally waits for all tasks to finish.
+
+The other tasks, because of (a) and (b), may enter the kernel before
+the container init completes its step (1). So they must first wait
+for that 'ctx' to be available
+
 > 
-> Hell no.
+>> +	if (ret < 0)
+>> +		goto out;
+>> +
+>> +	task_lock(root_task);
+>> +	ctx = root_task->checkpoint_ctx;
+>> +	if (ctx)
+>> +		cr_ctx_get(ctx);
+>> +	task_unlock(root_task);
+
+So the other tasks work in two steps:
+1) wait for the container init ->checkpoint_ctx (we don't know when !)
+2) grab a reference to that 'ctx'
+
+Step (2) ensures that our reference to 'ctx' is valid even if the
+container init exits (due to error, signal etc). The last user of
+the 'ctx' will be the one to actually free it.
+
+I use the lock to protect against time-of-check to time-of-use race
+(e.g.the container init may exit due to an error or a signal); the
+container init also grabs the lock before clearing its ->checkpoint_ctx.
+
+>> +
+>> +	if (!ctx) {
+>> +		ret = -EAGAIN;
+>> +		goto out;
+>> +	}
+>> +
+>> +	if (atomic_dec_and_test(&ctx->tasks_count))
+>> +		complete(&ctx->complete);
+>> +
+>> +	/* wait for our turn, do the restore, and tell next task in line */
+>> +	ret = cr_wait_task(ctx);
+>> +	if (ret < 0)
+>> +		goto out;
+>> +	ret = cr_read_task(ctx);
+>> +	if (ret < 0)
+>> +		goto out;
+>> +	ret = cr_next_task(ctx);
+>> +
+>> + out:
+>> +	cr_ctx_put(ctx);
+>> +	put_task_struct(root_task);
+>> +	return ret;
+>> +}
+>> +
+>> +static int cr_wait_all_tasks_start(struct cr_ctx *ctx)
+>> +{
+>> +	int ret;
+>> +
+>> +	if (ctx->pids_nr == 1)
+>> +		return 0;
+>> +
+>> +	init_completion(&ctx->complete);
+>> +	current->checkpoint_ctx = ctx;
+>> +
+>> +	wake_up_all(&cr_restart_waitq);
+>> +
+>> +	ret = wait_for_completion_interruptible(&ctx->complete);
+>> +	if (ret < 0)
+>> +		return ret;
+>> +
+>> +	task_lock(current);
+>> +	current->checkpoint_ctx = NULL;
+>> +	task_unlock(current);
 > 
-> There is apparently no security checking here. No way can we allow this 
-> for any random user that can open the loopback device read-only and then 
-> just change its size.
+> Who can you be racing with here?  All other tasks should have
+> already dereferenced current->checkpoint_ctx.
 > 
-> It needs to use all the same security checks as "loop_set_status()" and 
-> friends, afaik.
-> 
+> If you want to always lock root_task around setting and
+> reading of (root_task|current)->checkpoint_ctx, that's
+> ok, but I think you can sufficiently argue that your
+> completion is completely protecint readers from the sole
+> writer.
 
-oops, didn't think of that.
+Only lock around clearing and reading; setting is safe.
 
-There's a bug, too:
+The completion is interruptible so that you can signal or kill
+the container init if something goes wrong, e.g. bad checkpoint
+image causes it to wait for non-existing processes forever.
 
-> +static int loop_set_capacity(struct loop_device *lo, struct block_device *bdev)
-> +{
-> +	int err;
-> +	sector_t sec;
-> +	loff_t sz;
-> +
-> +	err = -ENXIO;
-> +	if (unlikely(lo->lo_state != Lo_bound))
-> +		goto out;
-> +	err = figure_loop_size(lo);
-> +	if (unlikely(err))
-> +		goto out;
-> +	sec = get_capacity(lo->lo_disk);
-> +	sz = sec << 9;
+At a second glance, the clearing of '->checkpoint_ctx' must
+happen regardless of whether an error occurred, so the test for
+'ret < 0' should follow (and not precede) it.
 
-This can overflow if sector_t is 32-bit.  Fix with:
+[...]
 
-	sz = (loff_t)sec << 9;
+Thanks,
 
-> +	mutex_lock(&bdev->bd_mutex);
-> +	bd_set_size(bdev, sz);
-> +	mutex_unlock(&bdev->bd_mutex);
-> +
-> + out:
-> +	return err;
-> +}
+Oren.
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
