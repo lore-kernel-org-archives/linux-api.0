@@ -1,41 +1,61 @@
-From: "J. R. Okajima" <hooanon05-/E1597aS9LR3+QwDJ9on6Q@public.gmane.org>
-Subject: [PATCH 1/2] security check for LOOP_SET_CAPACITY
-Date: Wed,  7 Jan 2009 15:14:14 +0900
-Message-ID: <1231308855-31726-1-git-send-email-hooanon05@yahoo.co.jp>
-References: <20090106160414.b165d452.akpm@linux-foundation.org>
+From: Ying Han <yinghan-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH]Fix: 32bit binary has 64bit address of stack vma
+Date: Thu, 8 Jan 2009 18:40:04 -0800
+Message-ID: <604427e00901081840pa6dcc41u9a7a5c69302c7b60@mail.gmail.com>
+References: <604427e00901051539x52ab85bcua94cd8036e5b619a@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090106160414.b165d452.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <604427e00901051539x52ab85bcua94cd8036e5b619a-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tomas-VOkecuvH9Oc@public.gmane.org, util-linux-ng-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+To: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rohit Seth <rohitseth-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm@linux-foundation>
 List-Id: linux-api@vger.kernel.org
 
-Respoding the comment from Linus Torvalds, LOOP_SET_CAPACITY now
-requires the device file to be opened for write or CAP_SYS_ADMIN.
-
-Signed-off-by: J. R. Okajima <hooanon05-/E1597aS9LR3+QwDJ9on6Q@public.gmane.org>
----
- drivers/block/loop.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
-
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 80e523e..fcd28a7 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1210,7 +1210,9 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
- 		err = loop_get_status64(lo, (struct loop_info64 __user *) arg);
- 		break;
- 	case LOOP_SET_CAPACITY:
--		err = loop_set_capacity(lo, bdev);
-+		err = -EPERM;
-+		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
-+			err = loop_set_capacity(lo, bdev);
- 		break;
- 	default:
- 		err = lo->ioctl ? lo->ioctl(lo, cmd, arg) : -EINVAL;
--- 
-1.5.5.4.dirty
-
+On Mon, Jan 5, 2009 at 3:39 PM, Ying Han <yinghan-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> From: Ying Han <yinghan-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>
+> Fix 32bit binary get 64bit stack vma offset.
+>
+> 32bit binary running on 64bit system, the /proc/pid/maps shows for the
+> vma represents stack get a 64bit adress:
+> ff96c000-ff981000 rwxp 7ffffffea000 00:00 0 [stack]
+>
+> Signed-off-by:  Ying Han <yinghan-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>
+> fs/exec.c                     |    5 +-
+>
+> diff --git a/fs/exec.c b/fs/exec.c
+> index 4e834f1..8c3eff4 100644
+> --- a/fs/exec.c
+> +++ b/fs/exec.c
+> @@ -517,6 +517,7 @@ static int shift_arg_pages(struct vm_area_struct *vma, uns
+>        unsigned long length = old_end - old_start;
+>        unsigned long new_start = old_start - shift;
+>        unsigned long new_end = old_end - shift;
+> +       unsigned long new_pgoff = new_start >> PAGE_SHIFT;
+>        struct mmu_gather *tlb;
+>
+>        BUG_ON(new_start > new_end);
+> @@ -531,7 +532,7 @@ static int shift_arg_pages(struct vm_area_struct *vma, uns
+>        /*
+>         * cover the whole range: [new_start, old_end)
+>         */
+> -       vma_adjust(vma, new_start, old_end, vma->vm_pgoff, NULL);
+> +       vma_adjust(vma, new_start, old_end, new_pgoff, NULL);
+>
+>        /*
+>         * move the page tables downwards, on failure we rely on
+> @@ -564,7 +565,7 @@ static int shift_arg_pages(struct vm_area_struct *vma, uns
+>        /*
+>         * shrink the vma to just the new range.
+>         */
+> -       vma_adjust(vma, new_start, new_end, vma->vm_pgoff, NULL);
+> +       vma_adjust(vma, new_start, new_end, new_pgoff, NULL);
+>
+>        return 0;
+>  }
+>
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
