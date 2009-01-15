@@ -1,15 +1,20 @@
 From: Jiri Pirko <jpirko-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] getrusage: fill ru_ixrss, ru_idrss and ru_isrss values
-Date: Thu, 15 Jan 2009 15:38:27 +0100
-Message-ID: <20090115153827.459ec787@psychotron.englab.brq.redhat.com>
+Subject: Re: [PATCH] getrusage: fill ru_ixrss, ru_idrss and ru_isrss values
+Date: Thu, 15 Jan 2009 15:46:56 +0100
+Message-ID: <20090115154656.72e01ce9@psychotron.englab.brq.redhat.com>
+References: <20090115153827.459ec787@psychotron.englab.brq.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090115153827.459ec787-YzwxZg+R7evSU73v1vjTzyO4YDw3rz4rAInAS/Ez/D0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: Jiri Pirko <jpirko-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hugh-DTz5qymZ9yRBDgjK7y7TUQ@public.gmane.org, mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, niemi-6DIZ2vNPO+SsTnJN9+BGXg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
+
+Sorry - correcting CC (nasty " came in :()
+
 
 This patch makes three values in rusage structure filled in getrusage
 syscall. These values are in KB units so as the ->ru_maxrss value. They
