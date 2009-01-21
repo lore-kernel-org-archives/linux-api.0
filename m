@@ -1,64 +1,65 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: Re: [PATCH v6 0/5] Add preadv & pwritev system calls.
-Date: Wed, 21 Jan 2009 10:31:27 +0100
-Message-ID: <4976EB6F.5090503@redhat.com>
-References: <1232124344-25892-1-git-send-email-kraxel@redhat.com> <200901161852.04953.arnd@arndb.de> <4970DDF9.4090007@redhat.com> <49748C1B.8090205@redhat.com> <20090121001131.GF21648@machine.or.cz>
+From: Patrick Ohly <patrick.ohly-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: hardware time stamping with optional structs in data area
+Date: Wed, 21 Jan 2009 11:07:37 +0100
+Message-ID: <1232532457.7829.19.camel@ecld0pohly>
+References: <1229352899-31330-1-git-send-email-patrick.ohly@intel.com>
+	 <1232102164.18762.72.camel@pohly-MOBL>
+	 <20090116.110033.163815590.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20090121001131.GF21648@machine.or.cz>
-Sender: linux-arch-owner@vger.kernel.org
-To: Petr Baudis <pasky@suse.cz>
-Cc: Ulrich Drepper <drepper@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, aarcange@redhat.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090116.110033.163815590.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Petr Baudis wrote:
-> On Mon, Jan 19, 2009 at 03:20:11PM +0100, Gerd Hoffmann wrote:
->> I do see the point in adding a interface like this ...
->>
->>>    ssize_t readz (int fd, void *buf, size_t len, void **res)
->> ... to help the kernel do zero-copy I/O.
->>
->> I think system calls for vector I/O are *not* the right place for that
->> though.  Usually applications use vectored I/O because they *do* care
->> about the place the data is stored, because vectored I/O allows them to
->> avoid copying data within the application.
+On Fri, 2009-01-16 at 21:00 +0200, David Miller wrote: 
+> From: Patrick Ohly <patrick.ohly-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Date: Fri, 16 Jan 2009 11:36:04 +0100
 > 
-> Can you elaborate on this? An application would have to have quite a
-> contrived design if its pointers simply cannot be updated according
-> to what the kernel returns.
+> > David, do you think it is ready to get included?
+> 
+> Resubmit the patch set before asking such questions.
 
-Well.  The "just update the pointers" argument is bogous.  It simply
-doesn't work in general for a number of reasons:
+Okay. I didn't want to spam the lists with just rebased patches if there
+were more fundamental objections against the current approach. I hope
+that this is no longer the case, so I'll post the current, rebased patch
+set as follow-up to this mail (because the description in the orginal
+mail of this thread still applies).
 
-First, it assumes that there is a pointer you can update in the first place.
+I personally consider the core infrastructure patches ready. If there
+are further comments I'd be happy to work on those, of course. The igb
+driver patches are more experimental, please don't include them.
 
-Second, it assumes you can easily update all pointer instances pointing
-to your data.  Finding all places which need updating might be
-non-trivial or impossible.  This tends to be true for refcounted data
-structures.
+I rebased the patches against net-next-2.6 as of today.
 
-Third, updating pointers can have extra costs, such as locking
-requirements in threaded applications.
+I tested them with the modified PTPd with and without hardware support
+on x86. With 64 bit kernel and user space both works. With 32 bit user
+space on a 64 bit kernel software-only time stamping works (thanks to
+the socket's compatibility layer), hardware support doesn't: the ifreq
+is passed to the right device driver, but the data pointer from a 32 bit
+process is not interpreted correctly by a 64 bit driver. If there is a
+way to handle this then please let me know - I didn't see how a device
+driver could distinguish between a 32 and 64 bit user process.
 
-Of course there are also tons of applications where it is absolutely no
-problem to just update the pointer.
+With a 32 bit kernel software time stamping works. I couldn't test
+hardware support because I couldn't get the igb driver to work. Even
+without any of the patches it failed to transmit packets (tested with
+net-next-2.6 sources and original Ubuntu 8.10 installation). I need to
+look into this problem further, but don't want to hold up the review of
+the patches.
 
-But I think that applications using the vectored I/O very likely belong
-to the group which can't.  Otherwise there would be little reason to use
-the vectored API in the first place.
+-- 
+Best Regards, Patrick Ohly
 
-> Then again, I'm not sure why wouldn't readv() actually be
-> zerocopy-ready. Just make sure you handle iov_base being NULL gracefully
-> now (EINVAL, with the remark that the kernel can write to the iovec
-> memory area in the future) and later the kernel can in that case set
-> iov_base to the buffer location?
+The content of this message is my personal opinion only and although
+I am an employee of Intel, the statements I make here in no way
+represent Intel's position on the issue, nor am I authorized to speak
+on behalf of Intel on this matter.
 
-You could (assuming you don't break POSIX along the way).  I don't think
-apps would use such an interface though for the reasons outlined above.
- The readz() prototype by Ullrich (without iovecs being involved) looks
-much more reasonable to me.
-
-cheers,
-  Gerd
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
