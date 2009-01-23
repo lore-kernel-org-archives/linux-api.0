@@ -1,38 +1,41 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+From: Bernd Petrovitsch <bernd@firmix.at>
 Subject: Re: [PATCH, RFC] Remove fasync() BKL usage, take 3325
-Date: Thu, 22 Jan 2009 22:57:13 -0800
-Message-ID: <20090122225713.2b2a02cc.akpm@linux-foundation.org>
+Date: Fri, 23 Jan 2009 11:45:30 +0100
+Message-ID: <1232707530.7914.23.camel@spike.firmix.at>
 References: <20090115153211.663df310@bike.lwn.net>
-	<20090122065104.2787df2d.akpm@linux-foundation.org>
-	<20090122221500.4c62aa54@tpl>
-	<20090122213105.74142908.akpm@linux-foundation.org>
-	<20090123055404.GL15750@one.firstfloor.org>
+	 <20090122065104.2787df2d.akpm@linux-foundation.org>
+	 <20090122221500.4c62aa54@tpl>
+	 <20090122213105.74142908.akpm@linux-foundation.org>
+	 <1232689549.5202.385.camel@calx>
+	 <20090123061557.GM15750@one.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090123055404.GL15750-qrUzlfsMFqo/4alezvVtWx2eb7JE58TQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: corbet-T1hC0tSOHrs@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758926AbZAWKrV@vger.kernel.org>
+In-Reply-To: <20090123061557.GM15750@one.firstfloor.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andi Kleen <andi@firstfloor.org>
+Cc: Matt Mackall <mpm@selenic.com>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, viro@ZenIV.linux.org.uk, oleg@redhat.com, linux-api@vger.kernel.org, alan@lxorguk.ukuu.org.uk
 List-Id: linux-api@vger.kernel.org
 
-> On Fri, 23 Jan 2009 06:54:04 +0100 Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org> wrote:
-> > I don't know what "the fasync() problem" is?
+On Fri, 2009-01-23 at 07:15 +0100, Andi Kleen wrote: 
+> > I have to agree with Christoph. The priority here is breaking down the
+> > BKL and document all the things being protected by it and we've got a
+> > reasonably obvious patch in that direction. Meanwhile, there's not
+> > currently a pressing demand to make fasync in particular scale that I'm
+> > aware of.
 > 
-> The state needs to be protected while the per driver ->fasync callback
-> runs, otherwise the bit can get out of sync with what the driver
-> thinks it is.
+> The classic case is a high throughput network server that uses async
+> sockets. It has to call F_SETFL on each new socket it opens.
 
-That's the sort of gem which one thinks might have merited a code comment
-and some changelog discussion.
+Am I the only one missing an (additional) socket()-like sys-call with an
+additional "flags" argument (somewhat similar to open())?
+O_NONBLOCK is another flag that may be set quite often/regularly (at
+least in my small world).
 
-> Mind you imho the best way would be to move the bit manipulation for
-> that into the drivers, but that would require to change them all.
-
-Do these mystery drivers do the ->f_flags changes under lock_kernel()?  If
-so, they all should be changed to take lock_file_flgs()?
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+	Bernd
+-- 
+Firmix Software GmbH                   http://www.firmix.at/
+mobil: +43 664 4416156                 fax: +43 1 7890849-55
+          Embedded Linux Development and Services
