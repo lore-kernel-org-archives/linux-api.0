@@ -1,41 +1,39 @@
-From: Bernd Petrovitsch <bernd@firmix.at>
-Subject: Re: [PATCH, RFC] Remove fasync() BKL usage, take 3325
-Date: Fri, 23 Jan 2009 11:45:30 +0100
-Message-ID: <1232707530.7914.23.camel@spike.firmix.at>
-References: <20090115153211.663df310@bike.lwn.net>
-	 <20090122065104.2787df2d.akpm@linux-foundation.org>
-	 <20090122221500.4c62aa54@tpl>
-	 <20090122213105.74142908.akpm@linux-foundation.org>
-	 <1232689549.5202.385.camel@calx>
-	 <20090123061557.GM15750@one.firstfloor.org>
+From: David Miller <davem@davemloft.net>
+Subject: Re: hardware time stamping with optional structs in data area
+Date: Sun, 25 Jan 2009 21:04:42 -0800 (PST)
+Message-ID: <20090125.210442.129666692.davem@davemloft.net>
+References: <1232102164.18762.72.camel@pohly-MOBL>
+	<20090116.110033.163815590.davem@davemloft.net>
+	<1232532457.7829.19.camel@ecld0pohly>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758926AbZAWKrV@vger.kernel.org>
-In-Reply-To: <20090123061557.GM15750@one.firstfloor.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andi Kleen <andi@firstfloor.org>
-Cc: Matt Mackall <mpm@selenic.com>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, viro@ZenIV.linux.org.uk, oleg@redhat.com, linux-api@vger.kernel.org, alan@lxorguk.ukuu.org.uk
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1232532457.7829.19.camel@ecld0pohly>
+Sender: netdev-owner@vger.kernel.org
+To: patrick.ohly@intel.com
+Cc: linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2009-01-23 at 07:15 +0100, Andi Kleen wrote: 
-> > I have to agree with Christoph. The priority here is breaking down the
-> > BKL and document all the things being protected by it and we've got a
-> > reasonably obvious patch in that direction. Meanwhile, there's not
-> > currently a pressing demand to make fasync in particular scale that I'm
-> > aware of.
-> 
-> The classic case is a high throughput network server that uses async
-> sockets. It has to call F_SETFL on each new socket it opens.
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Wed, 21 Jan 2009 11:07:37 +0100
 
-Am I the only one missing an (additional) socket()-like sys-call with an
-additional "flags" argument (somewhat similar to open())?
-O_NONBLOCK is another flag that may be set quite often/regularly (at
-least in my small world).
+> I tested them with the modified PTPd with and without hardware support
+> on x86. With 64 bit kernel and user space both works. With 32 bit user
+> space on a 64 bit kernel software-only time stamping works (thanks to
+> the socket's compatibility layer), hardware support doesn't: the ifreq
+> is passed to the right device driver, but the data pointer from a 32 bit
+> process is not interpreted correctly by a 64 bit driver. If there is a
+> way to handle this then please let me know - I didn't see how a device
+> driver could distinguish between a 32 and 64 bit user process.
 
-	Bernd
--- 
-Firmix Software GmbH                   http://www.firmix.at/
-mobil: +43 664 4416156                 fax: +43 1 7890849-55
-          Embedded Linux Development and Services
+See fs/compat_ioctl.c:dev_ifsioc() for how to handle the
+"32-bit process under 64-bit kernel" issue wrt. struct ifreq
+
+Next, I don't like that loop in the SKB allocator to deal with the
+variable size.  You're computing what amounts to a constant
+calculation.
+
+Just consolidate the array into a direct conversion table.  You only
+have 2 bits defined so you only need an array of 4 entries.  Pass the
+optional flag bits directly in as the index of that table.
