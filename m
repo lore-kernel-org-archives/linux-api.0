@@ -1,40 +1,44 @@
-From: David Daney <ddaney-M3mlKVOIwJVv6pq1l3V1OdBPR1lH4CV8@public.gmane.org>
+From: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: [PATCH, RFC] Remove fasync() BKL usage, take 3325
-Date: Wed, 28 Jan 2009 10:14:18 -0800
-Message-ID: <4980A07A.5060904@caviumnetworks.com>
-References: <20090115153211.663df310@bike.lwn.net> <20090122065104.2787df2d.akpm@linux-foundation.org> <20090122203248.GA20159@infradead.org> <20090123045646.GK15750@one.firstfloor.org> <20090127165504.53ed7a2d.akpm@linux-foundation.org> <20090128031439.GA11025@redhat.com> <20090128173618.GA3174@infradead.org>
+Date: Wed, 28 Jan 2009 12:13:47 -0600
+Message-ID: <1233166427.5202.907.camel@calx>
+References: <20090115153211.663df310@bike.lwn.net>
+	 <20090122065104.2787df2d.akpm@linux-foundation.org>
+	 <20090122203248.GA20159@infradead.org>
+	 <20090123045646.GK15750@one.firstfloor.org>
+	 <20090127165504.53ed7a2d.akpm@linux-foundation.org>
+	 <20090128031439.GA11025@redhat.com> <20090128173618.GA3174@infradead.org>
+	 <20090128104414.09aee3f9@bike.lwn.net>
+	 <20090128175541.GA7074@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090128173618.GA3174-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+In-Reply-To: <20090128175541.GA7074-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, corbet-T1hC0tSOHrs@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org
+Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Christoph Hellwig wrote:
-> On Wed, Jan 28, 2009 at 04:14:39AM +0100, Oleg Nesterov wrote:
->> I didn't send the actual patch. The idea is,
->>
->> 	can't we use O_LOCK_FLAGS bit? I agree, it is a bit ugly,
->> 	and I won't insist if you don't like is.
->>
->> 		static inline int try_lock_f_flags(struct file *file)
->> 		{
->> 			return !test_and_set_bit(O_LOCK_FLAGS, file->f_flags);
->> 		}
+On Wed, 2009-01-28 at 12:55 -0500, Christoph Hellwig wrote:
+> On Wed, Jan 28, 2009 at 10:44:14AM -0700, Jonathan Corbet wrote:
+> > If others disagree, and using bitops is not an idea which will fly, I'd
+> > sure like to know sooner rather than later.
 > 
-> ->f_flags is an unsigned int and the bit macros need an unsigned long.
-> Increasing the size of struct file for this is probably a bad idea.
-> 
+> There are more than enough use cases that have large numbers of open
+> files (e.g. various high-end network servers).  While it might not be
+> as sewer as for inodes I think it's really bad idea to do it for no
+> reason. 
 
-Could that be seen as a deficiency in the bit macros?
+Maybe we can just demote f_ep_lock to f_lock and share it? 
 
-Could we modify them so that they worked on unsigned int as well?  I 
-know we could for some architectures.
+Or extend flags and have two independent bitlocks in it. This actually
+shrinks struct_file for most users.
 
-David Daney
+-- 
+http://selenic.com : development and support for Mercurial and Linux
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
