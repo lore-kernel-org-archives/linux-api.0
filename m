@@ -1,164 +1,40 @@
-From: Randy Dunlap <randy.dunlap@oracle.com>
-Subject: Re: [RFC v13][PATCH 01/14] Create syscalls: sys_checkpoint, sys_restart
-Date: Tue, 27 Jan 2009 09:20:10 -0800
-Message-ID: <497F424A.7060202@oracle.com>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu> <1233076092-8660-2-git-send-email-orenl@cs.columbia.edu>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH, RFC] Remove fasync() BKL usage, take 3325
+Date: Tue, 27 Jan 2009 16:55:04 -0800
+Message-ID: <20090127165504.53ed7a2d.akpm@linux-foundation.org>
+References: <20090115153211.663df310@bike.lwn.net>
+	<20090122065104.2787df2d.akpm@linux-foundation.org>
+	<20090122203248.GA20159@infradead.org>
+	<20090123045646.GK15750@one.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1233076092-8660-2-git-send-email-orenl@cs.columbia.edu>
-Sender: owner-linux-mm@kvack.org
-To: Oren Laadan <orenl@cs.columbia.edu>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090123045646.GK15750-qrUzlfsMFqo/4alezvVtWx2eb7JE58TQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Oren Laadan wrote:
-> Changelog[v5]:
->   - Config is 'def_bool n' by default
+On Fri, 23 Jan 2009 05:56:46 +0100
+Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org> wrote:
 
-That's true by default; it doesn't have to be written/typed.
-
-
-> Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
-> Acked-by: Serge Hallyn <serue@us.ibm.com>
-> Signed-off-by: Dave Hansen <dave@linux.vnet.ibm.com>
-> ---
->  arch/x86/include/asm/unistd_32.h   |    2 +
->  arch/x86/kernel/syscall_table_32.S |    2 +
->  checkpoint/Kconfig                 |   11 +++++++++
->  checkpoint/Makefile                |    5 ++++
->  checkpoint/sys.c                   |   41 ++++++++++++++++++++++++++++++++++++
->  include/linux/syscalls.h           |    2 +
->  init/Kconfig                       |    2 +
->  kernel/sys_ni.c                    |    4 +++
->  8 files changed, 69 insertions(+), 0 deletions(-)
->  create mode 100644 checkpoint/Kconfig
->  create mode 100644 checkpoint/Makefile
->  create mode 100644 checkpoint/sys.c
+> On Thu, Jan 22, 2009 at 03:32:49PM -0500, Christoph Hellwig wrote:
+> > On Thu, Jan 22, 2009 at 06:51:04AM -0800, Andrew Morton wrote:
+> > > OK, replacing a lock_kernel() with a spin_lock(&global_lock) is pretty
+> > > straightforwad.  But it's really really sad.  It basically leaves a great
+> > > big FIXME in there.  It'd be better to fix it.
+> > 
+> > 
+> > Umm, we've been discussiong this in and out a guestimated million times.
+> > 
+> > Let's go forward with Jon's patch which is on obvious improvement and
+> > if it shows problems later on we can revisit it.
 > 
-> diff --git a/arch/x86/include/asm/unistd_32.h b/arch/x86/include/asm/unistd_32.h
-> index f2bba78..a5f9e09 100644
-> --- a/arch/x86/include/asm/unistd_32.h
-> +++ b/arch/x86/include/asm/unistd_32.h
-> @@ -338,6 +338,8 @@
->  #define __NR_dup3		330
->  #define __NR_pipe2		331
->  #define __NR_inotify_init1	332
-> +#define __NR_checkpoint		333
-> +#define __NR_restart		334
->  
->  #ifdef __KERNEL__
->  
-> diff --git a/arch/x86/kernel/syscall_table_32.S b/arch/x86/kernel/syscall_table_32.S
-> index d44395f..5543136 100644
-> --- a/arch/x86/kernel/syscall_table_32.S
-> +++ b/arch/x86/kernel/syscall_table_32.S
-> @@ -332,3 +332,5 @@ ENTRY(sys_call_table)
->  	.long sys_dup3			/* 330 */
->  	.long sys_pipe2
->  	.long sys_inotify_init1
-> +	.long sys_checkpoint
-> +	.long sys_restart
+> The point was that we already have a better patch from Oleg.
+> 
 
-> diff --git a/checkpoint/sys.c b/checkpoint/sys.c
-> new file mode 100644
-> index 0000000..375129c
-> --- /dev/null
-> +++ b/checkpoint/sys.c
-> @@ -0,0 +1,41 @@
-> +/*
-> + *  Generic container checkpoint-restart
-> + *
-> + *  Copyright (C) 2008 Oren Laadan
-> + *
-> + *  This file is subject to the terms and conditions of the GNU General Public
-> + *  License.  See the file COPYING in the main directory of the Linux
-> + *  distribution for more details.
-> + */
-> +
-
-#include <linux/syscalls.h>
-
-and then use the new syscall definition macros.
-See SYSCALL_DEFINE* in kernel/*.c (current git tree) for examples.
-
-> +#include <linux/sched.h>
-> +#include <linux/kernel.h>
-> +
-> +/**
-> + * sys_checkpoint - checkpoint a container
-> + * @pid: pid of the container init(1) process
-> + * @fd: file to which dump the checkpoint image
-> + * @flags: checkpoint operation flags
-> + *
-> + * Returns positive identifier on success, 0 when returning from restart
-> + * or negative value on error
-> + */
-> +asmlinkage long sys_checkpoint(pid_t pid, int fd, unsigned long flags)
-> +{
-> +	pr_debug("sys_checkpoint not implemented yet\n");
-> +	return -ENOSYS;
-> +}
-> +/**
-> + * sys_restart - restart a container
-> + * @crid: checkpoint image identifier
-> + * @fd: file from which read the checkpoint image
-> + * @flags: restart operation flags
-> + *
-> + * Returns negative value on error, or otherwise returns in the realm
-> + * of the original checkpoint
-> + */
-> +asmlinkage long sys_restart(int crid, int fd, unsigned long flags)
-> +{
-> +	pr_debug("sys_restart not implemented yet\n");
-> +	return -ENOSYS;
-> +}
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index 04fb47b..9750393 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -621,6 +621,8 @@ asmlinkage long sys_timerfd_gettime(int ufd, struct itimerspec __user *otmr);
->  asmlinkage long sys_eventfd(unsigned int count);
->  asmlinkage long sys_eventfd2(unsigned int count, int flags);
->  asmlinkage long sys_fallocate(int fd, int mode, loff_t offset, loff_t len);
-> +asmlinkage long sys_checkpoint(pid_t pid, int fd, unsigned long flags);
-> +asmlinkage long sys_restart(int crid, int fd, unsigned long flags);
->  
->  int kernel_execve(const char *filename, char *const argv[], char *const envp[]);
->  
-> diff --git a/init/Kconfig b/init/Kconfig
-> index f763762..57364fe 100644
-> --- a/init/Kconfig
-> +++ b/init/Kconfig
-> @@ -814,6 +814,8 @@ config MARKERS
->  
->  source "arch/Kconfig"
->  
-> +source "checkpoint/Kconfig"
-> +
->  endmenu		# General setup
->  
->  config HAVE_GENERIC_DMA_COHERENT
-> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-> index e14a232..fcd65cc 100644
-> --- a/kernel/sys_ni.c
-> +++ b/kernel/sys_ni.c
-> @@ -174,3 +174,7 @@ cond_syscall(compat_sys_timerfd_settime);
->  cond_syscall(compat_sys_timerfd_gettime);
->  cond_syscall(sys_eventfd);
->  cond_syscall(sys_eventfd2);
-> +
-> +/* checkpoint/restart */
-> +cond_syscall(sys_checkpoint);
-> +cond_syscall(sys_restart);
-
-
--- 
-~Randy
-
+Where is this patch?
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
