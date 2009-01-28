@@ -1,39 +1,165 @@
-From: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Subject: Re: [PATCH, RFC] Remove fasync() BKL usage, take 3325
-Date: Wed, 28 Jan 2009 07:13:51 -0700
-Message-ID: <20090128071351.3643800e@bike.lwn.net>
-References: <20090115153211.663df310@bike.lwn.net>
-	<20090122065104.2787df2d.akpm@linux-foundation.org>
-	<20090122203248.GA20159@infradead.org>
-	<20090123045646.GK15750@one.firstfloor.org>
-	<20090127165504.53ed7a2d.akpm@linux-foundation.org>
-	<20090128031439.GA11025@redhat.com>
-	<20090127205739.1384343f@bike.lwn.net>
-	<20090128042337.GA15060@redhat.com>
+From: Gerd Hoffmann <kraxel@redhat.com>
+Subject: Re: [PATCH v7 3/5] Add preadv and pwritev system calls.
+Date: Wed, 28 Jan 2009 16:04:37 +0100
+Message-ID: <49807405.2060606@redhat.com>
+References: <1232976389-13021-1-git-send-email-kraxel@redhat.com>	 <1232976389-13021-4-git-send-email-kraxel@redhat.com> <cfd18e0f0901261542x2d29e790tad3e940f1aed134f@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090128042337.GA15060-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org
+Content-Type: multipart/mixed;
+ boundary="------------070003090501050709060709"
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <cfd18e0f0901261542x2d29e790tad3e940f1aed134f@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: mtk.manpages@gmail.com
+Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, aarcange@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 28 Jan 2009 05:23:37 +0100
-Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+This is a multi-part message in MIME format.
+--------------070003090501050709060709
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-> But please don't forget it is not strictly necessary f_op->fasync()
-> must use fasync_helper(). And we have users (pipe_rdwr_fasync) which
-> call fasync_helper() twice.
+Michael Kerrisk wrote:
+>> The application-visible interface provided by glibc should look like
+>> this to be compatible to the existing implementations in the *BSD family:
+>>
+>>  ssize_t preadv(int d, const struct iovec *iov, int iovcnt, off_t offset);
+>>  ssize_t pwritev(int d, const struct iovec *iov, int iovcnt, off_t offset);
+> 
+> I earlier asked if you could provide some userspace example code using
+> this API.  If there was a response, I missed it.  Could you please
+> provide some working test using this interface.
 
-Understood.  Any such change will certainly require an audit of all
-in-tree fasync() implementations; that's part of why it's taking a
-little while.  But it also cleans things up and solves the atomicity
-problems nicely, so I think it's worth trying.
+I had some ptrs in the patch series intro text.
+Standalone test app is attached now.
 
-jon
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+cheers,
+  Gerd
+
+--------------070003090501050709060709
+Content-Type: text/x-csrc;
+ name="preadv.c"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="preadv.c"
+
+#if 0
+set -x
+gcc -Wall -O2 -o preadv $0
+exit 0
+#endif
+/*
+ * preadv demo / test
+ *
+ * (c) 2008 Gerd Hoffmann <kraxel@redhat.com>
+ *
+ * build with "sh $thisfile"
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <sys/uio.h>
+
+/* ----------------------------------------------------------------- */
+/* syscall windup                                                    */
+
+#include <sys/syscall.h>
+#if 0
+/* WARNING: Be sure you know what you are doing if you enable this.
+ * linux syscall code isn't upstream yet, syscall numbers are subject
+ * to change */
+# ifndef __NR_preadv
+#  ifdef __i386__
+#   define __NR_preadv  333
+#   define __NR_pwritev 334
+#  endif
+#  ifdef __x86_64__
+#   define __NR_preadv  295
+#   define __NR_pwritev 296
+#  endif
+# endif
+#endif
+#ifndef __NR_preadv
+# error preadv/pwritev syscall numbers are unknown
+#endif
+
+static ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+{
+    uint32_t pos_high = (offset >> 32) & 0xffffffff;
+    uint32_t pos_low  =  offset        & 0xffffffff;
+
+    return syscall(__NR_preadv, fd, iov, iovcnt, pos_high, pos_low);
+}
+
+static ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+{
+    uint32_t pos_high = (offset >> 32) & 0xffffffff;
+    uint32_t pos_low  =  offset        & 0xffffffff;
+
+    return syscall(__NR_pwritev, fd, iov, iovcnt, pos_high, pos_low);
+}
+
+/* ----------------------------------------------------------------- */
+/* demo/test app                                                     */
+
+static char filename[] = "/tmp/preadv-XXXXXX";
+static char outbuf[11] = "0123456789";
+static char inbuf[11]  = "----------";
+
+static struct iovec ovec[2] = {{
+        .iov_base = outbuf + 5,
+        .iov_len  = 5,
+    },{
+        .iov_base = outbuf + 0,
+        .iov_len  = 5,
+    }};
+
+static struct iovec ivec[3] = {{
+        .iov_base = inbuf + 6,
+        .iov_len  = 2,
+    },{
+        .iov_base = inbuf + 4,
+        .iov_len  = 2,
+    },{
+        .iov_base = inbuf + 2,
+        .iov_len  = 2,
+    }};
+
+void cleanup(void)
+{
+    unlink(filename);
+}
+
+int main(int argc, char **argv)
+{
+    int fd, rc;
+
+    fd = mkstemp(filename);
+    if (-1 == fd) {
+        perror("mkstemp");
+        exit(1);
+    }
+    atexit(cleanup);
+
+    /* write to file: "56789-01234" */
+    rc = pwritev(fd, ovec, 2, 0);
+    if (rc < 0) {
+        perror("pwritev");
+        exit(1);
+    }
+
+    /* read from file: "78-90-12" */
+    rc = preadv(fd, ivec, 3, 2);
+    if (rc < 0) {
+        perror("preadv");
+        exit(1);
+    }
+
+    printf("result  : %s\n", inbuf);
+    printf("expected: %s\n", "--129078--");
+    exit(0);
+}
+
+--------------070003090501050709060709--
