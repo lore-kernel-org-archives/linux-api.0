@@ -1,43 +1,36 @@
-From: Kent Yoder <key@linux.vnet.ibm.com>
-Subject: Re: [PATCH v5 0/2] Add PPI support in tpm driver
-Date: Wed, 22 Aug 2012 16:41:30 -0500
-Message-ID: <20120822214130.GA13519@linux.vnet.ibm.com>
-References: <1345632442-1458-1-git-send-email-xiaoyan.zhang@intel.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH, RFC] Remove fasync() BKL usage, take 3325
+Date: Tue, 27 Jan 2009 16:53:59 -0800
+Message-ID: <20090127165359.d6b95b52.akpm@linux-foundation.org>
+References: <20090115153211.663df310@bike.lwn.net>
+	<20090122065104.2787df2d.akpm@linux-foundation.org>
+	<20090122203248.GA20159@infradead.org>
+	<20090123045646.GK15750@one.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1345632442-1458-1-git-send-email-xiaoyan.zhang@intel.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: xiaoyan.zhang@intel.com
-Cc: linux-kernel@vger.kernel.org, joseph.cihula@intel.com, gang.wei@intel.com, tpmdd-devel@lists.sourceforge.net, debora@linux.vnet.ibm.com, srajiv@linux.vnet.ibm.com, m.selhorst@sirrix.com, shpedoikal@gmail.com, linux-security-module@vger.kernel.org, james.l.morris@oracle.com, hpa@zytor.com, linux-api@vger.kernel.org, yoder1@us.ibm.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090123045646.GK15750-qrUzlfsMFqo/4alezvVtWx2eb7JE58TQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.orgOleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 22, 2012 at 06:47:20PM +0800, xiaoyan.zhang@intel.com wrote:
-> From: Xiaoyan Zhang <xiaoyan.zhang@intel.com>
-> 
-> The Physical Presence Interface enables the OS and the BIOS to cooperate to
-> provide a simple and straightforward platform user experience for
-> administering the TPM without sacrificing security.
+On Fri, 23 Jan 2009 05:56:46 +0100
+Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org> wrote:
 
-  Thanks Xiaoyan, I'm including this in my next pull request to James.
-
-Kent
-
-> Xiaoyan Zhang (2):
->   Documentation: sysfs for Physical Presence Interface
->   driver: add PPI support in tpm driver
+> On Thu, Jan 22, 2009 at 03:32:49PM -0500, Christoph Hellwig wrote:
+> > On Thu, Jan 22, 2009 at 06:51:04AM -0800, Andrew Morton wrote:
+> > > OK, replacing a lock_kernel() with a spin_lock(&global_lock) is pretty
+> > > straightforwad.  But it's really really sad.  It basically leaves a great
+> > > big FIXME in there.  It'd be better to fix it.
+> > 
+> > 
+> > Umm, we've been discussiong this in and out a guestimated million times.
+> > 
+> > Let's go forward with Jon's patch which is on obvious improvement and
+> > if it shows problems later on we can revisit it.
 > 
->  Documentation/ABI/testing/sysfs-driver-ppi |   70 +++++
->  drivers/char/tpm/Makefile                  |    2 +-
->  drivers/char/tpm/tpm.c                     |    5 +
->  drivers/char/tpm/tpm.h                     |    9 +
->  drivers/char/tpm/tpm_ppi.c                 |  460 ++++++++++++++++++++++++++++
->  5 files changed, 545 insertions(+), 1 deletions(-)
->  create mode 100644 Documentation/ABI/testing/sysfs-driver-ppi
->  create mode 100644 drivers/char/tpm/tpm_ppi.c
-> 
-> -- 
-> 1.7.7.6
+> The point was that we already have a better patch from Oleg.
 > 
 
+Where is this patch??
