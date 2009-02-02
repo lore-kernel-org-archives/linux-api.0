@@ -1,7 +1,7 @@
 From: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Subject: [PATCH 2/4] Convert epoll to a bitlock
-Date: Mon,  2 Feb 2009 11:20:09 -0700
-Message-ID: <1233598811-6871-3-git-send-email-corbet@lwn.net>
+Subject: [PATCH 3/4] Move FASYNC bit handling to f_op->fasync()
+Date: Mon,  2 Feb 2009 11:20:10 -0700
+Message-ID: <1233598811-6871-4-git-send-email-corbet@lwn.net>
 References: <1233598811-6871-1-git-send-email-corbet@lwn.net>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1233598811-6871-1-git-send-email-corbet-T1hC0tSOHrs@public.gmane.org>
@@ -10,126 +10,138 @@ To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Matt Mackall suggested converting epoll's ep_lock to a bitlock as a way of
-saving space in struct file.  This patch makes that change.
+Removing the BKL from FASYNC handling ran into the challenge of keeping the
+setting of the FASYNC bit in filp->f_flags atomic with regard to calls to
+the underlying fasync() function.  Andi Kleen suggested moving the handling
+of that bit into fasync(); this patch does exactly that.
+
+As it happens, every fasync() implementation in the kernel with one
+exception calls fasync_helper().  So, if we make fasync_helper() set the
+FASYNC bit, we can avoid making any changes to the other fasync()
+functions - as long as those functions, themselves, have proper locking.
+Most fasync() implementations do nothing but call fasync_helper() - which
+has its own lock - so they are easily verified as correct.  The BKL had
+already been pushed down into the few exceptions.
+
+The networking code has its own version of fasync_helper(), so that code
+has been augmented with explicit FASYNC bit handling.
 
 Signed-off-by: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 ---
- fs/eventpoll.c              |   13 ++++++++-----
- fs/fcntl.c                  |    2 +-
- include/asm-generic/fcntl.h |    4 ++++
- include/linux/eventpoll.h   |    2 +-
- include/linux/fs.h          |    1 -
- 5 files changed, 14 insertions(+), 8 deletions(-)
+ fs/fcntl.c   |   21 ++++++++-------------
+ fs/ioctl.c   |   11 +----------
+ net/socket.c |    2 ++
+ 3 files changed, 11 insertions(+), 23 deletions(-)
 
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index ba2f9ec..95fae01 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -25,6 +25,7 @@
- #include <linux/list.h>
- #include <linux/hash.h>
- #include <linux/spinlock.h>
-+#include <linux/bit_spinlock.h>
- #include <linux/syscalls.h>
- #include <linux/rbtree.h>
- #include <linux/wait.h>
-@@ -427,10 +428,10 @@ static int ep_remove(struct eventpoll *ep, struct epitem *epi)
- 	ep_unregister_pollwait(ep, epi);
- 
- 	/* Remove the current item from the list of epoll hooks */
--	spin_lock(&file->f_ep_lock);
-+	bit_spin_lock(NR_EPOLL_FILE_LOCK, &file->f_flags);
- 	if (ep_is_linked(&epi->fllink))
- 		list_del_init(&epi->fllink);
--	spin_unlock(&file->f_ep_lock);
-+	bit_spin_unlock(NR_EPOLL_FILE_LOCK, &file->f_flags);
- 
- 	rb_erase(&epi->rbn, &ep->rbr);
- 
-@@ -549,7 +550,7 @@ void eventpoll_release_file(struct file *file)
- 	struct epitem *epi;
- 
- 	/*
--	 * We don't want to get "file->f_ep_lock" because it is not
-+	 * We don't want to get EPOLL_FILE_LOCK because it is not
- 	 * necessary. It is not necessary because we're in the "struct file"
- 	 * cleanup path, and this means that noone is using this file anymore.
- 	 * So, for example, epoll_ctl() cannot hit here sicne if we reach this
-@@ -558,6 +559,8 @@ void eventpoll_release_file(struct file *file)
- 	 * will correctly serialize the operation. We do need to acquire
- 	 * "ep->mtx" after "epmutex" because ep_remove() requires it when called
- 	 * from anywhere but ep_free().
-+	 *
-+	 * Besides, ep_remove() takes the lock.
- 	 */
- 	mutex_lock(&epmutex);
- 
-@@ -800,9 +803,9 @@ static int ep_insert(struct eventpoll *ep, struct epoll_event *event,
- 		goto error_unregister;
- 
- 	/* Add the current item to the list of active epoll hook for this file */
--	spin_lock(&tfile->f_ep_lock);
-+	bit_spin_lock(NR_EPOLL_FILE_LOCK, &tfile->f_flags);
- 	list_add_tail(&epi->fllink, &tfile->f_ep_links);
--	spin_unlock(&tfile->f_ep_lock);
-+	bit_spin_unlock(NR_EPOLL_FILE_LOCK, &tfile->f_flags);
- 
- 	/*
- 	 * Add the current item to the RB tree. All RB tree operations are
 diff --git a/fs/fcntl.c b/fs/fcntl.c
-index 3affd3e..756119e 100644
+index 756119e..7b641d9 100644
 --- a/fs/fcntl.c
 +++ b/fs/fcntl.c
-@@ -299,7 +299,7 @@ static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
- 		set_close_on_exec(fd, arg & FD_CLOEXEC);
- 		break;
- 	case F_GETFL:
--		err = filp->f_flags;
-+		err = filp->f_flags & ~EPOLL_FILE_LOCK;
- 		break;
- 	case F_SETFL:
- 		err = setfl(fd, filp, arg);
-diff --git a/include/asm-generic/fcntl.h b/include/asm-generic/fcntl.h
-index 41e9f88..d56a513 100644
---- a/include/asm-generic/fcntl.h
-+++ b/include/asm-generic/fcntl.h
-@@ -62,6 +62,10 @@
- #define NR_O_NDELAY	NR_O_NONBLOCK
- #endif
+@@ -185,19 +185,14 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
+ 		return error;
  
-+/* Use bit 31 for epoll locking */
-+#define NR_EPOLL_FILE_LOCK 31
-+#define EPOLL_FILE_LOCK (1 << NR_EPOLL_FILE_LOCK)
-+
- #define F_DUPFD		0	/* dup */
- #define F_GETFD		1	/* get close_on_exec */
- #define F_SETFD		2	/* set/clear close_on_exec */
-diff --git a/include/linux/eventpoll.h b/include/linux/eventpoll.h
-index f1e1d3c..7b5c58a 100644
---- a/include/linux/eventpoll.h
-+++ b/include/linux/eventpoll.h
-@@ -61,7 +61,7 @@ struct file;
- static inline void eventpoll_init_file(struct file *file)
- {
- 	INIT_LIST_HEAD(&file->f_ep_links);
--	spin_lock_init(&file->f_ep_lock);
-+	clear_bit(NR_EPOLL_FILE_LOCK, &file->f_flags);
+ 	/*
+-	 * We still need a lock here for now to keep multiple FASYNC calls
+-	 * from racing with each other.
++	 * ->fasync() is responsible for setting the FASYNC bit.
+ 	 */
+-	lock_kernel();
+-	if ((arg ^ filp->f_flags) & FASYNC) {
+-		if (filp->f_op && filp->f_op->fasync) {
+-			error = filp->f_op->fasync(fd, filp, (arg & FASYNC) != 0);
+-			if (error < 0)
+-				goto out;
+-		}
+-		change_bit(NR_FASYNC, &filp->f_flags);
++	if (((arg ^ filp->f_flags) & FASYNC) && filp->f_op &&
++			filp->f_op->fasync) {
++		error = filp->f_op->fasync(fd, filp, (arg & FASYNC) != 0);
++		if (error < 0)
++			goto out;
+ 	}
+-
+ 	/*
+ 	 * Now that we use bitops we have to tweak each bit individually.
+ 	 */
+@@ -207,7 +202,6 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
+ 	tweak_flags_bit(NR_O_DIRECT, arg & O_DIRECT, &filp->f_flags);
+ 	tweak_flags_bit(NR_O_NOATIME, arg & O_NOATIME, &filp->f_flags);
+  out:
+-	unlock_kernel();
+ 	return error;
  }
  
+@@ -532,7 +526,7 @@ static DEFINE_RWLOCK(fasync_lock);
+ static struct kmem_cache *fasync_cache __read_mostly;
  
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 9d7cb0e..ecd9a5b 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -865,7 +865,6 @@ struct file {
- #ifdef CONFIG_EPOLL
- 	/* Used by fs/eventpoll.c to link all the hooks to this file */
- 	struct list_head	f_ep_links;
--	spinlock_t		f_ep_lock;
- #endif /* #ifdef CONFIG_EPOLL */
- 	struct address_space	*f_mapping;
- #ifdef CONFIG_DEBUG_WRITECOUNT
+ /*
+- * fasync_helper() is used by some character device drivers (mainly mice)
++ * fasync_helper() is used by almost all character device drivers
+  * to set up the fasync queue. It returns negative on error, 0 if it did
+  * no changes and positive if it added/deleted the entry.
+  */
+@@ -548,6 +542,7 @@ int fasync_helper(int fd, struct file * filp, int on, struct fasync_struct **fap
+ 			return -ENOMEM;
+ 	}
+ 	write_lock_irq(&fasync_lock);
++	tweak_flags_bit(NR_FASYNC, on, &filp->f_flags);
+ 	for (fp = fapp; (fa = *fp) != NULL; fp = &fa->fa_next) {
+ 		if (fa->fa_file == filp) {
+ 			if(on) {
+diff --git a/fs/ioctl.c b/fs/ioctl.c
+index fc0db36..bc32cb2 100644
+--- a/fs/ioctl.c
++++ b/fs/ioctl.c
+@@ -427,17 +427,11 @@ static int ioctl_fioasync(unsigned int fd, struct file *filp,
+ 	/* Did FASYNC state change ? */
+ 	if ((flag ^ filp->f_flags) & FASYNC) {
+ 		if (filp->f_op && filp->f_op->fasync)
++			/* fasync() adjusts filp->f_flags */
+ 			error = filp->f_op->fasync(fd, filp, on);
+ 		else
+ 			error = -ENOTTY;
+ 	}
+-	if (error)
+-		return error;
+-
+-	if (on)
+-		set_bit(NR_FASYNC, &filp->f_flags);
+-	else
+-		clear_bit(NR_FASYNC, &filp->f_flags);
+ 	return error;
+ }
+ 
+@@ -505,10 +499,7 @@ int do_vfs_ioctl(struct file *filp, unsigned int fd, unsigned int cmd,
+ 		break;
+ 
+ 	case FIOASYNC:
+-		/* BKL needed to avoid races tweaking f_flags */
+-		lock_kernel();
+ 		error = ioctl_fioasync(fd, filp, argp);
+-		unlock_kernel();
+ 		break;
+ 
+ 	case FIOQSIZE:
+diff --git a/net/socket.c b/net/socket.c
+index 35dd737..2b1e380 100644
+--- a/net/socket.c
++++ b/net/socket.c
+@@ -1037,6 +1037,7 @@ static int sock_fasync(int fd, struct file *filp, int on)
+ 			break;
+ 
+ 	if (on) {
++		set_bit(NR_FASYNC, &filp->f_flags);
+ 		if (fa != NULL) {
+ 			write_lock_bh(&sk->sk_callback_lock);
+ 			fa->fa_fd = fd;
+@@ -1053,6 +1054,7 @@ static int sock_fasync(int fd, struct file *filp, int on)
+ 		sock->fasync_list = fna;
+ 		write_unlock_bh(&sk->sk_callback_lock);
+ 	} else {
++		clear_bit(NR_FASYNC, &filp->f_flags);
+ 		if (fa != NULL) {
+ 			write_lock_bh(&sk->sk_callback_lock);
+ 			*prev = fa->fa_next;
 -- 
 1.6.1.1
 
