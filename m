@@ -1,32 +1,60 @@
-From: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
-Subject: Re: [PATCH 2/4] Convert epoll to a bitlock
-Date: Wed, 4 Feb 2009 08:51:26 -0800 (PST)
-Message-ID: <alpine.DEB.1.10.0902040849570.5477@alien.or.mcafeemobile.com>
-References: <1233598811-6871-1-git-send-email-corbet@lwn.net> <1233598811-6871-3-git-send-email-corbet@lwn.net> <20090203133942.2ecec281.akpm@linux-foundation.org> <4988BD4E.8080206@cosmosbay.com> <20090203140543.6e915f97.akpm@linux-foundation.org>
- <1233699722.3243.127.camel@calx> <20090203153740.363d0a04@bike.lwn.net> <20090203145346.8df40277.akpm@linux-foundation.org> <20090203161931.4054a25e@bike.lwn.net> <20090204071320.GA19348@lst.de>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [patch/rfc] eventfd semaphore-like behavior
+Date: Wed, 4 Feb 2009 15:05:07 -0800
+Message-ID: <20090204150507.665b5b7c.akpm@linux-foundation.org>
+References: <alpine.DEB.1.10.0902041349180.6214@alien.or.mcafeemobile.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090204071320.GA19348-jcswGhMUV9g@public.gmane.org>
+In-Reply-To: <alpine.DEB.1.10.0902041349180.6214-GPJ85BhbkB8RepQJljzAVbITYcZ0+W3JAL8bYrjMMd8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, dada1-fPLkHRcR87vqlBn2x/YWAg@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+To: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 4 Feb 2009, Christoph Hellwig wrote:
+On Wed, 4 Feb 2009 14:58:39 -0800 (PST)
+Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org> wrote:
 
-> On Tue, Feb 03, 2009 at 04:19:31PM -0700, Jonathan Corbet wrote:
-> >  1) Use i_lock to protect accesses to f_flags.  This would enable some 
-> >     BKL usage to be removed, but would not fix fasync.
+> People started using eventfd in scnarios where before where using pipes. 
+> Many of them use eventfds in a semaphore-like way, like they were before 
+> with pipes. The problem with eventfd is that a read() on the fd returns 
+> and wipes the whole counter, making the use of it as semaphore a little 
+> bit more cumbersome. You can do a read() followed by a write() of 
+> COUNTER-1, but IMO it's pretty easy and cheap to make this work w/out 
+> extra steps. This patch introduces a new eventfd flag that tells eventfd 
+> to only dequeue 1 from the counter, allowing simple read/write to make it 
+> behave like a semaphore.
+
+Would be nice to spell out what "a sempahore-like way" is.
+
+> Simple test here:
 > 
-> What about just turning f_ep_lock into f_lock and using it?
+> http://www.xmailserver.org/eventfd-sem.c
+> 
+> 
+> Signed-off-by: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
+> 
+> +/*
+> + * CAREFUL: Check include/asm-generic/fcntl.h when defining
+> + * new flags, since they might collide with O_* ones. We want
+> + * to re-use O_* flags that couldn't possibly have a meaning
+> + * from eventfd, in order to leave a free define-space for
+> + * shared O_* flags.
+> + */
+> +#define EFD_SEMAPHORE (1 << 0)
+>  #define EFD_CLOEXEC O_CLOEXEC
+>  #define EFD_NONBLOCK O_NONBLOCK
+>  
+> +#define EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
+> +#define EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE)
 
-Looks like a good idea.
+How would you recommend that userspace determine whether its kernel
+supports this feature, bearing in mind that someone might backport this
+patch into arbitrarily earlier kernel versions?
 
-
-- Davide
-
-
+What should be userspace's fallback strategy if that support is not
+present?
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
