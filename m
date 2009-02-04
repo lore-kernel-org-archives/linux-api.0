@@ -1,85 +1,34 @@
 From: Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
 Subject: Re: [patch/rfc] eventfd semaphore-like behavior
-Date: Thu, 5 Feb 2009 12:48:45 +1300
-Message-ID: <cfd18e0f0902041548q3c392cb0wb642cb00bc58c1b3@mail.gmail.com>
+Date: Thu, 5 Feb 2009 12:49:31 +1300
+Message-ID: <cfd18e0f0902041549t393c76d0s635b5e8c17fee2d1@mail.gmail.com>
 References: <alpine.DEB.1.10.0902041349180.6214@alien.or.mcafeemobile.com>
 	 <20090204150507.665b5b7c.akpm@linux-foundation.org>
-	 <alpine.DEB.1.10.0902041509060.6214@alien.or.mcafeemobile.com>
-	 <20090204152434.c8f65d52.akpm@linux-foundation.org>
-	 <alpine.DEB.1.10.0902041526590.6214@alien.or.mcafeemobile.com>
+	 <a36005b50902041545qb9ce459y710bb3b9b8949b17@mail.gmail.com>
 Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.1.10.0902041526590.6214-GPJ85BhbkB8RepQJljzAVbITYcZ0+W3JAL8bYrjMMd8@public.gmane.org>
+In-Reply-To: <a36005b50902041545qb9ce459y710bb3b9b8949b17-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ulrich Drepper <drepper-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Ulrich Drepper <drepper-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 5, 2009 at 12:27 PM, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org> wrote:
-> On Wed, 4 Feb 2009, Andrew Morton wrote:
+On Thu, Feb 5, 2009 at 12:45 PM, Ulrich Drepper <drepper-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Wed, Feb 4, 2009 at 3:05 PM, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+>> How would you recommend that userspace determine whether its kernel
+>> supports this feature, bearing in mind that someone might backport this
+>> patch into arbitrarily earlier kernel versions?
 >
->> On Wed, 4 Feb 2009 15:18:43 -0800 (PST)
->> Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org> wrote:
->>
->> > > > Simple test here:
->> > > >
->> > > > http://www.xmailserver.org/eventfd-sem.c
->> > > >
->> > > >
->> > > > Signed-off-by: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
->> > > >
->> > > > +/*
->> > > > + * CAREFUL: Check include/asm-generic/fcntl.h when defining
->> > > > + * new flags, since they might collide with O_* ones. We want
->> > > > + * to re-use O_* flags that couldn't possibly have a meaning
->> > > > + * from eventfd, in order to leave a free define-space for
->> > > > + * shared O_* flags.
->> > > > + */
->> > > > +#define EFD_SEMAPHORE (1 << 0)
->> > > >  #define EFD_CLOEXEC O_CLOEXEC
->> > > >  #define EFD_NONBLOCK O_NONBLOCK
->> > > >
->> > > > +#define EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
->> > > > +#define EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE)
->> > >
->> > > How would you recommend that userspace determine whether its kernel
->> > > supports this feature, bearing in mind that someone might backport this
->> > > patch into arbitrarily earlier kernel versions?
->> > >
->> > > What should be userspace's fallback strategy if that support is not
->> > > present?
->> >
->> > #ifdef EFD_SEMAPHORE, maybe?
->>
->> That's compile-time.  People who ship binaries will probably want
->> to find a runtime thing for back-compatibility.
->
-> I dunno. How do they actually do when we add new flags, like the O_ ones?
+>   fd = eventfd2 (CNT, EFD_SEMAPHORE);
+>   if (fd == -1 && errno == EINVAL)
+>     puts("cannot handled EFD_SEMAPHORE");
 
-Maybe I missed something, but I think we're okay, aren't we?  Viz:
+Crossed mails.  Ulrich put the point more succinctly.
 
-a) The glibc eventfd() wrapper invokes sys_eventfd2() (which allows a
-flags arg) if it is available, and otherwise fall back to
-sys_eventfd() (which does not support a flags arg).
 
-b) If glibc falls back to sys_eventfd(), then it knows to reject
-non-zero flags.  (The glibc wrapper already does this.)
-
-c) If the old sys_eventfd2() is given a flag that it doesn't
-recognize, then it fails with EINVAL.  (That check is already in the
-code.)
-
-So, userspace can determine whether EFD_SEMAPHORE is supported by not
-getting an EINVAL error.  (Okay, this falls down for binaries that
-bypass glibc's eventfd() wrapper, but there are unlikely to be such
-binaries.)
-
-Cheers,
-
-Michael
 -- 
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
