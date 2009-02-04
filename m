@@ -1,45 +1,50 @@
-From: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Subject: Re: [PATCH 2/4] Convert epoll to a bitlock
-Date: Wed, 4 Feb 2009 06:34:07 -0700
-Message-ID: <20090204063407.611d5436@bike.lwn.net>
-References: <1233598811-6871-1-git-send-email-corbet@lwn.net>
-	<20090203161931.4054a25e@bike.lwn.net>
-	<20090204071320.GA19348@lst.de>
-	<200902041820.20535.nickpiggin@yahoo.com.au>
+From: Daniel Walker <dwalker@fifo99.com>
+Subject: Re: [RFC PATCH 09/12] clocksource: allow usage independent of
+	timekeeping.c
+Date: Wed, 04 Feb 2009 06:29:52 -0800
+Message-ID: <1233757792.15119.58.camel@desktop>
+References: <1229352899-31330-1-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-2-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-3-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-4-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-5-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-6-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-7-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-8-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-9-git-send-email-patrick.ohly@intel.com>
+	 <1229352899-31330-10-git-send-email-patrick.ohly@intel.com>
+	 <1229358410.8699.13.camel@jstultz-laptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <200902041820.20535.nickpiggin-/E1597aS9LT0CCvOHzKKcA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Nick Piggin <nickpiggin-/E1597aS9LT0CCvOHzKKcA@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, dada1-fPLkHRcR87vqlBn2x/YWAg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1229358410.8699.13.camel@jstultz-laptop>
+Sender: netdev-owner@vger.kernel.org
+To: John Stultz <johnstul@us.ibm.com>
+Cc: Patrick Ohly <patrick.ohly@intel.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, David Miller <davem@davemloft.net>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 4 Feb 2009 18:20:18 +1100
-Nick Piggin <nickpiggin-/E1597aS9LT0CCvOHzKKcA@public.gmane.org> wrote:
+On Mon, 2008-12-15 at 08:26 -0800, John Stultz wrote:
 
-> On Wednesday 04 February 2009 18:13:20 Christoph Hellwig wrote:
-> > On Tue, Feb 03, 2009 at 04:19:31PM -0700, Jonathan Corbet wrote:  
-> > >  1) Use i_lock to protect accesses to f_flags.  This would enable
-> > > some BKL usage to be removed, but would not fix fasync.  
-> >
-> > What about just turning f_ep_lock into f_lock and using it?  
+> Nice. The cyclecounter struct can work as a good base that I can shift
+> the clocksource bits over to as I clean that up.
 > 
-> Ah, yes I was going to say that too, but I confused i_lock with
-> i_mutex because it sounded like Jon needed a sleeping lock here?
+> We will probably want to split this out down the road, but for now its
+> small enough and related enough that I think its fine in the
+> clocksource.h/c.
+> 
+> Also since Magnus has been working on it, does enable/disable accessors
+> in the cyclecounter struct make sense for your hardware as well?
+> 
+> Also the corner cases on overflows (how we manage the state, should
+> reads be deferred for too long) will need to be addressed, but I guess
+> we can solve that when it becomes an issue. Just to be clear: none of
+> the hardware you're submitting this round has wrapping issues? Or is
+> that not the case?
 
-Sigh, obviously that's what I should do.  Sorry for being so dense.
-Consider it done.
+Why wouldn't this just use a clocksource directly and not register it
+with the timekeeping? The cyclecounter is just a subset of the
+clocksource ..
 
-[About sleeping locks: *if* one puts a lock around ->fasync(), it needs
-to be a sleeping lock.  But moving FASYNC bit handling down gets rid of
-the need to do that, so f_lock would be fine.]
+Daniel
 
-Thanks,
-
-jon
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
