@@ -1,79 +1,30 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [patch/rfc] eventfd semaphore-like behavior
-Date: Wed, 4 Feb 2009 16:34:34 -0800
-Message-ID: <20090204163434.1395a928.akpm@linux-foundation.org>
-References: <alpine.DEB.1.10.0902041349180.6214@alien.or.mcafeemobile.com>
-	<20090204150507.665b5b7c.akpm@linux-foundation.org>
-	<alpine.DEB.1.10.0902041509060.6214@alien.or.mcafeemobile.com>
-	<20090204152434.c8f65d52.akpm@linux-foundation.org>
-	<alpine.DEB.1.10.0902041526590.6214@alien.or.mcafeemobile.com>
-	<20090204155514.6abbdc8f.akpm@linux-foundation.org>
-	<cfd18e0f0902041559l4c40d9b6k704068337a00df7a@mail.gmail.com>
-	<20090204161816.b93a4588.akpm@linux-foundation.org>
-	<alpine.DEB.1.10.0902041621360.6214@alien.or.mcafeemobile.com>
+From: "H. Peter Anvin" <hpa@zytor.com>
+Subject: Re: + preadv-pwritev-add-preadv-and-pwritev-system-calls.patch added
+ to -mm tree
+Date: Wed, 04 Feb 2009 16:42:48 -0800
+Message-ID: <498A3608.3010008@zytor.com>
+References: <200902022135.n12LZa1a010673@imap1.linux-foundation.org> <49876A91.4000705@zytor.com> <49881904.30705@redhat.com> <498879B3.8030002@zytor.com> <20090203171559.GA20898@flint.arm.linux.org.uk> <49887EF4.1090300@zytor.com> <20090203174257.GC20898@flint.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.1.10.0902041621360.6214-GPJ85BhbkB8RepQJljzAVbITYcZ0+W3JAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20090203174257.GC20898@flint.arm.linux.org.uk>
+Sender: linux-arch-owner@vger.kernel.org
+To: "H. Peter Anvin" <hpa@zytor.com>, Gerd Hoffmann <kraxel@redhat.com>, akpm@linux-foundation.org, mm-commits@vger.kernel.org, arnd@arndb.de, linux-api@vger.kernel.org, linux-arch@vger.k
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 4 Feb 2009 16:25:52 -0800 (PST)
-Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org> wrote:
-
-> On Wed, 4 Feb 2009, Andrew Morton wrote:
+Russell King wrote:
 > 
-> > On Thu, 5 Feb 2009 12:59:07 +1300
-> > Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org> wrote:
-> > 
-> > > >> > > > What should be userspace's fallback strategy if that support is not
-> > > >> > > > present?
-> > > >> > >
-> > > >> > > #ifdef EFD_SEMAPHORE, maybe?
-> > > >> >
-> > > >> > That's compile-time.  People who ship binaries will probably want
-> > > >> > to find a runtime thing for back-compatibility.
-> > > >>
-> > > >> I dunno. How do they actually do when we add new flags, like the O_ ones?
-> > > >>
-> > > >
-> > > > Dunno.  Probably try the syscall and see if it returned -EINVAL.  Does
-> > > > that work in this case?
-> > > 
-> > > As youll have seen by now, Ulrich and I noted that it works.
-> > 
-> > I think you means "should work" ;)
-> > 
-> > We're talking about this, yes?
-> > 
-> > SYSCALL_DEFINE2(eventfd2, unsigned int, count, int, flags)
-> > {
-> > 	int fd;
-> > 	struct eventfd_ctx *ctx;
-> > 
-> > 	/* Check the EFD_* constants for consistency.  */
-> > 	BUILD_BUG_ON(EFD_CLOEXEC != O_CLOEXEC);
-> > 	BUILD_BUG_ON(EFD_NONBLOCK != O_NONBLOCK);
-> > 
-> > 	if (flags & ~(EFD_CLOEXEC | EFD_NONBLOCK))
-> > 		return -EINVAL;
-> > 
-> > That looks like it should work to me.
-> 
-> I lost you guys. On old kernels you'd get -EINVAL when using the new flag. 
-> Wasn't it clear? Or is there some side-band traffic in this conversation 
-> that I missed? :)
+> This is an overly simplified view of things.  There exist syscalls where
+> it's not just a matter of padding, but instead where the chosen argument
+> order interacts with the ABI padding requirements to produce something
+> which the syscall interface can't handle.  There are two solutions to
+> that: reorder the syscall arguments or split them up into 32-bit high/low
+> quantities.
 > 
 
-Well yes, that.  What I was trying to establish here is that we have
-thought about (and preferably tested) userspace's back-compatibility
-arrangements.
+I just went back and looked specifically at this, and I wonder if you 
+could be more concrete.  In particular, this seems to imply a rule 
+somewhere which could probably be improved reasonably easily.
 
-We have now done that.
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+	-hpa
