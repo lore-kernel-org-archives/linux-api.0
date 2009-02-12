@@ -1,21 +1,21 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Dave Hansen <dave@linux.vnet.ibm.com>
 Subject: Re: [RFC v13][PATCH 00/14] Kernel based checkpoint/restart
-Date: Thu, 12 Feb 2009 10:17:21 +0100
-Message-ID: <20090212091721.GB1888@elte.hu>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu> <1234285547.30155.6.camel@nimitz> <20090211141434.dfa1d079.akpm@linux-foundation.org>
+Date: Thu, 12 Feb 2009 10:11:22 -0800
+Message-ID: <1234462282.30155.171.camel@nimitz>
+References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>
+	 <1234285547.30155.6.camel@nimitz>
+	 <20090211141434.dfa1d079.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
 In-Reply-To: <20090211141434.dfa1d079.akpm@linux-foundation.org>
 Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, orenl@cs.columbia.edu, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, hpa@zytor.com, tglx@linutronix.de
+To: Ingo Molnar <mingo@elte.hu>
+Cc: Andrew Morton <akpm@linux-foundation.org>, orenl@cs.columbia.edu, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, hpa@zytor.com, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-
-* Andrew Morton <akpm@linux-foundation.org> wrote:
-
+On Wed, 2009-02-11 at 14:14 -0800, Andrew Morton wrote:
 > On Tue, 10 Feb 2009 09:05:47 -0800
 > Dave Hansen <dave@linux.vnet.ibm.com> wrote:
 > 
@@ -55,29 +55,99 @@ List-Id: linux-api@vger.kernel.org
 > 
 > - In bullet-point form, what features are present?
 
-It would be nice to get an honest, critical-thinking answer on this.
+ * i386 arch is supported
+ * processes can perform a "self-checkpoint" which means calling 
+   sys_checkpoint() on itself as well as "external checkpoint" where
+   one task checkpoints another.
+ * supported fds:
+   * "normal" files on the filesystem
+   * both endpoints of a pipe are checkpointed, as are pipe contents
+ * each process's memory map is saved
+ * the contents of anonymous memory are saved
+ * infrastructure for managing objects in the checkpoint which are
+   "shared" by multiple users like fds or a SVSV semaphore, for instance
+ * multiple processes may be checkpointed during a single sys_checkpoint()
 
-What is it good for right now, and what are the known weaknesses and
-quirks you can think of. Declaring them upfront is a bonus - not talking
-about them and us discovering them later at the patch integration stage
-is a sure receipe for upstream grumpiness.
+> - In bullet-point form, what features are missing, and should be added?
 
-This is an absolutely major featue, touching each and every subsystem in
-a very fundamental way. It is also a cool capability worth a bit of a
-maintenance pain, so we'd like to see the pros and cons nicely enumerated,
-to the best of your knowledge. Most of us are just as feature-happy at
-heart as you folks are, so if it can be done sanely we are on your side.
+ * support for more architectures than i386
+ * file descriptors:
+  * sockets (network, AF_UNIX, etc...)
+  * devices files
+  * shmfs, hugetlbfs
+  * epoll
+  * unlinked files
+ * Filesystem state
+  * contents of files
+  * mount tree for individual processes
+ * flock
+ * threads and sessions
+ * CPU and NUMA affinity
+ * sys_remap_file_pages()
 
-For example, one of the critical corner points: can an app programmatically 
-determine whether it can support checkpoint/restart safely? Are there 
-warnings/signals/helpers in place that make it a well-defined space, and
-make the implementation of missing features directly actionable?
+This is a very minimal list that is surely incomplete and sure to grow.
+I think of it like kernel scalability.  Is scalability important?  Do we
+want the whole kernel to scale?  Yes, and yes, of course.  *Does* every
+single device and feature in the kernel scale?  No way.  Will it ever be
+"done"?  No freakin' way!  But, the kernel is scalable on the workloads
+that are important to people.
 
-( instead of: 'silent breakage' and a wishy-washy boundary between the
-  working and non-working space. Without clear boundaries there's no
-  clear dynamics that extends the 'working' space beyond the demo stage. )
+Checkpoint/restart is the same way.  We intend to make core kernel
+functionality checkpointable first.  We'll move outwards from there as
+we (and our users) deem things important, but we'll certainly never be
+done.  
 
-	Ingo
+> - Is it possible to briefly sketch out the design of the to-be-added
+>   features?
+
+For architecture (and indeed processor variation) we need a look at how
+and when its registers are saved on kernel entry as well as things like
+32/64-bit processes  and mm_context considerations.  There is x86_64,
+s390 and ppc work ongoing.  Those ports have required quite small
+changes in the generic code, which is a good sign.
+
+Each fd type will need to be worked on separately.  Device files will
+generally have to be one-off.  /dev/null has no internal state at all.
+But, work needs done for devices which may have had all kinds of
+ioctl()s done on them. 
+
+Unlinked files will need their contents stored in the checkpoint so that
+they may be copied over during restart (say to a temporary file),
+opened, and unlinked again.  Files on kernel-internal mounts will need
+similar treatment (think 'pipe_mnt').
+
+We expect the filesystem *contents* to be taken care of generally by
+outside mechanisms like dm or btrfs snapshotting.  
+
+For the filesystem namespace, we'll effectively need to export what we
+already have in /proc/$pid/mountinfo.  
+
+I'm going to punt on explaining the networking bits for now because I
+think I'd be wasting your time.  There are a couple of other guys around
+much more versed in that area.
+
+> For extra marks:
+> 
+> - Will any of this involve non-trivial serialisation of kernel
+>   objects?  If so, that's getting into the
+>   unacceptably-expensive-to-maintain space, I suspect.
+
+We have some structures that are certainly tied to the kernel-internal
+ones.  However, we are certainly *not* simply writing kernel structures
+to userspace.  We could do that with /dev/mem.  We are carefully pulling
+out the minimal bits of information from the kernel structures that we
+*need* to recreate the function of the structure at restart.  There is a
+maintenance burden here but, so far, that burden is almost entirely in
+checkpoint/*.c.  We intend to test this functionality thoroughly to
+ensure that we don't regress once we have integrated it.
+
+> - Does (or will) this feature also support process migration?  If
+>   not, I'd have thought this to be a showstopper.
+
+You mean moving processes between machines?  Yes, it certainly will.
+That is one of the primary design goals.
+
+-- Dave
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
