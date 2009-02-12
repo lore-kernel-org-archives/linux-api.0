@@ -1,156 +1,101 @@
-From: Dave Hansen <dave@linux.vnet.ibm.com>
+From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Subject: Re: [RFC v13][PATCH 00/14] Kernel based checkpoint/restart
-Date: Thu, 12 Feb 2009 10:11:22 -0800
-Message-ID: <1234462282.30155.171.camel@nimitz>
+Date: Thu, 12 Feb 2009 10:11:23 -0800
+Message-ID: <1234462283.30155.173.camel@nimitz>
 References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>
 	 <1234285547.30155.6.camel@nimitz>
 	 <20090211141434.dfa1d079.akpm@linux-foundation.org>
+	 <20090212091721.GB1888@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090211141434.dfa1d079.akpm@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Ingo Molnar <mingo@elte.hu>
-Cc: Andrew Morton <akpm@linux-foundation.org>, orenl@cs.columbia.edu, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, hpa@zytor.com, Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090212091721.GB1888-X9Un+BFzKDI@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2009-02-11 at 14:14 -0800, Andrew Morton wrote:
-> On Tue, 10 Feb 2009 09:05:47 -0800
-> Dave Hansen <dave@linux.vnet.ibm.com> wrote:
+On Thu, 2009-02-12 at 10:17 +0100, Ingo Molnar wrote:
+> * Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
 > 
-> > On Tue, 2009-01-27 at 12:07 -0500, Oren Laadan wrote:
-> > > Checkpoint-restart (c/r): a couple of fixes in preparation for 64bit
-> > > architectures, and a couple of fixes for bugss (comments from Serge
-> > > Hallyn, Sudakvev Bhattiprolu and Nathan Lynch). Updated and tested
-> > > against v2.6.28.
+> > On Tue, 10 Feb 2009 09:05:47 -0800
+> > Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org> wrote:
+> > 
+> > > On Tue, 2009-01-27 at 12:07 -0500, Oren Laadan wrote:
+> > > > Checkpoint-restart (c/r): a couple of fixes in preparation for 64bit
+> > > > architectures, and a couple of fixes for bugss (comments from Serge
+> > > > Hallyn, Sudakvev Bhattiprolu and Nathan Lynch). Updated and tested
+> > > > against v2.6.28.
+> > > > 
+> > > > Aiming for -mm.
 > > > 
-> > > Aiming for -mm.
+> > > Is there anything that we're waiting on before these can go into -mm?  I
+> > > think the discussion on the first few patches has died down to almost
+> > > nothing.  They're pretty reviewed-out.  Do they need a run in -mm?  I
+> > > don't think linux-next is quite appropriate since they're not _quite_
+> > > aimed at mainline yet.
+> > > 
 > > 
-> > Is there anything that we're waiting on before these can go into -mm?  I
-> > think the discussion on the first few patches has died down to almost
-> > nothing.  They're pretty reviewed-out.  Do they need a run in -mm?  I
-> > don't think linux-next is quite appropriate since they're not _quite_
-> > aimed at mainline yet.
+> > I raised an issue a few months ago and got inconclusively waffled at. 
+> > Let us revisit.
 > > 
+> > I am concerned that this implementation is a bit of a toy, and that we
+> > don't know what a sufficiently complete implementation will look like. 
+> > There is a risk that if we merge the toy we either:
+> > 
+> > a) end up having to merge unacceptably-expensive-to-maintain code to
+> >    make it a non-toy or
+> > 
+> > b) decide not to merge the unacceptably-expensive-to-maintain code,
+> >    leaving us with a toy or
+> > 
+> > c) simply cannot work out how to implement the missing functionality.
+> > 
+> > 
+> > So perhaps we can proceed by getting you guys to fill out the following
+> > paperwork:
+> > 
+> > - In bullet-point form, what features are present?
 > 
-> I raised an issue a few months ago and got inconclusively waffled at. 
-> Let us revisit.
+> It would be nice to get an honest, critical-thinking answer on this.
 > 
-> I am concerned that this implementation is a bit of a toy, and that we
-> don't know what a sufficiently complete implementation will look like. 
-> There is a risk that if we merge the toy we either:
+> What is it good for right now, and what are the known weaknesses and
+> quirks you can think of. Declaring them upfront is a bonus - not talking
+> about them and us discovering them later at the patch integration stage
+> is a sure receipe for upstream grumpiness.
+
+That's a fair enough point, and I do agree with you on it.
+
+Right now, it is good for very little.  An app has to basically be
+either specifically designed to work, or be pretty puny in its
+capabilities.  Any fds that are open can only be restored if a simple
+open();lseek(); would have been sufficient to get it back into a good
+state.  The process must be single-threaded.  Shared memory, hugetlbfs,
+VM_NONLINEAR are not supported.  
+
+> For example, one of the critical corner points: can an app programmatically 
+> determine whether it can support checkpoint/restart safely? Are there 
+> warnings/signals/helpers in place that make it a well-defined space, and
+> make the implementation of missing features directly actionable?
 > 
-> a) end up having to merge unacceptably-expensive-to-maintain code to
->    make it a non-toy or
-> 
-> b) decide not to merge the unacceptably-expensive-to-maintain code,
->    leaving us with a toy or
-> 
-> c) simply cannot work out how to implement the missing functionality.
-> 
-> 
-> So perhaps we can proceed by getting you guys to fill out the following
-> paperwork:
-> 
-> - In bullet-point form, what features are present?
+> ( instead of: 'silent breakage' and a wishy-washy boundary between the
+>   working and non-working space. Without clear boundaries there's no
+>   clear dynamics that extends the 'working' space beyond the demo stage. )
 
- * i386 arch is supported
- * processes can perform a "self-checkpoint" which means calling 
-   sys_checkpoint() on itself as well as "external checkpoint" where
-   one task checkpoints another.
- * supported fds:
-   * "normal" files on the filesystem
-   * both endpoints of a pipe are checkpointed, as are pipe contents
- * each process's memory map is saved
- * the contents of anonymous memory are saved
- * infrastructure for managing objects in the checkpoint which are
-   "shared" by multiple users like fds or a SVSV semaphore, for instance
- * multiple processes may be checkpointed during a single sys_checkpoint()
+Patch 12/14 is supposed to address this *concept*.  But, it hasn't been
+carried through so that it currently works.  My expectation was that we
+would go through and add things over time.  I'll go make sure I push it
+to the point that it actually works for at least the simple test
+programs that we have.
 
-> - In bullet-point form, what features are missing, and should be added?
-
- * support for more architectures than i386
- * file descriptors:
-  * sockets (network, AF_UNIX, etc...)
-  * devices files
-  * shmfs, hugetlbfs
-  * epoll
-  * unlinked files
- * Filesystem state
-  * contents of files
-  * mount tree for individual processes
- * flock
- * threads and sessions
- * CPU and NUMA affinity
- * sys_remap_file_pages()
-
-This is a very minimal list that is surely incomplete and sure to grow.
-I think of it like kernel scalability.  Is scalability important?  Do we
-want the whole kernel to scale?  Yes, and yes, of course.  *Does* every
-single device and feature in the kernel scale?  No way.  Will it ever be
-"done"?  No freakin' way!  But, the kernel is scalable on the workloads
-that are important to people.
-
-Checkpoint/restart is the same way.  We intend to make core kernel
-functionality checkpointable first.  We'll move outwards from there as
-we (and our users) deem things important, but we'll certainly never be
-done.  
-
-> - Is it possible to briefly sketch out the design of the to-be-added
->   features?
-
-For architecture (and indeed processor variation) we need a look at how
-and when its registers are saved on kernel entry as well as things like
-32/64-bit processes  and mm_context considerations.  There is x86_64,
-s390 and ppc work ongoing.  Those ports have required quite small
-changes in the generic code, which is a good sign.
-
-Each fd type will need to be worked on separately.  Device files will
-generally have to be one-off.  /dev/null has no internal state at all.
-But, work needs done for devices which may have had all kinds of
-ioctl()s done on them. 
-
-Unlinked files will need their contents stored in the checkpoint so that
-they may be copied over during restart (say to a temporary file),
-opened, and unlinked again.  Files on kernel-internal mounts will need
-similar treatment (think 'pipe_mnt').
-
-We expect the filesystem *contents* to be taken care of generally by
-outside mechanisms like dm or btrfs snapshotting.  
-
-For the filesystem namespace, we'll effectively need to export what we
-already have in /proc/$pid/mountinfo.  
-
-I'm going to punt on explaining the networking bits for now because I
-think I'd be wasting your time.  There are a couple of other guys around
-much more versed in that area.
-
-> For extra marks:
-> 
-> - Will any of this involve non-trivial serialisation of kernel
->   objects?  If so, that's getting into the
->   unacceptably-expensive-to-maintain space, I suspect.
-
-We have some structures that are certainly tied to the kernel-internal
-ones.  However, we are certainly *not* simply writing kernel structures
-to userspace.  We could do that with /dev/mem.  We are carefully pulling
-out the minimal bits of information from the kernel structures that we
-*need* to recreate the function of the structure at restart.  There is a
-maintenance burden here but, so far, that burden is almost entirely in
-checkpoint/*.c.  We intend to test this functionality thoroughly to
-ensure that we don't regress once we have integrated it.
-
-> - Does (or will) this feature also support process migration?  If
->   not, I'd have thought this to be a showstopper.
-
-You mean moving processes between machines?  Yes, it certainly will.
-That is one of the primary design goals.
+What I will probably do is something BKL-style.  Basically put a "this
+can't be checkpointed" marker over most everything I can think of and
+selectively remove it as we add features.  
 
 -- Dave
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
