@@ -1,54 +1,86 @@
-From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: [RFC v13][PATCH 00/14] Kernel based checkpoint/restart
-Date: Thu, 12 Feb 2009 15:13:53 -0800
-Message-ID: <1234480433.30155.226.camel@nimitz>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>
-	 <1234285547.30155.6.camel@nimitz>
-	 <20090211141434.dfa1d079.akpm@linux-foundation.org>
-	 <1234462282.30155.171.camel@nimitz>  <1234467035.3243.538.camel@calx>
-	 <1234479457.30155.214.camel@nimitz>  <1234479924.3152.13.camel@calx>
+Date: Fri, 13 Feb 2009 11:20:36 +0100
+Message-ID: <20090213102036.GA4608@elte.hu>
+References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu> <1234285547.30155.6.camel@nimitz> <20090211141434.dfa1d079.akpm@linux-foundation.org> <20090212091721.GB1888@elte.hu> <1234462283.30155.173.camel@nimitz>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1234479924.3152.13.camel@calx>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
-Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Cedric Le Goater <clg-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1234462283.30155.173.camel@nimitz>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@linux.vnet.ibm.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, orenl@cs.columbia.edu, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, hpa@zytor.com, tglx@linutronix.de
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2009-02-12 at 17:05 -0600, Matt Mackall wrote:
-> On Thu, 2009-02-12 at 14:57 -0800, Dave Hansen wrote:
-> > > Also, what happens if I checkpoint a process in 2.6.30 and restore it in
-> > > 2.6.31 which has an expanded idea of what should be restored? Do your
-> > > file formats handle this sort of forward compatibility or am I
-> > > restricted to one kernel?
-> > 
-> > In general, you're restricted to one kernel.  But, people have mentioned
-> > that, if the formats change, we should be able to write in-userspace
-> > converters for the checkpoint files.  
+
+* Dave Hansen <dave@linux.vnet.ibm.com> wrote:
+
+> > What is it good for right now, and what are the known weaknesses and
+> > quirks you can think of. Declaring them upfront is a bonus - not talking
+> > about them and us discovering them later at the patch integration stage
+> > is a sure receipe for upstream grumpiness.
 > 
-> I mentioned this because it seems like a key use case is upgrading
-> kernels out from under long-lived applications.
+> That's a fair enough point, and I do agree with you on it.
+> 
+> Right now, it is good for very little.  An app has to basically be
+> either specifically designed to work, or be pretty puny in its
+> capabilities.  Any fds that are open can only be restored if a simple
+> open();lseek(); would have been sufficient to get it back into a good
+> state.  The process must be single-threaded.  Shared memory, hugetlbfs,
+> VM_NONLINEAR are not supported.  
 
-The key users as I envision it aren't really kernel hackers who are
-always running 2.6-next and running radically different kernels from
-moment to moment. :)
+That is OK as a starting point, as long as:
 
-Distros are pretty picky about changing things internal to the kernel
-during errata updates or even service packs.  While that can be a pain
-for some of us developers trying to get features and fixes in, it is a
-godsend for trying to do something like process migration across an
-update.
+> > For example, one of the critical corner points: can an app programmatically 
+> > determine whether it can support checkpoint/restart safely? Are there 
+> > warnings/signals/helpers in place that make it a well-defined space, and
+> > make the implementation of missing features directly actionable?
+> > 
+> > ( instead of: 'silent breakage' and a wishy-washy boundary between the
+> >   working and non-working space. Without clear boundaries there's no
+> >   clear dynamics that extends the 'working' space beyond the demo stage. )
+> 
+> Patch 12/14 is supposed to address this *concept*.  But, it hasn't been
+> carried through so that it currently works.  My expectation was that we
+> would go through and add things over time.  I'll go make sure I push it
+> to the point that it actually works for at least the simple test
+> programs that we have.
+> 
+> What I will probably do is something BKL-style.  Basically put a "this
+> can't be checkpointed" marker over most everything I can think of and
+> selectively remove it as we add features.  
 
-My random speculation would be that for things that if a kernel upgrade
-can be performed with ksplice (http://www.ksplice.com/) -- the original
-non-fancy version at least -- we can probably migrate across the
-upgrade.
+An app really has to know whether it can reliably checkpoint+restart.
 
--- Dave
+Otherwise it wont ever get past the toy stage and people will waste a
+lot of time if their designed-for-checkpoints app accidentally runs
+into some kernel feature or other side-effect that is not supported.
+
+I personally wouldnt mind to sprinkle the kernel with markers, as long
+as you can make it really cheap even with CONFIG_CHECKPOINT_RESTART=y.
+
+Btw., i dont think it's all that much work, nor is it really intrusive:
+have you thought of reusing all the existing security callbacks? You'd
+have instant coverage of basically every system call and kernel
+functionality that matters, and you could have a finegrained set of
+policies.
+
+The only drawback is that you have to enable CONFIG_SECURITY for it,
+but in practice most distros enable that, so the callback overhead is
+already there - you just have to enable it. (Also, some care has to
+be taken to properly stack it to existing LSM modules, but that is
+solvable too.)
+
+Sidenote: CONFIG_CHECKPOINT_RESTART is IMO an uncomfortably long name,
+i'd suggest to rename it to CONFIG_CHECKPOINTS or so. [the concept of a
+checkpoint is good enough to mention - if there's a checkpoint then a
+restart is logically implied.]
+
+	Ingo
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
