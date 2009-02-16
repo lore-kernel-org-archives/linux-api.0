@@ -1,75 +1,89 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Subject: Re: [RFC v13][PATCH 00/14] Kernel based checkpoint/restart
-Date: Sun, 15 Feb 2009 00:50:28 +0100
-Message-ID: <20090214235028.GE31861@elte.hu>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu> <1234285547.30155.6.camel@nimitz> <20090211141434.dfa1d079.akpm@linux-foundation.org> <1234462282.30155.171.camel@nimitz> <20090213152836.0fbbfa7d.akpm@linux-foundation.org> <20090214230802.GE20477@elte.hu> <20090214153124.73132bf9.akpm@linux-foundation.org>
+Date: Mon, 16 Feb 2009 09:37:13 -0800
+Message-ID: <1234805833.30155.258.camel@nimitz>
+References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>
+	 <1234285547.30155.6.camel@nimitz>
+	 <20090211141434.dfa1d079.akpm@linux-foundation.org>
+	 <1234462282.30155.171.camel@nimitz>
+	 <20090213152836.0fbbfa7d.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20090214153124.73132bf9.akpm@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, orenl@cs.columbia.edu, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, hpa@zytor.com, tglx@linutronix.de
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090213152836.0fbbfa7d.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: mingo-X9Un+BFzKDI@public.gmane.org, orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-
-* Andrew Morton <akpm@linux-foundation.org> wrote:
-
-> On Sun, 15 Feb 2009 00:08:02 +0100 Ingo Molnar <mingo@elte.hu> wrote:
+On Fri, 2009-02-13 at 15:28 -0800, Andrew Morton wrote:
+> > > For extra marks:
+> > > 
+> > > - Will any of this involve non-trivial serialisation of kernel
+> > >   objects?  If so, that's getting into the
+> > >   unacceptably-expensive-to-maintain space, I suspect.
+> > 
+> > We have some structures that are certainly tied to the kernel-internal
+> > ones.  However, we are certainly *not* simply writing kernel structures
+> > to userspace.  We could do that with /dev/mem.  We are carefully pulling
+> > out the minimal bits of information from the kernel structures that we
+> > *need* to recreate the function of the structure at restart.  There is a
+> > maintenance burden here but, so far, that burden is almost entirely in
+> > checkpoint/*.c.  We intend to test this functionality thoroughly to
+> > ensure that we don't regress once we have integrated it.
 > 
-> > 
-> > * Andrew Morton <akpm@linux-foundation.org> wrote:
-> > 
-> > > Similar to the way in which perfectly correct and normal kernel
-> > > sometimes has to be changed because it unexpectedly upsets the -rt
-> > > patch.
-> > 
-> > Actually, regarding -rt, we try to keep that in two buckets:
-> > 
-> >  1) Normal kernel code works but is unclean or structured less
-> >     than ideal. In this case we restructure the mainline code,
-> >     but that change stands on its own four legs, without any
-> >     -rt considerations.
-> > 
-> >  2) Normal kernel code that is clean - i.e. a change that only
-> >     matters to -rt. In this case we dont touch the mainline code,
-> >     nor do we bother mainline.
-> > 
-> > Do you know any specific example that falls outside of those categories?
-> > 
+> I guess my question can be approximately simplified to: "will it end up
+> looking like openvz"?  (I don't believe that we know of any other way
+> of implementing this?)
 > 
-> It happens fairly regularly.  Problems with irqs-off regions, problems
-> with preempt_disable() regions (came up just yesterday with a patch from
-> Jeremy).
+> Because if it does then that's a concern, because my assessment when I
+> looked at that code (a number of years ago) was that having code of
+> that nature in mainline would be pretty costly to us, and rather
+> unwelcome.
 
-As Peter has stated it in that thread, throwing around preempt_disable()s
-is considered anti-social regardless of any -rt concerns. (it's a bit like
-how people were throwing around opaque lock_kernel()/unlock_kernel() pairs
-a decade ago. It results in poorly documented locking semantics.)
+With the current path, my guess is that we will end up looking
+*something* like OpenVZ.  But, with all the input from the OpenVZ folks
+and at least three other projects, I bet we can come up with something
+better.  I do wish the OpenVZ folks were being more vocal and
+constructive about Oren's current code but I guess silence is the
+greatest complement...
 
-> Plus some convert-to-sleeping-lock conversions over the years which
-> weren't obviously needed in mainline.  Or which at least had -rt
-> motivations.  But that's different.
+> The broadest form of the question is "will we end up regretting having
+> done this".
+> If we can arrange for the implementation to sit quietly over in a
+> corner with a team of people maintaining it and not screwing up other
+> people's work then I guess we'd be OK - if it breaks then the breakage
+> is localised.
+> 
+> And it's not just a matter of "does the diffstat only affect a single
+> subdirectory".  We also should watch out for the imposition of new
+> rules which kernel code must follow.  "you can't do that, because we
+> can't serialise it", or something.
+> 
+> Similar to the way in which perfectly correct and normal kernel
+> sometimes has to be changed because it unexpectedly upsets the -rt
+> patch.
+> 
+> Do you expect that any restrictions of this type will be imposed?
 
-Having -rt motivation is perfectly fine - many of the top features we
-added in the past 2-3 years originated in the -rt tree. The question 
-is, does a change improve the mainline code or not. If it does, the
-motivation does not really matter.
+Basically, yes.  But, practically, we haven't been thinking about
+serializing stuff in the kernel, ever.  That's produced a few
+difficult-to-serialize things like AF_UNIX sockets but absolutely
+nothing that simply can't be done.  
 
-I'll also note that recent VFS performance tests with spinning mutexes
-have shown that they out-perform both spinlocks, old-semaphores and
-old-mutexes. So conversion to sleeping locks might in fact grow a
-"because it's not only easier to hack but also faster" dimension as well.
+Having this code in mainline and getting some of people's mindshare
+should at least enable us to speak up if we see another thing like
+AF_UNIX coming down the pipe.  We could hopefully catch it and at least
+tweak it a bit to enhance how easily we can serialize it. 
 
-( I'm wondering whether those ext2/ext3 spinlocks that were a performance
-  problem when converted to sleeping locks would perform better with
-  spinning mutexes. )
+Again, it isn't likely to be an all-or-nothing situation.  It is a
+matter of how many hoops the checkpoint code itself has to jump
+through. 
 
-	Ingo
+-- Dave
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
