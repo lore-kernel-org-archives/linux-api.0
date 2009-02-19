@@ -1,45 +1,62 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Banning checkpoint (was: Re: What can OpenVZ do?)
-Date: Thu, 19 Feb 2009 22:06:37 +0300
-Message-ID: <20090219190637.GA4846@x200.localdomain>
-References: <20090213105302.GC4608@elte.hu> <1234817490.30155.287.camel@nimitz> <20090217222319.GA10546@elte.hu> <1234909849.4816.9.camel@nimitz> <20090218003217.GB25856@elte.hu> <1234917639.4816.12.camel@nimitz> <20090218051123.GA9367@x200.localdomain> <20090218181644.GD19995@elte.hu> <1234992447.26788.12.camel@nimitz> <20090218231545.GA17524@elte.hu>
+From: Dave Hansen <dave@linux.vnet.ibm.com>
+Subject: Re: Banning checkpoint (was: Re: What can OpenVZ do?)
+Date: Thu, 19 Feb 2009 11:11:54 -0800
+Message-ID: <1235070714.26788.56.camel@nimitz>
+References: <20090213105302.GC4608@elte.hu>
+	 <1234817490.30155.287.camel@nimitz> <20090217222319.GA10546@elte.hu>
+	 <1234909849.4816.9.camel@nimitz> <20090218003217.GB25856@elte.hu>
+	 <1234917639.4816.12.camel@nimitz> <20090218051123.GA9367@x200.localdomain>
+	 <20090218181644.GD19995@elte.hu> <1234992447.26788.12.camel@nimitz>
+	 <20090218231545.GA17524@elte.hu>  <20090219190637.GA4846@x200.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20090218231545.GA17524@elte.hu>
+In-Reply-To: <20090219190637.GA4846@x200.localdomain>
 Sender: owner-linux-mm@kvack.org
-To: Ingo Molnar <mingo@elte.hu>
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, Nathan Lynch <nathanl@austin.ibm.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, mpm@selenic.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, viro@zeniv.linux.org.uk, hpa@zytor.com, Andrew Morton <akpm@linux-foundation.org>, torvalds@linux-foundation.org, tglx@linutronix.de, xemul@openvz.org
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Ingo Molnar <mingo@elte.hu>, Nathan Lynch <nathanl@austin.ibm.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, mpm@selenic.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, viro@zeniv.linux.org.uk, hpa@zytor.com, Andrew Morton <akpm@linux-foundation.org>, torvalds@linux-foundation.org, tglx@linutronix.de, xemul@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-I think that all these efforts to abort checkpoint "intelligently" by
-banning it early are completely misguided.
+On Thu, 2009-02-19 at 22:06 +0300, Alexey Dobriyan wrote:
+> Inotify isn't supported yet? You do
+> 
+>         if (!list_empty(&inode->inotify_watches))
+>                 return -E;
+> 
+> without hooking into inotify syscalls.
+> 
+> ptrace(2) isn't supported -- look at struct task_struct::ptraced and
+> friends.
+> 
+> And so on.
+> 
+> System call (or whatever) does something with some piece of kernel
+> internals. We look at this "something" when walking data structures
+> and
+> abort if it's scary enough.
+> 
+> Please, show at least one counter-example.
 
-"Checkpointable" property isn't one-way ticket like "tainted" flag,
-so doing it like tainted var isn't right, atomic or not, SMP-safe or
-not.
+Alexey, I agree with you here.  I've been fighting myself internally
+about these two somewhat opposing approaches.  Of *course* we can
+determine the "checkpointability" at sys_checkpoint() time by checking
+all the various bits of state.
 
-With filesystems, one has ->f_op field to compare against banned
-filesystems, one more flag isn't necessary.
+The problem that I think Ingo is trying to address here is that doing it
+then makes it hard to figure out _when_ you went wrong.  That's the
+single most critical piece of finding out how to go address it.
 
-Inotify isn't supported yet? You do
+I see where you are coming from.  Ingo's suggestion has the *huge*
+downside that we've got to go muck with a lot of generic code and hook
+into all the things we don't support.
 
-	if (!list_empty(&inode->inotify_watches))
-		return -E;
+I think what I posted is a decent compromise.  It gets you those
+warnings at runtime and is a one-way trip for any given process.  But,
+it does detect in certain cases (fork() and unshare(FILES)) when it is
+safe to make the trip back to the "I'm checkpointable" state again.
 
-without hooking into inotify syscalls.
-
-ptrace(2) isn't supported -- look at struct task_struct::ptraced and
-friends.
-
-And so on.
-
-System call (or whatever) does something with some piece of kernel
-internals. We look at this "something" when walking data structures and
-abort if it's scary enough.
-
-Please, show at least one counter-example.
+-- Dave
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
