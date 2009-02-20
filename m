@@ -1,65 +1,62 @@
-From: Dave Hansen <dave@linux.vnet.ibm.com>
-Subject: Re: Banning checkpoint (was: Re: What can OpenVZ do?)
-Date: Thu, 19 Feb 2009 11:11:54 -0800
-Message-ID: <1235070714.26788.56.camel@nimitz>
-References: <20090213105302.GC4608@elte.hu>
-	 <1234817490.30155.287.camel@nimitz> <20090217222319.GA10546@elte.hu>
-	 <1234909849.4816.9.camel@nimitz> <20090218003217.GB25856@elte.hu>
-	 <1234917639.4816.12.camel@nimitz> <20090218051123.GA9367@x200.localdomain>
-	 <20090218181644.GD19995@elte.hu> <1234992447.26788.12.camel@nimitz>
-	 <20090218231545.GA17524@elte.hu>  <20090219190637.GA4846@x200.localdomain>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [RFC][PATCH] neigh: Allow for user space users of the neighbour table
+Date: Fri, 20 Feb 2009 12:23:43 -0800
+Message-ID: <m11vtshn74.fsf@fess.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090219190637.GA4846@x200.localdomain>
-Sender: owner-linux-mm@kvack.org
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Ingo Molnar <mingo@elte.hu>, Nathan Lynch <nathanl@austin.ibm.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, mpm@selenic.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, viro@zeniv.linux.org.uk, hpa@zytor.com, Andrew Morton <akpm@linux-foundation.org>, torvalds@linux-foundation.org, tglx@linutronix.de, xemul@openvz.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Gautam Kachroo <gk-BGArkANP9klv6pq1l3V1OdBPR1lH4CV8@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2009-02-19 at 22:06 +0300, Alexey Dobriyan wrote:
-> Inotify isn't supported yet? You do
-> 
->         if (!list_empty(&inode->inotify_watches))
->                 return -E;
-> 
-> without hooking into inotify syscalls.
-> 
-> ptrace(2) isn't supported -- look at struct task_struct::ptraced and
-> friends.
-> 
-> And so on.
-> 
-> System call (or whatever) does something with some piece of kernel
-> internals. We look at this "something" when walking data structures
-> and
-> abort if it's scary enough.
-> 
-> Please, show at least one counter-example.
 
-Alexey, I agree with you here.  I've been fighting myself internally
-about these two somewhat opposing approaches.  Of *course* we can
-determine the "checkpointability" at sys_checkpoint() time by checking
-all the various bits of state.
+Currently it is possible to do just about everything with the arp table
+from user space except treat an entry like you are using it.  To that end
+implement and a flag NTF_USE that when set in a netwlink update request
+treats the neighbour table entry like the kernel does on the output path.
 
-The problem that I think Ingo is trying to address here is that doing it
-then makes it hard to figure out _when_ you went wrong.  That's the
-single most critical piece of finding out how to go address it.
+This allows user space applications to share the kernel's arp cache.
 
-I see where you are coming from.  Ingo's suggestion has the *huge*
-downside that we've got to go muck with a lot of generic code and hook
-into all the things we don't support.
+Signed-off-by: Eric Biederman <ebiederm-BGArkANP9klv6pq1l3V1OdBPR1lH4CV8@public.gmane.org>
+---
+ include/linux/neighbour.h |    1 +
+ net/core/neighbour.c      |    6 +++++-
+ 2 files changed, 6 insertions(+), 1 deletions(-)
 
-I think what I posted is a decent compromise.  It gets you those
-warnings at runtime and is a one-way trip for any given process.  But,
-it does detect in certain cases (fork() and unshare(FILES)) when it is
-safe to make the trip back to the "I'm checkpointable" state again.
-
--- Dave
+diff --git a/include/linux/neighbour.h b/include/linux/neighbour.h
+index 8730d5d..12c9de1 100644
+--- a/include/linux/neighbour.h
++++ b/include/linux/neighbour.h
+@@ -31,6 +31,7 @@ enum
+  *	Neighbor Cache Entry Flags
+  */
+ 
++#define NTF_USE		0x01
+ #define NTF_PROXY	0x08	/* == ATF_PUBL */
+ #define NTF_ROUTER	0x80
+ 
+diff --git a/net/core/neighbour.c b/net/core/neighbour.c
+index 278a142..0fc92ed 100644
+--- a/net/core/neighbour.c
++++ b/net/core/neighbour.c
+@@ -1656,7 +1656,11 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh, void *arg)
+ 				flags &= ~NEIGH_UPDATE_F_OVERRIDE;
+ 		}
+ 
+-		err = neigh_update(neigh, lladdr, ndm->ndm_state, flags);
++		if (ndm->ndm_flags & NTF_USE) {
++			neigh_event_send(neigh, NULL);
++			err = 0;
++		} else
++			err = neigh_update(neigh, lladdr, ndm->ndm_state, flags);
+ 		neigh_release(neigh);
+ 		goto out_dev_put;
+ 	}
+-- 
+1.6.1.2.350.g88cc
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
