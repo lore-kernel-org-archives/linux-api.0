@@ -1,45 +1,53 @@
-From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC v13][PATCH 05/14] x86 support for checkpoint/restart
-Date: Tue, 24 Feb 2009 08:06:46 -0800
-Message-ID: <1235491606.26788.248.camel@nimitz>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>
-	 <1233076092-8660-6-git-send-email-orenl@cs.columbia.edu>
-	 <20090224014739.1b82fc35@thinkcentre.lan>
+From: Alexey Dobriyan <adobriyan@gmail.com>
+Subject: Re: Banning checkpoint (was: Re: What can OpenVZ do?)
+Date: Tue, 24 Feb 2009 23:09:34 +0300
+Message-ID: <20090224200934.GA16862@x200.localdomain>
+References: <20090218003217.GB25856@elte.hu> <1234917639.4816.12.camel@nimitz> <20090218051123.GA9367@x200.localdomain> <20090218181644.GD19995@elte.hu> <1234992447.26788.12.camel@nimitz> <20090218231545.GA17524@elte.hu> <20090219190637.GA4846@x200.localdomain> <1235070714.26788.56.camel@nimitz> <20090224044752.GB3202@x200.localdomain> <1235452285.26788.226.camel@nimitz>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090224014739.1b82fc35-4v5LP+xe+1byhTdZtsIeww@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Nathan Lynch <ntl-e+AXbWqSrlAAvxtiuMwx3w@public.gmane.org>
-Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1235452285.26788.226.camel@nimitz>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@linux.vnet.ibm.com>
+Cc: Ingo Molnar <mingo@elte.hu>, Nathan Lynch <nathanl@austin.ibm.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, mpm@selenic.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, viro@zeniv.linux.org.uk, hpa@zytor.com, Andrew Morton <akpm@linux-foundation.org>, torvalds@linux-foundation.org, tglx@linutronix.de, xemul@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2009-02-24 at 01:47 -0600, Nathan Lynch wrote:
-> But I think this has been pointed out before.  If I understand the
-> justification for cr_hbuf_get correctly, the allocations it services
-> are somehow known to be bounded in size and nesting.  But even if that
-> is the case, it's not much of a reason to avoid using kmalloc, is it?
+On Mon, Feb 23, 2009 at 09:11:25PM -0800, Dave Hansen wrote:
+> On Tue, 2009-02-24 at 07:47 +0300, Alexey Dobriyan wrote:
+> > > I think what I posted is a decent compromise.  It gets you those
+> > > warnings at runtime and is a one-way trip for any given process.  But,
+> > > it does detect in certain cases (fork() and unshare(FILES)) when it is
+> > > safe to make the trip back to the "I'm checkpointable" state again.
+> > 
+> > "Checkpointable" is not even per-process property.
+> > 
+> > Imagine, set of SAs (struct xfrm_state) and SPDs (struct xfrm_policy).
+> > They are a) per-netns, b) persistent.
+> > 
+> > You can hook into socketcalls to mark process as uncheckpointable,
+> > but since SAs and SPDs are persistent, original process already exited.
+> > You're going to walk every process with same netns as SA adder and mark
+> > it as uncheckpointable. Definitely doable, but ugly, isn't it?
+> > 
+> > Same for iptable rules.
+> > 
+> > "Checkpointable" is container property, OK?
+> 
+> Ideally, I completely agree.
+> 
+> But, we don't currently have a concept of a true container in the
+> kernel.  Do you have any suggestions for any current objects that we
+> could use in its place for a while?
 
-Oren wants this particular facility to be used for live migration.  To
-support good live migration, we need to be able to return from the
-syscall as fast as possible.  To do that, Oren proposed that we buffer
-all the data needed for the checkpoint inside the kernel.
+After all foo_ns changes struct nsproxy is such thing.
 
-The current cr_hbuf_put/get() could easily be modified to support this
-usage by basically making put() do nothing, then handing off a handle to
-the cr_ctx structure elsewhere in the kernel.  When the time comes to
-free up the in-memory image, you only have one simple structure to go
-free (the hbuf) as opposed to a bunch of little kmalloc()'d objects.
-
-I'm sure I'm missing something.  I'm also sure that this *will* work
-eventually.  But, I don't think the code as it stands supports keeping
-the abstraction in there.  It is virtually impossible to debate the
-design or its alternatives in this state.
-
--- Dave
+More specific, a process with fully cloned nsproxy acting as init,
+all its children. In terms of data structures, every task_struct in such
+tree, every nsproxy of them, every foo_ns, and so on to lower levels.
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
