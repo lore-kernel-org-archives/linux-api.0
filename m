@@ -1,28 +1,38 @@
-From: Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+From: Bodo Eggert <7eggert-Mmb7MZpHnFY@public.gmane.org>
 Subject: Re: Banning checkpoint (was: Re: What can OpenVZ do?)
-Date: Mon, 23 Feb 2009 21:11:25 -0800
-Message-ID: <1235452285.26788.226.camel@nimitz>
-References: <20090217222319.GA10546@elte.hu>
-	 <1234909849.4816.9.camel@nimitz> <20090218003217.GB25856@elte.hu>
-	 <1234917639.4816.12.camel@nimitz> <20090218051123.GA9367@x200.localdomain>
-	 <20090218181644.GD19995@elte.hu> <1234992447.26788.12.camel@nimitz>
-	 <20090218231545.GA17524@elte.hu> <20090219190637.GA4846@x200.localdomain>
-	 <1235070714.26788.56.camel@nimitz> <20090224044752.GB3202@x200.localdomain>
+Date: Tue, 24 Feb 2009 14:00:27 +0100
+Message-ID: <E1Lbwtf-0001Zc-Uq@be1.7eggert.dyndns.org>
+References: <c6GC9-3l7-11@gated-at.bofh.it> <c6GLN-3xO-31@gated-at.bofh.it> <c6IDT-6AZ-9@gated-at.bofh.it> <c6INu-6Ol-1@gated-at.bofh.it> <c6MR7-54s-3@gated-at.bofh.it> <c6ZbG-hF-13@gated-at.bofh.it> <c729F-5gF-21@gated-at.bofh.it> <c73S1-8dJ-19@gated-at.bofh.it> <c7mrC-4YD-3@gated-at.bofh.it> <c7mBk-5b2-23@gated-at.bofh.it> <c8Xp3-3TH-3@gated-at.bofh.it>
+Reply-To: 7eggert-Mmb7MZpHnFY@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090224044752.GB3202-2ev+ksY9ol182hYKe6nXyg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, mpm@seleni
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2009-02-24 at 07:47 +0300, Alexey Dobriyan wrote:
-> > I think what I posted is a decent compromise.  It gets you those
-> > warnings at runtime and is a one-way trip for any given process.  But,
-> > it does detect in certain cases (fork() and unshare(FILES)) when it is
-> > safe to make the trip back to the "I'm checkpointable" state again.
+Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Thu, Feb 19, 2009 at 11:11:54AM -0800, Dave Hansen wrote:
+>> On Thu, 2009-02-19 at 22:06 +0300, Alexey Dobriyan wrote:
+
+>> Alexey, I agree with you here.  I've been fighting myself internally
+>> about these two somewhat opposing approaches.  Of *course* we can
+>> determine the "checkpointability" at sys_checkpoint() time by checking
+>> all the various bits of state.
+>> 
+>> The problem that I think Ingo is trying to address here is that doing it
+>> then makes it hard to figure out _when_ you went wrong.  That's the
+>> single most critical piece of finding out how to go address it.
+>> 
+>> I see where you are coming from.  Ingo's suggestion has the *huge*
+>> downside that we've got to go muck with a lot of generic code and hook
+>> into all the things we don't support.
+>> 
+>> I think what I posted is a decent compromise.  It gets you those
+>> warnings at runtime and is a one-way trip for any given process.  But,
+>> it does detect in certain cases (fork() and unshare(FILES)) when it is
+>> safe to make the trip back to the "I'm checkpointable" state again.
 > 
 > "Checkpointable" is not even per-process property.
 > 
@@ -38,13 +48,38 @@ On Tue, 2009-02-24 at 07:47 +0300, Alexey Dobriyan wrote:
 > 
 > "Checkpointable" is container property, OK?
 
-Ideally, I completely agree.
+IMO: Everything around the process may change as long as you can do the same
+using 'kill -STOP $PID; ...; kill -CONT $PID;'. E.g. changing iptables rules
+can be done to a normal process, so this should not prevent checkpointing
+(unless you checkpoint iptables, but don't do that then?).
 
-But, we don't currently have a concept of a true container in the
-kernel.  Do you have any suggestions for any current objects that we
-could use in its place for a while?
+BTW1: I might want to checkpoint something like seti@home. It will connect
+to a server from time to time, and send/receive a packet. If having opened
+a socket once in a lifetime would prevent checkpointing, this won't be
+possible. I see the benefit of the one-way-flag forcing to make all
+syscalls be checkpointable, but this won't work on sockets.
 
--- Dave
+Therefore I think you need something inbetween. Some syscalls (etc.) are not
+supported, so just make the process be uncheckpointable. But some syscalls
+will enter and leave non-checkpointable states by design, they need at least
+counters.
+
+Maybe you'll want to let the application decide if it's OK to be checkpointed
+on some conditions, too. The Seti client might know how to handle broken
+connections, and doing duplicate transfers or skipping them is expected, too.
+So the Seti client might declare the socket to be checkpointable, instead of
+making the do-the-checkpoint application wait until it's closed.
+
+BTW2: There is the problem of invalidating checkpoints, too. If a browser did
+a HTTP PUT, you don't want to restore the checkpoint where it was just about
+to start the PUT request. The application should be able to signal this to
+a checkpointing daemon. There will be a race, so having a signal "Invalidate
+checkpoints" won't work, but if the application sends a stable hash value,
+the duplicate can be detected. (Off cause you'd say "don't do that then" for
+browsers, but it's just an example. Off cause 2, the checkpoint daemon is
+only needed for advanced setups, a simple "checkpoint $povray --store jobfile"
+should just work.)
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
