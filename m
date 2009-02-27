@@ -1,8 +1,7 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
- do?
-Date: Fri, 27 Feb 2009 01:19:01 -0800
-Message-ID: <20090227011901.8598d7f0.akpm@linux-foundation.org>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ do?
+Date: Fri, 27 Feb 2009 01:22:09 -0800
+Message-ID: <20090227012209.65401324.akpm@linux-foundation.org>
 References: <20090211141434.dfa1d079.akpm@linux-foundation.org>
 	<1234462282.30155.171.camel@nimitz>
 	<1234467035.3243.538.camel@calx>
@@ -15,30 +14,25 @@ References: <20090211141434.dfa1d079.akpm@linux-foundation.org>
 	<20090226223112.GA2939@x200.localdomain>
 	<20090227090323.GC16211@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090227090323.GC16211@elte.hu>
-Sender: owner-linux-mm@kvack.org
-To: Ingo Molnar <mingo@elte.hu>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>, Dave Hansen <dave@linux.vnet.ibm.com>, mpm@selenic.com, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, torvalds@linux-foundation.org, tglx@linutronix.de, xemul@openvz.org
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20090227090323.GC16211-X9Un+BFzKDI@public.gmane.org>
+List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 27 Feb 2009 10:03:23 +0100 Ingo Molnar <mingo@elte.hu> wrote:
+On Fri, 27 Feb 2009 10:03:23 +0100 Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org> wrote:
 
-> 
-> * Alexey Dobriyan <adobriyan@gmail.com> wrote:
-> 
-> > > I think the main question is: will we ever find ourselves in 
-> > > the future saying that "C/R sucks, nobody but a small 
-> > > minority uses it, wish we had never merged it"? I think the 
-> > > likelyhood of that is very low. I think the current OpenVZ 
-> > > stuff already looks very useful, and i dont think we've 
-> > > realized (let alone explored) all the possibilities yet.
-> > 
-> > This is collecting and start of dumping part of cleaned up 
-> > OpenVZ C/R implementation, FYI.
-> > 
 > >  arch/x86/include/asm/unistd_32.h   |    2 
 > >  arch/x86/kernel/syscall_table_32.S |    2 
 > >  include/linux/Kbuild               |    1 
@@ -63,12 +57,4 @@ On Fri, 27 Feb 2009 10:03:23 +0100 Ingo Molnar <mingo@elte.hu> wrote:
 > 
 > That does not look scary to me at all. Andrew?
 
-I think we'd need to look into the details.  Sure, it's isolated from a
-where-it-is-in-the-tree POV.  But I assume that each of those files has
-intimate and intrusive knowledge of the internals of data structures?
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+btw, why is there no need for a kernel/cr/cpt-net.c?
