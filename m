@@ -1,76 +1,63 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Greg Kurz <gkurz-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
 Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
-	do?
-Date: Fri, 27 Feb 2009 10:03:23 +0100
-Message-ID: <20090227090323.GC16211@elte.hu>
-References: <20090211141434.dfa1d079.akpm@linux-foundation.org> <1234462282.30155.171.camel@nimitz> <1234467035.3243.538.camel@calx> <20090212114207.e1c2de82.akpm@linux-foundation.org> <1234475483.30155.194.camel@nimitz> <20090212141014.2cd3d54d.akpm@linux-foundation.org> <1234479845.30155.220.camel@nimitz> <20090226162755.GB1456@x200.localdomain> <20090226173302.GB29439@elte.hu> <20090226223112.GA2939@x200.localdomain>
+ do?
+Date: Fri, 27 Feb 2009 10:19:09 +0100
+Message-ID: <1235726349.4570.7.camel@bahia>
+References: <20090211141434.dfa1d079.akpm@linux-foundation.org>
+	 <1234462282.30155.171.camel@nimitz> <1234467035.3243.538.camel@calx>
+	 <20090212114207.e1c2de82.akpm@linux-foundation.org>
+	 <1234475483.30155.194.camel@nimitz>
+	 <20090212141014.2cd3d54d.akpm@linux-foundation.org>
+	 <1234479845.30155.220.camel@nimitz>
+	 <20090226162755.GB1456@x200.localdomain> <20090226173302.GB29439@elte.hu>
+	 <1235673016.5877.62.camel@bahia>  <20090226221709.GA2924@x200.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20090226223112.GA2939@x200.localdomain>
-Sender: owner-linux-mm@kvack.org
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Dave Hansen <dave@linux.vnet.ibm.com>, mpm@selenic.com, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, torvalds@linux-foundation.org, tglx@linutronix.de, xemul@openvz.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090226221709.GA2924-2ev+ksY9ol182hYKe6nXyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-
-* Alexey Dobriyan <adobriyan@gmail.com> wrote:
-
-> > I think the main question is: will we ever find ourselves in 
-> > the future saying that "C/R sucks, nobody but a small 
-> > minority uses it, wish we had never merged it"? I think the 
-> > likelyhood of that is very low. I think the current OpenVZ 
-> > stuff already looks very useful, and i dont think we've 
-> > realized (let alone explored) all the possibilities yet.
+On Fri, 2009-02-27 at 01:17 +0300, Alexey Dobriyan wrote:
+> On Thu, Feb 26, 2009 at 07:30:16PM +0100, Greg Kurz wrote:
+> > On Thu, 2009-02-26 at 18:33 +0100, Ingo Molnar wrote:
+> > > I think the main question is: will we ever find ourselves in the 
+> > > future saying that "C/R sucks, nobody but a small minority uses 
+> > > it, wish we had never merged it"? I think the likelyhood of that 
+> > > is very low. I think the current OpenVZ stuff already looks very 
+> > 
+> > We've been maintaining for some years now a C/R middleware with only a
+> > few hooks in the kernel. Our strategy is to leverage existing kernel
+> > paths as they do most of the work right.
+> > 
+> > Most of the checkpoint is performed from userspace, using regular
+> > syscalls in a signal handler or /proc parsing. Restart is a bit trickier
+> > and needs some kernel support to bypass syscall checks and enforce a
+> > specific id for a resource. At the end, we support C/R and live
+> > migration of networking apps (websphere application server for example).
+> > 
+> > >From our experience, we can tell:
+> > 
+> > Pros: mostly not-so-tricky userland code, independent from kernel
+> > internals
+> > Cons: sub-optimal for some resources
 > 
-> This is collecting and start of dumping part of cleaned up 
-> OpenVZ C/R implementation, FYI.
-> 
->  arch/x86/include/asm/unistd_32.h   |    2 
->  arch/x86/kernel/syscall_table_32.S |    2 
->  include/linux/Kbuild               |    1 
->  include/linux/cr.h                 |   56 ++++++
->  include/linux/ipc_namespace.h      |    3 
->  include/linux/syscalls.h           |    5 
->  init/Kconfig                       |    2 
->  kernel/Makefile                    |    1 
->  kernel/cr/Kconfig                  |   11 +
->  kernel/cr/Makefile                 |    8 
->  kernel/cr/cpt-cred.c               |  115 +++++++++++++
->  kernel/cr/cpt-fs.c                 |  122 +++++++++++++
->  kernel/cr/cpt-mm.c                 |  134 +++++++++++++++
->  kernel/cr/cpt-ns.c                 |  324 +++++++++++++++++++++++++++++++++++++
->  kernel/cr/cpt-signal.c             |  121 +++++++++++++
->  kernel/cr/cpt-sys.c                |  228 ++++++++++++++++++++++++++
->  kernel/cr/cr-ctx.c                 |  141 ++++++++++++++++
->  kernel/cr/cr.h                     |   61 ++++++
->  kernel/cr/rst-sys.c                |    9 +
->  kernel/sys_ni.c                    |    3 
->  20 files changed, 1349 insertions(+)
+> How do you restore struct task_struct::did_exec ?
 
-That does not look scary to me at all. Andrew?
+With sys_execve().
 
-Before going into any fine details, a small high-level structure 
-nit: the namespace is fine in kernel/cr/ too i guess, but 
-wouldnt it be even better to move it close to their respective 
-subsystems? mm/checkpoint.c, etc.?
+-- 
+Gregory Kurz                                     gkurz-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org
+Software Engineer @ IBM/Meiosys                  http://www.ibm.com
+Tel +33 (0)534 638 479                           Fax +33 (0)561 400 420
 
-Just like we have mm/nommu.c fs/proc/nommu.c, etc. - not 
-kernel/nommu/mm.c kernel/nommu/proc.c.
-
-I realize that for your forward-porting efforts it was a good 
-idea to keep it all separated, but once we move this upstream 
-the organization should be in close proximity of the code it 
-affects.
-
-That will have another advantage as well: the folks maintaining 
-those subsystems will be more aware of it.
-
-	Ingo
+"Anarchy is about taking complete responsibility for yourself."
+        Alan Moore.
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
