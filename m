@@ -1,216 +1,101 @@
-From: Cedric Le Goater <legoater@free.fr>
-Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
- do?
-Date: Wed, 11 Mar 2009 09:26:28 +0100
-Message-ID: <49B775B4.1040800@free.fr>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>	<1234285547.30155.6.camel@nimitz>	<20090211141434.dfa1d079.akpm@linux-foundation.org>	<1234462282.30155.171.camel@nimitz>	<1234467035.3243.538.camel@calx>	<20090212114207.e1c2de82.akpm@linux-foundation.org>	<1234475483.30155.194.camel@nimitz>	<20090212141014.2cd3d54d.akpm@linux-foundation.org>	<1234479845.30155.220.camel@nimitz>	<20090226155755.GA1456@x200.localdomain> <20090310215305.GA2078@x200.localdomain>
+From: Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Subject: Re: [patch] MAINTAINERS: downgrade support for man-pages
+Date: Thu, 12 Mar 2009 09:37:52 +1300
+Message-ID: <cfd18e0f0903111337l7d423903t70afee6e5a987bfa@mail.gmail.com>
+References: <49B70A21.7070400@gmail.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090310215305.GA2078@x200.localdomain>
-Sender: owner-linux-mm@kvack.org
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, mpm@selenic.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, hpa@zytor.com, Andrew Morton <akpm@linux-foundation.org>, torvalds@linux-foundation.org, mingo@elte.hu, xemul@openvz.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <49B70A21.7070400-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Alexey Dobriyan wrote:
-> On Thu, Feb 26, 2009 at 06:57:55PM +0300, Alexey Dobriyan wrote:
->> On Thu, Feb 12, 2009 at 03:04:05PM -0800, Dave Hansen wrote:
->>> dave@nimitz:~/kernels/linux-2.6-openvz$ git diff v2.6.27.10... kernel/cpt/ | diffstat 
-> 
->>>  47 files changed, 20702 insertions(+)
->>>
->>> One important thing that leaves out is the interaction that this code
->>> has with the rest of the kernel.  That's critically important when
->>> considering long-term maintenance, and I'd be curious how the OpenVZ
->>> folks view it. 
->> OpenVZ as-is in some cases wants some functions to be made global
->> (and if C/R code will be modular, exported). Or probably several
->> iterators added.
->>
->> But it's negligible amount of changes compared to main code.
-> 
-> Here is what C/R code wants from pid allocator.
-> 
-> With the introduction of hierarchical PID namespaces, struct pid can
-> have not one but many numbers -- tuple (pid_0, pid_1, ..., pid_N),
-> where pid_i is pid number in pid_ns which has level i.
-> 
-> Now root pid_ns of container has level n -- numbers from level n to N
-> inclusively should be dumped and restored.
-> 
-> During struct pid creation first n-1 numbers can be anything, because the're
-> outside of pid_ns, but the rest should be the same.
-> 
-> Code will be ifdeffed and commented, but anyhow, this is an example of
-> change C/R will require from the rest of the kernel.
-> 
-> 
-> 
-> --- a/kernel/pid.c
-> +++ b/kernel/pid.c
-> @@ -182,6 +182,34 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
->  	return -1;
->  }
->  
-> +static int set_pidmap(struct pid_namespace *pid_ns, pid_t pid)
-> +{
-> +	int offset;
-> +	struct pidmap *map;
-> +
-> +	offset = pid & BITS_PER_PAGE_MASK;
-> +	map = &pid_ns->pidmap[pid/BITS_PER_PAGE];
-> +	if (unlikely(!map->page)) {
-> +		void *page = kzalloc(PAGE_SIZE, GFP_KERNEL);
-> +		/*
-> +		 * Free the page if someone raced with us
-> +		 * installing it:
-> +		 */
-> +		spin_lock_irq(&pidmap_lock);
-> +		if (map->page)
-> +			kfree(page);
-> +		else
-> +			map->page = page;
-> +		spin_unlock_irq(&pidmap_lock);
-> +		if (unlikely(!map->page))
-> +			return -ENOMEM;
-> +	}
-> +	if (test_and_set_bit(offset, map->page))
-> +		return -EBUSY;
-> +	atomic_dec(&map->nr_free);
-> +	return pid;
-> +}
-> +
->  int next_pidmap(struct pid_namespace *pid_ns, int last)
->  {
->  	int offset;
-> @@ -239,7 +267,7 @@ void free_pid(struct pid *pid)
->  	call_rcu(&pid->rcu, delayed_put_pid);
->  }
->  
-> -struct pid *alloc_pid(struct pid_namespace *ns)
-> +struct pid *alloc_pid(struct pid_namespace *ns, int *cr_nr, unsigned int cr_level)
->  {
->  	struct pid *pid;
->  	enum pid_type type;
-> @@ -253,7 +281,10 @@ struct pid *alloc_pid(struct pid_namespace *ns)
->  
->  	tmp = ns;
->  	for (i = ns->level; i >= 0; i--) {
-> -		nr = alloc_pidmap(tmp);
-> +		if (cr_nr && ns->level - i <= cr_level)
-> +			nr = set_pidmap(tmp, cr_nr[ns->level - i]);
-> +		else
-> +			nr = alloc_pidmap(tmp);
->  		if (nr < 0)
->  			goto out_free;
+[Looks as though vger didn't like my long CC list, and didn't carry
+the message to the lists, so resending a slightly edited version to
+just the lists.]
 
-This patch supposes that the process is restored in a state which took several 
-clone(CLONE_NEWPID) to reach. if you replay these clone(), which is what restart
-is at the end : an optimized replay, you would only need something like below. 
+---------- Forwarded message ----------
+=46rom: Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Date: Wed, Mar 11, 2009 at 1:47 PM
+Subject: [patch] MAINTAINERS: downgrade support for man-pages
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds
+<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>,
+Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Jim Zemlin
+<jzemlin-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Randy Dunlap <rdunlap-/UHa2rfvQTnk1uMJSBkQmQ@public.gmane.org>,
+Oleg Nesterov <oleg-6lXkIZvqkOAvJsYlp49lxw@public.gmane.org>, Arnd Bergmann <arndb-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>,
+Jeff Licquia <licquia-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Miller
+<davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Stephen Hemminger
+<shemminger-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mats Wichmann
+<mats.d.wichmann-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,
+Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Baudis <pasky-AlSwsSmVLrQ@public.gmane.org>, "H.
+Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Theodore T'so <tytso-3s7WtUTddSA@public.gmane.org>, James
+Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Ulrich Drepper
+<drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alain Portal
+<alain.portal-CD6X2pywdrkGaKE8qFNMvg@public.gmane.org>, Greg KH <gregkh-l3A5Bk7waGM@public.gmane.org>, Andi Kleen
+<andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Matthew Wilcox <matthew-Ztpu424NOJ8@public.gmane.org>, Andries
+Brouwer <Andries.Brouwer-rh8NL+sEX9E@public.gmane.org>, hohndel-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org,
+"linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 
+Hi Andrew,
 
-Index: 2.6.git/kernel/pid.c
-===================================================================
---- 2.6.git.orig/kernel/pid.c
-+++ 2.6.git/kernel/pid.c
-@@ -122,12 +122,12 @@ static void free_pidmap(struct upid *upi
- 	atomic_inc(&map->nr_free);
- }
- 
--static int alloc_pidmap(struct pid_namespace *pid_ns)
-+static int alloc_pidmap(struct pid_namespace *pid_ns, pid_t upid)
- {
- 	int i, offset, max_scan, pid, last = pid_ns->last_pid;
- 	struct pidmap *map;
- 
--	pid = last + 1;
-+	pid = upid ? upid : last + 1;
- 	if (pid >= pid_max)
- 		pid = RESERVED_PIDS;
- 	offset = pid & BITS_PER_PAGE_MASK;
-@@ -239,7 +239,7 @@ void free_pid(struct pid *pid)
- 	call_rcu(&pid->rcu, delayed_put_pid);
- }
- 
--struct pid *alloc_pid(struct pid_namespace *ns)
-+struct pid *alloc_pid(struct pid_namespace *ns, pid_t next_pid)
- {
- 	struct pid *pid;
- 	enum pid_type type;
-@@ -253,10 +253,15 @@ struct pid *alloc_pid(struct pid_namespa
- 
- 	tmp = ns;
- 	for (i = ns->level; i >= 0; i--) {
--		nr = alloc_pidmap(tmp);
-+		nr = alloc_pidmap(tmp, next_pid);
- 		if (nr < 0)
- 			goto out_free;
- 
-+		/* The next_pid is only applicable for the ns namespace, not
-+		 * its parents.
-+		 */
-+		next_pid = 0;
-+
- 		pid->numbers[i].nr = nr;
- 		pid->numbers[i].ns = tmp;
- 		tmp = tmp->parent;
+Unfortunately, Linux Foundation funding for my work
+on man-pages/testing/doc under the auspices of the
+LF documentation fellowship ran out a
+short while ago (after earlier attempts to seek funding,
+only Google stepped forward with a bit of further
+funding for the position), so the patch below
+acknowledges something closer to reality.
+
+There will (probably very) soon be a further
+downgrade from "Maintained" to "Odd Fixes" or "Orphan",
+unless some funding miracle occurs. =A0So, if anyone is
+looking to become man-pages maintainer, there may soon be
+an opening (okay, don't trample me in the rush ;-).)
+
+Cheers,
+
+Michael
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 1c2ca1d..61aeb5a 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -1469,8 +1469,6 @@ L: =A0 =A0 =A0 =A0linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+=A0S: =A0 =A0 Supported
+
+=A0DOCUMENTATION (/Documentation directory)
+-P: =A0 =A0 Michael Kerrisk
+-M: =A0 =A0 mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+=A0P: =A0 =A0 Randy Dunlap
+=A0M: =A0 =A0 rdunlap-/UHa2rfvQTnk1uMJSBkQmQ@public.gmane.org
+=A0L: =A0 =A0 linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+@@ -2879,7 +2877,7 @@ P: =A0 =A0 =A0 =A0Michael Kerrisk
+=A0M: =A0 =A0 mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+=A0W: =A0 =A0 http://www.kernel.org/doc/man-pages
+=A0L: =A0 =A0 linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+-S: =A0 =A0 Supported
++S: =A0 =A0 Maintained
+
+=A0MARVELL LIBERTAS WIRELESS DRIVER
+=A0P: =A0 =A0 Dan Williams
 
 
 
 
-
-Well, that's how we do it but I'm not against your patch. It fits our need also. 
-It's just a bit intrusive for the pid bitmap. if we mix both path, we get something
-like this fake patch, which is a bit less intrusive IMO. not tested though.
-
- 
-
-@@ -122,12 +122,12 @@ static void free_pidmap(struct upid *upi
- 	atomic_inc(&map->nr_free);
- }
- 
--static int alloc_pidmap(struct pid_namespace *pid_ns)
-+static int alloc_pidmap(struct pid_namespace *pid_ns, pid_t upid)
- {
- 	int i, offset, max_scan, pid, last = pid_ns->last_pid;
- 	struct pidmap *map;
- 
--	pid = last + 1;
-+	pid = upid ? upid : last + 1;
- 	if (pid >= pid_max)
- 		pid = RESERVED_PIDS;
- 	offset = pid & BITS_PER_PAGE_MASK;
-
-
-@@ -239,7 +267,7 @@ void free_pid(struct pid *pid)
- 	call_rcu(&pid->rcu, delayed_put_pid);
- }
- 
--struct pid *alloc_pid(struct pid_namespace *ns)
-+struct pid *alloc_pid(struct pid_namespace *ns, int *cr_nr, unsigned int cr_level)
- {
- 	struct pid *pid;
- 	enum pid_type type;
-@@ -253,7 +281,10 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 
- 	tmp = ns;
- 	for (i = ns->level; i >= 0; i--) {
--		nr = alloc_pidmap(tmp);
-+		if (cr_nr && ns->level - i <= cr_level)
-+			nr = alloc_pidmap(tmp, cr_nr[ns->level - i]);
-+			if (nr != cr_nr[ns->level - i])
-+				return -EBUSY;
-+		else
-+			nr = alloc_pidmap(tmp);
- 		if (nr < 0)
- 			goto out_free;
- 
-
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+git://git.kernel.org/pub/scm/docs/man-pages/man-pages.git
+man-pages online: http://www.kernel.org/doc/man-pages/online_pages.html
+=46ound a bug? http://www.kernel.org/doc/man-pages/reporting_bugs.html
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
