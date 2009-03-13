@@ -1,36 +1,145 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
-	do?
-Date: Thu, 12 Mar 2009 16:21:24 -0500
-Message-ID: <20090312212124.GA25019@us.ibm.com>
-References: <1234467035.3243.538.camel@calx> <20090212114207.e1c2de82.akpm@linux-foundation.org> <1234475483.30155.194.camel@nimitz> <20090212141014.2cd3d54d.akpm@linux-foundation.org> <1234479845.30155.220.camel@nimitz> <20090226155755.GA1456@x200.localdomain> <20090310215305.GA2078@x200.localdomain> <49B775B4.1040800@free.fr> <20090312145311.GC12390@us.ibm.com> <1236891719.32630.14.camel@bahia>
+From: Oren Laadan <orenl@cs.columbia.edu>
+Subject: Re: [RFC v13][PATCH 00/14] Kernel based checkpoint/restart
+Date: Thu, 12 Mar 2009 22:45:52 -0400
+Message-ID: <49B9C8E0.5080500@cs.columbia.edu>
+References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>	<1234285547.30155.6.camel@nimitz>	<20090211141434.dfa1d079.akpm@linux-foundation.org>	<1234462282.30155.171.camel@nimitz> <20090213152836.0fbbfa7d.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1236891719.32630.14.camel@bahia>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kurz <gkurz-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
-Cc: Cedric Le Goater <legoater-GANU6spQydw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20090213152836.0fbbfa7d.akpm@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Dave Hansen <dave@linux.vnet.ibm.com>, mingo@elte.hu, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, hpa@zytor.com, tglx@linutronix.de
 List-Id: linux-api@vger.kernel.org
 
-Quoting Greg Kurz (gkurz-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org):
-> On Thu, 2009-03-12 at 09:53 -0500, Serge E. Hallyn wrote:
-> > Or are you suggesting that you'll do a dummy clone of (5594,2) so that
-> > the next clone(CLONE_NEWPID) will be expected to be (5594,3,1)?
-> > 
+Hi,
+
+Just got back from 3 weeks with practically no internet, and I see
+that I missed a big party !
+
+Trying to catch up with what's been said so far --
+
+"An app really has to know whether it can reliably checkpoint+restart."
+
+It was suggested (Dave) to either have an "uncheckpointable" flag at containter,
+or process, or resource level. Another suggestion (Serge, Alexey) was to let
+the app try to checkpoint and return an error.
+
+For what it's worth, I vote for the latter. Have the checkpoint code always
+return an error if the checkpoint cannot be taken. If checkpoint succeeds
+then the app/user is guaranteed that restart will succeed (if it is given
+the right starting conditions, e.g. correct file system view).
+
+To figure out what/when went wrong, the c/r code can indicate the _reason_
+to the failure (e.g. output to the console, or other means) so that the
+frustrated user/developer/app can report it. I also think it's cleaner as
+it keep c/r consideration within the c/r subsystem and not scattered around
+different locations in the kernel.
+
+
+Andrew Morton wrote:
+> On Thu, 12 Feb 2009 10:11:22 -0800
+> Dave Hansen <dave@linux.vnet.ibm.com> wrote:
 > 
-> Of course not
+>> ...
+>>
+>>> - In bullet-point form, what features are missing, and should be added?
+>>  * support for more architectures than i386
+>>  * file descriptors:
+>>   * sockets (network, AF_UNIX, etc...)
+>>   * devices files
+>>   * shmfs, hugetlbfs
+>>   * epoll
+>>   * unlinked files
+>>  * Filesystem state
+>>   * contents of files
+>>   * mount tree for individual processes
+>>  * flock
+>>  * threads and sessions
+>>  * CPU and NUMA affinity
+>>  * sys_remap_file_pages()
+>>
+>> This is a very minimal list that is surely incomplete and sure to grow.
+> 
+> That's a worry.
+> 
+>>> For extra marks:
+>>>
+>>> - Will any of this involve non-trivial serialisation of kernel
+>>>   objects?  If so, that's getting into the
+>>>   unacceptably-expensive-to-maintain space, I suspect.
+>> We have some structures that are certainly tied to the kernel-internal
+>> ones.  However, we are certainly *not* simply writing kernel structures
+>> to userspace.  We could do that with /dev/mem.  We are carefully pulling
+>> out the minimal bits of information from the kernel structures that we
+>> *need* to recreate the function of the structure at restart.  There is a
+>> maintenance burden here but, so far, that burden is almost entirely in
+>> checkpoint/*.c.  We intend to test this functionality thoroughly to
+>> ensure that we don't regress once we have integrated it.
+> 
+> I guess my question can be approximately simplified to: "will it end up
+> looking like openvz"?  (I don't believe that we know of any other way
+> of implementing this?)
+> 
+> Because if it does then that's a concern, because my assessment when I
+> looked at that code (a number of years ago) was that having code of
+> that nature in mainline would be pretty costly to us, and rather
+> unwelcome.
 
-Ok - someone *did* argue that at some point I think...
+I originally implemented c/r for linux as as kernel module, without
+requiring any changes from the kernel. (Doing the namespaces as a kernel
+module was much harder). For more details, see:
+	https://www.ncl.cs.columbia.edu/research/migrate
 
-> but one should be able to tell clone() to pick a specific
-> pid.
+The current set of patches is the beginning of a re-implementation
+based on that work and other lessons learned, as well as feedback and
+collaboration with other players.
 
-Can you explain exactly how?  I must be missing something clever.
+I am confident that the the vast majority of the code will end up as a
+separate "subsystem", and that relatively few changes will be required
+from the existing kernel.
 
--serge
+> The broadest form of the question is "will we end up regretting having
+> done this".
+
+I bet that once this works for a critical mass of apps/users - we will
+never regret having done this. (We may regret - and fix - having done
+specific part this way or another).
+
+> 
+> If we can arrange for the implementation to sit quietly over in a
+> corner with a team of people maintaining it and not screwing up other
+> people's work then I guess we'd be OK - if it breaks then the breakage
+> is localised.
+
+In my experience, there is very little code of the c/r that affects
+other parts of the kernel, it's mostly isolated. So I believe this
+will be the case.
+
+> 
+> And it's not just a matter of "does the diffstat only affect a single
+> subdirectory".  We also should watch out for the imposition of new
+> rules which kernel code must follow.  "you can't do that, because we
+> can't serialise it", or something.
+> 
+> Similar to the way in which perfectly correct and normal kernel
+> sometimes has to be changed because it unexpectedly upsets the -rt
+> patch.
+> 
+> Do you expect that any restrictions of this type will be imposed?
+> 
+
+That an excellent point. Again, judging from past experience -
+it is possible (but not always pretty) to implement c/r as a kernel
+module, without requiring _any_ kernel changes. I can't think of
+any such restrictions, but we'll certainly have to keep our eyes
+open.
+
+Oren
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
