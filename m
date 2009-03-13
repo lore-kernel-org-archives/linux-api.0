@@ -1,463 +1,152 @@
-From: Greg Kurz <gkurz-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
-Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ do?
-Date: Fri, 13 Mar 2009 18:11:55 +0100
-Message-ID: <1236964315.5193.10.camel@bahia>
-References: <1234467035.3243.538.camel@calx>
-	<1234475483.30155.194.camel@nimitz>
-	<20090212141014.2cd3d54d.akpm@linux-foundation.org>
-	<1234479845.30155.220.camel@nimitz>
-	<20090226155755.GA1456@x200.localdomain>
-	<20090310215305.GA2078@x200.localdomain> <49B775B4.1040800@free.fr>
-	<20090312145311.GC12390@us.ibm.com> <1236891719.32630.14.camel@bahia>
-	<20090312212124.GA25019@us.ibm.com>
-	<604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>
-	<49BA7B60.60607@free.fr>
+From: "Serge E. Hallyn" <serue@us.ibm.com>
+Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
+	do?
+Date: Fri, 13 Mar 2009 12:37:19 -0500
+Message-ID: <20090313173719.GA12179@us.ibm.com>
+References: <1234475483.30155.194.camel@nimitz> <20090212141014.2cd3d54d.akpm@linux-foundation.org> <1234479845.30155.220.camel@nimitz> <20090226155755.GA1456@x200.localdomain> <20090310215305.GA2078@x200.localdomain> <49B775B4.1040800@free.fr> <20090312145311.GC12390@us.ibm.com> <1236891719.32630.14.camel@bahia> <20090312212124.GA25019@us.ibm.com> <604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <49BA7B60.60607-GANU6spQydw@public.gmane.org>
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Cedric Le Goater <legoater-GANU6spQydw@public.gmane.org>
-Cc: mingo-X9Un+BFzKDI@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Ying Han <yinghan@google.com>
+Cc: Greg Kurz <gkurz@fr.ibm.com>, Cedric Le Goater <legoater@free.fr>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, mpm@selenic.com, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, hpa@zytor.com, mingo@elte.hu, torvalds@linux-foundation.org, Alexey Dobriyan <adobriyan@gmail.com>, xemul@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2009-03-13 at 16:27 +0100, Cedric Le Goater wrote:
-> Ying Han wrote:
-> > Hi Serge:
-> > I made a patch based on Oren's tree recently which implement a new
-> > syscall clone_with_pid. I tested with checkpoint/restart process tree
-> > and it works as expected.
-> > This patch has some hack in it which i made a copy of libc's clone and
-> > made modifications of passing one more argument(pid number). I will
-> > try to clean up the code and do more testing.
+Quoting Ying Han (yinghan@google.com):
+> Hi Serge:
+> I made a patch based on Oren's tree recently which implement a new
+> syscall clone_with_pid. I tested with checkpoint/restart process tree
+> and it works as expected.
+> This patch has some hack in it which i made a copy of libc's clone and
+> made modifications of passing one more argument(pid number). I will
+> try to clean up the code and do more testing.
 > 
-> ok. 2 patches would also be interesting. one for the syscall and one
-> for the kernel support (which might be acceptable)
+> New syscall clone_with_pid
+> Implement a new syscall which clone a thread with a preselected pid number.
 > 
-> > New syscall clone_with_pid
-> > Implement a new syscall which clone a thread with a preselected pid number.
+> clone_with_pid(child_func, child_stack + CHILD_STACK - 16,
+> 			CLONE_WITH_PID|SIGCHLD, pid, NULL);
 > 
-> yes this definitely needed to restart a task/thread. we maintain an ugly 
-> hack which stores a pid in the current task that will be used by the next 
-> clone() call. 
+> Signed-off-by: Ying Han <yinghan@google.com>
 > 
-
-That's probably better as you say... but damned, sys_clone() is arch
-dependant so much files to patch. :)
-
-> > clone_with_pid(child_func, child_stack + CHILD_STACK - 16,
-> > 			CLONE_WITH_PID|SIGCHLD, pid, NULL);
+> diff --git a/arch/x86/include/asm/syscalls.h b/arch/x86/include/asm/syscalls.h
+> index 87803da..b5a1b03 100644
+> --- a/arch/x86/include/asm/syscalls.h
+> +++ b/arch/x86/include/asm/syscalls.h
+> @@ -26,6 +26,7 @@ asmlinkage int sys_fork(struct pt_regs);
+>  asmlinkage int sys_clone(struct pt_regs);
+>  asmlinkage int sys_vfork(struct pt_regs);
+>  asmlinkage int sys_execve(struct pt_regs);
+> +asmlinkage int sys_clone_with_pid(struct pt_regs);
 > 
-> since you're introducing a new syscall, I don't see why you need a 
-> CLONE_WITH_PID flag ?
-> 
-> (FYI, attached is my old attempt of clone_with_pid but that's too old)
-> 
-> [ ... ]
-> 
-> > +#define DEBUG
-> >  #include <linux/slab.h>
-> >  #include <linux/init.h>
-> >  #include <linux/unistd.h>
-> > @@ -959,10 +959,19 @@ static struct task_struct *copy_process(unsigned long cl
-> >  	int retval;
-> >  	struct task_struct *p;
-> >  	int cgroup_callbacks_done = 0;
-> > +	pid_t clone_pid = stack_size;
-> > 
-> >  	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
-> >  		return ERR_PTR(-EINVAL);
-> > 
-> > +	/* We only allow the clone_with_pid when a new pid namespace is
-> > +	 * created. FIXME: how to restrict it.
-> > +	 */
-> > +	if ((clone_flags & CLONE_NEWPID) && (clone_flags & CLONE_WITH_PID))
-> > +		return ERR_PTR(-EINVAL);
-> > +	if ((clone_flags & CLONE_WITH_PID) && (clone_pid <= 1))
-> > +		return ERR_PTR(-EINVAL);
-> 
-> I would let alloc_pid() handle the error.
-> 
-> >  	/*
-> >  	 * Thread groups must share signals as well, and detached threads
-> >  	 * can only be started up within the thread group.
-> > @@ -1135,7 +1144,10 @@ static struct task_struct *copy_process(unsigned long c
-> > 
-> >  	if (pid != &init_struct_pid) {
-> >  		retval = -ENOMEM;
-> > -		pid = alloc_pid(task_active_pid_ns(p));
-> > +		if (clone_flags & CLONE_WITH_PID)
-> > +			pid = alloc_pid(task_active_pid_ns(p), clone_pid);
-> > +		else
-> > +			pid = alloc_pid(task_active_pid_ns(p), 0);
-> 
-> this is overkill IMO.
-> 
-> [ ... ]
-> 
-> > -static int alloc_pidmap(struct pid_namespace *pid_ns)
-> > +static int alloc_pidmap(struct pid_namespace *pid_ns, pid_t pid_nr)
-> >  {
-> >  	int i, offset, max_scan, pid, last = pid_ns->last_pid;
-> >  	struct pidmap *map;
-> > 
-> > -	pid = last + 1;
-> > +	if (pid_nr)
-> > +		pid = pid_nr;
-> > +	else
-> > +		pid = last + 1;
-> >
-> >  	if (pid >= pid_max)
-> >  		pid = RESERVED_PIDS;
-> >  	offset = pid & BITS_PER_PAGE_MASK;
-> > @@ -153,9 +156,12 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
-> >  			do {
-> >  				if (!test_and_set_bit(offset, map->page)) {
-> >  					atomic_dec(&map->nr_free);
-> > -					pid_ns->last_pid = pid;
-> > +					if (!pid_nr)
-> > +						pid_ns->last_pid = pid;
-> >  					return pid;
-> >  				}
-> > +				if (pid_nr)
-> > +					return -1;
-> >  				offset = find_next_offset(map, offset);
-> >  				pid = mk_pid(pid_ns, map, offset);
-> >  			/*
-> > @@ -239,21 +245,25 @@ void free_pid(struct pid *pid)
-> >  	call_rcu(&pid->rcu, delayed_put_pid);
-> >  }
-> > 
-> > -struct pid *alloc_pid(struct pid_namespace *ns)
-> > +struct pid *alloc_pid(struct pid_namespace *ns, pid_t pid_nr)
-> >  {
-> >  	struct pid *pid;
-> >  	enum pid_type type;
-> >  	int i, nr;
-> >  	struct pid_namespace *tmp;
-> >  	struct upid *upid;
-> > +	int level = ns->level;
-> > +
-> > +	if (pid_nr >= pid_max)
-> > +		return NULL;
-> 
-> let alloc_pidmap() handle it ? 
-> 
-> > 
-> >  	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
-> >  	if (!pid)
-> >  		goto out;
-> > 
-> > -	tmp = ns;
-> > -	for (i = ns->level; i >= 0; i--) {
-> > -		nr = alloc_pidmap(tmp);
-> > +	tmp = ns->parent;
-> > +	for (i = level-1; i >= 0; i--) {
-> > +		nr = alloc_pidmap(tmp, 0);
-> >  		if (nr < 0)
-> >  			goto out_free;
-> > 
-> > @@ -262,6 +272,14 @@ struct pid *alloc_pid(struct pid_namespace *ns)
-> >  		tmp = tmp->parent;
-> >  	}
-> > 
-> > +	nr = alloc_pidmap(ns, pid_nr);
-> > +	if (nr < 0)
-> > +		goto out_free;
-> > +	pid->numbers[level].nr = nr;
-> > +	pid->numbers[level].ns = ns;
-> > +	if (nr == pid_nr)
-> > +		pr_debug("nr == pid_nr == %d\n", nr);
-> > +
-> >  	get_pid_ns(ns);
-> >  	pid->level = ns->level;
-> >  	atomic_set(&pid->count, 1);
-> > 
-> > 
-> > 
-> > 
-> > 
-> > 
-> > 
-> > 
-> > On Thu, Mar 12, 2009 at 2:21 PM, Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org> wrote:
-> >> Quoting Greg Kurz (gkurz-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org):
-> >>> On Thu, 2009-03-12 at 09:53 -0500, Serge E. Hallyn wrote:
-> >>>> Or are you suggesting that you'll do a dummy clone of (5594,2) so that
-> >>>> the next clone(CLONE_NEWPID) will be expected to be (5594,3,1)?
-> >>>>
-> >>> Of course not
-> >> Ok - someone *did* argue that at some point I think...
-> >>
-> >>> but one should be able to tell clone() to pick a specific
-> >>> pid.
-> >> Can you explain exactly how?  I must be missing something clever.
-> >>
-> >> -serge
-> >>
-> >> --
-> >> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> >> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
-> >> see: http://www.linux-mm.org/ .
-> >> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
-> 
-> plain text document attachment (clone_with_pid.patch)
-> Subject: [RFC] forkpid() syscall
-> 
-> From: Cedric Le Goater <clg-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
-> 
-> let's the user specify a pid to fork and return EBUSY if the pid is
-> not available.
-> 
-> this patch includes a alloc_pid*() cleanup on the way errors are 
-> returned that could be pushed to mainline independently.
-> 
-> usage :
-> 
->     #include <sys/syscall.h>
-> 
->     #define __NR_forkpid 	324
-> 
->     static inline int forkpid(int pid)
->     {
-> 	  return syscall(__NR_forkpid, pid);
->     }
->     
-> caveats : 
-> 	fork oriented, should also cover clone
-> 	i386 only
-> 	does not cover 64 bits clone flags
-> 
-> 
-> Signed-off-by: Cedric Le Goater <clg-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org>
-> ---
->  arch/i386/kernel/process.c       |   15 +++++++++++----
->  arch/i386/kernel/syscall_table.S |    1 +
->  include/asm-i386/unistd.h        |    3 ++-
->  include/linux/pid.h              |    2 +-
->  include/linux/sched.h            |    2 +-
->  kernel/fork.c                    |    9 +++++----
->  kernel/pid.c                     |   28 +++++++++++++++-------------
->  7 files changed, 36 insertions(+), 24 deletions(-)
-> 
-> Index: 2.6.22/kernel/pid.c
-> ===================================================================
-> --- 2.6.22.orig/kernel/pid.c
-> +++ 2.6.22/kernel/pid.c
-> @@ -96,12 +96,12 @@ static fastcall void free_pidmap(struct 
->  	atomic_inc(&map->nr_free);
->  }
-> 
-> -static int alloc_pidmap(struct pid_namespace *pid_ns)
-> +static int alloc_pidmap(struct pid_namespace *pid_ns, pid_t upid)
->  {
->  	int i, offset, max_scan, pid, last = pid_ns->last_pid;
->  	struct pidmap *map;
-> 
-> -	pid = last + 1;
-> +	pid = upid ? upid : last + 1;
->  	if (pid >= pid_max)
->  		pid = RESERVED_PIDS;
->  	offset = pid & BITS_PER_PAGE_MASK;
-> @@ -130,6 +130,8 @@ static int alloc_pidmap(struct pid_names
->  					pid_ns->last_pid = pid;
->  					return pid;
->  				}
-> +				if (upid)
-> +					return -EBUSY;
->  				offset = find_next_offset(map, offset);
->  				pid = mk_pid(pid_ns, map, offset);
->  			/*
-> @@ -153,7 +155,7 @@ static int alloc_pidmap(struct pid_names
->  		}
->  		pid = mk_pid(pid_ns, map, offset);
->  	}
-> -	return -1;
-> +	return -EAGAIN;
->  }
-> 
->  static int next_pidmap(struct pid_namespace *pid_ns, int last)
-> @@ -203,19 +205,24 @@ fastcall void free_pid(struct pid *pid)
->  	call_rcu(&pid->rcu, delayed_put_pid);
->  }
-> 
-> -struct pid *alloc_pid(void)
-> +struct pid *alloc_pid(pid_t upid)
->  {
->  	struct pid *pid;
->  	enum pid_type type;
->  	int nr = -1;
-> 
->  	pid = kmem_cache_alloc(pid_cachep, GFP_KERNEL);
-> -	if (!pid)
-> +	if (!pid) {
-> +		pid = ERR_PTR(-ENOMEM);
->  		goto out;
-> +	}
-> 
-> -	nr = alloc_pidmap(current->nsproxy->pid_ns);
-> -	if (nr < 0)
-> -		goto out_free;
-> +	nr = alloc_pidmap(current->nsproxy->pid_ns, upid);
-> +	if (nr < 0) {
-> +		kmem_cache_free(pid_cachep, pid);
-> +		pid = ERR_PTR(nr);
-> +		goto out;
-> +	}
-> 
->  	atomic_set(&pid->count, 1);
->  	pid->nr = nr;
-> @@ -228,11 +235,6 @@ struct pid *alloc_pid(void)
-> 
->  out:
->  	return pid;
-> -
-> -out_free:
-> -	kmem_cache_free(pid_cachep, pid);
-> -	pid = NULL;
-> -	goto out;
->  }
-> 
->  struct pid * fastcall find_pid(int nr)
-> Index: 2.6.22/arch/i386/kernel/process.c
-> ===================================================================
-> --- 2.6.22.orig/arch/i386/kernel/process.c
-> +++ 2.6.22/arch/i386/kernel/process.c
-> @@ -355,7 +355,7 @@ int kernel_thread(int (*fn)(void *), voi
->  	regs.eflags = X86_EFLAGS_IF | X86_EFLAGS_SF | X86_EFLAGS_PF | 0x2;
-> 
->  	/* Ok, create the new process.. */
-> -	return do_fork(flags | CLONE_VM | CLONE_UNTRACED, 0, &regs, 0, NULL, NULL);
-> +	return do_fork(flags | CLONE_VM | CLONE_UNTRACED, 0, &regs, 0, NULL, NULL, 0);
->  }
->  EXPORT_SYMBOL(kernel_thread);
-> 
-> @@ -722,9 +722,16 @@ struct task_struct fastcall * __switch_t
->  	return prev_p;
->  }
-> 
-> +asmlinkage int sys_forkpid(struct pt_regs regs)
-> +{
-> +	pid_t pid = regs.ebx;
-> +
-> +	return do_fork(SIGCHLD, regs.esp, &regs, 0, NULL, NULL, pid);
-> +}
-> +
->  asmlinkage int sys_fork(struct pt_regs regs)
->  {
-> -	return do_fork(SIGCHLD, regs.esp, &regs, 0, NULL, NULL);
-> +	return do_fork(SIGCHLD, regs.esp, &regs, 0, NULL, NULL, 0);
->  }
-> 
->  asmlinkage int sys_clone(struct pt_regs regs)
-> @@ -739,7 +746,7 @@ asmlinkage int sys_clone(struct pt_regs 
->  	child_tidptr = (int __user *)regs.edi;
->  	if (!newsp)
->  		newsp = regs.esp;
-> -	return do_fork(clone_flags, newsp, &regs, 0, parent_tidptr, child_tidptr);
-> +	return do_fork(clone_flags, newsp, &regs, 0, parent_tidptr, child_tidptr, 0);
->  }
-> 
->  /*
-> @@ -754,7 +761,7 @@ asmlinkage int sys_clone(struct pt_regs 
->   */
->  asmlinkage int sys_vfork(struct pt_regs regs)
->  {
-> -	return do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, regs.esp, &regs, 0, NULL, NULL);
-> +	return do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, regs.esp, &regs, 0, NULL, NULL, 0);
->  }
-> 
->  /*
-> Index: 2.6.22/arch/i386/kernel/syscall_table.S
-> ===================================================================
-> --- 2.6.22.orig/arch/i386/kernel/syscall_table.S
-> +++ 2.6.22/arch/i386/kernel/syscall_table.S
-> @@ -323,3 +323,4 @@ ENTRY(sys_call_table)
->  	.long sys_signalfd
->  	.long sys_timerfd
->  	.long sys_eventfd
-> +	.long sys_forkpid
-> Index: 2.6.22/include/asm-i386/unistd.h
-> ===================================================================
-> --- 2.6.22.orig/include/asm-i386/unistd.h
-> +++ 2.6.22/include/asm-i386/unistd.h
-> @@ -329,10 +329,11 @@
->  #define __NR_signalfd		321
->  #define __NR_timerfd		322
->  #define __NR_eventfd		323
-> +#define __NR_forkpid		324
+>  /* kernel/signal_32.c */
+>  asmlinkage int sys_sigsuspend(int, int, old_sigset_t);
+> diff --git a/arch/x86/include/asm/unistd_32.h b/arch/x86/include/asm/unistd_32
+> index a5f9e09..f10ca0e 100644
+> --- a/arch/x86/include/asm/unistd_32.h
+> +++ b/arch/x86/include/asm/unistd_32.h
+> @@ -340,6 +340,7 @@
+>  #define __NR_inotify_init1	332
+>  #define __NR_checkpoint		333
+>  #define __NR_restart		334
+> +#define __NR_clone_with_pid	335
 > 
 >  #ifdef __KERNEL__
 > 
-> -#define NR_syscalls 324
-> +#define NR_syscalls 325
+> diff --git a/arch/x86/kernel/process_32.c b/arch/x86/kernel/process_32.c
+> index 0a1302f..88ae634 100644
+> --- a/arch/x86/kernel/process_32.c
+> +++ b/arch/x86/kernel/process_32.c
+> @@ -8,7 +8,6 @@
+>  /*
+>   * This file handles the architecture-dependent parts of process handling..
+>   */
+> -
+>  #include <stdarg.h>
 > 
->  #define __ARCH_WANT_IPC_PARSE_VERSION
->  #define __ARCH_WANT_OLD_READDIR
-> Index: 2.6.22/kernel/fork.c
-> ===================================================================
-> --- 2.6.22.orig/kernel/fork.c
-> +++ 2.6.22/kernel/fork.c
-> @@ -1358,15 +1358,16 @@ long do_fork(unsigned long clone_flags,
->  	      struct pt_regs *regs,
->  	      unsigned long stack_size,
->  	      int __user *parent_tidptr,
-> -	      int __user *child_tidptr)
-> +	      int __user *child_tidptr,
-> +	      pid_t upid)
->  {
->  	struct task_struct *p;
->  	int trace = 0;
-> -	struct pid *pid = alloc_pid();
-> +	struct pid *pid = alloc_pid(upid);
->  	long nr;
+>  #include <linux/cpu.h>
+> @@ -652,6 +651,28 @@ asmlinkage int sys_clone(struct pt_regs regs)
+>  	return do_fork(clone_flags, newsp, &regs, 0, parent_tidptr, child_tidptr);
+>  }
 > 
-> -	if (!pid)
-> -		return -EAGAIN;
-> +	if (IS_ERR(pid))
-> +		return PTR_ERR(pid);
->  	nr = pid->nr;
->  	if (unlikely(current->ptrace)) {
->  		trace = fork_traceflag (clone_flags);
-> Index: 2.6.22/include/linux/sched.h
-> ===================================================================
-> --- 2.6.22.orig/include/linux/sched.h
-> +++ 2.6.22/include/linux/sched.h
-> @@ -1433,7 +1433,7 @@ extern int allow_signal(int);
->  extern int disallow_signal(int);
-> 
->  extern int do_execve(char *, char __user * __user *, char __user * __user *, struct pt_regs *);
-> -extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *);
-> +extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *, pid_t);
->  struct task_struct *fork_idle(int);
-> 
->  extern void set_task_comm(struct task_struct *tsk, char *from);
-> Index: 2.6.22/include/linux/pid.h
-> ===================================================================
-> --- 2.6.22.orig/include/linux/pid.h
-> +++ 2.6.22/include/linux/pid.h
-> @@ -95,7 +95,7 @@ extern struct pid *FASTCALL(find_pid(int
->  extern struct pid *find_get_pid(int nr);
->  extern struct pid *find_ge_pid(int nr);
-> 
-> -extern struct pid *alloc_pid(void);
-> +extern struct pid *alloc_pid(pid_t upid);
->  extern void FASTCALL(free_pid(struct pid *pid));
-> 
->  static inline pid_t pid_nr(struct pid *pid)
--- 
-Gregory Kurz                                     gkurz-NmTC/0ZBporQT0dZR+AlfA@public.gmane.org
-Software Engineer @ IBM/Meiosys                  http://www.ibm.com
-Tel +33 (0)534 638 479                           Fax +33 (0)561 400 420
+> +/**
+> + * sys_clone_with_pid - clone a thread with pre-select pid number.
+> + */
+> +asmlinkage int sys_clone_with_pid(struct pt_regs regs)
+> +{
+> +	unsigned long clone_flags;
+> +	unsigned long newsp;
+> +	int __user *parent_tidptr, *child_tidptr;
+> +	pid_t pid_nr;
+> +
+> +	clone_flags = regs.bx;
+> +	newsp = regs.cx;
+> +	parent_tidptr = (int __user *)regs.dx;
+> +	child_tidptr = (int __user *)regs.di;
+> +	pid_nr = regs.bp;
 
-"Anarchy is about taking complete responsibility for yourself."
-        Alan Moore.
+Hi,
+
+Thanks for looking at this.  I appreciate the patch.  Two comments
+however.
+
+As I was saying in another email, i think that so long as we are going
+with a new syscall, we should make sure that it suffices for nested
+pid namespaces.  So send in an array of pids and its lengths, then
+use an algorithm like Alexey's to fill in the sent-in pids if possible.
+
+> +	if (!newsp)
+> +		newsp = regs.sp;
+> +	return do_fork(clone_flags, newsp, &regs, pid_nr, parent_tidptr,
+> +			child_tidptr);
+> +}
+> +
+>  /*
+>   * This is trivial, and on the face of it looks like it
+>   * could equally well be done in user mode.
+
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index 085ce56..262ae1e 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -10,7 +10,7 @@
+>   * Fork is rather simple, once you get the hang of it, but the memory
+>   * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
+>   */
+> -
+> +#define DEBUG
+>  #include <linux/slab.h>
+>  #include <linux/init.h>
+>  #include <linux/unistd.h>
+> @@ -959,10 +959,19 @@ static struct task_struct *copy_process(unsigned long cl
+>  	int retval;
+>  	struct task_struct *p;
+>  	int cgroup_callbacks_done = 0;
+> +	pid_t clone_pid = stack_size;
+
+Note that some architectures (i.e. ia64) actually use the stack_size
+sent to copy_thread, so you at least need to zero out stack_size here.
+
+And I suspect there are cases where a stack_size is actually sent in,
+so this doesn't seem legitimate, but I haven't tracked down the callers.
+If you tell me you think there should be no case where a real stack_size
+is sent in, well, I'll feel better if you prove it by breaking the patch
+up so that:
+
+1. you remove the stack_size argument from copy_process.  Test such a
+kernel on some architectures (boot+ltp, for instance).
+
+2. add a chosen_pid argument to copy_process.
+
+Then we can be sure noone is using the field.
+
+thanks,
+-serge
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
