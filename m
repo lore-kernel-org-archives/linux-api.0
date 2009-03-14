@@ -1,59 +1,43 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: What can OpenVZ do?
-Date: Fri, 13 Mar 2009 17:04:55 -0700
-Message-ID: <m1wsatrmu0.fsf@fess.ebiederm.org>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu>
-	<1234285547.30155.6.camel@nimitz>
-	<20090211141434.dfa1d079.akpm@linux-foundation.org>
-	<1234462282.30155.171.camel@nimitz> <1234467035.3243.538.camel@calx>
-	<20090212114207.e1c2de82.akpm@linux-foundation.org>
-	<1234475483.30155.194.camel@nimitz> <20090213102732.GB4608@elte.hu>
-	<20090213113248.GA15275@x200.localdomain>
-	<20090213114503.GG15679@elte.hu>
-	<20090213222818.GA17630@x200.localdomain>
+From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
+	do?
+Date: Sat, 14 Mar 2009 03:20:59 +0300
+Message-ID: <20090314002059.GA4167@x200.localdomain>
+References: <20090310215305.GA2078@x200.localdomain> <49B775B4.1040800@free.fr> <20090312145311.GC12390@us.ibm.com> <1236891719.32630.14.camel@bahia> <20090312212124.GA25019@us.ibm.com> <604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com> <20090313053458.GA28833@us.ibm.com> <alpine.LFD.2.00.0903131018390.3940@localhost.localdomain> <20090313193500.GA2285@x200.localdomain> <alpine.LFD.2.00.0903131401070.3940@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090213222818.GA17630@x200.localdomain> (Alexey Dobriyan's message of "Sat\, 14 Feb 2009 01\:28\:18 +0300")
-Sender: owner-linux-mm@kvack.org
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Ingo Molnar <mingo@elte.hu>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, viro@zeniv.linux.org.uk, Matt Mackall <mpm@selenic.com>, Andrew Morton <akpm@linux-foundation.org>, torvalds@linux-foundation.org, tglx@linutronix.de, Pavel Emelyanov <xemul@openvz.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.00.0903131401070.3940-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ying Han <yinghan-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Alexey Dobriyan <adobriyan@gmail.com> writes:
+On Fri, Mar 13, 2009 at 02:01:50PM -0700, Linus Torvalds wrote:
+> 
+> 
+> On Fri, 13 Mar 2009, Alexey Dobriyan wrote:
+> > > 
+> > > Let's face it, we're not going to _ever_ checkpoint any kind of general 
+> > > case process. Just TCP makes that fundamentally impossible in the general 
+> > > case, and there are lots and lots of other cases too (just something as 
+> > > totally _trivial_ as all the files in the filesystem that don't get rolled 
+> > > back).
+> > 
+> > What do you mean here? Unlinked files?
+> 
+> Or modified files, or anything else. "External state" is a pretty damn 
+> wide net. It's not just TCP sequence numbers and another machine.
 
-> On Fri, Feb 13, 2009 at 12:45:03PM +0100, Ingo Molnar wrote:
->> 
->> * Alexey Dobriyan <adobriyan@gmail.com> wrote:
->> 
->> > On Fri, Feb 13, 2009 at 11:27:32AM +0100, Ingo Molnar wrote:
->> > > Merging checkpoints instead might give them the incentive to get
->> > > their act together.
->> > 
->> > Knowing how much time it takes to beat CPT back into usable shape every time
->> > big kernel rebase is done, OpenVZ/Virtuozzo have every single damn incentive
->> > to have CPT mainlined.
->> 
->> So where is the bottleneck? I suspect the effort in having forward ported
->> it across 4 major kernel releases in a single year is already larger than
->> the technical effort it would  take to upstream it. Any unreasonable upstream 
->> resistence/passivity you are bumping into?
->
-> People were busy with netns/containers stuff and OpenVZ/Virtuozzo bugs.
+I think (I think) you're seriously underestimating what's doable with
+kernel C/R and what's already done.
 
-Yes.  Getting the namespaces particularly the network namespace finished
-has consumed a lot of work.
+I was told (haven't seen it myself) that Oracle installations and
+Counter Strike servers were moved between boxes just fine.
 
-Then we have a bunch of people helping with ill conceived patches that seem
-to wear out the patience of people upstream.  Al, Greg kh, Linus.
-
-The whole recent ressurection of the question of we should have a clone
-with pid syscall.
-
-Eric
-
+They were run in specially prepared environment of course, but still.
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
