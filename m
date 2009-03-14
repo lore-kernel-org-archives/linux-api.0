@@ -1,62 +1,82 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
-Subject: Re: What can OpenVZ do?
-Date: Fri, 13 Mar 2009 19:26:56 -0500
-Message-ID: <20090314002656.GA12337@us.ibm.com>
-References: <20090211141434.dfa1d079.akpm@linux-foundation.org> <1234462282.30155.171.camel@nimitz> <1234467035.3243.538.camel@calx> <20090212114207.e1c2de82.akpm@linux-foundation.org> <1234475483.30155.194.camel@nimitz> <20090213102732.GB4608@elte.hu> <20090213113248.GA15275@x200.localdomain> <20090213114503.GG15679@elte.hu> <20090213222818.GA17630@x200.localdomain> <m1wsatrmu0.fsf@fess.ebiederm.org>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ do?
+Date: Fri, 13 Mar 2009 17:27:02 -0700
+Message-ID: <m1hc1xrlt5.fsf@fess.ebiederm.org>
+References: <1234479845.30155.220.camel@nimitz>
+	<20090226155755.GA1456@x200.localdomain>
+	<20090310215305.GA2078@x200.localdomain> <49B775B4.1040800@free.fr>
+	<20090312145311.GC12390@us.ibm.com> <1236891719.32630.14.camel@bahia>
+	<20090312212124.GA25019@us.ibm.com>
+	<604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>
+	<20090313053458.GA28833@us.ibm.com>
+	<alpine.LFD.2.00.0903131018390.3940@localhost.localdomain>
+	<20090313193500.GA2285@x200.localdomain>
+	<alpine.LFD.2.00.0903131401070.3940@localhost.localdomain>
+	<1236981097.30142.251.camel@nimitz> <49BADAE5.8070900@cs.columbia.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <m1wsatrmu0.fsf@fess.ebiederm.org>
+In-Reply-To: <49BADAE5.8070900@cs.columbia.edu> (Oren Laadan's message of "Fri\, 13 Mar 2009 18\:15\:01 -0400")
 Sender: owner-linux-mm@kvack.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Matt Mackall <mpm@selenic.com>, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, hpa@zytor.com, Ingo Molnar <mingo@elte.hu>, torvalds@linux-foundation.org, Andrew Morton <akpm@linux-foundation.org>, Pavel Emelyanov <xemul@openvz.org>
+To: Oren Laadan <orenl@cs.columbia.edu>
+Cc: Dave Hansen <dave@linux.vnet.ibm.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, linux-mm@kvack.org, viro@zeniv.linux.org.uk, mingo@elte.hu, mpm@selenic.com, Andrew Morton <akpm@linux-foundation.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, tglx@linutronix.de, xemul@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Eric W. Biederman (ebiederm@xmission.com):
-> Alexey Dobriyan <adobriyan@gmail.com> writes:
-> 
-> > On Fri, Feb 13, 2009 at 12:45:03PM +0100, Ingo Molnar wrote:
-> >> 
-> >> * Alexey Dobriyan <adobriyan@gmail.com> wrote:
-> >> 
-> >> > On Fri, Feb 13, 2009 at 11:27:32AM +0100, Ingo Molnar wrote:
-> >> > > Merging checkpoints instead might give them the incentive to get
-> >> > > their act together.
-> >> > 
-> >> > Knowing how much time it takes to beat CPT back into usable shape every time
-> >> > big kernel rebase is done, OpenVZ/Virtuozzo have every single damn incentive
-> >> > to have CPT mainlined.
-> >> 
-> >> So where is the bottleneck? I suspect the effort in having forward ported
-> >> it across 4 major kernel releases in a single year is already larger than
-> >> the technical effort it would  take to upstream it. Any unreasonable upstream 
-> >> resistence/passivity you are bumping into?
-> >
-> > People were busy with netns/containers stuff and OpenVZ/Virtuozzo bugs.
-> 
-> Yes.  Getting the namespaces particularly the network namespace finished
-> has consumed a lot of work.
-> 
-> Then we have a bunch of people helping with ill conceived patches that seem
-> to wear out the patience of people upstream.  Al, Greg kh, Linus.
-> 
-> The whole recent ressurection of the question of we should have a clone
-> with pid syscall.
+Oren Laadan <orenl@cs.columbia.edu> writes:
 
-/me points
+> Dave Hansen wrote:
+>> On Fri, 2009-03-13 at 14:01 -0700, Linus Torvalds wrote:
+>>> On Fri, 13 Mar 2009, Alexey Dobriyan wrote:
+>>>>> Let's face it, we're not going to _ever_ checkpoint any kind of general 
+>>>>> case process. Just TCP makes that fundamentally impossible in the general 
+>>>>> case, and there are lots and lots of other cases too (just something as 
+>>>>> totally _trivial_ as all the files in the filesystem that don't get rolled 
+>>>>> back).
+>>>> What do you mean here? Unlinked files?
+>>> Or modified files, or anything else. "External state" is a pretty damn 
+>>> wide net. It's not just TCP sequence numbers and another machine.
+>> 
+>> This is precisely the reason that we've focused so hard on containers,
+>> and *didn't* just jump right into checkpoint/restart; we're trying
+>> really hard to constrain the _truly_ external things that a process can
+>> interact with.  
+>> 
+>> The approach so far has largely been to make things are external to a
+>> process at least *internal* to a container.  Network, pid, ipc, and uts
+>> namespaces, for example.  An ipc/sem.c semaphore may be external to a
+>> process, so we'll just pick the whole namespace up and checkpoint it
+>> along with the process.
+>> 
+>> In the OpenVZ case, they've at least demonstrated that the filesystem
+>> can be moved largely with rsync.  Unlinked files need some in-kernel TLC
+>> (or /proc mangling) but it isn't *that* bad.
+>
+> And in the Zap we have successfully used a log-based filesystem
+> (specifically NILFS) to continuously snapshot the file-system atomically
+> with taking a checkpoint, so it can easily branch off past checkpoints,
+> including the file system.
+>
+> And unlinked files can be (inefficiently) handled by saving their full
+> contents with the checkpoint image - it's not a big toll on many apps
+> (if you exclude Wine and UML...). At least that's a start.
 
-Alexey started it :)
+Oren we might want to do a proof of concept implementation like I did
+with network namespaces.  That is done in the community and goes far
+enough to show we don't have horribly nasty code.  The patches and
+individual changes don't need to be quite perfect but close enough
+that they can be considered for merging.
 
-But, Linus asks to start with simple checkpoint/restart patches.  Oren's
-basic patchset pretty much does that, though, right?  Patches 1-7 just
-do a basic single task.  8-10 add simple open files.  11, 13 and 14 do
-external checkpoint and multiple tasks.
+For the network namespace that seems to have made a big difference.
 
-Are these an ok place to start, or do these need to be simplified even
-more?
+I'm afraid in our clean start we may have focused a little too much
+on merging something simple and not gone far enough on showing that
+things will work.
 
--serge
+After I had that in the network namespace and we had a clear vision of
+the direction.   We started merging the individual patches and things
+went well.
+
+Eric
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
