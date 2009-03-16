@@ -1,113 +1,116 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
+From: Kevin Fox <Kevin.Fox@pnl.gov>
 Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
  do?
-Date: Mon, 16 Mar 2009 02:01:12 -0400
-Message-ID: <49BDEB28.7080302@cs.columbia.edu>
-References: <49B775B4.1040800@free.fr> <20090312145311.GC12390@us.ibm.com>	<1236891719.32630.14.camel@bahia>	<20090312212124.GA25019@us.ibm.com>	<604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>	<20090313053458.GA28833@us.ibm.com>	<alpine.LFD.2.00.0903131018390.3940@localhost.localdomain>	<20090313193500.GA2285@x200.localdomain>	<alpine.LFD.2.00.0903131401070.3940@localhost.localdomain>	<20090314002059.GA4167@x200.localdomain> <20090314082532.GB16436@elte.hu>
+Date: Mon, 16 Mar 2009 15:33:28 -0700
+Message-ID: <1237242808.23841.38.camel@sledge.emsl.pnl.gov>
+References: <1236891719.32630.14.camel@bahia>
+	 <20090312212124.GA25019@us.ibm.com>
+	 <604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>
+	 <20090313053458.GA28833@us.ibm.com>
+	 <alpine.LFD.2.00.0903131018390.3940@localhost.localdomain>
+	 <20090313193500.GA2285@x200.localdomain>
+	 <alpine.LFD.2.00.0903131401070.3940@localhost.localdomain>
+	 <1236981097.30142.251.camel@nimitz><49BADAE5.8070900@cs.columbia.edu>
+	 <m1hc1xrlt5.fsf@fess.ebiederm.org>  <20090314081207.GA16436@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090314082532.GB16436@elte.hu>
+In-Reply-To: <20090314081207.GA16436@elte.hu>
 Sender: owner-linux-mm@kvack.org
 To: Ingo Molnar <mingo@elte.hu>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, mpm@selenic.com, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, viro@zeniv.linux.org.uk, hpa@zytor.com, Andrew Morton <akpm@linux-foundation.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, tglx@linutronix.de, xemul@openvz.org
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, mpm@selenic.com, linux-mm@kvack.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, xemul@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-
-
-Ingo Molnar wrote:
-> * Alexey Dobriyan <adobriyan@gmail.com> wrote:
+On Sat, 2009-03-14 at 01:12 -0700, Ingo Molnar wrote:
 > 
->> On Fri, Mar 13, 2009 at 02:01:50PM -0700, Linus Torvalds wrote:
->>>
->>> On Fri, 13 Mar 2009, Alexey Dobriyan wrote:
->>>>> Let's face it, we're not going to _ever_ checkpoint any 
->>>>> kind of general case process. Just TCP makes that 
->>>>> fundamentally impossible in the general case, and there 
->>>>> are lots and lots of other cases too (just something as 
->>>>> totally _trivial_ as all the files in the filesystem 
->>>>> that don't get rolled back).
->>>> What do you mean here? Unlinked files?
->>> Or modified files, or anything else. "External state" is a 
->>> pretty damn wide net. It's not just TCP sequence numbers and 
->>> another machine.
->> I think (I think) you're seriously underestimating what's 
->> doable with kernel C/R and what's already done.
->>
->> I was told (haven't seen it myself) that Oracle installations 
->> and Counter Strike servers were moved between boxes just fine.
->>
->> They were run in specially prepared environment of course, but 
->> still.
+> * Eric W. Biederman <ebiederm@xmission.com> wrote:
 > 
-> That's the kind of stuff i'd like to see happen.
+> > >> In the OpenVZ case, they've at least demonstrated that the
+> > >> filesystem can be moved largely with rsync.  Unlinked files
+> > >> need some in-kernel TLC (or /proc mangling) but it isn't
+> > >> *that* bad.
+> > >
+> > > And in the Zap we have successfully used a log-based
+> > > filesystem (specifically NILFS) to continuously snapshot the
+> > > file-system atomically with taking a checkpoint, so it can
+> > > easily branch off past checkpoints, including the file
+> > > system.
+> > >
+> > > And unlinked files can be (inefficiently) handled by saving
+> > > their full contents with the checkpoint image - it's not a
+> > > big toll on many apps (if you exclude Wine and UML...). At
+> > > least that's a start.
+> >
+> > Oren we might want to do a proof of concept implementation
+> > like I did with network namespaces.  That is done in the
+> > community and goes far enough to show we don't have horribly
+> > nasty code.  The patches and individual changes don't need to
+> > be quite perfect but close enough that they can be considered
+> > for merging.
+> >
+> > For the network namespace that seems to have made a big
+> > difference.
+> >
+> > I'm afraid in our clean start we may have focused a little too
+> > much on merging something simple and not gone far enough on
+> > showing that things will work.
+> >
+> > After I had that in the network namespace and we had a clear
+> > vision of the direction.  We started merging the individual
+> > patches and things went well.
 > 
-> Right now the main 'enterprise' approach to do 
-> migration/consolidation of server contexts is based on hardware 
-> virtualization - but that pushes runtime overhead to the native 
-> kernel and slows down the guest context as well - massively so.
-> 
-> Before we've blinked twice it will be a 'required' enterprise 
-> feature and enterprise people will measure/benchmark Linux 
-> server performance in guest context primarily and we'll have a 
-> deep performance pit to dig ourselves out of.
-> 
-> We can ignore that trend as uninteresting (it is uninteresting 
-> in a number of ways because it is partly driven by stupidity), 
-> or we can do something about it while still advancing the 
-> kernel.
-> 
-> With containers+checkpointing the code is a lot scarier (we 
-> basically do system call virtualization), the environment 
-> interactions are a lot wider and thus they are a lot more 
-> difficult to handle - but it's all a lot faster as well, and 
-> conceptually so. All the runtime overhead is pushed to the 
-> checkpointing step - (with some minimal amount of data structure 
-> isolation overhead).
+> I'm curious: what is the actual end result other than good
+> looking code? In terms of tangible benefits to the everyday
+> Linux distro user. [This is not meant to be sarcastic, i'm
+> truly curious.]
 
-It's worthwhile the make the distinction between virtualization and
-checkpoint/restart (c/r). Virtualization is about decoupling of the
-applications from the underlying operating system by providing a
-private and and virtual namespace, that is - containers. Checkpoint/
-restart is ability to save the state of a container so that it can
-be restart later from that point.
+>From an ordinary user perspective, I hate loosing my desktop state every
+time there is a power bump or a new kernel/video driver comes down from
+the distro provider. Some of the stuff I loose:
+*All my terminals
+    *many tabs and windows
+    *each in a different directory
+    *vi
+       *which files I was editing
+       *which function I was coding
+    *screen
+    *scrollback buffer's contents
+         *history for debugging code
+    *command line arguments
+*State of running apps
+    *web browser
+        *Tabs, yes it saves urls on crash, but sometimes the page cant
+come back up (say, because of a form)
+        *where the windows are on the desktop
+    *evolution
+        *what folder is selected
+        *which message within the folder is selected
+    *rhythmbox
+    *misc other apps
 
-The point is, that virtualization is *already* part of the kernel
-through namespaces (pid, ipc, mounts, etc). This considerable body
-of work was eventually merged and is mostly complete, covering most
-of the environment interactions. The runtime overhead is negligible.
+Being able to reboot and get back to exactly where I was before the
+reboot would save me a lot of time restarting apps and getting my
+desktop back to where it was before the reboot. I'd also be more
+inclined to reboot to get security updates more frequently if I didn't
+loose track of what I was doing in the session, making machines more
+secure in the process.
 
-Seeing that namespaces are now part of the kernel, we now build on
-the existing virtualization to allow checkpoint/restart. The code is
-not at all scary: record the state on checkpoint, and restore it on
-restart. There is no runtime overhead for checkpoint but the downtime
-incurred on an application when it is frozen for the duration of the
-checkpoint.
+Kevin
 
+PS: Yes, I know both GNOME and KDE have tried to deal with some of this
+with their session manager stuff, but it doesn't restore everything and
+only supported by some apps. It would probably take more work to get all
+apps working with the session management stuff then supporting kernel
+C/R.
+
+>         Ingo
+> _______________________________________________
+> Containers mailing list
+> Containers@lists.linux-foundation.org
+> https://lists.linux-foundation.org/mailman/listinfo/containers
 > 
-> I see three conceptual levels of virtualization:
 > 
->  - hardware based virtualization, for 'unaware OSs'
-> 
->  - system call based virtualization, for 'unaware software'
-> 
->  - no virtualization kernel help is needed _at all_ to 
->    checkpoint 'aware' software. We have libraries to checkpoint 
->    'aware' user-space just fine - and had them for a decade.
-
-Checkpoint/restart is almost orthogonal to virtualization (c/r only
-needs a way to request a specific resource identifier for resources
-that it creates). Therefore, the effort required to allow c/r of
-'aware' software is nearly the same as for 'unaware' software.
-
-IMHO this is the natural next time: make the c/r useful and attractive
-by making it transparent (support 'unaware' software), complete (cover
-nearly all features) and efficient (with low application downtime).
-
-And this is precisely what we aim for with the current patchset.
-
-Oren.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
