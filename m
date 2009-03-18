@@ -1,135 +1,75 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
- do?
-Date: Wed, 18 Mar 2009 15:04:01 -0400
-Message-ID: <49C145A1.3000506@cs.columbia.edu>
-References: <1234475483.30155.194.camel@nimitz>	<20090212141014.2cd3d54d.akpm@linux-foundation.org>	<1234479845.30155.220.camel@nimitz>	<20090226155755.GA1456@x200.localdomain>	<20090310215305.GA2078@x200.localdomain>	<49B775B4.1040800@free.fr>	<20090312145311.GC12390@us.ibm.com>	<1236891719.32630.14.camel@bahia>	<20090312212124.GA25019@us.ibm.com>	<604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>	<20090313053458.GA28833@us.ibm.com>	<alpine.LFD.2.00.0903131018390.3940@localhost.localdomain> <49BAC6AF.9090607@google.com> <49BADFCE.8020207@cs.columbia.edu> <49C1435B.1090809@google.com>
+From: "Serge E. Hallyn" <serue@us.ibm.com>
+Subject: [RFC PATCH] CAP_FS_MASK: add some long-missing capabilities to
+	cap_fs_mask
+Date: Wed, 18 Mar 2009 15:42:51 -0500
+Message-ID: <20090318204251.GA608@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <49C1435B.1090809@google.com>
-Sender: owner-linux-mm@kvack.org
-To: Mike Waychison <mikew@google.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, viro@zeniv.linux.org.uk, mingo@elte.hu, mpm@selenic.com, tglx@linutronix.de, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, Alexey Dobriyan <adobriyan@gmail.com>, xemul@openvz.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-security-module-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: mtk.manpages@gmail.com, Stephen Smalley <sds@epoch.ncsc.mil>, Andrew Morgan <morgan@kernel.org>, linux-security-module@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, Igor Zhbanov <izh1979@gmail.com>, "J. Bruce Fields" <bfields@citi.umich.edu>, stable@kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+When POSIX capabilities were introduced during the 2.1 Linux
+cycle, the fs mask, which represents the capabilities which having
+fsuid==0 is supposed to grant, did not include CAP_MKNOD and
+CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
+to call these did in fact depend upon fsuid==0.
 
+This patch introduces those capabilities into the fsmask,
+restoring the old behavior.
 
-Mike Waychison wrote:
-> Oren Laadan wrote:
->>
->> Mike Waychison wrote:
->>> Linus Torvalds wrote:
->>>> On Thu, 12 Mar 2009, Sukadev Bhattiprolu wrote:
->>>>
->>>>> Ying Han [yinghan@google.com] wrote:
->>>>> | Hi Serge:
->>>>> | I made a patch based on Oren's tree recently which implement a new
->>>>> | syscall clone_with_pid. I tested with checkpoint/restart process
->>>>> tree
->>>>> | and it works as expected.
->>>>>
->>>>> Yes, I think we had a version of clone() with pid a while ago.
->>>> Are people _at_all_ thinking about security?
->>>>
->>>> Obviously not.
->>>>
->>>> There's no way we can do anything like this. Sure, it's trivial to
->>>> do inside the kernel. But it also sounds like a _wonderful_ attack
->>>> vector against badly written user-land software that sends signals
->>>> and has small races.
->>> I'm not really sure how this is different than a malicious app going
->>> off and spawning thousands of threads in an attempt to hit a target
->>> pid from a security pov.  Sure, it makes it easier, but it's not like
->>> there is anything in place to close the attack vector.
->>>
->>>> Quite frankly, from having followed the discussion(s) over the last
->>>> few weeks about checkpoint/restart in various forms, my reaction to
->>>> just about _all_ of this is that people pushing this are pretty damn
->>>> borderline.
->>>> I think you guys are working on all the wrong problems.
->>>> Let's face it, we're not going to _ever_ checkpoint any kind of
->>>> general case process. Just TCP makes that fundamentally impossible
->>>> in the general case, and there are lots and lots of other cases too
->>>> (just something as totally _trivial_ as all the files in the
->>>> filesystem that don't get rolled back).
->>> In some instances such as ours, TCP is probably the easiest thing to
->>> migrate.  In an rpc-based cluster application, TCP is nothing more
->>> than an RPC channel and applications already have to handle RPC
->>> channel failure and re-establishment.
->>>
->>> I agree that this is not the 'general case' as you mention above
->>> however.  This is the bit that sorta bothers me with the way the
->>> implementation has been going so far on this list.  The
->>> implementation that folks are building on top of Oren's patchset
->>> tries to be everything to everybody.  For our purposes, we need to
->>> have the flexibility of choosing *how* we checkpoint.  The line seems
->>> to be arbitrarily drawn at the kernel being responsible for
->>> checkpointing and restoring all resources associated with a task, and
->>> leaving userland with nothing more than transporting filesystem
->>> bits.  This approach isn't flexible enough:   Consider the case where
->>> we want to stub out most of the TCP file descriptors with
->>> ECONNRESETed sockets because we know that they are RPC sockets and
->>> can re-establish themselves, but we want to use some other mechanism
->>> for TCP sockets we don't know much about.  The current monolithic
->>> approach has zero flexibility for doing anything like this, and I
->>> figure out how we could even fit anything like this in.
->>
->> The flexibility exists, but wasn't spelled out, so here it is:
->>
->> 1) Similar to madvice(), I envision a cradvice() that could tell the c/r
->> something about specific resources, e.g.:
->>  * cradvice(CR_ADV_MEM, ptr, len)  -> don't save that memory, it's
->> scratch
->>  * cradvice(CR_ADV_SOCK, fd, CR_ADV_SOCK_RESET)  -> reset connection
->> on restart
->> etc .. (nevermind the exact interface right now)
->>
->> 2) Tasks can ask to be notified (e.g. register a signal) when a
->> checkpoint
->> or a restart complete successfully. At that time they can do their
->> private
->> house-keeping if they know better.
->>
->> 3) If restoring some resource is significantly easier in user space
->> (e.g. a
->> file-descriptor of some special device which user space knows how to
->> re-initialize), then the restarting task can prepare it ahead of time,
->> and, call:
->>   * cradvice(CR_ADV_USERFD, fd, 0)  -> use the fd in place instead of
->> trying
->>                        to restore it yourself.
-> 
-> This would be called by the embryo process (mktree.c?) before calling
-> sys_restart?
+See the thread starting at http://lkml.org/lkml/2009/3/11/157 for
+reference.
 
-Yes.
+Note that if this fix is deemed valid, then earlier kernel versions (2.4
+and 2.2) ought to be fixed too.
 
-> 
->>
->> Method #3 is what I used in Zap to implement distributed checkpoints,
->> where
->> it is so much easier to recreate all network connections in user space
->> then
->> putting that logic into the kernel.
->>
->> Now, on the other hand, doing the c/r from userland is much less flexible
->> than in the kernel (e.g. epollfd, futex state and much more) and requires
->> exposing tremendous amount of in-kernel data to user space. And we all
->> know
->> than exposing internals is always a one-way ticket :(
->>
->> [...]
->>
->> Oren.
->>
->>
-> 
-> 
+Reported-by: Igor Zhbanov <izh1979@gmail.com>
+Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
+---
+ include/linux/capability.h |   18 +++++++++++++++++-
+ 1 files changed, 17 insertions(+), 1 deletions(-)
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/include/linux/capability.h b/include/linux/capability.h
+index 1b98725..eae98b1 100644
+--- a/include/linux/capability.h
++++ b/include/linux/capability.h
+@@ -377,7 +377,21 @@ struct cpu_vfs_cap_data {
+ #define CAP_FOR_EACH_U32(__capi)  \
+ 	for (__capi = 0; __capi < _KERNEL_CAPABILITY_U32S; ++__capi)
+ 
++/*
++ * CAP_FS_MASK and CAP_NFSD_MASKS:
++ *
++ * The fs mask is all the privileges that fsuid==0 historically meant.
++ * At one time in the past, that included CAP_MKNOD and CAP_LINUX_IMMUTABLE.
++ *
++ * It has never meant setting security.* and trusted.* xattrs.
++ *
++ * We could also define fsmask as follows:
++ *    1. CAP_FS_MASK is the privilege to bypass all fs-related DAC permissions
++ *    2. The security.* and trusted.* xattrs are fs-related MAC permissions
++ */
++
+ # define CAP_FS_MASK_B0     (CAP_TO_MASK(CAP_CHOWN)		\
++			    | CAP_TO_MASK(CAP_MKNOD)		\
+ 			    | CAP_TO_MASK(CAP_DAC_OVERRIDE)	\
+ 			    | CAP_TO_MASK(CAP_DAC_READ_SEARCH)	\
+ 			    | CAP_TO_MASK(CAP_FOWNER)		\
+@@ -392,7 +406,9 @@ struct cpu_vfs_cap_data {
+ # define CAP_EMPTY_SET    ((kernel_cap_t){{ 0, 0 }})
+ # define CAP_FULL_SET     ((kernel_cap_t){{ ~0, ~0 }})
+ # define CAP_INIT_EFF_SET ((kernel_cap_t){{ ~CAP_TO_MASK(CAP_SETPCAP), ~0 }})
+-# define CAP_FS_SET       ((kernel_cap_t){{ CAP_FS_MASK_B0, CAP_FS_MASK_B1 } })
++# define CAP_FS_SET       ((kernel_cap_t){{ CAP_FS_MASK_B0 \
++					| CAP_TO_MASK(CAP_LINUX_IMMUTABLE), \
++					CAP_FS_MASK_B1 } })
+ # define CAP_NFSD_SET     ((kernel_cap_t){{ CAP_FS_MASK_B0|CAP_TO_MASK(CAP_SYS_RESOURCE), \
+ 					CAP_FS_MASK_B1 } })
+ 
+-- 
+1.5.4.3
+
