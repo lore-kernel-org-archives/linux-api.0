@@ -1,88 +1,114 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: Re: [RFC v13][PATCH 05/14] x86 support for checkpoint/restart
-Date: Wed, 18 Mar 2009 03:21:34 -0400
-Message-ID: <49C0A0FE.2000403@cs.columbia.edu>
-References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu> <1233076092-8660-6-git-send-email-orenl@cs.columbia.edu> <20090224014739.1b82fc35@thinkcentre.lan>
+From: Mike Waychison <mikew@google.com>
+Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
+ do?
+Date: Wed, 18 Mar 2009 11:54:19 -0700
+Message-ID: <49C1435B.1090809@google.com>
+References: <1234475483.30155.194.camel@nimitz>	<20090212141014.2cd3d54d.akpm@linux-foundation.org>	<1234479845.30155.220.camel@nimitz>	<20090226155755.GA1456@x200.localdomain>	<20090310215305.GA2078@x200.localdomain>	<49B775B4.1040800@free.fr>	<20090312145311.GC12390@us.ibm.com>	<1236891719.32630.14.camel@bahia>	<20090312212124.GA25019@us.ibm.com>	<604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>	<20090313053458.GA28833@us.ibm.com>	<alpine.LFD.2.00.0903131018390.3940@localhost.localdomain> <49BAC6AF.9090607@google.com> <49BADFCE.8020207@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090224014739.1b82fc35@thinkcentre.lan>
+In-Reply-To: <49BADFCE.8020207@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
-To: Nathan Lynch <ntl@pobox.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, Linus Torvalds <torvalds@osdl.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
+To: Oren Laadan <orenl@cs.columbia.edu>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, viro@zeniv.linux.org.uk, mingo@elte.hu, mpm@selenic.com, tglx@linutronix.de, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, Alexey Dobriyan <adobriyan@gmail.com>, xemul@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-
-
-Nathan Lynch wrote:
-> Hi, this is an old thread I guess, but I just noticed some issues while
-> looking at this code.
+Oren Laadan wrote:
 > 
-> On Tue, 27 Jan 2009 12:08:03 -0500
-> Oren Laadan <orenl@cs.columbia.edu> wrote:
->> +static int cr_read_cpu_fpu(struct cr_ctx *ctx, struct task_struct *t)
->> +{
->> +	void *xstate_buf = cr_hbuf_get(ctx, xstate_size);
->> +	int ret;
->> +
->> +	ret = cr_kread(ctx, xstate_buf, xstate_size);
->> +	if (ret < 0)
->> +		goto out;
->> +
->> +	/* i387 + MMU + SSE */
->> +	preempt_disable();
->> +
->> +	/* init_fpu() also calls set_used_math() */
->> +	ret = init_fpu(current);
->> +	if (ret < 0)
->> +		return ret;
+> Mike Waychison wrote:
+>> Linus Torvalds wrote:
+>>> On Thu, 12 Mar 2009, Sukadev Bhattiprolu wrote:
+>>>
+>>>> Ying Han [yinghan@google.com] wrote:
+>>>> | Hi Serge:
+>>>> | I made a patch based on Oren's tree recently which implement a new
+>>>> | syscall clone_with_pid. I tested with checkpoint/restart process tree
+>>>> | and it works as expected.
+>>>>
+>>>> Yes, I think we had a version of clone() with pid a while ago.
+>>> Are people _at_all_ thinking about security?
+>>>
+>>> Obviously not.
+>>>
+>>> There's no way we can do anything like this. Sure, it's trivial to do 
+>>> inside the kernel. But it also sounds like a _wonderful_ attack vector 
+>>> against badly written user-land software that sends signals and has small 
+>>> races.
+>> I'm not really sure how this is different than a malicious app going off 
+>> and spawning thousands of threads in an attempt to hit a target pid from 
+>> a security pov.  Sure, it makes it easier, but it's not like there is 
+>> anything in place to close the attack vector.
+>>
+>>> Quite frankly, from having followed the discussion(s) over the last few 
+>>> weeks about checkpoint/restart in various forms, my reaction to just about 
+>>> _all_ of this is that people pushing this are pretty damn borderline. 
+>>>
+>>> I think you guys are working on all the wrong problems. 
+>>>
+>>> Let's face it, we're not going to _ever_ checkpoint any kind of general 
+>>> case process. Just TCP makes that fundamentally impossible in the general 
+>>> case, and there are lots and lots of other cases too (just something as 
+>>> totally _trivial_ as all the files in the filesystem that don't get rolled 
+>>> back).
+>> In some instances such as ours, TCP is probably the easiest thing to 
+>> migrate.  In an rpc-based cluster application, TCP is nothing more than 
+>> an RPC channel and applications already have to handle RPC channel 
+>> failure and re-establishment.
+>>
+>> I agree that this is not the 'general case' as you mention above 
+>> however.  This is the bit that sorta bothers me with the way the 
+>> implementation has been going so far on this list.  The implementation 
+>> that folks are building on top of Oren's patchset tries to be everything 
+>> to everybody.  For our purposes, we need to have the flexibility of 
+>> choosing *how* we checkpoint.  The line seems to be arbitrarily drawn at 
+>> the kernel being responsible for checkpointing and restoring all 
+>> resources associated with a task, and leaving userland with nothing more 
+>> than transporting filesystem bits.  This approach isn't flexible enough: 
+>>   Consider the case where we want to stub out most of the TCP file 
+>> descriptors with ECONNRESETed sockets because we know that they are RPC 
+>> sockets and can re-establish themselves, but we want to use some other 
+>> mechanism for TCP sockets we don't know much about.  The current 
+>> monolithic approach has zero flexibility for doing anything like this, 
+>> and I figure out how we could even fit anything like this in.
 > 
-> Several problems here:
-> * init_fpu can call kmem_cache_alloc(GFP_KERNEL), but is called here
->   with preempt disabled (init_fpu could use a might_sleep annotation?)
-> * if init_fpu returns an error, we get preempt imbalance
-> * if init_fpu returns an error, we "leak" the cr_hbuf_get for
->   xstate_buf
+> The flexibility exists, but wasn't spelled out, so here it is:
+> 
+> 1) Similar to madvice(), I envision a cradvice() that could tell the c/r
+> something about specific resources, e.g.:
+>  * cradvice(CR_ADV_MEM, ptr, len)  -> don't save that memory, it's scratch
+>  * cradvice(CR_ADV_SOCK, fd, CR_ADV_SOCK_RESET)  -> reset connection on restart
+> etc .. (nevermind the exact interface right now)
+> 
+> 2) Tasks can ask to be notified (e.g. register a signal) when a checkpoint
+> or a restart complete successfully. At that time they can do their private
+> house-keeping if they know better.
+> 
+> 3) If restoring some resource is significantly easier in user space (e.g. a
+> file-descriptor of some special device which user space knows how to
+> re-initialize), then the restarting task can prepare it ahead of time,
+> and, call:
+>   * cradvice(CR_ADV_USERFD, fd, 0)  -> use the fd in place instead of trying
+> 				       to restore it yourself.
 
-Fixed, thanks.
+This would be called by the embryo process (mktree.c?) before calling 
+sys_restart?
 
 > 
-> Speaking of cr_hbuf_get... I'd prefer to see that "allocator" go away
-> and its users converted to kmalloc/kfree (this is what I've done for
-> the powerpc C/R code, btw).
+> Method #3 is what I used in Zap to implement distributed checkpoints, where
+> it is so much easier to recreate all network connections in user space then
+> putting that logic into the kernel.
 > 
-> Using the slab allocator would:
+> Now, on the other hand, doing the c/r from userland is much less flexible
+> than in the kernel (e.g. epollfd, futex state and much more) and requires
+> exposing tremendous amount of in-kernel data to user space. And we all know
+> than exposing internals is always a one-way ticket :(
 > 
-> * make the code less obscure and easier to review
-> * make the code more amenable to static analysis
-> * gain the benefits of slab debugging at runtime
+> [...]
 > 
-> But I think this has been pointed out before.  If I understand the
-> justification for cr_hbuf_get correctly, the allocations it services
-> are somehow known to be bounded in size and nesting.  But even if that
-> is the case, it's not much of a reason to avoid using kmalloc, is it?
+> Oren.
 > 
-
-The reason I want these wrappers (as opposed to allocators) in place is
-allow an optimization that will reduce application downtime during checkpoint.
-
-Since we freeze the container during checkpoint, the applications inside are
-unresponsive. The idea is to minimize the downtime by buffering the checkpoint
-data in the kernel while the applications are frozen, and defer the (slow)
-write-back of the buffer until after the application is allowed to resume
-execution. (Memory pages will be marked COW instead of a physical copy in the
-kernel).
-
-To that, we'll need the wrapper to not only allocate memory, but also track
-all the pieces together as a long buffer. Actual implementation details are
-not important now, but having a wrapper in place is.
-
-Consequently, although I prefer not to change the current implementation of
-cr_hbuf_get/put(), if you find it really helpful to change to kmalloc/kfree
-I won't stand in the way. However, I do insist that the wrappers remain.
-
-Oren.
+> 
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
