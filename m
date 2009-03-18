@@ -1,116 +1,88 @@
-From: Kevin Fox <Kevin.Fox@pnl.gov>
-Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ
- do?
-Date: Mon, 16 Mar 2009 15:33:28 -0700
-Message-ID: <1237242808.23841.38.camel@sledge.emsl.pnl.gov>
-References: <1236891719.32630.14.camel@bahia>
-	 <20090312212124.GA25019@us.ibm.com>
-	 <604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>
-	 <20090313053458.GA28833@us.ibm.com>
-	 <alpine.LFD.2.00.0903131018390.3940@localhost.localdomain>
-	 <20090313193500.GA2285@x200.localdomain>
-	 <alpine.LFD.2.00.0903131401070.3940@localhost.localdomain>
-	 <1236981097.30142.251.camel@nimitz><49BADAE5.8070900@cs.columbia.edu>
-	 <m1hc1xrlt5.fsf@fess.ebiederm.org>  <20090314081207.GA16436@elte.hu>
+From: Oren Laadan <orenl@cs.columbia.edu>
+Subject: Re: [RFC v13][PATCH 05/14] x86 support for checkpoint/restart
+Date: Wed, 18 Mar 2009 03:21:34 -0400
+Message-ID: <49C0A0FE.2000403@cs.columbia.edu>
+References: <1233076092-8660-1-git-send-email-orenl@cs.columbia.edu> <1233076092-8660-6-git-send-email-orenl@cs.columbia.edu> <20090224014739.1b82fc35@thinkcentre.lan>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090314081207.GA16436@elte.hu>
+In-Reply-To: <20090224014739.1b82fc35@thinkcentre.lan>
 Sender: owner-linux-mm@kvack.org
-To: Ingo Molnar <mingo@elte.hu>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, mpm@selenic.com, linux-mm@kvack.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, xemul@openvz.org
+To: Nathan Lynch <ntl@pobox.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, Linus Torvalds <torvalds@osdl.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 2009-03-14 at 01:12 -0700, Ingo Molnar wrote:
-> 
-> * Eric W. Biederman <ebiederm@xmission.com> wrote:
-> 
-> > >> In the OpenVZ case, they've at least demonstrated that the
-> > >> filesystem can be moved largely with rsync.  Unlinked files
-> > >> need some in-kernel TLC (or /proc mangling) but it isn't
-> > >> *that* bad.
-> > >
-> > > And in the Zap we have successfully used a log-based
-> > > filesystem (specifically NILFS) to continuously snapshot the
-> > > file-system atomically with taking a checkpoint, so it can
-> > > easily branch off past checkpoints, including the file
-> > > system.
-> > >
-> > > And unlinked files can be (inefficiently) handled by saving
-> > > their full contents with the checkpoint image - it's not a
-> > > big toll on many apps (if you exclude Wine and UML...). At
-> > > least that's a start.
-> >
-> > Oren we might want to do a proof of concept implementation
-> > like I did with network namespaces.  That is done in the
-> > community and goes far enough to show we don't have horribly
-> > nasty code.  The patches and individual changes don't need to
-> > be quite perfect but close enough that they can be considered
-> > for merging.
-> >
-> > For the network namespace that seems to have made a big
-> > difference.
-> >
-> > I'm afraid in our clean start we may have focused a little too
-> > much on merging something simple and not gone far enough on
-> > showing that things will work.
-> >
-> > After I had that in the network namespace and we had a clear
-> > vision of the direction.  We started merging the individual
-> > patches and things went well.
-> 
-> I'm curious: what is the actual end result other than good
-> looking code? In terms of tangible benefits to the everyday
-> Linux distro user. [This is not meant to be sarcastic, i'm
-> truly curious.]
 
->From an ordinary user perspective, I hate loosing my desktop state every
-time there is a power bump or a new kernel/video driver comes down from
-the distro provider. Some of the stuff I loose:
-*All my terminals
-    *many tabs and windows
-    *each in a different directory
-    *vi
-       *which files I was editing
-       *which function I was coding
-    *screen
-    *scrollback buffer's contents
-         *history for debugging code
-    *command line arguments
-*State of running apps
-    *web browser
-        *Tabs, yes it saves urls on crash, but sometimes the page cant
-come back up (say, because of a form)
-        *where the windows are on the desktop
-    *evolution
-        *what folder is selected
-        *which message within the folder is selected
-    *rhythmbox
-    *misc other apps
 
-Being able to reboot and get back to exactly where I was before the
-reboot would save me a lot of time restarting apps and getting my
-desktop back to where it was before the reboot. I'd also be more
-inclined to reboot to get security updates more frequently if I didn't
-loose track of what I was doing in the session, making machines more
-secure in the process.
-
-Kevin
-
-PS: Yes, I know both GNOME and KDE have tried to deal with some of this
-with their session manager stuff, but it doesn't restore everything and
-only supported by some apps. It would probably take more work to get all
-apps working with the session management stuff then supporting kernel
-C/R.
-
->         Ingo
-> _______________________________________________
-> Containers mailing list
-> Containers@lists.linux-foundation.org
-> https://lists.linux-foundation.org/mailman/listinfo/containers
+Nathan Lynch wrote:
+> Hi, this is an old thread I guess, but I just noticed some issues while
+> looking at this code.
 > 
+> On Tue, 27 Jan 2009 12:08:03 -0500
+> Oren Laadan <orenl@cs.columbia.edu> wrote:
+>> +static int cr_read_cpu_fpu(struct cr_ctx *ctx, struct task_struct *t)
+>> +{
+>> +	void *xstate_buf = cr_hbuf_get(ctx, xstate_size);
+>> +	int ret;
+>> +
+>> +	ret = cr_kread(ctx, xstate_buf, xstate_size);
+>> +	if (ret < 0)
+>> +		goto out;
+>> +
+>> +	/* i387 + MMU + SSE */
+>> +	preempt_disable();
+>> +
+>> +	/* init_fpu() also calls set_used_math() */
+>> +	ret = init_fpu(current);
+>> +	if (ret < 0)
+>> +		return ret;
 > 
+> Several problems here:
+> * init_fpu can call kmem_cache_alloc(GFP_KERNEL), but is called here
+>   with preempt disabled (init_fpu could use a might_sleep annotation?)
+> * if init_fpu returns an error, we get preempt imbalance
+> * if init_fpu returns an error, we "leak" the cr_hbuf_get for
+>   xstate_buf
+
+Fixed, thanks.
+
+> 
+> Speaking of cr_hbuf_get... I'd prefer to see that "allocator" go away
+> and its users converted to kmalloc/kfree (this is what I've done for
+> the powerpc C/R code, btw).
+> 
+> Using the slab allocator would:
+> 
+> * make the code less obscure and easier to review
+> * make the code more amenable to static analysis
+> * gain the benefits of slab debugging at runtime
+> 
+> But I think this has been pointed out before.  If I understand the
+> justification for cr_hbuf_get correctly, the allocations it services
+> are somehow known to be bounded in size and nesting.  But even if that
+> is the case, it's not much of a reason to avoid using kmalloc, is it?
+> 
+
+The reason I want these wrappers (as opposed to allocators) in place is
+allow an optimization that will reduce application downtime during checkpoint.
+
+Since we freeze the container during checkpoint, the applications inside are
+unresponsive. The idea is to minimize the downtime by buffering the checkpoint
+data in the kernel while the applications are frozen, and defer the (slow)
+write-back of the buffer until after the application is allowed to resume
+execution. (Memory pages will be marked COW instead of a physical copy in the
+kernel).
+
+To that, we'll need the wrapper to not only allocate memory, but also track
+all the pieces together as a long buffer. Actual implementation details are
+not important now, but having a wrapper in place is.
+
+Consequently, although I prefer not to change the current implementation of
+cr_hbuf_get/put(), if you find it really helpful to change to kmalloc/kfree
+I won't stand in the way. However, I do insist that the wrappers remain.
+
+Oren.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
