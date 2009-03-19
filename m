@@ -1,7 +1,7 @@
 From: Dell Online Promotion <wpdesign-mmE5Ufp4EHlWk0Htik3J/w@public.gmane.org>
 Subject: Dell News Center
 Date: Thu, 19 Mar 2009 10:17:54 -0500
-Message-ID: <7h9gbp$cgrpf3@rrcs-agw-01b.hrndva.rr.com>
+Message-ID: <7h9gbp$cgrpff__30477.1515344784$1237476077$gmane$org@rrcs-agw-01b.hrndva.rr.com>
 Reply-To: dellclaimoffice-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
