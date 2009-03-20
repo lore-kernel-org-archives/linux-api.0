@@ -1,74 +1,91 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: How much of a mess does OpenVZ make? ;) Was: What can OpenVZ do?
-Date: Thu, 19 Mar 2009 14:19:15 -0700
-Message-ID: <m1hc1p9pnw.fsf@fess.ebiederm.org>
-References: <1236891719.32630.14.camel@bahia>
-	<20090312212124.GA25019@us.ibm.com>
-	<604427e00903122129y37ad791aq5fe7ef2552415da9@mail.gmail.com>
-	<20090313053458.GA28833@us.ibm.com>
-	<alpine.LFD.2.00.0903131018390.3940@localhost.localdomain>
-	<20090313193500.GA2285@x200.localdomain>
-	<alpine.LFD.2.00.0903131401070.3940@localhost.localdomain>
-	<1236981097.30142.251.camel@nimitz> <49BADAE5.8070900@cs.columbia.edu>
-	<m1hc1xrlt5.fsf@fess.ebiederm.org> <20090314081207.GA16436@elte.hu>
+From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] add some long-missing capabilities to fs_mask
+Date: Fri, 20 Mar 2009 13:37:45 -0500
+Message-ID: <20090320183745.GA9352@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090314081207.GA16436@elte.hu> (Ingo Molnar's message of "Sat\, 14 Mar 2009 09\:12\:07 +0100")
-Sender: owner-linux-mm@kvack.org
-To: Ingo Molnar <mingo@elte.hu>
-Cc: Oren Laadan <orenl@cs.columbia.edu>, Dave Hansen <dave@linux.vnet.ibm.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, linux-mm@kvack.org, viro@zeniv.linux.org.uk, mpm@selenic.com, Andrew Morton <akpm@linux-foundation.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, tglx@linutronix.de, xemul@openvz.org
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Stephen Smalley <sds-FVV4AS6k8l2W8mdqIt43Ew@public.gmane.org>, Andrew Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Igor Zhbanov <izh1979-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "J. Bruce Fields" <bfields-vtMw8L3fJ9vSiEDVxGk4TQ@public.gmane.org>, stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Ingo Molnar <mingo@elte.hu> writes:
+( resubmitting without RFC tag, and updated against J. Bruce
+Fields' patch since that has been applied upstream )
 
-> * Eric W. Biederman <ebiederm@xmission.com> wrote:
->
->> >> In the OpenVZ case, they've at least demonstrated that the 
->> >> filesystem can be moved largely with rsync.  Unlinked files 
->> >> need some in-kernel TLC (or /proc mangling) but it isn't 
->> >> *that* bad.
->> >
->> > And in the Zap we have successfully used a log-based 
->> > filesystem (specifically NILFS) to continuously snapshot the 
->> > file-system atomically with taking a checkpoint, so it can 
->> > easily branch off past checkpoints, including the file 
->> > system.
->> >
->> > And unlinked files can be (inefficiently) handled by saving 
->> > their full contents with the checkpoint image - it's not a 
->> > big toll on many apps (if you exclude Wine and UML...). At 
->> > least that's a start.
->> 
->> Oren we might want to do a proof of concept implementation 
->> like I did with network namespaces.  That is done in the 
->> community and goes far enough to show we don't have horribly 
->> nasty code.  The patches and individual changes don't need to 
->> be quite perfect but close enough that they can be considered 
->> for merging.
->> 
->> For the network namespace that seems to have made a big 
->> difference.
->> 
->> I'm afraid in our clean start we may have focused a little too 
->> much on merging something simple and not gone far enough on 
->> showing that things will work.
->> 
->> After I had that in the network namespace and we had a clear 
->> vision of the direction.  We started merging the individual 
->> patches and things went well.
->
-> I'm curious: what is the actual end result other than good 
-> looking code? In terms of tangible benefits to the everyday 
-> Linux distro user. [This is not meant to be sarcastic, i'm
-> truly curious.]
+When POSIX capabilities were introduced during the 2.1 Linux
+cycle, the fs mask, which represents the capabilities which having
+fsuid==0 is supposed to grant, did not include CAP_MKNOD and
+CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
+to call these did in fact depend upon fsuid==0.
 
-Of the network namespace?  Sorry I'm not certain what you are asking.
+This patch introduces those capabilities into the fsmask,
+restoring the old behavior.
 
-Eric
+See the thread starting at http://lkml.org/lkml/2009/3/11/157 for
+reference.
+
+Note that if this fix is deemed valid, then earlier kernel versions (2.4
+and 2.2) ought to be fixed too.
+
+Changelog:
+	[Mar 20] Updated against J. Bruce Fields' patch
+
+Reported-by: Igor Zhbanov <izh1979-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Cc: stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Cc: J. Bruce Fields <bfields-vtMw8L3fJ9vSiEDVxGk4TQ@public.gmane.org>
+---
+ include/linux/capability.h |   22 +++++++++++++++++++---
+ 1 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/include/linux/capability.h b/include/linux/capability.h
+index 4864a43..959998a 100644
+--- a/include/linux/capability.h
++++ b/include/linux/capability.h
+@@ -377,7 +377,21 @@ struct cpu_vfs_cap_data {
+ #define CAP_FOR_EACH_U32(__capi)  \
+ 	for (__capi = 0; __capi < _KERNEL_CAPABILITY_U32S; ++__capi)
+ 
++/*
++ * CAP_FS_MASK and CAP_NFSD_MASKS:
++ *
++ * The fs mask is all the privileges that fsuid==0 historically meant.
++ * At one time in the past, that included CAP_MKNOD and CAP_LINUX_IMMUTABLE.
++ *
++ * It has never meant setting security.* and trusted.* xattrs.
++ *
++ * We could also define fsmask as follows:
++ *   1. CAP_FS_MASK is the privilege to bypass all fs-related DAC permissions
++ *   2. The security.* and trusted.* xattrs are fs-related MAC permissions
++ */
++
+ # define CAP_FS_MASK_B0     (CAP_TO_MASK(CAP_CHOWN)		\
++			    | CAP_TO_MASK(CAP_MKNOD)		\
+ 			    | CAP_TO_MASK(CAP_DAC_OVERRIDE)	\
+ 			    | CAP_TO_MASK(CAP_DAC_READ_SEARCH)	\
+ 			    | CAP_TO_MASK(CAP_FOWNER)		\
+@@ -393,10 +407,12 @@ struct cpu_vfs_cap_data {
+ # define CAP_FULL_SET     ((kernel_cap_t){{ ~0, ~0 }})
+ # define CAP_INIT_EFF_SET ((kernel_cap_t){{ ~CAP_TO_MASK(CAP_SETPCAP), ~0 }})
+ # define CAP_FS_SET       ((kernel_cap_t){{ CAP_FS_MASK_B0, CAP_FS_MASK_B1 } })
++# define CAP_FS_SET       ((kernel_cap_t){{ CAP_FS_MASK_B0 \
++				    | CAP_TO_MASK(CAP_LINUX_IMMUTABLE), \
++				    CAP_FS_MASK_B1 } })
+ # define CAP_NFSD_SET     ((kernel_cap_t){{ CAP_FS_MASK_B0 \
+-					    | CAP_TO_MASK(CAP_SYS_RESOURCE) \
+-					    | CAP_TO_MASK(CAP_MKNOD), \
+-					    CAP_FS_MASK_B1 } })
++				    | CAP_TO_MASK(CAP_SYS_RESOURCE), \
++				    CAP_FS_MASK_B1 } })
+ 
+ #endif /* _KERNEL_CAPABILITY_U32S != 2 */
+ 
+-- 
+1.5.4.3
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
