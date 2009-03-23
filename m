@@ -1,91 +1,38 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] add some long-missing capabilities to fs_mask
-Date: Fri, 20 Mar 2009 13:37:45 -0500
-Message-ID: <20090320183745.GA9352@us.ibm.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [patch 0/3] add rt_tgsigqueueinfo syscall [RESEND]
+Date: Mon, 23 Mar 2009 12:14:59 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0903231213180.29264@localhost.localdomain>
+References: <20090226133339.875832967@linutronix.de> <cfd18e0f0902261319v20ba7bd1pcc91ccc4b2c7d577@mail.gmail.com> <20090227000352.7D32BFC339@magilla.sf.frob.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Stephen Smalley <sds-FVV4AS6k8l2W8mdqIt43Ew@public.gmane.org>, Andrew Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Igor Zhbanov <izh1979-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "J. Bruce Fields" <bfields-vtMw8L3fJ9vSiEDVxGk4TQ@public.gmane.org>, stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090227000352.7D32BFC339-nL1rrgvulkc2UH6IwYuUx0EOCMrvLtNR@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-6lXkIZvqkOAvJsYlp49lxw@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-( resubmitting without RFC tag, and updated against J. Bruce
-Fields' patch since that has been applied upstream )
+Roland,
 
-When POSIX capabilities were introduced during the 2.1 Linux
-cycle, the fs mask, which represents the capabilities which having
-fsuid==0 is supposed to grant, did not include CAP_MKNOD and
-CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
-to call these did in fact depend upon fsuid==0.
+On Thu, 26 Feb 2009, Roland McGrath wrote:
 
-This patch introduces those capabilities into the fsmask,
-restoring the old behavior.
+> I don't see any rationale for rt_tgsigqueueinfo and rt_sigqueueinfo to
+> differ in their treatment of si_pid/si_uid (whatever that is).  It just
+> seems like common sense that they would match.
+> 
+> Oleg and/or Sukadev have some patches floating around (maybe all in -mm?)
+> that relate to setting those.
 
-See the thread starting at http://lkml.org/lkml/2009/3/11/157 for
-reference.
+You mean having the same logic as we have in {t,tg,}kill syscalls for
+rt_sigqueueinfo as well ?
 
-Note that if this fix is deemed valid, then earlier kernel versions (2.4
-and 2.2) ought to be fixed too.
+Is there anything else which stands in the way of getting the
+rt_tgsigqueueinfo interface merged ?
 
-Changelog:
-	[Mar 20] Updated against J. Bruce Fields' patch
+Thanks,
 
-Reported-by: Igor Zhbanov <izh1979-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Cc: stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: J. Bruce Fields <bfields-vtMw8L3fJ9vSiEDVxGk4TQ@public.gmane.org>
----
- include/linux/capability.h |   22 +++++++++++++++++++---
- 1 files changed, 19 insertions(+), 3 deletions(-)
-
-diff --git a/include/linux/capability.h b/include/linux/capability.h
-index 4864a43..959998a 100644
---- a/include/linux/capability.h
-+++ b/include/linux/capability.h
-@@ -377,7 +377,21 @@ struct cpu_vfs_cap_data {
- #define CAP_FOR_EACH_U32(__capi)  \
- 	for (__capi = 0; __capi < _KERNEL_CAPABILITY_U32S; ++__capi)
- 
-+/*
-+ * CAP_FS_MASK and CAP_NFSD_MASKS:
-+ *
-+ * The fs mask is all the privileges that fsuid==0 historically meant.
-+ * At one time in the past, that included CAP_MKNOD and CAP_LINUX_IMMUTABLE.
-+ *
-+ * It has never meant setting security.* and trusted.* xattrs.
-+ *
-+ * We could also define fsmask as follows:
-+ *   1. CAP_FS_MASK is the privilege to bypass all fs-related DAC permissions
-+ *   2. The security.* and trusted.* xattrs are fs-related MAC permissions
-+ */
-+
- # define CAP_FS_MASK_B0     (CAP_TO_MASK(CAP_CHOWN)		\
-+			    | CAP_TO_MASK(CAP_MKNOD)		\
- 			    | CAP_TO_MASK(CAP_DAC_OVERRIDE)	\
- 			    | CAP_TO_MASK(CAP_DAC_READ_SEARCH)	\
- 			    | CAP_TO_MASK(CAP_FOWNER)		\
-@@ -393,10 +407,12 @@ struct cpu_vfs_cap_data {
- # define CAP_FULL_SET     ((kernel_cap_t){{ ~0, ~0 }})
- # define CAP_INIT_EFF_SET ((kernel_cap_t){{ ~CAP_TO_MASK(CAP_SETPCAP), ~0 }})
- # define CAP_FS_SET       ((kernel_cap_t){{ CAP_FS_MASK_B0, CAP_FS_MASK_B1 } })
-+# define CAP_FS_SET       ((kernel_cap_t){{ CAP_FS_MASK_B0 \
-+				    | CAP_TO_MASK(CAP_LINUX_IMMUTABLE), \
-+				    CAP_FS_MASK_B1 } })
- # define CAP_NFSD_SET     ((kernel_cap_t){{ CAP_FS_MASK_B0 \
--					    | CAP_TO_MASK(CAP_SYS_RESOURCE) \
--					    | CAP_TO_MASK(CAP_MKNOD), \
--					    CAP_FS_MASK_B1 } })
-+				    | CAP_TO_MASK(CAP_SYS_RESOURCE), \
-+				    CAP_FS_MASK_B1 } })
- 
- #endif /* _KERNEL_CAPABILITY_U32S != 2 */
- 
--- 
-1.5.4.3
-
+	tglx
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
