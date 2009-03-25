@@ -1,47 +1,65 @@
-From: Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch 0/3] add rt_tgsigqueueinfo syscall [RESEND]
-Date: Mon, 23 Mar 2009 23:58:58 -0700 (PDT)
-Message-ID: <20090324065858.153BAFC3AB@magilla.sf.frob.com>
-References: <20090226133339.875832967@linutronix.de>
-	<cfd18e0f0902261319v20ba7bd1pcc91ccc4b2c7d577@mail.gmail.com>
-	<20090227000352.7D32BFC339@magilla.sf.frob.com>
-	<alpine.LFD.2.00.0903231213180.29264@localhost.localdomain>
+From: "Serge E. Hallyn" <serue@us.ibm.com>
+Subject: [PATCH 2.2] CAP_FS_MASK: add CAP_LINUX_IMMUTABLE
+Date: Wed, 25 Mar 2009 12:39:04 -0500
+Message-ID: <20090325173904.GA19269@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: Thomas Gleixner's message of  Monday, 23 March 2009 12:14:59 +0100 <alpine.LFD.2.00.0903231213180.29264-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-6lXkIZvqkOAvJsYlp49lxw@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-security-module-owner@vger.kernel.org
+To: Marc-Christian Petersen <m.c.p@wolk-project.de>
+Cc: mtk.manpages@gmail.com, Stephen Smalley <sds@epoch.ncsc.mil>, Andrew Morgan <morgan@kernel.org>, linux-security-module@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, Igor Zhbanov <izh1979@gmail.com>, stable@kernel.org, linux-api@vger.kernel.org, Chris Wright <chrisw@sous-sol.org>
 List-Id: linux-api@vger.kernel.org
 
-> > I don't see any rationale for rt_tgsigqueueinfo and rt_sigqueueinfo to
-> > differ in their treatment of si_pid/si_uid (whatever that is).  It just
-> > seems like common sense that they would match.
-> > 
-> > Oleg and/or Sukadev have some patches floating around (maybe all in -mm?)
-> > that relate to setting those.
-> 
-> You mean having the same logic as we have in {t,tg,}kill syscalls for
-> rt_sigqueueinfo as well ?
+When POSIX capabilities were introduced during the 2.1 Linux
+cycle, the fs mask, which represents the capabilities which having
+fsuid==0 is supposed to grant, did not include CAP_MKNOD and
+CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
+to call these did in fact depend upon fsuid==0.
 
-I mean just what I said: rt_tgsigqueueinfo's treatment of the siginfo_t
-should match rt_sigqueueinfo's.  Make it match rt_sigqueueinfo today and
-make sure that if rt_sigqueueinfo changes, then rt_tgsigqueueinfo will
-change to match.
+However, 2.2 does not have CAP_MKNOD, instead using CAP_SYS_ADMIN
+to authorize sys_mknod.  We don't want to put CAP_SYS_ADMIN in
+CAP_FS_MASK because it carries too many non-fs implications.
 
-> Is there anything else which stands in the way of getting the
-> rt_tgsigqueueinfo interface merged ?
+This patch introduces CAP_LINUX_IMMUTABLE into the fsmask.
 
-I don't see any problem.  But you should at least make sure that Ulrich
-likes the syscall interface for implementing pthread_sigqueue or whatever
-it will be.
+See the thread starting at http://lkml.org/lkml/2009/3/11/157 for
+reference.
 
+Reported-by: Igor Zhbanov <izh1979@gmail.com>
+Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
+Cc: stable@kernel.org
+---
+ include/linux/capability.h |   13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
 
-Thanks,
-Roland
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff -Nrup linux-2.2.26/include/linux/capability.h linux-2.2.26.new/include/linux/capability.h
+--- linux-2.2.26/include/linux/capability.h	2004-02-23 07:44:47.000000000 -0600
++++ linux-2.2.26.new/include/linux/capability.h	2009-03-25 11:12:08.000000000 -0500
+@@ -98,10 +98,6 @@ typedef __u32 kernel_cap_t;
+ 
+ #define CAP_FSETID           4
+ 
+-/* Used to decide between falling back on the old suser() or fsuser(). */
+-
+-#define CAP_FS_MASK          0x1f
+-
+ /* Overrides the restriction that the real or effective user ID of a
+    process sending a signal must match the real or effective user ID
+    of the process receiving the signal. */
+@@ -288,6 +284,15 @@ extern kernel_cap_t cap_bset;
+ 
+ #endif
+ 
++/* Used to decide between falling back on the old suser() or fsuser(). */
++
++#define CAP_FS_MASK	(CAP_TO_MASK(CAP_CHOWN)			\
++			| CAP_TO_MASK(CAP_DAC_OVERRIDE)		\
++			| CAP_TO_MASK(CAP_DAC_READ_SEARCH)	\
++			| CAP_TO_MASK(CAP_FOWNER)		\
++			| CAP_TO_MASK(CAP_FSETID)		\
++			| CAP_TO_MASK(CAP_LINUX_IMMUTABLE))
++
+ #define CAP_EMPTY_SET       to_cap_t(0)
+ #define CAP_FULL_SET        to_cap_t(~0)
+ #define CAP_INIT_EFF_SET    to_cap_t(~0 & ~CAP_TO_MASK(CAP_SETPCAP))
