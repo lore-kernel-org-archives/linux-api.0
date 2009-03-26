@@ -1,63 +1,46 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
-Subject: [PATCH 2.4] CAP_FS_MASK: add CAP_LINUX_IMMUTABLE and CAP_MKNOD
-Date: Wed, 25 Mar 2009 12:39:54 -0500
-Message-ID: <20090325173954.GA19299@us.ibm.com>
+From: Willy Tarreau <w@1wt.eu>
+Subject: Re: [PATCH 2.4] CAP_FS_MASK: add CAP_LINUX_IMMUTABLE and CAP_MKNOD
+Date: Thu, 26 Mar 2009 06:29:58 +0100
+Message-ID: <20090326052958.GC13146@1wt.eu>
+References: <20090325173954.GA19299@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763922AbZCYRk3@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Willy Tarreau <w@1wt.eu>
-Cc: mtk.manpages@gmail.com, Stephen Smalley <sds@epoch.ncsc.mil>, Andrew Morgan <morgan@kernel.org>, linux-security-module@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, Igor Zhbanov <izh1979@gmail.com>, stable@kernel.org, linux-api@vger.kernel.org, Chris Wright <chrisw@sous-sol.org>
+In-Reply-To: <20090325173954.GA19299-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Stephen Smalley <sds-FVV4AS6k8l2W8mdqIt43Ew@public.gmane.org>, Andrew Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Igor Zhbanov <izh1979-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Wright <chrisw-69jw2NvuJkxg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-When POSIX capabilities were introduced during the 2.1 Linux
-cycle, the fs mask, which represents the capabilities which having
-fsuid==0 is supposed to grant, did not include CAP_MKNOD and
-CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
-to call these did in fact depend upon fsuid==0.
+Hello,
 
-This patch introduces those capabilities into the fsmask,
-restoring the old behavior.
+On Wed, Mar 25, 2009 at 12:39:54PM -0500, Serge E. Hallyn wrote:
+> When POSIX capabilities were introduced during the 2.1 Linux
+> cycle, the fs mask, which represents the capabilities which having
+> fsuid==0 is supposed to grant, did not include CAP_MKNOD and
+> CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
+> to call these did in fact depend upon fsuid==0.
+> 
+> This patch introduces those capabilities into the fsmask,
+> restoring the old behavior.
+> 
+> See the thread starting at http://lkml.org/lkml/2009/3/11/157 for
+> reference.
 
-See the thread starting at http://lkml.org/lkml/2009/3/11/157 for
-reference.
+Thanks to Igor and you for fixing this. The impact did not appear
+obvious to me at first, to be honnest! I'm queuing the patch for
+next release.
 
-Reported-by: Igor Zhbanov <izh1979@gmail.com>
-Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
-Cc: stable@kernel.org
----
- include/linux/capability.h |   14 ++++++++++----
- 1 file changed, 10 insertions(+), 4 deletions(-)
+BTW, I've noticed your other patch for 2.2.26, but it's not worth
+wasting time on it, as 2.2 has remained unmaintained for years now
+and people are really discouraged from using it as many holes have
+never been fixed there.
 
-diff -Nrup linux-2.4.37/include/linux/capability.h linux-2.4.37.new/include/linux/capability.h
---- linux-2.4.37/include/linux/capability.h	2008-12-02 02:01:34.000000000 -0600
-+++ linux-2.4.37.new/include/linux/capability.h	2009-03-25 11:09:47.000000000 -0500
-@@ -99,10 +99,6 @@ typedef __u32 kernel_cap_t;
- 
- #define CAP_FSETID           4
- 
--/* Used to decide between falling back on the old suser() or fsuser(). */
--
--#define CAP_FS_MASK          0x1f
--
- /* Overrides the restriction that the real or effective user ID of a
-    process sending a signal must match the real or effective user ID
-    of the process receiving the signal. */
-@@ -301,6 +297,16 @@ extern kernel_cap_t cap_bset;
- 
- #endif
- 
-+/* Used to decide between falling back on the old suser() or fsuser(). */
-+
-+#define CAP_FS_MASK	(CAP_TO_MASK(CAP_CHOWN)			\
-+			| CAP_TO_MASK(CAP_DAC_OVERRIDE)		\
-+			| CAP_TO_MASK(CAP_DAC_READ_SEARCH)	\
-+			| CAP_TO_MASK(CAP_FOWNER)		\
-+			| CAP_TO_MASK(CAP_FSETID)		\
-+			| CAP_TO_MASK(CAP_LINUX_IMMUTABLE)	\
-+			| CAP_TO_MASK(CAP_MKNOD))
-+
- #define CAP_EMPTY_SET       to_cap_t(0)
- #define CAP_FULL_SET        to_cap_t(~0)
- #define CAP_INIT_EFF_SET    to_cap_t(~0 & ~CAP_TO_MASK(CAP_SETPCAP))
+Cheers,
+Willy
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
