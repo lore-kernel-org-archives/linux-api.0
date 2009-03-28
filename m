@@ -1,47 +1,23 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
-Subject: Re: [PATCH 2.4] CAP_FS_MASK: add CAP_LINUX_IMMUTABLE and CAP_MKNOD
-Date: Thu, 26 Mar 2009 08:27:38 -0500
-Message-ID: <20090326132738.GB13639@us.ibm.com>
-References: <20090325173954.GA19299@us.ibm.com> <20090326052958.GC13146@1wt.eu>
+From: "suleman_m020" <suleman_m020-VGgt2q2+T+FeoWH0uzbU5w@public.gmane.org>
+Subject: URGENT RESPONDS NEEDED.
+Date: Sat, 28 Mar 2009 23:13:52 +0100
+Message-ID: <KH8LR4$59F56186ACBFAE071766A4E8B66E4300@libero.it>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20090326052958.GC13146@1wt.eu>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Willy Tarreau <w@1wt.eu>
-Cc: mtk.manpages@gmail.com, Stephen Smalley <sds@epoch.ncsc.mil>, Andrew Morgan <morgan@kernel.org>, linux-security-module@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, Igor Zhbanov <izh1979@gmail.com>, stable@kernel.org, linux-api@vger.kernel.org, Chris Wright <chrisw@sous-sol.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Willy Tarreau (w@1wt.eu):
-> Hello,
-> 
-> On Wed, Mar 25, 2009 at 12:39:54PM -0500, Serge E. Hallyn wrote:
-> > When POSIX capabilities were introduced during the 2.1 Linux
-> > cycle, the fs mask, which represents the capabilities which having
-> > fsuid==0 is supposed to grant, did not include CAP_MKNOD and
-> > CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
-> > to call these did in fact depend upon fsuid==0.
-> > 
-> > This patch introduces those capabilities into the fsmask,
-> > restoring the old behavior.
-> > 
-> > See the thread starting at http://lkml.org/lkml/2009/3/11/157 for
-> > reference.
-> 
-> Thanks to Igor and you for fixing this. The impact did not appear
-> obvious to me at first, to be honnest! I'm queuing the patch for
-> next release.
-> 
-> BTW, I've noticed your other patch for 2.2.26, but it's not worth
-> wasting time on it, as 2.2 has remained unmaintained for years now
-> and people are really discouraged from using it as many holes have
-> never been fixed there.
-> 
-> Cheers,
-> Willy
+I am the manager of auditing and accounting department  Bank of African,I need
+your urgent assistance in transferring the sum of ($8.5  million us dollars
+immediately to your account. upon your reply I will send you full details on how
+the business will be executed,Reply me with this email...
+suleman_m03-7V4A5QgKqXk@public.gmane.org  My Regards mr Suleman Muhammed
 
-Sounds good to me.
 
-thanks,
--serge
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
