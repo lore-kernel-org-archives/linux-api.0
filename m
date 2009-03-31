@@ -1,171 +1,275 @@
 From: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Subject: [patch 081/183] eventfd: improve support for semaphore-like behavior
-Date: Tue, 31 Mar 2009 15:24:18 -0700
-Message-ID: <200903312224.n2VMOIRi022647@imap1.linux-foundation.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: [patch 062/183] loop: add ioctl to resize a loop device
+Date: Tue, 31 Mar 2009 15:23:43 -0700
+Message-ID: <200903312223.n2VMNi7j022330@imap1.linux-foundation.org>
+Return-path: <util-linux-ng-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: util-linux-ng-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org, drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hooanon05-/E1597aS9LR3+QwDJ9on6Q@public.gmane.org, akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tomas-VOkecuvH9Oc@public.gmane.org, util-linux-ng-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
+From: J. R. Okajima <hooanon05-/E1597aS9LR3+QwDJ9on6Q@public.gmane.org>
 
-People started using eventfd in a semaphore-like way where before they
-were using pipes.
+Add the ability to 'resize' the loop device on the fly.
 
-That is, counter-based resource access.  Where a "wait()" returns
-immediately by decrementing the counter by one, if counter is greater than
-zero.  Otherwise will wait.  And where a "post(count)" will add count to
-the counter releasing the appropriate amount of waiters.  If eventfd the
-"post" (write) part is fine, while the "wait" (read) does not dequeue 1,
-but the whole counter value.
+One practical application is a loop file with XFS filesystem, already
+mounted: You can easily enlarge the file (append some bytes) and then call
+ioctl(fd, LOOP_SET_CAPACITY, new); The loop driver will learn about the
+new size and you can use xfs_growfs later on, which will allow you to use
+full capacity of the loop file without the need to unmount.
 
-The problem with eventfd is that a read() on the fd returns and wipes the
-whole counter, making the use of it as semaphore a little bit more
-cumbersome.  You can do a read() followed by a write() of COUNTER-1, but
-IMO it's pretty easy and cheap to make this work w/out extra steps.  This
-patch introduces a new eventfd flag that tells eventfd to only dequeue 1
-from the counter, allowing simple read/write to make it behave like a
-semaphore.  Simple test here:
+Test app:
 
-http://www.xmailserver.org/eventfd-sem.c
+#include <linux/fs.h>
+#include <linux/loop.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-To be back-compatible with earlier kernels, userspace applications should
-probe for the availability of this feature via
+#define _GNU_SOURCE
+#include <getopt.h>
 
-#ifdef EFD_SEMAPHORE
-	fd = eventfd2 (CNT, EFD_SEMAPHORE);
-	if (fd == -1 && errno == EINVAL)
-		<fallback>
-#else
-		<fallback>
-#endif
+char *me;
 
-Signed-off-by: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
+void usage(FILE *f)
+{
+	fprintf(f, "%s [options] loop_dev [backend_file]\n"
+		"-s, --set new_size_in_bytes\n"
+		"\twhen backend_file is given, "
+		"it will be expanded too while keeping the original contents\n",
+		me);
+}
+
+struct option opts[] = {
+	{
+		.name		= "set",
+		.has_arg	= 1,
+		.flag		= NULL,
+		.val		= 's'
+	},
+	{
+		.name		= "help",
+		.has_arg	= 0,
+		.flag		= NULL,
+		.val		= 'h'
+	}
+};
+
+void err_size(char *name, __u64 old)
+{
+	fprintf(stderr, "size must be larger than current %s (%llu)\n",
+		name, old);
+}
+
+int main(int argc, char *argv[])
+{
+	int fd, err, c, i, bfd;
+	ssize_t ssz;
+	size_t sz;
+	__u64 old, new, append;
+	char a[BUFSIZ];
+	struct stat st;
+	FILE *out;
+	char *backend, *dev;
+
+	err = EINVAL;
+	out = stderr;
+	me = argv[0];
+	new = 0;
+	while ((c = getopt_long(argc, argv, "s:h", opts, &i)) != -1) {
+		switch (c) {
+		case 's':
+			errno = 0;
+			new = strtoull(optarg, NULL, 0);
+			if (errno) {
+				err = errno;
+				perror(argv[i]);
+				goto out;
+			}
+			break;
+
+		case 'h':
+			err = 0;
+			out = stdout;
+			goto err;
+
+		default:
+			perror(argv[i]);
+			goto err;
+		}
+	}
+
+	if (optind < argc)
+		dev = argv[optind++];
+	else
+		goto err;
+
+	fd = open(dev, O_RDONLY);
+	if (fd < 0) {
+		err = errno;
+		perror(dev);
+		goto out;
+	}
+
+	err = ioctl(fd, BLKGETSIZE64, &old);
+	if (err) {
+		err = errno;
+		perror("ioctl BLKGETSIZE64");
+		goto out;
+	}
+
+	if (!new) {
+		printf("%llu\n", old);
+		goto out;
+	}
+
+	if (new < old) {
+		err = EINVAL;
+		err_size(dev, old);
+		goto out;
+	}
+
+	if (optind < argc) {
+		backend = argv[optind++];
+		bfd = open(backend, O_WRONLY|O_APPEND);
+		if (bfd < 0) {
+			err = errno;
+			perror(backend);
+			goto out;
+		}
+		err = fstat(bfd, &st);
+		if (err) {
+			err = errno;
+			perror(backend);
+			goto out;
+		}
+		if (new < st.st_size) {
+			err = EINVAL;
+			err_size(backend, st.st_size);
+			goto out;
+		}
+		append = new - st.st_size;
+		sz = sizeof(a);
+		while (append > 0) {
+			if (append < sz)
+				sz = append;
+			ssz = write(bfd, a, sz);
+			if (ssz != sz) {
+				err = errno;
+				perror(backend);
+				goto out;
+			}
+			append -= sz;
+		}
+		err = fsync(bfd);
+		if (err) {
+			err = errno;
+			perror(backend);
+			goto out;
+		}
+	}
+
+	err = ioctl(fd, LOOP_SET_CAPACITY, new);
+	if (err) {
+		err = errno;
+		perror("ioctl LOOP_SET_CAPACITY");
+	}
+	goto out;
+
+ err:
+	usage(out);
+ out:
+	return err;
+}
+
+Signed-off-by: J. R. Okajima <hooanon05-/E1597aS9LR3+QwDJ9on6Q@public.gmane.org>
+Signed-off-by: Tomas Matejicek <tomas-VOkecuvH9Oc@public.gmane.org>
+Cc: <util-linux-ng-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Tested-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 ---
 
- fs/eventfd.c            |   20 +++++++++++---------
- include/linux/eventfd.h |   12 +++++++++++-
- 2 files changed, 22 insertions(+), 10 deletions(-)
+ drivers/block/loop.c |   30 ++++++++++++++++++++++++++++++
+ include/linux/loop.h |    1 +
+ 2 files changed, 31 insertions(+)
 
-diff -puN fs/eventfd.c~eventfd-improve-support-for-semaphore-like-behavior fs/eventfd.c
---- a/fs/eventfd.c~eventfd-improve-support-for-semaphore-like-behavior
-+++ a/fs/eventfd.c
-@@ -28,6 +28,7 @@ struct eventfd_ctx {
- 	 * issue a wakeup.
- 	 */
- 	__u64 count;
-+	unsigned int flags;
- };
- 
- /*
-@@ -87,22 +88,20 @@ static ssize_t eventfd_read(struct file 
- {
- 	struct eventfd_ctx *ctx = file->private_data;
- 	ssize_t res;
--	__u64 ucnt;
-+	__u64 ucnt = 0;
- 	DECLARE_WAITQUEUE(wait, current);
- 
- 	if (count < sizeof(ucnt))
- 		return -EINVAL;
- 	spin_lock_irq(&ctx->wqh.lock);
- 	res = -EAGAIN;
--	ucnt = ctx->count;
--	if (ucnt > 0)
-+	if (ctx->count > 0)
- 		res = sizeof(ucnt);
- 	else if (!(file->f_flags & O_NONBLOCK)) {
- 		__add_wait_queue(&ctx->wqh, &wait);
- 		for (res = 0;;) {
- 			set_current_state(TASK_INTERRUPTIBLE);
- 			if (ctx->count > 0) {
--				ucnt = ctx->count;
- 				res = sizeof(ucnt);
- 				break;
- 			}
-@@ -117,8 +116,9 @@ static ssize_t eventfd_read(struct file 
- 		__remove_wait_queue(&ctx->wqh, &wait);
- 		__set_current_state(TASK_RUNNING);
- 	}
--	if (res > 0) {
--		ctx->count = 0;
-+	if (likely(res > 0)) {
-+		ucnt = (ctx->flags & EFD_SEMAPHORE) ? 1 : ctx->count;
-+		ctx->count -= ucnt;
- 		if (waitqueue_active(&ctx->wqh))
- 			wake_up_locked(&ctx->wqh);
- 	}
-@@ -166,7 +166,7 @@ static ssize_t eventfd_write(struct file
- 		__remove_wait_queue(&ctx->wqh, &wait);
- 		__set_current_state(TASK_RUNNING);
- 	}
--	if (res > 0) {
-+	if (likely(res > 0)) {
- 		ctx->count += ucnt;
- 		if (waitqueue_active(&ctx->wqh))
- 			wake_up_locked(&ctx->wqh);
-@@ -207,7 +207,7 @@ SYSCALL_DEFINE2(eventfd2, unsigned int, 
- 	BUILD_BUG_ON(EFD_CLOEXEC != O_CLOEXEC);
- 	BUILD_BUG_ON(EFD_NONBLOCK != O_NONBLOCK);
- 
--	if (flags & ~(EFD_CLOEXEC | EFD_NONBLOCK))
-+	if (flags & ~EFD_FLAGS_SET)
- 		return -EINVAL;
- 
- 	ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
-@@ -216,13 +216,14 @@ SYSCALL_DEFINE2(eventfd2, unsigned int, 
- 
- 	init_waitqueue_head(&ctx->wqh);
- 	ctx->count = count;
-+	ctx->flags = flags;
- 
- 	/*
- 	 * When we call this, the initialization must be complete, since
- 	 * anon_inode_getfd() will install the fd.
- 	 */
- 	fd = anon_inode_getfd("[eventfd]", &eventfd_fops, ctx,
--			      flags & (O_CLOEXEC | O_NONBLOCK));
-+			      flags & EFD_SHARED_FCNTL_FLAGS);
- 	if (fd < 0)
- 		kfree(ctx);
- 	return fd;
-@@ -232,3 +233,4 @@ SYSCALL_DEFINE1(eventfd, unsigned int, c
- {
- 	return sys_eventfd2(count, 0);
+diff -puN drivers/block/loop.c~loop-add-ioctl-to-resize-a-loop-device drivers/block/loop.c
+--- a/drivers/block/loop.c~loop-add-ioctl-to-resize-a-loop-device
++++ a/drivers/block/loop.c
+@@ -1192,6 +1192,30 @@ loop_get_status64(struct loop_device *lo
+ 	return err;
  }
+ 
++static int loop_set_capacity(struct loop_device *lo, struct block_device *bdev)
++{
++	int err;
++	sector_t sec;
++	loff_t sz;
 +
-diff -puN include/linux/eventfd.h~eventfd-improve-support-for-semaphore-like-behavior include/linux/eventfd.h
---- a/include/linux/eventfd.h~eventfd-improve-support-for-semaphore-like-behavior
-+++ a/include/linux/eventfd.h
-@@ -13,10 +13,20 @@
- /* For O_CLOEXEC and O_NONBLOCK */
- #include <linux/fcntl.h>
- 
--/* Flags for eventfd2.  */
-+/*
-+ * CAREFUL: Check include/asm-generic/fcntl.h when defining
-+ * new flags, since they might collide with O_* ones. We want
-+ * to re-use O_* flags that couldn't possibly have a meaning
-+ * from eventfd, in order to leave a free define-space for
-+ * shared O_* flags.
-+ */
-+#define EFD_SEMAPHORE (1 << 0)
- #define EFD_CLOEXEC O_CLOEXEC
- #define EFD_NONBLOCK O_NONBLOCK
- 
-+#define EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
-+#define EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE)
++	err = -ENXIO;
++	if (unlikely(lo->lo_state != Lo_bound))
++		goto out;
++	err = figure_loop_size(lo);
++	if (unlikely(err))
++		goto out;
++	sec = get_capacity(lo->lo_disk);
++	/* the width of sector_t may be narrow for bit-shift */
++	sz = sec;
++	sz <<= 9;
++	mutex_lock(&bdev->bd_mutex);
++	bd_set_size(bdev, sz);
++	mutex_unlock(&bdev->bd_mutex);
 +
- struct file *eventfd_fget(int fd);
- int eventfd_signal(struct file *file, int n);
++ out:
++	return err;
++}
++
+ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
+ 	unsigned int cmd, unsigned long arg)
+ {
+@@ -1224,6 +1248,11 @@ static int lo_ioctl(struct block_device 
+ 	case LOOP_GET_STATUS64:
+ 		err = loop_get_status64(lo, (struct loop_info64 __user *) arg);
+ 		break;
++	case LOOP_SET_CAPACITY:
++		err = -EPERM;
++		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
++			err = loop_set_capacity(lo, bdev);
++		break;
+ 	default:
+ 		err = lo->ioctl ? lo->ioctl(lo, cmd, arg) : -EINVAL;
+ 	}
+@@ -1371,6 +1400,7 @@ static int lo_compat_ioctl(struct block_
+ 			lo, (struct compat_loop_info __user *) arg);
+ 		mutex_unlock(&lo->lo_ctl_mutex);
+ 		break;
++	case LOOP_SET_CAPACITY:
+ 	case LOOP_CLR_FD:
+ 	case LOOP_GET_STATUS64:
+ 	case LOOP_SET_STATUS64:
+diff -puN include/linux/loop.h~loop-add-ioctl-to-resize-a-loop-device include/linux/loop.h
+--- a/include/linux/loop.h~loop-add-ioctl-to-resize-a-loop-device
++++ a/include/linux/loop.h
+@@ -160,5 +160,6 @@ int loop_unregister_transfer(int number)
+ #define LOOP_SET_STATUS64	0x4C04
+ #define LOOP_GET_STATUS64	0x4C05
+ #define LOOP_CHANGE_FD		0x4C06
++#define LOOP_SET_CAPACITY	0x4C07
  
+ #endif
 _
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
+To unsubscribe from this list: send the line "unsubscribe util-linux-ng" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
