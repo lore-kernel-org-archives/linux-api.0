@@ -1,141 +1,210 @@
-From: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Subject: [patch 144/166] preadv/pwritev: MIPS: Add preadv(2) and pwritev(2) syscalls.
-Date: Thu, 02 Apr 2009 16:59:24 -0700
-Message-ID: <200904022359.n32NxONl022839@imap1.linux-foundation.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+From: akpm@linux-foundation.org
+Subject: [patch 141/166] preadv/pwritev: create compat_readv()
+Date: Thu, 02 Apr 2009 16:59:20 -0700
+Message-ID: <200904022359.n32NxLhX022785@imap1.linux-foundation.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: torvalds@linux-foundation.org
+Cc: akpm@linux-foundation.org, kraxel@redhat.com, arnd@arndb.de, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, ralf@linux-mips.org, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-From: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+From: Gerd Hoffmann <kraxel@redhat.com>
 
-Signed-off-by: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
-Signed-off-by: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+This patch series:
+
+Implement the preadv() and pwritev() syscalls.  *BSD has this syscall for
+quite some time.
+
+Test code:
+
+#if 0
+set -x
+gcc -Wall -O2 -o preadv $0
+exit 0
+#endif
+/*
+ * preadv demo / test
+ *
+ * (c) 2008 Gerd Hoffmann <kraxel@redhat.com>
+ *
+ * build with "sh $thisfile"
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <sys/uio.h>
+
+/* ----------------------------------------------------------------- */
+/* syscall windup                                                    */
+
+#include <sys/syscall.h>
+#if 0
+/* WARNING: Be sure you know what you are doing if you enable this.
+ * linux syscall code isn't upstream yet, syscall numbers are subject
+ * to change */
+# ifndef __NR_preadv
+#  ifdef __i386__
+#   define __NR_preadv  333
+#   define __NR_pwritev 334
+#  endif
+#  ifdef __x86_64__
+#   define __NR_preadv  295
+#   define __NR_pwritev 296
+#  endif
+# endif
+#endif
+#ifndef __NR_preadv
+# error preadv/pwritev syscall numbers are unknown
+#endif
+
+static ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+{
+    uint32_t pos_high = (offset >> 32) & 0xffffffff;
+    uint32_t pos_low  =  offset        & 0xffffffff;
+
+    return syscall(__NR_preadv, fd, iov, iovcnt, pos_high, pos_low);
+}
+
+static ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+{
+    uint32_t pos_high = (offset >> 32) & 0xffffffff;
+    uint32_t pos_low  =  offset        & 0xffffffff;
+
+    return syscall(__NR_pwritev, fd, iov, iovcnt, pos_high, pos_low);
+}
+
+/* ----------------------------------------------------------------- */
+/* demo/test app                                                     */
+
+static char filename[] = "/tmp/preadv-XXXXXX";
+static char outbuf[11] = "0123456789";
+static char inbuf[11]  = "----------";
+
+static struct iovec ovec[2] = {{
+        .iov_base = outbuf + 5,
+        .iov_len  = 5,
+    },{
+        .iov_base = outbuf + 0,
+        .iov_len  = 5,
+    }};
+
+static struct iovec ivec[3] = {{
+        .iov_base = inbuf + 6,
+        .iov_len  = 2,
+    },{
+        .iov_base = inbuf + 4,
+        .iov_len  = 2,
+    },{
+        .iov_base = inbuf + 2,
+        .iov_len  = 2,
+    }};
+
+void cleanup(void)
+{
+    unlink(filename);
+}
+
+int main(int argc, char **argv)
+{
+    int fd, rc;
+
+    fd = mkstemp(filename);
+    if (-1 == fd) {
+        perror("mkstemp");
+        exit(1);
+    }
+    atexit(cleanup);
+
+    /* write to file: "56789-01234" */
+    rc = pwritev(fd, ovec, 2, 0);
+    if (rc < 0) {
+        perror("pwritev");
+        exit(1);
+    }
+
+    /* read from file: "78-90-12" */
+    rc = preadv(fd, ivec, 3, 2);
+    if (rc < 0) {
+        perror("preadv");
+        exit(1);
+    }
+
+    printf("result  : %s\n", inbuf);
+    printf("expected: %s\n", "--129078--");
+    exit(0);
+}
+
+
+This patch:
+
+Factor out some code from compat_sys_readv() which can be shared with the
+upcoming compat_sys_preadv().
+
+
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: <linux-api@vger.kernel.org>
+Cc: <linux-arch@vger.kernel.org>
+Cc: Ralf Baechle <ralf@linux-mips.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
 
- arch/mips/include/asm/unistd.h |   18 ++++++++++++------
- arch/mips/kernel/scall32-o32.S |    2 ++
- arch/mips/kernel/scall64-64.S  |    2 ++
- arch/mips/kernel/scall64-n32.S |    2 ++
- arch/mips/kernel/scall64-o32.S |    2 ++
- 5 files changed, 20 insertions(+), 6 deletions(-)
+ fs/compat.c |   26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
 
-diff -puN arch/mips/include/asm/unistd.h~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls arch/mips/include/asm/unistd.h
---- a/arch/mips/include/asm/unistd.h~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls
-+++ a/arch/mips/include/asm/unistd.h
-@@ -350,16 +350,18 @@
- #define __NR_dup3			(__NR_Linux + 327)
- #define __NR_pipe2			(__NR_Linux + 328)
- #define __NR_inotify_init1		(__NR_Linux + 329)
-+#define __NR_preadv			(__NR_Linux + 330)
-+#define __NR_pwritev			(__NR_Linux + 331)
+diff -puN fs/compat.c~preadv-pwritev-create-compat_readv fs/compat.c
+--- a/fs/compat.c~preadv-pwritev-create-compat_readv
++++ a/fs/compat.c
+@@ -1195,16 +1195,12 @@ out:
+ 	return ret;
+ }
  
- /*
-  * Offset of the last Linux o32 flavoured syscall
-  */
--#define __NR_Linux_syscalls		329
-+#define __NR_Linux_syscalls		331
+-asmlinkage ssize_t
+-compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec, unsigned long vlen)
++static size_t compat_readv(struct file *file,
++			   const struct compat_iovec __user *vec,
++			   unsigned long vlen, loff_t *pos)
+ {
+-	struct file *file;
+ 	ssize_t ret = -EBADF;
  
- #endif /* _MIPS_SIM == _MIPS_SIM_ABI32 */
+-	file = fget(fd);
+-	if (!file)
+-		return -EBADF;
+-
+ 	if (!(file->f_mode & FMODE_READ))
+ 		goto out;
  
- #define __NR_O32_Linux			4000
--#define __NR_O32_Linux_syscalls		329
-+#define __NR_O32_Linux_syscalls		331
+@@ -1212,12 +1208,26 @@ compat_sys_readv(unsigned long fd, const
+ 	if (!file->f_op || (!file->f_op->aio_read && !file->f_op->read))
+ 		goto out;
  
- #if _MIPS_SIM == _MIPS_SIM_ABI64
+-	ret = compat_do_readv_writev(READ, file, vec, vlen, &file->f_pos);
++	ret = compat_do_readv_writev(READ, file, vec, vlen, pos);
  
-@@ -656,16 +658,18 @@
- #define __NR_dup3			(__NR_Linux + 286)
- #define __NR_pipe2			(__NR_Linux + 287)
- #define __NR_inotify_init1		(__NR_Linux + 288)
-+#define __NR_preadv			(__NR_Linux + 289)
-+#define __NR_pwritev			(__NR_Linux + 290)
- 
- /*
-  * Offset of the last Linux 64-bit flavoured syscall
-  */
--#define __NR_Linux_syscalls		288
-+#define __NR_Linux_syscalls		290
- 
- #endif /* _MIPS_SIM == _MIPS_SIM_ABI64 */
- 
- #define __NR_64_Linux			5000
--#define __NR_64_Linux_syscalls		288
-+#define __NR_64_Linux_syscalls		290
- 
- #if _MIPS_SIM == _MIPS_SIM_NABI32
- 
-@@ -966,16 +970,18 @@
- #define __NR_dup3			(__NR_Linux + 290)
- #define __NR_pipe2			(__NR_Linux + 291)
- #define __NR_inotify_init1		(__NR_Linux + 292)
-+#define __NR_preadv			(__NR_Linux + 293)
-+#define __NR_pwritev			(__NR_Linux + 294)
- 
- /*
-  * Offset of the last N32 flavoured syscall
-  */
--#define __NR_Linux_syscalls		292
-+#define __NR_Linux_syscalls		294
- 
- #endif /* _MIPS_SIM == _MIPS_SIM_NABI32 */
- 
- #define __NR_N32_Linux			6000
--#define __NR_N32_Linux_syscalls		292
-+#define __NR_N32_Linux_syscalls		294
- 
- #ifdef __KERNEL__
- 
-diff -puN arch/mips/kernel/scall32-o32.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls arch/mips/kernel/scall32-o32.S
---- a/arch/mips/kernel/scall32-o32.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls
-+++ a/arch/mips/kernel/scall32-o32.S
-@@ -650,6 +650,8 @@ einval:	li	v0, -ENOSYS
- 	sys	sys_dup3		3
- 	sys	sys_pipe2		2
- 	sys	sys_inotify_init1	1
-+	sys	sys_preadv		6	/* 4330 */
-+	sys	sys_pwritev		6
- 	.endm
- 
- 	/* We pre-compute the number of _instruction_ bytes needed to
-diff -puN arch/mips/kernel/scall64-64.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls arch/mips/kernel/scall64-64.S
---- a/arch/mips/kernel/scall64-64.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls
-+++ a/arch/mips/kernel/scall64-64.S
-@@ -487,4 +487,6 @@ sys_call_table:
- 	PTR	sys_dup3
- 	PTR	sys_pipe2
- 	PTR	sys_inotify_init1
-+	PTR	sys_preadv
-+	PTR	sys_pwritev			/* 5390 */
- 	.size	sys_call_table,.-sys_call_table
-diff -puN arch/mips/kernel/scall64-n32.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls arch/mips/kernel/scall64-n32.S
---- a/arch/mips/kernel/scall64-n32.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls
-+++ a/arch/mips/kernel/scall64-n32.S
-@@ -413,4 +413,6 @@ EXPORT(sysn32_call_table)
- 	PTR	sys_dup3			/* 5290 */
- 	PTR	sys_pipe2
- 	PTR	sys_inotify_init1
-+	PTR	sys_preadv
-+	PTR	sys_pwritev
- 	.size	sysn32_call_table,.-sysn32_call_table
-diff -puN arch/mips/kernel/scall64-o32.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls arch/mips/kernel/scall64-o32.S
---- a/arch/mips/kernel/scall64-o32.S~preadv-pwritev-mips-add-preadv2-and-pwritev2-syscalls
-+++ a/arch/mips/kernel/scall64-o32.S
-@@ -533,4 +533,6 @@ sys_call_table:
- 	PTR	sys_dup3
- 	PTR	sys_pipe2
- 	PTR	sys_inotify_init1
-+	PTR	compat_sys_preadv		/* 4330 */
-+	PTR	compat_sys_pwritev
- 	.size	sys_call_table,.-sys_call_table
+ out:
+ 	if (ret > 0)
+ 		add_rchar(current, ret);
+ 	inc_syscr(current);
++	return ret;
++}
++
++asmlinkage ssize_t
++compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec,
++		 unsigned long vlen)
++{
++	struct file *file;
++	ssize_t ret;
++
++	file = fget(fd);
++	if (!file)
++		return -EBADF;
++	ret = compat_readv(file, vec, vlen, &file->f_pos);
+ 	fput(file);
+ 	return ret;
+ }
 _
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
