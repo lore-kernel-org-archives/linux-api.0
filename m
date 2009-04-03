@@ -1,124 +1,167 @@
-From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [patch 143/166] preadv/pwritev: Add preadv and pwritev system
  calls.
-Date: Fri, 03 Apr 2009 13:53:16 +0200
-Message-ID: <49D5F8AC.6040608@redhat.com>
-References: <200904022359.n32NxNYu022834@imap1.linux-foundation.org> <alpine.LFD.2.00.0904021839390.15441@localhost.localdomain> <49D5CA58.20908@redhat.com> <49D5D609.7030400@redhat.com>
+Date: Fri, 3 Apr 2009 08:03:22 -0700 (PDT)
+Message-ID: <alpine.LFD.2.00.0904030739540.4130@localhost.localdomain>
+References: <200904022359.n32NxNYu022834@imap1.linux-foundation.org> <alpine.LFD.2.00.0904021839390.15441@localhost.localdomain> <49D5CA58.20908@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------030909000609080900040506"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <49D5D609.7030400-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <49D5CA58.20908@redhat.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Gerd Hoffmann <kraxel@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, arnd@arndb.de, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, Ingo Molnar <mingo@elte.hu>, ralf@linux-mips.org, tglx@linutronix.de, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------030909000609080900040506
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-
-Gerd Hoffmann wrote:
-
-> Patch attached for comments (builds, but otherwise not tested yet).
-
-New patch, updates compat_sys_writev() which was incomplete in the
-previous version.  Now tested on x86_64, both 32 and 64-bit binaries.
-
-cheers,
-  Gerd
 
 
---------------030909000609080900040506
-Content-Type: text/plain;
- name="0001-preadv-pwritev-tweak-interface.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="0001-preadv-pwritev-tweak-interface.patch"
+On Fri, 3 Apr 2009, Gerd Hoffmann wrote:
 
->From fc35c3cee3c3f821c39359fa6b33198d1a0219e6 Mon Sep 17 00:00:00 2001
-From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Date: Fri, 3 Apr 2009 11:08:00 +0200
-Subject: [PATCH] preadv/pwritev: tweak interface.
+> Linus Torvalds wrote:
+> > 
+> > How married are people to this crazy 2x "32 bits" model?
+> 
+> The tricky corner case are 32bit compat syscalls on 64bit kernel, where
+> a noticable number of archs (IIRC at least ppc, mips and s390) can't
+> pass unaligned 64bit values through the syscall abi.  The 32/32 split
+> was done because of that.
 
-Go from "u32" to "unsigned long" for the pos_{high,low} syscall
-arguments.  That way we avoid the 32/32 split for 64bit archs,
-and we still side-step the ABI issue with unaligned 64bit args
-on a number of 32bit archs.  pos_high on 64bit is unused for
-the time being. Some day we might be happy to have it though ;)
+I really think that the 32-bit interfaces are fine. So I'm literally 
+suggesting a patch something like the appended.
 
-Signed-off-by: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Some notes:
+
+ - I changed the order to "low first". Why? Because when we have it like 
+   this, the 64-bit system calls now don't use the "pos_high" argument at 
+   all, and it makes more sense for the native system call to simply match 
+   the user-mode prototype.
+
+   But I don't much _care_ about this particular change. I just made it 
+   because it seems more logical to me, and if we're changing the order 
+   anyway..
+
+ - I checked the resulting assembly code. At least on x86-64, gcc is 
+   indeed smart enough to convert the "shift by half twice" into just a 
+   zero, and I get the following code:
+
+        testq   %rcx, %rcx      # pos_l
+        js      .L122   #,
+        movq    %rcx, -48(%rbp) # pos_l, pos
+
+   which is from the C source
+
+        loff_t pos = pos_from_hilo(pos_h, pos_l);
+	...
+        if (pos < 0)
+                return -EINVAL;
+
+   and the 'pos_h' register isn't even touched. So this does indeed 
+   improve code generation. 
+
+ - It _used_ to generate code like
+
+        mov     %r8d, %r8d      # pos_low, pos_low
+        salq    $32, %rcx       #, tmp71
+        movq    %r8, %rax       # pos_low, pos.386
+        orq     %rcx, %rax      # tmp71, pos.386
+        js      .L122   #,
+        movq    %rax, -48(%rbp) # pos.386, pos
+
+   which isn't _that_ horrible, but I just think the new thing is more 
+   sensible. Does it really matter? Probably not. 
+
+(In both code sequences, the actual code had other instructions 
+interspersed, so the above code-sequences are just me manually picking out 
+the relevant instructions. Maybe I did something wrong).
+
+So I'm not going to commit the suggested patch, but I just personally 
+think it makes more sense that way.
+
+Note: in all cases the user code wrapper can again be the same. You can 
+just do
+
+	#define HALF_BITS (sizeof(unsigned long)*4)
+	__syscall(PWRITEV, fd, iov, count, offset, (offset >> HALF_BITS) >> HALF_BITS);
+
+or something like that (and passing in a zero for the last argument is a 
+good idea, even if nobody will ever care - this will be the _least_ of our 
+problems if we ever do 128-bit loff_t). So the user call wrapper isn't 
+really any more complicated - the HALF_BITS thing may look more 
+complicated than just doing a hard-coded '16' there twice, but if you 
+understand what it's doing it's actually more logical.
+
+I think.
+
+Comments?
+
+			Linus
+
 ---
- fs/compat.c              |    8 ++++----
- fs/read_write.c          |   12 ++++++++----
+ fs/compat.c              |    4 ++--
+ fs/read_write.c          |   14 ++++++++++----
  include/linux/compat.h   |    4 ++--
  include/linux/syscalls.h |    4 ++--
- 4 files changed, 16 insertions(+), 12 deletions(-)
+ 4 files changed, 16 insertions(+), 10 deletions(-)
 
 diff --git a/fs/compat.c b/fs/compat.c
-index 1c859da..17e1dd1 100644
+index 1c859da..3f84d5f 100644
 --- a/fs/compat.c
 +++ b/fs/compat.c
-@@ -1236,9 +1236,9 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec,
+@@ -1236,7 +1236,7 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec,
  
  asmlinkage ssize_t
  compat_sys_preadv(unsigned long fd, const struct compat_iovec __user *vec,
 -		  unsigned long vlen, u32 pos_high, u32 pos_low)
-+		  unsigned long vlen, unsigned long pos_high, unsigned long pos_low)
++		  unsigned long vlen, u32 pos_low, u32 pos_high)
  {
--	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	loff_t pos = ((loff_t)pos_high << BITS_PER_COMPAT_LONG) | pos_low;
+ 	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
  	struct file *file;
- 	int fput_needed;
- 	ssize_t ret;
-@@ -1293,9 +1293,9 @@ compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec,
+@@ -1293,7 +1293,7 @@ compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec,
  
  asmlinkage ssize_t
  compat_sys_pwritev(unsigned long fd, const struct compat_iovec __user *vec,
 -		   unsigned long vlen, u32 pos_high, u32 pos_low)
-+		   unsigned long vlen, unsigned long pos_high, unsigned long pos_low)
++		   unsigned long vlen, u32 pos_low, u32 pos_high)
  {
--	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	loff_t pos = ((loff_t)pos_high << BITS_PER_COMPAT_LONG) | pos_low;
+ 	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
  	struct file *file;
- 	int fput_needed;
- 	ssize_t ret;
 diff --git a/fs/read_write.c b/fs/read_write.c
-index 6d5d8ff..8201e60 100644
+index 6d5d8ff..9ac8b6f 100644
 --- a/fs/read_write.c
 +++ b/fs/read_write.c
-@@ -731,10 +731,14 @@ SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
+@@ -731,10 +731,16 @@ SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
  	return ret;
  }
  
-+#define HALF_LONG (BITS_PER_LONG / 2)
++static inline loff_t pos_from_hilo(unsigned long high, unsigned long low)
++{
++#define HALF_LONG_BITS (BITS_PER_LONG / 2)
++	return ((high << HALF_LONG_BITS) << HALF_LONG_BITS) | low;
++}
 +
  SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
 -		unsigned long, vlen, u32, pos_high, u32, pos_low)
-+		unsigned long, vlen, unsigned long, pos_high, unsigned long, pos_low)
++		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h)
  {
 -	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	/* gcc optimizes away the shifts for
-+	 * sizeof(pos_high) == sizeof(pos), i.e. on 64bit archs */
-+	loff_t pos = (((loff_t)pos_high << HALF_LONG) << HALF_LONG) | pos_low;
++	loff_t pos = pos_from_hilo(pos_h, pos_l);
  	struct file *file;
  	ssize_t ret = -EBADF;
  	int fput_needed;
-@@ -757,9 +761,9 @@ SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
+@@ -757,9 +763,9 @@ SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
  }
  
  SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
 -		unsigned long, vlen, u32, pos_high, u32, pos_low)
-+		unsigned long, vlen, unsigned long, pos_high, unsigned long, pos_low)
++		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h)
  {
 -	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
-+	loff_t pos = (((loff_t)pos_high << HALF_LONG) << HALF_LONG) | pos_low;
++	loff_t pos = pos_from_hilo(pos_h, pos_l);
  	struct file *file;
  	ssize_t ret = -EBADF;
  	int fput_needed;
 diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 9723edd..f4b607e 100644
+index 9723edd..f2ded21 100644
 --- a/include/linux/compat.h
 +++ b/include/linux/compat.h
 @@ -193,10 +193,10 @@ asmlinkage ssize_t compat_sys_writev(unsigned long fd,
@@ -126,16 +169,16 @@ index 9723edd..f4b607e 100644
  asmlinkage ssize_t compat_sys_preadv(unsigned long fd,
  		const struct compat_iovec __user *vec,
 -		unsigned long vlen, u32 pos_high, u32 pos_low);
-+		unsigned long vlen, unsigned long pos_high, unsigned long pos_low);
++		unsigned long vlen, u32 pos_low, u32 pos_high);
  asmlinkage ssize_t compat_sys_pwritev(unsigned long fd,
  		const struct compat_iovec __user *vec,
 -		unsigned long vlen, u32 pos_high, u32 pos_low);
-+		unsigned long vlen, unsigned long pos_high, unsigned long pos_low);
++		unsigned long vlen, u32 pos_low, u32 pos_high);
  
  int compat_do_execve(char * filename, compat_uptr_t __user *argv,
  	        compat_uptr_t __user *envp, struct pt_regs * regs);
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index b299a82..25e60b0 100644
+index b299a82..18771ca 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
 @@ -462,9 +462,9 @@ asmlinkage long sys_pread64(unsigned int fd, char __user *buf,
@@ -143,19 +186,10 @@ index b299a82..25e60b0 100644
  			     size_t count, loff_t pos);
  asmlinkage long sys_preadv(unsigned long fd, const struct iovec __user *vec,
 -			   unsigned long vlen, u32 pos_high, u32 pos_low);
-+			   unsigned long vlen, unsigned long pos_high, unsigned long pos_low);
++			   unsigned long vlen, unsigned long pos_l, unsigned long pos_h);
  asmlinkage long sys_pwritev(unsigned long fd, const struct iovec __user *vec,
 -			    unsigned long vlen, u32 pos_high, u32 pos_low);
-+			    unsigned long vlen, unsigned long pos_high, unsigned long pos_low);
++			    unsigned long vlen, unsigned long pos_l, unsigned long pos_h);
  asmlinkage long sys_getcwd(char __user *buf, unsigned long size);
  asmlinkage long sys_mkdir(const char __user *pathname, int mode);
  asmlinkage long sys_chdir(const char __user *filename);
--- 
-1.6.1.3
-
-
---------------030909000609080900040506--
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
