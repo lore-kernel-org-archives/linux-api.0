@@ -1,52 +1,44 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
+From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [patch 143/166] preadv/pwritev: Add preadv and pwritev system
  calls.
-Date: Fri, 03 Apr 2009 11:25:29 +0200
-Message-ID: <49D5D609.7030400@redhat.com>
-References: <200904022359.n32NxNYu022834@imap1.linux-foundation.org> <alpine.LFD.2.00.0904021839390.15441@localhost.localdomain> <49D5CA58.20908@redhat.com>
+Date: Fri, 03 Apr 2009 13:53:16 +0200
+Message-ID: <49D5F8AC.6040608@redhat.com>
+References: <200904022359.n32NxNYu022834@imap1.linux-foundation.org> <alpine.LFD.2.00.0904021839390.15441@localhost.localdomain> <49D5CA58.20908@redhat.com> <49D5D609.7030400@redhat.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
- boundary="------------020901030605070604070809"
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <49D5CA58.20908@redhat.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, arnd@arndb.de, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, Ingo Molnar <mingo@elte.hu>, ralf@linux-mips.org, tglx@linutronix.de, Al Viro <viro@zeniv.linux.org.uk>
+ boundary="------------030909000609080900040506"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <49D5D609.7030400-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 This is a multi-part message in MIME format.
---------------020901030605070604070809
+--------------030909000609080900040506
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 
 Gerd Hoffmann wrote:
->> How married are people to this crazy 2x "32 bits" model?
-> 
-> The tricky corner case are 32bit compat syscalls on 64bit kernel, where
-> a noticable number of archs (IIRC at least ppc, mips and s390) can't
-> pass unaligned 64bit values through the syscall abi.  The 32/32 split
-> was done because of that.
-> 
-> I think using two unsigned longs instead of two u32 should work.  And
-> allows us to handle 128bit file offsets on 64bit.  That I'll call
-> future-proof interface!  Nevertheless I'd like to have comments from the
-> arch maintainers on the idea.
 
-Patch attached for comments (builds, but otherwise not tested yet).
+> Patch attached for comments (builds, but otherwise not tested yet).
+
+New patch, updates compat_sys_writev() which was incomplete in the
+previous version.  Now tested on x86_64, both 32 and 64-bit binaries.
 
 cheers,
   Gerd
 
 
---------------020901030605070604070809
+--------------030909000609080900040506
 Content-Type: text/plain;
  name="0001-preadv-pwritev-tweak-interface.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
  filename="0001-preadv-pwritev-tweak-interface.patch"
 
->From 83ba4d31b29e931c08da1570bb47a2defef353fe Mon Sep 17 00:00:00 2001
-From: Gerd Hoffmann <kraxel@redhat.com>
+>From fc35c3cee3c3f821c39359fa6b33198d1a0219e6 Mon Sep 17 00:00:00 2001
+From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Date: Fri, 3 Apr 2009 11:08:00 +0200
 Subject: [PATCH] preadv/pwritev: tweak interface.
 
@@ -56,16 +48,16 @@ and we still side-step the ABI issue with unaligned 64bit args
 on a number of 32bit archs.  pos_high on 64bit is unused for
 the time being. Some day we might be happy to have it though ;)
 
-Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Signed-off-by: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/compat.c              |    6 +++---
+ fs/compat.c              |    8 ++++----
  fs/read_write.c          |   12 ++++++++----
- include/linux/compat.h   |    2 +-
+ include/linux/compat.h   |    4 ++--
  include/linux/syscalls.h |    4 ++--
- 4 files changed, 14 insertions(+), 10 deletions(-)
+ 4 files changed, 16 insertions(+), 12 deletions(-)
 
 diff --git a/fs/compat.c b/fs/compat.c
-index 1c859da..053f843 100644
+index 1c859da..17e1dd1 100644
 --- a/fs/compat.c
 +++ b/fs/compat.c
 @@ -1236,9 +1236,9 @@ compat_sys_readv(unsigned long fd, const struct compat_iovec __user *vec,
@@ -80,9 +72,12 @@ index 1c859da..053f843 100644
  	struct file *file;
  	int fput_needed;
  	ssize_t ret;
-@@ -1295,7 +1295,7 @@ asmlinkage ssize_t
+@@ -1293,9 +1293,9 @@ compat_sys_writev(unsigned long fd, const struct compat_iovec __user *vec,
+ 
+ asmlinkage ssize_t
  compat_sys_pwritev(unsigned long fd, const struct compat_iovec __user *vec,
- 		   unsigned long vlen, u32 pos_high, u32 pos_low)
+-		   unsigned long vlen, u32 pos_high, u32 pos_low)
++		   unsigned long vlen, unsigned long pos_high, unsigned long pos_low)
  {
 -	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
 +	loff_t pos = ((loff_t)pos_high << BITS_PER_COMPAT_LONG) | pos_low;
@@ -123,10 +118,10 @@ index 6d5d8ff..8201e60 100644
  	ssize_t ret = -EBADF;
  	int fput_needed;
 diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 9723edd..065944e 100644
+index 9723edd..f4b607e 100644
 --- a/include/linux/compat.h
 +++ b/include/linux/compat.h
-@@ -193,7 +193,7 @@ asmlinkage ssize_t compat_sys_writev(unsigned long fd,
+@@ -193,10 +193,10 @@ asmlinkage ssize_t compat_sys_writev(unsigned long fd,
  		const struct compat_iovec __user *vec, unsigned long vlen);
  asmlinkage ssize_t compat_sys_preadv(unsigned long fd,
  		const struct compat_iovec __user *vec,
@@ -134,7 +129,11 @@ index 9723edd..065944e 100644
 +		unsigned long vlen, unsigned long pos_high, unsigned long pos_low);
  asmlinkage ssize_t compat_sys_pwritev(unsigned long fd,
  		const struct compat_iovec __user *vec,
- 		unsigned long vlen, u32 pos_high, u32 pos_low);
+-		unsigned long vlen, u32 pos_high, u32 pos_low);
++		unsigned long vlen, unsigned long pos_high, unsigned long pos_low);
+ 
+ int compat_do_execve(char * filename, compat_uptr_t __user *argv,
+ 	        compat_uptr_t __user *envp, struct pt_regs * regs);
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
 index b299a82..25e60b0 100644
 --- a/include/linux/syscalls.h
@@ -155,4 +154,8 @@ index b299a82..25e60b0 100644
 1.6.1.3
 
 
---------------020901030605070604070809--
+--------------030909000609080900040506--
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
