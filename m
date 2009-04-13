@@ -1,42 +1,27 @@
-From: Valdis.Kletnieks@vt.edu
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Subject: Re: [PATCH] add some long-missing capabilities to fs_mask
-Date: Mon, 13 Apr 2009 17:03:28 -0400
-Message-ID: <13502.1239656608@turing-police.cc.vt.edu>
-References: <20090413145614.GA15342@us.ibm.com>
+Date: Mon, 13 Apr 2009 14:33:44 -0700 (PDT)
+Message-ID: <alpine.LFD.2.00.0904131433270.26713@localhost.localdomain>
+References: <20090413145614.GA15342@us.ibm.com> <13502.1239656608@turing-police.cc.vt.edu>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="==_Exmh_1239656608_7306P";
-	 micalg=pgp-sha1; protocol="application/pgp-signature"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: Your message of "Mon, 13 Apr 2009 09:56:14 CDT."
-             <20090413145614.GA15342@us.ibm.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serue@us.ibm.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, mtk.manpages@gmail.com, Stephen Smalley <sds@epoch.ncsc.mil>, Andrew Morgan <morgan@kernel.org>, linux-security-module@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, Igor Zhbanov <izh1979@gmail.com>, "J. Bruce Fields" <bfields@citi.umich.edu>, stable@kernel.org, linux-api@vger.kernel.org, Chris Wright <chrisw@sous-sol.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <13502.1239656608-+bZmOdGhbsPr6rcHtW+onFJE71vCis6O@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Valdis.Kletnieks-PjAqaU27lzQ@public.gmane.org
+Cc: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Stephen Smalley <sds-FVV4AS6k8l2W8mdqIt43Ew@public.gmane.org>, Andrew Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Igor Zhbanov <izh1979-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "J. Bruce Fields" <bfields-vtMw8L3fJ9vSiEDVxGk4TQ@public.gmane.org>, stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Wright <chrisw-69jw2NvuJkxg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---==_Exmh_1239656608_7306P
-Content-Type: text/plain; charset=us-ascii
 
-On Mon, 13 Apr 2009 09:56:14 CDT, "Serge E. Hallyn" said:
-> When POSIX capabilities were introduced during the 2.1 Linux
-> cycle, the fs mask, which represents the capabilities which having
-> fsuid==0 is supposed to grant, did not include CAP_MKNOD and
-> CAP_LINUX_IMMUTABLE.  However, before capabilities the privilege
-> to call these did in fact depend upon fsuid==0.
 
-Wow. How did this manage to stay un-noticed for this long?
+On Mon, 13 Apr 2009, Valdis.Kletnieks-PjAqaU27lzQ@public.gmane.org wrote:
+> 
+> Wow. How did this manage to stay un-noticed for this long?
 
---==_Exmh_1239656608_7306P
-Content-Type: application/pgp-signature
+Because nobody uses capabilities?
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFJ46igcC3lWbTT17ARApmsAJ9uMHtKObtUKhn0nQ7P/Sc4pEp95wCcCgOf
-Yzh1kFYnnKnsev2Lw/btpDU=
-=gxka
------END PGP SIGNATURE-----
-
---==_Exmh_1239656608_7306P--
+		Linus
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
