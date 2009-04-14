@@ -1,25 +1,55 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
+From: Jeff Moyer <jmoyer@redhat.com>
 Subject: Re: [RFC][PATCH v3 4/6] aio: Don't inherit aio ring memory at fork
-Date: Tue, 14 Apr 2009 15:41:09 +0200
-Message-ID: <20090414134109.GD28265@random.random>
-References: <20090414151204.C647.A69D9226@jp.fujitsu.com> <20090414151924.C653.A69D9226@jp.fujitsu.com>
+Date: Tue, 14 Apr 2009 12:01:50 -0400
+Message-ID: <x49iql7z0k1.fsf@segfault.boston.devel.redhat.com>
+References: <20090414151204.C647.A69D9226@jp.fujitsu.com>
+	<20090414151924.C653.A69D9226@jp.fujitsu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20090414151924.C653.A69D9226@jp.fujitsu.com>
+In-Reply-To: <20090414151924.C653.A69D9226@jp.fujitsu.com> (KOSAKI Motohiro's
+	message of "Tue, 14 Apr 2009 15:20:20 +0900 (JST)")
 Sender: owner-linux-mm@kvack.org
 To: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Zach Brown <zach.brown@oracle.com>, Jens Axboe <jens.axboe@oracle.com>, linux-api@vger.kernel.org, Linus Torvalds <torvalds@osdl.org>, Andrew Morton <akpm@osdl.org>, Nick Piggin <nickpiggin@yahoo.com.au>, Jeff Moyer <jmoyer@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
+Cc: LKML <linux-kernel@vger.kernel.org>, Zach Brown <zach.brown@oracle.com>, Jens Axboe <jens.axboe@oracle.com>, linux-api@vger.kernel.org, Linus Torvalds <torvalds@osdl.org>, Andrew Morton <akpm@osdl.org>, Nick Piggin <nickpiggin@yahoo.com.au>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 14, 2009 at 03:20:20PM +0900, KOSAKI Motohiro wrote:
-> In addition, This patch has good side effect. it also fix "get_user_pages() vs fork" problem.
+KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com> writes:
 
-Yes, patches like 3/6, 4/6, and 6/6 are the side effect of not fixing
-the core race in gup and spreading the new rwsem around the gup users,
-instead of sticking to a page-granular PG_flag touched at the same
-time atomic_inc runs on page->_count.
+> AIO folks, Am I missing anything?
+>
+> ===============
+> Subject: [RFC][PATCH] aio: Don't inherit aio ring memory at fork
+>
+> Currently, mm_struct::ioctx_list member isn't copyed at fork. IOW aio context don't inherit at fork.
+> but only ring memory inherited. that's strange.
+>
+> This patch mark DONTFORK to ring-memory too.
+
+Well, given that clearly nobody relies on io contexts being copied to
+the child, I think it's okay to make this change.  I think the current
+behaviour violates the principal of least surprise, but I'm having a
+hard time getting upset about that.  ;)
+
+> In addition, This patch has good side effect. it also fix
+> "get_user_pages() vs fork" problem.
+
+Hmm, I don't follow you, here.  As I understand it, the get_user_pages
+vs. fork problem has to do with the pages used for the actual I/O, not
+the pages used to store the completion data.  So, could you elaborate a
+bit on what you mean by the above statement?
+
+> I think "man fork" also sould be changed. it only say
+>
+>        *  The child does not inherit outstanding asynchronous I/O operations from
+>           its parent (aio_read(3), aio_write(3)).
+> but aio_context_t (return value of io_setup(2)) also don't inherit in current implementaion.
+
+I can certainly make that change, as I have other changes I need to push
+to Michael, anyway.
+
+Cheers,
+Jeff
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
