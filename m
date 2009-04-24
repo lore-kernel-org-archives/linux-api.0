@@ -1,7 +1,7 @@
-From: "Tilda Sewell" <cuo-YRMuQLZanst8vh58DwaUug@public.gmane.org>
-Subject: Feel the different life with enhancers
-Date: Sat, 18 Apr 2009 11:57:49 -0300
-Message-ID: <20090418115749.7060302@vision.zeiss.org>
+From: "Susan Faulkner" <turktelekomhadimkoy-Gq91CrxHrbzY0TyS/+Ba5Q@public.gmane.org>
+Subject: The world's most advanced sms reading program
+Date: Fri, 24 Apr 2009 04:26:52 +0200
+Message-ID: <20090424042652.8010408@babymantra.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
@@ -10,7 +10,8 @@ Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Control ur intimate life http://aoui.yskifgoki.com/
+Do you want to know if your partner is unfaithful? 
+http://fuuo.freesmsfrance.com/
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
