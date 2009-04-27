@@ -1,7 +1,7 @@
 From: <arnd-r2nGTMty4D4@public.gmane.org>
 Subject: (unknown)
 Date: Mon, 27 Apr 2009 10:42:00 -0400
-Message-ID: <20090427143737.417779214__18751.898330129$1240843437$gmane$org@arndb.de>
+Message-ID: <20090427143736.739525755@arndb.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
@@ -9,7 +9,7 @@ List-Id: linux-api@vger.kernel.org
 >From arnd-r2nGTMty4D4@public.gmane.org Mon Apr 27 16:28:40 2009
 References: <20090427142010.587518220-r2nGTMty4D4@public.gmane.org>
 User-Agent: quilt/0.46-1
-Date: Mon, 27 Apr 2009 16:20:15 +0200
+Date: Mon, 27 Apr 2009 16:20:11 +0200
 From: arnd-r2nGTMty4D4@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org,
@@ -19,103 +19,96 @@ Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org,
  liqin.chen-+XGAvkf1AAHby3iVrkZq2A@public.gmane.org,
  Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>,
  Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Subject: [RFC 05/17] asm-generic: add complete termios.h
-Content-Disposition: inline; filename=add-generic-termios-h.patch
-X-Provags-ID: V01U2FsdGVkX1843JWJKO1J3mO+QAC4k//5T+uyefOPaJT3QS0
- JXWnoALYmSO+jdZwxzpHNuXXmHf5eMX8pWSNKiyav9JTY1JI8U
- L13xq9UgAJ25BKhTIFKBw==
+Subject: [RFC 01/17] asm-generic: rename termios.h to termios-base.h
+Content-Disposition: inline; filename=0001-asm-generic-add-complete-termios.h.patch
+X-Provags-ID: V01U2FsdGVkX1/xu4vJssORo5JEwJmCN0zaKrLACm0pXgcgS8L
+ nEdWOCrcNmDlQGMPLb2pcu4w/QxDwJ8yUkFlayzHvuBS0VbefM
+ dtqNTnEx2sYlQA9QUc7pA==
 
-On most architectures, asm/termios.h is a straight copy from the x86
-version. This adds a cleaned up copy of that version so that
-everybody can migrate to the common copy.
-
-The existing asm-generic/termios.h was an incomplete file and
-missing some bug fixes that went into a few of the architectures.
+The existing asm-generic/termios.h file only contains a part
+of the required termios.h contents. This renames it to termios-base.h
+and changes all users, so we can add a full termios.h file for
+new archtitectures.
 
 Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 Signed-off-by: Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
 ---
- include/asm-generic/Kbuild    |    1 	1 +	0 -	0 !
- include/asm-generic/termios.h |  154 	154 +	0 -	0 !
- 2 files changed, 155 insertions(+)
+ arch/avr32/include/asm/termios.h      |    2 	1 +	1 -	0 !
+ arch/frv/include/asm/termios.h        |    2 	1 +	1 -	0 !
+ arch/microblaze/include/asm/termios.h |    2 	1 +	1 -	0 !
+ arch/powerpc/include/asm/termios.h    |    2 	1 +	1 -	0 !
+ arch/s390/include/asm/termios.h       |    2 	1 +	1 -	0 !
+ include/asm-generic/termios-base.h    |   77 	77 +	0 -	0 !
+ include/asm-generic/termios.h         |   77 	0 +	77 -	0 !
+ 7 files changed, 82 insertions(+), 82 deletions(-)
  create mode 100644 include/asm-generic/termios-base.h
 
-Index: linux-2.6/include/asm-generic/Kbuild
+Index: linux-2.6/arch/avr32/include/asm/termios.h
 ===================================================================
---- linux-2.6.orig/include/asm-generic/Kbuild
-+++ linux-2.6/include/asm-generic/Kbuild
-@@ -6,6 +6,7 @@ header-y += mman-common.h
- header-y += poll.h
- header-y += signal-defs.h
- header-y += statfs.h
-+header-y += termios.h
+--- linux-2.6.orig/arch/avr32/include/asm/termios.h
++++ linux-2.6/arch/avr32/include/asm/termios.h
+@@ -55,7 +55,7 @@ struct termio {
+ */
+ #define INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
  
- unifdef-y += int-l64.h
- unifdef-y += int-ll64.h
-Index: linux-2.6/include/asm-generic/termios.h
+-#include <asm-generic/termios.h>
++#include <asm-generic/termios-base.h>
+ 
+ #endif	/* __KERNEL__ */
+ 
+Index: linux-2.6/arch/frv/include/asm/termios.h
+===================================================================
+--- linux-2.6.orig/arch/frv/include/asm/termios.h
++++ linux-2.6/arch/frv/include/asm/termios.h
+@@ -52,7 +52,7 @@ struct termio {
+ /* ioctl (fd, TIOCSERGETLSR, &result) where result may be as below */
+ 
+ #ifdef __KERNEL__
+-#include <asm-generic/termios.h>
++#include <asm-generic/termios-base.h>
+ #endif
+ 
+ #endif /* _ASM_TERMIOS_H */
+Index: linux-2.6/arch/powerpc/include/asm/termios.h
+===================================================================
+--- linux-2.6.orig/arch/powerpc/include/asm/termios.h
++++ linux-2.6/arch/powerpc/include/asm/termios.h
+@@ -78,7 +78,7 @@ struct termio {
+ 
+ #ifdef __KERNEL__
+ 
+-#include <asm-generic/termios.h>
++#include <asm-generic/termios-base.h>
+ 
+ #endif	/* __KERNEL__ */
+ 
+Index: linux-2.6/arch/s390/include/asm/termios.h
+===================================================================
+--- linux-2.6.orig/arch/s390/include/asm/termios.h
++++ linux-2.6/arch/s390/include/asm/termios.h
+@@ -60,7 +60,7 @@ struct termio {
+ #define user_termios_to_kernel_termios(k, u) copy_from_user(k, u, sizeof(struct termios2))
+ #define kernel_termios_to_user_termios(u, k) copy_to_user(u, k, sizeof(struct termios2))
+ 
+-#include <asm-generic/termios.h>
++#include <asm-generic/termios-base.h>
+ 
+ #endif	/* __KERNEL__ */
+ 
+Index: linux-2.6/include/asm-generic/termios-base.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6/include/asm-generic/termios.h
-@@ -0,0 +1,154 @@
-+#ifndef _ASM_GENERIC_TERMIOS_H
-+#define _ASM_GENERIC_TERMIOS_H
-+/*
-+ * Most architectures have straight copies of the x86 code, with
-+ * varying levels of bug fixes on top. Usually it's a good idea
-+ * to use this generic version instead, but be careful to avoid
-+ * ABI changes.
-+ * New architectures should not provide their own version.
++++ linux-2.6/include/asm-generic/termios-base.h
+@@ -0,0 +1,77 @@
++/* termios.h: generic termios/termio user copying/translation
 + */
 +
-+#include <asm/termbits.h>
-+#include <asm/ioctls.h>
-+
-+struct winsize {
-+	unsigned short ws_row;
-+	unsigned short ws_col;
-+	unsigned short ws_xpixel;
-+	unsigned short ws_ypixel;
-+};
-+
-+#define NCC 8
-+struct termio {
-+	unsigned short c_iflag;		/* input mode flags */
-+	unsigned short c_oflag;		/* output mode flags */
-+	unsigned short c_cflag;		/* control mode flags */
-+	unsigned short c_lflag;		/* local mode flags */
-+	unsigned char c_line;		/* line discipline */
-+	unsigned char c_cc[NCC];	/* control characters */
-+};
-+
-+/* modem lines */
-+#define TIOCM_LE	0x001
-+#define TIOCM_DTR	0x002
-+#define TIOCM_RTS	0x004
-+#define TIOCM_ST	0x008
-+#define TIOCM_SR	0x010
-+#define TIOCM_CTS	0x020
-+#define TIOCM_CAR	0x040
-+#define TIOCM_RNG	0x080
-+#define TIOCM_DSR	0x100
-+#define TIOCM_CD	TIOCM_CAR
-+#define TIOCM_RI	TIOCM_RNG
-+#define TIOCM_OUT1	0x2000
-+#define TIOCM_OUT2	0x4000
-+#define TIOCM_LOOP	0x8000
-+
-+/* ioctl (fd, TIOCSERGETLSR, &result) where result may be as below */
-+
-+#ifdef __KERNEL__
++#ifndef _ASM_GENERIC_TERMIOS_BASE_H
++#define _ASM_GENERIC_TERMIOS_BASE_H
 +
 +#include <asm/uaccess.h>
 +
-+/*	intr=^C		quit=^\		erase=del	kill=^U
-+	eof=^D		vtime=\0	vmin=\1		sxtc=\0
-+	start=^Q	stop=^S		susp=^Z		eol=\0
-+	reprint=^R	discard=^U	werase=^W	lnext=^V
-+	eol2=\0
-+*/
-+#define INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
++#ifndef __ARCH_TERMIO_GETPUT
 +
 +/*
 + * Translate a "termio" structure into a "termios". Ugh.
@@ -170,47 +163,115 @@ Index: linux-2.6/include/asm-generic/termios.h
 +	return 0;
 +}
 +
-+#ifdef TCGETS2
-+static inline int user_termios_to_kernel_termios(struct ktermios *k,
-+						 struct termios2 __user *u)
-+{
-+	return copy_from_user(k, u, sizeof(struct termios2));
-+}
++#ifndef user_termios_to_kernel_termios
++#define user_termios_to_kernel_termios(k, u) copy_from_user(k, u, sizeof(struct termios))
++#endif
 +
-+static inline int kernel_termios_to_user_termios(struct termios2 __user *u,
-+						 struct ktermios *k)
-+{
-+	return copy_to_user(u, k, sizeof(struct termios2));
-+}
++#ifndef kernel_termios_to_user_termios
++#define kernel_termios_to_user_termios(u, k) copy_to_user(u, k, sizeof(struct termios))
++#endif
 +
-+static inline int user_termios_to_kernel_termios_1(struct ktermios *k,
-+						   struct termios __user *u)
-+{
-+	return copy_from_user(k, u, sizeof(struct termios));
-+}
++#define user_termios_to_kernel_termios_1(k, u) copy_from_user(k, u, sizeof(struct termios))
++#define kernel_termios_to_user_termios_1(u, k) copy_to_user(u, k, sizeof(struct termios))
 +
-+static inline int kernel_termios_to_user_termios_1(struct termios __user *u,
-+						   struct ktermios *k)
-+{
-+	return copy_to_user(u, k, sizeof(struct termios));
-+}
-+#else /* TCGETS2 */
-+static inline int user_termios_to_kernel_termios(struct ktermios *k,
-+						 struct termios __user *u)
-+{
-+	return copy_from_user(k, u, sizeof(struct termios));
-+}
++#endif	/* __ARCH_TERMIO_GETPUT */
 +
-+static inline int kernel_termios_to_user_termios(struct termios __user *u,
-+						 struct ktermios *k)
-+{
-+	return copy_to_user(u, k, sizeof(struct termios));
-+}
-+#endif /* TCGETS2 */
-+
-+#endif	/* __KERNEL__ */
-+
-+#endif /* _ASM_GENERIC_TERMIOS_H */
++#endif /* _ASM_GENERIC_TERMIOS_BASE_H */
+Index: linux-2.6/include/asm-generic/termios.h
+===================================================================
+--- linux-2.6.orig/include/asm-generic/termios.h
++++ /dev/null
+@@ -1,77 +0,0 @@
+-/* termios.h: generic termios/termio user copying/translation
+- */
+-
+-#ifndef _ASM_GENERIC_TERMIOS_H
+-#define _ASM_GENERIC_TERMIOS_H
+-
+-#include <asm/uaccess.h>
+-
+-#ifndef __ARCH_TERMIO_GETPUT
+-
+-/*
+- * Translate a "termio" structure into a "termios". Ugh.
+- */
+-static inline int user_termio_to_kernel_termios(struct ktermios *termios,
+-						struct termio __user *termio)
+-{
+-	unsigned short tmp;
+-
+-	if (get_user(tmp, &termio->c_iflag) < 0)
+-		goto fault;
+-	termios->c_iflag = (0xffff0000 & termios->c_iflag) | tmp;
+-
+-	if (get_user(tmp, &termio->c_oflag) < 0)
+-		goto fault;
+-	termios->c_oflag = (0xffff0000 & termios->c_oflag) | tmp;
+-
+-	if (get_user(tmp, &termio->c_cflag) < 0)
+-		goto fault;
+-	termios->c_cflag = (0xffff0000 & termios->c_cflag) | tmp;
+-
+-	if (get_user(tmp, &termio->c_lflag) < 0)
+-		goto fault;
+-	termios->c_lflag = (0xffff0000 & termios->c_lflag) | tmp;
+-
+-	if (get_user(termios->c_line, &termio->c_line) < 0)
+-		goto fault;
+-
+-	if (copy_from_user(termios->c_cc, termio->c_cc, NCC) != 0)
+-		goto fault;
+-
+-	return 0;
+-
+- fault:
+-	return -EFAULT;
+-}
+-
+-/*
+- * Translate a "termios" structure into a "termio". Ugh.
+- */
+-static inline int kernel_termios_to_user_termio(struct termio __user *termio,
+-						struct ktermios *termios)
+-{
+-	if (put_user(termios->c_iflag, &termio->c_iflag) < 0 ||
+-	    put_user(termios->c_oflag, &termio->c_oflag) < 0 ||
+-	    put_user(termios->c_cflag, &termio->c_cflag) < 0 ||
+-	    put_user(termios->c_lflag, &termio->c_lflag) < 0 ||
+-	    put_user(termios->c_line,  &termio->c_line) < 0 ||
+-	    copy_to_user(termio->c_cc, termios->c_cc, NCC) != 0)
+-		return -EFAULT;
+-
+-	return 0;
+-}
+-
+-#ifndef user_termios_to_kernel_termios
+-#define user_termios_to_kernel_termios(k, u) copy_from_user(k, u, sizeof(struct termios))
+-#endif
+-
+-#ifndef kernel_termios_to_user_termios
+-#define kernel_termios_to_user_termios(u, k) copy_to_user(u, k, sizeof(struct termios))
+-#endif
+-
+-#define user_termios_to_kernel_termios_1(k, u) copy_from_user(k, u, sizeof(struct termios))
+-#define kernel_termios_to_user_termios_1(u, k) copy_to_user(u, k, sizeof(struct termios))
+-
+-#endif	/* __ARCH_TERMIO_GETPUT */
+-
+-#endif /* _ASM_GENERIC_TERMIOS_H */
+Index: linux-2.6/arch/microblaze/include/asm/termios.h
+===================================================================
+--- linux-2.6.orig/arch/microblaze/include/asm/termios.h
++++ linux-2.6/arch/microblaze/include/asm/termios.h
+@@ -81,7 +81,7 @@ struct termio {
+ 
+ #ifdef __KERNEL__
+ 
+-#include <asm-generic/termios.h>
++#include <asm-generic/termios-base.h>
+ 
+ #endif	/* __KERNEL__ */
+ 
 
 -- 
 
