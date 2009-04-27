@@ -1,271 +1,329 @@
-From: arnd-r2nGTMty4D4@public.gmane.org
-Subject: [RFC 08/17] asm-generic: provide generic sysv ipc headers
-Date: Mon, 27 Apr 2009 17:01:22 +0200
-Message-ID: <20090427150318.542245635@arndb.de>
+From: arnd@arndb.de
+Subject: [RFC 03/17] asm-generic: rename mman.h to mman-common.h
+Date: Mon, 27 Apr 2009 17:01:17 +0200
+Message-ID: <20090427150317.691549787@arndb.de>
 References: <20090427142010.587518220@arndb.de>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline; filename=0004-asm-generic-provide-generic-sysv-ipc-headers.patch
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org, monstr-pSz03upnqPeHXe+LvDLADg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, liqin.chen-+XGAvkf1AAHby3iVrkZq2A@public.gmane.org, Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>, Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0018-asm-generic-make-generic-mman.h-header-generic.patch
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: john.williams@petalogix.com, monstr@monstr.eu, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, liqin.chen@sunplusct.com, Sam Ravnborg <sam@ravnborg.org>, Remis Lima Baima <remis.developer@googlemail.com>
 List-Id: linux-api@vger.kernel.org
 
-The ipc64 data structures were originally meant to
-be architecture specific so that each architecture
-could add their own optimizations for padding.
+The existing asm-generic/mman.h is incomplete and included
+by some architectures. New architectures should be able
+to use a generic version, so rename the existing file and
+change all users, which lets us add the new file.
 
-In the end, most of them just copied the x86 version,
-and most got that wrong. UClibc expects the x86 anyway,
-so we might just declare that the default and get
-rid of the extra copies.
-
-Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Signed-off-by: Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+Signed-off-by: Remis Lima Baima <remis.developer@googlemail.com>
 ---
- include/asm-generic/Kbuild     |    5 	5 +	0 -	0 !
- include/asm-generic/ipcbuf.h   |   33 	33 +	0 -	0 !
- include/asm-generic/msgbuf.h   |   47 	47 +	0 -	0 !
- include/asm-generic/sembuf.h   |   38 	38 +	0 -	0 !
- include/asm-generic/shmbuf.h   |   59 	59 +	0 -	0 !
- include/asm-generic/shmparam.h |    6 	6 +	0 -	0 !
- 6 files changed, 188 insertions(+)
- create mode 100644 include/asm-generic/ipcbuf.h
- create mode 100644 include/asm-generic/msgbuf.h
- create mode 100644 include/asm-generic/sembuf.h
- create mode 100644 include/asm-generic/shmbuf.h
- create mode 100644 include/asm-generic/shmparam.h
+ arch/arm/include/asm/mman.h       |    2 	1 +	1 -	0 !
+ arch/avr32/include/asm/mman.h     |    2 	1 +	1 -	0 !
+ arch/cris/include/asm/mman.h      |    2 	1 +	1 -	0 !
+ arch/frv/include/asm/mman.h       |    2 	1 +	1 -	0 !
+ arch/h8300/include/asm/mman.h     |    2 	1 +	1 -	0 !
+ arch/ia64/include/asm/mman.h      |    2 	1 +	1 -	0 !
+ arch/m32r/include/asm/mman.h      |    2 	1 +	1 -	0 !
+ arch/m68k/include/asm/mman.h      |    2 	1 +	1 -	0 !
+ arch/mn10300/include/asm/mman.h   |    2 	1 +	1 -	0 !
+ arch/powerpc/include/asm/mman.h   |    2 	1 +	1 -	0 !
+ arch/s390/include/asm/mman.h      |    2 	1 +	1 -	0 !
+ arch/sh/include/asm/mman.h        |    2 	1 +	1 -	0 !
+ arch/sparc/include/asm/mman.h     |    2 	1 +	1 -	0 !
+ arch/x86/include/asm/mman.h       |    2 	1 +	1 -	0 !
+ include/asm-generic/Kbuild        |    2 	1 +	1 -	0 !
+ include/asm-generic/mman-common.h |   41 	41 +	0 -	0 !
+ include/asm-generic/mman.h        |   41 	0 +	41 -	0 !
+ 17 files changed, 56 insertions(+), 56 deletions(-)
+ create mode 100644 include/asm-generic/mman-common.h
 
+Index: linux-2.6/arch/arm/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/arm/include/asm/mman.h
++++ linux-2.6/arch/arm/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __ARM_MMAN_H__
+ #define __ARM_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/avr32/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/avr32/include/asm/mman.h
++++ linux-2.6/arch/avr32/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __ASM_AVR32_MMAN_H__
+ #define __ASM_AVR32_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/cris/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/cris/include/asm/mman.h
++++ linux-2.6/arch/cris/include/asm/mman.h
+@@ -3,7 +3,7 @@
+ 
+ /* verbatim copy of asm-i386/ version */
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/frv/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/frv/include/asm/mman.h
++++ linux-2.6/arch/frv/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __ASM_MMAN_H__
+ #define __ASM_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/h8300/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/h8300/include/asm/mman.h
++++ linux-2.6/arch/h8300/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __H8300_MMAN_H__
+ #define __H8300_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/ia64/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/ia64/include/asm/mman.h
++++ linux-2.6/arch/ia64/include/asm/mman.h
+@@ -8,7 +8,7 @@
+  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
+  */
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x00100		/* stack-like segment */
+ #define MAP_GROWSUP	0x00200		/* register stack-like segment */
+Index: linux-2.6/arch/m68k/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/m68k/include/asm/mman.h
++++ linux-2.6/arch/m68k/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __M68K_MMAN_H__
+ #define __M68K_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/mn10300/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/mn10300/include/asm/mman.h
++++ linux-2.6/arch/mn10300/include/asm/mman.h
+@@ -12,7 +12,7 @@
+ #ifndef _ASM_MMAN_H
+ #define _ASM_MMAN_H
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/powerpc/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/powerpc/include/asm/mman.h
++++ linux-2.6/arch/powerpc/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef _ASM_POWERPC_MMAN_H
+ #define _ASM_POWERPC_MMAN_H
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ /*
+  * This program is free software; you can redistribute it and/or
+Index: linux-2.6/arch/s390/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/s390/include/asm/mman.h
++++ linux-2.6/arch/s390/include/asm/mman.h
+@@ -9,7 +9,7 @@
+ #ifndef __S390_MMAN_H__
+ #define __S390_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/sh/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/sh/include/asm/mman.h
++++ linux-2.6/arch/sh/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __ASM_SH_MMAN_H
+ #define __ASM_SH_MMAN_H
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+Index: linux-2.6/arch/sparc/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/sparc/include/asm/mman.h
++++ linux-2.6/arch/sparc/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __SPARC_MMAN_H__
+ #define __SPARC_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ /* SunOS'ified... */
+ 
+Index: linux-2.6/arch/x86/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/x86/include/asm/mman.h
++++ linux-2.6/arch/x86/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef _ASM_X86_MMAN_H
+ #define _ASM_X86_MMAN_H
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_32BIT	0x40		/* only give out 32bit addresses */
+ 
+Index: linux-2.6/include/asm-generic/mman-common.h
+===================================================================
+--- /dev/null
++++ linux-2.6/include/asm-generic/mman-common.h
+@@ -0,0 +1,41 @@
++#ifndef __ASM_GENERIC_MMAN_COMMON_H
++#define __ASM_GENERIC_MMAN_COMMON_H
++
++/*
++ Author: Michael S. Tsirkin <mst@mellanox.co.il>, Mellanox Technologies Ltd.
++ Based on: asm-xxx/mman.h
++*/
++
++#define PROT_READ	0x1		/* page can be read */
++#define PROT_WRITE	0x2		/* page can be written */
++#define PROT_EXEC	0x4		/* page can be executed */
++#define PROT_SEM	0x8		/* page may be used for atomic ops */
++#define PROT_NONE	0x0		/* page can not be accessed */
++#define PROT_GROWSDOWN	0x01000000	/* mprotect flag: extend change to start of growsdown vma */
++#define PROT_GROWSUP	0x02000000	/* mprotect flag: extend change to end of growsup vma */
++
++#define MAP_SHARED	0x01		/* Share changes */
++#define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_TYPE	0x0f		/* Mask for type of mapping */
++#define MAP_FIXED	0x10		/* Interpret addr exactly */
++#define MAP_ANONYMOUS	0x20		/* don't use a file */
++
++#define MS_ASYNC	1		/* sync memory asynchronously */
++#define MS_INVALIDATE	2		/* invalidate the caches */
++#define MS_SYNC		4		/* synchronous memory sync */
++
++#define MADV_NORMAL	0		/* no further special treatment */
++#define MADV_RANDOM	1		/* expect random page references */
++#define MADV_SEQUENTIAL	2		/* expect sequential page references */
++#define MADV_WILLNEED	3		/* will need these pages */
++#define MADV_DONTNEED	4		/* don't need these pages */
++
++/* common parameters: try to keep these consistent across architectures */
++#define MADV_REMOVE	9		/* remove these pages & resources */
++#define MADV_DONTFORK	10		/* don't inherit across fork */
++#define MADV_DOFORK	11		/* do inherit across fork */
++
++/* compatibility flags */
++#define MAP_FILE	0
++
++#endif /* __ASM_GENERIC_MMAN_COMMON_H */
+Index: linux-2.6/include/asm-generic/mman.h
+===================================================================
+--- linux-2.6.orig/include/asm-generic/mman.h
++++ /dev/null
+@@ -1,41 +0,0 @@
+-#ifndef _ASM_GENERIC_MMAN_H
+-#define _ASM_GENERIC_MMAN_H
+-
+-/*
+- Author: Michael S. Tsirkin <mst@mellanox.co.il>, Mellanox Technologies Ltd.
+- Based on: asm-xxx/mman.h
+-*/
+-
+-#define PROT_READ	0x1		/* page can be read */
+-#define PROT_WRITE	0x2		/* page can be written */
+-#define PROT_EXEC	0x4		/* page can be executed */
+-#define PROT_SEM	0x8		/* page may be used for atomic ops */
+-#define PROT_NONE	0x0		/* page can not be accessed */
+-#define PROT_GROWSDOWN	0x01000000	/* mprotect flag: extend change to start of growsdown vma */
+-#define PROT_GROWSUP	0x02000000	/* mprotect flag: extend change to end of growsup vma */
+-
+-#define MAP_SHARED	0x01		/* Share changes */
+-#define MAP_PRIVATE	0x02		/* Changes are private */
+-#define MAP_TYPE	0x0f		/* Mask for type of mapping */
+-#define MAP_FIXED	0x10		/* Interpret addr exactly */
+-#define MAP_ANONYMOUS	0x20		/* don't use a file */
+-
+-#define MS_ASYNC	1		/* sync memory asynchronously */
+-#define MS_INVALIDATE	2		/* invalidate the caches */
+-#define MS_SYNC		4		/* synchronous memory sync */
+-
+-#define MADV_NORMAL	0		/* no further special treatment */
+-#define MADV_RANDOM	1		/* expect random page references */
+-#define MADV_SEQUENTIAL	2		/* expect sequential page references */
+-#define MADV_WILLNEED	3		/* will need these pages */
+-#define MADV_DONTNEED	4		/* don't need these pages */
+-
+-/* common parameters: try to keep these consistent across architectures */
+-#define MADV_REMOVE	9		/* remove these pages & resources */
+-#define MADV_DONTFORK	10		/* don't inherit across fork */
+-#define MADV_DOFORK	11		/* do inherit across fork */
+-
+-/* compatibility flags */
+-#define MAP_FILE	0
+-
+-#endif
+Index: linux-2.6/arch/m32r/include/asm/mman.h
+===================================================================
+--- linux-2.6.orig/arch/m32r/include/asm/mman.h
++++ linux-2.6/arch/m32r/include/asm/mman.h
+@@ -1,7 +1,7 @@
+ #ifndef __M32R_MMAN_H__
+ #define __M32R_MMAN_H__
+ 
+-#include <asm-generic/mman.h>
++#include <asm-generic/mman-common.h>
+ 
+ #define MAP_GROWSDOWN	0x0100		/* stack-like segment */
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
 Index: linux-2.6/include/asm-generic/Kbuild
 ===================================================================
 --- linux-2.6.orig/include/asm-generic/Kbuild
 +++ linux-2.6/include/asm-generic/Kbuild
-@@ -2,9 +2,14 @@ header-y += errno-base.h
+@@ -2,7 +2,7 @@ header-y += errno-base.h
  header-y += errno.h
  header-y += fcntl.h
  header-y += ioctl.h
-+header-y += ipcbuf.h
- header-y += mman-common.h
- header-y += mman.h
-+header-y += msgbuf.h
+-header-y += mman.h
++header-y += mman-common.h
  header-y += poll.h
-+header-y += sembuf.h
-+header-y += shmbuf.h
-+header-y += shmparam.h
  header-y += signal-defs.h
- header-y += signal.h
  header-y += statfs.h
-Index: linux-2.6/include/asm-generic/ipcbuf.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/ipcbuf.h
-@@ -0,0 +1,33 @@
-+#ifndef __ASM_GENERIC_IPCBUF_H
-+#define __ASM_GENERIC_IPCBUF_H
-+
-+/*
-+ * The generic ipc64_perm structure:
-+ * Note extra padding because this structure is passed back and forth
-+ * between kernel and user space.
-+ *
-+ * ipc64_perm was originally meant to be architecture specific, but
-+ * everyone just ended up making identical copies without specific
-+ * optimizations, so we may just as well all use the same one.
-+ *
-+ * Pad space is left for:
-+ * - 32-bit mode_t on architectures that only had 16 bit
-+ * - 32-bit seq
-+ * - 2 miscellaneous 32-bit values
-+ */
-+
-+struct ipc64_perm {
-+	__kernel_key_t		key;
-+	__kernel_uid32_t	uid;
-+	__kernel_gid32_t	gid;
-+	__kernel_uid32_t	cuid;
-+	__kernel_gid32_t	cgid;
-+	__kernel_mode_t		mode;
-+	unsigned short		__pad1;
-+	unsigned short		seq;
-+	unsigned short		__pad2;
-+	unsigned long		__unused1;
-+	unsigned long		__unused2;
-+};
-+
-+#endif /* __ASM_GENERIC_IPCBUF_H */
-Index: linux-2.6/include/asm-generic/msgbuf.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/msgbuf.h
-@@ -0,0 +1,47 @@
-+#ifndef __ASM_GENERIC_MSGBUF_H
-+#define __ASM_GENERIC_MSGBUF_H
-+
-+#include <asm/bitsperlong.h>
-+/*
-+ * generic msqid64_ds structure.
-+ *
-+ * Note extra padding because this structure is passed back and forth
-+ * between kernel and user space.
-+ *
-+ * msqid64_ds was originally meant to be architecture specific, but
-+ * everyone just ended up making identical copies without specific
-+ * optimizations, so we may just as well all use the same one.
-+ *
-+ * 64 bit architectures typically define a 64 bit __kernel_time_t,
-+ * so they do not need the first three padding words.
-+ * On big-endian systems, the padding is in the wrong place.
-+ *
-+ * Pad space is left for:
-+ * - 64-bit time_t to solve y2038 problem
-+ * - 2 miscellaneous 32-bit values
-+ */
-+
-+struct msqid64_ds {
-+	struct ipc64_perm msg_perm;
-+	__kernel_time_t msg_stime;	/* last msgsnd time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long	__unused1;
-+#endif
-+	__kernel_time_t msg_rtime;	/* last msgrcv time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long	__unused2;
-+#endif
-+	__kernel_time_t msg_ctime;	/* last change time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long	__unused3;
-+#endif
-+	unsigned long  msg_cbytes;	/* current number of bytes on queue */
-+	unsigned long  msg_qnum;	/* number of messages in queue */
-+	unsigned long  msg_qbytes;	/* max number of bytes on queue */
-+	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
-+	__kernel_pid_t msg_lrpid;	/* last receive pid */
-+	unsigned long  __unused4;
-+	unsigned long  __unused5;
-+};
-+
-+#endif /* __ASM_GENERIC_MSGBUF_H */
-Index: linux-2.6/include/asm-generic/sembuf.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/sembuf.h
-@@ -0,0 +1,38 @@
-+#ifndef __ASM_GENERIC_SEMBUF_H
-+#define __ASM_GENERIC_SEMBUF_H
-+
-+#include <asm/bitsperlong.h>
-+
-+/*
-+ * The semid64_ds structure for x86 architecture.
-+ * Note extra padding because this structure is passed back and forth
-+ * between kernel and user space.
-+ *
-+ * semid64_ds was originally meant to be architecture specific, but
-+ * everyone just ended up making identical copies without specific
-+ * optimizations, so we may just as well all use the same one.
-+ *
-+ * 64 bit architectures typically define a 64 bit __kernel_time_t,
-+ * so they do not need the first two padding words.
-+ * On big-endian systems, the padding is in the wrong place.
-+ *
-+ * Pad space is left for:
-+ * - 64-bit time_t to solve y2038 problem
-+ * - 2 miscellaneous 32-bit values
-+ */
-+struct semid64_ds {
-+	struct ipc64_perm sem_perm;	/* permissions .. see ipc.h */
-+	__kernel_time_t	sem_otime;	/* last semop time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long	__unused1;
-+#endif
-+	__kernel_time_t	sem_ctime;	/* last change time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long	__unused2;
-+#endif
-+	unsigned long	sem_nsems;	/* no. of semaphores in array */
-+	unsigned long	__unused3;
-+	unsigned long	__unused4;
-+};
-+
-+#endif /* __ASM_GENERIC_SEMBUF_H */
-Index: linux-2.6/include/asm-generic/shmbuf.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/shmbuf.h
-@@ -0,0 +1,59 @@
-+#ifndef __ASM_GENERIC_SHMBUF_H
-+#define __ASM_GENERIC_SHMBUF_H
-+
-+#include <asm/bitsperlong.h>
-+
-+/*
-+ * The shmid64_ds structure for x86 architecture.
-+ * Note extra padding because this structure is passed back and forth
-+ * between kernel and user space.
-+ *
-+ * shmid64_ds was originally meant to be architecture specific, but
-+ * everyone just ended up making identical copies without specific
-+ * optimizations, so we may just as well all use the same one.
-+ *
-+ * 64 bit architectures typically define a 64 bit __kernel_time_t,
-+ * so they do not need the first two padding words.
-+ * On big-endian systems, the padding is in the wrong place.
-+ *
-+ *
-+ * Pad space is left for:
-+ * - 64-bit time_t to solve y2038 problem
-+ * - 2 miscellaneous 32-bit values
-+ */
-+
-+struct shmid64_ds {
-+	struct ipc64_perm	shm_perm;	/* operation perms */
-+	size_t			shm_segsz;	/* size of segment (bytes) */
-+	__kernel_time_t		shm_atime;	/* last attach time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long		__unused1;
-+#endif
-+	__kernel_time_t		shm_dtime;	/* last detach time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long		__unused2;
-+#endif
-+	__kernel_time_t		shm_ctime;	/* last change time */
-+#if __BITS_PER_LONG != 64
-+	unsigned long		__unused3;
-+#endif
-+	__kernel_pid_t		shm_cpid;	/* pid of creator */
-+	__kernel_pid_t		shm_lpid;	/* pid of last operator */
-+	unsigned long		shm_nattch;	/* no. of current attaches */
-+	unsigned long		__unused4;
-+	unsigned long		__unused5;
-+};
-+
-+struct shminfo64 {
-+	unsigned long	shmmax;
-+	unsigned long	shmmin;
-+	unsigned long	shmmni;
-+	unsigned long	shmseg;
-+	unsigned long	shmall;
-+	unsigned long	__unused1;
-+	unsigned long	__unused2;
-+	unsigned long	__unused3;
-+	unsigned long	__unused4;
-+};
-+
-+#endif /* __ASM_GENERIC_SHMBUF_H */
-Index: linux-2.6/include/asm-generic/shmparam.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/shmparam.h
-@@ -0,0 +1,6 @@
-+#ifndef __ASM_GENERIC_SHMPARAM_H
-+#define __ASM_GENERIC_SHMPARAM_H
-+
-+#define SHMLBA PAGE_SIZE	 /* attach addr a multiple of this */
-+
-+#endif /* _ASM_GENERIC_SHMPARAM_H */
 
 -- 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
