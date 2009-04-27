@@ -1,1040 +1,903 @@
 From: arnd@arndb.de
-Subject: [RFC 11/17] asm-generic: add a generic unistd.h
-Date: Mon, 27 Apr 2009 17:01:25 +0200
-Message-ID: <20090427150319.051077918@arndb.de>
+Subject: [RFC 17/17] microblaze: use generic unistd.h syscall list
+Date: Mon, 27 Apr 2009 17:01:31 +0200
+Message-ID: <20090427150320.067644841@arndb.de>
 References: <20090427142010.587518220@arndb.de>
 Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0049-asm-generic-add-a-first-draft-of-the-unistd.h.patch
+Content-Disposition: inline; filename=microblaze-syscalls.patch
 Sender: linux-arch-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: john.williams@petalogix.com, monstr@monstr.eu, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, liqin.chen@sunplusct.com, Sam Ravnborg <sam@ravnborg.org>, Remis Lima Baima <remis.developer@googlemail.com>
 List-Id: linux-api@vger.kernel.org
 
-A new architecture should only define a minimal set of system
-calls while still providing the full functionality. This version
-of unistd.h has gone through intensive review to make sure that
-by default it only enables syscalls that do not already have
-a more featureful replacement.
+This makes use of the generic system call list from
+asm-generic/unistd.h, and uses the same table to
+generate syscall_table.o.
 
-It is modeled after the x86-64 version of unistd.h, which unifies
-the syscall number definition and the actual system call table
-in a single file, in order to keep them synchronized much more
-easily.
-
-This first version still keeps legacy system call definitions
-around, guarded by various #ifdefs, and with numbers larger
-than 1024. The idea behind this is to make it easier for
-new architectures to transition from a full list to the reduced
-set. In particular, the new microblaze architecture that should
-migrate to using the generic ABI headers can at least use an
-existing uClibc source tree without major rewrites during the
-conversion.
+The code is kept in microblaze for now, but could
+easily be moved to kernel/syscall_table.c at a
+later time when more architectures want to share
+it.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/asm-generic/Kbuild   |    1 	1 +	0 -	0 !
- include/asm-generic/unistd.h |  841 	841 +	0 -	0 !
- scripts/checksyscalls.sh     |   92 	89 +	3 -	0 !
- 3 files changed, 931 insertions(+), 3 deletions(-)
- create mode 100644 include/asm-generic/unistd.h
+ arch/microblaze/include/asm/unistd.h   |  426 	9 +	417 -	0 !
+ arch/microblaze/kernel/Makefile        |    2 	1 +	1 -	0 !
+ arch/microblaze/kernel/entry-nommu.S   |   13 	0 +	13 -	0 !
+ arch/microblaze/kernel/syscall_table.S |  367 	0 +	367 -	0 !
+ arch/microblaze/kernel/syscall_table.c |   12 	12 +	0 -	0 !
+ 5 files changed, 22 insertions(+), 798 deletions(-)
 
-Index: linux-2.6/include/asm-generic/unistd.h
+Index: linux-2.6/arch/microblaze/include/asm/unistd.h
+===================================================================
+--- linux-2.6.orig/arch/microblaze/include/asm/unistd.h
++++ linux-2.6/arch/microblaze/include/asm/unistd.h
+@@ -1,423 +1,15 @@
+-/*
+- * Copyright (C) 2007-2008 Michal Simek <monstr@monstr.eu>
+- * Copyright (C) 2006 Atmark Techno, Inc.
+- *
+- * This file is subject to the terms and conditions of the GNU General Public
+- * License. See the file "COPYING" in the main directory of this archive
+- * for more details.
+- */
++#ifndef __MICROBLAZE_UNISTD_H
++#define __MICROBLAZE_UNISTD_H
+ 
+-#ifndef _ASM_MICROBLAZE_UNISTD_H
+-#define _ASM_MICROBLAZE_UNISTD_H
++#define __ARCH_HAVE_MMU
++#define __ARCH_WANT_SYSCALL_NO_AT
++#define __ARCH_WANT_SYSCALL_NOFLAGS
++#define __ARCH_WANT_SYSCALL_OFF_T
++#define __ARCH_WANT_SYSCALL_DEPRECATED
+ 
+-#define __NR_restart_syscall	0 /* ok */
+-#define __NR_exit		1 /* ok */
+-#define __NR_fork		2 /* not for no MMU - weird */
+-#define __NR_read		3 /* ok */
+-#define __NR_write		4 /* ok */
+-#define __NR_open		5 /* openat */
+-#define __NR_close		6 /* ok */
+-#define __NR_waitpid		7 /* waitid */
+-#define __NR_creat		8 /* openat */
+-#define __NR_link		9 /* linkat */
+-#define __NR_unlink		10 /* unlinkat */
+-#define __NR_execve		11 /* ok */
+-#define __NR_chdir		12 /* ok */
+-#define __NR_time		13 /* obsolete -> sys_gettimeofday */
+-#define __NR_mknod		14 /* mknodat */
+-#define __NR_chmod		15 /* fchmodat */
+-#define __NR_lchown		16 /* ok */
+-#define __NR_break		17 /* don't know */
+-#define __NR_oldstat		18 /* remove */
+-#define __NR_lseek		19 /* ok */
+-#define __NR_getpid		20 /* ok */
+-#define __NR_mount		21 /* ok */
+-#define __NR_umount		22 /* ok */  /* use only umount2 */
+-#define __NR_setuid		23 /* ok */
+-#define __NR_getuid		24 /* ok */
+-#define __NR_stime		25 /* obsolete -> sys_settimeofday */
+-#define __NR_ptrace		26 /* ok */
+-#define __NR_alarm		27 /* obsolete -> sys_setitimer */
+-#define __NR_oldfstat		28 /* remove */
+-#define __NR_pause		29 /* obsolete -> sys_rt_sigtimedwait */
+-#define __NR_utime		30 /* obsolete -> sys_utimesat */
+-#define __NR_stty		31 /* remove */
+-#define __NR_gtty		32 /* remove */
+-#define __NR_access		33 /* faccessat */
+-/* can be implemented by sys_setpriority */
+-#define __NR_nice		34
+-#define __NR_ftime		35 /* remove */
+-#define __NR_sync		36 /* ok */
+-#define __NR_kill		37 /* ok */
+-#define __NR_rename		38 /* renameat */
+-#define __NR_mkdir		39 /* mkdirat */
+-#define __NR_rmdir		40 /* unlinkat */
+-#define __NR_dup		41 /* ok */
+-#define __NR_pipe		42 /* ok */
+-#define __NR_times		43 /* ok */
+-#define __NR_prof		44 /* remove */
+-#define __NR_brk		45 /* ok -mmu, nommu specific */
+-#define __NR_setgid		46 /* ok */
+-#define __NR_getgid		47 /* ok */
+-#define __NR_signal		48 /* obsolete -> sys_rt_sigaction */
+-#define __NR_geteuid		49 /* ok */
+-#define __NR_getegid		50 /* ok */
+-#define __NR_acct		51 /* add it and then I can disable it */
+-#define __NR_umount2		52 /* remove */
+-#define __NR_lock		53 /* remove */
+-#define __NR_ioctl		54 /* ok */
+-#define __NR_fcntl		55 /* ok -> 64bit version*/
+-#define __NR_mpx		56 /* remove */
+-#define __NR_setpgid		57 /* ok */
+-#define __NR_ulimit		58 /* remove */
+-#define __NR_oldolduname	59 /* remove */
+-#define __NR_umask		60 /* ok */
+-#define __NR_chroot		61 /* ok */
+-#define __NR_ustat		62 /* obsolete -> statfs64 */
+-#define __NR_dup2		63 /* ok */
+-#define __NR_getppid		64 /* ok */
+-#define __NR_getpgrp		65 /* obsolete -> sys_getpgid */
+-#define __NR_setsid		66 /* ok */
+-#define __NR_sigaction		67 /* obsolete -> rt_sigaction */
+-#define __NR_sgetmask		68 /* obsolete -> sys_rt_sigprocmask */
+-#define __NR_ssetmask		69 /* obsolete ->sys_rt_sigprocmask */
+-#define __NR_setreuid		70 /* ok */
+-#define __NR_setregid		71 /* ok */
+-#define __NR_sigsuspend		72 /* obsolete -> rt_sigsuspend */
+-#define __NR_sigpending		73 /* obsolete -> sys_rt_sigpending */
+-#define __NR_sethostname	74 /* ok */
+-#define __NR_setrlimit		75 /* ok */
+-#define __NR_getrlimit		76 /* ok Back compatible 2G limited rlimit */
+-#define __NR_getrusage		77 /* ok */
+-#define __NR_gettimeofday	78 /* ok */
+-#define __NR_settimeofday	79 /* ok */
+-#define __NR_getgroups		80 /* ok */
+-#define __NR_setgroups		81 /* ok */
+-#define __NR_select		82 /* obsolete -> sys_pselect7 */
+-#define __NR_symlink		83 /* symlinkat */
+-#define __NR_oldlstat		84 /* remove */
+-#define __NR_readlink		85 /* obsolete -> sys_readlinkat */
+-#define __NR_uselib		86 /* remove */
+-#define __NR_swapon		87 /* ok */
+-#define __NR_reboot		88 /* ok */
+-#define __NR_readdir		89 /* remove ? */
+-#define __NR_mmap		90 /* obsolete -> sys_mmap2 */
+-#define __NR_munmap		91 /* ok - mmu and nommu */
+-#define __NR_truncate		92 /* ok or truncate64 */
+-#define __NR_ftruncate		93 /* ok or ftruncate64 */
+-#define __NR_fchmod		94 /* ok */
+-#define __NR_fchown		95 /* ok */
+-#define __NR_getpriority	96 /* ok */
+-#define __NR_setpriority	97 /* ok */
+-#define __NR_profil		98 /* remove */
+-#define __NR_statfs		99 /* ok or statfs64 */
+-#define __NR_fstatfs		100  /* ok or fstatfs64 */
+-#define __NR_ioperm		101 /* remove */
+-#define __NR_socketcall		102 /* remove */
+-#define __NR_syslog		103 /* ok */
+-#define __NR_setitimer		104 /* ok */
+-#define __NR_getitimer		105 /* ok */
+-#define __NR_stat		106 /* remove */
+-#define __NR_lstat		107 /* remove */
+-#define __NR_fstat		108 /* remove */
+-#define __NR_olduname		109 /* remove */
+-#define __NR_iopl		110 /* remove */
+-#define __NR_vhangup		111 /* ok */
+-#define __NR_idle		112 /* remove */
+-#define __NR_vm86old		113 /* remove */
+-#define __NR_wait4		114 /* obsolete -> waitid */
+-#define __NR_swapoff		115 /* ok */
+-#define __NR_sysinfo		116 /* ok */
+-#define __NR_ipc		117 /* remove - direct call */
+-#define __NR_fsync		118 /* ok */
+-#define __NR_sigreturn		119 /* obsolete -> sys_rt_sigreturn */
+-#define __NR_clone		120 /* ok */
+-#define __NR_setdomainname	121 /* ok */
+-#define __NR_uname		122 /* remove */
+-#define __NR_modify_ldt		123 /* remove */
+-#define __NR_adjtimex		124 /* ok */
+-#define __NR_mprotect		125 /* remove */
+-#define __NR_sigprocmask	126 /* obsolete -> sys_rt_sigprocmask */
+-#define __NR_create_module	127 /* remove */
+-#define __NR_init_module	128 /* ok */
+-#define __NR_delete_module	129 /* ok */
+-#define __NR_get_kernel_syms	130 /* remove */
+-#define __NR_quotactl		131 /* ok */
+-#define __NR_getpgid		132 /* ok */
+-#define __NR_fchdir		133 /* ok */
+-#define __NR_bdflush		134 /* remove */
+-#define __NR_sysfs		135 /* needed for busybox */
+-#define __NR_personality	136 /* ok */
+-#define __NR_afs_syscall	137 /* Syscall for Andrew File System */
+-#define __NR_setfsuid		138 /* ok */
+-#define __NR_setfsgid		139 /* ok */
+-#define __NR__llseek		140 /* remove only lseek */
+-#define __NR_getdents		141 /* ok or getdents64 */
+-#define __NR__newselect		142 /* remove */
+-#define __NR_flock		143 /* ok */
+-#define __NR_msync		144 /* remove */
+-#define __NR_readv		145 /* ok */
+-#define __NR_writev		146 /* ok */
+-#define __NR_getsid		147 /* ok */
+-#define __NR_fdatasync		148 /* ok */
+-#define __NR__sysctl		149 /* remove */
+-#define __NR_mlock		150 /* ok - nommu or mmu */
+-#define __NR_munlock		151 /* ok - nommu or mmu */
+-#define __NR_mlockall		152 /* ok - nommu or mmu */
+-#define __NR_munlockall		153 /* ok - nommu or mmu */
+-#define __NR_sched_setparam		154 /* ok */
+-#define __NR_sched_getparam		155 /* ok */
+-#define __NR_sched_setscheduler		156 /* ok */
+-#define __NR_sched_getscheduler		157 /* ok */
+-#define __NR_sched_yield		158 /* ok */
+-#define __NR_sched_get_priority_max	159 /* ok */
+-#define __NR_sched_get_priority_min	160 /* ok */
+-#define __NR_sched_rr_get_interval	161 /* ok */
+-#define __NR_nanosleep		162 /* ok */
+-#define __NR_mremap		163 /* ok - nommu or mmu */
+-#define __NR_setresuid		164 /* ok */
+-#define __NR_getresuid		165 /* ok */
+-#define __NR_vm86		166 /* remove */
+-#define __NR_query_module	167 /* ok */
+-#define __NR_poll		168 /* obsolete -> sys_ppoll */
+-#define __NR_nfsservctl		169 /* ok */
+-#define __NR_setresgid		170 /* ok */
+-#define __NR_getresgid		171 /* ok */
+-#define __NR_prctl		172 /* ok */
+-#define __NR_rt_sigreturn	173 /* ok */
+-#define __NR_rt_sigaction	174 /* ok */
+-#define __NR_rt_sigprocmask	175 /* ok */
+-#define __NR_rt_sigpending	176 /* ok */
+-#define __NR_rt_sigtimedwait	177 /* ok */
+-#define __NR_rt_sigqueueinfo	178 /* ok */
+-#define __NR_rt_sigsuspend	179 /* ok */
+-#define __NR_pread64		180 /* ok */
+-#define __NR_pwrite64		181 /* ok */
+-#define __NR_chown		182 /* obsolete -> fchownat */
+-#define __NR_getcwd		183 /* ok */
+-#define __NR_capget		184 /* ok */
+-#define __NR_capset		185 /* ok */
+-#define __NR_sigaltstack	186 /* remove */
+-#define __NR_sendfile		187 /* ok -> exist 64bit version*/
+-#define __NR_getpmsg		188 /* remove */
+-/* remove - some people actually want streams */
+-#define __NR_putpmsg		189
+-/* for noMMU - group with clone -> maybe remove */
+-#define __NR_vfork		190
+-#define __NR_ugetrlimit		191 /* remove - SuS compliant getrlimit */
+-#define __NR_mmap2		192 /* ok */
+-#define __NR_truncate64		193 /* ok */
+-#define __NR_ftruncate64	194 /* ok */
+-#define __NR_stat64		195 /* remove _ARCH_WANT_STAT64 */
+-#define __NR_lstat64		196 /* remove _ARCH_WANT_STAT64 */
+-#define __NR_fstat64		197 /* remove _ARCH_WANT_STAT64 */
+-#define __NR_lchown32		198 /* ok - without 32 */
+-#define __NR_getuid32		199 /* ok - without 32 */
+-#define __NR_getgid32		200 /* ok - without 32 */
+-#define __NR_geteuid32		201 /* ok - without 32 */
+-#define __NR_getegid32		202 /* ok - without 32 */
+-#define __NR_setreuid32		203 /* ok - without 32 */
+-#define __NR_setregid32		204 /* ok - without 32 */
+-#define __NR_getgroups32	205 /* ok - without 32 */
+-#define __NR_setgroups32	206 /* ok - without 32 */
+-#define __NR_fchown32		207 /* ok - without 32 */
+-#define __NR_setresuid32	208 /* ok - without 32 */
+-#define __NR_getresuid32	209 /* ok - without 32 */
+-#define __NR_setresgid32	210 /* ok - without 32 */
+-#define __NR_getresgid32	211 /* ok - without 32 */
+-#define __NR_chown32		212 /* ok - without 32 -obsolete -> fchownat */
+-#define __NR_setuid32		213 /* ok - without 32 */
+-#define __NR_setgid32		214 /* ok - without 32 */
+-#define __NR_setfsuid32		215 /* ok - without 32 */
+-#define __NR_setfsgid32		216 /* ok - without 32 */
+-#define __NR_pivot_root		217 /* ok */
+-#define __NR_mincore		218 /* ok */
+-#define __NR_madvise		219 /* ok */
+-#define __NR_getdents64		220 /* ok */
+-#define __NR_fcntl64		221 /* ok */
+-/* 223 is unused */
+-#define __NR_gettid		224 /* ok */
+-#define __NR_readahead		225 /* ok */
+-#define __NR_setxattr		226 /* ok */
+-#define __NR_lsetxattr		227 /* ok */
+-#define __NR_fsetxattr		228 /* ok */
+-#define __NR_getxattr		229 /* ok */
+-#define __NR_lgetxattr		230 /* ok */
+-#define __NR_fgetxattr		231 /* ok */
+-#define __NR_listxattr		232 /* ok */
+-#define __NR_llistxattr		233 /* ok */
+-#define __NR_flistxattr		234 /* ok */
+-#define __NR_removexattr	235 /* ok */
+-#define __NR_lremovexattr	236 /* ok */
+-#define __NR_fremovexattr	237 /* ok */
+-#define __NR_tkill		238 /* ok */
+-#define __NR_sendfile64		239 /* ok */
+-#define __NR_futex		240 /* ok */
+-#define __NR_sched_setaffinity	241 /* ok */
+-#define __NR_sched_getaffinity	242 /* ok */
+-#define __NR_set_thread_area	243 /* remove */
+-#define __NR_get_thread_area	244 /* remove */
+-#define __NR_io_setup		245 /* ok */
+-#define __NR_io_destroy		246 /* ok */
+-#define __NR_io_getevents	247 /* ok */
+-#define __NR_io_submit		248 /* ok */
+-#define __NR_io_cancel		249 /* ok */
+-#define __NR_fadvise64		250 /* remove -> sys_fadvise64_64 */
+-/* 251 is available for reuse (was briefly sys_set_zone_reclaim) */
+-#define __NR_exit_group		252 /* ok */
+-#define __NR_lookup_dcookie	253 /* ok */
+-#define __NR_epoll_create	254 /* ok */
+-#define __NR_epoll_ctl		255 /* ok */
+-#define __NR_epoll_wait		256 /* obsolete -> sys_epoll_pwait */
+-#define __NR_remap_file_pages	257 /* only for mmu */
+-#define __NR_set_tid_address	258 /* ok */
+-#define __NR_timer_create	259 /* ok */
+-#define __NR_timer_settime	(__NR_timer_create+1) /* 260 */ /* ok */
+-#define __NR_timer_gettime	(__NR_timer_create+2) /* 261 */ /* ok */
+-#define __NR_timer_getoverrun	(__NR_timer_create+3) /* 262 */ /* ok */
+-#define __NR_timer_delete	(__NR_timer_create+4) /* 263 */ /* ok */
+-#define __NR_clock_settime	(__NR_timer_create+5) /* 264 */ /* ok */
+-#define __NR_clock_gettime	(__NR_timer_create+6) /* 265 */ /* ok */
+-#define __NR_clock_getres	(__NR_timer_create+7) /* 266 */ /* ok */
+-#define __NR_clock_nanosleep	(__NR_timer_create+8) /* 267 */ /* ok */
+-#define __NR_statfs64		268 /* ok */
+-#define __NR_fstatfs64		269 /* ok */
+-#define __NR_tgkill		270 /* ok */
+-#define __NR_utimes		271 /* obsolete -> sys_futimesat */
+-#define __NR_fadvise64_64	272 /* ok */
+-#define __NR_vserver		273 /* ok */
+-#define __NR_mbind		274 /* only for mmu */
+-#define __NR_get_mempolicy	275 /* only for mmu */
+-#define __NR_set_mempolicy	276 /* only for mmu */
+-#define __NR_mq_open		277 /* ok */
+-#define __NR_mq_unlink		(__NR_mq_open+1) /* 278 */ /* ok */
+-#define __NR_mq_timedsend	(__NR_mq_open+2) /* 279 */ /* ok */
+-#define __NR_mq_timedreceive	(__NR_mq_open+3) /* 280 */ /* ok */
+-#define __NR_mq_notify		(__NR_mq_open+4) /* 281 */ /* ok */
+-#define __NR_mq_getsetattr	(__NR_mq_open+5) /* 282 */ /* ok */
+-#define __NR_kexec_load		283 /* ok */
+-#define __NR_waitid		284 /* ok */
+-/* #define __NR_sys_setaltroot	285 */
+-#define __NR_add_key		286 /* ok */
+-#define __NR_request_key	287 /* ok */
+-#define __NR_keyctl		288 /* ok */
+-#define __NR_ioprio_set		289 /* ok */
+-#define __NR_ioprio_get		290 /* ok */
+-#define __NR_inotify_init	291 /* ok */
+-#define __NR_inotify_add_watch	292 /* ok */
+-#define __NR_inotify_rm_watch	293 /* ok */
+-#define __NR_migrate_pages	294 /* mmu */
+-#define __NR_openat		295 /* ok */
+-#define __NR_mkdirat		296 /* ok */
+-#define __NR_mknodat		297 /* ok */
+-#define __NR_fchownat		298 /* ok */
+-#define __NR_futimesat		299 /* obsolete -> sys_utimesat */
+-#define __NR_fstatat64		300 /* stat64 */
+-#define __NR_unlinkat		301 /* ok */
+-#define __NR_renameat		302 /* ok */
+-#define __NR_linkat		303 /* ok */
+-#define __NR_symlinkat		304 /* ok */
+-#define __NR_readlinkat		305 /* ok */
+-#define __NR_fchmodat		306 /* ok */
+-#define __NR_faccessat		307 /* ok */
+-#define __NR_pselect6		308 /* obsolete -> sys_pselect7 */
+-#define __NR_ppoll		309 /* ok */
+-#define __NR_unshare		310 /* ok */
+-#define __NR_set_robust_list	311 /* ok */
+-#define __NR_get_robust_list	312 /* ok */
+-#define __NR_splice		313 /* ok */
+-#define __NR_sync_file_range	314 /* ok */
+-#define __NR_tee		315 /* ok */
+-#define __NR_vmsplice		316 /* ok */
+-#define __NR_move_pages		317 /* mmu */
+-#define __NR_getcpu		318 /* ok */
+-#define __NR_epoll_pwait	319 /* ok */
+-#define __NR_utimensat		320 /* ok */
+-#define __NR_signalfd		321 /* ok */
+-#define __NR_timerfd_create	322 /* ok */
+-#define __NR_eventfd		323 /* ok */
+-#define __NR_fallocate		324 /* ok */
+-#define __NR_semtimedop		325 /* ok - semaphore group */
+-#define __NR_timerfd_settime	326 /* ok */
+-#define __NR_timerfd_gettime	327 /* ok */
+-/* sysv ipc syscalls */
+-#define __NR_semctl		328 /* ok */
+-#define __NR_semget		329 /* ok */
+-#define __NR_semop		330 /* ok */
+-#define __NR_msgctl		331 /* ok */
+-#define __NR_msgget		332 /* ok */
+-#define __NR_msgrcv		333 /* ok */
+-#define __NR_msgsnd		334 /* ok */
+-#define __NR_shmat		335 /* ok */
+-#define __NR_shmctl		336 /* ok */
+-#define __NR_shmdt		337 /* ok */
+-#define __NR_shmget		338 /* ok */
+-
+-
+-#define __NR_signalfd4		339 /* new */
+-#define __NR_eventfd2		340 /* new */
+-#define __NR_epoll_create1	341 /* new */
+-#define __NR_dup3		342 /* new */
+-#define __NR_pipe2		343 /* new */
+-#define __NR_inotify_init1	344 /* new */
+-#define __NR_socket		345 /* new */
+-#define __NR_socketpair		346 /* new */
+-#define __NR_bind		347 /* new */
+-#define __NR_listen		348 /* new */
+-#define __NR_accept		349 /* new */
+-#define __NR_connect		350 /* new */
+-#define __NR_getsockname	351 /* new */
+-#define __NR_getpeername	352 /* new */
+-#define __NR_sendto		353 /* new */
+-#define __NR_send		354 /* new */
+-#define __NR_recvfrom		355 /* new */
+-#define __NR_recv		356 /* new */
+-#define __NR_setsockopt		357 /* new */
+-#define __NR_getsockopt		358 /* new */
+-#define __NR_shutdown		359 /* new */
+-#define __NR_sendmsg		360 /* new */
+-#define __NR_recvmsg		361 /* new */
+-#define __NR_accept04		362 /* new */
+-#define __NR_preadv		363 /* new */
+-#define __NR_pwritev		364 /* new */
+-
+-#define __NR_syscalls		365
+-
+-#ifdef __KERNEL__
+-#ifndef __ASSEMBLY__
+-
+-#define __ARCH_WANT_IPC_PARSE_VERSION
+-/* #define __ARCH_WANT_OLD_READDIR */
+-/* #define __ARCH_WANT_OLD_STAT */
+-#define __ARCH_WANT_STAT64
+-#define __ARCH_WANT_SYS_ALARM
+-#define __ARCH_WANT_SYS_GETHOSTNAME
+-#define __ARCH_WANT_SYS_PAUSE
+-#define __ARCH_WANT_SYS_SGETMASK
+-#define __ARCH_WANT_SYS_SIGNAL
+-#define __ARCH_WANT_SYS_TIME
+-#define __ARCH_WANT_SYS_UTIME
+-#define __ARCH_WANT_SYS_WAITPID
+-#define __ARCH_WANT_SYS_SOCKETCALL
+-#define __ARCH_WANT_SYS_FADVISE64
+-#define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+-#define __ARCH_WANT_SYS_NICE
+-/* #define __ARCH_WANT_SYS_OLD_GETRLIMIT */
+-#define __ARCH_WANT_SYS_OLDUMOUNT
+-#define __ARCH_WANT_SYS_SIGPENDING
+-#define __ARCH_WANT_SYS_SIGPROCMASK
+ #define __ARCH_WANT_SYS_RT_SIGACTION
+ #define __ARCH_WANT_SYS_RT_SIGSUSPEND
+ 
+-/*
+- * "Conditional" syscalls
+- *
+- * What we want is __attribute__((weak,alias("sys_ni_syscall"))),
+- * but it doesn't work on all toolchains, so we just do it by hand
+- */
+-#define cond_syscall(x) asm(".weak\t" #x "\n\t.set\t" #x ",sys_ni_syscall");
++#endif /* __MICROBLAZE_UNISTD_H */
+ 
+-#endif /* __ASSEMBLY__ */
+-#endif /* __KERNEL__ */
+-#endif /* _ASM_MICROBLAZE_UNISTD_H */
++#include <asm-generic/unistd.h>
+Index: linux-2.6/arch/microblaze/kernel/syscall_table.S
+===================================================================
+--- linux-2.6.orig/arch/microblaze/kernel/syscall_table.S
++++ /dev/null
+@@ -1,367 +0,0 @@
+-ENTRY(sys_call_table)
+-	.long sys_restart_syscall	/* 0 - old "setup()" system call,
+-					 * used for restarting */
+-	.long sys_exit
+-	.long sys_ni_syscall		/* was fork */
+-	.long sys_read
+-	.long sys_write
+-	.long sys_open			/* 5 */
+-	.long sys_close
+-	.long sys_waitpid
+-	.long sys_creat
+-	.long sys_link
+-	.long sys_unlink		/* 10 */
+-	.long sys_execve_wrapper
+-	.long sys_chdir
+-	.long sys_time
+-	.long sys_mknod
+-	.long sys_chmod			/* 15 */
+-	.long sys_lchown
+-	.long sys_ni_syscall		/* old break syscall holder */
+-	.long sys_ni_syscall		/* old stat */
+-	.long sys_lseek
+-	.long sys_getpid		/* 20 */
+-	.long sys_mount
+-	.long sys_oldumount
+-	.long sys_setuid
+-	.long sys_getuid
+-	.long sys_stime			/* 25 */
+-	.long sys_ptrace
+-	.long sys_alarm
+-	.long sys_ni_syscall		/* oldfstat */
+-	.long sys_pause
+-	.long sys_utime			/* 30 */
+-	.long sys_ni_syscall		/* old stty syscall holder */
+-	.long sys_ni_syscall		/* old gtty syscall holder */
+-	.long sys_access
+-	.long sys_nice
+-	.long sys_ni_syscall		/* 35 - old ftime syscall holder */
+-	.long sys_sync
+-	.long sys_kill
+-	.long sys_rename
+-	.long sys_mkdir
+-	.long sys_rmdir			/* 40 */
+-	.long sys_dup
+-	.long sys_pipe
+-	.long sys_times
+-	.long sys_ni_syscall		/* old prof syscall holder */
+-	.long sys_brk			/* 45 */
+-	.long sys_setgid
+-	.long sys_getgid
+-	.long sys_signal
+-	.long sys_geteuid
+-	.long sys_getegid		/* 50 */
+-	.long sys_acct
+-	.long sys_umount		/* recycled never used phys() */
+-	.long sys_ni_syscall		/* old lock syscall holder */
+-	.long sys_ioctl
+-	.long sys_fcntl			/* 55 */
+-	.long sys_ni_syscall		/* old mpx syscall holder */
+-	.long sys_setpgid
+-	.long sys_ni_syscall		/* old ulimit syscall holder */
+-	.long sys_ni_syscall		/* olduname */
+-	.long sys_umask			/* 60 */
+-	.long sys_chroot
+-	.long sys_ustat
+-	.long sys_dup2
+-	.long sys_getppid
+-	.long sys_getpgrp		/* 65 */
+-	.long sys_setsid
+-	.long sys_sigaction
+-	.long sys_sgetmask
+-	.long sys_ssetmask
+-	.long sys_setreuid		/* 70 */
+-	.long sys_setregid
+-	.long sys_sigsuspend_wrapper
+-	.long sys_sigpending
+-	.long sys_sethostname
+-	.long sys_setrlimit		/* 75 */
+-	.long sys_ni_syscall		/* old_getrlimit */
+-	.long sys_getrusage
+-	.long sys_gettimeofday
+-	.long sys_settimeofday
+-	.long sys_getgroups		/* 80 */
+-	.long sys_setgroups
+-	.long sys_ni_syscall		/* old_select */
+-	.long sys_symlink
+-	.long sys_ni_syscall		/* oldlstat */
+-	.long sys_readlink		/* 85 */
+-	.long sys_uselib
+-	.long sys_swapon
+-	.long sys_reboot
+-	.long sys_ni_syscall		/* old_readdir */
+-	.long sys_mmap			/* 90 */ /* old_mmap */
+-	.long sys_munmap
+-	.long sys_truncate
+-	.long sys_ftruncate
+-	.long sys_fchmod
+-	.long sys_fchown		/* 95 */
+-	.long sys_getpriority
+-	.long sys_setpriority
+-	.long sys_ni_syscall		/* old profil syscall holder */
+-	.long sys_statfs
+-	.long sys_fstatfs		/* 100 */
+-	.long sys_ni_syscall		/* ioperm */
+-	.long sys_socketcall
+-	.long sys_syslog		/* operation with system console */
+-	.long sys_setitimer
+-	.long sys_getitimer		/* 105 */
+-	.long sys_newstat
+-	.long sys_newlstat
+-	.long sys_newfstat
+-	.long sys_ni_syscall		/* uname */
+-	.long sys_ni_syscall		/* 110 */ /* iopl */
+-	.long sys_vhangup
+-	.long sys_ni_syscall		/* old "idle" system call */
+-	.long sys_ni_syscall		/* old sys_vm86old */
+-	.long sys_wait4
+-	.long sys_swapoff		/* 115 */
+-	.long sys_sysinfo
+-	.long sys_ipc
+-	.long sys_fsync
+-	.long sys_sigreturn_wrapper
+-	.long sys_clone_wrapper		/* 120 */
+-	.long sys_setdomainname
+-	.long sys_newuname
+-	.long sys_ni_syscall		/* modify_ldt */
+-	.long sys_adjtimex
+-	.long sys_mprotect		/* 125:	sys_mprotect */
+-	.long sys_sigprocmask
+-	.long sys_ni_syscall		/* old "create_module" */
+-	.long sys_init_module
+-	.long sys_delete_module
+-	.long sys_ni_syscall		/* 130:	old "get_kernel_syms" */
+-	.long sys_quotactl
+-	.long sys_getpgid
+-	.long sys_fchdir
+-	.long sys_bdflush
+-	.long sys_sysfs			/* 135 */
+-	.long sys_personality
+-	.long sys_ni_syscall		/* reserved for afs_syscall */
+-	.long sys_setfsuid
+-	.long sys_setfsgid
+-	.long sys_llseek		/* 140 */
+-	.long sys_getdents
+-	.long sys_select
+-	.long sys_flock
+-	.long sys_msync
+-	.long sys_readv			/* 145 */
+-	.long sys_writev
+-	.long sys_getsid
+-	.long sys_fdatasync
+-	.long sys_sysctl
+-	.long sys_mlock		/* 150:	sys_mlock */
+-	.long sys_munlock
+-	.long sys_mlockall
+-	.long sys_munlockall
+-	.long sys_sched_setparam
+-	.long sys_sched_getparam	/* 155 */
+-	.long sys_sched_setscheduler
+-	.long sys_sched_getscheduler
+-	.long sys_sched_yield
+-	.long sys_sched_get_priority_max
+-	.long sys_sched_get_priority_min	/* 160 */
+-	.long sys_sched_rr_get_interval
+-	.long sys_nanosleep
+-	.long sys_mremap
+-	.long sys_setresuid
+-	.long sys_getresuid		/* 165 */
+-	.long sys_ni_syscall		/* sys_vm86 */
+-	.long sys_ni_syscall		/* Old sys_query_module */
+-	.long sys_poll
+-	.long sys_nfsservctl
+-	.long sys_setresgid		/* 170 */
+-	.long sys_getresgid
+-	.long sys_prctl
+-	.long sys_rt_sigreturn_wrapper
+-	.long sys_rt_sigaction
+-	.long sys_rt_sigprocmask	/* 175 */
+-	.long sys_rt_sigpending
+-	.long sys_rt_sigtimedwait
+-	.long sys_rt_sigqueueinfo
+-	.long sys_rt_sigsuspend_wrapper
+-	.long sys_pread64		/* 180 */
+-	.long sys_pwrite64
+-	.long sys_chown
+-	.long sys_getcwd
+-	.long sys_capget
+-	.long sys_capset		/* 185 */
+-	.long sys_ni_syscall		/* sigaltstack */
+-	.long sys_sendfile
+-	.long sys_ni_syscall		/* reserved for streams1 */
+-	.long sys_ni_syscall		/* reserved for streams2 */
+-	.long sys_vfork_wrapper		/* 190 */
+-	.long sys_getrlimit
+-	.long sys_mmap2			/* mmap2 */
+-	.long sys_truncate64
+-	.long sys_ftruncate64
+-	.long sys_stat64		/* 195 */
+-	.long sys_lstat64
+-	.long sys_fstat64
+-	.long sys_lchown
+-	.long sys_getuid
+-	.long sys_getgid		/* 200 */
+-	.long sys_geteuid
+-	.long sys_getegid
+-	.long sys_setreuid
+-	.long sys_setregid
+-	.long sys_getgroups		/* 205 */
+-	.long sys_setgroups
+-	.long sys_fchown
+-	.long sys_setresuid
+-	.long sys_getresuid
+-	.long sys_setresgid		/* 210 */
+-	.long sys_getresgid
+-	.long sys_chown
+-	.long sys_setuid
+-	.long sys_setgid
+-	.long sys_setfsuid		/* 215 */
+-	.long sys_setfsgid
+-	.long sys_pivot_root
+-	.long sys_mincore
+-	.long sys_madvise
+-	.long sys_getdents64		/* 220 */
+-	.long sys_fcntl64
+-	.long sys_ni_syscall		/* reserved for TUX */
+-	.long sys_ni_syscall
+-	.long sys_gettid
+-	.long sys_readahead		/* 225 */
+-	.long sys_setxattr
+-	.long sys_lsetxattr
+-	.long sys_fsetxattr
+-	.long sys_getxattr
+-	.long sys_lgetxattr		/* 230 */
+-	.long sys_fgetxattr
+-	.long sys_listxattr
+-	.long sys_llistxattr
+-	.long sys_flistxattr
+-	.long sys_removexattr		/* 235 */
+-	.long sys_lremovexattr
+-	.long sys_fremovexattr
+-	.long sys_tkill
+-	.long sys_sendfile64
+-	.long sys_futex			/* 240 */
+-	.long sys_sched_setaffinity
+-	.long sys_sched_getaffinity
+-	.long sys_ni_syscall		/* set_thread_area */
+-	.long sys_ni_syscall		/* get_thread_area */
+-	.long sys_io_setup		/* 245 */
+-	.long sys_io_destroy
+-	.long sys_io_getevents
+-	.long sys_io_submit
+-	.long sys_io_cancel
+-	.long sys_fadvise64		/* 250 */
+-	.long sys_ni_syscall
+-	.long sys_exit_group
+-	.long sys_lookup_dcookie
+-	.long sys_epoll_create
+-	.long sys_epoll_ctl		/* 255 */
+-	.long sys_epoll_wait
+-	.long sys_remap_file_pages
+-	.long sys_set_tid_address
+-	.long sys_timer_create
+-	.long sys_timer_settime		/* 260 */
+-	.long sys_timer_gettime
+-	.long sys_timer_getoverrun
+-	.long sys_timer_delete
+-	.long sys_clock_settime
+-	.long sys_clock_gettime		/* 265 */
+-	.long sys_clock_getres
+-	.long sys_clock_nanosleep
+-	.long sys_statfs64
+-	.long sys_fstatfs64
+-	.long sys_tgkill		/* 270 */
+-	.long sys_utimes
+-	.long sys_fadvise64_64
+-	.long sys_ni_syscall		/* sys_vserver */
+-	.long sys_mbind
+-	.long sys_get_mempolicy
+-	.long sys_set_mempolicy
+-	.long sys_mq_open
+-	.long sys_mq_unlink
+-	.long sys_mq_timedsend
+-	.long sys_mq_timedreceive	/* 280 */
+-	.long sys_mq_notify
+-	.long sys_mq_getsetattr
+-	.long sys_kexec_load
+-	.long sys_waitid
+-	.long sys_ni_syscall		/* 285 */ /* available */
+-	.long sys_add_key
+-	.long sys_request_key
+-	.long sys_keyctl
+-	.long sys_ioprio_set
+-	.long sys_ioprio_get		/* 290 */
+-	.long sys_inotify_init
+-	.long sys_inotify_add_watch
+-	.long sys_inotify_rm_watch
+-	.long sys_ni_syscall		/* sys_migrate_pages */
+-	.long sys_openat	/* 295 */
+-	.long sys_mkdirat
+-	.long sys_mknodat
+-	.long sys_fchownat
+-	.long sys_ni_syscall
+-	.long sys_fstatat64		/* 300 */
+-	.long sys_unlinkat
+-	.long sys_renameat
+-	.long sys_linkat
+-	.long sys_symlinkat
+-	.long sys_readlinkat		/* 305 */
+-	.long sys_fchmodat
+-	.long sys_faccessat
+-	.long sys_ni_syscall /* pselect6 */
+-	.long sys_ni_syscall /* sys_ppoll */
+-	.long sys_unshare		/* 310 */
+-	.long sys_set_robust_list
+-	.long sys_get_robust_list
+-	.long sys_splice
+-	.long sys_sync_file_range
+-	.long sys_tee 			/* 315 */
+-	.long sys_vmsplice
+-	.long sys_move_pages
+-	.long sys_getcpu
+-	.long sys_epoll_pwait
+-	.long sys_utimensat		/* 320 */
+-	.long sys_signalfd
+-	.long sys_timerfd_create
+-	.long sys_eventfd
+-	.long sys_fallocate
+-	.long sys_semtimedop		/* 325 */
+-	.long sys_timerfd_settime
+-	.long sys_timerfd_gettime
+-	.long sys_semctl
+-	.long sys_semget
+-	.long sys_semop			/* 330 */
+-	.long sys_msgctl
+-	.long sys_msgget
+-	.long sys_msgrcv
+-	.long sys_msgsnd
+-	.long sys_shmat			/* 335 */
+-	.long sys_shmctl
+-	.long sys_shmdt
+-	.long sys_shmget
+-	.long sys_signalfd4	/* new syscall */
+-	.long sys_eventfd2		/* 340 */
+-	.long sys_epoll_create1
+-	.long sys_dup3
+-	.long sys_pipe2
+-	.long sys_inotify_init1
+-	.long sys_socket		/* 345 */
+-	.long sys_socketpair
+-	.long sys_bind
+-	.long sys_listen
+-	.long sys_accept
+-	.long sys_connect		/* 350 */
+-	.long sys_getsockname
+-	.long sys_getpeername
+-	.long sys_sendto
+-	.long sys_send
+-	.long sys_recvfrom		/* 355 */
+-	.long sys_recv
+-	.long sys_setsockopt
+-	.long sys_getsockopt
+-	.long sys_shutdown
+-	.long sys_sendmsg		/* 360 */
+-	.long sys_recvmsg
+-	.long sys_ni_syscall
+-	.long sys_ni_syscall
+-	.long sys_ni_syscall
+Index: linux-2.6/arch/microblaze/kernel/Makefile
+===================================================================
+--- linux-2.6.orig/arch/microblaze/kernel/Makefile
++++ linux-2.6/arch/microblaze/kernel/Makefile
+@@ -7,7 +7,7 @@ extra-y := head.o vmlinux.lds
+ obj-y += exceptions.o \
+ 	hw_exception_handler.o init_task.o intc.o irq.o of_device.o \
+ 	of_platform.o process.o prom.o prom_parse.o ptrace.o \
+-	setup.o signal.o sys_microblaze.o timer.o traps.o
++	setup.o signal.o sys_microblaze.o timer.o traps.o syscall_table.o
+ 
+ obj-y += cpu/
+ 
+Index: linux-2.6/arch/microblaze/kernel/entry-nommu.S
+===================================================================
+--- linux-2.6.orig/arch/microblaze/kernel/entry-nommu.S
++++ linux-2.6/arch/microblaze/kernel/entry-nommu.S
+@@ -563,18 +563,10 @@ sys_execve_wrapper:
+ 	brid	sys_execve
+ 	addk	r8, r1, r0
+ 
+-sys_sigreturn_wrapper:
+-	brid	sys_sigreturn
+-	addk	r5, r1, r0
+-
+ sys_rt_sigreturn_wrapper:
+ 	brid	sys_rt_sigreturn
+ 	addk	r5, r1, r0
+ 
+-sys_sigsuspend_wrapper:
+-	brid	sys_rt_sigsuspend
+-	addk	r6, r1, r0
+-
+ sys_rt_sigsuspend_wrapper:
+ 	brid	sys_rt_sigsuspend
+ 	addk	r7, r1, r0
+@@ -589,8 +581,3 @@ sys_rt_sigsuspend_wrapper:
+ 	brai	_hw_exception_handler
+ 	.org 0x60
+ 	brai	_debug_exception
+-
+-.section .rodata,"a"
+-#include "syscall_table.S"
+-
+-syscall_table_size=(.-sys_call_table)
+Index: linux-2.6/arch/microblaze/kernel/syscall_table.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6/include/asm-generic/unistd.h
-@@ -0,0 +1,841 @@
-+#if !defined(_ASM_GENERIC_UNISTD_H) || defined(__SYSCALL)
-+#define _ASM_GENERIC_UNISTD_H
-+
-+#include <asm/bitsperlong.h>
-+
-+/*
-+ * This file contains the system call numbers, based on the
-+ * layout of the x86-64 architecture, which embeds the
-+ * pointer to the syscall in the table.
-+ *
-+ * As a basic principle, no duplication of functionality
-+ * should be added, e.g. we don't use lseek when llseek
-+ * is present. New architectures should use this file
-+ * and implement the less feature-full calls in user space.
-+ */
-+
-+#ifndef __SYSCALL
-+#define __SYSCALL(x, y)
-+#endif
-+
-+#if __BITS_PER_LONG == 32
-+#define __SC_3264(_nr, _32, _64) __SYSCALL(_nr, _32)
-+#else
-+#define __SC_3264(_nr, _32, _64) __SYSCALL(_nr, _64)
-+#endif
-+
-+#define __NR_io_setup 0
-+__SYSCALL(__NR_io_setup, sys_io_setup)
-+#define __NR_io_destroy 1
-+__SYSCALL(__NR_io_destroy, sys_io_destroy)
-+#define __NR_io_submit 2
-+__SYSCALL(__NR_io_submit, sys_io_submit)
-+#define __NR_io_cancel 3
-+__SYSCALL(__NR_io_cancel, sys_io_cancel)
-+#define __NR_io_getevents 4
-+__SYSCALL(__NR_io_getevents, sys_io_getevents)
-+
-+/* fs/xattr.c */
-+#define __NR_setxattr 5
-+__SYSCALL(__NR_setxattr, sys_setxattr)
-+#define __NR_lsetxattr 6
-+__SYSCALL(__NR_lsetxattr, sys_lsetxattr)
-+#define __NR_fsetxattr 7
-+__SYSCALL(__NR_fsetxattr, sys_fsetxattr)
-+#define __NR_getxattr 8
-+__SYSCALL(__NR_getxattr, sys_getxattr)
-+#define __NR_lgetxattr 9
-+__SYSCALL(__NR_lgetxattr, sys_lgetxattr)
-+#define __NR_fgetxattr 10
-+__SYSCALL(__NR_fgetxattr, sys_fgetxattr)
-+#define __NR_listxattr 11
-+__SYSCALL(__NR_listxattr, sys_listxattr)
-+#define __NR_llistxattr 12
-+__SYSCALL(__NR_llistxattr, sys_llistxattr)
-+#define __NR_flistxattr 13
-+__SYSCALL(__NR_flistxattr, sys_flistxattr)
-+#define __NR_removexattr 14
-+__SYSCALL(__NR_removexattr, sys_removexattr)
-+#define __NR_lremovexattr 15
-+__SYSCALL(__NR_lremovexattr, sys_lremovexattr)
-+#define __NR_fremovexattr 16
-+__SYSCALL(__NR_fremovexattr, sys_fremovexattr)
-+
-+/* fs/dcache.c */
-+#define __NR_getcwd 17
-+__SYSCALL(__NR_getcwd, sys_getcwd)
-+
-+/* fs/cookies.c */
-+#define __NR_lookup_dcookie 18
-+__SYSCALL(__NR_lookup_dcookie, sys_lookup_dcookie)
-+
-+/* fs/eventfd.c */
-+#define __NR_eventfd2 19
-+__SYSCALL(__NR_eventfd2, sys_eventfd2)
-+
-+/* fs/eventpoll.c */
-+#define __NR_epoll_create1 20
-+__SYSCALL(__NR_epoll_create1, sys_epoll_create1)
-+#define __NR_epoll_ctl 21
-+__SYSCALL(__NR_epoll_ctl, sys_epoll_ctl)
-+#define __NR_epoll_pwait 22
-+__SYSCALL(__NR_epoll_pwait, sys_epoll_pwait)
-+
-+/* fs/fcntl.c */
-+#define __NR_dup 23
-+__SYSCALL(__NR_dup, sys_dup)
-+#define __NR_dup3 24
-+__SYSCALL(__NR_dup3, sys_dup3)
-+#define __NR3264_fcntl 25
-+__SC_3264(__NR3264_fcntl, sys_fcntl64, sys_fcntl)
-+
-+/* fs/inotify_user.c */
-+#define __NR_inotify_init1 26
-+__SYSCALL(__NR_inotify_init1, sys_inotify_init1)
-+#define __NR_inotify_add_watch 27
-+__SYSCALL(__NR_inotify_add_watch, sys_inotify_add_watch)
-+#define __NR_inotify_rm_watch 28
-+__SYSCALL(__NR_inotify_rm_watch, sys_inotify_rm_watch)
-+
-+/* fs/ioctl.c */
-+#define __NR_ioctl 29
-+__SYSCALL(__NR_ioctl, sys_ioctl)
-+
-+/* fs/ioprio.c */
-+#define __NR_ioprio_set 30
-+__SYSCALL(__NR_ioprio_set, sys_ioprio_set)
-+#define __NR_ioprio_get 31
-+__SYSCALL(__NR_ioprio_get, sys_ioprio_get)
-+
-+/* fs/locks.c */
-+#define __NR_flock 32
-+__SYSCALL(__NR_flock, sys_flock)
-+
-+/* fs/namei.c */
-+#define __NR_mknodat 33
-+__SYSCALL(__NR_mknodat, sys_mknodat)
-+#define __NR_mkdirat 34
-+__SYSCALL(__NR_mkdirat, sys_mkdirat)
-+#define __NR_unlinkat 35
-+__SYSCALL(__NR_unlinkat, sys_unlinkat)
-+#define __NR_symlinkat 36
-+__SYSCALL(__NR_symlinkat, sys_symlinkat)
-+#define __NR_linkat 37
-+__SYSCALL(__NR_linkat, sys_linkat)
-+#define __NR_renameat 38
-+__SYSCALL(__NR_renameat, sys_renameat)
-+
-+/* fs/namespace.c */
-+#define __NR_umount2 39
-+__SYSCALL(__NR_umount2, sys_umount)
-+#define __NR_mount 40
-+__SYSCALL(__NR_mount, sys_mount)
-+#define __NR_pivot_root 41
-+__SYSCALL(__NR_pivot_root, sys_pivot_root)
-+
-+/* fs/nfsctl.c */
-+#define __NR_nfsservctl 42
-+__SYSCALL(__NR_nfsservctl, sys_nfsservctl)
-+
-+/* fs/open.c */
-+#define __NR3264_statfs 43
-+__SC_3264(__NR3264_statfs, sys_statfs64, sys_statfs)
-+#define __NR3264_fstatfs 44
-+__SC_3264(__NR3264_fstatfs, sys_fstatfs64, sys_fstatfs)
-+#define __NR3264_truncate 45
-+__SC_3264(__NR3264_truncate, sys_truncate64, sys_truncate)
-+#define __NR3264_ftruncate 46
-+__SC_3264(__NR3264_ftruncate, sys_ftruncate64, sys_ftruncate)
-+
-+#define __NR_fallocate 47
-+__SYSCALL(__NR_fallocate, sys_fallocate)
-+#define __NR_faccessat 48
-+__SYSCALL(__NR_faccessat, sys_faccessat)
-+#define __NR_chdir 49
-+__SYSCALL(__NR_chdir, sys_chdir)
-+#define __NR_fchdir 50
-+__SYSCALL(__NR_fchdir, sys_fchdir)
-+#define __NR_chroot 51
-+__SYSCALL(__NR_chroot, sys_chroot)
-+#define __NR_fchmod 52
-+__SYSCALL(__NR_fchmod, sys_fchmod)
-+#define __NR_fchmodat 53
-+__SYSCALL(__NR_fchmodat, sys_fchmodat)
-+#define __NR_fchownat 54
-+__SYSCALL(__NR_fchownat, sys_fchownat)
-+#define __NR_fchown 55
-+__SYSCALL(__NR_fchown, sys_fchown)
-+#define __NR_openat 56
-+__SYSCALL(__NR_openat, sys_openat)
-+#define __NR_close 57
-+__SYSCALL(__NR_close, sys_close)
-+#define __NR_vhangup 58
-+__SYSCALL(__NR_vhangup, sys_vhangup)
-+
-+/* fs/pipe.c */
-+#define __NR_pipe2 59
-+__SYSCALL(__NR_pipe2, sys_pipe2)
-+
-+/* fs/quota.c */
-+#define __NR_quotactl 60
-+__SYSCALL(__NR_quotactl, sys_quotactl)
-+
-+/* fs/readdir.c */
-+#define __NR_getdents64 61
-+__SYSCALL(__NR_getdents64, sys_getdents64)
-+
-+/* fs/read_write.c */
-+#define __NR3264_lseek 62
-+__SC_3264(__NR3264_lseek, sys_llseek, sys_lseek)
-+#define __NR_read 63
-+__SYSCALL(__NR_read, sys_read)
-+#define __NR_write 64
-+__SYSCALL(__NR_write, sys_write)
-+#define __NR_readv 65
-+__SYSCALL(__NR_readv, sys_readv)
-+#define __NR_writev 66
-+__SYSCALL(__NR_writev, sys_writev)
-+#define __NR_pread64 67
-+__SYSCALL(__NR_pread64, sys_pread64)
-+#define __NR_pwrite64 68
-+__SYSCALL(__NR_pwrite64, sys_pwrite64)
-+#define __NR_preadv 69
-+__SYSCALL(__NR_preadv, sys_preadv)
-+#define __NR_pwritev 70
-+__SYSCALL(__NR_pwritev, sys_pwritev)
-+
-+/* fs/sendfile.c */
-+#define __NR3264_sendfile 71
-+__SC_3264(__NR3264_sendfile, sys_sendfile64, sys_sendfile)
-+
-+/* fs/select.c */
-+#define __NR_pselect6 72
-+__SYSCALL(__NR_pselect6, sys_pselect6)
-+#define __NR_ppoll 73
-+__SYSCALL(__NR_ppoll, sys_ppoll)
-+
-+/* fs/signalfd.c */
-+#define __NR_signalfd4 74
-+__SYSCALL(__NR_signalfd4, sys_signalfd4)
-+
-+/* fs/splice.c */
-+#define __NR_vmsplice 75
-+__SYSCALL(__NR_vmsplice, sys_vmsplice)
-+#define __NR_splice 76
-+__SYSCALL(__NR_splice, sys_splice)
-+#define __NR_tee 77
-+__SYSCALL(__NR_tee, sys_tee)
-+
-+/* fs/stat.c */
-+#define __NR_readlinkat 78
-+__SYSCALL(__NR_readlinkat, sys_readlinkat)
-+#define __NR3264_fstatat 79
-+__SC_3264(__NR3264_fstatat, sys_fstatat64, sys_newfstatat)
-+#define __NR3264_fstat 80
-+__SC_3264(__NR3264_fstat, sys_fstat64, sys_newfstat)
-+
-+/* fs/sync.c */
-+#define __NR_sync 81
-+__SYSCALL(__NR_sync, sys_sync)
-+#define __NR_fsync 82
-+__SYSCALL(__NR_fsync, sys_fsync)
-+#define __NR_fdatasync 83
-+__SYSCALL(__NR_fdatasync, sys_fdatasync)
-+#define __NR_sync_file_range 84
-+__SYSCALL(__NR_sync_file_range, sys_sync_file_range) /* .long sys_sync_file_range2, */
-+
-+/* fs/timerfd.c */
-+#define __NR_timerfd_create 85
-+__SYSCALL(__NR_timerfd_create, sys_timerfd_create)
-+#define __NR_timerfd_settime 86
-+__SYSCALL(__NR_timerfd_settime, sys_timerfd_settime)
-+#define __NR_timerfd_gettime 87
-+__SYSCALL(__NR_timerfd_gettime, sys_timerfd_gettime)
-+
-+/* fs/utimes.c */
-+#define __NR_utimensat 88
-+__SYSCALL(__NR_utimensat, sys_utimensat)
-+
-+/* kernel/acct.c */
-+#define __NR_acct 89
-+__SYSCALL(__NR_acct, sys_acct)
-+
-+/* kernel/capability.c */
-+#define __NR_capget 90
-+__SYSCALL(__NR_capget, sys_capget)
-+#define __NR_capset 91
-+__SYSCALL(__NR_capset, sys_capset)
-+
-+/* kernel/exec_domain.c */
-+#define __NR_personality 92
-+__SYSCALL(__NR_personality, sys_personality)
-+
-+/* kernel/exit.c */
-+#define __NR_exit 93
-+__SYSCALL(__NR_exit, sys_exit)
-+#define __NR_exit_group 94
-+__SYSCALL(__NR_exit_group, sys_exit_group)
-+#define __NR_waitid 95
-+__SYSCALL(__NR_waitid, sys_waitid)
-+
-+/* kernel/fork.c */
-+#define __NR_set_tid_address 96
-+__SYSCALL(__NR_set_tid_address, sys_set_tid_address)
-+#define __NR_unshare 97
-+__SYSCALL(__NR_unshare, sys_unshare)
-+
-+/* kernel/futex.c */
-+#define __NR_futex 98
-+__SYSCALL(__NR_futex, sys_futex)
-+#define __NR_set_robust_list 99
-+__SYSCALL(__NR_set_robust_list, sys_set_robust_list)
-+#define __NR_get_robust_list 100
-+__SYSCALL(__NR_get_robust_list, sys_get_robust_list)
-+
-+/* kernel/hrtimer.c */
-+#define __NR_nanosleep 101
-+__SYSCALL(__NR_nanosleep, sys_nanosleep)
-+
-+/* kernel/itimer.c */
-+#define __NR_getitimer 102
-+__SYSCALL(__NR_getitimer, sys_getitimer)
-+#define __NR_setitimer 103
-+__SYSCALL(__NR_setitimer, sys_setitimer)
-+
-+/* kernel/kexec.c */
-+#define __NR_kexec_load 104
-+__SYSCALL(__NR_kexec_load, sys_kexec_load)
-+
-+/* kernel/module.c */
-+#define __NR_init_module 105
-+__SYSCALL(__NR_init_module, sys_init_module)
-+#define __NR_delete_module 106
-+__SYSCALL(__NR_delete_module, sys_delete_module)
-+
-+/* kernel/posix-timers.c */
-+#define __NR_timer_create 107
-+__SYSCALL(__NR_timer_create, sys_timer_create)
-+#define __NR_timer_gettime 108
-+__SYSCALL(__NR_timer_gettime, sys_timer_gettime)
-+#define __NR_timer_getoverrun 109
-+__SYSCALL(__NR_timer_getoverrun, sys_timer_getoverrun)
-+#define __NR_timer_settime 110
-+__SYSCALL(__NR_timer_settime, sys_timer_settime)
-+#define __NR_timer_delete 111
-+__SYSCALL(__NR_timer_delete, sys_timer_delete)
-+#define __NR_clock_settime 112
-+__SYSCALL(__NR_clock_settime, sys_clock_settime)
-+#define __NR_clock_gettime 113
-+__SYSCALL(__NR_clock_gettime, sys_clock_gettime)
-+#define __NR_clock_getres 114
-+__SYSCALL(__NR_clock_getres, sys_clock_getres)
-+#define __NR_clock_nanosleep 115
-+__SYSCALL(__NR_clock_nanosleep, sys_clock_nanosleep)
-+
-+/* kernel/printk.c */
-+#define __NR_syslog 116
-+__SYSCALL(__NR_syslog, sys_syslog)
-+
-+/* kernel/ptrace.c */
-+#define __NR_ptrace 117
-+__SYSCALL(__NR_ptrace, sys_ptrace)
-+
-+/* kernel/sched.c */
-+#define __NR_sched_setparam 118
-+__SYSCALL(__NR_sched_setparam, sys_sched_setparam)
-+#define __NR_sched_setscheduler 119
-+__SYSCALL(__NR_sched_setscheduler, sys_sched_setscheduler)
-+#define __NR_sched_getscheduler 120
-+__SYSCALL(__NR_sched_getscheduler, sys_sched_getscheduler)
-+#define __NR_sched_getparam 121
-+__SYSCALL(__NR_sched_getparam, sys_sched_getparam)
-+#define __NR_sched_setaffinity 122
-+__SYSCALL(__NR_sched_setaffinity, sys_sched_setaffinity)
-+#define __NR_sched_getaffinity 123
-+__SYSCALL(__NR_sched_getaffinity, sys_sched_getaffinity)
-+#define __NR_sched_yield 124
-+__SYSCALL(__NR_sched_yield, sys_sched_yield)
-+#define __NR_sched_get_priority_max 125
-+__SYSCALL(__NR_sched_get_priority_max, sys_sched_get_priority_max)
-+#define __NR_sched_get_priority_min 126
-+__SYSCALL(__NR_sched_get_priority_min, sys_sched_get_priority_min)
-+#define __NR_sched_rr_get_interval 127
-+__SYSCALL(__NR_sched_rr_get_interval, sys_sched_rr_get_interval)
-+
-+/* kernel/signal.c */
-+#define __NR_restart_syscall 128
-+__SYSCALL(__NR_restart_syscall, sys_restart_syscall)
-+#define __NR_kill 129
-+__SYSCALL(__NR_kill, sys_kill)
-+#define __NR_tkill 130
-+__SYSCALL(__NR_tkill, sys_tkill)
-+#define __NR_tgkill 131
-+__SYSCALL(__NR_tgkill, sys_tgkill)
-+#define __NR_sigaltstack 132
-+__SYSCALL(__NR_sigaltstack, sys_sigaltstack)
-+#define __NR_rt_sigsuspend 133
-+__SYSCALL(__NR_rt_sigsuspend, sys_rt_sigsuspend) /* __ARCH_WANT_SYS_RT_SIGSUSPEND */
-+#define __NR_rt_sigaction 134
-+__SYSCALL(__NR_rt_sigaction, sys_rt_sigaction) /* __ARCH_WANT_SYS_RT_SIGACTION */
-+#define __NR_rt_sigprocmask 135
-+__SYSCALL(__NR_rt_sigprocmask, sys_rt_sigprocmask)
-+#define __NR_rt_sigpending 136
-+__SYSCALL(__NR_rt_sigpending, sys_rt_sigpending)
-+#define __NR_rt_sigtimedwait 137
-+__SYSCALL(__NR_rt_sigtimedwait, sys_rt_sigtimedwait)
-+#define __NR_rt_sigqueueinfo 138
-+__SYSCALL(__NR_rt_sigqueueinfo, sys_rt_sigqueueinfo)
-+#define __NR_rt_sigreturn 139
-+__SYSCALL(__NR_rt_sigreturn, sys_rt_sigreturn) /* sys_rt_sigreturn_wrapper, */
-+
-+/* kernel/sys.c */
-+#define __NR_setpriority 140
-+__SYSCALL(__NR_setpriority, sys_setpriority)
-+#define __NR_getpriority 141
-+__SYSCALL(__NR_getpriority, sys_getpriority)
-+#define __NR_reboot 142
-+__SYSCALL(__NR_reboot, sys_reboot)
-+#define __NR_setregid 143
-+__SYSCALL(__NR_setregid, sys_setregid)
-+#define __NR_setgid 144
-+__SYSCALL(__NR_setgid, sys_setgid)
-+#define __NR_setreuid 145
-+__SYSCALL(__NR_setreuid, sys_setreuid)
-+#define __NR_setuid 146
-+__SYSCALL(__NR_setuid, sys_setuid)
-+#define __NR_setresuid 147
-+__SYSCALL(__NR_setresuid, sys_setresuid)
-+#define __NR_getresuid 148
-+__SYSCALL(__NR_getresuid, sys_getresuid)
-+#define __NR_setresgid 149
-+__SYSCALL(__NR_setresgid, sys_setresgid)
-+#define __NR_getresgid 150
-+__SYSCALL(__NR_getresgid, sys_getresgid)
-+#define __NR_setfsuid 151
-+__SYSCALL(__NR_setfsuid, sys_setfsuid)
-+#define __NR_setfsgid 152
-+__SYSCALL(__NR_setfsgid, sys_setfsgid)
-+#define __NR_times 153
-+__SYSCALL(__NR_times, sys_times)
-+#define __NR_setpgid 154
-+__SYSCALL(__NR_setpgid, sys_setpgid)
-+#define __NR_getpgid 155
-+__SYSCALL(__NR_getpgid, sys_getpgid)
-+#define __NR_getsid 156
-+__SYSCALL(__NR_getsid, sys_getsid)
-+#define __NR_setsid 157
-+__SYSCALL(__NR_setsid, sys_setsid)
-+#define __NR_getgroups 158
-+__SYSCALL(__NR_getgroups, sys_getgroups)
-+#define __NR_setgroups 159
-+__SYSCALL(__NR_setgroups, sys_setgroups)
-+#define __NR_uname 160
-+__SYSCALL(__NR_uname, sys_newuname)
-+#define __NR_sethostname 161
-+__SYSCALL(__NR_sethostname, sys_sethostname)
-+#define __NR_setdomainname 162
-+__SYSCALL(__NR_setdomainname, sys_setdomainname)
-+#define __NR_getrlimit 163
-+__SYSCALL(__NR_getrlimit, sys_getrlimit)
-+#define __NR_setrlimit 164
-+__SYSCALL(__NR_setrlimit, sys_setrlimit)
-+#define __NR_getrusage 165
-+__SYSCALL(__NR_getrusage, sys_getrusage)
-+#define __NR_umask 166
-+__SYSCALL(__NR_umask, sys_umask)
-+#define __NR_prctl 167
-+__SYSCALL(__NR_prctl, sys_prctl)
-+#define __NR_getcpu 168
-+__SYSCALL(__NR_getcpu, sys_getcpu)
-+
-+/* kernel/time.c */
-+#define __NR_gettimeofday 169
-+__SYSCALL(__NR_gettimeofday, sys_gettimeofday)
-+#define __NR_settimeofday 170
-+__SYSCALL(__NR_settimeofday, sys_settimeofday)
-+#define __NR_adjtimex 171
-+__SYSCALL(__NR_adjtimex, sys_adjtimex)
-+
-+/* kernel/timer.c */
-+#define __NR_getpid 172
-+__SYSCALL(__NR_getpid, sys_getpid)
-+#define __NR_getppid 173
-+__SYSCALL(__NR_getppid, sys_getppid)
-+#define __NR_getuid 174
-+__SYSCALL(__NR_getuid, sys_getuid)
-+#define __NR_geteuid 175
-+__SYSCALL(__NR_geteuid, sys_geteuid)
-+#define __NR_getgid 176
-+__SYSCALL(__NR_getgid, sys_getgid)
-+#define __NR_getegid 177
-+__SYSCALL(__NR_getegid, sys_getegid)
-+#define __NR_gettid 178
-+__SYSCALL(__NR_gettid, sys_gettid)
-+#define __NR_sysinfo 179
-+__SYSCALL(__NR_sysinfo, sys_sysinfo)
-+
-+/* ipc/mqueue.c */
-+#define __NR_mq_open 180
-+__SYSCALL(__NR_mq_open, sys_mq_open)
-+#define __NR_mq_unlink 181
-+__SYSCALL(__NR_mq_unlink, sys_mq_unlink)
-+#define __NR_mq_timedsend 182
-+__SYSCALL(__NR_mq_timedsend, sys_mq_timedsend)
-+#define __NR_mq_timedreceive 183
-+__SYSCALL(__NR_mq_timedreceive, sys_mq_timedreceive)
-+#define __NR_mq_notify 184
-+__SYSCALL(__NR_mq_notify, sys_mq_notify)
-+#define __NR_mq_getsetattr 185
-+__SYSCALL(__NR_mq_getsetattr, sys_mq_getsetattr)
-+
-+/* ipc/msg.c */
-+#define __NR_msgget 186
-+__SYSCALL(__NR_msgget, sys_msgget)
-+#define __NR_msgctl 187
-+__SYSCALL(__NR_msgctl, sys_msgctl)
-+#define __NR_msgrcv 188
-+__SYSCALL(__NR_msgrcv, sys_msgrcv)
-+#define __NR_msgsnd 189
-+__SYSCALL(__NR_msgsnd, sys_msgsnd)
-+
-+/* ipc/sem.c */
-+#define __NR_semget 190
-+__SYSCALL(__NR_semget, sys_semget)
-+#define __NR_semctl 191
-+__SYSCALL(__NR_semctl, sys_semctl)
-+#define __NR_semtimedop 192
-+__SYSCALL(__NR_semtimedop, sys_semtimedop)
-+#define __NR_semop 193
-+__SYSCALL(__NR_semop, sys_semop)
-+
-+/* ipc/shm.c */
-+#define __NR_shmget 194
-+__SYSCALL(__NR_shmget, sys_shmget)
-+#define __NR_shmctl 195
-+__SYSCALL(__NR_shmctl, sys_shmctl)
-+#define __NR_shmat 196
-+__SYSCALL(__NR_shmat, sys_shmat)
-+#define __NR_shmdt 197
-+__SYSCALL(__NR_shmdt, sys_shmdt)
-+
-+/* net/socket.c */
-+#define __NR_socket 198
-+__SYSCALL(__NR_socket, sys_socket)
-+#define __NR_socketpair 199
-+__SYSCALL(__NR_socketpair, sys_socketpair)
-+#define __NR_bind 200
-+__SYSCALL(__NR_bind, sys_bind)
-+#define __NR_listen 201
-+__SYSCALL(__NR_listen, sys_listen)
-+#define __NR_accept 202
-+__SYSCALL(__NR_accept, sys_accept)
-+#define __NR_connect 203
-+__SYSCALL(__NR_connect, sys_connect)
-+#define __NR_getsockname 204
-+__SYSCALL(__NR_getsockname, sys_getsockname)
-+#define __NR_getpeername 205
-+__SYSCALL(__NR_getpeername, sys_getpeername)
-+#define __NR_sendto 206
-+__SYSCALL(__NR_sendto, sys_sendto)
-+#define __NR_recvfrom 207
-+__SYSCALL(__NR_recvfrom, sys_recvfrom)
-+#define __NR_setsockopt 208
-+__SYSCALL(__NR_setsockopt, sys_setsockopt)
-+#define __NR_getsockopt 209
-+__SYSCALL(__NR_getsockopt, sys_getsockopt)
-+#define __NR_shutdown 210
-+__SYSCALL(__NR_shutdown, sys_shutdown)
-+#define __NR_sendmsg 211
-+__SYSCALL(__NR_sendmsg, sys_sendmsg)
-+#define __NR_recvmsg 212
-+__SYSCALL(__NR_recvmsg, sys_recvmsg)
-+
-+/* mm/filemap.c */
-+#define __NR_readahead 213
-+__SYSCALL(__NR_readahead, sys_readahead)
-+
-+/* mm/nommu.c, also with MMU */
-+#define __NR_brk 214
-+__SYSCALL(__NR_brk, sys_brk)
-+#define __NR_munmap 215
-+__SYSCALL(__NR_munmap, sys_munmap)
-+#define __NR_mremap 216
-+__SYSCALL(__NR_mremap, sys_mremap)
-+
-+/* security/keys/keyctl.c */
-+#define __NR_add_key 217
-+__SYSCALL(__NR_add_key, sys_add_key)
-+#define __NR_request_key 218
-+__SYSCALL(__NR_request_key, sys_request_key)
-+#define __NR_keyctl 219
-+__SYSCALL(__NR_keyctl, sys_keyctl)
-+
-+/* arch/example/kernel/sys_example.c */
-+#define __NR_clone 220
-+__SYSCALL(__NR_clone, sys_clone)	/* .long sys_clone_wrapper */
-+#define __NR_execve 221
-+__SYSCALL(__NR_execve, sys_execve)	/* .long sys_execve_wrapper */
-+
-+#define __NR3264_mmap 222
-+__SC_3264(__NR3264_mmap, sys_mmap2, sys_mmap)
-+/* mm/fadvise.c */
-+#define __NR3264_fadvise64 223
-+__SC_3264(__NR3264_fadvise64, sys_fadvise64_64, sys_fadvise64)
-+
-+/* mm/, CONFIG_MMU only */
-+#ifndef __ARCH_NOMMU
-+#define __NR_swapon 224
-+__SYSCALL(__NR_swapon, sys_swapon)
-+#define __NR_swapoff 225
-+__SYSCALL(__NR_swapoff, sys_swapoff)
-+#define __NR_mprotect 226
-+__SYSCALL(__NR_mprotect, sys_mprotect)
-+#define __NR_msync 227
-+__SYSCALL(__NR_msync, sys_msync)
-+#define __NR_mlock 228
-+__SYSCALL(__NR_mlock, sys_mlock)
-+#define __NR_munlock 229
-+__SYSCALL(__NR_munlock, sys_munlock)
-+#define __NR_mlockall 230
-+__SYSCALL(__NR_mlockall, sys_mlockall)
-+#define __NR_munlockall 231
-+__SYSCALL(__NR_munlockall, sys_munlockall)
-+#define __NR_mincore 232
-+__SYSCALL(__NR_mincore, sys_mincore)
-+#define __NR_madvise 233
-+__SYSCALL(__NR_madvise, sys_madvise)
-+#define __NR_remap_file_pages 234
-+__SYSCALL(__NR_remap_file_pages, sys_remap_file_pages)
-+#define __NR_mbind 235
-+__SYSCALL(__NR_mbind, sys_mbind)
-+#define __NR_get_mempolicy 236
-+__SYSCALL(__NR_get_mempolicy, sys_get_mempolicy)
-+#define __NR_set_mempolicy 237
-+__SYSCALL(__NR_set_mempolicy, sys_set_mempolicy)
-+#define __NR_migrate_pages 238
-+__SYSCALL(__NR_migrate_pages, sys_migrate_pages)
-+#define __NR_move_pages 239
-+__SYSCALL(__NR_move_pages, sys_move_pages)
-+#endif
-+
-+#undef __NR_syscalls
-+#define __NR_syscalls 240
-+
-+/*
-+ * All syscalls below here should go away really,
-+ * these are provided for both review and as a porting
-+ * help for the C library version.
-+*
-+ * Last chance: are any of these important enought to
-+ * enable by default?
-+ */
-+#ifdef __ARCH_WANT_SYSCALL_NO_AT
-+#define __NR_open 1024
-+__SYSCALL(__NR_open, sys_open)
-+#define __NR_link 1025
-+__SYSCALL(__NR_link, sys_link)
-+#define __NR_unlink 1026
-+__SYSCALL(__NR_unlink, sys_unlink)
-+#define __NR_mknod 1027
-+__SYSCALL(__NR_mknod, sys_mknod)
-+#define __NR_chmod 1028
-+__SYSCALL(__NR_chmod, sys_chmod)
-+#define __NR_chown 1029
-+__SYSCALL(__NR_chown, sys_chown)
-+#define __NR_mkdir 1030
-+__SYSCALL(__NR_mkdir, sys_mkdir)
-+#define __NR_rmdir 1031
-+__SYSCALL(__NR_rmdir, sys_rmdir)
-+#define __NR_lchown 1032
-+__SYSCALL(__NR_lchown, sys_lchown)
-+#define __NR_access 1033
-+__SYSCALL(__NR_access, sys_access)
-+#define __NR_rename 1034
-+__SYSCALL(__NR_rename, sys_rename)
-+#define __NR_readlink 1035
-+__SYSCALL(__NR_readlink, sys_readlink)
-+#define __NR_symlink 1036
-+__SYSCALL(__NR_symlink, sys_symlink)
-+#define __NR_utimes 1037
-+__SYSCALL(__NR_utimes, sys_utimes)
-+#define __NR3264_stat 1038
-+__SC_3264(__NR3264_stat, sys_stat64, sys_newstat)
-+#define __NR3264_lstat 1039
-+__SC_3264(__NR3264_lstat, sys_lstat64, sys_newlstat)
-+
-+#undef __NR_syscalls
-+#define __NR_syscalls (__NR3264_lstat+1)
-+#endif /* __ARCH_WANT_SYSCALL_NO_AT */
-+
-+#ifdef __ARCH_WANT_SYSCALL_NO_FLAGS
-+#define __NR_pipe 1040
-+__SYSCALL(__NR_pipe, sys_pipe)
-+#define __NR_dup2 1041
-+__SYSCALL(__NR_dup2, sys_dup2)
-+#define __NR_epoll_create 1042
-+__SYSCALL(__NR_epoll_create, sys_epoll_create)
-+#define __NR_inotify_init 1043
-+__SYSCALL(__NR_inotify_init, sys_inotify_init)
-+#define __NR_eventfd 1044
-+__SYSCALL(__NR_eventfd, sys_eventfd)
-+#define __NR_signalfd 1045
-+__SYSCALL(__NR_signalfd, sys_signalfd)
-+
-+#undef __NR_syscalls
-+#define __NR_syscalls (__NR_signalfd+1)
-+#endif /* __ARCH_WANT_SYSCALL_NO_FLAGS */
-+
-+#if __BITS_PER_LONG == 32 && defined(__ARCH_WANT_SYSCALL_OFF_T)
-+#define __NR_sendfile 1046
-+__SYSCALL(__NR_sendfile, sys_sendfile)
-+#define __NR_ftruncate 1047
-+__SYSCALL(__NR_ftruncate, sys_ftruncate)
-+#define __NR_truncate 1048
-+__SYSCALL(__NR_truncate, sys_truncate)
-+#define __NR_stat 1049
-+__SYSCALL(__NR_stat, sys_newstat)
-+#define __NR_lstat 1050
-+__SYSCALL(__NR_lstat, sys_newlstat)
-+#define __NR_fstat 1051
-+__SYSCALL(__NR_fstat, sys_newfstat)
-+#define __NR_fcntl 1052
-+__SYSCALL(__NR_fcntl, sys_fcntl)
-+#define __NR_fadvise64 1053
-+#define __ARCH_WANT_SYS_FADVISE64
-+__SYSCALL(__NR_fadvise64, sys_fadvise64)
-+#define __NR_newfstatat 1054
-+#define __ARCH_WANT_SYS_NEWFSTATAT
-+__SYSCALL(__NR_newfstatat, sys_newfstatat)
-+#define __NR_fstatfs 1055
-+__SYSCALL(__NR_fstatfs, sys_fstatfs)
-+#define __NR_statfs 1056
-+__SYSCALL(__NR_statfs, sys_statfs)
-+#define __NR_lseek 1057
-+__SYSCALL(__NR_lseek, sys_lseek)
-+#define __NR_mmap 1058
-+__SYSCALL(__NR_mmap, sys_mmap)
-+
-+#undef __NR_syscalls
-+#define __NR_syscalls (__NR_mmap+1)
-+#endif /* 32 bit off_t syscalls */
-+
-+#ifdef __ARCH_WANT_SYSCALL_DEPRECATED
-+#define __NR_alarm 1059
-+#define __ARCH_WANT_SYS_ALARM
-+__SYSCALL(__NR_alarm, sys_alarm)
-+#define __NR_getpgrp 1060
-+#define __ARCH_WANT_SYS_GETPGRP
-+__SYSCALL(__NR_getpgrp, sys_getpgrp)
-+#define __NR_pause 1061
-+#define __ARCH_WANT_SYS_PAUSE
-+__SYSCALL(__NR_pause, sys_pause)
-+#define __NR_time 1062
-+#define __ARCH_WANT_SYS_TIME
-+__SYSCALL(__NR_time, sys_time)
-+#define __NR_utime 1063
-+#define __ARCH_WANT_SYS_UTIME
-+__SYSCALL(__NR_utime, sys_utime)
-+
-+#define __NR_creat 1064
-+__SYSCALL(__NR_creat, sys_creat)
-+#define __NR_getdents 1065
-+#define __ARCH_WANT_SYS_GETDENTS
-+__SYSCALL(__NR_getdents, sys_getdents)
-+#define __NR_futimesat 1066
-+__SYSCALL(__NR_futimesat, sys_futimesat)
-+#define __NR_select 1067
-+#define __ARCH_WANT_SYS_SELECT
-+__SYSCALL(__NR_select, sys_select)
-+#define __NR_poll 1068
-+__SYSCALL(__NR_poll, sys_poll)
-+#define __NR_epoll_wait 1069
-+__SYSCALL(__NR_epoll_wait, sys_epoll_wait)
-+#define __NR_ustat 1070
-+__SYSCALL(__NR_ustat, sys_ustat)
-+#define __NR_vfork 1071
-+__SYSCALL(__NR_vfork, sys_vfork)
-+#define __NR_wait4 1072
-+__SYSCALL(__NR_wait4, sys_wait4)
-+
-+#define __NR_fork 1073
-+#ifdef CONFIG_MMU
-+__SYSCALL(__NR_fork, sys_fork)
-+#else
-+__SYSCALL(__NR_fork, sys_ni_syscall)
-+#endif /* CONFIG_MMU */
-+
-+#undef __NR_syscalls
-+#define __NR_syscalls (__NR_fork+1)
-+
-+#endif /* __ARCH_WANT_SYSCALL_DEPRECATED */
-+
-+/*
-+ * 32 bit systems traditionally used different
-+ * syscalls for off_t and loff_t arguments, while
-+ * 64 bit systems only need the off_t version.
-+ * For new 32 bit platforms, there is no need to
-+ * implement the old 32 bit off_t syscalls, so
-+ * they take different names.
-+ * Here we map the numbers so that both versions
-+ * use the same syscall table layout.
-+ */
-+#if __BITS_PER_LONG == 64
-+#define __NR_fcntl __NR3264_fcntl
-+#define __NR_statfs __NR3264_statfs
-+#define __NR_fstatfs __NR3264_fstatfs
-+#define __NR_truncate __NR3264_truncate
-+#define __NR_ftruncate __NR3264_truncate
-+#define __NR_lseek __NR3264_lseek
-+#define __NR_sendfile __NR3264_sendfile
-+#define __NR_newfstatat __NR3264_fstatat
-+#define __NR_fstat __NR3264_fstat
-+#define __NR_mmap __NR3264_mmap
-+#define __NR_fadvise64 __NR3264_fadvise64
-+#ifdef __NR3264_stat
-+#define __NR_stat __NR3264_stat
-+#define __NR_lstat __NR3264_lstat
-+#endif
-+#else
-+#define __NR_fcntl64 __NR3264_fcntl
-+#define __NR_statfs64 __NR3264_statfs
-+#define __NR_fstatfs64 __NR3264_fstatfs
-+#define __NR_truncate64 __NR3264_truncate
-+#define __NR_ftruncate64 __NR3264_truncate
-+#define __NR_llseek __NR3264_lseek
-+#define __NR_sendfile64 __NR3264_sendfile
-+#define __NR_fstatat64 __NR3264_fstatat
-+#define __NR_fstat64 __NR3264_fstat
-+#define __NR_mmap2 __NR3264_mmap
-+#define __NR_fadvise64_64 __NR3264_fadvise64
-+#ifdef __NR3264_stat
-+#define __NR_stat64 __NR3264_stat
-+#define __NR_lstat64 __NR3264_lstat
-+#endif
-+#endif
-+
-+#ifdef __KERNEL__
-+
-+/*
-+ * These are required system calls, we should
-+ * invert the logic eventually and let them
-+ * be selected by default.
-+ */
-+#if __BITS_PER_LONG == 32
-+#define __ARCH_WANT_STAT64
-+#define __ARCH_WANT_SYS_LLSEEK
-+#endif
-+#define __ARCH_WANT_SYS_RT_SIGACTION
-+#define __ARCH_WANT_SYS_RT_SIGSUSPEND
-+
-+/*
-+ * "Conditional" syscalls
-+ *
-+ * What we want is __attribute__((weak,alias("sys_ni_syscall"))),
-+ * but it doesn't work on all toolchains, so we just do it by hand
-+ */
-+#ifndef cond_syscall
-+#define cond_syscall(x) asm(".weak\t" #x "\n\t.set\t" #x ",sys_ni_syscall")
-+#endif
-+
-+#endif /* __KERNEL__ */
-+#endif /* _ASM_GENERIC_UNISTD_H */
-Index: linux-2.6/include/asm-generic/Kbuild
-===================================================================
---- linux-2.6.orig/include/asm-generic/Kbuild
-+++ linux-2.6/include/asm-generic/Kbuild
-@@ -27,6 +27,7 @@ header-y += termbits.h
- header-y += termios.h
- header-y += types.h
- header-y += ucontext.h
-+header-y += unistd.h
- 
- unifdef-y += int-l64.h
- unifdef-y += int-ll64.h
-Index: linux-2.6/scripts/checksyscalls.sh
-===================================================================
---- linux-2.6.orig/scripts/checksyscalls.sh
-+++ linux-2.6/scripts/checksyscalls.sh
-@@ -14,6 +14,57 @@ cat << EOF
- #include <asm/types.h>
- #include <asm/unistd.h>
- 
-+/* *at */
-+#define __IGNORE_open		/* openat */
-+#define __IGNORE_link		/* linkat */
-+#define __IGNORE_unlink		/* unlinkat */
-+#define __IGNORE_mknod		/* mknodat */
-+#define __IGNORE_chmod		/* fchmodat */
-+#define __IGNORE_chown		/* fchownat */
-+#define __IGNORE_mkdir		/* mkdirat */
-+#define __IGNORE_rmdir		/* unlinkat */
-+#define __IGNORE_lchown		/* fchownat */
-+#define __IGNORE_access		/* faccessat */
-+#define __IGNORE_rename		/* renameat */
-+#define __IGNORE_readlink	/* readlinkat */
-+#define __IGNORE_symlink	/* symlinkat */
-+#define __IGNORE_utimes		/* futimesat */
-+#if BITS_PER_LONG == 64
-+#define __IGNORE_stat		/* fstatat */
-+#define __IGNORE_lstat		/* fstatat */
-+#else
-+#define __IGNORE_stat64		/* fstatat64 */
-+#define __IGNORE_lstat64	/* fstatat64 */
-+#endif
-+
-+/* CLOEXEC flag */
-+#define __IGNORE_pipe		/* pipe2 */
-+#define __IGNORE_dup2		/* dup3 */
-+#define __IGNORE_epoll_create	/* epoll_create1 */
-+#define __IGNORE_inotify_init	/* inotify_init1 */
-+#define __IGNORE_eventfd	/* eventfd2 */
-+#define __IGNORE_signalfd	/* signalfd4 */
-+
-+/* MMU */
-+#ifndef CONFIG_MMU
-+#define __IGNORE_madvise
-+#define __IGNORE_mbind
-+#define __IGNORE_mincore
-+#define __IGNORE_mlock
-+#define __IGNORE_mlockall
-+#define __IGNORE_munlock
-+#define __IGNORE_munlockall
-+#define __IGNORE_mprotect
-+#define __IGNORE_msync
-+#define __IGNORE_migrate_pages
-+#define __IGNORE_move_pages
-+#define __IGNORE_remap_file_pages
-+#define __IGNORE_get_mempolicy
-+#define __IGNORE_set_mempolicy
-+#define __IGNORE_swapoff
-+#define __IGNORE_swapon
-+#endif
-+
- /* System calls for 32-bit kernels only */
- #if BITS_PER_LONG == 64
- #define __IGNORE_sendfile64
-@@ -27,6 +78,22 @@ cat << EOF
- #define __IGNORE_fstatat64
- #define __IGNORE_fstatfs64
- #define __IGNORE_statfs64
-+#define __IGNORE_llseek
-+#define __IGNORE_mmap2
-+#else
-+#define __IGNORE_sendfile
-+#define __IGNORE_ftruncate
-+#define __IGNORE_truncate
-+#define __IGNORE_stat
-+#define __IGNORE_lstat
-+#define __IGNORE_fstat
-+#define __IGNORE_fcntl
-+#define __IGNORE_fadvise64
-+#define __IGNORE_newfstatat
-+#define __IGNORE_fstatfs
-+#define __IGNORE_statfs
-+#define __IGNORE_lseek
-+#define __IGNORE_mmap
- #endif
- 
- /* i386-specific or historical system calls */
-@@ -44,7 +111,6 @@ cat << EOF
- #define __IGNORE_idle
- #define __IGNORE_modify_ldt
- #define __IGNORE_ugetrlimit
--#define __IGNORE_mmap2
- #define __IGNORE_vm86
- #define __IGNORE_vm86old
- #define __IGNORE_set_thread_area
-@@ -55,7 +121,6 @@ cat << EOF
- #define __IGNORE_oldlstat
- #define __IGNORE_oldolduname
- #define __IGNORE_olduname
--#define __IGNORE_umount2
- #define __IGNORE_umount
- #define __IGNORE_waitpid
- #define __IGNORE_stime
-@@ -75,9 +140,12 @@ cat << EOF
- #define __IGNORE__llseek
- #define __IGNORE__newselect
- #define __IGNORE_create_module
--#define __IGNORE_delete_module
- #define __IGNORE_query_module
- #define __IGNORE_get_kernel_syms
-+#define __IGNORE_sysfs
-+#define __IGNORE_uselib
-+#define __IGNORE__sysctl
-+
- /* ... including the "new" 32-bit uid syscalls */
- #define __IGNORE_lchown32
- #define __IGNORE_getuid32
-@@ -99,6 +167,24 @@ cat << EOF
- #define __IGNORE_setfsuid32
- #define __IGNORE_setfsgid32
- 
-+/* these can be expressed using other calls */
-+#define __IGNORE_alarm		/* setitimer */
-+#define __IGNORE_creat		/* open */
-+#define __IGNORE_fork		/* clone */
-+#define __IGNORE_futimesat	/* utimensat */
-+#define __IGNORE_getpgrp	/* getpgid */
-+#define __IGNORE_getdents	/* getdents64 */
-+#define __IGNORE_pause		/* sigsuspend */
-+#define __IGNORE_poll		/* ppoll */
-+#define __IGNORE_select		/* pselect6 */
-+#define __IGNORE_epoll_wait	/* epoll_pwait */
-+#define __IGNORE_time		/* gettimeofday */
-+#define __IGNORE_uname		/* newuname */
-+#define __IGNORE_ustat		/* statfs */
-+#define __IGNORE_utime		/* utimes */
-+#define __IGNORE_vfork		/* clone */
-+#define __IGNORE_wait4		/* waitid */
-+
- /* sync_file_range had a stupid ABI. Allow sync_file_range2 instead */
- #ifdef __NR_sync_file_range2
- #define __IGNORE_sync_file_range
++++ linux-2.6/arch/microblaze/kernel/syscall_table.c
+@@ -0,0 +1,12 @@
++#include <linux/syscalls.h>
++#include <linux/signal.h>
++#include <linux/unistd.h>
++
++#include <asm/syscalls.h>
++
++#undef __SYSCALL
++#define __SYSCALL(nr, call) [nr] (call),
++
++void *sys_call_table[__NR_syscalls] = {
++#include <asm/unistd.h>
++};
 
 -- 
