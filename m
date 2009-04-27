@@ -1,7 +1,7 @@
 From: <arnd-r2nGTMty4D4@public.gmane.org>
 Subject: (unknown)
 Date: Mon, 27 Apr 2009 10:42:00 -0400
-Message-ID: <20090427143736.739525755@arndb.de>
+Message-ID: <20090427143736.910087365__48863.0280401141$1240843445$gmane$org@arndb.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
@@ -9,7 +9,7 @@ List-Id: linux-api@vger.kernel.org
 >From arnd-r2nGTMty4D4@public.gmane.org Mon Apr 27 16:28:40 2009
 References: <20090427142010.587518220-r2nGTMty4D4@public.gmane.org>
 User-Agent: quilt/0.46-1
-Date: Mon, 27 Apr 2009 16:20:11 +0200
+Date: Mon, 27 Apr 2009 16:20:12 +0200
 From: arnd-r2nGTMty4D4@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org,
@@ -19,259 +19,343 @@ Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org,
  liqin.chen-+XGAvkf1AAHby3iVrkZq2A@public.gmane.org,
  Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>,
  Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Subject: [RFC 01/17] asm-generic: rename termios.h to termios-base.h
-Content-Disposition: inline; filename=0001-asm-generic-add-complete-termios.h.patch
-X-Provags-ID: V01U2FsdGVkX1/xu4vJssORo5JEwJmCN0zaKrLACm0pXgcgS8L
- nEdWOCrcNmDlQGMPLb2pcu4w/QxDwJ8yUkFlayzHvuBS0VbefM
- dtqNTnEx2sYlQA9QUc7pA==
+Subject: [RFC 02/17] asm-generic: rename signal.h to signal-defs.h
+Content-Disposition: inline; filename=0007-asm-generic-add-a-complete-signal.h.patch
+X-Provags-ID: V01U2FsdGVkX1/ygXtkAefHotL8QCKAKvyM1WbG9g14kvVXE36
+ nbBf1wnHE0E7jHI4xtLbBpL9oSBfUgYjVr11LL4xGkORJ8Hh5o
+ pOnOucNiPGhKOlXTc/+8Q==
 
-The existing asm-generic/termios.h file only contains a part
-of the required termios.h contents. This renames it to termios-base.h
-and changes all users, so we can add a full termios.h file for
-new archtitectures.
+The existing asm-generic/signal.h is incomplete and included
+by some architectures. New architectures should be able
+to use a generic version, so rename the existing file and
+change all users, which lets us add the new file.
 
 Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 Signed-off-by: Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
 ---
- arch/avr32/include/asm/termios.h      |    2 	1 +	1 -	0 !
- arch/frv/include/asm/termios.h        |    2 	1 +	1 -	0 !
- arch/microblaze/include/asm/termios.h |    2 	1 +	1 -	0 !
- arch/powerpc/include/asm/termios.h    |    2 	1 +	1 -	0 !
- arch/s390/include/asm/termios.h       |    2 	1 +	1 -	0 !
- include/asm-generic/termios-base.h    |   77 	77 +	0 -	0 !
- include/asm-generic/termios.h         |   77 	0 +	77 -	0 !
- 7 files changed, 82 insertions(+), 82 deletions(-)
- create mode 100644 include/asm-generic/termios-base.h
+ arch/alpha/include/asm/signal.h      |    2 	1 +	1 -	0 !
+ arch/arm/include/asm/signal.h        |    2 	1 +	1 -	0 !
+ arch/avr32/include/asm/signal.h      |    2 	1 +	1 -	0 !
+ arch/blackfin/include/asm/signal.h   |    2 	1 +	1 -	0 !
+ arch/cris/include/asm/signal.h       |    2 	1 +	1 -	0 !
+ arch/h8300/include/asm/signal.h      |    2 	1 +	1 -	0 !
+ arch/ia64/include/asm/signal.h       |    2 	1 +	1 -	0 !
+ arch/m32r/include/asm/signal.h       |    2 	1 +	1 -	0 !
+ arch/m68k/include/asm/signal.h       |    2 	1 +	1 -	0 !
+ arch/microblaze/include/asm/signal.h |    2 	1 +	1 -	0 !
+ arch/mips/include/asm/signal.h       |    2 	1 +	1 -	0 !
+ arch/mn10300/include/asm/signal.h    |    2 	1 +	1 -	0 !
+ arch/powerpc/include/asm/signal.h    |    2 	1 +	1 -	0 !
+ arch/s390/include/asm/signal.h       |    2 	1 +	1 -	0 !
+ arch/sh/include/asm/signal.h         |    2 	1 +	1 -	0 !
+ arch/sparc/include/asm/signal.h      |    2 	1 +	1 -	0 !
+ arch/x86/include/asm/signal.h        |    2 	1 +	1 -	0 !
+ include/asm-generic/Kbuild           |    2 	1 +	1 -	0 !
+ include/asm-generic/signal-defs.h    |   28 	28 +	0 -	0 !
+ include/asm-generic/signal.h         |   28 	0 +	28 -	0 !
+ 20 files changed, 46 insertions(+), 46 deletions(-)
+ create mode 100644 include/asm-generic/signal-defs.h
 
-Index: linux-2.6/arch/avr32/include/asm/termios.h
+Index: linux-2.6/arch/alpha/include/asm/signal.h
 ===================================================================
---- linux-2.6.orig/arch/avr32/include/asm/termios.h
-+++ linux-2.6/arch/avr32/include/asm/termios.h
-@@ -55,7 +55,7 @@ struct termio {
- */
- #define INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
+--- linux-2.6.orig/arch/alpha/include/asm/signal.h
++++ linux-2.6/arch/alpha/include/asm/signal.h
+@@ -111,7 +111,7 @@ typedef unsigned long sigset_t;
+ #define SIG_UNBLOCK        2	/* for unblocking signals */
+ #define SIG_SETMASK        3	/* for setting the signal mask */
  
--#include <asm-generic/termios.h>
-+#include <asm-generic/termios-base.h>
- 
- #endif	/* __KERNEL__ */
- 
-Index: linux-2.6/arch/frv/include/asm/termios.h
-===================================================================
---- linux-2.6.orig/arch/frv/include/asm/termios.h
-+++ linux-2.6/arch/frv/include/asm/termios.h
-@@ -52,7 +52,7 @@ struct termio {
- /* ioctl (fd, TIOCSERGETLSR, &result) where result may be as below */
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
  
  #ifdef __KERNEL__
--#include <asm-generic/termios.h>
-+#include <asm-generic/termios-base.h>
+ struct osf_sigaction {
+Index: linux-2.6/arch/arm/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/arm/include/asm/signal.h
++++ linux-2.6/arch/arm/include/asm/signal.h
+@@ -111,7 +111,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/avr32/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/avr32/include/asm/signal.h
++++ linux-2.6/arch/avr32/include/asm/signal.h
+@@ -112,7 +112,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/blackfin/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/blackfin/include/asm/signal.h
++++ linux-2.6/arch/blackfin/include/asm/signal.h
+@@ -104,7 +104,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/cris/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/cris/include/asm/signal.h
++++ linux-2.6/arch/cris/include/asm/signal.h
+@@ -106,7 +106,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/h8300/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/h8300/include/asm/signal.h
++++ linux-2.6/arch/h8300/include/asm/signal.h
+@@ -105,7 +105,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/ia64/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/ia64/include/asm/signal.h
++++ linux-2.6/arch/ia64/include/asm/signal.h
+@@ -114,7 +114,7 @@
+ 
+ #endif /* __KERNEL__ */
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ # ifndef __ASSEMBLY__
+ 
+Index: linux-2.6/arch/m68k/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/m68k/include/asm/signal.h
++++ linux-2.6/arch/m68k/include/asm/signal.h
+@@ -103,7 +103,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/mips/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/mips/include/asm/signal.h
++++ linux-2.6/arch/mips/include/asm/signal.h
+@@ -109,7 +109,7 @@ typedef unsigned long old_sigset_t;		/* 
+ #define SIG_UNBLOCK	2	/* for unblocking signals */
+ #define SIG_SETMASK	3	/* for setting the signal mask */
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ struct sigaction {
+ 	unsigned int	sa_flags;
+Index: linux-2.6/arch/mn10300/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/mn10300/include/asm/signal.h
++++ linux-2.6/arch/mn10300/include/asm/signal.h
+@@ -115,7 +115,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/powerpc/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/powerpc/include/asm/signal.h
++++ linux-2.6/arch/powerpc/include/asm/signal.h
+@@ -94,7 +94,7 @@ typedef struct {
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ struct old_sigaction {
+ 	__sighandler_t sa_handler;
+Index: linux-2.6/arch/s390/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/s390/include/asm/signal.h
++++ linux-2.6/arch/s390/include/asm/signal.h
+@@ -115,7 +115,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ     2048
+ #define SIGSTKSZ        8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/sh/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/sh/include/asm/signal.h
++++ linux-2.6/arch/sh/include/asm/signal.h
+@@ -106,7 +106,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/sparc/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/sparc/include/asm/signal.h
++++ linux-2.6/arch/sparc/include/asm/signal.h
+@@ -176,7 +176,7 @@ struct sigstack {
+ #define SA_STATIC_ALLOC         0x8000
  #endif
  
- #endif /* _ASM_TERMIOS_H */
-Index: linux-2.6/arch/powerpc/include/asm/termios.h
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
+ 
+ struct __new_sigaction {
+ 	__sighandler_t		sa_handler;
+Index: linux-2.6/arch/x86/include/asm/signal.h
 ===================================================================
---- linux-2.6.orig/arch/powerpc/include/asm/termios.h
-+++ linux-2.6/arch/powerpc/include/asm/termios.h
-@@ -78,7 +78,7 @@ struct termio {
+--- linux-2.6.orig/arch/x86/include/asm/signal.h
++++ linux-2.6/arch/x86/include/asm/signal.h
+@@ -117,7 +117,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
  
- #ifdef __KERNEL__
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
  
--#include <asm-generic/termios.h>
-+#include <asm-generic/termios-base.h>
+ #ifndef __ASSEMBLY__
  
- #endif	/* __KERNEL__ */
- 
-Index: linux-2.6/arch/s390/include/asm/termios.h
-===================================================================
---- linux-2.6.orig/arch/s390/include/asm/termios.h
-+++ linux-2.6/arch/s390/include/asm/termios.h
-@@ -60,7 +60,7 @@ struct termio {
- #define user_termios_to_kernel_termios(k, u) copy_from_user(k, u, sizeof(struct termios2))
- #define kernel_termios_to_user_termios(u, k) copy_to_user(u, k, sizeof(struct termios2))
- 
--#include <asm-generic/termios.h>
-+#include <asm-generic/termios-base.h>
- 
- #endif	/* __KERNEL__ */
- 
-Index: linux-2.6/include/asm-generic/termios-base.h
+Index: linux-2.6/include/asm-generic/signal-defs.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6/include/asm-generic/termios-base.h
-@@ -0,0 +1,77 @@
-+/* termios.h: generic termios/termio user copying/translation
-+ */
++++ linux-2.6/include/asm-generic/signal-defs.h
+@@ -0,0 +1,28 @@
++#ifndef __ASM_GENERIC_SIGNAL_DEFS_H
++#define __ASM_GENERIC_SIGNAL_DEFS_H
 +
-+#ifndef _ASM_GENERIC_TERMIOS_BASE_H
-+#define _ASM_GENERIC_TERMIOS_BASE_H
++#include <linux/compiler.h>
 +
-+#include <asm/uaccess.h>
-+
-+#ifndef __ARCH_TERMIO_GETPUT
-+
-+/*
-+ * Translate a "termio" structure into a "termios". Ugh.
-+ */
-+static inline int user_termio_to_kernel_termios(struct ktermios *termios,
-+						struct termio __user *termio)
-+{
-+	unsigned short tmp;
-+
-+	if (get_user(tmp, &termio->c_iflag) < 0)
-+		goto fault;
-+	termios->c_iflag = (0xffff0000 & termios->c_iflag) | tmp;
-+
-+	if (get_user(tmp, &termio->c_oflag) < 0)
-+		goto fault;
-+	termios->c_oflag = (0xffff0000 & termios->c_oflag) | tmp;
-+
-+	if (get_user(tmp, &termio->c_cflag) < 0)
-+		goto fault;
-+	termios->c_cflag = (0xffff0000 & termios->c_cflag) | tmp;
-+
-+	if (get_user(tmp, &termio->c_lflag) < 0)
-+		goto fault;
-+	termios->c_lflag = (0xffff0000 & termios->c_lflag) | tmp;
-+
-+	if (get_user(termios->c_line, &termio->c_line) < 0)
-+		goto fault;
-+
-+	if (copy_from_user(termios->c_cc, termio->c_cc, NCC) != 0)
-+		goto fault;
-+
-+	return 0;
-+
-+ fault:
-+	return -EFAULT;
-+}
-+
-+/*
-+ * Translate a "termios" structure into a "termio". Ugh.
-+ */
-+static inline int kernel_termios_to_user_termio(struct termio __user *termio,
-+						struct ktermios *termios)
-+{
-+	if (put_user(termios->c_iflag, &termio->c_iflag) < 0 ||
-+	    put_user(termios->c_oflag, &termio->c_oflag) < 0 ||
-+	    put_user(termios->c_cflag, &termio->c_cflag) < 0 ||
-+	    put_user(termios->c_lflag, &termio->c_lflag) < 0 ||
-+	    put_user(termios->c_line,  &termio->c_line) < 0 ||
-+	    copy_to_user(termio->c_cc, termios->c_cc, NCC) != 0)
-+		return -EFAULT;
-+
-+	return 0;
-+}
-+
-+#ifndef user_termios_to_kernel_termios
-+#define user_termios_to_kernel_termios(k, u) copy_from_user(k, u, sizeof(struct termios))
++#ifndef SIG_BLOCK
++#define SIG_BLOCK          0	/* for blocking signals */
++#endif
++#ifndef SIG_UNBLOCK
++#define SIG_UNBLOCK        1	/* for unblocking signals */
++#endif
++#ifndef SIG_SETMASK
++#define SIG_SETMASK        2	/* for setting the signal mask */
 +#endif
 +
-+#ifndef kernel_termios_to_user_termios
-+#define kernel_termios_to_user_termios(u, k) copy_to_user(u, k, sizeof(struct termios))
++#ifndef __ASSEMBLY__
++typedef void __signalfn_t(int);
++typedef __signalfn_t __user *__sighandler_t;
++
++typedef void __restorefn_t(void);
++typedef __restorefn_t __user *__sigrestore_t;
++
++#define SIG_DFL	((__force __sighandler_t)0)	/* default signal handling */
++#define SIG_IGN	((__force __sighandler_t)1)	/* ignore signal */
++#define SIG_ERR	((__force __sighandler_t)-1)	/* error return from signal */
 +#endif
 +
-+#define user_termios_to_kernel_termios_1(k, u) copy_from_user(k, u, sizeof(struct termios))
-+#define kernel_termios_to_user_termios_1(u, k) copy_to_user(u, k, sizeof(struct termios))
-+
-+#endif	/* __ARCH_TERMIO_GETPUT */
-+
-+#endif /* _ASM_GENERIC_TERMIOS_BASE_H */
-Index: linux-2.6/include/asm-generic/termios.h
++#endif /* __ASM_GENERIC_SIGNAL_DEFS_H */
+Index: linux-2.6/include/asm-generic/signal.h
 ===================================================================
---- linux-2.6.orig/include/asm-generic/termios.h
+--- linux-2.6.orig/include/asm-generic/signal.h
 +++ /dev/null
-@@ -1,77 +0,0 @@
--/* termios.h: generic termios/termio user copying/translation
-- */
+@@ -1,28 +0,0 @@
+-#ifndef __ASM_GENERIC_SIGNAL_H
+-#define __ASM_GENERIC_SIGNAL_H
 -
--#ifndef _ASM_GENERIC_TERMIOS_H
--#define _ASM_GENERIC_TERMIOS_H
+-#include <linux/compiler.h>
 -
--#include <asm/uaccess.h>
--
--#ifndef __ARCH_TERMIO_GETPUT
--
--/*
-- * Translate a "termio" structure into a "termios". Ugh.
-- */
--static inline int user_termio_to_kernel_termios(struct ktermios *termios,
--						struct termio __user *termio)
--{
--	unsigned short tmp;
--
--	if (get_user(tmp, &termio->c_iflag) < 0)
--		goto fault;
--	termios->c_iflag = (0xffff0000 & termios->c_iflag) | tmp;
--
--	if (get_user(tmp, &termio->c_oflag) < 0)
--		goto fault;
--	termios->c_oflag = (0xffff0000 & termios->c_oflag) | tmp;
--
--	if (get_user(tmp, &termio->c_cflag) < 0)
--		goto fault;
--	termios->c_cflag = (0xffff0000 & termios->c_cflag) | tmp;
--
--	if (get_user(tmp, &termio->c_lflag) < 0)
--		goto fault;
--	termios->c_lflag = (0xffff0000 & termios->c_lflag) | tmp;
--
--	if (get_user(termios->c_line, &termio->c_line) < 0)
--		goto fault;
--
--	if (copy_from_user(termios->c_cc, termio->c_cc, NCC) != 0)
--		goto fault;
--
--	return 0;
--
-- fault:
--	return -EFAULT;
--}
--
--/*
-- * Translate a "termios" structure into a "termio". Ugh.
-- */
--static inline int kernel_termios_to_user_termio(struct termio __user *termio,
--						struct ktermios *termios)
--{
--	if (put_user(termios->c_iflag, &termio->c_iflag) < 0 ||
--	    put_user(termios->c_oflag, &termio->c_oflag) < 0 ||
--	    put_user(termios->c_cflag, &termio->c_cflag) < 0 ||
--	    put_user(termios->c_lflag, &termio->c_lflag) < 0 ||
--	    put_user(termios->c_line,  &termio->c_line) < 0 ||
--	    copy_to_user(termio->c_cc, termios->c_cc, NCC) != 0)
--		return -EFAULT;
--
--	return 0;
--}
--
--#ifndef user_termios_to_kernel_termios
--#define user_termios_to_kernel_termios(k, u) copy_from_user(k, u, sizeof(struct termios))
+-#ifndef SIG_BLOCK
+-#define SIG_BLOCK          0	/* for blocking signals */
+-#endif
+-#ifndef SIG_UNBLOCK
+-#define SIG_UNBLOCK        1	/* for unblocking signals */
+-#endif
+-#ifndef SIG_SETMASK
+-#define SIG_SETMASK        2	/* for setting the signal mask */
 -#endif
 -
--#ifndef kernel_termios_to_user_termios
--#define kernel_termios_to_user_termios(u, k) copy_to_user(u, k, sizeof(struct termios))
+-#ifndef __ASSEMBLY__
+-typedef void __signalfn_t(int);
+-typedef __signalfn_t __user *__sighandler_t;
+-
+-typedef void __restorefn_t(void);
+-typedef __restorefn_t __user *__sigrestore_t;
+-
+-#define SIG_DFL	((__force __sighandler_t)0)	/* default signal handling */
+-#define SIG_IGN	((__force __sighandler_t)1)	/* ignore signal */
+-#define SIG_ERR	((__force __sighandler_t)-1)	/* error return from signal */
 -#endif
 -
--#define user_termios_to_kernel_termios_1(k, u) copy_from_user(k, u, sizeof(struct termios))
--#define kernel_termios_to_user_termios_1(u, k) copy_to_user(u, k, sizeof(struct termios))
--
--#endif	/* __ARCH_TERMIO_GETPUT */
--
--#endif /* _ASM_GENERIC_TERMIOS_H */
-Index: linux-2.6/arch/microblaze/include/asm/termios.h
+-#endif /* __ASM_GENERIC_SIGNAL_H */
+Index: linux-2.6/arch/m32r/include/asm/signal.h
 ===================================================================
---- linux-2.6.orig/arch/microblaze/include/asm/termios.h
-+++ linux-2.6/arch/microblaze/include/asm/termios.h
-@@ -81,7 +81,7 @@ struct termio {
+--- linux-2.6.orig/arch/m32r/include/asm/signal.h
++++ linux-2.6/arch/m32r/include/asm/signal.h
+@@ -107,7 +107,7 @@ typedef unsigned long sigset_t;
+ #define MINSIGSTKSZ	2048
+ #define SIGSTKSZ	8192
+ 
+-#include <asm-generic/signal.h>
++#include <asm-generic/signal-defs.h>
  
  #ifdef __KERNEL__
+ struct old_sigaction {
+Index: linux-2.6/arch/microblaze/include/asm/signal.h
+===================================================================
+--- linux-2.6.orig/arch/microblaze/include/asm/signal.h
++++ linux-2.6/arch/microblaze/include/asm/signal.h
+@@ -90,7 +90,7 @@
  
--#include <asm-generic/termios.h>
-+#include <asm-generic/termios-base.h>
+ # ifndef __ASSEMBLY__
+ # include <linux/types.h>
+-# include <asm-generic/signal.h>
++# include <asm-generic/signal-defs.h>
  
- #endif	/* __KERNEL__ */
+ /* Avoid too many header ordering problems. */
+ struct siginfo;
+Index: linux-2.6/include/asm-generic/Kbuild
+===================================================================
+--- linux-2.6.orig/include/asm-generic/Kbuild
++++ linux-2.6/include/asm-generic/Kbuild
+@@ -4,7 +4,7 @@ header-y += fcntl.h
+ header-y += ioctl.h
+ header-y += mman.h
+ header-y += poll.h
+-header-y += signal.h
++header-y += signal-defs.h
+ header-y += statfs.h
  
+ unifdef-y += int-l64.h
 
 -- 
 
