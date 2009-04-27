@@ -1,7 +1,7 @@
 From: <arnd-r2nGTMty4D4@public.gmane.org>
 Subject: (unknown)
-Date: Mon, 27 Apr 2009 10:41:22 -0400
-Message-ID: <20090427143738.347089506@arndb.de>
+Date: Mon, 27 Apr 2009 10:41:21 -0400
+Message-ID: <20090427143740.376083696@arndb.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
@@ -9,7 +9,7 @@ List-Id: linux-api@vger.kernel.org
 >From arnd-r2nGTMty4D4@public.gmane.org Mon Apr 27 16:28:40 2009
 References: <20090427142010.587518220-r2nGTMty4D4@public.gmane.org>
 User-Agent: quilt/0.46-1
-Date: Mon, 27 Apr 2009 16:20:20 +0200
+Date: Mon, 27 Apr 2009 16:20:26 +0200
 From: arnd-r2nGTMty4D4@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org,
@@ -17,830 +17,604 @@ Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org,
  linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
  linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
  liqin.chen-+XGAvkf1AAHby3iVrkZq2A@public.gmane.org,
- Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>,
- Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Subject: [RFC 10/17] asm-generic: provide generic ABI headers
-Content-Disposition: inline; filename=0006-asm-generic-provide-generic-ABI-headers.patch
-X-Provags-ID: V01U2FsdGVkX18PSRZiW4+EZJqFTk5r5Yj5Zxoc6HvEGkxOKBW
- xlKIlQY3tbNzgAR5oFFoT/CjQ4ViOXH1L5gfF0VuPgx0Nm4EGZ
- zBYvx/PVahU2VUh4yHWog==
+ Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>
+Subject: [RFC 16/17] microblaze: clean up signal handling
+Content-Disposition: inline; filename=microblaze/0027-microblaze-clean-up-signal-handling.patch
+X-Provags-ID: V01U2FsdGVkX1/hON7QKR3+Tces4gXczLyzfv11HcPvhuaAYlf
+ YgYZo3HB4lnKTt82jL/8OeYTfSEwdf3HAWstn+8Jj+zwVnBrPH
+ YdxyeX44qbPquPVTTzg8w==
 
-These header files are typically copied from an existing architecture
-into any new one, slightly modified and then remain untouched until
-the end of time in the name of ABI stability.
+When legacy signal handling is disabled, the
+arch/microblaze/kernel/signal.c implementation can
+be much simpler, as most of it is handled generically
+from kernel/signal.c.
 
-To make it easier for future architectures, provide a sane generic
-version here. In cases where multiple architectures already use
-identical code, I used the most common version. In cases like
-stat.h that are more or less broken everywhere, I provide a
-version that is meant to be ideal for new architectures.
+This is also a prerequisite for using the generic
+asm/unistd.h, which does not provide __NR_sigreturn,
+because this macro is referenced by the current signal.c
+implementation.
 
 Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Signed-off-by: Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
 ---
- include/asm-generic/Kbuild        |   12 	12 +	0 -	0 !
- include/asm-generic/auxvec.h      |    8 	8 +	0 -	0 !
- include/asm-generic/ioctls.h      |  110 	110 +	0 -	0 !
- include/asm-generic/param.h       |   24 	24 +	0 -	0 !
- include/asm-generic/posix_types.h |  166 	166 +	0 -	0 !
- include/asm-generic/setup.h       |    6 	6 +	0 -	0 !
- include/asm-generic/socket.h      |   60 	60 +	0 -	0 !
- include/asm-generic/sockios.h     |   13 	13 +	0 -	0 !
- include/asm-generic/stat.h        |   72 	72 +	0 -	0 !
- include/asm-generic/swab.h        |   18 	18 +	0 -	0 !
- include/asm-generic/termbits.h    |  198 	198 +	0 -	0 !
- include/asm-generic/ucontext.h    |   12 	12 +	0 -	0 !
- 12 files changed, 699 insertions(+)
- create mode 100644 include/asm-generic/auxvec.h
- create mode 100644 include/asm-generic/ioctls.h
- create mode 100644 include/asm-generic/param.h
- create mode 100644 include/asm-generic/posix_types.h
- create mode 100644 include/asm-generic/setup.h
- create mode 100644 include/asm-generic/socket.h
- create mode 100644 include/asm-generic/sockios.h
- create mode 100644 include/asm-generic/stat.h
- create mode 100644 include/asm-generic/termbits.h
- create mode 100644 include/asm-generic/ucontext.h
+ arch/microblaze/include/asm/signal.h      |  166 	1 +	165 -	0 !
+ arch/microblaze/include/asm/syscalls.h    |   13 	4 +	9 -	0 !
+ arch/microblaze/include/asm/thread_info.h |   11 	11 +	0 -	0 !
+ arch/microblaze/include/asm/unistd.h      |    2 	1 +	1 -	0 !
+ arch/microblaze/kernel/signal.c           |  250 	38 +	212 -	0 !
+ 5 files changed, 55 insertions(+), 387 deletions(-)
 
-Index: linux-2.6/include/asm-generic/Kbuild
+Index: linux-2.6/arch/microblaze/include/asm/signal.h
 ===================================================================
---- linux-2.6.orig/include/asm-generic/Kbuild
-+++ linux-2.6/include/asm-generic/Kbuild
-@@ -1,20 +1,32 @@
-+header-y += auxvec.h
-+header-y += byteorder.h
- header-y += errno-base.h
- header-y += errno.h
- header-y += fcntl.h
- header-y += ioctl.h
-+header-y += ioctls.h
- header-y += ipcbuf.h
- header-y += mman-common.h
- header-y += mman.h
- header-y += msgbuf.h
-+header-y += param.h
- header-y += poll.h
-+header-y += posix_types.h
- header-y += sembuf.h
-+header-y += setup.h
- header-y += shmbuf.h
- header-y += shmparam.h
- header-y += signal-defs.h
- header-y += signal.h
-+header-y += socket.h
-+header-y += sockios.h
-+header-y += stat.h
- header-y += statfs.h
-+header-y += swab.h
-+header-y += termbits.h
- header-y += termios.h
- header-y += types.h
-+header-y += ucontext.h
+--- linux-2.6.orig/arch/microblaze/include/asm/signal.h
++++ linux-2.6/arch/microblaze/include/asm/signal.h
+@@ -1,165 +1 @@
+-/*
+- * Copyright (C) 2006 Atmark Techno, Inc.
+- *	Yasushi SHOJI <yashi-9u97MdVgWv6RbxiC3EKwHAC/G2K4zDHf@public.gmane.org>
+- *	Tetsuya OHKAWA <tetsuya-9u97MdVgWv6RbxiC3EKwHAC/G2K4zDHf@public.gmane.org>
+- *
+- * This file is subject to the terms and conditions of the GNU General Public
+- * License. See the file "COPYING" in the main directory of this archive
+- * for more details.
+- */
+-
+-#ifndef _ASM_MICROBLAZE_SIGNAL_H
+-#define _ASM_MICROBLAZE_SIGNAL_H
+-
+-#define SIGHUP		1
+-#define SIGINT		2
+-#define SIGQUIT		3
+-#define SIGILL		4
+-#define SIGTRAP		5
+-#define SIGABRT		6
+-#define SIGIOT		6
+-#define SIGBUS		7
+-#define SIGFPE		8
+-#define SIGKILL		9
+-#define SIGUSR1		10
+-#define SIGSEGV		11
+-#define SIGUSR2		12
+-#define SIGPIPE		13
+-#define SIGALRM		14
+-#define SIGTERM		15
+-#define SIGSTKFLT	16
+-#define SIGCHLD		17
+-#define SIGCONT		18
+-#define SIGSTOP		19
+-#define SIGTSTP		20
+-#define SIGTTIN		21
+-#define SIGTTOU		22
+-#define SIGURG		23
+-#define SIGXCPU		24
+-#define SIGXFSZ		25
+-#define SIGVTALRM	26
+-#define SIGPROF		27
+-#define SIGWINCH	28
+-#define SIGIO		29
+-#define SIGPOLL		SIGIO
+-/*
+-#define SIGLOST		29
+-*/
+-#define SIGPWR		30
+-#define SIGSYS		31
+-#define	SIGUNUSED	31
+-
+-/* These should not be considered constants from userland. */
+-#define SIGRTMIN	32
+-#define SIGRTMAX	_NSIG
+-
+-/*
+- * SA_FLAGS values:
+- *
+- * SA_ONSTACK indicates that a registered stack_t will be used.
+- * SA_RESTART flag to get restarting signals (which were the default long ago)
+- * SA_NOCLDSTOP flag to turn off SIGCHLD when children stop.
+- * SA_RESETHAND clears the handler when the signal is delivered.
+- * SA_NOCLDWAIT flag on SIGCHLD to inhibit zombies.
+- * SA_NODEFER prevents the current signal from being masked in the handler.
+- *
+- * SA_ONESHOT and SA_NOMASK are the historical Linux names for the Single
+- * Unix names RESETHAND and NODEFER respectively.
+- */
+-#define SA_NOCLDSTOP	0x00000001
+-#define SA_NOCLDWAIT	0x00000002
+-#define SA_SIGINFO	0x00000004
+-#define SA_ONSTACK	0x08000000
+-#define SA_RESTART	0x10000000
+-#define SA_NODEFER	0x40000000
+-#define SA_RESETHAND	0x80000000
+-
+-#define SA_NOMASK	SA_NODEFER
+-#define SA_ONESHOT	SA_RESETHAND
+-
+-#define SA_RESTORER	0x04000000
+-
+-/*
+- * sigaltstack controls
+- */
+-#define SS_ONSTACK	1
+-#define SS_DISABLE	2
+-
+-#define MINSIGSTKSZ	2048
+-#define SIGSTKSZ	8192
+-
+-# ifndef __ASSEMBLY__
+-# include <linux/types.h>
+-# include <asm-generic/signal-defs.h>
+-
+-/* Avoid too many header ordering problems. */
+-struct siginfo;
+-
+-#  ifdef __KERNEL__
+-/*
+- * Most things should be clean enough to redefine this at will, if care
+- * is taken to make libc match.
+- */
+-#  define _NSIG		64
+-#  define _NSIG_BPW	32
+-#  define _NSIG_WORDS	(_NSIG / _NSIG_BPW)
+-
+-typedef unsigned long old_sigset_t; /* at least 32 bits */
+-
+-typedef struct {
+-	unsigned long sig[_NSIG_WORDS];
+-} sigset_t;
+-
+-struct old_sigaction {
+-	__sighandler_t sa_handler;
+-	old_sigset_t sa_mask;
+-	unsigned long sa_flags;
+-	void (*sa_restorer)(void);
+-};
+-
+-struct sigaction {
+-	__sighandler_t sa_handler;
+-	unsigned long sa_flags;
+-	void (*sa_restorer)(void);
+-	sigset_t sa_mask; /* mask last for extensibility */
+-};
+-
+-struct k_sigaction {
+-	struct sigaction sa;
+-};
+-
+-#  include <asm/sigcontext.h>
+-#  undef __HAVE_ARCH_SIG_BITOPS
+-
+-#  define ptrace_signal_deliver(regs, cookie) do { } while (0)
+-
+-#  else /* !__KERNEL__ */
+-
+-/* Here we must cater to libcs that poke about in kernel headers. */
+-
+-#  define NSIG		32
+-typedef unsigned long sigset_t;
+-
+-struct sigaction {
+-	union {
+-	__sighandler_t _sa_handler;
+-	void (*_sa_sigaction)(int, struct siginfo *, void *);
+-	} _u;
+-	sigset_t sa_mask;
+-	unsigned long sa_flags;
+-	void (*sa_restorer)(void);
+-};
+-
+-#  define sa_handler	_u._sa_handler
+-#  define sa_sigaction	_u._sa_sigaction
+-
+-#  endif /* __KERNEL__ */
+-
+-typedef struct sigaltstack {
+-	void *ss_sp;
+-	int ss_flags;
+-	size_t ss_size;
+-} stack_t;
+-
+-# endif /* __ASSEMBLY__ */
+-#endif /* _ASM_MICROBLAZE_SIGNAL_H */
++#include <asm-generic/signal.h>
+Index: linux-2.6/arch/microblaze/include/asm/syscalls.h
+===================================================================
+--- linux-2.6.orig/arch/microblaze/include/asm/syscalls.h
++++ linux-2.6/arch/microblaze/include/asm/syscalls.h
+@@ -26,20 +26,15 @@ asmlinkage unsigned long sys_mmap(unsign
+ 			unsigned long fd, off_t offset);
  
- unifdef-y += int-l64.h
- unifdef-y += int-ll64.h
-Index: linux-2.6/include/asm-generic/auxvec.h
+ /* from signal.c */
+-asmlinkage int sys_sigsuspend(old_sigset_t mask, struct pt_regs *regs);
+-
+-asmlinkage int sys_rt_sigsuspend(sigset_t __user *unewset, size_t sigsetsize,
++asmlinkage long sys_rt_sigsuspend(sigset_t __user *unewset, size_t sigsetsize,
+ 		struct pt_regs *regs);
+ 
+-asmlinkage int sys_sigaction(int sig, const struct old_sigaction *act,
+-		struct old_sigaction *oact);
+-
+-asmlinkage int sys_sigaltstack(const stack_t __user *uss, stack_t __user *uoss,
++asmlinkage long sys_sigaltstack(const stack_t __user *uss, stack_t __user *uoss,
+ 		struct pt_regs *regs);
+ 
+-asmlinkage int sys_sigreturn(struct pt_regs *regs);
++asmlinkage long sys_rt_sigaction(int sig, const struct sigaction __user * act, struct sigaction __user * oact, size_t sigsetsize);
+ 
+-asmlinkage int sys_rt_sigreturn(struct pt_regs *regs);
++asmlinkage long sys_rt_sigreturn(struct pt_regs *regs);
+ 
+ #endif /* __KERNEL__ */
+ #endif /* __ASM_MICROBLAZE_SYSCALLS_H */
+Index: linux-2.6/arch/microblaze/include/asm/thread_info.h
 ===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/auxvec.h
-@@ -0,0 +1,8 @@
-+#ifndef __ASM_GENERIC_AUXVEC_H
-+#define __ASM_GENERIC_AUXVEC_H
-+/*
-+ * Not all architectures need their own auxvec.h, the most
-+ * common definitions are already in linux/auxvec.h.
-+ */
+--- linux-2.6.orig/arch/microblaze/include/asm/thread_info.h
++++ linux-2.6/arch/microblaze/include/asm/thread_info.h
+@@ -154,6 +154,17 @@ static inline struct thread_info *curren
+  */
+ /* FPU was used by this task this quantum (SMP) */
+ #define TS_USEDFPU		0x0001
++#define TS_RESTORE_SIGMASK	0x0002
 +
-+#endif /* __ASM_GENERIC_AUXVEC_H */
-Index: linux-2.6/include/asm-generic/ioctls.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/ioctls.h
-@@ -0,0 +1,110 @@
-+#ifndef __ASM_GENERIC_IOCTLS_H
-+#define __ASM_GENERIC_IOCTLS_H
-+
-+#include <linux/ioctl.h>
-+
-+/*
-+ * These are the most common definitions for tty ioctl numbers.
-+ * Most of them do not use the recommended _IOC(), but there is
-+ * probably some source code out there hardcoding the number,
-+ * so we might as well use them for all new platforms.
-+ *
-+ * The architectures that use different values here typically
-+ * try to be compatible with some Unix variants for the same
-+ * architecture.
-+ */
-+
-+/* 0x54 is just a magic number to make these relatively unique ('T') */
-+
-+#define TCGETS		0x5401
-+#define TCSETS		0x5402
-+#define TCSETSW		0x5403
-+#define TCSETSF		0x5404
-+#define TCGETA		0x5405
-+#define TCSETA		0x5406
-+#define TCSETAW		0x5407
-+#define TCSETAF		0x5408
-+#define TCSBRK		0x5409
-+#define TCXONC		0x540A
-+#define TCFLSH		0x540B
-+#define TIOCEXCL	0x540C
-+#define TIOCNXCL	0x540D
-+#define TIOCSCTTY	0x540E
-+#define TIOCGPGRP	0x540F
-+#define TIOCSPGRP	0x5410
-+#define TIOCOUTQ	0x5411
-+#define TIOCSTI		0x5412
-+#define TIOCGWINSZ	0x5413
-+#define TIOCSWINSZ	0x5414
-+#define TIOCMGET	0x5415
-+#define TIOCMBIS	0x5416
-+#define TIOCMBIC	0x5417
-+#define TIOCMSET	0x5418
-+#define TIOCGSOFTCAR	0x5419
-+#define TIOCSSOFTCAR	0x541A
-+#define FIONREAD	0x541B
-+#define TIOCINQ		FIONREAD
-+#define TIOCLINUX	0x541C
-+#define TIOCCONS	0x541D
-+#define TIOCGSERIAL	0x541E
-+#define TIOCSSERIAL	0x541F
-+#define TIOCPKT		0x5420
-+#define FIONBIO		0x5421
-+#define TIOCNOTTY	0x5422
-+#define TIOCSETD	0x5423
-+#define TIOCGETD	0x5424
-+#define TCSBRKP		0x5425	/* Needed for POSIX tcsendbreak() */
-+#define TIOCSBRK	0x5427  /* BSD compatibility */
-+#define TIOCCBRK	0x5428  /* BSD compatibility */
-+#define TIOCGSID	0x5429  /* Return the session ID of FD */
-+#define TCGETS2		_IOR('T', 0x2A, struct termios2)
-+#define TCSETS2		_IOW('T', 0x2B, struct termios2)
-+#define TCSETSW2	_IOW('T', 0x2C, struct termios2)
-+#define TCSETSF2	_IOW('T', 0x2D, struct termios2)
-+#define TIOCGRS485	0x542E
-+#define TIOCSRS485	0x542F
-+#define TIOCGPTN	_IOR('T', 0x30, unsigned int) /* Get Pty Number (of pty-mux device) */
-+#define TIOCSPTLCK	_IOW('T', 0x31, int)  /* Lock/unlock Pty */
-+#define TCGETX		0x5432 /* SYS5 TCGETX compatibility */
-+#define TCSETX		0x5433
-+#define TCSETXF		0x5434
-+#define TCSETXW		0x5435
-+
-+#define FIONCLEX	0x5450
-+#define FIOCLEX		0x5451
-+#define FIOASYNC	0x5452
-+#define TIOCSERCONFIG	0x5453
-+#define TIOCSERGWILD	0x5454
-+#define TIOCSERSWILD	0x5455
-+#define TIOCGLCKTRMIOS	0x5456
-+#define TIOCSLCKTRMIOS	0x5457
-+#define TIOCSERGSTRUCT	0x5458 /* For debugging only */
-+#define TIOCSERGETLSR   0x5459 /* Get line status register */
-+#define TIOCSERGETMULTI 0x545A /* Get multiport config  */
-+#define TIOCSERSETMULTI 0x545B /* Set multiport config */
-+
-+#define TIOCMIWAIT	0x545C	/* wait for a change on serial input line(s) */
-+#define TIOCGICOUNT	0x545D	/* read serial port inline interrupt counts */
-+
-+/*
-+ * some architectures define FIOQSIZE as 0x545E, which is used for
-+ * TIOCGHAYESESP on others
-+ */
-+#ifndef FIOQSIZE
-+# define TIOCGHAYESESP	0x545E  /* Get Hayes ESP configuration */
-+# define TIOCSHAYESESP	0x545F  /* Set Hayes ESP configuration */
-+# define FIOQSIZE	0x5460
-+#endif
-+
-+/* Used for packet mode */
-+#define TIOCPKT_DATA		 0
-+#define TIOCPKT_FLUSHREAD	 1
-+#define TIOCPKT_FLUSHWRITE	 2
-+#define TIOCPKT_STOP		 4
-+#define TIOCPKT_START		 8
-+#define TIOCPKT_NOSTOP		16
-+#define TIOCPKT_DOSTOP		32
-+
-+#define TIOCSER_TEMT	0x01	/* Transmitter physically empty */
-+
-+#endif /* __ASM_GENERIC_IOCTLS_H */
-Index: linux-2.6/include/asm-generic/param.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/param.h
-@@ -0,0 +1,24 @@
-+#ifndef __ASM_GENERIC_PARAM_H
-+#define __ASM_GENERIC_PARAM_H
-+
-+#ifdef __KERNEL__
-+# define HZ		CONFIG_HZ	/* Internal kernel timer frequency */
-+# define USER_HZ	100		/* some user interfaces are */
-+# define CLOCKS_PER_SEC	(USER_HZ)       /* in "ticks" like times() */
-+#endif
-+
-+#ifndef HZ
-+#define HZ 100
-+#endif
-+
-+#ifndef EXEC_PAGESIZE
-+#define EXEC_PAGESIZE	4096
-+#endif
-+
-+#ifndef NOGROUP
-+#define NOGROUP		(-1)
-+#endif
-+
-+#define MAXHOSTNAMELEN	64	/* max length of hostname */
-+
-+#endif /* __ASM_GENERIC_PARAM_H */
-Index: linux-2.6/include/asm-generic/posix_types.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/posix_types.h
-@@ -0,0 +1,166 @@
-+#ifndef __ASM_GENERIC_POSIX_TYPES_H
-+#define __ASM_GENERIC_POSIX_TYPES_H
-+
-+#include <linux/types.h>
-+
-+/*
-+ * This file is generally used by user-level software, so you need to
-+ * be a little careful about namespace pollution etc.
-+ *
-+ * First the types that are often defined in different ways across
-+ * architectures, so that you can override them.
-+ */
-+
-+#ifndef __kernel_ino_t
-+typedef unsigned long	__kernel_ino_t;
-+#endif
-+
-+#ifndef __kernel_mode_t
-+typedef unsigned int	__kernel_mode_t;
-+#endif
-+
-+#ifndef __kernel_nlink_t
-+typedef unsigned long	__kernel_nlink_t;
-+#endif
-+
-+#ifndef __kernel_pid_t
-+typedef int		__kernel_pid_t;
-+#endif
-+
-+#ifndef __kernel_ipc_pid_t
-+typedef int		__kernel_ipc_pid_t;
-+#endif
-+
-+#ifndef __kernel_uid_t
-+typedef unsigned int	__kernel_uid_t;
-+typedef unsigned int	__kernel_gid_t;
-+#endif
-+
-+#ifndef __kernel_suseconds_t
-+typedef long		__kernel_suseconds_t;
-+#endif
-+
-+#ifndef __kernel_daddr_t
-+typedef int		__kernel_daddr_t;
-+#endif
-+
-+#ifndef __kernel_uid32_t
-+typedef __kernel_uid_t	__kernel_uid32_t;
-+typedef __kernel_gid_t	__kernel_gid32_t;
-+#endif
-+
-+#ifndef __kernel_old_uid_t
-+typedef __kernel_uid_t	__kernel_old_uid_t;
-+typedef __kernel_gid_t	__kernel_old_gid_t;
-+#endif
-+
-+#ifndef __kernel_old_dev_t
-+typedef unsigned int	__kernel_old_dev_t;
-+#endif
-+
-+/*
-+ * Most 32 bit architectures use "unsigned int" size_t,
-+ * and all 64 bit architectures use "unsigned long" size_t.
-+ */
-+#ifndef __kernel_size_t
-+#if __BITS_PER_LONG != 64
-+typedef unsigned int	__kernel_size_t;
-+typedef int		__kernel_ssize_t;
-+typedef int		__kernel_ptrdiff_t;
-+#else
-+typedef unsigned long	__kernel_size_t;
-+typedef long		__kernel_ssize_t;
-+typedef long		__kernel_ptrdiff_t;
-+#endif
-+#endif
-+
-+/*
-+ * anything below here should be completely generic
-+ */
-+typedef long		__kernel_off_t;
-+typedef long long	__kernel_loff_t;
-+typedef long		__kernel_time_t;
-+typedef long		__kernel_clock_t;
-+typedef int		__kernel_timer_t;
-+typedef int		__kernel_clockid_t;
-+typedef char *		__kernel_caddr_t;
-+typedef unsigned short	__kernel_uid16_t;
-+typedef unsigned short	__kernel_gid16_t;
-+
-+typedef struct {
-+	int	val[2];
-+} __kernel_fsid_t;
-+
-+#ifdef __KERNEL__
-+
-+#undef __FD_SET
-+static inline void __FD_SET(unsigned long __fd, __kernel_fd_set *__fdsetp)
++#ifndef __ASSEMBLY__
++#define HAVE_SET_RESTORE_SIGMASK 1
++static inline void set_restore_sigmask(void)
 +{
-+	unsigned long __tmp = __fd / __NFDBITS;
-+	unsigned long __rem = __fd % __NFDBITS;
-+	__fdsetp->fds_bits[__tmp] |= (1UL<<__rem);
++	struct thread_info *ti = current_thread_info();
++	ti->status |= TS_RESTORE_SIGMASK;
++	set_bit(TIF_SIGPENDING, (unsigned long *)&ti->flags);
 +}
++#endif
+ 
+ #endif /* __KERNEL__ */
+ #endif /* _ASM_MICROBLAZE_THREAD_INFO_H */
+Index: linux-2.6/arch/microblaze/kernel/signal.c
+===================================================================
+--- linux-2.6.orig/arch/microblaze/kernel/signal.c
++++ linux-2.6/arch/microblaze/kernel/signal.c
+@@ -45,91 +45,7 @@
+ 
+ asmlinkage int do_signal(struct pt_regs *regs, sigset_t *oldset, int in_sycall);
+ 
+-/*
+- * Atomically swap in the new signal mask, and wait for a signal.
+- */
+-asmlinkage int
+-sys_sigsuspend(old_sigset_t mask, struct pt_regs *regs)
+-{
+-	sigset_t saveset;
+-
+-	mask &= _BLOCKABLE;
+-	spin_lock_irq(&current->sighand->siglock);
+-	saveset = current->blocked;
+-	siginitset(&current->blocked, mask);
+-	recalc_sigpending();
+-	spin_unlock_irq(&current->sighand->siglock);
+-
+-	regs->r3 = -EINTR;
+-	while (1) {
+-		current->state = TASK_INTERRUPTIBLE;
+-		schedule();
+-		if (do_signal(regs, &saveset, 1))
+-			return -EINTR;
+-	}
+-}
+-
+-asmlinkage int
+-sys_rt_sigsuspend(sigset_t __user *unewset, size_t sigsetsize,
+-		struct pt_regs *regs)
+-{
+-	sigset_t saveset, newset;
+-
+-	/* XXX: Don't preclude handling different sized sigset_t's. */
+-	if (sigsetsize != sizeof(sigset_t))
+-		return -EINVAL;
+-
+-	if (copy_from_user(&newset, unewset, sizeof(newset)))
+-		return -EFAULT;
+-	sigdelsetmask(&newset, ~_BLOCKABLE);
+-	spin_lock_irq(&current->sighand->siglock);
+-	saveset = current->blocked;
+-	current->blocked = newset;
+-	recalc_sigpending();
+-	spin_unlock_irq(&current->sighand->siglock);
+-
+-	regs->r3 = -EINTR;
+-	while (1) {
+-		current->state = TASK_INTERRUPTIBLE;
+-		schedule();
+-		if (do_signal(regs, &saveset, 1))
+-			return -EINTR;
+-	}
+-}
+-
+-asmlinkage int
+-sys_sigaction(int sig, const struct old_sigaction *act,
+-		struct old_sigaction *oact)
+-{
+-	struct k_sigaction new_ka, old_ka;
+-	int ret;
+-
+-	if (act) {
+-		old_sigset_t mask;
+-		if (!access_ok(VERIFY_READ, act, sizeof(*act)) ||
+-			__get_user(new_ka.sa.sa_handler, &act->sa_handler) ||
+-			__get_user(new_ka.sa.sa_restorer, &act->sa_restorer))
+-			return -EFAULT;
+-		__get_user(new_ka.sa.sa_flags, &act->sa_flags);
+-		__get_user(mask, &act->sa_mask);
+-		siginitset(&new_ka.sa.sa_mask, mask);
+-	}
+-
+-	ret = do_sigaction(sig, act ? &new_ka : NULL, oact ? &old_ka : NULL);
+-
+-	if (!ret && oact) {
+-		if (!access_ok(VERIFY_WRITE, oact, sizeof(*oact)) ||
+-			__put_user(old_ka.sa.sa_handler, &oact->sa_handler) ||
+-			__put_user(old_ka.sa.sa_restorer, &oact->sa_restorer))
+-			return -EFAULT;
+-		__put_user(old_ka.sa.sa_flags, &oact->sa_flags);
+-		__put_user(old_ka.sa.sa_mask.sig[0], &oact->sa_mask);
+-	}
+-
+-	return ret;
+-}
+-
+-asmlinkage int
++asmlinkage long
+ sys_sigaltstack(const stack_t __user *uss, stack_t __user *uoss,
+ 		struct pt_regs *regs)
+ {
+@@ -139,13 +55,13 @@ sys_sigaltstack(const stack_t __user *us
+ /*
+  * Do a signal return; undo the signal stack.
+  */
+-
+ struct sigframe {
+ 	struct sigcontext sc;
+ 	unsigned long extramask[_NSIG_WORDS-1];
+ 	unsigned long tramp[2];	/* signal trampoline */
+ };
+ 
 +
-+#undef __FD_CLR
-+static inline void __FD_CLR(unsigned long __fd, __kernel_fd_set *__fdsetp)
-+{
-+	unsigned long __tmp = __fd / __NFDBITS;
-+	unsigned long __rem = __fd % __NFDBITS;
-+	__fdsetp->fds_bits[__tmp] &= ~(1UL<<__rem);
-+}
+ struct rt_sigframe {
+ 	struct siginfo info;
+ 	struct ucontext uc;
+@@ -176,40 +92,7 @@ restore_sigcontext(struct pt_regs *regs,
+ 	return err;
+ }
+ 
+-asmlinkage int sys_sigreturn(struct pt_regs *regs)
+-{
+-	struct sigframe *frame =
+-			(struct sigframe *)(regs->r1 + STATE_SAVE_ARG_SPACE);
+-
+-	sigset_t set;
+-	int rval;
+-
+-	if (!access_ok(VERIFY_READ, frame, sizeof(*frame)))
+-		goto badframe;
+-
+-	if (__get_user(set.sig[0], &frame->sc.oldmask)
+-		|| (_NSIG_WORDS > 1
+-		&& __copy_from_user(&set.sig[1], &frame->extramask,
+-					sizeof(frame->extramask))))
+-		goto badframe;
+-
+-	sigdelsetmask(&set, ~_BLOCKABLE);
+-
+-	spin_lock_irq(&current->sighand->siglock);
+-	current->blocked = set;
+-	recalc_sigpending();
+-	spin_unlock_irq(&current->sighand->siglock);
+-
+-	if (restore_sigcontext(regs, &frame->sc, &rval))
+-		goto badframe;
+-	return rval;
+-
+-badframe:
+-	force_sig(SIGSEGV, current);
+-	return 0;
+-}
+-
+-asmlinkage int sys_rt_sigreturn(struct pt_regs *regs)
++asmlinkage long sys_rt_sigreturn(struct pt_regs *regs)
+ {
+ 	struct rt_sigframe *frame =
+ 			(struct rt_sigframe *)(regs->r1 + STATE_SAVE_ARG_SPACE);
+@@ -290,80 +173,6 @@ get_sigframe(struct k_sigaction *ka, str
+ 	return (void *)((sp - frame_size) & -8UL);
+ }
+ 
+-static void setup_frame(int sig, struct k_sigaction *ka,
+-			sigset_t *set, struct pt_regs *regs)
+-{
+-	struct sigframe *frame;
+-	int err = 0;
+-	int signal;
+-
+-	frame = get_sigframe(ka, regs, sizeof(*frame));
+-
+-	if (!access_ok(VERIFY_WRITE, frame, sizeof(*frame)))
+-		goto give_sigsegv;
+-
+-	signal = current_thread_info()->exec_domain
+-		&& current_thread_info()->exec_domain->signal_invmap
+-		&& sig < 32
+-		? current_thread_info()->exec_domain->signal_invmap[sig]
+-		: sig;
+-
+-	err |= setup_sigcontext(&frame->sc, regs, set->sig[0]);
+-
+-	if (_NSIG_WORDS > 1) {
+-		err |= __copy_to_user(frame->extramask, &set->sig[1],
+-					sizeof(frame->extramask));
+-	}
+-
+-	/* Set up to return from userspace. If provided, use a stub
+-	 already in userspace. */
+-	/* minus 8 is offset to cater for "rtsd r15,8" offset */
+-	if (ka->sa.sa_flags & SA_RESTORER) {
+-		regs->r15 = ((unsigned long)ka->sa.sa_restorer)-8;
+-	} else {
+-		/* Note, these encodings are _big endian_! */
+-
+-		/* addi r12, r0, __NR_sigreturn */
+-		err |= __put_user(0x31800000 | __NR_sigreturn ,
+-				frame->tramp + 0);
+-		/* brki r14, 0x8 */
+-		err |= __put_user(0xb9cc0008, frame->tramp + 1);
+-
+-		/* Return from sighandler will jump to the tramp.
+-		 Negative 8 offset because return is rtsd r15, 8 */
+-		regs->r15 = ((unsigned long)frame->tramp)-8;
+-
+-		__invalidate_cache_sigtramp((unsigned long)frame->tramp);
+-	}
+-
+-	if (err)
+-		goto give_sigsegv;
+-
+-	/* Set up registers for signal handler */
+-	regs->r1 = (unsigned long) frame - STATE_SAVE_ARG_SPACE;
+-
+-	/* Signal handler args: */
+-	regs->r5 = signal; /* Arg 0: signum */
+-	regs->r6 = (unsigned long) &frame->sc; /* arg 1: sigcontext */
+-
+-	/* Offset of 4 to handle microblaze rtid r14, 0 */
+-	regs->pc = (unsigned long)ka->sa.sa_handler;
+-
+-	set_fs(USER_DS);
+-
+-#ifdef DEBUG_SIG
+-	printk(KERN_INFO "SIG deliver (%s:%d): sp=%p pc=%08lx\n",
+-		current->comm, current->pid, frame, regs->pc);
+-#endif
+-
+-	return;
+-
+-give_sigsegv:
+-	if (sig == SIGSEGV)
+-		ka->sa.sa_handler = SIG_DFL;
+-	force_sig(SIGSEGV, current);
+-}
+-
+ static void setup_rt_frame(int sig, struct k_sigaction *ka, siginfo_t *info,
+ 			sigset_t *set, struct pt_regs *regs)
+ {
+@@ -399,21 +208,17 @@ static void setup_rt_frame(int sig, stru
+ 	/* Set up to return from userspace. If provided, use a stub
+ 	 already in userspace. */
+ 	/* minus 8 is offset to cater for "rtsd r15,8" */
+-	if (ka->sa.sa_flags & SA_RESTORER) {
+-		regs->r15 = ((unsigned long)ka->sa.sa_restorer)-8;
+-	} else {
+-		/* addi r12, r0, __NR_sigreturn */
+-		err |= __put_user(0x31800000 | __NR_rt_sigreturn ,
+-				frame->tramp + 0);
+-		/* brki r14, 0x8 */
+-		err |= __put_user(0xb9cc0008, frame->tramp + 1);
+-
+-		/* Return from sighandler will jump to the tramp.
+-		 Negative 8 offset because return is rtsd r15, 8 */
+-		regs->r15 = ((unsigned long)frame->tramp)-8;
++	/* addi r12, r0, __NR_sigreturn */
++	err |= __put_user(0x31800000 | __NR_rt_sigreturn ,
++			frame->tramp + 0);
++	/* brki r14, 0x8 */
++	err |= __put_user(0xb9cc0008, frame->tramp + 1);
 +
-+#undef __FD_ISSET
-+static inline int __FD_ISSET(unsigned long __fd, const __kernel_fd_set *__p)
-+{
-+	unsigned long __tmp = __fd / __NFDBITS;
-+	unsigned long __rem = __fd % __NFDBITS;
-+	return (__p->fds_bits[__tmp] & (1UL<<__rem)) != 0;
-+}
++	/* Return from sighandler will jump to the tramp.
++	 Negative 8 offset because return is rtsd r15, 8 */
++	regs->r15 = ((unsigned long)frame->tramp)-8;
+ 
+-		__invalidate_cache_sigtramp((unsigned long)frame->tramp);
+-	}
++	__invalidate_cache_sigtramp((unsigned long)frame->tramp);
+ 
+ 	if (err)
+ 		goto give_sigsegv;
+@@ -472,7 +277,7 @@ do_restart:
+  * OK, we're invoking a handler
+  */
+ 
+-static void
++static int
+ handle_signal(unsigned long sig, struct k_sigaction *ka,
+ 		siginfo_t *info, sigset_t *oldset, struct pt_regs *regs)
+ {
+@@ -480,7 +285,7 @@ handle_signal(unsigned long sig, struct 
+ 	if (ka->sa.sa_flags & SA_SIGINFO)
+ 		setup_rt_frame(sig, ka, info, oldset, regs);
+ 	else
+-		setup_frame(sig, ka, oldset, regs);
++		setup_rt_frame(sig, ka, NULL, oldset, regs);
+ 
+ 	if (ka->sa.sa_flags & SA_ONESHOT)
+ 		ka->sa.sa_handler = SIG_DFL;
+@@ -509,6 +314,7 @@ int do_signal(struct pt_regs *regs, sigs
+ 	siginfo_t info;
+ 	int signr;
+ 	struct k_sigaction ka;
 +
-+/*
-+ * This will unroll the loop for the normal constant case (8 ints,
-+ * for a 256-bit fd_set)
-+ */
-+#undef __FD_ZERO
-+static inline void __FD_ZERO(__kernel_fd_set *__p)
-+{
-+	unsigned long *__tmp = __p->fds_bits;
-+	int __i;
-+
-+	if (__builtin_constant_p(__FDSET_LONGS)) {
-+		switch (__FDSET_LONGS) {
-+		case 16:
-+			__tmp[ 0] = 0; __tmp[ 1] = 0;
-+			__tmp[ 2] = 0; __tmp[ 3] = 0;
-+			__tmp[ 4] = 0; __tmp[ 5] = 0;
-+			__tmp[ 6] = 0; __tmp[ 7] = 0;
-+			__tmp[ 8] = 0; __tmp[ 9] = 0;
-+			__tmp[10] = 0; __tmp[11] = 0;
-+			__tmp[12] = 0; __tmp[13] = 0;
-+			__tmp[14] = 0; __tmp[15] = 0;
-+			return;
-+
-+		case 8:
-+			__tmp[ 0] = 0; __tmp[ 1] = 0;
-+			__tmp[ 2] = 0; __tmp[ 3] = 0;
-+			__tmp[ 4] = 0; __tmp[ 5] = 0;
-+			__tmp[ 6] = 0; __tmp[ 7] = 0;
-+			return;
-+
-+		case 4:
-+			__tmp[ 0] = 0; __tmp[ 1] = 0;
-+			__tmp[ 2] = 0; __tmp[ 3] = 0;
-+			return;
+ #ifdef DEBUG_SIG
+ 	printk(KERN_INFO "do signal: %p %p %d\n", regs, oldset, in_syscall);
+ 	printk(KERN_INFO "do signal2: %lx %lx %ld [%lx]\n", regs->pc, regs->r1,
+@@ -523,7 +329,9 @@ int do_signal(struct pt_regs *regs, sigs
+ 	if (kernel_mode(regs))
+ 		return 1;
+ 
+-	if (!oldset)
++	if (current_thread_info()->status & TS_RESTORE_SIGMASK)
++		oldset = &current->saved_sigmask;
++	else
+ 		oldset = &current->blocked;
+ 
+ 	signr = get_signal_to_deliver(&info, &ka, regs, NULL);
+@@ -531,13 +339,31 @@ int do_signal(struct pt_regs *regs, sigs
+ 		/* Whee! Actually deliver the signal. */
+ 		if (in_syscall)
+ 			handle_restart(regs, &ka, 1);
+-		handle_signal(signr, &ka, &info, oldset, regs);
++		if (handle_signal(signr, &ka, &info, oldset, regs)) {
++			/*
++			 * A signal was successfully delivered; the saved
++			 * sigmask will have been stored in the signal frame,
++			 * and will be restored by sigreturn, so we can simply
++			 * clear the TS_RESTORE_SIGMASK flag.
++			 */
++			current_thread_info()->status &=
++			    ~TS_RESTORE_SIGMASK;
 +		}
+ 		return 1;
+ 	}
+ 
+ 	if (in_syscall)
+ 		handle_restart(regs, NULL, 0);
+ 
++	/*
++	 * If there's no signal to deliver, we just put the saved sigmask
++	 * back.
++	 */
++	if (current_thread_info()->status & TS_RESTORE_SIGMASK) {
++		current_thread_info()->status &= ~TS_RESTORE_SIGMASK;
++		sigprocmask(SIG_SETMASK, &current->saved_sigmask, NULL);
 +	}
-+	__i = __FDSET_LONGS;
-+	while (__i) {
-+		__i--;
-+		*__tmp = 0;
-+		__tmp++;
-+	}
-+}
 +
-+#endif /* __KERNEL__ */
-+
-+#endif /* __ASM_GENERIC_POSIX_TYPES_H */
-Index: linux-2.6/include/asm-generic/setup.h
+ 	/* Did we come from a system call? */
+ 	return 0;
+ }
+Index: linux-2.6/arch/microblaze/include/asm/unistd.h
 ===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/setup.h
-@@ -0,0 +1,6 @@
-+#ifndef __ASM_GENERIC_SETUP_H
-+#define __ASM_GENERIC_SETUP_H
-+
-+#define COMMAND_LINE_SIZE	512
-+
-+#endif	/* __ASM_GENERIC_SETUP_H */
-Index: linux-2.6/include/asm-generic/socket.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/socket.h
-@@ -0,0 +1,60 @@
-+#ifndef __ASM_GENERIC_SOCKET_H
-+#define __ASM_GENERIC_SOCKET_H
-+
-+#include <asm/sockios.h>
-+
-+/* For setsockopt(2) */
-+#define SOL_SOCKET	1
-+
-+#define SO_DEBUG	1
-+#define SO_REUSEADDR	2
-+#define SO_TYPE		3
-+#define SO_ERROR	4
-+#define SO_DONTROUTE	5
-+#define SO_BROADCAST	6
-+#define SO_SNDBUF	7
-+#define SO_RCVBUF	8
-+#define SO_SNDBUFFORCE	32
-+#define SO_RCVBUFFORCE	33
-+#define SO_KEEPALIVE	9
-+#define SO_OOBINLINE	10
-+#define SO_NO_CHECK	11
-+#define SO_PRIORITY	12
-+#define SO_LINGER	13
-+#define SO_BSDCOMPAT	14
-+/* To add :#define SO_REUSEPORT 15 */
-+#define SO_PASSCRED	16
-+#define SO_PEERCRED	17
-+#define SO_RCVLOWAT	18
-+#define SO_SNDLOWAT	19
-+#define SO_RCVTIMEO	20
-+#define SO_SNDTIMEO	21
-+
-+/* Security levels - as per NRL IPv6 - don't actually do anything */
-+#define SO_SECURITY_AUTHENTICATION		22
-+#define SO_SECURITY_ENCRYPTION_TRANSPORT	23
-+#define SO_SECURITY_ENCRYPTION_NETWORK		24
-+
-+#define SO_BINDTODEVICE	25
-+
-+/* Socket filtering */
-+#define SO_ATTACH_FILTER	26
-+#define SO_DETACH_FILTER	27
-+
-+#define SO_PEERNAME		28
-+#define SO_TIMESTAMP		29
-+#define SCM_TIMESTAMP		SO_TIMESTAMP
-+
-+#define SO_ACCEPTCONN		30
-+
-+#define SO_PEERSEC		31
-+#define SO_PASSSEC		34
-+#define SO_TIMESTAMPNS		35
-+#define SCM_TIMESTAMPNS		SO_TIMESTAMPNS
-+
-+#define SO_MARK			36
-+
-+#define SO_TIMESTAMPING		37
-+#define SCM_TIMESTAMPING	SO_TIMESTAMPING
-+
-+#endif /* __ASM_GENERIC_SOCKET_H */
-Index: linux-2.6/include/asm-generic/sockios.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/sockios.h
-@@ -0,0 +1,13 @@
-+#ifndef __ASM_GENERIC_SOCKIOS_H
-+#define __ASM_GENERIC_SOCKIOS_H
-+
-+/* Socket-level I/O control calls. */
-+#define FIOSETOWN	0x8901
-+#define SIOCSPGRP	0x8902
-+#define FIOGETOWN	0x8903
-+#define SIOCGPGRP	0x8904
-+#define SIOCATMARK	0x8905
-+#define SIOCGSTAMP	0x8906		/* Get stamp (timeval) */
-+#define SIOCGSTAMPNS	0x8907		/* Get stamp (timespec) */
-+
-+#endif /* __ASM_GENERIC_SOCKIOS_H */
-Index: linux-2.6/include/asm-generic/stat.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/stat.h
-@@ -0,0 +1,72 @@
-+#ifndef __ASM_GENERIC_STAT_H
-+#define __ASM_GENERIC_STAT_H
-+
-+/*
-+ * Everybody gets this wrong and has to stick with it for all
-+ * eternity. Hopefully, this version gets used by new architectures
-+ * so they don't fall into the same traps.
-+ *
-+ * stat64 is copied from powerpc64, with explicit padding added.
-+ * stat is the same structure layout on 64-bit, without the 'long long'
-+ * types.
-+ *
-+ * By convention, 64 bit architectures use the stat interface, while
-+ * 32 bit architectures use the stat64 interface. Note that we don't
-+ * provide an __old_kernel_stat here, which new architecture should
-+ * not have to start with.
-+ */
-+
-+#include <asm/bitsperlong.h>
-+
-+#define STAT_HAVE_NSEC 1
-+
-+struct stat {
-+	unsigned long	st_dev;		/* Device.  */
-+	unsigned long	st_ino;		/* File serial number.  */
-+	unsigned int	st_mode;	/* File mode.  */
-+	unsigned int	st_nlink;	/* Link count.  */
-+	unsigned int	st_uid;		/* User ID of the file's owner.  */
-+	unsigned int	st_gid;		/* Group ID of the file's group. */
-+	unsigned long	st_rdev;	/* Device number, if device.  */
-+	unsigned long	__pad1;
-+	long		st_size;	/* Size of file, in bytes.  */
-+	int		st_blksize;	/* Optimal block size for I/O.  */
-+	int		__pad2;
-+	long		st_blocks;	/* Number 512-byte blocks allocated. */
-+	int		st_atime;	/* Time of last access.  */
-+	unsigned int	st_atime_nsec;
-+	int		st_mtime;	/* Time of last modification.  */
-+	unsigned int	st_mtime_nsec;
-+	int		st_ctime;	/* Time of last status change.  */
-+	unsigned int	st_ctime_nsec;
-+	unsigned int	__unused4;
-+	unsigned int	__unused5;
-+};
-+
-+#if __BITS_PER_LONG != 64
-+/* This matches struct stat64 in glibc2.1. Only used for 32 bit. */
-+struct stat64 {
-+	unsigned long long st_dev;	/* Device.  */
-+	unsigned long long st_ino;	/* File serial number.  */
-+	unsigned int	st_mode;	/* File mode.  */
-+	unsigned int	st_nlink;	/* Link count.  */
-+	unsigned int	st_uid;		/* User ID of the file's owner.  */
-+	unsigned int	st_gid;		/* Group ID of the file's group. */
-+	unsigned long long st_rdev;	/* Device number, if device.  */
-+	unsigned long long __pad1;
-+	long long	st_size;	/* Size of file, in bytes.  */
-+	int		st_blksize;	/* Optimal block size for I/O.  */
-+	int		__pad2;
-+	long long	st_blocks;	/* Number 512-byte blocks allocated. */
-+	int		st_atime;	/* Time of last access.  */
-+	unsigned int	st_atime_nsec;
-+	int		st_mtime;	/* Time of last modification.  */
-+	unsigned int	st_mtime_nsec;
-+	int		st_ctime;	/* Time of last status change.  */
-+	unsigned int	st_ctime_nsec;
-+	unsigned int	__unused4;
-+	unsigned int	__unused5;
-+};
-+#endif
-+
-+#endif /* __ASM_GENERIC_STAT_H */
-Index: linux-2.6/include/asm-generic/termbits.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/termbits.h
-@@ -0,0 +1,198 @@
-+#ifndef __ASM_GENERIC_TERMBITS_H
-+#define __ASM_GENERIC_TERMBITS_H
-+
-+#include <linux/posix_types.h>
-+
-+typedef unsigned char	cc_t;
-+typedef unsigned int	speed_t;
-+typedef unsigned int	tcflag_t;
-+
-+#define NCCS 19
-+struct termios {
-+	tcflag_t c_iflag;		/* input mode flags */
-+	tcflag_t c_oflag;		/* output mode flags */
-+	tcflag_t c_cflag;		/* control mode flags */
-+	tcflag_t c_lflag;		/* local mode flags */
-+	cc_t c_line;			/* line discipline */
-+	cc_t c_cc[NCCS];		/* control characters */
-+};
-+
-+struct termios2 {
-+	tcflag_t c_iflag;		/* input mode flags */
-+	tcflag_t c_oflag;		/* output mode flags */
-+	tcflag_t c_cflag;		/* control mode flags */
-+	tcflag_t c_lflag;		/* local mode flags */
-+	cc_t c_line;			/* line discipline */
-+	cc_t c_cc[NCCS];		/* control characters */
-+	speed_t c_ispeed;		/* input speed */
-+	speed_t c_ospeed;		/* output speed */
-+};
-+
-+struct ktermios {
-+	tcflag_t c_iflag;		/* input mode flags */
-+	tcflag_t c_oflag;		/* output mode flags */
-+	tcflag_t c_cflag;		/* control mode flags */
-+	tcflag_t c_lflag;		/* local mode flags */
-+	cc_t c_line;			/* line discipline */
-+	cc_t c_cc[NCCS];		/* control characters */
-+	speed_t c_ispeed;		/* input speed */
-+	speed_t c_ospeed;		/* output speed */
-+};
-+
-+/* c_cc characters */
-+#define VINTR 0
-+#define VQUIT 1
-+#define VERASE 2
-+#define VKILL 3
-+#define VEOF 4
-+#define VTIME 5
-+#define VMIN 6
-+#define VSWTC 7
-+#define VSTART 8
-+#define VSTOP 9
-+#define VSUSP 10
-+#define VEOL 11
-+#define VREPRINT 12
-+#define VDISCARD 13
-+#define VWERASE 14
-+#define VLNEXT 15
-+#define VEOL2 16
-+
-+/* c_iflag bits */
-+#define IGNBRK	0000001
-+#define BRKINT	0000002
-+#define IGNPAR	0000004
-+#define PARMRK	0000010
-+#define INPCK	0000020
-+#define ISTRIP	0000040
-+#define INLCR	0000100
-+#define IGNCR	0000200
-+#define ICRNL	0000400
-+#define IUCLC	0001000
-+#define IXON	0002000
-+#define IXANY	0004000
-+#define IXOFF	0010000
-+#define IMAXBEL	0020000
-+#define IUTF8	0040000
-+
-+/* c_oflag bits */
-+#define OPOST	0000001
-+#define OLCUC	0000002
-+#define ONLCR	0000004
-+#define OCRNL	0000010
-+#define ONOCR	0000020
-+#define ONLRET	0000040
-+#define OFILL	0000100
-+#define OFDEL	0000200
-+#define NLDLY	0000400
-+#define   NL0	0000000
-+#define   NL1	0000400
-+#define CRDLY	0003000
-+#define   CR0	0000000
-+#define   CR1	0001000
-+#define   CR2	0002000
-+#define   CR3	0003000
-+#define TABDLY	0014000
-+#define   TAB0	0000000
-+#define   TAB1	0004000
-+#define   TAB2	0010000
-+#define   TAB3	0014000
-+#define   XTABS	0014000
-+#define BSDLY	0020000
-+#define   BS0	0000000
-+#define   BS1	0020000
-+#define VTDLY	0040000
-+#define   VT0	0000000
-+#define   VT1	0040000
-+#define FFDLY	0100000
-+#define   FF0	0000000
-+#define   FF1	0100000
-+
-+/* c_cflag bit meaning */
-+#define CBAUD	0010017
-+#define  B0	0000000		/* hang up */
-+#define  B50	0000001
-+#define  B75	0000002
-+#define  B110	0000003
-+#define  B134	0000004
-+#define  B150	0000005
-+#define  B200	0000006
-+#define  B300	0000007
-+#define  B600	0000010
-+#define  B1200	0000011
-+#define  B1800	0000012
-+#define  B2400	0000013
-+#define  B4800	0000014
-+#define  B9600	0000015
-+#define  B19200	0000016
-+#define  B38400	0000017
-+#define EXTA B19200
-+#define EXTB B38400
-+#define CSIZE	0000060
-+#define   CS5	0000000
-+#define   CS6	0000020
-+#define   CS7	0000040
-+#define   CS8	0000060
-+#define CSTOPB	0000100
-+#define CREAD	0000200
-+#define PARENB	0000400
-+#define PARODD	0001000
-+#define HUPCL	0002000
-+#define CLOCAL	0004000
-+#define CBAUDEX 0010000
-+#define    BOTHER 0010000
-+#define    B57600 0010001
-+#define   B115200 0010002
-+#define   B230400 0010003
-+#define   B460800 0010004
-+#define   B500000 0010005
-+#define   B576000 0010006
-+#define   B921600 0010007
-+#define  B1000000 0010010
-+#define  B1152000 0010011
-+#define  B1500000 0010012
-+#define  B2000000 0010013
-+#define  B2500000 0010014
-+#define  B3000000 0010015
-+#define  B3500000 0010016
-+#define  B4000000 0010017
-+#define CIBAUD	  002003600000	/* input baud rate */
-+#define CMSPAR	  010000000000	/* mark or space (stick) parity */
-+#define CRTSCTS	  020000000000	/* flow control */
-+
-+#define IBSHIFT	  16		/* Shift from CBAUD to CIBAUD */
-+
-+/* c_lflag bits */
-+#define ISIG	0000001
-+#define ICANON	0000002
-+#define XCASE	0000004
-+#define ECHO	0000010
-+#define ECHOE	0000020
-+#define ECHOK	0000040
-+#define ECHONL	0000100
-+#define NOFLSH	0000200
-+#define TOSTOP	0000400
-+#define ECHOCTL	0001000
-+#define ECHOPRT	0002000
-+#define ECHOKE	0004000
-+#define FLUSHO	0010000
-+#define PENDIN	0040000
-+#define IEXTEN	0100000
-+
-+/* tcflow() and TCXONC use these */
-+#define	TCOOFF		0
-+#define	TCOON		1
-+#define	TCIOFF		2
-+#define	TCION		3
-+
-+/* tcflush() and TCFLSH use these */
-+#define	TCIFLUSH	0
-+#define	TCOFLUSH	1
-+#define	TCIOFLUSH	2
-+
-+/* tcsetattr uses these */
-+#define	TCSANOW		0
-+#define	TCSADRAIN	1
-+#define	TCSAFLUSH	2
-+
-+#endif /* __ASM_GENERIC_TERMBITS_H */
-Index: linux-2.6/include/asm-generic/ucontext.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/ucontext.h
-@@ -0,0 +1,12 @@
-+#ifndef __ASM_GENERIC_UCONTEXT_H
-+#define __ASM_GENERIC_UCONTEXT_H
-+
-+struct ucontext {
-+	unsigned long	  uc_flags;
-+	struct ucontext  *uc_link;
-+	stack_t		  uc_stack;
-+	struct sigcontext uc_mcontext;
-+	sigset_t	  uc_sigmask;	/* mask last for extensibility */
-+};
-+
-+#endif /* __ASM_GENERIC_UCONTEXT_H */
-Index: linux-2.6/include/asm-generic/swab.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/swab.h
-@@ -0,0 +1,18 @@
-+#ifndef _ASM_GENERIC_SWAB_H
-+#define _ASM_GENERIC_SWAB_H
-+
-+#include <asm/bitsperlong.h>
-+
-+/*
-+ * 32 bit architectures typically (but not always) want to
-+ * set __SWAB_64_THRU_32__. In user space, this is only
-+ * valid if the compiler supports 64 bit data types.
-+ */
-+
-+#if __BITS_PER_LONG == 32
-+#if defined(__GNUC__) && !defined(__STRICT_ANSI__) || defined(__KERNEL__)
-+#define __SWAB_64_THRU_32__
-+#endif
-+#endif
-+
-+#endif /* _ASM_GENERIC_SWAB_H */
+--- linux-2.6.orig/arch/microblaze/include/asm/unistd.h
++++ linux-2.6/arch/microblaze/include/asm/unistd.h
+@@ -408,7 +408,7 @@
+ #define __ARCH_WANT_SYS_SIGPENDING
+ #define __ARCH_WANT_SYS_SIGPROCMASK
+ #define __ARCH_WANT_SYS_RT_SIGACTION
+-/* #define __ARCH_WANT_SYS_RT_SIGSUSPEND */
++#define __ARCH_WANT_SYS_RT_SIGSUSPEND
+ 
+ /*
+  * "Conditional" syscalls
 
 -- 
 
