@@ -1,18 +1,39 @@
-From: "Susan Faulkner" <turktelekomhadimkoy-Gq91CrxHrbzY0TyS/+Ba5Q@public.gmane.org>
-Subject: The world's most advanced sms reading program
-Date: Fri, 24 Apr 2009 04:26:52 +0200
-Message-ID: <20090424042652.8010408@babymantra.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: [RFC 00/17] asm-generic ABI files for microblaze
+Date: Mon, 27 Apr 2009 16:40:43 +0200
+Message-ID: <200904271640.44445.arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org, monstr-pSz03upnqPeHXe+LvDLADg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, liqin.chen-+XGAvkf1AAHby3iVrkZq2A@public.gmane.org, Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>, Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Do you want to know if your partner is unfaithful? 
-http://fuuo.freesmsfrance.com/
+This is my attempt to do a generic system call ABI for
+all new architectures, including a port for microblaze,
+which has recently been merged into 2.6.30. The next
+architecture that is about to get merged will be score,
+so it would be good if they can move to the same ABI.
 
+Please review the files and (in case of microblaze
+and score maintainers) test them on your architecture.
+
+The one part I'm not yet completely happy with is signal
+handling, I had to massage the microblaze code quite a
+bit to get the old-style siginfo out of it, which may
+not yet work.
+
+Sam also mentioned that it might be good to consistently
+use the __u32 and similar types everywhere in asm-generic
+exported headers, which I might be doing as a next step
+(including the existing files).
+
+Special thanks to Remis Baima, who has done some significant
+work cleaning up my patches.
+
+	Arnd <><
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
