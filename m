@@ -1,102 +1,38 @@
-From: <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: (unknown)
-Date: Mon, 27 Apr 2009 10:42:17 -0400
-Message-ID: <20090427143738.169360952@arndb.de>
+From: arnd-r2nGTMty4D4@public.gmane.org
+Subject: [RFC 00/17] asm-generic ABI files for microblaze
+Date: Mon, 27 Apr 2009 17:01:14 +0200
+Message-ID: <20090427142010.587518220@arndb.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org, monstr-pSz03upnqPeHXe+LvDLADg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, liqin.chen-+XGAvkf1AAHby3iVrkZq2A@public.gmane.org, Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>, Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
->From arnd-r2nGTMty4D4@public.gmane.org Mon Apr 27 16:28:40 2009
-References: <20090427142010.587518220-r2nGTMty4D4@public.gmane.org>
-User-Agent: quilt/0.46-1
-Date: Mon, 27 Apr 2009 16:20:19 +0200
-From: arnd-r2nGTMty4D4@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: john.williams-g5w7nrANp4BDPfheJLI6IQ@public.gmane.org,
- monstr-pSz03upnqPeHXe+LvDLADg@public.gmane.org,
- linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
- linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
- liqin.chen-+XGAvkf1AAHby3iVrkZq2A@public.gmane.org,
- Sam Ravnborg <sam-uyr5N9Q2VtJg9hUCZPvPmw@public.gmane.org>,
- Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Subject: [RFC 09/17] asm-generic: provide a common types.h
-Content-Disposition: inline; filename=0005-asm-generic-provide-a-common-types.h.patch
-X-Provags-ID: V01U2FsdGVkX18CtpQVZB8+uYG04E5Ehl7KULQiGraPHHFdOjH
- 5fDYksm+c91dCkXzqZf6HH7oArMpWHrsQddsvgiX1UIVuP/D0R
- ZINN5yOdm9bONtZja8VfA==
+This is my attempt to do a generic system call ABI for
+all new architectures, including a port for microblaze,
+which has recently been merged into 2.6.30. The next
+architecture that is about to get merged will be score,
+so it would be good if they can move to the same ABI.
 
-Practically all 32 bit architectures can use the same definitions in
-asm/types.h, so make that the default.
+Please review the files and (in case of microblaze
+and score maintainers) test them on your architecture.
 
-Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Signed-off-by: Remis Lima Baima <remis.developer-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
----
- include/asm-generic/Kbuild  |    1 	1 +	0 -	0 !
- include/asm-generic/types.h |   42 	42 +	0 -	0 !
- 2 files changed, 43 insertions(+)
- create mode 100644 include/asm-generic/types.h
+The one part I'm not yet completely happy with is signal
+handling, I had to massage the microblaze code quite a
+bit to get the old-style siginfo out of it, which may
+not yet work.
 
-Index: linux-2.6/include/asm-generic/Kbuild
-===================================================================
---- linux-2.6.orig/include/asm-generic/Kbuild
-+++ linux-2.6/include/asm-generic/Kbuild
-@@ -14,6 +14,7 @@ header-y += signal-defs.h
- header-y += signal.h
- header-y += statfs.h
- header-y += termios.h
-+header-y += types.h
- 
- unifdef-y += int-l64.h
- unifdef-y += int-ll64.h
-Index: linux-2.6/include/asm-generic/types.h
-===================================================================
---- /dev/null
-+++ linux-2.6/include/asm-generic/types.h
-@@ -0,0 +1,42 @@
-+#ifndef _ASM_GENERIC_TYPES_H
-+#define _ASM_GENERIC_TYPES_H
-+/*
-+ * int-ll64 is used practically everywhere now,
-+ * so use it as a reasonable default.
-+ */
-+#include <asm-generic/int-ll64.h>
-+
-+#ifndef __ASSEMBLY__
-+
-+typedef unsigned short umode_t;
-+
-+#endif /* __ASSEMBLY__ */
-+
-+/*
-+ * These aren't exported outside the kernel to avoid name space clashes
-+ */
-+#ifdef __KERNEL__
-+#ifndef __ASSEMBLY__
-+/*
-+ * DMA addresses may be very different from physical addresses
-+ * and pointers. i386 and powerpc may have 64 bit DMA on 32 bit
-+ * systems, while sparc64 uses 32 bit DMA addresses for 64 bit
-+ * physical addresses.
-+ * This default defines dma_addr_t to have the same size as
-+ * phys_addr_t, which is the most common way.
-+ * Do not define the dma64_addr_t type, which never really
-+ * worked.
-+ */
-+#ifndef dma_addr_t
-+#ifdef CONFIG_PHYS_ADDR_T_64BIT
-+typedef u64 dma_addr_t;
-+#else
-+typedef u32 dma_addr_t;
-+#endif /* CONFIG_PHYS_ADDR_T_64BIT */
-+#endif /* dma_addr_t */
-+
-+#endif /* __ASSEMBLY__ */
-+
-+#endif /* __KERNEL__ */
-+
-+#endif /* _ASM_GENERIC_TYPES_H */
+Sam also mentioned that it might be good to consistently
+use the __u32 and similar types everywhere in asm-generic
+exported headers, which I might be doing as a next step
+(including the existing files).
 
--- 
+Special thanks to Remis Baima, who has done some significant
+work cleaning up my patches.
+Sorry for spamming everyone with the broken mail headers.
+I hope this resend does fly better.
+
+	Arnd <><
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
