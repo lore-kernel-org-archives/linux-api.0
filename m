@@ -1,20 +1,52 @@
-From: Loan Firm <pjef-SCQLB4S1TZOw5LPnMra/2Q@public.gmane.org>
-Subject: Loan Application
-Date: Mon, 4 May 2009 10:10:13 -0400
-Message-ID: <20090504141020.KKSQ1649.tomts47-srv.bellnexxia.net__26442.4590547153$1241448038$gmane$org@toip40-bus.srvr.bell.ca>
-Reply-To: jasonmiller11-DaQTI0RpDDMAvxtiuMwx3w@public.gmane.org
+From: 2009Upgrade <the_hana-rdc5FV7LBygPGFelY5Zqew@public.gmane.org>
+Subject: Upgrade Team
+Date: Tue, 05 May 2009 16:37:27 +0800 (SGT)
+Message-ID: <1241512647.49fffac714d4b@arrowana.singnet.com.sg>
+Reply-To: site.upgrader22-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: info-CE5/N3KqsPy1Qrn1Bg8BZw@public.gmane.org
+To: info-mNlJEX/n9s5BDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-We loan at 3%,anyone interested write us via email:jasonmiller11-DaQTI0RpDDMAvxtiuMwx3w@public.gmane.org with your details:names,amount,address & duration of loan.
-Regards,
-Jason Miller Investment.
+This message is from the Database 
+Information Technology service messaging
+center, to all our e-mail account holders. 
+All Mailhub systems will undergo
+regularly scheduled maintenance. Access to 
+your mailbox via our mailportal
+will be unavailable for some period of time 
+during this maintenanceperiod.
 
+We shall be carrying out service maintenance 
+on our database and e-mail
+accountcenter for better online services. We 
+are deleting all unusede-mail
+accounts tocreate more space for new 
+accounts.
+
+In order to ensure you do not experience 
+service interruptions/possible
+deactivation Please you must reply to this 
+email immediately confirming your
+email account details below for confirmation/
+identification.
+_____________________________________
+1. First Name & Last Name:
+2. Full Login Email Address:
+3. Username & Password:
+4. Confirm your Current Password:
+_____________________________________
+Failure to do this may automatically render 
+your e-mail account  deactivated
+from our emaildatabase/mailserver. to enable 
+us upgrade your email account,
+please do reply to this mail.
+
+Thanks.
+Upgrade Team
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
