@@ -1,16 +1,25 @@
-From: "Frances Mcleod" <asadkanoor-0gvq3ud6dY9dz2imjWt+ww@public.gmane.org>
-Subject: Let your zip feel tension
-Date: Thu, 14 May 2009 09:58:30 -0300
-Message-ID: <20090514095830.9080406@lifefitness.com>
+From: Mnl <Mnl-/E1597aS9LT10XsdtD+oqA@public.gmane.org>
+Subject: (no subject)
+Date: Tue, 19 May 2009 00:16:52 +1200
+Message-ID: <d1a4c407580cf0df9711a26bd80d6acd__27932.7487027787$1242649669$gmane$org@ihug.co.nz>
+Reply-To: mrs.jeniferfox@9.cn
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Always good loving attack http://kcl.katrazaw.cn/
+Hello,
+
+=C2=A31,000,000.00 Pounds is now yours. Congrats... You have won.
+
+Send your information to Mr. Michael Smith. +44-704-573-6915 on
+mrs.jeniferfox@9.cn  to help you process your claims.
+Provide your Name, Address, Age, Phone Number, Occupation.
+
+Mrs. Jenifer Fox
+Monday Lotto
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
