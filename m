@@ -1,231 +1,284 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [RFC v16][PATCH 19/43] c/r: external checkpoint of a task other than ourself
-Date: Wed, 27 May 2009 13:32:45 -0400
-Message-ID: <1243445589-32388-20-git-send-email-orenl@cs.columbia.edu>
+From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Subject: [RFC v16][PATCH 31/43] deferqueue: generic queue to defer work
+Date: Wed, 27 May 2009 13:32:57 -0400
+Message-ID: <1243445589-32388-32-git-send-email-orenl@cs.columbia.edu>
 References: <1243445589-32388-1-git-send-email-orenl@cs.columbia.edu>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1243445589-32388-1-git-send-email-orenl@cs.columbia.edu>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@cs.columbia.edu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1243445589-32388-1-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Now we can do "external" checkpoint, i.e. act on another task.
+Add a interface to postpone an action until the end of the entire
+checkpoint or restart operation. This is useful when during the
+scan of tasks an operation cannot be performed in place, to avoid
+the need for a second scan.
 
-sys_checkpoint() now looks up the target pid (in our namespace) and
-checkpoints that corresponding task. That task should be the root of
-a container, unless CHECKPOINT_SUBTREE flag is given.
+One use case is when restoring an ipc shared memory region that has
+been deleted (but is still attached), during restart it needs to be
+create, attached and then deleted. However, creation and attachment
+are performed in distinct locations, so deletion can not be performed
+on the spot. Instead, this work (delete) is deferred until later.
+(This example is in one of the following patches).
 
-sys_restart() remains the same, as the restart is always done in the
-context of the restarting task.
+This interface allows chronic procrastination in the kernel:
 
-Changelog[v16]:
-  - Use CHECKPOINT_SUBTREE to allow subtree (partial container)
+deferqueue_create(void):
+    Allocates and returns a new deferqueue.
 
-Changelog[v14]:
-  - Refuse non-self checkpoint if target task isn't frozen
+deferqueue_run(deferqueue):
+    Executes all the pending works in the queue. Returns the number
+    of works executed, or an error upon the first error reported by
+    a deferred work.
 
-Changelog[v12]:
-  - Replace obsolete ckpt_debug() with pr_debug()
+deferqueue_add(deferqueue, data, size, func, dtor):
+    Enqueue a deferred work. @function is the callback function to
+    do the work, which will be called with @data as an argument.
+    @size tells the size of data. @dtor is a destructor callback
+    that is invoked for deferred works remaining in the queue when
+    the queue is destroyed. NOTE: for a given deferred work, @dtor
+    is _not_ called if @func was already called (regardless of the
+    return value of the latter).
 
-Changelog[v11]:
-  - Copy contents of 'init->fs->root' instead of pointing to them
+deferqueue_destroy(deferqueue):
+    Free the deferqueue and any queued items while invoking the
+    @dtor callback for each queued item.
 
-Changelog[v10]:
-  - Grab vfs root of container init, rather than current process
+Why aren't we using the existing kernel workqueue mechanism?  We need
+to defer to work until the end of the operation: not earlier, since we
+need other things to be in place; not later, to not block waiting for
+it. However, the workqueue schedules the work for 'some time later'.
+Also, the kernel workqueue may run in any task context, but we require
+many times that an operation be run in the context of some specific
+restarting task (e.g., restoring IPC state of a certain ipc_ns).
 
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
+Instead, this mechanism is a simple way for the c/r operation as a
+whole, and later a task in particular, to defer some action until
+later (but not arbitrarily later) _in the restore_ operation.
+
+Signed-off-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- checkpoint/checkpoint.c          |   79 +++++++++++++++++++++++++++++++++++++-
- checkpoint/restart.c             |    4 +-
- checkpoint/sys.c                 |    6 +++
- include/linux/checkpoint_types.h |    2 +
- 4 files changed, 87 insertions(+), 4 deletions(-)
+ checkpoint/Kconfig         |    5 ++
+ include/linux/deferqueue.h |   58 +++++++++++++++++++++++
+ kernel/Makefile            |    1 +
+ kernel/deferqueue.c        |  109 ++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 173 insertions(+), 0 deletions(-)
 
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index a346b7e..086f2d9 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -12,6 +12,9 @@
- #define CKPT_DFLAG  CKPT_DSYS
+diff --git a/checkpoint/Kconfig b/checkpoint/Kconfig
+index 1761b0a..53ed6fa 100644
+--- a/checkpoint/Kconfig
++++ b/checkpoint/Kconfig
+@@ -2,9 +2,14 @@
+ # implemented the hooks for processor state etc. needed by the
+ # core checkpoint/restart code.
  
- #include <linux/version.h>
-+#include <linux/sched.h>
-+#include <linux/freezer.h>
-+#include <linux/ptrace.h>
- #include <linux/time.h>
- #include <linux/fs.h>
- #include <linux/file.h>
-@@ -245,23 +248,95 @@ static int checkpoint_write_tail(struct ckpt_ctx *ctx)
- 	return ret;
- }
++config DEFERQUEUE
++	bool
++	default n
++
+ config CHECKPOINT
+ 	bool "Enable checkpoint/restart (EXPERIMENTAL)"
+ 	depends on CHECKPOINT_SUPPORT && EXPERIMENTAL
++	select DEFERQUEUE
+ 	help
+ 	  Application checkpoint/restart is the ability to save the
+ 	  state of a running application so that it can later resume
+diff --git a/include/linux/deferqueue.h b/include/linux/deferqueue.h
+new file mode 100644
+index 0000000..2eb58cf
+--- /dev/null
++++ b/include/linux/deferqueue.h
+@@ -0,0 +1,58 @@
++/*
++ * deferqueue.h --- deferred work queue handling for Linux.
++ */
++
++#ifndef _LINUX_DEFERQUEUE_H
++#define _LINUX_DEFERQUEUE_H
++
++#include <linux/list.h>
++#include <linux/slab.h>
++#include <linux/spinlock.h>
++
++/*
++ * This interface allows chronic procrastination in the kernel:
++ *
++ * deferqueue_create(void):
++ *     Allocates and returns a new deferqueue.
++ *
++ * deferqueue_run(deferqueue):
++ *     Executes all the pending works in the queue. Returns the number
++ *     of works executed, or an error upon the first error reported by
++ *     a deferred work.
++ *
++ * deferqueue_add(deferqueue, data, size, func, dtor):
++ * 	Enqueue a deferred work. @function is the callback function to
++ *      do the work, which will be called with @data as an argument.
++ *      @size tells the size of data. @dtor is a destructor callback
++ *      that is invoked for deferred works remaining in the queue when
++ *      the queue is destroyed. NOTE: for a given deferred work, @dtor
++ *      is _not_ called if @func was already called (regardless of the
++ *      return value of the latter).
++ *
++ * deferqueue_destroy(deferqueue):
++ *      Free the deferqueue and any queued items while invoking the
++ *      @dtor callback for each queued item.
++ */
++
++
++typedef int (*deferqueue_func_t)(void *);
++
++struct deferqueue_entry {
++	deferqueue_func_t function;
++	deferqueue_func_t destructor;
++	struct list_head list;
++	char data[0];
++};
++
++struct deferqueue_head {
++	spinlock_t lock;
++	struct list_head list;
++};
++
++struct deferqueue_head *deferqueue_create(void);
++void deferqueue_destroy(struct deferqueue_head *head);
++int deferqueue_add(struct deferqueue_head *head, void *data, int size,
++		   deferqueue_func_t func, deferqueue_func_t dtor);
++int deferqueue_run(struct deferqueue_head *head);
++
++#endif
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 4242366..6bc638d 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -22,6 +22,7 @@ CFLAGS_REMOVE_cgroup-debug.o = -pg
+ CFLAGS_REMOVE_sched_clock.o = -pg
+ endif
  
-+static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
++obj-$(CONFIG_DEFERQUEUE) += deferqueue.o
+ obj-$(CONFIG_FREEZER) += freezer.o
+ obj-$(CONFIG_PROFILING) += profile.o
+ obj-$(CONFIG_SYSCTL_SYSCALL_CHECK) += sysctl_check.o
+diff --git a/kernel/deferqueue.c b/kernel/deferqueue.c
+new file mode 100644
+index 0000000..efd99d5
+--- /dev/null
++++ b/kernel/deferqueue.c
+@@ -0,0 +1,109 @@
++/*
++ *  Infrastructure to manage deferred work
++ *
++ *  This differs from a workqueue in that the work must be deferred
++ *  until specifically run by the caller.
++ *
++ *  As the only user currently is checkpoint/restart, which has
++ *  very simple usage, the locking is kept simple.  Adding rules
++ *  is protected by the head->lock.  But deferqueue_run() is only
++ *  called once, after all entries have been added.  So it is not
++ *  protected.  Similarly, _destroy is only called once when the
++ *  ckpt_ctx is releeased, so it is not locked or refcounted.  These
++ *  can of course be added if needed by other users.
++ *
++ *  Why not use workqueue ?  We need to defer work until the end of an
++ *  operation: not earlier, since we need other things to be in place;
++ *  not later, to not block waiting for it. However, the workqueue
++ *  schedules the work for 'some time later'. Also, workqueue may run
++ *  in any task context, but we require many times that an operation
++ *  be run in the context of some specific restarting task (e.g.,
++ *  restoring IPC state of a certain ipc_ns).
++ *
++ *  Instead, this mechanism is a simple way for the c/r operation as a
++ *  whole, and later a task in particular, to defer some action until
++ *  later (but not arbitrarily later) _in the restore_ operation.
++ *
++ *  Copyright (C) 2009 Oren Laadan
++ *
++ *  This file is subject to the terms and conditions of the GNU General Public
++ *  License.  See the file COPYING in the main directory of the Linux
++ *  distribution for more details.
++ *
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/deferqueue.h>
++
++struct deferqueue_head *deferqueue_create(void)
 +{
-+	if (t->state == TASK_DEAD) {
-+		pr_warning("c/r: task %d is TASK_DEAD\n", task_pid_vnr(t));
-+		return -EAGAIN;
++	struct deferqueue_head *h = kmalloc(sizeof(*h), GFP_KERNEL);
++	if (h) {
++		spin_lock_init(&h->lock);
++		INIT_LIST_HEAD(&h->list);
 +	}
++	return h;
++}
 +
-+	if (!ptrace_may_access(t, PTRACE_MODE_READ)) {
-+		__ckpt_write_err(ctx, "access to task %d (%s) denied",
-+				 task_pid_vnr(t), t->comm);
-+		return -EPERM;
++void deferqueue_destroy(struct deferqueue_head *h)
++{
++	if (!list_empty(&h->list)) {
++		struct deferqueue_entry *dq, *n;
++
++		pr_debug("%s: freeing non-empty queue\n", __func__);
++		list_for_each_entry_safe(dq, n, &h->list, list) {
++			dq->destructor(dq->data);
++			list_del(&dq->list);
++			kfree(dq);
++		}
 +	}
++	kfree(h);
++}
 +
-+	/* verify that the task is frozen (unless self) */
-+	if (t != current && !frozen(t)) {
-+		__ckpt_write_err(ctx, "task %d (%s) is not frozen",
-+				 task_pid_vnr(t), t->comm);
-+		return -EBUSY;
-+	}
++int deferqueue_add(struct deferqueue_head *head, void *data, int size,
++		   deferqueue_func_t func, deferqueue_func_t dtor)
++{
++	struct deferqueue_entry *dq;
 +
-+	/* FIX: add support for ptraced tasks */
-+	if (task_ptrace(t)) {
-+		__ckpt_write_err(ctx, "task %d (%s) is ptraced",
-+				 task_pid_vnr(t), t->comm);
-+		return -EBUSY;
-+	}
++	dq = kmalloc(sizeof(dq) + size, GFP_KERNEL);
++	if (!dq)
++		return -ENOMEM;
 +
++	dq->function = func;
++	dq->destructor = dtor;
++	memcpy(dq->data, data, size);
++
++	pr_debug("%s: adding work %p func %p dtor %p\n",
++		 __func__, dq, func, dtor);
++	spin_lock(&head->lock);
++	list_add_tail(&head->list, &dq->list);
++	spin_unlock(&head->lock);
 +	return 0;
 +}
 +
-+static int get_container(struct ckpt_ctx *ctx, pid_t pid)
++/*
++ * deferqueue_run - perform all work in the work queue
++ * @head: deferqueue_head from which to run
++ *
++ * returns: number of works performed, or < 0 on error
++ */
++int deferqueue_run(struct deferqueue_head *head)
 +{
-+	struct task_struct *task = NULL;
-+	struct nsproxy *nsproxy = NULL;
++	struct deferqueue_entry *dq, *n;
++	int nr = 0;
 +	int ret;
 +
-+	ctx->root_pid = pid;
-+
-+	read_lock(&tasklist_lock);
-+	task = find_task_by_vpid(pid);
-+	if (task)
-+		get_task_struct(task);
-+	read_unlock(&tasklist_lock);
-+
-+	if (!task)
-+		return -ESRCH;
-+
-+	ret = may_checkpoint_task(ctx, task);
-+	if (ret) {
-+		ckpt_write_err(ctx, NULL);
-+		put_task_struct(task);
-+		return ret;
++	list_for_each_entry_safe(dq, n, &head->list, list) {
++		pr_debug("doing work %p function %p\n", dq, dq->function);
++		/* don't call destructor - function callback should do it */
++		ret = dq->function(dq->data);
++		if (ret < 0)
++			pr_debug("wq function failed %d\n", ret);
++		list_del(&dq->list);
++		kfree(dq);
++		nr++;
 +	}
 +
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(task);
-+	get_nsproxy(nsproxy);
-+	rcu_read_unlock();
-+
-+	ctx->root_task = task;
-+	ctx->root_nsproxy = nsproxy;
-+
-+	return 0;
++	return nr;
 +}
-+
- /* setup checkpoint-specific parts of ctx */
- static int init_checkpoint_ctx(struct ckpt_ctx *ctx, pid_t pid)
- {
- 	struct fs_struct *fs;
-+	int ret;
- 
- 	ctx->root_pid = pid;
- 
-+	ret = get_container(ctx, pid);
-+	if (ret < 0)
-+		return ret;
-+
- 	/*
- 	 * assume checkpointer is in container's root vfs
- 	 * FIXME: this works for now, but will change with real containers
- 	 */
- 
--	fs = current->fs;
-+	task_lock(ctx->root_task);
-+	fs = ctx->root_task->fs;
- 	read_lock(&fs->lock);
- 	ctx->fs_mnt = fs->root;
- 	path_get(&ctx->fs_mnt);
- 	read_unlock(&fs->lock);
-+	task_unlock(ctx->root_task);
- 
- 	return 0;
- }
-@@ -276,7 +351,7 @@ int do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
- 	ret = checkpoint_write_header(ctx);
- 	if (ret < 0)
- 		goto out;
--	ret = checkpoint_task(ctx, current);
-+	ret = checkpoint_task(ctx, ctx->root_task);
- 	if (ret < 0)
- 		goto out;
- 	ret = checkpoint_write_tail(ctx);
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index d3d6c5e..ca33539 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -352,7 +352,7 @@ static int restore_read_tail(struct ckpt_ctx *ctx)
- }
- 
- /* setup restart-specific parts of ctx */
--static int init_restart_ctx(struct ckpt_ctx *ctx)
-+static int init_restart_ctx(struct ckpt_ctx *ctx, pid_t pid)
- {
- 	return 0;
- }
-@@ -361,7 +361,7 @@ int do_restart(struct ckpt_ctx *ctx, pid_t pid)
- {
- 	int ret;
- 
--	ret = init_restart_ctx(ctx);
-+	ret = init_restart_ctx(ctx, pid);
- 	if (ret < 0)
- 		return ret;
- 	ret = restore_read_header(ctx);
-diff --git a/checkpoint/sys.c b/checkpoint/sys.c
-index 7bf70e4..c809120 100644
---- a/checkpoint/sys.c
-+++ b/checkpoint/sys.c
-@@ -12,6 +12,7 @@
- #define CKPT_DFLAG  CKPT_DSYS
- 
- #include <linux/sched.h>
-+#include <linux/nsproxy.h>
- #include <linux/kernel.h>
- #include <linux/syscalls.h>
- #include <linux/fs.h>
-@@ -173,6 +174,11 @@ static void ckpt_ctx_free(struct ckpt_ctx *ctx)
- 	path_put(&ctx->fs_mnt);
- 	ckpt_pgarr_free(ctx);
- 
-+	if (ctx->root_nsproxy)
-+		put_nsproxy(ctx->root_nsproxy);
-+	if (ctx->root_task)
-+		put_task_struct(ctx->root_task);
-+
- 	kfree(ctx);
- }
- 
-diff --git a/include/linux/checkpoint_types.h b/include/linux/checkpoint_types.h
-index a0ea5f6..4369f90 100644
---- a/include/linux/checkpoint_types.h
-+++ b/include/linux/checkpoint_types.h
-@@ -28,6 +28,8 @@ struct ckpt_ctx {
- 	int crid;		/* unique checkpoint id */
- 
- 	pid_t root_pid;		/* container identifier */
-+	struct task_struct *root_task;	/* container root task */
-+	struct nsproxy *root_nsproxy;	/* container root nsproxy */
- 
- 	unsigned long kflags;	/* kerenl flags */
- 	unsigned long uflags;	/* user flags */
 -- 
 1.6.0.4
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
