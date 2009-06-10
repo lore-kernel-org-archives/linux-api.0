@@ -1,24 +1,16 @@
-From: Web Draw <braininjuryottawavalley-SCQLB4S1TZOw5LPnMra/2Q@public.gmane.org>
-Subject: ""Congratulation""
-Date: Tue, 9 Jun 2009 13:27:56 -0400
-Message-ID: <20090609172803.BNKZ22814.tomts31-srv.bellnexxia.net@toip53-bus.srvr.bell.ca>
-Reply-To: thomas.brown51-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org
+From: "Paul Chen" <glenackie-cJaSceoyCSBWk0Htik3J/w@public.gmane.org>
+Subject: Make her come triple tonight
+Date: Wed, 10 Jun 2009 15:05:58 +0100
+Message-ID: <20090610150558.8030501@gacworld.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: info-QntSLMbYo9oAvxtiuMwx3w@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-You have just been awarded,the sum of =A3500,000.00 GBP in the MARIE ST=
-OPES INTERNATIONAL GRANT AWARD Anniversary Bonanza held on Friday June =
-2009.Names:... Address:..
-Country:.. Age:.
-Sex:..Occupation..Tel:.Nationality
-thomas.brown50-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org
-Regard
-Mr.Thomas Brown
+Take a pack plus four bluepills free! http://uxtdoo.wokmison.cn/
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
