@@ -1,7 +1,7 @@
-From: "Rosaline Villarreal" <ojapetr-KI9wpsmJx833om6gcEd6gFAUjnlXr6A1@public.gmane.org>
-Subject: Bigger baby-maker is not a dream anymore!
-Date: Wed, 1 Jul 2009 11:32:50 -0500
-Message-ID: <20090701113250.3090001@biocapital.ind.br>
+From: "Luke Alford" <colinc-EycnL4yA8wKVc3sceRu5cw@public.gmane.org>
+Subject: One of several options available to treat ED!
+Date: Sun, 5 Jul 2009 15:41:53 +0200
+Message-ID: <20090705154153.1060703@commnet.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
@@ -10,7 +10,7 @@ Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Step on the arousal glory way http://fzupoj.jedvikaf.com/
+Innovative anti-virals! http://we.hokeutfec.com/
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
