@@ -1,45 +1,98 @@
 From: Oren Laadan <orenl@librato.com>
-Subject: [RFC v17][PATCH 37/60] c/r: introduce method '->checkpoint()' in struct vm_operations_struct
-Date: Wed, 22 Jul 2009 05:59:59 -0400
-Message-ID: <1248256822-23416-38-git-send-email-orenl@librato.com>
+Subject: [RFC v17][PATCH 11/60] pids 1/7: Factor out code to allocate pidmap page
+Date: Wed, 22 Jul 2009 05:59:33 -0400
+Message-ID: <1248256822-23416-12-git-send-email-orenl@librato.com>
 References: <1248256822-23416-1-git-send-email-orenl@librato.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1248256822-23416-1-git-send-email-orenl@librato.com>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
+Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-Changelog[v17]
-  - Forward-declare 'ckpt_ctx et-al, don't use checkpoint_types.h
+From: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
 
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
+To implement support for clone_with_pids() system call we would
+need to allocate pidmap page in more than one place. Move this
+code to a new function alloc_pidmap_page().
+
+Changelog[v2]:
+	- (Matt Helsley, Dave Hansen) Have alloc_pidmap_page() return
+	  -ENOMEM on error instead of -1.
+
+Signed-off-by: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
+Acked-by: Serge Hallyn <serue@us.ibm.com>
+Reviewed-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- include/linux/mm.h |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ kernel/pid.c |   46 ++++++++++++++++++++++++++++++----------------
+ 1 files changed, 30 insertions(+), 16 deletions(-)
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index ba3a7cb..0e46e95 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -19,6 +19,7 @@ struct file_ra_state;
- struct user_struct;
- struct writeback_control;
- struct rlimit;
-+struct ckpt_ctx;
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 31310b5..f618096 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -122,9 +122,34 @@ static void free_pidmap(struct upid *upid)
+ 	atomic_inc(&map->nr_free);
+ }
  
- #ifndef CONFIG_DISCONTIGMEM          /* Don't use mapnrs, do it properly */
- extern unsigned long max_mapnr;
-@@ -220,6 +221,9 @@ struct vm_operations_struct {
- 	int (*migrate)(struct vm_area_struct *vma, const nodemask_t *from,
- 		const nodemask_t *to, unsigned long flags);
- #endif
-+#ifdef CONFIG_CHECKPOINT
-+	int (*checkpoint)(struct ckpt_ctx *ctx, struct vm_area_struct *vma);
-+#endif
- };
++static int alloc_pidmap_page(struct pidmap *map)
++{
++	void *page;
++
++	if (likely(map->page))
++		return 0;
++
++	page = kzalloc(PAGE_SIZE, GFP_KERNEL);
++
++	/*
++	 * Free the page if someone raced with us installing it:
++	 */
++	spin_lock_irq(&pidmap_lock);
++	if (map->page)
++		kfree(page);
++	else
++		map->page = page;
++	spin_unlock_irq(&pidmap_lock);
++
++	if (unlikely(!map->page))
++		return -ENOMEM;
++
++	return 0;
++}
++
+ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ {
+-	int i, offset, max_scan, pid, last = pid_ns->last_pid;
++	int i, rc, offset, max_scan, pid, last = pid_ns->last_pid;
+ 	struct pidmap *map;
  
- struct mmu_gather;
+ 	pid = last + 1;
+@@ -134,21 +159,10 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 	map = &pid_ns->pidmap[pid/BITS_PER_PAGE];
+ 	max_scan = (pid_max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
+ 	for (i = 0; i <= max_scan; ++i) {
+-		if (unlikely(!map->page)) {
+-			void *page = kzalloc(PAGE_SIZE, GFP_KERNEL);
+-			/*
+-			 * Free the page if someone raced with us
+-			 * installing it:
+-			 */
+-			spin_lock_irq(&pidmap_lock);
+-			if (map->page)
+-				kfree(page);
+-			else
+-				map->page = page;
+-			spin_unlock_irq(&pidmap_lock);
+-			if (unlikely(!map->page))
+-				break;
+-		}
++		rc = alloc_pidmap_page(map);
++		if (rc)
++			break;
++
+ 		if (likely(atomic_read(&map->nr_free))) {
+ 			do {
+ 				if (!test_and_set_bit(offset, map->page)) {
 -- 
 1.6.0.4
 
