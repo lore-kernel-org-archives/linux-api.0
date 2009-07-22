@@ -1,291 +1,94 @@
-From: Oren Laadan <orenl@librato.com>
-Subject: [RFC v17][PATCH 47/60] deferqueue: generic queue to defer work
-Date: Wed, 22 Jul 2009 06:00:09 -0400
-Message-ID: <1248256822-23416-48-git-send-email-orenl@librato.com>
+From: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Subject: [RFC v17][PATCH 54/60] c/r: add CKPT_COPY() macro
+Date: Wed, 22 Jul 2009 06:00:16 -0400
+Message-ID: <1248256822-23416-55-git-send-email-orenl@librato.com>
 References: <1248256822-23416-1-git-send-email-orenl@librato.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1248256822-23416-1-git-send-email-orenl@librato.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1248256822-23416-1-git-send-email-orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a interface to postpone an action until the end of the entire
-checkpoint or restart operation. This is useful when during the
-scan of tasks an operation cannot be performed in place, to avoid
-the need for a second scan.
+From: Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 
-One use case is when restoring an ipc shared memory region that has
-been deleted (but is still attached), during restart it needs to be
-create, attached and then deleted. However, creation and attachment
-are performed in distinct locations, so deletion can not be performed
-on the spot. Instead, this work (delete) is deferred until later.
-(This example is in one of the following patches).
+As suggested by Dave[1], this provides us a way to make the copy-in and
+copy-out processes symmetric.  CKPT_COPY_ARRAY() provides us a way to do
+the same thing but for arrays.  It's not critical, but it helps us unify
+the checkpoint and restart paths for some things.
 
-This interface allows chronic procrastination in the kernel:
+Changelog:
+    Mar 04:
+            . Removed semicolons
+            . Added build-time check for __must_be_array in CKPT_COPY_ARRAY
+    Feb 27:
+            . Changed CKPT_COPY() to use assignment, eliminating the need
+              for the CKPT_COPY_BIT() macro
+            . Add CKPT_COPY_ARRAY() macro to help copying register arrays,
+              etc
+            . Move the macro definitions inside the CR #ifdef
+    Feb 25:
+            . Changed WARN_ON() to BUILD_BUG_ON()
 
-deferqueue_create(void):
-    Allocates and returns a new deferqueue.
+Signed-off-by: Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 
-deferqueue_run(deferqueue):
-    Executes all the pending works in the queue. Returns the number
-    of works executed, or an error upon the first error reported by
-    a deferred work.
-
-deferqueue_add(deferqueue, data, size, func, dtor):
-    Enqueue a deferred work. @function is the callback function to
-    do the work, which will be called with @data as an argument.
-    @size tells the size of data. @dtor is a destructor callback
-    that is invoked for deferred works remaining in the queue when
-    the queue is destroyed. NOTE: for a given deferred work, @dtor
-    is _not_ called if @func was already called (regardless of the
-    return value of the latter).
-
-deferqueue_destroy(deferqueue):
-    Free the deferqueue and any queued items while invoking the
-    @dtor callback for each queued item.
-
-Why aren't we using the existing kernel workqueue mechanism?  We need
-to defer to work until the end of the operation: not earlier, since we
-need other things to be in place; not later, to not block waiting for
-it. However, the workqueue schedules the work for 'some time later'.
-Also, the kernel workqueue may run in any task context, but we require
-many times that an operation be run in the context of some specific
-restarting task (e.g., restoring IPC state of a certain ipc_ns).
-
-Instead, this mechanism is a simple way for the c/r operation as a
-whole, and later a task in particular, to defer some action until
-later (but not arbitrarily later) _in the restore_ operation.
-
-Changelog[v17]
-  - Fix deferqueue_add() function
-
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
+1: https://lists.linux-foundation.org/pipermail/containers/2009-February/015821.html (all the way at the bottom)
 ---
- checkpoint/Kconfig         |    5 ++
- include/linux/deferqueue.h |   58 +++++++++++++++++++++++
- kernel/Makefile            |    1 +
- kernel/deferqueue.c        |  109 ++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 173 insertions(+), 0 deletions(-)
- create mode 100644 include/linux/deferqueue.h
- create mode 100644 kernel/deferqueue.c
+ include/linux/checkpoint.h |   29 +++++++++++++++++++++++++++++
+ 1 files changed, 29 insertions(+), 0 deletions(-)
 
-diff --git a/checkpoint/Kconfig b/checkpoint/Kconfig
-index 21fc86b..4a2c845 100644
---- a/checkpoint/Kconfig
-+++ b/checkpoint/Kconfig
-@@ -2,10 +2,15 @@
- # implemented the hooks for processor state etc. needed by the
- # core checkpoint/restart code.
+diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
+index aeae2fa..2ee1bc2 100644
+--- a/include/linux/checkpoint.h
++++ b/include/linux/checkpoint.h
+@@ -211,6 +211,34 @@ extern int restore_memory_contents(struct ckpt_ctx *ctx, struct inode *inode);
+ 	 VM_MAPPED_COPY | VM_INSERTPAGE | VM_MIXEDMAP | VM_SAO)
  
-+config DEFERQUEUE
-+	bool
-+	default n
-+
- config CHECKPOINT
- 	bool "Checkpoint/restart (EXPERIMENTAL)"
- 	depends on CHECKPOINT_SUPPORT && EXPERIMENTAL
- 	depends on CGROUP_FREEZER
-+	select DEFERQUEUE
- 	help
- 	  Application checkpoint/restart is the ability to save the
- 	  state of a running application so that it can later resume
-diff --git a/include/linux/deferqueue.h b/include/linux/deferqueue.h
-new file mode 100644
-index 0000000..2eb58cf
---- /dev/null
-+++ b/include/linux/deferqueue.h
-@@ -0,0 +1,58 @@
-+/*
-+ * deferqueue.h --- deferred work queue handling for Linux.
-+ */
-+
-+#ifndef _LINUX_DEFERQUEUE_H
-+#define _LINUX_DEFERQUEUE_H
-+
-+#include <linux/list.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+
-+/*
-+ * This interface allows chronic procrastination in the kernel:
-+ *
-+ * deferqueue_create(void):
-+ *     Allocates and returns a new deferqueue.
-+ *
-+ * deferqueue_run(deferqueue):
-+ *     Executes all the pending works in the queue. Returns the number
-+ *     of works executed, or an error upon the first error reported by
-+ *     a deferred work.
-+ *
-+ * deferqueue_add(deferqueue, data, size, func, dtor):
-+ * 	Enqueue a deferred work. @function is the callback function to
-+ *      do the work, which will be called with @data as an argument.
-+ *      @size tells the size of data. @dtor is a destructor callback
-+ *      that is invoked for deferred works remaining in the queue when
-+ *      the queue is destroyed. NOTE: for a given deferred work, @dtor
-+ *      is _not_ called if @func was already called (regardless of the
-+ *      return value of the latter).
-+ *
-+ * deferqueue_destroy(deferqueue):
-+ *      Free the deferqueue and any queued items while invoking the
-+ *      @dtor callback for each queued item.
-+ */
-+
-+
-+typedef int (*deferqueue_func_t)(void *);
-+
-+struct deferqueue_entry {
-+	deferqueue_func_t function;
-+	deferqueue_func_t destructor;
-+	struct list_head list;
-+	char data[0];
-+};
-+
-+struct deferqueue_head {
-+	spinlock_t lock;
-+	struct list_head list;
-+};
-+
-+struct deferqueue_head *deferqueue_create(void);
-+void deferqueue_destroy(struct deferqueue_head *head);
-+int deferqueue_add(struct deferqueue_head *head, void *data, int size,
-+		   deferqueue_func_t func, deferqueue_func_t dtor);
-+int deferqueue_run(struct deferqueue_head *head);
-+
-+#endif
-diff --git a/kernel/Makefile b/kernel/Makefile
-index 2093a69..ef229da 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -23,6 +23,7 @@ CFLAGS_REMOVE_cgroup-debug.o = -pg
- CFLAGS_REMOVE_sched_clock.o = -pg
- endif
  
-+obj-$(CONFIG_DEFERQUEUE) += deferqueue.o
- obj-$(CONFIG_FREEZER) += freezer.o
- obj-$(CONFIG_PROFILING) += profile.o
- obj-$(CONFIG_SYSCTL_SYSCALL_CHECK) += sysctl_check.o
-diff --git a/kernel/deferqueue.c b/kernel/deferqueue.c
-new file mode 100644
-index 0000000..3fb388b
---- /dev/null
-+++ b/kernel/deferqueue.c
-@@ -0,0 +1,109 @@
-+/*
-+ *  Infrastructure to manage deferred work
-+ *
-+ *  This differs from a workqueue in that the work must be deferred
-+ *  until specifically run by the caller.
-+ *
-+ *  As the only user currently is checkpoint/restart, which has
-+ *  very simple usage, the locking is kept simple.  Adding rules
-+ *  is protected by the head->lock.  But deferqueue_run() is only
-+ *  called once, after all entries have been added.  So it is not
-+ *  protected.  Similarly, _destroy is only called once when the
-+ *  ckpt_ctx is releeased, so it is not locked or refcounted.  These
-+ *  can of course be added if needed by other users.
-+ *
-+ *  Why not use workqueue ?  We need to defer work until the end of an
-+ *  operation: not earlier, since we need other things to be in place;
-+ *  not later, to not block waiting for it. However, the workqueue
-+ *  schedules the work for 'some time later'. Also, workqueue may run
-+ *  in any task context, but we require many times that an operation
-+ *  be run in the context of some specific restarting task (e.g.,
-+ *  restoring IPC state of a certain ipc_ns).
-+ *
-+ *  Instead, this mechanism is a simple way for the c/r operation as a
-+ *  whole, and later a task in particular, to defer some action until
-+ *  later (but not arbitrarily later) _in the restore_ operation.
-+ *
-+ *  Copyright (C) 2009 Oren Laadan
-+ *
-+ *  This file is subject to the terms and conditions of the GNU General Public
-+ *  License.  See the file COPYING in the main directory of the Linux
-+ *  distribution for more details.
-+ *
-+ */
++/* useful macros to copy fields and buffers to/from ckpt_hdr_xxx structures */
++#define CKPT_CPT 1
++#define CKPT_RST 2
 +
-+#include <linux/module.h>
-+#include <linux/kernel.h>
-+#include <linux/deferqueue.h>
-+
-+struct deferqueue_head *deferqueue_create(void)
-+{
-+	struct deferqueue_head *h = kmalloc(sizeof(*h), GFP_KERNEL);
-+	if (h) {
-+		spin_lock_init(&h->lock);
-+		INIT_LIST_HEAD(&h->list);
-+	}
-+	return h;
-+}
-+
-+void deferqueue_destroy(struct deferqueue_head *h)
-+{
-+	if (!list_empty(&h->list)) {
-+		struct deferqueue_entry *dq, *n;
-+
-+		pr_debug("%s: freeing non-empty queue\n", __func__);
-+		list_for_each_entry_safe(dq, n, &h->list, list) {
-+			dq->destructor(dq->data);
-+			list_del(&dq->list);
-+			kfree(dq);
-+		}
-+	}
-+	kfree(h);
-+}
-+
-+int deferqueue_add(struct deferqueue_head *head, void *data, int size,
-+		   deferqueue_func_t func, deferqueue_func_t dtor)
-+{
-+	struct deferqueue_entry *dq;
-+
-+	dq = kmalloc(sizeof(*dq) + size, GFP_KERNEL);
-+	if (!dq)
-+		return -ENOMEM;
-+
-+	dq->function = func;
-+	dq->destructor = dtor;
-+	memcpy(dq->data, data, size);
-+
-+	pr_debug("%s: adding work %p func %p dtor %p\n",
-+		 __func__, dq, func, dtor);
-+	spin_lock(&head->lock);
-+	list_add_tail(&dq->list, &head->list);
-+	spin_unlock(&head->lock);
-+	return 0;
-+}
++#define CKPT_COPY(op, SAVE, LIVE)				        \
++	do {							\
++		if (op == CKPT_CPT)				\
++			SAVE = LIVE;				\
++		else						\
++			LIVE = SAVE;				\
++	} while (0)
 +
 +/*
-+ * deferqueue_run - perform all work in the work queue
-+ * @head: deferqueue_head from which to run
-+ *
-+ * returns: number of works performed, or < 0 on error
++ * Copy @count items from @LIVE to @SAVE if op is CKPT_CPT (otherwise,
++ * copy in the reverse direction)
 + */
-+int deferqueue_run(struct deferqueue_head *head)
-+{
-+	struct deferqueue_entry *dq, *n;
-+	int nr = 0;
-+	int ret;
++#define CKPT_COPY_ARRAY(op, SAVE, LIVE, count)				\
++	do {								\
++		(void)__must_be_array(SAVE);				\
++		(void)__must_be_array(LIVE);				\
++		BUILD_BUG_ON(sizeof(*SAVE) != sizeof(*LIVE));		\
++		if (op == CKPT_CPT)					\
++			memcpy(SAVE, LIVE, count * sizeof(*SAVE));	\
++		else							\
++			memcpy(LIVE, SAVE, count * sizeof(*SAVE));	\
++	} while (0)
 +
-+	list_for_each_entry_safe(dq, n, &head->list, list) {
-+		pr_debug("doing work %p function %p\n", dq, dq->function);
-+		/* don't call destructor - function callback should do it */
-+		ret = dq->function(dq->data);
-+		if (ret < 0)
-+			pr_debug("wq function failed %d\n", ret);
-+		list_del(&dq->list);
-+		kfree(dq);
-+		nr++;
-+	}
 +
-+	return nr;
-+}
+ /* debugging flags */
+ #define CKPT_DBASE	0x1		/* anything */
+ #define CKPT_DSYS	0x2		/* generic (system) */
+@@ -243,6 +271,7 @@ extern unsigned long ckpt_debug_level;
+  * CKPT_DBASE is the base flags, doesn't change
+  * CKPT_DFLAG is to be redfined in each source file
+  */
++
+ #define ckpt_debug(fmt, args...)  \
+ 	_ckpt_debug(CKPT_DBASE | CKPT_DFLAG, fmt, ## args)
+ 
 -- 
 1.6.0.4
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
