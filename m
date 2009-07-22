@@ -1,56 +1,46 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC v17][PATCH 52/60] c/r: support semaphore sysv-ipc
-Date: Wed, 22 Jul 2009 21:25:02 +0400
-Message-ID: <20090722172502.GA15805@lenovo>
-References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-53-git-send-email-orenl@librato.com>
+From: "Serge E. Hallyn" <serue@us.ibm.com>
+Subject: Re: [RFC v17][PATCH 22/60] c/r: external checkpoint of a task
+	other than ourself
+Date: Wed, 22 Jul 2009 12:52:23 -0500
+Message-ID: <20090722175223.GA19389@us.ibm.com>
+References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-23-git-send-email-orenl@librato.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1248256822-23416-53-git-send-email-orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+In-Reply-To: <1248256822-23416-23-git-send-email-orenl@librato.com>
+Sender: owner-linux-mm@kvack.org
+To: Oren Laadan <orenl@librato.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-[Oren Laadan - Wed, Jul 22, 2009 at 06:00:14AM -0400]
-...
-| +static struct sem *restore_sem_array(struct ckpt_ctx *ctx, int nsems)
-| +{
-| +	struct sem *sma;
-| +	int i, ret;
-| +
-| +	sma = kmalloc(nsems * sizeof(*sma), GFP_KERNEL);
+Quoting Oren Laadan (orenl@librato.com):
+> Now we can do "external" checkpoint, i.e. act on another task.
 
-Forgot to
-
-	if (!sma)
-		return -ENOMEM;
-
-right?
-
-| +	ret = _ckpt_read_buffer(ctx, sma, nsems * sizeof(*sma));
-| +	if (ret < 0)
-| +		goto out;
-| +
-| +	/* validate sem array contents */
-| +	for (i = 0; i < nsems; i++) {
-| +		if (sma[i].semval < 0 || sma[i].sempid < 0) {
-| +			ret = -EINVAL;
-| +			break;
-| +		}
-| +	}
-| + out:
-| +	if (ret < 0) {
-| +		kfree(sma);
-| +		sma = ERR_PTR(ret);
-| +	}
-| +	return sma;
-| +}
 ...
 
-	-- Cyrill
+>  long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
+>  {
+>  	long ret;
+> 
+> +	ret = init_checkpoint_ctx(ctx, pid);
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	if (ctx->root_freezer) {
+> +		ret = cgroup_freezer_begin_checkpoint(ctx->root_freezer);
+> +		if (ret < 0)
+> +			return ret;
+> +	}
+
+Self-checkpoint of a task in root freezer is now denied, though.
+
+Was that intentional?
+
+-serge
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
