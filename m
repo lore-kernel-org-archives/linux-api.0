@@ -1,155 +1,324 @@
-From: Oren Laadan <orenl@librato.com>
-Subject: [RFC v17][PATCH 56/60] c/r: clone_with_pids: define the s390 syscall
-Date: Wed, 22 Jul 2009 06:00:18 -0400
-Message-ID: <1248256822-23416-57-git-send-email-orenl@librato.com>
+From: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Subject: [RFC v17][PATCH 28/60] c/r: support for zombie processes
+Date: Wed, 22 Jul 2009 05:59:50 -0400
+Message-ID: <1248256822-23416-29-git-send-email-orenl@librato.com>
 References: <1248256822-23416-1-git-send-email-orenl@librato.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1248256822-23416-1-git-send-email-orenl@librato.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1248256822-23416-1-git-send-email-orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Serge E. Hallyn <serue@us.ibm.com>
+During checkpoint, a zombie processes need only save p->comm,
+p->state, p->exit_state, and p->exit_code.
 
-Hook up the clone_with_pids system call for s390x.  clone_with_pids()
-takes an additional argument over clone(), which we pass in through
-register 7.  Stub code for using the syscall looks like:
+During restart, zombie processes are created like all other
+processes. They validate the saved exit_code restore p->comm
+and p->exit_code. Then they call do_exit() instead of waking
+up the next task in line.
 
-struct target_pid_set {
-        int num_pids;
-        pid_t *target_pids;
-        unsigned long flags;
-};
+But before, they place the @ctx in p->checkpoint_ctx, so that
+only at exit time they will wake up the next task in line,
+and drop the reference to the @ctx.
 
-    register unsigned long int __r2 asm ("2") = (unsigned long int)(stack);
-    register unsigned long int __r3 asm ("3") = (unsigned long int)(flags);
-    register unsigned long int __r4 asm ("4") = (unsigned long int)(NULL);
-    register unsigned long int __r5 asm ("5") = (unsigned long int)(NULL);
-    register unsigned long int __r6 asm ("6") = (unsigned long int)(NULL);
-    register unsigned long int __r7 asm ("7") = (unsigned long int)(setp);
-    register unsigned long int __result asm ("2");
-    __asm__ __volatile__(
-            " lghi %%r1,332\n"
-            " svc 0\n"
-            : "=d" (__result)
-            : "0" (__r2), "d" (__r3),
-              "d" (__r4), "d" (__r5), "d" (__r6), "d" (__r7)
-            : "1", "cc", "memory"
-    );
-            __result;
-    })
+This provides the guarantee that when the coordinator's wait
+completes, all normal tasks completed their restart, and all
+zombie tasks are already zombified (as opposed to perhap only
+becoming a zombie).
 
-    struct target_pid_set pid_set;
-    int pids[1] = { 19799 };
-    pid_set.num_pids = 1;
-    pid_set.target_pids = &pids[0];
-    pid_set.flags = 0;
+Changelog[v17]:
+  - Validate t->exit_signal for both threads and leader
+  - Skip zombies in most of may_checkpoint_task()
+  - Save/restore t->pdeath_signal
+  - Validate ->exit_signal and ->pdeath_signal
 
-    rc = do_clone_with_pids(topstack, clone_flags, setp);
-    if (rc == 0)
-	printf("Child\n");
-    else if (rc > 0)
-	printf("Parent: child pid %d\n", rc);
-    else
-	printf("Error %d\n", rc);
-
-Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
+Signed-off-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- arch/s390/include/asm/unistd.h  |    3 ++-
- arch/s390/kernel/compat_linux.c |   19 +++++++++++++++++++
- arch/s390/kernel/process.c      |   19 +++++++++++++++++++
- arch/s390/kernel/syscalls.S     |    1 +
- 4 files changed, 41 insertions(+), 1 deletions(-)
+ checkpoint/checkpoint.c        |   12 +++++--
+ checkpoint/process.c           |   67 +++++++++++++++++++++++++++++++++++-----
+ checkpoint/restart.c           |   40 +++++++++++++++++++++---
+ include/linux/checkpoint.h     |    1 +
+ include/linux/checkpoint_hdr.h |    1 +
+ 5 files changed, 104 insertions(+), 17 deletions(-)
 
-diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
-index 5d1678a..2a84f9c 100644
---- a/arch/s390/include/asm/unistd.h
-+++ b/arch/s390/include/asm/unistd.h
-@@ -271,7 +271,8 @@
- #define __NR_perf_counter_open	331
- #define __NR_checkpoint		332
- #define __NR_restart		333
--#define NR_syscalls 334
-+#define __NR_clone_with_pids	334
-+#define NR_syscalls 335
+diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
+index 57f59de..fb14585 100644
+--- a/checkpoint/checkpoint.c
++++ b/checkpoint/checkpoint.c
+@@ -280,8 +280,8 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
  
- /* 
-  * There are some system calls that are not present on 64 bit, some
-diff --git a/arch/s390/kernel/compat_linux.c b/arch/s390/kernel/compat_linux.c
-index 9ab188d..c6dc681 100644
---- a/arch/s390/kernel/compat_linux.c
-+++ b/arch/s390/kernel/compat_linux.c
-@@ -818,6 +818,25 @@ asmlinkage long sys32_clone(void)
- 		       parent_tidptr, child_tidptr);
- }
+ 	ckpt_debug("check %d\n", task_pid_nr_ns(t, ctx->root_nsproxy->pid_ns));
  
-+asmlinkage long sys32_clone_with_pids(void)
-+{
-+	struct pt_regs *regs = task_pt_regs(current);
-+	unsigned long clone_flags;
-+	unsigned long newsp;
-+	int __user *parent_tidptr, *child_tidptr;
-+	void __user *upid_setp;
+-	if (t->state == TASK_DEAD) {
+-		pr_warning("c/r: task %d is TASK_DEAD\n", task_pid_vnr(t));
++	if (t->exit_state == EXIT_DEAD) {
++		pr_warning("c/r: task %d is EXIT_DEAD\n", task_pid_vnr(t));
+ 		return -EAGAIN;
+ 	}
+ 
+@@ -291,6 +291,10 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
+ 		return -EPERM;
+ 	}
+ 
++	/* zombies are cool (and also don't have nsproxy, below...) */
++	if (t->exit_state)
++		return 0;
 +
-+	clone_flags = regs->gprs[3] & 0xffffffffUL;
-+	newsp = regs->orig_gpr2 & 0x7fffffffUL;
-+	parent_tidptr = compat_ptr(regs->gprs[4]);
-+	child_tidptr = compat_ptr(regs->gprs[5]);
-+	upid_setp = compat_ptr(regs->gprs[7]);
-+	if (!newsp)
-+		newsp = regs->gprs[15];
-+	return do_fork_with_pids(clone_flags, newsp, regs, 0,
-+		       parent_tidptr, child_tidptr, upid_setp);
+ 	/* verify that all tasks belongs to same freezer cgroup */
+ 	if (t != current && !in_same_cgroup_freezer(t, ctx->root_freezer)) {
+ 		__ckpt_write_err(ctx, "task %d (%s) not frozen (wrong cgroup)",
+@@ -309,8 +313,8 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
+ 	 * FIX: for now, disallow siblings of container init created
+ 	 * via CLONE_PARENT (unclear if they will remain possible)
+ 	 */
+-	if (ctx->root_init && t != root && t->tgid != root->tgid &&
+-	    t->real_parent == root->real_parent) {
++	if (ctx->root_init && t != root &&
++	    t->real_parent == root->real_parent && t->tgid != root->tgid) {
+ 		__ckpt_write_err(ctx, "task %d (%s) is sibling of root",
+ 				 task_pid_vnr(t), t->comm);
+ 		return -EINVAL;
+diff --git a/checkpoint/process.c b/checkpoint/process.c
+index a0bf344..a67c389 100644
+--- a/checkpoint/process.c
++++ b/checkpoint/process.c
+@@ -35,12 +35,18 @@ static int checkpoint_task_struct(struct ckpt_ctx *ctx, struct task_struct *t)
+ 	h->state = t->state;
+ 	h->exit_state = t->exit_state;
+ 	h->exit_code = t->exit_code;
+-	h->exit_signal = t->exit_signal;
+ 
+-	h->set_child_tid = t->set_child_tid;
+-	h->clear_child_tid = t->clear_child_tid;
++	if (t->exit_state) {
++		/* zombie - skip remaining state */
++		BUG_ON(t->exit_state != EXIT_ZOMBIE);
++	} else {
++		/* FIXME: save remaining relevant task_struct fields */
++		h->exit_signal = t->exit_signal;
++		h->pdeath_signal = t->pdeath_signal;
+ 
+-	/* FIXME: save remaining relevant task_struct fields */
++		h->set_child_tid = t->set_child_tid;
++		h->clear_child_tid = t->clear_child_tid;
++	}
+ 
+ 	ret = ckpt_write_obj(ctx, &h->h);
+ 	ckpt_hdr_put(ctx, h);
+@@ -169,6 +175,11 @@ int checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
+ 	ckpt_debug("task %d\n", ret);
+ 	if (ret < 0)
+ 		goto out;
++
++	/* zombie - we're done here */
++	if (t->exit_state)
++		return 0;
++
+ 	ret = checkpoint_thread(ctx, t);
+ 	ckpt_debug("thread %d\n", ret);
+ 	if (ret < 0)
+@@ -187,6 +198,19 @@ int checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
+  * Restart
+  */
+ 
++static inline int valid_exit_code(int exit_code)
++{
++	if (exit_code >= 0x10000)
++		return 0;
++	if (exit_code & 0xff) {
++		if (exit_code & ~0xff)
++			return 0;
++		if (!valid_signal(exit_code & 0xff))
++			return 0;
++	}
++	return 1;
 +}
 +
- /*
-  * 31 bit emulation wrapper functions for sys_fadvise64/fadvise64_64.
-  * These need to rewrite the advise values for POSIX_FADV_{DONTNEED,NOREUSE}
-diff --git a/arch/s390/kernel/process.c b/arch/s390/kernel/process.c
-index 5a43f27..263d3ab 100644
---- a/arch/s390/kernel/process.c
-+++ b/arch/s390/kernel/process.c
-@@ -247,6 +247,25 @@ SYSCALL_DEFINE0(clone)
- 		       parent_tidptr, child_tidptr);
+ /* read the task_struct into the current task */
+ static int restore_task_struct(struct ckpt_ctx *ctx)
+ {
+@@ -198,15 +222,37 @@ static int restore_task_struct(struct ckpt_ctx *ctx)
+ 	if (IS_ERR(h))
+ 		return PTR_ERR(h);
+ 
++	ret = -EINVAL;
++	if (h->state == TASK_DEAD) {
++		if (h->exit_state != EXIT_ZOMBIE)
++			goto out;
++		if (!valid_exit_code(h->exit_code))
++			goto out;
++		t->exit_code = h->exit_code;
++	} else {
++		if (h->exit_code)
++			goto out;
++		if ((thread_group_leader(t) && !valid_signal(h->exit_signal)) ||
++		    (!thread_group_leader(t) && h->exit_signal != -1))
++			goto out;
++		if (!valid_signal(h->pdeath_signal))
++			goto out;
++
++		/* FIXME: restore remaining relevant task_struct fields */
++		t->exit_signal = h->exit_signal;
++		t->pdeath_signal = h->pdeath_signal;
++
++		t->set_child_tid = h->set_child_tid;
++		t->clear_child_tid = h->clear_child_tid;
++	}
++
+ 	memset(t->comm, 0, TASK_COMM_LEN);
+ 	ret = _ckpt_read_string(ctx, t->comm, TASK_COMM_LEN);
+ 	if (ret < 0)
+ 		goto out;
+ 
+-	t->set_child_tid = h->set_child_tid;
+-	t->clear_child_tid = h->clear_child_tid;
+-
+-	/* FIXME: restore remaining relevant task_struct fields */
++	/* return 1 for zombie, 0 otherwise */
++	ret = (h->state == TASK_DEAD ? 1 : 0);
+  out:
+ 	ckpt_hdr_put(ctx, h);
+ 	return ret;
+@@ -326,6 +372,11 @@ int restore_task(struct ckpt_ctx *ctx)
+ 	ckpt_debug("task %d\n", ret);
+ 	if (ret < 0)
+ 		goto out;
++
++	/* zombie - we're done here */
++	if (ret)
++		goto out;
++
+ 	ret = restore_thread(ctx);
+ 	ckpt_debug("thread %d\n", ret);
+ 	if (ret < 0)
+diff --git a/checkpoint/restart.c b/checkpoint/restart.c
+index 65422e2..1b1f639 100644
+--- a/checkpoint/restart.c
++++ b/checkpoint/restart.c
+@@ -375,20 +375,17 @@ static inline void ckpt_notify_error(struct ckpt_ctx *ctx)
+ 	complete(&ctx->complete);
  }
  
-+SYSCALL_DEFINE0(clone_with_pids)
+-static int ckpt_activate_next(struct ckpt_ctx *ctx)
++int ckpt_activate_next(struct ckpt_ctx *ctx)
+ {
+ 	struct task_struct *task;
+-	int active;
+ 	pid_t pid;
+ 
+-	active = ++ctx->active_pid;
+-	if (active >= ctx->nr_pids) {
++	if (++ctx->active_pid >= ctx->nr_pids) {
+ 		complete(&ctx->complete);
+ 		return 0;
+ 	}
+ 
+ 	pid = get_active_pid(ctx);
+-	ckpt_debug("active pid %d (%d < %d)\n", pid, active, ctx->nr_pids);
+ 
+ 	rcu_read_lock();
+ 	task = find_task_by_pid_ns(pid, ctx->root_nsproxy->pid_ns);
+@@ -413,6 +410,8 @@ static int wait_task_active(struct ckpt_ctx *ctx)
+ 	ret = wait_event_interruptible(ctx->waitq,
+ 				       is_task_active(ctx, pid) ||
+ 				       ckpt_test_ctx_error(ctx));
++	ckpt_debug("active %d < %d (ret %d)\n",
++		   ctx->active_pid, ctx->nr_pids, ret);
+ 	if (!ret && ckpt_test_ctx_error(ctx)) {
+ 		force_sig(SIGKILL, current);
+ 		ret = -EBUSY;
+@@ -468,6 +467,8 @@ static int do_restore_task(void)
+ 		return -EAGAIN;
+ 	}
+ 
++	current->flags |= PF_RESTARTING;
++
+ 	/* wait for our turn, do the restore, and tell next task in line */
+ 	ret = wait_task_active(ctx);
+ 	if (ret < 0)
+@@ -477,6 +478,13 @@ static int do_restore_task(void)
+ 	if (ret < 0)
+ 		goto out;
+ 
++	/*
++	 * zombie: we're done here; Save @ctx on task_struct, to be
++	 * used to ckpt_activate_next(), and released, from do_exit().
++	 */
++	if (ret)
++		do_exit(current->exit_code);
++
+ 	ret = ckpt_activate_next(ctx);
+ 	if (ret < 0)
+ 		goto out;
+@@ -493,6 +501,7 @@ static int do_restore_task(void)
+ 		wake_up_all(&ctx->waitq);
+ 	}
+ 
++	current->flags &= ~PF_RESTARTING;
+ 	ckpt_ctx_put(ctx);
+ 	return ret;
+ }
+@@ -593,6 +602,7 @@ static int wait_all_tasks_finish(struct ckpt_ctx *ctx)
+ 
+ 	ret = wait_for_completion_interruptible(&ctx->complete);
+ 
++	ckpt_debug("final sync kflags %#lx\n", ctx->kflags);
+ 	if (ckpt_test_ctx_error(ctx))
+ 		ret = -EBUSY;
+ 	return ret;
+@@ -820,3 +830,23 @@ long do_restart(struct ckpt_ctx *ctx, pid_t pid)
+ 
+ 	return ret;
+ }
++
++/**
++ * exit_checkpoint - callback from do_exit to cleanup checkpoint state
++ * @tsk: terminating task
++ */
++void exit_checkpoint(struct task_struct *tsk)
 +{
-+	struct pt_regs *regs = task_pt_regs(current);
-+	unsigned long clone_flags;
-+	unsigned long newsp;
-+	int __user *parent_tidptr, *child_tidptr;
-+	void __user *upid_setp;
++	struct ckpt_ctx *ctx;
 +
-+	clone_flags = regs->gprs[3];
-+	newsp = regs->orig_gpr2;
-+	parent_tidptr = (int __user *) regs->gprs[4];
-+	child_tidptr = (int __user *) regs->gprs[5];
-+	upid_setp = (void __user *) regs->gprs[7];
-+	if (!newsp)
-+		newsp = regs->gprs[15];
-+	return do_fork_with_pids(clone_flags, newsp, regs, 0, parent_tidptr,
-+			child_tidptr, upid_setp);
++	ctx = tsk->checkpoint_ctx;
++	tsk->checkpoint_ctx = NULL;
++
++	/* restarting zombies will acrivate next task in restart */
++	if (tsk->flags & PF_RESTARTING) {
++		if (ckpt_activate_next(ctx) < 0)
++			pr_warning("c/r: [%d] failed zombie exit\n", tsk->pid);
++	}
++
++	ckpt_ctx_put(ctx);
 +}
-+
- /*
-  * This is trivial, and on the face of it looks like it
-  * could equally well be done in user mode.
-diff --git a/arch/s390/kernel/syscalls.S b/arch/s390/kernel/syscalls.S
-index 67518e2..db850e7 100644
---- a/arch/s390/kernel/syscalls.S
-+++ b/arch/s390/kernel/syscalls.S
-@@ -342,3 +342,4 @@ SYSCALL(sys_rt_tgsigqueueinfo,sys_rt_tgsigqueueinfo,compat_sys_rt_tgsigqueueinfo
- SYSCALL(sys_perf_counter_open,sys_perf_counter_open,sys_perf_counter_open_wrapper)
- SYSCALL(sys_checkpoint,sys_checkpoint,sys_checkpoint_wrapper)
- SYSCALL(sys_restart,sys_restart,sys_restore_wrapper)
-+SYSCALL(sys_clone_with_pids,sys_clone_with_pids,sys_clone_with_pids_wrapper)
+diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
+index 44b692d..b6af5b9 100644
+--- a/include/linux/checkpoint.h
++++ b/include/linux/checkpoint.h
+@@ -85,6 +85,7 @@ extern long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid);
+ extern long do_restart(struct ckpt_ctx *ctx, pid_t pid);
+ 
+ /* task */
++extern int ckpt_activate_next(struct ckpt_ctx *ctx);
+ extern int checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t);
+ extern int restore_task(struct ckpt_ctx *ctx);
+ 
+diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
+index c9a80dc..3f2db22 100644
+--- a/include/linux/checkpoint_hdr.h
++++ b/include/linux/checkpoint_hdr.h
+@@ -130,6 +130,7 @@ struct ckpt_hdr_task {
+ 	__u32 exit_state;
+ 	__u32 exit_code;
+ 	__u32 exit_signal;
++	__u32 pdeath_signal;
+ 
+ 	__u64 set_child_tid;
+ 	__u64 clear_child_tid;
 -- 
 1.6.0.4
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
