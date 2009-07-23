@@ -1,43 +1,44 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
-Subject: Re: [RFC v17][PATCH 22/60] c/r: external checkpoint of a task
-	other than ourself
-Date: Wed, 22 Jul 2009 12:52:23 -0500
-Message-ID: <20090722175223.GA19389@us.ibm.com>
-References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-23-git-send-email-orenl@librato.com>
+From: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+Subject: Re: [RFC v17][PATCH 10/60] c/r: make file_pos_read/write() public
+Date: Thu, 23 Jul 2009 11:33:20 +0900
+Message-ID: <20090723113320.65f6746d.kamezawa.hiroyu@jp.fujitsu.com>
+References: <1248256822-23416-1-git-send-email-orenl@librato.com>
+	<1248256822-23416-11-git-send-email-orenl@librato.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1248256822-23416-23-git-send-email-orenl@librato.com>
+In-Reply-To: <1248256822-23416-11-git-send-email-orenl@librato.com>
 Sender: owner-linux-mm@kvack.org
 To: Oren Laadan <orenl@librato.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@cs.columbia.edu>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, linux-mm@kvack.org, Linus Torvalds <torvalds@osdl.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@elte.hu>, Alexey Dobriyan <adobriyan@gmail.com>, Pavel Emelyanov <xemul@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Oren Laadan (orenl@librato.com):
-> Now we can do "external" checkpoint, i.e. act on another task.
+a nitpick.
 
-...
+On Wed, 22 Jul 2009 05:59:32 -0400
+Oren Laadan <orenl@librato.com> wrote:
 
->  long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
->  {
->  	long ret;
-> 
-> +	ret = init_checkpoint_ctx(ctx, pid);
-> +	if (ret < 0)
-> +		return ret;
+> These two are used in the next patch when calling vfs_read/write()
+
+> +static inline loff_t file_pos_read(struct file *file)
+> +{
+> +	return file->f_pos;
+> +}
 > +
-> +	if (ctx->root_freezer) {
-> +		ret = cgroup_freezer_begin_checkpoint(ctx->root_freezer);
-> +		if (ret < 0)
-> +			return ret;
-> +	}
+> +static inline void file_pos_write(struct file *file, loff_t pos)
+> +{
+> +	file->f_pos = pos;
+> +}
+> +
 
-Self-checkpoint of a task in root freezer is now denied, though.
+I'm not sure but how about renaming this to
+	file_pos() 
+	set_file_pos()
+at moving this to global include file ?
 
-Was that intentional?
-
--serge
+Thanks,
+-Kame
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
