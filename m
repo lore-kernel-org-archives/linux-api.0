@@ -1,41 +1,58 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: Re: [RFC v17][PATCH 52/60] c/r: support semaphore sysv-ipc
-Date: Wed, 22 Jul 2009 23:46:30 -0400
-Message-ID: <4A67DD16.1090704@cs.columbia.edu>
-References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-53-git-send-email-orenl@librato.com> <20090722172502.GA15805@lenovo>
+From: Oren Laadan <orenl@librato.com>
+Subject: Re: [RFC v17][PATCH 22/60] c/r: external checkpoint of a task	other
+ than ourself
+Date: Thu, 23 Jul 2009 00:32:23 -0400
+Message-ID: <4A67E7D7.9060800@librato.com>
+References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-23-git-send-email-orenl@librato.com> <20090722175223.GA19389@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090722172502.GA15805@lenovo>
+In-Reply-To: <20090722175223.GA19389@us.ibm.com>
 Sender: owner-linux-mm@kvack.org
-To: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: Oren Laadan <orenl@librato.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>
+To: "Serge E. Hallyn" <serue@us.ibm.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
 
 
-Cyrill Gorcunov wrote:
-> [Oren Laadan - Wed, Jul 22, 2009 at 06:00:14AM -0400]
+Serge E. Hallyn wrote:
+> Quoting Oren Laadan (orenl@librato.com):
+>> Now we can do "external" checkpoint, i.e. act on another task.
+> 
 > ...
-> | +static struct sem *restore_sem_array(struct ckpt_ctx *ctx, int nsems)
-> | +{
-> | +	struct sem *sma;
-> | +	int i, ret;
-> | +
-> | +	sma = kmalloc(nsems * sizeof(*sma), GFP_KERNEL);
 > 
-> Forgot to
+>>  long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
+>>  {
+>>  	long ret;
+>>
+>> +	ret = init_checkpoint_ctx(ctx, pid);
+>> +	if (ret < 0)
+>> +		return ret;
+>> +
+>> +	if (ctx->root_freezer) {
+>> +		ret = cgroup_freezer_begin_checkpoint(ctx->root_freezer);
+>> +		if (ret < 0)
+>> +			return ret;
+>> +	}
 > 
-> 	if (!sma)
-> 		return -ENOMEM;
+> Self-checkpoint of a task in root freezer is now denied, though.
 > 
-> right?
+> Was that intentional?
 
-Yep !  thanks...  (fixed commit to branch ckpt-v17-dev)
+Yes.
+
+"root freezer" is an arbitrary task in the checkpoint subtree or
+container. It is used to verify that all checkpointed tasks - except
+for current, if doing self-checkpoint - belong to the same freezer
+group.
+
+Since current is busy calling checkpoint(2), and since we only permit
+checkpoint of (cgroup-) frozen tasks, then - by definition - it cannot
+possibly belong to the same group. If it did, it would itself be frozen
+like its fellows and unable to call checkpoint(2).
 
 Oren.
-
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
