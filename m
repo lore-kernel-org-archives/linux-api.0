@@ -1,103 +1,118 @@
-From: Oren Laadan <orenl@librato.com>
-Subject: Re: [RFC v17][PATCH 22/60] c/r: external checkpoint of a task	other
- than ourself
-Date: Thu, 23 Jul 2009 10:14:19 -0400
-Message-ID: <4A68703B.8030408@librato.com>
-References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-23-git-send-email-orenl@librato.com> <20090722175223.GA19389@us.ibm.com> <4A67E7D7.9060800@librato.com> <20090723131250.GA9535@us.ibm.com>
+From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC v17][PATCH 19/60] c/r: documentation
+Date: Thu, 23 Jul 2009 09:24:54 -0500
+Message-ID: <20090723142454.GA10769@us.ibm.com>
+References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-20-git-send-email-orenl@librato.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090723131250.GA9535@us.ibm.com>
-Sender: owner-linux-mm@kvack.org
-To: "Serge E. Hallyn" <serue@us.ibm.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@cs.columbia.edu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1248256822-23416-20-git-send-email-orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Quoting Oren Laadan (orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org):
+> +Security
+> +========
+> +
+> +The main question is whether sys_checkpoint() and sys_restart()
+> +require privileged or unprivileged operation.
+> +
+> +Early versions checked capable(CAP_SYS_ADMIN) assuming that we would
+> +attempt to remove the need for privilege, so that all users could
+> +safely use it. Arnd Bergmann pointed out that it'd make more sense to
+> +let unprivileged users use them now, so that we'll be more careful
+> +about the security as patches roll in.
+> +
+> +Checkpoint: the main concern is whether a task that performs the
+> +checkpoint of another task has sufficient privileges to access its
+> +state. We address this by requiring that the checkpointer task will be
+> +able to ptrace the target task, by means of ptrace_may_access() with
+> +read mode.
 
+with access mode now, actually.
 
-Serge E. Hallyn wrote:
-> Quoting Oren Laadan (orenl@librato.com):
->>
->> Serge E. Hallyn wrote:
->>> Quoting Oren Laadan (orenl@librato.com):
->>>> Now we can do "external" checkpoint, i.e. act on another task.
->>> ...
->>>
->>>>  long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
->>>>  {
->>>>  	long ret;
->>>>
->>>> +	ret = init_checkpoint_ctx(ctx, pid);
->>>> +	if (ret < 0)
->>>> +		return ret;
->>>> +
->>>> +	if (ctx->root_freezer) {
->>>> +		ret = cgroup_freezer_begin_checkpoint(ctx->root_freezer);
->>>> +		if (ret < 0)
->>>> +			return ret;
->>>> +	}
->>> Self-checkpoint of a task in root freezer is now denied, though.
->>>
->>> Was that intentional?
->> Yes.
->>
->> "root freezer" is an arbitrary task in the checkpoint subtree or
->> container. It is used to verify that all checkpointed tasks - except
->> for current, if doing self-checkpoint - belong to the same freezer
->> group.
->>
->> Since current is busy calling checkpoint(2), and since we only permit
->> checkpoint of (cgroup-) frozen tasks, then - by definition - it cannot
->> possibly belong to the same group. If it did, it would itself be frozen
->> like its fellows and unable to call checkpoint(2).
-> 
-> So then you're saying that regular self-checkpoint no longer works,
-> but the documentation still shows self.c and claims it should just
-> work.
+> +Restart: the main concern is that we may allow an unprivileged user to
+> +feed the kernel with random data. To this end, the restart works in a
+> +way that does not skip the usual security checks. Task credentials,
+> +i.e. euid, reuid, and LSM security contexts currently come from the
+> +caller, not the checkpoint image.  When restoration of credentials
+> +becomes supported, then definitely the ability of the task that calls
+> +sys_restore() to setresuid/setresgid to those values must be checked.
 
-I'm unsure why you say that self-checkpoint no longer works ?
-In fact, I just double checked that it does.
+That is now possible, and this is done.
 
-Self-checkpoint has two immediate use-cases:
+> +Keeping the restart procedure to operate within the limits of the
+> +caller's credentials means that there various scenarios that cannot
+> +be supported. For instance, a setuid program that opened a protected
+> +log file and then dropped privileges will fail the restart, because
+> +the user won't have enough credentials to reopen the file. In these
+> +cases, we should probably treat restarting like inserting a kernel
+> +module: surely the user can cause havoc by providing incorrect data,
+> +but then again we must trust the root account.
+> +
+> +So that's why we don't want CAP_SYS_ADMIN required up-front. That way
+> +we will be forced to more carefully review each of those features.
+> +However, this can be controlled with a sysctl-variable.
+> +
+> +
+> diff --git a/Documentation/checkpoint/usage.txt b/Documentation/checkpoint/usage.txt
+> new file mode 100644
+> index 0000000..ed34765
+> --- /dev/null
+> +++ b/Documentation/checkpoint/usage.txt
+> @@ -0,0 +1,193 @@
+> +
+> +	      How to use Checkpoint-Restart
+> +	=========================================
+> +
+> +
+> +API
+> +===
+> +
+> +The API consists of two new system calls:
+> +
+> +* int checkpoint(pid_t pid, int fd, unsigned long flag);
+> +
+> + Checkpoint a (sub-)container whose root task is identified by @pid,
+> + to the open file indicated by @fd. @flags may be on or more of:
+> +   - CHECKPOINT_SUBTREE : allow checkpoint of sub-container
+> + (other value are not allowed).
+> +
+> + Returns: a positive checkpoint identifier (ckptid) upon success, 0 if
+> + it returns from a restart, and -1 if an error occurs. The ckptid will
+> + uniquely identify a checkpoint image, for as long as the checkpoint
+> + is kept in the kernel (e.g. if one wishes to keep a checkpoint, or a
+> + partial checkpoint, residing in kernel memory).
+> +
+> +* int sys_restart(pid_t pid, int fd, unsigned long flags);
+> +
+> + Restart a process hierarchy from a checkpoint image that is read from
+> + the blob stored in the file indicated by @fd. The @flags' will have
+> + future meaning (must be 0 for now). @pid indicates the root of the
+> + hierarchy as seen in the coordinator's pid-namespace, and is expected
+> + to be a child of the coordinator. (Note that this argument may mean
+> + 'ckptid' to identify an in-kernel checkpoint image, with some @flags
+> + in the future).
+> +
+> + Returns: -1 if an error occurs, 0 on success when restarting from a
+> + "self" checkpoint, and return value of system call at the time of the
+> + checkpoint when restarting from an "external" checkpoint.
 
-1) Single process that checkpoints itself - ctx->root_freezer remains
-NULL, which causes cgroup_freezer_begin_checkpoint() to be skipped.
+Return value of the checkpointed (init) task's syscall at the time of
+external checkpoint?  If so, what's the use for this, as opposed to
+returning 0 as in the case of self-checkpoint?
 
-2) Process P that belongs to a hierarchy (subtree or container), and
-P calls checkpoint(2) to checkpoint the hierarchy.
-For this to work, all other processes in the hierarchy must be frozen.
-Therefore, they also belong to a freezer cgroup (perhaps more than one -
-but that is not permitted).
-In this case, ctx->root will point to a process from the freezer cgroup,
-and the code tests all other processes (excluding P, which is current)
-to confirm that they belong to the same freezer cgroup.
-P itself can not possibly belong to it, otherwise it would have been
-frozen and not executing the checkpoint(2) syscall.
+> + TODO: upon successful "external" restart, the container will end up
+> + in a frozen state.
 
-IOW, for case 2 to work, one must arrange for all tasks in the target
-hierarchy, except for P (- current, the checkpointer), to belong to
-a single freezer cgroup, and for that cgroup to be frozen.
+Should clone_with_pids() be mentioned here?
 
->>> Self-checkpoint of a task in root freezer is now denied, though.
-
-Maybe I didn't really understand what you meant by that, and by
-"root freezer" ?
-
-> 
-> Mind you I prefer this as it is more consistent, but I thought it
-> was something you wanted to support.
-
-Self-checkpoint simply allows a process to checkpoint itself (and
-perhaps additional processes too). I never quite understood why you
-view it as a source of inconsistency ...
-
-Nevertheless, it still works.
-
-Oren.
-
+thanks,
+-serge
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
