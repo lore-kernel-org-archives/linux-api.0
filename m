@@ -1,83 +1,41 @@
-From: Oren Laadan <orenl@librato.com>
-Subject: Re: [RFC v17][PATCH 22/60] c/r: external checkpoint of a task	other
- than ourself
-Date: Thu, 23 Jul 2009 11:33:20 -0400
-Message-ID: <4A6882C0.6020302@librato.com>
-References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-23-git-send-email-orenl@librato.com> <20090723144753.GA12416@us.ibm.com>
+From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC v17][PATCH 00/60] Kernel based checkpoint/restart
+Date: Fri, 24 Jul 2009 14:09:53 -0500
+Message-ID: <20090724190953.GA22641@us.ibm.com>
+References: <1248256822-23416-1-git-send-email-orenl@librato.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20090723144753.GA12416@us.ibm.com>
-Sender: owner-linux-mm@kvack.org
-To: "Serge E. Hallyn" <serue@us.ibm.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Oren Laadan <orenl@cs.columbia.edu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1248256822-23416-1-git-send-email-orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-Serge E. Hallyn wrote:
-> Quoting Oren Laadan (orenl@librato.com):
->> +/* setup checkpoint-specific parts of ctx */
->> +static int init_checkpoint_ctx(struct ckpt_ctx *ctx, pid_t pid)
->> +{
->> +	struct task_struct *task;
->> +	struct nsproxy *nsproxy;
->> +	int ret;
->> +
->> +	/*
->> +	 * No need for explicit cleanup here, because if an error
->> +	 * occurs then ckpt_ctx_free() is eventually called.
->> +	 */
->> +
->> +	ctx->root_pid = pid;
->> +
->> +	/* root task */
->> +	read_lock(&tasklist_lock);
->> +	task = find_task_by_vpid(pid);
->> +	if (task)
->> +		get_task_struct(task);
->> +	read_unlock(&tasklist_lock);
->> +	if (!task)
->> +		return -ESRCH;
->> +	else
->> +		ctx->root_task = task;
->> +
->> +	/* root nsproxy */
->> +	rcu_read_lock();
->> +	nsproxy = task_nsproxy(task);
->> +	if (nsproxy)
->> +		get_nsproxy(nsproxy);
->> +	rcu_read_unlock();
->> +	if (!nsproxy)
->> +		return -ESRCH;
->> +	else
->> +		ctx->root_nsproxy = nsproxy;
->> +
->> +	/* root freezer */
->> +	ctx->root_freezer = task;
->> +	geT_task_struct(task);
->> +
->> +	ret = may_checkpoint_task(ctx, task);
->> +	if (ret) {
->> +		ckpt_write_err(ctx, NULL);
->> +		put_task_struct(task);
->> +		put_task_struct(task);
->> +		put_nsproxy(nsproxy);
+Quoting Oren Laadan (orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org):
+> Application checkpoint/restart (c/r) is the ability to save the state
+> of a running application so that it can later resume its execution
+> from the time at which it was checkpointed, on the same or a different
+> machine.
 > 
-> I don't think this is safe - the ckpt_ctx_free() will
-> free them a second time because you're not setting them
-> to NULL, right?
+> This version introduces 'clone_with_pids()' syscall to preset pid(s)
+> for a child process. It is used by restart(2) to recreate process
+> hierarchy with the same pids as at checkpoint time.
+> 
+> It also adds a freezer state CHECKPOINTING to safeguard processes
+> during a checkpoint. Other important changes include support for
+> threads and zombies, credentials, signal handling, and improved
+> restart logic. See below for a more detailed changelog.
+> 
+> Compiled and tested against v2.6.31-rc3.
 
-Yes. Fortunately this hole chunk is removed by the 3rd-next patch.
-I'll make sure it's correct here too.
+With the s390 patch I recently sent on top of this set, all of my
+c/r tests pass, and ltp behaves the same as on plain v2.6.31-rc3
+(up to and including hanging on mallocstress).
 
-Thanks,
-
-Oren.
-
+-serge
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
