@@ -1,31 +1,41 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v17][PATCH 14/60] pids 4/7: Add target_pids parameter to
-	alloc_pid()
-Date: Mon, 3 Aug 2009 13:22:49 -0500
-Message-ID: <20090803182249.GA7493@us.ibm.com>
-References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-15-git-send-email-orenl@librato.com>
+From: "Serge E. Hallyn" <serue@us.ibm.com>
+Subject: Re: [RFC v17][PATCH 16/60] pids 6/7: Define do_fork_with_pids()
+Date: Mon, 3 Aug 2009 13:26:40 -0500
+Message-ID: <20090803182640.GB7493@us.ibm.com>
+References: <1248256822-23416-1-git-send-email-orenl@librato.com> <1248256822-23416-17-git-send-email-orenl@librato.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1248256822-23416-15-git-send-email-orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+In-Reply-To: <1248256822-23416-17-git-send-email-orenl@librato.com>
+Sender: owner-linux-mm@kvack.org
+To: Oren Laadan <orenl@librato.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Dave Hansen <dave@linux.vnet.ibm.com>, Ingo Molnar <mingo@elte.hu>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@openvz.org>, Alexey Dobriyan <adobriyan@gmail.com>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Oren Laadan (orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org):
-> From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> 
-> This parameter is currently NULL, but will be used in a follow-on patch.
+Quoting Oren Laadan (orenl@librato.com):
+> From: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
+...
+> +struct target_pid_set {
+> +	int num_pids;
+> +	pid_t *target_pids;
+> +};
 
-Note that patches 1-4 of the clone_with_pid() patchset should
-also be useful if we decide to re-create process trees in-kernel
-and not export clone_with_pid().  (Though maybe not immediately
-applicable to Alexey's current kthread_run()-based approach).
+Oren, I thought you had decided to add an extended flags field
+here, to support additional CLONE_ flags - such as CLONE_TIMENS?
+
+I mention it now because if you're still considering that
+long-term, then IMO the syscall should not be called clone_with_pids(),
+but clone_extended().  Otherwise, to support new clone flags we'll
+either have to use unshare2 (without clone support), or add yet
+another clone variant, OR use clone_with_pids() which is a poor name
+for something which will likely be used in cases without specifying
+pids, but specifying flags not support through any other interface.
 
 -serge
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
