@@ -1,340 +1,237 @@
 From: Oren Laadan <orenl@librato.com>
-Subject: [PATCH v18 22/80] c/r: external checkpoint of a task other than ourself
-Date: Wed, 23 Sep 2009 19:51:02 -0400
-Message-ID: <1253749920-18673-23-git-send-email-orenl@librato.com>
+Subject: [PATCH v18 29/80] c/r: Save and restore the [compat_]robust_list member of the task struct
+Date: Wed, 23 Sep 2009 19:51:09 -0400
+Message-ID: <1253749920-18673-30-git-send-email-orenl@librato.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753665AbZIXAaF@vger.kernel.org>
 In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
+Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Matt Helsley <matthltc@us.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-Now we can do "external" checkpoint, i.e. act on another task.
+From: Matt Helsley <matthltc@us.ibm.com>
 
-sys_checkpoint() now looks up the target pid (in our namespace) and
-checkpoints that corresponding task. That task should be the root of
-a container, unless CHECKPOINT_SUBTREE flag is given.
+These lists record which futexes the task holds. To keep the overhead of
+robust futexes low the list is kept in userspace. When the task exits the
+kernel carefully walks these lists to recover held futexes that
+other tasks may be attempting to acquire with FUTEX_WAIT.
 
-Set state of freezer cgroup of checkpointed task hierarchy to
-"CHECKPOINTING" during a checkpoint, to ensure that task(s) cannot be
-thawed while at it.
+Because they point to userspace memory that is saved/restored by
+checkpoint/restart saving the list pointers themselves is safe.
 
-Ensure that all tasks belong to root task's freezer cgroup (the root
-task is also tested, to detect it if changes its freezer cgroups
-before it moves to "CHECKPOINTING").
+While saving the pointers is safe during checkpoint, restart is tricky
+because the robust futex ABI contains provisions for changes based on
+checking the size of the list head. So we need to save the length of
+the list head too in order to make sure that the kernel used during
+restart is capable of handling that ABI. Since there is only one ABI
+supported at the moment taking the list head's size is simple. Should
+the ABI change we will need to use the same size as specified during
+sys_set_robust_list() and hence some new means of determining the length
+of this userspace structure in sys_checkpoint would be required.
 
-sys_restart() remains nearly the same, as the restart is always done
-in the context of the restarting task. However, the original task may
-have been frozen from user space, or interrupted from a syscall for
-the checkpoint. This is accounted for by restoring a suitable retval
-for the restarting task, according to how it was checkpointed.
+Rather than rewrite the logic that checks and handles the ABI we reuse
+sys_set_robust_list() by factoring out the body of the function and
+calling it during restart.
 
-Changelog[v17]:
-  - Move restore_retval() to this patch
-  - Tighten ptrace ceckpoint for checkpoint to PTRACE_MODE_ATTACH
-  - Use CHECKPOINTING state for hierarchy's freezer for checkpoint
-Changelog[v16]:
-  - Use CHECKPOINT_SUBTREE to allow subtree (partial container)
-Changelog[v14]:
-  - Refuse non-self checkpoint if target task isn't frozen
-Changelog[v12]:
-  - Replace obsolete ckpt_debug() with pr_debug()
-Changelog[v11]:
-  - Copy contents of 'init->fs->root' instead of pointing to them
-Changelog[v10]:
-  - Grab vfs root of container init, rather than current process
-
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
+Signed-off-by: Matt Helsley <matthltc@us.ibm.com>
+[orenl@cs.columbia.edu: move save/restore code to checkpoint/process.c]
 ---
- checkpoint/Kconfig               |    1 +
- checkpoint/checkpoint.c          |   98 +++++++++++++++++++++++++++++++++++++-
- checkpoint/restart.c             |   61 +++++++++++++++++++++++-
- checkpoint/sys.c                 |   10 ++++
- include/linux/checkpoint_types.h |    7 ++-
- 5 files changed, 174 insertions(+), 3 deletions(-)
+ checkpoint/process.c           |   49 ++++++++++++++++++++++++++++++++++++++++
+ include/linux/checkpoint_hdr.h |    5 ++++
+ include/linux/compat.h         |    3 +-
+ include/linux/futex.h          |    1 +
+ kernel/futex.c                 |   19 +++++++++-----
+ kernel/futex_compat.c          |   13 ++++++++--
+ 6 files changed, 79 insertions(+), 11 deletions(-)
 
-diff --git a/checkpoint/Kconfig b/checkpoint/Kconfig
-index ef7d406..21fc86b 100644
---- a/checkpoint/Kconfig
-+++ b/checkpoint/Kconfig
-@@ -5,6 +5,7 @@
- config CHECKPOINT
- 	bool "Checkpoint/restart (EXPERIMENTAL)"
- 	depends on CHECKPOINT_SUPPORT && EXPERIMENTAL
-+	depends on CGROUP_FREEZER
- 	help
- 	  Application checkpoint/restart is the ability to save the
- 	  state of a running application so that it can later resume
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index e228151..ad89f50 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -12,6 +12,9 @@
- #define CKPT_DFLAG  CKPT_DSYS
- 
- #include <linux/version.h>
-+#include <linux/sched.h>
-+#include <linux/freezer.h>
-+#include <linux/ptrace.h>
- #include <linux/time.h>
- #include <linux/fs.h>
- #include <linux/file.h>
-@@ -352,14 +355,105 @@ static int checkpoint_write_tail(struct ckpt_ctx *ctx)
- 	return ret;
- }
- 
-+static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	if (t->state == TASK_DEAD) {
-+		__ckpt_write_err(ctx, "TE", "task state EXIT_DEAD\n", -EBUSY);
-+		return -EBUSY;
-+	}
-+
-+	if (!ptrace_may_access(t, PTRACE_MODE_ATTACH)) {
-+		__ckpt_write_err(ctx, "TE", "ptrace attach denied", -EPERM);
-+		return -EPERM;
-+	}
-+
-+	/* verify that all tasks belongs to same freezer cgroup */
-+	if (t != current && !in_same_cgroup_freezer(t, ctx->root_freezer)) {
-+		__ckpt_write_err(ctx, "TE", "unfrozen or wrong cgroup", -EBUSY);
-+		return -EBUSY;
-+	}
-+
-+	/* FIX: add support for ptraced tasks */
-+	if (task_ptrace(t)) {
-+		__ckpt_write_err(ctx, "TE", "task is ptraced", -EBUSY);
-+		return -EBUSY;
-+	}
-+
-+	return 0;
-+}
-+
-+/* setup checkpoint-specific parts of ctx */
-+static int init_checkpoint_ctx(struct ckpt_ctx *ctx, pid_t pid)
-+{
-+	struct task_struct *task;
-+	struct nsproxy *nsproxy;
-+	int ret;
-+
-+	/*
-+	 * No need for explicit cleanup here, because if an error
-+	 * occurs then ckpt_ctx_free() is eventually called.
-+	 */
-+
-+	ctx->root_pid = pid;
-+
-+	/* root task */
-+	read_lock(&tasklist_lock);
-+	task = find_task_by_vpid(pid);
-+	if (task)
-+		get_task_struct(task);
-+	read_unlock(&tasklist_lock);
-+	if (!task)
-+		return -ESRCH;
-+	else
-+		ctx->root_task = task;
-+
-+	/* root nsproxy */
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(task);
-+	if (nsproxy)
-+		get_nsproxy(nsproxy);
-+	rcu_read_unlock();
-+	if (!nsproxy)
-+		return -ESRCH;
-+	else
-+		ctx->root_nsproxy = nsproxy;
-+
-+	/* root freezer */
-+	ctx->root_freezer = task;
-+	geT_task_struct(task);
-+
-+	ret = may_checkpoint_task(ctx, task);
-+	if (ret) {
-+		ckpt_write_err(ctx, "", NULL);
-+		put_task_struct(task);
-+		put_task_struct(task);
-+		put_nsproxy(nsproxy);
-+		ctx->root_nsproxy = NULL;
-+		ctx->root_task = NULL;
-+		return ret;
-+	}
-+
-+	return 0;
-+}
-+
- long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
- {
- 	long ret;
- 
-+	ret = init_checkpoint_ctx(ctx, pid);
-+	if (ret < 0)
-+		return ret;
-+
-+	if (ctx->root_freezer) {
-+		ret = cgroup_freezer_begin_checkpoint(ctx->root_freezer);
-+		if (ret < 0)
-+			return ret;
-+	}
-+
- 	ret = checkpoint_write_header(ctx);
- 	if (ret < 0)
- 		goto out;
--	ret = checkpoint_task(ctx, current);
-+	ret = checkpoint_task(ctx, ctx->root_task);
- 	if (ret < 0)
- 		goto out;
- 	ret = checkpoint_write_tail(ctx);
-@@ -370,5 +464,7 @@ long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
- 	ctx->crid = atomic_inc_return(&ctx_count);
- 	ret = ctx->crid;
-  out:
-+	if (ctx->root_freezer)
-+		cgroup_freezer_end_checkpoint(ctx->root_freezer);
- 	return ret;
- }
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index afe51c2..cb02ffb 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -411,10 +411,67 @@ static int restore_read_tail(struct ckpt_ctx *ctx)
- 	return ret;
- }
- 
-+static long restore_retval(void)
-+{
-+	struct pt_regs *regs = task_pt_regs(current);
-+	long ret;
-+
-+	/*
-+	 * For the restart, we entered the kernel via sys_restart(),
-+	 * so our return path is via the syscall exit. In particular,
-+	 * the code in entry.S will put the value that we will return
-+	 * into a register (e.g. regs->eax in x86), thus passing it to
-+	 * the caller task.
-+	 *
-+	 * What we do now depends on what happened to the checkpointed
-+	 * task right before the checkpoint - there are three cases:
-+	 *
-+	 * 1) It was carrying out a syscall when became frozen, or
-+	 * 2) It was running in userspace, or
-+	 * 3) It was doing a self-checkpoint
-+	 *
-+	 * In case #1, if the syscall succeeded, perhaps partially,
-+	 * then the retval is non-negative. If it failed, the error
-+	 * may be one of -ERESTART..., which is interpreted in the
-+	 * signal handling code. If that is the case, we force the
-+	 * signal handler to kick in by faking a signal to ourselves
-+	 * (a la freeze/thaw) when ret < 0.
-+	 *
-+	 * In case #2, our return value will overwrite the original
-+	 * value in the affected register. Workaround by simply using
-+	 * that saved value of that register as our retval.
-+	 *
-+	 * In case #3, then the state was recorded while the task was
-+	 * in checkpoint(2) syscall. The syscall is execpted to return
-+	 * 0 when returning from a restart. Fortunately, this already
-+	 * has been arranged for at checkpoint time (the register that
-+	 * holds the retval, e.g. regs->eax in x86, was set to
-+	 * zero).
-+	 */
-+
-+	/* needed for all 3 cases: get old value/error/retval */
-+	ret = syscall_get_return_value(current, regs);
-+
-+	/* if from a syscall and returning error, kick in signal handlig */
-+	if (syscall_get_nr(current, regs) >= 0 && ret < 0)
-+		set_tsk_thread_flag(current, TIF_SIGPENDING);
-+
-+	return ret;
-+}
-+
-+/* setup restart-specific parts of ctx */
-+static int init_restart_ctx(struct ckpt_ctx *ctx, pid_t pid)
-+{
-+	return 0;
-+}
-+
- long do_restart(struct ckpt_ctx *ctx, pid_t pid)
- {
- 	long ret;
- 
-+	ret = init_restart_ctx(ctx, pid);
-+	if (ret < 0)
-+		return ret;
- 	ret = restore_read_header(ctx);
- 	if (ret < 0)
- 		return ret;
-@@ -422,7 +479,9 @@ long do_restart(struct ckpt_ctx *ctx, pid_t pid)
- 	if (ret < 0)
- 		return ret;
- 	ret = restore_read_tail(ctx);
-+	if (ret < 0)
-+		return ret;
- 
- 	/* on success, adjust the return value if needed [TODO] */
--	return ret;
-+	return restore_retval(ctx);
- }
-diff --git a/checkpoint/sys.c b/checkpoint/sys.c
-index 7f6f71e..dda2c21 100644
---- a/checkpoint/sys.c
-+++ b/checkpoint/sys.c
-@@ -12,7 +12,9 @@
- #define CKPT_DFLAG  CKPT_DSYS
- 
+diff --git a/checkpoint/process.c b/checkpoint/process.c
+index 62ae72d..2580b31 100644
+--- a/checkpoint/process.c
++++ b/checkpoint/process.c
+@@ -14,10 +14,57 @@
  #include <linux/sched.h>
-+#include <linux/nsproxy.h>
- #include <linux/kernel.h>
-+#include <linux/cgroup.h>
- #include <linux/syscalls.h>
- #include <linux/fs.h>
- #include <linux/file.h>
-@@ -168,6 +170,14 @@ static void ckpt_ctx_free(struct ckpt_ctx *ctx)
+ #include <linux/posix-timers.h>
+ #include <linux/futex.h>
++#include <linux/compat.h>
+ #include <linux/poll.h>
+ #include <linux/checkpoint.h>
+ #include <linux/checkpoint_hdr.h>
+ 
++
++#ifdef CONFIG_FUTEX
++static void save_task_robust_futex_list(struct ckpt_hdr_task *h,
++					struct task_struct *t)
++{
++	/*
++	 * These are __user pointers and thus can be saved without
++	 * the objhash.
++	 */
++	h->robust_futex_list = (unsigned long)t->robust_list;
++	h->robust_futex_head_len = sizeof(*t->robust_list);
++#ifdef CONFIG_COMPAT
++	h->compat_robust_futex_list = ptr_to_compat(t->compat_robust_list);
++	h->compat_robust_futex_head_len = sizeof(*t->compat_robust_list);
++#endif
++}
++
++static void restore_task_robust_futex_list(struct ckpt_hdr_task *h)
++{
++	/* Since we restore the memory map the address remains the same and
++	 * this is safe. This is the same as [compat_]sys_set_robust_list() */
++	if (h->robust_futex_list) {
++		struct robust_list_head __user *rfl;
++		rfl = (void __user *)(unsigned long) h->robust_futex_list;
++		do_set_robust_list(rfl, h->robust_futex_head_len);
++	}
++#ifdef CONFIG_COMPAT
++	if (h->compat_robust_futex_list) {
++		struct compat_robust_list_head __user *crfl;
++		crfl = compat_ptr(h->compat_robust_futex_list);
++		do_compat_set_robust_list(crfl, h->compat_robust_futex_head_len);
++	}
++#endif
++}
++#else /* !CONFIG_FUTEX */
++static inline void save_task_robust_futex_list(struct ckpt_hdr_task *h,
++					       struct task_struct *t)
++{
++}
++
++static inline void restore_task_robust_futex_list(struct ckpt_hdr_task *h)
++{
++}
++#endif /* CONFIG_FUTEX */
++
++
+ /***********************************************************************
+  * Checkpoint
+  */
+@@ -46,6 +93,7 @@ static int checkpoint_task_struct(struct ckpt_ctx *ctx, struct task_struct *t)
+ 
+ 		h->set_child_tid = (unsigned long) t->set_child_tid;
+ 		h->clear_child_tid = (unsigned long) t->clear_child_tid;
++		save_task_robust_futex_list(h, t);
+ 	}
+ 
+ 	ret = ckpt_write_obj(ctx, &h->h);
+@@ -250,6 +298,7 @@ static int restore_task_struct(struct ckpt_ctx *ctx)
+ 			(int __user *) (unsigned long) h->set_child_tid;
+ 		t->clear_child_tid =
+ 			(int __user *) (unsigned long) h->clear_child_tid;
++		restore_task_robust_futex_list(h);
+ 	}
+ 
+ 	memset(t->comm, 0, TASK_COMM_LEN);
+diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
+index 8ae3bbe..b56fe71 100644
+--- a/include/linux/checkpoint_hdr.h
++++ b/include/linux/checkpoint_hdr.h
+@@ -136,6 +136,11 @@ struct ckpt_hdr_task {
+ 
+ 	__u64 set_child_tid;
+ 	__u64 clear_child_tid;
++
++	__u32 compat_robust_futex_head_len;
++	__u32 compat_robust_futex_list; /* a compat __user ptr */
++	__u32 robust_futex_head_len;
++	__u64 robust_futex_list; /* a __user ptr */
+ } __attribute__((aligned(8)));
+ 
+ /* restart blocks */
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index af931ee..f444cf0 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -165,7 +165,8 @@ struct compat_robust_list_head {
+ };
+ 
+ extern void compat_exit_robust_list(struct task_struct *curr);
+-
++extern long do_compat_set_robust_list(struct compat_robust_list_head __user *head,
++				      compat_size_t len);
+ asmlinkage long
+ compat_sys_set_robust_list(struct compat_robust_list_head __user *head,
+ 			   compat_size_t len);
+diff --git a/include/linux/futex.h b/include/linux/futex.h
+index 4326f81..2e126a9 100644
+--- a/include/linux/futex.h
++++ b/include/linux/futex.h
+@@ -185,6 +185,7 @@ union futex_key {
+ #define FUTEX_KEY_INIT (union futex_key) { .both = { .ptr = NULL } }
+ 
+ #ifdef CONFIG_FUTEX
++extern long do_set_robust_list(struct robust_list_head __user *head, size_t len);
+ extern void exit_robust_list(struct task_struct *curr);
+ extern void exit_pi_state_list(struct task_struct *curr);
+ extern int futex_cmpxchg_enabled;
+diff --git a/kernel/futex.c b/kernel/futex.c
+index def86c8..1ef7c8e 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -2278,13 +2278,7 @@ out:
+  * the list. There can only be one such pending lock.
+  */
+ 
+-/**
+- * sys_set_robust_list - set the robust-futex list head of a task
+- * @head: pointer to the list-head
+- * @len: length of the list-head, as userspace expects
+- */
+-SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
+-		size_t, len)
++long do_set_robust_list(struct robust_list_head __user *head, size_t len)
  {
- 	if (ctx->file)
- 		fput(ctx->file);
-+
-+	if (ctx->root_nsproxy)
-+		put_nsproxy(ctx->root_nsproxy);
-+	if (ctx->root_task)
-+		put_task_struct(ctx->root_task);
-+	if (ctx->root_freezer)
-+		put_task_struct(ctx->root_freezer);
-+
- 	kfree(ctx);
+ 	if (!futex_cmpxchg_enabled)
+ 		return -ENOSYS;
+@@ -2300,6 +2294,17 @@ SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
  }
  
-diff --git a/include/linux/checkpoint_types.h b/include/linux/checkpoint_types.h
-index 585cb7b..15dbe1b 100644
---- a/include/linux/checkpoint_types.h
-+++ b/include/linux/checkpoint_types.h
-@@ -12,12 +12,17 @@
+ /**
++ * sys_set_robust_list - set the robust-futex list head of a task
++ * @head: pointer to the list-head
++ * @len: length of the list-head, as userspace expects
++ */
++SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
++		size_t, len)
++{
++	return do_set_robust_list(head, len);
++}
++
++/**
+  * sys_get_robust_list - get the robust-futex list head of a task
+  * @pid: pid of the process [zero for current task]
+  * @head_ptr: pointer to a list-head pointer, the kernel fills it in
+diff --git a/kernel/futex_compat.c b/kernel/futex_compat.c
+index 2357165..5e1a169 100644
+--- a/kernel/futex_compat.c
++++ b/kernel/futex_compat.c
+@@ -114,9 +114,9 @@ void compat_exit_robust_list(struct task_struct *curr)
+ 	}
+ }
  
- #ifdef __KERNEL__
+-asmlinkage long
+-compat_sys_set_robust_list(struct compat_robust_list_head __user *head,
+-			   compat_size_t len)
++long
++do_compat_set_robust_list(struct compat_robust_list_head __user *head,
++			  compat_size_t len)
+ {
+ 	if (!futex_cmpxchg_enabled)
+ 		return -ENOSYS;
+@@ -130,6 +130,13 @@ compat_sys_set_robust_list(struct compat_robust_list_head __user *head,
+ }
  
-+#include <linux/sched.h>
-+#include <linux/nsproxy.h>
- #include <linux/fs.h>
- 
- struct ckpt_ctx {
- 	int crid;		/* unique checkpoint id */
- 
--	pid_t root_pid;		/* container identifier */
-+	pid_t root_pid;				/* [container] root pid */
-+	struct task_struct *root_task;		/* [container] root task */
-+	struct nsproxy *root_nsproxy;		/* [container] root nsproxy */
-+	struct task_struct *root_freezer;	/* [container] root task */
- 
- 	unsigned long kflags;	/* kerenl flags */
- 	unsigned long uflags;	/* user flags */
+ asmlinkage long
++compat_sys_set_robust_list(struct compat_robust_list_head __user *head,
++			   compat_size_t len)
++{
++	return do_compat_set_robust_list(head, len);
++}
++
++asmlinkage long
+ compat_sys_get_robust_list(int pid, compat_uptr_t __user *head_ptr,
+ 			   compat_size_t __user *len_ptr)
+ {
 -- 
 1.6.0.4
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
