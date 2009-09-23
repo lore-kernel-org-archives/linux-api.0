@@ -1,332 +1,340 @@
 From: Oren Laadan <orenl@librato.com>
-Subject: [PATCH v18 59/80] c/r: capabilities: define checkpoint and restore fns
-Date: Wed, 23 Sep 2009 19:51:39 -0400
-Message-ID: <1253749920-18673-60-git-send-email-orenl@librato.com>
+Subject: [PATCH v18 22/80] c/r: external checkpoint of a task other than ourself
+Date: Wed, 23 Sep 2009 19:51:02 -0400
+Message-ID: <1253749920-18673-23-git-send-email-orenl@librato.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753768AbZIXAaH@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>
+Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-From: Serge E. Hallyn <serue@us.ibm.com>
+Now we can do "external" checkpoint, i.e. act on another task.
 
-[ Andrew: I am punting on dealing with the subsystem cooperation
-issues in this version, in favor of trying to get LSM issues
-straightened out ]
+sys_checkpoint() now looks up the target pid (in our namespace) and
+checkpoints that corresponding task. That task should be the root of
+a container, unless CHECKPOINT_SUBTREE flag is given.
 
-An application checkpoint image will store capability sets
-(and the bounding set) as __u64s.  Define checkpoint and
-restart functions to translate between those and kernel_cap_t's.
+Set state of freezer cgroup of checkpointed task hierarchy to
+"CHECKPOINTING" during a checkpoint, to ensure that task(s) cannot be
+thawed while at it.
 
-Define a common function do_capset_tocred() which applies capability
-set changes to a passed-in struct cred.
+Ensure that all tasks belong to root task's freezer cgroup (the root
+task is also tested, to detect it if changes its freezer cgroups
+before it moves to "CHECKPOINTING").
 
-The restore function uses do_capset_tocred() to apply the restored
-capabilities to the struct cred being crafted, subject to the
-current task's (task executing sys_restart()) permissions.
+sys_restart() remains nearly the same, as the restart is always done
+in the context of the restarting task. However, the original task may
+have been frozen from user space, or interrupted from a syscall for
+the checkpoint. This is accounted for by restoring a suitable retval
+for the restarting task, according to how it was checkpointed.
 
-Changelog:
-	Jun 09: Can't choose securebits or drop bounding set if
-		file capabilities aren't compiled into the kernel.
-		Also just store caps in __u32s (looks cleaner).
-	Jun 01: Made the checkpoint and restore functions and the
-		ckpt_hdr_capabilities struct more opaque to the
-		rest of the c/r code, as suggested by Andrew Morgan,
-		and using naming suggested by Oren.
-	Jun 01: Add commented BUILD_BUG_ON() to point out that the
-		current implementation depends on 64-bit capabilities.
-		(Andrew Morgan and Alexey Dobriyan).
-	May 28: add helpers to c/r securebits
+Changelog[v17]:
+  - Move restore_retval() to this patch
+  - Tighten ptrace ceckpoint for checkpoint to PTRACE_MODE_ATTACH
+  - Use CHECKPOINTING state for hierarchy's freezer for checkpoint
+Changelog[v16]:
+  - Use CHECKPOINT_SUBTREE to allow subtree (partial container)
+Changelog[v14]:
+  - Refuse non-self checkpoint if target task isn't frozen
+Changelog[v12]:
+  - Replace obsolete ckpt_debug() with pr_debug()
+Changelog[v11]:
+  - Copy contents of 'init->fs->root' instead of pointing to them
+Changelog[v10]:
+  - Grab vfs root of container init, rather than current process
 
-Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
+Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- include/linux/capability.h     |    6 ++
- include/linux/checkpoint_hdr.h |   11 +++
- kernel/capability.c            |  164 +++++++++++++++++++++++++++++++++++++---
- security/commoncap.c           |   19 +----
- 4 files changed, 172 insertions(+), 28 deletions(-)
+ checkpoint/Kconfig               |    1 +
+ checkpoint/checkpoint.c          |   98 +++++++++++++++++++++++++++++++++++++-
+ checkpoint/restart.c             |   61 +++++++++++++++++++++++-
+ checkpoint/sys.c                 |   10 ++++
+ include/linux/checkpoint_types.h |    7 ++-
+ 5 files changed, 174 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/capability.h b/include/linux/capability.h
-index c302110..3a74655 100644
---- a/include/linux/capability.h
-+++ b/include/linux/capability.h
-@@ -568,6 +568,12 @@ extern int capable(int cap);
- struct dentry;
- extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+diff --git a/checkpoint/Kconfig b/checkpoint/Kconfig
+index ef7d406..21fc86b 100644
+--- a/checkpoint/Kconfig
++++ b/checkpoint/Kconfig
+@@ -5,6 +5,7 @@
+ config CHECKPOINT
+ 	bool "Checkpoint/restart (EXPERIMENTAL)"
+ 	depends on CHECKPOINT_SUPPORT && EXPERIMENTAL
++	depends on CGROUP_FREEZER
+ 	help
+ 	  Application checkpoint/restart is the ability to save the
+ 	  state of a running application so that it can later resume
+diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
+index e228151..ad89f50 100644
+--- a/checkpoint/checkpoint.c
++++ b/checkpoint/checkpoint.c
+@@ -12,6 +12,9 @@
+ #define CKPT_DFLAG  CKPT_DSYS
  
-+struct cred;
-+int apply_securebits(unsigned securebits, struct cred *new);
-+struct ckpt_capabilities;
-+int restore_capabilities(struct ckpt_capabilities *h, struct cred *new);
-+void checkpoint_capabilities(struct ckpt_capabilities *h, struct cred * cred);
-+
- #endif /* __KERNEL__ */
- 
- #endif /* !_LINUX_CAPABILITY_H */
-diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index ef260a0..cb036e8 100644
---- a/include/linux/checkpoint_hdr.h
-+++ b/include/linux/checkpoint_hdr.h
-@@ -61,6 +61,7 @@ enum {
- 	CKPT_HDR_NS,
- 	CKPT_HDR_UTS_NS,
- 	CKPT_HDR_IPC_NS,
-+	CKPT_HDR_CAPABILITIES,
- 
- 	/* 201-299: reserved for arch-dependent */
- 
-@@ -192,6 +193,16 @@ struct ckpt_hdr_task {
- 	__u64 robust_futex_list; /* a __user ptr */
- } __attribute__((aligned(8)));
- 
-+/* Posix capabilities */
-+struct ckpt_capabilities {
-+	__u32 cap_i_0, cap_i_1; /* inheritable set */
-+	__u32 cap_p_0, cap_p_1; /* permitted set */
-+	__u32 cap_e_0, cap_e_1; /* effective set */
-+	__u32 cap_b_0, cap_b_1; /* bounding set */
-+	__u32 securebits;
-+	__u32 padding;
-+} __attribute__((aligned(8)));
-+
- /* namespaces */
- struct ckpt_hdr_task_ns {
- 	struct ckpt_hdr h;
-diff --git a/kernel/capability.c b/kernel/capability.c
-index 4e17041..4f58454 100644
---- a/kernel/capability.c
-+++ b/kernel/capability.c
-@@ -14,6 +14,8 @@
- #include <linux/security.h>
- #include <linux/syscalls.h>
- #include <linux/pid_namespace.h>
-+#include <linux/securebits.h>
-+#include <linux/checkpoint.h>
- #include <asm/uaccess.h>
- #include "cred-internals.h"
- 
-@@ -217,6 +219,45 @@ SYSCALL_DEFINE2(capget, cap_user_header_t, header, cap_user_data_t, dataptr)
+ #include <linux/version.h>
++#include <linux/sched.h>
++#include <linux/freezer.h>
++#include <linux/ptrace.h>
+ #include <linux/time.h>
+ #include <linux/fs.h>
+ #include <linux/file.h>
+@@ -352,14 +355,105 @@ static int checkpoint_write_tail(struct ckpt_ctx *ctx)
  	return ret;
  }
  
-+static int do_capset_tocred(kernel_cap_t *effective, kernel_cap_t *inheritable,
-+			kernel_cap_t *permitted, struct cred *new)
++static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
 +{
-+	int ret;
++	if (t->state == TASK_DEAD) {
++		__ckpt_write_err(ctx, "TE", "task state EXIT_DEAD\n", -EBUSY);
++		return -EBUSY;
++	}
 +
-+	ret = security_capset(new, current_cred(),
-+			      effective, inheritable, permitted);
-+	if (ret < 0)
-+		return ret;
-+
-+	/*
-+	 * for checkpoint-restart, do we want to wait until end of restart?
-+	 * not sure we care */
-+	audit_log_capset(current->pid, new, current_cred());
-+
-+	return 0;
-+}
-+
-+static int do_capset(kernel_cap_t *effective, kernel_cap_t *inheritable,
-+			kernel_cap_t *permitted)
-+{
-+	struct cred *new;
-+	int ret;
-+
-+	new = prepare_creds();
-+	if (!new)
-+		return -ENOMEM;
-+
-+	ret = do_capset_tocred(effective, inheritable, permitted, new);
-+	if (ret < 0)
-+		goto error;
-+
-+	return commit_creds(new);
-+
-+error:
-+	abort_creds(new);
-+	return ret;
-+}
-+
- /**
-  * sys_capset - set capabilities for a process or (*) a group of processes
-  * @header: pointer to struct that contains capability version and
-@@ -240,7 +281,6 @@ SYSCALL_DEFINE2(capset, cap_user_header_t, header, const cap_user_data_t, data)
- 	struct __user_cap_data_struct kdata[_KERNEL_CAPABILITY_U32S];
- 	unsigned i, tocopy;
- 	kernel_cap_t inheritable, permitted, effective;
--	struct cred *new;
- 	int ret;
- 	pid_t pid;
- 
-@@ -271,23 +311,125 @@ SYSCALL_DEFINE2(capset, cap_user_header_t, header, const cap_user_data_t, data)
- 		i++;
- 	}
- 
--	new = prepare_creds();
--	if (!new)
--		return -ENOMEM;
-+	return do_capset(&effective, &inheritable, &permitted);
- 
--	ret = security_capset(new, current_cred(),
--			      &effective, &inheritable, &permitted);
-+}
-+
-+#ifdef CONFIG_SECURITY_FILE_CAPABILITIES
-+int apply_securebits(unsigned securebits, struct cred *new)
-+{
-+	if ((((new->securebits & SECURE_ALL_LOCKS) >> 1)
-+	     & (new->securebits ^ securebits))				/*[1]*/
-+	    || ((new->securebits & SECURE_ALL_LOCKS & ~securebits))	/*[2]*/
-+	    || (securebits & ~(SECURE_ALL_LOCKS | SECURE_ALL_BITS))	/*[3]*/
-+	    || (cap_capable(current, current_cred(), CAP_SETPCAP,
-+			    SECURITY_CAP_AUDIT) != 0)			/*[4]*/
-+		/*
-+		 * [1] no changing of bits that are locked
-+		 * [2] no unlocking of locks
-+		 * [3] no setting of unsupported bits
-+		 * [4] doing anything requires privilege (go read about
-+		 *     the "sendmail capabilities bug")
-+		 */
-+	    )
-+		/* cannot change a locked bit */
++	if (!ptrace_may_access(t, PTRACE_MODE_ATTACH)) {
++		__ckpt_write_err(ctx, "TE", "ptrace attach denied", -EPERM);
 +		return -EPERM;
-+	new->securebits = securebits;
-+	return 0;
-+}
++	}
 +
-+static void do_capbset_drop(struct cred *cred, int cap)
-+{
-+	cap_lower(cred->cap_bset, cap);
-+}
++	/* verify that all tasks belongs to same freezer cgroup */
++	if (t != current && !in_same_cgroup_freezer(t, ctx->root_freezer)) {
++		__ckpt_write_err(ctx, "TE", "unfrozen or wrong cgroup", -EBUSY);
++		return -EBUSY;
++	}
 +
-+static inline int restore_cap_bset(kernel_cap_t bset, struct cred *cred)
-+{
-+	int i, may_dropbcap = capable(CAP_SETPCAP);
-+
-+	for (i = 0; i < CAP_LAST_CAP; i++) {
-+		if (cap_raised(bset, i))
-+			continue;
-+		if (!cap_raised(current_cred()->cap_bset, i))
-+			continue;
-+		if (!may_dropbcap)
-+			return -EPERM;
-+		do_capbset_drop(cred, i);
++	/* FIX: add support for ptraced tasks */
++	if (task_ptrace(t)) {
++		__ckpt_write_err(ctx, "TE", "task is ptraced", -EBUSY);
++		return -EBUSY;
 +	}
 +
 +	return 0;
 +}
 +
-+#else /* CONFIG_SECURITY_FILE_CAPABILITIES */
-+
-+int apply_securebits(unsigned securebits, struct cred *new)
++/* setup checkpoint-specific parts of ctx */
++static int init_checkpoint_ctx(struct ckpt_ctx *ctx, pid_t pid)
 +{
-+	/* settable securebits not supported */
-+	return 0;
-+}
-+
-+static inline int restore_cap_bset(kernel_cap_t bset, struct cred *cred)
-+{
-+	/* bounding sets not supported */
-+	return 0;
-+}
-+#endif /* CONFIG_SECURITY_FILE_CAPABILITIES */
-+
-+#ifdef CONFIG_CHECKPOINT
-+static int do_restore_caps(struct ckpt_capabilities *h, struct cred *cred)
-+{
-+	kernel_cap_t effective, inheritable, permitted, bset;
++	struct task_struct *task;
++	struct nsproxy *nsproxy;
 +	int ret;
 +
-+	effective.cap[0] = h->cap_e_0;
-+	effective.cap[1] = h->cap_e_1;
-+	inheritable.cap[0] = h->cap_i_0;
-+	inheritable.cap[1] = h->cap_i_1;
-+	permitted.cap[0] = h->cap_p_0;
-+	permitted.cap[1] = h->cap_p_1;
-+	bset.cap[0] = h->cap_b_0;
-+	bset.cap[1] = h->cap_b_1;
++	/*
++	 * No need for explicit cleanup here, because if an error
++	 * occurs then ckpt_ctx_free() is eventually called.
++	 */
 +
-+	ret = do_capset_tocred(&effective, &inheritable, &permitted, cred);
- 	if (ret < 0)
--		goto error;
++	ctx->root_pid = pid;
++
++	/* root task */
++	read_lock(&tasklist_lock);
++	task = find_task_by_vpid(pid);
++	if (task)
++		get_task_struct(task);
++	read_unlock(&tasklist_lock);
++	if (!task)
++		return -ESRCH;
++	else
++		ctx->root_task = task;
++
++	/* root nsproxy */
++	rcu_read_lock();
++	nsproxy = task_nsproxy(task);
++	if (nsproxy)
++		get_nsproxy(nsproxy);
++	rcu_read_unlock();
++	if (!nsproxy)
++		return -ESRCH;
++	else
++		ctx->root_nsproxy = nsproxy;
++
++	/* root freezer */
++	ctx->root_freezer = task;
++	geT_task_struct(task);
++
++	ret = may_checkpoint_task(ctx, task);
++	if (ret) {
++		ckpt_write_err(ctx, "", NULL);
++		put_task_struct(task);
++		put_task_struct(task);
++		put_nsproxy(nsproxy);
++		ctx->root_nsproxy = NULL;
++		ctx->root_task = NULL;
++		return ret;
++	}
++
++	return 0;
++}
++
+ long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
+ {
+ 	long ret;
+ 
++	ret = init_checkpoint_ctx(ctx, pid);
++	if (ret < 0)
 +		return ret;
 +
-+	ret = restore_cap_bset(bset, cred);
-+	return ret;
-+}
- 
--	audit_log_capset(pid, new, current_cred());
-+void checkpoint_capabilities(struct ckpt_capabilities *h, struct cred * cred)
-+{
-+	BUILD_BUG_ON(CAP_LAST_CAP >= 64);
-+	h->securebits = cred->securebits;
-+	h->cap_i_0 = cred->cap_inheritable.cap[0];
-+	h->cap_i_1 = cred->cap_inheritable.cap[1];
-+	h->cap_p_0 = cred->cap_permitted.cap[0];
-+	h->cap_p_1 = cred->cap_permitted.cap[1];
-+	h->cap_e_0 = cred->cap_effective.cap[0];
-+	h->cap_e_1 = cred->cap_effective.cap[1];
-+	h->cap_b_0 = cred->cap_bset.cap[0];
-+	h->cap_b_1 = cred->cap_bset.cap[1];
-+}
- 
--	return commit_creds(new);
-+/*
-+ * restore_capabilities: called by restore_creds() to set the
-+ * restored capabilities (if permitted) in a new struct cred which
-+ * will be attached at the end of the sys_restart().
-+ * struct cred *new is prepared by caller (using prepare_creds())
-+ * (and aborted by caller on error)
-+ * return 0 on success, < 0 on error
-+ */
-+int restore_capabilities(struct ckpt_capabilities *h, struct cred *new)
-+{
-+	int ret = do_restore_caps(h, new);
++	if (ctx->root_freezer) {
++		ret = cgroup_freezer_begin_checkpoint(ctx->root_freezer);
++		if (ret < 0)
++			return ret;
++	}
 +
-+	if (!ret)
-+		ret = apply_securebits(h->securebits, new);
- 
--error:
--	abort_creds(new);
+ 	ret = checkpoint_write_header(ctx);
+ 	if (ret < 0)
+ 		goto out;
+-	ret = checkpoint_task(ctx, current);
++	ret = checkpoint_task(ctx, ctx->root_task);
+ 	if (ret < 0)
+ 		goto out;
+ 	ret = checkpoint_write_tail(ctx);
+@@ -370,5 +464,7 @@ long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid)
+ 	ctx->crid = atomic_inc_return(&ctx_count);
+ 	ret = ctx->crid;
+  out:
++	if (ctx->root_freezer)
++		cgroup_freezer_end_checkpoint(ctx->root_freezer);
  	return ret;
  }
-+#endif /* CONFIG_CHECKPOINT */
+diff --git a/checkpoint/restart.c b/checkpoint/restart.c
+index afe51c2..cb02ffb 100644
+--- a/checkpoint/restart.c
++++ b/checkpoint/restart.c
+@@ -411,10 +411,67 @@ static int restore_read_tail(struct ckpt_ctx *ctx)
+ 	return ret;
+ }
  
- /**
-  * capable - Determine if the current task has a superior capability in effect
-diff --git a/security/commoncap.c b/security/commoncap.c
-index e3097c0..892815b 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -893,24 +893,9 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
- 	 * capability-based-privilege environment.
- 	 */
- 	case PR_SET_SECUREBITS:
--		error = -EPERM;
--		if ((((new->securebits & SECURE_ALL_LOCKS) >> 1)
--		     & (new->securebits ^ arg2))			/*[1]*/
--		    || ((new->securebits & SECURE_ALL_LOCKS & ~arg2))	/*[2]*/
--		    || (arg2 & ~(SECURE_ALL_LOCKS | SECURE_ALL_BITS))	/*[3]*/
--		    || (cap_capable(current, current_cred(), CAP_SETPCAP,
--				    SECURITY_CAP_AUDIT) != 0)		/*[4]*/
--			/*
--			 * [1] no changing of bits that are locked
--			 * [2] no unlocking of locks
--			 * [3] no setting of unsupported bits
--			 * [4] doing anything requires privilege (go read about
--			 *     the "sendmail capabilities bug")
--			 */
--		    )
--			/* cannot change a locked bit */
-+		error = apply_securebits(arg2, new);
-+		if (error)
- 			goto error;
--		new->securebits = arg2;
- 		goto changed;
++static long restore_retval(void)
++{
++	struct pt_regs *regs = task_pt_regs(current);
++	long ret;
++
++	/*
++	 * For the restart, we entered the kernel via sys_restart(),
++	 * so our return path is via the syscall exit. In particular,
++	 * the code in entry.S will put the value that we will return
++	 * into a register (e.g. regs->eax in x86), thus passing it to
++	 * the caller task.
++	 *
++	 * What we do now depends on what happened to the checkpointed
++	 * task right before the checkpoint - there are three cases:
++	 *
++	 * 1) It was carrying out a syscall when became frozen, or
++	 * 2) It was running in userspace, or
++	 * 3) It was doing a self-checkpoint
++	 *
++	 * In case #1, if the syscall succeeded, perhaps partially,
++	 * then the retval is non-negative. If it failed, the error
++	 * may be one of -ERESTART..., which is interpreted in the
++	 * signal handling code. If that is the case, we force the
++	 * signal handler to kick in by faking a signal to ourselves
++	 * (a la freeze/thaw) when ret < 0.
++	 *
++	 * In case #2, our return value will overwrite the original
++	 * value in the affected register. Workaround by simply using
++	 * that saved value of that register as our retval.
++	 *
++	 * In case #3, then the state was recorded while the task was
++	 * in checkpoint(2) syscall. The syscall is execpted to return
++	 * 0 when returning from a restart. Fortunately, this already
++	 * has been arranged for at checkpoint time (the register that
++	 * holds the retval, e.g. regs->eax in x86, was set to
++	 * zero).
++	 */
++
++	/* needed for all 3 cases: get old value/error/retval */
++	ret = syscall_get_return_value(current, regs);
++
++	/* if from a syscall and returning error, kick in signal handlig */
++	if (syscall_get_nr(current, regs) >= 0 && ret < 0)
++		set_tsk_thread_flag(current, TIF_SIGPENDING);
++
++	return ret;
++}
++
++/* setup restart-specific parts of ctx */
++static int init_restart_ctx(struct ckpt_ctx *ctx, pid_t pid)
++{
++	return 0;
++}
++
+ long do_restart(struct ckpt_ctx *ctx, pid_t pid)
+ {
+ 	long ret;
  
- 	case PR_GET_SECUREBITS:
++	ret = init_restart_ctx(ctx, pid);
++	if (ret < 0)
++		return ret;
+ 	ret = restore_read_header(ctx);
+ 	if (ret < 0)
+ 		return ret;
+@@ -422,7 +479,9 @@ long do_restart(struct ckpt_ctx *ctx, pid_t pid)
+ 	if (ret < 0)
+ 		return ret;
+ 	ret = restore_read_tail(ctx);
++	if (ret < 0)
++		return ret;
+ 
+ 	/* on success, adjust the return value if needed [TODO] */
+-	return ret;
++	return restore_retval(ctx);
+ }
+diff --git a/checkpoint/sys.c b/checkpoint/sys.c
+index 7f6f71e..dda2c21 100644
+--- a/checkpoint/sys.c
++++ b/checkpoint/sys.c
+@@ -12,7 +12,9 @@
+ #define CKPT_DFLAG  CKPT_DSYS
+ 
+ #include <linux/sched.h>
++#include <linux/nsproxy.h>
+ #include <linux/kernel.h>
++#include <linux/cgroup.h>
+ #include <linux/syscalls.h>
+ #include <linux/fs.h>
+ #include <linux/file.h>
+@@ -168,6 +170,14 @@ static void ckpt_ctx_free(struct ckpt_ctx *ctx)
+ {
+ 	if (ctx->file)
+ 		fput(ctx->file);
++
++	if (ctx->root_nsproxy)
++		put_nsproxy(ctx->root_nsproxy);
++	if (ctx->root_task)
++		put_task_struct(ctx->root_task);
++	if (ctx->root_freezer)
++		put_task_struct(ctx->root_freezer);
++
+ 	kfree(ctx);
+ }
+ 
+diff --git a/include/linux/checkpoint_types.h b/include/linux/checkpoint_types.h
+index 585cb7b..15dbe1b 100644
+--- a/include/linux/checkpoint_types.h
++++ b/include/linux/checkpoint_types.h
+@@ -12,12 +12,17 @@
+ 
+ #ifdef __KERNEL__
+ 
++#include <linux/sched.h>
++#include <linux/nsproxy.h>
+ #include <linux/fs.h>
+ 
+ struct ckpt_ctx {
+ 	int crid;		/* unique checkpoint id */
+ 
+-	pid_t root_pid;		/* container identifier */
++	pid_t root_pid;				/* [container] root pid */
++	struct task_struct *root_task;		/* [container] root task */
++	struct nsproxy *root_nsproxy;		/* [container] root nsproxy */
++	struct task_struct *root_freezer;	/* [container] root task */
+ 
+ 	unsigned long kflags;	/* kerenl flags */
+ 	unsigned long uflags;	/* user flags */
 -- 
 1.6.0.4
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
