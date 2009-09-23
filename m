@@ -1,139 +1,90 @@
 From: Oren Laadan <orenl@librato.com>
-Subject: [PATCH v18 80/80] powerpc: clone_with_pids implementation
-Date: Wed, 23 Sep 2009 19:52:00 -0400
-Message-ID: <1253749920-18673-81-git-send-email-orenl@librato.com>
+Subject: [PATCH v18 42/80] c/r: export shmem_getpage() to support shared memory
+Date: Wed, 23 Sep 2009 19:51:22 -0400
+Message-ID: <1253749920-18673-43-git-send-email-orenl@librato.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Nathan Lynch <ntl@pobox.com>
+Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-From: Nathan Lynch <ntl@pobox.com>
+Export functionality to retrieve specific pages from shared memory
+given an inode in shmem-fs; this will be used in the next two patches
+to provide support for c/r of shared memory.
 
-Mostly copy-paste from existing clone code.
+mm/shmem.c:
+- shmem_getpage() and 'enum sgp_type' moved to linux/mm.h
 
-(may want to hold off applying this until the ongoing clone_with_pids
-discussion is resolved.)
-
-Signed-off-by: Nathan Lynch <ntl@pobox.com>
+Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- arch/powerpc/include/asm/syscalls.h |    4 ++++
- arch/powerpc/include/asm/systbl.h   |    1 +
- arch/powerpc/include/asm/unistd.h   |    3 ++-
- arch/powerpc/kernel/entry_32.S      |    8 ++++++++
- arch/powerpc/kernel/entry_64.S      |    5 +++++
- arch/powerpc/kernel/process.c       |   20 +++++++++++++++++++-
- 6 files changed, 39 insertions(+), 2 deletions(-)
+ include/linux/mm.h |   11 +++++++++++
+ mm/shmem.c         |   15 ++-------------
+ 2 files changed, 13 insertions(+), 13 deletions(-)
 
-diff --git a/arch/powerpc/include/asm/syscalls.h b/arch/powerpc/include/asm/syscalls.h
-index eb8eb40..25dfe8b 100644
---- a/arch/powerpc/include/asm/syscalls.h
-+++ b/arch/powerpc/include/asm/syscalls.h
-@@ -24,6 +24,10 @@ asmlinkage int sys_execve(unsigned long a0, unsigned long a1,
- asmlinkage int sys_clone(unsigned long clone_flags, unsigned long usp,
- 		int __user *parent_tidp, void __user *child_threadptr,
- 		int __user *child_tidp, int p6, struct pt_regs *regs);
-+asmlinkage int sys_clone_with_pids(unsigned long clone_flags,
-+		unsigned long usp, int __user *parent_tidp,
-+		void __user *child_threadptr, int __user *child_tidp,
-+		void __user *upid_setp, struct pt_regs *regs);
- asmlinkage int sys_fork(unsigned long p1, unsigned long p2,
- 		unsigned long p3, unsigned long p4, unsigned long p5,
- 		unsigned long p6, struct pt_regs *regs);
-diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
-index 3d44cf3..e3c0b96 100644
---- a/arch/powerpc/include/asm/systbl.h
-+++ b/arch/powerpc/include/asm/systbl.h
-@@ -328,3 +328,4 @@ COMPAT_SYS_SPU(pwritev)
- COMPAT_SYS(rt_tgsigqueueinfo)
- SYSCALL(checkpoint)
- SYSCALL(restart)
-+PPC_SYS(clone_with_pids)
-diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
-index ef41ebb..c54db8b 100644
---- a/arch/powerpc/include/asm/unistd.h
-+++ b/arch/powerpc/include/asm/unistd.h
-@@ -347,10 +347,11 @@
- #define __NR_rt_tgsigqueueinfo	322
- #define __NR_checkpoint		323
- #define __NR_restart		324
-+#define __NR_clone_with_pids	325
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 0d0c46b..b565a82 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -327,6 +327,17 @@ void put_pages_list(struct list_head *pages);
  
- #ifdef __KERNEL__
+ void split_page(struct page *page, unsigned int order);
  
--#define __NR_syscalls		325
-+#define __NR_syscalls		326
- 
- #define __NR__exit __NR_exit
- #define NR_syscalls	__NR_syscalls
-diff --git a/arch/powerpc/kernel/entry_32.S b/arch/powerpc/kernel/entry_32.S
-index 3cadba6..081dd36 100644
---- a/arch/powerpc/kernel/entry_32.S
-+++ b/arch/powerpc/kernel/entry_32.S
-@@ -586,6 +586,14 @@ ppc_clone:
- 	stw	r0,_TRAP(r1)		/* register set saved */
- 	b	sys_clone
- 
-+	.globl	ppc_clone_with_pids
-+ppc_clone_with_pids:
-+	SAVE_NVGPRS(r1)
-+	lwz	r0,_TRAP(r1)
-+	rlwinm	r0,r0,0,0,30		/* clear LSB to indicate full */
-+	stw	r0,_TRAP(r1)		/* register set saved */
-+	b	sys_clone_with_pids
++/* Flag allocation requirements to shmem_getpage and shmem_swp_alloc */
++enum sgp_type {
++	SGP_READ,	/* don't exceed i_size, don't allocate page */
++	SGP_CACHE,	/* don't exceed i_size, may allocate page */
++	SGP_DIRTY,	/* like SGP_CACHE, but set new page dirty */
++	SGP_WRITE,	/* may exceed i_size, may allocate page */
++};
 +
- 	.globl	ppc_swapcontext
- ppc_swapcontext:
- 	SAVE_NVGPRS(r1)
-diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
-index 43e0734..39fa316 100644
---- a/arch/powerpc/kernel/entry_64.S
-+++ b/arch/powerpc/kernel/entry_64.S
-@@ -320,6 +320,11 @@ _GLOBAL(ppc_clone)
- 	bl	.sys_clone
- 	b	syscall_exit
++extern int shmem_getpage(struct inode *inode, unsigned long idx,
++			 struct page **pagep, enum sgp_type sgp, int *type);
++
+ /*
+  * Compound pages have a destructor function.  Provide a
+  * prototype for that function and accessor functions.
+diff --git a/mm/shmem.c b/mm/shmem.c
+index d713239..d80532b 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -99,14 +99,6 @@ static struct vfsmount *shm_mnt;
+ /* Pretend that each entry is of this size in directory's i_size */
+ #define BOGO_DIRENT_SIZE 20
  
-+_GLOBAL(ppc_clone_with_pids)
-+	bl	.save_nvgprs
-+	bl	.sys_clone_with_pids
-+	b	syscall_exit
-+
- _GLOBAL(ppc32_swapcontext)
- 	bl	.save_nvgprs
- 	bl	.compat_sys_swapcontext
-diff --git a/arch/powerpc/kernel/process.c b/arch/powerpc/kernel/process.c
-index 892a9f2..7bf21cc 100644
---- a/arch/powerpc/kernel/process.c
-+++ b/arch/powerpc/kernel/process.c
-@@ -895,7 +895,25 @@ int sys_clone(unsigned long clone_flags, unsigned long usp,
- 		child_tidp = TRUNC_PTR(child_tidp);
- 	}
- #endif
-- 	return do_fork(clone_flags, usp, regs, 0, parent_tidp, child_tidp);
-+	return do_fork(clone_flags, usp, regs, 0, parent_tidp, child_tidp);
-+}
-+
-+int sys_clone_with_pids(unsigned long clone_flags, unsigned long usp,
-+	      int __user *parent_tidp, void __user *child_threadptr,
-+	      int __user *child_tidp, void __user *upid_setp,
-+	      struct pt_regs *regs)
-+{
-+	CHECK_FULL_REGS(regs);
-+	if (usp == 0)
-+		usp = regs->gpr[1];
-+#ifdef CONFIG_PPC64
-+	if (test_thread_flag(TIF_32BIT)) {
-+		parent_tidp = TRUNC_PTR(parent_tidp);
-+		child_tidp = TRUNC_PTR(child_tidp);
-+	}
-+#endif
-+	return do_fork_with_pids(clone_flags, usp, regs, 0,
-+				 parent_tidp, child_tidp, upid_setp);
+-/* Flag allocation requirements to shmem_getpage and shmem_swp_alloc */
+-enum sgp_type {
+-	SGP_READ,	/* don't exceed i_size, don't allocate page */
+-	SGP_CACHE,	/* don't exceed i_size, may allocate page */
+-	SGP_DIRTY,	/* like SGP_CACHE, but set new page dirty */
+-	SGP_WRITE,	/* may exceed i_size, may allocate page */
+-};
+-
+ #ifdef CONFIG_TMPFS
+ static unsigned long shmem_default_max_blocks(void)
+ {
+@@ -119,9 +111,6 @@ static unsigned long shmem_default_max_inodes(void)
  }
+ #endif
  
- int sys_fork(unsigned long p1, unsigned long p2, unsigned long p3,
+-static int shmem_getpage(struct inode *inode, unsigned long idx,
+-			 struct page **pagep, enum sgp_type sgp, int *type);
+-
+ static inline struct page *shmem_dir_alloc(gfp_t gfp_mask)
+ {
+ 	/*
+@@ -1202,8 +1191,8 @@ static inline struct mempolicy *shmem_get_sbmpol(struct shmem_sb_info *sbinfo)
+  * vm. If we swap it in we mark it dirty since we also free the swap
+  * entry since a page cannot live in both the swap and page cache
+  */
+-static int shmem_getpage(struct inode *inode, unsigned long idx,
+-			struct page **pagep, enum sgp_type sgp, int *type)
++int shmem_getpage(struct inode *inode, unsigned long idx,
++		  struct page **pagep, enum sgp_type sgp, int *type)
+ {
+ 	struct address_space *mapping = inode->i_mapping;
+ 	struct shmem_inode_info *info = SHMEM_I(inode);
 -- 
 1.6.0.4
 
