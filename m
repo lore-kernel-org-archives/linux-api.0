@@ -1,65 +1,89 @@
 From: Oren Laadan <orenl@librato.com>
-Subject: [PATCH v18 10/80] c/r: make file_pos_read/write() public
-Date: Wed, 23 Sep 2009 19:50:50 -0400
-Message-ID: <1253749920-18673-11-git-send-email-orenl@librato.com>
+Subject: [PATCH v18 12/80] pids 2/7: Have alloc_pidmap() return actual error code
+Date: Wed, 23 Sep 2009 19:50:52 -0400
+Message-ID: <1253749920-18673-13-git-send-email-orenl@librato.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
+Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-These two are used in the next patch when calling vfs_read/write()
+From: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
 
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
+alloc_pidmap() can fail either because all pid numbers are in use or
+because memory allocation failed.  With support for setting a specific
+pid number, alloc_pidmap() would also fail if either the given pid
+number is invalid or in use.
+
+Rather than have callers assume -ENOMEM, have alloc_pidmap() return
+the actual error.
+
+Signed-off-by: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
+Acked-by: Serge Hallyn <serue@us.ibm.com>
+Reviewed-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- fs/read_write.c    |   10 ----------
- include/linux/fs.h |   10 ++++++++++
- 2 files changed, 10 insertions(+), 10 deletions(-)
+ kernel/fork.c |    5 +++--
+ kernel/pid.c  |    9 ++++++---
+ 2 files changed, 9 insertions(+), 5 deletions(-)
 
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 6c8c55d..d331975 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -359,16 +359,6 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
+diff --git a/kernel/fork.c b/kernel/fork.c
+index e6c04d4..851ccd1 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1110,10 +1110,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 		goto bad_fork_cleanup_io;
  
- EXPORT_SYMBOL(vfs_write);
+ 	if (pid != &init_struct_pid) {
+-		retval = -ENOMEM;
+ 		pid = alloc_pid(p->nsproxy->pid_ns);
+-		if (!pid)
++		if (IS_ERR(pid)) {
++			retval = PTR_ERR(pid);
+ 			goto bad_fork_cleanup_io;
++		}
  
--static inline loff_t file_pos_read(struct file *file)
--{
--	return file->f_pos;
--}
--
--static inline void file_pos_write(struct file *file, loff_t pos)
--{
--	file->f_pos = pos;
--}
--
- SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
- {
- 	struct file *file;
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 73e9b64..a21f175 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1548,6 +1548,16 @@ ssize_t rw_copy_check_uvector(int type, const struct iovec __user * uvector,
- 				struct iovec *fast_pointer,
- 				struct iovec **ret_pointer);
+ 		if (clone_flags & CLONE_NEWPID) {
+ 			retval = pid_ns_prepare_proc(p->nsproxy->pid_ns);
+diff --git a/kernel/pid.c b/kernel/pid.c
+index f618096..9c678ce 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -158,6 +158,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 	offset = pid & BITS_PER_PAGE_MASK;
+ 	map = &pid_ns->pidmap[pid/BITS_PER_PAGE];
+ 	max_scan = (pid_max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
++	rc = -EAGAIN;
+ 	for (i = 0; i <= max_scan; ++i) {
+ 		rc = alloc_pidmap_page(map);
+ 		if (rc)
+@@ -188,12 +189,14 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 		} else {
+ 			map = &pid_ns->pidmap[0];
+ 			offset = RESERVED_PIDS;
+-			if (unlikely(last == offset))
++			if (unlikely(last == offset)) {
++				rc = -EAGAIN;
+ 				break;
++			}
+ 		}
+ 		pid = mk_pid(pid_ns, map, offset);
+ 	}
+-	return -1;
++	return rc;
+ }
  
-+static inline loff_t file_pos_read(struct file *file)
-+{
-+	return file->f_pos;
-+}
-+
-+static inline void file_pos_write(struct file *file, loff_t pos)
-+{
-+	file->f_pos = pos;
-+}
-+
- extern ssize_t vfs_read(struct file *, char __user *, size_t, loff_t *);
- extern ssize_t vfs_write(struct file *, const char __user *, size_t, loff_t *);
- extern ssize_t vfs_readv(struct file *, const struct iovec __user *,
+ int next_pidmap(struct pid_namespace *pid_ns, int last)
+@@ -298,7 +301,7 @@ out_free:
+ 		free_pidmap(pid->numbers + i);
+ 
+ 	kmem_cache_free(ns->pid_cachep, pid);
+-	pid = NULL;
++	pid = ERR_PTR(nr);
+ 	goto out;
+ }
+ 
 -- 
 1.6.0.4
 
