@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@librato.com>
-Subject: [PATCH v18 62/80] c/r: checkpoint and restore (shared) task's sighand_struct
-Date: Wed, 23 Sep 2009 19:51:42 -0400
-Message-ID: <1253749920-18673-63-git-send-email-orenl@librato.com>
+Subject: [PATCH v18 74/80] c/r: support for controlling terminal and job control
+Date: Wed, 23 Sep 2009 19:51:54 -0400
+Message-ID: <1253749920-18673-75-git-send-email-orenl@librato.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
@@ -10,471 +10,281 @@ To: Andrew Morton <akpm@linux-foundation.org>
 Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the checkpointing and restart of signal handling
-state - 'struct sighand_struct'. Since the contents of this state
-only affect userspace, no input validation is required.
+Add checkpoint/restart of controlling terminal: current->signal->tty.
+This is only done for session leaders.
 
-Add _NSIG to kernel constants saved/tested with image header.
+If the session leader belongs to the ancestor pid-ns, then checkpoint
+skips this tty; On restart, it will not be restored, and whatever tty
+is in place from parent pid-ns (at restart) will be inherited.
 
-Number of signals (_NSIG) is arch-dependent, but is within __KERNEL__
-and not visibile to userspace compile. Therefore, define per arch
-CKPT_ARCH_NSIG in <asm/checkpoint_hdr.h>.
-
-Changelog[v1]:
-  - Rename headerless struct ckpt_hdr_* to struct ckpt_*
+Chagnelog [v1]:
+  - Don't restore tty_old_pgrp it pgid is CKPT_PID_NULL
+  - Initialize pgrp to NULL in restore_signal
 
 Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- arch/s390/include/asm/checkpoint_hdr.h |    8 ++
- arch/x86/include/asm/checkpoint_hdr.h  |    8 ++
- checkpoint/Makefile                    |    3 +-
- checkpoint/checkpoint.c                |    2 +
- checkpoint/objhash.c                   |   26 +++++
- checkpoint/process.c                   |   19 ++++
- checkpoint/restart.c                   |    3 +
- checkpoint/signal.c                    |  163 ++++++++++++++++++++++++++++++++
- include/linux/checkpoint.h             |    9 ++-
- include/linux/checkpoint_hdr.h         |   22 +++++
- 10 files changed, 261 insertions(+), 2 deletions(-)
- create mode 100644 checkpoint/signal.c
+ checkpoint/signal.c            |   79 +++++++++++++++++++++++++++++++++++++++-
+ drivers/char/tty_io.c          |   33 +++++++++++++----
+ include/linux/checkpoint.h     |    1 +
+ include/linux/checkpoint_hdr.h |    6 +++
+ include/linux/tty.h            |    5 +++
+ 5 files changed, 115 insertions(+), 9 deletions(-)
 
-diff --git a/arch/s390/include/asm/checkpoint_hdr.h b/arch/s390/include/asm/checkpoint_hdr.h
-index ad9449e..1976355 100644
---- a/arch/s390/include/asm/checkpoint_hdr.h
-+++ b/arch/s390/include/asm/checkpoint_hdr.h
-@@ -82,6 +82,14 @@ struct ckpt_hdr_mm_context {
- 	unsigned long asce_limit;
- };
- 
-+#define CKPT_ARCH_NSIG  64
-+#ifdef __KERNEL__
-+#include <asm/signal.h>
-+#if CKPT_ARCH_NSIG != _SIGCONTEXT_NSIG
-+#error CKPT_ARCH_NSIG size is wrong (asm/sigcontext.h and asm/checkpoint_hdr.h)
-+#endif
-+#endif
-+
- struct ckpt_hdr_header_arch {
- 	struct ckpt_hdr h;
- };
-diff --git a/arch/x86/include/asm/checkpoint_hdr.h b/arch/x86/include/asm/checkpoint_hdr.h
-index 0e756b0..1228d1b 100644
---- a/arch/x86/include/asm/checkpoint_hdr.h
-+++ b/arch/x86/include/asm/checkpoint_hdr.h
-@@ -48,6 +48,14 @@ enum {
- 	CKPT_HDR_MM_CONTEXT_LDT,
- };
- 
-+#define CKPT_ARCH_NSIG  64
-+#ifdef __KERNEL__
-+#include <asm/signal.h>
-+#if CKPT_ARCH_NSIG != _NSIG
-+#error CKPT_ARCH_NSIG size is wrong per asm/signal.h and asm/checkpoint_hdr.h
-+#endif
-+#endif
-+
- struct ckpt_hdr_header_arch {
- 	struct ckpt_hdr h;
- 	/* FIXME: add HAVE_HWFP */
-diff --git a/checkpoint/Makefile b/checkpoint/Makefile
-index bb2c0ca..f8a55df 100644
---- a/checkpoint/Makefile
-+++ b/checkpoint/Makefile
-@@ -10,4 +10,5 @@ obj-$(CONFIG_CHECKPOINT) += \
- 	process.o \
- 	namespace.o \
- 	files.o \
--	memory.o
-+	memory.o \
-+	signal.o
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index 27eec5c..3460c03 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -288,6 +288,8 @@ static void fill_kernel_const(struct ckpt_const *h)
- 	h->task_comm_len = sizeof(tsk->comm);
- 	/* mm */
- 	h->mm_saved_auxv_len = sizeof(mm->saved_auxv);
-+	/* signal */
-+	h->signal_nsig = _NSIG;
- 	/* uts */
- 	h->uts_sysname_len = sizeof(uts->sysname);
- 	h->uts_nodename_len = sizeof(uts->nodename);
-diff --git a/checkpoint/objhash.c b/checkpoint/objhash.c
-index f8a3210..b4034dc 100644
---- a/checkpoint/objhash.c
-+++ b/checkpoint/objhash.c
-@@ -125,6 +125,22 @@ static int obj_mm_users(void *ptr)
- 	return atomic_read(&((struct mm_struct *) ptr)->mm_users);
- }
- 
-+static int obj_sighand_grab(void *ptr)
-+{
-+	atomic_inc(&((struct sighand_struct *) ptr)->count);
-+	return 0;
-+}
-+
-+static void obj_sighand_drop(void *ptr, int lastref)
-+{
-+	__cleanup_sighand((struct sighand_struct *) ptr);
-+}
-+
-+static int obj_sighand_users(void *ptr)
-+{
-+	return atomic_read(&((struct sighand_struct *) ptr)->count);
-+}
-+
- static int obj_ns_grab(void *ptr)
- {
- 	get_nsproxy((struct nsproxy *) ptr);
-@@ -263,6 +279,16 @@ static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 		.checkpoint = checkpoint_mm,
- 		.restore = restore_mm,
- 	},
-+	/* sighand object */
-+	{
-+		.obj_name = "SIGHAND",
-+		.obj_type = CKPT_OBJ_SIGHAND,
-+		.ref_drop = obj_sighand_drop,
-+		.ref_grab = obj_sighand_grab,
-+		.ref_users = obj_sighand_users,
-+		.checkpoint = checkpoint_sighand,
-+		.restore = restore_sighand,
-+	},
- 	/* ns object */
- 	{
- 		.obj_name = "NSPROXY",
-diff --git a/checkpoint/process.c b/checkpoint/process.c
-index 1e79f73..56f33dd 100644
---- a/checkpoint/process.c
-+++ b/checkpoint/process.c
-@@ -181,6 +181,7 @@ static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- 	struct ckpt_hdr_task_objs *h;
- 	int files_objref;
- 	int mm_objref;
-+	int sighand_objref;
- 	int ret;
- 
- 	/*
-@@ -214,11 +215,19 @@ static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- 		return mm_objref;
- 	}
- 
-+	sighand_objref = checkpoint_obj_sighand(ctx, t);
-+	ckpt_debug("sighand: objref %d\n", sighand_objref);
-+	if (sighand_objref < 0) {
-+		ckpt_write_err(ctx, "TE", "sighand_struct", sighand_objref);
-+		return sighand_objref;
-+	}
-+
- 	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_TASK_OBJS);
- 	if (!h)
- 		return -ENOMEM;
- 	h->files_objref = files_objref;
- 	h->mm_objref = mm_objref;
-+	h->sighand_objref = sighand_objref;
- 	ret = ckpt_write_obj(ctx, &h->h);
- 	ckpt_hdr_put(ctx, h);
- 
-@@ -382,6 +391,9 @@ int ckpt_collect_task(struct ckpt_ctx *ctx, struct task_struct *t)
- 	if (ret < 0)
- 		return ret;
- 	ret = ckpt_collect_mm(ctx, t);
-+	if (ret < 0)
-+		return ret;
-+	ret = ckpt_collect_sighand(ctx, t);
- 
- 	return ret;
- }
-@@ -529,10 +541,17 @@ static int restore_task_objs(struct ckpt_ctx *ctx)
- 
- 	ret = restore_obj_file_table(ctx, h->files_objref);
- 	ckpt_debug("file_table: ret %d (%p)\n", ret, current->files);
-+	if (ret < 0)
-+		goto out;
- 
- 	ret = restore_obj_mm(ctx, h->mm_objref);
- 	ckpt_debug("mm: ret %d (%p)\n", ret, current->mm);
-+	if (ret < 0)
-+		goto out;
- 
-+	ret = restore_obj_sighand(ctx, h->sighand_objref);
-+	ckpt_debug("sighand: ret %d (%p)\n", ret, current->sighand);
-+ out:
- 	ckpt_hdr_put(ctx, h);
- 	return ret;
- }
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index 53a759a..73c4e72 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -383,6 +383,9 @@ static int check_kernel_const(struct ckpt_const *h)
- 	/* mm */
- 	if (h->mm_saved_auxv_len != sizeof(mm->saved_auxv))
- 		return -EINVAL;
-+	/* signal */
-+	if (h->signal_nsig != _NSIG)
-+		return -EINVAL;
- 	/* uts */
- 	if (h->uts_sysname_len != sizeof(uts->sysname))
- 		return -EINVAL;
 diff --git a/checkpoint/signal.c b/checkpoint/signal.c
-new file mode 100644
-index 0000000..1aadadd
---- /dev/null
+index 5ff0734..cd3956d 100644
+--- a/checkpoint/signal.c
 +++ b/checkpoint/signal.c
-@@ -0,0 +1,163 @@
-+/*
-+ *  Checkpoint task signals
+@@ -316,11 +316,12 @@ static int checkpoint_signal(struct ckpt_ctx *ctx, struct task_struct *t)
+ 	struct ckpt_hdr_signal *h;
+ 	struct signal_struct *signal;
+ 	struct sigpending shared_pending;
++	struct tty_struct *tty = NULL;
+ 	struct rlimit *rlim;
+ 	struct timeval tval;
+ 	cputime_t cputime;
+ 	unsigned long flags;
+-	int i, ret;
++	int i, ret = 0;
+ 
+ 	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_SIGNAL);
+ 	if (!h)
+@@ -398,9 +399,34 @@ static int checkpoint_signal(struct ckpt_ctx *ctx, struct task_struct *t)
+ 	cputime_to_timeval(signal->it_prof_incr, &tval);
+ 	h->it_prof_incr = timeval_to_ns(&tval);
+ 
++	/* tty */
++	if (signal->leader) {
++		h->tty_old_pgrp = ckpt_pid_nr(ctx, signal->tty_old_pgrp);
++		tty = tty_kref_get(signal->tty);
++		if (tty) {
++			/* irq is already disabled */
++			spin_lock(&tty->ctrl_lock);
++			h->tty_pgrp = ckpt_pid_nr(ctx, tty->pgrp);
++			spin_unlock(&tty->ctrl_lock);
++			tty_kref_put(tty);
++		}
++	}
++
+ 	unlock_task_sighand(t, &flags);
+ 
+-	ret = ckpt_write_obj(ctx, &h->h);
++	/*
++	 * If the session is in an ancestor namespace, skip this tty
++	 * and set tty_objref = 0. It will not be explicitly restored,
++	 * but rather inherited from parent pid-ns at restart time.
++	 */
++	if (tty && ckpt_pid_nr(ctx, tty->session) > 0) {
++		h->tty_objref = checkpoint_obj(ctx, tty, CKPT_OBJ_TTY);
++		if (h->tty_objref < 0)
++			ret = h->tty_objref;
++	}
++
++	if (!ret)
++		ret = ckpt_write_obj(ctx, &h->h);
+ 	if (!ret)
+ 		ret = checkpoint_sigpending(ctx, &shared_pending);
+ 
+@@ -471,8 +497,10 @@ static int restore_signal(struct ckpt_ctx *ctx)
+ 	struct ckpt_hdr_signal *h;
+ 	struct sigpending new_pending;
+ 	struct sigpending *pending;
++	struct tty_struct *tty = NULL;
+ 	struct itimerval itimer;
+ 	struct rlimit rlim;
++	struct pid *pgrp = NULL;
+ 	int i, ret;
+ 
+ 	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_SIGNAL);
+@@ -492,6 +520,40 @@ static int restore_signal(struct ckpt_ctx *ctx)
+ 	if (ret < 0)
+ 		goto out;
+ 
++	/* tty - session */
++	if (h->tty_objref) {
++		tty = ckpt_obj_fetch(ctx, h->tty_objref, CKPT_OBJ_TTY);
++		if (IS_ERR(tty)) {
++			ret = PTR_ERR(tty);
++			goto out;
++		}
++		/* this will fail unless we're the session leader */
++		ret = tiocsctty(tty, 0);
++		if (ret < 0)
++			goto out;
++		/* now restore the foreground group (job control) */
++		if (h->tty_pgrp) {
++			/*
++			 * If tty_pgrp == CKPT_PID_NULL, below will
++			 * fail, so no need for explicit test
++			 */
++			ret = do_tiocspgrp(tty, tty_pair_get_tty(tty),
++					   h->tty_pgrp);
++			if (ret < 0)
++				goto out;
++		}
++	} else {
++		/*
++		 * If tty_objref isn't set, we _keep_ whatever tty we
++		 * already have as a ctty. Why does this make sense ?
++		 * - If our session is "within" the restart context,
++		 * then that session has no controlling terminal.
++		 * - If out session is "outside" the restart context,
++                 * then we're like to keep whatever we inherit from
++                 * the parent pid-ns.
++		 */
++	}
++
+ 	/*
+ 	 * Reset real/virt/prof itimer (in case they were set), to
+ 	 * prevent unwanted signals after flushing current signals
+@@ -503,7 +565,20 @@ static int restore_signal(struct ckpt_ctx *ctx)
+ 	do_setitimer(ITIMER_VIRTUAL, &itimer, NULL);
+ 	do_setitimer(ITIMER_PROF, &itimer, NULL);
+ 
++	/* tty - tty_old_pgrp */
++	if (current->signal->leader && h->tty_old_pgrp != CKPT_PID_NULL) {
++		rcu_read_lock();
++		pgrp = get_pid(_ckpt_find_pgrp(ctx, h->tty_old_pgrp));
++		rcu_read_unlock();
++		if (!pgrp)
++			goto out;
++	}
++
+ 	spin_lock_irq(&current->sighand->siglock);
++	/* tty - tty_old_pgrp */
++	put_pid(current->signal->tty_old_pgrp);
++	current->signal->tty_old_pgrp = pgrp;
++	/* pending signals */
+ 	pending = &current->signal->shared_pending;
+ 	flush_sigqueue(pending);
+ 	pending->signal = new_pending.signal;
+diff --git a/drivers/char/tty_io.c b/drivers/char/tty_io.c
+index 72f4432..1b220c1 100644
+--- a/drivers/char/tty_io.c
++++ b/drivers/char/tty_io.c
+@@ -2130,7 +2130,7 @@ static int fionbio(struct file *file, int __user *p)
+  *		Takes ->siglock() when updating signal->tty
+  */
+ 
+-static int tiocsctty(struct tty_struct *tty, int arg)
++int tiocsctty(struct tty_struct *tty, int arg)
+ {
+ 	int ret = 0;
+ 	if (current->signal->leader && (task_session(current) == tty->session))
+@@ -2219,10 +2219,10 @@ static int tiocgpgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t
+ }
+ 
+ /**
+- *	tiocspgrp		-	attempt to set process group
++ *	do_tiocspgrp		-	attempt to set process group
+  *	@tty: tty passed by user
+  *	@real_tty: tty side device matching tty passed by user
+- *	@p: pid pointer
++ *	@pid: pgrp_nr
+  *
+  *	Set the process group of the tty to the session passed. Only
+  *	permitted where the tty session is our session.
+@@ -2230,10 +2230,10 @@ static int tiocgpgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t
+  *	Locking: RCU, ctrl lock
+  */
+ 
+-static int tiocspgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t __user *p)
++int do_tiocspgrp(struct tty_struct *tty,
++		 struct tty_struct *real_tty, pid_t pgrp_nr)
+ {
+ 	struct pid *pgrp;
+-	pid_t pgrp_nr;
+ 	int retval = tty_check_change(real_tty);
+ 	unsigned long flags;
+ 
+@@ -2245,8 +2245,6 @@ static int tiocspgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t
+ 	    (current->signal->tty != real_tty) ||
+ 	    (real_tty->session != task_session(current)))
+ 		return -ENOTTY;
+-	if (get_user(pgrp_nr, p))
+-		return -EFAULT;
+ 	if (pgrp_nr < 0)
+ 		return -EINVAL;
+ 	rcu_read_lock();
+@@ -2268,6 +2266,27 @@ out_unlock:
+ }
+ 
+ /**
++ *	tiocspgrp		-	attempt to set process group
++ *	@tty: tty passed by user
++ *	@real_tty: tty side device matching tty passed by user
++ *	@p: pid pointer
 + *
-+ *  Copyright (C) 2009 Oren Laadan
++ *	Set the process group of the tty to the session passed. Only
++ *	permitted where the tty session is our session.
 + *
-+ *  This file is subject to the terms and conditions of the GNU General Public
-+ *  License.  See the file COPYING in the main directory of the Linux
-+ *  distribution for more details.
++ *	Locking: RCU, ctrl lock
 + */
 +
-+/* default debug level for output */
-+#define CKPT_DFLAG  CKPT_DSYS
-+
-+#include <linux/sched.h>
-+#include <linux/signal.h>
-+#include <linux/errno.h>
-+#include <linux/checkpoint.h>
-+#include <linux/checkpoint_hdr.h>
-+
-+static inline void fill_sigset(struct ckpt_sigset *h, sigset_t *sigset)
++static int tiocspgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t __user *p)
 +{
-+	memcpy(&h->sigset, sigset, sizeof(*sigset));
++	pid_t pgrp_nr;
++
++	if (get_user(pgrp_nr, p))
++		return -EFAULT;
++	return do_tiocspgrp(tty, real_tty, pgrp_nr);
 +}
 +
-+static inline void load_sigset(sigset_t *sigset, struct ckpt_sigset *h)
-+{
-+	memcpy(sigset, &h->sigset, sizeof(*sigset));
-+}
-+
-+/***********************************************************************
-+ * sighand checkpoint/collect/restart
-+ */
-+
-+static int do_checkpoint_sighand(struct ckpt_ctx *ctx,
-+				 struct sighand_struct *sighand)
-+{
-+	struct ckpt_hdr_sighand *h;
-+	struct ckpt_sigaction *hh;
-+	struct sigaction *sa;
-+	int i, ret;
-+
-+	h = ckpt_hdr_get_type(ctx, _NSIG * sizeof(*hh) + sizeof(*h),
-+			      CKPT_HDR_SIGHAND);
-+	if (!h)
-+		return -ENOMEM;
-+
-+	hh = h->action;
-+	spin_lock_irq(&sighand->siglock);
-+	for (i = 0; i < _NSIG; i++) {
-+		sa = &sighand->action[i].sa;
-+		hh[i]._sa_handler = (unsigned long) sa->sa_handler;
-+		hh[i].sa_flags = sa->sa_flags;
-+		hh[i].sa_restorer = (unsigned long) sa->sa_restorer;
-+		fill_sigset(&hh[i].sa_mask, &sa->sa_mask);
-+	}
-+	spin_unlock_irq(&sighand->siglock);
-+
-+	ret = ckpt_write_obj(ctx, &h->h);
-+	ckpt_hdr_put(ctx, h);
-+
-+	return ret;
-+}
-+
-+int checkpoint_sighand(struct ckpt_ctx *ctx, void *ptr)
-+{
-+	return do_checkpoint_sighand(ctx, (struct sighand_struct *) ptr);
-+}
-+
-+int checkpoint_obj_sighand(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct sighand_struct *sighand;
-+	int objref;
-+
-+	read_lock(&tasklist_lock);
-+	sighand = rcu_dereference(t->sighand);
-+	atomic_inc(&sighand->count);
-+	read_unlock(&tasklist_lock);
-+
-+	objref = checkpoint_obj(ctx, sighand, CKPT_OBJ_SIGHAND);
-+	__cleanup_sighand(sighand);
-+
-+	return objref;
-+}
-+
-+int ckpt_collect_sighand(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct sighand_struct *sighand;
-+	int ret;
-+
-+	read_lock(&tasklist_lock);
-+	sighand = rcu_dereference(t->sighand);
-+	atomic_inc(&sighand->count);
-+	read_unlock(&tasklist_lock);
-+
-+	ret = ckpt_obj_collect(ctx, sighand, CKPT_OBJ_SIGHAND);
-+	__cleanup_sighand(sighand);
-+
-+	return ret;
-+}
-+
-+static struct sighand_struct *do_restore_sighand(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_sighand *h;
-+	struct ckpt_sigaction *hh;
-+	struct sighand_struct *sighand;
-+	struct sigaction *sa;
-+	int i;
-+
-+	h = ckpt_read_obj_type(ctx, _NSIG * sizeof(*hh) + sizeof(*h),
-+			       CKPT_HDR_SIGHAND);
-+	if (IS_ERR(h))
-+		return ERR_PTR(PTR_ERR(h));
-+
-+	sighand = kmem_cache_alloc(sighand_cachep, GFP_KERNEL);
-+	if (!sighand) {
-+		sighand = ERR_PTR(-ENOMEM);
-+		goto out;
-+	}
-+	atomic_set(&sighand->count, 1);
-+
-+	hh = h->action;
-+	for (i = 0; i < _NSIG; i++) {
-+		sa = &sighand->action[i].sa;
-+		sa->sa_handler = (void *) (unsigned long) hh[i]._sa_handler;
-+		sa->sa_flags = hh[i].sa_flags;
-+		sa->sa_restorer = (void *) (unsigned long) hh[i].sa_restorer;
-+		load_sigset(&sa->sa_mask, &hh[i].sa_mask);
-+	}
-+ out:
-+	ckpt_hdr_put(ctx, h);
-+	return sighand;
-+}
-+
-+void *restore_sighand(struct ckpt_ctx *ctx)
-+{
-+	return (void *) do_restore_sighand(ctx);
-+}
-+
-+int restore_obj_sighand(struct ckpt_ctx *ctx, int sighand_objref)
-+{
-+	struct sighand_struct *sighand;
-+	struct sighand_struct *old_sighand;
-+
-+	sighand = ckpt_obj_fetch(ctx, sighand_objref, CKPT_OBJ_SIGHAND);
-+	if (IS_ERR(sighand))
-+		return PTR_ERR(sighand);
-+
-+	if (sighand == current->sighand)
-+		return 0;
-+
-+	atomic_inc(&sighand->count);
-+
-+	/* manipulate tsk->sighand with tasklist lock write-held */
-+	write_lock_irq(&tasklist_lock);
-+	old_sighand = rcu_dereference(current->sighand);
-+	spin_lock(&old_sighand->siglock);
-+	rcu_assign_pointer(current->sighand, sighand);
-+	spin_unlock(&old_sighand->siglock);
-+	write_unlock_irq(&tasklist_lock);
-+	__cleanup_sighand(old_sighand);
-+
-+	return 0;
-+}
++/**
+  *	tiocgsid		-	get session id
+  *	@tty: tty passed by user
+  *	@real_tty: tty side of the tty pased by the user if a pty else the tty
 diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index 3dbf188..c0e549e 100644
+index 8e1cce7..e00dd70 100644
 --- a/include/linux/checkpoint.h
 +++ b/include/linux/checkpoint.h
-@@ -245,6 +245,14 @@ extern int restore_memory_contents(struct ckpt_ctx *ctx, struct inode *inode);
- 	 VM_RESERVED | VM_NORESERVE | VM_HUGETLB | VM_NONLINEAR |	\
- 	 VM_MAPPED_COPY | VM_INSERTPAGE | VM_MIXEDMAP | VM_SAO)
+@@ -84,6 +84,7 @@ extern char *ckpt_fill_fname(struct path *path, struct path *root,
  
-+/* signals */
-+extern int checkpoint_obj_sighand(struct ckpt_ctx *ctx, struct task_struct *t);
-+extern int restore_obj_sighand(struct ckpt_ctx *ctx, int sighand_objref);
-+
-+extern int ckpt_collect_sighand(struct ckpt_ctx *ctx, struct task_struct *t);
-+extern int checkpoint_sighand(struct ckpt_ctx *ctx, void *ptr);
-+extern void *restore_sighand(struct ckpt_ctx *ctx);
-+
- static inline int ckpt_validate_errno(int errno)
- {
- 	return (errno >= 0) && (errno < MAX_ERRNO);
-@@ -277,7 +285,6 @@ static inline int ckpt_validate_errno(int errno)
- 			memcpy(LIVE, SAVE, count * sizeof(*SAVE));	\
- 	} while (0)
+ /* pids */
+ extern pid_t ckpt_pid_nr(struct ckpt_ctx *ctx, struct pid *pid);
++extern struct pid *_ckpt_find_pgrp(struct ckpt_ctx *ctx, pid_t pgid);
  
--
- /* debugging flags */
- #define CKPT_DBASE	0x1		/* anything */
- #define CKPT_DSYS	0x2		/* generic (system) */
+ /* socket functions */
+ extern int ckpt_sock_getnames(struct ckpt_ctx *ctx,
 diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index ca24112..3d3a105 100644
+index 842177f..9ae35a0 100644
 --- a/include/linux/checkpoint_hdr.h
 +++ b/include/linux/checkpoint_hdr.h
-@@ -87,6 +87,8 @@ enum {
- 	CKPT_HDR_IPC_MSG_MSG,
- 	CKPT_HDR_IPC_SEM,
+@@ -578,13 +578,19 @@ struct ckpt_rlimit {
  
-+	CKPT_HDR_SIGHAND = 601,
-+
- 	CKPT_HDR_TAIL = 9001,
- 
- 	CKPT_HDR_ERROR = 9999,
-@@ -113,6 +115,7 @@ enum obj_type {
- 	CKPT_OBJ_FILE_TABLE,
- 	CKPT_OBJ_FILE,
- 	CKPT_OBJ_MM,
-+	CKPT_OBJ_SIGHAND,
- 	CKPT_OBJ_NS,
- 	CKPT_OBJ_UTS_NS,
- 	CKPT_OBJ_IPC_NS,
-@@ -129,6 +132,8 @@ struct ckpt_const {
- 	__u16 task_comm_len;
- 	/* mm */
- 	__u16 mm_saved_auxv_len;
-+	/* signal */
-+	__u16 signal_nsig;
- 	/* uts */
- 	__u16 uts_sysname_len;
- 	__u16 uts_nodename_len;
-@@ -299,6 +304,7 @@ struct ckpt_hdr_task_objs {
- 
- 	__s32 files_objref;
- 	__s32 mm_objref;
-+	__s32 sighand_objref;
+ struct ckpt_hdr_signal {
+ 	struct ckpt_hdr h;
++	/* rlimit */
+ 	struct ckpt_rlimit rlim[CKPT_RLIM_NLIMITS];
++	/* itimer */
+ 	__u64 it_real_value;
+ 	__u64 it_real_incr;
+ 	__u64 it_virt_value;
+ 	__u64 it_virt_incr;
+ 	__u64 it_prof_value;
+ 	__u64 it_prof_incr;
++	/* tty */
++	__s32 tty_objref;
++	__s32 tty_pgrp;
++	__s32 tty_old_pgrp;
  } __attribute__((aligned(8)));
  
- /* restart blocks */
-@@ -414,6 +420,22 @@ struct ckpt_hdr_pgarr {
- 	__u64 nr_pages;		/* number of pages to saved */
- } __attribute__((aligned(8)));
+ struct ckpt_hdr_signal_task {
+diff --git a/include/linux/tty.h b/include/linux/tty.h
+index 295447b..9447251 100644
+--- a/include/linux/tty.h
++++ b/include/linux/tty.h
+@@ -471,6 +471,11 @@ extern void tty_ldisc_enable(struct tty_struct *tty);
+ /* This one is for ptmx_close() */
+ extern int tty_release(struct inode *inode, struct file *filp);
  
-+/* signals */
-+struct ckpt_sigset {
-+	__u8 sigset[CKPT_ARCH_NSIG / 8];
-+} __attribute__((aligned(8)));
++/* These are for checkpoint/restart */
++extern int tiocsctty(struct tty_struct *tty, int arg);
++extern int do_tiocspgrp(struct tty_struct *tty,
++			struct tty_struct *real_tty, pid_t pgrp_nr);
 +
-+struct ckpt_sigaction {
-+	__u64 _sa_handler;
-+	__u64 sa_flags;
-+	__u64 sa_restorer;
-+	struct ckpt_sigset sa_mask;
-+} __attribute__((aligned(8)));
-+
-+struct ckpt_hdr_sighand {
-+	struct ckpt_hdr h;
-+	struct ckpt_sigaction action[0];
-+} __attribute__((aligned(8)));
- 
- /* ipc commons */
- struct ckpt_hdr_ipcns {
+ #ifdef CONFIG_CHECKPOINT
+ struct ckpt_ctx;
+ struct ckpt_hdr_file;
 -- 
 1.6.0.4
 
