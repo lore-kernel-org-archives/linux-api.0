@@ -1,34 +1,68 @@
-From: Rishikesh <risrajak@linux.vnet.ibm.com>
+From: Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
-Date: Thu, 24 Sep 2009 23:50:58 +0530
-Message-ID: <4ABBB88A.5000200@linux.vnet.ibm.com>
-References: <1253749920-18673-1-git-send-email-orenl@librato.com> <4ABB6EB6.2040204@linux.vnet.ibm.com> <878wg41f65.fsf@caffeine.danplanet.com>
+Date: Thu, 24 Sep 2009 15:41:39 -0700
+Message-ID: <20090924154139.2a7dd5ec.akpm@linux-foundation.org>
+References: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <878wg41f65.fsf@caffeine.danplanet.com>
+In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Sender: owner-linux-mm@kvack.org
-To: Dan Smith <danms@us.ibm.com>
-Cc: Oren Laadan <orenl@librato.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org
+Cc: torvalds@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, serue@us.ibm.com, mingo@elte.hu, xemul@openvz.org, orenl@librato.com
 List-Id: linux-api@vger.kernel.org
 
-Dan Smith wrote:
-> R> I am getting following build error while compiling linux-cr kernel.
->
-> With CONFIG_CHECKPOINT=3Dn, right?
->
-> R> 76569 net/unix/af_unix.c:528: error: =E2=80=98unix_collect=E2=80=99 =
-undeclared here (not=20
-> R> in a function)
->
-> Try the patch below.
->  =20
+On Wed, 23 Sep 2009 19:50:40 -0400
+Oren Laadan <orenl@librato.com> wrote:
 
-Yes attached patch solves the prob. Thanks Dan.
+> Q: How useful is this code as it stands in real-world usage?
+> A: The application can be single- or multi-processes and threads. It
+>    handles open files (regular files/directories on most file systems,
+>    pipes, fifos, af_unix sockets, /dev/{null,zero,random,urandom} and
+>    pseudo-terminals. It supports shared memory. sysv IPC (except undo
+>    of sempahores). It's suitable for many types of batch jobs as well
+>    as some interactive jobs. (Note: it is assumed that the fs view is
+>    available at restart).
+
+That's encouraging.
+
+> Q: What can it checkpoint and restart ?
+> A: A (single threaded) process can checkpoint itself, aka "self"
+>    checkpoint, if it calls the new system calls. Otherise, for an
+>    "external" checkpoint, the caller must first freeze the target
+>    processes. One can either checkpoint an entire container (and
+>    we make best effort to ensure that the result is self-contained),
+>    or merely a subtree of a process hierarchy.
+
+What is "best effort"?  Will the operation appear to have succeeded,
+only it didn't?
+
+IOW, how reliable and robust is code at detecting that it was unable to
+successfully generate a restartable image?
+
+> Q: What about namespaces ?
+> A: Currrently, UTS and IPC namespaces are restored. They demonstrate
+>    how namespaces are handled. More to come.
+
+Will this new code muck up the kernel?
+
+> Q: What additional work needs to be done to it?
+> A: Fill in the gory details following the examples so far. Current WIP
+>    includes inet sockets, event-poll, and early work on inotify, mount
+>    namespace and mount-points, pseudo file systems
+
+Will this new code muck up the kernel, or will it be clean?
+
+> and x86_64 support.
+
+eh?  You mean the code doesn't work on x86_64 at present?
+
+
+What is the story on migration?  Moving the process(es) to a different
+machine?
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
 the body to majordomo@kvack.org.  For more info on Linux MM,
 see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
