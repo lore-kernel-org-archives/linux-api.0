@@ -1,426 +1,428 @@
-From: Oren Laadan <orenl@librato.com>
-Subject: [PATCH v18 48/80] c/r: make ckpt_may_checkpoint_task() check each namespace individually
-Date: Wed, 23 Sep 2009 19:51:28 -0400
-Message-ID: <1253749920-18673-49-git-send-email-orenl@librato.com>
+From: Rishikesh <risrajak@linux.vnet.ibm.com>
+Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
+Date: Thu, 24 Sep 2009 18:35:58 +0530
+Message-ID: <4ABB6EB6.2040204@linux.vnet.ibm.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
 Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Oren Laadan <orenl@librato.com>, Oren Laadan <orenl@cs.columbia.edu>
+To: Oren Laadan <orenl@librato.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-For a given namespace type, say XXX, if a checkpoint was taken on a
-CONFIG_XXX_NS system, is restarted on a !CONFIG_XXX_NS, then ensure
-that:
+Hi Oren,
 
-1) The global settings of the global (init) namespace do not get
-overwritten. Creating new objects in that namespace is ok, as long as
-the request identifier is available.
+I am getting following build error while compiling linux-cr kernel.
 
-2) All restarting tasks use a single namespace - because it is
-impossible to create additional namespaces to accommodate for what had
-been checkpointed.
+git://git.ncl.cs.columbia.edu/pub/git/linux-cr.git
 
-Original patch introducing nsproxy c/r by Dan Smith <danms@us.ibm.com>
+...
+76569 net/unix/af_unix.c:528: error: =91unix_collect=92 undeclared here (=
+not=20
+in a function)
+76570 LD [M] drivers/net/enic/enic.o
+76571 make[2]: *** [net/unix/af_unix.o] Error 1
+76572 make[1]: *** [net/unix] Error 2
+76573 make: *** [net] Error 2
+76574 make: *** Waiting for unfinished jobs....
+...
 
-Chagnelog[v18]:
-  - Add a few more ckpt_write_err()s
-Chagnelog[v17]:
-  - Only collect sub-objects of struct_nsproxy once.
-  - Restore namespace pieces directly instead of using sys_unshare()
-  - Proper handling of restart from namespace(s) without namespace(s)
+Let me know if you need config file.
 
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
----
- checkpoint/checkpoint.c        |   26 +++++++++++--
- checkpoint/objhash.c           |   28 ++++++++++++++
- checkpoint/process.c           |   81 ++++++++++++++++++++++++++++++++++++++++
- include/linux/checkpoint.h     |    5 ++
- include/linux/checkpoint_hdr.h |   13 ++++++
- kernel/nsproxy.c               |   76 +++++++++++++++++++++++++++++++++++++
- 6 files changed, 225 insertions(+), 4 deletions(-)
-
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index f907485..52d7a92 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -378,6 +378,8 @@ static int checkpoint_all_tasks(struct ckpt_ctx *ctx)
- static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
- {
- 	struct task_struct *root = ctx->root_task;
-+	struct nsproxy *nsproxy;
-+	int ret = 0;
- 
- 	ckpt_debug("check %d\n", task_pid_nr_ns(t, ctx->root_nsproxy->pid_ns));
- 
-@@ -417,11 +419,27 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
- 		return -EINVAL;
- 	}
- 
--	/* FIX: change this when namespaces are added */
--	if (task_nsproxy(t) != ctx->root_nsproxy)
--		return -EPERM;
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(t);
-+	if (nsproxy->uts_ns != ctx->root_nsproxy->uts_ns)
-+		ret = -EPERM;
-+	if (nsproxy->ipc_ns != ctx->root_nsproxy->ipc_ns)
-+		ret = -EPERM;
-+	if (nsproxy->mnt_ns != ctx->root_nsproxy->mnt_ns) {
-+		__ckpt_write_err(ctx, "TE", "bad mnt_ns", -EPERM);
-+		ret = -EPERM;
-+	}
-+	if (nsproxy->pid_ns != ctx->root_nsproxy->pid_ns) {
-+		__ckpt_write_err(ctx, "TE", "bad pid_ns", -EPERM);
-+		ret = -EPERM;
-+	}
-+	if (nsproxy->net_ns != ctx->root_nsproxy->net_ns) {
-+		__ckpt_write_err(ctx, "TE", "bad net_ns", -EPERM);
-+		ret = -EPERM;
-+	}
-+	rcu_read_unlock();
- 
--	return 0;
-+	return ret;
- }
- 
- #define CKPT_HDR_PIDS_CHUNK	256
-diff --git a/checkpoint/objhash.c b/checkpoint/objhash.c
-index be9411f..a8a99e7 100644
---- a/checkpoint/objhash.c
-+++ b/checkpoint/objhash.c
-@@ -122,6 +122,22 @@ static int obj_mm_users(void *ptr)
- 	return atomic_read(&((struct mm_struct *) ptr)->mm_users);
- }
- 
-+static int obj_ns_grab(void *ptr)
-+{
-+	get_nsproxy((struct nsproxy *) ptr);
-+	return 0;
-+}
-+
-+static void obj_ns_drop(void *ptr, int lastref)
-+{
-+	put_nsproxy((struct nsproxy *) ptr);
-+}
-+
-+static int obj_ns_users(void *ptr)
-+{
-+	return atomic_read(&((struct nsproxy *) ptr)->count);
-+}
-+
- static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 	/* ignored object */
- 	{
-@@ -167,6 +183,16 @@ static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 		.checkpoint = checkpoint_mm,
- 		.restore = restore_mm,
- 	},
-+	/* ns object */
-+	{
-+		.obj_name = "NSPROXY",
-+		.obj_type = CKPT_OBJ_NS,
-+		.ref_drop = obj_ns_drop,
-+		.ref_grab = obj_ns_grab,
-+		.ref_users = obj_ns_users,
-+		.checkpoint = checkpoint_ns,
-+		.restore = restore_ns,
-+	},
- };
- 
- 
-@@ -572,6 +598,8 @@ int ckpt_obj_contained(struct ckpt_ctx *ctx)
- 
- 	/* account for ctx->file reference (if in the table already) */
- 	ckpt_obj_users_inc(ctx, ctx->file, 1);
-+	/* account for ctx->root_nsproxy reference (if in the table already) */
-+	ckpt_obj_users_inc(ctx, ctx->root_nsproxy, 1);
- 
- 	hlist_for_each_entry(obj, node, &ctx->obj_hash->list, next) {
- 		if (!obj->ops->ref_users)
-diff --git a/checkpoint/process.c b/checkpoint/process.c
-index 1788a39..3444aff 100644
---- a/checkpoint/process.c
-+++ b/checkpoint/process.c
-@@ -12,6 +12,7 @@
- #define CKPT_DFLAG  CKPT_DSYS
- 
- #include <linux/sched.h>
-+#include <linux/nsproxy.h>
- #include <linux/posix-timers.h>
- #include <linux/futex.h>
- #include <linux/compat.h>
-@@ -104,6 +105,35 @@ static int checkpoint_task_struct(struct ckpt_ctx *ctx, struct task_struct *t)
- 	return ckpt_write_string(ctx, t->comm, TASK_COMM_LEN);
- }
- 
-+static int checkpoint_task_ns(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct ckpt_hdr_task_ns *h;
-+	struct nsproxy *nsproxy;
-+	int ns_objref;
-+	int ret;
-+
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(t);
-+	get_nsproxy(nsproxy);
-+	rcu_read_unlock();
-+
-+	ns_objref = checkpoint_obj(ctx, nsproxy, CKPT_OBJ_NS);
-+	put_nsproxy(nsproxy);
-+
-+	ckpt_debug("nsproxy: objref %d\n", ns_objref);
-+	if (ns_objref < 0)
-+		return ns_objref;
-+
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_TASK_NS);
-+	if (!h)
-+		return -ENOMEM;
-+	h->ns_objref = ns_objref;
-+	ret = ckpt_write_obj(ctx, &h->h);
-+	ckpt_hdr_put(ctx, h);
-+
-+	return ret;
-+}
-+
- static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- {
- 	struct ckpt_hdr_task_objs *h;
-@@ -111,6 +141,19 @@ static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- 	int mm_objref;
- 	int ret;
- 
-+	/*
-+	 * Shared objects may have dependencies among them: task->mm
-+	 * depends on task->nsproxy (by ipc_ns). Therefore first save
-+	 * the namespaces, and then the remaining shared objects.
-+	 * During restart a task will already have its namespaces
-+	 * restored when it gets to restore, e.g. its memory.
-+	 */
-+
-+	ret = checkpoint_task_ns(ctx, t);
-+	ckpt_debug("ns: objref %d\n", ret);
-+	if (ret < 0)
-+		return ret;
-+
- 	files_objref = checkpoint_obj_file_table(ctx, t);
- 	ckpt_debug("files: objref %d\n", files_objref);
- 	if (files_objref < 0) {
-@@ -286,6 +329,9 @@ int ckpt_collect_task(struct ckpt_ctx *ctx, struct task_struct *t)
- {
- 	int ret;
- 
-+	ret = ckpt_collect_ns(ctx, t);
-+	if (ret < 0)
-+		return ret;
- 	ret = ckpt_collect_file_table(ctx, t);
- 	if (ret < 0)
- 		return ret;
-@@ -361,11 +407,46 @@ static int restore_task_struct(struct ckpt_ctx *ctx)
- 	return ret;
- }
- 
-+static int restore_task_ns(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_task_ns *h;
-+	struct nsproxy *nsproxy;
-+	int ret = 0;
-+
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_TASK_NS);
-+	if (IS_ERR(h))
-+		return PTR_ERR(h);
-+
-+	nsproxy = ckpt_obj_fetch(ctx, h->ns_objref, CKPT_OBJ_NS);
-+	if (IS_ERR(nsproxy)) {
-+		ret = PTR_ERR(nsproxy);
-+		goto out;
-+	}
-+
-+	if (nsproxy != task_nsproxy(current)) {
-+		get_nsproxy(nsproxy);
-+		switch_task_namespaces(current, nsproxy);
-+	}
-+ out:
-+	ckpt_debug("nsproxy: ret %d (%p)\n", ret, task_nsproxy(current));
-+	ckpt_hdr_put(ctx, h);
-+	return ret;
-+}
-+
- static int restore_task_objs(struct ckpt_ctx *ctx)
- {
- 	struct ckpt_hdr_task_objs *h;
- 	int ret;
- 
-+	/*
-+	 * Namespaces come first, because ->mm depends on ->nsproxy,
-+	 * and because shared objects are restored before they are
-+	 * referenced. See comment in checkpoint_task_objs.
-+	 */
-+	ret = restore_task_ns(ctx);
-+	if (ret < 0)
-+		return ret;
-+
- 	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_TASK_OBJS);
- 	if (IS_ERR(h))
- 		return PTR_ERR(h);
-diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index 2770fc2..e68afab 100644
---- a/include/linux/checkpoint.h
-+++ b/include/linux/checkpoint.h
-@@ -142,6 +142,11 @@ extern int checkpoint_restart_block(struct ckpt_ctx *ctx,
- 				    struct task_struct *t);
- extern int restore_restart_block(struct ckpt_ctx *ctx);
- 
-+/* namespaces */
-+extern int ckpt_collect_ns(struct ckpt_ctx *ctx, struct task_struct *t);
-+extern int checkpoint_ns(struct ckpt_ctx *ctx, void *ptr);
-+extern void *restore_ns(struct ckpt_ctx *ctx);
-+
- /* file table */
- extern int ckpt_collect_file_table(struct ckpt_ctx *ctx, struct task_struct *t);
- extern int checkpoint_obj_file_table(struct ckpt_ctx *ctx,
-diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index 7e64b77..5a5916d 100644
---- a/include/linux/checkpoint_hdr.h
-+++ b/include/linux/checkpoint_hdr.h
-@@ -54,10 +54,12 @@ enum {
- 
- 	CKPT_HDR_TREE = 101,
- 	CKPT_HDR_TASK,
-+	CKPT_HDR_TASK_NS,
- 	CKPT_HDR_TASK_OBJS,
- 	CKPT_HDR_RESTART_BLOCK,
- 	CKPT_HDR_THREAD,
- 	CKPT_HDR_CPU,
-+	CKPT_HDR_NS,
- 
- 	/* 201-299: reserved for arch-dependent */
- 
-@@ -96,6 +98,7 @@ enum obj_type {
- 	CKPT_OBJ_FILE_TABLE,
- 	CKPT_OBJ_FILE,
- 	CKPT_OBJ_MM,
-+	CKPT_OBJ_NS,
- 	CKPT_OBJ_MAX
- };
- 
-@@ -175,6 +178,16 @@ struct ckpt_hdr_task {
- 	__u64 robust_futex_list; /* a __user ptr */
- } __attribute__((aligned(8)));
- 
-+/* namespaces */
-+struct ckpt_hdr_task_ns {
-+	struct ckpt_hdr h;
-+	__s32 ns_objref;
-+} __attribute__((aligned(8)));
-+
-+struct ckpt_hdr_ns {
-+	struct ckpt_hdr h;
-+} __attribute__((aligned(8)));
-+
- /* task's shared resources */
- struct ckpt_hdr_task_objs {
- 	struct ckpt_hdr h;
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index 09b4ff9..54cb987 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -21,6 +21,7 @@
- #include <linux/pid_namespace.h>
- #include <net/net_namespace.h>
- #include <linux/ipc_namespace.h>
-+#include <linux/checkpoint.h>
- 
- static struct kmem_cache *nsproxy_cachep;
- 
-@@ -221,6 +222,81 @@ void exit_task_namespaces(struct task_struct *p)
- 	switch_task_namespaces(p, NULL);
- }
- 
-+#ifdef CONFIG_CHECKPOINT
-+int ckpt_collect_ns(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct nsproxy *nsproxy;
-+	int exists;
-+	int ret;
-+
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(t);
-+	if (nsproxy)
-+		get_nsproxy(nsproxy);
-+	rcu_read_unlock();
-+
-+	if (!nsproxy)
-+		return 0;
-+
-+	/* if already exists, don't proceed inside the struct */
-+	exists = ckpt_obj_lookup(ctx, nsproxy, CKPT_OBJ_NS);
-+
-+	ret = ckpt_obj_collect(ctx, nsproxy, CKPT_OBJ_NS);
-+	if (ret < 0 || exists)
-+		goto out;
-+
-+	/* TODO: collect other namespaces here */
-+ out:
-+	put_nsproxy(nsproxy);
-+	return ret;
-+}
-+
-+static int do_checkpoint_ns(struct ckpt_ctx *ctx, struct nsproxy *nsproxy)
-+{
-+	struct ckpt_hdr_ns *h;
-+	int ret;
-+
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_NS);
-+	if (!h)
-+		return -ENOMEM;
-+
-+	/* TODO: Write other namespaces here */
-+
-+	ret = ckpt_write_obj(ctx, &h->h);
-+	ckpt_hdr_put(ctx, h);
-+	return ret;
-+}
-+
-+
-+int checkpoint_ns(struct ckpt_ctx *ctx, void *ptr)
-+{
-+	return do_checkpoint_ns(ctx, (struct nsproxy *) ptr);
-+}
-+
-+static struct nsproxy *do_restore_ns(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_ns *h;
-+	struct nsproxy *nsproxy = NULL;
-+
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_NS);
-+	if (IS_ERR(h))
-+		return (struct nsproxy *) h;
-+
-+	nsproxy = current->nsproxy;
-+	get_nsproxy(nsproxy);
-+
-+	/* TODO: add more namespaces here */
-+
-+	ckpt_hdr_put(ctx, h);
-+	return nsproxy;
-+}
-+
-+void *restore_ns(struct ckpt_ctx *ctx)
-+{
-+	return (void *) do_restore_ns(ctx);
-+}
-+#endif /* CONFIG_CHECKPOINT */
-+
- static int __init nsproxy_cache_init(void)
- {
- 	nsproxy_cachep = KMEM_CACHE(nsproxy, SLAB_PANIC);
--- 
-1.6.0.4
+-Rishi
+Oren Laadan wrote:
+> Hi Andrew,
+>
+> This is our recent round of checkpoint/restart patches. It can
+> checkpoint and restart interactive sessions of 'screen' across=20
+> kernel reboot. Please consider applying to -mm.
+>
+> Patches 1-17 are clean-ups and preparations for c/r:
+>  * 1,2,3,4 and 9,10: cleanups, also useful for c/r.
+>  * 5,6: fix freezer control group
+>  * 7,8: extend freezer control group for c/r.
+>  * 11-17: clone_with_pid
+>
+> Patch 18 reserves the system calls slots - please apply so we
+> don't need to keep changing them.
+>
+> Patches 19-80 contain the actual c/r code; we've exhausted the
+> reviewers for most of them.
+>
+> Patch 32 implements a deferqueue - mechanism for a process to
+> defer work for some later time (unlike workqueue, designed for
+> the work to execute in the context of same/original process).
+>
+> Thanks,
+>
+> Oren.
+>
+> ----
+>
+> Application checkpoint/restart (c/r) is the ability to save the state
+> of a running application so that it can later resume its execution
+> from the time at which it was checkpointed, on the same or a different
+> machine.
+>
+> This version brings support many new features, including support for
+> unix domain sockets, fifos, pseudo-terminals, and signals (see the
+> detailed changelog below).
+>
+> With these in place, it can now checkpoint and restart not only batch
+> jobs, but also interactive programs using 'screen'. For example, users
+> can checkpoint a 'screen' session with multiple shells, upgrade their
+> kernel, reboot, and restart their interactive 'screen' session from
+> before !
+>
+> This patchset was compiled and tested against v2.6.31. For more
+> information, check out Documentation/checkpoint/*.txt
+>
+> Q: How useful is this code as it stands in real-world usage?
+> A: The application can be single- or multi-processes and threads. It
+>    handles open files (regular files/directories on most file systems,
+>    pipes, fifos, af_unix sockets, /dev/{null,zero,random,urandom} and
+>    pseudo-terminals. It supports shared memory. sysv IPC (except undo
+>    of sempahores). It's suitable for many types of batch jobs as well
+>    as some interactive jobs. (Note: it is assumed that the fs view is
+>    available at restart).
+>
+> Q: What can it checkpoint and restart ?
+> A: A (single threaded) process can checkpoint itself, aka "self"
+>    checkpoint, if it calls the new system calls. Otherise, for an
+>    "external" checkpoint, the caller must first freeze the target
+>    processes. One can either checkpoint an entire container (and
+>    we make best effort to ensure that the result is self-contained),
+>    or merely a subtree of a process hierarchy.
+>
+> Q: What about namespaces ?
+> A: Currrently, UTS and IPC namespaces are restored. They demonstrate
+>    how namespaces are handled. More to come.
+>
+> Q: What additional work needs to be done to it?
+> A: Fill in the gory details following the examples so far. Current WIP
+>    includes inet sockets, event-poll, and early work on inotify, mount
+>    namespace and mount-points, pseudo file systems, and x86_64 support.
+>   =20
+> Q: How can I try it ?
+> A: Use it for simple batch jobs (pipes, too), or an interactive
+>    'screen' session, in a whole container or just a subtree of
+>    tasks:
+>
+>    create the freezer cgroup:
+>      $ mount -t cgroup -ofreezer freezer /cgroup
+>      $ mkdir /cgroup/0
+>   =20
+>    run the test, freeze it: =20
+>      $ test/multitask &
+>      [1] 2754
+>      $ for i in `pidof multitask`; do echo $i > /cgroup/0/tasks; done
+>      $ echo FROZEN > /cgruop/0/freezer.state
+>   =20
+>    checkpoint:
+>      $ ./ckpt 2754 > ckpt.out
+>   =20
+>    restart:
+>      $ ./mktree < ckpt.out
+>   =20
+>    voila :)
+>   =20
+> To do all this, you'll need:
+>
+> The git tree tracking v18, branch 'ckpt-v18' (and past versions):
+> 	git://git.ncl.cs.columbia.edu/pub/git/linux-cr.git
+>
+> The userspace tools are available through the matching branch [v18]:
+> 	git://git.ncl.cs.columbia.edu/pub/git/user-cr.git
+>
+>
+> Changelog:
+>
+> [2009-Sep-22] v18
+>
+>   (new features)
+>   - [Nathan Lynch] Re-introduce powerpc support
+>   - Save/restore pseudo-terminals
+>   - Save/restore (pty) controlling terminals
+>   - Save/restore restore PGIDs
+>   - [Dan Smith] Save/restore unix domain sockets
+>   - Save/restore FIFOs
+>   - Save/restore pending signals
+>   - Save/restore rlimits
+>   - Save/restore itimers
+>   - [Matt Helsley] Handle many non-pseudo file-systems
+>
+>   (other changes)
+>   - Rename headerless struct ckpt_hdr_* to struct ckpt_*
+>   - [Nathan Lynch] discard const from struct cred * where appropriate
+>   - [Serge Hallyn][s390] Set return value for self-checkpoint=20
+>   - Handle kmalloc failure in restore_sem_array()
+>   - [IPC] Collect files used by shm objects
+>   - [IPC] Use file (not inode) as shared object on checkpoint of shm
+>   - More ckpt_write_err()s to give information on checkpoint failure
+>   - Adjust format of pipe buffer to include the mandatory pre-header
+>   - [LEAKS] Mark the backing file as visited at chekcpoint
+>   - Tighten checks on supported vma to checkpoint or restart
+>   - [Serge Hallyn] Export filemap_checkpoint() (used for ext4)
+>   - Introduce ckpt_collect_file() that also uses file->collect method
+>   - Use ckpt_collect_file() instead of ckpt_obj_collect() for files
+>   - Fix leak-detection issue in collect_mm() (test for first-time obj)
+>   - Invoke set_close_on_exec() unconditionally on restart
+>   - [Dan Smith] Export fill_fname() as ckpt_fill_fname()
+>   - Interface to pass simple pointers as data with deferqueue
+>   - [Dan Smith] Fix ckpt_obj_lookup_add() leak detection logic
+>   - Replace EAGAIN with EBUSY where necessary
+>   - Introduce CKPT_OBJ_VISITED in leak detection
+>   - ckpt_obj_collect() returns objref for new objects, 0 otherwise
+>   - Rename ckpt_obj_checkpointed() to ckpt_obj_visited()
+>   - Introduce ckpt_obj_visit() to mark objects as visited
+>   - Set the CHECKPOINTED flag on objects before calling checkpoint
+>   - Introduce ckpt_obj_reserve()
+>   - Change ref_drop() to accept a @lastref argument (for cleanup)
+>   - Disallow multiple objects with same objref in restart
+>   - Allow _ckpt_read_obj_type() to read header only (w/o payload)
+>   - Fix leak of ckpt_ctx when restoring zombie tasks
+>   - Fix race of prepare_descendant() with an ongoing fork()
+>   - Track and report the first error if restart fails
+>   - Tighten logic to protect against bogus pids in input
+>   - [Matt Helsley] Improve debug output from ckpt_notify_error()
+>   - [Nathan Lynch] fix compilation errors with CONFIG_COMPAT=3Dy
+>   - Detect error-headers in input data on restart, and abort.
+>   - Standard format for checkpoint error strings (and documentation)
+>   - [Dan Smith] Add an errno validation function
+>   - Add ckpt_read_payload(): read a variable-length object (no header)
+>   - Add ckpt_read_string(): same for strings (ensures null-terminated)
+>   - Add ckpt_read_consume(): consumes next object without processing
+>   - [John Dykstra] Fix no-dot-config-targets pattern in linux/Makefile
+>
+> [2009-Jul-21] v17
+>   - Introduce syscall clone_with_pids() to restore original pids
+>   - Support threads and zombies
+>   - Save/restore task->files
+>   - Save/restore task->sighand
+>   - Save/restore futex
+>   - Save/restore credentials
+>   - Introduce PF_RESTARTING to skip notifications on task exit
+>   - restart(2) allow caller to ask to freeze tasks after restart
+>   - restart(2) isn't idempotent: return -EINTR if interrupted
+>   - Improve debugging output handling=20
+>   - Make multi-process restart logic more robust and complete
+>   - Correctly select return value for restarting tasks on success
+>   - Tighten ptrace test for checkpoint to PTRACE_MODE_ATTACH
+>   - Use CHECKPOINTING state for frozen checkpointed tasks
+>   - Fix compilation without CONFIG_CHECKPOINT
+>   - Fix compilation with CONFIG_COMPAT
+>   - Fix headers includes and exports
+>   - Leak detection performed in two steps
+>   - Detect "inverse" leaks of objects (dis)appearing unexpectedly
+>   - Memory: save/restore mm->{flags,def_flags,saved_auxv}
+>   - Memory: only collect sub-objects of mm once (leak detection)
+>   - Files: validate f_mode after restore
+>   - Namespaces: leak detection for nsproxy sub-components
+>   - Namespaces: proper restart from namespace(s) without namespace(s)
+>   - Save global constants in header instead of per-object
+>   - IPC: replace sys_unshare() with create_ipc_ns()
+>   - IPC: restore objects in suitable namespace
+>   - IPC: correct behavior under !CONFIG_IPC_NS
+>   - UTS: save/restore all fields
+>   - UTS: replace sys_unshare() with create_uts_ns()
+>   - X86_32: sanitize cpu, debug, and segment registers on restart
+>   - cgroup_freezer: add CHECKPOINTING state to safeguard checkpoint
+>   - cgroup_freezer: add interface to freeze a cgroup (given a task)
+>
+> [2009-May-27] v16
+>   - Privilege checks for IPC checkpoint
+>   - Fix error string generation during checkpoint
+>   - Use kzalloc for header allocation
+>   - Restart blocks are arch-independent
+>   - Redo pipe c/r using splice
+>   - Fixes to s390 arch
+>   - Remove powerpc arch (temporary)
+>   - Explicitly restore ->nsproxy
+>   - All objects in image are precedeed by 'struct ckpt_hdr'
+>   - Fix leaks detection (and leaks)
+>   - Reorder of patchset
+>   - Misc bugs and compilation fixes
+>
+> [2009-Apr-12] v15
+>   - Minor fixes
+>
+> [2009-Apr-28] v14
+>   - Tested against kernel v2.6.30-rc3 on x86_32.
+>   - Refactor files chekpoint to use f_ops (file operations)
+>   - Refactor mm/vma to use vma_ops
+>   - Explicitly handle VDSO vma (and require compat mode)
+>   - Added code to c/r restat-blocks (restart timeout related syscalls)
+>   - Added code to c/r namespaces: uts, ipc (with Dan Smith)
+>   - Added code to c/r sysvipc (shm, msg, sem)
+>   - Support for VM_CLONE shared memory
+>   - Added resource leak detection for whole-container checkpoint
+>   - Added sysctl gauge to allow unprivileged restart/checkpoint
+>   - Improve and simplify the code and logic of shared objects
+>   - Rework image format: shared objects appear prior to their use
+>   - Merge checkpoint and restart functionality into same files
+>   - Massive renaming of functions: prefix "ckpt_" for generics,
+>     "checkpoint_" for checkpoint, and "restore_" for restart.
+>   - Report checkpoint errors as a valid (string record) in the output
+>   - Merged PPC architecture (by Nathan Lunch),
+>   - Requires updates to userspace tools too.
+>   - Misc nits and bug fixes
+>
+> [2009-Mar-31] v14-rc2
+>   - Change along Dave's suggestion to use f_ops->checkpoint() for files
+>   - Merge patch simplifying Kconfig, with CONFIG_CHECKPOINT_SUPPORT
+>   - Merge support for PPC arch (Nathan Lynch)
+>   - Misc cleanups and fixes in response to comments
+>
+> [2009-Mar-20] v14-rc1:
+>   - The 'h.parent' field of 'struct cr_hdr' isn't used - discard
+>   - Check whether calls to cr_hbuf_get() succeed or fail.
+>   - Fixed of pipe c/r code
+>   - Prevent deadlock by refusing c/r when a pipe inode =3D=3D ctx->file=
+ inode
+>   - Refuse non-self checkpoint if a task isn't frozen
+>   - Use unsigned fields in checkpoint headers unless otherwise required
+>   - Rename functions in files c/r to better reflect their role
+>   - Add support for anonymous shared memory
+>   - Merge support for s390 arch (Dan Smith, Serge Hallyn)
+>    =20
+> [2008-Dec-03] v13:
+>   - Cleanups of 'struct cr_ctx' - remove unused fields
+>   - Misc fixes for comments
+>  =20
+> [2008-Dec-17] v12:
+>   - Fix re-alloc/reset of pgarr chain to correctly reuse buffers
+>     (empty pgarr are saves in a separate pool chain)
+>   - Add a couple of missed calls to cr_hbuf_put()
+>   - cr_kwrite/cr_kread() again use vfs_read(), vfs_write() (safer)
+>   - Split cr_write/cr_read() to two parts: _cr_write/read() helper
+>   - Befriend with sparse: explicit conversion to 'void __user *'
+>   - Redrefine 'pr_fmt' ind replace cr_debug() with pr_debug()
+>
+> [2008-Dec-05] v11:
+>   - Use contents of 'init->fs->root' instead of pointing to it
+>   - Ignore symlinks (there is no such thing as an open symlink)
+>   - cr_scan_fds() retries from scratch if it hits size limits
+>   - Add missing test for VM_MAYSHARE when dumping memory
+>   - Improve documentation about: behavior when tasks aren't fronen,
+>     life span of the object hash, references to objects in the hash
+>
+> [2008-Nov-26] v10:
+>   - Grab vfs root of container init, rather than current process
+>   - Acquire dcache_lock around call to __d_path() in cr_fill_name()
+>   - Force end-of-string in cr_read_string() (fix possible DoS)
+>   - Introduce cr_write_buffer(), cr_read_buffer() and cr_read_buf_type(=
+)
+>
+> [2008-Nov-10] v9:
+>   - Support multiple processes c/r
+>   - Extend checkpoint header with archtiecture dependent header=20
+>   - Misc bug fixes (see individual changelogs)
+>   - Rebase to v2.6.28-rc3.
+>
+> [2008-Oct-29] v8:
+>   - Support "external" checkpoint
+>   - Include Dave Hansen's 'deny-checkpoint' patch
+>   - Split docs in Documentation/checkpoint/..., and improve contents
+>
+> [2008-Oct-17] v7:
+>   - Fix save/restore state of FPU
+>   - Fix argument given to kunmap_atomic() in memory dump/restore
+>
+> [2008-Oct-07] v6:
+>   - Balance all calls to cr_hbuf_get() with matching cr_hbuf_put()
+>     (even though it's not really needed)
+>   - Add assumptions and what's-missing to documentation
+>   - Misc fixes and cleanups
+>
+> [2008-Sep-11] v5:
+>   - Config is now 'def_bool n' by default
+>   - Improve memory dump/restore code (following Dave Hansen's comments)
+>   - Change dump format (and code) to allow chunks of <vaddrs, pages>
+>     instead of one long list of each
+>   - Fix use of follow_page() to avoid faulting in non-present pages
+>   - Memory restore now maps user pages explicitly to copy data into the=
+m,
+>     instead of reading directly to user space; got rid of mprotect_fixu=
+p()
+>   - Remove preempt_disable() when restoring debug registers
+>   - Rename headers files s/ckpt/checkpoint/
+>   - Fix misc bugs in files dump/restore
+>   - Fixes and cleanups on some error paths
+>   - Fix misc coding style
+>
+> [2008-Sep-09] v4:
+>   - Various fixes and clean-ups
+>   - Fix calculation of hash table size
+>   - Fix header structure alignment
+>   - Use stand list_... for cr_pgarr
+>
+> [2008-Aug-29] v3:
+>   - Various fixes and clean-ups
+>   - Use standard hlist_... for hash table
+>   - Better use of standard kmalloc/kfree
+>
+> [2008-Aug-20] v2:
+>   - Added Dump and restore of open files (regular and directories)
+>   - Added basic handling of shared objects, and improve handling of
+>     'parent tag' concept
+>   - Added documentation
+>   - Improved ABI, 64bit padding for image data
+>   - Improved locking when saving/restoring memory
+>   - Added UTS information to header (release, version, machine)
+>   - Cleanup extraction of filename from a file pointer
+>   - Refactor to allow easier reviewing
+>   - Remove requirement for CAPS_SYS_ADMIN until we come up with a
+>     security policy (this means that file restore may fail)
+>   - Other cleanup and response to comments for v1
+>
+> [2008-Jul-29] v1:
+>   - Initial version: support a single task with address space of only
+>     private anonymous or file-mapped VMAs; syscalls ignore pid/crid
+>     argument and act on current process.
+>
+> --
+> At the containers mini-conference before OLS, the consensus among
+> all the stakeholders was that doing checkpoint/restart in the kernel
+> as much as possible was the best approach.  With this approach, the
+> kernel will export a relatively opaque 'blob' of data to userspace
+> which can then be handed to the new kernel at restore time.
+>
+> This is different than what had been proposed before, which was
+> that a userspace application would be responsible for collecting
+> all of this data.  We were also planning on adding lots of new,
+> little kernel interfaces for all of the things that needed
+> checkpointing.  This unites those into a single, grand interface.
+>
+> The 'blob' will contain copies of select portions of kernel
+> structures such as vmas and mm_structs.  It will also contain
+> copies of the actual memory that the process uses.  Any changes
+> in this blob's format between kernel revisions can be handled by
+> an in-userspace conversion program.
+>
+> This is a similar approach to virtually all of the commercial
+> checkpoint/restart products out there, as well as the research
+> project Zap.
+>
+> These patches basically serialize internel kernel state and write
+> it out to a file descriptor.  The checkpoint and restore are done
+> with two new system calls: sys_checkpoint and sys_restart.
+>
+> In this incarnation, they can only work checkpoint and restore a
+> single task. The task's address space may consist of only private,
+> simple vma's - anonymous or file-mapped. The open files may consist
+> of only simple files and directories.
+> --
+> _______________________________________________
+> Containers mailing list
+> Containers@lists.linux-foundation.org
+> https://lists.linux-foundation.org/mailman/listinfo/containers
+>  =20
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
 the body to majordomo@kvack.org.  For more info on Linux MM,
 see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
