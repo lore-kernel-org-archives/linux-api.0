@@ -1,60 +1,49 @@
-From: Daniel Walker <dwalker-zu3NM2574RrQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v18 20/80] c/r: basic infrastructure for
- checkpoint/restart
-Date: Thu, 24 Sep 2009 09:03:41 -0700
-Message-ID: <1253808221.20648.196.camel@desktop>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
+Date: Thu, 24 Sep 2009 09:27:30 -0700
+Message-ID: <878wg41f65.fsf@caffeine.danplanet.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
-	 <1253749920-18673-21-git-send-email-orenl@librato.com>
+	<4ABB6EB6.2040204@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1253749920-18673-21-git-send-email-orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-3NddpPZAyC0@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Rishikesh <risrajak@linux.vnet.ibm.com>
+Cc: Oren Laadan <orenl@librato.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2009-09-23 at 19:51 -0400, Oren Laadan wrote:
-> /
-> +static char *__ckpt_generate_fmt(struct ckpt_ctx *ctx, char *prefmt, char *fmt)
-> +{
-> +	static int warn_notask = 0;
-> +	static int warn_prefmt = 0;
+R> I am getting following build error while compiling linux-cr kernel.
 
-Shouldn't need the initializer since it's static..
+With CONFIG_CHECKPOINT=3Dn, right?
 
+R> 76569 net/unix/af_unix.c:528: error: =E2=80=98unix_collect=E2=80=99 unde=
+clared here (not=20
+R> in a function)
 
-> +/* read the checkpoint header */
-> +static int restore_read_header(struct ckpt_ctx *ctx)
-> +{
-> +	struct ckpt_hdr_header *h;
-> +	struct new_utsname *uts = NULL;
-> +	int ret;
-> +
-> +	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_HEADER);
-> +	if (IS_ERR(h))
-> +		return PTR_ERR(h);
-> +
-> +	ret = -EINVAL;
-> +	if (h->magic != CHECKPOINT_MAGIC_HEAD ||
-> +	    h->rev != CHECKPOINT_VERSION ||
-> +	    h->major != ((LINUX_VERSION_CODE >> 16) & 0xff) ||
-> +	    h->minor != ((LINUX_VERSION_CODE >> 8) & 0xff) ||
-> +	    h->patch != ((LINUX_VERSION_CODE) & 0xff))
-> +		goto out;
+Try the patch below.
 
-Do you still need this LINUX_VERSION_CODE stuff ? I would think once
-it's in mainline you wouldn't need to track that..
+--=20
+Dan Smith
+IBM Linux Technology Center
+email: danms@us.ibm.com
 
-These both got flagged by checkpatch .. Your series is marked in a
-couple other places with checkpatch errors .. If you haven't already
-reviewed those errors, it would be a good idea to review them.
-
-Daniel
-
+diff --git a/include/net/af_unix.h b/include/net/af_unix.h
+index e42a714..ee423d1 100644
+--- a/include/net/af_unix.h
++++ b/include/net/af_unix.h
+@@ -80,6 +80,7 @@ extern int unix_collect(struct ckpt_ctx *ctx, struct sock=
+et *sock);
+ #else
+ #define unix_checkpoint NULL
+ #define unix_restore NULL
++#define unix_collect NULL
+ #endif /* CONFIG_CHECKPOINT */
+=20
+ #endif
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
