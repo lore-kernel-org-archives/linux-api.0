@@ -1,46 +1,81 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
-Date: Thu, 24 Sep 2009 09:27:30 -0700
-Message-ID: <878wg41f65.fsf@caffeine.danplanet.com>
-References: <1253749920-18673-1-git-send-email-orenl@librato.com>
-	<4ABB6EB6.2040204@linux.vnet.ibm.com>
+From: Oren Laadan <orenl@librato.com>
+Subject: Re: [PATCH v18 20/80] c/r: basic infrastructure for checkpoint/restart
+Date: Thu, 24 Sep 2009 13:33:25 -0400
+Message-ID: <4ABBAD65.3080706@librato.com>
+References: <1253749920-18673-1-git-send-email-orenl@librato.com>	 <1253749920-18673-21-git-send-email-orenl@librato.com> <1253808221.20648.196.camel@desktop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1253808221.20648.196.camel@desktop>
 Sender: owner-linux-mm@kvack.org
-To: Rishikesh <risrajak@linux.vnet.ibm.com>
-Cc: Oren Laadan <orenl@librato.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org
+To: Daniel Walker <dwalker@fifo99.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@osdl.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-R> I am getting following build error while compiling linux-cr kernel.
 
-With CONFIG_CHECKPOINT=3Dn, right?
 
-R> 76569 net/unix/af_unix.c:528: error: =E2=80=98unix_collect=E2=80=99 unde=
-clared here (not=20
-R> in a function)
+Daniel Walker wrote:
+> On Wed, 2009-09-23 at 19:51 -0400, Oren Laadan wrote:
+>> /
+>> +static char *__ckpt_generate_fmt(struct ckpt_ctx *ctx, char *prefmt, char *fmt)
+>> +{
+>> +	static int warn_notask = 0;
+>> +	static int warn_prefmt = 0;
+> 
+> Shouldn't need the initializer since it's static..
+> 
 
-Try the patch below.
+Yup ...
 
---=20
-Dan Smith
-IBM Linux Technology Center
-email: danms@us.ibm.com
+> 
+>> +/* read the checkpoint header */
+>> +static int restore_read_header(struct ckpt_ctx *ctx)
+>> +{
+>> +	struct ckpt_hdr_header *h;
+>> +	struct new_utsname *uts = NULL;
+>> +	int ret;
+>> +
+>> +	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_HEADER);
+>> +	if (IS_ERR(h))
+>> +		return PTR_ERR(h);
+>> +
+>> +	ret = -EINVAL;
+>> +	if (h->magic != CHECKPOINT_MAGIC_HEAD ||
+>> +	    h->rev != CHECKPOINT_VERSION ||
+>> +	    h->major != ((LINUX_VERSION_CODE >> 16) & 0xff) ||
+>> +	    h->minor != ((LINUX_VERSION_CODE >> 8) & 0xff) ||
+>> +	    h->patch != ((LINUX_VERSION_CODE) & 0xff))
+>> +		goto out;
+> 
+> Do you still need this LINUX_VERSION_CODE stuff ? I would think once
+> it's in mainline you wouldn't need to track that..
 
-diff --git a/include/net/af_unix.h b/include/net/af_unix.h
-index e42a714..ee423d1 100644
---- a/include/net/af_unix.h
-+++ b/include/net/af_unix.h
-@@ -80,6 +80,7 @@ extern int unix_collect(struct ckpt_ctx *ctx, struct sock=
-et *sock);
- #else
- #define unix_checkpoint NULL
- #define unix_restore NULL
-+#define unix_collect NULL
- #endif /* CONFIG_CHECKPOINT */
-=20
- #endif
+In short: yes.
+
+This is our poor-man's way to telling the kernel version on which
+a given checkpoint image was generated.
+
+The image format is a blob that may change between kernel releases.
+Conversion between version formats will be done by userspace tools.
+Tagging the image with the version of the kernel serves two goals:
+it indicates the image version to the kernel at restart time, and
+it will be used by userspace conversion tools.
+
+How the kernel and image versions are encoded is WIP and is likely
+to become more comprehensive soon.
+
+> 
+> These both got flagged by checkpatch .. Your series is marked in a
+> couple other places with checkpatch errors .. If you haven't already
+> reviewed those errors, it would be a good idea to review them.
+> 
+
+Sure, will re-review to remove remaining errors that sneaked in.
+
+Thanks,
+
+Oren.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
