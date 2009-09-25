@@ -1,68 +1,41 @@
-From: Andrew Morton <akpm@linux-foundation.org>
+From: Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
-Date: Thu, 24 Sep 2009 15:41:39 -0700
-Message-ID: <20090924154139.2a7dd5ec.akpm@linux-foundation.org>
+Date: Fri, 25 Sep 2009 06:59:06 -0700
+Message-ID: <87ljk39lcl.fsf@caffeine.danplanet.com>
 References: <1253749920-18673-1-git-send-email-orenl@librato.com>
+	<20090924154139.2a7dd5ec.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1253749920-18673-1-git-send-email-orenl@librato.com>
-Sender: owner-linux-mm@kvack.org
-Cc: torvalds@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, serue@us.ibm.com, mingo@elte.hu, xemul@openvz.org, orenl@librato.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20090924154139.2a7dd5ec.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> (Andrew Morton's message of "Thu\, 24 Sep 2009 15\:41\:39 -0700")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 23 Sep 2009 19:50:40 -0400
-Oren Laadan <orenl@librato.com> wrote:
+>> Q: What additional work needs to be done to it?  A: Fill in the
+>> gory details following the examples so far. Current WIP includes
+>> inet sockets, event-poll, and early work on inotify, mount
+>> namespace and mount-points, pseudo file systems
 
-> Q: How useful is this code as it stands in real-world usage?
-> A: The application can be single- or multi-processes and threads. It
->    handles open files (regular files/directories on most file systems,
->    pipes, fifos, af_unix sockets, /dev/{null,zero,random,urandom} and
->    pseudo-terminals. It supports shared memory. sysv IPC (except undo
->    of sempahores). It's suitable for many types of batch jobs as well
->    as some interactive jobs. (Note: it is assumed that the fs view is
->    available at restart).
+AM> Will this new code muck up the kernel, or will it be clean?
 
-That's encouraging.
+I have (and have previously posted) prototype code to do c/r of open
+sockets, ignoring some things like updating timers and such.  It looks
+rather similar to the existing UNIX bits, and is even easier in some
+ways.
 
-> Q: What can it checkpoint and restart ?
-> A: A (single threaded) process can checkpoint itself, aka "self"
->    checkpoint, if it calls the new system calls. Otherise, for an
->    "external" checkpoint, the caller must first freeze the target
->    processes. One can either checkpoint an entire container (and
->    we make best effort to ensure that the result is self-contained),
->    or merely a subtree of a process hierarchy.
+One particular use case is only migrating listening sockets and
+allowing the connected ones to be reset upon restart.  That enables a
+bunch of things like apache, postfix, vncserver, and even sshd.  I
+will pull the listen-only bits out of my current patch, scrape off a
+little bitrot, and post them in a few days.
 
-What is "best effort"?  Will the operation appear to have succeeded,
-only it didn't?
-
-IOW, how reliable and robust is code at detecting that it was unable to
-successfully generate a restartable image?
-
-> Q: What about namespaces ?
-> A: Currrently, UTS and IPC namespaces are restored. They demonstrate
->    how namespaces are handled. More to come.
-
-Will this new code muck up the kernel?
-
-> Q: What additional work needs to be done to it?
-> A: Fill in the gory details following the examples so far. Current WIP
->    includes inet sockets, event-poll, and early work on inotify, mount
->    namespace and mount-points, pseudo file systems
-
-Will this new code muck up the kernel, or will it be clean?
-
-> and x86_64 support.
-
-eh?  You mean the code doesn't work on x86_64 at present?
-
-
-What is the story on migration?  Moving the process(es) to a different
-machine?
-
+-- 
+Dan Smith
+IBM Linux Technology Center
+email: danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
