@@ -1,41 +1,35 @@
-From: Daniel Lezcano <daniel.lezcano-GANU6spQydw@public.gmane.org>
-Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
-Date: Tue, 29 Sep 2009 15:29:28 +0200
-Message-ID: <4AC20BB8.4070509@free.fr>
-References: <1253749920-18673-1-git-send-email-orenl@librato.com>	<20090924154139.2a7dd5ec.akpm@linux-foundation.org> <20090928163704.GA3327@us.ibm.com>
+From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC][v7][PATCH 8/9]: Define clone2() syscall
+Date: Tue, 29 Sep 2009 11:05:37 -0700
+Message-ID: <20090929180537.GD4625@us.ibm.com>
+References: <20090924165548.GA16586@us.ibm.com> <20090924170308.GH16989@us.ibm.com> <200909242343.59903.arnd@arndb.de> <20090925082346.GB4436@localdomain> <20090925105632.GG12824@hawkmoon.kerlabs.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20090928163704.GA3327-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20090925105632.GG12824-Hu8+6S1rdjywhHL9vcZdMVaTQe2KTcn/@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm@>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Serge E. Hallyn wrote:
-> Quoting Andrew Morton (akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org):
->   
->> On Wed, 23 Sep 2009 19:50:40 -0400
->> Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org> wrote:
->>     
->>> Q: What about namespaces ?
->>> A: Currrently, UTS and IPC namespaces are restored. They demonstrate
->>>    how namespaces are handled. More to come.
->>>       
->> Will this new code muck up the kernel?
->>     
+Ccing kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org and linux-api on this thread.
 
-[ cut ]
-> For network namespaces i think it's clearer that a wrapper
-> program should set up the network for the restarted init task,
-> while the usrspace code should recreate any private network
-> namespaces and veth's which were created by the application.
-> But it still needs discussion.
->   
-Ok for the restart, but for the checkpoint, how do you access the 
-network setup from a process which belongs to another namespace context ?
+Louis Rilling [Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org] wrote:
+| > It will very likely break ia64, which defines CONFIG_HAVE_ARCH_TRACEHOOK and
+| > already has sys_clone2().
+| 
+| -> sys_clone_ext() ?
+| 
+| Louis
 
+How about spelling out extended and calling it clone_extended() ?
+
+The other options I can think of are clone_with_pids() and clone3().
+
+Thanks for your feedback.
+
+Sukadev
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
