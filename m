@@ -1,45 +1,29 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v18 49/80] c/r: support for UTS namespace
-Date: Tue, 29 Sep 2009 13:51:26 -0500
-Message-ID: <20090929185126.GB13297@us.ibm.com>
-References: <1253749920-18673-1-git-send-email-orenl@librato.com> <1253749920-18673-50-git-send-email-orenl@librato.com> <200909292213.21266@blacky.localdomain>
+From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC][v7][PATCH 8/9]: Define clone2() syscall
+Date: Tue, 29 Sep 2009 11:44:52 -0700
+Message-ID: <4AC255A4.4030002@zytor.com>
+References: <20090924165548.GA16586@us.ibm.com>	<20090924170308.GH16989@us.ibm.com>	<200909242343.59903.arnd@arndb.de>	<20090925082346.GB4436@localdomain>	<20090925105632.GG12824@hawkmoon.kerlabs.com>	<20090929180537.GD4625@us.ibm.com> <20090929184023.532DF34@magilla.sf.frob.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <200909292213.21266-vlktAfmDCSZSq9BJjBFyUp/QNRX+jHPU@public.gmane.org>
+In-Reply-To: <20090929184023.532DF34-nL1rrgvulkc2UH6IwYuUx0EOCMrvLtNR@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Nikita V. Youshchenko" <yoush-/llMDZXAvAOHXe+LvDLADg@public.gmane.org>
-Cc: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+To: Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Nikita V. Youshchenko (yoush-/llMDZXAvAOHXe+LvDLADg@public.gmane.org):
-> > +static struct uts_namespace *do_restore_uts_ns(struct ckpt_ctx *ctx)
-> > ...
-> > +#ifdef CONFIG_UTS_NS
-> > +	uts_ns = create_uts_ns();
-> > +	if (!uts_ns) {
-> > +		uts_ns = ERR_PTR(-ENOMEM);
-> > +		goto out;
-> > +	}
-> > +	down_read(&uts_sem);
-> > +	name = &uts_ns->name;
-> > +	memcpy(name->sysname, h->sysname, sizeof(name->sysname));
-> > +	memcpy(name->nodename, h->nodename, sizeof(name->nodename));
-> > +	memcpy(name->release, h->release, sizeof(name->release));
-> > +	memcpy(name->version, h->version, sizeof(name->version));
-> > +	memcpy(name->machine, h->machine, sizeof(name->machine));
-> > +	memcpy(name->domainname, h->domainname, sizeof(name->domainname));
-> > +	up_read(&uts_sem);
-> 
-> Could you please explain what for is this down_read() / up_read() ?
-> You operate only on local objects: 'name' points to just-created 
-> uts_ns, 'h' is also local data.
+On 09/29/2009 11:40 AM, Roland McGrath wrote:
+> Why add a new syscall at all instead of just using a new CLONE_* flag to
+> indicate that the argument layout is different?
 
-Yup, good point, that looks unnecessary.
+What an absolutely atrociously bad idea.
 
-thanks,
--serge
+We already have a syscall layer which is painful to thunk in places, and
+this would make it much worse.
+
+	-hpa
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
