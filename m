@@ -1,36 +1,44 @@
-From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC][v7][PATCH 8/9]: Define clone2() syscall
-Date: Tue, 29 Sep 2009 11:05:37 -0700
-Message-ID: <20090929180537.GD4625@us.ibm.com>
-References: <20090924165548.GA16586@us.ibm.com> <20090924170308.GH16989@us.ibm.com> <200909242343.59903.arnd@arndb.de> <20090925082346.GB4436@localdomain> <20090925105632.GG12824@hawkmoon.kerlabs.com>
+From: "Nikita V. Youshchenko" <yoush@cs.msu.su>
+Subject: Re: [PATCH v18 49/80] c/r: support for UTS namespace
+Date: Tue, 29 Sep 2009 22:13:17 +0400
+Message-ID: <200909292213.21266@blacky.localdomain>
+References: <1253749920-18673-1-git-send-email-orenl@librato.com> <1253749920-18673-50-git-send-email-orenl@librato.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1253749920-18673-50-git-send-email-orenl@librato.com>
 Content-Disposition: inline
-In-Reply-To: <20090925105632.GG12824-Hu8+6S1rdjywhHL9vcZdMVaTQe2KTcn/@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm@>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org
+Sender: owner-linux-mm@kvack.org
+To: Oren Laadan <orenl@librato.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, Pavel Emelyanov <xemul@openvz.org>, Dan Smith <danms@us.ibm.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-Ccing kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org and linux-api on this thread.
+> +static struct uts_namespace *do_restore_uts_ns(struct ckpt_ctx *ctx)
+> ...
+> +#ifdef CONFIG_UTS_NS
+> +	uts_ns = create_uts_ns();
+> +	if (!uts_ns) {
+> +		uts_ns = ERR_PTR(-ENOMEM);
+> +		goto out;
+> +	}
+> +	down_read(&uts_sem);
+> +	name = &uts_ns->name;
+> +	memcpy(name->sysname, h->sysname, sizeof(name->sysname));
+> +	memcpy(name->nodename, h->nodename, sizeof(name->nodename));
+> +	memcpy(name->release, h->release, sizeof(name->release));
+> +	memcpy(name->version, h->version, sizeof(name->version));
+> +	memcpy(name->machine, h->machine, sizeof(name->machine));
+> +	memcpy(name->domainname, h->domainname, sizeof(name->domainname));
+> +	up_read(&uts_sem);
 
-Louis Rilling [Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org] wrote:
-| > It will very likely break ia64, which defines CONFIG_HAVE_ARCH_TRACEHOOK and
-| > already has sys_clone2().
-| 
-| -> sys_clone_ext() ?
-| 
-| Louis
+Could you please explain what for is this down_read() / up_read() ?
+You operate only on local objects: 'name' points to just-created 
+uts_ns, 'h' is also local data.
 
-How about spelling out extended and calling it clone_extended() ?
-
-The other options I can think of are clone_with_pids() and clone3().
-
-Thanks for your feedback.
-
-Sukadev
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
