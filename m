@@ -1,53 +1,50 @@
-From: Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
-Date: Wed, 30 Sep 2009 11:28:36 -0700
-Message-ID: <877hvgnv6z.fsf@caffeine.danplanet.com>
-References: <1253749920-18673-1-git-send-email-orenl@librato.com>
-	<20090924154139.2a7dd5ec.akpm@linux-foundation.org>
-	<20090928163704.GA3327@us.ibm.com> <4AC20BB8.4070509@free.fr>
-	<87iqf0o5sf.fsf@caffeine.danplanet.com> <4AC38477.4070007@free.fr>
-	<87eipoo0po.fsf@caffeine.danplanet.com> <4AC39CE5.9080908@free.fr>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [RFC][v7][PATCH 8/9]: Define clone2() syscall
+Date: Wed, 30 Sep 2009 12:14:23 -0700 (PDT)
+Message-ID: <alpine.LFD.2.01.0909301208410.6996@localhost.localdomain>
+References: <20090924165548.GA16586@us.ibm.com> <200909301815.45211.arnd@arndb.de> <alpine.LFD.2.01.0909300925170.6996@localhost.localdomain> <200909301959.41706.arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4AC39CE5.9080908-GANU6spQydw@public.gmane.org> (Daniel Lezcano's message of "Wed\, 30 Sep 2009 20\:01\:09 +0200")
+In-Reply-To: <200909301959.41706.arnd-r2nGTMty4D4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Lezcano <daniel.lezcano-GANU6spQydw@public.gmane.org>
-Cc: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, mingo-X9Un+BFzKDI@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-DL> Yep, I agree. But you didn't answer the question, what are the
-DL> network resources you plan to checkpoint / restart ?  eg. you let
-DL> the container to setup your network, will you restore netdev
-DL> statistics ? the mac address ? ipv4 ? ipv6 ?
 
-Yes, Yes, Yes, and Yes.  I'm making the assumption that the common
-case will be with a veth device in the container and that all of the
-aforementioned attributes should be copied over.  In the future case
-where we could potentially have a real device in the container, it
-probably doesn't make sense to copy the mac address.
 
-DL> Is it possible to do a detailed list of network resources you plan
-DL> to CR with the different items you will address from userspace and
-DL> kernel space ?
+On Wed, 30 Sep 2009, Arnd Bergmann wrote:
+> 
+> Right, you still need to save all the registers from the entry code.
+> I was under the wrong assumption that task_pt_regs(current)
+> would give the full register set on all architectures.
+> 
+> However, I'd still hope that a new system call can be defined in
+> a way that you only need to have an assembly wrapper to save
+> the full pt_regs, but no arch specific code to get the syscall arguments
+> out of that again. In do_clone(), you need a pointer to pt_regs and
+> the user stack pointer, but that can be generated from
+> user_stack_pointer(regs).
 
-I'm sure it's possible, but no, I haven't planned out everything for
-the next year.  If you have strong feelings about what should be done
-in user and kernel space, feel free to share :)
+I don't think it can. You don't know what the system call stack layout is. 
 
-DL> Argh ! I was hoping there was something else than the source code
+> Does task_pt_regs(current) give the right pointer on all architectures
+> or do we also need to pass the regs into the syscall?
 
-The header file makes it pretty clear what is going on, but maybe the
-Documentation/checkpoint/readme.txt will help.  Putting all the
-details in such a documentation file would be rather silly at the
-moment, given that new things are being added at a rapid rate and it
-would duplicate the only description that matters, which is the
-header file.
+I do not believe that it gives the right pointer in general. In fact, I 
+can guarantee it doesn't. Even on x86 it only works for certain contexts 
+(non-vm86 mode at a minimum), and on architectures like alpha it's not at 
+all sufficient, because even if you can locate the 'pt_regs' structure, 
+you _also_ need the extra guarantees of the pt_regs being next to the 
+extended signal state register structure - and that only happens for magic 
+sequences like signal handling and explicit setups like fork/clone.
 
--- 
-Dan Smith
-IBM Linux Technology Center
-email: danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org
+So I do repeat: if you think you can do all of this in generic code, then 
+you're sadly and totally mistaken. Don't even try. It may work on some 
+architectures, but it's simply fundamentally _wrong_.
+
+		Linus
 --
 To unsubscribe from this list: send the line "unsubscribe linux-api" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
