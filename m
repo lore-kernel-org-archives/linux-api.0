@@ -1,49 +1,59 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [RFC][v7][PATCH 8/9]: Define clone2() syscall
-Date: Wed, 30 Sep 2009 19:59:40 +0200
-Message-ID: <200909301959.41706.arnd@arndb.de>
-References: <20090924165548.GA16586@us.ibm.com>
-	<200909301815.45211.arnd@arndb.de>
-	<alpine.LFD.2.01.0909300925170.6996@localhost.localdomain>
+From: Daniel Lezcano <daniel.lezcano-GANU6spQydw@public.gmane.org>
+Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
+Date: Wed, 30 Sep 2009 20:01:09 +0200
+Message-ID: <4AC39CE5.9080908@free.fr>
+References: <1253749920-18673-1-git-send-email-orenl@librato.com>	<20090924154139.2a7dd5ec.akpm@linux-foundation.org>	<20090928163704.GA3327@us.ibm.com> <4AC20BB8.4070509@free.fr>	<87iqf0o5sf.fsf@caffeine.danplanet.com> <4AC38477.4070007@free.fr> <87eipoo0po.fsf@caffeine.danplanet.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <alpine.LFD.2.01.0909300925170.6996-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Content-Disposition: inline
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, mingo-X9Un+BFzKDI@public.gmane.org, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87eipoo0po.fsf-FLMGYpZoEPULwtHQx/6qkW3U47Q5hpJU@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Cc: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 30 September 2009, Linus Torvalds wrote:
-> Umm. I don't think that is possible.
-> 
-> You need architecture-specific code to even get access to all registers to 
-> copy and get a signal-handler-compatible stack frame. See for example 
-> arch/alpha/kernel/entry.S with the switch-stack thing etc.  I don't think 
-> there is any way to make that even remotely architecture-neutral.
+Dan Smith wrote:
+> DL> If the checkpoint is done from the kernel, why the restart
+> DL> wouldn't be in the kernel too ?
+>
+> I think thus far we have taken the approach of "if it can be done
+> reasonably in userspace, then do it there" right?  
+Well I am a little lost :)
+The tty CR can be "reasonably" done in userspace I think. But it was 
+done in the kernel, no ?
 
-Right, you still need to save all the registers from the entry code.
-I was under the wrong assumption that task_pt_regs(current)
-would give the full register set on all architectures.
+> Setup of the
+> network devices is easy to do in userspace, allows more flexibility
+> from a policy standpoint, and ensures that all existing security
+> checks are performed. 
+Yep, I agree. But you didn't answer the question, what are the network 
+resources you plan to checkpoint / restart ?
+eg. you let the container to setup your network, will you restore netdev 
+statistics ? the mac address ? ipv4 ? ipv6 ?
 
-However, I'd still hope that a new system call can be defined in
-a way that you only need to have an assembly wrapper to save
-the full pt_regs, but no arch specific code to get the syscall arguments
-out of that again. In do_clone(), you need a pointer to pt_regs and
-the user stack pointer, but that can be generated from
-user_stack_pointer(regs).
+Is it possible to do a detailed list of network resources you plan to CR 
+with the different items you will address from userspace and kernel space ?
 
-Does task_pt_regs(current) give the right pointer on all architectures
-or do we also need to pass the regs into the syscall?
+> Also, migration may be easier if the userspace
+> bits can call custom hooks allowing for routing changes and other
+> infrastructure-specific operations.
+>   
+You may have some problems with the connected sockets you will restore 
+in this case.
 
-	Arnd <><
+> DL> Is there any documentation about the statefile format I can use if
+> DL> I want to implement myself an userspace CR solution based on this
+> DL> kernel patchset ?
+>
+> See linux-cr/include/linux/checkpoint_hdr.h and user-cr/restart.c.
+>   
+Argh ! I was hoping there was something else than the source code :)
+
+Thanks
+  -- Daniel
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
