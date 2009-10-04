@@ -1,61 +1,84 @@
-From: Daniel Lezcano <daniel.lezcano-GANU6spQydw@public.gmane.org>
-Subject: Re: [PATCH 00/80] Kernel based checkpoint/restart [v18]
-Date: Thu, 01 Oct 2009 00:08:28 +0200
-Message-ID: <4AC3D6DC.9010500@free.fr>
-References: <1253749920-18673-1-git-send-email-orenl@librato.com>	<20090924154139.2a7dd5ec.akpm@linux-foundation.org>	<20090928163704.GA3327@us.ibm.com> <4AC20BB8.4070509@free.fr>	<87iqf0o5sf.fsf@caffeine.danplanet.com> <4AC38477.4070007@free.fr>	<87eipoo0po.fsf@caffeine.danplanet.com> <4AC39CE5.9080908@free.fr> <877hvgnv6z.fsf@caffeine.danplanet.com>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Subject: Re: F_SETOWN_EX and F_GETLK64 conflict
+Date: Sun, 04 Oct 2009 23:30:22 +0200
+Message-ID: <1254691822.21044.9.camel@laptop>
+References: <Pine.LNX.4.64.0910041229300.20203@digraph.polyomino.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <877hvgnv6z.fsf-FLMGYpZoEPULwtHQx/6qkW3U47Q5hpJU@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dan Smith <danms-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Cc: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758080AbZJDVbK@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.0910041229300.20203@digraph.polyomino.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Joseph S. Myers" <joseph@codesourcery.com>
+Cc: linux-api@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, Oleg Nesterov <onestero@redhat.com>, Stephane Eranian <eranian@googlemail.com>, Michael Kerrisk <mtk.manpages@googlemail.com>, Roland McGrath <roland@redhat.com>, Al Viro <viro@ZenIV.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-Dan Smith wrote:
-> DL> Yep, I agree. But you didn't answer the question, what are the
-> DL> network resources you plan to checkpoint / restart ?  eg. you let
-> DL> the container to setup your network, will you restore netdev
-> DL> statistics ? the mac address ? ipv4 ? ipv6 ?
->
-> Yes, Yes, Yes, and Yes.  I'm making the assumption that the common
-> case will be with a veth device in the container and that all of the
-> aforementioned attributes should be copied over.  In the future case
-> where we could potentially have a real device in the container, it
-> probably doesn't make sense to copy the mac address.
->   
-
-Be careful with the assumptions ;)
-> DL> Is it possible to do a detailed list of network resources you plan
-> DL> to CR with the different items you will address from userspace and
-> DL> kernel space ?
->
-> I'm sure it's possible, but no, I haven't planned out everything for
-> the next year.  If you have strong feelings about what should be done
-> in user and kernel space, feel free to share :)
->   
-
-Dan,
-
-I just want to understand what is your plan. If you say "yes I will 
-checkpoint / restart" ipv4, ipv6, netdev statistics, etc ...  you should 
-be able to give at least a small list of network resources you will 
-checkpoint and how you will restart them, no ?
-
-> DL> Argh ! I was hoping there was something else than the source code
->
-> The header file makes it pretty clear what is going on, 
-Certainly for you.
-We are a little far away of the sys_checkpoint / sys_restart simple 
-syscalls we talked about at the cr-minisummit in 2008.
-
-Regards,
-     -- Daniel
+On Sun, 2009-10-04 at 12:35 +0000, Joseph S. Myers wrote:
+> In asm-generic/fcntl.h, F_SETOWN_EX and F_GETLK64 both have value 12, and 
+> F_GETOWN_EX and F_SETLK64 both have value 13.  I don't see how this is 
+> going to work correctly.  See 
+> <http://sourceware.org/ml/libc-ports/2009-10/msg00013.html>.
 
 
+Ugh,.. yeah, non obvious collision that.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+How about something like:
+
+---
+ arch/alpha/include/asm/fcntl.h |    4 ++--
+ include/asm-generic/fcntl.h    |   19 +++++++++++--------
+ 2 files changed, 13 insertions(+), 10 deletions(-)
+
+diff --git a/arch/alpha/include/asm/fcntl.h b/arch/alpha/include/asm/fcntl.h
+index e42823e..73126e4 100644
+--- a/arch/alpha/include/asm/fcntl.h
++++ b/arch/alpha/include/asm/fcntl.h
+@@ -26,8 +26,8 @@
+ #define F_GETOWN	6	/*  for sockets. */
+ #define F_SETSIG	10	/*  for sockets. */
+ #define F_GETSIG	11	/*  for sockets. */
+-#define F_SETOWN_EX	12
+-#define F_GETOWN_EX	13
++#define F_SETOWN_EX	15
++#define F_GETOWN_EX	16
+ 
+ /* for posix fcntl() and lockf() */
+ #define F_RDLCK		1
+diff --git a/include/asm-generic/fcntl.h b/include/asm-generic/fcntl.h
+index 0c3dd86..cd2d789 100644
+--- a/include/asm-generic/fcntl.h
++++ b/include/asm-generic/fcntl.h
+@@ -73,9 +73,18 @@
+ #define F_SETSIG	10	/* for sockets. */
+ #define F_GETSIG	11	/* for sockets. */
+ #endif
++
++#ifndef CONFIG_64BIT
++#ifndef F_GETLK64
++#define F_GETLK64	12	/*  using 'struct flock64' */
++#define F_SETLK64	13
++#define F_SETLKW64	14
++#endif
++#endif
++
+ #ifndef F_SETOWN_EX
+-#define F_SETOWN_EX	12
+-#define F_GETOWN_EX	13
++#define F_SETOWN_EX	15
++#define F_GETOWN_EX	16
+ #endif
+ 
+ #define F_OWNER_TID	0
+@@ -139,12 +148,6 @@ struct flock {
+ 
+ #ifndef CONFIG_64BIT
+ 
+-#ifndef F_GETLK64
+-#define F_GETLK64	12	/*  using 'struct flock64' */
+-#define F_SETLK64	13
+-#define F_SETLKW64	14
+-#endif
+-
+ #ifndef HAVE_ARCH_STRUCT_FLOCK64
+ #ifndef __ARCH_FLOCK64_PAD
+ #define __ARCH_FLOCK64_PAD
