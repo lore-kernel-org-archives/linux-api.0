@@ -1,24 +1,55 @@
-From: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Subject: =?utf-8?B?Q2/QsWVwZdC8INC00LvRjyBCYWMg0L9vIGPQtdGC0Lgg0LjQvdGC0LVw0L3QtdGCINCxYdC3eSDQtNCw0L3QvdGLeCDQv9C+0YLQtdC90YbQuNCw0LvRjNC90Yt4IGvQu9C4ZdC90YLQvtCyINC00LvRjyBC0LDRiGXQs9C+INCR0LjQt9C90LXRgdCwISDQn9C+0LTRgG/QsdC9ZdC1IHnQt9C9YdC50YLQtSDQv286IFRF0Js6ICs3OTEzMzkxMzgzNyBJQ1EgNjI4ODg2MiBFbWFpbDogcHJvZGF3ZXpAbWl4bWFpbC5jb20gU0tZUEU6IGJhc2VkYW5uaXg=?=
-Date: Mon, 5 Oct 2009 14:48:29 +0200
-Message-ID: <ed5e1697-1034-4d33-8e69-f395dbfcb672@Mail.iag09.local>
+From: Gleb Natapov <gleb@redhat.com>
+Subject: [PATCH][RFC] add MAP_UNLOCKED mmap flag
+Date: Tue, 6 Oct 2009 11:51:11 +0200
+Message-ID: <20091006095111.GG9832@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1251
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Co=E1epe=EC =E4=EB=FF Bac =EFo c=E5=F2=E8 =E8=ED=F2=E5p=ED=E5=F2=20
-=E1a=E7y =E4=E0=ED=ED=FBx =EF=EE=F2=E5=ED=F6=E8=E0=EB=FC=ED=FBx k=EB=E8=
-e=ED=F2=EE=E2 =E4=EB=FF B=E0=F8e=E3=EE =C1=E8=E7=ED=E5=F1=E0
-=C1=EE=EBe=E5 =EFo=E4=F0o=E1=ED=EE y=E7=EDa=E9=F2=E5=20
-Te=EB=E5=F4o=ED=F3: +79133913837=20
-ICQ:     6288862=20
-SKYPE:  basedannix=20
-EMAIL:   prodawez-oLI30V9UujBBDgjK7y7TUQ@public.gmane.org
+If application does mlockall(MCL_FUTURE) it is no longer possible to
+mmap file bigger than main memory or allocate big area of anonymous
+memory. Sometimes it is desirable to lock everything related to program
+execution into memory, but still be able to mmap big file or allocate
+huge amount of memory and allow OS to swap them on demand. MAP_UNLOCKED
+allows to do that.
+
+Signed-off-by: Gleb Natapov <gleb@redhat.com>
+diff --git a/include/asm-generic/mman.h b/include/asm-generic/mman.h
+index 32c8bd6..0ab4c74 100644
+--- a/include/asm-generic/mman.h
++++ b/include/asm-generic/mman.h
+@@ -12,6 +12,7 @@
+ #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
++#define MAP_UNLOKED	0x80000         /* pages are unlocked */
+ 
+ #define MCL_CURRENT	1		/* lock all current mappings */
+ #define MCL_FUTURE	2		/* lock all future mappings */
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 73f5e4b..7c2abdb 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -985,6 +985,9 @@ unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
+ 		if (!can_do_mlock())
+ 			return -EPERM;
+ 
++        if (flags & MAP_UNLOKED)
++                vm_flags &= ~VM_LOCKED;
++
+ 	/* mlock MCL_FUTURE? */
+ 	if (vm_flags & VM_LOCKED) {
+ 		unsigned long locked, lock_limit;
 --
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+			Gleb.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
