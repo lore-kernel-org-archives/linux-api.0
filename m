@@ -1,53 +1,53 @@
-From: Gleb Natapov <gleb@redhat.com>
-Subject: Re: [PATCH][RFC] add MAP_UNLOCKED mmap flag
-Date: Wed, 7 Oct 2009 22:47:18 +0200
-Message-ID: <20091007204718.GD19692@redhat.com>
-References: <20091006190938.126F.A69D9226@jp.fujitsu.com>
- <20091006102136.GH9832@redhat.com>
- <20091006192454.1272.A69D9226@jp.fujitsu.com>
- <20091006103300.GI9832@redhat.com>
- <2f11576a0910060510y401c1d5ax6f17135478d22899@mail.gmail.com>
- <20091006121603.GK9832@redhat.com>
- <20091007185054.GB66690@dspnet.fr.eu.org>
- <20091007185952.GC19692@redhat.com>
- <20091007201017.GC66690@dspnet.fr.eu.org>
+From: WANG Cong <xiyou.wangcong@gmail.com>
+Subject: Re: [PATCH v3][RFC] add MAP_UNLOCKED mmap flag
+Date: Thu, 08 Oct 2009 17:10:35 +0800
+Message-ID: <874oqap7xw.fsf@gmail.com>
+References: <20091006190316.GB19692@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20091007201017.GC66690@dspnet.fr.eu.org>
+In-Reply-To: <20091006190316.GB19692@redhat.com> (Gleb Natapov's message of
+	"Tue, 6 Oct 2009 21:03:16 +0200")
 Sender: owner-linux-mm@kvack.org
-To: Olivier Galibert <galibert@pobox.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Gleb Natapov <gleb@redhat.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 07, 2009 at 10:10:17PM +0200, Olivier Galibert wrote:
-> On Wed, Oct 07, 2009 at 08:59:52PM +0200, Gleb Natapov wrote:
-> > On Wed, Oct 07, 2009 at 08:50:54PM +0200, Olivier Galibert wrote:
-> > > On Tue, Oct 06, 2009 at 02:16:03PM +0200, Gleb Natapov wrote:
-> > > > I did. It allows me to achieve something I can't now. Steps you provide
-> > > > just don't fit my needs. I need all memory areas (current and feature) to be
-> > > > locked except one. Very big one. You propose to lock memory at some
-> > > > arbitrary point and from that point on all newly mapped memory areas will
-> > > > be unlocked. Don't you see it is different?
-> > > 
-> > > What about mlockall(MCL_CURRENT); mmap(...); mlockall(MCL_FUTURE);?
-> > > Or toggle MCL_FUTURE if a mlockall call can stop it?
-> > > 
-> > This may work. And MCL_FUTURE can be toggled, but this is not thread
-> > safe.
-> 
-> Just ensure that your one special mmap is done with the other threads
-> not currently allocating stuff.  It's probably a synchronization point
-> for the whole process anyway.
-> 
-How can you stop other threads and libraries from calling malloc()? And if
-it is two special allocations? Or many mmap(big file)/munmap(big file)?
-This is the same issue as opening file CLOEXEC atomically. Why not
-prevent other thread from calling fork() instead of adding flags to
-bunch of system calls.
+Gleb Natapov <gleb@redhat.com> writes:
 
---
-			Gleb.
+> If application does mlockall(MCL_FUTURE) it is no longer possible to
+> mmap file bigger than main memory or allocate big area of anonymous
+> memory. Sometimes it is desirable to lock everything related to program
+> execution into memory, but still be able to mmap big file or allocate
+> huge amount of memory and allow OS to swap them on demand. MAP_UNLOCKED
+> allows to do that.
+>
+> Signed-off-by: Gleb Natapov <gleb@redhat.com>
+
+<snip>
+
+> diff --git a/mm/mmap.c b/mm/mmap.c
+> index 73f5e4b..ecc4471 100644
+> --- a/mm/mmap.c
+> +++ b/mm/mmap.c
+> @@ -985,6 +985,9 @@ unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
+>  		if (!can_do_mlock())
+>  			return -EPERM;
+>  
+> +        if (flags & MAP_UNLOCKED)
+> +                vm_flags &= ~VM_LOCKED;
+> +
+>  	/* mlock MCL_FUTURE? */
+>  	if (vm_flags & VM_LOCKED) {
+>  		unsigned long locked, lock_limit;
+
+So, if I read it correctly, it is perfectly legal to set
+both MAP_LOCKED and MAP_UNLOCKED at the same time? While
+the behavior is still same as only setting MAP_UNLOCKED.
+
+Is this what we expect?
+
+Regards.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
