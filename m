@@ -1,62 +1,248 @@
-From: Johannes Weiner <hannes@cmpxchg.org>
-Subject: Re: [PATCH v2][RFC] add MAP_UNLOCKED mmap flag
-Date: Thu, 8 Oct 2009 13:03:24 +0200
-Message-ID: <20091008110324.GA31065@cmpxchg.org>
-References: <20091006170218.GM9832@redhat.com> <20091006183436.GA23110@cmpxchg.org> <20091006185344.GA19692@redhat.com> <20091008093752.GA30858@cmpxchg.org> <20091008094055.GE16702@redhat.com>
+From: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+Subject: [resend][PATCH] Added PR_SET_PROCTITLE_AREA option for prctl()
+Date: Fri,  9 Oct 2009 13:50:17 +0900 (JST)
+Message-ID: <20091009134354.12A7.A69D9226@jp.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20091008094055.GE16702@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Gleb Natapov <gleb@redhat.com>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Bryan Donlan <bdonlan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akp>
+Cc: kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 08, 2009 at 11:40:55AM +0200, Gleb Natapov wrote:
-> On Thu, Oct 08, 2009 at 11:37:52AM +0200, Johannes Weiner wrote:
-> > On Tue, Oct 06, 2009 at 08:53:44PM +0200, Gleb Natapov wrote:
-> > > On Tue, Oct 06, 2009 at 08:34:36PM +0200, Johannes Weiner wrote:
-> > > > On Tue, Oct 06, 2009 at 07:02:18PM +0200, Gleb Natapov wrote:
-> > > > > diff --git a/include/asm-generic/mman.h b/include/asm-generic/mman.h
-> > > > > index 32c8bd6..59e0f29 100644
-> > > > > --- a/include/asm-generic/mman.h
-> > > > > +++ b/include/asm-generic/mman.h
-> > > > > @@ -12,6 +12,7 @@
-> > > > >  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
-> > > > >  #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
-> > > > >  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
-> > > > > +#define MAP_UNLOCKED	0x80000         /* force page unlocking */
-> > > > >  
-> > > > >  #define MCL_CURRENT	1		/* lock all current mappings */
-> > > > >  #define MCL_FUTURE	2		/* lock all future mappings */
-> > > > > diff --git a/mm/mmap.c b/mm/mmap.c
-> > > > > index 73f5e4b..7c2abdb 100644
-> > > > > --- a/mm/mmap.c
-> > > > > +++ b/mm/mmap.c
-> > > > > @@ -985,6 +985,9 @@ unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
-> > > > >  		if (!can_do_mlock())
-> > > > >  			return -EPERM;
-> > > > >  
-> > > > > +        if (flags & MAP_UNLOKED)
-> > > > > +                vm_flags &= ~VM_LOCKED;
-> > > 
-> > > > Should we do something special about (MAP_UNLOCKED | MAP_LOCKED)?
-> > >
-> > > It is simpler to just ignore it. What do you think?
-> > 
-> > I think we should filter it out.  It's unlocking even when MAP_LOCKED
-> > is set and doing mlock-specific checks also no mlock will happen.
->
-> What do you mean by "filter it out"? Return error.
+ok, all lkml reviewer ack this patch.
+then, I've switched to linux-api review.
 
-Yes, sorry for being vague.  I mean returning -EINVAL for both flags
-being set.
+Any comments?
 
-	Hannes
+
+
+==================================================
+From: Timo Sirainen <tss-X3B1VOXEql0@public.gmane.org>
+
+Currently glibc2 doesn't have setproctitle(3), so several userland 
+daemons attempt to emulate it by doing some brutal stack modifications.
+This works most of the time, but it has problems. For example:
+
+ % ps -ef |grep avahi-daemon
+ avahi     1679     1  0 09:20 ?        00:00:00 avahi-daemon: running [kosadesk.local]
+
+ # cat /proc/1679/cmdline
+ avahi-daemon: running [kosadesk.local]
+
+This looks good, but the process has also overwritten its environment
+area and made the environ file useless:
+
+ # cat /proc/1679/environ
+ adesk.local]
+
+Another problem is that the process title length is limited by the size of
+the environment. Security conscious people try to avoid potential information
+leaks by clearing most of the environment before running a daemon:
+
+ # env - MINIMUM_NEEDED_VAR=foo /path/to/daemon
+
+The resulting environment size may be too small to fit the wanted process
+titles.
+
+This patch makes it possible for userspace to implement setproctitle()
+cleanly. It adds a new PR_SET_PROCTITLE_AREA option for prctl(), which
+updates task's mm_struct->arg_start and arg_end to the given area.
+
+ test_setproctitle.c
+ ================================================
+ #define ERR(str) (perror(str), exit(1))
+
+ void settitle(char* title){
+         int err;
+
+         err = prctl(34, title, strlen(title)+1);
+         if (err < 0)
+                 ERR("prctl ");
+ }
+
+ void main(void){
+         long i;
+         char buf[1024];
+
+         for (i = 0; i < 10000000000LL; i++){
+                 sprintf(buf, "loooooooooooooooooooooooong string %d",i);
+                 settitle(buf);
+         }
+ }
+ ==================================================
+
+Cc: Bryan Donlan <bdonlan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Ulrich Drepper <drepper-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+Signed-off-by: Timo Sirainen <tss-X3B1VOXEql0@public.gmane.org>
+---
+ fs/proc/base.c           |   57 +++++++++++++++++++++++++++++-----------------
+ include/linux/mm_types.h |    2 +
+ include/linux/prctl.h    |    4 +++
+ kernel/fork.c            |    1 +
+ kernel/sys.c             |   23 ++++++++++++++++++
+ 5 files changed, 66 insertions(+), 21 deletions(-)
+
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 6f742f6..2f48440 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -255,32 +255,47 @@ static int proc_pid_cmdline(struct task_struct *task, char * buffer)
+ 	int res = 0;
+ 	unsigned int len;
+ 	struct mm_struct *mm = get_task_mm(task);
++	unsigned seq;
++
+ 	if (!mm)
+ 		goto out;
++
++	/* The process was not constructed yet? */
+ 	if (!mm->arg_end)
+-		goto out_mm;	/* Shh! No looking before we're done */
++		goto out_mm;
+ 
+- 	len = mm->arg_end - mm->arg_start;
+- 
+-	if (len > PAGE_SIZE)
+-		len = PAGE_SIZE;
+- 
+-	res = access_process_vm(task, mm->arg_start, buffer, len, 0);
+-
+-	// If the nul at the end of args has been overwritten, then
+-	// assume application is using setproctitle(3).
+-	if (res > 0 && buffer[res-1] != '\0' && len < PAGE_SIZE) {
+-		len = strnlen(buffer, res);
+-		if (len < res) {
+-		    res = len;
+-		} else {
+-			len = mm->env_end - mm->env_start;
+-			if (len > PAGE_SIZE - res)
+-				len = PAGE_SIZE - res;
+-			res += access_process_vm(task, mm->env_start, buffer+res, len, 0);
++	do {
++		seq = read_seqbegin(&mm->arg_lock);
++
++		len = mm->arg_end - mm->arg_start;
++		if (len > PAGE_SIZE)
++			len = PAGE_SIZE;
++
++		res = access_process_vm(task, mm->arg_start, buffer, len, 0);
++
++		if (mm->arg_end != mm->env_start)
++			/* PR_SET_PROCTITLE_AREA used */
+ 			res = strnlen(buffer, res);
++		else if (res > 0 && buffer[res-1] != '\0' && len < PAGE_SIZE) {
++			/*
++			 * If the nul at the end of args has been overwritten,
++			 * then assume application is using sendmail's
++			 * SPT_REUSEARGV style argv override.
++			 */
++			len = strnlen(buffer, res);
++			if (len < res) {
++				res = len;
++			} else {
++				len = mm->env_end - mm->env_start;
++				if (len > PAGE_SIZE - res)
++					len = PAGE_SIZE - res;
++				res += access_process_vm(task, mm->env_start,
++							 buffer+res, len, 0);
++				res = strnlen(buffer, res);
++			}
+ 		}
+-	}
++	} while (read_seqretry(&mm->arg_lock, seq));
++
+ out_mm:
+ 	mmput(mm);
+ out:
+diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+index 0042090..9daa1fa 100644
+--- a/include/linux/mm_types.h
++++ b/include/linux/mm_types.h
+@@ -12,6 +12,7 @@
+ #include <linux/completion.h>
+ #include <linux/cpumask.h>
+ #include <linux/page-debug-flags.h>
++#include <linux/seqlock.h>
+ #include <asm/page.h>
+ #include <asm/mmu.h>
+ 
+@@ -236,6 +237,7 @@ struct mm_struct {
+ 	unsigned long stack_vm, reserved_vm, def_flags, nr_ptes;
+ 	unsigned long start_code, end_code, start_data, end_data;
+ 	unsigned long start_brk, brk, start_stack;
++	seqlock_t arg_lock;
+ 	unsigned long arg_start, arg_end, env_start, env_end;
+ 
+ 	unsigned long saved_auxv[AT_VECTOR_SIZE]; /* for /proc/PID/auxv */
+diff --git a/include/linux/prctl.h b/include/linux/prctl.h
+index b00df4c..feffb17 100644
+--- a/include/linux/prctl.h
++++ b/include/linux/prctl.h
+@@ -88,4 +88,8 @@
+ #define PR_TASK_PERF_COUNTERS_DISABLE		31
+ #define PR_TASK_PERF_COUNTERS_ENABLE		32
+ 
++
++/* Set process title memory area for setproctitle() */
++#define PR_SET_PROCTITLE_AREA 34
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/fork.c b/kernel/fork.c
+index bfee931..9eaa1cb 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -435,6 +435,7 @@ static struct mm_struct * mm_init(struct mm_struct * mm, struct task_struct *p)
+ 	mm->free_area_cache = TASK_UNMAPPED_BASE;
+ 	mm->cached_hole_size = ~0UL;
+ 	mm_init_owner(mm, p);
++	seqlock_init(&mm->arg_lock);
+ 
+ 	if (likely(!mm_alloc_pgd(mm))) {
+ 		mm->def_flags = 0;
+diff --git a/kernel/sys.c b/kernel/sys.c
+index b3f1097..e26c687 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1528,6 +1528,29 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 				current->timer_slack_ns = arg2;
+ 			error = 0;
+ 			break;
++		case PR_SET_PROCTITLE_AREA: {
++			struct mm_struct *mm = current->mm;
++			unsigned long addr = arg2;
++			unsigned long len = arg3;
++			unsigned long end = arg2 + arg3;
++
++			if (len > PAGE_SIZE)
++				return -EINVAL;
++
++			if (addr >= end)
++				return -EINVAL;
++
++			if (!access_ok(VERIFY_READ, addr, len)) {
++				return -EFAULT;
++			}
++
++			write_seqlock(&mm->arg_lock);
++			mm->arg_start = addr;
++			mm->arg_end = addr + len;
++			write_sequnlock(&mm->arg_lock);
++
++			return 0;
++		}
+ 		default:
+ 			error = -EINVAL;
+ 			break;
+-- 
+1.6.2.5
+
+
+
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
