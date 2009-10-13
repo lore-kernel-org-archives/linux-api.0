@@ -1,7 +1,7 @@
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [RFC][v8][PATCH 2/10]: Have alloc_pidmap() return actual error code
-Date: Mon, 12 Oct 2009 21:50:17 -0700
-Message-ID: <20091013045017.GB28435@us.ibm.com>
+Subject: [RFC][v8][PATCH 5/10]: Add target_pids parameter to alloc_pid()
+Date: Mon, 12 Oct 2009 21:51:42 -0700
+Message-ID: <20091013045142.GE28435@us.ibm.com>
 References: <20091013044925.GA28181@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,89 +24,82 @@ List-Id: linux-api@vger.kernel.org
 
 
 
-Subject: [RFC][v8][PATCH 2/10]: Have alloc_pidmap() return actual error code
+Subject: [RFC][v8][PATCH 5/10]: Add target_pids parameter to alloc_pid()
 
-alloc_pidmap() can fail either because all pid numbers are in use or
-because memory allocation failed.  With support for setting a specific
-pid number, alloc_pidmap() would also fail if either the given pid
-number is invalid or in use.
-
-Rather than have callers assume -ENOMEM, have alloc_pidmap() return
-the actual error.
+This parameter is currently NULL, but will be used in a follow-on patch.
 
 Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 Reviewed-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- kernel/fork.c |    5 +++--
- kernel/pid.c  |   14 +++++++++-----
- 2 files changed, 12 insertions(+), 7 deletions(-)
+ include/linux/pid.h |    2 +-
+ kernel/fork.c       |    3 ++-
+ kernel/pid.c        |    9 +++++++--
+ 3 files changed, 10 insertions(+), 4 deletions(-)
 
+Index: linux-2.6/include/linux/pid.h
+===================================================================
+--- linux-2.6.orig/include/linux/pid.h	2009-09-10 10:19:20.000000000 -0700
++++ linux-2.6/include/linux/pid.h	2009-09-10 10:29:10.000000000 -0700
+@@ -119,7 +119,7 @@ extern struct pid *find_get_pid(int nr);
+ extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
+ int next_pidmap(struct pid_namespace *pid_ns, int last);
+ 
+-extern struct pid *alloc_pid(struct pid_namespace *ns);
++extern struct pid *alloc_pid(struct pid_namespace *ns, pid_t *target_pids);
+ extern void free_pid(struct pid *pid);
+ 
+ /*
 Index: linux-2.6/kernel/fork.c
 ===================================================================
---- linux-2.6.orig/kernel/fork.c	2009-09-09 19:06:21.000000000 -0700
-+++ linux-2.6/kernel/fork.c	2009-09-09 19:06:46.000000000 -0700
-@@ -1110,10 +1110,11 @@ static struct task_struct *copy_process(
+--- linux-2.6.orig/kernel/fork.c	2009-09-10 10:19:20.000000000 -0700
++++ linux-2.6/kernel/fork.c	2009-09-10 10:29:10.000000000 -0700
+@@ -940,6 +940,7 @@ static struct task_struct *copy_process(
+ 	int retval;
+ 	struct task_struct *p;
+ 	int cgroup_callbacks_done = 0;
++	pid_t *target_pids = NULL;
+ 
+ 	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
+ 		return ERR_PTR(-EINVAL);
+@@ -1110,7 +1111,7 @@ static struct task_struct *copy_process(
  		goto bad_fork_cleanup_io;
  
  	if (pid != &init_struct_pid) {
--		retval = -ENOMEM;
- 		pid = alloc_pid(p->nsproxy->pid_ns);
--		if (!pid)
-+		if (IS_ERR(pid)) {
-+			retval = PTR_ERR(pid);
+-		pid = alloc_pid(p->nsproxy->pid_ns);
++		pid = alloc_pid(p->nsproxy->pid_ns, target_pids);
+ 		if (IS_ERR(pid)) {
+ 			retval = PTR_ERR(pid);
  			goto bad_fork_cleanup_io;
-+		}
- 
- 		if (clone_flags & CLONE_NEWPID) {
- 			retval = pid_ns_prepare_proc(p->nsproxy->pid_ns);
 Index: linux-2.6/kernel/pid.c
 ===================================================================
---- linux-2.6.orig/kernel/pid.c	2009-09-09 19:06:25.000000000 -0700
-+++ linux-2.6/kernel/pid.c	2009-09-09 19:06:46.000000000 -0700
-@@ -150,7 +150,7 @@ static int alloc_pidmap_page(struct pidm
- static int alloc_pidmap(struct pid_namespace *pid_ns)
- {
- 	int i, offset, max_scan, pid, last = pid_ns->last_pid;
--	int rc;
-+	int rc = -EAGAIN;
- 	struct pidmap *map;
- 
- 	pid = last + 1;
-@@ -189,12 +189,14 @@ static int alloc_pidmap(struct pid_names
- 		} else {
- 			map = &pid_ns->pidmap[0];
- 			offset = RESERVED_PIDS;
--			if (unlikely(last == offset))
-+			if (unlikely(last == offset)) {
-+				rc = -EAGAIN;
- 				break;
-+			}
- 		}
- 		pid = mk_pid(pid_ns, map, offset);
- 	}
--	return -1;
-+	return rc;
+--- linux-2.6.orig/kernel/pid.c	2009-09-10 10:23:27.000000000 -0700
++++ linux-2.6/kernel/pid.c	2009-09-10 10:29:10.000000000 -0700
+@@ -272,13 +272,14 @@ void free_pid(struct pid *pid)
+ 	call_rcu(&pid->rcu, delayed_put_pid);
  }
  
- int next_pidmap(struct pid_namespace *pid_ns, int last)
-@@ -263,8 +265,10 @@ struct pid *alloc_pid(struct pid_namespa
+-struct pid *alloc_pid(struct pid_namespace *ns)
++struct pid *alloc_pid(struct pid_namespace *ns, pid_t *target_pids)
+ {
+ 	struct pid *pid;
+ 	enum pid_type type;
+ 	int i, nr;
+ 	struct pid_namespace *tmp;
  	struct upid *upid;
++	int tpid;
  
  	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
--	if (!pid)
-+	if (!pid) {
-+		pid = ERR_PTR(-ENOMEM);
- 		goto out;
-+	}
+ 	if (!pid) {
+@@ -288,7 +289,11 @@ struct pid *alloc_pid(struct pid_namespa
  
  	tmp = ns;
  	for (i = ns->level; i >= 0; i--) {
-@@ -299,7 +303,7 @@ out_free:
- 		free_pidmap(pid->numbers + i);
- 
- 	kmem_cache_free(ns->pid_cachep, pid);
--	pid = NULL;
-+	pid = ERR_PTR(nr);
- 	goto out;
- }
+-		nr = alloc_pidmap(tmp, 0);
++		tpid = 0;
++		if (target_pids)
++			tpid = target_pids[i];
++
++		nr = alloc_pidmap(tmp, tpid);
+ 		if (nr < 0)
+ 			goto out_free;
