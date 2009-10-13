@@ -1,47 +1,91 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
-Subject: Re: [RFC][v8][PATCH 3/10]: Make pid_max a pid_ns property
-Date: Tue, 13 Oct 2009 11:28:18 -0500
-Message-ID: <20091013162818.GA13416@us.ibm.com>
-References: <20091013044925.GA28181@us.ibm.com> <20091013045041.GC28435@us.ibm.com> <4AD47C1F.7040703@openvz.org> <20091013152453.GA9994@us.ibm.com> <4AD4A676.3010603@openvz.org>
+From: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC][v8][PATCH 7/10]: Check invalid clone flags
+Date: Tue, 13 Oct 2009 14:35:57 -0400
+Message-ID: <4AD4C88D.7040008@librato.com>
+References: <20091013044925.GA28181@us.ibm.com>
+	<20091013045234.GG28435@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760546AbZJMQ3G@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4AD4A676.3010603@openvz.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Emelyanov <xemul@openvz.org>
-Cc: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, Oren Laadan <orenl@cs.columbia.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@osdl.org>, torvalds@linux-foundation.org, mikew@google.com, mingo@elte.hu, hpa@zytor.com, Nathan Lynch <nathanl@austin.ibm.com>, arnd@arndb.de, peterz@infradead.org, Louis.Rilling@kerlabs.com, roland@redhat.com, kosaki.motohiro@jp.fujitsu.com, randy.dunlap@oracle.com, linux-api@vger.kernel.org, Containers <containers@lists.linux-foundation.org>, sukadev@us.ibm.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20091013045234.GG28435-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Pavel Emelyanov (xemul@openvz.org):
-> > This patch isn't a core part of the clone_with_pid functionality,
-> > just something Eric has asked for.  So I don't object to dropping
-> > it.  But I disagree with Alexey's claim that this isn't a namespace
-> > property.  It should be.
-> 
-> OK
-> 
-> >> frankly I don't see the reason for doing so. Why should we?
-> >> Especially taking into account, that we essentially cannot
-> >> change thin in the namespace level 3 and deeper?
-> > 
-> > What do you mean by that?  With this patchset we're not, it's
-> > true, but we trivially can - even now, userspace can simply not
-> > give the container CAP_SYS_ADMIN or write access to the sysctl
-> > so they can't do any more CLONE_NEWPIDS or change the sysctl.
-> 
-> It's a misprint - I meant "level 2 and deeper". Sysctl is
-> only pointing at the init_pid_ns variable.
 
-Right, and I'm saying that's to be fixed up as with all other
-containerized sysctl's.  You're right that this patch doesn't
-solve that problem, but you seem to be arguing that it bc it's
-not done in this patch, we should act as though it can't be
-done.
 
-But again, maybe we're best off dropping this patch (sorry, Suka,
-I had suggested you add it...) and focusing on the rest of the set
-for now.
+Sukadev Bhattiprolu wrote:
+> 
+> Subject: [RFC][v8][PATCH 7/10]: Check invalid clone flags
+> 
+> As pointed out by Oren Laadan, we want to ensure that unused bits in the
+> clone-flags remain unused and available for future. To ensure this, define
+> a mask of clone-flags and check the flags in the clone() system calls.
+> 
+> Changelog[v8]:
+> 	- New patch in set
+> 
+> Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> 
+> ---
+>  include/linux/sched.h |   10 ++++++++++
+>  kernel/fork.c         |    3 +++
+>  2 files changed, 13 insertions(+)
+> 
+> Index: linux-2.6/include/linux/sched.h
+> ===================================================================
+> --- linux-2.6.orig/include/linux/sched.h	2009-10-02 18:53:55.000000000 -0700
+> +++ linux-2.6/include/linux/sched.h	2009-10-02 19:58:21.000000000 -0700
+> @@ -29,6 +29,16 @@
+>  #define CLONE_NEWNET		0x40000000	/* New network namespace */
+>  #define CLONE_IO		0x80000000	/* Clone io context */
+>  
+> +#define VALID_CLONE_FLAGS	(CSIGNAL | CLONE_VM | CLONE_FS | CLONE_FILES |\
+> +				 CLONE_SIGHAND | CLONE_PTRACE | CLONE_VFORK  |\
+> +				 CLONE_PARENT | CLONE_THREAD | CLONE_NEWNS   |\
+> +				 CLONE_SYSVSEM | CLONE_SETTLS                |\
+> +				 CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID  |\
+> +				 CLONE_DETACHED | CLONE_UNTRACED             |\
+> +				 CLONE_CHILD_SETTID | CLONE_STOPPED          |\
+> +				 CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER |\
+> +				 CLONE_NEWPID | CLONE_NEWNET| CLONE_IO)
+> +
+>  /*
+>   * Scheduling policies
+>   */
+> Index: linux-2.6/kernel/fork.c
+> ===================================================================
+> --- linux-2.6.orig/kernel/fork.c	2009-10-02 19:00:08.000000000 -0700
+> +++ linux-2.6/kernel/fork.c	2009-10-02 19:57:36.000000000 -0700
+> @@ -942,6 +942,9 @@ static struct task_struct *copy_process(
+>  	struct task_struct *p;
+>  	int cgroup_callbacks_done = 0;
+>  
 
-thanks,
--serge
+We can safely apply these tests to clone3(), because it is a new syscall.
+
+However, I don't know if applying it to clone() can break existing
+application that may already be (incorrectly) using invalid flags ?
+
+Oren.
+
+> +	if (clone_flags & ~VALID_CLONE_FLAGS)
+> +		return ERR_PTR(-EINVAL);
+> +
+>  	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
+>  		return ERR_PTR(-EINVAL);
+>  
+> _______________________________________________
+> Containers mailing list
+> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> https://lists.linux-foundation.org/mailman/listinfo/containers
