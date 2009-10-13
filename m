@@ -1,7 +1,7 @@
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [RFC][v8][PATCH 1/10]: Factor out code to allocate pidmap page
-Date: Mon, 12 Oct 2009 21:49:55 -0700
-Message-ID: <20091013044955.GA28435@us.ibm.com>
+Subject: [RFC][v8][PATCH 4/10]: Add target_pid parameter to alloc_pidmap()
+Date: Mon, 12 Oct 2009 21:51:04 -0700
+Message-ID: <20091013045104.GD28435@us.ibm.com>
 References: <20091013044925.GA28181@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,89 +24,86 @@ List-Id: linux-api@vger.kernel.org
 
 
 
-Subject: [RFC][v8][PATCH 1/10]: Factor out code to allocate pidmap page
+Subject: [RFC][v8][PATCH 4/10]: Add target_pid parameter to alloc_pidmap()
 
-To simplify alloc_pidmap(), move code to allocate a pid map page to a
-separate function.
+With support for setting a specific pid number for a process,
+alloc_pidmap() will need a 'target_pid' parameter.
 
+Changelog[v6]:
+	- Separate target_pid > 0 case to minimize the number of checks needed.
 Changelog[v3]:
-	- Earlier version of patchset called alloc_pidmap_page() from two
-	  places. But now its called from only one place. Even so, moving
-	  this code out into a separate function simplifies alloc_pidmap().
+	- (Eric Biederman): Avoid set_pidmap() function. Added couple of
+	  checks for target_pid in alloc_pidmap() itself.
 Changelog[v2]:
-	- (Matt Helsley, Dave Hansen) Have alloc_pidmap_page() return
-	  -ENOMEM on error instead of -1.
+	- (Serge Hallyn) Check for 'pid < 0' in set_pidmap().(Code
+	  actually checks for 'pid <= 0' for completeness).
 
 Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- kernel/pid.c |   45 ++++++++++++++++++++++++++++++---------------
- 1 file changed, 30 insertions(+), 15 deletions(-)
+ kernel/pid.c |   26 +++++++++++++++++++++-----
+ 1 file changed, 21 insertions(+), 5 deletions(-)
 
 Index: linux-2.6/kernel/pid.c
 ===================================================================
---- linux-2.6.orig/kernel/pid.c	2009-09-09 19:06:21.000000000 -0700
-+++ linux-2.6/kernel/pid.c	2009-09-09 19:06:25.000000000 -0700
-@@ -122,9 +122,35 @@ static void free_pidmap(struct upid *upi
- 	atomic_inc(&map->nr_free);
+--- linux-2.6.orig/kernel/pid.c	2009-09-09 19:07:20.000000000 -0700
++++ linux-2.6/kernel/pid.c	2009-09-10 10:23:27.000000000 -0700
+@@ -146,16 +146,22 @@ static int alloc_pidmap_page(struct pidm
+ 	return 0;
  }
  
-+static int alloc_pidmap_page(struct pidmap *map)
-+{
-+	void *page;
-+
-+	if (likely(map->page))
-+		return 0;
-+
-+	page = kzalloc(PAGE_SIZE, GFP_KERNEL);
-+
-+	/*
-+	 * Free the page if someone raced with us installing it:
-+	 */
-+	spin_lock_irq(&pidmap_lock);
-+	if (map->page)
-+		kfree(page);
-+	else
-+		map->page = page;
-+	spin_unlock_irq(&pidmap_lock);
-+
-+	if (unlikely(!map->page))
-+		return -ENOMEM;
-+
-+	return 0;
-+}
-+
- static int alloc_pidmap(struct pid_namespace *pid_ns)
+-static int alloc_pidmap(struct pid_namespace *pid_ns)
++static int alloc_pidmap(struct pid_namespace *pid_ns, int target_pid)
  {
  	int i, offset, max_scan, pid, last = pid_ns->last_pid;
-+	int rc;
+ 	int rc = -EAGAIN;
+ 	int pid_max = pid_ns->pid_max;
  	struct pidmap *map;
  
- 	pid = last + 1;
-@@ -134,21 +160,10 @@ static int alloc_pidmap(struct pid_names
+-	pid = last + 1;
+-	if (pid >= pid_max)
+-		pid = RESERVED_PIDS;
++	if (target_pid) {
++		pid = target_pid;
++		if (pid < 0 || pid >= pid_max)
++			return -EINVAL;
++	} else {
++		pid = last + 1;
++		if (pid >= pid_max)
++			pid = RESERVED_PIDS;
++	}
+ 	offset = pid & BITS_PER_PAGE_MASK;
  	map = &pid_ns->pidmap[pid/BITS_PER_PAGE];
  	max_scan = (pid_max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
- 	for (i = 0; i <= max_scan; ++i) {
--		if (unlikely(!map->page)) {
--			void *page = kzalloc(PAGE_SIZE, GFP_KERNEL);
--			/*
--			 * Free the page if someone raced with us
--			 * installing it:
--			 */
--			spin_lock_irq(&pidmap_lock);
--			if (map->page)
--				kfree(page);
--			else
--				map->page = page;
--			spin_unlock_irq(&pidmap_lock);
--			if (unlikely(!map->page))
--				break;
--		}
-+		rc = alloc_pidmap_page(map);
-+		if (rc)
-+			break;
+@@ -164,6 +170,15 @@ static int alloc_pidmap(struct pid_names
+ 		if (rc)
+ 			break;
+ 
++		if (target_pid) {
++			rc = -EBUSY;
++			if (!test_and_set_bit(offset, map->page)) {
++				atomic_dec(&map->nr_free);
++				rc = pid;
++			}
++			return rc;
++		}
 +
  		if (likely(atomic_read(&map->nr_free))) {
  			do {
  				if (!test_and_set_bit(offset, map->page)) {
+@@ -196,6 +211,7 @@ static int alloc_pidmap(struct pid_names
+ 		}
+ 		pid = mk_pid(pid_ns, map, offset);
+ 	}
++
+ 	return rc;
+ }
+ 
+@@ -272,7 +288,7 @@ struct pid *alloc_pid(struct pid_namespa
+ 
+ 	tmp = ns;
+ 	for (i = ns->level; i >= 0; i--) {
+-		nr = alloc_pidmap(tmp);
++		nr = alloc_pidmap(tmp, 0);
+ 		if (nr < 0)
+ 			goto out_free;
