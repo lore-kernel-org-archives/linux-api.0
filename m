@@ -1,14 +1,14 @@
 From: Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC][v8][PATCH 4/10]: Add target_pid parameter to alloc_pidmap()
-Date: Tue, 13 Oct 2009 15:50:15 +0400
-Message-ID: <4AD46977.5020303@openvz.org>
+Subject: Re: [RFC][v8][PATCH 3/10]: Make pid_max a pid_ns property
+Date: Tue, 13 Oct 2009 17:09:51 +0400
+Message-ID: <4AD47C1F.7040703@openvz.org>
 References: <20091013044925.GA28181@us.ibm.com>
-	<20091013045104.GD28435@us.ibm.com>
+	<20091013045041.GC28435@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20091013045104.GD28435-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20091013045041.GC28435-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
@@ -24,18 +24,25 @@ List-Id: linux-api@vger.kernel.org
 
 Sukadev Bhattiprolu wrote:
 > 
-> Subject: [RFC][v8][PATCH 4/10]: Add target_pid parameter to alloc_pidmap()
+> From: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+> Subject: [RFC][v8][PATCH 3/10]: Make pid_max a pid_ns property
 > 
+> Remove the pid_max global, and make it a property of the
+> pid_namespace.  When a pid_ns is created, it inherits
+> the parent's pid_ns.
+> 
+> Fixing up sysctl (trivial akin to ipc version, but
+> potentially tedious to get right for all CONFIG*
+> combinations) is left for later.
+> 
+> Changelog[v2]:
+> 	- Port to newer kernel
+> 	- Make pid_max a local variable in alloc_pidmap() to simplify code/patch
+> 
+> Signed-off-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Sukadev Bhattiprolu <sukadev-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 
-[ snip ]
-
-> @@ -146,16 +146,22 @@ static int alloc_pidmap_page(struct pidm
->  	return 0;
->  }
->  
-> -static int alloc_pidmap(struct pid_namespace *pid_ns)
-> +static int alloc_pidmap(struct pid_namespace *pid_ns, int target_pid)
-
-Please no! Better create another function, that will just
-atomic_test_and_set() the proper bit in the map. This one
-is heavy enough already.
+Not that I'm about to slow down or block the process, but...
+frankly I don't see the reason for doing so. Why should we?
+Especially taking into account, that we essentially cannot
+change thin in the namespace level 3 and deeper?
