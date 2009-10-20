@@ -1,50 +1,66 @@
-From: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC][v8][PATCH 9/10]: Define clone3() syscall
-Date: Mon, 19 Oct 2009 16:50:12 -0700
-Message-ID: <20091019235012.GF27627@count0.beaverton.ibm.com>
-References: <20091013044925.GA28181@us.ibm.com> <20091013045439.GI28435@us.ibm.com> <20091016042041.GA7220@us.ibm.com> <cfd18e0f0910152325m4a9125c2q18f36f5bd7d4a0@mail.gmail.com> <20091016180631.GA31036@us.ibm.com> <20091019174405.GE27627@count0.beaverton.ibm.com> <4ADCDAA8.5080408@zytor.com>
+From: Matt Helsley <matthltc@us.ibm.com>
+Subject: Re: [RFC][v8][PATCH 0/10] Implement clone3() system call
+Date: Mon, 19 Oct 2009 17:51:25 -0700
+Message-ID: <20091020005125.GG27627@count0.beaverton.ibm.com>
+References: <20091013044925.GA28181@us.ibm.com> <4AD8C7E4.9000903@free.fr> <20091016194451.GA28706@us.ibm.com> <4ADCCD68.9030003@free.fr> <4ADCDE7F.4090501@librato.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758069AbZJTAve@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4ADCDAA8.5080408-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <4ADCDE7F.4090501@librato.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oren Laadan <orenl@librato.com>
+Cc: Daniel Lezcano <daniel.lezcano@free.fr>, randy.dunlap@oracle.com, arnd@arndb.de, linux-api@vger.kernel.org, Containers <containers@lists.linux-foundation.org>, Nathan Lynch <nathanl@austin.ibm.com>, linux-kernel@vger.kernel.org, Louis.Rilling@kerlabs.com, "Eric W. Biederman" <ebiederm@xmission.com>, kosaki.motohiro@jp.fujitsu.com, hpa@zytor.com, mingo@elte.hu, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, torvalds@linux-foundation.org, Alexey Dobriyan <adobriyan@gmail.com>, roland@redhat.com, Pavel Emelyanov <xemul@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 20, 2009 at 06:31:20AM +0900, H. Peter Anvin wrote:
-> On 10/20/2009 02:44 AM, Matt Helsley wrote:
->>> |
->>> | I know I'm late to this discussion, but why the name clone3()? It's
->>> | not consistent with any other convention used fo syscall naming,
->
-> This assumption, of course, is just plain wrong.  Look at the wait  
-> system calls, for example.  However, when a small integer is used like  
-> that, it pretty much always reflects numbers of arguments.
->
->>> | AFAICS. I think a name like clone_ext() or clonex() (for extended)
->>> | might make more sense.
->>>
->>> Sure, we talked about calling it clone_extended() and I can go back
->>> to that.
->>>
->>> Only minor concern with that name was if this new call ever needs to
->>> be extended, what would we call it :-). With clone3() we could add a
->>> real/fake parameter and call it clone4() :-p
->>
->> Perhaps clone64 (somewhat like stat64 for example)?
->>
->
-> I think that doesn't exactly reflect the nature of the changes.
+On Mon, Oct 19, 2009 at 05:47:43PM -0400, Oren Laadan wrote:
+> 
+> 
+> Daniel Lezcano wrote:
+> > Sukadev Bhattiprolu wrote:
+> >> Daniel Lezcano [daniel.lezcano@free.fr] wrote:
+> >>   
+> >>> Sukadev Bhattiprolu wrote:
+> >>>     
+> >>>> Subject: [RFC][v8][PATCH 0/10] Implement clone3() system call
+> >>>>
 
-Yes. Without adopting an impractical encoding scheme it's quite
-unlikely a small number like 3 or 64 could exactly reflect all the
-changes :). I don't think that's a realistic objection though so...
+<snip>
 
-> clone3() is actually pretty good.
+> > Another point. It's another way to extend the exhausted clone  flags as 
+> > the cloneat can be called as a compatibility way, with cloneat(getpid(), 
+> > 0, ... )
+> 
+> Which is what the proposed new clone_....() does.
 
-I agree.
+Just to be clear -- Suka's proposing to extend the clone flags. However I
+don't believe reusing the "pid" parameters as Daniel seemed to suggest
+was ever part of Suka's proposed changes.
+
+<snip>
+
+> > I don't really see a difference between sys_restart(pid_t pid , int fd, 
+> > long flags) where pid_t is the topmost in the hierarchy, fd is a file 
+> > descriptor to a structure "pid_t * + struct clone_args *" and flags is 
+> > "PROCTREE".
+
+I think the difference has to do with keeping the code maintainable.
+
+Clone creates the process so it's already involved in allocating and
+assigning pids to the new task. Switching pids at sys_restart() would 
+add another point in the code where pids are allocated and assigned.
+This suggests we may have to worry about introducing new obscure races
+for anyone who's working on the pid allocator to be careful of. At
+least when all the code is "localized" to the clone paths we can be
+reasonably certain of proper maintenance.
+
+<snip>
+
+> I really really really hope we can settle down on *a* name,
+> *any* name, and move forward. Amen.
+
+clone3() seemed to be the leading contender from what I've read so far.
+Does anyone still object to clone3() after reading the whole thread?
 
 Cheers,
 	-Matt Helsley
