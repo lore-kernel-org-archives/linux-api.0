@@ -1,28 +1,44 @@
-From: "H. Peter Anvin" <hpa@zytor.com>
-Subject: Re: [RFC][v8][PATCH 9/10]: Define clone3() syscall
-Date: Wed, 21 Oct 2009 22:03:51 +0900
-Message-ID: <4ADF06B7.50508@zytor.com>
-References: <20091013044925.GA28181@us.ibm.com>	 <20091013045439.GI28435@us.ibm.com> <20091016042041.GA7220@us.ibm.com>	 <cfd18e0f0910152325m4a9125c2q18f36f5bd7d4a0@mail.gmail.com>	 <20091016180631.GA31036@us.ibm.com>	 <20091019174405.GE27627@count0.beaverton.ibm.com>	 <4ADCDAA8.5080408@zytor.com>	 <20091019235012.GF27627@count0.beaverton.ibm.com> <cfd18e0f0910202126w1ebfa2e2u2ecbaa23b198d100@mail.gmail.com>
+From: Arnd Bergmann <arndbergmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Subject: Re: [RFC][v8][PATCH 10/10]: Document clone3() syscall
+Date: Wed, 21 Oct 2009 15:26:50 +0200
+Message-ID: <200910211526.50584.arnd@arndb.de>
+References: <20091013044925.GA28181@us.ibm.com> <200910211037.38413.arnd@arndb.de> <20091021093338.GA11670@elf.ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: Text/Plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753369AbZJUNMJ@vger.kernel.org>
-In-Reply-To: <cfd18e0f0910202126w1ebfa2e2u2ecbaa23b198d100@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mtk.manpages@gmail.com
-Cc: Matt Helsley <matthltc@us.ibm.com>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, randy.dunlap@oracle.com, arnd@arndb.de, Containers <containers@lists.linux-foundation.org>, Nathan Lynch <nathanl@austin.ibm.com>, linux-kernel@vger.kernel.org, Louis.Rilling@kerlabs.com, "Eric W. Biederman" <ebiederm@xmission.com>, kosaki.motohiro@jp.fujitsu.com, mingo@elte.hu, linux-api@vger.kernel.org, torvalds@linux-foundation.org, Alexey Dobriyan <adobriyan@gmail.com>, roland@redhat.com, Pavel Emelyanov <xemul@openvz.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20091021093338.GA11670-I/5MKhXcvmPrBKCeMvbIDA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Cc: Arnd Bergmann <arndbergmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-3NddpPZAyC0@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, sukadev-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/21/2009 01:26 PM, Michael Kerrisk wrote:
->
-> My question here is: what does "3" actually mean? In general, system
-> calls have not followed any convention of numbering to indicate
-> successive versions -- clone2() being the one possible exception that
-> I know of.
->
+On Wednesday 21 October 2009, Pavel Machek wrote:
+> > > Hmm, is there reason why pids are not at the end of struct
+> > > clone_struct? Passing most parameters in special structure, then pids
+> > > separately is strange...
+> > 
+> > I suggested doing that, it's a lot easier to handle fixed length data
+> > structures than an array at the end.
+> 
+> You could still put the something * pids at the end of (fixed length)
+> structure.
+> 
+> (Not that I agree with the argument, pid array is variable-length,
+> anyway, and inlining it at the end of structure should not make code
+> more complex).
 
-"3" is number of arguments.  It's better than "extended" or something 
-like that simply because "extended" just means "more than", and a number 
-at least tells you *how much more than*.
+Please read up on the v1 to v7 patches, we've been through all this
+before. There are obviously a lot of ways to do it, many of which are
+equally good. The important thing to note is that the user-visible
+interface should *not* pass the structure into the library that provides
+this function but build the structure itself, so it doesn't matter that
+much.
 
-	-hpa
+If you put the array at the end of the data structure, the wrapper
+will have to copy the array provided by the user to a temporary
+buffer. Passing the array as a separate syscall argument avoids
+this.
+
+	Arnd <><
