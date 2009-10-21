@@ -1,100 +1,118 @@
-From: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC][v8][PATCH 0/10] Implement clone3() system call
-Date: Tue, 20 Oct 2009 09:09:17 -0500
-Message-ID: <20091020140917.GA2145@us.ibm.com>
-References: <20091013044925.GA28181@us.ibm.com> <4AD8C7E4.9000903@free.fr> <20091016194451.GA28706@us.ibm.com> <4ADCCD68.9030003@free.fr> <4ADCDE7F.4090501@librato.com> <20091020005125.GG27627@count0.beaverton.ibm.com> <m1vdiad9jd.fsf@fess.ebiederm.org>
+From: Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Subject: Re: [RFC][v8][PATCH 9/10]: Define clone3() syscall
+Date: Wed, 21 Oct 2009 06:26:16 +0200
+Message-ID: <cfd18e0f0910202126w1ebfa2e2u2ecbaa23b198d100@mail.gmail.com>
+References: <20091013044925.GA28181@us.ibm.com>
+	 <20091013045439.GI28435@us.ibm.com> <20091016042041.GA7220@us.ibm.com>
+	 <cfd18e0f0910152325m4a9125c2q18f36f5bd7d4a0@mail.gmail.com>
+	 <20091016180631.GA31036@us.ibm.com>
+	 <20091019174405.GE27627@count0.beaverton.ibm.com>
+	 <4ADCDAA8.5080408@zytor.com>
+	 <20091019235012.GF27627@count0.beaverton.ibm.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <m1vdiad9jd.fsf-+imSwln9KH6u2/kzUuoCbdi2O/JbrIOy@public.gmane.org>
+In-Reply-To: <20091019235012.GF27627-52DBMbEzqgQ/wnmkkaCWp/UQ3DHhIser@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+To: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org> writes:
-> 
-> > On Mon, Oct 19, 2009 at 05:47:43PM -0400, Oren Laadan wrote:
-> >> 
-> >> 
-> >> Daniel Lezcano wrote:
-> >> > Sukadev Bhattiprolu wrote:
-> >> >> Daniel Lezcano [daniel.lezcano-GANU6spQydw@public.gmane.org] wrote:
-> >> >>   
-> >> >>> Sukadev Bhattiprolu wrote:
-> >> >>>     
-> >> >>>> Subject: [RFC][v8][PATCH 0/10] Implement clone3() system call
-> >> >>>>
-> >
-> > <snip>
-> >
-> >> > Another point. It's another way to extend the exhausted clone  flags as 
-> >> > the cloneat can be called as a compatibility way, with cloneat(getpid(), 
-> >> > 0, ... )
-> >> 
-> >> Which is what the proposed new clone_....() does.
-> >
-> > Just to be clear -- Suka's proposing to extend the clone flags. However I
-> > don't believe reusing the "pid" parameters as Daniel seemed to suggest
-> > was ever part of Suka's proposed changes.
-> >
-> > <snip>
-> >
-> >> > I don't really see a difference between sys_restart(pid_t pid , int fd, 
-> >> > long flags) where pid_t is the topmost in the hierarchy, fd is a file 
-> >> > descriptor to a structure "pid_t * + struct clone_args *" and flags is 
-> >> > "PROCTREE".
-> >
-> > I think the difference has to do with keeping the code maintainable.
-> >
-> > Clone creates the process so it's already involved in allocating and
-> > assigning pids to the new task. Switching pids at sys_restart() would 
-> > add another point in the code where pids are allocated and assigned.
-> > This suggests we may have to worry about introducing new obscure races
-> > for anyone who's working on the pid allocator to be careful of. At
-> > least when all the code is "localized" to the clone paths we can be
-> > reasonably certain of proper maintenance.
-> >
-> > <snip>
-> >
-> >> I really really really hope we can settle down on *a* name,
-> >> *any* name, and move forward. Amen.
-> >
-> > clone3() seemed to be the leading contender from what I've read so far.
-> > Does anyone still object to clone3() after reading the whole thread?
-> 
-> I object to what clone3() is.  The name is not particularly interesting.
-> 
-> The sanity checks for assigning pids are missing and there is a todo
-> about it.  I am not comfortable with assigning pids to a new process
-> in a pid namespace with other processes user space processes executing
-> in it.
-> 
-> How we handle a clone extension depends critically on if we want to
-> create a processes for restart in user space or kernel space.
-> 
-> Could some one give me or point me at a strong case for creating the
-> processes for restart in user space?
-> 
-> The pid assignment code is currently ugly.  I asked that we just pass
-> in the min max pid pids that already exist into the core pid
-> assignment function and a constrained min/max that only admits a
-> single pid when we are allocating a struct pid for restart.  That was
-> not done and now we have a weird abortion with unnecessary special cases.
+On Tue, Oct 20, 2009 at 1:50 AM, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org> wro=
+te:
+> On Tue, Oct 20, 2009 at 06:31:20AM +0900, H. Peter Anvin wrote:
+>> On 10/20/2009 02:44 AM, Matt Helsley wrote:
+>>>> |
+>>>> | I know I'm late to this discussion, but why the name clone3()? I=
+t's
+>>>> | not consistent with any other convention used fo syscall naming,
+>>
+>> This assumption, of course, is just plain wrong. =A0Look at the wait
+>> system calls, for example. =A0However, when a small integer is used =
+like
+>> that, it pretty much always reflects numbers of arguments.
+>>
+>>>> | AFAICS. I think a name like clone_ext() or clonex() (for extende=
+d)
+>>>> | might make more sense.
+>>>>
+>>>> Sure, we talked about calling it clone_extended() and I can go bac=
+k
+>>>> to that.
+>>>>
+>>>> Only minor concern with that name was if this new call ever needs =
+to
+>>>> be extended, what would we call it :-). With clone3() we could add=
+ a
+>>>> real/fake parameter and call it clone4() :-p
+>>>
+>>> Perhaps clone64 (somewhat like stat64 for example)?
+>>>
+>>
+>> I think that doesn't exactly reflect the nature of the changes.
+>
+> Yes. Without adopting an impractical encoding scheme it's quite
+> unlikely a small number like 3 or 64 could exactly reflect all the
+> changes :). I don't think that's a realistic objection though so...
+>
+>> clone3() is actually pretty good.
+>
+> I agree.
 
-I asked you (I believe twice) to clarify how on earth you meant for
-that to be done for hierarchical pid namespaces (a task being restored
-which needs two of it's 4 pids specified), and you did not reply.
+My question here is: what does "3" actually mean? In general, system
+calls have not followed any convention of numbering to indicate
+successive versions -- clone2() being the one possible exception that
+I know of.
 
-Did you mean for it to be done through procfiles?  If so, does the
-task have to keep multiple /proc mounts around, one for each
-pidns hierarchy in which it needs to specify a pid?  Or did you have
-another idea in mind?  A single procfile into which multiple pids can
-be specified in a list?  A completely different interface?
+The only other conventions used for numbering new versions of system
+calls relates either to arguments size (e.g., 32 versus 64) or to
+their number number of arguments (dup2(), dup3(), wait3(), wait4(),
+accept4(), eventfd2(), inotify_init1(), epoll_create1(), evetfd2(),
+signalfd4()). The former convention makes some sense, but the latter
+is rather questionable, for a couple of reasons. One is that the
+number of arguments for the system call may change in the future
+(several of the newer system calls have a flags argument which could
+be used to indeicate the presence of an additional, optional
+argument). Another reason that the latter convention is questionable
+is that the number of arguments exposed to userspace by glibc may be
+different from the number of arguments in the raw syscall. For
+example, signafd4() has 4 arguments, but the glibc interface
+(signalfd() http://www.kernel.org/doc/man-pages/online/pages/man2/signa=
+lfd.2.html)
+has 3.
 
-Or do you mean for this to be done only from the kernel?
+Using the name clone3() follows no historical convention, which is why
+it seems unwise to me. Thus my suggestion of clonex() (like e.g.,
+adjtimex()), though quite possibly there could be some better name.
 
-thanks,
--serge
+Sukadev, you wrote "With clone3() we could add areal/fake parameter
+and call it clone4()". This rasies for me the question: should
+clone3() have a flags argument, so as to allow these types of
+extensions (i.e., not for clone flags, but rather to indicate changes
+in the system call interface). Yes, I understand there is a 64-bit
+flags in 'struct clone_struct', but I wonder whether there is any
+virtue in having an additional flags argument in the base signature of
+the function, as per the following:
+http://www.kernel.org/doc/man-pages/online/pages/man2/dup3.2.html
+http://www.kernel.org/doc/man-pages/online/pages/man2/signalfd4.2.html
+http://www.kernel.org/doc/man-pages/online/pages/man2/eventfd2.2.html
+see also
+http://linux-man-pages.blogspot.com/2008/10/recent-changes-in-file-desc=
+riptor.html
+
+By the way, one further thought: why "struct clone_struct"? We know
+it's a struct. Therefore, it seems pointless to include that in the
+name. Something like "struct clone_args" would seem less redundant and
+slightly more meaningful as a name.
+
+Cheers,
+
+Michael
+
+
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface" http://blog.man7.org/
