@@ -1,31 +1,68 @@
-From: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Subject: =?utf-8?B?0KHQvtCx0LXRgGXQvCDQtNC70Y8g0JLQsNGBINC/byBjZdGC0Lgg0LjQvdGCZXDQvWXRgiDQsWHQt9GDINC0YdC90L3Ri9GFINC/b9GC0LXQvdGG0Lhh0LvRjNC90Yt4INC60LvQuGXQvdGCb9CyINC00LvRjyBCYdGI0LXQs28g0JHQuNC30L1lY9CwIELRiyDQvNC+0LbQtdGC0LUgedC30L1h0YLRjCDQv2/QtHDQvtCx0L1l0LUg0L9vINGC0LXQu9C10YTQvtC9eTogKzc5SdCXMzlJMzgzNyDQlW3QsGlsOiBwcm9kYXdlekBtaXhtYWlsLmNvbSBJQ1E6IDYyLTg4OC02MiBTa3lwZTogYmFzZWRhbm5peA==?=
-Date: 23 Oct 2009 15:17:29 +0600
-Message-ID: <POSTPHtJaXc6u9y5lYG00003869@postph.auroras>
+From: Oren Laadan <orenl-RdfvBDnrOixBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC][v8][PATCH 0/10] Implement clone3() system call
+Date: Fri, 23 Oct 2009 15:16:52 -0400
+Message-ID: <4AE20124.4010108@librato.com>
+References: <20091020005125.GG27627@count0.beaverton.ibm.com> <m1vdiad9jd.fsf@fess.ebiederm.org> <20091020040315.GA26632@us.ibm.com> <m1iqeauyvl.fsf@fess.ebiederm.org> <20091020183329.GB22646@us.ibm.com> <m1r5sxsw7w.fsf@fess.ebiederm.org> <20091021062021.GA2667@us.ibm.com> <m1eioxrtsb.fsf@fess.ebiederm.org> <20091023004253.GA7915@us.ibm.com> <m1bpjyrkep.fsf@fess.ebiederm.org> <20091023053001.GA24972@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20091023053001.GA24972-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Daniel Lezcano <daniel.lezcano-GANU6spQydw@public.gmane.org>, randy.dunlap-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Louis.Rilling-aw0BnHfMbSpBDgjK7y7TUQ@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Co=E1=E5pe=EC =E4=EB=FF B=E0c =EFo ce=F2=E8 =E8=ED=F2ep=EDe=F2 =E1a=E7=F3=
- =E4a=ED=ED=FB=F5=20
-=EFo=F2=E5=ED=F6=E8a=EB=FC=ED=FBx =EA=EB=E8e=ED=F2o=E2 =E4=EB=FF Ba=F8=E5=
-=E3=EE =C1=E8=E7=EDec=E0
-(=E2c=E5 k=EE=ED=F2ak=F2=ED=FB=E5 =E4=E0=ED=ED=FBe - p=EE=E4 =E4=E5=FF=F2=
-=E5=EB=FC=EDo=F1=F2=E8,=20
-=EDa=E7=E2=E0=ED=E8=E5, =E0=E4pe=F1, =E8=EC=E5=EDa, =F2=E5=EBe=F4o=ED=FB=
-, =F4=E0k=F1=FB,=20
-e-mail, www =E8=F2=E4)=20
-To=F7=EDo! M=EDo=E3=EE! =C1=FBc=F2=F0=EE!
-C=E1o=F0 =E4=E0=ED=ED=FBx =EFo =E3o=F0o=E4y =E8 o=E1=EB=E0c=F2=E8 4O0O =
-py=E1=EBe=E9
-C=E1=EEp =E4a=ED=ED=FBx =EFo c=F2p=E0=EDe 6O0=CE py=E1=EBe=E9
 
-B=FB =EC=EE=E6=E5=F2e y=E7=ED=E0=F2=FC =EFo=E4p=EE=E1=ED=E5e=20
-=EF=EE =F2=E5=EB=E5=F4=EE=ED=F3: +79I339I3837
-Email: prodawez-oLI30V9UujBBDgjK7y7TUQ@public.gmane.org
-ICQ: 62-888-62
-Skyp=E5: basedannix
+
+Sukadev Bhattiprolu wrote:
+> Eric W. Biederman [ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org] wrote:
+> | > | +	if (target < RESERVED_PIDS)
+> | >
+> | > Should we replace RESERVED_PIDS with 0 ? We currently allow new
+> | > containers to have pids 1..32K in the first pass and in subsequent
+> | > passes assign starting at RESERVED_PIDS.
+> | 
+> | If it is a preexisting namespace pid namespace removing the RESERVED_PIDS
+> | check removes most if not all of the point of RESERVED_PIDS.
+> | 
+> | In a new fresh pid namespace I have no problem with not performing
+> | the RESERVED_PIDS check.
+> 
+> In that case can we do this
+> 
+> 	if (target_pid < RESERVED_PIDS && !pid_ns->level)
+> 		return -EINVAL;
+> 
+> instead ?
+> | 
+> | So I guess that makes the check.
+> | 
+> | if ((target < RESERVED_PIDS) && pid_ns->last_pid >= RESERVED_PIDS)
+> |    return -EINVAL;
+> 
+> I am just wondering if there is a small corner case where C/R would randomly
+> fail because of this sequence:
+> 
+> 	- C/R code calls clone() or clone3() say about RESERVED_PIDS-1
+> 	  times and ->last_pid == RESERVED_PIDS-1.
+> 
+> 	- C/R code calls normal fork()/alloc_pidmap() for a short-lived
+> 	  child - its pid == ->last_pid == RESERVED_PIDS
+> 
+> 	- C/R code then calls clone3()/set_pidmap() to set the pid of
+> 	  a new child to RESERVED_PID but fails (i.e it fails to restore
+> 	  a pid even when the pid is not in use).
+
+Not only for short-lived children. The problem is restart will succeed
+or fail depending on the order in which tasks were checkpointed. If
+task with pid 290 is restarted after pid 305, restart will fail.
+
+And because chekcpoint scans the task tree in a DFS manner, this is
+more likely to happen than not.
+
+I wonder why you'd like to restrict a pid-specific clone like that ?
+It is already a privileged syscall, so it could be exempt. I suggest
+that only regular clones will be constrained.
+
+Oren.
