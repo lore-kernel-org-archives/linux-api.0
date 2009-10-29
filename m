@@ -1,51 +1,37 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
-Subject: Re: [PATCH resend] define convenient securebits masks for prctl
-	users
-Date: Thu, 29 Oct 2009 09:05:47 -0500
-Message-ID: <20091029140547.GC15713@us.ibm.com>
-References: <20091028140236.GA8157@us.ibm.com> <20091029133306.0cb87521.sfr@canb.auug.org.au>
+From: Andreas Schwab <schwab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: F_SETOWN_EX and F_GETLK64 conflict
+Date: Thu, 29 Oct 2009 18:03:48 +0100
+Message-ID: <m3k4yew2rv.fsf@hase.home>
+References: <Pine.LNX.4.64.0910041229300.20203@digraph.polyomino.org.uk>
+	<1254691822.21044.9.camel@laptop>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754409AbZJ2OHC@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20091029133306.0cb87521.sfr@canb.auug.org.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Stephen Rothwell <sfr@canb.auug.org.au>
-Cc: lkml <linux-kernel@vger.kernel.org>, "Andrew G. Morgan" <morgan@kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Ulrich Drepper <drepper@redhat.com>, linux-api@vger.kernel.org, James Morris <jmorris@namei.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1254691822.21044.9.camel@laptop> (Peter Zijlstra's message of
+	"Sun, 04 Oct 2009 23:30:22 +0200")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>
+Cc: "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <onestero-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephane Eranian <eranian-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Stephen Rothwell (sfr@canb.auug.org.au):
-> Hi Serge,
-> 
-> On Wed, 28 Oct 2009 09:02:36 -0500 "Serge E. Hallyn" <serue@us.ibm.com> wrote:
-> >
-> > [ Are there any objections to exporting securebits.h?  If not,
-> > can this patch be pushed to linux-next? ]
-> 
-> I am not sure which tree this belongs in?  Maybe security-testing (James
-> cc'd)?
+Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org> writes:
 
-I don't know why that didn't occur to me!  Thanks, I'll pursue
-that :)
+> On Sun, 2009-10-04 at 12:35 +0000, Joseph S. Myers wrote:
+>> In asm-generic/fcntl.h, F_SETOWN_EX and F_GETLK64 both have value 12, and 
+>> F_GETOWN_EX and F_SETLK64 both have value 13.  I don't see how this is 
+>> going to work correctly.  See 
+>> <http://sourceware.org/ml/libc-ports/2009-10/msg00013.html>.
+>
+>
+> Ugh,.. yeah, non obvious collision that.
+>
+> How about something like:
 
-> > diff --git a/include/linux/securebits.h b/include/linux/securebits.h
-> > index d2c5ed8..9ad109e 100644
-> > --- a/include/linux/securebits.h
-> > +++ b/include/linux/securebits.h
-> > @@ -1,6 +1,13 @@
-> >  #ifndef _LINUX_SECUREBITS_H
-> >  #define _LINUX_SECUREBITS_H 1
-> >  
-> > +/* Each securesetting is implemented using two bits. One bit specifies
-> > +   whether the setting is on or off. The other bit specify whether the
-> > +   setting is locked or not. A setting which is locked cannot be
-> > +   changed from user-level. */
-> > +#define issecure_mask(X)	(1 << (X))
-> > +#define issecure(X)		(issecure_mask(X) & current_cred_xxx(securebits))
-> 
-> You want this second define protected by ifdef __KERNEL__ ...
+That really needs to be fixed before 2.6.32.
 
-True, userspace doesn't need to see those.  Will sanitize and resend.
+Andreas.
 
-thanks,
--serge
+-- 
+Andreas Schwab, schwab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+GPG Key fingerprint = D4E8 DBE3 3813 BB5D FA84  5EC7 45C6 250E 6F00 984E
+"And now for something completely different."
