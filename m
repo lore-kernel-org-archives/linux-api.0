@@ -1,30 +1,59 @@
-From: Ulrich Drepper <drepper@gmail.com>
+From: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
 Subject: Re: F_SETOWN_EX and F_GETLK64 conflict
-Date: Thu, 29 Oct 2009 20:21:02 -0700
-Message-ID: <a36005b50910292021y392075d5lddc620e3bdfc3ede@mail.gmail.com>
+Date: Fri, 30 Oct 2009 16:13:20 +1100
+Message-ID: <20091030161320.17d07dc9.sfr@canb.auug.org.au>
 References: <Pine.LNX.4.64.0910041229300.20203@digraph.polyomino.org.uk>
 	<1254691822.21044.9.camel@laptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754965AbZJ3D2L@vger.kernel.org>
+Content-Type: multipart/signed; protocol="application/pgp-signature";
+ micalg="PGP-SHA1";
+ boundary="Signature=_Fri__30_Oct_2009_16_13_20_+1100_D3NqZ+.Fp_O8cjYi"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1254691822.21044.9.camel@laptop>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Cc: "Joseph S. Myers" <joseph@codesourcery.com>, linux-api@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, Oleg Nesterov <onestero@redhat.com>, Stephane Eranian <eranian@googlemail.com>, Michael Kerrisk <mtk.manpages@googlemail.com>, Roland McGrath <roland@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@elte.hu>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>
+Cc: "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <onestero-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephane Eranian <eranian-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Oct 4, 2009 at 14:30, Peter Zijlstra <a.p.zijlstra@chello.nl> w=
-rote:
-> =C2=A0arch/alpha/include/asm/fcntl.h | =C2=A0 =C2=A04 ++--
-> =C2=A0include/asm-generic/fcntl.h =C2=A0 =C2=A0| =C2=A0 19 ++++++++++=
-+--------
-> =C2=A02 files changed, 13 insertions(+), 10 deletions(-)
+--Signature=_Fri__30_Oct_2009_16_13_20_+1100_D3NqZ+.Fp_O8cjYi
+Content-Type: text/plain; charset=US-ASCII
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-This patch looks fine:
+Hi Peter,
 
-Acked-by: Ulrich Drepper <drepper@redhat.com>
+On Sun, 04 Oct 2009 23:30:22 +0200 Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org> =
+wrote:
+>
+> On Sun, 2009-10-04 at 12:35 +0000, Joseph S. Myers wrote:
+> > In asm-generic/fcntl.h, F_SETOWN_EX and F_GETLK64 both have value 12, a=
+nd=20
+> > F_GETOWN_EX and F_SETLK64 both have value 13.  I don't see how this is=
+=20
+> > going to work correctly.  See=20
+> > <http://sourceware.org/ml/libc-ports/2009-10/msg00013.html>.
+>=20
+>=20
+> Ugh,.. yeah, non obvious collision that.
 
+This is why we have F_LINUX_SPECIFIC_BASE and use it in
+include/linux/fcntl.h ... it should be used as a base for any new fcntl
+types since they don't require backward compatibility.
 
-Linus, can you please apply it in whatever form so that we know the
-value of the constants?
+--=20
+Cheers,
+Stephen Rothwell                    sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org
+http://www.canb.auug.org.au/~sfr/
+
+--Signature=_Fri__30_Oct_2009_16_13_20_+1100_D3NqZ+.Fp_O8cjYi
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.10 (GNU/Linux)
+
+iEYEARECAAYFAkrqdfAACgkQjjKRsyhoI8wR6ACdEKs7znjR8nNcvA2ZaCLZNR0c
+wmYAoI3XL92cSFc3MHyMDgsUo/nfpcEa
+=813U
+-----END PGP SIGNATURE-----
+
+--Signature=_Fri__30_Oct_2009_16_13_20_+1100_D3NqZ+.Fp_O8cjYi--
