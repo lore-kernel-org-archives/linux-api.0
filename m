@@ -1,7 +1,7 @@
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v12][PATCH 3/9] Define set_pidmap() function
-Date: Tue, 10 Nov 2009 20:43:29 -0800
-Message-ID: <20091111044329.GC11393@suka>
+Subject: [v12][PATCH 7/9] Define do_fork_with_pids()
+Date: Tue, 10 Nov 2009 20:44:38 -0800
+Message-ID: <20091111044438.GG11393@suka>
 References: <20091111043440.GA9377@suka>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -14,117 +14,96 @@ Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, serue-r/Jw6+rmf
 List-Id: linux-api@vger.kernel.org
 
 
-Subject: [v12][PATCH 3/9] Define set_pidmap() function
+Subject: [v12][PATCH 7/9] Define do_fork_with_pids()
 
-Define a set_pidmap() interface which is like alloc_pidmap() only that
-caller specifies the pid number to be assigned.
+do_fork_with_pids() is same as do_fork(), except that it takes an
+additional, 'pid_set', parameter. This parameter, currently unused,
+specifies the set of target pids of the process in each of its pid
+namespaces.
 
-Changelog[v9]:
-	- Completely rewrote this patch based on Eric Biederman's code.
 Changelog[v7]:
-        - [Eric Biederman] Generalize alloc_pidmap() to take a range of pids.
+	- Drop 'struct pid_set' object and pass in 'pid_t *target_pids'
+	  instead of 'struct pid_set *'.
+
 Changelog[v6]:
-        - Separate target_pid > 0 case to minimize the number of checks needed.
+	- (Nathan Lynch, Arnd Bergmann, H. Peter Anvin, Linus Torvalds)
+	  Change 'pid_set.pids' to a 'pid_t pids[]' so size of 'struct pid_set'
+	  is constant across architectures.
+	- (Nathan Lynch) Change 'pid_set.num_pids' to 'unsigned int'.
+
+Changelog[v4]:
+	- Rename 'struct target_pid_set' to 'struct pid_set' since it may
+	  be useful in other contexts.
+
 Changelog[v3]:
-        - (Eric Biederman): Avoid set_pidmap() function. Added couple of
-          checks for target_pid in alloc_pidmap() itself.
+	- Fix "long-line" warning from checkpatch.pl
+
 Changelog[v2]:
-        - (Serge Hallyn) Check for 'pid < 0' in set_pidmap().(Code
-          actually checks for 'pid <= 0' for completeness).
+	- To facilitate moving architecture-inpdendent code to kernel/fork.c
+	  pass in 'struct target_pid_set __user *' to do_fork_with_pids()
+	  rather than 'pid_t *' (next patch moves the arch-independent
+	  code to kernel/fork.c)
 
-Signed-off-by: Sukadev Bhattiprolu <sukadev-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Acked-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- kernel/pid.c |   41 +++++++++++++++++++++++++++++++++--------
- 1 files changed, 33 insertions(+), 8 deletions(-)
+ include/linux/sched.h |    3 +++
+ kernel/fork.c         |   17 +++++++++++++++--
+ 2 files changed, 18 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/pid.c b/kernel/pid.c
-index c4d9914..afef766 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -147,18 +147,19 @@ static int alloc_pidmap_page(struct pidmap *map)
- 	return 0;
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index a4d2c23..85e971a 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2153,6 +2153,9 @@ extern int disallow_signal(int);
+ 
+ extern int do_execve(char *, char __user * __user *, char __user * __user *, struct pt_regs *);
+ extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *);
++extern long do_fork_with_pids(unsigned long, unsigned long, struct pt_regs *,
++				unsigned long, int __user *, int __user *,
++				unsigned int, pid_t __user *);
+ struct task_struct *fork_idle(int);
+ 
+ extern void set_task_comm(struct task_struct *tsk, char *from);
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 11f77ed..210e841 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1377,12 +1377,14 @@ struct task_struct * __cpuinit fork_idle(int cpu)
+  * It copies the process, and if successful kick-starts
+  * it and waits for it to finish using the VM if required.
+  */
+-long do_fork(unsigned long clone_flags,
++long do_fork_with_pids(unsigned long clone_flags,
+ 	      unsigned long stack_start,
+ 	      struct pt_regs *regs,
+ 	      unsigned long stack_size,
+ 	      int __user *parent_tidptr,
+-	      int __user *child_tidptr)
++	      int __user *child_tidptr,
++	      unsigned int num_pids,
++	      pid_t __user *upids)
+ {
+ 	struct task_struct *p;
+ 	int trace = 0;
+@@ -1485,6 +1487,17 @@ long do_fork(unsigned long clone_flags,
+ 	return nr;
  }
  
--static int alloc_pidmap(struct pid_namespace *pid_ns)
-+static int do_alloc_pidmap(struct pid_namespace *pid_ns, int last, int min,
-+		int max)
- {
--	int i, offset, max_scan, pid, last = pid_ns->last_pid;
-+	int i, offset, max_scan, pid;
- 	int rc = -EAGAIN;
- 	struct pidmap *map;
- 
- 	pid = last + 1;
- 	if (pid >= pid_max)
--		pid = RESERVED_PIDS;
-+		pid = min;
- 	offset = pid & BITS_PER_PAGE_MASK;
- 	map = &pid_ns->pidmap[pid/BITS_PER_PAGE];
--	max_scan = (pid_max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
-+	max_scan = (max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
- 	for (i = 0; i <= max_scan; ++i) {
- 		rc = alloc_pidmap_page(map);
- 		if (rc)
-@@ -168,7 +169,6 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
- 			do {
- 				if (!test_and_set_bit(offset, map->page)) {
- 					atomic_dec(&map->nr_free);
--					pid_ns->last_pid = pid;
- 					return pid;
- 				}
- 				offset = find_next_offset(map, offset);
-@@ -179,16 +179,16 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
- 			 * bitmap block and the final block was the same
- 			 * as the starting point, pid is before last_pid.
- 			 */
--			} while (offset < BITS_PER_PAGE && pid < pid_max &&
-+			} while (offset < BITS_PER_PAGE && pid < max &&
- 					(i != max_scan || pid < last ||
- 					    !((last+1) & BITS_PER_PAGE_MASK)));
- 		}
--		if (map < &pid_ns->pidmap[(pid_max-1)/BITS_PER_PAGE]) {
-+		if (map < &pid_ns->pidmap[(max-1)/BITS_PER_PAGE]) {
- 			++map;
- 			offset = 0;
- 		} else {
- 			map = &pid_ns->pidmap[0];
--			offset = RESERVED_PIDS;
-+			offset = min;
- 			if (unlikely(last == offset)) {
- 				rc = -EAGAIN;
- 				break;
-@@ -199,6 +199,31 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
- 	return rc;
- }
- 
-+static int alloc_pidmap(struct pid_namespace *pid_ns)
++long do_fork(unsigned long clone_flags,
++	      unsigned long stack_start,
++	      struct pt_regs *regs,
++	      unsigned long stack_size,
++	      int __user *parent_tidptr,
++	      int __user *child_tidptr)
 +{
-+	int nr;
-+
-+	nr = do_alloc_pidmap(pid_ns, pid_ns->last_pid, RESERVED_PIDS, pid_max);
-+	if (nr >= 0)
-+		pid_ns->last_pid = nr;
-+	return nr;
++	return do_fork_with_pids(clone_flags, stack_start, regs, stack_size,
++			parent_tidptr, child_tidptr, 0, NULL);
 +}
 +
-+static int set_pidmap(struct pid_namespace *pid_ns, int target)
-+{
-+	if (!target)
-+		return alloc_pidmap(pid_ns);
-+
-+	if (target >= pid_max)
-+		return -EINVAL;
-+
-+	if ((target < 0) || (target < RESERVED_PIDS &&
-+				pid_ns->last_pid >= RESERVED_PIDS))
-+		return -EINVAL;
-+
-+	return do_alloc_pidmap(pid_ns, target - 1, target, target + 1);
-+}
-+
- int next_pidmap(struct pid_namespace *pid_ns, int last)
- {
- 	int offset;
+ #ifndef ARCH_MIN_MMSTRUCT_ALIGN
+ #define ARCH_MIN_MMSTRUCT_ALIGN 0
+ #endif
 -- 
 1.6.0.4
