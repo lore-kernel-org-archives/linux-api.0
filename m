@@ -1,7 +1,7 @@
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v12][PATCH 4/9] Add target_pids parameter to alloc_pid()
-Date: Tue, 10 Nov 2009 20:43:47 -0800
-Message-ID: <20091111044347.GD11393@suka>
+Subject: [v12][PATCH 3/9] Define set_pidmap() function
+Date: Tue, 10 Nov 2009 20:43:29 -0800
+Message-ID: <20091111044329.GC11393@suka>
 References: <20091111043440.GA9377@suka>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -14,85 +14,117 @@ Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, serue-r/Jw6+rmf
 List-Id: linux-api@vger.kernel.org
 
 
-Subject: [v12][PATCH 4/9] Add target_pids parameter to alloc_pid()
+Subject: [v12][PATCH 3/9] Define set_pidmap() function
 
-This parameter is currently NULL, but will be used in a follow-on patch.
+Define a set_pidmap() interface which is like alloc_pidmap() only that
+caller specifies the pid number to be assigned.
 
-Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Changelog[v9]:
+	- Completely rewrote this patch based on Eric Biederman's code.
+Changelog[v7]:
+        - [Eric Biederman] Generalize alloc_pidmap() to take a range of pids.
+Changelog[v6]:
+        - Separate target_pid > 0 case to minimize the number of checks needed.
+Changelog[v3]:
+        - (Eric Biederman): Avoid set_pidmap() function. Added couple of
+          checks for target_pid in alloc_pidmap() itself.
+Changelog[v2]:
+        - (Serge Hallyn) Check for 'pid < 0' in set_pidmap().(Code
+          actually checks for 'pid <= 0' for completeness).
+
+Signed-off-by: Sukadev Bhattiprolu <sukadev-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Acked-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- include/linux/pid.h |    2 +-
- kernel/fork.c       |    3 ++-
- kernel/pid.c        |    9 +++++++--
- 3 files changed, 10 insertions(+), 4 deletions(-)
+ kernel/pid.c |   41 +++++++++++++++++++++++++++++++++--------
+ 1 files changed, 33 insertions(+), 8 deletions(-)
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index 49f1c2f..914185d 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -119,7 +119,7 @@ extern struct pid *find_get_pid(int nr);
- extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
- int next_pidmap(struct pid_namespace *pid_ns, int last);
- 
--extern struct pid *alloc_pid(struct pid_namespace *ns);
-+extern struct pid *alloc_pid(struct pid_namespace *ns, pid_t *target_pids);
- extern void free_pid(struct pid *pid);
- 
- /*
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 93626b2..3f1dddf 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -980,6 +980,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 	int retval;
- 	struct task_struct *p;
- 	int cgroup_callbacks_done = 0;
-+	pid_t *target_pids = NULL;
- 
- 	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
- 		return ERR_PTR(-EINVAL);
-@@ -1156,7 +1157,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 		goto bad_fork_cleanup_io;
- 
- 	if (pid != &init_struct_pid) {
--		pid = alloc_pid(p->nsproxy->pid_ns);
-+		pid = alloc_pid(p->nsproxy->pid_ns, target_pids);
- 		if (IS_ERR(pid)) {
- 			retval = PTR_ERR(pid);
- 			goto bad_fork_cleanup_io;
 diff --git a/kernel/pid.c b/kernel/pid.c
-index afef766..3ee52cd 100644
+index c4d9914..afef766 100644
 --- a/kernel/pid.c
 +++ b/kernel/pid.c
-@@ -281,13 +281,14 @@ void free_pid(struct pid *pid)
- 	call_rcu(&pid->rcu, delayed_put_pid);
+@@ -147,18 +147,19 @@ static int alloc_pidmap_page(struct pidmap *map)
+ 	return 0;
  }
  
--struct pid *alloc_pid(struct pid_namespace *ns)
-+struct pid *alloc_pid(struct pid_namespace *ns, pid_t *target_pids)
+-static int alloc_pidmap(struct pid_namespace *pid_ns)
++static int do_alloc_pidmap(struct pid_namespace *pid_ns, int last, int min,
++		int max)
  {
- 	struct pid *pid;
- 	enum pid_type type;
- 	int i, nr;
- 	struct pid_namespace *tmp;
- 	struct upid *upid;
-+	pid_t tpid;
+-	int i, offset, max_scan, pid, last = pid_ns->last_pid;
++	int i, offset, max_scan, pid;
+ 	int rc = -EAGAIN;
+ 	struct pidmap *map;
  
- 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
- 	if (!pid) {
-@@ -297,7 +298,11 @@ struct pid *alloc_pid(struct pid_namespace *ns)
+ 	pid = last + 1;
+ 	if (pid >= pid_max)
+-		pid = RESERVED_PIDS;
++		pid = min;
+ 	offset = pid & BITS_PER_PAGE_MASK;
+ 	map = &pid_ns->pidmap[pid/BITS_PER_PAGE];
+-	max_scan = (pid_max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
++	max_scan = (max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
+ 	for (i = 0; i <= max_scan; ++i) {
+ 		rc = alloc_pidmap_page(map);
+ 		if (rc)
+@@ -168,7 +169,6 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 			do {
+ 				if (!test_and_set_bit(offset, map->page)) {
+ 					atomic_dec(&map->nr_free);
+-					pid_ns->last_pid = pid;
+ 					return pid;
+ 				}
+ 				offset = find_next_offset(map, offset);
+@@ -179,16 +179,16 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 			 * bitmap block and the final block was the same
+ 			 * as the starting point, pid is before last_pid.
+ 			 */
+-			} while (offset < BITS_PER_PAGE && pid < pid_max &&
++			} while (offset < BITS_PER_PAGE && pid < max &&
+ 					(i != max_scan || pid < last ||
+ 					    !((last+1) & BITS_PER_PAGE_MASK)));
+ 		}
+-		if (map < &pid_ns->pidmap[(pid_max-1)/BITS_PER_PAGE]) {
++		if (map < &pid_ns->pidmap[(max-1)/BITS_PER_PAGE]) {
+ 			++map;
+ 			offset = 0;
+ 		} else {
+ 			map = &pid_ns->pidmap[0];
+-			offset = RESERVED_PIDS;
++			offset = min;
+ 			if (unlikely(last == offset)) {
+ 				rc = -EAGAIN;
+ 				break;
+@@ -199,6 +199,31 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 	return rc;
+ }
  
- 	tmp = ns;
- 	for (i = ns->level; i >= 0; i--) {
--		nr = alloc_pidmap(tmp);
-+		tpid = 0;
-+		if (target_pids)
-+			tpid = target_pids[i];
++static int alloc_pidmap(struct pid_namespace *pid_ns)
++{
++	int nr;
 +
-+		nr = set_pidmap(tmp, tpid);
- 		if (nr < 0)
- 			goto out_free;
- 
++	nr = do_alloc_pidmap(pid_ns, pid_ns->last_pid, RESERVED_PIDS, pid_max);
++	if (nr >= 0)
++		pid_ns->last_pid = nr;
++	return nr;
++}
++
++static int set_pidmap(struct pid_namespace *pid_ns, int target)
++{
++	if (!target)
++		return alloc_pidmap(pid_ns);
++
++	if (target >= pid_max)
++		return -EINVAL;
++
++	if ((target < 0) || (target < RESERVED_PIDS &&
++				pid_ns->last_pid >= RESERVED_PIDS))
++		return -EINVAL;
++
++	return do_alloc_pidmap(pid_ns, target - 1, target, target + 1);
++}
++
+ int next_pidmap(struct pid_namespace *pid_ns, int last)
+ {
+ 	int offset;
 -- 
 1.6.0.4
