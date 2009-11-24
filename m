@@ -1,7 +1,7 @@
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v13][PATCH 02/12] Have alloc_pidmap() return actual error code
-Date: Tue, 24 Nov 2009 12:07:21 -0800
-Message-ID: <20091124200721.GC24400@us.ibm.com>
+Subject: [v13][PATCH 07/12] Define do_fork_with_pids()
+Date: Tue, 24 Nov 2009 12:08:52 -0800
+Message-ID: <20091124200852.GH24400@us.ibm.com>
 References: <20091124200449.GA24400@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -15,92 +15,96 @@ List-Id: linux-api@vger.kernel.org
 
 
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v13][PATCH 02/12] Have alloc_pidmap() return actual error code
+Subject: [v13][PATCH 07/12] Define do_fork_with_pids()
 
-alloc_pidmap() can fail either because all pid numbers are in use or
-because memory allocation failed.  With support for setting a specific
-pid number, alloc_pidmap() would also fail if either the given pid
-number is invalid or in use.
+do_fork_with_pids() is same as do_fork(), except that it takes an
+additional, 'pid_set', parameter. This parameter, currently unused,
+specifies the set of target pids of the process in each of its pid
+namespaces.
 
-Rather than have callers assume -ENOMEM, have alloc_pidmap() return
-the actual error.
+Changelog[v7]:
+	- Drop 'struct pid_set' object and pass in 'pid_t *target_pids'
+	  instead of 'struct pid_set *'.
+
+Changelog[v6]:
+	- (Nathan Lynch, Arnd Bergmann, H. Peter Anvin, Linus Torvalds)
+	  Change 'pid_set.pids' to a 'pid_t pids[]' so size of 'struct pid_set'
+	  is constant across architectures.
+	- (Nathan Lynch) Change 'pid_set.num_pids' to 'unsigned int'.
+
+Changelog[v4]:
+	- Rename 'struct target_pid_set' to 'struct pid_set' since it may
+	  be useful in other contexts.
+
+Changelog[v3]:
+	- Fix "long-line" warning from checkpatch.pl
+
+Changelog[v2]:
+	- To facilitate moving architecture-inpdendent code to kernel/fork.c
+	  pass in 'struct target_pid_set __user *' to do_fork_with_pids()
+	  rather than 'pid_t *' (next patch moves the arch-independent
+	  code to kernel/fork.c)
 
 Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 Reviewed-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- kernel/fork.c |    5 +++--
- kernel/pid.c  |   14 +++++++++-----
- 2 files changed, 12 insertions(+), 7 deletions(-)
+ include/linux/sched.h |    3 +++
+ kernel/fork.c         |   17 +++++++++++++++--
+ 2 files changed, 18 insertions(+), 2 deletions(-)
 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index a4d2c23..85e971a 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2153,6 +2153,9 @@ extern int disallow_signal(int);
+ 
+ extern int do_execve(char *, char __user * __user *, char __user * __user *, struct pt_regs *);
+ extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *);
++extern long do_fork_with_pids(unsigned long, unsigned long, struct pt_regs *,
++				unsigned long, int __user *, int __user *,
++				unsigned int, pid_t __user *);
+ struct task_struct *fork_idle(int);
+ 
+ extern void set_task_comm(struct task_struct *tsk, char *from);
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 166b8c4..8053c10 100644
+index 317adcf..2610a64 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -1156,10 +1156,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 		goto bad_fork_cleanup_io;
- 
- 	if (pid != &init_struct_pid) {
--		retval = -ENOMEM;
- 		pid = alloc_pid(p->nsproxy->pid_ns);
--		if (!pid)
-+		if (IS_ERR(pid)) {
-+			retval = PTR_ERR(pid);
- 			goto bad_fork_cleanup_io;
-+		}
- 
- 		if (clone_flags & CLONE_NEWPID) {
- 			retval = pid_ns_prepare_proc(p->nsproxy->pid_ns);
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 7d4bb6e..c4d9914 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -150,7 +150,7 @@ static int alloc_pidmap_page(struct pidmap *map)
- static int alloc_pidmap(struct pid_namespace *pid_ns)
+@@ -1377,12 +1377,14 @@ struct task_struct * __cpuinit fork_idle(int cpu)
+  * It copies the process, and if successful kick-starts
+  * it and waits for it to finish using the VM if required.
+  */
+-long do_fork(unsigned long clone_flags,
++long do_fork_with_pids(unsigned long clone_flags,
+ 	      unsigned long stack_start,
+ 	      struct pt_regs *regs,
+ 	      unsigned long stack_size,
+ 	      int __user *parent_tidptr,
+-	      int __user *child_tidptr)
++	      int __user *child_tidptr,
++	      unsigned int num_pids,
++	      pid_t __user *upids)
  {
- 	int i, offset, max_scan, pid, last = pid_ns->last_pid;
--	int rc;
-+	int rc = -EAGAIN;
- 	struct pidmap *map;
- 
- 	pid = last + 1;
-@@ -189,12 +189,14 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
- 		} else {
- 			map = &pid_ns->pidmap[0];
- 			offset = RESERVED_PIDS;
--			if (unlikely(last == offset))
-+			if (unlikely(last == offset)) {
-+				rc = -EAGAIN;
- 				break;
-+			}
- 		}
- 		pid = mk_pid(pid_ns, map, offset);
- 	}
--	return -1;
-+	return rc;
+ 	struct task_struct *p;
+ 	int trace = 0;
+@@ -1485,6 +1487,17 @@ long do_fork(unsigned long clone_flags,
+ 	return nr;
  }
  
- int next_pidmap(struct pid_namespace *pid_ns, int last)
-@@ -263,8 +265,10 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 	struct upid *upid;
- 
- 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
--	if (!pid)
-+	if (!pid) {
-+		pid = ERR_PTR(-ENOMEM);
- 		goto out;
-+	}
- 
- 	tmp = ns;
- 	for (i = ns->level; i >= 0; i--) {
-@@ -299,7 +303,7 @@ out_free:
- 		free_pidmap(pid->numbers + i);
- 
- 	kmem_cache_free(ns->pid_cachep, pid);
--	pid = NULL;
-+	pid = ERR_PTR(nr);
- 	goto out;
- }
- 
++long do_fork(unsigned long clone_flags,
++	      unsigned long stack_start,
++	      struct pt_regs *regs,
++	      unsigned long stack_size,
++	      int __user *parent_tidptr,
++	      int __user *child_tidptr)
++{
++	return do_fork_with_pids(clone_flags, stack_start, regs, stack_size,
++			parent_tidptr, child_tidptr, 0, NULL);
++}
++
+ #ifndef ARCH_MIN_MMSTRUCT_ALIGN
+ #define ARCH_MIN_MMSTRUCT_ALIGN 0
+ #endif
 -- 
 1.6.0.4
