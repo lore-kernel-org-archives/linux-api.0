@@ -1,7 +1,7 @@
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v13][PATCH 05/12] Add target_pids parameter to copy_process()
-Date: Tue, 24 Nov 2009 12:08:19 -0800
-Message-ID: <20091124200819.GF24400@us.ibm.com>
+Subject: [v13][PATCH 06/12] Check invalid clone flags
+Date: Tue, 24 Nov 2009 12:08:34 -0800
+Message-ID: <20091124200834.GG24400@us.ibm.com>
 References: <20091124200449.GA24400@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -15,61 +15,62 @@ List-Id: linux-api@vger.kernel.org
 
 
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v13][PATCH 05/12] Add target_pids parameter to copy_process()
+Subject: [v13][PATCH 06/12] Check invalid clone flags
 
-Add a 'target_pids' parameter to copy_process().  The new parameter will be
-used in a follow-on patch when eclone() is implemented.
+As pointed out by Oren Laadan, we want to ensure that unused bits in the
+clone-flags remain unused and available for future. To ensure this, define
+a mask of clone-flags and check the flags in the clone() system calls.
+
+Changelog[v9]:
+	- Include the unused clone-flag (CLONE_UNUSED) to VALID_CLONE_FLAGS
+	  to avoid breaking any applications that may have set it. IOW, this
+	  patch/check only applies to clone-flags bits 33 and higher.
+
+Changelog[v8]:
+	- New patch in set
 
 Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Acked-by: Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- kernel/fork.c |    7 ++++---
- 1 files changed, 4 insertions(+), 3 deletions(-)
+ include/linux/sched.h |   12 ++++++++++++
+ kernel/fork.c         |    3 +++
+ 2 files changed, 15 insertions(+), 0 deletions(-)
 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 75e6e60..a4d2c23 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -29,6 +29,18 @@
+ #define CLONE_NEWNET		0x40000000	/* New network namespace */
+ #define CLONE_IO		0x80000000	/* Clone io context */
+ 
++#define CLONE_UNUSED        	0x00001000	/* Can be reused ? */
++
++#define VALID_CLONE_FLAGS	(CSIGNAL | CLONE_VM | CLONE_FS | CLONE_FILES |\
++				 CLONE_SIGHAND | CLONE_UNUSED | CLONE_PTRACE |\
++				 CLONE_VFORK  | CLONE_PARENT | CLONE_THREAD  |\
++				 CLONE_NEWNS  | CLONE_SYSVSEM | CLONE_SETTLS |\
++				 CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID  |\
++				 CLONE_DETACHED | CLONE_UNTRACED             |\
++				 CLONE_CHILD_SETTID | CLONE_STOPPED          |\
++				 CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER |\
++				 CLONE_NEWPID | CLONE_NEWNET | CLONE_IO)
++
+ /*
+  * Scheduling policies
+  */
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 00adf9f..72c76a1 100644
+index 72c76a1..317adcf 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -975,12 +975,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 					unsigned long stack_size,
- 					int __user *child_tidptr,
- 					struct pid *pid,
-+					pid_t *target_pids,
- 					int trace)
- {
- 	int retval;
+@@ -982,6 +982,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
  	struct task_struct *p;
  	int cgroup_callbacks_done = 0;
--	pid_t *target_pids = NULL;
  
++	if (clone_flags & ~VALID_CLONE_FLAGS)
++		return ERR_PTR(-EINVAL);
++
  	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
  		return ERR_PTR(-EINVAL);
-@@ -1361,7 +1361,7 @@ struct task_struct * __cpuinit fork_idle(int cpu)
- 	struct pt_regs regs;
  
- 	task = copy_process(CLONE_VM, 0, idle_regs(&regs), 0, NULL,
--			    &init_struct_pid, 0);
-+			    &init_struct_pid, NULL, 0);
- 	if (!IS_ERR(task))
- 		init_idle(task, cpu);
- 
-@@ -1384,6 +1384,7 @@ long do_fork(unsigned long clone_flags,
- 	struct task_struct *p;
- 	int trace = 0;
- 	long nr;
-+	pid_t *target_pids = NULL;
- 
- 	/*
- 	 * Do some preliminary argument and permissions checking before we
-@@ -1424,7 +1425,7 @@ long do_fork(unsigned long clone_flags,
- 		trace = tracehook_prepare_clone(clone_flags);
- 
- 	p = copy_process(clone_flags, stack_start, regs, stack_size,
--			 child_tidptr, NULL, trace);
-+			 child_tidptr, NULL, target_pids, trace);
- 	/*
- 	 * Do this prior waking up the new thread - the thread pointer
- 	 * might get invalid after that point, if the thread exits quickly.
 -- 
 1.6.0.4
