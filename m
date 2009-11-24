@@ -1,7 +1,7 @@
 From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v13][PATCH 06/12] Check invalid clone flags
-Date: Tue, 24 Nov 2009 12:08:34 -0800
-Message-ID: <20091124200834.GG24400@us.ibm.com>
+Subject: [v13][PATCH 10/12] Implement sys_eclone for s390
+Date: Tue, 24 Nov 2009 12:09:40 -0800
+Message-ID: <20091124200940.GK24400@us.ibm.com>
 References: <20091124200449.GA24400@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -14,63 +14,114 @@ Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, serue-r/Jw6+rmf
 List-Id: linux-api@vger.kernel.org
 
 
-From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [v13][PATCH 06/12] Check invalid clone flags
+From: Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Subject: [v13][PATCH 10/12] Implement sys_eclone for s390
 
-As pointed out by Oren Laadan, we want to ensure that unused bits in the
-clone-flags remain unused and available for future. To ensure this, define
-a mask of clone-flags and check the flags in the clone() system calls.
+Implement the s390 hook for sys_eclone().
 
-Changelog[v9]:
-	- Include the unused clone-flag (CLONE_UNUSED) to VALID_CLONE_FLAGS
-	  to avoid breaking any applications that may have set it. IOW, this
-	  patch/check only applies to clone-flags bits 33 and higher.
+Changelog:
+	Nov 24: Removed user-space code from commit log. See user-cr git tree.
+	Nov 17: remove redundant flags_high check
+	Nov 13: As suggested by Heiko, convert eclone to take its
+		parameters via registers.
 
-Changelog[v8]:
-	- New patch in set
-
-Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Signed-off-by: Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 ---
- include/linux/sched.h |   12 ++++++++++++
- kernel/fork.c         |    3 +++
- 2 files changed, 15 insertions(+), 0 deletions(-)
+ arch/s390/include/asm/unistd.h    |    3 ++-
+ arch/s390/kernel/compat_wrapper.S |    8 ++++++++
+ arch/s390/kernel/process.c        |   37 +++++++++++++++++++++++++++++++++++++
+ arch/s390/kernel/syscalls.S       |    1 +
+ 4 files changed, 48 insertions(+), 1 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 75e6e60..a4d2c23 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -29,6 +29,18 @@
- #define CLONE_NEWNET		0x40000000	/* New network namespace */
- #define CLONE_IO		0x80000000	/* Clone io context */
+diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
+index cb5232d..cbf6c7c 100644
+--- a/arch/s390/include/asm/unistd.h
++++ b/arch/s390/include/asm/unistd.h
+@@ -269,7 +269,8 @@
+ #define	__NR_pwritev		329
+ #define __NR_rt_tgsigqueueinfo	330
+ #define __NR_perf_event_open	331
+-#define NR_syscalls 332
++#define __NR_eclone		332
++#define NR_syscalls 333
  
-+#define CLONE_UNUSED        	0x00001000	/* Can be reused ? */
+ /* 
+  * There are some system calls that are not present on 64 bit, some
+diff --git a/arch/s390/kernel/compat_wrapper.S b/arch/s390/kernel/compat_wrapper.S
+index cbd9901..816ae61 100644
+--- a/arch/s390/kernel/compat_wrapper.S
++++ b/arch/s390/kernel/compat_wrapper.S
+@@ -1849,6 +1849,14 @@ sys_clone_wrapper:
+ 	llgtr	%r5,%r5			# int *
+ 	jg	sys_clone		# branch to system call
+ 
++	.globl	sys_eclone_wrapper
++sys_eclone_wrapper:
++	llgfr	%r2,%r2			# unsigned int
++	llgtr	%r3,%r3			# struct clone_args *
++	lgfr	%r4,%r4			# int
++	llgtr	%r5,%r5			# pid_t *
++	jg	sys_eclone		# branch to system call
 +
-+#define VALID_CLONE_FLAGS	(CSIGNAL | CLONE_VM | CLONE_FS | CLONE_FILES |\
-+				 CLONE_SIGHAND | CLONE_UNUSED | CLONE_PTRACE |\
-+				 CLONE_VFORK  | CLONE_PARENT | CLONE_THREAD  |\
-+				 CLONE_NEWNS  | CLONE_SYSVSEM | CLONE_SETTLS |\
-+				 CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID  |\
-+				 CLONE_DETACHED | CLONE_UNTRACED             |\
-+				 CLONE_CHILD_SETTID | CLONE_STOPPED          |\
-+				 CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER |\
-+				 CLONE_NEWPID | CLONE_NEWNET | CLONE_IO)
+ 	.globl	sys32_execve_wrapper
+ sys32_execve_wrapper:
+ 	llgtr	%r2,%r2			# char *
+diff --git a/arch/s390/kernel/process.c b/arch/s390/kernel/process.c
+index 5417eb5..0a59317 100644
+--- a/arch/s390/kernel/process.c
++++ b/arch/s390/kernel/process.c
+@@ -241,6 +241,43 @@ SYSCALL_DEFINE4(clone, unsigned long, newsp, unsigned long, clone_flags,
+ 		       parent_tidptr, child_tidptr);
+ }
+ 
++SYSCALL_DEFINE4(eclone, unsigned int, flags_low, struct clone_args __user *,
++		uca, int, args_size, pid_t __user *, pids)
++{
++	int rc;
++	struct pt_regs *regs = task_pt_regs(current);
++	struct clone_args kca;
++	int __user *parent_tid_ptr;
++	int __user *child_tid_ptr;
++	unsigned long flags;
++	unsigned long __user child_stack;
++	unsigned long stack_size;
++
++	rc = fetch_clone_args_from_user(uca, args_size, &kca);
++	if (rc)
++		return rc;
++
++	flags = flags_low;
++	parent_tid_ptr = (int __user *) kca.parent_tid_ptr;
++	child_tid_ptr =  (int __user *) kca.child_tid_ptr;
++
++	stack_size = (unsigned long) kca.child_stack_size;
++	if (stack_size)
++		return -EINVAL;
++
++	child_stack = (unsigned long) kca.child_stack;
++	if (!child_stack)
++		child_stack = regs->gprs[15];
++
++	/*
++	 * TODO: On 32-bit systems, clone_flags is passed in as 32-bit value
++	 * 	 to several functions. Need to convert clone_flags to 64-bit.
++	 */
++	return do_fork_with_pids(flags, child_stack, regs, stack_size,
++				parent_tid_ptr, child_tid_ptr, kca.nr_pids,
++				pids);
++}
 +
  /*
-  * Scheduling policies
-  */
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 72c76a1..317adcf 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -982,6 +982,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 	struct task_struct *p;
- 	int cgroup_callbacks_done = 0;
- 
-+	if (clone_flags & ~VALID_CLONE_FLAGS)
-+		return ERR_PTR(-EINVAL);
-+
- 	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
- 		return ERR_PTR(-EINVAL);
- 
+  * This is trivial, and on the face of it looks like it
+  * could equally well be done in user mode.
+diff --git a/arch/s390/kernel/syscalls.S b/arch/s390/kernel/syscalls.S
+index 30eca07..fb8708d 100644
+--- a/arch/s390/kernel/syscalls.S
++++ b/arch/s390/kernel/syscalls.S
+@@ -340,3 +340,4 @@ SYSCALL(sys_preadv,sys_preadv,compat_sys_preadv_wrapper)
+ SYSCALL(sys_pwritev,sys_pwritev,compat_sys_pwritev_wrapper)
+ SYSCALL(sys_rt_tgsigqueueinfo,sys_rt_tgsigqueueinfo,compat_sys_rt_tgsigqueueinfo_wrapper) /* 330 */
+ SYSCALL(sys_perf_event_open,sys_perf_event_open,sys_perf_event_open_wrapper)
++SYSCALL(sys_eclone,sys_eclone,sys_eclone_wrapper)
 -- 
 1.6.0.4
