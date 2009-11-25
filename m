@@ -1,127 +1,77 @@
-From: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
-Subject: [v13][PATCH 10/12] Implement sys_eclone for s390
-Date: Wed, 25 Nov 2009 11:00:17 -0800
-Message-ID: <20091125190017.GK30858@us.ibm.com>
+From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: [v13][PATCH 09/12] Implement sys_eclone for x86_64
+Date: Wed, 25 Nov 2009 10:59:55 -0800
+Message-ID: <20091125185955.GJ30858@us.ibm.com>
 References: <20091125185543.GA30858@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S934787AbZKYTAX@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20091125185543.GA30858@us.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@osdl.org>
-Cc: linux-kernel@vger.kernel.org, Oren Laadan <orenl@cs.columbia.edu>, serue@us.ibm.com, "Eric W. Biederman" <ebiederm@xmission.com>, Alexey Dobriyan <adobriyan@gmail.com>, Pavel Emelyanov <xemul@openvz.org>, hpa@zytor.com, Nathan Lynch <nathanl@austin.ibm.com>, haveblue@us.ibm.com, Matt Helsley <matthltc@us.ibm.com>, arnd@arndb.de, roland@redhat.com, mtk.manpages@googlemail.com, linux-api@vger.kernel.org, Containers <containers@lists.linux-foundation.org>
+In-Reply-To: <20091125185543.GA30858-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-3NddpPZAyC0@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, Nathan Lynch <nathanl-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org>, haveblue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
-From: Serge E. Hallyn <serue@us.ibm.com>
-Subject: [v13][PATCH 10/12] Implement sys_eclone for s390
+From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: [v13][PATCH 09/12] Implement sys_eclone for x86_64
 
-Implement the s390 hook for sys_eclone().
+Implement sys_eclone() system call for x86_64.
 
-Changelog:
-	Nov 24: Removed user-space code from commit log. See user-cr git tree.
-	Nov 17: remove redundant flags_high check
-	Nov 13: As suggested by Heiko, convert eclone to take its
-		parameters via registers.
+This is based on earlier code from Dave Hansen. Modified to share code
+between x86 and x86_64 kernels.
 
-Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
+Signed-off-by: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 ---
- arch/s390/include/asm/unistd.h    |    3 ++-
- arch/s390/kernel/compat_wrapper.S |    8 ++++++++
- arch/s390/kernel/process.c        |   37 +++++++++++++++++++++++++++++++++++++
- arch/s390/kernel/syscalls.S       |    1 +
- 4 files changed, 48 insertions(+), 1 deletions(-)
+ arch/x86/include/asm/unistd_64.h |    3 +++
+ arch/x86/kernel/entry_64.S       |    1 +
+ arch/x86/kernel/process_64.c     |    7 +++++++
+ 3 files changed, 11 insertions(+), 0 deletions(-)
 
-diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
-index cb5232d..cbf6c7c 100644
---- a/arch/s390/include/asm/unistd.h
-+++ b/arch/s390/include/asm/unistd.h
-@@ -269,7 +269,8 @@
- #define	__NR_pwritev		329
- #define __NR_rt_tgsigqueueinfo	330
- #define __NR_perf_event_open	331
--#define NR_syscalls 332
-+#define __NR_eclone		332
-+#define NR_syscalls 333
- 
- /* 
-  * There are some system calls that are not present on 64 bit, some
-diff --git a/arch/s390/kernel/compat_wrapper.S b/arch/s390/kernel/compat_wrapper.S
-index cbd9901..816ae61 100644
---- a/arch/s390/kernel/compat_wrapper.S
-+++ b/arch/s390/kernel/compat_wrapper.S
-@@ -1849,6 +1849,14 @@ sys_clone_wrapper:
- 	llgtr	%r5,%r5			# int *
- 	jg	sys_clone		# branch to system call
- 
-+	.globl	sys_eclone_wrapper
-+sys_eclone_wrapper:
-+	llgfr	%r2,%r2			# unsigned int
-+	llgtr	%r3,%r3			# struct clone_args *
-+	lgfr	%r4,%r4			# int
-+	llgtr	%r5,%r5			# pid_t *
-+	jg	sys_eclone		# branch to system call
+diff --git a/arch/x86/include/asm/unistd_64.h b/arch/x86/include/asm/unistd_64.h
+index 8d3ad0a..d2ffc89 100644
+--- a/arch/x86/include/asm/unistd_64.h
++++ b/arch/x86/include/asm/unistd_64.h
+@@ -661,6 +661,9 @@ __SYSCALL(__NR_pwritev, sys_pwritev)
+ __SYSCALL(__NR_rt_tgsigqueueinfo, sys_rt_tgsigqueueinfo)
+ #define __NR_perf_event_open			298
+ __SYSCALL(__NR_perf_event_open, sys_perf_event_open)
++#define __NR_eclone                   		299
++__SYSCALL(__NR_eclone, stub_eclone)
 +
- 	.globl	sys32_execve_wrapper
- sys32_execve_wrapper:
- 	llgtr	%r2,%r2			# char *
-diff --git a/arch/s390/kernel/process.c b/arch/s390/kernel/process.c
-index 5417eb5..0a59317 100644
---- a/arch/s390/kernel/process.c
-+++ b/arch/s390/kernel/process.c
-@@ -241,6 +241,43 @@ SYSCALL_DEFINE4(clone, unsigned long, newsp, unsigned long, clone_flags,
- 		       parent_tidptr, child_tidptr);
+ 
+ #ifndef __NO_STUBS
+ #define __ARCH_WANT_OLD_READDIR
+diff --git a/arch/x86/kernel/entry_64.S b/arch/x86/kernel/entry_64.S
+index b5c061f..6d60cd1 100644
+--- a/arch/x86/kernel/entry_64.S
++++ b/arch/x86/kernel/entry_64.S
+@@ -698,6 +698,7 @@ END(\label)
+ 	PTREGSCALL stub_vfork, sys_vfork, %rdi
+ 	PTREGSCALL stub_sigaltstack, sys_sigaltstack, %rdx
+ 	PTREGSCALL stub_iopl, sys_iopl, %rsi
++	PTREGSCALL stub_eclone, sys_eclone, %r8
+ 
+ ENTRY(ptregscall_common)
+ 	DEFAULT_FRAME 1 8	/* offset 8: return address */
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index eb62cbc..2c306b9 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -540,6 +540,13 @@ sys_clone(unsigned long clone_flags, unsigned long newsp,
+ 	return do_fork(clone_flags, newsp, regs, 0, parent_tid, child_tid);
  }
  
-+SYSCALL_DEFINE4(eclone, unsigned int, flags_low, struct clone_args __user *,
-+		uca, int, args_size, pid_t __user *, pids)
++asmlinkage long
++sys_eclone(unsigned int flags_low, struct clone_args * __user uca,
++		int args_size, pid_t * __user pids, struct pt_regs *regs)
 +{
-+	int rc;
-+	struct pt_regs *regs = task_pt_regs(current);
-+	struct clone_args kca;
-+	int __user *parent_tid_ptr;
-+	int __user *child_tid_ptr;
-+	unsigned long flags;
-+	unsigned long __user child_stack;
-+	unsigned long stack_size;
-+
-+	rc = fetch_clone_args_from_user(uca, args_size, &kca);
-+	if (rc)
-+		return rc;
-+
-+	flags = flags_low;
-+	parent_tid_ptr = (int __user *) kca.parent_tid_ptr;
-+	child_tid_ptr =  (int __user *) kca.child_tid_ptr;
-+
-+	stack_size = (unsigned long) kca.child_stack_size;
-+	if (stack_size)
-+		return -EINVAL;
-+
-+	child_stack = (unsigned long) kca.child_stack;
-+	if (!child_stack)
-+		child_stack = regs->gprs[15];
-+
-+	/*
-+	 * TODO: On 32-bit systems, clone_flags is passed in as 32-bit value
-+	 * 	 to several functions. Need to convert clone_flags to 64-bit.
-+	 */
-+	return do_fork_with_pids(flags, child_stack, regs, stack_size,
-+				parent_tid_ptr, child_tid_ptr, kca.nr_pids,
-+				pids);
++	return do_eclone_common(regs, flags_low, uca, args_size, pids);
 +}
 +
- /*
-  * This is trivial, and on the face of it looks like it
-  * could equally well be done in user mode.
-diff --git a/arch/s390/kernel/syscalls.S b/arch/s390/kernel/syscalls.S
-index 30eca07..fb8708d 100644
---- a/arch/s390/kernel/syscalls.S
-+++ b/arch/s390/kernel/syscalls.S
-@@ -340,3 +340,4 @@ SYSCALL(sys_preadv,sys_preadv,compat_sys_preadv_wrapper)
- SYSCALL(sys_pwritev,sys_pwritev,compat_sys_pwritev_wrapper)
- SYSCALL(sys_rt_tgsigqueueinfo,sys_rt_tgsigqueueinfo,compat_sys_rt_tgsigqueueinfo_wrapper) /* 330 */
- SYSCALL(sys_perf_event_open,sys_perf_event_open,sys_perf_event_open_wrapper)
-+SYSCALL(sys_eclone,sys_eclone,sys_eclone_wrapper)
+ unsigned long get_wchan(struct task_struct *p)
+ {
+ 	unsigned long stack;
 -- 
 1.6.0.4
