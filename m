@@ -1,10 +1,8 @@
-From: Minchan Kim <minchan.kim-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Pekka Enberg <penberg@cs.helsinki.fi>
 Subject: Re: [PATCH v6] add MAP_UNLOCKED mmap flag
-Date: Tue, 19 Jan 2010 21:48:52 +0900
-Message-ID: <1263905332.2163.11.camel@barrios-desktop>
+Date: Tue, 19 Jan 2010 15:18:11 +0200
+Message-ID: <84144f021001190518x450868eax2edfa5e16ff6e4b@mail.gmail.com>
 References: <20100118141938.GI30698@redhat.com>
-	 <20100118170816.GA22111@redhat.com>
-	 <84144f021001181009m52f7eaebp2bd746f92de08da9@mail.gmail.com>
 	 <20100118181942.GD22111@redhat.com>
 	 <20100118191031.0088f49a@lxorguk.ukuu.org.uk>
 	 <20100119071734.GG14345@redhat.com>
@@ -13,50 +11,32 @@ References: <20100118141938.GI30698@redhat.com>
 	 <84144f021001190007q54a334dfwed64189e6cf0b7c4@mail.gmail.com>
 	 <20100119082638.GK14345@redhat.com>
 	 <84144f021001190044s397c6665qb00af48235d2d818@mail.gmail.com>
+	 <1263905332.2163.11.camel@barrios-desktop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <84144f021001190044s397c6665qb00af48235d2d818-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pekka Enberg <penberg-bbCR+/B0CizivPeTLB3BmA@public.gmane.org>
-Cc: Gleb Natapov <gleb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, andrew.c.morrow-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1263905332.2163.11.camel@barrios-desktop>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan.kim@gmail.com>
+Cc: Gleb Natapov <gleb@redhat.com>, Alan Cox <alan@lxorguk.ukuu.org.uk>, linux-mm@kvack.org, kosaki.motohiro@jp.fujitsu.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, andrew.c.morrow@gmail.com, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Rik van Riel <riel@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi, Pekka. 
+On Tue, Jan 19, 2010 at 2:48 PM, Minchan Kim <minchan.kim@gmail.com> wrote:
+> Gleb. How about using MADV_SEQUENTIAL on guest memory?
+> It makes that pages of guest are moved into inactive reclaim list more
+> fast. It means it is likely to swap out faster than other pages if it
+> isn't hit during inactive list.
 
-On Tue, 2010-01-19 at 10:44 +0200, Pekka Enberg wrote:
-> Hi Gleb,
-> 
-> On Tue, Jan 19, 2010 at 10:26 AM, Gleb Natapov <gleb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> design would still be broken, no? Did you try using (or extending)
-> >> posix_madvise(MADV_DONTNEED) for the guest address space? It seems to
-> > After mlockall() I can't even allocate guest address space. Or do you mean
-> > instead of mlockall()? Then how MADV_DONTNEED will help? It just drops
-> > page table for the address range (which is not what I need) and does not
-> > have any long time effect.
-> 
-> Oh right, MADV_DONTNEED is no good.
-> 
-> On Tue, Jan 19, 2010 at 10:26 AM, Gleb Natapov <gleb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> me that you're trying to use a big hammer (mlock) when a polite hint
-> >> for the VM would probably be sufficient for it do its job.
-> >>
-> > I what to tell to VM "swap this, don't swap that" and as far as I see
-> > there is no other way to do it currently.
-> 
-> Yeah, which is why I was suggesting that maybe posix_madvise() needs
-> to be extended to have a MADV_NEED_BUT_LESS_IMPORTANT flag that can be
-> used as a hint by mm/vmscan.c to first swap the guest address spaces.
-> 
->                         Pekka
+Yeah, something like that but we don't want the readahead. OTOH, it's
+not clear what Gleb's real problem is. Are the guest address spaces
+anonymous or file backed? Which parts of the emulator are swapped out
+that are causing the problem? Maybe it's a VM balancing issue that
+mlock papers over?
 
-Gleb. How about using MADV_SEQUENTIAL on guest memory?
-It makes that pages of guest are moved into inactive reclaim list more
-fast. It means it is likely to swap out faster than other pages if it
-isn't hit during inactive list.
+                         Pekka
 
-
--- 
-Kind regards,
-Minchan Kim
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
