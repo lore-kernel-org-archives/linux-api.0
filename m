@@ -1,32 +1,51 @@
-From: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+From: Gleb Natapov <gleb@redhat.com>
 Subject: Re: [PATCH v6] add MAP_UNLOCKED mmap flag
-Date: Tue, 19 Jan 2010 09:12:44 +0900 (JST)
-Message-ID: <20100119091004.5F28.A69D9226@jp.fujitsu.com>
-References: <1263827194.4283.609.camel@laptop> <20100118151405.GD14345@redhat.com>
+Date: Tue, 19 Jan 2010 09:17:34 +0200
+Message-ID: <20100119071734.GG14345@redhat.com>
+References: <20100118133755.GG30698@redhat.com>
+ <84144f021001180609r4d7fbbd0p972d5bc0e227d09a@mail.gmail.com>
+ <20100118141938.GI30698@redhat.com>
+ <84144f021001180805q4d1203b8qab8ccb1de87b2866@mail.gmail.com>
+ <20100118170816.GA22111@redhat.com>
+ <84144f021001181009m52f7eaebp2bd746f92de08da9@mail.gmail.com>
+ <20100118181942.GD22111@redhat.com>
+ <20100118191031.0088f49a@lxorguk.ukuu.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20100118151405.GD14345@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20100118191031.0088f49a@lxorguk.ukuu.org.uk>
 Sender: owner-linux-mm@kvack.org
-To: Gleb Natapov <gleb@redhat.com>
-Cc: kosaki.motohiro@jp.fujitsu.com, Peter Zijlstra <peterz@infradead.org>, Alan Cox <alan@lxorguk.ukuu.org.uk>, Pekka Enberg <penberg@cs.helsinki.fi>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, andrew.c.morrow@gmail.com, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Alan Cox <alan@lxorguk.ukuu.org.uk>
+Cc: Pekka Enberg <penberg@cs.helsinki.fi>, linux-mm@kvack.org, kosaki.motohiro@jp.fujitsu.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, andrew.c.morrow@gmail.com, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-> On Mon, Jan 18, 2010 at 04:06:34PM +0100, Peter Zijlstra wrote:
-> > On Mon, 2010-01-18 at 17:01 +0200, Gleb Natapov wrote:
-> > > There are valid uses for mlockall()
-> > 
-> > That's debatable.
-> > 
-> Well, I have use for it. You can look at previous thread were I described
-> it and suggest alternatives.
+On Mon, Jan 18, 2010 at 07:10:31PM +0000, Alan Cox wrote:
+> > I can't realistically chase every address space mapping changes and mlock
+> > new areas. The only way other then mlockall() is to use custom memory
+> > allocator that allocates mlocked memory.
+> 
+> Which keeps all the special cases in your app rather than in every single
+> users kernel. That seems to be the right way up, especially as you can
+> make a library of it !
+> 
+Are you advocating rewriting mlockall() in userspace? It may be possible,
+but will require rewriting half of libc. Everything that changes process
+address space should support mlocking (memory allocation functions, dynamic
+loading, strdup). Allocations can be done only with mmap() since brk()
+can allocate mlocked memory atomically. And of course if third party library
+uses mmap syscall directly instead of using libc one you are SOL. Been
+there already, worked on project that replaced libc memory allocations functions
+because it had to track when memory is returned to OS, not just internal
+libc pool (MPI). This is pain in the arse and on top of that it doesn't work
+reliably. Some things are better be done on OS level.
 
-Please stop suck.
-This is the reviewing. The reviewers shouldn't need to look at all
-previous thread. It mean your description isn't enough.
+The thread took a direction of bashing mlockall(). This is especially
+strange since proposed patch actually makes mlockall() more fine
+grained and thus more useful.
 
-
+--
+			Gleb.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
