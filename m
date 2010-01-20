@@ -1,48 +1,41 @@
-From: Gleb Natapov <gleb@redhat.com>
+From: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
 Subject: Re: [PATCH v6] add MAP_UNLOCKED mmap flag
-Date: Tue, 19 Jan 2010 16:14:36 +0200
-Message-ID: <20100119141436.GA5238@redhat.com>
-References: <20100118141938.GI30698@redhat.com>
- <84144f021001180805q4d1203b8qab8ccb1de87b2866@mail.gmail.com>
- <20100118170816.GA22111@redhat.com>
- <84144f021001181009m52f7eaebp2bd746f92de08da9@mail.gmail.com>
- <20100118181942.GD22111@redhat.com>
- <20100118191031.0088f49a@lxorguk.ukuu.org.uk>
- <20100119071734.GG14345@redhat.com>
- <84144f021001182337o274c8ed3q8ce60581094bc2b9@mail.gmail.com>
- <20100119075205.GI14345@redhat.com>
- <1263910043.2163.24.camel@barrios-desktop>
+Date: Wed, 20 Jan 2010 09:24:06 +0900 (JST)
+Message-ID: <20100120091051.405D.A69D9226@jp.fujitsu.com>
+References: <20100119082638.GK14345@redhat.com> <84144f021001190044s397c6665qb00af48235d2d818@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1263910043.2163.24.camel@barrios-desktop>
+In-Reply-To: <84144f021001190044s397c6665qb00af48235d2d818@mail.gmail.com>
 Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan.kim@gmail.com>
-Cc: Pekka Enberg <penberg@cs.helsinki.fi>, Alan Cox <alan@lxorguk.ukuu.org.uk>, linux-mm@kvack.org, kosaki.motohiro@jp.fujitsu.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, andrew.c.morrow@gmail.com, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Pekka Enberg <penberg@cs.helsinki.fi>
+Cc: kosaki.motohiro@jp.fujitsu.com, Gleb Natapov <gleb@redhat.com>, Alan Cox <alan@lxorguk.ukuu.org.uk>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, andrew.c.morrow@gmail.com, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Rik van Riel <riel@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, minchan.kim@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 19, 2010 at 11:07:23PM +0900, Minchan Kim wrote:
-> On Tue, 2010-01-19 at 09:52 +0200, Gleb Natapov wrote:
+> Hi Gleb,
 > 
-> > In my case (virtualization) I want to test/profile guest under heavy swapping
-> > of a guests memory, so I intentionally create memory shortage by creating
+> On Tue, Jan 19, 2010 at 10:26 AM, Gleb Natapov <gleb@redhat.com> wrote:
+> >> design would still be broken, no? Did you try using (or extending)
+> >> posix_madvise(MADV_DONTNEED) for the guest address space? It seems to
+> > After mlockall() I can't even allocate guest address space. Or do you mean
+> > instead of mlockall()? Then how MADV_DONTNEED will help? It just drops
+> > page table for the address range (which is not what I need) and does not
+> > have any long time effect.
 > 
-> You mean "guest memory" that is area emulated DRAM in qemu?
-> It is anonymous vma. 
-> 
-> > guest much large then host memory, but I want system to swap out only
-> > guest's memory.
-> 
-> Couldn't you use MADV_SEQUENTIAL on only guest memory area?
-> It doesn't make side effect about readahead since it's anon area. 
-> And it would make do best effort to swap out guest's memory.
-> 
-I can try, should be better then nothing I guess. Doesn't guaranty that
-emulator memory will not be swapped out though.
+> Oh right, MADV_DONTNEED is no good.
 
---
-			Gleb.
+Off topic:
+
+posix_madvise(MADV_DONTNEED) is nop. glibc's posix_madvise(MADV_DONTNEED)
+don't call linux's madvise(MADV_DONTNEED).
+It's because madvise(MADV_DONTNEED) is not POSIX compliant. 
+
+The behavior of linux madvise(MADV_DONTNEED) is similar to Solaris (or *BSD) 
+madvise(MADV_FREE).
+
+
+
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
