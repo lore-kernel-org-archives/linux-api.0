@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 80/96] c/r: [pty 2/2] support for pseudo terminals
-Date: Wed, 17 Mar 2010 12:09:08 -0400
-Message-ID: <1268842164-5590-81-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 78/96] c/r: add support for connected INET sockets (v5)
+Date: Wed, 17 Mar 2010 12:09:06 -0400
+Message-ID: <1268842164-5590-79-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -80,956 +80,779 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-76-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-77-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-78-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-79-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-80-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-80-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-78-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Oren Laadan <orenl@cs.columbia.edu>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Dan Smith <danms@us.ibm.com>, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds support for checkpoint and restart of pseudo terminals
-(PTYs). Since PTYs are shared (pointed to by file, and signal), they
-are managed via objhash.
+From: Dan Smith <danms@us.ibm.com>
 
-PTYs are master/slave pairs; The code arranges for the master to
-always be checkpointed first, followed by the slave. This is important
-since during restart both ends are created when restoring the master.
+This patch adds basic support for C/R of open INET sockets.  I think that
+all the important bits of the TCP and ICSK socket structures is saved,
+but I think there is still some additional IPv6 stuff that needs to be
+handled.
 
-In this patch only UNIX98 style PTYs are supported.
+With this patch applied, the following script can be used to demonstrate
+the functionality:
 
-Currently only PTYs that are referenced by open files are handled.
-Thus PTYs checkpoint starts with a file in tty_file_checkpoint(). It
-will first checkpoint the master and slave PTYs via tty_checkpoint(),
-and then complete the saving of the file descriptor. This means that
-in the image file, the order of objects is: master-tty, slave-tty,
-file-desc.
+  https://lists.linux-foundation.org/pipermail/containers/2009-October/021239.html
 
-During restart, to restore the master side, we open the /dev/ptmx
-device and get a file handle. But at this point we don't know the
-designated objref for this file, because the file is due later on in
-the image stream. On the other hand, we can't just fput() the file
-because it will close the PTY too.
+It shows that this enables migration of a sendmail process with open
+connections from one machine to another without dropping.
 
-Instead, when we checkpoint the master PTY, we _reserve_ an objref
-for the file (which won't be further used in checkpoint). Then at
-restart, use it to insert the file to objhash.
+We probably need comments from the netdev people about the quality of
+sanity checking we do on the values in the ckpt_hdr_socket_inet
+structure on restart.
 
-TODO:
+Note that this still doesn't address lingering sockets yet.
 
-* Better sanitize input from checkpoint image on restore
-* Check the locking when saving/restoring tty_struct state
-* Echo position/buffer isn't saved (is it needed ?)
-* Handle multiple devpts mounts (namespaces)
-* Paths of ptmx and slaves are hard coded (/dev/ptmx, /dev/pts/...)
+Changelog [v19-rc3]:
+  - Rebase to kernel 2.6.33 (add 'inet_' prefix to some sk fields)
+  - Relax tcp.window_clamp value in INET restore
+Changelog [v19-rc2]:
+  - Restore gso_type fields on sockets and buffers, so that they're
+    properly handled on incoming path. Use the proper value from the
+    socket (instead of storing that per-buffer) to avoid needing to
+    detect (e.g.) the user restore a UDP buffer into a TCP socket.
+Changes in v5:
+ - Change ckpt_write_err() to ckpt_err()
+Changes in v4:
+ - Use the new socket buffer restore functions introduced in the
+   previous patch
+ - Move listen_sockets list under the restart items in ckpt_ctx
+ - Rename RESTART_SOCK_LISTENONLY to RESTART_CONN_RESET
+Changes in v3:
+ - Prevent restart from allowing a bind on a <1024 port unless the
+   user is granted that capability
+ - Add some sanity checking in the inet_precheck() function to make sure
+   the values read from the checkpoint image are within acceptable ranges
+ - Check the result of sock_restore_header_info() and fail if needed
+Changes in v2:
+ - Restore saddr, rcv_saddr, daddr, sport, and dport from the sockaddr
+   structure instead of saving them separately
+ - Fix 'sock' naming in sock_cptrst()
+ - Don't take the queue lock before skb_queue_tail() since it is
+   done for us
+ - Allow "listen only" restore behavior if RESTART_SOCK_LISTENONLY
+   flag is specified on sys_restart()
+ - Pull the implementation of the list of listening sockets back into
+   this patch
+ - Fix dangling printk
+ - Add some comments around the parent/child restore logic
 
-Changelog[v19-rc1]:
-  - [Matt Helsley] Add cpp definitions for enums
-Changelog[v4]:
-  - Fix error path(s) in restore_tty_ldisc()
-  - Fix memory leak in restore_tty_ldisc()
-Changelog[v3]:
-  - [Serge Hallyn] Set tty on error path
-Changelog[v2]:
-  - Don't save/restore tty->{session,pgrp}
-  - Fix leak: drop file reference after ckpt_obj_insert()
-  - Move get_file() inside locked clause (fix race)
-Changelog[v1]:
-  - Adjust include/asm/checkpoint_hdr.h for s390 architecture
-  - Add NCC to kernel constants header (ckpt_hdr_const)
-  - [Serge Hallyn] fix calculation of canon_datalen
-
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
+Cc: netdev@vger.kernel.org
+Signed-off-by: Dan Smith <danms@us.ibm.com>
+Acked-by: Oren Laadan <orenl@librato.com>
 Acked-by: Serge Hallyn <serue@us.ibm.com>
 Tested-by: Serge E. Hallyn <serue@us.ibm.com>
 ---
- arch/s390/include/asm/checkpoint_hdr.h |   11 +
- arch/x86/include/asm/checkpoint_hdr.h  |   11 +
- checkpoint/checkpoint.c                |    3 +
- checkpoint/files.c                     |    6 +
- checkpoint/objhash.c                   |   26 ++
- checkpoint/restart.c                   |    6 +
- drivers/char/pty.c                     |    1 +
- drivers/char/tty_io.c                  |  503 ++++++++++++++++++++++++++++++++
- include/linux/checkpoint.h             |    4 +
- include/linux/checkpoint_hdr.h         |   89 ++++++
- include/linux/tty.h                    |    7 +
- 11 files changed, 667 insertions(+), 0 deletions(-)
+ checkpoint/sys.c                 |    4 +
+ include/linux/checkpoint.h       |    7 +-
+ include/linux/checkpoint_hdr.h   |   95 ++++++++++
+ include/linux/checkpoint_types.h |    1 +
+ net/checkpoint.c                 |   19 +-
+ net/ipv4/checkpoint.c            |  373 +++++++++++++++++++++++++++++++++++++-
+ 6 files changed, 481 insertions(+), 18 deletions(-)
 
-diff --git a/arch/s390/include/asm/checkpoint_hdr.h b/arch/s390/include/asm/checkpoint_hdr.h
-index 7d30317..fd8be2a 100644
---- a/arch/s390/include/asm/checkpoint_hdr.h
-+++ b/arch/s390/include/asm/checkpoint_hdr.h
-@@ -92,13 +92,24 @@ struct ckpt_hdr_mm_context {
- };
+diff --git a/checkpoint/sys.c b/checkpoint/sys.c
+index 02b12a3..62f49ad 100644
+--- a/checkpoint/sys.c
++++ b/checkpoint/sys.c
+@@ -236,6 +236,8 @@ static void ckpt_ctx_free(struct ckpt_ctx *ctx)
  
- #define CKPT_ARCH_NSIG  64
-+#define CKPT_TTY_NCC  8
-+
-+/* arch dependent constants */
- #ifdef __KERNEL__
-+
- #include <asm/signal.h>
- #if CKPT_ARCH_NSIG != _SIGCONTEXT_NSIG
- #error CKPT_ARCH_NSIG size is wrong (asm/sigcontext.h and asm/checkpoint_hdr.h)
- #endif
-+
-+#include <linux/tty.h>
-+#if CKPT_TTY_NCC != NCC
-+#error CKPT_TTY_NCC size is wrong per asm-generic/termios.h
- #endif
+ 	kfree(ctx->pids_arr);
  
-+#endif /* __KERNEL__ */
++	sock_listening_list_free(&ctx->listen_sockets);
 +
-+
- struct ckpt_hdr_header_arch {
- 	struct ckpt_hdr h;
- };
-diff --git a/arch/x86/include/asm/checkpoint_hdr.h b/arch/x86/include/asm/checkpoint_hdr.h
-index 44737b8..535a9c6 100644
---- a/arch/x86/include/asm/checkpoint_hdr.h
-+++ b/arch/x86/include/asm/checkpoint_hdr.h
-@@ -52,14 +52,25 @@ enum {
- #define CKPT_HDR_MM_CONTEXT_LDT CKPT_HDR_MM_CONTEXT_LDT
- };
- 
-+/* arch dependent constants */
- #define CKPT_ARCH_NSIG  64
-+#define CKPT_TTY_NCC  8
-+
- #ifdef __KERNEL__
-+
- #include <asm/signal.h>
- #if CKPT_ARCH_NSIG != _NSIG
- #error CKPT_ARCH_NSIG size is wrong per asm/signal.h and asm/checkpoint_hdr.h
- #endif
-+
-+#include <linux/tty.h>
-+#if CKPT_TTY_NCC != NCC
-+#error CKPT_TTY_NCC size is wrong per asm-generic/termios.h
- #endif
- 
-+#endif /* __KERNEL__ */
-+
-+
- struct ckpt_hdr_header_arch {
- 	struct ckpt_hdr h;
- 	/* FIXME: add HAVE_HWFP */
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index 71a4bec..aaa8500 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -124,6 +124,9 @@ static void fill_kernel_const(struct ckpt_const *h)
- 	h->uts_domainname_len = sizeof(uts->domainname);
- 	/* rlimit */
- 	h->rlimit_nlimits = RLIM_NLIMITS;
-+	/* tty */
-+	h->n_tty_buf_size = N_TTY_BUF_SIZE;
-+	h->tty_termios_ncc = NCC;
+ 	kfree(ctx);
  }
  
- /* write the checkpoint header */
-diff --git a/checkpoint/files.c b/checkpoint/files.c
-index 900d1c1..bcc1fbf 100644
---- a/checkpoint/files.c
-+++ b/checkpoint/files.c
-@@ -631,6 +631,12 @@ static struct restore_file_ops restore_file_ops[] = {
- 		.file_type = CKPT_FILE_SOCKET,
- 		.restore = sock_file_restore,
- 	},
-+	/* tty */
-+	{
-+		.file_name = "TTY",
-+		.file_type = CKPT_FILE_TTY,
-+		.restore = tty_file_restore,
-+	},
- };
+@@ -269,6 +271,8 @@ static struct ckpt_ctx *ckpt_ctx_alloc(int fd, unsigned long uflags,
  
- static struct file *do_restore_file(struct ckpt_ctx *ctx)
-diff --git a/checkpoint/objhash.c b/checkpoint/objhash.c
-index b1f257f..84bceec 100644
---- a/checkpoint/objhash.c
-+++ b/checkpoint/objhash.c
-@@ -269,6 +269,22 @@ static int obj_sock_users(void *ptr)
- 	return atomic_read(&((struct sock *) ptr)->sk_refcnt);
- }
+ 	mutex_init(&ctx->msg_mutex);
  
-+static int obj_tty_grab(void *ptr)
-+{
-+	tty_kref_get((struct tty_struct *) ptr);
-+	return 0;
-+}
-+
-+static void obj_tty_drop(void *ptr, int lastref)
-+{
-+	tty_kref_put((struct tty_struct *) ptr);
-+}
-+
-+static int obj_tty_users(void *ptr)
-+{
-+	return atomic_read(&((struct tty_struct *) ptr)->kref.refcount);
-+}
-+
- static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 	/* ignored object */
- 	{
-@@ -407,6 +423,16 @@ static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 		.checkpoint = checkpoint_sock,
- 		.restore = restore_sock,
- 	},
-+	/* struct tty_struct */
-+	{
-+		.obj_name = "TTY",
-+		.obj_type = CKPT_OBJ_TTY,
-+		.ref_drop = obj_tty_drop,
-+		.ref_grab = obj_tty_grab,
-+		.ref_users = obj_tty_users,
-+		.checkpoint = checkpoint_tty,
-+		.restore = restore_tty,
-+	},
- };
- 
- 
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index 42885be..6f206a3 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -19,6 +19,7 @@
- #include <linux/freezer.h>
- #include <linux/magic.h>
- #include <linux/utsname.h>
-+#include <linux/termios.h>
- #include <asm/syscall.h>
- #include <linux/elf.h>
- #include <linux/deferqueue.h>
-@@ -586,6 +587,11 @@ static int check_kernel_const(struct ckpt_const *h)
- 	/* rlimit */
- 	if (h->rlimit_nlimits != RLIM_NLIMITS)
- 		return -EINVAL;
-+	/* tty */
-+	if (h->n_tty_buf_size != N_TTY_BUF_SIZE)
-+		return -EINVAL;
-+	if (h->tty_termios_ncc != NCC)
-+		return -EINVAL;
- 
- 	return 0;
- }
-diff --git a/drivers/char/pty.c b/drivers/char/pty.c
-index 33f720b..062368e 100644
---- a/drivers/char/pty.c
-+++ b/drivers/char/pty.c
-@@ -15,6 +15,7 @@
- 
- #include <linux/errno.h>
- #include <linux/interrupt.h>
-+#include <linux/file.h>
- #include <linux/tty.h>
- #include <linux/tty_flip.h>
- #include <linux/fcntl.h>
-diff --git a/drivers/char/tty_io.c b/drivers/char/tty_io.c
-index 169c130..0dbf3f0 100644
---- a/drivers/char/tty_io.c
-+++ b/drivers/char/tty_io.c
-@@ -106,6 +106,7 @@
- 
- #include <linux/kmod.h>
- #include <linux/nsproxy.h>
-+#include <linux/checkpoint.h>
- 
- #undef TTY_DEBUG_HANGUP
- 
-@@ -151,6 +152,13 @@ static long tty_compat_ioctl(struct file *file, unsigned int cmd,
- #define tty_compat_ioctl NULL
- #endif
- static int tty_fasync(int fd, struct file *filp, int on);
-+#ifdef CONFIG_CHECKPOINT
-+static int tty_file_checkpoint(struct ckpt_ctx *ctx, struct file *file);
-+static int tty_file_collect(struct ckpt_ctx *ctx, struct file *file);
-+#else
-+#define tty_file_checkpoint NULL
-+#define tty_file_collect NULL
-+#endif /* CONFIG_CHECKPOINT */
- static void release_tty(struct tty_struct *tty, int idx);
- static void __proc_set_tty(struct task_struct *tsk, struct tty_struct *tty);
- static void proc_set_tty(struct task_struct *tsk, struct tty_struct *tty);
-@@ -417,6 +425,8 @@ static const struct file_operations tty_fops = {
- 	.open		= tty_open,
- 	.release	= tty_release,
- 	.fasync		= tty_fasync,
-+	.checkpoint	= tty_file_checkpoint,
-+	.collect	= tty_file_collect,
- };
- 
- static const struct file_operations console_fops = {
-@@ -439,6 +449,8 @@ static const struct file_operations hung_up_tty_fops = {
- 	.unlocked_ioctl	= hung_up_tty_ioctl,
- 	.compat_ioctl	= hung_up_tty_compat_ioctl,
- 	.release	= tty_release,
-+	.checkpoint	= tty_file_checkpoint,
-+	.collect	= tty_file_collect,
- };
- 
- static DEFINE_SPINLOCK(redirect_lock);
-@@ -2627,6 +2639,497 @@ static long tty_compat_ioctl(struct file *file, unsigned int cmd,
- }
- #endif
- 
-+#ifdef CONFIG_CHECKPOINT
-+static int tty_can_checkpoint(struct ckpt_ctx *ctx, struct tty_struct *tty)
-+{
-+	/* only support pty driver */
-+	if (tty->driver->type != TTY_DRIVER_TYPE_PTY) {
-+		ckpt_err(ctx, -ENOSYS,
-+			 "%(T)%(S)%(P)tty: unknown driverv type %d\n",
-+			 tty->driver, tty, tty->driver->type);
-+		return 0;
-+	}
-+	/* only support unix98 style */
-+	if (tty->driver->major != UNIX98_PTY_MASTER_MAJOR &&
-+	    tty->driver->major != UNIX98_PTY_SLAVE_MAJOR) {
-+		ckpt_err(ctx, -ENOSYS, "%(T)%(P)tty: legacy pty\n", tty);
-+		return 0;
-+	}
-+	/* only support n_tty ldisc */
-+	if (tty->ldisc->ops->num != N_TTY) {
-+		ckpt_err(ctx, -ENOSYS,
-+			 "%(T)%(S)%(P)tty: unknown ldisc type %d\n",
-+			 tty->ldisc->ops, tty, tty->ldisc->ops->num);
-+		return 0;
-+	}
-+
-+	return 1;
-+}
-+
-+static int tty_file_checkpoint(struct ckpt_ctx *ctx, struct file *file)
-+{
-+	struct ckpt_hdr_file_tty *h;
-+	struct tty_struct *tty, *real_tty;
-+	struct inode *inode;
-+	int master_objref, slave_objref;
-+	int ret;
-+
-+	tty = (struct tty_struct *)file->private_data;
-+	inode = file->f_path.dentry->d_inode;
-+	if (tty_paranoia_check(tty, inode, "tty_file_checkpoint"))
-+		return -EIO;
-+
-+	if (!tty_can_checkpoint(ctx, tty))
-+		return -ENOSYS;
-+
-+	/*
-+	 * If we ever support more than PTYs, this would be tty-type
-+	 * specific (and probably called via tty_operations).
-+	 */
-+
-+	real_tty = tty_pair_get_tty(tty);
-+	ckpt_debug("tty: %p, real_tty: %p\n", tty, real_tty);
-+
-+	master_objref = checkpoint_obj(ctx, real_tty->link, CKPT_OBJ_TTY);
-+	if (master_objref < 0)
-+		return master_objref;
-+	slave_objref = checkpoint_obj(ctx, real_tty, CKPT_OBJ_TTY);
-+	if (slave_objref < 0)
-+		return slave_objref;
-+	ckpt_debug("master %p %d, slave %p %d\n",
-+		   real_tty->link, master_objref, real_tty, slave_objref);
-+
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_FILE);
-+	if (!h)
-+		return -ENOMEM;
-+
-+	h->common.f_type = CKPT_FILE_TTY;
-+	h->tty_objref = (tty == real_tty ? slave_objref : master_objref);
-+
-+	ret = checkpoint_file_common(ctx, file, &h->common);
-+	if (!ret)
-+		ret = ckpt_write_obj(ctx, &h->common.h);
-+
-+	ckpt_hdr_put(ctx, h);
-+	return ret;
-+}
-+
-+static int tty_file_collect(struct ckpt_ctx *ctx, struct file *file)
-+{
-+	struct tty_struct *tty;
-+	struct inode *inode;
-+	int ret;
-+
-+	tty = (struct tty_struct *)file->private_data;
-+	inode = file->f_path.dentry->d_inode;
-+	if (tty_paranoia_check(tty, inode, "tty_collect"))
-+		return -EIO;
-+
-+	if (!tty_can_checkpoint(ctx, tty))
-+		return -ENOSYS;
-+
-+	ckpt_debug("collecting tty: %p\n", tty);
-+	ret = ckpt_obj_collect(ctx, tty, CKPT_OBJ_TTY);
-+	if (ret < 0)
-+		return ret;
-+
-+	if (tty->driver->subtype == PTY_TYPE_MASTER) {
-+		if (!tty->link) {
-+			ckpt_err(ctx, -EIO, "%(T)%(P)tty: missing link\n\n",
-+				 tty);
-+			return -EIO;
-+		}
-+		ckpt_debug("collecting slave tty: %p\n", tty->link);
-+		ret = ckpt_obj_collect(ctx, tty->link, CKPT_OBJ_TTY);
-+	}
-+
-+	return ret;
-+}
-+
-+#define CKPT_LDISC_BAD   (1 << TTY_LDISC_CHANGING)
-+#define CKPT_LDISC_GOOD  ((1 << TTY_LDISC_OPEN) | (1 << TTY_LDISC))
-+#define CKPT_LDISC_FLAGS (CKPT_LDISC_GOOD | CKPT_LDISC_BAD)
-+
-+static int checkpoint_tty_ldisc(struct ckpt_ctx *ctx, struct tty_struct *tty)
-+{
-+	struct ckpt_hdr_ldisc_n_tty *h;
-+	int datalen, read_tail;
-+	int n, ret;
-+
-+	/* shouldn't reach here unless ldisc is n_tty */
-+	BUG_ON(tty->ldisc->ops->num != N_TTY);
-+
-+	if ((tty->flags & CKPT_LDISC_FLAGS) != CKPT_LDISC_GOOD) {
-+		ckpt_err(ctx, -EBUSY, "%(T)%(P)tty: bad ldisc flags %#lx\n",
-+			       tty, tty->flags);
-+		return -EBUSY;
-+	}
-+
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_TTY_LDISC);
-+	if (!h)
-+		return -ENOMEM;
-+
-+	spin_lock_irq(&tty->read_lock);
-+	h->column = tty->column;
-+	h->datalen = tty->read_cnt;
-+	h->canon_column = tty->canon_column;
-+	h->canon_datalen = tty->canon_head;
-+	if (tty->canon_head > tty->read_tail)
-+		h->canon_datalen -= tty->read_tail;
-+	else
-+		h->canon_datalen += N_TTY_BUF_SIZE - tty->read_tail;
-+	h->canon_data = tty->canon_data;
-+
-+	datalen = tty->read_cnt;
-+	read_tail = tty->read_tail;
-+	spin_unlock_irq(&tty->read_lock);
-+
-+	h->minimum_to_wake = tty->minimum_to_wake;
-+
-+	h->stopped = tty->stopped;
-+	h->hw_stopped = tty->hw_stopped;
-+	h->flow_stopped = tty->flow_stopped;
-+	h->packet = tty->packet;
-+	h->ctrl_status = tty->ctrl_status;
-+	h->lnext = tty->lnext;
-+	h->erasing = tty->erasing;
-+	h->raw = tty->raw;
-+	h->real_raw = tty->real_raw;
-+	h->icanon = tty->icanon;
-+	h->closing = tty->closing;
-+
-+	BUILD_BUG_ON(sizeof(h->read_flags) != sizeof(tty->read_flags));
-+	memcpy(h->read_flags, tty->read_flags, sizeof(tty->read_flags));
-+
-+	ret = ckpt_write_obj(ctx, &h->h);
-+	ckpt_hdr_put(ctx, h);
-+	if (ret < 0)
-+		return ret;
-+
-+	ckpt_debug("datalen %d\n", datalen);
-+	if (datalen) {
-+		ret = ckpt_write_buffer(ctx, NULL, datalen);
-+		if (ret < 0)
-+			return ret;
-+		n = min(datalen, N_TTY_BUF_SIZE - read_tail);
-+		ret = ckpt_kwrite(ctx, &tty->read_buf[read_tail], n);
-+		if (ret < 0)
-+			return ret;
-+		n = datalen - n;
-+		ret = ckpt_kwrite(ctx, tty->read_buf, n);
-+	}
-+
-+	return ret;
-+}
-+
-+#define CKPT_TTY_BAD   ((1 << TTY_CLOSING) | (1 << TTY_FLUSHING))
-+#define CKPT_TTY_GOOD  0
-+
-+static int do_checkpoint_tty(struct ckpt_ctx *ctx, struct tty_struct *tty)
-+{
-+	struct ckpt_hdr_tty *h;
-+	int link_objref;
-+	int master = 0;
-+	int ret;
-+
-+	if ((tty->flags & (CKPT_TTY_BAD | CKPT_TTY_GOOD)) != CKPT_TTY_GOOD) {
-+		ckpt_err(ctx, -EBUSY, "%(T)%(P)tty: bad flags %#lx\n",
-+			       tty, tty->flags);
-+		return -EBUSY;
-+	}
-+
-+	/*
-+	 * If we ever support more than PTYs, this would be tty-type
-+	 * specific (and probably called via tty_operations).
-+	 */
-+	link_objref = ckpt_obj_lookup(ctx, tty->link, CKPT_OBJ_TTY);
-+
-+	if (tty->driver->subtype == PTY_TYPE_MASTER)
-+		master = 1;
-+
-+	/* tty is master if-and-only-if link_objref is zero */
-+	BUG_ON(master ^ !link_objref);
-+
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_TTY);
-+	if (!h)
-+		return -ENOMEM;
-+
-+	h->driver_type = tty->driver->type;
-+	h->driver_subtype = tty->driver->subtype;
-+
-+	h->link_objref = link_objref;
-+
-+	/* if master, reserve an objref (see do_restore_tty) */
-+	h->file_objref = (master ? ckpt_obj_reserve(ctx) : 0);
-+	ckpt_debug("link %d file %d\n", h->link_objref, h->file_objref);
-+
-+	h->index = tty->index;
-+	h->ldisc = tty->ldisc->ops->num;
-+	h->flags = tty->flags;
-+
-+	mutex_lock(&tty->termios_mutex);
-+	h->termios.c_line = tty->termios->c_line;
-+	h->termios.c_iflag = tty->termios->c_iflag;
-+	h->termios.c_oflag = tty->termios->c_oflag;
-+	h->termios.c_cflag = tty->termios->c_cflag;
-+	h->termios.c_lflag = tty->termios->c_lflag;
-+	memcpy(h->termios.c_cc, tty->termios->c_cc, NCC);
-+	h->winsize.ws_row = tty->winsize.ws_row;
-+	h->winsize.ws_col = tty->winsize.ws_col;
-+	h->winsize.ws_ypixel = tty->winsize.ws_ypixel;
-+	h->winsize.ws_xpixel = tty->winsize.ws_xpixel;
-+	mutex_unlock(&tty->termios_mutex);
-+
-+	ret  = ckpt_write_obj(ctx, &h->h);
-+	ckpt_hdr_put(ctx, h);
-+	if (ret < 0)
-+		return ret;
-+
-+	/* save line discipline data (also writes buffer) */
-+	if (!test_bit(TTY_HUPPED, &tty->flags))
-+		ret = checkpoint_tty_ldisc(ctx, tty);
-+
-+	return ret;
-+}
-+
-+int checkpoint_tty(struct ckpt_ctx *ctx, void *ptr)
-+{
-+	return do_checkpoint_tty(ctx, (struct tty_struct *) ptr);
-+}
-+
-+struct file *tty_file_restore(struct ckpt_ctx *ctx, struct ckpt_hdr_file *ptr)
-+{
-+	struct ckpt_hdr_file_tty *h = (struct ckpt_hdr_file_tty *) ptr;
-+	struct tty_struct *tty;
-+	struct file *file;
-+	char slavepath[16];	/* "/dev/pts/###" */
-+	int slavelock;
-+	int ret;
-+
-+	if (ptr->h.type != CKPT_HDR_FILE ||
-+	    ptr->h.len != sizeof(*h) || ptr->f_type != CKPT_FILE_TTY)
-+		return ERR_PTR(-EINVAL);
-+
-+	if (h->tty_objref <= 0)
-+		return ERR_PTR(-EINVAL);
-+
-+	tty = ckpt_obj_fetch(ctx, h->tty_objref, CKPT_OBJ_TTY);
-+	ckpt_debug("tty %p objref %d\n", tty, h->tty_objref);
-+
-+	/* at this point the tty should have been restore already */
-+	if (IS_ERR(tty))
-+		return (struct file *) tty;
-+
-+	/*
-+	 * If we ever support more than PTYs, this would be tty-type
-+	 * specific (and probably called via tty_operations).
-+	 */
-+
-+	/*
-+	 * If this tty is master, get the corresponding file from
-+	 * tty->tty_file. Otherwise, open the slave device.
-+	 */
-+	if (tty->driver->subtype == PTY_TYPE_MASTER) {
-+		file_list_lock();
-+		file = list_first_entry(&tty->tty_files,
-+					typeof(*file), f_u.fu_list);
-+		get_file(file);
-+		file_list_unlock();
-+		ckpt_debug("master file %p\n", file);
-+	} else {
-+		sprintf(slavepath, "/dev/pts/%d", tty->index);
-+		slavelock = test_bit(TTY_PTY_LOCK, &tty->link->flags);
-+		clear_bit(TTY_PTY_LOCK, &tty->link->flags);
-+		file = filp_open(slavepath, O_RDWR | O_NOCTTY, 0);
-+		ckpt_debug("slave file %p (idnex %d)\n", file, tty->index);
-+		if (IS_ERR(file))
-+			return file;
-+		if (slavelock)
-+			set_bit(TTY_PTY_LOCK, &tty->link->flags);
-+	}
-+
-+	ret = restore_file_common(ctx, file, ptr);
-+	if (ret < 0) {
-+		fput(file);
-+		file = ERR_PTR(ret);
-+	}
-+
-+	return file;
-+}
-+
-+static int restore_tty_ldisc(struct ckpt_ctx *ctx,
-+			     struct tty_struct *tty,
-+			     struct ckpt_hdr_tty *hh)
-+{
-+	struct ckpt_hdr_ldisc_n_tty *h;
-+	int ret = -EINVAL;
-+
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_TTY_LDISC);
-+	if (IS_ERR(h))
-+		return PTR_ERR(h);
-+
-+	/* this is unfair shortcut, because we know ldisc is n_tty */
-+	if (hh->ldisc != N_TTY)
-+		goto out;
-+	if ((hh->flags & CKPT_LDISC_FLAGS) != CKPT_LDISC_GOOD)
-+		goto out;
-+
-+	if (h->datalen > N_TTY_BUF_SIZE)
-+		goto out;
-+	if (h->canon_datalen > N_TTY_BUF_SIZE)
-+		goto out;
-+
-+	if (h->datalen) {
-+		ret = _ckpt_read_buffer(ctx, tty->read_buf, h->datalen);
-+		if (ret < 0)
-+			goto out;
-+	}
-+
-+	/* TODO: sanitize all these values ? */
-+
-+	spin_lock_irq(&tty->read_lock);
-+	tty->column = h->column;
-+	tty->read_cnt = h->datalen;
-+	tty->read_head = h->datalen;
-+	tty->read_tail = 0;
-+	tty->canon_column = h->canon_column;
-+	tty->canon_head = h->canon_datalen;
-+	tty->canon_data = h->canon_data;
-+	spin_unlock_irq(&tty->read_lock);
-+
-+	tty->minimum_to_wake = h->minimum_to_wake;
-+
-+	tty->stopped = h->stopped;
-+	tty->hw_stopped = h->hw_stopped;
-+	tty->flow_stopped = h->flow_stopped;
-+	tty->packet = h->packet;
-+	tty->ctrl_status = h->ctrl_status;
-+	tty->lnext = h->lnext;
-+	tty->erasing = h->erasing;
-+	tty->raw = h->raw;
-+	tty->real_raw = h->real_raw;
-+	tty->icanon = h->icanon;
-+	tty->closing = h->closing;
-+
-+	BUILD_BUG_ON(sizeof(h->read_flags) != sizeof(tty->read_flags));
-+	memcpy(tty->read_flags, h->read_flags, sizeof(tty->read_flags));
-+ out:
-+	ckpt_hdr_put(ctx, h);
-+	return 0;
-+}
-+
-+#define CKPT_PTMX_PATH  "/dev/ptmx"
-+
-+static struct tty_struct *do_restore_tty(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_tty *h;
-+	struct tty_struct *tty = ERR_PTR(-EINVAL);
-+	struct file *file = NULL;
-+	int master, ret;
-+
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_TTY);
-+	if (IS_ERR(h))
-+		return (struct tty_struct *) h;
-+
-+	if (h->driver_type != TTY_DRIVER_TYPE_PTY)
-+		goto out;
-+	if (h->driver_subtype == PTY_TYPE_MASTER)
-+		master = 1;
-+	else if (h->driver_subtype == PTY_TYPE_SLAVE)
-+		master = 0;
-+	else
-+		goto out;
-+	/* @link_object is positive if-and-only-if tty is not master */
-+	if (h->link_objref < 0 || (master ^ !h->link_objref))
-+		goto out;
-+	/* @file_object is positive if-and-only-if tty is master */
-+	if (h->file_objref < 0 || (master ^ !!h->file_objref))
-+		goto out;
-+	if (h->flags & CKPT_TTY_BAD)
-+		goto out;
-+	/* hung-up tty cannot be master, or have session or pgrp */
-+	if (test_bit(TTY_HUPPED, (unsigned long *) &h->flags) && master)
-+		goto out;
-+
-+	ckpt_debug("sanity checks passed, link %d\n", h->link_objref);
-+
-+	/*
-+	 * If we ever support more than PTYs, this would be tty-type
-+	 * specific (and probably called via tty_operations).
-+	 */
-+	if (master) {
-+		file = pty_open_by_index("/dev/ptmx", h->index);
-+		if (IS_ERR(file)) {
-+			int ret = PTR_ERR(file);
-+			ckpt_err(ctx, ret, "%(T)Open ptmx\n");
-+			tty = ERR_PTR(ret);
-+			goto out;
-+		}
-+
-+		/*
-+		 * Add file to objhash to ensure proper cleanup later
-+		 * (it isn't referenced elsewhere). Use h->file_objref
-+		 * which was explicitly during checkpoint for this.
-+		 */
-+		ret = ckpt_obj_insert(ctx, file, h->file_objref, CKPT_OBJ_FILE);
-+		fput(file);  /* even on succes (referenced in objash) */
-+		if (ret < 0) {
-+			tty = ERR_PTR(ret);
-+			goto out;
-+		}
-+
-+		tty = file->private_data;
-+	} else {
-+		tty = ckpt_obj_fetch(ctx, h->link_objref, CKPT_OBJ_TTY);
-+		if (IS_ERR(tty))
-+			goto out;
-+		tty = tty->link;
-+	}
-+
-+	ckpt_debug("tty %p (hup %d)\n",
-+		   tty, test_bit(TTY_HUPPED, (unsigned long *) &h->flags));
-+
-+	/* we now have the desired tty: restore its state as per @h */
-+
-+	mutex_lock(&tty->termios_mutex);
-+	tty->termios->c_line = h->termios.c_line;
-+	tty->termios->c_iflag = h->termios.c_iflag;
-+	tty->termios->c_oflag = h->termios.c_oflag;
-+	tty->termios->c_cflag = h->termios.c_cflag;
-+	tty->termios->c_lflag = h->termios.c_lflag;
-+	memcpy(tty->termios->c_cc, h->termios.c_cc, NCC);
-+	tty->winsize.ws_row = h->winsize.ws_row;
-+	tty->winsize.ws_col = h->winsize.ws_col;
-+	tty->winsize.ws_ypixel = h->winsize.ws_ypixel;
-+	tty->winsize.ws_xpixel = h->winsize.ws_xpixel;
-+	mutex_unlock(&tty->termios_mutex);
-+
-+	if (test_bit(TTY_HUPPED, (unsigned long *) &h->flags))
-+		tty_vhangup(tty);
-+	else {
-+		ret = restore_tty_ldisc(ctx, tty, h);
-+		if (ret < 0) {
-+			tty = ERR_PTR(ret);
-+			goto out;
-+		}
-+	}
-+
-+	tty_kref_get(tty);
-+ out:
-+	ckpt_hdr_put(ctx, h);
-+	return tty;
-+}
-+
-+void *restore_tty(struct ckpt_ctx *ctx)
-+{
-+#ifdef CONFIG_UNIX98_PTYS
-+	return (void *) do_restore_tty(ctx);
-+#else
-+	return ERR_PTR(-ENOSYS);
-+#endif
-+}
-+#endif /* COFNIG_CHECKPOINT */
-+
- /*
-  * This implements the "Secure Attention Key" ---  the idea is to
-  * prevent trojan horses by killing all processes associated with this
++	INIT_LIST_HEAD(&ctx->listen_sockets);
++
+ 	err = -EBADF;
+ 	ctx->file = fget(fd);
+ 	if (!ctx->file)
 diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index 57b8fd0..c7bd9d4 100644
+index e0f4bd1..57b8fd0 100644
 --- a/include/linux/checkpoint.h
 +++ b/include/linux/checkpoint.h
-@@ -301,6 +301,10 @@ extern int restore_obj_signal(struct ckpt_ctx *ctx, int signal_objref);
- extern int checkpoint_task_signal(struct ckpt_ctx *ctx, struct task_struct *t);
- extern int restore_task_signal(struct ckpt_ctx *ctx);
+@@ -19,6 +19,7 @@
+ #define RESTART_TASKSELF	0x1
+ #define RESTART_FROZEN		0x2
+ #define RESTART_GHOST		0x4
++#define RESTART_CONN_RESET      0x10
  
-+/* ttys */
-+extern int checkpoint_tty(struct ckpt_ctx *ctx, void *ptr);
-+extern void *restore_tty(struct ckpt_ctx *ctx);
-+
- static inline int ckpt_validate_errno(int errno)
- {
- 	return (errno >= 0) && (errno < MAX_ERRNO);
+ /* misc user visible */
+ #define CHECKPOINT_FD_NONE	-1
+@@ -57,7 +58,8 @@ extern long do_sys_restart(pid_t pid, int fd,
+ #define RESTART_USER_FLAGS  \
+ 	(RESTART_TASKSELF | \
+ 	 RESTART_FROZEN | \
+-	 RESTART_GHOST)
++	 RESTART_GHOST | \
++	 RESTART_CONN_RESET)
+ 
+ extern int walk_task_subtree(struct task_struct *task,
+ 			     int (*func)(struct task_struct *, void *),
+@@ -103,7 +105,8 @@ extern int ckpt_sock_getnames(struct ckpt_ctx *ctx,
+ 			      struct socket *socket,
+ 			      struct sockaddr *loc, unsigned *loc_len,
+ 			      struct sockaddr *rem, unsigned *rem_len);
+-extern struct sk_buff *sock_restore_skb(struct ckpt_ctx *ctx);
++extern struct sk_buff *sock_restore_skb(struct ckpt_ctx *ctx, struct sock *sk);
++extern void sock_listening_list_free(struct list_head *head);
+ 
+ /* ckpt kflags */
+ #define ckpt_set_ctx_kflag(__ctx, __kflag)  \
 diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index 1a6343a..549093c 100644
+index cf36fe1..1a6343a 100644
 --- a/include/linux/checkpoint_hdr.h
 +++ b/include/linux/checkpoint_hdr.h
-@@ -115,6 +115,10 @@ enum {
- #define CKPT_HDR_FILE CKPT_HDR_FILE
- 	CKPT_HDR_PIPE_BUF,
- #define CKPT_HDR_PIPE_BUF CKPT_HDR_PIPE_BUF
-+	CKPT_HDR_TTY,
-+#define CKPT_HDR_TTY CKPT_HDR_TTY
-+	CKPT_HDR_TTY_LDISC,
-+#define CKPT_HDR_TTY_LDISC CKPT_HDR_TTY_LDISC
+@@ -15,6 +15,7 @@
+ #include <linux/socket.h>
+ #include <linux/un.h>
+ #include <linux/in.h>
++#include <linux/in6.h>
+ #else
+ #include <sys/types.h>
+ #include <linux/types.h>
+@@ -576,6 +577,100 @@ struct ckpt_hdr_socket_unix {
  
- 	CKPT_HDR_MM = 401,
- #define CKPT_HDR_MM CKPT_HDR_MM
-@@ -215,6 +219,8 @@ enum obj_type {
- #define CKPT_OBJ_GROUPINFO CKPT_OBJ_GROUPINFO
- 	CKPT_OBJ_SOCK,
- #define CKPT_OBJ_SOCK CKPT_OBJ_SOCK
-+	CKPT_OBJ_TTY,
-+#define CKPT_OBJ_TTY CKPT_OBJ_TTY
- 	CKPT_OBJ_MAX
- #define CKPT_OBJ_MAX CKPT_OBJ_MAX
+ struct ckpt_hdr_socket_inet {
+ 	struct ckpt_hdr h;
++	__u32 daddr;
++	__u32 rcv_saddr;
++	__u32 saddr;
++	__u16 dport;
++	__u16 num;
++	__u16 sport;
++	__s16 uc_ttl;
++	__u16 cmsg_flags;
++
++	struct {
++		__u64 timeout;
++		__u32 ato;
++		__u32 lrcvtime;
++		__u16 last_seg_size;
++		__u16 rcv_mss;
++		__u8 pending;
++		__u8 quick;
++		__u8 pingpong;
++		__u8 blocked;
++	} icsk_ack __attribute__ ((aligned(8)));
++
++	/* FIXME: Skipped opt, tos, multicast, cork settings */
++
++	struct {
++		__u32 rcv_nxt;
++		__u32 copied_seq;
++		__u32 rcv_wup;
++		__u32 snd_nxt;
++		__u32 snd_una;
++		__u32 snd_sml;
++		__u32 rcv_tstamp;
++		__u32 lsndtime;
++
++		__u32 snd_wl1;
++		__u32 snd_wnd;
++		__u32 max_window;
++		__u32 mss_cache;
++		__u32 window_clamp;
++		__u32 rcv_ssthresh;
++		__u32 frto_highmark;
++
++		__u32 srtt;
++		__u32 mdev;
++		__u32 mdev_max;
++		__u32 rttvar;
++		__u32 rtt_seq;
++
++		__u32 packets_out;
++		__u32 retrans_out;
++
++		__u32 snd_up;
++		__u32 rcv_wnd;
++		__u32 write_seq;
++		__u32 pushed_seq;
++		__u32 lost_out;
++		__u32 sacked_out;
++		__u32 fackets_out;
++		__u32 tso_deferred;
++		__u32 bytes_acked;
++
++		__s32 lost_cnt_hint;
++		__u32 retransmit_high;
++
++		__u32 lost_retrans_low;
++
++		__u32 prior_ssthresh;
++		__u32 high_seq;
++
++		__u32 retrans_stamp;
++		__u32 undo_marker;
++		__s32 undo_retrans;
++		__u32 total_retrans;
++
++		__u32 urg_seq;
++		__u32 keepalive_time;
++		__u32 keepalive_intvl;
++
++		__u16 urg_data;
++		__u16 advmss;
++		__u8 frto_counter;
++		__u8 nonagle;
++
++		__u8 ecn_flags;
++		__u8 reordering;
++
++		__u8 keepalive_probes;
++	} tcp __attribute__ ((aligned(8)));
++
++	struct {
++		struct in6_addr saddr;
++		struct in6_addr rcv_saddr;
++		struct in6_addr daddr;
++	} inet6 __attribute__ ((aligned(8)));
++
+ 	__u32 laddr_len;
+ 	__u32 raddr_len;
+ 	struct sockaddr_in laddr;
+diff --git a/include/linux/checkpoint_types.h b/include/linux/checkpoint_types.h
+index 6edcaea..75e198f 100644
+--- a/include/linux/checkpoint_types.h
++++ b/include/linux/checkpoint_types.h
+@@ -79,6 +79,7 @@ struct ckpt_ctx {
+ 	wait_queue_head_t waitq;	/* waitqueue for restarting tasks */
+ 	wait_queue_head_t ghostq;	/* waitqueue for ghost tasks */
+ 	struct cred *realcred, *ecred;	/* tmp storage for cred at restart */
++	struct list_head listen_sockets;/* listening parent sockets */
+ 
+ 	struct ckpt_stats stats;	/* statistics */
+ 
+diff --git a/net/checkpoint.c b/net/checkpoint.c
+index 6fe7aa2..0eb8860 100644
+--- a/net/checkpoint.c
++++ b/net/checkpoint.c
+@@ -116,9 +116,9 @@ static void sock_record_header_info(struct sk_buff *skb,
+ 	h->nr_frags = skb_shinfo(skb)->nr_frags;
+ }
+ 
+-int sock_restore_header_info(struct ckpt_ctx *ctx,
+-			     struct sk_buff *skb,
+-			     struct ckpt_hdr_socket_buffer *h)
++static int sock_restore_header_info(struct ckpt_ctx *ctx,
++				    struct sock *sk, struct sk_buff *skb,
++				    struct ckpt_hdr_socket_buffer *h)
+ {
+ 	if (h->mac_header + h->mac_len != h->network_header) {
+ 		ckpt_err(ctx, -EINVAL,
+@@ -172,6 +172,8 @@ int sock_restore_header_info(struct ckpt_ctx *ctx,
+ 	skb->data = skb->head + h->data_offset;
+ 	skb->len = h->skb_len;
+ 
++	skb_shinfo(skb)->gso_type = sk->sk_gso_type;
++
+ 	return 0;
+ }
+ 
+@@ -217,7 +219,7 @@ static int sock_restore_skb_frag(struct ckpt_ctx *ctx,
+ 	return ret;
+ }
+ 
+-struct sk_buff *sock_restore_skb(struct ckpt_ctx *ctx)
++struct sk_buff *sock_restore_skb(struct ckpt_ctx *ctx, struct sock *sk)
+ {
+ 	struct ckpt_hdr_socket_buffer *h;
+ 	struct sk_buff *skb = NULL;
+@@ -270,7 +272,7 @@ struct sk_buff *sock_restore_skb(struct ckpt_ctx *ctx)
+ 		goto out;
+ 	}
+ 
+-	sock_restore_header_info(ctx, skb, h);
++	sock_restore_header_info(ctx, sk, skb, h);
+  out:
+ 	ckpt_hdr_put(ctx, h);
+ 	if (ret < 0) {
+@@ -936,10 +938,9 @@ struct sock *do_sock_restore(struct ckpt_ctx *ctx)
+ 		goto err;
+ 
+ 	if ((h->sock_common.family == AF_INET) &&
+-	    (h->sock.state != TCP_LISTEN)) {
+-		/* Temporary hack to enable restore of TCP_LISTEN sockets
+-		 * while forcing anything else to a closed state
+-		 */
++	    (h->sock.state != TCP_LISTEN) &&
++	    (ctx->uflags & RESTART_CONN_RESET)) {
++		ckpt_debug("Forcing open socket closed\n");
+ 		sock->sk->sk_state = TCP_CLOSE;
+ 		sock->state = SS_UNCONNECTED;
+ 	}
+diff --git a/net/ipv4/checkpoint.c b/net/ipv4/checkpoint.c
+index 1982119..b4024e7 100644
+--- a/net/ipv4/checkpoint.c
++++ b/net/ipv4/checkpoint.c
+@@ -17,6 +17,7 @@
+ #include <linux/deferqueue.h>
+ #include <net/tcp_states.h>
+ #include <net/tcp.h>
++#include <net/ipv6.h>
+ 
+ struct dq_sock {
+ 	struct ckpt_ctx *ctx;
+@@ -28,6 +29,248 @@ struct dq_buffers {
+ 	struct sock *sk;
  };
-@@ -236,6 +242,9 @@ struct ckpt_const {
- 	__u16 uts_domainname_len;
- 	/* rlimit */
- 	__u16 rlimit_nlimits;
-+	/* tty */
-+	__u16 n_tty_buf_size;
-+	__u16 tty_termios_ncc;
- } __attribute__((aligned(8)));
  
- /* checkpoint image header */
-@@ -466,6 +475,8 @@ enum file_type {
- #define CKPT_FILE_FIFO CKPT_FILE_FIFO
- 	CKPT_FILE_SOCKET,
- #define CKPT_FILE_SOCKET CKPT_FILE_SOCKET
-+	CKPT_FILE_TTY,
-+#define CKPT_FILE_TTY CKPT_FILE_TTY
- 	CKPT_FILE_MAX
- #define CKPT_FILE_MAX CKPT_FILE_MAX
- };
-@@ -889,6 +900,84 @@ struct ckpt_hdr_ipc_sem {
- } __attribute__((aligned(8)));
- 
- 
-+/* devices */
-+struct ckpt_hdr_file_tty {
-+	struct ckpt_hdr_file common;
-+	__s32 tty_objref;
++struct listen_item {
++	struct sock *sk;
++	struct list_head list;
 +};
 +
-+struct ckpt_hdr_tty {
-+	struct ckpt_hdr h;
++void sock_listening_list_free(struct list_head *head)
++{
++	struct listen_item *item, *tmp;
 +
-+	__u16 driver_type;
-+	__u16 driver_subtype;
++	list_for_each_entry_safe(item, tmp, head, list) {
++		list_del(&item->list);
++		kfree(item);
++	}
++}
 +
-+	__s32 link_objref;
-+	__s32 file_objref;
-+	__u32 _padding;
++static int sock_listening_list_add(struct ckpt_ctx *ctx, struct sock *sk)
++{
++	struct listen_item *item;
 +
-+	__u32 index;
-+	__u32 ldisc;
-+	__u64 flags;
++	item = kmalloc(sizeof(*item), GFP_KERNEL);
++	if (!item)
++		return -ENOMEM;
 +
-+	/* termios */
-+	struct {
-+		__u16 c_iflag;
-+		__u16 c_oflag;
-+		__u16 c_cflag;
-+		__u16 c_lflag;
-+		__u8 c_line;
-+		__u8 c_cc[CKPT_TTY_NCC];
-+	} __attribute__((aligned(8))) termios;
++	item->sk = sk;
++	list_add(&item->list, &ctx->listen_sockets);
 +
-+	/* winsize */
-+	struct {
-+		__u16 ws_row;
-+		__u16 ws_col;
-+		__u16 ws_xpixel;
-+		__u16 ws_ypixel;
-+	} __attribute__((aligned(8))) winsize;
-+} __attribute__((aligned(8)));
++	return 0;
++}
 +
-+/* cannot include <linux/tty.h> from userspace, so define: */
-+#define CKPT_N_TTY_BUF_SIZE  4096
-+#ifdef __KERNEL__
-+#include <linux/tty.h>
-+#if CKPT_N_TTY_BUF_SIZE != N_TTY_BUF_SIZE
-+#error CKPT_N_TTY_BUF_SIZE size is wrong per linux/tty.h
-+#endif
-+#endif
++static struct sock *sock_get_parent(struct ckpt_ctx *ctx, struct sock *sk)
++{
++	struct listen_item *item;
 +
-+struct ckpt_hdr_ldisc_n_tty {
-+	struct ckpt_hdr h;
++	list_for_each_entry(item, &ctx->listen_sockets, list) {
++		if (inet_sk(sk)->inet_sport == inet_sk(item->sk)->inet_sport)
++			return item->sk;
++	}
 +
-+	__u32 column;
-+	__u32 datalen;
-+	__u32 canon_column;
-+	__u32 canon_datalen;
-+	__u32 canon_data;
++	return NULL;
++}
 +
-+	__u16 minimum_to_wake;
++static int sock_hash_parent(void *data)
++{
++	struct dq_sock *dq = (struct dq_sock *)data;
++	struct sock *parent;
 +
-+	__u8 stopped;
-+	__u8 hw_stopped;
-+	__u8 flow_stopped;
-+	__u8 packet;
-+	__u8 ctrl_status;
-+	__u8 lnext;
-+	__u8 erasing;
-+	__u8 raw;
-+	__u8 real_raw;
-+	__u8 icanon;
-+	__u8 closing;
-+	__u8 padding[3];
++	ckpt_debug("INET post-restart hash\n");
 +
-+	__u8 read_flags[CKPT_N_TTY_BUF_SIZE / 8];
++	dq->sk->sk_prot->hash(dq->sk);
 +
-+	/* if @datalen > 0, buffer contents follow (next object) */
-+} __attribute__((aligned(8)));
++	/* If there is a listening socket with the same source port,
++	 * then become a child of that socket [we are the result of an
++	 * accept()].  Otherwise hash ourselves directly in [we are
++	 * the result of a connect()]
++	 */
 +
++	parent = sock_get_parent(dq->ctx, dq->sk);
++	if (parent) {
++		inet_sk(dq->sk)->inet_num = ntohs(inet_sk(dq->sk)->inet_sport);
++		local_bh_disable();
++		__inet_inherit_port(parent, dq->sk);
++		local_bh_enable();
++	} else {
++		inet_sk(dq->sk)->inet_num = 0;
++		inet_hash_connect(&tcp_death_row, dq->sk);
++		inet_sk(dq->sk)->inet_num = ntohs(inet_sk(dq->sk)->inet_sport);
++	}
 +
- #define CKPT_TST_OVERFLOW_16(a, b) \
- 	((sizeof(a) > sizeof(b)) && ((a) > SHORT_MAX))
++	return 0;
++}
++
++static int sock_defer_hash(struct ckpt_ctx *ctx, struct sock *sock)
++{
++	struct dq_sock dq;
++
++	dq.sk = sock;
++	dq.ctx = ctx;
++
++	return deferqueue_add(ctx->deferqueue, &dq, sizeof(dq),
++			      sock_hash_parent, NULL);
++}
++
++static int sock_inet_tcp_cptrst(struct ckpt_ctx *ctx,
++				struct tcp_sock *sk,
++				struct ckpt_hdr_socket_inet *hh,
++				int op)
++{
++	CKPT_COPY(op, hh->tcp.rcv_nxt, sk->rcv_nxt);
++	CKPT_COPY(op, hh->tcp.copied_seq, sk->copied_seq);
++	CKPT_COPY(op, hh->tcp.rcv_wup, sk->rcv_wup);
++	CKPT_COPY(op, hh->tcp.snd_nxt, sk->snd_nxt);
++	CKPT_COPY(op, hh->tcp.snd_una, sk->snd_una);
++	CKPT_COPY(op, hh->tcp.snd_sml, sk->snd_sml);
++	CKPT_COPY(op, hh->tcp.rcv_tstamp, sk->rcv_tstamp);
++	CKPT_COPY(op, hh->tcp.lsndtime, sk->lsndtime);
++
++	CKPT_COPY(op, hh->tcp.snd_wl1, sk->snd_wl1);
++	CKPT_COPY(op, hh->tcp.snd_wnd, sk->snd_wnd);
++	CKPT_COPY(op, hh->tcp.max_window, sk->max_window);
++	CKPT_COPY(op, hh->tcp.mss_cache, sk->mss_cache);
++	CKPT_COPY(op, hh->tcp.window_clamp, sk->window_clamp);
++	CKPT_COPY(op, hh->tcp.rcv_ssthresh, sk->rcv_ssthresh);
++	CKPT_COPY(op, hh->tcp.frto_highmark, sk->frto_highmark);
++	CKPT_COPY(op, hh->tcp.advmss, sk->advmss);
++	CKPT_COPY(op, hh->tcp.frto_counter, sk->frto_counter);
++	CKPT_COPY(op, hh->tcp.nonagle, sk->nonagle);
++
++	CKPT_COPY(op, hh->tcp.srtt, sk->srtt);
++	CKPT_COPY(op, hh->tcp.mdev, sk->mdev);
++	CKPT_COPY(op, hh->tcp.mdev_max, sk->mdev_max);
++	CKPT_COPY(op, hh->tcp.rttvar, sk->rttvar);
++	CKPT_COPY(op, hh->tcp.rtt_seq, sk->rtt_seq);
++
++	CKPT_COPY(op, hh->tcp.packets_out, sk->packets_out);
++	CKPT_COPY(op, hh->tcp.retrans_out, sk->retrans_out);
++
++	CKPT_COPY(op, hh->tcp.urg_data, sk->urg_data);
++	CKPT_COPY(op, hh->tcp.ecn_flags, sk->ecn_flags);
++	CKPT_COPY(op, hh->tcp.reordering, sk->reordering);
++	CKPT_COPY(op, hh->tcp.snd_up, sk->snd_up);
++
++	CKPT_COPY(op, hh->tcp.keepalive_probes, sk->keepalive_probes);
++
++	CKPT_COPY(op, hh->tcp.rcv_wnd, sk->rcv_wnd);
++	CKPT_COPY(op, hh->tcp.write_seq, sk->write_seq);
++	CKPT_COPY(op, hh->tcp.pushed_seq, sk->pushed_seq);
++	CKPT_COPY(op, hh->tcp.lost_out, sk->lost_out);
++	CKPT_COPY(op, hh->tcp.sacked_out, sk->sacked_out);
++	CKPT_COPY(op, hh->tcp.fackets_out, sk->fackets_out);
++	CKPT_COPY(op, hh->tcp.tso_deferred, sk->tso_deferred);
++	CKPT_COPY(op, hh->tcp.bytes_acked, sk->bytes_acked);
++
++	CKPT_COPY(op, hh->tcp.lost_cnt_hint, sk->lost_cnt_hint);
++	CKPT_COPY(op, hh->tcp.retransmit_high, sk->retransmit_high);
++
++	CKPT_COPY(op, hh->tcp.lost_retrans_low, sk->lost_retrans_low);
++
++	CKPT_COPY(op, hh->tcp.prior_ssthresh, sk->prior_ssthresh);
++	CKPT_COPY(op, hh->tcp.high_seq, sk->high_seq);
++
++	CKPT_COPY(op, hh->tcp.retrans_stamp, sk->retrans_stamp);
++	CKPT_COPY(op, hh->tcp.undo_marker, sk->undo_marker);
++	CKPT_COPY(op, hh->tcp.undo_retrans, sk->undo_retrans);
++	CKPT_COPY(op, hh->tcp.total_retrans, sk->total_retrans);
++
++	CKPT_COPY(op, hh->tcp.urg_seq, sk->urg_seq);
++	CKPT_COPY(op, hh->tcp.keepalive_time, sk->keepalive_time);
++	CKPT_COPY(op, hh->tcp.keepalive_intvl, sk->keepalive_intvl);
++
++	if (!skb_queue_empty(&sk->ucopy.prequeue))
++		printk(KERN_ERR "PREQUEUE!\n");
++
++	return 0;
++}
++
++static int sock_inet_restore_connection(struct sock *sk,
++					struct ckpt_hdr_socket_inet *hh)
++{
++	struct inet_sock *inet = inet_sk(sk);
++	int tcp_gso = sk->sk_family == AF_INET ? SKB_GSO_TCPV4 : SKB_GSO_TCPV6;
++
++	inet->inet_daddr = hh->raddr.sin_addr.s_addr;
++	inet->inet_saddr = hh->laddr.sin_addr.s_addr;
++	inet->inet_rcv_saddr = inet->inet_saddr;
++
++	inet->inet_dport = hh->raddr.sin_port;
++	inet->inet_sport = hh->laddr.sin_port;
++
++	if (sk->sk_protocol == IPPROTO_TCP)
++		sk->sk_gso_type = tcp_gso;
++	else if (sk->sk_protocol == IPPROTO_UDP)
++		sk->sk_gso_type = SKB_GSO_UDP;
++	else {
++		ckpt_debug("Unsupported socket type while setting GSO\n");
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static int sock_inet_cptrst(struct ckpt_ctx *ctx,
++			    struct sock *sk,
++			    struct ckpt_hdr_socket_inet *hh,
++			    int op)
++{
++	struct inet_sock *inet = inet_sk(sk);
++	struct inet_connection_sock *icsk = inet_csk(sk);
++	int ret;
++
++	if (op == CKPT_CPT) {
++		CKPT_COPY(op, hh->daddr, inet->inet_daddr);
++		CKPT_COPY(op, hh->rcv_saddr, inet->inet_rcv_saddr);
++		CKPT_COPY(op, hh->dport, inet->inet_dport);
++		CKPT_COPY(op, hh->saddr, inet->inet_saddr);
++		CKPT_COPY(op, hh->sport, inet->inet_sport);
++	} else {
++		ret = sock_inet_restore_connection(sk, hh);
++		if (ret)
++			return ret;
++	}
++
++	CKPT_COPY(op, hh->num, inet->inet_num);
++	CKPT_COPY(op, hh->uc_ttl, inet->uc_ttl);
++	CKPT_COPY(op, hh->cmsg_flags, inet->cmsg_flags);
++
++	CKPT_COPY(op, hh->icsk_ack.pending, icsk->icsk_ack.pending);
++	CKPT_COPY(op, hh->icsk_ack.quick, icsk->icsk_ack.quick);
++	CKPT_COPY(op, hh->icsk_ack.pingpong, icsk->icsk_ack.pingpong);
++	CKPT_COPY(op, hh->icsk_ack.blocked, icsk->icsk_ack.blocked);
++	CKPT_COPY(op, hh->icsk_ack.ato, icsk->icsk_ack.ato);
++	CKPT_COPY(op, hh->icsk_ack.timeout, icsk->icsk_ack.timeout);
++	CKPT_COPY(op, hh->icsk_ack.lrcvtime, icsk->icsk_ack.lrcvtime);
++	CKPT_COPY(op,
++		  hh->icsk_ack.last_seg_size, icsk->icsk_ack.last_seg_size);
++	CKPT_COPY(op, hh->icsk_ack.rcv_mss, icsk->icsk_ack.rcv_mss);
++
++	if (sk->sk_protocol == IPPROTO_TCP)
++		ret = sock_inet_tcp_cptrst(ctx, tcp_sk(sk), hh, op);
++	else if (sk->sk_protocol == IPPROTO_UDP)
++		ret = 0;
++	else {
++		ret = -EINVAL;
++		ckpt_err(ctx, ret, "unknown socket protocol %d",
++			 sk->sk_protocol);
++	}
++
++	if (sk->sk_family == AF_INET6) {
++		struct ipv6_pinfo *inet6 = inet6_sk(sk);
++		if (op == CKPT_CPT) {
++			ipv6_addr_copy(&hh->inet6.saddr, &inet6->saddr);
++			ipv6_addr_copy(&hh->inet6.rcv_saddr, &inet6->rcv_saddr);
++			ipv6_addr_copy(&hh->inet6.daddr, &inet6->daddr);
++		} else {
++			ipv6_addr_copy(&inet6->saddr, &hh->inet6.saddr);
++			ipv6_addr_copy(&inet6->rcv_saddr, &hh->inet6.rcv_saddr);
++			ipv6_addr_copy(&inet6->daddr, &hh->inet6.daddr);
++		}
++	}
++
++	return ret;
++}
++
+ int inet_checkpoint(struct ckpt_ctx *ctx, struct socket *sock)
+ {
+ 	struct ckpt_hdr_socket_inet *in;
+@@ -43,6 +286,10 @@ int inet_checkpoint(struct ckpt_ctx *ctx, struct socket *sock)
+ 	if (ret)
+ 		goto out;
  
-diff --git a/include/linux/tty.h b/include/linux/tty.h
-index 7d77487..887afd1 100644
---- a/include/linux/tty.h
-+++ b/include/linux/tty.h
-@@ -504,6 +504,13 @@ extern void tty_ldisc_enable(struct tty_struct *tty);
- /* This one is for ptmx_close() */
- extern int tty_release(struct inode *inode, struct file *filp);
- 
-+#ifdef CONFIG_CHECKPOINT
-+struct ckpt_ctx;
-+struct ckpt_hdr_file;
-+extern struct file *tty_file_restore(struct ckpt_ctx *ctx,
-+				     struct ckpt_hdr_file *ptr);
-+#endif
++	ret = sock_inet_cptrst(ctx, sock->sk, in, CKPT_CPT);
++	if (ret < 0)
++		goto out;
 +
- /* n_tty.c */
- extern struct tty_ldisc_ops tty_ldisc_N_TTY;
+ 	ret = ckpt_write_obj(ctx, (struct ckpt_hdr *) in);
+  out:
+ 	ckpt_hdr_put(ctx, in);
+@@ -55,11 +302,13 @@ int inet_collect(struct ckpt_ctx *ctx, struct socket *sock)
+ 	return ckpt_obj_collect(ctx, sock->sk, CKPT_OBJ_SOCK);
+ }
  
+-static int inet_read_buffer(struct ckpt_ctx *ctx, struct sk_buff_head *queue)
++static int inet_read_buffer(struct ckpt_ctx *ctx,
++			    struct sk_buff_head *queue,
++			    struct sock *sk)
+ {
+ 	struct sk_buff *skb = NULL;
+ 
+-	skb = sock_restore_skb(ctx);
++	skb = sock_restore_skb(ctx, sk);
+ 	if (IS_ERR(skb))
+ 		return PTR_ERR(skb);
+ 
+@@ -67,7 +316,9 @@ static int inet_read_buffer(struct ckpt_ctx *ctx, struct sk_buff_head *queue)
+ 	return skb->len;
+ }
+ 
+-static int inet_read_buffers(struct ckpt_ctx *ctx, struct sk_buff_head *queue)
++static int inet_read_buffers(struct ckpt_ctx *ctx,
++			     struct sk_buff_head *queue,
++			     struct sock *sk)
+ {
+ 	struct ckpt_hdr_socket_queue *h;
+ 	int ret = 0;
+@@ -78,7 +329,7 @@ static int inet_read_buffers(struct ckpt_ctx *ctx, struct sk_buff_head *queue)
+ 		return PTR_ERR(h);
+ 
+ 	for (i = 0; i < h->skb_count; i++) {
+-		ret = inet_read_buffer(ctx, queue);
++		ret = inet_read_buffer(ctx, queue, sk);
+ 		ckpt_debug("read inet buffer %i: %i", i, ret);
+ 		if (ret < 0)
+ 			goto out;
+@@ -106,12 +357,12 @@ static int inet_deferred_restore_buffers(void *data)
+ 	struct sock *sk = dq->sk;
+ 	int ret;
+ 
+-	ret = inet_read_buffers(ctx, &sk->sk_receive_queue);
++	ret = inet_read_buffers(ctx, &sk->sk_receive_queue, sk);
+ 	ckpt_debug("(R) inet_read_buffers: %i\n", ret);
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	ret = inet_read_buffers(ctx, &sk->sk_write_queue);
++	ret = inet_read_buffers(ctx, &sk->sk_write_queue, sk);
+ 	ckpt_debug("(W) inet_read_buffers: %i\n", ret);
+ 
+ 	return ret;
+@@ -130,6 +381,19 @@ static int inet_defer_restore_buffers(struct ckpt_ctx *ctx, struct sock *sk)
+ 
+ static int inet_precheck(struct socket *sock, struct ckpt_hdr_socket_inet *in)
+ {
++	__u8 icsk_ack_mask = ICSK_ACK_SCHED | ICSK_ACK_TIMER |
++		ICSK_ACK_PUSHED | ICSK_ACK_PUSHED2;
++	__u16 urg_mask = TCP_URG_VALID | TCP_URG_NOTYET | TCP_URG_READ;
++	__u8 nonagle_mask = TCP_NAGLE_OFF | TCP_NAGLE_CORK | TCP_NAGLE_PUSH;
++	__u8 ecn_mask = TCP_ECN_OK | TCP_ECN_QUEUE_CWR | TCP_ECN_DEMAND_CWR;
++
++	if ((htons(in->laddr.sin_port) < PROT_SOCK) &&
++	    !capable(CAP_NET_BIND_SERVICE)) {
++		ckpt_debug("unable to bind to port %hu\n",
++			   htons(in->laddr.sin_port));
++		return -EINVAL;
++	}
++
+ 	if (in->laddr_len > sizeof(struct sockaddr_in)) {
+ 		ckpt_debug("laddr_len is too big\n");
+ 		return -EINVAL;
+@@ -140,6 +404,75 @@ static int inet_precheck(struct socket *sock, struct ckpt_hdr_socket_inet *in)
+ 		return -EINVAL;
+ 	}
+ 
++	/* Set ato to the default */
++	in->icsk_ack.ato = TCP_ATO_MIN;
++
++	/* No quick acks are scheduled after a restart */
++	in->icsk_ack.quick = 0;
++
++	if (in->icsk_ack.pending & ~icsk_ack_mask) {
++		ckpt_debug("invalid pending flags 0x%x\n",
++			   in->icsk_ack.pending & ~icsk_ack_mask);
++		return -EINVAL;
++	}
++
++	if (in->icsk_ack.pingpong > 1) {
++		ckpt_debug("invalid icsk_ack.pingpong value\n");
++		return -EINVAL;
++	}
++
++	if (in->icsk_ack.blocked > 1) {
++		ckpt_debug("invalid icsk_ack.blocked value\n");
++		return -EINVAL;
++	}
++
++	/* do_tcp_setsockopt() quietly makes this coercion */
++	if (in->tcp.window_clamp < (SOCK_MIN_RCVBUF / 2))
++		in->tcp.window_clamp = SOCK_MIN_RCVBUF / 2;
++	else
++		in->tcp.window_clamp = min(in->tcp.window_clamp, 65535U);
++
++	if (in->tcp.rcv_ssthresh > (4U * in->tcp.advmss))
++		in->tcp.rcv_ssthresh = 4U * in->tcp.advmss;
++
++	/* These will all be recalculated on the next call to
++	 * tcp_rtt_estimator()
++	 */
++	in->tcp.srtt = in->tcp.mdev = in->tcp.mdev_max = 0;
++	in->tcp.rttvar = in->tcp.rtt_seq = 0;
++
++	/* Might want to set packets_out to zero ? */
++
++	if (in->tcp.rcv_wnd > MAX_TCP_WINDOW)
++		in->tcp.rcv_wnd = MAX_TCP_WINDOW;
++
++	if (in->tcp.keepalive_intvl > MAX_TCP_KEEPINTVL) {
++		ckpt_debug("keepalive_intvl %i out of range\n",
++			   in->tcp.keepalive_intvl);
++		return -EINVAL;
++	}
++
++	if (in->tcp.keepalive_probes > MAX_TCP_KEEPCNT) {
++		ckpt_debug("Invalid keepalive_probes value %i\n",
++			   in->tcp.keepalive_probes);
++		return -EINVAL;
++	}
++
++	if (in->tcp.urg_data & ~urg_mask) {
++		ckpt_debug("Invalid urg_data value\n");
++		return -EINVAL;
++	}
++
++	if (in->tcp.nonagle & ~nonagle_mask) {
++		ckpt_debug("Invalid nonagle value\n");
++		return -EINVAL;
++	}
++
++	if (in->tcp.ecn_flags & ~ecn_mask) {
++		ckpt_debug("Invalid ecn_flags value\n");
++		return -EINVAL;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -177,8 +510,35 @@ int inet_restore(struct ckpt_ctx *ctx,
+ 			ckpt_debug("inet listen: %i\n", ret);
+ 			if (ret < 0)
+ 				goto out;
++
++			/* We are a listening socket, so add ourselves
++			 * to the list of parent sockets.  This will
++			 * allow our children to find us later and
++			 * link up
++			 */
++
++			ret = sock_listening_list_add(ctx, sock->sk);
++			if (ret < 0)
++				goto out;
+ 		}
+ 	} else {
++		ret = sock_inet_cptrst(ctx, sock->sk, in, CKPT_RST);
++		if (ret)
++			goto out;
++
++		if ((h->sock.state == TCP_ESTABLISHED) &&
++		    (h->sock.protocol == IPPROTO_TCP)) {
++			/* A connected socket that was spawned from an
++			 * accept() needs to be hashed with its parent
++			 * listening socket in order to receive
++			 * traffic on the original port.  Since we may
++			 * not have restarted the parent yet, we defer
++			 * this until later when we know we have all
++			 * the listening sockets accounted for.
++			 */
++			ret = sock_defer_hash(ctx, sock->sk);
++		}
++
+ 		if (!sock_flag(sock->sk, SOCK_DEAD))
+ 			ret = inet_defer_restore_buffers(ctx, sock->sk);
+ 	}
+@@ -187,4 +547,3 @@ int inet_restore(struct ckpt_ctx *ctx,
+ 
+ 	return ret;
+ }
+-
 -- 
 1.6.3.3
 
