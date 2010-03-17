@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 15/96] cgroup freezer: Fix buggy resume test for tasks frozen with cgroup freezer
-Date: Wed, 17 Mar 2010 12:08:03 -0400
-Message-ID: <1268842164-5590-16-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 19/96] Namespaces submenu
+Date: Wed, 17 Mar 2010 12:08:07 -0400
+Message-ID: <1268842164-5590-20-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -17,118 +17,44 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-13-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-14-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-15-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-16-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-17-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-18-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-19-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-15-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-19-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Matt Helsley <matthltc@us.ibm.com>, Cedric Le Goater <legoater@free.fr>, Paul Menage <menage@google.com>, Li Zefan <lizf@cn.fujitsu.com>, "Rafael J. Wysocki" <rjw@sisk.pl>, Pavel Machek <pavel@ucw.cz>, linux-pm@lists.linux-foundation.org
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Dave Hansen <dave@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Matt Helsley <matthltc@us.ibm.com>
+From: Dave Hansen <dave@linux.vnet.ibm.com>
 
-When the cgroup freezer is used to freeze tasks we do not want to thaw
-those tasks during resume. Currently we test the cgroup freezer
-state of the resuming tasks to see if the cgroup is FROZEN.  If so
-then we don't thaw the task. However, the FREEZING state also indicates
-that the task should remain frozen.
+Let's not steal too much space in the 'General Setup' menu.
+Take a cue from the cgroups code and create a submenu.
 
-This also avoids a problem pointed out by Oren Ladaan: the freezer state
-transition from FREEZING to FROZEN is updated lazily when userspace reads
-or writes the freezer.state file in the cgroup filesystem. This means that
-resume will thaw tasks in cgroups which should be in the FROZEN state if
-there is no read/write of the freezer.state file to trigger this
-transition before suspend.
+This can go upstream now.
 
-NOTE: Another "simple" solution would be to always update the cgroup
-freezer state during resume. However it's a bad choice for several reasons:
-Updating the cgroup freezer state is somewhat expensive because it requires
-walking all the tasks in the cgroup and checking if they are each frozen.
-Worse, this could easily make resume run in N^2 time where N is the number
-of tasks in the cgroup. Finally, updating the freezer state from this code
-path requires trickier locking because of the way locks must be ordered.
-
-Instead of updating the freezer state we rely on the fact that lazy
-updates only manage the transition from FREEZING to FROZEN. We know that
-a cgroup with the FREEZING state may actually be FROZEN so test for that
-state too. This makes sense in the resume path even for partially-frozen
-cgroups -- those that really are FREEZING but not FROZEN.
-
-Reported-by: Oren Ladaan <orenl@cs.columbia.edu>
-Signed-off-by: Matt Helsley <matthltc@us.ibm.com>
-Cc: Cedric Le Goater <legoater@free.fr>
-Cc: Paul Menage <menage@google.com>
-Cc: Li Zefan <lizf@cn.fujitsu.com>
-Cc: Rafael J. Wysocki <rjw@sisk.pl>
-Cc: Pavel Machek <pavel@ucw.cz>
-Cc: linux-pm@lists.linux-foundation.org
-
-Seems like a candidate for -stable.
+Signed-off-by: Dave Hansen <dave@linux.vnet.ibm.com>
+Acked-by: Oren Laadan <orenl@cs.columbia.edu>
+Acked-by: Serge E. Hallyn <serue@us.ibm.com>
 ---
- include/linux/freezer.h |    7 +++++--
- kernel/cgroup_freezer.c |    9 ++++++---
- kernel/power/process.c  |    2 +-
- 3 files changed, 12 insertions(+), 6 deletions(-)
+ init/Kconfig |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/include/linux/freezer.h b/include/linux/freezer.h
-index 5a361f8..da7e52b 100644
---- a/include/linux/freezer.h
-+++ b/include/linux/freezer.h
-@@ -64,9 +64,12 @@ extern bool freeze_task(struct task_struct *p, bool sig_only);
- extern void cancel_freezing(struct task_struct *p);
+diff --git a/init/Kconfig b/init/Kconfig
+index d95ca7c..0c00a78 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -668,7 +668,7 @@ config RELAY
  
- #ifdef CONFIG_CGROUP_FREEZER
--extern int cgroup_frozen(struct task_struct *task);
-+extern int cgroup_freezing_or_frozen(struct task_struct *task);
- #else /* !CONFIG_CGROUP_FREEZER */
--static inline int cgroup_frozen(struct task_struct *task) { return 0; }
-+static inline int cgroup_freezing_or_frozen(struct task_struct *task)
-+{
-+	return 0;
-+}
- #endif /* !CONFIG_CGROUP_FREEZER */
+ 	  If unsure, say N.
  
- /*
-diff --git a/kernel/cgroup_freezer.c b/kernel/cgroup_freezer.c
-index 59e9ef6..eb3f34d 100644
---- a/kernel/cgroup_freezer.c
-+++ b/kernel/cgroup_freezer.c
-@@ -47,17 +47,20 @@ static inline struct freezer *task_freezer(struct task_struct *task)
- 			    struct freezer, css);
- }
- 
--int cgroup_frozen(struct task_struct *task)
-+int cgroup_freezing_or_frozen(struct task_struct *task)
- {
- 	struct freezer *freezer;
- 	enum freezer_state state;
- 
- 	task_lock(task);
- 	freezer = task_freezer(task);
--	state = freezer->state;
-+	if (!freezer->css.cgroup->parent)
-+		state = CGROUP_THAWED; /* root cgroup can't be frozen */
-+	else
-+		state = freezer->state;
- 	task_unlock(task);
- 
--	return state == CGROUP_FROZEN;
-+	return (state == CGROUP_FREEZING) || (state == CGROUP_FROZEN);
- }
- 
- /*
-diff --git a/kernel/power/process.c b/kernel/power/process.c
-index 5ade1bd..de53015 100644
---- a/kernel/power/process.c
-+++ b/kernel/power/process.c
-@@ -145,7 +145,7 @@ static void thaw_tasks(bool nosig_only)
- 		if (nosig_only && should_send_signal(p))
- 			continue;
- 
--		if (cgroup_frozen(p))
-+		if (cgroup_freezing_or_frozen(p))
- 			continue;
- 
- 		thaw_process(p);
+-config NAMESPACES
++menuconfig NAMESPACES
+ 	bool "Namespaces support" if EMBEDDED
+ 	default !EMBEDDED
+ 	help
 -- 
 1.6.3.3
 
