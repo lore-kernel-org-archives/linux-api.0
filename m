@@ -1,7 +1,7 @@
-From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 84/96] c/r: restore task fs_root and pwd (v3)
-Date: Wed, 17 Mar 2010 12:09:12 -0400
-Message-ID: <1268842164-5590-85-git-send-email-orenl@cs.columbia.edu>
+From: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Subject: [C/R v20][PATCH 94/96] c/r: add smack support to lsm c/r (v4)
+Date: Wed, 17 Mar 2010 12:09:22 -0400
+Message-ID: <1268842164-5590-95-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -86,632 +86,454 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-82-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-83-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-84-git-send-email-orenl@cs.columbia.edu>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-84-git-send-email-orenl@cs.columbia.edu>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Oren Laadan <orenl@cs.columbia.edu>
+ <1268842164-5590-85-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-86-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-87-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-88-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-89-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-90-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-91-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-92-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-93-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-94-git-send-email-orenl@cs.columbia.edu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1268842164-5590-94-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Checkpoint and restore task->fs.  Tasks sharing task->fs will
-share them again after restart.
+From: Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 
-Original patch by Serge Hallyn <serue@us.ibm.com>
+Documentation/checkpoint/readme.txt begins:
+"""
+Application checkpoint/restart is the ability to save the state
+of a running application so that it can later resume its execution
+from the time at which it was checkpointed.
+"""
+
+This patch implements checkpoint and restore of Smack security
+labels.  The rules are the same as in previous versions:
+
+	1. when objects are created during restore() they are
+	   automatically labeled with current_security().
+	2. if there was a label checkpointed with the object,
+	   and that label != current_security() (which is the
+	   same as obj->security), then the object is relabeled
+	   if the sys_restart() caller has CAP_MAC_ADMIN.
+	   Otherwise we return -EPERM.
+
+This has been tested by checkpointing tasks under labels
+_, vs1, and vs2, and restarting from tasks under _, vs1,
+and vs2, with and without CAP_MAC_ADMIN in the bounding
+set, and with and without the '-k' (keep_lsm) flag to mktree.
+Expected results:
+
+	#shell 1:
+	echo vs1 > /proc/self/attr/current
+	ckpt > out
+	echo vs2 > /proc/self/attr/current
+	mktree -F /cgroup/2 < out
+		(frozen)
+	# shell 2:
+	cat /proc/`pidof ckpt`/attr/current
+		vs2
+	echo THAWED > /cgroup/2/freezer.state
+	# shell 1:
+	mktree -k -F /cgroup/2 < out
+		(frozen)
+	# shell 2:
+	cat /proc/`pidof ckpt`/attr/current
+		vs1
+	echo THAWED > /cgroup/2/freezer.state
+	# shell 1:
+	capsh --drop=cap_mac_admin --
+	mktree -k -F /cgroup/2 < out
+		(permission denied)
+
+There are testcases in git://git.sr71.net/~hallyn/cr_tests.git
+under cr_tests/smack, which automate the above (and pass).
 
 Changelog:
-  Jan 25: [orenl] Addressed comments by .. myself:
-    - add leak detection
-    - change order of save/restore of chroot and cwd
-    - save/restore fs only after file-table and mm
-    - rename functions to adapt existing conventions
-  Dec 28: [serge] Addressed comments by Oren (and Dave)
-    - define and use {get,put}_fs_struct helpers
-    - fix locking comment
-    - define ckpt_read_fname() and use in checkpoint/files.c
+	sep 3: add a version to smack lsm, accessible through
+		/smack/version  (Casey and Serge)
+	sep 10: rename xyz_get_ctx() to xyz_checkpoint()
 
-Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
-Signed-off-by: Serge Hallyn <serue@us.ibm.com>
+Signed-off-by: Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Acked-by: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Acked-by: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 ---
- checkpoint/files.c             |  203 +++++++++++++++++++++++++++++++++++++++-
- checkpoint/objhash.c           |   34 +++++++
- checkpoint/process.c           |   17 ++++
- fs/fs_struct.c                 |   21 ++++
- fs/open.c                      |   58 +++++++-----
- include/linux/checkpoint.h     |    8 ++-
- include/linux/checkpoint_hdr.h |   12 +++
- include/linux/fs.h             |    4 +
- include/linux/fs_struct.h      |    2 +
- 9 files changed, 331 insertions(+), 28 deletions(-)
+ checkpoint/restart.c       |    1 +
+ security/smack/smack.h     |    1 +
+ security/smack/smack_lsm.c |  144 ++++++++++++++++++++++++++++++++++++++++++++
+ security/smack/smackfs.c   |   83 +++++++++++++++++++++++++
+ 4 files changed, 229 insertions(+), 0 deletions(-)
 
-diff --git a/checkpoint/files.c b/checkpoint/files.c
-index 4b551fe..7855bae 100644
---- a/checkpoint/files.c
-+++ b/checkpoint/files.c
-@@ -15,6 +15,9 @@
- #include <linux/module.h>
- #include <linux/sched.h>
- #include <linux/file.h>
-+#include <linux/namei.h>
-+#include <linux/fs_struct.h>
-+#include <linux/fs.h>
- #include <linux/fdtable.h>
- #include <linux/fsnotify.h>
+diff --git a/checkpoint/restart.c b/checkpoint/restart.c
+index cfcb62b..0d1b9bf 100644
+--- a/checkpoint/restart.c
++++ b/checkpoint/restart.c
+@@ -679,6 +679,7 @@ static int restore_lsm(struct ckpt_ctx *ctx)
+ 	}
+ 
+ 	if (strcmp(ctx->lsm_name, "lsm_none") != 0 &&
++			strcmp(ctx->lsm_name, "smack") != 0 &&
+ 			strcmp(ctx->lsm_name, "default") != 0) {
+ 		ckpt_debug("c/r: RESTART_KEEP_LSM unsupported for %s\n",
+ 				ctx->lsm_name);
+diff --git a/security/smack/smack.h b/security/smack/smack.h
+index c6e9aca..a8917b0 100644
+--- a/security/smack/smack.h
++++ b/security/smack/smack.h
+@@ -216,6 +216,7 @@ u32 smack_to_secid(const char *);
+ extern int smack_cipso_direct;
+ extern char *smack_net_ambient;
+ extern char *smack_onlycap;
++extern char *smack_version;
+ extern const char *smack_cipso_option;
+ 
+ extern struct smack_known smack_known_floor;
+diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+index 529c9ca..cd1d330 100644
+--- a/security/smack/smack_lsm.c
++++ b/security/smack/smack_lsm.c
+@@ -27,6 +27,7 @@
+ #include <linux/udp.h>
+ #include <linux/mutex.h>
  #include <linux/pipe_fs_i.h>
-@@ -374,6 +377,62 @@ int checkpoint_obj_file_table(struct ckpt_ctx *ctx, struct task_struct *t)
- 	return objref;
++#include <linux/checkpoint.h>
+ #include <net/netlabel.h>
+ #include <net/cipso_ipv4.h>
+ #include <linux/audit.h>
+@@ -886,6 +887,28 @@ static int smack_file_permission(struct file *file, int mask)
+ 	return 0;
  }
  
-+int checkpoint_obj_fs(struct ckpt_ctx *ctx, struct task_struct *t)
++static inline char *smack_file_checkpoint(void *security)
 +{
-+	struct fs_struct *fs;
-+	int fs_objref;
-+
-+	task_lock(current);
-+	fs = t->fs;
-+	get_fs_struct(fs);
-+	task_unlock(current);
-+
-+	fs_objref = checkpoint_obj(ctx, fs, CKPT_OBJ_FS);
-+	put_fs_struct(fs);
-+
-+	return fs_objref;
++	return kstrdup((char *)security, GFP_KERNEL);
 +}
 +
-+/* called with fs refcount bumped so it won't disappear */
-+static int do_checkpoint_fs(struct ckpt_ctx *ctx, struct fs_struct *fs)
++static inline int smack_file_restore(struct file *file, char *ctx)
 +{
-+	struct ckpt_hdr_fs *h;
-+	struct fs_struct *fscopy;
-+	int ret;
++	char *newsmack = smk_import(ctx, 0);
 +
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_FS);
-+	if (!h)
-+		return -ENOMEM;
-+	ret = ckpt_write_obj(ctx, &h->h);
-+	ckpt_hdr_put(ctx, h);
-+	if (ret)
-+		return ret;
++	if (newsmack == NULL)
++		return -EINVAL;
++	/* I think by definition, file->f_security == current_security
++	 * right now, but let's assume somehow it might not be */
++	if (newsmack == file->f_security)
++		return 0;
++	if (!capable(CAP_MAC_ADMIN))
++		return -EPERM;
++	file->f_security = newsmack;
 +
-+	fscopy = copy_fs_struct(fs);
-+	if (!fs)
-+		return -ENOMEM;
-+
-+	ret = checkpoint_fname(ctx, &fscopy->pwd, &ctx->root_fs_path);
-+	if (ret < 0) {
-+		ckpt_err(ctx, ret, "%(T)writing path of cwd");
-+		goto out;
-+	}
-+	ret = checkpoint_fname(ctx, &fscopy->root, &ctx->root_fs_path);
-+	if (ret < 0) {
-+		ckpt_err(ctx, ret, "%(T)writing path of fs root");
-+		goto out;
-+	}
-+	ret = 0;
-+ out:
-+	free_fs_struct(fscopy);
-+	return ret;
-+}
-+
-+int checkpoint_fs(struct ckpt_ctx *ctx, void *ptr)
-+{
-+	return do_checkpoint_fs(ctx, (struct fs_struct *) ptr);
-+}
-+
- /***********************************************************************
-  * Collect
-  */
-@@ -460,10 +519,41 @@ int ckpt_collect_file_table(struct ckpt_ctx *ctx, struct task_struct *t)
- 	return ret;
- }
- 
-+int ckpt_collect_fs(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct fs_struct *fs;
-+	int ret;
-+
-+	task_lock(t);
-+	fs = t->fs;
-+	get_fs_struct(fs);
-+	task_unlock(t);
-+
-+	ret = ckpt_obj_collect(ctx, fs, CKPT_OBJ_FS);
-+
-+	put_fs_struct(fs);
-+	return ret;
-+}
-+
- /**************************************************************************
-  * Restart
-  */
- 
-+static int ckpt_read_fname(struct ckpt_ctx *ctx, char **fname)
-+{
-+	int len;
-+
-+	len = ckpt_read_payload(ctx, (void **) fname,
-+				PATH_MAX, CKPT_HDR_FILE_NAME);
-+	if (len < 0)
-+		return len;
-+
-+	(*fname)[len - 1] = '\0';	/* always play if safe */
-+	ckpt_debug("read filename '%s'\n", *fname);
-+
-+	return len;
++	return 0;
 +}
 +
  /**
-  * restore_open_fname - read a file name and open a file
-  * @ctx: checkpoint context
-@@ -479,11 +569,9 @@ struct file *restore_open_fname(struct ckpt_ctx *ctx, int flags)
- 	if (flags & (O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC))
- 		return ERR_PTR(-EINVAL);
+  * smack_file_alloc_security - assign a file security blob
+  * @file: the object
+@@ -1073,6 +1096,27 @@ static int smack_file_receive(struct file *file)
+  * Task hooks
+  */
  
--	len = ckpt_read_payload(ctx, (void **) &fname,
--				PATH_MAX, CKPT_HDR_FILE_NAME);
-+	len = ckpt_read_fname(ctx, &fname);
- 	if (len < 0)
- 		return ERR_PTR(len);
--	fname[len - 1] = '\0';	/* always play if safe */
- 	ckpt_debug("fname '%s' flags %#x\n", fname, flags);
- 
- 	file = filp_open(fname, flags, 0);
-@@ -819,3 +907,112 @@ int restore_obj_file_table(struct ckpt_ctx *ctx, int files_objref)
- 
++static inline char *smack_cred_checkpoint(void *security)
++{
++	return kstrdup((char *)security, GFP_KERNEL);
++}
++
++static inline int smack_cred_restore(struct file *file, struct cred *cred,
++					char *ctx)
++{
++	char *newsmack = smk_import(ctx, 0);
++
++	if (newsmack == NULL)
++		return -EINVAL;
++	if (newsmack == cred->security)
++		return 0;
++	if (!capable(CAP_MAC_ADMIN))
++		return -EPERM;
++	cred->security = newsmack;
++
++	return 0;
++}
++
+ /**
+  * smack_cred_alloc_blank - "allocate" blank task-level security credentials
+  * @new: the new credentials
+@@ -1765,6 +1809,26 @@ static int smack_msg_msg_alloc_security(struct msg_msg *msg)
  	return 0;
  }
-+
-+/*
-+ * Called by task restore code to set the restarted task's
-+ * current->fs to an entry on the hash
-+ */
-+int restore_obj_fs(struct ckpt_ctx *ctx, int fs_objref)
+ 
++static inline char *smack_msg_msg_checkpoint(void *security)
 +{
-+	struct fs_struct *newfs, *oldfs;
++	return kstrdup((char *)security, GFP_KERNEL);
++}
 +
-+	newfs = ckpt_obj_fetch(ctx, fs_objref, CKPT_OBJ_FS);
-+	if (IS_ERR(newfs))
-+		return PTR_ERR(newfs);
++static inline int smack_msg_msg_restore(struct msg_msg *msg, char *ctx)
++{
++	char *newsmack = smk_import(ctx, 0);
 +
-+	task_lock(current);
-+	get_fs_struct(newfs);
-+	oldfs = current->fs;
-+	current->fs = newfs;
-+	task_unlock(current);
-+	put_fs_struct(oldfs);
++	if (newsmack == NULL)
++		return -EINVAL;
++	if (newsmack == msg->security)
++		return 0;
++	if (!capable(CAP_MAC_ADMIN))
++		return -EPERM;
++	msg->security = newsmack;
 +
 +	return 0;
 +}
 +
-+static int restore_chroot(struct ckpt_ctx *ctx, struct fs_struct *fs, char *name)
+ /**
+  * smack_msg_msg_free_security - Clear the security blob for msg_msg
+  * @msg: the object
+@@ -2198,6 +2262,26 @@ static void smack_ipc_getsecid(struct kern_ipc_perm *ipp, u32 *secid)
+ 	*secid = smack_to_secid(smack);
+ }
+ 
++static inline char *smack_ipc_checkpoint(void *security)
 +{
-+	struct nameidata nd;
-+	int ret;
++	return kstrdup((char *)security, GFP_KERNEL);
++}
 +
-+	ckpt_debug("attempting chroot to %s\n", name);
-+	ret = path_lookup(name, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &nd);
-+	if (ret) {
-+		ckpt_err(ctx, ret, "%(T)Opening chroot dir %s", name);
-+		return ret;
-+	}
-+	ret = do_chroot(fs, &nd.path);
-+	path_put(&nd.path);
-+	if (ret) {
-+		ckpt_err(ctx, ret, "%(T)Setting chroot %s", name);
-+		return ret;
-+	}
++static inline int smack_ipc_restore(struct kern_ipc_perm *ipcp, char *ctx)
++{
++	char *newsmack = smk_import(ctx, 0);
++
++	if (newsmack == NULL)
++		return -EINVAL;
++	if (newsmack == ipcp->security)
++		return 0;
++	if (!capable(CAP_MAC_ADMIN))
++		return -EPERM;
++	ipcp->security = newsmack;
++
 +	return 0;
 +}
 +
-+static int restore_cwd(struct ckpt_ctx *ctx, struct fs_struct *fs, char *name)
-+{
-+	struct nameidata nd;
-+	int ret;
+ /**
+  * smack_d_instantiate - Make sure the blob is correct on an inode
+  * @opt_dentry: unused
+@@ -3073,6 +3157,51 @@ static int smack_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_CHECKPOINT
 +
-+	ckpt_debug("attempting chdir to %s\n", name);
-+	ret = path_lookup(name, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &nd);
-+	if (ret) {
-+		ckpt_err(ctx, ret, "%(T)Opening cwd %s", name);
-+		return ret;
-+	}
-+	ret = do_chdir(fs, &nd.path);
-+	path_put(&nd.path);
-+	if (ret) {
-+		ckpt_err(ctx, ret, "%(T)Setting cwd %s", name);
-+		return ret;
-+	}
-+	return 0;
-+}
-+
-+/*
-+ * Called by objhash when it runs into a CKPT_OBJ_FS entry. Creates
-+ * an fs_struct with desired chroot/cwd and places it in the hash.
-+ */
-+static struct fs_struct *do_restore_fs(struct ckpt_ctx *ctx)
++static int smack_may_restart(struct ckpt_ctx *ctx)
 +{
-+	struct ckpt_hdr_fs *h;
-+	struct fs_struct *fs;
-+	char *path;
++	struct ckpt_hdr *chp;
++	char *saved_version;
 +	int ret = 0;
 +
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_FS);
-+	if (IS_ERR(h))
-+		return ERR_PTR(PTR_ERR(h));
-+	ckpt_hdr_put(ctx, h);
++	chp = ckpt_read_buf_type(ctx, CKPT_LSM_INFO_LEN, CKPT_HDR_LSM_INFO);
++	if (IS_ERR(chp))
++		return PTR_ERR(chp);
 +
-+	fs = copy_fs_struct(current->fs);
-+	if (!fs)
-+		return ERR_PTR(-ENOMEM);
-+
-+	ret = ckpt_read_fname(ctx, &path);
-+	if (ret < 0)
-+		goto out;
-+	ret = restore_cwd(ctx, fs, path);
-+	kfree(path);
-+	if (ret)
-+		goto out;
-+
-+	ret = ckpt_read_fname(ctx, &path);
-+	if (ret < 0)
-+		goto out;
-+	ret = restore_chroot(ctx, fs, path);
-+	kfree(path);
-+
-+out:
-+	if (ret) {
-+		free_fs_struct(fs);
-+		return ERR_PTR(ret);
-+	}
-+	return fs;
-+}
-+
-+void *restore_fs(struct ckpt_ctx *ctx)
-+{
-+	return (void *) do_restore_fs(ctx);
-+}
-diff --git a/checkpoint/objhash.c b/checkpoint/objhash.c
-index 84bceec..5c4749d 100644
---- a/checkpoint/objhash.c
-+++ b/checkpoint/objhash.c
-@@ -15,6 +15,7 @@
- #include <linux/hash.h>
- #include <linux/file.h>
- #include <linux/fdtable.h>
-+#include <linux/fs_struct.h>
- #include <linux/sched.h>
- #include <linux/ipc_namespace.h>
- #include <linux/user_namespace.h>
-@@ -126,6 +127,29 @@ static int obj_mm_users(void *ptr)
- 	return atomic_read(&((struct mm_struct *) ptr)->mm_users);
- }
- 
-+static int obj_fs_grab(void *ptr)
-+{
-+	get_fs_struct((struct fs_struct *) ptr);
-+	return 0;
-+}
-+
-+static void obj_fs_drop(void *ptr, int lastref)
-+{
-+	put_fs_struct((struct fs_struct *) ptr);
-+}
-+
-+static int obj_fs_users(void *ptr)
-+{
 +	/*
-+	 * It's safe to not use fs->lock because the fs referenced.
-+	 * It's also sufficient for leak detection: with no leak the
-+	 * count can't change; with a leak it will be too big already
-+	 * (even if it's about to grow), and if it's about to shrink
-+	 * then it's as if we sampled the count a bit earlier.
++	 * After the checkpoint header comes the null terminated
++	 * Smack "policy" version. This will usually be the
++	 * floor label "_".
 +	 */
-+	return ((struct fs_struct *) ptr)->users;
-+}
++	saved_version = (char *)(chp + 1);
 +
- static int obj_sighand_grab(void *ptr)
- {
- 	atomic_inc(&((struct sighand_struct *) ptr)->count);
-@@ -330,6 +354,16 @@ static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 		.checkpoint = checkpoint_mm,
- 		.restore = restore_mm,
- 	},
-+	/* fs object */
-+	{
-+		.obj_name = "FS",
-+		.obj_type = CKPT_OBJ_FS,
-+		.ref_drop = obj_fs_drop,
-+		.ref_grab = obj_fs_grab,
-+		.ref_users = obj_fs_users,
-+		.checkpoint = checkpoint_fs,
-+		.restore = restore_fs,
-+	},
- 	/* sighand object */
- 	{
- 		.obj_name = "SIGHAND",
-diff --git a/checkpoint/process.c b/checkpoint/process.c
-index e0ef795..f917112 100644
---- a/checkpoint/process.c
-+++ b/checkpoint/process.c
-@@ -232,6 +232,7 @@ static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- 	struct ckpt_hdr_task_objs *h;
- 	int files_objref;
- 	int mm_objref;
-+	int fs_objref;
- 	int sighand_objref;
- 	int signal_objref;
- 	int first, ret;
-@@ -272,6 +273,13 @@ static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- 		return mm_objref;
- 	}
- 
-+	/* note: this must come *after* file-table and mm */
-+	fs_objref = checkpoint_obj_fs(ctx, t);
-+	if (fs_objref < 0) {
-+		ckpt_err(ctx, fs_objref, "%(T)process fs\n");
-+		return fs_objref;
++	/*
++	 * Of course, it is possible that a "policy" version mismatch
++	 * is not considered threatening.
++	 */
++	if (!(ctx->uflags & RESTART_KEEP_LSM))
++		goto skip;
++
++	if (strcmp(saved_version, smack_version) != 0) {
++		ckpt_debug("Smack version at checkpoint was"
++			   "\"%s\", now is \"%s\".\n",
++				saved_version, smack_version);
++		ret = -EINVAL;
 +	}
-+
- 	sighand_objref = checkpoint_obj_sighand(ctx, t);
- 	ckpt_debug("sighand: objref %d\n", sighand_objref);
- 	if (sighand_objref < 0) {
-@@ -299,6 +307,7 @@ static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- 		return -ENOMEM;
- 	h->files_objref = files_objref;
- 	h->mm_objref = mm_objref;
-+	h->fs_objref = fs_objref;
- 	h->sighand_objref = sighand_objref;
- 	h->signal_objref = signal_objref;
- 	ret = ckpt_write_obj(ctx, &h->h);
-@@ -477,6 +486,9 @@ int ckpt_collect_task(struct ckpt_ctx *ctx, struct task_struct *t)
- 	ret = ckpt_collect_mm(ctx, t);
- 	if (ret < 0)
- 		return ret;
-+	ret = ckpt_collect_fs(ctx, t);
-+	if (ret < 0)
-+		return ret;
- 	ret = ckpt_collect_sighand(ctx, t);
- 
- 	return ret;
-@@ -645,6 +657,11 @@ static int restore_task_objs(struct ckpt_ctx *ctx)
- 	if (ret < 0)
- 		goto out;
- 
-+	ret = restore_obj_fs(ctx, h->fs_objref);
-+	ckpt_debug("fs: ret %d (%p)\n", ret, current->fs);
-+	if (ret < 0)
-+		return ret;
-+
- 	ret = restore_obj_sighand(ctx, h->sighand_objref);
- 	ckpt_debug("sighand: ret %d (%p)\n", ret, current->sighand);
- 	if (ret < 0)
-diff --git a/fs/fs_struct.c b/fs/fs_struct.c
-index eee0590..2a4c6f5 100644
---- a/fs/fs_struct.c
-+++ b/fs/fs_struct.c
-@@ -6,6 +6,27 @@
- #include <linux/fs_struct.h>
- 
- /*
-+ * call with owning task locked
-+ */
-+void get_fs_struct(struct fs_struct *fs)
-+{
-+	write_lock(&fs->lock);
-+	fs->users++;
-+	write_unlock(&fs->lock);
++skip:
++	ckpt_hdr_put(ctx, chp);
++	return ret;
 +}
 +
-+void put_fs_struct(struct fs_struct *fs)
++static int smack_checkpoint_header(struct ckpt_ctx *ctx)
 +{
-+	int kill;
-+
-+	write_lock(&fs->lock);
-+	kill = !--fs->users;
-+	write_unlock(&fs->lock);
-+	if (kill)
-+		free_fs_struct(fs);
++	return ckpt_write_obj_type(ctx, smack_version,
++					strlen(smack_version) + 1,
++					CKPT_HDR_LSM_INFO);
 +}
++#endif
 +
-+/*
-  * Replace the fs->{rootmnt,root} with {mnt,dentry}. Put the old values.
-  * It can block.
-  */
-diff --git a/fs/open.c b/fs/open.c
-index 040cef7..62fc70c 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -527,6 +527,18 @@ SYSCALL_DEFINE2(access, const char __user *, filename, int, mode)
- 	return sys_faccessat(AT_FDCWD, filename, mode);
- }
+ struct security_operations smack_ops = {
+ 	.name =				"smack",
  
-+int do_chdir(struct fs_struct *fs, struct path *path)
-+{
-+	int error;
+@@ -3108,6 +3237,8 @@ struct security_operations smack_ops = {
+ 	.inode_getsecid =		smack_inode_getsecid,
+ 
+ 	.file_permission = 		smack_file_permission,
++	.file_checkpoint = 		smack_file_checkpoint,
++	.file_restore = 		smack_file_restore,
+ 	.file_alloc_security = 		smack_file_alloc_security,
+ 	.file_free_security = 		smack_file_free_security,
+ 	.file_ioctl = 			smack_file_ioctl,
+@@ -3118,6 +3249,10 @@ struct security_operations smack_ops = {
+ 	.file_receive = 		smack_file_receive,
+ 
+ 	.cred_alloc_blank =		smack_cred_alloc_blank,
 +
-+	error = inode_permission(path->dentry->d_inode, MAY_EXEC | MAY_ACCESS);
-+	if (error)
-+		return error;
++	.cred_checkpoint =		smack_cred_checkpoint,
++	.cred_restore =			smack_cred_restore,
 +
-+	set_fs_pwd(fs, path);
-+	return 0;
-+}
+ 	.cred_free =			smack_cred_free,
+ 	.cred_prepare =			smack_cred_prepare,
+ 	.cred_commit =			smack_cred_commit,
+@@ -3140,8 +3275,12 @@ struct security_operations smack_ops = {
+ 
+ 	.ipc_permission = 		smack_ipc_permission,
+ 	.ipc_getsecid =			smack_ipc_getsecid,
++	.ipc_checkpoint =		smack_ipc_checkpoint,
++	.ipc_restore =			smack_ipc_restore,
+ 
+ 	.msg_msg_alloc_security = 	smack_msg_msg_alloc_security,
++	.msg_msg_checkpoint =		smack_msg_msg_checkpoint,
++	.msg_msg_restore =		smack_msg_msg_restore,
+ 	.msg_msg_free_security = 	smack_msg_msg_free_security,
+ 
+ 	.msg_queue_alloc_security = 	smack_msg_queue_alloc_security,
+@@ -3204,6 +3343,11 @@ struct security_operations smack_ops = {
+ 	.inode_notifysecctx =		smack_inode_notifysecctx,
+ 	.inode_setsecctx =		smack_inode_setsecctx,
+ 	.inode_getsecctx =		smack_inode_getsecctx,
 +
- SYSCALL_DEFINE1(chdir, const char __user *, filename)
- {
- 	struct path path;
-@@ -534,17 +546,10 @@ SYSCALL_DEFINE1(chdir, const char __user *, filename)
- 
- 	error = user_path_dir(filename, &path);
- 	if (error)
--		goto out;
--
--	error = inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_ACCESS);
--	if (error)
--		goto dput_and_out;
--
--	set_fs_pwd(current->fs, &path);
-+		return error;
- 
--dput_and_out:
-+	error = do_chdir(current->fs, &path);
- 	path_put(&path);
--out:
- 	return error;
- }
- 
-@@ -574,31 +579,36 @@ out:
- 	return error;
- }
- 
--SYSCALL_DEFINE1(chroot, const char __user *, filename)
-+int do_chroot(struct fs_struct *fs, struct path *path)
- {
--	struct path path;
- 	int error;
- 
--	error = user_path_dir(filename, &path);
-+	error = inode_permission(path->dentry->d_inode, MAY_EXEC | MAY_ACCESS);
- 	if (error)
--		goto out;
-+		return error;
-+
-+	if (!capable(CAP_SYS_CHROOT))
-+		return -EPERM;
- 
--	error = inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_ACCESS);
-+	error = security_path_chroot(path);
- 	if (error)
--		goto dput_and_out;
-+		return error;
- 
--	error = -EPERM;
--	if (!capable(CAP_SYS_CHROOT))
--		goto dput_and_out;
--	error = security_path_chroot(&path);
-+	set_fs_root(fs, path);
-+	return 0;
-+}
-+
-+SYSCALL_DEFINE1(chroot, const char __user *, filename)
-+{
-+	struct path path;
-+	int error;
-+
-+	error = user_path_dir(filename, &path);
- 	if (error)
--		goto dput_and_out;
-+		return error;
- 
--	set_fs_root(current->fs, &path);
--	error = 0;
--dput_and_out:
-+	error = do_chroot(current->fs, &path);
- 	path_put(&path);
--out:
- 	return error;
- }
- 
-diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index ca91405..3e0937a 100644
---- a/include/linux/checkpoint.h
-+++ b/include/linux/checkpoint.h
-@@ -10,7 +10,7 @@
-  *  distribution for more details.
-  */
- 
--#define CHECKPOINT_VERSION  3
-+#define CHECKPOINT_VERSION  4
- 
- /* checkpoint user flags */
- #define CHECKPOINT_SUBTREE	0x1
-@@ -236,6 +236,12 @@ extern int checkpoint_file_common(struct ckpt_ctx *ctx, struct file *file,
- extern int restore_file_common(struct ckpt_ctx *ctx, struct file *file,
- 			       struct ckpt_hdr_file *h);
- 
-+extern int ckpt_collect_fs(struct ckpt_ctx *ctx, struct task_struct *t);
-+extern int checkpoint_obj_fs(struct ckpt_ctx *ctx, struct task_struct *t);
-+extern int restore_obj_fs(struct ckpt_ctx *ctx, int fs_objref);
-+extern int checkpoint_fs(struct ckpt_ctx *ctx, void *ptr);
-+extern void *restore_fs(struct ckpt_ctx *ctx);
-+
- /* credentials */
- extern int checkpoint_groupinfo(struct ckpt_ctx *ctx, void *ptr);
- extern int checkpoint_user(struct ckpt_ctx *ctx, void *ptr);
-diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index 0b36430..4dc852d 100644
---- a/include/linux/checkpoint_hdr.h
-+++ b/include/linux/checkpoint_hdr.h
-@@ -131,6 +131,9 @@ enum {
- 	CKPT_HDR_MM_CONTEXT,
- #define CKPT_HDR_MM_CONTEXT CKPT_HDR_MM_CONTEXT
- 
-+	CKPT_HDR_FS = 451,  /* must be after file-table, mm */
-+#define CKPT_HDR_FS CKPT_HDR_FS
-+
- 	CKPT_HDR_IPC = 501,
- #define CKPT_HDR_IPC CKPT_HDR_IPC
- 	CKPT_HDR_IPC_SHM,
-@@ -201,6 +204,8 @@ enum obj_type {
- #define CKPT_OBJ_FILE CKPT_OBJ_FILE
- 	CKPT_OBJ_MM,
- #define CKPT_OBJ_MM CKPT_OBJ_MM
-+	CKPT_OBJ_FS,
-+#define CKPT_OBJ_FS CKPT_OBJ_FS
- 	CKPT_OBJ_SIGHAND,
- #define CKPT_OBJ_SIGHAND CKPT_OBJ_SIGHAND
- 	CKPT_OBJ_SIGNAL,
-@@ -416,6 +421,7 @@ struct ckpt_hdr_task_objs {
- 
- 	__s32 files_objref;
- 	__s32 mm_objref;
-+	__s32 fs_objref;
- 	__s32 sighand_objref;
- 	__s32 signal_objref;
- } __attribute__((aligned(8)));
-@@ -453,6 +459,12 @@ enum restart_block_type {
++#ifdef CONFIG_CHECKPOINT
++	.may_restart =			smack_may_restart,
++	.checkpoint_header =		smack_checkpoint_header,
++#endif
  };
  
- /* file system */
-+struct ckpt_hdr_fs {
-+	struct ckpt_hdr h;
-+	/* char *fs_root */
-+	/* char *fs_pwd */
-+} __attribute__((aligned(8)));
+ 
+diff --git a/security/smack/smackfs.c b/security/smack/smackfs.c
+index aeead75..0634a08 100644
+--- a/security/smack/smackfs.c
++++ b/security/smack/smackfs.c
+@@ -42,6 +42,7 @@ enum smk_inos {
+ 	SMK_NETLBLADDR	= 8,	/* single label hosts */
+ 	SMK_ONLYCAP	= 9,	/* the only "capable" label */
+ 	SMK_LOGGING	= 10,	/* logging */
++	SMK_VERSION	= 11,	/* logging */
+ };
+ 
+ /*
+@@ -51,6 +52,7 @@ static DEFINE_MUTEX(smack_list_lock);
+ static DEFINE_MUTEX(smack_cipso_lock);
+ static DEFINE_MUTEX(smack_ambient_lock);
+ static DEFINE_MUTEX(smk_netlbladdr_lock);
++static DEFINE_MUTEX(smack_version_lock);
+ 
+ /*
+  * This is the "ambient" label for network traffic.
+@@ -60,6 +62,16 @@ static DEFINE_MUTEX(smk_netlbladdr_lock);
+ char *smack_net_ambient = smack_known_floor.smk_known;
+ 
+ /*
++ * This is the policy version. In the interest of simplicity the
++ * policy version is a string that meets all of the requirements
++ * of a Smack label. This is enforced by the expedient of
++ * importing it like a label. The policy version is thus always
++ * also a valid label on the system. This may prove useful under
++ * some as yet undiscovered circumstance.
++ */
++char *smack_version = smack_known_floor.smk_known;
 +
- struct ckpt_hdr_file_table {
- 	struct ckpt_hdr h;
- 	__s32 fdt_nfds;
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 7902a51..a1525aa 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1818,6 +1818,10 @@ extern void drop_collected_mounts(struct vfsmount *);
- 
- extern int vfs_statfs(struct dentry *, struct kstatfs *);
- 
-+struct fs_struct;
-+extern int do_chdir(struct fs_struct *fs, struct path *path);
-+extern int do_chroot(struct fs_struct *fs, struct path *path);
++/*
+  * This is the level in a CIPSO header that indicates a
+  * smack label is contained directly in the category set.
+  * It can be reset via smackfs/direct
+@@ -1255,6 +1267,75 @@ static const struct file_operations smk_logging_ops = {
+ 	.read		= smk_read_logging,
+ 	.write		= smk_write_logging,
+ };
 +
- extern int current_umask(void);
++#define SMK_VERSIONLEN 12
++/**
++ * smk_read_version - read() for /smack/version
++ * @filp: file pointer, not actually used
++ * @buf: where to put the result
++ * @cn: maximum to send along
++ * @ppos: where to start
++ *
++ * Returns number of bytes read or error code, as appropriate
++ */
++static ssize_t smk_read_version(struct file *filp, char __user *buf,
++				size_t count, loff_t *ppos)
++{
++	int rc;
++
++	if (*ppos != 0)
++		return 0;
++
++	mutex_lock(&smack_version_lock);
++
++	rc = simple_read_from_buffer(buf, count, ppos, smack_version,
++					strlen(smack_version) + 1);
++
++	mutex_unlock(&smack_version_lock);
++
++	return rc;
++}
++
++/**
++ * smk_write_version - write() for /smack/version
++ * @file: file pointer, not actually used
++ * @buf: where to get the data from
++ * @count: bytes sent
++ * @ppos: where to start
++ *
++ * Returns number of bytes written or error code, as appropriate
++ */
++static ssize_t smk_write_version(struct file *file, const char __user *buf,
++				 size_t count, loff_t *ppos)
++{
++	char *smack;
++	char in[SMK_LABELLEN];
++
++	if (!capable(CAP_MAC_ADMIN))
++		return -EPERM;
++
++	if (count >= SMK_LABELLEN)
++		return -EINVAL;
++
++	if (copy_from_user(in, buf, count) != 0)
++		return -EFAULT;
++
++	smack = smk_import(in, count);
++	if (smack == NULL)
++		return -EINVAL;
++
++	mutex_lock(&smack_version_lock);
++	smack_version = smack;
++	mutex_unlock(&smack_version_lock);
++
++	return count;
++}
++
++static const struct file_operations smk_version_ops = {
++	.read		= smk_read_version,
++	.write		= smk_write_version,
++};
++
+ /**
+  * smk_fill_super - fill the /smackfs superblock
+  * @sb: the empty superblock
+@@ -1287,6 +1368,8 @@ static int smk_fill_super(struct super_block *sb, void *data, int silent)
+ 			{"onlycap", &smk_onlycap_ops, S_IRUGO|S_IWUSR},
+ 		[SMK_LOGGING]	=
+ 			{"logging", &smk_logging_ops, S_IRUGO|S_IWUSR},
++		[SMK_VERSION]	=
++			{"version", &smk_version_ops, S_IRUGO|S_IWUSR},
+ 		/* last one */ {""}
+ 	};
  
- /* /sys/fs */
-diff --git a/include/linux/fs_struct.h b/include/linux/fs_struct.h
-index 78a05bf..a73cbcb 100644
---- a/include/linux/fs_struct.h
-+++ b/include/linux/fs_struct.h
-@@ -20,5 +20,7 @@ extern struct fs_struct *copy_fs_struct(struct fs_struct *);
- extern void free_fs_struct(struct fs_struct *);
- extern void daemonize_fs_struct(void);
- extern int unshare_fs_struct(void);
-+extern void get_fs_struct(struct fs_struct *);
-+extern void put_fs_struct(struct fs_struct *);
- 
- #endif /* _LINUX_FS_STRUCT_H */
 -- 
 1.6.3.3
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
