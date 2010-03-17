@@ -1,17 +1,9 @@
-From: Andreas Dilger <adilger@sun.com>
-Subject: Re: [C/R v20][PATCH 46/96] c/r: add checkpoint operation for opened
- files of generic filesystems
-Date: Wed, 17 Mar 2010 15:09:00 -0600
-Message-ID: <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6@sun.com>
-References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-4-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-5-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-6-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-7-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-8-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-9-git-send-email-orenl@cs.columbia.edu>
+From: Matt Helsley <matthltc@us.ibm.com>
+Subject: Re: [C/R v20][PATCH 46/96] c/r: add checkpoint operation for
+ opened files of generic filesystems
+Date: Wed, 17 Mar 2010 16:37:53 -0700
+Message-ID: <20100317233753.GJ3037@count0.beaverton.ibm.com>
+References: <1268842164-5590-9-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-10-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-11-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-12-git-send-email-orenl@cs.columbia.edu>
@@ -20,92 +12,81 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-15-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-16-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-17-git-send-email-orenl@cs.columbia.edu>
+ <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6@sun.com>
 Mime-Version: 1.0
-Content-Type: text/plain; CHARSET=US-ASCII; delsp=yes; format=flowed
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-reply-to: <1268842164-5590-47-git-send-email-orenl@cs.columbia.edu>
+Content-Disposition: inline
+In-Reply-To: <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6@sun.com>
 Sender: owner-linux-mm@kvack.org
-To: Oren Laadan <orenl@cs.columbia.edu>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Matt Helsley <matthltc@us.ibm.com>, linux-fsdevel@vger.kernel.org
+To: Andreas Dilger <adilger@sun.com>
+Cc: Oren Laadan <orenl@cs.columbia.edu>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Matt Helsley <matthltc@us.ibm.com>, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 2010-03-17, at 10:08, Oren Laadan wrote:
-> These patches extend the use of the generic file checkpoint  
-> operation to
-> non-extX filesystems which have lseek operations that ensure we can  
-> save
-> and restore the files for later use. Note that this does not include
-> things like FUSE, network filesystems, or pseudo-filesystem kernel
-> interfaces.
+On Wed, Mar 17, 2010 at 03:09:00PM -0600, Andreas Dilger wrote:
 
-I didn't see any other patches posted to linux-fsdevel regarding what  
-this code is, or what it is supposed to be doing.  Could you please  
-repost the patches related to generic_file_checkpoint(), and the  
-overview email that explains what you mean by "checkpoint".  I'm  
-assuming this is related to HPC/process restart/migration, but better  
-to not guess.
+<snip> (already responded to the first part)
 
-> @@ -718,6 +718,7 @@ static const struct file_operations  
-> btrfs_ctl_fops = {
-> 	.unlocked_ioctl	 = btrfs_control_ioctl,
-> 	.compat_ioctl = btrfs_control_ioctl,
-> 	.owner	 = THIS_MODULE,
-> +	.checkpoint = generic_file_checkpoint,
-> };
->
-> const struct file_operations exofs_file_operations = {
-> 	.llseek		= generic_file_llseek,
-> +	.checkpoint	= generic_file_checkpoint,
-> 	.read		= do_sync_read,
-> 	.write		= do_sync_write,
-> 	.aio_read	= generic_file_aio_read,
->
-> static const struct file_operations hostfs_file_fops = {
-> 	.llseek		= generic_file_llseek,
-> +	.checkpoint	= generic_file_checkpoint,
-> 	.read		= do_sync_read,
-> 	.splice_read	= generic_file_splice_read,
-> 	.aio_read	= generic_file_aio_read,
-> @@ -430,6 +431,7 @@ static const struct file_operations  
-> hostfs_file_fops = {
->
-> static const struct file_operations hostfs_dir_fops = {
-> 	.llseek		= generic_file_llseek,
-> +	.checkpoint	= generic_file_checkpoint,
-> 	.readdir	= hostfs_readdir,
-> 	.read		= generic_read_dir,
-> };
->
-> const struct file_operations nilfs_file_operations = {
-> 	.llseek		= generic_file_llseek,
-> +	.checkpoint	= generic_file_checkpoint,
-> 	.read		= do_sync_read,
-> 	.write		= do_sync_write,
-> 	.aio_read	= generic_file_aio_read,
+> >static const struct vm_operations_struct nfs_file_vm_ops = {
+> >	.fault = filemap_fault,
+> >	.page_mkwrite = nfs_vm_page_mkwrite,
+> >+#ifdef CONFIG_CHECKPOINT
+> >+	.checkpoint = filemap_checkpoint,
+> >+#endif
+> >};
+> 
+> Why is this one conditional, but the others are not?
 
+Something like this perhaps (untested, but it should work).
 
-Minor nit - it would be good to add this method in the same place in  
-all of the *_file_operation structures for consistency.  Ideally these  
-would already be in the order that they are declared in the structure,  
-but at least new ones should be added consistently.
+    Move empty filemap_checkpoint definition
+    
+    This makes the operation usable in the nfs vm operation structure
+    and avoids the extra #ifdef.
+    
+    Signed-off-by: Matt Helsley <matthltc@us.ibm.com>
+    Cc: Andreas Dilger <adilger@sun.com>
 
-> static const struct vm_operations_struct nfs_file_vm_ops = {
-> 	.fault = filemap_fault,
-> 	.page_mkwrite = nfs_vm_page_mkwrite,
-> +#ifdef CONFIG_CHECKPOINT
-> +	.checkpoint = filemap_checkpoint,
-> +#endif
-> };
-
-Why is this one conditional, but the others are not?
-
-
-Cheers, Andreas
---
-Andreas Dilger
-Sr. Staff Engineer, Lustre Group
-Sun Microsystems of Canada, Inc.
+diff --git a/fs/nfs/file.c b/fs/nfs/file.c
+index 4437ef9..c6f9090 100644
+--- a/fs/nfs/file.c
++++ b/fs/nfs/file.c
+@@ -578,9 +578,7 @@ out_unlock:
+ static const struct vm_operations_struct nfs_file_vm_ops = {
+ 	.fault = filemap_fault,
+ 	.page_mkwrite = nfs_vm_page_mkwrite,
+-#ifdef CONFIG_CHECKPOINT
+ 	.checkpoint = filemap_checkpoint,
+-#endif
+ };
+ 
+ static int nfs_need_sync_write(struct file *filp, struct inode *inode)
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 210d8e3..e9d9605 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1206,6 +1206,8 @@ extern int filemap_fault(struct vm_area_struct *, struct vm_fault *);
+ #ifdef CONFIG_CHECKPOINT
+ /* generic vm_area_ops exported for mapped files checkpoint */
+ extern int filemap_checkpoint(struct ckpt_ctx *, struct vm_area_struct *);
++#else /* !CONFIG_CHECKPOINT */
++#define filemap_checkpoint NULL
+ #endif
+ 
+ /* mm/page-writeback.c */
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 4ea28e6..bc98a15 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1678,8 +1678,6 @@ int filemap_restore(struct ckpt_ctx *ctx,
+ 	}
+ 	return ret;
+ }
+-#else /* !CONFIG_CHECKPOINT */
+-#define filemap_checkpoint NULL
+ #endif
+ 
+ const struct vm_operations_struct generic_file_vm_ops = {
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
