@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 54/96] c/r: make ckpt_may_checkpoint_task() check each namespace individually
-Date: Wed, 17 Mar 2010 12:08:42 -0400
-Message-ID: <1268842164-5590-55-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 60/96] c/r: support semaphore sysv-ipc
+Date: Wed, 17 Mar 2010 12:08:48 -0400
+Message-ID: <1268842164-5590-61-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -56,468 +56,437 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-52-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-53-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-54-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-55-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-56-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-57-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-58-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-59-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-60-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-54-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-60-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-For a given namespace type, say XXX, if a checkpoint was taken on a
-CONFIG_XXX_NS system, is restarted on a !CONFIG_XXX_NS, then ensure
-that:
+Checkpoint of sysvipc semaphores is performed by iterating through all
+sem objects and dumping the contents of each one. The semaphore array
+of each sem is dumped with that object.
 
-1) The global settings of the global (init) namespace do not get
-overwritten. Creating new objects in that namespace is ok, as long as
-the request identifier is available.
+The semaphore array (sem->sem_base) holds an array of 'struct sem',
+which is a {int, int}. Because this translates into the same format
+on 32- and 64-bit architectures, the checkpoint format is simply the
+dump of this array as is.
 
-2) All restarting tasks use a single namespace - because it is
-impossible to create additional namespaces to accommodate for what had
-been checkpointed.
+TODO: this patch does not handle semaphore-undo -- this data should be
+saved per-task while iterating through the tasks.
 
-Original patch introducing nsproxy c/r by Dan Smith <danms@us.ibm.com>
-
-Chagnelog[v19]:
-  - Restart to handle checkpoint images lacking {uts,ipc}-ns
-Chagnelog[v19-rc1]:
-  - [Matt Helsley] Add cpp definitions for enums
-Chagnelog[v18]:
-  - Add a few more ckpt_write_err()s
-Chagnelog[v17]:
-  - Only collect sub-objects of struct_nsproxy once.
-  - Restore namespace pieces directly instead of using sys_unshare()
-  - Proper handling of restart from namespace(s) without namespace(s)
+Changelog[v20]:
+    Fix "scheduling in atomic" while restoring ipc sem
+Changelog[v19-rc3]:
+  - Don't free sma if it's an error on restore
+Changelog[v18]:
+  - Handle kmalloc failure in restore_sem_array()
+Changelog[v17]:
+  - Restore objects in the right namespace
+  - Forward declare struct msg_msg (instead of include linux/msg.h)
+  - Fix typo in comment
+  - Don't unlock ipc before calling freeary in error path
 
 Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 Acked-by: Serge E. Hallyn <serue@us.ibm.com>
 Tested-by: Serge E. Hallyn <serue@us.ibm.com>
 ---
- checkpoint/checkpoint.c        |   29 +++++++++--
- checkpoint/objhash.c           |   28 ++++++++++
- checkpoint/process.c           |   81 +++++++++++++++++++++++++++++
- include/linux/checkpoint.h     |    5 ++
- include/linux/checkpoint_hdr.h |   16 ++++++
- kernel/nsproxy.c               |  110 ++++++++++++++++++++++++++++++++++++++++
- 6 files changed, 265 insertions(+), 4 deletions(-)
+ include/linux/checkpoint_hdr.h |    8 ++
+ ipc/Makefile                   |    2 +-
+ ipc/checkpoint.c               |    4 -
+ ipc/checkpoint_sem.c           |  240 ++++++++++++++++++++++++++++++++++++++++
+ ipc/sem.c                      |   11 +-
+ ipc/util.h                     |    8 ++
+ 6 files changed, 261 insertions(+), 12 deletions(-)
+ create mode 100644 ipc/checkpoint_sem.c
 
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index fd88d5f..9bafb13 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -218,6 +218,8 @@ static int checkpoint_all_tasks(struct ckpt_ctx *ctx)
- static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
- {
- 	struct task_struct *root = ctx->root_task;
-+	struct nsproxy *nsproxy;
-+	int ret = 0;
+diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
+index 07e918e..64c3f8f 100644
+--- a/include/linux/checkpoint_hdr.h
++++ b/include/linux/checkpoint_hdr.h
+@@ -494,6 +494,14 @@ struct ckpt_hdr_ipc_msg_msg {
+ 	__u32 m_ts;
+ } __attribute__((aligned(8)));
  
- 	ckpt_debug("check %d\n", task_pid_nr_ns(t, ctx->root_nsproxy->pid_ns));
- 
-@@ -257,11 +259,30 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
- 		return -EINVAL;
- 	}
- 
--	/* FIX: change this when namespaces are added */
--	if (task_nsproxy(t) != ctx->root_nsproxy)
--		return -EPERM;
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(t);
-+	if (nsproxy->uts_ns != ctx->root_nsproxy->uts_ns)
-+		ret = -EPERM;
-+	if (nsproxy->ipc_ns != ctx->root_nsproxy->ipc_ns)
-+		ret = -EPERM;
-+	/* no support for >1 private mntns */
-+	if (nsproxy->mnt_ns != ctx->root_nsproxy->mnt_ns) {
-+		_ckpt_err(ctx, -EPERM, "%(T)Nested mnt_ns unsupported\n");
-+		ret = -EPERM;
-+	}
-+	/* no support for >1 private netns */
-+	if (nsproxy->net_ns != ctx->root_nsproxy->net_ns) {
-+		_ckpt_err(ctx, -EPERM, "%(T)Nested net_ns unsupported\n");
-+		ret = -EPERM;
-+	}
-+	/* no support for >1 private pidns */
-+	if (nsproxy->pid_ns != ctx->root_nsproxy->pid_ns) {
-+		_ckpt_err(ctx, -EPERM, "%(T)Nested pid_ns unsupported\n");
-+		ret = -EPERM;
-+	}
-+	rcu_read_unlock();
- 
--	return 0;
-+	return ret;
- }
- 
- #define CKPT_HDR_PIDS_CHUNK	256
-diff --git a/checkpoint/objhash.c b/checkpoint/objhash.c
-index 8c8e622..4368e7b 100644
---- a/checkpoint/objhash.c
-+++ b/checkpoint/objhash.c
-@@ -122,6 +122,22 @@ static int obj_mm_users(void *ptr)
- 	return atomic_read(&((struct mm_struct *) ptr)->mm_users);
- }
- 
-+static int obj_ns_grab(void *ptr)
-+{
-+	get_nsproxy((struct nsproxy *) ptr);
-+	return 0;
-+}
++struct ckpt_hdr_ipc_sem {
++	struct ckpt_hdr h;
++	struct ckpt_hdr_ipc_perms perms;
++	__u64 sem_otime;
++	__u64 sem_ctime;
++	__u32 sem_nsems;
++} __attribute__((aligned(8)));
 +
-+static void obj_ns_drop(void *ptr, int lastref)
-+{
-+	put_nsproxy((struct nsproxy *) ptr);
-+}
-+
-+static int obj_ns_users(void *ptr)
-+{
-+	return atomic_read(&((struct nsproxy *) ptr)->count);
-+}
-+
- static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 	/* ignored object */
- 	{
-@@ -167,6 +183,16 @@ static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 		.checkpoint = checkpoint_mm,
- 		.restore = restore_mm,
- 	},
-+	/* ns object */
-+	{
-+		.obj_name = "NSPROXY",
-+		.obj_type = CKPT_OBJ_NS,
-+		.ref_drop = obj_ns_drop,
-+		.ref_grab = obj_ns_grab,
-+		.ref_users = obj_ns_users,
-+		.checkpoint = checkpoint_ns,
-+		.restore = restore_ns,
-+	},
- };
  
- 
-@@ -579,6 +605,8 @@ int ckpt_obj_contained(struct ckpt_ctx *ctx)
- 	ckpt_obj_users_inc(ctx, ctx->file, 1);
- 	if (ctx->logfile)
- 		ckpt_obj_users_inc(ctx, ctx->logfile, 1);
-+	/* account for ctx->root_nsproxy (if in the table already) */
-+	ckpt_obj_users_inc(ctx, ctx->root_nsproxy, 1);
- 
- 	hlist_for_each_entry(obj, node, &ctx->obj_hash->list, next) {
- 		if (!obj->ops->ref_users)
-diff --git a/checkpoint/process.c b/checkpoint/process.c
-index 91999ee..961795f 100644
---- a/checkpoint/process.c
-+++ b/checkpoint/process.c
-@@ -12,6 +12,7 @@
- #define CKPT_DFLAG  CKPT_DSYS
- 
- #include <linux/sched.h>
-+#include <linux/nsproxy.h>
- #include <linux/posix-timers.h>
- #include <linux/futex.h>
- #include <linux/compat.h>
-@@ -104,6 +105,35 @@ static int checkpoint_task_struct(struct ckpt_ctx *ctx, struct task_struct *t)
- 	return ckpt_write_string(ctx, t->comm, TASK_COMM_LEN);
- }
- 
-+static int checkpoint_task_ns(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct ckpt_hdr_task_ns *h;
-+	struct nsproxy *nsproxy;
-+	int ns_objref;
-+	int ret;
-+
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(t);
-+	get_nsproxy(nsproxy);
-+	rcu_read_unlock();
-+
-+	ns_objref = checkpoint_obj(ctx, nsproxy, CKPT_OBJ_NS);
-+	put_nsproxy(nsproxy);
-+
-+	ckpt_debug("nsproxy: objref %d\n", ns_objref);
-+	if (ns_objref < 0)
-+		return ns_objref;
-+
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_TASK_NS);
-+	if (!h)
-+		return -ENOMEM;
-+	h->ns_objref = ns_objref;
-+	ret = ckpt_write_obj(ctx, &h->h);
-+	ckpt_hdr_put(ctx, h);
-+
-+	return ret;
-+}
-+
- static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- {
- 	struct ckpt_hdr_task_objs *h;
-@@ -111,6 +141,19 @@ static int checkpoint_task_objs(struct ckpt_ctx *ctx, struct task_struct *t)
- 	int mm_objref;
- 	int ret;
- 
-+	/*
-+	 * Shared objects may have dependencies among them: task->mm
-+	 * depends on task->nsproxy (by ipc_ns). Therefore first save
-+	 * the namespaces, and then the remaining shared objects.
-+	 * During restart a task will already have its namespaces
-+	 * restored when it gets to restore, e.g. its memory.
-+	 */
-+
-+	ret = checkpoint_task_ns(ctx, t);
-+	ckpt_debug("ns: objref %d\n", ret);
-+	if (ret < 0)
-+		return ret;
-+
- 	files_objref = checkpoint_obj_file_table(ctx, t);
- 	ckpt_debug("files: objref %d\n", files_objref);
- 	if (files_objref < 0) {
-@@ -285,6 +328,9 @@ int ckpt_collect_task(struct ckpt_ctx *ctx, struct task_struct *t)
- {
- 	int ret;
- 
-+	ret = ckpt_collect_ns(ctx, t);
-+	if (ret < 0)
-+		return ret;
- 	ret = ckpt_collect_file_table(ctx, t);
+ #define CKPT_TST_OVERFLOW_16(a, b) \
+ 	((sizeof(a) > sizeof(b)) && ((a) > SHORT_MAX))
+diff --git a/ipc/Makefile b/ipc/Makefile
+index 71a257f..3ecba9e 100644
+--- a/ipc/Makefile
++++ b/ipc/Makefile
+@@ -10,4 +10,4 @@ obj-$(CONFIG_POSIX_MQUEUE) += mqueue.o msgutil.o $(obj_mq-y)
+ obj-$(CONFIG_IPC_NS) += namespace.o
+ obj-$(CONFIG_POSIX_MQUEUE_SYSCTL) += mq_sysctl.o
+ obj-$(CONFIG_SYSVIPC_CHECKPOINT) += checkpoint.o \
+-		checkpoint_shm.o checkpoint_msg.o
++		checkpoint_shm.o checkpoint_msg.o checkpoint_sem.o
+diff --git a/ipc/checkpoint.c b/ipc/checkpoint.c
+index 6b1ec0b..4e7ac81 100644
+--- a/ipc/checkpoint.c
++++ b/ipc/checkpoint.c
+@@ -134,12 +134,10 @@ static int do_checkpoint_ipc_ns(struct ckpt_ctx *ctx,
+ 		return ret;
+ 	ret = checkpoint_ipc_any(ctx, ipc_ns, IPC_MSG_IDS,
+ 				 CKPT_HDR_IPC_MSG, checkpoint_ipc_msg);
+-#if 0 /* NEXT FEW PATCHES */
  	if (ret < 0)
  		return ret;
-@@ -360,11 +406,46 @@ static int restore_task_struct(struct ckpt_ctx *ctx)
+ 	ret = checkpoint_ipc_any(ctx, ipc_ns, IPC_SEM_IDS,
+ 				 CKPT_HDR_IPC_SEM, checkpoint_ipc_sem);
+-#endif
  	return ret;
  }
  
-+static int restore_task_ns(struct ckpt_ctx *ctx)
+@@ -332,7 +330,6 @@ static struct ipc_namespace *do_restore_ipc_ns(struct ckpt_ctx *ctx)
+ 
+ 	ret = restore_ipc_any(ctx, ipc_ns, IPC_SHM_IDS,
+ 			      CKPT_HDR_IPC_SHM, restore_ipc_shm);
+-#if 0 /* NEXT FEW PATCHES */
+ 	if (ret < 0)
+ 		goto out;
+ 	ret = restore_ipc_any(ctx, ipc_ns, IPC_MSG_IDS,
+@@ -341,7 +338,6 @@ static struct ipc_namespace *do_restore_ipc_ns(struct ckpt_ctx *ctx)
+ 		goto out;
+ 	ret = restore_ipc_any(ctx, ipc_ns, IPC_SEM_IDS,
+ 			      CKPT_HDR_IPC_SEM, restore_ipc_sem);
+-#endif
+ 	if (ret < 0)
+ 		goto out;
+ 
+diff --git a/ipc/checkpoint_sem.c b/ipc/checkpoint_sem.c
+new file mode 100644
+index 0000000..a1a4356
+--- /dev/null
++++ b/ipc/checkpoint_sem.c
+@@ -0,0 +1,240 @@
++/*
++ *  Checkpoint/restart - dump state of sysvipc sem
++ *
++ *  Copyright (C) 2009 Oren Laadan
++ *
++ *  This file is subject to the terms and conditions of the GNU General Public
++ *  License.  See the file COPYING in the main directory of the Linux
++ *  distribution for more details.
++ */
++
++/* default debug level for output */
++#define CKPT_DFLAG  CKPT_DIPC
++
++#include <linux/mm.h>
++#include <linux/sem.h>
++#include <linux/rwsem.h>
++#include <linux/sched.h>
++#include <linux/syscalls.h>
++#include <linux/nsproxy.h>
++#include <linux/ipc_namespace.h>
++
++struct msg_msg;
++#include "util.h"
++
++#include <linux/checkpoint.h>
++#include <linux/checkpoint_hdr.h>
++
++/************************************************************************
++ * ipc checkpoint
++ */
++
++/* called with the msgids->rw_mutex is read-held */
++static int fill_ipc_sem_hdr(struct ckpt_ctx *ctx,
++			       struct ckpt_hdr_ipc_sem *h,
++			       struct sem_array *sem)
 +{
-+	struct ckpt_hdr_task_ns *h;
-+	struct nsproxy *nsproxy;
 +	int ret = 0;
 +
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_TASK_NS);
-+	if (IS_ERR(h))
-+		return PTR_ERR(h);
-+
-+	nsproxy = ckpt_obj_fetch(ctx, h->ns_objref, CKPT_OBJ_NS);
-+	if (IS_ERR(nsproxy)) {
-+		ret = PTR_ERR(nsproxy);
-+		goto out;
-+	}
-+
-+	if (nsproxy != task_nsproxy(current)) {
-+		get_nsproxy(nsproxy);
-+		switch_task_namespaces(current, nsproxy);
-+	}
-+ out:
-+	ckpt_debug("nsproxy: ret %d (%p)\n", ret, task_nsproxy(current));
-+	ckpt_hdr_put(ctx, h);
-+	return ret;
-+}
-+
- static int restore_task_objs(struct ckpt_ctx *ctx)
- {
- 	struct ckpt_hdr_task_objs *h;
- 	int ret;
- 
-+	/*
-+	 * Namespaces come first, because ->mm depends on ->nsproxy,
-+	 * and because shared objects are restored before they are
-+	 * referenced. See comment in checkpoint_task_objs.
-+	 */
-+	ret = restore_task_ns(ctx);
++	ret = checkpoint_fill_ipc_perms(&h->perms, &sem->sem_perm);
 +	if (ret < 0)
 +		return ret;
 +
- 	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_TASK_OBJS);
- 	if (IS_ERR(h))
- 		return PTR_ERR(h);
-diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index de17f9b..22cc8f6 100644
---- a/include/linux/checkpoint.h
-+++ b/include/linux/checkpoint.h
-@@ -164,6 +164,11 @@ extern int checkpoint_restart_block(struct ckpt_ctx *ctx,
- 				    struct task_struct *t);
- extern int restore_restart_block(struct ckpt_ctx *ctx);
- 
-+/* namespaces */
-+extern int ckpt_collect_ns(struct ckpt_ctx *ctx, struct task_struct *t);
-+extern int checkpoint_ns(struct ckpt_ctx *ctx, void *ptr);
-+extern void *restore_ns(struct ckpt_ctx *ctx);
++	ipc_lock_by_ptr(&sem->sem_perm);
++	h->sem_otime = sem->sem_otime;
++	h->sem_ctime = sem->sem_ctime;
++	h->sem_nsems = sem->sem_nsems;
++	ipc_unlock(&sem->sem_perm);
 +
- /* file table */
- extern int ckpt_collect_file_table(struct ckpt_ctx *ctx, struct task_struct *t);
- extern int checkpoint_obj_file_table(struct ckpt_ctx *ctx,
-diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index fce35f3..7c43266 100644
---- a/include/linux/checkpoint_hdr.h
-+++ b/include/linux/checkpoint_hdr.h
-@@ -71,6 +71,8 @@ enum {
- #define CKPT_HDR_TREE CKPT_HDR_TREE
- 	CKPT_HDR_TASK,
- #define CKPT_HDR_TASK CKPT_HDR_TASK
-+	CKPT_HDR_TASK_NS,
-+#define CKPT_HDR_TASK_NS CKPT_HDR_TASK_NS
- 	CKPT_HDR_TASK_OBJS,
- #define CKPT_HDR_TASK_OBJS CKPT_HDR_TASK_OBJS
- 	CKPT_HDR_RESTART_BLOCK,
-@@ -79,6 +81,8 @@ enum {
- #define CKPT_HDR_THREAD CKPT_HDR_THREAD
- 	CKPT_HDR_CPU,
- #define CKPT_HDR_CPU CKPT_HDR_CPU
-+	CKPT_HDR_NS,
-+#define CKPT_HDR_NS CKPT_HDR_NS
- 
- 	/* 201-299: reserved for arch-dependent */
- 
-@@ -136,6 +140,8 @@ enum obj_type {
- #define CKPT_OBJ_FILE CKPT_OBJ_FILE
- 	CKPT_OBJ_MM,
- #define CKPT_OBJ_MM CKPT_OBJ_MM
-+	CKPT_OBJ_NS,
-+#define CKPT_OBJ_NS CKPT_OBJ_NS
- 	CKPT_OBJ_MAX
- #define CKPT_OBJ_MAX CKPT_OBJ_MAX
- };
-@@ -220,6 +226,16 @@ struct ckpt_hdr_task {
- 	__u64 clear_child_tid;
- } __attribute__((aligned(8)));
- 
-+/* namespaces */
-+struct ckpt_hdr_task_ns {
-+	struct ckpt_hdr h;
-+	__s32 ns_objref;
-+} __attribute__((aligned(8)));
++	ckpt_debug("sem: nsems %u\n", h->sem_nsems);
 +
-+struct ckpt_hdr_ns {
-+	struct ckpt_hdr h;
-+} __attribute__((aligned(8)));
-+
- /* task's shared resources */
- struct ckpt_hdr_task_objs {
- 	struct ckpt_hdr h;
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index 09b4ff9..ccb4fd3 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -21,6 +21,7 @@
- #include <linux/pid_namespace.h>
- #include <net/net_namespace.h>
- #include <linux/ipc_namespace.h>
-+#include <linux/checkpoint.h>
- 
- static struct kmem_cache *nsproxy_cachep;
- 
-@@ -221,6 +222,115 @@ void exit_task_namespaces(struct task_struct *p)
- 	switch_task_namespaces(p, NULL);
- }
- 
-+#ifdef CONFIG_CHECKPOINT
-+int ckpt_collect_ns(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct nsproxy *nsproxy;
-+	int exists;
-+	int ret;
-+
-+	rcu_read_lock();
-+	nsproxy = task_nsproxy(t);
-+	if (nsproxy)
-+		get_nsproxy(nsproxy);
-+	rcu_read_unlock();
-+
-+	if (!nsproxy)
-+		return 0;
-+
-+	/* if already exists, don't proceed inside the struct */
-+	exists = ckpt_obj_lookup(ctx, nsproxy, CKPT_OBJ_NS);
-+
-+	ret = ckpt_obj_collect(ctx, nsproxy, CKPT_OBJ_NS);
-+	if (ret < 0 || exists)
-+		goto out;
-+
-+	/* TODO: collect other namespaces here */
-+ out:
-+	put_nsproxy(nsproxy);
-+	return ret;
++	return 0;
 +}
 +
-+static int do_checkpoint_ns(struct ckpt_ctx *ctx, struct nsproxy *nsproxy)
++/**
++ * ckpt_write_sem_array - dump the state of a semaphore array
++ * @ctx: checkpoint context
++ * @sem: semphore array
++ *
++ * The state of a sempahore is an array of 'struct sem'. This structure
++ * is {int, int}, which translates to the same format {32 bits, 32 bits}
++ * on both 32- and 64-bit architectures. So we simply dump the array.
++ *
++ * The sem-undo information is not saved per ipc_ns, but rather per task.
++ */
++static int checkpoint_sem_array(struct ckpt_ctx *ctx, struct sem_array *sem)
 +{
-+	struct ckpt_hdr_ns *h;
++	/* this is a "best-effort" test, so lock not needed */
++	if (!list_empty(&sem->sem_pending))
++		return -EBUSY;
++
++	/* our caller holds the mutex, so this is safe */
++	return ckpt_write_buffer(ctx, sem->sem_base,
++			       sem->sem_nsems * sizeof(*sem->sem_base));
++}
++
++/* called with the msgids->rw_mutex is read-held */
++int checkpoint_ipc_sem(int id, void *p, void *data)
++{
++	struct ckpt_hdr_ipc_sem *h;
++	struct ckpt_ctx *ctx = (struct ckpt_ctx *) data;
++	struct kern_ipc_perm *perm = (struct kern_ipc_perm *) p;
++	struct sem_array *sem;
 +	int ret;
 +
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_NS);
++	sem = container_of(perm, struct sem_array, sem_perm);
++
++	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_IPC_SEM);
 +	if (!h)
 +		return -ENOMEM;
 +
-+	/* TODO: Write other namespaces here */
++	ret = fill_ipc_sem_hdr(ctx, h, sem);
++	if (ret < 0)
++		goto out;
 +
 +	ret = ckpt_write_obj(ctx, &h->h);
++	if (ret < 0)
++		goto out;
++
++	if (h->sem_nsems)
++		ret = checkpoint_sem_array(ctx, sem);
++ out:
 +	ckpt_hdr_put(ctx, h);
 +	return ret;
 +}
 +
++/************************************************************************
++ * ipc restart
++ */
 +
-+int checkpoint_ns(struct ckpt_ctx *ctx, void *ptr)
++/* called with the msgids->rw_mutex is write-held */
++static int load_ipc_sem_hdr(struct ckpt_ctx *ctx,
++			       struct ckpt_hdr_ipc_sem *h,
++			       struct sem_array *sem)
 +{
-+	return do_checkpoint_ns(ctx, (struct nsproxy *) ptr);
-+}
-+
-+static struct nsproxy *do_restore_ns(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_ns *h;
-+	struct nsproxy *nsproxy = NULL;
-+	struct uts_namespace *uts_ns;
-+	struct ipc_namespace *ipc_ns;
-+	struct mnt_namespace *mnt_ns;
-+	struct net *net_ns;
 +	int ret = 0;
 +
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_NS);
-+	if (IS_ERR(h))
-+		return (struct nsproxy *) h;
++	ret = restore_load_ipc_perms(&h->perms, &sem->sem_perm);
++	if (ret < 0)
++		return ret;
 +
-+	uts_ns = ctx->root_nsproxy->uts_ns;
-+	ipc_ns = ctx->root_nsproxy->ipc_ns;
-+	mnt_ns = ctx->root_nsproxy->mnt_ns;
-+	net_ns = ctx->root_nsproxy->net_ns;
++	ckpt_debug("sem: nsems %u\n", h->sem_nsems);
 +
-+	if (uts_ns == current->nsproxy->uts_ns &&
-+	    ipc_ns == current->nsproxy->ipc_ns &&
-+	    mnt_ns == current->nsproxy->mnt_ns &&
-+	    net_ns == current->nsproxy->net_ns) {
-+		/* all xxx-ns are identical: reuse nsproxy */
-+		nsproxy = current->nsproxy;
-+		get_nsproxy(nsproxy);
-+	} else {
-+		nsproxy = create_nsproxy();
-+		if (!nsproxy) {
-+			ret = -ENOMEM;
-+			goto out;
++	sem->sem_otime = h->sem_otime;
++	sem->sem_ctime = h->sem_ctime;
++	sem->sem_nsems = h->sem_nsems;
++
++	return 0;
++}
++
++/**
++ * ckpt_read_sem_array - read the state of a semaphore array
++ * @ctx: checkpoint context
++ * @sem: semphore array
++ *
++ * Expect the data in an array of 'struct sem': {32 bit, 32 bit}.
++ * See comment in ckpt_write_sem_array().
++ *
++ * The sem-undo information is not restored per ipc_ns, but rather per task.
++ */
++static struct sem *restore_sem_array(struct ckpt_ctx *ctx, int nsems)
++{
++	struct sem *sma;
++	int i, ret;
++
++	sma = kmalloc(nsems * sizeof(*sma), GFP_KERNEL);
++	if (!sma)
++		return ERR_PTR(-ENOMEM);
++	ret = _ckpt_read_buffer(ctx, sma, nsems * sizeof(*sma));
++	if (ret < 0)
++		goto out;
++
++	/* validate sem array contents */
++	for (i = 0; i < nsems; i++) {
++		if (sma[i].semval < 0 || sma[i].sempid < 0) {
++			ret = -EINVAL;
++			break;
 +		}
-+
-+		get_uts_ns(uts_ns);
-+		nsproxy->uts_ns = uts_ns;
-+		get_ipc_ns(ipc_ns);
-+		nsproxy->ipc_ns = ipc_ns;
-+		get_mnt_ns(mnt_ns);
-+		nsproxy->mnt_ns = mnt_ns;
-+		get_net(net_ns);
-+		nsproxy->net_ns = net_ns;
-+
-+		get_pid_ns(current->nsproxy->pid_ns);
-+		nsproxy->pid_ns = current->nsproxy->pid_ns;
 +	}
 + out:
-+	if (ret < 0)
-+		nsproxy = ERR_PTR(ret);
-+	ckpt_hdr_put(ctx, h);
-+	return nsproxy;
++	if (ret < 0) {
++		kfree(sma);
++		sma = ERR_PTR(ret);
++	}
++	return sma;
 +}
 +
-+void *restore_ns(struct ckpt_ctx *ctx)
++int restore_ipc_sem(struct ckpt_ctx *ctx, struct ipc_namespace *ns)
 +{
-+	return (void *) do_restore_ns(ctx);
-+}
-+#endif /* CONFIG_CHECKPOINT */
++	struct ckpt_hdr_ipc_sem *h;
++	struct kern_ipc_perm *ipc;
++	struct sem_array *sem;
++	struct sem *sma = NULL;
++	struct ipc_ids *sem_ids = &ns->ids[IPC_SEM_IDS];
++	int semflag, ret;
 +
- static int __init nsproxy_cache_init(void)
++	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_IPC_SEM);
++	if (IS_ERR(h))
++		return PTR_ERR(h);
++
++	ret = -EINVAL;
++	if (h->perms.id < 0)
++		goto out;
++	if (h->sem_nsems < 0)
++		goto out;
++
++	/* read sempahore array state */
++	sma = restore_sem_array(ctx, h->sem_nsems);
++	if (IS_ERR(sma)) {
++		ret = PTR_ERR(sma);
++		sma = NULL;
++		goto out;
++	}
++
++	/* restore the message queue now */
++	semflag = h->perms.mode | IPC_CREAT | IPC_EXCL;
++	ckpt_debug("sem: do_semget key %d flag %#x id %d\n",
++		 h->perms.key, semflag, h->perms.id);
++	ret = do_semget(ns, h->perms.key, h->sem_nsems, semflag, h->perms.id);
++	ckpt_debug("sem: do_semget ret %d\n", ret);
++	if (ret < 0)
++		goto out;
++
++	down_write(&sem_ids->rw_mutex);
++
++	/*
++	 * We are the sole owners/users of this brand new ipc-ns, so:
++	 *
++	 * 1) The semid could not have been deleted between its creation
++	 *   and taking the rw_mutex above.
++	 * 2) No unauthorized task will attempt to gain access to it,
++	 *   so it is safe to do away with ipc_lock(). This is useful
++	 *   because we can call functions that sleep.
++	 * 3) Likewise, we only restore the security bits further below,
++	 *   so it is safe to ignore this (theoretical only!) race.
++	 *
++	 * If/when we allow to restore the ipc state within the parent's
++	 * ipc-ns, we will need to re-examine this.
++	 */
++	ipc = ipc_lock(sem_ids, h->perms.id);
++	BUG_ON(IS_ERR(ipc));
++
++	sem = container_of(ipc, struct sem_array, sem_perm);
++	memcpy(sem->sem_base, sma, sem->sem_nsems * sizeof(*sma));
++
++	/* this is safe because no unauthorized access is possible */
++	ipc_unlock(ipc);
++
++	ret = load_ipc_sem_hdr(ctx, h, sem);
++	if (ret < 0) {
++		ipc_lock_by_ptr(&sem->sem_perm);
++		ckpt_debug("sem: need to remove (%d)\n", ret);
++		freeary(ns, ipc);
++		ipc_unlock(ipc);
++	}
++	up_write(&sem_ids->rw_mutex);
++ out:
++	kfree(sma);
++	ckpt_hdr_put(ctx, h);
++	return ret;
++}
+diff --git a/ipc/sem.c b/ipc/sem.c
+index faed3a3..37da85e 100644
+--- a/ipc/sem.c
++++ b/ipc/sem.c
+@@ -93,7 +93,6 @@
+ #define sem_checkid(sma, semid)	ipc_checkid(&sma->sem_perm, semid)
+ 
+ static int newary(struct ipc_namespace *, struct ipc_params *, int);
+-static void freeary(struct ipc_namespace *, struct kern_ipc_perm *);
+ #ifdef CONFIG_PROC_FS
+ static int sysvipc_sem_proc_show(struct seq_file *s, void *it);
+ #endif
+@@ -317,14 +316,12 @@ static inline int sem_more_checks(struct kern_ipc_perm *ipcp,
+ 	return 0;
+ }
+ 
+-int do_semget(key_t key, int nsems, int semflg, int req_id)
++int do_semget(struct ipc_namespace *ns, key_t key, int nsems,
++	      int semflg, int req_id)
  {
- 	nsproxy_cachep = KMEM_CACHE(nsproxy, SLAB_PANIC);
+-	struct ipc_namespace *ns;
+ 	struct ipc_ops sem_ops;
+ 	struct ipc_params sem_params;
+ 
+-	ns = current->nsproxy->ipc_ns;
+-
+ 	if (nsems < 0 || nsems > ns->sc_semmsl)
+ 		return -EINVAL;
+ 
+@@ -341,7 +338,7 @@ int do_semget(key_t key, int nsems, int semflg, int req_id)
+ 
+ SYSCALL_DEFINE3(semget, key_t, key, int, nsems, int, semflg)
+ {
+-	return do_semget(key, nsems, semflg, -1);
++	return do_semget(current->nsproxy->ipc_ns, key, nsems, semflg, -1);
+ }
+ 
+ /*
+@@ -574,7 +571,7 @@ static void free_un(struct rcu_head *head)
+  * as a writer and the spinlock for this semaphore set hold. sem_ids.rw_mutex
+  * remains locked on exit.
+  */
+-static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
++void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
+ {
+ 	struct sem_undo *un, *tu;
+ 	struct sem_queue *q, *tq;
+diff --git a/ipc/util.h b/ipc/util.h
+index 8a223f0..ba080de 100644
+--- a/ipc/util.h
++++ b/ipc/util.h
+@@ -193,6 +193,11 @@ void do_shm_rmid(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp);
+ int do_msgget(struct ipc_namespace *ns, key_t key, int msgflg, int req_id);
+ void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp);
+ 
++int do_semget(struct ipc_namespace *ns, key_t key, int nsems, int semflg,
++	      int req_id);
++void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp);
++
++
+ #ifdef CONFIG_CHECKPOINT
+ extern int checkpoint_fill_ipc_perms(struct ckpt_hdr_ipc_perms *h,
+ 				     struct kern_ipc_perm *perm);
+@@ -205,6 +210,9 @@ extern int restore_ipc_shm(struct ckpt_ctx *ctx, struct ipc_namespace *ns);
+ 
+ extern int checkpoint_ipc_msg(int id, void *p, void *data);
+ extern int restore_ipc_msg(struct ckpt_ctx *ctx, struct ipc_namespace *ns);
++
++extern int checkpoint_ipc_sem(int id, void *p, void *data);
++extern int restore_ipc_sem(struct ckpt_ctx *ctx, struct ipc_namespace *ns);
+ #endif
+ 
+ #endif
 -- 
 1.6.3.3
 
