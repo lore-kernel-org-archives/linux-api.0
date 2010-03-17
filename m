@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 64/96] c/r: capabilities: define checkpoint and restore fns
-Date: Wed, 17 Mar 2010 12:08:52 -0400
-Message-ID: <1268842164-5590-65-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 70/96] c/r: [signal 3/4] pending signals (private, shared)
+Date: Wed, 17 Mar 2010 12:08:58 -0400
+Message-ID: <1268842164-5590-71-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -66,336 +66,453 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-62-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-63-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-64-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-65-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-66-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-67-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-68-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-69-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-70-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-64-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-70-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-From: Serge E. Hallyn <serue@us.ibm.com>
+This patch adds checkpoint and restart of pending signals queues:
+struct sigpending, both per-task t->sigpending and shared (per-
+thread-group) t->signal->shared_sigpending.
 
-[ Andrew: I am punting on dealing with the subsystem cooperation
-issues in this version, in favor of trying to get LSM issues
-straightened out ]
+To checkpoint pending signals (private/shared) we first detach the
+signal queue (and copy the mask) to a separate struct sigpending.
+This separate structure can be iterated through without locking.
 
-An application checkpoint image will store capability sets
-(and the bounding set) as __u64s.  Define checkpoint and
-restart functions to translate between those and kernel_cap_t's.
+Once the state is saved, we re-attaches (prepends) the original signal
+queue back to the original struct sigpending.
 
-Define a common function do_capset_tocred() which applies capability
-set changes to a passed-in struct cred.
+Signals that arrive(d) in the meantime will be suitably queued after
+these (for real-time signals). Repeated non-realtime signals will not
+be queued because they will already be marked in the pending mask,
+that remains as is. This is the expected behavior of non-realtime
+signals.
 
-The restore function uses do_capset_tocred() to apply the restored
-capabilities to the struct cred being crafted, subject to the
-current task's (task executing sys_restart()) permissions.
-
-Changlog [v19-rc1]:
+Changelog [v19-rc1]:
+  - Switch to ckpt_obj_try_fetch()
   - [Matt Helsley] Add cpp definitions for enums
+Changelog [v4]:
+  - Rename headerless struct ckpt_hdr_* to struct ckpt_*
+Changelog [v3]:
+  - [Dan Smith] Sanity check for number of pending signals in buffer
+Changelog [v2]:
+  - Validate si_errno from checkpoint image
+Changelog [v1]:
+  - Fix compilation warnings
+  - [Louis Rilling] Remove SIGQUEUE_PREALLOC flag from queued signals
+  - [Louis Rilling] Fail if task has posix-timers or SI_TIMER signal
 
-Changelog:
-	Jun 09: Can't choose securebits or drop bounding set if
-		file capabilities aren't compiled into the kernel.
-		Also just store caps in __u32s (looks cleaner).
-	Jun 01: Made the checkpoint and restore functions and the
-		ckpt_hdr_capabilities struct more opaque to the
-		rest of the c/r code, as suggested by Andrew Morgan,
-		and using naming suggested by Oren.
-	Jun 01: Add commented BUILD_BUG_ON() to point out that the
-		current implementation depends on 64-bit capabilities.
-		(Andrew Morgan and Alexey Dobriyan).
-	May 28: add helpers to c/r securebits
-
-Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
-Acked-by: Oren Laadan <orenl@cs.columbia.edu>
+Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
+Acked-by: Louis Rilling <Louis.Rilling@kerlabs.com>
+Acked-by: Serge E. Hallyn <serue@us.ibm.com>
+Tested-by: Serge E. Hallyn <serue@us.ibm.com>
 ---
- include/linux/capability.h     |    6 ++
- include/linux/checkpoint_hdr.h |   12 +++
- kernel/capability.c            |  164 +++++++++++++++++++++++++++++++++++++---
- security/commoncap.c           |   19 +----
- 4 files changed, 173 insertions(+), 28 deletions(-)
+ checkpoint/signal.c            |  280 +++++++++++++++++++++++++++++++++++++++-
+ include/linux/checkpoint_hdr.h |   24 ++++
+ 2 files changed, 301 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/capability.h b/include/linux/capability.h
-index 39e5ff5..5abd86c 100644
---- a/include/linux/capability.h
-+++ b/include/linux/capability.h
-@@ -566,6 +566,12 @@ extern int capable(int cap);
- struct dentry;
- extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+diff --git a/checkpoint/signal.c b/checkpoint/signal.c
+index 5884462..3d13c56 100644
+--- a/checkpoint/signal.c
++++ b/checkpoint/signal.c
+@@ -167,12 +167,156 @@ int restore_obj_sighand(struct ckpt_ctx *ctx, int sighand_objref)
+  * signal checkpoint/restart
+  */
  
-+struct cred;
-+int apply_securebits(unsigned securebits, struct cred *new);
-+struct ckpt_capabilities;
-+int restore_capabilities(struct ckpt_capabilities *h, struct cred *new);
-+void checkpoint_capabilities(struct ckpt_capabilities *h, struct cred * cred);
-+
- #endif /* __KERNEL__ */
- 
- #endif /* !_LINUX_CAPABILITY_H */
-diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index 825f4cc..78557ec 100644
---- a/include/linux/checkpoint_hdr.h
-+++ b/include/linux/checkpoint_hdr.h
-@@ -85,6 +85,8 @@ enum {
- #define CKPT_HDR_UTS_NS CKPT_HDR_UTS_NS
- 	CKPT_HDR_IPC_NS,
- #define CKPT_HDR_IPC_NS CKPT_HDR_IPC_NS
-+	CKPT_HDR_CAPABILITIES,
-+#define CKPT_HDR_CAPABILITIES CKPT_HDR_CAPABILITIES
- 
- 	/* 201-299: reserved for arch-dependent */
- 
-@@ -249,6 +251,16 @@ struct ckpt_hdr_task {
- 	__u64 clear_child_tid;
- } __attribute__((aligned(8)));
- 
-+/* Posix capabilities */
-+struct ckpt_capabilities {
-+	__u32 cap_i_0, cap_i_1; /* inheritable set */
-+	__u32 cap_p_0, cap_p_1; /* permitted set */
-+	__u32 cap_e_0, cap_e_1; /* effective set */
-+	__u32 cap_b_0, cap_b_1; /* bounding set */
-+	__u32 securebits;
-+	__u32 padding;
-+} __attribute__((aligned(8)));
-+
- /* namespaces */
- struct ckpt_hdr_task_ns {
- 	struct ckpt_hdr h;
-diff --git a/kernel/capability.c b/kernel/capability.c
-index 7f876e6..2cc66a7 100644
---- a/kernel/capability.c
-+++ b/kernel/capability.c
-@@ -14,6 +14,8 @@
- #include <linux/security.h>
- #include <linux/syscalls.h>
- #include <linux/pid_namespace.h>
-+#include <linux/securebits.h>
-+#include <linux/checkpoint.h>
- #include <asm/uaccess.h>
- #include "cred-internals.h"
- 
-@@ -215,6 +217,45 @@ SYSCALL_DEFINE2(capget, cap_user_header_t, header, cap_user_data_t, dataptr)
- 	return ret;
- }
- 
-+static int do_capset_tocred(kernel_cap_t *effective, kernel_cap_t *inheritable,
-+			kernel_cap_t *permitted, struct cred *new)
++static void fill_siginfo(struct ckpt_siginfo *si, siginfo_t *info)
 +{
-+	int ret;
++	si->signo = info->si_signo;
++	si->_errno = info->si_errno;
++	si->code = info->si_code;
 +
-+	ret = security_capset(new, current_cred(),
-+			      effective, inheritable, permitted);
-+	if (ret < 0)
-+		return ret;
++	/* TODO: convert info->si_uid to uid_objref */
 +
-+	/*
-+	 * for checkpoint-restart, do we want to wait until end of restart?
-+	 * not sure we care */
-+	audit_log_capset(current->pid, new, current_cred());
-+
-+	return 0;
++	switch (info->si_code & __SI_MASK) {
++	case __SI_TIMER:
++		si->pid = info->si_tid;
++		si->uid = info->si_overrun;
++		si->sigval_int = info->si_int;
++		si->utime = info->si_sys_private;
++		break;
++	case __SI_POLL:
++		si->pid = info->si_band;
++		si->sigval_int = info->si_fd;
++		break;
++	case __SI_FAULT:
++		si->sigval_ptr = (unsigned long) info->si_addr;
++#ifdef __ARCH_SI_TRAPNO
++		si->sigval_int = info->si_trapno;
++#endif
++		break;
++	case __SI_CHLD:
++		si->pid = info->si_pid;
++		si->uid = info->si_uid;
++		si->sigval_int = info->si_status;
++		si->stime = info->si_stime;
++		si->utime = info->si_utime;
++		break;
++	case __SI_KILL:
++	case __SI_RT:
++	case __SI_MESGQ:
++		si->pid = info->si_pid;
++		si->uid = info->si_uid;
++		si->sigval_ptr = (unsigned long) info->si_ptr;
++		break;
++	default:
++		BUG();
++	}
 +}
 +
-+static int do_capset(kernel_cap_t *effective, kernel_cap_t *inheritable,
-+			kernel_cap_t *permitted)
++static int load_siginfo(siginfo_t *info, struct ckpt_siginfo *si)
 +{
-+	struct cred *new;
-+	int ret;
++	if (!valid_signal(si->signo))
++		return -EINVAL;
++	if (!ckpt_validate_errno(si->_errno))
++		return -EINVAL;
 +
-+	new = prepare_creds();
-+	if (!new)
-+		return -ENOMEM;
++	info->si_signo = si->signo;
++	info->si_errno = si->_errno;
++	info->si_code = si->code;
 +
-+	ret = do_capset_tocred(effective, inheritable, permitted, new);
-+	if (ret < 0)
-+		goto error;
++	/* TODO: validate remaining signal fields */
 +
-+	return commit_creds(new);
-+
-+error:
-+	abort_creds(new);
-+	return ret;
-+}
-+
- /**
-  * sys_capset - set capabilities for a process or (*) a group of processes
-  * @header: pointer to struct that contains capability version and
-@@ -238,7 +279,6 @@ SYSCALL_DEFINE2(capset, cap_user_header_t, header, const cap_user_data_t, data)
- 	struct __user_cap_data_struct kdata[_KERNEL_CAPABILITY_U32S];
- 	unsigned i, tocopy, copybytes;
- 	kernel_cap_t inheritable, permitted, effective;
--	struct cred *new;
- 	int ret;
- 	pid_t pid;
- 
-@@ -272,23 +312,125 @@ SYSCALL_DEFINE2(capset, cap_user_header_t, header, const cap_user_data_t, data)
- 		i++;
- 	}
- 
--	new = prepare_creds();
--	if (!new)
--		return -ENOMEM;
-+	return do_capset(&effective, &inheritable, &permitted);
- 
--	ret = security_capset(new, current_cred(),
--			      &effective, &inheritable, &permitted);
-+}
-+
-+#ifdef CONFIG_SECURITY_FILE_CAPABILITIES
-+int apply_securebits(unsigned securebits, struct cred *new)
-+{
-+	if ((((new->securebits & SECURE_ALL_LOCKS) >> 1)
-+	     & (new->securebits ^ securebits))				/*[1]*/
-+	    || ((new->securebits & SECURE_ALL_LOCKS & ~securebits))	/*[2]*/
-+	    || (securebits & ~(SECURE_ALL_LOCKS | SECURE_ALL_BITS))	/*[3]*/
-+	    || (cap_capable(current, current_cred(), CAP_SETPCAP,
-+			    SECURITY_CAP_AUDIT) != 0)			/*[4]*/
-+		/*
-+		 * [1] no changing of bits that are locked
-+		 * [2] no unlocking of locks
-+		 * [3] no setting of unsupported bits
-+		 * [4] doing anything requires privilege (go read about
-+		 *     the "sendmail capabilities bug")
-+		 */
-+	    )
-+		/* cannot change a locked bit */
-+		return -EPERM;
-+	new->securebits = securebits;
-+	return 0;
-+}
-+
-+static void do_capbset_drop(struct cred *cred, int cap)
-+{
-+	cap_lower(cred->cap_bset, cap);
-+}
-+
-+static inline int restore_cap_bset(kernel_cap_t bset, struct cred *cred)
-+{
-+	int i, may_dropbcap = capable(CAP_SETPCAP);
-+
-+	for (i = 0; i < CAP_LAST_CAP; i++) {
-+		if (cap_raised(bset, i))
-+			continue;
-+		if (!cap_raised(current_cred()->cap_bset, i))
-+			continue;
-+		if (!may_dropbcap)
-+			return -EPERM;
-+		do_capbset_drop(cred, i);
++	switch (info->si_code & __SI_MASK) {
++	case __SI_TIMER:
++		info->si_tid = si->pid;
++		info->si_overrun = si->uid;
++		info->si_int = si->sigval_int;
++		info->si_sys_private = si->utime;
++		break;
++	case __SI_POLL:
++		info->si_band = si->pid;
++		info->si_fd = si->sigval_int;
++		break;
++	case __SI_FAULT:
++		info->si_addr = (void __user *) (unsigned long) si->sigval_ptr;
++#ifdef __ARCH_SI_TRAPNO
++		info->si_trapno = si->sigval_int;
++#endif
++		break;
++	case __SI_CHLD:
++		info->si_pid = si->pid;
++		info->si_uid = si->uid;
++		info->si_status = si->sigval_int;
++		info->si_stime = si->stime;
++		info->si_utime = si->utime;
++		break;
++	case __SI_KILL:
++	case __SI_RT:
++	case __SI_MESGQ:
++		info->si_pid = si->pid;
++		info->si_uid = si->uid;
++		info->si_ptr = (void __user *) (unsigned long) si->sigval_ptr;
++		break;
++	default:
++		return -EINVAL;
 +	}
 +
 +	return 0;
 +}
 +
-+#else /* CONFIG_SECURITY_FILE_CAPABILITIES */
-+
-+int apply_securebits(unsigned securebits, struct cred *new)
++/*
++ * To checkpoint pending signals (private/shared) the caller moves the
++ * signal queue (and copies the mask) to a separate struct sigpending,
++ * therefore we can iterate through it without locking.
++ * After we return, the caller re-attaches (prepends) the original
++ * signal queue to the original struct sigpending. Thus, signals that
++ * arrive(d) in the meantime will be suitably queued after these.
++ * Finally, repeated non-realtime signals will not be queued because
++ * they will already be marked in the pending mask, that remains as is.
++ * This is the expected behavior of non-realtime signals.
++ */
++static int checkpoint_sigpending(struct ckpt_ctx *ctx,
++				 struct sigpending *pending)
 +{
-+	/* settable securebits not supported */
-+	return 0;
-+}
-+
-+static inline int restore_cap_bset(kernel_cap_t bset, struct cred *cred)
-+{
-+	/* bounding sets not supported */
-+	return 0;
-+}
-+#endif /* CONFIG_SECURITY_FILE_CAPABILITIES */
-+
-+#ifdef CONFIG_CHECKPOINT
-+static int do_restore_caps(struct ckpt_capabilities *h, struct cred *cred)
-+{
-+	kernel_cap_t effective, inheritable, permitted, bset;
++	struct ckpt_hdr_sigpending *h;
++	struct ckpt_siginfo *si;
++	struct sigqueue *q;
++	int nr_pending = 0;
 +	int ret;
 +
-+	effective.cap[0] = h->cap_e_0;
-+	effective.cap[1] = h->cap_e_1;
-+	inheritable.cap[0] = h->cap_i_0;
-+	inheritable.cap[1] = h->cap_i_1;
-+	permitted.cap[0] = h->cap_p_0;
-+	permitted.cap[1] = h->cap_p_1;
-+	bset.cap[0] = h->cap_b_0;
-+	bset.cap[1] = h->cap_b_1;
++	list_for_each_entry(q, &pending->list, list) {
++		/* TODO: remove after adding support for posix-timers */
++		if ((q->info.si_code & __SI_MASK) == __SI_TIMER) {
++			ckpt_err(ctx, -ENOTSUPP, "%(T)signal SI_TIMER\n");
++			return -ENOTSUPP;
++		}
++		nr_pending++;
++	}
 +
-+	ret = do_capset_tocred(&effective, &inheritable, &permitted, cred);
- 	if (ret < 0)
--		goto error;
-+		return ret;
- 
--	audit_log_capset(pid, new, current_cred());
-+	ret = restore_cap_bset(bset, cred);
++	h = ckpt_hdr_get_type(ctx, nr_pending * sizeof(*si) + sizeof(*h),
++			      CKPT_HDR_SIGPENDING);
++	if (!h)
++		return -ENOMEM;
++
++	h->nr_pending = nr_pending;
++	fill_sigset(&h->signal, &pending->signal);
++
++	si = h->siginfo;
++	list_for_each_entry(q, &pending->list, list)
++		fill_siginfo(si++, &q->info);
++
++	ret = ckpt_write_obj(ctx, &h->h);
++	ckpt_hdr_put(ctx, h);
++
 +	return ret;
 +}
++
+ static int checkpoint_signal(struct ckpt_ctx *ctx, struct task_struct *t)
+ {
+ 	struct ckpt_hdr_signal *h;
+ 	struct signal_struct *signal;
++	struct sigpending shared_pending;
+ 	struct rlimit *rlim;
+-	int ret;
++	unsigned long flags;
++	int i, ret;
  
--	return commit_creds(new);
-+void checkpoint_capabilities(struct ckpt_capabilities *h, struct cred * cred)
-+{
-+	BUILD_BUG_ON(CAP_LAST_CAP >= 64);
-+	h->securebits = cred->securebits;
-+	h->cap_i_0 = cred->cap_inheritable.cap[0];
-+	h->cap_i_1 = cred->cap_inheritable.cap[1];
-+	h->cap_p_0 = cred->cap_permitted.cap[0];
-+	h->cap_p_1 = cred->cap_permitted.cap[1];
-+	h->cap_e_0 = cred->cap_effective.cap[0];
-+	h->cap_e_1 = cred->cap_effective.cap[1];
-+	h->cap_b_0 = cred->cap_bset.cap[0];
-+	h->cap_b_1 = cred->cap_bset.cap[1];
-+}
+ 	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_SIGNAL);
+ 	if (!h)
+@@ -181,13 +325,46 @@ static int checkpoint_signal(struct ckpt_ctx *ctx, struct task_struct *t)
+ 	signal = t->signal;
+ 	rlim = signal->rlim;
+ 
++	INIT_LIST_HEAD(&shared_pending.list);
 +
-+/*
-+ * restore_capabilities: called by restore_creds() to set the
-+ * restored capabilities (if permitted) in a new struct cred which
-+ * will be attached at the end of the sys_restart().
-+ * struct cred *new is prepared by caller (using prepare_creds())
-+ * (and aborted by caller on error)
-+ * return 0 on success, < 0 on error
-+ */
-+int restore_capabilities(struct ckpt_capabilities *h, struct cred *new)
-+{
-+	int ret = do_restore_caps(h, new);
++	/* temporarily borrow signal queue - see chekcpoint_sigpending() */
++	if (!lock_task_sighand(t, &flags)) {
++		ckpt_err(ctx, -EBUSY, "%(T)c/r: [pid %d] without sighand\n",
++			 task_pid_vnr(t));
++		ret = -EBUSY;
++		goto out;
++	}
 +
++	/* TODO: remove after adding support for posix-timers */
++	if (!list_empty(&signal->posix_timers)) {
++		unlock_task_sighand(t, &flags);
++		ckpt_err(ctx, -ENOTSUPP, "%(T)%(P)posix-timers\n", signal);
++		ret = -ENOTSUPP;
++		goto out;
++	}
++
++	list_splice_init(&signal->shared_pending.list, &shared_pending.list);
++	shared_pending.signal = signal->shared_pending.signal;
++
+ 	/* rlimit */
+ 	for (i = 0; i < RLIM_NLIMITS; i++) {
+ 		h->rlim[i].rlim_cur = rlim[i].rlim_cur;
+ 		h->rlim[i].rlim_max = rlim[i].rlim_max;
+ 	}
++	unlock_task_sighand(t, &flags);
+ 
+ 	ret = ckpt_write_obj(ctx, &h->h);
 +	if (!ret)
-+		ret = apply_securebits(h->securebits, new);
- 
--error:
--	abort_creds(new);
++		ret = checkpoint_sigpending(ctx, &shared_pending);
++
++	/* return the borrowed queue */
++	if (!lock_task_sighand(t, &flags)) {
++		pr_warning("c/r: [%d] sighand disappeared\n", task_pid_vnr(t));
++		goto out;
++	}
++	list_splice(&shared_pending.list, &signal->shared_pending.list);
++	unlock_task_sighand(t, &flags);
++ out:
+ 	ckpt_hdr_put(ctx, h);
  	return ret;
  }
-+#endif /* CONFIG_CHECKPOINT */
+@@ -198,9 +375,55 @@ int checkpoint_obj_signal(struct ckpt_ctx *ctx, struct task_struct *t)
+ 	return checkpoint_signal(ctx, t);
+ }
  
- /**
-  * capable - Determine if the current task has a superior capability in effect
-diff --git a/security/commoncap.c b/security/commoncap.c
-index f800fdb..86b3e23 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -827,24 +827,9 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
- 	 * capability-based-privilege environment.
- 	 */
- 	case PR_SET_SECUREBITS:
--		error = -EPERM;
--		if ((((new->securebits & SECURE_ALL_LOCKS) >> 1)
--		     & (new->securebits ^ arg2))			/*[1]*/
--		    || ((new->securebits & SECURE_ALL_LOCKS & ~arg2))	/*[2]*/
--		    || (arg2 & ~(SECURE_ALL_LOCKS | SECURE_ALL_BITS))	/*[3]*/
--		    || (cap_capable(current, current_cred(), CAP_SETPCAP,
--				    SECURITY_CAP_AUDIT) != 0)		/*[4]*/
--			/*
--			 * [1] no changing of bits that are locked
--			 * [2] no unlocking of locks
--			 * [3] no setting of unsupported bits
--			 * [4] doing anything requires privilege (go read about
--			 *     the "sendmail capabilities bug")
--			 */
--		    )
--			/* cannot change a locked bit */
-+		error = apply_securebits(arg2, new);
-+		if (error)
- 			goto error;
--		new->securebits = arg2;
- 		goto changed;
++static int restore_sigpending(struct ckpt_ctx *ctx, struct sigpending *pending)
++{
++	struct ckpt_hdr_sigpending *h;
++	struct ckpt_siginfo *si;
++	struct sigqueue *q;
++	int ret = 0;
++
++	h = ckpt_read_buf_type(ctx, 0, CKPT_HDR_SIGPENDING);
++	if (IS_ERR(h))
++		return PTR_ERR(h);
++
++	if (h->h.len != h->nr_pending * sizeof(*si) + sizeof(*h)) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	INIT_LIST_HEAD(&pending->list);
++	load_sigset(&pending->signal, &h->signal);
++
++	si = h->siginfo;
++	while (h->nr_pending--) {
++		q = sigqueue_alloc();
++		if (!q) {
++			ret = -ENOMEM;
++			break;
++		}
++
++		ret = load_siginfo(&q->info, si++);
++		if (ret < 0) {
++			sigqueue_free(q);
++			break;
++		}
++
++		q->flags &= ~SIGQUEUE_PREALLOC;
++		list_add_tail(&pending->list, &q->list);
++	}
++
++	if (ret < 0)
++		flush_sigqueue(pending);
++ out:
++	ckpt_hdr_put(ctx, h);
++	return ret;
++}
++
+ static int restore_signal(struct ckpt_ctx *ctx)
+ {
+ 	struct ckpt_hdr_signal *h;
++	struct sigpending new_pending;
++	struct sigpending *pending;
+ 	struct rlimit rlim;
+ 	int i, ret;
  
- 	case PR_GET_SECUREBITS:
+@@ -214,8 +437,19 @@ static int restore_signal(struct ckpt_ctx *ctx)
+ 		rlim.rlim_max = h->rlim[i].rlim_max;
+ 		ret = do_setrlimit(i, &rlim);
+ 		if (ret < 0)
+-			break;
++			goto out;
+ 	}
++
++	ret = restore_sigpending(ctx, &new_pending);
++	if (ret < 0)
++		goto out;
++
++	spin_lock_irq(&current->sighand->siglock);
++	pending = &current->signal->shared_pending;
++	flush_sigqueue(pending);
++	pending->signal = new_pending.signal;
++	list_splice_init(&new_pending.list, &pending->list);
++	spin_unlock_irq(&current->sighand->siglock);
+  out:
+ 	ckpt_hdr_put(ctx, h);
+ 	return ret;
+@@ -226,7 +460,7 @@ int restore_obj_signal(struct ckpt_ctx *ctx, int signal_objref)
+ 	struct signal_struct *signal;
+ 	int ret = 0;
+ 
+-	signal = ckpt_obj_fetch(ctx, signal_objref, CKPT_OBJ_SIGNAL);
++	signal = ckpt_obj_try_fetch(ctx, signal_objref, CKPT_OBJ_SIGNAL);
+ 	if (!IS_ERR(signal)) {
+ 		/*
+ 		 * signal_struct is already shared properly as it is
+@@ -251,8 +485,34 @@ int restore_obj_signal(struct ckpt_ctx *ctx, int signal_objref)
+ int checkpoint_task_signal(struct ckpt_ctx *ctx, struct task_struct *t)
+ {
+ 	struct ckpt_hdr_signal_task *h;
++	struct sigpending pending;
++	unsigned long flags;
+ 	int ret;
+ 
++	INIT_LIST_HEAD(&pending.list);
++
++	/* temporarily borrow signal queue - see chekcpoint_sigpending() */
++	if (!lock_task_sighand(t, &flags)) {
++		ckpt_err(ctx, -EBUSY, "%(T)signand missing\n");
++		return -EBUSY;
++	}
++	list_splice_init(&t->pending.list, &pending.list);
++	pending.signal = t->pending.signal;
++	unlock_task_sighand(t, &flags);
++
++	ret = checkpoint_sigpending(ctx, &pending);
++
++	/* re-attach the borrowed queue */
++	if (!lock_task_sighand(t, &flags)) {
++		ckpt_err(ctx, -EBUSY, "%(T)signand missing\n");
++		return -EBUSY;
++	}
++	list_splice(&pending.list, &t->pending.list);
++	unlock_task_sighand(t, &flags);
++
++	if (ret < 0)
++		return ret;
++
+ 	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_SIGNAL_TASK);
+ 	if (!h)
+ 		return -ENOMEM;
+@@ -270,7 +530,21 @@ int checkpoint_task_signal(struct ckpt_ctx *ctx, struct task_struct *t)
+ int restore_task_signal(struct ckpt_ctx *ctx)
+ {
+ 	struct ckpt_hdr_signal_task *h;
++	struct sigpending new_pending;
++	struct sigpending *pending;
+ 	sigset_t blocked;
++	int ret;
++
++	ret = restore_sigpending(ctx, &new_pending);
++	if (ret < 0)
++		return ret;
++
++	spin_lock_irq(&current->sighand->siglock);
++	pending = &current->pending;
++	flush_sigqueue(pending);
++	pending->signal = new_pending.signal;
++	list_splice_init(&new_pending.list, &pending->list);
++	spin_unlock_irq(&current->sighand->siglock);
+ 
+ 	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_SIGNAL_TASK);
+ 	if (IS_ERR(h))
+diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
+index 39302a6..939d6f2 100644
+--- a/include/linux/checkpoint_hdr.h
++++ b/include/linux/checkpoint_hdr.h
+@@ -137,6 +137,8 @@ enum {
+ #define CKPT_HDR_SIGNAL CKPT_HDR_SIGNAL
+ 	CKPT_HDR_SIGNAL_TASK,
+ #define CKPT_HDR_SIGNAL_TASK CKPT_HDR_SIGNAL_TASK
++	CKPT_HDR_SIGPENDING,
++#define CKPT_HDR_SIGPENDING CKPT_HDR_SIGPENDING
+ 
+ 	CKPT_HDR_TAIL = 9001,
+ #define CKPT_HDR_TAIL CKPT_HDR_TAIL
+@@ -540,6 +542,28 @@ struct ckpt_hdr_sighand {
+ 	struct ckpt_sigaction action[0];
+ } __attribute__((aligned(8)));
+ 
++#ifndef HAVE_ARCH_SIGINFO_T
++struct ckpt_siginfo {
++	__u32 signo;
++	__u32 _errno;
++	__u32 code;
++
++	__u32 pid;
++	__s32 uid;
++	__u32 sigval_int;
++	__u64 sigval_ptr;
++	__u64 utime;
++	__u64 stime;
++} __attribute__((aligned(8)));
++#endif
++
++struct ckpt_hdr_sigpending {
++	struct ckpt_hdr h;
++	__u32 nr_pending;
++	struct ckpt_sigset signal;
++	struct ckpt_siginfo siginfo[0];
++} __attribute__((aligned(8)));
++
+ struct ckpt_rlimit {
+ 	__u64 rlim_cur;
+ 	__u64 rlim_max;
 -- 
 1.6.3.3
 
