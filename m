@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 41/96] Introduce FOLL_DIRTY to follow_page() for "dirty" pages
-Date: Wed, 17 Mar 2010 12:08:29 -0400
-Message-ID: <1268842164-5590-42-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 52/96] c/r: checkpoint and restore FIFOs
+Date: Wed, 17 Mar 2010 12:08:40 -0400
+Message-ID: <1268842164-5590-53-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -43,217 +43,209 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-39-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-40-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-41-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-42-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-43-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-44-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-45-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-46-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-47-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-48-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-49-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-50-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-51-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-52-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-41-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-52-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-This is a preparatory patch necessary for checkpoint/restart (next
-two patches) of memory to work correctly.
+FIFOs are almost like pipes.
 
-The patch introduces a new FOLL_DIRTY flag which tells follow_page()
-to return -EFAULT also for not-present file-backed pages.
+Checkpoints adds the FIFO pathname. The first time the FIFO is found
+it also assigns an @objref and dumps the contents in the buffers.
 
-In 2.6.32 follow_page() changes its behavior due to this commit:
-	mm: FOLL_DUMP replace FOLL_ANON
- 	8e4b9a60718970bbc02dfd3abd0b956ab65af231
+To restore, use the @objref only to determine whether a particular
+FIFO has already been restored earlier. Note that it ignores the file
+pointer that matches that @objref (unlike with pipes, where that file
+corresponds to the other end of the pipe). Instead, it creates a new
+FIFO using the saved pathname.
 
-Also introduce __get_dirty_page() that returns a page only if it's
-"dirty", that is that has been modified before, and otherwise returns
-NULL. It uses FOLL_DUMP | FOLL_DIRTY and converts the error value
-EFAULT to NULL - telling the caller that the page in question is
-clean.
-
-(This also optimizes for checkpoint in the next patch: before, if a
-file-backed page was not-present we would first fault it in (read from
-disk) and then detect that it was virgin. Instead, now we detect that
-the page is clean earlier without needing to fault it in).
-
-To see why it's needed, consider these scenarios:
-
-1. Task maps a file beyond it's limit, never touches those
- extra page (if it did, it would get EFAULT/Bus error)
-
-2. Task maps a file and writes the last page, then the file gets
- truncated (by at least a page). A subsequent access to the page will
- cause bus error (VM_FAULT_SIGBUS).
-
-3. If the file size is extended back (using truncate) and the task
- accesses that page, then the task will get a fresh page (losing data
- it had written to that address before).
-
-[Before kernel 2.6.32, that page would become anonymous once it was
-dirtied, such that accesses in case #2 are valid, and in case #3 the
-task would see the old page regardless of the file contents.]
-
---CHECKPOINT: before we used FOLL_ANON flags to tell follow_page() to
-return the zero-page for case#1. For case#2, the actual page was
-returned. Without this patch, In kernel 2.3.32, FOLL_DUMP would make
-follow_page() return NULL and then fault handler would have returned
-VM_FAULT_SIGBUS in case#1 (and depending on arch, case#2 too), and
-checkpoint would fails.
-
---RESTART: case #1 works, because mmap() works as before, and those
-pages that were never touched will not be restored either, they will
-remain untouched. The same holds for case#2 (as of kernel 2.6.32),
-because at checkpoint it would decide that the page is clean and not
-save the contents, and therefore it will not try to restore the
-contents at restart. This is consistent with the expected behavior
-after restart: if the file remains as is, subsequent accesses will
-trigger a bus error, and if the file is extended, then the user will
-observe a fresh page.
+Changelog [v19-rc3]:
+  - Rebase to kernel 2.6.33
+Changelog [v19-rc1]:
+  - Switch to ckpt_obj_try_fetch()
+  - [Matt Helsley] Add cpp definitions for enums
 
 Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 Acked-by: Serge E. Hallyn <serue@us.ibm.com>
 Tested-by: Serge E. Hallyn <serue@us.ibm.com>
 ---
- include/linux/mm.h |    2 +
- mm/memory.c        |   95 +++++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 96 insertions(+), 1 deletions(-)
+ checkpoint/files.c             |    6 +++
+ fs/pipe.c                      |   81 +++++++++++++++++++++++++++++++++++++++-
+ include/linux/checkpoint_hdr.h |    2 +
+ include/linux/pipe_fs_i.h      |    2 +
+ 4 files changed, 90 insertions(+), 1 deletions(-)
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 48d67ee..a93f4dc 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -843,6 +843,7 @@ int get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
- int get_user_pages_fast(unsigned long start, int nr_pages, int write,
- 			struct page **pages);
- struct page *get_dump_page(unsigned long addr);
-+struct page *__get_dirty_page(struct vm_area_struct *vma, unsigned long addr);
+diff --git a/checkpoint/files.c b/checkpoint/files.c
+index 1c294fe..c647bfd 100644
+--- a/checkpoint/files.c
++++ b/checkpoint/files.c
+@@ -599,6 +599,12 @@ static struct restore_file_ops restore_file_ops[] = {
+ 		.file_type = CKPT_FILE_PIPE,
+ 		.restore = pipe_file_restore,
+ 	},
++	/* fifo */
++	{
++		.file_name = "FIFO",
++		.file_type = CKPT_FILE_FIFO,
++		.restore = fifo_file_restore,
++	},
+ };
  
- extern int try_to_release_page(struct page * page, gfp_t gfp_mask);
- extern void do_invalidatepage(struct page *page, unsigned long offset);
-@@ -1262,6 +1263,7 @@ struct page *follow_page(struct vm_area_struct *, unsigned long address,
- #define FOLL_GET	0x04	/* do get_page on page */
- #define FOLL_DUMP	0x08	/* give error on hole if it would be zero */
- #define FOLL_FORCE	0x10	/* get_user_pages read/write w/o permission */
-+#define FOLL_DIRTY	0x20	/* give error on non-present file mapped */
+ static struct file *do_restore_file(struct ckpt_ctx *ctx)
+diff --git a/fs/pipe.c b/fs/pipe.c
+index 747b2d7..8c79493 100644
+--- a/fs/pipe.c
++++ b/fs/pipe.c
+@@ -830,6 +830,8 @@ pipe_rdwr_open(struct inode *inode, struct file *filp)
+ 	return ret;
+ }
  
- typedef int (*pte_fn_t)(pte_t *pte, pgtable_t token, unsigned long addr,
- 			void *data);
-diff --git a/mm/memory.c b/mm/memory.c
-index 09e4b1b..005dd55 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -1226,8 +1226,17 @@ bad_page:
++static struct vfsmount *pipe_mnt __read_mostly;
++
+ #ifdef CONFIG_CHECKPOINT
+ static int checkpoint_pipe(struct ckpt_ctx *ctx, struct inode *inode)
+ {
+@@ -877,7 +879,11 @@ static int pipe_file_checkpoint(struct ckpt_ctx *ctx, struct file *file)
+ 	if (!h)
+ 		return -ENOMEM;
  
- no_page:
- 	pte_unmap_unlock(ptep, ptl);
--	if (!pte_none(pte))
-+	if (!pte_none(pte)) {
-+		/*
-+		 * When checkpointing we only care about dirty pages.
-+		 * If a file-backed page is missing, then return an
-+		 * error to tell __get_dirty_page() that it's clean,
-+		 * so it won't try to demand page it into memory.
-+		 */
-+		if ((flags & FOLL_DIRTY) && pte_file(pte))
-+			page = ERR_PTR(-EFAULT);
- 		return page;
+-	h->common.f_type = CKPT_FILE_PIPE;
++	/* fifo and pipe are similar at checkpoint, differ on restore */
++	if (inode->i_sb == pipe_mnt->mnt_sb)
++		h->common.f_type = CKPT_FILE_PIPE;
++	else
++		h->common.f_type = CKPT_FILE_FIFO;
+ 	h->pipe_objref = objref;
+ 
+ 	ret = checkpoint_file_common(ctx, file, &h->common);
+@@ -887,6 +893,13 @@ static int pipe_file_checkpoint(struct ckpt_ctx *ctx, struct file *file)
+ 	if (ret < 0)
+ 		goto out;
+ 
++	/* FIFO also needs a file name */
++	if (h->common.f_type == CKPT_FILE_FIFO) {
++		ret = checkpoint_fname(ctx, &file->f_path, &ctx->root_fs_path);
++		if (ret < 0)
++			goto out;
 +	}
- 
- no_page_table:
- 	/*
-@@ -1241,6 +1250,16 @@ no_page_table:
- 	if ((flags & FOLL_DUMP) &&
- 	    (!vma->vm_ops || !vma->vm_ops->fault))
- 		return ERR_PTR(-EFAULT);
 +
-+	/*
-+	 * When checkpointing we only care about dirty pages. If there
-+	 * is no page table for a non-anonymous page, we return an
-+	 * error to tell __get_dirty_page() that the page is clean, so
-+	 * it won't allocate page tables and the page unnecessarily.
-+	 */
-+	if ((flags & FOLL_DIRTY) && vma->vm_ops)
-+		return ERR_PTR(-EFAULT);
+ 	if (first)
+ 		ret = checkpoint_pipe(ctx, inode);
+  out:
+@@ -978,8 +991,74 @@ struct file *pipe_file_restore(struct ckpt_ctx *ctx, struct ckpt_hdr_file *ptr)
+ 
+ 	return file;
+ }
 +
- 	return page;
- }
- 
-@@ -1498,6 +1517,80 @@ pte_t *get_locked_pte(struct mm_struct *mm, unsigned long addr,
- 	return NULL;
- }
- 
-+/**
-+ * __get_dirty_page - return page pointer for dirty user page
-+ * @vma - target vma
-+ * @addr - page address
-+ *
-+ * Looks up the page that correspond to the address in the vma, and
-+ * return the page if it was modified (and grabs a reference to it),
-+ * or otherwise returns NULL or error.
-+ *
-+ * Should only be called for private vma.
-+ * Must be called with mmap_sem held for read or write.
-+ */
-+struct page *__get_dirty_page(struct vm_area_struct *vma, unsigned long addr)
++struct file *fifo_file_restore(struct ckpt_ctx *ctx, struct ckpt_hdr_file *ptr)
 +{
-+	struct page *page;
++	struct ckpt_hdr_file_pipe *h = (struct ckpt_hdr_file_pipe *) ptr;
++	struct file *file;
++	int first, ret;
 +
-+	BUG_ON(vma->vm_flags & (VM_SHARED | VM_MAYSHARE));
++	if (ptr->h.type != CKPT_HDR_FILE  ||
++	    ptr->h.len != sizeof(*h) || ptr->f_type != CKPT_FILE_FIFO)
++		return ERR_PTR(-EINVAL);
 +
-+	/*
-+	 * FOLL_DUMP tells follow_page() to return -EFAULT for either
-+	 * non-present anonymous pages, or memory "holes".
-+	 * FOLL_DIRTY tells follow_page() to return -EFAULT also for
-+	 * non-present file-mapped pages.
-+	 * Otherwise, follow_page() returns the page, or NULL if the
-+	 * page is swapped out.
-+	 */
-+
-+	cond_resched();
-+	while (!(page = follow_page(vma, addr,
-+				    FOLL_GET | FOLL_DUMP | FOLL_DIRTY))) {
-+		int ret;
-+
-+		/* the page is swapped out - bring it in (optimize ?) */
-+		ret = handle_mm_fault(vma->vm_mm, vma, addr, 0);
-+		if (ret & VM_FAULT_ERROR) {
-+			if (ret & VM_FAULT_OOM)
-+				return ERR_PTR(-ENOMEM);
-+			else if (ret & VM_FAULT_SIGBUS)
-+				return ERR_PTR(-EFAULT);
-+			else
-+				BUG();
-+			break;
-+		}
-+		cond_resched();
-+	}
-+
-+	/* -EFAULT means that the page is clean (see above) */
-+	if (PTR_ERR(page) == -EFAULT)
-+		return NULL;
-+	else if (IS_ERR(page))
-+		return page;
++	if (h->pipe_objref <= 0)
++		return ERR_PTR(-EINVAL);
 +
 +	/*
-+	 * Only care about dirty pages: either anonymous non-zero pages,
-+	 * or file-backed COW (copy-on-write) pages that were modified.
-+	 * A clean COW page is not interesting because its contents are
-+	 * identical to the backing file; ignore such pages.
-+	 * A file-backed broken COW is identified by its page_mapping()
-+	 * being unset (NULL) because the page will no longer be mapped
-+	 * to the original file after having been modified.
++	 * If ckpt_obj_try_fetch() returned ERR_PTR(-EINVAL), this is the
++	 * first time for this fifo.
 +	 */
-+	if (is_zero_pfn(page_to_pfn(page))) {
-+		/* this is the zero page: ignore */
-+		page_cache_release(page);
-+		page = NULL;
-+	} else if (vma->vm_file && (page_mapping(page) != NULL)) {
-+		/* file backed clean cow: ignore */
-+		page_cache_release(page);
-+		page = NULL;
++	file = ckpt_obj_try_fetch(ctx, h->pipe_objref, CKPT_OBJ_FILE);
++	if (!IS_ERR(file))
++		first = 0;
++	else if (PTR_ERR(file) == -EINVAL)
++		first = 1;
++	else
++		return file;
++
++	/*
++	 * To avoid blocking, always open the fifo with O_RDWR;
++	 * then fix flags below.
++	 */
++	file = restore_open_fname(ctx, (ptr->f_flags & ~O_ACCMODE) | O_RDWR);
++	if (IS_ERR(file))
++		return file;
++
++	if ((ptr->f_flags & O_ACCMODE) == O_RDONLY) {
++		file->f_flags = (file->f_flags & ~O_ACCMODE) | O_RDONLY;
++		file->f_mode &= ~FMODE_WRITE;
++	} else if ((ptr->f_flags & O_ACCMODE) == O_WRONLY) {
++		file->f_flags = (file->f_flags & ~O_ACCMODE) | O_WRONLY;
++		file->f_mode &= ~FMODE_READ;
++	} else if ((ptr->f_flags & O_ACCMODE) != O_RDWR) {
++		ret = -EINVAL;
++		goto out;
 +	}
 +
-+	return page;
++	/* first time: add to objhash and restore fifo's contents */
++	if (first) {
++		ret = ckpt_obj_insert(ctx, file, h->pipe_objref, CKPT_OBJ_FILE);
++		if (ret < 0)
++			goto out;
++
++		ret = restore_pipe(ctx, file);
++		if (ret < 0)
++			goto out;
++	}
++
++	ret = restore_file_common(ctx, file, ptr);
++ out:
++	if (ret < 0) {
++		fput(file);
++		file = ERR_PTR(ret);
++	}
++
++	return file;
 +}
-+
+ #else
+ #define pipe_file_checkpoint  NULL
++#define fifo_file_checkpoint  NULL
+ #endif /* CONFIG_CHECKPOINT */
+ 
  /*
-  * This is the old fallback for page remapping.
-  *
+diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
+index 885d06b..fce35f3 100644
+--- a/include/linux/checkpoint_hdr.h
++++ b/include/linux/checkpoint_hdr.h
+@@ -281,6 +281,8 @@ enum file_type {
+ #define CKPT_FILE_GENERIC CKPT_FILE_GENERIC
+ 	CKPT_FILE_PIPE,
+ #define CKPT_FILE_PIPE CKPT_FILE_PIPE
++	CKPT_FILE_FIFO,
++#define CKPT_FILE_FIFO CKPT_FILE_FIFO
+ 	CKPT_FILE_MAX
+ #define CKPT_FILE_MAX CKPT_FILE_MAX
+ };
+diff --git a/include/linux/pipe_fs_i.h b/include/linux/pipe_fs_i.h
+index e526a12..596403e 100644
+--- a/include/linux/pipe_fs_i.h
++++ b/include/linux/pipe_fs_i.h
+@@ -160,6 +160,8 @@ struct ckpt_ctx;
+ struct ckpt_hdr_file;
+ extern struct file *pipe_file_restore(struct ckpt_ctx *ctx,
+ 				      struct ckpt_hdr_file *ptr);
++extern struct file *fifo_file_restore(struct ckpt_ctx *ctx,
++				      struct ckpt_hdr_file *ptr);
+ #endif
+ 
+ #endif
 -- 
 1.6.3.3
 
