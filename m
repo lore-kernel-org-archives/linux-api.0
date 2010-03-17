@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 13/96] c/r: break out new_user_ns()
-Date: Wed, 17 Mar 2010 12:08:01 -0400
-Message-ID: <1268842164-5590-14-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 14/96] c/r: split core function out of some set*{u,g}id functions
+Date: Wed, 17 Mar 2010 12:08:02 -0400
+Message-ID: <1268842164-5590-15-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -15,8 +15,9 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-11-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-12-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-13-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-14-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-13-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-14-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org
@@ -24,133 +25,389 @@ List-Id: linux-api@vger.kernel.org
 
 From: Serge E. Hallyn <serue@us.ibm.com>
 
-Break out the core function which checks privilege and (if
-allowed) creates a new user namespace, with the passed-in
-creating user_struct.  Note that a user_namespace, unlike
-other namespace pointers, is not stored in the nsproxy.
-Rather it is purely a property of user_structs.
+When restarting tasks, we want to be able to change xuid and
+xgid in a struct cred, and do so with security checks.  Break
+the core functionality of set{fs,res}{u,g}id into cred_setX
+which performs the access checks based on current_cred(),
+but performs the requested change on a passed-in cred.
 
-This will let us keep the task restore code simpler.
+This will allow us to securely construct struct creds based
+on a checkpoint image, constrained by the caller's permissions,
+and apply them to the caller at the end of sys_restart().
 
 Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
 Acked-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- include/linux/user_namespace.h |    8 ++++++
- kernel/user_namespace.c        |   53 ++++++++++++++++++++++++++++------------
- 2 files changed, 45 insertions(+), 16 deletions(-)
+ include/linux/cred.h |    8 +++
+ kernel/cred.c        |  114 ++++++++++++++++++++++++++++++++++++++++++
+ kernel/sys.c         |  134 ++++++++------------------------------------------
+ 3 files changed, 143 insertions(+), 113 deletions(-)
 
-diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index cc4f453..f6ea75d 100644
---- a/include/linux/user_namespace.h
-+++ b/include/linux/user_namespace.h
-@@ -20,6 +20,8 @@ extern struct user_namespace init_user_ns;
+diff --git a/include/linux/cred.h b/include/linux/cred.h
+index 4e3387a..e35631e 100644
+--- a/include/linux/cred.h
++++ b/include/linux/cred.h
+@@ -22,6 +22,9 @@ struct user_struct;
+ struct cred;
+ struct inode;
  
- #ifdef CONFIG_USER_NS
++/* defined in sys.c, used in cred_setresuid */
++extern int set_user(struct cred *new);
++
+ /*
+  * COW Supplementary groups list
+  */
+@@ -396,4 +399,9 @@ do {						\
+ 	*(_fsgid) = __cred->fsgid;		\
+ } while(0)
  
-+struct user_namespace *new_user_ns(struct user_struct *creator,
-+				   struct user_struct **newroot);
- static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
- {
- 	if (ns)
-@@ -38,6 +40,12 @@ static inline void put_user_ns(struct user_namespace *ns)
++int cred_setresuid(struct cred *new, uid_t ruid, uid_t euid, uid_t suid);
++int cred_setresgid(struct cred *new, gid_t rgid, gid_t egid, gid_t sgid);
++int cred_setfsuid(struct cred *new, uid_t uid, uid_t *old_fsuid);
++int cred_setfsgid(struct cred *new, gid_t gid, gid_t *old_fsgid);
++
+ #endif /* _LINUX_CRED_H */
+diff --git a/kernel/cred.c b/kernel/cred.c
+index 1ed8ca1..1fefcb1 100644
+--- a/kernel/cred.c
++++ b/kernel/cred.c
+@@ -890,3 +890,117 @@ void validate_creds_for_do_exit(struct task_struct *tsk)
+ }
  
- #else
- 
-+static inline struct user_namespace *new_user_ns(struct user_struct *creator,
-+				   struct user_struct **newroot)
+ #endif /* CONFIG_DEBUG_CREDENTIALS */
++
++int cred_setresuid(struct cred *new, uid_t ruid, uid_t euid, uid_t suid)
 +{
-+	return ERR_PTR(-EINVAL);
++	int retval;
++	const struct cred *old;
++
++	retval = security_task_setuid(ruid, euid, suid, LSM_SETID_RES);
++	if (retval)
++		return retval;
++	old = current_cred();
++
++	if (!capable(CAP_SETUID)) {
++		if (ruid != (uid_t) -1 && ruid != old->uid &&
++		    ruid != old->euid  && ruid != old->suid)
++			return -EPERM;
++		if (euid != (uid_t) -1 && euid != old->uid &&
++		    euid != old->euid  && euid != old->suid)
++			return -EPERM;
++		if (suid != (uid_t) -1 && suid != old->uid &&
++		    suid != old->euid  && suid != old->suid)
++			return -EPERM;
++	}
++
++	if (ruid != (uid_t) -1) {
++		new->uid = ruid;
++		if (ruid != old->uid) {
++			retval = set_user(new);
++			if (retval < 0)
++				return retval;
++		}
++	}
++	if (euid != (uid_t) -1)
++		new->euid = euid;
++	if (suid != (uid_t) -1)
++		new->suid = suid;
++	new->fsuid = new->euid;
++
++	return security_task_fix_setuid(new, old, LSM_SETID_RES);
 +}
 +
- static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
- {
- 	return &init_user_ns;
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 076c7c8..e624b0f 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -11,15 +11,8 @@
- #include <linux/user_namespace.h>
- #include <linux/cred.h>
- 
--/*
-- * Create a new user namespace, deriving the creator from the user in the
-- * passed credentials, and replacing that user with the new root user for the
-- * new namespace.
-- *
-- * This is called by copy_creds(), which will finish setting the target task's
-- * credentials.
-- */
--int create_user_ns(struct cred *new)
-+static struct user_namespace *_new_user_ns(struct user_struct *creator,
-+				   struct user_struct **newroot)
- {
- 	struct user_namespace *ns;
- 	struct user_struct *root_user;
-@@ -27,7 +20,7 @@ int create_user_ns(struct cred *new)
- 
- 	ns = kmalloc(sizeof(struct user_namespace), GFP_KERNEL);
- 	if (!ns)
--		return -ENOMEM;
-+		return ERR_PTR(-ENOMEM);
- 
- 	kref_init(&ns->kref);
- 
-@@ -38,12 +31,43 @@ int create_user_ns(struct cred *new)
- 	root_user = alloc_uid(ns, 0);
- 	if (!root_user) {
- 		kfree(ns);
--		return -ENOMEM;
-+		return ERR_PTR(-ENOMEM);
- 	}
- 
- 	/* set the new root user in the credentials under preparation */
--	ns->creator = new->user;
--	new->user = root_user;
-+	ns->creator = creator;
++int cred_setresgid(struct cred *new, gid_t rgid, gid_t egid,
++			gid_t sgid)
++{
++	const struct cred *old = current_cred();
++	int retval;
 +
-+	/* alloc_uid() incremented the userns refcount.  Just set it to 1 */
-+	kref_set(&ns->kref, 1);
++	retval = security_task_setgid(rgid, egid, sgid, LSM_SETID_RES);
++	if (retval)
++		return retval;
 +
-+	*newroot = root_user;
-+	return ns;
++	if (!capable(CAP_SETGID)) {
++		if (rgid != (gid_t) -1 && rgid != old->gid &&
++		    rgid != old->egid  && rgid != old->sgid)
++			return -EPERM;
++		if (egid != (gid_t) -1 && egid != old->gid &&
++		    egid != old->egid  && egid != old->sgid)
++			return -EPERM;
++		if (sgid != (gid_t) -1 && sgid != old->gid &&
++		    sgid != old->egid  && sgid != old->sgid)
++			return -EPERM;
++	}
++
++	if (rgid != (gid_t) -1)
++		new->gid = rgid;
++	if (egid != (gid_t) -1)
++		new->egid = egid;
++	if (sgid != (gid_t) -1)
++		new->sgid = sgid;
++	new->fsgid = new->egid;
++	return 0;
 +}
 +
-+struct user_namespace *new_user_ns(struct user_struct *creator,
-+				   struct user_struct **newroot)
++int cred_setfsuid(struct cred *new, uid_t uid, uid_t *old_fsuid)
 +{
-+	if (!capable(CAP_SYS_ADMIN))
-+		return ERR_PTR(-EPERM);
-+	return _new_user_ns(creator, newroot);
++	const struct cred *old;
++
++	old = current_cred();
++	*old_fsuid = old->fsuid;
++
++	if (security_task_setuid(uid, (uid_t)-1, (uid_t)-1, LSM_SETID_FS) < 0)
++		return -EPERM;
++
++	if (uid == old->uid  || uid == old->euid  ||
++	    uid == old->suid || uid == old->fsuid ||
++	    capable(CAP_SETUID)) {
++		if (uid != *old_fsuid) {
++			new->fsuid = uid;
++			if (security_task_fix_setuid(new, old, LSM_SETID_FS) == 0)
++				return 0;
++		}
++	}
++	return -EPERM;
 +}
 +
-+/*
-+ * Create a new user namespace, deriving the creator from the user in the
-+ * passed credentials, and replacing that user with the new root user for the
-+ * new namespace.
-+ *
-+ * This is called by copy_creds(), which will finish setting the target task's
-+ * credentials.
-+ */
-+int create_user_ns(struct cred *new)
++int cred_setfsgid(struct cred *new, gid_t gid, gid_t *old_fsgid)
 +{
-+	struct user_namespace *ns;
++	const struct cred *old;
 +
-+	ns = new_user_ns(new->user, &new->user);
-+	if (IS_ERR(ns))
-+		return PTR_ERR(ns);
++	old = current_cred();
++	*old_fsgid = old->fsgid;
 +
- 	new->uid = new->euid = new->suid = new->fsuid = 0;
- 	new->gid = new->egid = new->sgid = new->fsgid = 0;
- 	put_group_info(new->group_info);
-@@ -54,9 +78,6 @@ int create_user_ns(struct cred *new)
- #endif
- 	/* tgcred will be cleared in our caller bc CLONE_THREAD won't be set */
++	if (security_task_setgid(gid, (gid_t)-1, (gid_t)-1, LSM_SETID_FS))
++		return -EPERM;
++
++	if (gid == old->gid  || gid == old->egid  ||
++	    gid == old->sgid || gid == old->fsgid ||
++	    capable(CAP_SETGID)) {
++		if (gid != *old_fsgid) {
++			new->fsgid = gid;
++			return 0;
++		}
++	}
++	return -EPERM;
++}
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 18bde97..0df737a 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -563,11 +563,12 @@ error:
+ /*
+  * change the user struct in a credentials set to match the new UID
+  */
+-static int set_user(struct cred *new)
++int set_user(struct cred *new)
+ {
+ 	struct user_struct *new_user;
  
--	/* alloc_uid() incremented the userns refcount.  Just set it to 1 */
--	kref_set(&ns->kref, 1);
+-	new_user = alloc_uid(current_user_ns(), new->uid);
++	/* is this ok? */
++	new_user = alloc_uid(new->user->user_ns, new->uid);
+ 	if (!new_user)
+ 		return -EAGAIN;
+ 
+@@ -708,14 +709,12 @@ error:
+ 	return retval;
+ }
+ 
 -
- 	return 0;
+ /*
+  * This function implements a generic ability to update ruid, euid,
+  * and suid.  This allows you to implement the 4.4 compatible seteuid().
+  */
+ SYSCALL_DEFINE3(setresuid, uid_t, ruid, uid_t, euid, uid_t, suid)
+ {
+-	const struct cred *old;
+ 	struct cred *new;
+ 	int retval;
+ 
+@@ -723,45 +722,10 @@ SYSCALL_DEFINE3(setresuid, uid_t, ruid, uid_t, euid, uid_t, suid)
+ 	if (!new)
+ 		return -ENOMEM;
+ 
+-	retval = security_task_setuid(ruid, euid, suid, LSM_SETID_RES);
+-	if (retval)
+-		goto error;
+-	old = current_cred();
+-
+-	retval = -EPERM;
+-	if (!capable(CAP_SETUID)) {
+-		if (ruid != (uid_t) -1 && ruid != old->uid &&
+-		    ruid != old->euid  && ruid != old->suid)
+-			goto error;
+-		if (euid != (uid_t) -1 && euid != old->uid &&
+-		    euid != old->euid  && euid != old->suid)
+-			goto error;
+-		if (suid != (uid_t) -1 && suid != old->uid &&
+-		    suid != old->euid  && suid != old->suid)
+-			goto error;
+-	}
+-
+-	if (ruid != (uid_t) -1) {
+-		new->uid = ruid;
+-		if (ruid != old->uid) {
+-			retval = set_user(new);
+-			if (retval < 0)
+-				goto error;
+-		}
+-	}
+-	if (euid != (uid_t) -1)
+-		new->euid = euid;
+-	if (suid != (uid_t) -1)
+-		new->suid = suid;
+-	new->fsuid = new->euid;
+-
+-	retval = security_task_fix_setuid(new, old, LSM_SETID_RES);
+-	if (retval < 0)
+-		goto error;
+-
+-	return commit_creds(new);
++	retval = cred_setresuid(new, ruid, euid, suid);
++	if (retval == 0)
++		return commit_creds(new);
+ 
+-error:
+ 	abort_creds(new);
+ 	return retval;
+ }
+@@ -783,43 +747,17 @@ SYSCALL_DEFINE3(getresuid, uid_t __user *, ruid, uid_t __user *, euid, uid_t __u
+  */
+ SYSCALL_DEFINE3(setresgid, gid_t, rgid, gid_t, egid, gid_t, sgid)
+ {
+-	const struct cred *old;
+ 	struct cred *new;
+ 	int retval;
+ 
+ 	new = prepare_creds();
+ 	if (!new)
+ 		return -ENOMEM;
+-	old = current_cred();
+ 
+-	retval = security_task_setgid(rgid, egid, sgid, LSM_SETID_RES);
+-	if (retval)
+-		goto error;
++	retval = cred_setresgid(new, rgid, egid, sgid);
++	if (retval == 0)
++		return commit_creds(new);
+ 
+-	retval = -EPERM;
+-	if (!capable(CAP_SETGID)) {
+-		if (rgid != (gid_t) -1 && rgid != old->gid &&
+-		    rgid != old->egid  && rgid != old->sgid)
+-			goto error;
+-		if (egid != (gid_t) -1 && egid != old->gid &&
+-		    egid != old->egid  && egid != old->sgid)
+-			goto error;
+-		if (sgid != (gid_t) -1 && sgid != old->gid &&
+-		    sgid != old->egid  && sgid != old->sgid)
+-			goto error;
+-	}
+-
+-	if (rgid != (gid_t) -1)
+-		new->gid = rgid;
+-	if (egid != (gid_t) -1)
+-		new->egid = egid;
+-	if (sgid != (gid_t) -1)
+-		new->sgid = sgid;
+-	new->fsgid = new->egid;
+-
+-	return commit_creds(new);
+-
+-error:
+ 	abort_creds(new);
+ 	return retval;
+ }
+@@ -836,7 +774,6 @@ SYSCALL_DEFINE3(getresgid, gid_t __user *, rgid, gid_t __user *, egid, gid_t __u
+ 	return retval;
+ }
+ 
+-
+ /*
+  * "setfsuid()" sets the fsuid - the uid used for filesystem checks. This
+  * is used for "access()" and for the NFS daemon (letting nfsd stay at
+@@ -845,35 +782,20 @@ SYSCALL_DEFINE3(getresgid, gid_t __user *, rgid, gid_t __user *, egid, gid_t __u
+  */
+ SYSCALL_DEFINE1(setfsuid, uid_t, uid)
+ {
+-	const struct cred *old;
+ 	struct cred *new;
+ 	uid_t old_fsuid;
++	int retval;
+ 
+ 	new = prepare_creds();
+ 	if (!new)
+ 		return current_fsuid();
+-	old = current_cred();
+-	old_fsuid = old->fsuid;
+-
+-	if (security_task_setuid(uid, (uid_t)-1, (uid_t)-1, LSM_SETID_FS) < 0)
+-		goto error;
+-
+-	if (uid == old->uid  || uid == old->euid  ||
+-	    uid == old->suid || uid == old->fsuid ||
+-	    capable(CAP_SETUID)) {
+-		if (uid != old_fsuid) {
+-			new->fsuid = uid;
+-			if (security_task_fix_setuid(new, old, LSM_SETID_FS) == 0)
+-				goto change_okay;
+-		}
+-	}
+ 
+-error:
+-	abort_creds(new);
+-	return old_fsuid;
++	retval = cred_setfsuid(new, uid, &old_fsuid);
++	if (retval == 0)
++		commit_creds(new);
++	else
++		abort_creds(new);
+ 
+-change_okay:
+-	commit_creds(new);
+ 	return old_fsuid;
+ }
+ 
+@@ -882,34 +804,20 @@ change_okay:
+  */
+ SYSCALL_DEFINE1(setfsgid, gid_t, gid)
+ {
+-	const struct cred *old;
+ 	struct cred *new;
+ 	gid_t old_fsgid;
++	int retval;
+ 
+ 	new = prepare_creds();
+ 	if (!new)
+ 		return current_fsgid();
+-	old = current_cred();
+-	old_fsgid = old->fsgid;
+-
+-	if (security_task_setgid(gid, (gid_t)-1, (gid_t)-1, LSM_SETID_FS))
+-		goto error;
+-
+-	if (gid == old->gid  || gid == old->egid  ||
+-	    gid == old->sgid || gid == old->fsgid ||
+-	    capable(CAP_SETGID)) {
+-		if (gid != old_fsgid) {
+-			new->fsgid = gid;
+-			goto change_okay;
+-		}
+-	}
+ 
+-error:
+-	abort_creds(new);
+-	return old_fsgid;
++	retval = cred_setfsgid(new, gid, &old_fsgid);
++	if (retval == 0)
++		commit_creds(new);
++	else
++		abort_creds(new);
+ 
+-change_okay:
+-	commit_creds(new);
+ 	return old_fsgid;
  }
  
 -- 
