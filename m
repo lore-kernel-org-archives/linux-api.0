@@ -1,8 +1,8 @@
-From: Matt Helsley <matthltc@us.ibm.com>
+From: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [C/R v20][PATCH 46/96] c/r: add checkpoint operation for
  opened files of generic filesystems
-Date: Wed, 17 Mar 2010 16:37:53 -0700
-Message-ID: <20100317233753.GJ3037@count0.beaverton.ibm.com>
+Date: Wed, 17 Mar 2010 16:25:26 -0700
+Message-ID: <20100317232526.GI3037@count0.beaverton.ibm.com>
 References: <1268842164-5590-9-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-10-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-11-git-send-email-orenl@cs.columbia.edu>
@@ -15,18 +15,100 @@ References: <1268842164-5590-9-git-send-email-orenl@cs.columbia.edu>
  <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6@sun.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6@sun.com>
-Sender: owner-linux-mm@kvack.org
-To: Andreas Dilger <adilger@sun.com>
-Cc: Oren Laadan <orenl@cs.columbia.edu>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Matt Helsley <matthltc@us.ibm.com>, linux-fsdevel@vger.kernel.org
+In-Reply-To: <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6-xsfywfwIY+M@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Dilger <adilger-xsfywfwIY+M@public.gmane.org>
+Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On Wed, Mar 17, 2010 at 03:09:00PM -0600, Andreas Dilger wrote:
+> On 2010-03-17, at 10:08, Oren Laadan wrote:
+> >These patches extend the use of the generic file checkpoint
+> >operation to
+> >non-extX filesystems which have lseek operations that ensure we
+> >can save
+> >and restore the files for later use. Note that this does not include
+> >things like FUSE, network filesystems, or pseudo-filesystem kernel
+> >interfaces.
+> 
+> I didn't see any other patches posted to linux-fsdevel regarding
+> what this code is, or what it is supposed to be doing.  Could you
+> please repost the patches related to generic_file_checkpoint(), and
 
-<snip> (already responded to the first part)
+I'm not sure why those weren't sent to linux-fsdevel. It mainly saves
+the critical pieces of kernel information from the struct file needed
+to restart the open file descriptors. It does not save the file
+(system) contents in the checkpoint image. That's left for proper
+filesystem freezing, snapshotting, or rsync (for example) depending on
+the tools and/or filesystems userspace has chosen.
 
+> the overview email that explains what you mean by "checkpoint".  I'm
+> assuming this is related to HPC/process restart/migration, but
+> better to not guess.
+
+Your assumption is correct -- this is related to HPC/process
+restart/migration. That said, we'd like to make it as useful as
+possible for other folks as well.
+
+> 
+> >@@ -718,6 +718,7 @@ static const struct file_operations
+> >btrfs_ctl_fops = {
+> >	.unlocked_ioctl	 = btrfs_control_ioctl,
+> >	.compat_ioctl = btrfs_control_ioctl,
+> >	.owner	 = THIS_MODULE,
+> >+	.checkpoint = generic_file_checkpoint,
+> >};
+> >
+> >const struct file_operations exofs_file_operations = {
+> >	.llseek		= generic_file_llseek,
+> >+	.checkpoint	= generic_file_checkpoint,
+> >	.read		= do_sync_read,
+> >	.write		= do_sync_write,
+> >	.aio_read	= generic_file_aio_read,
+> >
+> >static const struct file_operations hostfs_file_fops = {
+> >	.llseek		= generic_file_llseek,
+> >+	.checkpoint	= generic_file_checkpoint,
+> >	.read		= do_sync_read,
+> >	.splice_read	= generic_file_splice_read,
+> >	.aio_read	= generic_file_aio_read,
+> >@@ -430,6 +431,7 @@ static const struct file_operations
+> >hostfs_file_fops = {
+> >
+> >static const struct file_operations hostfs_dir_fops = {
+> >	.llseek		= generic_file_llseek,
+> >+	.checkpoint	= generic_file_checkpoint,
+> >	.readdir	= hostfs_readdir,
+> >	.read		= generic_read_dir,
+> >};
+> >
+> >const struct file_operations nilfs_file_operations = {
+> >	.llseek		= generic_file_llseek,
+> >+	.checkpoint	= generic_file_checkpoint,
+> >	.read		= do_sync_read,
+> >	.write		= do_sync_write,
+> >	.aio_read	= generic_file_aio_read,
+> 
+> 
+> Minor nit - it would be good to add this method in the same place in
+> all of the *_file_operation structures for consistency.  Ideally
+> these would already be in the order that they are declared in the
+> structure, but at least new ones should be added consistently.
+
+I chose to put them right after llseek because that's a critical
+operation that determines whether generic_file_checkpoint is suitable
+or whether a custom operation is needed. Since the placement here
+has nothing to do with the order in memory it's mainly a convention
+I thought up to support review of copy-pasted file operations with
+new .checkpoint ops.
+
+I'll post a patch to move these down to correspond to definition-order
+unless you agree that my reasoning above justifies keeping them
+where they are.
+
+> 
 > >static const struct vm_operations_struct nfs_file_vm_ops = {
 > >	.fault = filemap_fault,
 > >	.page_mkwrite = nfs_vm_page_mkwrite,
@@ -37,59 +119,14 @@ On Wed, Mar 17, 2010 at 03:09:00PM -0600, Andreas Dilger wrote:
 > 
 > Why is this one conditional, but the others are not?
 
-Something like this perhaps (untested, but it should work).
+filemap_checkpoint is defined in mm/filemap.c and the !CONFIG_CHECKPOINT
+section has:
 
-    Move empty filemap_checkpoint definition
-    
-    This makes the operation usable in the nfs vm operation structure
-    and avoids the extra #ifdef.
-    
-    Signed-off-by: Matt Helsley <matthltc@us.ibm.com>
-    Cc: Andreas Dilger <adilger@sun.com>
+#define filemap_checkpoint NULL
 
-diff --git a/fs/nfs/file.c b/fs/nfs/file.c
-index 4437ef9..c6f9090 100644
---- a/fs/nfs/file.c
-+++ b/fs/nfs/file.c
-@@ -578,9 +578,7 @@ out_unlock:
- static const struct vm_operations_struct nfs_file_vm_ops = {
- 	.fault = filemap_fault,
- 	.page_mkwrite = nfs_vm_page_mkwrite,
--#ifdef CONFIG_CHECKPOINT
- 	.checkpoint = filemap_checkpoint,
--#endif
- };
- 
- static int nfs_need_sync_write(struct file *filp, struct inode *inode)
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 210d8e3..e9d9605 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -1206,6 +1206,8 @@ extern int filemap_fault(struct vm_area_struct *, struct vm_fault *);
- #ifdef CONFIG_CHECKPOINT
- /* generic vm_area_ops exported for mapped files checkpoint */
- extern int filemap_checkpoint(struct ckpt_ctx *, struct vm_area_struct *);
-+#else /* !CONFIG_CHECKPOINT */
-+#define filemap_checkpoint NULL
- #endif
- 
- /* mm/page-writeback.c */
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 4ea28e6..bc98a15 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -1678,8 +1678,6 @@ int filemap_restore(struct ckpt_ctx *ctx,
- 	}
- 	return ret;
- }
--#else /* !CONFIG_CHECKPOINT */
--#define filemap_checkpoint NULL
- #endif
- 
- const struct vm_operations_struct generic_file_vm_ops = {
+Of course since it's not in a header file that define is useless
+elsewhere hence the conditional here. We should move that to a
+proper header. Good catch, thanks!
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Cheers,
+	-Matt Helsley
