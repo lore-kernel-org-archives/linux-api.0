@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 89/96] powerpc: checkpoint/restart implementation
-Date: Wed, 17 Mar 2010 12:09:17 -0400
-Message-ID: <1268842164-5590-90-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 92/96] c/r: add lsm name and lsm_info (policy header) to container info
+Date: Wed, 17 Mar 2010 12:09:20 -0400
+Message-ID: <1268842164-5590-93-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -91,681 +91,487 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-87-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-88-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-89-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-90-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-91-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-92-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-89-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-92-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Nathan Lynch <ntl@pobox.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-From: Nathan Lynch <ntl@pobox.com>
+From: Serge E. Hallyn <serue@us.ibm.com>
 
-Support for checkpointing and restarting GPRs, FPU state, DABR, and
-Altivec state.
+The LSM name is 'selinux', 'smack', 'tomoyo', or 'dummy'.  We
+add that to the container configuration section.  We also add
+a LSM policy configuration section.  That is placed after the LSM
+name.  It is written by the LSM in security_checkpoint_header(),
+called during checkpoint container(), and read by the LSM during
+security_may_restart(), which is called from restore_lsm() in
+restore_container().
 
-The portion of the checkpoint image manipulated by this code begins
-with a bitmask of features indicating the various contexts saved.
-Fields in image that can vary depending on kernel configuration
-(e.g. FP regs due to VSX) have their sizes explicitly recorded, except
-for GPRS, so migrating between ppc32 and ppc64 won't work yet.
-
-The restart code ensures that the task is not modified until the
-checkpoint image is validated against the current kernel configuration
-and hardware features (e.g. can't restart a task using Altivec on
-non-Altivec systems).
-
-What works:
-* self and external checkpoint of simple (single thread, one open
-  file) 32- and 64-bit processes on a ppc64 kernel
-
-What doesn't work:
-* restarting a 32-bit task from a 64-bit task and vice versa
-
-Untested:
-* ppc32 (but it builds)
-
-Changelog[v19]:
-  - [Serge Hallyn] Add hook task_has_saved_sigmask()
-Changelog[v19-rc3]:
-  - [Oren Laadan] Move checkpoint.c from arch/powerpc/{mm->kernel}
-  - [Nathan Lynch] Warn if full register state unavailable
-
-Signed-off-by: Nathan Lynch <ntl@pobox.com>
-Acked-by: Serge E. Hallyn <serue@us.ibm.com>
-[Oren Laadan <orenl@cs.columbia.edu>] Add arch-specific tty support
+Signed-off-by: Serge E. Hallyn <serue@us.ibm.com>
+Acked-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- arch/powerpc/include/asm/Kbuild           |    1 +
- arch/powerpc/include/asm/checkpoint_hdr.h |   37 ++
- arch/powerpc/kernel/Makefile              |    1 +
- arch/powerpc/kernel/checkpoint.c          |  533 +++++++++++++++++++++++++++++
- arch/powerpc/kernel/signal.c              |    6 +
- 5 files changed, 578 insertions(+), 0 deletions(-)
- create mode 100644 arch/powerpc/include/asm/checkpoint_hdr.h
- create mode 100644 arch/powerpc/kernel/checkpoint.c
+ Documentation/checkpoint/readme.txt |   24 ++++++++++++++
+ checkpoint/checkpoint.c             |   13 +++++++-
+ checkpoint/restart.c                |   41 +++++++++++++++++++++++
+ checkpoint/sys.c                    |   22 ++++++++++++
+ include/linux/checkpoint.h          |    6 +++
+ include/linux/checkpoint_hdr.h      |   16 +++++++++
+ include/linux/checkpoint_types.h    |    2 +
+ include/linux/security.h            |   61 +++++++++++++++++++++++++++++++++++
+ security/capability.c               |   25 ++++++++++++++
+ security/security.c                 |   26 +++++++++++++++
+ 10 files changed, 235 insertions(+), 1 deletions(-)
 
-diff --git a/arch/powerpc/include/asm/Kbuild b/arch/powerpc/include/asm/Kbuild
-index 5ab7d7f..20379f1 100644
---- a/arch/powerpc/include/asm/Kbuild
-+++ b/arch/powerpc/include/asm/Kbuild
-@@ -12,6 +12,7 @@ header-y += shmbuf.h
- header-y += socket.h
- header-y += termbits.h
- header-y += fcntl.h
-+header-y += checkpoint_hdr.h
- header-y += poll.h
- header-y += sockios.h
- header-y += ucontext.h
-diff --git a/arch/powerpc/include/asm/checkpoint_hdr.h b/arch/powerpc/include/asm/checkpoint_hdr.h
-new file mode 100644
-index 0000000..fbb1705
---- /dev/null
-+++ b/arch/powerpc/include/asm/checkpoint_hdr.h
-@@ -0,0 +1,37 @@
-+#ifndef __ASM_POWERPC_CKPT_HDR_H
-+#define __ASM_POWERPC_CKPT_HDR_H
-+
-+#include <linux/types.h>
-+
-+/* arch dependent constants */
-+#define CKPT_ARCH_NSIG 64
-+#define CKPT_TTY_NCC  10
-+
-+#ifdef __KERNEL__
-+
-+#include <asm/signal.h>
-+#if CKPT_ARCH_NSIG != _NSIG
-+#error CKPT_ARCH_NSIG size is wrong per asm/signal.h and asm/checkpoint_hdr.h
-+#endif
-+
-+#include <linux/tty.h>
-+#if CKPT_TTY_NCC != NCC
-+#error CKPT_TTY_NCC size is wrong per asm-generic/termios.h
-+#endif
-+
-+#endif /* __KERNEL__ */
-+
-+#ifdef __KERNEL__
-+#ifdef CONFIG_PPC64
-+#define CKPT_ARCH_ID CKPT_ARCH_PPC64
-+#else
-+#define CKPT_ARCH_ID CKPT_ARCH_PPC32
-+#endif
-+#endif
-+
-+struct ckpt_hdr_header_arch {
-+	struct ckpt_hdr h;
-+	__u32 what;
-+} __attribute__((aligned(8)));
-+
-+#endif /* __ASM_POWERPC_CKPT_HDR_H */
-diff --git a/arch/powerpc/kernel/Makefile b/arch/powerpc/kernel/Makefile
-index c002b04..b5bd090 100644
---- a/arch/powerpc/kernel/Makefile
-+++ b/arch/powerpc/kernel/Makefile
-@@ -63,6 +63,7 @@ obj64-$(CONFIG_HIBERNATION)	+= swsusp_asm64.o
- obj-$(CONFIG_MODULES)		+= module.o module_$(CONFIG_WORD_SIZE).o
- obj-$(CONFIG_44x)		+= cpu_setup_44x.o
- obj-$(CONFIG_FSL_BOOKE)		+= cpu_setup_fsl_booke.o dbell.o
-+obj-$(CONFIG_CHECKPOINT)	+= checkpoint.o
+diff --git a/Documentation/checkpoint/readme.txt b/Documentation/checkpoint/readme.txt
+index 2548bb4..030a001 100644
+--- a/Documentation/checkpoint/readme.txt
++++ b/Documentation/checkpoint/readme.txt
+@@ -343,6 +343,30 @@ So that's why we don't want CAP_SYS_ADMIN required up-front. That way
+ we will be forced to more carefully review each of those features.
+ However, this can be controlled with a sysctl-variable.
  
- extra-y				:= head_$(CONFIG_WORD_SIZE).o
- extra-$(CONFIG_PPC_BOOK3E_32)	:= head_new_booke.o
-diff --git a/arch/powerpc/kernel/checkpoint.c b/arch/powerpc/kernel/checkpoint.c
-new file mode 100644
-index 0000000..2634011
---- /dev/null
-+++ b/arch/powerpc/kernel/checkpoint.c
-@@ -0,0 +1,533 @@
-+/*
-+ * PowerPC architecture support for checkpoint/restart.
-+ * Based on x86 implementation.
-+ *
-+ * Copyright (C) 2008 Oren Laadan
-+ * Copyright 2009 IBM Corp.
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License version
-+ * 2 as published by the Free Software Foundation.
-+ */
-+
-+#if 0
-+#define DEBUG
-+#endif
-+
-+#include <linux/checkpoint.h>
-+#include <linux/checkpoint_hdr.h>
-+#include <linux/kernel.h>
-+#include <asm/processor.h>
-+#include <asm/ptrace.h>
-+#include <asm/system.h>
-+
-+enum ckpt_cpu_feature {
-+	CKPT_USED_FP,
-+	CKPT_USED_DEBUG,
-+	CKPT_USED_ALTIVEC,
-+	CKPT_USED_SPE,
-+	CKPT_USED_VSX,
-+	CKPT_FTR_END = 31,
-+};
-+
-+#define x(ftr) (1UL << ftr)
-+
-+/* features this kernel can handle for restart */
-+enum {
-+	CKPT_FTRS_POSSIBLE =
-+#ifdef CONFIG_PPC_FPU
-+	x(CKPT_USED_FP) |
-+#endif
-+	x(CKPT_USED_DEBUG) |
-+#ifdef CONFIG_ALTIVEC
-+	x(CKPT_USED_ALTIVEC) |
-+#endif
-+#ifdef CONFIG_SPE
-+	x(CKPT_USED_SPE) |
-+#endif
-+#ifdef CONFIG_VSX
-+	x(CKPT_USED_VSX) |
-+#endif
-+	0,
-+};
-+
-+#undef x
-+
-+struct ckpt_hdr_cpu {
-+	struct ckpt_hdr h;
-+	u32 features_used;
-+	u32 pt_regs_size;
-+	u32 fpr_size;
-+	u64 orig_gpr3;
-+	struct pt_regs pt_regs;
-+	/* relevant fields from thread_struct */
-+	double fpr[32][TS_FPRWIDTH];
-+	u32 fpscr;
-+	s32 fpexc_mode;
-+	u64 dabr;
-+	/* Altivec/VMX state */
-+	vector128 vr[32];
-+	vector128 vscr;
-+	u64 vrsave;
-+	/* SPE state */
-+	u32 evr[32];
-+	u64 acc;
-+	u32 spefscr;
-+};
-+
-+/**************************************************************************
-+ * Checkpoint
-+ */
-+
-+static void ckpt_cpu_feature_set(struct ckpt_hdr_cpu *hdr,
-+				 enum ckpt_cpu_feature ftr)
-+{
-+	hdr->features_used |= 1ULL << ftr;
-+}
-+
-+static bool ckpt_cpu_feature_isset(const struct ckpt_hdr_cpu *hdr,
-+				 enum ckpt_cpu_feature ftr)
-+{
-+	return hdr->features_used & (1ULL << ftr);
-+}
-+
-+/* determine whether an image has feature bits set that this kernel
-+ * does not support */
-+static bool ckpt_cpu_features_unknown(const struct ckpt_hdr_cpu *hdr)
-+{
-+	return hdr->features_used & ~CKPT_FTRS_POSSIBLE;
-+}
-+
-+static void checkpoint_gprs(struct ckpt_hdr_cpu *cpu_hdr,
-+			    struct task_struct *task)
-+{
-+	struct pt_regs *pt_regs;
-+
-+	pr_debug("%s: saving GPRs\n", __func__);
-+
-+	cpu_hdr->pt_regs_size = sizeof(*pt_regs);
-+	pt_regs = task_pt_regs(task);
-+	WARN_ON(!FULL_REGS(pt_regs));
-+
-+	cpu_hdr->pt_regs = *pt_regs;
-+
-+	if (task == current)
-+		cpu_hdr->pt_regs.gpr[3] = 0;
-+
-+	cpu_hdr->orig_gpr3 = pt_regs->orig_gpr3;
-+}
-+
-+#ifdef CONFIG_PPC_FPU
-+static void checkpoint_fpu(struct ckpt_hdr_cpu *cpu_hdr,
-+			   struct task_struct *task)
-+{
-+	/* easiest to save FP state unconditionally */
-+
-+	pr_debug("%s: saving FPU state\n", __func__);
-+
-+	if (task == current)
-+		flush_fp_to_thread(task);
-+
-+	cpu_hdr->fpr_size = sizeof(cpu_hdr->fpr);
-+	cpu_hdr->fpscr = task->thread.fpscr.val;
-+	cpu_hdr->fpexc_mode = task->thread.fpexc_mode;
-+
-+	memcpy(cpu_hdr->fpr, task->thread.fpr, sizeof(cpu_hdr->fpr));
-+
-+	ckpt_cpu_feature_set(cpu_hdr, CKPT_USED_FP);
-+}
-+#else
-+static void checkpoint_fpu(struct ckpt_hdr_cpu *cpu_hdr,
-+			   struct task_struct *task)
-+{
-+	return;
-+}
-+#endif
-+
-+#ifdef CONFIG_ALTIVEC
-+static void checkpoint_altivec(struct ckpt_hdr_cpu *cpu_hdr,
-+			       struct task_struct *task)
-+{
-+	if (!cpu_has_feature(CPU_FTR_ALTIVEC))
-+		return;
-+
-+	if (!task->thread.used_vr)
-+		return;
-+
-+	pr_debug("%s: saving Altivec state\n", __func__);
-+
-+	if (task == current)
-+		flush_altivec_to_thread(task);
-+
-+	cpu_hdr->vrsave = task->thread.vrsave;
-+	memcpy(cpu_hdr->vr, task->thread.vr, sizeof(cpu_hdr->vr));
-+	ckpt_cpu_feature_set(cpu_hdr, CKPT_USED_ALTIVEC);
-+}
-+#else
-+static void checkpoint_altivec(struct ckpt_hdr_cpu *cpu_hdr,
-+			       struct task_struct *task)
-+{
-+	return;
-+}
-+#endif
-+
-+#ifdef CONFIG_SPE
-+static void checkpoint_spe(struct ckpt_hdr_cpu *cpu_hdr,
-+			   struct task_struct *task)
-+{
-+	if (!cpu_has_feature(CPU_FTR_SPE))
-+		return;
-+
-+	if (!task->thread.used_spe)
-+		return;
-+
-+	pr_debug("%s: saving SPE state\n", __func__);
-+
-+	if (task == current)
-+		flush_spe_to_thread(task);
-+
-+	cpu_hdr->acc = task->thread.acc;
-+	cpu_hdr->spefscr = task->thread.spefscr;
-+	memcpy(cpu_hdr->evr, task->thread.evr, sizeof(cpu_hdr->evr));
-+	ckpt_cpu_feature_set(cpu_hdr, CKPT_USED_SPE);
-+}
-+#else
-+static void checkpoint_spe(struct ckpt_hdr_cpu *cpu_hdr,
-+			   struct task_struct *task)
-+{
-+	return;
-+}
-+#endif
-+
-+static void checkpoint_dabr(struct ckpt_hdr_cpu *cpu_hdr,
-+			    const struct task_struct *task)
-+{
-+	if (!task->thread.dabr)
-+		return;
-+
-+	cpu_hdr->dabr = task->thread.dabr;
-+	ckpt_cpu_feature_set(cpu_hdr, CKPT_USED_DEBUG);
-+}
-+
-+/* dump the thread_struct of a given task */
-+int checkpoint_thread(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	return 0;
-+}
-+
-+/* dump the cpu state and registers of a given task */
-+int checkpoint_cpu(struct ckpt_ctx *ctx, struct task_struct *t)
-+{
-+	struct ckpt_hdr_cpu *cpu_hdr;
-+	int rc;
-+
-+	rc = -ENOMEM;
-+	cpu_hdr = ckpt_hdr_get_type(ctx, sizeof(*cpu_hdr), CKPT_HDR_CPU);
-+	if (!cpu_hdr)
-+		goto err;
-+
-+	checkpoint_gprs(cpu_hdr, t);
-+	checkpoint_fpu(cpu_hdr, t);
-+	checkpoint_dabr(cpu_hdr, t);
-+	checkpoint_altivec(cpu_hdr, t);
-+	checkpoint_spe(cpu_hdr, t);
-+
-+	rc = ckpt_write_obj(ctx, (struct ckpt_hdr *) cpu_hdr);
-+err:
-+	ckpt_hdr_put(ctx, cpu_hdr);
-+	return rc;
-+}
-+
-+int checkpoint_write_header_arch(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_header_arch *arch_hdr;
-+	int ret;
-+
-+	arch_hdr = ckpt_hdr_get_type(ctx, sizeof(*arch_hdr),
-+				     CKPT_HDR_HEADER_ARCH);
-+	if (!arch_hdr)
-+		return -ENOMEM;
-+
-+	arch_hdr->what = 0xdeadbeef;
-+
-+	ret = ckpt_write_obj(ctx, &arch_hdr->h);
-+	ckpt_hdr_put(ctx, arch_hdr);
-+
-+	return ret;
-+}
-+
-+/* dump the mm->context state */
-+int checkpoint_mm_context(struct ckpt_ctx *ctx, struct mm_struct *mm)
-+{
-+	return 0;
-+}
-+
-+/**************************************************************************
-+ * Restart
-+ */
-+
-+/* read the thread_struct into the current task */
-+int restore_thread(struct ckpt_ctx *ctx)
-+{
-+	return 0;
-+}
-+
-+/* Based on the MSR value from a checkpoint image, produce an MSR
-+ * value that is appropriate for the restored task.  Right now we only
-+ * check for MSR_SF (64-bit) for PPC64.
-+ */
-+static unsigned long sanitize_msr(unsigned long msr_ckpt)
-+{
-+#ifdef CONFIG_PPC32
-+	return MSR_USER;
-+#else
-+	if (msr_ckpt & MSR_SF)
-+		return MSR_USER64;
-+	return MSR_USER32;
-+#endif
-+}
-+
-+static int restore_gprs(const struct ckpt_hdr_cpu *cpu_hdr,
-+			struct task_struct *task, bool update)
-+{
-+	struct pt_regs *regs;
-+	int rc;
-+
-+	rc = -EINVAL;
-+	if (cpu_hdr->pt_regs_size != sizeof(*regs))
-+		goto out;
-+
-+	rc = 0;
-+	if (!update)
-+		goto out;
-+
-+	regs = task_pt_regs(task);
-+	*regs = cpu_hdr->pt_regs;
-+
-+	regs->orig_gpr3 = cpu_hdr->orig_gpr3;
-+
-+	regs->msr = sanitize_msr(regs->msr);
-+out:
-+	return rc;
-+}
-+
-+#ifdef CONFIG_PPC_FPU
-+static int restore_fpu(const struct ckpt_hdr_cpu *cpu_hdr,
-+		       struct task_struct *task, bool update)
-+{
-+	int rc;
-+
-+	rc = -EINVAL;
-+	if (cpu_hdr->fpr_size != sizeof(task->thread.fpr))
-+		goto out;
-+
-+	rc = 0;
-+	if (!update || !ckpt_cpu_feature_isset(cpu_hdr, CKPT_USED_FP))
-+		goto out;
-+
-+	task->thread.fpscr.val = cpu_hdr->fpscr;
-+	task->thread.fpexc_mode = cpu_hdr->fpexc_mode;
-+
-+	memcpy(task->thread.fpr, cpu_hdr->fpr, sizeof(task->thread.fpr));
-+out:
-+	return rc;
-+}
-+#else
-+static int restore_fpu(const struct ckpt_hdr_cpu *cpu_hdr,
-+		       struct task_struct *task, bool update)
-+{
-+	WARN_ON_ONCE(ckpt_cpu_feature_isset(cpu_hdr, CKPT_USED_FP));
-+	return 0;
-+}
-+#endif
-+
-+static int restore_dabr(const struct ckpt_hdr_cpu *cpu_hdr,
-+			struct task_struct *task, bool update)
-+{
-+	int rc;
-+
-+	rc = 0;
-+	if (!ckpt_cpu_feature_isset(cpu_hdr, CKPT_USED_DEBUG))
-+		goto out;
-+
-+	rc = -EINVAL;
-+	if (!debugreg_valid(cpu_hdr->dabr, 0))
-+		goto out;
-+
-+	rc = 0;
-+	if (!update)
-+		goto out;
-+
-+	debugreg_update(task, cpu_hdr->dabr, 0);
-+out:
-+	return rc;
-+}
-+
-+#ifdef CONFIG_ALTIVEC
-+static int restore_altivec(const struct ckpt_hdr_cpu *cpu_hdr,
-+			   struct task_struct *task, bool update)
-+{
-+	int rc;
-+
-+	rc = 0;
-+	if (!ckpt_cpu_feature_isset(cpu_hdr, CKPT_USED_ALTIVEC))
-+		goto out;
-+
-+	rc = -EINVAL;
-+	if (!cpu_has_feature(CPU_FTR_ALTIVEC))
-+		goto out;
-+
-+	rc = 0;
-+	if (!update)
-+		goto out;
-+
-+	task->thread.vrsave = cpu_hdr->vrsave;
-+	task->thread.used_vr = 1;
-+
-+	memcpy(task->thread.vr, cpu_hdr->vr, sizeof(cpu_hdr->vr));
-+out:
-+	return rc;
-+}
-+#else
-+static int restore_altivec(const struct ckpt_hdr_cpu *cpu_hdr,
-+			   struct task_struct *task, bool update)
-+{
-+	WARN_ON_ONCE(ckpt_cpu_feature_isset(CKPT_USED_ALTIVEC));
-+	return 0;
-+}
-+#endif
-+
-+#ifdef CONFIG_SPE
-+static int restore_spe(const struct ckpt_hdr_cpu *cpu_hdr,
-+		       struct task_struct *task, bool update)
-+{
-+	int rc;
-+
-+	rc = 0;
-+	if (!ckpt_cpu_feature_isset(cpu_hdr, CKPT_USED_SPE))
-+		goto out;
-+
-+	rc = -EINVAL;
-+	if (!cpu_has_feature(CPU_FTR_SPE))
-+		goto out;
-+
-+	rc = 0;
-+	if (!update)
-+		goto out;
-+
-+	task->thread.acc = cpu_hdr->acc;
-+	task->thread.spefscr = cpu_hdr->spefscr;
-+	task->thread.used_spe = 1;
-+
-+	memcpy(task->thread.evr, cpu_hdr->evr, sizeof(cpu_hdr->evr));
-+out:
-+	return rc;
-+}
-+#else
-+static int restore_spe(const struct ckpt_hdr_cpu *cpu_hdr,
-+		       struct task_struct *task, bool update)
-+{
-+	WARN_ON_ONCE(ckpt_cpu_feature_isset(cpu_hdr, CKPT_USED_SPE));
-+	return 0;
-+}
-+#endif
-+
-+struct restore_func_desc {
-+	int (*func)(const struct ckpt_hdr_cpu *, struct task_struct *, bool);
-+	const char *info;
-+};
-+
-+typedef int (*restore_func_t)(const struct ckpt_hdr_cpu *,
-+			      struct task_struct *, bool);
-+
-+static const restore_func_t restore_funcs[] = {
-+	restore_gprs,
-+	restore_fpu,
-+	restore_dabr,
-+	restore_altivec,
-+	restore_spe,
-+};
-+
-+static bool bitness_match(const struct ckpt_hdr_cpu *cpu_hdr,
-+			  const struct task_struct *task)
-+{
-+	/* 64-bit image */
-+	if (cpu_hdr->pt_regs.msr & MSR_SF) {
-+		if (task->thread.regs->msr & MSR_SF)
-+			return true;
-+		else
-+			return false;
-+	}
-+
-+	/* 32-bit image */
-+	if (task->thread.regs->msr & MSR_SF)
-+		return false;
-+
-+	return true;
-+}
-+
-+int restore_cpu(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_cpu *cpu_hdr;
-+	bool update;
-+	int rc;
-+	int i;
-+
-+	cpu_hdr = ckpt_read_obj_type(ctx, sizeof(*cpu_hdr), CKPT_HDR_CPU);
-+	if (IS_ERR(cpu_hdr))
-+		return PTR_ERR(cpu_hdr);
-+
-+	rc = -EINVAL;
-+	if (ckpt_cpu_features_unknown(cpu_hdr))
-+		goto err;
-+
-+	/* temporary: restoring a 32-bit image from a 64-bit task and
-+	 * vice-versa is known not to work (probably not restoring
-+	 * thread_info correctly); detect this and fail gracefully.
-+	 */
-+	if (!bitness_match(cpu_hdr, current))
-+		goto err;
-+
-+	/* We want to determine whether there's anything wrong with
-+	 * the checkpoint image before changing the task at all.  Run
-+	 * a "check" phase (update = false) first.
-+	 */
-+	update = false;
-+commit:
-+	for (i = 0; i < ARRAY_SIZE(restore_funcs); i++) {
-+		rc = restore_funcs[i](cpu_hdr, current, update);
-+		if (rc == 0)
-+			continue;
-+		pr_debug("%s: restore_func[%i] failed\n", __func__, i);
-+		WARN_ON_ONCE(update);
-+		goto err;
-+	}
-+
-+	if (!update) {
-+		update = true;
-+		goto commit;
-+	}
-+
-+err:
-+	ckpt_hdr_put(ctx, cpu_hdr);
-+	return rc;
-+}
-+
-+int restore_read_header_arch(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_header_arch *arch_hdr;
-+
-+	arch_hdr = ckpt_read_obj_type(ctx, sizeof(*arch_hdr),
-+				      CKPT_HDR_HEADER_ARCH);
-+	if (IS_ERR(arch_hdr))
-+		return PTR_ERR(arch_hdr);
-+
-+	ckpt_hdr_put(ctx, arch_hdr);
-+
-+	return 0;
-+}
-+
-+int restore_mm_context(struct ckpt_ctx *ctx, struct mm_struct *mm)
-+{
-+	return 0;
-+}
-diff --git a/arch/powerpc/kernel/signal.c b/arch/powerpc/kernel/signal.c
-index 00b5078..701a064 100644
---- a/arch/powerpc/kernel/signal.c
-+++ b/arch/powerpc/kernel/signal.c
-@@ -188,6 +188,12 @@ static int do_signal_pending(sigset_t *oldset, struct pt_regs *regs)
++LSM
++===
++
++Security modules use custom labels on subjects and objects to
++further mediate access decisions beyond DAC controls.  When
++checkpoint applications, these labels are [ work in progress ]
++checkpointed along with the objects.  At restart, the
++RESTART_KEEP_LSM flag tells the kernel whether re-created objects
++whould keep their checkpointed labels, or get automatically
++recalculated labels.  Since checkpointed labels will only make
++sense to the same LSM which was active at checkpoint time,
++sys_restart() with the RESTART_KEEP_LSM flag will fail with
++-EINVAL if the LSM active at restart is not the same as that
++active at checkpoint.  If RESTART_KEEP_LSM is not specified,
++then objects will be given whatever default labels the LSM and
++their optional policy decide.  Of course, when RESTART_KEEP_LSM
++is specified, the LSM may choose a different label than the
++checkpointed one, or fail the entire restart if the caller
++does not have permission to create objects with the checkpointed
++label.
++
++It should always be safe to take a checkpoint of an application
++under LSM_1, and restart it without the RESTART_KEEP_LSM flag
++under LSM_2.
+ 
+ Sockets
+ =======
+diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
+index aaa8500..f27af41 100644
+--- a/checkpoint/checkpoint.c
++++ b/checkpoint/checkpoint.c
+@@ -191,7 +191,18 @@ static int checkpoint_container(struct ckpt_ctx *ctx)
+ 	ret = ckpt_write_obj(ctx, &h->h);
+ 	ckpt_hdr_put(ctx, h);
+ 
+-	return ret;
++	if (ret < 0)
++		return ret;
++
++	memset(ctx->lsm_name, 0, CHECKPOINT_LSM_NAME_MAX + 1);
++	strlcpy(ctx->lsm_name, security_get_lsm_name(),
++				CHECKPOINT_LSM_NAME_MAX + 1);
++	ret = ckpt_write_buffer(ctx, ctx->lsm_name,
++				CHECKPOINT_LSM_NAME_MAX + 1);
++	if (ret < 0)
++		return ret;
++
++	return security_checkpoint_header(ctx);
+ }
+ 
+ /* write the checkpoint trailer */
+diff --git a/checkpoint/restart.c b/checkpoint/restart.c
+index 6f206a3..cfcb62b 100644
+--- a/checkpoint/restart.c
++++ b/checkpoint/restart.c
+@@ -656,6 +656,42 @@ static int restore_read_header(struct ckpt_ctx *ctx)
  	return ret;
  }
  
-+int task_has_saved_sigmask(struct task_struct *task)
++/* read the LSM configuration section */
++static int restore_lsm(struct ckpt_ctx *ctx)
 +{
-+	struct thread_info *ti = task_thread_info(task);
-+	return !!(ti->local_flags & _TLF_RESTORE_SIGMASK);
++	int ret;
++	char *cur_lsm = security_get_lsm_name();
++
++	ret = _ckpt_read_buffer(ctx, ctx->lsm_name,
++				CHECKPOINT_LSM_NAME_MAX + 1);
++	if (ret < 0) {
++		ckpt_debug("Error %d reading lsm name\n", ret);
++		return ret;
++	}
++
++	if (!(ctx->uflags & RESTART_KEEP_LSM))
++		goto skip_lsm;
++
++	if (strncmp(cur_lsm, ctx->lsm_name, CHECKPOINT_LSM_NAME_MAX + 1) != 0) {
++		ckpt_debug("c/r: checkpointed LSM %s, current is %s.\n",
++			ctx->lsm_name, cur_lsm);
++		return -EPERM;
++	}
++
++	if (strcmp(ctx->lsm_name, "lsm_none") != 0 &&
++			strcmp(ctx->lsm_name, "default") != 0) {
++		ckpt_debug("c/r: RESTART_KEEP_LSM unsupported for %s\n",
++				ctx->lsm_name);
++		return -ENOSYS;
++	}
++
++skip_lsm:
++	ret = security_may_restart(ctx);
++	if (ret < 0)
++		ckpt_debug("security_may_restart returned %d\n", ret);
++	return ret;
 +}
 +
- void do_signal(struct pt_regs *regs, unsigned long thread_info_flags)
+ /* read the container configuration section */
+ static int restore_container(struct ckpt_ctx *ctx)
  {
- 	if (thread_info_flags & _TIF_SIGPENDING)
+@@ -667,6 +703,11 @@ static int restore_container(struct ckpt_ctx *ctx)
+ 		return PTR_ERR(h);
+ 	ckpt_hdr_put(ctx, h);
+ 
++	/* read the LSM name and info which follow ("are a part of")
++	 * the ckpt_hdr_container */
++	ret = restore_lsm(ctx);
++	if (ret < 0)
++		ckpt_debug("Error %d on LSM configuration\n", ret);
+ 	return ret;
+ }
+ 
+diff --git a/checkpoint/sys.c b/checkpoint/sys.c
+index 62f49ad..9e9df9b 100644
+--- a/checkpoint/sys.c
++++ b/checkpoint/sys.c
+@@ -181,6 +181,28 @@ void *ckpt_hdr_get_type(struct ckpt_ctx *ctx, int len, int type)
+ }
+ EXPORT_SYMBOL(ckpt_hdr_get_type);
+ 
++#define DUMMY_LSM_INFO "dummy"
++
++int ckpt_write_dummy_lsm_info(struct ckpt_ctx *ctx)
++{
++	return ckpt_write_obj_type(ctx, DUMMY_LSM_INFO,
++			strlen(DUMMY_LSM_INFO), CKPT_HDR_LSM_INFO);
++}
++
++/*
++ * ckpt_snarf_lsm_info
++ * If there is a CKPT_HDR_LSM_INFO field, toss it.
++ * Used when the current LSM doesn't care about this field.
++ */
++void ckpt_snarf_lsm_info(struct ckpt_ctx *ctx)
++{
++	struct ckpt_hdr *h;
++
++	h = ckpt_read_buf_type(ctx, CKPT_LSM_INFO_LEN, CKPT_HDR_LSM_INFO);
++	if (!IS_ERR(h))
++		ckpt_hdr_put(ctx, h);
++}
++
+ /*
+  * Helpers to manage c/r contexts: allocated for each checkpoint and/or
+  * restart operation, and persists until the operation is completed.
+diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
+index 64b4b8a..70198f9 100644
+--- a/include/linux/checkpoint.h
++++ b/include/linux/checkpoint.h
+@@ -19,6 +19,7 @@
+ #define RESTART_TASKSELF	0x1
+ #define RESTART_FROZEN		0x2
+ #define RESTART_GHOST		0x4
++#define RESTART_KEEP_LSM	0x8
+ #define RESTART_CONN_RESET      0x10
+ 
+ /* misc user visible */
+@@ -59,8 +60,11 @@ extern long do_sys_restart(pid_t pid, int fd,
+ 	(RESTART_TASKSELF | \
+ 	 RESTART_FROZEN | \
+ 	 RESTART_GHOST | \
++	 RESTART_KEEP_LSM | \
+ 	 RESTART_CONN_RESET)
+ 
++#define CKPT_LSM_INFO_LEN 200
++
+ extern int walk_task_subtree(struct task_struct *task,
+ 			     int (*func)(struct task_struct *, void *),
+ 			     void *data);
+@@ -73,6 +77,8 @@ extern void _ckpt_hdr_put(struct ckpt_ctx *ctx, void *ptr, int n);
+ extern void ckpt_hdr_put(struct ckpt_ctx *ctx, void *ptr);
+ extern void *ckpt_hdr_get(struct ckpt_ctx *ctx, int n);
+ extern void *ckpt_hdr_get_type(struct ckpt_ctx *ctx, int n, int type);
++extern int ckpt_write_dummy_lsm_info(struct ckpt_ctx *ctx);
++extern void ckpt_snarf_lsm_info(struct ckpt_ctx *ctx);
+ 
+ extern int ckpt_write_obj(struct ckpt_ctx *ctx, struct ckpt_hdr *h);
+ extern int ckpt_write_obj_type(struct ckpt_ctx *ctx,
+diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
+index acf964a..fad955f 100644
+--- a/include/linux/checkpoint_hdr.h
++++ b/include/linux/checkpoint_hdr.h
+@@ -25,6 +25,15 @@
+ #endif
+ 
+ /*
++ * /usr/include/linux/security.h is not exported to userspace, so
++ * we need this value here for userspace restart.c to read.
++ *
++ * CHECKPOINT_LSM_NAME_MAX should be SECURITY_NAME_MAX
++ * security_may_restart() has a BUILD_BUG_ON to enforce that.
++ */
++#define CHECKPOINT_LSM_NAME_MAX 10
++
++/*
+  * To maintain compatibility between 32-bit and 64-bit architecture flavors,
+  * keep data 64-bit aligned: use padding for structure members, and use
+  * __attribute__((aligned (8))) for the entire structure.
+@@ -69,6 +78,8 @@ enum {
+ #define CKPT_HDR_STRING CKPT_HDR_STRING
+ 	CKPT_HDR_OBJREF,
+ #define CKPT_HDR_OBJREF CKPT_HDR_OBJREF
++	CKPT_HDR_LSM_INFO,
++#define CKPT_HDR_LSM_INFO CKPT_HDR_LSM_INFO
+ 
+ 	CKPT_HDR_TREE = 101,
+ #define CKPT_HDR_TREE CKPT_HDR_TREE
+@@ -296,6 +307,11 @@ struct ckpt_hdr_tail {
+ /* container configuration section header */
+ struct ckpt_hdr_container {
+ 	struct ckpt_hdr h;
++	/*
++	 * the header is followed by the string:
++	 *   char lsm_name[SECURITY_NAME_MAX + 1]
++	 * plus the CKPT_HDR_LSM_INFO section
++	 */
+ } __attribute__((aligned(8)));;
+ 
+ /* task tree */
+diff --git a/include/linux/checkpoint_types.h b/include/linux/checkpoint_types.h
+index 75e198f..efd34b6 100644
+--- a/include/linux/checkpoint_types.h
++++ b/include/linux/checkpoint_types.h
+@@ -21,6 +21,7 @@
+ #include <linux/fs.h>
+ #include <linux/ktime.h>
+ #include <linux/wait.h>
++#include <linux/security.h>
+ 
+ struct ckpt_stats {
+ 	int uts_ns;
+@@ -38,6 +39,7 @@ struct ckpt_ctx {
+ 	struct task_struct *root_task;		/* [container] root task */
+ 	struct nsproxy *root_nsproxy;		/* [container] root nsproxy */
+ 	struct task_struct *root_freezer;	/* [container] root task */
++	char lsm_name[SECURITY_NAME_MAX + 1];   /* security module at ckpt */
+ 
+ 	unsigned long kflags;	/* kerenl flags */
+ 	unsigned long uflags;	/* user flags */
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 2c627d3..980c942 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -143,6 +143,13 @@ extern int mmap_min_addr_handler(struct ctl_table *table, int write,
+ 				 void __user *buffer, size_t *lenp, loff_t *ppos);
+ #endif
+ 
++#ifdef CONFIG_CHECKPOINT
++struct ckpt_ctx;
++
++void ckpt_snarf_lsm_info(struct ckpt_ctx *ctx);
++int ckpt_write_dummy_lsm_info(struct ckpt_ctx *ctx);
++#endif
++
+ #ifdef CONFIG_SECURITY
+ 
+ struct security_mnt_opts {
+@@ -1375,6 +1382,28 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
+  *	@secdata contains the security context.
+  *	@seclen contains the length of the security context.
+  *
++ * Security hooks for Checkpoint/restart
++ * (In addition to *_checkpoint and *_restore)
++ *
++ * @may_restart:
++ *	Authorize sys_restart().
++ *	Note that all construction of kernel resources, credentials,
++ *	etc is already authorized per the caller's credentials.  This
++ *	hook is intended for the LSM to make further decisions about
++ *	a task not being allowed to restart at all, for instance if
++ *	the policy has changed since checkpoint.
++ *	@ctx is the checkpoint/restart context (see <linux/checkpoint_types.h>)
++ *	Return 0 if allowed, <0 on error.
++ *
++ * @checkpoint_header:
++ *	Optionally write out a LSM-specific checkpoint header.  This is
++ *	a chance to write out policy information, for instance.  The same
++ *	LSM on restart can then use the info in security_may_restart() to
++ * 	refuse restart (for instance) across policy changes.
++ *	The info is to be written as a an object of type CKPT_HDR_LSM_INFO.
++ *	@ctx is the checkpoint/restart context (see <linux/checkpoint_types.h>)
++ *	Return 0 on success, <0 on error.
++ *
+  * Security hooks for Audit
+  *
+  * @audit_rule_init:
+@@ -1657,6 +1686,11 @@ struct security_operations {
+ 	int (*inode_setsecctx)(struct dentry *dentry, void *ctx, u32 ctxlen);
+ 	int (*inode_getsecctx)(struct inode *inode, void **ctx, u32 *ctxlen);
+ 
++#ifdef CONFIG_CHECKPOINT
++	int (*may_restart) (struct ckpt_ctx *ctx);
++	int (*checkpoint_header) (struct ckpt_ctx *ctx);
++#endif
++
+ #ifdef CONFIG_SECURITY_NETWORK
+ 	int (*unix_stream_connect) (struct socket *sock,
+ 				    struct socket *other, struct sock *newsk);
+@@ -1909,6 +1943,14 @@ void security_release_secctx(char *secdata, u32 seclen);
+ int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
+ int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
+ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
++
++#ifdef CONFIG_CHECKPOINT
++int security_may_restart(struct ckpt_ctx *ctx);
++int security_checkpoint_header(struct ckpt_ctx *ctx);
++#endif /* CONFIG_CHECKPOINT */
++
++char *security_get_lsm_name(void);
++
+ #else /* CONFIG_SECURITY */
+ struct security_mnt_opts {
+ };
+@@ -1931,6 +1973,12 @@ static inline int security_init(void)
+ 	return 0;
+ }
+ 
++#define DEFAULT_LSM_NAME "lsm_none"
++static inline char *security_get_lsm_name(void)
++{
++	return DEFAULT_LSM_NAME;
++}
++
+ static inline int security_ptrace_access_check(struct task_struct *child,
+ 					     unsigned int mode)
+ {
+@@ -2678,6 +2726,19 @@ static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32
+ {
+ 	return -EOPNOTSUPP;
+ }
++
++#ifdef CONFIG_CHECKPOINT
++static inline int security_may_restart(struct ckpt_ctx *ctx)
++{
++	ckpt_snarf_lsm_info(ctx);
++	return 0;
++}
++static inline int security_checkpoint_header(struct ckpt_ctx *ctx)
++{
++	return ckpt_write_dummy_lsm_info(ctx);
++}
++#endif /* CONFIG_CHECKPOINT */
++
+ #endif	/* CONFIG_SECURITY */
+ 
+ #ifdef CONFIG_SECURITY_NETWORK
+diff --git a/security/capability.c b/security/capability.c
+index 5c700e1..f79911a 100644
+--- a/security/capability.c
++++ b/security/capability.c
+@@ -852,6 +852,27 @@ static int cap_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
+ {
+ 	return 0;
+ }
++
++#ifdef CONFIG_CHECKPOINT
++static int cap_may_restart(struct ckpt_ctx *ctx)
++{
++	/*
++	 * Note that all construction of kernel resources, credentials,
++	 * etc is already authorized per the caller's credentials.  This
++	 * hook is intended for the LSM to make further decisions about
++	 * a task not being allowed to restart at all, for instance if
++	 * the policy has changed since checkpoint.
++	 */
++	ckpt_snarf_lsm_info(ctx);
++	return 0;
++}
++
++static int cap_checkpoint_header(struct ckpt_ctx *ctx)
++{
++	return ckpt_write_dummy_lsm_info(ctx);
++}
++#endif
++
+ #ifdef CONFIG_KEYS
+ static int cap_key_alloc(struct key *key, const struct cred *cred,
+ 			 unsigned long flags)
+@@ -1068,6 +1089,10 @@ void security_fixup_ops(struct security_operations *ops)
+ 	set_to_cap_if_null(ops, inode_notifysecctx);
+ 	set_to_cap_if_null(ops, inode_setsecctx);
+ 	set_to_cap_if_null(ops, inode_getsecctx);
++#ifdef CONFIG_CHECKPOINT
++	set_to_cap_if_null(ops, may_restart);
++	set_to_cap_if_null(ops, checkpoint_header);
++#endif
+ #ifdef CONFIG_SECURITY_NETWORK
+ 	set_to_cap_if_null(ops, unix_stream_connect);
+ 	set_to_cap_if_null(ops, unix_may_send);
+diff --git a/security/security.c b/security/security.c
+index 122b748..abc1142 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -17,6 +17,9 @@
+ #include <linux/kernel.h>
+ #include <linux/security.h>
+ #include <linux/ima.h>
++#ifdef CONFIG_CHECKPOINT
++#include <linux/checkpoint.h>
++#endif
+ 
+ /* Boot-time LSM user choice */
+ static __initdata char chosen_lsm[SECURITY_NAME_MAX + 1] =
+@@ -126,6 +129,11 @@ int register_security(struct security_operations *ops)
+ 	return 0;
+ }
+ 
++char *security_get_lsm_name(void)
++{
++	return security_ops->name;
++}
++
+ /* Security operations */
+ 
+ int security_ptrace_access_check(struct task_struct *child, unsigned int mode)
+@@ -1035,6 +1043,24 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
+ }
+ EXPORT_SYMBOL(security_inode_getsecctx);
+ 
++#ifdef CONFIG_CHECKPOINT
++int security_may_restart(struct ckpt_ctx *ctx)
++{
++	/*
++	 * SECURITY_NAME_MAX is defined in linux/security.h,
++	 * CHECKPOINT_LSM_NAME_MAX in linux/checkpoint_hdr.h
++	 */
++	BUILD_BUG_ON(CHECKPOINT_LSM_NAME_MAX != SECURITY_NAME_MAX);
++
++	return security_ops->may_restart(ctx);
++}
++
++int security_checkpoint_header(struct ckpt_ctx *ctx)
++{
++	return security_ops->checkpoint_header(ctx);
++}
++#endif
++
+ #ifdef CONFIG_SECURITY_NETWORK
+ 
+ int security_unix_stream_connect(struct socket *sock, struct socket *other,
 -- 
 1.6.3.3
 
