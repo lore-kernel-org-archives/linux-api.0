@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 32/96] c/r: support for zombie processes
-Date: Wed, 17 Mar 2010 12:08:20 -0400
-Message-ID: <1268842164-5590-33-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 44/96] c/r: add generic '->checkpoint' f_op to ext fses
+Date: Wed, 17 Mar 2010 12:08:32 -0400
+Message-ID: <1268842164-5590-45-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -34,281 +34,136 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-30-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-31-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-32-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-33-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-34-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-35-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-36-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-37-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-38-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-39-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-40-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-41-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-42-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-43-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-44-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-32-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-44-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Oren Laadan <orenl@cs.columbia.edu>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Dave Hansen <dave@linux.vnet.ibm.com>, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-During checkpoint, a zombie processes need only save p->comm,
-p->state, p->exit_state, and p->exit_code.
+From: Dave Hansen <dave@linux.vnet.ibm.com>
 
-During restart, zombie processes are created like all other
-processes. They validate the saved exit_code restore p->comm
-and p->exit_code. Then they call do_exit() instead of waking
-up the next task in line.
+This marks ext[234] as being checkpointable.  There will be many
+more to do this to, but this is a start.
 
-But before, they place the @ctx in p->checkpoint_ctx, so that
-only at exit time they will wake up the next task in line,
-and drop the reference to the @ctx.
+Changelog[ckpt-v19-rc3]:
+  - Rebase to kernel 2.6.33 (ext2)
+Changelog[v1]:
+  - [Serge Hallyn] Use filemap_checkpoint() in ext4_file_vm_ops
 
-This provides the guarantee that when the coordinator's wait
-completes, all normal tasks completed their restart, and all
-zombie tasks are already zombified (as opposed to perhap only
-becoming a zombie).
-
-Changelog[v19-rc1]:
-  - Simplify logic of tracking restarting tasks
-Changelog[v18]:
-  - Fix leak of ckpt_ctx when restoring zombie tasks
-  - Add a few more ckpt_write_err()s
-Changelog[v17]:
-  - Validate t->exit_signal for both threads and leader
-  - Skip zombies in most of may_checkpoint_task()
-  - Save/restore t->pdeath_signal
-  - Validate ->exit_signal and ->pdeath_signal
-
+Signed-off-by: Dave Hansen <dave@linux.vnet.ibm.com>
 Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 Acked-by: Serge E. Hallyn <serue@us.ibm.com>
 Tested-by: Serge E. Hallyn <serue@us.ibm.com>
 ---
- checkpoint/checkpoint.c        |   10 ++++--
- checkpoint/process.c           |   69 +++++++++++++++++++++++++++++++++++-----
- checkpoint/restart.c           |   22 +++++++++++--
- include/linux/checkpoint.h     |    1 +
- include/linux/checkpoint_hdr.h |    1 +
- 5 files changed, 89 insertions(+), 14 deletions(-)
+ fs/ext2/dir.c  |    1 +
+ fs/ext2/file.c |    2 ++
+ fs/ext3/dir.c  |    1 +
+ fs/ext3/file.c |    1 +
+ fs/ext4/dir.c  |    1 +
+ fs/ext4/file.c |    4 ++++
+ 6 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index 1e38ae3..ea1494d 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -218,7 +218,7 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
+diff --git a/fs/ext2/dir.c b/fs/ext2/dir.c
+index 7516957..84c17f9 100644
+--- a/fs/ext2/dir.c
++++ b/fs/ext2/dir.c
+@@ -722,4 +722,5 @@ const struct file_operations ext2_dir_operations = {
+ 	.compat_ioctl	= ext2_compat_ioctl,
+ #endif
+ 	.fsync		= ext2_fsync,
++	.checkpoint	= generic_file_checkpoint,
+ };
+diff --git a/fs/ext2/file.c b/fs/ext2/file.c
+index 586e358..b38d7b9 100644
+--- a/fs/ext2/file.c
++++ b/fs/ext2/file.c
+@@ -75,6 +75,7 @@ const struct file_operations ext2_file_operations = {
+ 	.fsync		= ext2_fsync,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
++	.checkpoint	= generic_file_checkpoint,
+ };
  
- 	ckpt_debug("check %d\n", task_pid_nr_ns(t, ctx->root_nsproxy->pid_ns));
+ #ifdef CONFIG_EXT2_FS_XIP
+@@ -90,6 +91,7 @@ const struct file_operations ext2_xip_file_operations = {
+ 	.open		= generic_file_open,
+ 	.release	= ext2_release_file,
+ 	.fsync		= ext2_fsync,
++	.checkpoint	= generic_file_checkpoint,
+ };
+ #endif
  
--	if (t->state == TASK_DEAD) {
-+	if (t->exit_state == EXIT_DEAD) {
- 		_ckpt_err(ctx, -EBUSY, "%(T)Task state EXIT_DEAD\n");
- 		return -EBUSY;
- 	}
-@@ -228,6 +228,10 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
- 		return -EPERM;
- 	}
+diff --git a/fs/ext3/dir.c b/fs/ext3/dir.c
+index 373fa90..65f98af 100644
+--- a/fs/ext3/dir.c
++++ b/fs/ext3/dir.c
+@@ -48,6 +48,7 @@ const struct file_operations ext3_dir_operations = {
+ #endif
+ 	.fsync		= ext3_sync_file,	/* BKL held */
+ 	.release	= ext3_release_dir,
++	.checkpoint	= generic_file_checkpoint,
+ };
  
-+	/* zombies are cool (and also don't have nsproxy, below...) */
-+	if (t->exit_state)
-+		return 0;
-+
- 	/* verify that all tasks belongs to same freezer cgroup */
- 	if (t != current && !in_same_cgroup_freezer(t, ctx->root_freezer)) {
- 		_ckpt_err(ctx, -EBUSY, "%(T)Not frozen or wrong cgroup\n");
-@@ -244,8 +248,8 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
- 	 * FIX: for now, disallow siblings of container init created
- 	 * via CLONE_PARENT (unclear if they will remain possible)
- 	 */
--	if (ctx->root_init && t != root && t->tgid != root->tgid &&
--	    t->real_parent == root->real_parent) {
-+	if (ctx->root_init && t != root &&
-+	    t->real_parent == root->real_parent && t->tgid != root->tgid) {
- 		_ckpt_err(ctx, -EINVAL, "%(T)Task is sibling of root\n");
- 		return -EINVAL;
- 	}
-diff --git a/checkpoint/process.c b/checkpoint/process.c
-index 9f2059c..c47dea1 100644
---- a/checkpoint/process.c
-+++ b/checkpoint/process.c
-@@ -35,12 +35,18 @@ static int checkpoint_task_struct(struct ckpt_ctx *ctx, struct task_struct *t)
- 	h->state = t->state;
- 	h->exit_state = t->exit_state;
- 	h->exit_code = t->exit_code;
--	h->exit_signal = t->exit_signal;
  
--	h->set_child_tid = (unsigned long) t->set_child_tid;
--	h->clear_child_tid = (unsigned long) t->clear_child_tid;
-+	if (t->exit_state) {
-+		/* zombie - skip remaining state */
-+		BUG_ON(t->exit_state != EXIT_ZOMBIE);
-+	} else {
-+		/* FIXME: save remaining relevant task_struct fields */
-+		h->exit_signal = t->exit_signal;
-+		h->pdeath_signal = t->pdeath_signal;
+diff --git a/fs/ext3/file.c b/fs/ext3/file.c
+index 388bbdf..bcd9b88 100644
+--- a/fs/ext3/file.c
++++ b/fs/ext3/file.c
+@@ -67,6 +67,7 @@ const struct file_operations ext3_file_operations = {
+ 	.fsync		= ext3_sync_file,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
++	.checkpoint	= generic_file_checkpoint,
+ };
  
--	/* FIXME: save remaining relevant task_struct fields */
-+		h->set_child_tid = (unsigned long) t->set_child_tid;
-+		h->clear_child_tid = (unsigned long) t->clear_child_tid;
-+	}
+ const struct inode_operations ext3_file_inode_operations = {
+diff --git a/fs/ext4/dir.c b/fs/ext4/dir.c
+index 9dc9316..f69404c 100644
+--- a/fs/ext4/dir.c
++++ b/fs/ext4/dir.c
+@@ -48,6 +48,7 @@ const struct file_operations ext4_dir_operations = {
+ #endif
+ 	.fsync		= ext4_sync_file,
+ 	.release	= ext4_release_dir,
++	.checkpoint	= generic_file_checkpoint,
+ };
  
- 	ret = ckpt_write_obj(ctx, &h->h);
- 	ckpt_hdr_put(ctx, h);
-@@ -171,6 +177,11 @@ int checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
- 	ckpt_debug("task %d\n", ret);
- 	if (ret < 0)
- 		goto out;
-+
-+	/* zombie - we're done here */
-+	if (t->exit_state)
-+		return 0;
-+
- 	ret = checkpoint_thread(ctx, t);
- 	ckpt_debug("thread %d\n", ret);
- 	if (ret < 0)
-@@ -190,6 +201,19 @@ int checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
-  * Restart
-  */
  
-+static inline int valid_exit_code(int exit_code)
-+{
-+	if (exit_code >= 0x10000)
-+		return 0;
-+	if (exit_code & 0xff) {
-+		if (exit_code & ~0xff)
-+			return 0;
-+		if (!valid_signal(exit_code & 0xff))
-+			return 0;
-+	}
-+	return 1;
-+}
-+
- /* read the task_struct into the current task */
- static int restore_task_struct(struct ckpt_ctx *ctx)
- {
-@@ -201,15 +225,39 @@ static int restore_task_struct(struct ckpt_ctx *ctx)
- 	if (IS_ERR(h))
- 		return PTR_ERR(h);
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 9630583..93a129b 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -84,6 +84,9 @@ ext4_file_write(struct kiocb *iocb, const struct iovec *iov,
+ static const struct vm_operations_struct ext4_file_vm_ops = {
+ 	.fault		= filemap_fault,
+ 	.page_mkwrite   = ext4_page_mkwrite,
++#ifdef CONFIG_CHECKPOINT
++	.checkpoint	= filemap_checkpoint,
++#endif
+ };
  
-+	ret = -EINVAL;
-+	if (h->state == TASK_DEAD) {
-+		if (h->exit_state != EXIT_ZOMBIE)
-+			goto out;
-+		if (!valid_exit_code(h->exit_code))
-+			goto out;
-+		t->exit_code = h->exit_code;
-+	} else {
-+		if (h->exit_code)
-+			goto out;
-+		if ((thread_group_leader(t) && !valid_signal(h->exit_signal)) ||
-+		    (!thread_group_leader(t) && h->exit_signal != -1))
-+			goto out;
-+		if (!valid_signal(h->pdeath_signal))
-+			goto out;
-+
-+		/* FIXME: restore remaining relevant task_struct fields */
-+		t->exit_signal = h->exit_signal;
-+		t->pdeath_signal = h->pdeath_signal;
-+
-+		t->set_child_tid =
-+			(int __user *) (unsigned long) h->set_child_tid;
-+		t->clear_child_tid =
-+			(int __user *) (unsigned long) h->clear_child_tid;
-+	}
-+
- 	memset(t->comm, 0, TASK_COMM_LEN);
- 	ret = _ckpt_read_string(ctx, t->comm, TASK_COMM_LEN);
- 	if (ret < 0)
- 		goto out;
+ static int ext4_file_mmap(struct file *file, struct vm_area_struct *vma)
+@@ -146,6 +149,7 @@ const struct file_operations ext4_file_operations = {
+ 	.fsync		= ext4_sync_file,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
++	.checkpoint	= generic_file_checkpoint,
+ };
  
--	t->set_child_tid = (int __user *) (unsigned long) h->set_child_tid;
--	t->clear_child_tid = (int __user *) (unsigned long) h->clear_child_tid;
--
--	/* FIXME: restore remaining relevant task_struct fields */
-+	/* return 1 for zombie, 0 otherwise */
-+	ret = (h->state == TASK_DEAD ? 1 : 0);
-  out:
- 	ckpt_hdr_put(ctx, h);
- 	return ret;
-@@ -329,6 +377,11 @@ int restore_task(struct ckpt_ctx *ctx)
- 	ckpt_debug("task %d\n", ret);
- 	if (ret < 0)
- 		goto out;
-+
-+	/* zombie - we're done here */
-+	if (ret)
-+		goto out;
-+
- 	ret = restore_thread(ctx);
- 	ckpt_debug("thread %d\n", ret);
- 	if (ret < 0)
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index 59c4bd8..e2ed358 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -852,7 +852,7 @@ static int wait_sync_threads(void)
- static int do_restore_task(void)
- {
- 	struct ckpt_ctx *ctx;
--	int ret;
-+	int zombie, ret;
- 
- 	ctx = wait_checkpoint_ctx();
- 	if (IS_ERR(ctx))
-@@ -862,6 +862,8 @@ static int do_restore_task(void)
- 	if (ret < 0)
- 		goto out;
- 
-+	current->flags |= PF_RESTARTING;
-+
- 	ret = wait_sync_threads();
- 	if (ret < 0)
- 		goto out;
-@@ -873,9 +875,22 @@ static int do_restore_task(void)
- 
- 	restore_debug_running(ctx);
- 
--	ret = restore_task(ctx);
--	if (ret < 0)
-+	zombie = restore_task(ctx);
-+	if (zombie < 0) {
-+		ret = zombie;
- 		goto out;
-+	}
-+
-+	/*
-+	 * zombie: we're done here; do_exit() will notice the @ctx on
-+	 * our current->checkpoint_ctx (and our PF_RESTARTING) - it
-+	 * will call restore_activate_next() and release the @ctx.
-+	 */
-+	if (zombie) {
-+		restore_debug_exit(ctx);
-+		ckpt_ctx_put(ctx);
-+		do_exit(current->exit_code);
-+	}
- 
- 	restore_task_done(ctx);
- 	ret = wait_task_sync(ctx);
-@@ -884,6 +899,7 @@ static int do_restore_task(void)
- 	if (ret < 0)
- 		ckpt_err(ctx, ret, "task restart failed\n");
- 
-+	current->flags &= ~PF_RESTARTING;
- 	clear_task_ctx(current);
- 	ckpt_ctx_put(ctx);
- 	return ret;
-diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index d1eb722..61581f6 100644
---- a/include/linux/checkpoint.h
-+++ b/include/linux/checkpoint.h
-@@ -113,6 +113,7 @@ extern long do_checkpoint(struct ckpt_ctx *ctx, pid_t pid);
- extern long do_restart(struct ckpt_ctx *ctx, pid_t pid);
- 
- /* task */
-+extern int ckpt_activate_next(struct ckpt_ctx *ctx);
- extern int checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t);
- extern int restore_task(struct ckpt_ctx *ctx);
- 
-diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index 083f5d3..f85b673 100644
---- a/include/linux/checkpoint_hdr.h
-+++ b/include/linux/checkpoint_hdr.h
-@@ -160,6 +160,7 @@ struct ckpt_hdr_task {
- 	__u32 exit_state;
- 	__u32 exit_code;
- 	__u32 exit_signal;
-+	__u32 pdeath_signal;
- 
- 	__u64 set_child_tid;
- 	__u64 clear_child_tid;
+ const struct inode_operations ext4_file_inode_operations = {
 -- 
 1.6.3.3
 
