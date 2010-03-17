@@ -1,7 +1,7 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [C/R v20][PATCH 55/96] c/r: support for UTS namespace
-Date: Wed, 17 Mar 2010 12:08:43 -0400
-Message-ID: <1268842164-5590-56-git-send-email-orenl@cs.columbia.edu>
+Subject: [C/R v20][PATCH 59/96] c/r: support share-memory sysv-ipc
+Date: Wed, 17 Mar 2010 12:08:47 -0400
+Message-ID: <1268842164-5590-60-git-send-email-orenl@cs.columbia.edu>
 References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-2-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-3-git-send-email-orenl@cs.columbia.edu>
@@ -57,118 +57,132 @@ References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-53-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-54-git-send-email-orenl@cs.columbia.edu>
  <1268842164-5590-55-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-56-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-57-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-58-git-send-email-orenl@cs.columbia.edu>
+ <1268842164-5590-59-git-send-email-orenl@cs.columbia.edu>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1268842164-5590-55-git-send-email-orenl@cs.columbia.edu>
+In-Reply-To: <1268842164-5590-59-git-send-email-orenl@cs.columbia.edu>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Dan Smith <danms@us.ibm.com>, Oren Laadan <orenl@cs.columbia.edu>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Ingo Molnar <mingo@elte.hu>, containers@lists.linux-foundation.org, Oren Laadan <orenl@cs.columbia.edu>
 List-Id: linux-api@vger.kernel.org
 
-From: Dan Smith <danms@us.ibm.com>
+Checkpoint of sysvipc shared memory is performed in two steps: first,
+the entire ipc namespace is dumped as a whole by iterating through all
+shm objects and dumping the contents of each one. The shmem inode is
+registered in the objhash. Second, for each vma that refers to ipc
+shared memory we find the inode in the objhash, and save the objref.
 
-This patch adds a "phase" of checkpoint that saves out information about any
-namespaces the task(s) may have.  Do this by tracking the namespace objects
-of the tasks and making sure that tasks with the same namespace that follow
-get properly referenced in the checkpoint stream.
+(If we find a new inode, that indicates that the ipc namespace is not
+entirely frozen and someone must have manipulated it since step 1).
 
-Changes[v20]:
-  - Make uts_ns=n compile
-Changes[v19]:
-  - Restart to handle checkpoint images lacking {uts,ipc}-ns
-Changes[v19-rc1]:
+Handling of shm objects that have been deleted (via IPC_RMID) is left
+to a later patch in this series.
+
+Changelog[v20]:
+    Fix "scheduling in atomic" while restoring ipc shm
+Changelog[v19-rc3]:
+  - Rebase to kernel 2.6.33
+Changelog[v19-rc1]:
   - [Matt Helsley] Add cpp definitions for enums
-Changes[v17]:
-  - Collect nsproxy->uts_ns
-  - Save uts string lengths once in ckpt_hdr_const
-  - Save and restore all fields of uts-ns
-  - Don't overwrite global uts-ns if !CONFIG_UTS_NS
-  - Replace sys_unshare() with create_uts_ns()
-  - Take uts_sem around access to uts data
-Changes:
-  - Remove the kernel restore path
-  - Punt on nested namespaces
-  - Use __NEW_UTS_LEN in nodename and domainname buffers
-  - Add a note to Documentation/checkpoint/internals.txt to indicate where
-    in the save/restore process the UTS information is kept
-  - Store (and track) the objref of the namespace itself instead of the
-    nsproxy (based on comments from Dave on IRC)
-  - Remove explicit check for non-root nsproxy
-  - Store the nodename and domainname lengths and use ckpt_write_string()
-    to store the actual name strings
-  - Catch failure of ckpt_obj_add_ptr() in ckpt_write_namespaces()
-  - Remove "types" bitfield and use the "is this new" flag to determine
-    whether or not we should write out a new ns descriptor
-  - Replace kernel restore path
-  - Move the namespace information to be directly after the task
-    information record
-  - Update Documentation to reflect new location of namespace info
-  - Support checkpoint and restart of nested UTS namespaces
+Changelog[v18]:
+  - Collect files used by shm objects
+  - Use file instead of inode as shared object during checkpoint
+Changelog[v17]:
+  - Restore objects in the right namespace
+  - Properly initialize ctx->deferqueue
+  - Fix compilation with CONFIG_CHECKPOINT=n
 
-Signed-off-by: Dan Smith <danms@us.ibm.com>
 Signed-off-by: Oren Laadan <orenl@cs.columbia.edu>
 Acked-by: Serge E. Hallyn <serue@us.ibm.com>
 Tested-by: Serge E. Hallyn <serue@us.ibm.com>
 ---
- checkpoint/Makefile              |    1 +
- checkpoint/checkpoint.c          |    5 +-
- checkpoint/namespace.c           |  116 ++++++++++++++++++++++++++++++++++++++
- checkpoint/objhash.c             |   26 +++++++++
- checkpoint/process.c             |    2 +
- checkpoint/restart.c             |    6 ++
- include/linux/checkpoint.h       |    4 +
- include/linux/checkpoint_hdr.h   |   29 +++++++++-
- include/linux/checkpoint_types.h |    6 ++
- include/linux/utsname.h          |    1 +
- kernel/nsproxy.c                 |   19 ++++++-
- kernel/utsname.c                 |    3 +-
- 12 files changed, 212 insertions(+), 6 deletions(-)
- create mode 100644 checkpoint/namespace.c
+ include/linux/checkpoint_hdr.h |   21 +++
+ ipc/Makefile                   |    3 +-
+ ipc/checkpoint.c               |    2 +-
+ ipc/checkpoint_msg.c           |  380 ++++++++++++++++++++++++++++++++++++++++
+ ipc/msg.c                      |   10 +-
+ ipc/msgutil.c                  |    8 -
+ ipc/util.h                     |   13 ++
+ 7 files changed, 420 insertions(+), 17 deletions(-)
+ create mode 100644 ipc/checkpoint_msg.c
 
-diff --git a/checkpoint/Makefile b/checkpoint/Makefile
-index f56a7d6..bb2c0ca 100644
---- a/checkpoint/Makefile
-+++ b/checkpoint/Makefile
-@@ -8,5 +8,6 @@ obj-$(CONFIG_CHECKPOINT) += \
- 	checkpoint.o \
- 	restart.o \
- 	process.o \
-+	namespace.o \
- 	files.o \
- 	memory.o
-diff --git a/checkpoint/checkpoint.c b/checkpoint/checkpoint.c
-index 9bafb13..2707978 100644
---- a/checkpoint/checkpoint.c
-+++ b/checkpoint/checkpoint.c
-@@ -113,9 +113,12 @@ static void fill_kernel_const(struct ckpt_const *h)
- 	/* mm->saved_auxv size */
- 	h->at_vector_size = AT_VECTOR_SIZE;
- 	/* uts */
-+	h->uts_sysname_len = sizeof(uts->sysname);
-+	h->uts_nodename_len = sizeof(uts->nodename);
- 	h->uts_release_len = sizeof(uts->release);
- 	h->uts_version_len = sizeof(uts->version);
- 	h->uts_machine_len = sizeof(uts->machine);
-+	h->uts_domainname_len = sizeof(uts->domainname);
- }
+diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
+index 1b2ffef..07e918e 100644
+--- a/include/linux/checkpoint_hdr.h
++++ b/include/linux/checkpoint_hdr.h
+@@ -114,6 +114,8 @@ enum {
+ #define CKPT_HDR_IPC_SHM CKPT_HDR_IPC_SHM
+ 	CKPT_HDR_IPC_MSG,
+ #define CKPT_HDR_IPC_MSG CKPT_HDR_IPC_MSG
++	CKPT_HDR_IPC_MSG_MSG,
++#define CKPT_HDR_IPC_MSG_MSG CKPT_HDR_IPC_MSG_MSG
+ 	CKPT_HDR_IPC_SEM,
+ #define CKPT_HDR_IPC_SEM CKPT_HDR_IPC_SEM
  
- /* write the checkpoint header */
-@@ -261,8 +264,6 @@ static int may_checkpoint_task(struct ckpt_ctx *ctx, struct task_struct *t)
+@@ -473,6 +475,25 @@ struct ckpt_hdr_ipc_shm {
+ 	__u32 objref;
+ } __attribute__((aligned(8)));
  
- 	rcu_read_lock();
- 	nsproxy = task_nsproxy(t);
--	if (nsproxy->uts_ns != ctx->root_nsproxy->uts_ns)
--		ret = -EPERM;
- 	if (nsproxy->ipc_ns != ctx->root_nsproxy->ipc_ns)
- 		ret = -EPERM;
- 	/* no support for >1 private mntns */
-diff --git a/checkpoint/namespace.c b/checkpoint/namespace.c
++struct ckpt_hdr_ipc_msg {
++	struct ckpt_hdr h;
++	struct ckpt_hdr_ipc_perms perms;
++	__u64 q_stime;
++	__u64 q_rtime;
++	__u64 q_ctime;
++	__u64 q_cbytes;
++	__u64 q_qnum;
++	__u64 q_qbytes;
++	__s32 q_lspid;
++	__s32 q_lrpid;
++} __attribute__((aligned(8)));
++
++struct ckpt_hdr_ipc_msg_msg {
++	struct ckpt_hdr h;
++	__s64 m_type;
++	__u32 m_ts;
++} __attribute__((aligned(8)));
++
+ 
+ #define CKPT_TST_OVERFLOW_16(a, b) \
+ 	((sizeof(a) > sizeof(b)) && ((a) > SHORT_MAX))
+diff --git a/ipc/Makefile b/ipc/Makefile
+index db4b076..71a257f 100644
+--- a/ipc/Makefile
++++ b/ipc/Makefile
+@@ -9,4 +9,5 @@ obj_mq-$(CONFIG_COMPAT) += compat_mq.o
+ obj-$(CONFIG_POSIX_MQUEUE) += mqueue.o msgutil.o $(obj_mq-y)
+ obj-$(CONFIG_IPC_NS) += namespace.o
+ obj-$(CONFIG_POSIX_MQUEUE_SYSCTL) += mq_sysctl.o
+-obj-$(CONFIG_SYSVIPC_CHECKPOINT) += checkpoint.o checkpoint_shm.o
++obj-$(CONFIG_SYSVIPC_CHECKPOINT) += checkpoint.o \
++		checkpoint_shm.o checkpoint_msg.o
+diff --git a/ipc/checkpoint.c b/ipc/checkpoint.c
+index 7a3a9ca..6b1ec0b 100644
+--- a/ipc/checkpoint.c
++++ b/ipc/checkpoint.c
+@@ -130,11 +130,11 @@ static int do_checkpoint_ipc_ns(struct ckpt_ctx *ctx,
+ 
+ 	ret = checkpoint_ipc_any(ctx, ipc_ns, IPC_SHM_IDS,
+ 				 CKPT_HDR_IPC_SHM, checkpoint_ipc_shm);
+-#if 0 /* NEXT FEW PATCHES */
+ 	if (ret < 0)
+ 		return ret;
+ 	ret = checkpoint_ipc_any(ctx, ipc_ns, IPC_MSG_IDS,
+ 				 CKPT_HDR_IPC_MSG, checkpoint_ipc_msg);
++#if 0 /* NEXT FEW PATCHES */
+ 	if (ret < 0)
+ 		return ret;
+ 	ret = checkpoint_ipc_any(ctx, ipc_ns, IPC_SEM_IDS,
+diff --git a/ipc/checkpoint_msg.c b/ipc/checkpoint_msg.c
 new file mode 100644
-index 0000000..3703577
+index 0000000..16ebbb5
 --- /dev/null
-+++ b/checkpoint/namespace.c
-@@ -0,0 +1,116 @@
++++ b/ipc/checkpoint_msg.c
+@@ -0,0 +1,380 @@
 +/*
-+ *  Checkpoint namespaces
++ *  Checkpoint/restart - dump state of sysvipc msg
 + *
 + *  Copyright (C) 2009 Oren Laadan
 + *
@@ -178,377 +192,478 @@ index 0000000..3703577
 + */
 +
 +/* default debug level for output */
-+#define CKPT_DFLAG  CKPT_DSYS
++#define CKPT_DFLAG  CKPT_DIPC
 +
++#include <linux/mm.h>
++#include <linux/msg.h>
++#include <linux/rwsem.h>
++#include <linux/sched.h>
++#include <linux/syscalls.h>
 +#include <linux/nsproxy.h>
-+#include <linux/user_namespace.h>
++#include <linux/security.h>
++#include <linux/ipc_namespace.h>
++
++#include "util.h"
 +
 +#include <linux/checkpoint.h>
 +#include <linux/checkpoint_hdr.h>
 +
-+/*
-+ * uts_ns  -  this needs to compile even for !CONFIG_UTS_NS, so
-+ *   the code may not reside in kernel/utsname.c (which wouldn't
-+ *   compile then).
++/************************************************************************
++ * ipc checkpoint
 + */
-+static int do_checkpoint_uts_ns(struct ckpt_ctx *ctx,
-+				struct uts_namespace *uts_ns)
++
++/* called with the msgids->rw_mutex is read-held */
++static int fill_ipc_msg_hdr(struct ckpt_ctx *ctx,
++			    struct ckpt_hdr_ipc_msg *h,
++			    struct msg_queue *msq)
 +{
-+	struct ckpt_hdr_utsns *h;
-+	struct new_utsname *name;
 +	int ret;
 +
-+	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_UTS_NS);
++	ret = checkpoint_fill_ipc_perms(&h->perms, &msq->q_perm);
++	if (ret < 0)
++		return ret;
++
++	ipc_lock_by_ptr(&msq->q_perm);
++	h->q_stime = msq->q_stime;
++	h->q_rtime = msq->q_rtime;
++	h->q_ctime = msq->q_ctime;
++	h->q_cbytes = msq->q_cbytes;
++	h->q_qnum = msq->q_qnum;
++	h->q_qbytes = msq->q_qbytes;
++	h->q_lspid = msq->q_lspid;
++	h->q_lrpid = msq->q_lrpid;
++	ipc_unlock(&msq->q_perm);
++
++	ckpt_debug("msg: lspid %d rspid %d qnum %lld qbytes %lld\n",
++		 h->q_lspid, h->q_lrpid, h->q_qnum, h->q_qbytes);
++
++	return 0;
++}
++
++static int checkpoint_msg_contents(struct ckpt_ctx *ctx, struct msg_msg *msg)
++{
++	struct ckpt_hdr_ipc_msg_msg *h;
++	struct msg_msgseg *seg;
++	int total, len;
++	int ret;
++
++	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_IPC_MSG_MSG);
 +	if (!h)
 +		return -ENOMEM;
 +
-+	down_read(&uts_sem);
-+	name = &uts_ns->name;
-+	memcpy(h->sysname, name->sysname, sizeof(name->sysname));
-+	memcpy(h->nodename, name->nodename, sizeof(name->nodename));
-+	memcpy(h->release, name->release, sizeof(name->release));
-+	memcpy(h->version, name->version, sizeof(name->version));
-+	memcpy(h->machine, name->machine, sizeof(name->machine));
-+	memcpy(h->domainname, name->domainname, sizeof(name->domainname));
-+	up_read(&uts_sem);
++	h->m_type = msg->m_type;
++	h->m_ts = msg->m_ts;
 +
 +	ret = ckpt_write_obj(ctx, &h->h);
++	ckpt_hdr_put(ctx, h);
++	if (ret < 0)
++		return ret;
++
++	total = msg->m_ts;
++	len = min(total, (int) DATALEN_MSG);
++	ret = ckpt_write_buffer(ctx, (msg + 1), len);
++	if (ret < 0)
++		return ret;
++
++	seg = msg->next;
++	total -= len;
++
++	while (total) {
++		len = min(total, (int) DATALEN_SEG);
++		ret = ckpt_write_buffer(ctx, (seg + 1), len);
++		if (ret < 0)
++			break;
++		seg = seg->next;
++		total -= len;
++	}
++
++	return ret;
++}
++
++static int checkpoint_msg_queue(struct ckpt_ctx *ctx, struct msg_queue *msq)
++{
++	struct list_head messages;
++	struct msg_msg *msg;
++	int ret = -EBUSY;
++
++	/*
++	 * Scanning the msq requires the lock, but then we can't write
++	 * data out from inside. Instead, we grab the lock, remove all
++	 * messages to our own list, drop the lock, write the messages,
++	 * and finally re-attach the them to the msq with the lock taken.
++	 */
++	ipc_lock_by_ptr(&msq->q_perm);
++	if (!list_empty(&msq->q_receivers))
++		goto unlock;
++	if (!list_empty(&msq->q_senders))
++		goto unlock;
++	if (list_empty(&msq->q_messages))
++		goto unlock;
++	/* temporarily take out all messages */
++	INIT_LIST_HEAD(&messages);
++	list_splice_init(&msq->q_messages, &messages);
++ unlock:
++	ipc_unlock(&msq->q_perm);
++
++	list_for_each_entry(msg, &messages, m_list) {
++		ret = checkpoint_msg_contents(ctx, msg);
++		if (ret < 0)
++			break;
++	}
++
++	/* put all the messages back in */
++	ipc_lock_by_ptr(&msq->q_perm);
++	list_splice(&messages, &msq->q_messages);
++	ipc_unlock(&msq->q_perm);
++
++	return ret;
++}
++
++/* called with the msgids->rw_mutex is read-held */
++int checkpoint_ipc_msg(int id, void *p, void *data)
++{
++	struct ckpt_hdr_ipc_msg *h;
++	struct ckpt_ctx *ctx = (struct ckpt_ctx *) data;
++	struct kern_ipc_perm *perm = (struct kern_ipc_perm *) p;
++	struct msg_queue *msq;
++	int ret;
++
++	msq = container_of(perm, struct msg_queue, q_perm);
++
++	h = ckpt_hdr_get_type(ctx, sizeof(*h), CKPT_HDR_IPC_MSG);
++	if (!h)
++		return -ENOMEM;
++
++	ret = fill_ipc_msg_hdr(ctx, h, msq);
++	if (ret < 0)
++		goto out;
++
++	ret = ckpt_write_obj(ctx, &h->h);
++	if (ret < 0)
++		goto out;
++
++	if (h->q_qnum)
++		ret = checkpoint_msg_queue(ctx, msq);
++ out:
 +	ckpt_hdr_put(ctx, h);
 +	return ret;
 +}
 +
-+int checkpoint_uts_ns(struct ckpt_ctx *ctx, void *ptr)
++
++/************************************************************************
++ * ipc restart
++ */
++
++/* called with the msgids->rw_mutex is write-held */
++static int load_ipc_msg_hdr(struct ckpt_ctx *ctx,
++			    struct ckpt_hdr_ipc_msg *h,
++			    struct msg_queue *msq)
 +{
-+	return do_checkpoint_uts_ns(ctx, (struct uts_namespace *) ptr);
-+}
++	int ret = 0;
 +
-+#ifdef CONFIG_UTS_NS
-+static inline struct uts_namespace *ckpt_do_copy_uts_ns(struct ckpt_ctx *ctx,
-+		struct ckpt_hdr_utsns *h)
-+{
-+	struct new_utsname *name = NULL;
-+	struct uts_namespace *uts_ns;
++	ret = restore_load_ipc_perms(&h->perms, &msq->q_perm);
++	if (ret < 0)
++		return ret;
 +
-+	uts_ns = create_uts_ns();
-+	if (!uts_ns)
-+		return ERR_PTR(-ENOMEM);
++	ckpt_debug("msq: lspid %d lrpid %d qnum %lld qbytes %lld\n",
++		 h->q_lspid, h->q_lrpid, h->q_qnum, h->q_qbytes);
 +
-+	down_read(&uts_sem);
-+	name = &uts_ns->name;
-+	memcpy(name->sysname, h->sysname, sizeof(name->sysname));
-+	memcpy(name->nodename, h->nodename, sizeof(name->nodename));
-+	memcpy(name->release, h->release, sizeof(name->release));
-+	memcpy(name->version, h->version, sizeof(name->version));
-+	memcpy(name->machine, h->machine, sizeof(name->machine));
-+	memcpy(name->domainname, h->domainname, sizeof(name->domainname));
-+	up_read(&uts_sem);
-+	return uts_ns;
-+}
-+#else
-+static inline struct uts_namespace *ckpt_do_copy_uts_ns(struct ckpt_ctx *ctx,
-+		struct ckpt_hdr_utsns *h)
-+{
-+	struct uts_namespace *uts_ns;
++	if (h->q_lspid < 0 || h->q_lrpid < 0)
++		return -EINVAL;
 +
-+	/* complain if image contains multiple namespaces */
-+	if (ctx->stats.uts_ns)
-+		return ERR_PTR(-EEXIST);
++	msq->q_stime = h->q_stime;
++	msq->q_rtime = h->q_rtime;
++	msq->q_ctime = h->q_ctime;
++	msq->q_lspid = h->q_lspid;
++	msq->q_lrpid = h->q_lrpid;
 +
-+	uts_ns = current->nsproxy->uts_ns;
-+	get_uts_ns(uts_ns);
-+	return uts_ns;
-+}
-+#endif
-+
-+static struct uts_namespace *do_restore_uts_ns(struct ckpt_ctx *ctx)
-+{
-+	struct ckpt_hdr_utsns *h;
-+	struct uts_namespace *uts_ns;
-+
-+	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_UTS_NS);
-+	if (IS_ERR(h))
-+		return (struct uts_namespace *) h;
-+
-+	uts_ns = ckpt_do_copy_uts_ns(ctx, h);
-+	if (IS_ERR(uts_ns))
-+		goto out;
-+
-+	ctx->stats.uts_ns++;
-+ out:
-+	ckpt_hdr_put(ctx, h);
-+	return uts_ns;
-+}
-+
-+void *restore_uts_ns(struct ckpt_ctx *ctx)
-+{
-+	return (void *) do_restore_uts_ns(ctx);
-+}
-diff --git a/checkpoint/objhash.c b/checkpoint/objhash.c
-index 4368e7b..a2cf082 100644
---- a/checkpoint/objhash.c
-+++ b/checkpoint/objhash.c
-@@ -138,6 +138,22 @@ static int obj_ns_users(void *ptr)
- 	return atomic_read(&((struct nsproxy *) ptr)->count);
- }
- 
-+static int obj_uts_ns_grab(void *ptr)
-+{
-+	get_uts_ns((struct uts_namespace *) ptr);
 +	return 0;
 +}
 +
-+static void obj_uts_ns_drop(void *ptr, int lastref)
++static struct msg_msg *restore_msg_contents_one(struct ckpt_ctx *ctx, int *clen)
 +{
-+	put_uts_ns((struct uts_namespace *) ptr);
-+}
++	struct ckpt_hdr_ipc_msg_msg *h;
++	struct msg_msg *msg = NULL;
++	struct msg_msgseg *seg, **pseg;
++	int total, len;
++	int ret;
 +
-+static int obj_uts_ns_users(void *ptr)
-+{
-+	return atomic_read(&((struct uts_namespace *) ptr)->kref.refcount);
-+}
++	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_IPC_MSG_MSG);
++	if (IS_ERR(h))
++		return (struct msg_msg *) h;
 +
- static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 	/* ignored object */
- 	{
-@@ -193,6 +209,16 @@ static struct ckpt_obj_ops ckpt_obj_ops[] = {
- 		.checkpoint = checkpoint_ns,
- 		.restore = restore_ns,
- 	},
-+	/* uts_ns object */
-+	{
-+		.obj_name = "UTS_NS",
-+		.obj_type = CKPT_OBJ_UTS_NS,
-+		.ref_drop = obj_uts_ns_drop,
-+		.ref_grab = obj_uts_ns_grab,
-+		.ref_users = obj_uts_ns_users,
-+		.checkpoint = checkpoint_uts_ns,
-+		.restore = restore_uts_ns,
-+	},
- };
- 
- 
-diff --git a/checkpoint/process.c b/checkpoint/process.c
-index 961795f..0935cd6 100644
---- a/checkpoint/process.c
-+++ b/checkpoint/process.c
-@@ -17,8 +17,10 @@
- #include <linux/futex.h>
- #include <linux/compat.h>
- #include <linux/poll.h>
-+#include <linux/utsname.h>
- #include <linux/checkpoint.h>
- #include <linux/checkpoint_hdr.h>
-+#include <linux/syscalls.h>
- 
- 
- #ifdef CONFIG_FUTEX
-diff --git a/checkpoint/restart.c b/checkpoint/restart.c
-index 325d03a..e66575c 100644
---- a/checkpoint/restart.c
-+++ b/checkpoint/restart.c
-@@ -567,12 +567,18 @@ static int check_kernel_const(struct ckpt_const *h)
- 	if (h->at_vector_size != AT_VECTOR_SIZE)
- 		return -EINVAL;
- 	/* uts */
-+	if (h->uts_sysname_len != sizeof(uts->sysname))
-+		return -EINVAL;
-+	if (h->uts_nodename_len != sizeof(uts->nodename))
-+		return -EINVAL;
- 	if (h->uts_release_len != sizeof(uts->release))
- 		return -EINVAL;
- 	if (h->uts_version_len != sizeof(uts->version))
- 		return -EINVAL;
- 	if (h->uts_machine_len != sizeof(uts->machine))
- 		return -EINVAL;
-+	if (h->uts_domainname_len != sizeof(uts->domainname))
-+		return -EINVAL;
- 
- 	return 0;
- }
-diff --git a/include/linux/checkpoint.h b/include/linux/checkpoint.h
-index 22cc8f6..9f2a7ba 100644
---- a/include/linux/checkpoint.h
-+++ b/include/linux/checkpoint.h
-@@ -169,6 +169,10 @@ extern int ckpt_collect_ns(struct ckpt_ctx *ctx, struct task_struct *t);
- extern int checkpoint_ns(struct ckpt_ctx *ctx, void *ptr);
- extern void *restore_ns(struct ckpt_ctx *ctx);
- 
-+/* uts-ns */
-+extern int checkpoint_uts_ns(struct ckpt_ctx *ctx, void *ptr);
-+extern void *restore_uts_ns(struct ckpt_ctx *ctx);
++	ret = -EINVAL;
++	if (h->m_type < 1)
++		goto out;
++	if (h->m_ts > current->nsproxy->ipc_ns->msg_ctlmax)
++		goto out;
 +
- /* file table */
- extern int ckpt_collect_file_table(struct ckpt_ctx *ctx, struct task_struct *t);
- extern int checkpoint_obj_file_table(struct ckpt_ctx *ctx,
-diff --git a/include/linux/checkpoint_hdr.h b/include/linux/checkpoint_hdr.h
-index 7c43266..dc2cadb 100644
---- a/include/linux/checkpoint_hdr.h
-+++ b/include/linux/checkpoint_hdr.h
-@@ -19,8 +19,6 @@
- #include <linux/types.h>
- #endif
- 
--#include <linux/utsname.h>
--
- /*
-  * To maintain compatibility between 32-bit and 64-bit architecture flavors,
-  * keep data 64-bit aligned: use padding for structure members, and use
-@@ -83,6 +81,8 @@ enum {
- #define CKPT_HDR_CPU CKPT_HDR_CPU
- 	CKPT_HDR_NS,
- #define CKPT_HDR_NS CKPT_HDR_NS
-+	CKPT_HDR_UTS_NS,
-+#define CKPT_HDR_UTS_NS CKPT_HDR_UTS_NS
- 
- 	/* 201-299: reserved for arch-dependent */
- 
-@@ -142,6 +142,8 @@ enum obj_type {
- #define CKPT_OBJ_MM CKPT_OBJ_MM
- 	CKPT_OBJ_NS,
- #define CKPT_OBJ_NS CKPT_OBJ_NS
-+	CKPT_OBJ_UTS_NS,
-+#define CKPT_OBJ_UTS_NS CKPT_OBJ_UTS_NS
- 	CKPT_OBJ_MAX
- #define CKPT_OBJ_MAX CKPT_OBJ_MAX
- };
-@@ -153,9 +155,12 @@ struct ckpt_const {
- 	/* mm */
- 	__u16 at_vector_size;
- 	/* uts */
-+	__u16 uts_sysname_len;
-+	__u16 uts_nodename_len;
- 	__u16 uts_release_len;
- 	__u16 uts_version_len;
- 	__u16 uts_machine_len;
-+	__u16 uts_domainname_len;
- } __attribute__((aligned(8)));
- 
- /* checkpoint image header */
-@@ -234,6 +239,26 @@ struct ckpt_hdr_task_ns {
- 
- struct ckpt_hdr_ns {
- 	struct ckpt_hdr h;
-+	__s32 uts_objref;
-+} __attribute__((aligned(8)));
++	total = h->m_ts;
++	len = min(total, (int) DATALEN_MSG);
++	msg = kmalloc(sizeof(*msg) + len, GFP_KERNEL);
++	if (!msg) {
++		ret = -ENOMEM;
++		goto out;
++	}
++	msg->next = NULL;
++	pseg = &msg->next;
 +
-+/* cannot include <linux/tty.h> from userspace, so define: */
-+#define CKPT_NEW_UTS_LEN  64
-+#ifdef __KERNEL__
-+#include <linux/utsname.h>
-+#if CKPT_NEW_UTS_LEN != __NEW_UTS_LEN
-+#error CKPT_NEW_UTS_LEN size is wrong per linux/utsname.h
-+#endif
-+#endif
-+
-+struct ckpt_hdr_utsns {
-+	struct ckpt_hdr h;
-+	char sysname[CKPT_NEW_UTS_LEN + 1];
-+	char nodename[CKPT_NEW_UTS_LEN + 1];
-+	char release[CKPT_NEW_UTS_LEN + 1];
-+	char version[CKPT_NEW_UTS_LEN + 1];
-+	char machine[CKPT_NEW_UTS_LEN + 1];
-+	char domainname[CKPT_NEW_UTS_LEN + 1];
- } __attribute__((aligned(8)));
- 
- /* task's shared resources */
-diff --git a/include/linux/checkpoint_types.h b/include/linux/checkpoint_types.h
-index 192dd86..ee35488 100644
---- a/include/linux/checkpoint_types.h
-+++ b/include/linux/checkpoint_types.h
-@@ -22,6 +22,10 @@
- #include <linux/ktime.h>
- #include <linux/wait.h>
- 
-+struct ckpt_stats {
-+	int uts_ns;
-+};
-+
- struct ckpt_ctx {
- 	int crid;		/* unique checkpoint id */
- 
-@@ -71,6 +75,8 @@ struct ckpt_ctx {
- 	struct completion complete;	/* container root and other tasks on */
- 	wait_queue_head_t waitq;	/* start, end, and restart ordering */
- 
-+	struct ckpt_stats stats;	/* statistics */
-+
- #define CKPT_MSG_LEN 1024
- 	char fmt[CKPT_MSG_LEN];
- 	char msg[CKPT_MSG_LEN];
-diff --git a/include/linux/utsname.h b/include/linux/utsname.h
-index 69f3997..774001d 100644
---- a/include/linux/utsname.h
-+++ b/include/linux/utsname.h
-@@ -49,6 +49,7 @@ static inline void get_uts_ns(struct uts_namespace *ns)
- 	kref_get(&ns->kref);
- }
- 
-+extern struct uts_namespace *create_uts_ns(void);
- extern struct uts_namespace *copy_utsname(unsigned long flags,
- 					struct uts_namespace *ns);
- extern void free_uts_ns(struct kref *kref);
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index ccb4fd3..90cba48 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -245,6 +245,10 @@ int ckpt_collect_ns(struct ckpt_ctx *ctx, struct task_struct *t)
- 	if (ret < 0 || exists)
- 		goto out;
- 
-+	ret = ckpt_obj_collect(ctx, nsproxy->uts_ns, CKPT_OBJ_UTS_NS);
++	ret = _ckpt_read_buffer(ctx, (msg + 1), len);
 +	if (ret < 0)
 +		goto out;
 +
- 	/* TODO: collect other namespaces here */
-  out:
- 	put_nsproxy(nsproxy);
-@@ -260,9 +264,14 @@ static int do_checkpoint_ns(struct ckpt_ctx *ctx, struct nsproxy *nsproxy)
- 	if (!h)
- 		return -ENOMEM;
- 
-+	ret = checkpoint_obj(ctx, nsproxy->uts_ns, CKPT_OBJ_UTS_NS);
-+	if (ret <= 0)
-+		goto out;
-+	h->uts_objref = ret;
- 	/* TODO: Write other namespaces here */
- 
- 	ret = ckpt_write_obj(ctx, &h->h);
-+ out:
- 	ckpt_hdr_put(ctx, h);
- 	return ret;
- }
-@@ -287,7 +296,15 @@ static struct nsproxy *do_restore_ns(struct ckpt_ctx *ctx)
- 	if (IS_ERR(h))
- 		return (struct nsproxy *) h;
- 
--	uts_ns = ctx->root_nsproxy->uts_ns;
-+	if (h->uts_objref == 0)
-+		uts_ns = ctx->root_nsproxy->uts_ns;
-+	else
-+		uts_ns = ckpt_obj_fetch(ctx, h->uts_objref, CKPT_OBJ_UTS_NS);
-+	if (IS_ERR(uts_ns)) {
-+		ret = PTR_ERR(uts_ns);
-+		goto out;
++	total -= len;
++	while (total) {
++		len = min(total, (int) DATALEN_SEG);
++		seg = kmalloc(sizeof(*seg) + len, GFP_KERNEL);
++		if (!seg) {
++			ret = -ENOMEM;
++			goto out;
++		}
++		seg->next = NULL;
++		*pseg = seg;
++		pseg = &seg->next;
++
++		ret = _ckpt_read_buffer(ctx, (seg + 1), len);
++		if (ret < 0)
++			goto out;
++		total -= len;
 +	}
 +
- 	ipc_ns = ctx->root_nsproxy->ipc_ns;
- 	mnt_ns = ctx->root_nsproxy->mnt_ns;
- 	net_ns = ctx->root_nsproxy->net_ns;
-diff --git a/kernel/utsname.c b/kernel/utsname.c
-index 8a82b4b..c82ed83 100644
---- a/kernel/utsname.c
-+++ b/kernel/utsname.c
-@@ -14,8 +14,9 @@
- #include <linux/utsname.h>
- #include <linux/err.h>
- #include <linux/slab.h>
-+#include <linux/checkpoint.h>
++	msg->m_type = h->m_type;
++	msg->m_ts = h->m_ts;
++	*clen = h->m_ts;
++	ret = security_msg_msg_alloc(msg);
++ out:
++	if (ret < 0 && msg) {
++		free_msg(msg);
++		msg = ERR_PTR(ret);
++	}
++	ckpt_hdr_put(ctx, h);
++	return msg;
++}
++
++static inline void free_msg_list(struct list_head *queue)
++{
++	struct msg_msg *msg, *tmp;
++
++	list_for_each_entry_safe(msg, tmp, queue, m_list)
++		free_msg(msg);
++}
++
++static int restore_msg_contents(struct ckpt_ctx *ctx, struct list_head *queue,
++				unsigned long qnum, unsigned long *cbytes)
++{
++	struct msg_msg *msg;
++	int clen = 0;
++	int ret = 0;
++
++	INIT_LIST_HEAD(queue);
++
++	*cbytes = 0;
++	while (qnum--) {
++		msg = restore_msg_contents_one(ctx, &clen);
++		if (IS_ERR(msg))
++			goto fail;
++		list_add_tail(&msg->m_list, queue);
++		*cbytes += clen;
++	}
++	return 0;
++ fail:
++	ret = PTR_ERR(msg);
++	free_msg_list(queue);
++	return ret;
++}
++
++int restore_ipc_msg(struct ckpt_ctx *ctx, struct ipc_namespace *ns)
++{
++	struct ckpt_hdr_ipc_msg *h;
++	struct kern_ipc_perm *ipc;
++	struct msg_queue *msq;
++	struct ipc_ids *msg_ids = &ns->ids[IPC_MSG_IDS];
++	struct list_head messages;
++	unsigned long cbytes;
++	int msgflag;
++	int ret;
++
++	INIT_LIST_HEAD(&messages);
++
++	h = ckpt_read_obj_type(ctx, sizeof(*h), CKPT_HDR_IPC_MSG);
++	if (IS_ERR(h))
++		return PTR_ERR(h);
++
++	ret = -EINVAL;
++	if (h->perms.id < 0)
++		goto out;
++
++	/* read queued messages into temporary queue */
++	ret = restore_msg_contents(ctx, &messages, h->q_qnum, &cbytes);
++	if (ret < 0)
++		goto out;
++
++	ret = -EINVAL;
++	if (h->q_cbytes != cbytes)
++		goto out;
++
++	/* restore the message queue */
++	msgflag = h->perms.mode | IPC_CREAT | IPC_EXCL;
++	ckpt_debug("msg: do_msgget key %d flag %#x id %d\n",
++		 h->perms.key, msgflag, h->perms.id);
++	ret = do_msgget(ns, h->perms.key, msgflag, h->perms.id);
++	ckpt_debug("msg: do_msgget ret %d\n", ret);
++	if (ret < 0)
++		goto out;
++
++	down_write(&msg_ids->rw_mutex);
++
++	/*
++	 * We are the sole owners/users of this brand new ipc-ns, so:
++	 *
++	 * 1) The msgid could not have been deleted between its creation
++	 *   and taking the rw_mutex above.
++	 *
++	 * 2) No unauthorized task will have attempted to gain access
++	 *   to it either, not even until we restore the security bit
++	 *   further below, so the theoretical security race is void.
++	 *
++	 * If/when we allow to restore the ipc state within the parent's
++	 * ipc-ns, we will need to re-examine this.
++	 */
++	ipc = ipc_lock(msg_ids, h->perms.id);
++	BUG_ON(IS_ERR(ipc));
++
++	msq = container_of(ipc, struct msg_queue, q_perm);
++	BUG_ON(!list_empty(&msq->q_messages));
++
++	/* attach queued messages we read before */
++	list_splice_init(&messages, &msq->q_messages);
++
++	/* adjust msq and namespace statistics */
++	atomic_add(h->q_cbytes, &ns->msg_bytes);
++	atomic_add(h->q_qnum, &ns->msg_hdrs);
++	msq->q_cbytes = h->q_cbytes;
++	msq->q_qbytes = h->q_qbytes;
++	msq->q_qnum = h->q_qnum;
++
++	/* this is safe because no unauthorized access is possible */
++	ipc_unlock(ipc);
++
++	ret = load_ipc_msg_hdr(ctx, h, msq);
++	if (ret < 0) {
++		ckpt_debug("msq: need to remove (%d)\n", ret);
++		ipc_lock_by_ptr(&msq->q_perm);
++		freeque(ns, ipc);
++		ipc_unlock(ipc);
++	}
++	up_write(&msg_ids->rw_mutex);
++ out:
++	free_msg_list(&messages);  /* no-op if all ok, else cleanup msgs */
++	ckpt_hdr_put(ctx, h);
++	return ret;
++}
+diff --git a/ipc/msg.c b/ipc/msg.c
+index 9230e7c..7711c77 100644
+--- a/ipc/msg.c
++++ b/ipc/msg.c
+@@ -72,7 +72,6 @@ struct msg_sender {
  
--static struct uts_namespace *create_uts_ns(void)
-+struct uts_namespace *create_uts_ns(void)
+ #define msg_unlock(msq)		ipc_unlock(&(msq)->q_perm)
+ 
+-static void freeque(struct ipc_namespace *, struct kern_ipc_perm *);
+ static int newque(struct ipc_namespace *, struct ipc_params *, int);
+ #ifdef CONFIG_PROC_FS
+ static int sysvipc_msg_proc_show(struct seq_file *s, void *it);
+@@ -279,7 +278,7 @@ static void expunge_all(struct msg_queue *msq, int res)
+  * msg_ids.rw_mutex (writer) and the spinlock for this message queue are held
+  * before freeque() is called. msg_ids.rw_mutex remains locked on exit.
+  */
+-static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
++void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
  {
- 	struct uts_namespace *uts_ns;
+ 	struct list_head *tmp;
+ 	struct msg_queue *msq = container_of(ipcp, struct msg_queue, q_perm);
+@@ -312,14 +311,11 @@ static inline int msg_security(struct kern_ipc_perm *ipcp, int msgflg)
+ 	return security_msg_queue_associate(msq, msgflg);
+ }
  
+-int do_msgget(key_t key, int msgflg, int req_id)
++int do_msgget(struct ipc_namespace *ns, key_t key, int msgflg, int req_id)
+ {
+-	struct ipc_namespace *ns;
+ 	struct ipc_ops msg_ops;
+ 	struct ipc_params msg_params;
+ 
+-	ns = current->nsproxy->ipc_ns;
+-
+ 	msg_ops.getnew = newque;
+ 	msg_ops.associate = msg_security;
+ 	msg_ops.more_checks = NULL;
+@@ -332,7 +328,7 @@ int do_msgget(key_t key, int msgflg, int req_id)
+ 
+ SYSCALL_DEFINE2(msgget, key_t, key, int, msgflg)
+ {
+-	return do_msgget(key, msgflg, -1);
++	return do_msgget(current->nsproxy->ipc_ns, key, msgflg, -1);
+ }
+ 
+ static inline unsigned long
+diff --git a/ipc/msgutil.c b/ipc/msgutil.c
+index f095ee2..e119243 100644
+--- a/ipc/msgutil.c
++++ b/ipc/msgutil.c
+@@ -36,14 +36,6 @@ struct ipc_namespace init_ipc_ns = {
+ 
+ atomic_t nr_ipc_ns = ATOMIC_INIT(1);
+ 
+-struct msg_msgseg {
+-	struct msg_msgseg* next;
+-	/* the next part of the message follows immediately */
+-};
+-
+-#define DATALEN_MSG	(PAGE_SIZE-sizeof(struct msg_msg))
+-#define DATALEN_SEG	(PAGE_SIZE-sizeof(struct msg_msgseg))
+-
+ struct msg_msg *load_msg(const void __user *src, int len)
+ {
+ 	struct msg_msg *msg;
+diff --git a/ipc/util.h b/ipc/util.h
+index e0007dc..8a223f0 100644
+--- a/ipc/util.h
++++ b/ipc/util.h
+@@ -141,6 +141,14 @@ extern void free_msg(struct msg_msg *msg);
+ extern struct msg_msg *load_msg(const void __user *src, int len);
+ extern int store_msg(void __user *dest, struct msg_msg *msg, int len);
+ 
++struct msg_msgseg {
++	struct msg_msgseg *next;
++	/* the next part of the message follows immediately */
++};
++
++#define DATALEN_MSG	(PAGE_SIZE-sizeof(struct msg_msg))
++#define DATALEN_SEG	(PAGE_SIZE-sizeof(struct msg_msgseg))
++
+ extern void recompute_msgmni(struct ipc_namespace *);
+ 
+ static inline int ipc_buildid(int id, int seq)
+@@ -182,6 +190,8 @@ int do_shmget(struct ipc_namespace *ns, key_t key, size_t size, int shmflg,
+ 	      int req_id);
+ void do_shm_rmid(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp);
+ 
++int do_msgget(struct ipc_namespace *ns, key_t key, int msgflg, int req_id);
++void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp);
+ 
+ #ifdef CONFIG_CHECKPOINT
+ extern int checkpoint_fill_ipc_perms(struct ckpt_hdr_ipc_perms *h,
+@@ -192,6 +202,9 @@ extern int restore_load_ipc_perms(struct ckpt_hdr_ipc_perms *h,
+ extern int ckpt_collect_ipc_shm(int id, void *p, void *data);
+ extern int checkpoint_ipc_shm(int id, void *p, void *data);
+ extern int restore_ipc_shm(struct ckpt_ctx *ctx, struct ipc_namespace *ns);
++
++extern int checkpoint_ipc_msg(int id, void *p, void *data);
++extern int restore_ipc_msg(struct ckpt_ctx *ctx, struct ipc_namespace *ns);
+ #endif
+ 
+ #endif
 -- 
 1.6.3.3
 
