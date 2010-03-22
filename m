@@ -1,132 +1,130 @@
-From: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [C/R v20][PATCH 46/96] c/r: add checkpoint operation for
- opened files of generic filesystems
-Date: Wed, 17 Mar 2010 16:25:26 -0700
-Message-ID: <20100317232526.GI3037@count0.beaverton.ibm.com>
-References: <1268842164-5590-9-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-10-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-11-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-12-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-13-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-14-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-15-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-16-git-send-email-orenl@cs.columbia.edu>
- <1268842164-5590-17-git-send-email-orenl@cs.columbia.edu>
- <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6@sun.com>
+From: "Rafael J. Wysocki" <rjw-KKrjLPT3xs0@public.gmane.org>
+Subject: Re: [C/R v20][PATCH 15/96] cgroup freezer: Fix buggy resume test for tasks frozen with cgroup freezer
+Date: Tue, 23 Mar 2010 00:28:40 +0100
+Message-ID: <201003230028.40915.rjw@sisk.pl>
+References: <1268842164-5590-1-git-send-email-orenl@cs.columbia.edu> <1268842164-5590-15-git-send-email-orenl@cs.columbia.edu> <1268842164-5590-16-git-send-email-orenl@cs.columbia.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain;
+  charset="iso-8859-2"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <BA0C23DE-E2B5-42A9-8478-CE216D18A6C6-xsfywfwIY+M@public.gmane.org>
+In-Reply-To: <1268842164-5590-16-git-send-email-orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dilger <adilger-xsfywfwIY+M@public.gmane.org>
-Cc: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oren Laadan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Cedric Le Goater <legoater-GANU6spQydw@public.gmane.org>, Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, linux-pm-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 17, 2010 at 03:09:00PM -0600, Andreas Dilger wrote:
-> On 2010-03-17, at 10:08, Oren Laadan wrote:
-> >These patches extend the use of the generic file checkpoint
-> >operation to
-> >non-extX filesystems which have lseek operations that ensure we
-> >can save
-> >and restore the files for later use. Note that this does not include
-> >things like FUSE, network filesystems, or pseudo-filesystem kernel
-> >interfaces.
+On Wednesday 17 March 2010, Oren Laadan wrote:
+> From: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 > 
-> I didn't see any other patches posted to linux-fsdevel regarding
-> what this code is, or what it is supposed to be doing.  Could you
-> please repost the patches related to generic_file_checkpoint(), and
-
-I'm not sure why those weren't sent to linux-fsdevel. It mainly saves
-the critical pieces of kernel information from the struct file needed
-to restart the open file descriptors. It does not save the file
-(system) contents in the checkpoint image. That's left for proper
-filesystem freezing, snapshotting, or rsync (for example) depending on
-the tools and/or filesystems userspace has chosen.
-
-> the overview email that explains what you mean by "checkpoint".  I'm
-> assuming this is related to HPC/process restart/migration, but
-> better to not guess.
-
-Your assumption is correct -- this is related to HPC/process
-restart/migration. That said, we'd like to make it as useful as
-possible for other folks as well.
-
+> When the cgroup freezer is used to freeze tasks we do not want to thaw
+> those tasks during resume. Currently we test the cgroup freezer
+> state of the resuming tasks to see if the cgroup is FROZEN.  If so
+> then we don't thaw the task. However, the FREEZING state also indicates
+> that the task should remain frozen.
 > 
-> >@@ -718,6 +718,7 @@ static const struct file_operations
-> >btrfs_ctl_fops = {
-> >	.unlocked_ioctl	 = btrfs_control_ioctl,
-> >	.compat_ioctl = btrfs_control_ioctl,
-> >	.owner	 = THIS_MODULE,
-> >+	.checkpoint = generic_file_checkpoint,
-> >};
-> >
-> >const struct file_operations exofs_file_operations = {
-> >	.llseek		= generic_file_llseek,
-> >+	.checkpoint	= generic_file_checkpoint,
-> >	.read		= do_sync_read,
-> >	.write		= do_sync_write,
-> >	.aio_read	= generic_file_aio_read,
-> >
-> >static const struct file_operations hostfs_file_fops = {
-> >	.llseek		= generic_file_llseek,
-> >+	.checkpoint	= generic_file_checkpoint,
-> >	.read		= do_sync_read,
-> >	.splice_read	= generic_file_splice_read,
-> >	.aio_read	= generic_file_aio_read,
-> >@@ -430,6 +431,7 @@ static const struct file_operations
-> >hostfs_file_fops = {
-> >
-> >static const struct file_operations hostfs_dir_fops = {
-> >	.llseek		= generic_file_llseek,
-> >+	.checkpoint	= generic_file_checkpoint,
-> >	.readdir	= hostfs_readdir,
-> >	.read		= generic_read_dir,
-> >};
-> >
-> >const struct file_operations nilfs_file_operations = {
-> >	.llseek		= generic_file_llseek,
-> >+	.checkpoint	= generic_file_checkpoint,
-> >	.read		= do_sync_read,
-> >	.write		= do_sync_write,
-> >	.aio_read	= generic_file_aio_read,
+> This also avoids a problem pointed out by Oren Ladaan: the freezer state
+> transition from FREEZING to FROZEN is updated lazily when userspace reads
+> or writes the freezer.state file in the cgroup filesystem. This means that
+> resume will thaw tasks in cgroups which should be in the FROZEN state if
+> there is no read/write of the freezer.state file to trigger this
+> transition before suspend.
 > 
+> NOTE: Another "simple" solution would be to always update the cgroup
+> freezer state during resume. However it's a bad choice for several reasons:
+> Updating the cgroup freezer state is somewhat expensive because it requires
+> walking all the tasks in the cgroup and checking if they are each frozen.
+> Worse, this could easily make resume run in N^2 time where N is the number
+> of tasks in the cgroup. Finally, updating the freezer state from this code
+> path requires trickier locking because of the way locks must be ordered.
 > 
-> Minor nit - it would be good to add this method in the same place in
-> all of the *_file_operation structures for consistency.  Ideally
-> these would already be in the order that they are declared in the
-> structure, but at least new ones should be added consistently.
-
-I chose to put them right after llseek because that's a critical
-operation that determines whether generic_file_checkpoint is suitable
-or whether a custom operation is needed. Since the placement here
-has nothing to do with the order in memory it's mainly a convention
-I thought up to support review of copy-pasted file operations with
-new .checkpoint ops.
-
-I'll post a patch to move these down to correspond to definition-order
-unless you agree that my reasoning above justifies keeping them
-where they are.
-
+> Instead of updating the freezer state we rely on the fact that lazy
+> updates only manage the transition from FREEZING to FROZEN. We know that
+> a cgroup with the FREEZING state may actually be FROZEN so test for that
+> state too. This makes sense in the resume path even for partially-frozen
+> cgroups -- those that really are FREEZING but not FROZEN.
 > 
-> >static const struct vm_operations_struct nfs_file_vm_ops = {
-> >	.fault = filemap_fault,
-> >	.page_mkwrite = nfs_vm_page_mkwrite,
-> >+#ifdef CONFIG_CHECKPOINT
-> >+	.checkpoint = filemap_checkpoint,
-> >+#endif
-> >};
+> Reported-by: Oren Ladaan <orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
+> Signed-off-by: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+> Cc: Cedric Le Goater <legoater-GANU6spQydw@public.gmane.org>
+> Cc: Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> Cc: Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+> Cc: Rafael J. Wysocki <rjw-KKrjLPT3xs0@public.gmane.org>
+> Cc: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+> Cc: linux-pm-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+
+Looks reasonable.
+
+Is anyone handling that already or do you want me to take it to my tree?
+
+Rafael
+
+
+> Seems like a candidate for -stable.
+> ---
+>  include/linux/freezer.h |    7 +++++--
+>  kernel/cgroup_freezer.c |    9 ++++++---
+>  kernel/power/process.c  |    2 +-
+>  3 files changed, 12 insertions(+), 6 deletions(-)
 > 
-> Why is this one conditional, but the others are not?
-
-filemap_checkpoint is defined in mm/filemap.c and the !CONFIG_CHECKPOINT
-section has:
-
-#define filemap_checkpoint NULL
-
-Of course since it's not in a header file that define is useless
-elsewhere hence the conditional here. We should move that to a
-proper header. Good catch, thanks!
-
-Cheers,
-	-Matt Helsley
+> diff --git a/include/linux/freezer.h b/include/linux/freezer.h
+> index 5a361f8..da7e52b 100644
+> --- a/include/linux/freezer.h
+> +++ b/include/linux/freezer.h
+> @@ -64,9 +64,12 @@ extern bool freeze_task(struct task_struct *p, bool sig_only);
+>  extern void cancel_freezing(struct task_struct *p);
+>  
+>  #ifdef CONFIG_CGROUP_FREEZER
+> -extern int cgroup_frozen(struct task_struct *task);
+> +extern int cgroup_freezing_or_frozen(struct task_struct *task);
+>  #else /* !CONFIG_CGROUP_FREEZER */
+> -static inline int cgroup_frozen(struct task_struct *task) { return 0; }
+> +static inline int cgroup_freezing_or_frozen(struct task_struct *task)
+> +{
+> +	return 0;
+> +}
+>  #endif /* !CONFIG_CGROUP_FREEZER */
+>  
+>  /*
+> diff --git a/kernel/cgroup_freezer.c b/kernel/cgroup_freezer.c
+> index 59e9ef6..eb3f34d 100644
+> --- a/kernel/cgroup_freezer.c
+> +++ b/kernel/cgroup_freezer.c
+> @@ -47,17 +47,20 @@ static inline struct freezer *task_freezer(struct task_struct *task)
+>  			    struct freezer, css);
+>  }
+>  
+> -int cgroup_frozen(struct task_struct *task)
+> +int cgroup_freezing_or_frozen(struct task_struct *task)
+>  {
+>  	struct freezer *freezer;
+>  	enum freezer_state state;
+>  
+>  	task_lock(task);
+>  	freezer = task_freezer(task);
+> -	state = freezer->state;
+> +	if (!freezer->css.cgroup->parent)
+> +		state = CGROUP_THAWED; /* root cgroup can't be frozen */
+> +	else
+> +		state = freezer->state;
+>  	task_unlock(task);
+>  
+> -	return state == CGROUP_FROZEN;
+> +	return (state == CGROUP_FREEZING) || (state == CGROUP_FROZEN);
+>  }
+>  
+>  /*
+> diff --git a/kernel/power/process.c b/kernel/power/process.c
+> index 5ade1bd..de53015 100644
+> --- a/kernel/power/process.c
+> +++ b/kernel/power/process.c
+> @@ -145,7 +145,7 @@ static void thaw_tasks(bool nosig_only)
+>  		if (nosig_only && should_send_signal(p))
+>  			continue;
+>  
+> -		if (cgroup_frozen(p))
+> +		if (cgroup_freezing_or_frozen(p))
+>  			continue;
+>  
+>  		thaw_process(p);
+> 
