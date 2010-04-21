@@ -1,64 +1,50 @@
-From: "Serge E. Hallyn" <serue@us.ibm.com>
+From: Ashwin Ganti <ashwin.ganti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH 3/3] p9auth: add p9auth driver
-Date: Wed, 21 Apr 2010 09:30:16 -0500
-Message-ID: <20100421143016.GA31880@us.ibm.com>
+Date: Wed, 21 Apr 2010 07:44:01 -0700
+Message-ID: <u2wa67e66b21004210744n48b1b189v2775665c7b2ea77f@mail.gmail.com>
 References: <20100421012749.GA21338@us.ibm.com>
- <20100421012908.GB24251@us.ibm.com>
- <20100421102739.6ad932fb@lxorguk.ukuu.org.uk>
- <1271858141.2899.7.camel@dhcp235-240.rdu.redhat.com>
+	 <20100421012908.GB24251@us.ibm.com> <20100421030406.GB10258@kroah.com>
+	 <20100421034532.GA9254@us.ibm.com>
+	 <h2na67e66b21004202118w484dd8f0pe526b0a1fc7220e0@mail.gmail.com>
+	 <20100421134759.GE16326@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1271858141.2899.7.camel@dhcp235-240.rdu.redhat.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Eric Paris <eparis@redhat.com>
-Cc: Alan Cox <alan@lxorguk.ukuu.org.uk>, lkml <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Ashwin Ganti <ashwin.ganti@gmail.com>, Greg KH <greg@kroah.com>, rsc@swtch.com, ericvh@gmail.com, linux-security-module@vger.kernel.org, Ron Minnich <rminnich@gmail.com>, jt.beard@gmail.com, Andrew Morton <akpm@linux-foundation.org>, Andrew Morgan <morgan@kernel.org>, oleg@us.ibm.com, "Eric W. Biederman" <ebiederm@xmission.com>, linux-api@vger.kernel.org, Randy Dunlap <rdunlap@xenotime.net>, sgrubb@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20100421134759.GE16326-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Cc: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rsc-kPPrOchjzlEAvxtiuMwx3w@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ron Minnich <rminnich-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, jt.beard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, oleg-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Randy Dunlap <rdunlap-/UHa2rfvQTnk1uMJSBkQmQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Eric Paris (eparis@redhat.com):
-> On Wed, 2010-04-21 at 10:27 +0100, Alan Cox wrote:
-> > > This is a change which must be discussed.  The use of this
-> > > privilege can be completely prevented by having init remove
-> > > CAP_GRANT_ID from its capability bounding set before forking any
-> > > processes.
-> > 
-> > Which is a minor back compat issue - but you could start without it and
-> > allow init to add it.
-> > 
-> > It seems a very complex interface to do a simple thing. A long time ago
-> > there was discussion around extending the AF_UNIX fd passing to permit
-> > 'pass handle and auth' so you could send someone a handle with a "become
-> > me" token attached.
-> 
-> If you do go down this path there is a separate (and actually completely
-> opposite) but related problem I might be able and willing to work with
-> you on.  When looking at how auditing works in this modern day and age
-> of dbus+polkit to get background processes to do work on behalf of a
+On Wed, Apr 21, 2010 at 6:47 AM, Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org> wro=
+te:
+> Quoting Ashwin Ganti (ashwin.ganti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
+>> On Tue, Apr 20, 2010 at 8:45 PM, Serge E. Hallyn <serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org> =
+wrote:
+>> > Quoting Greg KH (greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org):
+>> >> Hm, who is going to maintain this, you, or Ashwin?
+>> >
+>> > I haven't asked Ashwin, and will be happy either way. =A0Ashwin, d=
+id
+>> > you want to maintain it?
+>>
+>> Well, since you have been driving a lot of implementation changes
+>> recently, I feel it makes sense for you to be a maintainer. Honestly=
+ I
+>> don't think I will be able to find time maintaining this in the futu=
+re
+>> although I can do the code reviews for you. I will be more than happ=
+y
+>> if this feature continues to get traction.
+>>
+>> - Ashwin
+>
+> Ok. =A0I'll put myself in MAINTAINERS. =A0If we stick with the p9auth
+> driver or filesystem approach, I'd like to keep you in MODULE_AUTHOR(=
+)
+> if that's ok, bc it really is yours, and wouldn't exist without you.
 
-This actually brings up an issue I've been a bit worried about: is
-credentials passing for dbus adequate?  I thought that the last time
-I looked through some code, there was no way in particular for upstart
-to pass posix capabilities info along.  What that means is that as root
-I can do
+Yeah, sure.
 
-capsh --drop=(list of all capabilities) --
-   reboot
-
-and, although I don't have cap_sys_boot, I can reboot the system.  So
-the only way I can prevent a container from rebooting the host is to
-start it in a fresh network namespace to segrate the abstract unix
-domain sockets.  But if I don't want a fresh network namespace, I'm out
-of luck.
-
-> user we were discussing an interface that would pass the information
-> about the user to the background server process.  The background server
-> process could do some magic such that it still had all the permissions
-> and rights of itself, but had the audit information of the original
-> user.  Thus even though it was a server process with uid=0 that did the
-> work, the audit logs could know it was actually on behalf of uid=500.  
-> 
-> It was discussed passing that token of audit information over an AF_UNIX
-> socket.
-> 
-> -Eric
+- Ashwin
