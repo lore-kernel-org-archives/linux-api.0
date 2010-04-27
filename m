@@ -1,13 +1,11 @@
-From: hob <frankjohnson-5Sq3c+g6qRGDSzTpti6kl4o+FmitHQ/T+ogQgVFfb1koyEvpXFnHzQ@public.gmane.org>
-Subject: optin email list
-Date: Tue, 27 Apr 2010 04:30:22 +0200
-Message-ID: <76b3c826-b52b-4562-b50a-29d416b33477@BRUZONMAIL.bruzon-miller.com>
-Reply-To: <frankjohnson-5Sq3c+g6qRGDSzTpti6kl4o+FmitHQ/T+ogQgVFfb1koyEvpXFnHzQ@public.gmane.org>
-Mime-Version: 1.0
-Content-Type: text/plain
+From: "usn" <jenifferknowles-1qqe7n+7OJXMcuqBxl//4SaUA//5aTcQ@public.gmane.org>
+Subject: online mailing lists
+Date: Tue, 27 Apr 2010 04:41:03 +0200 (CEST)
+Message-ID: <20100427024103.57B5D36CAF4@mail.massmotionmedia.com>
+Reply-To: jenifferknowles-1qqe7n+7OJXMcuqBxl//4SaUA//5aTcQ@public.gmane.org
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: jmckphotography-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, president-TC/Izo/6YVn88ffX0xAuOMvUccWbeCJQ@public.gmane.org
+To: webmaster-UxR/4qnKViDhzAFQRv8kRQC/G2K4zDHf@public.gmane.org, president-Gr/ANKY5pUKHXe+LvDLADg@public.gmane.org, maggiechair-Rs3qZ4JR9LsQKouaRIsehV+7ItdqKx3q2LY78lusg7I@public.gmane.org, shanabana85-PkbjNfxxIARBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 To get additional details, samples and counts for our USA contact data please
@@ -19,6 +17,6 @@ we have lots of different lists in many fields and this week is the time to buy 
 
 
 
-Send email to  for deleted status
+Send us an email to  we will discontinue from the list
 
-Establish 3-way conferencing call
+After off hook, press to display the dialed numbers. When
