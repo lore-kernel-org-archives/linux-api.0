@@ -1,99 +1,111 @@
 From: Oren Laadan <orenl@cs.columbia.edu>
-Subject: [PATCH v21 004/100] eclone (4/11): Add target_pids parameter to alloc_pid()
-Date: Sat,  1 May 2010 10:14:46 -0400
-Message-ID: <1272723382-19470-5-git-send-email-orenl@cs.columbia.edu>
+Subject: [PATCH v21 007/100] eclone (7/11): Define do_fork_with_pids()
+Date: Sat,  1 May 2010 10:14:49 -0400
+Message-ID: <1272723382-19470-8-git-send-email-orenl@cs.columbia.edu>
 References: <1272723382-19470-1-git-send-email-orenl@cs.columbia.edu>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1272723382-19470-1-git-send-email-orenl@cs.columbia.edu>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Matt Helsley <matthltc@us.ibm.com>, Pavel Emelyanov <xemul@openvz.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-s390@vger.kernel.org, linuxppc-dev@ozlabs.org
+Cc: containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Serge Hallyn <serue@us.ibm.com>, Matt Helsley <matthltc@us.ibm.com>, Pavel Emelyanov <xemul@openvz.org>, Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-s390@vger.kernel.org, linuxppc-dev@ozlabs.org, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
 
-This parameter is currently NULL, but will be used in a follow-on patch.
+do_fork_with_pids() is same as do_fork(), except that it takes an
+additional, 'pid_set', parameter. This parameter, currently unused,
+specifies the set of target pids of the process in each of its pid
+namespaces.
+
+Changelog[v7]:
+	- Drop 'struct pid_set' object and pass in 'pid_t *target_pids'
+	  instead of 'struct pid_set *'.
+
+Changelog[v6]:
+	- (Nathan Lynch, Arnd Bergmann, H. Peter Anvin, Linus Torvalds)
+	  Change 'pid_set.pids' to a 'pid_t pids[]' so size of 'struct pid_set'
+	  is constant across architectures.
+	- (Nathan Lynch) Change 'pid_set.num_pids' to 'unsigned int'.
+
+Changelog[v4]:
+	- Rename 'struct target_pid_set' to 'struct pid_set' since it may
+	  be useful in other contexts.
+
+Changelog[v3]:
+	- Fix "long-line" warning from checkpatch.pl
+
+Changelog[v2]:
+	- To facilitate moving architecture-inpdendent code to kernel/fork.c
+	  pass in 'struct target_pid_set __user *' to do_fork_with_pids()
+	  rather than 'pid_t *' (next patch moves the arch-independent
+	  code to kernel/fork.c)
 
 Cc: linux-api@vger.kernel.org
 Cc: x86@kernel.org
 Cc: linux-s390@vger.kernel.org
 Cc: linuxppc-dev@ozlabs.org
+Cc: Oleg Nesterov <oleg@redhat.com>
 Signed-off-by: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
 Acked-by: Serge E. Hallyn <serue@us.ibm.com>
 Tested-by: Serge E. Hallyn <serue@us.ibm.com>
 Reviewed-by: Oren Laadan <orenl@cs.columbia.edu>
 ---
- include/linux/pid.h |    2 +-
- kernel/fork.c       |    3 ++-
- kernel/pid.c        |    9 +++++++--
- 3 files changed, 10 insertions(+), 4 deletions(-)
+ include/linux/sched.h |    3 +++
+ kernel/fork.c         |   17 +++++++++++++++--
+ 2 files changed, 18 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index 49f1c2f..914185d 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -119,7 +119,7 @@ extern struct pid *find_get_pid(int nr);
- extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
- int next_pidmap(struct pid_namespace *pid_ns, int last);
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 5de3ce5..f4ae3e3 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2129,6 +2129,9 @@ extern int disallow_signal(int);
  
--extern struct pid *alloc_pid(struct pid_namespace *ns);
-+extern struct pid *alloc_pid(struct pid_namespace *ns, pid_t *target_pids);
- extern void free_pid(struct pid *pid);
+ extern int do_execve(char *, char __user * __user *, char __user * __user *, struct pt_regs *);
+ extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *);
++extern long do_fork_with_pids(unsigned long, unsigned long, struct pt_regs *,
++				unsigned long, int __user *, int __user *,
++				unsigned int, pid_t __user *);
+ struct task_struct *fork_idle(int);
  
- /*
+ extern void set_task_comm(struct task_struct *tsk, char *from);
 diff --git a/kernel/fork.c b/kernel/fork.c
-index afdfb08..62018c8 100644
+index e41b3d1..2559d7a 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -962,6 +962,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 	int retval;
+@@ -1355,12 +1355,14 @@ struct task_struct * __cpuinit fork_idle(int cpu)
+  * It copies the process, and if successful kick-starts
+  * it and waits for it to finish using the VM if required.
+  */
+-long do_fork(unsigned long clone_flags,
++long do_fork_with_pids(unsigned long clone_flags,
+ 	      unsigned long stack_start,
+ 	      struct pt_regs *regs,
+ 	      unsigned long stack_size,
+ 	      int __user *parent_tidptr,
+-	      int __user *child_tidptr)
++	      int __user *child_tidptr,
++	      unsigned int num_pids,
++	      pid_t __user *upids)
+ {
  	struct task_struct *p;
- 	int cgroup_callbacks_done = 0;
-+	pid_t *target_pids = NULL;
- 
- 	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
- 		return ERR_PTR(-EINVAL);
-@@ -1147,7 +1148,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 		goto bad_fork_cleanup_io;
- 
- 	if (pid != &init_struct_pid) {
--		pid = alloc_pid(p->nsproxy->pid_ns);
-+		pid = alloc_pid(p->nsproxy->pid_ns, target_pids);
- 		if (IS_ERR(pid)) {
- 			retval = PTR_ERR(pid);
- 			goto bad_fork_cleanup_io;
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 4eaf975..57f1344 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -276,13 +276,14 @@ void free_pid(struct pid *pid)
- 	call_rcu(&pid->rcu, delayed_put_pid);
+ 	int trace = 0;
+@@ -1463,6 +1465,17 @@ long do_fork(unsigned long clone_flags,
+ 	return nr;
  }
  
--struct pid *alloc_pid(struct pid_namespace *ns)
-+struct pid *alloc_pid(struct pid_namespace *ns, pid_t *target_pids)
- {
- 	struct pid *pid;
- 	enum pid_type type;
- 	int i, nr;
- 	struct pid_namespace *tmp;
- 	struct upid *upid;
-+	pid_t tpid;
- 
- 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
- 	if (!pid) {
-@@ -292,7 +293,11 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 
- 	tmp = ns;
- 	for (i = ns->level; i >= 0; i--) {
--		nr = alloc_pidmap(tmp);
-+		tpid = 0;
-+		if (target_pids)
-+			tpid = target_pids[i];
++long do_fork(unsigned long clone_flags,
++	      unsigned long stack_start,
++	      struct pt_regs *regs,
++	      unsigned long stack_size,
++	      int __user *parent_tidptr,
++	      int __user *child_tidptr)
++{
++	return do_fork_with_pids(clone_flags, stack_start, regs, stack_size,
++			parent_tidptr, child_tidptr, 0, NULL);
++}
 +
-+		nr = set_pidmap(tmp, tpid);
- 		if (nr < 0)
- 			goto out_free;
- 
+ #ifndef ARCH_MIN_MMSTRUCT_ALIGN
+ #define ARCH_MIN_MMSTRUCT_ALIGN 0
+ #endif
 -- 
 1.6.3.3
