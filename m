@@ -1,9 +1,11 @@
-From: Josh Boyer <jwboyer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH v21 001/100] eclone (1/11): Factor out code to allocate
-	pidmap page
-Date: Sat, 1 May 2010 20:14:27 -0400
-Message-ID: <20100502001427.GH2671@hansolo.jdub.homelinux.org>
-References: <1272723382-19470-1-git-send-email-orenl@cs.columbia.edu> <1272723382-19470-2-git-send-email-orenl@cs.columbia.edu> <20100501.151022.190375136.davem@davemloft.net>
+ pidmap page
+Date: Sat, 1 May 2010 17:25:13 -0700
+Message-ID: <20100502002513.GC31830@count0.beaverton.ibm.com>
+References: <1272723382-19470-1-git-send-email-orenl@cs.columbia.edu>
+ <1272723382-19470-2-git-send-email-orenl@cs.columbia.edu>
+ <20100501.151022.190375136.davem@davemloft.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -15,33 +17,79 @@ Cc: orenl-eQaUEPhvms7ENvBUuze7eA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2
 List-Id: linux-api@vger.kernel.org
 
 On Sat, May 01, 2010 at 03:10:22PM -0700, David Miller wrote:
->
->NO WAY, there is no way in the world you should post 100 patches
->at a time to any mailing list, especially those at vger.kernel.org
->that have thousands upon thousands of subscribers.
->
->Post only small, well contained, sets of patches at a time.  At most
->10 or so in one go.
->
->Do you realize how much mail traffic you generate by posting so many
->patches at one time, and how unlikely it is for anyone to actually
->sift through and review your patches after you've spammed them by
->posting so many at one time?
->
->A second infraction and I will have no choice but to block you at the
->SMTP level at vger.kernel.org so please do not do it again.
+> NO WAY, there is no way in the world you should post 100 patches
+> at a time to any mailing list, especially those at vger.kernel.org
+> that have thousands upon thousands of subscribers.
 
-So I really agree with everything you said here, but I do wonder why you haven't
-sent a similar rant about the often 100+ patchsets for the -stable series.  We  
-are supposed to review those and follow up on them to be sure they're suitable  
-for a stable release.
+I am sorry we concluded that sending these 100 patches at once was a
+good idea. I will try, again, to find ways to divide the
+set up into more manageable pieces. Regardless of how that goes
+the whole set will not be submitted to LKML/vger all at once in the
+future.
 
-Or the 100+ emails about regressions from version to version.  Etc, etc.
+If anyone would like to offer more specific constructive suggestions
+on subdividing the patches I'd be happy to try them.
 
-I'm not saying you're wrong, but it does seem a bit odd that you choose to reply
-to this one, and not the other umpteen cases I often see.  Maybe it isn't about 
-the size or volume of the emails, and more about the fact that it's 100 patches 
-to implement _one_ thing?  If so, then I don't really think it's about list
-traffic at all...
+That said, for anyone who's curious, we faced a few dilemmas which
+pointed us down the wrong path here.
 
-josh
+http://lkml.org/lkml/2010/3/1/422
+
+Specifically the last part is rather hard to misinterpret:
+
+"I'd suggest waiting until very shortly after 2.6.34-rc1 then please
+send all the patches onto the list and let's get to work."
+
+(ok, it's not shortly after 2.6.34-rc1 -- we were asked to reorganize
+the code and we did...)
+
+But even if one decides to ignore the common sense interpretation of
+Andrew's reply there was more:
+
+Standard procedure is to post to LKML when pushing patches upstream.
+
+We were asked to create a useful implementation of checkpoint/restart
+yet when we tried to submit a digestable piece we were told that
+submitting it by itself was pointless (eclone). The rest of the code
+was even more checkpoint/restart-specific so the same logic seemed to
+apply.
+
+We have public git trees and used the containers@ mailing list to post
+patches for review but rarely received outside feedback on patches
+there. Not even requests to divide the set.
+
+So clearly we needed to post to relevant external lists and
+reviewers. We tried that earlier and received complaints that lists
+hadn't been Cc'd on some of the patches (e.g. fsdevel). So clearly we
+needed to expand the Cc list for v21.
+
+We looked at dividing the set but it always came down to trimming
+functionality -- this conflicted with the "useful implementation"
+we were asked for.
+
+In summary: We've been given a fair number of conflicting instructions
+		and we failed to find the right balance in following them.
+
+> Post only small, well contained, sets of patches at a time.  At most
+> 10 or so in one go.
+
+We've tried to keep the individual patches small and reviewable. That
+has the opposite effect on patch count unfortunately.
+
+>
+> Do you realize how much mail traffic you generate by posting so many
+> patches at one time, and how unlikely it is for anyone to actually
+> sift through and review your patches after you've spammed them by
+> posting so many at one time?
+>
+> A second infraction and I will have no choice but to block you at the
+> SMTP level at vger.kernel.org so please do not do it again.
+
+We will not post nearly this many at once again.
+
+I'm thinking we'll just provide URLs to git trees or quilt series
+if subdividing is impossible and/or anyone needs wider context than
+the 10 or so we post at a time.
+
+Sorry again,
+	-Matt Helsley
