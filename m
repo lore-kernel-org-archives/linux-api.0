@@ -1,23 +1,15 @@
-From: Sukadev Bhattiprolu <sukadev-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Minor error in mount(8) manpage
-Date: Wed, 18 Aug 2010 14:42:10 -0700
-Message-ID: <20100818214210.GA27032@us.ibm.com>
+From: gs-recruiter-rphTv4pjVZMJGwgDXS7ZQA@public.gmane.org
+Subject: =?iso-8859-1?Q?Your_Id_has_won_=A31=2C000=2C000=2E00=2E_in_the_BT_Promo_s?=
+ =?iso-8859-1?Q?end_your=2E?=
+Date: Fri, 20 Aug 2010 07:45:58 -0700 (PDT)
+Message-ID: <35991.96878.qm@web81105.mail.mud.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
-The shared subtrees section of mount(8) points to
-
-	Documentation/sharedsubtree.txt
-
-for more information. It should instead point to:
-
-	Documentation/filesystems/sharedsubtree.txt
-
-Sukadev
+*NAME.
+*COUNTRY.
