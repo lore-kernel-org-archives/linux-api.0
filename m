@@ -1,42 +1,25 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+From: Roland McGrath <roland@redhat.com>
 Subject: Re: [PATCH 1/1] posix clocks: introduce syscall for clock tuning.
-Date: Mon, 23 Aug 2010 16:46:00 +0200
-Message-ID: <201008231646.00357.arnd@arndb.de>
-References: <cover.1282550649.git.richard.cochran@omicron.at> <201008231457.26690.arnd@arndb.de> <20100823134330.GM12892@parisc-linux.org>
+Date: Mon, 23 Aug 2010 09:57:58 -0700 (PDT)
+Message-ID: <20100823165758.4624E400BF@magilla.sf.frob.com>
+References: <cover.1282550649.git.richard.cochran@omicron.at>
+	<201008231457.26690.arnd@arndb.de>
+	<20100823134330.GM12892@parisc-linux.org>
+	<201008231646.00357.arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20100823134330.GM12892-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matthew Wilcox <matthew-Ztpu424NOJ8@public.gmane.org>
-Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: Arnd Bergmann's message of  Monday, 23 August 2010 16:46:00 +0200 <201008231646.00357.arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Matthew Wilcox <matthew@wil.cx>, Richard Cochran <richardcochran@gmail.com>, john stultz <johnstul@us.ibm.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Monday 23 August 2010, Matthew Wilcox wrote:
-> On Mon, Aug 23, 2010 at 02:57:26PM +0200, Arnd Bergmann wrote:
-> > > +static inline int common_clock_adj(const clockid_t which_clock, int ppb,
-> > > +                              struct timespec *tp)
-> > > +{
-> > > +   return -EOPNOTSUPP;
-> > > +}
-> > > +
-> > >  static int no_timer_create(struct k_itimer *new_timer)
-> > >  {
-> > >     return -EOPNOTSUPP;
-> > 
-> > So we already return -EOPNOTSUPP in some cases? The man page does not document this.
-> > I wonder if we should change that to -EINVAL as well.
-> 
-> ENOTTY is the usual errno for "inappropriate ioctl for device".  Due to
-> the way this patch has been chopped up, I can't tell if that's what is
-> intended here.
+EOPNOTSUPP is also called ENOTSUP in userland.  ENOTSUP is the appropriate
+POSIX errno code for a situation such as a clock type that cannot be used
+in a certain call (like setting when you can only read it, etc.).
 
-It's for the CLOCK_* syscall family, which I think is different enough from
-an ioctl that ENOTTY makes no sense.
 
-The documented return values of timer_create() are EAGAIN, EINVAL and
-ENOMEM.
-
-	Arnd
+Thanks,
+Roland
