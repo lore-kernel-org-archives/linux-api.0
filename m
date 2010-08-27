@@ -1,71 +1,75 @@
-From: john stultz <johnstul@us.ibm.com>
-Subject: Re: [PATCH 1/1] posix clocks: introduce syscall for clock tuning.
-Date: Mon, 23 Aug 2010 13:41:13 -0700
-Message-ID: <1282596073.3111.373.camel@localhost.localdomain>
-References: <cover.1282550649.git.richard.cochran@omicron.at>
-	 <e253843e07ce5d15c2c8d11ce786bf979ed85ca5.1282550649.git.richard.cochran@omicron.at>
-	 <201008231457.26690.arnd@arndb.de>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH] vfs: introduce FS_IOC_SYNCFS to sync a single super
+Date: Thu, 26 Aug 2010 17:01:42 -0700
+Message-ID: <20100826170142.e029cff5.akpm@linux-foundation.org>
+References: <Pine.LNX.4.64.1008090711040.17515@cobra.newdream.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <201008231457.26690.arnd@arndb.de>
-Sender: netdev-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Richard Cochran <richardcochran@gmail.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <Pine.LNX.4.64.1008090711040.17515-vIokxiIdD2AQNTJnQDzGJqxOck334EZe@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2010-08-23 at 14:57 +0200, Arnd Bergmann wrote:
-> On Monday 23 August 2010, Richard Cochran wrote:
-> > A new syscall is introduced that allows tuning of a POSIX clock. The
-> > syscall is implemented for four architectures: arm, blackfin, powerpc,
-> > and x86.
-> > 
-> > The new syscall, clock_adjtime, takes two parameters, a frequency
-> > adjustment in parts per billion, and a pointer to a struct timespec
-> > containing the clock offset. If the pointer is NULL, a frequency
-> > adjustment is performed. Otherwise, the clock offset is immediately
-> > corrected by skipping to the new time value.
+On Mon, 9 Aug 2010 07:33:57 -0700 (PDT)
+Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org> wrote:
+
+> Currently the only way to sync a single super_block (and not all of them 
+> via sync(2)) is via the BLKFLSBUF ioctl on the block device.  That also 
+> invalidates the bdev mapping, which isn't usually desireable
+
+Actually you can do
+
+	mount -o remount /dev/whatever
+
+and it will sync the fs and retain caches.
+
+> and it 
+> doesn't work for non-block file systems.
+
+And I guess remount will do that also.
+
+>  The ability to sync a single 
+> mount can be useful for both applications and administrators (e.g., when 
+> other mounts on the system are hung).
 > 
-> It looks well-implemented, and seems to be a reasonable extension
-> to the clock API. I'm looking forward to your ptp patches on top
-> of this to see how it all fits together.
+> Introduce a simple ioctl to sync the super associated with an open file.
+> Pass any error returned by sync_filesystem() back to the user.
 > 
-> For new syscalls, it's best to take linux-api on Cc. I also added
-> John, since he participated in the discussion.
 
-As I mentioned in the previous mail, I agree the new functionality
-(adjusting the time by an offset instantaneously) is useful, but I'd
-prefer it be done initially within the existing adjtimex() interface.
+The changelog forgot to tell us why this is a useful thing to add. 
+What is the use-case?
 
-Then if the posix-time clock_id multiplexing version of adjtimex is
-found to be necessary, the new syscall should be introduced, using the
-same API (not all clock_ids need to support all the adjtimex modes, but
-the new interface should be sufficient for NTPd to use).
+> ---
+>  fs/ioctl.c         |    9 +++++++++
+>  include/linux/fs.h |    1 +
+>  2 files changed, 10 insertions(+), 0 deletions(-)
+> 
+> diff --git a/fs/ioctl.c b/fs/ioctl.c
+> index 2d140a7..2aabb19 100644
+> --- a/fs/ioctl.c
+> +++ b/fs/ioctl.c
+> @@ -593,6 +593,15 @@ int do_vfs_ioctl(struct file *filp, unsigned int fd, unsigned int cmd,
+>  	case FS_IOC_FIEMAP:
+>  		return ioctl_fiemap(filp, arg);
+>  
+> +	case FS_IOC_SYNCFS:
+> +	{
+> +		struct super_block *sb = filp->f_dentry->d_sb;
+> +		down_read(&sb->s_umount);
+> +		error = sync_filesystem(sb);
+> +		up_read(&sb->s_umount);
+> +		break;
+> +	}
+> +
 
+`mount -o remount' is surely a Linux-specific side-effect and there's
+really no guarantee that Linux will always retain that side-effect. 
+OTOH FS_IOC_SYNCFS is linux-specific.
 
-There are some other conceptual issues this new syscall introduces:
-
-1) While clock_adjtimex(CLOCK_REALTIME,...) would be equivalent to
-adjtimex(), would clock_adjtimex(CLOCK_MONOTONIC,...) make sense? 
-
-Given CLOCK_MONOTONIC and CLOCK_REALTIME are both based off the same
-notion of time, but offset from each other, any adjustment to one clock
-would be reflected in the other. However, the API would make it seem
-like they could be adjusted independently.
-
-2) The same issue in #1 exists for CLOCK_REALTIME/MONOTONIC_COARSE
-variants. 
-
-3) Freq steering for MONOTONIC_RAW would defeat the purpose of the
-clock_id.
-
-4) Does adjustments to CPU_TIME clock_ids make sense?
-
-I'm guessing "no" is the right call to all of the above, but am
-interested if others see it differently.
-
-thanks
--john
-
-
+If we're going to add something like this then it will need to be
+documented in manpages.  Supposedly, a cc to linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+will help make all that happen, but I'm not sure who if anyone is
+answering the phone over there?
