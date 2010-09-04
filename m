@@ -1,31 +1,39 @@
-From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/2] posix clocks: introduce a syscall for clock tuning.
-Date: Sat, 4 Sep 2010 16:06:39 +0200
-Message-ID: <20100904140639.GA22074@riccoc20.at.omicron.at>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [PATCH 0/2] [RFC] posix clock tuning
+Date: Sat, 4 Sep 2010 12:23:55 -0500 (CDT)
+Message-ID: <alpine.DEB.2.00.1009041221240.888@router.home>
 References: <cover.1283504065.git.richard.cochran@omicron.at>
- <7f4815cdfcf5bc49df4bdd09d59a4f56ca2598f5.1283504065.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <7f4815cdfcf5bc49df4bdd09d59a4f56ca2598f5.1283504065.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <cover.1283504065.git.richard.cochran@omicron.at>
+Sender: netdev-owner@vger.kernel.org
+To: Richard Cochran <richardcochran@gmail.com>
+Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 03, 2010 at 11:29:05AM +0200, Richard Cochran wrote:
-> A new syscall is introduced that allows tuning of a POSIX clock. The
-> syscall is implemented for four architectures: arm, blackfin, powerpc,
-> and x86.
-> 
-> The new syscall, clock_adjtime, takes two parameters, the clock ID,
-> and a pointer to a struct timex. The semantics of the timex struct
-> have been expanded by one additional mode flag, which allows an
-> absolute offset correction. When specificied, the clock offset is
-> immediately corrected by skipping to the new time value.
+On Fri, 3 Sep 2010, Richard Cochran wrote:
 
-Sorry, last sentence should read, "corrected by adding the given time
-value to the current time value."
+> Recently on the lkml, we discussed how to allow adjustment of posix
+> clocks. I have tried to understand and implement the ideas expressed
+> in the various threads.
+>
+> If there is agreement on this approach, I will resubmit these two
+> patches as part of a longer series, including support for a new kind
+> of hardware clock, so you can see how it all fits together. But first,
+> I would like to concentrate on the new syscall itself.
+>
+> The patches are against a recent net-next tree. Please don't worry if
+> the syscall tables are not quite up to date. I can fix that later.
 
-Richard
+Could you explain why the existing interfaces are not sufficient that do
+what you describe?
+
+man adjtime
+man adjtimex
+man clock_settime
+?
+
+Why would you need this to support a new hardware clock? You want the
+clock to run at a different speed from system time?
+
