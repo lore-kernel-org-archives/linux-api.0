@@ -1,7 +1,7 @@
 From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH 1/2] posix clocks: introduce a syscall for clock tuning.
-Date: Fri, 3 Sep 2010 11:58:32 +0200
-Message-ID: <20100903095832.GA22138@riccoc20.at.omicron.at>
+Date: Sat, 4 Sep 2010 16:06:39 +0200
+Message-ID: <20100904140639.GA22074@riccoc20.at.omicron.at>
 References: <cover.1283504065.git.richard.cochran@omicron.at>
  <7f4815cdfcf5bc49df4bdd09d59a4f56ca2598f5.1283504065.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
@@ -15,25 +15,17 @@ Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY7
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Sep 03, 2010 at 11:29:05AM +0200, Richard Cochran wrote:
-> +long compat_sys_clock_adjtime(clockid_t which_clock,
-> +		struct compat_timex __user *utp)
-> +{
-> +	struct timex txc;
-> +	mm_segment_t oldfs;
-> +	int err, ret;
-> +
-> +	err = compat_get_timex(&txc, utp);
-> +	if (err)
-> +		return err;
-> +
-> +	oldfs = get_fs();
-> +	set_fs(KERNEL_DS);
-> +	ret = sys_clock_adjtime(which_clock, (struct timex __user *) &txc);
-> +	set_fs(oldfs);
+> A new syscall is introduced that allows tuning of a POSIX clock. The
+> syscall is implemented for four architectures: arm, blackfin, powerpc,
+> and x86.
+> 
+> The new syscall, clock_adjtime, takes two parameters, the clock ID,
+> and a pointer to a struct timex. The semantics of the timex struct
+> have been expanded by one additional mode flag, which allows an
+> absolute offset correction. When specificied, the clock offset is
+> immediately corrected by skipping to the new time value.
 
-I don't know what the purpose of get_fs, set_fs is, but the other
-clock_ functions have it that way. The adjtimex call does not have
-this at all, so I ask, do we need this here, or not?
+Sorry, last sentence should read, "corrected by adding the given time
+value to the current time value."
 
-Thanks,
 Richard
