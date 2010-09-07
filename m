@@ -1,112 +1,223 @@
-From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 0/2] [RFC] posix clock tuning
-Date: Mon, 6 Sep 2010 09:09:51 +0200
-Message-ID: <20100906070951.GB4549@riccoc20.at.omicron.at>
-References: <cover.1283504065.git.richard.cochran@omicron.at>
- <alpine.DEB.2.00.1009041221240.888@router.home>
- <4C828652.4060804@gmail.com>
- <alpine.DEB.2.00.1009042042130.9425@router.home>
- <20100905062240.GB2699@riccoc20.at.omicron.at>
- <20100905072041.GA2928@riccoc20.at.omicron.at>
- <alpine.DEB.2.00.1009051759100.3480@router.home>
+From: "Dr. Werner Fink" <werner-l3A5Bk7waGM@public.gmane.org>
+Subject: [PATCH] tty: Add a new file /proc/tty/consoles
+Date: Tue, 7 Sep 2010 18:53:05 +0200
+Message-ID: <20100907165305.GA18757@boole.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.00.1009051759100.3480-sBS69tsa9Uj/9pzu0YdTqQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Cc: Christian Riesch <christian.riesch-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+To: Greg KH <gregkh-l3A5Bk7waGM@public.gmane.org>
+Cc: Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-(Taking John Stultz on CC.)
+ Add a new file /proc/tty/consoles to be able to
+ determine the registered system console lines.
+ If the reading process holds /dev/console open at
+ the regular standard input stream the active device
+ will be marked by an asterisk.
 
-On Sun, Sep 05, 2010 at 06:13:33PM -0500, Christoph Lameter wrote:
-> On Sun, 5 Sep 2010, Richard Cochran wrote:
-> > When I get some more time, I'll try to put together an executive
-> > summary of PTP and of all the discussions that have taken place over
-> > the last few months on linux-netdev and the lkml.
-> 
-> I know PTP,
+Signed-off-by: Werner Fink <werner-l3A5Bk7waGM@public.gmane.org>
+---
+ Documentation/filesystems/proc.txt |   16 ++++
+ fs/proc/proc_tty.c                 |  138 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 154 insertions(+), 0 deletions(-)
 
-Ah, thats good.
-
-> I just dont know why you would need to extend the existing
-> apis for support. Maybe you could just simply write a PTP clock driver? If
-
-That is what I already did in this patch set:
-
-   http://lkml.org/lkml/2010/8/16/90
-
-However, people asked, why not just use the posix clock API?  And so,
-I implemented that idea, too. Now the question is, which API is the
-better choice. I like the posix clock idea, but I am also fine with
-the character device. That was my original approach.
-
-> you follow the way hpet is implemented then you dont even need a clock id.
-> See drivers/char/hpet.c. I cannot imagine why someone would want to set
-> PTP to a different time and speed (vs. realtime not the hardware
-> configuration) than the standard clock. The API you proposed so far is
-> not needed as far as I can tell.
-
-No one wants to set a different time, but the fact remains that we
-have two separate clocks. The two clocks need to be synchronized, but
-how do you do this?
-
-My idea was this. Simply use the PPS subsystem to synchronize the
-Linux system time to the PTP time in the PTP hardware clock. That is
-just like using a GPS or radio clock. The only requirement is that the
-hardware clocks provides one interrupt.
-
-It will happen that some hardware will be build without any interrupt
-between the PTP hardware clock and the CPU. Even so, such a setup can
-still be useful, for example in an embedded control application. The
-userland software can simply ignore the wrong system time. I think the
-PTP hardware clock infrastructure should be rich enough to support
-this situation.
-
-> I really would like a PTP clock as soon as possible. Very very important
-> for time sync via the network.
-
-Good, me too!
+diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+index 9fb6cbe..a5b6dd5 100644
+--- a/Documentation/filesystems/proc.txt
++++ b/Documentation/filesystems/proc.txt
+@@ -1074,6 +1074,7 @@ Table 1-11: Files in /proc/tty
+  drivers       list of drivers and their usage                
+  ldiscs        registered line disciplines                    
+  driver/serial usage statistic and status of single tty lines 
++ consoles      registered system console lines
+ ..............................................................................
  
-> Then there is CLOCK_SGI_CYCLE. Another hw clock that can be set and gotten
-> already with the standard posix interface. See drivers/char/mmtimer.c. The
-> main benefit from CLOCK_SGI_CYCLE is that you can set it manually (maybe
-> you want an offset to realtime? But I do not know of any usecase for
-> setting the clock) and that the clock can cause hardware IRQ events
-> to cause timer timers in user space (would be great to know if PTP needs
-> this?).
-
-Some PTP hardware clocks provide interrupts to the main CPU. These can
-used to implement a PPS input, user alarms, and user timers.
-
-> I would not think that PTP needs any of this specialized functionality.
-
-Well, to make the super-synchronized time in the PTP hardware clock
-really useful, there needs to be some extra functionality, like
-timestamping external signals or producing periodic or one-shot output
-signals.
-
-If you don't have or need such functionality, then running PTP with
-plain old software timestamping (no special PTP hardware clock) should
-be good enough for most purposes.
-
-> John point about not wanting to proliferate different APIs and useless
-> clock ids is valid. An intial implementation using hpet style stuff would
-> be satisfactory and as far as I can tell would be rather trivial to do.
-> 
-> Standardizing the ioctls between the different clock drivers would be
-> useful so that they can all be controlled with some common API. But it
-> would be great to first have a release of a clock_ptp listing all the
-> needed ioctl so that we can see what the common subset is.
-
-Okay, I think I have already done that in the above patch set. Would
-you care to comment on it?
-
-As I said before, I prefer the posix clock idea, but the character
-device implementation is fine, too. Heck, we can offer both
-avenues. My goal is to support PTP hardware clocks in the kernel.
-
-Thanks,
-Richard
+ To see  which  tty's  are  currently in use, you can simply look into the file
+@@ -1092,6 +1093,21 @@ To see  which  tty's  are  currently in use, you can simply look into the file
+   /dev/tty             /dev/tty        5       0 system:/dev/tty 
+   unknown              /dev/tty        4    1-63 console 
+ 
++To see which character device lines are currently used for the system console
++/dev/console, you may simply look into the file /proc/tty/consoles:
++
++  > cat /proc/tty/consoles
++  tty0                 4:7
++  ttyS0                4:64
++
++If the reading process holds /dev/console open at the regular standard input
++stream the active device will be marked by an asterisk:
++
++  > cat /proc/tty/consoles < /dev/console
++  *tty0                4:7
++  > tty
++  /dev/pts/3
++
+ 
+ 1.8 Miscellaneous kernel statistics in /proc/stat
+ -------------------------------------------------
+diff --git a/fs/proc/proc_tty.c b/fs/proc/proc_tty.c
+index 83adcc8..f717e84 100644
+--- a/fs/proc/proc_tty.c
++++ b/fs/proc/proc_tty.c
+@@ -12,7 +12,10 @@
+ #include <linux/proc_fs.h>
+ #include <linux/stat.h>
+ #include <linux/tty.h>
++#include <linux/tty_driver.h>
++#include <linux/console.h>
+ #include <linux/seq_file.h>
++#include <linux/fdtable.h>
+ #include <linux/bitops.h>
+ 
+ /*
+@@ -137,6 +140,140 @@ static const struct file_operations proc_tty_drivers_operations = {
+ };
+ 
+ /*
++ * The device ID of file descriptor 0 of the current reading
++ * task if a character device...
++ */
++static dev_t current_dev;
++
++/*
++ * This is the handler for /proc/tty/consoles
++ */
++static int show_console_dev(struct seq_file *m, void *v)
++{
++	const struct tty_driver * driver;
++	struct console * con;
++	int index, len;
++	dev_t dev;
++
++	if (v == SEQ_START_TOKEN)
++		return 0;
++	con = (struct console *)v;
++	if (!con)
++		return 0;
++	driver = con->device(con, &index);
++	if (!driver)
++		return 0;
++
++	dev = MKDEV(driver->major, driver->minor_start) + index;
++
++	seq_printf(m, "%s%s%d%n", (current_dev == dev) ? "*" : "",
++			con->name, con->index, &len);
++	len = 19 - len;
++	if (len < 1)
++		len = 1;
++	seq_printf(m, "%*c%d:%d\n", len, ' ', MAJOR(dev), MINOR(dev));
++
++	return 0;
++}
++
++/* iterator for consoles */
++static void *c_start(struct seq_file *m, loff_t *pos)
++{
++	struct console * con;
++	loff_t off = 0;
++
++	if (*pos == 0)
++		return SEQ_START_TOKEN;
++
++	acquire_console_sem();
++	for (con = console_drivers; con; con = con->next) {
++		if (!con->device)
++			continue;
++		if (!con->write)
++			continue;
++		if ((con->flags & CON_ENABLED) == 0)
++			continue;
++		if (++off == *pos)
++			break;
++	}
++	release_console_sem();
++
++	return con;
++}
++
++static void *c_next(struct seq_file *m, void *v, loff_t *pos)
++{
++	struct console * con;
++
++	acquire_console_sem();
++ 	if (v == SEQ_START_TOKEN)
++		con = console_drivers;
++	else
++		con = ((struct console *)v)->next;
++	for (; con; con = con->next) {
++		if (!con->device)
++			continue;
++		if (!con->write)
++			continue;
++		if ((con->flags & CON_ENABLED) == 0)
++			continue;
++		++*pos;
++		break;
++	}
++	release_console_sem();
++
++	return con;
++}
++
++static void c_stop(struct seq_file *m, void *v)
++{
++}
++
++static const struct seq_operations tty_consoles_op = {
++	.start	= c_start,
++	.next	= c_next,
++	.stop	= c_stop,
++	.show	= show_console_dev
++};
++
++static int tty_consoles_open(struct inode *inode, struct file *file)
++{
++	struct files_struct * curfiles;
++
++	current_dev = 0;
++	curfiles = get_files_struct(current);
++	if (curfiles) {
++		const struct file * curfp;
++		spin_lock(&curfiles->file_lock);
++		curfp = fcheck_files(curfiles, 0);
++		if (curfp && curfp->private_data) {
++			const struct inode * inode;
++			dget(curfp->f_dentry);
++			inode = curfp->f_dentry->d_inode;
++			if (S_ISCHR(inode->i_mode)) {
++				struct tty_struct * tty;
++				tty = (struct tty_struct *)curfp->private_data;
++				if (tty && tty->magic == TTY_MAGIC) {
++					tty = tty_pair_get_tty(tty);
++					current_dev = tty_devnum(tty);
++				}
++			}
++			dput(curfp->f_dentry);
++		}
++		spin_unlock(&curfiles->file_lock);
++		put_files_struct(curfiles);
++	}
++	return seq_open(file, &tty_consoles_op);
++}
++
++static const struct file_operations proc_tty_consoles_operations = {
++	.open		= tty_consoles_open,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= seq_release,
++};
++
++/*
+  * This function is called by tty_register_driver() to handle
+  * registering the driver's /proc handler into /proc/tty/driver/<foo>
+  */
+@@ -186,4 +323,5 @@ void __init proc_tty_init(void)
+ 	proc_tty_driver = proc_mkdir_mode("tty/driver", S_IRUSR|S_IXUSR, NULL);
+ 	proc_create("tty/ldiscs", 0, NULL, &tty_ldiscs_proc_fops);
+ 	proc_create("tty/drivers", 0, NULL, &proc_tty_drivers_operations);
++	proc_create("tty/consoles", 0, NULL, &proc_tty_consoles_operations);
+ }
+-- 
+1.6.0.2
