@@ -1,69 +1,81 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH 1/2] posix clocks: introduce a syscall for clock
- tuning.
-Date: Thu, 9 Sep 2010 12:49:27 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1009091159260.2477@localhost6.localdomain6>
-References: <cover.1283504065.git.richard.cochran@omicron.at> <7f4815cdfcf5bc49df4bdd09d59a4f56ca2598f5.1283504065.git.richard.cochran@omicron.at>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/2] [RFC] posix clock tuning
+Date: Thu, 9 Sep 2010 14:21:56 +0200
+Message-ID: <20100909122156.GA2823@riccoc20.at.omicron.at>
+References: <cover.1283504065.git.richard.cochran@omicron.at>
+ <alpine.LFD.2.00.1009091152300.2477@localhost6.localdomain6>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <7f4815cdfcf5bc49df4bdd09d59a4f56ca2598f5.1283504065.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.00.1009091152300.2477-bi+AKbBUZKagILUCTcTcHdKyNwTtLsGr@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 3 Sep 2010, Richard Cochran wrote:
-
-This patch needs to be split in pieces. The syscall change is totally
-unrelated to the dynamic clock id creation. Though I do not like
-either of them. :)
-
-> A new syscall is introduced that allows tuning of a POSIX clock. The
-> syscall is implemented for four architectures: arm, blackfin, powerpc,
-> and x86.
+On Thu, Sep 09, 2010 at 11:58:09AM +0200, Thomas Gleixner wrote:
+> On Fri, 3 Sep 2010, Richard Cochran wrote:
 > 
-> The new syscall, clock_adjtime, takes two parameters, the clock ID,
-> and a pointer to a struct timex. The semantics of the timex struct
-> have been expanded by one additional mode flag, which allows an
-> absolute offset correction. When specificied, the clock offset is
-> immediately corrected by skipping to the new time value.
+> > Recently on the lkml, we discussed how to allow adjustment of posix
+> > clocks. I have tried to understand and implement the ideas expressed
+> > in the various threads.
+> 
+> Cc'ing the relevant maintainers to such discussions and patches might
+> be helpful. Seems I need to do some archive digging.
 
-And why do we need a separate syscall for this?
+Sorry about that. Still learning how to work on the list.  The story
+so far is...
 
-> In addition, the POSIX clock code has been augmented to offer a
-> dynamic clock creation method. Instead of registering a hard
-> coded clock ID, modules may call create_posix_clock(), which
-> returns a new clock ID.
+** PTP hardware clock as a character device (54 messages)
 
-This has been discussed for years and I still fail to see the
-requirement for this. The only result is that it allows folks to
-create their special purpose clock stuff and keep it out of tree
-instead of fixing the problems they have with the existing clock
-infrastructure in the kernel.
+   http://lkml.org/lkml/2010/8/16/90
 
-As far as I understood from the previous discussions, the final goal
-is to provide PTP support, right?
+   The general mood of this was something like: "You have made a
+   chardev for PTP clocks. The ioctls look similar to the posix clock
+   api. Why not just use the posix api?"
 
-But what I see is an approach which tries to implement disconnected
-special purpose clocks which have the ability to be adjusted
-independently. What's the purpose of this ? Why can't we just use the
-existing clocks and make PTP work on them ?
+** posix clock tuning syscall, static clockid (13 messages)
 
-I know that lots of embedded folks think that they need their special
-timers and extra magic to make stuff work, but that's the wrong
-approach.
+   http://lkml.org/lkml/2010/8/23/49
 
-What's wrong with the existing clocks? Nothing, except that we have no
-way to sync CLOCK_MONOTONIC across several machines. And that's what
-you really want if you try to do distributed control and data
-acquisition stuff.
+   The general mood of this one was: "I don't like a static clockid
+   for PTP clocks. But a dynamic id would be just fine."
 
-That's a single CLOCK_MONOTONIC_GLOBAL and not a bunch of completely
-disconnected clock implementations with random clock ids and random
-feature sets.
+** posix clock tuning syscall, dynamic clockid (16 messages)
 
-Thoughts ?
+   http://lkml.org/lkml/2010/9/3/119 (This thread)
 
+   The mood seems to be, "why not use a chardev for that?"
 
-	 tglx
+>From my point of view, the discussion is going round in circles. There
+seems to be agreement that supporting PTP hardware clocks is a good
+idea. The objections seem to be about the form of the API. In general,
+there are three avenues.
+
+1. character device (like hpet)
+2. posix clock api
+3. sysfs
+
+Or possibly some combination of the three.
+
+I have my preference, but I am willing to work it according to
+taste. Would you have some preference?
+
+> > If there is agreement on this approach, I will resubmit these two
+> > patches as part of a longer series, including support for a new kind
+> > of hardware clock, so you can see how it all fits together. But first,
+> > I would like to concentrate on the new syscall itself.
+> > 
+> > The patches are against a recent net-next tree. Please don't worry if
+> > the syscall tables are not quite up to date. I can fix that later.
+> 
+> How is this related to net-next ? 
+
+The whole hardware timestamping and PTP clock issue is somewhat
+network related. In particular, needed to start there to get some
+background support for timestamping within PHY devices.
+
+Thanks,
+
+Richard
