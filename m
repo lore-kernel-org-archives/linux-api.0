@@ -1,21 +1,33 @@
-From: Christoph Lameter <cl@linux.com>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH v6 0/8] ptp: IEEE 1588 hardware clock support
-Date: Mon, 27 Sep 2010 10:56:09 -0500 (CDT)
-Message-ID: <alpine.DEB.2.00.1009271054320.9258@router.home>
-References: <cover.1285261533.git.richard.cochran@omicron.at> <20100923213654.0c64b047@lxorguk.ukuu.org.uk> <20100924131407.GA3113@riccoc20.at.omicron.at> <20100924150246.0e6064b6@lxorguk.ukuu.org.uk>
+Date: Mon, 27 Sep 2010 10:37:35 -0500 (CDT)
+Message-ID: <alpine.DEB.2.00.1009271035110.9258@router.home>
+References: <cover.1285261533.git.richard.cochran@omicron.at> <alpine.DEB.2.00.1009231238170.2962@router.home> <1285268380.2587.11.camel@localhost.localdomain> <alpine.DEB.2.00.1009231402420.2962@router.home> <1285273684.2587.92.camel@localhost.localdomain>
+ <alpine.DEB.2.00.1009231533040.7522@router.home> <20100923223417.4ed62e5b@lxorguk.ukuu.org.uk> <4C9BC7CE.8020400@riesch.at>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100924150246.0e6064b6@lxorguk.ukuu.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Cc: Richard Cochran <richardcochran@gmail.com>, linux-kernel@vger.kernel.org, devicetree-discuss@lists.ozlabs.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linuxppc-dev@lists.ozlabs.org, netdev@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <4C9BC7CE.8020400-U4+xqT1Vg0VeoWH0uzbU5w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christian Riesch <christian-U4+xqT1Vg0VeoWH0uzbU5w@public.gmane.org>
+Cc: Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-discuss-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, 23 Sep 2010, Christian Riesch wrote:
 
-On Fri, 24 Sep 2010, Alan Cox wrote:
+> > > It implies clock tuning in userspace for a potential sub microsecond
+> > > accurate clock. The clock accuracy will be limited by user space
+> > > latencies and noise. You wont be able to discipline the system clock
+> > > accurately.
+> >
+> > Noise matters, latency doesn't.
+>
+> Well put! That's why we need hardware support for PTP timestamping to reduce
+> the noise, but get along well with the clock servo that is steering the PHC in
+> user space.
 
-> Whether you add new syscalls or do the fd passing using flags and hide
-> the ugly bits in glibc is another question.
-
-Use device specific ioctls instead of syscalls?
+Even if I buy into the catch phrase above: User space is subject to noise
+that the in kernel code is not. If you do the tuning over long intervals
+then it hopefully averages out but it still causes jitter effects that
+affects the degree of accuracy (or sync) that you can reach. And the noise
+varies with the load on the system.
