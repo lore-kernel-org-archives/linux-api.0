@@ -1,58 +1,26 @@
-From: "M. Warner Losh" <imp@bsdimp.com>
-Subject: Re: [PATCH v6 0/8] ptp: IEEE 1588 hardware clock support
-Date: Fri, 01 Oct 2010 19:44:50 -0600 (MDT)
-Message-ID: <20101001.194450.1113329769525619655.imp@bsdimp.com>
-References: <20100923223417.4ed62e5b@lxorguk.ukuu.org.uk>
-	<4C9BC7CE.8020400@riesch.at>
-	<alpine.DEB.2.00.1009271035110.9258@router.home>
+From: Webmaster Help Desk Support <health-AO2k3S5bIr0@public.gmane.org>
+Subject: Technical Support
+Date: Mon, 25 Oct 2010 13:50:16 -0400
+Message-ID: <20101025135016.39al2aioysock88g@webmail.utgsu.ca>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain;
+	charset=ISO-8859-1;
+	DelSp="Yes";
+	format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.00.1009271035110.9258@router.home>
-Sender: netdev-owner@vger.kernel.org
-To: cl@linux.com
-Cc: christian@riesch.at, giometti@linux.it, peterz@infradead.org, johnstul@us.ibm.com, devicetree-discuss@lists.ozlabs.org, linux-kernel@vger.kernel.org, davem@davemloft.net, netdev@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, tglx@linutronix.de, linuxppc-dev@lists.ozlabs.org, richardcochran@gmail.com, alan@lxorguk.ukuu.org.uk, khc@pm.waw.pl
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-In message: <alpine.DEB.2.00.1009271035110.9258@router.home>
-            Christoph Lameter <cl@linux.com> writes:
-: On Thu, 23 Sep 2010, Christian Riesch wrote:
-: 
-: > > > It implies clock tuning in userspace for a potential sub microsecond
-: > > > accurate clock. The clock accuracy will be limited by user space
-: > > > latencies and noise. You wont be able to discipline the system clock
-: > > > accurately.
-: > >
-: > > Noise matters, latency doesn't.
-: >
-: > Well put! That's why we need hardware support for PTP timestamping to reduce
-: > the noise, but get along well with the clock servo that is steering the PHC in
-: > user space.
-: 
-: Even if I buy into the catch phrase above: User space is subject to noise
-: that the in kernel code is not. If you do the tuning over long intervals
-: then it hopefully averages out but it still causes jitter effects that
-: affects the degree of accuracy (or sync) that you can reach. And the noise
-: varies with the load on the system.
 
-Please see the earlier posts in this thread about why this doesn't
-matter as much as you might think.  What matters is the measurements
-(which are done in hardware and the results buffered), not the latency
-in processing those messages through your servo.  This is due to the
-fact that the errors that even long latencies introduce are
-proportional to the change in fractional frequency[*] of the clock being
-steered.  This change is usually on the order of a part per million.
-Even with 10ms of latency would mean that you're introducing on the
-order of sub-nanoseconds of phase error that will be measured in the
-next cycle and steered out.
+-- 
+You have reached the limit of your email quota.
+You will not be able to send or receive new mail until you boost your mailbox
+size.
 
-That's why latency doesn't matter.  Do you have other math to show
-that it does?
+Click the below link and fill the form to upgrade your account.
+http://use.my/system-helpdeskdesk/
 
-Warner
-
-[*] abs(1 - (clock_freq_old / clock_freq_new)) where clock_freq_old is
-the old estimate of the clock and clock_freq_new is the new frequency
-estimate of the clock.  Second to second, these change on the order of
-a part per million or less...
+Technical Support
+192.168.0.1
