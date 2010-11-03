@@ -1,7 +1,7 @@
 From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v1 01/12] Oops: Pass regs to oops_exit()
-Date: Tue, 02 Nov 2010 18:29:31 -0700
-Message-ID: <20101103012930.4641.93668.stgit@crlf.mtv.corp.google.com>
+Subject: [PATCH v1 08/12] netoops: Add one-shot mode
+Date: Tue, 02 Nov 2010 18:30:13 -0700
+Message-ID: <20101103013012.4641.15217.stgit@crlf.mtv.corp.google.com>
 References: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,122 +13,77 @@ To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ
 Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Later commits in this series will want to see pt_regs if available when a
-machine oopses.  Pass regs if available on to oops_exit().
+Sometimes it is possible to have a kernel crashing that continuously Oopses.
+In this case, we do not want the network dumper get called over and over again,
+as we may only be interested in the first Oops that a kernel emits (especially
+in cases where we panic_on_oops).
+
+In order to support this dumping policy, this commit introduces a file call
+/proc/sys/kernel/net_dump_one_shot that contains a boolean as to whether or not
+the netoops driver will operate in one-shot mode.
+
+Note that 'soft' dumps do not disable the netoops driver when one-shot mode is
+enabled.
 
 Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- arch/arm/kernel/traps.c     |    2 +-
- arch/parisc/kernel/traps.c  |    2 +-
- arch/powerpc/kernel/traps.c |    2 +-
- arch/s390/kernel/traps.c    |    2 +-
- arch/sh/kernel/traps_32.c   |    2 +-
- arch/x86/kernel/dumpstack.c |    2 +-
- include/linux/kernel.h      |    2 +-
- kernel/panic.c              |    2 +-
- 8 files changed, 8 insertions(+), 8 deletions(-)
+TODO: ABI needs a better home.
+---
+ drivers/net/netoops.c |   16 +++++++++++++++-
+ 1 files changed, 15 insertions(+), 1 deletions(-)
 
-diff --git a/arch/arm/kernel/traps.c b/arch/arm/kernel/traps.c
-index cda78d5..45cc7c0 100644
---- a/arch/arm/kernel/traps.c
-+++ b/arch/arm/kernel/traps.c
-@@ -280,7 +280,7 @@ void die(const char *str, struct pt_regs *regs, int err)
- 	bust_spinlocks(0);
- 	add_taint(TAINT_DIE);
- 	spin_unlock_irq(&die_lock);
--	oops_exit();
-+	oops_exit(regs);
+diff --git a/drivers/net/netoops.c b/drivers/net/netoops.c
+index 13c4d51..01432d7 100644
+--- a/drivers/net/netoops.c
++++ b/drivers/net/netoops.c
+@@ -86,6 +86,8 @@ static struct netpoll *np;
+ static struct neighbour *netoops_neighbour;
+ static DEFINE_SPINLOCK(netoops_lock);
+ static struct netoops_msg msg;
++static int network_dumper_one_shot = 1;
++static int network_dumper_disabled;
  
- 	if (in_interrupt())
- 		panic("Fatal exception in interrupt");
-diff --git a/arch/parisc/kernel/traps.c b/arch/parisc/kernel/traps.c
-index 8b58bf0..4aa5514 100644
---- a/arch/parisc/kernel/traps.c
-+++ b/arch/parisc/kernel/traps.c
-@@ -294,7 +294,7 @@ void die_if_kernel(char *str, struct pt_regs *regs, long err)
- 		panic("Fatal exception");
+ static char netoops_fw_version[80];
+ static char netoops_board_name[80];
+@@ -209,6 +211,7 @@ static void enable_netoops(char *dev_name, u32 dest_ip, u32 src_ip,
+ 	np = new_np;
+ 	neighbour = netoops_neighbour;
+ 	netoops_neighbour = dest_neighbour;
++	network_dumper_disabled = 0;
+ 	spin_unlock_irqrestore(&netoops_lock, flags);
+ 
+ 	/* refcount cannot be decreased with interrupt disabled. */
+@@ -415,7 +418,7 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
+ 	if (!spin_trylock(&netoops_lock))
+ 		return;
+ 
+-	if (np == NULL || np->dev == NULL) {
++	if (np == NULL || np->dev == NULL || network_dumper_disabled) {
+ 		spin_unlock(&netoops_lock);
+ 		return;
+ 	}
+@@ -442,6 +445,10 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
+ 		netoops_send_segment(packet_count_2, s1, l1);
  	}
  
--	oops_exit();
-+	oops_exit(regs);
- 	do_exit(SIGSEGV);
++	/* Should we disable ourselves now? */
++	if (!soft_dump && network_dumper_one_shot)
++		network_dumper_disabled = 1;
++
+ 	spin_unlock(&netoops_lock);
  }
  
-diff --git a/arch/powerpc/kernel/traps.c b/arch/powerpc/kernel/traps.c
-index a45a63c..918c498 100644
---- a/arch/powerpc/kernel/traps.c
-+++ b/arch/powerpc/kernel/traps.c
-@@ -170,7 +170,7 @@ int die(const char *str, struct pt_regs *regs, long err)
- 	if (panic_on_oops)
- 		panic("Fatal exception");
+@@ -577,6 +584,13 @@ static struct ctl_table kern_table[] = {
+ 		.mode           = 0644,
+ 		.proc_handler   = &proc_netoops_device,
+ 	},
++	{
++		.procname       = "net_dump_one_shot",
++		.data           = &network_dumper_one_shot,
++		.maxlen         = sizeof(int),
++		.mode           = 0644,
++		.proc_handler   = &proc_dointvec,
++	},
+ 	{},
+ };
  
--	oops_exit();
-+	oops_exit(regs);
- 	do_exit(err);
- 
- 	return 0;
-diff --git a/arch/s390/kernel/traps.c b/arch/s390/kernel/traps.c
-index 5d8f0f3..90c8259 100644
---- a/arch/s390/kernel/traps.c
-+++ b/arch/s390/kernel/traps.c
-@@ -305,7 +305,7 @@ void die(const char * str, struct pt_regs * regs, long err)
- 		panic("Fatal exception in interrupt");
- 	if (panic_on_oops)
- 		panic("Fatal exception: panic_on_oops");
--	oops_exit();
-+	oops_exit(regs);
- 	do_exit(SIGSEGV);
- }
- 
-diff --git a/arch/sh/kernel/traps_32.c b/arch/sh/kernel/traps_32.c
-index c3d86fa..6b3f31e 100644
---- a/arch/sh/kernel/traps_32.c
-+++ b/arch/sh/kernel/traps_32.c
-@@ -102,7 +102,7 @@ void die(const char * str, struct pt_regs * regs, long err)
- 	bust_spinlocks(0);
- 	add_taint(TAINT_DIE);
- 	spin_unlock_irq(&die_lock);
--	oops_exit();
-+	oops_exit(regs);
- 
- 	if (kexec_should_crash(current))
- 		crash_kexec(regs);
-diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
-index 6e8752c..89c720c 100644
---- a/arch/x86/kernel/dumpstack.c
-+++ b/arch/x86/kernel/dumpstack.c
-@@ -254,7 +254,7 @@ void __kprobes oops_end(unsigned long flags, struct pt_regs *regs, int signr)
- 		/* Nest count reaches zero, release the lock. */
- 		arch_spin_unlock(&die_lock);
- 	raw_local_irq_restore(flags);
--	oops_exit();
-+	oops_exit(regs);
- 
- 	if (!signr)
- 		return;
-diff --git a/include/linux/kernel.h b/include/linux/kernel.h
-index 2b0a35e..995eb70 100644
---- a/include/linux/kernel.h
-+++ b/include/linux/kernel.h
-@@ -181,7 +181,7 @@ extern long (*panic_blink)(int state);
- NORET_TYPE void panic(const char * fmt, ...)
- 	__attribute__ ((NORET_AND format (printf, 1, 2))) __cold;
- extern void oops_enter(void);
--extern void oops_exit(void);
-+extern void oops_exit(struct pt_regs *);
- void print_oops_end_marker(void);
- extern int oops_may_print(void);
- NORET_TYPE void do_exit(long error_code)
-diff --git a/kernel/panic.c b/kernel/panic.c
-index 4c13b1a..c3f39cd 100644
---- a/kernel/panic.c
-+++ b/kernel/panic.c
-@@ -349,7 +349,7 @@ void print_oops_end_marker(void)
-  * Called when the architecture exits its oops handler, after printing
-  * everything.
-  */
--void oops_exit(void)
-+void oops_exit(struct pt_regs *regs)
- {
- 	do_oops_enter_exit();
- 	print_oops_end_marker();
