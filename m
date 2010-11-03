@@ -1,48 +1,71 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: [PATCH v1 00/12] netoops support
-Date: Wed, 03 Nov 2010 13:29:06 -0700
-Message-ID: <4CD1C612.5080902@google.com>
-References: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com>	<20101103023422.GB5782@kroah.com>	<AANLkTi=Oe4oJ0imCh1eoJLS0QYqSBM4pLo=dEUSiJcQb@mail.gmail.com>	<20101103181634.GF7441@kroah.com> <AANLkTimKWCWtuPeZhMZ75gTxB8LwAhJfy2FZnnRwthft@mail.gmail.com>
+Date: Wed, 03 Nov 2010 15:54:45 -0500
+Message-ID: <1288817685.26428.1129.camel@calx>
+References: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com>
+	 <20101103023422.GB5782@kroah.com>
+	 <AANLkTi=Oe4oJ0imCh1eoJLS0QYqSBM4pLo=dEUSiJcQb@mail.gmail.com>
+	 <20101103181634.GF7441@kroah.com>
+	 <AANLkTimKWCWtuPeZhMZ75gTxB8LwAhJfy2FZnnRwthft@mail.gmail.com>
+	 <4CD1C612.5080902@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <AANLkTimKWCWtuPeZhMZ75gTxB8LwAhJfy2FZnnRwthft-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <4CD1C612.5080902-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
+To: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Mike Waychison wrote:
-> FWIW, another semantic difference between netconsole and netoops (that
-> I had missed in the last email) is filtering: we really do want to get
-> the whole log when a crash happens, debug messages and all.
-> Netconsole is subject to console filtering (which we _do_ want as
-> debug messages going out the uart slows the whole world down).
+On Wed, 2010-11-03 at 13:29 -0700, Mike Waychison wrote:
+> Mike Waychison wrote:
+> > FWIW, another semantic difference between netconsole and netoops (that
+> > I had missed in the last email) is filtering: we really do want to get
+> > the whole log when a crash happens, debug messages and all.
+> > Netconsole is subject to console filtering (which we _do_ want as
+> > debug messages going out the uart slows the whole world down).
+> > 
+> > netconsole and netoops _do_ have bits in common, for instance the
+> > handling of NETDEV events and source+target configuration.  I'd rather
+> > those bits become common between the two than figure out how to jam
+> > the semantics we need into netconsole.
 > 
-> netconsole and netoops _do_ have bits in common, for instance the
-> handling of NETDEV events and source+target configuration.  I'd rather
-> those bits become common between the two than figure out how to jam
-> the semantics we need into netconsole.
+> Hi Matt,
+> 
+> I've been reading through the netconsole driver in response to Greg's 
+> comments on this thread, and it is definitely more robust in terms of 
+> configuration and handling of network device events than the netoops 
+> driver I proposed.
 
-Hi Matt,
+I've been following the discussion to see if it went anywhere
+interesting..
 
-I've been reading through the netconsole driver in response to Greg's 
-comments on this thread, and it is definitely more robust in terms of 
-configuration and handling of network device events than the netoops 
-driver I proposed.
+> What are your thoughts on extending netconsole with the same sort of 
+> semantics that are in the netoops patchset?
 
-What are your thoughts on extending netconsole with the same sort of 
-semantics that are in the netoops patchset?
+My first thought is that it's a bit unfortunate that some of the the
+netconsole configgy bits weren't implemented in a generic way that would
+be applicable to other netpoll clients. Some people have never gotten it
+into their heads that netconsole isn't the only client.
 
-I'd still like to have blit-dmesg-to-the-network-on-oops semantics, 
-which seems doable by having a per-target flag for streaming of console 
-messages (enabled by default) and a flag to emit a structured full dmesg 
-dump (disabled by default).
+> I'd still like to have blit-dmesg-to-the-network-on-oops semantics, 
+> which seems doable by having a per-target flag for streaming of console 
+> messages (enabled by default) and a flag to emit a structured full dmesg 
+> dump (disabled by default).
 
-I'd be happy to change this patchset to modify the netconsole driver if 
-you agree.
+I'd actually like to see you go forward with netoops. It's clear to me
+that it's a different beast and complexifying netconsole with a bunch of
+weird new options doesn't really sit well. If that means abstracting
+some of the sysfs crap from netconsole, great. 
 
-Thanks,
+That said, I don't think netoops is an ideal name, given how closely
+bound oops _events_ are with their textual output. Presumably it covers
+events other than oopsen like panics too. 
 
-Mike Waychison
+Regarding rolling oopses: lots of machines regularly survive oopses, so 
+I think you ought to consider rate-limiting them (to a configurable rate
+with a very low default) rather than suppressing all but the first.
+
+-- 
+Mathematics is the supreme nostalgia of our time.
