@@ -1,89 +1,82 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v1 08/12] netoops: Add one-shot mode
-Date: Tue, 02 Nov 2010 18:30:13 -0700
-Message-ID: <20101103013012.4641.15217.stgit@crlf.mtv.corp.google.com>
+From: Mike Waychison <mikew@google.com>
+Subject: [PATCH v1 09/12] netoops: Add an interface to trigger various types
+	of crashes.
+Date: Tue, 02 Nov 2010 18:30:19 -0700
+Message-ID: <20101103013018.4641.251.stgit@crlf.mtv.corp.google.com>
 References: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20101103012917.4641.57113.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
-Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: simon.kagstrom@netinsight.net, davem@davemloft.net
+Cc: adurbin@google.com, akpm@linux-foundation.org, chavey@google.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Sometimes it is possible to have a kernel crashing that continuously Oopses.
-In this case, we do not want the network dumper get called over and over again,
-as we may only be interested in the first Oops that a kernel emits (especially
-in cases where we panic_on_oops).
+It is very useful to be able to test the crash path, but in order to do so, we
+need to expose various ways to crash the kernel in a deterministic fashion.
 
-In order to support this dumping policy, this commit introduces a file call
-/proc/sys/kernel/net_dump_one_shot that contains a boolean as to whether or not
-the netoops driver will operate in one-shot mode.
+This commit adds a file, /proc/sys/kernel/net_dump_now that takes various
+tokens that will crash the kernel in various ways.
 
-Note that 'soft' dumps do not disable the netoops driver when one-shot mode is
-enabled.
-
-Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Mike Waychison <mikew@google.com>
 ---
-TODO: ABI needs a better home.
+
+This trigger is probably better done using an ABI that is much more generic.
+It could perhaps be an extension of /proc/sysrq-trigger, though it would be
+nice to have the 'types' of crashes enumerated in a programmable manner somehow
+to know if they are available or not.
 ---
- drivers/net/netoops.c |   16 +++++++++++++++-
- 1 files changed, 15 insertions(+), 1 deletions(-)
+ drivers/net/netoops.c |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/net/netoops.c b/drivers/net/netoops.c
-index 13c4d51..01432d7 100644
+index 01432d7..87b2122 100644
 --- a/drivers/net/netoops.c
 +++ b/drivers/net/netoops.c
-@@ -86,6 +86,8 @@ static struct netpoll *np;
- static struct neighbour *netoops_neighbour;
- static DEFINE_SPINLOCK(netoops_lock);
- static struct netoops_msg msg;
-+static int network_dumper_one_shot = 1;
-+static int network_dumper_disabled;
- 
- static char netoops_fw_version[80];
- static char netoops_board_name[80];
-@@ -209,6 +211,7 @@ static void enable_netoops(char *dev_name, u32 dest_ip, u32 src_ip,
- 	np = new_np;
- 	neighbour = netoops_neighbour;
- 	netoops_neighbour = dest_neighbour;
-+	network_dumper_disabled = 0;
- 	spin_unlock_irqrestore(&netoops_lock, flags);
- 
- 	/* refcount cannot be decreased with interrupt disabled. */
-@@ -415,7 +418,7 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
- 	if (!spin_trylock(&netoops_lock))
- 		return;
- 
--	if (np == NULL || np->dev == NULL) {
-+	if (np == NULL || np->dev == NULL || network_dumper_disabled) {
- 		spin_unlock(&netoops_lock);
- 		return;
- 	}
-@@ -442,6 +445,10 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
- 		netoops_send_segment(packet_count_2, s1, l1);
- 	}
- 
-+	/* Should we disable ourselves now? */
-+	if (!soft_dump && network_dumper_one_shot)
-+		network_dumper_disabled = 1;
-+
- 	spin_unlock(&netoops_lock);
+@@ -578,6 +578,32 @@ static int proc_netoops_device(struct ctl_table *table, int write,
+ 	return 0;
  }
  
-@@ -577,6 +584,13 @@ static struct ctl_table kern_table[] = {
- 		.mode           = 0644,
++static int proc_netoops_now(struct ctl_table *table, int write,
++			    void __user *buffer, size_t *lenp, loff_t *ppos)
++{
++	if (write) {
++		char magic[20];
++		/* just crash in kernel mode. */
++		if (copy_from_user(magic, buffer, min(*lenp, sizeof(magic))))
++			return -EFAULT;
++		magic[min(*lenp, sizeof(magic))-1] = 0;
++		if (!strcmp(magic, "elgooG")) {
++			/* Test a simple crash */
++			*(unsigned long *)0 = 0;
++		} else if (!strcmp(magic, "guB")) {
++			/* Test the BUG() handler */
++			BUG();
++		} else if (!strcmp(magic, "cinaP")) {
++			panic("Testing panic");
++		} else if (!strcmp(magic, "pmuD")) {
++			kmsg_dump(KMSG_DUMP_SOFT, NULL);
++		}
++		return 0;
++	}
++	*lenp = 0;
++	return 0;
++}
++
+ static struct ctl_table kern_table[] = {
+ 	{
+ 		.procname       = "net_dump_device",
+@@ -585,6 +611,11 @@ static struct ctl_table kern_table[] = {
  		.proc_handler   = &proc_netoops_device,
  	},
-+	{
-+		.procname       = "net_dump_one_shot",
-+		.data           = &network_dumper_one_shot,
-+		.maxlen         = sizeof(int),
-+		.mode           = 0644,
-+		.proc_handler   = &proc_dointvec,
+ 	{
++		.procname       = "net_dump_now",
++		.mode           = 0600,
++		.proc_handler   = &proc_netoops_now,
 +	},
- 	{},
- };
- 
++	{
+ 		.procname       = "net_dump_one_shot",
+ 		.data           = &network_dumper_one_shot,
+ 		.maxlen         = sizeof(int),
