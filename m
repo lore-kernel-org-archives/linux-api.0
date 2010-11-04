@@ -1,47 +1,95 @@
-From: Bruno =?UTF-8?B?UHLDqW1vbnQ=?= <bonbons@linux-vserver.org>
+From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH v1 00/12] netoops support
-Date: Wed, 3 Nov 2010 21:58:51 +0100
-Message-ID: <20101103215851.2df7723f@neptune.home>
-References: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com>
-	<20101103023422.GB5782@kroah.com>
-	<AANLkTi=Oe4oJ0imCh1eoJLS0QYqSBM4pLo=dEUSiJcQb@mail.gmail.com>
-	<20101103181634.GF7441@kroah.com>
-	<20101103115020.ad8a4ecc.randy.dunlap@oracle.com>
-	<1288813229.10236.2.camel@Joe-Laptop>
+Date: Wed, 03 Nov 2010 18:18:41 -0700
+Message-ID: <4CD209F1.90708@google.com>
+References: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com>	 <20101103023422.GB5782@kroah.com>	 <AANLkTi=Oe4oJ0imCh1eoJLS0QYqSBM4pLo=dEUSiJcQb@mail.gmail.com>	 <20101103181634.GF7441@kroah.com>	 <AANLkTimKWCWtuPeZhMZ75gTxB8LwAhJfy2FZnnRwthft@mail.gmail.com>	 <4CD1C612.5080902@google.com> <1288817685.26428.1129.camel@calx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1288813229.10236.2.camel@Joe-Laptop>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Joe Perches <joe@perches.com>
-Cc: Mike Waychison <mikew@google.com>, Randy Dunlap <randy.dunlap@oracle.com>, Greg KH <gregkh@suse.de>, simon.kagstrom@netinsight.net, davem@davemloft.net, adurbin@google.com, akpm@linux-foundation.org, chavey@google.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1288817685.26428.1129.camel@calx>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
+Cc: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 03 November 2010 Joe Perches wrote:
-> On Wed, 2010-11-03 at 11:50 -0700, Randy Dunlap wrote:
-> > On Wed, 3 Nov 2010 11:16:34 -0700 Greg KH wrote:
-> > > On Tue, Nov 02, 2010 at 08:37:42PM -0700, Mike Waychison wrote:
-> > > > On Tue, Nov 2, 2010 at 7:34 PM, Greg KH wrote:
-> > > As for the user/kernel interface, perhaps exporting the data in a text
-> > > format that is "tagged" would be best?  Then the whole world can parse
-> > > it easily.
-> > I have been (occasionally) looking at critical kernel messages.
-> > IMO we really need an easy way to find them.
-> > They can begin with any of these strings (and others can be added
-> > too easily):
-> > BUG|panic|MCE|NMI|error:|Oops|Bad|Fatal|Unrecoverable|Unhandled|Weird
-> > We need a simple (single?) tagging method to identify any/all of these,
-> > /methinks.
+Matt Mackall wrote:
+> On Wed, 2010-11-03 at 13:29 -0700, Mike Waychison wrote:
+>> Mike Waychison wrote:
+>>> FWIW, another semantic difference between netconsole and netoops (that
+>>> I had missed in the last email) is filtering: we really do want to get
+>>> the whole log when a crash happens, debug messages and all.
+>>> Netconsole is subject to console filtering (which we _do_ want as
+>>> debug messages going out the uart slows the whole world down).
+>>>
+>>> netconsole and netoops _do_ have bits in common, for instance the
+>>> handling of NETDEV events and source+target configuration.  I'd rather
+>>> those bits become common between the two than figure out how to jam
+>>> the semantics we need into netconsole.
+>> Hi Matt,
+>>
+>> I've been reading through the netconsole driver in response to Greg's 
+>> comments on this thread, and it is definitely more robust in terms of 
+>> configuration and handling of network device events than the netoops 
+>> driver I proposed.
 > 
-> Simply marking these messages KERN_CRIT or higher would seem to work.
+> I've been following the discussion to see if it went anywhere
+> interesting..
+> 
+>> What are your thoughts on extending netconsole with the same sort of 
+>> semantics that are in the netoops patchset?
+> 
+> My first thought is that it's a bit unfortunate that some of the the
+> netconsole configgy bits weren't implemented in a generic way that would
+> be applicable to other netpoll clients. Some people have never gotten it
+> into their heads that netconsole isn't the only client.
+> 
+>> I'd still like to have blit-dmesg-to-the-network-on-oops semantics, 
+>> which seems doable by having a per-target flag for streaming of console 
+>> messages (enabled by default) and a flag to emit a structured full dmesg 
+>> dump (disabled by default).
+> 
+> I'd actually like to see you go forward with netoops. It's clear to me
+> that it's a different beast and complexifying netconsole with a bunch of
+> weird new options doesn't really sit well. If that means abstracting
+> some of the sysfs crap from netconsole, great. 
 
-That's an idea (probably better higher that can be enabled on a console with
-a specific flag), though it also invites for filter levels on a per-console
-base (e.g. let uart only show KERN_WARN..KERN_CRIT but having more verbosity
-on termial or netconsole [per target]).
+I'd be happy to take a stab at this.  This solves most of the ABI 
+reservations that I have with this v1 patchset.
 
-I've been playing with this last winter, need to dig out that code again and
-clean it up for sharing.
+Looking at netconsole, it looks to lack some locking for data 
+consistency, and it appears that we will deadlock if we ever get a 
+NETDEV_UNREGISTER event (due to recursively grabbing the rtnl in 
+netpoll_cleanup).  I have a couple patches I've been hacking on this 
+afternoon that should clear those issues up.
 
-Bruno
+I'm thinking of pushing all the target handling options down into 
+net/core/netpoll.c.  I'll probably expose this interface as "struct 
+netpoll_targets" where ->lock and ->list could be completely exposed to 
+clients.  netconsole would then get a lot smaller as would netoops.
+
+> That said, I don't think netoops is an ideal name, given how closely
+> bound oops _events_ are with their textual output. Presumably it covers
+> events other than oopsen like panics too. 
+
+True.  We call this code 'netdump' or 'network_dumper' internally, but I 
+figured it'd be better to follow current conventions with ramoops and 
+mtdoops already in the tree.  I don't really care what it's called in 
+the end :)
+
+> 
+> Regarding rolling oopses: lots of machines regularly survive oopses, so 
+> I think you ought to consider rate-limiting them (to a configurable rate
+> with a very low default) rather than suppressing all but the first.
+> 
+
+The trouble with Oopses is just that:  We don't know whether we can 
+safely survive them or not and it's a total gamble each time we do Oops. 
+  We can't programmatically know how crapped out the machine is, so 
+historically we've erred on not allowing bad things to continue 
+happening once someone notices something wrong.
+
+It's easier for us to just shoot the machine in the head (panic_on_oops) 
+and move on than corrupt data or dead-lock in weird ways at some later 
+point in time.  This is definitely not the behaviour I would want nor 
+expect from my desktop or phone, but for the cluster, it's just safer.
