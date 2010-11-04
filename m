@@ -1,128 +1,69 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 00/12] netoops support
-Date: Thu, 04 Nov 2010 10:38:15 -0700
-Message-ID: <4CD2EF87.2030906@google.com>
-References: <20101103012917.4641.57113.stgit@crlf.mtv.corp.google.com> <20101103023422.GB5782@kroah.com> <AANLkTi=Oe4oJ0imCh1eoJLS0QYqSBM4pLo=dEUSiJcQb@mail.gmail.com> <20101103181634.GF7441@kroah.com> <AANLkTimKWCWtuPeZhMZ75gTxB8LwAhJfy2FZnnRwthft@mail.gmail.com> <4CD1C612.5080902@google.com> <1288817685.26428.1129.camel@calx> <4CD209F1.90708@google.com> <20101104063511.GE5210@cr0.nay.redhat.com>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH RFC 0/8] Dynamic clock devices
+Date: Thu, 4 Nov 2010 20:26:34 +0100
+Message-ID: <cover.1288897198.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20101104063511.GE5210-+dguKlz9DXUf7BdofF/totBPR1lH4CV8@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?ISO-8859-1?Q?Am=E9rico_Wang?= <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am=E9rico Wang wrote:
-> On Wed, Nov 03, 2010 at 06:18:41PM -0700, Mike Waychison wrote:
->> Matt Mackall wrote:
->>> On Wed, 2010-11-03 at 13:29 -0700, Mike Waychison wrote:
->>>> Mike Waychison wrote:
->>>>> FWIW, another semantic difference between netconsole and netoops =
-(that
->>>>> I had missed in the last email) is filtering: we really do want t=
-o get
->>>>> the whole log when a crash happens, debug messages and all.
->>>>> Netconsole is subject to console filtering (which we _do_ want as
->>>>> debug messages going out the uart slows the whole world down).
->>>>>
->>>>> netconsole and netoops _do_ have bits in common, for instance the
->>>>> handling of NETDEV events and source+target configuration.  I'd r=
-ather
->>>>> those bits become common between the two than figure out how to j=
-am
->>>>> the semantics we need into netconsole.
->>>> Hi Matt,
->>>>
->>>> I've been reading through the netconsole driver in response to
->>>> Greg's comments on this thread, and it is definitely more robust
->>>> in terms of configuration and handling of network device events
->>>> than the netoops driver I proposed.
->>> I've been following the discussion to see if it went anywhere
->>> interesting..
->>>
->>>> What are your thoughts on extending netconsole with the same sort
->>>> of semantics that are in the netoops patchset?
->>> My first thought is that it's a bit unfortunate that some of the th=
-e
->>> netconsole configgy bits weren't implemented in a generic way that =
-would
->>> be applicable to other netpoll clients. Some people have never gott=
-en it
->>> into their heads that netconsole isn't the only client.
->>>
->>>> I'd still like to have blit-dmesg-to-the-network-on-oops
->>>> semantics, which seems doable by having a per-target flag for
->>>> streaming of console messages (enabled by default) and a flag to
->>>> emit a structured full dmesg dump (disabled by default).
->>> I'd actually like to see you go forward with netoops. It's clear to=
- me
->>> that it's a different beast and complexifying netconsole with a bun=
-ch of
->>> weird new options doesn't really sit well. If that means abstractin=
-g
->>> some of the sysfs crap from netconsole, great.
->> I'd be happy to take a stab at this.  This solves most of the ABI
->> reservations that I have with this v1 patchset.
->>
->> Looking at netconsole, it looks to lack some locking for data
->> consistency, and it appears that we will deadlock if we ever get a
->> NETDEV_UNREGISTER event (due to recursively grabbing the rtnl in
->> netpoll_cleanup).  I have a couple patches I've been hacking on this
->> afternoon that should clear those issues up.
->>
->=20
->=20
-> You might want to look at net-next-2.6, it has some fixes
-> from Neil.
+Okay, here is a work in progress, not well tested, but I would like to
+get some feedback whether the direction is good or not.
 
-Excellent, yes, 3b410a31 fixes the recursive rtnl deadlock I was=20
-referring to.
+The first patch introduces clock devices which can appear and
+disappear like usb devices (and, I suppose, hot plug PCI but I am not
+too sure that what is offered here would really work in that case).
+The subsequent patches convert the clock_ and timer_ system calls, one
+by one.
 
->=20
->=20
->> I'm thinking of pushing all the target handling options down into
->> net/core/netpoll.c.  I'll probably expose this interface as "struct
->> netpoll_targets" where ->lock and ->list could be completely exposed
->> to clients.  netconsole would then get a lot smaller as would
->> netoops.
->>
->>> That said, I don't think netoops is an ideal name, given how closel=
-y
->>> bound oops _events_ are with their textual output. Presumably it co=
-vers
->>> events other than oopsen like panics too.
->> True.  We call this code 'netdump' or 'network_dumper' internally,
->> but I figured it'd be better to follow current conventions with
->> ramoops and mtdoops already in the tree.  I don't really care what
->> it's called in the end :)
->>
->=20
->=20
-> "netdump" was used by a utility that do crash dumping over net.
-> It is deprecated now, since we have kdump.
+The clock_ syscalls are moved into a new file and they call the older
+posix functions when needed. The timer_ syscalls stay where they are,
+in posix-timers.c, since I did not want to change the fairly involved
+timer management code. Eventually, we could remove the posix clock_*
+functions for the CLOCK_* ids from posix-timers.c and rework them
+using the new dynamic clock api. That would leave just the timer code
+in posix-timers.c, as the file name suggests.
 
-Yup.  If you go back far enough, I think this was a gut of that code=20
-long long ago, hence the name.
+I dropped the idea of having user space open a sysfs file in order to
+get a reference to a clock, since there are no open/release hooks
+within sysfs for drivers (coincidentally, there has been some talk
+about this on the lkml recently, but previously Greg KH object to
+abusing sysfs as a "clockfs").
 
->=20
->>> Regarding rolling oopses: lots of machines regularly survive
->>> oopses, so I think you ought to consider rate-limiting them (to a
->>> configurable rate
->>> with a very low default) rather than suppressing all but the first.
->>>
->> The trouble with Oopses is just that:  We don't know whether we can
->> safely survive them or not and it's a total gamble each time we do
->> Oops.  We can't programmatically know how crapped out the machine is=
-,
->> so historically we've erred on not allowing bad things to continue
->> happening once someone notices something wrong.
->>
->> It's easier for us to just shoot the machine in the head
->> (panic_on_oops) and move on than corrupt data or dead-lock in weird
->> ways at some later point in time.  This is definitely not the
->> behaviour I would want nor expect from my desktop or phone, but for
->> the cluster, it's just safer.
->=20
-> We also have pause_on_oops, or we can invent a oops_once.
+Instead, since many clocks (hpet, rtc, ptp, ...) will want to offer a
+custom chardev for special advanced functionality, the dynamic clock
+layer registers a cdev for the driver, placing its own hooks into the
+open/release methods. The driver thus needs to access its private data
+via a standard access method (not just by using fp->private_data). If
+a driver doesn't want any chardev functions, that is okay, too.
+
+Well, please take a look and let me know what you think.
+
+Thanks,
+
+Richard
+
+
+Richard Cochran (8):
+  Introduce dynamic clock devices
+  clock device: convert clock_gettime
+  clock device: convert clock_getres
+  clock device: convert clock_settime
+  clock device: convert timer_create
+  clock device: convert timer_delete
+  clock device: convert timer_gettime
+  clock device: convert timer_settime
+
+ include/linux/clockdevice.h  |  117 +++++++++++++++
+ include/linux/posix-timers.h |   23 +++-
+ include/linux/time.h         |    2 +
+ kernel/posix-timers.c        |   51 +++++--
+ kernel/time/Makefile         |    3 +-
+ kernel/time/clockdevice.c    |  336 ++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 518 insertions(+), 14 deletions(-)
+ create mode 100644 include/linux/clockdevice.h
+ create mode 100644 kernel/time/clockdevice.c
