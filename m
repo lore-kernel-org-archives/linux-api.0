@@ -1,97 +1,49 @@
-From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH RFC 8/8] clock device: convert timer_settime
-Date: Thu, 4 Nov 2010 20:30:49 +0100
-Message-ID: <b01f31d7dbb6c60b9b36d7408c0be99badfa7661.1288897199.git.richard.cochran@omicron.at>
-References: <cover.1288897198.git.richard.cochran@omicron.at>
+From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Inconsistent credential checking in prlimit() syscall
+Date: Sun, 7 Nov 2010 09:04:22 +0100
+Message-ID: <AANLkTi=mM2GoL=+umHJ6dDCqa7dNmG3=ra8xDOW4QCEV@mail.gmail.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1288897198.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+To: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>, Jiri Slaby <jslaby-Et1tbQHTxzrQT0dZR+AlfA@public.gmane.org>
+Cc: marcin.slusarz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch lets the timer_settime system call use dynamic clock devices.
+Hello Neil, Jiri,
 
-Signed-off-by: Richard Cochran <richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
----
- include/linux/clockdevice.h |    3 +++
- kernel/posix-timers.c       |   12 +++++++++---
- kernel/time/clockdevice.c   |   20 ++++++++++++++++++++
- 3 files changed, 32 insertions(+), 3 deletions(-)
+I  started documenting the prlimit() system call added in 2.6.36, and
+found the permission checks to be rather inconsistent with any other
+kernel-userspace API. They are:
 
-diff --git a/include/linux/clockdevice.h b/include/linux/clockdevice.h
-index b56debb..d3589a0 100644
---- a/include/linux/clockdevice.h
-+++ b/include/linux/clockdevice.h
-@@ -110,5 +110,8 @@ int clock_device_timer_create(struct clock_device *clk, struct k_itimer *kit);
- int clock_device_timer_delete(struct clock_device *clk, struct k_itimer *kit);
- void clock_device_timer_gettime(struct clock_device *clk, struct k_itimer *kit,
- 				struct itimerspec *tsp);
-+int clock_device_timer_settime(struct clock_device *clk,
-+			       struct k_itimer *kit, int flags,
-+			       struct itimerspec *tsp, struct itimerspec *old);
- 
- #endif
-diff --git a/kernel/posix-timers.c b/kernel/posix-timers.c
-index d00ff73..b09e37e 100644
---- a/kernel/posix-timers.c
-+++ b/kernel/posix-timers.c
-@@ -817,6 +817,7 @@ SYSCALL_DEFINE4(timer_settime, timer_t, timer_id, int, flags,
- 		const struct itimerspec __user *, new_setting,
- 		struct itimerspec __user *, old_setting)
- {
-+	struct clock_device *clk_dev;
- 	struct k_itimer *timr;
- 	struct itimerspec new_spec, old_spec;
- 	int error = 0;
-@@ -837,9 +838,14 @@ retry:
- 	if (!timr)
- 		return -EINVAL;
- 
--	error = CLOCK_DISPATCH(timr->it_clock, timer_set,
--			       (timr, flags, &new_spec, rtn));
--
-+	clk_dev = clockid_to_clock_device(timr->it_clock);
-+	if (clk_dev)
-+		error = clock_device_timer_settime(clk_dev, timr,
-+						   flags, &new_spec, rtn);
-+	else {
-+		error = CLOCK_DISPATCH(timr->it_clock, timer_set,
-+				       (timr, flags, &new_spec, rtn));
-+	}
- 	unlock_timer(timr, flag);
- 	if (error == TIMER_RETRY) {
- 		rtn = NULL;	// We already got the old time...
-diff --git a/kernel/time/clockdevice.c b/kernel/time/clockdevice.c
-index 0f6f913..3345c3a 100644
---- a/kernel/time/clockdevice.c
-+++ b/kernel/time/clockdevice.c
-@@ -314,3 +314,23 @@ void clock_device_timer_gettime(struct clock_device *clk, struct k_itimer *kit,
- out:
- 	mutex_unlock(&clk->mux);
- }
-+
-+int clock_device_timer_settime(struct clock_device *clk,
-+			       struct k_itimer *kit, int flags,
-+			       struct itimerspec *tsp, struct itimerspec *old)
-+{
-+	int err;
-+
-+	mutex_lock(&clk->mux);
-+
-+	if (clk->zombie)
-+		err = -ENODEV;
-+	else if (!clk->ops->timer_settime)
-+		err = -EOPNOTSUPP;
-+	else
-+		err = clk->ops->timer_settime(clk->priv, kit, flags, tsp, old);
-+
-+	mutex_unlock(&clk->mux);
-+
-+	return err;
-+}
+CAP_SYS_RESOURCE ||
+(c-uid == t-uid && c0uid == t-euid && c-uid == t-suid) &&
+(c-gid == t-gid && c-gid == t-guid && c-gid == t-sgid)
+
+(uid == real UID; euid == effective UID; suid == save set-user-ID; and
+analogously for GIDs; c- == caller's ID, and t- == target process's
+ID)
+
+In other words, for an unprivileged user, all UIDs of the target
+process must match the calling process's real UID *and* all GIDs of
+the target process must match the calling process's real GID.
+
+What is the reason that the checks for prlimit() aren't similar to say
+setpriority(), whose checks are the much simpler, and make no mention
+of GIDs:
+
+c-euid == t-uid || c-euid == t-euid
+
+?
+
+Thanks,
+
+Michael
+
+PS see also http://linux-man-pages.blogspot.com/2010/11/system-call-credential-checking-tale-of.html
+
 -- 
-1.7.0.4
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface"; http://man7.org/tlpi/
