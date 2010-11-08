@@ -1,44 +1,69 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 17/23] kmsg_dumper: Introduce a new 'SOFT' dump reason
-Date: Mon, 08 Nov 2010 12:33:17 -0800
-Message-ID: <20101108203316.22479.86025.stgit@crlf.mtv.corp.google.com>
+From: Mike Waychison <mikew@google.com>
+Subject: [PATCH v2 13/23] netconsole: Move setting of default ports.
+Date: Mon, 08 Nov 2010 12:32:53 -0800
+Message-ID: <20101108203252.22479.95111.stgit@crlf.mtv.corp.google.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20101108203120.22479.19708.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
-Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>
+Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-It is a useful to be able to exercise kmsg_dumper implementations without
-requiring a kernel oops or panic.  This commit adds a new reason called
-KMSG_DUMP_SOFT, which signifies that the system isn't really going down.
+Clients of netpoll_targets need to be able to specify the default port
+numbers.  Do this by specifying the default port numbers in struct
+netpoll_targets directly.
 
-This logic is used in a later commit that introduces the netoops driver.
-
-Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Mike Waychison <mikew@google.com>
 ---
+ drivers/net/netconsole.c |   13 +++++++++----
+ 1 files changed, 9 insertions(+), 4 deletions(-)
 
-It is also possible that we not introduce KMSG_DUMP_SOFT, and simply overload
-the existing KMSG_DUMP_OOPS reason, but I figured that this would be cleaner.
-
-TODO: Make sure mtdoops and ramoops do something useful with this flag?
----
- include/linux/kmsg_dump.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
-
-diff --git a/include/linux/kmsg_dump.h b/include/linux/kmsg_dump.h
-index a229acc..0abc2d7 100644
---- a/include/linux/kmsg_dump.h
-+++ b/include/linux/kmsg_dump.h
-@@ -20,6 +20,7 @@ enum kmsg_dump_reason {
- 	KMSG_DUMP_OOPS,
- 	KMSG_DUMP_PANIC,
- 	KMSG_DUMP_KEXEC,
-+	KMSG_DUMP_SOFT,
- };
+diff --git a/drivers/net/netconsole.c b/drivers/net/netconsole.c
+index 2fe571d..0d77fc8 100644
+--- a/drivers/net/netconsole.c
++++ b/drivers/net/netconsole.c
+@@ -68,6 +68,7 @@ __setup("netconsole=", option_setup);
+ struct netpoll_targets {
+ 	struct list_head list;
+ 	spinlock_t lock;
++	u16 default_local_port, default_remote_port;
+ #ifdef	CONFIG_NETPOLL_TARGETS_DYNAMIC
+ 	struct configfs_subsystem configfs_subsys;
+ #endif
+@@ -161,8 +162,8 @@ static struct netpoll_target *alloc_param_target(struct netpoll_targets *nts,
+ 	nt->nts = nts;
+ 	nt->np.name = nts->subsys_name;
+ 	strlcpy(nt->np.dev_name, "eth0", IFNAMSIZ);
+-	nt->np.local_port = 6665;
+-	nt->np.remote_port = 6666;
++	nt->np.local_port = nts->default_local_port;
++	nt->np.remote_port = nts->default_remote_port;
+ 	memset(nt->np.remote_mac, 0xff, ETH_ALEN);
+ 	INIT_WORK(&nt->cleanup_work, deferred_netpoll_cleanup);
  
- /**
+@@ -635,8 +636,8 @@ static struct config_item *make_netpoll_target(struct config_group *group,
+ 	nt->nts = nts;
+ 	nt->np.name = nts->subsys_name;
+ 	strlcpy(nt->np.dev_name, "eth0", IFNAMSIZ);
+-	nt->np.local_port = 6665;
+-	nt->np.remote_port = 6666;
++	nt->np.local_port = nts->default_local_port;
++	nt->np.remote_port = nts->default_remote_port;
+ 	memset(nt->np.remote_mac, 0xff, ETH_ALEN);
+ 	INIT_WORK(&nt->cleanup_work, deferred_netpoll_cleanup);
+ 
+@@ -923,6 +924,10 @@ static void __exit unregister_netpoll_targets(struct netpoll_targets *nts)
+ static int __init init_netconsole(void)
+ {
+ 	int err;
++
++	targets.default_local_port = 6665;
++	targets.default_remote_port = 6666;
++
+ 	err = register_netpoll_targets("netconsole", &targets, config);
+ 	if (err)
+ 		return err;
