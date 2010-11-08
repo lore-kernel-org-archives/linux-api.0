@@ -1,95 +1,111 @@
-From: Mike Waychison <mikew@google.com>
-Subject: [PATCH v2 23/23] netoops: Add an interface to trigger various types
-	of crashes.
-Date: Mon, 08 Nov 2010 12:33:53 -0800
-Message-ID: <20101108203352.22479.15302.stgit@crlf.mtv.corp.google.com>
+From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 22/23] netoops: Add one-shot mode
+Date: Mon, 08 Nov 2010 12:33:47 -0800
+Message-ID: <20101108203346.22479.10201.stgit@crlf.mtv.corp.google.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>
-Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20101108203120.22479.19708.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
+Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-It is very useful to be able to test the crash path, but in order to do so, we
-need to expose various ways to crash the kernel in a deterministic fashion.
+Sometimes it is possible to have a kernel crashing that continuously
+Oopses.  In this case, we do not want the network dumper get called over
+and over again, as we may only be interested in the first Oops that a
+kernel emits (especially in cases where we panic_on_oops).
 
-This commit adds a file, /proc/sys/kernel/net_dump_now that takes various
-tokens that will crash the kernel in various ways.
+In order to support this dumping policy, this commit introduces a file
+call /proc/sys/kernel/net_dump_one_shot that contains a boolean as to
+whether or not the netoops driver will operate in one-shot mode.
 
-This requires kmsg_dump() be accessible to modules, so export it.
+Note that 'soft' dumps do not disable the netoops driver when one-shot
+mode is enabled.
 
-Signed-off-by: Mike Waychison <mikew@google.com>
+Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
-Changelog:
-- v2
-   - Folded EXPORT_SYMBOL_GPL(kmsg_dump) into this patch
-
-TODO: User visible ABI needs a better interface
+TODO: ABI needs a better home.
 ---
- drivers/net/netoops.c |   31 +++++++++++++++++++++++++++++++
- kernel/printk.c       |    1 +
- 2 files changed, 32 insertions(+), 0 deletions(-)
+ drivers/net/netoops.c |   37 +++++++++++++++++++++++++++++++++++++
+ 1 files changed, 37 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/net/netoops.c b/drivers/net/netoops.c
-index 1ffd0f0..60683c5 100644
+index 5cbb732..1ffd0f0 100644
 --- a/drivers/net/netoops.c
 +++ b/drivers/net/netoops.c
-@@ -288,6 +288,32 @@ static struct kmsg_dumper netoops_dumper = {
+@@ -97,6 +97,8 @@ struct netoops_msg {
+ } __attribute__ ((packed));
+ 
+ static struct netoops_msg msg;
++static int network_dumper_one_shot = 1;
++static int network_dumper_disabled;
+ 
+ static char netoops_fw_version[80];
+ static char netoops_board_name[80];
+@@ -221,6 +223,10 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
+ 		netoops_send_segment(packet_count_2, s1, l1);
+ 	}
+ 
++	/* Should we disable ourselves now? */
++	if (!soft_dump && network_dumper_one_shot)
++		network_dumper_disabled = 1;
++
+ 	spin_unlock_irqrestore(&targets.lock, flags);
+ }
+ 
+@@ -282,6 +288,28 @@ static struct kmsg_dumper netoops_dumper = {
  	.dump = netoops,
  };
  
-+static int proc_netoops_now(struct ctl_table *table, int write,
-+			    void __user *buffer, size_t *lenp, loff_t *ppos)
-+{
-+	if (write) {
-+		char magic[20];
-+		/* just crash in kernel mode. */
-+		if (copy_from_user(magic, buffer, min(*lenp, sizeof(magic))))
-+			return -EFAULT;
-+		magic[min(*lenp, sizeof(magic))-1] = 0;
-+		if (!strcmp(magic, "elgooG")) {
-+			/* Test a simple crash */
-+			*(unsigned long *)0 = 0;
-+		} else if (!strcmp(magic, "guB")) {
-+			/* Test the BUG() handler */
-+			BUG();
-+		} else if (!strcmp(magic, "cinaP")) {
-+			panic("Testing panic");
-+		} else if (!strcmp(magic, "pmuD")) {
-+			kmsg_dump(KMSG_DUMP_SOFT, NULL);
-+		}
-+		return 0;
-+	}
-+	*lenp = 0;
-+	return 0;
-+}
-+
- static struct ctl_table kern_table[] = {
- 	{
- 		.procname       = "net_dump_one_shot",
-@@ -296,6 +322,11 @@ static struct ctl_table kern_table[] = {
- 		.mode           = 0644,
- 		.proc_handler   = &proc_dointvec,
- 	},
++static struct ctl_table kern_table[] = {
 +	{
-+		.procname       = "net_dump_now",
-+		.mode           = 0600,
-+		.proc_handler   = &proc_netoops_now,
++		.procname       = "net_dump_one_shot",
++		.data           = &network_dumper_one_shot,
++		.maxlen         = sizeof(int),
++		.mode           = 0644,
++		.proc_handler   = &proc_dointvec,
 +	},
- 	{},
- };
++	{},
++};
++
++static struct ctl_table root_table[] = {
++	{
++		.procname	= "kernel",
++		.mode		= 0555,
++		.child		= kern_table,
++	},
++	{}
++};
++
++static struct ctl_table_header *proc_table_header;
++
+ static int __init netoops_init(void)
+ {
+ 	int retval = -EINVAL;
+@@ -309,7 +337,15 @@ static int __init netoops_init(void)
+ 	if (retval)
+ 		goto out_sysfs_group;
  
-diff --git a/kernel/printk.c b/kernel/printk.c
-index 159b4d6..9323339 100644
---- a/kernel/printk.c
-+++ b/kernel/printk.c
-@@ -1573,4 +1573,5 @@ void kmsg_dump(enum kmsg_dump_reason reason, struct pt_regs *pt_regs)
- 		dumper->dump(dumper, reason, pt_regs, s1, l1, s2, l2);
- 	spin_unlock_irqrestore(&dump_list_lock, flags);
- }
-+EXPORT_SYMBOL_GPL(kmsg_dump);
- #endif
++	proc_table_header = register_sysctl_table(root_table);
++	if (!proc_table_header) {
++		retval = -EINVAL;
++		goto out_kmsg_dump;
++	}
++
+ 	return 0;
++out_kmsg_dump:
++	kmsg_dump_unregister(&netoops_dumper);
+ out_sysfs_group:
+ 	sysfs_remove_group(netoops_kobj, &attr_group);
+ out_kobj:
+@@ -322,6 +358,7 @@ out:
+ 
+ static void __exit netoops_exit(void)
+ {
++	unregister_sysctl_table(proc_table_header);
+ 	kmsg_dump_unregister(&netoops_dumper);
+ 	sysfs_remove_group(netoops_kobj, &attr_group);
+ 	kobject_put(netoops_kobj);
