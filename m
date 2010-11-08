@@ -1,49 +1,64 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Inconsistent credential checking in prlimit() syscall
-Date: Sun, 7 Nov 2010 09:04:22 +0100
-Message-ID: <AANLkTi=mM2GoL=+umHJ6dDCqa7dNmG3=ra8xDOW4QCEV@mail.gmail.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 01/23] netconsole: Remove unneeded reference counting
+Date: Mon, 08 Nov 2010 12:31:42 -0800
+Message-ID: <20101108203141.22479.74390.stgit@crlf.mtv.corp.google.com>
+References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20101108203120.22479.19708.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>, Jiri Slaby <jslaby-Et1tbQHTxzrQT0dZR+AlfA@public.gmane.org>
-Cc: marcin.slusarz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
+Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Neil, Jiri,
+The loops that iterate through the list of targets for emitting console
+messages in the netconsole driver operating with interrupts disabled and
+the list-protecting lock held.  There is no way for the elements of the
+list to disappear, so we don't need to grab references to them.
 
-I  started documenting the prlimit() system call added in 2.6.36, and
-found the permission checks to be rather inconsistent with any other
-kernel-userspace API. They are:
+This patch keeps the definitions however of netconsole_target_get() and
+netconsole_target_put() as they are used in a subsequent patch.
 
-CAP_SYS_RESOURCE ||
-(c-uid == t-uid && c0uid == t-euid && c-uid == t-suid) &&
-(c-gid == t-gid && c-gid == t-guid && c-gid == t-sgid)
+Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+---
+ drivers/net/netconsole.c |    4 ----
+ 1 files changed, 0 insertions(+), 4 deletions(-)
 
-(uid == real UID; euid == effective UID; suid == save set-user-ID; and
-analogously for GIDs; c- == caller's ID, and t- == target process's
-ID)
-
-In other words, for an unprivileged user, all UIDs of the target
-process must match the calling process's real UID *and* all GIDs of
-the target process must match the calling process's real GID.
-
-What is the reason that the checks for prlimit() aren't similar to say
-setpriority(), whose checks are the much simpler, and make no mention
-of GIDs:
-
-c-euid == t-uid || c-euid == t-euid
-
-?
-
-Thanks,
-
-Michael
-
-PS see also http://linux-man-pages.blogspot.com/2010/11/system-call-credential-checking-tale-of.html
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface"; http://man7.org/tlpi/
+diff --git a/drivers/net/netconsole.c b/drivers/net/netconsole.c
+index 94255f0..c87a49e 100644
+--- a/drivers/net/netconsole.c
++++ b/drivers/net/netconsole.c
+@@ -671,7 +671,6 @@ static int netconsole_netdev_event(struct notifier_block *this,
+ 
+ 	spin_lock_irqsave(&target_list_lock, flags);
+ 	list_for_each_entry(nt, &target_list, list) {
+-		netconsole_target_get(nt);
+ 		if (nt->np.dev == dev) {
+ 			switch (event) {
+ 			case NETDEV_CHANGENAME:
+@@ -693,7 +692,6 @@ static int netconsole_netdev_event(struct notifier_block *this,
+ 				break;
+ 			}
+ 		}
+-		netconsole_target_put(nt);
+ 	}
+ 	spin_unlock_irqrestore(&target_list_lock, flags);
+ 	if (event == NETDEV_UNREGISTER || event == NETDEV_BONDING_DESLAVE)
+@@ -722,7 +720,6 @@ static void write_msg(struct console *con, const char *msg, unsigned int len)
+ 
+ 	spin_lock_irqsave(&target_list_lock, flags);
+ 	list_for_each_entry(nt, &target_list, list) {
+-		netconsole_target_get(nt);
+ 		if (nt->enabled && netif_running(nt->np.dev)) {
+ 			/*
+ 			 * We nest this inside the for-each-target loop above
+@@ -738,7 +735,6 @@ static void write_msg(struct console *con, const char *msg, unsigned int len)
+ 				left -= frag;
+ 			}
+ 		}
+-		netconsole_target_put(nt);
+ 	}
+ 	spin_unlock_irqrestore(&target_list_lock, flags);
+ }
