@@ -1,188 +1,223 @@
 From: Mike Waychison <mikew@google.com>
-Subject: [PATCH v2 00/23] netoops support
-Date: Mon, 08 Nov 2010 12:31:36 -0800
-Message-ID: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
+Subject: [PATCH v2 03/23] netconsole: Introduce 'enabled' state-machine
+Date: Mon, 08 Nov 2010 12:31:54 -0800
+Message-ID: <20101108203153.22479.54008.stgit@crlf.mtv.corp.google.com>
+References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>
 Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patchset applies to v2.6.37-rc1.
+Representing the internal state within netconsole isn't really a boolean
+value, but rather a state machine with transitions.
 
-The following series implements support for 'netoops', a simple driver that
-will deliver kmsg logs together with machine specifics over the network.
+This patch introduces 4 states that the netconsole multi-target can
+handle.  These states are:
+- NETPOLL_DISABLED:
+    The netpoll structure hasn't been setup.
+- NETPOLL_SETTINGUP:
+    The netpoll structure is being setup, and only whoever set this
+    state can transition out of it.  Must come from the NETPOLL_DISABLED
+    state.
+- NETPOLL_ENABLED:
+    The netpoll structure has been setup and we are good to emit
+    packets.
+- NETPOLL_CLEANING:
+    Somebody is queued to call netpoll_clean.  Whoever does so must
+    transition out of this state.  Must come from the NETPOLL_CLEANING
+    state.
 
-This driver is based on code used in Google's production server environment.
-We internally call the driver 'netdump', but are planning on changing the name
-to 'netoops' to follow the convention set by both the mtdoops and ramoops
-drivers.  We use these facilities to gather crash data from our entire fleet of
-machines in a light-weight manner.  We do things this way because it
-simply isn't feasible to gather full crash data off of every machine in
-the wild that decides it is time to die.
+The SETTINGUP state specifically targets the window where
+netpoll_setup() can take a while (for example, waiting on RTNL).
+During this window, we want to exclude console messages from being
+emitted to this netpoll target.  We also want to exclude any subsequent
+user thread that tries to simultaneously enable or disable the target.
 
-Currently, this driver only supports UDP over ipv4.
+The CLEANING state will be used in a subsequent patch to safely defer
+netpoll_cleanup to scheduled work in process context (to fix the
+deadlock that will occur whenever NETDEV_UNREGISTER is seen).
 
-In order to handle configuration, the target support in netconsole is
-fixed, seperated out, and re-used by netoops.
+When introducing these new transition states, it no longer makes sense
+to 'disable' the target if the interface is going down, only when it is
+being removed completely (or deslaved).  In fact, prior to this change,
+we would leak a reference to the network device if an interface was
+brought down, the target removed, and netconsole unloaded.
 
-I'm posting these patches in an effort to eventually get this sort of
-functionality mainlined.  I have tried to clean this code up internally, but
-there are still several unresolved issues that would need to be worked
-out as of this version.  In particular:
+Signed-off-by: Mike Waychison <mikew@google.com>
+---
+ drivers/net/netconsole.c |   62 +++++++++++++++++++++++++++++-----------------
+ 1 files changed, 39 insertions(+), 23 deletions(-)
 
-   * I am _NOT_ happy with the remaining userland ABIs presented in this
-     patchset.  Specifically the files "net_dump_now",
-     "net_dump_one_shot", "netdump_fw_version", "netdump_board_name" and
-     "netdump_boot_id" should be considered.  These files have been
-     cobbled together by a variety of engineers over the years, and they
-     aren't very pretty.  I present them none-the-less to express the
-     scope of the functionality that we would like to maintain.
-
-   * I am _NOT_ happy with the data format of the transmitted packets.  It is
-     very specific to our server environment and currently:
-
-      * is hard-coded to support both userland provided information (that may
-        not be applicable to others) and
-
-      * only supports i386 and x86_64.
-
-I'd like to resolve each of the above issues in subsequent versions of this
-patchset.  I need help in identifying what the ABI should look like in
-particular.
-
-Patchset summary
-================
-
-Patches 1 through 4 inclusive are fixes to the existing netconsole code,
-adding locking consistency, fixing races and deadlocks.
-
-Patches 5 through 14 inclusive splits the target configuration portion
-of netconsole out into a new component in net/core/netpoll_targets.c.
-
-Patches 15 through 18 inclusive are core changes to support
-functionality in the netoops driver.
-
-Patches 19 through 23 is the netoops driver itself, with different
-functional aspects broken out.
-
- 1 - netconsole: Remove unneeded reference counting
- 2 - netconsole: Introduce locking over the netpoll fields
- 3 - netconsole: Introduce 'enabled' state-machine
- 4 - netconsole: Call netpoll_cleanup() in process context
-
- 5 - netconsole: Wrap the list and locking in a structure
- 6 - netconsole: Push configfs_subsystem into netpoll_targets
- 7 - netconsole: Move netdev_notifier into netpoll_targets
- 8 - netconsole: Split out netpoll_targets init/exit
- 9 - netconsole: Add pointer to netpoll_targets
-10 - netconsole: Rename netconsole_target -> netpoll_target
-11 - netconsole: Abstract away the subsystem name
-12 - netpoll: Introduce netpoll_target configs
-13 - netconsole: Move setting of default ports.
-14 - netpoll: Move target code into netpoll_targets.c
-
-15 - Oops: Pass regs to oops_exit()
-16 - kmsg_dumper: Pass pt_regs along to dumpers.
-17 - kmsg_dumper: Introduce a new 'SOFT' dump reason
-18 - sys-rq: Add option to soft dump
-
-19 - netoops: add core functionality
-20 - netoops: Add x86 specific bits to packet headers
-21 - netoops: Add user programmable fields to the netoops packet.
-22 - netoops: Add one-shot mode
-23 - netoops: Add an interface to trigger various types of crashes.
-
-
-Diffstat
-========
- arch/arm/kernel/traps.c         |    2 
- arch/parisc/kernel/traps.c      |    2 
- arch/powerpc/kernel/traps.c     |    2 
- arch/s390/kernel/traps.c        |    2 
- arch/sh/kernel/traps_32.c       |    2 
- arch/x86/kernel/dumpstack.c     |    2 
- drivers/char/ramoops.c          |    4 
- drivers/char/sysrq.c            |   14 
- drivers/mtd/mtdoops.c           |    4 
- drivers/net/Kconfig             |   26 +
- drivers/net/Makefile            |    1 
- drivers/net/netconsole.c        |  735 +--------------------------------------
- drivers/net/netoops.c           |  401 +++++++++++++++++++++
- include/linux/kernel.h          |    2 
- include/linux/kmsg_dump.h       |    9 
- include/linux/netpoll_targets.h |   76 ++++
- kernel/kexec.c                  |    5 
- kernel/panic.c                  |    6 
- kernel/printk.c                 |    5 
- net/core/Makefile               |    1 
- net/core/netpoll_targets.c      |  746 ++++++++++++++++++++++++++++++++++++++++
- 21 files changed, 1309 insertions(+), 738 deletions(-)
-
-Comparison to netconsole
-========================
-
-This driver differs from netconsole in a couple different ways.
-
-* Network overheads:
-     With the number of machines we have, streaming large amounts of consoles
-     within the data center can really add up.  This gets worse when you take
-     into account how reliant we are on kernel logging like OOM conditions
-     (which are very regular and very verbose).  Events in the data center
-     (such as application growth) tend to be temporally correlated, which
-     causes large bursts of logging when we are OOM.  We aren't so interested
-     in this kernel verbosity from a global collection standpoint though, and
-     haven't been keen on the amount of extra un-regulated UDP traffic it would
-     generate.  We are however interested in kernel oopses which occur far less
-     often.
-
-* Structured data:
-     In terms of the data received, we've really benefited by having structured
-     data in the payload.  We've been collecting kernel oopses since sometime
-     in 2006 and have a _vast_ collection of crashes that we have indexed by
-     just about anything you could ever want (registers, full dmesg text,
-     backtraces, motherboards, CPU types, kernel versions, bios versions, etc).
-     This has allowed us to quickly find 'big bugs' vs 'rare bugs' (similar to
-     kerneloops.org) in a data center environment.
-
-     This structured data also allows for automated labeling of oopses/panics
-     using a variety of criteria.  Netconsole only provides unstructured
-     streaming data, and the bits that we care about are either not present in
-     the dmesg logs or they are, but is extremely difficult to parse them out
-     (especially across kernel versions).  Other bits of information, like
-     firmware version, are also difficult to associate with crashes with
-     post-processing due to gaps in global sampling and the churn that occurs
-     in the lab where versions can change quickly.
-
-* Network reliability:
-     Another area where the two approaches have differed has been in handling
-     of network reliability.  Historically (though less and less now), we found
-     that we had to transmit data several times.  We also used to explicitly
-     space out packets with delays to handle switch chip buffer overruns.  Both
-     of these functions I presume could be added to netconsole without too much
-     of a problem.
-
-* Dealing with excessive logging:
-     This patchset introduces a 'one-shot' mode, which has saved our bacon
-     several times in the past.  It's not totally uncommon for the kernel's
-     crash path to be buggy, in turn causing the kernel to emit Oopses until
-     the cows come home (or rather, until the hardware watchdogs trip).
-     One-shot keeps us from emitting too much garbage on the network when this
-     happens.
-
-     As well, while console filtering of printk()ed messages is common
-     practice, we would like to see *all* kernel messages, including KERN_DEBUG
-     messages when investigating a kernel crash.  Using kmsg_dumper to get at
-     the full ring buffer provides access to this sort of data, whereas
-     netconsole would be subject to system-wide filtering policies (which also
-     affect the serial console).
-
-ChangeLog:
-==========
-- v2
-   - Now uses the same mechanism that netconsole uses for configuring
-     targets, which is also now abstracted out to
-     net/core/netpoll_targets.c.
+diff --git a/drivers/net/netconsole.c b/drivers/net/netconsole.c
+index 6e16888..288a025 100644
+--- a/drivers/net/netconsole.c
++++ b/drivers/net/netconsole.c
+@@ -71,16 +71,24 @@ static LIST_HEAD(target_list);
+ /* This needs to be a spinlock because write_msg() cannot sleep */
+ static DEFINE_SPINLOCK(target_list_lock);
+ 
++#define NETPOLL_DISABLED	0
++#define NETPOLL_SETTINGUP	1
++#define NETPOLL_ENABLED		2
++#define NETPOLL_CLEANING	3
++
+ /**
+  * struct netconsole_target - Represents a configured netconsole target.
+  * @list:	Links this target into the target_list.
+  * @item:	Links us into the configfs subsystem hierarchy.
+- * @enabled:	On / off knob to enable / disable target.
+- *		Visible from userspace (read-write).
+- *		We maintain a strict 1:1 correspondence between this and
+- *		whether the corresponding netpoll is active or inactive.
++ * @np_state:	Enabled / Disabled / SettingUp / Cleaning
++ *		Visible from userspace (read-write) as "enabled".
++ *		We maintain a state machine here of the valid states.  Either a
++ *		target is enabled or disabled, but it may also be in a
++ *		transitional state whereby nobody is allowed to act on the
++ *		target other than whoever owns the transition.
++ *
+  *		Also, other parameters of a target may be modified at
+- *		runtime only when it is disabled (enabled == 0).
++ *		runtime only when it is disabled (np_state == NETPOLL_ENABLED).
+  * @np:		The netpoll structure for this target.
+  *		Contains the other userspace visible parameters:
+  *		dev_name	(read-write)
+@@ -96,7 +104,7 @@ struct netconsole_target {
+ #ifdef	CONFIG_NETCONSOLE_DYNAMIC
+ 	struct config_item	item;
+ #endif
+-	int			enabled;
++	int			np_state;
+ 	struct netpoll		np;
+ };
+ 
+@@ -189,7 +197,7 @@ static struct netconsole_target *alloc_param_target(char *target_config)
+ 	if (err)
+ 		goto fail;
+ 
+-	nt->enabled = 1;
++	nt->np_state = NETPOLL_ENABLED;
+ 
+ 	return nt;
+ 
+@@ -275,7 +283,8 @@ static long strtol10_check_range(const char *cp, long min, long max)
+ 
+ static ssize_t show_enabled(struct netconsole_target *nt, char *buf)
+ {
+-	return snprintf(buf, PAGE_SIZE, "%d\n", nt->enabled);
++	return snprintf(buf, PAGE_SIZE, "%d\n",
++			nt->np_state == NETPOLL_ENABLED);
+ }
+ 
+ static ssize_t show_dev_name(struct netconsole_target *nt, char *buf)
+@@ -337,9 +346,12 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 
+ 	if (enabled) {	/* 1 */
+ 		spin_lock_irqsave(&target_list_lock, flags);
+-		if (nt->enabled)
++		if (nt->np_state != NETPOLL_DISABLED)
+ 			goto busy;
+-		spin_unlock_irqrestore(&target_list_lock, flags);
++		else {
++			nt->np_state = NETPOLL_SETTINGUP;
++			spin_unlock_irqrestore(&target_list_lock, flags);
++		}
+ 
+ 		/*
+ 		 * Skip netpoll_parse_options() -- all the attributes are
+@@ -350,9 +362,9 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 		err = netpoll_setup(&nt->np);
+ 		spin_lock_irqsave(&target_list_lock, flags);
+ 		if (err)
+-			nt->enabled = 0;
++			nt->np_state = NETPOLL_DISABLED;
+ 		else
+-			nt->enabled = 1;
++			nt->np_state = NETPOLL_ENABLED;
+ 		spin_unlock_irqrestore(&target_list_lock, flags);
+ 		if (err)
+ 			return err;
+@@ -360,10 +372,17 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 		printk(KERN_INFO "netconsole: network logging started\n");
+ 	} else {	/* 0 */
+ 		spin_lock_irqsave(&target_list_lock, flags);
+-		nt->enabled = 0;
++		if (nt->np_state == NETPOLL_ENABLED)
++			nt->np_state = NETPOLL_CLEANING;
++		else if (nt->np_state != NETPOLL_DISABLED)
++			goto busy;
+ 		spin_unlock_irqrestore(&target_list_lock, flags);
+ 
+ 		netpoll_cleanup(&nt->np);
++
++		spin_lock_irqsave(&target_list_lock, flags);
++		nt->np_state = NETPOLL_DISABLED;
++		spin_unlock_irqrestore(&target_list_lock, flags);
+ 	}
+ 
+ 	return strnlen(buf, count);
+@@ -486,7 +505,7 @@ static ssize_t store_locked_##_name(struct netconsole_target *nt,	\
+ 	unsigned long flags;						\
+ 	ssize_t ret;							\
+ 	spin_lock_irqsave(&target_list_lock, flags);			\
+-	if (nt->enabled) {						\
++	if (nt->np_state != NETPOLL_DISABLED) {				\
+ 		printk(KERN_ERR "netconsole: target (%s) is enabled, "	\
+ 				"disable to update parameters\n",	\
+ 				config_item_name(&nt->item));		\
+@@ -642,7 +661,7 @@ static void drop_netconsole_target(struct config_group *group,
+ 	 * The target may have never been enabled, or was manually disabled
+ 	 * before being removed so netpoll may have already been cleaned up.
+ 	 */
+-	if (nt->enabled)
++	if (nt->np_state == NETPOLL_ENABLED)
+ 		netpoll_cleanup(&nt->np);
+ 
+ 	config_item_put(&nt->item);
+@@ -680,16 +699,17 @@ static int netconsole_netdev_event(struct notifier_block *this,
+ 	struct net_device *dev = ptr;
+ 
+ 	if (!(event == NETDEV_CHANGENAME || event == NETDEV_UNREGISTER ||
+-	      event == NETDEV_BONDING_DESLAVE || event == NETDEV_GOING_DOWN))
++	      event == NETDEV_BONDING_DESLAVE))
+ 		goto done;
+ 
+ 	spin_lock_irqsave(&target_list_lock, flags);
+ 	list_for_each_entry(nt, &target_list, list) {
+-		if (nt->np.dev == dev) {
++		if (nt->np_state == NETPOLL_ENABLED && nt->np.dev == dev) {
+ 			switch (event) {
+ 			case NETDEV_CHANGENAME:
+ 				strlcpy(nt->np.dev_name, dev->name, IFNAMSIZ);
+ 				break;
++			case NETDEV_BONDING_DESLAVE:
+ 			case NETDEV_UNREGISTER:
+ 				/*
+ 				 * rtnl_lock already held
+@@ -699,11 +719,6 @@ static int netconsole_netdev_event(struct notifier_block *this,
+ 					dev_put(nt->np.dev);
+ 					nt->np.dev = NULL;
+ 				}
+-				/* Fall through */
+-			case NETDEV_GOING_DOWN:
+-			case NETDEV_BONDING_DESLAVE:
+-				nt->enabled = 0;
+-				break;
+ 			}
+ 		}
+ 	}
+@@ -734,7 +749,8 @@ static void write_msg(struct console *con, const char *msg, unsigned int len)
+ 
+ 	spin_lock_irqsave(&target_list_lock, flags);
+ 	list_for_each_entry(nt, &target_list, list) {
+-		if (nt->enabled && netif_running(nt->np.dev)) {
++		if (nt->np_state == NETPOLL_ENABLED
++		    && netif_running(nt->np.dev)) {
+ 			/*
+ 			 * We nest this inside the for-each-target loop above
+ 			 * so that we're able to get as much logging out to
