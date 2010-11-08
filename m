@@ -1,64 +1,230 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 01/23] netconsole: Remove unneeded reference counting
-Date: Mon, 08 Nov 2010 12:31:42 -0800
-Message-ID: <20101108203141.22479.74390.stgit@crlf.mtv.corp.google.com>
+From: Mike Waychison <mikew@google.com>
+Subject: [PATCH v2 02/23] netconsole: Introduce locking over the netpoll fields
+Date: Mon, 08 Nov 2010 12:31:48 -0800
+Message-ID: <20101108203147.22479.8515.stgit@crlf.mtv.corp.google.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20101108203120.22479.19708.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
-Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>
+Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The loops that iterate through the list of targets for emitting console
-messages in the netconsole driver operating with interrupts disabled and
-the list-protecting lock held.  There is no way for the elements of the
-list to disappear, so we don't need to grab references to them.
+The netconsole driver currently doesn't do any locking over its
+configuration fields.  This can cause problems if we were to ever have
+concurrent writing to fields while somebody is enabling the service.
 
-This patch keeps the definitions however of netconsole_target_get() and
-netconsole_target_put() as they are used in a subsequent patch.
+For simplicity, this patch extends targets_list_lock to cover all
+configuration fields within the targets.  Macros are also added here to
+wrap accessors so that we check whether the target has been enabled with
+locking handled.
 
-Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Mike Waychison <mikew@google.com>
 ---
- drivers/net/netconsole.c |    4 ----
- 1 files changed, 0 insertions(+), 4 deletions(-)
+ drivers/net/netconsole.c |  114 ++++++++++++++++++++++++++--------------------
+ 1 files changed, 64 insertions(+), 50 deletions(-)
 
 diff --git a/drivers/net/netconsole.c b/drivers/net/netconsole.c
-index 94255f0..c87a49e 100644
+index c87a49e..6e16888 100644
 --- a/drivers/net/netconsole.c
 +++ b/drivers/net/netconsole.c
-@@ -671,7 +671,6 @@ static int netconsole_netdev_event(struct notifier_block *this,
+@@ -327,6 +327,7 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 			     const char *buf,
+ 			     size_t count)
+ {
++	unsigned long flags;
+ 	int err;
+ 	long enabled;
  
- 	spin_lock_irqsave(&target_list_lock, flags);
- 	list_for_each_entry(nt, &target_list, list) {
--		netconsole_target_get(nt);
- 		if (nt->np.dev == dev) {
- 			switch (event) {
- 			case NETDEV_CHANGENAME:
-@@ -693,7 +692,6 @@ static int netconsole_netdev_event(struct notifier_block *this,
- 				break;
- 			}
- 		}
--		netconsole_target_put(nt);
- 	}
- 	spin_unlock_irqrestore(&target_list_lock, flags);
- 	if (event == NETDEV_UNREGISTER || event == NETDEV_BONDING_DESLAVE)
-@@ -722,7 +720,6 @@ static void write_msg(struct console *con, const char *msg, unsigned int len)
+@@ -335,6 +336,10 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 		return enabled;
  
- 	spin_lock_irqsave(&target_list_lock, flags);
- 	list_for_each_entry(nt, &target_list, list) {
--		netconsole_target_get(nt);
- 		if (nt->enabled && netif_running(nt->np.dev)) {
- 			/*
- 			 * We nest this inside the for-each-target loop above
-@@ -738,7 +735,6 @@ static void write_msg(struct console *con, const char *msg, unsigned int len)
- 				left -= frag;
- 			}
- 		}
--		netconsole_target_put(nt);
+ 	if (enabled) {	/* 1 */
++		spin_lock_irqsave(&target_list_lock, flags);
++		if (nt->enabled)
++			goto busy;
++		spin_unlock_irqrestore(&target_list_lock, flags);
+ 
+ 		/*
+ 		 * Skip netpoll_parse_options() -- all the attributes are
+@@ -343,18 +348,28 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 		netpoll_print_options(&nt->np);
+ 
+ 		err = netpoll_setup(&nt->np);
++		spin_lock_irqsave(&target_list_lock, flags);
++		if (err)
++			nt->enabled = 0;
++		else
++			nt->enabled = 1;
++		spin_unlock_irqrestore(&target_list_lock, flags);
+ 		if (err)
+ 			return err;
+ 
+ 		printk(KERN_INFO "netconsole: network logging started\n");
+-
+ 	} else {	/* 0 */
++		spin_lock_irqsave(&target_list_lock, flags);
++		nt->enabled = 0;
++		spin_unlock_irqrestore(&target_list_lock, flags);
++
+ 		netpoll_cleanup(&nt->np);
  	}
- 	spin_unlock_irqrestore(&target_list_lock, flags);
+ 
+-	nt->enabled = enabled;
+-
+ 	return strnlen(buf, count);
++busy:
++	spin_unlock_irqrestore(&target_list_lock, flags);
++	return -EBUSY;
  }
+ 
+ static ssize_t store_dev_name(struct netconsole_target *nt,
+@@ -363,13 +378,6 @@ static ssize_t store_dev_name(struct netconsole_target *nt,
+ {
+ 	size_t len;
+ 
+-	if (nt->enabled) {
+-		printk(KERN_ERR "netconsole: target (%s) is enabled, "
+-				"disable to update parameters\n",
+-				config_item_name(&nt->item));
+-		return -EINVAL;
+-	}
+-
+ 	strlcpy(nt->np.dev_name, buf, IFNAMSIZ);
+ 
+ 	/* Get rid of possible trailing newline from echo(1) */
+@@ -387,13 +395,6 @@ static ssize_t store_local_port(struct netconsole_target *nt,
+ 	long local_port;
+ #define __U16_MAX	((__u16) ~0U)
+ 
+-	if (nt->enabled) {
+-		printk(KERN_ERR "netconsole: target (%s) is enabled, "
+-				"disable to update parameters\n",
+-				config_item_name(&nt->item));
+-		return -EINVAL;
+-	}
+-
+ 	local_port = strtol10_check_range(buf, 0, __U16_MAX);
+ 	if (local_port < 0)
+ 		return local_port;
+@@ -410,13 +411,6 @@ static ssize_t store_remote_port(struct netconsole_target *nt,
+ 	long remote_port;
+ #define __U16_MAX	((__u16) ~0U)
+ 
+-	if (nt->enabled) {
+-		printk(KERN_ERR "netconsole: target (%s) is enabled, "
+-				"disable to update parameters\n",
+-				config_item_name(&nt->item));
+-		return -EINVAL;
+-	}
+-
+ 	remote_port = strtol10_check_range(buf, 0, __U16_MAX);
+ 	if (remote_port < 0)
+ 		return remote_port;
+@@ -430,13 +424,6 @@ static ssize_t store_local_ip(struct netconsole_target *nt,
+ 			      const char *buf,
+ 			      size_t count)
+ {
+-	if (nt->enabled) {
+-		printk(KERN_ERR "netconsole: target (%s) is enabled, "
+-				"disable to update parameters\n",
+-				config_item_name(&nt->item));
+-		return -EINVAL;
+-	}
+-
+ 	nt->np.local_ip = in_aton(buf);
+ 
+ 	return strnlen(buf, count);
+@@ -446,13 +433,6 @@ static ssize_t store_remote_ip(struct netconsole_target *nt,
+ 			       const char *buf,
+ 			       size_t count)
+ {
+-	if (nt->enabled) {
+-		printk(KERN_ERR "netconsole: target (%s) is enabled, "
+-				"disable to update parameters\n",
+-				config_item_name(&nt->item));
+-		return -EINVAL;
+-	}
+-
+ 	nt->np.remote_ip = in_aton(buf);
+ 
+ 	return strnlen(buf, count);
+@@ -466,13 +446,6 @@ static ssize_t store_remote_mac(struct netconsole_target *nt,
+ 	char *p = (char *) buf;
+ 	int i;
+ 
+-	if (nt->enabled) {
+-		printk(KERN_ERR "netconsole: target (%s) is enabled, "
+-				"disable to update parameters\n",
+-				config_item_name(&nt->item));
+-		return -EINVAL;
+-	}
+-
+ 	for (i = 0; i < ETH_ALEN - 1; i++) {
+ 		remote_mac[i] = simple_strtoul(p, &p, 16);
+ 		if (*p != ':')
+@@ -496,15 +469,56 @@ invalid:
+  * Attribute definitions for netconsole_target.
+  */
+ 
+-#define NETCONSOLE_TARGET_ATTR_RO(_name)				\
++#define __NETCONSOLE_TARGET_ATTR_RO(_name, _prefix_...)			\
+ static struct netconsole_target_attr netconsole_target_##_name =	\
+-	__CONFIGFS_ATTR(_name, S_IRUGO, show_##_name, NULL)
++	__CONFIGFS_ATTR(_name, S_IRUGO, show_##_prefix_##_name, NULL)
+ 
+-#define NETCONSOLE_TARGET_ATTR_RW(_name)				\
++#define __NETCONSOLE_TARGET_ATTR_RW(_name, _prefix_...)			\
+ static struct netconsole_target_attr netconsole_target_##_name =	\
+-	__CONFIGFS_ATTR(_name, S_IRUGO | S_IWUSR, show_##_name, store_##_name)
++	__CONFIGFS_ATTR(_name, S_IRUGO | S_IWUSR,			\
++			show_##_prefix_##_name, store_##_prefix_##_name)
++
++#define NETCONSOLE_WRAP_ATTR_STORE(_name)				\
++static ssize_t store_locked_##_name(struct netconsole_target *nt,	\
++				    const char *buf,			\
++				    size_t count)			\
++{									\
++	unsigned long flags;						\
++	ssize_t ret;							\
++	spin_lock_irqsave(&target_list_lock, flags);			\
++	if (nt->enabled) {						\
++		printk(KERN_ERR "netconsole: target (%s) is enabled, "	\
++				"disable to update parameters\n",	\
++				config_item_name(&nt->item));		\
++		spin_unlock_irqrestore(&target_list_lock, flags);	\
++		return -EBUSY;						\
++	}								\
++	ret = store_##_name(nt, buf, count);				\
++	spin_unlock_irqrestore(&target_list_lock, flags);		\
++	return ret;							\
++}
++
++#define NETCONSOLE_WRAP_ATTR_SHOW(_name)				\
++static ssize_t show_locked_##_name(struct netconsole_target *nt, char *buf) \
++{									\
++	unsigned long flags;						\
++	ssize_t ret;							\
++	spin_lock_irqsave(&target_list_lock, flags);			\
++	ret = show_##_name(nt, buf);					\
++	spin_unlock_irqrestore(&target_list_lock, flags);		\
++	return ret;							\
++}
++
++#define NETCONSOLE_TARGET_ATTR_RW(_name)				\
++		NETCONSOLE_WRAP_ATTR_STORE(_name)			\
++		NETCONSOLE_WRAP_ATTR_SHOW(_name)			\
++		__NETCONSOLE_TARGET_ATTR_RW(_name, locked_)
++
++#define NETCONSOLE_TARGET_ATTR_RO(_name)				\
++		NETCONSOLE_WRAP_ATTR_SHOW(_name)			\
++		__NETCONSOLE_TARGET_ATTR_RO(_name, locked_)
+ 
+-NETCONSOLE_TARGET_ATTR_RW(enabled);
++__NETCONSOLE_TARGET_ATTR_RW(enabled);
+ NETCONSOLE_TARGET_ATTR_RW(dev_name);
+ NETCONSOLE_TARGET_ATTR_RW(local_port);
+ NETCONSOLE_TARGET_ATTR_RW(remote_port);
