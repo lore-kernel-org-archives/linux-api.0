@@ -1,63 +1,90 @@
-From: Mike Waychison <mikew@google.com>
-Subject: [PATCH v2 18/23] sys-rq: Add option to soft dump
-Date: Mon, 08 Nov 2010 12:33:23 -0800
-Message-ID: <20101108203322.22479.47929.stgit@crlf.mtv.corp.google.com>
+From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 20/23] netoops: Add x86 specific bits to packet headers
+Date: Mon, 08 Nov 2010 12:33:35 -0800
+Message-ID: <20101108203334.22479.71661.stgit@crlf.mtv.corp.google.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>
-Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20101108203120.22479.19708.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
+Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-It is very useful to provide some means to force the kernel logs to make it out
-via the kmsg_oops implementations on the console.  Add a new option 'Y' to
-sysrq to allow dumping of logs to kmsg_dumper drivers.
+We need to be able to gather information about the CPUs that caused the crash.
 
-Signed-off-by: Mike Waychison <mikew@google.com>
+This commit only handles x86, but it is desirable to come up with some new
+packet format that can accommodate any architecture.
+
+Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- drivers/char/sysrq.c |   14 +++++++++++++-
- 1 files changed, 13 insertions(+), 1 deletions(-)
+TODO: This should be made more general to other architectures.  As is, we are
+probably okay exporting some value for the 'arch' field.  Different
+architectures though will likely want to gather different data.
+---
+ drivers/net/netoops.c |   27 +++++++++++++++++++++------
+ 1 files changed, 21 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/char/sysrq.c b/drivers/char/sysrq.c
-index eaa5d3e..058d3c8 100644
---- a/drivers/char/sysrq.c
-+++ b/drivers/char/sysrq.c
-@@ -41,6 +41,7 @@
- #include <linux/oom.h>
- #include <linux/slab.h>
- #include <linux/input.h>
-+#include <linux/kmsg_dump.h>
+diff --git a/drivers/net/netoops.c b/drivers/net/netoops.c
+index dc1ee97..f63e12a 100644
+--- a/drivers/net/netoops.c
++++ b/drivers/net/netoops.c
+@@ -69,16 +69,24 @@ struct netoops_msg {
+ 		u32 packet_count;
+ 		u32 packet_no;
+ 		u32 __reserved1;
+-		u8 __reserved2;
+-		u8 __reserved3;
+-		u8 __reserved4;
++		u8 x86_family;
++		u8 x86_model;
++		u8 x86_stepping;
+ 		/*
+ 		 * NOTE: fixed length strings for a packet.  NULL
+ 		 * termination not required.
+ 		 */
+ 		char kernel_version[64];
+-		char __reserved5[64];
+-		char __reserved6[64];
++		char __reserved2[64];
++		char __reserved3[64];
++		/* NOTE: regs is 60 or 168 bytes */
++		struct pt_regs regs; /* arch specific. */
++		/*
++		 * NOTE: The header is potentially ~385 bytes
++		 * already.  That doesn't leave much room for
++		 * expansion unless we reduce the data size
++		 * or truncate above fields.
++		 */
+ 	} __attribute__ ((packed)) header;
+ 	char data[NETOOPS_DATA_BYTES];
+ } __attribute__ ((packed));
+@@ -94,10 +102,17 @@ static void setup_packet_header(int packet_count, int soft_dump)
+ 	msg.header.dump_id = (jiffies/HZ) & 0xffff;
+ 	msg.header.packet_count = packet_count;
+ 	msg.header.header_size = sizeof(msg.header);
++#ifndef CONFIG_UML
++	msg.header.x86_family = current_cpu_data.x86;
++	msg.header.x86_model = current_cpu_data.x86_model;
++	msg.header.x86_stepping = current_cpu_data.x86_mask;
++#endif
+ 	strncpy(msg.header.kernel_version,
+ 		utsname()->release,
+ 		min(sizeof(msg.header.kernel_version),
+ 		    sizeof(utsname()->release)));
++	if (regs != NULL)
++		memcpy(&msg.header.regs, regs, sizeof(msg.header.regs));
+ }
  
- #include <asm/ptrace.h>
- #include <asm/irq_regs.h>
-@@ -395,6 +396,17 @@ static struct sysrq_key_op sysrq_unrt_op = {
- 	.enable_mask	= SYSRQ_ENABLE_RTNICE,
- };
+ static int packet_count_from_length(unsigned long l)
+@@ -182,7 +197,7 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
  
-+static void sysrq_handle_softdump(int key)
-+{
-+	kmsg_dump(KMSG_DUMP_SOFT, NULL);
-+}
-+static struct sysrq_key_op sysrq_softdump_op = {
-+	.handler	= sysrq_handle_softdump,
-+	.help_msg	= "soft-dump(Y)",
-+	.action_msg	= "Trigger a soft dump",
-+	.enable_mask	= SYSRQ_ENABLE_DUMP,
-+};
-+
- /* Key Operations table and lock */
- static DEFINE_SPINLOCK(sysrq_key_table_lock);
+ 	/* setup the non varying parts of the message */
+ 	memset(&msg, 0, sizeof(msg));
+-	setup_packet_header(packet_count_1 + packet_count_2, soft_dump);
++	setup_packet_header(packet_count_1 + packet_count_2, regs, soft_dump);
  
-@@ -451,7 +463,7 @@ static struct sysrq_key_op *sysrq_key_table[36] = {
- 	/* x: May be registered on ppc/powerpc for xmon */
- 	NULL,				/* x */
- 	/* y: May be registered on sparc64 for global register dump */
--	NULL,				/* y */
-+	&sysrq_softdump_op,		/* y */
- 	&sysrq_ftrace_dump_op,		/* z */
- };
- 
+ 	/* Transmission loop */
+ 	for (i = 0; i < NETOOPS_RETRANSMIT_COUNT; i++) {
