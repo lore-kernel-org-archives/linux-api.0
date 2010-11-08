@@ -1,7 +1,7 @@
 From: Mike Waychison <mikew@google.com>
-Subject: [PATCH v2 08/23] netconsole: Split out netpoll_targets init/exit
-Date: Mon, 08 Nov 2010 12:32:23 -0800
-Message-ID: <20101108203222.22479.14559.stgit@crlf.mtv.corp.google.com>
+Subject: [PATCH v2 09/23] netconsole: Add pointer to netpoll_targets
+Date: Mon, 08 Nov 2010 12:32:29 -0800
+Message-ID: <20101108203228.22479.53951.stgit@crlf.mtv.corp.google.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,154 +13,249 @@ To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, M
 Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-As part of the factoring to move target handling out of netconsole,
-abstract the construction and destruction of struct netpoll_targets
-into their own functions.
+For each netconsole_target, we'd like to get back at the parenting
+netpoll_targets structure so that we can access the locking and list
+fields.  Add a pointer that points to the netpoll_targets structure.  We
+don't have to maintain reference counting because a netpoll_targets will
+always out-live their children netconsole_target structures.
 
 Signed-off-by: Mike Waychison <mikew@google.com>
 ---
- drivers/net/netconsole.c |   69 ++++++++++++++++++++++++++++------------------
- 1 files changed, 42 insertions(+), 27 deletions(-)
+ drivers/net/netconsole.c |   71 +++++++++++++++++++++++++++++-----------------
+ 1 files changed, 45 insertions(+), 26 deletions(-)
 
 diff --git a/drivers/net/netconsole.c b/drivers/net/netconsole.c
-index 8ea4c5c..54d124c 100644
+index 54d124c..ec8bda2 100644
 --- a/drivers/net/netconsole.c
 +++ b/drivers/net/netconsole.c
-@@ -660,13 +660,14 @@ static struct config_item_type netconsole_subsys_type = {
- 	.ct_owner	= THIS_MODULE,
- };
- 
--static int __init dynamic_netpoll_targets_init(struct netpoll_targets *nts)
-+static int __init dynamic_netpoll_targets_init(const char *subsys_name,
-+					       struct netpoll_targets *nts)
+@@ -107,6 +107,7 @@ static DEFINE_NETPOLL_TARGETS(targets);
+  *		remote_mac	(read-write)
+  */
+ struct netconsole_target {
++	struct netpoll_targets *nts;
+ 	struct list_head	list;
+ #ifdef	CONFIG_NETCONSOLE_DYNAMIC
+ 	struct config_item	item;
+@@ -122,21 +123,25 @@ static void netconsole_target_put(struct netconsole_target *nt);
+ static void deferred_netpoll_cleanup(struct work_struct *work)
  {
- 	struct configfs_subsystem *subsys = &nts->configfs_subsys;
+ 	struct netconsole_target *nt;
++	struct netpoll_targets *nts;
+ 	unsigned long flags;
  
- 	config_group_init(&subsys->su_group);
- 	mutex_init(&subsys->su_mutex);
--	strncpy((char *)&subsys->su_group.cg_item.ci_namebuf, "netconsole",
-+	strncpy((char *)&subsys->su_group.cg_item.ci_namebuf, subsys_name,
- 		CONFIGFS_ITEM_NAME_LEN);
- 	subsys->su_group.cg_item.ci_type = &netconsole_subsys_type;
- 	return configfs_register_subsystem(subsys);
-@@ -814,13 +815,15 @@ static struct console netconsole = {
- 	.write	= write_msg,
- };
+ 	nt = container_of(work, struct netconsole_target, cleanup_work);
++	nts = nt->nts;
++
+ 	netpoll_cleanup(&nt->np);
  
--static int __init init_netconsole(void)
-+static int __init register_netpoll_targets(const char *subsys_name,
-+					   struct netpoll_targets *nts,
-+					   char *static_targets)
+-	spin_lock_irqsave(&targets.lock, flags);
++	spin_lock_irqsave(&nts->lock, flags);
+ 	BUG_ON(nt->np_state != NETPOLL_CLEANING);
+ 	nt->np_state = NETPOLL_DISABLED;
+-	spin_unlock_irqrestore(&targets.lock, flags);
++	spin_unlock_irqrestore(&nts->lock, flags);
+ 
+ 	netconsole_target_put(nt);
+ }
+ 
+ /* Allocate new target (from boot/module param) and setup netpoll for it */
+-static struct netconsole_target *alloc_param_target(char *target_config)
++static struct netconsole_target *alloc_param_target(struct netpoll_targets *nts,
++						    char *target_config)
  {
+ 	int err = -ENOMEM;
+ 	struct netconsole_target *nt;
+@@ -151,6 +156,7 @@ static struct netconsole_target *alloc_param_target(char *target_config)
+ 		goto fail;
+ 	}
+ 
++	nt->nts = nts;
+ 	nt->np.name = "netconsole";
+ 	strlcpy(nt->np.dev_name, "eth0", IFNAMSIZ);
+ 	nt->np.local_port = 6665;
+@@ -308,6 +314,7 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 			     const char *buf,
+ 			     size_t count)
+ {
++	struct netpoll_targets *nts = nt->nts;
+ 	unsigned long flags;
  	int err;
- 	struct netconsole_target *nt, *tmp;
+ 	long enabled;
+@@ -317,7 +324,7 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 		return enabled;
+ 
+ 	if (enabled) {	/* 1 */
+-		spin_lock_irqsave(&targets.lock, flags);
++		spin_lock_irqsave(&nts->lock, flags);
+ 		if (nt->np_state != NETPOLL_DISABLED)
+ 			goto busy;
+ 		else {
+@@ -329,7 +336,7 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 			 * because there is a reference implicitly held by the
+ 			 * caller of the store operation.
+ 			 */
+-			spin_unlock_irqrestore(&targets.lock, flags);
++			spin_unlock_irqrestore(&nts->lock, flags);
+ 		}
+ 
+ 		/*
+@@ -339,34 +346,34 @@ static ssize_t store_enabled(struct netconsole_target *nt,
+ 		netpoll_print_options(&nt->np);
+ 
+ 		err = netpoll_setup(&nt->np);
+-		spin_lock_irqsave(&targets.lock, flags);
++		spin_lock_irqsave(&nts->lock, flags);
+ 		if (err)
+ 			nt->np_state = NETPOLL_DISABLED;
+ 		else
+ 			nt->np_state = NETPOLL_ENABLED;
+-		spin_unlock_irqrestore(&targets.lock, flags);
++		spin_unlock_irqrestore(&nts->lock, flags);
+ 		if (err)
+ 			return err;
+ 
+ 		printk(KERN_INFO "netconsole: network logging started\n");
+ 	} else {	/* 0 */
+-		spin_lock_irqsave(&targets.lock, flags);
++		spin_lock_irqsave(&nts->lock, flags);
+ 		if (nt->np_state == NETPOLL_ENABLED)
+ 			nt->np_state = NETPOLL_CLEANING;
+ 		else if (nt->np_state != NETPOLL_DISABLED)
+ 			goto busy;
+-		spin_unlock_irqrestore(&targets.lock, flags);
++		spin_unlock_irqrestore(&nts->lock, flags);
+ 
+ 		netpoll_cleanup(&nt->np);
+ 
+-		spin_lock_irqsave(&targets.lock, flags);
++		spin_lock_irqsave(&nts->lock, flags);
+ 		nt->np_state = NETPOLL_DISABLED;
+-		spin_unlock_irqrestore(&targets.lock, flags);
++		spin_unlock_irqrestore(&nts->lock, flags);
+ 	}
+ 
+ 	return strnlen(buf, count);
+ busy:
+-	spin_unlock_irqrestore(&targets.lock, flags);
++	spin_unlock_irqrestore(&nts->lock, flags);
+ 	return -EBUSY;
+ }
+ 
+@@ -481,29 +488,31 @@ static ssize_t store_locked_##_name(struct netconsole_target *nt,	\
+ 				    const char *buf,			\
+ 				    size_t count)			\
+ {									\
++	struct netpoll_targets *nts = nt->nts;				\
+ 	unsigned long flags;						\
+ 	ssize_t ret;							\
+-	spin_lock_irqsave(&targets.lock, flags);			\
++	spin_lock_irqsave(&nts->lock, flags);				\
+ 	if (nt->np_state != NETPOLL_DISABLED) {				\
+ 		printk(KERN_ERR "netconsole: target (%s) is enabled, "	\
+ 				"disable to update parameters\n",	\
+ 				config_item_name(&nt->item));		\
+-		spin_unlock_irqrestore(&targets.lock, flags);		\
++		spin_unlock_irqrestore(&nts->lock, flags);		\
+ 		return -EBUSY;						\
+ 	}								\
+ 	ret = store_##_name(nt, buf, count);				\
+-	spin_unlock_irqrestore(&targets.lock, flags);			\
++	spin_unlock_irqrestore(&nts->lock, flags);			\
+ 	return ret;							\
+ }
+ 
+ #define NETCONSOLE_WRAP_ATTR_SHOW(_name)				\
+ static ssize_t show_locked_##_name(struct netconsole_target *nt, char *buf) \
+ {									\
++	struct netpoll_targets *nts = nt->nts;				\
+ 	unsigned long flags;						\
+ 	ssize_t ret;							\
+-	spin_lock_irqsave(&targets.lock, flags);			\
++	spin_lock_irqsave(&nts->lock, flags);				\
+ 	ret = show_##_name(nt, buf);					\
+-	spin_unlock_irqrestore(&targets.lock, flags);			\
++	spin_unlock_irqrestore(&nts->lock, flags);			\
+ 	return ret;							\
+ }
+ 
+@@ -589,6 +598,13 @@ static struct config_item_type netconsole_target_type = {
+ 	.ct_owner		= THIS_MODULE,
+ };
+ 
++static struct netpoll_targets *group_to_targets(struct config_group *group)
++{
++	struct configfs_subsystem *subsys;
++	subsys = container_of(group, struct configfs_subsystem, su_group);
++	return container_of(subsys, struct netpoll_targets, configfs_subsys);
++}
++
+ /*
+  * Group operations and type for netconsole_subsys.
+  */
+@@ -596,8 +612,9 @@ static struct config_item_type netconsole_target_type = {
+ static struct config_item *make_netconsole_target(struct config_group *group,
+ 						  const char *name)
+ {
 -	unsigned long flags;
- 	char *target_config;
--	char *input = config;
-+	char *input = static_targets;
++	struct netpoll_targets *nts = group_to_targets(group);
+ 	struct netconsole_target *nt;
 +	unsigned long flags;
+ 
+ 	/*
+ 	 * Allocate and initialize with defaults.
+@@ -609,6 +626,7 @@ static struct config_item *make_netconsole_target(struct config_group *group,
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+ 
++	nt->nts = nts;
+ 	nt->np.name = "netconsole";
+ 	strlcpy(nt->np.dev_name, "eth0", IFNAMSIZ);
+ 	nt->np.local_port = 6665;
+@@ -620,9 +638,9 @@ static struct config_item *make_netconsole_target(struct config_group *group,
+ 	config_item_init_type_name(&nt->item, name, &netconsole_target_type);
+ 
+ 	/* Adding, but it is disabled */
+-	spin_lock_irqsave(&targets.lock, flags);
+-	list_add(&nt->list, &targets.list);
+-	spin_unlock_irqrestore(&targets.lock, flags);
++	spin_lock_irqsave(&nts->lock, flags);
++	list_add(&nt->list, &nts->list);
++	spin_unlock_irqrestore(&nts->lock, flags);
+ 
+ 	return &nt->item;
+ }
+@@ -630,12 +648,13 @@ static struct config_item *make_netconsole_target(struct config_group *group,
+ static void drop_netconsole_target(struct config_group *group,
+ 				   struct config_item *item)
+ {
+-	unsigned long flags;
++	struct netpoll_targets *nts = group_to_targets(group);
+ 	struct netconsole_target *nt = to_target(item);
++	unsigned long flags;
+ 
+-	spin_lock_irqsave(&targets.lock, flags);
++	spin_lock_irqsave(&nts->lock, flags);
+ 	list_del(&nt->list);
+-	spin_unlock_irqrestore(&targets.lock, flags);
++	spin_unlock_irqrestore(&nts->lock, flags);
+ 
+ 	/*
+ 	 * The target may have never been enabled, or was manually disabled
+@@ -723,7 +742,7 @@ static void netconsole_target_put(struct netconsole_target *nt)
+ 
+ /*
+  * Call netpoll_cleanup on this target asynchronously.
+- * targets.lock is required.
++ * nts->lock is required.
+  */
+ static void defer_netpoll_cleanup(struct netconsole_target *nt)
+ {
+@@ -827,7 +846,7 @@ static int __init register_netpoll_targets(const char *subsys_name,
  
  	if (strnlen(input, MAX_PARAM_LENGTH)) {
  		while ((target_config = strsep(&input, ";"))) {
-@@ -829,41 +832,33 @@ static int __init init_netconsole(void)
+-			nt = alloc_param_target(target_config);
++			nt = alloc_param_target(nts, target_config);
+ 			if (IS_ERR(nt)) {
  				err = PTR_ERR(nt);
  				goto fail;
- 			}
--			/* Dump existing printks when we register */
--			netconsole.flags |= CON_PRINTBUFFER;
- 
--			spin_lock_irqsave(&targets.lock, flags);
--			list_add(&nt->list, &targets.list);
--			spin_unlock_irqrestore(&targets.lock, flags);
-+			spin_lock_irqsave(&nts->lock, flags);
-+			list_add(&nt->list, &nts->list);
-+			spin_unlock_irqrestore(&nts->lock, flags);
- 		}
- 	}
- 
--	targets.netdev_notifier.notifier_call = netconsole_netdev_event;
--	err = register_netdevice_notifier(&targets.netdev_notifier);
-+	nts->netdev_notifier.notifier_call = netconsole_netdev_event;
-+	err = register_netdevice_notifier(&nts->netdev_notifier);
- 	if (err)
- 		goto fail;
- 
--	err = dynamic_netpoll_targets_init(&targets);
-+	err = dynamic_netpoll_targets_init(subsys_name, nts);
- 	if (err)
- 		goto undonotifier;
- 
--	register_console(&netconsole);
--	printk(KERN_INFO "netconsole: network logging started\n");
--
--	return err;
-+	return 0;
- 
- undonotifier:
--	unregister_netdevice_notifier(&targets.netdev_notifier);
--
-+	unregister_netdevice_notifier(&nts->netdev_notifier);
- fail:
--	printk(KERN_ERR "netconsole: cleaning up\n");
--
- 	/*
- 	 * Remove all targets and destroy them (only targets created
- 	 * from the boot/module option exist here). Skipping the list
- 	 * lock is safe here, and netpoll_cleanup() will sleep.
- 	 */
--	list_for_each_entry_safe(nt, tmp, &targets.list, list) {
-+	list_for_each_entry_safe(nt, tmp, &nts->list, list) {
- 		list_del(&nt->list);
- 		free_param_target(nt);
- 	}
-@@ -871,13 +866,12 @@ fail:
- 	return err;
- }
- 
--static void __exit cleanup_netconsole(void)
-+static void __exit unregister_netpoll_targets(struct netpoll_targets *nts)
- {
- 	struct netconsole_target *nt, *tmp;
- 
--	unregister_console(&netconsole);
--	dynamic_netpoll_targets_exit(&targets);
--	unregister_netdevice_notifier(&targets.netdev_notifier);
-+	dynamic_netpoll_targets_exit(nts);
-+	unregister_netdevice_notifier(&nts->netdev_notifier);
- 
- 	/*
- 	 * Targets created via configfs pin references on our module
-@@ -887,11 +881,32 @@ static void __exit cleanup_netconsole(void)
- 	 * destroy them. Skipping the list lock is safe here, and
- 	 * netpoll_cleanup() will sleep.
- 	 */
--	list_for_each_entry_safe(nt, tmp, &targets.list, list) {
-+	list_for_each_entry_safe(nt, tmp, &nts->list, list) {
- 		list_del(&nt->list);
- 		free_param_target(nt);
- 	}
- }
- 
-+static int __init init_netconsole(void)
-+{
-+	int err;
-+	err = register_netpoll_targets("netconsole", &targets, config);
-+	if (err)
-+		return err;
-+	/* Dump existing printks if we registered any targets */
-+	if (!list_empty(&targets.list))
-+		netconsole.flags |= CON_PRINTBUFFER;
-+	register_console(&netconsole);
-+	printk(KERN_INFO "netconsole: network logging started\n");
-+
-+	return 0;
-+}
-+
-+static void __exit cleanup_netconsole(void)
-+{
-+	unregister_console(&netconsole);
-+	unregister_netpoll_targets(&targets);
-+}
-+
- module_init(init_netconsole);
- module_exit(cleanup_netconsole);
