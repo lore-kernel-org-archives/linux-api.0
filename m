@@ -1,90 +1,159 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 20/23] netoops: Add x86 specific bits to packet headers
-Date: Mon, 08 Nov 2010 12:33:35 -0800
-Message-ID: <20101108203334.22479.71661.stgit@crlf.mtv.corp.google.com>
+From: Mike Waychison <mikew@google.com>
+Subject: [PATCH v2 16/23] kmsg_dumper: Pass pt_regs along to dumpers.
+Date: Mon, 08 Nov 2010 12:33:11 -0800
+Message-ID: <20101108203310.22479.2496.stgit@crlf.mtv.corp.google.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20101108203120.22479.19708.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
-Cc: adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>
+Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-We need to be able to gather information about the CPUs that caused the crash.
+A subsequent commit adding netoops functionality would like access to the
+pt_regs to have them recorded in the dump.  Pass the register values along if
+available.
 
-This commit only handles x86, but it is desirable to come up with some new
-packet format that can accommodate any architecture.
-
-Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Mike Waychison <mikew@google.com>
 ---
-TODO: This should be made more general to other architectures.  As is, we are
-probably okay exporting some value for the 'arch' field.  Different
-architectures though will likely want to gather different data.
----
- drivers/net/netoops.c |   27 +++++++++++++++++++++------
- 1 files changed, 21 insertions(+), 6 deletions(-)
+ drivers/char/ramoops.c    |    4 +++-
+ drivers/mtd/mtdoops.c     |    4 +++-
+ include/linux/kmsg_dump.h |    8 ++++++--
+ kernel/kexec.c            |    5 +++--
+ kernel/panic.c            |    4 ++--
+ kernel/printk.c           |    4 ++--
+ 6 files changed, 19 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/net/netoops.c b/drivers/net/netoops.c
-index dc1ee97..f63e12a 100644
---- a/drivers/net/netoops.c
-+++ b/drivers/net/netoops.c
-@@ -69,16 +69,24 @@ struct netoops_msg {
- 		u32 packet_count;
- 		u32 packet_no;
- 		u32 __reserved1;
--		u8 __reserved2;
--		u8 __reserved3;
--		u8 __reserved4;
-+		u8 x86_family;
-+		u8 x86_model;
-+		u8 x86_stepping;
- 		/*
- 		 * NOTE: fixed length strings for a packet.  NULL
- 		 * termination not required.
- 		 */
- 		char kernel_version[64];
--		char __reserved5[64];
--		char __reserved6[64];
-+		char __reserved2[64];
-+		char __reserved3[64];
-+		/* NOTE: regs is 60 or 168 bytes */
-+		struct pt_regs regs; /* arch specific. */
-+		/*
-+		 * NOTE: The header is potentially ~385 bytes
-+		 * already.  That doesn't leave much room for
-+		 * expansion unless we reduce the data size
-+		 * or truncate above fields.
-+		 */
- 	} __attribute__ ((packed)) header;
- 	char data[NETOOPS_DATA_BYTES];
- } __attribute__ ((packed));
-@@ -94,10 +102,17 @@ static void setup_packet_header(int packet_count, int soft_dump)
- 	msg.header.dump_id = (jiffies/HZ) & 0xffff;
- 	msg.header.packet_count = packet_count;
- 	msg.header.header_size = sizeof(msg.header);
-+#ifndef CONFIG_UML
-+	msg.header.x86_family = current_cpu_data.x86;
-+	msg.header.x86_model = current_cpu_data.x86_model;
-+	msg.header.x86_stepping = current_cpu_data.x86_mask;
-+#endif
- 	strncpy(msg.header.kernel_version,
- 		utsname()->release,
- 		min(sizeof(msg.header.kernel_version),
- 		    sizeof(utsname()->release)));
-+	if (regs != NULL)
-+		memcpy(&msg.header.regs, regs, sizeof(msg.header.regs));
+diff --git a/drivers/char/ramoops.c b/drivers/char/ramoops.c
+index 73dcb0e..9d79492 100644
+--- a/drivers/char/ramoops.c
++++ b/drivers/char/ramoops.c
+@@ -58,7 +58,9 @@ static struct ramoops_context {
+ } oops_cxt;
+ 
+ static void ramoops_do_dump(struct kmsg_dumper *dumper,
+-		enum kmsg_dump_reason reason, const char *s1, unsigned long l1,
++		enum kmsg_dump_reason reason,
++		struct pt_regs *pt_regs,
++		const char *s1, unsigned long l1,
+ 		const char *s2, unsigned long l2)
+ {
+ 	struct ramoops_context *cxt = container_of(dumper,
+diff --git a/drivers/mtd/mtdoops.c b/drivers/mtd/mtdoops.c
+index 1ee72f3..cf07cf5 100644
+--- a/drivers/mtd/mtdoops.c
++++ b/drivers/mtd/mtdoops.c
+@@ -298,7 +298,9 @@ static void find_next_position(struct mtdoops_context *cxt)
  }
  
- static int packet_count_from_length(unsigned long l)
-@@ -182,7 +197,7 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
+ static void mtdoops_do_dump(struct kmsg_dumper *dumper,
+-		enum kmsg_dump_reason reason, const char *s1, unsigned long l1,
++		enum kmsg_dump_reason reason,
++		struct pt_regs *pt_regs,
++		const char *s1, unsigned long l1,
+ 		const char *s2, unsigned long l2)
+ {
+ 	struct mtdoops_context *cxt = container_of(dumper,
+diff --git a/include/linux/kmsg_dump.h b/include/linux/kmsg_dump.h
+index 24b4414..a229acc 100644
+--- a/include/linux/kmsg_dump.h
++++ b/include/linux/kmsg_dump.h
+@@ -14,6 +14,8 @@
  
- 	/* setup the non varying parts of the message */
- 	memset(&msg, 0, sizeof(msg));
--	setup_packet_header(packet_count_1 + packet_count_2, soft_dump);
-+	setup_packet_header(packet_count_1 + packet_count_2, regs, soft_dump);
+ #include <linux/list.h>
  
- 	/* Transmission loop */
- 	for (i = 0; i < NETOOPS_RETRANSMIT_COUNT; i++) {
++struct pt_regs;
++
+ enum kmsg_dump_reason {
+ 	KMSG_DUMP_OOPS,
+ 	KMSG_DUMP_PANIC,
+@@ -30,6 +32,7 @@ enum kmsg_dump_reason {
+  */
+ struct kmsg_dumper {
+ 	void (*dump)(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
++			struct pt_regs *pt_regs,
+ 			const char *s1, unsigned long l1,
+ 			const char *s2, unsigned long l2);
+ 	struct list_head list;
+@@ -37,13 +40,14 @@ struct kmsg_dumper {
+ };
+ 
+ #ifdef CONFIG_PRINTK
+-void kmsg_dump(enum kmsg_dump_reason reason);
++void kmsg_dump(enum kmsg_dump_reason reason, struct pt_regs *pt_regs);
+ 
+ int kmsg_dump_register(struct kmsg_dumper *dumper);
+ 
+ int kmsg_dump_unregister(struct kmsg_dumper *dumper);
+ #else
+-static inline void kmsg_dump(enum kmsg_dump_reason reason)
++static inline void kmsg_dump(enum kmsg_dump_reason reason,
++			     struct pt_regs *pt_regs)
+ {
+ }
+ 
+diff --git a/kernel/kexec.c b/kernel/kexec.c
+index b55045b..840af0c 100644
+--- a/kernel/kexec.c
++++ b/kernel/kexec.c
+@@ -1078,10 +1078,11 @@ void crash_kexec(struct pt_regs *regs)
+ 		if (kexec_crash_image) {
+ 			struct pt_regs fixed_regs;
+ 
+-			kmsg_dump(KMSG_DUMP_KEXEC);
+-
+ 			crash_setup_regs(&fixed_regs, regs);
+ 			crash_save_vmcoreinfo();
++
++			kmsg_dump(KMSG_DUMP_KEXEC, &fixed_regs);
++
+ 			machine_crash_shutdown(&fixed_regs);
+ 			machine_kexec(kexec_crash_image);
+ 		}
+diff --git a/kernel/panic.c b/kernel/panic.c
+index c3f39cd..b3a4440 100644
+--- a/kernel/panic.c
++++ b/kernel/panic.c
+@@ -87,7 +87,7 @@ NORET_TYPE void panic(const char * fmt, ...)
+ 	 */
+ 	crash_kexec(NULL);
+ 
+-	kmsg_dump(KMSG_DUMP_PANIC);
++	kmsg_dump(KMSG_DUMP_PANIC, NULL);
+ 
+ 	/*
+ 	 * Note smp_send_stop is the usual smp shutdown function, which
+@@ -353,7 +353,7 @@ void oops_exit(struct pt_regs *regs)
+ {
+ 	do_oops_enter_exit();
+ 	print_oops_end_marker();
+-	kmsg_dump(KMSG_DUMP_OOPS);
++	kmsg_dump(KMSG_DUMP_OOPS, regs);
+ }
+ 
+ #ifdef WANT_WARN_ON_SLOWPATH
+diff --git a/kernel/printk.c b/kernel/printk.c
+index b2ebaee..159b4d6 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -1533,7 +1533,7 @@ static const char *kmsg_to_str(enum kmsg_dump_reason reason)
+  * Iterate through each of the dump devices and call the oops/panic
+  * callbacks with the log buffer.
+  */
+-void kmsg_dump(enum kmsg_dump_reason reason)
++void kmsg_dump(enum kmsg_dump_reason reason, struct pt_regs *pt_regs)
+ {
+ 	unsigned long end;
+ 	unsigned chars;
+@@ -1570,7 +1570,7 @@ void kmsg_dump(enum kmsg_dump_reason reason)
+ 		return;
+ 	}
+ 	list_for_each_entry(dumper, &dump_list, list)
+-		dumper->dump(dumper, reason, s1, l1, s2, l2);
++		dumper->dump(dumper, reason, pt_regs, s1, l1, s2, l2);
+ 	spin_unlock_irqrestore(&dump_list_lock, flags);
+ }
+ #endif
