@@ -1,203 +1,97 @@
-From: Mike Waychison <mikew@google.com>
-Subject: [PATCH v2 06/23] netconsole: Push configfs_subsystem into
-	netpoll_targets
-Date: Mon, 08 Nov 2010 12:32:12 -0800
-Message-ID: <20101108203211.22479.12196.stgit@crlf.mtv.corp.google.com>
+From: Matt Mackall <mpm@selenic.com>
+Subject: Re: [PATCH v2 00/23] netoops support
+Date: Mon, 08 Nov 2010 14:55:27 -0600
+Message-ID: <1289249727.18612.228.camel@calx>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>
-Cc: adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
+To: Mike Waychison <mikew@google.com>
+Cc: simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?ISO-8859-1?Q?Am=E9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch is a step in the preparation of pushing the target handling
-code out of netconsole and into netpoll proper where it can be used by
-other clients.
+On Mon, 2010-11-08 at 12:31 -0800, Mike Waychison wrote:
+> This patchset applies to v2.6.37-rc1.
+> 
+> The following series implements support for 'netoops', a simple driver that
+> will deliver kmsg logs together with machine specifics over the network.
+> 
+> This driver is based on code used in Google's production server environment.
+> We internally call the driver 'netdump', but are planning on changing the name
+> to 'netoops' to follow the convention set by both the mtdoops and ramoops
+> drivers.  We use these facilities to gather crash data from our entire fleet of
+> machines in a light-weight manner.  We do things this way because it
+> simply isn't feasible to gather full crash data off of every machine in
+> the wild that decides it is time to die.
+> 
+> Currently, this driver only supports UDP over ipv4.
+> 
+> In order to handle configuration, the target support in netconsole is
+> fixed, seperated out, and re-used by netoops.
+> 
+> I'm posting these patches in an effort to eventually get this sort of
+> functionality mainlined.  I have tried to clean this code up internally, but
+> there are still several unresolved issues that would need to be worked
+> out as of this version.  In particular:
+> 
+>    * I am _NOT_ happy with the remaining userland ABIs presented in this
+>      patchset.  Specifically the files "net_dump_now",
+>      "net_dump_one_shot", "netdump_fw_version", "netdump_board_name" and
+>      "netdump_boot_id" should be considered.  These files have been
+>      cobbled together by a variety of engineers over the years, and they
+>      aren't very pretty.  I present them none-the-less to express the
+>      scope of the functionality that we would like to maintain.
+> 
+>    * I am _NOT_ happy with the data format of the transmitted packets.  It is
+>      very specific to our server environment and currently:
+> 
+>       * is hard-coded to support both userland provided information (that may
+>         not be applicable to others) and
+> 
+>       * only supports i386 and x86_64.
+> 
+> I'd like to resolve each of the above issues in subsequent versions of this
+> patchset.  I need help in identifying what the ABI should look like in
+> particular.
+> 
+> Patchset summary
+> ================
+> 
+> Patches 1 through 4 inclusive are fixes to the existing netconsole code,
+> adding locking consistency, fixing races and deadlocks.
+> 
+> Patches 5 through 14 inclusive splits the target configuration portion
+> of netconsole out into a new component in net/core/netpoll_targets.c.
+> 
+> Patches 15 through 18 inclusive are core changes to support
+> functionality in the netoops driver.
+> 
+> Patches 19 through 23 is the netoops driver itself, with different
+> functional aspects broken out.
+> 
+>  1 - netconsole: Remove unneeded reference counting
+>  2 - netconsole: Introduce locking over the netpoll fields
+>  3 - netconsole: Introduce 'enabled' state-machine
+>  4 - netconsole: Call netpoll_cleanup() in process context
 
-Here, we move the configfs_subsystem bits out of global scope and
-package it in the netpoll_targets structure that will maintain a set of
-targets.  There is a bit of code that is rearranged due to needing to
-provide netconsole_subsys_type in scope much earlier in the file.  This
-has the added benefit of folding all of the dynamic target handling code
-under a single #ifdef CONFIG_NETCONSOLE_DYNAMIC block.
+>  5 - netconsole: Wrap the list and locking in a structure
+>  6 - netconsole: Push configfs_subsystem into netpoll_targets
+>  7 - netconsole: Move netdev_notifier into netpoll_targets
+>  8 - netconsole: Split out netpoll_targets init/exit
+>  9 - netconsole: Add pointer to netpoll_targets
+> 10 - netconsole: Rename netconsole_target -> netpoll_target
+> 11 - netconsole: Abstract away the subsystem name
+> 12 - netpoll: Introduce netpoll_target configs
+> 13 - netconsole: Move setting of default ports.
+> 14 - netpoll: Move target code into netpoll_targets.c
 
-Signed-off-by: Mike Waychison <mikew@google.com>
----
- drivers/net/netconsole.c |  132 ++++++++++++++++++++++------------------------
- 1 files changed, 64 insertions(+), 68 deletions(-)
+This much of your set looks very nice to me, but I'd like to get some
+more eyeballs on the first four. Dave?
 
-diff --git a/drivers/net/netconsole.c b/drivers/net/netconsole.c
-index f28681b..55f72ba 100644
---- a/drivers/net/netconsole.c
-+++ b/drivers/net/netconsole.c
-@@ -68,6 +68,9 @@ __setup("netconsole=", option_setup);
- struct netpoll_targets {
- 	struct list_head list;
- 	spinlock_t lock;
-+#ifdef	CONFIG_NETCONSOLE_DYNAMIC
-+	struct configfs_subsystem configfs_subsys;
-+#endif
- };
- #define DEFINE_NETPOLL_TARGETS(x) struct netpoll_targets x = \
- 	{ .list = LIST_HEAD_INIT(x.list), \
-@@ -112,63 +115,8 @@ struct netconsole_target {
- 	struct work_struct	cleanup_work;
- };
- 
--#ifdef	CONFIG_NETCONSOLE_DYNAMIC
--
--static struct configfs_subsystem netconsole_subsys;
--
--static int __init dynamic_netconsole_init(void)
--{
--	config_group_init(&netconsole_subsys.su_group);
--	mutex_init(&netconsole_subsys.su_mutex);
--	return configfs_register_subsystem(&netconsole_subsys);
--}
--
--static void __exit dynamic_netconsole_exit(void)
--{
--	configfs_unregister_subsystem(&netconsole_subsys);
--}
--
--/*
-- * Targets that were created by parsing the boot/module option string
-- * do not exist in the configfs hierarchy (and have NULL names) and will
-- * never go away, so make these a no-op for them.
-- */
--static void netconsole_target_get(struct netconsole_target *nt)
--{
--	if (config_item_name(&nt->item))
--		config_item_get(&nt->item);
--}
--
--static void netconsole_target_put(struct netconsole_target *nt)
--{
--	if (config_item_name(&nt->item))
--		config_item_put(&nt->item);
--}
--
--#else	/* !CONFIG_NETCONSOLE_DYNAMIC */
--
--static int __init dynamic_netconsole_init(void)
--{
--	return 0;
--}
--
--static void __exit dynamic_netconsole_exit(void)
--{
--}
--
--/*
-- * No danger of targets going away from under us when dynamic
-- * reconfigurability is off.
-- */
--static void netconsole_target_get(struct netconsole_target *nt)
--{
--}
--
--static void netconsole_target_put(struct netconsole_target *nt)
--{
--}
--
--#endif	/* CONFIG_NETCONSOLE_DYNAMIC */
-+static void netconsole_target_get(struct netconsole_target *nt);
-+static void netconsole_target_put(struct netconsole_target *nt);
- 
- static void deferred_netpoll_cleanup(struct work_struct *work)
- {
-@@ -711,15 +659,63 @@ static struct config_item_type netconsole_subsys_type = {
- 	.ct_owner	= THIS_MODULE,
- };
- 
--/* The netconsole configfs subsystem */
--static struct configfs_subsystem netconsole_subsys = {
--	.su_group	= {
--		.cg_item	= {
--			.ci_namebuf	= "netconsole",
--			.ci_type	= &netconsole_subsys_type,
--		},
--	},
--};
-+static int __init dynamic_netpoll_targets_init(struct netpoll_targets *nts)
-+{
-+	struct configfs_subsystem *subsys = &nts->configfs_subsys;
-+
-+	config_group_init(&subsys->su_group);
-+	mutex_init(&subsys->su_mutex);
-+	strncpy((char *)&subsys->su_group.cg_item.ci_namebuf, "netconsole",
-+		CONFIGFS_ITEM_NAME_LEN);
-+	subsys->su_group.cg_item.ci_type = &netconsole_subsys_type;
-+	return configfs_register_subsystem(subsys);
-+}
-+
-+static void __exit dynamic_netpoll_targets_exit(struct netpoll_targets *nts)
-+{
-+	configfs_unregister_subsystem(&nts->configfs_subsys);
-+}
-+
-+/*
-+ * Targets that were created by parsing the boot/module option string
-+ * do not exist in the configfs hierarchy (and have NULL names) and will
-+ * never go away, so make these a no-op for them.
-+ */
-+static void netconsole_target_get(struct netconsole_target *nt)
-+{
-+	if (config_item_name(&nt->item))
-+		config_item_get(&nt->item);
-+}
-+
-+static void netconsole_target_put(struct netconsole_target *nt)
-+{
-+	if (config_item_name(&nt->item))
-+		config_item_put(&nt->item);
-+}
-+
-+#else	/* !CONFIG_NETCONSOLE_DYNAMIC */
-+
-+static int __init dynamic_netpoll_targets_init(const char *subsys_name,
-+					       struct netpoll_targets *nts)
-+{
-+	return 0;
-+}
-+
-+static void __exit dynamic_netpoll_targets_exit(struct netpoll_targets *nts)
-+{
-+}
-+
-+/*
-+ * No danger of targets going away from under us when dynamic
-+ * reconfigurability is off.
-+ */
-+static void netconsole_target_get(struct netconsole_target *nt)
-+{
-+}
-+
-+static void netconsole_target_put(struct netconsole_target *nt)
-+{
-+}
- 
- #endif	/* CONFIG_NETCONSOLE_DYNAMIC */
- 
-@@ -847,7 +843,7 @@ static int __init init_netconsole(void)
- 	if (err)
- 		goto fail;
- 
--	err = dynamic_netconsole_init();
-+	err = dynamic_netpoll_targets_init(&targets);
- 	if (err)
- 		goto undonotifier;
- 
-@@ -880,7 +876,7 @@ static void __exit cleanup_netconsole(void)
- 	struct netconsole_target *nt, *tmp;
- 
- 	unregister_console(&netconsole);
--	dynamic_netconsole_exit();
-+	dynamic_netpoll_targets_exit(&targets);
- 	unregister_netdevice_notifier(&netconsole_netdev_notifier);
- 
- 	/*
+Acked-by: Matt Mackall <mpm@selenic.com>
+
+-- 
+Mathematics is the supreme nostalgia of our time.
