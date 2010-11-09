@@ -1,35 +1,30 @@
-From: =?utf-8?Q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>
-Subject: Re: [PATCH v2 00/23] netoops support
-Date: Tue, 9 Nov 2010 12:25:35 +0800
-Message-ID: <20101109042535.GB5220@cr0.nay.redhat.com>
+From: =?utf-8?Q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 12/23] netpoll: Introduce netpoll_target configs
+Date: Tue, 9 Nov 2010 12:27:32 +0800
+Message-ID: <20101109042732.GC5220@cr0.nay.redhat.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
- <87k4knqo91.fsf@basil.nowhere.org>
+ <20101108203246.22479.60118.stgit@crlf.mtv.corp.google.com>
+ <20101109033024.GA5220@cr0.nay.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87k4knqo91.fsf@basil.nowhere.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andi Kleen <andi@firstfloor.org>
-Cc: Mike Waychison <mikew@google.com>, simon.kagstrom@netinsight.net, davem@davemloft.net, nhorman@tuxdriver.com, Matt Mackall <mpm@selenic.com>, adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, =?utf-8?Q?Am=C3=A9rico?= Wang <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
+In-Reply-To: <20101109033024.GA5220-+dguKlz9DXUf7BdofF/totBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?utf-8?Q?Am=C3=A9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 09, 2010 at 02:28:26AM +0100, Andi Kleen wrote:
->Mike Waychison <mikew@google.com> writes:
+On Tue, Nov 09, 2010 at 11:30:24AM +0800, Am=C3=A9rico Wang wrote:
 >
->I'm still not fully convinced this needs to be a fully separate
->mechanism from netconsole.  It seems a lot of work to implement
->basically log level.
+=2E...
 >
->Maybe netconsole could be patched to support only dumping KERN_EMERG?
->
-
-I tend to agree, IMHO, we can introduce another parameter like "oops_only"
-to netconsole.
-
-
->But I guess the structured logging has some advantages, although
->there have been certainly oops parsers (e.g. kerneloops.org) without it.
+>So, either we need to de-modulize configfs or replace configfs API
+>with sysfs API. Personally, I prefer the former one, I don't think
+>configfs should be a module as long as it can provide API's
+>for other subsystems, like debugfs.
 >
 
-+1
+To clarify, I meant "as long as the API it provides can be used by
+other core subsystems".
