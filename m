@@ -1,80 +1,75 @@
-From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 12/23] netpoll: Introduce netpoll_target configs
-Date: Tue, 9 Nov 2010 09:27:13 -0800
-Message-ID: <20101109172713.GA11073@kroah.com>
+From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 20/23] netoops: Add x86 specific bits to packet headers
+Date: Tue, 9 Nov 2010 09:56:02 -0800
+Message-ID: <AANLkTik9i9pMqnngE-9t+Cc7cN6WbftjPoW6AWE6Va=x@mail.gmail.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
- <20101108203246.22479.60118.stgit@crlf.mtv.corp.google.com>
- <20101109033024.GA5220@cr0.nay.redhat.com>
- <20101109042732.GC5220@cr0.nay.redhat.com>
- <AANLkTingq8R8bc-4fwhBQomdhTgff+fN_vE-pc5zofKX@mail.gmail.com>
- <20101109090645.GG5220@cr0.nay.redhat.com>
- <20101109142053.GA3067@kroah.com>
- <AANLkTi=tUSMrCqnY3-868ugi=b2K78Z=SD=ZDJ36vBUJ@mail.gmail.com>
+ <20101108203334.22479.71661.stgit@crlf.mtv.corp.google.com> <20101109142208.GB18269@hmsreliant.think-freely.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <AANLkTi=tUSMrCqnY3-868ugi=b2K78Z=SD=ZDJ36vBUJ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20101109142208.GB18269-B26myB8xz7F8NnZeBjwnZQMhkBWG/bsMQH7oEaQurus@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Am??rico Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
+Cc: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?ISO-8859-1?Q?Am=E9rico_Wang?= <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 09, 2010 at 09:24:33AM -0800, Mike Waychison wrote:
-> On Tue, Nov 9, 2010 at 6:20 AM, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> wrote:
-> > On Tue, Nov 09, 2010 at 05:06:45PM +0800, Am??rico Wang wrote:
-> >> On Tue, Nov 09, 2010 at 12:34:24AM -0800, Mike Waychison wrote:
-> >> >On Mon, Nov 8, 2010 at 8:27 PM, Am??rico Wang <xiyou.wangcong@gma=
-il.com> wrote:
-> >> >> On Tue, Nov 09, 2010 at 11:30:24AM +0800, Am??rico Wang wrote:
-> >> >>>
-> >> >> ....
-> >> >>>
-> >> >>>So, either we need to de-modulize configfs or replace configfs =
-API
-> >> >>>with sysfs API. Personally, I prefer the former one, I don't th=
-ink
-> >> >>>configfs should be a module as long as it can provide API's
-> >> >>>for other subsystems, like debugfs.
-> >> >>>
-> >> >>
-> >> >> To clarify, I meant "as long as the API it provides can be used=
- by
-> >> >> other core subsystems".
-> >> >>
-> >> >
-> >> >Ya, I see the problem with it being a tristate.
-> >> >
-> >> >Why not just make netconsole support being compiled in force conf=
-igfs
-> >> >to be compiled in? =A0Or does that just set bad precedent?
-> >>
-> >> That is what netconsole does now, and this is fine, since netconso=
-le is
-> >> a module too, however, after you move that code into netpoll, then=
- netpoll
-> >> will have a dependence on it, we will have problems.
-> >>
-> >> I think we can let NETPOLL_TARGET depend on CONFIGFS_FS=3Dy, but I=
- still
-> >> see no reason why CONFIGFS_FS should be a module.
-> >
-> > No, just have the NETPOLL_TARGET set CONFIG_FS to y, don't force th=
-e
-> > code to always be that way if the user isn't going to want that opt=
-ion.
->=20
-> Can you clarify what you mean by "that way" here?
+On Tue, Nov 9, 2010 at 6:22 AM, Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org> wro=
+te:
+> On Mon, Nov 08, 2010 at 12:33:35PM -0800, Mike Waychison wrote:
+>> We need to be able to gather information about the CPUs that caused =
+the crash.
+>>
+>> This commit only handles x86, but it is desirable to come up with so=
+me new
+>> packet format that can accommodate any architecture.
+>>
+>> Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>> ---
+>> TODO: This should be made more general to other architectures. =A0As=
+ is, we are
+>> probably okay exporting some value for the 'arch' field. =A0Differen=
+t
+>> architectures though will likely want to gather different data.
+>> ---
+>> =A0drivers/net/netoops.c | =A0 27 +++++++++++++++++++++------
+>> =A01 files changed, 21 insertions(+), 6 deletions(-)
+>>
+> Not sure I see the value in encapsulating arch specific data in a net=
+oops
+> message. =A0Ostensibly this information can be inferred at the time o=
+f the crash
+> by the name/ip of the system crashing (one presumes that the sysadmin=
+ knows what
+> systems are what arch, or can look it up easily).
 
-I think I can't remember, as this is a bit complex.
+This actually becomes harder than it appears at first.  The
+distributed nature of our systems means that we cannot ever rely on a
+central data source that describes the machines we have without having
+to worry about network partitions and service downtimes. The
+alternative is to post-process crashes, looking up machine information
+in various data sources and hoping that the results are consistent.
+This becomes yet another job in the cluster, which seems a little
+silly when we could just have the machine self describe itself at the
+time of the crash.
 
-I'm just objecting to the changing of configfs to only be able to be
-built into the kernel.  If this patch set requires configfs, great, the=
-n
-set the value to "Y", but don't change configfs like the proposed patch
-later in this email thread did.
+>
+> If thats not the case, why not just dump out the contents of /proc/cp=
+uinfo in
+> ascii form, so that no arch specific data is needed?
 
-thanks,
+As a segment of the dump? I'm okay with doing this, as long it never
+makes it's way into log_buf.  log_buf is a real pain to parse given
+the lack of transactions and the fact that many other cores may be
+scribbling all over it.
 
-greg k-h
+A couple years ago, we speced out a different wire protocol for these
+packets, version 3 (yes, this has already had a version bump).
+Anyhow, we came up with a design that used (key,length)->value fields.
+  Keys were designed to be 16bit wide integers and clients could
+easily ignore fields that it doesn't understand.  We never implemented
+this, but it'd be great if folks bought into it.  It'd allow us to
+ship things like file contents side by side with other structured
+fields like pt_regs snapshots, the log_buf and a user defined buffer.
+
+How do folks feel about something like that?
