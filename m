@@ -1,128 +1,72 @@
 From: john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH RFC 2/8] clock device: convert clock_gettime
-Date: Tue, 09 Nov 2010 13:10:58 -0800
-Message-ID: <1289337058.9434.39.camel@localhost.localdomain>
+Date: Tue, 09 Nov 2010 13:37:02 -0800
+Message-ID: <1289338622.9434.46.camel@localhost.localdomain>
 References: <cover.1288897198.git.richard.cochran@omicron.at>
 	 <81ccd2674ebf26332898761ba6b7b54f395a15bd.1288897199.git.richard.cochran@omicron.at>
-	 <1289259423.21487.7.camel@localhost.localdomain>
-	 <20101109082353.GA2690@riccoc20.at.omicron.at>
+	 <201011080756.50930.arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20101109082353.GA2690-7KxsofuKt4IfAd9E5cN8NEzG7cXyKsk/@public.gmane.org>
+In-Reply-To: <201011080756.50930.arnd-r2nGTMty4D4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2010-11-09 at 09:23 +0100, Richard Cochran wrote:
-> On Mon, Nov 08, 2010 at 03:37:03PM -0800, john stultz wrote:
-> > On Thu, 2010-11-04 at 20:28 +0100, Richard Cochran wrote: 
-> > > #define CPUCLOCK_PID(clock)		((pid_t) ~((clock) >> 3))
-> > 
-> > So I think we may want to add some additional comments here.
-> > Specifically around the limits both new and existing that are created
-> > around the interactions between clockid_t, pid_t and now the clock_fd.
-> > 
-> > Specifically, pid_t is already limited by futex to 29 bits (I believe,
-> > please correct me if I'm wrong). MAKE_PROCESS_CPUCLOCK macro below seems
-> > to also utilize this 29 bit pid limit assumption as well (via pid<<3),
-> > however it may actually require pid to be below 28 (since CLOCK_DISPATCH
-> > assumes cpu clockids are negative).
-> > 
-> > Anyway, this seems like it should be a bit more explicit.
+On Mon, 2010-11-08 at 07:56 +0100, Arnd Bergmann wrote:
+> On Thursday 04 November 2010, Richard Cochran wrote:
+> > diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
+> > index 3e23844..70f40e6 100644
+> > --- a/include/linux/posix-timers.h
+> > +++ b/include/linux/posix-timers.h
+> > @@ -17,10 +17,22 @@ struct cpu_timer_list {
+> >  	int firing;
+> >  };
+> >  
+> > +/* Bit fields within a clockid:
+> > + *
+> > + * The most significant 29 bits hold either a pid or a file descriptor.
+> > + *
+> > + * Bit 2 indicates whether a cpu clock refers to a thread or a process.
+> > + *
+> > + * Bits 1 and 0 give the type: PROF=0, VIRT=1, SCHED=2, or FD=3.
+> > + *
+> > + * A clockid is invalid if bits 2, 1, and 0 all set (see also CLOCK_INVALID
+> > + * in include/linux/time.h)
+> > + */
+> > +
+> >  #define 	(clock)		((pid_t) ~((clock) >> 3))
+> >  #define CPUCLOCK_PERTHREAD(clock) \
+> >  	(((clock) & (clockid_t) CPUCLOCK_PERTHREAD_MASK) != 0)
+> > -#define CPUCLOCK_PID_MASK	7
+> > +
+> >  #define CPUCLOCK_PERTHREAD_MASK	4
+> >  #define CPUCLOCK_WHICH(clock)	((clock) & (clockid_t) CPUCLOCK_CLOCK_MASK)
+> >  #define CPUCLOCK_CLOCK_MASK	3
+> > @@ -28,12 +40,17 @@ struct cpu_timer_list {
+> >  #define CPUCLOCK_VIRT		1
+> >  #define CPUCLOCK_SCHED		2
+> >  #define CPUCLOCK_MAX		3
+> > +#define CLOCKFD			CPUCLOCK_MAX
+> > +#define CLOCKFD_MASK		(CPUCLOCK_PERTHREAD_MASK|CPUCLOCK_CLOCK_MASK)
 > 
-> Yes, you are right, of course, but I would like to point out that the
-> existing "overloading" of the clockid_t isn't really explained at all.
-> It was not clear to me whether or not 29 pid bits is enough for the
-> worst case, or not.
+> It looks like you are turning a kernel internal interface into a user ABI,
+> which I think is highly questionable. Using the bits like this internally is
+> ok, but making it part of the syscall ABI means that we can never change this
+> in the future.
 > 
-> This code is older than 2005 (git/linux) and so I don't know who wrote
-> it and what they were thinking.  I took the first step and tried to
-> explain as much I understand.
-
-Looks like the cpu timers bit landed in 2.6.11 from Roland.
-
-Roland: Might be nice to get your thoughts on the proposed changes here.
+> Maybe I was misunderstanding your patch though.
 
 
-> > > +#define FD_TO_CLOCKID(fd)  ((clockid_t) (fd << 3) | CLOCKFD)
-> > > +#define CLOCKID_TO_FD(clk) (((unsigned int) clk) >> 3)
-> > 
-> > So similarly here, we need to be explicit in making sure that the max fd
-> > value is small enough to fit without dropping bits if we shift it up by
-> > three (trying to quickly review open I don't see any explicit limit,
-> > other then NR_OPEN_DEFAULT, but that's BIT_PER_LONG, which won't fit in
-> > the int returned by open on 64bit systems).
-> 
-> I also didn't see any limit to the number of open files, except that
-> it must be a non-negative (signed) integer.
-> 
-> For userspace, there will have to be a glibc function/macro like
-> FD_TO_CLOCKID() that tests the three most significant bits and returns
-> CLOCK_INVALID if any are set.
-> 
-> This will result in the limitation that if a userspace program already
-> has 2^29 (536 million) open files, then it will not be able to obtain
-> a dynamic clock id. I think we can live with that.
+As Richard already mentioned, the cpuclocks has already exported this as
+ABI and its used in pthread_getcpuclockid().
 
-This does seem reasonable. Any one have an objection with this?
-
-
-> > So sort of minor nit here, but is there a reason the clockfd
-> > implementation is primary here and the standard posix implementation
-> > gets pushed off into its own function rather then doing something like:
-> > 
-> > clk = clockid_to_clock_device(id)
-> > if(clk)
-> > 	return clockdev_clock_gettime(clk, user_ts);
-> > [existing sys_clock_gettime()] 
-> > 
-> > As you implemented it, it seems to expect the clockdevice method to be
-> > the most frequent use case, where as its likely to be the inverse. So
-> > folks looking into the more common CLOCK_REALTIME calls have to traverse
-> > more code then the likely more rare clockfd cases.
-> 
-> Actually, what I would like to do is refactor the exisiting posix
-> clock code to use the new framework. The idea is to have a set of
-> static global clock_device*, one per fixed clock. The function
-> clockid_to_clock_device() will include a lookup table, like this:
-> 
-> static clock_device *realtime_clock, *monotinic_clock;
-> 
-> switch (id) {
-> case CLOCK_REALTIME:
-> 	return realtime_clock;
-> case CLOCK_MONOTONIC:
-> 	return monotinic_clock;
-> /* and so on ... */
-> }
-
-This seems a little over-reaching. I'm not sure I see what benefit would
-come from having clock_devices for the static clock_ids? The extra mutex
-locking and status/null checking for the clock_device would would just
-add unnecessary overhead to the performance critical clock_gettime call.
-
-And would each cpuclock need a clock_device too? 
-
-
-> This could be done on top of the existing patch in an incremental way.
-> However, I did not want to change everything all at once.
-> 
-> > Also, in my mind, it would seem more in-line with the existing code to
-> > integrate the conditional into CLOCK_DISPATCH. Not that CLOCK_DISPATCH
-> > is pretty, but it avoids making your changes look tacked on in front of
-> > everything.
-> 
-> Sorry to disagree, but I really don't want to be the one to extend
-> that macro in any way. IMHO it really should be replaced with
-> something more legible.
-
-Yes, I agree it could use some cleanup. And again, this was only a nit
-with the early version of the patch, so not a huge issue right now. But
-before these go upstream, we'll need to address this in some way (be it
-your lookup table above or something else).
+I wonder thought if it would be worth having a syscall to convert from
+fd to clock_id so it could be more flexible in the future. But it may
+not be worth it, as we're probably already limited by the cpuclock
+implementation.
 
 thanks
 -john
