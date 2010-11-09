@@ -1,105 +1,98 @@
-From: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
-Subject: Re: [PATCH v2 20/23] netoops: Add x86 specific bits to packet headers
-Date: Tue, 9 Nov 2010 09:22:08 -0500
-Message-ID: <20101109142208.GB18269@hmsreliant.think-freely.org>
+From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 04/23] netconsole: Call netpoll_cleanup() in process context
+Date: Tue, 9 Nov 2010 09:18:57 -0800
+Message-ID: <AANLkTi=Dez6st660R3h+0uTqkTUgOppvzBXcbg7QqxDu@mail.gmail.com>
 References: <20101108203120.22479.19708.stgit@crlf.mtv.corp.google.com>
- <20101108203334.22479.71661.stgit@crlf.mtv.corp.google.com>
+ <20101108203159.22479.48774.stgit@crlf.mtv.corp.google.com> <20101109120752.GA18269@hmsreliant.think-freely.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20101108203334.22479.71661.stgit-+dUuAhMFdFN6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
+In-Reply-To: <20101109120752.GA18269-B26myB8xz7F8NnZeBjwnZQMhkBWG/bsMQH7oEaQurus@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?iso-8859-1?Q?Am=E9rico?= Wang <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
+Cc: simon.kagstrom-vI6UBbBVNY+JA8cjQkG2/g@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chavey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, =?ISO-8859-1?Q?Am=E9rico_Wang?= <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 08, 2010 at 12:33:35PM -0800, Mike Waychison wrote:
-> We need to be able to gather information about the CPUs that caused the crash.
-> 
-> This commit only handles x86, but it is desirable to come up with some new
-> packet format that can accommodate any architecture.
-> 
-> Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> ---
-> TODO: This should be made more general to other architectures.  As is, we are
-> probably okay exporting some value for the 'arch' field.  Different
-> architectures though will likely want to gather different data.
-> ---
->  drivers/net/netoops.c |   27 +++++++++++++++++++++------
->  1 files changed, 21 insertions(+), 6 deletions(-)
-> 
-Not sure I see the value in encapsulating arch specific data in a netoops
-message.  Ostensibly this information can be inferred at the time of the crash
-by the name/ip of the system crashing (one presumes that the sysadmin knows what
-systems are what arch, or can look it up easily).
+On Tue, Nov 9, 2010 at 4:07 AM, Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org> wro=
+te:
+> On Mon, Nov 08, 2010 at 12:32:00PM -0800, Mike Waychison wrote:
+>> +static void deferred_netpoll_cleanup(struct work_struct *work)
+>> +{
+>> + =A0 =A0 struct netconsole_target *nt;
+>> + =A0 =A0 unsigned long flags;
+>> +
+>> + =A0 =A0 nt =3D container_of(work, struct netconsole_target, cleanu=
+p_work);
+>> + =A0 =A0 netpoll_cleanup(&nt->np);
+>> +
+>> + =A0 =A0 spin_lock_irqsave(&target_list_lock, flags);
+>> + =A0 =A0 BUG_ON(nt->np_state !=3D NETPOLL_CLEANING);
+>> + =A0 =A0 nt->np_state =3D NETPOLL_DISABLED;
+>> + =A0 =A0 spin_unlock_irqrestore(&target_list_lock, flags);
+>> +
+>> + =A0 =A0 netconsole_target_put(nt);
+>> +}
+>> +
+> Where is the synchronization on the new work queue when the module is=
+ getting
+> removed? The target get/put code does nothing to the module refcount,=
+ and
+> cleanup_netconsole just deletes targets, it doesn't block or fail on =
+netconsole
+> refcounts, so you could run this work after the module has been remov=
+ed and oops
+> the system.
+>
 
-If thats not the case, why not just dump out the contents of /proc/cpuinfo in
-ascii form, so that no arch specific data is needed?
+The synchronization here is actually handled in free_param_target()
+with the call to cancel_work_sync().  After that call is made in the
+exit path, we know a task cannot be rescheduled for cleanup, so we can
+clean things up directly.
 
-Regards
-Neil
+The comment/name of free_param_target should probably change.  I used
+to have this cancel_work_sync() call elsewhere, and folded both the
+dynamic and param-based target cleanup into one as they ended up being
+the same.
 
-> diff --git a/drivers/net/netoops.c b/drivers/net/netoops.c
-> index dc1ee97..f63e12a 100644
-> --- a/drivers/net/netoops.c
-> +++ b/drivers/net/netoops.c
-> @@ -69,16 +69,24 @@ struct netoops_msg {
->  		u32 packet_count;
->  		u32 packet_no;
->  		u32 __reserved1;
-> -		u8 __reserved2;
-> -		u8 __reserved3;
-> -		u8 __reserved4;
-> +		u8 x86_family;
-> +		u8 x86_model;
-> +		u8 x86_stepping;
->  		/*
->  		 * NOTE: fixed length strings for a packet.  NULL
->  		 * termination not required.
->  		 */
->  		char kernel_version[64];
-> -		char __reserved5[64];
-> -		char __reserved6[64];
-> +		char __reserved2[64];
-> +		char __reserved3[64];
-> +		/* NOTE: regs is 60 or 168 bytes */
-> +		struct pt_regs regs; /* arch specific. */
-> +		/*
-> +		 * NOTE: The header is potentially ~385 bytes
-> +		 * already.  That doesn't leave much room for
-> +		 * expansion unless we reduce the data size
-> +		 * or truncate above fields.
-> +		 */
->  	} __attribute__ ((packed)) header;
->  	char data[NETOOPS_DATA_BYTES];
->  } __attribute__ ((packed));
-> @@ -94,10 +102,17 @@ static void setup_packet_header(int packet_count, int soft_dump)
->  	msg.header.dump_id = (jiffies/HZ) & 0xffff;
->  	msg.header.packet_count = packet_count;
->  	msg.header.header_size = sizeof(msg.header);
-> +#ifndef CONFIG_UML
-> +	msg.header.x86_family = current_cpu_data.x86;
-> +	msg.header.x86_model = current_cpu_data.x86_model;
-> +	msg.header.x86_stepping = current_cpu_data.x86_mask;
-> +#endif
->  	strncpy(msg.header.kernel_version,
->  		utsname()->release,
->  		min(sizeof(msg.header.kernel_version),
->  		    sizeof(utsname()->release)));
-> +	if (regs != NULL)
-> +		memcpy(&msg.header.regs, regs, sizeof(msg.header.regs));
->  }
->  
->  static int packet_count_from_length(unsigned long l)
-> @@ -182,7 +197,7 @@ static void netoops(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason,
->  
->  	/* setup the non varying parts of the message */
->  	memset(&msg, 0, sizeof(msg));
-> -	setup_packet_header(packet_count_1 + packet_count_2, soft_dump);
-> +	setup_packet_header(packet_count_1 + packet_count_2, regs, soft_dump);
->  
->  	/* Transmission loop */
->  	for (i = 0; i < NETOOPS_RETRANSMIT_COUNT; i++) {
-> 
-> 
+Removal of the item from configfs however isn't handled.
+
+How about something like (no idea if this will get whitespace damage):
+
+
+diff --git a/drivers/net/netconsole.c b/drivers/net/netconsole.c
+index 02ba5c4..ddd5e4f 100644
+--- a/drivers/net/netconsole.c
++++ b/drivers/net/netconsole.c
+@@ -686,13 +686,16 @@ static void drop_netconsole_target(struct
+config_group *group,
+        spin_unlock_irqrestore(&target_list_lock, flags);
+
+        /*
+-        * The target may have never been enabled, or was manually disa=
+bled
+-        * before being removed so netpoll may have already been cleane=
+d up.
++        * The target may have never been disabled, or was disabled due
++        * to a netdev event, but we haven't had the chance to clean
++        * things up yet.
+         *
+-        * If it queued for cleanup already, that is fine, as that path=
+ holds a
+-        * reference to the config_item.
++        * We can't wait for the target to be cleaned up by its
++        * scheduled work however, as that work doesn't pin this module
++        * in place.
+         */
+-       if (nt->np_state =3D=3D NETPOLL_ENABLED)
++       cancel_work_sync(&nt->cleanup_work);
++       if (nt->np_state =3D=3D NETPOLL_ENABLED || nt->np-state =3D=3D =
+NETPOLL_CLEANING)
+                netpoll_cleanup(&nt->np);
+
+        config_item_put(&nt->item);
+
+
+
+I can fold this diff snippet into this patch for the next round if you
+agree it plugs the remaining hole.
