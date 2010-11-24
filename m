@@ -1,8 +1,8 @@
 From: Western Union Money Transfer <info-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
-Subject: End Of Year Promo
-Date: Fri, 19 Nov 2010 22:26:38 +0200
-Message-ID: <20101119222638.59835tx9d00e3ibi@webmail.mofa-gov.ps>
-Reply-To: transfer-SYOtdDaUK6G1OXqM+dc5E0EOCMrvLtNR@public.gmane.org
+Subject: You've earned 1,000,000.00 USD
+Date: Wed, 24 Nov 2010 10:10:51 +0200
+Message-ID: <20101124101051.14275om2fshd966j@webmail.mofa-gov.ps>
+Reply-To: transferwnunion1-EMRzualFZlQ@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain;
  charset=ISO-8859-1;
@@ -16,4 +16,4 @@ List-Id: linux-api@vger.kernel.org
 
 
 You have earned 1,000,000.00 USD,Send info:Names,Age,Country,phone number
-To:(transfer-SYOtdDaUK6G1OXqM+dc5E0EOCMrvLtNR@public.gmane.org)
+To:(transferwnunion1-EMRzualFZlQ@public.gmane.org)
