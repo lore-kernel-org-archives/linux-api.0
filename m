@@ -1,64 +1,57 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH V7 3/8] posix clocks: introduce dynamic clocks
-Date: Thu, 16 Dec 2010 17:16:42 +0100
-Message-ID: <201012161716.42520.arnd@arndb.de>
-References: <cover.1292512461.git.richard.cochran@omicron.at> <8debe4d48d9a6484b7fbd35d8888524155fed977.1292512461.git.richard.cochran@omicron.at>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH V7 1/8] ntp: add ADJ_SETOFFSET mode bit
+Date: Thu, 16 Dec 2010 18:48:12 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1012161844140.12146@localhost6.localdomain6>
+References: <cover.1292512461.git.richard.cochran@omicron.at> <880d82bb8120f73973db27e0c48e949014b1a106.1292512461.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8debe4d48d9a6484b7fbd35d8888524155fed977.1292512461.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
+In-Reply-To: <880d82bb8120f73973db27e0c48e949014b1a106.1292512461.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 16 December 2010, Richard Cochran wrote:
-> This patch adds support for adding and removing posix clocks. The
-> clock lifetime cycle is patterned after usb devices. Each clock is
-> represented by a standard character device. In addition, the driver
-> may optionally implemented custom character device operations.
+On Thu, 16 Dec 2010, Richard Cochran wrote:
+> +	if (txc->modes & ADJ_SETOFFSET) {
+> +		/* Validate the delta value. */
+> +		if (txc->time.tv_sec && txc->time.tv_usec < 0)
+> +			return -EINVAL;
+> +
+> +		if (txc->modes & ADJ_NANO) {
+> +			struct timespec tmp;
+> +			tmp.tv_sec  = txc->time.tv_sec;
+> +			tmp.tv_nsec = txc->time.tv_usec;
+> +			delta = timespec_to_ktime(tmp);
+> +		} else
+> +			delta = timeval_to_ktime(txc->time);
+> +
+> +		/* Adding the delta should be an "atomic" operation. */
+> +		local_irq_disable();
+
+I really do not like that conditional irq_disable(), especially as we
+disable them further down again and we only safe the getnstimeofday()
+call in the non ADJSETOFFSET code path.
+
+So we really better do that unconditionally before getnstimeofday()
+with an appropriate comment and change the write_seqlock_irq() to
+write_seqlock().
+
+> +	}
+> +
+>  	getnstimeofday(&ts);
+>  
+> +	if (txc->modes & ADJ_SETOFFSET) {
+> +		kt = timespec_to_ktime(ts);
+> +		kt = ktime_add(kt, delta);
+> +		ts = ktime_to_timespec(kt);
+> +		do_settimeofday(&ts);
+> +		local_irq_enable();
+> +	}
+> +
+>  	write_seqlock_irq(&xtime_lock);
+
+Thanks,
+
+	tglx
 > 
-> The dynamic posix clocks do not yet do anything useful. This patch
-> merely provides some needed infrastructure.
-> 
-> Signed-off-by: Richard Cochran <richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
-
-> +struct posix_clock_fops {
-> +	int (*fasync)  (void *priv, int fd, struct file *file, int on);
-> +	int (*mmap)    (void *priv, struct vm_area_struct *vma);
-> +	int (*open)    (void *priv, fmode_t f_mode);
-> +	int (*release) (void *priv);
-> +	long (*ioctl)  (void *priv, unsigned int cmd, unsigned long arg);
-> +	long (*compat_ioctl) (void *priv, unsigned int cmd, unsigned long arg);
-> +	ssize_t (*read) (void *priv, uint flags, char __user *buf, size_t cnt);
-> +	unsigned int (*poll) (void *priv, struct file *file, poll_table *wait);
-> +};
-
-Thanks for the change to a private ops structure. Three more
-suggestions for this:
-
-* I would recommend starting without a compat_ioctl operation if you can.
-Just mandate that all ioctls for posix clocks are compatible and call
-fops->ioctl from the posix_clock_compat_ioctl() function.
-If you ever need compat_ioctl handling, it can still be added later.
-
-* Instead of passing a void pointer, why not pass a struct posix_clock
-pointer to the lower device and use container_of? That follows what
-we do in other subsystems and allows you save one allocation, by
-including the posix_clock into the specific clock struct like
-ptp_clock.
-
-> +struct posix_clock_operations {
-> +	struct module *owner;
-> +	struct posix_clock_fops fops;
-> +	int  (*clock_adjtime)(void *priv, struct timex *tx);
-
-You can easily combine the two structures and get rid of the extra
-struct posix_clock_fops by moving its operations into
-posix_clock_operations.
-
-Looks really good otherwise.
-
-	Arnd
