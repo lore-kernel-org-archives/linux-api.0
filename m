@@ -1,184 +1,327 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH V7 3/8] posix clocks: introduce dynamic clocks
-Date: Thu, 16 Dec 2010 21:56:38 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1012161939340.12146@localhost6.localdomain6>
-References: <cover.1292512461.git.richard.cochran@omicron.at> <8debe4d48d9a6484b7fbd35d8888524155fed977.1292512461.git.richard.cochran@omicron.at>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH V7 4/8] posix clocks: hook dynamic clocks into system
+ calls
+Date: Fri, 17 Dec 2010 00:20:44 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1012162156580.12146@localhost6.localdomain6>
+References: <cover.1292512461.git.richard.cochran@omicron.at> <6241238a1df55033e50b151ec9d35ba957e43d53.1292512461.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <8debe4d48d9a6484b7fbd35d8888524155fed977.1292512461.git.richard.cochran@omicron.at>
-Sender: netdev-owner@vger.kernel.org
-To: Richard Cochran <richardcochran@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <6241238a1df55033e50b151ec9d35ba957e43d53.1292512461.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 On Thu, 16 Dec 2010, Richard Cochran wrote:
 
-> --- /dev/null
+Can you please split this into infrastructure and conversion of
+posix-timer.c ?
+
+> diff --git a/include/linux/posix-clock.h b/include/linux/posix-clock.h
+> index 1ce7fb7..7ea94f5 100644
+> --- a/include/linux/posix-clock.h
 > +++ b/include/linux/posix-clock.h
+> @@ -108,4 +108,29 @@ struct posix_clock *posix_clock_create(struct posix_clock_operations *cops,
+>   */
+>  void posix_clock_destroy(struct posix_clock *clk);
+>  
 > +/**
-> + * struct posix_clock_fops - character device operations
+> + * clockid_to_posix_clock() - obtain clock device pointer from a clock id
+> + * @id: user space clock id
 > + *
-> + * Every posix clock is represented by a character device. Drivers may
-> + * optionally offer extended capabilities by implementing these
-> + * functions. The character device file operations are first handled
-> + * by the clock device layer, then passed on to the driver by calling
-> + * these functions.
-> + *
-> + * The clock device layer already uses fp->private_data, so drivers
-> + * are provided their private data via the 'priv' paramenter.
+> + * Returns a pointer to the clock device, or NULL if the id is not a
+> + * dynamic clock id.
 > + */
-> +void *posix_clock_private(struct file *fp);
-
-Leftover ? There is neither a caller nor an implementation
-
-> +struct posix_clock_fops {
-> +	int (*fasync)  (void *priv, int fd, struct file *file, int on);
-> +	int (*mmap)    (void *priv, struct vm_area_struct *vma);
-> +	int (*open)    (void *priv, fmode_t f_mode);
-> +	int (*release) (void *priv);
-> +	long (*ioctl)  (void *priv, unsigned int cmd, unsigned long arg);
-> +	long (*compat_ioctl) (void *priv, unsigned int cmd, unsigned long arg);
-
-Do we really need a compat_ioctl ?
-
-> +	ssize_t (*read) (void *priv, uint flags, char __user *buf, size_t cnt);
-> +	unsigned int (*poll) (void *priv, struct file *file, poll_table *wait);
-
-> --- a/kernel/time/Makefile
-> +++ b/kernel/time/Makefile
-> @@ -1,4 +1,5 @@
-> -obj-y += timekeeping.o ntp.o clocksource.o jiffies.o timer_list.o timecompare.o timeconv.o
-> +obj-y += timekeeping.o ntp.o clocksource.o jiffies.o timer_list.o \
-> +timecompare.o timeconv.o posix-clock.o
-
-Please start a new obj-y += line instead
-  
-> --- /dev/null
-> +++ b/kernel/time/posix-clock.c
+> +struct posix_clock *clockid_to_posix_clock(clockid_t id);
 > +
-> +#define MAX_CLKDEV BITS_PER_LONG
+> +/*
+> + * The following functions are only to be called from posix-timers.c
+> + */
 
-Please put some more space between the MAX_CLKDEV and BITS_PER_LONG. I
-had to look three times to not read it as a single word.
+Then they should be in a header file which is not consumable by the
+general public. e.g. kernel/time/posix-clock.h
 
-> +static DECLARE_BITMAP(clocks_map, MAX_CLKDEV);
-> +static DEFINE_MUTEX(clocks_mutex); /* protects 'clocks_map' */
-
-Please avoid tail comments
-
-> +struct posix_clock {
-> +	struct posix_clock_operations *ops;
-> +	struct cdev cdev;
-> +	struct kref kref;
-> +	struct mutex mux;
-> +	void *priv;
-
-You can get away with that private pointer and all the void *
-arguments to the various posix_clock_operations, if you mandate that
-the posix_clock_operations are embedded into a clock specific data
-structure.
-
-So void *priv would become struct posix_clock_operations *clkops and
-you can get your private data in the clock implementation with
-container_of().
-
-> +	int index;
-> +	bool zombie;
-
-Ths field is only set, but nowhere else used. What's the purpose ?
-Leftover ?
-
-> +};
+> +int pc_clock_adjtime(struct posix_clock *clk, struct timex *tx);
+> +int pc_clock_gettime(struct posix_clock *clk, struct timespec *ts);
+> +int pc_clock_getres(struct posix_clock *clk, struct timespec *ts);
+> +int pc_clock_settime(struct posix_clock *clk, const struct timespec *ts);
 > +
-
-> +static void delete_clock(struct kref *kref);
+> +int pc_timer_create(struct posix_clock *clk, struct k_itimer *kit);
+> +int pc_timer_delete(struct posix_clock *clk, struct k_itimer *kit);
 > +
+> +void pc_timer_gettime(struct posix_clock *clk, struct k_itimer *kit,
+> +		      struct itimerspec *ts);
+> +int pc_timer_settime(struct posix_clock *clk, struct k_itimer *kit,
+> +		     int flags, struct itimerspec *ts, struct itimerspec *old);
 > +
-> +static int posix_clock_open(struct inode *inode, struct file *fp)
+>  #endif
+> +
+> +static inline bool clock_is_static(const clockid_t id)
 > +{
-> +	struct posix_clock *clk =
-> +		container_of(inode->i_cdev, struct posix_clock, cdev);
-> +
-> +	kref_get(&clk->kref);
-> +	fp->private_data = clk;
+> +	if (0 == (id & ~CLOCKFD_MASK))
+> +		return true;
+> +	if (CLOCKFD == (id & CLOCKFD_MASK))
+> +		return false;
 
-fp->private_data should only be set on success. And this will leak a
-ref count when the clock open function fails.
+Please use the usual kernel notation.
 
-What's that kref protecting here ?
-
-> +
-> +	if (clk->ops->fops.open)
-> +		return clk->ops->fops.open(clk->priv, fp->f_mode);
-> +	else
-> +		return 0;
+> +	return true;
 > +}
 > +
-> +static int posix_clock_release(struct inode *inode, struct file *fp)
-> +{
-> +	struct posix_clock *clk = fp->private_data;
-> +	int err = 0;
-
-fp->private_data should be set to NULL in the release function.
-
-> +	if (clk->ops->fops.release)
-> +		err = clk->ops->fops.release(clk->priv);
+>  /* POSIX.1b interval timer structure. */
+>  struct k_itimer {
+>  	struct list_head list;		/* free/ allocate list */
+> diff --git a/include/linux/time.h b/include/linux/time.h
+> index 9f15ac7..914c48d 100644
+> --- a/include/linux/time.h
+> +++ b/include/linux/time.h
+> @@ -299,6 +299,8 @@ struct itimerval {
+>  #define CLOCKS_MASK			(CLOCK_REALTIME | CLOCK_MONOTONIC)
+>  #define CLOCKS_MONO			CLOCK_MONOTONIC
+>  
+> +#define CLOCK_INVALID			-1
 > +
-> +	kref_put(&clk->kref, delete_clock);
+> @@ -712,6 +720,7 @@ common_timer_get(struct k_itimer *timr, struct itimerspec *cur_setting)
+>  SYSCALL_DEFINE2(timer_gettime, timer_t, timer_id,
+>  		struct itimerspec __user *, setting)
+>  {
+> +	struct posix_clock *clk_dev;
+>  	struct k_itimer *timr;
+>  	struct itimerspec cur_setting;
+>  	unsigned long flags;
+> @@ -720,7 +729,15 @@ SYSCALL_DEFINE2(timer_gettime, timer_t, timer_id,
+>  	if (!timr)
+>  		return -EINVAL;
+>  
+> -	CLOCK_DISPATCH(timr->it_clock, timer_get, (timr, &cur_setting));
+> +	if (likely(clock_is_static(timr->it_clock))) {
+> +
+> +		CLOCK_DISPATCH(timr->it_clock, timer_get, (timr, &cur_setting));
+> +
+> +	} else {
+> +		clk_dev = clockid_to_posix_clock(timr->it_clock);
+> +		if (clk_dev)
+> +			pc_timer_gettime(clk_dev, timr, &cur_setting);
 
-> +struct posix_clock *posix_clock_create(struct posix_clock_operations *cops,
-> +				       dev_t devid, void *priv)
+Why this extra step ? Why can't you call 
+
+      pc_timer_gettime(timr, &cur_setting);
+
+You already established that the timer is fd based, so let the
+pc_timer_* functions deal with it.
+
+> +	}
+>  
+>  	unlock_timer(timr, flags);
+>  
+> @@ -811,6 +828,7 @@ SYSCALL_DEFINE4(timer_settime, timer_t, timer_id, int, flags,
+>  		const struct itimerspec __user *, new_setting,
+>  		struct itimerspec __user *, old_setting)
+>  {
+> +	struct posix_clock *clk_dev;
+>  	struct k_itimer *timr;
+>  	struct itimerspec new_spec, old_spec;
+>  	int error = 0;
+> @@ -831,8 +849,19 @@ retry:
+>  	if (!timr)
+>  		return -EINVAL;
+>  
+> -	error = CLOCK_DISPATCH(timr->it_clock, timer_set,
+> -			       (timr, flags, &new_spec, rtn));
+> +	if (likely(clock_is_static(timr->it_clock))) {
+> +
+> +		error = CLOCK_DISPATCH(timr->it_clock, timer_set,
+> +				       (timr, flags, &new_spec, rtn));
+> +
+> +	} else {
+> +		clk_dev = clockid_to_posix_clock(timr->it_clock);
+> +		if (clk_dev)
+> +			error = pc_timer_settime(clk_dev, timr,
+> +						 flags, &new_spec, rtn);
+> +		else
+> +			error = -EINVAL;
+ 
+ Ditto. pc_timer_settime() can return -EINVAL when there is no valid fd.
+
+> @@ -957,26 +993,51 @@ EXPORT_SYMBOL_GPL(do_posix_clock_nonanosleep);
+>  SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
+>  		const struct timespec __user *, tp)
+>  {
+> +	struct posix_clock *clk_dev = NULL;
+>  	struct timespec new_tp;
+>  
+> -	if (invalid_clockid(which_clock))
+> -		return -EINVAL;
+> +	if (likely(clock_is_static(which_clock))) {
+> +
+> +		if (invalid_clockid(which_clock))
+> +			return -EINVAL;
+> +	} else {
+> +		clk_dev = clockid_to_posix_clock(which_clock);
+> +		if (!clk_dev)
+> +			return -EINVAL;
+> +	}
+
+It's not a problem to check the validity of that clock fd after the
+copy_from_user. That's an error case and we don't care about whether
+we return EINVAL here or later. And with your current code this can
+happen anyway as you don't hold a reference to the fd. And we do the
+same thing for posix_cpu_timers as well. See invalid_clockid()
+
+>  	if (copy_from_user(&new_tp, tp, sizeof (*tp)))
+>  		return -EFAULT;
+>  
+> +	if (unlikely(clk_dev))
+> +		return pc_clock_settime(clk_dev, &new_tp);
+> +
+>  	return CLOCK_DISPATCH(which_clock, clock_set, (which_clock, &new_tp));
+
+I really start to wonder whether we should cleanup that whole
+CLOCK_DISPATCH macro magic and provide real inline functions for
+each of the clock functions instead.
+
+static inline int dispatch_clock_settime(const clockid_t id, struct timespec *tp)
+{
+	if (id >= 0) {
+	   	return posix_clocks[id].clock_set ?
+		        posic_clocks[id].clock_set(id, tp) : -EINVAL;
+	}
+	if (posix_cpu_clock(id))
+		return -EINVAL;
+
+	return pc_timers_clock_set(id, tp);
+}
+
+That is a bit of work, but the code will be simpler and we just do the
+normal thing of function pointer structures. Stuff which is not
+implemented does not magically become called via some common
+function. There is no point in doing that. We just have to fill in the
+various k_clock structs with the correct pointers in the first place
+and let the NULL case return a sensible error value. The data
+structure does not become larger that way. It's a little bit more init
+code, but that's fine if we make the code better in general. In that
+case it's not even more init code, it's just filling the data
+structures which we register.
+
+That needs to be done in two steps:
+
+   1) cleanup CLOCK_DISPATCH
+   2) add the pc_timer_* extras
+
+That will make the thing way more palatable than working around the
+restrictions of CLOCK_DISPATCH and adding the hell to each syscall.
+
+The second step would be a patch consisting of exactly nine lines:
+
+ {
+	if (id >= 0)
+	        return .....
+	if (posix_cpu_clock_id(id))
+		return ....
+-	return -EINVAL;
++	return pc_timer_xxx(...);
+ }
+
+Please don't tell me now that we could even hack this into
+CLOCK_DISPATCH. *shudder*
+
+> +
+> +struct posix_clock *clockid_to_posix_clock(const clockid_t id)
 > +{
-> +	struct posix_clock *clk;
+> +	struct posix_clock *clk = NULL;
+> +	struct file *fp;
+> +
+> +	if (clock_is_static(id))
+> +		return NULL;
+> +
+> +	fp = fget(CLOCKID_TO_FD(id));
+> +	if (!fp)
+> +		return NULL;
+> +
+> +	if (fp->f_op->open == posix_clock_open)
+> +		clk = fp->private_data;
+> +
+> +	fput(fp);
+> +	return clk;
+> +}
+> +
+> +int pc_clock_adjtime(struct posix_clock *clk, struct timex *tx)
+> +{
 > +	int err;
 > +
-> +	mutex_lock(&clocks_mutex);
-> +
-> +	err = -ENOMEM;
-> +	clk = kzalloc(sizeof(*clk), GFP_KERNEL);
-> +	if (!clk)
-> +		goto no_memory;
-> +
-> +	err = -EBUSY;
-> +	clk->index = find_first_zero_bit(clocks_map, MAX_CLKDEV);
-> +	if (clk->index < MAX_CLKDEV)
-> +		set_bit(clk->index, clocks_map);
-> +	else
-> +		goto no_index;
-
-	if (clk->index >= MAX_CLKDEV)
-		goto no_index;
-
-	set_bit(clk->index, clocks_map);
-
-Makes it better readable.
-
-> +static void delete_clock(struct kref *kref)
-> +{
-> +	struct posix_clock *clk =
-> +		container_of(kref, struct posix_clock, kref);
-> +
-> +	mutex_lock(&clocks_mutex);
-> +	clear_bit(clk->index, clocks_map);
-> +	mutex_unlock(&clocks_mutex);
-> +
-> +	mutex_destroy(&clk->mux);
-> +	kfree(clk);
-> +}
-> +
-> +void posix_clock_destroy(struct posix_clock *clk)
-> +{
-> +	cdev_del(&clk->cdev);
-> +
 > +	mutex_lock(&clk->mux);
-> +	clk->zombie = true;
-> +	mutex_unlock(&clk->mux);
 > +
-> +	kref_put(&clk->kref, delete_clock);
+> +	if (clk->zombie)
 
-I still have some headache to understand that kref / delete_clock
-magic here.
+Uuurgh. That explains the zombie thing. That's really horrible and we
+can be more clever. When we leave the file lookup to the pc_timer_*
+functions, then we can simply do:
+
+struct posix_clock_descr {
+       struct file *fp;
+       struct posix_clock *clk;
+};
+
+static int get_posix_clock(const clockid_t id, struct posix_clock_descr *cd)
+{
+	struct file *fp = fget(CLOCKID_TO_FD(id));
+
+	if (!fp || fp->f_op->open != posix_clock_open || !fp->private_data)
+	   	return -ENODEV;
+	cd->fp = fp;
+	cd->clk = fp->private_data;
+	return 0;
+}
+
+static void put_posix_clock(struct posix_clock_descr *cd)
+{
+	fput(cd->fp);
+}
+
+int pc_timer_****(....)
+{
+	struct posix_clock_descr cd;
+	ret = -EOPNOTSUPP;
+
+	if (get_posix_clock(id, &cd))
+		return -ENODEV;
+		
+	if (cd.clk->ops->whatever)
+		ret = cd.clk->ops->whatever(....);
+
+	put_posix_clock(&cd);
+	return ret;
+}
+
+That get's rid of your life time problems, of clk->mutex, clock->zombie
+and makes the code simpler and more robust. And it avoids the whole
+mess in posix-timers.c as well.
+
+> +		err = -ENODEV;
+> +	else if (!clk->ops->clock_adjtime)
+> +		err = -EOPNOTSUPP;
+> +	else
+> +		err = clk->ops->clock_adjtime(clk->priv, tx);
+> +
+> +	mutex_unlock(&clk->mux);
+> +	return err;
+> +}
+
+Though all this feels still a bit backwards.
+
+The whole point of this exercise is to provide dynamic clock ids and
+make them available via the standard posix timer interface and aside
+of that have standard file operations for these clocks to provide
+special purpose ioctls, mmap and whatever. And to make it a bit more
+complex these must be removable modules.
+
+I need to read back the previous discussions, but maybe someone can
+fill me in why we can't make these dynamic things not just live in
+posix_clocks[MAX_CLOCKS ... MAX_DYNAMIC_CLOCKS] (there is no
+requirement to have an unlimited number of those) and just get a
+mapping from the fd to the clock_id? That creates a different set of
+life time problems, but no real horrible ones.
 
 Thanks,
 
