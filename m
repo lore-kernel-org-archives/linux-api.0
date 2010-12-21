@@ -1,73 +1,36 @@
-From: Mike Waychison <mikew@google.com>
-Subject: Re: [PATCH v3 03/22] netconsole: Introduce 'enabled' state-machine
-Date: Fri, 17 Dec 2010 13:20:30 -0800
-Message-ID: <AANLkTikG-XepYDb3R9=T8NP5TWVgsKNK-QmXrznGDHUO@mail.gmail.com>
-References: <20101214212846.17022.64836.stgit@mike.mtv.corp.google.com>
- <20101214212909.17022.96801.stgit@mike.mtv.corp.google.com> <20101217205238.GA8642@hmsreliant.think-freely.org>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH V7 1/8] ntp: add ADJ_SETOFFSET mode bit
+Date: Tue, 21 Dec 2010 08:56:12 +0100
+Message-ID: <20101221075612.GA13626@riccoc20.at.omicron.at>
+References: <cover.1292512461.git.richard.cochran@omicron.at>
+ <880d82bb8120f73973db27e0c48e949014b1a106.1292512461.git.richard.cochran@omicron.at>
+ <AANLkTi=yGoFwYt4p_LeHtAQyYgmURspO-p57UdL0sUEZ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20101217205238.GA8642@hmsreliant.think-freely.org>
-Sender: netdev-owner@vger.kernel.org
-To: Neil Horman <nhorman@tuxdriver.com>
-Cc: simon.kagstrom@netinsight.net, davem@davemloft.net, Matt Mackall <mpm@selenic.com>, adurbin@google.com, linux-kernel@vger.kernel.org, chavey@google.com, Greg KH <greg@kroah.com>, netdev@vger.kernel.org, =?ISO-8859-1?Q?Am=E9rico_Wang?= <xiyou.wangcong@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <AANLkTi=yGoFwYt4p_LeHtAQyYgmURspO-p57UdL0sUEZ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 17, 2010 at 12:52 PM, Neil Horman <nhorman@tuxdriver.com> w=
-rote:
-> On Tue, Dec 14, 2010 at 01:29:10PM -0800, Mike Waychison wrote:
+On Sat, Dec 18, 2010 at 05:16:52AM +0900, Kuwahara,T. wrote:
+> On 12/17/10, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > This patch adds a new mode bit into the timex structure. When set, the bit
+> > instructs the kernel to add the given time value to the current time.
+> >
+> 
+> The proposed new control mode, ADJ_SETOFFSET, is logically the same as
+> ADJ_OFFSET with timex.constant == -INFINITY.  So it is possible to do
+> the same thing without risking forward compatibility.  (I mean by "risking
+> forward compatibility" that the mode bit 0x0040 may be defined differently
+> by the upstream maintainer anytime in the future.)
 
->> @@ -680,16 +699,17 @@ static int netconsole_netdev_event(struct noti=
-fier_block *this,
->> =A0 =A0 =A0 struct net_device *dev =3D ptr;
->>
->> =A0 =A0 =A0 if (!(event =3D=3D NETDEV_CHANGENAME || event =3D=3D NET=
-DEV_UNREGISTER ||
->> - =A0 =A0 =A0 =A0 =A0 event =3D=3D NETDEV_BONDING_DESLAVE || event =3D=
-=3D NETDEV_GOING_DOWN))
->> + =A0 =A0 =A0 =A0 =A0 event =3D=3D NETDEV_BONDING_DESLAVE))
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto done;
->>
->> =A0 =A0 =A0 spin_lock_irqsave(&target_list_lock, flags);
->> =A0 =A0 =A0 list_for_each_entry(nt, &target_list, list) {
->> - =A0 =A0 =A0 =A0 =A0 =A0 if (nt->np.dev =3D=3D dev) {
->> + =A0 =A0 =A0 =A0 =A0 =A0 if (nt->np_state =3D=3D NETPOLL_ENABLED &&=
- nt->np.dev =3D=3D dev) {
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 switch (event) {
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 case NETDEV_CHANGENAME:
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 strlcpy(=
-nt->np.dev_name, dev->name, IFNAMSIZ);
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 break;
->> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 case NETDEV_BONDING_DESLAV=
-E:
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 case NETDEV_UNREGISTER:
-> I don't follow what you're doing here. =A0Previously NETDEV_BONDING_D=
-ESLAVE events
-> simply caused the netconsole interface to get deactivated, and now we=
-'re doing a
-> dev_put on the bonded interface bacause of the above move. =A0Given t=
-hat
-> NETDEV_BONDING_DESLAVE events are generated when a slave leaves the b=
-ond, this
-> doesn't seem right, or am I missing something
+Can you please elaborate?
 
-Ya, I did a poor job of explaining this bit.  Let me try now:
+I don't see any way to use timex.constant with ADJ_OFFSET in order to
+correct a time offset. The 'time_constant' in kernel/time/ntp.c is
+restricted to the interval [0..MAXTC], and MAXTC is 10 in timex.h.
 
-- NETDEV_GOING_DOWN is unneccesary because we will always see a
-NETDEV_UNREGISTER event, which is why it is removed.
-- I wasn't sure how to handle the NETDEV_BONDING_DESLAVE event in a
-consistent way.  Originally we would disable the target, but this
-actually leaks nt->np as it will never get cleaned up properly.  To
-the user, it looks as if the target gets disabled.
-
-I don't think you have any contention with the first comment above
-(though I need to document it).
-
-You are right in that with this patch, the target is left enabled,
-when we should probably mark it as disabled.  I'd be happy to add the
-transition from NETPOLL_ENABLED -> NETPOLL_DISABLED here if you'd
-like, but it'd move again in the next patch anyway (which already
-re-introduces the state transition in defer_netpoll_cleanup()).  Sorry
-this is confusing :(   I'll make it clearer in the next series
-version.
+Richard
