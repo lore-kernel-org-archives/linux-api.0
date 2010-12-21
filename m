@@ -1,42 +1,42 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: [PATCH V7 4/8] posix clocks: hook dynamic clocks into system
- calls
-Date: Tue, 21 Dec 2010 09:00:37 +0100
-Message-ID: <20101221080037.GB13626@riccoc20.at.omicron.at>
+From: john stultz <johnstul@us.ibm.com>
+Subject: Re: [PATCH V7 1/8] ntp: add ADJ_SETOFFSET mode bit
+Date: Tue, 21 Dec 2010 11:37:04 -0800
+Message-ID: <1292960224.2618.4.camel@work-vm>
 References: <cover.1292512461.git.richard.cochran@omicron.at>
- <6241238a1df55033e50b151ec9d35ba957e43d53.1292512461.git.richard.cochran@omicron.at>
- <alpine.LFD.2.00.1012162156580.12146@localhost6.localdomain6>
- <20101217070450.GB2982@riccoc20.at.omicron.at>
- <alpine.LFD.2.00.1012171010160.12146@localhost6.localdomain6>
+	 <880d82bb8120f73973db27e0c48e949014b1a106.1292512461.git.richard.cochran@omicron.at>
+	 <AANLkTi=yGoFwYt4p_LeHtAQyYgmURspO-p57UdL0sUEZ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.00.1012171010160.12146@localhost6.localdomain6>
+In-Reply-To: <AANLkTi=yGoFwYt4p_LeHtAQyYgmURspO-p57UdL0sUEZ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>
+To: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah@gmail.com>
+Cc: Richard Cochran <richardcochran@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 17, 2010 at 11:03:46AM +0100, Thomas Gleixner wrote:
+On Sat, 2010-12-18 at 05:16 +0900, Kuwahara,T. wrote:
+> On 12/17/10, Richard Cochran <richardcochran@gmail.com> wrote:
+> > This patch adds a new mode bit into the timex structure. When set, the bit
+> > instructs the kernel to add the given time value to the current time.
+> >
 > 
-> Doesn't the same problem exist for the file operations of patch 3? I
-> think you want the very same protection there unless you want to do
-> the same magic in your USB driver as well.
+> The proposed new control mode, ADJ_SETOFFSET, is logically the same as
+> ADJ_OFFSET with timex.constant == -INFINITY. 
 
-Yes, you are right. I overlooked that.
+I'm not sure if this is correct. Its more like settimeofday, only giving
+a relative offset to jump the clock, rather then an absolute time. It
+does not slew the clock over time like ADJ_OFFSET does.
 
-> So you could do the following:
-  ...
+>  So it is possible to do
+> the same thing without risking forward compatibility.  (I mean by "risking
+> forward compatibility" that the mode bit 0x0040 may be defined differently
+> by the upstream maintainer anytime in the future.)
 
-> So your fops would call get_fd_clk() and put_fd_clk() and the pc_timer
-> ones get_posix_clock() and put_posix_clock() or whatever sensible
-> function names you come up with.
-> 
-> Thoughts ?
+adjtimex is a linux specific interface, which is compatible but not
+identical to the ntp specified interfaces. The ntp client code already
+has Linux specific modifications, so I don't think we have to worry
+about 0x40 specifically being reserved by the NTP client.
 
-It is a good, concrete suggestion. I will try it that way.
-
-Thanks,
-
-Richard
+thanks
+-john
