@@ -1,40 +1,58 @@
 From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: [PATCH V7 1/8] ntp: add ADJ_SETOFFSET mode bit
-Date: Wed, 22 Dec 2010 08:13:19 +0100
-Message-ID: <20101222071319.GB8627@riccoc20.at.omicron.at>
+Subject: Re: [PATCH V7 4/8] posix clocks: hook dynamic clocks into system
+ calls
+Date: Wed, 22 Dec 2010 09:21:28 +0100
+Message-ID: <20101222082128.GA22845@riccoc20.at.omicron.at>
 References: <cover.1292512461.git.richard.cochran@omicron.at>
- <880d82bb8120f73973db27e0c48e949014b1a106.1292512461.git.richard.cochran@omicron.at>
- <AANLkTi=yGoFwYt4p_LeHtAQyYgmURspO-p57UdL0sUEZ@mail.gmail.com>
- <20101221075612.GA13626@riccoc20.at.omicron.at>
- <AANLkTimJd5pScKTiDxuYd-h+NevYbCusyvUAqmUDXe8h@mail.gmail.com>
- <1292970355.2618.76.camel@work-vm>
+ <6241238a1df55033e50b151ec9d35ba957e43d53.1292512461.git.richard.cochran@omicron.at>
+ <alpine.LFD.2.00.1012162156580.12146@localhost6.localdomain6>
+ <20101217070450.GB2982@riccoc20.at.omicron.at>
+ <alpine.LFD.2.00.1012171010160.12146@localhost6.localdomain6>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1292970355.2618.76.camel@work-vm>
-Sender: linux-kernel-owner@vger.kernel.org
-To: john stultz <johnstul@us.ibm.com>
-Cc: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
+In-Reply-To: <alpine.LFD.2.00.1012171010160.12146@localhost6.localdomain6>
+Sender: netdev-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 21, 2010 at 02:25:55PM -0800, john stultz wrote:
-> On Wed, 2010-12-22 at 05:57 +0900, Kuwahara,T. wrote:
+On Fri, Dec 17, 2010 at 11:03:46AM +0100, Thomas Gleixner wrote:
+> So you could do the following:
+...
+> static int get_posix_clock(const clockid_t id, struct posix_clock_descr *cd)
+> {
+> 	struct file *fp = fget(CLOCKID_TO_FD(id));
+> 	int ret;
 > 
-> > How about this?
-> > 
-> > if (txc->modes & ADJ_OFFSET) {
-> > 	if (txc->constant == INT32_MIN) {
-> > 		/* step time */
-> > 	} else {
-> > 		/* slew time */
-> > 	}
-> > }
-> 
-> This looks like magic behavior. Sort of a "knock twice and then say the
-> password" interface. I don't see why that would be better then adding a
-> clear new mode flag?
+> 	if (!fp || fp->f_op->open != posix_clock_open || !fp->private_data)
+> 	   	return -ENODEV;
+> 	ret = get_fd_clk(cd, fp);
+> 	if (ret)
+> 		fput(fp);
+> 	return ret;
+> }
 
-I have to agree with John on this one. Looks very hacky to me.
+In order to avoid leaking a fp reference, shouldn't this go like:
 
+static int get_posix_clock(const clockid_t id, struct posix_clock_desc *cd)
+{
+	struct file *fp = fget(CLOCKID_TO_FD(id));
+	int ret = -EINVAL;
+
+	if (!fp)
+		return ret;
+	if (fp->f_op->open != posix_clock_open || !fp->private_data)
+		goto out;
+	ret = get_fd_clk(cd, fp);
+out:
+	if (ret)
+		fput(fp);
+	return ret;
+}
+
+Thanks again for your help,
 Richard
+
+
