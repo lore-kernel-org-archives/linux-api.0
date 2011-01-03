@@ -1,44 +1,24 @@
-From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Subject: Re: [PATCH V7 7/8] ptp: Added a clock driver for the IXP46x.
-Date: Sun, 2 Jan 2011 10:20:42 +0100
-Message-ID: <20110102092042.GA14165@ucw.cz>
-References: <cover.1292512461.git.richard.cochran@omicron.at>
- <d2e0a5ac5eb51e9e4c7fcc94723b67c72c2f57c1.1292512461.git.richard.cochran@omicron.at>
- <20110102084505.GA3980@ucw.cz>
- <20110102091233.GA2847@riccoc20.at.omicron.at>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH V8 08/13] posix clocks: cleanup the CLOCK_DISPTACH macro
+Date: Mon, 03 Jan 2011 10:29:09 +0100
+Message-ID: <1294046949.2016.36.camel@laptop>
+References: <cover.1293820862.git.richard.cochran@omicron.at>
+	 <503cd1fa268867573001cfc9bb5681ee3b5b32fa.1293820862.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20110102091233.GA2847-7KxsofuKt4IfAd9E5cN8NEzG7cXyKsk/@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <503cd1fa268867573001cfc9bb5681ee3b5b32fa.1293820862.git.richard.cochran@omicron.at>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Cochran <richardcochran@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-On Sun 2011-01-02 10:12:33, Richard Cochran wrote:
-> On Sun, Jan 02, 2011 at 09:45:05AM +0100, Pavel Machek wrote:
-> > Hi!!
-> > 
-> > > +struct ixp46x_channel_ctl {
-> > > +	u32 Ch_Control; /* 0x40 Time Synchronization Channel Control */
-> > > +	u32 Ch_Event;   /* 0x44 Time Synchronization Channel Event */
-> > > +	u32 TxSnapLo;   /* 0x48 Transmit Snapshot Low Register */
-> > > +	u32 TxSnapHi;   /* 0x4C Transmit Snapshot High Register */
-> > 
-> > CouldWeGetRidOfCamelCase?
-> 
-> I agree that CamelCase is ugly and in bad taste. However, I make an
-> exception when the register level programmer's manual uses this style.
-> 
-> IMHO, it is better to use the exact same mnemonics as in the
-> manual. That way, when the next person comes along to make a change to
+On Fri, 2010-12-31 at 20:15 +0100, Richard Cochran wrote:
+> +#define CLOCK_DISPATCH(clock, call, arglist) dispatch_##call arglist
 
-Given the comments -- does manual really use camelCase crap?
-And... the identifiers actually combine camelCase with _. Better fix
-it.
-							Pavel
+How about you run something like:
 
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+ :% s/CLOCK_DISPATCH([^,]*, \([^,]*\), \([^)]*)\))/dispatch_\1\2/g
+
+and remove that cruft all together?
