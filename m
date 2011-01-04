@@ -1,29 +1,43 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: [PATCH V7 7/8] ptp: Added a clock driver for the IXP46x.
-Date: Mon, 3 Jan 2011 18:07:34 +0100
-Message-ID: <20110103170732.GA3700@riccoc20.at.omicron.at>
-References: <cover.1292512461.git.richard.cochran@omicron.at>
- <d2e0a5ac5eb51e9e4c7fcc94723b67c72c2f57c1.1292512461.git.richard.cochran@omicron.at>
- <20110102084505.GA3980@ucw.cz>
- <20110102091233.GA2847@riccoc20.at.omicron.at>
- <20110102092042.GA14165@ucw.cz>
+From: Shaohua Li <shaohua.li@intel.com>
+Subject: [PATCH v2 0/5] add new ioctls to do metadata readahead in btrfs
+Date: Tue, 04 Jan 2011 13:40:30 +0800
+Message-ID: <1294119630.1949.365.camel@sli10-conroe>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110102092042.GA14165@ucw.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+Cc: Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, linux-api@vger.kernel.org, mtk.manpages@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jan 02, 2011 at 10:20:42AM +0100, Pavel Machek wrote:
-> Given the comments -- does manual really use camelCase crap?
-> And... the identifiers actually combine camelCase with _. Better fix
-> it.
+Hi,
+  We have file readahead to do asyn file read, but has no metadata
+readahead. For a list of files, their metadata is stored in fragmented
+disk space and metadata read is a sync operation, which impacts the
+efficiency of readahead much. The patches try to add meatadata readahead
+for btrfs.
+  In btrfs, metadata is stored in btree_inode. Ideally, if we could hook
+the inode to a fd so we could use existing syscalls (readahead, mincore
+or upcoming fincore) to do readahead, but the inode is hidden, there is
+no easy way for this from my understanding. So we add two ioctls for
+this. One is like readahead syscall, the other is like micore/fincore
+syscall.
+  Under a harddisk based netbook with Meego, the metadata readahead
+reduced about 3.5s boot time in average from total 16s.
+  Last time I posted similar patches to btrfs maillist, which adds the
+new ioctls in btrfs specific ioctl code. But Christoph Hellwig asks we
+have a generic interface to do this so other filesystem can share some
+code, so I came up with the new one. Comments and suggestions are
+welcome!
 
-Thats the way Intel likes it:
+v1->v2:
+1. Added more comments and fix return values suggested by Andrew Morton
+2. fix a race condition pointed out by Yan Zheng
 
-http://download.intel.com/design/network/manuals/30626204.pdf
+initial post:
+http://marc.info/?l=linux-fsdevel&m=129222493406353&w=2
 
-Page 837
+Thanks,
+Shaohua
+
