@@ -1,119 +1,109 @@
-From: Shaohua Li <shaohua.li@intel.com>
-Subject: [PATCH v2 2/5] implement metadata_incore in btrfs
-Date: Tue, 04 Jan 2011 13:40:35 +0800
-Message-ID: <1294119635.1949.367.camel@sli10-conroe>
+From: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2 3/5]add metadata_readahead ioctl in vfs
+Date: Tue, 04 Jan 2011 13:40:37 +0800
+Message-ID: <1294119637.1949.368.camel@sli10-conroe>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
-Cc: Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, linux-api@vger.kernel.org, mtk.manpages@gmail.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Yan, Zheng" <zheng.z.yan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Implement btrfs specific .metadata_incore.
-In btrfs, all metadata pages are in a special btree_inode, we take pages from it.
-we only account updated and referenced pages here. Say we collect metadata info
-in one boot, do metadata readahead in next boot and we might collect metadata
-again. The readahead could read garbage data in as metadata could be changed
-from first run. If we only account updated pages, the metadata info collected
-by userspace will increase every run. Btrfs alloc_extent_buffer will do
-mark_page_accessed() for pages which will be used soon, so we could use
-referenced bit to filter some garbage pages.
+Add metadata readahead ioctl in vfs. Filesystem can hook to
+super_operations.metadata_readahead to handle filesystem specific task.
+Next patch will give an example how btrfs implements it.
 
-Signed-off-by: Shaohua Li <shaohua.li@intel.com>
+Signed-off-by: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
 ---
- fs/btrfs/super.c |   63 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 63 insertions(+)
+ fs/compat_ioctl.c  |    1 +
+ fs/ioctl.c         |   21 +++++++++++++++++++++
+ include/linux/fs.h |    8 ++++++++
+ 3 files changed, 30 insertions(+)
 
-Index: linux/fs/btrfs/super.c
+Index: linux/fs/ioctl.c
 ===================================================================
---- linux.orig/fs/btrfs/super.c	2010-12-31 08:52:00.000000000 +0800
-+++ linux/fs/btrfs/super.c	2011-01-03 21:16:00.000000000 +0800
-@@ -39,6 +39,7 @@
- #include <linux/miscdevice.h>
- #include <linux/magic.h>
- #include <linux/slab.h>
-+#include <linux/pagevec.h>
- #include "compat.h"
- #include "ctree.h"
- #include "disk-io.h"
-@@ -845,6 +846,67 @@ static int btrfs_unfreeze(struct super_b
- 	return 0;
+--- linux.orig/fs/ioctl.c	2011-01-03 21:15:48.000000000 +0800
++++ linux/fs/ioctl.c	2011-01-03 21:16:06.000000000 +0800
+@@ -601,6 +601,24 @@ static int ioctl_metadata_incore(struct
+ 	return entries;
  }
  
-+static int btrfs_metadata_incore(struct super_block *sb, loff_t *offset,
-+	ssize_t *size)
++static int ioctl_metadata_readahead(struct file *filp, void __user *argp)
 +{
-+	struct btrfs_root *tree_root = btrfs_sb(sb);
-+	struct inode *btree_inode = tree_root->fs_info->btree_inode;
-+	struct pagevec pvec;
-+	pgoff_t index = (*offset) >> PAGE_CACHE_SHIFT;
-+	int i, nr_pages;
++	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
++	struct metadata_readahead_args args;
 +
-+	*size = 0;
-+retry:
-+	pagevec_init(&pvec, 0);
-+	nr_pages = pagevec_lookup(&pvec, btree_inode->i_mapping, index,
-+		PAGEVEC_SIZE);
-+	if (nr_pages == 0)
-+		goto out;
-+	for (i = 0; i < nr_pages; i++) {
-+		struct page *page = pvec.pages[i];
++	if (!sb->s_op->metadata_readahead)
++		return -EINVAL;
 +
-+		/*
-+		 * we only account updated and referenced pages here. Say we
-+		 * collect metadata info in one boot, do metadata readahead in
-+		 * next boot and we collect metadata again. The readahead could
-+		 * read garbage data in as metadata could be changed from first
-+		 * run. If we only account updated pages, the metadata info
-+		 * collected by userspace will increase every run. Btrfs
-+		 * alloc_extent_buffer will do mark_page_accessed() for pages
-+		 * which will be used soon, so we could use referenced bit to
-+		 * filter some garbage pages.
-+		 */
-+		if (PageUptodate(page) && PageReferenced(page)) {
-+			if (*size == 0) {
-+				*size += PAGE_CACHE_SIZE;
-+				*offset = page->index << PAGE_CACHE_SHIFT;
-+				continue;
-+			}
-+			if (page->index !=
-+			    (*offset + *size) >> PAGE_CACHE_SHIFT)
-+				break;
-+			*size += PAGE_CACHE_SIZE;
-+		} else if (*size > 0)
-+			break;
-+		else
-+			index = page->index + 1;
-+	}
-+	pagevec_release(&pvec);
++	if (copy_from_user(&args, argp, sizeof(args)))
++		return -EFAULT;
 +
-+	/*
-+	 * all pages are filtered out because of referenced bit, but this
-+	 * doesn't mean we have no pages anymore in the btree_inode. so we
-+	 * retry the search and 'index' is already set to next start address
-+	 */
-+	if (nr_pages > 0 && *size == 0)
-+		goto retry;
-+out:
-+	if (*size > 0)
-+		return 0;
-+	else
-+		return -ENOENT;
++	/* readahead in page unit */
++	if ((args.offset & ~PAGE_CACHE_MASK) || (args.size & ~PAGE_CACHE_MASK))
++		return -EINVAL;
++
++	return sb->s_op->metadata_readahead(sb, args.offset, args.size);
 +}
 +
- static const struct super_operations btrfs_super_ops = {
- 	.drop_inode	= btrfs_drop_inode,
- 	.evict_inode	= btrfs_evict_inode,
-@@ -859,6 +921,7 @@ static const struct super_operations btr
- 	.remount_fs	= btrfs_remount,
- 	.freeze_fs	= btrfs_freeze,
- 	.unfreeze_fs	= btrfs_unfreeze,
-+	.metadata_incore = btrfs_metadata_incore,
+ /*
+  * When you add any new common ioctls to the switches above and below
+  * please update compat_sys_ioctl() too.
+@@ -664,6 +682,9 @@ int do_vfs_ioctl(struct file *filp, unsi
+ 	case FIMETADATA_INCORE:
+ 		return ioctl_metadata_incore(filp, argp);
+ 
++	case FIMETADATA_READAHEAD:
++		return ioctl_metadata_readahead(filp, argp);
++
+ 	default:
+ 		if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
+ 			error = file_ioctl(filp, cmd, arg);
+Index: linux/include/linux/fs.h
+===================================================================
+--- linux.orig/include/linux/fs.h	2011-01-03 21:15:48.000000000 +0800
++++ linux/include/linux/fs.h	2011-01-03 21:16:06.000000000 +0800
+@@ -65,6 +65,11 @@ struct metadata_incore_args {
+ 	__u32 unused;
  };
  
- static const struct file_operations btrfs_ctl_fops = {
-
-
++struct metadata_readahead_args {
++	__u64 offset;
++	__u64 size;
++};
++
+ #define NR_FILE  8192	/* this can well be larger on a larger system */
+ 
+ #define MAY_EXEC 1
+@@ -338,6 +343,7 @@ struct metadata_incore_args {
+ #define FITHAW		_IOWR('X', 120, int)	/* Thaw */
+ #define FITRIM		_IOWR('X', 121, struct fstrim_range)	/* Trim */
+ #define FIMETADATA_INCORE _IOWR('X', 122, struct metadata_incore_args)
++#define FIMETADATA_READAHEAD _IOR('X', 123, struct metadata_readahead_args)
+ 
+ #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
+ #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
+@@ -1628,6 +1634,8 @@ struct super_operations {
+ 	int (*bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
+ 	int (*metadata_incore)(struct super_block*, loff_t *offset,
+ 		ssize_t *size);
++	int (*metadata_readahead)(struct super_block*, loff_t offset,
++		ssize_t size);
+ };
+ 
+ /*
+Index: linux/fs/compat_ioctl.c
+===================================================================
+--- linux.orig/fs/compat_ioctl.c	2011-01-03 21:15:48.000000000 +0800
++++ linux/fs/compat_ioctl.c	2011-01-03 21:16:06.000000000 +0800
+@@ -883,6 +883,7 @@ COMPATIBLE_IOCTL(FIGETBSZ)
+ COMPATIBLE_IOCTL(FIFREEZE)
+ COMPATIBLE_IOCTL(FITHAW)
+ COMPATIBLE_IOCTL(FIMETADATA_INCORE)
++COMPATIBLE_IOCTL(FIMETADATA_READAHEAD)
+ COMPATIBLE_IOCTL(KDGETKEYCODE)
+ COMPATIBLE_IOCTL(KDSETKEYCODE)
+ COMPATIBLE_IOCTL(KDGKBTYPE)
