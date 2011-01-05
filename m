@@ -1,57 +1,166 @@
 From: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] add new ioctls to do metadata readahead in btrfs
-Date: Wed, 05 Jan 2011 10:10:48 +0800
-Message-ID: <1294193448.1949.377.camel@sli10-conroe>
-References: <1294119630.1949.365.camel@sli10-conroe>
-	 <x498vz0abov.fsf@segfault.boston.devel.redhat.com>
+Subject: Re: [PATCH v2 3/5]add metadata_readahead ioctl in vfs
+Date: Wed, 05 Jan 2011 10:11:36 +0800
+Message-ID: <1294193496.1949.378.camel@sli10-conroe>
+References: <1294119637.1949.368.camel@sli10-conroe>
+	 <201101041051.13979.arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <x498vz0abov.fsf-RRHT56Q3PSP4kTEheFKJxxDDeQx5vsVwAInAS/Ez/D0@public.gmane.org>
+In-Reply-To: <201101041051.13979.arnd-r2nGTMty4D4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 Cc: "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Yan, Zheng" <zheng.z.yan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2011-01-05 at 00:14 +0800, Jeff Moyer wrote:
-> Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> writes:
+On Tue, 2011-01-04 at 17:51 +0800, Arnd Bergmann wrote:
+> On Tuesday 04 January 2011 06:40:37 Shaohua Li wrote:
+> >  /*
+> >   * When you add any new common ioctls to the switches above and below
+> >   * please update compat_sys_ioctl() too.
+> > @@ -664,6 +682,9 @@ int do_vfs_ioctl(struct file *filp, unsi
+> >         case FIMETADATA_INCORE:
+> >                 return ioctl_metadata_incore(filp, argp);
+> >  
+> > +       case FIMETADATA_READAHEAD:
+> > +               return ioctl_metadata_readahead(filp, argp);
+> > +
+> >         default:
+> >                 if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
+> >                         error = file_ioctl(filp, cmd, arg);
 > 
-> > Hi,
-> >   We have file readahead to do asyn file read, but has no metadata
-> > readahead. For a list of files, their metadata is stored in fragmented
-> > disk space and metadata read is a sync operation, which impacts the
-> > efficiency of readahead much. The patches try to add meatadata readahead
-> > for btrfs.
-> >   In btrfs, metadata is stored in btree_inode. Ideally, if we could hook
-> > the inode to a fd so we could use existing syscalls (readahead, mincore
-> > or upcoming fincore) to do readahead, but the inode is hidden, there is
-> > no easy way for this from my understanding. So we add two ioctls for
-> > this. One is like readahead syscall, the other is like micore/fincore
-> > syscall.
-> >   Under a harddisk based netbook with Meego, the metadata readahead
-> > reduced about 3.5s boot time in average from total 16s.
-> >   Last time I posted similar patches to btrfs maillist, which adds the
-> > new ioctls in btrfs specific ioctl code. But Christoph Hellwig asks we
-> > have a generic interface to do this so other filesystem can share some
-> > code, so I came up with the new one. Comments and suggestions are
-> > welcome!
+> Did you notice the comment above the function? ;-)
 > 
-> Is it not possible to enhance the existing readahead mechanisms to work
-> on metadata as well? 
-using existing sys_readahead to do metadata readahead? The problem is I
-can't hook a fd for meatadata inode, as explained above.
-or let kernel automatically do metadata readahead? Kernel can't be so
-intelligent, because kernel doesn't even know which file should be
-readahead till userspace tells it
+> You should really add the new ioctls to compat_sys_ioctl, not
+> to the COMPATIBLE_IOCTL() list, in order to make the behavior
+> consistent between 32 and 64 bit user space. The main difference
+> is that all ioctl commands that are hardcoded in the functions
+> get called before trying to call the file system specific
+> .ioctl method.
+> 
+> > +struct metadata_readahead_args {
+> > +       __u64 offset;
+> > +       __u64 size;
+> > +};
+> > +
+> >  #define NR_FILE  8192  /* this can well be larger on a larger system */
+> >  
+> >  #define MAY_EXEC 1
+> > @@ -338,6 +343,7 @@ struct metadata_incore_args {
+> >  #define FITHAW         _IOWR('X', 120, int)    /* Thaw */
+> >  #define FITRIM         _IOWR('X', 121, struct fstrim_range)    /* Trim */
+> >  #define FIMETADATA_INCORE _IOWR('X', 122, struct metadata_incore_args)
+> > +#define FIMETADATA_READAHEAD _IOR('X', 123, struct metadata_readahead_args)
+> 
+> This should be _IOW, not _IOR.
+> 
+> Otherwise looks good.
+Thanks, fixed them.
 
->  Is there some reason why metadata should be
-> fetched separately from the data it references?
-metadata read is sync operation, which will break data readahead
-pipeline. And metadata and data usually lives in not adjacent disk
-blocks, which will introduce a lot of disk seeks. reading metadata first
-and then do data readahead can reduce a lot of disk seeks and data
-readahead can be fully pumped
+Subject: add metadata_readahead ioctl in vfs
 
-Thanks,
-Shaohua
+Add metadata readahead ioctl in vfs. Filesystem can hook to
+super_operations.metadata_readahead to handle filesystem specific task.
+Next patch will give an example how btrfs implements it.
+
+Signed-off-by: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+
+---
+ fs/compat_ioctl.c  |    2 ++
+ fs/ioctl.c         |   21 +++++++++++++++++++++
+ include/linux/fs.h |    8 ++++++++
+ 3 files changed, 31 insertions(+)
+
+Index: linux/fs/ioctl.c
+===================================================================
+--- linux.orig/fs/ioctl.c	2011-01-05 10:00:17.000000000 +0800
++++ linux/fs/ioctl.c	2011-01-05 10:00:42.000000000 +0800
+@@ -603,6 +603,24 @@ static int ioctl_metadata_incore(struct
+ 	return entries;
+ }
+ 
++static int ioctl_metadata_readahead(struct file *filp, void __user *argp)
++{
++	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
++	struct metadata_readahead_args args;
++
++	if (!sb->s_op->metadata_readahead)
++		return -EINVAL;
++
++	if (copy_from_user(&args, argp, sizeof(args)))
++		return -EFAULT;
++
++	/* readahead in page unit */
++	if ((args.offset & ~PAGE_CACHE_MASK) || (args.size & ~PAGE_CACHE_MASK))
++		return -EINVAL;
++
++	return sb->s_op->metadata_readahead(sb, args.offset, args.size);
++}
++
+ /*
+  * When you add any new common ioctls to the switches above and below
+  * please update compat_sys_ioctl() too.
+@@ -666,6 +684,9 @@ int do_vfs_ioctl(struct file *filp, unsi
+ 	case FIMETADATA_INCORE:
+ 		return ioctl_metadata_incore(filp, argp);
+ 
++	case FIMETADATA_READAHEAD:
++		return ioctl_metadata_readahead(filp, argp);
++
+ 	default:
+ 		if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
+ 			error = file_ioctl(filp, cmd, arg);
+Index: linux/include/linux/fs.h
+===================================================================
+--- linux.orig/include/linux/fs.h	2011-01-05 09:10:12.000000000 +0800
++++ linux/include/linux/fs.h	2011-01-05 10:00:42.000000000 +0800
+@@ -65,6 +65,11 @@ struct metadata_incore_args {
+ 	__u32 unused;
+ };
+ 
++struct metadata_readahead_args {
++	__u64 offset;
++	__u64 size;
++};
++
+ #define NR_FILE  8192	/* this can well be larger on a larger system */
+ 
+ #define MAY_EXEC 1
+@@ -338,6 +343,7 @@ struct metadata_incore_args {
+ #define FITHAW		_IOWR('X', 120, int)	/* Thaw */
+ #define FITRIM		_IOWR('X', 121, struct fstrim_range)	/* Trim */
+ #define FIMETADATA_INCORE _IOWR('X', 122, struct metadata_incore_args)
++#define FIMETADATA_READAHEAD _IOW('X', 123, struct metadata_readahead_args)
+ 
+ #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
+ #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
+@@ -1628,6 +1634,8 @@ struct super_operations {
+ 	int (*bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
+ 	int (*metadata_incore)(struct super_block*, loff_t *offset,
+ 		ssize_t *size);
++	int (*metadata_readahead)(struct super_block*, loff_t offset,
++		ssize_t size);
+ };
+ 
+ /*
+Index: linux/fs/compat_ioctl.c
+===================================================================
+--- linux.orig/fs/compat_ioctl.c	2011-01-05 08:58:06.000000000 +0800
++++ linux/fs/compat_ioctl.c	2011-01-05 10:00:42.000000000 +0800
+@@ -883,6 +883,7 @@ COMPATIBLE_IOCTL(FIGETBSZ)
+ COMPATIBLE_IOCTL(FIFREEZE)
+ COMPATIBLE_IOCTL(FITHAW)
+ COMPATIBLE_IOCTL(FIMETADATA_INCORE)
++COMPATIBLE_IOCTL(FIMETADATA_READAHEAD)
+ COMPATIBLE_IOCTL(KDGETKEYCODE)
+ COMPATIBLE_IOCTL(KDSETKEYCODE)
+ COMPATIBLE_IOCTL(KDGKBTYPE)
+@@ -1579,6 +1580,7 @@ asmlinkage long compat_sys_ioctl(unsigne
+ 	case FIOASYNC:
+ 	case FIOQSIZE:
+ 	case FIMETADATA_INCORE:
++	case FIMETADATA_READAHEAD:
+ 		break;
+ 
+ #if defined(CONFIG_IA64) || defined(CONFIG_X86_64)
