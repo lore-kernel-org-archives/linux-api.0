@@ -1,31 +1,26 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH v2 3/5]add metadata_readahead ioctl in vfs
-Date: Wed, 5 Jan 2011 10:09:20 +0100
-Message-ID: <201101051009.20591.arnd@arndb.de>
-References: <1294119637.1949.368.camel@sli10-conroe> <201101041051.13979.arnd@arndb.de> <1294193496.1949.378.camel@sli10-conroe>
+Date: Wed, 5 Jan 2011 10:26:15 +0100
+Message-ID: <201101051026.15391.arnd@arndb.de>
+References: <1294119637.1949.368.camel@sli10-conroe> <1294193496.1949.378.camel@sli10-conroe> <201101051009.20591.arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: Text/Plain;
   charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1294193496.1949.378.camel@sli10-conroe>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Yan, Zheng" <zheng.z.yan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <201101051009.20591.arnd@arndb.de>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Shaohua Li <shaohua.li@intel.com>
+Cc: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 05 January 2011 03:11:36 Shaohua Li wrote:
-> > Did you notice the comment above the function? ;-)
-> > 
-> > You should really add the new ioctls to compat_sys_ioctl, not
-> > to the COMPATIBLE_IOCTL() list, in order to make the behavior
-> > consistent between 32 and 64 bit user space. The main difference
-> > is that all ioctl commands that are hardcoded in the functions
-> > get called before trying to call the file system specific
-> > .ioctl method.
+On Wednesday 05 January 2011 10:09:20 Arnd Bergmann wrote:
+> > Thanks, fixed them.
+> 
+> The patch you posted still uses COMPATIBLE_IOCTL. Wrong patch?
 
-> Thanks, fixed them.
-
-The patch you posted still uses COMPATIBLE_IOCTL. Wrong patch?
+On a second look, I noticed that you now have both the COMPATIBLE_IOCTL
+and the case statement in compat_sys_ioctl. The former can be
+dropped.
 
 	Arnd
