@@ -1,36 +1,105 @@
-From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Subject: Re: [PATCH V7 7/8] ptp: Added a clock driver for the IXP46x.
-Date: Thu, 6 Jan 2011 21:04:56 +0100
-Message-ID: <20110106200456.GB1521@ucw.cz>
-References: <cover.1292512461.git.richard.cochran@omicron.at>
- <d2e0a5ac5eb51e9e4c7fcc94723b67c72c2f57c1.1292512461.git.richard.cochran@omicron.at>
- <20110102084505.GA3980@ucw.cz>
- <20110102091233.GA2847@riccoc20.at.omicron.at>
- <20110102092042.GA14165@ucw.cz>
- <20110103170732.GA3700@riccoc20.at.omicron.at>
+From: Krzysztof Halasa <khc@pm.waw.pl>
+Subject: Re: [PATCH V8 12/13] ptp: Added a clock driver for the IXP46x.
+Date: Thu, 06 Jan 2011 22:01:59 +0100
+Message-ID: <m3ei8plpa0.fsf@intrepid.localdomain>
+References: <cover.1293820862.git.richard.cochran@omicron.at>
+	<8151196c018776704df34748f333bdb159497d0b.1293820862.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20110103170732.GA3700-7KxsofuKt4IfAd9E5cN8NEzG7cXyKsk/@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <8151196c018776704df34748f333bdb159497d0b.1293820862.git.richard.cochran@omicron.at>
+	(Richard Cochran's message of "Fri, 31 Dec 2010 20:17:23 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Cochran <richardcochran@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+Richard Cochran <richardcochran@gmail.com> writes:
 
-> > Given the comments -- does manual really use camelCase crap?
-> > And... the identifiers actually combine camelCase with _. Better fix
-> > it.
-> 
-> Thats the way Intel likes it:
-> 
-> http://download.intel.com/design/network/manuals/30626204.pdf
+> +struct ixp46x_channel_ctl {
+> +	u32 Ch_Control; /* 0x40 Time Synchronization Channel Control */
+> +	u32 Ch_Event;   /* 0x44 Time Synchronization Channel Event */
+> +	u32 TxSnapLo;   /* 0x48 Transmit Snapshot Low Register */
+> +	u32 TxSnapHi;   /* 0x4C Transmit Snapshot High Register */
+> +	u32 RxSnapLo;   /* 0x50 Receive Snapshot Low Register */
+> +	u32 RxSnapHi;   /* 0x54 Receive Snapshot High Register */
+> +	u32 SrcUUIDLo;  /* 0x58 Source UUID0 Low Register */
+> +	u32 SrcUUIDHi;  /* 0x5C Sequence Identifier/Source UUID0 High */
 
-Ok... I'd say that it is so ugly that it should be replaced, but it is
-not huge deal.
+I don't like these XxxYyyZzz either :-(
 
+> +static void do_tx_timestamp(struct port *port, struct sk_buff *skb)
+> +{
+> +#ifdef __ARMEB__
+> +	struct skb_shared_hwtstamps shhwtstamps;
+> +	struct ixp46x_ts_regs *regs;
+> +	struct skb_shared_info *shtx;
+> +	u64 ns;
+> +	u32 ch, cnt, hi, lo, val;
+> +
+> +	shtx = skb_shinfo(skb);
+> +	if (unlikely(shtx->tx_flags & SKBTX_HW_TSTAMP && port->hwts_tx_en))
+> +		shtx->tx_flags |= SKBTX_IN_PROGRESS;
+> +	else
+> +		return;
+> +
+> +	ch = PORT2CHANNEL(port);
+> +
+> +	regs = (struct ixp46x_ts_regs __iomem *) IXP4XX_TIMESYNC_BASE_VIRT;
+> +
+> +	/*
+> +	 * This really stinks, but we have to poll for the Tx time stamp.
+> +	 * Usually, the time stamp is ready after 4 to 6 microseconds.
+> +	 */
+> +	for (cnt = 0; cnt < 100; cnt++) {
+> +		val = __raw_readl(&regs->channel[ch].Ch_Event);
+> +		if (val & TX_SNAPSHOT_LOCKED)
+> +			break;
+> +		udelay(1);
+> +	}
+> +	if (!(val & TX_SNAPSHOT_LOCKED)) {
+> +		shtx->tx_flags &= ~SKBTX_IN_PROGRESS;
+> +		return;
+> +	}
+> +
+> +	lo = __raw_readl(&regs->channel[ch].TxSnapLo);
+> +	hi = __raw_readl(&regs->channel[ch].TxSnapHi);
+> +	ns = ((u64) hi) << 32;
+> +	ns |= lo;
+> +	ns <<= TICKS_NS_SHIFT;
+> +
+> +	memset(&shhwtstamps, 0, sizeof(shhwtstamps));
+> +	shhwtstamps.hwtstamp = ns_to_ktime(ns);
+> +	skb_tstamp_tx(skb, &shhwtstamps);
+> +
+> +	__raw_writel(TX_SNAPSHOT_LOCKED, &regs->channel[ch].Ch_Event);
+> +#endif
+> +}
+
+And what if we're little-endian? Why does it depend on BE?
+
+> @@ -1171,6 +1357,11 @@ static int __devinit eth_init_one(struct platform_device *pdev)
+>  	char phy_id[MII_BUS_ID_SIZE + 3];
+>  	int err;
+>  
+> +	if (ptp_filter_init(ptp_filter, ARRAY_SIZE(ptp_filter))) {
+> +		pr_err("ixp4xx_eth: bad ptp filter\n");
+> +		return -EINVAL;
+> +	}
+> +
+>  	if (!(dev = alloc_etherdev(sizeof(struct port))))
+>  		return -ENOMEM;
+
+Shouldn't it depend on CPU type?
+BTW which CPU is required? IXP46x (455/460/465)? Does it work on 43x?
+
+> +	if (NO_IRQ == irq)
+> +		return NO_IRQ;
+
+Don't like these either :-(
+Not showstoppers but...
+
+Also I don't like the ixp_read/ixp_write() trivial macros. Why not
+simply call __raw_readl() and __raw_writel()?
 -- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+Krzysztof Halasa
