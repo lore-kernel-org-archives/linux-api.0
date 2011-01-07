@@ -1,30 +1,26 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 1/5] add metadata_incore ioctl in vfs
-Date: Fri, 7 Jan 2011 15:15:13 +0100
-Message-ID: <201101071515.13901.arnd@arndb.de>
-References: <1294119632.1949.366.camel@sli10-conroe> <201101060838.49359.arnd@arndb.de> <1294299907.1949.582.camel@sli10-conroe>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH v2 3/5]add metadata_readahead ioctl in vfs
+Date: Fri, 7 Jan 2011 15:16:09 +0100
+Message-ID: <201101071516.09941.arnd@arndb.de>
+References: <1294119637.1949.368.camel@sli10-conroe> <201101051026.15391.arnd@arndb.de> <1294299909.1949.583.camel@sli10-conroe>
 Mime-Version: 1.0
 Content-Type: Text/Plain;
   charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <1294299907.1949.582.camel@sli10-conroe>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Shaohua Li <shaohua.li@intel.com>
-Cc: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1294299909.1949.583.camel@sli10-conroe>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Yan, Zheng" <zheng.z.yan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 On Thursday 06 January 2011, Shaohua Li wrote:
-> Subject: add metadata_incore ioctl in vfs
+> Subject: add metadata_readahead ioctl in vfs
 > 
-> Add an ioctl to dump filesystem's metadata in memory in vfs. Userspace collects
-> such info and uses it to do metadata readahead.
-> Filesystem can hook to super_operations.metadata_incore to get metadata in
-> specific approach. Next patch will give an example how to implement
-> .metadata_incore in btrfs.
+> Add metadata readahead ioctl in vfs. Filesystem can hook to
+> super_operations.metadata_readahead to handle filesystem specific task.
+> Next patch will give an example how btrfs implements it.
 > 
-> Signed-off-by: Shaohua Li <shaohua.li@intel.com>
+> Signed-off-by: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-Looks great!
-
-Reviewed-by: Arnd Bergmann <arnd@arndb.de>
+Reviewed-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
