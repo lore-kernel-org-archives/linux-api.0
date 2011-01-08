@@ -1,61 +1,77 @@
-From: Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH V8 12/13] ptp: Added a clock driver for the IXP46x.
-Date: Sat, 08 Jan 2011 17:25:36 +0100
-Message-ID: <m3r5cnuzun.fsf@intrepid.localdomain>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH V8 02/13] ntp: add ADJ_SETOFFSET mode bit
+Date: Sat, 8 Jan 2011 18:50:28 +0100
+Message-ID: <20110108175028.GA22308@riccoc20.at.omicron.at>
 References: <cover.1293820862.git.richard.cochran@omicron.at>
-	<8151196c018776704df34748f333bdb159497d0b.1293820862.git.richard.cochran@omicron.at>
-	<m3ei8plpa0.fsf@intrepid.localdomain>
-	<20110107170752.GB8666@riccoc20.at.omicron.at>
+ <fe2bec763bec155381d62721aa9da84aeca2785c.1293820862.git.richard.cochran@omicron.at>
+ <AANLkTini2WdT-1v4k9V3JOZYDkA59P+SyscTe8-fK2Wk@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110107170752.GB8666-7KxsofuKt4IfAd9E5cN8NEzG7cXyKsk/@public.gmane.org> (Richard Cochran's
-	message of "Fri, 7 Jan 2011 18:07:52 +0100")
+Content-Disposition: inline
+In-Reply-To: <AANLkTini2WdT-1v4k9V3JOZYDkA59P+SyscTe8-fK2Wk-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+To: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+On Sun, Jan 02, 2011 at 05:38:19AM +0900, Kuwahara,T. wrote:
+> As you know, it conflicts with MOD_PPSMAX.  And also, it is logically
+> the same as ADJ_OFFSET, unless the kernel PLL is enabled explicitly.
 
-> The time stamp code clones the skb, but the LE version frees the skb
-> too early. Perhaps we can move that dev_kfree_skb(skb) in the LE case
-> to be the last statement in eth_xmit(). What do you think?
+I choose another bit, for the next version of the patch series.
 
-I think so. Or something similar.
+> 
+> So here's my simple solution:
+> 
 
-> Do you mean, you don't like the constant on the left hand side?
+I have read the API documentation in the nanokernel source archive. It
+explains the (very complex looking) timex structure quite clearly and
+nicely. Now I am more convinced than ever that adding a new mode bit
+is the best way to go, as opposed to ADJ_OFFSET/!STA_PLL, because:
 
-Yes.
+1. The mode bits update kernel variables. That is what we want.
+2. Clearing STA_PLL means disable adjustments.
+3. The range of the timex.offset is way too small.
 
-> Is that prohibited by CodingStyle or similar?
+I expand on each point, below. BTW, the API document is also available
+for online reading here:
 
-I don't think so. It's just a personal taste. I think it's based on
-things learned in primary school, they teach to write (comparisons)
-X = 4 instead of the other way around, and my brain seems to shock
-a bit on the opposite.
+   http://www.slac.stanford.edu/comp/unix/package/rtems/src/ssrlApps/ntpNanoclock/api.htm
 
-> I got into the habit of writing it that way to prevent a typo like:
->
-> 	if (irq = NO_IRQ)
+1. Looking at the API, the documentation for the bits of the 'modes'
+   field states:
 
-I see. Unfortunately it doesn't prevent typos like this when the right
-side isn't a constant. Anyway gcc warns about them, even when both sides
-are variable.
+        These bits control which field of the timex structure are used
+        to update the corresponding kernel variable. The bits may be
+        set in any combination. See the description below for which
+        bits control which variable.
 
->> Also I don't like the ixp_read/ixp_write() trivial macros. Why not
->> simply call __raw_readl() and __raw_writel()?
->
-> Well, I have had the experience back in 2.4 days of having my drivers
-> ruined by the changing IO macros in the kernel. The wrappers are
-> supposed to help if that ever happens again. Seeing *two* leading
-> underscores in the macro names certainly makes me nervous.
+   With the ADJ_SETOFFSET mode, we are telling the kernel to update
+   the instantaneous value of the 'current time' variable. That usage
+   agrees with the sematics of the other mode bits.
 
-Well, these two underscores mainly mean it's arch-dependent, but so are
-the ixp4xx drivers. Using the __raw_read* directly is the preferred
-method (or, perhaps, in such case, it's the only way).
+2. The documentation for STA_PLL states:
 
-Actually, I was thinking about changing the macros some time ago, and it
-may eventually happen. But we'll fix all the code using them then.
--- 
-Krzysztof Halasa
+        Master enable switch for the PLL/FLL loop. The algorithm is
+        responsive to time and/or frequency updates if set; otherwise,
+        no change in the current time or frequency will be made other
+        than to complete a pending phase adjustment. This bit does not
+        affect the PPS loop.
+
+   So when we clear this bit, the kernel promises that it will make
+   "no change in the current time." The proposed ADJ_OFFSET/!STA_PLL
+   solution would break this pattern.
+
+3. The timex.offset field is of type "long" and represents either
+   nanoseconds or microseconds. On 32 bit architectures, the maximum
+   possible adjustment would be
+
+   2^31 * 10^-6 = 2147.5 seconds
+
+   which is less than one hour. For the first adjustment of a clock,
+   we want to be able to jump the clock arbitrarily. Not every
+   computer has an RTC, and so some boot up believing that it is still
+   the year 1970.
+
+Richard
