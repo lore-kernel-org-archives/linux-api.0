@@ -1,100 +1,61 @@
-From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>
 Subject: Re: [PATCH V8 12/13] ptp: Added a clock driver for the IXP46x.
-Date: Fri, 7 Jan 2011 18:07:52 +0100
-Message-ID: <20110107170752.GB8666@riccoc20.at.omicron.at>
+Date: Sat, 08 Jan 2011 17:25:36 +0100
+Message-ID: <m3r5cnuzun.fsf@intrepid.localdomain>
 References: <cover.1293820862.git.richard.cochran@omicron.at>
- <8151196c018776704df34748f333bdb159497d0b.1293820862.git.richard.cochran@omicron.at>
- <m3ei8plpa0.fsf@intrepid.localdomain>
+	<8151196c018776704df34748f333bdb159497d0b.1293820862.git.richard.cochran@omicron.at>
+	<m3ei8plpa0.fsf@intrepid.localdomain>
+	<20110107170752.GB8666@riccoc20.at.omicron.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <m3ei8plpa0.fsf-gTjgKJgtlHj77SC2UrCW1FMQynFLKtET@public.gmane.org>
+In-Reply-To: <20110107170752.GB8666-7KxsofuKt4IfAd9E5cN8NEzG7cXyKsk/@public.gmane.org> (Richard Cochran's
+	message of "Fri, 7 Jan 2011 18:07:52 +0100")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>
+To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Krzysztof,
+Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
 
-Thanks for your review. I have some responses, below.
+> The time stamp code clones the skb, but the LE version frees the skb
+> too early. Perhaps we can move that dev_kfree_skb(skb) in the LE case
+> to be the last statement in eth_xmit(). What do you think?
 
-But before that, I have a big favor to ask you. Can you please look at
-the TODO in my patch and give me a hint? I don't know how to relate
-the port instance (NPE A,B,C) to the two time stamping channels.
+I think so. Or something similar.
 
-On Thu, Jan 06, 2011 at 10:01:59PM +0100, Krzysztof Halasa wrote:
-> Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
-> > +	u32 SrcUUIDHi;  /* 0x5C Sequence Identifier/Source UUID0 High */
-> 
-> I don't like these XxxYyyZzz either :-(
+> Do you mean, you don't like the constant on the left hand side?
 
-Okay, I'll change that.
+Yes.
 
-> > +static void do_tx_timestamp(struct port *port, struct sk_buff *skb)
-> > +{
-> > +#ifdef __ARMEB__
-...
-> > +#endif
-> > +}
-> 
-> And what if we're little-endian?
+> Is that prohibited by CodingStyle or similar?
 
-It is a NOOP in that case.
+I don't think so. It's just a personal taste. I think it's based on
+things learned in primary school, they teach to write (comparisons)
+X = 4 instead of the other way around, and my brain seems to shock
+a bit on the opposite.
 
-> Why does it depend on BE?
+> I got into the habit of writing it that way to prevent a typo like:
+>
+> 	if (irq = NO_IRQ)
 
-The time stamp code clones the skb, but the LE version frees the skb
-too early. Perhaps we can move that dev_kfree_skb(skb) in the LE case
-to be the last statement in eth_xmit(). What do you think?
+I see. Unfortunately it doesn't prevent typos like this when the right
+side isn't a constant. Anyway gcc warns about them, even when both sides
+are variable.
 
-> 
-> > @@ -1171,6 +1357,11 @@ static int __devinit eth_init_one(struct platform_device *pdev)
-> >  	char phy_id[MII_BUS_ID_SIZE + 3];
-> >  	int err;
-> >  
-> > +	if (ptp_filter_init(ptp_filter, ARRAY_SIZE(ptp_filter))) {
-> > +		pr_err("ixp4xx_eth: bad ptp filter\n");
-> > +		return -EINVAL;
-> > +	}
-> > +
-> >  	if (!(dev = alloc_etherdev(sizeof(struct port))))
-> >  		return -ENOMEM;
-> 
-> Shouldn't it depend on CPU type?
+>> Also I don't like the ixp_read/ixp_write() trivial macros. Why not
+>> simply call __raw_readl() and __raw_writel()?
+>
+> Well, I have had the experience back in 2.4 days of having my drivers
+> ruined by the changing IO macros in the kernel. The wrappers are
+> supposed to help if that ever happens again. Seeing *two* leading
+> underscores in the macro names certainly makes me nervous.
 
-It won't hurt to init the BPF unconditionally. The important bits are
-checked with cpu_is_ixp46x().
+Well, these two underscores mainly mean it's arch-dependent, but so are
+the ixp4xx drivers. Using the __raw_read* directly is the preferred
+method (or, perhaps, in such case, it's the only way).
 
-> BTW which CPU is required? IXP46x (455/460/465)? Does it work on 43x?
-
-IIRC, it does not work on 43x.
-
-I don't know about 455 and 460, but I can find out...
-
-> > +	if (NO_IRQ == irq)
-> > +		return NO_IRQ;
-> 
-> Don't like these either :-(
-
-Do you mean, you don't like the constant on the left hand side?
-
-Is that prohibited by CodingStyle or similar?
-
-I got into the habit of writing it that way to prevent a typo like:
-
-	if (irq = NO_IRQ)
-
-> Not showstoppers but...
-> 
-> Also I don't like the ixp_read/ixp_write() trivial macros. Why not
-> simply call __raw_readl() and __raw_writel()?
-
-Well, I have had the experience back in 2.4 days of having my drivers
-ruined by the changing IO macros in the kernel. The wrappers are
-supposed to help if that ever happens again. Seeing *two* leading
-underscores in the macro names certainly makes me nervous.
-
-Thanks again,
-
-Richard
+Actually, I was thinking about changing the macros some time ago, and it
+may eventually happen. But we'll fix all the code using them then.
+-- 
+Krzysztof Halasa
