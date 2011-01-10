@@ -1,27 +1,62 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: [PATCH V8 02/13] ntp: add ADJ_SETOFFSET mode bit
-Date: Mon, 10 Jan 2011 08:22:26 +0100
-Message-ID: <20110110072226.GB4864@riccoc20.at.omicron.at>
-References: <cover.1293820862.git.richard.cochran@omicron.at>
- <fe2bec763bec155381d62721aa9da84aeca2785c.1293820862.git.richard.cochran@omicron.at>
- <AANLkTini2WdT-1v4k9V3JOZYDkA59P+SyscTe8-fK2Wk@mail.gmail.com>
- <20110108175028.GA22308@riccoc20.at.omicron.at>
- <AANLkTikigXGSACF6R6kfNHyKZ7GFWrUrCMxygvL3fUC6@mail.gmail.com>
+From: Wu Fengguang <fengguang.wu@intel.com>
+Subject: Re: [PATCH v2 0/5] add new ioctls to do metadata readahead in btrfs
+Date: Mon, 10 Jan 2011 22:26:06 +0800
+Message-ID: <20110110142606.GA8788@localhost>
+References: <1294119630.1949.365.camel@sli10-conroe>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <AANLkTikigXGSACF6R6kfNHyKZ7GFWrUrCMxygvL3fUC6@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
+In-Reply-To: <1294119630.1949.365.camel@sli10-conroe>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Shaohua Li <shaohua.li@intel.com>
+Cc: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, linux-api@vger.kernel.org, mtk.manpages@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 10, 2011 at 06:07:26AM +0900, Kuwahara,T. wrote:
+Shaohua,
+
+On Tue, Jan 04, 2011 at 01:40:30PM +0800, Li, Shaohua wrote:
+> Hi,
+>   We have file readahead to do asyn file read, but has no metadata
+> readahead. For a list of files, their metadata is stored in fragmented
+> disk space and metadata read is a sync operation, which impacts the
+> efficiency of readahead much. The patches try to add meatadata readahead
+> for btrfs.
+>   In btrfs, metadata is stored in btree_inode. Ideally, if we could hook
+> the inode to a fd so we could use existing syscalls (readahead, mincore
+> or upcoming fincore) to do readahead, but the inode is hidden, there is
+> no easy way for this from my understanding. So we add two ioctls for
+
+If that is the main obstacle, why not do straightforward fincore()/
+fadvise(), and add ioctls to btrfs to export/grab the hidden
+btree_inode in any form?  This will address btrfs' specific issue, and
+have the benefit of making the VFS part general enough. You know
+ext2/3/4 already have block_dev ready for metadata readahead.
+
+Thanks,
+Fengguang
+
+> this. One is like readahead syscall, the other is like micore/fincore
+> syscall.
+>   Under a harddisk based netbook with Meego, the metadata readahead
+> reduced about 3.5s boot time in average from total 16s.
+>   Last time I posted similar patches to btrfs maillist, which adds the
+> new ioctls in btrfs specific ioctl code. But Christoph Hellwig asks we
+> have a generic interface to do this so other filesystem can share some
+> code, so I came up with the new one. Comments and suggestions are
+> welcome!
 > 
-> Another problem remains:  How do you deal with leap seconds?  I mean,
-
-Since you have changed the topic, does that mean that you now agree
-with adding a new mode bit? ;)
-
-Richard
+> v1->v2:
+> 1. Added more comments and fix return values suggested by Andrew Morton
+> 2. fix a race condition pointed out by Yan Zheng
+> 
+> initial post:
+> http://marc.info/?l=linux-fsdevel&m=129222493406353&w=2
+> 
+> Thanks,
+> Shaohua
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
