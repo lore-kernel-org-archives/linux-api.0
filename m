@@ -1,72 +1,103 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: [PATCH V8 02/13] ntp: add ADJ_SETOFFSET mode bit
-Date: Tue, 11 Jan 2011 12:09:48 +0100
-Message-ID: <20110111110948.GA5279@riccoc20.at.omicron.at>
-References: <cover.1293820862.git.richard.cochran@omicron.at>
- <fe2bec763bec155381d62721aa9da84aeca2785c.1293820862.git.richard.cochran@omicron.at>
- <AANLkTini2WdT-1v4k9V3JOZYDkA59P+SyscTe8-fK2Wk@mail.gmail.com>
- <20110108175028.GA22308@riccoc20.at.omicron.at>
- <AANLkTikigXGSACF6R6kfNHyKZ7GFWrUrCMxygvL3fUC6@mail.gmail.com>
- <20110110071759.GA4864@riccoc20.at.omicron.at>
- <AANLkTimS0-ih=WZ_GvPi9NFjbYMT4OctWV943ri4GuTD@mail.gmail.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH V8 08/13] posix clocks: cleanup the CLOCK_DISPTACH
+ macro
+Date: Tue, 11 Jan 2011 13:57:23 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1101111224280.12146@localhost6.localdomain6>
+References: <cover.1293820862.git.richard.cochran@omicron.at> <503cd1fa268867573001cfc9bb5681ee3b5b32fa.1293820862.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <AANLkTimS0-ih=WZ_GvPi9NFjbYMT4OctWV943ri4GuTD@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, John Stultz <johnstul@us.ibm.com>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <503cd1fa268867573001cfc9bb5681ee3b5b32fa.1293820862.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 11, 2011 at 05:47:13AM +0900, Kuwahara,T. wrote:
-> On Mon, Jan 10, 2011 at 4:17 PM, Richard Cochran
-> <richardcochran@gmail.com> wrote:
-> > the PTP Hardware Clocks for which this whole patch
-> > set was created in the first place will keep their time as TAI.
-> 
-> Are you sure of that?
+On Fri, 31 Dec 2010, Richard Cochran wrote:
+> +static inline bool clock_is_posix_cpu(const clockid_t id)
+> +{
+> +	if ((id & CLOCKFD_MASK) == CLOCKFD)
+> +		return false;
+> +	else
+> +		return true;
+> +}
+> +
+> +static inline int dispatch_clock_getres(const clockid_t id, struct timespec *ts)
+> +{
+> +	if (id >= 0) {
+> +		return posix_clocks[id].clock_getres ?
+> +			posix_clocks[id].clock_getres(id, ts) : -EINVAL;
+> +	}
+> +
+> +	if (clock_is_posix_cpu(id))
+> +		return posix_cpu_clock_getres(id, ts);
 
-Yes.
+I wonder whether we should be a bit more clever here and create an
+extra entry for posix_cpu_timers in the posix_clocks array and do the
+following:
 
-> I don't have the standard handy (it's non-free, right?) but it seems
-> that the Annex B states differently.
+/* These are local to posix-timer.c and not exposed to anything else */
+#define POSIX_INV_CLOCK_ID	MAX_CLOCKS
+#define POSIX_CPU_CLOCK_ID	(MAX_CLOCKS + 1)
+#define NR_CLOCK_ENTRIES	(MAX_CLOCKS + 2)
 
-IEEE Std 1588-2008, Page 41:
+static struct k_clock posix_clocks[NR_CLOCK_ENTRIES];
 
-        The timescale PTP: In normal operation, the epoch is the PTP
-        epoch and the timescale is continuous; see 7.2.4. The unit of
-        measure of time is the SI second as realized on the rotating
-        geoid.
+static __init int init_posix_timers(void)
+{
+	......
+	/*
+	 * We leave the POSIX_INV_CLOCK_ID entries zeroed out, so the 
+	 * the dispatch code will return -EINVAL.
+	 */
 
-IEEE Std 1588-2008, Page 42:
+	init_posix_cpu_timer_entries();
+}
 
-        The PTP epoch is 1 January 1970 00:00:00 TAI, which is 31
-        December 1969 23:59:51.999918 UTC.
+static clockid_t clock_get_array_id(const clockid_t id)
+{
+	if (id >= 0)
+	       return id < MAX_CLOCKS ? id : POSIX_INV_CLOCK_ID;
 
-The standard does permit using some other, arbitrary timescale, "set
-by an administrative procedure." But no other timescales are
-standardized by 1588.
+      	if (clock_is_posix_cpu(id))
+		return POSIX_CPU_CLOCK_ID;
 
-> But that's not the point anyway.  My concern is that your patch not
-> only adds the useless (and broken) feature to the existing syscall
-> but also makes a permanent change to the public interface for your
-> own use.
+	return POSIX_INV_CLOCK_ID;
+}
 
-It is neither useless or broken. Using the new interface, you can
-estimate offset and frequency for a few seconds and jump directly into
-a closely synchronized state (like within 100 nanoseconds) relative to
-another clock on the network. That is pretty useful.
+static inline int dispatch_clock_getres(const clockid_t id, struct timespec *ts)
+{
+	struct k_clock *clk = &posix_clocks[clock_get_array_id(id)];
 
-Your issue with leap seconds is really a non-issue. The time value of
-the ADJ_SETOFFSET mode is a time interval, *not* an absolute time.
+	return clk->clock_getres ? clk->clock_getres(id, ts) : -EINVAL;
+}
 
->  That's what I'm against.  So if you stop touching the struct timex,
-> I won't complain anymore.
+That reduces the code significantly and the MAX_CLOCKS check in
+clock_get_array_id() replaces the invalid_clock() check in the
+syscalls as well. It does not matter whether we check this before or
+after copying stuff from user.
 
-I have no love for the timex interface. However, I used it for the new
-syscall because Arnd Bergmann and John Stultz specifically asked for
-it. Also, several other people have reviewed the new call without
-objecting to the new mode.
+Adding your new stuff requires just another entry in the array, the
+setup of the function pointers and the CLOCKFD check in
+clock_get_array_id(). Everything else just falls in place.
 
-Richard
+> +
+> +#define CLOCK_DISPATCH(clock, call, arglist) dispatch_##call arglist
+> +
+
+Can we get rid of this completely please ?
+
+>  clock_nanosleep_restart(struct restart_block *restart_block)
+>  {
+> -	clockid_t which_clock = restart_block->arg0;
+> -
+
+How does that compile ?
+
+>  	return CLOCK_DISPATCH(which_clock, nsleep_restart,
+>  			      (restart_block));
+>  }
+
+Thanks,
+
+	tglx
