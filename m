@@ -1,103 +1,70 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH V8 08/13] posix clocks: cleanup the CLOCK_DISPTACH
- macro
-Date: Tue, 11 Jan 2011 13:57:23 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1101111224280.12146@localhost6.localdomain6>
-References: <cover.1293820862.git.richard.cochran@omicron.at> <503cd1fa268867573001cfc9bb5681ee3b5b32fa.1293820862.git.richard.cochran@omicron.at>
+From: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH V8 02/13] ntp: add ADJ_SETOFFSET mode bit
+Date: Wed, 12 Jan 2011 05:32:03 +0900
+Message-ID: <AANLkTik+2udoJ6JyZMhkd1yhr2W9hSWO_vD_zdm+BoOG@mail.gmail.com>
+References: <cover.1293820862.git.richard.cochran@omicron.at>
+ <fe2bec763bec155381d62721aa9da84aeca2785c.1293820862.git.richard.cochran@omicron.at>
+ <AANLkTini2WdT-1v4k9V3JOZYDkA59P+SyscTe8-fK2Wk@mail.gmail.com>
+ <20110108175028.GA22308@riccoc20.at.omicron.at> <AANLkTikigXGSACF6R6kfNHyKZ7GFWrUrCMxygvL3fUC6@mail.gmail.com>
+ <1294678145.3068.6.camel@work-vm> <AANLkTikdg4Pb5c4wcCU3d3Eku=mpiW_TEkBz0A2VPdVp@mail.gmail.com>
+ <1294693597.3068.12.camel@work-vm>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <503cd1fa268867573001cfc9bb5681ee3b5b32fa.1293820862.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
+In-Reply-To: <1294693597.3068.12.camel@work-vm>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>
+To: john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 31 Dec 2010, Richard Cochran wrote:
-> +static inline bool clock_is_posix_cpu(const clockid_t id)
-> +{
-> +	if ((id & CLOCKFD_MASK) == CLOCKFD)
-> +		return false;
-> +	else
-> +		return true;
-> +}
-> +
-> +static inline int dispatch_clock_getres(const clockid_t id, struct timespec *ts)
-> +{
-> +	if (id >= 0) {
-> +		return posix_clocks[id].clock_getres ?
-> +			posix_clocks[id].clock_getres(id, ts) : -EINVAL;
-> +	}
-> +
-> +	if (clock_is_posix_cpu(id))
-> +		return posix_cpu_clock_getres(id, ts);
+On Tue, Jan 11, 2011 at 6:06 AM, john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org> wrot=
+e:
+> On Tue, 2011-01-11 at 05:45 +0900, Kuwahara,T. wrote:
+>> On Tue, Jan 11, 2011 at 1:49 AM, john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org> w=
+rote:
+>> > Leapsecond processing is done via an absolute hrtimer. Thus when t=
+he
+>> > time offset is set, the hrtimers that should have expired will fir=
+e
+>> > (just like with settimeofday) and the adjustment will then be made=
+=2E
+>>
+>> How do you convert relative time to absolute time? =C2=A0It's not tr=
+ivial
+>> because TAI offset is also a variable.
+>
+> I don't believe I understand what you're getting at.
+>
+> The proposed interface is almost identical in functionality to a
+> userland application doing the following:
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0offset =3D my_calculate_offset();
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0clock_gettime(CLOCK_REALTIME, &now);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0newtime =3D my_add_ts(now, offset);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0settimeofday(&newtime, 0);
+>
+> The only difference is that you avoid the error from the delay betwee=
+n
+> the gettime call and the settime call. It just adds the offset direct=
+ly
+> to the CLOCK_REALTIME.
 
-I wonder whether we should be a bit more clever here and create an
-extra entry for posix_cpu_timers in the posix_clocks array and do the
-following:
+=46or example, what time was it 3 seconds after 2008-12-31 23:59:59?
+You may say, of course it's 2009-01-01 00:00:02.  But it's not true.
+You wonder why?  Because a leap second had been added at midnight.
 
-/* These are local to posix-timer.c and not exposed to anything else */
-#define POSIX_INV_CLOCK_ID	MAX_CLOCKS
-#define POSIX_CPU_CLOCK_ID	(MAX_CLOCKS + 1)
-#define NR_CLOCK_ENTRIES	(MAX_CLOCKS + 2)
+	unix time   UTC     offset
+	---------- -------- ---
+	1230767997 23:59:57  -2
+	1230767998 23:59:58  -1
+	1230767999 23:59:59   0
+	1230768000 23:59:60   1 (leap second)
+	1230768000 00:00:00   2
+	1230768001 00:00:01   3
+	1230768002 00:00:02   4
 
-static struct k_clock posix_clocks[NR_CLOCK_ENTRIES];
-
-static __init int init_posix_timers(void)
-{
-	......
-	/*
-	 * We leave the POSIX_INV_CLOCK_ID entries zeroed out, so the 
-	 * the dispatch code will return -EINVAL.
-	 */
-
-	init_posix_cpu_timer_entries();
-}
-
-static clockid_t clock_get_array_id(const clockid_t id)
-{
-	if (id >= 0)
-	       return id < MAX_CLOCKS ? id : POSIX_INV_CLOCK_ID;
-
-      	if (clock_is_posix_cpu(id))
-		return POSIX_CPU_CLOCK_ID;
-
-	return POSIX_INV_CLOCK_ID;
-}
-
-static inline int dispatch_clock_getres(const clockid_t id, struct timespec *ts)
-{
-	struct k_clock *clk = &posix_clocks[clock_get_array_id(id)];
-
-	return clk->clock_getres ? clk->clock_getres(id, ts) : -EINVAL;
-}
-
-That reduces the code significantly and the MAX_CLOCKS check in
-clock_get_array_id() replaces the invalid_clock() check in the
-syscalls as well. It does not matter whether we check this before or
-after copying stuff from user.
-
-Adding your new stuff requires just another entry in the array, the
-setup of the function pointers and the CLOCKFD check in
-clock_get_array_id(). Everything else just falls in place.
-
-> +
-> +#define CLOCK_DISPATCH(clock, call, arglist) dispatch_##call arglist
-> +
-
-Can we get rid of this completely please ?
-
->  clock_nanosleep_restart(struct restart_block *restart_block)
->  {
-> -	clockid_t which_clock = restart_block->arg0;
-> -
-
-How does that compile ?
-
->  	return CLOCK_DISPATCH(which_clock, nsleep_restart,
->  			      (restart_block));
->  }
-
-Thanks,
-
-	tglx
+That's why I said it's not trivial, and that your patch is broken and
+thus useless.  Unfortunately, there's no remedy for this as long as a
+nonlinear timescale such as the unix time is being used, since the
+leap second insertion/deletion is a non-deterministic event.
