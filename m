@@ -1,49 +1,66 @@
-From: john stultz <johnstul@us.ibm.com>
-Subject: Re: [PATCH V8 02/13] ntp: add ADJ_SETOFFSET mode bit
-Date: Mon, 10 Jan 2011 13:11:32 -0800
-Message-ID: <1294693892.3068.17.camel@work-vm>
-References: <cover.1293820862.git.richard.cochran@omicron.at>
-	 <fe2bec763bec155381d62721aa9da84aeca2785c.1293820862.git.richard.cochran@omicron.at>
-	 <AANLkTini2WdT-1v4k9V3JOZYDkA59P+SyscTe8-fK2Wk@mail.gmail.com>
-	 <20110108175028.GA22308@riccoc20.at.omicron.at>
-	 <AANLkTikigXGSACF6R6kfNHyKZ7GFWrUrCMxygvL3fUC6@mail.gmail.com>
-	 <20110110071759.GA4864@riccoc20.at.omicron.at>
-	 <AANLkTimS0-ih=WZ_GvPi9NFjbYMT4OctWV943ri4GuTD@mail.gmail.com>
+From: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] add new ioctls to do metadata readahead in btrfs
+Date: Tue, 11 Jan 2011 08:15:19 +0800
+Message-ID: <1294704919.1949.593.camel@sli10-conroe>
+References: <1294119630.1949.365.camel@sli10-conroe>
+	 <20110110142606.GA8788@localhost>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <AANLkTimS0-ih=WZ_GvPi9NFjbYMT4OctWV943ri4GuTD@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Kuwahara,T." <6vvetjsrt26xsrzlh1z0zn4d2grdah@gmail.com>
-Cc: Richard Cochran <richardcochran@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20110110142606.GA8788@localhost>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Wu, Fengguang" <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Yan, Zheng" <zheng.z.yan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2011-01-11 at 05:47 +0900, Kuwahara,T. wrote:
-> On Mon, Jan 10, 2011 at 4:17 PM, Richard Cochran
-> <richardcochran@gmail.com> wrote:
-> > the PTP Hardware Clocks for which this whole patch
-> > set was created in the first place will keep their time as TAI.
+On Mon, 2011-01-10 at 22:26 +0800, Wu, Fengguang wrote:
+> Shaohua,
 > 
-> Are you sure of that?  I don't have the standard handy (it's non-free,
-> right?) but it seems that the Annex B states differently.  But that's
-> not the point anyway.  My concern is that your patch not only adds the
-> useless (and broken) feature to the existing syscall but also makes a
-> permanent change to the public interface for your own use.  That's
-> what I'm against.  So if you stop touching the struct timex, I won't
-> complain anymore.
+> On Tue, Jan 04, 2011 at 01:40:30PM +0800, Li, Shaohua wrote:
+> > Hi,
+> >   We have file readahead to do asyn file read, but has no metadata
+> > readahead. For a list of files, their metadata is stored in fragmented
+> > disk space and metadata read is a sync operation, which impacts the
+> > efficiency of readahead much. The patches try to add meatadata readahead
+> > for btrfs.
+> >   In btrfs, metadata is stored in btree_inode. Ideally, if we could hook
+> > the inode to a fd so we could use existing syscalls (readahead, mincore
+> > or upcoming fincore) to do readahead, but the inode is hidden, there is
+> > no easy way for this from my understanding. So we add two ioctls for
+> 
+> If that is the main obstacle, why not do straightforward fincore()/
+> fadvise(), and add ioctls to btrfs to export/grab the hidden
+> btree_inode in any form?  This will address btrfs' specific issue, and
+> have the benefit of making the VFS part general enough. You know
+> ext2/3/4 already have block_dev ready for metadata readahead.
+I forgot to update this comment. Please see patch 2 and patch 4, both
+incore and readahead need btrfs specific staff involved, so we can't use
+generic fincore or something.
 
-You still haven't explained *why* you're so protective of the timex and
-adjtimex interfaces.  While I do want to keep compatible the
-functionality where possible, I don't see why Linux should be limited by
-what other OSes do.
-
-Injecting an offset to the system time seems like a reasonable thing for
-adjtimex to do (rather then adding a new syscall). Further utilizing a
-new mode bit for this functionality seems reasonable and cleaner then
-your suggestions for utilizing existing mode bits in combined with other
-magic bits. If there is a compelling reason why not to do this, do
-please let us know! We might just agree with you after hearing it. :)
-
-thanks
--john
+Thanks,
+Shaohua
+> > this. One is like readahead syscall, the other is like micore/fincore
+> > syscall.
+> >   Under a harddisk based netbook with Meego, the metadata readahead
+> > reduced about 3.5s boot time in average from total 16s.
+> >   Last time I posted similar patches to btrfs maillist, which adds the
+> > new ioctls in btrfs specific ioctl code. But Christoph Hellwig asks we
+> > have a generic interface to do this so other filesystem can share some
+> > code, so I came up with the new one. Comments and suggestions are
+> > welcome!
+> > 
+> > v1->v2:
+> > 1. Added more comments and fix return values suggested by Andrew Morton
+> > 2. fix a race condition pointed out by Yan Zheng
+> > 
+> > initial post:
+> > http://marc.info/?l=linux-fsdevel&m=129222493406353&w=2
+> > 
+> > Thanks,
+> > Shaohua
+> > 
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
