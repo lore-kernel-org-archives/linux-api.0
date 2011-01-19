@@ -1,146 +1,229 @@
 From: Shaohua Li <shaohua.li@intel.com>
-Subject: [PATCH v3 1/5] add metadata_incore ioctl in vfs
-Date: Wed, 19 Jan 2011 09:15:18 +0800
-Message-ID: <1295399718.1949.864.camel@sli10-conroe>
+Subject: [PATCH v3 5/5] validate extent_buffer if it's readahead in btrfs
+Date: Wed, 19 Jan 2011 09:15:27 +0800
+Message-ID: <1295399727.1949.868.camel@sli10-conroe>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Sender: linux-btrfs-owner@vger.kernel.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
 Cc: Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, "Wu, Fengguang" <fengguang.wu@intel.com>, linux-api <linux-api@vger.kernel.org>, manpages <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Subject: add metadata_incore ioctl in vfs
+do validation for extent_buffer if it's skipped before
 
-Add an ioctl to dump filesystem's metadata in memory in vfs. Userspace collects
-such info and uses it to do metadata readahead.
-Filesystem can hook to super_operations.metadata_incore to get metadata in
-specific approach. Next patch will give an example how to implement
-.metadata_incore in btrfs.
+With metadata readahead, we slightly change the behavior. Before it, we allocate
+an extent_buffer (so set page->private), do metadata read and
+btree_readpage_end_io_hook() will do validation. After it, we directly do
+metadata readahead, and since in this case page hasn't ->private,
+btree_readpage_end_io_hook() will not do validation. This patch fixes this.
+It addes a new flag to indicate if a buffer is validated. If not and even
+the buffer is uptodated, we will do a validation.
 
 Signed-off-by: Shaohua Li <shaohua.li@intel.com>
-Reviewed-by: Arnd Bergmann <arnd@arndb.de>
----
- fs/compat_ioctl.c  |    2 ++
- fs/ioctl.c         |   42 ++++++++++++++++++++++++++++++++++++++++++
- include/linux/fs.h |   10 ++++++++++
- 3 files changed, 54 insertions(+)
 
-Index: linux/fs/ioctl.c
+---
+ fs/btrfs/disk-io.c     |   71 ++++++++++++++++++++++++++++++-------------------
+ fs/btrfs/disk-io.h     |    2 +
+ fs/btrfs/extent-tree.c |    1 
+ fs/btrfs/extent_io.c   |   14 ++++++++-
+ fs/btrfs/extent_io.h   |    1 
+ 5 files changed, 60 insertions(+), 29 deletions(-)
+
+Index: linux/fs/btrfs/disk-io.c
 ===================================================================
---- linux.orig/fs/ioctl.c	2011-01-18 10:15:17.000000000 +0800
-+++ linux/fs/ioctl.c	2011-01-18 10:39:40.000000000 +0800
-@@ -530,6 +530,45 @@ static int ioctl_fsthaw(struct file *fil
+--- linux.orig/fs/btrfs/disk-io.c	2011-01-18 10:53:07.000000000 +0800
++++ linux/fs/btrfs/disk-io.c	2011-01-18 11:16:41.000000000 +0800
+@@ -424,12 +424,53 @@ void btrfs_set_buffer_lockdep_class(stru
  }
+ #endif
  
- /*
-+ * Copy info about metadata in memory to userspace
-+ * Returns:
-+ * = 1, one metadata range copied to userspace
-+ * = 0, no more metadata
-+ * < 0, error
-+ */
-+static int ioctl_metadata_incore(struct file *filp, void __user *argp)
++int btree_validate_extent_buffer(struct btrfs_root *root,
++	struct extent_buffer *eb)
 +{
-+	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
-+	struct metadata_incore_args args;
-+	loff_t offset;
-+	ssize_t size;
++	u64 found_start;
++	int found_level;
++	int ret = 0;
 +
-+	if (!sb->s_op->metadata_incore)
-+		return -EINVAL;
-+
-+	if (copy_from_user(&args, argp, sizeof(args)))
-+		return -EFAULT;
-+
-+	/* we check metadata info in page unit */
-+	if (args.offset & ~PAGE_CACHE_MASK)
-+		return -EINVAL;
-+
-+	offset = args.offset;
-+
-+	if (sb->s_op->metadata_incore(sb, &offset, &size) < 0)
++	if (!test_bit(EXTENT_BUFFER_UNCHECKED, &eb->bflags))
 +		return 0;
 +
-+	args.address = offset;
-+	args.size = size;
-+	args.unused = 0;
++	found_start = btrfs_header_bytenr(eb);
++	if (found_start != eb->start) {
++		if (printk_ratelimit()) {
++			printk(KERN_INFO "btrfs bad tree block start "
++			       "%llu %llu\n",
++			       (unsigned long long)found_start,
++			       (unsigned long long)eb->start);
++		}
++		ret = -EIO;
++		goto err;
++	}
 +
-+	if (copy_to_user(argp, &args, sizeof(args)))
-+		return -EFAULT;
++	if (check_tree_block_fsid(root, eb)) {
++		if (printk_ratelimit()) {
++			printk(KERN_INFO "btrfs bad fsid on block %llu\n",
++			       (unsigned long long)eb->start);
++		}
++		ret = -EIO;
++		goto err;
++	}
++	found_level = btrfs_header_level(eb);
 +
-+	return 1;
++	btrfs_set_buffer_lockdep_class(eb, found_level);
++
++	ret = csum_tree_block(root, eb, 1);
++	if (ret)
++		ret = -EIO;
++err:
++	if (ret == 0)
++		clear_bit(EXTENT_BUFFER_UNCHECKED, &eb->bflags);
++	return ret;
 +}
 +
-+/*
-  * When you add any new common ioctls to the switches above and below
-  * please update compat_sys_ioctl() too.
-  *
-@@ -589,6 +628,9 @@ int do_vfs_ioctl(struct file *filp, unsi
- 		return put_user(inode->i_sb->s_blocksize, p);
+ static int btree_readpage_end_io_hook(struct page *page, u64 start, u64 end,
+ 			       struct extent_state *state)
+ {
+ 	struct extent_io_tree *tree;
+-	u64 found_start;
+-	int found_level;
+ 	unsigned long len;
+ 	struct extent_buffer *eb;
+ 	struct btrfs_root *root = BTRFS_I(page->mapping->host)->root;
+@@ -450,17 +491,6 @@ static int btree_readpage_end_io_hook(st
+ 		goto out;
  	}
  
-+	case FIMETADATA_INCORE:
-+		return ioctl_metadata_incore(filp, argp);
-+
- 	default:
- 		if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
- 			error = file_ioctl(filp, cmd, arg);
-Index: linux/include/linux/fs.h
+-	found_start = btrfs_header_bytenr(eb);
+-	if (found_start != start) {
+-		if (printk_ratelimit()) {
+-			printk(KERN_INFO "btrfs bad tree block start "
+-			       "%llu %llu\n",
+-			       (unsigned long long)found_start,
+-			       (unsigned long long)eb->start);
+-		}
+-		ret = -EIO;
+-		goto err;
+-	}
+ 	if (eb->first_page != page) {
+ 		printk(KERN_INFO "btrfs bad first page %lu %lu\n",
+ 		       eb->first_page->index, page->index);
+@@ -468,21 +498,8 @@ static int btree_readpage_end_io_hook(st
+ 		ret = -EIO;
+ 		goto err;
+ 	}
+-	if (check_tree_block_fsid(root, eb)) {
+-		if (printk_ratelimit()) {
+-			printk(KERN_INFO "btrfs bad fsid on block %llu\n",
+-			       (unsigned long long)eb->start);
+-		}
+-		ret = -EIO;
+-		goto err;
+-	}
+-	found_level = btrfs_header_level(eb);
+-
+-	btrfs_set_buffer_lockdep_class(eb, found_level);
+ 
+-	ret = csum_tree_block(root, eb, 1);
+-	if (ret)
+-		ret = -EIO;
++	ret = btree_validate_extent_buffer(root, eb);
+ 
+ 	end = min_t(u64, eb->len, PAGE_CACHE_SIZE);
+ 	end = eb->start + end - 1;
+Index: linux/fs/btrfs/disk-io.h
 ===================================================================
---- linux.orig/include/linux/fs.h	2011-01-18 10:15:17.000000000 +0800
-+++ linux/include/linux/fs.h	2011-01-18 10:39:40.000000000 +0800
-@@ -53,6 +53,13 @@ struct inodes_stat_t {
- };
+--- linux.orig/fs/btrfs/disk-io.h	2011-01-18 10:53:07.000000000 +0800
++++ linux/fs/btrfs/disk-io.h	2011-01-18 10:57:54.000000000 +0800
+@@ -36,6 +36,8 @@ static inline u64 btrfs_sb_offset(int mi
+ struct btrfs_device;
+ struct btrfs_fs_devices;
  
- 
-+struct metadata_incore_args {
-+	__u64 offset; /* offset in metadata address */
-+	__u64 address; /* returned address of metadata in memory */
-+	__u32 size; /* size of the metadata */
-+	__u32 unused;
-+};
-+
- #define NR_FILE  8192	/* this can well be larger on a larger system */
- 
- #define MAY_EXEC 1
-@@ -327,6 +334,7 @@ struct inodes_stat_t {
- #define FIFREEZE	_IOWR('X', 119, int)	/* Freeze */
- #define FITHAW		_IOWR('X', 120, int)	/* Thaw */
- #define FITRIM		_IOWR('X', 121, struct fstrim_range)	/* Trim */
-+#define FIMETADATA_INCORE _IOWR('X', 122, struct metadata_incore_args)
- 
- #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
- #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
-@@ -1626,6 +1634,8 @@ struct super_operations {
- 	ssize_t (*quota_write)(struct super_block *, int, const char *, size_t, loff_t);
- #endif
- 	int (*bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
-+	int (*metadata_incore)(struct super_block*, loff_t *offset,
-+		ssize_t *size);
- };
- 
- /*
-Index: linux/fs/compat_ioctl.c
++int btree_validate_extent_buffer(struct btrfs_root *root,
++	struct extent_buffer *eb);
+ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
+ 				      u32 blocksize, u64 parent_transid);
+ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
+Index: linux/fs/btrfs/extent_io.c
 ===================================================================
---- linux.orig/fs/compat_ioctl.c	2011-01-18 09:38:03.000000000 +0800
-+++ linux/fs/compat_ioctl.c	2011-01-18 10:39:40.000000000 +0800
-@@ -883,6 +883,7 @@ COMPATIBLE_IOCTL(FIGETBSZ)
- /* 'X' - originally XFS but some now in the VFS */
- COMPATIBLE_IOCTL(FIFREEZE)
- COMPATIBLE_IOCTL(FITHAW)
-+COMPATIBLE_IOCTL(FIMETADATA_INCORE)
- COMPATIBLE_IOCTL(KDGETKEYCODE)
- COMPATIBLE_IOCTL(KDSETKEYCODE)
- COMPATIBLE_IOCTL(KDGKBTYPE)
-@@ -1578,6 +1579,7 @@ asmlinkage long compat_sys_ioctl(unsigne
- 	case FIONBIO:
- 	case FIOASYNC:
- 	case FIOQSIZE:
-+	case FIMETADATA_INCORE:
- 		break;
+--- linux.orig/fs/btrfs/extent_io.c	2011-01-18 10:53:07.000000000 +0800
++++ linux/fs/btrfs/extent_io.c	2011-01-18 10:57:54.000000000 +0800
+@@ -14,6 +14,7 @@
+ #include "extent_map.h"
+ #include "compat.h"
+ #include "ctree.h"
++#include "disk-io.h"
+ #include "btrfs_inode.h"
  
- #if defined(CONFIG_IA64) || defined(CONFIG_X86_64)
+ static struct kmem_cache *extent_state_cache;
+@@ -3194,6 +3195,7 @@ struct extent_buffer *alloc_extent_buffe
+ 			uptodate = 0;
+ 		unlock_page(p);
+ 	}
++	set_bit(EXTENT_BUFFER_UNCHECKED, &eb->bflags);
+ 	if (uptodate)
+ 		set_bit(EXTENT_BUFFER_UPTODATE, &eb->bflags);
+ 
+@@ -3424,9 +3426,10 @@ int read_extent_buffer_pages(struct exte
+ 	unsigned long num_pages;
+ 	struct bio *bio = NULL;
+ 	unsigned long bio_flags = 0;
++	struct btrfs_root *root = BTRFS_I(tree->mapping->host)->root;
+ 
+ 	if (test_bit(EXTENT_BUFFER_UPTODATE, &eb->bflags))
+-		return 0;
++		goto out;
+ 
+ 	if (test_range_bit(tree, eb->start, eb->start + eb->len - 1,
+ 			   EXTENT_UPTODATE, 1, NULL)) {
+@@ -3491,8 +3494,10 @@ int read_extent_buffer_pages(struct exte
+ 			ret = -EIO;
+ 	}
+ 
+-	if (!ret)
++	if (!ret) {
+ 		set_bit(EXTENT_BUFFER_UPTODATE, &eb->bflags);
++		goto out;
++	}
+ 	return ret;
+ 
+ unlock_exit:
+@@ -3503,6 +3508,11 @@ unlock_exit:
+ 		unlock_page(page);
+ 		locked_pages--;
+ 	}
++out:
++	if (!ret && test_bit(EXTENT_BUFFER_UNCHECKED, &eb->bflags) &&
++		test_bit(EXTENT_BUFFER_UPTODATE, &eb->bflags))
++		return btree_validate_extent_buffer(root, eb);
++
+ 	return ret;
+ }
+ 
+Index: linux/fs/btrfs/extent_io.h
+===================================================================
+--- linux.orig/fs/btrfs/extent_io.h	2011-01-18 10:53:07.000000000 +0800
++++ linux/fs/btrfs/extent_io.h	2011-01-18 10:57:54.000000000 +0800
+@@ -31,6 +31,7 @@
+ #define EXTENT_BUFFER_UPTODATE 0
+ #define EXTENT_BUFFER_BLOCKING 1
+ #define EXTENT_BUFFER_DIRTY 2
++#define EXTENT_BUFFER_UNCHECKED 3
+ 
+ /* these are flags for extent_clear_unlock_delalloc */
+ #define EXTENT_CLEAR_UNLOCK_PAGE 0x1
+Index: linux/fs/btrfs/extent-tree.c
+===================================================================
+--- linux.orig/fs/btrfs/extent-tree.c	2011-01-18 10:53:07.000000000 +0800
++++ linux/fs/btrfs/extent-tree.c	2011-01-18 10:57:54.000000000 +0800
+@@ -5606,6 +5606,7 @@ struct extent_buffer *btrfs_init_new_buf
+ 	clean_tree_block(trans, root, buf);
+ 
+ 	btrfs_set_lock_blocking(buf);
++	clear_bit(EXTENT_BUFFER_UNCHECKED, &buf->bflags);
+ 	btrfs_set_buffer_uptodate(buf);
+ 
+ 	if (root->root_key.objectid == BTRFS_TREE_LOG_OBJECTID) {
 
 
