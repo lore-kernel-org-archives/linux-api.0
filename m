@@ -1,48 +1,54 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH v3 0/5]add new ioctls to do metadata readahead in btrfs
-Date: Wed, 19 Jan 2011 18:46:36 -0800
-Message-ID: <20110119184636.fed233a7.akpm@linux-foundation.org>
-References: <1295399715.1949.863.camel@sli10-conroe>
-	<20110119123451.75bb3c76.akpm@linux-foundation.org>
-	<1295490858.1949.894.camel@sli10-conroe>
+From: Shaohua Li <shaohua.li@intel.com>
+Subject: Re: [PATCH v3 1/5] add metadata_incore ioctl in vfs
+Date: Thu, 20 Jan 2011 10:48:33 +0800
+Message-ID: <1295491713.1949.898.camel@sli10-conroe>
+References: <1295399718.1949.864.camel@sli10-conroe>
+	 <20110119124158.b0348c44.akpm@linux-foundation.org>
+	 <1295490647.1949.890.camel@sli10-conroe>
+	 <20110119184240.b0a6a016.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1295490858.1949.894.camel@sli10-conroe>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Yan, Zheng" <zheng.z.yan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Wu, Fengguang" <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20110119184240.b0a6a016.akpm@linux-foundation.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, "Wu, Fengguang" <fengguang.wu@intel.com>, linux-api <linux-api@vger.kernel.org>, manpages <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 20 Jan 2011 10:34:18 +0800 Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+On Thu, 2011-01-20 at 10:42 +0800, Andrew Morton wrote:
+> On Thu, 20 Jan 2011 10:30:47 +0800 Shaohua Li <shaohua.li@intel.com> wrote:
+> 
+> > > I don't know if this is worth addressing.  Perhaps require that the
+> > > filp refers to the root of the fs?
+> > I didn't see why this is needed, but I can limit the fip to the root of
+> > the fs.
+> 
+> I don't think it matters much either.  The only problem I can see is if
+> we were to later try to extend the ioctl into a per-file thing.
+since we return page range, a metadata page might be shared by several
+files, which makes the per-file thing doesn't work. For a fs using
+trees, it's even more hard to distinguish a file's metadata
 
-> > >   Under a harddisk based netbook with Meego, the metadata readahead
-> > > reduced about 3.5s boot time in average from total 16s.
-> > 
-> > That's a respectable speedup.  And it *needs* to be a good speedup,
-> > given how hacky all of this is!
-> > 
-> > But then..  reducing bootup time on a laptop/desktop/server by 3.5s
-> > isn't exactly a world-shattering benefit, is it?  Is it worth all the
-> > hacky code?
-> a laptop/desktop/server need read more data from hard disks, this will
-> give more bootup time saving I think, though not tested yet.
+> > > Also, is this a privileged operation?  If not, then that might be a
+> > > problem - could it be used by unprivileged users to work out which
+> > > files have been opened recently or something like that?
+> > it's harmless even a unprivileged user uses it. I don't think
+> > unprivileged user can decode the data returned from the ioctl.
+> 
+> um.
+> 
+> Well, by doing a before-and-after thing I can use this ioctl to work
+> out what metadata blocks are used when someone reads
+> /my/super/secret-directory/foo.  Then I can write a program which sits
+> there waiting until someone else reads /my/super/secret-directory/foo. 
+> Then I can use that information to start WWIII or something.
+> 
+> I dunno, strange things happen.  Unless there's a good *need* to make
+> this available to unprivileged users then we should not do so.
+ok, looks interesting, I'll update the patch to limit unprivileged
+users.
 
-Well, the whole point of the patch is to improve boot times, so the
-more boot-time testing you can do, the better that is!
+Thanks,
+Shaohua
 
-> > It would be much more valuable if those 3.5 seconds were available to
-> > devices which really really care about bootup times, but very few of
-> > those devices use rotating disks nowadays, I expect?
-> Currently most popular netbooks are using rotating disks actually. And
-> this will benefit laptop/desktop too.
-
-But my point is that three seconds boot-time improvement for a system
-which has an uptime of days or months isn't terribly exciting.
-
-What *would* be terribly exciting is a three-second improvement for
-cameras, cellphones, etc.  But they don't use spinning disks.
-
-Can we expect *any* benefit for flash-type storage devices?  If so, how
-much?
