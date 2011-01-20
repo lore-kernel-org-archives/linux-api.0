@@ -1,28 +1,30 @@
-From: Wu Fengguang <fengguang.wu@intel.com>
+From: Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [PATCH v3 1/5] add metadata_incore ioctl in vfs
-Date: Thu, 20 Jan 2011 14:19:50 +0800
-Message-ID: <20110120061950.GA21597@localhost>
-References: <20110119124158.b0348c44.akpm@linux-foundation.org>
- <1295490647.1949.890.camel@sli10-conroe>
- <20110119184240.b0a6a016.akpm@linux-foundation.org>
- <1295491713.1949.898.camel@sli10-conroe>
- <20110119190548.e1f7f01f.akpm@linux-foundation.org>
- <1295493709.1949.910.camel@sli10-conroe>
- <20110119201014.adf02a78.akpm@linux-foundation.org>
- <1295501898.1949.917.camel@sli10-conroe>
- <20110119215510.0882db92.akpm@linux-foundation.org>
- <1295503953.1949.928.camel@sli10-conroe>
+Date: Wed, 19 Jan 2011 22:27:40 -0800
+Message-ID: <20110119222740.fb1b5229.akpm@linux-foundation.org>
+References: <1295399718.1949.864.camel@sli10-conroe>
+	<20110119124158.b0348c44.akpm@linux-foundation.org>
+	<1295490647.1949.890.camel@sli10-conroe>
+	<20110119184240.b0a6a016.akpm@linux-foundation.org>
+	<1295491713.1949.898.camel@sli10-conroe>
+	<20110119190548.e1f7f01f.akpm@linux-foundation.org>
+	<1295493709.1949.910.camel@sli10-conroe>
+	<20110119201014.adf02a78.akpm@linux-foundation.org>
+	<1295501898.1949.917.camel@sli10-conroe>
+	<20110119215510.0882db92.akpm@linux-foundation.org>
+	<1295503953.1949.928.camel@sli10-conroe>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1295503953.1949.928.camel@sli10-conroe>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: "Li, Shaohua" <shaohua.li@intel.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, linux-api <linux-api@vger.kernel.org>, manpages <mtk.manpages@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Shaohua Li <shaohua.li@intel.com>
+Cc: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Chris Mason <chris.mason@oracle.com>, Christoph Hellwig <hch@infradead.org>, Arjan van de Ven <arjan@infradead.org>, "Yan, Zheng" <zheng.z.yan@linux.intel.com>, "Wu, Fengguang" <fengguang.wu@intel.com>, linux-api <linux-api@vger.kernel.org>, manpages <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 20, 2011 at 02:12:33PM +0800, Li, Shaohua wrote:
+On Thu, 20 Jan 2011 14:12:33 +0800 Shaohua Li <shaohua.li@intel.com> wrote:
+
 > On Thu, 2011-01-20 at 13:55 +0800, Andrew Morton wrote:
 > > On Thu, 20 Jan 2011 13:38:18 +0800 Shaohua Li <shaohua.li@intel.com> wrote:
 > > 
@@ -46,11 +48,26 @@ On Thu, Jan 20, 2011 at 02:12:33PM +0800, Li, Shaohua wrote:
 > Looks we could only do the metadata readahead in filesystem specific
 > way.
 
-There should be little interest on ext2 boot time optimization.
+Another way of doing all this would be to implement some sort of
+lookaside cache at the vfs->block boundary.  At boot time, load that
+cache up with all the disk blocks which we know the boot will need (a
+single ascending pass across the disk) and then when the vfs/fs goes to
+read a disk block take a peek in that cache first and if it's a hit,
+either steal the page or memcpy it.
 
-However if necessary, we might somehow treat ext2 dirs as files and
-do normal fadvise on them? The other ext2 metadata may still be
-accessible via the block_dev interface.
+It has the obvious coherence problems which would be pretty simple to
+solve by hooking into the block write path as well.  The list of needed
+blocks can be very simply generated with existing blktrace
+infrastructure.  It does add permanent runtime overhead - once the
+cache is invalidated and disabled, every IO operation would incur a
+test-n-not-taken-branch.  Maybe not too bad.
 
-Thanks,
-Fengguang
+Need to handle small-memory systems somehow, where the cache simply
+ooms the machine or becomes ineffective because it's causing eviction
+elsewhere.
+
+It could perhaps all be implemented as an md or dm driver.
+
+Or even as an IO scheduler.  I say this because IO schedulers can be
+replaced on-the-fly, so the caching layer can be unloaded from the
+stack once it is finished with.
