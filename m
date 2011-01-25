@@ -1,53 +1,49 @@
-From: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v3 1/5] add metadata_incore ioctl in vfs
-Date: Mon, 24 Jan 2011 12:06:31 +0200
-Message-ID: <4D3D4F27.8050109@panasas.com>
-References: <1295399718.1949.864.camel@sli10-conroe>	<20110119124158.b0348c44.akpm@linux-foundation.org>	<1295490647.1949.890.camel@sli10-conroe>	<20110119184240.b0a6a016.akpm@linux-foundation.org>	<1295491713.1949.898.camel@sli10-conroe>	<20110119190548.e1f7f01f.akpm@linux-foundation.org>	<1295493709.1949.910.camel@sli10-conroe>	<20110119201014.adf02a78.akpm@linux-foundation.org>	<1295501898.1949.917.camel@sli10-conroe>	<20110119215510.0882db92.akpm@linux-foundation.org>	<1295503953.1949.928.camel@sli10-conroe> <20110119222740.fb1b5229.akpm@linux-foundation.org>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [BUG] Generic syscalls -- chmod vs. fchmodat
+Date: Tue, 25 Jan 2011 15:29:24 +0100
+Message-ID: <201101251529.24779.arnd@arndb.de>
+References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: Text/Plain;
+  charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110119222740.fb1b5229.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Arjan van de Ven <arjan-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Yan, Zheng" <zheng.z.yan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Wu, Fengguang" <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: linasvepstas-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Chris Metcalf <cmetcalf-kv+TWInifGbQT0dZR+AlfA@public.gmane.org>, GLIBC Devel <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-ports-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/20/2011 08:27 AM, Andrew Morton wrote:
+On Monday 24 January 2011, Linas Vepstas wrote:
+> Chris, Arnd, all,
+
+[adding linux-api list]
+
+> Found a bug/incompatibility in the generic syscalls chmod implementation;
+> not sure if this is a kernel bug or a glibc bug, or how to correctly resolve it.
 > 
-> Another way of doing all this would be to implement some sort of
-> lookaside cache at the vfs->block boundary.  At boot time, load that
-> cache up with all the disk blocks which we know the boot will need (a
-> single ascending pass across the disk) and then when the vfs/fs goes to
-> read a disk block take a peek in that cache first and if it's a hit,
-> either steal the page or memcpy it.
+> The new "generic chmod" implementation for glibc sends chmod to the
+> kernel call sys_fchmodat with  AT_FDCWD, instead of using the older
+> "deprecated" chmod syscall.  These two behave slightly differently:  with
+> the new implementation, the file "" (i.e. string of length zero) gets
+> interpreted
+> as . and so the syscall succeeds, setting perms on .  The old syscall would
+> return an errno=2 No such file or directory for this filename.
 > 
-
-Ha. this sounds very much like the cleancache project presented for
-inclusion so many times. It has even visited and left linux-next
-a few times. They solved all these problems with a few VFS hooks.
-
-> It has the obvious coherence problems which would be pretty simple to
-> solve by hooking into the block write path as well.  
-
-See cleancache they solved it with a simple VFS hook.
-
-> The list of needed
-> blocks can be very simply generated with existing blktrace
-> infrastructure.  It does add permanent runtime overhead - once the
-> cache is invalidated and disabled, every IO operation would incur a
-> test-n-not-taken-branch.  Maybe not too bad.
+> My gut instinct is that this is a kernel bug, but am not so sure; perhaps this
+> is "working as designed".  I thought of submitting a patch to fs/namei.c to
+> fix this, but then got lost in the details: there didn't seem to be
+> any particularly
+> good place to add this check.  Meanwhile, a glibc test case (posix/tst-chmod.c)
+> is failing as a result.
 > 
-> Need to handle small-memory systems somehow, where the cache simply
-> ooms the machine or becomes ineffective because it's causing eviction
-> elsewhere.
-> 
-> It could perhaps all be implemented as an md or dm driver.
-> 
-> Or even as an IO scheduler.  I say this because IO schedulers can be
-> replaced on-the-fly, so the caching layer can be unloaded from the
-> stack once it is finished with.
+> Should we put a check for this funky non-filename into the glibc
+> generic code, or into sys_chmodat? Recommendations?
 
-Or a cleancache driver
+My feeling is that it should be in glibc: as Mike mentioned, we don't normally
+change the behavior of existing system calls unless they are obviously
+broken to start with. If we want to keep fchmodat getting the implicit
+"." directory, and at the same time keep fchmod returning an error, the fchmod
+wrapper around fchmodat is the only place that can enforce this.
 
-Boaz
+	Arnd
