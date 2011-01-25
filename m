@@ -1,100 +1,58 @@
-From: Eric Blake <eblake@redhat.com>
+From: Linas Vepstas <linasvepstas@gmail.com>
 Subject: Re: [BUG] Generic syscalls -- chmod vs. fchmodat
-Date: Tue, 25 Jan 2011 14:32:06 -0700
-Message-ID: <4D3F4156.7010900@redhat.com>
-References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com> <20110125174515.C1DC2183C19@magilla.sf.frob.com> <201101251921.15184.arnd@arndb.de> <201101251352.03079.vapier@gentoo.org> <4D3F2AD9.8060000@redhat.com> <4D3F3308.1050305@redhat.com>
+Date: Tue, 25 Jan 2011 16:10:48 -0600
+Message-ID: <AANLkTi=_sRM6k+fiKiOkbano7LCmys6Hy2Em_W3GaYx=@mail.gmail.com>
+References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com> <20110125174515.C1DC2183C19@magilla.sf.frob.com> <201101251921.15184.arnd@arndb.de> <201101251352.03079.vapier@gentoo.org> <4D3F2AD9.8060000@redhat.com> <4D3F3308.1050305@redhat.com> <4D3F4156.7010900@redhat.com>
+Reply-To: linasvepstas@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256; protocol="application/pgp-signature"; boundary="------------enigB8B280F5F3CB958B1C534D9A"
-Return-path: <libc-ports-return-1823-gclgp-libc-ports=m.gmane.org@sourceware.org>
-In-Reply-To: <4D3F3308.1050305@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <libc-ports-return-1824-gclgp-libc-ports=m.gmane.org@sourceware.org>
+In-Reply-To: <4D3F4156.7010900@redhat.com>
 List-Unsubscribe: <mailto:libc-ports-unsubscribe-gclgp-libc-ports=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-ports-subscribe@sourceware.org>
 List-Post: <mailto:libc-ports@sourceware.org>
 List-Help: <mailto:libc-ports-help@sourceware.org>, <http://sourceware.org/lists.html#faqs>
 Sender: libc-ports-owner@sourceware.org
-Cc: Mike Frysinger <vapier@gentoo.org>, Arnd Bergmann <arnd@arndb.de>, Paul Eggert <eggert@cs.ucla.edu>, Roland McGrath <roland@redhat.com>, linasvepstas@gmail.com, Chris Metcalf <cmetcalf@tilera.com>, GLIBC Devel <libc-alpha@sourceware.org>, linux-kernel@vger.kernel.org, libc-ports@sourceware.org, linux-api@vger.kernel.org
+To: Eric Blake <eblake@redhat.com>
+Cc: Mike Frysinger <vapier@gentoo.org>, Arnd Bergmann <arnd@arndb.de>, Paul Eggert <eggert@cs.ucla.edu>, Roland McGrath <roland@redhat.com>, Chris Metcalf <cmetcalf@tilera.com>, GLIBC Devel <libc-alpha@sourceware.org>, linux-kernel@vger.kernel.org, libc-ports@sourceware.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigB8B280F5F3CB958B1C534D9A
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Hi,
 
-On 01/25/2011 01:31 PM, Eric Blake wrote:
-> One other thing to point out - this is not the first time glibc has
-> added code around *at kernel syscalls in order to provide POSIX
-> semantics where the Linux syscall does not.  Remember that both futimens
-> and utimensat are implemented on top of the same syscall, and that
-> futimens(AT_FDCWD, times) must fail rather than set the times on ".".
+On 25 January 2011 15:32, Eric Blake <eblake@redhat.com> wrote:
+>
+> 7. fchmodat(AT_FDCWD, "") must fail with ENOENT. =C2=A0Apparently, the ke=
+rnel
+> currently modifies ".", although point 1 says it might make more sense
+> to fail with ENOENT so that glibc doesn't have to do as much work in
+> chmod and fchmodat (if the kernel call does not change, then the burden
+> is on glibc).
 
-I guess an executive summary of the issue, from my point of view, is
-that I like the idea of making both simple versions of a command call
-into the same *at version of the syscall [chmod via
-sys_fchmodat(AT_FDCWD,name), and fchmod via sys_fchmodat(fd, NULL)],
-provided that:
+Interesting discussion, but I'm very embarrassed to say I started it
+due to a mis-diagnosis of a bug :-(
 
-1. chmod("") must continue to fail with ENOENT (here, it might make
-sense for the kernel to do the filtering, since there is an obvious
-difference between "" and NULL; but if the kernel call does not change,
-then the burden is on glibc instead)
+In fact, the current kernels *do* check for an empty string, and do so
+in order to maintain POSIX compliance, per Eric's points 5 and 7.
+See fs/namei.c in do_getname, circa line 114,  where we read:
 
-2. fchmod(AT_FDCWD) must continue to fail with EBADF (here, it might
-make sense for the kernel to do the filtering - if the name argument is
-NULL, then the fd argument must be non-negative; but precedence with
-futimens vs. sys_utimensat puts the burden on glibc instead)
+ * POSIX.1 2.4: an empty pathname is invalid (ENOENT).
 
-3. chmod(NULL) is undefined.  Currently it fails with EFAULT, but I see
-no reason why it can't start failing with EBADF (assuming the kernel
-does filtering as for point 2) or start operating on ".", because it's
-only a buggy program that would be making that call in the first place
-(actually, failing with EBADF is a little safer, as silent conversion
-between two types of failures is a bit easier to audit for consequences
-than is silent conversion from error to success).
+This is backed up with code, circa line 129 ff:
 
-4. fchmodat(fd, NULL) is undefined.  For non-negative fd, POSIX allows
-failure, but it also allows behaving like fchmod.  Portable programs
-can't rely on a particular behavior, but glibc is more than welcome to
-rely on a particular syscall behavior for implementing the simpler
-functions.
+   retval =3D strncpy_from_user(page, filename, len);
+...
+else if (!retval)
+      retval =3D -ENOENT;
+   return retval;
 
-5. fchmodat(fd, "") must fail with ENOENT.  For non-negative fd,
-apparently the kernel currently modifies fd, although point 1 says it
-might make more sense to fail with ENOENT so that glibc doesn't have to
-do as much work in chmod and fchmodat (if the kernel call does not
-change, then the burden is on glibc).
+So an empty string will have length zero, and the ENOENT is indeed
+set.
 
-6. fchmodat(AT_FDCWD, NULL) is undefined.  For AT_FDCWD, the kernel
-currently modifies ".", although point 2 says it might make more sense
-to fail with EBADF so that glibc doesn't have to do as much work in fchmod.
+This handles cases 5 & 7.  I've no idea how any of the other cases
+work out.
 
-7. fchmodat(AT_FDCWD, "") must fail with ENOENT.  Apparently, the kernel
-currently modifies ".", although point 1 says it might make more sense
-to fail with ENOENT so that glibc doesn't have to do as much work in
-chmod and fchmodat (if the kernel call does not change, then the burden
-is on glibc).
+Note that getname() is used in a variety of places; its not just chmod,
+but also in symlinks and many others.
 
---=20
-Eric Blake   eblake@redhat.com    +1-801-349-2682
-Libvirt virtualization library http://libvirt.org
-
-
---------------enigB8B280F5F3CB958B1C534D9A
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Public key at http://people.redhat.com/eblake/eblake.gpg
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org/
-
-iQEcBAEBCAAGBQJNP0FWAAoJEKeha0olJ0NqfmMH/0lATthcNht9vU/kP49SnvKx
-e1wmOUH5l7O7X6MtDXxHQYgp7IxiU4QJcvdZuqQ2HiyoAFCW41H4R+E7pwujKO38
-wYSVnpebsfT3vAck+ocz3EKNdDp4mudf7PLcVicDvJVnzYbg5NdKktvyygR2LBo+
-aqDr87bEeB7RcYqK7mIMBxpRRijpIhmj3IPjV1oScNjKxKPZI8B8HjTGIZ/4jcGR
-cIQ20S5Wu6ShV1j1gsHpK7HxnSVS7fppnuKRgmVPl/wnWGCQuvmPViLolboUlJ6x
-9YDreoTQwz5Ajq52h03ftiNFtLBXYS81T7jpwQkdF7qew/gFj9U13iGEl75ddgg=
-=TbNi
------END PGP SIGNATURE-----
-
---------------enigB8B280F5F3CB958B1C534D9A--
+--linas
