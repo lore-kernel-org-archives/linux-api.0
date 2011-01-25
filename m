@@ -1,12 +1,12 @@
 From: Eric Blake <eblake@redhat.com>
 Subject: Re: [BUG] Generic syscalls -- chmod vs. fchmodat
-Date: Tue, 25 Jan 2011 13:31:04 -0700
-Message-ID: <4D3F3308.1050305@redhat.com>
-References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com> <20110125174515.C1DC2183C19@magilla.sf.frob.com> <201101251921.15184.arnd@arndb.de> <201101251352.03079.vapier@gentoo.org> <4D3F2AD9.8060000@redhat.com>
+Date: Tue, 25 Jan 2011 14:32:06 -0700
+Message-ID: <4D3F4156.7010900@redhat.com>
+References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com> <20110125174515.C1DC2183C19@magilla.sf.frob.com> <201101251921.15184.arnd@arndb.de> <201101251352.03079.vapier@gentoo.org> <4D3F2AD9.8060000@redhat.com> <4D3F3308.1050305@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256; protocol="application/pgp-signature"; boundary="------------enigC65679483EDCD6DE644ED270"
-Return-path: <libc-ports-return-1819-gclgp-libc-ports=m.gmane.org@sourceware.org>
-In-Reply-To: <4D3F2AD9.8060000@redhat.com>
+Content-Type: multipart/signed; micalg=pgp-sha256; protocol="application/pgp-signature"; boundary="------------enigB8B280F5F3CB958B1C534D9A"
+Return-path: <libc-ports-return-1823-gclgp-libc-ports=m.gmane.org@sourceware.org>
+In-Reply-To: <4D3F3308.1050305@redhat.com>
 List-Unsubscribe: <mailto:libc-ports-unsubscribe-gclgp-libc-ports=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-ports-subscribe@sourceware.org>
 List-Post: <mailto:libc-ports@sourceware.org>
@@ -16,49 +16,69 @@ Cc: Mike Frysinger <vapier@gentoo.org>, Arnd Bergmann <arnd@arndb.de>, Paul Egge
 List-Id: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigC65679483EDCD6DE644ED270
+--------------enigB8B280F5F3CB958B1C534D9A
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-On 01/25/2011 12:56 PM, Eric Blake wrote:
->>> Treating the empty string special for AT_FDCWD is rather pointless, but
->>> at least consistent.
->=20
-> No, treating an empty string name argument to a *at function as a
-> synonym for AT_FDCWD is a violation of POSIX.
->=20
->> i dont know if the gnulib peeps are on these lists, but i think their=20
->> implementations of some of the *at funcs leverage the extended behavior =
-that=20
->> is available under Linux.  or at least, i'm certain they'll have some in=
-sight=20
->> into some of these nuances.
->=20
-> Gnulib has code to explicitly work around bugs in earlier glibc/Linux
-> implementations that mistakenly treated fd, "" the same as fd, "." (at
-> least modern kernels get it right, and when glibc defers to the kernel,
-> those workarounds in gnulib are not needed on newer systems).
+On 01/25/2011 01:31 PM, Eric Blake wrote:
+> One other thing to point out - this is not the first time glibc has
+> added code around *at kernel syscalls in order to provide POSIX
+> semantics where the Linux syscall does not.  Remember that both futimens
+> and utimensat are implemented on top of the same syscall, and that
+> futimens(AT_FDCWD, times) must fail rather than set the times on ".".
 
-One other thing to point out - this is not the first time glibc has
-added code around *at kernel syscalls in order to provide POSIX
-semantics where the Linux syscall does not.  Remember that both futimens
-and utimensat are implemented on top of the same syscall, and that
-futimens(AT_FDCWD, times) must fail rather than set the times on ".".
-See glibc commit 4286fa41 where glibc had to add code to work around the
-kernel's choice of the syscall utimensat(fd, NULL, times, 0) as being
-the way to implement futimens, in response to
-http://sourceware.org/bugzilla/show_bug.cgi?id=3D10992, which was raised
-because gnulib detected the POSIX compliance bug, in much the same way
-that gnulib is now detecting the chmod("") bug of not failing with
-ENOENT when chmod is incorrectly implemented around the sys_fchmodat
-syscall.
+I guess an executive summary of the issue, from my point of view, is
+that I like the idea of making both simple versions of a command call
+into the same *at version of the syscall [chmod via
+sys_fchmodat(AT_FDCWD,name), and fchmod via sys_fchmodat(fd, NULL)],
+provided that:
+
+1. chmod("") must continue to fail with ENOENT (here, it might make
+sense for the kernel to do the filtering, since there is an obvious
+difference between "" and NULL; but if the kernel call does not change,
+then the burden is on glibc instead)
+
+2. fchmod(AT_FDCWD) must continue to fail with EBADF (here, it might
+make sense for the kernel to do the filtering - if the name argument is
+NULL, then the fd argument must be non-negative; but precedence with
+futimens vs. sys_utimensat puts the burden on glibc instead)
+
+3. chmod(NULL) is undefined.  Currently it fails with EFAULT, but I see
+no reason why it can't start failing with EBADF (assuming the kernel
+does filtering as for point 2) or start operating on ".", because it's
+only a buggy program that would be making that call in the first place
+(actually, failing with EBADF is a little safer, as silent conversion
+between two types of failures is a bit easier to audit for consequences
+than is silent conversion from error to success).
+
+4. fchmodat(fd, NULL) is undefined.  For non-negative fd, POSIX allows
+failure, but it also allows behaving like fchmod.  Portable programs
+can't rely on a particular behavior, but glibc is more than welcome to
+rely on a particular syscall behavior for implementing the simpler
+functions.
+
+5. fchmodat(fd, "") must fail with ENOENT.  For non-negative fd,
+apparently the kernel currently modifies fd, although point 1 says it
+might make more sense to fail with ENOENT so that glibc doesn't have to
+do as much work in chmod and fchmodat (if the kernel call does not
+change, then the burden is on glibc).
+
+6. fchmodat(AT_FDCWD, NULL) is undefined.  For AT_FDCWD, the kernel
+currently modifies ".", although point 2 says it might make more sense
+to fail with EBADF so that glibc doesn't have to do as much work in fchmod.
+
+7. fchmodat(AT_FDCWD, "") must fail with ENOENT.  Apparently, the kernel
+currently modifies ".", although point 1 says it might make more sense
+to fail with ENOENT so that glibc doesn't have to do as much work in
+chmod and fchmodat (if the kernel call does not change, then the burden
+is on glibc).
 
 --=20
 Eric Blake   eblake@redhat.com    +1-801-349-2682
 Libvirt virtualization library http://libvirt.org
 
 
---------------enigC65679483EDCD6DE644ED270
+--------------enigB8B280F5F3CB958B1C534D9A
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
@@ -68,13 +88,13 @@ Version: GnuPG v1.4.11 (GNU/Linux)
 Comment: Public key at http://people.redhat.com/eblake/eblake.gpg
 Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org/
 
-iQEcBAEBCAAGBQJNPzMJAAoJEKeha0olJ0NqTYgH/1aR1ABvFAD3uF0JBQGwObjG
-8tfV3Ju8nJIFeQcJaFrTvxFdcvTC5t54OYqSTkkSQIFtPZ9sJITQxdOVuw2YB18b
-wRsGe3tsvKC6S31f0jfKDzTm26V5iSKcl+lChBG+H+gSJaBLKqeVyU/ZoHSZOLrQ
-mwR+bNbdmlF2Z+sBY4rC4mYD7M1gYO43Ag8SmUi+flQJfJrxM+xTpvz9UPKXuPg/
-SHlLuy4veJZHt0Zk0MHrCp8QwwxHVb2BmHjqZ/PmCf8gnebtyZveKp493DJ97A8j
-+66XzjWOd7zljoCrn7/JdEl96z25/eKkunGD0swHNXdTqepYjj6C59T7QJogwb0=
-=xcyY
+iQEcBAEBCAAGBQJNP0FWAAoJEKeha0olJ0NqfmMH/0lATthcNht9vU/kP49SnvKx
+e1wmOUH5l7O7X6MtDXxHQYgp7IxiU4QJcvdZuqQ2HiyoAFCW41H4R+E7pwujKO38
+wYSVnpebsfT3vAck+ocz3EKNdDp4mudf7PLcVicDvJVnzYbg5NdKktvyygR2LBo+
+aqDr87bEeB7RcYqK7mIMBxpRRijpIhmj3IPjV1oScNjKxKPZI8B8HjTGIZ/4jcGR
+cIQ20S5Wu6ShV1j1gsHpK7HxnSVS7fppnuKRgmVPl/wnWGCQuvmPViLolboUlJ6x
+9YDreoTQwz5Ajq52h03ftiNFtLBXYS81T7jpwQkdF7qew/gFj9U13iGEl75ddgg=
+=TbNi
 -----END PGP SIGNATURE-----
 
---------------enigC65679483EDCD6DE644ED270--
+--------------enigB8B280F5F3CB958B1C534D9A--
