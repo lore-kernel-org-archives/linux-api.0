@@ -1,45 +1,49 @@
-From: John Stultz <john.stultz@linaro.org>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH V10 01/15] time: Introduce timekeeping_inject_offset
-Date: Thu, 27 Jan 2011 10:48:19 -0800
-Message-ID: <1296154099.2855.162.camel@work-vm>
+Date: Fri, 28 Jan 2011 08:08:00 +0100
+Message-ID: <20110128070800.GA3225@riccoc20.at.omicron.at>
 References: <cover.1296124770.git.richard.cochran@omicron.at>
-	 <6aec014551fc1d34924d6a7bcf97769867c15ba9.1296124770.git.richard.cochran@omicron.at>
+ <6aec014551fc1d34924d6a7bcf97769867c15ba9.1296124770.git.richard.cochran@omicron.at>
+ <1296154099.2855.162.camel@work-vm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6aec014551fc1d34924d6a7bcf97769867c15ba9.1296124770.git.richard.cochran@omicron.at>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Cochran <richardcochran@gmail.com>, Richard Cochran <richard.cochran@omicron.at>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Paul Mackerras <paulus@samba.org>, Russell King <linux@arm.linux.org.uk>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1296154099.2855.162.camel@work-vm>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Richard Cochran <richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2011-01-27 at 11:54 +0100, John Stultz wrote:
-> This adds a kernel-internal timekeeping interface to add or subtract
-> a fixed amount from CLOCK_REALTIME. This makes it so kernel users or
-> interfaces trying to do so do not have to read the time, then add an
-> offset and then call settimeofday(), which adds some extra error in
-> comparision to just simply adding the offset in the kernel timekeeping
-> core.
-> 
-> CC: Thomas Gleixner <tglx@linutronix.de>
-> Signed-off-by: John Stultz <john.stultz@linaro.org>
-> Signed-off-by: Richard Cochran <richard.cochran@omicron.at>
-> ---
+On Thu, Jan 27, 2011 at 10:48:19AM -0800, John Stultz wrote:
+> While I appreciate you preserving the path author, and the signoffs are
+> right, you really should send the email under your own name.
 
+Guess I've been reading too much spam. It wore off on me.
+ 
+> The proper style is to keep the mail-header From: the same (ie: Richard
+> Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>), but as the first line of the mail
+> body put:
+>    From: Author Name <author-MBgCfJrXA/zQT0dZR+AlfA@public.gmane.org>
 
-Hey Richard,
-	Something seems wrong with your mail sending script. It looks like your
-sending the email under my name (John Stultz
-<richardcochran@gmail.com>).
+Sorry about this. Arnd already explained this to me, and I did catch
+it with V9. This time I forgot.
 
-While I appreciate you preserving the path author, and the signoffs are
-right, you really should send the email under your own name.
+I would like to get to the bottom of this. Here is what I did:
 
-The proper style is to keep the mail-header From: the same (ie: Richard
-Cochran <richardcochran@gmail.com>), but as the first line of the mail
-body put:
-   From: Author Name <author@lemail.com>
+   1. Saved your patch to disk in mbox format using Mutt.
+   2. git am
+   3. ... rebase, rebase, rebase, ...
+   4. git format-patch [options] 1234..abcd
+   5. Edit cover letter
+   6. for x in 00*; do mutt -H $x; done
 
-thanks
--john
+Git format-patch places the "From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>"
+line with the other mail headers, and so I guess mutt just faithfully
+preserves this.
+
+I don't like having to remember to fix this manually. There must be a
+better way...
+
+Sorry,
+Richard
