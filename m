@@ -1,25 +1,45 @@
-From: john stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V10 15/15] ptp: Added a clock driver for the National
- Semiconductor PHYTER.
-Date: Tue, 01 Feb 2011 18:11:52 -0800
-Message-ID: <1296612712.3336.214.camel@work-vm>
-References: <cover.1296124770.git.richard.cochran@omicron.at>
-	 <9a8c774950f1a78259a49681ee2fe7977ace44d6.1296124770.git.richard.cochran@omicron.at>
+From: Andries Brouwer <aebr@win.tue.nl>
+Subject: Re: [BUG] Generic syscalls -- chmod vs. fchmodat
+Date: Thu, 10 Feb 2011 19:12:21 +0100
+Message-ID: <20110210181221.GA19413@win.tue.nl>
+References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com> <201101251529.24779.arnd@arndb.de> <20110125174515.C1DC2183C19@magilla.sf.frob.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <9a8c774950f1a78259a49681ee2fe7977ace44d6.1296124770.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-ports-return-1835-gclgp-libc-ports=m.gmane.org@sourceware.org>
+Content-Disposition: inline
+In-Reply-To: <20110125174515.C1DC2183C19@magilla.sf.frob.com>
+List-Unsubscribe: <mailto:libc-ports-unsubscribe-gclgp-libc-ports=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-ports-subscribe@sourceware.org>
+List-Post: <mailto:libc-ports@sourceware.org>
+List-Help: <mailto:libc-ports-help@sourceware.org>, <http://sourceware.org/lists.html#faqs>
+Sender: libc-ports-owner@sourceware.org
+To: Roland McGrath <roland@redhat.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, linasvepstas@gmail.com, Chris Metcalf <cmetcalf@tilera.com>, GLIBC Devel <libc-alpha@sourceware.org>, linux-kernel@vger.kernel.org, libc-ports@sourceware.org, linux-api@vger.kernel.org, Mike Frysinger <vapier@gentoo.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2011-01-27 at 12:00 +0100, Richard Cochran wrote:
-> This patch adds support for the PTP clock found on the DP83640.
-> The basic clock operations and one external time stamp have
-> been implemented.
-> 
-> Signed-off-by: Richard Cochran <richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
+On Tue, Jan 25, 2011 at 09:45:15AM -0800, Roland McGrath wrote:
 
-Acked-by: John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+> the empty string has never been a valid relative pathname.
+
+Hmm. I definitely recall otherwise.
+
+The old Unix definition is that the empty string stands for "."
+so that 'ls ""' means the same as 'ls .'
+and 'ls /tmp/""' the same as 'ls /tmp/.'.
+
+Let me try.
+
+On a recent Linux system:
+
+% ls -l ""
+ls: cannot access : No such file or directory
+
+On an old Unix system:
+
+# ls -l ""
+drwxr-xr-x  2 bin      1040 Jan  1  1970 bin
+drwxr-xr-x  2 bin       352 Jan  1  1970 dev
+drwxr-xr-x  2 bin       304 Aug 20 12:39 etc
+...
+
+Andries
