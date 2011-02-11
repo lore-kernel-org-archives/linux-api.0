@@ -1,35 +1,30 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: [PATCH V10 15/15] ptp: Added a clock driver for the National
- Semiconductor PHYTER.
-Date: Fri, 11 Feb 2011 09:19:01 +0100
-Message-ID: <20110211081901.GB12270@riccoc20.at.omicron.at>
-References: <cover.1296124770.git.richard.cochran@omicron.at>
- <9a8c774950f1a78259a49681ee2fe7977ace44d6.1296124770.git.richard.cochran@omicron.at>
- <1296612712.3336.214.camel@work-vm>
+From: Andreas Schwab <schwab@redhat.com>
+Subject: Re: [BUG] Generic syscalls -- chmod vs. fchmodat
+Date: Fri, 11 Feb 2011 10:11:39 +0100
+Message-ID: <m34o8bq6k4.fsf@redhat.com>
+References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com>	<201101251529.24779.arnd@arndb.de>	<20110125174515.C1DC2183C19@magilla.sf.frob.com>	<20110210181221.GA19413@win.tue.nl>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1296612712.3336.214.camel@work-vm>
-Sender: netdev-owner@vger.kernel.org
-To: john stultz <johnstul@us.ibm.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Paul Mackerras <paulus@samba.org>, Russell King <linux@arm.linux.org.uk>
+Return-path: <libc-ports-return-1837-gclgp-libc-ports=m.gmane.org@sourceware.org>
+In-Reply-To: <20110210181221.GA19413@win.tue.nl> (Andries Brouwer's message of	"Thu, 10 Feb 2011 19:12:21 +0100")
+List-Unsubscribe: <mailto:libc-ports-unsubscribe-gclgp-libc-ports=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-ports-subscribe@sourceware.org>
+List-Post: <mailto:libc-ports@sourceware.org>
+List-Help: <mailto:libc-ports-help@sourceware.org>, <http://sourceware.org/lists.html#faqs>
+Sender: libc-ports-owner@sourceware.org
+To: Andries Brouwer <aebr@win.tue.nl>
+Cc: Roland McGrath <roland@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linasvepstas@gmail.com, Chris Metcalf <cmetcalf@tilera.com>, GLIBC Devel <libc-alpha@sourceware.org>, linux-kernel@vger.kernel.org, libc-ports@sourceware.org, linux-api@vger.kernel.org, Mike Frysinger <vapier@gentoo.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 01, 2011 at 06:11:52PM -0800, john stultz wrote:
-> On Thu, 2011-01-27 at 12:00 +0100, Richard Cochran wrote:
-> > This patch adds support for the PTP clock found on the DP83640.
-> > The basic clock operations and one external time stamp have
-> > been implemented.
-> > 
-> > Signed-off-by: Richard Cochran <richard.cochran@omicron.at>
-> 
-> Acked-by: John Stultz <johnstul@us.ibm.com>
+Andries Brouwer <aebr@win.tue.nl> writes:
 
-I am going to post the PHC patches one more time, and I want to expand
-this driver to support mutiple PHYs. So, I would ask you to please
-take a second look at this driver then.
+> and 'ls /tmp/""' the same as 'ls /tmp/.'.
 
-Thanks,
+/tmp/"" is not an empty file name, and it is indistinguishable from /tmp/ .
 
-Richard
+Andreas.
+
+-- 
+Andreas Schwab, schwab@redhat.com
+GPG Key fingerprint = D4E8 DBE3 3813 BB5D FA84  5EC7 45C6 250E 6F00 984E
+"And now for something completely different."
