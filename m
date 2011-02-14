@@ -1,30 +1,57 @@
-From: Andreas Schwab <schwab@redhat.com>
-Subject: Re: [BUG] Generic syscalls -- chmod vs. fchmodat
-Date: Fri, 11 Feb 2011 10:11:39 +0100
-Message-ID: <m34o8bq6k4.fsf@redhat.com>
-References: <AANLkTikhKHnR+7DskxYqWXduX4=tpfgsfL4sNYq+4QDq@mail.gmail.com>	<201101251529.24779.arnd@arndb.de>	<20110125174515.C1DC2183C19@magilla.sf.frob.com>	<20110210181221.GA19413@win.tue.nl>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-ports-return-1837-gclgp-libc-ports=m.gmane.org@sourceware.org>
-In-Reply-To: <20110210181221.GA19413@win.tue.nl> (Andries Brouwer's message of	"Thu, 10 Feb 2011 19:12:21 +0100")
-List-Unsubscribe: <mailto:libc-ports-unsubscribe-gclgp-libc-ports=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-ports-subscribe@sourceware.org>
-List-Post: <mailto:libc-ports@sourceware.org>
-List-Help: <mailto:libc-ports-help@sourceware.org>, <http://sourceware.org/lists.html#faqs>
-Sender: libc-ports-owner@sourceware.org
-To: Andries Brouwer <aebr@win.tue.nl>
-Cc: Roland McGrath <roland@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linasvepstas@gmail.com, Chris Metcalf <cmetcalf@tilera.com>, GLIBC Devel <libc-alpha@sourceware.org>, linux-kernel@vger.kernel.org, libc-ports@sourceware.org, linux-api@vger.kernel.org, Mike Frysinger <vapier@gentoo.org>
+From: "Kirill A. Shutsemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Subject: [PATCH, v6 0/3] Introduce timer slack controller
+Date: Mon, 14 Feb 2011 15:06:24 +0200
+Message-ID: <1297688787-3592-1-git-send-email-kirill@shutemov.name>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Andries Brouwer <aebr@win.tue.nl> writes:
+From: Kirill A. Shutemov <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 
-> and 'ls /tmp/""' the same as 'ls /tmp/.'.
 
-/tmp/"" is not an empty file name, and it is indistinguishable from /tmp/ .
+Changelog:
 
-Andreas.
+v6:
+ - add documentation
+ - use notifier_call_chain() instead of check hook
+ - fix validate_change()
+ - cleanup
+v5:
+ - -EBUSY on writing to timer_slack.min_slack_ns/max_slack_ns if a child has
+   wider min-max range
+v4:
+ - hierarchy support
+ - drop dummy_timer_slack_check()
+ - workaround lockdep false (?) positive
+ - allow 0 as timer slack value
+v3:
+ - rework interface
+ - s/EXPORT_SYMBOL/EXPORT_SYMBOL_GPL/
+v2:
+ - fixed with CONFIG_CGROUP_TIMER_SLACK=y
+v1:
+ - initial revision
+
+Kirill A. Shutemov (3):
+  cgroups: export cgroup_iter_{start,next,end}
+  Implement timer slack notifier chain
+  cgroups: introduce timer slack controller
+
+ Documentation/cgroups/timer_slack.txt |   93 +++++++++++
+ include/linux/cgroup_subsys.h         |    6 +
+ include/linux/sched.h                 |    5 +
+ init/Kconfig                          |   10 ++
+ kernel/Makefile                       |    3 +-
+ kernel/cgroup.c                       |    3 +
+ kernel/cgroup_timer_slack.c           |  285 +++++++++++++++++++++++++++++++++
+ kernel/sys.c                          |    9 +-
+ kernel/timer_slack.c                  |   57 +++++++
+ 9 files changed, 463 insertions(+), 8 deletions(-)
+ create mode 100644 Documentation/cgroups/timer_slack.txt
+ create mode 100644 kernel/cgroup_timer_slack.c
+ create mode 100644 kernel/timer_slack.c
 
 -- 
-Andreas Schwab, schwab@redhat.com
-GPG Key fingerprint = D4E8 DBE3 3813 BB5D FA84  5EC7 45C6 250E 6F00 984E
-"And now for something completely different."
+1.7.4
