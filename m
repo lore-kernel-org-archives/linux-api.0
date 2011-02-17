@@ -1,7 +1,7 @@
 From: Mike Waychison <mikew@google.com>
-Subject: [PATCH v1 5/5] firmware: Add documentation for /sys/firmware/dmi
-Date: Thu, 17 Feb 2011 13:28:21 -0800
-Message-ID: <20110217212821.3967.22439.stgit@mike.mtv.corp.google.com>
+Subject: [PATCH v1 4/5] firmware: Expose DMI type 15 System Event Log
+Date: Thu, 17 Feb 2011 13:28:16 -0800
+Message-ID: <20110217212816.3967.923.stgit@mike.mtv.corp.google.com>
 References: <20110217212754.3967.98648.stgit@mike.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,118 +13,181 @@ To: Greg KH <greg@kroah.com>, Olof Johansson <olofj@chromium.org>, Andi Kleen <a
 Cc: Jon Mayer <jonmayer@google.com>, Duncan Laurie <dlaurie@google.com>, Aaron Durbin <adurbin@google.com>, linux-kernel@vger.kernel.org, Tim Hockin <thockin@google.com>, David Hendrix <dhendrix@chromium.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Document the new ABI added by the dmi-sysfs module.
+The System Event Log described by DMI entry type 15 may be backed by
+either memory or may be indirectly accessed via an IO index/data
+register pair.
+
+In order to get read access to this log, expose it in the
+"system_event_log" sub-directory of type 15 DMI entries, ie:
+/sys/firmware/dmi/entries/15-0/system_event_log/raw_event_log.
+
+This commit handles both IO accessed and memory access system event
+logs.  OEM specific access and GPNV support is explicitly not handled
+and we error out in the logs when we do not recognize the access method.
 
 Signed-off-by: Mike Waychison <mikew@google.com>
 ---
- Documentation/ABI/testing/sysfs-firmware-dmi |  101 ++++++++++++++++++++++++++
- 1 files changed, 101 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-firmware-dmi
+ drivers/firmware/dmi-sysfs.c |  143 ++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 143 insertions(+), 0 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Documentation/ABI/testing/sysfs-firmware-dmi
-new file mode 100644
-index 0000000..c6526b0
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-firmware-dmi
-@@ -0,0 +1,101 @@
-+What:		/sys/firmware/dmi/
-+Date:		February 2011
-+Contact:	Mike Waychison <mikew@google.com>
-+Description:
-+		Many machine's firmware (x86 and ia64) export DMI /
-+		SMBIOS tables to the operating system.  Getting at this
-+		information is often valuable to userland, especially in
-+		cases where there are OEM extensions used.
+diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
+index 3f49042..51462fe 100644
+--- a/drivers/firmware/dmi-sysfs.c
++++ b/drivers/firmware/dmi-sysfs.c
+@@ -305,6 +305,140 @@ static struct kobj_type dmi_system_event_log_ktype = {
+ 	.default_attrs = dmi_sysfs_sel_attrs,
+ };
+ 
++typedef u8 (*sel_io_reader)(const struct dmi_system_event_log *sel,
++			    loff_t offset);
 +
-+		The kernel itself does not rely on the majority of the
-+		information in these tables being correct.  It equally
-+		cannot ensure that the data as exported to userland is
-+		without error either.
++static DEFINE_MUTEX(io_port_lock);
 +
-+		DMI is structured as a large table of entries, where
-+		each entry has a common header indicating the type and
-+		length of the entry, as well as 'handle' that is
-+		supposed to be unique amongst all entries.
++static u8 read_sel_8bit_indexed_io(const struct dmi_system_event_log *sel,
++				   loff_t offset)
++{
++	u8 ret;
 +
-+		Some entries are required by the specification, but many
-+		others are optional.  In general though, user's should
-+		never expect to find a specific entry type on their
-+		system unless they know for certain what their firmware
-+		is doing.  Machine to machine will vary.
++	mutex_lock(&io_port_lock);
++	outb((u8)offset, sel->io.index_addr);
++	ret = inb(sel->io.data_addr);
++	mutex_unlock(&io_port_lock);
++	return ret;
++}
 +
-+		Multiple entries of the same type are allowed.  In order
-+		to handle these duplicate entry types, each entry is
-+		assigned by the operating system an 'instance', which is
-+		derived from an entry type's ordinal position.  That is
-+		to say, if there are 'N' multiple entries with the same type
-+		'T' in the DMI tables (adjacent or spread apart, it
-+		doesn't matter), they will be represented in sysfs as
-+		entries "T-0" through "T-(N-1)":
++static u8 read_sel_2x8bit_indexed_io(const struct dmi_system_event_log *sel,
++				     loff_t offset)
++{
++	u8 ret;
 +
-+		Example entry directories:
++	mutex_lock(&io_port_lock);
++	outb((u8)offset, sel->io.index_addr);
++	outb((u8)(offset >> 8), sel->io.index_addr + 1);
++	ret = inb(sel->io.data_addr);
++	mutex_unlock(&io_port_lock);
++	return ret;
++}
 +
-+			/sys/firmware/dmi/entries/17-0
-+			/sys/firmware/dmi/entries/17-1
-+			/sys/firmware/dmi/entries/17-2
-+			/sys/firmware/dmi/entries/17-3
-+			...
++static u8 read_sel_16bit_indexed_io(const struct dmi_system_event_log *sel,
++				    loff_t offset)
++{
++	u8 ret;
 +
-+		Instance numbers are used in lieu of the firmware
-+		assigned entry handles as there is kernel itself makes
-+		no guarantees that handles as exported are unique, and
-+		there are likely firmware images that get this wrong in
-+		the wild.
++	mutex_lock(&io_port_lock);
++	outw((u16)offset, sel->io.index_addr);
++	ret = inb(sel->io.data_addr);
++	mutex_unlock(&io_port_lock);
++	return ret;
++}
 +
-+		Each DMI entry in sysfs has the common header values
-+		exported as attributes:
++static sel_io_reader sel_io_readers[] = {
++	[DMI_SEL_ACCESS_METHOD_IO8]	= read_sel_8bit_indexed_io,
++	[DMI_SEL_ACCESS_METHOD_IO2x8]	= read_sel_2x8bit_indexed_io,
++	[DMI_SEL_ACCESS_METHOD_IO16]	= read_sel_16bit_indexed_io,
++};
 +
-+		handle	: The 16bit 'handle' that is assigned to this
-+			  entry by the firmware.  This handle may be
-+			  referred to by other entries.
-+		length	: The length of the entry, as presented in the
-+			  entry itself.  Note that this is _not the
-+			  total count of bytes associated with the
-+			  entry_.  This value represents the length of
-+			  the "formatted" portion of the entry.  This
-+			  "formatted" region is sometimes followed by
-+			  the "unformatted" region composed of nul
-+			  terminated strings, with termination signalled
-+			  by a two nul characters in series.
-+		raw	: The raw bytes of the entry. This includes the
-+			  "formatted" portion of the entry, the
-+			  "unformatted" strings portion of the entry,
-+			  and the two terminating nul characters.
++static ssize_t dmi_sel_raw_read_io(struct dmi_sysfs_entry *entry,
++				   const struct dmi_system_event_log *sel,
++				   char *buf, loff_t pos, size_t count)
++{
++	ssize_t wrote = 0;
 +
-+		=== Entry Specialization ===
++	sel_io_reader io_reader = sel_io_readers[sel->access_method];
 +
-+		Some entry types may have other information available in
-+		sysfs.
++	while (count && pos < sel->area_length) {
++		count--;
++		*(buf++) = io_reader(sel, pos++);
++		wrote++;
++	}
 +
-+		--- Type 15 - System Event Log ---
++	return wrote;
++}
 +
-+		This entry allows the firmware to export a log of
-+		events the system has taken.  This information is
-+		typically backed by nvram, but the implementation
-+		details are abstracted by this table.  This entries data
-+		is exported in the directory:
++static ssize_t dmi_sel_raw_read_phys32(struct dmi_sysfs_entry *entry,
++				       const struct dmi_system_event_log *sel,
++				       char *buf, loff_t pos, size_t count)
++{
++	u8 __iomem *mapped;
++	ssize_t wrote = 0;
 +
-+		/sys/firmware/dmi/entries/15-0/system_event_log
++	mapped = ioremap(sel->access_method_address, sel->area_length);
++	if (!mapped)
++		return -EIO;
 +
-+		and has the following attributes (documented in the
-+		SMBIOS / DMI specification under "System Event Log (Type 15)":
++	while (count && pos < sel->area_length) {
++		count--;
++		*(buf++) = readb(mapped + pos++);
++		wrote++;
++	}
 +
-+		area_length
-+		header_start_offset
-+		data_start_offset
-+		access_method
-+		status
-+		change_token
-+		access_method_address
-+		header_format
-+		per_log_type_descriptor_length
-+		type_descriptors_supported_count
++	iounmap(mapped);
++	return wrote;
++}
 +
-+		As well, the kernel exports the binary attribute:
++static ssize_t dmi_sel_raw_read_helper(struct dmi_sysfs_entry *entry,
++				       const struct dmi_header *dh,
++				       void *_state)
++{
++	struct dmi_read_state *state = _state;
++	const struct dmi_system_event_log *sel = to_sel(dh);
 +
-+		raw_event_log	: The raw binary bits of the event log
-+				  as described by the DMI entry.
++	if (sizeof(*sel) > dmi_entry_length(dh))
++		return -EIO;
++
++	switch (sel->access_method) {
++	case DMI_SEL_ACCESS_METHOD_IO8:
++	case DMI_SEL_ACCESS_METHOD_IO2x8:
++	case DMI_SEL_ACCESS_METHOD_IO16:
++		return dmi_sel_raw_read_io(entry, sel, state->buf,
++					   state->pos, state->count);
++	case DMI_SEL_ACCESS_METHOD_PHYS32:
++		return dmi_sel_raw_read_phys32(entry, sel, state->buf,
++					       state->pos, state->count);
++	case DMI_SEL_ACCESS_METHOD_GPNV:
++		pr_info("dmi-sysfs: GPNV support missing.\n");
++		return -EIO;
++	default:
++		pr_info("dmi-sysfs: Unknown access method %02x\n",
++			sel->access_method);
++		return -EIO;
++	}
++}
++
++static ssize_t dmi_sel_raw_read(struct file *filp, struct kobject *kobj,
++				struct bin_attribute *bin_attr,
++				char *buf, loff_t pos, size_t count)
++{
++	struct dmi_sysfs_entry *entry = to_entry(kobj->parent);
++	struct dmi_read_state state = {
++		.buf = buf,
++		.pos = pos,
++		.count = count,
++	};
++
++	return find_dmi_entry(entry, dmi_sel_raw_read_helper, &state);
++}
++
++static struct bin_attribute dmi_sel_raw_attr = {
++	.attr = {.name = "raw_event_log", .mode = 0400},
++	.read = dmi_sel_raw_read,
++};
++
+ static int dmi_system_event_log(struct dmi_sysfs_entry *entry)
+ {
+ 	int ret;
+@@ -318,6 +452,15 @@ static int dmi_system_event_log(struct dmi_sysfs_entry *entry)
+ 				   "system_event_log");
+ 	if (ret)
+ 		goto out_free;
++
++	ret = sysfs_create_bin_file(entry->child, &dmi_sel_raw_attr);
++	if (ret)
++		goto out_del;
++
++	return 0;
++
++out_del:
++	kobject_del(entry->child);
+ out_free:
+ 	kfree(entry->child);
+ 	return ret;
