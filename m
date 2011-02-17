@@ -1,13 +1,13 @@
 From: Tim Hockin <thockin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 2/5] firmware: Basic dmi-sysfs support
-Date: Thu, 17 Feb 2011 13:42:45 -0800
-Message-ID: <AANLkTi=e4DMSwpMn0=cV1B1J-=GP=SOGA2qADtUTCQyZ@mail.gmail.com>
-References: <20110217212754.3967.98648.stgit@mike.mtv.corp.google.com> <20110217212805.3967.47547.stgit@mike.mtv.corp.google.com>
+Subject: Re: [PATCH v1 5/5] firmware: Add documentation for /sys/firmware/dmi
+Date: Thu, 17 Feb 2011 13:50:15 -0800
+Message-ID: <AANLkTi=_8iU+QVTo+bDUjDc=md7E=fW6HpNuf_EFW2Nn@mail.gmail.com>
+References: <20110217212754.3967.98648.stgit@mike.mtv.corp.google.com> <20110217212821.3967.22439.stgit@mike.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110217212805.3967.47547.stgit-tzAwxxnF6Tt6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
+In-Reply-To: <20110217212821.3967.22439.stgit-tzAwxxnF6Tt6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Olof Johansson <olofj-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Robert Lippert <rlippert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jon Mayer <jonmayer-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Duncan Laurie <dlaurie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Aaron Durbin <adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Hendrix <dhendrix-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -15,508 +15,190 @@ List-Id: linux-api@vger.kernel.org
 
 On Thu, Feb 17, 2011 at 1:28 PM, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrot=
 e:
-> Introduce a new module "dmi-sysfs" that exports the broken out entrie=
-s
-> of the DMI table through sysfs.
->
-> Entries are enumerated via dmi_walk() on module load, and are populat=
-ed
-> as kobjects rooted at /sys/firmware/dmi/entries.
->
-> Entries are named "<type>-<instance>", where:
-> =A0 <type> =A0 =A0 =A0 : is the type of the entry, and
-> =A0 <instance> =A0 : is the ordinal count within the DMI table of tha=
-t
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0entry type. =A0This instance is us=
-ed in lieu the DMI
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0entry's handle as no assurances ar=
-e made by the kernel
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0that handles are unique.
->
-> All entries export the following attributes:
-> =A0 length =A0 =A0 =A0 : The length of the formatted portion of the e=
-ntry
-> =A0 handle =A0 =A0 =A0 : The handle given to this entry by the firmwa=
-re
-> =A0 raw =A0 =A0 =A0 =A0 =A0: The raw bytes of the entire entry, inclu=
-ding the
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0formatted portion, the unformatted=
- (strings) portion,
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0and the two terminating nul charac=
-ters.
-
-Is it worth dropping another file here for type (and maybe one for
-ordinal)?  I know they are in the dir name, but something nags at me
-that they would be useful here.
-
->
-> Entries in dmi-sysfs are kobject backed members called "struct
-> dmi_sysfs_entry" and belong to dmi_kset. =A0They are threaded through
-> entry_list (protected by entry_list_lock) so that we can find them at
-> cleanup time.
+> Document the new ABI added by the dmi-sysfs module.
 >
 > Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > ---
-> =A0drivers/firmware/Kconfig =A0 =A0 | =A0 11 +
-> =A0drivers/firmware/Makefile =A0 =A0| =A0 =A01
-> =A0drivers/firmware/dmi-sysfs.c | =A0362 ++++++++++++++++++++++++++++=
+> =A0Documentation/ABI/testing/sysfs-firmware-dmi | =A0101 ++++++++++++=
 ++++++++++++++
-> =A03 files changed, 374 insertions(+), 0 deletions(-)
-> =A0create mode 100644 drivers/firmware/dmi-sysfs.c
+> =A01 files changed, 101 insertions(+), 0 deletions(-)
+> =A0create mode 100644 Documentation/ABI/testing/sysfs-firmware-dmi
 >
-> diff --git a/drivers/firmware/Kconfig b/drivers/firmware/Kconfig
-> index e710424..959175d 100644
-> --- a/drivers/firmware/Kconfig
-> +++ b/drivers/firmware/Kconfig
-> @@ -113,6 +113,17 @@ config DMIID
-> =A0 =A0 =A0 =A0 =A0information from userspace through /sys/class/dmi/=
-id/ or if you want
-> =A0 =A0 =A0 =A0 =A0DMI-based module auto-loading.
->
-> +config DMI_SYSFS
-> + =A0 =A0 =A0 tristate "DMI table support in sysfs"
-> + =A0 =A0 =A0 depends on SYSFS && DMI
-> + =A0 =A0 =A0 default X86
-> + =A0 =A0 =A0 help
-> + =A0 =A0 =A0 =A0 Say Y or M here to enable the exporting of the raw =
-DMI table
-> + =A0 =A0 =A0 =A0 data via sysfs. =A0This is useful for consuming the=
- data without
-> + =A0 =A0 =A0 =A0 requiring any access to /dev/mem at all. =A0Tables =
-are found
-> + =A0 =A0 =A0 =A0 under /sys/firmware/dmi when this option is enabled=
- and
-> + =A0 =A0 =A0 =A0 loaded.
-> +
-> =A0config ISCSI_IBFT_FIND
-> =A0 =A0 =A0 =A0bool "iSCSI Boot Firmware Table Attributes"
-> =A0 =A0 =A0 =A0depends on X86
-> diff --git a/drivers/firmware/Makefile b/drivers/firmware/Makefile
-> index 1c3c173..20c17fc 100644
-> --- a/drivers/firmware/Makefile
-> +++ b/drivers/firmware/Makefile
-> @@ -2,6 +2,7 @@
-> =A0# Makefile for the linux kernel.
-> =A0#
-> =A0obj-$(CONFIG_DMI) =A0 =A0 =A0 =A0 =A0 =A0 =A0+=3D dmi_scan.o
-> +obj-$(CONFIG_DMI_SYSFS) =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0+=3D dmi-sysf=
-s.o
-> =A0obj-$(CONFIG_EDD) =A0 =A0 =A0 =A0 =A0 =A0 =A0+=3D edd.o
-> =A0obj-$(CONFIG_EFI_VARS) =A0 =A0 =A0 =A0 +=3D efivars.o
-> =A0obj-$(CONFIG_EFI_PCDP) =A0 =A0 =A0 =A0 +=3D pcdp.o
-> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysf=
-s.c
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Documenta=
+tion/ABI/testing/sysfs-firmware-dmi
 > new file mode 100644
-> index 0000000..adcd604
+> index 0000000..c6526b0
 > --- /dev/null
-> +++ b/drivers/firmware/dmi-sysfs.c
-> @@ -0,0 +1,362 @@
-> +/*
-> + * dmi-sysfs.c
-> + *
-> + * This module exports the DMI tables read-only to userspace through=
- the
-> + * sysfs file system.
-> + *
-> + * Data is currently found below
-> + * =A0 =A0/sys/firmware/dmi/...
-> + *
-> + * DMI attributes are presented in attribute files with names
-> + * formatted using %d-%d, so that the first integer indicates the
-> + * structure type (0-255), and the second field is the instance of t=
-hat
-> + * entry.
-> + *
-> + * Copyright 2010 Google, Inc.
-> + */
+> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi
+> @@ -0,0 +1,101 @@
+> +What: =A0 =A0 =A0 =A0 =A0/sys/firmware/dmi/
+> +Date: =A0 =A0 =A0 =A0 =A0February 2011
+> +Contact: =A0 =A0 =A0 Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 Many machine's firmware (x86 and ia64) =
+export DMI /
+
+machines'
+
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 SMBIOS tables to the operating system. =
+=A0Getting at this
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 information is often valuable to userla=
+nd, especially in
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 cases where there are OEM extensions us=
+ed.
 > +
-> +#include <linux/kernel.h>
-> +#include <linux/init.h>
-> +#include <linux/module.h>
-> +#include <linux/types.h>
-> +#include <linux/kobject.h>
-> +#include <linux/dmi.h>
-> +#include <linux/capability.h>
-> +#include <linux/slab.h>
-> +#include <linux/list.h>
-> +#include <linux/io.h>
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 The kernel itself does not rely on the =
+majority of the
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 information in these tables being corre=
+ct. =A0It equally
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 cannot ensure that the data as exported=
+ to userland is
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 without error either.
 > +
-> +#define MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we cons=
-ider
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 the top ent=
-ry type is only 8 bits */
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 DMI is structured as a large table of e=
+ntries, where
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 each entry has a common header indicati=
+ng the type and
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 length of the entry, as well as 'handle=
+' that is
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 supposed to be unique amongst all entri=
+es.
 > +
-> +struct dmi_sysfs_entry {
-> + =A0 =A0 =A0 struct dmi_header dh;
-> + =A0 =A0 =A0 struct kobject kobj;
-> + =A0 =A0 =A0 int instance;
-> + =A0 =A0 =A0 struct list_head list;
-> +};
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 Some entries are required by the specif=
+ication, but many
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 others are optional. =A0In general thou=
+gh, user's should
+
+users
+
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 never expect to find a specific entry t=
+ype on their
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 system unless they know for certain wha=
+t their firmware
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 is doing. =A0Machine to machine will va=
+ry.
 > +
-> +/*
-> + * Global list of dmi_sysfs_entry. =A0Even though this should only b=
-e
-> + * manipulated at setup and teardown, the lazy nature of the kobject
-> + * system means we get lazy removes.
-> + */
-> +static LIST_HEAD(entry_list);
-> +static DEFINE_SPINLOCK(entry_list_lock);
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 Multiple entries of the same type are a=
+llowed. =A0In order
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 to handle these duplicate entry types, =
+each entry is
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 assigned by the operating system an 'in=
+stance', which is
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 derived from an entry type's ordinal po=
+sition. =A0That is
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 to say, if there are 'N' multiple entri=
+es with the same type
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 'T' in the DMI tables (adjacent or spre=
+ad apart, it
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 doesn't matter), they will be represent=
+ed in sysfs as
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 entries "T-0" through "T-(N-1)":
 > +
-> +/* dmi_sysfs_attribute - Top level attribute. used by all entries. *=
-/
-> +struct dmi_sysfs_attribute {
-> + =A0 =A0 =A0 struct attribute attr;
-> + =A0 =A0 =A0 ssize_t (*show)(struct dmi_sysfs_entry *entry, char *bu=
-f);
-> +};
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 Example entry directories:
 > +
-> +#define DMI_SYSFS_ATTR(_entry, _name) \
-> +struct dmi_sysfs_attribute dmi_sysfs_attr_##_entry##_##_name =3D { \
-> + =A0 =A0 =A0 .attr =3D {.name =3D __stringify(_name), .mode =3D 0400=
-}, \
-> + =A0 =A0 =A0 .show =3D dmi_sysfs_##_entry##_##_name, \
-> +}
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 /sys/firmware/dmi/entri=
+es/17-0
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 /sys/firmware/dmi/entri=
+es/17-1
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 /sys/firmware/dmi/entri=
+es/17-2
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 /sys/firmware/dmi/entri=
+es/17-3
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 ...
 > +
-> +/*
-> + * dmi_sysfs_mapped_attribute - Attribute where we require the entry=
- be
-> + * mapped in. =A0Use in conjunction with dmi_sysfs_specialize_attr_o=
-ps.
-> + */
-> +struct dmi_sysfs_mapped_attribute {
-> + =A0 =A0 =A0 struct attribute attr;
-> + =A0 =A0 =A0 ssize_t (*show)(struct dmi_sysfs_entry *entry,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 const struct dmi_header=
- *dh,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 char *buf);
-> +};
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 Instance numbers are used in lieu of th=
+e firmware
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 assigned entry handles as there is kern=
+el itself makes
+
+s/there is/the/
+
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 no guarantees that handles as exported =
+are unique, and
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 there are likely firmware images that g=
+et this wrong in
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 the wild.
 > +
-> +#define DMI_SYSFS_MAPPED_ATTR(_entry, _name) \
-> +struct dmi_sysfs_mapped_attribute dmi_sysfs_attr_##_entry##_##_name =
-=3D { \
-> + =A0 =A0 =A0 .attr =3D {.name =3D __stringify(_name), .mode =3D 0400=
-}, \
-> + =A0 =A0 =A0 .show =3D dmi_sysfs_##_entry##_##_name, \
-> +}
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 Each DMI entry in sysfs has the common =
+header values
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 exported as attributes:
 > +
-> +/*************************************************
-> + * Generic DMI entry support.
-> + *************************************************/
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 handle =A0: The 16bit 'handle' that is =
+assigned to this
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 entry by the firmwa=
+re. =A0This handle may be
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 referred to by othe=
+r entries.
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 length =A0: The length of the entry, as=
+ presented in the
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 entry itself. =A0No=
+te that this is _not the
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 total count of byte=
+s associated with the
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 entry_. =A0This val=
+ue represents the length of
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 the "formatted" por=
+tion of the entry. =A0This
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 "formatted" region =
+is sometimes followed by
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 the "unformatted" r=
+egion composed of nul
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 terminated strings,=
+ with termination signalled
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 by a two nul charac=
+ters in series.
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 raw =A0 =A0 : The raw bytes of the entr=
+y. This includes the
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 "formatted" portion=
+ of the entry, the
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 "unformatted" strin=
+gs portion of the entry,
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 and the two termina=
+ting nul characters.
 > +
-> +static struct dmi_sysfs_entry *to_entry(struct kobject *kobj)
-> +{
-> + =A0 =A0 =A0 return container_of(kobj, struct dmi_sysfs_entry, kobj)=
-;
-> +}
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =3D=3D=3D Entry Specialization =3D=3D=3D
 > +
-> +static struct dmi_sysfs_attribute *to_attr(struct attribute *attr)
-> +{
-> + =A0 =A0 =A0 return container_of(attr, struct dmi_sysfs_attribute, a=
-ttr);
-> +}
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 Some entry types may have other informa=
+tion available in
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 sysfs.
 > +
-> +static ssize_t dmi_sysfs_attr_show(struct kobject *kobj,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
-struct attribute *_attr, char *buf)
-> +{
-> + =A0 =A0 =A0 struct dmi_sysfs_entry *entry =3D to_entry(kobj);
-> + =A0 =A0 =A0 struct dmi_sysfs_attribute *attr =3D to_attr(_attr);
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 --- Type 15 - System Event Log ---
 > +
-> + =A0 =A0 =A0 /* DMI stuff is only ever admin visible */
-> + =A0 =A0 =A0 if (!capable(CAP_SYS_ADMIN))
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return -EACCES;
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 This entry allows the firmware to expor=
+t a log of
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 events the system has taken. =A0This in=
+formation is
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 typically backed by nvram, but the impl=
+ementation
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 details are abstracted by this table. =A0=
+This entries data
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 is exported in the directory:
 > +
-> + =A0 =A0 =A0 return attr->show(entry, buf);
-> +}
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 /sys/firmware/dmi/entries/15-0/system_e=
+vent_log
 > +
-> +static const struct sysfs_ops dmi_sysfs_attr_ops =3D {
-> + =A0 =A0 =A0 .show =3D dmi_sysfs_attr_show,
-> +};
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 and has the following attributes (docum=
+ented in the
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 SMBIOS / DMI specification under "Syste=
+m Event Log (Type 15)":
 > +
-> +typedef ssize_t (*dmi_callback)(struct dmi_sysfs_entry *,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 const s=
-truct dmi_header *dh, void *);
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 area_length
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 header_start_offset
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 data_start_offset
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 access_method
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 status
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 change_token
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 access_method_address
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 header_format
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 per_log_type_descriptor_length
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 type_descriptors_supported_count
 > +
-> +struct find_dmi_data {
-> + =A0 =A0 =A0 struct dmi_sysfs_entry =A0*entry;
-> + =A0 =A0 =A0 dmi_callback =A0 =A0 =A0 =A0 =A0 =A0callback;
-> + =A0 =A0 =A0 void =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0*private;
-> + =A0 =A0 =A0 int =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 instance_co=
-untdown;
-> + =A0 =A0 =A0 ssize_t =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 ret;
-> +};
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 As well, the kernel exports the binary =
+attribute:
 > +
-> +static void find_dmi_entry_helper(const struct dmi_header *dh,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 voi=
-d *_data)
-> +{
-> + =A0 =A0 =A0 struct find_dmi_data *data =3D _data;
-> + =A0 =A0 =A0 struct dmi_sysfs_entry *entry =3D data->entry;
-> +
-> + =A0 =A0 =A0 /* Is this the entry we want? */
-> + =A0 =A0 =A0 if (dh->type !=3D entry->dh.type)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return;
-> +
-> + =A0 =A0 =A0 if (data->instance_countdown !=3D 0) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 /* try the next instance? */
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 data->instance_countdown--;
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return;
-> + =A0 =A0 =A0 }
-> +
-> + =A0 =A0 =A0 /* Found the entry */
-> + =A0 =A0 =A0 data->ret =3D data->callback(entry, dh, data->private);
-> +}
-> +
-> +/* State for passing the read parameters through dmi_find_entry() */
-> +struct dmi_read_state {
-> + =A0 =A0 =A0 char *buf;
-> + =A0 =A0 =A0 loff_t pos;
-> + =A0 =A0 =A0 size_t count;
-> +};
-> +
-> +static ssize_t find_dmi_entry(struct dmi_sysfs_entry *entry,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 dmi_callbac=
-k callback, void *private)
-> +{
-> + =A0 =A0 =A0 struct find_dmi_data data =3D {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .entry =3D entry,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .callback =3D callback,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .private =3D private,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .instance_countdown =3D entry->instance=
-,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .ret =3D -EIO, =A0/* To signal the entr=
-y disappeared */
-> + =A0 =A0 =A0 };
-> + =A0 =A0 =A0 int ret;
-> +
-> + =A0 =A0 =A0 ret =3D dmi_walk(find_dmi_entry_helper, &data);
-> + =A0 =A0 =A0 /* This shouldn't happen, but just in case. */
-> + =A0 =A0 =A0 if (ret)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return -EINVAL;
-> + =A0 =A0 =A0 return data.ret;
-> +}
-> +
-> +/*
-> + * Calculate and return the byte length of the dmi entry identified =
-by
-> + * dh. =A0This includes both the formatted portion as well as the
-> + * unformatted string space, including the two trailing nul characte=
-rs.
-> + */
-> +static size_t dmi_entry_length(const struct dmi_header *dh)
-> +{
-> + =A0 =A0 =A0 const char *p =3D (const char *)dh;
-> +
-> + =A0 =A0 =A0 p +=3D dh->length;
-> +
-> + =A0 =A0 =A0 while (p[0] || p[1])
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 p++;
-> +
-> + =A0 =A0 =A0 return 2 + p - (const char *)dh;
-> +}
-> +
-> +/*************************************************
-> + * Generic DMI entry support.
-> + *************************************************/
-> +
-> +static ssize_t dmi_sysfs_entry_length(struct dmi_sysfs_entry *entry,=
- char *buf)
-> +{
-> + =A0 =A0 =A0 return sprintf(buf, "%d\n", entry->dh.length);
-> +}
-> +
-> +static ssize_t dmi_sysfs_entry_handle(struct dmi_sysfs_entry *entry,=
- char *buf)
-> +{
-> + =A0 =A0 =A0 return sprintf(buf, "%d\n", entry->dh.handle);
-> +}
-> +
-> +static DMI_SYSFS_ATTR(entry, length);
-> +static DMI_SYSFS_ATTR(entry, handle);
-> +
-> +static struct attribute *dmi_sysfs_entry_attrs[] =3D {
-> + =A0 =A0 =A0 &dmi_sysfs_attr_entry_length.attr,
-> + =A0 =A0 =A0 &dmi_sysfs_attr_entry_handle.attr,
-> + =A0 =A0 =A0 NULL,
-> +};
-> +
-> +static ssize_t dmi_entry_raw_read_helper(struct dmi_sysfs_entry *ent=
-ry,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 =A0const struct dmi_header *dh,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 =A0void *_state)
-> +{
-> + =A0 =A0 =A0 struct dmi_read_state *state =3D _state;
-> + =A0 =A0 =A0 size_t entry_length;
-> +
-> + =A0 =A0 =A0 entry_length =3D dmi_entry_length(dh);
-> +
-> + =A0 =A0 =A0 return memory_read_from_buffer(state->buf, state->count=
-,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0&state->pos, dh, entry_length);
-> +}
-> +
-> +static ssize_t dmi_entry_raw_read(struct file *filp,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 str=
-uct kobject *kobj,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 str=
-uct bin_attribute *bin_attr,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 cha=
-r *buf, loff_t pos, size_t count)
-> +{
-> + =A0 =A0 =A0 struct dmi_sysfs_entry *entry =3D to_entry(kobj);
-> + =A0 =A0 =A0 struct dmi_read_state state =3D {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .buf =3D buf,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .pos =3D pos,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 .count =3D count,
-> + =A0 =A0 =A0 };
-> +
-> + =A0 =A0 =A0 return find_dmi_entry(entry, dmi_entry_raw_read_helper,=
- &state);
-> +}
-> +
-> +static const struct bin_attribute dmi_entry_raw_attr =3D {
-> + =A0 =A0 =A0 .attr =3D {.name =3D "raw", .mode =3D 0400},
-> + =A0 =A0 =A0 .read =3D dmi_entry_raw_read,
-> +};
-> +
-> +static void dmi_sysfs_entry_release(struct kobject *kobj)
-> +{
-> + =A0 =A0 =A0 struct dmi_sysfs_entry *entry =3D to_entry(kobj);
-> + =A0 =A0 =A0 sysfs_remove_bin_file(&entry->kobj, &dmi_entry_raw_attr=
-);
-> + =A0 =A0 =A0 spin_lock(&entry_list_lock);
-> + =A0 =A0 =A0 list_del(&entry->list);
-> + =A0 =A0 =A0 spin_unlock(&entry_list_lock);
-> + =A0 =A0 =A0 kfree(entry);
-> +}
-> +
-> +static struct kobj_type dmi_sysfs_entry_ktype =3D {
-> + =A0 =A0 =A0 .release =3D dmi_sysfs_entry_release,
-> + =A0 =A0 =A0 .sysfs_ops =3D &dmi_sysfs_attr_ops,
-> + =A0 =A0 =A0 .default_attrs =3D dmi_sysfs_entry_attrs,
-> +};
-> +
-> +static struct kobject *dmi_kobj;
-> +static struct kset *dmi_kset;
-> +
-> +/* Global count of all instances seen. =A0Only for setup */
-> +static int __initdata instance_counts[MAX_ENTRY_TYPE + 1];
-> +
-> +static void __init dmi_sysfs_register_handle(const struct dmi_header=
- *dh,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 =A0 =A0 =A0void *_ret)
-> +{
-> + =A0 =A0 =A0 struct dmi_sysfs_entry *entry;
-> + =A0 =A0 =A0 int *ret =3D _ret;
-> +
-> + =A0 =A0 =A0 /* If a previous entry saw an error, short circuit */
-> + =A0 =A0 =A0 if (*ret)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return;
-> +
-> + =A0 =A0 =A0 /* Allocate and register a new entry into the entries s=
-et */
-> + =A0 =A0 =A0 entry =3D kzalloc(sizeof(*entry), GFP_KERNEL);
-> + =A0 =A0 =A0 if (!entry) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 *ret =3D -ENOMEM;
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return;
-> + =A0 =A0 =A0 }
-> +
-> + =A0 =A0 =A0 /* Set the key */
-> + =A0 =A0 =A0 entry->dh =3D *dh;
-> + =A0 =A0 =A0 entry->instance =3D instance_counts[dh->type]++;
-> +
-> + =A0 =A0 =A0 entry->kobj.kset =3D dmi_kset;
-> + =A0 =A0 =A0 *ret =3D kobject_init_and_add(&entry->kobj, &dmi_sysfs_=
-entry_ktype, NULL,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- "%d-%d", dh->type, entry->instance);
-> +
-> + =A0 =A0 =A0 if (*ret) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 kfree(entry);
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return;
-> + =A0 =A0 =A0 }
-> +
-> + =A0 =A0 =A0 /* Thread on the global list for cleanup */
-> + =A0 =A0 =A0 spin_lock(&entry_list_lock);
-> + =A0 =A0 =A0 list_add_tail(&entry->list, &entry_list);
-> + =A0 =A0 =A0 spin_unlock(&entry_list_lock);
-> +
-> + =A0 =A0 =A0 /* Create the raw binary file to access the entry */
-> + =A0 =A0 =A0 *ret =3D sysfs_create_bin_file(&entry->kobj, &dmi_entry=
-_raw_attr);
-> + =A0 =A0 =A0 if (*ret)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto out_err;
-> +
-> + =A0 =A0 =A0 return;
-> +out_err:
-> + =A0 =A0 =A0 kobject_put(&entry->kobj);
-> + =A0 =A0 =A0 return;
-> +}
-> +
-> +static void cleanup_entry_list(void)
-> +{
-> + =A0 =A0 =A0 struct dmi_sysfs_entry *entry, *next;
-> +
-> + =A0 =A0 =A0 /* No locks, we are on our way out */
-> + =A0 =A0 =A0 list_for_each_entry_safe(entry, next, &entry_list, list=
-) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 kobject_put(&entry->kobj);
-> + =A0 =A0 =A0 }
-> +}
-> +
-> +static int __init dmi_sysfs_init(void)
-> +{
-> + =A0 =A0 =A0 int error =3D -ENOMEM;
-> + =A0 =A0 =A0 int val;
-> +
-> + =A0 =A0 =A0 /* Set up our directory */
-> + =A0 =A0 =A0 dmi_kobj =3D kobject_create_and_add("dmi", firmware_kob=
-j);
-> + =A0 =A0 =A0 if (!dmi_kobj)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto err;
-> +
-> + =A0 =A0 =A0 dmi_kset =3D kset_create_and_add("entries", NULL, dmi_k=
-obj);
-> + =A0 =A0 =A0 if (!dmi_kset)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto err;
-> +
-> + =A0 =A0 =A0 val =3D 0;
-> + =A0 =A0 =A0 error =3D dmi_walk(dmi_sysfs_register_handle, &val);
-> + =A0 =A0 =A0 if (error)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto err;
-> + =A0 =A0 =A0 if (val) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 error =3D val;
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto err;
-> + =A0 =A0 =A0 }
-> +
-> + =A0 =A0 =A0 pr_info("dmi-sysfs: loaded.\n");
-> +
-> + =A0 =A0 =A0 return 0;
-> +err:
-> + =A0 =A0 =A0 cleanup_entry_list();
-> + =A0 =A0 =A0 kset_unregister(dmi_kset);
-> + =A0 =A0 =A0 kobject_put(dmi_kobj);
-> + =A0 =A0 =A0 return error;
-> +}
-> +
-> +/* clean up everything. */
-> +static void __exit dmi_sysfs_exit(void)
-> +{
-> + =A0 =A0 =A0 pr_info("dmi-sysfs: unloading.\n");
-> + =A0 =A0 =A0 cleanup_entry_list();
-> + =A0 =A0 =A0 kset_unregister(dmi_kset);
-> + =A0 =A0 =A0 kobject_put(dmi_kobj);
-> +}
-> +
-> +module_init(dmi_sysfs_init);
-> +module_exit(dmi_sysfs_exit);
-> +
-> +MODULE_AUTHOR("Google, Inc.");
-> +MODULE_DESCRIPTION("DMI sysfs support");
-> +MODULE_LICENSE("GPL");
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 raw_event_log =A0 : The raw binary bits=
+ of the event log
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 as =
+described by the DMI entry.
 >
 >
