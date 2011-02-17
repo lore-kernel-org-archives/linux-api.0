@@ -1,82 +1,130 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v1 1/5] firmware: Add DMI entry types to the headers
-Date: Thu, 17 Feb 2011 13:28:00 -0800
-Message-ID: <20110217212800.3967.35961.stgit@mike.mtv.corp.google.com>
+From: Mike Waychison <mikew@google.com>
+Subject: [PATCH v1 5/5] firmware: Add documentation for /sys/firmware/dmi
+Date: Thu, 17 Feb 2011 13:28:21 -0800
+Message-ID: <20110217212821.3967.22439.stgit@mike.mtv.corp.google.com>
 References: <20110217212754.3967.98648.stgit@mike.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110217212754.3967.98648.stgit-tzAwxxnF6Tt6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Olof Johansson <olofj-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Robert Lippert <rlippert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Jon Mayer <jonmayer-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Duncan Laurie <dlaurie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Aaron Durbin <adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tim Hockin <thockin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Hendrix <dhendrix-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110217212754.3967.98648.stgit@mike.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <greg@kroah.com>, Olof Johansson <olofj@chromium.org>, Andi Kleen <andi@firstfloor.org>, Alan Cox <alan@lxorguk.ukuu.org.uk>, Robert Lippert <rlippert@google.com>
+Cc: Jon Mayer <jonmayer@google.com>, Duncan Laurie <dlaurie@google.com>, Aaron Durbin <adurbin@google.com>, linux-kernel@vger.kernel.org, Tim Hockin <thockin@google.com>, David Hendrix <dhendrix@chromium.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-In preparation for the upcoming commits, introduce the DMI entry types to
-the headers.  These type names are based on those specified in the DMTF
-SMBIOS specification version 2.7.1.
+Document the new ABI added by the dmi-sysfs module.
 
-Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Mike Waychison <mikew@google.com>
 ---
- include/linux/dmi.h |   47 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 47 insertions(+), 0 deletions(-)
+ Documentation/ABI/testing/sysfs-firmware-dmi |  101 ++++++++++++++++++++++++++
+ 1 files changed, 101 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-firmware-dmi
 
-diff --git a/include/linux/dmi.h b/include/linux/dmi.h
-index 90e087f..f156cca 100644
---- a/include/linux/dmi.h
-+++ b/include/linux/dmi.h
-@@ -23,6 +23,53 @@ enum dmi_device_type {
- 	DMI_DEV_TYPE_DEV_ONBOARD = -3,
- };
- 
-+enum dmi_entry_type {
-+	DMI_ENTRY_BIOS = 0,
-+	DMI_ENTRY_SYSTEM,
-+	DMI_ENTRY_BASEBOARD,
-+	DMI_ENTRY_CHASSIS,
-+	DMI_ENTRY_PROCESSOR,
-+	DMI_ENTRY_MEM_CONTROLLER,
-+	DMI_ENTRY_MEM_MODULE,
-+	DMI_ENTRY_CACHE,
-+	DMI_ENTRY_PORT_CONNECTOR,
-+	DMI_ENTRY_SYSTEM_SLOT,
-+	DMI_ENTRY_ONBOARD_DEVICE,
-+	DMI_ENTRY_OEMSTRINGS,
-+	DMI_ENTRY_SYSCONF,
-+	DMI_ENTRY_BIOS_LANG,
-+	DMI_ENTRY_GROUP_ASSOC,
-+	DMI_ENTRY_SYSTEM_EVENT_LOG,
-+	DMI_ENTRY_PHYS_MEM_ARRAY,
-+	DMI_ENTRY_MEM_DEVICE,
-+	DMI_ENTRY_32_MEM_ERROR,
-+	DMI_ENTRY_MEM_ARRAY_MAPPED_ADDR,
-+	DMI_ENTRY_MEM_DEV_MAPPED_ADDR,
-+	DMI_ENTRY_BUILTIN_POINTING_DEV,
-+	DMI_ENTRY_PORTABLE_BATTERY,
-+	DMI_ENTRY_SYSTEM_RESET,
-+	DMI_ENTRY_HW_SECURITY,
-+	DMI_ENTRY_SYSTEM_POWER_CONTROLS,
-+	DMI_ENTRY_VOLTAGE_PROBE,
-+	DMI_ENTRY_COOLING_DEV,
-+	DMI_ENTRY_TEMP_PROBE,
-+	DMI_ENTRY_ELECTRICAL_CURRENT_PROBE,
-+	DMI_ENTRY_OOB_REMOTE_ACCESS,
-+	DMI_ENTRY_BIS_ENTRY,
-+	DMI_ENTRY_SYSTEM_BOOT,
-+	DMI_ENTRY_MGMT_DEV,
-+	DMI_ENTRY_MGMT_DEV_COMPONENT,
-+	DMI_ENTRY_MGMT_DEV_THRES,
-+	DMI_ENTRY_MEM_CHANNEL,
-+	DMI_ENTRY_IPMI_DEV,
-+	DMI_ENTRY_SYS_POWER_SUPPLY,
-+	DMI_ENTRY_ADDITIONAL,
-+	DMI_ENTRY_ONBOARD_DEV_EXT,
-+	DMI_ENTRY_MGMT_CONTROLLER_HOST,
-+	DMI_ENTRY_INACTIVE = 126,
-+	DMI_ENTRY_END_OF_TABLE = 127,
-+};
+diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Documentation/ABI/testing/sysfs-firmware-dmi
+new file mode 100644
+index 0000000..c6526b0
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-firmware-dmi
+@@ -0,0 +1,101 @@
++What:		/sys/firmware/dmi/
++Date:		February 2011
++Contact:	Mike Waychison <mikew@google.com>
++Description:
++		Many machine's firmware (x86 and ia64) export DMI /
++		SMBIOS tables to the operating system.  Getting at this
++		information is often valuable to userland, especially in
++		cases where there are OEM extensions used.
 +
- struct dmi_header {
- 	u8 type;
- 	u8 length;
++		The kernel itself does not rely on the majority of the
++		information in these tables being correct.  It equally
++		cannot ensure that the data as exported to userland is
++		without error either.
++
++		DMI is structured as a large table of entries, where
++		each entry has a common header indicating the type and
++		length of the entry, as well as 'handle' that is
++		supposed to be unique amongst all entries.
++
++		Some entries are required by the specification, but many
++		others are optional.  In general though, user's should
++		never expect to find a specific entry type on their
++		system unless they know for certain what their firmware
++		is doing.  Machine to machine will vary.
++
++		Multiple entries of the same type are allowed.  In order
++		to handle these duplicate entry types, each entry is
++		assigned by the operating system an 'instance', which is
++		derived from an entry type's ordinal position.  That is
++		to say, if there are 'N' multiple entries with the same type
++		'T' in the DMI tables (adjacent or spread apart, it
++		doesn't matter), they will be represented in sysfs as
++		entries "T-0" through "T-(N-1)":
++
++		Example entry directories:
++
++			/sys/firmware/dmi/entries/17-0
++			/sys/firmware/dmi/entries/17-1
++			/sys/firmware/dmi/entries/17-2
++			/sys/firmware/dmi/entries/17-3
++			...
++
++		Instance numbers are used in lieu of the firmware
++		assigned entry handles as there is kernel itself makes
++		no guarantees that handles as exported are unique, and
++		there are likely firmware images that get this wrong in
++		the wild.
++
++		Each DMI entry in sysfs has the common header values
++		exported as attributes:
++
++		handle	: The 16bit 'handle' that is assigned to this
++			  entry by the firmware.  This handle may be
++			  referred to by other entries.
++		length	: The length of the entry, as presented in the
++			  entry itself.  Note that this is _not the
++			  total count of bytes associated with the
++			  entry_.  This value represents the length of
++			  the "formatted" portion of the entry.  This
++			  "formatted" region is sometimes followed by
++			  the "unformatted" region composed of nul
++			  terminated strings, with termination signalled
++			  by a two nul characters in series.
++		raw	: The raw bytes of the entry. This includes the
++			  "formatted" portion of the entry, the
++			  "unformatted" strings portion of the entry,
++			  and the two terminating nul characters.
++
++		=== Entry Specialization ===
++
++		Some entry types may have other information available in
++		sysfs.
++
++		--- Type 15 - System Event Log ---
++
++		This entry allows the firmware to export a log of
++		events the system has taken.  This information is
++		typically backed by nvram, but the implementation
++		details are abstracted by this table.  This entries data
++		is exported in the directory:
++
++		/sys/firmware/dmi/entries/15-0/system_event_log
++
++		and has the following attributes (documented in the
++		SMBIOS / DMI specification under "System Event Log (Type 15)":
++
++		area_length
++		header_start_offset
++		data_start_offset
++		access_method
++		status
++		change_token
++		access_method_address
++		header_format
++		per_log_type_descriptor_length
++		type_descriptors_supported_count
++
++		As well, the kernel exports the binary attribute:
++
++		raw_event_log	: The raw binary bits of the event log
++				  as described by the DMI entry.
