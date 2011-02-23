@@ -1,237 +1,84 @@
-From: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 3/5] firmware: Break out system_event_log in dmi-sysfs
-Date: Tue, 22 Feb 2011 17:53:26 -0800
-Message-ID: <20110223015326.13068.58029.stgit@mike.mtv.corp.google.com>
-References: <20110223015307.13068.14063.stgit@mike.mtv.corp.google.com>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH V11 0/4] ptp: IEEE 1588 hardware clock support
+Date: Wed, 23 Feb 2011 11:37:32 +0100
+Message-ID: <cover.1298447722.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110223015307.13068.14063.stgit-tzAwxxnF6Tt6FDdRrpk8kO4/NqBCd+6Q@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Olof Johansson <olofj-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Robert Lippert <rlippert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Jon Mayer <jonmayer-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Duncan Laurie <dlaurie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Aaron Durbin <adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tim Hockin <thockin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Hendrix <dhendrix-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-discuss-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The optional type 15 entry of the DMI table describes a non-volatile
-storage-backed system event log.
+This just might be the last round of review of the PTP hardware clock
+patch series. These patches apply on top of the timers/core branch in
+the tip tree. Patches 1 and 4 have changed since the last version.
 
-In preparation for the next commit which exposes the raw bits of the
-event log to userland, create a new sub-directory within the dmi entry
-called "system_event_log" and expose attribute files that describe the
-event log itself.
+* Why all the CCs?
+  - One driver is for PowerPC, and adds device tree stuff.
+  - One driver is for the ARM Xscale IXP465.
 
-Currently, only a single child object is permitted within a
-dmi_sysfs_entry.  We simply point at this child from the dmi_sysfs_entry
-if it exists.
+* Patch ChangeLog
+** v11
+   - added more padding to the structures in the user space ABI
+   - tweaked Kconfig to make dependencies more clear
+   - fixed locking on time stamp event queue
+   - added John Stultz's acks on patches 2 and 3.
+   - now the phyter driver handles multiple PHYs
 
-Signed-off-by: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- drivers/firmware/dmi-sysfs.c |  159 ++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 159 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
-index 2d8a04a..d209610 100644
---- a/drivers/firmware/dmi-sysfs.c
-+++ b/drivers/firmware/dmi-sysfs.c
-@@ -35,6 +35,7 @@ struct dmi_sysfs_entry {
- 	int instance;
- 	int position;
- 	struct list_head list;
-+	struct kobject *child;
- };
- 
- /*
-@@ -77,6 +78,10 @@ struct dmi_sysfs_mapped_attribute dmi_sysfs_attr_##_entry##_##_name = { \
- /*************************************************
-  * Generic DMI entry support.
-  *************************************************/
-+static void dmi_entry_free(struct kobject *kobj)
-+{
-+	kfree(kobj);
-+}
- 
- static struct dmi_sysfs_entry *to_entry(struct kobject *kobj)
- {
-@@ -186,6 +191,146 @@ static size_t dmi_entry_length(const struct dmi_header *dh)
- }
- 
- /*************************************************
-+ * Support bits for specialized DMI entry support
-+ *************************************************/
-+struct dmi_entry_attr_show_data {
-+	struct attribute *attr;
-+	char *buf;
-+};
-+
-+static ssize_t dmi_entry_attr_show_helper(struct dmi_sysfs_entry *entry,
-+					  const struct dmi_header *dh,
-+					  void *_data)
-+{
-+	struct dmi_entry_attr_show_data *data = _data;
-+	struct dmi_sysfs_mapped_attribute *attr;
-+
-+	attr = container_of(data->attr,
-+			    struct dmi_sysfs_mapped_attribute, attr);
-+	return attr->show(entry, dh, data->buf);
-+}
-+
-+static ssize_t dmi_entry_attr_show(struct kobject *kobj,
-+				   struct attribute *attr,
-+				   char *buf)
-+{
-+	struct dmi_entry_attr_show_data data = {
-+		.attr = attr,
-+		.buf  = buf,
-+	};
-+	/* Find the entry according to our parent and call the
-+	 * normalized show method hanging off of the attribute */
-+	return find_dmi_entry(to_entry(kobj->parent),
-+			      dmi_entry_attr_show_helper, &data);
-+}
-+
-+static const struct sysfs_ops dmi_sysfs_specialize_attr_ops = {
-+	.show = dmi_entry_attr_show,
-+};
-+
-+/*************************************************
-+ * Specialized DMI entry support.
-+ *************************************************/
-+
-+/*** Type 15 - System Event Table ***/
-+
-+#define DMI_SEL_ACCESS_METHOD_IO8	0x00
-+#define DMI_SEL_ACCESS_METHOD_IO2x8	0x01
-+#define DMI_SEL_ACCESS_METHOD_IO16	0x02
-+#define DMI_SEL_ACCESS_METHOD_PHYS32	0x03
-+#define DMI_SEL_ACCESS_METHOD_GPNV	0x04
-+
-+struct dmi_system_event_log {
-+	struct dmi_header header;
-+	u16	area_length;
-+	u16	header_start_offset;
-+	u16	data_start_offset;
-+	u8	access_method;
-+	u8	status;
-+	u32	change_token;
-+	union {
-+		struct {
-+			u16 index_addr;
-+			u16 data_addr;
-+		} io;
-+		u32	phys_addr32;
-+		u16	gpnv_handle;
-+		u32	access_method_address;
-+	};
-+	u8	header_format;
-+	u8	type_descriptors_supported_count;
-+	u8	per_log_type_descriptor_length;
-+	u8	supported_log_type_descriptos[0];
-+} __packed;
-+
-+static const struct dmi_system_event_log *to_sel(const struct dmi_header *dh)
-+{
-+	return (const struct dmi_system_event_log *)dh;
-+}
-+
-+#define DMI_SYSFS_SEL_FIELD(_field) \
-+static ssize_t dmi_sysfs_sel_##_field(struct dmi_sysfs_entry *entry, \
-+				      const struct dmi_header *dh, \
-+				      char *buf) \
-+{ \
-+	const struct dmi_system_event_log *sel = to_sel(dh); \
-+	if (sizeof(*sel) > dmi_entry_length(dh)) \
-+		return -EIO; \
-+	return sprintf(buf, "%u\n", sel->_field); \
-+} \
-+static DMI_SYSFS_MAPPED_ATTR(sel, _field)
-+
-+DMI_SYSFS_SEL_FIELD(area_length);
-+DMI_SYSFS_SEL_FIELD(header_start_offset);
-+DMI_SYSFS_SEL_FIELD(data_start_offset);
-+DMI_SYSFS_SEL_FIELD(access_method);
-+DMI_SYSFS_SEL_FIELD(status);
-+DMI_SYSFS_SEL_FIELD(change_token);
-+DMI_SYSFS_SEL_FIELD(access_method_address);
-+DMI_SYSFS_SEL_FIELD(header_format);
-+DMI_SYSFS_SEL_FIELD(type_descriptors_supported_count);
-+DMI_SYSFS_SEL_FIELD(per_log_type_descriptor_length);
-+
-+static struct attribute *dmi_sysfs_sel_attrs[] = {
-+	&dmi_sysfs_attr_sel_area_length.attr,
-+	&dmi_sysfs_attr_sel_header_start_offset.attr,
-+	&dmi_sysfs_attr_sel_data_start_offset.attr,
-+	&dmi_sysfs_attr_sel_access_method.attr,
-+	&dmi_sysfs_attr_sel_status.attr,
-+	&dmi_sysfs_attr_sel_change_token.attr,
-+	&dmi_sysfs_attr_sel_access_method_address.attr,
-+	&dmi_sysfs_attr_sel_header_format.attr,
-+	&dmi_sysfs_attr_sel_type_descriptors_supported_count.attr,
-+	&dmi_sysfs_attr_sel_per_log_type_descriptor_length.attr,
-+	NULL,
-+};
-+
-+
-+static struct kobj_type dmi_system_event_log_ktype = {
-+	.release = dmi_entry_free,
-+	.sysfs_ops = &dmi_sysfs_specialize_attr_ops,
-+	.default_attrs = dmi_sysfs_sel_attrs,
-+};
-+
-+static int dmi_system_event_log(struct dmi_sysfs_entry *entry)
-+{
-+	int ret;
-+
-+	entry->child = kzalloc(sizeof(*entry->child), GFP_KERNEL);
-+	if (!entry->child)
-+		return -ENOMEM;
-+	ret = kobject_init_and_add(entry->child,
-+				   &dmi_system_event_log_ktype,
-+				   &entry->kobj,
-+				   "system_event_log");
-+	if (ret)
-+		goto out_free;
-+out_free:
-+	kfree(entry->child);
-+	return ret;
-+}
-+
-+/*************************************************
-  * Generic DMI entry support.
-  *************************************************/
- 
-@@ -325,6 +470,18 @@ static void __init dmi_sysfs_register_handle(const struct dmi_header *dh,
- 	list_add_tail(&entry->list, &entry_list);
- 	spin_unlock(&entry_list_lock);
- 
-+	/* Handle specializations by type */
-+	switch (dh->type) {
-+	case DMI_ENTRY_SYSTEM_EVENT_LOG:
-+		*ret = dmi_system_event_log(entry);
-+		break;
-+	default:
-+		/* No specialization */
-+		break;
-+	}
-+	if (*ret)
-+		goto out_err;
-+
- 	/* Create the raw binary file to access the entry */
- 	*ret = sysfs_create_bin_file(&entry->kobj, &dmi_entry_raw_attr);
- 	if (*ret)
-@@ -332,6 +489,7 @@ static void __init dmi_sysfs_register_handle(const struct dmi_header *dh,
- 
- 	return;
- out_err:
-+	kobject_put(entry->child);
- 	kobject_put(&entry->kobj);
- 	return;
- }
-@@ -342,6 +500,7 @@ static void cleanup_entry_list(void)
- 
- 	/* No locks, we are on our way out */
- 	list_for_each_entry_safe(entry, next, &entry_list, list) {
-+		kobject_put(entry->child);
- 		kobject_put(&entry->kobj);
- 	}
- }
+Richard Cochran (4):
+  ptp: Added a brand new class driver for ptp clocks.
+  ptp: Added a clock that uses the eTSEC found on the MPC85xx.
+  ptp: Added a clock driver for the IXP46x.
+  ptp: Added a clock driver for the National Semiconductor PHYTER.
+
+ Documentation/ABI/testing/sysfs-ptp                |   98 ++
+ .../devicetree/bindings/net/fsl-tsec-phy.txt       |   57 ++
+ Documentation/ptp/ptp.txt                          |   89 ++
+ Documentation/ptp/testptp.c                        |  352 +++++++
+ Documentation/ptp/testptp.mk                       |   33 +
+ arch/arm/mach-ixp4xx/include/mach/ixp46x_ts.h      |   78 ++
+ arch/powerpc/boot/dts/mpc8313erdb.dts              |   14 +
+ arch/powerpc/boot/dts/mpc8572ds.dts                |   14 +
+ arch/powerpc/boot/dts/p2020ds.dts                  |   14 +
+ arch/powerpc/boot/dts/p2020rdb.dts                 |   14 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/net/Makefile                               |    1 +
+ drivers/net/arm/ixp4xx_eth.c                       |  192 ++++-
+ drivers/net/gianfar_ptp.c                          |  448 +++++++++
+ drivers/net/gianfar_ptp_reg.h                      |  113 +++
+ drivers/net/phy/Makefile                           |    1 +
+ drivers/net/phy/dp83640.c                          | 1012 ++++++++++++++++++++
+ drivers/net/phy/dp83640_reg.h                      |  267 +++++
+ drivers/ptp/Kconfig                                |   75 ++
+ drivers/ptp/Makefile                               |    7 +
+ drivers/ptp/ptp_chardev.c                          |  156 +++
+ drivers/ptp/ptp_clock.c                            |  320 ++++++
+ drivers/ptp/ptp_ixp46x.c                           |  332 +++++++
+ drivers/ptp/ptp_private.h                          |   86 ++
+ drivers/ptp/ptp_sysfs.c                            |  230 +++++
+ include/linux/Kbuild                               |    1 +
+ include/linux/ptp_clock.h                          |   84 ++
+ include/linux/ptp_clock_kernel.h                   |  139 +++
+ 29 files changed, 4227 insertions(+), 3 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-ptp
+ create mode 100644 Documentation/ptp/ptp.txt
+ create mode 100644 Documentation/ptp/testptp.c
+ create mode 100644 Documentation/ptp/testptp.mk
+ create mode 100644 arch/arm/mach-ixp4xx/include/mach/ixp46x_ts.h
+ create mode 100644 drivers/net/gianfar_ptp.c
+ create mode 100644 drivers/net/gianfar_ptp_reg.h
+ create mode 100644 drivers/net/phy/dp83640.c
+ create mode 100644 drivers/net/phy/dp83640_reg.h
+ create mode 100644 drivers/ptp/Kconfig
+ create mode 100644 drivers/ptp/Makefile
+ create mode 100644 drivers/ptp/ptp_chardev.c
+ create mode 100644 drivers/ptp/ptp_clock.c
+ create mode 100644 drivers/ptp/ptp_ixp46x.c
+ create mode 100644 drivers/ptp/ptp_private.h
+ create mode 100644 drivers/ptp/ptp_sysfs.c
+ create mode 100644 include/linux/ptp_clock.h
+ create mode 100644 include/linux/ptp_clock_kernel.h
