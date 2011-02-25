@@ -1,35 +1,55 @@
-From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH V11 2/4] ptp: Added a clock that uses the eTSEC found
- on the MPC85xx.
-Date: Fri, 25 Feb 2011 08:53:20 +0100
-Message-ID: <20110225075320.GA4032@riccoc20.at.omicron.at>
-References: <cover.1298447722.git.richard.cochran@omicron.at>
- <be1f5e801e8cd0145dd23aadae7c2055bb3c1d47.1298447722.git.richard.cochran@omicron.at>
- <20110223165058.GE14597@angua.secretlab.ca>
- <20110223112612.30071995@schlenkerla>
- <20110223175459.GH14597@angua.secretlab.ca>
- <20110223132444.65dfdda4@schlenkerla>
- <20110224165004.GB15234@riccoc20.at.omicron.at>
- <20110224112731.2d9bf080@schlenkerla>
+From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 2/5] firmware: Basic dmi-sysfs support
+Date: Fri, 25 Feb 2011 11:58:10 -0800
+Message-ID: <20110225195810.GB8860@kroah.com>
+References: <20110223015307.13068.14063.stgit@mike.mtv.corp.google.com>
+ <20110223015320.13068.77428.stgit@mike.mtv.corp.google.com>
+ <AANLkTinjhY3oiFTq2xq4fwQ-mtLZ8ph435+nc5irM7wZ@mail.gmail.com>
+ <AANLkTi=+-Wc0bWdpvR+X6UszLf7MXKYgi8Oo6anN-jR8@mail.gmail.com>
+ <AANLkTi=dE5_VjJ+5H6cWf9nAtdkLiqhSXo6Gvd_uGQ25@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20110224112731.2d9bf080@schlenkerla>
+In-Reply-To: <AANLkTi=dE5_VjJ+5H6cWf9nAtdkLiqhSXo6Gvd_uGQ25-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Scott Wood <scottwood-KZfg59tc24xl57MIdRCFDg@public.gmane.org>
-Cc: Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-discuss-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>
+To: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Olof Johansson <olofj-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Robert Lippert <rlippert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Jon Mayer <jonmayer-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Duncan Laurie <dlaurie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Aaron Durbin <adurbin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tim Hockin <thockin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Hendrix <dhendrix-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 24, 2011 at 11:27:31AM -0600, Scott Wood wrote:
+On Wed, Feb 23, 2011 at 01:29:46PM -0800, Tony Luck wrote:
+> On Wed, Feb 23, 2011 at 12:28 PM, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> w=
+rote:
+> > Ya, I don't think there is anything that guarantees that dmi_header=
+ is
+> > aligned. =A0 The access is probably the struct copy I did here:
+> >
+> > =A0 =A0 =A0 =A0/* Set the key */
+> > =A0 =A0 =A0 =A0entry->dh =3D *dh;
+>=20
+> Yup - looking back at the assembly I see that one of the 2-byte
+> accesses is offset 2
+> (picking up ->handle), but the second is offset 0 (picking up ->type
+> and ->length). The
+> compiler assumed the structure was 2-byte aligned because of ->handle=
+=2E
+>=20
+> > What if we changed that guy to use memcpy? =A0We'd probably need to
+> > memcpy the dmi_system_event_log as well. =A0Patch attached (applies=
+ on
+> > top of the entire patchset).
+>=20
+> With the patch, all the unaligned accesses go away.
+>=20
+> Tested-by: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-> My vote, if it goes in a separate node at all, is "fsl,etsec-ptp",
+Great!
 
-So, that is what the patch does.
+Mike, care to resend this last patch as a 6/5 patch with a proper
+subject, changelog comment, and signed-off-by: section so that I can
+queue it up?
 
-> and let the driver use SVR.
+thanks,
 
-What is SVR?
-
-Thanks,
-Richard
+greg k-h
