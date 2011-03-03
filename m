@@ -1,139 +1,78 @@
-From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Subject: Re: [PATCH, v7] cgroups: introduce timer slack controller
-Date: Thu, 3 Mar 2011 10:33:46 +0200
-Message-ID: <20110303083346.GA8145@shutemov.name>
-References: <1299084001-3916-1-git-send-email-kirill@shutemov.name>
- <1299084001-3916-2-git-send-email-kirill@shutemov.name>
- <alpine.LFD.2.00.1103021912090.2701@localhost6.localdomain6>
+From: "Aneesh Kumar K. V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC] introduce sys_syncat to sync a single file system
+Date: Thu, 03 Mar 2011 14:24:56 +0530
+Message-ID: <87bp1sziqn.fsf@linux.vnet.ibm.com>
+References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net> <20110303072223.GA28133@elie>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.00.1103021912090.2701-bi+AKbBUZKagILUCTcTcHdKyNwTtLsGr@public.gmane.org>
+In-Reply-To: <20110303072223.GA28133@elie>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 02, 2011 at 07:40:01PM +0100, Thomas Gleixner wrote:
-> On Wed, 2 Mar 2011, Kirill A. Shutsemov wrote:
+On Thu, 3 Mar 2011 01:22:24 -0600, Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Hi,
 > 
-> Not CC'ing me does not avoid another review :)
-
-Sorry for that. It's by mistake.
-
-> > diff --git a/fs/select.c b/fs/select.c
-> > index e56560d..a189e4d 100644
-> > --- a/fs/select.c
-> > +++ b/fs/select.c
-> > @@ -69,7 +69,6 @@ static long __estimate_accuracy(struct timespec *tv)
-> >  
-> >  long select_estimate_accuracy(struct timespec *tv)
-> >  {
-> > -	unsigned long ret;
-> >  	struct timespec now;
-> >  
-> >  	/*
-> > @@ -81,10 +80,8 @@ long select_estimate_accuracy(struct timespec *tv)
-> >  
-> >  	ktime_get_ts(&now);
-> >  	now = timespec_sub(*tv, now);
-> > -	ret = __estimate_accuracy(&now);
-> > -	if (ret < current->timer_slack_ns)
-> > -		return current->timer_slack_ns;
-> > -	return ret;
-> > +	return clamp(__estimate_accuracy(&now),
-> > +			get_task_timer_slack(current), LONG_MAX);
-> >  }
+> Sage Weil wrote:
 > 
-> Can you please split out the get_task_timer_slack() change into a
-> separate patch?
+> >  - On machines with many of mounts, it is not at all uncommon for some of
+> >    them to hang (e.g. unresponsive NFS server).  sync(2) will get stuck on
+> >    those and may never get to the one you do care about (e.g., /).
 > 
-> Also the function wants to be named different.
+> Fun to see this again.
 > 
-> task_get_effective_timer_slack() or such, so it becomes clear, that
-> it's not just a wrapper around tsk->timer_slack_ns
+> >  - Some applications (Ceph, dpkg) write lots of data to the file system and
+> >    then want to make sure it is flushed to disk.  Calling fsync(2) on each
+> >    file introduces unnecessary ordering constraints that result in a large
+> >    amount of sub-optimal writeback/flush/commit behavior by the file
+> >    system.
+
+This would be useful for 9p server in qemu
+
+http://article.gmane.org/gmane.comp.emulators.qemu/95497
+
 > 
-> And the places which access tsk->timer_slack_ns directly should be
-> updated with comments, why they are not using the wrapper.
-
-Ok, I'll fix it.
-
-> > +static int tslack_write_min(struct cgroup *cgroup, struct cftype *cft, u64 val)
-> > +{
-> > +	struct cgroup *cur;
-> > +
-> > +	if (val > ULONG_MAX)
-> > +		return -EINVAL;
-> > +
-> > +	/* the min timer slack value should be more or equal than parent's */
+> FWIW dpkg uses sync_file_range(2) and only syncs the files it needs to
+> nowadays.  Other apps in the same position should probably do the
+> same.[1][2]
 > 
-> s/should/must/
-
-Ok.
-
-> > +	if (cgroup->parent) {
-> > +		struct tslack_cgroup *parent = cgroup_to_tslack(cgroup->parent);
+> > This patch introduces a new system call syncat(2) that mimics the existing 
+> > *at() interfaces by taking an fd and/or path.  The fd can be either an 
+> > open file descriptor or AT_FDCWD, and the pathname can be either a path or 
+> > (unlike the usual *at() style interface) NULL.  Only the file system for 
+> > the referenced file is synced.
 > 
-> New line between variables and code please
+> Sounds like overengineering.  The openat(2) family of calls are meant
+> to add flexibility to familiar calls that perform an operation with a
+> path relative to the cwd.  To maintain familiarity, they include some
+> complication (AT_FDCWD, taking a relative path, and so on).
 
-Ok.
 
-> > +		if (parent->min_slack_ns > val)
-> > +			return -EPERM;
-> > +	}
-> > +
-> > +	cgroup_to_tslack(cgroup)->min_slack_ns = val;
-> > +
-> > +	/* update children's min slack value if needed */
-> > +	list_for_each_entry(cur, &cgroup->children, sibling) {
-> > +		struct tslack_cgroup *child = cgroup_to_tslack(cur);
+With some of the proposed changes for VFS [1] some of the *at calls also allows to
+specify "" names. So i guess having syncat is useful because now we can
+call sync with either an fd or with a name. 
+
+ie 
+
+syncat(fd, "");
+or
+syncat(AT_FDCWD, "a");
+
+[1] http://article.gmane.org/gmane.linux.file-systems/50773
+
 > 
-> Ditto
+> Since sync_one_filesystem(2) is new, why not just take a file or
+> directory fd (and perhaps flags for future expansion)?  I can use
+> open(".", O_NONBLOCK) to get a file descriptor for the cwd.
 > 
-> > +		if (val > child->min_slack_ns)
-> > +			tslack_write_min(cur, cft, val);
-> > +	}
+> > Is this a reasonable approach?  (Patch below is compile tested only.  :)
 > 
-> So, we can increase the value and propagate it through the groups
-> children, but decreasing it requires to go through all child groups
-> seperately. 
+> Sounds reasonably sane.
 > 
-> When I'm trying to optimize something during runtime and chose a too
-> high value I need to go through hoops and loops to make it smaller
-> again.
+> As for the patch: without the pathname arg it becomes much simpler.
+> To my inexpert eyes, aside from that it looks good.
 > 
-> Asymetric behaviour sucks always.
 
-Other option is to remove restriction on the min_slack_ns value and
-modify get_task_timer_slack() to use the most strict value up by
-hierarchy.
-Do you prefer this approach?
-
-> > +unsigned long get_task_timer_slack(struct task_struct *tsk)
-> > +{
-> > +	struct cgroup_subsys_state *css;
-> > +	struct tslack_cgroup *tslack_cgroup;
-> > +	unsigned long ret;
-> > +
-> > +	rcu_read_lock();
-> 
-> Did you just remove the odd comment or actually figure out why you
-> need rcu_read_lock() here ?
-
-The second ;)
-
-> > +	css = task_subsys_state(tsk, timer_slack_subsys.subsys_id);
-> > +	tslack_cgroup = container_of(css, struct tslack_cgroup, css);
-> > +	ret = max(tsk->timer_slack_ns, tslack_cgroup->min_slack_ns);
-> > +	rcu_read_unlock();
-> > +
-> > +	return ret;
-> > +}
-> 
-> Otherwise, it's way more palatable than the last one.
-
-Thanks for reviewing.
-
--- 
- Kirill A. Shutemov
+-aneesh
