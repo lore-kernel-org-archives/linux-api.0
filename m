@@ -1,41 +1,23 @@
-From: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH 2/2] Define ENONAMESERVICE and ENAMEUNKNOWN to indicate
- name service errors
-Date: Tue, 8 Mar 2011 15:25:18 +0000
-Message-ID: <20110308152518.074d0996@lxorguk.ukuu.org.uk>
-References: <20110307160042.2ddc8e65@lxorguk.ukuu.org.uk>
-	<20110307150208.28218.89348.stgit@warthog.procyon.org.uk>
-	<20110307150218.28218.84916.stgit@warthog.procyon.org.uk>
-	<14977.1299596999@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 2/2] Define ENONAMESERVICE and ENAMEUNKNOWN to indicate name service errors
+Date: Tue, 08 Mar 2011 16:37:01 +0000
+Message-ID: <17429.1299602221@redhat.com>
+References: <20110308152518.074d0996@lxorguk.ukuu.org.uk> <20110307160042.2ddc8e65@lxorguk.ukuu.org.uk> <20110307150208.28218.89348.stgit@warthog.procyon.org.uk> <20110307150218.28218.84916.stgit@warthog.procyon.org.uk> <14977.1299596999@redhat.com>
 Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <14977.1299596999@redhat.com>
+In-Reply-To: <20110308152518.074d0996@lxorguk.ukuu.org.uk>
 Sender: linux-security-module-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: linux-security-module@vger.kernel.org, keyrings@linux-nfs.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Alan Cox <alan@lxorguk.ukuu.org.uk>
+Cc: dhowells@redhat.com, linux-security-module@vger.kernel.org, keyrings@linux-nfs.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 08 Mar 2011 15:09:59 +0000
-David Howells <dhowells@redhat.com> wrote:
+Alan Cox <alan@lxorguk.ukuu.org.uk> wrote:
 
-> Alan Cox <alan@lxorguk.ukuu.org.uk> wrote:
-> 
-> > > Define ENONAMESERVICE to indicate "Network name service unavailable".
-> > > This can be used to indicate, for example, that an attempt was made by
-> > > dns_query() to make a query, but the name server (e.g. a DNS server) it is
-> > > supposed to contact didn't answer or that it couldn't determine the
-> > > location of a suitable server.
-> > 
-> > Are these in glibc and are there glibc patches submitted and accepted for
-> > this ?
-> 
-> No.
-> 
-> Are you saying that I should push them through glibc first - and then submit
-> them to the kernel? 
+> I was wondering if at least there was some co-ordination going on so that
+> functions like perror() produced sensible answers. Otherwise it's
+> debatable if its actually an improvement for the poor end user ?
 
-I was wondering if at least there was some co-ordination going on so that
-functions like perror() produced sensible answers. Otherwise it's
-debatable if its actually an improvement for the poor end user ?
+Fair point.  That's why I cc'd the messages to linux-api@, but I'm not sure who
+actually reads it, besides Michael Kerrisk.  I guess it's probably a good idea
+to wave my suggestions on the glibc list at least.
+
+David
