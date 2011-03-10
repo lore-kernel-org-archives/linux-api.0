@@ -1,62 +1,56 @@
-From: Alexander Shishkin <virtuoso@slind.org>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Subject: Re: [RFCv4] timerfd: add TFD_NOTIFY_CLOCK_SET to watch for clock
  changes
-Date: Thu, 10 Mar 2011 10:19:21 +0200
-Message-ID: <20110310081921.GC11410@shisha.kicks-ass.net>
+Date: Thu, 10 Mar 2011 00:25:34 -0800
+Message-ID: <20110310002534.f984f8b2.akpm@linux-foundation.org>
 References: <1299681411-9227-1-git-send-email-virtuoso@slind.org>
- <20110309162513.5058c824.akpm@linux-foundation.org>
- <AANLkTinZioShsr3O0Z=xaEQ-S=JBCgs_SS_LdsBnNhZ2@mail.gmail.com>
+	<20110309162513.5058c824.akpm@linux-foundation.org>
+	<AANLkTin7=rK2Sc2D7aMhPnPWU9LJq7KMSvwxv_PHERcK@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <AANLkTinZioShsr3O0Z=xaEQ-S=JBCgs_SS_LdsBnNhZ2@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Kay Sievers <kay.sievers@vrfy.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, Ken MacLeod <ken@bitsko.slc.ut.us>, Shaun Reich <predator106@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Alexander Viro <viro@zeniv.linux.org.uk>, Greg Kroah-Hartman <gregkh@suse.de>, Feng Tang <feng.tang@intel.com>, Michael Tokarev <mjt@tls.msk.ru>, Marcelo Tosatti <mtosatti@redhat.com>, John Stultz <johnstul@us.ibm.com>, Chris Friesen <chris.friesen@genband.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Artem Bityutskiy <dedekind1@gmail.com>, Davide Libenzi <davidel@xmailserver.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Alexander Shishkin <virtuoso@slind.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <AANLkTin7=rK2Sc2D7aMhPnPWU9LJq7KMSvwxv_PHERcK-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Scott James Remnant <scott-Umf49k1wg4FWk0Htik3J/w@public.gmane.org>
+Cc: Alexander Shishkin <virtuoso-0lOfPCoBze7YtjvyW6yDsg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ken MacLeod <ken-VbOJbV3qneKf+c8Povm/Gg@public.gmane.org>, Shaun Reich <predator106-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>, Feng Tang <feng.tang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Tokarev <mjt-XAri/EZa3C4vJsYlp49lxw@public.gmane.org>, Marcelo Tosatti <mtosatti-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Chris Friesen <chris.friesen-b7o/lNNmKxtBDgjK7y7TUQ@public.gmane.org>, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Artem Bityutskiy <dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 10, 2011 at 01:36:18AM +0100, Kay Sievers wrote:
-> On Thu, Mar 10, 2011 at 01:25, Andrew Morton <akpm@linux-foundation.o=
-rg> wrote:
-> > On Wed, =9A9 Mar 2011 16:36:51 +0200
-> > Alexander Shishkin <virtuoso@slind.org> wrote:
-> >
-> >> Changes since v3:
-> >> =9A- changed timerfd_settime() semantics (see below)
-> >> Changes since v2:
-> >> =9A- replaced sysfs interface with a syscall
-> >> =9A- added sysctl/procfs handle to set a limit to the number of us=
-ers
-> >> =9A- fixed issues pointed out by Greg.
-> >> Changes since v1:
-> >> =9A- updated against 2.6.36-rc1,
-> >> =9A- added notification/filtering options,
-> >> =9A- added Documentation/ABI/sysfs-kernel-time-notify interface de=
-scription.
->=20
+On Wed, 9 Mar 2011 18:01:09 -0800 Scott James Remnant <scott-Umf49k1wg4FWk0Htik3J/w@public.gmane.org> wrote:
+
 > > It would be helpful to know if the identified users of this feature
-> > actually find it useful and adequate. =9AI guess the most common
-> > application is the 1,001 desktop clock widgets. =9ADo you have any
+> > actually find it useful and adequate. __I guess the most common
+> > application is the 1,001 desktop clock widgets. __Do you have any
 > > feedback from any of the owners of those?
->=20
-> We want it for systemd, to provide cron-like functionality but withou=
-t
-> the need to stupidly wake up every minute and check the system time
-> for possible jumps.
->=20
-> It also sounds useful for a generic resume (after system suspend)
-> notification for applications, which isn't really possible today.
+> >
+> cron is another obvious one (or init systems attempting to replace
+> cron). Having to wakeup and check the time every minute can be
+> non-conducive to power savings, it would be better if we could just
+> sleep until the next alarm and be woken up if the time changes in
+> between.
+> 
+> (That being said, we also need to poll for and/or check for timezone
+> changes - but those are entirely userspace, so we can deal with that
+> separately)
 
-Yes, but with John's CLOCK_BOOTTIME patches (which are in the tip tree
-currently) it will be.
+Sure, there will be lots of applications.
 
-Regards,
---
-Alex
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+But what I'm asking isn't "it is a good feature".  I'm asking "is the
+feature implemented well".  Ideally someone would get down and modify
+cron to use the interface in this patch.
+
+That's a bit of work (although not a huge amount) and a compromise
+would be for app owners to sit down for half an hour and work through
+their code and the kernel interface and let us know whether they found
+the interface to be good and complete.
+
+Because it would be most regrettable if we were to roll this feature
+out and then three months later its users come back saying "what a
+shame you didn't do it *this* way".
+
+Also...  Alexander, I assume you have a userspace test app?  Please
+send it and we'll add it to the changelog for testers, as example code
+for implementers and as an additional way of reviewing the proposed
+interface.
+
+Thanks.
