@@ -1,56 +1,61 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [RFCv4] timerfd: add TFD_NOTIFY_CLOCK_SET to watch for clock
  changes
-Date: Thu, 10 Mar 2011 00:25:34 -0800
-Message-ID: <20110310002534.f984f8b2.akpm@linux-foundation.org>
-References: <1299681411-9227-1-git-send-email-virtuoso@slind.org>
-	<20110309162513.5058c824.akpm@linux-foundation.org>
-	<AANLkTin7=rK2Sc2D7aMhPnPWU9LJq7KMSvwxv_PHERcK@mail.gmail.com>
+Date: Thu, 10 Mar 2011 10:08:18 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1103101004540.2787@localhost6.localdomain6>
+References: <1299681411-9227-1-git-send-email-virtuoso@slind.org> <20110309162513.5058c824.akpm@linux-foundation.org> <AANLkTinZioShsr3O0Z=xaEQ-S=JBCgs_SS_LdsBnNhZ2@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <AANLkTin7=rK2Sc2D7aMhPnPWU9LJq7KMSvwxv_PHERcK-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Scott James Remnant <scott-Umf49k1wg4FWk0Htik3J/w@public.gmane.org>
-Cc: Alexander Shishkin <virtuoso-0lOfPCoBze7YtjvyW6yDsg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ken MacLeod <ken-VbOJbV3qneKf+c8Povm/Gg@public.gmane.org>, Shaun Reich <predator106-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>, Feng Tang <feng.tang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Tokarev <mjt-XAri/EZa3C4vJsYlp49lxw@public.gmane.org>, Marcelo Tosatti <mtosatti-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Chris Friesen <chris.friesen-b7o/lNNmKxtBDgjK7y7TUQ@public.gmane.org>, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Artem Bityutskiy <dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: MULTIPART/MIXED; BOUNDARY="-1463795968-231965284-1299748105=:2787"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <AANLkTinZioShsr3O0Z=xaEQ-S=JBCgs_SS_LdsBnNhZ2@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kay Sievers <kay.sievers@vrfy.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Alexander Shishkin <virtuoso@slind.org>, linux-kernel@vger.kernel.org, Ken MacLeod <ken@bitsko.slc.ut.us>, Shaun Reich <predator106@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Greg Kroah-Hartman <gregkh@suse.de>, Feng Tang <feng.tang@intel.com>, Michael Tokarev <mjt@tls.msk.ru>, Marcelo Tosatti <mtosatti@redhat.com>, John Stultz <johnstul@us.ibm.com>, Chris Friesen <chris.friesen@genband.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Artem Bityutskiy <dedekind1@gmail.com>, Davide Libenzi <davidel@xmailserver.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 9 Mar 2011 18:01:09 -0800 Scott James Remnant <scott-Umf49k1wg4FWk0Htik3J/w@public.gmane.org> wrote:
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-> > It would be helpful to know if the identified users of this feature
-> > actually find it useful and adequate. __I guess the most common
-> > application is the 1,001 desktop clock widgets. __Do you have any
-> > feedback from any of the owners of those?
+---1463795968-231965284-1299748105=:2787
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+On Thu, 10 Mar 2011, Kay Sievers wrote:
+
+> On Thu, Mar 10, 2011 at 01:25, Andrew Morton <akpm@linux-foundation.org> wrote:
+> > On Wed,  9 Mar 2011 16:36:51 +0200
+> > Alexander Shishkin <virtuoso@slind.org> wrote:
 > >
-> cron is another obvious one (or init systems attempting to replace
-> cron). Having to wakeup and check the time every minute can be
-> non-conducive to power savings, it would be better if we could just
-> sleep until the next alarm and be woken up if the time changes in
-> between.
+> >> Changes since v3:
+> >>  - changed timerfd_settime() semantics (see below)
+> >> Changes since v2:
+> >>  - replaced sysfs interface with a syscall
+> >>  - added sysctl/procfs handle to set a limit to the number of users
+> >>  - fixed issues pointed out by Greg.
+> >> Changes since v1:
+> >>  - updated against 2.6.36-rc1,
+> >>  - added notification/filtering options,
+> >>  - added Documentation/ABI/sysfs-kernel-time-notify interface description.
 > 
-> (That being said, we also need to poll for and/or check for timezone
-> changes - but those are entirely userspace, so we can deal with that
-> separately)
+> > It would be helpful to know if the identified users of this feature
+> > actually find it useful and adequate.  I guess the most common
+> > application is the 1,001 desktop clock widgets.  Do you have any
+> > feedback from any of the owners of those?
+> 
+> We want it for systemd, to provide cron-like functionality but without
+> the need to stupidly wake up every minute and check the system time
+> for possible jumps.
+> 
+> It also sounds useful for a generic resume (after system suspend)
+> notification for applications, which isn't really possible today.
 
-Sure, there will be lots of applications.
+Note, that we have CLOCK_BOOTTIME pending for .39 which aims at the
+same problem. It's basically CLOCK_MONOTONIC adjusted by the time we
+were in suspend. So while CLOCK_MONOTONIC timers are not aware of the
+time spent in suspend CLOCK_BOOTTIME timers are. The reason for
+implementing CLOCK_BOOTTIME was basically the same problem.
 
-But what I'm asking isn't "it is a good feature".  I'm asking "is the
-feature implemented well".  Ideally someone would get down and modify
-cron to use the interface in this patch.
+Thanks,
 
-That's a bit of work (although not a huge amount) and a compromise
-would be for app owners to sit down for half an hour and work through
-their code and the kernel interface and let us know whether they found
-the interface to be good and complete.
-
-Because it would be most regrettable if we were to roll this feature
-out and then three months later its users come back saying "what a
-shame you didn't do it *this* way".
-
-Also...  Alexander, I assume you have a userspace test app?  Please
-send it and we'll add it to the changelog for testers, as example code
-for implementers and as an additional way of reviewing the proposed
-interface.
-
-Thanks.
+	tglx
+---1463795968-231965284-1299748105=:2787--
