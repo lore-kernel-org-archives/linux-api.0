@@ -1,70 +1,66 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [RFCv4] timerfd: add TFD_NOTIFY_CLOCK_SET to watch for clock
- changes
-Date: Fri, 11 Mar 2011 20:56:49 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1103112054540.2787@localhost6.localdomain6>
-References: <1299681411-9227-1-git-send-email-virtuoso@slind.org> <20110309162513.5058c824.akpm@linux-foundation.org> <AANLkTin7=rK2Sc2D7aMhPnPWU9LJq7KMSvwxv_PHERcK@mail.gmail.com> <20110310002534.f984f8b2.akpm@linux-foundation.org>
- <AANLkTi=_DG8uYLxDnXF=so5daUE=w-pxL67mYaFAGkkL@mail.gmail.com>
+From: "Indan Zupancic" <indan-1J6HnF7K7zE@public.gmane.org>
+Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
+Date: Sat, 12 Mar 2011 00:45:47 +0100 (CET)
+Message-ID: <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
+References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net>
+    <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
+    <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
+    <201103111255.44979.arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="-1463795968-244858380-1299873414=:2787"
+Content-Type: text/plain;charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <AANLkTi=_DG8uYLxDnXF=so5daUE=w-pxL67mYaFAGkkL-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <201103111255.44979.arnd-r2nGTMty4D4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Scott James Remnant <scott-Umf49k1wg4FWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Shishkin <virtuoso-0lOfPCoBze7YtjvyW6yDsg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ken MacLeod <ken-VbOJbV3qneKf+c8Povm/Gg@public.gmane.org>, Shaun Reich <predator106-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>, Feng Tang <feng.tang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Tokarev <mjt-XAri/EZa3C4vJsYlp49lxw@public.gmane.org>, Marcelo Tosatti <mtosatti-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Chris Friesen <chris.friesen-b7o/lNNmKxtBDgjK7y7TUQ@public.gmane.org>, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Artem Bityutskiy <dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Aneesh Kumar K. V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, l@jasper.es
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Fri, March 11, 2011 12:55, Arnd Bergmann wrote:
+> On Friday 11 March 2011, Indan Zupancic wrote:
+>> >       http://marc.info/?l=linux-fsdevel&amp;m=127970513829285&amp;w=2
+>>
+>> The patch there seems much more reasonable than introducing a whole
+>> new systemcall just for 20 lines of kernel code. New system calls are
+>> added too easily nowadays.
+>
+> The only problem with adding new system calls is that we are stuck
+> with the interface until the end of time, so we must be sure not
+> to get it wrong. The same thing is true for any other interface
+> such as ioctl or extensions to existing system calls. People usually
+> get away with adding new ioctls more easily because it is less
+> obvious when they are added.
 
----1463795968-244858380-1299873414=:2787
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: 8BIT
+Agreed.
 
-On Fri, 11 Mar 2011, Scott James Remnant wrote:
-> On Thu, Mar 10, 2011 at 12:25 AM, Andrew Morton
-> <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> > On Wed, 9 Mar 2011 18:01:09 -0800 Scott James Remnant <scott-Umf49k1wg4FWk0Htik3J/w@public.gmane.org> wrote:
-> >
-> >> > It would be helpful to know if the identified users of this feature
-> >> > actually find it useful and adequate. __I guess the most common
-> >> > application is the 1,001 desktop clock widgets. __Do you have any
-> >> > feedback from any of the owners of those?
-> >> >
-> >> cron is another obvious one (or init systems attempting to replace
-> >> cron). Having to wakeup and check the time every minute can be
-> >> non-conducive to power savings, it would be better if we could just
-> >> sleep until the next alarm and be woken up if the time changes in
-> >> between.
-> >>
-> >> (That being said, we also need to poll for and/or check for timezone
-> >> changes - but those are entirely userspace, so we can deal with that
-> >> separately)
-> >
-> > Sure, there will be lots of applications.
-> >
-> > But what I'm asking isn't "it is a good feature".  I'm asking "is the
-> > feature implemented well".  Ideally someone would get down and modify
-> > cron to use the interface in this patch.
-> >
-> So I've just been thinking today - and I'm actually not sure whether
-> this is needed at all for this case.
-> 
-> A good cron implementation is going to set timers according to
-> CLOCK_REALTIME; in the case where the clock changes forwards, those
-> timers will fire as part of the clock changing already no? And in the
-> case where the clock changes backwards, you don't want to re-run old
-> ones anyway.
-> 
-> Even the hourly/daily cases are actually at a fixed time, so would be
-> triggered - and a decent implementation wouldn't trigger a given
-> script more than once.
+I'm not sure this feature is important enough to add. I can't really
+think of a regular use case where this would be useful, generally
+it's transparent on which mount files are. Add symlinks, and you
+give users a lot of rope. Any user has to make sure that all the
+files they want to sync are on the same file system.
 
-Yeah, I was wondering about today as well. Though when you set back
-your clock several days, stuff might be surprised if it's not woken up
-for several days :)
+About the arguments against sync(2):
 
-Thanks,
+>  - On machines with many mounts, it is not at all uncommon for some of
+>    them to hang (e.g. unresponsive NFS server).  sync(2) will get stuck on
+>    those and may never get to the one you do care about (e.g., /).
 
-	tglx
----1463795968-244858380-1299873414=:2787--
+It would be better to fix NFS, or mount it with the fsc option (assuming
+a sync will write to the local cache instead of hanging forever then).
+
+>  - Some applications write lots of data to the file system and then
+>    want to make sure it is flushed to disk.  Calling fsync(2) on each
+>    file introduces unnecessary ordering constraints that result in a large
+>    amount of sub-optimal writeback/flush/commit behavior by the file
+>    system.
+
+You can use sync_file_range() on those files to schedule the writes
+and then do the fsync(2) as usual (both on files and dirs).
+
+If there still is a good reason to implement this, please don't add it
+as a new system call, but add it to sync_file_range(), as that seems
+the best place for odd file synchronisation operations.
+
+Greetings,
+
+Indan
