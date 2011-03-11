@@ -1,66 +1,40 @@
-From: "Indan Zupancic" <indan-1J6HnF7K7zE@public.gmane.org>
+From: Jonathan Nieder <jrnieder@gmail.com>
 Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Sat, 12 Mar 2011 00:45:47 +0100 (CET)
-Message-ID: <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
+Date: Fri, 11 Mar 2011 17:56:15 -0600
+Message-ID: <20110311235607.GB15853@elie>
 References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net>
-    <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
-    <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
-    <201103111255.44979.arnd@arndb.de>
+ <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
+ <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
+ <201103111255.44979.arnd@arndb.de>
+ <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201103111255.44979.arnd-r2nGTMty4D4@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Aneesh Kumar K. V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, l@jasper.es
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Indan Zupancic <indan@nul.nu>
+Cc: Arnd Bergmann <arnd@arndb.de>, Sage Weil <sage@newdream.net>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, mtk.manpages@gmail.com, viro@zeniv.linux.org.uk, hch@lst.de, l@jasper.es
 List-Id: linux-api@vger.kernel.org
 
-On Fri, March 11, 2011 12:55, Arnd Bergmann wrote:
-> On Friday 11 March 2011, Indan Zupancic wrote:
->> >       http://marc.info/?l=linux-fsdevel&amp;m=127970513829285&amp;w=2
->>
->> The patch there seems much more reasonable than introducing a whole
->> new systemcall just for 20 lines of kernel code. New system calls are
->> added too easily nowadays.
->
-> The only problem with adding new system calls is that we are stuck
-> with the interface until the end of time, so we must be sure not
-> to get it wrong. The same thing is true for any other interface
-> such as ioctl or extensions to existing system calls. People usually
-> get away with adding new ioctls more easily because it is less
-> obvious when they are added.
+Indan Zupancic wrote:
 
-Agreed.
+> If there still is a good reason to implement this, please don't add it
+> as a new system call, but add it to sync_file_range(), as that seems
+> the best place for odd file synchronisation operations.
 
-I'm not sure this feature is important enough to add. I can't really
-think of a regular use case where this would be useful, generally
-it's transparent on which mount files are. Add symlinks, and you
-give users a lot of rope. Any user has to make sure that all the
-files they want to sync are on the same file system.
+I have no strong preference about how this is added (and in fact I'm
+quite ignorant about the usual conventions), but:
 
-About the arguments against sync(2):
+ - as a sysadmin, it really _would_ be nice to be able to say
+   "sync /usr" to sync /usr;
 
->  - On machines with many mounts, it is not at all uncommon for some of
->    them to hang (e.g. unresponsive NFS server).  sync(2) will get stuck on
->    those and may never get to the one you do care about (e.g., /).
+ - the existing functionality of sync_file_range is about controlling
+   writeback behavior for files, not mounts.
 
-It would be better to fix NFS, or mount it with the fsc option (assuming
-a sync will write to the local cache instead of hanging forever then).
+So unless there is a shortage of syscall numbers or something, I find
+the request to omit this or tack it onto sync_file_range odd.  Could
+you explain the benefit?
 
->  - Some applications write lots of data to the file system and then
->    want to make sure it is flushed to disk.  Calling fsync(2) on each
->    file introduces unnecessary ordering constraints that result in a large
->    amount of sub-optimal writeback/flush/commit behavior by the file
->    system.
-
-You can use sync_file_range() on those files to schedule the writes
-and then do the fsync(2) as usual (both on files and dirs).
-
-If there still is a good reason to implement this, please don't add it
-as a new system call, but add it to sync_file_range(), as that seems
-the best place for odd file synchronisation operations.
-
-Greetings,
-
-Indan
+Thanks,
+Jonathan
