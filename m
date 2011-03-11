@@ -1,31 +1,35 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Fri, 11 Mar 2011 12:55:44 +0100
-Message-ID: <201103111255.44979.arnd@arndb.de>
-References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net> <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net> <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re:
+	timerfd-add-tfd_notify_clock_set-to-watch-for-clock-changes.patch
+	added to -mm tree
+Date: Fri, 11 Mar 2011 14:50:23 +0100
+Message-ID: <20110311135023.GA23552@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <edfa4cf081249734807e582c14253fca.squirrel-2RFepEojUI3wYrDfM2ltn5vKXLoBo5SK@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Indan Zupancic <indan-1J6HnF7K7zE@public.gmane.org>
-Cc: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Aneesh Kumar K. V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, l@jasper.es
+To: Alexander Shishkin <virtuoso-0lOfPCoBze7YtjvyW6yDsg@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>, Feng Tang <feng.tang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Tokarev <mjt-XAri/EZa3C4vJsYlp49lxw@public.gmane.org>, Marcelo Tosatti <mtosatti-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Chris Friesen <chris.friesen-b7o/lNNmKxtBDgjK7y7TUQ@public.gmane.org>, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Artem Bityutskiy <dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday 11 March 2011, Indan Zupancic wrote:
-> >       http://marc.info/?l=linux-fsdevel&amp;m=127970513829285&amp;w=2
-> 
-> The patch there seems much more reasonable than introducing a whole
-> new systemcall just for 20 lines of kernel code. New system calls are
-> added too easily nowadays.
+> @@ -218,10 +266,12 @@ SYSCALL_DEFINE4(timerfd_settime, int, uf
+>  	 * it to the new values.
+>  	 */
+>  	for (;;) {
+> +		spin_lock(&notifiers_lock);
+>  		spin_lock_irq(&ctx->wqh.lock);
+> -		if (hrtimer_try_to_cancel(&ctx->tmr) >= 0)
+> +		if (!list_empty(&notifiers_list) || hrtimer_try_to_cancel(&ctx->tmr) >= 0)
+>  			break;
 
-The only problem with adding new system calls is that we are stuck with
-the interface until the end of time, so we must be sure not to get it
-wrong. The same thing is true for any other interface such as ioctl
-or extensions to existing system calls. People usually get away with
-adding new ioctls more easily because it is less obvious when they
-are added.
+Confused. Why do we check the global notifiers_list?
 
-	Arnd
+IOW. Suppose that this list is not empty and timerfd_settime() is called
+without TFD_NOTIFY_CLOCK_SET. Now we are going to reprogramm the timer
+without stopping it?
+
+And. What if timerfd_settime(TFD_NOTIFY_CLOCK_SET, utmr => NULL) is called
+twice? timerfd_setup() blindly does list_add(), and we corrupt the list, no?
+
+Oleg.
