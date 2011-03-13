@@ -1,38 +1,24 @@
-From: Artem Bityutskiy <dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Christoph Hellwig <hch@lst.de>
 Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Sat, 12 Mar 2011 21:28:09 +0200
-Message-ID: <1299958089.2332.8.camel@koala>
-References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net>
-	 <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
-	 <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
-	 <201103111255.44979.arnd@arndb.de>
-	 <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
-	 <4D7AC0FE.8070806@gmail.com>
-	 <1d4d1b7ae64da97f44cad0e2bda4f832.squirrel@webmail.greenhost.nl>
-	 <4D7ADFDD.9080108@gmail.com>
-	 <e118a1458c29e4f44bf71c7095e4bce8.squirrel@webmail.greenhost.nl>
-Reply-To: dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Date: Sun, 13 Mar 2011 21:59:11 +0100
+Message-ID: <20110313205911.GA4239@lst.de>
+References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net> <20110303072223.GA28133@elie> <87bp1sziqn.fsf@linux.vnet.ibm.com> <Pine.LNX.4.64.1103071515070.11152@cobra.newdream.net> <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <e118a1458c29e4f44bf71c7095e4bce8.squirrel-2RFepEojUI3wYrDfM2ltn5vKXLoBo5SK@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Indan Zupancic <indan-1J6HnF7K7zE@public.gmane.org>
-Cc: Ric Wheeler <ricwheeler-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Aneesh Kumar K. V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, l@jasper.es
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sage Weil <sage@newdream.net>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, Jonathan Nieder <jrnieder@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, arnd@arndb.de, mtk.manpages@gmail.com, viro@zeniv.linux.org.uk, hch@lst.de, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 2011-03-12 at 04:50 +0100, Indan Zupancic wrote:
-> Did you use the remount trick or the ioctl? If the latter, is it suff=
-icient
-> for your need? If the first, would guaranteeing that mount -o remount=
-,rw
-> trick will keep working solve the problem for you?
+> +/*
+> + * sync a single super
+> + */
 
--o remount,rw wants sysadmin capability, which limits the usage of this
-trick.
+Not exactly the most descriptive comment.
 
---=20
-Best Regards,
-Artem Bityutskiy (=D0=91=D0=B8=D1=82=D1=8E=D1=86=D0=BA=D0=B8=D0=B9 =D0=90=
-=D1=80=D1=82=D1=91=D0=BC)
+Otherwise looks good,
+
+Reviewed-by: Christoph Hellwig <hch@lst.de>
