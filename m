@@ -1,41 +1,54 @@
-From: Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Mon, 14 Mar 2011 19:17:53 -0400
-Message-ID: <20110314231753.GF8120@thunk.org>
-References: <201103111255.44979.arnd@arndb.de>
- <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
- <20110311235607.GB15853@elie>
- <9446ab1a2315c0d2476c30f8315a0503.squirrel@webmail.greenhost.nl>
- <20110312021001.GA16833@elie>
- <20110312173217.GA24981@kroah.com>
- <1e597aedd3d7825dcc0630b1cf2399fa.squirrel@webmail.greenhost.nl>
- <20110314131042.5a7fb32f.akpm@linux-foundation.org>
- <20110314211119.GC8120@thunk.org>
- <20110314142032.b9523309.akpm@linux-foundation.org>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH, v9 3/3] cgroups: introduce timer slack controller
+Date: Mon, 14 Mar 2011 16:46:52 -0700
+Message-ID: <20110314164652.5b44fb9e.akpm@linux-foundation.org>
+References: <1300111524-5666-1-git-send-email-kirill@shutemov.name>
+	<1300111524-5666-4-git-send-email-kirill@shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20110314142032.b9523309.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <1300111524-5666-4-git-send-email-kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: G@thunk.org, Indan Zupancic <indan-1J6HnF7K7zE@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Aneesh Kumar K. V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, l@jasper.es
+To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Cc: Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 14, 2011 at 02:20:32PM -0700, Andrew Morton wrote:
-> > I'm a bit nervous about exposing WB_SYNC_NONE to userspace, because
-> > its semantics are *definitely* hard to describe.  For example, at the
-> > moment if you do a WB_SYNC_NONE writeback, the writeback code will
-> > clamp the amount of data written back for each inode to
-> > MAX_WRITEBACK_PAGES (1024) pages.
-> 
-> Wha?  It does?  When did that get broken?
+On Mon, 14 Mar 2011 16:05:24 +0200
+Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org> wrote:
 
-Oops, sorry, I misread the code in wb_writeback().  My bad!  I
-misinterpreted what write_chunk does in that function.
-MAX_WRITEBACK_PAGES now really is the minimum amount of pages that
-wb_writeback() will request the file system to write back.  I'm not
-sure why we bother with write_chunk any more, but it shouldn't be
-doing any harm any more.
+> +Overview
+> +--------
+> +
+> +Every task_struct has timer_slack_ns value. This value uses to round up
+> +poll() and select() timeout values. This feature can be useful in
+> +mobile environment where combined wakeups are desired.
+> +
+> +Originally, prctl() was the only way to change timer slack value of
+> +a process. So you was not able change timer slack value of another
+> +process.
+> +
+> +cgroup subsys "timer_slack" implements timer slack controller. It
+> +provides a way to set minimal timer slack value for a group of tasks.
+> +If a task belongs to a cgroup with minimal timer slack value higher than
+> +task's value, cgroup's value will be applied.
+> +
+> +Timer slack controller allows to implement setting timer slack value of
+> +a process based on a policy. For example, you can create foreground and
+> +background cgroups and move tasks between them based on system state.
 
-					- Ted
+(quoting myself from last time)
+
+Why do we need a cgroup for this as opposed to (say) inheritance over
+fork(), or a system-wide knob, or a per-process/threadgroup knob, or
+just leaving the existing code as-is?  Presumably you felt that a
+cgroup approach is better for manageability, but you didn't tell us
+about this and you didn't explore alternative ways of solving the
+problem-which-you-didn't-describe.
+
+
+
+
+I'm still having trouble seeing why we should merge this.  Who will use
+it, and for what reason and what benefits will they see?  Quantified
+benefits, if possible!
