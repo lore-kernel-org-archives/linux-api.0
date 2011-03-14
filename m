@@ -1,91 +1,27 @@
-From: "Indan Zupancic" <indan@nul.nu>
+From: Theodore Tso <tytso@MIT.EDU>
 Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Mon, 14 Mar 2011 10:27:25 +0100 (CET)
-Message-ID: <0b7ab4190f781632fdb9a247f458edc2.squirrel@webmail.greenhost.nl>
-References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net>
-    <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
-    <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
-    <201103111255.44979.arnd@arndb.de>
-    <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
-    <20110311235607.GB15853@elie>
-    <9446ab1a2315c0d2476c30f8315a0503.squirrel@webmail.greenhost.nl>
-    <20110312021001.GA16833@elie> <20110312173217.GA24981@kroah.com>
-    <1e597aedd3d7825dcc0630b1cf2399fa.squirrel@webmail.greenhost.nl>
-    <Pine.LNX.4.64.1103132114380.5145@cobra.newdream.net>
-Mime-Version: 1.0
-Content-Type: text/plain;charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Date: Mon, 14 Mar 2011 06:22:44 -0400
+Message-ID: <BA67B1FD-F3B2-463E-9E09-FAAB01BFE479@mit.edu>
+References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net> <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net> <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl> <201103111255.44979.arnd@arndb.de> <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl> <20110311235607.GB15853@elie> <9446ab1a2315c0d2476c30f8315a0503.squirrel@webmail.greenhost.nl> <20110312021001.GA16833@elie> <20110312173217.GA24981@kroah.com> <1e597aedd3d7825dcc0630b1cf2399fa.squirrel@webmail.greenhost.nl> <Pine.LNX.4.64.1103132114380.5145@cobra.newdream.net> <0b7ab4190f781632fdb9a247f458edc2.squirrel@webmail.greenhost.nl>
+Mime-Version: 1.0 (Apple Message framework v1082)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1103132114380.5145@cobra.newdream.net>
+In-Reply-To: <0b7ab4190f781632fdb9a247f458edc2.squirrel@webmail.greenhost.nl>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sage Weil <sage@newdream.net>
-Cc: Greg KH <greg@kroah.com>, Jonathan Nieder <jrnieder@gmail.com>, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, mtk.manpages@gmail.com, viro@zeniv.linux.org.uk, hch@lst.de, l@jasper.es
+To: Indan Zupancic <indan@nul.nu>
+Cc: Sage Weil <sage@newdream.net>, Greg KH <greg@kroah.com>, Jonathan Nieder <jrnieder@gmail.com>, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, mtk.manpages@gmail.com, viro@zeniv.linux.org.uk, hch@lst.de, l@jasper.es
 List-Id: linux-api@vger.kernel.org
 
-On Mon, March 14, 2011 05:29, Sage Weil wrote:
-> On Mon, 14 Mar 2011, Indan Zupancic wrote:
->> Everyone seems to want to add this new syncfs, but it's not even defined
->> what it does. "Same as sync, but only on one fs" is IMHO not good
->> enough, because sync's behaviour is pretty badly documented, and that's
->> a system call.
->
-> How about the man page below?  I tried to avoid the somewhat antiquated
-> implementation specific terminology in the sync(2) man page.
 
-Good enough.
+On Mar 14, 2011, at 5:27 AM, Indan Zupancic wrote:
 
->
-> I think adding this functionality into sync_file_range(2) is forcing
-> unrelated functionality into an existing interface; sync_file_range
-> operates on _files_, not an entire file system.  With each API addition
-> it is more important to make the interface simple and intuitive than
-> to minimize the size of our patches.  IMO that's why a new syscall
-> is preferable to, say, an equivalent ioctl.
+> 
+> Your new syncfs also operates on files, it's only the name of sync_file_range
+> which is not very fitting. Other than that, syncing files in weird, nonstandard
+> ways is what it does and in that sense it's a good place for syncfs functionality.
 
-Your new syncfs also operates on files, it's only the name of sync_file_range
-which is not very fitting. Other than that, syncing files in weird, nonstandard
-ways is what it does and in that sense it's a good place for syncfs functionality.
+It operates on a file system.  It takes a file descriptor as an argument.  (Much
+like the statfs(2) system call.)  There's a difference. 
 
-But hey, it seems I'm the only one favouring that approach, and as you don't
-mind the size of your patch, make sure to add support for syncfs to all other
-23 archs too in your next patch submission.
-
-Take care,
-
-Indan
-
-
-> Thanks-
-> sage
->
->
-> .TH SYNCFS 2 2011-03-13 "Linux" "Linux Programmer's Manual"
-> .SH NAME
-> syncfs \- commit cached file system state to stable storage
-> .SH SYNOPSIS
-> .B #include <unistd.h>
-> .sp
-> .B void syncfs(int fd);
-> .SH DESCRIPTION
-> .BR syncfs ()
-> flushes any cached data modifications to the file system containing the
-> file referenced by the file descriptor
-> .I fd
-> to stable storage (usually a disk).  This includes the results of any
-> file modifications or other file system operations that have completed
-> prior to the call to
-> .BR syncfs(2).
-> This is similar to
-> .BR sync(2),
-> but will commit changes for only a single file system instead of all
-> mounted file systems.
-> .SH ERRORS
-> This function is always successful.
-> .SH "SEE ALSO"
-> .BR bdflush (2),
-> .BR fdatasync (2),
-> .BR fsync (2),
-> .BR sync (2),
-> .BR sync (8),
-> .BR update (8)
->
+- Ted
