@@ -1,27 +1,68 @@
-From: Theodore Tso <tytso@MIT.EDU>
-Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Mon, 14 Mar 2011 06:22:44 -0400
-Message-ID: <BA67B1FD-F3B2-463E-9E09-FAAB01BFE479@mit.edu>
-References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net> <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net> <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl> <201103111255.44979.arnd@arndb.de> <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl> <20110311235607.GB15853@elie> <9446ab1a2315c0d2476c30f8315a0503.squirrel@webmail.greenhost.nl> <20110312021001.GA16833@elie> <20110312173217.GA24981@kroah.com> <1e597aedd3d7825dcc0630b1cf2399fa.squirrel@webmail.greenhost.nl> <Pine.LNX.4.64.1103132114380.5145@cobra.newdream.net> <0b7ab4190f781632fdb9a247f458edc2.squirrel@webmail.greenhost.nl>
-Mime-Version: 1.0 (Apple Message framework v1082)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0b7ab4190f781632fdb9a247f458edc2.squirrel@webmail.greenhost.nl>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Indan Zupancic <indan@nul.nu>
-Cc: Sage Weil <sage@newdream.net>, Greg KH <greg@kroah.com>, Jonathan Nieder <jrnieder@gmail.com>, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, mtk.manpages@gmail.com, viro@zeniv.linux.org.uk, hch@lst.de, l@jasper.es
+From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Subject: [PATCH, v9 0/3] Introduce timer slack controller
+Date: Mon, 14 Mar 2011 16:05:21 +0200
+Message-ID: <1300111524-5666-1-git-send-email-kirill@shutemov.name>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Changelog:
 
-On Mar 14, 2011, at 5:27 AM, Indan Zupancic wrote:
+v9:
+ - update documentation
+ - minor cleanup
+v8:
+ - change hiearchy rules
+ - introduce timer_slack.effective_slack_ns
+ - get_task_timer_slack() -> task_get_effective_timer_slack()
+ - task_get_effective_timer_slack() splited in separate patch
+ - implement PR_GET_EFFECTIVE_TIMERSLACK
+v7:
+ - totally reworked interface and rewritten from scratch
+   (See Documentation/cgroups/timer_slack.txt for more information)
+v6:
+ - add documentation
+ - use notifier_call_chain() instead of check hook
+ - fix validate_change()
+ - cleanup
+v5:
+ - -EBUSY on writing to timer_slack.min_slack_ns/max_slack_ns if a child has
+   wider min-max range
+v4:
+ - hierarchy support
+ - drop dummy_timer_slack_check()
+ - workaround lockdep false (?) positive
+ - allow 0 as timer slack value
+v3:
+ - rework interface
+ - s/EXPORT_SYMBOL/EXPORT_SYMBOL_GPL/
+v2:
+ - fixed with CONFIG_CGROUP_TIMER_SLACK=y
+v1:
+ - initial revision
 
-> 
-> Your new syncfs also operates on files, it's only the name of sync_file_range
-> which is not very fitting. Other than that, syncing files in weird, nonstandard
-> ways is what it does and in that sense it's a good place for syncfs functionality.
+Kirill A. Shutemov (3):
+  hrtimer: introduce effective timer slack
+  hrtimer: implement PR_GET_EFFECTIVE_TIMERSLACK
+  cgroups: introduce timer slack controller
 
-It operates on a file system.  It takes a file descriptor as an argument.  (Much
-like the statfs(2) system call.)  There's a difference. 
+ Documentation/cgroups/timer_slack.txt |   72 +++++++++++++++++++
+ fs/select.c                           |    7 +--
+ include/linux/cgroup_subsys.h         |    6 ++
+ include/linux/prctl.h                 |    6 ++
+ include/linux/sched.h                 |   10 +++
+ init/Kconfig                          |    8 ++
+ kernel/Makefile                       |    1 +
+ kernel/cgroup_timer_slack.c           |  124 +++++++++++++++++++++++++++++++++
+ kernel/fork.c                         |    4 +
+ kernel/futex.c                        |    4 +-
+ kernel/hrtimer.c                      |    2 +-
+ kernel/sys.c                          |    3 +
+ 12 files changed, 239 insertions(+), 8 deletions(-)
+ create mode 100644 Documentation/cgroups/timer_slack.txt
+ create mode 100644 kernel/cgroup_timer_slack.c
 
-- Ted
+-- 
+1.7.4.1
