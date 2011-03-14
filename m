@@ -1,44 +1,91 @@
-From: Artem Bityutskiy <dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: "Indan Zupancic" <indan@nul.nu>
 Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Mon, 14 Mar 2011 07:52:54 +0200
-Message-ID: <1300081974.2332.14.camel@koala>
+Date: Mon, 14 Mar 2011 10:27:25 +0100 (CET)
+Message-ID: <0b7ab4190f781632fdb9a247f458edc2.squirrel@webmail.greenhost.nl>
 References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net>
-	 <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
-	 <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
-	 <201103111255.44979.arnd@arndb.de>
-	 <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
-	 <4D7AC0FE.8070806@gmail.com>
-	 <1d4d1b7ae64da97f44cad0e2bda4f832.squirrel@webmail.greenhost.nl>
-	 <1299957736.2332.4.camel@koala>
-	 <3cc2c5c6fa6b3bd384017ae95a4241ab.squirrel@webmail.greenhost.nl>
-Reply-To: dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+    <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
+    <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
+    <201103111255.44979.arnd@arndb.de>
+    <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
+    <20110311235607.GB15853@elie>
+    <9446ab1a2315c0d2476c30f8315a0503.squirrel@webmail.greenhost.nl>
+    <20110312021001.GA16833@elie> <20110312173217.GA24981@kroah.com>
+    <1e597aedd3d7825dcc0630b1cf2399fa.squirrel@webmail.greenhost.nl>
+    <Pine.LNX.4.64.1103132114380.5145@cobra.newdream.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3cc2c5c6fa6b3bd384017ae95a4241ab.squirrel-2RFepEojUI3wYrDfM2ltn5vKXLoBo5SK@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Indan Zupancic <indan-1J6HnF7K7zE@public.gmane.org>
-Cc: Ric Wheeler <ricwheeler-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Aneesh Kumar K. V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Jonathan Nieder <jrnieder-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, l@jasper.es
+Content-Type: text/plain;charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1103132114380.5145@cobra.newdream.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sage Weil <sage@newdream.net>
+Cc: Greg KH <greg@kroah.com>, Jonathan Nieder <jrnieder@gmail.com>, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, mtk.manpages@gmail.com, viro@zeniv.linux.org.uk, hch@lst.de, l@jasper.es
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2011-03-14 at 02:38 +0100, Indan Zupancic wrote:
-> > I had a program, actually a set of programs, which test a file-syst=
-em.
-> > And this set of programs needed such a feature quite a lot, to sync=
- the
-> > FS which is being tested and nothing else - for both performance re=
-asons
-> > and to put more stress to the FS under testing. We used -o remount,=
- rw
-> > for this - but this forced us to run under root.
->=20
-> You could use a tiny setuid root helper binary that does the remount =
-trick.
+On Mon, March 14, 2011 05:29, Sage Weil wrote:
+> On Mon, 14 Mar 2011, Indan Zupancic wrote:
+>> Everyone seems to want to add this new syncfs, but it's not even defined
+>> what it does. "Same as sync, but only on one fs" is IMHO not good
+>> enough, because sync's behaviour is pretty badly documented, and that's
+>> a system call.
+>
+> How about the man page below?  I tried to avoid the somewhat antiquated
+> implementation specific terminology in the sync(2) man page.
 
-Yes, but I think this is not elegant solution.
+Good enough.
 
---=20
-Best Regards,
-Artem Bityutskiy (=D0=91=D0=B8=D1=82=D1=8E=D1=86=D0=BA=D0=B8=D0=B9 =D0=90=
-=D1=80=D1=82=D1=91=D0=BC)
+>
+> I think adding this functionality into sync_file_range(2) is forcing
+> unrelated functionality into an existing interface; sync_file_range
+> operates on _files_, not an entire file system.  With each API addition
+> it is more important to make the interface simple and intuitive than
+> to minimize the size of our patches.  IMO that's why a new syscall
+> is preferable to, say, an equivalent ioctl.
+
+Your new syncfs also operates on files, it's only the name of sync_file_range
+which is not very fitting. Other than that, syncing files in weird, nonstandard
+ways is what it does and in that sense it's a good place for syncfs functionality.
+
+But hey, it seems I'm the only one favouring that approach, and as you don't
+mind the size of your patch, make sure to add support for syncfs to all other
+23 archs too in your next patch submission.
+
+Take care,
+
+Indan
+
+
+> Thanks-
+> sage
+>
+>
+> .TH SYNCFS 2 2011-03-13 "Linux" "Linux Programmer's Manual"
+> .SH NAME
+> syncfs \- commit cached file system state to stable storage
+> .SH SYNOPSIS
+> .B #include <unistd.h>
+> .sp
+> .B void syncfs(int fd);
+> .SH DESCRIPTION
+> .BR syncfs ()
+> flushes any cached data modifications to the file system containing the
+> file referenced by the file descriptor
+> .I fd
+> to stable storage (usually a disk).  This includes the results of any
+> file modifications or other file system operations that have completed
+> prior to the call to
+> .BR syncfs(2).
+> This is similar to
+> .BR sync(2),
+> but will commit changes for only a single file system instead of all
+> mounted file systems.
+> .SH ERRORS
+> This function is always successful.
+> .SH "SEE ALSO"
+> .BR bdflush (2),
+> .BR fdatasync (2),
+> .BR fsync (2),
+> .BR sync (2),
+> .BR sync (8),
+> .BR update (8)
+>
