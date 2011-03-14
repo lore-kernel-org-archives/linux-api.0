@@ -1,36 +1,44 @@
-From: Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH V12 3/4] ptp: Added a clock driver for the IXP46x.
-Date: Mon, 14 Mar 2011 00:40:48 +0100
-Message-ID: <m3ei6azj0f.fsf@intrepid.localdomain>
-References: <cover.1298878618.git.richard.cochran@omicron.at>
-	<cd6ddff0dcca60ac88b35660505d7bf54ad32405.1298878618.git.richard.cochran@omicron.at>
+From: "Indan Zupancic" <indan@nul.nu>
+Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
+Date: Mon, 14 Mar 2011 02:31:49 +0100 (CET)
+Message-ID: <89481603ed9cfc86efaa039c2dfeb955.squirrel@webmail.greenhost.nl>
+References: <Pine.LNX.4.64.1102171035220.13904@cobra.newdream.net>
+    <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
+    <edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
+    <201103111255.44979.arnd@arndb.de>
+    <ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
+    <4D7AC0FE.8070806@gmail.com>
+    <1d4d1b7ae64da97f44cad0e2bda4f832.squirrel@webmail.greenhost.nl>
+    <4D7ADFDD.9080108@gmail.com>
+    <e118a1458c29e4f44bf71c7095e4bce8.squirrel@webmail.greenhost.nl>
+    <4D7BBC03.3020404@garzik.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cd6ddff0dcca60ac88b35660505d7bf54ad32405.1298878618.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
-	(Richard Cochran's message of "Mon, 28 Feb 2011 08:58:27 +0100")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-discuss-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+Content-Type: text/plain;charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4D7BBC03.3020404@garzik.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jeff Garzik <jeff@garzik.org>
+Cc: Ric Wheeler <ricwheeler@gmail.com>, Arnd Bergmann <arnd@arndb.de>, Sage Weil <sage@newdream.net>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, Jonathan Nieder <jrnieder@gmail.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, mtk.manpages@gmail.com, viro@zeniv.linux.org.uk, hch@lst.de, l@jasper.es
 List-Id: linux-api@vger.kernel.org
 
-Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
-
-> This patch adds a driver for the hardware time stamping unit found on the
-> IXP465. The basic clock operations and an external trigger are implemented.
+On Sat, March 12, 2011 19:31, Jeff Garzik wrote:
+> On 03/11/2011 10:50 PM, Indan Zupancic wrote:
+>> If sync(2) didn't exist and people wanted to add it I'd complain too. This
+>> has all the problems of sync(2), but with the "not sure if all the files are
+>> on the file system I think" problem added.
 >
-> Signed-off-by: Richard Cochran <richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
-> Acked-by: John Stultz <johnstul-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-> ---
->  arch/arm/mach-ixp4xx/include/mach/ixp46x_ts.h |   78 ++++++
->  drivers/net/arm/ixp4xx_eth.c                  |  192 ++++++++++++++-
->  drivers/ptp/Kconfig                           |   13 +
->  drivers/ptp/Makefile                          |    1 +
->  drivers/ptp/ptp_ixp46x.c                      |  332 +++++++++++++++++++++++++
+> You are decades too late, then...
 
-I can't see any obvious problem in this code, though I don't have IXP46x
-hardware.
+I know.
 
-Acked-by: Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>
--- 
-Krzysztof Halasa
+> sync_file_range() is not appropriate because that works on only one fd.
+>
+> The new syscall is fine, and addresses a need.
+
+The new syscall works on only one fd too. The behaviour of the proposed
+syncfs and an extended sync_file_range is exactly the same.
+
+Greetings,
+
+Indan
