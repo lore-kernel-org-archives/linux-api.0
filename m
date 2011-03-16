@@ -1,69 +1,34 @@
-From: jacob pan <jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH, v9 3/3] cgroups: introduce timer slack controller
-Date: Wed, 16 Mar 2011 04:35:45 -0700
-Message-ID: <20110316043545.493c7b36@jacob-laptop>
-References: <1300111524-5666-1-git-send-email-kirill@shutemov.name>
-	<1300111524-5666-4-git-send-email-kirill@shutemov.name>
-	<20110314164652.5b44fb9e.akpm@linux-foundation.org>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH V12 0/4] ptp: IEEE 1588 hardware clock support
+Date: Wed, 16 Mar 2011 15:26:03 +0100
+Message-ID: <20110316142603.GC12435@riccoc20.at.omicron.at>
+References: <cover.1298878618.git.richard.cochran@omicron.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110314164652.5b44fb9e.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <cover.1298878618.git.richard.cochran-3mrvs1K0uXizZXS1Dc/lvw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-discuss-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Krzysztof Halasa <khc-9GfyWEdoJtJmR6Xm/wNWPw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rodolfo Giometti <giometti-k2GhghHVRtY@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 14 Mar 2011 16:46:52 -0700
-Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+On Mon, Feb 28, 2011 at 08:57:03AM +0100, Richard Cochran wrote:
+> * PHC Patch ChangeLog
+> ** v12
+> *** gianfar_ptp
+>    - fixed up device tree
+>    - inlined the header file
+>    - use platform_ calls instead of deprecated of_ calls
+>    - removed static global single instance
+>    - removed John Stultz's ack from this patch
 
-> On Mon, 14 Mar 2011 16:05:24 +0200
-> Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org> wrote:
-> 
-> > +Overview
-> > +--------
-> > +
-> > +Every task_struct has timer_slack_ns value. This value uses to
-> > round up +poll() and select() timeout values. This feature can be
-> > useful in +mobile environment where combined wakeups are desired.
-> > +
-> > +Originally, prctl() was the only way to change timer slack value of
-> > +a process. So you was not able change timer slack value of another
-> > +process.
-> > +
-> > +cgroup subsys "timer_slack" implements timer slack controller. It
-> > +provides a way to set minimal timer slack value for a group of
-> > tasks. +If a task belongs to a cgroup with minimal timer slack
-> > value higher than +task's value, cgroup's value will be applied.
-> > +
-> > +Timer slack controller allows to implement setting timer slack
-> > value of +a process based on a policy. For example, you can create
-> > foreground and +background cgroups and move tasks between them
-> > based on system state.
-> 
-> (quoting myself from last time)
-> 
-> Why do we need a cgroup for this as opposed to (say) inheritance over
-> fork(), or a system-wide knob, or a per-process/threadgroup knob, or
-> just leaving the existing code as-is?  Presumably you felt that a
-> cgroup approach is better for manageability, but you didn't tell us
-> about this and you didn't explore alternative ways of solving the
-> problem-which-you-didn't-describe.
-> 
-> 
-> 
-> 
-> I'm still having trouble seeing why we should merge this.  Who will
-> use it, and for what reason and what benefits will they see?
-> Quantified benefits, if possible!
-> 
-I am planning to use it for doing resource management for a mobile
-device where we classify applications by groups based on priority and
-trust level. Then at runtime, I plan to use timer slack as one of the
-knobs to penalize/manage them at different degree to reduce power
-consumption (via reduction of #wake-ups in this case).
+@Thomas and John:
+
+Can I get your acks on the remaining patches?
+
+Can this be merged for 2.6.39?
 
 Thanks,
 
-Jacob
+Richard
