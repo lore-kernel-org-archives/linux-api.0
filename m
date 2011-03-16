@@ -1,42 +1,69 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH v3] introduce sys_syncfs to sync a single file system
-Date: Tue, 15 Mar 2011 13:18:46 -0700
-Message-ID: <20110315131846.4d41af3c.akpm@linux-foundation.org>
-References: <Pine.LNX.4.64.1103101125150.4190@cobra.newdream.net>
-	<edfa4cf081249734807e582c14253fca.squirrel@webmail.greenhost.nl>
-	<201103111255.44979.arnd@arndb.de>
-	<ffafd3ccb3fd1be7c40348c9cee84aef.squirrel@webmail.greenhost.nl>
-	<20110311235607.GB15853@elie>
-	<9446ab1a2315c0d2476c30f8315a0503.squirrel@webmail.greenhost.nl>
-	<20110312021001.GA16833@elie>
-	<20110312173217.GA24981@kroah.com>
-	<1e597aedd3d7825dcc0630b1cf2399fa.squirrel@webmail.greenhost.nl>
-	<Pine.LNX.4.64.1103132114380.5145@cobra.newdream.net>
-	<20110315101155.GO15097@dastard>
-	<C79DDACF-9320-424D-84F5-3DB9C5325B1D@dilger.ca>
+From: jacob pan <jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH, v9 3/3] cgroups: introduce timer slack controller
+Date: Wed, 16 Mar 2011 04:35:45 -0700
+Message-ID: <20110316043545.493c7b36@jacob-laptop>
+References: <1300111524-5666-1-git-send-email-kirill@shutemov.name>
+	<1300111524-5666-4-git-send-email-kirill@shutemov.name>
+	<20110314164652.5b44fb9e.akpm@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <C79DDACF-9320-424D-84F5-3DB9C5325B1D@dilger.ca>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: Dave Chinner <david@fromorbit.com>, Sage Weil <sage@newdream.net>, Indan Zupancic <indan@nul.nu>, Greg KH <greg@kroah.com>, Jonathan Nieder <jrnieder@gmail.com>, Arnd Bergmann <arnd@arndb.de>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Aneesh Kumar K. V" <aneesh.kumar@linux.vnet.ibm.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "hch@lst.de" <hch@lst.de>, "l@jasper.es" <l@jasper.es>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20110314164652.5b44fb9e.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 15 Mar 2011 09:56:08 -0600
-Andreas Dilger <adilger@dilger.ca> wrote:
+On Mon, 14 Mar 2011 16:46:52 -0700
+Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
 
-> Should there be a "wait" argument or flag that allows an app to start the syncfs(), do something, and then call again to wait for completion?
+> On Mon, 14 Mar 2011 16:05:24 +0200
+> Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org> wrote:
+> 
+> > +Overview
+> > +--------
+> > +
+> > +Every task_struct has timer_slack_ns value. This value uses to
+> > round up +poll() and select() timeout values. This feature can be
+> > useful in +mobile environment where combined wakeups are desired.
+> > +
+> > +Originally, prctl() was the only way to change timer slack value of
+> > +a process. So you was not able change timer slack value of another
+> > +process.
+> > +
+> > +cgroup subsys "timer_slack" implements timer slack controller. It
+> > +provides a way to set minimal timer slack value for a group of
+> > tasks. +If a task belongs to a cgroup with minimal timer slack
+> > value higher than +task's value, cgroup's value will be applied.
+> > +
+> > +Timer slack controller allows to implement setting timer slack
+> > value of +a process based on a policy. For example, you can create
+> > foreground and +background cgroups and move tasks between them
+> > based on system state.
+> 
+> (quoting myself from last time)
+> 
+> Why do we need a cgroup for this as opposed to (say) inheritance over
+> fork(), or a system-wide knob, or a per-process/threadgroup knob, or
+> just leaving the existing code as-is?  Presumably you felt that a
+> cgroup approach is better for manageability, but you didn't tell us
+> about this and you didn't explore alternative ways of solving the
+> problem-which-you-didn't-describe.
+> 
+> 
+> 
+> 
+> I'm still having trouble seeing why we should merge this.  Who will
+> use it, and for what reason and what benefits will they see?
+> Quantified benefits, if possible!
+> 
+I am planning to use it for doing resource management for a mobile
+device where we classify applications by groups based on priority and
+trust level. Then at runtime, I plan to use timer slack as one of the
+knobs to penalize/manage them at different degree to reduce power
+consumption (via reduction of #wake-ups in this case).
 
-I don't think so.  If userspace wants to do that then fork().
+Thanks,
 
-> > Perhaps we should consider propagating errors out to the user
-> > application rather than discarding them in kernel and pretending we
-> > can't ever have a write error?
-
-That would be nice, but is probably a pretty complex thing to
-implement.  The manpage should include words indicating that syncfs()
-can return an errno.  That way, userspace will hopefully have the
-appropriate checks, whcih will become more useful if/when the kernel
-implementation gets fixed up.
+Jacob
