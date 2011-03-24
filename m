@@ -1,51 +1,25 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: [PATCH] powerpc: add clock_adjtime for powerpc
-Date: Thu, 24 Mar 2011 16:05:17 +0100
-Message-ID: <20110324150517.GA6710@riccoc20.at.omicron.at>
+From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] powerpc: add clock_adjtime for powerpc
+Date: Thu, 24 Mar 2011 16:17:19 +0100
+Message-ID: <20110324151719.GA6738@riccoc20.at.omicron.at>
+References: <20110324150517.GA6710@riccoc20.at.omicron.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>
+In-Reply-To: <20110324150517.GA6710-7KxsofuKt4IfAd9E5cN8NEzG7cXyKsk/@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the clock_adjtime system call to the powerpc architecture.
+On Thu, Mar 24, 2011 at 04:05:17PM +0100, Richard Cochran wrote:
+> This patch adds the clock_adjtime system call to the powerpc architecture.
 
-The call was introduced in f1f1d5ebd10ffa4242bce7a90a56a222d6b7bc77
+Never mind this patch.
 
-Signed-off-by: Richard Cochran <richard.cochran@omicron.at>
----
- arch/powerpc/include/asm/systbl.h |    1 +
- arch/powerpc/include/asm/unistd.h |    3 ++-
- 2 files changed, 3 insertions(+), 1 deletions(-)
+Stephen Rothwell already posted a patch on linuxppc-dev adding this
+syscall eariler today.
 
-diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
-index aa0f1eb..6a1152c 100644
---- a/arch/powerpc/include/asm/systbl.h
-+++ b/arch/powerpc/include/asm/systbl.h
-@@ -348,3 +348,4 @@ COMPAT_SYS_SPU(sendmsg)
- COMPAT_SYS_SPU(recvmsg)
- COMPAT_SYS_SPU(recvmmsg)
- SYSCALL_SPU(accept4)
-+COMPAT_SYS_SPU(clock_adjtime)
-diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
-index 6151937..386de07 100644
---- a/arch/powerpc/include/asm/unistd.h
-+++ b/arch/powerpc/include/asm/unistd.h
-@@ -367,10 +367,11 @@
- #define __NR_recvmsg		342
- #define __NR_recvmmsg		343
- #define __NR_accept4		344
-+#define __NR_clock_adjtime	345
- 
- #ifdef __KERNEL__
- 
--#define __NR_syscalls		345
-+#define __NR_syscalls		346
- 
- #define __NR__exit __NR_exit
- #define NR_syscalls	__NR_syscalls
--- 
-1.7.0.4
+Thanks,
+Richard
