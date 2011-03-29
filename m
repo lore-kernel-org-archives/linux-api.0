@@ -1,25 +1,23 @@
-From: John Stultz <john.stultz@linaro.org>
-Subject: Re: [PATCH V13 4/4] ptp: Added a clock driver for the National
- Semiconductor PHYTER.
-Date: Mon, 28 Mar 2011 11:08:27 -0700
-Message-ID: <1301335707.21829.3.camel@work-vm>
-References: <cover.1301206090.git.richard.cochran@omicron.at>
-	 <3ecd2d805a96324a04d3b231b16f21e2b5cda0e6.1301206090.git.richard.cochran@omicron.at>
+From: "System Admins Alerts" <Service-Rrbileazn+l54TAoqtyWWQ@public.gmane.org>
+Subject: Attension!! Activate! Webmail Quota Limit!
+Date: Tue, 29 Mar 2011 12:13:33 +0200 (CEST)
+Message-ID: <cd9a60e992f2d6c14460aa60dd289bd3.squirrel@kolbaba.pedf.cuni.cz>
+Reply-To: Service-Rrbileazn+l54TAoqtyWWQ@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3ecd2d805a96324a04d3b231b16f21e2b5cda0e6.1301206090.git.richard.cochran@omicron.at>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Cochran <richardcochran@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, devicetree-discuss@lists.ozlabs.org, linux-arm-kernel@lists.infradead.org, linuxppc-dev@lists.ozlabs.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arnd Bergmann <arnd@arndb.de>, Christoph Lameter <cl@linux.com>, David Miller <davem@davemloft.net>, Krzysztof Halasa <khc@pm.waw.pl>, Peter Zijlstra <peterz@infradead.org>, Rodolfo Giometti <giometti@linux.it>, Thomas Gleixner <tglx@linutronix.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Mike Frysinger <vapier@gentoo.org>, Paul Mackerras <paulus@samba.org>, Russell King <linux@arm.linux.org.uk>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 2011-03-27 at 08:39 +0200, Richard Cochran wrote:
-> This patch adds support for the PTP clock found on the DP83640.
-> The basic clock operations and one external time stamp have
-> been implemented.
-> 
-> Signed-off-by: Richard Cochran <richard.cochran@omicron.at>
+Your mailbox has exceeded the storage limit of 1GB, which is as defined by
+your administrator, you are running at 5.9GB, you may not be able to send
+or receive new messages until you re-validate your mailbox. To revalidate
+your mailbox,
 
-Acked-by: John Stultz <john.stultz@linaro.org>
+click below link:
+http://www.cardiomil.com.uy/contacto/use/admin/form1.html
+
+Thanks You
+Webmail System Administrator
+contact the ITS Help Desk.
