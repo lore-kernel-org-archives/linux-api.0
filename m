@@ -1,70 +1,75 @@
-From: Andrea Righi <andrea@betterlinux.com>
-Subject: Re: [PATCH] fadvise: introduce POSIX_FADV_DONTNEED_FS
-Date: Wed, 27 Apr 2011 17:12:19 +0200
-Message-ID: <20110427151218.GA15335@linux.betterlinux.com>
-References: <1303914545-15642-1-git-send-email-andrea@betterlinux.com>
- <201104271700.13013.arnd@arndb.de>
+From: Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC] [PATCH] drop_pagecache syscall
+Date: Wed, 27 Apr 2011 11:25:47 -0400
+Message-ID: <BANLkTi=+E+WzUgqEQTnRPmL1g5yPsXu8Bw@mail.gmail.com>
+References: <1303853727-21444-1-git-send-email-andrea@betterlinux.com>
+ <20110427001453.GD12436@dastard> <20110427085910.GA1749@linux.betterlinux.com>
+ <BANLkTimrpNOHVfnund7uc=thf-c3_HxyYQ@mail.gmail.com> <20110427094717.GB1749@linux.betterlinux.com>
+ <BANLkTi=ZNq4Yp3U5jVspsJixu4ckbdVjtQ@mail.gmail.com> <20110427095709.GA1687@linux.develer.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <201104271700.13013.arnd@arndb.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Dave Chinner <david@fromorbit.com>, Mike Frysinger <vapier@gentoo.org>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20110427095709.GA1687-fxUVXftIFDlZdMzt4l2sLQC/G2K4zDHf@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrea Righi <righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrea Righi <andrea-oIIqvOZpAevzfdHfmsDf5w@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 27, 2011 at 05:00:12PM +0200, Arnd Bergmann wrote:
-> On Wednesday 27 April 2011 16:29:05 Andrea Righi wrote:
-> > diff --git a/include/linux/fadvise.h b/include/linux/fadvise.h
-> > index e8e7471..dc9ce98 100644
-> > --- a/include/linux/fadvise.h
-> > +++ b/include/linux/fadvise.h
-> > @@ -13,9 +13,11 @@
-> >  #if defined(__s390x__)
-> >  #define POSIX_FADV_DONTNEED    6 /* Don't need these pages.  */
-> >  #define POSIX_FADV_NOREUSE     7 /* Data will be accessed once.  */
-> > +#define POSIX_FADV_DONTNEED_FS 8 /* Don't need these filesystem pages.  */
-> >  #else
-> >  #define POSIX_FADV_DONTNEED    4 /* Don't need these pages.  */
-> >  #define POSIX_FADV_NOREUSE     5 /* Data will be accessed once.  */
-> > +#define POSIX_FADV_DONTNEED_FS 6 /* Don't need these filesystem pages.  */
-> >  #endif
-> >  
-> >  #endif /* FADVISE_H_INCLUDED */
-> 
-> Please don't make the s390 mess worse than it already is here.
-> I think the best solution would be to assign new values starting
-> from 8 so they can be common for all architectures.
+On Wed, Apr 27, 2011 at 05:57, Andrea Righi wrote:
+> On Wed, Apr 27, 2011 at 05:50:04AM -0400, Mike Frysinger wrote:
+>> On Wed, Apr 27, 2011 at 05:47, Andrea Righi wrote:
+>> > On Wed, Apr 27, 2011 at 05:10:41AM -0400, Mike Frysinger wrote:
+>> >> On Wed, Apr 27, 2011 at 05:01, Andrea Righi wrote:
+>> >> > On Wed, Apr 27, 2011 at 10:14:53AM +1000, Dave Chinner wrote:
+>> >> >> On Tue, Apr 26, 2011 at 11:35:27PM +0200, Andrea Righi wrote:
+>> >> >> > This functionality can be used by all the applications that =
+want to have a
+>> >> >> > better control over the page cache management (for example t=
+o immediately drop
+>> >> >> > pages that for sure will not be reused in the near future, w=
+ithout calling
+>> >> >> > posix_fadvise() for all the files they've touched), or to pr=
+ovide a more fine
+>> >> >> > grained debugging feature usable by the filesystem benchmark=
+s.
+>> >> >> >
+>> >> >> > The system call does not require root privileges and it can =
+be called by any
+>> >> >> > unprivileged application. For example, we can write a usersp=
+ace tool to run
+>> >> >> > something like this:
+>> >> >> >
+>> >> >> > =C2=A0 $ drop-pagecache /path/file_or_dir
+>> >> >>
+>> >> >> That's a potential DOS vector, I think. Drop the pagecache in =
+a hard
+>> >> >> loop on the root fs of a busy server and watch it crawl...
+>> >> >
+>> >> > Yes, probably we could allow only the CAP_SYS_ADMIN tasks to ex=
+ecute
+>> >> > this syscall.
+>> >>
+>> >> if /proc/sys/vm/drop_caches has any checks other than file permis=
+sion
+>> >> checks (i.e. UID=3D=3D0), it'd probably be better to copy those r=
+ather
+>> >> than picking something different.
+>> >
+>> > ok, what about checking current_euid() =3D=3D 0?
+>>
+>> that's not what i meant. =C2=A0if the drop_caches file already has c=
+ertain
+>> cap checks/whatever in place, let's use those. =C2=A0if it doesnt, t=
+hen
+>> picking a cap level as you proposed makes sense.
+>
+> mmh, drop_caches has a file ownership (root:root) and a permission ma=
+sk
+> (0644), how to apply the same checks to a system call? The most simil=
+ar
+> thing seems to check the current euid. Am I missing something?
 
-Agreed.
-
-> 
-> > @@ -127,6 +128,12 @@ SYSCALL_DEFINE(fadvise64_64)(int fd, loff_t offset, loff_t len, int advice)
-> >                         invalidate_mapping_pages(mapping, start_index,
-> >                                                 end_index);
-> >                 break;
-> > +       case POSIX_FADV_DONTNEED_FS:
-> > +               if (!current_euid())
-> > +                       drop_pagecache_sb(file->f_dentry->d_sb, NULL);
-> > +               else
-> > +                       ret = -EPERM;
-> > +               break;
-> 
-> I somewhat disagree with keying the capability off the UID value, even
-> if that is what the sysctl uses. CAP_SYS_ADMIN is not that nice either, but
-> I think it's better than the UID here.
-
-OK, I also prefer CAP_SYS_ADMIN.
-
-> 
-> Aside from these, I like the patch.
-> 
-> 	Arnd
-
-I'll wait for other comments and post another version with the changes
-you suggested.
-
-Thanks for looking at it.
-
--Andrea
+my (limited) understanding is that you should be using cap checks, not =
+UID
+-mike
