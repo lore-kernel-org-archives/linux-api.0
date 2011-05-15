@@ -1,33 +1,29 @@
-From: Andrea Righi <andrea-oIIqvOZpAevzfdHfmsDf5w@public.gmane.org>
-Subject: Re: [PATCH v2] fadvise: introduce POSIX_FADV_DONTNEED_FS
-Date: Thu, 5 May 2011 00:09:22 +0200
-Message-ID: <20110504220922.GA4811@linux.develer.com>
-References: <1303928027-5100-1-git-send-email-andrea@betterlinux.com>
- <20110504144411.7f32c00c.akpm@linux-foundation.org>
+From: taurino alarico <eventocalidad-NigQoAqfJP0@public.gmane.org>
+Subject: REVIEW AND RESPOND
+Date: Sun, 15 May 2011 03:48:57 -0400 (CDT)
+Message-ID: <314176891.1084571305445737901.JavaMail.root@ucimail2.uci.cu>
+Reply-To: taurino alarico <taurinoalarico-KfVeZMHDAfI@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20110504144411.7f32c00c.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 04, 2011 at 02:44:11PM -0700, Andrew Morton wrote:
-> On Wed, 27 Apr 2011 20:13:47 +0200
-> Andrea Righi <andrea-oIIqvOZpAevzfdHfmsDf5w@public.gmane.org> wrote:
-> 
-> > Introduce a new fadvise flag to drop page cache pages of a single
-> > filesystem.
-> 
-> I'm going to object to this on general principle.  We shouldn't toss
-> new features into the kernel API just because we can.  Each feature
-> needs a really good argument to justify its inclusion, and I don't
-> believe that the case has been made for this feature.
-> 
-> IOW, who's going to die if we don't merge it?
 
-OK. :)
 
--Andrea
+I have packaged a financial transaction that will benefit both of us. As a
+regional manager, it's my duty to send in a financial report to my head
+office in the capital city (Quito Ecuador) at the end of each year. In the
+year 2009 i discovered that my branch made three million seven hundred and
+fifty thousand dollar, which my head office doesn't know about. I have placed
+the said funds in a suspense account without any beneficiary.
+
+As an official of the bank I cannot be directly connected to the money. So i
+need you to assist and receive this money into your account and 35% of the
+total sum will be yours. There is no risk involved and it will be a bank to
+bank transfer. All I need from you is to stand claim as the original
+depositor of this fund and have my head office transfer the money to your account.
+
+I will give you more details on how we can achieve it successfully once i
+hear from you. Please contact me with this email address: taurinoalarico-KfVeZMHDAfI@public.gmane.org
