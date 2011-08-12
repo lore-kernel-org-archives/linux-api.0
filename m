@@ -1,11 +1,11 @@
-From: "Solar Huang" <solar-B9n1sLibSko@public.gmane.org>
+From: "Solar Huang." <solar-/E1597aS9LSnedCIQ9mT8A@public.gmane.org>
 Subject: (unknown)
-Date: Wed, 10 Aug 2011 20:24:08 -0200
-Message-ID: <20110810214516.M23007@igeprev.to.gov.br>
-Reply-To: damingzhou1-ey7UC80OcDUdnm+yROfE0A@public.gmane.org
+Date: Fri, 12 Aug 2011 13:00:46 -0500
+Message-ID: <20110812174540.M45536__8913.58704907379$1313173386$gmane$org@yahoo.com.tw>
+Reply-To: Shangyulong-JygmOgmZj75eoWH0uzbU5w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset=iso-8859-1
+	charset=big5
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Subject: 
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -32,7 +32,7 @@ representative office in Malaysia. In view of this, You are to Contact our
 Representativ Mr. Daming Zhou he can understand english and some european 
 languages.
 
-For claims proceedures Send your details to ( damingzhou1-ey7UC80OcDUdnm+yROfE0A@public.gmane.org ) 
+For claims proceedures Send your details to ( Shangyulong-JygmOgmZj75eoWH0uzbU5w@public.gmane.org ) 
 Only.Phone-(+60-1116455077.)
 ------------------
 Congratulations!!!
