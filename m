@@ -1,37 +1,62 @@
-From: "Shangyu Long" <Shangyu-OFkwwFIAC9oVNXGz7ipsyg@public.gmane.org>
-Subject: (unknown)
-Date: Thu, 11 Aug 2011 23:54:59 -0500
-Message-ID: <20110812035833.M79705__17820.0464266867$1313271696$gmane$org@huatulco.umar.mx>
-Reply-To: Shangyulong-JygmOgmZj75eoWH0uzbU5w@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain;
-	charset=iso-8859-1
+From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 1/3] nbd: remove unused flags fields
+Date: Wed,  7 Sep 2011 16:41:41 +0200
+Message-ID: <1315406503-7883-2-git-send-email-pbonzini@redhat.com>
+References: <1315406503-7883-1-git-send-email-pbonzini@redhat.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Subject: 
+In-Reply-To: <1315406503-7883-1-git-send-email-pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Clements <Paul.Clements-G8/ITkJZaeZWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Dear E-mail User,   
-   
-This is to inform you that your email address with MICROS ID MCX-84743-MFG-133CN-9JP 
-emerge our second place winner of $485,000 plus a brand new 2012 Ford TAURUS Car from 
-the Shangyu Long&#8482; Mid-year promotion.
+The flags field is never written right now.  Before putting it
+to new use in the next patches, clean up the uses.
 
-Please confirm your status by Contacting Agent: Mr. Daming Zhou with info below..
+Cc: Paul Clements <Paul.Clements-G8/ITkJZaeZWk0Htik3J/w@public.gmane.org>
+Signed-off-by: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ drivers/block/nbd.c |   11 +++--------
+ include/linux/nbd.h |    4 ----
+ 2 files changed, 3 insertions(+), 12 deletions(-)
 
-***Full Name
-***Country
-***Phone
-***Age
-***Gender
-***Occupation
-
-Please note that your Micros ID  falls within our Asian booklet representative office 
-in Malaysia. In view of this, You are to Contact our Representativ Mr. Daming Zhou he 
-can understand english and some european languages.
-
-For claims proceedures Send your details to ( Shangyulong-JygmOgmZj75eoWH0uzbU5w@public.gmane.org ) Only.Phone-(+60-
-1116455077.)
-------------------
-Congratulations!!!
-Solar Huang. (Sec.announcer)
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index f533f33..be23aec 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -453,15 +453,10 @@ static void nbd_handle_req(struct nbd_device *lo, struct request *req)
+ 	if (req->cmd_type != REQ_TYPE_FS)
+ 		goto error_out;
+ 
+-	nbd_cmd(req) = NBD_CMD_READ;
+-	if (rq_data_dir(req) == WRITE) {
++	if (rq_data_dir(req) == WRITE)
+ 		nbd_cmd(req) = NBD_CMD_WRITE;
+-		if (lo->flags & NBD_READ_ONLY) {
+-			printk(KERN_ERR "%s: Write on read-only\n",
+-					lo->disk->disk_name);
+-			goto error_out;
+-		}
+-	}
++	else
++		nbd_cmd(req) = NBD_CMD_READ;
+ 
+ 	req->errors = 0;
+ 
+diff --git a/include/linux/nbd.h b/include/linux/nbd.h
+index d146ca1..0582054 100644
+--- a/include/linux/nbd.h
++++ b/include/linux/nbd.h
+@@ -42,10 +42,6 @@ enum {
+ #include <linux/wait.h>
+ #include <linux/mutex.h>
+ 
+-/* values for flags field */
+-#define NBD_READ_ONLY 0x0001
+-#define NBD_WRITE_NOCHK 0x0002
+-
+ struct request;
+ 
+ struct nbd_device {
+-- 
+1.7.6
