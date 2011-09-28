@@ -1,299 +1,323 @@
 From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: rt_sigqueueinfo/rt_tgsigqueueinfo man page
-Date: Sun, 18 Sep 2011 17:04:06 +0200
-Message-ID: <CAKgNAkipOC3kcq3jXxTxpKDECXjwNwv_aRF5ycp6pUTMw8YhHg@mail.gmail.com>
+Subject: Re: Draft manpage for recvmmsg [RESEND]
+Date: Wed, 28 Sep 2011 19:29:00 +0200
+Message-ID: <CAKgNAki0bw4ezSNAYMcg92Gyan049Pg7PyXkcEwJLSiAXOZ_Rg@mail.gmail.com>
 Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-6lXkIZvqkOAvJsYlp49lxw@public.gmane.org>, Michael Kerrisk <mtk.manpages-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Stephan Mueller <stephan.mueller-fwYZOkdEjagAvxtiuMwx3w@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Stephan Mueller <stephan.mueller-fwYZOkdEjagAvxtiuMwx3w@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Thomas
+Hi Andi, Arnaldo,
 
-Long ago (see below) you added the rt_tgsigqueueinfo() syscall, and
-provided the essential documentation:
+Could you please review the revised recvmmsg.2 man page below.
 
-On Thu, Feb 26, 2009 at 2:35 PM, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> w=
-rote:
-> sys_kill has a counterpart sys_tgkill which allows to send signals to
-> a particular thread. sys_rt_sigqueueinfo is lacking such a counterpar=
-t.
->
-> Aside of the asymetry it is a show stopper for migrating applications
-> from other unix-alike RTOSes.
->
-> The following patch series implements rt_tgsigqueueinfo and hooks it
-> up for x86.
->
-> Find below the raw documentation.
->
-> Thanks,
->
-> =A0 =A0 =A0 =A0tglx
-> ----
->
-> NAME
-> =A0 =A0 =A0 rt_tgsigqueueinfo - Send signal information to a signal t=
-o a thread
->
-> SYNOPSIS
-> =A0 =A0 =A0 long sys_rt_tgsigqueueinfo (int tgid, int tid, int sig, s=
-iginfo_t *uinfo);
->
-> DESCRIPTION
->
-> =A0 =A0 =A0 rt_tgsigqueueinfo sends signal sig information uinfo to t=
-he
-> =A0 =A0 =A0 thread with the thread ID tid in the thread group tgid. =A0=
-(By
-> =A0 =A0 =A0 contrast, rt_sigqueueinfo(2) can only be used to send a s=
-ignal
-> =A0 =A0 =A0 info to a process (i.e., thread group) as a whole, and th=
-e
-> =A0 =A0 =A0 signal will be delivered to an arbitrary thread within th=
-at
-> =A0 =A0 =A0 process.)
->
-> RETURN VALUE
->
-> =A0 =A0 =A0 rt_tgsigqueueinfo returns 0 on success; otherwise,
-> =A0 =A0 =A0 rt_sigqueueinfo returns one of the errors listed in the
-> =A0 =A0 =A0 "Errors" section.
->
-> ERRORS
-> =A0 =A0 =A0 -EFAULT
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0An invalid value for uinfo was specified.
->
-> =A0 =A0 =A0 -EINVAL
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0An invalid TID, TGID or signal was specifi=
-ed.
->
-> =A0 =A0 =A0 -EPERM
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0Permission denied. =A0For the required per=
-missions,
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0see rt_sigqueueinfo(2).
->
-> =A0 =A0 =A0 -ESRCH
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0No process with the specified thread ID an=
-d thread group
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0ID exists.
-
-I've incorporated that documentation into a new rt_sigqueueinfo(2) man
-page that documents both rt_sigqueueinfo() and rt_tgsigqueueinfo(). If
-you have a moment, could you take a brief look ("man -l <file">) to
-see that everything seems sane?
+Andi: I need to know what copyright and license to attach to the page
+before I can release it.
 
 Thanks,
 
 Michael
 
-=2E\" Copyright (c) 2002, 2011 Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-=2E\"
-=2E\" Permission is granted to make and distribute verbatim copies of t=
-his
-=2E\" manual provided the copyright notice and this permission notice a=
-re
-=2E\" preserved on all copies.
-=2E\"
-=2E\" Permission is granted to copy and distribute modified versions of=
- this
-=2E\" manual under the conditions for verbatim copying, provided that t=
-he
-=2E\" entire resulting derived work is distributed under the terms of a
-=2E\" permission notice identical to this one.
-=2E\"
-=2E\" Since the Linux kernel and libraries are constantly changing, thi=
-s
-=2E\" manual page may be incorrect or out-of-date.  The author(s) assum=
-e no
-=2E\" responsibility for errors or omissions, or for damages resulting =
-from
-=2E\" the use of the information contained herein.  The author(s) may n=
-ot
-=2E\" have taken the same level of care in the production of this manua=
-l,
-=2E\" which is licensed free of charge, as they might when working
-=2E\" professionally.
-=2E\"
-=2E\" Formatted or processed versions of this manual, if unaccompanied =
-by
-=2E\" the source, must acknowledge the copyright and authors of this wo=
-rk.
-=2E\"
-=2ETH RT_SIGQUEUEINFO 2 2011-09-18 "Linux" "Linux Programmer's Manual"
+---------- Forwarded message ----------
+=46rom: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Date: Thu, Sep 15, 2011 at 6:15 AM
+Subject: Re: Draft manpage for recvmmsg
+To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Stephan Mueller <stephan.mueller-fwYZOkdEjagAvxtiuMwx3w@public.gmane.org>, Anton
+Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+
+
+[CC list expanded]
+
+Hi Andi, (and Arnaldo)
+
+As noted in an earlier mail, I still need to know what copyright and
+license to attach to the page before I can release it.
+
+See below for further comments.
+
+On Tue, Nov 23, 2010 at 11:15 AM, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org> wrot=
+e:
+>
+> Here's a draft manpage for recvmmsg(2), which is one
+> of the last undocumented syscalls currently.
+> Please review and comment.
+>
+> -Andi
+>
+>
+> .TH RECVMMSG 2 2010-11-23 "Linux" "Linux Programmer's Manual"
+> .SH NAME
+> recvmmsg \- receive multiple messages on a socket
+> .SH SYNOPSIS
+> .BI "#include <sys/socket.h>"
+> .br
+> .BI "int recvmmsg(int " fd ", struct mmsghdr *" mmsghdr \
+> ", unsigned int " vlen ","
+> .br
+> .BI " =A0 =A0 =A0 =A0 =A0 =A0 unsigned int " flags ", struct timespec=
+ *" timeout ");"
+> .SH DESCRIPTION
+> The
+> .B recvmmsg
+> system call receives multiple messages in a socket.
+> It acts similar to
+> .B recvmsg(2),
+> but allows to batch multiple receive operations into a single syscall=
+=2E
+> In addition it support an explicit timeout.
+>
+> .B fd
+> is the file descriptor of the socket to receive data from.
+> .B mmsghdr
+> is a pointer to an array with length
+> .B vlen
+> of
+> .I mmsghdr
+> structures.
+> .I struct mmsg
+> is defined in
+> .I sys/socket.h
+> as:
+> .in +4n
+> .nf
+> struct mmsghdr {
+> =A0 =A0struct msghdr msg_hdr; =A0/* Message header */
+> =A0 =A0unsigned int =A0msg_len; =A0/* Number of received bytes for he=
+ader */
+> };
+> .fi
+> .in
+> .PP
+> .B msg_hdr
+> is a struct
+> .I msghdr
+> as described in
+> .I recvmsg(2).
+> .B msg_len
+> is the number of bytes returned for the message in the entry.
+> This field has the same value as the return value of a single
+> .I recvmsg(2)
+> on the header.
+>
+> .B flags
+> contains flags ored together. The flags are the same
+> as documented for
+> .I recvmsg(2).
+> The additional
+> .B MSG_WAITFORONE
+> turns one
+> .I MSG_DONTWAIT
+> after the first message has been received.
+>
+> .B timeout
+> points to a
+> .I struct timespec
+> (see
+> .I clock_gettime(2)
+> )
+> defining a timeout for receiving, or
+> .I NULL
+> for no timeout. When the timeout expires
+> .I recvmmsg
+> returns.
+> .SH RETURN VALUE
+> .I recvmmsg
+> returns the number of messages received in
+> .I mmsghdr
+> or
+> -1
+> when an error occurs. The
+> .I msg_len
+> members of
+> .I mmsghdr
+> are updated for each received message,
+> in addition to other fields in the msg_hdr for each message,
+> as described in
+> .I recvmsg(2).
+> .SH SEE ALSO
+> .B recvmsg(2),
+> .B sendmsg(2),
+> .B socket(7),
+> .B socket(2),
+> .B clock_gettime(2)
+> .SH VERSIONS
+> The
+> .I recvmmsg
+> syscall was added with kernel 2.6.32.
+> Support in glibc was added with 2.6.12.
+> On earlier glibcs the function can be called
+> manually using
+> .I syscall(2).
+
+I reworked a number of pieces of text, and added several other pieces.
+Could you please take a look (for others interested: "man -l <file>")
+at the version below and let me know of inaccuracies
+
+Thanks,
+
+Michael
+
+=2ETH RECVMMSG 2 2011-09-09 "Linux" "Linux Programmer's Manual"
 =2ESH NAME
-rt_sigqueueinfo, rt_tgsigqueueinfo \- queue a signal and data
+recvmmsg \- receive multiple messages on a socket
 =2ESH SYNOPSIS
 =2Enf
-=2EBI "int rt_sigqueueinfo(pid_t " tgid ", int " sig ", siginfo_t *" ui=
-nfo );
-=2Esp
-=2EBI "int rt_tgsigqueueinfo(pid_t " tgid ", pid_t " tid ", int " sig ,
-=2EBI "                      siginfo_t *" uinfo );
+=2EB "#define _GNU_SOURCE"
+=2EBI "#include <sys/socket.h>"
+
+=2EBI "int recvmmsg(int " sockfd ", struct mmsghdr *" msgvec \
+", unsigned int " vlen ","
+=2Ebr
+=2EBI " =A0 =A0 =A0 =A0 =A0 =A0 unsigned int " flags ", struct timespec=
+ *" timeout ");"
 =2Efi
 =2ESH DESCRIPTION
 The
-=2EBR rt_sigqueueinfo()
-and
-=2EBR rt_tgsigqueueinfo()
-system calls are the low-level interfaces used to send a signal plus da=
-ta
-to a process or thread.
-The receiver of the signal can obtain the accompanying data
-by establishing a signal handler with the
-=2EBR sigaction (2)
-=2EB SA_SIGINFO
-flag.
-
-These system calls are not intended for direct application use;
-they are provided to allow the implementation of
-=2EBR sigqueue (3)
-and
-=2EBR pthread_sigqueue (3).
+=2EBR recvmmsg ()
+system call is an extension of
+=2EBR recvmsg (2)
+that allows the caller to receive multiple messages from a socket
+using a single system call.
+(This has performance benefits for some applications.)
+A further extension over
+=2EBR recvmsg (2)
+is support for a timeout on the receive operation.
 
 The
-=2EBR rt_sigqueueinfo()
-system call sends the signal
-=2EI sig
-to the thread group with the ID
-=2EIR tgid .
-(The term "thread group" is synonomous with "process", and
-=2EI tid
-corresponds to the traditional UNIX process ID.)
-The signal will be delivered to an arbitrary member of the thread group
-(i.e., one of the threads that is not currently blocking the signal).
+=2EI sockfd
+argument is the file descriptor of the socket to receive data from.
 
 The
-=2EI uinfo
-argument specifies the data to accompany the signal.
-This argument is a pointer to a structure of type
-=2EIR siginfo_t ,
-described in
-=2EBR sigaction (2)
-(and defined by including
-=2EIR <sigaction.h> ).
-The caller should set the following fields in this structure:
-=2ETP
-=2EI si_code
-This must be one of the
-=2EB SI_*
-codes in the kernel source file
-=2EIR include/asm-generic/siginfo.h ,
-with the restriction that the code must be negative
-(i.e., cannot be
-=2EBR SI_USER ,
-which is used by the kernel to indicate a signal sent by
-=2EBR kill (2))
-and cannot (since Linux 2.6.39) be
-=2EBR SI_TKILL
-(which is used by the kernel to indicate a signal sent using
-=2E\" tkill(2) or
-=2EBR tgkill (2)).
-=2ETP
-=2EI si_pid
-This should be set to a process ID,
-typically the process ID of the sender.
-=2ETP
-=2EI si_uid
-This should be set to a user ID,
-typically the real user ID of the sender.
-=2ETP
-=2EI si_value
-This field contains the user data to accompany the signal.
-=46or more information, see the description of the last
-=2ERI ( "union sigval" )
-argument of
-=2EBR sigqueue (3).
+=2EI msgvec
+argument is a pointer to an array of
+=2EI mmsghdr
+structures.
+The size of this array is specified in
+=2EIR vlen .
+
+The
+=2EI mmsghdr
+structure is defined in
+=2EI <sys/socket.h>
+as:
+
+=2Ein +4n
+=2Enf
+struct mmsghdr {
+=A0 =A0struct msghdr msg_hdr; =A0/* Message header */
+=A0 =A0unsigned int =A0msg_len; =A0/* Number of received bytes for head=
+er */
+};
+=2Efi
+=2Ein
 =2EPP
-Internally, the kernel sets the
-=2EI si_signo
-field to the value specified in
-=2EIR sig ,
-so that the receiver of the signal can also obtain
-the signal number via that field.
+The
+=2EI msg_hdr
+field is a
+=2EI msghdr
+structure, as described in
+=2EBR recvmsg (2).
+The
+=2EI msg_len
+field is the number of bytes returned for the message in the entry.
+This field has the same value as the return value of a single
+=2EBR recvmsg (2)
+on the header.
 
 The
-=2EBR rt_tgsigueueinfo ()
-system call is like
-=2EBR rt_sigueueinfo (),
-but sends the signal and data to the single thread
-specified by the combination of
-=2EIR tgid ,
-a thread group ID,
-and
-=2EIR tid ,
-a thread in that thread group.
-=2ESH "RETURN VALUE"
-On success, these system calls return 0.
-On error, they return \-1 and
+=2EI flags
+argument contains flags ORed together.
+The flags are the same as documented for
+=2EBR recvmsg (2),
+with the following addition:
+=2ETP
+=2EB MSG_WAITFORONE
+Turns on
+=2EB MSG_DONTWAIT
+after the first message has been received.
+=2EPP
+The
+=2EI timeout
+argument points to a
+=2EI struct timespec
+(see
+=2EBR clock_gettime (2))
+defining a timeout (seconds plus nanoseconds) for the receive operation=
+=2E
+If
+=2EI timeout
+is
+=2EI NULL
+then the operation blocks indefinitely.
+
+A blocking
+=2EBR recvmmsg ()
+call blocks until
+=2EI vlen
+messages have been received
+or until the timeout expires.
+A nonblocking call reads as many messages as are available
+(up to the limit specified by
+=2EIR vlen )
+and returns immediately.
+
+On return from
+=2EBR recvmmsg (),
+successive elements of
+=2EIR msgvec
+are updated to contain information about each received message:
+=2EI msg_len
+contains the size of the received message;
+the subfields of
+=2EI msg_hdr
+are updated as described in
+=2EBR recvmsg (2).
+The return value of the call indicates the number of elements of
+=2EI msgvec
+that have been updated.
+=2ESH RETURN VALUE
+On success,
+=2EBR recvmmsg ()
+returns the number of messages received in
+=2EIR msgvec ;
+on error, \-1 is returned, and
 =2EI errno
 is set to indicate the error.
 =2ESH ERRORS
-=2ETP
-=2EB EAGAIN
-The limit of signals which may be queued has been reached.
-(See
-=2EBR signal (7)
-for further information.)
+Errors are as for
+=2EBR recvmsg (2).
+In addition, the following error can occur:
 =2ETP
 =2EB EINVAL
-=2EIR sig ,
-=2EIR tgid ,
-or
-=2EIR tid
-was invalid.
-=2ETP
-=2EB EPERM
-The caller does not have permission to send the signal to the target.
-=46or the required permissions, see
-=2EBR kill (2).
-Or:
-=2EI uinfo->si_code
+=2EI timeout
 is invalid.
-=2ETP
-=2EB ESRCH
-=2EBR rt_sigqueinfo ():
-No thread group matching
-=2EI tgid
-was found.
-=2Ebr
-=2EBR rt_rtsigqueinfo ():
-No thread matching
-=2EI tgid
-and
-=2EI tid
-was found.
 =2ESH VERSIONS
 The
-=2EBR rt_sigqueueinfo ()
-system call was added to Linux in version 2.2.
-The
-=2EBR rt_tgsigqueueinfo ()
-system call was added to Linux in version 2.6.31.
-=2ESH "CONFORMING TO"
-These system calls are Linux-specific.
-=2ESH NOTES
-Since these system calls are not intended for application use,
-there are no glibc wrapper functions; use
-=2EBR syscall (2)
-in the unlikely case that you want to call them directly.
+=2EBR recvmmsg ()
+system call was added in Linux 2.6.32.
+Support in glibc was added in version 2.12.
+=2ESH CONFORMING TO
+=2EBR recvmmsg ()
+is Linux-specific.
+=2ESH SEE ALSO
+=2EBR clock_gettime (2),
+=2EBR recvmsg (2),
+=2EBR sendmmsg (2),
+=2EBR sendmsg (2),
+=2EBR socket (2),
+=2EBR socket (7)
 
-As with
-=2EBR kill (2),
-the null signal (0) can be used to check if the specified process
-or thread exists.
-=2ESH "SEE ALSO"
-=2EBR kill (2),
-=2EBR sigaction (2),
-=2EBR sigprocmask (2),
-=2EBR tgkill (2),
-=2EBR pthread_sigqueue (3),
-=2EBR sigqueue (3),
-=2EBR signal (7)
+--
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface"; http://man7.org/tlpi/
 
 
 
@@ -301,7 +325,3 @@ or thread exists.
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Author of "The Linux Programming Interface"; http://man7.org/tlpi/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
