@@ -1,32 +1,22 @@
-From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+From: Lennart Poettering <mzxreary@0pointer.de>
 Subject: Re: [PATCH, v10 3/3] cgroups: introduce timer slack controller
-Date: Sat, 15 Oct 2011 02:34:45 +0300
-Message-ID: <20111014233445.GA28092@shutemov.name>
+Date: Sat, 15 Oct 2011 13:20:09 +0200
+Message-ID: <20111015112006.GA10173@tango.0pointer.de>
 References: <1318349729-3108-1-git-send-email-kirill@shutemov.name>
  <1318349729-3108-4-git-send-email-kirill@shutemov.name>
  <20111014154348.ae6267aa.akpm@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20111014154348.ae6267aa.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, lennart-mdGvqq1h2p+GdvJs77BJ7Q@public.gmane.org, harald-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-o55+BOBDEFg@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org
+In-Reply-To: <20111014154348.ae6267aa.akpm@linux-foundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Paul Menage <menage@google.com>, Li Zefan <lizf@cn.fujitsu.com>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, jacob.jun.pan@linux.intel.com, Arjan van de Ven <arjan@linux.intel.com>, linux-kernel@vger.kernel.org, Matt Helsley <matthltc@us.ibm.com>, linux-api@vger.kernel.org, Kay Sievers <kay.sievers@vrfy.org>, harald@redhat.com, david@fubar.dk, greg@kroah.com, Matthew Garrett <mjg59@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 14, 2011 at 03:43:48PM -0700, Andrew Morton wrote:
-> On Tue, 11 Oct 2011 19:15:29 +0300
-> "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org> wrote:
-> 
-> > Every task_struct has timer_slack_ns value. This value uses to round up
-> > poll() and select() timeout values. This feature can be useful in
-> > mobile environment where combined wakeups are desired.
-> > 
-> > Originally, prctl() was the only way to change timer slack value of
-> > a process. So you was not able change timer slack value of another
-> > process.
-> > 
+On Fri, 14.10.11 15:43, Andrew Morton (akpm@linux-foundation.org) wrote:
+
 > > cgroup subsys "timer_slack" implements timer slack controller. It
 > > provides a way to set minimal timer slack value for a group of tasks.
 > > If a task belongs to a cgroup with minimal timer slack value higher than
@@ -47,13 +37,28 @@ On Fri, Oct 14, 2011 at 03:43:48PM -0700, Andrew Morton wrote:
 > 
 > So.... why should we merge this?
 
-Putting a task to a cgroup isn't change task's timer slack, it may affect
-"effective timer slack", if min timer slack for the cgroup > task's timer
-slack.
+Our usecase is basically this:
 
-Since we don't touch task's slack value we can drag tasks between cgroups
-and always get the most relaxed slack value for a task without
-saving/restoring it in userspace.
+consider you have one or more desktop user sessions logged in, each one
+in a timer slack cgroup. Now, userspace already tracks when sessions
+become idle (i.e. currently desktop userspace then starts a screensaver,
+or turns off the screen, or similar), and we'd like to increase the timer slack
+for the session cgroups individually as the individual session becomes
+idle, and decrease it again if the session stops being idle.
+
+Matthew Garrett experimented with a logic like this based on existing
+patches, and it showed quite positive effects on power consumption. If
+you need hard data I am sure Matthew can fill you in (added him to CC).
+
+What matters for us here is that the timer slack cgroup controller
+provides us with a very nice way to change the timerslack for the whole
+set of session processes in one go and from the outside. i.e. the idle
+logic in userspace would be trivially easy to implement, since we
+already track per-session idle states and with the timerlsack cgroup
+controller we'd have to touch only a single kernel file to make our
+changes.
+
+Lennart
 
 -- 
- Kirill A. Shutemov
+Lennart Poettering - Red Hat, Inc.
