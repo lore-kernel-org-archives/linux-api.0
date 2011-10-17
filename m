@@ -1,50 +1,47 @@
-From: Matthew Garrett <mjg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Valdis.Kletnieks-PjAqaU27lzQ@public.gmane.org
 Subject: Re: [PATCH, v10 3/3] cgroups: introduce timer slack controller
-Date: Mon, 17 Oct 2011 17:49:29 +0100
-Message-ID: <20111017164929.GA18620@srcf.ucam.org>
-References: <20111017141147.GA14581@srcf.ucam.org>
- <1318861707.4172.32.camel@twins>
- <20111017144013.GA15447@srcf.ucam.org>
- <1318862969.4172.45.camel@twins>
- <20111017145952.GB15769@srcf.ucam.org>
- <1318864260.4172.54.camel@twins>
- <20111017151920.GA16664@srcf.ucam.org>
- <1318864870.4172.61.camel@twins>
- <20111017153142.GA17047@srcf.ucam.org>
- <1318869404.4172.67.camel@twins>
+Date: Mon, 17 Oct 2011 15:46:55 -0400
+Message-ID: <17708.1318880815@turing-police.cc.vt.edu>
+References: <1318349729-3108-1-git-send-email-kirill@shutemov.name> <1318349729-3108-4-git-send-email-kirill@shutemov.name> <20111014154348.ae6267aa.akpm@linux-foundation.org> <20111015112006.GA10173@tango.0pointer.de> <1318705910.2664.5.camel@laptop> <20111017013921.GA30035@tango.0pointer.de>
+            <1318836529.6594.20.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; boundary="==_Exmh_1318880815_2955P";
+	 micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1318869404.4172.67.camel@twins>
+In-Reply-To: Your message of "Mon, 17 Oct 2011 09:28:49 +0200."
+             <1318836529.6594.20.camel@twins>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, harald-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-o55+BOBDEFg@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org
+Cc: Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, harald-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-o55+BOBDEFg@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org, Matthew Garrett <mjg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 17, 2011 at 06:36:44PM +0200, Peter Zijlstra wrote:
-> On Mon, 2011-10-17 at 16:31 +0100, Matthew Garrett wrote:
-> > On Mon, Oct 17, 2011 at 05:21:10PM +0200, Peter Zijlstra wrote:
-> > 
-> > > Well what other cases are there? Can we enumerate them and come up 
-> > > with similar solutions?
-> > 
-> > Javascript has timers. We execute rather a lot of javascript from 
-> > sources we can't influence at all.
-> 
-> Which brings me to yet another gripe I've got with firefox, _WHY_ does
-> it run javascript for tabs I can't see? Simply freeze the interpreter.
+--==_Exmh_1318880815_2955P
+Content-Type: text/plain; charset=us-ascii
 
-Because people expect gmail to provide them with status updates even if 
-it's not the foreground tab.
+On Mon, 17 Oct 2011 09:28:49 +0200, Peter Zijlstra said:
+> As to the proprietary plugins, let firefox spawn one per tab and simply
+> SIGSTOP the thing when the tab becomes invisible or so, dunno.
 
-> Then again, what does JavaScript do with these timers? I don't really
-> see how javascript/random-native-binary are really different, something
-> needs doing. What something?
+Which really sucks if you're trying to listen to streaming audio from the tab
+while trying to do other work.  Having to keep the tab visible is a pain.
 
-I agree that the thing that needs doing probably involves web developers 
-and threats of implied violence, but I suspect that web developers are 
-being created faster than we can reeducate them.
+(And yes, I know the *right* answer is to find a URI suitable to feed to amarok
+or xine or something - but have you ever *looked* at the maze of indirections
+and Javascript and Flash and who knows what other horrors some radio stations
+go through to keep you from doing that? ;)
 
--- 
-Matthew Garrett | mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org
+
+--==_Exmh_1318880815_2955P
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Exmh version 2.5 07/13/2001
+
+iD8DBQFOnIYvcC3lWbTT17ARAsb6AKCI70FYy6cHXN3V4v6+j1EcVAreigCfV1rd
+2zc+WcYfE9fDEd6Tw1ALhh0=
+=6vi1
+-----END PGP SIGNATURE-----
+
+--==_Exmh_1318880815_2955P--
