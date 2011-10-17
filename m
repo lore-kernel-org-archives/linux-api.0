@@ -1,43 +1,32 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [PATCH, v10 3/3] cgroups: introduce timer slack controller
-Date: Mon, 17 Oct 2011 09:34:37 +0200
-Message-ID: <1318836877.6594.26.camel@twins>
+Date: Mon, 17 Oct 2011 09:36:58 +0200
+Message-ID: <1318837019.6594.29.camel@twins>
 References: <1318349729-3108-1-git-send-email-kirill@shutemov.name>
 	 <1318349729-3108-4-git-send-email-kirill@shutemov.name>
 	 <20111014154348.ae6267aa.akpm@linux-foundation.org>
 	 <20111015112006.GA10173@tango.0pointer.de> <1318705910.2664.5.camel@laptop>
 	 <20111017013921.GA30035@tango.0pointer.de>
-	 <20111017032232.GA4816@srcf.ucam.org>
+	 <20111017032232.GA4816@srcf.ucam.org> <4E9BBB6D.4050004@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20111017032232.GA4816@srcf.ucam.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <mjg@redhat.com>
-Cc: Lennart Poettering <mzxreary@0pointer.de>, Andrew Morton <akpm@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Paul Menage <menage@google.com>, Li Zefan <lizf@cn.fujitsu.com>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, jacob.jun.pan@linux.intel.com, Arjan van de Ven <arjan@linux.intel.com>, linux-kernel@vger.kernel.org, Matt Helsley <matthltc@us.ibm.com>, linux-api@vger.kernel.org, Kay Sievers <kay.sievers@vrfy.org>, harald@redhat.com, david@fubar.dk, greg@kroah.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <4E9BBB6D.4050004-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arjan van de Ven <arjan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Matthew Garrett <mjg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, harald-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-o55+BOBDEFg@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2011-10-17 at 04:22 +0100, Matthew Garrett wrote:
-> 
-> I agree. We can't assume perfect software, and I don't think *requiring* 
-> the duplication of this functionality in every single session 
-> application is sensible. We want to be able to shut down timer based 
-> code when the session is idle. We could do this by exposing the slack in 
-> /proc. We could do this by modifying every piece of code to listen for 
-> session idle events and (independently) enact session-wide policy. Or we 
-> could just accept that it's a problem that maps onto what people are 
-> already using cgroups for and implement it in the same way. 
+On Sun, 2011-10-16 at 22:21 -0700, Arjan van de Ven wrote:
+> and..it's not like we let the bad guys go free.
+> We actually seriously hurt their behavior while we throttle their timers 
+> here. 
 
-So what about the app that is both screen oriented and has a server
-part, say some multi-player game thing. Suppose you run one as a server
-but leave the client idle (you go have dinner with a pretty lady instead
-of playing quake, but leave your machine up to serve for your nerd
-friends).
+How are they hurt? The app appears to behave properly (there are no
+repercussions, the app doesn't crash, the developer doesn't get punched
+in the face). This doesn't make the developer improve his app, nor make
+him take greater care for the next app.
 
-Should your friends get punished with a horrible gaming experience just
-because you're having a good time IRL and your screen went blank?
-
-Sure pushing up timer slack will save you power, but it will also hurt
-people, what will you do for them? The same that you do for those that
-want to run a CGROUP=n kernel?
+Such behaviour will in fact encourage crap since he seems to be getting
+away with it.
