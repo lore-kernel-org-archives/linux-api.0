@@ -1,39 +1,36 @@
-From: Michael Kerrisk <mtk.manpages@gmail.com>
+From: Stanislav Kinsbursky <skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Subject: Re: [PATCH 2/2] IPC: message queue stealing feature introduced
-Date: Thu, 5 Apr 2012 11:59:11 +1200
-Message-ID: <CAHO5Pa0MPt6dOUyG95XkZ2wcDHLng-63n4gxFHXz1Z0DM_nUgA@mail.gmail.com>
-References: <20120215163203.27978.52494.stgit@localhost6.localdomain6>
-	<20120215165439.27978.43513.stgit@localhost6.localdomain6>
-	<20120404161224.dea67733.akpm@linux-foundation.org>
-	<CAKgNAkjpWpHR9Ww0JzZqsACktXzsm9r8=k6e7CJF_9+5cWdJBQ@mail.gmail.com>
+Date: Thu, 05 Apr 2012 15:42:28 +0400
+Message-ID: <4F7D8524.8030709@parallels.com>
+References: <20120215163203.27978.52494.stgit@localhost6.localdomain6> <20120215165439.27978.43513.stgit@localhost6.localdomain6> <20120404161224.dea67733.akpm@linux-foundation.org> <CAKgNAkjpWpHR9Ww0JzZqsACktXzsm9r8=k6e7CJF_9+5cWdJBQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKgNAkjpWpHR9Ww0JzZqsACktXzsm9r8=k6e7CJF_9+5cWdJBQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Stanislav Kinsbursky <skinsbursky@parallels.com>, serge.hallyn@canonical.com, criu@openvz.org, lucas.demarchi@profusion.mobi, linux-kernel@vger.kernel.org, cmetcalf@tilera.com, dhowells@redhat.com, Arnd Bergmann <arnd@arndb.de>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKgNAkjpWpHR9Ww0JzZqsACktXzsm9r8=k6e7CJF_9+5cWdJBQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org" <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "lucas.demarchi-Y3ZbgMPKUGA34EUeqzHoZw@public.gmane.org" <lucas.demarchi-Y3ZbgMPKUGA34EUeqzHoZw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "cmetcalf-kv+TWInifGbQT0dZR+AlfA@public.gmane.org" <cmetcalf-kv+TWInifGbQT0dZR+AlfA@public.gmane.org>, "dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Stanislav,
-
-I reread your mail, and see I missed a point.
-
-On Thu, Apr 5, 2012 at 11:50 AM, Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
+05.04.2012 03:50, Michael Kerrisk (man-pages) =D0=BF=D0=B8=D1=88=D0=B5=D1=
+=82:
 > On Thu, Apr 5, 2012 at 11:12 AM, Andrew Morton
-> <akpm@linux-foundation.org> wrote:
+> <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>  wrote:
 >> On Wed, 15 Feb 2012 20:54:39 +0400
->> Stanislav Kinsbursky <skinsbursky@parallels.com> wrote:
+>> Stanislav Kinsbursky<skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>  wrote:
 >
 > Stanislav,
 >
 > Luckily, Andrew added me to CC. However, as noted in
 > Documentation/SubmitChecklist, all patches that change the ABI/API
-> should CC linux-api@vger.kernel.org. Please do that for the future.
+> should CC linux-api-u79uwXL29TaiAVqoAR/hOA@public.gmane.org Please do that for the future.
 > (CC added for this thread.)
 >
+
+Yep, sure. Next time I'll do that. Sorry.
+
 >>> v2:
 >>> 1) compat functions added.
 >>> 2) message slot size in array is now aligned by struct msgbuf_a.
@@ -48,15 +45,27 @@ es written
 > gather you are in fact just flushing all messages from a queue. So I
 > more intuitive name seems to be in order (MSG_READ_ALL,
 > MSG_FLUSH_ALL?).
+>
 
-Looking at what you say below, perhaps a better name for this flag is
-MSG_PEEK_ALL (by analogy with recvmsg(2)'s MSG_PEEK_ALL)?
+Nice to know, that it sounds to you exactly like it is desired to. I.e.=
+ this=20
+flag was designed to take messages that belong to someone else without =
+any=20
+trace, visible to the owner of the messages.
+But (like you mentioned in following letter) MSG_PEEK_ALL sound better =
+to me.=20
+Thus I'll replace MSG_STEAL with MSG_PEEK_ALL, if you don't mind.
 
 >>> 5) flag MSG_NOERROR is ignored if MSG_STEAL flag is set.
 >
 > Would it not be better to return an error if MSG_NOERROR is specified=
 ?
 >
+
+I don't think so. IOW, error can be returned in this case, but I don't =
+see any=20
+practical reason for this. If you do - please share.
+
 >>> This patch is required for checkpoint/restore in userspace.
 >>> IOW, c/r requires some way to get all pending IPC messages without =
 deleting
@@ -71,16 +80,15 @@ m call
 >>> array of structures:
 >>>
 >>> struct msgbuf_a {
->>> =A0 =A0 =A0 long mtype; =A0 =A0 =A0 =A0 /* type of message */
->>> =A0 =A0 =A0 int msize; =A0 =A0 =A0 =A0 =A0/* size of message */
->>> =A0 =A0 =A0 char mtext[0]; =A0 =A0 =A0/* message text */
+>>>        long mtype;         /* type of message */
+>>>        int msize;          /* size of message */
+>>>        char mtext[0];      /* message text */
 >>> };
 >
 > So, I'm not clear on how things look here. We get back array like thi=
 s:
 >
-> [0] =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 [1] =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 =A0 =A0 [2]
+> [0]                     [1]                     [2]
 > | mtype | msize | mtext | mtype | msize | mtext | ...
 >
 > How do I calculate the offset of element 1 of the array? I assume it
@@ -91,6 +99,17 @@ s:
 r
 > in msize).
 >
+
+This is easy. You can be sure, that struct msgbuf_a is aligned by sizeo=
+f(struct=20
+msgbuf_a). And since you know the size of this structure and length of =
+data=20
+segment, then offset of any element of the queue can be calculated like=
+ this:
+
+addr_N+1 =3D addr_N +
+round_up(sizeof(struct msgbuf_a) + msize, sizeof(struct msgbuf_a));
+
 >>> each of which will be followed by corresponding message data.
 >>>
 >>
@@ -101,10 +120,17 @@ it
 >
 > Indeed, do you have a userspace test program that you could post?
 >
+
+Yes, sure. I'll add it to the patch set.
+But please not, that this test (in it's current state) can be executed =
+only as a=20
+part of out CRIU test suit.
+So you won't be able to execute it as is.
+
 >> We've been trying to isolate the c/r-specific functions inside #ifde=
 f
->> CONFIG_CHECKPOINT_RESTORE, but this patch doesn't do that. =A0I have=
- been
+>> CONFIG_CHECKPOINT_RESTORE, but this patch doesn't do that.  I have b=
+een
 >> encouraging this isolation so that people who aren't using c/r don't
 >> have to carry the overhead it adds and so that we can more easily hu=
 nt
@@ -113,19 +139,13 @@ t
 >> successfully.
 >>
 >> This patch modifies the sys_msgrcv() API and so we should update the
->> manpage for that syscall. =A0Please work with Michael on this.
+>> manpage for that syscall.  Please work with Michael on this.
 >
 > Yes please.
 >
-> Cheers,
->
-> Michael
 
-Thanks,
-
-Michael
+Sure. What do you want me to do?
 
 --=20
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+Best regards,
+Stanislav Kinsbursky
