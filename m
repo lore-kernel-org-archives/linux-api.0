@@ -1,151 +1,101 @@
-From: Stanislav Kinsbursky <skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH 2/2] IPC: message queue stealing feature introduced
-Date: Thu, 05 Apr 2012 15:42:28 +0400
-Message-ID: <4F7D8524.8030709@parallels.com>
-References: <20120215163203.27978.52494.stgit@localhost6.localdomain6> <20120215165439.27978.43513.stgit@localhost6.localdomain6> <20120404161224.dea67733.akpm@linux-foundation.org> <CAKgNAkjpWpHR9Ww0JzZqsACktXzsm9r8=k6e7CJF_9+5cWdJBQ@mail.gmail.com>
+From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [patch] Fix handling of overlength pathname in AF_UNIX sun_path
+Date: Tue, 17 Apr 2012 22:44:15 +1200
+Message-ID: <4F8D497F.8060601@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKgNAkjpWpHR9Ww0JzZqsACktXzsm9r8=k6e7CJF_9+5cWdJBQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org" <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "lucas.demarchi-Y3ZbgMPKUGA34EUeqzHoZw@public.gmane.org" <lucas.demarchi-Y3ZbgMPKUGA34EUeqzHoZw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "cmetcalf-kv+TWInifGbQT0dZR+AlfA@public.gmane.org" <cmetcalf-kv+TWInifGbQT0dZR+AlfA@public.gmane.org>, "dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Jan Engelhardt <jengelh-nopoi9nDyk+ELgA04lAiVw@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-05.04.2012 03:50, Michael Kerrisk (man-pages) =D0=BF=D0=B8=D1=88=D0=B5=D1=
-=82:
-> On Thu, Apr 5, 2012 at 11:12 AM, Andrew Morton
-> <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>  wrote:
->> On Wed, 15 Feb 2012 20:54:39 +0400
->> Stanislav Kinsbursky<skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>  wrote:
->
-> Stanislav,
->
-> Luckily, Andrew added me to CC. However, as noted in
-> Documentation/SubmitChecklist, all patches that change the ABI/API
-> should CC linux-api-u79uwXL29TaiAVqoAR/hOA@public.gmane.org Please do that for the future.
-> (CC added for this thread.)
->
+Tetsuo Handa sent me a patch to document the kernel's odd 
+behavior when asked to create a UNIX domain socket address where the 
+pathname completely fills the sun_path field without including a null 
+terminator [1]. 
 
-Yep, sure. Next time I'll do that. Sorry.
+One of the consequences of the current kernel behavior is that 
+when a socket address is returned to userspace (via getsockname(), 
+getpeername(), accept(), recvfrom()), applications can't reliably 
+do things such as:
 
->>> v2:
->>> 1) compat functions added.
->>> 2) message slot size in array is now aligned by struct msgbuf_a.
->>> 3) check for enough free space in buffer before message copying add=
-ed.
->>> 4) if MSG_STEAL flag is set, then do_msgrcv() returns number of byt=
-es written
->>> to buffer.
->
-> By the way, why the name "MSG_STEAL"? At first glance, it sounds like
-> that means we're taking messages that belong to someone else. But I
-> gather you are in fact just flushing all messages from a queue. So I
-> more intuitive name seems to be in order (MSG_READ_ALL,
-> MSG_FLUSH_ALL?).
->
+printf("%s\n", addr.sun_path);
 
-Nice to know, that it sounds to you exactly like it is desired to. I.e.=
- this=20
-flag was designed to take messages that belong to someone else without =
-any=20
-trace, visible to the owner of the messages.
-But (like you mentioned in following letter) MSG_PEEK_ALL sound better =
-to me.=20
-Thus I'll replace MSG_STEAL with MSG_PEEK_ALL, if you don't mind.
+Instead one must either write:
 
->>> 5) flag MSG_NOERROR is ignored if MSG_STEAL flag is set.
->
-> Would it not be better to return an error if MSG_NOERROR is specified=
-?
->
+printf("%.*s\n", sizeof(addr.sun_path), addr.sun_path);
 
-I don't think so. IOW, error can be returned in this case, but I don't =
-see any=20
-practical reason for this. If you do - please share.
+or, when retrieving a socket address structure, employ a buffer whose
+size is:
 
->>> This patch is required for checkpoint/restore in userspace.
->>> IOW, c/r requires some way to get all pending IPC messages without =
-deleting
->>> them for the queue (checkpoint can fail and in this case tasks will=
- be resumed,
->>> so queue have to be valid).
->>> To achive this, new operation flag MSG_STEAL for sys_msgrcv() syste=
-m call
->>> introduced.
->>> If this flag is set, then passed struct msgbuf pointer will be used=
- for storing
->>> array of structures:
->>>
->>> struct msgbuf_a {
->>>        long mtype;         /* type of message */
->>>        int msize;          /* size of message */
->>>        char mtext[0];      /* message text */
->>> };
->
-> So, I'm not clear on how things look here. We get back array like thi=
-s:
->
-> [0]                     [1]                     [2]
-> | mtype | msize | mtext | mtype | msize | mtext | ...
->
-> How do I calculate the offset of element 1 of the array? I assume it
-> can't be just
-> (&item[0].mtext + msize), since there'll be alignment issues to deal
-> with, so that there are padding bytes after each mtext. In that case,
-> msize on its own seems insufficient (since there is no null-terminato=
-r
-> in msize).
->
+sizeof(struct sockaddr_un) + 1
 
-This is easy. You can be sure, that struct msgbuf_a is aligned by sizeo=
-f(struct=20
-msgbuf_a). And since you know the size of this structure and length of =
-data=20
-segment, then offset of any element of the queue can be calculated like=
- this:
+(This ensures that there is enough space to hold the null terminator
+for the case where a socket was bound to a sun_path with non-NUL characters
+in all 108 bytes. But it entails some casting.)
 
-addr_N+1 =3D addr_N +
-round_up(sizeof(struct msgbuf_a) + msize, sizeof(struct msgbuf_a));
+Tetsuo initially considered there might be a kernel bug here, 
+but an attempt to change the kernel behavior met resistance [2].
 
->>> each of which will be followed by corresponding message data.
->>>
->>
->> I'd be a bit more comfortable if there was some sign that other c/r
->> developers have reviewed and tested this and have successfully used =
-it
->> in c/r operation testing?
->
-> Indeed, do you have a userspace test program that you could post?
->
+The patch at the end of this message is a slightly different 
+fix for the same problem. There are a few reasons why I think 
+it (or some variation) should be considered:
 
-Yes, sure. I'll add it to the patch set.
-But please not, that this test (in it's current state) can be executed =
-only as a=20
-part of out CRIU test suit.
-So you won't be able to execute it as is.
+1. Changing the kernel behavior prevents userspace having 
+   to go through the sort of contortions described above
+   in order to handle the 108-non-NUL-bytes-in-sun_path case.
+2. POSIX says that sun_path is a pathname. By (POSIX) definition, 
+   a pathname is null terminated.
+3. Considering these two sets:
 
->> We've been trying to isolate the c/r-specific functions inside #ifde=
-f
->> CONFIG_CHECKPOINT_RESTORE, but this patch doesn't do that.  I have b=
-een
->> encouraging this isolation so that people who aren't using c/r don't
->> have to carry the overhead it adds and so that we can more easily hu=
-nt
->> down and remove everything if the entire c/r project doesn't work ou=
-t
->> successfully.
->>
->> This patch modifies the sys_msgrcv() API and so we should update the
->> manpage for that syscall.  Please work with Michael on this.
->
-> Yes please.
->
+   (a) [applications that rely on the assumption that there
+        is a null terminator inside sizeof(sun_path) bytes]
+   (b) [applications that would break if the kernel behavior changed]
 
-Sure. What do you want me to do?
+   I suspect that set (a) is rather larger than set (b)--or, more 
+   likely still, applications ensure they go for the lowest common
+   denominator limit of 92 (HP-UX) or 104 (historical BSD limit)
+   bytes, and so avoid this issue completely.
 
---=20
-Best regards,
-Stanislav Kinsbursky
+The accompanying patch changes unix_mkname() to ensure that a terminating 
+null byte is always located within the first 108 bytes of sun_path. 
+It does change the ABI for the former case where a pathname ran to 108
+bytes without a null terminator: for that case, the call now fails with
+the error -EINVAL. What are people's thoughts on applying this?
+
+[1] http://thread.gmane.org/gmane.linux.network/174473/focus=1861
+[2] http://thread.gmane.org/gmane.linux.kernel/291038
+
+Signed-off-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+
+---
+
+--- net/unix/af_unix.c.orig	2012-04-17 09:50:07.383459311 +1200
++++ net/unix/af_unix.c	2012-04-17 19:49:56.077852639 +1200
+@@ -207,14 +207,16 @@ static int unix_mkname(struct sockaddr_u
+ 	if (!sunaddr || sunaddr->sun_family != AF_UNIX)
+ 		return -EINVAL;
+ 	if (sunaddr->sun_path[0]) {
+-		/*
+-		 * This may look like an off by one error but it is a bit more
+-		 * subtle. 108 is the longest valid AF_UNIX path for a binding.
+-		 * sun_path[108] doesn't as such exist.  However in kernel space
+-		 * we are guaranteed that it is a valid memory location in our
+-		 * kernel address buffer.
+-		 */
+-		((char *)sunaddr)[len] = 0;
++		if (len == sizeof(*sunaddr)) {
++			/*
++			 * If 'sun_path' is completely filled, the user
++			 * must include a terminator
++			 */
++			if (!memchr(sunaddr->sun_path, '\0',
++					sizeof(sunaddr->sun_path)))
++				return -EINVAL;
++		} else
++			((char *)sunaddr)[len] = 0;
+ 		len = strlen(sunaddr->sun_path)+1+sizeof(short);
+ 		return len;
+ 	}
