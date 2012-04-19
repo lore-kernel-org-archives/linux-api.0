@@ -1,145 +1,57 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 4/6] xstat: NFS: Return extended attributes
-Date: Thu, 19 Apr 2012 15:06:53 +0100
-Message-ID: <20120419140653.17272.95035.stgit@warthog.procyon.org.uk>
+From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 6/6] xstat: eCryptFS: Return extended attributes
+Date: Thu, 19 Apr 2012 15:07:19 +0100
+Message-ID: <20120419140719.17272.39008.stgit@warthog.procyon.org.uk>
 References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: dhowells@redhat.com, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120419140558.17272.74360.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org, kfm-devel-RoXCvvDuEio@public.gmane.org, nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Return extended attributes from the NFS filesystem.  This includes the
-following:
+Return extended attributes from the eCryptFS filesystem, dredged up from the
+lower filesystem.  XSTAT_INFO_ENCRYPTED is set on the files whose cryptography
+is handled by eCryptFS.
 
- (1) The change attribute as st_data_version if NFSv4.
+Possibly eCryptFS should also set FS_COMPR_FL on its compressed files.
 
- (2) XSTAT_INFO_AUTOMOUNT and XSTAT_INFO_FABRICATED are set on referral or
-     submount directories that are automounted upon.  NFS shows one directory
-     with a different FSID, but the local filesystem has two: the mountpoint
-     directory and the root of the filesystem mounted upon it.
-
- (3) XSTAT_INFO_REMOTE is set on files acquired over NFS.
-
-Furthermore, what nfs_getattr() does can be controlled as follows:
-
- (1) If AT_FORCE_ATTR_SYNC is indicated, or mtime, ctime or data_version (NFSv4
-     only) are requested then the outstanding writes will be written to the
-     server first.
-
- (2) The inode's attributes may be synchronised with the server:
-
-     (a) If AT_FORCE_ATTR_SYNC is indicated or if atime is requested (and atime
-     	 updating is not suppressed by a mount flag) then the attributes will
-     	 be reread unconditionally.
-
-     (b) If the data version or any of basic stats are requested then the
-     	 attributes will be reread if the cached attributes have expired.
-
-     (c) Otherwise the cached attributes will be used - even if expired -
-     	 without reference to the server.
-
-Signed-off-by: David Howells <dhowells@redhat.com>
+Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
 
- fs/nfs/inode.c |   49 +++++++++++++++++++++++++++++++++++++------------
- fs/nfs/super.c |    1 +
- 2 files changed, 38 insertions(+), 12 deletions(-)
+ fs/ecryptfs/inode.c |   14 ++++++++++++--
+ 1 files changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
-index e8bbfa5..460fcf3 100644
---- a/fs/nfs/inode.c
-+++ b/fs/nfs/inode.c
-@@ -509,11 +509,18 @@ void nfs_setattr_update_inode(struct inode *inode, struct iattr *attr)
- int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
- {
- 	struct inode *inode = dentry->d_inode;
-+	unsigned force = stat->query_flags & AT_FORCE_ATTR_SYNC;
- 	int need_atime = NFS_I(inode)->cache_validity & NFS_INO_INVALID_ATIME;
- 	int err;
+diff --git a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
+index ab35b11..62865e9 100644
+--- a/fs/ecryptfs/inode.c
++++ b/fs/ecryptfs/inode.c
+@@ -1060,13 +1060,23 @@ int ecryptfs_getattr(struct vfsmount *mnt, struct dentry *dentry,
+ 	struct kstat lower_stat;
+ 	int rc;
  
--	/* Flush out writes to the server in order to update c/mtime.  */
--	if (S_ISREG(inode->i_mode)) {
-+	if (NFS_SERVER(inode)->nfs_client->rpc_ops->version < 4)
-+		stat->request_mask &= ~XSTAT_VERSION;
-+
-+	/* Flush out writes to the server in order to update c/mtime
-+	 * or data version if the user wants them */
-+	if ((force || (stat->request_mask &
-+		       (XSTAT_MTIME | XSTAT_CTIME | XSTAT_VERSION))) &&
-+	    S_ISREG(inode->i_mode)) {
- 		err = filemap_write_and_wait(inode->i_mapping);
- 		if (err)
- 			goto out;
-@@ -528,18 +535,36 @@ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
- 	 *  - NFS never sets MS_NOATIME or MS_NODIRATIME so there is
- 	 *    no point in checking those.
- 	 */
-- 	if ((mnt->mnt_flags & MNT_NOATIME) ||
-- 	    ((mnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode)))
-+	if (mnt->mnt_flags & MNT_NOATIME ||
-+	    (mnt->mnt_flags & MNT_NODIRATIME && S_ISDIR(inode->i_mode))) {
-+		stat->ioc_flags |= FS_NOATIME_FL;
-+		need_atime = 0;
-+	} else if (!(stat->request_mask & XSTAT_ATIME)) {
- 		need_atime = 0;
-+	}
- 
--	if (need_atime)
--		err = __nfs_revalidate_inode(NFS_SERVER(inode), inode);
--	else
--		err = nfs_revalidate_inode(NFS_SERVER(inode), inode);
--	if (!err) {
--		generic_fillattr(inode, stat);
--		stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
-+	if (force || stat->request_mask & (XSTAT_BASIC_STATS | XSTAT_VERSION)) {
-+		if (force || need_atime)
-+			err = __nfs_revalidate_inode(NFS_SERVER(inode), inode);
-+		else
-+			err = nfs_revalidate_inode(NFS_SERVER(inode), inode);
-+		if (err)
-+			goto out;
+-	rc = vfs_getattr(ecryptfs_dentry_to_lower_mnt(dentry),
+-			 ecryptfs_dentry_to_lower(dentry), &lower_stat);
++	lower_stat.query_flags = stat->query_flags;
++	lower_stat.request_mask = stat->request_mask | XSTAT_BLOCKS;
++	rc = vfs_xgetattr(ecryptfs_dentry_to_lower_mnt(dentry),
++			  ecryptfs_dentry_to_lower(dentry), &lower_stat);
+ 	if (!rc) {
+ 		fsstack_copy_attr_all(dentry->d_inode,
+ 				      ecryptfs_inode_to_lower(dentry->d_inode));
+ 		generic_fillattr(dentry->d_inode, stat);
+ 		stat->blocks = lower_stat.blocks;
++		stat->result_mask = lower_stat.result_mask;
++		stat->information = lower_stat.information;
++		stat->information |= XSTAT_INFO_ENCRYPTED;
++		stat->gen = lower_stat.gen;
++		stat->version = lower_stat.version;
++		stat->ioc_flags = lower_stat.ioc_flags;
++		memcpy(&stat->volume_id, lower_stat.volume_id,
++		       sizeof(stat->volume_id));
  	}
-+
-+	generic_fillattr(inode, stat);
-+	stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
-+
-+	if (stat->request_mask & XSTAT_VERSION) {
-+		stat->version = inode->i_version;
-+		stat->result_mask |= XSTAT_VERSION;
-+	}
-+
-+	if (IS_AUTOMOUNT(inode))
-+		stat->information |= XSTAT_INFO_FABRICATED;
-+
-+	stat->information |= XSTAT_INFO_REMOTE;
-+
- out:
- 	return err;
+ 	return rc;
  }
-@@ -852,7 +877,7 @@ int nfs_revalidate_inode(struct nfs_server *server, struct inode *inode)
- static int nfs_invalidate_mapping(struct inode *inode, struct address_space *mapping)
- {
- 	struct nfs_inode *nfsi = NFS_I(inode);
--	
-+
- 	if (mapping->nrpages != 0) {
- 		int ret = invalidate_inode_pages2(mapping);
- 		if (ret < 0)
-diff --git a/fs/nfs/super.c b/fs/nfs/super.c
-index 37412f7..faa652c 100644
---- a/fs/nfs/super.c
-+++ b/fs/nfs/super.c
-@@ -2222,6 +2222,7 @@ static int nfs_set_super(struct super_block *s, void *data)
- 	ret = set_anon_super(s, server);
- 	if (ret == 0)
- 		server->s_dev = s->s_dev;
-+	memcpy(&s->s_volume_id, &server->fsid, sizeof(s->s_volume_id));
- 	return ret;
- }
- 
-
