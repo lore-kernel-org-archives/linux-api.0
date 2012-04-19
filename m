@@ -1,119 +1,145 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 3/6] xstat: AFS: Return extended attributes
-Date: Thu, 19 Apr 2012 15:06:39 +0100
-Message-ID: <20120419140639.17272.61333.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 4/6] xstat: NFS: Return extended attributes
+Date: Thu, 19 Apr 2012 15:06:53 +0100
+Message-ID: <20120419140653.17272.95035.stgit@warthog.procyon.org.uk>
 References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-Sender: linux-ext4-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org
 Cc: dhowells@redhat.com, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
-Return extended attributes from the AFS filesystem.  This includes the
+Return extended attributes from the NFS filesystem.  This includes the
 following:
 
- (1) The vnode uniquifier as st_gen.
+ (1) The change attribute as st_data_version if NFSv4.
 
- (2) The data version number as st_data_version.
+ (2) XSTAT_INFO_AUTOMOUNT and XSTAT_INFO_FABRICATED are set on referral or
+     submount directories that are automounted upon.  NFS shows one directory
+     with a different FSID, but the local filesystem has two: the mountpoint
+     directory and the root of the filesystem mounted upon it.
 
- (3) XSTAT_INFO_AUTOMOUNT will be set on automount directories by virtue of
-     S_AUTOMOUNT being set on the inode.  These are referrals to other volumes
-     or other cells.
+ (3) XSTAT_INFO_REMOTE is set on files acquired over NFS.
 
- (4) XSTAT_INFO_AUTODIR on a directory that does cell lookup for non-existent
-     names and mounts them (typically mounted on /afs with -o autocell).  The
-     resulting directories are marked XSTAT_INFO_FABRICATED as they do not
-     actually exist in the mounted AFS directory.
+Furthermore, what nfs_getattr() does can be controlled as follows:
 
- (6) Files, directories and symlinks accessed over AFS are marked
-     XSTAT_INFO_REMOTE.
+ (1) If AT_FORCE_ATTR_SYNC is indicated, or mtime, ctime or data_version (NFSv4
+     only) are requested then the outstanding writes will be written to the
+     server first.
 
- (7) XSTAT_INFO_NONSYSTEM_OWNERSHIP is set as the UID and GID retrieved from an
-     AFS share may not be applicable on the system.
+ (2) The inode's attributes may be synchronised with the server:
 
- (8) XSTAT_INFO_HAS_ACL is set as AFS directories have ACLs (the UID and GID
-     are only used through the ACLs) and these ACLs apply to the contents of
-     the directories.
+     (a) If AT_FORCE_ATTR_SYNC is indicated or if atime is requested (and atime
+     	 updating is not suppressed by a mount flag) then the attributes will
+     	 be reread unconditionally.
+
+     (b) If the data version or any of basic stats are requested then the
+     	 attributes will be reread if the cached attributes have expired.
+
+     (c) Otherwise the cached attributes will be used - even if expired -
+     	 without reference to the server.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/afs/inode.c |   29 +++++++++++++++++++++--------
- fs/afs/super.c |    7 +++++++
- 2 files changed, 28 insertions(+), 8 deletions(-)
+ fs/nfs/inode.c |   49 +++++++++++++++++++++++++++++++++++++------------
+ fs/nfs/super.c |    1 +
+ 2 files changed, 38 insertions(+), 12 deletions(-)
 
-diff --git a/fs/afs/inode.c b/fs/afs/inode.c
-index d890ae3..062def2 100644
---- a/fs/afs/inode.c
-+++ b/fs/afs/inode.c
-@@ -71,9 +71,9 @@ static int afs_inode_map_status(struct afs_vnode *vnode, struct key *key)
- 	inode->i_uid		= vnode->status.owner;
- 	inode->i_gid		= 0;
- 	inode->i_size		= vnode->status.size;
--	inode->i_ctime.tv_sec	= vnode->status.mtime_server;
--	inode->i_ctime.tv_nsec	= 0;
--	inode->i_atime		= inode->i_mtime = inode->i_ctime;
-+	inode->i_mtime.tv_sec	= vnode->status.mtime_server;
-+	inode->i_mtime.tv_nsec	= 0;
-+	inode->i_atime		= inode->i_ctime = inode->i_mtime;
- 	inode->i_blocks		= 0;
- 	inode->i_generation	= vnode->fid.unique;
- 	inode->i_version	= vnode->status.data_version;
-@@ -374,16 +374,29 @@ error_unlock:
- /*
-  * read the attributes of an inode
-  */
--int afs_getattr(struct vfsmount *mnt, struct dentry *dentry,
--		      struct kstat *stat)
-+int afs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
+diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
+index e8bbfa5..460fcf3 100644
+--- a/fs/nfs/inode.c
++++ b/fs/nfs/inode.c
+@@ -509,11 +509,18 @@ void nfs_setattr_update_inode(struct inode *inode, struct iattr *attr)
+ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
  {
--	struct inode *inode;
--
--	inode = dentry->d_inode;
-+	struct inode *inode = dentry->d_inode;
+ 	struct inode *inode = dentry->d_inode;
++	unsigned force = stat->query_flags & AT_FORCE_ATTR_SYNC;
+ 	int need_atime = NFS_I(inode)->cache_validity & NFS_INO_INVALID_ATIME;
+ 	int err;
  
- 	_enter("{ ino=%lu v=%u }", inode->i_ino, inode->i_generation);
+-	/* Flush out writes to the server in order to update c/mtime.  */
+-	if (S_ISREG(inode->i_mode)) {
++	if (NFS_SERVER(inode)->nfs_client->rpc_ops->version < 4)
++		stat->request_mask &= ~XSTAT_VERSION;
++
++	/* Flush out writes to the server in order to update c/mtime
++	 * or data version if the user wants them */
++	if ((force || (stat->request_mask &
++		       (XSTAT_MTIME | XSTAT_CTIME | XSTAT_VERSION))) &&
++	    S_ISREG(inode->i_mode)) {
+ 		err = filemap_write_and_wait(inode->i_mapping);
+ 		if (err)
+ 			goto out;
+@@ -528,18 +535,36 @@ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
+ 	 *  - NFS never sets MS_NOATIME or MS_NODIRATIME so there is
+ 	 *    no point in checking those.
+ 	 */
+- 	if ((mnt->mnt_flags & MNT_NOATIME) ||
+- 	    ((mnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode)))
++	if (mnt->mnt_flags & MNT_NOATIME ||
++	    (mnt->mnt_flags & MNT_NODIRATIME && S_ISDIR(inode->i_mode))) {
++		stat->ioc_flags |= FS_NOATIME_FL;
++		need_atime = 0;
++	} else if (!(stat->request_mask & XSTAT_ATIME)) {
+ 		need_atime = 0;
++	}
  
- 	generic_fillattr(inode, stat);
+-	if (need_atime)
+-		err = __nfs_revalidate_inode(NFS_SERVER(inode), inode);
+-	else
+-		err = nfs_revalidate_inode(NFS_SERVER(inode), inode);
+-	if (!err) {
+-		generic_fillattr(inode, stat);
+-		stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
++	if (force || stat->request_mask & (XSTAT_BASIC_STATS | XSTAT_VERSION)) {
++		if (force || need_atime)
++			err = __nfs_revalidate_inode(NFS_SERVER(inode), inode);
++		else
++			err = nfs_revalidate_inode(NFS_SERVER(inode), inode);
++		if (err)
++			goto out;
+ 	}
 +
-+	stat->result_mask &= ~(XSTAT_ATIME | XSTAT_CTIME | XSTAT_BLOCKS);
-+	stat->result_mask |= XSTAT_GEN | XSTAT_VERSION;
-+	stat->gen = inode->i_generation;
-+	stat->version = inode->i_version;
++	generic_fillattr(inode, stat);
++	stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
 +
-+	if (test_bit(AFS_VNODE_AUTOCELL, &AFS_FS_I(inode)->flags))
-+		stat->information |= XSTAT_INFO_AUTODIR;
++	if (stat->request_mask & XSTAT_VERSION) {
++		stat->version = inode->i_version;
++		stat->result_mask |= XSTAT_VERSION;
++	}
 +
-+	if (test_bit(AFS_VNODE_PSEUDODIR, &AFS_FS_I(inode)->flags))
++	if (IS_AUTOMOUNT(inode))
 +		stat->information |= XSTAT_INFO_FABRICATED;
-+	else
-+		stat->information |= XSTAT_INFO_REMOTE;
 +
-+	stat->information |=
-+		XSTAT_INFO_NONSYSTEM_OWNERSHIP | XSTAT_INFO_HAS_ACL;
- 	return 0;
++	stat->information |= XSTAT_INFO_REMOTE;
++
+ out:
+ 	return err;
+ }
+@@ -852,7 +877,7 @@ int nfs_revalidate_inode(struct nfs_server *server, struct inode *inode)
+ static int nfs_invalidate_mapping(struct inode *inode, struct address_space *mapping)
+ {
+ 	struct nfs_inode *nfsi = NFS_I(inode);
+-	
++
+ 	if (mapping->nrpages != 0) {
+ 		int ret = invalidate_inode_pages2(mapping);
+ 		if (ret < 0)
+diff --git a/fs/nfs/super.c b/fs/nfs/super.c
+index 37412f7..faa652c 100644
+--- a/fs/nfs/super.c
++++ b/fs/nfs/super.c
+@@ -2222,6 +2222,7 @@ static int nfs_set_super(struct super_block *s, void *data)
+ 	ret = set_anon_super(s, server);
+ 	if (ret == 0)
+ 		server->s_dev = s->s_dev;
++	memcpy(&s->s_volume_id, &server->fsid, sizeof(s->s_volume_id));
+ 	return ret;
  }
  
-diff --git a/fs/afs/super.c b/fs/afs/super.c
-index f02b31e..1f13b48 100644
---- a/fs/afs/super.c
-+++ b/fs/afs/super.c
-@@ -314,6 +314,13 @@ static int afs_fill_super(struct super_block *sb,
- 	sb->s_bdi		= &as->volume->bdi;
- 	strlcpy(sb->s_id, as->volume->vlocation->vldb.name, sizeof(sb->s_id));
- 
-+	/* construct a volume ID from the AFS volume ID and type */
-+	sb->s_volume_id[4] = as->volume->type;
-+	sb->s_volume_id[3] = as->volume->vid >> 0;
-+	sb->s_volume_id[2] = as->volume->vid >> 8;
-+	sb->s_volume_id[1] = as->volume->vid >> 16;
-+	sb->s_volume_id[0] = as->volume->vid >> 24;
-+
- 	/* allocate the root inode and dentry */
- 	fid.vid		= as->volume->vid;
- 	fid.vnode	= 1;
 
