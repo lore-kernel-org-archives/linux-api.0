@@ -1,88 +1,129 @@
-From: "Myklebust, Trond" <Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+From: Steve French <smfrench@gmail.com>
 Subject: Re: [PATCH 0/6] Extended file stat system call
-Date: Thu, 26 Apr 2012 17:00:41 +0000
-Message-ID: <1335459642.9701.27.camel@lade.trondhjem.org>
+Date: Thu, 26 Apr 2012 12:03:07 -0500
+Message-ID: <CAH2r5mvmCfLrxRHje6Wx5X84zxPEHwRMUJGsjvWBujMu7w841w@mail.gmail.com>
 References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-	 <CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com>
-	 <20656.1335450358@redhat.com>
-	 <CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com>
-	 <1335453958.9701.10.camel@lade.trondhjem.org>
-	 <CAH2r5mt5af-_hxBRKK72iD5Gr99bo91ec78Rov8EGVEx8=21mA@mail.gmail.com>
+	<CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com>
+	<20656.1335450358@redhat.com>
+	<CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com>
+	<1335453958.9701.10.camel@lade.trondhjem.org>
+	<CAH2r5mt5af-_hxBRKK72iD5Gr99bo91ec78Rov8EGVEx8=21mA@mail.gmail.com>
+	<1335459642.9701.27.camel@lade.trondhjem.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAH2r5mt5af-_hxBRKK72iD5Gr99bo91ec78Rov8EGVEx8=21mA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-Content-ID: <F345B2C468D7B3499C7A67C9C842615D-oP88Kt8RkgzdA/Lu/QRl1Q@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org" <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org" <wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org>, "kfm-devel-RoXCvvDuEio@public.gmane.org" <kfm-devel-RoXCvvDuEio@public.gmane.org>, "nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org" <nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1335459642.9701.27.camel@lade.trondhjem.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Myklebust, Trond" <Trond.Myklebust@netapp.com>
+Cc: David Howells <dhowells@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, "samba-technical@lists.samba.org" <samba-technical@lists.samba.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "wine-devel@winehq.org" <wine-devel@winehq.org>, "kfm-devel@kde.org" <kfm-devel@kde.org>, "nautilus-list@gnome.org" <nautilus-list@gnome.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCAyMDEyLTA0LTI2IGF0IDExOjU2IC0wNTAwLCBTdGV2ZSBGcmVuY2ggd3JvdGU6DQo+
-IE9uIFRodSwgQXByIDI2LCAyMDEyIGF0IDEwOjI1IEFNLCBNeWtsZWJ1c3QsIFRyb25kDQo+IDxU
-cm9uZC5NeWtsZWJ1c3RAbmV0YXBwLmNvbT4gd3JvdGU6DQo+ID4gT24gVGh1LCAyMDEyLTA0LTI2
-IGF0IDA5OjU0IC0wNTAwLCBTdGV2ZSBGcmVuY2ggd3JvdGU6DQo+ID4+IE9uIFRodSwgQXByIDI2
-LCAyMDEyIGF0IDk6MjUgQU0sIERhdmlkIEhvd2VsbHMgPGRob3dlbGxzQHJlZGhhdC5jb20+IHdy
-b3RlOg0KPiA+PiA+IFN0ZXZlIEZyZW5jaCA8c21mcmVuY2hAZ21haWwuY29tPiB3cm90ZToNCj4g
-Pj4gPg0KPiA+PiA+PiBXb3VsZCBpdCBiZSBiZXR0ZXIgdG8gbWFrZSB0aGUgc3RhYmxlIHZzIHZv
-bGF0aWxlIGlub2RlIG51bWJlciBhbiBhdHRyaWJ1dGUNCj4gPj4gPj4gb2YgdGhlIHZvbHVtZSAg
-b3Igc29tZXRoaW5nIHJldHVybmVkIGJ5IHRoZSBwcm9wb3NlZCB4c3RhdD8NCj4gPj4gPg0KPiA+
-PiA+IEknbSBub3Qgc3VyZSB3aGF0IHlvdSBtZWFuIGJ5IGEgc3RhYmxlIHZzIGEgdm9sYXRpbGUg
-aW5vZGUgbnVtYmVyLg0KPiA+Pg0KPiA+PiBCb3RoIE5GUyBhbmQgQ0lGUyAoYW5kIFNNQjIpIGNh
-biByZXR1cm4gaW5vZGUgbnVtYmVycyBvciBlcXVpdmFsZW50DQo+ID4+IHVuaXF1ZSBpZGVudGlm
-aWVyLCBidXQgaW4gdGhlIGNhc2Ugb2YgQ0lGUyBzb21lIG9sZCBzZXJ2ZXJzIGRvbid0IHN1cHBv
-cnQgdGhlDQo+ID4+IGNhbGxzIHdoaWNoIHJldHVybiBpbm9kZSBudW1iZXJzIChvciBkb24ndCBy
-ZXR1cm4gdGhlbSBmb3IgYWxsIGZpbGUgc3lzdGVtDQo+ID4+IHR5cGVzLCBXaW5kb3dzIEZBVD8p
-IHNvIGluIHRoZXNlIGNhc2VzIGNpZnMgaGFzIHRvIGNyZWF0ZSBpbm9kZQ0KPiA+PiBudW1iZXJz
-IG9uIHRoZSBmbHkNCj4gPj4gb24gdGhlIGNsaWVudC4gICBpbm9kZSBudW1iZXJzIGNyZWF0ZWQg
-b24gdGhlIGNsaWVudCBhcmUgbm90ICJzdGFibGUiIHRoZXkNCj4gPj4gY2FuIGNoYW5nZSBvbiB1
-bm1vdW50L3JlbW91bnQgKHdoaWNoIGNhbiBjYXVzZSBwcm9ibGVtcyBmb3IgYmFja3VwDQo+ID4+
-IGFwcGxpY2F0aW9ucykuDQo+ID4+DQo+ID4+IFNpbWlsYXJseSBORlN2NCBkb2VzIG5vdCByZXF1
-aXJlIHRoYXQgc2VydmVycyBhbHdheXMgcmV0dXJuIHN0YWJsZSBpbm9kZSBudW1iZXJzDQo+ID4+
-ICh0aGF0IHdpbGwgbmV2ZXIgY2hhbmdlKSBhbmQgaW50cm9kdWNlZCBhIGNvbmNlcHQgb2YgInZv
-bGF0aWxlIGZpbGUgaGFuZGxlLiINCj4gPj4gV2UgaGF2ZSBydW4gaW50byB0aGlzIGluIHR3byBj
-YXNlcyAodGhlcmUgYXJlIHByb2JhYmx5IG1vcmUpIC0NCj4gPj4gU3BlY2lhbGl6ZWQgTkZTIHNl
-cnZlcnMNCj4gPj4gZm9yIEhQQyB3aGljaCBkZWFsIHdpdGggbG90cyBvZiB0cmFuc2llbnQgaW5v
-ZGVzLCBhbmQgc2Vjb25kIHRob3NlIGZvciBzZXJ2ZXJzDQo+ID4+IHdoaWNoIGJhc2UgdGhlcmUg
-aW5vZGUgbnVtYmVyIG9uIHBhdGggKFdpbmRvd3MgTkZTPykuICBTZWUNCj4gPj4gaHR0cDovL2Rv
-Y3Mub3JhY2xlLmNvbS9jZC9FMTkwODItMDEvODE5LTE2MzQvcmZzcmVmZXItMTM3L2luZGV4Lmh0
-bWwNCj4gPj4gb3IgdGhlIE5GU3Y0IFJGQy4NCj4gPj4NCj4gPj4gQmFzaWNhbGx5IHRoZSBxdWVz
-dGlvbiBpcyB3aGV0aGVyIGl0IGlzIHdvcnRoIHJlcG9ydGluZyBhIGZsYWcgb24gdGhlDQo+ID4+
-IGNhbGwgd2hpY2ggcmV0dXJucw0KPiA+PiB0aGUgaW5vZGUgbnVtYmVyIHRvIGluZGljYXRlIHRo
-YXQgdGhlIGlub2RlIG51bWJlciBpcyAic3RhYmxlIiAod291bGQgbm90IGNoYW5nZQ0KPiA+PiBv
-biByZWJvb3Qgb3IgcmVjb25uZWN0aW9uKSBvciAidm9sYXRpbGUuIiAgICBTaW5jZSB0aGUgbWFq
-b3JpdHkgb2YgTkZTDQo+ID4+IGFuZCBTTUIyIHNlcnZlcnMNCj4gPj4gY2FuIHJldHVybiBzdGFi
-bGUgaW5vZGUgbnVtYmVycywgSSBkb24ndCBmZWVsIHN0cm9uZ2x5IGFib3V0IHRoZSBuZWVkDQo+
-ID4+IGZvciBhbiBpbmRpY2F0b3INCj4gPj4gb2YgInN0YWJsZSIgdnMuICJ2b2xhdGlsZSIgYnV0
-IEkgbWVudGlvbiBpdCBiZWNhdXNlIGJhY2t1cCBhbmQNCj4gPj4gbWlncmF0aW9uIGFwcGxpY2F0
-aW9ucw0KPiA+PiBtZW50aW9uIHRoaXMgKGlmIGlub2RlIG51bWJlcnMgYXJlIHZvbGF0aWxlLCB0
-aGV5IG1heSBoYXZlIHRvIGNoZWNrDQo+ID4+IGZvciBoYXJkbGlua3MgZGlmZmVyZW50bHkNCj4g
-Pj4gZm9yIGV4YW1wbGUpDQo+ID4NCj4gPiBJIGRvbid0IHVuZGVyc3RhbmQuIElmIHRoZSBmaWxl
-c3lzdGVtIGRvZXNuJ3Qgc3VwcG9ydCByZWFsIGlub2RlDQo+ID4gbnVtYmVycywgdGhlbiB3aHkg
-cmVwb3J0IHRoZW0gYXQgYWxsPyBXaGF0IHVzZSB3b3VsZCBhbiBhcHBsaWNhdGlvbiBoYXZlDQo+
-ID4gZm9yIGFuIGlub2RlIG51bWJlciB0aGF0IGNhbid0IGJlIHVzZWQgdG8gaWRlbnRpZnkgaGFy
-ZCBsaW5rZWQgZmlsZXM/DQo+IA0KPiBXZWxsIC4uLiB5b3UgaGF2ZSB0byBoYXZlIGFuIGlub2Rl
-IG51bWJlciBvbiB0aGUgTGludXggY2xpZW50IHNpZGUgZXZlbiBpZg0KPiB0aGUgc2VydmVyIGRv
-ZXNuJ3QgcmVwb3J0IHRoZW0gKG9yIGhhcyBhIGJ1ZyBhbmQgcmVwb3J0cyBkdXBsaWNhdGVzKS4N
-Cj4gSWYgeW91IGNhbid0IHRlbGwgaGFyZGxpbmtlZCBmaWxlcyBhcGFydCBmaXggdGhlIHNlcnZl
-ciAoYnV0IGluIHRoZQ0KPiBjYXNlcyB3aGVyZSB0aGUgZmlsZSBzeXN0ZW1zIGhhcyB0aGlzIHBy
-b2JsZW0gdGhlIHNlcnZlciBkb2Vzbid0IHVzdWFsbHkNCj4gc3VwcG9ydCBoYXJkbGlua3MgZWl0
-aGVyKS4NCj4gDQo+IElmIHRoZSBzZXJ2ZXIncyBmaWxlIHN5c3RlbSBpbnRlcm5hbCBzdHJ1Y3R1
-cmVzIGRvbid0IHN1cHBvcnQgcmVhbCBpbm9kZQ0KPiBudW1iZXJzIChzdWNoIGFzIEZBVCBvciBh
-IHJhbWRpc2spIHRoZW4gaXQgZWl0aGVyIGhhcyB0byBtYWtlIHRoZW0NCj4gdXAgYmFzZWQgb24g
-c29tZXRoaW5nIGxpa2UgcGF0aCBuYW1lIG9yIHNvbWUgb3RoZXIgYXR0cmlidXRlIG9mIHRoZQ0K
-PiBmaWxlIG9uIGRpc2suDQo+IA0KPiBTZXJ2ZXJzIGxpa2UgTmV0QXBwIGlzIHdoZXJlIHRoaXMg
-Z2V0cyBpbnRlcmVzdGluZyAtIGZvciBjaWZzIGUuZy4gbGV2ZWwgMTAwOQ0KPiBxdWVyeSBmaWxl
-IGluZm8gaXMgdXNlZCB0byBxdWVyeV9maWxlX2ludGVybmFsX2luZm8gKHRoZSBpbm9kZSBudW1i
-ZXIpIGJ1dA0KPiB3aGF0IGlmIHRoZSBzZXJ2ZXIgY2FuIG5vdCByZXBvcnQgaW5vZGUgbnVtYmVy
-cyAoZHVlIHRvIGEgYnVnKSBpbg0KPiBhbGwgY2FzZXMuDQoNClJpZ2h0LCBidXQgbm9uZSBvZiB0
-aGlzIGV4cGxhaW5zIHdoeSB3ZSBuZWVkIHRvIHJlcG9ydCB0aGVzZSBib2d1cyBpbm9kZQ0KbnVt
-YmVycyB0byB0aGUgYXBwbGljYXRpb24gaW4gdGhlIHhzdGF0KCkgcmVwbHkuDQoNCi0tIA0KVHJv
-bmQgTXlrbGVidXN0DQpMaW51eCBORlMgY2xpZW50IG1haW50YWluZXINCg0KTmV0QXBwDQpUcm9u
-ZC5NeWtsZWJ1c3RAbmV0YXBwLmNvbQ0Kd3d3Lm5ldGFwcC5jb20NCg0K
+On Thu, Apr 26, 2012 at 12:00 PM, Myklebust, Trond
+<Trond.Myklebust@netapp.com> wrote:
+> On Thu, 2012-04-26 at 11:56 -0500, Steve French wrote:
+>> On Thu, Apr 26, 2012 at 10:25 AM, Myklebust, Trond
+>> <Trond.Myklebust@netapp.com> wrote:
+>> > On Thu, 2012-04-26 at 09:54 -0500, Steve French wrote:
+>> >> On Thu, Apr 26, 2012 at 9:25 AM, David Howells <dhowells@redhat.c=
+om> wrote:
+>> >> > Steve French <smfrench@gmail.com> wrote:
+>> >> >
+>> >> >> Would it be better to make the stable vs volatile inode number=
+ an attribute
+>> >> >> of the volume =A0or something returned by the proposed xstat?
+>> >> >
+>> >> > I'm not sure what you mean by a stable vs a volatile inode numb=
+er.
+>> >>
+>> >> Both NFS and CIFS (and SMB2) can return inode numbers or equivale=
+nt
+>> >> unique identifier, but in the case of CIFS some old servers don't=
+ support the
+>> >> calls which return inode numbers (or don't return them for all fi=
+le system
+>> >> types, Windows FAT?) so in these cases cifs has to create inode
+>> >> numbers on the fly
+>> >> on the client. =A0 inode numbers created on the client are not "s=
+table" they
+>> >> can change on unmount/remount (which can cause problems for backu=
+p
+>> >> applications).
+>> >>
+>> >> Similarly NFSv4 does not require that servers always return stabl=
+e inode numbers
+>> >> (that will never change) and introduced a concept of "volatile fi=
+le handle."
+>> >> We have run into this in two cases (there are probably more) -
+>> >> Specialized NFS servers
+>> >> for HPC which deal with lots of transient inodes, and second thos=
+e for servers
+>> >> which base there inode number on path (Windows NFS?). =A0See
+>> >> http://docs.oracle.com/cd/E19082-01/819-1634/rfsrefer-137/index.h=
+tml
+>> >> or the NFSv4 RFC.
+>> >>
+>> >> Basically the question is whether it is worth reporting a flag on=
+ the
+>> >> call which returns
+>> >> the inode number to indicate that the inode number is "stable" (w=
+ould not change
+>> >> on reboot or reconnection) or "volatile." =A0 =A0Since the majori=
+ty of NFS
+>> >> and SMB2 servers
+>> >> can return stable inode numbers, I don't feel strongly about the =
+need
+>> >> for an indicator
+>> >> of "stable" vs. "volatile" but I mention it because backup and
+>> >> migration applications
+>> >> mention this (if inode numbers are volatile, they may have to che=
+ck
+>> >> for hardlinks differently
+>> >> for example)
+>> >
+>> > I don't understand. If the filesystem doesn't support real inode
+>> > numbers, then why report them at all? What use would an applicatio=
+n have
+>> > for an inode number that can't be used to identify hard linked fil=
+es?
+>>
+>> Well ... you have to have an inode number on the Linux client side e=
+ven if
+>> the server doesn't report them (or has a bug and reports duplicates)=
+=2E
+>> If you can't tell hardlinked files apart fix the server (but in the
+>> cases where the file systems has this problem the server doesn't usu=
+ally
+>> support hardlinks either).
+>>
+>> If the server's file system internal structures don't support real i=
+node
+>> numbers (such as FAT or a ramdisk) then it either has to make them
+>> up based on something like path name or some other attribute of the
+>> file on disk.
+>>
+>> Servers like NetApp is where this gets interesting - for cifs e.g. l=
+evel 1009
+>> query file info is used to query_file_internal_info (the inode numbe=
+r) but
+>> what if the server can not report inode numbers (due to a bug) in
+>> all cases.
+>
+> Right, but none of this explains why we need to report these bogus in=
+ode
+> numbers to the application in the xstat() reply.
+
+the question is whether the application (backup) would need to know
+that the inode numbers are bogus and from my conversations with
+guys writing backup software it seems that such data is useful to them.
+
+
+--=20
+Thanks,
+
+Steve
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
