@@ -1,121 +1,77 @@
 From: Steve French <smfrench@gmail.com>
-Subject: Re: [PATCH 0/6] Extended file stat system call
-Date: Thu, 26 Apr 2012 12:03:07 -0500
-Message-ID: <CAH2r5mvmCfLrxRHje6Wx5X84zxPEHwRMUJGsjvWBujMu7w841w@mail.gmail.com>
-References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-	<CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com>
-	<20656.1335450358@redhat.com>
-	<CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com>
-	<1335453958.9701.10.camel@lade.trondhjem.org>
-	<CAH2r5mt5af-_hxBRKK72iD5Gr99bo91ec78Rov8EGVEx8=21mA@mail.gmail.com>
-	<1335459642.9701.27.camel@lade.trondhjem.org>
+Subject: Re: [PATCH 1/6] xstat: Add a pair of system calls to make extended
+ file stats available
+Date: Thu, 26 Apr 2012 12:06:22 -0500
+Message-ID: <CAH2r5mut083KtCZWMsvC08WtJPJpBxXm6M0HCY4hk8T3hN7xdg@mail.gmail.com>
+References: <CAH2r5muMb8m9-fMc_tcfn3ku_s55q9EEbc-vzvoFjPnsDdq1gA@mail.gmail.com>
+	<20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
+	<20120419140612.17272.57774.stgit@warthog.procyon.org.uk>
+	<20120424212911.GA26073@fieldses.org>
+	<18765.1335447954@redhat.com>
+	<20120426142816.GB7176@fieldses.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1335459642.9701.27.camel@lade.trondhjem.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Myklebust, Trond" <Trond.Myklebust@netapp.com>
-Cc: David Howells <dhowells@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, "samba-technical@lists.samba.org" <samba-technical@lists.samba.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "wine-devel@winehq.org" <wine-devel@winehq.org>, "kfm-devel@kde.org" <kfm-devel@kde.org>, "nautilus-list@gnome.org" <nautilus-list@gnome.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20120426142816.GB7176@fieldses.org>
+Sender: linux-ext4-owner@vger.kernel.org
+To: "J. Bruce Fields" <bfields@fieldses.org>
+Cc: David Howells <dhowells@redhat.com>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 26, 2012 at 12:00 PM, Myklebust, Trond
-<Trond.Myklebust@netapp.com> wrote:
-> On Thu, 2012-04-26 at 11:56 -0500, Steve French wrote:
->> On Thu, Apr 26, 2012 at 10:25 AM, Myklebust, Trond
->> <Trond.Myklebust@netapp.com> wrote:
->> > On Thu, 2012-04-26 at 09:54 -0500, Steve French wrote:
->> >> On Thu, Apr 26, 2012 at 9:25 AM, David Howells <dhowells@redhat.c=
-om> wrote:
->> >> > Steve French <smfrench@gmail.com> wrote:
->> >> >
->> >> >> Would it be better to make the stable vs volatile inode number=
- an attribute
->> >> >> of the volume =A0or something returned by the proposed xstat?
->> >> >
->> >> > I'm not sure what you mean by a stable vs a volatile inode numb=
-er.
->> >>
->> >> Both NFS and CIFS (and SMB2) can return inode numbers or equivale=
-nt
->> >> unique identifier, but in the case of CIFS some old servers don't=
- support the
->> >> calls which return inode numbers (or don't return them for all fi=
-le system
->> >> types, Windows FAT?) so in these cases cifs has to create inode
->> >> numbers on the fly
->> >> on the client. =A0 inode numbers created on the client are not "s=
-table" they
->> >> can change on unmount/remount (which can cause problems for backu=
-p
->> >> applications).
->> >>
->> >> Similarly NFSv4 does not require that servers always return stabl=
-e inode numbers
->> >> (that will never change) and introduced a concept of "volatile fi=
-le handle."
->> >> We have run into this in two cases (there are probably more) -
->> >> Specialized NFS servers
->> >> for HPC which deal with lots of transient inodes, and second thos=
-e for servers
->> >> which base there inode number on path (Windows NFS?). =A0See
->> >> http://docs.oracle.com/cd/E19082-01/819-1634/rfsrefer-137/index.h=
-tml
->> >> or the NFSv4 RFC.
->> >>
->> >> Basically the question is whether it is worth reporting a flag on=
- the
->> >> call which returns
->> >> the inode number to indicate that the inode number is "stable" (w=
-ould not change
->> >> on reboot or reconnection) or "volatile." =A0 =A0Since the majori=
-ty of NFS
->> >> and SMB2 servers
->> >> can return stable inode numbers, I don't feel strongly about the =
-need
->> >> for an indicator
->> >> of "stable" vs. "volatile" but I mention it because backup and
->> >> migration applications
->> >> mention this (if inode numbers are volatile, they may have to che=
-ck
->> >> for hardlinks differently
->> >> for example)
->> >
->> > I don't understand. If the filesystem doesn't support real inode
->> > numbers, then why report them at all? What use would an applicatio=
-n have
->> > for an inode number that can't be used to identify hard linked fil=
-es?
+On Thu, Apr 26, 2012 at 9:28 AM, J. Bruce Fields <bfields@fieldses.org>=
+ wrote:
+> On Thu, Apr 26, 2012 at 02:45:54PM +0100, David Howells wrote:
+>> Steve French <smfrench@gmail.com> wrote:
 >>
->> Well ... you have to have an inode number on the Linux client side e=
-ven if
->> the server doesn't report them (or has a bug and reports duplicates)=
-=2E
->> If you can't tell hardlinked files apart fix the server (but in the
->> cases where the file systems has this problem the server doesn't usu=
-ally
->> support hardlinks either).
+>> > I also would prefer that we simply treat the time granularity as p=
+art
+>> > of the superblock (mounted volume) ie returned on fstat rather tha=
+n on
+>> > every stat of the filesystem. =A0 For cifs mounts we could conceiv=
+ably
+>> > have different time granularity (1 or 2 second) on mounts to old
+>> > servers rather than 100 nanoseconds.
 >>
->> If the server's file system internal structures don't support real i=
-node
->> numbers (such as FAT or a ramdisk) then it either has to make them
->> up based on something like path name or some other attribute of the
->> file on disk.
+>> The question is whether you want to have to do a statfs in addition =
+to a stat?
+>> I suppose you can potentially cache the statfs based on device numbe=
+r.
 >>
->> Servers like NetApp is where this gets interesting - for cifs e.g. l=
-evel 1009
->> query file info is used to query_file_internal_info (the inode numbe=
-r) but
->> what if the server can not report inode numbers (due to a bug) in
->> all cases.
+>> That said, there are cases where caching filesystem-level info based=
+ on i_dev
+>> doesn't work. =A0OpenAFS springs to mind as that only has one superb=
+lock and
+>> thus one set of device numbers, but keeps all the inodes for all the=
+ different
+>> volumes it may have mounted there.
+>>
+>> I don't know whether this would be a problem for CIFS too - say on a=
+ windows
+>> server you fabricate P:, for example, by joining together several fi=
+lesystems
+>> (with junctions?). =A0How does this appear on a Linux client when it=
+ steps from
+>> one filesystem to another within a mounted share?
 >
-> Right, but none of this explains why we need to report these bogus in=
-ode
-> numbers to the application in the xstat() reply.
+> In the NFS case we do try to preserve filesystem boundaries as well a=
+s
+> we can--the protocol has an fsid field and the client creates a new
+> mount each time it sees it change. =A0And the protocol defines time_d=
+elta
+> as a per-filesystem attribute (though, somewhat hilariously, there's
+> also a per-filesystem "homogeneous" attribute that a server can clear=
+ to
+> indicate the per-filesystem attributes might actually vary within the
+> filesystem.)
 
-the question is whether the application (backup) would need to know
-that the inode numbers are bogus and from my conversations with
-guys writing backup software it seems that such data is useful to them.
+Thank you for reminding me, I need to look at this case more ...
+although cifs creates  implicit submounts (as we traverse DFS referrals=
+)
+there are probably cases where we need to do the same thing as NFS
+and look at the fsid so we don't run into a Windows server
+exporting something with a "junction" (e.g. directory redirection to
+a DVD drive for example) and thus cross file system volume boundaries.
 
 
 --=20
@@ -123,7 +79,7 @@ Thanks,
 
 Steve
 --
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
+To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
+n
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
