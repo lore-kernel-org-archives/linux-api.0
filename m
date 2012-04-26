@@ -1,134 +1,65 @@
-From: Steve French <smfrench@gmail.com>
+From: "Myklebust, Trond" <Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 0/6] Extended file stat system call
-Date: Thu, 26 Apr 2012 09:54:26 -0500
-Message-ID: <CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com>
+Date: Thu, 26 Apr 2012 15:25:59 +0000
+Message-ID: <1335453958.9701.10.camel@lade.trondhjem.org>
 References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-	<CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com>
-	<20656.1335450358@redhat.com>
+	 <CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com>
+	 <20656.1335450358@redhat.com>
+	 <CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <libc-alpha-return-27996-glibc-alpha=m.gmane.org@sourceware.org>
-In-Reply-To: <20656.1335450358@redhat.com>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-To: David Howells <dhowells@redhat.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Content-ID: <16956AA237B3F5409C10DE04EF66BC11-oP88Kt8RkgzdA/Lu/QRl1Q@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org" <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org" <wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org>, "kfm-devel-RoXCvvDuEio@public.gmane.org" <kfm-devel-RoXCvvDuEio@public.gmane.org>, "nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org" <nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 26, 2012 at 9:25 AM, David Howells <dhowells@redhat.com> wrote:
-> Steve French <smfrench@gmail.com> wrote:
->
->> Would it be better to make the stable vs volatile inode number an attrib=
-ute
->> of the volume =A0or something returned by the proposed xstat?
->
-> I'm not sure what you mean by a stable vs a volatile inode number.
-
-Both NFS and CIFS (and SMB2) can return inode numbers or equivalent
-unique identifier, but in the case of CIFS some old servers don't support t=
-he
-calls which return inode numbers (or don't return them for all file system
-types, Windows FAT?) so in these cases cifs has to create inode
-numbers on the fly
-on the client.   inode numbers created on the client are not "stable" they
-can change on unmount/remount (which can cause problems for backup
-applications).
-
-Similarly NFSv4 does not require that servers always return stable inode nu=
-mbers
-(that will never change) and introduced a concept of "volatile file handle.=
-"
-We have run into this in two cases (there are probably more) -
-Specialized NFS servers
-for HPC which deal with lots of transient inodes, and second those for serv=
-ers
-which base there inode number on path (Windows NFS?).  See
-http://docs.oracle.com/cd/E19082-01/819-1634/rfsrefer-137/index.html
-or the NFSv4 RFC.
-
-Basically the question is whether it is worth reporting a flag on the
-call which returns
-the inode number to indicate that the inode number is "stable" (would not c=
-hange
-on reboot or reconnection) or "volatile."    Since the majority of NFS
-and SMB2 servers
-can return stable inode numbers, I don't feel strongly about the need
-for an indicator
-of "stable" vs. "volatile" but I mention it because backup and
-migration applications
-mention this (if inode numbers are volatile, they may have to check
-for hardlinks differently
-for example)
-
-
->> > Should things like the Windows Archive, Hidden and System bits be hand=
-led
->> > through IOC flags, perhaps expanded to 64-bits?
->>
->> Today I export these through an psuedo-xattr in cifs.ko, I am curious ho=
-w
->> NTFS and FAT export these on linux.
->
-> NTFS: Not at all.
->
-> FAT: The hidden bit causes the filename to get a dot prepended (and nothi=
-ng
-> else is noted).
->
->> > Autofs, ntfs, btrfs, ...
->>
->> Given the overlap in optional attributes between the network
->> protocol and local NTFS (and ReFS and to a lesser extent FAT)
->> I would expect cifs.ko and the ntfs implementations
->> info to map pretty closely.
->
-> Yep. =A0I wasn't going to do more filesystems till we'd finished arguing =
-about
-> the basic arrangement of things in struct xstat.
-
-makes sense
-
-
->> > Handle remote filesystems being offline and indicate this with
->> > XSTAT_INFO_OFFLINE.
->>
->> You already have support for an indicator for offline files (HSM),
->
-> HSM
-
-HSM is the more general case of two tiered data (disk vs. tape)
-
-en.wikipedia.org/wiki/Hierarchical_storage_management
-
-in the simplest case on "disk" (fast) vs. moved to tape (slow to retrieve)
-
-
->> would XSTAT_INFO_OFFLINE be intended for the case
->> where the network session to the server is disconnected
->> (and in which you case the application does not want to reconnect)?
->
-> Hmmm... =A0Interesting question. =A0Both NTFS and CIFS have an offline at=
-tribute
-> (which is where I originally got this from) - but should I have a separat=
-e
-> indicator to indicate the client can't access a server over a network
-> (ie. we've gone to disconnected operation on this file)? =A0E.g. should t=
-here be
-> a XSTAT_INFO_DISCONNECTED too?
-
-my reaction is no, since it adds complexity.  If you do a stat on a disconn=
-ected
-volume (where the network is temporarily down) reconnection will be attempt=
-ed.
-If reconnection fails then the xstat will either fail or be retried forever
-depending on the value of "hard" vs. "soft" mount flag.
-
---=20
-Thanks,
-
-Steve
+T24gVGh1LCAyMDEyLTA0LTI2IGF0IDA5OjU0IC0wNTAwLCBTdGV2ZSBGcmVuY2ggd3JvdGU6DQo+
+IE9uIFRodSwgQXByIDI2LCAyMDEyIGF0IDk6MjUgQU0sIERhdmlkIEhvd2VsbHMgPGRob3dlbGxz
+QHJlZGhhdC5jb20+IHdyb3RlOg0KPiA+IFN0ZXZlIEZyZW5jaCA8c21mcmVuY2hAZ21haWwuY29t
+PiB3cm90ZToNCj4gPg0KPiA+PiBXb3VsZCBpdCBiZSBiZXR0ZXIgdG8gbWFrZSB0aGUgc3RhYmxl
+IHZzIHZvbGF0aWxlIGlub2RlIG51bWJlciBhbiBhdHRyaWJ1dGUNCj4gPj4gb2YgdGhlIHZvbHVt
+ZSAgb3Igc29tZXRoaW5nIHJldHVybmVkIGJ5IHRoZSBwcm9wb3NlZCB4c3RhdD8NCj4gPg0KPiA+
+IEknbSBub3Qgc3VyZSB3aGF0IHlvdSBtZWFuIGJ5IGEgc3RhYmxlIHZzIGEgdm9sYXRpbGUgaW5v
+ZGUgbnVtYmVyLg0KPiANCj4gQm90aCBORlMgYW5kIENJRlMgKGFuZCBTTUIyKSBjYW4gcmV0dXJu
+IGlub2RlIG51bWJlcnMgb3IgZXF1aXZhbGVudA0KPiB1bmlxdWUgaWRlbnRpZmllciwgYnV0IGlu
+IHRoZSBjYXNlIG9mIENJRlMgc29tZSBvbGQgc2VydmVycyBkb24ndCBzdXBwb3J0IHRoZQ0KPiBj
+YWxscyB3aGljaCByZXR1cm4gaW5vZGUgbnVtYmVycyAob3IgZG9uJ3QgcmV0dXJuIHRoZW0gZm9y
+IGFsbCBmaWxlIHN5c3RlbQ0KPiB0eXBlcywgV2luZG93cyBGQVQ/KSBzbyBpbiB0aGVzZSBjYXNl
+cyBjaWZzIGhhcyB0byBjcmVhdGUgaW5vZGUNCj4gbnVtYmVycyBvbiB0aGUgZmx5DQo+IG9uIHRo
+ZSBjbGllbnQuICAgaW5vZGUgbnVtYmVycyBjcmVhdGVkIG9uIHRoZSBjbGllbnQgYXJlIG5vdCAi
+c3RhYmxlIiB0aGV5DQo+IGNhbiBjaGFuZ2Ugb24gdW5tb3VudC9yZW1vdW50ICh3aGljaCBjYW4g
+Y2F1c2UgcHJvYmxlbXMgZm9yIGJhY2t1cA0KPiBhcHBsaWNhdGlvbnMpLg0KPiANCj4gU2ltaWxh
+cmx5IE5GU3Y0IGRvZXMgbm90IHJlcXVpcmUgdGhhdCBzZXJ2ZXJzIGFsd2F5cyByZXR1cm4gc3Rh
+YmxlIGlub2RlIG51bWJlcnMNCj4gKHRoYXQgd2lsbCBuZXZlciBjaGFuZ2UpIGFuZCBpbnRyb2R1
+Y2VkIGEgY29uY2VwdCBvZiAidm9sYXRpbGUgZmlsZSBoYW5kbGUuIg0KPiBXZSBoYXZlIHJ1biBp
+bnRvIHRoaXMgaW4gdHdvIGNhc2VzICh0aGVyZSBhcmUgcHJvYmFibHkgbW9yZSkgLQ0KPiBTcGVj
+aWFsaXplZCBORlMgc2VydmVycw0KPiBmb3IgSFBDIHdoaWNoIGRlYWwgd2l0aCBsb3RzIG9mIHRy
+YW5zaWVudCBpbm9kZXMsIGFuZCBzZWNvbmQgdGhvc2UgZm9yIHNlcnZlcnMNCj4gd2hpY2ggYmFz
+ZSB0aGVyZSBpbm9kZSBudW1iZXIgb24gcGF0aCAoV2luZG93cyBORlM/KS4gIFNlZQ0KPiBodHRw
+Oi8vZG9jcy5vcmFjbGUuY29tL2NkL0UxOTA4Mi0wMS84MTktMTYzNC9yZnNyZWZlci0xMzcvaW5k
+ZXguaHRtbA0KPiBvciB0aGUgTkZTdjQgUkZDLg0KPiANCj4gQmFzaWNhbGx5IHRoZSBxdWVzdGlv
+biBpcyB3aGV0aGVyIGl0IGlzIHdvcnRoIHJlcG9ydGluZyBhIGZsYWcgb24gdGhlDQo+IGNhbGwg
+d2hpY2ggcmV0dXJucw0KPiB0aGUgaW5vZGUgbnVtYmVyIHRvIGluZGljYXRlIHRoYXQgdGhlIGlu
+b2RlIG51bWJlciBpcyAic3RhYmxlIiAod291bGQgbm90IGNoYW5nZQ0KPiBvbiByZWJvb3Qgb3Ig
+cmVjb25uZWN0aW9uKSBvciAidm9sYXRpbGUuIiAgICBTaW5jZSB0aGUgbWFqb3JpdHkgb2YgTkZT
+DQo+IGFuZCBTTUIyIHNlcnZlcnMNCj4gY2FuIHJldHVybiBzdGFibGUgaW5vZGUgbnVtYmVycywg
+SSBkb24ndCBmZWVsIHN0cm9uZ2x5IGFib3V0IHRoZSBuZWVkDQo+IGZvciBhbiBpbmRpY2F0b3IN
+Cj4gb2YgInN0YWJsZSIgdnMuICJ2b2xhdGlsZSIgYnV0IEkgbWVudGlvbiBpdCBiZWNhdXNlIGJh
+Y2t1cCBhbmQNCj4gbWlncmF0aW9uIGFwcGxpY2F0aW9ucw0KPiBtZW50aW9uIHRoaXMgKGlmIGlu
+b2RlIG51bWJlcnMgYXJlIHZvbGF0aWxlLCB0aGV5IG1heSBoYXZlIHRvIGNoZWNrDQo+IGZvciBo
+YXJkbGlua3MgZGlmZmVyZW50bHkNCj4gZm9yIGV4YW1wbGUpDQoNCkkgZG9uJ3QgdW5kZXJzdGFu
+ZC4gSWYgdGhlIGZpbGVzeXN0ZW0gZG9lc24ndCBzdXBwb3J0IHJlYWwgaW5vZGUNCm51bWJlcnMs
+IHRoZW4gd2h5IHJlcG9ydCB0aGVtIGF0IGFsbD8gV2hhdCB1c2Ugd291bGQgYW4gYXBwbGljYXRp
+b24gaGF2ZQ0KZm9yIGFuIGlub2RlIG51bWJlciB0aGF0IGNhbid0IGJlIHVzZWQgdG8gaWRlbnRp
+ZnkgaGFyZCBsaW5rZWQgZmlsZXM/DQoNCkNoZWVycw0KICBUcm9uZA0KLS0gDQpUcm9uZCBNeWts
+ZWJ1c3QNCkxpbnV4IE5GUyBjbGllbnQgbWFpbnRhaW5lcg0KDQpOZXRBcHANClRyb25kLk15a2xl
+YnVzdEBuZXRhcHAuY29tDQp3d3cubmV0YXBwLmNvbQ0KDQo=
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
