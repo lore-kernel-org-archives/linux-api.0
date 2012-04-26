@@ -1,52 +1,49 @@
 From: David Howells <dhowells@redhat.com>
 Subject: Re: [PATCH 1/6] xstat: Add a pair of system calls to make extended file stats available
-Date: Thu, 26 Apr 2012 14:32:36 +0100
-Message-ID: <18195.1335447156@redhat.com>
-References: <5D4BF4AB-47E9-4E25-B2A3-F895C98BDAA3@dilger.ca> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <20120419140612.17272.57774.stgit@warthog.procyon.org.uk>
-Return-path: <libc-alpha-return-27979-glibc-alpha=m.gmane.org@sourceware.org>
-In-Reply-To: <5D4BF4AB-47E9-4E25-B2A3-F895C98BDAA3@dilger.ca>
+Date: Thu, 26 Apr 2012 14:40:17 +0100
+Message-ID: <18533.1335447617@redhat.com>
+References: <20120424212911.GA26073@fieldses.org> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <20120419140612.17272.57774.stgit@warthog.procyon.org.uk>
+Return-path: <libc-alpha-return-27980-glibc-alpha=m.gmane.org@sourceware.org>
+In-Reply-To: <20120424212911.GA26073@fieldses.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
 List-Post: <mailto:libc-alpha@sourceware.org>
 List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
 Sender: libc-alpha-owner@sourceware.org
-To: Andreas Dilger <adilger@dilger.ca>
+To: "J. Bruce Fields" <bfields@fieldses.org>
 Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
-Andreas Dilger <adilger@dilger.ca> wrote:
+J. Bruce Fields <bfields@fieldses.org> wrote:
 
-> > The idea was initially proposed as a set of xattrs that could be
-> > retrieved with getxattr(), but the general preferance proved to be
-> > for new syscalls with an extended stat structure.
+> > (11) Include granularity fields in the time data to indicate the
+> >      granularity of each of the times (NFSv4 time_delta) [Steve French].
 > 
-> I would comment that it was the opposite.  It was originally a
-> stat()-like extension that degraded into a messy getxattr() mess.
+> It looks like you're including this with *each* time?  But surely
+> there's no filesystem with different granularity (say) for ctime than
+> for mtime.
 
-Ummm...  No, my first attempt was definitely through getxattr().  You even
-commented on it.
+I put it in each time struct to use up the hole there.  I could, I suppose,
+split tv_sec from tv_nsec to get rid of the holes and then put the granularity
+separately.  That means that someone who wanted both the tv_sec and tv_nsec
+would have to fish them out separately, but that's probably okay.
 
-> > The fields in struct xstat come in a number of classes:
-> > 
-> > (0) st_dev, st_blksize, st_information.
-> > 
-> >     These are local data and are always available.
-> 
-> For the extra two bits it would cost us, I don't think st_blksize
-> and st_information should always be returned.
+I could even make the granularity bigger then, to allow for the possibility of
+having a granularity >4s, but I don't know of anywhere that requires a gran >2.
 
-Fair enough.
+> Also, nfsd will want only one time_delta, not one for each time.
 
-> st_blksize may be variable for a distributed filesystem,
+time_delta?  Is that the same as granularity?
 
-I wonder if there's a way to make this explicit - or is it something that if
-the bit isn't set, you can't use the value in st_blksize.  I wonder if this
-value always has to be non-zero to make sure existing stat() doesn't explode.
+> Note also we need to document carefully what this means: I think it
+> should be the granularity that the filesystem is capable of
+> representing, but people are sometimes surprised to find out that the
+> actual time source is usually more coarse-grained than that.
 
-> and some of the fields in st_information (offline) may not be free to access
-> either.
-
-True.
+Yeah, but the latter is something you may not be able to determine, and may
+indeed change over time (say someone updates the server kernel to one with a
+more fine-grained software clock).  Also, for a network fs, it may depend on
+the client that happened to set that time last.
 
 David
