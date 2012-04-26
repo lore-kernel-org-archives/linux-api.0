@@ -1,66 +1,63 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH 1/6] xstat: Add a pair of system calls to make extended
- file stats available
-Date: Thu, 26 Apr 2012 10:23:29 -0400
-Message-ID: <20120426142329.GA7176@fieldses.org>
-References: <20120424212911.GA26073@fieldses.org>
- <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
- <20120419140612.17272.57774.stgit@warthog.procyon.org.uk>
- <18533.1335447617@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <18533.1335447617-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org, kfm-devel-RoXCvvDuEio@public.gmane.org, nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 0/6] Extended file stat system call
+Date: Thu, 26 Apr 2012 15:25:58 +0100
+Message-ID: <20656.1335450358@redhat.com>
+References: <CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
+Return-path: <libc-alpha-return-27990-glibc-alpha=m.gmane.org@sourceware.org>
+In-Reply-To: <CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+To: Steve French <smfrench@gmail.com>
+Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 26, 2012 at 02:40:17PM +0100, David Howells wrote:
-> J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org> wrote:
-> 
-> > > (11) Include granularity fields in the time data to indicate the
-> > >      granularity of each of the times (NFSv4 time_delta) [Steve French].
-> > 
-> > It looks like you're including this with *each* time?  But surely
-> > there's no filesystem with different granularity (say) for ctime than
-> > for mtime.
-> 
-> I put it in each time struct to use up the hole there.  I could, I suppose,
-> split tv_sec from tv_nsec to get rid of the holes and then put the granularity
-> separately.  That means that someone who wanted both the tv_sec and tv_nsec
-> would have to fish them out separately, but that's probably okay.
-> 
-> I could even make the granularity bigger then, to allow for the possibility of
-> having a granularity >4s, but I don't know of anywhere that requires a gran >2.
-> 
-> > Also, nfsd will want only one time_delta, not one for each time.
-> 
-> time_delta?  Is that the same as granularity?
+Steve French <smfrench@gmail.com> wrote:
 
-Right, sorry, that's just the NFS word for the same thing.
+> Would it be better to make the stable vs volatile inode number an attribute
+> of the volume  or something returned by the proposed xstat?
 
-So my whine here is just that most callers only want to know one number
-and we're giving them three.  Whatever, they can just pick one.  It
-feels a little ugly, but feel free to ignore my nitpicking....
+I'm not sure what you mean by a stable vs a volatile inode number.
 
-(Though as Steve French asked: could we add this to statfs (or something
-similar) instead?)
-
+> > Should things like the Windows Archive, Hidden and System bits be handled
+> > through IOC flags, perhaps expanded to 64-bits?
 > 
-> > Note also we need to document carefully what this means: I think it
-> > should be the granularity that the filesystem is capable of
-> > representing, but people are sometimes surprised to find out that the
-> > actual time source is usually more coarse-grained than that.
+> Today I export these through an psuedo-xattr in cifs.ko, I am curious how
+> NTFS and FAT export these on linux.
+
+NTFS: Not at all.
+
+FAT: The hidden bit causes the filename to get a dot prepended (and nothing
+else is noted).
+
+> > Autofs, ntfs, btrfs, ...
 > 
-> Yeah, but the latter is something you may not be able to determine, and may
-> indeed change over time (say someone updates the server kernel to one with a
-> more fine-grained software clock).  Also, for a network fs, it may depend on
-> the client that happened to set that time last.
+> Given the overlap in optional attributes between the network
+> protocol and local NTFS (and ReFS and to a lesser extent FAT)
+> I would expect cifs.ko and the ntfs implementations
+> info to map pretty closely.
 
-Yep, agreed, the granularity should be what the filesystem can store, we
-should just make sure that statement makes it into any eventual man
-pages or other documentation, since it does seem to surprise people.
+Yep.  I wasn't going to do more filesystems till we'd finished arguing about
+the basic arrangement of things in struct xstat.
 
---b.
+> > Handle remote filesystems being offline and indicate this with
+> > XSTAT_INFO_OFFLINE.
+> 
+> You already have support for an indicator for offline files (HSM),
+
+HSM?
+
+> would XSTAT_INFO_OFFLINE be intended for the case
+> where the network session to the server is disconnected
+> (and in which you case the application does not want to reconnect)?
+
+Hmmm...  Interesting question.  Both NTFS and CIFS have an offline attribute
+(which is where I originally got this from) - but should I have a separate
+indicator to indicate the client can't access a server over a network
+(ie. we've gone to disconnected operation on this file)?  E.g. should there be
+a XSTAT_INFO_DISCONNECTED too?
+
+David
