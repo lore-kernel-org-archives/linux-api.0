@@ -1,85 +1,103 @@
-From: Steve French <smfrench@gmail.com>
-Subject: Re: [PATCH 1/6] xstat: Add a pair of system calls to make extended
- file stats available
-Date: Thu, 26 Apr 2012 12:06:22 -0500
-Message-ID: <CAH2r5mut083KtCZWMsvC08WtJPJpBxXm6M0HCY4hk8T3hN7xdg@mail.gmail.com>
-References: <CAH2r5muMb8m9-fMc_tcfn3ku_s55q9EEbc-vzvoFjPnsDdq1gA@mail.gmail.com>
-	<20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-	<20120419140612.17272.57774.stgit@warthog.procyon.org.uk>
-	<20120424212911.GA26073@fieldses.org>
-	<18765.1335447954@redhat.com>
-	<20120426142816.GB7176@fieldses.org>
+From: "Myklebust, Trond" <Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 0/6] Extended file stat system call
+Date: Thu, 26 Apr 2012 17:06:51 +0000
+Message-ID: <1335460011.9701.30.camel@lade.trondhjem.org>
+References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
+	 <CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com>
+	 <20656.1335450358@redhat.com>
+	 <CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com>
+	 <1335453958.9701.10.camel@lade.trondhjem.org>
+	 <CAH2r5mt5af-_hxBRKK72iD5Gr99bo91ec78Rov8EGVEx8=21mA@mail.gmail.com>
+	 <1335459642.9701.27.camel@lade.trondhjem.org>
+	 <CAH2r5mvmCfLrxRHje6Wx5X84zxPEHwRMUJGsjvWBujMu7w841w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20120426142816.GB7176@fieldses.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: "J. Bruce Fields" <bfields@fieldses.org>
-Cc: David Howells <dhowells@redhat.com>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAH2r5mvmCfLrxRHje6Wx5X84zxPEHwRMUJGsjvWBujMu7w841w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Content-ID: <3AB7AE9DDB937E4296DEC1B33C03F5E0-oP88Kt8RkgzdA/Lu/QRl1Q@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org" <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org" <wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org>, "kfm-devel-RoXCvvDuEio@public.gmane.org" <kfm-devel-RoXCvvDuEio@public.gmane.org>, "nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org" <nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 26, 2012 at 9:28 AM, J. Bruce Fields <bfields@fieldses.org>=
- wrote:
-> On Thu, Apr 26, 2012 at 02:45:54PM +0100, David Howells wrote:
->> Steve French <smfrench@gmail.com> wrote:
->>
->> > I also would prefer that we simply treat the time granularity as p=
-art
->> > of the superblock (mounted volume) ie returned on fstat rather tha=
-n on
->> > every stat of the filesystem. =A0 For cifs mounts we could conceiv=
-ably
->> > have different time granularity (1 or 2 second) on mounts to old
->> > servers rather than 100 nanoseconds.
->>
->> The question is whether you want to have to do a statfs in addition =
-to a stat?
->> I suppose you can potentially cache the statfs based on device numbe=
-r.
->>
->> That said, there are cases where caching filesystem-level info based=
- on i_dev
->> doesn't work. =A0OpenAFS springs to mind as that only has one superb=
-lock and
->> thus one set of device numbers, but keeps all the inodes for all the=
- different
->> volumes it may have mounted there.
->>
->> I don't know whether this would be a problem for CIFS too - say on a=
- windows
->> server you fabricate P:, for example, by joining together several fi=
-lesystems
->> (with junctions?). =A0How does this appear on a Linux client when it=
- steps from
->> one filesystem to another within a mounted share?
->
-> In the NFS case we do try to preserve filesystem boundaries as well a=
-s
-> we can--the protocol has an fsid field and the client creates a new
-> mount each time it sees it change. =A0And the protocol defines time_d=
-elta
-> as a per-filesystem attribute (though, somewhat hilariously, there's
-> also a per-filesystem "homogeneous" attribute that a server can clear=
- to
-> indicate the per-filesystem attributes might actually vary within the
-> filesystem.)
-
-Thank you for reminding me, I need to look at this case more ...
-although cifs creates  implicit submounts (as we traverse DFS referrals=
-)
-there are probably cases where we need to do the same thing as NFS
-and look at the fsid so we don't run into a Windows server
-exporting something with a "junction" (e.g. directory redirection to
-a DVD drive for example) and thus cross file system volume boundaries.
-
-
---=20
-Thanks,
-
-Steve
+T24gVGh1LCAyMDEyLTA0LTI2IGF0IDEyOjAzIC0wNTAwLCBTdGV2ZSBGcmVuY2ggd3JvdGU6DQo+
+IE9uIFRodSwgQXByIDI2LCAyMDEyIGF0IDEyOjAwIFBNLCBNeWtsZWJ1c3QsIFRyb25kDQo+IDxU
+cm9uZC5NeWtsZWJ1c3RAbmV0YXBwLmNvbT4gd3JvdGU6DQo+ID4gT24gVGh1LCAyMDEyLTA0LTI2
+IGF0IDExOjU2IC0wNTAwLCBTdGV2ZSBGcmVuY2ggd3JvdGU6DQo+ID4+IE9uIFRodSwgQXByIDI2
+LCAyMDEyIGF0IDEwOjI1IEFNLCBNeWtsZWJ1c3QsIFRyb25kDQo+ID4+IDxUcm9uZC5NeWtsZWJ1
+c3RAbmV0YXBwLmNvbT4gd3JvdGU6DQo+ID4+ID4gT24gVGh1LCAyMDEyLTA0LTI2IGF0IDA5OjU0
+IC0wNTAwLCBTdGV2ZSBGcmVuY2ggd3JvdGU6DQo+ID4+ID4+IE9uIFRodSwgQXByIDI2LCAyMDEy
+IGF0IDk6MjUgQU0sIERhdmlkIEhvd2VsbHMgPGRob3dlbGxzQHJlZGhhdC5jb20+IHdyb3RlOg0K
+PiA+PiA+PiA+IFN0ZXZlIEZyZW5jaCA8c21mcmVuY2hAZ21haWwuY29tPiB3cm90ZToNCj4gPj4g
+Pj4gPg0KPiA+PiA+PiA+PiBXb3VsZCBpdCBiZSBiZXR0ZXIgdG8gbWFrZSB0aGUgc3RhYmxlIHZz
+IHZvbGF0aWxlIGlub2RlIG51bWJlciBhbiBhdHRyaWJ1dGUNCj4gPj4gPj4gPj4gb2YgdGhlIHZv
+bHVtZSAgb3Igc29tZXRoaW5nIHJldHVybmVkIGJ5IHRoZSBwcm9wb3NlZCB4c3RhdD8NCj4gPj4g
+Pj4gPg0KPiA+PiA+PiA+IEknbSBub3Qgc3VyZSB3aGF0IHlvdSBtZWFuIGJ5IGEgc3RhYmxlIHZz
+IGEgdm9sYXRpbGUgaW5vZGUgbnVtYmVyLg0KPiA+PiA+Pg0KPiA+PiA+PiBCb3RoIE5GUyBhbmQg
+Q0lGUyAoYW5kIFNNQjIpIGNhbiByZXR1cm4gaW5vZGUgbnVtYmVycyBvciBlcXVpdmFsZW50DQo+
+ID4+ID4+IHVuaXF1ZSBpZGVudGlmaWVyLCBidXQgaW4gdGhlIGNhc2Ugb2YgQ0lGUyBzb21lIG9s
+ZCBzZXJ2ZXJzIGRvbid0IHN1cHBvcnQgdGhlDQo+ID4+ID4+IGNhbGxzIHdoaWNoIHJldHVybiBp
+bm9kZSBudW1iZXJzIChvciBkb24ndCByZXR1cm4gdGhlbSBmb3IgYWxsIGZpbGUgc3lzdGVtDQo+
+ID4+ID4+IHR5cGVzLCBXaW5kb3dzIEZBVD8pIHNvIGluIHRoZXNlIGNhc2VzIGNpZnMgaGFzIHRv
+IGNyZWF0ZSBpbm9kZQ0KPiA+PiA+PiBudW1iZXJzIG9uIHRoZSBmbHkNCj4gPj4gPj4gb24gdGhl
+IGNsaWVudC4gICBpbm9kZSBudW1iZXJzIGNyZWF0ZWQgb24gdGhlIGNsaWVudCBhcmUgbm90ICJz
+dGFibGUiIHRoZXkNCj4gPj4gPj4gY2FuIGNoYW5nZSBvbiB1bm1vdW50L3JlbW91bnQgKHdoaWNo
+IGNhbiBjYXVzZSBwcm9ibGVtcyBmb3IgYmFja3VwDQo+ID4+ID4+IGFwcGxpY2F0aW9ucykuDQo+
+ID4+ID4+DQo+ID4+ID4+IFNpbWlsYXJseSBORlN2NCBkb2VzIG5vdCByZXF1aXJlIHRoYXQgc2Vy
+dmVycyBhbHdheXMgcmV0dXJuIHN0YWJsZSBpbm9kZSBudW1iZXJzDQo+ID4+ID4+ICh0aGF0IHdp
+bGwgbmV2ZXIgY2hhbmdlKSBhbmQgaW50cm9kdWNlZCBhIGNvbmNlcHQgb2YgInZvbGF0aWxlIGZp
+bGUgaGFuZGxlLiINCj4gPj4gPj4gV2UgaGF2ZSBydW4gaW50byB0aGlzIGluIHR3byBjYXNlcyAo
+dGhlcmUgYXJlIHByb2JhYmx5IG1vcmUpIC0NCj4gPj4gPj4gU3BlY2lhbGl6ZWQgTkZTIHNlcnZl
+cnMNCj4gPj4gPj4gZm9yIEhQQyB3aGljaCBkZWFsIHdpdGggbG90cyBvZiB0cmFuc2llbnQgaW5v
+ZGVzLCBhbmQgc2Vjb25kIHRob3NlIGZvciBzZXJ2ZXJzDQo+ID4+ID4+IHdoaWNoIGJhc2UgdGhl
+cmUgaW5vZGUgbnVtYmVyIG9uIHBhdGggKFdpbmRvd3MgTkZTPykuICBTZWUNCj4gPj4gPj4gaHR0
+cDovL2RvY3Mub3JhY2xlLmNvbS9jZC9FMTkwODItMDEvODE5LTE2MzQvcmZzcmVmZXItMTM3L2lu
+ZGV4Lmh0bWwNCj4gPj4gPj4gb3IgdGhlIE5GU3Y0IFJGQy4NCj4gPj4gPj4NCj4gPj4gPj4gQmFz
+aWNhbGx5IHRoZSBxdWVzdGlvbiBpcyB3aGV0aGVyIGl0IGlzIHdvcnRoIHJlcG9ydGluZyBhIGZs
+YWcgb24gdGhlDQo+ID4+ID4+IGNhbGwgd2hpY2ggcmV0dXJucw0KPiA+PiA+PiB0aGUgaW5vZGUg
+bnVtYmVyIHRvIGluZGljYXRlIHRoYXQgdGhlIGlub2RlIG51bWJlciBpcyAic3RhYmxlIiAod291
+bGQgbm90IGNoYW5nZQ0KPiA+PiA+PiBvbiByZWJvb3Qgb3IgcmVjb25uZWN0aW9uKSBvciAidm9s
+YXRpbGUuIiAgICBTaW5jZSB0aGUgbWFqb3JpdHkgb2YgTkZTDQo+ID4+ID4+IGFuZCBTTUIyIHNl
+cnZlcnMNCj4gPj4gPj4gY2FuIHJldHVybiBzdGFibGUgaW5vZGUgbnVtYmVycywgSSBkb24ndCBm
+ZWVsIHN0cm9uZ2x5IGFib3V0IHRoZSBuZWVkDQo+ID4+ID4+IGZvciBhbiBpbmRpY2F0b3INCj4g
+Pj4gPj4gb2YgInN0YWJsZSIgdnMuICJ2b2xhdGlsZSIgYnV0IEkgbWVudGlvbiBpdCBiZWNhdXNl
+IGJhY2t1cCBhbmQNCj4gPj4gPj4gbWlncmF0aW9uIGFwcGxpY2F0aW9ucw0KPiA+PiA+PiBtZW50
+aW9uIHRoaXMgKGlmIGlub2RlIG51bWJlcnMgYXJlIHZvbGF0aWxlLCB0aGV5IG1heSBoYXZlIHRv
+IGNoZWNrDQo+ID4+ID4+IGZvciBoYXJkbGlua3MgZGlmZmVyZW50bHkNCj4gPj4gPj4gZm9yIGV4
+YW1wbGUpDQo+ID4+ID4NCj4gPj4gPiBJIGRvbid0IHVuZGVyc3RhbmQuIElmIHRoZSBmaWxlc3lz
+dGVtIGRvZXNuJ3Qgc3VwcG9ydCByZWFsIGlub2RlDQo+ID4+ID4gbnVtYmVycywgdGhlbiB3aHkg
+cmVwb3J0IHRoZW0gYXQgYWxsPyBXaGF0IHVzZSB3b3VsZCBhbiBhcHBsaWNhdGlvbiBoYXZlDQo+
+ID4+ID4gZm9yIGFuIGlub2RlIG51bWJlciB0aGF0IGNhbid0IGJlIHVzZWQgdG8gaWRlbnRpZnkg
+aGFyZCBsaW5rZWQgZmlsZXM/DQo+ID4+DQo+ID4+IFdlbGwgLi4uIHlvdSBoYXZlIHRvIGhhdmUg
+YW4gaW5vZGUgbnVtYmVyIG9uIHRoZSBMaW51eCBjbGllbnQgc2lkZSBldmVuIGlmDQo+ID4+IHRo
+ZSBzZXJ2ZXIgZG9lc24ndCByZXBvcnQgdGhlbSAob3IgaGFzIGEgYnVnIGFuZCByZXBvcnRzIGR1
+cGxpY2F0ZXMpLg0KPiA+PiBJZiB5b3UgY2FuJ3QgdGVsbCBoYXJkbGlua2VkIGZpbGVzIGFwYXJ0
+IGZpeCB0aGUgc2VydmVyIChidXQgaW4gdGhlDQo+ID4+IGNhc2VzIHdoZXJlIHRoZSBmaWxlIHN5
+c3RlbXMgaGFzIHRoaXMgcHJvYmxlbSB0aGUgc2VydmVyIGRvZXNuJ3QgdXN1YWxseQ0KPiA+PiBz
+dXBwb3J0IGhhcmRsaW5rcyBlaXRoZXIpLg0KPiA+Pg0KPiA+PiBJZiB0aGUgc2VydmVyJ3MgZmls
+ZSBzeXN0ZW0gaW50ZXJuYWwgc3RydWN0dXJlcyBkb24ndCBzdXBwb3J0IHJlYWwgaW5vZGUNCj4g
+Pj4gbnVtYmVycyAoc3VjaCBhcyBGQVQgb3IgYSByYW1kaXNrKSB0aGVuIGl0IGVpdGhlciBoYXMg
+dG8gbWFrZSB0aGVtDQo+ID4+IHVwIGJhc2VkIG9uIHNvbWV0aGluZyBsaWtlIHBhdGggbmFtZSBv
+ciBzb21lIG90aGVyIGF0dHJpYnV0ZSBvZiB0aGUNCj4gPj4gZmlsZSBvbiBkaXNrLg0KPiA+Pg0K
+PiA+PiBTZXJ2ZXJzIGxpa2UgTmV0QXBwIGlzIHdoZXJlIHRoaXMgZ2V0cyBpbnRlcmVzdGluZyAt
+IGZvciBjaWZzIGUuZy4gbGV2ZWwgMTAwOQ0KPiA+PiBxdWVyeSBmaWxlIGluZm8gaXMgdXNlZCB0
+byBxdWVyeV9maWxlX2ludGVybmFsX2luZm8gKHRoZSBpbm9kZSBudW1iZXIpIGJ1dA0KPiA+PiB3
+aGF0IGlmIHRoZSBzZXJ2ZXIgY2FuIG5vdCByZXBvcnQgaW5vZGUgbnVtYmVycyAoZHVlIHRvIGEg
+YnVnKSBpbg0KPiA+PiBhbGwgY2FzZXMuDQo+ID4NCj4gPiBSaWdodCwgYnV0IG5vbmUgb2YgdGhp
+cyBleHBsYWlucyB3aHkgd2UgbmVlZCB0byByZXBvcnQgdGhlc2UgYm9ndXMgaW5vZGUNCj4gPiBu
+dW1iZXJzIHRvIHRoZSBhcHBsaWNhdGlvbiBpbiB0aGUgeHN0YXQoKSByZXBseS4NCj4gDQo+IHRo
+ZSBxdWVzdGlvbiBpcyB3aGV0aGVyIHRoZSBhcHBsaWNhdGlvbiAoYmFja3VwKSB3b3VsZCBuZWVk
+IHRvIGtub3cNCj4gdGhhdCB0aGUgaW5vZGUgbnVtYmVycyBhcmUgYm9ndXMgYW5kIGZyb20gbXkg
+Y29udmVyc2F0aW9ucyB3aXRoDQo+IGd1eXMgd3JpdGluZyBiYWNrdXAgc29mdHdhcmUgaXQgc2Vl
+bXMgdGhhdCBzdWNoIGRhdGEgaXMgdXNlZnVsIHRvIHRoZW0uDQoNCllvdSBhcmUgc3RpbGwgbm90
+IGV4cGxhaW5pbmcgd2h5IHRoZXkgbmVlZCB0byBrbm93IHRoZSB2YWx1ZXMgYXQgYWxsPyBJZg0K
+dGhlIHZhbHVlcyBhcmUgYm9ndXMsIHRoZW4gZG9uJ3QgcmV0dXJuIHRoZW0sIGFuZCBkb24ndCBz
+ZXQgdGhlIGZsYWcNCnRoYXQgc2F5cyB0aGV5IGFyZSBiZWluZyByZXR1cm5lZC4NCg0KVHJvbmQN
+Cg0KLS0gDQpUcm9uZCBNeWtsZWJ1c3QNCkxpbnV4IE5GUyBjbGllbnQgbWFpbnRhaW5lcg0KDQpO
+ZXRBcHANClRyb25kLk15a2xlYnVzdEBuZXRhcHAuY29tDQp3d3cubmV0YXBwLmNvbQ0KDQo=
 --
-To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
-n
-the body of a message to majordomo@vger.kernel.org
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
