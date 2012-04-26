@@ -1,37 +1,66 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 0/6] Extended file stat system call
-Date: Thu, 26 Apr 2012 15:16:00 +0100
-Message-ID: <20173.1335449760@redhat.com>
-References: <20120419230556.A80392C0AF@topped-with-meat.com> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <20120419163238.61D382C0DF@topped-with-meat.com> <4F9088D6.9020203@cs.ucla.edu>
-Return-path: <libc-alpha-return-27988-glibc-alpha=m.gmane.org@sourceware.org>
-In-Reply-To: <20120419230556.A80392C0AF@topped-with-meat.com>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-To: Roland McGrath <roland@hack.frob.com>
-Cc: dhowells@redhat.com, Paul Eggert <eggert@cs.ucla.edu>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
+From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH 1/6] xstat: Add a pair of system calls to make extended
+ file stats available
+Date: Thu, 26 Apr 2012 10:23:29 -0400
+Message-ID: <20120426142329.GA7176@fieldses.org>
+References: <20120424212911.GA26073@fieldses.org>
+ <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
+ <20120419140612.17272.57774.stgit@warthog.procyon.org.uk>
+ <18533.1335447617@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <18533.1335447617-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org, kfm-devel-RoXCvvDuEio@public.gmane.org, nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Roland McGrath <roland@hack.frob.com> wrote:
+On Thu, Apr 26, 2012 at 02:40:17PM +0100, David Howells wrote:
+> J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org> wrote:
+> 
+> > > (11) Include granularity fields in the time data to indicate the
+> > >      granularity of each of the times (NFSv4 time_delta) [Steve French].
+> > 
+> > It looks like you're including this with *each* time?  But surely
+> > there's no filesystem with different granularity (say) for ctime than
+> > for mtime.
+> 
+> I put it in each time struct to use up the hole there.  I could, I suppose,
+> split tv_sec from tv_nsec to get rid of the holes and then put the granularity
+> separately.  That means that someone who wanted both the tv_sec and tv_nsec
+> would have to fish them out separately, but that's probably okay.
+> 
+> I could even make the granularity bigger then, to allow for the possibility of
+> having a granularity >4s, but I don't know of anywhere that requires a gran >2.
+> 
+> > Also, nfsd will want only one time_delta, not one for each time.
+> 
+> time_delta?  Is that the same as granularity?
 
-> statx seems like a better family of names.  I also think it's worthwhile to
-> see if the interface can be made to more closely match the AIX precedent.
+Right, sorry, that's just the NFS word for the same thing.
 
-I'm not sure we can make Linux xstat (or whatever) match AIX statxat() very
-closely, at least from a syscall interface point of view.  We really need the
-AT_* flags mask to be compatible with the other Linux syscalls and the length
-parameter that I originally had got argued out of existence.  I would also
-like to make it so that there aren't different 32-bit and 64-bit interfaces to
-the kernel - though that means a burden on glibc/uClibc/etc., I guess.
+So my whine here is just that most callers only want to know one number
+and we're giving them three.  Whatever, they can just pick one.  It
+feels a little ugly, but feel free to ignore my nitpicking....
 
-I do also want to be able to pass a mask of what we're actually interested in
-- but that's not part of the AIX interface.
+(Though as Steve French asked: could we add this to statfs (or something
+similar) instead?)
 
-I also like the idea of having a larger buffer with the ability to return
-extra info (such as security label xattrs), but I was told it was a poor idea,
-so that got taken out.
+> 
+> > Note also we need to document carefully what this means: I think it
+> > should be the granularity that the filesystem is capable of
+> > representing, but people are sometimes surprised to find out that the
+> > actual time source is usually more coarse-grained than that.
+> 
+> Yeah, but the latter is something you may not be able to determine, and may
+> indeed change over time (say someone updates the server kernel to one with a
+> more fine-grained software clock).  Also, for a network fs, it may depend on
+> the client that happened to set that time last.
 
-David
+Yep, agreed, the granularity should be what the filesystem can store, we
+should just make sure that statement makes it into any eventual man
+pages or other documentation, since it does seem to surprise people.
+
+--b.
