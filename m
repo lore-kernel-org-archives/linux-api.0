@@ -1,69 +1,96 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+From: Andreas Dilger <adilger@dilger.ca>
 Subject: Re: [PATCH 0/6] Extended file stat system call
-Date: Fri, 27 Apr 2012 11:06:10 +1000
-Message-ID: <20120427010610.GE9541@dastard>
-References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-Mime-Version: 1.0
+Date: Thu, 26 Apr 2012 19:29:27 -0500
+Message-ID: <3F302713-B675-4BAA-B2B7-235E03C5975F@dilger.ca>
+References: <CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com> <20656.1335450358@redhat.com> <24787.1335455535@redhat.com>
+Mime-Version: 1.0 (1.0)
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120419140558.17272.74360.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org, kfm-devel-RoXCvvDuEio@public.gmane.org, nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <24787.1335455535@redhat.com>
+Sender: linux-ext4-owner@vger.kernel.org
+Cc: Steve French <smfrench@gmail.com>, "dhowells@redhat.com" <dhowells@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, "samba-technical@lists.samba.org" <samba-technical@lists.samba.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "wine-devel@winehq.org" <wine-devel@winehq.org>, "kfm-devel@kde.org" <kfm-devel@kde.org>, "nautilus-list@gnome.org" <nautilus-list@gnome.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 19, 2012 at 03:05:58PM +0100, David Howells wrote:
-> 
-> Implement a pair of new system calls to provide extended and further extensible
-> stat functions.
-> 
-> The second of the associated patches is the main patch that provides these new
-> system calls:
-> 
-> 	ssize_t ret = xstat(int dfd,
-> 			    const char *filename,
-> 			    unsigned atflag,
-> 			    unsigned mask,
-> 			    struct xstat *buffer);
-> 
-> 	ssize_t ret = fxstat(int fd,
-> 			     unsigned atflag,
-> 			     unsigned mask,
-> 			     struct xstat *buffer);
-> 
-> which are more fully documented in the first patch's description.
-> 
-> These new stat functions provide a number of useful features, in summary:
-> 
->  (1) More information: creation time, inode generation number, data version
->      number, flags/attributes.  A subset of these is available through a number
->      of filesystems (such as CIFS, NFS, AFS, Ext4 and BTRFS).
+On 2012-04-26, at 10:52, David Howells <dhowells@redhat.com> wrote:
 
-If we are adding per-inode flags, then what do we do with filesystem
-specific flags? e.g. XFS has quite a number of per-inode flags that
-don't align with any other filesystem (e.g. filestream allocator,
-real time file, behaviour inheritence flags, etc), but may be useful
-to retrieve in such a call. We currently have an ioctl to get that
-information from each inode. Have you thought about how to handle
-such flags?
+> Steve French <smfrench@gmail.com> wrote:
+>> 
+>> Both NFS and CIFS (and SMB2) can return inode numbers or equivalent unique
+>> identifier, but in the case of CIFS some old servers don't support the calls
+>> which return inode numbers (or don't return them for all file system types,
+>> Windows FAT?) so in these cases cifs has to create inode numbers on the fly
+>> on the client.  inode numbers created on the client are not "stable" they can
+>> change on unmount/remount (which can cause problems for backup applications).
+> 
+> In the volatile case you'd probably want to unset XSTAT_INO in st_mask as the
+> inode number is a local fabrication.
 
-Along the same lines, filesytsems can have different allocation
-constraints to IO the filesystem block size - ext4 with it's
-bigalloc hack, XFS with it's per-inode extent size hints and the
-realtime device, etc. Then there's optimal IO characteristics
-(e.g. geometery hints like stripe unit/stripe width for the
-allocation policy of that given file) that applications could use
-if they were present rather than having to expose them through
-ioctls that nobody even knows about...
+I'd agree. Why fake up an inode number if the application doesn't care?  Most apps don't actually use the inode. The only uses I know for the inode number in userspace are backup, CIFS/NFS servers, and "ls -li" . 
 
-Perhaps also exposing the project ID for quota purposes, like we do
-UID and GID. That way we wouldn't need a filesystem specific ioctl
-to read it....
+> However, since there is a remote file ID,
+> we could add an XSTAT_INFO_FILE_ID flag to indicate there's a standard xattr
+> holding this.
 
-Cheers,
+It is a bit strange that the kernel would return a flag that was not requested, but not fatal. 
 
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+> On CIFS this could be the servername + pathname, on NFS this
+> could be the server address + FH on AFS the cell+volID+FID+uniquifier for
+> example.  That's independent of xstat, however, and wouldn't be returned as
+> it's a blob that could be quite large.
+> 
+> I presume in some cases, there is not a unique file ID that persists across
+> rename.
+> 
+>> Similarly NFSv4 does not require that servers always return stable inode
+>> numbers (that will never change) and introduced a concept of "volatile file
+>> handle."
+> 
+> Can I presume the inode number cannot be considered stable if the NFS4 FH is
+> non-volatile?  Furthermore, can I presume NFS2/3 inode numbers are supposed to
+> be stable?
+> 
+>> Basically the question is whether it is worth reporting a flag on the call
+>> which returns the inode number to indicate that the inode number is "stable"
+>> (would not change on reboot or reconnection) or "volatile."  Since the
+>> majority of NFS and SMB2 servers can return stable inode numbers, I don't
+>> feel strongly about the need for an indicator of "stable" vs. "volatile" but
+>> I mention it because backup and migration applications mention this (if inode
+>> numbers are volatile, they may have to check for hardlinks differently for
+>> example)
+> 
+> It may be that unsetting XSTAT_INO if you've fabricated the inode number
+> locally is sufficient.
+> 
+>>>>> Handle remote filesystems being offline and indicate this with
+>>>>> XSTAT_INFO_OFFLINE.
+>>>> 
+>>>> You already have support for an indicator for offline files (HSM),
+> 
+> Which indicator is this?  Or do you mean XSTAT_INFO_OFFLINE?
+> 
+>>>> would XSTAT_INFO_OFFLINE be intended for the case
+>>>> where the network session to the server is disconnected
+>>>> (and in which you case the application does not want to reconnect)?
+>>> 
+>>> Hmmm...  Interesting question.  Both NTFS and CIFS have an offline
+>>> attribute (which is where I originally got this from) - but should I have a
+>>> separate indicator to indicate the client can't access a server over a
+>>> network (ie. we've gone to disconnected operation on this file)?
+>>> E.g. should there be a XSTAT_INFO_DISCONNECTED too?
+>> 
+>> my reaction is no, since it adds complexity.  If you do a stat on a
+>> disconnected volume (where the network is temporarily down) reconnection will
+>> be attempted.  If reconnection fails then the xstat will either fail or be
+>> retried forever depending on the value of "hard" vs. "soft" mount flag.
+> 
+> I was thinking of how to handle disconnected operation, where you can't just
+> sit there and churn waiting for the server to come back or give an error.  On
+> the other hand, as long as there's some spare space in the struct, we can deal
+> with that later when we actually start to implement D/O.
+> 
+> David
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
