@@ -1,34 +1,62 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: David Howells <dhowells@redhat.com>
 Subject: Re: [PATCH 0/6] Extended file stat system call
-Date: Fri, 27 Apr 2012 10:19:09 +0100
-Message-ID: <3279.1335518349@redhat.com>
-References: <3F302713-B675-4BAA-B2B7-235E03C5975F@dilger.ca> <CAH2r5mv1Lijdwk5zsQwYJr4Etb6fhrRyNXm-iFCQX+HecboGrQ@mail.gmail.com> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <CAH2r5ms4WQV3DnTvqNN=2N71Cj8UHwj8Z6+RHXgrAOv6mSoyQg@mail.gmail.com> <20656.1335450358@redhat.com> <24787.1335455535@redhat.com>
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3F302713-B675-4BAA-B2B7-235E03C5975F-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org" <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org" <wine-devel-5vRYHf7vrtgdnm+yROfE0A@public.gmane.org>, "kfm-devel-RoXCvvDuEio@public.gmane.org" <kfm-devel-RoXCvvDuEio@public.gmane.org>, "nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org" <nautilus-list-rDKQcyrBJuzYtjvyW6yDsg@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
+Date: Fri, 27 Apr 2012 10:39:05 +0100
+Message-ID: <4111.1335519545@redhat.com>
+References: <20120427010610.GE9541@dastard> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
+Return-path: <libc-alpha-return-28059-glibc-alpha=m.gmane.org@sourceware.org>
+In-Reply-To: <20120427010610.GE9541@dastard>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
-Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> wrote:
+Dave Chinner <david@fromorbit.com> wrote:
 
-> > However, since there is a remote file ID, we could add an
-> > XSTAT_INFO_FILE_ID flag to indicate there's a standard xattr holding this.
-> 
-> It is a bit strange that the kernel would return a flag that was not
-> requested, but not fatal.
+> If we are adding per-inode flags, then what do we do with filesystem specific
+> flags? e.g. XFS has quite a number of per-inode flags that don't align with
+> any other filesystem (e.g. filestream allocator, real time file, behaviour
+> inheritence flags, etc), but may be useful to retrieve in such a call. We
+> currently have an ioctl to get that information from each inode. Have you
+> thought about how to handle such flags?
 
-On the other hand, if it costs the kernel nothing to generate this indicator...
+I haven't looked at XFS with regard to xstat as yet, so I'm not sure exactly
+which flags you're talking about.  The question, though, is what will actually
+make use of these flags?  Will it just be XFS tools or are they something that
+a GUI might make use of?
 
-For network filesystems, for instance, you might know that there is some other
-file ID because of the way the fs is specified.
+Either you can add some of them to the ioc flags (which may be impractical, I
+grant you) or we'd have to add an arbitrary fs-type specific field and specify
+the host fs (the provision of which might not be a bad idea in and of itself)
+to tell userspace how to interpret them.
 
-I was thinking that many of the fields will be given values, even if you don't
-ask for them, because the values (or approximations thereof) are present in
-memory already.
+> Along the same lines, filesytsems can have different allocation constraints
+> to IO the filesystem block size - ext4 with it's bigalloc hack, XFS with it's
+> per-inode extent size hints and the realtime device, etc. Then there's
+> optimal IO characteristics (e.g. geometery hints like stripe unit/stripe
+> width for the allocation policy of that given file) that applications could
+> use if they were present rather than having to expose them through ioctls
+> that nobody even knows about...
+
+Yeah...  Not representable by one number.  You'd have to unset a flag to say
+you were providing this information.
+
+However, providing a whole bunch of hints about I/O characteristics is probably
+beyond this syscall - especially if it isn't constant over the length of a
+file.  That's specialist knowledge that most applications don't need to know.
+Having a generic way to retrieve it, though, may be a good idea.
+
+OTOH, there's plenty of uncommitted space, so if we can condense the hints down
+to something small, we could perhaps add it later - but from your paragraph
+above, it doesn't sound like it'll be small.
+
+> Perhaps also exposing the project ID for quota purposes, like we do UID and
+> GID. That way we wouldn't need a filesystem specific ioctl to read it....
+
+Is this an XFS only thing?  If so, can it be generalised?
 
 David
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
