@@ -1,103 +1,173 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH 0/6] Extended file stat system call
-Date: Sat, 28 Apr 2012 10:58:56 +1000
-Message-ID: <20120428005856.GI9541@dastard>
-References: <20120427010610.GE9541@dastard>
- <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
- <4111.1335519545@redhat.com>
- <20120427131306.GG9541@dastard>
- <F2018580-9ACC-4A63-A8D1-155FA371749A@dilger.ca>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/2] core dump: re-purpose VM_ALWAYSDUMP to user
+ controlled VM_DONTDUMP
+Date: Sat, 28 Apr 2012 19:29:32 +1200
+Message-ID: <CAKgNAkg=fcSJvB98zJZX2n_wGvxewxHvh3r8XjXiKYG1N_oX_Q@mail.gmail.com>
+References: <cover.1331137504.git.jbaron@redhat.com> <CAHO5Pa0cyvD-zUh-RRyOwvu2FGQYOMn_thFQt3_64BDi-wB=GQ@mail.gmail.com>
+ <20120427184311.GB13762@redhat.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <F2018580-9ACC-4A63-A8D1-155FA371749A@dilger.ca>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: David Howells <dhowells@redhat.com>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-ext4@vger.kernel.org, wine-devel@winehq.org, kfm-devel@kde.org, nautilus-list@gnome.org, linux-api@vger.kernel.org, libc-alpha@sourceware.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120427184311.GB13762-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Baron <jbaron-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: mcgrathr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, avi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 27, 2012 at 01:31:07PM -0600, Andreas Dilger wrote:
-> On 2012-04-27, at 7:13 AM, Dave Chinner wrote:
-> > Have a look at fs/xfs/xfs_dinode.h. There's a bunch of flags defined
-> > at the bottom of the file.
-> > 
-> > Stuff like the "nodefrag", "nodump", and "prealloc" bits seem fairly
-> > generic - they are for indicating that files are to be avoided for
-> > defrag or backup purposes, the prealloc bit indicates that fallocate
-> > has been used to reserve space on the inode (finding files that space
-> > can be punched out of safely), and so on.
-> 
-> There is already the FS_NODUMP_FL in the standard FS_IOC_GETFLAGS ioctl
-> and I expect this to be in statxat() also.
+Hello Jason,
 
-I forgot that was one of the generic flags :/
+On Sat, Apr 28, 2012 at 6:43 AM, Jason Baron <jbaron-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Tue, Apr 24, 2012 at 10:42:16AM +1200, Michael Kerrisk wrote:
+>> Jason,
+>>
+>> On Thu, Mar 8, 2012 at 6:00 AM, Jason Baron <jbaron-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrot=
+e:
+>> > Hi,
+>> >
+>> > The motivation for this change was that I was looking at a way for=
+ a qemu-kvm
+>> > process, to exclude the guest memory from its core dump, which can=
+ be quite
+>> > large. There are already a number of filter flags in
+>> > /proc/<pid>/coredump_filter, however, these allow one to specify '=
+types' of
+>> > kernel memory, not specific address ranges (which is needed in thi=
+s case).
+>> >
+>> > Since there are no more vma flags available, the first patch elimi=
+nates the
+>> > need for the 'VM_ALWAYSDUMP' flag. The flag is used internally by =
+the kernel to
+>> > mark vdso and vsyscall pages. However, it is simple enough to chec=
+k if a vma
+>> > covers a vdso or vsyscall page without the need for this flag.
+>> >
+>> > The second patch then replaces the 'VM_ALWAYSDUMP' flag with a new
+>> > 'VM_DONTDUMP' flag, which can be set by userspace using new madvis=
+e flags:
+>> > 'MADV_DONTDUMP', and unset via 'MADV_DUMP'. The core dump filters =
+continue to
+>> > work the same as before unless 'MADV_DONTDUMP' is set on the regio=
+n.
+>> >
+>> > The qemu code which implements this features is at:
+>> > http://people.redhat.com/~jbaron/qemu-dump/qemu-dump.patch
+>> >
+>> > In my testing the qemu core dump shrunk from 383MB -> 13MB with th=
+is patch.
+>> >
+>> > I also believe that the 'MADV_DONTDUMP' flag might be useful for s=
+ecurity
+>> > sensitive apps, which might want to select which areas are dumped.
+>>
+>> Since we have
+>> MADV_DODUMP
+>> MADV_DONTDUMP
+>> MADV_NODUMP
+>> heading for userspace in 3.4, would you be willing to write patches
+>> for the madvise(2) man page to describe these flags?
+>>
+>> See http://www.kernel.org/doc/man-pages/download.html for details on
+>> accessing man-pages Git.
+>>
+>> Cheers,
+>>
+>> Michael
+>>
+>> PS Please also CC linux-api@ when making API/ABI changes.
+>>
+>
+> Ok, here's a stab at manpage patch, let me know if I should send it a=
+s a
+> separate patch. Thanks.
+>
+> -Jason
+>
+>
+> diff --git a/man2/madvise.2 b/man2/madvise.2
+> index 36f988a..472c23a 100644
+> --- a/man2/madvise.2
+> +++ b/man2/madvise.2
+> @@ -247,6 +247,22 @@ Ensures that memory in the address range specifi=
+ed by
+> =A0and
+> =A0.IR length
+> =A0will not be collapsed into huge pages.
+> +.TP
+> +.BR MADV_DONTDUMP " (since Linux 3.4)"
+> +Explicitly exclude from a core dump those pages in the range specifi=
+ed by
+> +.I addr
+> +and
+> +.IR length .
+> +Applications may have large areas of memory which are known not to b=
+e useful in
+> +diagnosing a core dump. This specification takes precedence over the=
+ bit mask that
+> +is set via the
+> +.I /proc/PID/coredump_filter
+> +file (see
+> +.BR core (5)).
+> +.TP
+> +.BR MADV_DODUMP " (since Linux 3.4)"
+> +Undo the effect of an earlier
+> +.BR MADV_DONTDUMP.
+> =A0.SH "RETURN VALUE"
+> =A0On success
+> =A0.BR madvise ()
+> @@ -356,4 +372,5 @@ from the system call, as it should).
+> =A0.BR mmap (2),
+> =A0.BR mprotect (2),
+> =A0.BR msync (2),
+> -.BR munmap (2)
+> +.BR munmap (2),
+> +.BR core (5)
 
-> In ext4 there was also an
-> EXT4_EOFBLOCKS_FL added for inodes with fallocate'd data beyond EOF,
-> but Eric thought it was a pain to maintain and it has been deprecated
-> in ext4 and e2fsprogs recently.
-
-I'd think that flag is more of a "filesystem implementation
-specific" flag than a general "this file contained persistent
-preallocation" flag, which is essentially what the XFS flag says.
-XFS uses in various ways to optimise extent management on the file
-(e.g. don't truncate extents past EOF when closing the file), but it
-is not specific to one particular aspect of the preallocation
-implementation.
-
-> >> OTOH, there's plenty of uncommitted space, so if we can condense
-> >> the hints down to something small, we could perhaps add it later -
-> >> but from your paragraph above, it doesn't sound like it'll be small.
-> > 
-> > Allocation block size, minimum sane IO size (to avoid page cache RMW
-> > cycles or DIO zeroing), minimum prefered IO size (e.g. stripe unit),
-> > optimal IO size for bandwidth (e.g. stripe width). I don't think
-> > there's much more than that which will be really usable by
-> > applications.
-> 
-> I think this is a minimal set that makes sense, and is manageable for
-> both the interface and for users.  Even if it isn't 100% correct for
-> every file of every filesystem, it still makes sense for many systems.
-
-That's the aim, isn't it? To expose what is useful to the majority
-in a simple manner?
-
-> I'd suggest st_frsize (like BSD statvfs() f_frsize) would be the
-> minimum fragment or page size, st_iosize (BSD f_iosize) could be
-> the optimal IO size, and "st_stripesize" for the minimum preferred RAID/chunk size.
-
-Personally, I think those names are, well, terribly lacking in
-obviousness. Something more along the lines of:
-
-	st_blksize		- file block size
-	st_alloc_blksize	- allocation block size/alignment
-	st_small_io_size	- IO size/alignment that avoids
-				  filesystem/page cache RMW
-	st_preferred_io_size	- preferred IO size for general
-				  usage.
-	st_large_io_size	- IO size/alignment for high
-				  bandwidth sequential IO
-
-With the aim that applications tend to use st_preferred_io_size for
-all general IO (i.e. the default), st_small_io_size for small IO,
-IOPS intensive workloads, and st_large_io_size for writing large
-chunks of sequential data.
-
-> One could argue that "st_blksize" is used for the "optimal IO size"
-> on Linux today, but this is an overloaded term.  It _appears_ to
-> represent the filesystem blocksize, which it usually is not, and on
-> BSD st_bsize means the minimum blocksize and has a confusingly
-> similar name.  Since any application using this API needs to do some
-> extra coding already, we may as well give the structure members good
-> names that are not ambiguous.
-
-Well said - I couldn't have stated the case better myself. ;)
+Thanks! I tweaked this patch a little and applied the version below.
 
 Cheers,
 
-Dave.
+Michael
 
--- 
-Dave Chinner
-david@fromorbit.com
+--- a/man2/madvise.2
++++ b/man2/madvise.2
+@@ -247,6 +247,24 @@ Ensures that memory in the address range specified=
+ by
+ and
+ .IR length
+ will not be collapsed into huge pages.
++.TP
++.BR MADV_DONTDUMP " (since Linux 3.4)"
++Exclude from a core dump those pages in the range specified by
++.I addr
++and
++.IR length .
++This is useful in applications that have large areas of memory
++that are known not to be useful in a core dump.
++The effect of
++.BR MADV_DONTDUMP
++takes precedence over the bit mask that is set via the
++.I /proc/PID/coredump_filter
++file (see
++.BR core (5)).
++.TP
++.BR MADV_DODUMP " (since Linux 3.4)"
++Undo the effect of an earlier
++.BR MADV_DONTDUMP .
+ .SH "RETURN VALUE"
+ On success
+ .BR madvise ()
+@@ -356,4 +374,5 @@ from the system call, as it should).
+ .BR mmap (2),
+ .BR mprotect (2),
+ .BR msync (2),
+-.BR munmap (2)
++.BR munmap (2),
++.BR core (5)
+
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface"; http://man7.org/tlpi/
