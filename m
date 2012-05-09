@@ -1,91 +1,165 @@
-From: "Myklebust, Trond" <Trond.Myklebust@netapp.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
 Subject: Re: Extended file stat: Splitting file- and fs-specific info?
-Date: Tue, 8 May 2012 21:13:21 +0000
-Message-ID: <1336511603.12198.11.camel@lade.trondhjem.org>
+Date: Wed, 9 May 2012 10:24:20 +1000
+Message-ID: <20120509002420.GL5091@dastard>
 References: <20120419140558.17272.74360.stgit@warthog.procyon.org.uk>
-	 <16281.1336508382@redhat.com>
+ <16281.1336508382@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <libc-alpha-return-28604-glibc-alpha=m.gmane.org@sourceware.org>
-In-Reply-To: <16281.1336508382@redhat.com>
-Content-ID: <C766920C35D6214F8F7D5B1C99E68048@tahoe.netapp.com>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-To: David Howells <dhowells@redhat.com>
-Cc: "adilger@dilger.ca" <adilger@dilger.ca>, "david@fromorbit.com" <david@fromorbit.com>, "bfields@fieldses.org" <bfields@fieldses.org>, "smfrench@gmail.com" <smfrench@gmail.com>, "ben@decadent.org.uk" <ben@decadent.org.uk>, "roland@hack.frob.com" <roland@hack.frob.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, "samba-technical@lists.samba.org" <samba-technical@lists.samba.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <16281.1336508382-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gVHVlLCAyMDEyLTA1LTA4IGF0IDIxOjE5ICswMTAwLCBEYXZpZCBIb3dlbGxzIHdyb3RlOg0K
-PiBTaG91bGQgSSBzcGxpdCB0aGUgZmlsZS1zcGVjaWZpYyBpbmZvIGFuZCB0aGUgZnMtc3BlY2lm
-aWMgaW5mbyBhbmQgbWFrZSB0aGUNCj4gc2Vjb25kIG9wdGlvbmFsPyAgV2hhdCBJJ20gdGhpbmtp
-bmcgb2YgaXMgc29tZXRoaW5nIGxpa2UgdGhpczoNCj4gDQo+IEhhdmUgYSBmaWxlIGluZm9ybWF0
-aW9uIHN0cnVjdHVyZToNCj4gDQo+IHN0cnVjdCBzdGF0eCB7DQo+IAkvKiAweDAwICovDQo+IAl1
-aW50MzJfdAlzdF9tYXNrOwkvKiBXaGF0IHJlc3VsdHMgd2VyZSB3cml0dGVuICovDQo+IAl1aW50
-MzJfdAlzdF9pbmZvcm1hdGlvbjsJLyogSW5mb3JtYXRpb24gYWJvdXQgdGhlIGZpbGUgKi8NCj4g
-CXVpbnQxNl90CXN0X21vZGU7CS8qIEZpbGUgbW9kZSAqLw0KPiAJdWludDE2X3QJX19zcGFyZTBb
-M107DQo+IAkvKiAweDEwICovDQo+IAl1aW50MzJfdAlzdF91aWQ7CQkvKiBVc2VyIElEIG9mIG93
-bmVyICovDQo+IAl1aW50MzJfdAlzdF9naWQ7CQkvKiBHcm91cCBJRCBvZiBvd25lciAqLw0KPiAJ
-dWludDMyX3QJc3Rfbmxpbms7CS8qIE51bWJlciBvZiBoYXJkIGxpbmtzICovDQo+IAl1aW50MzJf
-dAlzdF9ibGtzaXplOwkvKiBPcHRpbWFsIHNpemUgZm9yIGZpbGVzeXN0ZW0gSS9PICovDQo+IAkv
-KiAweDIwICovDQo+IAlzdHJ1Y3Qgc3RhdHhfZGV2IHN0X3JkZXY7CS8qIERldmljZSBJRCBvZiBz
-cGVjaWFsIGZpbGUgKi8NCj4gCXN0cnVjdCBzdGF0eF9kZXYgc3RfZGV2OwkvKiBJRCBvZiBkZXZp
-Y2UgY29udGFpbmluZyBmaWxlICovDQo+IAkvKiAweDMwICovDQo+IAlpbnQzMl90CQlzdF9hdGlt
-ZV9uczsJLyogTGFzdCBhY2Nlc3MgdGltZSAobnMgcGFydCkgKi8NCj4gCWludDMyX3QJCXN0X2J0
-aW1lX25zOwkvKiBGaWxlIGNyZWF0aW9uIHRpbWUgKG5zIHBhcnQpICovDQo+IAlpbnQzMl90CQlz
-dF9jdGltZV9uczsJLyogTGFzdCBhdHRyaWJ1dGUgY2hhbmdlIHRpbWUgKG5zIHBhcnQpICovDQo+
-IAlpbnQzMl90CQlzdF9tdGltZV9uczsJLyogTGFzdCBkYXRhIG1vZGlmaWNhdGlvbiB0aW1lIChu
-cyBwYXJ0KSAqLw0KPiAJLyogMHg0MCAqLw0KPiAJaW50NjRfdAkJc3RfYXRpbWU7CS8qIExhc3Qg
-YWNjZXNzIHRpbWUgKi8NCj4gCWludDY0X3QJCXN0X2J0aW1lOwkvKiBGaWxlIGNyZWF0aW9uIHRp
-bWUgKi8NCj4gCWludDY0X3QJCXN0X2N0aW1lOwkvKiBMYXN0IGF0dHJpYnV0ZSBjaGFuZ2UgdGlt
-ZSAqLw0KPiAJaW50NjRfdAkJc3RfbXRpbWU7CS8qIExhc3QgZGF0YSBtb2RpZmljYXRpb24gdGlt
-ZSAqLw0KPiAJLyogMHg2MCAqLw0KPiAJdWludDY0X3QJc3RfaW5vOwkJLyogSW5vZGUgbnVtYmVy
-ICovDQo+IAl1aW50NjRfdAlzdF9zaXplOwkvKiBGaWxlIHNpemUgKi8NCg0KU2hvdWxkIHdlIGNv
-bnNpZGVyIG1ha2luZyB0aGUgc3Rfc2l6ZSBhbmQgc3RfYmxvY2tzIDEyOC1iaXQgdmFsdWVzIHdo
-aWxlDQp3ZSdyZSBhdCBpdD8gQWx0ZXJuYXRpdmVseSwgd2UgY291bGQgYWRkIGFuIHN0X2lvY19m
-bGFnIGZvciBpdCBsYXRlci4uLg0KDQo+IAl1aW50NjRfdAlzdF9ibG9ja3M7CS8qIE51bWJlciBv
-ZiA1MTItYnl0ZSBibG9ja3MgYWxsb2NhdGVkICovDQo+IAl1aW50NjRfdAlzdF9nZW47CQkvKiBJ
-bm9kZSBnZW5lcmF0aW9uIG51bWJlciAqLw0KPiAJdWludDY0X3QJc3RfdmVyc2lvbjsJLyogRGF0
-YSB2ZXJzaW9uIG51bWJlciAqLw0KPiAJdWludDY0X3QJc3RfaW9jX2ZsYWdzOwkvKiBBcyBGU19J
-T0NfR0VURkxBR1MgKi8NCj4gCS8qIDB4OTAgKi8NCj4gCXVpbnQ2NF90CV9fc3BhcmUxWzEzXTsJ
-LyogU3BhcmUgc3BhY2UgZm9yIGZ1dHVyZSBleHBhbnNpb24gKi8NCj4gCS8qIDB4MTAwICovDQo+
-IH07DQo+IA0KPiBBbmQgYW4gZnMgaW5mb3JtYXRpb24gc3RydWN0dXJlIGZvciBsZXNzIGNvbW1v
-bmx5IG5lZWRlZCBkYXRhOg0KPiANCj4gc3RydWN0IHN0YXR4X2ZzaW5mbyB7DQo+IAkvKiAweDAw
-IC0gR2VuZXJhbCBpbmZvICovDQo+IAl1aW50MzJfdAlzdF9tYXNrOwkvKiBXaGF0IG9wdGlvbmFs
-IGZpZWxkcyBhcmUgZmlsbGVkIGluICovDQo+IAl1aW50MzJfdAlzdF90eXBlOwkvKiBGaWxlc3lz
-dGVtIHR5cGUgZnJvbSBsaW51eC9tYWdpYy5oICovDQo+IA0KPiAJLyogMHgwOCAtIGZpbGUgdGlt
-ZXN0YW1wIGdyYW51bGFyaXR5IGluZm8gKi8NCj4gCXVpbnQxNl90CXN0X2F0aW1lX2dyYW5fbWFu
-dGlzc2E7CS8qIGdyYW4oc2VjcykgPSBtYW50ICogMTBeZXhwICovDQo+IAl1aW50MTZfdAlzdF9i
-dGltZV9ncmFuX21hbnRpc3NhOw0KPiAJdWludDE2X3QJc3RfY3RpbWVfZ3Jhbl9tYW50aXNzYTsN
-Cj4gCXVpbnQxNl90CXN0X210aW1lX2dyYW5fbWFudGlzc2E7DQo+IAkvKiAweDEwICovDQo+IAlp
-bnQ4X3QJCXN0X2F0aW1lX2dyYW5fZXhwb25lbnQ7DQo+IAlpbnQ4X3QJCXN0X2J0aW1lX2dyYW5f
-ZXhwb25lbnQ7DQo+IAlpbnQ4X3QJCXN0X2N0aW1lX2dyYW5fZXhwb25lbnQ7DQo+IAlpbnQ4X3QJ
-CXN0X210aW1lX2dyYW5fZXhwb25lbnQ7DQo+IA0KPiAJLyogMHgxNCAtIEkvTyBwYXJhbWV0ZXJz
-ICovDQo+IAl1aW50MzJfdAlzdF9ibGtzaXplOwkgIC8qIEZpbGUgYmxvY2sgc2l6ZSAqLw0KPiAJ
-dWludDMyX3QJc3RfYWxsb2NfYmxrc2l6ZTsgLyogQWxsb2NhdGlvbiBibG9jayBzaXplL2FsaWdu
-bWVudCAqLw0KPiAJdWludDMyX3QJc3Rfc21hbGxfaW9fc2l6ZTsgLyogSU8gc2l6ZS9hbGlnbm1l
-bnQgdGhhdCBhdm9pZHMgZnMvcGFnZSBjYWNoZSBSTVcgKi8NCj4gCXVpbnQzMl90CXN0X3ByZWZf
-aW9fc2l6ZTsgIC8qIFByZWZlcnJlZCBJTyBzaXplIGZvciBnZW5lcmFsIHVzYWdlICovDQo+IAl1
-aW50MzJfdAlzdF9sYXJnZV9pb19zaXplOyAvKiBJTyBzaXplL2FsaWdubWVudCBmb3IgaGlnaCBi
-YW5kd2lkdGggc2VxdWVudGlhbCBJTyAqLw0KPiANCj4gCS8qIDB4MjggLSBSZXN0cmljdGlvbnMg
-b24gc3RydWN0IHN0YXR4IGNvbnRlbnRzICovDQo+IAl1aW50NjRfdAlzdF9zdXBwb3J0ZWRfaW9j
-X2ZsYWdzOyAvKiBGU19JT0NfR0VURkxBR1MgZmxhZ3Mgc3VwcG9ydGVkICAqLw0KPiANCj4gCS8q
-IDB4MzAgLSBWb2x1bWUvZmlsZXN5c3RlbSBpbmZvcm1hdGlvbiAqLw0KPiAJdWludDY0X3QJc3Rf
-ZnNpZDsJLyogU2hvcnQgNjQtYml0IEZpbGVzeXN0ZW0gSUQgKGFzIHN0YXRmcykgKi8NCj4gCXVp
-bnQ2NF90CV9fc3BhcmUwWzNdOw0KPiAJLyogMHg1MCAqLw0KPiAJdWludDhfdAkJc3Rfdm9sdW1l
-X2lkWzE2XTsgLyogVm9sdW1lL2ZzIGlkZW50aWZpZXIgKi8NCj4gCXVpbnQ4X3QJCXN0X3ZvbHVt
-ZV91dWlkWzE2XTsgLyogVm9sdW1lL2ZzIFVVSUQgKi8NCj4gCS8qIDB4ODAgKi8NCj4gCXVpbnQ2
-NF90CV9fc3BhcmUxWzhdOw0KPiAJLyogMHhjMCAqLw0KPiAJdWludDhfdAkJc3Rfdm9sdW1lX25h
-bWVbNjRdOyAvKiBWb2x1bWUgbmFtZSAodXAgdG8gNjQgY2hhcnMpICovDQo+IAkvKiAweDEwMCAq
-Lw0KPiAJdWludDhfdAkJc3RfZG9tYWluX25hbWVbMjU2XTsgLyogRG9tYWluL2NlbGwvd29ya2dy
-b3VwIG5hbWUgKHVwIHRvIDI1NiBjaGFycykgKi8NCj4gCS8qIDB4MjAwICovDQo+IH07DQoNCklm
-IHlvdSBhcmUgbWFraW5nIGEgc2VwYXJhdGUgZnNpbmZvIHN0cnVjdHVyZSwgdGhlbiBpdCB3b3Vs
-ZCBiZSBuaWNlIHRvDQpoYXZlIGZsYWdzIHRvIGluZGljYXRlIHdoYXQga2luZCBvZiBhY2xzIHRo
-ZSBmaWxlc3lzdGVtIHN1cHBvcnRzLCBhbmQgaWYNCml0IHN1cHBvcnRzIGZlYXR1cmVzIHN1Y2gg
-YXMgeGF0dHJzLCBzdWJmaWxlcyBhbmQvb3Igc25hcHNob3RzLg0KDQoNCg0KLS0gDQpUcm9uZCBN
-eWtsZWJ1c3QNCkxpbnV4IE5GUyBjbGllbnQgbWFpbnRhaW5lcg0KDQpOZXRBcHANClRyb25kLk15
-a2xlYnVzdEBuZXRhcHAuY29tDQp3d3cubmV0YXBwLmNvbQ0KDQo=
+On Tue, May 08, 2012 at 09:19:42PM +0100, David Howells wrote:
+>=20
+> Should I split the file-specific info and the fs-specific info and ma=
+ke the
+> second optional?  What I'm thinking of is something like this:
+>=20
+> Have a file information structure:
+>=20
+> struct statx {
+> 	/* 0x00 */
+> 	uint32_t	st_mask;	/* What results were written */
+> 	uint32_t	st_information;	/* Information about the file */
+> 	uint16_t	st_mode;	/* File mode */
+> 	uint16_t	__spare0[3];
+> 	/* 0x10 */
+> 	uint32_t	st_uid;		/* User ID of owner */
+> 	uint32_t	st_gid;		/* Group ID of owner */
+> 	uint32_t	st_nlink;	/* Number of hard links */
+> 	uint32_t	st_blksize;	/* Optimal size for filesystem I/O */
+> 	/* 0x20 */
+> 	struct statx_dev st_rdev;	/* Device ID of special file */
+> 	struct statx_dev st_dev;	/* ID of device containing file */
+> 	/* 0x30 */
+> 	int32_t		st_atime_ns;	/* Last access time (ns part) */
+> 	int32_t		st_btime_ns;	/* File creation time (ns part) */
+> 	int32_t		st_ctime_ns;	/* Last attribute change time (ns part) */
+> 	int32_t		st_mtime_ns;	/* Last data modification time (ns part) */
+> 	/* 0x40 */
+> 	int64_t		st_atime;	/* Last access time */
+> 	int64_t		st_btime;	/* File creation time */
+> 	int64_t		st_ctime;	/* Last attribute change time */
+> 	int64_t		st_mtime;	/* Last data modification time */
+> 	/* 0x60 */
+> 	uint64_t	st_ino;		/* Inode number */
+> 	uint64_t	st_size;	/* File size */
+> 	uint64_t	st_blocks;	/* Number of 512-byte blocks allocated */
+> 	uint64_t	st_gen;		/* Inode generation number */
+
+I don't think we want to expose the inode generation numbers. It is
+trivial to construct NFS file handles (usually just fsid, inode
+number and generation) with that information and hence bypass
+security checks to access files.
+
+> 	uint64_t	st_version;	/* Data version number */
+> 	uint64_t	st_ioc_flags;	/* As FS_IOC_GETFLAGS */
+> 	/* 0x90 */
+> 	uint64_t	__spare1[13];	/* Spare space for future expansion */
+> 	/* 0x100 */
+> };
+>=20
+> And an fs information structure for less commonly needed data:
+>=20
+> struct statx_fsinfo {
+> 	/* 0x00 - General info */
+> 	uint32_t	st_mask;	/* What optional fields are filled in */
+> 	uint32_t	st_type;	/* Filesystem type from linux/magic.h */
+>=20
+> 	/* 0x08 - file timestamp granularity info */
+> 	uint16_t	st_atime_gran_mantissa;	/* gran(secs) =3D mant * 10^exp */
+> 	uint16_t	st_btime_gran_mantissa;
+> 	uint16_t	st_ctime_gran_mantissa;
+> 	uint16_t	st_mtime_gran_mantissa;
+> 	/* 0x10 */
+> 	int8_t		st_atime_gran_exponent;
+> 	int8_t		st_btime_gran_exponent;
+> 	int8_t		st_ctime_gran_exponent;
+> 	int8_t		st_mtime_gran_exponent;
+>=20
+> 	/* 0x14 - I/O parameters */
+> 	uint32_t	st_blksize;	  /* File block size */
+> 	uint32_t	st_alloc_blksize; /* Allocation block size/alignment */
+> 	uint32_t	st_small_io_size; /* IO size/alignment that avoids fs/page =
+cache RMW */
+> 	uint32_t	st_pref_io_size;  /* Preferred IO size for general usage */
+> 	uint32_t	st_large_io_size; /* IO size/alignment for high bandwidth s=
+equential IO */
+
+That's per file information, not per filesystem. XFS definitely
+needs this IO information per-file....
+
+>=20
+> 	/* 0x28 - Restrictions on struct statx contents */
+> 	uint64_t	st_supported_ioc_flags; /* FS_IOC_GETFLAGS flags supported =
+ */
+>=20
+> 	/* 0x30 - Volume/filesystem information */
+> 	uint64_t	st_fsid;	/* Short 64-bit Filesystem ID (as statfs) */
+> 	uint64_t	__spare0[3];
+> 	/* 0x50 */
+> 	uint8_t		st_volume_id[16]; /* Volume/fs identifier */
+> 	uint8_t		st_volume_uuid[16]; /* Volume/fs UUID */
+
+And there's all the remaining information needed to construct file
+NFS handles without root priviledges...
+
+> 	/* 0x80 */
+> 	uint64_t	__spare1[8];
+> 	/* 0xc0 */
+> 	uint8_t		st_volume_name[64]; /* Volume name (up to 64 chars) */
+> 	/* 0x100 */
+> 	uint8_t		st_domain_name[256]; /* Domain/cell/workgroup name (up to 2=
+56 chars) */
+> 	/* 0x200 */
+> };
+>=20
+> One could argue a bit over what goes in which, should we go for this.=
+  This
+> may be better split between multiple syscalls though (with the race t=
+hat that
+> implies) and potentially merging with statfs.
+>=20
+>=20
+> The statxat() syscall [n=E9e xstat] could then use the 6th parameter =
+thusly:
+>=20
+> asmlinkage long sys_statxat(int dfd, const char __user *path, unsigne=
+d flags,
+> 			    unsigned mask, struct statx __user *buffer,
+> 			    struct statx_fsinfo __user *fsinfo);
+>=20
+>=20
+> letting fsinfo be NULL to indicate a lack of interest.  I'm not sure =
+we want
+> to do that, though.
+>=20
+>=20
+> Also, do Dave Chinner's ideas for indicating five I/O parameters want=
+ to be
+> 32-bit numbers?  Larger?  Smaller?  Can they be log2?
+
+Definitely 32 bit, IMO, as it's not uncommon to see optimal IO sizes
+in the tens of megabytes on large, high bandwidth storage systems.
+As for being log2 - that's just making it more complex to use and
+making code ugly - we'd have to convert to log2 in kernel, then
+convert back in every single application....
+
+> Note also, that I've suggested that we represent the timestamp granul=
+arity
+> information as a decimal float (which requires 3 bytes per timestamp)=
+ and that
+> we provide separate granularities for each timestamp.
+>=20
+> David
+>=20
+
+--=20
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
