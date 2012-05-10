@@ -1,30 +1,27 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: David Howells <dhowells@redhat.com>
 Subject: Re: Extended file stat: Splitting file- and fs-specific info?
-Date: Thu, 10 May 2012 10:14:11 +0100
-Message-ID: <13791.1336641251@redhat.com>
-References: <20120509002420.GL5091@dastard> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <16281.1336508382@redhat.com>
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120509002420.GL5091@dastard>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
+Date: Thu, 10 May 2012 10:23:14 +0100
+Message-ID: <14477.1336641794@redhat.com>
+References: <73759631-F1E4-4352-9FE6-E9F576F793FB@gmail.com> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <16281.1336508382@redhat.com> <20120509002420.GL5091@dastard>
+Return-path: <libc-alpha-return-28760-glibc-alpha=m.gmane.org@sourceware.org>
+In-Reply-To: <73759631-F1E4-4352-9FE6-E9F576F793FB@gmail.com>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+To: Andreas Dilger <aedilger@gmail.com>, Dave Chinner <david@fromorbit.com>
+Cc: dhowells@redhat.com, "adilger@dilger.ca" <adilger@dilger.ca>, "bfields@fieldses.org" <bfields@fieldses.org>, "smfrench@gmail.com" <smfrench@gmail.com>, "ben@decadent.org.uk" <ben@decadent.org.uk>, "Trond.Myklebust@netapp.com" <Trond.Myklebust@netapp.com>, "roland@hack.frob.com" <roland@hack.frob.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, "samba-technical@lists.samba.org" <samba-technical@lists.samba.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+Andreas Dilger <aedilger@gmail.com> wrote:
 
-> > Also, do Dave Chinner's ideas for indicating five I/O parameters want to be
-> > 32-bit numbers?  Larger?  Smaller?  Can they be log2?
-> 
-> Definitely 32 bit, IMO, as it's not uncommon to see optimal IO sizes
-> in the tens of megabytes on large, high bandwidth storage systems.
-> As for being log2 - that's just making it more complex to use and
-> making code ugly - we'd have to convert to log2 in kernel, then
-> convert back in every single application....
+> The main question I have about these fields is what the difference is
+> between st_blksize and st_alloc_blksize?
 
-ilog2() in the kernel uses the CPU's bit-scan instruction if it has one and
-converting back is just a bitshift operator.
-
-But let's go with 32-bit fields for the moment.  I presume we aren't worried
-about a driver that wants to do a 4GB transfer...
+I would assume that st_blksize is some ideal I/O size, not the allocation
+block size.  Dave Chinner might be able to answer better as he suggested these
+I/O information fields.
 
 David
