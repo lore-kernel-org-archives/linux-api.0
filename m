@@ -1,40 +1,20 @@
-From: Andreas Dilger <adilger@dilger.ca>
-Subject: Re: Extended file stat: Splitting file- and fs-specific info?
-Date: Fri, 11 May 2012 02:54:13 -0600
-Message-ID: <258C4ED4-2FB3-4E3F-A99E-842D231BA869@dilger.ca>
-References: <73759631-F1E4-4352-9FE6-E9F576F793FB@gmail.com> <20120419140558.17272.74360.stgit@warthog.procyon.org.uk> <16281.1336508382@redhat.com> <20120509002420.GL5091@dastard> <14477.1336641794@redhat.com> <20120510171016.B45BA2C096@topped-with-meat.com>
-Mime-Version: 1.0 (Apple Message framework v1084)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
-Return-path: <libc-alpha-return-28830-glibc-alpha=m.gmane.org@sourceware.org>
-In-Reply-To: <20120510171016.B45BA2C096@topped-with-meat.com>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-To: Roland McGrath <roland@hack.frob.com>
-Cc: David Howells <dhowells@redhat.com>, Dave Chinner <david@fromorbit.com>, "bfields@fieldses.org Fields" <bfields@fieldses.org>, "smfrench@gmail.com French" <smfrench@gmail.com>, "ben@decadent.org.uk Hutchings" <ben@decadent.org.uk>, "Trond.Myklebust@netapp.com Myklebust" <Trond.Myklebust@netapp.com>, "linux-fsdevel@vger.kernel.org Devel" <linux-fsdevel@vger.kernel.org>, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, "linux-ext4@vger.kernel.org List" <linux-ext4@vger.kernel.org>, linux-api@vger.kernel.org, libc-alpha@sourceware.org
+From: "Zhang, Xiaoyan" <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 0/2] Add PPI support in tpm driver
+Date: Wed, 23 May 2012 03:33:58 +0000
+Message-ID: <953B7F5DA8C0F44CBD2621D8763F4F6005F797@SHSMSX101.ccr.corp.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: "tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, "debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org" <m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org>, "shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Cihula, Joseph" <joseph.cihula-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Wei, Gang" <gang.wei-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2012-05-10, at 11:10 AM, Roland McGrath wrote:
-> POSIX specifies st_blksize thusly: "A file system-specific preferred
-> I/O block size for this object. In some file system types, this may
-> vary from file to file."
->=20
-> Since there is only one available to POSIX applications, it should map
-> to the one that's described as "preferred IO size for general usage".
+The series of patches add PPI support in linux kernel.
 
-Sure, but statxat() isn't a POSIX API.
+The Physical Presence Interface enables the OS and the BIOS to cooperate to provide a simple and straightforward platform user experience for administering the TPM without sacrificing security.
 
-While I agree with the idea that there should be enough information =
-about the underlying layout for applications to be able to submit good =
-IO, it doesn't help if we have a bunch of extra fields that have vague =
-meanings.=20
-
-They will get filled in by the filesystem in a haphazard way, and will =
-not be used by application developers that don't understand what they =
-mean.
-
-Cheers, Andreas
+PATCH 1: drivers: Add PPI support in tpm driver
+PATCH 2: Documentation: sysfs for physical presence interface
