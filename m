@@ -1,41 +1,24 @@
-From: Kent Yoder <shpedoikal@gmail.com>
+From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH 1/2] driver: add PPI support in tpm driver
-Date: Tue, 12 Jun 2012 13:57:32 -0500
-Message-ID: <CAM0nabHV6CepQyXeVZiv2XT9WHPgMy=prdK-8fNgyrCZ4v6dSg@mail.gmail.com>
-References: <953B7F5DA8C0F44CBD2621D8763F4F6005F79F@SHSMSX101.ccr.corp.intel.com>
+Date: Tue, 12 Jun 2012 12:00:38 -0700
+Message-ID: <4FD791D6.5050503@zytor.com>
+References: <953B7F5DA8C0F44CBD2621D8763F4F6005F79F@SHSMSX101.ccr.corp.intel.com> <CAM0nabHV6CepQyXeVZiv2XT9WHPgMy=prdK-8fNgyrCZ4v6dSg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <953B7F5DA8C0F44CBD2621D8763F4F6005F79F@SHSMSX101.ccr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Zhang, Xiaoyan" <xiaoyan.zhang@intel.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "tpmdd-devel@lists.sourceforge.net" <tpmdd-devel@lists.sourceforge.net>, "debora@linux.vnet.ibm.com" <debora@linux.vnet.ibm.com>, "srajiv@linux.vnet.ibm.com" <srajiv@linux.vnet.ibm.com>, "m.selhorst@sirrix.com" <m.selhorst@sirrix.com>, "linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, "james.l.morris@oracle.com" <james.l.morris@oracle.com>, "hpa@zytor.com" <hpa@zytor.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "Cihula, Joseph" <joseph.cihula@intel.com>, "Wei, Gang" <gang.wei@intel.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAM0nabHV6CepQyXeVZiv2XT9WHPgMy=prdK-8fNgyrCZ4v6dSg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Yoder <shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Zhang, Xiaoyan" <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, "debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org" <m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org>, "linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Cihula, Joseph" <joseph.cihula-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Wei, Gang" <gang.wei-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Xiaoyan,
+On 06/12/2012 11:57 AM, Kent Yoder wrote:
+> 
+>   This code looks clean - my only suggestion would be to add an #ifdef
+> CONFIG_ACPI around it so it compiles out on ppc.
+> 
 
-On Tue, May 22, 2012 at 10:34 PM, Zhang, Xiaoyan
-<xiaoyan.zhang@intel.com> wrote:
-> From: Xiaoyan Zhang <xiaoyan.zhang@intel.com>
->
-> The Physical Presence Interface enables the OS and the BIOS to cooper=
-ate
-> and provides a simple and straightforward platform user experience fo=
-r
-> administering the TPM without sacrificing security.
->
-> Signed-off-by: Xiaoyan Zhang <xiaoyan.zhang@intel.com>
-> ---
-> =A0drivers/char/tpm/tpm.c | =A0462 ++++++++++++++++++++++++++++++++++=
-++++++++++++++
-> =A0drivers/char/tpm/tpm.h | =A0 18 ++
-> =A02 files changed, 480 insertions(+), 0 deletions(-)
+Better yet, any way to separate it out in a separate source file?
 
-  This code looks clean - my only suggestion would be to add an #ifdef
-CONFIG_ACPI around it so it compiles out on ppc.
-
-Kent
-
---=20
-IBM LTC Security
+	-hpa
