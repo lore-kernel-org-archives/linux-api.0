@@ -1,312 +1,1287 @@
-From: "Zhang, Xiaoyan" <xiaoyan.zhang@intel.com>
-Subject: [PATCH V3 1/2] driver: add PPI support in tpm driver
-Date: Thu, 21 Jun 2012 06:54:51 +0000
-Message-ID: <1340203963.24516.2.camel@localhost>
+From: Kent Yoder <key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH V3 1/2] driver: add PPI support in tpm driver
+Date: Wed, 11 Jul 2012 10:24:31 -0500
+Message-ID: <20120711152430.GC21153@linux.vnet.ibm.com>
+References: <1340203963.24516.2.camel@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: "Cihula, Joseph" <joseph.cihula@intel.com>, "Wei, Gang" <gang.wei@intel.com>, "Zhang, Xiaoyan" <xiaoyan.zhang@intel.com>, "tpmdd-devel@lists.sourceforge.net" <tpmdd-devel@lists.sourceforge.net>, "debora@linux.vnet.ibm.com" <debora@linux.vnet.ibm.com>, "srajiv@linux.vnet.ibm.com" <srajiv@linux.vnet.ibm.com>, "m.selhorst@sirrix.com" <m.selhorst@sirrix.com>, "shpedoikal@gmail.com" <shpedoikal@gmail.com>, "linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, "james.l.morris@oracle.com" <james.l.morris@oracle.com>, "hpa@zytor.com" <hpa@zytor.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1340203963.24516.2.camel@localhost>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Zhang, Xiaoyan" <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Cihula, Joseph" <joseph.cihula-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Wei, Gang" <gang.wei-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, "debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org" <m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org>, "shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogWGlhb3lhbiBaaGFuZyA8eGlhb3lhbi56aGFuZ0BpbnRlbC5jb20+CgpUaGUgUGh5c2lj
-YWwgUHJlc2VuY2UgSW50ZXJmYWNlIGVuYWJsZXMgdGhlIE9TIGFuZCB0aGUgQklPUyB0byBjb29w
-ZXJhdGUKYW5kIHByb3ZpZGVzIGEgc2ltcGxlIGFuZCBzdHJhaWdodGZvcndhcmQgcGxhdGZvcm0g
-dXNlciBleHBlcmllbmNlIGZvcgphZG1pbmlzdGVyaW5nIHRoZSBUUE0gd2l0aG91dCBzYWNyaWZp
-Y2luZyBzZWN1cml0eS4KClYyOiBzZXBhcmF0ZSB0aGUgcGF0Y2ggb3V0IGluIGEgc2VwYXJhdGUg
-c291cmNlIGZpbGUsIGFkZCAjaWZkZWYgQ09ORklHX0FDUEkKc28gaXQgY29tcGlsZXMgb3V0IG9u
-IHBwYywgYW5kIHVzZSBzdGFuZGFyZCBlcnJvciBpbnN0ZWFkIG9mIEFDUEkgZXJyb3IgYXMKcmV0
-dXJuIGNvZGUgb2Ygc2hvdy9zdG9yZSBmbnMuCgpWMzogbW92ZSAjaWZkZWYgQ09ORklHX0FDUEkg
-ZnJvbSAuYyBmaWxlIHRvIC5oIGZpbGUKClNpZ25lZC1vZmYtYnk6IFhpYW95YW4gWmhhbmcgPHhp
-YW95YW4uemhhbmdAaW50ZWwuY29tPgotLS0KIGRyaXZlcnMvY2hhci90cG0vTWFrZWZpbGUgIHwg
-ICAgNCArLQogZHJpdmVycy9jaGFyL3RwbS90cG0uYyAgICAgfCAgICA1ICsKIGRyaXZlcnMvY2hh
-ci90cG0vdHBtLmggICAgIHwgICAgOCArCiBkcml2ZXJzL2NoYXIvdHBtL3RwbV9wcGkuYyB8ICA0
-NjEgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKIDQgZmlsZXMg
-Y2hhbmdlZCwgNDc3IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb25zKC0pCiBjcmVhdGUgbW9kZSAx
-MDA2NDQgZHJpdmVycy9jaGFyL3RwbS90cG1fcHBpLmMKCmRpZmYgLS1naXQgYS9kcml2ZXJzL2No
-YXIvdHBtL01ha2VmaWxlIGIvZHJpdmVycy9jaGFyL3RwbS9NYWtlZmlsZQppbmRleCBlYTNhMWUw
-Li4xMzJhZDk1IDEwMDY0NAotLS0gYS9kcml2ZXJzL2NoYXIvdHBtL01ha2VmaWxlCisrKyBiL2Ry
-aXZlcnMvY2hhci90cG0vTWFrZWZpbGUKQEAgLTEsOCArMSwxMCBAQAogIwogIyBNYWtlZmlsZSBm
-b3IgdGhlIGtlcm5lbCB0cG0gZGV2aWNlIGRyaXZlcnMuCiAjCi1vYmotJChDT05GSUdfVENHX1RQ
-TSkgKz0gdHBtLm8KK29iai0kKENPTkZJR19UQ0dfVFBNKSArPSB0cG1fbWFpbi5vCit0cG1fbWFp
-bi15ICs9IHRwbS5vCiBpZmRlZiBDT05GSUdfQUNQSQorCXRwbV9tYWluLXkgKz0gdHBtX3BwaS5v
-CiAJb2JqLSQoQ09ORklHX1RDR19UUE0pICs9IHRwbV9iaW9zLm8KIGVuZGlmCiBvYmotJChDT05G
-SUdfVENHX1RJUykgKz0gdHBtX3Rpcy5vCmRpZmYgLS1naXQgYS9kcml2ZXJzL2NoYXIvdHBtL3Rw
-bS5jIGIvZHJpdmVycy9jaGFyL3RwbS90cG0uYwppbmRleCBhZDdjNzMyLi5lZjJmZjc5IDEwMDY0
-NAotLS0gYS9kcml2ZXJzL2NoYXIvdHBtL3RwbS5jCisrKyBiL2RyaXZlcnMvY2hhci90cG0vdHBt
-LmMKQEAgLTE0MTYsNiArMTQxNiwxMSBAQCBzdHJ1Y3QgdHBtX2NoaXAgKnRwbV9yZWdpc3Rlcl9o
-YXJkd2FyZShzdHJ1Y3QgZGV2aWNlICpkZXYsCiAJCXJldHVybiBOVUxMOwogCX0KIAorCWlmIChz
-eXNfYWRkX3BwaSgmZGV2LT5rb2JqLCAmcHBpX2F0dHJfZ3JwKSkgeworCQltaXNjX2RlcmVnaXN0
-ZXIoJmNoaXAtPnZlbmRvci5taXNjZGV2KTsKKwkJcHV0X2RldmljZShjaGlwLT5kZXYpOworCQly
-ZXR1cm4gTlVMTDsKKwl9CiAJY2hpcC0+Ymlvc19kaXIgPSB0cG1fYmlvc19sb2dfc2V0dXAoZGV2
-bmFtZSk7CiAKIAkvKiBNYWtlIGNoaXAgYXZhaWxhYmxlICovCmRpZmYgLS1naXQgYS9kcml2ZXJz
-L2NoYXIvdHBtL3RwbS5oIGIvZHJpdmVycy9jaGFyL3RwbS90cG0uaAppbmRleCBiMWM1MjgwLi5j
-NWQxMjFiIDEwMDY0NAotLS0gYS9kcml2ZXJzL2NoYXIvdHBtL3RwbS5oCisrKyBiL2RyaXZlcnMv
-Y2hhci90cG0vdHBtLmgKQEAgLTMwMyw5ICszMDMsMTIgQEAgZXh0ZXJuIGludCB0cG1fcG1fc3Vz
-cGVuZChzdHJ1Y3QgZGV2aWNlICosIHBtX21lc3NhZ2VfdCk7CiBleHRlcm4gaW50IHRwbV9wbV9y
-ZXN1bWUoc3RydWN0IGRldmljZSAqKTsKIGV4dGVybiBpbnQgd2FpdF9mb3JfdHBtX3N0YXQoc3Ry
-dWN0IHRwbV9jaGlwICosIHU4LCB1bnNpZ25lZCBsb25nLAogCQkJICAgICB3YWl0X3F1ZXVlX2hl
-YWRfdCAqKTsKK2V4dGVybiBzdHJ1Y3QgYXR0cmlidXRlX2dyb3VwIHBwaV9hdHRyX2dycDsKICNp
-ZmRlZiBDT05GSUdfQUNQSQogZXh0ZXJuIHN0cnVjdCBkZW50cnkgKiogdHBtX2Jpb3NfbG9nX3Nl
-dHVwKGNoYXIgKik7CiBleHRlcm4gdm9pZCB0cG1fYmlvc19sb2dfdGVhcmRvd24oc3RydWN0IGRl
-bnRyeSAqKik7CitleHRlcm4gc3NpemVfdCBzeXNfYWRkX3BwaShzdHJ1Y3Qga29iamVjdCAqcGFy
-ZW50LAorCQkJICAgc3RydWN0IGF0dHJpYnV0ZV9ncm91cCAqZ3JwKTsKICNlbHNlCiBzdGF0aWMg
-aW5saW5lIHN0cnVjdCBkZW50cnkgKiogdHBtX2Jpb3NfbG9nX3NldHVwKGNoYXIgKm5hbWUpCiB7
-CkBAIC0zMTQsNCArMzE3LDkgQEAgc3RhdGljIGlubGluZSBzdHJ1Y3QgZGVudHJ5ICoqIHRwbV9i
-aW9zX2xvZ19zZXR1cChjaGFyICpuYW1lKQogc3RhdGljIGlubGluZSB2b2lkIHRwbV9iaW9zX2xv
-Z190ZWFyZG93bihzdHJ1Y3QgZGVudHJ5ICoqZGlyKQogewogfQorc3RhdGljIGlubGluZSBzc2l6
-ZV90IHN5c19hZGRfcHBpKHN0cnVjdCBrb2JqZWN0ICpwYXJlbnQsCisJCQkJICBzdHJ1Y3QgYXR0
-cmlidXRlX2dyb3VwICpncnApCit7CisJcmV0dXJuIDA7Cit9CiAjZW5kaWYKZGlmZiAtLWdpdCBh
-L2RyaXZlcnMvY2hhci90cG0vdHBtX3BwaS5jIGIvZHJpdmVycy9jaGFyL3RwbS90cG1fcHBpLmMK
-bmV3IGZpbGUgbW9kZSAxMDA2NDQKaW5kZXggMDAwMDAwMC4uYzE4MTlhOAotLS0gL2Rldi9udWxs
-CisrKyBiL2RyaXZlcnMvY2hhci90cG0vdHBtX3BwaS5jCkBAIC0wLDAgKzEsNDYxIEBACisjaW5j
-bHVkZSA8bGludXgvYWNwaS5oPgorI2luY2x1ZGUgPGFjcGkvYWNwaV9kcml2ZXJzLmg+CisjaW5j
-bHVkZSAidHBtLmgiCisKK3N0YXRpYyBjb25zdCB1OCB0cG1fcHBpX3V1aWRbXSA9IHsKKwkweEE2
-LCAweEZBLCAweERELCAweDNELAorCTB4MUIsIDB4MzYsCisJMHhCNCwgMHg0RSwKKwkweEE0LCAw
-eDI0LAorCTB4OEQsIDB4MTAsIDB4MDgsIDB4OUQsIDB4MTYsIDB4NTMKK307CitzdGF0aWMgY2hh
-ciAqdHBtX2RldmljZV9uYW1lID0gIlRQTSI7CisKKyNkZWZpbmUgVFBNX1BQSV9SRVZJU0lPTl9J
-RAkxCisjZGVmaW5lIFRQTV9QUElfRk5fVkVSU0lPTgkxCisjZGVmaW5lIFRQTV9QUElfRk5fU1VC
-UkVRCTIKKyNkZWZpbmUgVFBNX1BQSV9GTl9HRVRSRVEJMworI2RlZmluZSBUUE1fUFBJX0ZOX0dF
-VEFDVAk0CisjZGVmaW5lIFRQTV9QUElfRk5fR0VUUlNQCTUKKyNkZWZpbmUgVFBNX1BQSV9GTl9T
-VUJSRVEyCTcKKyNkZWZpbmUgVFBNX1BQSV9GTl9HRVRPUFIJOAorI2RlZmluZSBQUElfVFBNX1JF
-UV9NQVgJCTIyCisjZGVmaW5lIFBQSV9WU19SRVFfU1RBUlQJMTI4CisjZGVmaW5lIFBQSV9WU19S
-RVFfRU5ECQkyNTUKKyNkZWZpbmUgUFBJX1ZFUlNJT05fTEVOCQkzCisKK3NzaXplX3Qgc3lzX2Fk
-ZF9wcGkoc3RydWN0IGtvYmplY3QgKnBhcmVudCwgc3RydWN0IGF0dHJpYnV0ZV9ncm91cCAqZ3Jw
-KQoreworCXN0cnVjdCBrb2JqZWN0ICpwcGk7CisJcHBpID0ga29iamVjdF9jcmVhdGVfYW5kX2Fk
-ZCgicHBpIiwgcGFyZW50KTsKKwlpZiAoc3lzZnNfY3JlYXRlX2dyb3VwKHBwaSwgZ3JwKSkKKwkJ
-cmV0dXJuIC1FRkFVTFQ7CisJZWxzZQorCQlyZXR1cm4gMDsKK30KK0VYUE9SVF9TWU1CT0xfR1BM
-KHN5c19hZGRfcHBpKTsKKworc3RhdGljIGFjcGlfc3RhdHVzIHBwaV9jYWxsYmFjayhhY3BpX2hh
-bmRsZSBoYW5kbGUsIHUzMiBsZXZlbCwgdm9pZCAqY29udGV4dCwKKwkJCQl2b2lkICoqcmV0dXJu
-X3ZhbHVlKQoreworCWFjcGlfc3RhdHVzIHN0YXR1czsKKwlzdHJ1Y3QgYWNwaV9idWZmZXIgYnVm
-ZmVyID0geyBBQ1BJX0FMTE9DQVRFX0JVRkZFUiwgTlVMTCB9OworCXN0YXR1cyA9IGFjcGlfZ2V0
-X25hbWUoaGFuZGxlLCBBQ1BJX0ZVTExfUEFUSE5BTUUsICZidWZmZXIpOworCWlmIChzdHJzdHIo
-YnVmZmVyLnBvaW50ZXIsIGNvbnRleHQpICE9IE5VTEwpIHsKKwkJKnJldHVybl92YWx1ZSA9IGhh
-bmRsZTsKKwkJa2ZyZWUoYnVmZmVyLnBvaW50ZXIpOworCQlyZXR1cm4gQUVfQ1RSTF9URVJNSU5B
-VEU7CisJfQorCXJldHVybiBBRV9PSzsKK30KKworc3RhdGljIGlubGluZSB2b2lkIHBwaV9hc3Np
-Z25fcGFyYW1zKHVuaW9uIGFjcGlfb2JqZWN0IHBhcmFtc1s0XSwKKwkJCQkgICAgIHU2NCBmdW5j
-dGlvbl9udW0pCit7CisJcGFyYW1zWzBdLnR5cGUgPSBBQ1BJX1RZUEVfQlVGRkVSOworCXBhcmFt
-c1swXS5idWZmZXIubGVuZ3RoID0gc2l6ZW9mKHRwbV9wcGlfdXVpZCk7CisJcGFyYW1zWzBdLmJ1
-ZmZlci5wb2ludGVyID0gKGNoYXIgKil0cG1fcHBpX3V1aWQ7CisJcGFyYW1zWzFdLnR5cGUgPSBB
-Q1BJX1RZUEVfSU5URUdFUjsKKwlwYXJhbXNbMV0uaW50ZWdlci52YWx1ZSA9IFRQTV9QUElfUkVW
-SVNJT05fSUQ7CisJcGFyYW1zWzJdLnR5cGUgPSBBQ1BJX1RZUEVfSU5URUdFUjsKKwlwYXJhbXNb
-Ml0uaW50ZWdlci52YWx1ZSA9IGZ1bmN0aW9uX251bTsKKwlwYXJhbXNbM10udHlwZSA9IEFDUElf
-VFlQRV9QQUNLQUdFOworCXBhcmFtc1szXS5wYWNrYWdlLmNvdW50ID0gMDsKKwlwYXJhbXNbM10u
-cGFja2FnZS5lbGVtZW50cyA9IE5VTEw7Cit9CisKK3NzaXplX3QgdHBtX3Nob3dfcHBpX3ZlcnNp
-b24oc3RydWN0IGRldmljZSAqZGV2LCBzdHJ1Y3QgZGV2aWNlX2F0dHJpYnV0ZSAqYXR0ciwKKwkJ
-CSAgICAgY2hhciAqYnVmKQoreworCWFjcGlfaGFuZGxlIGhhbmRsZTsKKwlhY3BpX3N0YXR1cyBz
-dGF0dXM7CisJc3RydWN0IGFjcGlfb2JqZWN0X2xpc3QgaW5wdXQ7CisJc3RydWN0IGFjcGlfYnVm
-ZmVyIG91dHB1dCA9IHsgQUNQSV9BTExPQ0FURV9CVUZGRVIsIE5VTEwgfTsKKwl1bmlvbiBhY3Bp
-X29iamVjdCBwYXJhbXNbNF07CisJdW5pb24gYWNwaV9vYmplY3QgKm9iajsKKworCWlucHV0LmNv
-dW50ID0gNDsKKwlwcGlfYXNzaWduX3BhcmFtcyhwYXJhbXMsIFRQTV9QUElfRk5fVkVSU0lPTik7
-CisJaW5wdXQucG9pbnRlciA9IHBhcmFtczsKKwlzdGF0dXMgPSBhY3BpX3dhbGtfbmFtZXNwYWNl
-KEFDUElfVFlQRV9ERVZJQ0UsIEFDUElfUk9PVF9PQkpFQ1QsCisJCQkJICAgICBBQ1BJX1VJTlQz
-Ml9NQVgsIHBwaV9jYWxsYmFjaywgTlVMTCwKKwkJCQkgICAgIHRwbV9kZXZpY2VfbmFtZSwgJmhh
-bmRsZSk7CisJaWYgKEFDUElfRkFJTFVSRShzdGF0dXMpKQorCQlyZXR1cm4gLUVOWElPOworCisJ
-c3RhdHVzID0gYWNwaV9ldmFsdWF0ZV9vYmplY3RfdHlwZWQoaGFuZGxlLCAiX0RTTSIsICZpbnB1
-dCwgJm91dHB1dCwKKwkJCQkJIEFDUElfVFlQRV9TVFJJTkcpOworCWlmIChBQ1BJX0ZBSUxVUkUo
-c3RhdHVzKSkKKwkJcmV0dXJuIC1FTk9NRU07CisJb2JqID0gKHVuaW9uIGFjcGlfb2JqZWN0ICop
-b3V0cHV0LnBvaW50ZXI7CisJc3RhdHVzID0gc2NucHJpbnRmKGJ1ZiwgUEFHRV9TSVpFLCAiJXNc
-biIsIG9iai0+c3RyaW5nLnBvaW50ZXIpOworCWtmcmVlKG91dHB1dC5wb2ludGVyKTsKKwlyZXR1
-cm4gc3RhdHVzOworfQorCitzc2l6ZV90IHRwbV9zaG93X3BwaV9yZXF1ZXN0KHN0cnVjdCBkZXZp
-Y2UgKmRldiwKKwkJCSAgICAgc3RydWN0IGRldmljZV9hdHRyaWJ1dGUgKmF0dHIsCisJCQkgICAg
-IGNoYXIgKmJ1ZikKK3sKKwlhY3BpX2hhbmRsZSBoYW5kbGU7CisJYWNwaV9zdGF0dXMgc3RhdHVz
-OworCXN0cnVjdCBhY3BpX29iamVjdF9saXN0IGlucHV0OworCXN0cnVjdCBhY3BpX2J1ZmZlciBv
-dXRwdXQgPSB7IEFDUElfQUxMT0NBVEVfQlVGRkVSLCBOVUxMIH07CisJdW5pb24gYWNwaV9vYmpl
-Y3QgcGFyYW1zWzRdOworCXVuaW9uIGFjcGlfb2JqZWN0ICpyZXRfb2JqOworCisJaW5wdXQuY291
-bnQgPSA0OworCXBwaV9hc3NpZ25fcGFyYW1zKHBhcmFtcywgVFBNX1BQSV9GTl9HRVRSRVEpOwor
-CWlucHV0LnBvaW50ZXIgPSBwYXJhbXM7CisJc3RhdHVzID0gYWNwaV93YWxrX25hbWVzcGFjZShB
-Q1BJX1RZUEVfREVWSUNFLCBBQ1BJX1JPT1RfT0JKRUNULAorCQkJCSAgICAgQUNQSV9VSU5UMzJf
-TUFYLCBwcGlfY2FsbGJhY2ssIE5VTEwsCisJCQkJICAgICB0cG1fZGV2aWNlX25hbWUsICZoYW5k
-bGUpOworCWlmIChBQ1BJX0ZBSUxVUkUoc3RhdHVzKSkKKwkJcmV0dXJuIC1FTlhJTzsKKworCXN0
-YXR1cyA9IGFjcGlfZXZhbHVhdGVfb2JqZWN0X3R5cGVkKGhhbmRsZSwgIl9EU00iLCAmaW5wdXQs
-ICZvdXRwdXQsCisJCQkJCSAgICBBQ1BJX1RZUEVfUEFDS0FHRSk7CisJaWYgKEFDUElfRkFJTFVS
-RShzdGF0dXMpKQorCQlyZXR1cm4gLUVOT01FTTsKKwkvKgorCSAqIG91dHB1dC5wb2ludGVyIHNo
-b3VsZCBiZSBvZiBwYWNrYWdlIHR5cGUsIGluY2x1ZGluZyB0d28gaW50ZWdlcnMuCisJICogVGhl
-IGZpcnN0IGlzIGZ1bmN0aW9uIHJldHVybiBjb2RlLCAwIG1lYW5zIHN1Y2Nlc3MgYW5kIDEgbWVh
-bnMKKwkgKiBlcnJvci4gVGhlIHNlY29uZCBpcyBwZW5kaW5nIFRQTSBvcGVyYXRpb24gcmVxdWVz
-dGVkIGJ5IHRoZSBPUywgMAorCSAqIG1lYW5zIG5vbmUgYW5kID4wIG1lYW5zIG9wZXJhdGlvbiB2
-YWx1ZS4KKwkgKi8KKwlyZXRfb2JqID0gKCh1bmlvbiBhY3BpX29iamVjdCAqKW91dHB1dC5wb2lu
-dGVyKS0+cGFja2FnZS5lbGVtZW50czsKKwlpZiAocmV0X29iai0+dHlwZSA9PSBBQ1BJX1RZUEVf
-SU5URUdFUikgeworCQlpZiAocmV0X29iai0+aW50ZWdlci52YWx1ZSkgeworCQkJc3RhdHVzID0g
-LUVGQVVMVDsKKwkJCWdvdG8gY2xlYW51cDsKKwkJfQorCQlyZXRfb2JqKys7CisJCWlmIChyZXRf
-b2JqLT50eXBlID09IEFDUElfVFlQRV9JTlRFR0VSKQorCQkJc3RhdHVzID0gc2NucHJpbnRmKGJ1
-ZiwgUEFHRV9TSVpFLCAiJWxsdVxuIiwKKwkJCQkJICAgcmV0X29iai0+aW50ZWdlci52YWx1ZSk7
-CisJCWVsc2UKKwkJCXN0YXR1cyA9IC1FSU5WQUw7CisJfSBlbHNlIHsKKwkJc3RhdHVzID0gLUVJ
-TlZBTDsKKwl9CitjbGVhbnVwOgorCWtmcmVlKG91dHB1dC5wb2ludGVyKTsKKwlyZXR1cm4gc3Rh
-dHVzOworfQorCitzc2l6ZV90IHRwbV9zdG9yZV9wcGlfcmVxdWVzdChzdHJ1Y3QgZGV2aWNlICpk
-ZXYsCisJCQkgICAgICBzdHJ1Y3QgZGV2aWNlX2F0dHJpYnV0ZSAqYXR0ciwKKwkJCSAgICAgIGNv
-bnN0IGNoYXIgKmJ1Ziwgc2l6ZV90IGNvdW50KQoreworCWNoYXIgdmVyc2lvbltQUElfVkVSU0lP
-Tl9MRU4gKyAxXTsKKwlhY3BpX2hhbmRsZSBoYW5kbGU7CisJYWNwaV9zdGF0dXMgc3RhdHVzOwor
-CXN0cnVjdCBhY3BpX29iamVjdF9saXN0IGlucHV0OworCXN0cnVjdCBhY3BpX2J1ZmZlciBvdXRw
-dXQgPSB7IEFDUElfQUxMT0NBVEVfQlVGRkVSLCBOVUxMIH07CisJdW5pb24gYWNwaV9vYmplY3Qg
-cGFyYW1zWzRdOworCXVuaW9uIGFjcGlfb2JqZWN0IG9iajsKKwl1MzIgcmVxOworCXU2NCByZXQ7
-CisKKwlpbnB1dC5jb3VudCA9IDQ7CisJcHBpX2Fzc2lnbl9wYXJhbXMocGFyYW1zLCBUUE1fUFBJ
-X0ZOX1ZFUlNJT04pOworCWlucHV0LnBvaW50ZXIgPSBwYXJhbXM7CisJc3RhdHVzID0gYWNwaV93
-YWxrX25hbWVzcGFjZShBQ1BJX1RZUEVfREVWSUNFLCBBQ1BJX1JPT1RfT0JKRUNULAorCQkJCSAg
-ICAgQUNQSV9VSU5UMzJfTUFYLCBwcGlfY2FsbGJhY2ssIE5VTEwsCisJCQkJICAgICB0cG1fZGV2
-aWNlX25hbWUsICZoYW5kbGUpOworCWlmIChBQ1BJX0ZBSUxVUkUoc3RhdHVzKSkKKwkJcmV0dXJu
-IC1FTlhJTzsKKworCXN0YXR1cyA9IGFjcGlfZXZhbHVhdGVfb2JqZWN0X3R5cGVkKGhhbmRsZSwg
-Il9EU00iLCAmaW5wdXQsICZvdXRwdXQsCisJCQkJCSAgICBBQ1BJX1RZUEVfU1RSSU5HKTsKKwlp
-ZiAoQUNQSV9GQUlMVVJFKHN0YXR1cykpCisJCXJldHVybiAtRU5PTUVNOworCXN0cm5jcHkodmVy
-c2lvbiwKKwkJKCh1bmlvbiBhY3BpX29iamVjdCAqKW91dHB1dC5wb2ludGVyKS0+c3RyaW5nLnBv
-aW50ZXIsCisJCVBQSV9WRVJTSU9OX0xFTik7CisJa2ZyZWUob3V0cHV0LnBvaW50ZXIpOworCW91
-dHB1dC5sZW5ndGggPSBBQ1BJX0FMTE9DQVRFX0JVRkZFUjsKKwlvdXRwdXQucG9pbnRlciA9IE5V
-TEw7CisJLyoKKwkgKiB0aGUgZnVuY3Rpb24gdG8gc3VibWl0IFRQTSBvcGVyYXRpb24gcmVxdWVz
-dCB0byBwcmUtb3MgZW52aXJvbm1lbnQKKwkgKiBpcyB1cGRhdGVkIHdpdGggZnVuY3Rpb24gaW5k
-ZXggZnJvbSBTVUJSRVEgdG8gU1VCUkVRMiBzaW5jZSBQUEkKKwkgKiB2ZXJzaW9uIDEuMQorCSAq
-LworCWlmIChzdHJjbXAodmVyc2lvbiwgIjEuMSIpID09IC0xKQorCQlwYXJhbXNbMl0uaW50ZWdl
-ci52YWx1ZSA9IFRQTV9QUElfRk5fU1VCUkVROworCWVsc2UKKwkJcGFyYW1zWzJdLmludGVnZXIu
-dmFsdWUgPSBUUE1fUFBJX0ZOX1NVQlJFUTI7CisJLyoKKwkgKiBQUEkgc3BlYyBkZWZpbmVzIHBh
-cmFtc1szXS50eXBlIGFzIEFDUElfVFlQRV9QQUNLQUdFLiBTb21lIEJJT1MKKwkgKiBhY2NlcHQg
-YnVmZmVyL3N0cmluZy9pbnRlZ2VyIHR5cGUsIGJ1dCBzb21lIEJJT1MgYWNjZXB0IGJ1ZmZlci8K
-KwkgKiBzdHJpbmcvcGFja2FnZSB0eXBlLiBGb3IgUFBJIHZlcnNpb24gMS4wIGFuZCAxLjEsIHVz
-ZSBidWZmZXIgdHlwZQorCSAqIGZvciBjb21wYXRpYmlsaXR5LCBhbmQgdXNlIHBhY2thZ2UgdHlw
-ZSBzaW5jZSAxLjIgYWNjb3JkaW5nIHRvIHNwZWMuCisJICovCisJaWYgKHN0cmNtcCh2ZXJzaW9u
-LCAiMS4yIikgPT0gLTEpIHsKKwkJcGFyYW1zWzNdLnR5cGUgPSBBQ1BJX1RZUEVfQlVGRkVSOwor
-CQlwYXJhbXNbM10uYnVmZmVyLmxlbmd0aCA9IHNpemVvZihyZXEpOworCQlzc2NhbmYoYnVmLCAi
-JWQiLCAmcmVxKTsKKwkJcGFyYW1zWzNdLmJ1ZmZlci5wb2ludGVyID0gKGNoYXIgKikmcmVxOwor
-CX0gZWxzZSB7CisJCXBhcmFtc1szXS5wYWNrYWdlLmNvdW50ID0gMTsKKwkJb2JqLnR5cGUgPSBB
-Q1BJX1RZUEVfSU5URUdFUjsKKwkJc3NjYW5mKGJ1ZiwgIiVsbHUiLCAmb2JqLmludGVnZXIudmFs
-dWUpOworCQlwYXJhbXNbM10ucGFja2FnZS5lbGVtZW50cyA9ICZvYmo7CisJfQorCisJc3RhdHVz
-ID0gYWNwaV9ldmFsdWF0ZV9vYmplY3RfdHlwZWQoaGFuZGxlLCAiX0RTTSIsICZpbnB1dCwgJm91
-dHB1dCwKKwkJCQkJICAgIEFDUElfVFlQRV9JTlRFR0VSKTsKKwlpZiAoQUNQSV9GQUlMVVJFKHN0
-YXR1cykpCisJCXJldHVybiAtRU5PTUVNOworCXJldCA9ICgodW5pb24gYWNwaV9vYmplY3QgKilv
-dXRwdXQucG9pbnRlciktPmludGVnZXIudmFsdWU7CisJaWYgKHJldCA9PSAwKQorCQlzdGF0dXMg
-PSAoYWNwaV9zdGF0dXMpY291bnQ7CisJZWxzZSBpZiAocmV0ID09IDEpCisJCXN0YXR1cyA9IC1F
-UEVSTTsKKwllbHNlCisJCXN0YXR1cyA9IC1FRkFVTFQ7CisJa2ZyZWUob3V0cHV0LnBvaW50ZXIp
-OworCXJldHVybiBzdGF0dXM7Cit9CisKK3NzaXplX3QgdHBtX3Nob3dfcHBpX3RyYW5zaXRpb25f
-YWN0aW9uKHN0cnVjdCBkZXZpY2UgKmRldiwKKwkJCQkgICAgICAgc3RydWN0IGRldmljZV9hdHRy
-aWJ1dGUgKmF0dHIsCisJCQkJICAgICAgIGNoYXIgKmJ1ZikKK3sKKwljaGFyIHZlcnNpb25bUFBJ
-X1ZFUlNJT05fTEVOICsgMV07CisJYWNwaV9oYW5kbGUgaGFuZGxlOworCWFjcGlfc3RhdHVzIHN0
-YXR1czsKKwlzdHJ1Y3QgYWNwaV9vYmplY3RfbGlzdCBpbnB1dDsKKwlzdHJ1Y3QgYWNwaV9idWZm
-ZXIgb3V0cHV0ID0geyBBQ1BJX0FMTE9DQVRFX0JVRkZFUiwgTlVMTCB9OworCXVuaW9uIGFjcGlf
-b2JqZWN0IHBhcmFtc1s0XTsKKwl1MzIgcmV0OworCWNoYXIgKmluZm9bXSA9IHsKKwkJIk5vbmUi
-LAorCQkiU2h1dGRvd24iLAorCQkiUmVib290IiwKKwkJIk9TIFZlbmRvci1zcGVjaWZpYyIsCisJ
-CSJFcnJvciIsCisJfTsKKwlpbnB1dC5jb3VudCA9IDQ7CisJcHBpX2Fzc2lnbl9wYXJhbXMocGFy
-YW1zLCBUUE1fUFBJX0ZOX1ZFUlNJT04pOworCWlucHV0LnBvaW50ZXIgPSBwYXJhbXM7CisJc3Rh
-dHVzID0gYWNwaV93YWxrX25hbWVzcGFjZShBQ1BJX1RZUEVfREVWSUNFLCBBQ1BJX1JPT1RfT0JK
-RUNULAorCQkJCSAgICAgQUNQSV9VSU5UMzJfTUFYLCBwcGlfY2FsbGJhY2ssIE5VTEwsCisJCQkJ
-ICAgICB0cG1fZGV2aWNlX25hbWUsICZoYW5kbGUpOworCWlmIChBQ1BJX0ZBSUxVUkUoc3RhdHVz
-KSkKKwkJcmV0dXJuIC1FTlhJTzsKKworCXN0YXR1cyA9IGFjcGlfZXZhbHVhdGVfb2JqZWN0X3R5
-cGVkKGhhbmRsZSwgIl9EU00iLCAmaW5wdXQsICZvdXRwdXQsCisJCQkJCSAgICBBQ1BJX1RZUEVf
-U1RSSU5HKTsKKwlpZiAoQUNQSV9GQUlMVVJFKHN0YXR1cykpCisJCXJldHVybiAtRU5PTUVNOwor
-CXN0cm5jcHkodmVyc2lvbiwKKwkJKCh1bmlvbiBhY3BpX29iamVjdCAqKW91dHB1dC5wb2ludGVy
-KS0+c3RyaW5nLnBvaW50ZXIsCisJCVBQSV9WRVJTSU9OX0xFTik7CisJLyoKKwkgKiBQUEkgc3Bl
-YyBkZWZpbmVzIHBhcmFtc1szXS50eXBlIGFzIGVtcHR5IHBhY2thZ2UsIGJ1dCBzb21lIHBsYXRm
-b3JtcworCSAqIChlLmcuIENhcGVsbGEgd2l0aCBQUEkgMS4wKSBuZWVkIGludGVnZXIvc3RyaW5n
-L2J1ZmZlciB0eXBlLCBzbyBmb3IKKwkgKiBjb21wYXRpYmlsaXR5LCBkZWZpbmUgcGFyYW1zWzNd
-LnR5cGUgYXMgYnVmZmVyLCBpZiBQUEkgdmVyc2lvbiA8IDEuMgorCSAqLworCWlmIChzdHJjbXAo
-dmVyc2lvbiwgIjEuMiIpID09IC0xKSB7CisJCXBhcmFtc1szXS50eXBlID0gQUNQSV9UWVBFX0JV
-RkZFUjsKKwkJcGFyYW1zWzNdLmJ1ZmZlci5sZW5ndGggPSAgMDsKKwkJcGFyYW1zWzNdLmJ1ZmZl
-ci5wb2ludGVyID0gTlVMTDsKKwl9CisJcGFyYW1zWzJdLmludGVnZXIudmFsdWUgPSBUUE1fUFBJ
-X0ZOX0dFVEFDVDsKKwlrZnJlZShvdXRwdXQucG9pbnRlcik7CisJb3V0cHV0Lmxlbmd0aCA9IEFD
-UElfQUxMT0NBVEVfQlVGRkVSOworCW91dHB1dC5wb2ludGVyID0gTlVMTDsKKwlzdGF0dXMgPSBh
-Y3BpX2V2YWx1YXRlX29iamVjdF90eXBlZChoYW5kbGUsICJfRFNNIiwgJmlucHV0LCAmb3V0cHV0
-LAorCQkJCQkgICAgQUNQSV9UWVBFX0lOVEVHRVIpOworCWlmIChBQ1BJX0ZBSUxVUkUoc3RhdHVz
-KSkKKwkJcmV0dXJuIC1FTk9NRU07CisJcmV0ID0gKCh1bmlvbiBhY3BpX29iamVjdCAqKW91dHB1
-dC5wb2ludGVyKS0+aW50ZWdlci52YWx1ZTsKKwlpZiAocmV0IDwgQVJSQVlfU0laRShpbmZvKSAt
-IDEpCisJCXN0YXR1cyA9IHNjbnByaW50ZihidWYsIFBBR0VfU0laRSwgIiVkOiAlc1xuIiwgcmV0
-LCBpbmZvW3JldF0pOworCWVsc2UKKwkJc3RhdHVzID0gc2NucHJpbnRmKGJ1ZiwgUEFHRV9TSVpF
-LCAiJWQ6ICVzXG4iLCByZXQsCisJCQkJICAgaW5mb1tBUlJBWV9TSVpFKGluZm8pLTFdKTsKKwlr
-ZnJlZShvdXRwdXQucG9pbnRlcik7CisJcmV0dXJuIHN0YXR1czsKK30KKworc3NpemVfdCB0cG1f
-c2hvd19wcGlfcmVzcG9uc2Uoc3RydWN0IGRldmljZSAqZGV2LAorCQkJICAgICAgc3RydWN0IGRl
-dmljZV9hdHRyaWJ1dGUgKmF0dHIsCisJCQkgICAgICBjaGFyICpidWYpCit7CisJYWNwaV9oYW5k
-bGUgaGFuZGxlOworCWFjcGlfc3RhdHVzIHN0YXR1czsKKwlzdHJ1Y3QgYWNwaV9vYmplY3RfbGlz
-dCBpbnB1dDsKKwlzdHJ1Y3QgYWNwaV9idWZmZXIgb3V0cHV0ID0geyBBQ1BJX0FMTE9DQVRFX0JV
-RkZFUiwgTlVMTCB9OworCXVuaW9uIGFjcGlfb2JqZWN0IHBhcmFtc1s0XTsKKwl1bmlvbiBhY3Bp
-X29iamVjdCAqcmV0X29iajsKKwl1NjQgcmVxOworCisJaW5wdXQuY291bnQgPSA0OworCXBwaV9h
-c3NpZ25fcGFyYW1zKHBhcmFtcywgVFBNX1BQSV9GTl9HRVRSU1ApOworCWlucHV0LnBvaW50ZXIg
-PSBwYXJhbXM7CisJc3RhdHVzID0gYWNwaV93YWxrX25hbWVzcGFjZShBQ1BJX1RZUEVfREVWSUNF
-LCBBQ1BJX1JPT1RfT0JKRUNULAorCQkJCSAgICAgQUNQSV9VSU5UMzJfTUFYLCBwcGlfY2FsbGJh
-Y2ssIE5VTEwsCisJCQkJICAgICB0cG1fZGV2aWNlX25hbWUsICZoYW5kbGUpOworCWlmIChBQ1BJ
-X0ZBSUxVUkUoc3RhdHVzKSkKKwkJcmV0dXJuIC1FTlhJTzsKKworCXN0YXR1cyA9IGFjcGlfZXZh
-bHVhdGVfb2JqZWN0X3R5cGVkKGhhbmRsZSwgIl9EU00iLCAmaW5wdXQsICZvdXRwdXQsCisJCQkJ
-CSAgICBBQ1BJX1RZUEVfUEFDS0FHRSk7CisJaWYgKEFDUElfRkFJTFVSRShzdGF0dXMpKQorCQly
-ZXR1cm4gLUVOT01FTTsKKwkvKgorCSAqIHBhcmFtZXRlciBvdXRwdXQucG9pbnRlciBzaG91bGQg
-YmUgb2YgcGFja2FnZSB0eXBlLCBpbmNsdWRpbmcKKwkgKiAzIGludGVnZXJzLiBUaGUgZmlyc3Qg
-bWVhbnMgZnVuY3Rpb24gcmV0dXJuIGNvZGUsIHRoZSBzZWNvbmQgbWVhbnMKKwkgKiBtb3N0IHJl
-Y2VudCBUUE0gb3BlcmF0aW9uIHJlcXVlc3QsIGFuZCB0aGUgbGFzdCBtZWFucyByZXNwb25zZSB0
-bworCSAqIHRoZSBtb3N0IHJlY2VudCBUUE0gb3BlcmF0aW9uIHJlcXVlc3QuIE9ubHkgaWYgdGhl
-IGZpcnN0IGlzIDAsIGFuZAorCSAqIHRoZSBzZWNvbmQgaW50ZWdlciBpcyBub3QgMCwgdGhlIHJl
-c3BvbnNlIG1ha2VzIHNlbnNlLgorCSAqLworCXJldF9vYmogPSAoKHVuaW9uIGFjcGlfb2JqZWN0
-ICopb3V0cHV0LnBvaW50ZXIpLT5wYWNrYWdlLmVsZW1lbnRzOworCWlmIChyZXRfb2JqLT50eXBl
-ICE9IEFDUElfVFlQRV9JTlRFR0VSKSB7CisJCXN0YXR1cyA9IC1FSU5WQUw7CisJCWdvdG8gY2xl
-YW51cDsKKwl9CisJaWYgKHJldF9vYmotPmludGVnZXIudmFsdWUpIHsKKwkJc3RhdHVzID0gLUVG
-QVVMVDsKKwkJZ290byBjbGVhbnVwOworCX0KKwlyZXRfb2JqKys7CisJaWYgKHJldF9vYmotPnR5
-cGUgIT0gQUNQSV9UWVBFX0lOVEVHRVIpIHsKKwkJc3RhdHVzID0gLUVJTlZBTDsKKwkJZ290byBj
-bGVhbnVwOworCX0KKwlpZiAocmV0X29iai0+aW50ZWdlci52YWx1ZSkgeworCQlyZXEgPSByZXRf
-b2JqLT5pbnRlZ2VyLnZhbHVlOworCQlyZXRfb2JqKys7CisJCWlmIChyZXRfb2JqLT50eXBlICE9
-IEFDUElfVFlQRV9JTlRFR0VSKSB7CisJCQlzdGF0dXMgPSAtRUlOVkFMOworCQkJZ290byBjbGVh
-bnVwOworCQl9CisJCWlmIChyZXRfb2JqLT5pbnRlZ2VyLnZhbHVlID09IDApCisJCQlzdGF0dXMg
-PSBzY25wcmludGYoYnVmLCBQQUdFX1NJWkUsICIlbGx1ICVzXG4iLCByZXEsCisJCQkJCSAgICIw
-OiBTdWNjZXNzIik7CisJCWVsc2UgaWYgKHJldF9vYmotPmludGVnZXIudmFsdWUgPT0gMHhGRkZG
-RkZGMCkKKwkJCXN0YXR1cyA9IHNjbnByaW50ZihidWYsIFBBR0VfU0laRSwgIiVsbHUgJXNcbiIs
-IHJlcSwKKwkJCQkJICAgIjB4RkZGRkZGRjA6IFVzZXIgQWJvcnQiKTsKKwkJZWxzZSBpZiAocmV0
-X29iai0+aW50ZWdlci52YWx1ZSA9PSAweEZGRkZGRkYxKQorCQkJc3RhdHVzID0gc2NucHJpbnRm
-KGJ1ZiwgUEFHRV9TSVpFLCAiJWxsdSAlc1xuIiwgcmVxLAorCQkJCQkgICAiMHhGRkZGRkZGMTog
-QklPUyBGYWlsdXJlIik7CisJCWVsc2UgaWYgKHJldF9vYmotPmludGVnZXIudmFsdWUgPj0gMSAm
-JgorCQkJIHJldF9vYmotPmludGVnZXIudmFsdWUgPD0gMHgwMDAwMEZGRikKKwkJCXN0YXR1cyA9
-IHNjbnByaW50ZihidWYsIFBBR0VfU0laRSwgIiVsbHUgJWxsdTogJXNcbiIsCisJCQkJCSAgIHJl
-cSwgcmV0X29iai0+aW50ZWdlci52YWx1ZSwKKwkJCQkJICAgIkNvcnJlc3BvbmRpbmcgVFBNIGVy
-cm9yIik7CisJCWVsc2UKKwkJCXN0YXR1cyA9IHNjbnByaW50ZihidWYsIFBBR0VfU0laRSwgIiVs
-bHUgJWxsdTogJXNcbiIsCisJCQkJCSAgIHJlcSwgcmV0X29iai0+aW50ZWdlci52YWx1ZSwKKwkJ
-CQkJICAgIkVycm9yIik7CisJfSBlbHNlIHsKKwkJc3RhdHVzID0gc2NucHJpbnRmKGJ1ZiwgUEFH
-RV9TSVpFLCAiJWxsdTogJXNcbiIsCisJCQkJICAgcmV0X29iai0+aW50ZWdlci52YWx1ZSwgIk5v
-IFJlY2VudCBSZXF1ZXN0Iik7CisJfQorY2xlYW51cDoKKwlrZnJlZShvdXRwdXQucG9pbnRlcik7
-CisJcmV0dXJuIHN0YXR1czsKK30KKworc3RhdGljIHNzaXplX3Qgc2hvd19wcGlfb3BlcmF0aW9u
-cyhjaGFyICpidWYsIHUzMiBzdGFydCwgdTMyIGVuZCkKK3sKKwljaGFyICpzdHIgPSBidWY7CisJ
-Y2hhciB2ZXJzaW9uW1BQSV9WRVJTSU9OX0xFTl07CisJYWNwaV9oYW5kbGUgaGFuZGxlOworCWFj
-cGlfc3RhdHVzIHN0YXR1czsKKwlzdHJ1Y3QgYWNwaV9vYmplY3RfbGlzdCBpbnB1dDsKKwlzdHJ1
-Y3QgYWNwaV9idWZmZXIgb3V0cHV0ID0geyBBQ1BJX0FMTE9DQVRFX0JVRkZFUiwgTlVMTCB9Owor
-CXVuaW9uIGFjcGlfb2JqZWN0IHBhcmFtc1s0XTsKKwl1bmlvbiBhY3BpX29iamVjdCBvYmo7CisJ
-aW50IGk7CisJdTMyIHJldDsKKwljaGFyICppbmZvW10gPSB7CisJCSJOb3QgaW1wbGVtZW50ZWQi
-LAorCQkiQklPUyBvbmx5IiwKKwkJIkJsb2NrZWQgZm9yIE9TIGJ5IEJJT1MiLAorCQkiVXNlciBy
-ZXF1aXJlZCIsCisJCSJVc2VyIG5vdCByZXF1aXJlZCIsCisJfTsKKwlpbnB1dC5jb3VudCA9IDQ7
-CisJcHBpX2Fzc2lnbl9wYXJhbXMocGFyYW1zLCBUUE1fUFBJX0ZOX1ZFUlNJT04pOworCWlucHV0
-LnBvaW50ZXIgPSBwYXJhbXM7CisJc3RhdHVzID0gYWNwaV93YWxrX25hbWVzcGFjZShBQ1BJX1RZ
-UEVfREVWSUNFLCBBQ1BJX1JPT1RfT0JKRUNULAorCQkJCSAgICAgQUNQSV9VSU5UMzJfTUFYLCBw
-cGlfY2FsbGJhY2ssIE5VTEwsCisJCQkJICAgICB0cG1fZGV2aWNlX25hbWUsICZoYW5kbGUpOwor
-CWlmIChBQ1BJX0ZBSUxVUkUoc3RhdHVzKSkKKwkJcmV0dXJuIC1FTlhJTzsKKworCXN0YXR1cyA9
-IGFjcGlfZXZhbHVhdGVfb2JqZWN0X3R5cGVkKGhhbmRsZSwgIl9EU00iLCAmaW5wdXQsICZvdXRw
-dXQsCisJCQkJCSBBQ1BJX1RZUEVfU1RSSU5HKTsKKwlpZiAoQUNQSV9GQUlMVVJFKHN0YXR1cykp
-CisJCXJldHVybiAtRU5PTUVNOworCisJc3RybmNweSh2ZXJzaW9uLAorCQkoKHVuaW9uIGFjcGlf
-b2JqZWN0ICopb3V0cHV0LnBvaW50ZXIpLT5zdHJpbmcucG9pbnRlciwKKwkJUFBJX1ZFUlNJT05f
-TEVOKTsKKwlrZnJlZShvdXRwdXQucG9pbnRlcik7CisJb3V0cHV0Lmxlbmd0aCA9IEFDUElfQUxM
-T0NBVEVfQlVGRkVSOworCW91dHB1dC5wb2ludGVyID0gTlVMTDsKKwlpZiAoc3RyY21wKHZlcnNp
-b24sICIxLjIiKSA9PSAtMSkKKwkJcmV0dXJuIC1FUEVSTTsKKworCXBhcmFtc1syXS5pbnRlZ2Vy
-LnZhbHVlID0gVFBNX1BQSV9GTl9HRVRPUFI7CisJcGFyYW1zWzNdLnBhY2thZ2UuY291bnQgPSAx
-OworCW9iai50eXBlID0gQUNQSV9UWVBFX0lOVEVHRVI7CisJcGFyYW1zWzNdLnBhY2thZ2UuZWxl
-bWVudHMgPSAmb2JqOworCWZvciAoaSA9IHN0YXJ0OyBpIDw9IGVuZDsgaSsrKSB7CisJCW9iai5p
-bnRlZ2VyLnZhbHVlID0gaTsKKwkJc3RhdHVzID0gYWNwaV9ldmFsdWF0ZV9vYmplY3RfdHlwZWQo
-aGFuZGxlLCAiX0RTTSIsCisJCQkgJmlucHV0LCAmb3V0cHV0LCBBQ1BJX1RZUEVfSU5URUdFUik7
-CisJCWlmIChBQ1BJX0ZBSUxVUkUoc3RhdHVzKSkKKwkJCXJldHVybiAtRU5PTUVNOworCisJCXJl
-dCA9ICgodW5pb24gYWNwaV9vYmplY3QgKilvdXRwdXQucG9pbnRlciktPmludGVnZXIudmFsdWU7
-CisJCWlmIChyZXQgPiAwICYmIHJldCA8IEFSUkFZX1NJWkUoaW5mbykpCisJCQlzdHIgKz0gc2Nu
-cHJpbnRmKHN0ciwgUEFHRV9TSVpFLCAiJWQgJWQ6ICVzXG4iLAorCQkJCQkgaSwgcmV0LCBpbmZv
-W3JldF0pOworCQlrZnJlZShvdXRwdXQucG9pbnRlcik7CisJCW91dHB1dC5sZW5ndGggPSBBQ1BJ
-X0FMTE9DQVRFX0JVRkZFUjsKKwkJb3V0cHV0LnBvaW50ZXIgPSBOVUxMOworCX0KKwlyZXR1cm4g
-c3RyIC0gYnVmOworfQorCitzc2l6ZV90IHRwbV9zaG93X3BwaV90Y2dfb3BlcmF0aW9ucyhzdHJ1
-Y3QgZGV2aWNlICpkZXYsCisJCQkJICAgc3RydWN0IGRldmljZV9hdHRyaWJ1dGUgKmF0dHIsIGNo
-YXIgKmJ1ZikKK3sKKwlyZXR1cm4gc2hvd19wcGlfb3BlcmF0aW9ucyhidWYsIDAsIFBQSV9UUE1f
-UkVRX01BWCk7Cit9CisKK3NzaXplX3QgdHBtX3Nob3dfcHBpX3ZzX29wZXJhdGlvbnMoc3RydWN0
-IGRldmljZSAqZGV2LAorCQkJCSAgc3RydWN0IGRldmljZV9hdHRyaWJ1dGUgKmF0dHIsIGNoYXIg
-KmJ1ZikKK3sKKwlyZXR1cm4gc2hvd19wcGlfb3BlcmF0aW9ucyhidWYsIFBQSV9WU19SRVFfU1RB
-UlQsIFBQSV9WU19SRVFfRU5EKTsKK30KKworc3RhdGljIERFVklDRV9BVFRSKHZlcnNpb24sIFNf
-SVJVR08sIHRwbV9zaG93X3BwaV92ZXJzaW9uLCBOVUxMKTsKK3N0YXRpYyBERVZJQ0VfQVRUUihy
-ZXF1ZXN0LCBTX0lSVUdPIHwgU19JV1VTUiB8IFNfSVdHUlAsCisJCSAgIHRwbV9zaG93X3BwaV9y
-ZXF1ZXN0LCB0cG1fc3RvcmVfcHBpX3JlcXVlc3QpOworc3RhdGljIERFVklDRV9BVFRSKHRyYW5z
-aXRpb25fYWN0aW9uLCBTX0lSVUdPLAorCQkgICB0cG1fc2hvd19wcGlfdHJhbnNpdGlvbl9hY3Rp
-b24sIE5VTEwpOworc3RhdGljIERFVklDRV9BVFRSKHJlc3BvbnNlLCBTX0lSVUdPLCB0cG1fc2hv
-d19wcGlfcmVzcG9uc2UsIE5VTEwpOworc3RhdGljIERFVklDRV9BVFRSKHRjZ19vcGVyYXRpb25z
-LCBTX0lSVUdPLCB0cG1fc2hvd19wcGlfdGNnX29wZXJhdGlvbnMsIE5VTEwpOworc3RhdGljIERF
-VklDRV9BVFRSKHZzX29wZXJhdGlvbnMsIFNfSVJVR08sIHRwbV9zaG93X3BwaV92c19vcGVyYXRp
-b25zLCBOVUxMKTsKKworc3RhdGljIHN0cnVjdCBhdHRyaWJ1dGUgKnBwaV9hdHRyc1tdID0gewor
-CSZkZXZfYXR0cl92ZXJzaW9uLmF0dHIsCisJJmRldl9hdHRyX3JlcXVlc3QuYXR0ciwKKwkmZGV2
-X2F0dHJfdHJhbnNpdGlvbl9hY3Rpb24uYXR0ciwKKwkmZGV2X2F0dHJfcmVzcG9uc2UuYXR0ciwK
-KwkmZGV2X2F0dHJfdGNnX29wZXJhdGlvbnMuYXR0ciwKKwkmZGV2X2F0dHJfdnNfb3BlcmF0aW9u
-cy5hdHRyLCBOVUxMLAorfTsKK3N0cnVjdCBhdHRyaWJ1dGVfZ3JvdXAgcHBpX2F0dHJfZ3JwID0g
-eworCS5hdHRycyA9IHBwaV9hdHRycworfTsKK0VYUE9SVF9TWU1CT0xfR1BMKHBwaV9hdHRyX2dy
-cCk7CisKK01PRFVMRV9MSUNFTlNFKCJHUEwiKTsKLS0gCjEuNy42LjUKCg==
+Hi Xiaoyan,
+
+On Thu, Jun 21, 2012 at 06:54:51AM +0000, Zhang, Xiaoyan wrote:
+> From: Xiaoyan Zhang <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> 
+> The Physical Presence Interface enables the OS and the BIOS to cooperate
+> and provides a simple and straightforward platform user experience for
+> administering the TPM without sacrificing security.
+> 
+> V2: separate the patch out in a separate source file, add #ifdef CONFIG_ACPI
+> so it compiles out on ppc, and use standard error instead of ACPI error as
+> return code of show/store fns.
+> 
+> V3: move #ifdef CONFIG_ACPI from .c file to .h file
+> 
+> Signed-off-by: Xiaoyan Zhang <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+>  drivers/char/tpm/Makefile  |    4 +-
+>  drivers/char/tpm/tpm.c     |    5 +
+>  drivers/char/tpm/tpm.h     |    8 +
+>  drivers/char/tpm/tpm_ppi.c |  461 ++++++++++++++++++++++++++++++++++++++++++++
+>  4 files changed, 477 insertions(+), 1 deletions(-)
+>  create mode 100644 drivers/char/tpm/tpm_ppi.c
+> 
+> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+> index ea3a1e0..132ad95 100644
+> --- a/drivers/char/tpm/Makefile
+> +++ b/drivers/char/tpm/Makefile
+> @@ -1,8 +1,10 @@
+>  #
+>  # Makefile for the kernel tpm device drivers.
+>  #
+> -obj-$(CONFIG_TCG_TPM) += tpm.o
+> +obj-$(CONFIG_TCG_TPM) += tpm_main.o
+> +tpm_main-y += tpm.o
+>  ifdef CONFIG_ACPI
+> +	tpm_main-y += tpm_ppi.o
+>  	obj-$(CONFIG_TCG_TPM) += tpm_bios.o
+
+  This will change the name of the tpm driver, which I really don't want
+to do. Can you apply on top of [1] and resubmit?  I've added the
+following patch which modularizes the event logging code and has a
+couple Makefile changes too. This is needed for a future driver on PPC,
+but it should make adding your file obvious. Note that the patch below
+applies on top of Infineon's I2C driver patches.
+
+[1] git://github.com/shpedoikal/linux.git tpmdd-next
+
+Thanks,
+Kent
+
+tpm: modularize event log collection
+
+Break ACPI-specific pieces of the event log handling into their own file
+and create tpm_eventlog.[ch] to store common event log handling code.
+This will be required to integrate future event log sources on platforms
+without ACPI tables.
+
+Signed-off-by: Kent Yoder <key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+---
+ drivers/char/tpm/Makefile       |    1 +
+ drivers/char/tpm/tpm.c          |    1 +
+ drivers/char/tpm/tpm_acpi.c     |  104 ++++++++
+ drivers/char/tpm/tpm_bios.c     |  556 ---------------------------------------
+ drivers/char/tpm/tpm_eventlog.c |  419 +++++++++++++++++++++++++++++
+ drivers/char/tpm/tpm_eventlog.h |   71 +++++
+ 6 files changed, 596 insertions(+), 556 deletions(-)
+ create mode 100644 drivers/char/tpm/tpm_acpi.c
+ delete mode 100644 drivers/char/tpm/tpm_bios.c
+ create mode 100644 drivers/char/tpm/tpm_eventlog.c
+ create mode 100644 drivers/char/tpm/tpm_eventlog.h
+
+diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+index a9c3afc..beac52f6 100644
+--- a/drivers/char/tpm/Makefile
++++ b/drivers/char/tpm/Makefile
+@@ -4,6 +4,7 @@
+ obj-$(CONFIG_TCG_TPM) += tpm.o
+ ifdef CONFIG_ACPI
+ 	obj-$(CONFIG_TCG_TPM) += tpm_bios.o
++	tpm_bios-objs += tpm_eventlog.o tpm_acpi.o
+ endif
+ obj-$(CONFIG_TCG_TIS) += tpm_tis.o
+ obj-$(CONFIG_TCG_TIS_I2C_INFINEON) += tpm_i2c_infineon.o
+diff --git a/drivers/char/tpm/tpm.c b/drivers/char/tpm/tpm.c
+index d39b1f6..beb98c3 100644
+--- a/drivers/char/tpm/tpm.c
++++ b/drivers/char/tpm/tpm.c
+@@ -30,6 +30,7 @@
+ #include <linux/freezer.h>
+ 
+ #include "tpm.h"
++#include "tpm_eventlog.h"
+ 
+ enum tpm_const {
+ 	TPM_MINOR = 224,	/* officially assigned */
+diff --git a/drivers/char/tpm/tpm_acpi.c b/drivers/char/tpm/tpm_acpi.c
+new file mode 100644
+index 0000000..a1bb5a18
+--- /dev/null
++++ b/drivers/char/tpm/tpm_acpi.c
+@@ -0,0 +1,104 @@
++/*
++ * Copyright (C) 2005 IBM Corporation
++ *
++ * Authors:
++ *	Seiji Munetoh <munetoh-JE5g2YyFxFHQT0dZR+AlfA@public.gmane.org>
++ *	Stefan Berger <stefanb-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
++ *	Reiner Sailer <sailer-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
++ *	Kylene Hall <kjhall-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
++ *
++ * Maintained by: <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
++ *
++ * Access to the eventlog extended by the TCG BIOS of PC platform
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version
++ * 2 of the License, or (at your option) any later version.
++ *
++ */
++
++#include <linux/seq_file.h>
++#include <linux/fs.h>
++#include <linux/security.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++#include <acpi/acpi.h>
++
++#include "tpm.h"
++#include "tpm_eventlog.h"
++
++struct acpi_tcpa {
++	struct acpi_table_header hdr;
++	u16 platform_class;
++	union {
++		struct client_hdr {
++			u32 log_max_len __attribute__ ((packed));
++			u64 log_start_addr __attribute__ ((packed));
++		} client;
++		struct server_hdr {
++			u16 reserved;
++			u64 log_max_len __attribute__ ((packed));
++			u64 log_start_addr __attribute__ ((packed));
++		} server;
++	};
++};
++
++/* read binary bios log */
++int read_log(struct tpm_bios_log *log)
++{
++	struct acpi_tcpa *buff;
++	acpi_status status;
++	struct acpi_table_header *virt;
++	u64 len, start;
++
++	if (log->bios_event_log != NULL) {
++		printk(KERN_ERR
++		       "%s: ERROR - Eventlog already initialized\n",
++		       __func__);
++		return -EFAULT;
++	}
++
++	/* Find TCPA entry in RSDT (ACPI_LOGICAL_ADDRESSING) */
++	status = acpi_get_table(ACPI_SIG_TCPA, 1,
++				(struct acpi_table_header **)&buff);
++
++	if (ACPI_FAILURE(status)) {
++		printk(KERN_ERR "%s: ERROR - Could not get TCPA table\n",
++		       __func__);
++		return -EIO;
++	}
++
++	switch(buff->platform_class) {
++	case BIOS_SERVER:
++		len = buff->server.log_max_len;
++		start = buff->server.log_start_addr;
++		break;
++	case BIOS_CLIENT:
++	default:
++		len = buff->client.log_max_len;
++		start = buff->client.log_start_addr;
++		break;
++	}
++	if (!len) {
++		printk(KERN_ERR "%s: ERROR - TCPA log area empty\n", __func__);
++		return -EIO;
++	}
++
++	/* malloc EventLog space */
++	log->bios_event_log = kmalloc(len, GFP_KERNEL);
++	if (!log->bios_event_log) {
++		printk("%s: ERROR - Not enough  Memory for BIOS measurements\n",
++			__func__);
++		return -ENOMEM;
++	}
++
++	log->bios_event_log_end = log->bios_event_log + len;
++
++	virt = acpi_os_map_memory(start, len);
++
++	memcpy(log->bios_event_log, virt, len);
++
++	acpi_os_unmap_memory(virt, len);
++	return 0;
++}
+diff --git a/drivers/char/tpm/tpm_bios.c b/drivers/char/tpm/tpm_bios.c
+deleted file mode 100644
+index 0636520..0000000
+--- a/drivers/char/tpm/tpm_bios.c
++++ /dev/null
+@@ -1,556 +0,0 @@
+-/*
+- * Copyright (C) 2005 IBM Corporation
+- *
+- * Authors:
+- *	Seiji Munetoh <munetoh-JE5g2YyFxFHQT0dZR+AlfA@public.gmane.org>
+- *	Stefan Berger <stefanb-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+- *	Reiner Sailer <sailer-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
+- *	Kylene Hall <kjhall-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+- *
+- * Maintained by: <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+- *
+- * Access to the eventlog extended by the TCG BIOS of PC platform
+- *
+- * This program is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU General Public License
+- * as published by the Free Software Foundation; either version
+- * 2 of the License, or (at your option) any later version.
+- *
+- */
+-
+-#include <linux/seq_file.h>
+-#include <linux/fs.h>
+-#include <linux/security.h>
+-#include <linux/module.h>
+-#include <linux/slab.h>
+-#include <acpi/acpi.h>
+-#include "tpm.h"
+-
+-#define TCG_EVENT_NAME_LEN_MAX	255
+-#define MAX_TEXT_EVENT		1000	/* Max event string length */
+-#define ACPI_TCPA_SIG		"TCPA"	/* 0x41504354 /'TCPA' */
+-
+-enum bios_platform_class {
+-	BIOS_CLIENT = 0x00,
+-	BIOS_SERVER = 0x01,
+-};
+-
+-struct tpm_bios_log {
+-	void *bios_event_log;
+-	void *bios_event_log_end;
+-};
+-
+-struct acpi_tcpa {
+-	struct acpi_table_header hdr;
+-	u16 platform_class;
+-	union {
+-		struct client_hdr {
+-			u32 log_max_len __attribute__ ((packed));
+-			u64 log_start_addr __attribute__ ((packed));
+-		} client;
+-		struct server_hdr {
+-			u16 reserved;
+-			u64 log_max_len __attribute__ ((packed));
+-			u64 log_start_addr __attribute__ ((packed));
+-		} server;
+-	};
+-};
+-
+-struct tcpa_event {
+-	u32 pcr_index;
+-	u32 event_type;
+-	u8 pcr_value[20];	/* SHA1 */
+-	u32 event_size;
+-	u8 event_data[0];
+-};
+-
+-enum tcpa_event_types {
+-	PREBOOT = 0,
+-	POST_CODE,
+-	UNUSED,
+-	NO_ACTION,
+-	SEPARATOR,
+-	ACTION,
+-	EVENT_TAG,
+-	SCRTM_CONTENTS,
+-	SCRTM_VERSION,
+-	CPU_MICROCODE,
+-	PLATFORM_CONFIG_FLAGS,
+-	TABLE_OF_DEVICES,
+-	COMPACT_HASH,
+-	IPL,
+-	IPL_PARTITION_DATA,
+-	NONHOST_CODE,
+-	NONHOST_CONFIG,
+-	NONHOST_INFO,
+-};
+-
+-static const char* tcpa_event_type_strings[] = {
+-	"PREBOOT",
+-	"POST CODE",
+-	"",
+-	"NO ACTION",
+-	"SEPARATOR",
+-	"ACTION",
+-	"EVENT TAG",
+-	"S-CRTM Contents",
+-	"S-CRTM Version",
+-	"CPU Microcode",
+-	"Platform Config Flags",
+-	"Table of Devices",
+-	"Compact Hash",
+-	"IPL",
+-	"IPL Partition Data",
+-	"Non-Host Code",
+-	"Non-Host Config",
+-	"Non-Host Info"
+-};
+-
+-struct tcpa_pc_event {
+-	u32 event_id;
+-	u32 event_size;
+-	u8 event_data[0];
+-};
+-
+-enum tcpa_pc_event_ids {
+-	SMBIOS = 1,
+-	BIS_CERT,
+-	POST_BIOS_ROM,
+-	ESCD,
+-	CMOS,
+-	NVRAM,
+-	OPTION_ROM_EXEC,
+-	OPTION_ROM_CONFIG,
+-	OPTION_ROM_MICROCODE = 10,
+-	S_CRTM_VERSION,
+-	S_CRTM_CONTENTS,
+-	POST_CONTENTS,
+-	HOST_TABLE_OF_DEVICES,
+-};
+-
+-static const char* tcpa_pc_event_id_strings[] = {
+-	"",
+-	"SMBIOS",
+-	"BIS Certificate",
+-	"POST BIOS ",
+-	"ESCD ",
+-	"CMOS",
+-	"NVRAM",
+-	"Option ROM",
+-	"Option ROM config",
+-	"",
+-	"Option ROM microcode ",
+-	"S-CRTM Version",
+-	"S-CRTM Contents ",
+-	"POST Contents ",
+-	"Table of Devices",
+-};
+-
+-/* returns pointer to start of pos. entry of tcg log */
+-static void *tpm_bios_measurements_start(struct seq_file *m, loff_t *pos)
+-{
+-	loff_t i;
+-	struct tpm_bios_log *log = m->private;
+-	void *addr = log->bios_event_log;
+-	void *limit = log->bios_event_log_end;
+-	struct tcpa_event *event;
+-
+-	/* read over *pos measurements */
+-	for (i = 0; i < *pos; i++) {
+-		event = addr;
+-
+-		if ((addr + sizeof(struct tcpa_event)) < limit) {
+-			if (event->event_type == 0 && event->event_size == 0)
+-				return NULL;
+-			addr += sizeof(struct tcpa_event) + event->event_size;
+-		}
+-	}
+-
+-	/* now check if current entry is valid */
+-	if ((addr + sizeof(struct tcpa_event)) >= limit)
+-		return NULL;
+-
+-	event = addr;
+-
+-	if ((event->event_type == 0 && event->event_size == 0) ||
+-	    ((addr + sizeof(struct tcpa_event) + event->event_size) >= limit))
+-		return NULL;
+-
+-	return addr;
+-}
+-
+-static void *tpm_bios_measurements_next(struct seq_file *m, void *v,
+-					loff_t *pos)
+-{
+-	struct tcpa_event *event = v;
+-	struct tpm_bios_log *log = m->private;
+-	void *limit = log->bios_event_log_end;
+-
+-	v += sizeof(struct tcpa_event) + event->event_size;
+-
+-	/* now check if current entry is valid */
+-	if ((v + sizeof(struct tcpa_event)) >= limit)
+-		return NULL;
+-
+-	event = v;
+-
+-	if (event->event_type == 0 && event->event_size == 0)
+-		return NULL;
+-
+-	if ((event->event_type == 0 && event->event_size == 0) ||
+-	    ((v + sizeof(struct tcpa_event) + event->event_size) >= limit))
+-		return NULL;
+-
+-	(*pos)++;
+-	return v;
+-}
+-
+-static void tpm_bios_measurements_stop(struct seq_file *m, void *v)
+-{
+-}
+-
+-static int get_event_name(char *dest, struct tcpa_event *event,
+-			unsigned char * event_entry)
+-{
+-	const char *name = "";
+-	/* 41 so there is room for 40 data and 1 nul */
+-	char data[41] = "";
+-	int i, n_len = 0, d_len = 0;
+-	struct tcpa_pc_event *pc_event;
+-
+-	switch(event->event_type) {
+-	case PREBOOT:
+-	case POST_CODE:
+-	case UNUSED:
+-	case NO_ACTION:
+-	case SCRTM_CONTENTS:
+-	case SCRTM_VERSION:
+-	case CPU_MICROCODE:
+-	case PLATFORM_CONFIG_FLAGS:
+-	case TABLE_OF_DEVICES:
+-	case COMPACT_HASH:
+-	case IPL:
+-	case IPL_PARTITION_DATA:
+-	case NONHOST_CODE:
+-	case NONHOST_CONFIG:
+-	case NONHOST_INFO:
+-		name = tcpa_event_type_strings[event->event_type];
+-		n_len = strlen(name);
+-		break;
+-	case SEPARATOR:
+-	case ACTION:
+-		if (MAX_TEXT_EVENT > event->event_size) {
+-			name = event_entry;
+-			n_len = event->event_size;
+-		}
+-		break;
+-	case EVENT_TAG:
+-		pc_event = (struct tcpa_pc_event *)event_entry;
+-
+-		/* ToDo Row data -> Base64 */
+-
+-		switch (pc_event->event_id) {
+-		case SMBIOS:
+-		case BIS_CERT:
+-		case CMOS:
+-		case NVRAM:
+-		case OPTION_ROM_EXEC:
+-		case OPTION_ROM_CONFIG:
+-		case S_CRTM_VERSION:
+-			name = tcpa_pc_event_id_strings[pc_event->event_id];
+-			n_len = strlen(name);
+-			break;
+-		/* hash data */
+-		case POST_BIOS_ROM:
+-		case ESCD:
+-		case OPTION_ROM_MICROCODE:
+-		case S_CRTM_CONTENTS:
+-		case POST_CONTENTS:
+-			name = tcpa_pc_event_id_strings[pc_event->event_id];
+-			n_len = strlen(name);
+-			for (i = 0; i < 20; i++)
+-				d_len += sprintf(&data[2*i], "%02x",
+-						pc_event->event_data[i]);
+-			break;
+-		default:
+-			break;
+-		}
+-	default:
+-		break;
+-	}
+-
+-	return snprintf(dest, MAX_TEXT_EVENT, "[%.*s%.*s]",
+-			n_len, name, d_len, data);
+-
+-}
+-
+-static int tpm_binary_bios_measurements_show(struct seq_file *m, void *v)
+-{
+-	struct tcpa_event *event = v;
+-	char *data = v;
+-	int i;
+-
+-	for (i = 0; i < sizeof(struct tcpa_event) + event->event_size; i++)
+-		seq_putc(m, data[i]);
+-
+-	return 0;
+-}
+-
+-static int tpm_bios_measurements_release(struct inode *inode,
+-					 struct file *file)
+-{
+-	struct seq_file *seq = file->private_data;
+-	struct tpm_bios_log *log = seq->private;
+-
+-	if (log) {
+-		kfree(log->bios_event_log);
+-		kfree(log);
+-	}
+-
+-	return seq_release(inode, file);
+-}
+-
+-static int tpm_ascii_bios_measurements_show(struct seq_file *m, void *v)
+-{
+-	int len = 0;
+-	int i;
+-	char *eventname;
+-	struct tcpa_event *event = v;
+-	unsigned char *event_entry =
+-	    (unsigned char *) (v + sizeof(struct tcpa_event));
+-
+-	eventname = kmalloc(MAX_TEXT_EVENT, GFP_KERNEL);
+-	if (!eventname) {
+-		printk(KERN_ERR "%s: ERROR - No Memory for event name\n ",
+-		       __func__);
+-		return -EFAULT;
+-	}
+-
+-	seq_printf(m, "%2d ", event->pcr_index);
+-
+-	/* 2nd: SHA1 */
+-	for (i = 0; i < 20; i++)
+-		seq_printf(m, "%02x", event->pcr_value[i]);
+-
+-	/* 3rd: event type identifier */
+-	seq_printf(m, " %02x", event->event_type);
+-
+-	len += get_event_name(eventname, event, event_entry);
+-
+-	/* 4th: eventname <= max + \'0' delimiter */
+-	seq_printf(m, " %s\n", eventname);
+-
+-	kfree(eventname);
+-	return 0;
+-}
+-
+-static const struct seq_operations tpm_ascii_b_measurments_seqops = {
+-	.start = tpm_bios_measurements_start,
+-	.next = tpm_bios_measurements_next,
+-	.stop = tpm_bios_measurements_stop,
+-	.show = tpm_ascii_bios_measurements_show,
+-};
+-
+-static const struct seq_operations tpm_binary_b_measurments_seqops = {
+-	.start = tpm_bios_measurements_start,
+-	.next = tpm_bios_measurements_next,
+-	.stop = tpm_bios_measurements_stop,
+-	.show = tpm_binary_bios_measurements_show,
+-};
+-
+-/* read binary bios log */
+-static int read_log(struct tpm_bios_log *log)
+-{
+-	struct acpi_tcpa *buff;
+-	acpi_status status;
+-	struct acpi_table_header *virt;
+-	u64 len, start;
+-
+-	if (log->bios_event_log != NULL) {
+-		printk(KERN_ERR
+-		       "%s: ERROR - Eventlog already initialized\n",
+-		       __func__);
+-		return -EFAULT;
+-	}
+-
+-	/* Find TCPA entry in RSDT (ACPI_LOGICAL_ADDRESSING) */
+-	status = acpi_get_table(ACPI_SIG_TCPA, 1,
+-				(struct acpi_table_header **)&buff);
+-
+-	if (ACPI_FAILURE(status)) {
+-		printk(KERN_ERR "%s: ERROR - Could not get TCPA table\n",
+-		       __func__);
+-		return -EIO;
+-	}
+-
+-	switch(buff->platform_class) {
+-	case BIOS_SERVER:
+-		len = buff->server.log_max_len;
+-		start = buff->server.log_start_addr;
+-		break;
+-	case BIOS_CLIENT:
+-	default:
+-		len = buff->client.log_max_len;
+-		start = buff->client.log_start_addr;
+-		break;
+-	}
+-	if (!len) {
+-		printk(KERN_ERR "%s: ERROR - TCPA log area empty\n", __func__);
+-		return -EIO;
+-	}
+-
+-	/* malloc EventLog space */
+-	log->bios_event_log = kmalloc(len, GFP_KERNEL);
+-	if (!log->bios_event_log) {
+-		printk("%s: ERROR - Not enough  Memory for BIOS measurements\n",
+-			__func__);
+-		return -ENOMEM;
+-	}
+-
+-	log->bios_event_log_end = log->bios_event_log + len;
+-
+-	virt = acpi_os_map_memory(start, len);
+-
+-	memcpy(log->bios_event_log, virt, len);
+-
+-	acpi_os_unmap_memory(virt, len);
+-	return 0;
+-}
+-
+-static int tpm_ascii_bios_measurements_open(struct inode *inode,
+-					    struct file *file)
+-{
+-	int err;
+-	struct tpm_bios_log *log;
+-	struct seq_file *seq;
+-
+-	log = kzalloc(sizeof(struct tpm_bios_log), GFP_KERNEL);
+-	if (!log)
+-		return -ENOMEM;
+-
+-	if ((err = read_log(log)))
+-		goto out_free;
+-
+-	/* now register seq file */
+-	err = seq_open(file, &tpm_ascii_b_measurments_seqops);
+-	if (!err) {
+-		seq = file->private_data;
+-		seq->private = log;
+-	} else {
+-		goto out_free;
+-	}
+-
+-out:
+-	return err;
+-out_free:
+-	kfree(log->bios_event_log);
+-	kfree(log);
+-	goto out;
+-}
+-
+-static const struct file_operations tpm_ascii_bios_measurements_ops = {
+-	.open = tpm_ascii_bios_measurements_open,
+-	.read = seq_read,
+-	.llseek = seq_lseek,
+-	.release = tpm_bios_measurements_release,
+-};
+-
+-static int tpm_binary_bios_measurements_open(struct inode *inode,
+-					     struct file *file)
+-{
+-	int err;
+-	struct tpm_bios_log *log;
+-	struct seq_file *seq;
+-
+-	log = kzalloc(sizeof(struct tpm_bios_log), GFP_KERNEL);
+-	if (!log)
+-		return -ENOMEM;
+-
+-	if ((err = read_log(log)))
+-		goto out_free;
+-
+-	/* now register seq file */
+-	err = seq_open(file, &tpm_binary_b_measurments_seqops);
+-	if (!err) {
+-		seq = file->private_data;
+-		seq->private = log;
+-	} else {
+-		goto out_free;
+-	}
+-
+-out:
+-	return err;
+-out_free:
+-	kfree(log->bios_event_log);
+-	kfree(log);
+-	goto out;
+-}
+-
+-static const struct file_operations tpm_binary_bios_measurements_ops = {
+-	.open = tpm_binary_bios_measurements_open,
+-	.read = seq_read,
+-	.llseek = seq_lseek,
+-	.release = tpm_bios_measurements_release,
+-};
+-
+-static int is_bad(void *p)
+-{
+-	if (!p)
+-		return 1;
+-	if (IS_ERR(p) && (PTR_ERR(p) != -ENODEV))
+-		return 1;
+-	return 0;
+-}
+-
+-struct dentry **tpm_bios_log_setup(char *name)
+-{
+-	struct dentry **ret = NULL, *tpm_dir, *bin_file, *ascii_file;
+-
+-	tpm_dir = securityfs_create_dir(name, NULL);
+-	if (is_bad(tpm_dir))
+-		goto out;
+-
+-	bin_file =
+-	    securityfs_create_file("binary_bios_measurements",
+-				   S_IRUSR | S_IRGRP, tpm_dir, NULL,
+-				   &tpm_binary_bios_measurements_ops);
+-	if (is_bad(bin_file))
+-		goto out_tpm;
+-
+-	ascii_file =
+-	    securityfs_create_file("ascii_bios_measurements",
+-				   S_IRUSR | S_IRGRP, tpm_dir, NULL,
+-				   &tpm_ascii_bios_measurements_ops);
+-	if (is_bad(ascii_file))
+-		goto out_bin;
+-
+-	ret = kmalloc(3 * sizeof(struct dentry *), GFP_KERNEL);
+-	if (!ret)
+-		goto out_ascii;
+-
+-	ret[0] = ascii_file;
+-	ret[1] = bin_file;
+-	ret[2] = tpm_dir;
+-
+-	return ret;
+-
+-out_ascii:
+-	securityfs_remove(ascii_file);
+-out_bin:
+-	securityfs_remove(bin_file);
+-out_tpm:
+-	securityfs_remove(tpm_dir);
+-out:
+-	return NULL;
+-}
+-EXPORT_SYMBOL_GPL(tpm_bios_log_setup);
+-
+-void tpm_bios_log_teardown(struct dentry **lst)
+-{
+-	int i;
+-
+-	for (i = 0; i < 3; i++)
+-		securityfs_remove(lst[i]);
+-}
+-EXPORT_SYMBOL_GPL(tpm_bios_log_teardown);
+-MODULE_LICENSE("GPL");
+diff --git a/drivers/char/tpm/tpm_eventlog.c b/drivers/char/tpm/tpm_eventlog.c
+new file mode 100644
+index 0000000..84ddc55
+--- /dev/null
++++ b/drivers/char/tpm/tpm_eventlog.c
+@@ -0,0 +1,419 @@
++/*
++ * Copyright (C) 2005, 2012 IBM Corporation
++ *
++ * Authors:
++ *	Kent Yoder <key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
++ *	Seiji Munetoh <munetoh-JE5g2YyFxFHQT0dZR+AlfA@public.gmane.org>
++ *	Stefan Berger <stefanb-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
++ *	Reiner Sailer <sailer-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
++ *	Kylene Hall <kjhall-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
++ *
++ * Maintained by: <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
++ *
++ * Access to the eventlog created by a system's firmware / BIOS
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version
++ * 2 of the License, or (at your option) any later version.
++ *
++ */
++
++#include <linux/seq_file.h>
++#include <linux/fs.h>
++#include <linux/security.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++
++#include "tpm.h"
++#include "tpm_eventlog.h"
++
++
++static const char* tcpa_event_type_strings[] = {
++	"PREBOOT",
++	"POST CODE",
++	"",
++	"NO ACTION",
++	"SEPARATOR",
++	"ACTION",
++	"EVENT TAG",
++	"S-CRTM Contents",
++	"S-CRTM Version",
++	"CPU Microcode",
++	"Platform Config Flags",
++	"Table of Devices",
++	"Compact Hash",
++	"IPL",
++	"IPL Partition Data",
++	"Non-Host Code",
++	"Non-Host Config",
++	"Non-Host Info"
++};
++
++static const char* tcpa_pc_event_id_strings[] = {
++	"",
++	"SMBIOS",
++	"BIS Certificate",
++	"POST BIOS ",
++	"ESCD ",
++	"CMOS",
++	"NVRAM",
++	"Option ROM",
++	"Option ROM config",
++	"",
++	"Option ROM microcode ",
++	"S-CRTM Version",
++	"S-CRTM Contents ",
++	"POST Contents ",
++	"Table of Devices",
++};
++
++/* returns pointer to start of pos. entry of tcg log */
++static void *tpm_bios_measurements_start(struct seq_file *m, loff_t *pos)
++{
++	loff_t i;
++	struct tpm_bios_log *log = m->private;
++	void *addr = log->bios_event_log;
++	void *limit = log->bios_event_log_end;
++	struct tcpa_event *event;
++
++	/* read over *pos measurements */
++	for (i = 0; i < *pos; i++) {
++		event = addr;
++
++		if ((addr + sizeof(struct tcpa_event)) < limit) {
++			if (event->event_type == 0 && event->event_size == 0)
++				return NULL;
++			addr += sizeof(struct tcpa_event) + event->event_size;
++		}
++	}
++
++	/* now check if current entry is valid */
++	if ((addr + sizeof(struct tcpa_event)) >= limit)
++		return NULL;
++
++	event = addr;
++
++	if ((event->event_type == 0 && event->event_size == 0) ||
++	    ((addr + sizeof(struct tcpa_event) + event->event_size) >= limit))
++		return NULL;
++
++	return addr;
++}
++
++static void *tpm_bios_measurements_next(struct seq_file *m, void *v,
++					loff_t *pos)
++{
++	struct tcpa_event *event = v;
++	struct tpm_bios_log *log = m->private;
++	void *limit = log->bios_event_log_end;
++
++	v += sizeof(struct tcpa_event) + event->event_size;
++
++	/* now check if current entry is valid */
++	if ((v + sizeof(struct tcpa_event)) >= limit)
++		return NULL;
++
++	event = v;
++
++	if (event->event_type == 0 && event->event_size == 0)
++		return NULL;
++
++	if ((event->event_type == 0 && event->event_size == 0) ||
++	    ((v + sizeof(struct tcpa_event) + event->event_size) >= limit))
++		return NULL;
++
++	(*pos)++;
++	return v;
++}
++
++static void tpm_bios_measurements_stop(struct seq_file *m, void *v)
++{
++}
++
++static int get_event_name(char *dest, struct tcpa_event *event,
++			unsigned char * event_entry)
++{
++	const char *name = "";
++	/* 41 so there is room for 40 data and 1 nul */
++	char data[41] = "";
++	int i, n_len = 0, d_len = 0;
++	struct tcpa_pc_event *pc_event;
++
++	switch(event->event_type) {
++	case PREBOOT:
++	case POST_CODE:
++	case UNUSED:
++	case NO_ACTION:
++	case SCRTM_CONTENTS:
++	case SCRTM_VERSION:
++	case CPU_MICROCODE:
++	case PLATFORM_CONFIG_FLAGS:
++	case TABLE_OF_DEVICES:
++	case COMPACT_HASH:
++	case IPL:
++	case IPL_PARTITION_DATA:
++	case NONHOST_CODE:
++	case NONHOST_CONFIG:
++	case NONHOST_INFO:
++		name = tcpa_event_type_strings[event->event_type];
++		n_len = strlen(name);
++		break;
++	case SEPARATOR:
++	case ACTION:
++		if (MAX_TEXT_EVENT > event->event_size) {
++			name = event_entry;
++			n_len = event->event_size;
++		}
++		break;
++	case EVENT_TAG:
++		pc_event = (struct tcpa_pc_event *)event_entry;
++
++		/* ToDo Row data -> Base64 */
++
++		switch (pc_event->event_id) {
++		case SMBIOS:
++		case BIS_CERT:
++		case CMOS:
++		case NVRAM:
++		case OPTION_ROM_EXEC:
++		case OPTION_ROM_CONFIG:
++		case S_CRTM_VERSION:
++			name = tcpa_pc_event_id_strings[pc_event->event_id];
++			n_len = strlen(name);
++			break;
++		/* hash data */
++		case POST_BIOS_ROM:
++		case ESCD:
++		case OPTION_ROM_MICROCODE:
++		case S_CRTM_CONTENTS:
++		case POST_CONTENTS:
++			name = tcpa_pc_event_id_strings[pc_event->event_id];
++			n_len = strlen(name);
++			for (i = 0; i < 20; i++)
++				d_len += sprintf(&data[2*i], "%02x",
++						pc_event->event_data[i]);
++			break;
++		default:
++			break;
++		}
++	default:
++		break;
++	}
++
++	return snprintf(dest, MAX_TEXT_EVENT, "[%.*s%.*s]",
++			n_len, name, d_len, data);
++
++}
++
++static int tpm_binary_bios_measurements_show(struct seq_file *m, void *v)
++{
++	struct tcpa_event *event = v;
++	char *data = v;
++	int i;
++
++	for (i = 0; i < sizeof(struct tcpa_event) + event->event_size; i++)
++		seq_putc(m, data[i]);
++
++	return 0;
++}
++
++static int tpm_bios_measurements_release(struct inode *inode,
++					 struct file *file)
++{
++	struct seq_file *seq = file->private_data;
++	struct tpm_bios_log *log = seq->private;
++
++	if (log) {
++		kfree(log->bios_event_log);
++		kfree(log);
++	}
++
++	return seq_release(inode, file);
++}
++
++static int tpm_ascii_bios_measurements_show(struct seq_file *m, void *v)
++{
++	int len = 0;
++	int i;
++	char *eventname;
++	struct tcpa_event *event = v;
++	unsigned char *event_entry =
++	    (unsigned char *) (v + sizeof(struct tcpa_event));
++
++	eventname = kmalloc(MAX_TEXT_EVENT, GFP_KERNEL);
++	if (!eventname) {
++		printk(KERN_ERR "%s: ERROR - No Memory for event name\n ",
++		       __func__);
++		return -EFAULT;
++	}
++
++	seq_printf(m, "%2d ", event->pcr_index);
++
++	/* 2nd: SHA1 */
++	for (i = 0; i < 20; i++)
++		seq_printf(m, "%02x", event->pcr_value[i]);
++
++	/* 3rd: event type identifier */
++	seq_printf(m, " %02x", event->event_type);
++
++	len += get_event_name(eventname, event, event_entry);
++
++	/* 4th: eventname <= max + \'0' delimiter */
++	seq_printf(m, " %s\n", eventname);
++
++	kfree(eventname);
++	return 0;
++}
++
++static const struct seq_operations tpm_ascii_b_measurments_seqops = {
++	.start = tpm_bios_measurements_start,
++	.next = tpm_bios_measurements_next,
++	.stop = tpm_bios_measurements_stop,
++	.show = tpm_ascii_bios_measurements_show,
++};
++
++static const struct seq_operations tpm_binary_b_measurments_seqops = {
++	.start = tpm_bios_measurements_start,
++	.next = tpm_bios_measurements_next,
++	.stop = tpm_bios_measurements_stop,
++	.show = tpm_binary_bios_measurements_show,
++};
++
++static int tpm_ascii_bios_measurements_open(struct inode *inode,
++					    struct file *file)
++{
++	int err;
++	struct tpm_bios_log *log;
++	struct seq_file *seq;
++
++	log = kzalloc(sizeof(struct tpm_bios_log), GFP_KERNEL);
++	if (!log)
++		return -ENOMEM;
++
++	if ((err = read_log(log)))
++		goto out_free;
++
++	/* now register seq file */
++	err = seq_open(file, &tpm_ascii_b_measurments_seqops);
++	if (!err) {
++		seq = file->private_data;
++		seq->private = log;
++	} else {
++		goto out_free;
++	}
++
++out:
++	return err;
++out_free:
++	kfree(log->bios_event_log);
++	kfree(log);
++	goto out;
++}
++
++static const struct file_operations tpm_ascii_bios_measurements_ops = {
++	.open = tpm_ascii_bios_measurements_open,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = tpm_bios_measurements_release,
++};
++
++static int tpm_binary_bios_measurements_open(struct inode *inode,
++					     struct file *file)
++{
++	int err;
++	struct tpm_bios_log *log;
++	struct seq_file *seq;
++
++	log = kzalloc(sizeof(struct tpm_bios_log), GFP_KERNEL);
++	if (!log)
++		return -ENOMEM;
++
++	if ((err = read_log(log)))
++		goto out_free;
++
++	/* now register seq file */
++	err = seq_open(file, &tpm_binary_b_measurments_seqops);
++	if (!err) {
++		seq = file->private_data;
++		seq->private = log;
++	} else {
++		goto out_free;
++	}
++
++out:
++	return err;
++out_free:
++	kfree(log->bios_event_log);
++	kfree(log);
++	goto out;
++}
++
++static const struct file_operations tpm_binary_bios_measurements_ops = {
++	.open = tpm_binary_bios_measurements_open,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = tpm_bios_measurements_release,
++};
++
++static int is_bad(void *p)
++{
++	if (!p)
++		return 1;
++	if (IS_ERR(p) && (PTR_ERR(p) != -ENODEV))
++		return 1;
++	return 0;
++}
++
++struct dentry **tpm_bios_log_setup(char *name)
++{
++	struct dentry **ret = NULL, *tpm_dir, *bin_file, *ascii_file;
++
++	tpm_dir = securityfs_create_dir(name, NULL);
++	if (is_bad(tpm_dir))
++		goto out;
++
++	bin_file =
++	    securityfs_create_file("binary_bios_measurements",
++				   S_IRUSR | S_IRGRP, tpm_dir, NULL,
++				   &tpm_binary_bios_measurements_ops);
++	if (is_bad(bin_file))
++		goto out_tpm;
++
++	ascii_file =
++	    securityfs_create_file("ascii_bios_measurements",
++				   S_IRUSR | S_IRGRP, tpm_dir, NULL,
++				   &tpm_ascii_bios_measurements_ops);
++	if (is_bad(ascii_file))
++		goto out_bin;
++
++	ret = kmalloc(3 * sizeof(struct dentry *), GFP_KERNEL);
++	if (!ret)
++		goto out_ascii;
++
++	ret[0] = ascii_file;
++	ret[1] = bin_file;
++	ret[2] = tpm_dir;
++
++	return ret;
++
++out_ascii:
++	securityfs_remove(ascii_file);
++out_bin:
++	securityfs_remove(bin_file);
++out_tpm:
++	securityfs_remove(tpm_dir);
++out:
++	return NULL;
++}
++EXPORT_SYMBOL_GPL(tpm_bios_log_setup);
++
++void tpm_bios_log_teardown(struct dentry **lst)
++{
++	int i;
++
++	for (i = 0; i < 3; i++)
++		securityfs_remove(lst[i]);
++}
++EXPORT_SYMBOL_GPL(tpm_bios_log_teardown);
++MODULE_LICENSE("GPL");
+diff --git a/drivers/char/tpm/tpm_eventlog.h b/drivers/char/tpm/tpm_eventlog.h
+new file mode 100644
+index 0000000..8e23ccd
+--- /dev/null
++++ b/drivers/char/tpm/tpm_eventlog.h
+@@ -0,0 +1,71 @@
++
++#ifndef __TPM_EVENTLOG_H__
++#define __TPM_EVENTLOG_H__
++
++#define TCG_EVENT_NAME_LEN_MAX	255
++#define MAX_TEXT_EVENT		1000	/* Max event string length */
++#define ACPI_TCPA_SIG		"TCPA"	/* 0x41504354 /'TCPA' */
++
++enum bios_platform_class {
++	BIOS_CLIENT = 0x00,
++	BIOS_SERVER = 0x01,
++};
++
++struct tpm_bios_log {
++	void *bios_event_log;
++	void *bios_event_log_end;
++};
++
++struct tcpa_event {
++	u32 pcr_index;
++	u32 event_type;
++	u8 pcr_value[20];	/* SHA1 */
++	u32 event_size;
++	u8 event_data[0];
++};
++
++enum tcpa_event_types {
++	PREBOOT = 0,
++	POST_CODE,
++	UNUSED,
++	NO_ACTION,
++	SEPARATOR,
++	ACTION,
++	EVENT_TAG,
++	SCRTM_CONTENTS,
++	SCRTM_VERSION,
++	CPU_MICROCODE,
++	PLATFORM_CONFIG_FLAGS,
++	TABLE_OF_DEVICES,
++	COMPACT_HASH,
++	IPL,
++	IPL_PARTITION_DATA,
++	NONHOST_CODE,
++	NONHOST_CONFIG,
++	NONHOST_INFO,
++};
++
++struct tcpa_pc_event {
++	u32 event_id;
++	u32 event_size;
++	u8 event_data[0];
++};
++
++enum tcpa_pc_event_ids {
++	SMBIOS = 1,
++	BIS_CERT,
++	POST_BIOS_ROM,
++	ESCD,
++	CMOS,
++	NVRAM,
++	OPTION_ROM_EXEC,
++	OPTION_ROM_CONFIG,
++	OPTION_ROM_MICROCODE = 10,
++	S_CRTM_VERSION,
++	S_CRTM_CONTENTS,
++	POST_CONTENTS,
++	HOST_TABLE_OF_DEVICES,
++};
++
++int read_log(struct tpm_bios_log *log);
++#endif
+-- 
+1.7.5.4
