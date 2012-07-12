@@ -1,30 +1,48 @@
-From: Kent Yoder <key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH V3 1/2] driver: add PPI support in tpm driver
-Date: Wed, 11 Jul 2012 10:24:31 -0500
-Message-ID: <20120711152430.GC21153@linux.vnet.ibm.com>
+From: "Zhang, Xiaoyan" <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: RE: [PATCH V3 1/2] driver: add PPI support in tpm driver
+Date: Thu, 12 Jul 2012 02:38:56 +0000
+Message-ID: <953B7F5DA8C0F44CBD2621D8763F4F600C8A32@SHSMSX101.ccr.corp.intel.com>
 References: <1340203963.24516.2.camel@localhost>
+ <20120711152430.GC21153@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1340203963.24516.2.camel@localhost>
+In-Reply-To: <20120711152430.GC21153-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Zhang, Xiaoyan" <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+To: Kent Yoder <key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Cihula, Joseph" <joseph.cihula-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Wei, Gang" <gang.wei-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, "debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org" <srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org" <m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org>, "shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
+
+Hi Kent,
+
+Thanks for your comment on the patch. But there's some confusion on my side.
+You mentioned not to change the tpm driver name. But the driver is linked from tpm.c and tpm_ppi.c, so I should change the original tpm.c file name, right? Is it acceptable to change tpm.c to tpm_common.c or tpm_utils.c or else?
+
+Thanks,
+Xiaoyan
+
+
+-----Original Message-----
+From: Kent Yoder [mailto:key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org] 
+Sent: Wednesday, July 11, 2012 11:25 PM
+To: Zhang, Xiaoyan
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; Cihula, Joseph; Wei, Gang; tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org; debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org; srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org; m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org; shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org; hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: Re: [PATCH V3 1/2] driver: add PPI support in tpm driver
 
 Hi Xiaoyan,
 
 On Thu, Jun 21, 2012 at 06:54:51AM +0000, Zhang, Xiaoyan wrote:
 > From: Xiaoyan Zhang <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > 
-> The Physical Presence Interface enables the OS and the BIOS to cooperate
-> and provides a simple and straightforward platform user experience for
-> administering the TPM without sacrificing security.
+> The Physical Presence Interface enables the OS and the BIOS to 
+> cooperate and provides a simple and straightforward platform user 
+> experience for administering the TPM without sacrificing security.
 > 
-> V2: separate the patch out in a separate source file, add #ifdef CONFIG_ACPI
-> so it compiles out on ppc, and use standard error instead of ACPI error as
-> return code of show/store fns.
+> V2: separate the patch out in a separate source file, add #ifdef 
+> CONFIG_ACPI so it compiles out on ppc, and use standard error instead 
+> of ACPI error as return code of show/store fns.
 > 
 > V3: move #ifdef CONFIG_ACPI from .c file to .h file
 > 
@@ -33,11 +51,12 @@ On Thu, Jun 21, 2012 at 06:54:51AM +0000, Zhang, Xiaoyan wrote:
 >  drivers/char/tpm/Makefile  |    4 +-
 >  drivers/char/tpm/tpm.c     |    5 +
 >  drivers/char/tpm/tpm.h     |    8 +
->  drivers/char/tpm/tpm_ppi.c |  461 ++++++++++++++++++++++++++++++++++++++++++++
->  4 files changed, 477 insertions(+), 1 deletions(-)
->  create mode 100644 drivers/char/tpm/tpm_ppi.c
+>  drivers/char/tpm/tpm_ppi.c |  461 
+> ++++++++++++++++++++++++++++++++++++++++++++
+>  4 files changed, 477 insertions(+), 1 deletions(-)  create mode 
+> 100644 drivers/char/tpm/tpm_ppi.c
 > 
-> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile 
 > index ea3a1e0..132ad95 100644
 > --- a/drivers/char/tpm/Makefile
 > +++ b/drivers/char/tpm/Makefile
@@ -52,12 +71,7 @@ On Thu, Jun 21, 2012 at 06:54:51AM +0000, Zhang, Xiaoyan wrote:
 > +	tpm_main-y += tpm_ppi.o
 >  	obj-$(CONFIG_TCG_TPM) += tpm_bios.o
 
-  This will change the name of the tpm driver, which I really don't want
-to do. Can you apply on top of [1] and resubmit?  I've added the
-following patch which modularizes the event logging code and has a
-couple Makefile changes too. This is needed for a future driver on PPC,
-but it should make adding your file obvious. Note that the patch below
-applies on top of Infineon's I2C driver patches.
+  This will change the name of the tpm driver, which I really don't want to do. Can you apply on top of [1] and resubmit?  I've added the following patch which modularizes the event logging code and has a couple Makefile changes too. This is needed for a future driver on PPC, but it should make adding your file obvious. Note that the patch below applies on top of Infineon's I2C driver patches.
 
 [1] git://github.com/shpedoikal/linux.git tpmdd-next
 
@@ -66,10 +80,8 @@ Kent
 
 tpm: modularize event log collection
 
-Break ACPI-specific pieces of the event log handling into their own file
-and create tpm_eventlog.[ch] to store common event log handling code.
-This will be required to integrate future event log sources on platforms
-without ACPI tables.
+Break ACPI-specific pieces of the event log handling into their own file and create tpm_eventlog.[ch] to store common event log handling code.
+This will be required to integrate future event log sources on platforms without ACPI tables.
 
 Signed-off-by: Kent Yoder <key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 ---
@@ -79,14 +91,9 @@ Signed-off-by: Kent Yoder <key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
  drivers/char/tpm/tpm_bios.c     |  556 ---------------------------------------
  drivers/char/tpm/tpm_eventlog.c |  419 +++++++++++++++++++++++++++++
  drivers/char/tpm/tpm_eventlog.h |   71 +++++
- 6 files changed, 596 insertions(+), 556 deletions(-)
- create mode 100644 drivers/char/tpm/tpm_acpi.c
- delete mode 100644 drivers/char/tpm/tpm_bios.c
- create mode 100644 drivers/char/tpm/tpm_eventlog.c
- create mode 100644 drivers/char/tpm/tpm_eventlog.h
+ 6 files changed, 596 insertions(+), 556 deletions(-)  create mode 100644 drivers/char/tpm/tpm_acpi.c  delete mode 100644 drivers/char/tpm/tpm_bios.c  create mode 100644 drivers/char/tpm/tpm_eventlog.c  create mode 100644 drivers/char/tpm/tpm_eventlog.h
 
-diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
-index a9c3afc..beac52f6 100644
+diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile index a9c3afc..beac52f6 100644
 --- a/drivers/char/tpm/Makefile
 +++ b/drivers/char/tpm/Makefile
 @@ -4,6 +4,7 @@
@@ -96,9 +103,7 @@ index a9c3afc..beac52f6 100644
 +	tpm_bios-objs += tpm_eventlog.o tpm_acpi.o
  endif
  obj-$(CONFIG_TCG_TIS) += tpm_tis.o
- obj-$(CONFIG_TCG_TIS_I2C_INFINEON) += tpm_i2c_infineon.o
-diff --git a/drivers/char/tpm/tpm.c b/drivers/char/tpm/tpm.c
-index d39b1f6..beb98c3 100644
+ obj-$(CONFIG_TCG_TIS_I2C_INFINEON) += tpm_i2c_infineon.o diff --git a/drivers/char/tpm/tpm.c b/drivers/char/tpm/tpm.c index d39b1f6..beb98c3 100644
 --- a/drivers/char/tpm/tpm.c
 +++ b/drivers/char/tpm/tpm.c
 @@ -30,6 +30,7 @@
@@ -109,9 +114,7 @@ index d39b1f6..beb98c3 100644
  
  enum tpm_const {
  	TPM_MINOR = 224,	/* officially assigned */
-diff --git a/drivers/char/tpm/tpm_acpi.c b/drivers/char/tpm/tpm_acpi.c
-new file mode 100644
-index 0000000..a1bb5a18
+diff --git a/drivers/char/tpm/tpm_acpi.c b/drivers/char/tpm/tpm_acpi.c new file mode 100644 index 0000000..a1bb5a18
 --- /dev/null
 +++ b/drivers/char/tpm/tpm_acpi.c
 @@ -0,0 +1,104 @@
@@ -219,9 +222,7 @@ index 0000000..a1bb5a18
 +	acpi_os_unmap_memory(virt, len);
 +	return 0;
 +}
-diff --git a/drivers/char/tpm/tpm_bios.c b/drivers/char/tpm/tpm_bios.c
-deleted file mode 100644
-index 0636520..0000000
+diff --git a/drivers/char/tpm/tpm_bios.c b/drivers/char/tpm/tpm_bios.c deleted file mode 100644 index 0636520..0000000
 --- a/drivers/char/tpm/tpm_bios.c
 +++ /dev/null
 @@ -1,556 +0,0 @@
@@ -373,9 +374,7 @@ index 0636520..0000000
 -	"Table of Devices",
 -};
 -
--/* returns pointer to start of pos. entry of tcg log */
--static void *tpm_bios_measurements_start(struct seq_file *m, loff_t *pos)
--{
+-/* returns pointer to start of pos. entry of tcg log */ -static void *tpm_bios_measurements_start(struct seq_file *m, loff_t *pos) -{
 -	loff_t i;
 -	struct tpm_bios_log *log = m->private;
 -	void *addr = log->bios_event_log;
@@ -432,9 +431,7 @@ index 0636520..0000000
 -	return v;
 -}
 -
--static void tpm_bios_measurements_stop(struct seq_file *m, void *v)
--{
--}
+-static void tpm_bios_measurements_stop(struct seq_file *m, void *v) -{ -}
 -
 -static int get_event_name(char *dest, struct tcpa_event *event,
 -			unsigned char * event_entry)
@@ -511,8 +508,7 @@ index 0636520..0000000
 -
 -}
 -
--static int tpm_binary_bios_measurements_show(struct seq_file *m, void *v)
--{
+-static int tpm_binary_bios_measurements_show(struct seq_file *m, void *v) -{
 -	struct tcpa_event *event = v;
 -	char *data = v;
 -	int i;
@@ -537,8 +533,7 @@ index 0636520..0000000
 -	return seq_release(inode, file);
 -}
 -
--static int tpm_ascii_bios_measurements_show(struct seq_file *m, void *v)
--{
+-static int tpm_ascii_bios_measurements_show(struct seq_file *m, void *v) -{
 -	int len = 0;
 -	int i;
 -	char *eventname;
@@ -586,8 +581,7 @@ index 0636520..0000000
 -};
 -
 -/* read binary bios log */
--static int read_log(struct tpm_bios_log *log)
--{
+-static int read_log(struct tpm_bios_log *log) -{
 -	struct acpi_tcpa *buff;
 -	acpi_status status;
 -	struct acpi_table_header *virt;
@@ -729,8 +723,7 @@ index 0636520..0000000
 -	return 0;
 -}
 -
--struct dentry **tpm_bios_log_setup(char *name)
--{
+-struct dentry **tpm_bios_log_setup(char *name) -{
 -	struct dentry **ret = NULL, *tpm_dir, *bin_file, *ascii_file;
 -
 -	tpm_dir = securityfs_create_dir(name, NULL);
@@ -772,8 +765,7 @@ index 0636520..0000000
 -}
 -EXPORT_SYMBOL_GPL(tpm_bios_log_setup);
 -
--void tpm_bios_log_teardown(struct dentry **lst)
--{
+-void tpm_bios_log_teardown(struct dentry **lst) -{
 -	int i;
 -
 -	for (i = 0; i < 3; i++)
@@ -781,9 +773,7 @@ index 0636520..0000000
 -}
 -EXPORT_SYMBOL_GPL(tpm_bios_log_teardown);
 -MODULE_LICENSE("GPL");
-diff --git a/drivers/char/tpm/tpm_eventlog.c b/drivers/char/tpm/tpm_eventlog.c
-new file mode 100644
-index 0000000..84ddc55
+diff --git a/drivers/char/tpm/tpm_eventlog.c b/drivers/char/tpm/tpm_eventlog.c new file mode 100644 index 0000000..84ddc55
 --- /dev/null
 +++ b/drivers/char/tpm/tpm_eventlog.c
 @@ -0,0 +1,419 @@
@@ -857,9 +847,8 @@ index 0000000..84ddc55
 +	"Table of Devices",
 +};
 +
-+/* returns pointer to start of pos. entry of tcg log */
-+static void *tpm_bios_measurements_start(struct seq_file *m, loff_t *pos)
-+{
++/* returns pointer to start of pos. entry of tcg log */ static void 
++*tpm_bios_measurements_start(struct seq_file *m, loff_t *pos) {
 +	loff_t i;
 +	struct tpm_bios_log *log = m->private;
 +	void *addr = log->bios_event_log;
@@ -916,9 +905,7 @@ index 0000000..84ddc55
 +	return v;
 +}
 +
-+static void tpm_bios_measurements_stop(struct seq_file *m, void *v)
-+{
-+}
++static void tpm_bios_measurements_stop(struct seq_file *m, void *v) { }
 +
 +static int get_event_name(char *dest, struct tcpa_event *event,
 +			unsigned char * event_entry)
@@ -995,8 +982,8 @@ index 0000000..84ddc55
 +
 +}
 +
-+static int tpm_binary_bios_measurements_show(struct seq_file *m, void *v)
-+{
++static int tpm_binary_bios_measurements_show(struct seq_file *m, void 
++*v) {
 +	struct tcpa_event *event = v;
 +	char *data = v;
 +	int i;
@@ -1021,8 +1008,8 @@ index 0000000..84ddc55
 +	return seq_release(inode, file);
 +}
 +
-+static int tpm_ascii_bios_measurements_show(struct seq_file *m, void *v)
-+{
++static int tpm_ascii_bios_measurements_show(struct seq_file *m, void 
++*v) {
 +	int len = 0;
 +	int i;
 +	char *eventname;
@@ -1059,8 +1046,7 @@ index 0000000..84ddc55
 +	.start = tpm_bios_measurements_start,
 +	.next = tpm_bios_measurements_next,
 +	.stop = tpm_bios_measurements_stop,
-+	.show = tpm_ascii_bios_measurements_show,
-+};
++	.show = tpm_ascii_bios_measurements_show, };
 +
 +static const struct seq_operations tpm_binary_b_measurments_seqops = {
 +	.start = tpm_bios_measurements_start,
@@ -1104,8 +1090,7 @@ index 0000000..84ddc55
 +	.open = tpm_ascii_bios_measurements_open,
 +	.read = seq_read,
 +	.llseek = seq_lseek,
-+	.release = tpm_bios_measurements_release,
-+};
++	.release = tpm_bios_measurements_release, };
 +
 +static int tpm_binary_bios_measurements_open(struct inode *inode,
 +					     struct file *file)
@@ -1142,8 +1127,7 @@ index 0000000..84ddc55
 +	.open = tpm_binary_bios_measurements_open,
 +	.read = seq_read,
 +	.llseek = seq_lseek,
-+	.release = tpm_bios_measurements_release,
-+};
++	.release = tpm_bios_measurements_release, };
 +
 +static int is_bad(void *p)
 +{
@@ -1154,8 +1138,7 @@ index 0000000..84ddc55
 +	return 0;
 +}
 +
-+struct dentry **tpm_bios_log_setup(char *name)
-+{
++struct dentry **tpm_bios_log_setup(char *name) {
 +	struct dentry **ret = NULL, *tpm_dir, *bin_file, *ascii_file;
 +
 +	tpm_dir = securityfs_create_dir(name, NULL);
@@ -1197,8 +1180,7 @@ index 0000000..84ddc55
 +}
 +EXPORT_SYMBOL_GPL(tpm_bios_log_setup);
 +
-+void tpm_bios_log_teardown(struct dentry **lst)
-+{
++void tpm_bios_log_teardown(struct dentry **lst) {
 +	int i;
 +
 +	for (i = 0; i < 3; i++)
@@ -1206,9 +1188,7 @@ index 0000000..84ddc55
 +}
 +EXPORT_SYMBOL_GPL(tpm_bios_log_teardown);
 +MODULE_LICENSE("GPL");
-diff --git a/drivers/char/tpm/tpm_eventlog.h b/drivers/char/tpm/tpm_eventlog.h
-new file mode 100644
-index 0000000..8e23ccd
+diff --git a/drivers/char/tpm/tpm_eventlog.h b/drivers/char/tpm/tpm_eventlog.h new file mode 100644 index 0000000..8e23ccd
 --- /dev/null
 +++ b/drivers/char/tpm/tpm_eventlog.h
 @@ -0,0 +1,71 @@
@@ -1281,7 +1261,6 @@ index 0000000..8e23ccd
 +	HOST_TABLE_OF_DEVICES,
 +};
 +
-+int read_log(struct tpm_bios_log *log);
-+#endif
--- 
++int read_log(struct tpm_bios_log *log); #endif
+--
 1.7.5.4
