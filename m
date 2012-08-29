@@ -1,10 +1,10 @@
 From: xiaoyan.zhang@intel.com
 Subject: [PATCH] driver/char/tpm: declare internal symbols as static
-Date: Wed, 29 Aug 2012 04:40:30 +0000 (UTC)
-Message-ID: <1377779951-1687-1-git-send-email-xiaoyan.zhang__26794.7135529996$1346215231$gmane$org@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Date: Wed, 29 Aug 2012 04:40:41 +0000 (UTC)
+Message-ID: <1377779951-1687-1-git-send-email-xiaoyan.zhang__42974.8101080351$1346215243$gmane$org@intel.com>
+Return-path: <linux-security-module-owner@vger.kernel.org>
 Date: Thu, 29 Aug 2013 20:39:11 +0800
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-security-module-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: xiaoyan.zhang@intel.com, joseph.cihula@intel.com, gang.wei@intel.com, tpmdd-devel@lists.sourceforge.net, debora@linux.vnet.ibm.com, srajiv@linux.vnet.ibm.com, m.selhorst@sirrix.com, shpedoikal@gmail.com, linux-security-module@vger.kernel.org, james.l.morris@oracle.com, hpa@zytor.com, linux-api@vger.kernel.org, yoder1@us.ibm.com, key@linux.vnet.ibm.com, fengguang.wu@intel.com
 List-Id: linux-api@vger.kernel.org
@@ -132,3 +132,4 @@ index 440fa1c..f27b58c 100644
  }
 -- 
 1.7.7.6
+
