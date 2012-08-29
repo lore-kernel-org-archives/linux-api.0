@@ -1,21 +1,21 @@
-From: xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+From: xiaoyan.zhang@intel.com
 Subject: [PATCH] driver/char/tpm: declare internal symbols as static
-Date: Wed, 29 Aug 2012 04:40:19 +0000 (UTC)
-Message-ID: <1377779951-1687-1-git-send-email-xiaoyan.zhang@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Date: Wed, 29 Aug 2012 04:40:30 +0000 (UTC)
+Message-ID: <1377779951-1687-1-git-send-email-xiaoyan.zhang__26794.7135529996$1346215231$gmane$org@intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Date: Thu, 29 Aug 2013 20:39:11 +0800
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, joseph.cihula-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, gang.wei-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, debora-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, srajiv-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, m.selhorst-iBygD9l97zzQT0dZR+AlfA@public.gmane.org, shpedoikal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, yoder1-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, key-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: xiaoyan.zhang@intel.com, joseph.cihula@intel.com, gang.wei@intel.com, tpmdd-devel@lists.sourceforge.net, debora@linux.vnet.ibm.com, srajiv@linux.vnet.ibm.com, m.selhorst@sirrix.com, shpedoikal@gmail.com, linux-security-module@vger.kernel.org, james.l.morris@oracle.com, hpa@zytor.com, linux-api@vger.kernel.org, yoder1@us.ibm.com, key@linux.vnet.ibm.com, fengguang.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-From: Xiaoyan Zhang <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: Xiaoyan Zhang <xiaoyan.zhang@intel.com>
 
 This patch declares the internal struct and functions as static to provide
 more security.
 
-Signed-off-by: Xiaoyan Zhang <xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Fengguang Wu <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Xiaoyan Zhang <xiaoyan.zhang@intel.com>
+Signed-off-by: Fengguang Wu <fengguang.wu@intel.com>
 ---
  drivers/char/tpm/tpm.c     |    4 ++--
  drivers/char/tpm/tpm_ppi.c |   37 +++++++++++++++++++------------------
