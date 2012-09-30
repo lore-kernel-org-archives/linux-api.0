@@ -1,109 +1,83 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: ABI change for setitimer(2) [in feature-removal-schedule.txt]
-Date: Sun, 30 Sep 2012 08:30:20 +0200
-Message-ID: <CAHO5Pa2dnFH+SVkrJngR8Vn4VomsfJ00nOCzRB3+Ns4zs_pxnQ@mail.gmail.com>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: ABI change for setitimer(2) [in feature-removal-schedule.txt]
+Date: Sun, 30 Sep 2012 10:51:21 -0700
+Message-ID: <CA+55aFyjvESz3FZwAdnOuZX7R5B0ES0Vj3SngikA1A9PqTcoyQ@mail.gmail.com>
+References: <CAHO5Pa2dnFH+SVkrJngR8Vn4VomsfJ00nOCzRB3+Ns4zs_pxnQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHO5Pa2dnFH+SVkrJngR8Vn4VomsfJ00nOCzRB3+Ns4zs_pxnQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sasikantha Babu <sasikanth.v19-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Trevor Woerner <twoerner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sasikantha Babu <sasikanth.v19-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Trevor Woerner <twoerner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[Was: Re: [GIT pull] timer fixes for 3.4]
-
-[CC+=Trevor Woerner, after an independent mail led me to find this thread.]
-[CC+=linux-api@, which really should have been CCed on the original patch]
-
-Linus,
-
-On Fri, Apr 13, 2012 at 12:19 AM, Linus Torvalds
-<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> On Thu, Apr 12, 2012 at 3:06 PM, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> wrote:
->>
->> The itimer removal one is not strictly a fix, but I really wanted to
->> avoid a rebase of the urgent ones.
+On Sat, Sep 29, 2012 at 11:30 PM, Michael Kerrisk
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 >
-> Btw, I think that setitimer NULL pointer removal commit is crap.
+>> I think the whole "let's deprecate this six months into the future" is
+>> unnecessary. Yes, it may well be worth doing for something with bigger
+>> consequences, but I think that for something like this, it's just
+>> overthinking the issue.
 >
-> If people actually do rely on the NULL pointer thing, we're not
-> "scheduling it for removal". And we most *definitely* aren't
-> scheduling it for removal for some short timeframe like 3.6.
->
-> That's not how ABI's work. If it has become something people rely on,
-> it now *is* part of the ABI, and no amount of "violates the spec"
-> matters what-so-ever.
->
-> "The spec" is paper - and worthless. What people actually *do* is all
-> that matters.
+> When it comes to ABIs, I think there *is* value in a lead time on the
+> change. This particular example is a good example of why.
 
-So, to restore some context some months after the last mail in this
-thread, commit aa2bf9bc6414b6972b9e51903c1ce7b1f057aee2 added this to
-Documentation/feature-removal-schedule.txt:
+No. This whole example is a good example of the fact that YOU SHOULD
+NOT MAKE ABI CHANGES.
 
-[[
-What:   setitimer accepts user NULL pointer (value)
-When:   3.6
-Why:    setitimer is not returning -EFAULT if user pointer is NULL. This
-        violates the spec.
-]]
+I don't understand why this seems to be so hard for people to understand.
 
-And the commit message said:
+There are exactly *zero* reasons to change the ABI for its own sake,
+and this whole thread is a wonderful example of how F*CKING STUPID it
+was to even consider it.
 
-    setitimer() should return -EFAULT if called with an invalid pointer
-    for value. The current code excludes a NULL pointer from this rule and
-    silently uses it to stop the timer. This violates the spec.
+There are real and valid reasons to change the ABI, but for every
+single one of them, there is some external issue:
 
-The last sentence is rather questionable. POSIX is actually rather
-silent on this point, since it doesn't say anything explicit about the
-new_value==NULL case. The Linux man page is also rather silent about
-it. (By the way, the current behavior seems to have been present on
-Linux since 1.0.) So, I'm not sure what spec is being referred to (and
-thus, what the rationale is for the change).
+ - security. We've had cases where we had an ABI that simply exposed
+too much information.
 
-In any case, if the behavior here should change, the proposed change
-is the wrong change. The right thing to do would be to make Linux
-consistent with other systems. At least Solaris, FreeBSD, and NetBSD
-(which are all the systems that I have for testing) all do the
-following (though none of them seem to document it):
+ - implementation issues. Sometimes, we've done something really
+really badly, and some subtle ABI issue may simply not work. This is
+basically never about normal system calls used by normal applications,
+though - it's about things like the whole iptables flaps etc.
 
-    If the 'new_value' of setitimer() is NULL, then (assuming
-    that 'old_value' is not NULL) the call is equivalent to
-    getitimer(), simply return the current value of the timer
-    in 'old_value'
+ - actual real applications breaking. We've had cases where we simply
+did things wrong, and portable applications broke. Then we can *try*
+to fix it, and see if something else breaks from that.
 
-If Linux is to change, then it should at least be made consistent with
-those other systems. There is one question if that path is taken: what
-to do in the case where both 'old_value" and 'new_value' are NULL?
-Solaris treats that case as a no-op; FreeBSD gives EFAULT. The FreeBSD
-behavior seems a little more sensible, IMO.
+And quite frankly, for all but the security case, even then we're
+often better off at least having a compatibilty layer for the old
+cases, even if it was bad and wrong (example: the very original linux
+'select()' timeout behavior, where Linux did the documented thing, but
+nobody else did. Or the various versions of 'stat()' we've had. Or the
+inotify/dnotify/fsnotify things).
 
-Would you entertain a patch to implement FreeBSD semantics for
-setitimer() where 'new_value' is NULL?
+Occasionally some compat model may not be worth it (if the interface
+is too specialized and there really is just one or two system apps
+that use it), but that's very very rare to the point where it
+shouldn't even be considered an issue.
 
-Later in this thread you said:
+Quite frankly, our most common ABI change is that we don't even
+realize that something changed. And then people may or may not notice
+it. And we've had cases where the same system call returned
+*different* things for different subsystems, and we tried to make it
+at least internally consistent.
 
-> I think the whole "let's deprecate this six months into the future" is
-> unnecessary. Yes, it may well be worth doing for something with bigger
-> consequences, but I think that for something like this, it's just
-> overthinking the issue.
+But the "premeditated ABI change just for the reason of an ABI
+change"? It's bullshit. And it's bullshit whether it shows up in
+feature-removal or not.
 
-When it comes to ABIs, I think there *is* value in a lead time on the
-change. This particular example is a good example of why. Making ABI
-changes like this should be done with a bit or research and review,
-rather than bluntly making the change and seeing if anybody squawks
-because something breaks. If this change _had_ been instantly executed
-in 3.4, then we'd have missed a chance to bring greater consistency
-across systems (here, I assume that having added the EFAULT behavior,
-there'd probably be resistance to changing the ABI a *second* time in
-order to achieve consistency).
+(The whole feature-removal file is BS, for that matter, but that's a
+different issue).
 
-Thanks,
+SO STOP DOING ABI CHANGES. WE DON'T DO THEM.
 
-Michael
+The absolute worst thing a kernel can do is "change the user-level
+interfaces". It has to be done occasionally (see above), and sometimes
+we do it by mistake, but anybody who does it on purpose "just because"
+should not be involved in kernel development (or library development
+for that matter).
 
-
--- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+                Linus
