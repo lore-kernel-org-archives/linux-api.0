@@ -1,85 +1,146 @@
 From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH v8 2/5] ipc: add sysctl to specify desired next object
- id
-Date: Wed, 24 Oct 2012 14:41:23 -0700
-Message-ID: <20121024144123.0a77584b.akpm@linux-foundation.org>
+Subject: Re: [PATCH v8 4/5] ipc: message queue copy feature introduced
+Date: Wed, 24 Oct 2012 14:41:28 -0700
+Message-ID: <20121024144128.5964e88a.akpm@linux-foundation.org>
 References: <20121024151555.5642.79086.stgit@localhost.localdomain>
-	<20121024153509.5642.76385.stgit@localhost.localdomain>
+	<20121024153520.5642.4297.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20121024153509.5642.76385.stgit@localhost.localdomain>
+In-Reply-To: <20121024153520.5642.4297.stgit@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Stanislav Kinsbursky <skinsbursky@parallels.com>
 Cc: serge.hallyn@canonical.com, ebiederm@xmission.com, linux-kernel@vger.kernel.org, xemul@parallels.com, catalin.marinas@arm.com, will.deacon@arm.com, jmorris@namei.org, cmetcalf@tilera.com, joe.korty@ccur.com, dhowells@redhat.com, dledford@redhat.com, viro@zeniv.linux.org.uk, kosaki.motohiro@jp.fujitsu.com, linux-api@vger.kernel.org, serue@us.ibm.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, devel@openvz.org, mtk.manpages@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 24 Oct 2012 19:35:09 +0400
+On Wed, 24 Oct 2012 19:35:20 +0400
 Stanislav Kinsbursky <skinsbursky@parallels.com> wrote:
 
-> This patch adds 3 new variables and sysctls to tune them (by one "next_id"
-> variable for messages, semaphores and shared memory respectively).
-> This variable can be used to set desired id for next allocated IPC object.
-> By default it's equal to -1 and old behaviour is preserved.
-> If this variable is non-negative, then desired idr will be extracted from it
-> and used as a start value to search for free IDR slot.
+> This patch is required for checkpoint/restore in userspace.
+> IOW, c/r requires some way to get all pending IPC messages without deleting
+> them from the queue (checkpoint can fail and in this case tasks will be resumed,
+> so queue have to be valid).
+> To achive this, new operation flag MSG_COPY for sys_msgrcv() system call was
+> introduced. If this flag was specified, then mtype is interpreted as number of
+> the message to copy.
+> If MSG_COPY is set, then kernel will allocate dummy message with passed size,
+> and then use new copy_msg() helper function to copy desired message (instead of
+> unlinking it from the queue).
 > 
-> Notes:
-> 1) this patch doesn't garantee, that new object will have desired id. So it's
-> up to user space how to handle new object with wrong id.
-> 2) After sucessfull id allocation attempt, "next_id" will be set back to -1
-> (if it was non-negative).
-> 
-> --- a/ipc/ipc_sysctl.c
-> +++ b/ipc/ipc_sysctl.c
-> @@ -158,6 +158,7 @@ static int proc_ipcauto_dointvec_minmax(ctl_table *table, int write,
+> ...
+>
+> @@ -777,19 +777,48 @@ long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp,
+>  	struct msg_msg *msg;
+>  	int mode;
+>  	struct ipc_namespace *ns;
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +	struct msg_msg *copy = NULL;
+> +	unsigned long copy_number = 0;
+> +#endif
 >  
->  static int zero;
->  static int one = 1;
-> +static int int_max = INT_MAX;
+>  	if (msqid < 0 || (long) bufsz < 0)
+>  		return -EINVAL;
+> +	if (msgflg & MSG_COPY) {
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +
+> +		if (msgflg & MSG_COPY) {
+
+This test is't needed.
+
+> +			copy_number = msgtyp;
+> +			msgtyp = 0;
+> +		}
+> +
+> +		/*
+> +		 * Create dummy message to copy real message to.
+> +		 */
+> +		copy = load_msg(buf, bufsz);
+> +		if (IS_ERR(copy))
+> +			return PTR_ERR(copy);
+> +		copy->m_ts = bufsz;
+> +#else
+> +		return -ENOSYS;
+> +#endif
+> +	}
+>  	mode = convert_mode(&msgtyp, msgflg);
+>  	ns = current->nsproxy->ipc_ns;
 >  
->  static struct ctl_table ipc_kern_table[] = {
->  	{
-> @@ -227,6 +228,33 @@ static struct ctl_table ipc_kern_table[] = {
->  		.extra1		= &zero,
->  		.extra2		= &one,
->  	},
-> +	{
-> +		.procname	= "sem_next_id",
-> +		.data		= &init_ipc_ns.ids[IPC_SEM_IDS].next_id,
-> +		.maxlen		= sizeof(init_ipc_ns.ids[IPC_SEM_IDS].next_id),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_ipc_dointvec_minmax,
-> +		.extra1		= &zero,
-> +		.extra2		= &int_max,
-> +	},
-> +	{
-> +		.procname	= "msg_next_id",
-> +		.data		= &init_ipc_ns.ids[IPC_MSG_IDS].next_id,
-> +		.maxlen		= sizeof(init_ipc_ns.ids[IPC_MSG_IDS].next_id),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_ipc_dointvec_minmax,
-> +		.extra1		= &zero,
-> +		.extra2		= &int_max,
-> +	},
-> +	{
-> +		.procname	= "shm_next_id",
-> +		.data		= &init_ipc_ns.ids[IPC_SHM_IDS].next_id,
-> +		.maxlen		= sizeof(init_ipc_ns.ids[IPC_SHM_IDS].next_id),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_ipc_dointvec_minmax,
-> +		.extra1		= &zero,
-> +		.extra2		= &int_max,
-> +	},
->  	{}
->  };
+>  	msq = msg_lock_check(ns, msqid);
+> -	if (IS_ERR(msq))
+> +	if (IS_ERR(msq)) {
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +		if (msgflg & MSG_COPY)
+> +			free_msg(copy);
+> +#endif
+>  		return PTR_ERR(msq);
+> +	}
+>  
+>  	for (;;) {
+>  		struct msg_receiver msr_d;
+>  		struct list_head *tmp;
+> +		long msg_counter = 0;
+>  
+>  		msg = ERR_PTR(-EACCES);
+>  		if (ipcperms(ns, &msq->q_perm, S_IRUGO))
+> @@ -809,8 +838,16 @@ long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp,
+>  				if (mode == SEARCH_LESSEQUAL &&
+>  						walk_msg->m_type != 1) {
+>  					msgtyp = walk_msg->m_type - 1;
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +				} else if (msgflg & MSG_COPY) {
+> +					if (copy_number == msg_counter) {
+> +						msg = copy_msg(walk_msg, copy);
+> +						break;
+> +					}
+> +#endif
+>  				} else
+>  					break;
+> +				msg_counter++;
+>  			}
+>  			tmp = tmp->next;
+>  		}
+> @@ -823,6 +860,10 @@ long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp,
+>  				msg = ERR_PTR(-E2BIG);
+>  				goto out_unlock;
+>  			}
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +			if (msgflg & MSG_COPY)
+> +				goto out_unlock;
+> +#endif
+>  			list_del(&msg->m_list);
+>  			msq->q_qnum--;
+>  			msq->q_rtime = get_seconds();
+> @@ -906,8 +947,13 @@ out_unlock:
+>  			break;
+>  		}
+>  	}
+> -	if (IS_ERR(msg))
+> +	if (IS_ERR(msg)) {
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +		if (msgflg & MSG_COPY)
+> +			free_msg(copy);
+> +#endif
+>  		return PTR_ERR(msg);
+> +	}
+>  
+>  	bufsz = msg_handler(buf, msg, bufsz);
+>  	free_msg(msg);
 
-ipc_kern_table[] is (badly) documented in
-Documentation/sysctl/kernel.txt.  Can we at least mention these
-controls in there?  Better, create a new way of properly documenting
-each control and document these three in that manner?  Better still,
-document all the other ones as well ;)
+It's all a bit ugly, but I don't really see much we can practically do
+about that.
 
-The patch adds these controls to CONFIG_CHECKPOINT_RESTORE=n kernels. 
-Why is this?
+You could add something like
+
+#ifdef CONFIG_CHECKPOINT_RESTORE
+static inline void free_copy(void *p, int msgflg, struct msg_msg *copy)
+{
+	if (IS_ERR(p) && (msgflg & MSG_COPY))
+		free_msg(copy);
+}
+#else
+/* As a macro because `copy' will be undefined */
+#define free_copy(p, msgflg, copy) do {} while (0)
+#endif
+
+and use that in a couple of places.  But that won't help much.
