@@ -1,73 +1,96 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [PATCH 2/4] clone.2:  Describe the user namespace
-Date: Mon, 26 Nov 2012 18:46:46 -0600
-Message-ID: <87y5hnq3d5.fsf@xmission.com>
+Subject: [PATCH 3/4] proc.5:  Document the proc files for the user, mount,
+	and pid namespaces.
+Date: Mon, 26 Nov 2012 18:47:57 -0600
+Message-ID: <87pq2zq3b6.fsf@xmission.com>
 References: <87a9u4rmz0.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 In-Reply-To: <87a9u4rmz0.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric W. Biederman's message of
 	"Mon, 26 Nov 2012 16:57:55 -0600")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- man2/clone.2 |   39 +++++++++++++++++++++++++++++++++++++++
- 1 files changed, 39 insertions(+), 0 deletions(-)
+ man5/proc.5 |   52 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 52 insertions(+), 0 deletions(-)
 
-diff --git a/man2/clone.2 b/man2/clone.2
-index 0582057..4566677 100644
---- a/man2/clone.2
-+++ b/man2/clone.2
-@@ -366,6 +366,45 @@ in the same
- .BR clone ()
- call.
+diff --git a/man5/proc.5 b/man5/proc.5
+index 840480d..eb612b9 100644
+--- a/man5/proc.5
++++ b/man5/proc.5
+@@ -581,6 +581,58 @@ even if all processes in the namespace terminate.
+ The file descriptor can be passed to
+ .BR setns (2).
  .TP
-+.BR CLONE_NEWUSER " (since Linux 3.6)"
-+If
-+.B CLONE_NEWUSER
-+is set, the create the process in a new user namespace.  If this flag is not set, then (as with
-+.BR fork (2)),
-+the process is created in the same user namespace as the calling process.
++.IR /proc/[pid]/ns/user " (since Linux 3.8)"
++Bind mounting this file (see
++.BR mount (2))
++to somewhere else in the filesystem keeps
++the user namespace of the process specified by
++.I pid
++alive even if all processes currently in the namespace terminate.
 +
-+A user namespace provides an isolated environment for security related identifiers in particular
-+uids, gids, keys (see
-+.BR keyctl (2)),
-+and capabilities.
++Opening this file returns a file handle for the user namespace
++of the process specified by
++.IR pid .
++As long as this file descriptor remains open,
++the user namespace will remain alive,
++even if all processes in the namespace terminate.
++The file descriptor can be passed to
++.BR setns (2).
++.TP
++.IR /proc/[pid]/ns/pid " (since Linux 3.8)"
++Bind mounting this file (see
++.BR mount (2))
++to somewhere else in the filesystem keeps
++the PID namespace of the process specified by
++.I pid
++alive even if all processes currently in the namespace terminate.
 +
-+When a user namespace is created it initially starts out without a mapping of uids and gids
-+to the parent user namespace.  The desired mapping of uids to the parent user namespace
-+may be set by writting into  
-+.IR /proc/[pid]/uid_map.
-+The desired mapping of gids to the parent user namespace may be set by writinng into
-+.IR /proc/[pid]/gid_map.
++Opening this file returns a file handle for the PID namespace
++of the process specified by
++.IR pid .
++As long as this file descriptor remains open,
++the PID namespace will remain alive,
++even if all processes in the namespace terminate.
++The file descriptor can be passed to
++.BR setns (2).
++.TP
++.IR /proc/[pid]/ns/mnt " (since Linux 3.8)"
++Bind mounting this file (see
++.BR mount (2))
++to somewhere else in the filesystem keeps
++the mount namespace of the process specified by
++.I pid
++alive even if all processes currently in the namespace terminate.
 +
-+The first process in a user namespace starts out with a complete set of capabilities with
-+respect to the new user namespace.  
-+
-+syscalls that return uids and gids will either return the uid or gid mapped into the current
-+user namespace if there is a mapping or depending on the context will return either
-+the overflowuid (default 65534) or the overflowgid (default 65534). See
-+.IR /proc/sys/kernel/overflowuid, /proc/sys/kernel/overflowgid
-+
-+As of Linux 3.8 no priviliges are needed to create a user namespace,
-+and mount, pid, ipc, net, uts namespaces can be created with just
-+CAP_SYS_ADMIN privileges in your current user namespace.
-+
-+Over the years there have been a lot of features that have been added
-+to the linux kernel that are only available to privileged users
-+because of their potential to confuse setuid root applications.  In
-+general it becomes safe to allow the root user in a user namespace to
-+use those features because it is impossible while in a user namespace
-+to gain more privilege than the root user of a user namespace has.
++Opening this file returns a file handle for the mount namespace
++of the process specified by
++.IR pid .
++As long as this file descriptor remains open,
++the mount namespace will remain alive,
++even if all processes in the namespace terminate.
++The file descriptor can be passed to
++.BR setns (2).
 +
 +.TP
- .BR CLONE_NEWPID " (since Linux 2.6.24)"
- .\" This explanation draws a lot of details from
- .\" http://lwn.net/Articles/259217/
+ .IR /proc/[pid]/numa_maps " (since Linux 2.6.14)"
+ See
+ .BR numa (7).
 -- 
 1.7.5.4
