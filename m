@@ -1,151 +1,186 @@
-From: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH v8 0/5] IPC: checkpoint/restore in userspace enhancements
-Date: Sat, 22 Dec 2012 10:43:07 -0500
-Message-ID: <50D5D50B.8090309@oracle.com>
-References: <20121024151555.5642.79086.stgit@localhost.localdomain> <20121218123601.113a29c0.akpm@linux-foundation.org> <50D28EC8.7000708@parallels.com> <20121220124751.d7ccbd8e.akpm@linux-foundation.org> <50D4CA90.60205@parallels.com> <50D4DB5D.9020309@oracle.com>
+From: Michael Kerrisk <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 3/4] signalfd: add ability to choose a private or shared queue
+Date: Mon, 24 Dec 2012 21:53:33 +0100
+Message-ID: <CAHO5Pa2TY3fVs4fFNdhrRN79QkVrWhR_sxD1JoEt-wSwCSN8_A@mail.gmail.com>
+References: <1356336807-5517-1-git-send-email-avagin@openvz.org> <1356336807-5517-4-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <50D4DB5D.9020309-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stanislav Kinsbursky <skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, catalin.marinas-5wv7dgnIgG8@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org, cmetcalf-kv+TWInifGbQT0dZR+AlfA@public.gmane.org, joe.korty-oXJCJecloQs@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, serue-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, devel-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Wu Fengguang <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1356336807-5517-4-git-send-email-avagin@openvz.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrey Vagin <avagin@openvz.org>
+Cc: linux-kernel@vger.kernel.org, criu@openvz.org, linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, David Howells <dhowells@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12/21/2012 04:57 PM, Sasha Levin wrote:
-> On 12/21/2012 03:46 PM, Stanislav Kinsbursky wrote:
->> 21.12.2012 00:47, Andrew Morton =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->>> On Thu, 20 Dec 2012 08:06:32 +0400
->>> Stanislav Kinsbursky<skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>  wrote:
->>>
->>>> 19.12.2012 00:36, Andrew Morton __________:
->>>>> On Wed, 24 Oct 2012 19:34:51 +0400
->>>>> Stanislav Kinsbursky<skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>  wrote:
->>>>>
->>>>>> This respin of the patch set was significantly reworked. Most pa=
-rt of new API
->>>>>> was replaced by sysctls (by one per messages, semaphores and sha=
-red memory),
->>>>>> allowing to preset desired id for next new IPC object.
->>>>>>
->>>>>> This patch set is aimed to provide additional functionality for =
-all IPC
->>>>>> objects, which is required for migration of these objects by use=
-r-space
->>>>>> checkpoint/restore utils (CRIU).
->>>>>>
->>>>>> The main problem here was impossibility to set up object id. Thi=
-s patch set
->>>>>> solves the problem by adding new sysctls for preset of desired i=
-d for new IPC
->>>>>> object.
->>>>>>
->>>>>> Another problem was to peek messages from queues without deletin=
-g them.
->>>>>> This was achived by introducing of new MSG_COPY flag for sys_msg=
-rcv(). If
->>>>>> MSG_COPY flag is set, then msgtyp is interpreted as message numb=
-er.
->>>>> According to my extensive records, Sasha hit a bug in
->>>>> ipc-message-queue-copy-feature-introduced.patch and Fengguang fou=
-nd a
->>>>> bug in
->>>>> ipc-message-queue-copy-feature-introduced-cleanup-do_msgrcv-aroun=
-g-msg_copy-feature.patch
->>>>>
->>>>> It's not obvious (to me) that these things have been identified a=
-nd
->>>>> fixed.  What's the status, please?
->>>> Hello, Andrew.
->>>> Fengguang's issue was solved by "ipc: simplify message copying" I =
-sent you.
->>>> But I can't find Sasha's issue. As I remember, there was some prob=
-lem in
->>>> early
->>>> version of the patch set. But I believe its fixed now.
->>> http://lkml.indiana.edu/hypermail/linux/kernel/1210.3/01710.html
->>>
->>> Subject: "ipc, msgqueue: NULL ptr deref in msgrcv"
->>
->> Ah, yes. Thanks.
->> Hi found it in initial version of code, which was significantly chan=
-ged (or cleaned and simplified) by further patch series.
->> And I cant find out, how this can happen, because this patch he bise=
-ct to do not modify the queue itself, while he found the
->> problem in testmsg.
->=20
-> I actually can't reproduce it on the latest -next.
->=20
-> I was reverting the IPC changes in the past couple of weeks so that I=
- could test the
-> rest of the IPC code with the fuzzer, and when I added them back in a=
-gain I can't
-> reproduce the issue I've reported earlier.
->=20
-> We can probably figure out where it got fixed by bisecting between -n=
-ext trees if anyone
-> is interested in that.
+[CC+=linux-api]
 
-Ignore that. It just took more fuzzing to stumble on it again:
+Andrey,
 
-[  103.164594] BUG: unable to handle kernel NULL pointer dereference at=
- 0000000000000010
-[  103.168159] IP: [<ffffffff81937155>] do_msgrcv+0x205/0x540
-[  103.170031] PGD c7cd067 PUD d274067 PMD 0
-[  103.170031] Oops: 0000 [#1] PREEMPT SMP DEBUG_PAGEALLOC
-[  103.170031] Dumping ftrace buffer:
-[  103.170031]    (ftrace buffer empty)
-[  103.170031] CPU 4
-[  103.170031] Pid: 7056, comm: trinity Tainted: G        W    3.7.0-ne=
-xt-20121221-sasha-00014-g339890c #229
-[  103.170031] RIP: 0010:[<ffffffff81937155>]  [<ffffffff81937155>] do_=
-msgrcv+0x205/0x540
-[  103.170031] RSP: 0018:ffff88000c7cfe88  EFLAGS: 00010246
-[  103.170031] RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000=
-000000000
-[  103.170031] RDX: ffff880013681f00 RSI: 0000000000000124 RDI: ffff880=
-0075a7810
-[  103.170031] RBP: ffff88000c7cff68 R08: 0000000000000000 R09: 0000000=
-000000000
-[  103.170031] R10: 0000000000000001 R11: 0000000000000001 R12: 0000000=
-000000002
-[  103.170031] R13: ffff8800075a78c0 R14: 7fffffff00000000 R15: ffff880=
-0075a7810
-[  103.170031] FS:  00007ffa529ae700(0000) GS:ffff880013c00000(0000) kn=
-lGS:0000000000000000
-[  103.170031] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[  103.170031] CR2: 0000000000000010 CR3: 000000000c7cc000 CR4: 0000000=
-0000406e0
-[  103.170031] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000=
-000000000
-[  103.170031] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000=
-000000400
-[  103.170031] Process trinity (pid: 7056, threadinfo ffff88000c7ce000,=
- task ffff88000c020000)
-[  103.170031] Stack:
-[  103.170031]  ffff88000c7cfea8 ffff88000c020000 ffff88000c020000 ffff=
-88000c020000
-[  103.170031]  0000000000000000 ffffffff81935e50 0000000000000008 0000=
-000000000000
-[  103.170031]  ffffffff858e91e0 0000000000000000 0000000000001001 ffff=
-88000c020000
-[  103.170031] Call Trace:
-[  103.170031]  [<ffffffff81935e50>] ? load_msg+0x170/0x170
-[  103.170031]  [<ffffffff8107e8c4>] ? syscall_trace_enter+0x24/0x2e0
-[  103.170031]  [<ffffffff81184678>] ? trace_hardirqs_on_caller+0x118/0=
-x140
-[  103.170031]  [<ffffffff819374a0>] sys_msgrcv+0x10/0x20
-[  103.170031]  [<ffffffff83cdf798>] tracesys+0xe1/0xe6
-[  103.170031] Code: 80 f5 ff ff ff 90 41 83 fc 03 74 32 41 83 fc 04 74=
- 0c 41 83 fc 02 75 2c eb 11 0f 1f 40 00 4c 3b 73 10 7d 20
-66 90 e9 94 00 00 00 <4c> 39 73 10 0f 85 8a 00 00 00 90 eb 0c 66 0f 1f =
-44 00 00 4c 39
-[  103.170031] RIP  [<ffffffff81937155>] do_msgrcv+0x205/0x540
-[  103.170031]  RSP <ffff88000c7cfe88>
-[  103.170031] CR2: 0000000000000010
-[  103.228270] ---[ end trace ddc37199fdad82b0 ]---
+(Among other things, some suggested wording fixes below to improve the
+eventual commit log entry).
+
+On Mon, Dec 24, 2012 at 9:13 AM, Andrey Vagin <avagin@openvz.org> wrote:
+> This patch is added two flags SFD_GROUP and SFD_SHARED.
+> SFD_SHARED - read signals from a shared queue
+> SFD_PRIVATE - read signals from a private queue
+
+These names and comments are not quite meaningful I find. Also, you
+use SFD_SHARED here, but the name below is SFD_GROUP. I had to read
+further to confirm what I guessed the names meant. How about these
+names and comments:
+
+SFD_SHARED_QUEUE - read signals from a shared (process wide) queue
+SFD_PER_THREAD_QUEUE - read signals from a per-thread queue
+
+> Without this flags or with both flags signals are read from both queues.
+
+Without these flags
+
+> This functionality is requered for dumping pending signals.
+
+"required"
+
+> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+> Cc: David Howells <dhowells@redhat.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Oleg Nesterov <oleg@redhat.com>
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+> Cc: Pavel Emelyanov <xemul@parallels.com>
+> CC: Cyrill Gorcunov <gorcunov@openvz.org>
+> Signed-off-by: Andrey Vagin <avagin@openvz.org>
+> ---
+>  fs/signalfd.c                 | 25 +++++++++++++++++++------
+>  include/uapi/linux/signalfd.h |  2 ++
+>  2 files changed, 21 insertions(+), 6 deletions(-)
+>
+> diff --git a/fs/signalfd.c b/fs/signalfd.c
+> index 95f1444..a35aeda 100644
+> --- a/fs/signalfd.c
+> +++ b/fs/signalfd.c
+> @@ -170,13 +170,13 @@ static int signalfd_copyinfo(struct signalfd_siginfo __user *uinfo,
+>  }
+>
+>  static ssize_t signalfd_dequeue(struct signalfd_ctx *ctx, siginfo_t *info,
+> -                               int nonblock)
+> +                               int nonblock, int queue)
+>  {
+>         ssize_t ret;
+>         DECLARE_WAITQUEUE(wait, current);
+>
+>         spin_lock_irq(&current->sighand->siglock);
+> -       ret = dequeue_signal(current, &ctx->sigmask, info);
+> +       ret = do_dequeue_signal(current, &ctx->sigmask, info, queue);
+>         switch (ret) {
+>         case 0:
+>                 if (!nonblock)
+> @@ -223,14 +223,21 @@ static ssize_t signalfd_read(struct file *file, char __user *buf, size_t count,
+>         bool raw = file->f_flags & SFD_RAW;
+>         ssize_t ret, total = 0;
+>         siginfo_t info;
+> +       int queue = 0;
+>
+>         count /= sizeof(struct signalfd_siginfo);
+>         if (!count)
+>                 return -EINVAL;
+>
+> +       if (file->f_flags & SFD_GROUP)
+> +               queue++;
+> +
+> +       if (file->f_flags & SFD_PRIVATE)
+> +               queue--;
+> +
+>         siginfo = (struct signalfd_siginfo __user *) buf;
+>         do {
+> -               ret = signalfd_dequeue(ctx, &info, nonblock);
+> +               ret = signalfd_dequeue(ctx, &info, nonblock, queue);
+>                 if (unlikely(ret <= 0))
+>                         break;
+>
+> @@ -274,6 +281,8 @@ static const struct file_operations signalfd_fops = {
+>         .llseek         = noop_llseek,
+>  };
+>
+> +#define SIGNAFD_FLAGS (SFD_RAW | SFD_GROUP | SFD_PRIVATE)
+
+This name is rather obtuse. What is the purpose of grouping these
+three flags like this? Yes, I understand how you use the name below,
+but the grouping seems arbitrary.
+
+Why not have a grouping of all SFD_ 5 flags?
+
+#define SFD_ALL_FLAGS (SFD_CLOEXEC | SFD_NONBLOCK | SFD_RAW |
+SFD_GROUP | SFD_PRIVATE)
+
+And use that appropriately below.
+
+See also the comments below about individual flags.
 
 
-Thanks,
-Sasha
+> +
+>  SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
+>                 size_t, sizemask, int, flags)
+>  {
+> @@ -284,7 +293,7 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
+>         BUILD_BUG_ON(SFD_CLOEXEC != O_CLOEXEC);
+>         BUILD_BUG_ON(SFD_NONBLOCK != O_NONBLOCK);
+>
+> -       if (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK | SFD_RAW))
+> +       if (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK | SIGNAFD_FLAGS))
+>                 return -EINVAL;
+>
+>         if (sizemask != sizeof(sigset_t) ||
+> @@ -308,9 +317,9 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
+>                                        O_RDWR | (flags & (O_CLOEXEC | O_NONBLOCK)));
+>                 if (ufd < 0)
+>                         kfree(ctx);
+> -               else if (flags & SFD_RAW) {
+> +               else if (flags & SIGNAFD_FLAGS) {
+>                         struct fd f = fdget(ufd);
+> -                       f.file->f_flags |= flags & SFD_RAW;
+> +                       f.file->f_flags |= flags & SIGNAFD_FLAGS;
+>                         fdput(f);
+>                 }
+>         } else {
+> @@ -322,6 +331,10 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
+>                         fdput(f);
+>                         return -EINVAL;
+>                 }
+> +
+> +               f.file->f_flags = (f.file->f_flags & ~SIGNAFD_FLAGS) |
+> +                                               (flags & SIGNAFD_FLAGS);
+> +
+>                 spin_lock_irq(&current->sighand->siglock);
+>                 ctx->sigmask = sigmask;
+>                 spin_unlock_irq(&current->sighand->siglock);
+> diff --git a/include/uapi/linux/signalfd.h b/include/uapi/linux/signalfd.h
+> index bc31849..9421321 100644
+> --- a/include/uapi/linux/signalfd.h
+> +++ b/include/uapi/linux/signalfd.h
+> @@ -16,6 +16,8 @@
+>  #define SFD_CLOEXEC O_CLOEXEC
+>  #define SFD_NONBLOCK O_NONBLOCK
+>  #define SFD_RAW O_DIRECT
+> +#define SFD_GROUP O_DIRECTORY
+> +#define SFD_PRIVATE O_EXCL
+
+What's the reason for making these flags synonyms of existing O_*
+flags, as opposed to just choosing suitable numeric values. (There is
+a rationale for this, in the case of CLOEXEC and NONBLOCK, as
+indicated by the names, but that rationale doesn't extend to the three
+new flags.) Using synonyms here suggests that there's a relationship
+between SFD_RAW and O_DIRECT and so on, when there isn't.
+
+>  struct signalfd_siginfo {
+>         __u32 ssi_signo;
+> --
+> 1.7.11.7
+
+Cheers,
+
+Michael
+
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
