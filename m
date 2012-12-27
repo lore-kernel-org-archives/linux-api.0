@@ -1,14 +1,15 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/4] clone.2: Describe the user namespace
-Date: Thu, 27 Dec 2012 11:16:17 +0100
-Message-ID: <CAKgNAkgXWp49wXKom9hMm9fajKVOAwOmFzPdKWBesbBhfZEssA@mail.gmail.com>
-References: <87a9u4rmz0.fsf@xmission.com> <87y5hnq3d5.fsf@xmission.com>
+Subject: Re: [PATCH 3/4] proc.5: Document the proc files for the user, mount,
+	and pid namespaces.
+Date: Thu, 27 Dec 2012 11:28:53 +0100
+Message-ID: <CAKgNAkhz8B5jhuZeHHvKCmv=wJXGGs57SwLe5bswrD7j4Ko5kQ@mail.gmail.com>
+References: <87a9u4rmz0.fsf@xmission.com> <87pq2zq3b6.fsf@xmission.com>
 Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87y5hnq3d5.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <87pq2zq3b6.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -22,101 +23,94 @@ To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgRXJpYywKCk9uIFR1ZSwgTm92IDI3LCAyMDEyIGF0IDE6NDYgQU0sIEVyaWMgVy4gQmllZGVy
-bWFuCjxlYmllZGVybUB4bWlzc2lvbi5jb20+IHdyb3RlOgo+Cj4gU2lnbmVkLW9mZi1ieTogIkVy
-aWMgVy4gQmllZGVybWFuIiA8ZWJpZWRlcm1AeG1pc3Npb24uY29tPgo+IC0tLQo+ICBtYW4yL2Ns
-b25lLjIgfCAgIDM5ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwo+ICAx
-IGZpbGVzIGNoYW5nZWQsIDM5IGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pCj4KPiBkaWZm
-IC0tZ2l0IGEvbWFuMi9jbG9uZS4yIGIvbWFuMi9jbG9uZS4yCj4gaW5kZXggMDU4MjA1Ny4uNDU2
-NjY3NyAxMDA2NDQKPiAtLS0gYS9tYW4yL2Nsb25lLjIKPiArKysgYi9tYW4yL2Nsb25lLjIKPiBA
-QCAtMzY2LDYgKzM2Niw0NSBAQCBpbiB0aGUgc2FtZQo+ICAuQlIgY2xvbmUgKCkKPiAgY2FsbC4K
-PiAgLlRQCj4gKy5CUiBDTE9ORV9ORVdVU0VSICIgKHNpbmNlIExpbnV4IDMuNikiCgpXaHkgInNp
-bmNlIExpbnV4IDMuNiI/IEFzIGZhcyBhcyBJIGNhbiBzZWUsIENMT05FX05FV1VTRVIgZmlyc3Qg
-Z2FpbmVkCnNvbWUgbWVhbmluZyBpbiAyLjYuMjkuCgo+ICtJZgo+ICsuQiBDTE9ORV9ORVdVU0VS
-Cj4gK2lzIHNldCwgdGhlIGNyZWF0ZSB0aGUgcHJvY2VzcyBpbiBhIG5ldyB1c2VyIG5hbWVzcGFj
-ZS4gIElmIHRoaXMgZmxhZyBpcyBub3Qgc2V0LCB0aGVuIChhcyB3aXRoCj4gKy5CUiBmb3JrICgy
-KSksCj4gK3RoZSBwcm9jZXNzIGlzIGNyZWF0ZWQgaW4gdGhlIHNhbWUgdXNlciBuYW1lc3BhY2Ug
-YXMgdGhlIGNhbGxpbmcgcHJvY2Vzcy4KPiArCj4gK0EgdXNlciBuYW1lc3BhY2UgcHJvdmlkZXMg
-YW4gaXNvbGF0ZWQgZW52aXJvbm1lbnQgZm9yIHNlY3VyaXR5IHJlbGF0ZWQgaWRlbnRpZmllcnMg
-aW4gcGFydGljdWxhcgo+ICt1aWRzLCBnaWRzLCBrZXlzIChzZWUKPiArLkJSIGtleWN0bCAoMikp
-LAo+ICthbmQgY2FwYWJpbGl0aWVzLgo+ICsKPiArV2hlbiBhIHVzZXIgbmFtZXNwYWNlIGlzIGNy
-ZWF0ZWQgaXQgaW5pdGlhbGx5IHN0YXJ0cyBvdXQgd2l0aG91dCBhIG1hcHBpbmcgb2YgdWlkcyBh
-bmQgZ2lkcwo+ICt0byB0aGUgcGFyZW50IHVzZXIgbmFtZXNwYWNlLiAgVGhlIGRlc2lyZWQgbWFw
-cGluZyBvZiB1aWRzIHRvIHRoZSBwYXJlbnQgdXNlciBuYW1lc3BhY2UKPiArbWF5IGJlIHNldCBi
-eSB3cml0dGluZyBpbnRvCj4gKy5JUiAvcHJvYy9bcGlkXS91aWRfbWFwLgo+ICtUaGUgZGVzaXJl
-ZCBtYXBwaW5nIG9mIGdpZHMgdG8gdGhlIHBhcmVudCB1c2VyIG5hbWVzcGFjZSBtYXkgYmUgc2V0
-IGJ5IHdyaXRpbm5nIGludG8KPiArLklSIC9wcm9jL1twaWRdL2dpZF9tYXAuCj4gKwo+ICtUaGUg
-Zmlyc3QgcHJvY2VzcyBpbiBhIHVzZXIgbmFtZXNwYWNlIHN0YXJ0cyBvdXQgd2l0aCBhIGNvbXBs
-ZXRlIHNldCBvZiBjYXBhYmlsaXRpZXMgd2l0aAo+ICtyZXNwZWN0IHRvIHRoZSBuZXcgdXNlciBu
-YW1lc3BhY2UuCj4gKwo+ICtzeXNjYWxscyB0aGF0IHJldHVybiB1aWRzIGFuZCBnaWRzIHdpbGwg
-ZWl0aGVyIHJldHVybiB0aGUgdWlkIG9yIGdpZCBtYXBwZWQgaW50byB0aGUgY3VycmVudAo+ICt1
-c2VyIG5hbWVzcGFjZSBpZiB0aGVyZSBpcyBhIG1hcHBpbmcgb3IgZGVwZW5kaW5nIG9uIHRoZSBj
-b250ZXh0IHdpbGwgcmV0dXJuIGVpdGhlcgo+ICt0aGUgb3ZlcmZsb3d1aWQgKGRlZmF1bHQgNjU1
-MzQpIG9yIHRoZSBvdmVyZmxvd2dpZCAoZGVmYXVsdCA2NTUzNCkuIFNlZQo+ICsuSVIgL3Byb2Mv
-c3lzL2tlcm5lbC9vdmVyZmxvd3VpZCwgL3Byb2Mvc3lzL2tlcm5lbC9vdmVyZmxvd2dpZAo+ICsK
-PiArQXMgb2YgTGludXggMy44IG5vIHByaXZpbGlnZXMgYXJlIG5lZWRlZCB0byBjcmVhdGUgYSB1
-c2VyIG5hbWVzcGFjZSwKPiArYW5kIG1vdW50LCBwaWQsIGlwYywgbmV0LCB1dHMgbmFtZXNwYWNl
-cyBjYW4gYmUgY3JlYXRlZCB3aXRoIGp1c3QKPiArQ0FQX1NZU19BRE1JTiBwcml2aWxlZ2VzIGlu
-IHlvdXIgY3VycmVudCB1c2VyIG5hbWVzcGFjZS4KPiArCj4gK092ZXIgdGhlIHllYXJzIHRoZXJl
-IGhhdmUgYmVlbiBhIGxvdCBvZiBmZWF0dXJlcyB0aGF0IGhhdmUgYmVlbiBhZGRlZAo+ICt0byB0
-aGUgbGludXgga2VybmVsIHRoYXQgYXJlIG9ubHkgYXZhaWxhYmxlIHRvIHByaXZpbGVnZWQgdXNl
-cnMKPiArYmVjYXVzZSBvZiB0aGVpciBwb3RlbnRpYWwgdG8gY29uZnVzZSBzZXR1aWQgcm9vdCBh
-cHBsaWNhdGlvbnMuICBJbgo+ICtnZW5lcmFsIGl0IGJlY29tZXMgc2FmZSB0byBhbGxvdyB0aGUg
-cm9vdCB1c2VyIGluIGEgdXNlciBuYW1lc3BhY2UgdG8KPiArdXNlIHRob3NlIGZlYXR1cmVzIGJl
-Y2F1c2UgaXQgaXMgaW1wb3NzaWJsZSB3aGlsZSBpbiBhIHVzZXIgbmFtZXNwYWNlCj4gK3RvIGdh
-aW4gbW9yZSBwcml2aWxlZ2UgdGhhbiB0aGUgcm9vdCB1c2VyIG9mIGEgdXNlciBuYW1lc3BhY2Ug
-aGFzLgo+ICsKPiArLlRQCj4gIC5CUiBDTE9ORV9ORVdQSUQgIiAoc2luY2UgTGludXggMi42LjI0
-KSIKPiAgLlwiIFRoaXMgZXhwbGFuYXRpb24gZHJhd3MgYSBsb3Qgb2YgZGV0YWlscyBmcm9tCj4g
-IC5cIiBodHRwOi8vbHduLm5ldC9BcnRpY2xlcy8yNTkyMTcvCgpJIHJld29ya2VkIHlvdXIgdGV4
-dCBzb21ld2hhdC4gQ291bGQgeW91IHBsZWFzZSByZXZpZXcgdGhlIGZvbGxvd2luZzoKCltbCiAg
-ICAgICBDTE9ORV9ORVdVU0VSCiAgICAgICAgICAgICAgKFRoaXMgIGZsYWcgZmlyc3QgYmVjYW1l
-IG1lYW5pbmdmdWwgZm9yIGNsb25lKCkgaW4gTGludXgKICAgICAgICAgICAgICAyLjYuMjksIGJ1
-dCB0aGUgaW1wbGVtZW50YXRpb24gb2YgIHVzZXIgIG5hbWVzcGFjZXMgIHdhcwogICAgICAgICAg
-ICAgIG9ubHkgIGNvbXBsZXRlZCBpbiBMaW51eCAzLjguKSAgSWYgQ0xPTkVfTkVXVVNFUiBpcyBz
-ZXQsCiAgICAgICAgICAgICAgdGhlbiBjcmVhdGUgdGhlIHByb2Nlc3MgaW4gYSAgbmV3ICB1c2Vy
-ICBuYW1lc3BhY2UuICAgSWYKICAgICAgICAgICAgICB0aGlzIGZsYWcgaXMgbm90IHNldCwgdGhl
-biAoYXMgd2l0aCBmb3JrKDIpKSB0aGUgcHJvY2VzcwogICAgICAgICAgICAgIGlzIGNyZWF0ZWQg
-aW4gdGhlIHNhbWUgdXNlciAgbmFtZXNwYWNlICBhcyAgdGhlICBjYWxsaW5nCiAgICAgICAgICAg
-ICAgcHJvY2Vzcy4KCiAgICAgICAgICAgICAgQSAgdXNlciAgbmFtZXNwYWNlICBwcm92aWRlcyBh
-biBpc29sYXRlZCBlbnZpcm9ubWVudCBmb3IKICAgICAgICAgICAgICBzZWN1cml0eSByZWxhdGVk
-IGlkZW50aWZpZXJzLCBpbiBwYXJ0aWN1bGFyLCAgdXNlciAgSURzLAogICAgICAgICAgICAgIGdy
-b3VwIElEcywga2V5cyAoc2VlIGtleWN0bCgyKSksIGFuZCBjYXBhYmlsaXRpZXMuCgogICAgICAg
-ICAgICAgIFdoZW4gIGEgdXNlciBuYW1lc3BhY2UgaXMgY3JlYXRlZCwgaXQgc3RhcnRzIG91dCB3
-aXRob3V0CiAgICAgICAgICAgICAgYSBtYXBwaW5nIG9mIHVzZXIgSURzIChncm91cCBJRHMpICB0
-byAgdGhlICBwYXJlbnQgIHVzZXIKICAgICAgICAgICAgICBuYW1lc3BhY2UuICAgVGhlIGRlc2ly
-ZWQgbWFwcGluZyBvZiB1c2VyIElEcyAoZ3JvdXAgSURzKQogICAgICAgICAgICAgIHRvIHRoZSBw
-YXJlbnQgdXNlciBuYW1lc3BhY2UgbWF5IGJlIHNldCBieSB3cml0aW5nICBpbnRvCiAgICAgICAg
-ICAgICAgL3Byb2MvW3BpZF0vdWlkX21hcCAoL3Byb2MvW3BpZF0vZ2lkX21hcCk7IHNlZSBwcm9j
-KDUpLgoKICAgICAgICAgICAgICBUaGUgIGZpcnN0IHByb2Nlc3MgaW4gYSB1c2VyIG5hbWVzcGFj
-ZSBzdGFydHMgb3V0IHdpdGggYQogICAgICAgICAgICAgIGNvbXBsZXRlIHNldCBvZiBjYXBhYmls
-aXRpZXMgd2l0aCAgcmVzcGVjdCAgdG8gIHRoZSAgbmV3CiAgICAgICAgICAgICAgdXNlciBuYW1l
-c3BhY2UuCgogICAgICAgICAgICAgIFN5c3RlbSAgY2FsbHMgIHRoYXQgIHJldHVybiAgdXNlciAg
-SURzICAoZ3JvdXAgSURzKSB3aWxsCiAgICAgICAgICAgICAgcmV0dXJuIGVpdGhlciB0aGUgdXNl
-ciBJRCAoZ3JvdXAgIElEKSAgbWFwcGVkICBpbnRvICB0aGUKICAgICAgICAgICAgICBjdXJyZW50
-ICB1c2VyICBuYW1lc3BhY2UgIGlmICB0aGVyZSBpcyBhIG1hcHBpbmcsIG9yIHRoZQogICAgICAg
-ICAgICAgIG92ZXJmbG93IHVzZXIgSUQgKGdyb3VwIElEKTsgdGhlIGRlZmF1bHQgdmFsdWUgIGZv
-ciAgdGhlCiAgICAgICAgICAgICAgb3ZlcmZsb3cgIHVzZXIgSUQgKGdyb3VwIElEKSBpcyA2NTUz
-NC4gIFNlZSB0aGUgZGVzY3JpcOKAkAogICAgICAgICAgICAgIHRpb25zIG9mIC9wcm9jL3N5cy9r
-ZXJuZWwvb3ZlcmZsb3d1aWQgYW5kIC9wcm9jL3N5cy9rZXLigJAKICAgICAgICAgICAgICBuZWwv
-b3ZlcmZsb3dnaWQgaW4gcHJvYyg1KS4KCiAgICAgICAgICAgICAgU3RhcnRpbmcgIHdpdGggIExp
-bnV4ICAzLjgsICBubyBwcml2aWxlZ2VzIGFyZSBuZWVkZWQgdG8KICAgICAgICAgICAgICBjcmVh
-dGUgYSB1c2VyIG5hbWVzcGFjZSwgYW5kIG1vdW50LCBQSUQsIElQQywgIG5ldCwgIGFuZAogICAg
-ICAgICAgICAgIFVUUyAgIG5hbWVzcGFjZXMgICBjYW4gICBiZSAgIGNyZWF0ZWQgICB3aXRoICAg
-anVzdCAgdGhlCiAgICAgICAgICAgICAgQ0FQX1NZU19BRE1JTiBjYXBhYmlsaXR5IGluIHRoZSBj
-YWxsZXIncyB1c2VyIG5hbWVzcGFjZS4KCiAgICAgICAgICAgICAgT3ZlciB0aGUgeWVhcnMsIHRo
-ZXJlIGhhdmUgYmVlbiBhIGxvdCBvZiAgZmVhdHVyZXMgIHRoYXQKICAgICAgICAgICAgICBoYXZl
-IGJlZW4gYWRkZWQgdG8gdGhlIExpbnV4IGtlcm5lbCB0aGF0IGFyZSBvbmx5IGF2YWls4oCQCiAg
-ICAgICAgICAgICAgYWJsZSB0byBwcml2aWxlZ2VkIHVzZXJzIGJlY2F1c2Ugb2YgdGhlaXIgIHBv
-dGVudGlhbCAgdG8KICAgICAgICAgICAgICBjb25mdXNlICBzZXQtdXNlci1JRC1yb290ICBhcHBs
-aWNhdGlvbnMuICBJbiBnZW5lcmFsLCBpdAogICAgICAgICAgICAgIGJlY29tZXMgc2FmZSB0byBh
-bGxvdyB0aGUgcm9vdCB1c2VyIGluIGEgdXNlciAgbmFtZXNwYWNlCiAgICAgICAgICAgICAgdG8g
-dXNlIHRob3NlIGZlYXR1cmVzIGJlY2F1c2UgaXQgaXMgaW1wb3NzaWJsZSwgd2hpbGUgaW4KICAg
-ICAgICAgICAgICBhIHVzZXIgbmFtZXNwYWNlLCB0byBnYWluIG1vcmUgcHJpdmlsZWdlIHRoYW4g
-IHRoZSAgcm9vdAogICAgICAgICAgICAgIHVzZXIgb2YgYSB1c2VyIG5hbWVzcGFjZSBoYXMuCl1d
-CgpUaGFua3MsCgpNaWNoYWVsCgoKLS0gCk1pY2hhZWwgS2VycmlzawpMaW51eCBtYW4tcGFnZXMg
-bWFpbnRhaW5lcjsgaHR0cDovL3d3dy5rZXJuZWwub3JnL2RvYy9tYW4tcGFnZXMvCkF1dGhvciBv
-ZiAiVGhlIExpbnV4IFByb2dyYW1taW5nIEludGVyZmFjZSI7IGh0dHA6Ly9tYW43Lm9yZy90bHBp
-LwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250YWlu
-ZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0
-dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5l
-cnM=
+Hi Eric,
+
+On Tue, Nov 27, 2012 at 1:47 AM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>
+> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+
+Thanks. Applied.
+
+Cheers,
+
+Michael
+
+
+> ---
+>  man5/proc.5 |   52 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 files changed, 52 insertions(+), 0 deletions(-)
+>
+> diff --git a/man5/proc.5 b/man5/proc.5
+> index 840480d..eb612b9 100644
+> --- a/man5/proc.5
+> +++ b/man5/proc.5
+> @@ -581,6 +581,58 @@ even if all processes in the namespace terminate.
+>  The file descriptor can be passed to
+>  .BR setns (2).
+>  .TP
+> +.IR /proc/[pid]/ns/user " (since Linux 3.8)"
+> +Bind mounting this file (see
+> +.BR mount (2))
+> +to somewhere else in the filesystem keeps
+> +the user namespace of the process specified by
+> +.I pid
+> +alive even if all processes currently in the namespace terminate.
+> +
+> +Opening this file returns a file handle for the user namespace
+> +of the process specified by
+> +.IR pid .
+> +As long as this file descriptor remains open,
+> +the user namespace will remain alive,
+> +even if all processes in the namespace terminate.
+> +The file descriptor can be passed to
+> +.BR setns (2).
+> +.TP
+> +.IR /proc/[pid]/ns/pid " (since Linux 3.8)"
+> +Bind mounting this file (see
+> +.BR mount (2))
+> +to somewhere else in the filesystem keeps
+> +the PID namespace of the process specified by
+> +.I pid
+> +alive even if all processes currently in the namespace terminate.
+> +
+> +Opening this file returns a file handle for the PID namespace
+> +of the process specified by
+> +.IR pid .
+> +As long as this file descriptor remains open,
+> +the PID namespace will remain alive,
+> +even if all processes in the namespace terminate.
+> +The file descriptor can be passed to
+> +.BR setns (2).
+> +.TP
+> +.IR /proc/[pid]/ns/mnt " (since Linux 3.8)"
+> +Bind mounting this file (see
+> +.BR mount (2))
+> +to somewhere else in the filesystem keeps
+> +the mount namespace of the process specified by
+> +.I pid
+> +alive even if all processes currently in the namespace terminate.
+> +
+> +Opening this file returns a file handle for the mount namespace
+> +of the process specified by
+> +.IR pid .
+> +As long as this file descriptor remains open,
+> +the mount namespace will remain alive,
+> +even if all processes in the namespace terminate.
+> +The file descriptor can be passed to
+> +.BR setns (2).
+> +
+> +.TP
+>  .IR /proc/[pid]/numa_maps " (since Linux 2.6.14)"
+>  See
+>  .BR numa (7).
+> --
+> 1.7.5.4
+>
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface"; http://man7.org/tlpi/
