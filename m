@@ -1,79 +1,194 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 0/4] signalfd: a kernel interface for dumping/restoring
- pending signals
-Date: Mon, 24 Dec 2012 21:51:10 +0100
-Message-ID: <CAHO5Pa0B9KsU-kr=M78kRG5WqOf-ere6YmZ0GPUv4WLF6at_RQ@mail.gmail.com>
-References: <1356336807-5517-1-git-send-email-avagin@openvz.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/4] proc.5: Document /proc/[pid]/uid_map and /proc/[pid]/gid_map
+Date: Thu, 27 Dec 2012 10:03:02 +0100
+Message-ID: <CAKgNAkixXmtvQUbwyv=a8mU=gdf-x+w-ou_4N=cNaau+hVoy4Q@mail.gmail.com>
+References: <87a9u4rmz0.fsf@xmission.com> <874nkbrhyv.fsf@xmission.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1356336807-5517-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <874nkbrhyv.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC+=3Dlinux-api]
+Hi Eric,
 
-Hi Andrey,
+Thanks for this patch. I have one question and a revised version f the
+text that I'd like you to review.
 
-On Mon, Dec 24, 2012 at 9:13 AM, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> wrote=
-:
-> The idea is simple. We need to get the siginfo for each signal on dum=
-p,
-> and then return it back on restore.
+On Tue, Nov 27, 2012 at 1:46 AM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
 >
-> The first problem is that the kernel doesn=92t report complete siginf=
-o-s
-> in user-space. In a signal handler the kernel strips SI_CODE from
-> siginfo. When a siginfo is received from signalfd, it has a different
-> format with fixed sizes of fields. The interface of signalfd was
-> extended. If a signalfd is created with the flag SFD_RAW, it returns
-> siginfo in a raw format. We need to choose a queue, so two flags
-> SFD_GROUP and SFD_PRIVATE were added.
+> Document the user namespace files that report the mapping of uids
+> and gids between user namespaces.
 >
-> rt_sigqueueinfo looks suitable for restoring signals, but it can=92t =
-send
-> siginfo with a positive si_code, because these codes are reserved for
-> the kernel. In the real world each person has right to do anything wi=
-th
-> himself, so I think a process should able to send any siginfo to itse=
-lf.
+> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+> ---
+>  man5/proc.5 |   50 +++++++++++++++++++++++++++++++++++++++++++++++++=
++
+>  1 files changed, 50 insertions(+), 0 deletions(-)
+>
+> diff --git a/man5/proc.5 b/man5/proc.5
+> index fb70d2b..840480d 100644
+> --- a/man5/proc.5
+> +++ b/man5/proc.5
+> @@ -317,6 +317,31 @@ The files in this directory are readable only by=
+ the owner of the process.
+>  .\" .TP
+>  .\" .IR /proc/[pid]/io " (since kernel 2.6.20)"
+>  .TP
+> +.IR /proc/[pid]/gid_map " (since kernel 3.6)"
+> +This file reports the mapping of gids from the user namespace of the=
+ process specified by
+> +.IR pid
+> +to the user namespace of the process that opened
+> +.IR /proc/[pid]/gid_map .
+> +
+> +Each line specifies a 1 to 1 mapping of a range of contiguous gids f=
+rom
+> +the user namespace of the process specified by
+> +.IR pid
+> +to the user namespace of the process that opened
+> +.IR /proc/[pid]/gid_map.
 
-I see that you CCed me on a couple of the patches in this series.
-Thanks for that. But, since most of the series concerns API changes,
-it would be good also to CC linux-api on (future revisions of) the
-entire series.
+I want to check the above point. What do you mean by "the process that
+opened uid_map"? Does that mean the process that opened uid_map to do
+the one-time write of the UID map? I had assumed that uid_map actually
+provided a mapping between the namespace of 'pid' and the 'parent'
+namespace, where the parent namespace is the namespace of the process
+that created this namespace via clone(CLONE_NEWUSER).
 
-I have a few largely cosmetic comments on some of the patches, which
-I'll add in the respective threads.
+> +
+> +Each line contains three numbers.  The start of the range of gids in
+> +the user namespace of the process specifed by
+> +.IR pid.
+> +The start of the range of gids in the user namespace of the process =
+that
+> +opened
+> +.IR /proc/[pid]/gid_map.
+> +The number of gids in the range of numbers that is mapped between to=
+ two
+> +user namespaces.
+> +
+> +After the creation of a new user namespace this file may be written =
+to
+> +exactly once to specify the mapping of gids in the new user namespac=
+e.
+> +
+> +.TP
+>  .IR /proc/[pid]/limits " (since kernel 2.6.24)"
+>  This file displays the soft limit, hard limit, and units of measurem=
+ent
+>  for each of the process's resource limits (see
+> @@ -1169,6 +1194,31 @@ directory are not available if the main thread=
+ has already terminated
+>  (typically by calling
+>  .BR pthread_exit (3)).
+>  .TP
+> +.IR /proc/[pid]/uid_map " (since kernel 3.6)"
+> +This file reports the mapping of uids from the user namespace of the=
+ process specified by
+> +.IR pid
+> +to the user namespace of the process that opened
+> +.IR /proc/[pid]/uid_map .
+> +
+> +Each line specifies a 1 to 1 mapping of a range of contiguous uids f=
+rom
+> +the user namespace of the process specified by
+> +.IR pid
+> +to the user namespace of the process that opened
+> +.IR /proc/[pid]/uid_map.
+> +
+> +Each line contains three numbers.  The start of the range of uids in
+> +the user namespace of the process specifed by
+> +.IR pid.
+> +The start of the range of uids in the user namespace of the process =
+that
+> +opened
+> +.IR /proc/[pid]/uid_map.
+> +The number of uids in the range of numbers that is mapped between to=
+ two
+> +user namespaces.
+> +
+> +After the creation of a new user namespace this file may be written =
+to
+> +exactly once to specify the mapping of uids in the new user namespac=
+e.
+> +
+> +.TP
+>  .I /proc/apm
+>  Advanced power management version and battery information when
+>  .B CONFIG_APM
+
+I revised your text quite a bit, and added a piece on the format od
+the uid_map files. Could you please read the following and let me know
+of errors:
+
+[[
+       /proc/[pid]/uid_map, /proc/[pid]/gid_map (since Linux 3.6)
+              These  files  expose the mappings for user and group IDs
+              inside the user namespace  for  the  process  pid.   The
+              description  here  explains  the  details  for  uid_map;
+              gid_map is exactly the same, but each instance of  "user
+              ID" is replaced by "group ID".
+
+              The  uid_map  file  exposes the mapping of user IDs from
+              the user namespace of the process pid to the user names=E2=
+=80=90
+              pace of the process that opened uid_map.
+
+              Each  line  in  the file specifies a 1-to-1 mapping of a
+              range of contiguous user IDs from the user namespace  of
+              the  process  pid  to  the user namespace of the process
+              that opened uid_map.
+
+              Each line contains  three  numbers  delimited  by  white
+              space:
+
+              (1) The  start  of  the  range  of  user IDs in the user
+                  namespace of the process pid.
+
+              (2) The start of the range  of  user  IDs  in  the  user
+                  namespace of the process that opened uid_map.
+
+              (3) The  length  of the range of user IDs that is mapped
+                  between the two user namespaces.
+
+              After the creation of a new user  namespace,  this  file
+              may be written to exactly once to specify the mapping of
+              user IDs in the new  user  namespace.   (An  attempt  to
+              write  more  than  once to the file fails with the error
+              EPERM.)
+
+              The lines written to uid_map must conform to the follow=E2=
+=80=90
+              ing rules:
+
+              *  The  three fields must be valid numbers, and the last
+                 field must be greater than 0.
+
+              *  Lines are terminated by newline characters.
+
+              *  The file can contain a maximum of five lines.
+
+              *  The values in both field 1 and field 2 of  each  line
+                 must be in ascending numerical order.
+
+              *  The  range  of user IDs specified in each line cannot
+                 overlap with the ranges in any other lines.
+
+              Writes that violate the above rules fail with the  error
+              EINVAL.
+]]
 
 Thanks,
 
 Michael
 
-
-> Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-> Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-> Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-> Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> CC: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
->
-> --
-> 1.7.11.7
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fsdev=
-el" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
-
 --=20
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface"; http://man7.org/tlpi/
