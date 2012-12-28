@@ -1,190 +1,102 @@
-From: Andrey Vagin <avagin@openvz.org>
-Subject: [PATCH 2/3] signalfd: add ability to return siginfo in a raw format (v2)
-Date: Fri, 28 Dec 2012 14:23:00 +0400
-Message-ID: <1356690181-1796-3-git-send-email-avagin@openvz.org>
-References: <1356690181-1796-1-git-send-email-avagin@openvz.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1356690181-1796-1-git-send-email-avagin@openvz.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: criu@openvz.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, David Howells <dhowells@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 3/3] signalfd: add ability to read siginfo-s without
+	dequeuing signals (v3)
+Date: Fri, 28 Dec 2012 15:32:00 +0100
+Message-ID: <20121228143200.GB24229@redhat.com>
+References: <1356690181-1796-1-git-send-email-avagin@openvz.org> <1356690181-1796-4-git-send-email-avagin@openvz.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1356690181-1796-4-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-signalfd should be called with the flag SFD_RAW for that.
+On 12/28, Andrey Vagin wrote:
+>
+> pread(fd, buf, size, pos) with non-zero pos returns siginfo-s
+> without dequeuing signals.
+>
+> A sequence number and a queue are encoded in pos.
+>
+> pos = seq + SFD_*_OFFSET
+>
+> seq is a sequence number of a signal in a queue.
+>
+> SFD_PER_THREAD_QUEUE_OFFSET - read signals from a per-thread queue.
+> SFD_SHARED_QUEUE_OFFSET - read signals from a shared (process wide) queue.
+>
+> This functionality is required for checkpointing pending signals.
+>
+> v2: llseek() can't be used here, because peek_offset/f_pos/whatever
+> has to be shared with all processes which have this file opened.
+>
+> Suppose that the task forks after sys_signalfd(). Now if parent or child
+> do llseek this affects them both. This is insane because signalfd is
+> "strange" to say at least, fork/dup/etc inherits signalfd_ctx but not
+> the" source" of the data. // Oleg Nesterov
 
-signalfd_siginfo is not full for siginfo with a negative si_code.
-copy_siginfo_to_user() is copied a full siginfo to user-space, if
-si_code is negative.  signalfd_copyinfo() doesn't do that and can't be
-expanded, because it has not compatible format with siginfo_t.
+I think we should cc Linus.
 
-Another problem is that a constant __SI_* is removed from si_code.
-It's not a problem for usual applications, because they expect
-a defined type of siginfo (internal logic).
-When we want to dump pending signals, we can't predict a type of
-siginfo, so we should get it from kernel.
+This patch adds the hack and it makes signalfd even more strange.
 
-The main idea of the raw format is that it should be enough for
-restoring exactly the same siginfo for the current process.
+Yes, this hack was suggested by me because I can't suggest something
+better. But if Linus dislikes this user-visible API it would be better
+to get his nack right now.
 
-This functionality is required for checkpointing pending signals.
+> +static ssize_t signalfd_peek(struct signalfd_ctx *ctx,
+> +				siginfo_t *info, loff_t *ppos)
+> +{
+> +	struct sigpending *pending;
+> +	struct sigqueue *q;
+> +	loff_t seq;
+> +	int ret = 0;
+> +
+> +	spin_lock_irq(&current->sighand->siglock);
+> +
+> +	if (*ppos >= SFD_SHARED_QUEUE_OFFSET) {
+> +		pending = &current->signal->shared_pending;
+> +		seq = *ppos - SFD_SHARED_QUEUE_OFFSET;
+> +	} else {
+> +		pending = &current->pending;
+> +		seq = *ppos - SFD_PER_THREAD_QUEUE_OFFSET;
+> +	}
 
-v2: fix a race condition during setting file flags
-    copy_siginfo_to_user32() if is_compat_task
+You can do this outside of spin_lock_irq().
 
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: David Howells <dhowells@redhat.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Pavel Emelyanov <xemul@parallels.com>
-CC: Cyrill Gorcunov <gorcunov@openvz.org>
-Signed-off-by: Andrey Vagin <avagin@openvz.org>
----
- fs/signalfd.c                 | 64 +++++++++++++++++++++++++++++++++++++++----
- include/uapi/linux/signalfd.h |  1 +
- 2 files changed, 60 insertions(+), 5 deletions(-)
+And I think it would be better to check SFD_PRIVATE_QUEUE_OFFSET too
+although this is not strictly necessary. Otherwise this code assumes
+that sys_pread() cheks pos >= 0 and SFD_PRIVATE_QUEUE_OFFSET == 1.
 
-diff --git a/fs/signalfd.c b/fs/signalfd.c
-index b534869..4439a81 100644
---- a/fs/signalfd.c
-+++ b/fs/signalfd.c
-@@ -30,6 +30,7 @@
- #include <linux/signalfd.h>
- #include <linux/syscalls.h>
- #include <linux/proc_fs.h>
-+#include <linux/compat.h>
- 
- void signalfd_cleanup(struct sighand_struct *sighand)
- {
-@@ -74,6 +75,38 @@ static unsigned int signalfd_poll(struct file *file, poll_table *wait)
- }
- 
- /*
-+ * Copy a whole siginfo into users spaces.
-+ * The main idea of this format is that it should be enough
-+ * for restoring siginfo back into the kernel.
-+ */
-+static int signalfd_copy_raw_info(struct signalfd_siginfo __user *siginfo,
-+					siginfo_t *kinfo)
-+{
-+	siginfo_t *uinfo = (siginfo_t *) siginfo;
-+	int err;
-+
-+	BUILD_BUG_ON(sizeof(siginfo_t) != sizeof(struct signalfd_siginfo));
-+
-+	err = __clear_user(uinfo, sizeof(*uinfo));
-+
-+#ifdef CONFIG_COMPAT
-+	if (unlikely(is_compat_task())) {
-+		compat_siginfo_t *compat_uinfo = (compat_siginfo_t *) siginfo;
-+
-+		err |= copy_siginfo_to_user32(compat_uinfo, kinfo);
-+		err |= put_user(kinfo->si_code, &compat_uinfo->si_code);
-+
-+		return err ? -EFAULT: sizeof(*compat_uinfo);
-+	}
-+#endif
-+
-+	err |= copy_siginfo_to_user(uinfo, kinfo);
-+	err |= put_user(kinfo->si_code, &uinfo->si_code);
-+
-+	return err ? -EFAULT: sizeof(*uinfo);
-+}
-+
-+/*
-  * Copied from copy_siginfo_to_user() in kernel/signal.c
-  */
- static int signalfd_copyinfo(struct signalfd_siginfo __user *uinfo,
-@@ -205,6 +238,7 @@ static ssize_t signalfd_read(struct file *file, char __user *buf, size_t count,
- 	struct signalfd_ctx *ctx = file->private_data;
- 	struct signalfd_siginfo __user *siginfo;
- 	int nonblock = file->f_flags & O_NONBLOCK;
-+	bool raw = file->f_flags & SFD_RAW;
- 	ssize_t ret, total = 0;
- 	siginfo_t info;
- 
-@@ -217,7 +251,12 @@ static ssize_t signalfd_read(struct file *file, char __user *buf, size_t count,
- 		ret = signalfd_dequeue(ctx, &info, nonblock);
- 		if (unlikely(ret <= 0))
- 			break;
--		ret = signalfd_copyinfo(siginfo, &info);
-+
-+		if (raw)
-+			ret = signalfd_copy_raw_info(siginfo, &info);
-+		else
-+			ret = signalfd_copyinfo(siginfo, &info);
-+
- 		if (ret < 0)
- 			break;
- 		siginfo++;
-@@ -262,7 +301,7 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
- 	BUILD_BUG_ON(SFD_CLOEXEC != O_CLOEXEC);
- 	BUILD_BUG_ON(SFD_NONBLOCK != O_NONBLOCK);
- 
--	if (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK))
-+	if (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK | SFD_RAW))
- 		return -EINVAL;
- 
- 	if (sizemask != sizeof(sigset_t) ||
-@@ -272,20 +311,35 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
- 	signotset(&sigmask);
- 
- 	if (ufd == -1) {
-+		struct file *file;
- 		ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
- 		if (!ctx)
- 			return -ENOMEM;
- 
- 		ctx->sigmask = sigmask;
- 
-+		ufd = get_unused_fd_flags(flags);
-+		if (ufd < 0) {
-+			kfree(ctx);
-+			goto out;
-+		}
-+
- 		/*
- 		 * When we call this, the initialization must be complete, since
- 		 * anon_inode_getfd() will install the fd.
- 		 */
--		ufd = anon_inode_getfd("[signalfd]", &signalfd_fops, ctx,
-+		file = anon_inode_getfile("[signalfd]", &signalfd_fops, ctx,
- 				       O_RDWR | (flags & (O_CLOEXEC | O_NONBLOCK)));
--		if (ufd < 0)
-+		if (IS_ERR(file)) {
-+			put_unused_fd(ufd);
-+			ufd = PTR_ERR(file);
- 			kfree(ctx);
-+			goto out;
-+		}
-+
-+		file->f_flags |= flags & SFD_RAW;
-+
-+		fd_install(ufd, file);
- 	} else {
- 		struct fd f = fdget(ufd);
- 		if (!f.file)
-@@ -302,7 +356,7 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
- 		wake_up(&current->sighand->signalfd_wqh);
- 		fdput(f);
- 	}
--
-+out:
- 	return ufd;
- }
- 
-diff --git a/include/uapi/linux/signalfd.h b/include/uapi/linux/signalfd.h
-index 492c6de..bc31849 100644
---- a/include/uapi/linux/signalfd.h
-+++ b/include/uapi/linux/signalfd.h
-@@ -15,6 +15,7 @@
- /* Flags for signalfd4.  */
- #define SFD_CLOEXEC O_CLOEXEC
- #define SFD_NONBLOCK O_NONBLOCK
-+#define SFD_RAW O_DIRECT
- 
- struct signalfd_siginfo {
- 	__u32 ssi_signo;
--- 
-1.7.11.7
+> +	list_for_each_entry(q, &pending->list, list) {
+> +		if (sigismember(&ctx->sigmask, q->info.si_signo))
+> +			continue;
+> +
+> +		if (seq-- == 0) {
+> +			copy_siginfo(info, &q->info);
+> +			ret = info->si_signo;
+> +			break;
+> +		}
+> +	}
+> +
+> +	spin_unlock_irq(&current->sighand->siglock);
+> +
+> +	if (ret)
+> +		(*ppos)++;
+
+We can change it unconditionally but I won't argue.
+
+> @@ -338,6 +379,7 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
+>  		}
+>
+>  		file->f_flags |= flags & SFD_RAW;
+> +		file->f_mode |= FMODE_PREAD;
+
+Again, this is not needed or the code was broken by the previous patch.
+
+Given that 2/3 passes O_RDWR to anon_inode_getfile() I think FMODE_PREAD
+should be already set. Note OPEN_FMODE(flags) in anon_inode_getfile().
+
+Oleg.
