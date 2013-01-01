@@ -1,256 +1,133 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/4] clone.2: Describe the user namespace
-Date: Tue, 1 Jan 2013 10:30:17 +0100
-Message-ID: <CAKgNAkgPET9jex1DO=1Z3HRQqO_WVD8qmG-UaH1DQB6wDGqO5A@mail.gmail.com>
-References: <87a9u4rmz0.fsf@xmission.com> <87y5hnq3d5.fsf@xmission.com>
- <CAKgNAkgXWp49wXKom9hMm9fajKVOAwOmFzPdKWBesbBhfZEssA@mail.gmail.com> <87r4mbv2c9.fsf@xmission.com>
+Subject: Re: [PATCH 4/4] setns.2: Document the pid, user,
+	and mount namespace support.
+Date: Tue, 1 Jan 2013 10:30:45 +0100
+Message-ID: <CAKgNAkjJR02rKOBh98n7HJwXqAwywHY=Ef35t9tW7wOuyo86NQ@mail.gmail.com>
+References: <87a9u4rmz0.fsf@xmission.com> <87k3t7q39u.fsf@xmission.com>
+	<CAKgNAkiaw5L_oNE8NENjmoBS8Hq_uj+iaEdhyXc1+hje4HdnNQ@mail.gmail.com>
+	<87bodftmv0.fsf@xmission.com>
 Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87r4mbv2c9.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87bodftmv0.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Eric,
-
-On Thu, Dec 27, 2012 at 6:20 PM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
->
->> Hi Eric,
->>
->> On Tue, Nov 27, 2012 at 1:46 AM, Eric W. Biederman
->> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>>
->>> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
->>> ---
->>>  man2/clone.2 |   39 +++++++++++++++++++++++++++++++++++++++
->>>  1 files changed, 39 insertions(+), 0 deletions(-)
->>>
->>> diff --git a/man2/clone.2 b/man2/clone.2
->>> index 0582057..4566677 100644
->>> --- a/man2/clone.2
->>> +++ b/man2/clone.2
->>> @@ -366,6 +366,45 @@ in the same
->>>  .BR clone ()
->>>  call.
->>>  .TP
->>> +.BR CLONE_NEWUSER " (since Linux 3.6)"
->>
->> Why "since Linux 3.6"? As fas as I can see, CLONE_NEWUSER first gain=
-ed
->> some meaning in 2.6.29.
->
-> Looking at it where I have said 3.6 that is wrong.  I meant 3.5.
-
-Okay.
-
-> I think I made the same mistake in one or two other manpages.  Nothin=
-g
-> was merged in 3.6 unfortunately.
-
-I think the other cases have been fixed by now.
-
-> My intent was these are the semantics of user namespaces since 3.5,
-> when my rework/refocusing of them was merged.
->
-> Since 3.5 all that has really happened with user namespaces is the
-> uid/gid to kuid/kgid conversion, permission checks have been relaxed,
-> and a few bugs have been fixed.
->
-> 3.8 is huge from a usability standpoint.  3.8 is huge because setns()=
-,
-> and unshare() are now complete from a namespace perspective, and beca=
-use
-> enough permission checks have been relaxed in user namespaces that yo=
-u
-> can really start using them.
->
-> But semantically from a user namespace perspective nothing really has
-> changed in 3.8.
->
-[...]
-
->> I reworked your text somewhat. Could you please review the following=
-:
->>
->> [[
->>        CLONE_NEWUSER
->>               (This  flag first became meaningful for clone() in Lin=
-ux
->>               2.6.29, but the implementation of  user  namespaces  w=
-as
->>               only  completed in Linux 3.8.)
->
-> Long rant about 2.6.29 vs 3.8 above.  I think what we need to say is:
->
->                 (This  flag first became meaningful for clone() in Li=
-nux
->                 2.6.29, the current semantics were merged present in
->                 3.5, and user namespaces only really became usable in=
- 3.8.)
-
-Yup. I've done something like that now.
-
->>                                               If CLONE_NEWUSER is se=
-t,
->>               then create the process in a  new  user  namespace.   =
-If
->>               this flag is not set, then (as with fork(2)) the proce=
-ss
->>               is created in the same user  namespace  as  the  calli=
-ng
->>               process.
->>
->>               A  user  namespace  provides an isolated environment f=
-or
->>               security related identifiers, in particular,  user  ID=
-s,
->>               group IDs, keys (see keyctl(2)), and capabilities.
->>
->>               When  a user namespace is created, it starts out witho=
-ut
->>               a mapping of user IDs (group IDs)  to  the  parent  us=
-er
->>               namespace.   The desired mapping of user IDs (group ID=
-s)
->>               to the parent user namespace may be set by writing  in=
-to
->>               /proc/[pid]/uid_map (/proc/[pid]/gid_map); see proc(5)=
-=2E
->
->                 /proc/[pid]/projid_map deserves a mention.  Not that
->                 I am a fan of project is or that xfs where the are
->                 implemented has been converted yet but....
-
-Would you be able to send a patch documenting this in proc(5)?
-
->>               The  first process in a user namespace starts out with=
- a
->>               complete set of capabilities with  respect  to  the  n=
-ew
->>               user namespace.
->>
->>               System  calls  that  return  user  IDs  (group IDs) wi=
-ll
->>               return either the user ID (group  ID)  mapped  into  t=
-he
->>               current  user  namespace  if  there is a mapping, or t=
-he
->>               overflow user ID (group ID); the default value  for  t=
-he
->>               overflow  user ID (group ID) is 65534.  See the descri=
-p=E2=80=90
->>               tions of /proc/sys/kernel/overflowuid and /proc/sys/ke=
-r=E2=80=90
->>               nel/overflowgid in proc(5).
->>
->>               Starting  with  Linux  3.8,  no privileges are needed =
-to
->>               create a user namespace, and mount, PID, IPC,  net,  a=
-nd
->>               UTS   namespaces   can   be   created   with   just  t=
-he
->>               CAP_SYS_ADMIN capability in the caller's user namespac=
-e.
->>
->>               Over the years, there have been a lot of  features  th=
-at
->>               have been added to the Linux kernel that are only avai=
-l=E2=80=90
->>               able to privileged users because of their  potential  =
-to
->>               confuse  set-user-ID-root  applications.  In general, =
-it
->>               becomes safe to allow the root user in a user  namespa=
-ce
->>               to use those features because it is impossible, while =
-in
->>               a user namespace, to gain more privilege than  the  ro=
-ot
->>               user of a user namespace has.
->
-> I don't have any problems with this bit of text.
->
-> It occurs to me that what is going on with capabilities and user
-> namespaces needs to be documented better.  There was a minor bug with
-> them this release cycle and I realized while the current definition
-> makes sense and isn't hard to understand in general.  In detail the
-> interaction of capabilities and user namespaces are hard to describe.
->
-> I think capabilities and user namespaces are the work of a future pat=
-ch
-> however.
-
-Okay. So, below, a new iteration of the text. Could you please check
-it over, and note any errors to be fixed or improvements to be made.
-
-Thanks,
-
-Michael
-
-       CLONE_NEWUSER
-              (This  flag first became meaningful for clone() in Linux
-              2.6.23, the current clone()  semantics  were  merged  in
-              Linux  3.5, and the final pieces to make the user names=E2=
-=80=90
-              paces completely usable were merged in Linux 3.8.)
-
-              If CLONE_NEWUSER is set, then create the  process  in  a
-              new  user  namespace.  If this flag is not set, then (as
-              with fork(2)) the process is created in  the  same  user
-              namespace as the calling process.
-
-              A  user  namespace  provides an isolated environment for
-              security related identifiers, in particular,  user  IDs,
-              group IDs, keys (see keyctl(2)), and capabilities.
-
-              When  a user namespace is created, it starts out without
-              a mapping of user IDs (group IDs)  to  the  parent  user
-              namespace.   The desired mapping of user IDs (group IDs)
-              to the parent user namespace may be set by writing  into
-              /proc/[pid]/uid_map (/proc/[pid]/gid_map); see proc(5).
-
-              The  first process in a user namespace starts out with a
-              complete set of capabilities with  respect  to  the  new
-              user namespace.
-
-              System  calls  that  return  user  IDs  (group IDs) will
-              return either the user ID (group  ID)  mapped  into  the
-              current  user  namespace  if  there is a mapping, or the
-              overflow user ID (group ID); the default value  for  the
-              overflow  user ID (group ID) is 65534.  See the descrip=E2=
-=80=90
-              tions of /proc/sys/kernel/overflowuid and /proc/sys/ker=E2=
-=80=90
-              nel/overflowgid in proc(5).
-
-              Use  of  this flag requires a kernel configured with the
-              CONFIG_USER_NS  option.   Before  Linux  3.8,   use   of
-              CLONE_NEWUSER  required that the caller have three capa=E2=
-=80=90
-              bilities:  CAP_SYS_ADMIN,  CAP_SETUID,  and  CAP_SETGID.
-              Starting  with  Linux  3.8,  no privileges are needed to
-              create a user namespace, and mount, PID, IPC,  net,  and
-              UTS   namespaces   can   be   created   with   just  the
-              CAP_SYS_ADMIN capability in the caller's user namespace.
-
-              Over the years, there have been a lot of  features  that
-              have been added to the Linux kernel that are only avail=E2=
-=80=90
-              able to privileged users because of their  potential  to
-              confuse  set-user-ID-root  applications.  In general, it
-              becomes safe to allow the root user in a user  namespace
-              to use those features because it is impossible, while in
-              a user namespace, to gain more privilege than  the  root
-              user of a user namespace has.
-
-
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface"; http://man7.org/tlpi/
+SGkgRXJpYywKCk9uIFRodSwgRGVjIDI3LCAyMDEyIGF0IDY6NDAgUE0sIEVyaWMgVy4gQmllZGVy
+bWFuCjxlYmllZGVybUB4bWlzc2lvbi5jb20+IHdyb3RlOgo+ICJNaWNoYWVsIEtlcnJpc2sgKG1h
+bi1wYWdlcykiIDxtdGsubWFucGFnZXNAZ21haWwuY29tPiB3cml0ZXM6Cj4KPj4gSGkgRXJpYywK
+Pj4KPj4gU29tZSBxdWVzdGlvbnMgYmVsb3cuCj4KPiBBIHF1aWNrIG5vdGUuICBHZXR0aW5nIHRo
+ZSBwZXJtaXNzaW9uIGNoZWNrcyBjb3JyZWN0IGhhcyBiZWVuIGEgbGl0dGxlCj4gbW9yZSBpbnRl
+cmVzdGluZyB0aGF0IEkgd291bGQgaGF2ZSBwcmVmZXJyZWQuCj4KPiBJIGhhZCB0byBhZGQgYSBu
+c293bl9jYXBhYmxlKENBUF9TWVNfQURNSU4pIGNoZWNrIHRvIGFsbCBvZiB0aGUgc2V0bnMoKQo+
+IGluc3RhbGwgbWV0aG9kcyBleGNlcHQgdGhlIHVzZXIgbmFtZXNwYWNlLiAgTm90IGEgY2hhbmdl
+IGluIHByZSAzLjgKPiBiZWhhdmlvciBidXQgYSBjaGFuZ2UgdG8gbXkgcGF0Y2gsIGFuZCBwb3Nz
+aWJseSBhIGRvY3VtZW50YXRpb24gY2hhbmdlCj4gYmVsb3cuCj4KPj4gT24gVHVlLCBOb3YgMjcs
+IDIwMTIgYXQgMTo0OCBBTSwgRXJpYyBXLiBCaWVkZXJtYW4KPj4gPGViaWVkZXJtQHhtaXNzaW9u
+LmNvbT4gd3JvdGU6Cj4+Pgo+Pj4gU2lnbmVkLW9mZi1ieTogIkVyaWMgVy4gQmllZGVybWFuIiA8
+ZWJpZWRlcm1AeG1pc3Npb24uY29tPgo+Pj4gLS0tCj4+PiAgbWFuMi9zZXRucy4yIHwgICA0MSAr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tLQo+Pj4gIDEgZmlsZXMgY2hh
+bmdlZCwgMzMgaW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSkKPj4+Cj4+PiBkaWZmIC0tZ2l0
+IGEvbWFuMi9zZXRucy4yIGIvbWFuMi9zZXRucy4yCj4+PiBpbmRleCA2YWEwMWUxLi42M2IwNGRj
+IDEwMDY0NAo+Pj4gLS0tIGEvbWFuMi9zZXRucy4yCj4+PiArKysgYi9tYW4yL3NldG5zLjIKPj4+
+IEBAIC00OCw2ICs0OCwxOCBAQCBtdXN0IHJlZmVyIHRvIGEgbmV0d29yayBuYW1lc3BhY2UuCj4+
+PiAgLkJSIENMT05FX05FV1VUUwo+Pj4gIC5JIGZkCj4+PiAgbXVzdCByZWZlciB0byBhIFVUUyBu
+YW1lc3BhY2UuCj4+PiArLlRQCj4+PiArLkJSIENMT05FX05FV1BJRAo+Pj4gKy5JIGZkCj4+PiAr
+bXVzdCByZWZlciB0byBhIFBJRCBuYW1lc3BhY2UuCj4+PiArLlRQCj4+PiArLkJSIENMT05FX05F
+V1VTRVIKPj4+ICsuSSBmZAo+Pj4gK211c3QgcmVmZXIgdG8gYSB1c2VyIG5hbWVzcGFjZS4KPj4+
+ICsuVFAKPj4+ICsuQlIgQ0xPTkVfTkVXTlMKPj4+ICsuSSBmZAo+Pj4gK211c3QgcmVmZXIgdG8g
+YSBtb3VudCBuYW1lc3BhY2UuCj4+PiAgLlBQCj4+PiAgU3BlY2lmeWluZwo+Pj4gIC5JIG5zdHlw
+ZQo+Pj4gQEAgLTYzLDYgKzc1LDI1IEBAIGFuZCB3YW50cyB0byBlbnN1cmUgdGhhdCB0aGUgbmFt
+ZXNwYWNlIGlzIG9mIGEgcGFydGljdWxhciB0eXBlLgo+Pj4gIC5JUiBmZAo+Pj4gIGlmIHRoZSBm
+aWxlIGRlc2NyaXB0b3Igd2FzIG9wZW5lZCBieSBhbm90aGVyIHByb2Nlc3MgYW5kLCBmb3IgZXhh
+bXBsZSwKPj4+ICBwYXNzZWQgdG8gdGhlIGNhbGxlciB2aWEgYSBVTklYIGRvbWFpbiBzb2NrZXQu
+KQo+Pj4gKwo+Pj4gK1RoZSBwaWQgbmFtZXNwYWNlIGlzIGEgbGl0dGxlIGRpZmZlcmVudC4gIFJl
+YXNzb2NpYXRpbmcgdGhlIGNhbGxpbmcKPj4+ICt0aHJlYWQgd2l0aCBhIHBpZCBuYW1lc3BhY2Ug
+b25seSBjaGFuZ2VzIHRoZSBwaWQgbmFtZXNwYWNlIHRoYXQgdGhlCj4+PiArY2hpbGQgcHJvY2Vz
+c2VzIHdpbGwgYmUgY3JlYXRlZCBpbi4KPj4+ICsKPj4+ICtDaGFuZ2luZyB0aGUgcGlkIG5hbWVz
+cGFjZSBmb3IgY2hpbGQgcHJvY2Vzc2VzIGlzIG9ubHkgYWxsb3dlZCBpZiB0aGUKPj4+ICtwaWQg
+bmFtZXNwYWNlIHNwZWNpZmllZCBieQo+Pj4gKy5JUiBmZAo+Pj4gK2lzIGEgY2hpbGQgcGlkIG5h
+bWVzcGFjZSBvZiB0aGUgcGlkIG5hbWVzcGFjZSBvZiB0aGUgY3VycmVudCB0aHJlYWQuCj4+Cj4+
+IEkgYXNzdW1lICJjdXJyZW50IHRocmVhZCIgYWJvdmUgc2hvdWxkIGJlICJjYWxsaW5nIHRocmVh
+ZCIsIHJpZ2h0Pwo+Cj4gV2hhdCBJIG1lYW4gaW4gImN1cnJlbnQiIGZyb20gYSBrZXJuZWwgcGVy
+c3BlY3RpdmUuCj4KPiBJdCBzaG91bGQgYmUganVzdCAiY2FsbGVyIi4KCk9rYXkuIENoYW5nZWQu
+Cgo+IFRocmVhZHMgbXVzdCBzaGFyZSBhIHBpZCBuYW1lc3BhY2Ugc28gbWVudGlvbmluZyB0aHJl
+YWRzIHNlZW1zIHdyb25nLgo+Cj4+PiArCj4+PiArQSBtdWx0aS10aHJlYWRlZCBwcm9jZXNzIG1h
+eSBub3QgY2hhbmdlIHVzZXIgbmFtZXNwYWNlIHdpdGggc2V0bnMuICBBCj4+PiArcHJvY2VzcyBt
+YXkgbm90IHJlYXNzb2NpYXRlIHRoZSB0aHJlYWQgd2l0aCB0aGUgY3VycmVudCB1c2VyCj4+PiAr
+bmFtZXNwYWNlLgo+Pgo+PiBXaGF0IGRvIHlvdSBtZWFuIGJ5ICJ0aGUgY3VycmVudCB1c2VyIG5z
+YW1lc2FwY2UiPwo+Cj4gZmQgPSBvcGVuKCIvcHJvYy9zZWxmL25zL3VzZXIiKTsKPiBzZXRucyhm
+ZCkgLT4gLUVJTlZBTC4KPgo+IFNvIGZyb20gYSB1c2Vyc3BhY2UgcGVyc3BlY3RpdmUgSSBtZWFu
+ICJ0aGUgY2FsbGVycyB1c2VyIG5hbWVzcGFjZSIuCj4KPj4+IFRoZSBwcm9jZXNzIHJlYXNzb2Np
+YXRpbmcgaXRzZWxmIHdpdGggYSB1c2VyIG5hbWVzcGFjZQo+Pj4gK211c3QgaGF2ZSBDQVBfU1lT
+X0FETUlOIHByaXZpbGVnZXMgaW4gdGhlIHRhcmdldCB1c2VyIG5hbWVzcGFjZS4KPj4+Cj4+PiAr
+QSBwcm9jZXNzIG1heSBub3QgYmUgcmVhc3NvY2lhdGVkIHdpdGggYSBuZXcgbW91bnQgbmFtZXNw
+YWNlIGlmIGl0IGlzCj4+PiArbXVsdGktdGhyZWFkZWQKPj4KPj4gSSB0cmllZCB0byB2ZXJpZnkg
+dGhlIHByZWNkZWluZyB0d28gbGluZXMgZnJvbSB0aGUga2VybmVsIHNvdXJjZSwgYnV0Cj4+IGRp
+ZCBub3Qgd29yayBvdXQgd2hlcmUgdGhpcyBjaGVjayBpcyBtYWRlLiBXaGVyZSBpcyBpdD8KPgo+
+IGtlcm5lbC91c2VyX25hbWVzcGFjZS5jOnVzZXJuc19pbnN0YWxsKCkKPiBmcy9uYW1lc3BhY2Uu
+YzptbnRuc19pbnN0YWxsKCkKClRoYW5rcy4KCj4gQSBjb3VwbGUgb2YgdGhlIHNlY3VyaXR5IGNo
+ZWNrcyBoYXZlIGJlZW4gcHVzaGVkIGRvd24gaW50byBhIHBlcgo+IG5hbWVzcGFjZSBjb250ZXh0
+LCBiZWNhdXNlIHRoZSBleGFjdCBjaGVjayB0aGF0IG1ha2VzIHNlbnNlIGRlcGVuZHMgb24KPiB0
+aGUgbmFtZXNwYWNlLgo+Cj4+PiBvciBpdCBkb2VzIG5vdCBwb3NzZXNzIGJvdGggQ0FQX1NZU19D
+SFJPT1QgcHJpdmlsZWdlcwo+Pj4gK2FuZCBDQVBfU1lTX0FETUlOIHJpZ2h0cyBvdmVyIHRoZSB0
+YXJnZXQgbW91bnQgbmFtZXNwYWNlLgo+Pgo+PiBDb3VsZCB5b3UgcGxlYXNlIGV4cGFuZC9jbGFy
+aWZ5IHRoZSBwcmVjZWRpbmcgdHdvIGxpbmVzLiBBcyB0aGV5Cj4+IHN0YW5kLCBJIGRvbid0IHJl
+YWxseSB1bmRlcnN0YW5kIHRoZW0uCj4KPiBVZ2guICBUaGUgdGV4dCBpcyBzbGlnaHRseSB3cm9u
+Zy4KPgo+IFRoZSBjb2RlIGlzOgo+ICAgICAgICAgaWYgKCFuc19jYXBhYmxlKG1udF9ucy0+dXNl
+cl9ucywgQ0FQX1NZU19BRE1JTikgfHwKPiAgICAgICAgICAgICAhbnNvd25fY2FwYWJsZShDQVBf
+U1lTX0NIUk9PVCkgfHwKPiAgICAgICAgICAgICAhbnNvd25fY2FwYWJsZShDQVBfU1lTX0FETUlO
+KSkKPiAgICAgICAgICAgICAgICAgcmV0dXJuIC1FUEVSTTsKPgo+IEJhc2ljYWxseSB5b3UgYXJl
+bid0IGFsbG93ZWQgY2hhbmdlIHlvdXIgbW91bnQgbmFtZXNwYWNlIGludG8KPiBhIG1vdW50IG5h
+bWVzcGFjZSB0aGF0IGRvZXNuJ3Qgc2VlIHlvdSBhcyB0aGUgYWxsIHBvd2VyZnVsIHJvb3QKPiBh
+YmxlIHRvIG1vdW50IGFuZCB1bm1vdW50IGZpbGVzeXN0ZW1zLgo+Cj4gWW91IGFyZW4ndCBhbGxv
+d2VkIHRvIGNoYW5nZSB5b3VyIG1vdW50IG5hbWVzcGFjZSB1bmxlc3MgeW91IHBvc3Nlc3Nlcwo+
+IENBUF9TWVNfQ0hST09UIGFuZCBDQVBfU1lTX0FETUlOLgoKT2theSAtLSByZXdvcmRlZC4KClNv
+LCBJJ3ZlIGRvbmUgc29tZSBtb3JlIHJld29ya2luZyBvZiB0aGUgdGV4dCwgd2hpY2ggbm93IHJl
+YWRzIGFzCmZvbG93cy4gQ291bGQgeW91IHBsZWFzZSBjaGVjayB0aGlzIChhbmQgc2VlIG15IHF1
+ZXN0aW9ucyBiZWxvdykuCgogICAgICAgQ0xPTkVfTkVXUElEICBiZWhhdmVzIHNvbWV3aGF0IGRp
+ZmZlcmVudGx5IGZyb20gdGhlIG90aGVyCiAgICAgICBuc3R5cGUgdmFsdWVzOiByZWFzc29jaWF0
+aW5nIHRoZSBjYWxsaW5nICB0aHJlYWQgIHdpdGggIGEKICAgICAgIFBJRCAgbmFtZXNwYWNlICBv
+bmx5IGNoYW5nZXMgdGhlIFBJRCBuYW1lc3BhY2UgdGhhdCBjaGlsZAogICAgICAgcHJvY2Vzc2Vz
+IG9mIHRoZSBjYWxsZXIgd2lsbCBiZSBjcmVhdGVkIGluOyBpdCAgZG9lcyAgbm90CiAgICAgICBj
+aGFuZ2UgdGhlIFBJRCBuYW1lc3BhY2Ugb2YgdGhlIGNhbGxlciBpdHNlbGYuCgpJIHJld29ya2Vk
+IHRoZSBwcmVjZWRpbmcgcGllY2UgYSBsb3QuIElzIGl0IGNvcnJlY3Qgc3RpbGw/CgogICAgICAg
+UmVhc3NvY2nigJAKICAgICAgIGF0aW5nIHdpdGggYSBQSUQgbmFtZXNwYWNlIGlzIG9ubHkgIGFs
+bG93ZWQgIGlmICB0aGUgIFBJRAogICAgICAgbmFtZXNwYWNlICBzcGVjaWZpZWQgYnkgZmQgaXMg
+YSBkZXNjZW5kYW50IChjaGlsZCwgZ3JhbmTigJAKICAgICAgIGNoaWxkLCBldGMuKQoKSXMgdGhl
+IHByZWNlZGluZyBzZW50ZW5jZSBjb3JyZWN0PyAoWW91IHRhbGtlZCBvbmx5IG9mIGNoaWxkcmVu
+IGluCnlvdXIgb3JpZ2luYWwgcGF0Y2gsIGJ1dCBJIGJlbGlldmUgaXQncyBtb3JlIGdlbmVyYWwg
+dGhhbiB0aGF0LikKCiAgICAgICBQSUQgbmFtZXNwYWNlIG9mIHRoZSBQSUQgbmFtZXNwYWNlICBv
+ZiAgdGhlCiAgICAgICBjYWxsZXIuCgogICAgICAgQSAgbXVsdGktdGhyZWFkZWQgIHByb2Nlc3Mg
+IG1heSBub3QgY2hhbmdlIHVzZXIgbmFtZXNwYWNlCiAgICAgICB3aXRoIHNldG5zKCkuICBBIHBy
+b2Nlc3MgbWF5IG5vdCByZWFzc29jaWF0ZSAgdGhlICB0aHJlYWQKICAgICAgIHdpdGggIHRoZSBj
+YWxsZXIncyB1c2VyIG5hbWVzcGFjZS4KCldoYXQgZG9lcyB0aGUgbGFzdCBzZW50ZW5jZSBhYm92
+ZSAqbWVhbio/IEkgZG9uJ3QgdW5kZXJzdGFuZCBpdC4KCiAgICAgICBBIHByb2Nlc3MgcmVhc3Nv
+Y2lhdOKAkAogICAgICAgaW5nIGl0c2VsZiB3aXRoIGEgdXNlciBuYW1lc3BhY2UgbXVzdCBoYXZl
+ICBDQVBfU1lTX0FETUlOCiAgICAgICBwcml2aWxlZ2VzIGluIHRoZSB0YXJnZXQgdXNlciBuYW1l
+c3BhY2UuCgogICAgICAgQSBwcm9jZXNzIG1heSBub3QgYmUgcmVhc3NvY2lhdGVkIHdpdGggYSBu
+ZXcgbW91bnQgbmFtZXPigJAKICAgICAgIHBhY2UgaWYgaXQgaXMgbXVsdGktdGhyZWFkZWQuICBD
+aGFuZ2luZyB0aGUgbW91bnQgIG5hbWVz4oCQCiAgICAgICBwYWNlIHJlcXVpcmVzIHRoYXQgdGhl
+IGNhbGxlciBwb3NzZXNzIGJvdGggQ0FQX1NZU19DSFJPT1QKICAgICAgIGFuZCBDQVBfU1lTX0FE
+TUlOIGNhcGFiaWxpdGllcy4KClJlIHRoZSBsYXN0IHNlbnRlbmNlOiBhcmUgdGhvc2UgY2FwYWJp
+bGl0aWVzIHJlcXVpcmVkIGluICgxKSB0aGUKdGFyZ2V0IG5hbWVzcGFjZSwgb3IgKDIpIHRoZSBz
+b3VyY2UgbmFtZXNwYWNlLCBvciAoMykgYm90aD8gSSBzdXNwZWN0CigxKSwgYnV0IHBsZWFzZSBj
+b25maXJtLgoKVGhhbmtzLAoKTWljaGFlbAoKCgotLSAKTWljaGFlbCBLZXJyaXNrCkxpbnV4IG1h
+bi1wYWdlcyBtYWludGFpbmVyOyBodHRwOi8vd3d3Lmtlcm5lbC5vcmcvZG9jL21hbi1wYWdlcy8K
+QXV0aG9yIG9mICJUaGUgTGludXggUHJvZ3JhbW1pbmcgSW50ZXJmYWNlIjsgaHR0cDovL21hbjcu
+b3JnL3RscGkvCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+CkNvbnRhaW5lcnMgbWFpbGluZyBsaXN0CkNvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlv
+bi5vcmcKaHR0cHM6Ly9saXN0cy5saW51eGZvdW5kYXRpb24ub3JnL21haWxtYW4vbGlzdGluZm8v
+Y29udGFpbmVycw==
