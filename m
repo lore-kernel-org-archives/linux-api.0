@@ -1,92 +1,43 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 4/4] setns.2: Document the pid, user,
-	and mount namespace support.
-Date: Mon, 7 Jan 2013 10:51:04 +0100
-Message-ID: <CAKgNAkggEOV0dXVzr4Zf3n_-it5SXfvjJ1ooYxiVNWaYzQgRLg@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 4/4] setns.2: Document the pid, user, and mount namespace support.
+Date: Mon, 07 Jan 2013 15:58:46 -0800
+Message-ID: <8738yc5yvd.fsf@xmission.com>
 References: <87a9u4rmz0.fsf@xmission.com> <87k3t7q39u.fsf@xmission.com>
 	<CAKgNAkiaw5L_oNE8NENjmoBS8Hq_uj+iaEdhyXc1+hje4HdnNQ@mail.gmail.com>
 	<87bodftmv0.fsf@xmission.com>
 	<CAKgNAkjJR02rKOBh98n7HJwXqAwywHY=Ef35t9tW7wOuyo86NQ@mail.gmail.com>
 	<87mwwt2pj8.fsf@xmission.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+	<CAKgNAkggEOV0dXVzr4Zf3n_-it5SXfvjJ1ooYxiVNWaYzQgRLg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87mwwt2pj8.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKgNAkggEOV0dXVzr4Zf3n_-it5SXfvjJ1ooYxiVNWaYzQgRLg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Michael Kerrisk's message of "Mon, 7 Jan 2013 10:51:04 +0100")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gVHVlLCBKYW4gMSwgMjAxMyBhdCAxMDo1OCBBTSwgRXJpYyBXLiBCaWVkZXJtYW4KPGViaWVk
-ZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4gIk1pY2hhZWwgS2VycmlzayAobWFuLXBhZ2VzKSIg
-PG10ay5tYW5wYWdlc0BnbWFpbC5jb20+IHdyaXRlczoKPgoKWy4uLl0KCj4+ICAgICAgICBQSUQg
-bmFtZXNwYWNlIG9mIHRoZSBQSUQgbmFtZXNwYWNlICBvZiAgdGhlCj4+ICAgICAgICBjYWxsZXIu
-Cj4+Cj4+ICAgICAgICBBICBtdWx0aS10aHJlYWRlZCAgcHJvY2VzcyAgbWF5IG5vdCBjaGFuZ2Ug
-dXNlciBuYW1lc3BhY2UKPj4gICAgICAgIHdpdGggc2V0bnMoKS4gIEEgcHJvY2VzcyBtYXkgbm90
-IHJlYXNzb2NpYXRlICB0aGUgIHRocmVhZAo+PiAgICAgICAgd2l0aCAgdGhlIGNhbGxlcidzIHVz
-ZXIgbmFtZXNwYWNlLgo+Pgo+PiBXaGF0IGRvZXMgdGhlIGxhc3Qgc2VudGVuY2UgYWJvdmUgKm1l
-YW4qPyBJIGRvbid0IHVuZGVyc3RhbmQgaXQuCj4KPiBTbyB0aGUgc2V0IG9mIGNoZWNrcyBhcmU6
-Cj4KPiAgICAgICAgIC8qIERvbid0IGFsbG93IGdhaW5pbmcgY2FwYWJpbGl0aWVzIGJ5IHJlZW50
-ZXJpbmcKPiAgICAgICAgICAqIHRoZSBzYW1lIHVzZXIgbmFtZXNwYWNlLgo+ICAgICAgICAgICov
-Cj4gICAgICAgICBpZiAodXNlcl9ucyA9PSBjdXJyZW50X3VzZXJfbnMoKSkKPiAgICAgICAgICAg
-ICAgICAgcmV0dXJuIC1FSU5WQUw7Cj4KPiAgICAgICAgIC8qIFRocmVhZGVkIHByb2Nlc3NlcyBt
-YXkgbm90IGVudGVyIGEgZGlmZmVyZW50IHVzZXIgbmFtZXNwYWNlICovCj4gICAgICAgICBpZiAo
-YXRvbWljX3JlYWQoJmN1cnJlbnQtPm1tLT5tbV91c2VycykgPiAxKQo+ICAgICAgICAgICAgICAg
-ICByZXR1cm4gLUVJTlZBTDsKPgo+ICAgICAgICAgaWYgKCFuc19jYXBhYmxlKHVzZXJfbnMsIENB
-UF9TWVNfQURNSU4pKQo+ICAgICAgICAgICAgICAgICByZXR1cm4gLUVQRVJNOwo+Cj4gUmVyZWFk
-aW5nIGl0IGxvb2tzIGxpa2UgSSB3YXMgZ29pbmcgZmFzdCBhbmQgc3VmZmVyZWQgZnJvbSBkcm9w
-cGluZwo+IGltcG9ydGFudCB3b3Jkcy4KPgo+IEEgIG11bHRpLXRocmVhZGVkICBwcm9jZXNzICBt
-YXkgbm90IGNoYW5nZSBpdCdzIHVzZXIgbmFtZXNwYWNlCj4gd2l0aCBzZXRucygpLgo+Cj4gYWth
-IGlmIHlvdSBoYXZlIHRocmVhZHMgc2V0bnMgZm9yIGEgdXNlciBuYW1lc3BhY2Ugd2lsbCBmYWls
-Lgo+Cj4KPiAgICAgQSBwcm9jZXNzIG1heSBub3QgY2hhbmdlIHRoZSB1c2VyIG5hbWVzcGFjZSB0
-byB0aGUgY2FsbGVyJ3MgdXNlcgo+ICAgICBuYW1lc3BhY2UgdmlhIHNldG5zLiAgVGhpcyBpcyBp
-bXBvcnRhbnQgYmVjYXVzZSBjaGFuZ2luZyB0byBhCj4gICAgIHVzZXIgbmFtZXNwYWNlIHZpYSBz
-ZXRucyBpbXBsaWVzIGdhaW5pbmcgYWxsIGNhcHMsIGFuZCB5b3Ugc2hvdWxkCj4gICAgIG5vdCBi
-ZSBhYmxlIHRvIGdhaW4gYWxsIGNhcHMgb3ZlciB5b3VyIGN1cnJlbnQgdXNlciBuYW1lc3BhY2Uu
-Cj4KPiBIb3BlZnVsbHkgdGhhdCBjbGVhcnMgaXQgdXAuCgpXZWxsLCBJIHdvcmRlZCBpdCByYXRo
-ZXIgZGlmZmVyZW50bHksIGJ1dCBJIGhvcGUgSSBnb3QgaXQgcmlnaHQuIFNlZSBiZWxvdy4KCj4+
-ICAgICAgICBBIHByb2Nlc3MgcmVhc3NvY2lhdOKAkAo+PiAgICAgICAgaW5nIGl0c2VsZiB3aXRo
-IGEgdXNlciBuYW1lc3BhY2UgbXVzdCBoYXZlICBDQVBfU1lTX0FETUlOCj4+ICAgICAgICBwcml2
-aWxlZ2VzIGluIHRoZSB0YXJnZXQgdXNlciBuYW1lc3BhY2UuCj4+Cj4+ICAgICAgICBBIHByb2Nl
-c3MgbWF5IG5vdCBiZSByZWFzc29jaWF0ZWQgd2l0aCBhIG5ldyBtb3VudCBuYW1lc+KAkAo+PiAg
-ICAgICAgcGFjZSBpZiBpdCBpcyBtdWx0aS10aHJlYWRlZC4gIENoYW5naW5nIHRoZSBtb3VudCAg
-bmFtZXPigJAKPj4gICAgICAgIHBhY2UgcmVxdWlyZXMgdGhhdCB0aGUgY2FsbGVyIHBvc3Nlc3Mg
-Ym90aCBDQVBfU1lTX0NIUk9PVAo+PiAgICAgICAgYW5kIENBUF9TWVNfQURNSU4gY2FwYWJpbGl0
-aWVzLgo+Pgo+PiBSZSB0aGUgbGFzdCBzZW50ZW5jZTogYXJlIHRob3NlIGNhcGFiaWxpdGllcyBy
-ZXF1aXJlZCBpbiAoMSkgdGhlCj4+IHRhcmdldCBuYW1lc3BhY2UsIG9yICgyKSB0aGUgc291cmNl
-IG5hbWVzcGFjZSwgb3IgKDMpIGJvdGg/IEkgc3VzcGVjdAo+PiAoMSksIGJ1dCBwbGVhc2UgY29u
-ZmlybS4KPgo+IENBUF9TWVNfQURNSU4gaXMgcmVxdWlyZWQgaW4gdGhlIGN1cnJlbnQgdXNlciBu
-YW1lc3BhY2UuCj4gQ0FQX1NZU19BRE1JTiBpcyByZXF1aXJlZCBvdmVyIHRoZSB0YXJnZXQgbW91
-bnQgbmFtZXNhcGNlLgo+Cj4gQ0FQX1NZU19DSFJPT1QgaXMgcmVxdWlyZWQgaW4gdGhlIGN1cnJl
-bnQgdXNlciBuYW1lc3BhY2UuCgpPa2F5LiBTZWUgYmVsb3cuCgpTbywgbGV0J3MgdGFrZSBvbmUg
-bW9yZSBwYXNzLiBIb3cgZG9lcyB0aGUgZm9sbG93aW5nIGxvb2s6CgogICAgICAgQSBtdWx0aS10
-aHJlYWRlZCBwcm9jZXNzIG1heSBub3QgIGNoYW5nZSAgdXNlciAgbmFtZXNwYWNlICB3aXRoCiAg
-ICAgICBzZXRucygpLiAgIEl0ICBpcyAgbm90ICBwZXJtaXR0ZWQgdG8gdXNlIHNldG5zKCkgdG8g
-cmVlbnRlciB0aGUKICAgICAgIGNhbGxlcidzIGN1cnJlbnQgdXNlciBuYW1lc3BhY2UuICBUaGlz
-IHByZXZlbnRzIGEgIGNhbGxlciAgdGhhdAogICAgICAgaGFzICBkcm9wcGVkIGNhcGFiaWxpdGll
-cyBmcm9tIHJlZ2FpbmluZyB0aG9zZSBjYXBhYmlsaXRpZXMgdmlhCiAgICAgICBhIGNhbGwgdG8g
-c2V0bnMoKSBBIHByb2Nlc3MgcmVhc3NvY2lhdGluZyBpdHNlbGYgIHdpdGggIGEgIHVzZXIKICAg
-ICAgIG5hbWVzcGFjZSBtdXN0IGhhdmUgQ0FQX1NZU19BRE1JTiBwcml2aWxlZ2VzIGluIHRoZSB0
-YXJnZXQgdXNlcgogICAgICAgbmFtZXNwYWNlLgoKICAgICAgIEEgcHJvY2VzcyBtYXkgbm90IGJl
-IHJlYXNzb2NpYXRlZCB3aXRoIGEgbmV3IG1vdW50IG5hbWVzcGFjZSBpZgogICAgICAgaXQgIGlz
-ICBtdWx0aS10aHJlYWRlZC4gICBDaGFuZ2luZyB0aGUgbW91bnQgbmFtZXNwYWNlIHJlcXVpcmVz
-CiAgICAgICB0aGF0IHRoZSBjYWxsZXIgcG9zc2VzcyBib3RoIENBUF9TWVNfQ0hST09UICBhbmQg
-IENBUF9TWVNfQURNSU4KICAgICAgIGNhcGFiaWxpdGllcyBpbiBpdHMgb3duIHVzZXIgbmFtZXNw
-YWNlIGFuZCBDQVBfU1lTX0FETUlOIGluIHRoZQogICAgICAgdGFyZ2V0IG1vdW50IG5hbWVzcGFj
-ZS4KCkNoZWVycywKCk1pY2hhZWwKCi0tIApNaWNoYWVsIEtlcnJpc2sKTGludXggbWFuLXBhZ2Vz
-IG1haW50YWluZXI7IGh0dHA6Ly93d3cua2VybmVsLm9yZy9kb2MvbWFuLXBhZ2VzLwpBdXRob3Ig
-b2YgIlRoZSBMaW51eCBQcm9ncmFtbWluZyBJbnRlcmZhY2UiOyBodHRwOi8vbWFuNy5vcmcvdGxw
-aS8KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KQ29udGFp
-bmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZwpo
-dHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWlu
-ZXJz
+"Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+
+> Okay. See below.
+>
+> So, let's take one more pass. How does the following look:
+>
+>        A multi-threaded process may not  change  user  namespace  with
+>        setns().   It  is  not  permitted to use setns() to reenter the
+>        caller's current user namespace.  This prevents a  caller  that
+>        has  dropped capabilities from regaining those capabilities via
+>        a call to setns() A process reassociating itself  with  a  user
+>        namespace must have CAP_SYS_ADMIN privileges in the target user
+>        namespace.
+>
+>        A process may not be reassociated with a new mount namespace if
+>        it  is  multi-threaded.   Changing the mount namespace requires
+>        that the caller possess both CAP_SYS_CHROOT  and  CAP_SYS_ADMIN
+>        capabilities in its own user namespace and CAP_SYS_ADMIN in the
+>        target mount namespace.
+
+That wording looks correct.
+
+Eric
