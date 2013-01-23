@@ -1,80 +1,94 @@
-From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 1/3] signal: add a helper for dequeuing signals from a specified queue
-Date: Tue, 22 Jan 2013 14:15:39 +0400
-Message-ID: <1358849741-9611-2-git-send-email-avagin@openvz.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 0/3] signalfd: a kernel interface for dumping pending signals
+Date: Wed, 23 Jan 2013 05:19:24 +0100
+Message-ID: <CAKgNAkgfV3qdrvBUYKBAgaYXUTZ5hMYLhwaiLkZO0KBTA_=1zw@mail.gmail.com>
 References: <1358849741-9611-1-git-send-email-avagin@openvz.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1358849741-9611-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reply-To: mtk.manpages@gmail.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1358849741-9611-1-git-send-email-avagin@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrey Vagin <avagin@openvz.org>
+Cc: linux-kernel@vger.kernel.org, criu@openvz.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Serge Hallyn <serge.hallyn@canonical.com>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-CC: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
----
- include/linux/sched.h | 13 ++++++++++++-
- kernel/signal.c       | 10 ++++++----
- 2 files changed, 18 insertions(+), 5 deletions(-)
+Hi Andrey,
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 206bb08..45871f1 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2221,7 +2221,18 @@ extern void flush_signals(struct task_struct *);
- extern void __flush_signals(struct task_struct *);
- extern void ignore_signals(struct task_struct *);
- extern void flush_signal_handlers(struct task_struct *, int force_default);
--extern int dequeue_signal(struct task_struct *tsk, sigset_t *mask, siginfo_t *info);
-+
-+#define SIGQUEUE_SHARED		1
-+#define SIGQUEUE_PRIVATE	2
-+extern int do_dequeue_signal(struct task_struct *tsk,
-+				sigset_t *mask, siginfo_t *info, int qmask);
-+
-+static inline int dequeue_signal(struct task_struct *tsk,
-+					sigset_t *mask, siginfo_t *info)
-+{
-+	return do_dequeue_signal(tsk, mask, info,
-+					SIGQUEUE_SHARED | SIGQUEUE_PRIVATE);
-+}
- 
- static inline int dequeue_signal_lock(struct task_struct *tsk, sigset_t *mask, siginfo_t *info)
- {
-diff --git a/kernel/signal.c b/kernel/signal.c
-index ac5f5e7..1412f6a 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -600,15 +600,17 @@ static int __dequeue_signal(struct sigpending *pending, sigset_t *mask,
-  *
-  * All callers have to hold the siglock.
-  */
--int dequeue_signal(struct task_struct *tsk, sigset_t *mask, siginfo_t *info)
-+int do_dequeue_signal(struct task_struct *tsk, sigset_t *mask,
-+					siginfo_t *info, int qmask)
- {
--	int signr;
-+	int signr = 0;
- 
- 	/* We only dequeue private signals from ourselves, we don't let
- 	 * signalfd steal them
- 	 */
--	signr = __dequeue_signal(&tsk->pending, mask, info);
--	if (!signr) {
-+	if (qmask & SIGQUEUE_PRIVATE)
-+		signr = __dequeue_signal(&tsk->pending, mask, info);
-+	if (!signr && (qmask & SIGQUEUE_SHARED)) {
- 		signr = __dequeue_signal(&tsk->signal->shared_pending,
- 					 mask, info);
- 		/*
+On Tue, Jan 22, 2013 at 11:15 AM, Andrey Vagin <avagin@openvz.org> wrote:
+> This patch set adds ability to choose a signal queue and
+> to read signals without dequeuing them.
+>
+> Three new flags are added:
+> SFD_SHARED_QUEUE     -- reads will be from process-wide shared signal queue
+> SFD_PER_THREAD_QUEUE -- reads will be from per-thread signal queue
+> SFD_PEEK             -- don't dequeue signals
+
+A fuller description of the patch, including information that was in
+previous versions of this patch would be helpful. Let me see if I can
+summarize/fill out the API side of things, and ask a few questions
+along the way (yes, I could answer some of the questions by checking
+the code, but I want to know what the *intended* behavior is).
+
+The patch series adds a total of 4 flags to signalfd(). In addition to
+those you list above, the other is
+
+SFD_RAW -- return raw siginfo structs when reading, rather than signalfd_siginfo
+
+The intention is that these flags be used in conjunction with pread(),
+to peek at queued signals. The 'offset' argument is treated as a
+position. Thus, for example, to non-destructively read all of the
+per-thread signals in raw form from the per-thread queue, one would
+write
+
+fd = signalfd(-1, SFD_PER_THREAD_QUEUE | SFD_RAW | SFD_PEEK)
+for (j = 0; ; j++) {
+    s = pread(fd, buf, ocunt, j)
+    if (s == 0) /* No more signals */
+        break;
+}
+
+Right?
+
+Now some questions. I don't require all of the following, but I'm
+wanting to know what's possible, for documentation purposes.
+
+Q1: with this patch series, is it permissible to specify
+SFD_PER_THREAD_QUEUE or SFD_SHARED_QUEUE without specifying either
+SFD_PEEK or SFD_QUEUE? In other words, can one do traditional
+signalfd_siginfo reads, but selecting from a specific queue.
+
+Q2: Is it possible to specify SFD_PEEK without SFD_RAW, so that one
+can peek at siginfo structs rather than signalfd_siginfo structs?
+
+Q3: Is it possible to specify SFD_RAW without SFD_PEEK, so that one
+can destructively read signalfd_siginfo structs? Can that be done
+using any read interface (read(), pread(), etc.)?
+
+Q4: Is it possible to specify both SFD_PER_THREAD_QUEUE and
+SFD_SHARED_QUEUE? In that case, in what order are signals read from
+the two queues?
+
+Thanks,
+
+Michael
+
+> Cc: Serge Hallyn <serge.hallyn@canonical.com>
+> Cc: Oleg Nesterov <oleg@redhat.com>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> Cc: Pavel Emelyanov <xemul@parallels.com>
+> CC: Cyrill Gorcunov <gorcunov@openvz.org>
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+>
+> --
+> 1.7.11.7
+>
+
+
+
 -- 
-1.7.11.7
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface"; http://man7.org/tlpi/
