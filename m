@@ -1,7 +1,7 @@
 From: info-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
 Subject: UPGRADE YOUR XMISSION ACCOUNT
-Date: Fri, 25 Jan 2013 23:36:04 +0700
-Message-ID: <201301251636.r0PGWxFV005360__6422.72289046577$1359132306$gmane$org@mail.finger.co.kr>
+Date: Fri, 25 Jan 2013 22:14:42 +0700
+Message-ID: <201301251515.r0PFBWYp000526__34272.4665570588$1359221445$gmane$org@mail.finger.co.kr>
 Reply-To: accountaccessupgrade-XGZiAJ+5fF/QJDZefrY4RA@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
