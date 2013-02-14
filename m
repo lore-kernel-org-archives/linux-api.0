@@ -1,8 +1,7 @@
 From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: [PATCH 2/3] posix timers: Add syscall that lists timer IDs armed
- by process
-Date: Thu, 14 Feb 2013 20:19:28 +0400
-Message-ID: <511D0E90.5090705@parallels.com>
+Subject: [PATCH 3/3] posix timers: Add syscall that works on timer sigevent
+Date: Thu, 14 Feb 2013 20:19:45 +0400
+Message-ID: <511D0EA1.9060704@parallels.com>
 References: <511D0E50.7090505@parallels.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
@@ -13,104 +12,89 @@ Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+The intention is to make a syscall, that works like sigaction
+but on a posix timer. I.e. -- puts (if provided) new sigevent
+on the timer and reports the previous value (if requested).
 
-The sys_timer_list syscall accepts clock id, buffer size to store
-the timers ids and the pointer to the buffer itself.
+That said, the syscall accepts timer id to work on, a pointer
+to the new sigevent (may be NULL, meaning that the existing
+sigevent remains intact) and pointer to memory buffer where to
+put the existing sigevent (may be NULL as well, sigevent is
+not reported in this case).
 
-The number of timers of clockid type is returned and these timers'
-ids are put into the provided buffer. If the buffer is not enough
-for all timers, then only part of ids are put into it, but the
-actual number of timers is reported anyway. If the buffer is bigger
-than required, then its tail is left untouched and the number of
-timers returned from the syscall denotes how much of ids are there.
+For how I didn't implement the new sigevent assignment, as it
+requires a little bit of trickery with timer. If the proposed
+idea itself is OK useful I will implement this part as well in
+the v2 series.
 
 Signed-off-by: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 ---
  arch/x86/syscalls/syscall_64.tbl |    1 +
- include/linux/syscalls.h         |    2 +
- kernel/posix-timers.c            |   48 ++++++++++++++++++++++++++++++++++++++
- 3 files changed, 51 insertions(+), 0 deletions(-)
+ include/linux/syscalls.h         |    3 +++
+ kernel/posix-timers.c            |   28 ++++++++++++++++++++++++++++
+ 3 files changed, 32 insertions(+), 0 deletions(-)
 
 diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index dc97328..72b6ee6 100644
+index 72b6ee6..c2c1743 100644
 --- a/arch/x86/syscalls/syscall_64.tbl
 +++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -320,6 +320,7 @@
- 311	64	process_vm_writev	sys_process_vm_writev
+@@ -321,6 +321,7 @@
  312	common	kcmp			sys_kcmp
  313	common	finit_module		sys_finit_module
-+314	common	timer_list		sys_timer_list
+ 314	common	timer_list		sys_timer_list
++315	64	timer_sigevent		sys_timer_sigevent
  
  #
  # x32-specific system call numbers start at 512 to avoid cache impact
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 45e2db2..dc951da 100644
+index dc951da..7d121c5 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -319,6 +319,8 @@ asmlinkage long sys_timer_settime(timer_t timer_id, int flags,
- 				const struct itimerspec __user *new_setting,
- 				struct itimerspec __user *old_setting);
- asmlinkage long sys_timer_delete(timer_t timer_id);
-+asmlinkage long sys_timer_list(const clockid_t clock_id, int nr,
-+				timer_t __user *timer_ids);
- asmlinkage long sys_clock_settime(clockid_t which_clock,
- 				const struct timespec __user *tp);
- asmlinkage long sys_clock_gettime(clockid_t which_clock,
+@@ -312,6 +312,9 @@ asmlinkage long sys_setitimer(int which,
+ asmlinkage long sys_timer_create(clockid_t which_clock,
+ 				 struct sigevent __user *timer_event_spec,
+ 				 timer_t __user * created_timer_id);
++asmlinkage long sys_timer_sigevent(timer_t timer_id,
++				struct sigevent __user *new_event,
++				struct sigevent __user *old_event);
+ asmlinkage long sys_timer_gettime(timer_t timer_id,
+ 				struct itimerspec __user *setting);
+ asmlinkage long sys_timer_getoverrun(timer_t timer_id);
 diff --git a/kernel/posix-timers.c b/kernel/posix-timers.c
-index 9cfb86a..46cee59 100644
+index 46cee59..29de379 100644
 --- a/kernel/posix-timers.c
 +++ b/kernel/posix-timers.c
-@@ -1103,3 +1103,51 @@ long clock_nanosleep_restart(struct restart_block *restart_block)
- 
- 	return kc->nsleep_restart(restart_block);
+@@ -1151,3 +1151,31 @@ try_again:
+ out:
+ 	return nr;
  }
 +
-+SYSCALL_DEFINE3(timer_list, const clockid_t, clock_id,
-+		int, unr, timer_t __user *, timer_ids)
++SYSCALL_DEFINE3(timer_sigevent, timer_t, timer_id, struct sigevent __user *, new_event,
++		struct sigevent __user *, old_event)
 +{
 +	struct k_itimer *timer;
-+	timer_t *buf;
-+	int nr = 0, buf_nr;
++	unsigned long flags;
++	struct sigevent event;
++	int ret = 0;
 +
-+	spin_lock_irq(&current->sighand->siglock);
-+	list_for_each_entry(timer, &current->signal->posix_timers, list)
-+		if (timer->it_clock == clock_id)
-+			nr++;
-+	spin_unlock_irq(&current->sighand->siglock);
++	if (new_event)
++		return -EINVAL;
 +
-+	if (!unr)
-+		goto out;
++	timer = lock_timer(timer_id, &flags);
++	if (!timer)
++		return -EINVAL;
 +
-+try_again:
-+	buf_nr = min(nr, unr);
-+	buf = kmalloc(buf_nr * sizeof(timer_t), GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
++	event.sigev_notify = timer->it_sigev_notify;
++	event.sigev_signo = timer->sigq->info.si_signo;
++	event.sigev_value = timer->sigq->info.si_value;
++	event.sigev_notify_thread_id = pid_vnr(timer->it_pid);
 +
-+	nr = 0;
-+	spin_lock_irq(&current->sighand->siglock);
-+	list_for_each_entry(timer, &current->signal->posix_timers, list) {
-+		if (timer->it_clock != clock_id)
-+			continue;
++	unlock_timer(timer, flags);
 +
-+		if (nr < buf_nr)
-+			buf[nr] = timer->it_id;
++	if (old_event && copy_to_user(old_event, &event, sizeof(event)))
++		ret = -EFAULT;
 +
-+		nr++;
-+	}
-+	spin_unlock_irq(&current->sighand->siglock);
-+
-+	if (nr > buf_nr) {
-+		kfree(buf);
-+		goto try_again;
-+	}
-+
-+	if (copy_to_user(timer_ids, buf, nr * sizeof(timer_t)))
-+		unr = -EFAULT;
-+
-+	kfree(buf);
-+out:
-+	return nr;
++	return ret;
 +}
 -- 
 1.7.6.5
