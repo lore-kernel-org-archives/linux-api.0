@@ -1,53 +1,49 @@
-From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH 1/3] posix timers: Allocate timer id per process
-Date: Fri, 15 Feb 2013 09:13:19 +0400
-Message-ID: <511DC3EF.60904@parallels.com>
-References: <511D0E50.7090505@parallels.com> <511D0E77.2090907@parallels.com> <CA+1xoqdk5PArnjSnu=7gUq_4got09a0PxBd4Yy=inezPTGsdAA@mail.gmail.com>
+From: David Herrmann <dh.herrmann@googlemail.com>
+Subject: Re: uhid: broken interface: 32/64-bit compatibility
+Date: Fri, 15 Feb 2013 12:46:55 +0100
+Message-ID: <CANq1E4T1QzOUOwWPpV6_55hVTXzXF4baShxpYaM0HNAgF0ffAg@mail.gmail.com>
+References: <20130215112911.68A98E0085@blue.fi.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+1xoqdk5PArnjSnu=7gUq_4got09a0PxBd4Yy=inezPTGsdAA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130215112911.68A98E0085@blue.fi.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Cc: linux-api@vger.kernel.org, linux-input@vger.kernel.org, Jiri Kosina <jkosina@suse.cz>, RavindranathX Doddi <ravindranathx.doddi@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, Marcel Holtmann <marcel@holtmann.org>, Johan Hedberg <johan.hedberg@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 02/15/2013 12:13 AM, Sasha Levin wrote:
-> On Thu, Feb 14, 2013 at 11:19 AM, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
->> From: Stanislav Kinsbursky <skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
->>
->> Patch replaces global idr with global hash table for posix timers and
->> makes timer ids unique not globally, but per process. Next free timer id is
->> type of integer and stored on signal struct (posix_timer_id). If free timer
->> id reaches negative value on timer creation, it will be dropped to zero and
->> -EAGAIN will be returned to user.
->>
->> Hash table has 512 slots.
->> Key is constructed as follows:
->> key = hash_32(hash_32(current->signal) ^ posix_timer_id));
->>
->> Note: with this patch, id, returned to user, is not the minimal free
->> amymore. It means, that id, returned to user space in loop, listed below, will
->> be increasing on each iteration till INT_MAX and then dropped to zero:
->>
->> while(1) {
->>         id = timer_create(...);
->>         timer_delete(id);
->> }
->>
->> Signed-off-by: Stanislav Kinsbursky <skinsbursky-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
->> Signed-off-by: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> 
-> Hi Pavel,
-> 
-> Why not use linux/hashtable.h?
+Hi Kirill
 
-Simply because this patch was just picked from the previous discussions
-as is :) I will tune it to use hashtable.h in the next iteration.
+On Fri, Feb 15, 2013 at 12:29 PM, Kirill A. Shutemov
+<kirill.shutemov@linux.intel.com> wrote:
+> Hi David and all,
+>
+> There's claim in uhid.h that the interface is "compatible even between
+> architectures". But it obviously is not true: struct uhid_create_req
+> contains pointer which breaks everything.
+>
+> The easy way to demonstrate the issue is compile uhid-example.c with -m32
+> and try to run it on 64 bit kernel. Creating of the device will fail.
 
-> 
-> Thanks,
-> Sasha
-> .
-> 
+Indeed, we missed that. We should probably also notify the HIDP
+developers as "struct hidp_connadd_req" suffers from the same
+problems. (CC'ed)
+
+> I don't see an easy way to fix this. Few options:
+>
+> 1. Replace the pointer with u64. It will fix the issue, but it breaks ABI
+>    which is never a good idea. Not sure how many users interface already
+>    has.
+
+The only users I am aware of is an HID debugging tool and experimental
+HoG Bluetooth support (bluez). Maybe Marcel or Johan can comment
+whether this is already used by bluez-5? If it is, then we shouldn't
+break ABI and go with #2+#3. Otherwise, I think changing to u64 should
+be ok.
+On the other hand, it would break any future build for older stable
+kernels so not breaking ABI is probably the best idea. Any comments? I
+can add a COMPAT fix and a comment to fix this in the next version of
+UHID_CREATE.
+
+Thanks!
+David
