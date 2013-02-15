@@ -1,48 +1,50 @@
-From: Andy Shevchenko <andy.shevchenko@gmail.com>
-Subject: Re: uhid: broken interface: 32/64-bit compatibility
-Date: Fri, 15 Feb 2013 18:40:27 +0200
-Message-ID: <CAHp75VdC7JnoYwnKRsyr7v3or167OdX8mrv00VK-0YuPhpSFaw@mail.gmail.com>
-References: <20130215112911.68A98E0085@blue.fi.intel.com>
-	<CANq1E4T1QzOUOwWPpV6_55hVTXzXF4baShxpYaM0HNAgF0ffAg@mail.gmail.com>
-	<20130215120022.GA23694@x220>
-	<20130215135141.1EFCEE0085@blue.fi.intel.com>
+From: Pedro Alves <palves-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] ptrace: add ability to retrieve signals without removing
+ them from a queue
+Date: Fri, 15 Feb 2013 18:44:51 +0000
+Message-ID: <511E8223.6010506@redhat.com>
+References: <1360768595-31943-1-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-input-owner@vger.kernel.org>
-In-Reply-To: <20130215135141.1EFCEE0085@blue.fi.intel.com>
-Sender: linux-input-owner@vger.kernel.org
-To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Cc: Johan Hedberg <johan.hedberg@gmail.com>, David Herrmann <dh.herrmann@googlemail.com>, linux-api@vger.kernel.org, linux-input@vger.kernel.org, Jiri Kosina <jkosina@suse.cz>, RavindranathX Doddi <ravindranathx.doddi@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, Marcel Holtmann <marcel@holtmann.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1360768595-31943-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-> Any comments?
+On 02/13/2013 03:16 PM, Andrey Vagin wrote:
+> This patch adds a new ptrace request PTRACE_PEEKSIGINFO.
+> 
+> This request is used to retrieve information about a signal with the
+> specified sequence number. A siginfo_t structure is copied from the child
+> to location data in the parent.
+> 
+> The low 16 bits of addr contains a sequence number of signal in a queue.
+> All other bits of addr is used for flags. Currently here is only one
+> flag PTRACE_PEEK_SHARED for dumping signals from process-wide shared
+> queue. If this flag is not set, a signal is read from a per-thread
+> queue.  A result siginfo contains a kernel part of si_code which usually
+> striped, but it's required for queuing the same siginfo back during
+> restore of pending signals.
+> 
+> If a signal with the specified sequence number doesn't exist, ptrace
+> returns ENOENT.
+> 
+> This functionality is required for checkpointing pending signals.
+> 
+> The prototype of this code was developed by Oleg Nesterov.
 
-Generic comments.  Could you use *_compat instead of  *_old_*?
-Another idea is do not touch current interface, just append new
-function and associated structure to make a smooth transition of the
-userspace stuff.
-
-What about documentation (Documentation/hid/uhid.txt)? Could you
-update it acordingly?
-
-> Subject: [PATCH] uhid: introduce new create event to fix 32/64-bit
->  compatibility issue
->
-> Current create event has pointer in payload. It causes problem with
-> 32/64-bit compatibility. In particular it's not possible to use 32-bit
-> userspace driver with 64-bit kernel.
-
-
-> This patch deprecates old create event and introduce a new one. The new
-> create event has padding for pointer on 32-bit system to extend pointer
-> correctly.
->
-> Old userspace driver binaries will use old create event. It requires
-> simple recompile to switch to new one.
-
-That's what I afraid of. Better to try to avoid any excessive
-requirement to the existing userspace.
+Not sure I'm reading the patch right, but it looks like GDB would
+be able to use this as alternative to PTRACE_GET_SIGINFO variant
+that returns the siginfo_t object in the architecture/bitness of
+the tracee, rather than the architecture of the kernel, right?
+So it no longer would need to try and replicate the kernel's
+siginfo conversions.  I wouldn't mind if this was added unconditionally
+instead of wrapped on CONFIG_CHECKPOINT_RESTORE.  We'd miss the poke
+variant, but that looks like something that could be always be added
+later.
 
 -- 
-With Best Regards,
-Andy Shevchenko
+Pedro Alves
