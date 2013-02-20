@@ -1,66 +1,41 @@
-From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH] ptrace: add ability to retrieve signals without removing
- them from a queue
-Date: Tue, 19 Feb 2013 23:47:34 +0400
-Message-ID: <5123D6D6.7010904@parallels.com>
-References: <1360768595-31943-1-git-send-email-avagin@openvz.org> <CAKgNAkicAGEkvNFnSso__wK6QKao8jyDu5yuRmeyUOeaXLGChw@mail.gmail.com> <5123BC20.9040405@parallels.com> <20130219193424.GA9606@redhat.com>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] ptrace: add ability to retrieve signals without
+	removing them from a queue
+Date: Wed, 20 Feb 2013 23:37:03 +0100
+Message-ID: <20130220223703.GB16194@redhat.com>
+References: <1360768595-31943-1-git-send-email-avagin@openvz.org> <CAKgNAkicAGEkvNFnSso__wK6QKao8jyDu5yuRmeyUOeaXLGChw@mail.gmail.com> <5123BC20.9040405@parallels.com> <20130219193424.GA9606@redhat.com> <5123D6D6.7010904@parallels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20130219193424.GA9606-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5123D6D6.7010904-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02/19/2013 11:34 PM, Oleg Nesterov wrote:
-> On 02/19, Pavel Emelyanov wrote:
->>
->> On 02/19/2013 04:15 PM, Michael Kerrisk (man-pages) wrote:
->>> On Wed, Feb 13, 2013 at 4:16 PM, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> wrote:
->>>> This patch adds a new ptrace request PTRACE_PEEKSIGINFO.
->>>>
->>>> This request is used to retrieve information about a signal with the
->>>> specified sequence number. A siginfo_t structure is copied from the child
->>>> to location data in the parent.
->>>>
->>>> The low 16 bits of addr contains a sequence number of signal in a queue:
->>>
->>> I think 16 bits is probably not enough.... Already, on the "out of the
->>> box" system that I have at hand, one can queue more than 2^16-1
->>> signals:
->>>
->>>     $ cat /proc/$$/status | grep SigQ
->>>     SigQ:	2/126065
->>
->> Yup :( Well, actually it would be enough to have only 1 bit as "flags"
->> and the rest (31 at least) for the number. But taking into account
->> Oleg's wish to have an ability to extend the amount of flags
-> 
-> I am not sure this is really needed, and we can add more PTRACE_PEEK_
-> codes later. I am fine either way, we can even add PEEK_PRIVATE/SHARED
-> right now.
-> 
-> But, given that every PEEK does list_for_each() until it finds the
-> necessary sequence number, I am wondering how this O(n**2) will work
-> if you want to dump 126065 signals ;)
+On 02/19, Pavel Emelyanov wrote:
+>
+> On 02/19/2013 11:34 PM, Oleg Nesterov wrote:
+> > But, given that every PEEK does list_for_each() until it finds the
+> > necessary sequence number, I am wondering how this O(n**2) will work
+> > if you want to dump 126065 signals ;)
+>
+> Isn't it the great reason for making the addr point to a structure, that
+> would look like
+>
+> struct siginfo_peek_arg {
+> 	unsigned flags; /* all bits but 0th, that selects between private/shared
+> 			   queues, should be zero */
+> 	unsigned int off; /* from which siginfo to start */
+> 	unsigned int nr; /* how may siginfos to take */
+> };
 
-Isn't it the great reason for making the addr point to a structure, that
-would look like
+I am fine either way, to me everything looks better than signalfd
+hacks.
 
-struct siginfo_peek_arg {
-	unsigned flags; /* all bits but 0th, that selects between private/shared
-			   queues, should be zero */
-	unsigned int off; /* from which siginfo to start */
-	unsigned int nr; /* how may siginfos to take */
-};
+But if you meant "avoid n^2", this won't help? You can't do
+copy_siginfo_to_user() under ->siglock, so you need to restart
+list_for_each() anyway.
 
-? :)
-
-> Oleg.
-> 
-> .
-
-Thanks,
-Pavel
+Oleg.
