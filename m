@@ -1,41 +1,66 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] ptrace: add ability to retrieve signals without
-	removing them from a queue
-Date: Wed, 20 Feb 2013 23:37:03 +0100
-Message-ID: <20130220223703.GB16194@redhat.com>
-References: <1360768595-31943-1-git-send-email-avagin@openvz.org> <CAKgNAkicAGEkvNFnSso__wK6QKao8jyDu5yuRmeyUOeaXLGChw@mail.gmail.com> <5123BC20.9040405@parallels.com> <20130219193424.GA9606@redhat.com> <5123D6D6.7010904@parallels.com>
+From: Matthew Helsley <matt.helsley-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/3] posix timers: Extend kernel API to report more info
+ about timers
+Date: Wed, 20 Feb 2013 17:21:29 -0800
+Message-ID: <CA+RrjuURQTCP8yMa4nWxNQg=qxxsu6vrko2UVK4f8pFYbK6SYQ@mail.gmail.com>
+References: <511D0E50.7090505@parallels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <5123D6D6.7010904-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+In-Reply-To: <511D0E50.7090505-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02/19, Pavel Emelyanov wrote:
+On Thu, Feb 14, 2013 at 8:18 AM, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+> Hi.
 >
-> On 02/19/2013 11:34 PM, Oleg Nesterov wrote:
-> > But, given that every PEEK does list_for_each() until it finds the
-> > necessary sequence number, I am wondering how this O(n**2) will work
-> > if you want to dump 126065 signals ;)
+> I'm working on the checkpoint-restore project (http://criu.org), briefly
+> it's aim is to collect information about process' state and saving it so
+> that later it is possible to recreate the processes in the very same state
+> as they were, using the collected information.
 >
-> Isn't it the great reason for making the addr point to a structure, that
-> would look like
+> One part of the task's state is the posix timers that this task has created.
+> Currently kernel doesn't provide any API for getting information about
+> what timers are currently created by process and in which state they are.
+> I'd like to extend the posix timers API to provide more information about
+> timers.
 >
-> struct siginfo_peek_arg {
-> 	unsigned flags; /* all bits but 0th, that selects between private/shared
-> 			   queues, should be zero */
-> 	unsigned int off; /* from which siginfo to start */
-> 	unsigned int nr; /* how may siginfos to take */
-> };
+> Another problem with timers is the timer ID. Currently IDs are generated
+> from global IDR and this makes it impossible to restore a timer from
+> the saved state in general, as the required ID may be already busy at the
+> time of restore.
+>
+> That said, I propose to
+>
+> 1. Change the way timer IDs are generated. This was done some time ago, so
+>    I'm just re-sending this patch;
 
-I am fine either way, to me everything looks better than signalfd
-hacks.
+Seems fine in principle. Aside: I noticed there were some
+important-looking patches to the idr usage in timer id allocation
+today...
 
-But if you meant "avoid n^2", this won't help? You can't do
-copy_siginfo_to_user() under ->siglock, so you need to restart
-list_for_each() anyway.
+> 2. Add a system call that will list timer IDs created by the calling process;
 
-Oleg.
+If timers were listed in /proc like fds then you wouldn't need this
+syscall. If we keep adding new syscalls like this CRIU will be
+needlessly x86-specific when it could have been written more portably.
+
+> 3. Add a system call that will allow to get the sigevent information about
+>    particular timer in the sigaction-like manner.
+
+You mentioned "extending the POSIX timer API". Isn't that something
+best left to standards bodies lest your changes conflict with theirs?
+Again, if this were a /proc interface you wouldn't have that issue
+(you'll have others ;)).
+
+>
+> This is actually an RFC to start discussion about how the described problems
+> can be addressed. Thus, if the approach with new system calls is not acceptable,
+> I'm OK to implement this in any other form.
+
+My preference is for "other form" for the reasons above.
+
+Cheers,
+    -Matt Helsley
