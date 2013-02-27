@@ -1,126 +1,280 @@
-From: Andrey Wagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] ptrace: add ability to retrieve signals without removing
- from a queue (v2)
-Date: Tue, 26 Feb 2013 11:33:39 +0400
-Message-ID: <CANaxB-x2uzgyd-EmhtyDcKJ6+bB1onL_ftmuZpCTLXnm5z-dcg@mail.gmail.com>
-References: <1361786813-14652-1-git-send-email-avagin@openvz.org>
-	<20130225141234.99b76738.akpm@linux-foundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH 2/2] selftest: add a test case for PTRACE_PEEKSIGINFO
+Date: Wed, 27 Feb 2013 18:37:09 +0400
+Message-ID: <1361975829-1738-2-git-send-email-avagin@openvz.org>
+References: <1361975829-1738-1-git-send-email-avagin@openvz.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20130225141234.99b76738.akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <1361975829-1738-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Pedro Alves <palves-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Pedro Alves <palves-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Andrew, thank you for the comments. I will fix them and send a new
-patch. A few comments are inline.
+* Dump signals from process-wide and per-thread queues with
+  different sizes of buffers.
+* Check error paths for buffers with restricted permissions. A part of
+  buffer or a whole buffer is for read-only.
+* Try to get nonexistent signal.
 
-2013/2/26 Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>:
-> On Mon, 25 Feb 2013 14:06:53 +0400
->> +     for (i = 0; i < arg.nr; i++) {
->> +             off = arg.off + i;
->
-> "long long" = "u64" + "int".
->
-> Wanna have a little think about what we're doing here, see if we can
-> pick the most appropriate types?
+Cc: Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Pedro Alves <palves-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+---
+ tools/testing/selftests/Makefile             |   2 +-
+ tools/testing/selftests/ptrace/Makefile      |   5 +
+ tools/testing/selftests/ptrace/peeksiginfo.c | 214 +++++++++++++++++++++++++++
+ 3 files changed, 220 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/ptrace/Makefile
+ create mode 100644 tools/testing/selftests/ptrace/peeksiginfo.c
 
-A number of signal has the type int, because the system call ptrace()
-return "int" and my interface supposed to return a number of dumped
-signals.
-"off" is signed to check on a negative value and it can not be more
-then MAX_RAM / sizeof(siginfo), so
-long long is enough. It can be changed on s64 for avoiding misleading.
-
->
-> `off' could be made local to this loop, which is a bit neater.
->
->> +             spin_lock_irq(&child->sighand->siglock);
->> +             list_for_each_entry(q, &pending->list, list) {
->> +                     if (!off--) {
->> +                             copy_siginfo(&info, &q->info);
->> +                             break;
->> +                     }
->> +             }
->> +             spin_unlock_irq(&child->sighand->siglock);
->> +
->> +             if (off >= 0)
->> +                     break;
->
-> <scratches head>
->
-> Oh I see what you did there - the user requested an entry which is
-> beyond the end of the list? A code comment would be nice.
->
-> What's the return value in this case?  "i".  So how does userspace find
-> out what happened?
-
-The request PTRACE_PEEKSIGINFO returns a number of dumped signals. If
-a signal with the specified sequence number doesn't exist, ptrace
-returns 0.
-
->
-> Please fully describe the interface so things such as this can be
-> understood.
->
->> +#ifdef CONFIG_COMPAT
->> +             if (unlikely(is_compat_task())) {
->> +                     compat_siginfo_t __user *uinfo = compat_ptr(data);
->> +
->> +                     ret = copy_siginfo_to_user32(uinfo, &info);
->> +                     if (!ret)
->> +                             ret = __put_user(info.si_code, &uinfo->si_code);
->> +             } else
->> +#endif
->> +             {
->> +                     siginfo_t __user *uinfo = (siginfo_t __user *) data;
->> +
->> +                     ret = copy_siginfo_to_user(uinfo, &info);
->> +                     if (!ret)
->> +                             ret = __put_user(info.si_code, &uinfo->si_code);
->> +             }
->> +
->> +             if (ret)
->> +                     break;
->> +
->> +             data += sizeof(siginfo_t);
->> +
->> +             if (signal_pending(current)) {
->> +                     i++;
->
-> What does the i++ do?
-
-For accounting a current siginfo. I will add a comment here.
-
->
->> +                     break;
->> +             }
->> +
->> +             cond_resched();
->> +     }
->> +
->> +     return i ? : ret;
->
-> I hate that gcc thing :(
->
-> Also, is it buggy?  `ret' might be -EFAULT here.  We appear to be using
-> read() return semantics here?
-
-I have tried to implement read() semantics here. ptrace() returns a
-number of dumped signals even if dumping of the last signal is failed.
-And it returns an error if not one signal has been dumped
-successfully.
-
-The similar logic is used in read()
-generic_file_aio_read()
-....
-                retval += desc.written;
-                if (desc.error) {
-                        retval = retval ?: desc.error;
-                        break;
-                }
-
-Thanks,
-  Andrey
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 85baf11..379ba69 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -1,4 +1,4 @@
+-TARGETS = breakpoints kcmp mqueue vm cpu-hotplug memory-hotplug
++TARGETS = breakpoints kcmp mqueue vm cpu-hotplug memory-hotplug ptrace
+ 
+ all:
+ 	for TARGET in $(TARGETS); do \
+diff --git a/tools/testing/selftests/ptrace/Makefile b/tools/testing/selftests/ptrace/Makefile
+new file mode 100644
+index 0000000..82ada21
+--- /dev/null
++++ b/tools/testing/selftests/ptrace/Makefile
+@@ -0,0 +1,5 @@
++CFLAGS += -iquote../../../../include/uapi -Wall
++peeksiginfo: peeksiginfo.c
++
++clean:
++	rm -f peeksiginfo
+diff --git a/tools/testing/selftests/ptrace/peeksiginfo.c b/tools/testing/selftests/ptrace/peeksiginfo.c
+new file mode 100644
+index 0000000..d46558b
+--- /dev/null
++++ b/tools/testing/selftests/ptrace/peeksiginfo.c
+@@ -0,0 +1,214 @@
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <signal.h>
++#include <unistd.h>
++#include <errno.h>
++#include <linux/types.h>
++#include <sys/wait.h>
++#include <sys/syscall.h>
++#include <sys/user.h>
++#include <sys/mman.h>
++
++#include "linux/ptrace.h"
++
++static int sys_rt_sigqueueinfo(pid_t tgid, int sig, siginfo_t *uinfo)
++{
++	return syscall(SYS_rt_sigqueueinfo, tgid, sig, uinfo);
++}
++
++static int sys_rt_tgsigqueueinfo(pid_t tgid, pid_t tid,
++					int sig, siginfo_t *uinfo)
++{
++	return syscall(SYS_rt_tgsigqueueinfo, tgid, tid, sig, uinfo);
++}
++
++static int sys_ptrace(int request, pid_t pid, void *addr, void *data)
++{
++	return syscall(SYS_ptrace, request, pid, addr, data);
++}
++
++#define SIGNR 10
++#define TEST_SICODE_PRIV	-1
++#define TEST_SICODE_SHARE	-2
++
++#define err(fmt, ...)						\
++		fprintf(stderr,					\
++			"Error (%s:%d): " fmt,			\
++			__FILE__, __LINE__, ##__VA_ARGS__)
++
++static int check_error_paths(pid_t child)
++{
++	struct ptrace_peeksiginfo_args arg;
++	int ret, exit_code = -1;
++	void *addr_rw, *addr_ro;
++
++	/*
++	 * Allocate two contiguous pages. The first one is for read-write,
++	 * another is for read-only.
++	 */
++	addr_rw = mmap(NULL, 2 * PAGE_SIZE, PROT_READ | PROT_WRITE,
++				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
++	if (addr_rw == MAP_FAILED) {
++		err("mmap() failed: %m\n");
++		return 1;
++	}
++
++	addr_ro = mmap(addr_rw + PAGE_SIZE, PAGE_SIZE, PROT_READ,
++			MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
++	if (addr_ro == MAP_FAILED) {
++		err("mmap() failed: %m\n");
++		goto out;
++	}
++
++	arg.nr = SIGNR;
++	arg.off = 0;
++
++	/* Unsupported flags */
++	arg.flags = ~0;
++	ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg, addr_rw);
++	if (ret != -1 || errno != EINVAL) {
++		err("sys_ptrace() returns %d (expected -1),"
++				" errno %d (expected %d): %m\n",
++				ret, errno, EINVAL);
++		goto out;
++	}
++	arg.flags = 0;
++
++	/* A part of the buffer is read-only */
++	ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg,
++					addr_ro - sizeof(siginfo_t) * 2);
++	if (ret != 2) {
++		err("sys_ptrace() returns %d (expected 2): %m\n", ret);
++		goto out;
++	}
++
++	/* Read-only buffer */
++	ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg, addr_ro);
++	if (ret != -1 && errno != EFAULT) {
++		err("sys_ptrace() returns %d (expected -1),"
++				" errno %d (expected %d): %m\n",
++				ret, errno, EFAULT);
++		goto out;
++	}
++
++	exit_code = 0;
++out:
++	munmap(addr_rw, 2 * PAGE_SIZE);
++	return exit_code;
++}
++
++int check_direct_path(pid_t child, int shared, int nr)
++{
++	struct ptrace_peeksiginfo_args arg = {.flags = 0, .nr = nr, .off = 0};
++	int i, j, ret, exit_code = -1;
++	siginfo_t siginfo[SIGNR];
++	int si_code;
++
++	if (shared == 1) {
++		arg.flags = PTRACE_PEEKSIGINFO_SHARED;
++		si_code = TEST_SICODE_SHARE;
++	} else {
++		arg.flags = 0;
++		si_code = TEST_SICODE_PRIV;
++	}
++
++	for (i = 0; i < SIGNR; ) {
++		arg.off = i;
++		ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg, siginfo);
++		if (ret == -1) {
++			err("ptrace() failed: %m\n");
++			goto out;
++		}
++
++		if (ret == 0)
++			break;
++
++		for (j = 0; j < ret; j++, i++) {
++			if (siginfo[j].si_code == si_code &&
++			    siginfo[j].si_int == i)
++				continue;
++
++			err("%d: Wrong siginfo i=%d si_code=%d si_int=%d\n",
++			     shared, i, siginfo[j].si_code, siginfo[j].si_int);
++			goto out;
++		}
++	}
++
++	if (i != SIGNR) {
++		err("Only %d signals were read\n", i);
++		goto out;
++	}
++
++	exit_code = 0;
++out:
++	return exit_code;
++}
++
++int main(int argc, char *argv[])
++{
++	siginfo_t siginfo[SIGNR];
++	int i, exit_code = 1;
++	sigset_t blockmask;
++	pid_t child;
++
++	sigemptyset(&blockmask);
++	sigaddset(&blockmask, SIGRTMIN);
++	sigprocmask(SIG_BLOCK, &blockmask, NULL);
++
++	child = fork();
++	if (child == -1) {
++		err("fork() failed: %m");
++		return 1;
++	} else if (child == 0) {
++		pid_t ppid = getppid();
++		while (1) {
++			if (ppid != getppid())
++				break;
++			sleep(1);
++		}
++		return 1;
++	}
++
++	/* Send signals in process-wide and per-thread queues */
++	for (i = 0; i < SIGNR; i++) {
++		siginfo->si_code = TEST_SICODE_SHARE;
++		siginfo->si_int = i;
++		sys_rt_sigqueueinfo(child, SIGRTMIN, siginfo);
++
++		siginfo->si_code = TEST_SICODE_PRIV;
++		siginfo->si_int = i;
++		sys_rt_tgsigqueueinfo(child, child, SIGRTMIN, siginfo);
++	}
++
++	if (sys_ptrace(PTRACE_ATTACH, child, NULL, NULL) == -1)
++		return 1;
++
++	waitpid(child, NULL, 0);
++
++	/* Dump signals one by one*/
++	if (check_direct_path(child, 0, 1))
++		goto out;
++	/* Dump all signals for one call */
++	if (check_direct_path(child, 0, SIGNR))
++		goto out;
++
++	/*
++	 * Dump signal from the process-wide queue.
++	 * The number of signals is not multible to the buffer size
++	 */
++	if (check_direct_path(child, 1, 3))
++		goto out;
++
++	if (check_error_paths(child))
++		goto out;
++
++	printf("PASS\n");
++	exit_code = 0;
++out:
++	if (sys_ptrace(PTRACE_KILL, child, NULL, NULL) == -1)
++		return 1;
++
++	waitpid(child, NULL, 0);
++
++	return exit_code;
++}
+-- 
+1.7.11.7
