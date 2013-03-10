@@ -1,49 +1,27 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH 1/3] posix timers: Allocate timer id per process (v2)
-Date: Fri, 8 Mar 2013 13:50:28 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1303081349020.22263@ionos>
-References: <512665BA.9040802@parallels.com> <512665E1.4040800@parallels.com>
+From: Germaine Sandoval <gsandoval-U2FVTXlmoeo@public.gmane.org>
+Subject: Greetings from George Daniels
+Date: Sun, 10 Mar 2013 15:42:36 -0600 (MDT)
+Message-ID: <588381949.726767.1362951756009.JavaMail.root__30906.6642811105$1362952309$gmane$org@luna.edu>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <512665E1.4040800-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matthew Helsley <matt.helsley-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Pavel,
 
-On Thu, 21 Feb 2013, Pavel Emelyanov wrote:
 
-> Patch replaces global idr with global hash table for posix timers and
-> makes timer ids unique not globally, but per process. Next free timer id is
-> type of integer and stored on signal struct (posix_timer_id). If free timer
-> id reaches negative value on timer creation, it will be dropped to zero and
-> -EAGAIN will be returned to user.
-> 
-> Hash table has 512 slots.
-> Key is constructed as follows:
-> key = hash_32(hash_32(current->signal) ^ posix_timer_id));
-> 
-> Note: with this patch, id, returned to user, is not the minimal free
-> amymore. It means, that id, returned to user space in loop, listed below,
-> will be increasing on each iteration till INT_MAX and then dropped to zero:
-> 
-> while(1) {
-> 	id = timer_create(...);
-> 	timer_delete(id);
-> }
-> 
-> In this version the helpers from include/linux/hashtable.h are used
-> instead of hand-made hash-table.
+Greetings from George Daniels
 
-I think the patches are ready to go, though the changelog needs quite
-some care.
+I am George Daniels, a Banker and credit system programmer (HSBC bank). 
+I saw your email address while browsing through  the bank D.T.C Screen in my office 
+yesterday so I decided to use this very chance to know you. I believe 
+we should use every opportunity to know each other better. However, I am contacting you 
+for obvious reason which you will understand. 
 
-It's explaining what the patch does and not why. Can you please
-rework?
+I am sending this mail just to know if this email address is OK, 
+reply me back so that I will send  more details to you. 
+I have a very important thing to discuss with you, I look forward to receiving your response at 
+georgedaniels-VpKtJLNTnGPuFKmmi/icCA@public.gmane.org Have a pleasant day.
 
-Thanks,
-
-	tglx
+George Daniels
