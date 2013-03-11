@@ -1,27 +1,34 @@
-From: Germaine Sandoval <gsandoval-U2FVTXlmoeo@public.gmane.org>
-Subject: Greetings from George Daniels
-Date: Sun, 10 Mar 2013 15:42:36 -0600 (MDT)
-Message-ID: <588381949.726767.1362951756009.JavaMail.root__30906.6642811105$1362952309$gmane$org@luna.edu>
+From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: [PATCH 0/3] posix timers: Extend kernel API to report more info about
+ timers (v3)
+Date: Mon, 11 Mar 2013 13:11:53 +0400
+Message-ID: <513D9FD9.6020507@parallels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matthew Helsley <matt.helsley-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi.
 
+Currently kernel doesn't provide any API for getting information about
+what timers are currently created by process and in which state they 
+are. Also, the way timer IDs are generated makes it impossible to create
+a timer with any desired ID. Both facilities are very very tempting by
+the checkpoint-restore project.
 
-Greetings from George Daniels
+That said, this series fixes posix timers API in this way:
 
-I am George Daniels, a Banker and credit system programmer (HSBC bank). 
-I saw your email address while browsing through  the bank D.T.C Screen in my office 
-yesterday so I decided to use this very chance to know you. I believe 
-we should use every opportunity to know each other better. However, I am contacting you 
-for obvious reason which you will understand. 
+1. it makes timers IDs generation per-signal_struct to allow for
+   recreation of a timer with desired ID;
+2. it adds per-task proc file where all timers created by it are
+   listed.
 
-I am sending this mail just to know if this email address is OK, 
-reply me back so that I will send  more details to you. 
-I have a very important thing to discuss with you, I look forward to receiving your response at 
-georgedaniels-VpKtJLNTnGPuFKmmi/icCA@public.gmane.org Have a pleasant day.
+This v3 series is ported on v3.9-rc2 and patches' changelogs are fixed
+according to Thomas' feedback to contain info why the change is required.
 
-George Daniels
+Thanks,
+Pavel
