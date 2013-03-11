@@ -1,7 +1,7 @@
 From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: [PATCH 1/3] posix timers: Allocate timer id per process (v2)
-Date: Mon, 11 Mar 2013 13:12:21 +0400
-Message-ID: <513D9FF5.9010004@parallels.com>
+Subject: [PATCH 2/3] posix-timers: Introduce /proc/<pid>/timers file
+Date: Mon, 11 Mar 2013 13:12:45 +0400
+Message-ID: <513DA00D.6070009@parallels.com>
 References: <513D9FD9.6020507@parallels.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
@@ -13,219 +13,140 @@ To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matthew Helsley <matt.helsley-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Currently kernel generates IDs for posix timers in a global manner --
-there's a kernel-wide IDR tree from which IDs are created. This makes
-it impossible to recreate a timer with a desired ID (in particulat
-this is done by the CRIU checkpoint-restore project) -- since these
-IDs are global it may happen, that at the time we recreate a timer, the
-ID we want for it is already busy by some other timer.
+Currently kernel doesn't provide any API for getting info about
+what posix timers are configured by tasks. It's implied, that
+task, that configured some timers, knows what it did. However,
+for external tools it's impossible to get this information. In
+particular, this is critical for checkpoint-restore project to
+have this info.
 
-In order to address this, I'd like to replace the mentioned IDR tree
-with global hash table for timers and makes timer IDs unique per
-signal_struct (to which timers are linked anyway). With this, two
-timers belonging to different tasks may have equal IDs and we can
-recreate either of them with ID we want.
+That said, the proposal is to introduce the per-pid proc file
+with information about posix timers. Since these timers are shared
+between threads, this file is present on tgid level only, no such
+thing in tid subdirs.
+
+The file format is expected to be the "/proc/<pid>/smaps"-like,
+i.e. each timer will occupy seveal lines to allow for future
+extending.
+
+Each new timer entry starts with the
+
+ID: <number>
+
+line which is added by this patch.
 
 Signed-off-by: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 ---
- include/linux/posix-timers.h |    1 +
- include/linux/sched.h        |    3 +-
- kernel/posix-timers.c        |  106 +++++++++++++++++++++++++++---------------
- 3 files changed, 72 insertions(+), 38 deletions(-)
+ fs/proc/base.c |   83 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 83 insertions(+), 0 deletions(-)
 
-diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
-index 042058f..60bac69 100644
---- a/include/linux/posix-timers.h
-+++ b/include/linux/posix-timers.h
-@@ -55,6 +55,7 @@ struct cpu_timer_list {
- /* POSIX.1b interval timer structure. */
- struct k_itimer {
- 	struct list_head list;		/* free/ allocate list */
-+	struct hlist_node t_hash;
- 	spinlock_t it_lock;
- 	clockid_t it_clock;		/* which timer type */
- 	timer_t it_id;			/* timer id */
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index d35d2b6..d13341b 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -526,7 +526,8 @@ struct signal_struct {
- 	unsigned int		has_child_subreaper:1;
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 69078c7..01def9f 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -86,6 +86,7 @@
+ #include <linux/fs_struct.h>
+ #include <linux/slab.h>
+ #include <linux/flex_array.h>
++#include <linux/posix-timers.h>
+ #ifdef CONFIG_HARDWALL
+ #include <asm/hardwall.h>
+ #endif
+@@ -2013,6 +2014,85 @@ static const struct file_operations proc_map_files_operations = {
+ 	.llseek		= default_llseek,
+ };
  
- 	/* POSIX.1b Interval Timers */
--	struct list_head posix_timers;
-+	int			posix_timer_id;
-+	struct list_head	posix_timers;
- 
- 	/* ITIMER_REAL timer for the process */
- 	struct hrtimer real_timer;
-diff --git a/kernel/posix-timers.c b/kernel/posix-timers.c
-index 6edbb2c..4625a64 100644
---- a/kernel/posix-timers.c
-+++ b/kernel/posix-timers.c
-@@ -40,38 +40,31 @@
- #include <linux/list.h>
- #include <linux/init.h>
- #include <linux/compiler.h>
--#include <linux/idr.h>
-+#include <linux/hash.h>
- #include <linux/posix-clock.h>
- #include <linux/posix-timers.h>
- #include <linux/syscalls.h>
- #include <linux/wait.h>
- #include <linux/workqueue.h>
- #include <linux/export.h>
-+#include <linux/hashtable.h>
- 
- /*
-- * Management arrays for POSIX timers.	 Timers are kept in slab memory
-- * Timer ids are allocated by an external routine that keeps track of the
-- * id and the timer.  The external interface is:
-- *
-- * void *idr_find(struct idr *idp, int id);           to find timer_id <id>
-- * int idr_get_new(struct idr *idp, void *ptr);       to get a new id and
-- *                                                    related it to <ptr>
-- * void idr_remove(struct idr *idp, int id);          to release <id>
-- * void idr_init(struct idr *idp);                    to initialize <idp>
-- *                                                    which we supply.
-- * The idr_get_new *may* call slab for more memory so it must not be
-- * called under a spin lock.  Likewise idr_remore may release memory
-- * (but it may be ok to do this under a lock...).
-- * idr_find is just a memory look up and is quite fast.  A -1 return
-- * indicates that the requested id does not exist.
-+ * Management arrays for POSIX timers. Timers are now kept in static hash table
-+ * with 512 entries.
-+ * Timer ids are allocated by local routine, which selects proper hash head by
-+ * key, constructed from current->signal address and per signal struct counter.
-+ * This keeps timer ids unique per process, but now they can intersect between
-+ * processes.
-  */
- 
- /*
-  * Lets keep our timers in a slab cache :-)
-  */
- static struct kmem_cache *posix_timers_cache;
--static struct idr posix_timers_id;
--static DEFINE_SPINLOCK(idr_lock);
++struct timers_private {
++	struct pid *pid;
++	struct task_struct *task;
++	struct sighand_struct *sighand;
++	unsigned long flags;
++};
 +
-+static DEFINE_HASHTABLE(posix_timers_hashtable, 9);
-+static DEFINE_SPINLOCK(hash_lock);
- 
- /*
-  * we assume that the new SIGEV_THREAD_ID shares no bits with the other
-@@ -152,6 +145,57 @@ static struct k_itimer *__lock_timer(timer_t timer_id, unsigned long *flags);
- 	__timr;								   \
- })
- 
-+static int hash(struct signal_struct *sig, unsigned int nr)
++static void *timers_start(struct seq_file *m, loff_t *pos)
 +{
-+	return hash_32(hash32_ptr(sig) ^ nr, HASH_BITS(posix_timers_hashtable));
++	struct timers_private *tp = m->private;
++
++	tp->task = get_pid_task(tp->pid, PIDTYPE_PID);
++	if (!tp->task)
++		return ERR_PTR(-ESRCH);
++
++	tp->sighand = lock_task_sighand(tp->task, &tp->flags);
++	if (!tp->sighand)
++		return ERR_PTR(-ESRCH);
++
++	return seq_list_start(&tp->task->signal->posix_timers, *pos);
 +}
 +
-+static struct k_itimer *__posix_timers_find(struct hlist_head *head,
-+					    struct signal_struct *sig,
-+					    timer_t id)
++static void *timers_next(struct seq_file *m, void *v, loff_t *pos)
 +{
-+	struct hlist_node *node;
++	struct timers_private *tp = m->private;
++	return seq_list_next(v, &tp->task->signal->posix_timers, pos);
++}
++
++static void timers_stop(struct seq_file *m, void *v)
++{
++	struct timers_private *tp = m->private;
++
++	if (tp->sighand) {
++		unlock_task_sighand(tp->task, &tp->flags);
++		tp->sighand = NULL;
++	}
++
++	if (tp->task) {
++		put_task_struct(tp->task);
++		tp->task = NULL;
++	}
++}
++
++static int show_timer(struct seq_file *m, void *v)
++{
 +	struct k_itimer *timer;
 +
-+	hlist_for_each_entry_rcu(timer, head, t_hash) {
-+		if ((timer->it_signal == sig) && (timer->it_id == id))
-+			return timer;
-+	}
-+	return NULL;
++	timer = list_entry((struct list_head *)v, struct k_itimer, list);
++	seq_printf(m, "ID: %d\n", timer->it_id);
++
++	return 0;
 +}
 +
-+static struct k_itimer *posix_timer_by_id(timer_t id)
++static const struct seq_operations proc_timers_seq_ops = {
++	.start	= timers_start,
++	.next	= timers_next,
++	.stop	= timers_stop,
++	.show	= show_timer,
++};
++
++static int proc_timers_open(struct inode *inode, struct file *file)
 +{
-+	struct signal_struct *sig = current->signal;
-+	struct hlist_head *head = &posix_timers_hashtable[hash(sig, id)];
++	struct timers_private *tp;
 +
-+	return __posix_timers_find(head, sig, id);
++	tp = __seq_open_private(file, &proc_timers_seq_ops,
++			sizeof(struct timers_private));
++	if (!tp)
++		return -ENOMEM;
++
++	tp->pid = proc_pid(inode);
++	return 0;
 +}
 +
-+static int posix_timer_add(struct k_itimer *timer)
-+{
-+	struct signal_struct *sig = current->signal;
-+	int first_free_id = sig->posix_timer_id;
-+	struct hlist_head *head;
-+	int ret = -ENOENT;
-+
-+	do {
-+		spin_lock(&hash_lock);
-+		head = &posix_timers_hashtable[hash(sig, sig->posix_timer_id)];
-+		if (!__posix_timers_find(head, sig, sig->posix_timer_id)) {
-+			hlist_add_head_rcu(&timer->t_hash, head);
-+			ret = sig->posix_timer_id;
-+		}
-+		if (++sig->posix_timer_id < 0)
-+			sig->posix_timer_id = 0;
-+		if ((sig->posix_timer_id == first_free_id) && (ret == -ENOENT))
-+			/* Loop over all possible ids completed */
-+			ret = -EAGAIN;
-+		spin_unlock(&hash_lock);
-+	} while (ret == -ENOENT);
-+	return ret;
-+}
-+
- static inline void unlock_timer(struct k_itimer *timr, unsigned long flags)
- {
- 	spin_unlock_irqrestore(&timr->it_lock, flags);
-@@ -282,7 +326,6 @@ static __init int init_posix_timers(void)
- 	posix_timers_cache = kmem_cache_create("posix_timers_cache",
- 					sizeof (struct k_itimer), 0, SLAB_PANIC,
- 					NULL);
--	idr_init(&posix_timers_id);
- 	return 0;
- }
++static const struct file_operations proc_timers_operations = {
++	.open		= proc_timers_open,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= seq_release_private,
++};
+ #endif /* CONFIG_CHECKPOINT_RESTORE */
  
-@@ -504,9 +547,9 @@ static void release_posix_timer(struct k_itimer *tmr, int it_id_set)
- {
- 	if (it_id_set) {
- 		unsigned long flags;
--		spin_lock_irqsave(&idr_lock, flags);
--		idr_remove(&posix_timers_id, tmr->it_id);
--		spin_unlock_irqrestore(&idr_lock, flags);
-+		spin_lock_irqsave(&hash_lock, flags);
-+		hlist_del_rcu(&tmr->t_hash);
-+		spin_unlock_irqrestore(&hash_lock, flags);
- 	}
- 	put_pid(tmr->it_pid);
- 	sigqueue_free(tmr->sigq);
-@@ -552,22 +595,11 @@ SYSCALL_DEFINE3(timer_create, const clockid_t, which_clock,
- 		return -EAGAIN;
+ static struct dentry *proc_pident_instantiate(struct inode *dir,
+@@ -2583,6 +2663,9 @@ static const struct pid_entry tgid_base_stuff[] = {
+ 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
+ 	REG("projid_map", S_IRUGO|S_IWUSR, proc_projid_map_operations),
+ #endif
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	REG("timers",	  S_IRUGO, proc_timers_operations),
++#endif
+ };
  
- 	spin_lock_init(&new_timer->it_lock);
--
--	idr_preload(GFP_KERNEL);
--	spin_lock_irq(&idr_lock);
--	error = idr_alloc(&posix_timers_id, new_timer, 0, 0, GFP_NOWAIT);
--	spin_unlock_irq(&idr_lock);
--	idr_preload_end();
--	if (error < 0) {
--		/*
--		 * Weird looking, but we return EAGAIN if the IDR is
--		 * full (proper POSIX return value for this)
--		 */
--		if (error == -ENOSPC)
--			error = -EAGAIN;
-+	new_timer_id = posix_timer_add(new_timer);
-+	if (new_timer_id < 0) {
-+		error = new_timer_id;
- 		goto out;
- 	}
--	new_timer_id = error;
- 
- 	it_id_set = IT_ID_SET;
- 	new_timer->it_id = (timer_t) new_timer_id;
-@@ -645,7 +677,7 @@ static struct k_itimer *__lock_timer(timer_t timer_id, unsigned long *flags)
- 		return NULL;
- 
- 	rcu_read_lock();
--	timr = idr_find(&posix_timers_id, (int)timer_id);
-+	timr = posix_timer_by_id(timer_id);
- 	if (timr) {
- 		spin_lock_irqsave(&timr->it_lock, *flags);
- 		if (timr->it_signal == current->signal) {
+ static int proc_tgid_base_readdir(struct file * filp,
 -- 
 1.7.6.5
