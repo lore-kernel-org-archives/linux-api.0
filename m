@@ -1,7 +1,7 @@
 From: "CHEVROLET MOTOR COMPANY" <info-rd0e0RNjLLTby3iVrkZq2A@public.gmane.org>
 Subject: YOU HAVE WON
-Date: Sun, 9 Jun 2013 00:07:39 +0300 (EEST)
-Message-ID: <42382.10.66.0.22.1370725659.squirrel@sjelectrica.ro>
+Date: Sun, 9 Jun 2013 00:07:29 +0300 (EEST)
+Message-ID: <42371.10.66.0.22.1370725649.squirrel@sjelectrica.ro>
 Reply-To: chevrolet50-PkbjNfxxIAQqdlJmJB21zg@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
