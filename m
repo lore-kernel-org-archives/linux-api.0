@@ -1,349 +1,107 @@
-From: "Lee, Jae-Hong" <pyrasis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: =?UTF-8?q?=5BPATCH=5D=20Documentation/ko=5FKR=3A=20fix=20minor=20typos/spelling?=
-Date: Wed, 31 Jul 2013 12:39:17 +0900
-Message-ID: <1375241957-2841-1-git-send-email-pyrasis@gmail.com>
+From: Rich Felker <dalias@aerifal.cx>
+Subject: Request for comments: reserving a value for O_SEARCH and O_EXEC
+Date: Mon, 5 Aug 2013 18:25:44 -0400
+Message-ID: <20130805222544.GA19168@brightrain.aerifal.cx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Lee, Jae-Hong" <pyrasis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-41782-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-##L=##H@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+Content-Disposition: inline
+To: linux-api@vger.kernel.org
+Cc: "Joseph S. Myers" <joseph@codesourcery.com>, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
-=46rom: "Lee, Jae-Hong" <pyrasis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Hi,
 
- * word spacing
- * unfaithful translations
- * typos and spelling
+[I'm resending this to linux-api instead of linux-kernel on the advice
+of Joseph Myers on libc-alpha. Please see the link to the libc-alpha
+thread at the bottom of this message for discussion that has already
+taken place.]
 
-Signed-off-by: Lee, Jae-Hong <pyrasis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- Documentation/ko_KR/HOWTO                   |   25 +++++++++++++------=
-------
- Documentation/ko_KR/stable_api_nonsense.txt |    6 +++---
- 2 files changed, 16 insertions(+), 15 deletions(-)
+At present, one of the few interface-level conformance issues for
+Linux against POSIX 2008 is lack of O_SEARCH and O_EXEC. I am trying
+to get full, conforming support for them both into musl libc (for
+which I am the maintainer) and glibc (see the libc-alpha post[1]).
+At this point, I believe it is possible to do so with no changes at
+the kernel level, using O_PATH and a moderate amount of
+userspace-level emulation where O_PATH semantics are lacking. What
+we're missing, however, is a reserved O_ACCMODE value for O_SEARCH and
+O_EXEC (it can be the same for both). Using O_PATH directly is not an
+option because the semantics for O_PATH|O_NOFOLLOW differ from the
+POSIX semantics for O_SEARCH|O_NOFOLLOW and O_EXEC|O_NOFOLLOW:
 
-diff --git a/Documentation/ko_KR/HOWTO b/Documentation/ko_KR/HOWTO
-index ab5189a..6bf4832 100644
---- a/Documentation/ko_KR/HOWTO
-+++ b/Documentation/ko_KR/HOWTO
-@@ -182,8 +182,8 @@ Documentation/DocBook/ =EB=94=94=EB=A0=89=ED=86=A0=EB=
-=A6=AC =EB=82=B4=EC=97=90=EC=84=9C =EB=A7=8C=EB=93=A4=EC=96=B4=EC=A7=80=
-=EB=A9=B0 PDF, Postscript, H
- =ED=94=84=EB=A1=9C=EC=A0=9D=ED=8A=B8=EB=A5=BC =EB=B4=90=EC=95=BC =ED=95=
-=9C=EB=8B=A4.
-     http://kernelnewbies.org
- =EA=B7=B8=EA=B3=B3=EC=9D=80 =EA=B1=B0=EC=9D=98 =EB=AA=A8=EB=93=A0 =EC=A2=
-=85=EB=A5=98=EC=9D=98 =EA=B8=B0=EB=B3=B8=EC=A0=81=EC=9D=B8 =EC=BB=A4=EB=
-=84=90 =EA=B0=9C=EB=B0=9C =EC=A7=88=EB=AC=B8=EB=93=A4(=EC=A7=88=EB=AC=B8=
-=ED=95=98=EA=B8=B0 =EC=A0=84=EC=97=90 =EB=A8=BC=EC=A0=80
--=EC=95=84=EC=B9=B4=EC=9D=B4=EB=B8=8C=EB=A5=BC =EC=B0=BE=EC=95=84=EB=B4=
-=90=EB=9D=BC. =EA=B3=BC=EA=B1=B0=EC=97=90 =EC=9D=B4=EB=AF=B8 =EB=8B=B5=EB=
-=B3=80=EB=90=98=EC=97=88=EC=9D=84 =EC=88=98=EB=8F=84 =EC=9E=88=EB=8B=A4=
-)=EC=9D=84 =ED=95=A0=EC=88=98=EC=9E=88=EB=8A=94 =EB=8F=84=EC=9B=80=EC=9D=
-=B4
--=EB=90=A0=EB=A7=8C=ED=95=9C =EB=A9=94=EC=9D=BC=EB=A7=81 =EB=A6=AC=EC=8A=
-=A4=ED=8A=B8=EA=B0=80 =EC=9E=88=EB=8B=A4. =EB=98=90=ED=95=9C =EC=8B=A4=EC=
-=8B=9C=EA=B0=84=EC=9C=BC=EB=A1=9C =EC=A7=88=EB=AC=B8 =ED=95=A0=EC=88=98=
- =EC=9E=88=EB=8A=94 IRC =EC=B1=84=EB=84=90=EB=8F=84
-+=EC=95=84=EC=B9=B4=EC=9D=B4=EB=B8=8C=EB=A5=BC =EC=B0=BE=EC=95=84=EB=B4=
-=90=EB=9D=BC. =EA=B3=BC=EA=B1=B0=EC=97=90 =EC=9D=B4=EB=AF=B8 =EB=8B=B5=EB=
-=B3=80=EB=90=98=EC=97=88=EC=9D=84 =EC=88=98=EB=8F=84 =EC=9E=88=EB=8B=A4=
-)=EC=9D=84 =ED=95=A0 =EC=88=98=EC=9E=88=EB=8A=94 =EB=8F=84=EC=9B=80=EC=9D=
-=B4
-+=EB=90=A0=EB=A7=8C=ED=95=9C =EB=A9=94=EC=9D=BC=EB=A7=81 =EB=A6=AC=EC=8A=
-=A4=ED=8A=B8=EA=B0=80 =EC=9E=88=EB=8B=A4. =EB=98=90=ED=95=9C =EC=8B=A4=EC=
-=8B=9C=EA=B0=84=EC=9C=BC=EB=A1=9C =EC=A7=88=EB=AC=B8 =ED=95=A0 =EC=88=98=
- =EC=9E=88=EB=8A=94 IRC =EC=B1=84=EB=84=90=EB=8F=84
- =EA=B0=80=EC=A7=80=EA=B3=A0 =EC=9E=88=EC=9C=BC=EB=A9=B0 =EB=A6=AC=EB=88=
-=85=EC=8A=A4 =EC=BB=A4=EB=84=90 =EA=B0=9C=EB=B0=9C=EC=9D=84 =EB=B0=B0=EC=
-=9A=B0=EB=8A=94 =EB=8D=B0 =EC=9C=A0=EC=9A=A9=ED=95=9C =EB=AC=B8=EC=84=9C=
-=EB=93=A4=EC=9D=84 =EB=B3=B4=EC=9C=A0=ED=95=98=EA=B3=A0 =EC=9E=88=EB=8B=
-=A4.
-=20
- =EC=9B=B9=EC=82=AC=EC=9D=B4=ED=8A=B8=EB=8A=94 =EC=BD=94=EB=93=9C=EA=B5=
-=AC=EC=84=B1, =EC=84=9C=EB=B8=8C=EC=8B=9C=EC=8A=A4=ED=85=9C=EB=93=A4, =EA=
-=B7=B8=EB=A6=AC=EA=B3=A0 =ED=98=84=EC=9E=AC =ED=94=84=EB=A1=9C=EC=A0=9D=
-=ED=8A=B8=EB=93=A4
-@@ -245,7 +245,7 @@ Documentation/DocBook/ =EB=94=94=EB=A0=89=ED=86=A0=EB=
-=A6=AC =EB=82=B4=EC=97=90=EC=84=9C =EB=A7=8C=EB=93=A4=EC=96=B4=EC=A7=80=
-=EB=A9=B0 PDF, Postscript, H
-     =EA=B2=83=EC=9D=84 =EA=B8=B0=EC=96=B5=ED=95=B4=EB=9D=BC. =EC=99=9C=
-=EB=83=90=ED=95=98=EB=A9=B4 =EB=B3=80=EA=B2=BD=EC=9D=B4 =EC=9E=90=EC=B2=
-=B4=EB=82=B4=EC=97=90=EC=84=9C=EB=A7=8C =EB=B0=9C=EC=83=9D=ED=95=98=EA=B3=
-=A0 =EC=B6=94=EA=B0=80=EB=90=9C =EC=BD=94=EB=93=9C=EA=B0=80
-     =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=84 =EC=99=B8=EB=B6=80=EC=9D=98 =EB=
-=8B=A4=EB=A5=B8 =EB=B6=80=EB=B6=84=EC=97=90=EB=8A=94 =EC=98=81=ED=96=A5=
-=EC=9D=84 =EC=A3=BC=EC=A7=80 =EC=95=8A=EC=9C=BC=EB=AF=80=EB=A1=9C =EA=B7=
-=B8=EB=9F=B0 =EB=B3=80=EA=B2=BD=EC=9D=80
-     =ED=9A=8C=EA=B7=80(=EC=97=AD=EC=9E=90=EC=A3=BC: =EC=9D=B4=EC=A0=84=
-=EC=97=90=EB=8A=94 =EC=A1=B4=EC=9E=AC=ED=95=98=EC=A7=80 =EC=95=8A=EC=95=
-=98=EC=A7=80=EB=A7=8C =EC=83=88=EB=A1=9C=EC=9A=B4 =EA=B8=B0=EB=8A=A5=EC=
-=B6=94=EA=B0=80=EB=82=98 =EB=B3=80=EA=B2=BD=EC=9C=BC=EB=A1=9C =EC=9D=B8=
-=ED=95=B4
--		=EC=83=9D=EA=B2=A8=EB=82=9C =EB=B2=84=EA=B7=B8)=EB=A5=BC =EC=9D=BC=EC=
-=9C=BC=ED=82=AC =EB=A7=8C=ED=95=9C =EC=9C=84=ED=97=98=EC=9D=84 =EA=B0=80=
-=EC=A7=80=EA=B3=A0 =EC=9E=88=EC=A7=80 =EC=95=8A=EA=B8=B0 =EB=95=8C=EB=AC=
-=B8=EC=9D=B4=EB=8B=A4. -rc1=EC=9D=B4
-+    =EC=83=9D=EA=B2=A8=EB=82=9C =EB=B2=84=EA=B7=B8)=EB=A5=BC =EC=9D=BC=
-=EC=9C=BC=ED=82=AC =EB=A7=8C=ED=95=9C =EC=9C=84=ED=97=98=EC=9D=84 =EA=B0=
-=80=EC=A7=80=EA=B3=A0 =EC=9E=88=EC=A7=80 =EC=95=8A=EA=B8=B0 =EB=95=8C=EB=
-=AC=B8=EC=9D=B4=EB=8B=A4. -rc1=EC=9D=B4
-     =EB=B0=B0=ED=8F=AC=EB=90=9C =EC=9D=B4=ED=9B=84=EC=97=90 git=EB=A5=BC=
- =EC=82=AC=EC=9A=A9=ED=95=98=EC=97=AC =ED=8C=A8=EC=B9=98=EB=93=A4=EC=9D=
-=84 Linus=EC=97=90=EA=B2=8C =EB=B3=B4=EB=82=BC=EC=88=98 =EC=9E=88=EC=A7=
-=80=EB=A7=8C =ED=8C=A8=EC=B9=98=EB=93=A4=EC=9D=80
-     =EA=B3=B5=EC=8B=9D=EC=A0=81=EC=9D=B8 =EB=A9=94=EC=9D=BC=EB=A7=81 =EB=
-=A6=AC=EC=8A=A4=ED=8A=B8=EB=A1=9C =EB=B3=B4=EB=82=B4=EC=84=9C =EA=B2=80=
-=ED=86=A0=EB=A5=BC =EB=B0=9B=EC=9D=84 =ED=95=84=EC=9A=94=EA=B0=80 =EC=9E=
-=88=EB=8B=A4.
-   - =EC=83=88=EB=A1=9C=EC=9A=B4 -rc=EB=8A=94 Linus=EA=B0=80 =ED=98=84=EC=
-=9E=AC git tree=EA=B0=80 =ED=85=8C=EC=8A=A4=ED=8A=B8 =ED=95=98=EA=B8=B0=
-=EC=97=90 =EC=B6=A9=EB=B6=84=ED=9E=88 =EC=95=88=EC=A0=95=EB=90=9C =EC=83=
-=81=ED=83=9C=EC=97=90
-@@ -455,7 +455,7 @@ bugme-janitor =EB=A9=94=EC=9D=BC=EB=A7=81 =EB=A6=AC=
-=EC=8A=A4=ED=8A=B8(bugzilla=EC=97=90 =EB=AA=A8=EB=93=A0 =EB=B3=80=ED=99=
-=94=EB=93=A4=EC=9D=B4 =EC=97=AC=EA=B8=B0=EC=84=9C =EB=A9=94
-  - =EC=9D=98=EA=B2=AC
-  - =EB=B3=80=EA=B2=BD=EC=9D=84 =EC=9C=84=ED=95=9C =EC=9A=94=EA=B5=AC
-  - =EB=8B=B9=EC=9C=84=EC=84=B1=EC=9D=84 =EC=9C=84=ED=95=9C =EC=9A=94=EA=
-=B5=AC
-- - =EA=B3=A0=EC=9A=94
-+ - =EC=B9=A8=EB=AC=B5
-=20
- =EA=B8=B0=EC=96=B5=ED=95=98=EB=9D=BC. =EC=9D=B4=EA=B2=83=EB=93=A4=EC=9D=
-=80 =EC=97=AC=EB=9F=AC=EB=B6=84=EC=9D=98 =ED=8C=A8=EC=B9=98=EA=B0=80 =EC=
-=BB=A4=EB=84=90=EB=A1=9C =EB=93=A4=EC=96=B4=EA=B0=80=EA=B8=B0 =EC=9C=84=
-=ED=95=9C =EA=B3=BC=EC=A0=95=EC=9D=B4=EB=8B=A4. =EC=97=AC=EB=9F=AC=EB=B6=
-=84=EC=9D=98
- =ED=8C=A8=EC=B9=98=EB=93=A4=EC=9D=80 =EB=B9=84=ED=8C=90=EA=B3=BC =EB=8B=
-=A4=EB=A5=B8 =EC=9D=98=EA=B2=AC=EC=9D=84 =EB=B0=9B=EC=9D=84 =EC=88=98 =EC=
-=9E=88=EA=B3=A0 =EA=B7=B8=EA=B2=83=EB=93=A4=EC=9D=84 =EA=B8=B0=EC=88=A0=
-=EC=A0=81=EC=9D=B8 =EB=A0=88=EB=B2=A8=EB=A1=9C =ED=8F=89=EA=B0=80=ED=95=
-=98=EA=B3=A0
-@@ -472,7 +472,7 @@ bugme-janitor =EB=A9=94=EC=9D=BC=EB=A7=81 =EB=A6=AC=
-=EC=8A=A4=ED=8A=B8(bugzilla=EC=97=90 =EB=AA=A8=EB=93=A0 =EB=B3=80=ED=99=
-=94=EB=93=A4=EC=9D=B4 =EC=97=AC=EA=B8=B0=EC=84=9C =EB=A9=94
- =EA=B0=80=EB=8A=A5=ED=95=9C=ED=95=9C =EA=B0=80=EC=9E=A5 =EC=A2=8B=EC=9D=
-=80 =EA=B8=B0=EC=88=A0=EC=A0=81=EC=9D=B8 =ED=95=B4=EB=8B=B5=EC=9D=84 =EC=
-=B0=BE=EA=B3=A0 =EC=9E=88=EB=8A=94 =EC=BB=A4=EB=AE=A4=EB=8B=88=ED=8B=B0=
-=EC=97=90=EC=84=9C=EB=8A=94 =ED=95=AD=EC=83=81
- =EC=96=B4=EB=96=A4 =ED=8C=A8=EC=B9=98=EA=B0=80 =EC=96=BC=EB=A7=88=EB=82=
-=98 =EC=A2=8B=EC=9D=80=EC=A7=80=EC=97=90 =EA=B4=80=ED=95=98=EC=97=AC =EB=
-=8B=A4=EB=A5=B8 =EC=9D=98=EA=B2=AC=EB=93=A4=EC=9D=B4 =EC=9E=88=EC=9D=84=
- =EC=88=98 =EC=9E=88=EB=8B=A4. =EC=97=AC=EB=9F=AC=EB=B6=84=EC=9D=80
- =ED=98=91=EC=A1=B0=EC=A0=81=EC=9D=B4=EC=96=B4=EC=95=BC =ED=95=98=EA=B3=
-=A0 =EA=B8=B0=EA=BA=BC=EC=9D=B4 =EC=97=AC=EB=9F=AC=EB=B6=84=EC=9D=98 =EC=
-=83=9D=EA=B0=81=EC=9D=84 =EC=BB=A4=EB=84=90 =EB=82=B4=EC=97=90 =EB=A7=9E=
-=EC=B6=94=EC=96=B4=EC=95=BC =ED=95=9C=EB=8B=A4. =EC=95=84=EB=8B=88=EB=A9=
-=B4
--=EC=A0=81=EC=96=B4=EB=8F=84 =EC=97=AC=EB=9F=AC=EB=B6=84=EC=9D=98 =EA=B2=
-=83=EC=9D=B4 =EA=B0=80=EC=B9=98=EC=9E=88=EB=8B=A4=EB=8A=94 =EA=B2=83=EC=
-=9D=84 =EC=A4=91=EB=AA=85=ED=95=98=EC=97=AC=EC=95=BC =ED=95=9C=EB=8B=A4=
-=2E =EC=9E=98=EB=AA=BB=EB=90=9C =EA=B2=83=EB=8F=84 =EC=97=AC=EB=9F=AC=EB=
-=B6=84=EC=9D=B4
-+=EC=A0=81=EC=96=B4=EB=8F=84 =EC=97=AC=EB=9F=AC=EB=B6=84=EC=9D=98 =EA=B2=
-=83=EC=9D=B4 =EA=B0=80=EC=B9=98=EC=9E=88=EB=8B=A4=EB=8A=94 =EA=B2=83=EC=
-=9D=84 =EC=A6=9D=EB=AA=85=ED=95=98=EC=97=AC=EC=95=BC =ED=95=9C=EB=8B=A4=
-=2E =EC=9E=98=EB=AA=BB=EB=90=9C =EA=B2=83=EB=8F=84 =EC=97=AC=EB=9F=AC=EB=
-=B6=84=EC=9D=B4
- =EC=98=AC=EB=B0=94=EB=A5=B8 =EB=B0=A9=ED=96=A5=EC=9D=98 =ED=95=B4=EA=B2=
-=B0=EC=B1=85=EC=9C=BC=EB=A1=9C =EC=9D=B4=EB=81=8C=EC=96=B4=EA=B0=88 =EC=
-=9D=98=EC=A7=80=EA=B0=80 =EC=9E=88=EB=8B=A4=EB=A9=B4 =EB=B0=9B=EC=95=84=
-=EB=93=A4=EC=97=AC=EC=A7=88 =EA=B2=83=EC=9D=B4=EB=9D=BC=EB=8A=94 =EC=A0=
-=90=EC=9D=84
- =EA=B8=B0=EC=96=B5=ED=95=98=EB=9D=BC.
-=20
-@@ -488,21 +488,21 @@ bugme-janitor =EB=A9=94=EC=9D=BC=EB=A7=81 =EB=A6=AC=
-=EC=8A=A4=ED=8A=B8(bugzilla=EC=97=90 =EB=AA=A8=EB=93=A0 =EB=B3=80=ED=99=
-=94=EB=93=A4=EC=9D=B4 =EC=97=AC=EA=B8=B0=EC=84=9C =EB=A9=94
- =EC=BB=A4=EB=84=90 =EC=BB=A4=EB=AE=A4=EB=8B=88=ED=8B=B0=EB=8A=94 =EA=B0=
-=80=EC=9E=A5 =EC=A0=84=ED=86=B5=EC=A0=81=EC=9D=B8 =ED=9A=8C=EC=82=AC=EC=
-=9D=98 =EA=B0=9C=EB=B0=9C =ED=99=98=EA=B2=BD=EA=B3=BC=EB=8A=94 =EB=8B=A4=
-=EB=A5=B4=EB=8B=A4. =EC=97=AC=EA=B8=B0=EC=97=90 =EC=97=AC=EB=9F=AC=EB=B6=
-=84=EB=93=A4=EC=9D=98
- =EB=AC=B8=EC=A0=9C=EB=A5=BC =ED=94=BC=ED=95=98=EA=B8=B0 =EC=9C=84=ED=95=
-=9C =EB=AA=A9=EB=A1=9D=EC=9D=B4 =EC=9E=88=EB=8B=A4.
-   =EC=97=AC=EB=9F=AC=EB=B6=84=EB=93=A4=EC=9D=B4 =EC=A0=9C=EC=95=88=ED=95=
-=9C =EB=B3=80=EA=B2=BD=EB=93=A4=EC=97=90 =EA=B4=80=ED=95=98=EC=97=AC =EB=
-=A7=90=ED=95=A0 =EB=95=8C =EC=A2=8B=EC=9D=80 =EA=B2=83=EB=93=A4 :
--    - "=EC=9D=B4=EA=B2=83=EC=9D=80 =EC=97=AC=EB=9F=AC =EB=AC=B8=EC=A0=9C=
-=EB=93=A4=EC=9D=84 =ED=95=B4=EA=B2=B9=ED=95=A9=EB=8B=88=EB=8B=A4."
--    - "=EC=9D=B4=EA=B2=83=EC=9D=80 2000 =EB=9D=BC=EC=9D=B8=EC=9D=98 =EC=
-=BD=94=EB=93=9C=EB=A5=BC =EC=A0=9C=EA=B1=B0=ED=95=A9=EB=8B=88=EB=8B=A4.=
-"
-+    - "=EC=9D=B4=EA=B2=83=EC=9D=80 =EC=97=AC=EB=9F=AC =EB=AC=B8=EC=A0=9C=
-=EB=93=A4=EC=9D=84 =ED=95=B4=EA=B2=B0=ED=95=A9=EB=8B=88=EB=8B=A4."
-+    - "=EC=9D=B4=EA=B2=83=EC=9D=80 2000 =EB=9D=BC=EC=9D=B8=EC=9D=98 =EC=
-=BD=94=EB=93=9C=EB=A5=BC =EC=A4=84=EC=9E=85=EB=8B=88=EB=8B=A4."
-     - "=EC=9D=B4=EA=B2=83=EC=9D=80 =EB=82=B4=EA=B0=80 =EB=A7=90=ED=95=98=
-=EB=A0=A4=EB=8A=94 =EA=B2=83=EC=97=90 =EA=B4=80=ED=95=B4 =EC=84=A4=EB=AA=
-=85=ED=95=98=EB=8A=94 =ED=8C=A8=EC=B9=98=EC=9E=85=EB=8B=88=EB=8B=A4."
--    - "=EB=82=98=EB=8A=94 5=EA=B0=9C=EC=9D=98 =EB=8B=A4=EB=A5=B8 =EC=95=
-=84=ED=82=A4=ED=85=8D=EC=B3=90=EC=97=90=EC=84=9C =EA=B7=B8=EA=B2=83=EC=9D=
-=84 =ED=85=8C=EC=8A=A4=ED=8A=B8=ED=96=88=EC=8A=B4=EC=9C=BC=EB=A1=9C..."
--    - "=EC=97=AC=EA=B8=B0=EC=97=90 =EC=9D=BC=EB=A0=A8=EC=9D=98 =EC=9E=91=
-=EC=9D=80 =ED=8C=A8=EC=B9=98=EB=93=A4=EC=9D=B4 =EC=9E=88=EC=8A=B4=EC=9D=
-=8C=EB=A1=9C..."
--    - "=EC=9D=B4=EA=B2=83=EC=9D=80 =EC=9D=BC=EB=B0=98=EC=A0=81=EC=9D=B8=
- =EB=A8=B8=EC=8B=A0=EC=97=90=EC=84=9C =EC=84=B1=EB=8A=A5=EC=9D=84 =ED=96=
-=A5=EC=83=81=EC=8B=9C=ED=82=B4=EC=9C=BC=EB=A1=9C..."
-+    - "=EB=82=98=EB=8A=94 5=EA=B0=9C=EC=9D=98 =EB=8B=A4=EB=A5=B8 =EC=95=
-=84=ED=82=A4=ED=85=8D=EC=B3=90=EC=97=90=EC=84=9C =EA=B7=B8=EA=B2=83=EC=9D=
-=84 =ED=85=8C=EC=8A=A4=ED=8A=B8 =ED=96=88=EC=9C=BC=EB=AF=80=EB=A1=9C...=
-"
-+    - "=EC=97=AC=EA=B8=B0=EC=97=90 =EC=9D=BC=EB=A0=A8=EC=9D=98 =EC=9E=91=
-=EC=9D=80 =ED=8C=A8=EC=B9=98=EB=93=A4=EC=9D=B4 =EC=9E=88=EC=9C=BC=EB=AF=
-=80=EB=A1=9C..."
-+    - "=EC=9D=B4=EA=B2=83=EC=9D=80 =EC=9D=BC=EB=B0=98=EC=A0=81=EC=9D=B8=
- =EB=A8=B8=EC=8B=A0=EC=97=90=EC=84=9C =EC=84=B1=EB=8A=A5=EC=9D=84 =ED=96=
-=A5=EC=83=81=EC=8B=9C=ED=82=A4=EB=AF=80=EB=A1=9C..."
-=20
-   =EC=97=AC=EB=9F=AC=EB=B6=84=EB=93=A4=EC=9D=B4 =EB=A7=90=ED=95=A0 =EB=
-=95=8C =ED=94=BC=ED=95=B4=EC=95=BC =ED=95=A0 =EC=A2=8B=EC=A7=80 =EC=95=8A=
-=EC=9D=80 =EA=B2=83=EB=93=A4 :
--    - "=EC=9A=B0=EB=A6=AC=EB=A5=BC =EA=B7=B8=EA=B2=83=EC=9D=84 AIT/ptx=
-/Solaris=EC=97=90=EC=84=9C =EC=9D=B4=EB=9F=AC=ED=95=9C =EB=B0=A9=EB=B2=95=
-=EC=9C=BC=EB=A1=9C =ED=96=88=EB=8B=A4. =EA=B7=B8=EB=9F=AC=EB=AF=80=EB=A1=
-=9C =EA=B7=B8=EA=B2=83=EC=9D=80 =EC=A2=8B=EC=9D=80 =EA=B2=83=EC=9E=84=EC=
-=97=90 =ED=8B=80=EB=A6=BD=EC=97=86=EB=8B=A4..."
-+    - "=EC=9A=B0=EB=A6=AC=EB=A5=BC =EA=B7=B8=EA=B2=83=EC=9D=84 AIT/ptx=
-/Solaris=EC=97=90=EC=84=9C =EC=9D=B4=EB=9F=AC=ED=95=9C =EB=B0=A9=EB=B2=95=
-=EC=9C=BC=EB=A1=9C =ED=96=88=EB=8B=A4. =EA=B7=B8=EB=9F=AC=EB=AF=80=EB=A1=
-=9C =EA=B7=B8=EA=B2=83=EC=9D=80 =EC=A2=8B=EC=9D=80 =EA=B2=83=EC=9E=84=EC=
-=97=90 =ED=8B=80=EB=A6=BC=EC=97=86=EB=8B=A4..."
-     - "=EB=82=98=EB=8A=94 20=EB=85=84=EB=8F=99=EC=95=88 =EC=9D=B4=EA=B2=
-=83=EC=9D=84 =ED=95=B4=EC=99=94=EB=8B=A4. =EA=B7=B8=EB=9F=AC=EB=AF=80=EB=
-=A1=9C..."
-     - "=EC=9D=B4=EA=B2=83=EC=9D=80 =EB=8F=88=EC=9D=84 =EB=B2=8C=EA=B8=B0=
-=EC=9C=84=ED=95=B4 =EB=82=98=EC=9D=98 =ED=9A=8C=EC=82=AC=EA=B0=80 =ED=95=
-=84=EC=9A=94=EB=A1=9C =ED=95=98=EB=8A=94 =EA=B2=83=EC=9D=B4=EB=8B=A4."
-     - "=EC=9D=B4=EA=B2=83=EC=9D=80 =EC=9A=B0=EB=A6=AC=EC=9D=98 =EC=97=94=
-=ED=84=B0=ED=94=84=EB=9D=BC=EC=9D=B4=EC=A6=88 =EC=83=81=ED=92=88 =EB=9D=
-=BC=EC=9D=B8=EC=9D=84 =EC=9C=84=ED=95=9C =EA=B2=83=EC=9D=B4=EB=8B=A4."
-     - "=EC=97=AC=EA=B8=B0=EC=97=90 =EB=82=98=EC=9D=98 =EC=83=9D=EA=B0=81=
-=EC=9D=84 =EB=A7=90=ED=95=98=EA=B3=A0 =EC=9E=88=EB=8A=94 1000 =ED=8E=98=
-=EC=9D=B4=EC=A7=80 =EC=84=A4=EA=B3=84 =EB=AC=B8=EC=84=9C=EA=B0=80 =EC=9E=
-=88=EB=8B=A4."
-     - "=EB=82=98=EB=8A=94 6=EB=8B=AC=EB=8F=99=EC=95=88 =EC=9D=B4=EA=B2=
-=83=EC=9D=84 =ED=96=88=EC=9C=BC=EB=8B=88..."
--    - "=EC=97=AC=EA=B8=B0=EC=97=90 5000=EB=9D=BC=EC=9D=B8 =EC=A7=9C=EB=
-=A6=AC =ED=8C=A8=EC=B9=98=EA=B0=80 =EC=9E=88=EC=9C=BC=EB=8B=88..."
-+    - "=EC=97=AC=EA=B8=B0=EC=97=90 5000 =EB=9D=BC=EC=9D=B8 =EC=A7=9C=EB=
-=A6=AC =ED=8C=A8=EC=B9=98=EA=B0=80 =EC=9E=88=EC=9C=BC=EB=8B=88..."
-     - "=EB=82=98=EB=8A=94 =ED=98=84=EC=9E=AC =EB=92=A4=EC=A3=BD=EB=B0=95=
-=EC=A3=BD=EC=9D=B8 =EA=B2=83=EC=9D=84 =EC=9E=AC=EC=9E=91=EC=84=B1=ED=96=
-=88=EB=8B=A4. =EA=B7=B8=EB=A6=AC=EA=B3=A0 =EC=97=AC=EA=B8=B0=EC=97=90..=
-=2E"
-     - "=EB=82=98=EB=8A=94 =EB=A7=88=EA=B0=90=EC=8B=9C=ED=95=9C=EC=9D=84=
- =EA=B0=80=EC=A7=80=EA=B3=A0 =EC=9E=88=EC=9C=BC=EB=AF=80=EB=A1=9C =EC=9D=
-=B4 =ED=8C=A8=EC=B9=98=EB=8A=94 =EC=A7=80=EA=B8=88 =EC=A0=81=EC=9A=A9=EB=
-=90=A0 =ED=95=84=EC=9A=94=EA=B0=80 =EC=9E=88=EB=8B=A4."
-=20
-@@ -574,6 +574,7 @@ Pat=EC=9D=B4=EB=9D=BC=EB=8A=94 =EC=9D=B4=EB=A6=84=EC=
-=9D=84 =EA=B0=80=EC=A7=84 =EC=97=AC=EC=9E=90=EA=B0=80 =EC=9E=88=EC=9D=84=
- =EC=88=98=EB=8F=84 =EC=9E=88=EB=8A=94 =EA=B2=83=EC=9D=B4=EB=8B=A4. =EB=
-=A6=AC=EB=88=85
- =EB=98=90=ED=95=9C =EC=99=84=EC=84=B1=EB=90=98=EC=A7=80 =EC=95=8A=EC=95=
-=98=EA=B3=A0 "=EB=82=98=EC=A4=91=EC=97=90 =EC=88=98=EC=A0=95=EB=90=A0 =EA=
-=B2=83=EC=9D=B4=EB=8B=A4." =EC=99=80 =EA=B0=99=EC=9D=80 =EA=B2=83=EB=93=
-=A4=EC=9D=84 =ED=8F=AC=ED=95=A8=ED=95=98=EB=8A=94
- =ED=8C=A8=EC=B9=98=EB=93=A4=EC=9D=80 =EB=B0=9B=EC=95=84=EB=93=A4=EC=97=
-=AC=EC=A7=80=EC=A7=80 =EC=95=8A=EC=9D=84 =EA=B2=83=EC=9D=B4=EB=9D=BC=EB=
-=8A=94 =EC=A0=90=EC=9D=84 =EC=9C=A0=EB=85=90=ED=95=98=EB=9D=BC.
-=20
-+
- =EB=B3=80=EA=B2=BD=EC=9D=84 =EC=A0=95=EB=8B=B9=ED=99=94=ED=95=B4=EB=9D=
-=BC
- -----------------
-=20
-diff --git a/Documentation/ko_KR/stable_api_nonsense.txt b/Documentatio=
-n/ko_KR/stable_api_nonsense.txt
-index 8f2b0e1..51f85ad 100644
---- a/Documentation/ko_KR/stable_api_nonsense.txt
-+++ b/Documentation/ko_KR/stable_api_nonsense.txt
-@@ -106,12 +106,12 @@ Greg Kroah-Hartman <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
- ---------------------------------
-=20
- =EB=A6=AC=EB=88=85=EC=8A=A4 =EC=BB=A4=EB=84=90 =EB=93=9C=EB=9D=BC=EC=9D=
-=B4=EB=B2=84=EB=A5=BC =EA=B3=84=EC=86=8D=ED=95=B4=EC=84=9C =EB=A9=94=EC=
-=9D=B8 =EC=BB=A4=EB=84=90 =ED=8A=B8=EB=A6=AC=EC=97=90 =EB=B0=98=EC=98=81=
-=ED=95=98=EC=A7=80 =EC=95=8A=EA=B3=A0
--=EC=9C=A0=EC=A7=80=EB=B3=B4=EC=88=98=ED=95=98=EB=A0=A4=EA=B3=A0 =ED=95=
-=98=EB=8A=94 =EC=82=AC=EB=A6=84=EB=93=A4=EA=B3=BC =EC=9D=B4 =EB=AC=B8=EC=
-=A0=9C=EB=A5=BC =EB=85=BC=EC=9D=98=ED=95=98=EA=B2=8C =EB=90=98=EB=A9=B4=
- =ED=9B=A8=EC=94=AC =EB=8D=94
-+=EC=9C=A0=EC=A7=80=EB=B3=B4=EC=88=98=ED=95=98=EB=A0=A4=EA=B3=A0 =ED=95=
-=98=EB=8A=94 =EC=82=AC=EB=9E=8C=EB=93=A4=EA=B3=BC =EC=9D=B4 =EB=AC=B8=EC=
-=A0=9C=EB=A5=BC =EB=85=BC=EC=9D=98=ED=95=98=EA=B2=8C =EB=90=98=EB=A9=B4=
- =ED=9B=A8=EC=94=AC =EB=8D=94
- "=EB=85=BC=EB=9E=80=EC=9D=98 =EC=97=AC=EC=A7=80=EA=B0=80 =EB=A7=8E=EC=9D=
-=80" =EC=A3=BC=EC=A0=9C=EA=B0=80 =EB=90=A0 =EA=B2=83=EC=9D=B4=EB=8B=A4.
-=20
- =EB=A6=AC=EB=88=85=EC=8A=A4 =EC=BB=A4=EB=84=90 =EA=B0=9C=EB=B0=9C=EC=9D=
-=80 =EB=81=8A=EC=9E=84=EC=97=86=EC=9D=B4 =EB=B9=A0=EB=A5=B8 =EC=86=8D=EB=
-=8F=84=EB=A1=9C =EC=9D=B4=EB=A3=A8=EC=96=B4=EC=A7=80=EA=B3=A0 =EC=9E=88=
-=EC=9C=BC=EB=A9=B0 =EA=B2=B0=EC=BD=94
- =EB=8A=90=EC=8A=A8=ED=95=B4=EC=A7=84 =EC=A0=81=EC=9D=B4 =EC=97=86=EB=8B=
-=A4. =EC=BB=A4=EB=84=90 =EA=B0=9C=EB=B0=9C=EC=9E=90=EB=93=A4=EC=9D=B4 =ED=
-=98=84=EC=9E=AC =EC=9D=B8=ED=84=B0=ED=8E=98=EC=9D=B4=EC=8A=A4=EB=93=A4=EC=
-=97=90=EC=84=9C =EB=B2=84=EA=B7=B8=EB=A5=BC
--=EB=B0=9C=EA=B2=AC=ED=95=98=EA=B1=B0=EB=82=98 =EB=AC=B4=EC=97=87=EC=9D=
-=B8=EA=B0=80 =ED=95=A0=EC=88=98 =EC=9E=88=EB=8A=94 =EB=8D=94 =EC=A2=8B=EC=
-=9D=80 =EB=B0=A9=EB=B2=95=EC=9D=84 =EC=B0=BE=EA=B2=8C =EB=90=98=EC=97=88=
-=EB=8B=A4=EA=B3=A0 =ED=95=98=EC=9E=90.
-+=EB=B0=9C=EA=B2=AC=ED=95=98=EA=B1=B0=EB=82=98 =EB=AC=B4=EC=97=87=EC=9D=
-=B8=EA=B0=80 =ED=95=A0 =EC=88=98 =EC=9E=88=EB=8A=94 =EB=8D=94 =EC=A2=8B=
-=EC=9D=80 =EB=B0=A9=EB=B2=95=EC=9D=84 =EC=B0=BE=EA=B2=8C =EB=90=98=EC=97=
-=88=EB=8B=A4=EA=B3=A0 =ED=95=98=EC=9E=90.
- =EA=B7=B8=EB=93=A4=EC=9D=B4 =EB=B0=9C=EA=B2=AC=ED=95=9C =EA=B2=83=EC=9D=
-=84 =EC=8B=A4=ED=96=89=ED=95=9C=EB=8B=A4=EB=A9=B4 =EC=95=84=EB=A7=88=EB=
-=8F=84 =EB=8D=94 =EC=9E=98 =EB=8F=99=EC=9E=91=ED=95=98=EB=8F=84=EB=A1=9D=
- =ED=98=84=EC=9E=AC =EC=9D=B8=ED=84=B0=ED=8E=98=EC=9D=B4=EC=8A=A4=EB=93=
-=A4=EC=9D=84
- =EC=88=98=EC=A0=95=ED=95=98=EA=B2=8C =EB=90=A0 =EA=B2=83=EC=9D=B4=EB=8B=
-=A4. =EA=B7=B8=EB=93=A4=EC=9D=B4 =EA=B7=B8=EB=9F=B0 =EC=9D=BC=EC=9D=84 =
-=ED=95=98=EA=B2=8C=EB=90=98=EB=A9=B4 =ED=95=A8=EC=88=98 =EC=9D=B4=EB=A6=
-=84=EB=93=A4=EC=9D=80 =EB=B3=80=ED=95=98=EA=B2=8C =EB=90=98=EA=B3=A0,
- =EA=B5=AC=EC=A1=B0=EC=B2=B4=EB=93=A4=EC=9D=80 =EB=8A=98=EC=96=B4=EB=82=
-=98=EA=B1=B0=EB=82=98 =EC=A4=84=EC=96=B4=EB=93=A4=EA=B2=8C =EB=90=98=EA=
-=B3=A0, =ED=95=A8=EC=88=98 =ED=8C=8C=EB=9D=BC=EB=AF=B8=ED=84=B0=EB=93=A4=
-=EC=9D=80 =EC=9E=AC=EC=9E=91=EC=97=85=EB=90=A0 =EA=B2=83=EC=9D=B4=EB=8B=
-=A4.
-@@ -174,7 +174,7 @@ GPL=EC=9D=84 =EB=94=B0=EB=A5=B4=EB=8A=94 =EB=B0=B0=ED=
-=8F=AC =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=84=EC=97=90 =EA=B4=80=ED=95=B4=
- =EC=96=98=EA=B8=B0=ED=95=98=EA=B3=A0 =EC=9E=88=EB=8B=A4=EB=8A=94 =EA=B2=
-=83=EC=9D=84 =EC=83=81
- =EB=8F=99=EC=9E=91=ED=95=98=EB=8A=94 =EA=B2=83=EC=9D=84 =EB=B3=B4=EC=9E=
-=A5=ED=95=9C=EB=8B=A4.
-=20
- =EB=A9=94=EC=9D=B8 =EC=BB=A4=EB=84=90 =ED=8A=B8=EB=A6=AC=EC=97=90 =EC=97=
-=AC=EB=9F=AC=EB=B6=84=EC=9D=98 =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=84=EB=A5=
-=BC =EB=B0=98=EC=98=81=ED=95=98=EB=A9=B4 =EC=96=BB=EA=B2=8C =EB=90=98=EB=
-=8A=94 =EC=9E=A5=EC=A0=90=EB=93=A4=EC=9D=80 =EB=8B=A4=EC=9D=8C=EA=B3=BC=
- =EA=B0=99=EB=8B=A4.
--   - =EA=B4=80=EB=A6=AC=EC=9D=98 =EB=93=9C=EB=8A=94 =EB=B9=84=EC=9A=A9=
-(=EC=9B=90=EB=9E=98 =EA=B0=9C=EB=B0=9C=EC=9E=90=EC=9D=98)=EC=9D=80 =EC=A4=
-=84=EC=96=B4=EC=A4=84=EB=A9=B4=EC=84=9C =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=
-=84=EC=9D=98 =EC=A7=88=EC=9D=80 =ED=96=A5=EC=83=81=EB=90=A0 =EA=B2=83=EC=
-=9D=B4=EB=8B=A4.
-+   - =EA=B4=80=EB=A6=AC=EC=97=90 =EB=93=9C=EB=8A=94 =EB=B9=84=EC=9A=A9=
-(=EC=9B=90=EB=9E=98 =EA=B0=9C=EB=B0=9C=EC=9E=90=EC=9D=98)=EC=9D=80 =EC=A4=
-=84=EC=96=B4=EC=A4=84=EB=A9=B4=EC=84=9C =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=
-=84=EC=9D=98 =EC=A7=88=EC=9D=80 =ED=96=A5=EC=83=81=EB=90=A0 =EA=B2=83=EC=
-=9D=B4=EB=8B=A4.
-    - =EB=8B=A4=EB=A5=B8 =EA=B0=9C=EB=B0=9C=EC=9E=90=EB=93=A4=EC=9D=B4 =
-=EC=97=AC=EB=9F=AC=EB=B6=84=EC=9D=98 =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=84=
-=EC=97=90 =EA=B8=B0=EB=8A=A5=EB=93=A4=EC=9D=84 =EC=B6=94=EA=B0=80 =ED=95=
-=A0 =EA=B2=83=EC=9D=B4=EB=8B=A4.
-    - =EB=8B=A4=EB=A5=B8 =EC=82=AC=EB=9E=8C=EB=93=A4=EC=9D=80 =EC=97=AC=
-=EB=9F=AC=EB=B6=84=EC=9D=98 =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=84=EC=97=90=
- =EB=B2=84=EA=B7=B8=EB=A5=BC =EB=B0=9C=EA=B2=AC=ED=95=98=EA=B3=A0 =EC=88=
-=98=EC=A0=95=ED=95=A0 =EA=B2=83=EC=9D=B4=EB=8B=A4.
-    - =EB=8B=A4=EB=A5=B8 =EC=82=AC=EB=9E=8C=EB=93=A4=EC=9D=80 =EC=97=AC=
-=EB=9F=AC=EB=B6=84=EC=9D=98 =EB=93=9C=EB=9D=BC=EC=9D=B4=EB=B2=84=EC=9D=98=
- =EA=B0=9C=EC=84=A0=EC=A0=90=EC=9D=84 =EC=B0=BE=EC=9D=84 =EC=A4=84 =EA=B2=
-=83=EC=9D=B4=EB=8B=A4.
---=20
-1.7.10.4
+- Linux O_PATH|O_NOFOLLOW opens a file descriptor referring to the
+  symlink inode itself.
+
+- POSIX O_NOFOLLOW with O_SEARCH or O_EXEC forces failure if the
+  pathname refers to a symlink.
+
+Both are important functionality to support - the former for features
+and the latter for security. We can't just fstat and reject symbolic
+links in userspace when O_PATH gets one or we would break access to
+the Linux-specific O_PATH functionality, which is useful. So there
+needs to be a way for open (the library function) to detect whether
+the caller requested O_PATH or O_SEARCH/O_EXEC.
+
+We could chord O_PATH with another flag such as O_EXCL where the
+behavior would otherwise be undefined, but I don't want to conflict
+with future such use by the kernel; that would be a compatibility
+disaster.
+
+My preference would be to use the value 3 for O_SEARCH and O_EXEC, so
+that the O_ACCMODE mask would not even need to change. But doing this
+requires (even moreso than chording) agreement with the kernel
+community that this value will not be used for something else in the
+future. Looking back, I see that it's been accepted by the kernel for
+a long time (at least since 2.6.32) and treated as "no access" (reads
+and writes result in EBADF, like O_PATH) but still does not let you
+open files you don't have permissions to, or directories. However I'm
+not clear if this is a documented (or undocumented, but stable :)
+interface that should be left with its current behavior. Taking the
+value 3 for O_SEARCH and O_EXEC would mean having open (the library
+function) automatically apply O_PATH before passing it to the kernel
+and rejecting the resulting fd if it's a symbolic link.
+
+An alternate, less graceful but perhaps more compatible approach,
+would be to use O_PATH|3 for O_SEARCH and O_EXEC. Then open could just
+look for the low bits of flags (which should be 0 when using O_PATH
+for the Linux semantics, no?) and reject symbolic links if they are
+set.
+
+Whatever approach we settle on, it would be nice if it has the
+property that the kernel could eventually provide the full O_SEARCH
+and O_EXEC semantics itself and eliminate the need for userspace
+emulation. The current emulations we need are:
+
+- fchmod and fchown (still not supported for O_PATH) fall back to
+  calling chmod or chown on the pseudo-symlink in /proc/self/fd.
+
+- fchdir and fstat (not supported prior to 3.5/3.6) fall back to
+  calling chdir or stat.
+
+- open checks whether it obtained a symlink and if so closes it and
+  reports ELOOP.
+
+- fcntl, depending on the value chosen for O_SEARCH/O_EXEC, may have
+  to map the flags from F_GETFL to the right value.
+
+There may be others I'm missing, but emulation generally follows the
+same pattern.
+
+Opinions? Please keep me CC'd on replies since I am not on the list.
+
+
+Thanks,
+
+Rich
+
+
+
+
+
+[1] http://www.sourceware.org/ml/libc-alpha/2013-08/msg00016.html
