@@ -1,98 +1,47 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+From: Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>
 Subject: Re: Request for comments: reserving a value for O_SEARCH and O_EXEC
-Date: Mon, 12 Aug 2013 10:42:03 -0700
-Message-ID: <52091E6B.10800@mit.edu>
+Date: Mon, 12 Aug 2013 23:22:15 -0400
+Message-ID: <20130813032214.GA221@brightrain.aerifal.cx>
 References: <20130803024808.GA26932@brightrain.aerifal.cx>
+ <52091E6B.10800@mit.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20130803024808.GA26932-C3MtFaGISjmo6RMmaWD+6Sb1p8zYI1N1@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <52091E6B.10800-3s7WtUTddSA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[cc: linux-api]
+On Mon, Aug 12, 2013 at 10:42:03AM -0700, Andy Lutomirski wrote:
+> You'll have the same problem that O_TMPFILE had: the kernel currently
+> ignores unrecognized flags.  I wonder if it's time to add a new syscall
+> (or syscalls) with more sensible semantics.
 
+That's not a problem here. In fact, in the case where O_PATH is not
+supported by the kernel, the best possible behavior for O_SEARCH and
+O_EXEC would be for them to be the same as O_RDONLY, since this gives
+comforming behavior in all ways except that it will fail if you don't
+have read access to the file.
 
-On 08/02/2013 07:48 PM, Rich Felker wrote:
-> Hi,
-> 
-> At present, one of the few interface-level conformance issues for
-> Linux against POSIX 2008 is lack of O_SEARCH and O_EXEC. I am trying
-> to get full, conforming support for them both into musl libc (for
-> which I am the maintainer) and glibc (see the libc-alpha post[1]).
-> At this point, I believe it is possible to do so with no changes at
-> the kernel level, using O_PATH and a moderate amount of
-> userspace-level emulation where O_PATH semantics are lacking. What
-> we're missing, however, is a reserved O_ACCMODE value for O_SEARCH and
-> O_EXEC (it can be the same for both). Using O_PATH directly is not an
-> option because the semantics for O_PATH|O_NOFOLLOW differ from the
-> POSIX semantics for O_SEARCH|O_NOFOLLOW and O_EXEC|O_NOFOLLOW:
-> 
-> - Linux O_PATH|O_NOFOLLOW opens a file descriptor referring to the
->   symlink inode itself.
-> 
-> - POSIX O_NOFOLLOW with O_SEARCH or O_EXEC forces failure if the
->   pathname refers to a symlink.
-> 
-> Both are important functionality to support - the former for features
-> and the latter for security. We can't just fstat and reject symbolic
-> links in userspace when O_PATH gets one or we would break access to
-> the Linux-specific O_PATH functionality, which is useful. So there
-> needs to be a way for open (the library function) to detect whether
-> the caller requested O_PATH or O_SEARCH/O_EXEC.
-> 
-> We could chord O_PATH with another flag such as O_EXCL where the
-> behavior would otherwise be undefined, but I don't want to conflict
-> with future such use by the kernel; that would be a compatibility
-> disaster.
-> 
-> My preference would be to use the value 3 for O_SEARCH and O_EXEC, so
-> that the O_ACCMODE mask would not even need to change. But doing this
-> requires (even moreso than chording) agreement with the kernel
-> community that this value will not be used for something else in the
-> future. Looking back, I see that it's been accepted by the kernel for
-> a long time (at least since 2.6.32) and treated as "no access" (reads
-> and writes result in EBADF, like O_PATH) but still does not let you
-> open files you don't have permissions to, or directories. However I'm
-> not clear if this is a documented (or undocumented, but stable :)
-> interface that should be left with its current behavior. Taking the
-> value 3 for O_SEARCH and O_EXEC would mean having open (the library
-> function) automatically apply O_PATH before passing it to the kernel
-> and rejecting the resulting fd if it's a symbolic link.
-> 
-> An alternate, less graceful but perhaps more compatible approach,
-> would be to use O_PATH|3 for O_SEARCH and O_EXEC. Then open could just
-> look for the low bits of flags (which should be 0 when using O_PATH
-> for the Linux semantics, no?) and reject symbolic links if they are
-> set.
-> 
-> Whatever approach we settle on, it would be nice if it has the
-> property that the kernel could eventually provide the full O_SEARCH
-> and O_EXEC semantics itself and eliminate the need for userspace
-> emulation. The current emulations we need are:
-> 
-> - fchmod and fchown (still not supported for O_PATH) fall back to
->   calling chmod or chown on the pseudo-symlink in /proc/self/fd.
-> 
-> - fchdir and fstat (not supported prior to 3.5/3.6) fall back to
->   calling chdir or stat.
-> 
-> - open checks whether it obtained a symlink and if so closes it and
->   reports ELOOP.
-> 
-> - fcntl, depending on the value chosen for O_SEARCH/O_EXEC, may have
->   to map the flags from F_GETFL to the right value.
-> 
-> There may be others I'm missing, but emulation generally follows the
-> same pattern.
-> 
-> Opinions? Please keep me CC'd on replies since I am not on the list.
+Some folks have raised the issue that it would be "dangerous" because
+certain devices have side effects on open, even open for read, but
+POSIX does not specify that opening for search or exec suppresses such
+side effects anyway. It's only applications directly using O_PATH and
+expecting the Linux semantics that would be thrown off by getting
+O_READ semantics instead. In any case, there are many reasons it's
+unsafe for a privileged process to open an untrusted pathname already.
 
-You'll have the same problem that O_TMPFILE had: the kernel currently
-ignores unrecognized flags.  I wonder if it's time to add a new syscall
-(or syscalls) with more sensible semantics.
+Anyway, the whole point of this discussion is about choosing a value
+that has the best fallback behavior on old kernels. O_PATH alone would
+meet that requirement almost perfectly, but it has the unfortunate
+issue that O_NOFOLLOW is interpreted in a special way with O_PATH: it
+causes the symlink itelf to be opened, rather than for open to fail
+when encountering a symlink. So we need a new flag by which the kernel
+could detect and reject symlinks with O_PATH, _or_ the kernel could
+just ignore this new flag, since userspace will have to check (to
+support older kernels) that it did not get a symlink, and if so,
+simulate failure.
 
---Andy
+Rich
