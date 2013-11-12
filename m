@@ -1,71 +1,175 @@
-From: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/3] statxat: Provide IOC flags for Windows fs attributes
-Date: Tue, 12 Nov 2013 12:06:15 -0600
-Message-ID: <CAH2r5ms3p4wNwGyDYF6sr=_iwG1dqAD=SaciSYdEUBuM129Zgg@mail.gmail.com>
-References: <20131112173518.25813.67568.stgit@warthog.procyon.org.uk>
-	<20131112173526.25813.85546.stgit@warthog.procyon.org.uk>
+From: David Howells <dhowells@redhat.com>
+Subject: [PATCH 0/3] Extended file stat system call [ver #2]
+Date: Tue, 12 Nov 2013 18:41:27 +0000
+Message-ID: <20131112184127.2880.24025.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20131112173526.25813.85546.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, samba-technical <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <samba-technical-bounces@lists.samba.org>
+List-Unsubscribe: <https://lists.samba.org/mailman/options/samba-technical>, <mailto:samba-technical-request@lists.samba.org?subject=unsubscribe>
+List-Archive: <http://lists.samba.org/pipermail/samba-technical>
+List-Post: <mailto:samba-technical@lists.samba.org>
+List-Help: <mailto:samba-technical-request@lists.samba.org?subject=help>
+List-Subscribe: <https://lists.samba.org/mailman/listinfo/samba-technical>, <mailto:samba-technical-request@lists.samba.org?subject=subscribe>
+Sender: samba-technical-bounces@lists.samba.org
+Errors-To: samba-technical-bounces@lists.samba.org
+To: viro@ZenIV.linux.org.uk
+Cc: linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org, andreas.gruenbacher@gmail.com, samba-technical@lists.samba.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-I was experimenting with these flags when adding the per-file
-compression support for cifs and smb2/smb3, and noticed that it would
-be helpful to be able to display the FILE_ATTRIBUTE_ENCRYPTED flag
-here too on get (ie to show that the file is encrypted at rest on the
-server).   I am unsure whether displaying the "FILE_ATTRIBUTE_SPARSE"
-is useful or not here but that is another obvious one.
 
-And the other obvious flag to display would be
-"FILE_ATTRIBUTE_INTEGRITY_STREAM" or equivalent (to indicate that this
-file is protected by data and metadata checksums, perhaps btrfs and
-other local file systems may even eventually allow you to configure
-additional extra data/metadata integrity checks someday as well, not
-just SMB3).
+Implement a new system call to provide an extended and further extensible stat
+function.
 
-On Tue, Nov 12, 2013 at 11:35 AM, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Provide IOC flags for Windows fs attributes so that they can be retrieved (or
-> even altered) using the FS_IOC_[GS]ETFLAGS ioctl and read using statxat().
->
-> Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->
->  include/uapi/linux/fs.h |    7 +++++--
->  1 file changed, 5 insertions(+), 2 deletions(-)
->
-> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> index 6c28b61bb690..8b966f48dd41 100644
-> --- a/include/uapi/linux/fs.h
-> +++ b/include/uapi/linux/fs.h
-> @@ -191,10 +191,13 @@ struct inodes_stat_t {
->  #define FS_EXTENT_FL                   0x00080000 /* Extents */
->  #define FS_DIRECTIO_FL                 0x00100000 /* Use direct i/o */
->  #define FS_NOCOW_FL                    0x00800000 /* Do not cow file */
-> +#define FS_HIDDEN_FL                   0x10000000 /* Windows hidden file attribute */
-> +#define FS_SYSTEM_FL                   0x20000000 /* Windows system file attribute */
-> +#define FS_ARCHIVE_FL                  0x40000000 /* Windows archive file attribute */
->  #define FS_RESERVED_FL                 0x80000000 /* reserved for ext2 lib */
->
-> -#define FS_FL_USER_VISIBLE             0x0003DFFF /* User visible flags */
-> -#define FS_FL_USER_MODIFIABLE          0x000380FF /* User modifiable flags */
-> +#define FS_FL_USER_VISIBLE             0x7003DFFF /* User visible flags */
-> +#define FS_FL_USER_MODIFIABLE          0x700380FF /* User modifiable flags */
->
->
->  #define SYNC_FILE_RANGE_WAIT_BEFORE    1
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-cifs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+=======
+CHANGES
+=======
+
+ (*) Added an optional auxiliary data buffer pointer argument to sys_statxat()
+     and moved some of the stuff into it.
+
+ (*) Discarded "has an ACL info flag" for now.
+
+ (*) AFS doesn't need to set time granularity itself as the default is 1s
+     anyway.
 
 
+===========
+DESCRIPTION
+===========
 
--- 
-Thanks,
+The second of the associated patches is the main patch that provides this new
+system call:
 
-Steve
+	long ret = statxat(int dfd,
+			   const char *filename,
+			   unsigned atflag,
+			   unsigned mask,
+			   struct statx *buffer,
+			   struct statx_auxinfo *auxinfo);
+
+which is more fully documented in the main patch's description.
+
+This new stat function provides a number of useful features, in summary:
+
+ (1) More information: creation time, data version number, flags/attributes.
+     A subset of these is available through a number of filesystems (such as
+     CIFS, NFS, AFS, Ext4 and BTRFS).
+
+ (2) Lightweight stat: Ask for just those details of interest, and allow a
+     netfs (such as NFS) to approximate anything not of interest, possibly
+     without going to the server.
+
+ (3) Heavyweight stat: Force a netfs to go to the server, even if it thinks its
+     cached attributes are up to date.
+
+ (4) Allow the filesystem to indicate what it can/cannot provide: A filesystem
+     can now say it doesn't support a standard stat feature if that isn't
+     available.
+
+ (5) Make the fields a consistent size on all arches, and make them large.
+
+ (6) Can be extended by using more request flags and appending further data
+     after the end of the standard return data.
+
+Note that no lstat() equivalent is required as that can be implemented through
+statxat() with atflag == 0.  There is also no fstat() equivalent as that can be
+implemented through statxat() with filename == NULL and the relevant fd passed
+as dfd.
+
+
+=======
+PATCHES
+=======
+
+Patch 1 introduces IOC flags for Windows Hidden, Archive and System attributes.
+
+Patch 2 defines the statxat() system call.
+
+Patch 3 implements extended stat facilities for AFS.  Other fs patches to go
+through their respective trees once the core is in.
+
+
+==============
+CONSIDERATIONS
+==============
+
+Should the default for a network fs be to do an unconditional (heavyweight)
+stat with a flag to suppress going to the server to update the locally held
+attributes and flushing pending writebacks?
+
+Is it useful to pass the volume ID out?  Or should statfs() be used for this?
+
+Is there anything else I can usefully add at the moment?
+
+
+==========
+TO BE DONE
+==========
+
+Autofs, ntfs, btrfs, ...
+
+I should perhaps use u8/u32/u64 rather than uint8/32/64_t.
+
+Handle remote filesystems being offline and indicate this with
+STATX_INFO_OFFLINE.
+
+Should a "light stat" be explicitly requested by its own AT_ flag?
+
+
+=======
+TESTING
+=======
+
+There's a test program attached to the description for the main patch.  It can
+be run as follows:
+[root@andromeda tmp]# ./xstat -R /mnt/foo
+
+	xstat(/mnt/foo) = 0
+	0000: 000081a40000ffef 0000000000000001 0000020000000000 0000100000080000
+	0020: 0000000000000000 0000000600000008 000000004f88499a 0000000136fd9208
+	0040: 000000004f88499a 0000000136fd9208 000000004f8849b9 0000000106daf187
+	0060: 000000004f8849b9 0000000106daf187 000000000000000c 000000000000000f
+	0080: 0000000000000008 00000000484ebbef 0000000000000025 5949ebd4711efd82
+	00a0: d3250b5c15d5e380 0000000000000000 0000000000000000 0000000000000000
+	00c0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+	00e0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+	results=ffef
+	  Size: 15              Blocks: 8          IO Block: 4096    regular file
+	Device: 08:06           Inode: 12          Links: 1    
+	Access: (0644/-rw-r--r--)  Uid: 0   
+	Gid: 0
+	Access: 2012-04-13 16:43:22.922587656+0100
+	Modify: 2012-04-13 16:43:53.115011975+0100
+	Change: 2012-04-13 16:43:53.115011975+0100
+	Create: 2012-04-13 16:43:22.922587656+0100
+	Inode version: 484ebbefh
+	Data version: 25h
+	Inode flags: 00080000 (-------- ----e--- -------- --------)
+	Information: 00000200 (-------- -------- ------a- --------)
+	Volume ID: 82fd1e71d4eb4959-80e3d5155c0b25d3
+
+David
+---
+David Howells (3):
+      statxat: Provide IOC flags for Windows fs attributes
+      statxat: Add a system call to make extended file stats available
+      statxat: AFS: Return enhanced basic attributes
+
+
+ arch/x86/ia32/sys_ia32.c         |    2 
+ arch/x86/syscalls/syscall_32.tbl |    1 
+ arch/x86/syscalls/syscall_64.tbl |    1 
+ fs/afs/inode.c                   |   46 ++++-
+ fs/ceph/inode.c                  |    2 
+ fs/cifs/inode.c                  |    5 -
+ fs/compat.c                      |    2 
+ fs/nfsd/nfsxdr.c                 |    2 
+ fs/stat.c                        |  348 ++++++++++++++++++++++++++++++++++++--
+ include/linux/fs.h               |    3 
+ include/linux/stat.h             |   16 ++
+ include/linux/syscalls.h         |    6 +
+ include/uapi/linux/fcntl.h       |    1 
+ include/uapi/linux/fs.h          |    7 +
+ include/uapi/linux/stat.h        |  164 ++++++++++++++++++
+ 15 files changed, 567 insertions(+), 39 deletions(-)
