@@ -1,62 +1,175 @@
-From: Thorsten Glaser <tg-vpiyNrvJqjezQB+pC5nmwQ@public.gmane.org>
-Subject: Re: [PATCH] Use __unused0 instead of __unused for user visible struct
- member names
-Date: Mon, 11 Nov 2013 14:59:12 +0000 (UTC)
-Message-ID: <Pine.BSM.4.64L.1311111448490.23723__43621.1307337091$1384182717$gmane$org@herc.mirbsd.org>
-References: <20120102024418.GA10483@gaara.hadrons.org>
- <20120102202243.GA31103@elie.hsd1.il.comcast.net> <20120103065659.GA32216@merkur.ravnborg.org>
+From: David Howells <dhowells@redhat.com>
+Subject: [PATCH 0/3] Extended file stat system call
+Date: Tue, 12 Nov 2013 17:35:18 +0000
+Message-ID: <20131112173518.25813.67568.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120103065659.GA32216-OoSGOWW0KRunlFQ6Q1D1Y0B+6BGkLq7r@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sam Ravnborg <public-sam-uyr5N9Q2VtJg9hUCZPvPmw-wOFGN7rlS/M9smdsby/KFg@public.gmane.org>
-Cc: Jonathan Nieder <public-jrnieder-Re5JQEeQqe8AvxtiuMwx3w-wOFGN7rlS/M9smdsby/KFg@public.gmane.org>, Guillem Jover <public-guillem-+FW4gsLVM0RAfugRpC6u6w-wOFGN7rlS/M9smdsby/KFg@public.gmane.org>, public-linux-kernel-u79uwXL29TY76Z2rM5mHXA-wOFGN7rlS/M9smdsby/KFg@public.gmane.org, public-linux-kbuild-u79uwXL29TY76Z2rM5mHXA-wOFGN7rlS/M9smdsby/KFg@public.gmane.org, public-linux-api-u79uwXL29TY76Z2rM5mHXA-wOFGN7rlS/M9smdsby/KFg@public.gmane.org, Michal Marek <public-mmarek-AlSwsSmVLrQ-wOFGN7rlS/M9smdsby/KFg@public.gmane.org>, Justin Cormack <justin-7CuHE+YKekf/05JY2t+omGXnswh1EIUO@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <samba-technical-bounces@lists.samba.org>
+List-Unsubscribe: <https://lists.samba.org/mailman/options/samba-technical>, <mailto:samba-technical-request@lists.samba.org?subject=unsubscribe>
+List-Archive: <http://lists.samba.org/pipermail/samba-technical>
+List-Post: <mailto:samba-technical@lists.samba.org>
+List-Help: <mailto:samba-technical-request@lists.samba.org?subject=help>
+List-Subscribe: <https://lists.samba.org/mailman/listinfo/samba-technical>, <mailto:samba-technical-request@lists.samba.org?subject=subscribe>
+Sender: samba-technical-bounces@lists.samba.org
+Errors-To: samba-technical-bounces@lists.samba.org
+To: viro@ZenIV.linux.org.uk
+Cc: linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org, andreas.gruenbacher@gmail.com, samba-technical@lists.samba.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
+Implement a new system call to provide an extended and further extensible stat
+function.
+
+=======
+CHANGES
+=======
+
+ (*) Added an optional auxiliary data buffer pointer argument to sys_statxat()
+     and moved some of the stuff into it.
+
+ (*) Discarded "has an ACL info flag" for now.
+
+ (*) AFS doesn't need to set time granularity itself as the default is 1s
+     anyway.
 
 
-Sam Ravnborg dixit:
+===========
+DESCRIPTION
+===========
 
->> Guillem Jover wrote:
+The second of the associated patches is the main patch that provides this new
+system call:
 
->> > On BSD systems __unused has traditionally been defined to mean the
->> > equivalent of gcc's __attribute__((__unused__)), some parts of the
-[=E2=80=A6]
->^__ is reserved for libc internal stuff and there is no reason to
->name the unused/padding members "__unused".
+	long ret = statxat(int dfd,
+			   const char *filename,
+			   unsigned atflag,
+			   unsigned mask,
+			   struct statx *buffer,
+			   struct statx_auxinfo *auxinfo);
 
-Considering that glibc has seen the light=C2=B9 now too, can we please
-do something about these now? The BSD tools (not just NetBSD=C2=AE) hav=
-e
-been using this for far longer after all=E2=80=A6
+which is more fully documented in the main patch's description.
+
+This new stat function provides a number of useful features, in summary:
+
+ (1) More information: creation time, data version number, flags/attributes.
+     A subset of these is available through a number of filesystems (such as
+     CIFS, NFS, AFS, Ext4 and BTRFS).
+
+ (2) Lightweight stat: Ask for just those details of interest, and allow a
+     netfs (such as NFS) to approximate anything not of interest, possibly
+     without going to the server.
+
+ (3) Heavyweight stat: Force a netfs to go to the server, even if it thinks its
+     cached attributes are up to date.
+
+ (4) Allow the filesystem to indicate what it can/cannot provide: A filesystem
+     can now say it doesn't support a standard stat feature if that isn't
+     available.
+
+ (5) Make the fields a consistent size on all arches, and make them large.
+
+ (6) Can be extended by using more request flags and appending further data
+     after the end of the standard return data.
+
+Note that no lstat() equivalent is required as that can be implemented through
+statxat() with atflag == 0.  There is also no fstat() equivalent as that can be
+implemented through statxat() with filename == NULL and the relevant fd passed
+as dfd.
 
 
-Currently (git pull --ff torvalds master), we have:
+=======
+PATCHES
+=======
 
-=E2=80=A2 2 occurrences of files *inside* the Linux kernel defining __u=
-nused
-  to=C2=B2 __attribute__((unused)) themselves
+Patch 1 introduces IOC flags for Windows Hidden, Archive and System attributes.
 
-=E2=80=A2 68 struct members and function arguments called __unused
+Patch 2 defines the statxat() system call.
 
->So one or a set of patches that rename them all to something more
->sensible would be fine.
-
-I think __unused0 is okay as it matches current __unused[0-9] in
-use by other parts of the Linux kernel =E2=80=93 although glibc now use=
-s
-__glibc_reserved[0-9], I think this doesn=E2=80=99t look like the Linux
-kernel should use it =E2=98=BB=E2=98=BA
+Patch 3 implements extended stat facilities for AFS.  Other fs patches to go
+through their respective trees once the core is in.
 
 
-=E2=91=A0 http://thread.gmane.org/gmane.comp.lib.glibc.alpha/36439
+==============
+CONSIDERATIONS
+==============
 
-=E2=91=A1 I=E2=80=99ve recently come to the belief that this should be
-  __attribute__((__unused__)) in all cases, i.e. all those
-  attribute namings need double underscores before and after,
-  as some software likes to #define printf to something else,
-  lighttpd does #define bounded something else, so there=E2=80=99s
-  probably software out there containing #define unused foo.
+Should the default for a network fs be to do an unconditional (heavyweight)
+stat with a flag to suppress going to the server to update the locally held
+attributes and flushing pending writebacks?
+
+Is it useful to pass the volume ID out?  Or should statfs() be used for this?
+
+Is there anything else I can usefully add at the moment?
+
+
+==========
+TO BE DONE
+==========
+
+Autofs, ntfs, btrfs, ...
+
+I should perhaps use u8/u32/u64 rather than uint8/32/64_t.
+
+Handle remote filesystems being offline and indicate this with
+STATX_INFO_OFFLINE.
+
+Should a "light stat" be explicitly requested by its own AT_ flag?
+
+
+=======
+TESTING
+=======
+
+There's a test program attached to the description for the main patch.  It can
+be run as follows:
+[root@andromeda tmp]# ./xstat -R /mnt/foo
+
+	xstat(/mnt/foo) = 0
+	0000: 000081a40000ffef 0000000000000001 0000020000000000 0000100000080000
+	0020: 0000000000000000 0000000600000008 000000004f88499a 0000000136fd9208
+	0040: 000000004f88499a 0000000136fd9208 000000004f8849b9 0000000106daf187
+	0060: 000000004f8849b9 0000000106daf187 000000000000000c 000000000000000f
+	0080: 0000000000000008 00000000484ebbef 0000000000000025 5949ebd4711efd82
+	00a0: d3250b5c15d5e380 0000000000000000 0000000000000000 0000000000000000
+	00c0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+	00e0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+	results=ffef
+	  Size: 15              Blocks: 8          IO Block: 4096    regular file
+	Device: 08:06           Inode: 12          Links: 1    
+	Access: (0644/-rw-r--r--)  Uid: 0   
+	Gid: 0
+	Access: 2012-04-13 16:43:22.922587656+0100
+	Modify: 2012-04-13 16:43:53.115011975+0100
+	Change: 2012-04-13 16:43:53.115011975+0100
+	Create: 2012-04-13 16:43:22.922587656+0100
+	Inode version: 484ebbefh
+	Data version: 25h
+	Inode flags: 00080000 (-------- ----e--- -------- --------)
+	Information: 00000200 (-------- -------- ------a- --------)
+	Volume ID: 82fd1e71d4eb4959-80e3d5155c0b25d3
+
+David
+---
+David Howells (3):
+      statxat: Provide IOC flags for Windows fs attributes
+      statxat: Add a system call to make extended file stats available
+      statxat: AFS: Return enhanced basic attributes
+
+
+ arch/x86/ia32/sys_ia32.c         |    2 
+ arch/x86/syscalls/syscall_32.tbl |    1 
+ arch/x86/syscalls/syscall_64.tbl |    1 
+ fs/afs/inode.c                   |   47 ++++-
+ fs/ceph/inode.c                  |    2 
+ fs/cifs/inode.c                  |    5 -
+ fs/compat.c                      |    2 
+ fs/nfsd/nfsxdr.c                 |    2 
+ fs/stat.c                        |  348 ++++++++++++++++++++++++++++++++++++--
+ include/linux/fs.h               |    3 
+ include/linux/stat.h             |   16 ++
+ include/linux/syscalls.h         |    6 +
+ include/uapi/linux/fcntl.h       |    1 
+ include/uapi/linux/fs.h          |    7 +
+ include/uapi/linux/stat.h        |  164 ++++++++++++++++++
+ 15 files changed, 568 insertions(+), 39 deletions(-)
