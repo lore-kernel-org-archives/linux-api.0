@@ -1,125 +1,56 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 3/3] statxat: AFS: Return enhanced basic attributes [ver #2]
-Date: Tue, 12 Nov 2013 18:41:50 +0000
-Message-ID: <20131112184150.2880.25803.stgit@warthog.procyon.org.uk>
-References: <20131112184127.2880.24025.stgit@warthog.procyon.org.uk>
+From: Andreas Schwab <schwab-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: Re: [PATCH 2/3] statxat: Add a system call to make extended file stats available
+Date: Tue, 12 Nov 2013 19:44:59 +0100
+Message-ID: <87li0t31ec.fsf@igel.home>
+References: <20131112173518.25813.67568.stgit@warthog.procyon.org.uk>
+	<20131112173534.25813.70732.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <samba-technical-bounces@lists.samba.org>
-In-Reply-To: <20131112184127.2880.24025.stgit@warthog.procyon.org.uk>
-List-Unsubscribe: <https://lists.samba.org/mailman/options/samba-technical>, <mailto:samba-technical-request@lists.samba.org?subject=unsubscribe>
-List-Archive: <http://lists.samba.org/pipermail/samba-technical>
-List-Post: <mailto:samba-technical@lists.samba.org>
-List-Help: <mailto:samba-technical-request@lists.samba.org?subject=help>
-List-Subscribe: <https://lists.samba.org/mailman/listinfo/samba-technical>, <mailto:samba-technical-request@lists.samba.org?subject=subscribe>
-Sender: samba-technical-bounces@lists.samba.org
-Errors-To: samba-technical-bounces@lists.samba.org
-To: viro@ZenIV.linux.org.uk
-Cc: linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org, andreas.gruenbacher@gmail.com, samba-technical@lists.samba.org, linux-fsdevel@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20131112173534.25813.70732.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org> (David
+	Howells's message of "Tue, 12 Nov 2013 17:35:34 +0000")
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Return enhanced basic attributes from the AFS filesystem.  This includes the
-following:
+David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
 
- (1) The data version number as st_data_version.
+> 	struct statx {
+> 		uint32_t		st_mask;
+> 		uint32_t		st_information;
+> 		uint16_t		st_mode;
+> 		uint16_t		__spare0[1];
+> 		uint32_t		st_nlink;
+> 		uint32_t		st_uid;
+> 		uint32_t		st_gid;
+> 		uint32_t		st_alloc_blksize;
+> 		uint32_t		st_blksize;
+> 		uint32_t		st_small_io_size;
+> 		uint32_t		st_large_io_size;
+> 		struct statx_dev	st_rdev;
+> 		struct statx_dev	st_dev;
+> 		int32_t			st_atime_ns;
+> 		int32_t			st_btime_ns;
+> 		int32_t			st_ctime_ns;
+> 		int32_t			st_mtime_ns;
+> 		int64_t			st_atime;
+> 		int64_t			st_btime;
+> 		int64_t			st_ctime;
+> 		int64_t			st_mtime;
+> 		uint64_t		st_ino;
+> 		uint64_t		st_size;
+> 		uint64_t		st_blocks;
+> 		uint64_t		st_version;
+> 		uint64_t		st_ioc_flags;
 
- (2) STATX_INFO_AUTOMOUNT will be set on automount directories by virtue of
-     S_AUTOMOUNT being set on the inode.  These are referrals to other volumes
-     or other cells.
+I'd suggest to use a different prefix (stx_ instead of st_) for the
+members.  st_[acm]time are typically defined as macros by <sys/stat.h>
+which would conflict.
 
- (3) STATX_INFO_AUTODIR on a directory that does cell lookup for non-existent
-     names and mounts them (typically mounted on /afs with -o autocell).  The
-     resulting directories are marked STATX_INFO_FABRICATED as they do not
-     actually exist in the mounted AFS directory.
+Andreas.
 
- (4) Files, directories and symlinks accessed over AFS are marked
-     STATX_INFO_REMOTE.  Local fake directories are marked
-     STATX_INFO_FABRICATED.
-
- (5) STATX_INFO_NONSYSTEM_OWNERSHIP is set as the UID and GID retrieved from an
-     AFS share may not be applicable on the system.
-
-and also some auxiliary data:
-
- (6) The volume ID and type.
-
- (7) The volume name.
-
- (8) The cell name.
-
-Signed-off-by: David Howells <dhowells@redhat.com>
----
-
- fs/afs/inode.c |   46 ++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 38 insertions(+), 8 deletions(-)
-
-diff --git a/fs/afs/inode.c b/fs/afs/inode.c
-index ce25d755b7aa..5789f68abbea 100644
---- a/fs/afs/inode.c
-+++ b/fs/afs/inode.c
-@@ -71,9 +71,9 @@ static int afs_inode_map_status(struct afs_vnode *vnode, struct key *key)
- 	inode->i_uid		= vnode->status.owner;
- 	inode->i_gid		= GLOBAL_ROOT_GID;
- 	inode->i_size		= vnode->status.size;
--	inode->i_ctime.tv_sec	= vnode->status.mtime_server;
--	inode->i_ctime.tv_nsec	= 0;
--	inode->i_atime		= inode->i_mtime = inode->i_ctime;
-+	inode->i_mtime.tv_sec	= vnode->status.mtime_server;
-+	inode->i_mtime.tv_nsec	= 0;
-+	inode->i_atime		= inode->i_ctime = inode->i_mtime;
- 	inode->i_blocks		= 0;
- 	inode->i_generation	= vnode->fid.unique;
- 	inode->i_version	= vnode->status.data_version;
-@@ -374,16 +374,46 @@ error_unlock:
- /*
-  * read the attributes of an inode
-  */
--int afs_getattr(struct vfsmount *mnt, struct dentry *dentry,
--		      struct kstat *stat)
-+int afs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
- {
--	struct inode *inode;
--
--	inode = dentry->d_inode;
-+	struct inode *inode = dentry->d_inode;
- 
- 	_enter("{ ino=%lu v=%u }", inode->i_ino, inode->i_generation);
- 
- 	generic_fillattr(inode, stat);
-+
-+	stat->result_mask &= ~(STATX_ATIME | STATX_CTIME | STATX_BLOCKS);
-+	stat->result_mask |= STATX_VERSION;
-+	stat->version = inode->i_version;
-+
-+	if (test_bit(AFS_VNODE_AUTOCELL, &AFS_FS_I(inode)->flags))
-+		stat->information |= STATX_INFO_AUTODIR;
-+
-+	if (test_bit(AFS_VNODE_PSEUDODIR, &AFS_FS_I(inode)->flags))
-+		stat->information |= STATX_INFO_FABRICATED;
-+	else
-+		stat->information |= STATX_INFO_REMOTE;
-+
-+	stat->information |= STATX_INFO_NONSYSTEM_OWNERSHIP;
-+
-+	if (stat->auxinfo) {
-+		struct afs_super_info *as = inode->i_sb->s_fs_info;
-+		struct statx_auxinfo *aux = stat->auxinfo;
-+
-+		aux->sx_fsid = as->volume->vid;
-+		/* construct a volume ID from the AFS volume ID and type */
-+		aux->sx_volume_id[0] = as->volume->vid >> 24;
-+		aux->sx_volume_id[1] = as->volume->vid >> 16;
-+		aux->sx_volume_id[2] = as->volume->vid >> 8;
-+		aux->sx_volume_id[3] = as->volume->vid >> 0;
-+		aux->sx_volume_id[4] = as->volume->type;
-+
-+		strcpy(aux->sx_volume_name, as->volume->vlocation->vldb.name);
-+		strcpy(aux->sx_domain_name, as->volume->cell->name);
-+
-+		aux->sx_mask = STATX_FSID | STATX_VOLUME_ID |
-+			STATX_VOLUME_NAME | STATX_DOMAIN_NAME;
-+	}
- 	return 0;
- }
- 
+-- 
+Andreas Schwab, schwab-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
+GPG Key fingerprint = 58CA 54C7 6D53 942B 1756  01D3 44D5 214B 8276 4ED5
+"And now for something completely different."
