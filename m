@@ -1,37 +1,44 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v2 0/3] xfs: add O_TMPFILE support
-Date: Tue, 7 Jan 2014 12:51:30 -0800
-Message-ID: <20140107205130.GA5751@infradead.org>
-References: <1387326161-24530-1-git-send-email-zwu.kernel@gmail.com>
-	<20131226085134.GA32660@infradead.org>
-	<20140107204938.GE1935@sgi.com>
+From: Rich Felker <dalias@aerifal.cx>
+Subject: Deficiencies in kernel/compat.c for x32 timespec
+Date: Sat, 11 Jan 2014 20:42:34 -0500
+Message-ID: <20140112014234.GA27914@brightrain.aerifal.cx>
+Reply-To: musl@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <musl-return-4476-gllmg-musl=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:musl@lists.openwall.com>
+List-Help: <mailto:musl-help@lists.openwall.com>
+List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
 Content-Disposition: inline
-In-Reply-To: <20140107204938.GE1935@sgi.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Ben Myers <bpm@sgi.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Zhi Yong Wu <zwu.kernel@gmail.com>, xfs@oss.sgi.com, Zhi Yong Wu <wuzhy@linux.vnet.ibm.com>, linux-api@vger.kernel.org
+To: linux-api@vger.kernel.org
+Cc: musl@lists.openwall.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 07, 2014 at 02:49:38PM -0600, Ben Myers wrote:
-> Are you suggesting that we hold off on this until such time as the tests are
-> completed?
+Hi,
 
-Yes.  Code that doesn't come with proper test coverage usually tends to
-be buggy.
+We're working on adding x32 support in musl libc, and ran into a
+pretty major obstacle that the glibc folks seem to have glossed over:
+when the kernel reads timespec structures from x32 userspace, it
+treats both tv_sec and tv_nsec as 64-bit values. This requires
+userspace either to be non-conforming to ISO C11 and POSIX (both of
+which require tv_nsec to have type long, not an implementation-defined
+signed integer type) or to wrap syscalls with ugly x32-specific
+wrappers to copy the input timespec to a temporary location where it
+can be sign-extended to 64-bit for passing to the kernel.
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+glibc has (so far) taken the former approach, documented in this bug
+report: https://sourceware.org/bugzilla/show_bug.cgi?id=16437
+
+I'd like to see this fixed on the kernel side by having
+kernel/compat.c modified to copy tv_sec and tv_nsec copied separately
+as 64-bit and 32-bit values, respectively, rather than using
+copy_from_user for the whole structure, when COMPAT_USE_64BIT_TIME is
+true.
+
+Note that copy_to_user still works for writing timespec results back
+to userspace; the excess data just goes into padding bits, and it's
+always necessarily zero because output tv_nsec values are never
+outside the range [0,999999999].
+
+Rich
