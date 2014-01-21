@@ -1,44 +1,65 @@
-From: Rich Felker <dalias@aerifal.cx>
-Subject: Deficiencies in kernel/compat.c for x32 timespec
-Date: Sat, 11 Jan 2014 20:42:34 -0500
-Message-ID: <20140112014234.GA27914@brightrain.aerifal.cx>
-Reply-To: musl@lists.openwall.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <musl-return-4476-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
-Content-Disposition: inline
-To: linux-api@vger.kernel.org
-Cc: musl@lists.openwall.com
+From: angel80200-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org
+Subject: RE: LOCAL MAP OPTIMIZATION FOR : mail-archive.com (Less Than
+ $99/Month)
+Date: Tue, 21 Jan 2014 16:45:00 +0530
+Message-ID: <52de56b1.a7d4440a.173a.0385@mx.google.com>
+Reply-To: Lova43432-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Good Morning Sir / Mam
 
-We're working on adding x32 support in musl libc, and ran into a
-pretty major obstacle that the glibc folks seem to have glossed over:
-when the kernel reads timespec structures from x32 userspace, it
-treats both tv_sec and tv_nsec as 64-bit values. This requires
-userspace either to be non-conforming to ISO C11 and POSIX (both of
-which require tv_nsec to have type long, not an implementation-defined
-signed integer type) or to wrap syscalls with ugly x32-specific
-wrappers to copy the input timespec to a temporary location where it
-can be sign-extended to 64-bit for passing to the kernel.
+Is your business ranking in local maps shown on PAGE 1 of google ? With new
+google policies they have specifically asked local business owners to
+optimize their website for local maps rather than JUST organics. Do you know
+the reason why you are not ranked well on google MAPs or why there is drop
+in your website rankings? Prime reason for bad rankings for a busniess is
+lack of local presence and local citations ie getting your business listed
+on directories like YELP, MANTA & Many more. These websites not just give
+your business a push but also help you Maintain a good Online Reputation.
 
-glibc has (so far) taken the former approach, documented in this bug
-report: https://sourceware.org/bugzilla/show_bug.cgi?id=16437
+Why you need to optimize your website for local MAP Listings ?
 
-I'd like to see this fixed on the kernel side by having
-kernel/compat.c modified to copy tv_sec and tv_nsec copied separately
-as 64-bit and 32-bit values, respectively, rather than using
-copy_from_user for the whole structure, when COMPAT_USE_64BIT_TIME is
-true.
+- MAP listings get 10 times more clicks than organic listings
+- Increased conversions because of real reviews posted on your Google Plus
+Page
+- Every year there is 30% increase in searches for local keywords
+- Increases legitimacy of a Business
 
-Note that copy_to_user still works for writing timespec results back
-to userspace; the excess data just goes into padding bits, and it's
-always necessarily zero because output tv_nsec values are never
-outside the range [0,999999999].
+We will help you get your website ranked well on google for the related
+keywords in your niche. We specialize in LOCAL SEARCH ENGINE OPTIMIZATION
+increasing visibility for small businesses by ranking them for
+geographically-related keywords. Say for eg-: you want to search a plumber
+in your city, You will be typing in keywords like Plumbers + City Or
+Plumbers + IN + City. We make sure your website comes in google MAP listings
+shown on page 1 for each such keyword.
 
-Rich
+Now Google believes in - BE ORIGINAL, HAVE ORIGINAL AND GIVE ORIGINAL which
+means that google wants to end up that frustrating experience of users who
+are searching for Service Or Product and seeing the results that are not
+even close to what they are looking for. Google only wants to give their
+user original and relevant results. This makes it even more important that
+we showcase our business in the best possible way and make sure our website
+in valued high by google.
+
+We at TheLOCALIST will make google feel the importance of your business by
+following their guidelines thus ranking your website higher in serach
+results. We are presently offering LOCAL OPTIMIZATION to more than 400
+websites and they all rank page 1 for all possible keywords !!! Each month
+your website is submitted to more than 50 citations and social presence is
+controlled by posting videos and blogs all over the web.
+
+Email us back with your website & phone number so we can discuss this
+further with you. Our Packages start from as low as 99$/month.
+
+
+Thanks For Taking Time To Read Our Email
+
+Polly Martin
+Local SEO Manager ( THE Localist )
+Address : 24 ST Suite 32 Downtown Provo Utah
+
+-------------------
+NOT INTERESTED ? REPLY WITH NOT INTERESTED IN THE SUBJECT LINE 
