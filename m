@@ -1,7 +1,7 @@
 From: Alex Thorlton <athorlton@sgi.com>
-Subject: [PATCH 2/4] mm, s390: Ignore MADV_HUGEPAGE on s390 to prevent SIGSEGV in qemu
-Date: Thu, 27 Feb 2014 11:23:24 -0600
-Message-ID: <c856e298ae180842638bdf85d74436ad8bbb84e4.1393516106.git.athorlton@sgi.com>
+Subject: [PATCH 4/4] exec: kill the unnecessary mm->def_flags setting in load_elf_binary()
+Date: Thu, 27 Feb 2014 11:23:26 -0600
+Message-ID: <daed0ccdee74e3d8e2074e5c9128d0fedb0f4174.1393516106.git.athorlton@sgi.com>
 References: <cover.1393516106.git.athorlton@sgi.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <cover.1393516106.git.athorlton@sgi.com>
@@ -12,17 +12,12 @@ To: linux-kernel@vger.kernel.org
 Cc: Alex Thorlton <athorlton@sgi.com>, Gerald Schaefer <gerald.schaefer@de.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Christian Borntraeger <borntraeger@de.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, Paolo Bonzini <pbonzini@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Mel Gorman <mgorman@suse.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrea Arcangeli <aarcange@redhat.com>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux390@de.ibm.com, linux-s390@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-As Christian pointed out, the recent 'Revert "thp: make MADV_HUGEPAGE
-check for mm->def_flags"' breaks qemu, it does QEMU_MADV_HUGEPAGE for
-all kvm pages but this doesn't work after s390_enable_sie/thp_split_mm.
+load_elf_binary() sets current->mm->def_flags = def_flags and
+def_flags is always zero. Not only this looks strange, this is
+unnecessary because mm_init() has already set ->def_flags = 0. 
 
-Paolo suggested that instead of failing on the call to madvise, we
-simply ignore the call (return 0).
-
-Reported-by: Christian Borntraeger <borntraeger@de.ibm.com>
-Suggested-by: Paolo Bonzini <pbonzini@redhat.com>
-Suggested-by: Oleg Nesterov <oleg@redhat.com>
 Signed-off-by: Alex Thorlton <athorlton@sgi.com>
+Suggested-by: Oleg Nesterov <oleg@redhat.com>
 Cc: Gerald Schaefer <gerald.schaefer@de.ibm.com>
 Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>
 Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
@@ -45,29 +40,31 @@ Cc: linux-mm@kvack.org
 Cc: linux-api@vger.kernel.org
 
 ---
- mm/huge_memory.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ fs/binfmt_elf.c | 4 ----
+ 1 file changed, 4 deletions(-)
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index a4310a5..61d234d 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1970,6 +1970,15 @@ int hugepage_madvise(struct vm_area_struct *vma,
- {
- 	switch (advice) {
- 	case MADV_HUGEPAGE:
-+#ifdef CONFIG_S390
-+		/*
-+		 * qemu blindly sets MADV_HUGEPAGE on all allocations, but s390
-+		 * can't handle this properly after s390_enable_sie, so we simply
-+		 * ignore the madvise to prevent qemu from causing a SIGSEGV.
-+		 */
-+		if (mm_has_pgste(vma->vm_mm))
-+			return 0;
-+#endif
- 		/*
- 		 * Be somewhat over-protective like KSM for now!
- 		 */
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 67be295..d09bd9c 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -579,7 +579,6 @@ static int load_elf_binary(struct linux_binprm *bprm)
+ 	unsigned long start_code, end_code, start_data, end_data;
+ 	unsigned long reloc_func_desc __maybe_unused = 0;
+ 	int executable_stack = EXSTACK_DEFAULT;
+-	unsigned long def_flags = 0;
+ 	struct pt_regs *regs = current_pt_regs();
+ 	struct {
+ 		struct elfhdr elf_ex;
+@@ -719,9 +718,6 @@ static int load_elf_binary(struct linux_binprm *bprm)
+ 	if (retval)
+ 		goto out_free_dentry;
+ 
+-	/* OK, This is the point of no return */
+-	current->mm->def_flags = def_flags;
+-
+ 	/* Do this immediately, since STACK_TOP as used in setup_arg_pages
+ 	   may depend on the personality.  */
+ 	SET_PERSONALITY(loc->elf_ex);
 -- 
 1.7.12.4
 
