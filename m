@@ -1,27 +1,27 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
+From: Christian Borntraeger <borntraeger@de.ibm.com>
 Subject: Re: [PATCH 2/4] mm, s390: Ignore MADV_HUGEPAGE on s390 to prevent
  SIGSEGV in qemu
-Date: Fri, 28 Feb 2014 12:42:36 +0100
-Message-ID: <5310762C.90108@redhat.com>
+Date: Fri, 28 Feb 2014 12:52:18 +0100
+Message-ID: <53107872.7030904@de.ibm.com>
 References: <cover.1393516106.git.athorlton@sgi.com> <c856e298ae180842638bdf85d74436ad8bbb84e4.1393516106.git.athorlton@sgi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <c856e298ae180842638bdf85d74436ad8bbb84e4.1393516106.git.athorlton@sgi.com>
 Sender: owner-linux-mm@kvack.org
 To: Alex Thorlton <athorlton@sgi.com>, linux-kernel@vger.kernel.org
-Cc: Gerald Schaefer <gerald.schaefer@de.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Christian Borntraeger <borntraeger@de.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Mel Gorman <mgorman@suse.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrea Arcangeli <aarcange@redhat.com>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux390@de.ibm.com, linux-s390@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Cc: Gerald Schaefer <gerald.schaefer@de.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, Paolo Bonzini <pbonzini@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Mel Gorman <mgorman@suse.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrea Arcangeli <aarcange@redhat.com>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux390@de.ibm.com, linux-s390@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Il 27/02/2014 18:23, Alex Thorlton ha scritto:
+On 27/02/14 18:23, Alex Thorlton wrote:
 > As Christian pointed out, the recent 'Revert "thp: make MADV_HUGEPAGE
 > check for mm->def_flags"' breaks qemu, it does QEMU_MADV_HUGEPAGE for
 > all kvm pages but this doesn't work after s390_enable_sie/thp_split_mm.
->
+> 
 > Paolo suggested that instead of failing on the call to madvise, we
 > simply ignore the call (return 0).
->
+> 
 > Reported-by: Christian Borntraeger <borntraeger@de.ibm.com>
 > Suggested-by: Paolo Bonzini <pbonzini@redhat.com>
 > Suggested-by: Oleg Nesterov <oleg@redhat.com>
@@ -46,11 +46,11 @@ Il 27/02/2014 18:23, Alex Thorlton ha scritto:
 > Cc: linux-kernel@vger.kernel.org
 > Cc: linux-mm@kvack.org
 > Cc: linux-api@vger.kernel.org
->
+> 
 > ---
 >  mm/huge_memory.c | 9 +++++++++
 >  1 file changed, 9 insertions(+)
->
+> 
 > diff --git a/mm/huge_memory.c b/mm/huge_memory.c
 > index a4310a5..61d234d 100644
 > --- a/mm/huge_memory.c
@@ -71,9 +71,10 @@ Il 27/02/2014 18:23, Alex Thorlton ha scritto:
 >  		/*
 >  		 * Be somewhat over-protective like KSM for now!
 >  		 */
->
+> 
 
-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+
+Tested-by: Christian Borntraeger <borntraeger@de.ibm.com>
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
