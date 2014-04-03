@@ -1,48 +1,78 @@
-From: Christopher Covington <cov@codeaurora.org>
+From: Greg Troxel <gdt@ir.bbn.com>
 Subject: Re: [PATCH] mm: msync: require either MS_ASYNC or MS_SYNC
-Date: Thu, 03 Apr 2014 07:51:30 -0400
-Message-ID: <533D4B42.4040600@codeaurora.org>
-References: <533B04A9.6090405@bbn.com> <20140402111032.GA27551@infradead.org> <1396439119.2726.29.camel@menhir> <533CA0F6.2070100@bbn.com> <CAKgNAki8U+j0mvYCg99j7wJ2Z7ve-gxusVbM3zdog=hKGPdidQ@mail.gmail.com>
+Date: Thu, 03 Apr 2014 08:57:52 -0400
+Message-ID: <rmivbuqy3hr.fsf@fnord.ir.bbn.com>
+References: <533B04A9.6090405@bbn.com> <20140402111032.GA27551@infradead.org>
+	<1396439119.2726.29.camel@menhir> <533CA0F6.2070100@bbn.com>
+	<CAKgNAki8U+j0mvYCg99j7wJ2Z7ve-gxusVbM3zdog=hKGPdidQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <CAKgNAki8U+j0mvYCg99j7wJ2Z7ve-gxusVbM3zdog=hKGPdidQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mtk.manpages@gmail.com
-Cc: Richard Hansen <rhansen@bbn.com>, Steven Whitehouse <swhiteho@redhat.com>, Christoph Hellwig <hch@infradead.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Troxel <gdt@ir.bbn.com>, Peter Zijlstra <peterz@infradead.org>
+	(Michael Kerrisk's message of "Thu, 3 Apr 2014 10:25:01 +0200")
+Sender: owner-linux-mm@kvack.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Richard Hansen <rhansen@bbn.com>, Steven Whitehouse <swhiteho@redhat.com>, Christoph Hellwig <hch@infradead.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/03/2014 04:25 AM, Michael Kerrisk (man-pages) wrote:
+--=-=-=
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+
+"Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
 
 > I think the only reasonable solution is to better document existing
 > behavior and what the programmer should do. With that in mind, I've
 > drafted the following text for the msync(2) man page:
->=20
+>
 >     NOTES
->        According to POSIX, exactly one of MS_SYNC and MS_ASYNC  must =
- be
->        specified  in  flags.   However,  Linux permits a call to msyn=
-c()
->        that specifies neither of these flags, with  semantics  that  =
-are
->        (currently)  equivalent  to  specifying  MS_ASYNC.   (Since Li=
-nux
->        2.6.19, MS_ASYNC is in fact a no-op, since  the  kernel  prope=
-rly
->        tracks  dirty  pages  and  flushes them to storage as necessar=
-y.)
->        Notwithstanding the Linux behavior, portable, future-proof app=
-li=E2=80=90
->        cations  should  ensure  that they specify exactly one of MS_S=
-YNC
+>        According to POSIX, exactly one of MS_SYNC and MS_ASYNC  must  be
+>        specified  in  flags.   However,  Linux permits a call to msync()
+>        that specifies neither of these flags, with  semantics  that  are
+>        (currently)  equivalent  to  specifying  MS_ASYNC.   (Since Linux
+>        2.6.19, MS_ASYNC is in fact a no-op, since  the  kernel  properly
+>        tracks  dirty  pages  and  flushes them to storage as necessary.)
+>        Notwithstanding the Linux behavior, portable, future-proof appli=
+=E2=80=90
+>        cations  should  ensure  that they specify exactly one of MS_SYNC
 >        and MS_ASYNC in flags.
+>
+> Comments on this draft welcome.
 
-Nit: MS_SYNC or MS_ASYNC
+I think it's a step backwards to document unspecified behavior.  If
+anything, the man page should make it clear that providing neither flag
+results in undefined behavior and will lead to failure on systems on
+than Linux.  While I can see the point of not changing the previous
+behavior to protect buggy code, there's no need to document it in the
+man page and further enshrine it.
 
-Christopher
+There's a larger point, which is that people write code for Linux when
+they should be writing code for POSIX.  Therefore, Linux has an
+obligation to the larger free software community to avoid encouraging
+non-portable code.  This is somewhat similar (except for the key point
+that it's unintentional) to bash's allowing "=3D=3D" in test, which is a
+gratuitous extension to the standard that has led to large amounts of
+nonportable code.  To mitigate this, it would be reasonable to syslog a
+warning the first time a process makes a call with flags that POSIX says
+leads to undefined behavior.  That would meet the
+portability-citizenzhip goals and not break existing systems.
 
---=20
-Employee of Qualcomm Innovation Center, Inc.
-Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
-hosted by the Linux Foundation.
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlM9WtAACgkQ+vesoDJhHiV7HwCfdOu6gMykiZY3L5gYuaaAmD6k
+/vIAmwb5o33ETiVujuJmg5qcHzbU9sVx
+=JpEp
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
