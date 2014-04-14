@@ -1,139 +1,73 @@
-From: Ming Zhao <mingzhao-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: EPOLLOUT is triggered after sending data on UDP socket without EAGAIN
-Date: Sat, 12 Apr 2014 22:59:31 -0700
-Message-ID: <CAN0GiO0GR09a5cU3ALNzbDosmRh8aNoNvQ0meE8nG4e2ikvacQ@mail.gmail.com>
+From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Documenting prctl() PR_SET_THP_DISABLE and PR_GET_THP_DISABLE
+Date: Mon, 14 Apr 2014 12:15:01 +0200
+Message-ID: <CAHO5Pa0VCzR7oqNXkwELuAsNQnnvF8Xoo=CuCaM64-GzjDuoFA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>
+Cc: Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi there,
+Alex,
 
-I'm not sure whether this is an epoll bug:
+Your commit a0715cc22601e8830ace98366c0c2bd8da52af52 added the prctl()
+PR_SET_THP_DISABLE and PR_GET_THP_DISABLE flags.
 
-- I have a UDP socket which is non-blocking and watched by epoll with
-(EPOLLOUT | EPOLLET).
-- EPOLLOUT is triggered after registering the file descriptor with
-epoll_add, which is expected.
-- After calling sendto on the UDP socket with a very small message(5
-bytes), sendto returns the exact number of bytes sent and no EAGAIN is
-generated.
-- *but* calling epoll_wait still returns EPOLLOUT.
+The text below attempts to document these flags for the prctl(3).
+Could you (and anyone else who is willing) please review the text
+below (one or two p[ieces of which are drawn from your commit message)
+to verify that it accurately reflects reality and your intent, and
+that I have not missed any significant details.
 
-Shouldn't that EPOLLOUT be only triggered when an EAGAIN is generated
-after any writing operation?
+    DESCRIPTION
+    ...
+       PR_SET_THP_DISABLE (since Linux 3.15)
+              Set the state of the "THP disable" flag for the  calling
+              thread.   If  arg2 has a nonzero value, the flag is set,
+              otherwise it is cleared.  Setting this flag  provides  a
+              method  for disabling  transparent  huge  pages for jobs
+              where the code cannot be modified, and  using  a  malloc
+              hook  with madvise(2) is not an option (i.e., statically
+              allocated data).  The setting of the "THP disable"  flag
+              is  inherited by a child created via fork(2) and is pre=E2=
+=80=90
+              served across execve(2).
 
-Here is the code I use:
-==================
-We have very simple wrapper for socket and epoll operations, and you
-can easily guess what they're doing
+       PR_GET_THP_DISABLE (since Linux 3.15)
+              Return (via the function result) the current setting  of
+              the "THP disable" flag for the calling thread: either 1,
+              if the flag is set, or 0, if it is not.
+    ...
+    RETURN VALUE
+       On       success,       PR_GET_DUMPABLE,       PR_GET_KEEPCAPS,
+       PR_GET_NO_NEW_PRIVS,    PR_GET_THP_DISABLE,    PR_CAPBSET_READ,
+       PR_GET_TIMING,       PR_GET_TIMERSLACK,      PR_GET_SECUREBITS,
+       PR_MCE_KILL_GET, and (if it returns) PR_GET_SECCOMP return  the
+       nonnegative  values  described  above.  All other option values
+       return 0 on success.  On error, -1 is returned,  and  errno  is
+       set appropriately.
+    ...
+    ERRORS
+       EINVAL option is PR_SET_THP_DISABLE and arg3, arg4, or arg5  is
+              nonzero.
 
-TEST(EpollService, UdpWriteable) {
+       EINVAL option  is  PR_GET_THP_DISABLE  and arg2, arg3, arg4, or
+              arg5 is nonzero.
 
-  Socket client(Socket::UDP());
+Thanks,
 
-  Socket server(Socket::UDP());
-
-  // Ask os to pick random port
-  CHECK_ERR(server.Bind(SocketAddress(SocketAddress::LOOPBACK, 0)));
-
-  const SocketAddress server_addr(server.GetMyAddress());
-
-  ASSERT_TRUE(SocketOption::SetBlocking(client.fd(), false));
-
-
-  EpollService eps;
-
-  eps.Add(client.fd(), EPOLLOUT | EPOLLET, NULL);
-
-  epoll_event event;
-
-  // The fd should be writable.
-
-  ASSERT_EQ(1, eps.Wait(&event, 1, 0));
-
-  // No more writable event.
-
-  ASSERT_EQ(0, eps.Wait(&event, 1, 0));
+Michael
 
 
-  const char buffer[] = "abcd";
 
-  CHECK_ERR(::sendto(client.fd(), buffer, ARRAYSIZE(buffer), 0,
-
-                     server_addr.addr(), server_addr.length()))1;
-
-  EXPECT_EQ(0, eps.Wait(&event, 1, 0)) << "Got unexpect event " << event.events;
-
-  EXPECT_EQ(0, eps.Wait(&event, 1, 0)) << "Got unexpect event " << event.events;
-
-  client.Close();
-
-  server.Close();
-
-}
-
-And strace output:
-===============
-
-write(1, "\33[0;32m[ RUN      ] \33[mEpollServ"..., 49[ RUN      ]
-EpollService.UdpWriteable
-
-) = 49
-
-socket(PF_INET, SOCK_DGRAM, IPPROTO_IP) = 4
-
-socket(PF_INET, SOCK_DGRAM, IPPROTO_IP) = 5
-
-bind(5, {sa_family=AF_INET, sin_port=htons(0),
-sin_addr=inet_addr("127.0.0.1")}, 16) = 0
-
-getsockname(5, {sa_family=AF_INET, sin_port=htons(51019),
-sin_addr=inet_addr("127.0.0.1")}, [16]) = 0
-
-fcntl(4, F_GETFL)                       = 0x2 (flags O_RDWR)
-
-fcntl(4, F_SETFL, O_RDWR|O_NONBLOCK)    = 0
-
-epoll_create(1024)                      = 6
-
-epoll_ctl(6, EPOLL_CTL_ADD, 4, {EPOLLOUT|EPOLLET, {u32=0, u64=0}}) = 0
-
-epoll_wait(6, {{EPOLLOUT, {u32=0, u64=0}}}, 1, 0) = 1
-
-epoll_wait(6, {}, 1, 0)                 = 0
-
-sendto(4, "abcd\0", 5, 0, {sa_family=AF_INET, sin_port=htons(51019),
-sin_addr=inet_addr("127.0.0.1")}, 16) = 5
-
-epoll_wait(6, {{EPOLLOUT, {u32=0, u64=0}}}, 1, 0) = 1
-
-write(1, "net/base/eventmanager_test.cc:50"...,
-99net/base/eventmanager_test.cc:50: Failure
-
-Value of: eps.Wait(&event, 1, 0)
-
-  Actual: 1
-
-Expected: 0
-
-) = 99
-
-write(1, "Got unexpect event 4\n", 21Got unexpect event 4
-
-)  = 21
-
-epoll_wait(6, {}, 1, 0)                 = 0
-
-close(4)                                = 0
-
-close(5)                                = 0
-
-close(6)                                = 0
-
-write(1, "\33[0;31m[  FAILED  ] \33[mEpollServ"..., 56[  FAILED  ]
-EpollService.UdpWriteable (2 ms)
-
-Thanks you for your feedback!
+--=20
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
