@@ -1,36 +1,34 @@
-From: Davidlohr Bueso <davidlohr@hp.com>
+From: Manfred Spraul <manfred-nhLOkwUX5cPe2c5cEj3t2g@public.gmane.org>
 Subject: Re: [PATCH v3] ipc,shm: disable shmmax and shmall by default
-Date: Fri, 18 Apr 2014 09:33:32 -0700
-Message-ID: <1397838812.19331.3.camel@buesod1.americas.hpqcorp.net>
-References: <1397784345.2556.26.camel@buesod1.americas.hpqcorp.net>
-	 <5350EFAA.2030607@colorfullife.com>
+Date: Fri, 18 Apr 2014 19:51:04 +0200
+Message-ID: <53516608.8090409@colorfullife.com>
+References: <1397784345.2556.26.camel@buesod1.americas.hpqcorp.net> <5350EFAA.2030607@colorfullife.com> <CAKgNAkhY94Y5Nut9+Jj1gcnio81CEmE5sQL_gH_zFnHD-yNx2Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <5350EFAA.2030607@colorfullife.com>
-Sender: owner-linux-mm@kvack.org
-To: Manfred Spraul <manfred@colorfullife.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, KOSAKI Motohiro <kosaki.motohiro@gmail.com>, Kamezawa Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, Greg Thelen <gthelen@google.com>, aswin@hp.com, LKML <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKgNAkhY94Y5Nut9+Jj1gcnio81CEmE5sQL_gH_zFnHD-yNx2Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kamezawa Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, aswin-VXdhtT5mjnY@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2014-04-18 at 11:26 +0200, Manfred Spraul wrote:
-> Hi Davidlohr,
-> 
-> On 04/18/2014 03:25 AM, Davidlohr Bueso wrote:
-> > So a value of 0 bytes or pages, for shmmax and shmall, respectively,
-> > implies unlimited memory, as opposed to disabling sysv shared memory.
-> That might be a second risk:
-> Right now, a sysadmin can prevent sysv memory allocations with
-> 
->      # sysctl kernel.shmall=0
+On 04/18/2014 05:36 PM, Michael Kerrisk (man-pages) wrote:
+> On Fri, Apr 18, 2014 at 11:26 AM, Manfred Spraul
+> <manfred-nhLOkwUX5cPe2c5cEj3t2g@public.gmane.org> wrote:
+>> Obviously my patch has the opposite problem: 64-bit wrap-arounds.
+> I know you alluded to a case in another thread, but I couldn't quite
+> work out from the mail you referred to whether this was really the
+> problem. (And I assume those folks were forced to fix their set-up
+> scripts anyway.) So, it's not clear to me whether this is a real
+> problem. (And your patch does not worsen things from the current
+> situation, right?)
+a) When I wrote the comment it was just an idea.
+But now I think wrap-around could be an issue, e.g. 
+find_vma_intersection(,addr,addr+ULONG_MAX) always returns false, even 
+if there are vmas inbetween.
 
-Yeah, I had pointed this out previously, and it is addressed in the
-changelog. shmall = 0 directly contradicts size < shmmin = 1, so I don't
-know who's wrong there...
+b) If we make ULONG_MAX the default, then it should work.
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+     Manfred
