@@ -1,66 +1,46 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 11/11] ext4: add cross rename support
-Date: Wed, 23 Apr 2014 21:01:16 +0200
-Message-ID: <53580DFC.9060507@gmail.com>
-References: <1389219015-10980-1-git-send-email-miklos@szeredi.hu>	<1389219015-10980-12-git-send-email-miklos@szeredi.hu>	<20140113122517.GA10366@quack.suse.cz>	<20140115182347.GB5715@fieldses.org>	<CAJfpegv0TgJpd-pXxBj2n0efRUW9_GW_tYtHtfN6drOYA=25QQ@mail.gmail.com>	<20140116105406.GF24171@tucsk.piliscsaba.szeredi.hu>	<52D90B93.5010209@gmail.com>	<20140117144126.GG24171@tucsk.piliscsaba.szeredi.hu>	<53523D16.9020101@gmail.com> <CAJfpegsdUwxHOGxhiLtkMHzB==UGzbj+rAVOJGX4nb6z1Urzpw@mail.gmail.com>
+From: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
+Subject: execve is not atomic, what is the exit state of the process when
+ execve fails after throwing away the original process image?
+Date: Fri, 02 May 2014 02:19:52 +0000 (GMT)
+Message-ID: <faa2c0e82f8a8.536300c8@langara.bc.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAJfpegsdUwxHOGxhiLtkMHzB==UGzbj+rAVOJGX4nb6z1Urzpw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "mszeredi-AlSwsSmVLrQ@public.gmane.org" <mszeredi-AlSwsSmVLrQ@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-disposition: inline
+Content-language: en
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/23/2014 04:21 PM, Miklos Szeredi wrote:
-> On Sat, Apr 19, 2014 at 11:08 AM, Michael Kerrisk (man-pages)
-> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> Hi Miklos,
->>
->>> The code changes are pushed to the git tree and the updated man page is below.
->>
->> Now that renameat2() is in 3.15, I've taken these changes. This had to be
->> manually does, because I'd done some major reworking on the pages since you
->> originally wrote your text. So, I may have injected some errors.
->>
->> I did a little light reworking of the text and added VERSIONS and
->> CONFORMING TO pieces. I also added a couple of FIXMEs, to note points
->> that will need to be updated once glibc support is (presumably) added.
->> (Carlos, what's the usual process for triggering that sort of thing?)
->>
->> Could you please review the diff below (now against rename(2)).
+Hello, can any kernel gurus please help me out with what happens on this weird
+corner-case?
+
+
+Quoting Rich Felker at http://ewontfix.com/14/:
+
+> For common reasons it might fail, the execve syscall returns failure
+> in the original process image, allowing the program to handle the
+> error. However, failure of execve is not entirely atomic:
 > 
-> Looks okay.
-
-Thanks for checking it.
-
-> One comment on the current rename.2 page:
+>     The kernel may fail setting up the VM for the new process image
+>     after the original VM has already been destroyed; the main
+>     situation under which this would happen is resource exhaustion.
 > 
->   #include <fcntl.h>           /* Definition of AT_* constants */
-> 
-> AT_ constants are not used in renameat() hence this seems unneeded.
+>     Even after the kernel successfully sets up the new VM and
+>     transfers execution to the new process image, it's possible to
+>     have failures prior to the transfer of control to the actual
+>     application program. This could happen in the dynamic linker
+>     (resource exhaustion or other transient failures mapping required
+>     libraries or loading configuration files) or libc startup
+>     code. Using musl libc with static linking or even dynamic linking
+>     with no additional libraries eliminates these failure cases, but
+>     systemd is intended to be used with glibc.
 
-I think you overlooked AT_FDCWD? (It is true though that that comment 
-is boilerplate across the *at() pages, some of which have several 
-AT_* constants.)
+execve is not atomic, what is the exit state of the process when
+execve fails after throwing away the original process image?
 
-> Not sure where the RENAME_ constants need to go once renameat2() is
-> added to glibc, possibly to <stdio.h> since they are closely related
-> to rename.
-
-Will you be prodding the glibc folks about this?
-
-Thanks,
-
-Michael
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I already have a hacky solution (see
+https://gitorious.org/linted/linted/source/d25eac7a6fb58946ec8112771c0c56eb39fd1055:src/spawn/spawn.c)
+to finding when a process fails before or at execve and now I want to
+know what exit status is returned so I can give a nice error message.
