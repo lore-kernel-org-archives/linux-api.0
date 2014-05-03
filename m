@@ -1,53 +1,59 @@
-From: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+From: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
 Subject: Re: execve is not atomic, what is the exit state of the process when
  execve fails after throwing away the original process image?
-Date: Sat, 3 May 2014 19:45:10 +0200
-Message-ID: <20140503174510.GA7720@debjann.fritz.box>
+Date: Sat, 03 May 2014 22:18:52 +0000 (GMT)
+Message-ID: <faa0c9e9297ad.53656b4c@langara.bc.ca>
 References: <faa2c0e82f8a8.536300c8@langara.bc.ca>
+ <20140503174510.GA7720@debjann.fritz.box>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="VS++wcV0S1rZb1Fb"
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <faa2c0e82f8a8.536300c8-BTv7Ps/Sm75C8prJL3GQQw@public.gmane.org>
+Content-disposition: inline
+Content-language: en
+In-reply-to: <20140503174510.GA7720-7cfQGs147y6a6lf8Wg2v7Z5kstrrjoWp@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Thank you Jann
+Horn. http://lxr.free-electrons.com/source/fs/binfmt_elf.c#L740
+answers my question.
 
---VS++wcV0S1rZb1Fb
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On reflection, the kernel code makes sense. The process must either
+exit with an error code or raise the SIGKILL signal because SIGKILL
+and SIGSTOP are the only unblockable signals (of course, the kernel
+has the privileges to do whatever it wants but it tries to be
+consistent with userspace).
 
-On Fri, May 02, 2014 at 02:19:52AM +0000, Steven Stewart-Gallus wrote:
-> execve is not atomic, what is the exit state of the process when
-> execve fails after throwing away the original process image?
+Strangely, in other places the SIGSEGV is sent when the ELF file is
+incorrect in some places and I don't fully understand that part of the
+code. Still, I understand enough to look at the code in more detail
+later.
 
-See http://lxr.free-electrons.com/source/fs/binfmt_elf.c#L740 or
-so =E2=80=93 as far as I know, the kernel sends a SIGKILL. Does that help?
+Thank you,
+Steven Stewart-Gallus
 
---VS++wcV0S1rZb1Fb
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+P.S.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
+I'm CC'ing Michael because he wanted to know this case so could
+document it.
 
-iQIcBAEBAgAGBQJTZSsmAAoJED4KNFJOeCOo/HQP/1iMJ4EtxpopYNC/jBbao6GL
-tQUXzVvL0Gyb2paVT02lngUa1UG+C8yOKMAnInmMTntrcaentzSAc2HGTtECty+7
-qZXx3SKd73Rm0tlr2gw68JwiFJCplSE8fat8Q5CEzApQzyGq6zil2Nm/FelX9S2+
-ngALsSwcXpI9fmvf+gZu0eqkubOmBRhx6ZYMh5/oIXwp1TEgKv/xejipRimUPObE
-NCGDxs8+E9B41vmwOhg8DVs11qMX+x+Yokm6c4cTPmrdXWKN9sT5WQby3CXLBThU
-JFpIFAl1dSTLdl+IQV0JO1UM+i/ZDEak6o7DZgxCeYpijyIG68KZjZ8OpTQ5WchS
-oIzHrKXPiI8brp5JWeIqc3b5HWNHmFp3rz7PrDV4EKgCLduZZZtfo3QcaStgti9Z
-jpaailvJlwpppCsuuNV2IIEKkl7WNrzfgbtcUttgtBG4S9SKo3eHJQr0BI08OCCp
-tkOmtLQhYzWjCASYR8876xH2WeqyKYiWZYEr5HHMZs7wLyL57rdQRuvNUS6MGMKC
-rTLyd5r/w2ZJeRpsZTFXZmViTSj6CqbDIA748oBcmPgEpO/Iv+1RVzJCSQ9envh4
-9HHGFnO0lxxoKX8+L2c2OdNPocoxeq7jyY1xfxw4RZ1D4pudXl2U302WIDeLWTiN
-FP7tcqy2rTpLhVxFsUAU
-=oFTg
------END PGP SIGNATURE-----
+----- Original Message -----
+=46rom: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+Date: Saturday, May 3, 2014 10:45 am
+Subject: Re: execve is not atomic, what is the exit state of the proces=
+s when
+execve fails after throwing away the original process image?
+To: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
---VS++wcV0S1rZb1Fb--
+> On Fri, May 02, 2014 at 02:19:52AM +0000, Steven Stewart-Gallus wrote=
+:
+> > execve is not atomic, what is the exit state of the process when
+> > execve fails after throwing away the original process image?
+>=20
+> See http://lxr.free-electrons.com/source/fs/binfmt_elf.c#L740 or
+> so =96 as far as I know, the kernel sends a SIGKILL. Does that help?
+>=20
