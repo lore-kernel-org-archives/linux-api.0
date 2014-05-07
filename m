@@ -1,58 +1,41 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Joe Perches <joe@perches.com>
 Subject: Re: [PATCH] MAINTAINERS: Add linux-api for review of API/ABI changes
-Date: Wed, 07 May 2014 07:24:10 +0200
-Message-ID: <5369C37A.1000001@gmail.com>
+Date: Wed, 07 May 2014 11:00:43 -0700
+Message-ID: <1399485643.2911.12.camel@joe-AO725>
 References: <20140506205953.GA16997@jtriplet-mobl1>
+	 <5369C37A.1000001@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140506205953.GA16997@jtriplet-mobl1>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5369C37A.1000001@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Josh Triplett <josh@joshtriplett.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/06/2014 10:59 PM, Josh Triplett wrote:
-> This makes it more likely that patch submitters will CC API/ABI changes
-> to the linux-api list, and tools like get_maintainer.pl will do so
-> automatically.
+On Wed, 2014-05-07 at 07:24 +0200, Michael Kerrisk (man-pages) wrote:
+> On 05/06/2014 10:59 PM, Josh Triplett wrote:
+> > This makes it more likely that patch submitters will CC API/ABI changes
+> > to the linux-api list, and tools like get_maintainer.pl will do so
+> > automatically.
+> > 
+> > Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+> > Acked-by: Steven Rostedt <rostedt@goodmis.org>
 > 
-> Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-> Acked-by: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+> Every little bit helps, I guess. However, what I think would make a difference
+> is if if people constantly posted reminders to CC linux-api when they see API/API
+> changes on the lists. (And the reminders should of course CC linux-api).
+[]
+> > diff --git a/MAINTAINERS b/MAINTAINERS
+[]
+> > +ABI/API
+> > +L:	linux-api@vger.kernel.org
+> > +F:	Documentation/ABI/
+> > +F:	include/linux/syscalls.h
+> > +F:	include/uapi/
+> > +F:	kernel/sys_ni.c
 
-Every little bit helps, I guess. However, what I think would make a difference
-is if if people constantly posted reminders to CC linux-api when they see API/API
-changes on the lists. (And the reminders should of course CC linux-api).
-
-Acked-by: Michael Kerrisk <mtk.man-pages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
-> ---
->  MAINTAINERS | 7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> diff --git a/MAINTAINERS b/MAINTAINERS
-> index 7578deb..52a282b 100644
-> --- a/MAINTAINERS
-> +++ b/MAINTAINERS
-> @@ -210,6 +210,13 @@ S:	Supported
->  F:	Documentation/scsi/aacraid.txt
->  F:	drivers/scsi/aacraid/
->  
-> +ABI/API
-> +L:	linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> +F:	Documentation/ABI/
-> +F:	include/linux/syscalls.h
-> +F:	include/uapi/
-> +F:	kernel/sys_ni.c
-> +
->  ABIT UGURU 1,2 HARDWARE MONITOR DRIVER
->  M:	Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->  L:	lm-sensors-GZX6beZjE8VD60Wz+7aTrA@public.gmane.org
-> 
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Perhaps this should have a
+	"S:	Odd Fixes"
+line too.
