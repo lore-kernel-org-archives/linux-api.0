@@ -1,11 +1,11 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: [SCHED_DEADLINE man pages 1/2] sched_setattr.2
-Date: Tue, 13 May 2014 16:57:36 +0200
-Message-ID: <537232E0.4020202@gmail.com>
+Subject: [SCHED_DEADLINE man pages 2/2] sched(7) SCHED_DEADLINE
+Date: Tue, 13 May 2014 17:00:57 +0200
+Message-ID: <537233A9.6040102@gmail.com>
 References: <53723235.40101@gmail.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
- boundary="------------040601020709070106020502"
+ boundary="------------050207020903020903090506"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <53723235.40101@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -14,654 +14,806 @@ Cc: mtk.manpages@gmail.com, Juri Lelli <juri.lelli@gmail.com>, Dario Faggioli <r
 List-Id: linux-api@vger.kernel.org
 
 This is a multi-part message in MIME format.
---------------040601020709070106020502
+--------------050207020903020903090506
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 Hello Peter et al.
 
-Here is the sched_attr.2 page as rendered text, with the 
-raw page source attached. Please carefully review.
+Here is the section of the sched(7) page that describes SCHED_DEADLINE,
+as rendered text, with the (entire) raw page source attached. Please 
+carefully review.
 
 Cheers,
 
 Michael
 
+   SCHED_DEADLINE: Sporadic task model deadline scheduling
+       Since version 3.14, Linux provides a deadline scheduling pol‐
+       icy (SCHED_DEADLINE).  This policy is  currently  implemented
+       using  GEDF  (Global  Earliest Deadline First) in conjunction
+       with CBS (Constant Bandwidth Server).  To set and fetch  this
+       policy and associated attributes, one must use the Linux-spe‐
+       cific sched_setattr(2) and sched_getattr(2) system calls.
 
-NAME
-       sched_setattr,  sched_getattr  -  set and get scheduling policy
-       and attributes
+       A sporadic task is one that has a  sequence  of  jobs,  where
+       each job is activated at most once per period.  Each job also
+       has a relative deadline, before which it should finish execu‐
+       tion, and a computation time, which is the CPU time necessary
+       for executing the job.  The  moment  when  a  task  wakes  up
+       because  a  new  job has to be executed is called the arrival
+       time (also referred to as the request time or release  time).
+       The  start time is the time at which a task starts its execu‐
+       tion.  The absolute deadline is thus obtained by  adding  the
+       relative deadline to the arrival time.
 
-SYNOPSIS
-       #include <sched.h>
+       The following diagram clarifies these terms:
 
-       int sched_setattr(pid_t pid, const struct sched_attr *attr,
-                         unsigned int flags);
+           arrival/wakeup                   absolute deadline
+                |    start time                   |
+                |        |                        |
+                v        v                        v
+           -----x--------xooooooooooooooooo-------x--------x---
+                         |<- comp. time ->|
+                |<------- relative deadline ----->|
+                |<-------------- period ------------------>|
 
-       int sched_getattr(pid_t pid, const struct sched_attr *attr,
-                         unsigned int size, unsigned int flags);
+       When  setting  a  SCHED_DEADLINE  policy  for  a thread using
+       sched_setattr(2), one can specify three parameters:  Runtime,
+       Deadline,  and  Period.   These parameters do not necessarily
+       correspond to the aforementioned terms: usual practice is  to
+       set  Runtime to something bigger than the average computation
+       time (or worst-case execution time for hard real-time tasks),
+       Deadline  to  the relative deadline, and Period to the period
+       of the task.  Thus, for SCHED_DEADLINE scheduling, we have:
 
-DESCRIPTION
-   sched_setattr()
-       The sched_setattr() system call sets the scheduling policy  and
-       associated  attributes  for the thread whose ID is specified in
-       pid.  If pid equals zero, the scheduling policy and  attributes
-       of the calling thread will be set.
+           arrival/wakeup                   absolute deadline
+                |    start time                   |
+                |        |                        |
+                v        v                        v
+           -----x--------xooooooooooooooooo-------x--------x---
+                         |<-- Runtime --->|
+                |<----------- Deadline ---------->|
+                |<-------------- Period ------------------>|
 
-       Currently,  Linux  supports  the following "normal" (i.e., non-
-       real-time) scheduling policies as values that may be  specified
-       in policy:
+       The three deadline-scheduling parameters  correspond  to  the
+       sched_runtime, sched_deadline, and sched_period fields of the
+       sched_attr structure;  see  sched_setattr(2).   These  fields
+       express  value  in nanoseconds.  If sched_period is specified
+       as 0, then it is made the same as sched_deadline.
 
-       SCHED_OTHER   the standard round-robin time-sharing policy;
+       The kernel requires that:
 
-       SCHED_BATCH   for "batch" style execution of processes; and
+           sched_runtime <= sched_deadline <= sched_period
 
-       SCHED_IDLE    for running very low priority background jobs.
+       In addition, under the current  implementation,  all  of  the
+       parameter  values  must be at least 1024 (i.e., just over one
+       microsecond, which is the resolution of the  implementation).
+       If any of these checks fails, sched_setattr(2) fails with the
+       error EINVAL.
 
-       Various  "real-time"  policies  are also supported, for special
-       time-critical applications that need precise control  over  the
-       way  in which runnable threads are selected for execution.  For
-       the rules governing when a process may use these policies,  see
-       sched(7).  The real-time policies that may be specified in pol‐
-       icy are:
+       The CBS guarantees non-interference between tasks, by  throt‐
+       tling  threads  that attempt to over-run their specified Run‐
+       time.
 
-       SCHED_FIFO    a first-in, first-out policy; and
+       To ensure deadline scheduling  guarantees,  the  kernel  must
+       prevent situations where the set of SCHED_DEADLINE threads is
+       not feasible (schedulable) within the given constraints.  The
+       kernel  thus  performs  an  admittance  test  when setting or
+       changing SCHED_DEADLINE policy and attributes.   This  admis‐
+       sion test calculates whether the change is feasible; if it is
+       not sched_setattr(2) fails with the error EBUSY.
 
-       SCHED_RR      a round-robin policy.
+       For example, it is required (but not necessarily  sufficient)
+       for  the  total  utilization  to be less than or equal to the
+       total number of CPUs available, where, since each thread  can
+       maximally  run for Runtime per Period, that thread's utiliza‐
+       tion is its Runtime divided by its Period.
 
-       Linux also provides the following policy:
+       In order to fulfil the guarantees that are made when a thread
+       is  admitted  to  the  SCHED_DEADLINE  policy, SCHED_DEADLINE
+       threads are the highest priority (user controllable)  threads
+       in  the  system; if any SCHED_DEADLINE thread is runnable, it
+       will preempt any thread scheduled  under  one  of  the  other
+       policies.
 
-       SCHED_DEADLINE
-                     a deadline scheduling policy;  see  sched(7)  for
-                     details.
+       A call to fork(2) by a thread scheduled under the SCHED_DEAD‐
+       LINE policy will fail  with  the  error  EAGAIN,  unless  the
+       thread has its reset-on-fork flag set (see below).
 
-       The  attr argument is a pointer to a structure that defines the
-       new scheduling policy and attributes for the specified  thread.
-       This structure has the following form:
-
-           struct sched_attr {
-               u32 size;              /* Size of this structure */
-               u32 sched_policy;      /* Policy (SCHED_*) */
-               u64 sched_flags;       /* Flags */
-               s32 sched_nice;        /* Nice value (SCHED_OTHER,
-                                         SCHED_BATCH) */
-               u32 sched_priority;    /* Static priority (SCHED_FIFO,
-                                         SCHED_RR) */
-               /* Remaining fields are for SCHED_DEADLINE */
-               u64 sched_runtime;
-               u64 sched_deadline;
-               u64 sched_period;
-           };
-
-       The fields of this structure are as follows:
-
-       size   This field should be set to the size of the structure in
-              bytes, as in sizeof(struct sched_attr).  If the provided
-              structure  is  smaller  than  the  kernel structure, any
-              additional fields are assumed to be '0'.   If  the  pro‐
-              vided structure is larger than the kernel structure, the
-              kernel verifies that all additional  fields  are  0;  if
-              they are not, sched_setattr() fails with the error E2BIG
-              and updates size to  contain  the  size  of  the  kernel
-              structure.
-
-              The  above  behavior  when  the  size  of the user-space
-              sched_attr structure does not match the size of the ker‐
-              nel  structure  allows  for  future extensibility of the
-              interface.  Malformed applications  that  pass  oversize
-              structures  won't break in the future if the size of the
-              kernel  sched_attr  structure  is  increased.   In   the
-              future, it could also allow applications that know about
-              a larger user-space sched_attr  structure  to  determine
-              whether  they  are  running on an older kernel that does
-              not support the larger structure.
-
-       sched_policy
-              This field specifies the scheduling policy,  as  one  of
-              the SCHED_* values listed above.
-
-       sched_flags
-              This  field contains flags controlling scheduling behav‐
-              ior.   Only  one  such  flag   is   currently   defined:
-              SCHED_FLAG_RESET_ON_FORK.  As a result of including this
-              flag, children created by fork(2) do not inherit  privi‐
-              leged scheduling policies.  See sched(7) for details.
-
-       sched_nice
-              This field specifies the nice value to be set when spec‐
-              ifying sched_policy as SCHED_OTHER or SCHED_BATCH.   The
-              nice  value is a number in the range -20 (high priority)
-              to +19 (low priority); see setpriority(2).
-
-       sched_priority
-              This field specifies the static priority to be set  when
-              specifying  sched_policy as SCHED_FIFO or SCHED_RR.  The
-              allowed range of priorities for these  policies  can  be
-              determined     using    sched_get_priority_min(2)    and
-              sched_get_priority_max(2).   For  other  policies,  this
-              field must be specified as 0.
-
-       sched_runtime
-              This  field  specifies the "Runtime" parameter for dead‐
-              line scheduling.  The value is expressed in nanoseconds.
-              This  field,  and the next two fields, are used only for
-              SCHED_DEADLINE  scheduling;  for  further  details,  see
-              sched(7).
-
-       sched_deadline
-              This  field specifies the "Deadline" parameter for dead‐
-              line scheduling.  The value is expressed in nanoseconds.
-
-       sched_period
-              This field specifies the "Period" parameter for deadline
-              scheduling.  The value is expressed in nanoseconds.
-
-       The  flags  argument is provided to allow for future extensions
-       to the interface; in the  current  implementation  it  must  be
-       specified as 0.
-
-   sched_getattr()
-       The  sched_getattr()  system call fetches the scheduling policy
-       and the associated attributes for the thread whose ID is speci‐
-       fied  in  pid.   If  pid equals zero, the scheduling policy and
-       attributes of the calling thread will be retrieved.
-
-       The size argument should be set to the size of  the  sched_attr
-       structure  as  known to user space.  The value must be at least
-       as large as the size  of  the  initially  published  sched_attr
-       structure, or the call fails with the error EINVAL.
-
-       The retrieved scheduling attributes are placed in the fields of
-       the sched_attr structure pointed to by attr.  The  kernel  sets
-       attr.size to the size of its sched_attr structure.
-
-       If  the caller-provided attr buffer is larger than the kernel's
-       sched_attr structure, the additional bytes  in  the  user-space
-       structure are not touched.  If the caller-provided structure is
-       smaller than the kernel sched_attr  structure  and  the  kernel
-       needs   to   return   values   outside   the   provided  space,
-       sched_getattr()  fails  with  the   error   E2BIG.    As   with
-       sched_setattr(), these semantics allow for future extensibility
-       of the interface.
-
-       The flags argument is provided to allow for  future  extensions
-       to  the  interface;  in  the  current implementation it must be
-       specified as 0.
-
-RETURN VALUE
-       On success, sched_setattr() and sched_getattr() return  0.   On
-       error,  -1  is returned, and errno is set to indicate the cause
-       of the error.
-
-ERRORS
-       sched_getattr() and sched_setattr() can both fail for the  fol‐
-       lowing reasons:
-
-       EINVAL attr is NULL; or pid is negative; or flags is not zero.
-
-       ESRCH  The thread whose ID is pid could not be found.
-
-       In  addition,  sched_getattr()  can fail for the following rea‐
-       sons:
-
-       E2BIG  The buffer specified by size and attr is too small.
-
-       EINVAL size is invalid; that is, it is smaller than the initial
-              version of the sched_attr structure (48 bytes) or larger
-              than the system page size.
-
-       In addition, sched_setattr() can fail for  the  following  rea‐
-       sons:
-
-       E2BIG  The buffer specified by size and attr is larger than the
-              kernel structure, and one or more of the excess bytes is
-              nonzero.
-
-       EBUSY  SCHED_DEADLINE admission control failure, see sched(7).
-
-       EINVAL attr.sched_policy is not one of the recognized policies;
-              attr.sched_flags   contains   a    flag    other    than
-              SCHED_FLAG_RESET_ON_FORK;   or   attr.sched_priority  is
-              invalid; or attr.sched_policy is SCHED_DEADLINE and  the
-              deadline scheduling parameters in attr are invalid.
-
-       EPERM  The caller does not have appropriate privileges.
-
-       EPERM  The caller's CPU affinity mask does not include all CPUs
-              in the system (see sched_setaffinity(2)).
-
-VERSIONS
-       These system calls first appeared in Linux 3.14.
-
-CONFORMING TO
-       These system calls are nonstandard Linux extensions.
-
-NOTES
-       sched_setattr() provides a superset  of  the  functionality  of
-       sched_setscheduler(2),  sched_setparam(2),  nice(2), and (other
-       than the ability to set the priority of all processes belonging
-       to a specified user or all processes in a specified group) set‐
-       priority(2).  Analogously, sched_getattr() provides a  superset
-       of   the  functionality  of  sched_getscheduler(2),  sched_get‐
-       param(2), and (partially) getpriority(2).
-
-BUGS
-       In Linux versions up to 3.15, sched_settattr() failed with  the
-       error EFAULT instead of E2BIG for the case described in ERRORS.
-
-SEE ALSO
-       nice(2), sched_get_priority_max(2), sched_get_priority_min(2),
-       sched_getaffinity(2), sched_getscheduler(2), sched_getparam(2),
-       sched_rr_get_interval(2), sched_setaffinity(2),
-       sched_setscheduler(2), sched_setparam(2), sched_yield(2),
-       setpriority(2), pthread_getschedparam(3),
-       pthread_setschedparam(3), pthread_setschedprio(3),
-       capabilities(7), cpuset(7), sched(7)
+       A  SCHED_DEADLINE thread that calls sched_yield(2) will yield
+       the current job and wait for a new period to begin.
 
 -- 
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Linux/UNIX System Programming Training: http://man7.org/training/
 
---------------040601020709070106020502
+--------------050207020903020903090506
 Content-Type: application/x-troff-man;
- name="sched_setattr.2"
+ name="sched.7"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment;
- filename="sched_setattr.2"
+ filename="sched.7"
 
 .\" Copyright (C) 2014 Michael Kerrisk <mtk.manpages@gmail.com>
 .\" and Copyright (C) 2014 Peter Zijlstra <peterz@infradead.org>
+.\" and Copyright (C) 2014 Juri Lelli <juri.lelli@gmail.com>
+.\" Various pieces from the old sched_setscheduler(2) page
+.\" 	Copyright (C) Tom Bjorkholm, Markus Kuhn & David A. Wheeler 1996-1999
+.\" 	and Copyright (C) 2007 Carsten Emde <Carsten.Emde@osadl.org>
+.\" 	and Copyright (C) 2008 Michael Kerrisk <mtk.manpages@gmail.com>
 .\"
-.\" %%%LICENSE_START(VERBATIM)
-.\" Permission is granted to make and distribute verbatim copies of this
-.\" manual provided the copyright notice and this permission notice are
-.\" preserved on all copies.
+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 2 of
+.\" the License, or (at your option) any later version.
 .\"
-.\" Permission is granted to copy and distribute modified versions of this
-.\" manual under the conditions for verbatim copying, provided that the
-.\" entire resulting derived work is distributed under the terms of a
-.\" permission notice identical to this one.
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
 .\"
-.\" Since the Linux kernel and libraries are constantly changing, this
-.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-.\" responsibility for errors or omissions, or for damages resulting from
-.\" the use of the information contained herein.  The author(s) may not
-.\" have taken the same level of care in the production of this manual,
-.\" which is licensed free of charge, as they might when working
-.\" professionally.
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
 .\"
-.\" Formatted or processed versions of this manual, if unaccompanied by
-.\" the source, must acknowledge the copyright and authors of this work.
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, see
+.\" <http://www.gnu.org/licenses/>.
 .\" %%%LICENSE_END
 .\"
-.TH SCHED_SETATTR 2 2014-05-09 "Linux" "Linux Programmer's Manual"
+.\" Worth looking at: http://rt.wiki.kernel.org/index.php
+.\"
+.TH SCHED 7 2014-05-12 "Linux" "Linux Programmer's Manual"
 .SH NAME
-sched_setattr, sched_getattr \-
-set and get scheduling policy and attributes
-.SH SYNOPSIS
-.nf
-.B #include <sched.h>
-
-.BI "int sched_setattr(pid_t " pid ", const struct sched_attr *" attr ,
-.BI "                  unsigned int " flags );
-
-.BI "int sched_getattr(pid_t " pid ", const struct sched_attr *" attr ,
-.BI "                  unsigned int " size ", unsigned int " flags );
-.fi
-.\" FIXME Add feature test macro requirements
+sched \- overview of scheduling APIs
 .SH DESCRIPTION
-.SS sched_setattr()
-The
-.BR sched_setattr ()
-system call sets the scheduling policy and
-associated attributes for the thread whose ID is specified in
-.IR pid .
-If
-.I pid
-equals zero,
-the scheduling policy and attributes of the calling thread will be set.
+.SS API summary
+The Linux scheduling APIs are as follows:
+.TP
+.BR sched_setscheduler (2)
+Set the scheduling policy and parameters of a specified thread.
+.TP
+.BR sched_getscheduler (2)
+Return the scheduling policy of a specified thread.
+.TP
+.BR sched_setparam (2)
+Set the scheduling parameters of a specified thread.
+.TP
+.BR sched_getparam (2)
+Fetch the scheduling parameters of a specified thread.
+.TP
+.BR sched_get_priority_max (2)
+Return the minimum priority available in a specified scheduling policy.
+.TP
+.BR sched_get_priority_min (2)
+Return the maximum priority available in a specified scheduling policy.
+.TP
+.BR sched_rr_get_interval (2)
+Fetch the quantum used for threads that are scheduled under
+the "round-robin" scheduling policy.
+.TP
+.BR sched_yield (2)
+Cause the caller to relinquish the CPU,
+so that some other thread be executed.
+.TP
+.BR sched_setaffinity (2)
+(Linux-specific)
+Set the CPU affinity of a specified thread.
+.TP
+.BR sched_getaffinity (2)
+(Linux-specific)
+Get the CPU affinity of a specified thread.
+.TP
+.BR sched_setattr (2)
+Set the scheduling policy and parameters of a specified thread.
+This (Linux-specific) system call provides a superset of the functionality of
+.BR sched_setscheduler (2)
+and
+.BR sched_setparam (2).
+.TP
+.BR sched_getattr (2)
+Fetch the scheduling policy and parameters of a specified thread.
+This (Linux-specific) system call provides a superset of the functionality of
+.BR sched_getscheduler (2)
+and
+.BR sched_getparam (2).
+.\"
+.SS Scheduling policies
+The scheduler is the kernel component that decides which runnable thread
+will be executed by the CPU next.
+Each thread has an associated scheduling policy and a \fIstatic\fP
+scheduling priority,
+.IR sched_priority .
+The scheduler makes its decisions based on knowledge of the scheduling
+policy and static priority of all threads on the system.
 
-Currently, Linux supports the following "normal"
-(i.e., non-real-time) scheduling policies as values that may be specified in
-.IR policy :
-.TP 14
-.BR SCHED_OTHER
-the standard round-robin time-sharing policy;
-.\" In the 2.6 kernel sources, SCHED_OTHER is actually called
-.\" SCHED_NORMAL.
-.TP
-.BR SCHED_BATCH
-for "batch" style execution of processes; and
-.TP
-.BR SCHED_IDLE
-for running
-.I very
-low priority background jobs.
+For threads scheduled under one of the normal scheduling policies
+(\fBSCHED_OTHER\fP, \fBSCHED_IDLE\fP, \fBSCHED_BATCH\fP),
+\fIsched_priority\fP is not used in scheduling
+decisions (it must be specified as 0).
+
+Processes scheduled under one of the real-time policies
+(\fBSCHED_FIFO\fP, \fBSCHED_RR\fP) have a
+\fIsched_priority\fP value in the range 1 (low) to 99 (high).
+(As the numbers imply, real-time threads always have higher priority
+than normal threads.)
+Note well: POSIX.1-2001 requires an implementation to support only a
+minimum 32 distinct priority levels for the real-time policies,
+and some systems supply just this minimum.
+Portable programs should use
+.BR sched_get_priority_min (2)
+and
+.BR sched_get_priority_max (2)
+to find the range of priorities supported for a particular policy.
+
+Conceptually, the scheduler maintains a list of runnable
+threads for each possible \fIsched_priority\fP value.
+In order to determine which thread runs next, the scheduler looks for
+the nonempty list with the highest static priority and selects the
+thread at the head of this list.
+
+A thread's scheduling policy determines
+where it will be inserted into the list of threads
+with equal static priority and how it will move inside this list.
+
+All scheduling is preemptive: if a thread with a higher static
+priority becomes ready to run, the currently running thread
+will be preempted and
+returned to the wait list for its static priority level.
+The scheduling policy determines the
+ordering only within the list of runnable threads with equal static
+priority.
+.SS SCHED_FIFO: First in-first out scheduling
+\fBSCHED_FIFO\fP can be used only with static priorities higher than
+0, which means that when a \fBSCHED_FIFO\fP threads becomes runnable,
+it will always immediately preempt any currently running
+\fBSCHED_OTHER\fP, \fBSCHED_BATCH\fP, or \fBSCHED_IDLE\fP thread.
+\fBSCHED_FIFO\fP is a simple scheduling
+algorithm without time slicing.
+For threads scheduled under the
+\fBSCHED_FIFO\fP policy, the following rules apply:
+.IP * 3
+A \fBSCHED_FIFO\fP thread that has been preempted by another thread of
+higher priority will stay at the head of the list for its priority and
+will resume execution as soon as all threads of higher priority are
+blocked again.
+.IP *
+When a \fBSCHED_FIFO\fP thread becomes runnable, it
+will be inserted at the end of the list for its priority.
+.IP *
+A call to
+.BR sched_setscheduler (2),
+.BR sched_setparam (2),
+or
+.BR sched_setattr (2)
+will put the
+\fBSCHED_FIFO\fP (or \fBSCHED_RR\fP) thread identified by
+\fIpid\fP at the start of the list if it was runnable.
+As a consequence, it may preempt the currently running thread if
+it has the same priority.
+(POSIX.1-2001 specifies that the thread should go to the end
+of the list.)
+.\" In 2.2.x and 2.4.x, the thread is placed at the front of the queue
+.\" In 2.0.x, the Right Thing happened: the thread went to the back -- MTK
+.IP *
+A thread calling
+.BR sched_yield (2)
+will be put at the end of the list.
 .PP
-Various "real-time" policies are also supported,
-for special time-critical applications that need precise control over
-the way in which runnable threads are selected for execution.
-For the rules governing when a process may use these policies, see
-.BR sched (7).
-The real-time policies that may be specified in
-.IR policy
-are:
-.TP 14
-.BR SCHED_FIFO
-a first-in, first-out policy; and
-.TP
-.BR SCHED_RR
-a round-robin policy.
-.PP
-Linux also provides the following policy:
-.TP 14
-.B SCHED_DEADLINE
-a deadline scheduling policy; see
-.BR sched (7)
-for details.
-.PP
+No other events will move a thread
+scheduled under the \fBSCHED_FIFO\fP policy in the wait list of
+runnable threads with equal static priority.
+
+A \fBSCHED_FIFO\fP
+thread runs until either it is blocked by an I/O request, it is
+preempted by a higher priority thread, or it calls
+.BR sched_yield (2).
+.SS SCHED_RR: Round-robin scheduling
+\fBSCHED_RR\fP is a simple enhancement of \fBSCHED_FIFO\fP.
+Everything
+described above for \fBSCHED_FIFO\fP also applies to \fBSCHED_RR\fP,
+except that each thread is allowed to run only for a maximum time
+quantum.
+If a \fBSCHED_RR\fP thread has been running for a time
+period equal to or longer than the time quantum, it will be put at the
+end of the list for its priority.
+A \fBSCHED_RR\fP thread that has
+been preempted by a higher priority thread and subsequently resumes
+execution as a running thread will complete the unexpired portion of
+its round-robin time quantum.
+The length of the time quantum can be
+retrieved using
+.BR sched_rr_get_interval (2).
+.\" On Linux 2.4, the length of the RR interval is influenced
+.\" by the process nice value -- MTK
+.\"
+.SS SCHED_DEADLINE: Sporadic task model deadline scheduling
+Since version 3.14, Linux provides a deadline scheduling policy
+.RB ( SCHED_DEADLINE ).
+This policy is currently implemented using
+GEDF (Global Earliest Deadline First)
+in conjunction with CBS (Constant Bandwidth Server).
+To set and fetch this policy and associated attributes,
+one must use the Linux-specific
+.BR sched_setattr (2)
+and
+.BR sched_getattr (2)
+system calls.
+
+A sporadic task is one that has a sequence of jobs, where each
+job is activated at most once per period.
+Each job also has a
+.IR "relative deadline" ,
+before which it should finish execution, and a
+.IR "computation time" ,
+which is the CPU time necessary for executing the job.
+The moment when a task wakes up
+because a new job has to be executed is called the
+.IR "arrival time"
+(also referred to as the request time or release time).
 The
-.I attr
-argument is a pointer to a structure that defines
-the new scheduling policy and attributes for the specified thread.
-This structure has the following form:
+.IR "start time"
+is the time at which a task starts its execution.
+The
+.I "absolute deadline" 
+is thus obtained by adding the relative deadline to the arrival time.
+
+The following diagram clarifies these terms:
 
 .in +4n
 .nf
-struct sched_attr {
-    u32 size;              /* Size of this structure */
-    u32 sched_policy;      /* Policy (SCHED_*) */
-    u64 sched_flags;       /* Flags */
-    s32 sched_nice;        /* Nice value (SCHED_OTHER,
-                              SCHED_BATCH) */
-    u32 sched_priority;    /* Static priority (SCHED_FIFO,
-                              SCHED_RR) */
-    /* Remaining fields are for SCHED_DEADLINE */
-    u64 sched_runtime;
-    u64 sched_deadline;
-    u64 sched_period;
-};
+arrival/wakeup                   absolute deadline
+     |    start time                   |
+     |        |                        |
+     v        v                        v
+-----x--------xooooooooooooooooo-------x--------x---
+              |<- comp. time ->|
+     |<------- relative deadline ----->|
+     |<-------------- period ------------------>|
 .fi
 .in
 
-The fields of this structure are as follows:
-.TP
-.B size
-This field should be set to the size of the structure in bytes, as in
-.IR "sizeof(struct sched_attr)" .
-If the provided structure is smaller than the kernel structure,
-any additional fields are assumed to be '0'.
-If the provided structure is larger than the kernel structure,
-the kernel verifies that all additional fields are 0;
-if they are not,
-.BR sched_setattr ()
-fails with the error
-.BR E2BIG
-and updates
-.I size
-to contain the size of the kernel structure.
-.IP
-The above behavior when the size of the user-space
-.I sched_attr
-structure does not match the size of the kernel structure
-allows for future extensibility of the interface.
-Malformed applications that pass oversize structures
-won't break in the future if the size of the kernel
-.I sched_attr
-structure is increased.
-In the future,
-it could also allow applications that know about a larger user-space
-.I sched_attr
-structure to determine whether they are running on an older kernel
-that does not support the larger structure.
-.TP
-.I sched_policy
-This field specifies the scheduling policy, as one of the
-.BR SCHED_*
-values listed above.
-.TP
-.I sched_flags
-This field contains flags controlling scheduling behavior.
-Only one such flag is currently defined:
-.BR SCHED_FLAG_RESET_ON_FORK .
-As a result of including this flag, children created by
-.BR fork (2)
-do not inherit privileged scheduling policies.
-See
-.BR sched (7)
-for details.
-.TP
-.I sched_nice
-This field specifies the nice value to be set when specifying
-.IR sched_policy
-as
-.BR SCHED_OTHER
-or
-.BR SCHED_BATCH .
-The nice value is a number in the range \-20 (high priority)
-to +19 (low priority); see
-.BR setpriority (2).
-.TP
-.I sched_priority
-This field specifies the static priority to be set when specifying
-.IR sched_policy
-as
-.BR SCHED_FIFO
-or
-.BR SCHED_RR .
-The allowed range of priorities for these policies can be determined using
-.BR sched_get_priority_min (2)
+When setting a
+.B SCHED_DEADLINE
+policy for a thread using
+.BR sched_setattr (2),
+one can specify three parameters:
+.IR Runtime ,
+.IR Deadline ,
 and
-.BR sched_get_priority_max (2).
-For other policies, this field must be specified as 0.
-.TP
-.I sched_runtime
-This field specifies the "Runtime" parameter for deadline scheduling.
-The value is expressed in nanoseconds.
-This field, and the next two fields,
-are used only for
-.BR SCHED_DEADLINE 
-scheduling; for further details, see
-.BR sched (7).
-.TP
-.I sched_deadline
-This field specifies the "Deadline" parameter for deadline scheduling.
-The value is expressed in nanoseconds.
-.TP
-.I sched_period
-This field specifies the "Period" parameter for deadline scheduling.
-The value is expressed in nanoseconds.
-.PP
-The
-.I flags
-argument is provided to allow for future extensions to the interface;
-in the current implementation it must be specified as 0.
-.\"
-.\"
-.SS sched_getattr()
-The
-.BR sched_getattr ()
-system call fetches the scheduling policy and the
-associated attributes for the thread whose ID is specified in
-.IR pid .
-If
-.I pid
-equals zero,
-the scheduling policy and attributes of the calling thread
-will be retrieved.
+.IR Period .
+These parameters do not necessarily correspond to the aforementioned terms:
+usual practice is to set Runtime to something bigger than the average
+computation time (or worst-case execution time for hard real-time tasks),
+Deadline to the relative deadline, and Period to the period of the task.
+Thus, for
+.BR SCHED_DEADLINE
+scheduling, we have:
 
-The
-.I size
-argument should be set to the size of the
+.in +4n
+.nf
+arrival/wakeup                   absolute deadline
+     |    start time                   |
+     |        |                        |
+     v        v                        v
+-----x--------xooooooooooooooooo-------x--------x---
+              |<-- Runtime --->|
+     |<----------- Deadline ---------->|
+     |<-------------- Period ------------------>|
+.fi
+.in
+
+The three deadline-scheduling parameters correspond to the
+.IR sched_runtime ,
+.IR sched_deadline ,
+and
+.IR sched_period
+fields of the
 .I sched_attr
-structure as known to user space.
-The value must be at least as large as the size of the initially published
-.I sched_attr
-structure, or the call fails with the error
+structure; see
+.BR sched_setattr (2).
+These fields express value in nanoseconds.
+.\" FIXME It looks as though specifying sched_period as 0 means
+.\"       "make sched_period the same as sched_deadline", right?
+.\"       This needs to be documented.
+If
+.IR sched_period
+is specified as 0, then it is made the same as
+.IR sched_deadline .
+
+The kernel requires that:
+
+    sched_runtime <= sched_deadline <= sched_period
+
+.\" See __checkparam_dl in kernel/sched/core.c
+In addition, under the current implementation,
+all of the parameter values must be at least 1024
+(i.e., just over one microsecond,
+which is the resolution of the implementation).
+If any of these checks fails,
+.BR sched_setattr (2)
+fails with the error
 .BR EINVAL .
 
-The retrieved scheduling attributes are placed in the fields of the
-.I sched_attr
-structure pointed to by
-.IR attr .
-The kernel sets
-.I attr.size
-to the size of its
-.I sched_attr
-structure.
+The CBS guarantees non-interference between tasks, by throttling
+threads that attempt to over-run their specified Runtime.
 
-If the caller-provided
-.I attr
-buffer is larger than the kernel's
-.I sched_attr
-structure,
-the additional bytes in the user-space structure are not touched.
-If the caller-provided structure is smaller than the kernel
-.I sched_attr
-structure and the kernel needs to return values outside the provided space,
-.BR sched_getattr ()
-fails with the error
-.BR E2BIG .
-As with
-.BR sched_setattr (),
-these semantics allow for future extensibility of the interface.
-
-The
-.I flags
-argument is provided to allow for future extensions to the interface;
-in the current implementation it must be specified as 0.
-.SH RETURN VALUE
-On success,
-.BR sched_setattr ()
-and
-.BR sched_getattr ()
-return 0.
-On error, \-1 is returned, and
-.I errno
-is set to indicate the cause of the error.
-.SH ERRORS
-.BR sched_getattr ()
-and
-.BR sched_setattr ()
-can both fail for the following reasons:
-.TP
-.B EINVAL
-.I attr
-is NULL; or
-.I pid
-is negative; or
-.I flags
-is not zero.
-.TP
-.B ESRCH
-The thread whose ID is
-.I pid
-could not be found.
-.PP
-In addition,
-.BR sched_getattr ()
-can fail for the following reasons:
-.TP
-.B E2BIG
-The buffer specified by
-.I size
-and
-.I attr
-is too small.
-.TP
-.B EINVAL
-.I size
-is invalid; that is, it is smaller than the initial version of the
-.I sched_attr
-structure (48 bytes) or larger than the system page size.
-.PP
-In addition,
-.BR sched_setattr ()
-can fail for the following reasons:
-.TP
-.B E2BIG
-The buffer specified by
-.I size
-and
-.I attr
-is larger than the kernel structure,
-and one or more of the excess bytes is nonzero.
-.TP
-.B EBUSY
+To ensure deadline scheduling guarantees,
+the kernel must prevent situations where the set of 
 .B SCHED_DEADLINE
-admission control failure, see
-.BR sched (7).
-.TP
-.B EINVAL
-.I attr.sched_policy
-is not one of the recognized policies;
-.I attr.sched_flags
-contains a flag other than
-.BR SCHED_FLAG_RESET_ON_FORK ;
-or
-.I attr.sched_priority
-is invalid; or
-.I attr.sched_policy
-is
+threads is not feasible (schedulable) within the given constraints.
+The kernel thus performs an admittance test when setting or changing
+.B SCHED_DEADLINE
+policy and attributes.
+This admission test calculates whether the change is feasible;
+if it is not
+.BR sched_setattr (2)
+fails with the error
+.BR EBUSY .
+
+For example, it is required (but not necessarily sufficient) for
+the total utilization to be less than or equal to the total number of
+CPUs available, where, since each thread can maximally run for
+Runtime per Period, that thread's utilization is its
+Runtime divided by its Period.
+
+In order to fulfil the guarantees that are made when
+a thread is admitted to the
 .BR SCHED_DEADLINE
-and the deadline scheduling parameters in
-.I attr
-are invalid.
-.TP
-.B EPERM
-The caller does not have appropriate privileges.
-.TP
-.B EPERM
-The caller's CPU affinity mask
-does not include all CPUs in the system
-(see
-.BR sched_setaffinity (2)).
-.SH VERSIONS
-These system calls first appeared in Linux 3.14.
-.\" FIXME Add glibc version
-.SH CONFORMING TO
-These system calls are nonstandard Linux extensions.
-.SH NOTES
-.BR sched_setattr ()
-provides a superset of the functionality of
-.BR sched_setscheduler (2),
-.BR sched_setparam (2),
+policy,
+.BR SCHED_DEADLINE
+threads are the highest priority (user controllable) threads in the
+system; if any
+.BR SCHED_DEADLINE
+thread is runnable,
+it will preempt any thread scheduled under one of the other policies.
+
+A call to
+.BR fork (2)
+by a thread scheduled under the
+.B SCHED_DEADLINE
+policy will fail with the error
+.BR EAGAIN ,
+unless the thread has its reset-on-fork flag set (see below).
+
+A
+.B SCHED_DEADLINE
+thread that calls
+.BR sched_yield (2)
+will yield the current job and wait for a new period to begin.
+.\"
+.\" FIXME Calling sched_getparam() on a SCHED_DEADLINE thread
+.\"       fails with EINVAL, but sched_getscheduler() succeeds.
+.\"       Is that intended? (Why?)
+.\"
+.\"
+.SS SCHED_OTHER: Default Linux time-sharing scheduling
+\fBSCHED_OTHER\fP can be used at only static priority 0.
+\fBSCHED_OTHER\fP is the standard Linux time-sharing scheduler that is
+intended for all threads that do not require the special
+real-time mechanisms.
+The thread to run is chosen from the static
+priority 0 list based on a \fIdynamic\fP priority that is determined only
+inside this list.
+The dynamic priority is based on the nice value (set by
 .BR nice (2),
-and (other than the ability to set the priority of all processes
-belonging to a specified user or all processes in a specified group)
-.BR setpriority (2).
-Analogously,
-.BR sched_getattr()
-provides a superset of the functionality of
-.BR sched_getscheduler (2),
-.BR sched_getparam (2),
-and (partially)
-.BR getpriority (2).
-.SH BUGS
-In Linux versions up to
-.\" FIXME patch sent to Peter Zijlstra
-3.15,
-.BR sched_settattr ()
-failed with the error
-.BR EFAULT
-instead of
-.BR E2BIG
-for the case described in ERRORS.
-.\" In Linux versions up to up 3.15,
-.\" .\" FIXME patch from Peter Zijlstra pending
-.\" .BR sched_setattr ()
-.\" allowed a negative
-.\" .I attr.sched_policy
-.\" value.
+.BR setpriority (2),
+or
+.BR sched_setattr (2))
+and increased for each time quantum the thread is ready to run,
+but denied to run by the scheduler.
+This ensures fair progress among all \fBSCHED_OTHER\fP threads.
+.\"
+.SS SCHED_BATCH: Scheduling batch processes
+(Since Linux 2.6.16.)
+\fBSCHED_BATCH\fP can be used only at static priority 0.
+This policy is similar to \fBSCHED_OTHER\fP in that it schedules
+the thread according to its dynamic priority
+(based on the nice value).
+The difference is that this policy
+will cause the scheduler to always assume
+that the thread is CPU-intensive.
+Consequently, the scheduler will apply a small scheduling
+penalty with respect to wakeup behaviour,
+so that this thread is mildly disfavored in scheduling decisions.
+
+.\" The following paragraph is drawn largely from the text that
+.\" accompanied Ingo Molnar's patch for the implementation of
+.\" SCHED_BATCH.
+.\" commit b0a9499c3dd50d333e2aedb7e894873c58da3785
+This policy is useful for workloads that are noninteractive,
+but do not want to lower their nice value,
+and for workloads that want a deterministic scheduling policy without
+interactivity causing extra preemptions (between the workload's tasks).
+.\"
+.SS SCHED_IDLE: Scheduling very low priority jobs
+(Since Linux 2.6.23.)
+\fBSCHED_IDLE\fP can be used only at static priority 0;
+the process nice value has no influence for this policy.
+
+This policy is intended for running jobs at extremely low
+priority (lower even than a +19 nice value with the
+.B SCHED_OTHER
+or
+.B SCHED_BATCH
+policies).
+.\"
+.SS Resetting scheduling policy for child processes
+Each thread has a reset-on-fork scheduling flag.
+When this flag is set, children created by
+.BR fork (2)
+do not inherit privileged scheduling policies.
+The reset-on-fork flag can be set by either:
+.IP * 3
+ORing the
+.B SCHED_RESET_ON_FORK
+flag into the
+.I policy
+argument when calling
+.BR sched_setscheduler (2)
+(since Linux 2.6.32);
+or
+.IP *
+specifying the
+.B SCHED_FLAG_RESET_ON_FORK
+flag in
+.IR attr.sched_flags
+when calling
+.BR sched_setattr (2).
+.PP
+Note that the constants used with these two APIs have different names.
+The state of the reset-on-fork flag can analogously be retrieved using
+.BR sched_getscheduler (2)
+and
+.BR sched_getattr (2).
+
+The reset-on-fork feature is intended for media-playback applications,
+and can be used to prevent applications evading the
+.BR RLIMIT_RTTIME
+resource limit (see
+.BR getrlimit (2))
+by creating multiple child processes.
+
+More precisely, if the reset-on-fork flag is set,
+the following rules apply for subsequently created children:
+.IP * 3
+If the calling thread has a scheduling policy of
+.B SCHED_FIFO
+or
+.BR SCHED_RR ,
+the policy is reset to
+.BR SCHED_OTHER
+in child processes.
+.IP *
+If the calling process has a negative nice value,
+the nice value is reset to zero in child processes.
+.PP
+After the reset-on-fork flag has been enabled,
+it can be reset only if the thread has the
+.BR CAP_SYS_NICE
+capability.
+This flag is disabled in child processes created by
+.BR fork (2).
+.\"
+.SS Privileges and resource limits
+In Linux kernels before 2.6.12, only privileged
+.RB ( CAP_SYS_NICE )
+threads can set a nonzero static priority (i.e., set a real-time
+scheduling policy).
+The only change that an unprivileged thread can make is to set the
+.B SCHED_OTHER
+policy, and this can be done only if the effective user ID of the caller
+matches the real or effective user ID of the target thread
+(i.e., the thread specified by
+.IR pid )
+whose policy is being changed.
+
+A thread must be privileged
+.RB ( CAP_SYS_NICE )
+in order to set or modify a 
+.BR SCHED_DEADLINE
+policy.
+
+Since Linux 2.6.12, the
+.B RLIMIT_RTPRIO
+resource limit defines a ceiling on an unprivileged thread's
+static priority for the
+.B SCHED_RR
+and
+.B SCHED_FIFO
+policies.
+The rules for changing scheduling policy and priority are as follows:
+.IP * 3
+If an unprivileged thread has a nonzero
+.B RLIMIT_RTPRIO
+soft limit, then it can change its scheduling policy and priority,
+subject to the restriction that the priority cannot be set to a
+value higher than the maximum of its current priority and its
+.B RLIMIT_RTPRIO
+soft limit.
+.IP *
+If the
+.B RLIMIT_RTPRIO
+soft limit is 0, then the only permitted changes are to lower the priority,
+or to switch to a non-real-time policy.
+.IP *
+Subject to the same rules,
+another unprivileged thread can also make these changes,
+as long as the effective user ID of the thread making the change
+matches the real or effective user ID of the target thread.
+.IP *
+Special rules apply for the
+.BR SCHED_IDLE
+policy.
+In Linux kernels before 2.6.39,
+an unprivileged thread operating under this policy cannot
+change its policy, regardless of the value of its
+.BR RLIMIT_RTPRIO
+resource limit.
+In Linux kernels since 2.6.39,
+.\" commit c02aa73b1d18e43cfd79c2f193b225e84ca497c8
+an unprivileged thread can switch to either the
+.BR SCHED_BATCH
+or the
+.BR SCHED_NORMAL
+policy so long as its nice value falls within the range permitted by its
+.BR RLIMIT_NICE
+resource limit (see
+.BR getrlimit (2)).
+.PP
+Privileged
+.RB ( CAP_SYS_NICE )
+threads ignore the
+.B RLIMIT_RTPRIO
+limit; as with older kernels,
+they can make arbitrary changes to scheduling policy and priority.
+See
+.BR getrlimit (2)
+for further information on
+.BR RLIMIT_RTPRIO .
+.SS Limiting the CPU usage of real-time and deadline processes
+A nonblocking infinite loop in a thread scheduled under the
+.BR SCHED_FIFO ,
+.BR SCHED_RR ,
+or
+.BR SCHED_DEADLINE
+policy will block all threads with lower
+priority forever.
+Prior to Linux 2.6.25, the only way of preventing a runaway real-time
+process from freezing the system was to run (at the console)
+a shell scheduled under a higher static priority than the tested application.
+This allows an emergency kill of tested
+real-time applications that do not block or terminate as expected.
+
+Since Linux 2.6.25, there are other techniques for dealing with runaway
+real-time and deadline processes.
+One of these is to use the
+.BR RLIMIT_RTTIME
+resource limit to set a ceiling on the CPU time that
+a real-time process may consume.
+See
+.BR getrlimit (2)
+for details.
+
+Since version 2.6.25, Linux also provides two
+.I /proc
+files that can be used to reserve a certain amount of CPU time
+to be used by non-real-time processes.
+Reserving some CPU time in this fashion allows some CPU time to be
+allocated to (say) a root shell that can be used to kill a runaway process.
+Both of these files specify time values in microseconds:
+.TP
+.IR /proc/sys/kernel/sched_rt_period_us
+This file specifies a scheduling period that is equivalent to
+100% CPU bandwidth.
+The value in this file can range from 1 to
+.BR INT_MAX ,
+giving an operating range of 1 microsecond to around 35 minutes.
+The default value in this file is 1,000,000 (1 second).
+.TP
+.IR /proc/sys/kernel/sched_rt_runtime_us
+The value in this file specifies how much of the "period" time
+can be used by all real-time and deadline scheduled processes
+on the system.
+The value in this file can range from \-1 to
+.BR INT_MAX \-1.
+Specifying \-1 makes the runtime the same as the period;
+that is, no CPU time is set aside for non-real-time processes
+(which was the Linux behavior before kernel 2.6.25).
+The default value in this file is 950,000 (0.95 seconds),
+meaning that 5% of the CPU time is reserved for processes that
+don't run under a real-time or deadline scheduling policy.
+.PP
+.SS Response time
+A blocked high priority thread waiting for I/O has a certain
+response time before it is scheduled again.
+The device driver writer
+can greatly reduce this response time by using a "slow interrupt"
+interrupt handler.
+.\" as described in
+.\" .BR request_irq (9).
+.SS Miscellaneous
+Child processes inherit the scheduling policy and parameters across a
+.BR fork (2).
+The scheduling policy and parameters are preserved across
+.BR execve (2).
+
+Memory locking is usually needed for real-time processes to avoid
+paging delays; this can be done with
+.BR mlock (2)
+or
+.BR mlockall (2).
+.SH NOTES
+.PP
+Originally, Standard Linux was intended as a general-purpose operating
+system being able to handle background processes, interactive
+applications, and less demanding real-time applications (applications that
+need to usually meet timing deadlines).
+Although the Linux kernel 2.6
+allowed for kernel preemption and the newly introduced O(1) scheduler
+ensures that the time needed to schedule is fixed and deterministic
+irrespective of the number of active tasks, true real-time computing
+was not possible up to kernel version 2.6.17.
+.SS Real-time features in the mainline Linux kernel
+.\" FIXME . Probably this text will need some minor tweaking
+.\" by about the time of 2.6.30; ask Carsten Emde about this then.
+>From kernel version 2.6.18 onward, however, Linux is gradually
+becoming equipped with real-time capabilities,
+most of which are derived from the former
+.I realtime-preempt
+patches developed by Ingo Molnar, Thomas Gleixner,
+Steven Rostedt, and others.
+Until the patches have been completely merged into the
+mainline kernel
+(this is expected to be around kernel version 2.6.30),
+they must be installed to achieve the best real-time performance.
+These patches are named:
+.in +4n
+.nf
+
+patch-\fIkernelversion\fP-rt\fIpatchversion\fP
+.fi
+.in
+.PP
+and can be downloaded from
+.UR http://www.kernel.org\:/pub\:/linux\:/kernel\:/projects\:/rt/
+.UE .
+
+Without the patches and prior to their full inclusion into the mainline
+kernel, the kernel configuration offers only the three preemption classes
+.BR CONFIG_PREEMPT_NONE ,
+.BR CONFIG_PREEMPT_VOLUNTARY ,
+and
+.B CONFIG_PREEMPT_DESKTOP
+which respectively provide no, some, and considerable
+reduction of the worst-case scheduling latency.
+
+With the patches applied or after their full inclusion into the mainline
+kernel, the additional configuration item
+.B CONFIG_PREEMPT_RT
+becomes available.
+If this is selected, Linux is transformed into a regular
+real-time operating system.
+The FIFO and RR scheduling policies are then used to run a thread
+with true real-time priority and a minimum worst-case scheduling latency.
 .SH SEE ALSO
 .ad l
 .nh
+.BR chrt (1),
+.BR getpriority (2),
+.BR mlock (2),
+.BR mlockall (2),
+.BR munlock (2),
+.BR munlockall (2),
 .BR nice (2),
 .BR sched_get_priority_max (2),
 .BR sched_get_priority_min (2),
-.BR sched_getaffinity (2),
 .BR sched_getscheduler (2),
+.BR sched_getaffinity (2),
 .BR sched_getparam (2),
 .BR sched_rr_get_interval (2),
 .BR sched_setaffinity (2),
@@ -669,12 +821,21 @@ for the case described in ERRORS.
 .BR sched_setparam (2),
 .BR sched_yield (2),
 .BR setpriority (2),
-.BR pthread_getschedparam (3),
-.BR pthread_setschedparam (3),
-.BR pthread_setschedprio (3),
+.BR pthread_getaffinity_np (3),
+.BR pthread_setaffinity_np (3),
+.BR sched_getcpu (3),
 .BR capabilities (7),
-.BR cpuset (7),
-.BR sched (7)
+.BR cpuset (7)
 .ad
+.PP
+.I Programming for the real world \- POSIX.4
+by Bill O. Gallmeister, O'Reilly & Associates, Inc., ISBN 1-56592-074-0.
+.PP
+The Linux kernel source files
+.IR Documentation/scheduler/sched-deadline.txt ,
+.IR Documentation/scheduler/sched-rt-group.txt ,
+.IR Documentation/scheduler/sched-design-CFS.txt ,
+and
+.IR Documentation/scheduler/sched-nice-design.txt
 
---------------040601020709070106020502--
+--------------050207020903020903090506--
