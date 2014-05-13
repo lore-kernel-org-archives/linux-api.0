@@ -1,44 +1,111 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [PATCH] drivers/char/mem.c: Add /dev/ioports, supporting 16-bit
- and 32-bit ports
-Date: Sun, 11 May 2014 14:05:19 -0700
-Message-ID: <20140511210514.GB6056@thin>
-References: <20140509191914.GA7286@jtriplet-mobl1>
- <20140510070742.GE6099@debjann.fritz.box>
- <20140510193246.GA12079@thin>
- <20140511125006.GA16197@debjann.fritz.box>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH] mem.4, ioports.4: Document /dev/ioports
+Date: Tue, 13 May 2014 10:27:10 +0200
+Message-ID: <CAKgNAkiPRnQRE6ovEXsPOsSagMGC-3xM38G8WRRHg+4iKiQuYQ@mail.gmail.com>
+References: <20140509191914.GA7286@jtriplet-mobl1> <20140509192126.GA13050@jtriplet-mobl1>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140511125006.GA16197-7cfQGs147y6a6lf8Wg2v7Z5kstrrjoWp@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140509192126.GA13050@jtriplet-mobl1>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Triplett <josh@joshtriplett.org>
+Cc: linux-man <linux-man@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, May 11, 2014 at 02:50:06PM +0200, Jann Horn wrote:
-> On Sat, May 10, 2014 at 12:32:46PM -0700, Josh Triplett wrote:
-> > On Sat, May 10, 2014 at 09:07:42AM +0200, Jann Horn wrote:
-> > > On Fri, May 09, 2014 at 12:19:16PM -0700, Josh Triplett wrote:
-> > > > +	if (port > 65535)
-> > > > +		return 0;
-> > > > +	switch (count) {
-> > > [...]
-> > > > +	case 4:
-> > > > +		if (__put_user(inl(port), buf) < 0)
-> > > > +			return -EFAULT;
-> > > 
-> > > What if I attempt a four-byte read at 65535? That would access four
-> > > out-of-bounds bytes, right?
-> > 
-> > No, it would do an ind instruction on port 65535.
-> 
-> Yes, on x86. What about other architectures?
+Hi Josh,
 
-That's a good point; on architectures that map I/O to memory, this
-device should check port+count rather than port.  Is there a reliable
-#define that identifies architectures with that property, other than
-CONFIG_X86?
+On Fri, May 9, 2014 at 9:21 PM, Josh Triplett <josh@joshtriplett.org> wrote:
+> /dev/ioports works like /dev/port, but supports 16-bit and 32-bit ports.
+> Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+> ---
+>
+> Wasn't sure whether I should update the "Modified" notice at the top;
+> ideally such things should go away in favor of git.
 
-- Josh Triplett
+Mostly they do go away with Git, but I do add Copyright notices when
+the changes to the page are substantial (as here).
+
+Could you ping me again if/when this looks like heading to mainline?
+
+Thanks,
+
+Michael
+
+
+
+>
+>  man4/ioports.4 |  1 +
+>  man4/mem.4     | 21 +++++++++++++++++++--
+>  2 files changed, 20 insertions(+), 2 deletions(-)
+>  create mode 100644 man4/ioports.4
+>
+> diff --git a/man4/ioports.4 b/man4/ioports.4
+> new file mode 100644
+> index 0000000..d4c1762
+> --- /dev/null
+> +++ b/man4/ioports.4
+> @@ -0,0 +1 @@
+> +.so man4/mem.4
+> diff --git a/man4/mem.4 b/man4/mem.4
+> index 74b7b89..adfd810 100644
+> --- a/man4/mem.4
+> +++ b/man4/mem.4
+> @@ -25,7 +25,7 @@
+>  .\" Modified Sat Jul 24 16:59:10 1993 by Rik Faith (faith@cs.unc.edu)
+>  .TH MEM 4 1992-11-21 "Linux" "Linux Programmer's Manual"
+>  .SH NAME
+> -mem, kmem, port \- system memory, kernel memory and system ports
+> +mem, kmem, port, ioports \- system memory, kernel memory and system ports
+>  .SH DESCRIPTION
+>  .B mem
+>  is a character device file
+> @@ -66,7 +66,8 @@ chown root:kmem /dev/kmem
+>  .B port
+>  is similar to
+>  .BR mem ,
+> -but the I/O ports are accessed.
+> +but the I/O ports are accessed.  Multi-byte reads or writes to port will
+> +operate on successive byte-sized ports.
+>  .LP
+>  It is typically created by:
+>  .RS
+> @@ -75,12 +76,28 @@ mknod \-m 660 /dev/port c 1 4
+>  .br
+>  chown root:mem /dev/port
+>  .RE
+> +.LP
+> +.B ioports
+> +is similar to
+> +.BR port ,
+> +but supports reads and writes of 16-bit or 32-bit ports.  Reads or writes to
+> +ioport with sizes other than 1, 2, or 4 will return EINVAL.
+> +.LP
+> +It is typically created by:
+> +.RS
+> +.sp
+> +mknod \-m 660 /dev/ioports c 1 12
+> +.br
+> +chown root:mem /dev/ioports
+> +.RE
+>  .SH FILES
+>  .I /dev/mem
+>  .br
+>  .I /dev/kmem
+>  .br
+>  .I /dev/port
+> +.br
+> +.I /dev/ioports
+>  .SH SEE ALSO
+>  .BR chown (1),
+>  .BR mknod (1),
+> --
+> 2.0.0.rc2
+>
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
