@@ -1,109 +1,40 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH] mem.4, ioports.4: Document /dev/ioports
-Date: Tue, 13 May 2014 10:27:10 +0200
-Message-ID: <CAKgNAkiPRnQRE6ovEXsPOsSagMGC-3xM38G8WRRHg+4iKiQuYQ@mail.gmail.com>
-References: <20140509191914.GA7286@jtriplet-mobl1> <20140509192126.GA13050@jtriplet-mobl1>
-Reply-To: mtk.manpages@gmail.com
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [SCHED_DEADLINE man pages 0/2] Summary
+Date: Tue, 13 May 2014 16:54:45 +0200
+Message-ID: <53723235.40101@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140509192126.GA13050@jtriplet-mobl1>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: linux-man <linux-man@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Juri Lelli <juri.lelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dario Faggioli <raistlin-k2GhghHVRtY@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Josh,
+Peter, at al.
 
-On Fri, May 9, 2014 at 9:21 PM, Josh Triplett <josh@joshtriplett.org> wrote:
-> /dev/ioports works like /dev/port, but supports 16-bit and 32-bit ports.
-> Signed-off-by: Josh Triplett <josh@joshtriplett.org>
-> ---
->
-> Wasn't sure whether I should update the "Modified" notice at the top;
-> ideally such things should go away in favor of git.
+The follow ups to this mail contain the changes to man-pages for
+the new sched_setattr() and sched_getattr() system calls, as well
+as the changes to the sched(7) man page to document the 
+SCHED_DEADLINE policy, all new changes in kernel 3.14.
 
-Mostly they do go away with Git, but I do add Copyright notices when
-the changes to the page are substantial (as here).
+I used the text you submitted, but _heavily_ edited it, and added
+a _lot_ of further details. Therefore, could you (and Juri, and 
+Dario?) please carefully review the text.
 
-Could you ping me again if/when this looks like heading to mainline?
+The follow-up mails are:
+
+[1/2] The sched_setattr.2 page that documents sched_setattr(2) 
+      and sched_getattr(2).
+
+[2/2] The revisions to the sched(7) page.
+
+In each case, I've posted the formatted output for easy reading,
+and attached the page source to the message.
 
 Thanks,
 
 Michael
-
-
-
->
->  man4/ioports.4 |  1 +
->  man4/mem.4     | 21 +++++++++++++++++++--
->  2 files changed, 20 insertions(+), 2 deletions(-)
->  create mode 100644 man4/ioports.4
->
-> diff --git a/man4/ioports.4 b/man4/ioports.4
-> new file mode 100644
-> index 0000000..d4c1762
-> --- /dev/null
-> +++ b/man4/ioports.4
-> @@ -0,0 +1 @@
-> +.so man4/mem.4
-> diff --git a/man4/mem.4 b/man4/mem.4
-> index 74b7b89..adfd810 100644
-> --- a/man4/mem.4
-> +++ b/man4/mem.4
-> @@ -25,7 +25,7 @@
->  .\" Modified Sat Jul 24 16:59:10 1993 by Rik Faith (faith@cs.unc.edu)
->  .TH MEM 4 1992-11-21 "Linux" "Linux Programmer's Manual"
->  .SH NAME
-> -mem, kmem, port \- system memory, kernel memory and system ports
-> +mem, kmem, port, ioports \- system memory, kernel memory and system ports
->  .SH DESCRIPTION
->  .B mem
->  is a character device file
-> @@ -66,7 +66,8 @@ chown root:kmem /dev/kmem
->  .B port
->  is similar to
->  .BR mem ,
-> -but the I/O ports are accessed.
-> +but the I/O ports are accessed.  Multi-byte reads or writes to port will
-> +operate on successive byte-sized ports.
->  .LP
->  It is typically created by:
->  .RS
-> @@ -75,12 +76,28 @@ mknod \-m 660 /dev/port c 1 4
->  .br
->  chown root:mem /dev/port
->  .RE
-> +.LP
-> +.B ioports
-> +is similar to
-> +.BR port ,
-> +but supports reads and writes of 16-bit or 32-bit ports.  Reads or writes to
-> +ioport with sizes other than 1, 2, or 4 will return EINVAL.
-> +.LP
-> +It is typically created by:
-> +.RS
-> +.sp
-> +mknod \-m 660 /dev/ioports c 1 12
-> +.br
-> +chown root:mem /dev/ioports
-> +.RE
->  .SH FILES
->  .I /dev/mem
->  .br
->  .I /dev/kmem
->  .br
->  .I /dev/port
-> +.br
-> +.I /dev/ioports
->  .SH SEE ALSO
->  .BR chown (1),
->  .BR mknod (1),
-> --
-> 2.0.0.rc2
->
-
-
 
 -- 
 Michael Kerrisk
