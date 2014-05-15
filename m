@@ -1,31 +1,42 @@
-From: "Joseph S. Myers" <joseph@codesourcery.com>
+From: chrubis-AlSwsSmVLrQ@public.gmane.org
 Subject: Re: futex(2) man page update help request
-Date: Thu, 15 May 2014 15:15:48 +0000
-Message-ID: <Pine.LNX.4.64.1405151510430.3155@digraph.polyomino.org.uk>
-References: <537346E5.4050407@gmail.com>  <CF98E3EF.90564%dvhart@linux.intel.com>
- <1400101522.6897.1.camel@buesod1.americas.hpqcorp.net>
+Date: Thu, 15 May 2014 17:28:35 +0200
+Message-ID: <20140515152834.GA6926@rei.Home>
+References: <537346E5.4050407@gmail.com>
+ <CF98E3EF.90564%dvhart@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1400101522.6897.1.camel@buesod1.americas.hpqcorp.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Darren Hart <dvhart@linux.intel.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>, Jakub Jelinek <jakub@redhat.com>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Davidlohr Bueso <davidlohr.bueso@hp.com>, Arnd Bergmann <arnd@arndb.de>, Steven Rostedt <rostedt@goodmis.org>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>, Carlos O'Donell <carlos@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CF98E3EF.90564%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <davidlohr.bueso-VXdhtT5mjnY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 14 May 2014, Davidlohr Bueso wrote:
-
-> > If I'm wrong, or we can restore the futex() call, great. If not... Should
-> > we keep the man-pages and document it as syscall(SYS_futex, ..., op, ...) ?
+Hi!
 > 
-> +1, is there anything preventing adding a futex wrapper... glibc folks?
+> However, unless I'm sorely mistaken, the larger problem is that glibc
+> removed the futex() call entirely, so these man pages don't describe
+> something users even have access to anymore. I had to revert to calling
+> the syscalls directly in the futextest test suite because of this:
+> 
+> http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextest.git/tree/inclu
 
-See what I said at 
-<https://sourceware.org/bugzilla/show_bug.cgi?id=9712#c4> (with references 
-to previous discussions).  Someone needs to take the lead on pushing to 
-consensus the question of what syscalls should have wrappers in glibc, and 
-then implement the conclusions.
+So there actually exists some tests for futexes, I've been asked if we
+have these as a LTP[1] maintainer several times.
+
+Are these tests executed regulary as a part of some automated framework?
+If not it would make sense to port them to LTP (looking at the code that
+would be quite easy task) and get them executed by several QA
+departments for free. What do you think?
+
+[1] http://linux-test-project.github.io/
 
 -- 
-Joseph S. Myers
-joseph@codesourcery.com
+Cyril Hrubis
+chrubis-AlSwsSmVLrQ@public.gmane.org
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
