@@ -1,53 +1,46 @@
-From: Darren Hart <dvhart@linux.intel.com>
+From: chrubis-AlSwsSmVLrQ@public.gmane.org
 Subject: Re: futex(2) man page update help request
-Date: Thu, 15 May 2014 09:14:05 -0700
-Message-ID: <CF9A3521.90ECC%dvhart@linux.intel.com>
+Date: Thu, 15 May 2014 18:17:53 +0200
+Message-ID: <20140515161753.GA7959@rei.Home>
 References: <537346E5.4050407@gmail.com>
  <CF98E3EF.90564%dvhart@linux.intel.com>
- <20140515152834.GA6926@rei.Home>
+ <537407ED.8050606@zytor.com>
+ <CF999CD6.90A93%dvhart@linux.intel.com>
+ <5374C54B.7040408@gmail.com>
+ <20140515154246.GC6926@rei.Home>
+ <5374E2A4.2070408@zytor.com>
+ <20140515160152.GA7529@rei.Home>
+ <5374E653.2080309@zytor.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140515152834.GA6926@rei.Home>
-Sender: linux-kernel-owner@vger.kernel.org
-To: chrubis@suse.cz
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>, Jakub Jelinek <jakub@redhat.com>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Davidlohr Bueso <davidlohr.bueso@hp.com>, Arnd Bergmann <arnd@arndb.de>, Steven Rostedt <rostedt@goodmis.org>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>, Carlos O'Donell <carlos@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5374E653.2080309-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <davidlohr.bueso-VXdhtT5mjnY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 5/15/14, 8:28, "chrubis@suse.cz" <chrubis@suse.cz> wrote:
+Hi!
+> >> I really believe the proper fix is to use assembly syscall stubs.  In
+> >> klibc I build a fairly elaborate machinery to autogenerate such syscall
+> >> stubs for a variety of architectures.
+> > 
+> > Then it would be nice to share these between klibc and LTP (and possible
+> > everybody else).
+> > 
+> 
+> It should be quite easy to extract from klibc.
 
->Hi!
->> 
->> However, unless I'm sorely mistaken, the larger problem is that glibc
->> removed the futex() call entirely, so these man pages don't describe
->> something users even have access to anymore. I had to revert to calling
->> the syscalls directly in the futextest test suite because of this:
->> 
->> 
->>http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextest.git/tree/inc
->>lu
->
->So there actually exists some tests for futexes, I've been asked if we
->have these as a LTP[1] maintainer several times.
->
->Are these tests executed regulary as a part of some automated framework?
->If not it would make sense to port them to LTP (looking at the code that
->would be quite easy task) and get them executed by several QA
->departments for free. What do you think?
->
->[1] http://linux-test-project.github.io/
-
-I've used LTP in the past (quite a bit), and I felt there was some
-advantage to keeping futextest independent. Perhaps things have changed
-enough since then (~2009 era) that we should reconsider. We can discuss
-the pros/cons there if you like. I have agreed to move the performance
-related tests over to perf, and Davidlohr has added some other such tests
-to perf. Trinity now covers the planned fuzz testing for futexes (very
-well... Obviously) so that idea will be dropped, leaving pure functional
-tests in futextest.
+That is not the main concern here. If I extract the code I would have to
+watch for any changes manually. If it was in a library or a separate
+repository all that would be needed is to add it as dependency/git
+submodule and I would get all updates automatically.
 
 -- 
-Darren Hart					Open Source Technology Center
-darren.hart@intel.com				            Intel Corporation
+Cyril Hrubis
+chrubis-AlSwsSmVLrQ@public.gmane.org
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
