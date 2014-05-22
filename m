@@ -1,167 +1,683 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH V3 0/6] namespaces: log namespaces per task
-Date: Thu, 22 May 2014 12:20:57 +0200
-Message-ID: <CAHO5Pa0EdUsV9jJuLbkmbvFyopecQiUDZd0UasAJ5kMhtsVxjQ@mail.gmail.com>
-References: <cover.1400271129.git.rgb@redhat.com>
+From: Michael Kerrisk <mtk.manpages@gmail.com>
+Subject: Re: [PATCH v7] mm: support madvise(MADV_FREE)
+Date: Thu, 22 May 2014 12:49:47 +0200
+Message-ID: <CAHO5Pa2o8XAabF31s1LdPMwMziLYxn6__wBo5bk5Q6zwLm-WyA@mail.gmail.com>
+References: <1400469419-5456-1-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <cover.1400271129.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1400469419-5456-1-git-send-email-minchan@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Dave Hansen <dave.hansen@intel.com>, John Stultz <john.stultz@linaro.org>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Richard,
+Hi Minchan,
 
-On Tue, May 20, 2014 at 3:12 PM, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> The purpose is to track namespaces in use by logged processes from the
-> perspective of init_*_ns.
->
-> 1/6 defines a function to generate them and assigns them.
->
-> Use a serial number per namespace (unique across one boot of one kernel)
-> instead of the inode number (which is claimed to have had the right to change
-> reserved and is not necessarily unique if there is more than one proc fs).  It
-> could be argued that the inode numbers have now become a defacto interface and
-> can't change now, but I'm proposing this approach to see if this helps address
-> some of the objections to the earlier patchset.
->
-> 2/6 adds access functions to get to the serial numbers in a similar way to
-> inode access for namespace proc operations.
->
-> 3/6 implements, as suggested by Serge Hallyn, making these serial numbers
-> available in /proc/self/ns/{ipc,mnt,net,pid,user,uts}_snum.  I chose "snum"
-> instead of "seq" for consistency with inum and there are a number of other uses
-> of "seq" in the namespace code.
->
-> 4/6 exposes proc's ns entries structure which lists a number of useful
-> operations per namespace type for other subsystems to use.
+On Mon, May 19, 2014 at 5:16 AM, Minchan Kim <minchan@kernel.org> wrote:
+> Linux doesn't have an ability to free pages lazy while other OS
+> already have been supported that named by madvise(MADV_FREE).
 
-Since the 3 and 4 change the ABI, please CC iterations of this patch
-series to linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, as per
+Since this patch changes the ABI, could you please CC future
+iterations to linux-api@vger.kernel.org as per
 Documentation/SubmitChecklist.
 
-Cheers,
+Thanks,
 
 Michael
 
 
-> 5/6 provides an example of usage for audit_log_task_info() which is used by
-> syscall audits, among others.  audit_log_task() and audit_common_recv_message()
-> would be other potential use cases.
+> The gain is clear that kernel can discard freed pages rather than
+> swapping out or OOM if memory pressure happens.
 >
-> Proposed output format:
-> This differs slightly from Aristeu's patch because of the label conflict with
-> "pid=" due to including it in existing records rather than it being a seperate
-> record.  The serial numbers are printed in hex.
->         type=SYSCALL msg=audit(1399651071.433:72): arch=c000003e syscall=272 success=yes exit=0 a0=40000000 a1=ffffffffffffffff a2=0 a3=22 items=0 ppid=1 pid=483 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="(t-daemon)" exe="/usr/lib/systemd/systemd" netns=97 utsns=2 ipcns=1 pidns=4 userns=3 mntns=5 subj=system_u:system_r:init_t:s0 key=(null)
+> Without memory pressure, freed pages would be reused by userspace
+> without another additional overhead(ex, page fault + allocation
+> + zeroing).
 >
-> 6/6 tracks the creation and deletion of of namespaces, listing the type of
-> namespace instance, related namespace id if there is one and the newly minted
-> serial number.
+> How to work is following as.
 >
-> Proposed output format:
->         type=NS_INIT msg=audit(1400217435.706:94): pid=524 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:mount_t:s0 type=20000 old_snum=0 snum=a1 res=1
->         type=NS_DEL msg=audit(1400217435.730:95): pid=524 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:mount_t:s0 type=20000 snum=a1 res=1
+> When madvise syscall is called, VM clears dirty bit of ptes of
+> the range. If memory pressure happens, VM checks dirty bit of
+> page table and if it found still "clean", it means it's a
+> "lazyfree pages" so VM could discard the page instead of swapping out.
+> Once there was store operation for the page before VM peek a page
+> to reclaim, dirty bit is set so VM can swap out the page instead of
+> discarding.
 >
+> Firstly, heavy users would be general allocators(ex, jemalloc,
+> tcmalloc and hope glibc supports it) and jemalloc/tcmalloc already
+> have supported the feature for other OS(ex, FreeBSD)
+> barrios@blaptop:~/benchmark/ebizzy$ lscpu
+> Architecture:          x86_64
+> CPU op-mode(s):        32-bit, 64-bit
+> Byte Order:            Little Endian
+> CPU(s):                4
+> On-line CPU(s) list:   0-3
+> Thread(s) per core:    2
+> Core(s) per socket:    2
+> Socket(s):             1
+> NUMA node(s):          1
+> Vendor ID:             GenuineIntel
+> CPU family:            6
+> Model:                 42
+> Stepping:              7
+> CPU MHz:               2801.000
+> BogoMIPS:              5581.64
+> Virtualization:        VT-x
+> L1d cache:             32K
+> L1i cache:             32K
+> L2 cache:              256K
+> L3 cache:              4096K
+> NUMA node0 CPU(s):     0-3
 >
-> v2 -> v3:
->         Use atomic64_t in ns_serial to simplify it.
->         Avoid funciton duplication in proc, keying on dentry.
->         Squash down audit patch to avoid rcu sleep issues.
->         Add tracking for creation and deletion of namespace instances.
+> ebizzy benchmark(./ebizzy -S 10 -n 512)
 >
-> v1 -> v2:
->         Avoid rollover by switching from an int to a long long.
->         Change rollover behaviour from simply avoiding zero to raising a BUG.
->         Expose serial numbers in /proc/<pid>/ns/*_snum.
->         Expose ns_entries and use it in audit.
+>  vanilla-jemalloc               MADV_free-jemalloc
 >
+> 1 thread
+> records:  10              records:  10
+> avg:      7682.10         avg:      15306.10
+> std:      62.35(0.81%)    std:      347.99(2.27%)
+> max:      7770.00         max:      15622.00
+> min:      7598.00         min:      14772.00
 >
-> Notes:
-> There has been some progress made for audit in net namespaces and pid
-> namespaces since this previous thread.  net namespaces are now served as peers
-> by one auditd in the init_net namespace with processes in a non-init_net
-> namespace being able to write records if they are in the init_user_ns and have
-> CAP_AUDIT_WRITE.  Processes in a non-init_pid_ns can now similarly write
-> records.  As for CAP_AUDIT_READ, I just posted a patchset to check capabilities
-> of userspace processes that try to join netlink broadcast groups.
+> 2 thread
+> records:  10              records:  10
+> avg:      12747.50        avg:      24171.00
+> std:      792.06(6.21%)   std:      895.18(3.70%)
+> max:      13337.00        max:      26023.00
+> min:      10535.00        min:      23152.00
 >
-> This set does not try to solve the non-init namespace audit messages and
-> auditd problem yet.  That will come later, likely with additional auditd
-> instances running in another namespace with a limited ability to influence the
-> master auditd.  I echo Eric B's idea that messages destined for different
-> namespaces would have to be tailored for that namespace with references that
-> make sense (such as the right pid number reported to that pid namespace, and
-> not leaking info about parents or peers).
+> 4 thread
+> records:  10              records:  10
+> avg:      16474.60        avg:      33717.90
+> std:      1496.45(9.08%)  std:      2008.97(5.96%)
+> max:      17877.00        max:      35958.00
+> min:      12224.00        min:      29565.00
 >
-> Bugs:
-> Patch 6/6 has a timing bug such that mnt and net namespace initial namespaces
-> never get logged, I suspect because they are initialized before the audit
-> subsystem.  I've tried moving audit from __initcall to subsys_initcall, but
-> that doesn't help.
+> 8 thread
+> records:  10              records:  10
+> avg:      16778.50        avg:      33308.10
+> std:      825.53(4.92%)   std:      1668.30(5.01%)
+> max:      17543.00        max:      36010.00
+> min:      14576.00        min:      29577.00
 >
-> Questions:
-> Is there a way to link serial numbers of namespaces involved in migration of a
-> container to another kernel?  It sounds like what is needed is a part of a
-> mangement application that is able to pull the audit rcords from constituent
-> hosts to build an audit trail of a container.
+> 16 thread
+> records:  10              records:  10
+> avg:      20614.40        avg:      35516.30
+> std:      602.95(2.92%)   std:      1283.65(3.61%)
+> max:      21753.00        max:      37178.00
+> min:      19605.00        min:      33217.00
 >
-> What additional events should list this information?
+> 32 thread
+> records:  10              records:  10
+> avg:      22771.70        avg:      36018.50
+> std:      598.94(2.63%)   std:      1046.76(2.91%)
+> max:      24035.00        max:      37266.00
+> min:      22108.00        min:      34149.00
 >
-> Does this present any problematic information leaks?  Only CAP_AUDIT_CONTROL
-> (and proposed CAP_AUDIT_READ) in init_user_ns can get to this information in
-> the init namespace at the moment from audit.  *However*, the addition of the
-> proc/<pid>/ns/*_snum does make it available to other processes now.
+> In summary, MADV_FREE is about 2 time faster than MADV_DONTNEED.
 >
+> * From v6
+>  * Remove page from swapcache in syscal time
+>  * Move utility functions from memory.c to madvise.c - Johannes
+>  * Rename untilify functtions - Johannes
+>  * Remove unnecessary checks from vmscan.c - Johannes
+>  * Rebased-on v3.15-rc5-mmotm-2014-05-16-16-56
+>  * Drop Reviewe-by because there was some changes since then.
 >
-> Richard Guy Briggs (6):
->   namespaces: assign each namespace instance a serial number
->   namespaces: expose namespace instance serial number in proc_ns_operations
->   namespaces: expose ns instance serial numbers in proc
->   namespaces: expose ns_entries
->   audit: log namespace serial numbers
->   audit: log creation and deletion of namespace instances
+> * From v5
+>  * Fix PPC problem which don't flush TLB - Rik
+>  * Remove unnecessary lazyfree_range stub function - Rik
+>  * Rebased on v3.15-rc5
 >
->  fs/mount.h                     |    1 +
->  fs/namespace.c                 |   12 +++++++++
->  fs/proc/namespaces.c           |   35 +++++++++++++++++++-------
->  include/linux/audit.h          |   15 +++++++++++
->  include/linux/ipc_namespace.h  |    1 +
->  include/linux/nsproxy.h        |    8 ++++++
->  include/linux/pid_namespace.h  |    1 +
->  include/linux/proc_ns.h        |    2 +
->  include/linux/user_namespace.h |    1 +
->  include/linux/utsname.h        |    1 +
->  include/net/net_namespace.h    |    1 +
->  include/uapi/linux/audit.h     |    2 +
->  init/version.c                 |    1 +
->  ipc/msgutil.c                  |    1 +
->  ipc/namespace.c                |   20 +++++++++++++++
->  kernel/audit.c                 |   53 +++++++++++++++++++++++++++++++++++++++-
->  kernel/nsproxy.c               |   17 +++++++++++++
->  kernel/pid.c                   |    1 +
->  kernel/pid_namespace.c         |   19 ++++++++++++++
->  kernel/user.c                  |    1 +
->  kernel/user_namespace.c        |   18 +++++++++++++
->  kernel/utsname.c               |   20 +++++++++++++++
->  net/core/net_namespace.c       |   20 ++++++++++++++-
->  23 files changed, 240 insertions(+), 11 deletions(-)
+> * From v4
+>  * Add Reviewed-by: Zhang Yanfei
+>  * Rebase on v3.15-rc1-mmotm-2014-04-15-16-14
 >
-> _______________________________________________
-> Containers mailing list
-> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> https://lists.linuxfoundation.org/mailman/listinfo/containers
+> * From v3
+>  * Add "how to work part" in description - Zhang
+>  * Add page_discardable utility function - Zhang
+>  * Clean up
+>
+> * From v2
+>  * Remove forceful dirty marking of swap-readed page - Johannes
+>  * Remove deactivation logic of lazyfreed page
+>  * Rebased on 3.14
+>  * Remove RFC tag
+>
+> * From v1
+>  * Use custom page table walker for madvise_free - Johannes
+>  * Remove PG_lazypage flag - Johannes
+>  * Do madvise_dontneed instead of madvise_freein swapless system
+>
+> Cc: Hugh Dickins <hughd@google.com>
+> Cc: Johannes Weiner <hannes@cmpxchg.org>
+> Cc: Rik van Riel <riel@redhat.com>
+> Cc: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+> Cc: Mel Gorman <mgorman@suse.de>
+> Cc: Jason Evans <je@fb.com>
+> Cc: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+> Signed-off-by: Minchan Kim <minchan@kernel.org>
+> ---
+>  include/linux/rmap.h                   |   8 +-
+>  include/linux/vm_event_item.h          |   1 +
+>  include/uapi/asm-generic/mman-common.h |   1 +
+>  mm/madvise.c                           | 174 +++++++++++++++++++++++++++++++++
+>  mm/rmap.c                              |  34 ++++++-
+>  mm/vmscan.c                            |  37 +++++--
+>  mm/vmstat.c                            |   1 +
+>  7 files changed, 245 insertions(+), 11 deletions(-)
+>
+> diff --git a/include/linux/rmap.h b/include/linux/rmap.h
+> index 9be55c7617da..1fb2beb351f8 100644
+> --- a/include/linux/rmap.h
+> +++ b/include/linux/rmap.h
+> @@ -182,7 +182,8 @@ static inline void page_dup_rmap(struct page *page)
+>   * Called from mm/vmscan.c to handle paging out
+>   */
+>  int page_referenced(struct page *, int is_locked,
+> -                       struct mem_cgroup *memcg, unsigned long *vm_flags);
+> +                       struct mem_cgroup *memcg, unsigned long *vm_flags,
+> +                       int *is_dirty);
+>
+>  #define TTU_ACTION(x) ((x) & TTU_ACTION_MASK)
+>
+> @@ -261,9 +262,12 @@ int rmap_walk(struct page *page, struct rmap_walk_control *rwc);
+>
+>  static inline int page_referenced(struct page *page, int is_locked,
+>                                   struct mem_cgroup *memcg,
+> -                                 unsigned long *vm_flags)
+> +                                 unsigned long *vm_flags,
+> +                                 int *is_pte_dirty)
+>  {
+>         *vm_flags = 0;
+> +       if (is_pte_dirty)
+> +               *is_pte_dirty = 0;
+>         return 0;
+>  }
+>
+> diff --git a/include/linux/vm_event_item.h b/include/linux/vm_event_item.h
+> index ced92345c963..e2d3fb1e9814 100644
+> --- a/include/linux/vm_event_item.h
+> +++ b/include/linux/vm_event_item.h
+> @@ -25,6 +25,7 @@ enum vm_event_item { PGPGIN, PGPGOUT, PSWPIN, PSWPOUT,
+>                 FOR_ALL_ZONES(PGALLOC),
+>                 PGFREE, PGACTIVATE, PGDEACTIVATE,
+>                 PGFAULT, PGMAJFAULT,
+> +               PGLAZYFREED,
+>                 FOR_ALL_ZONES(PGREFILL),
+>                 FOR_ALL_ZONES(PGSTEAL_KSWAPD),
+>                 FOR_ALL_ZONES(PGSTEAL_DIRECT),
+> diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+> index ddc3b36f1046..7a94102b7a02 100644
+> --- a/include/uapi/asm-generic/mman-common.h
+> +++ b/include/uapi/asm-generic/mman-common.h
+> @@ -34,6 +34,7 @@
+>  #define MADV_SEQUENTIAL        2               /* expect sequential page references */
+>  #define MADV_WILLNEED  3               /* will need these pages */
+>  #define MADV_DONTNEED  4               /* don't need these pages */
+> +#define MADV_FREE      5               /* free pages only if memory pressure */
+>
+>  /* common parameters: try to keep these consistent across architectures */
+>  #define MADV_REMOVE    9               /* remove these pages & resources */
+> diff --git a/mm/madvise.c b/mm/madvise.c
+> index a402f8fdc68e..3085441c484c 100644
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -19,6 +19,9 @@
+>  #include <linux/blkdev.h>
+>  #include <linux/swap.h>
+>  #include <linux/swapops.h>
+> +#include <linux/mmu_notifier.h>
+> +
+> +#include <asm/tlb.h>
+>
+>  /*
+>   * Any behaviour which results in changes to the vma->vm_flags needs to
+> @@ -31,6 +34,7 @@ static int madvise_need_mmap_write(int behavior)
+>         case MADV_REMOVE:
+>         case MADV_WILLNEED:
+>         case MADV_DONTNEED:
+> +       case MADV_FREE:
+>                 return 0;
+>         default:
+>                 /* be safe, default to 1. list exceptions explicitly */
+> @@ -251,6 +255,168 @@ static long madvise_willneed(struct vm_area_struct *vma,
+>         return 0;
+>  }
+>
+> +static unsigned long madvise_free_pte_range(struct mmu_gather *tlb,
+> +                               struct vm_area_struct *vma, pmd_t *pmd,
+> +                               unsigned long addr, unsigned long end)
+> +{
+> +       struct mm_struct *mm = tlb->mm;
+> +       spinlock_t *ptl;
+> +       pte_t *start_pte;
+> +       pte_t *pte;
+> +       struct page *page;
+> +
+> +       start_pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+> +       pte = start_pte;
+> +       arch_enter_lazy_mmu_mode();
+> +       do {
+> +               pte_t ptent = *pte;
+> +
+> +               if (pte_none(ptent))
+> +                       continue;
+> +
+> +               if (!pte_present(ptent))
+> +                       continue;
+> +
+> +               page = vm_normal_page(vma, addr, ptent);
+> +               if (page && PageSwapCache(page)) {
+> +                       if (trylock_page(page)) {
+> +                               if (try_to_free_swap(page))
+> +                                       ClearPageDirty(page);
+> +                               unlock_page(page);
+> +                       } else
+> +                               continue;
+> +               }
+> +
+> +               /*
+> +                * Some of architecture(ex, PPC) don't update TLB
+> +                * with set_pte_at and tlb_remove_tlb_entry so for
+> +                * the portability, remap the pte with old|clean
+> +                * after pte clearing.
+> +                */
+> +               ptent = ptep_get_and_clear_full(mm, addr, pte,
+> +                                               tlb->fullmm);
+> +               ptent = pte_mkold(ptent);
+> +               ptent = pte_mkclean(ptent);
+> +               set_pte_at(mm, addr, pte, ptent);
+> +               tlb_remove_tlb_entry(tlb, pte, addr);
+> +       } while (pte++, addr += PAGE_SIZE, addr != end);
+> +       arch_leave_lazy_mmu_mode();
+> +       pte_unmap_unlock(start_pte, ptl);
+> +
+> +       return addr;
+> +}
+> +
+> +static inline unsigned long madvise_free_pmd_range(struct mmu_gather *tlb,
+> +                               struct vm_area_struct *vma, pud_t *pud,
+> +                               unsigned long addr, unsigned long end)
+> +{
+> +       pmd_t *pmd;
+> +       unsigned long next;
+> +
+> +       pmd = pmd_offset(pud, addr);
+> +       do {
+> +               /*
+> +                * XXX: We can optimize with supporting Hugepage free
+> +                * if the range covers.
+> +                */
+> +               next = pmd_addr_end(addr, end);
+> +               if (pmd_trans_huge(*pmd))
+> +                       split_huge_page_pmd(vma, addr, pmd);
+> +               /*
+> +                * Here there can be other concurrent MADV_DONTNEED or
+> +                * trans huge page faults running, and if the pmd is
+> +                * none or trans huge it can change under us. This is
+> +                * because MADV_LAZYFREE holds the mmap_sem in read
+> +                * mode.
+> +                */
+> +               if (pmd_none_or_trans_huge_or_clear_bad(pmd))
+> +                       goto next;
+> +               next = madvise_free_pte_range(tlb, vma, pmd, addr, next);
+> +next:
+> +               cond_resched();
+> +       } while (pmd++, addr = next, addr != end);
+> +
+> +       return addr;
+> +}
+> +
+> +static inline unsigned long madvise_free_pud_range(struct mmu_gather *tlb,
+> +                               struct vm_area_struct *vma, pgd_t *pgd,
+> +                               unsigned long addr, unsigned long end)
+> +{
+> +       pud_t *pud;
+> +       unsigned long next;
+> +
+> +       pud = pud_offset(pgd, addr);
+> +       do {
+> +               next = pud_addr_end(addr, end);
+> +               if (pud_none_or_clear_bad(pud))
+> +                       continue;
+> +               next = madvise_free_pmd_range(tlb, vma, pud, addr, next);
+> +       } while (pud++, addr = next, addr != end);
+> +
+> +       return addr;
+> +}
+> +
+> +static void madvise_free_page_range(struct mmu_gather *tlb,
+> +                            struct vm_area_struct *vma,
+> +                            unsigned long addr, unsigned long end)
+> +{
+> +       pgd_t *pgd;
+> +       unsigned long next;
+> +
+> +       BUG_ON(addr >= end);
+> +       tlb_start_vma(tlb, vma);
+> +       pgd = pgd_offset(vma->vm_mm, addr);
+> +       do {
+> +               next = pgd_addr_end(addr, end);
+> +               if (pgd_none_or_clear_bad(pgd))
+> +                       continue;
+> +               next = madvise_free_pud_range(tlb, vma, pgd, addr, next);
+> +       } while (pgd++, addr = next, addr != end);
+> +       tlb_end_vma(tlb, vma);
+> +}
+> +
+> +static int madvise_free_single_vma(struct vm_area_struct *vma,
+> +                       unsigned long start_addr, unsigned long end_addr)
+> +{
+> +       unsigned long start, end;
+> +       struct mm_struct *mm = vma->vm_mm;
+> +       struct mmu_gather tlb;
+> +
+> +       if (vma->vm_flags & (VM_LOCKED|VM_HUGETLB|VM_PFNMAP))
+> +               return -EINVAL;
+> +
+> +       /* MADV_FREE works for only anon vma at the moment */
+> +       if (vma->vm_file)
+> +               return -EINVAL;
+> +
+> +       start = max(vma->vm_start, start_addr);
+> +       if (start >= vma->vm_end)
+> +               return -EINVAL;
+> +       end = min(vma->vm_end, end_addr);
+> +       if (end <= vma->vm_start)
+> +               return -EINVAL;
+> +
+> +       lru_add_drain();
+> +       tlb_gather_mmu(&tlb, mm, start, end);
+> +       update_hiwater_rss(mm);
+> +
+> +       mmu_notifier_invalidate_range_start(mm, start, end);
+> +       madvise_free_page_range(&tlb, vma, start, end);
+> +       mmu_notifier_invalidate_range_end(mm, start, end);
+> +       tlb_finish_mmu(&tlb, start, end);
+> +
+> +       return 0;
+> +}
+> +
+> +static long madvise_free(struct vm_area_struct *vma,
+> +                            struct vm_area_struct **prev,
+> +                            unsigned long start, unsigned long end)
+> +{
+> +       *prev = vma;
+> +       return madvise_free_single_vma(vma, start, end);
+> +}
+> +
+>  /*
+>   * Application no longer needs these pages.  If the pages are dirty,
+>   * it's OK to just throw them away.  The app will be more careful about
+> @@ -384,6 +550,13 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
+>                 return madvise_remove(vma, prev, start, end);
+>         case MADV_WILLNEED:
+>                 return madvise_willneed(vma, prev, start, end);
+> +       case MADV_FREE:
+> +               /*
+> +                * XXX: In this implementation, MADV_FREE works like
+> +                * MADV_DONTNEED on swapless system or full swap.
+> +                */
+> +               if (get_nr_swap_pages() > 0)
+> +                       return madvise_free(vma, prev, start, end);
+>         case MADV_DONTNEED:
+>                 return madvise_dontneed(vma, prev, start, end);
+>         default:
+> @@ -403,6 +576,7 @@ madvise_behavior_valid(int behavior)
+>         case MADV_REMOVE:
+>         case MADV_WILLNEED:
+>         case MADV_DONTNEED:
+> +       case MADV_FREE:
+>  #ifdef CONFIG_KSM
+>         case MADV_MERGEABLE:
+>         case MADV_UNMERGEABLE:
+> diff --git a/mm/rmap.c b/mm/rmap.c
+> index 3333baab6ece..6f69055311da 100644
+> --- a/mm/rmap.c
+> +++ b/mm/rmap.c
+> @@ -657,6 +657,7 @@ int page_mapped_in_vma(struct page *page, struct vm_area_struct *vma)
+>  }
+>
+>  struct page_referenced_arg {
+> +       int dirtied;
+>         int mapcount;
+>         int referenced;
+>         unsigned long vm_flags;
+> @@ -671,6 +672,7 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
+>         struct mm_struct *mm = vma->vm_mm;
+>         spinlock_t *ptl;
+>         int referenced = 0;
+> +       int dirty = 0;
+>         struct page_referenced_arg *pra = arg;
+>
+>         if (unlikely(PageTransHuge(page))) {
+> @@ -723,6 +725,10 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
+>                         if (likely(!(vma->vm_flags & VM_SEQ_READ)))
+>                                 referenced++;
+>                 }
+> +
+> +               if (pte_dirty(*pte))
+> +                       dirty++;
+> +
+>                 pte_unmap_unlock(pte, ptl);
+>         }
+>
+> @@ -731,6 +737,9 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
+>                 pra->vm_flags |= vma->vm_flags;
+>         }
+>
+> +       if (dirty)
+> +               pra->dirtied++;
+> +
+>         pra->mapcount--;
+>         if (!pra->mapcount)
+>                 return SWAP_SUCCESS; /* To break the loop */
+> @@ -755,6 +764,7 @@ static bool invalid_page_referenced_vma(struct vm_area_struct *vma, void *arg)
+>   * @is_locked: caller holds lock on the page
+>   * @memcg: target memory cgroup
+>   * @vm_flags: collect encountered vma->vm_flags who actually referenced the page
+> + * @is_pte_dirty: ptes which have marked dirty bit - used for lazyfree page
+>   *
+>   * Quick test_and_clear_referenced for all mappings to a page,
+>   * returns the number of ptes which referenced the page.
+> @@ -762,7 +772,8 @@ static bool invalid_page_referenced_vma(struct vm_area_struct *vma, void *arg)
+>  int page_referenced(struct page *page,
+>                     int is_locked,
+>                     struct mem_cgroup *memcg,
+> -                   unsigned long *vm_flags)
+> +                   unsigned long *vm_flags,
+> +                   int *is_pte_dirty)
+>  {
+>         int ret;
+>         int we_locked = 0;
+> @@ -777,6 +788,9 @@ int page_referenced(struct page *page,
+>         };
+>
+>         *vm_flags = 0;
+> +       if (is_pte_dirty)
+> +               *is_pte_dirty = 0;
+> +
+>         if (!page_mapped(page))
+>                 return 0;
+>
+> @@ -804,6 +818,9 @@ int page_referenced(struct page *page,
+>         if (we_locked)
+>                 unlock_page(page);
+>
+> +       if (is_pte_dirty)
+> +               *is_pte_dirty = pra.dirtied;
+> +
+>         return pra.referenced;
+>  }
+>
+> @@ -1142,6 +1159,7 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+>         spinlock_t *ptl;
+>         int ret = SWAP_AGAIN;
+>         enum ttu_flags flags = (enum ttu_flags)arg;
+> +       int dirty = 0;
+>
+>         pte = page_check_address(page, mm, address, &ptl, 0);
+>         if (!pte)
+> @@ -1171,7 +1189,8 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+>         pteval = ptep_clear_flush(vma, address, pte);
+>
+>         /* Move the dirty bit to the physical page now the pte is gone. */
+> -       if (pte_dirty(pteval))
+> +       dirty = pte_dirty(pteval);
+> +       if (dirty)
+>                 set_page_dirty(page);
+>
+>         /* Update high watermark before we lower rss */
+> @@ -1218,6 +1237,16 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+>                         }
+>                         dec_mm_counter(mm, MM_ANONPAGES);
+>                         inc_mm_counter(mm, MM_SWAPENTS);
+> +               } else if (TTU_ACTION(flags) == TTU_UNMAP) {
+> +                       if (dirty || PageDirty(page)) {
+> +                               set_pte_at(mm, address, pte, pteval);
+> +                               ret = SWAP_FAIL;
+> +                               goto out_unmap;
+> +                       } else {
+> +                               /* It's a freeable page by madvise_free */
+> +                               dec_mm_counter(mm, MM_ANONPAGES);
+> +                               goto discard;
+> +                       }
+>                 } else if (IS_ENABLED(CONFIG_MIGRATION)) {
+>                         /*
+>                          * Store the pfn of the page in a special migration
+> @@ -1241,6 +1270,7 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+>         } else
+>                 dec_mm_counter(mm, MM_FILEPAGES);
+>
+> +discard:
+>         page_remove_rmap(page);
+>         page_cache_release(page);
+>
+> diff --git a/mm/vmscan.c b/mm/vmscan.c
+> index 7f8504198d41..db6eda9163d0 100644
+> --- a/mm/vmscan.c
+> +++ b/mm/vmscan.c
+> @@ -707,13 +707,17 @@ enum page_references {
+>  };
+>
+>  static enum page_references page_check_references(struct page *page,
+> -                                                 struct scan_control *sc)
+> +                                                 struct scan_control *sc,
+> +                                                 bool *freeable)
+>  {
+>         int referenced_ptes, referenced_page;
+>         unsigned long vm_flags;
+> +       int pte_dirty;
+> +
+> +       VM_BUG_ON_PAGE(!PageLocked(page), page);
+>
+>         referenced_ptes = page_referenced(page, 1, sc->target_mem_cgroup,
+> -                                         &vm_flags);
+> +                                         &vm_flags, &pte_dirty);
+>         referenced_page = TestClearPageReferenced(page);
+>
+>         /*
+> @@ -754,6 +758,10 @@ static enum page_references page_check_references(struct page *page,
+>                 return PAGEREF_KEEP;
+>         }
+>
+> +       if (PageAnon(page) && !pte_dirty && !PageSwapCache(page) &&
+> +                       !PageDirty(page))
+> +               *freeable = true;
+> +
+>         /* Reclaim if clean, defer dirty pages to writeback */
+>         if (referenced_page && !PageSwapBacked(page))
+>                 return PAGEREF_RECLAIM_CLEAN;
+> @@ -823,6 +831,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
+>                 int may_enter_fs;
+>                 enum page_references references = PAGEREF_RECLAIM_CLEAN;
+>                 bool dirty, writeback;
+> +               bool freeable = false;
+>
+>                 cond_resched();
+>
+> @@ -945,7 +954,8 @@ static unsigned long shrink_page_list(struct list_head *page_list,
+>                 }
+>
+>                 if (!force_reclaim)
+> -                       references = page_check_references(page, sc);
+> +                       references = page_check_references(page, sc,
+> +                                                       &freeable);
+>
+>                 switch (references) {
+>                 case PAGEREF_ACTIVATE:
+> @@ -961,7 +971,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
+>                  * Anonymous process memory has backing store?
+>                  * Try to allocate it some swap space here.
+>                  */
+> -               if (PageAnon(page) && !PageSwapCache(page)) {
+> +               if (PageAnon(page) && !PageSwapCache(page) && !freeable) {
+>                         if (!(sc->gfp_mask & __GFP_IO))
+>                                 goto keep_locked;
+>                         if (!add_to_swap(page, page_list))
+> @@ -976,7 +986,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
+>                  * The page is mapped into the page tables of one or more
+>                  * processes. Try to unmap it here.
+>                  */
+> -               if (page_mapped(page) && mapping) {
+> +               if (page_mapped(page) && (mapping || freeable)) {
+>                         switch (try_to_unmap(page, ttu_flags)) {
+>                         case SWAP_FAIL:
+>                                 goto activate_locked;
+> @@ -985,7 +995,20 @@ static unsigned long shrink_page_list(struct list_head *page_list,
+>                         case SWAP_MLOCK:
+>                                 goto cull_mlocked;
+>                         case SWAP_SUCCESS:
+> -                               ; /* try to free the page below */
+> +                               /* try to free the page below */
+> +                               if (!freeable)
+> +                                       break;
+> +                               /*
+> +                                * Freeable anon page doesn't have mapping
+> +                                * due to skipping of swapcache so we free
+> +                                * page in here rather than __remove_mapping.
+> +                                */
+> +                               VM_BUG_ON_PAGE(PageSwapCache(page), page);
+> +                               if (!page_freeze_refs(page, 1))
+> +                                       goto keep_locked;
+> +                               __clear_page_locked(page);
+> +                               count_vm_event(PGLAZYFREED);
+> +                               goto free_it;
+>                         }
+>                 }
+>
+> @@ -1723,7 +1746,7 @@ static void shrink_active_list(unsigned long nr_to_scan,
+>                 }
+>
+>                 if (page_referenced(page, 0, sc->target_mem_cgroup,
+> -                                   &vm_flags)) {
+> +                                   &vm_flags, NULL)) {
+>                         nr_rotated += hpage_nr_pages(page);
+>                         /*
+>                          * Identify referenced, file-backed active pages and
+> diff --git a/mm/vmstat.c b/mm/vmstat.c
+> index eef6321c8470..da18337c6c66 100644
+> --- a/mm/vmstat.c
+> +++ b/mm/vmstat.c
+> @@ -794,6 +794,7 @@ const char * const vmstat_text[] = {
+>
+>         "pgfault",
+>         "pgmajfault",
+> +       "pglazyfreed",
+>
+>         TEXTS_FOR_ZONES("pgrefill")
+>         TEXTS_FOR_ZONES("pgsteal_kswapd")
+> --
+> 1.9.2
+>
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 
 
 
@@ -169,3 +685,9 @@ Michael
 Michael Kerrisk Linux man-pages maintainer;
 http://www.kernel.org/doc/man-pages/
 Author of "The Linux Programming Interface", http://blog.man7.org/
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
