@@ -1,40 +1,38 @@
-From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Subject: Re: Pondering per-process vsyscall disablement
-Date: Wed, 28 May 2014 14:45:18 -0700
-Message-ID: <538658EE.8030809@zytor.com>
-References: <CALCETrX4-qooSyLw3=zHGcMoWqQ2ozPB_WtKU2AtkMei-XZOUA@mail.gmail.com> <537EB60E.40204@1h.com> <CALCETrWgtQCRiHt+am8+DoOMVvTuxy05AB6zzg3iAheGs13L6A@mail.gmail.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH] drivers/char/mem.c: Add /dev/ioports, supporting 16-bit and 32-bit ports
+Date: Thu, 29 May 2014 11:26:44 +0200
+Message-ID: <16228376.RHijyT1ZPk@wuerfel>
+References: <20140509191914.GA7286@jtriplet-mobl1> <63645237.lSKEVJUKkQ@wuerfel> <53865820.7010309@zytor.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWgtQCRiHt+am8+DoOMVvTuxy05AB6zzg3iAheGs13L6A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <53865820.7010309-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Marian Marinov <mm-108MBtLGafw@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/23/2014 09:40 AM, Andy Lutomirski wrote:
+On Wednesday 28 May 2014 14:41:52 H. Peter Anvin wrote:
+> On 05/19/2014 05:36 AM, Arnd Bergmann wrote:
+> > 
+> > My feeling is that all devices we can think of fall into at least one
+> > of these categories:
+> > 
+> > * legacy PC stuff that needs only byte access
+> > * PCI devices that can be accessed through sysfs
+> > * devices on x86 that can be accessed using iopl
+> > 
 > 
-> I don't think this should be something configured by the
-> administrator, unless the administrator is the builder of a kiosky
-> thing like Chromium OS.  In that case, the administrator can use
-> vsyscall=none.
-> 
-> I think this should be handled by either libc or the toolchain, hence
-> the suggestions of a syscall or an ELF header.
-> 
+> I don't believe PCI I/O space devices can be accessed through sysfs, but
+> perhaps I'm wrong?  (mmapping I/O space is not portable.)
 
-We could mimic the NX stack stuff, but it would have a lot of false
-negatives, simply because very few things would actually poke at the
-vsyscall page.
+The interface is there, both a read/write and mmap on the resource
+bin_attribute. But it seems you're right, neither of them is implemented
+on all architectures.
 
-The NX stuff uses a dummy program header in the ELF image.
+Only powerpc, microblaze, alpha, sparc and xtensa allow users to mmap
+I/O space, even though a lot of others could. The read-write interface
+is only defined for alpha, ia64, microblaze and powerpc.
 
-On the other hand, you could make the argument that anything compiled
-with a new toolchain simply should not use the vsyscall page, and just
-unconditionally set the opt-out bit (header) in question.
-
-It might be better to have some kind of flags field (which a number of
-architectures use) than keep using dummy program headers, though.
-
-	-hpa
+	Arnd
