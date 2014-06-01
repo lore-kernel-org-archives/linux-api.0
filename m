@@ -1,44 +1,54 @@
-From: Manfred Spraul <manfred@colorfullife.com>
-Subject: MSGMNB and MSGMAX: good default values?
-Date: Sat, 31 May 2014 19:54:36 +0200
-Message-ID: <538A175C.80705@colorfullife.com>
+From: "Maciej W. Rozycki" <macro-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Subject: Re: [PATCH] drivers/char/mem.c: Add /dev/ioports, supporting 16-bit
+ and 32-bit ports
+Date: Sun, 1 Jun 2014 11:35:10 +0100 (BST)
+Message-ID: <alpine.LFD.2.11.1406011101400.30121@eddie.linux-mips.org>
+References: <20140509191914.GA7286@jtriplet-mobl1> <20140510070742.GE6099@debjann.fritz.box> <20140510193246.GA12079@thin> <20140511125006.GA16197@debjann.fritz.box> <20140511210514.GB6056@thin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Davidlohr Bueso <davidlohr@hp.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20140511210514.GB6056@thin>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+On Sun, 11 May 2014, Josh Triplett wrote:
 
-until now, every sysadmin/distro had to update the sysv limits.
-For shm, the new proposal is to increase the limits to (nearly) ULONG_MAX.
+> > > > What if I attempt a four-byte read at 65535? That would access four
+> > > > out-of-bounds bytes, right?
+> > > 
+> > > No, it would do an ind instruction on port 65535.
+> > 
+> > Yes, on x86. What about other architectures?
+> 
+> That's a good point; on architectures that map I/O to memory, this
+> device should check port+count rather than port.  Is there a reliable
+> #define that identifies architectures with that property, other than
+> CONFIG_X86?
 
-Right now, I try to create patches that also increase the limits for 
-sysv msg, but I got stuck:
+ FWIW, on x86 an IND from 65535 will be split into two separate bus read 
+cycles, e.g. on a 32-bit data bus one at 0xfffc with only the MSB enabled 
+and another one with the three LSB enabled (64-bit buses will address the 
+first cycle at 0xfff8, etc.).  Data obtained from these cycles is then 
+merged appropriately before writing to the destination.  The address put 
+on the bus for the second cycle is implementation-specific as are all 
+accesses beyond 0xffff so it might be 0x10000 or it might be 0.
 
-- MSGMNI is trivial, just increase it to nearly IPCMNI.
+ If implementing unaligned port I/O on non-x86 targets I think it would be 
+most reasonable to wrap the out-of-range part around back to 0 before 
+merging data obtained this way.  The range supported can of course be 
+different to what x86 supports and may be specific e.g. to the PCI host 
+bridge (its port I/O space forwarding window size).  Systems with peer 
+bridges may have multiple port I/O spaces too, this is one reason to have 
+the size of the port I/O space extended beyond 64kB; address bits from #16 
+up can then be used to select the intended host bridge to forward the 
+access to.  Also IIRC PCI-PCI bridges only forward port I/O space accesses 
+within the low 64kB.
 
-- MSGMNB is not an upper limit, it is actually the default amount of 
-data that can be stored in a message queue before senders must sleep.
-   Since Linux-0.99.10, it always was 16384.
+ Most easily unaligned port I/O may not be supported at all by our kernel 
+device, even on x86.  I think it would actually be reasonable to do, I 
+have yet to hear of a piece of hardware that has any use for unaligned 
+port I/O.
 
-   A websearch shows that for both db2 and oracle, the recommendation is 
-65536.
-
-   It seems that redhat has increased the value to 65536:
-https://bugzilla.redhat.com/show_bug.cgi?id=862597
-
-Tuxedo seems to use sysv messages and the documentation warns that too 
-large values are harmfull:
-http://read.pudn.com/downloads142/doc/618733/tux-a11-80/manual/13-ADM-PERF-Notes.pdf
-
-- MSGMAX: Same issue as above: it was slightly below 4096 and since 2.6 
-it is 8192.
-
-Any proposals?
-Right now, I would leave MSGMAX and MSGMNB as they are.
-
---
-     Manfred
+  Maciej
