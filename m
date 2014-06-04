@@ -1,71 +1,89 @@
-From: Julien Tinnes <jln@google.com>
-Subject: Re: [PATCH v5 0/6] seccomp: add PR_SECCOMP_EXT and SECCOMP_EXT_ACT_TSYNC
-Date: Tue, 3 Jun 2014 16:47:50 -0700
-Message-ID: <CAKyRK=i+nDe3jFXRnYeDbrefc4HwC4gn16Biq8GMjXPRfry+oQ@mail.gmail.com>
-References: <1400799936-26499-1-git-send-email-keescook@chromium.org>
-	<CAGXu5jLYPbJKCBvhVxfHEUFeCPJO-OBhRFufUSNy6o1N=LJ6UQ@mail.gmail.com>
-	<CALCETrV0ZEFipU0E64n5q44LiUV4j4Qqvnz0h_QAoddg+e7V3A@mail.gmail.com>
-	<CAGXu5j+YRW_+W8Z9S9O84ep-uUc4wQQRbtSu6_s8o5J2HLPUYg@mail.gmail.com>
-	<CALCETrXB0zp8gwpWuxXs0bgB8sQhe6JLE46BOYw3OrBx7hQYVw@mail.gmail.com>
-	<CAGXu5jKFte0ZvqU8RYcqjWDCoegWeu66gdwX83tiL8vprcvMgQ@mail.gmail.com>
-	<CALCETrWLNFJbwaYKkjBi7XPLBQ2=gEGmW=G==+_9jcrLPW+JdA@mail.gmail.com>
-	<CAHO5Pa3F2MjfTtfNxa8LbnkeeU8=YJ+9tDqxZpw7Gz59E-4AUg@mail.gmail.com>
+From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 00/13][V3] kexec: A new system call to allow in kernel loading
+Date: Wed, 4 Jun 2014 21:39:10 +0200
+Message-ID: <CAHO5Pa0dxpq7YNe5eUMPE9Mn5m7XCnB1C5mZxrvt2-OqOpVZAA@mail.gmail.com>
+References: <1401800822-27425-1-git-send-email-vgoyal@redhat.com>
+ <20140603131203.GA23395@redhat.com> <20140604092214.GA17528@dhcp-17-89.nay.redhat.com>
+ <20140604175031.GA4406@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHO5Pa3F2MjfTtfNxa8LbnkeeU8=YJ+9tDqxZpw7Gz59E-4AUg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, James Morris <james.l.morris@oracle.com>, Stephen Rothwell <sfr@canb.auug.org.au>, "David S. Miller" <davem@davemloft.net>, LKML <linux-kernel@vger.kernel.org>, Will Drewry <wad@chromium.org>, Alexei Starovoitov <ast@plumgrid.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20140604175031.GA4406-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: WANG Chao <chaowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org, Greg Kroah-Hartman <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 3, 2014 at 3:12 AM, Michael Kerrisk <mtk.manpages@gmail.com> wrote:
-> [Kees, thank you for CCing linux-api]
+Vivek,
+
+As per Documentation/SubmitChecklist , please CC linux-api@ on patces
+that change the ABI/API. See
+https://www.kernel.org/doc/man-pages/linux-api-ml.html.
+
+Also, is there some draft man page for this new system call?
+
+Thanks,
+
+Michael
+
+On Wed, Jun 4, 2014 at 7:50 PM, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Wed, Jun 04, 2014 at 05:22:14PM +0800, WANG Chao wrote:
 >
-> On Tue, Jun 3, 2014 at 1:08 AM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Mon, Jun 2, 2014 at 4:05 PM, Kees Cook <keescook@chromium.org> wrote:
->
->>> I'd like to hear from other folks on this (akpm?). My instinct is to
->>> continue using prctl since that is already where mediation for seccomp
->>> happens. I don't see why prctl vs a new syscall makes a difference
->>> here, frankly.
+> [..]
+>> > Index: kexec-tools/kexec/kexec.h
+>> > ===================================================================
+>> > --- kexec-tools.orig/kexec/kexec.h  2014-06-02 14:34:16.719774316 -0400
+>> > +++ kexec-tools/kexec/kexec.h       2014-06-02 14:34:42.010036325 -0400
+>> > @@ -156,6 +156,13 @@ struct kexec_info {
+>> >     unsigned long kexec_flags;
+>> >     unsigned long backup_src_start;
+>> >     unsigned long backup_src_size;
+>> > +   /* Set to 1 if we are using kexec2 syscall */
+>> > +   unsigned long file_mode :1;
+>> > +
+>> > +   /* Filled by kernel image processing code */
+>> > +   int initrd_fd;
+>> > +   char *command_line;
+>> > +   int command_line_len;
+>> >  };
+>> >
+>> >  struct arch_map_entry {
+>> > @@ -207,6 +214,7 @@ extern int file_types;
+>> >  #define OPT_UNLOAD         'u'
+>> >  #define OPT_TYPE           't'
+>> >  #define OPT_PANIC          'p'
+>> > +#define OPT_USE_KEXEC2_SYSCALL     's'
+>> >  #define OPT_MEM_MIN             256
+>> >  #define OPT_MEM_MAX             257
+>> >  #define OPT_REUSE_INITRD   258
+>> > @@ -230,6 +238,7 @@ extern int file_types;
+>> >     { "mem-min",            1, 0, OPT_MEM_MIN }, \
+>> >     { "mem-max",            1, 0, OPT_MEM_MAX }, \
+>> >     { "reuseinitrd",        0, 0, OPT_REUSE_INITRD }, \
+>> > +   { "use-kexec2-syscall", 0, 0, OPT_USE_KEXEC2_SYSCALL }, \
+>> >     { "debug",              0, 0, OPT_DEBUG }, \
+>> >
+>> >  #define KEXEC_OPT_STR "h?vdfxluet:p"
 >>
->> Aesthetics?  There's a tendency for people to get annoyed at big
->> multiplexed APIs, and your patches will be doubly multiplexed.
+>> This line,
+>> #define KEXEC_OPT_STR "h?vdfxluet:p"
+>>
+>> should be something like,
+>> #define KEXEC_OPT_STR "h?vdfxluet:ps"
 >
-> prctl() is already a Franken-interface that provides a mass of
-> different, mostly completely unrelated, functionality. So, I wonder if
-> it would be better not to make the situation worse. Furthermore, the
-> very fact that the existing prctl seccomp API is being extended and
-> multiplexed suggests that other extensions might be desirable further
-> down the line, which also hints that a separate syscall would be a
-> good idea. (Or do we have to wait until the prctl seccomp API is
-> extended one more time, before we realize that a new system call would
-> have been a good idea...)
+> Thanks chao. I will fix it.
 >
->> TBH, I care more about the atomicity thing than about the actual form
->> of the API.
->
-> User-space does not necessarily thank you for that perspective, Andy
-> ;-). The atomicity thing is presumably fixable, regardless of the API.
-> On the other hand, APIs are things that kernel developers design once
-> and forget about, and user-space has to live with forever.
+> Thanks
+> Vivek
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 
-Well, maybe the history of it being a prctl() should count for something.
-Most likely, userland will need to test for whether or not these
-features are present in the kernel for years to come. With a syscall,
-it would now require a syscall (unlikely to be in older headers for a
-while, so will require using syscall(3) for a bit) as well as a call
-to prctl() to test for seccomp mode 2 (without thread sync) in the
-fallback path. It'll be a little odd. As the person who will make this
-work in Chromium, I do not feel strongly either way, it's a detail, so
-feel free to disregard this point.
 
-But I'm eagerly waiting for:
-- Not having to test for the presence of threads at run-time (which
-requires a very ugly busy loop with exponential back-off watching for
-/proc/self/tasks/ to drop to 1 directory entry).
-- Being able to engage the sandbox after third-party libraries have
-started threads.
 
-Julien
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
