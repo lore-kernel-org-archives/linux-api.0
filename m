@@ -1,42 +1,42 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH 00/13][V3] kexec: A new system call to allow in
- kernel loading
-Date: Thu, 5 Jun 2014 10:04:16 -0400
-Message-ID: <20140605140416.GB17389@redhat.com>
-References: <1401800822-27425-1-git-send-email-vgoyal@redhat.com>
- <20140603131203.GA23395@redhat.com>
- <20140604092214.GA17528@dhcp-17-89.nay.redhat.com>
- <20140604175031.GA4406@redhat.com>
- <CAHO5Pa0dxpq7YNe5eUMPE9Mn5m7XCnB1C5mZxrvt2-OqOpVZAA@mail.gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
+Date: Thu, 5 Jun 2014 10:14:52 -0700
+Message-ID: <CAGXu5jLjneRP=eF67k86cZNNGczZ=9-D4x9GQ-TaSKheCoG-Tg@mail.gmail.com>
+References: <1401975635-6162-1-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHO5Pa0dxpq7YNe5eUMPE9Mn5m7XCnB1C5mZxrvt2-OqOpVZAA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: WANG Chao <chaowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org, Greg Kroah-Hartman <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1401975635-6162-1-git-send-email-drysdale@google.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, LKML <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "x86@kernel.org" <x86@kernel.org>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 04, 2014 at 09:39:10PM +0200, Michael Kerrisk wrote:
-> Vivek,
-> 
-> As per Documentation/SubmitChecklist , please CC linux-api@ on patces
-> that change the ABI/API. See
-> https://www.kernel.org/doc/man-pages/linux-api-ml.html.
+On Thu, Jun 5, 2014 at 6:40 AM, David Drysdale <drysdale@google.com> wrote:
+> Resending, adding cc:linux-api.
+>
+> Also, it may help to add a little more background -- this patch is
+> needed as a (small) part of implementing Capsicum in the Linux kernel.
+>
+> Capsicum is a security framework that has been present in FreeBSD since
+> version 9.0 (Jan 2012), and is based on concepts from object-capability
+> security [1].
+>
+> One of the features of Capsicum is capability mode, which locks down
+> access to global namespaces such as the filesystem hierarchy.  In
+> capability mode, /proc is thus inaccessible and so fexecve(3) doesn't
+> work -- hence the need for a kernel-space alternative.
+>
+> [1] http://www.cl.cam.ac.uk/research/security/capsicum/papers/2010usenix-security-capsicum-website.pdf
 
-Hi Michael,
+Thanks for reposting!
 
-Sorry, I did not notice that. I will CC linux-api@ in next version of
-patches in patches which introduce new systemcal..
+I think it'd be quite helpful to have this available for very tightly
+confined sandboxes. And in a larger sense, Capsicum itself is an
+interesting way to do programmatic isolation.
 
-> 
-> Also, is there some draft man page for this new system call?
+-Kees
 
-No, there is none yet. In fact I don't see a man page for old kexec
-system call either kexec_load().
-
-Do you want me to write man page for this new syscall?
-
-Thanks
-Vivek
+-- 
+Kees Cook
+Chrome OS Security
