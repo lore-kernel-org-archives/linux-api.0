@@ -1,101 +1,344 @@
 From: David Drysdale <drysdale@google.com>
-Subject: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
-Date: Thu,  5 Jun 2014 14:40:32 +0100
-Message-ID: <1401975635-6162-1-git-send-email-drysdale@google.com>
+Subject: [PATCHv4 RESEND 2/3] syscalls,x86: add selftest for execveat(2)
+Date: Thu,  5 Jun 2014 14:40:34 +0100
+Message-ID: <1401975635-6162-3-git-send-email-drysdale@google.com>
+References: <1401975635-6162-1-git-send-email-drysdale@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1401975635-6162-1-git-send-email-drysdale@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org
 Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Resending, adding cc:linux-api.
-
-Also, it may help to add a little more background -- this patch is
-needed as a (small) part of implementing Capsicum in the Linux kernel.
-
-Capsicum is a security framework that has been present in FreeBSD since
-version 9.0 (Jan 2012), and is based on concepts from object-capability
-security [1].
-
-One of the features of Capsicum is capability mode, which locks down
-access to global namespaces such as the filesystem hierarchy.  In
-capability mode, /proc is thus inaccessible and so fexecve(3) doesn't
-work -- hence the need for a kernel-space alternative.
-
-[1] http://www.cl.cam.ac.uk/research/security/capsicum/papers/2010usenix-security-capsicum-website.pdf
-
-------
-
-This patch set adds execveat(2) for x86, and is derived from Meredydd
-Luff's patch from Sept 2012 (https://lkml.org/lkml/2012/9/11/528).
-
-The primary aim of adding an execveat syscall is to allow an
-implementation of fexecve(3) that does not rely on the /proc
-filesystem.  The current glibc version of fexecve(3) is implemented
-via /proc, which causes problems in sandboxed or otherwise restricted
-environments.
-
-Given the desire for a /proc-free fexecve() implementation, HPA
-suggested (https://lkml.org/lkml/2006/7/11/556) that an execveat(2)
-syscall would be an appropriate generalization.
-
-Also, having a new syscall means that it can take a flags argument
-without back-compatibility concerns.  The current implementation just
-defines the AT_SYMLINK_NOFOLLOW flag, but other flags could be added
-in future -- for example, flags for new namespaces (as suggested at
-https://lkml.org/lkml/2006/7/11/474).
-
-Related history:
- - https://lkml.org/lkml/2006/12/27/123 is an example of someone
-   realizing that fexecve() is likely to fail in a chroot environment.
- - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=514043 covered
-   documenting the /proc requirement of fexecve(3) in its manpage, to
-   "prevent other people from wasting their time".
- - https://bugzilla.kernel.org/show_bug.cgi?id=74481 documented that
-   it's not possible to fexecve() a file descriptor for a script with
-   close-on-exec set (which is possible with the implementation here).
- - https://bugzilla.redhat.com/show_bug.cgi?id=241609 described a
-   problem where a process that did setuid() could not fexecve()
-   because it no longer had access to /proc/self/fd; this has since
-   been fixed.
-
-
-Changes since Meredydd's v3 patch:
- - Added a selftest.
- - Added a man page.
- - Left open_exec() signature untouched to reduce patch impact
-   elsewhere (as suggested by Al Viro).
- - Filled in bprm->filename with d_path() into a buffer, to avoid use
-   of potentially-ephemeral dentry->d_name.
- - Patch against v3.14 (455c6fdbd21916).
-
-
-David Drysdale (2):
-  syscalls,x86: implement execveat() system call
-  syscalls,x86: add selftest for execveat(2)
-
- arch/x86/ia32/audit.c                   |   1 +
- arch/x86/ia32/ia32entry.S               |   1 +
- arch/x86/kernel/audit_64.c              |   1 +
- arch/x86/kernel/entry_64.S              |  28 ++++
- arch/x86/syscalls/syscall_32.tbl        |   1 +
- arch/x86/syscalls/syscall_64.tbl        |   2 +
- arch/x86/um/sys_call_table_64.c         |   1 +
- fs/exec.c                               | 153 ++++++++++++++++---
- include/linux/compat.h                  |   3 +
- include/linux/sched.h                   |   4 +
- include/linux/syscalls.h                |   4 +
- include/uapi/asm-generic/unistd.h       |   4 +-
- kernel/sys_ni.c                         |   3 +
- lib/audit.c                             |   3 +
+Signed-off-by: David Drysdale <drysdale@google.com>
+---
  tools/testing/selftests/Makefile        |   1 +
  tools/testing/selftests/exec/.gitignore |   6 +
  tools/testing/selftests/exec/Makefile   |  32 ++++
  tools/testing/selftests/exec/execveat.c | 251 ++++++++++++++++++++++++++++++++
- 18 files changed, 476 insertions(+), 23 deletions(-)
+ 4 files changed, 290 insertions(+)
  create mode 100644 tools/testing/selftests/exec/.gitignore
  create mode 100644 tools/testing/selftests/exec/Makefile
  create mode 100644 tools/testing/selftests/exec/execveat.c
 
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 32487ed18354..26b7e6410fcd 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -10,6 +10,7 @@ TARGETS += timers
+ TARGETS += vm
+ TARGETS += powerpc
+ TARGETS += user
++TARGETS += exec
+
+ all:
+ 	for TARGET in $(TARGETS); do \
+diff --git a/tools/testing/selftests/exec/.gitignore b/tools/testing/selftests/exec/.gitignore
+new file mode 100644
+index 000000000000..349a786899a7
+--- /dev/null
++++ b/tools/testing/selftests/exec/.gitignore
+@@ -0,0 +1,6 @@
++subdir*
++script*
++execveat
++execveat.symlink
++execveat.moved
++execveat.ephemeral
+diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
+new file mode 100644
+index 000000000000..55771ed05dda
+--- /dev/null
++++ b/tools/testing/selftests/exec/Makefile
+@@ -0,0 +1,32 @@
++CC = $(CROSS_COMPILE)gcc
++CFLAGS = -Wall
++BINARIES = execveat
++DEPS = execveat.symlink script execveat.ephemeral script.ephemeral subdir subdir.ephemeral subdir.ephemeral/script
++all: $(BINARIES) $(DEPS)
++
++subdir:
++	mkdir -p $@
++subdir.ephemeral:
++	mkdir -p $@
++subdir.ephemeral/script: | subdir.ephemeral
++	echo '#!/bin/sh' > $@
++	echo 'exit $$*' >> $@
++	chmod +x $@
++script:
++	echo '#!/bin/sh' > $@
++	echo 'exit $$*' >> $@
++	chmod +x $@
++script.ephemeral: script
++	cp $< $@
++execveat.symlink: execveat
++	ln -s -f $< $@
++execveat.ephemeral: execveat
++	cp $< $@
++%: %.c
++	$(CC) $(CFLAGS) -o $@ $^
++
++run_tests: all
++	./execveat
++
++clean:
++	rm -rf $(BINARIES) $(DEPS) subdir.moved execveat.moved
+diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
+new file mode 100644
+index 000000000000..f67862fa3f38
+--- /dev/null
++++ b/tools/testing/selftests/exec/execveat.c
+@@ -0,0 +1,251 @@
++/*
++ * Copyright (c) 2014 Google, Inc.
++ *
++ * Licensed under the terms of the GNU GPL License version 2
++ *
++ * Selftests for execveat(2).
++ */
++
++#define _GNU_SOURCE  /* to get O_PATH */
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <sys/syscall.h>
++#include <sys/stat.h>
++#include <stdio.h>
++#include <errno.h>
++#include <string.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <limits.h>
++#include <stdlib.h>
++
++static char *envp[] = { "IN_TEST=yes", NULL };
++static char *argv[] = { "execveat", "99", NULL };
++
++static int execveat_(int fd, const char *path, char **argv, char **envp,
++		     int flags)
++{
++#ifdef __NR_execveat
++	return syscall(__NR_execveat, fd, path, argv, envp, flags);
++#else
++	errno = -ENOSYS;
++	return -1;
++#endif
++}
++
++#define check_execveat_fail(fd, path, flags, errno)	\
++	_check_execveat_fail(fd, path, flags, errno, #errno)
++static int _check_execveat_fail(int fd, const char *path, int flags,
++				int expected_errno, const char *errno_str)
++{
++	errno = 0;
++	printf("Check failure of execveat(%d, '%s', %d) with %s... ",
++		fd, path?:"(null)", flags, errno_str);
++	int rc = execveat_(fd, path, argv, envp, flags);
++	if (rc > 0) {
++		printf("[FAIL] (unexpected success from execveat(2))\n");
++		return 1;
++	}
++	if (errno != expected_errno) {
++		printf("[FAIL] (expected errno %d (%s) not %d (%s)\n",
++			expected_errno, strerror(expected_errno),
++			errno, strerror(errno));
++		return 1;
++	}
++	printf("[OK]\n");
++	return 0;
++}
++
++static int check_execveat_invoked_rc(int fd, const char *path, int flags,
++				     int expected_rc)
++{
++	int status;
++	int rc;
++	pid_t child;
++	printf("Check success of execveat(%d, '%s', %d)... ",
++		fd, path?:"(null)", flags);
++	child = fork();
++	if (child < 0) {
++		printf("[FAIL] (fork() failed)\n");
++		return 1;
++	}
++	if (child == 0) {
++		/* Child: do execveat(). */
++		rc = execveat_(fd, path, argv, envp, flags);
++		printf("[FAIL]: execveat() failed, rc=%d errno=%d (%s)\n",
++			rc, errno, strerror(errno));
++		exit(1);  /* should not reach here */
++	}
++	/* Parent: wait for & check child's exit status. */
++	rc = waitpid(child, &status, 0);
++	if (rc != child) {
++		printf("[FAIL] (waitpid(%d,...) returned %d)\n", child, rc);
++		return 1;
++	}
++	if (!WIFEXITED(status)) {
++		printf("[FAIL] (child %d did not exit cleanly, status=%08x)\n",
++			child, status);
++		return 1;
++	}
++	if (WEXITSTATUS(status) != expected_rc) {
++		printf("[FAIL] (child %d exited with %d not %d)\n",
++			child, WEXITSTATUS(status), expected_rc);
++		return 1;
++	}
++	printf("[OK]\n");
++	return 0;
++}
++
++static int check_execveat(int fd, const char *path, int flags)
++{
++	return check_execveat_invoked_rc(fd, path, flags, 99);
++}
++
++static char *concat(const char *left, const char *right)
++{
++	char *result = malloc(strlen(left) + strlen(right) + 1);
++	strcpy(result, left);
++	strcat(result, right);
++	return result;
++}
++
++static int open_or_die(const char *filename, int flags)
++{
++	int fd = open(filename, flags);
++	if (fd < 0) {
++		printf("Failed to open '%s'; "
++			"check prerequisites are available\n", filename);
++		exit(1);
++	}
++	return fd;
++}
++
++static int run_tests(void)
++{
++	int fail = 0;
++	char *fullname = realpath("execveat", NULL);
++	char *fullname_script = realpath("script", NULL);
++	char *fullname_symlink = concat(fullname, ".symlink");
++	int subdir_dfd = open_or_die("subdir", O_DIRECTORY|O_RDONLY);
++	int subdir_dfd_ephemeral = open_or_die("subdir.ephemeral",
++					       O_DIRECTORY|O_RDONLY);
++	int dot_dfd = open_or_die(".", O_DIRECTORY|O_RDONLY);
++	int dot_dfd_path = open_or_die(".", O_DIRECTORY|O_RDONLY|O_PATH);
++	int fd = open_or_die("execveat", O_RDONLY);
++	int fd_path = open_or_die("execveat", O_RDONLY|O_PATH);
++	int fd_symlink = open_or_die("execveat.symlink", O_RDONLY);
++	int fd_script = open_or_die("script", O_RDONLY);
++	int fd_ephemeral = open_or_die("execveat.ephemeral", O_RDONLY);
++	int fd_script_ephemeral = open_or_die("script.ephemeral", O_RDONLY);
++
++	/* Normal executable file: */
++	/*   dfd + path */
++	fail |= check_execveat(subdir_dfd, "../execveat", 0);
++	fail |= check_execveat(dot_dfd, "execveat", 0);
++	fail |= check_execveat(dot_dfd_path, "execveat", 0);
++	/*   absolute path */
++	fail |= check_execveat(AT_FDCWD, fullname, 0);
++	/*   absolute path with nonsense dfd */
++	fail |= check_execveat(99, fullname, 0);
++	/*   fd + no path */
++	fail |= check_execveat(fd, NULL, 0);
++
++	/* Mess with executable file that's already open: */
++	/*   fd + no path to a file that's been renamed */
++	rename("execveat.ephemeral", "execveat.moved");
++	fail |= check_execveat(fd_ephemeral, NULL, 0);
++	/*   fd + no path to a file that's been deleted */
++	unlink("execveat.moved"); /* remove the file now fd open */
++	fail |= check_execveat(fd_ephemeral, NULL, 0);
++
++	/* Symlink to executable file: */
++	/*   dfd + path */
++	fail |= check_execveat(dot_dfd, "execveat.symlink", 0);
++	fail |= check_execveat(dot_dfd_path, "execveat.symlink", 0);
++	/*   absolute path */
++	fail |= check_execveat(AT_FDCWD, fullname_symlink, 0);
++	/*   fd + no path, even with AT_SYMLINK_NOFOLLOW (already followed) */
++	fail |= check_execveat(fd_symlink, NULL, 0);
++	fail |= check_execveat(fd_symlink, NULL, AT_SYMLINK_NOFOLLOW);
++
++	/* Symlink fails when AT_SYMLINK_NOFOLLOW set: */
++	/*   dfd + path */
++	fail |= check_execveat_fail(dot_dfd, "execveat.symlink",
++				    AT_SYMLINK_NOFOLLOW, ELOOP);
++	fail |= check_execveat_fail(dot_dfd_path, "execveat.symlink",
++				    AT_SYMLINK_NOFOLLOW, ELOOP);
++	/*   absolute path */
++	fail |= check_execveat_fail(AT_FDCWD, fullname_symlink,
++				    AT_SYMLINK_NOFOLLOW, ELOOP);
++
++	/* Shell script wrapping executable file: */
++	/*   dfd + path */
++	fail |= check_execveat(subdir_dfd, "../script", 0);
++	fail |= check_execveat(dot_dfd, "script", 0);
++	fail |= check_execveat(dot_dfd_path, "script", 0);
++	/*   absolute path */
++	fail |= check_execveat(AT_FDCWD, fullname_script, 0);
++	/*   fd + no path */
++	fail |= check_execveat(fd_script, NULL, 0);
++	fail |= check_execveat(fd_script, NULL, AT_SYMLINK_NOFOLLOW);
++
++	/* Mess with script file that's already open: */
++	/*   fd + no path to a file that's been renamed */
++	rename("script.ephemeral", "script.moved");
++	fail |= check_execveat(fd_script_ephemeral, NULL, 0);
++	/*   fd + no path to a file that's been deleted */
++	unlink("script.moved"); /* remove the file while fd open */
++	/* Shell attempts to load the deleted file but fails => rc=127 */
++	fail |= check_execveat_invoked_rc(fd_script_ephemeral, NULL, 0, 127);
++
++	/* Rename a subdirectory in the path: */
++	rename("subdir.ephemeral", "subdir.moved");
++	fail |= check_execveat(subdir_dfd_ephemeral, "../script", 0);
++	fail |= check_execveat(subdir_dfd_ephemeral, "script", 0);
++	/* Remove the subdir and its contents */
++	unlink("subdir.moved/script");
++	unlink("subdir.moved");
++	/* Shell loads via deleted subdir OK because name starts with .. */
++	fail |= check_execveat(subdir_dfd_ephemeral, "../script", 0);
++	fail |= check_execveat_fail(subdir_dfd_ephemeral, "script", 0, ENOENT);
++
++	/* Flag values other than AT_SYMLINK_NOFOLLOW => EINVAL */
++	fail |= check_execveat_fail(dot_dfd, "execveat", 0xFFFF, EINVAL);
++	/* Invalid path => ENOENT */
++	fail |= check_execveat_fail(dot_dfd, "no-such-file", 0, ENOENT);
++	fail |= check_execveat_fail(dot_dfd_path, "no-such-file", 0, ENOENT);
++	fail |= check_execveat_fail(AT_FDCWD, "no-such-file", 0, ENOENT);
++	/* Attempt to execute directory => EACCES */
++	fail |= check_execveat_fail(dot_dfd, NULL, 0, EACCES);
++	/* Attempt to execute non-executable => EACCES */
++	fail |= check_execveat_fail(dot_dfd, "Makefile", 0, EACCES);
++	/* Attempt to execute file opened with O_PATH => EBADF */
++	fail |= check_execveat_fail(dot_dfd_path, NULL, 0, EBADF);
++	fail |= check_execveat_fail(fd_path, NULL, 0, EBADF);
++	/* Attempt to execute nonsense FD => EBADF */
++	fail |= check_execveat_fail(99, NULL, 0, EBADF);
++	fail |= check_execveat_fail(99, "execveat", 0, EBADF);
++	/* Attempt to execute relative to non-directory => ENOTDIR */
++	fail |= check_execveat_fail(fd, "execveat", 0, ENOTDIR);
++
++	return fail ? -1 : 0;
++}
++
++int main(int argc, char **argv)
++{
++	if (argc >= 2) {
++		/* If we are invoked with an argument, exit immediately. */
++		/* Check expected environment transferred. */
++		if (strcmp(getenv("IN_TEST"), "yes") != 0) {
++			printf("[FAIL] (no IN_TEST=yes in env)\n");
++			return 1;
++		}
++
++		/* Use the argument as an exit code. */
++		int rc = atoi(argv[1]);
++		fflush(stdout);
++		return rc;
++	} else {
++		return run_tests();
++	}
++}
 --
 1.9.1.423.g4596e3a
