@@ -1,71 +1,49 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [patch 3/3] timerfd: Implement write method
-Date: Wed, 11 Jun 2014 00:22:26 +0400
-Message-ID: <20140610202226.GG2243@moon>
-References: <20140428212517.200264067@openvz.org>
- <20140428213301.507657833@openvz.org>
- <alpine.DEB.2.02.1405220643170.9695@ionos.tec.linutronix.de>
- <alpine.DEB.2.02.1405220656130.9695@ionos.tec.linutronix.de>
- <20140610163530.GF2243@moon>
- <CAKgNAkiR2xt7xnkgGDg5zKfGRoPtveWG8Jjh5=aD76L6jK7C8w@mail.gmail.com>
- <CALCETrV5augTv4bXFmfnifiAGZGw2DfNHrpBUYAp_bBsJvWRBQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrV5augTv4bXFmfnifiAGZGw2DfNHrpBUYAp_bBsJvWRBQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, LKML <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andrey Vagin <avagin@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, vdavydov@parallels.com, Linux API <linux-api@vger.kernel.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v6 0/9] seccomp: add thread sync ability
+Date: Tue, 10 Jun 2014 16:01:45 -0700
+Message-ID: <1402441314-7447-1-git-send-email-keescook@chromium.org>
+Return-path: <linux-mips-bounce@linux-mips.org>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: linux-kernel@vger.kernel.org
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Alexei Starovoitov <ast@plumgrid.com>, John Johansen <john.johansen@canonical.com>, Russell King <linux@arm.linux.org.uk>, Ralf Baechle <ralf@linux-mips.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Peter Zijlstra <peterz@infradead.org>, Arnd Bergmann <arnd@arndb.de>, James Morris <james.l.morris@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Frederic Weisbecker <fweisbec@gmail.com>, "David A. Long" <dave.long@lina>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 10, 2014 at 01:05:22PM -0700, Andy Lutomirski wrote:
-> On Tue, Jun 10, 2014 at 1:03 PM, Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
-> > [CC += linux-api@]
+This adds the ability for threads to request seccomp filter
+synchronization across their thread group (at filter attach time).
+For example, for Chrome to make sure graphic driver threads are fully
+confined after seccomp filters have been attached.
 
-Thanks Michael!
+To support this, locking on seccomp changes is introduced, along with
+refactoring of no_new_privs. Races with thread creation/death are handled
+via tasklist_lock.
 
-> > On Tue, Jun 10, 2014 at 6:35 PM, Cyrill Gorcunov <gorcunov@gmail.com> wrote:
-> >> On Thu, May 22, 2014 at 06:58:19AM +0900, Thomas Gleixner wrote:
-> >>> >
-> >>> > So what wakes a potential waiter in read/poll?
-> >>>
-> >>> And who is updating timerfd_create(2) ?
-> >>
-> >> Thomas, could you please take a look if the approach below is acceptable?
-> >> If it will be fine I update manpage then.
-> >> ---
-> >> From: Cyrill Gorcunov <gorcunov@openvz.org>
-> >> Subject: timerfd: Implement timerfd_ioctl method to restore timerfd_ctx::ticks
-> >>
-> >> The read() of timerfd files allows to fetch the number of timer ticks
-> >> while there is no way to set it back from userspace.
-> >>
-> >> To restore the timer's state as it was at checkpoint moment we need
-> >> a path to bring @ticks back. Initially I thought about writing ticks
-> >> back via write() interface but it seems such API is somehow obscure.
-> >>
-> >> Instead implement timerfd_ioctl() method with TFD_IOC_SET_TICKS
-> >> command which requires CAP_SYS_RESOURCE capability to be able to
-> >> set @ticks into arbitrary value. Note this command doesn't wake
-> >> up readers/waiters and its purpose only to serve C/R needs
-> >> (for same sake I wrapped code with CONFIG_CHECKPOINT_RESTORE).
-> >> Still if needed the ioctl may be extended for new commands
-> >> and CONFIG_CHECKPOINT_RESTORE dropped off.
-> 
-> Why does this need CAP_SYS_RESOURCE?
+This includes a new syscall (instead of adding a new prctl option),
+as suggested by Andy Lutomirski and Michael Kerrisk.
 
-  Because I think this interface should not be used by a regular
-applications, the only purpose is to restore the @ticks after
-checkpoint. Requiring CAP_SYS_RESOURCE means that at least
-program which use it knows what it's doing.
+Thanks!
 
-  Still if someone has a scenarion where we might need this
-intarface out of this cap requirement -- we always can
-drop it of without breaking existing users, but not the
-reverse.
+-Kees
 
-P.S. I remember Thomas' words about existence of the other
-word out of c/r, still I treat this ioctl as exception
-(as in prctl codes we use for c/r).
+v6:
+ - switch from seccomp-specific lock to thread-group lock to gain atomicity
+ - implement seccomp syscall across all architectures with seccomp filter
+ - clean up sparse warnings around locking
+v5:
+ - move includes around (drysdale)
+ - drop set_nnp return value (luto)
+ - use smp_load_acquire/store_release (luto)
+ - merge nnp changes to seccomp always, fewer ifdef (luto)
+v4:
+ - cleaned up locking further, as noticed by David Drysdale
+v3:
+ - added SECCOMP_EXT_ACT_FILTER for new filter install options
+v2:
+ - reworked to avoid clone races
