@@ -1,184 +1,220 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v6 4/9] seccomp: move no_new_privs into seccomp
-Date: Tue, 10 Jun 2014 20:25:16 -0700
-Message-ID: <1402457121-8410-5-git-send-email-keescook@chromium.org>
+Subject: [PATCH v6 2/9] seccomp: split filter prep from check and apply
+Date: Tue, 10 Jun 2014 20:25:14 -0700
+Message-ID: <1402457121-8410-3-git-send-email-keescook@chromium.org>
 References: <1402457121-8410-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-mips-bounce@linux-mips.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <1402457121-8410-1-git-send-email-keescook@chromium.org>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: linux-kernel@vger.kernel.org
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Alexei Starovoitov <ast@plumgrid.com>, John Johansen <john.johansen@canonical.com>, Andrew Morton <akpm@linux-foundation.org>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+Cc: linux-arch@vger.kernel.org, linux-mips@linux-mips.org, John Johansen <john.johansen@canonical.com>, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, x86@kernel.org, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, linux-security-module@vger.kernel.org, Julien Tinnes <jln@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, David Drysdale <drysdale@google.com>, linux-arm-kernel@lists.infradead.org, Alexei Starovoitov <ast@plumgrid.com>
 List-Id: linux-api@vger.kernel.org
 
-Since seccomp transitions between threads requires updates to the
-no_new_privs flag to be atomic, changes must be atomic. This moves the nnp
-flag into the seccomp field as a separate unsigned long for atomic access.
+In preparation for adding seccomp locking, move filter creation away
+from where it is checked and applied. This will allow for locking where
+no memory allocation is happening. The validation, filter attachment,
+and seccomp mode setting can all happen under the future locks.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
-Acked-by: Andy Lutomirski <luto@amacapital.net>
 ---
- fs/exec.c                  |    4 ++--
- include/linux/sched.h      |   13 ++++++++++---
- include/linux/seccomp.h    |    8 +++++++-
- kernel/seccomp.c           |    2 +-
- kernel/sys.c               |    4 ++--
- security/apparmor/domain.c |    4 ++--
- 6 files changed, 24 insertions(+), 11 deletions(-)
+ kernel/seccomp.c |   86 ++++++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 58 insertions(+), 28 deletions(-)
 
-diff --git a/fs/exec.c b/fs/exec.c
-index 238b7aa26f68..614fcb993739 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1233,7 +1233,7 @@ static void check_unsafe_exec(struct linux_binprm *bprm)
- 	 * This isn't strictly necessary, but it makes it harder for LSMs to
- 	 * mess up.
- 	 */
--	if (current->no_new_privs)
-+	if (task_no_new_privs(current))
- 		bprm->unsafe |= LSM_UNSAFE_NO_NEW_PRIVS;
- 
- 	t = p;
-@@ -1271,7 +1271,7 @@ int prepare_binprm(struct linux_binprm *bprm)
- 	bprm->cred->egid = current_egid();
- 
- 	if (!(bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID) &&
--	    !current->no_new_privs &&
-+	    !task_no_new_privs(current) &&
- 	    kuid_has_mapping(bprm->cred->user_ns, inode->i_uid) &&
- 	    kgid_has_mapping(bprm->cred->user_ns, inode->i_gid)) {
- 		/* Set-uid? */
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index ea74596014a2..50b41affb7b1 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1307,9 +1307,6 @@ struct task_struct {
- 				 * execve */
- 	unsigned in_iowait:1;
- 
--	/* task may not gain privileges */
--	unsigned no_new_privs:1;
--
- 	/* Revert to default priority/policy when forking */
- 	unsigned sched_reset_on_fork:1;
- 	unsigned sched_contributes_to_load:1;
-@@ -2525,6 +2522,16 @@ static inline void task_unlock(struct task_struct *p)
- 	spin_unlock(&p->alloc_lock);
- }
- 
-+static inline bool task_no_new_privs(struct task_struct *p)
-+{
-+	return test_bit(SECCOMP_FLAG_NO_NEW_PRIVS, &p->seccomp.flags);
-+}
-+
-+static inline void task_set_no_new_privs(struct task_struct *p)
-+{
-+	set_bit(SECCOMP_FLAG_NO_NEW_PRIVS, &p->seccomp.flags);
-+}
-+
- extern struct sighand_struct *__lock_task_sighand(struct task_struct *tsk,
- 							unsigned long *flags);
- 
-diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
-index 9ff98b4bfe2e..6a5e2d0ec912 100644
---- a/include/linux/seccomp.h
-+++ b/include/linux/seccomp.h
-@@ -3,6 +3,8 @@
- 
- #include <uapi/linux/seccomp.h>
- 
-+#define SECCOMP_FLAG_NO_NEW_PRIVS	0	/* task may not gain privs */
-+
- #ifdef CONFIG_SECCOMP
- 
- #include <linux/thread_info.h>
-@@ -16,6 +18,7 @@ struct seccomp_filter;
-  *         system calls available to a process.
-  * @filter: must always point to a valid seccomp-filter or NULL as it is
-  *          accessed without locking during system call entry.
-+ * @flags: flags under task->sighand->siglock lock
-  *
-  *          @filter must only be accessed from the context of current as there
-  *          is no read locking.
-@@ -23,6 +26,7 @@ struct seccomp_filter;
- struct seccomp {
- 	int mode;
- 	struct seccomp_filter *filter;
-+	unsigned long flags;
- };
- 
- extern int __secure_computing(int);
-@@ -51,7 +55,9 @@ static inline int seccomp_mode(struct seccomp *s)
- 
- #include <linux/errno.h>
- 
--struct seccomp { };
-+struct seccomp {
-+	unsigned long flags;
-+};
- struct seccomp_filter { };
- 
- static inline int secure_computing(int this_syscall) { return 0; }
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 33655302b658..7ec99b99e400 100644
+index 552b972b8f83..7a9257ddd69c 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -219,7 +219,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
- 	 * This avoids scenarios where unprivileged tasks can affect the
- 	 * behavior of privileged children.
- 	 */
--	if (!current->no_new_privs &&
-+	if (!task_no_new_privs(current) &&
+@@ -18,6 +18,7 @@
+ #include <linux/compat.h>
+ #include <linux/sched.h>
+ #include <linux/seccomp.h>
++#include <linux/slab.h>
+ 
+ /* #define SECCOMP_DEBUG 1 */
+ 
+@@ -26,7 +27,6 @@
+ #include <linux/filter.h>
+ #include <linux/ptrace.h>
+ #include <linux/security.h>
+-#include <linux/slab.h>
+ #include <linux/tracehook.h>
+ #include <linux/uaccess.h>
+ 
+@@ -197,27 +197,21 @@ static u32 seccomp_run_filters(int syscall)
+ }
+ 
+ /**
+- * seccomp_attach_filter: Attaches a seccomp filter to current.
++ * seccomp_prepare_filter: Prepares a seccomp filter for use.
+  * @fprog: BPF program to install
+  *
+- * Returns 0 on success or an errno on failure.
++ * Returns filter on success or an ERR_PTR on failure.
+  */
+-static long seccomp_attach_filter(struct sock_fprog *fprog)
++static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+ {
+ 	struct seccomp_filter *filter;
+ 	unsigned long fp_size = fprog->len * sizeof(struct sock_filter);
+-	unsigned long total_insns = fprog->len;
+ 	struct sock_filter *fp;
+ 	int new_len;
+ 	long ret;
+ 
+ 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
+-		return -EINVAL;
+-
+-	for (filter = current->seccomp.filter; filter; filter = filter->prev)
+-		total_insns += filter->len + 4;  /* include a 4 instr penalty */
+-	if (total_insns > MAX_INSNS_PER_PATH)
+-		return -ENOMEM;
++		return ERR_PTR(-EINVAL);
+ 
+ 	/*
+ 	 * Installing a seccomp filter requires that the task has
+@@ -228,11 +222,11 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
+ 	if (!current->no_new_privs &&
  	    security_capable_noaudit(current_cred(), current_user_ns(),
  				     CAP_SYS_ADMIN) != 0)
- 		return ERR_PTR(-EACCES);
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 66a751ebf9d9..ce8129192a26 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -1990,12 +1990,12 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
- 		if (arg2 != 1 || arg3 || arg4 || arg5)
- 			return -EINVAL;
+-		return -EACCES;
++		return ERR_PTR(-EACCES);
  
--		current->no_new_privs = 1;
-+		task_set_no_new_privs(current);
+ 	fp = kzalloc(fp_size, GFP_KERNEL|__GFP_NOWARN);
+ 	if (!fp)
+-		return -ENOMEM;
++		return ERR_PTR(-ENOMEM);
+ 
+ 	/* Copy the instructions from fprog. */
+ 	ret = -EFAULT;
+@@ -270,31 +264,26 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
+ 	atomic_set(&filter->usage, 1);
+ 	filter->len = new_len;
+ 
+-	/*
+-	 * If there is an existing filter, make it the prev and don't drop its
+-	 * task reference.
+-	 */
+-	filter->prev = current->seccomp.filter;
+-	current->seccomp.filter = filter;
+-	return 0;
++	return filter;
+ 
+ free_filter:
+ 	kfree(filter);
+ free_prog:
+ 	kfree(fp);
+-	return ret;
++	return ERR_PTR(ret);
+ }
+ 
+ /**
+- * seccomp_attach_user_filter - attaches a user-supplied sock_fprog
++ * seccomp_prepare_user_filter - prepares a user-supplied sock_fprog
+  * @user_filter: pointer to the user data containing a sock_fprog.
+  *
+- * Returns 0 on success and non-zero otherwise.
++ * Returns filter on success and ERR_PTR otherwise.
+  */
+-static long seccomp_attach_user_filter(char __user *user_filter)
++static
++struct seccomp_filter *seccomp_prepare_user_filter(char __user *user_filter)
+ {
+ 	struct sock_fprog fprog;
+-	long ret = -EFAULT;
++	struct seccomp_filter *filter = ERR_PTR(-EFAULT);
+ 
+ #ifdef CONFIG_COMPAT
+ 	if (is_compat_task()) {
+@@ -307,9 +296,37 @@ static long seccomp_attach_user_filter(char __user *user_filter)
+ #endif
+ 	if (copy_from_user(&fprog, user_filter, sizeof(fprog)))
+ 		goto out;
+-	ret = seccomp_attach_filter(&fprog);
++	filter = seccomp_prepare_filter(&fprog);
+ out:
+-	return ret;
++	return filter;
++}
++
++/**
++ * seccomp_attach_filter: validate and attach filter
++ * @filter: seccomp filter to add to the current process
++ *
++ * Returns 0 on success, -ve on error.
++ */
++static long seccomp_attach_filter(struct seccomp_filter *filter)
++{
++	unsigned long total_insns;
++	struct seccomp_filter *walker;
++
++	/* Validate resulting filter length. */
++	total_insns = filter->len;
++	for (walker = current->seccomp.filter; walker; walker = filter->prev)
++		total_insns += walker->len + 4;  /* include a 4 instr penalty */
++	if (total_insns > MAX_INSNS_PER_PATH)
++		return -ENOMEM;
++
++	/*
++	 * If there is an existing filter, make it the prev and don't drop its
++	 * task reference.
++	 */
++	filter->prev = current->seccomp.filter;
++	current->seccomp.filter = filter;
++
++	return 0;
+ }
+ 
+ /* get_seccomp_filter - increments the reference count of the filter on @tsk */
+@@ -480,8 +497,18 @@ long prctl_get_seccomp(void)
+  */
+ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ {
++	struct seccomp_filter *prepared = NULL;
+ 	long ret = -EINVAL;
+ 
++#ifdef CONFIG_SECCOMP_FILTER
++	/* Prepare the new filter outside of the seccomp lock. */
++	if (seccomp_mode == SECCOMP_MODE_FILTER) {
++		prepared = seccomp_prepare_user_filter(filter);
++		if (IS_ERR(prepared))
++			return PTR_ERR(prepared);
++	}
++#endif
++
+ 	if (current->seccomp.mode &&
+ 	    current->seccomp.mode != seccomp_mode)
+ 		goto out;
+@@ -495,9 +522,11 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
  		break;
- 	case PR_GET_NO_NEW_PRIVS:
- 		if (arg2 || arg3 || arg4 || arg5)
- 			return -EINVAL;
--		return current->no_new_privs ? 1 : 0;
-+		return task_no_new_privs(current) ? 1 : 0;
- 	case PR_GET_THP_DISABLE:
- 		if (arg2 || arg3 || arg4 || arg5)
- 			return -EINVAL;
-diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
-index 452567d3a08e..d97cba3e3849 100644
---- a/security/apparmor/domain.c
-+++ b/security/apparmor/domain.c
-@@ -621,7 +621,7 @@ int aa_change_hat(const char *hats[], int count, u64 token, bool permtest)
- 	 * There is no exception for unconfined as change_hat is not
- 	 * available.
- 	 */
--	if (current->no_new_privs)
-+	if (task_no_new_privs(current))
- 		return -EPERM;
+ #ifdef CONFIG_SECCOMP_FILTER
+ 	case SECCOMP_MODE_FILTER:
+-		ret = seccomp_attach_user_filter(filter);
++		ret = seccomp_attach_filter(prepared);
+ 		if (ret)
+ 			goto out;
++		/* Do not free the successfully attached filter. */
++		prepared = NULL;
+ 		break;
+ #endif
+ 	default:
+@@ -507,6 +536,7 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ 	current->seccomp.mode = seccomp_mode;
+ 	set_thread_flag(TIF_SECCOMP);
+ out:
++	kfree(prepared);
+ 	return ret;
+ }
  
- 	/* released below */
-@@ -776,7 +776,7 @@ int aa_change_profile(const char *ns_name, const char *hname, bool onexec,
- 	 * no_new_privs is set because this aways results in a reduction
- 	 * of permissions.
- 	 */
--	if (current->no_new_privs && !unconfined(profile)) {
-+	if (task_no_new_privs(current) && !unconfined(profile)) {
- 		put_cred(cred);
- 		return -EPERM;
- 	}
 -- 
 1.7.9.5
