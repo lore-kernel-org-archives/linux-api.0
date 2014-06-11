@@ -1,51 +1,61 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v6 0/9] seccomp: add thread sync ability
-Date: Tue, 10 Jun 2014 20:25:12 -0700
-Message-ID: <1402457121-8410-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-mips-bounce@linux-mips.org>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+Subject: [PATCH v6 1/9] seccomp: create internal mode-setting function
+Date: Tue, 10 Jun 2014 20:25:13 -0700
+Message-ID: <1402457121-8410-2-git-send-email-keescook@chromium.org>
+References: <1402457121-8410-1-git-send-email-keescook@chromium.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1402457121-8410-1-git-send-email-keescook@chromium.org>
+Sender: linux-arch-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Alexei Starovoitov <ast@plumgrid.com>, John Johansen <john.johansen@canonical.com>, Andrew Morton <akpm@linux-foundation.org>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-[re-send with smaller CC list]
+In preparation for having other callers of the seccomp mode setting
+logic, split the prctl entry point away from the core logic that performs
+seccomp mode setting.
 
-This adds the ability for threads to request seccomp filter
-synchronization across their thread group (at filter attach time).
-For example, for Chrome to make sure graphic driver threads are fully
-confined after seccomp filters have been attached.
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ kernel/seccomp.c |   16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
-To support this, locking on seccomp changes is introduced, along with
-refactoring of no_new_privs. Races with thread creation/death are handled
-via tasklist_lock.
-
-This includes a new syscall (instead of adding a new prctl option),
-as suggested by Andy Lutomirski and Michael Kerrisk.
-
-Thanks!
-
--Kees
-
-v6:
- - switch from seccomp-specific lock to thread-group lock to gain atomicity
- - implement seccomp syscall across all architectures with seccomp filter
- - clean up sparse warnings around locking
-v5:
- - move includes around (drysdale)
- - drop set_nnp return value (luto)
- - use smp_load_acquire/store_release (luto)
- - merge nnp changes to seccomp always, fewer ifdef (luto)
-v4:
- - cleaned up locking further, as noticed by David Drysdale
-v3:
- - added SECCOMP_EXT_ACT_FILTER for new filter install options
-v2:
- - reworked to avoid clone races
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index f6d76bebe69f..552b972b8f83 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -465,7 +465,7 @@ long prctl_get_seccomp(void)
+ }
+ 
+ /**
+- * prctl_set_seccomp: configures current->seccomp.mode
++ * seccomp_set_mode: internal function for setting seccomp mode
+  * @seccomp_mode: requested mode to use
+  * @filter: optional struct sock_fprog for use with SECCOMP_MODE_FILTER
+  *
+@@ -478,7 +478,7 @@ long prctl_get_seccomp(void)
+  *
+  * Returns 0 on success or -EINVAL on failure.
+  */
+-long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
++static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ {
+ 	long ret = -EINVAL;
+ 
+@@ -509,3 +509,15 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+ out:
+ 	return ret;
+ }
++
++/**
++ * prctl_set_seccomp: configures current->seccomp.mode
++ * @seccomp_mode: requested mode to use
++ * @filter: optional struct sock_fprog for use with SECCOMP_MODE_FILTER
++ *
++ * Returns 0 on success or -EINVAL on failure.
++ */
++long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
++{
++	return seccomp_set_mode(seccomp_mode, filter);
++}
+-- 
+1.7.9.5
