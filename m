@@ -1,251 +1,253 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v6 6/9] seccomp: add "seccomp" syscall
-Date: Tue, 10 Jun 2014 20:25:18 -0700
-Message-ID: <1402457121-8410-7-git-send-email-keescook@chromium.org>
+Subject: [PATCH v6 3/9] seccomp: introduce writer locking
+Date: Tue, 10 Jun 2014 20:25:15 -0700
+Message-ID: <1402457121-8410-4-git-send-email-keescook@chromium.org>
 References: <1402457121-8410-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-security-module-owner@vger.kernel.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 In-Reply-To: <1402457121-8410-1-git-send-email-keescook@chromium.org>
-Sender: linux-security-module-owner@vger.kernel.org
+Sender: linux-arch-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Alexei Starovoitov <ast@plumgrid.com>, John Johansen <john.johansen@canonical.com>, Andrew Morton <akpm@linux-foundation.org>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Alexei Starovoitov <ast@plumgrid.com>, John Johansen <john.johansen@canonical.com>, Andrew Morton <akpm@linux-foundation.org>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds the new "seccomp" syscall with both an "operation" and "flags"
-parameter for future expansion. The third argument is a pointer value,
-used with the SECCOMP_SET_MODE_FILTER operation. Currently, flags must
-be 0. This is functionally equivalent to prctl(PR_SET_SECCOMP, ...).
+Normally, task_struct.seccomp.filter is only ever read or modified by
+the task that owns it (current). This property aids in fast access
+during system call filtering as read access is lockless.
+
+Updating the pointer from another task, however, opens up race
+conditions. To allow cross-thread filter pointer updates, writes to
+the seccomp fields are now protected by the sighand spinlock (which
+is unique to the thread group). Read access remains lockless because
+pointer updates themselves are atomic.  However, writes (or cloning)
+often entail additional checking (like maximum instruction counts)
+which require locking to perform safely.
+
+In the case of cloning threads, the child is invisible to the system
+until it enters the task list. To make sure a child can't be cloned from
+a thread and left in a prior state, seccomp duplication is additionally
+moved under the tasklist_lock. Then parent and child are certain have
+the same seccomp state when they exit the lock.
+
+Based on patches by Will Drewry and David Drysdale.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
-Cc: linux-api@vger.kernel.org
 ---
- arch/x86/syscalls/syscall_32.tbl  |    1 +
- arch/x86/syscalls/syscall_64.tbl  |    1 +
- include/linux/syscalls.h          |    2 ++
- include/uapi/asm-generic/unistd.h |    4 ++-
- include/uapi/linux/seccomp.h      |    4 +++
- kernel/seccomp.c                  |   63 ++++++++++++++++++++++++++++++++-----
- kernel/sys_ni.c                   |    3 ++
- 7 files changed, 69 insertions(+), 9 deletions(-)
+ include/linux/seccomp.h |    6 +++---
+ kernel/fork.c           |   40 ++++++++++++++++++++++++++++++++++++----
+ kernel/seccomp.c        |   22 ++++++++++++++++------
+ 3 files changed, 55 insertions(+), 13 deletions(-)
 
-diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-index d6b867921612..7527eac24122 100644
---- a/arch/x86/syscalls/syscall_32.tbl
-+++ b/arch/x86/syscalls/syscall_32.tbl
-@@ -360,3 +360,4 @@
- 351	i386	sched_setattr		sys_sched_setattr
- 352	i386	sched_getattr		sys_sched_getattr
- 353	i386	renameat2		sys_renameat2
-+354	i386	seccomp			sys_seccomp
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index ec255a1646d2..16272a6c12b7 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -323,6 +323,7 @@
- 314	common	sched_setattr		sys_sched_setattr
- 315	common	sched_getattr		sys_sched_getattr
- 316	common	renameat2		sys_renameat2
-+317	common	seccomp			sys_seccomp
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index 4054b0994071..9ff98b4bfe2e 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -14,11 +14,11 @@ struct seccomp_filter;
+  *
+  * @mode:  indicates one of the valid values above for controlled
+  *         system calls available to a process.
+- * @filter: The metadata and ruleset for determining what system calls
+- *          are allowed for a task.
++ * @filter: must always point to a valid seccomp-filter or NULL as it is
++ *          accessed without locking during system call entry.
+  *
+  *          @filter must only be accessed from the context of current as there
+- *          is no locking.
++ *          is no read locking.
+  */
+ struct seccomp {
+ 	int mode;
+diff --git a/kernel/fork.c b/kernel/fork.c
+index d2799d1fc952..6b2a9add1079 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -315,6 +315,15 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
+ 		goto free_ti;
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index b0881a0ed322..1713977ee26f 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -866,4 +866,6 @@ asmlinkage long sys_process_vm_writev(pid_t pid,
- asmlinkage long sys_kcmp(pid_t pid1, pid_t pid2, int type,
- 			 unsigned long idx1, unsigned long idx2);
- asmlinkage long sys_finit_module(int fd, const char __user *uargs, int flags);
-+asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
-+			    const char __user *uargs);
- #endif
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 333640608087..65acbf0e2867 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -699,9 +699,11 @@ __SYSCALL(__NR_sched_setattr, sys_sched_setattr)
- __SYSCALL(__NR_sched_getattr, sys_sched_getattr)
- #define __NR_renameat2 276
- __SYSCALL(__NR_renameat2, sys_renameat2)
-+#define __NR_seccomp 277
-+__SYSCALL(__NR_seccomp, sys_seccomp)
+ 	tsk->stack = ti;
++#ifdef CONFIG_SECCOMP
++	/*
++	 * We must handle setting up seccomp filters once we're under
++	 * the tasklist_lock in case orig has changed between now and
++	 * then. Until then, filter must be NULL to avoid messing up
++	 * the usage counts on the error path calling free_task.
++	 */
++	tsk->seccomp.filter = NULL;
++#endif
  
- #undef __NR_syscalls
--#define __NR_syscalls 277
-+#define __NR_syscalls 278
+ 	setup_thread_stack(tsk, orig);
+ 	clear_user_return_notifier(tsk);
+@@ -1081,6 +1090,23 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
+ 	return 0;
+ }
  
- /*
-  * All syscalls below here should go away really,
-diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
-index ac2dc9f72973..b258878ba754 100644
---- a/include/uapi/linux/seccomp.h
-+++ b/include/uapi/linux/seccomp.h
-@@ -10,6 +10,10 @@
- #define SECCOMP_MODE_STRICT	1 /* uses hard-coded filter. */
- #define SECCOMP_MODE_FILTER	2 /* uses user-supplied filter. */
- 
-+/* Valid operations for seccomp syscall. */
-+#define SECCOMP_SET_MODE_STRICT	0
-+#define SECCOMP_SET_MODE_FILTER	1
++static void copy_seccomp(struct task_struct *p)
++{
++#ifdef CONFIG_SECCOMP
++	/*
++	 * Must be called with sighand->lock held. Child lock not needed
++	 * since it is not yet in tasklist.
++	 */
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
 +
- /*
-  * All BPF programs must return a 32-bit value.
-  * The bottom 16-bits are for optional return data.
++	get_seccomp_filter(current);
++	p->seccomp = current->seccomp;
++
++	if (p->seccomp.mode != SECCOMP_MODE_DISABLED)
++		set_tsk_thread_flag(p, TIF_SECCOMP);
++#endif
++}
++
+ SYSCALL_DEFINE1(set_tid_address, int __user *, tidptr)
+ {
+ 	current->clear_child_tid = tidptr;
+@@ -1142,6 +1168,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ {
+ 	int retval;
+ 	struct task_struct *p;
++	unsigned long irqflags;
+ 
+ 	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
+ 		return ERR_PTR(-EINVAL);
+@@ -1196,7 +1223,6 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 		goto fork_out;
+ 
+ 	ftrace_graph_init_task(p);
+-	get_seccomp_filter(p);
+ 
+ 	rt_mutex_init_task(p);
+ 
+@@ -1434,7 +1460,13 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 		p->parent_exec_id = current->self_exec_id;
+ 	}
+ 
+-	spin_lock(&current->sighand->siglock);
++	spin_lock_irqsave(&current->sighand->siglock, irqflags);
++
++	/*
++	 * Copy seccomp details explicitly here, in case they were changed
++	 * before holding tasklist_lock.
++	 */
++	copy_seccomp(p);
+ 
+ 	/*
+ 	 * Process group and session signals need to be delivered to just the
+@@ -1446,7 +1478,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	*/
+ 	recalc_sigpending();
+ 	if (signal_pending(current)) {
+-		spin_unlock(&current->sighand->siglock);
++		spin_unlock_irqrestore(&current->sighand->siglock, irqflags);
+ 		write_unlock_irq(&tasklist_lock);
+ 		retval = -ERESTARTNOINTR;
+ 		goto bad_fork_free_pid;
+@@ -1486,7 +1518,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	}
+ 
+ 	total_forks++;
+-	spin_unlock(&current->sighand->siglock);
++	spin_unlock_irqrestore(&current->sighand->siglock, irqflags);
+ 	write_unlock_irq(&tasklist_lock);
+ 	proc_fork_connector(p);
+ 	cgroup_post_fork(p);
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 39d32c2904fc..c0cafa9e84af 100644
+index 7a9257ddd69c..33655302b658 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -19,6 +19,7 @@
- #include <linux/sched.h>
- #include <linux/seccomp.h>
- #include <linux/slab.h>
-+#include <linux/syscalls.h>
- 
- /* #define SECCOMP_DEBUG 1 */
- 
-@@ -301,8 +302,8 @@ free_prog:
-  *
-  * Returns filter on success and ERR_PTR otherwise.
+@@ -174,12 +174,12 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
   */
--static
--struct seccomp_filter *seccomp_prepare_user_filter(char __user *user_filter)
-+static struct seccomp_filter *
-+seccomp_prepare_user_filter(const char __user *user_filter)
+ static u32 seccomp_run_filters(int syscall)
  {
- 	struct sock_fprog fprog;
- 	struct seccomp_filter *filter = ERR_PTR(-EFAULT);
-@@ -325,19 +326,25 @@ out:
+-	struct seccomp_filter *f;
++	struct seccomp_filter *f = smp_load_acquire(&current->seccomp.filter);
+ 	struct seccomp_data sd;
+ 	u32 ret = SECCOMP_RET_ALLOW;
  
- /**
+ 	/* Ensure unexpected behavior doesn't result in failing open. */
+-	if (WARN_ON(current->seccomp.filter == NULL))
++	if (WARN_ON(f == NULL))
+ 		return SECCOMP_RET_KILL;
+ 
+ 	populate_seccomp_data(&sd);
+@@ -188,7 +188,7 @@ static u32 seccomp_run_filters(int syscall)
+ 	 * All filters in the list are evaluated and the lowest BPF return
+ 	 * value always takes priority (ignoring the DATA).
+ 	 */
+-	for (f = current->seccomp.filter; f; f = f->prev) {
++	for (; f; f = smp_load_acquire(&f->prev)) {
+ 		u32 cur_ret = sk_run_filter_int_seccomp(&sd, f->insnsi);
+ 		if ((cur_ret & SECCOMP_RET_ACTION) < (ret & SECCOMP_RET_ACTION))
+ 			ret = cur_ret;
+@@ -305,6 +305,8 @@ out:
   * seccomp_attach_filter: validate and attach filter
-+ * @flags:  flags to change filter behavior
   * @filter: seccomp filter to add to the current process
   *
-  * Caller must be holding current->sighand->siglock lock.
-  *
++ * Caller must be holding current->sighand->siglock lock.
++ *
   * Returns 0 on success, -ve on error.
   */
--static long seccomp_attach_filter(struct seccomp_filter *filter)
-+static long seccomp_attach_filter(unsigned int flags,
-+				  struct seccomp_filter *filter)
- {
+ static long seccomp_attach_filter(struct seccomp_filter *filter)
+@@ -312,6 +314,8 @@ static long seccomp_attach_filter(struct seccomp_filter *filter)
  	unsigned long total_insns;
  	struct seccomp_filter *walker;
  
- 	BUG_ON(!spin_is_locked(&current->sighand->siglock));
- 
-+	/* Validate flags. */
-+	if (flags != 0)
-+		return -EINVAL;
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
 +
  	/* Validate resulting filter length. */
  	total_insns = filter->len;
  	for (walker = current->seccomp.filter; walker; walker = filter->prev)
-@@ -541,6 +548,7 @@ out:
- #ifdef CONFIG_SECCOMP_FILTER
- /**
-  * seccomp_set_mode_filter: internal function for setting seccomp filter
-+ * @flags:  flags to change filter behavior
-  * @filter: struct sock_fprog containing filter
-  *
-  * This function may be called repeatedly to install additional filters.
-@@ -551,7 +559,8 @@ out:
-  *
-  * Returns 0 on success or -EINVAL on failure.
-  */
--static long seccomp_set_mode_filter(char __user *filter)
-+static long seccomp_set_mode_filter(unsigned int flags,
-+				    const char __user *filter)
- {
- 	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
- 	struct seccomp_filter *prepared = NULL;
-@@ -569,7 +578,7 @@ static long seccomp_set_mode_filter(char __user *filter)
- 	if (!seccomp_check_mode(current, seccomp_mode))
- 		goto out;
+@@ -324,7 +328,7 @@ static long seccomp_attach_filter(struct seccomp_filter *filter)
+ 	 * task reference.
+ 	 */
+ 	filter->prev = current->seccomp.filter;
+-	current->seccomp.filter = filter;
++	smp_store_release(&current->seccomp.filter, filter);
  
--	ret = seccomp_attach_filter(prepared);
-+	ret = seccomp_attach_filter(flags, prepared);
- 	if (ret)
- 		goto out;
- 	/* Do not free the successfully attached filter. */
-@@ -583,12 +592,35 @@ out_free:
- 	return ret;
+ 	return 0;
  }
- #else
--static inline long seccomp_set_mode_filter(char __user *filter)
-+static inline long seccomp_set_mode_filter(unsigned int flags,
-+					   const char __user *filter)
+@@ -332,7 +336,7 @@ static long seccomp_attach_filter(struct seccomp_filter *filter)
+ /* get_seccomp_filter - increments the reference count of the filter on @tsk */
+ void get_seccomp_filter(struct task_struct *tsk)
  {
- 	return -EINVAL;
+-	struct seccomp_filter *orig = tsk->seccomp.filter;
++	struct seccomp_filter *orig = smp_load_acquire(&tsk->seccomp.filter);
+ 	if (!orig)
+ 		return;
+ 	/* Reference count is bounded by the number of total processes. */
+@@ -346,7 +350,7 @@ void put_seccomp_filter(struct task_struct *tsk)
+ 	/* Clean up single-reference branches iteratively. */
+ 	while (orig && atomic_dec_and_test(&orig->usage)) {
+ 		struct seccomp_filter *freeme = orig;
+-		orig = orig->prev;
++		orig = smp_load_acquire(&orig->prev);
+ 		kfree(freeme);
+ 	}
  }
+@@ -498,6 +502,7 @@ long prctl_get_seccomp(void)
+ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ {
+ 	struct seccomp_filter *prepared = NULL;
++	unsigned long irqflags;
+ 	long ret = -EINVAL;
+ 
+ #ifdef CONFIG_SECCOMP_FILTER
+@@ -509,6 +514,9 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ 	}
  #endif
  
-+/* Common entry point for both prctl and syscall. */
-+static long do_seccomp(unsigned int op, unsigned int flags,
-+		       const char __user *uargs)
-+{
-+	switch (op) {
-+	case SECCOMP_SET_MODE_STRICT:
-+		if (flags != 0 || uargs != NULL)
-+			return -EINVAL;
-+		return seccomp_set_mode_strict();
-+	case SECCOMP_SET_MODE_FILTER:
-+		return seccomp_set_mode_filter(flags, uargs);
-+	default:
-+		return -EINVAL;
-+	}
-+}
++	if (unlikely(!lock_task_sighand(current, &irqflags)))
++		goto out_free;
 +
-+SYSCALL_DEFINE3(seccomp, unsigned int, op, unsigned int, flags,
-+			 const char __user *, uargs)
-+{
-+	return do_seccomp(op, flags, uargs);
-+}
-+
- /**
-  * prctl_set_seccomp: configures current->seccomp.mode
-  * @seccomp_mode: requested mode to use
-@@ -598,12 +630,27 @@ static inline long seccomp_set_mode_filter(char __user *filter)
-  */
- long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
- {
-+	unsigned int op;
-+	char __user *uargs;
-+
- 	switch (seccomp_mode) {
- 	case SECCOMP_MODE_STRICT:
--		return seccomp_set_mode_strict();
-+		op = SECCOMP_SET_MODE_STRICT;
-+		/*
-+		 * Setting strict mode through prctl always ignored filter,
-+		 * so make sure it is always NULL here to pass the internal
-+		 * check in do_seccomp().
-+		 */
-+		uargs = NULL;
-+		break;
- 	case SECCOMP_MODE_FILTER:
--		return seccomp_set_mode_filter(filter);
-+		op = SECCOMP_SET_MODE_FILTER;
-+		uargs = filter;
-+		break;
- 	default:
- 		return -EINVAL;
- 	}
-+
-+	/* prctl interface doesn't have flags, so they are always zero. */
-+	return do_seccomp(op, 0, uargs);
+ 	if (current->seccomp.mode &&
+ 	    current->seccomp.mode != seccomp_mode)
+ 		goto out;
+@@ -536,6 +544,8 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ 	current->seccomp.mode = seccomp_mode;
+ 	set_thread_flag(TIF_SECCOMP);
+ out:
++	unlock_task_sighand(current, &irqflags);
++out_free:
+ 	kfree(prepared);
+ 	return ret;
  }
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 36441b51b5df..2904a2105914 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -213,3 +213,6 @@ cond_syscall(compat_sys_open_by_handle_at);
- 
- /* compare kernel pointers */
- cond_syscall(sys_kcmp);
-+
-+/* operate on Secure Computing state */
-+cond_syscall(sys_seccomp);
 -- 
 1.7.9.5
-
