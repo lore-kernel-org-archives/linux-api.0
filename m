@@ -1,102 +1,89 @@
-From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
-Subject: Re: [PATCH 3/4] drm/tegra: Add SET/GET_FLAGS IOCTLs
-Date: Thu, 12 Jun 2014 11:28:43 +0200
-Message-ID: <20140612092843.GW5821@phenom.ffwll.local>
-References: <1402398294-10252-1-git-send-email-thierry.reding@gmail.com>
- <1402398294-10252-3-git-send-email-thierry.reding@gmail.com>
- <CADMs+9Y+i7H9GGpMKJNs2kkxzyruOjiXEv2O1_SipudPGZW-8g@mail.gmail.com>
- <20140612071840.GB17027@ulmo>
+From: "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH 1/2] mm: mark remap_file_pages() syscall as deprecated
+Date: Thu, 12 Jun 2014 12:40:14 +0300 (EEST)
+Message-ID: <20140612094014.BFEA4E00A2@blue.fi.intel.com>
+References: <1399552888-11024-1-git-send-email-kirill.shutemov@linux.intel.com>
+ <1399552888-11024-2-git-send-email-kirill.shutemov@linux.intel.com>
+ <CAHO5Pa31WVrtG+2hU1grbLHiEPjkM_eB4JgSStskX8AvDjQRKA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140612071840.GB17027@ulmo>
+In-Reply-To: <CAHO5Pa31WVrtG+2hU1grbLHiEPjkM_eB4JgSStskX8AvDjQRKA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: =?iso-8859-1?Q?St=E9phane?= Marchesin <marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-tegra-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
+Cc: "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 12, 2014 at 09:18:40AM +0200, Thierry Reding wrote:
-> On Wed, Jun 11, 2014 at 09:21:21AM -0700, St=E9phane Marchesin wrote:
-> > On Tue, Jun 10, 2014 at 4:04 AM, Thierry Reding
-> > <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > From: Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
-> > >
-> > > The DRM_TEGRA_GEM_SET_FLAGS IOCTL can be used to set the flags of=
- a
-> > > buffer object after it has been allocated or imported. Flags asso=
-ciated
-> > > with a buffer object can be queried using the DRM_TEGRA_GEM_GET_F=
-LAGS
-> > > IOCTL.
-> > >
-> > > Signed-off-by: Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
-> > > ---
-> > >  drivers/gpu/drm/tegra/drm.c  | 48 ++++++++++++++++++++++++++++++=
-++++++++++++++
-> > >  include/uapi/drm/tegra_drm.h | 21 +++++++++++++++++++
-> > >  2 files changed, 69 insertions(+)
-> > >
-> > > diff --git a/drivers/gpu/drm/tegra/drm.c b/drivers/gpu/drm/tegra/=
-drm.c
-> > > index 5dca20982f3b..f292c29ef62f 100644
-> > > --- a/drivers/gpu/drm/tegra/drm.c
-> > > +++ b/drivers/gpu/drm/tegra/drm.c
-> > > @@ -548,6 +548,52 @@ static int tegra_gem_get_tiling(struct drm_d=
-evice *drm, void *data,
-> > >
-> > >         return err;
-> > >  }
-> > > +
-> > > +static int tegra_gem_set_flags(struct drm_device *drm, void *dat=
-a,
-> > > +                              struct drm_file *file)
-> > > +{
-> > > +       struct drm_tegra_gem_set_flags *args =3D data;
-> > > +       struct drm_tegra_bo *bo;
-> > > +       unsigned long flags =3D 0;
-> > > +
-> > > +       if (args->flags & ~DRM_TEGRA_GEM_FLAGS)
-> > > +               return -EINVAL;
-> > > +
-> > > +       gem =3D drm_gem_object_lookup(drm, file, args->handle);
-> > > +       if (!gem)
-> > > +               return -EINVAL;
-> >=20
-> > Usually -ENOENT is returned for unknown objects I think?
+Michael Kerrisk wrote:
+> Hi Kirill,
 >=20
-> We've had that discussion on IRC a little while back. I came across a
-> few places where this was returned to userspace, and since I remember
-> a particular email[0] about this error code so well I thought it shou=
-ld
-> be discussed, but I can't remember the outcome (if any). Quoting from
-> that email:
+> On Thu, May 8, 2014 at 2:41 PM, Kirill A. Shutemov
+> <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> > The remap_file_pages() system call is used to create a nonlinear ma=
+pping,
+> > that is, a mapping in which the pages of the file are mapped into a
+> > nonsequential order in memory. The advantage of using remap_file_pa=
+ges()
+> > over using repeated calls to mmap(2) is that the former approach do=
+es not
+> > require the kernel to create additional VMA (Virtual Memory Area) d=
+ata
+> > structures.
+> >
+> > Supporting of nonlinear mapping requires significant amount of non-=
+trivial
+> > code in kernel virtual memory subsystem including hot paths. Also t=
+o get
+> > nonlinear mapping work kernel need a way to distinguish normal page=
+ table
+> > entries from entries with file offset (pte_file). Kernel reserves f=
+lag in
+> > PTE for this purpose. PTE flags are scarce resource especially on s=
+ome CPU
+> > architectures. It would be nice to free up the flag for other usage=
+=2E
+> >
+> > Fortunately, there are not many users of remap_file_pages() in the =
+wild.
+> > It's only known that one enterprise RDBMS implementation uses the s=
+yscall
+> > on 32-bit systems to map files bigger than can linearly fit into 32=
+-bit
+> > virtual address space. This use-case is not critical anymore since =
+64-bit
+> > systems are widely available.
+> >
+> > The plan is to deprecate the syscall and replace it with an emulati=
+on.
+> > The emulation will create new VMAs instead of nonlinear mappings. I=
+t's
+> > going to work slower for rare users of remap_file_pages() but ABI i=
+s
+> > preserved.
+> >
+> > One side effect of emulation (apart from performance) is that user =
+can hit
+> > vm.max_map_count limit more easily due to additional VMAs. See comm=
+ent for
+> > DEFAULT_MAX_MAP_COUNT for more details on the limit.
 >=20
-> 	ENOENT is not a valid error return from an ioctl. Never has been,
-> 	never will be. ENOENT means "No such file and directory", and is
-> 	for path operations. ioctl's are done on files that have already
-> 	been opened, there's no way in hell that ENOENT would ever be
-> 	valid.
+> Best to CC linux-api@
+> (https://www.kernel.org/doc/man-pages/linux-api-ml.html) on patches
+> like this, as well as the man-pages maintainer, so that something goe=
+s
+> into the man page. I added the following into the man page:
 >=20
-> Given that -ENOENT is used *a lot* in DRM (many, if not most, of the
-> instances returning the error from an IOCTL), I wonder how this can b=
-e
-> resolved. Given that userspace may rely on this error code and that w=
-e
-> can't break userspace I don't see a way out.
+>        Note:  this  system  call  is (since Linux 3.16) deprecated an=
+d
+>        will eventually be replaced by a  slower  in-kernel  emulation=
+=2E
+>        Those  few  applications  that use this system call should con=
+=E2=80=90
+>        sider migrating to alternatives.
+>=20
+> Okay?
 
-Imo returning -ENOENT for lookup failures is perfectly ok, after all th=
-e
-error code spelled out means "No entity" or so. So might as well extend
-the meaning. Without slight bending of error codes the only thing we'd
-ever be able to return is -EINVAL for ioctls, which is completely
-pointless.
+Yep. Looks okay to me.
 
-So my approach is to throw the vfs experts opinion into the wind and
-continue with the well-established rules we have in drm.
--Daniel
 --=20
-Daniel Vetter
-Software Engineer, Intel Corporation
-+41 (0) 79 365 57 48 - http://blog.ffwll.ch
+ Kirill A. Shutemov
