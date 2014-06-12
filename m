@@ -1,101 +1,159 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 1/2] mm: mark remap_file_pages() syscall as deprecated
-Date: Thu, 12 Jun 2014 11:44:01 +0200
-Message-ID: <CAKgNAkhnWwDxr8n7p0m60koRK+a_fhp8yuOssK5_-QEWMJ3qYg@mail.gmail.com>
-References: <1399552888-11024-1-git-send-email-kirill.shutemov@linux.intel.com>
- <1399552888-11024-2-git-send-email-kirill.shutemov@linux.intel.com>
- <CAHO5Pa31WVrtG+2hU1grbLHiEPjkM_eB4JgSStskX8AvDjQRKA@mail.gmail.com> <20140612094014.BFEA4E00A2@blue.fi.intel.com>
-Reply-To: mtk.manpages@gmail.com
+From: Thierry Reding <thierry.reding@gmail.com>
+Subject: Re: [PATCH 3/4] drm/tegra: Add SET/GET_FLAGS IOCTLs
+Date: Thu, 12 Jun 2014 13:02:57 +0200
+Message-ID: <20140612110256.GA27153@ulmo>
+References: <1402398294-10252-1-git-send-email-thierry.reding@gmail.com>
+ <1402398294-10252-3-git-send-email-thierry.reding@gmail.com>
+ <CADMs+9Y+i7H9GGpMKJNs2kkxzyruOjiXEv2O1_SipudPGZW-8g@mail.gmail.com>
+ <20140612071840.GB17027@ulmo>
+ <20140612092843.GW5821@phenom.ffwll.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20140612094014.BFEA4E00A2@blue.fi.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="===============1591903606=="
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20140612092843.GW5821@phenom.ffwll.local>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Daniel Vetter <daniel@ffwll.ch>
+Cc: linux-tegra@vger.kernel.org, =?utf-8?B?U3TDqXBoYW5l?= Marchesin <marcheu@chromium.org>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Kirill,
 
-On Thu, Jun 12, 2014 at 11:40 AM, Kirill A. Shutemov
-<kirill.shutemov@linux.intel.com> wrote:
-> Michael Kerrisk wrote:
->> Hi Kirill,
->>
->> On Thu, May 8, 2014 at 2:41 PM, Kirill A. Shutemov
->> <kirill.shutemov@linux.intel.com> wrote:
->> > The remap_file_pages() system call is used to create a nonlinear mappi=
-ng,
->> > that is, a mapping in which the pages of the file are mapped into a
->> > nonsequential order in memory. The advantage of using remap_file_pages=
-()
->> > over using repeated calls to mmap(2) is that the former approach does =
-not
->> > require the kernel to create additional VMA (Virtual Memory Area) data
->> > structures.
->> >
->> > Supporting of nonlinear mapping requires significant amount of non-tri=
-vial
->> > code in kernel virtual memory subsystem including hot paths. Also to g=
-et
->> > nonlinear mapping work kernel need a way to distinguish normal page ta=
-ble
->> > entries from entries with file offset (pte_file). Kernel reserves flag=
- in
->> > PTE for this purpose. PTE flags are scarce resource especially on some=
- CPU
->> > architectures. It would be nice to free up the flag for other usage.
->> >
->> > Fortunately, there are not many users of remap_file_pages() in the wil=
-d.
->> > It's only known that one enterprise RDBMS implementation uses the sysc=
-all
->> > on 32-bit systems to map files bigger than can linearly fit into 32-bi=
-t
->> > virtual address space. This use-case is not critical anymore since 64-=
-bit
->> > systems are widely available.
->> >
->> > The plan is to deprecate the syscall and replace it with an emulation.
->> > The emulation will create new VMAs instead of nonlinear mappings. It's
->> > going to work slower for rare users of remap_file_pages() but ABI is
->> > preserved.
->> >
->> > One side effect of emulation (apart from performance) is that user can=
- hit
->> > vm.max_map_count limit more easily due to additional VMAs. See comment=
- for
->> > DEFAULT_MAX_MAP_COUNT for more details on the limit.
->>
->> Best to CC linux-api@
->> (https://www.kernel.org/doc/man-pages/linux-api-ml.html) on patches
->> like this, as well as the man-pages maintainer, so that something goes
->> into the man page. I added the following into the man page:
->>
->>        Note:  this  system  call  is (since Linux 3.16) deprecated and
->>        will eventually be replaced by a  slower  in-kernel  emulation.
->>        Those  few  applications  that use this system call should con=E2=
-=80=90
->>        sider migrating to alternatives.
->>
->> Okay?
->
-> Yep. Looks okay to me.
+--===============1591903606==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="MGYHOYXEY6WxJCY8"
+Content-Disposition: inline
 
-Thanks for checking.
 
-Cheers,
+--MGYHOYXEY6WxJCY8
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Michael
+On Thu, Jun 12, 2014 at 11:28:43AM +0200, Daniel Vetter wrote:
+> On Thu, Jun 12, 2014 at 09:18:40AM +0200, Thierry Reding wrote:
+> > On Wed, Jun 11, 2014 at 09:21:21AM -0700, St=C3=A9phane Marchesin wrote:
+> > > On Tue, Jun 10, 2014 at 4:04 AM, Thierry Reding
+> > > <thierry.reding@gmail.com> wrote:
+> > > > From: Thierry Reding <treding@nvidia.com>
+> > > >
+> > > > The DRM_TEGRA_GEM_SET_FLAGS IOCTL can be used to set the flags of a
+> > > > buffer object after it has been allocated or imported. Flags associ=
+ated
+> > > > with a buffer object can be queried using the DRM_TEGRA_GEM_GET_FLA=
+GS
+> > > > IOCTL.
+> > > >
+> > > > Signed-off-by: Thierry Reding <treding@nvidia.com>
+> > > > ---
+> > > >  drivers/gpu/drm/tegra/drm.c  | 48 ++++++++++++++++++++++++++++++++=
+++++++++++++
+> > > >  include/uapi/drm/tegra_drm.h | 21 +++++++++++++++++++
+> > > >  2 files changed, 69 insertions(+)
+> > > >
+> > > > diff --git a/drivers/gpu/drm/tegra/drm.c b/drivers/gpu/drm/tegra/dr=
+m.c
+> > > > index 5dca20982f3b..f292c29ef62f 100644
+> > > > --- a/drivers/gpu/drm/tegra/drm.c
+> > > > +++ b/drivers/gpu/drm/tegra/drm.c
+> > > > @@ -548,6 +548,52 @@ static int tegra_gem_get_tiling(struct drm_dev=
+ice *drm, void *data,
+> > > >
+> > > >         return err;
+> > > >  }
+> > > > +
+> > > > +static int tegra_gem_set_flags(struct drm_device *drm, void *data,
+> > > > +                              struct drm_file *file)
+> > > > +{
+> > > > +       struct drm_tegra_gem_set_flags *args =3D data;
+> > > > +       struct drm_tegra_bo *bo;
+> > > > +       unsigned long flags =3D 0;
+> > > > +
+> > > > +       if (args->flags & ~DRM_TEGRA_GEM_FLAGS)
+> > > > +               return -EINVAL;
+> > > > +
+> > > > +       gem =3D drm_gem_object_lookup(drm, file, args->handle);
+> > > > +       if (!gem)
+> > > > +               return -EINVAL;
+> > >=20
+> > > Usually -ENOENT is returned for unknown objects I think?
+> >=20
+> > We've had that discussion on IRC a little while back. I came across a
+> > few places where this was returned to userspace, and since I remember
+> > a particular email[0] about this error code so well I thought it should
+> > be discussed, but I can't remember the outcome (if any). Quoting from
+> > that email:
+> >=20
+> > 	ENOENT is not a valid error return from an ioctl. Never has been,
+> > 	never will be. ENOENT means "No such file and directory", and is
+> > 	for path operations. ioctl's are done on files that have already
+> > 	been opened, there's no way in hell that ENOENT would ever be
+> > 	valid.
+> >=20
+> > Given that -ENOENT is used *a lot* in DRM (many, if not most, of the
+> > instances returning the error from an IOCTL), I wonder how this can be
+> > resolved. Given that userspace may rely on this error code and that we
+> > can't break userspace I don't see a way out.
+>=20
+> Imo returning -ENOENT for lookup failures is perfectly ok, after all the
+> error code spelled out means "No entity" or so. So might as well extend
+> the meaning. Without slight bending of error codes the only thing we'd
+> ever be able to return is -EINVAL for ioctls, which is completely
+> pointless.
 
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+I disagree. -EINVAL makes perfect sense because one of the arguments
+passed into the IOCTL (the handle) is invalid.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> So my approach is to throw the vfs experts opinion into the wind and
+> continue with the well-established rules we have in drm.
+
+The quoted comments was from Linus himself and I didn't feel like being
+shouted at. Given his above explanation it doesn't seem like the thing
+that he'd consider subsystem specific. But then again, ENOENT usage has
+gone unnoticed in DRM for some time, so maybe we'll get away with it.
+
+I'll update the patch to make it consistent with the rest of DRM.
+
+Thierry
+
+--MGYHOYXEY6WxJCY8
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iQIcBAEBAgAGBQJTmYjgAAoJEN0jrNd/PrOhK5AP/04BZDVa3uQT0C+jq3rjb7m5
+ckpqnl+B/w/aKaPDThEzlHqE7FgNZ4d6CMP+wgrfuwGUBnAtBFmMOcYZnp3TLdh0
+FkUKas7ozfnbIDqR1fDe1CTY3ykTOcETHA0xcyfjs5KGv9HxvLqbZRzmsUyM9s1v
+48CE08Kd2hd/s2PmAErpsassk3huwk0Q352ZBcD2fH5EuzrbFv9jyHUHegpyz6Ti
+vsuUbGKKj84HRX7Pea7YeCXJBx8O4jqRbk+DKe5eW9fcY/GApHIFBtepzzRl9S6u
+e/ZNOWSyh8YAd0KckNPQi28XHUFPRLjWta3Y6vRgtF8SYoTHcaxTlC25o3bA6lCB
+inRYk4mNeimwbQ45cn6rYQQ1qUTmZZJrF/WbWaNyfxNz4LcocPEtRZHwSWJxyXSd
+478bLCZRQVgTCWodwHWqnLBfMRfmRiYOaJSR1LRqECfn6LVVl7BDwreNeUlw3Wze
+lEfKlHbJlLS8x2gx27cpuOJy6VejepPjHj6AEHmOJcMPJobOha64n6UNtgajKW0H
+nopX/HkOuOkubFnMukbEkYZQHjgzuV3bIagPOGeFLJz9o5fYd76NwXNBw67HGmID
+jqwaDnbwrihd+xZ1pMlurPhB+1azFNGy3ZFH+UxfqWTN+HqN/RXM89NEngSkQA/W
+KbXUpacsbWTYT4YQF5/G
+=hFhd
+-----END PGP SIGNATURE-----
+
+--MGYHOYXEY6WxJCY8--
+
+--===============1591903606==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+dri-devel mailing list
+dri-devel@lists.freedesktop.org
+http://lists.freedesktop.org/mailman/listinfo/dri-devel
+
+--===============1591903606==--
