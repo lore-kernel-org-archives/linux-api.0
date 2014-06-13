@@ -1,7 +1,7 @@
 From: David Herrmann <dh.herrmann@gmail.com>
-Subject: [PATCH v3 1/7] mm: allow drivers to prevent new writable mappings
-Date: Fri, 13 Jun 2014 12:36:53 +0200
-Message-ID: <1402655819-14325-2-git-send-email-dh.herrmann@gmail.com>
+Subject: [PATCH v3 3/7] shm: add memfd_create() syscall
+Date: Fri, 13 Jun 2014 12:36:55 +0200
+Message-ID: <1402655819-14325-4-git-send-email-dh.herrmann@gmail.com>
 References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
@@ -10,184 +10,183 @@ To: linux-kernel@vger.kernel.org
 Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-The i_mmap_writable field counts existing writable mappings of an
-address_space. To allow drivers to prevent new writable mappings, make
-this counter signed and prevent new writable mappings if it is negative.
-This is modelled after i_writecount and DENYWRITE.
+memfd_create() is similar to mmap(MAP_ANON), but returns a file-descriptor
+that you can pass to mmap(). It can support sealing and avoids any
+connection to user-visible mount-points. Thus, it's not subject to quotas
+on mounted file-systems, but can be used like malloc()'ed memory, but
+with a file-descriptor to it.
 
-This will be required by the shmem-sealing infrastructure to prevent any
-new writable mappings after the WRITE seal has been set. In case there
-exists a writable mapping, this operation will fail with EBUSY.
+memfd_create() returns the raw shmem file, so calls like ftruncate() can
+be used to modify the underlying inode. Also calls like fstat()
+will return proper information and mark the file as regular file. If you
+want sealing, you can specify MFD_ALLOW_SEALING. Otherwise, sealing is not
+supported (like on all other regular files).
 
-Note that we rely on the fact that iff you already own a writable mapping,
-you can increase the counter without using the helpers. This is the same
-that we do for i_writecount.
+Compared to O_TMPFILE, it does not require a tmpfs mount-point and is not
+subject to quotas and alike. It is still properly accounted to memcg
+limits, though.
 
 Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
 ---
- fs/inode.c         |  1 +
- include/linux/fs.h | 29 +++++++++++++++++++++++++++--
- kernel/fork.c      |  2 +-
- mm/mmap.c          | 24 ++++++++++++++++++------
- mm/swap_state.c    |  1 +
- 5 files changed, 48 insertions(+), 9 deletions(-)
+ arch/x86/syscalls/syscall_32.tbl |  1 +
+ arch/x86/syscalls/syscall_64.tbl |  1 +
+ include/linux/syscalls.h         |  1 +
+ include/uapi/linux/memfd.h       |  8 +++++
+ kernel/sys_ni.c                  |  1 +
+ mm/shmem.c                       | 72 ++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 84 insertions(+)
+ create mode 100644 include/uapi/linux/memfd.h
 
-diff --git a/fs/inode.c b/fs/inode.c
-index 6eecb7f..9945b11 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -165,6 +165,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
- 	mapping->a_ops = &empty_aops;
- 	mapping->host = inode;
- 	mapping->flags = 0;
-+	atomic_set(&mapping->i_mmap_writable, 0);
- 	mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE);
- 	mapping->private_data = NULL;
- 	mapping->backing_dev_info = &default_backing_dev_info;
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 338e6f7..71d17c9 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -387,7 +387,7 @@ struct address_space {
- 	struct inode		*host;		/* owner: inode, block_device */
- 	struct radix_tree_root	page_tree;	/* radix tree of all pages */
- 	spinlock_t		tree_lock;	/* and lock protecting it */
--	unsigned int		i_mmap_writable;/* count VM_SHARED mappings */
-+	atomic_t		i_mmap_writable;/* count VM_SHARED mappings */
- 	struct rb_root		i_mmap;		/* tree of private and shared mappings */
- 	struct list_head	i_mmap_nonlinear;/*list VM_NONLINEAR mappings */
- 	struct mutex		i_mmap_mutex;	/* protect tree, count, list */
-@@ -470,10 +470,35 @@ static inline int mapping_mapped(struct address_space *mapping)
-  * Note that i_mmap_writable counts all VM_SHARED vmas: do_mmap_pgoff
-  * marks vma as VM_SHARED if it is shared, and the file was opened for
-  * writing i.e. vma may be mprotected writable even if now readonly.
-+ *
-+ * If i_mmap_writable is negative, no new writable mappings are allowed. You
-+ * can only deny writable mappings, if none exists right now.
-  */
- static inline int mapping_writably_mapped(struct address_space *mapping)
- {
--	return mapping->i_mmap_writable != 0;
-+	return atomic_read(&mapping->i_mmap_writable) > 0;
-+}
+diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
+index d6b8679..e7495b4 100644
+--- a/arch/x86/syscalls/syscall_32.tbl
++++ b/arch/x86/syscalls/syscall_32.tbl
+@@ -360,3 +360,4 @@
+ 351	i386	sched_setattr		sys_sched_setattr
+ 352	i386	sched_getattr		sys_sched_getattr
+ 353	i386	renameat2		sys_renameat2
++354	i386	memfd_create		sys_memfd_create
+diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
+index ec255a1..28be0e1 100644
+--- a/arch/x86/syscalls/syscall_64.tbl
++++ b/arch/x86/syscalls/syscall_64.tbl
+@@ -323,6 +323,7 @@
+ 314	common	sched_setattr		sys_sched_setattr
+ 315	common	sched_getattr		sys_sched_getattr
+ 316	common	renameat2		sys_renameat2
++317	common	memfd_create		sys_memfd_create
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index b0881a0..0be5d4d 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -802,6 +802,7 @@ asmlinkage long sys_timerfd_settime(int ufd, int flags,
+ asmlinkage long sys_timerfd_gettime(int ufd, struct itimerspec __user *otmr);
+ asmlinkage long sys_eventfd(unsigned int count);
+ asmlinkage long sys_eventfd2(unsigned int count, int flags);
++asmlinkage long sys_memfd_create(const char *uname_ptr, unsigned int flags);
+ asmlinkage long sys_fallocate(int fd, int mode, loff_t offset, loff_t len);
+ asmlinkage long sys_old_readdir(unsigned int, struct old_linux_dirent __user *, unsigned int);
+ asmlinkage long sys_pselect6(int, fd_set __user *, fd_set __user *,
+diff --git a/include/uapi/linux/memfd.h b/include/uapi/linux/memfd.h
+new file mode 100644
+index 0000000..534e364
+--- /dev/null
++++ b/include/uapi/linux/memfd.h
+@@ -0,0 +1,8 @@
++#ifndef _UAPI_LINUX_MEMFD_H
++#define _UAPI_LINUX_MEMFD_H
 +
-+static inline int mapping_map_writable(struct address_space *mapping)
-+{
-+	return atomic_inc_unless_negative(&mapping->i_mmap_writable) ?
-+		0 : -EPERM;
-+}
++/* flags for memfd_create(2) (unsigned int) */
++#define MFD_CLOEXEC		0x0001U
++#define MFD_ALLOW_SEALING	0x0002U
 +
-+static inline void mapping_unmap_writable(struct address_space *mapping)
-+{
-+	return atomic_dec(&mapping->i_mmap_writable);
-+}
-+
-+static inline int mapping_deny_writable(struct address_space *mapping)
-+{
-+	return atomic_dec_unless_positive(&mapping->i_mmap_writable) ?
-+		0 : -EBUSY;
-+}
-+
-+static inline void mapping_allow_writable(struct address_space *mapping)
-+{
-+	atomic_inc(&mapping->i_mmap_writable);
++#endif /* _UAPI_LINUX_MEMFD_H */
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 36441b5..489a4e6 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -197,6 +197,7 @@ cond_syscall(compat_sys_timerfd_settime);
+ cond_syscall(compat_sys_timerfd_gettime);
+ cond_syscall(sys_eventfd);
+ cond_syscall(sys_eventfd2);
++cond_syscall(sys_memfd_create);
+ 
+ /* performance counters: */
+ cond_syscall(sys_perf_event_open);
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 1438b3e..e7c5fe1 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -66,7 +66,9 @@ static struct vfsmount *shm_mnt;
+ #include <linux/highmem.h>
+ #include <linux/seq_file.h>
+ #include <linux/magic.h>
++#include <linux/syscalls.h>
+ #include <linux/fcntl.h>
++#include <uapi/linux/memfd.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm/pgtable.h>
+@@ -2662,6 +2664,76 @@ static int shmem_show_options(struct seq_file *seq, struct dentry *root)
+ 	shmem_show_mpol(seq, sbinfo->mpol);
+ 	return 0;
  }
- 
- /*
-diff --git a/kernel/fork.c b/kernel/fork.c
-index d2799d1..f1f127e 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -421,7 +421,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
- 				atomic_dec(&inode->i_writecount);
- 			mutex_lock(&mapping->i_mmap_mutex);
- 			if (tmp->vm_flags & VM_SHARED)
--				mapping->i_mmap_writable++;
-+				atomic_inc(&mapping->i_mmap_writable);
- 			flush_dcache_mmap_lock(mapping);
- 			/* insert tmp into the share list, just after mpnt */
- 			if (unlikely(tmp->vm_flags & VM_NONLINEAR))
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 129b847..19b6562 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -216,7 +216,7 @@ static void __remove_shared_vm_struct(struct vm_area_struct *vma,
- 	if (vma->vm_flags & VM_DENYWRITE)
- 		atomic_inc(&file_inode(file)->i_writecount);
- 	if (vma->vm_flags & VM_SHARED)
--		mapping->i_mmap_writable--;
-+		mapping_unmap_writable(mapping);
- 
- 	flush_dcache_mmap_lock(mapping);
- 	if (unlikely(vma->vm_flags & VM_NONLINEAR))
-@@ -617,7 +617,7 @@ static void __vma_link_file(struct vm_area_struct *vma)
- 		if (vma->vm_flags & VM_DENYWRITE)
- 			atomic_dec(&file_inode(file)->i_writecount);
- 		if (vma->vm_flags & VM_SHARED)
--			mapping->i_mmap_writable++;
-+			atomic_inc(&mapping->i_mmap_writable);
- 
- 		flush_dcache_mmap_lock(mapping);
- 		if (unlikely(vma->vm_flags & VM_NONLINEAR))
-@@ -1572,6 +1572,11 @@ munmap_back:
- 			if (error)
- 				goto free_vma;
- 		}
-+		if (vm_flags & VM_SHARED) {
-+			error = mapping_map_writable(file->f_mapping);
-+			if (error)
-+				goto allow_write_and_free_vma;
-+		}
- 		vma->vm_file = get_file(file);
- 		error = file->f_op->mmap(file, vma);
- 		if (error)
-@@ -1611,8 +1616,12 @@ munmap_back:
- 
- 	vma_link(mm, vma, prev, rb_link, rb_parent);
- 	/* Once vma denies write, undo our temporary denial count */
--	if (vm_flags & VM_DENYWRITE)
--		allow_write_access(file);
-+	if (file) {
-+		if (vm_flags & VM_SHARED)
-+			mapping_unmap_writable(file->f_mapping);
-+		if (vm_flags & VM_DENYWRITE)
-+			allow_write_access(file);
++
++#define MFD_NAME_PREFIX "memfd:"
++#define MFD_NAME_PREFIX_LEN (sizeof(MFD_NAME_PREFIX) - 1)
++#define MFD_NAME_MAX_LEN (NAME_MAX - MFD_NAME_PREFIX_LEN)
++
++#define MFD_ALL_FLAGS (MFD_CLOEXEC | MFD_ALLOW_SEALING)
++
++SYSCALL_DEFINE2(memfd_create,
++		const char*, uname,
++		unsigned int, flags)
++{
++	struct shmem_inode_info *info;
++	struct file *file;
++	int fd, error;
++	char *name;
++	long len;
++
++	if (flags & ~(unsigned int)MFD_ALL_FLAGS)
++		return -EINVAL;
++
++	/* length includes terminating zero */
++	len = strnlen_user(uname, MFD_NAME_MAX_LEN + 1);
++	if (len <= 0)
++		return -EFAULT;
++	if (len > MFD_NAME_MAX_LEN + 1)
++		return -EINVAL;
++
++	name = kmalloc(len + MFD_NAME_PREFIX_LEN, GFP_TEMPORARY);
++	if (!name)
++		return -ENOMEM;
++
++	strcpy(name, MFD_NAME_PREFIX);
++	if (copy_from_user(&name[MFD_NAME_PREFIX_LEN], uname, len)) {
++		error = -EFAULT;
++		goto err_name;
 +	}
- 	file = vma->vm_file;
- out:
- 	perf_event_mmap(vma);
-@@ -1641,14 +1650,17 @@ out:
- 	return addr;
++
++	/* terminating-zero may have changed after strnlen_user() returned */
++	if (name[len + MFD_NAME_PREFIX_LEN - 1]) {
++		error = -EFAULT;
++		goto err_name;
++	}
++
++	fd = get_unused_fd_flags((flags & MFD_CLOEXEC) ? O_CLOEXEC : 0);
++	if (fd < 0) {
++		error = fd;
++		goto err_name;
++	}
++
++	file = shmem_file_setup(name, 0, VM_NORESERVE);
++	if (IS_ERR(file)) {
++		error = PTR_ERR(file);
++		goto err_fd;
++	}
++	info = SHMEM_I(file_inode(file));
++	file->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;
++	if (flags & MFD_ALLOW_SEALING)
++		info->seals &= ~F_SEAL_SEAL;
++
++	fd_install(fd, file);
++	kfree(name);
++	return fd;
++
++err_fd:
++	put_unused_fd(fd);
++err_name:
++	kfree(name);
++	return error;
++}
++
+ #endif /* CONFIG_TMPFS */
  
- unmap_and_free_vma:
--	if (vm_flags & VM_DENYWRITE)
--		allow_write_access(file);
- 	vma->vm_file = NULL;
- 	fput(file);
- 
- 	/* Undo any partial mapping done by a device driver. */
- 	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
- 	charged = 0;
-+	if (vm_flags & VM_SHARED)
-+		mapping_unmap_writable(file->f_mapping);
-+allow_write_and_free_vma:
-+	if (vm_flags & VM_DENYWRITE)
-+		allow_write_access(file);
- free_vma:
- 	kmem_cache_free(vm_area_cachep, vma);
- unacct_error:
-diff --git a/mm/swap_state.c b/mm/swap_state.c
-index 2972eee..31321fa 100644
---- a/mm/swap_state.c
-+++ b/mm/swap_state.c
-@@ -39,6 +39,7 @@ static struct backing_dev_info swap_backing_dev_info = {
- struct address_space swapper_spaces[MAX_SWAPFILES] = {
- 	[0 ... MAX_SWAPFILES - 1] = {
- 		.page_tree	= RADIX_TREE_INIT(GFP_ATOMIC|__GFP_NOWARN),
-+		.i_mmap_writable = ATOMIC_INIT(0),
- 		.a_ops		= &swap_aops,
- 		.backing_dev_info = &swap_backing_dev_info,
- 	}
+ static void shmem_put_super(struct super_block *sb)
 -- 
 2.0.0
 
