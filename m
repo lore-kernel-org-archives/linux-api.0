@@ -1,159 +1,113 @@
-From: Thierry Reding <thierry.reding@gmail.com>
-Subject: Re: [PATCH 3/4] drm/tegra: Add SET/GET_FLAGS IOCTLs
-Date: Thu, 12 Jun 2014 13:02:57 +0200
-Message-ID: <20140612110256.GA27153@ulmo>
-References: <1402398294-10252-1-git-send-email-thierry.reding@gmail.com>
- <1402398294-10252-3-git-send-email-thierry.reding@gmail.com>
- <CADMs+9Y+i7H9GGpMKJNs2kkxzyruOjiXEv2O1_SipudPGZW-8g@mail.gmail.com>
- <20140612071840.GB17027@ulmo>
- <20140612092843.GW5821@phenom.ffwll.local>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1591903606=="
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20140612092843.GW5821@phenom.ffwll.local>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Daniel Vetter <daniel@ffwll.ch>
-Cc: linux-tegra@vger.kernel.org, =?utf-8?B?U3TDqXBoYW5l?= Marchesin <marcheu@chromium.org>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: [PATCH v3 0/7] File Sealing & memfd_create()
+Date: Fri, 13 Jun 2014 12:36:52 +0200
+Message-ID: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
+Hi
 
---===============1591903606==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="MGYHOYXEY6WxJCY8"
-Content-Disposition: inline
+This is v3 of the File-Sealing and memfd_create() patches. You can find v1 with
+a longer introduction at gmane:
+  http://thread.gmane.org/gmane.comp.video.dri.devel/102241
+An LWN article about memfd+sealing is available, too:
+  https://lwn.net/Articles/593918/
+v2 with some more discussions can be found here:
+  http://thread.gmane.org/gmane.linux.kernel.mm/115713
+
+This series introduces two new APIs:
+  memfd_create(): Think of this syscall as malloc() but it returns a
+                  file-descriptor instead of a pointer. That file-descriptor is
+                  backed by anon-memory and can be memory-mapped for access.
+  sealing: The sealing API can be used to prevent a specific set of operations
+           on a file-descriptor. You 'seal' the file and give thus the
+           guarantee, that it cannot be modified in the specific ways.
+
+A short high-level introduction is also available here:
+  http://dvdhrm.wordpress.com/2014/06/10/memfd_create2/
 
 
---MGYHOYXEY6WxJCY8
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Changed in v3:
+ - fcntl() now returns EINVAL if the FD does not support sealing. We used to
+   return EBADF like pipe_fcntl() does, but that is really weird and I don't
+   like repeating that.
+ - seals are now saved as "unsigned int" instead of "u32".
+ - i_mmap_writable is now an atomic so we can deny writable mappings just like
+   i_writecount does.
+ - SHMEM_ALLOW_SEALING is dropped. We initialize all objects with F_SEAL_SEAL
+   and only unset it for memfds that shall support sealing.
+ - memfd_create() no longer has a size argument. It was redundant, use
+   ftruncate() or fallocate().
+ - memfd_create() flags are "unsigned int" now, instead of "u64".
+ - NAME_MAX off-by-one fix
+ - several cosmetic changes
+ - Added AIO/Direct-IO page-pinning protection
 
-On Thu, Jun 12, 2014 at 11:28:43AM +0200, Daniel Vetter wrote:
-> On Thu, Jun 12, 2014 at 09:18:40AM +0200, Thierry Reding wrote:
-> > On Wed, Jun 11, 2014 at 09:21:21AM -0700, St=C3=A9phane Marchesin wrote:
-> > > On Tue, Jun 10, 2014 at 4:04 AM, Thierry Reding
-> > > <thierry.reding@gmail.com> wrote:
-> > > > From: Thierry Reding <treding@nvidia.com>
-> > > >
-> > > > The DRM_TEGRA_GEM_SET_FLAGS IOCTL can be used to set the flags of a
-> > > > buffer object after it has been allocated or imported. Flags associ=
-ated
-> > > > with a buffer object can be queried using the DRM_TEGRA_GEM_GET_FLA=
-GS
-> > > > IOCTL.
-> > > >
-> > > > Signed-off-by: Thierry Reding <treding@nvidia.com>
-> > > > ---
-> > > >  drivers/gpu/drm/tegra/drm.c  | 48 ++++++++++++++++++++++++++++++++=
-++++++++++++
-> > > >  include/uapi/drm/tegra_drm.h | 21 +++++++++++++++++++
-> > > >  2 files changed, 69 insertions(+)
-> > > >
-> > > > diff --git a/drivers/gpu/drm/tegra/drm.c b/drivers/gpu/drm/tegra/dr=
-m.c
-> > > > index 5dca20982f3b..f292c29ef62f 100644
-> > > > --- a/drivers/gpu/drm/tegra/drm.c
-> > > > +++ b/drivers/gpu/drm/tegra/drm.c
-> > > > @@ -548,6 +548,52 @@ static int tegra_gem_get_tiling(struct drm_dev=
-ice *drm, void *data,
-> > > >
-> > > >         return err;
-> > > >  }
-> > > > +
-> > > > +static int tegra_gem_set_flags(struct drm_device *drm, void *data,
-> > > > +                              struct drm_file *file)
-> > > > +{
-> > > > +       struct drm_tegra_gem_set_flags *args =3D data;
-> > > > +       struct drm_tegra_bo *bo;
-> > > > +       unsigned long flags =3D 0;
-> > > > +
-> > > > +       if (args->flags & ~DRM_TEGRA_GEM_FLAGS)
-> > > > +               return -EINVAL;
-> > > > +
-> > > > +       gem =3D drm_gem_object_lookup(drm, file, args->handle);
-> > > > +       if (!gem)
-> > > > +               return -EINVAL;
-> > >=20
-> > > Usually -ENOENT is returned for unknown objects I think?
-> >=20
-> > We've had that discussion on IRC a little while back. I came across a
-> > few places where this was returned to userspace, and since I remember
-> > a particular email[0] about this error code so well I thought it should
-> > be discussed, but I can't remember the outcome (if any). Quoting from
-> > that email:
-> >=20
-> > 	ENOENT is not a valid error return from an ioctl. Never has been,
-> > 	never will be. ENOENT means "No such file and directory", and is
-> > 	for path operations. ioctl's are done on files that have already
-> > 	been opened, there's no way in hell that ENOENT would ever be
-> > 	valid.
-> >=20
-> > Given that -ENOENT is used *a lot* in DRM (many, if not most, of the
-> > instances returning the error from an IOCTL), I wonder how this can be
-> > resolved. Given that userspace may rely on this error code and that we
-> > can't break userspace I don't see a way out.
->=20
-> Imo returning -ENOENT for lookup failures is perfectly ok, after all the
-> error code spelled out means "No entity" or so. So might as well extend
-> the meaning. Without slight bending of error codes the only thing we'd
-> ever be able to return is -EINVAL for ioctls, which is completely
-> pointless.
+The last point is the most important change in this version: We now bail out if
+any page-refcount is elevated while setting SEAL_WRITE. This prevents parallel
+GUP users from writing to sealed files _after_ they were sealed. There is also a
+new FUSE-based test-case to trigger such situations.
 
-I disagree. -EINVAL makes perfect sense because one of the arguments
-passed into the IOCTL (the handle) is invalid.
+The last 2 patches try to improve the page-pinning handling. I included both in
+this series, but obviously only one of them is needed (or we could stack them):
+ - 6/7: This waits for up to 150ms for pages to be unpinned
+ - 7/7: This isolates pinned pages and replaces them with a fresh copy
 
-> So my approach is to throw the vfs experts opinion into the wind and
-> continue with the well-established rules we have in drm.
+Hugh, patch 6 is basically your code. In case that gets merged, can I put your
+Signed-off-by on it?
 
-The quoted comments was from Linus himself and I didn't feel like being
-shouted at. Given his above explanation it doesn't seem like the thing
-that he'd consider subsystem specific. But then again, ENOENT usage has
-gone unnoticed in DRM for some time, so maybe we'll get away with it.
+I hope I didn't miss anything. Further comments welcome!
 
-I'll update the patch to make it consistent with the rest of DRM.
+Thanks
+David
 
-Thierry
+David Herrmann (7):
+  mm: allow drivers to prevent new writable mappings
+  shm: add sealing API
+  shm: add memfd_create() syscall
+  selftests: add memfd_create() + sealing tests
+  selftests: add memfd/sealing page-pinning tests
+  shm: wait for pins to be released when sealing
+  shm: isolate pinned pages when sealing files
 
---MGYHOYXEY6WxJCY8
-Content-Type: application/pgp-signature
+ arch/x86/syscalls/syscall_32.tbl               |   1 +
+ arch/x86/syscalls/syscall_64.tbl               |   1 +
+ fs/fcntl.c                                     |   5 +
+ fs/inode.c                                     |   1 +
+ include/linux/fs.h                             |  29 +-
+ include/linux/shmem_fs.h                       |  17 +
+ include/linux/syscalls.h                       |   1 +
+ include/uapi/linux/fcntl.h                     |  15 +
+ include/uapi/linux/memfd.h                     |   8 +
+ kernel/fork.c                                  |   2 +-
+ kernel/sys_ni.c                                |   1 +
+ mm/mmap.c                                      |  24 +-
+ mm/shmem.c                                     | 320 ++++++++-
+ mm/swap_state.c                                |   1 +
+ tools/testing/selftests/Makefile               |   1 +
+ tools/testing/selftests/memfd/.gitignore       |   4 +
+ tools/testing/selftests/memfd/Makefile         |  40 ++
+ tools/testing/selftests/memfd/fuse_mnt.c       | 110 +++
+ tools/testing/selftests/memfd/fuse_test.c      | 311 +++++++++
+ tools/testing/selftests/memfd/memfd_test.c     | 913 +++++++++++++++++++++++++
+ tools/testing/selftests/memfd/run_fuse_test.sh |  14 +
+ 21 files changed, 1807 insertions(+), 12 deletions(-)
+ create mode 100644 include/uapi/linux/memfd.h
+ create mode 100644 tools/testing/selftests/memfd/.gitignore
+ create mode 100644 tools/testing/selftests/memfd/Makefile
+ create mode 100755 tools/testing/selftests/memfd/fuse_mnt.c
+ create mode 100644 tools/testing/selftests/memfd/fuse_test.c
+ create mode 100644 tools/testing/selftests/memfd/memfd_test.c
+ create mode 100755 tools/testing/selftests/memfd/run_fuse_test.sh
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
+-- 
+2.0.0
 
-iQIcBAEBAgAGBQJTmYjgAAoJEN0jrNd/PrOhK5AP/04BZDVa3uQT0C+jq3rjb7m5
-ckpqnl+B/w/aKaPDThEzlHqE7FgNZ4d6CMP+wgrfuwGUBnAtBFmMOcYZnp3TLdh0
-FkUKas7ozfnbIDqR1fDe1CTY3ykTOcETHA0xcyfjs5KGv9HxvLqbZRzmsUyM9s1v
-48CE08Kd2hd/s2PmAErpsassk3huwk0Q352ZBcD2fH5EuzrbFv9jyHUHegpyz6Ti
-vsuUbGKKj84HRX7Pea7YeCXJBx8O4jqRbk+DKe5eW9fcY/GApHIFBtepzzRl9S6u
-e/ZNOWSyh8YAd0KckNPQi28XHUFPRLjWta3Y6vRgtF8SYoTHcaxTlC25o3bA6lCB
-inRYk4mNeimwbQ45cn6rYQQ1qUTmZZJrF/WbWaNyfxNz4LcocPEtRZHwSWJxyXSd
-478bLCZRQVgTCWodwHWqnLBfMRfmRiYOaJSR1LRqECfn6LVVl7BDwreNeUlw3Wze
-lEfKlHbJlLS8x2gx27cpuOJy6VejepPjHj6AEHmOJcMPJobOha64n6UNtgajKW0H
-nopX/HkOuOkubFnMukbEkYZQHjgzuV3bIagPOGeFLJz9o5fYd76NwXNBw67HGmID
-jqwaDnbwrihd+xZ1pMlurPhB+1azFNGy3ZFH+UxfqWTN+HqN/RXM89NEngSkQA/W
-KbXUpacsbWTYT4YQF5/G
-=hFhd
------END PGP SIGNATURE-----
-
---MGYHOYXEY6WxJCY8--
-
---===============1591903606==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-dri-devel mailing list
-dri-devel@lists.freedesktop.org
-http://lists.freedesktop.org/mailman/listinfo/dri-devel
-
---===============1591903606==--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
