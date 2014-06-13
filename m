@@ -1,88 +1,71 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC v3 7/7] shm: isolate pinned pages when sealing files
-Date: Fri, 13 Jun 2014 10:23:23 -0700
-Message-ID: <CALCETrWsRQpuu2u9W5mcDTZKT9KVZn6TJHiMP7VWpR=6Zc_7Rw@mail.gmail.com>
-References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
- <1402655819-14325-8-git-send-email-dh.herrmann@gmail.com> <CALCETrWaUsq_D2Z1PwbbwQQWKrnsWTLOdUR6bqPuedi8ZHgvEQ@mail.gmail.com>
- <CANq1E4TQXKD8jaBcOJsL3h3ZPRXq176fz8Z9yevFbS3P0q1FQg@mail.gmail.com>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: [RFC PATCH 0/2] block: virtio-blk: support multi vq per virtio-blk
+Date: Sat, 14 Jun 2014 01:29:20 +0800
+Message-ID: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CANq1E4TQXKD8jaBcOJsL3h3ZPRXq176fz8Z9yevFbS3P0q1FQg@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: David Herrmann <dh.herrmann@gmail.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <greg@kroah.com>, John Stultz <john.stultz@linaro.org>, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org
+Cc: "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org, Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 13, 2014 at 8:27 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
-> Hi
->
-> On Fri, Jun 13, 2014 at 5:06 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Fri, Jun 13, 2014 at 3:36 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
->>> When setting SEAL_WRITE, we must make sure nobody has a writable reference
->>> to the pages (via GUP or similar). We currently check references and wait
->>> some time for them to be dropped. This, however, might fail for several
->>> reasons, including:
->>>  - the page is pinned for longer than we wait
->>>  - while we wait, someone takes an already pinned page for read-access
->>>
->>> Therefore, this patch introduces page-isolation. When sealing a file with
->>> SEAL_WRITE, we copy all pages that have an elevated ref-count. The newpage
->>> is put in place atomically, the old page is detached and left alone. It
->>> will get reclaimed once the last external user dropped it.
->>>
->>> Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
->>
->> Won't this have unexpected effects?
->>
->> Thread 1:  start read into mapping backed by fd
->>
->> Thread 2:  SEAL_WRITE
->>
->> Thread 1: read finishes.  now the page doesn't match the sealed page
->
-> Just to be clear: you're talking about read() calls that write into
-> the memfd? (like my FUSE example does) Your language might be
-> ambiguous to others as "read into" actually implies a write.
->
-> No, this does not have unexpected effects. But yes, your conclusion is
-> right. To be clear, this behavior would be part of the API. Any
-> asynchronous write might be cut off by SEAL_WRITE _iff_ you unmap your
-> buffer before the write finishes. But you actually have to extend your
-> example:
->
-> Thread 1: p = mmap(memfd, SIZE);
-> Thread 1: h = async_read(some_fd, p, SIZE);
-> Thread 1: munmap(p, SIZE);
-> Thread 2: SEAL_WRITE
-> Thread 1: async_wait(h);
->
-> If you don't do the unmap(), then SEAL_WRITE will fail due to an
-> elevated i_mmap_writable. I think this is fine. In fact, I remember
-> reading that async-IO is not required to resolve user-space addresses
-> at the time of the syscall, but might delay it to the time of the
-> actual write. But you're right, it would be misleading that the AIO
-> operation returns success. This would be part of the memfd-API,
-> though. And if you mess with your address space while running an
-> async-IO operation on it, you're screwed anyway.
+Hi,
 
-Ok, I missed the part where you had to munmap to trigger the oddity.
-That seems fine to me.
+This patches try to support multi virtual queues(multi-vq) in one
+virtio-blk device, and maps each virtual queue(vq) to blk-mq's
+hardware queue.
 
->
-> Btw., your sealing use-case is really odd. No-one guarantees that the
-> SEAL_WRITE happens _after_ you schedule your async-read. In case you
-> have some synchronization there, you just have to move it after
-> waiting for your async-io to finish.
->
-> Does that clear things up?
+With this approach, both scalability and performance problems on
+virtio-blk device get improved.
 
-I think so.
+For verifying the improvement, I implements virtio-blk multi-vq over
+qemu's dataplane feature, and both handling host notification
+from each vq and processing host I/O are still kept in the per-device
+iothread context, the changes are based on qemu v2.0.0 release, and
+can be accessed from below tree:
 
---Andy
+	git://kernel.ubuntu.com/ming/qemu.git #v2.0.0-virtblk-dataplane-mq
 
+For enabling the multi-vq feature, 'num_queues=N' need to be added into
+'-device virtio-blk-pci ...' of qemu command line, and suggest to pass
+'vectors=N+1' to keep one MSI irq vector per each vq, and the feature
+depends on x-data-plane.
+
+Fio(libaio, randread, iodepth=64, bs=4K, jobs=N) is run inside VM to
+verify the improvement.
+
+I just create a small quadcore VM and run fio inside the VM, and
+num_queues of the virtio-blk device is set as 2, but looks the
+improvement is still obvious.
+
+1), about scalability
+- without mutli-vq feature
+	-- jobs=2, thoughput: 145K iops
+	-- jobs=4, thoughput: 100K iops
+- without mutli-vq feature
+	-- jobs=2, thoughput: 186K iops
+	-- jobs=4, thoughput: 199K iops
+
+2), about thoughput
+- without mutli-vq feature
+	-- top thoughput: 145K iops
+- with mutli-vq feature
+    -- top thoughput: 199K iops
+
+So even for one quadcore VM, if the virtqueue number is increased
+from 1 to 2, both scalability and performance can get improved a
+lot.
+
+Thanks,
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Ming Lei
