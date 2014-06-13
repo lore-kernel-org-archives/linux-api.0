@@ -1,57 +1,88 @@
-From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 3/7] shm: add memfd_create() syscall
-Date: Fri, 13 Jun 2014 09:20:22 -0700
-Message-ID: <CALAqxLUDDYhDbU-fa50ZHVe+yOmv0m3aOO3WmGpRrk-cPzsMAg@mail.gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC v3 7/7] shm: isolate pinned pages when sealing files
+Date: Fri, 13 Jun 2014 10:23:23 -0700
+Message-ID: <CALCETrWsRQpuu2u9W5mcDTZKT9KVZn6TJHiMP7VWpR=6Zc_7Rw@mail.gmail.com>
 References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
-	<1402655819-14325-4-git-send-email-dh.herrmann@gmail.com>
-	<CAKgNAkgnnWjrbE+2KAETsmiyrnrMQu0h7-MrYLvkiwj--_nxcQ@mail.gmail.com>
-	<CANq1E4R2K+eq9AxtFewp4YUL2cujg+dg+sN19Anvf-zWuvgyWw@mail.gmail.com>
-	<CAKgNAkgMA39AfoSoA5Pe1r9N+ZzfYQNvNPvcRN7tOvRb8+v06Q@mail.gmail.com>
+ <1402655819-14325-8-git-send-email-dh.herrmann@gmail.com> <CALCETrWaUsq_D2Z1PwbbwQQWKrnsWTLOdUR6bqPuedi8ZHgvEQ@mail.gmail.com>
+ <CANq1E4TQXKD8jaBcOJsL3h3ZPRXq176fz8Z9yevFbS3P0q1FQg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKgNAkgMA39AfoSoA5Pe1r9N+ZzfYQNvNPvcRN7tOvRb8+v06Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Lennart Poettering <lennart-mdGvqq1h2p+GdvJs77BJ7Q@public.gmane.org>, Daniel Mack <zonque-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kay Sievers <kay-tD+1rO4QERM@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tony Battersby <tonyb-vFAe+i1/wJI5UWNf+nJyDw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CANq1E4TQXKD8jaBcOJsL3h3ZPRXq176fz8Z9yevFbS3P0q1FQg@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <greg@kroah.com>, John Stultz <john.stultz@linaro.org>, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 13, 2014 at 7:20 AM, Michael Kerrisk (man-pages)
-<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+On Fri, Jun 13, 2014 at 8:27 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
+> Hi
 >
-> The general notion these days is that a (comprehensive) manual page
-> _should_ come *with* the system call, rather than after the fact. And
-> there's a lot of value in that. I've found no end of bugs and design
-> errors while writing (comprehensive) man pages after the fact (by
-> which time it's too late to fix the design errors), and also found
-> quite a few of those issues when I've managed to work with folk at the
-> same time as they write the syscall. Bottom line: you really should
-> write formal documentation now, as part of the process of code
-> submission. It improves the chance of finding implementation and
-> design bugs, and may well widen your circle of reviewers.
+> On Fri, Jun 13, 2014 at 5:06 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>> On Fri, Jun 13, 2014 at 3:36 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
+>>> When setting SEAL_WRITE, we must make sure nobody has a writable reference
+>>> to the pages (via GUP or similar). We currently check references and wait
+>>> some time for them to be dropped. This, however, might fail for several
+>>> reasons, including:
+>>>  - the page is pinned for longer than we wait
+>>>  - while we wait, someone takes an already pinned page for read-access
+>>>
+>>> Therefore, this patch introduces page-isolation. When sealing a file with
+>>> SEAL_WRITE, we copy all pages that have an elevated ref-count. The newpage
+>>> is put in place atomically, the old page is detached and left alone. It
+>>> will get reclaimed once the last external user dropped it.
+>>>
+>>> Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
+>>
+>> Won't this have unexpected effects?
+>>
+>> Thread 1:  start read into mapping backed by fd
+>>
+>> Thread 2:  SEAL_WRITE
+>>
+>> Thread 1: read finishes.  now the page doesn't match the sealed page
+>
+> Just to be clear: you're talking about read() calls that write into
+> the memfd? (like my FUSE example does) Your language might be
+> ambiguous to others as "read into" actually implies a write.
+>
+> No, this does not have unexpected effects. But yes, your conclusion is
+> right. To be clear, this behavior would be part of the API. Any
+> asynchronous write might be cut off by SEAL_WRITE _iff_ you unmap your
+> buffer before the write finishes. But you actually have to extend your
+> example:
+>
+> Thread 1: p = mmap(memfd, SIZE);
+> Thread 1: h = async_read(some_fd, p, SIZE);
+> Thread 1: munmap(p, SIZE);
+> Thread 2: SEAL_WRITE
+> Thread 1: async_wait(h);
+>
+> If you don't do the unmap(), then SEAL_WRITE will fail due to an
+> elevated i_mmap_writable. I think this is fine. In fact, I remember
+> reading that async-IO is not required to resolve user-space addresses
+> at the time of the syscall, but might delay it to the time of the
+> actual write. But you're right, it would be misleading that the AIO
+> operation returns success. This would be part of the memfd-API,
+> though. And if you mess with your address space while running an
+> async-IO operation on it, you're screwed anyway.
 
-I very much agree here. One practical issue I've noticed is that
-having separate targets for both the code changes and the manpages can
-be an extra barrier for folks getting changes correctly documented as
-the change is being submitted. Reviewers may say "be sure to send
-updates to the man pages" but its not always easy to remember to
-follow up and make sure the submitter got the changes (which match the
-merged patches) to you as well.
+Ok, I missed the part where you had to munmap to trigger the oddity.
+That seems fine to me.
 
-I've been thinking it might be nice to have the kernel syscall man
-pages included in the kernel source tree, then have them
-copied/imported over to the man-pages project (similar to how glibc
-imports uapi kernel headers).  They could even be kept in the
-include/uapi directory, and checkpatch could ensure that changes that
-touch include/uapi also have modifications to something in the
-manpages directory. This way folks would be able to include the man
-page change with the code change, making it easier for developers to
-do the right thing, making it easier for reviewers to ensure its
-correct, and making it easier for maintainers to ensure man page
-documentation is properly in sync.
+>
+> Btw., your sealing use-case is really odd. No-one guarantees that the
+> SEAL_WRITE happens _after_ you schedule your async-read. In case you
+> have some synchronization there, you just have to move it after
+> waiting for your async-io to finish.
+>
+> Does that clear things up?
 
-Or is this something that has been hashed over already? I do admit
-this would disrupt your process a bit.
+I think so.
 
-thanks
--john
+--Andy
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
