@@ -1,70 +1,81 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v3 0/7] File Sealing & memfd_create()
-Date: Fri, 13 Jun 2014 08:17:54 -0700
-Message-ID: <CALCETrU8N9EbnJ3=oQ1WQCG9Vunn3nR9Ba=J48wJm0SuH0YB4A@mail.gmail.com>
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: Re: [RFC v3 7/7] shm: isolate pinned pages when sealing files
+Date: Fri, 13 Jun 2014 17:27:14 +0200
+Message-ID: <CANq1E4TQXKD8jaBcOJsL3h3ZPRXq176fz8Z9yevFbS3P0q1FQg@mail.gmail.com>
 References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
- <CALCETrVoE+JO2rLsBUHAOJdvescEEjxikj8iQ339Nxfopfc7pw@mail.gmail.com> <CANq1E4SaWLD=hNEc-CDJbNnrGfXE_PkxZFBhpW4tbK7wor7xPA@mail.gmail.com>
+	<1402655819-14325-8-git-send-email-dh.herrmann@gmail.com>
+	<CALCETrWaUsq_D2Z1PwbbwQQWKrnsWTLOdUR6bqPuedi8ZHgvEQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANq1E4SaWLD=hNEc-CDJbNnrGfXE_PkxZFBhpW4tbK7wor7xPA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Lennart Poettering <lennart-mdGvqq1h2p+GdvJs77BJ7Q@public.gmane.org>, Daniel Mack <zonque-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kay Sievers <kay-tD+1rO4QERM@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tony Battersby <tonyb-vFAe+i1/wJI5UWNf+nJyDw@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALCETrWaUsq_D2Z1PwbbwQQWKrnsWTLOdUR6bqPuedi8ZHgvEQ@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <greg@kroah.com>, John Stultz <john.stultz@linaro.org>, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 13, 2014 at 8:15 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hi
->
-> On Fri, Jun 13, 2014 at 5:10 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->> On Fri, Jun 13, 2014 at 3:36 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>> Hi
->>>
->>> This is v3 of the File-Sealing and memfd_create() patches. You can find v1 with
->>> a longer introduction at gmane:
->>>   http://thread.gmane.org/gmane.comp.video.dri.devel/102241
->>> An LWN article about memfd+sealing is available, too:
->>>   https://lwn.net/Articles/593918/
->>> v2 with some more discussions can be found here:
->>>   http://thread.gmane.org/gmane.linux.kernel.mm/115713
->>>
->>> This series introduces two new APIs:
->>>   memfd_create(): Think of this syscall as malloc() but it returns a
->>>                   file-descriptor instead of a pointer. That file-descriptor is
->>>                   backed by anon-memory and can be memory-mapped for access.
->>>   sealing: The sealing API can be used to prevent a specific set of operations
->>>            on a file-descriptor. You 'seal' the file and give thus the
->>>            guarantee, that it cannot be modified in the specific ways.
->>>
->>> A short high-level introduction is also available here:
->>>   http://dvdhrm.wordpress.com/2014/06/10/memfd_create2/
+Hi
+
+On Fri, Jun 13, 2014 at 5:06 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+> On Fri, Jun 13, 2014 at 3:36 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
+>> When setting SEAL_WRITE, we must make sure nobody has a writable reference
+>> to the pages (via GUP or similar). We currently check references and wait
+>> some time for them to be dropped. This, however, might fail for several
+>> reasons, including:
+>>  - the page is pinned for longer than we wait
+>>  - while we wait, someone takes an already pinned page for read-access
 >>
->> Potentially silly question: is it guaranteed that mmapping and reading
->> a SEAL_SHRINKed fd within size bounds will not SIGBUS?  If so, should
->> this be documented?  (The particular issue here would be reading
->> holes.  It should work by using the zero page, but, if so, we should
->> probably make it a real documented guarantee.)
+>> Therefore, this patch introduces page-isolation. When sealing a file with
+>> SEAL_WRITE, we copy all pages that have an elevated ref-count. The newpage
+>> is put in place atomically, the old page is detached and left alone. It
+>> will get reclaimed once the last external user dropped it.
+>>
+>> Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
 >
-> No, this is not guaranteed. See the previous discussion in v2 on Patch
-> 2/4 between Hugh and me.
+> Won't this have unexpected effects?
 >
-> Summary is: If you want mmap-reads to not fail, use mlock(). There are
-> many situations where a fault might fail (think: OOM) and sealing is
-> not meant to protect against that. Btw., holes are automatically
-> filled with fresh pages by shmem. So a read only fails in OOM
-> situations (or memcg limits, etc.).
+> Thread 1:  start read into mapping backed by fd
 >
+> Thread 2:  SEAL_WRITE
+>
+> Thread 1: read finishes.  now the page doesn't match the sealed page
 
-Isn't the point of SEAL_SHRINK to allow servers to mmap and read
-safely without worrying about SIGBUS?
+Just to be clear: you're talking about read() calls that write into
+the memfd? (like my FUSE example does) Your language might be
+ambiguous to others as "read into" actually implies a write.
 
---Andy
+No, this does not have unexpected effects. But yes, your conclusion is
+right. To be clear, this behavior would be part of the API. Any
+asynchronous write might be cut off by SEAL_WRITE _iff_ you unmap your
+buffer before the write finishes. But you actually have to extend your
+example:
 
-> Thanks
-> David
+Thread 1: p = mmap(memfd, SIZE);
+Thread 1: h = async_read(some_fd, p, SIZE);
+Thread 1: munmap(p, SIZE);
+Thread 2: SEAL_WRITE
+Thread 1: async_wait(h);
 
+If you don't do the unmap(), then SEAL_WRITE will fail due to an
+elevated i_mmap_writable. I think this is fine. In fact, I remember
+reading that async-IO is not required to resolve user-space addresses
+at the time of the syscall, but might delay it to the time of the
+actual write. But you're right, it would be misleading that the AIO
+operation returns success. This would be part of the memfd-API,
+though. And if you mess with your address space while running an
+async-IO operation on it, you're screwed anyway.
 
+Btw., your sealing use-case is really odd. No-one guarantees that the
+SEAL_WRITE happens _after_ you schedule your async-read. In case you
+have some synchronization there, you just have to move it after
+waiting for your async-io to finish.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+Does that clear things up?
+Thanks
+David
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
