@@ -1,251 +1,162 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: [RFC 2/2] [NOT READY] x86/vdso: Add __vdso_findsym
-Date: Sat, 14 Jun 2014 11:16:44 -0700
-Message-ID: <965725522edc00c60b7e72c66970eb2844d0911b.1402769596.git.luto@amacapital.net>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: [RFC 1/2] uapi: Add some missing dynamic table-related definitions to elf.h
+Date: Sat, 14 Jun 2014 11:16:43 -0700
+Message-ID: <9ad89a074e56096a18288d1537a35174c53b21fc.1402769596.git.luto@amacapital.net>
 References: <cover.1402769596.git.luto@amacapital.net>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1402769596.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-In-Reply-To: <cover.1402769596.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-References: <cover.1402769596.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Russ Cox <rsc-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ian Taylor <iant-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dalias-8zAoT0mYgF4@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1402769596.git.luto@amacapital.net>
+In-Reply-To: <cover.1402769596.git.luto@amacapital.net>
+References: <cover.1402769596.git.luto@amacapital.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Russ Cox <rsc@golang.org>, linux-api@vger.kernel.org, Ian Taylor <iant@golang.org>, linux-kernel@vger.kernel.org
+Cc: X86 ML <x86@kernel.org>, dalias@libc.org, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-The intent is to add a painless way for userspace libraries to find
-vdso symbols.  This will work by adding a vdso function
-__vdso_findsym and a new auxvec entry AT_VDSO_FINDSYM that points at
-it.
+This adds STN_UNDEF and ELF symbol version data structures.
 
-This isn't done yet.  __vdso_findsym works, but it's only available
-for the 64-bit vdso, and AT_VDSO_FINDSYM isn't implemented.
-
-Getting this to work for x32 will require hackery or an actual x32
-toolchain to build it.
-
-Signed-off-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Signed-off-by: Andy Lutomirski <luto@amacapital.net>
 ---
- arch/x86/vdso/Makefile          |   3 +
- arch/x86/vdso/vdso-findsym.c    | 136 ++++++++++++++++++++++++++++++++++++++++
- arch/x86/vdso/vdso-layout.lds.S |  11 ++--
- arch/x86/vdso/vdso.lds.S        |   1 +
- arch/x86/vdso/vdso2c.h          |   2 +-
- 5 files changed, 147 insertions(+), 6 deletions(-)
- create mode 100644 arch/x86/vdso/vdso-findsym.c
+ include/uapi/linux/elf.h | 121 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 121 insertions(+)
 
-diff --git a/arch/x86/vdso/Makefile b/arch/x86/vdso/Makefile
-index ba6fc27..62e6938 100644
---- a/arch/x86/vdso/Makefile
-+++ b/arch/x86/vdso/Makefile
-@@ -16,7 +16,9 @@ vdso-install-$(VDSO32-y)	+= $(vdso32-images)
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index ef6103b..8b7cf23 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -134,6 +134,12 @@ typedef __s64	Elf64_Sxword;
+ #define ELF64_ST_BIND(x)	ELF_ST_BIND(x)
+ #define ELF64_ST_TYPE(x)	ELF_ST_TYPE(x)
  
- # files to link into the vdso
- vobjs-y := vdso-note.o vclock_gettime.o vgetcpu.o vdso-fakesections.o
-+vobjs-y += vdso-findsym.o
- vobjs-nox32 := vdso-fakesections.o
-+vobjs-nox32 += vdso-findsym.o
++/* Symbol table indices are found in the hash buckets and chain table
++   of a symbol hash table section.  This special index value indicates
++   the end of a chain, meaning no further symbols are found in that bucket.  */
++
++#define STN_UNDEF	0		/* End of a chain.  */
++
+ typedef struct dynamic{
+   Elf32_Sword d_tag;
+   union{
+@@ -197,6 +203,121 @@ typedef struct elf64_sym {
+   Elf64_Xword st_size;		/* Associated symbol size */
+ } Elf64_Sym;
  
- # files to link into kernel
- obj-y				+= vma.o
-@@ -83,6 +85,7 @@ CFLAGS_REMOVE_vdso-note.o = -pg
- CFLAGS_REMOVE_vclock_gettime.o = -pg
- CFLAGS_REMOVE_vgetcpu.o = -pg
- CFLAGS_REMOVE_vvar.o = -pg
-+CFLAGS_REMOVE_vdso-findsym.o = -pg
- 
- #
- # X32 processes use x32 vDSO to access 64bit kernel data.
-diff --git a/arch/x86/vdso/vdso-findsym.c b/arch/x86/vdso/vdso-findsym.c
-new file mode 100644
-index 0000000..83b0c0a
---- /dev/null
-+++ b/arch/x86/vdso/vdso-findsym.c
-@@ -0,0 +1,136 @@
-+/*
-+ * Copyright 2014 Andy Lutomirski
-+ * Subject to the GNU Public License, v.2
-+ *
-+ * AT_VDSO_FINDSYM implementation
-+ *
-+ * AT_VDSO_FINDSYM is a mechanism that can be used by userspace runtimes
-+ * that don't want to implement a full ELF parser.  The ELF parser in
-+ * here cheats heavily.  It relies on the linker to do part of the work,
-+ * and it makes questionable assumptions about the layout of some of the
-+ * dynamic data structures.  Those questionable assumptions are verified
-+ * by vdso2c.
-+ */
++/* Version definition sections.  */
 +
-+/* Disable profiling for userspace code: */
-+#define DISABLE_BRANCH_PROFILING
-+
-+#pragma GCC optimize ("Os")
-+
-+#include <linux/elf.h>
-+#include <linux/compiler.h>
-+
-+struct elf_hash {
-+	Elf64_Word nbuckets;
-+	Elf64_Word nchains;
-+	Elf64_Word data[];
-+};
-+
-+/*
-+ * These must be explicitly hidden: we need to access them via direct
-+ * PC-relative relocations, not through the GOT, since we have no GOT.
-+ */
-+extern const char VDSO_START[] __attribute__((visibility("hidden")));
-+extern const char DYN_STRTAB[] __attribute__((visibility("hidden")));
-+extern Elf64_Sym DYN_SYMTAB[] __attribute__((visibility("hidden")));
-+extern struct elf_hash DYN_HASH __attribute__((visibility("hidden")));
-+extern Elf64_Half DYN_VERSYM[] __attribute__((visibility("hidden")));
-+extern Elf64_Verdef DYN_VERDEF[] __attribute__((visibility("hidden")));
-+
-+/* Straight from the ELF specification. */
-+static unsigned long elf_hash(const unsigned char *name)
++typedef struct
 +{
-+	unsigned long h = 0, g;
-+	while (*name)
-+	{
-+		h = (h << 4) + *name++;
-+		if ((g = h & 0xf0000000) != 0)
-+			h ^= g >> 24;
-+		h &= ~g;
-+	}
-+	return h;
-+}
++  Elf32_Half	vd_version;		/* Version revision */
++  Elf32_Half	vd_flags;		/* Version information */
++  Elf32_Half	vd_ndx;			/* Version Index */
++  Elf32_Half	vd_cnt;			/* Number of associated aux entries */
++  Elf32_Word	vd_hash;		/* Version name hash value */
++  Elf32_Word	vd_aux;			/* Offset in bytes to verdaux array */
++  Elf32_Word	vd_next;		/* Offset in bytes to next verdef
++					   entry */
++} Elf32_Verdef;
 +
-+static bool strings_equal(const char *a, const char *b)
++typedef struct
 +{
-+	while (true) {
-+		if (*a != *b)
-+			return false;
-+		if (!*a)
-+			return true;
-+		a++;
-+		b++;
-+	}
-+}
++  Elf64_Half	vd_version;		/* Version revision */
++  Elf64_Half	vd_flags;		/* Version information */
++  Elf64_Half	vd_ndx;			/* Version Index */
++  Elf64_Half	vd_cnt;			/* Number of associated aux entries */
++  Elf64_Word	vd_hash;		/* Version name hash value */
++  Elf64_Word	vd_aux;			/* Offset in bytes to verdaux array */
++  Elf64_Word	vd_next;		/* Offset in bytes to next verdef
++					   entry */
++} Elf64_Verdef;
 +
-+static bool vdso_match_version(Elf64_Half ver,
-+			       const char *name, Elf64_Word hash)
++
++/* Legal values for vd_version (version revision).  */
++#define VER_DEF_NONE	0		/* No version */
++#define VER_DEF_CURRENT	1		/* Current version */
++#define VER_DEF_NUM	2		/* Given version number */
++
++/* Legal values for vd_flags (version information flags).  */
++#define VER_FLG_BASE	0x1		/* Version definition of file itself */
++#define VER_FLG_WEAK	0x2		/* Weak version identifier */
++
++/* Versym symbol index values.  */
++#define	VER_NDX_LOCAL		0	/* Symbol is local.  */
++#define	VER_NDX_GLOBAL		1	/* Symbol is global.  */
++#define	VER_NDX_LORESERVE	0xff00	/* Beginning of reserved entries.  */
++#define	VER_NDX_ELIMINATE	0xff01	/* Symbol is to be eliminated.  */
++
++/* Auxialiary version information.  */
++
++typedef struct
 +{
-+	/*
-+	 * This is a helper function to check if the version indexed by
-+	 * ver matches name (which hashes to hash).
-+	 *
-+	 * The version definition table is a mess, and I don't know how
-+	 * to do this in better than linear time without allocating memory
-+	 * to build an index.  I also don't know why the table has
-+	 * variable size entries in the first place.
-+	 *
-+	 * For added fun, I can't find a comprehensible specification of how
-+	 * to parse all the weird flags in the table.
-+	 *
-+	 * So I just parse the whole table every time.
-+	 */
++  Elf32_Word	vda_name;		/* Version or dependency names */
++  Elf32_Word	vda_next;		/* Offset in bytes to next verdaux
++					   entry */
++} Elf32_Verdaux;
 +
-+	Elf64_Verdef *def = DYN_VERDEF;
-+	Elf64_Verdaux *aux;
-+
-+	/* First step: find the version definition */
-+	ver &= 0x7fff;  /* Apparently bit 15 means "hidden" */
-+	while(true) {
-+		if ((def->vd_flags & VER_FLG_BASE) == 0
-+		    && (def->vd_ndx & 0x7fff) == ver)
-+			break;
-+
-+		if (def->vd_next == 0)
-+			return false;  /* No definition. */
-+
-+		def = (Elf64_Verdef *)((char *)def + def->vd_next);
-+	}
-+
-+	/* Now figure out whether it matches. */
-+	aux = (Elf64_Verdaux*)((char *)def + def->vd_aux);
-+	return def->vd_hash == hash
-+		&& strings_equal(name, DYN_STRTAB + aux->vda_name);
-+}
-+
-+void *__vdso_findsym(const char *name, const char *version)
++typedef struct
 +{
-+	Elf64_Word chain = DYN_HASH.data[elf_hash(name) % DYN_HASH.nbuckets];
-+	const Elf64_Word *chain_next = &DYN_HASH.data[DYN_HASH.nbuckets + 2];
-+	unsigned long ver_hash = elf_hash(version);
++  Elf64_Word	vda_name;		/* Version or dependency names */
++  Elf64_Word	vda_next;		/* Offset in bytes to next verdaux
++					   entry */
++} Elf64_Verdaux;
 +
-+	for (; chain != STN_UNDEF; chain = chain_next[chain]) {
-+		Elf64_Sym *sym = &DYN_SYMTAB[chain];
 +
-+		/* Check for a defined global or weak function w/ right name. */
-+		if (ELF64_ST_TYPE(sym->st_info) != STT_FUNC)
-+			continue;
-+		if (ELF64_ST_BIND(sym->st_info) != STB_GLOBAL &&
-+		    ELF64_ST_BIND(sym->st_info) != STB_WEAK)
-+			continue;
-+		if (sym->st_shndx == SHN_UNDEF)
-+			continue;
-+		if (!strings_equal(name, DYN_STRTAB + sym->st_name))
-+			continue;
++/* Version dependency section.  */
 +
-+		/* Check symbol version. */
-+		if (!vdso_match_version(DYN_VERSYM[chain],
-+					version, ver_hash))
-+			continue;
++typedef struct
++{
++  Elf32_Half	vn_version;		/* Version of structure */
++  Elf32_Half	vn_cnt;			/* Number of associated aux entries */
++  Elf32_Word	vn_file;		/* Offset of filename for this
++					   dependency */
++  Elf32_Word	vn_aux;			/* Offset in bytes to vernaux array */
++  Elf32_Word	vn_next;		/* Offset in bytes to next verneed
++					   entry */
++} Elf32_Verneed;
 +
-+		return (void *)((unsigned long)VDSO_START + sym->st_value);
-+	}
++typedef struct
++{
++  Elf64_Half	vn_version;		/* Version of structure */
++  Elf64_Half	vn_cnt;			/* Number of associated aux entries */
++  Elf64_Word	vn_file;		/* Offset of filename for this
++					   dependency */
++  Elf64_Word	vn_aux;			/* Offset in bytes to vernaux array */
++  Elf64_Word	vn_next;		/* Offset in bytes to next verneed
++					   entry */
++} Elf64_Verneed;
 +
-+	return 0;
-+}
 +
-diff --git a/arch/x86/vdso/vdso-layout.lds.S b/arch/x86/vdso/vdso-layout.lds.S
-index 2ec72f6..2e8b692 100644
---- a/arch/x86/vdso/vdso-layout.lds.S
-+++ b/arch/x86/vdso/vdso-layout.lds.S
-@@ -8,14 +8,15 @@
++/* Legal values for vn_version (version revision).  */
++#define VER_NEED_NONE	 0		/* No version */
++#define VER_NEED_CURRENT 1		/* Current version */
++#define VER_NEED_NUM	 2		/* Given version number */
++
++/* Auxiliary needed version information.  */
++
++typedef struct
++{
++  Elf32_Word	vna_hash;		/* Hash value of dependency name */
++  Elf32_Half	vna_flags;		/* Dependency specific information */
++  Elf32_Half	vna_other;		/* Unused */
++  Elf32_Word	vna_name;		/* Dependency name string offset */
++  Elf32_Word	vna_next;		/* Offset in bytes to next vernaux
++					   entry */
++} Elf32_Vernaux;
++
++typedef struct
++{
++  Elf64_Word	vna_hash;		/* Hash value of dependency name */
++  Elf64_Half	vna_flags;		/* Dependency specific information */
++  Elf64_Half	vna_other;		/* Unused */
++  Elf64_Word	vna_name;		/* Dependency name string offset */
++  Elf64_Word	vna_next;		/* Offset in bytes to next vernaux
++					   entry */
++} Elf64_Vernaux;
++
++
++/* Legal values for vna_flags.  */
++#define VER_FLG_WEAK	0x2		/* Weak version identifier */
++
  
- SECTIONS
- {
-+	VDSO_START = .;
- 	. = SIZEOF_HEADERS;
+ #define EI_NIDENT	16
  
--	.hash		: { *(.hash) }			:text
-+	.hash		: { DYN_HASH = .; *(.hash) }		:text
- 	.gnu.hash	: { *(.gnu.hash) }
--	.dynsym		: { *(.dynsym) }
--	.dynstr		: { *(.dynstr) }
--	.gnu.version	: { *(.gnu.version) }
--	.gnu.version_d	: { *(.gnu.version_d) }
-+	.dynsym		: { DYN_SYMTAB = .; *(.dynsym) }
-+	.dynstr		: { DYN_STRTAB = .; *(.dynstr) }
-+	.gnu.version	: { DYN_VERSYM = .; *(.gnu.version) }
-+	.gnu.version_d	: { DYN_VERDEF = .; *(.gnu.version_d) }
- 	.gnu.version_r	: { *(.gnu.version_r) }
- 
- 	.note		: { *(.note.*) }		:text	:note
-diff --git a/arch/x86/vdso/vdso.lds.S b/arch/x86/vdso/vdso.lds.S
-index 75e3404..9b23d4e 100644
---- a/arch/x86/vdso/vdso.lds.S
-+++ b/arch/x86/vdso/vdso.lds.S
-@@ -22,6 +22,7 @@ VERSION {
- 		__vdso_getcpu;
- 		time;
- 		__vdso_time;
-+		__vdso_findsym;
- 	local: *;
- 	};
- }
-diff --git a/arch/x86/vdso/vdso2c.h b/arch/x86/vdso/vdso2c.h
-index c6eefaf..931abac 100644
---- a/arch/x86/vdso/vdso2c.h
-+++ b/arch/x86/vdso/vdso2c.h
-@@ -51,7 +51,7 @@ static void GOFUNC(void *addr, size_t len, FILE *outfile, const char *name)
- 	for (i = 0; dyn + i < dyn_end &&
- 		     GET_LE(&dyn[i].d_tag) != DT_NULL; i++) {
- 		typeof(dyn[i].d_tag) tag = GET_LE(&dyn[i].d_tag);
--		if (tag == DT_REL || tag == DT_RELSZ ||
-+		if (tag == DT_REL || tag == DT_RELA || tag == DT_RELSZ ||
- 		    tag == DT_RELENT || tag == DT_TEXTREL)
- 			fail("vdso image contains dynamic relocations\n");
- 	}
 -- 
 1.9.3
