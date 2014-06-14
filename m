@@ -1,180 +1,251 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH v6 6/9] seccomp: add "seccomp" syscall
-Date: Fri, 13 Jun 2014 15:26:11 -0700
-Message-ID: <CAMEtUuwKNx8TfRtRx=wdy3EwsL0ioQCMxhasXbrBvrBZW+tBgg@mail.gmail.com>
-References: <1402457121-8410-1-git-send-email-keescook@chromium.org>
-	<1402457121-8410-7-git-send-email-keescook@chromium.org>
-	<CAMEtUuwKRUYN_qdnCj42G3Z1UT3vMYPoJqXd2_PjV+_J3WA+8w@mail.gmail.com>
-	<CALCETrVCJvnj9yr5yhhZTn_Gq32mgSqOhMRi16Y=_LvqGOTZ5g@mail.gmail.com>
-	<CAMEtUuykiN=FvBFZLp8ieN2ymt0=opfyFee0UC9aRpcW3SQ0pg@mail.gmail.com>
-	<CALCETrVbsGjgtHtQKftxcNJB_vY5=Dd3FckW-1C9=xgdOrR6_A@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVbsGjgtHtQKftxcNJB_vY5=Dd3FckW-1C9=xgdOrR6_A@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Kees Cook <keescook@chromium.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, John Johansen <john.johansen@canonical.com>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-mips@linux-mips.org, linux-arch <linux-arch@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: [RFC 2/2] [NOT READY] x86/vdso: Add __vdso_findsym
+Date: Sat, 14 Jun 2014 11:16:44 -0700
+Message-ID: <965725522edc00c60b7e72c66970eb2844d0911b.1402769596.git.luto@amacapital.net>
+References: <cover.1402769596.git.luto@amacapital.net>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1402769596.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+In-Reply-To: <cover.1402769596.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+References: <cover.1402769596.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Russ Cox <rsc-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ian Taylor <iant-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dalias-8zAoT0mYgF4@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 13, 2014 at 2:42 PM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Fri, Jun 13, 2014 at 2:37 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
->> On Fri, Jun 13, 2014 at 2:25 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>> On Fri, Jun 13, 2014 at 2:22 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
->>>> On Tue, Jun 10, 2014 at 8:25 PM, Kees Cook <keescook@chromium.org> wrote:
->>>>> This adds the new "seccomp" syscall with both an "operation" and "flags"
->>>>> parameter for future expansion. The third argument is a pointer value,
->>>>> used with the SECCOMP_SET_MODE_FILTER operation. Currently, flags must
->>>>> be 0. This is functionally equivalent to prctl(PR_SET_SECCOMP, ...).
->>>>>
->>>>> Signed-off-by: Kees Cook <keescook@chromium.org>
->>>>> Cc: linux-api@vger.kernel.org
->>>>> ---
->>>>>  arch/x86/syscalls/syscall_32.tbl  |    1 +
->>>>>  arch/x86/syscalls/syscall_64.tbl  |    1 +
->>>>>  include/linux/syscalls.h          |    2 ++
->>>>>  include/uapi/asm-generic/unistd.h |    4 ++-
->>>>>  include/uapi/linux/seccomp.h      |    4 +++
->>>>>  kernel/seccomp.c                  |   63 ++++++++++++++++++++++++++++++++-----
->>>>>  kernel/sys_ni.c                   |    3 ++
->>>>>  7 files changed, 69 insertions(+), 9 deletions(-)
->>>>>
->>>>> diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
->>>>> index d6b867921612..7527eac24122 100644
->>>>> --- a/arch/x86/syscalls/syscall_32.tbl
->>>>> +++ b/arch/x86/syscalls/syscall_32.tbl
->>>>> @@ -360,3 +360,4 @@
->>>>>  351    i386    sched_setattr           sys_sched_setattr
->>>>>  352    i386    sched_getattr           sys_sched_getattr
->>>>>  353    i386    renameat2               sys_renameat2
->>>>> +354    i386    seccomp                 sys_seccomp
->>>>> diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
->>>>> index ec255a1646d2..16272a6c12b7 100644
->>>>> --- a/arch/x86/syscalls/syscall_64.tbl
->>>>> +++ b/arch/x86/syscalls/syscall_64.tbl
->>>>> @@ -323,6 +323,7 @@
->>>>>  314    common  sched_setattr           sys_sched_setattr
->>>>>  315    common  sched_getattr           sys_sched_getattr
->>>>>  316    common  renameat2               sys_renameat2
->>>>> +317    common  seccomp                 sys_seccomp
->>>>>
->>>>>  #
->>>>>  # x32-specific system call numbers start at 512 to avoid cache impact
->>>>> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
->>>>> index b0881a0ed322..1713977ee26f 100644
->>>>> --- a/include/linux/syscalls.h
->>>>> +++ b/include/linux/syscalls.h
->>>>> @@ -866,4 +866,6 @@ asmlinkage long sys_process_vm_writev(pid_t pid,
->>>>>  asmlinkage long sys_kcmp(pid_t pid1, pid_t pid2, int type,
->>>>>                          unsigned long idx1, unsigned long idx2);
->>>>>  asmlinkage long sys_finit_module(int fd, const char __user *uargs, int flags);
->>>>> +asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
->>>>> +                           const char __user *uargs);
->>>>
->>>> It looks odd to add 'flags' argument to syscall that is not even used.
->>>> It don't think it will be extensible this way.
->>>> 'uargs' is used only in 2nd command as well and it's not 'char __user *'
->>>> but rather 'struct sock_fprog __user *'
->>>> I think it makes more sense to define only first argument as 'int op' and the
->>>> rest as variable length array.
->>>> Something like:
->>>> long sys_seccomp(unsigned int op, struct nlattr *attrs, int len);
->>>> then different commands can interpret 'attrs' differently.
->>>> if op == mode_strict, then attrs == NULL, len == 0
->>>> if op == mode_filter, then attrs->nla_type == seccomp_bpf_filter
->>>> and nla_data(attrs) is 'struct sock_fprog'
->>>
->>> Eww.  If the operation doesn't imply the type, then I think we've
->>> totally screwed up.
->>>
->>>> If we decide to add new types of filters or new commands, the syscall prototype
->>>> won't need to change. New commands can be added preserving backward
->>>> compatibility.
->>>> The basic TLV concept has been around forever in netlink world. imo makes
->>>> sense to use it with new syscalls. Passing 'struct xxx' into syscalls
->>>> is the thing
->>>> of the past. TLV style is more extensible. Fields of structures can become
->>>> optional in the future, new fields added, etc.
->>>> 'struct nlattr' brings the same benefits to kernel api as protobuf did
->>>> to user land.
->>>
->>> I see no reason to bring nl_attr into this.
->>>
->>> Admittedly, I've never dealt with nl_attr, but everything
->>> netlink-related I've even been involved in has involved some sort of
->>> API atrocity.
->>
->> netlink has a lot of legacy and there is genetlink which is not pretty
->> either because of extra socket creation, binding, dealing with packet
->> loss issues, but the key concept of variable length encoding is sound.
->> Right now seccomp has two commands and they already don't fit
->> into single syscall neatly. Are you saying there should be two syscalls
->> here? What about another seccomp related command? Another syscall?
->> imo all seccomp related commands needs to be mux/demux-ed under
->> one syscall. What is the way to mux/demux potentially very different
->> commands under one syscall? I cannot think of anything better than
->> TLV style. 'struct nlattr' is what we have today and I think it works fine.
->> I'm not suggesting to bring the whole netlink into the picture, but rather
->> TLV style of encoding different arguments for different commands.
->
-> I'm unconvinced.  These are simple commands, and I think the interface
-> should be simple.  Syscalls are cheap.
->
-> As an example, the interface could be:
->
-> int seccomp_add_filter(const struct sock_fprog *filter, unsigned int flags);
->
-> The "tsync" operation would be seccomp_add_filter(NULL,
-> SECCOMP_ADD_FILTER_TSYNC) -- it's equivalent to adding an
-> always-accept filter and syncing threads.
->
-> But, frankly, this kind of stuff should probably be "do operation X".
-> IIUC nl_attr is more like "do something, with these tags and values",
-> which results in oddities like whatever should happen of more than one
-> tag is set.
+The intent is to add a painless way for userspace libraries to find
+vdso symbols.  This will work by adding a vdso function
+__vdso_findsym and a new auxvec entry AT_VDSO_FINDSYM that points at
+it.
 
-TLV is a price of extensibility vs simplicity.
-Say we have a syscall_foo(struct XX __user *x); that takes
-struct XX {
-  int flag;
-  int var1;
-};
-now we want to add another variable to the structure that will be used
-only when certain flag is set. You cannot do it easily without
-breaking old user binaries, since new structure will be:
-struct XX2 {
-  int flag;
-  int var1;
-  int var2;
-};
-if we do copy_from_user(,, sizeof(struct XX2)) it will brake old programs.
-Potentially we can do it the ugly way:
-copy_from_user(,, sizeof(struct XX)), then check flag and do another
-copy_from_user(,, sizeof(struct XX2)) just to fetch extra argument.
-but then another day passes and yet another new flag means that both
-var1 and var2 are unused and it needs 'u64 var3' instead.
-Now kernel looks very ugly by doing multiple copy_from_user() of different
-structures.
-It would be much cleaner with nlattr:
-syscall_foo(struct nlattr *attrs, int len);
-kernel fetches 'len' bytes onces and then picks var[123] fields from nlattr
-array. In other words nlattr array is a way to represent flexible structure
-where fields can come and go in the future.
-This was a simple example. Consider the case where var1 and var2
-are arrays of things.
-imo the old:
-struct sock_fprog {
-        unsigned short          len;    /* Number of filter blocks */
-        struct sock_filter __user *filter;
-};
-is the example of inflexible user interface.
-It could have been single 'struct nlattr'
-nlattr->nla_len == length of filter program in bytes
-nlattr->nla_type == ARRAY_OF_SOCK_FILTER constant
-nla_data(nlattr) - variable length array of 'struct sock_filter' bpf
-instructions.
-Right now I'd like to extend it for the work I'm doing around eBPF, but
-I cannot, since it's rigid. If it was TLV, I could have easily added new flags,
-new types, new sections to bpf programs.
-For user space it would have been just as easy to populate such
-'struct nlattr' as to populate 'struct sock_fprog'.
+This isn't done yet.  __vdso_findsym works, but it's only available
+for the 64-bit vdso, and AT_VDSO_FINDSYM isn't implemented.
+
+Getting this to work for x32 will require hackery or an actual x32
+toolchain to build it.
+
+Signed-off-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+---
+ arch/x86/vdso/Makefile          |   3 +
+ arch/x86/vdso/vdso-findsym.c    | 136 ++++++++++++++++++++++++++++++++++++++++
+ arch/x86/vdso/vdso-layout.lds.S |  11 ++--
+ arch/x86/vdso/vdso.lds.S        |   1 +
+ arch/x86/vdso/vdso2c.h          |   2 +-
+ 5 files changed, 147 insertions(+), 6 deletions(-)
+ create mode 100644 arch/x86/vdso/vdso-findsym.c
+
+diff --git a/arch/x86/vdso/Makefile b/arch/x86/vdso/Makefile
+index ba6fc27..62e6938 100644
+--- a/arch/x86/vdso/Makefile
++++ b/arch/x86/vdso/Makefile
+@@ -16,7 +16,9 @@ vdso-install-$(VDSO32-y)	+= $(vdso32-images)
+ 
+ # files to link into the vdso
+ vobjs-y := vdso-note.o vclock_gettime.o vgetcpu.o vdso-fakesections.o
++vobjs-y += vdso-findsym.o
+ vobjs-nox32 := vdso-fakesections.o
++vobjs-nox32 += vdso-findsym.o
+ 
+ # files to link into kernel
+ obj-y				+= vma.o
+@@ -83,6 +85,7 @@ CFLAGS_REMOVE_vdso-note.o = -pg
+ CFLAGS_REMOVE_vclock_gettime.o = -pg
+ CFLAGS_REMOVE_vgetcpu.o = -pg
+ CFLAGS_REMOVE_vvar.o = -pg
++CFLAGS_REMOVE_vdso-findsym.o = -pg
+ 
+ #
+ # X32 processes use x32 vDSO to access 64bit kernel data.
+diff --git a/arch/x86/vdso/vdso-findsym.c b/arch/x86/vdso/vdso-findsym.c
+new file mode 100644
+index 0000000..83b0c0a
+--- /dev/null
++++ b/arch/x86/vdso/vdso-findsym.c
+@@ -0,0 +1,136 @@
++/*
++ * Copyright 2014 Andy Lutomirski
++ * Subject to the GNU Public License, v.2
++ *
++ * AT_VDSO_FINDSYM implementation
++ *
++ * AT_VDSO_FINDSYM is a mechanism that can be used by userspace runtimes
++ * that don't want to implement a full ELF parser.  The ELF parser in
++ * here cheats heavily.  It relies on the linker to do part of the work,
++ * and it makes questionable assumptions about the layout of some of the
++ * dynamic data structures.  Those questionable assumptions are verified
++ * by vdso2c.
++ */
++
++/* Disable profiling for userspace code: */
++#define DISABLE_BRANCH_PROFILING
++
++#pragma GCC optimize ("Os")
++
++#include <linux/elf.h>
++#include <linux/compiler.h>
++
++struct elf_hash {
++	Elf64_Word nbuckets;
++	Elf64_Word nchains;
++	Elf64_Word data[];
++};
++
++/*
++ * These must be explicitly hidden: we need to access them via direct
++ * PC-relative relocations, not through the GOT, since we have no GOT.
++ */
++extern const char VDSO_START[] __attribute__((visibility("hidden")));
++extern const char DYN_STRTAB[] __attribute__((visibility("hidden")));
++extern Elf64_Sym DYN_SYMTAB[] __attribute__((visibility("hidden")));
++extern struct elf_hash DYN_HASH __attribute__((visibility("hidden")));
++extern Elf64_Half DYN_VERSYM[] __attribute__((visibility("hidden")));
++extern Elf64_Verdef DYN_VERDEF[] __attribute__((visibility("hidden")));
++
++/* Straight from the ELF specification. */
++static unsigned long elf_hash(const unsigned char *name)
++{
++	unsigned long h = 0, g;
++	while (*name)
++	{
++		h = (h << 4) + *name++;
++		if ((g = h & 0xf0000000) != 0)
++			h ^= g >> 24;
++		h &= ~g;
++	}
++	return h;
++}
++
++static bool strings_equal(const char *a, const char *b)
++{
++	while (true) {
++		if (*a != *b)
++			return false;
++		if (!*a)
++			return true;
++		a++;
++		b++;
++	}
++}
++
++static bool vdso_match_version(Elf64_Half ver,
++			       const char *name, Elf64_Word hash)
++{
++	/*
++	 * This is a helper function to check if the version indexed by
++	 * ver matches name (which hashes to hash).
++	 *
++	 * The version definition table is a mess, and I don't know how
++	 * to do this in better than linear time without allocating memory
++	 * to build an index.  I also don't know why the table has
++	 * variable size entries in the first place.
++	 *
++	 * For added fun, I can't find a comprehensible specification of how
++	 * to parse all the weird flags in the table.
++	 *
++	 * So I just parse the whole table every time.
++	 */
++
++	Elf64_Verdef *def = DYN_VERDEF;
++	Elf64_Verdaux *aux;
++
++	/* First step: find the version definition */
++	ver &= 0x7fff;  /* Apparently bit 15 means "hidden" */
++	while(true) {
++		if ((def->vd_flags & VER_FLG_BASE) == 0
++		    && (def->vd_ndx & 0x7fff) == ver)
++			break;
++
++		if (def->vd_next == 0)
++			return false;  /* No definition. */
++
++		def = (Elf64_Verdef *)((char *)def + def->vd_next);
++	}
++
++	/* Now figure out whether it matches. */
++	aux = (Elf64_Verdaux*)((char *)def + def->vd_aux);
++	return def->vd_hash == hash
++		&& strings_equal(name, DYN_STRTAB + aux->vda_name);
++}
++
++void *__vdso_findsym(const char *name, const char *version)
++{
++	Elf64_Word chain = DYN_HASH.data[elf_hash(name) % DYN_HASH.nbuckets];
++	const Elf64_Word *chain_next = &DYN_HASH.data[DYN_HASH.nbuckets + 2];
++	unsigned long ver_hash = elf_hash(version);
++
++	for (; chain != STN_UNDEF; chain = chain_next[chain]) {
++		Elf64_Sym *sym = &DYN_SYMTAB[chain];
++
++		/* Check for a defined global or weak function w/ right name. */
++		if (ELF64_ST_TYPE(sym->st_info) != STT_FUNC)
++			continue;
++		if (ELF64_ST_BIND(sym->st_info) != STB_GLOBAL &&
++		    ELF64_ST_BIND(sym->st_info) != STB_WEAK)
++			continue;
++		if (sym->st_shndx == SHN_UNDEF)
++			continue;
++		if (!strings_equal(name, DYN_STRTAB + sym->st_name))
++			continue;
++
++		/* Check symbol version. */
++		if (!vdso_match_version(DYN_VERSYM[chain],
++					version, ver_hash))
++			continue;
++
++		return (void *)((unsigned long)VDSO_START + sym->st_value);
++	}
++
++	return 0;
++}
++
+diff --git a/arch/x86/vdso/vdso-layout.lds.S b/arch/x86/vdso/vdso-layout.lds.S
+index 2ec72f6..2e8b692 100644
+--- a/arch/x86/vdso/vdso-layout.lds.S
++++ b/arch/x86/vdso/vdso-layout.lds.S
+@@ -8,14 +8,15 @@
+ 
+ SECTIONS
+ {
++	VDSO_START = .;
+ 	. = SIZEOF_HEADERS;
+ 
+-	.hash		: { *(.hash) }			:text
++	.hash		: { DYN_HASH = .; *(.hash) }		:text
+ 	.gnu.hash	: { *(.gnu.hash) }
+-	.dynsym		: { *(.dynsym) }
+-	.dynstr		: { *(.dynstr) }
+-	.gnu.version	: { *(.gnu.version) }
+-	.gnu.version_d	: { *(.gnu.version_d) }
++	.dynsym		: { DYN_SYMTAB = .; *(.dynsym) }
++	.dynstr		: { DYN_STRTAB = .; *(.dynstr) }
++	.gnu.version	: { DYN_VERSYM = .; *(.gnu.version) }
++	.gnu.version_d	: { DYN_VERDEF = .; *(.gnu.version_d) }
+ 	.gnu.version_r	: { *(.gnu.version_r) }
+ 
+ 	.note		: { *(.note.*) }		:text	:note
+diff --git a/arch/x86/vdso/vdso.lds.S b/arch/x86/vdso/vdso.lds.S
+index 75e3404..9b23d4e 100644
+--- a/arch/x86/vdso/vdso.lds.S
++++ b/arch/x86/vdso/vdso.lds.S
+@@ -22,6 +22,7 @@ VERSION {
+ 		__vdso_getcpu;
+ 		time;
+ 		__vdso_time;
++		__vdso_findsym;
+ 	local: *;
+ 	};
+ }
+diff --git a/arch/x86/vdso/vdso2c.h b/arch/x86/vdso/vdso2c.h
+index c6eefaf..931abac 100644
+--- a/arch/x86/vdso/vdso2c.h
++++ b/arch/x86/vdso/vdso2c.h
+@@ -51,7 +51,7 @@ static void GOFUNC(void *addr, size_t len, FILE *outfile, const char *name)
+ 	for (i = 0; dyn + i < dyn_end &&
+ 		     GET_LE(&dyn[i].d_tag) != DT_NULL; i++) {
+ 		typeof(dyn[i].d_tag) tag = GET_LE(&dyn[i].d_tag);
+-		if (tag == DT_REL || tag == DT_RELSZ ||
++		if (tag == DT_REL || tag == DT_RELA || tag == DT_RELSZ ||
+ 		    tag == DT_RELENT || tag == DT_TEXTREL)
+ 			fail("vdso image contains dynamic relocations\n");
+ 	}
+-- 
+1.9.3
