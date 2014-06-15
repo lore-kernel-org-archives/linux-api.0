@@ -1,53 +1,37 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [RFC 0/2] __vdso_findsym
-Date: Sun, 15 Jun 2014 08:47:19 -0700
-Message-ID: <CALCETrXqcO_Jz_9P5bHW7yBcxOXgTFveL9r4G8PO4XiHC8JhAg@mail.gmail.com>
-References: <cover.1402769596.git.luto@amacapital.net> <21405.44257.742122.786960@gargle.gargle.HOWL>
- <20140615143500.GP179@brightrain.aerifal.cx>
+Date: Sun, 15 Jun 2014 10:05:47 -0700
+Message-ID: <539DD26B.3060709@zytor.com>
+References: <cover.1402769596.git.luto@amacapital.net> <21405.44257.742122.786960@gargle.gargle.HOWL> <20140615143500.GP179@brightrain.aerifal.cx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140615143500.GP179@brightrain.aerifal.cx>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rich Felker <dalias@libc.org>
-Cc: Mikael Pettersson <mikpelinux@gmail.com>, Russ Cox <rsc@golang.org>, Linux API <linux-api@vger.kernel.org>, Ian Taylor <iant@golang.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, X86 ML <x86@kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20140615143500.GP179-C3MtFaGISjmo6RMmaWD+6Sb1p8zYI1N1@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Russ Cox <rsc-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ian Taylor <iant-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jun 15, 2014 at 7:35 AM, Rich Felker <dalias@libc.org> wrote:
-> On Sun, Jun 15, 2014 at 04:25:37PM +0200, Mikael Pettersson wrote:
->> Andy Lutomirski writes:
->>  > The idea is to add AT_VDSO_FINDSYM pointing at __vdso_findsym.  This
->>  > implements __vdso_findsym.
->>  >
->>  > This would make it easier for runtimes that don't otherwise implement
->>  > ELF loaders to use the vdso.
->>  >
->>  > Thoughts?
->>
->> I'm opposed to this based on the principle that the kernel should NOT
->> be a dumping ground for random code that user-space can and should
->> implement for itself.  As long as the vdso is correctly formatted ELF,
->> then parsing it is easy, and the kernel should not care at all if or
->> how user-space accesses it.
->
+On 06/15/2014 07:35 AM, Rich Felker wrote:
+> 
 > Arguably, it was a mistake for the kernel to expose a virtual ELF to
 > begin with, and it should just have exposed a "lookup function by
 > name" operation to begin with. Yes this can be done in userspace, but
 > I see it more as a matter of "fixing a broken API design".
+> 
 
-Is the __vdso_findsym(name, version) approach good?  I don't know why
-the vdso uses symbol versions at all, nor do I know why it uses weak
-symbol aliases.  The vdso's "clock_gettime" isn't a drop-in
-replacement for glibc's: it doesn't touch error, and it returns
-negative error codes.
+What the fsck are you smoking?  There is immense value in providing a
+stable and very well-defined data structure, which also happens to be
+what dynamic linkers already want to consume.  Providing a helper for
+crippled libc applications has potential value.  Shaving a few hundred
+bytes off static applications is a very weak argument, simply because it
+is such a small fraction of the enormous cost of a static application,
+and static applications are problematic in a number of other ways,
+especially the lack of ability to fix bugs.
 
-It might make more sense to promise that the vdso will never export to
-functions with the same name but different versions and to just get
-rid of the version field from __vdso_findsym.  I tried implementing
-this; it's untested, but the text size is only 230 bytes :)
+Treating the kernel as an ersatz dynamic library for "static"
+applications is kind of silly -- after all, why not provide an entire
+libc in the vdso?  I have actually seen people advocate for doing that.
 
-It might also make sense to look up by number.  Yes, it smells like
-Windows DLLs, but it also looks awfully like Linux syscalls, which do
-just fine using a call-by-number scheme.
-
---Andy
+	-hpa
