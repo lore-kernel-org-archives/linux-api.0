@@ -1,37 +1,55 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC 0/2] __vdso_findsym
-Date: Sat, 14 Jun 2014 23:49:53 -0700
-Message-ID: <CALCETrU47SPpiPbEWKOquy7dfBS01ctCirmZA=HH5Xa4jVy_4w@mail.gmail.com>
-References: <cover.1402769596.git.luto@amacapital.net> <20140614213000.GO179@brightrain.aerifal.cx>
- <CALCETrX3Kv7VAfYau-79odKtRvME0-AzZB_xGUMPEHeas8AkaQ@mail.gmail.com>
- <539CDC6F.6010501@zytor.com> <539D1A28.7040107@zytor.com>
+From: Jann Horn <jann@thejh.net>
+Subject: Re: [PATCH v3 3/7] shm: add memfd_create() syscall
+Date: Sun, 15 Jun 2014 12:50:14 +0200
+Message-ID: <20140615105014.GA8856@debjann.fritz.box>
+References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
+ <1402655819-14325-4-git-send-email-dh.herrmann@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <539D1A28.7040107-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Russ Cox <rsc-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ian Taylor <iant-iFWiy5xATs8dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="d6Gm4EdcadzBjdND"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1402655819-14325-4-git-send-email-dh.herrmann@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: linux-kernel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jun 14, 2014 at 8:59 PM, H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org> wrote:
-> On 06/14/2014 04:36 PM, H. Peter Anvin wrote:
->>
->> Now, if we can do this without adding another page then that becomes
->> much more compelling IMO.  I suspect we can if you are already down to
->> 488 bytes.
->>
->
-> (If it isn't already the case, was inteded to be part of that...)
 
-It's down to 375 bytes now.  I'm not sure how to do better than that
-without starting to hardcode variously nasty assumptions.
+--d6Gm4EdcadzBjdND
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-With CONFIG_PARAVIRT_CLOCK=y I think the 64-bit vdso is two pages
-anyway.  With CONFIG_PARAVIRT_CLOCK=n, it's one page even with my
-code.
+On Fri, Jun 13, 2014 at 12:36:55PM +0200, David Herrmann wrote:
+> +asmlinkage long sys_memfd_create(const char *uname_ptr, unsigned int flags);
+[...]
+> +SYSCALL_DEFINE2(memfd_create,
+> +		const char*, uname,
+> +		unsigned int, flags)
+> +{
 
-(At some point I plan on tackling the paravirt clock code.  It's much
-more complicated and much slower than it needs to be.)
+Shouldn't uname_ptr and uname be "const char __user *" instead of "const char *"?
 
---Andy
+--d6Gm4EdcadzBjdND
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAEBAgAGBQJTnXpmAAoJED4KNFJOeCOopPYQALj+Vm8+Sg6YXj6/wAsznNN4
+DwlnBNIt6mUTlXAMEpHonnEcSGE/YlaUQfwWLaVXvE++YosBqic4vA59PxFpAOvM
+kX+JULj1e9lVtklp88jk8ZFC98mc0/mndLQkLceurnGDoOPTtT0qD2DkO+bdJP8Z
+n+V3zqYp8Nv1gRpGnI37l07RGAyfCgI3nAmy/bA+O0jOh6EqX0OGP5HCRatCWrcN
+Xk3Ojx/3MUQWnRH5sR734F77L1znE+7SBGyvsA7orAQeKygEXqh+CKKyrvedG41i
+uKQcmBdrzlteyWB0GRkUnreiZ9GAc6P0MFOXwRZOgMGqQsRnPpY5Nrecigfi/XDi
+shQq++85x38wUXu4UJ3RKftqTJGSIrNeBTjdxfcCtRzDL1y3QUoDs4fdaMAHTlHi
+4vcrEQQ1aDMsZN6phL/NJ4Jg2q0xYIdbPOgiRSVL6UWtqdukyQIwIQhznpPOqsAf
+9yYov31M5VzCngJhejwwvX1KtNuAa6AeyTOYobP0Ek0BSDkEUCQdBufbELBSrpnY
+fGJ4HCEvoPUhZ8qVrFgpvLytz5h6/+Z8KHvMol8Rr/yC8pSusLcZO4L2EdF5eIAT
+q/xxJzblX4KgIDVpLRIlgoUG8+tVZk5ItsCTajfOVte5P6xYajwdebPP8XkqeKk0
+UmifGhoTM2F4xdNiTzH3
+=H7oB
+-----END PGP SIGNATURE-----
+
+--d6Gm4EdcadzBjdND--
