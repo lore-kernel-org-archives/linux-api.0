@@ -1,57 +1,39 @@
-From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues per
- virtio-blk device
-Date: Tue, 17 Jun 2014 23:50:57 +0800
-Message-ID: <CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
-References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
-	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>
-	<CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues
+	per virtio-blk device
+Date: Tue, 17 Jun 2014 17:53:25 +0200
+Message-ID: <53A06475.7000308@redhat.com>
+References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>	<CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
+	<CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stefan Hajnoczi <stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Virtualization <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Stefan Hajnoczi <stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Ming Lei <ming.lei@canonical.com>, Stefan Hajnoczi <stefanha@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, Linux Virtualization <virtualization@lists.linux-foundation.org>, Stefan Hajnoczi <stefanha@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 17, 2014 at 10:40 AM, Stefan Hajnoczi <stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Sat, Jun 14, 2014 at 1:29 AM, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
->> Firstly this patch supports more than one virtual queues for virtio-blk
->> device.
->>
->> Secondly this patch maps the virtual queue to blk-mq's hardware queue.
->>
->> With this approach, both scalability and performance problem can be improved.
->>
->> Signed-off-by: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
->> ---
->>  drivers/block/virtio_blk.c |   75 ++++++++++++++++++++++++++++++++------------
->>  1 file changed, 55 insertions(+), 20 deletions(-)
->>
->> diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
->> index f63d358..e0d077d 100644
->> --- a/drivers/block/virtio_blk.c
->> +++ b/drivers/block/virtio_blk.c
->> @@ -16,6 +16,8 @@
->>
->>  #define PART_BITS 4
->>
->> +#define MAX_NUM_VQ 16
->
-> It would be nice to allocate virtqueues dynamically instead of
-> hardcoding the limit.  virtio-scsi also allocates virtqueues
-> dynamically.
+Il 17/06/2014 17:50, Ming Lei ha scritto:
+>> > It would be nice to allocate virtqueues dynamically instead of
+>> > hardcoding the limit.  virtio-scsi also allocates virtqueues
+>> > dynamically.
+> virtio-scsi may have lots of LUN, but virtio-blk only has one disk
+> which needn't lots of hardware queues.
 
-virtio-scsi may have lots of LUN, but virtio-blk only has one disk
-which needn't lots of hardware queues.
+If you want to do queue steering based on the guest VCPU number, the 
+number of queues must be = to the number of VCPUs shouldn't it?
 
-Also it doesn't matter since it isn't part of ABI.
+I tried using a divisor of the number of VCPUs, but couldn't get the 
+block layer to deliver interrupts to the right VCPU.
 
-If change on virtio_blk_config is agreed, both host side and
-guest side can choose to support dynamic length or pre-defined
-length freely.
-
-Thanks,
---
-Ming Lei
+Paolo
