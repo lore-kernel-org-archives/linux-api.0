@@ -1,32 +1,57 @@
-From: "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>
-Subject: Re: MIPS MSA sigcontext changes in 3.15
-Date: Tue, 17 Jun 2014 15:44:36 +0000
-Message-ID: <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
-References: <Pine.LNX.4.64.1406171447030.23412@digraph.polyomino.org.uk>
+From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues per
+ virtio-blk device
+Date: Tue, 17 Jun 2014 23:50:57 +0800
+Message-ID: <CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
+References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
+	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>
+	<CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <Pine.LNX.4.64.1406171447030.23412-9YEB1lltEqivcGRMvF24k2I39yigxGEX@public.gmane.org>
+In-Reply-To: <CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Hajnoczi <stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Virtualization <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Stefan Hajnoczi <stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 17 Jun 2014, Joseph S. Myers wrote:
+On Tue, Jun 17, 2014 at 10:40 AM, Stefan Hajnoczi <stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Sat, Jun 14, 2014 at 1:29 AM, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+>> Firstly this patch supports more than one virtual queues for virtio-blk
+>> device.
+>>
+>> Secondly this patch maps the virtual queue to blk-mq's hardware queue.
+>>
+>> With this approach, both scalability and performance problem can be improved.
+>>
+>> Signed-off-by: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+>> ---
+>>  drivers/block/virtio_blk.c |   75 ++++++++++++++++++++++++++++++++------------
+>>  1 file changed, 55 insertions(+), 20 deletions(-)
+>>
+>> diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+>> index f63d358..e0d077d 100644
+>> --- a/drivers/block/virtio_blk.c
+>> +++ b/drivers/block/virtio_blk.c
+>> @@ -16,6 +16,8 @@
+>>
+>>  #define PART_BITS 4
+>>
+>> +#define MAX_NUM_VQ 16
+>
+> It would be nice to allocate virtqueues dynamically instead of
+> hardcoding the limit.  virtio-scsi also allocates virtqueues
+> dynamically.
 
-> signal mask at a particular offset in the ucontext.  As far as I can see, 
-> extending sigcontext requires a new sigaction flag that could be used to 
-> opt in, for a particular signal handler, to receiving the new-layout 
-> ucontext (so new symbol versions of sigaction in glibc could then pass 
-> that flag to the kernel, but existing binaries would continue to get 
-> old-layout ucontext from the kernel), or else putting the new data at the 
+virtio-scsi may have lots of LUN, but virtio-blk only has one disk
+which needn't lots of hardware queues.
 
-And a new flag would itself be problematic - signal handlers would need 
-wrapping with userspace code to convert structure layout when new-version 
-sigaction is used on an older kernel.  That suggests putting the new data 
-at the end of ucontext is to be preferred (but in any case it would be 
-best to revert the incompatible changes until something compatible with 
-existing userspace can be produced).
+Also it doesn't matter since it isn't part of ABI.
 
--- 
-Joseph S. Myers
-joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org
+If change on virtio_blk_config is agreed, both host side and
+guest side can choose to support dynamic length or pre-defined
+length freely.
+
+Thanks,
+--
+Ming Lei
