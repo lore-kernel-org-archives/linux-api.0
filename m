@@ -1,85 +1,110 @@
-From: "chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Subject: RE: [PATCH] ns: introduce getnspid syscall
-Date: Wed, 18 Jun 2014 10:03:40 +0000
-Message-ID: <5871495633F38949900D2BF2DC04883E548592@G08CNEXMBPEKD02.g08.fujitsu.local>
-References: <1403000496-10094-1-git-send-email-chenhanxiao@cn.fujitsu.com>
-	<87fvj3ngv0.fsf@x220.int.ebiederm.org>
+From: Paul Burton <paul.burton@imgtec.com>
+Subject: Re: MIPS MSA sigcontext changes in 3.15
+Date: Tue, 17 Jun 2014 17:25:09 +0100
+Message-ID: <20140617162509.GB7020@pburton-laptop.home>
+References: <Pine.LNX.4.64.1406171447030.23412@digraph.polyomino.org.uk>
+ <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7158187244849990721=="
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87fvj3ngv0.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Content-Language: zh-CN
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="2B/JsCI69OhZNC5r"
+Return-path: <libc-alpha-return-50900-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
+To: "Joseph S. Myers" <joseph@codesourcery.com>
+Cc: linux-mips@linux-mips.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
---===============7158187244849990721==
-Content-Language: zh-CN
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
-
-SGksDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogRXJpYyBXLiBCaWVk
-ZXJtYW4gW21haWx0bzplYmllZGVybUB4bWlzc2lvbi5jb21dDQo+IFNlbnQ6IFdlZG5lc2RheSwg
-SnVuZSAxOCwgMjAxNCA5OjMxIEFNDQo+IFRvOiBDaGVuLCBIYW54aWFvL7PCIOrPz/YNCj4gQ2M6
-IGNvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmc7IGxpbnV4LWtlcm5lbEB2Z2Vy
-Lmtlcm5lbC5vcmc7DQo+IEFuZHJldyBNb3J0b247IFNlcmdlIEhhbGx5bjsgRGFuaWVsIFAuIEJl
-cnJhbmdlOyBPbGVnIE5lc3Rlcm92OyBBbCBWaXJvOyBEYXZpZA0KPiBIb3dlbGxzOyBSaWNoYXJk
-IFdlaW5iZXJnZXI7IFBhdmVsIEVtZWx5YW5vdjsgVmFzaWxpeSBLdWxpa292OyBHb3RvdSwgWWFz
-dW5vcmkvDQo+IM7ljXUgv7XOxDsgTGludXggQVBJOyBNaWNoYWVsIEtlcnJpc2stbWFucGFnZXMN
-Cj4gU3ViamVjdDogUmU6IFtQQVRDSF0gbnM6IGludHJvZHVjZSBnZXRuc3BpZCBzeXNjYWxsDQo+
-IA0KPiBDaGVuIEhhbnhpYW8gPGNoZW5oYW54aWFvQGNuLmZ1aml0c3UuY29tPiB3cml0ZXM6DQo+
-IA0KPiA+IFdlIG5lZWQgYSBkaXJlY3QgbWV0aG9kIG9mIGdldHRpbmcgdGhlIHBpZCBpbnNpZGUg
-Y29udGFpbmVycy4NCj4gPiBJZiBzb21lIGlzc3VlcyBvY2N1cnJlZCBpbnNpZGUgY29udGFpbmVy
-IGd1ZXN0LCBob3N0IHVzZXINCj4gPiBjb3VsZCBub3Qga25vdyB3aGljaCBwcm9jZXNzIGlzIGlu
-IHRyb3VibGUganVzdCBieSBndWVzdCBwaWQ6DQo+ID4gdGhlIHVzZXJzIG9mIGNvbnRhaW5lciBn
-dWVzdCBvbmx5IGtuZXcgdGhlIHBpZCBpbnNpZGUgY29udGFpbmVycy4NCj4gPiBUaGlzIHdpbGwg
-YnJpbmcgb2JzdGFjbGUgZm9yIHRyb3VibGUgc2hvb3RpbmcuDQo+IA0KPiBUaGVyZSBpcyBhbHNv
-IHNvbWUgb25nb2luZyB3b3JrIHRvIGV4cG9ydCB0aGlzIGluZm9ybWF0aW9uIHZpYSBhIHByb2MN
-Cj4gZmlsZSB3aGljaCBzZWVtcyBtb3JlIGFwcHJvcHJpYXRlIGZvciBzb2x2aW5nIHlvdXIgcHJv
-YmxlbS4gIENlcnRhaW5seQ0KPiBmb3IgZGVidWdnaW5nIHNvbWV0aGluZyBlYXNpbHkgaHVtYW4g
-ZGlzY292ZXJhYmxlIGlzIG5lZWRlZC4NCj4gDQoNCkRvIHlvdSBtZWFuIHRoaXMgcGF0Y2g6DQov
-cHJvYy9waWQvc3RhdHVzOiBzaG93IGFsbCBzZXRzIG9mIHBpZCBhY2NvcmRpbmcgdG8gbnMNCmh0
-dHBzOi8vbGttbC5vcmcvbGttbC8yMDE0LzUvMjYvMTQ1DQoNCkJ1dCBubyBuZXcgY29tbWVudHMg
-b24gdGhpcyBwYXRjaCwNClBhdmVsIHN1Z2dlc3RlZCB0aGF0IGEgc3lzY2FsbCBzaG91bGQgYmUg
-YSBnb29kIGNob2ljZS4NCkRvIHdlIHNob3VsZCBjb250aW51ZSB0aGlzIGtpbmQgb2Ygd29yaz8N
-Cg0KPiA+IGludCBnZXRuc3BpZChwaWRfdCBwaWQsIGludCBmZDEsIGludCBmZDIsIGludCBwaWR0
-eXBlKTsNCj4gDQo+IFRoZSBwaWR0eXBlIGlzIG5vbnNlbnNlLiAgVGhlIHRyYW5zbGF0aW9uIG9m
-IGEgcGlkIGRvZXMgbm90IGRlcGVuZCB1cG9uDQo+IHR5cGUuICBVc2luZyB0aGF0IGtpbmQgb2Yg
-bm9uc2Vuc2Ugd2lsbCBsZWFkIHlvdSBhbmQgb3RoZXJzIGludG8gY29uZnVzaW9uLg0KPiANCg0K
-SSBzZWUuDQoNCj4gPiBwaWQ6IHRoZSBwaWQgbnVtYmVyIG5lZWQgdG8gYmUgdHJhbnNsYXRlZC4N
-Cj4gPg0KPiA+IGZkOiBhIGZpbGUgZGVzY3JpcHRvciByZWZlcnJpbmcgdG8gb25lIG9mDQo+ID4g
-ICAgIHRoZSBuYW1lc3BhY2UgZW50cmllcyBpbiBhIC9wcm9jL1twaWRdL25zL3BpZC4NCj4gPiAg
-ICAgZmQxIGZvciBkZXN0aW5hdGlvbiBucyhuczEpLCB3aGVyZSB0aGUgcGlkIGNhbWUgZnJvbS4N
-Cj4gPiAgICAgZmQyIGZvciByZWZlcmVuY2UgbnMobnMyKSwgd2hpbGUgZmQyID0gLTIgbWVhbnMg
-Zm9yIGN1cnJlbnQgbnMuDQo+ID4NCj4gPiBwaWR0eXBlOiAwIFBJRFRZUEVfUElEOyAxIFBJRFRZ
-UEVfUEdJRDsgMiBQSURUWVBFX1NJRC4NCj4gPg0KPiA+IHJldHVybiB2YWx1ZToNCj4gPiAgICAg
-PjA6IHRyYW5zbGF0ZWQgcGlkIGluIG5zMShmZDEpIHNlZW4gZnJvbSBuczIoZmQyKS4NCj4gPiAg
-ICAgPDA6IG9uIGZhaWx1cmUuDQo+IA0KPiBFbHNld2hlcmUgd2UgdXNlIDAgb24gcGlkIHRyYW5z
-bGF0aW9uIGZhaWx1cmUuICBXaHkgYmUgZGlmZmVyZW50IGhlcmU/DQo+IA0KDQpJdCBzaG91bGQg
-YmUgPD0wLiBBbmQgPDAgbWVhbnMgc29tZSBvdGhlciBmYWlsdXJlcy4NCg0KPiBFcmljDQo+IA0K
-PiANCj4gPiBTaWduZWQtb2ZmLWJ5OiBDaGVuIEhhbnhpYW8gPGNoZW5oYW54aWFvQGNuLmZ1aml0
-c3UuY29tPg0KPiA+ICsNCj4gPiArCXJjdV9yZWFkX2xvY2soKTsNCj4gPiArCXRhc2sgPSBmaW5k
-X3Rhc2tfYnlfcGlkX25zKHBpZCwgbnMxKTsNCj4gDQo+IFRoZSBmdW5jdGlvbnMgeW91IHdhbnQg
-dG8gYmUgdXNpbmcgaGVyZSBhcmU6DQo+IGZpbmRfcGlkX25zIGFuZCBwaWRfbnJfbnMuDQo+IA0K
-DQpUaGFua3MgZm9yIHlvdXIgaGludC4NCg0KLSBDaGVuDQoNCg0K
-
---===============7158187244849990721==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
+--2B/JsCI69OhZNC5r
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-_______________________________________________
-Containers mailing list
-Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-https://lists.linuxfoundation.org/mailman/listinfo/containers
---===============7158187244849990721==--
+On Tue, Jun 17, 2014 at 03:44:36PM +0000, Joseph S. Myers wrote:
+> On Tue, 17 Jun 2014, Joseph S. Myers wrote:
+>=20
+> > signal mask at a particular offset in the ucontext.  As far as I can se=
+e,=20
+> > extending sigcontext requires a new sigaction flag that could be used t=
+o=20
+> > opt in, for a particular signal handler, to receiving the new-layout=20
+> > ucontext (so new symbol versions of sigaction in glibc could then pass=
+=20
+> > that flag to the kernel, but existing binaries would continue to get=20
+> > old-layout ucontext from the kernel), or else putting the new data at t=
+he=20
+>=20
+> And a new flag would itself be problematic - signal handlers would need=
+=20
+> wrapping with userspace code to convert structure layout when new-version=
+=20
+> sigaction is used on an older kernel.  That suggests putting the new data=
+=20
+> at the end of ucontext is to be preferred (but in any case it would be=20
+> best to revert the incompatible changes until something compatible with=
+=20
+> existing userspace can be produced).
+>=20
+> --=20
+> Joseph S. Myers
+> joseph@codesourcery.com
+>=20
+
+True. Oops. I hadn't realised this...
+
+I wonder if the sensible thing is to switch to sigcontext merely
+containing a pointer to another struct holding FP state, much like x86.
+Only in response to a flag as you describe of course. That way the
+kernel could avoid the games it currently plays with splitting the
+vector registers into 64b pieces, and it would probably be more open
+to wider vector registers if they appear in the future.
+
+Anyway, I agree with reverting the sigcontext change (eec43a224cf1
+"MIPS: Save/restore MSA context around signals") in the meantime.
+
+Given:
+
+ - This issue.
+
+ - A couple of other MSA fixes I have pending cleanup.
+
+ - The fact that the only CPU the kernel supports which has MSA is the
+   P5600, and since that is 32b it can't actually make use of MSA
+   without the experimental CONFIG_MIPS_O32_FP64_SUPPORT option. Thus
+   MSA isn't actually being used yet beyond a few small groups who
+   accepted that big shouty experimental warning.
+
+=2E..I wonder if it makes sense to disable MSA support by default for the
+moment also.
+
+Thanks,
+    Paul
+
+--2B/JsCI69OhZNC5r
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJToGvlAAoJENzvn0paErs5osAQAIA00p/HcRCU4jMtBi0YH4he
+lUjUPwXU1dNas4AJOaiQBs/IW42byyvTNoRQ1XQXhZdbcpoVtCjdW2nSCL3ZL93d
+4m8f8VXVpQXEM2RpjWW+Y4ecCNSBqCNiBWw8+0jmOsxO/LOjdGZFucbNqReGn6lK
+2qNErsz0YgoupZ2MGW8+K+a7GG3IStc56/jeLM0fsvn2pSb0jAvgLIjsxRnl2Ou8
+4z/WPqxm67w0cUuCr0WBfPosH6+nZKpwO0t1Y49AbrG2Y/dPyHyKUkdAUdtTSryV
+giaahS//GWWj2bG+v4hmNvD08CfgGMb/5eMI3megLHS7KLH+rAu9Q9IsCyRs6Ekq
+ediQITxMag1xhjm18RwUyP1PsRnz85kClqYeXmTXpkX0fb4Qn/Mt0fRcgWVDSZML
+DRztIEkO/wGMeYwbUtsrn3UmEGlMhjBNBOhQmBToA0Lkxr+QXkgXU1EdnHvgxK78
+zChtiwXJIPqIm3AXgUXA3AeqabrqMXZkUc95zr5v5VovH2OFm+64/gbhiEdGIWpT
+IUJOVpMMrg/JlRgk6Mav4trXzVlKU7w/EmXTBfxtN53E6981EsWnDtgtGd91Z9QT
+nOsNWq94pSKew1rFKSlgbMEyYEe+pmeRFkm10ebqkmZ64e++FbWran/Mi00RDf6V
+7D7tSQldjlkpVbVidHiu
+=MwAg
+-----END PGP SIGNATURE-----
+
+--2B/JsCI69OhZNC5r--
