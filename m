@@ -1,42 +1,52 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues
-	per virtio-blk device
-Date: Tue, 17 Jun 2014 18:34:13 +0200
-Message-ID: <53A06E05.9060708@redhat.com>
-References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>	<CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>	<CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>	<53A06475.7000308@redhat.com>
-	<CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: Re: [PATCH v3 0/7] File Sealing & memfd_create()
+Date: Tue, 17 Jun 2014 18:36:55 +0200
+Message-ID: <CANq1E4QdGz6cRm2Y-vMQHV1O=VK74XNP8qCAmiAskVaVKpJuxg@mail.gmail.com>
+References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
+	<CALCETrVoE+JO2rLsBUHAOJdvescEEjxikj8iQ339Nxfopfc7pw@mail.gmail.com>
+	<CANq1E4SaWLD=hNEc-CDJbNnrGfXE_PkxZFBhpW4tbK7wor7xPA@mail.gmail.com>
+	<CALCETrU8N9EbnJ3=oQ1WQCG9Vunn3nR9Ba=J48wJm0SuH0YB4A@mail.gmail.com>
+	<CANq1E4QQUKHabheq18AzkVZk3WDtAeC-6W66tVNB+EKgYOx1Vg@mail.gmail.com>
+	<53A01049.6020502@redhat.com>
+	<CANq1E4T3KJZ++=KF2OZ_dd+NvPqg+=4Pw6O7Po3-ZxaaMHPukw@mail.gmail.com>
+	<CALCETrVpZ0vFM4usHK+tQhk234Y2jWzB1522kGcGvdQQFAqsZQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Ming Lei <ming.lei@canonical.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Michael S. Tsirkin" <mst@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux Virtualization <virtualization@lists.linux-foundation.org>, Stefan Hajnoczi <stefanha@redhat.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALCETrVpZ0vFM4usHK+tQhk234Y2jWzB1522kGcGvdQQFAqsZQ@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Greg KH <greg@kroah.com>, Florian Weimer <fweimer@redhat.com>, Hugh Dickins <hughd@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Lennart Poettering <lennart@poettering.net>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kay Sievers <kay@vrfy.org>, John Stultz <john.stultz@linaro.org>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel Mack <zonque@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tony Battersby <tonyb@cybernetics.com>
 List-Id: linux-api@vger.kernel.org
 
-Il 17/06/2014 18:00, Ming Lei ha scritto:
->> > If you want to do queue steering based on the guest VCPU number, the number
->> > of queues must be = to the number of VCPUs shouldn't it?
->> >
->> > I tried using a divisor of the number of VCPUs, but couldn't get the block
->> > layer to deliver interrupts to the right VCPU.
-> For blk-mq's hardware queue, that won't be necessary to equal to
-> VCPUs number, and irq affinity per hw queue can be simply set as
-> blk_mq_hw_ctx->cpumask.
+Hi
 
-Yes, but on top of that you want to have each request processed exactly 
-by the CPU that sent it.  Unless the cpumasks are singletons, most of 
-the benefit went away in my virtio-scsi tests.  Perhaps blk-mq is smarter.
+On Tue, Jun 17, 2014 at 6:20 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+> Can you summarize why holes can't be reliably backed by the zero page?
 
-Can you try benchmarking a 16 VCPU guest with 8 and 16 queues?
+To answer this, I will quote Hugh from "PATCH v2 1/3":
 
-Paolo
+> We do already use the ZERO_PAGE instead of allocating when it's a
+> simple read; and on the face of it, we could extend that to mmap
+> once the file is sealed.  But I am rather afraid to do so - for
+> many years there was an mmap /dev/zero case which did that, but
+> it was an easily forgotten case which caught us out at least
+> once, so I'm reluctant to reintroduce it now for sealing.
+>
+> Anyway, I don't expect you to resolve the issue of sealed holes:
+> that's very much my territory, to give you support on.
+
+Holes can be avoided with a simple fallocate(). I don't understand why
+I should make SEAL_WRITE do the fallocate for the caller. During the
+discussion of memfd_create() I was told to drop the "size" parameter,
+because it is redundant. I don't see how this implicit fallocate()
+does not fall into the same category?
+
+Thanks
+David
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
