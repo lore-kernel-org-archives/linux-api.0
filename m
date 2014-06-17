@@ -1,85 +1,68 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v3 0/7] File Sealing & memfd_create()
-Date: Tue, 17 Jun 2014 10:01:05 -0700
-Message-ID: <CALCETrWCbc=nhK-_+=uwCpUH0ZYWJXLwObVzAQeT20q8STa4Gw@mail.gmail.com>
-References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
- <CALCETrVoE+JO2rLsBUHAOJdvescEEjxikj8iQ339Nxfopfc7pw@mail.gmail.com>
- <CANq1E4SaWLD=hNEc-CDJbNnrGfXE_PkxZFBhpW4tbK7wor7xPA@mail.gmail.com>
- <CALCETrU8N9EbnJ3=oQ1WQCG9Vunn3nR9Ba=J48wJm0SuH0YB4A@mail.gmail.com>
- <CANq1E4QQUKHabheq18AzkVZk3WDtAeC-6W66tVNB+EKgYOx1Vg@mail.gmail.com>
- <53A01049.6020502@redhat.com> <CANq1E4T3KJZ++=KF2OZ_dd+NvPqg+=4Pw6O7Po3-ZxaaMHPukw@mail.gmail.com>
- <CALCETrVpZ0vFM4usHK+tQhk234Y2jWzB1522kGcGvdQQFAqsZQ@mail.gmail.com>
- <CANq1E4QdGz6cRm2Y-vMQHV1O=VK74XNP8qCAmiAskVaVKpJuxg@mail.gmail.com>
- <CALCETrVerC155vzO-1Js1W8cRTYat0-+OGOxW+kSynJor6rJag@mail.gmail.com> <CANq1E4RqLLk8_Fn=e-c2g29_uiD-R59u=WKF9Tka33L5G9VA9Q@mail.gmail.com>
+From: Paul Burton <paul.burton-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Subject: Re: MIPS MSA sigcontext changes in 3.15
+Date: Tue, 17 Jun 2014 19:14:09 +0100
+Message-ID: <20140617181409.GD7020@pburton-laptop.home>
+References: <Pine.LNX.4.64.1406171447030.23412@digraph.polyomino.org.uk>
+ <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CANq1E4RqLLk8_Fn=e-c2g29_uiD-R59u=WKF9Tka33L5G9VA9Q@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: David Herrmann <dh.herrmann@gmail.com>
-Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Greg KH <greg@kroah.com>, Florian Weimer <fweimer@redhat.com>, Hugh Dickins <hughd@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Lennart Poettering <lennart@poettering.net>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kay Sievers <kay@vrfy.org>, John Stultz <john.stultz@linaro.org>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel Mack <zonque@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tony Battersby <tonyb@cybernetics.com>
+Content-Type: text/plain; charset="utf-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1406171539240.23412-9YEB1lltEqivcGRMvF24k2I39yigxGEX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>
+Cc: linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 17, 2014 at 9:51 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
-> Hi
->
-> On Tue, Jun 17, 2014 at 6:41 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Tue, Jun 17, 2014 at 9:36 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
->>> Hi
->>>
->>> On Tue, Jun 17, 2014 at 6:20 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>> Can you summarize why holes can't be reliably backed by the zero page?
->>>
->>> To answer this, I will quote Hugh from "PATCH v2 1/3":
->>>
->>>> We do already use the ZERO_PAGE instead of allocating when it's a
->>>> simple read; and on the face of it, we could extend that to mmap
->>>> once the file is sealed.  But I am rather afraid to do so - for
->>>> many years there was an mmap /dev/zero case which did that, but
->>>> it was an easily forgotten case which caught us out at least
->>>> once, so I'm reluctant to reintroduce it now for sealing.
->>>>
->>>> Anyway, I don't expect you to resolve the issue of sealed holes:
->>>> that's very much my territory, to give you support on.
->>>
->>> Holes can be avoided with a simple fallocate(). I don't understand why
->>> I should make SEAL_WRITE do the fallocate for the caller. During the
->>> discussion of memfd_create() I was told to drop the "size" parameter,
->>> because it is redundant. I don't see how this implicit fallocate()
->>> does not fall into the same category?
->>>
->>
->> I'm really confused now.
->>
->> If I SEAL_WRITE a file, and then I mmap it PROT_READ, and then I read
->> it, is that a "simple read"?  If so, doesn't that mean that there's no
->> problem?
->
-> I assumed Hugh was talking about read(). So no, this is not about
-> memory-reads on mmap()ed regions.
->
-> Looking at shmem_file_read_iter() I can see a ZERO_PAGE(0) call in
-> case shmem_getpage_gfp(SGP_READ) tells us there's a hole. I cannot see
-> anything like that in the mmap_region() and shmem_fault() paths.
+On Tue, Jun 17, 2014 at 03:44:36PM +0000, Joseph S. Myers wrote:
+> On Tue, 17 Jun 2014, Joseph S. Myers wrote:
+> 
+> > signal mask at a particular offset in the ucontext.  As far as I can see, 
+> > extending sigcontext requires a new sigaction flag that could be used to 
+> > opt in, for a particular signal handler, to receiving the new-layout 
+> > ucontext (so new symbol versions of sigaction in glibc could then pass 
+> > that flag to the kernel, but existing binaries would continue to get 
+> > old-layout ucontext from the kernel), or else putting the new data at the 
+> 
+> And a new flag would itself be problematic - signal handlers would need 
+> wrapping with userspace code to convert structure layout when new-version 
+> sigaction is used on an older kernel.  That suggests putting the new data 
+> at the end of ucontext is to be preferred (but in any case it would be 
+> best to revert the incompatible changes until something compatible with 
+> existing userspace can be produced).
+> 
+> -- 
+> Joseph S. Myers
+> joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org
+> 
 
-Would it be easy to fix this just for SEAL_WRITE files?  Hugh?
+True. Oops. I hadn't realised this...
 
-This would make the interface much nicer, IMO.
+I wonder if the sensible thing is to switch to sigcontext merely
+containing a pointer to another struct holding FP state, much like x86.
+Only in response to a flag as you describe of course. That way the
+kernel could avoid the games it currently plays with splitting the
+vector registers into 64b pieces, and it would probably be more open
+to wider vector registers if they appear in the future.
 
---Andy
+Anyway, I agree with reverting the sigcontext change (eec43a224cf1
+"MIPS: Save/restore MSA context around signals") in the meantime. I'll
+submit a patch as soon as I can.
 
->
-> Thanks
-> David
+Given:
 
+ - This issue.
 
+ - A couple of other MSA fixes I have pending cleanup.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+ - The fact that the only CPU the kernel supports which has MSA is the
+      P5600, and since that is 32b it can't actually make use of MSA
+   without the experimental CONFIG_MIPS_O32_FP64_SUPPORT option. Thus
+   MSA isn't actually being used yet beyond a few small groups who
+   accepted that big shouty experimental warning.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+...I wonder if it makes sense to disable MSA support by default for the
+moment also.
+
+Thanks,
+    Paul
