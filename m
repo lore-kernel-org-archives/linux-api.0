@@ -1,62 +1,53 @@
-From: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>
-Subject: Re: [RFC PATCH 1/2] include/uapi/linux/virtio_blk.h: introduce feature of VIRTIO_BLK_F_MQ
-Date: Mon, 16 Jun 2014 22:12:50 +0930
-Message-ID: <87a99dnhyt.fsf@rustcorp.com.au>
-References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com> <1402680562-8328-2-git-send-email-ming.lei@canonical.com>
+From: Stefan Hajnoczi <stefanha@gmail.com>
+Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues per
+	virtio-blk device
+Date: Tue, 17 Jun 2014 10:40:56 +0800
+Message-ID: <CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
+References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
+	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1402680562-8328-2-git-send-email-ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stefan Hajnoczi <stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <1402680562-8328-3-git-send-email-ming.lei@canonical.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Ming Lei <ming.lei@canonical.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, Linux Virtualization <virtualization@lists.linux-foundation.org>, Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> writes:
-> Current virtio-blk spec only supports one virtual queue for transfering
-> data between VM and host, and inside VM all kinds of operations on
-> the virtual queue needs to hold one lock, so cause below problems:
+On Sat, Jun 14, 2014 at 1:29 AM, Ming Lei <ming.lei@canonical.com> wrote:
+> Firstly this patch supports more than one virtual queues for virtio-blk
+> device.
 >
-> 	- no scalability
->     - bad throughput
+> Secondly this patch maps the virtual queue to blk-mq's hardware queue.
 >
-> So this patch requests to introduce feature of VIRTIO_BLK_F_MQ
-> so that more than one virtual queues can be used to virtio-blk
-> device, then above problems can be solved or eased.
+> With this approach, both scalability and performance problem can be improved.
 >
-> Signed-off-by: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+> Signed-off-by: Ming Lei <ming.lei@canonical.com>
 > ---
->  include/uapi/linux/virtio_blk.h |    4 ++++
->  1 file changed, 4 insertions(+)
+>  drivers/block/virtio_blk.c |   75 ++++++++++++++++++++++++++++++++------------
+>  1 file changed, 55 insertions(+), 20 deletions(-)
 >
-> diff --git a/include/uapi/linux/virtio_blk.h b/include/uapi/linux/virtio_blk.h
-> index 6d8e61c..c5a2751 100644
-> --- a/include/uapi/linux/virtio_blk.h
-> +++ b/include/uapi/linux/virtio_blk.h
-> @@ -40,6 +40,7 @@
->  #define VIRTIO_BLK_F_WCE	9	/* Writeback mode enabled after reset */
->  #define VIRTIO_BLK_F_TOPOLOGY	10	/* Topology information is available */
->  #define VIRTIO_BLK_F_CONFIG_WCE	11	/* Writeback mode available in config */
-> +#define VIRTIO_BLK_F_MQ		12	/* support more than one vq */
->  
->  #ifndef __KERNEL__
->  /* Old (deprecated) name for VIRTIO_BLK_F_WCE. */
-> @@ -77,6 +78,9 @@ struct virtio_blk_config {
->  
->  	/* writeback mode (if VIRTIO_BLK_F_CONFIG_WCE) */
->  	__u8 wce;
-> +
-> +	/* number of vqs, only available when VIRTIO_BLK_F_MQ is set */
-> +	__u16 num_queues;
->  } __attribute__((packed));
+> diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+> index f63d358..e0d077d 100644
+> --- a/drivers/block/virtio_blk.c
+> +++ b/drivers/block/virtio_blk.c
+> @@ -16,6 +16,8 @@
+>
+>  #define PART_BITS 4
+>
+> +#define MAX_NUM_VQ 16
 
-Hmm, please pad this like so:
+It would be nice to allocate virtqueues dynamically instead of
+hardcoding the limit.  virtio-scsi also allocates virtqueues
+dynamically.
 
-        __u8 unused;
-
-        __u16 num_queues;
-
-That avoids weird alignment.
-
-Thanks,
-Rusty.
+Stefan
