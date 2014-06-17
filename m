@@ -1,48 +1,42 @@
-From: Matthew Fortune <Matthew.Fortune-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: RE: MIPS MSA sigcontext changes in 3.15
-Date: Tue, 17 Jun 2014 16:32:40 +0000
-Message-ID: <6D39441BF12EF246A7ABCE6654B0235320E03BD4@LEMAIL01.le.imgtec.org>
-References: <Pine.LNX.4.64.1406171447030.23412@digraph.polyomino.org.uk>
- <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues
+	per virtio-blk device
+Date: Tue, 17 Jun 2014 18:34:13 +0200
+Message-ID: <53A06E05.9060708@redhat.com>
+References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>	<CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>	<CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>	<53A06475.7000308@redhat.com>
+	<CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <Pine.LNX.4.64.1406171539240.23412-9YEB1lltEqivcGRMvF24k2I39yigxGEX@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>, "linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org" <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Ming Lei <ming.lei@canonical.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Michael S. Tsirkin" <mst@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux Virtualization <virtualization@lists.linux-foundation.org>, Stefan Hajnoczi <stefanha@redhat.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Joseph S. Myers <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org> writes:
-> On Tue, 17 Jun 2014, Joseph S. Myers wrote:
-> 
-> > signal mask at a particular offset in the ucontext.  As far as I can see,
-> > extending sigcontext requires a new sigaction flag that could be used to
-> > opt in, for a particular signal handler, to receiving the new-layout
-> > ucontext (so new symbol versions of sigaction in glibc could then pass
-> > that flag to the kernel, but existing binaries would continue to get
-> > old-layout ucontext from the kernel), or else putting the new data at the
-> 
-> And a new flag would itself be problematic - signal handlers would need
-> wrapping with userspace code to convert structure layout when new-version
-> sigaction is used on an older kernel.  That suggests putting the new data
-> at the end of ucontext is to be preferred (but in any case it would be
-> best to revert the incompatible changes until something compatible with
-> existing userspace can be produced).
+Il 17/06/2014 18:00, Ming Lei ha scritto:
+>> > If you want to do queue steering based on the guest VCPU number, the number
+>> > of queues must be = to the number of VCPUs shouldn't it?
+>> >
+>> > I tried using a divisor of the number of VCPUs, but couldn't get the block
+>> > layer to deliver interrupts to the right VCPU.
+> For blk-mq's hardware queue, that won't be necessary to equal to
+> VCPUs number, and irq affinity per hw queue can be simply set as
+> blk_mq_hw_ctx->cpumask.
 
-An attempt was made to appropriately version the sigcontext structure to
-allow readers to determine whether the MSA part of the context was present
-or not but this only helps the sigcontext structure and not necessarily
-the impact that has on the overall ucontext. On the face of it then it
-does seem better to have the extra context at the end of ucontext as it
-does indeed look broken for existing glibc versions.
+Yes, but on top of that you want to have each request processed exactly 
+by the CPU that sent it.  Unless the cpumasks are singletons, most of 
+the benefit went away in my virtio-scsi tests.  Perhaps blk-mq is smarter.
 
-A brief scan of how other architectures have handled extending ucontext
-shows a wide variety of solutions although adding to the end of ucontext
-seems to be the underlying theme.
+Can you try benchmarking a 16 VCPU guest with 8 and 16 queues?
 
-Thanks for finding this.
-
-Regards,
-Matthew
+Paolo
