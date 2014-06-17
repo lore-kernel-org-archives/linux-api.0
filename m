@@ -1,156 +1,48 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v3 0/7] File Sealing & memfd_create()
-Date: Tue, 17 Jun 2014 09:20:46 -0700
-Message-ID: <CALCETrVpZ0vFM4usHK+tQhk234Y2jWzB1522kGcGvdQQFAqsZQ@mail.gmail.com>
-References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
- <CALCETrVoE+JO2rLsBUHAOJdvescEEjxikj8iQ339Nxfopfc7pw@mail.gmail.com>
- <CANq1E4SaWLD=hNEc-CDJbNnrGfXE_PkxZFBhpW4tbK7wor7xPA@mail.gmail.com>
- <CALCETrU8N9EbnJ3=oQ1WQCG9Vunn3nR9Ba=J48wJm0SuH0YB4A@mail.gmail.com>
- <CANq1E4QQUKHabheq18AzkVZk3WDtAeC-6W66tVNB+EKgYOx1Vg@mail.gmail.com>
- <53A01049.6020502@redhat.com> <CANq1E4T3KJZ++=KF2OZ_dd+NvPqg+=4Pw6O7Po3-ZxaaMHPukw@mail.gmail.com>
+From: Matthew Fortune <Matthew.Fortune-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Subject: RE: MIPS MSA sigcontext changes in 3.15
+Date: Tue, 17 Jun 2014 16:32:40 +0000
+Message-ID: <6D39441BF12EF246A7ABCE6654B0235320E03BD4@LEMAIL01.le.imgtec.org>
+References: <Pine.LNX.4.64.1406171447030.23412@digraph.polyomino.org.uk>
+ <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/alternative; boundary=089e01182c3ee1a3f004fc0a8717
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CANq1E4T3KJZ++=KF2OZ_dd+NvPqg+=4Pw6O7Po3-ZxaaMHPukw@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: David Herrmann <dh.herrmann@gmail.com>
-Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Greg KH <greg@kroah.com>, Florian Weimer <fweimer@redhat.com>, Hugh Dickins <hughd@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Lennart Poettering <lennart@poettering.net>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kay Sievers <kay@vrfy.org>, John Stultz <john.stultz@linaro.org>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel Mack <zonque@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tony Battersby <tonyb@cybernetics.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <Pine.LNX.4.64.1406171539240.23412-9YEB1lltEqivcGRMvF24k2I39yigxGEX@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>, "linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org" <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---089e01182c3ee1a3f004fc0a8717
-Content-Type: text/plain; charset=UTF-8
+Joseph S. Myers <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org> writes:
+> On Tue, 17 Jun 2014, Joseph S. Myers wrote:
+> 
+> > signal mask at a particular offset in the ucontext.  As far as I can see,
+> > extending sigcontext requires a new sigaction flag that could be used to
+> > opt in, for a particular signal handler, to receiving the new-layout
+> > ucontext (so new symbol versions of sigaction in glibc could then pass
+> > that flag to the kernel, but existing binaries would continue to get
+> > old-layout ucontext from the kernel), or else putting the new data at the
+> 
+> And a new flag would itself be problematic - signal handlers would need
+> wrapping with userspace code to convert structure layout when new-version
+> sigaction is used on an older kernel.  That suggests putting the new data
+> at the end of ucontext is to be preferred (but in any case it would be
+> best to revert the incompatible changes until something compatible with
+> existing userspace can be produced).
 
-On Jun 17, 2014 3:01 AM, "David Herrmann" <dh.herrmann@gmail.com> wrote:
->
-> Hi
->
-> On Tue, Jun 17, 2014 at 11:54 AM, Florian Weimer <fweimer@redhat.com>
-wrote:
-> > On 06/13/2014 05:33 PM, David Herrmann wrote:
-> >>
-> >> On Fri, Jun 13, 2014 at 5:17 PM, Andy Lutomirski <luto@amacapital.net>
-> >> wrote:
-> >>>
-> >>> Isn't the point of SEAL_SHRINK to allow servers to mmap and read
-> >>> safely without worrying about SIGBUS?
-> >>
-> >>
-> >> No, I don't think so.
-> >> The point of SEAL_SHRINK is to prevent a file from shrinking. SIGBUS
-> >> is an effect, not a cause. It's only a coincidence that "OOM during
-> >> reads" and "reading beyond file-boundaries" has the same effect:
-> >> SIGBUS.
-> >> We only protect against reading beyond file-boundaries due to
-> >> shrinking. Therefore, OOM-SIGBUS is unrelated to SEAL_SHRINK.
-> >>
-> >> Anyone dealing with mmap() _has_ to use mlock() to protect against
-> >> OOM-SIGBUS. Making SEAL_SHRINK protect against OOM-SIGBUS would be
-> >> redundant, because you can achieve the same with SEAL_SHRINK+mlock().
-> >
-> >
-> > I don't think this is what potential users expect because mlock requires
-> > capabilities which are not available to them.
-> >
-> > A couple of weeks ago, sealing was to be applied to anonymous shared
-memory.
-> > Has this changed?  Why should *reading* it trigger OOM?
->
-> The file might have holes, therefore, you'd have to allocate backing
-> pages. This might hit a soft-limit and fail. To avoid this, use
-> fallocate() to allocate pages prior to mmap() or mlock() to make the
-> kernel lock them in memory.
->
+An attempt was made to appropriately version the sigcontext structure to
+allow readers to determine whether the MSA part of the context was present
+or not but this only helps the sigcontext structure and not necessarily
+the impact that has on the overall ucontext. On the face of it then it
+does seem better to have the extra context at the end of ucontext as it
+does indeed look broken for existing glibc versions.
 
-Can you summarize why holes can't be reliably backed by the zero page?
+A brief scan of how other architectures have handled extending ucontext
+shows a wide variety of solutions although adding to the end of ucontext
+seems to be the underlying theme.
 
-(I realize the kernel could OOM on PTE allocation, but fallocate won't fix
-that. OTOH MAP_POPULATE should work.)
+Thanks for finding this.
 
-And I don't think I like hole filling being allowed on write-sealed files.
-Holes are observable these days with SEEK_HOLE and such.
-
-Alternatively, we could add a new syscall or madvise option to populate a
-mapping.
-
---Andy
-
---089e01182c3ee1a3f004fc0a8717
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><p dir=3D"ltr"><br>
-On Jun 17, 2014 3:01 AM, &quot;David Herrmann&quot; &lt;<a href=3D"mailto:d=
-h.herrmann@gmail.com" target=3D"_blank">dh.herrmann@gmail.com</a>&gt; wrote=
-:<br>
-&gt;<br>
-&gt; Hi<br>
-&gt;<br>
-&gt; On Tue, Jun 17, 2014 at 11:54 AM, Florian Weimer &lt;<a href=3D"mailto=
-:fweimer@redhat.com" target=3D"_blank">fweimer@redhat.com</a>&gt; wrote:<br=
->
-&gt; &gt; On 06/13/2014 05:33 PM, David Herrmann wrote:<br>
-&gt; &gt;&gt;<br>
-&gt; &gt;&gt; On Fri, Jun 13, 2014 at 5:17 PM, Andy Lutomirski &lt;<a href=
-=3D"mailto:luto@amacapital.net" target=3D"_blank">luto@amacapital.net</a>&g=
-t;<br>
-&gt; &gt;&gt; wrote:<br>
-&gt; &gt;&gt;&gt;<br>
-&gt; &gt;&gt;&gt; Isn&#39;t the point of SEAL_SHRINK to allow servers to mm=
-ap and read<br>
-&gt; &gt;&gt;&gt; safely without worrying about SIGBUS?<br>
-&gt; &gt;&gt;<br>
-&gt; &gt;&gt;<br>
-&gt; &gt;&gt; No, I don&#39;t think so.<br>
-&gt; &gt;&gt; The point of SEAL_SHRINK is to prevent a file from shrinking.=
- SIGBUS<br>
-&gt; &gt;&gt; is an effect, not a cause. It&#39;s only a coincidence that &=
-quot;OOM during<br>
-&gt; &gt;&gt; reads&quot; and &quot;reading beyond file-boundaries&quot; ha=
-s the same effect:<br>
-&gt; &gt;&gt; SIGBUS.<br>
-&gt; &gt;&gt; We only protect against reading beyond file-boundaries due to=
-<br>
-&gt; &gt;&gt; shrinking. Therefore, OOM-SIGBUS is unrelated to SEAL_SHRINK.=
-<br>
-&gt; &gt;&gt;<br>
-&gt; &gt;&gt; Anyone dealing with mmap() _has_ to use mlock() to protect ag=
-ainst<br>
-&gt; &gt;&gt; OOM-SIGBUS. Making SEAL_SHRINK protect against OOM-SIGBUS wou=
-ld be<br>
-&gt; &gt;&gt; redundant, because you can achieve the same with SEAL_SHRINK+=
-mlock().<br>
-&gt; &gt;<br>
-&gt; &gt;<br>
-&gt; &gt; I don&#39;t think this is what potential users expect because mlo=
-ck requires<br>
-&gt; &gt; capabilities which are not available to them.<br>
-&gt; &gt;<br>
-&gt; &gt; A couple of weeks ago, sealing was to be applied to anonymous sha=
-red memory.<br>
-&gt; &gt; Has this changed? =C2=A0Why should *reading* it trigger OOM?<br>
-&gt;<br>
-&gt; The file might have holes, therefore, you&#39;d have to allocate backi=
-ng<br>
-&gt; pages. This might hit a soft-limit and fail. To avoid this, use<br>
-&gt; fallocate() to allocate pages prior to mmap() or mlock() to make the<b=
-r>
-&gt; kernel lock them in memory.<br>
-&gt;</p>
-<p dir=3D"ltr">Can you summarize why holes can&#39;t be reliably backed by =
-the zero page?</p>
-<p dir=3D"ltr">(I realize the kernel could OOM on PTE allocation, but fallo=
-cate won&#39;t fix that. OTOH MAP_POPULATE should work.)</p>
-<p dir=3D"ltr">And I don&#39;t think I like hole filling being allowed on w=
-rite-sealed files.=C2=A0 Holes are observable these days with SEEK_HOLE and=
- such.</p><p>Alternatively, we could add a new syscall or madvise option to=
- populate a mapping.<br>
-
-</p><p>--Andy</p></div>
-
---089e01182c3ee1a3f004fc0a8717--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Regards,
+Matthew
