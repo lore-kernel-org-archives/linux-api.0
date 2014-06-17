@@ -1,52 +1,156 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues per
-	virtio-blk device
-Date: Wed, 18 Jun 2014 00:00:07 +0800
-Message-ID: <CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
-References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
-	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>
-	<CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
-	<CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
-	<53A06475.7000308@redhat.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v3 0/7] File Sealing & memfd_create()
+Date: Tue, 17 Jun 2014 09:20:46 -0700
+Message-ID: <CALCETrVpZ0vFM4usHK+tQhk234Y2jWzB1522kGcGvdQQFAqsZQ@mail.gmail.com>
+References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
+ <CALCETrVoE+JO2rLsBUHAOJdvescEEjxikj8iQ339Nxfopfc7pw@mail.gmail.com>
+ <CANq1E4SaWLD=hNEc-CDJbNnrGfXE_PkxZFBhpW4tbK7wor7xPA@mail.gmail.com>
+ <CALCETrU8N9EbnJ3=oQ1WQCG9Vunn3nR9Ba=J48wJm0SuH0YB4A@mail.gmail.com>
+ <CANq1E4QQUKHabheq18AzkVZk3WDtAeC-6W66tVNB+EKgYOx1Vg@mail.gmail.com>
+ <53A01049.6020502@redhat.com> <CANq1E4T3KJZ++=KF2OZ_dd+NvPqg+=4Pw6O7Po3-ZxaaMHPukw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <53A06475.7000308@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Paolo Bonzini <pbonzini@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Michael S. Tsirkin" <mst@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux Virtualization <virtualization@lists.linux-foundation.org>, Stefan Hajnoczi <stefanha@redhat.com>, linux-api@vger.kernel.org
+Content-Type: multipart/alternative; boundary=089e01182c3ee1a3f004fc0a8717
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CANq1E4T3KJZ++=KF2OZ_dd+NvPqg+=4Pw6O7Po3-ZxaaMHPukw@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Greg KH <greg@kroah.com>, Florian Weimer <fweimer@redhat.com>, Hugh Dickins <hughd@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Lennart Poettering <lennart@poettering.net>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kay Sievers <kay@vrfy.org>, John Stultz <john.stultz@linaro.org>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel Mack <zonque@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tony Battersby <tonyb@cybernetics.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 17, 2014 at 11:53 PM, Paolo Bonzini <pbonzini@redhat.com> wrote:
-> Il 17/06/2014 17:50, Ming Lei ha scritto:
->
->>> > It would be nice to allocate virtqueues dynamically instead of
->>> > hardcoding the limit.  virtio-scsi also allocates virtqueues
->>> > dynamically.
->>
->> virtio-scsi may have lots of LUN, but virtio-blk only has one disk
->> which needn't lots of hardware queues.
->
->
-> If you want to do queue steering based on the guest VCPU number, the number
-> of queues must be = to the number of VCPUs shouldn't it?
->
-> I tried using a divisor of the number of VCPUs, but couldn't get the block
-> layer to deliver interrupts to the right VCPU.
+--089e01182c3ee1a3f004fc0a8717
+Content-Type: text/plain; charset=UTF-8
 
-For blk-mq's hardware queue, that won't be necessary to equal to
-VCPUs number, and irq affinity per hw queue can be simply set as
-blk_mq_hw_ctx->cpumask.
+On Jun 17, 2014 3:01 AM, "David Herrmann" <dh.herrmann@gmail.com> wrote:
+>
+> Hi
+>
+> On Tue, Jun 17, 2014 at 11:54 AM, Florian Weimer <fweimer@redhat.com>
+wrote:
+> > On 06/13/2014 05:33 PM, David Herrmann wrote:
+> >>
+> >> On Fri, Jun 13, 2014 at 5:17 PM, Andy Lutomirski <luto@amacapital.net>
+> >> wrote:
+> >>>
+> >>> Isn't the point of SEAL_SHRINK to allow servers to mmap and read
+> >>> safely without worrying about SIGBUS?
+> >>
+> >>
+> >> No, I don't think so.
+> >> The point of SEAL_SHRINK is to prevent a file from shrinking. SIGBUS
+> >> is an effect, not a cause. It's only a coincidence that "OOM during
+> >> reads" and "reading beyond file-boundaries" has the same effect:
+> >> SIGBUS.
+> >> We only protect against reading beyond file-boundaries due to
+> >> shrinking. Therefore, OOM-SIGBUS is unrelated to SEAL_SHRINK.
+> >>
+> >> Anyone dealing with mmap() _has_ to use mlock() to protect against
+> >> OOM-SIGBUS. Making SEAL_SHRINK protect against OOM-SIGBUS would be
+> >> redundant, because you can achieve the same with SEAL_SHRINK+mlock().
+> >
+> >
+> > I don't think this is what potential users expect because mlock requires
+> > capabilities which are not available to them.
+> >
+> > A couple of weeks ago, sealing was to be applied to anonymous shared
+memory.
+> > Has this changed?  Why should *reading* it trigger OOM?
+>
+> The file might have holes, therefore, you'd have to allocate backing
+> pages. This might hit a soft-limit and fail. To avoid this, use
+> fallocate() to allocate pages prior to mmap() or mlock() to make the
+> kernel lock them in memory.
+>
 
-Thanks,
+Can you summarize why holes can't be reliably backed by the zero page?
+
+(I realize the kernel could OOM on PTE allocation, but fallocate won't fix
+that. OTOH MAP_POPULATE should work.)
+
+And I don't think I like hole filling being allowed on write-sealed files.
+Holes are observable these days with SEEK_HOLE and such.
+
+Alternatively, we could add a new syscall or madvise option to populate a
+mapping.
+
+--Andy
+
+--089e01182c3ee1a3f004fc0a8717
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><p dir=3D"ltr"><br>
+On Jun 17, 2014 3:01 AM, &quot;David Herrmann&quot; &lt;<a href=3D"mailto:d=
+h.herrmann@gmail.com" target=3D"_blank">dh.herrmann@gmail.com</a>&gt; wrote=
+:<br>
+&gt;<br>
+&gt; Hi<br>
+&gt;<br>
+&gt; On Tue, Jun 17, 2014 at 11:54 AM, Florian Weimer &lt;<a href=3D"mailto=
+:fweimer@redhat.com" target=3D"_blank">fweimer@redhat.com</a>&gt; wrote:<br=
+>
+&gt; &gt; On 06/13/2014 05:33 PM, David Herrmann wrote:<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; On Fri, Jun 13, 2014 at 5:17 PM, Andy Lutomirski &lt;<a href=
+=3D"mailto:luto@amacapital.net" target=3D"_blank">luto@amacapital.net</a>&g=
+t;<br>
+&gt; &gt;&gt; wrote:<br>
+&gt; &gt;&gt;&gt;<br>
+&gt; &gt;&gt;&gt; Isn&#39;t the point of SEAL_SHRINK to allow servers to mm=
+ap and read<br>
+&gt; &gt;&gt;&gt; safely without worrying about SIGBUS?<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; No, I don&#39;t think so.<br>
+&gt; &gt;&gt; The point of SEAL_SHRINK is to prevent a file from shrinking.=
+ SIGBUS<br>
+&gt; &gt;&gt; is an effect, not a cause. It&#39;s only a coincidence that &=
+quot;OOM during<br>
+&gt; &gt;&gt; reads&quot; and &quot;reading beyond file-boundaries&quot; ha=
+s the same effect:<br>
+&gt; &gt;&gt; SIGBUS.<br>
+&gt; &gt;&gt; We only protect against reading beyond file-boundaries due to=
+<br>
+&gt; &gt;&gt; shrinking. Therefore, OOM-SIGBUS is unrelated to SEAL_SHRINK.=
+<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; Anyone dealing with mmap() _has_ to use mlock() to protect ag=
+ainst<br>
+&gt; &gt;&gt; OOM-SIGBUS. Making SEAL_SHRINK protect against OOM-SIGBUS wou=
+ld be<br>
+&gt; &gt;&gt; redundant, because you can achieve the same with SEAL_SHRINK+=
+mlock().<br>
+&gt; &gt;<br>
+&gt; &gt;<br>
+&gt; &gt; I don&#39;t think this is what potential users expect because mlo=
+ck requires<br>
+&gt; &gt; capabilities which are not available to them.<br>
+&gt; &gt;<br>
+&gt; &gt; A couple of weeks ago, sealing was to be applied to anonymous sha=
+red memory.<br>
+&gt; &gt; Has this changed? =C2=A0Why should *reading* it trigger OOM?<br>
+&gt;<br>
+&gt; The file might have holes, therefore, you&#39;d have to allocate backi=
+ng<br>
+&gt; pages. This might hit a soft-limit and fail. To avoid this, use<br>
+&gt; fallocate() to allocate pages prior to mmap() or mlock() to make the<b=
+r>
+&gt; kernel lock them in memory.<br>
+&gt;</p>
+<p dir=3D"ltr">Can you summarize why holes can&#39;t be reliably backed by =
+the zero page?</p>
+<p dir=3D"ltr">(I realize the kernel could OOM on PTE allocation, but fallo=
+cate won&#39;t fix that. OTOH MAP_POPULATE should work.)</p>
+<p dir=3D"ltr">And I don&#39;t think I like hole filling being allowed on w=
+rite-sealed files.=C2=A0 Holes are observable these days with SEEK_HOLE and=
+ such.</p><p>Alternatively, we could add a new syscall or madvise option to=
+ populate a mapping.<br>
+
+</p><p>--Andy</p></div>
+
+--089e01182c3ee1a3f004fc0a8717--
+
 --
-Ming Lei
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
