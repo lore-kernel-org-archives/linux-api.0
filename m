@@ -1,74 +1,50 @@
-From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues per
- virtio-blk device
-Date: Wed, 18 Jun 2014 12:04:48 +0800
-Message-ID: <CACVXFVMkV5R5GUjM7Y-U54SA-ENZZ26dbbv4K2_OYPdmmiuUqg@mail.gmail.com>
-References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
-	<1402680562-8328-3-git-send-email-ming.lei@canonical.com>
-	<CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
-	<CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
-	<53A06475.7000308@redhat.com>
-	<CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
-	<53A06E05.9060708@redhat.com>
+From: "chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: RE: [PATCH] ns: introduce getnspid syscall
+Date: Wed, 18 Jun 2014 08:29:56 +0000
+Message-ID: <5871495633F38949900D2BF2DC04883E5483D7@G08CNEXMBPEKD02.g08.fujitsu.local>
+References: <1403000496-10094-1-git-send-email-chenhanxiao@cn.fujitsu.com>
+	<CAHO5Pa0SHZXsbT14adxnMYGg6dG0DaMabNoreWAO-JDCCUKmWA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <53A06E05.9060708-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Stefan Hajnoczi <stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Virtualization <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Stefan Hajnoczi <stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <CAHO5Pa0SHZXsbT14adxnMYGg6dG0DaMabNoreWAO-JDCCUKmWA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: zh-CN
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 18, 2014 at 12:34 AM, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Il 17/06/2014 18:00, Ming Lei ha scritto:
->
->>> > If you want to do queue steering based on the guest VCPU number, the
->>> > number
->>> > of queues must be = to the number of VCPUs shouldn't it?
->>> >
->>> > I tried using a divisor of the number of VCPUs, but couldn't get the
->>> > block
->>> > layer to deliver interrupts to the right VCPU.
->>
->> For blk-mq's hardware queue, that won't be necessary to equal to
->> VCPUs number, and irq affinity per hw queue can be simply set as
->> blk_mq_hw_ctx->cpumask.
->
->
-> Yes, but on top of that you want to have each request processed exactly by
-> the CPU that sent it.  Unless the cpumasks are singletons, most of the
-> benefit went away in my virtio-scsi tests.  Perhaps blk-mq is smarter.
->
-> Can you try benchmarking a 16 VCPU guest with 8 and 16 queues?
-
->From VM side, it might be better to use one hardware queue per vCPU,
-since in theory it can remove vq lock contention.
-
-But from host side, there is still disadvantage with more queues, since
-more queues means more notify times, in my virtio-blk test, even with
-ioeventfd, one notification may take ~3us averagely on qemu-system-x86_64.
-
-For virtio-blk, I don't think it is always better to take more queues, and
-we need to leverage below things in host side:
-
-- host storage top performance, generally it reaches that with more
-than 1 jobs with libaio(suppose it is N, so basically we can use N
-iothread per device in qemu to try to get top performance)
-
-- iothreads' loading(if iothreads are at full loading, increasing
-queues doesn't help at all)
-
-In my test, I only use the current per-dev iothread(x-dataplane)
-in qemu to handle 2 vqs' notification and precess all I/O from
-the 2 vqs, and looks it can improve IOPS by ~30%.
-
-For virtio-scsi, the current usage doesn't make full use of blk-mq's
-advantage too because only one vq is active at the same time, so I
-guess the multi vqs' benefit won't be very much and I'd like to post
-patches to support that first, then provide test data with
-more queues(8, 16).
-
-
-Thanks,
---
-Ming Lei
+DQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogbXRrLmxpbnV4Lmxpc3Rz
+QGdtYWlsLmNvbSBbbWFpbHRvOm10ay5saW51eC5saXN0c0BnbWFpbC5jb21dIE9uIEJlaGFsZiBP
+Zg0KPiBNaWNoYWVsIEtlcnJpc2sNCj4gU2VudDogV2VkbmVzZGF5LCBKdW5lIDE4LCAyMDE0IDI6
+MjcgQU0NCj4gVG86IENoZW4sIEhhbnhpYW8v6ZmIIOaZl+mchA0KPiBDYzogY29udGFpbmVyczsg
+TGludXggS2VybmVsOyBSaWNoYXJkIFdlaW5iZXJnZXI7IFNlcmdlIEhhbGx5bjsgT2xlZyBOZXN0
+ZXJvdjsNCj4gRGF2aWQgSG93ZWxsczsgRXJpYyBXLiBCaWVkZXJtYW47IEFuZHJldyBNb3J0b247
+IEFsIFZpcm87IExpbnV4IEFQSTsgTWljaGFlbA0KPiBLZXJyaXNrLW1hbnBhZ2VzDQo+IFN1Ympl
+Y3Q6IFJlOiBbUEFUQ0hdIG5zOiBpbnRyb2R1Y2UgZ2V0bnNwaWQgc3lzY2FsbA0KPiANCj4gSGVs
+bG8gQ2hlbiBIYW54aWFvDQo+IA0KPiBPbiBUdWUsIEp1biAxNywgMjAxNCBhdCAxMjoyMSBQTSwg
+Q2hlbiBIYW54aWFvDQo+IDxjaGVuaGFueGlhb0Bjbi5mdWppdHN1LmNvbT4gd3JvdGU6DQo+ID4g
+V2UgbmVlZCBhIGRpcmVjdCBtZXRob2Qgb2YgZ2V0dGluZyB0aGUgcGlkIGluc2lkZSBjb250YWlu
+ZXJzLg0KPiA+IElmIHNvbWUgaXNzdWVzIG9jY3VycmVkIGluc2lkZSBjb250YWluZXIgZ3Vlc3Qs
+IGhvc3QgdXNlcg0KPiA+IGNvdWxkIG5vdCBrbm93IHdoaWNoIHByb2Nlc3MgaXMgaW4gdHJvdWJs
+ZSBqdXN0IGJ5IGd1ZXN0IHBpZDoNCj4gPiB0aGUgdXNlcnMgb2YgY29udGFpbmVyIGd1ZXN0IG9u
+bHkga25ldyB0aGUgcGlkIGluc2lkZSBjb250YWluZXJzLg0KPiA+IFRoaXMgd2lsbCBicmluZyBv
+YnN0YWNsZSBmb3IgdHJvdWJsZSBzaG9vdGluZy4NCj4gPg0KPiA+IGludCBnZXRuc3BpZChwaWRf
+dCBwaWQsIGludCBmZDEsIGludCBmZDIsIGludCBwaWR0eXBlKTsNCj4gDQo+IFBsZWFzZSBDQyBs
+aW51eC1hcGlAdmdlci5rZXJuZWwub3JnIG9uIGFsbCBwYXRjaGVzIHRoYXQgY2hhbmdlIHRoZSBB
+UEkNCj4gdGhhdCB0aGUga2VybmVsIHByZXNlbnRzIHRvIHVzZXIgc3BhY2UuIFNlZQ0KPiBodHRw
+czovL3d3dy5rZXJuZWwub3JnL2RvYy9tYW4tcGFnZXMvbGludXgtYXBpLW1sLmh0bWwNCj4gDQo+
+IFRoYW5rcywNCj4gDQo+IE1pY2hhZWwNCj4gDQo+IA0KVGhhbmtzIGZvciByZW1pbmRpbmcuDQoN
+Ci0gQ2hlbg0KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
+Q29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9u
+Lm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9j
+b250YWluZXJz
