@@ -1,110 +1,140 @@
-From: Paul Burton <paul.burton@imgtec.com>
-Subject: Re: MIPS MSA sigcontext changes in 3.15
-Date: Tue, 17 Jun 2014 17:25:09 +0100
-Message-ID: <20140617162509.GB7020@pburton-laptop.home>
-References: <Pine.LNX.4.64.1406171447030.23412@digraph.polyomino.org.uk>
- <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
+From: Chen Hanxiao <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: [PATCH v2] ns: introduce getnspid syscall
+Date: Fri, 20 Jun 2014 18:18:32 +0800
+Message-ID: <1403259512-10510-1-git-send-email-chenhanxiao@cn.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="2B/JsCI69OhZNC5r"
-Return-path: <libc-alpha-return-50900-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1406171539240.23412@digraph.polyomino.org.uk>
-To: "Joseph S. Myers" <joseph@codesourcery.com>
-Cc: linux-mips@linux-mips.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---2B/JsCI69OhZNC5r
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+We need a direct method of getting the pid inside containers.
+If some issues occurred inside container guest, host user
+could not know which process is in trouble just by guest pid:
+the users of container guest only knew the pid inside containers.
+This will bring obstacle for trouble shooting.
 
-On Tue, Jun 17, 2014 at 03:44:36PM +0000, Joseph S. Myers wrote:
-> On Tue, 17 Jun 2014, Joseph S. Myers wrote:
->=20
-> > signal mask at a particular offset in the ucontext.  As far as I can se=
-e,=20
-> > extending sigcontext requires a new sigaction flag that could be used t=
-o=20
-> > opt in, for a particular signal handler, to receiving the new-layout=20
-> > ucontext (so new symbol versions of sigaction in glibc could then pass=
-=20
-> > that flag to the kernel, but existing binaries would continue to get=20
-> > old-layout ucontext from the kernel), or else putting the new data at t=
-he=20
->=20
-> And a new flag would itself be problematic - signal handlers would need=
-=20
-> wrapping with userspace code to convert structure layout when new-version=
-=20
-> sigaction is used on an older kernel.  That suggests putting the new data=
-=20
-> at the end of ucontext is to be preferred (but in any case it would be=20
-> best to revert the incompatible changes until something compatible with=
-=20
-> existing userspace can be produced).
->=20
-> --=20
-> Joseph S. Myers
-> joseph@codesourcery.com
->=20
+int getnspid(pid_t pid, int fd1, int fd2);
 
-True. Oops. I hadn't realised this...
+pid: the pid number need to be translated.
 
-I wonder if the sensible thing is to switch to sigcontext merely
-containing a pointer to another struct holding FP state, much like x86.
-Only in response to a flag as you describe of course. That way the
-kernel could avoid the games it currently plays with splitting the
-vector registers into 64b pieces, and it would probably be more open
-to wider vector registers if they appear in the future.
+fd: a file descriptor referring to one of
+    the namespace entries in a /proc/[pid]/ns/pid.
+    fd1 for destination ns(ns1), where the pid came from.
+    fd2 for reference ns(ns2), while fd2 = -2 means for current ns.
 
-Anyway, I agree with reverting the sigcontext change (eec43a224cf1
-"MIPS: Save/restore MSA context around signals") in the meantime.
+return value:
+    >0 : translated pid in ns1(fd1) seen from ns2(fd2).
+    <=0: on failure.
 
-Given:
+Signed-off-by: Chen Hanxiao <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+---
+v2: drop pidtype
+    check ns_ops before getting pid_namespace structure
 
- - This issue.
+ arch/x86/syscalls/syscall_32.tbl |  1 +
+ arch/x86/syscalls/syscall_64.tbl |  1 +
+ include/linux/syscalls.h         |  1 +
+ kernel/nsproxy.c                 | 45 ++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 48 insertions(+)
 
- - A couple of other MSA fixes I have pending cleanup.
-
- - The fact that the only CPU the kernel supports which has MSA is the
-   P5600, and since that is 32b it can't actually make use of MSA
-   without the experimental CONFIG_MIPS_O32_FP64_SUPPORT option. Thus
-   MSA isn't actually being used yet beyond a few small groups who
-   accepted that big shouty experimental warning.
-
-=2E..I wonder if it makes sense to disable MSA support by default for the
-moment also.
-
-Thanks,
-    Paul
-
---2B/JsCI69OhZNC5r
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJToGvlAAoJENzvn0paErs5osAQAIA00p/HcRCU4jMtBi0YH4he
-lUjUPwXU1dNas4AJOaiQBs/IW42byyvTNoRQ1XQXhZdbcpoVtCjdW2nSCL3ZL93d
-4m8f8VXVpQXEM2RpjWW+Y4ecCNSBqCNiBWw8+0jmOsxO/LOjdGZFucbNqReGn6lK
-2qNErsz0YgoupZ2MGW8+K+a7GG3IStc56/jeLM0fsvn2pSb0jAvgLIjsxRnl2Ou8
-4z/WPqxm67w0cUuCr0WBfPosH6+nZKpwO0t1Y49AbrG2Y/dPyHyKUkdAUdtTSryV
-giaahS//GWWj2bG+v4hmNvD08CfgGMb/5eMI3megLHS7KLH+rAu9Q9IsCyRs6Ekq
-ediQITxMag1xhjm18RwUyP1PsRnz85kClqYeXmTXpkX0fb4Qn/Mt0fRcgWVDSZML
-DRztIEkO/wGMeYwbUtsrn3UmEGlMhjBNBOhQmBToA0Lkxr+QXkgXU1EdnHvgxK78
-zChtiwXJIPqIm3AXgUXA3AeqabrqMXZkUc95zr5v5VovH2OFm+64/gbhiEdGIWpT
-IUJOVpMMrg/JlRgk6Mav4trXzVlKU7w/EmXTBfxtN53E6981EsWnDtgtGd91Z9QT
-nOsNWq94pSKew1rFKSlgbMEyYEe+pmeRFkm10ebqkmZ64e++FbWran/Mi00RDf6V
-7D7tSQldjlkpVbVidHiu
-=MwAg
------END PGP SIGNATURE-----
-
---2B/JsCI69OhZNC5r--
+diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
+index d6b8679..9de0b32 100644
+--- a/arch/x86/syscalls/syscall_32.tbl
++++ b/arch/x86/syscalls/syscall_32.tbl
+@@ -360,3 +360,4 @@
+ 351	i386	sched_setattr		sys_sched_setattr
+ 352	i386	sched_getattr		sys_sched_getattr
+ 353	i386	renameat2		sys_renameat2
++354	i386	getnspid		sys_getnspid
+diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
+index ec255a1..1630a8a 100644
+--- a/arch/x86/syscalls/syscall_64.tbl
++++ b/arch/x86/syscalls/syscall_64.tbl
+@@ -323,6 +323,7 @@
+ 314	common	sched_setattr		sys_sched_setattr
+ 315	common	sched_getattr		sys_sched_getattr
+ 316	common	renameat2		sys_renameat2
++317	common	getnspid		sys_getnspid
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index b0881a0..53dd0e8 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -866,4 +866,5 @@ asmlinkage long sys_process_vm_writev(pid_t pid,
+ asmlinkage long sys_kcmp(pid_t pid1, pid_t pid2, int type,
+ 			 unsigned long idx1, unsigned long idx2);
+ asmlinkage long sys_finit_module(int fd, const char __user *uargs, int flags);
++asmlinkage long sys_getpidns(pid_t pid, int fd1, int fd2);
+ #endif
+diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
+index 8e78110..9701ade 100644
+--- a/kernel/nsproxy.c
++++ b/kernel/nsproxy.c
+@@ -261,6 +261,51 @@ out:
+ 	return err;
+ }
+ 
++SYSCALL_DEFINE3(getnspid, pid_t, pid, int, fd1, int, fd2)
++{
++	struct file *file1 = NULL, *file2 = NULL;
++	struct pid *pid_struct;
++	struct pid_namespace *ns1, *ns2;
++	struct proc_ns *ei;
++	int ret = -EINVAL;
++
++	file1 = proc_ns_fget(fd1);
++	if (IS_ERR(file1))
++		return PTR_ERR(file1);
++	ei = get_proc_ns(file_inode(file1));
++	if (ei->ns_ops != &pidns_operations)
++		goto out;
++	ns1 = (struct pid_namespace *)ei->ns;
++
++	/* fd == -2 for current pid ns */
++	if (fd2 == -2) {
++		ns2 = task_active_pid_ns(current);
++	} else {
++		file2 = proc_ns_fget(fd2);
++		if (IS_ERR(file2)) {
++			fput(file1);
++			return PTR_ERR(file2);
++		}
++		ei = get_proc_ns(file_inode(file2));
++		if (ei->ns_ops != &pidns_operations)
++			goto out;
++		ns2 = (struct pid_namespace *)ei->ns;
++	}
++
++	pid_struct = find_pid_ns(pid, ns1);
++	if (!pid_struct) {
++		ret = -ESRCH;
++		goto out;
++	}
++
++	ret = pid_nr_ns(pid_struct, ns2);
++out:
++	fput(file1);
++	if (file2)
++		fput(file2);
++	return ret;
++}
++
+ int __init nsproxy_cache_init(void)
+ {
+ 	nsproxy_cachep = KMEM_CACHE(nsproxy, SLAB_PANIC);
+-- 
+1.9.0
