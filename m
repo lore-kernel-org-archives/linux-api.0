@@ -1,267 +1,138 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v7 6/9] seccomp: add "seccomp" syscall
-Date: Mon, 23 Jun 2014 14:58:10 -0700
-Message-ID: <1403560693-21809-7-git-send-email-keescook@chromium.org>
+Subject: [PATCH v7 9/9] MIPS: add seccomp syscall
+Date: Mon, 23 Jun 2014 14:58:13 -0700
+Message-ID: <1403560693-21809-10-git-send-email-keescook@chromium.org>
 References: <1403560693-21809-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-mips-bounce@linux-mips.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <1403560693-21809-1-git-send-email-keescook@chromium.org>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: linux-kernel@vger.kernel.org
-Cc: Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+Cc: linux-arch@vger.kernel.org, linux-mips@linux-mips.org, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <dborkman@redhat.com>, Julien Tinnes <jln@chromium.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, David Drysdale <drysdale@google.com>, linux-arm-kernel@lists.infradead.org, Alexei Starovoitov <ast@plumgrid.com>
 List-Id: linux-api@vger.kernel.org
 
-This adds the new "seccomp" syscall with both an "operation" and "flags"
-parameter for future expansion. The third argument is a pointer value,
-used with the SECCOMP_SET_MODE_FILTER operation. Currently, flags must
-be 0. This is functionally equivalent to prctl(PR_SET_SECCOMP, ...).
-
-In addition to the TSYNC flag in the following patch, there is a non-zero
-chance that this syscall could be used for configuring a fixed argument
-area for seccomp-tracer-aware processes to pass syscall arguments in
-the future. Hence, the use of "seccomp" not simply "seccomp_add_filter"
-for this syscall. Additionally, this syscall uses operation, flags,
-and user pointer for arguments because strictly passing arguments via
-a user pointer would mean seccomp itself would be unable to trivially
-filter the seccomp syscall itself.
+Wires up the new seccomp syscall.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
-Cc: linux-api@vger.kernel.org
 ---
- arch/x86/syscalls/syscall_32.tbl  |    1 +
- arch/x86/syscalls/syscall_64.tbl  |    1 +
- include/linux/syscalls.h          |    2 ++
- include/uapi/asm-generic/unistd.h |    4 ++-
- include/uapi/linux/seccomp.h      |    4 +++
- kernel/seccomp.c                  |   63 ++++++++++++++++++++++++++++++++-----
- kernel/sys_ni.c                   |    3 ++
- 7 files changed, 69 insertions(+), 9 deletions(-)
+ arch/mips/include/uapi/asm/unistd.h |   15 +++++++++------
+ arch/mips/kernel/scall32-o32.S      |    1 +
+ arch/mips/kernel/scall64-64.S       |    1 +
+ arch/mips/kernel/scall64-n32.S      |    1 +
+ arch/mips/kernel/scall64-o32.S      |    1 +
+ 5 files changed, 13 insertions(+), 6 deletions(-)
 
-diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-index d6b867921612..7527eac24122 100644
---- a/arch/x86/syscalls/syscall_32.tbl
-+++ b/arch/x86/syscalls/syscall_32.tbl
-@@ -360,3 +360,4 @@
- 351	i386	sched_setattr		sys_sched_setattr
- 352	i386	sched_getattr		sys_sched_getattr
- 353	i386	renameat2		sys_renameat2
-+354	i386	seccomp			sys_seccomp
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index ec255a1646d2..16272a6c12b7 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -323,6 +323,7 @@
- 314	common	sched_setattr		sys_sched_setattr
- 315	common	sched_getattr		sys_sched_getattr
- 316	common	renameat2		sys_renameat2
-+317	common	seccomp			sys_seccomp
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index b0881a0ed322..1713977ee26f 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -866,4 +866,6 @@ asmlinkage long sys_process_vm_writev(pid_t pid,
- asmlinkage long sys_kcmp(pid_t pid1, pid_t pid2, int type,
- 			 unsigned long idx1, unsigned long idx2);
- asmlinkage long sys_finit_module(int fd, const char __user *uargs, int flags);
-+asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
-+			    const char __user *uargs);
- #endif
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 333640608087..65acbf0e2867 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -699,9 +699,11 @@ __SYSCALL(__NR_sched_setattr, sys_sched_setattr)
- __SYSCALL(__NR_sched_getattr, sys_sched_getattr)
- #define __NR_renameat2 276
- __SYSCALL(__NR_renameat2, sys_renameat2)
-+#define __NR_seccomp 277
-+__SYSCALL(__NR_seccomp, sys_seccomp)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 277
-+#define __NR_syscalls 278
+diff --git a/arch/mips/include/uapi/asm/unistd.h b/arch/mips/include/uapi/asm/unistd.h
+index 5805414777e0..9bc13eaf9d67 100644
+--- a/arch/mips/include/uapi/asm/unistd.h
++++ b/arch/mips/include/uapi/asm/unistd.h
+@@ -372,16 +372,17 @@
+ #define __NR_sched_setattr		(__NR_Linux + 349)
+ #define __NR_sched_getattr		(__NR_Linux + 350)
+ #define __NR_renameat2			(__NR_Linux + 351)
++#define __NR_seccomp			(__NR_Linux + 352)
  
  /*
-  * All syscalls below here should go away really,
-diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
-index ac2dc9f72973..b258878ba754 100644
---- a/include/uapi/linux/seccomp.h
-+++ b/include/uapi/linux/seccomp.h
-@@ -10,6 +10,10 @@
- #define SECCOMP_MODE_STRICT	1 /* uses hard-coded filter. */
- #define SECCOMP_MODE_FILTER	2 /* uses user-supplied filter. */
+  * Offset of the last Linux o32 flavoured syscall
+  */
+-#define __NR_Linux_syscalls		351
++#define __NR_Linux_syscalls		352
  
-+/* Valid operations for seccomp syscall. */
-+#define SECCOMP_SET_MODE_STRICT	0
-+#define SECCOMP_SET_MODE_FILTER	1
-+
+ #endif /* _MIPS_SIM == _MIPS_SIM_ABI32 */
+ 
+ #define __NR_O32_Linux			4000
+-#define __NR_O32_Linux_syscalls		351
++#define __NR_O32_Linux_syscalls		352
+ 
+ #if _MIPS_SIM == _MIPS_SIM_ABI64
+ 
+@@ -701,16 +702,17 @@
+ #define __NR_sched_setattr		(__NR_Linux + 309)
+ #define __NR_sched_getattr		(__NR_Linux + 310)
+ #define __NR_renameat2			(__NR_Linux + 311)
++#define __NR_seccomp			(__NR_Linux + 312)
+ 
  /*
-  * All BPF programs must return a 32-bit value.
-  * The bottom 16-bits are for optional return data.
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 1fb162e8b032..a0db770ff26c 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -19,6 +19,7 @@
- #include <linux/sched.h>
- #include <linux/seccomp.h>
- #include <linux/slab.h>
-+#include <linux/syscalls.h>
- 
- /* #define SECCOMP_DEBUG 1 */
- 
-@@ -307,8 +308,8 @@ free_prog:
-  *
-  * Returns filter on success and ERR_PTR otherwise.
+  * Offset of the last Linux 64-bit flavoured syscall
   */
--static
--struct seccomp_filter *seccomp_prepare_user_filter(char __user *user_filter)
-+static struct seccomp_filter *
-+seccomp_prepare_user_filter(const char __user *user_filter)
- {
- 	struct sock_fprog fprog;
- 	struct seccomp_filter *filter = ERR_PTR(-EFAULT);
-@@ -331,19 +332,25 @@ out:
+-#define __NR_Linux_syscalls		311
++#define __NR_Linux_syscalls		312
  
- /**
-  * seccomp_attach_filter: validate and attach filter
-+ * @flags:  flags to change filter behavior
-  * @filter: seccomp filter to add to the current process
-  *
-  * Caller must be holding current->sighand->siglock lock.
-  *
-  * Returns 0 on success, -ve on error.
+ #endif /* _MIPS_SIM == _MIPS_SIM_ABI64 */
+ 
+ #define __NR_64_Linux			5000
+-#define __NR_64_Linux_syscalls		311
++#define __NR_64_Linux_syscalls		312
+ 
+ #if _MIPS_SIM == _MIPS_SIM_NABI32
+ 
+@@ -1034,15 +1036,16 @@
+ #define __NR_sched_setattr		(__NR_Linux + 313)
+ #define __NR_sched_getattr		(__NR_Linux + 314)
+ #define __NR_renameat2			(__NR_Linux + 315)
++#define __NR_seccomp			(__NR_Linux + 316)
+ 
+ /*
+  * Offset of the last N32 flavoured syscall
   */
--static long seccomp_attach_filter(struct seccomp_filter *filter)
-+static long seccomp_attach_filter(unsigned int flags,
-+				  struct seccomp_filter *filter)
- {
- 	unsigned long total_insns;
- 	struct seccomp_filter *walker;
+-#define __NR_Linux_syscalls		315
++#define __NR_Linux_syscalls		316
  
- 	BUG_ON(!spin_is_locked(&current->sighand->siglock));
+ #endif /* _MIPS_SIM == _MIPS_SIM_NABI32 */
  
-+	/* Validate flags. */
-+	if (flags != 0)
-+		return -EINVAL;
-+
- 	/* Validate resulting filter length. */
- 	total_insns = filter->prog->len;
- 	for (walker = current->seccomp.filter; walker; walker = walker->prev)
-@@ -555,6 +562,7 @@ out:
- #ifdef CONFIG_SECCOMP_FILTER
- /**
-  * seccomp_set_mode_filter: internal function for setting seccomp filter
-+ * @flags:  flags to change filter behavior
-  * @filter: struct sock_fprog containing filter
-  *
-  * This function may be called repeatedly to install additional filters.
-@@ -565,7 +573,8 @@ out:
-  *
-  * Returns 0 on success or -EINVAL on failure.
-  */
--static long seccomp_set_mode_filter(char __user *filter)
-+static long seccomp_set_mode_filter(unsigned int flags,
-+				    const char __user *filter)
- {
- 	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
- 	struct seccomp_filter *prepared = NULL;
-@@ -583,7 +592,7 @@ static long seccomp_set_mode_filter(char __user *filter)
- 	if (!seccomp_check_mode(current, seccomp_mode))
- 		goto out;
+ #define __NR_N32_Linux			6000
+-#define __NR_N32_Linux_syscalls		315
++#define __NR_N32_Linux_syscalls		316
  
--	ret = seccomp_attach_filter(prepared);
-+	ret = seccomp_attach_filter(flags, prepared);
- 	if (ret)
- 		goto out;
- 	/* Do not free the successfully attached filter. */
-@@ -597,12 +606,35 @@ out_free:
- 	return ret;
- }
- #else
--static inline long seccomp_set_mode_filter(char __user *filter)
-+static inline long seccomp_set_mode_filter(unsigned int flags,
-+					   const char __user *filter)
- {
- 	return -EINVAL;
- }
- #endif
- 
-+/* Common entry point for both prctl and syscall. */
-+static long do_seccomp(unsigned int op, unsigned int flags,
-+		       const char __user *uargs)
-+{
-+	switch (op) {
-+	case SECCOMP_SET_MODE_STRICT:
-+		if (flags != 0 || uargs != NULL)
-+			return -EINVAL;
-+		return seccomp_set_mode_strict();
-+	case SECCOMP_SET_MODE_FILTER:
-+		return seccomp_set_mode_filter(flags, uargs);
-+	default:
-+		return -EINVAL;
-+	}
-+}
-+
-+SYSCALL_DEFINE3(seccomp, unsigned int, op, unsigned int, flags,
-+			 const char __user *, uargs)
-+{
-+	return do_seccomp(op, flags, uargs);
-+}
-+
- /**
-  * prctl_set_seccomp: configures current->seccomp.mode
-  * @seccomp_mode: requested mode to use
-@@ -612,12 +644,27 @@ static inline long seccomp_set_mode_filter(char __user *filter)
-  */
- long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
- {
-+	unsigned int op;
-+	char __user *uargs;
-+
- 	switch (seccomp_mode) {
- 	case SECCOMP_MODE_STRICT:
--		return seccomp_set_mode_strict();
-+		op = SECCOMP_SET_MODE_STRICT;
-+		/*
-+		 * Setting strict mode through prctl always ignored filter,
-+		 * so make sure it is always NULL here to pass the internal
-+		 * check in do_seccomp().
-+		 */
-+		uargs = NULL;
-+		break;
- 	case SECCOMP_MODE_FILTER:
--		return seccomp_set_mode_filter(filter);
-+		op = SECCOMP_SET_MODE_FILTER;
-+		uargs = filter;
-+		break;
- 	default:
- 		return -EINVAL;
- 	}
-+
-+	/* prctl interface doesn't have flags, so they are always zero. */
-+	return do_seccomp(op, 0, uargs);
- }
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 36441b51b5df..2904a2105914 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -213,3 +213,6 @@ cond_syscall(compat_sys_open_by_handle_at);
- 
- /* compare kernel pointers */
- cond_syscall(sys_kcmp);
-+
-+/* operate on Secure Computing state */
-+cond_syscall(sys_seccomp);
+ #endif /* _UAPI_ASM_UNISTD_H */
+diff --git a/arch/mips/kernel/scall32-o32.S b/arch/mips/kernel/scall32-o32.S
+index 3245474f19d5..ab02d14f1b5c 100644
+--- a/arch/mips/kernel/scall32-o32.S
++++ b/arch/mips/kernel/scall32-o32.S
+@@ -578,3 +578,4 @@ EXPORT(sys_call_table)
+ 	PTR	sys_sched_setattr
+ 	PTR	sys_sched_getattr		/* 4350 */
+ 	PTR	sys_renameat2
++	PTR	sys_seccomp
+diff --git a/arch/mips/kernel/scall64-64.S b/arch/mips/kernel/scall64-64.S
+index be2fedd4ae33..010dccf128ec 100644
+--- a/arch/mips/kernel/scall64-64.S
++++ b/arch/mips/kernel/scall64-64.S
+@@ -431,4 +431,5 @@ EXPORT(sys_call_table)
+ 	PTR	sys_sched_setattr
+ 	PTR	sys_sched_getattr		/* 5310 */
+ 	PTR	sys_renameat2
++	PTR	sys_seccomp
+ 	.size	sys_call_table,.-sys_call_table
+diff --git a/arch/mips/kernel/scall64-n32.S b/arch/mips/kernel/scall64-n32.S
+index c1dbcda4b816..c3b3b6525df5 100644
+--- a/arch/mips/kernel/scall64-n32.S
++++ b/arch/mips/kernel/scall64-n32.S
+@@ -424,4 +424,5 @@ EXPORT(sysn32_call_table)
+ 	PTR	sys_sched_setattr
+ 	PTR	sys_sched_getattr
+ 	PTR	sys_renameat2			/* 6315 */
++	PTR	sys_seccomp
+ 	.size	sysn32_call_table,.-sysn32_call_table
+diff --git a/arch/mips/kernel/scall64-o32.S b/arch/mips/kernel/scall64-o32.S
+index f1343ccd7ed7..bb1550b1f501 100644
+--- a/arch/mips/kernel/scall64-o32.S
++++ b/arch/mips/kernel/scall64-o32.S
+@@ -557,4 +557,5 @@ EXPORT(sys32_call_table)
+ 	PTR	sys_sched_setattr
+ 	PTR	sys_sched_getattr		/* 4350 */
+ 	PTR	sys_renameat2
++	PTR	sys_seccomp
+ 	.size	sys32_call_table,.-sys32_call_table
 -- 
 1.7.9.5
