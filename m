@@ -1,59 +1,26 @@
-From: Cyrill Gorcunov <gorcunov@openvz.org>
-Subject: [patch 4/4] timerfd.2: Add ioctl method description
-Date: Mon, 23 Jun 2014 22:54:35 +0400
-Message-ID: <20140623190345.575572496@openvz.org>
+From: Andrew Vagin <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: Re: [patch 0/4] timerfd c/r support, v4
+Date: Mon, 23 Jun 2014 23:44:29 +0400
+Message-ID: <20140623194429.GB23651@paralelels.com>
 References: <20140623185431.396309193@openvz.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=timerfd-man
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Andrey Vagin <avagin@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Vladimir Davydov <vdavydov@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="koi8-r"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20140623185431.396309193-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-ioctl(2)
-	The following commands are supported: TFD_IOC_SET_TICKS to adjust
-	the number of the timer expirations that have occurred.
-	It take a pointer to nonzero 8-byte integer (uint64_t*) containing
-	new number of expirations. Once the number is set any waiter on
-	the timer is woken up. The only purpose of this command is to restore
-	the expirations in a sake of checkpoint/restore procedure.
-	It requires the kernel to be built with CONFIG_CHECKPOINT_RESTORE
-	support.
+On Mon, Jun 23, 2014 at 10:54:31PM +0400, Cyrill Gorcunov wrote:
+> Hi guys, here is an updated version of c/r support for timerfd files. The main change
+> is in how @ticks are restored in patch 3 -- I switched to ioctl code, which is wrapped
+> with CONFIG because I still think that while there is only one ioctl designated
+> solely for c/r needs no need to build it all the time until explicitly requested.
+> Please take a look once time permit. Comments are highly appreciated.
+> Also note the last patch is for man-page git repo, not for kernel.
+> 
+> Thanks!
 
-Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Andrey Vagin <avagin@openvz.org>
-CC: Pavel Emelyanov <xemul@parallels.com>
-CC: Vladimir Davydov <vdavydov@parallels.com>
-CC: linux-api@vger.kernel.org
----
- man2/timerfd_create.2 |   14 ++++++++++++++
- 1 file changed, 14 insertions(+)
-
-Index: man-pages/man2/timerfd_create.2
-===================================================================
---- man-pages.orig/man2/timerfd_create.2
-+++ man-pages/man2/timerfd_create.2
-@@ -260,6 +260,20 @@ multiplexing APIs:
- and
- .BR epoll (7).
- .TP
-+.BR ioctl "(2)"
-+The following commands are supported:
-+.B TFD_IOC_SET_TICKS
-+to adjust the number of the timer expirations that have occurred.
-+It take a pointer to nonzero 8-byte integer
-+.RI ( uint64_t *)
-+containing the new number of expirations.
-+Once the number is set any waiter on the timer is woken up.
-+The only purpose of this command is to restore the expirations
-+in a sake of checkpoint/restore procedure.
-+It requires the kernel to be built with
-+.BR CONFIG_CHECKPOINT_RESTORE
-+support.
-+.TP
- .BR close (2)
- When the file descriptor is no longer required it should be closed.
- When all file descriptors associated with the same timer object
+Acked-by: Andrew Vagin <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
