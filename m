@@ -1,168 +1,76 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 2/2] block: virtio-blk: support multi virt queues per
- virtio-blk device
-Date: Mon, 23 Jun 2014 09:47:00 +0300
-Message-ID: <20140623064700.GA13810@redhat.com>
-References: <1403278181-28455-1-git-send-email-ming.lei@canonical.com>
- <1403278181-28455-3-git-send-email-ming.lei@canonical.com>
- <20140622102448.GB17067@redhat.com>
- <20140623034251.GR4453@dastard>
+From: "chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: RE: [PATCH v2] ns: introduce getnspid syscall
+Date: Mon, 23 Jun 2014 10:15:37 +0000
+Message-ID: <5871495633F38949900D2BF2DC04883E54ECC5@G08CNEXMBPEKD02.g08.fujitsu.local>
+References: <1403259512-10510-1-git-send-email-chenhanxiao@cn.fujitsu.com>
+	<53A414B2.20108@nod.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140623034251.GR4453@dastard>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Stefan Hajnoczi <stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============5700312852427085892=="
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <53A414B2.20108-/L3Ra7n9ekc@public.gmane.org>
+Content-Language: zh-CN
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, "containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 23, 2014 at 01:42:51PM +1000, Dave Chinner wrote:
-> On Sun, Jun 22, 2014 at 01:24:48PM +0300, Michael S. Tsirkin wrote:
-> > On Fri, Jun 20, 2014 at 11:29:40PM +0800, Ming Lei wrote:
-> > > @@ -24,8 +26,8 @@ static struct workqueue_struct *virtblk_wq;
-> > >  struct virtio_blk
-> > >  {
-> > >  	struct virtio_device *vdev;
-> > > -	struct virtqueue *vq;
-> > > -	spinlock_t vq_lock;
-> > > +	struct virtqueue *vq[MAX_NUM_VQ];
-> > > +	spinlock_t vq_lock[MAX_NUM_VQ];
-> > 
-> > array of struct {
-> >     *vq;
-> >     spinlock_t lock;
-> > }
-> > would use more memory but would get us better locality.
-> > It might even make sense to add padding to avoid
-> > cacheline sharing between two unrelated VQs.
-> > Want to try?
-> 
-> It's still false sharing because the queue objects share cachelines.
-> To operate without contention they have to be physically separated
-> from each other like so:
-> 
-> struct vq {
-> 	struct virtqueue	*q;
-> 	spinlock_t		lock;
-> } ____cacheline_aligned_in_smp;
+--===============5700312852427085892==
+Content-Language: zh-CN
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
 
-Exacly, that's what I meant by padding above.
+SGkNCg0KPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBSaWNoYXJkIFdlaW5i
+ZXJnZXIgW21haWx0bzpyaWNoYXJkQG5vZC5hdF0NCj4gU2VudDogRnJpZGF5LCBKdW5lIDIwLCAy
+MDE0IDc6MDIgUE0NCj4gVG86IENoZW4sIEhhbnhpYW8vs8Ig6s/P9jsgY29udGFpbmVyc0BsaXN0
+cy5saW51eC1mb3VuZGF0aW9uLm9yZzsNCj4gbGludXgta2VybmVsQHZnZXIua2VybmVsLm9yZw0K
+PiBDYzogRXJpYyBXLiBCaWVkZXJtYW47IFNlcmdlIEhhbGx5bjsgRGFuaWVsIFAuIEJlcnJhbmdl
+OyBPbGVnIE5lc3Rlcm92OyBBbCBWaXJvOw0KPiBEYXZpZCBIb3dlbGxzOyBQYXZlbCBFbWVseWFu
+b3Y7IFZhc2lsaXkgS3VsaWtvdjsgR290b3UsIFlhc3Vub3JpL87ljXUgv7XOxDsNCj4gbGludXgt
+YXBpQHZnZXIua2VybmVsLm9yZw0KPiBTdWJqZWN0OiBSZTogW1BBVENIIHYyXSBuczogaW50cm9k
+dWNlIGdldG5zcGlkIHN5c2NhbGwNCj4gDQo+IEFtIDIwLjA2LjIwMTQgMTI6MTgsIHNjaHJpZWIg
+Q2hlbiBIYW54aWFvOg0KPiA+IFdlIG5lZWQgYSBkaXJlY3QgbWV0aG9kIG9mIGdldHRpbmcgdGhl
+IHBpZCBpbnNpZGUgY29udGFpbmVycy4NCj4gPiBJZiBzb21lIGlzc3VlcyBvY2N1cnJlZCBpbnNp
+ZGUgY29udGFpbmVyIGd1ZXN0LCBob3N0IHVzZXINCj4gPiBjb3VsZCBub3Qga25vdyB3aGljaCBw
+cm9jZXNzIGlzIGluIHRyb3VibGUganVzdCBieSBndWVzdCBwaWQ6DQo+ID4gdGhlIHVzZXJzIG9m
+IGNvbnRhaW5lciBndWVzdCBvbmx5IGtuZXcgdGhlIHBpZCBpbnNpZGUgY29udGFpbmVycy4NCj4g
+PiBUaGlzIHdpbGwgYnJpbmcgb2JzdGFjbGUgZm9yIHRyb3VibGUgc2hvb3RpbmcuDQo+ID4NCj4g
+PiBpbnQgZ2V0bnNwaWQocGlkX3QgcGlkLCBpbnQgZmQxLCBpbnQgZmQyKTsNCj4gPg0KPiA+IHBp
+ZDogdGhlIHBpZCBudW1iZXIgbmVlZCB0byBiZSB0cmFuc2xhdGVkLg0KPiA+DQo+ID4gZmQ6IGEg
+ZmlsZSBkZXNjcmlwdG9yIHJlZmVycmluZyB0byBvbmUgb2YNCj4gPiAgICAgdGhlIG5hbWVzcGFj
+ZSBlbnRyaWVzIGluIGEgL3Byb2MvW3BpZF0vbnMvcGlkLg0KPiA+ICAgICBmZDEgZm9yIGRlc3Rp
+bmF0aW9uIG5zKG5zMSksIHdoZXJlIHRoZSBwaWQgY2FtZSBmcm9tLg0KPiA+ICAgICBmZDIgZm9y
+IHJlZmVyZW5jZSBucyhuczIpLCB3aGlsZSBmZDIgPSAtMiBtZWFucyBmb3IgY3VycmVudCBucy4N
+Cj4gPg0KPiA+IHJldHVybiB2YWx1ZToNCj4gPiAgICAgPjAgOiB0cmFuc2xhdGVkIHBpZCBpbiBu
+czEoZmQxKSBzZWVuIGZyb20gbnMyKGZkMikuDQo+ID4gICAgIDw9MDogb24gZmFpbHVyZS4NCj4g
+Pg0KPiANCj4gSSBkb24ndCB0aGluayB0aGF0IGFkZGluZyBhIG5ldyBzeXN0ZW0gY2FsbCBmb3Ig
+dGhpcyBpcyBhIGdvb2Qgc29sdXRpb24uDQo+IFdlIG5lZWQgYSBtb3JlIGdlbmVyaWMgd2F5LiBJ
+IGJldCBwZW9wbGUgYXJlIGludGVyZXN0ZWQgaW4gbW9yZSB0aGFuIGp1c3QgUElEDQo+IG51bWJl
+cnMuDQoNCkNvdWxkIHlvdSBwbGVhc2UgZ2l2ZSBzb21lIGhpbnRzIG9uIGhvdyB0byBleHBhbmQg
+dGhpcyBpbnRlcmZhY2U/DQoNCj4gDQo+IEkgYWdyZWUgd2l0aCBFcmljIHRoYXQgYSBwcm9jZnMg
+c29sdXRpb24gaXMgbW9yZSBhcHByb3ByaWF0ZS4NCj4gDQoNClByb2NmcyBpcyBhIGdvb2Qgc29s
+dXRpb24sIGJ1dCBzeXNjYWxsIGlzIG5vdCBiYWQgdGhvdWdoLg0KUHJvY2ZzIHdvcmtzIGZvciBt
+ZSwgYnV0IHRoYXQgc2VlbXMgY291bGQgbm90IGZpdA0KUGF2ZWwncyByZXF1aXJlbWVudC4NCkhp
+cyBvcGluaW9uIGlzIHRoYXQgYSBzeXNjYWxsIGlzIGEgbW9yZSBnZW5lcmljIGludGVyZmFjZQ0K
+dGhhbiBwcm9jIGZpbGVzLCBhbmQgIGFsc28gdmVyeSBoZWxwZnVsLg0KQW5kIHN5c2NhbGwgY291
+bGQgdGVsbCB3aGV0aGVyIGEgcGlkIGxpdmVzIGluIGEgc3BlY2lmaWMgcGlkIG5hbWVzcGFjZSwN
+Cm11Y2ggY29udmVuaWVudCB0aGFuIHByb2Nmcy4NCg0KVGhhbmtzLA0KLSBDaGVuDQo=
 
-> struct some_other_struct {
-> 	....
-> 	struct vq	vq[MAX_NUM_VQ];
-> 	....
-> };
-> 
-> This keeps locality to objects within a queue, but separates each
-> queue onto it's own cacheline....
-> 
-> Cheers,
-> 
-> Dave.
-> -- 
-> Dave Chinner
-> david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+--===============5700312852427085892==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-To reduce the amount of memory wasted, we could add
-the lock in the VQ itself.
-Wastes 8 bytes of memory for devices which don't need it, but
-we can save it elsewhere (e.g. get rid of the list and
-the priv pointer).
-
-How's this?  Your patch would go on top.
-Care benchmarking and telling us whether it makes sense?
-If yes please let me know and I'll send an official patchset.
-
--->
-
-virtio-blk: move spinlock to vq itself
-
-Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
---
-
-diff --git a/include/linux/virtio.h b/include/linux/virtio.h
-index b46671e..0951b21 100644
---- a/include/linux/virtio.h
-+++ b/include/linux/virtio.h
-@@ -19,6 +19,7 @@
-  * @priv: a pointer for the virtqueue implementation to use.
-  * @index: the zero-based ordinal number for this queue.
-  * @num_free: number of elements we expect to be able to fit.
-+ * @lock: lock for optional use by devices. If used, devices must initialize it.
-  *
-  * A note on @num_free: with indirect buffers, each buffer needs one
-  * element in the queue, otherwise a buffer will need one element per
-@@ -31,6 +32,7 @@ struct virtqueue {
- 	struct virtio_device *vdev;
- 	unsigned int index;
- 	unsigned int num_free;
-+	spinlock_t lock;
- 	void *priv;
- };
- 
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index f63d358..a3cdc19 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -25,7 +25,6 @@ struct virtio_blk
- {
- 	struct virtio_device *vdev;
- 	struct virtqueue *vq;
--	spinlock_t vq_lock;
- 
- 	/* The disk structure for the kernel. */
- 	struct gendisk *disk;
-@@ -137,7 +136,7 @@ static void virtblk_done(struct virtqueue *vq)
- 	unsigned long flags;
- 	unsigned int len;
- 
--	spin_lock_irqsave(&vblk->vq_lock, flags);
-+	spin_lock_irqsave(&vblk->vq->lock, flags);
- 	do {
- 		virtqueue_disable_cb(vq);
- 		while ((vbr = virtqueue_get_buf(vblk->vq, &len)) != NULL) {
-@@ -151,7 +150,7 @@ static void virtblk_done(struct virtqueue *vq)
- 	/* In case queue is stopped waiting for more buffers. */
- 	if (req_done)
- 		blk_mq_start_stopped_hw_queues(vblk->disk->queue, true);
--	spin_unlock_irqrestore(&vblk->vq_lock, flags);
-+	spin_unlock_irqrestore(&vblk->vq->lock, flags);
- }
- 
- static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
-@@ -202,12 +201,12 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
- 			vbr->out_hdr.type |= VIRTIO_BLK_T_IN;
- 	}
- 
--	spin_lock_irqsave(&vblk->vq_lock, flags);
-+	spin_lock_irqsave(&vblk->vq->lock, flags);
- 	err = __virtblk_add_req(vblk->vq, vbr, vbr->sg, num);
- 	if (err) {
- 		virtqueue_kick(vblk->vq);
- 		blk_mq_stop_hw_queue(hctx);
--		spin_unlock_irqrestore(&vblk->vq_lock, flags);
-+		spin_unlock_irqrestore(&vblk->vq->lock, flags);
- 		/* Out of mem doesn't actually happen, since we fall back
- 		 * to direct descriptors */
- 		if (err == -ENOMEM || err == -ENOSPC)
-@@ -217,7 +216,7 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
- 
- 	if (last && virtqueue_kick_prepare(vblk->vq))
- 		notify = true;
--	spin_unlock_irqrestore(&vblk->vq_lock, flags);
-+	spin_unlock_irqrestore(&vblk->vq->lock, flags);
- 
- 	if (notify)
- 		virtqueue_notify(vblk->vq);
-@@ -551,7 +550,7 @@ static int virtblk_probe(struct virtio_device *vdev)
- 	err = init_vq(vblk);
- 	if (err)
- 		goto out_free_vblk;
--	spin_lock_init(&vblk->vq_lock);
-+	spin_lock_init(&vblk->vq->lock);
- 
- 	/* FIXME: How many partitions?  How long is a piece of string? */
- 	vblk->disk = alloc_disk(1 << PART_BITS);
+_______________________________________________
+Containers mailing list
+Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+https://lists.linuxfoundation.org/mailman/listinfo/containers
+--===============5700312852427085892==--
