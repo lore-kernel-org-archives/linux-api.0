@@ -1,123 +1,50 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [patch 3/4] timerfd: Implement timerfd_ioctl method to restore
- timerfd_ctx::ticks
-Date: Wed, 25 Jun 2014 02:03:51 +0400
-Message-ID: <20140624220351.GZ2095@moon>
-References: <20140623185431.396309193@openvz.org>
- <20140623190345.499956567@openvz.org>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [PATCH] mm: update the description for madvise_remove
+Date: Tue, 24 Jun 2014 15:44:33 -0700 (PDT)
+Message-ID: <alpine.DEB.2.02.1406241542040.29176@chino.kir.corp.google.com>
+References: <53A9116B.9030004@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140623190345.499956567-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <53A9116B.9030004@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Wang Sheng-Hui <shhuiw@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Johannes Weiner <hannes@cmpxchg.org>, Andi Kleen <ak@linux.intel.com>, Vladimir Cernov <gg.kaspersky@gmail.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The read() of timerfd files allows to fetch the number of timer ticks
-while there is no way to set it back from userspace.
+On Tue, 24 Jun 2014, Wang Sheng-Hui wrote:
 
-To restore the timer's state as it was at checkpoint moment we need
-a path to bring @ticks back. Initially I thought about writing ticks
-back via write() interface but it seems such API is somehow obscure.
+> 
+> Currently, we have more filesystems supporting fallocate, e.g
+> ext4/btrfs. Remove the outdated comment for madvise_remove.
+> 
+> Signed-off-by: Wang Sheng-Hui <shhuiw@gmail.com>
+> ---
+>  mm/madvise.c | 3 ---
+>  1 file changed, 3 deletions(-)
+> 
+> diff --git a/mm/madvise.c b/mm/madvise.c
+> index a402f8f..0938b30 100644
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -292,9 +292,6 @@ static long madvise_dontneed(struct vm_area_struct *vma,
+>  /*
+>   * Application wants to free up the pages and associated backing store.
+>   * This is effectively punching a hole into the middle of a file.
+> - *
+> - * NOTE: Currently, only shmfs/tmpfs is supported for this operation.
+> - * Other filesystems return -ENOSYS.
+>   */
+>  static long madvise_remove(struct vm_area_struct *vma,
+>                                 struct vm_area_struct **prev,
 
-Instead implement timerfd_ioctl() method with TFD_IOC_SET_TICKS
-command which allows to adjust @ticks into non-zero value waking
-up the waiters.
+[For those without context: this patch has been merged into the -mm tree.]
 
-I wrapped code with CONFIG_CHECKPOINT_RESTORE which can be
-dropped off if there users except c/r camp appear.
+This reference also exists in the man-page for madvise(2), are you 
+planning on removing it as well?
 
-v2 (by akpm@):
- -Use define timerfd_ioctl NULL for non c/r config
-
-CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-CC: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-CC: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
----
-
-A nit fixed for for non c/r config in timerfd_ioctl declaration
-
- fs/timerfd.c            |   37 +++++++++++++++++++++++++++++++++++++
- include/linux/timerfd.h |    5 +++++
- 2 files changed, 42 insertions(+)
-
-Index: linux-2.6.git/fs/timerfd.c
-===================================================================
---- linux-2.6.git.orig/fs/timerfd.c
-+++ linux-2.6.git/fs/timerfd.c
-@@ -315,12 +315,49 @@ static int timerfd_show(struct seq_file
- #define timerfd_show NULL
- #endif
- 
-+#ifdef CONFIG_CHECKPOINT_RESTORE
-+static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-+{
-+	struct timerfd_ctx *ctx = file->private_data;
-+	int ret = 0;
-+
-+	switch (cmd) {
-+	case TFD_IOC_SET_TICKS: {
-+		u64 ticks;
-+
-+		if (get_user(ticks, (u64 __user *)arg))
-+			return -EFAULT;
-+		if (!ticks)
-+			return -EINVAL;
-+
-+		spin_lock_irq(&ctx->wqh.lock);
-+		if (!timerfd_canceled(ctx)) {
-+			ctx->ticks = ticks;
-+			if (ticks)
-+				wake_up_locked(&ctx->wqh);
-+		} else
-+			ret = -ECANCELED;
-+		spin_unlock_irq(&ctx->wqh.lock);
-+		break;
-+	}
-+	default:
-+		ret = -ENOTTY;
-+		break;
-+	}
-+
-+	return ret;
-+}
-+#else
-+#define timerfd_ioctl NULL
-+#endif
-+
- static const struct file_operations timerfd_fops = {
- 	.release	= timerfd_release,
- 	.poll		= timerfd_poll,
- 	.read		= timerfd_read,
- 	.llseek		= noop_llseek,
- 	.show_fdinfo	= timerfd_show,
-+	.unlocked_ioctl	= timerfd_ioctl,
- };
- 
- static int timerfd_fget(int fd, struct fd *p)
-Index: linux-2.6.git/include/linux/timerfd.h
-===================================================================
---- linux-2.6.git.orig/include/linux/timerfd.h
-+++ linux-2.6.git/include/linux/timerfd.h
-@@ -11,6 +11,9 @@
- /* For O_CLOEXEC and O_NONBLOCK */
- #include <linux/fcntl.h>
- 
-+/* For _IO helpers */
-+#include <linux/ioctl.h>
-+
- /*
-  * CAREFUL: Check include/asm-generic/fcntl.h when defining
-  * new flags, since they might collide with O_* ones. We want
-@@ -29,4 +32,6 @@
- /* Flags for timerfd_settime.  */
- #define TFD_SETTIME_FLAGS (TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET)
- 
-+#define TFD_IOC_SET_TICKS	_IOW('T', 0, u64)
-+
- #endif /* _LINUX_TIMERFD_H */
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
