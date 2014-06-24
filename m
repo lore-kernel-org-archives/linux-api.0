@@ -1,46 +1,61 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v8 7/9] ARM: add seccomp syscall
-Date: Tue, 24 Jun 2014 13:48:11 -0700
-Message-ID: <1403642893-23107-8-git-send-email-keescook@chromium.org>
-References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1403642893-23107-1-git-send-email-keescook@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [PATCH v8 0/9] seccomp: add thread sync ability
+Date: Tue, 24 Jun 2014 13:48:04 -0700
+Message-ID: <1403642893-23107-1-git-send-email-keescook@chromium.org>
+Return-path: <linux-mips-bounce@linux-mips.org>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
 To: linux-kernel@vger.kernel.org
 Cc: Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Wires up the new seccomp syscall.
+This adds the ability for threads to request seccomp filter
+synchronization across their thread group (at filter attach time).
+For example, for Chrome to make sure graphic driver threads are fully
+confined after seccomp filters have been attached.
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- arch/arm/include/uapi/asm/unistd.h |    1 +
- arch/arm/kernel/calls.S            |    1 +
- 2 files changed, 2 insertions(+)
+To support this, locking on seccomp changes via thread-group-shared
+sighand lock is introduced, along with refactoring of no_new_privs. Races
+with thread creation are handled via delayed duplication of the seccomp
+task struct field.
 
-diff --git a/arch/arm/include/uapi/asm/unistd.h b/arch/arm/include/uapi/asm/unistd.h
-index ba94446c72d9..e21b4a069701 100644
---- a/arch/arm/include/uapi/asm/unistd.h
-+++ b/arch/arm/include/uapi/asm/unistd.h
-@@ -409,6 +409,7 @@
- #define __NR_sched_setattr		(__NR_SYSCALL_BASE+380)
- #define __NR_sched_getattr		(__NR_SYSCALL_BASE+381)
- #define __NR_renameat2			(__NR_SYSCALL_BASE+382)
-+#define __NR_seccomp			(__NR_SYSCALL_BASE+383)
- 
- /*
-  * This may need to be greater than __NR_last_syscall+1 in order to
-diff --git a/arch/arm/kernel/calls.S b/arch/arm/kernel/calls.S
-index 8f51bdcdacbb..bea85f97f363 100644
---- a/arch/arm/kernel/calls.S
-+++ b/arch/arm/kernel/calls.S
-@@ -392,6 +392,7 @@
- /* 380 */	CALL(sys_sched_setattr)
- 		CALL(sys_sched_getattr)
- 		CALL(sys_renameat2)
-+		CALL(sys_seccomp)
- #ifndef syscalls_counted
- .equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
- #define syscalls_counted
--- 
-1.7.9.5
+This includes a new syscall (instead of adding a new prctl option),
+as suggested by Andy Lutomirski and Michael Kerrisk.
+
+Thanks!
+
+-Kees
+
+v8:
+ - drop use of tasklist_lock, appears redundant against sighand (oleg)
+ - reduced use of smp_load_acquire to logical minimum (oleg)
+ - change nnp to a task struct held atomic flags field (oleg, luto)
+ - drop needless irqflags changes in fork.c for holding sighand lock (oleg)
+ - cleaned up use of thread for-each loop (oleg)
+ - rearranged patch order to keep syscall changes adjacent
+ - added example code to manpage (mtk)
+v7:
+ - rebase on Linus's tree (merged with network bpf changes)
+ - wrote manpage text documenting API (follows this series)
+v6:
+ - switch from seccomp-specific lock to thread-group lock to gain atomicity
+ - implement seccomp syscall across all architectures with seccomp filter
+ - clean up sparse warnings around locking
+v5:
+ - move includes around (drysdale)
+ - drop set_nnp return value (luto)
+ - use smp_load_acquire/store_release (luto)
+ - merge nnp changes to seccomp always, fewer ifdef (luto)
+v4:
+ - cleaned up locking further, as noticed by David Drysdale
+v3:
+ - added SECCOMP_EXT_ACT_FILTER for new filter install options
+v2:
+ - reworked to avoid clone races
