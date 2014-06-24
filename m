@@ -1,236 +1,451 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v8 2/9] seccomp: split filter prep from check and apply
-Date: Tue, 24 Jun 2014 13:48:06 -0700
-Message-ID: <1403642893-23107-3-git-send-email-keescook@chromium.org>
+Subject: [PATCH v8 1/1] man-pages: seccomp.2: document syscall
+Date: Tue, 24 Jun 2014 13:56:15 -0700
+Message-ID: <20140624205615.GW5412@outflux.net>
 References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-mips-bounce@linux-mips.org>
+Content-Disposition: inline
 In-Reply-To: <1403642893-23107-1-git-send-email-keescook@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org, keescook@chromium.org
 List-Id: linux-api@vger.kernel.org
 
-In preparation for adding seccomp locking, move filter creation away
-from where it is checked and applied. This will allow for locking where
-no memory allocation is happening. The validation, filter attachment,
-and seccomp mode setting can all happen under the future locks.
+Combines documentation from prctl, in-kernel seccomp_filter.txt and
+dropper.c, along with details specific to the new syscall.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- kernel/seccomp.c |   97 +++++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 67 insertions(+), 30 deletions(-)
+v3:
+ - change args to void * (luto)
+ - small typo cleanups
+v2:
+ - add full example code, based on "dropper.c" in samples/seccomp/
+---
+ man2/seccomp.2 |  400 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 400 insertions(+)
+ create mode 100644 man2/seccomp.2
 
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index afb916c7e890..edc8c79ed16d 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -18,6 +18,7 @@
- #include <linux/compat.h>
- #include <linux/sched.h>
- #include <linux/seccomp.h>
-+#include <linux/slab.h>
- 
- /* #define SECCOMP_DEBUG 1 */
- 
-@@ -26,7 +27,6 @@
- #include <linux/filter.h>
- #include <linux/ptrace.h>
- #include <linux/security.h>
--#include <linux/slab.h>
- #include <linux/tracehook.h>
- #include <linux/uaccess.h>
- 
-@@ -196,27 +196,21 @@ static u32 seccomp_run_filters(int syscall)
- }
- 
- /**
-- * seccomp_attach_filter: Attaches a seccomp filter to current.
-+ * seccomp_prepare_filter: Prepares a seccomp filter for use.
-  * @fprog: BPF program to install
-  *
-- * Returns 0 on success or an errno on failure.
-+ * Returns filter on success or an ERR_PTR on failure.
-  */
--static long seccomp_attach_filter(struct sock_fprog *fprog)
-+static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
- {
- 	struct seccomp_filter *filter;
- 	unsigned long fp_size = fprog->len * sizeof(struct sock_filter);
--	unsigned long total_insns = fprog->len;
- 	struct sock_filter *fp;
- 	int new_len;
- 	long ret;
- 
- 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
--		return -EINVAL;
--
--	for (filter = current->seccomp.filter; filter; filter = filter->prev)
--		total_insns += filter->prog->len + 4;  /* include a 4 instr penalty */
--	if (total_insns > MAX_INSNS_PER_PATH)
--		return -ENOMEM;
-+		return ERR_PTR(-EINVAL);
- 
- 	/*
- 	 * Installing a seccomp filter requires that the task has
-@@ -227,11 +221,11 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
- 	if (!current->no_new_privs &&
- 	    security_capable_noaudit(current_cred(), current_user_ns(),
- 				     CAP_SYS_ADMIN) != 0)
--		return -EACCES;
-+		return ERR_PTR(-EACCES);
- 
- 	fp = kzalloc(fp_size, GFP_KERNEL|__GFP_NOWARN);
- 	if (!fp)
--		return -ENOMEM;
-+		return ERR_PTR(-ENOMEM);
- 
- 	/* Copy the instructions from fprog. */
- 	ret = -EFAULT;
-@@ -275,13 +269,7 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
- 
- 	sk_filter_select_runtime(filter->prog);
- 
--	/*
--	 * If there is an existing filter, make it the prev and don't drop its
--	 * task reference.
--	 */
--	filter->prev = current->seccomp.filter;
--	current->seccomp.filter = filter;
--	return 0;
-+	return filter;
- 
- free_filter_prog:
- 	kfree(filter->prog);
-@@ -289,19 +277,20 @@ free_filter:
- 	kfree(filter);
- free_prog:
- 	kfree(fp);
--	return ret;
-+	return ERR_PTR(ret);
- }
- 
- /**
-- * seccomp_attach_user_filter - attaches a user-supplied sock_fprog
-+ * seccomp_prepare_user_filter - prepares a user-supplied sock_fprog
-  * @user_filter: pointer to the user data containing a sock_fprog.
-  *
-- * Returns 0 on success and non-zero otherwise.
-+ * Returns filter on success and ERR_PTR otherwise.
-  */
--static long seccomp_attach_user_filter(char __user *user_filter)
-+static
-+struct seccomp_filter *seccomp_prepare_user_filter(char __user *user_filter)
- {
- 	struct sock_fprog fprog;
--	long ret = -EFAULT;
-+	struct seccomp_filter *filter = ERR_PTR(-EFAULT);
- 
- #ifdef CONFIG_COMPAT
- 	if (is_compat_task()) {
-@@ -314,9 +303,37 @@ static long seccomp_attach_user_filter(char __user *user_filter)
- #endif
- 	if (copy_from_user(&fprog, user_filter, sizeof(fprog)))
- 		goto out;
--	ret = seccomp_attach_filter(&fprog);
-+	filter = seccomp_prepare_filter(&fprog);
- out:
--	return ret;
-+	return filter;
+diff --git a/man2/seccomp.2 b/man2/seccomp.2
+new file mode 100644
+index 0000000..f64950f
+--- /dev/null
++++ b/man2/seccomp.2
+@@ -0,0 +1,400 @@
++.\" Copyright (C) 2014 Kees Cook <keescook@chromium.org>
++.\" and Copyright (C) 2012 Will Drewry <wad@chromium.org>
++.\" and Copyright (C) 2008 Michael Kerrisk <mtk.manpages@gmail.com>
++.\"
++.\" %%%LICENSE_START(VERBATIM)
++.\" Permission is granted to make and distribute verbatim copies of this
++.\" manual provided the copyright notice and this permission notice are
++.\" preserved on all copies.
++.\"
++.\" Permission is granted to copy and distribute modified versions of this
++.\" manual under the conditions for verbatim copying, provided that the
++.\" entire resulting derived work is distributed under the terms of a
++.\" permission notice identical to this one.
++.\"
++.\" Since the Linux kernel and libraries are constantly changing, this
++.\" manual page may be incorrect or out-of-date.  The author(s) assume no
++.\" responsibility for errors or omissions, or for damages resulting from
++.\" the use of the information contained herein.  The author(s) may not
++.\" have taken the same level of care in the production of this manual,
++.\" which is licensed free of charge, as they might when working
++.\" professionally.
++.\"
++.\" Formatted or processed versions of this manual, if unaccompanied by
++.\" the source, must acknowledge the copyright and authors of this work.
++.\" %%%LICENSE_END
++.\"
++.TH SECCOMP 2 2014-06-23 "Linux" "Linux Programmer's Manual"
++.SH NAME
++seccomp \-
++operate on Secure Computing state of the process
++.SH SYNOPSIS
++.nf
++.B #include <linux/seccomp.h>
++.B #include <linux/filter.h>
++.B #include <linux/audit.h>
++.B #include <linux/signal.h>
++.B #include <sys/ptrace.h>
++
++.BI "int seccomp(unsigned int " operation ", unsigned int " flags ,
++.BI "            void *" args );
++.fi
++.SH DESCRIPTION
++The
++.BR seccomp ()
++system call operates on the Secure Computing (seccomp) state of the
++current process.
++
++Currently, Linux supports the following
++.IR operation
++values:
++.TP
++.BR SECCOMP_SET_MODE_STRICT
++Only system calls that the thread is permitted to make are
++.BR read (2),
++.BR write (2),
++.BR _exit (2),
++and
++.BR sigreturn (2).
++Other system calls result in the delivery of a
++.BR SIGKILL
++signal. Strict secure computing mode is useful for number-crunching
++applications that may need to execute untrusted byte code, perhaps
++obtained by reading from a pipe or socket.
++
++This operation is available only if the kernel is configured with
++.BR CONFIG_SECCOMP
++enabled.
++
++The value of
++.IR flags
++must be 0, and
++.IR args
++must be NULL.
++
++This operation is functionally identical to calling
++.IR "prctl(PR_SET_SECCOMP,\ SECCOMP_MODE_STRICT)" .
++.TP
++.BR SECCOMP_SET_MODE_FILTER
++The system calls allowed are defined by a pointer to a Berkeley Packet
++Filter (BPF) passed via
++.IR args .
++This argument is a pointer to
++.IR "struct\ sock_fprog" ;
++it can be designed to filter arbitrary system calls and system call
++arguments. If the filter is invalid, the call will fail, returning
++.BR EACCESS
++in
++.IR errno .
++
++If
++.BR fork (2),
++.BR clone (2),
++or
++.BR execve (2)
++are allowed by the filter, any child processes will be constrained to
++the same filters and system calls as the parent.
++
++Prior to using this operation, the process must call
++.IR "prctl(PR_SET_NO_NEW_PRIVS,\ 1)"
++or run with
++.BR CAP_SYS_ADMIN
++privileges in its namespace. If these are not true, the call will fail
++and return
++.BR EACCES
++in
++.IR errno .
++This requirement ensures that filter programs cannot be applied to child
++processes with greater privileges than the process that installed them.
++
++Additionally, if
++.BR prctl (2)
++or
++.BR seccomp (2)
++is allowed by the attached filter, additional filters may be layered on
++which will increase evaluation time, but allow for further reduction of
++the attack surface during execution of a process.
++
++This operation is available only if the kernel is configured with
++.BR CONFIG_SECCOMP_FILTER
++enabled.
++
++When
++.IR flags
++are 0, this operation is functionally identical to calling
++.IR "prctl(PR_SET_SECCOMP,\ SECCOMP_MODE_FILTER,\ args)" .
++
++The recognized
++.IR flags
++are:
++.RS
++.TP
++.BR SECCOMP_FILTER_FLAG_TSYNC
++When adding a new filter, synchronize all other threads of the current
++process to the same seccomp filter tree. If any thread cannot do this,
++the call will not attach the new seccomp filter, and will fail returning
++the first thread ID found that cannot synchronize.  Synchronization will
++fail if another thread is in
++.BR SECCOMP_MODE_STRICT
++or if it has attached new seccomp filters to itself, diverging from the
++calling thread's filter tree.
++.RE
++.SH FILTERS
++When adding filters via
++.BR SECCOMP_SET_MODE_FILTER ,
++.IR args
++points to a filter program:
++
++.in +4n
++.nf
++struct sock_fprog {
++    unsigned short      len;    /* Number of BPF instructions */
++    struct sock_filter *filter;
++};
++.fi
++.in
++
++Each program must contain one or more BPF instructions:
++
++.in +4n
++.nf
++struct sock_filter {    /* Filter block */
++    __u16   code;       /* Actual filter code */
++    __u8    jt;         /* Jump true */
++    __u8    jf;         /* Jump false */
++    __u32   k;          /* Generic multiuse field */
++};
++.fi
++.in
++
++When executing the instructions, the BPF program executes over the
++syscall information made available via:
++
++.in +4n
++.nf
++struct seccomp_data {
++    int nr;                     /* system call number */
++    __u32 arch;                 /* AUDIT_ARCH_* value */
++    __u64 instruction_pointer;  /* CPU instruction pointer */
++    __u64 args[6];              /* up to 6 system call arguments */
++};
++.fi
++.in
++
++A seccomp filter may return any of the following values. If multiple
++filters exist, the return value for the evaluation of a given system
++call will always use the highest precedent value. (For example,
++.BR SECCOMP_RET_KILL
++will always take precedence.)
++
++In precedence order, they are:
++.TP
++.BR SECCOMP_RET_KILL
++Results in the task exiting immediately without executing the
++system call.  The exit status of the task (status & 0x7f) will
++be
++.BR SIGSYS ,
++not
++.BR SIGKILL .
++.TP
++.BR SECCOMP_RET_TRAP
++Results in the kernel sending a
++.BR SIGSYS
++signal to the triggering task without executing the system call.
++.IR siginfo\->si_call_addr
++will show the address of the system call instruction, and
++.IR siginfo\->si_syscall
++and
++.IR siginfo\->si_arch
++will indicate which syscall was attempted.  The program counter will be
++as though the syscall happened (i.e. it will not point to the syscall
++instruction).  The return value register will contain an arch\-dependent
++value; if resuming execution, set it to something sensible.
++(The architecture dependency is because replacing it with
++.BR ENOSYS
++could overwrite some useful information.)
++
++The
++.BR SECCOMP_RET_DATA
++portion of the return value will be passed as
++.IR si_errno .
++
++.BR SIGSYS
++triggered by seccomp will have a
++.IR si_code
++of
++.BR SYS_SECCOMP .
++.TP
++.BR SECCOMP_RET_ERRNO
++Results in the lower 16-bits of the return value being passed
++to userland as the
++.IR errno
++without executing the system call.
++.TP
++.BR SECCOMP_RET_TRACE
++When returned, this value will cause the kernel to attempt to
++notify a ptrace()-based tracer prior to executing the system
++call.  If there is no tracer present,
++.BR ENOSYS
++is returned to userland and the system call is not executed.
++
++A tracer will be notified if it requests
++.BR PTRACE_O_TRACESECCOMP
++using
++.IR ptrace(PTRACE_SETOPTIONS) .
++The tracer will be notified of a
++.BR PTRACE_EVENT_SECCOMP
++and the
++.BR SECCOMP_RET_DATA
++portion of the BPF program return value will be available to the tracer
++via
++.BR PTRACE_GETEVENTMSG .
++
++The tracer can skip the system call by changing the syscall number
++to \-1.  Alternatively, the tracer can change the system call
++requested by changing the system call to a valid syscall number.  If
++the tracer asks to skip the system call, then the system call will
++appear to return the value that the tracer puts in the return value
++register.
++
++The seccomp check will not be run again after the tracer is
++notified.  (This means that seccomp-based sandboxes MUST NOT
++allow use of ptrace, even of other sandboxed processes, without
++extreme care; ptracers can use this mechanism to escape.)
++.TP
++.BR SECCOMP_RET_ALLOW
++Results in the system call being executed.
++
++If multiple filters exist, the return value for the evaluation of a
++given system call will always use the highest precedent value.
++
++Precedence is only determined using the
++.BR SECCOMP_RET_ACTION
++mask.  When multiple filters return values of the same precedence,
++only the
++.BR SECCOMP_RET_DATA
++from the most recently installed filter will be returned.
++.SH RETURN VALUE
++On success,
++.BR seccomp ()
++returns 0.
++On error, if
++.BR SECCOMP_FILTER_FLAG_TSYNC
++was used, the return value is the thread ID that caused the
++synchronization failure. On other errors, \-1 is returned, and
++.IR errno
++is set to indicate the cause of the error.
++.SH ERRORS
++.BR seccomp ()
++can fail for the following reasons:
++.TP
++.BR EACCESS
++the caller did not have the
++.BR CAP_SYS_ADMIN
++capability, or had not set
++.IR no_new_privs
++before using
++.BR SECCOMP_SET_MODE_FILTER .
++.TP
++.BR EFAULT
++.IR args
++was required to be a valid address.
++.TP
++.BR EINVAL
++.IR operation
++is unknown; or
++.IR flags
++are invalid for the given
++.IR operation
++.TP
++.BR ESRCH
++Another thread caused a failure during thread sync, but its ID could not
++be determined.
++.SH VERSIONS
++This system call first appeared in Linux 3.16.
++.\" FIXME Add glibc version
++.SH CONFORMING TO
++This system call is a nonstandard Linux extension.
++.SH NOTES
++.BR seccomp ()
++provides a superset of the functionality provided by
++.IR PR_SET_SECCOMP
++of
++.BR prctl (2) .
++(Which does not support
++.IR flags .)
++.SH EXAMPLE
++.nf
++#include <errno.h>
++#include <stddef.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <linux/audit.h>
++#include <linux/filter.h>
++#include <linux/seccomp.h>
++#include <sys/prctl.h>
++
++static int install_filter(int syscall, int arch, int error)
++{
++    struct sock_filter filter[] = {
++        /* Load architecture. */
++        BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
++                 (offsetof(struct seccomp_data, arch))),
++        /* Jump forward 4 instructions on architecture mismatch. */
++        BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, arch, 0, 4),
++        /* Load syscall number. */
++        BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
++                 (offsetof(struct seccomp_data, nr))),
++        /* Jump forward 1 instruction on syscall mismatch. */
++        BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, syscall, 0, 1),
++        /* Matching arch and syscall: return specific errno. */
++        BPF_STMT(BPF_RET+BPF_K,
++                 SECCOMP_RET_ERRNO|(error & SECCOMP_RET_DATA)),
++        /* Destination of syscall mismatch: Allow other syscalls. */
++        BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
++        /* Destination of arch mismatch: Kill process. */
++        BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL),
++    };
++    struct sock_fprog prog = {
++        .len = (unsigned short)(sizeof(filter)/sizeof(filter[0])),
++        .filter = filter,
++    };
++    if (seccomp(SECCOMP_SET_MODE_FILTER, 0, &prog)) {
++        perror("seccomp");
++        return EXIT_FAILURE;
++    }
++    return EXIT_SUCCESS;
 +}
 +
-+/**
-+ * seccomp_attach_filter: validate and attach filter
-+ * @filter: seccomp filter to add to the current process
-+ *
-+ * Returns 0 on success, -ve on error.
-+ */
-+static long seccomp_attach_filter(struct seccomp_filter *filter)
++int main(int argc, char **argv)
 +{
-+	unsigned long total_insns;
-+	struct seccomp_filter *walker;
-+
-+	/* Validate resulting filter length. */
-+	total_insns = filter->prog->len;
-+	for (walker = current->seccomp.filter; walker; walker = walker->prev)
-+		total_insns += walker->prog->len + 4;  /* 4 instr penalty */
-+	if (total_insns > MAX_INSNS_PER_PATH)
-+		return -ENOMEM;
-+
-+	/*
-+	 * If there is an existing filter, make it the prev and don't drop its
-+	 * task reference.
-+	 */
-+	filter->prev = current->seccomp.filter;
-+	current->seccomp.filter = filter;
-+
-+	return 0;
- }
- 
- /* get_seccomp_filter - increments the reference count of the filter on @tsk */
-@@ -329,6 +346,14 @@ void get_seccomp_filter(struct task_struct *tsk)
- 	atomic_inc(&orig->usage);
- }
- 
-+static inline void seccomp_filter_free(struct seccomp_filter *filter)
-+{
-+	if (filter) {
-+		sk_filter_free(filter->prog);
-+		kfree(filter);
-+	}
++    if (argc < 5) {
++        fprintf(stderr, "Usage:\\n"
++                "refuse <syscall_nr> <arch> <errno> <prog> [<args>]\\n"
++                "Hint:  AUDIT_ARCH_I386: 0x%X\\n"
++                "       AUDIT_ARCH_X86_64: 0x%X\\n"
++                "\\n", AUDIT_ARCH_I386, AUDIT_ARCH_X86_64);
++        return EXIT_FAILURE;
++    }
++    if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
++        perror("prctl");
++        return EXIT_FAILURE;
++    }
++    if (install_filter(strtol(argv[1], NULL, 0),
++                       strtol(argv[2], NULL, 0),
++                       strtol(argv[3], NULL, 0)))
++        return EXIT_FAILURE;
++    execv(argv[4], &argv[4]);
++    perror("execv");
++    return EXIT_FAILURE;
 +}
-+
- /* put_seccomp_filter - decrements the ref count of tsk->seccomp.filter */
- void put_seccomp_filter(struct task_struct *tsk)
- {
-@@ -337,8 +362,7 @@ void put_seccomp_filter(struct task_struct *tsk)
- 	while (orig && atomic_dec_and_test(&orig->usage)) {
- 		struct seccomp_filter *freeme = orig;
- 		orig = orig->prev;
--		sk_filter_free(freeme->prog);
--		kfree(freeme);
-+		seccomp_filter_free(freeme);
- 	}
- }
- 
-@@ -488,8 +512,18 @@ long prctl_get_seccomp(void)
-  */
- static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
- {
-+	struct seccomp_filter *prepared = NULL;
- 	long ret = -EINVAL;
- 
-+#ifdef CONFIG_SECCOMP_FILTER
-+	/* Prepare the new filter outside of the seccomp lock. */
-+	if (seccomp_mode == SECCOMP_MODE_FILTER) {
-+		prepared = seccomp_prepare_user_filter(filter);
-+		if (IS_ERR(prepared))
-+			return PTR_ERR(prepared);
-+	}
-+#endif
-+
- 	if (current->seccomp.mode &&
- 	    current->seccomp.mode != seccomp_mode)
- 		goto out;
-@@ -503,9 +537,11 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
- 		break;
- #ifdef CONFIG_SECCOMP_FILTER
- 	case SECCOMP_MODE_FILTER:
--		ret = seccomp_attach_user_filter(filter);
-+		ret = seccomp_attach_filter(prepared);
- 		if (ret)
- 			goto out;
-+		/* Do not free the successfully attached filter. */
-+		prepared = NULL;
- 		break;
- #endif
- 	default:
-@@ -515,6 +551,7 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
- 	current->seccomp.mode = seccomp_mode;
- 	set_thread_flag(TIF_SECCOMP);
- out:
-+	seccomp_filter_free(prepared);
- 	return ret;
- }
- 
++.fi
++.SH SEE ALSO
++.ad l
++.nh
++.BR prctl (2),
++.BR ptrace (2),
++.BR signal (7),
++.BR socket (7)
++.ad
 -- 
 1.7.9.5
+
+
+
+-- 
+Kees Cook                                            @outflux.net
