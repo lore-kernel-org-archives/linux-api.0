@@ -1,280 +1,193 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v8 6/9] seccomp: add "seccomp" syscall
-Date: Tue, 24 Jun 2014 13:48:10 -0700
-Message-ID: <1403642893-23107-7-git-send-email-keescook@chromium.org>
+Subject: [PATCH v8 5/9] seccomp: split mode set routines
+Date: Tue, 24 Jun 2014 13:48:09 -0700
+Message-ID: <1403642893-23107-6-git-send-email-keescook@chromium.org>
 References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-mips-bounce@linux-mips.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1403642893-23107-1-git-send-email-keescook@chromium.org>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+Cc: Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds the new "seccomp" syscall with both an "operation" and "flags"
-parameter for future expansion. The third argument is a pointer value,
-used with the SECCOMP_SET_MODE_FILTER operation. Currently, flags must
-be 0. This is functionally equivalent to prctl(PR_SET_SECCOMP, ...).
-
-In addition to the TSYNC flag in the following patch, there is a non-zero
-chance that this syscall could be used for configuring a fixed argument
-area for seccomp-tracer-aware processes to pass syscall arguments in
-the future. Hence, the use of "seccomp" not simply "seccomp_add_filter"
-for this syscall. Additionally, this syscall uses operation, flags,
-and user pointer for arguments because strictly passing arguments via
-a user pointer would mean seccomp itself would be unable to trivially
-filter the seccomp syscall itself.
+Extracts the common check/assign logic, and separates the two mode
+setting paths to make things more readable with fewer #ifdefs within
+function bodies.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
-Cc: linux-api@vger.kernel.org
 ---
- arch/Kconfig                      |    1 +
- arch/x86/syscalls/syscall_32.tbl  |    1 +
- arch/x86/syscalls/syscall_64.tbl  |    1 +
- include/linux/syscalls.h          |    2 ++
- include/uapi/asm-generic/unistd.h |    4 ++-
- include/uapi/linux/seccomp.h      |    4 +++
- kernel/seccomp.c                  |   63 ++++++++++++++++++++++++++++++++-----
- kernel/sys_ni.c                   |    3 ++
- 8 files changed, 70 insertions(+), 9 deletions(-)
+ kernel/seccomp.c |  123 +++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 84 insertions(+), 39 deletions(-)
 
-diff --git a/arch/Kconfig b/arch/Kconfig
-index 97ff872c7acc..0eae9df35b88 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -321,6 +321,7 @@ config HAVE_ARCH_SECCOMP_FILTER
- 	  - secure_computing is called from a ptrace_event()-safe context
- 	  - secure_computing return value is checked and a return value of -1
- 	    results in the system call being skipped immediately.
-+	  - seccomp syscall wired up
- 
- config SECCOMP_FILTER
- 	def_bool y
-diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-index d6b867921612..7527eac24122 100644
---- a/arch/x86/syscalls/syscall_32.tbl
-+++ b/arch/x86/syscalls/syscall_32.tbl
-@@ -360,3 +360,4 @@
- 351	i386	sched_setattr		sys_sched_setattr
- 352	i386	sched_getattr		sys_sched_getattr
- 353	i386	renameat2		sys_renameat2
-+354	i386	seccomp			sys_seccomp
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index ec255a1646d2..16272a6c12b7 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -323,6 +323,7 @@
- 314	common	sched_setattr		sys_sched_setattr
- 315	common	sched_getattr		sys_sched_getattr
- 316	common	renameat2		sys_renameat2
-+317	common	seccomp			sys_seccomp
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index b0881a0ed322..1713977ee26f 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -866,4 +866,6 @@ asmlinkage long sys_process_vm_writev(pid_t pid,
- asmlinkage long sys_kcmp(pid_t pid1, pid_t pid2, int type,
- 			 unsigned long idx1, unsigned long idx2);
- asmlinkage long sys_finit_module(int fd, const char __user *uargs, int flags);
-+asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
-+			    const char __user *uargs);
- #endif
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 333640608087..65acbf0e2867 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -699,9 +699,11 @@ __SYSCALL(__NR_sched_setattr, sys_sched_setattr)
- __SYSCALL(__NR_sched_getattr, sys_sched_getattr)
- #define __NR_renameat2 276
- __SYSCALL(__NR_renameat2, sys_renameat2)
-+#define __NR_seccomp 277
-+__SYSCALL(__NR_seccomp, sys_seccomp)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 277
-+#define __NR_syscalls 278
- 
- /*
-  * All syscalls below here should go away really,
-diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
-index ac2dc9f72973..b258878ba754 100644
---- a/include/uapi/linux/seccomp.h
-+++ b/include/uapi/linux/seccomp.h
-@@ -10,6 +10,10 @@
- #define SECCOMP_MODE_STRICT	1 /* uses hard-coded filter. */
- #define SECCOMP_MODE_FILTER	2 /* uses user-supplied filter. */
- 
-+/* Valid operations for seccomp syscall. */
-+#define SECCOMP_SET_MODE_STRICT	0
-+#define SECCOMP_SET_MODE_FILTER	1
-+
- /*
-  * All BPF programs must return a 32-bit value.
-  * The bottom 16-bits are for optional return data.
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index c81000dd0a53..051c3da4fb4c 100644
+index eb8248ab045e..c81000dd0a53 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -19,6 +19,7 @@
- #include <linux/sched.h>
- #include <linux/seccomp.h>
- #include <linux/slab.h>
-+#include <linux/syscalls.h>
+@@ -194,7 +194,29 @@ static u32 seccomp_run_filters(int syscall)
+ 	}
+ 	return ret;
+ }
++#endif /* CONFIG_SECCOMP_FILTER */
  
- /* #define SECCOMP_DEBUG 1 */
- 
-@@ -308,8 +309,8 @@ free_prog:
-  *
-  * Returns filter on success and ERR_PTR otherwise.
-  */
--static
--struct seccomp_filter *seccomp_prepare_user_filter(char __user *user_filter)
-+static struct seccomp_filter *
-+seccomp_prepare_user_filter(const char __user *user_filter)
- {
- 	struct sock_fprog fprog;
- 	struct seccomp_filter *filter = ERR_PTR(-EFAULT);
-@@ -332,19 +333,25 @@ out:
- 
- /**
-  * seccomp_attach_filter: validate and attach filter
-+ * @flags:  flags to change filter behavior
-  * @filter: seccomp filter to add to the current process
-  *
-  * Caller must be holding current->sighand->siglock lock.
-  *
-  * Returns 0 on success, -ve on error.
-  */
--static long seccomp_attach_filter(struct seccomp_filter *filter)
-+static long seccomp_attach_filter(unsigned int flags,
-+				  struct seccomp_filter *filter)
- {
- 	unsigned long total_insns;
- 	struct seccomp_filter *walker;
- 
- 	BUG_ON(!spin_is_locked(&current->sighand->siglock));
- 
-+	/* Validate flags. */
-+	if (flags != 0)
-+		return -EINVAL;
++static inline bool seccomp_check_mode(struct task_struct *task,
++				      unsigned long seccomp_mode)
++{
++	BUG_ON(!spin_is_locked(&task->sighand->siglock));
 +
- 	/* Validate resulting filter length. */
- 	total_insns = filter->prog->len;
- 	for (walker = current->seccomp.filter; walker; walker = walker->prev)
-@@ -555,6 +562,7 @@ out:
- #ifdef CONFIG_SECCOMP_FILTER
++	if (task->seccomp.mode && task->seccomp.mode != seccomp_mode)
++		return false;
++
++	return true;
++}
++
++static inline void seccomp_assign_mode(struct task_struct *task,
++				       unsigned long seccomp_mode)
++{
++	BUG_ON(!spin_is_locked(&task->sighand->siglock));
++
++	task->seccomp.mode = seccomp_mode;
++	set_tsk_thread_flag(task, TIF_SECCOMP);
++}
++
++#ifdef CONFIG_SECCOMP_FILTER
  /**
-  * seccomp_set_mode_filter: internal function for setting seccomp filter
-+ * @flags:  flags to change filter behavior
-  * @filter: struct sock_fprog containing filter
+  * seccomp_prepare_filter: Prepares a seccomp filter for use.
+  * @fprog: BPF program to install
+@@ -501,67 +523,83 @@ long prctl_get_seccomp(void)
+ }
+ 
+ /**
+- * seccomp_set_mode: internal function for setting seccomp mode
+- * @seccomp_mode: requested mode to use
+- * @filter: optional struct sock_fprog for use with SECCOMP_MODE_FILTER
++ * seccomp_set_mode_strict: internal function for setting strict seccomp
   *
-  * This function may be called repeatedly to install additional filters.
-@@ -565,7 +573,8 @@ out:
+- * This function may be called repeatedly with a @seccomp_mode of
+- * SECCOMP_MODE_FILTER to install additional filters.  Every filter
+- * successfully installed will be evaluated (in reverse order) for each system
+- * call the task makes.
++ * Once current->seccomp.mode is non-zero, it may not be changed.
++ *
++ * Returns 0 on success or -EINVAL on failure.
++ */
++static long seccomp_set_mode_strict(void)
++{
++	const unsigned long seccomp_mode = SECCOMP_MODE_STRICT;
++	unsigned long irqflags;
++	int ret = -EINVAL;
++
++	spin_lock_irqsave(&current->sighand->siglock, irqflags);
++
++	if (!seccomp_check_mode(current, seccomp_mode))
++		goto out;
++
++#ifdef TIF_NOTSC
++	disable_TSC();
++#endif
++	seccomp_assign_mode(current, seccomp_mode);
++	ret = 0;
++
++out:
++	spin_unlock_irqrestore(&current->sighand->siglock, irqflags);
++
++	return ret;
++}
++
++#ifdef CONFIG_SECCOMP_FILTER
++/**
++ * seccomp_set_mode_filter: internal function for setting seccomp filter
++ * @filter: struct sock_fprog containing filter
++ *
++ * This function may be called repeatedly to install additional filters.
++ * Every filter successfully installed will be evaluated (in reverse order)
++ * for each system call the task makes.
+  *
+  * Once current->seccomp.mode is non-zero, it may not be changed.
   *
   * Returns 0 on success or -EINVAL on failure.
   */
--static long seccomp_set_mode_filter(char __user *filter)
-+static long seccomp_set_mode_filter(unsigned int flags,
-+				    const char __user *filter)
+-static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
++static long seccomp_set_mode_filter(char __user *filter)
  {
- 	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
++	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
  	struct seccomp_filter *prepared = NULL;
-@@ -582,7 +591,7 @@ static long seccomp_set_mode_filter(char __user *filter)
- 	if (!seccomp_check_mode(current, seccomp_mode))
+ 	unsigned long irqflags;
+ 	long ret = -EINVAL;
+ 
+-#ifdef CONFIG_SECCOMP_FILTER
+-	/* Prepare the new filter outside of the seccomp lock. */
+-	if (seccomp_mode == SECCOMP_MODE_FILTER) {
+-		prepared = seccomp_prepare_user_filter(filter);
+-		if (IS_ERR(prepared))
+-			return PTR_ERR(prepared);
+-	}
+-#endif
++	/* Prepare the new filter outside of any locking. */
++	prepared = seccomp_prepare_user_filter(filter);
++	if (IS_ERR(prepared))
++		return PTR_ERR(prepared);
+ 
+ 	spin_lock_irqsave(&current->sighand->siglock, irqflags);
+ 
+-	if (current->seccomp.mode &&
+-	    current->seccomp.mode != seccomp_mode)
++	if (!seccomp_check_mode(current, seccomp_mode))
  		goto out;
  
--	ret = seccomp_attach_filter(prepared);
-+	ret = seccomp_attach_filter(flags, prepared);
- 	if (ret)
+-	switch (seccomp_mode) {
+-	case SECCOMP_MODE_STRICT:
+-		ret = 0;
+-#ifdef TIF_NOTSC
+-		disable_TSC();
+-#endif
+-		break;
+-#ifdef CONFIG_SECCOMP_FILTER
+-	case SECCOMP_MODE_FILTER:
+-		ret = seccomp_attach_filter(prepared);
+-		if (ret)
+-			goto out;
+-		/* Do not free the successfully attached filter. */
+-		prepared = NULL;
+-		break;
+-#endif
+-	default:
++	ret = seccomp_attach_filter(prepared);
++	if (ret)
  		goto out;
- 	/* Do not free the successfully attached filter. */
-@@ -595,12 +604,35 @@ out:
+-	}
++	/* Do not free the successfully attached filter. */
++	prepared = NULL;
+ 
+-	current->seccomp.mode = seccomp_mode;
+-	set_thread_flag(TIF_SECCOMP);
++	seccomp_assign_mode(current, seccomp_mode);
+ out:
+ 	spin_unlock_irqrestore(&current->sighand->siglock, irqflags);
+ 	seccomp_filter_free(prepared);
  	return ret;
  }
- #else
--static inline long seccomp_set_mode_filter(char __user *filter)
-+static inline long seccomp_set_mode_filter(unsigned int flags,
-+					   const char __user *filter)
- {
- 	return -EINVAL;
- }
- #endif
++#else
++static inline long seccomp_set_mode_filter(char __user *filter)
++{
++	return -EINVAL;
++}
++#endif
  
-+/* Common entry point for both prctl and syscall. */
-+static long do_seccomp(unsigned int op, unsigned int flags,
-+		       const char __user *uargs)
-+{
-+	switch (op) {
-+	case SECCOMP_SET_MODE_STRICT:
-+		if (flags != 0 || uargs != NULL)
-+			return -EINVAL;
-+		return seccomp_set_mode_strict();
-+	case SECCOMP_SET_MODE_FILTER:
-+		return seccomp_set_mode_filter(flags, uargs);
-+	default:
-+		return -EINVAL;
-+	}
-+}
-+
-+SYSCALL_DEFINE3(seccomp, unsigned int, op, unsigned int, flags,
-+			 const char __user *, uargs)
-+{
-+	return do_seccomp(op, flags, uargs);
-+}
-+
  /**
   * prctl_set_seccomp: configures current->seccomp.mode
-  * @seccomp_mode: requested mode to use
-@@ -610,12 +642,27 @@ static inline long seccomp_set_mode_filter(char __user *filter)
+@@ -572,5 +610,12 @@ out:
   */
  long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
  {
-+	unsigned int op;
-+	char __user *uargs;
-+
- 	switch (seccomp_mode) {
- 	case SECCOMP_MODE_STRICT:
--		return seccomp_set_mode_strict();
-+		op = SECCOMP_SET_MODE_STRICT;
-+		/*
-+		 * Setting strict mode through prctl always ignored filter,
-+		 * so make sure it is always NULL here to pass the internal
-+		 * check in do_seccomp().
-+		 */
-+		uargs = NULL;
-+		break;
- 	case SECCOMP_MODE_FILTER:
--		return seccomp_set_mode_filter(filter);
-+		op = SECCOMP_SET_MODE_FILTER;
-+		uargs = filter;
-+		break;
- 	default:
- 		return -EINVAL;
- 	}
-+
-+	/* prctl interface doesn't have flags, so they are always zero. */
-+	return do_seccomp(op, 0, uargs);
+-	return seccomp_set_mode(seccomp_mode, filter);
++	switch (seccomp_mode) {
++	case SECCOMP_MODE_STRICT:
++		return seccomp_set_mode_strict();
++	case SECCOMP_MODE_FILTER:
++		return seccomp_set_mode_filter(filter);
++	default:
++		return -EINVAL;
++	}
  }
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 36441b51b5df..2904a2105914 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -213,3 +213,6 @@ cond_syscall(compat_sys_open_by_handle_at);
- 
- /* compare kernel pointers */
- cond_syscall(sys_kcmp);
-+
-+/* operate on Secure Computing state */
-+cond_syscall(sys_seccomp);
 -- 
 1.7.9.5
