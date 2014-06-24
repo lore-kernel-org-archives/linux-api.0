@@ -1,37 +1,56 @@
-From: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
-Subject: Re: [PATCH] Documentation: sysfs-bus-usb: update power/persist
- description
-Date: Tue, 24 Jun 2014 13:17:17 -0400 (EDT)
-Message-ID: <Pine.LNX.4.44L0.1406241316550.888-100000@iolanthe.rowland.org>
-References: <1403628854.1960.21.camel@x220>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v7 7/9] seccomp: implement SECCOMP_FILTER_FLAG_TSYNC
+Date: Tue, 24 Jun 2014 19:27:53 +0200
+Message-ID: <20140624172753.GA31435@redhat.com>
+References: <1403560693-21809-1-git-send-email-keescook@chromium.org> <1403560693-21809-8-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1403628854.1960.21.camel@x220>
-Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-mips-bounce@linux-mips.org>
+Content-Disposition: inline
+In-Reply-To: <1403560693-21809-8-git-send-email-keescook@chromium.org>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: Kees Cook <keescook@chromium.org>
+Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 24 Jun 2014, Paul Bolle wrote:
+On 06/23, Kees Cook wrote:
+>
+> +static pid_t seccomp_can_sync_threads(void)
+> +{
+> +	struct task_struct *thread, *caller;
+> +
+> +	BUG_ON(write_can_lock(&tasklist_lock));
+> +	BUG_ON(!spin_is_locked(&current->sighand->siglock));
+> +
+> +	if (current->seccomp.mode != SECCOMP_MODE_FILTER)
+> +		return -EACCES;
+> +
+> +	/* Validate all threads being eligible for synchronization. */
+> +	thread = caller = current;
+> +	for_each_thread(caller, thread) {
+> +		pid_t failed;
+> +
+> +		if (thread->seccomp.mode == SECCOMP_MODE_DISABLED ||
+> +		    (thread->seccomp.mode == SECCOMP_MODE_FILTER &&
+> +		     is_ancestor(thread->seccomp.filter,
+> +				 caller->seccomp.filter)))
+> +			continue;
+> +
+> +		/* Return the first thread that cannot be synchronized. */
+> +		failed = task_pid_vnr(thread);
+> +		/* If the pid cannot be resolved, then return -ESRCH */
+> +		if (failed == 0)
+> +			failed = -ESRCH;
 
-> On Tue, 2014-06-24 at 10:15 -0400, Alan Stern wrote:
-> > The default value for the persist facility depends on the setting of 
-> > CONFIG_USB_DEFAULT_PERSIST.  If that symbol is set then persist is 
-> > enabled by default for all devices, except those which have the 
-> > USB_QUIRK_RESET flag set (meaning that they will morph or change modes 
-> > when reset).  If the symbol is not set then persist is enabled by 
-> > default only for hubs.
-> > 
-> > Thanks for the documentation update.
-> 
-> You do expect a v2 updated to reflect your comments, don't you?
+forgot to mention, task_pid_vnr() can't fail. sighand->siglock is held,
+for_each_thread() can't see a thread which has passed unhash_process().
 
-It would be nice.
-
-Alan Stern
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-usb" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Oleg.
