@@ -1,177 +1,223 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v7 3/9] seccomp: introduce writer locking
-Date: Tue, 24 Jun 2014 13:26:57 -0700
-Message-ID: <CAGXu5jJvAhnVVLvwvC54YUWvZngQGAAhoGoqvDsHs3SK723O5w@mail.gmail.com>
-References: <1403560693-21809-1-git-send-email-keescook@chromium.org>
-	<1403560693-21809-4-git-send-email-keescook@chromium.org>
-	<20140624165216.GA29272@redhat.com>
-	<CAGXu5j+G8qAkGD7H=3R2iw2ZTqZSrMPa2f=czoEjwSW5wKqUWQ@mail.gmail.com>
-	<20140624183550.GB1258@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20140624183550.GB1258@redhat.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Linux API <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-mips@linux-mips.org, linux-arch <linux-arch@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>
+Subject: [PATCH v8 3/9] seccomp: introduce writer locking
+Date: Tue, 24 Jun 2014 13:48:07 -0700
+Message-ID: <1403642893-23107-4-git-send-email-keescook@chromium.org>
+References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
+Return-path: <linux-mips-bounce@linux-mips.org>
+In-Reply-To: <1403642893-23107-1-git-send-email-keescook@chromium.org>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: linux-kernel@vger.kernel.org
+Cc: Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 24, 2014 at 11:35 AM, Oleg Nesterov <oleg@redhat.com> wrote:
-> On 06/24, Kees Cook wrote:
->> On Tue, Jun 24, 2014 at 9:52 AM, Oleg Nesterov <oleg@redhat.com> wrote:
->> >> @@ -1142,6 +1168,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->> >>  {
->> >>       int retval;
->> >>       struct task_struct *p;
->> >> +     unsigned long irqflags;
->> >>
->> >>       if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
->> >>               return ERR_PTR(-EINVAL);
->> >> @@ -1196,7 +1223,6 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->> >>               goto fork_out;
->> >>
->> >>       ftrace_graph_init_task(p);
->> >> -     get_seccomp_filter(p);
->> >>
->> >>       rt_mutex_init_task(p);
->> >>
->> >> @@ -1434,7 +1460,13 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->> >>               p->parent_exec_id = current->self_exec_id;
->> >>       }
->> >>
->> >> -     spin_lock(&current->sighand->siglock);
->> >> +     spin_lock_irqsave(&current->sighand->siglock, irqflags);
->> >> +
->> >> +     /*
->> >> +      * Copy seccomp details explicitly here, in case they were changed
->> >> +      * before holding tasklist_lock.
->> >> +      */
->> >> +     copy_seccomp(p);
->> >>
->> >>       /*
->> >>        * Process group and session signals need to be delivered to just the
->> >> @@ -1446,7 +1478,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->> >>       */
->> >>       recalc_sigpending();
->> >>       if (signal_pending(current)) {
->> >> -             spin_unlock(&current->sighand->siglock);
->> >> +             spin_unlock_irqrestore(&current->sighand->siglock, irqflags);
->> >>               write_unlock_irq(&tasklist_lock);
->> >>               retval = -ERESTARTNOINTR;
->> >>               goto bad_fork_free_pid;
->> >> @@ -1486,7 +1518,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->> >>       }
->> >>
->> >>       total_forks++;
->> >> -     spin_unlock(&current->sighand->siglock);
->> >> +     spin_unlock_irqrestore(&current->sighand->siglock, irqflags);
->> >>       write_unlock_irq(&tasklist_lock);
->> >>       proc_fork_connector(p);
->> >>       cgroup_post_fork(p);
->> >
->> > It seems that the only change copy_process() needs is copy_seccomp() under the locks.
->> > Everythinh else (irqflags games) looks obviously unneeded?
->>
->> I got irq lock dep warnings without these changes.
->
-> With or without your patches? Could you show the waring?
+Normally, task_struct.seccomp.filter is only ever read or modified by
+the task that owns it (current). This property aids in fast access
+during system call filtering as read access is lockless.
 
-It seems it's only needed in seccomp itself (I can drop the changes in
-kernel/fork.c). I get no warnings in that case. If I also remove irq
-handling from seccomp, I see:
+Updating the pointer from another task, however, opens up race
+conditions. To allow cross-thread filter pointer updates, writes to
+the seccomp fields are now protected by the sighand spinlock (which
+is unique to the thread group). Read access remains lockless because
+pointer updates themselves are atomic.  However, writes (or cloning)
+often entail additional checking (like maximum instruction counts)
+which require locking to perform safely.
 
-[   17.444328]
-[   17.445031] =================================
-[   17.445031] [ INFO: inconsistent lock state ]
-[   17.445031] 3.16.0-rc2+ #289 Not tainted
-[   17.445031] ---------------------------------
-[   17.445031] inconsistent {IN-HARDIRQ-W} -> {HARDIRQ-ON-W} usage.
-[   17.445031] seccomp_bpf_tes/1987 [HC0[0]:SC0[0]:HE1:SE1] takes:
-[   17.445031]  (&(&sighand->siglock)->rlock){?.....}, at:
-[<ffffffff9e2fb7e5>] do_seccomp.part.7+0x25/0xc0
-[   17.445031] {IN-HARDIRQ-W} state was registered at:
-[   17.445031]   [<ffffffff9e2a422a>] mark_irqflags+0x19a/0x1b0
-[   17.445031]   [<ffffffff9e2a4542>] __lock_acquire+0x302/0x9e0
-[   17.445031]   [<ffffffff9e2a5325>] lock_acquire+0x95/0x1e0
-[   17.445031]   [<ffffffff9ebda204>] _raw_spin_lock+0x34/0x50
-[   17.445031]   [<ffffffff9e263e70>] __lock_task_sighand+0xa0/0x230
-[   17.445031]   [<ffffffff9e2652cf>] send_sigqueue+0x3f/0x280
-[   17.445031]   [<ffffffff9e2781e3>] posix_timer_event+0x83/0x140
-[   17.445031]   [<ffffffff9e2782f2>] posix_timer_fn+0x52/0xd0
-[   17.445031]   [<ffffffff9e27d3bc>] __run_hrtimer+0x7c/0x420
-[   17.445031]   [<ffffffff9e27de27>] hrtimer_interrupt+0x107/0x260
-[   17.445031]   [<ffffffff9e235aa6>] local_apic_timer_interrupt+0x36/0x60
-[   17.445031]   [<ffffffff9e235f1e>] smp_apic_timer_interrupt+0x3e/0x60
-[   17.445031]   [<ffffffff9ebdbf2f>] apic_timer_interrupt+0x6f/0x80
-[   17.445031]   [<ffffffff9e20d99a>] arch_cpu_idle+0xa/0x10
-[   17.445031]   [<ffffffff9e29d587>] cpuidle_idle_call+0x157/0x3d0
-[   17.445031]   [<ffffffff9e29d945>] cpu_idle_loop+0x145/0x370
-[   17.445031]   [<ffffffff9e29dbc6>] cpu_startup_entry+0x56/0x60
-[   17.445031]   [<ffffffff9e234544>] start_secondary+0xd4/0xe0
-[   17.445031] irq event stamp: 243
-[   17.445031] hardirqs last  enabled at (243): [<ffffffff9e2b9d00>]
-__call_rcu.constprop.63+0x70/0x120
-[   17.445031] hardirqs last disabled at (242): [<ffffffff9e2b9cd2>]
-__call_rcu.constprop.63+0x42/0x120
-[   17.445031] softirqs last  enabled at (50): [<ffffffff9e256310>]
-__do_softirq+0x1d0/0x4d0
-[   17.445031] softirqs last disabled at (21): [<ffffffff9e2568be>]
-irq_exit+0x8e/0xb0
-[   17.445031]
-[   17.445031] other info that might help us debug this:
-[   17.445031]  Possible unsafe locking scenario:
-[   17.445031]
-[   17.445031]        CPU0
-[   17.445031]        ----
-[   17.445031]   lock(&(&sighand->siglock)->rlock);
-[   17.445031]   <Interrupt>
-[   17.445031]     lock(&(&sighand->siglock)->rlock);
-[   17.445031]
-[   17.445031]  *** DEADLOCK ***
-[   17.445031]
-[   17.445031] no locks held by seccomp_bpf_tes/1987.
-[   17.445031]
-[   17.445031] stack backtrace:
-[   17.445031] CPU: 0 PID: 1987 Comm: seccomp_bpf_tes Not tainted
-3.16.0-rc2+ #289
-[   17.445031] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996),
-BIOS Bochs 01/01/2011
-[   17.445031]  ffffffff9f71dd90 ffff88007878bc48 ffffffff9ebc4fb4
-0000000000000007
-[   17.445031]  ffff880077fb3570 ffff88007878bca8 ffffffff9ebbad0d
-0000000000000000
-[   17.445031]  0000000000000001 00007fff00000001 ffff88007878bd70
-ffff88007878bd18
-[   17.445031] Call Trace:
-[   17.445031]  [<ffffffff9ebc4fb4>] dump_stack+0x4e/0x68
-[   17.445031]  [<ffffffff9ebbad0d>] print_usage_bug+0x1f1/0x202
-[   17.445031]  [<ffffffff9e2a26e0>] ? check_usage_forwards+0x150/0x150
-[   17.445031]  [<ffffffff9ebbad8a>] mark_lock_irq+0x6c/0x137
-[   17.445031]  [<ffffffff9e2a3ff5>] mark_lock+0x125/0x1c0
-[   17.445031]  [<ffffffff9e2a41c8>] mark_irqflags+0x138/0x1b0
-[   17.445031]  [<ffffffff9e2a4542>] __lock_acquire+0x302/0x9e0
-[   17.445031]  [<ffffffff9e383a0c>] ? create_object+0x21c/0x2d0
-[   17.445031]  [<ffffffff9e2a5325>] lock_acquire+0x95/0x1e0
-[   17.445031]  [<ffffffff9e2fb7e5>] ? do_seccomp.part.7+0x25/0xc0
-[   17.445031]  [<ffffffff9e2a5e55>] ? trace_hardirqs_on_caller+0x105/0x1d0
-[   17.445031]  [<ffffffff9ebda204>] _raw_spin_lock+0x34/0x50
-[   17.445031]  [<ffffffff9e2fb7e5>] ? do_seccomp.part.7+0x25/0xc0
-[   17.445031]  [<ffffffff9e27ffc5>] ? abort_creds+0x45/0x50
-[   17.445031]  [<ffffffff9e2fb7e5>] do_seccomp.part.7+0x25/0xc0
-[   17.445031]  [<ffffffff9e2fbf28>] do_seccomp+0x18/0x40
-[   17.445031]  [<ffffffff9e2fc1df>] prctl_set_seccomp+0x2f/0x40
-[   17.445031]  [<ffffffff9e26bce1>] SyS_prctl+0x141/0x4b0
-[   17.445031]  [<ffffffff9e2f306c>] ? __audit_syscall_entry+0x8c/0xe0
-[   17.445031]  [<ffffffff9e59556e>] ? trace_hardirqs_on_thunk+0x3a/0x3f
-[   17.445031]  [<ffffffff9ebdb012>] system_call_fastpath+0x16/0x1b
+In the case of cloning threads, the child is invisible to the system
+until it enters the task list. To make sure a child can't be cloned from
+a thread and left in a prior state, seccomp duplication is additionally
+moved under the tasklist_lock. Then parent and child are certain have
+the same seccomp state when they exit the lock.
 
+Based on patches by Will Drewry and David Drysdale.
 
-I'll drop the fork.c changes, and keep the seccomp.c irqflags.
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ include/linux/seccomp.h |    6 +++---
+ kernel/fork.c           |   34 +++++++++++++++++++++++++++++++++-
+ kernel/seccomp.c        |   18 +++++++++++++-----
+ 3 files changed, 49 insertions(+), 9 deletions(-)
 
-Thanks!
-
--Kees
-
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index 4054b0994071..9ff98b4bfe2e 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -14,11 +14,11 @@ struct seccomp_filter;
+  *
+  * @mode:  indicates one of the valid values above for controlled
+  *         system calls available to a process.
+- * @filter: The metadata and ruleset for determining what system calls
+- *          are allowed for a task.
++ * @filter: must always point to a valid seccomp-filter or NULL as it is
++ *          accessed without locking during system call entry.
+  *
+  *          @filter must only be accessed from the context of current as there
+- *          is no locking.
++ *          is no read locking.
+  */
+ struct seccomp {
+ 	int mode;
+diff --git a/kernel/fork.c b/kernel/fork.c
+index d2799d1fc952..d41bdc8700b6 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -315,6 +315,15 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
+ 		goto free_ti;
+ 
+ 	tsk->stack = ti;
++#ifdef CONFIG_SECCOMP
++	/*
++	 * We must handle setting up seccomp filters once we're under
++	 * the sighand lock in case orig has changed between now and
++	 * then. Until then, filter must be NULL to avoid messing up
++	 * the usage counts on the error path calling free_task.
++	 */
++	tsk->seccomp.filter = NULL;
++#endif
+ 
+ 	setup_thread_stack(tsk, orig);
+ 	clear_user_return_notifier(tsk);
+@@ -1081,6 +1090,24 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
+ 	return 0;
+ }
+ 
++static void copy_seccomp(struct task_struct *p)
++{
++#ifdef CONFIG_SECCOMP
++	/*
++	 * Must be called with sighand->lock held, which is common to
++	 * all threads in the group. Regardless, nothing special is
++	 * needed for the child since it is not yet in the tasklist.
++	 */
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
++
++	get_seccomp_filter(current);
++	p->seccomp = current->seccomp;
++
++	if (p->seccomp.mode != SECCOMP_MODE_DISABLED)
++		set_tsk_thread_flag(p, TIF_SECCOMP);
++#endif
++}
++
+ SYSCALL_DEFINE1(set_tid_address, int __user *, tidptr)
+ {
+ 	current->clear_child_tid = tidptr;
+@@ -1196,7 +1223,6 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 		goto fork_out;
+ 
+ 	ftrace_graph_init_task(p);
+-	get_seccomp_filter(p);
+ 
+ 	rt_mutex_init_task(p);
+ 
+@@ -1437,6 +1463,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	spin_lock(&current->sighand->siglock);
+ 
+ 	/*
++	 * Copy seccomp details explicitly here, in case they were changed
++	 * before holding sighand lock.
++	 */
++	copy_seccomp(p);
++
++	/*
+ 	 * Process group and session signals need to be delivered to just the
+ 	 * parent before the fork or both the parent and the child after the
+ 	 * fork. Restart if a signal comes in before we add the new process to
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index edc8c79ed16d..405eb72dfe35 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -172,12 +172,12 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
+  */
+ static u32 seccomp_run_filters(int syscall)
+ {
+-	struct seccomp_filter *f;
++	struct seccomp_filter *f = smp_load_acquire(&current->seccomp.filter);
+ 	struct seccomp_data sd;
+ 	u32 ret = SECCOMP_RET_ALLOW;
+ 
+ 	/* Ensure unexpected behavior doesn't result in failing open. */
+-	if (WARN_ON(current->seccomp.filter == NULL))
++	if (unlikely(WARN_ON(f == NULL)))
+ 		return SECCOMP_RET_KILL;
+ 
+ 	populate_seccomp_data(&sd);
+@@ -186,7 +186,7 @@ static u32 seccomp_run_filters(int syscall)
+ 	 * All filters in the list are evaluated and the lowest BPF return
+ 	 * value always takes priority (ignoring the DATA).
+ 	 */
+-	for (f = current->seccomp.filter; f; f = f->prev) {
++	for (; f; f = f->prev) {
+ 		u32 cur_ret = SK_RUN_FILTER(f->prog, (void *)&sd);
+ 
+ 		if ((cur_ret & SECCOMP_RET_ACTION) < (ret & SECCOMP_RET_ACTION))
+@@ -312,6 +312,8 @@ out:
+  * seccomp_attach_filter: validate and attach filter
+  * @filter: seccomp filter to add to the current process
+  *
++ * Caller must be holding current->sighand->siglock lock.
++ *
+  * Returns 0 on success, -ve on error.
+  */
+ static long seccomp_attach_filter(struct seccomp_filter *filter)
+@@ -319,6 +321,8 @@ static long seccomp_attach_filter(struct seccomp_filter *filter)
+ 	unsigned long total_insns;
+ 	struct seccomp_filter *walker;
+ 
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
++
+ 	/* Validate resulting filter length. */
+ 	total_insns = filter->prog->len;
+ 	for (walker = current->seccomp.filter; walker; walker = walker->prev)
+@@ -331,7 +335,7 @@ static long seccomp_attach_filter(struct seccomp_filter *filter)
+ 	 * task reference.
+ 	 */
+ 	filter->prev = current->seccomp.filter;
+-	current->seccomp.filter = filter;
++	smp_store_release(&current->seccomp.filter, filter);
+ 
+ 	return 0;
+ }
+@@ -357,7 +361,7 @@ static inline void seccomp_filter_free(struct seccomp_filter *filter)
+ /* put_seccomp_filter - decrements the ref count of tsk->seccomp.filter */
+ void put_seccomp_filter(struct task_struct *tsk)
+ {
+-	struct seccomp_filter *orig = tsk->seccomp.filter;
++	struct seccomp_filter *orig = smp_load_acquire(&tsk->seccomp.filter);
+ 	/* Clean up single-reference branches iteratively. */
+ 	while (orig && atomic_dec_and_test(&orig->usage)) {
+ 		struct seccomp_filter *freeme = orig;
+@@ -513,6 +517,7 @@ long prctl_get_seccomp(void)
+ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ {
+ 	struct seccomp_filter *prepared = NULL;
++	unsigned long irqflags;
+ 	long ret = -EINVAL;
+ 
+ #ifdef CONFIG_SECCOMP_FILTER
+@@ -524,6 +529,8 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ 	}
+ #endif
+ 
++	spin_lock_irqsave(&current->sighand->siglock, irqflags);
++
+ 	if (current->seccomp.mode &&
+ 	    current->seccomp.mode != seccomp_mode)
+ 		goto out;
+@@ -551,6 +558,7 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ 	current->seccomp.mode = seccomp_mode;
+ 	set_thread_flag(TIF_SECCOMP);
+ out:
++	spin_unlock_irqrestore(&current->sighand->siglock, irqflags);
+ 	seccomp_filter_free(prepared);
+ 	return ret;
+ }
 -- 
-Kees Cook
-Chrome OS Security
+1.7.9.5
