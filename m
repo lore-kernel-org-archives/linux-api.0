@@ -1,44 +1,36 @@
 From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [patch 1/4] timerfd: Implement show_fdinfo method
-Date: Wed, 25 Jun 2014 02:02:18 +0400
-Message-ID: <20140624220218.GY2095@moon>
+Subject: [patch 3/4] timerfd: Implement timerfd_ioctl method to restore
+ timerfd_ctx::ticks
+Date: Wed, 25 Jun 2014 02:03:51 +0400
+Message-ID: <20140624220351.GZ2095@moon>
 References: <20140623185431.396309193@openvz.org>
- <20140623190345.354980826@openvz.org>
+ <20140623190345.499956567@openvz.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20140623190345.354980826-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <20140623190345.499956567-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-For checkpoint/restore of timerfd files we need to know how exactly
-the timer were armed, to be able to recreate it on restore stage.
-Thus implement show_fdinfo method which provides enough information
-for that.
+The read() of timerfd files allows to fetch the number of timer ticks
+while there is no way to set it back from userspace.
 
-One of significant changes I think is the addition of @settime_flags
-member. Currently there are two flags TFD_TIMER_ABSTIME and
-TFD_TIMER_CANCEL_ON_SET, and the second can be found from
-@might_cancel variable but in case if the flags will be extended
-in future we most probably will have to somehow remember them
-explicitly anyway so I guss doing that right now won't hurt.
+To restore the timer's state as it was at checkpoint moment we need
+a path to bring @ticks back. Initially I thought about writing ticks
+back via write() interface but it seems such API is somehow obscure.
 
-To not bloat the timerfd_ctx structure I've converted @expired
-to short integer and defined @settime_flags as short too.
+Instead implement timerfd_ioctl() method with TFD_IOC_SET_TICKS
+command which allows to adjust @ticks into non-zero value waking
+up the waiters.
 
-v2 (by avagin@, vdavydov@ and tglx@):
+I wrapped code with CONFIG_CHECKPOINT_RESTORE which can be
+dropped off if there users except c/r camp appear.
 
- - Add it_value/it_interval fields
- - Save flags being used in timerfd_setup in context
-
-v3 (by tglx@):
- - don't forget to use CONFIG_PROC_FS
-
-v4 (by akpm@):
- -Use define timerfd_show NULL for non c/r config
+v2 (by akpm@):
+ -Use define timerfd_ioctl NULL for non c/r config
 
 CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
@@ -48,65 +40,54 @@ CC: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 ---
 
-A nit fixed in timerfd_show for non c/r config
+A nit fixed for for non c/r config in timerfd_ioctl declaration
 
- fs/timerfd.c |   34 +++++++++++++++++++++++++++++++++-
- 1 file changed, 33 insertions(+), 1 deletion(-)
+ fs/timerfd.c            |   37 +++++++++++++++++++++++++++++++++++++
+ include/linux/timerfd.h |    5 +++++
+ 2 files changed, 42 insertions(+)
 
 Index: linux-2.6.git/fs/timerfd.c
 ===================================================================
 --- linux-2.6.git.orig/fs/timerfd.c
 +++ linux-2.6.git/fs/timerfd.c
-@@ -35,8 +35,9 @@ struct timerfd_ctx {
- 	ktime_t moffs;
- 	wait_queue_head_t wqh;
- 	u64 ticks;
--	int expired;
- 	int clockid;
-+	short unsigned expired;
-+	short unsigned settime_flags;	/* to show in fdinfo */
- 	struct rcu_head rcu;
- 	struct list_head clist;
- 	bool might_cancel;
-@@ -196,6 +197,8 @@ static int timerfd_setup(struct timerfd_
- 		if (timerfd_canceled(ctx))
- 			return -ECANCELED;
- 	}
-+
-+	ctx->settime_flags = flags & TFD_SETTIME_FLAGS;
- 	return 0;
- }
+@@ -315,12 +315,49 @@ static int timerfd_show(struct seq_file
+ #define timerfd_show NULL
+ #endif
  
-@@ -284,11 +287,40 @@ static ssize_t timerfd_read(struct file
- 	return res;
- }
- 
-+#ifdef CONFIG_PROC_FS
-+static int timerfd_show(struct seq_file *m, struct file *file)
++#ifdef CONFIG_CHECKPOINT_RESTORE
++static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 +{
 +	struct timerfd_ctx *ctx = file->private_data;
-+	struct itimerspec t;
++	int ret = 0;
 +
-+	spin_lock_irq(&ctx->wqh.lock);
-+	t.it_value = ktime_to_timespec(timerfd_get_remaining(ctx));
-+	t.it_interval = ktime_to_timespec(ctx->tintv);
-+	spin_unlock_irq(&ctx->wqh.lock);
++	switch (cmd) {
++	case TFD_IOC_SET_TICKS: {
++		u64 ticks;
 +
-+	return seq_printf(m,
-+			  "clockid: %d\n"
-+			  "ticks: %llu\n"
-+			  "settime flags: 0%o\n"
-+			  "it_value: (%llu, %llu)\n"
-+			  "it_interval: (%llu, %llu)\n",
-+			  ctx->clockid, (unsigned long long)ctx->ticks,
-+			  ctx->settime_flags,
-+			  (unsigned long long)t.it_value.tv_sec,
-+			  (unsigned long long)t.it_value.tv_nsec,
-+			  (unsigned long long)t.it_interval.tv_sec,
-+			  (unsigned long long)t.it_interval.tv_nsec);
++		if (get_user(ticks, (u64 __user *)arg))
++			return -EFAULT;
++		if (!ticks)
++			return -EINVAL;
++
++		spin_lock_irq(&ctx->wqh.lock);
++		if (!timerfd_canceled(ctx)) {
++			ctx->ticks = ticks;
++			if (ticks)
++				wake_up_locked(&ctx->wqh);
++		} else
++			ret = -ECANCELED;
++		spin_unlock_irq(&ctx->wqh.lock);
++		break;
++	}
++	default:
++		ret = -ENOTTY;
++		break;
++	}
++
++	return ret;
 +}
 +#else
-+#define timerfd_show NULL
++#define timerfd_ioctl NULL
 +#endif
 +
  static const struct file_operations timerfd_fops = {
@@ -114,7 +95,29 @@ Index: linux-2.6.git/fs/timerfd.c
  	.poll		= timerfd_poll,
  	.read		= timerfd_read,
  	.llseek		= noop_llseek,
-+	.show_fdinfo	= timerfd_show,
+ 	.show_fdinfo	= timerfd_show,
++	.unlocked_ioctl	= timerfd_ioctl,
  };
  
  static int timerfd_fget(int fd, struct fd *p)
+Index: linux-2.6.git/include/linux/timerfd.h
+===================================================================
+--- linux-2.6.git.orig/include/linux/timerfd.h
++++ linux-2.6.git/include/linux/timerfd.h
+@@ -11,6 +11,9 @@
+ /* For O_CLOEXEC and O_NONBLOCK */
+ #include <linux/fcntl.h>
+ 
++/* For _IO helpers */
++#include <linux/ioctl.h>
++
+ /*
+  * CAREFUL: Check include/asm-generic/fcntl.h when defining
+  * new flags, since they might collide with O_* ones. We want
+@@ -29,4 +32,6 @@
+ /* Flags for timerfd_settime.  */
+ #define TFD_SETTIME_FLAGS (TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET)
+ 
++#define TFD_IOC_SET_TICKS	_IOW('T', 0, u64)
++
+ #endif /* _LINUX_TIMERFD_H */
