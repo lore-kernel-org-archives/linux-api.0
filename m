@@ -1,13 +1,13 @@
 From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v8 5/9] seccomp: split mode set routines
-Date: Wed, 25 Jun 2014 15:51:22 +0200
-Message-ID: <20140625135121.GB7892@redhat.com>
-References: <1403642893-23107-1-git-send-email-keescook@chromium.org> <1403642893-23107-6-git-send-email-keescook@chromium.org>
+Subject: Re: [PATCH v8 3/9] seccomp: introduce writer locking
+Date: Wed, 25 Jun 2014 16:03:12 +0200
+Message-ID: <20140625140312.GC7892@redhat.com>
+References: <1403642893-23107-1-git-send-email-keescook@chromium.org> <1403642893-23107-4-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-mips-bounce@linux-mips.org>
 Content-Disposition: inline
-In-Reply-To: <1403642893-23107-6-git-send-email-keescook@chromium.org>
+In-Reply-To: <1403642893-23107-4-git-send-email-keescook@chromium.org>
 Sender: linux-mips-bounce@linux-mips.org
 Errors-to: linux-mips-bounce@linux-mips.org
 List-help: <mailto:ecartis@linux-mips.org?Subject=help>
@@ -23,24 +23,16 @@ List-Id: linux-api@vger.kernel.org
 
 On 06/24, Kees Cook wrote:
 >
-> +static inline void seccomp_assign_mode(struct task_struct *task,
-> +				       unsigned long seccomp_mode)
-> +{
-> +	BUG_ON(!spin_is_locked(&task->sighand->siglock));
+> @@ -524,6 +529,8 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+>  	}
+>  #endif
+>
+> +	spin_lock_irqsave(&current->sighand->siglock, irqflags);
 > +
-> +	task->seccomp.mode = seccomp_mode;
-> +	set_tsk_thread_flag(task, TIF_SECCOMP);
-> +}
 
-OK, but unless task == current this can race with secure_computing().
-I think this needs smp_mb__before_atomic() and secure_computing() needs
-rmb() after test_bit(TIF_SECCOMP).
+Well, I won't argue if you prefer to use _irqsave "just in case".
 
-Otherwise, can't __secure_computing() hit BUG() if it sees the old
-mode == SECCOMP_MODE_DISABLED ?
-
-Or seccomp_run_filters() can see ->filters == NULL and WARN(),
-smp_load_acquire() only serializes that LOAD with the subsequent memory
-operations.
+But irqs must be enabled in syscall paths, you could use spin_lock_irq().
+The same for seccomp_set_mode_filter() added later.
 
 Oleg.
