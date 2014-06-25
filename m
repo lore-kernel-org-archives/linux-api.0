@@ -1,13 +1,13 @@
 From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v8 4/9] sched: move no_new_privs into new atomic flags
-Date: Wed, 25 Jun 2014 15:43:54 +0200
-Message-ID: <20140625134354.GA7892@redhat.com>
-References: <1403642893-23107-1-git-send-email-keescook@chromium.org> <1403642893-23107-5-git-send-email-keescook@chromium.org>
+Subject: Re: [PATCH v8 5/9] seccomp: split mode set routines
+Date: Wed, 25 Jun 2014 15:51:22 +0200
+Message-ID: <20140625135121.GB7892@redhat.com>
+References: <1403642893-23107-1-git-send-email-keescook@chromium.org> <1403642893-23107-6-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-mips-bounce@linux-mips.org>
 Content-Disposition: inline
-In-Reply-To: <1403642893-23107-5-git-send-email-keescook@chromium.org>
+In-Reply-To: <1403642893-23107-6-git-send-email-keescook@chromium.org>
 Sender: linux-mips-bounce@linux-mips.org
 Errors-to: linux-mips-bounce@linux-mips.org
 List-help: <mailto:ecartis@linux-mips.org?Subject=help>
@@ -23,22 +23,24 @@ List-Id: linux-api@vger.kernel.org
 
 On 06/24, Kees Cook wrote:
 >
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -1307,8 +1307,7 @@ struct task_struct {
->  				 * execve */
->  	unsigned in_iowait:1;
->
-> -	/* task may not gain privileges */
-> -	unsigned no_new_privs:1;
-> +	unsigned long atomic_flags; /* Flags needing atomic access. */
->
->  	/* Revert to default priority/policy when forking */
->  	unsigned sched_reset_on_fork:1;
+> +static inline void seccomp_assign_mode(struct task_struct *task,
+> +				       unsigned long seccomp_mode)
+> +{
+> +	BUG_ON(!spin_is_locked(&task->sighand->siglock));
+> +
+> +	task->seccomp.mode = seccomp_mode;
+> +	set_tsk_thread_flag(task, TIF_SECCOMP);
+> +}
 
-Agreed, personally I like it more than seccomp->flags.
+OK, but unless task == current this can race with secure_computing().
+I think this needs smp_mb__before_atomic() and secure_computing() needs
+rmb() after test_bit(TIF_SECCOMP).
 
-But probably it would be better to place the new member before/after
-other bitfields to save the space?
+Otherwise, can't __secure_computing() hit BUG() if it sees the old
+mode == SECCOMP_MODE_DISABLED ?
+
+Or seccomp_run_filters() can see ->filters == NULL and WARN(),
+smp_load_acquire() only serializes that LOAD with the subsequent memory
+operations.
 
 Oleg.
