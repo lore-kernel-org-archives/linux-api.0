@@ -1,77 +1,85 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v8 9/9] seccomp: implement SECCOMP_FILTER_FLAG_TSYNC
-Date: Wed, 25 Jun 2014 16:21:21 +0200
-Message-ID: <20140625142121.GD7892@redhat.com>
-References: <1403642893-23107-1-git-send-email-keescook@chromium.org> <1403642893-23107-10-git-send-email-keescook@chromium.org>
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2] ns: introduce getnspid syscall
+Date: Wed, 25 Jun 2014 14:38:31 +0000
+Message-ID: <20140625143831.GB17169@ubuntumail>
+References: <1403259512-10510-1-git-send-email-chenhanxiao@cn.fujitsu.com>
+	<53A414B2.20108@nod.at>
+	<5871495633F38949900D2BF2DC04883E54ECC5@G08CNEXMBPEKD02.g08.fujitsu.local>
+	<20140623133230.GA31817@mail.hallyn.com>
+	<5871495633F38949900D2BF2DC04883E551F09@G08CNEXMBPEKD02.g08.fujitsu.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-mips-bounce@linux-mips.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1403642893-23107-10-git-send-email-keescook@chromium.org>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: Kees Cook <keescook@chromium.org>
-Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+In-Reply-To: <5871495633F38949900D2BF2DC04883E551F09-ZEd+hNNJ6a5ZYpXjqAkB5jz3u5zwRJJDAzI0kPv9QBlmR6Xm/wNWPw@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, "containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 06/24, Kees Cook wrote:
->
-> +static void seccomp_sync_threads(void)
-> +{
-> +	struct task_struct *thread, *caller;
-> +
-> +	BUG_ON(!spin_is_locked(&current->sighand->siglock));
-> +
-> +	/* Synchronize all threads. */
-> +	caller = current;
-> +	for_each_thread(caller, thread) {
-> +		/* Get a task reference for the new leaf node. */
-> +		get_seccomp_filter(caller);
-> +		/*
-> +		 * Drop the task reference to the shared ancestor since
-> +		 * current's path will hold a reference.  (This also
-> +		 * allows a put before the assignment.)
-> +		 */
-> +		put_seccomp_filter(thread);
-> +		thread->seccomp.filter = caller->seccomp.filter;
-> +		/* Opt the other thread into seccomp if needed.
-> +		 * As threads are considered to be trust-realm
-> +		 * equivalent (see ptrace_may_access), it is safe to
-> +		 * allow one thread to transition the other.
-> +		 */
-> +		if (thread->seccomp.mode == SECCOMP_MODE_DISABLED) {
-> +			/*
-> +			 * Don't let an unprivileged task work around
-> +			 * the no_new_privs restriction by creating
-> +			 * a thread that sets it up, enters seccomp,
-> +			 * then dies.
-> +			 */
-> +			if (task_no_new_privs(caller))
-> +				task_set_no_new_privs(thread);
-> +
-> +			seccomp_assign_mode(thread, SECCOMP_MODE_FILTER);
-> +		}
-> +	}
-> +}
-
-OK, personally I think this all make sense. I even think that perhaps
-SECCOMP_FILTER_FLAG_TSYNC should allow filter == NULL, a thread might
-want to "sync" without adding the new filter, but this is minor/offtopic.
-
-But. Doesn't this change add the new security hole?
-
-Obviously, we should not allow to install a filter and then (say) exec
-a suid binary, that is why we have no_new_privs/LSM_UNSAFE_NO_NEW_PRIVS.
-
-But what if "thread->seccomp.filter = caller->seccomp.filter" races with
-any user of task_no_new_privs() ? Say, suppose this thread has already
-passed check_unsafe_exec/etc and it is going to exec the suid binary?
-
-Oleg.
+UXVvdGluZyBjaGVuaGFueGlhb0Bjbi5mdWppdHN1LmNvbSAoY2hlbmhhbnhpYW9AY24uZnVqaXRz
+dS5jb20pOgo+IEhpLAo+IAo+ID4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0KPiA+IEZyb206
+IFNlcmdlIEUuIEhhbGx5biBbbWFpbHRvOnNlcmdlQGhhbGx5bi5jb21dCj4gPiBTZW50OiBNb25k
+YXksIEp1bmUgMjMsIDIwMTQgOTozMyBQTQo+ID4gVG86IENoZW4sIEhhbnhpYW8v6ZmIIOaZl+mc
+hAo+ID4gQ2M6IFJpY2hhcmQgV2VpbmJlcmdlcjsgY29udGFpbmVyc0BsaXN0cy5saW51eC1mb3Vu
+ZGF0aW9uLm9yZzsKPiA+IGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc7IFBhdmVsIEVtZWx5
+YW5vdjsgbGludXgtYXBpQHZnZXIua2VybmVsLm9yZzsKPiA+IFNlcmdlIEhhbGx5bjsgT2xlZyBO
+ZXN0ZXJvdjsgRGF2aWQgSG93ZWxsczsgRXJpYyBXLiBCaWVkZXJtYW47IEFsIFZpcm8KPiA+IFN1
+YmplY3Q6IFJlOiBbUEFUQ0ggdjJdIG5zOiBpbnRyb2R1Y2UgZ2V0bnNwaWQgc3lzY2FsbAo+ID4g
+Cj4gPiA+ID4gPgo+ID4gPiA+Cj4gPiA+ID4gSSBkb24ndCB0aGluayB0aGF0IGFkZGluZyBhIG5l
+dyBzeXN0ZW0gY2FsbCBmb3IgdGhpcyBpcyBhIGdvb2Qgc29sdXRpb24uCj4gPiA+ID4gV2UgbmVl
+ZCBhIG1vcmUgZ2VuZXJpYyB3YXkuIEkgYmV0IHBlb3BsZSBhcmUgaW50ZXJlc3RlZCBpbiBtb3Jl
+IHRoYW4ganVzdAo+ID4gUElECj4gPiA+ID4gbnVtYmVycy4KPiA+ID4KPiA+ID4gQ291bGQgeW91
+IHBsZWFzZSBnaXZlIHNvbWUgaGludHMgb24gaG93IHRvIGV4cGFuZCB0aGlzIGludGVyZmFjZT8K
+PiA+ID4KPiA+ID4gPgo+ID4gPiA+IEkgYWdyZWUgd2l0aCBFcmljIHRoYXQgYSBwcm9jZnMgc29s
+dXRpb24gaXMgbW9yZSBhcHByb3ByaWF0ZS4KPiA+ID4gPgo+ID4gPgo+ID4gPiBQcm9jZnMgaXMg
+YSBnb29kIHNvbHV0aW9uLCBidXQgc3lzY2FsbCBpcyBub3QgYmFkIHRob3VnaC4KPiA+IAo+ID4g
+SSBtaWdodCBiZSBpbmNsaW5lZCB0byBhZ3JlZSwgZXhjZXB0IHRoYXQgaW4gdGhpcyBjYXNlIHlv
+dSBhcmUgc3RpbGwKPiA+IG5lZWRpbmcgbW91bnRlZCBwcm9jZnMgYW55d2F5IHRvIGdldCB0aGUg
+cHJvYy8kcGlkL25zL3BpZCBmZHMuCj4gPiAKPiA+IEknbSBzb3JyeSwgSSd2ZSBub3QgYmVlbiB3
+YXRjaGluZyB0aGlzIHRocmVhZCwgc28gdGhpcyBwcm9iYWJseSBoYXMgYmVlbgo+ID4gY29uc2lk
+ZXJlZCBhbmQgZGVjaWRlZCBhZ2FpbnN0LCBidXQgSSdtIGdvaW5nIHRvIGFzayBhbnl3YXkuICBL
+ZWVwaW5nCj4gPiBpbiBtaW5kIGJvdGggY2hlY2twb2ludC1yZXN0YXJ0IGFuZCBhbmQgaW50cm9z
+cGVjdGlvbiBmb3IgdXNlIGluIGEKPiA+IHNldG5zJ2QgY29tbWVuZCwgd2h5IG5vdCBtYWtlIGl0
+Cj4gPiAKPiA+IHBpZF90IGdldG5zcGlkKHBpZF90IHF1ZXJ5X3BpZCwgcGlkX3Qgb2JzZXJ2ZXJf
+cGlkKQo+ID4gCj4gPiB3aGljaCByZXR1cm5zIHRoZSBwcm9jZXNzIGlkIG9mIHF1ZXJ5X3BpZCBh
+cyBzZWVuIGZyb20gb2JzZXJ2ZXJfcGlkJ3MKPiA+IHBpZG5zPwo+ID4gCj4gCj4gQnV0IHRoaXMg
+Y291bGQgYmUgY29uZnVzZWQgaW4gbmVzdGVkIG5zLgo+IAo+IEV4Ogo+ICh0aGFua3MgZm9yIFBh
+dmVsJ3MgZmlndXJlKQo+ICAgICBpbml0X3BpZF9ucyAgICBuczEgICAgICAgICBuczIKPiB0MSAg
+Mgo+IHQyICAgYC0gMyAgICAgICAgICAxIAo+IHQzICAgICAgIGAtIDQgICAgICBgLSA1ICAgICAg
+ICAxCj4gdDQgIDUKPiAKPiBhKSBnZXRuc3BpZCgxLCAxKToKPiBXZSBleHBlY3RlZCBpdCBjb3Vs
+ZCByZXR1cm4gdDIncyBwaWQoMm5kIDEgYXMgcGlkCgpDbGVhcmx5IHRoZSBwYXNzZWQtaW4gcGlk
+cyBzaG91bGQgYmUgaW50ZXJwcmV0ZWQgYXMgcmVsYXRpdmUKdG8gY3VycmVudCdzIHBpZG5zLiAg
+VGhlcmUgY2FuIGJlIG5vIGFtYmlndWl0eSBhdCB0aGF0IHBvaW50LAp1bmxlc3MgSSdtIG92ZXJs
+b29raW5nIHNvbWV0aGluZy4KCj4gc3VjaCBhcyBzeXN0ZW1kIGluIGluaXRfcGlkX25zKSwKPiBi
+dXQgdDMncGlkIGlzIGFsc28gYW4gYXBwcm9wcmlhdGUgcmVzdWx0Lgo+IFdlIG1heSBnZXQgbW9y
+ZSB0aGFuIG9uZSByZXR1cm5zLgo+IAo+IGIpIGdldG5zcGlkKDUsIDEpOgo+ICgxc3QgNSB3YXMg
+ZXhwZWN0ZWQgYXMgIHBpZCBpbiBuczEpCj4gdDMncGlkIGFuZCB0NCdzIHBpZCBjb3VsZCBib3Ro
+IGJlIHRoZSBhbnN3ZXIuCj4gV2UgY291bGQgbm90IGRldGVybWluZSB3aGljaCBvbmUgaXMgd2hh
+dCB3ZSB3YW50Lgo+IAo+IFNvIHNvbWV0aGluZyB1bmlxdWUgbGlrZSBmZHMgb2YgbnMgc2hvdWxk
+IGJlCj4gYSBiZXR0ZXIgcmVmZXJlbmNlLiAKPiAKPiBUaGFua3MsCj4gLSBDaGVuCj4gCj4gPiAK
+PiA+ID4gUHJvY2ZzIHdvcmtzIGZvciBtZSwgYnV0IHRoYXQgc2VlbXMgY291bGQgbm90IGZpdAo+
+ID4gPiBQYXZlbCdzIHJlcXVpcmVtZW50Lgo+ID4gPiBIaXMgb3BpbmlvbiBpcyB0aGF0IGEgc3lz
+Y2FsbCBpcyBhIG1vcmUgZ2VuZXJpYyBpbnRlcmZhY2UKPiA+ID4gdGhhbiBwcm9jIGZpbGVzLCBh
+bmQgIGFsc28gdmVyeSBoZWxwZnVsLgo+ID4gPiBBbmQgc3lzY2FsbCBjb3VsZCB0ZWxsIHdoZXRo
+ZXIgYSBwaWQgbGl2ZXMgaW4gYSBzcGVjaWZpYyBwaWQgbmFtZXNwYWNlLAo+ID4gPiBtdWNoIGNv
+bnZlbmllbnQgdGhhbiBwcm9jZnMuCj4gPiA+Cj4gPiA+IFRoYW5rcywKPiA+ID4gLSBDaGVuCj4g
+PiAKPiA+ID4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
+PiA+ID4gQ29udGFpbmVycyBtYWlsaW5nIGxpc3QKPiA+ID4gQ29udGFpbmVyc0BsaXN0cy5saW51
+eC1mb3VuZGF0aW9uLm9yZwo+ID4gPiBodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcv
+bWFpbG1hbi9saXN0aW5mby9jb250YWluZXJzCj4gCj4gX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX18KPiBDb250YWluZXJzIG1haWxpbmcgbGlzdAo+IENvbnRh
+aW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmcKPiBodHRwczovL2xpc3RzLmxpbnV4Zm91
+bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWluZXJzCl9fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkNvbnRhaW5lcnMgbWFpbGluZyBsaXN0CkNv
+bnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmcKaHR0cHM6Ly9saXN0cy5saW51eGZv
+dW5kYXRpb24ub3JnL21haWxtYW4vbGlzdGluZm8vY29udGFpbmVycw==
