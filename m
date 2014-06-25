@@ -1,14 +1,13 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH v8 1/1] man-pages: seccomp.2: document syscall
-Date: Wed, 25 Jun 2014 14:04:40 +0100
-Message-ID: <20140625140440.6870eac1@alan.etchedpixels.co.uk>
-References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
-        <20140624205615.GW5412@outflux.net>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v8 4/9] sched: move no_new_privs into new atomic flags
+Date: Wed, 25 Jun 2014 15:43:54 +0200
+Message-ID: <20140625134354.GA7892@redhat.com>
+References: <1403642893-23107-1-git-send-email-keescook@chromium.org> <1403642893-23107-5-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <20140624205615.GW5412@outflux.net>
+Content-Disposition: inline
+In-Reply-To: <1403642893-23107-5-git-send-email-keescook@chromium.org>
 Sender: linux-mips-bounce@linux-mips.org
 Errors-to: linux-mips-bounce@linux-mips.org
 List-help: <mailto:ecartis@linux-mips.org?Subject=help>
@@ -19,17 +18,27 @@ List-owner: <mailto:ralf@linux-mips.org>
 List-post: <mailto:linux-mips@linux-mips.org>
 List-archive: <http://www.linux-mips.org/archives/linux-mips/>
 To: Kees Cook <keescook@chromium.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 24 Jun 2014 13:56:15 -0700
-Kees Cook <keescook@chromium.org> wrote:
+On 06/24, Kees Cook wrote:
+>
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -1307,8 +1307,7 @@ struct task_struct {
+>  				 * execve */
+>  	unsigned in_iowait:1;
+>
+> -	/* task may not gain privileges */
+> -	unsigned no_new_privs:1;
+> +	unsigned long atomic_flags; /* Flags needing atomic access. */
+>
+>  	/* Revert to default priority/policy when forking */
+>  	unsigned sched_reset_on_fork:1;
 
-> Combines documentation from prctl, in-kernel seccomp_filter.txt and
-> dropper.c, along with details specific to the new syscall.
+Agreed, personally I like it more than seccomp->flags.
 
-What is the license on the example ? Probably you want to propogate the
-minimal form of the text in seccomp/dropper into the document example to
-avoid confusion ?
+But probably it would be better to place the new member before/after
+other bitfields to save the space?
 
-Alan
+Oleg.
