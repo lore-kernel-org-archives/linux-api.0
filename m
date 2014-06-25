@@ -1,92 +1,65 @@
-From: Wang Sheng-Hui <shhuiw-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] mm: update the description for madvise_remove
-Date: Wed, 25 Jun 2014 09:58:45 +0800
-Message-ID: <53AA2CD5.6060202@gmail.com>
-References: <53A9116B.9030004@gmail.com> <alpine.DEB.2.02.1406241542040.29176@chino.kir.corp.google.com>
+From: "chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: RE: [PATCH v2] ns: introduce getnspid syscall
+Date: Wed, 25 Jun 2014 10:00:13 +0000
+Message-ID: <5871495633F38949900D2BF2DC04883E551F09@G08CNEXMBPEKD02.g08.fujitsu.local>
+References: <1403259512-10510-1-git-send-email-chenhanxiao@cn.fujitsu.com>
+ <53A414B2.20108@nod.at>
+ <5871495633F38949900D2BF2DC04883E54ECC5@G08CNEXMBPEKD02.g08.fujitsu.local>
+ <20140623133230.GA31817@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.02.1406241542040.29176-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
+In-Reply-To: <20140623133230.GA31817-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+Content-Language: zh-CN
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vladimir Cernov <gg.kaspersky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, "containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Gotou, Yasunori" <y-goto-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Patch to man-page.
-
-[PATCH] madvise.2: update the description for MADV_REMOVE
-
-Currently we have more filesystems supporting fallcate, e.g ext4/btrfs,
-which can response to MADV_REMOVE gracefully.
-
-And if filesystems don't support fallocate, the return error would be
-EOPNOTSUPP, instead of ENOSYS.
-
-Signed-off-by: Wang Sheng-Hui <shhuiw-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- man2/madvise.2 | 10 +++-------
- 1 file changed, 3 insertions(+), 7 deletions(-)
-
-diff --git a/man2/madvise.2 b/man2/madvise.2
-index 032ead7..4ce869c 100644
---- a/man2/madvise.2
-+++ b/man2/madvise.2
-@@ -99,13 +99,9 @@ or zero-fill-on-demand pages for mappings
- without an underlying file.
- .TP
- .BR MADV_REMOVE " (since Linux 2.6.16)"
--Free up a given range of pages
--and its associated backing store.
--Currently,
--.\" 2.6.18-rc5
--only shmfs/tmpfs supports this; other filesystems return with the
--error
--.BR ENOSYS .
-+Free up a given range of pages and its associated backing store.
-+Filesystems that don't support fallocate will return error
-+.BR EOPNOTSUPP.
- .\" Databases want to use this feature to drop a section of their
- .\" bufferpool (shared memory segments) - without writing back to
- .\" disk/swap space.  This feature is also useful for supporting
---=20
-1.8.3.2
-
-
-
-On 2014=E5=B9=B406=E6=9C=8825=E6=97=A5 06:44, David Rientjes wrote:
-> On Tue, 24 Jun 2014, Wang Sheng-Hui wrote:
->=20
->>
->> Currently, we have more filesystems supporting fallocate, e.g
->> ext4/btrfs. Remove the outdated comment for madvise_remove.
->>
->> Signed-off-by: Wang Sheng-Hui <shhuiw-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> ---
->>  mm/madvise.c | 3 ---
->>  1 file changed, 3 deletions(-)
->>
->> diff --git a/mm/madvise.c b/mm/madvise.c
->> index a402f8f..0938b30 100644
->> --- a/mm/madvise.c
->> +++ b/mm/madvise.c
->> @@ -292,9 +292,6 @@ static long madvise_dontneed(struct vm_area_stru=
-ct *vma,
->>  /*
->>   * Application wants to free up the pages and associated backing st=
-ore.
->>   * This is effectively punching a hole into the middle of a file.
->> - *
->> - * NOTE: Currently, only shmfs/tmpfs is supported for this operatio=
-n.
->> - * Other filesystems return -ENOSYS.
->>   */
->>  static long madvise_remove(struct vm_area_struct *vma,
->>                                 struct vm_area_struct **prev,
->=20
-> [For those without context: this patch has been merged into the -mm t=
-ree.]
->=20
-> This reference also exists in the man-page for madvise(2), are you=20
-> planning on removing it as well?
->=20
+SGksDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogU2VyZ2UgRS4gSGFs
+bHluIFttYWlsdG86c2VyZ2VAaGFsbHluLmNvbV0NCj4gU2VudDogTW9uZGF5LCBKdW5lIDIzLCAy
+MDE0IDk6MzMgUE0NCj4gVG86IENoZW4sIEhhbnhpYW8v6ZmIIOaZl+mchA0KPiBDYzogUmljaGFy
+ZCBXZWluYmVyZ2VyOyBjb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnOw0KPiBs
+aW51eC1rZXJuZWxAdmdlci5rZXJuZWwub3JnOyBQYXZlbCBFbWVseWFub3Y7IGxpbnV4LWFwaUB2
+Z2VyLmtlcm5lbC5vcmc7DQo+IFNlcmdlIEhhbGx5bjsgT2xlZyBOZXN0ZXJvdjsgRGF2aWQgSG93
+ZWxsczsgRXJpYyBXLiBCaWVkZXJtYW47IEFsIFZpcm8NCj4gU3ViamVjdDogUmU6IFtQQVRDSCB2
+Ml0gbnM6IGludHJvZHVjZSBnZXRuc3BpZCBzeXNjYWxsDQo+IA0KPiA+ID4gPg0KPiA+ID4NCj4g
+PiA+IEkgZG9uJ3QgdGhpbmsgdGhhdCBhZGRpbmcgYSBuZXcgc3lzdGVtIGNhbGwgZm9yIHRoaXMg
+aXMgYSBnb29kIHNvbHV0aW9uLg0KPiA+ID4gV2UgbmVlZCBhIG1vcmUgZ2VuZXJpYyB3YXkuIEkg
+YmV0IHBlb3BsZSBhcmUgaW50ZXJlc3RlZCBpbiBtb3JlIHRoYW4ganVzdA0KPiBQSUQNCj4gPiA+
+IG51bWJlcnMuDQo+ID4NCj4gPiBDb3VsZCB5b3UgcGxlYXNlIGdpdmUgc29tZSBoaW50cyBvbiBo
+b3cgdG8gZXhwYW5kIHRoaXMgaW50ZXJmYWNlPw0KPiA+DQo+ID4gPg0KPiA+ID4gSSBhZ3JlZSB3
+aXRoIEVyaWMgdGhhdCBhIHByb2NmcyBzb2x1dGlvbiBpcyBtb3JlIGFwcHJvcHJpYXRlLg0KPiA+
+ID4NCj4gPg0KPiA+IFByb2NmcyBpcyBhIGdvb2Qgc29sdXRpb24sIGJ1dCBzeXNjYWxsIGlzIG5v
+dCBiYWQgdGhvdWdoLg0KPiANCj4gSSBtaWdodCBiZSBpbmNsaW5lZCB0byBhZ3JlZSwgZXhjZXB0
+IHRoYXQgaW4gdGhpcyBjYXNlIHlvdSBhcmUgc3RpbGwNCj4gbmVlZGluZyBtb3VudGVkIHByb2Nm
+cyBhbnl3YXkgdG8gZ2V0IHRoZSBwcm9jLyRwaWQvbnMvcGlkIGZkcy4NCj4gDQo+IEknbSBzb3Jy
+eSwgSSd2ZSBub3QgYmVlbiB3YXRjaGluZyB0aGlzIHRocmVhZCwgc28gdGhpcyBwcm9iYWJseSBo
+YXMgYmVlbg0KPiBjb25zaWRlcmVkIGFuZCBkZWNpZGVkIGFnYWluc3QsIGJ1dCBJJ20gZ29pbmcg
+dG8gYXNrIGFueXdheS4gIEtlZXBpbmcNCj4gaW4gbWluZCBib3RoIGNoZWNrcG9pbnQtcmVzdGFy
+dCBhbmQgYW5kIGludHJvc3BlY3Rpb24gZm9yIHVzZSBpbiBhDQo+IHNldG5zJ2QgY29tbWVuZCwg
+d2h5IG5vdCBtYWtlIGl0DQo+IA0KPiBwaWRfdCBnZXRuc3BpZChwaWRfdCBxdWVyeV9waWQsIHBp
+ZF90IG9ic2VydmVyX3BpZCkNCj4gDQo+IHdoaWNoIHJldHVybnMgdGhlIHByb2Nlc3MgaWQgb2Yg
+cXVlcnlfcGlkIGFzIHNlZW4gZnJvbSBvYnNlcnZlcl9waWQncw0KPiBwaWRucz8NCj4gDQoNCkJ1
+dCB0aGlzIGNvdWxkIGJlIGNvbmZ1c2VkIGluIG5lc3RlZCBucy4NCg0KRXg6DQoodGhhbmtzIGZv
+ciBQYXZlbCdzIGZpZ3VyZSkNCiAgICBpbml0X3BpZF9ucyAgICBuczEgICAgICAgICBuczINCnQx
+ICAyDQp0MiAgIGAtIDMgICAgICAgICAgMSANCnQzICAgICAgIGAtIDQgICAgICBgLSA1ICAgICAg
+ICAxDQp0NCAgNQ0KDQphKSBnZXRuc3BpZCgxLCAxKToNCldlIGV4cGVjdGVkIGl0IGNvdWxkIHJl
+dHVybiB0MidzIHBpZCgybmQgMSBhcyBwaWQNCnN1Y2ggYXMgc3lzdGVtZCBpbiBpbml0X3BpZF9u
+cyksDQpidXQgdDMncGlkIGlzIGFsc28gYW4gYXBwcm9wcmlhdGUgcmVzdWx0Lg0KV2UgbWF5IGdl
+dCBtb3JlIHRoYW4gb25lIHJldHVybnMuDQoNCmIpIGdldG5zcGlkKDUsIDEpOg0KKDFzdCA1IHdh
+cyBleHBlY3RlZCBhcyAgcGlkIGluIG5zMSkNCnQzJ3BpZCBhbmQgdDQncyBwaWQgY291bGQgYm90
+aCBiZSB0aGUgYW5zd2VyLg0KV2UgY291bGQgbm90IGRldGVybWluZSB3aGljaCBvbmUgaXMgd2hh
+dCB3ZSB3YW50Lg0KDQpTbyBzb21ldGhpbmcgdW5pcXVlIGxpa2UgZmRzIG9mIG5zIHNob3VsZCBi
+ZQ0KYSBiZXR0ZXIgcmVmZXJlbmNlLiANCg0KVGhhbmtzLA0KLSBDaGVuDQoNCj4gDQo+ID4gUHJv
+Y2ZzIHdvcmtzIGZvciBtZSwgYnV0IHRoYXQgc2VlbXMgY291bGQgbm90IGZpdA0KPiA+IFBhdmVs
+J3MgcmVxdWlyZW1lbnQuDQo+ID4gSGlzIG9waW5pb24gaXMgdGhhdCBhIHN5c2NhbGwgaXMgYSBt
+b3JlIGdlbmVyaWMgaW50ZXJmYWNlDQo+ID4gdGhhbiBwcm9jIGZpbGVzLCBhbmQgIGFsc28gdmVy
+eSBoZWxwZnVsLg0KPiA+IEFuZCBzeXNjYWxsIGNvdWxkIHRlbGwgd2hldGhlciBhIHBpZCBsaXZl
+cyBpbiBhIHNwZWNpZmljIHBpZCBuYW1lc3BhY2UsDQo+ID4gbXVjaCBjb252ZW5pZW50IHRoYW4g
+cHJvY2ZzLg0KPiA+DQo+ID4gVGhhbmtzLA0KPiA+IC0gQ2hlbg0KPiANCj4gPiBfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXw0KPiA+IENvbnRhaW5lcnMgbWFp
+bGluZyBsaXN0DQo+ID4gQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZw0KPiA+
+IGh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRh
+aW5lcnMNCg0K
