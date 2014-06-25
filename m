@@ -1,103 +1,98 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v8 5/9] seccomp: split mode set routines
-Date: Wed, 25 Jun 2014 10:03:42 -0700
-Message-ID: <CALCETrVrs8sb19+UUqyFEpAFzTih5dkAwn-WpQjfgPcPJMpP5g@mail.gmail.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v8 9/9] seccomp: implement SECCOMP_FILTER_FLAG_TSYNC
+Date: Wed, 25 Jun 2014 10:09:00 -0700
+Message-ID: <CAGXu5jLHDew1fifGY_mWgwcH7evm0T8rqSnBrw4XpoAXGK+t-Q@mail.gmail.com>
 References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
- <1403642893-23107-6-git-send-email-keescook@chromium.org> <20140625135121.GB7892@redhat.com>
- <CAGXu5jJkFxh4K=40xuh6tu3kUf4oJM8Dry+4upBdRieW3FNLgw@mail.gmail.com>
- <CALCETrUBNmLnpa+LM91om2RSpR6SjupP-EdefzhU1Me4nv3Dfw@mail.gmail.com> <CAGXu5j+J11zJnuFR8bYKAXizAHhCx4R+uJE_QH6zC3q2udkpaQ@mail.gmail.com>
+	<1403642893-23107-10-git-send-email-keescook@chromium.org>
+	<20140625142121.GD7892@redhat.com>
+	<CAGXu5jJtLrjbobZC1FD4WV-Jm2p7cRGa1aSPK-d_isnfCZAHdA@mail.gmail.com>
+	<20140625165209.GA14720@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+J11zJnuFR8bYKAXizAHhCx4R+uJE_QH6zC3q2udkpaQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20140625165209.GA14720-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 25, 2014 at 9:54 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> On Wed, Jun 25, 2014 at 9:10 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->> On Wed, Jun 25, 2014 at 7:51 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->>> On Wed, Jun 25, 2014 at 6:51 AM, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>>> On 06/24, Kees Cook wrote:
->>>>>
->>>>> +static inline void seccomp_assign_mode(struct task_struct *task,
->>>>> +                                    unsigned long seccomp_mode)
->>>>> +{
->>>>> +     BUG_ON(!spin_is_locked(&task->sighand->siglock));
->>>>> +
->>>>> +     task->seccomp.mode = seccomp_mode;
->>>>> +     set_tsk_thread_flag(task, TIF_SECCOMP);
->>>>> +}
->>>>
->>>> OK, but unless task == current this can race with secure_computing().
->>>> I think this needs smp_mb__before_atomic() and secure_computing() needs
->>>> rmb() after test_bit(TIF_SECCOMP).
->>>>
->>>> Otherwise, can't __secure_computing() hit BUG() if it sees the old
->>>> mode == SECCOMP_MODE_DISABLED ?
->>>>
->>>> Or seccomp_run_filters() can see ->filters == NULL and WARN(),
->>>> smp_load_acquire() only serializes that LOAD with the subsequent memory
->>>> operations.
->>>
->>> Hm, actually, now I'm worried about smp_load_acquire() being too slow
->>> in run_filters().
->>>
->>> The ordering must be:
->>> - task->seccomp.filter must be valid before
->>> - task->seccomp.mode is set, which must be valid before
->>> - TIF_SECCOMP is set
->>>
->>> But I don't want to impact secure_computing(). What's the best way to
->>> make sure this ordering is respected?
+On Wed, Jun 25, 2014 at 9:52 AM, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On 06/25, Kees Cook wrote:
 >>
->> Remove the ordering requirement, perhaps?
+>> On Wed, Jun 25, 2014 at 7:21 AM, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> >
+>> > But. Doesn't this change add a new security hole?
+>> >
+>> > Obviously, we should not allow to install a filter and then (say) exec
+>> > a suid binary, that is why we have no_new_privs/LSM_UNSAFE_NO_NEW_PRIVS.
+>> >
+>> > But what if "thread->seccomp.filter = caller->seccomp.filter" races with
+>> > any user of task_no_new_privs() ? Say, suppose this thread has already
+>> > passed check_unsafe_exec/etc and it is going to exec the suid binary?
 >>
->> What if you moved mode into seccomp.filter?  Then there would be
->> little reason to check TIF_SECCOMP from secure_computing; instead, you
->> could smp_load_acquire (or read_barrier_depends, maybe) seccomp.filter
->> from secure_computing and pass the result as a parameter to
->> __secure_computing.  Or you could even remove the distinction between
->> secure_computing and __secure_computing -- it's essentially useless
->> anyway to split entry hook approaches like my x86 fastpath prototype.
+>> Oh, ew. Yeah. It looks like there's a cred lock to be held to combat this?
 >
-> The TIF_SECCOMP is needed for the syscall entry path. The check in
-> secure_computing() is just because the "I am being traced" trigger
-> includes a call to secure_computing, which filters out tracing
-> reasons.
-
-Right.  I'm suggesting just checking a single indication that seccomp
-is on from the process in the seccomp code so that the order doesn't
-matter.
-
-IOW, TIF_SECCOMP causes __secure_computing to be invoked, but the race
-only seems to matter because of the warning and the BUG.  I think that
-both can be fixed if you merge mode into filter so that
-__secure_computing atomically checks one condition.
-
+> Yes, cred_guard_mutex looks like an obvious choice... Hmm, but somehow
+> initially I thought that the fix won't be simple. Not sure why.
 >
-> Your fast path work would clean a lot of that up, as you say. But it
-> still doesn't change the ordering check here. TIF_SECCOMP indicates
-> seccomp.mode must be checked, so that ordering will remain, and if
-> mode == FILTER, seccomp.filter must be valid.
+> Yes, at least this should close the race with suid-exec. And there are no
+> other users. Except apparmor, and I hope you will check it because I simply
+> do not know what it does ;)
 >
-> Isn't there a way we can force the assignment ordering in seccomp_assign_mode()?
-
-Write the filter, then smp_mb (or maybe a weaker barrier is okay),
-then set the bit.
-
---Andy
-
+>> I wonder if changes to nnp need to "flushed" during syscall entry
+>> instead of getting updated externally/asynchronously? That way it
+>> won't be out of sync with the seccomp mode/filters.
+>>
+>> Perhaps secure computing needs to check some (maybe seccomp-only)
+>> atomic flags and flip on the "real" nnp if found?
 >
-> -Kees
+> Not sure I understand you, could you clarify?
+
+Instead of having TSYNC change the nnp bit, it can set a new flag, say:
+
+    task->seccomp.flags |= SECCOMP_NEEDS_NNP;
+
+This would be set along with seccomp.mode, seccomp.filter, and
+TIF_SECCOMP. Then, during the next secure_computing() call that thread
+makes, it would check the flag:
+
+    if (task->seccomp.flags & SECCOMP_NEEDS_NNP)
+        task->nnp = 1;
+
+This means that nnp couldn't change in the middle of a running syscall.
+
+Hmmm. Perhaps this doesn't solve anything, though? Perhaps my proposal
+above would actually make things worse, since now we'd have a thread
+with seccomp set up, and no nnp. If it was in the middle of exec,
+we're still causing a problem.
+
+I think we'd also need a way to either delay the seccomp changes, or
+to notice this condition during exec. Bleh.
+
+What actually happens with a multi-threaded process calls exec? I
+assume all the other threads are destroyed?
+
+> But I was also worried that task_no_new_privs(current) is no longer stable
+> inside the syscall paths, perhaps this is what you meant? However I do not
+> see something bad here... And this has nothing to do with the race above.
 >
-> --
-> Kees Cook
-> Chrome OS Security
+> Also. Even ignoring no_new_privs, SECCOMP_FILTER_FLAG_TSYNC is not atomic
+> and we can do nothing with this fact (unless it try to freeze the thread
+> group somehow), perhaps it makes sense to document this somehow.
+>
+> I mean, suppose you want to ensure write-to-file is not possible, so you
+> do seccomp(SECCOMP_FILTER_FLAG_TSYNC, nack_write_to_file_filter). You can't
+> assume that this has effect right after seccomp() returns, this can obviously
+> race with a sub-thread which has already entered sys_write().
+>
+> Once again, I am not arguing, just I think it makes sense to at least mention
+> the limitations during the discussion.
 
+Right -- this is an accepted limitation. I will call it out
+specifically in the man-page; that's a good idea.
 
+-Kees
 
 -- 
-Andy Lutomirski
-AMA Capital Management, LLC
+Kees Cook
+Chrome OS Security
