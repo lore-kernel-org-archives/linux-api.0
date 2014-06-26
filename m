@@ -1,266 +1,89 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: [PATCH v3 2/2] block: virtio-blk: support multi virt queues per
-	virtio-blk device
-Date: Thu, 26 Jun 2014 17:41:48 +0800
-Message-ID: <1403775708-22244-3-git-send-email-ming.lei@canonical.com>
-References: <1403775708-22244-1-git-send-email-ming.lei@canonical.com>
+From: "chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: RE: [PATCH v2] ns: introduce getnspid syscall
+Date: Thu, 26 Jun 2014 10:19:55 +0000
+Message-ID: <5871495633F38949900D2BF2DC04883E5538AC@G08CNEXMBPEKD02.g08.fujitsu.local>
+References: <1403259512-10510-1-git-send-email-chenhanxiao@cn.fujitsu.com>
+ <53A414B2.20108@nod.at>
+ <5871495633F38949900D2BF2DC04883E54ECC5@G08CNEXMBPEKD02.g08.fujitsu.local>
+ <20140623133230.GA31817@mail.hallyn.com>
+ <5871495633F38949900D2BF2DC04883E551F09@G08CNEXMBPEKD02.g08.fujitsu.local>
+ <20140625143831.GB17169@ubuntumail>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <1403775708-22244-1-git-send-email-ming.lei@canonical.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org
-Cc: "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, Ming Lei <ming.lei@canonical.com>, virtualization@lists.linux-foundation.org, Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20140625143831.GB17169@ubuntumail>
+Content-Language: zh-CN
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, "containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Gotou, Yasunori" <y-goto-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Firstly this patch supports more than one virtual queues for virtio-blk
-device.
-
-Secondly this patch maps the virtual queue to blk-mq's hardware queue.
-
-With this approach, both scalability and performance can be improved.
-
-Signed-off-by: Ming Lei <ming.lei@canonical.com>
----
- drivers/block/virtio_blk.c |  104 +++++++++++++++++++++++++++++++++++---------
- 1 file changed, 84 insertions(+), 20 deletions(-)
-
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index f63d358..0a58140 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -15,17 +15,22 @@
- #include <linux/numa.h>
- 
- #define PART_BITS 4
-+#define VQ_NAME_LEN 16
- 
- static int major;
- static DEFINE_IDA(vd_index_ida);
- 
- static struct workqueue_struct *virtblk_wq;
- 
-+struct virtio_blk_vq {
-+	struct virtqueue *vq;
-+	spinlock_t lock;
-+	char name[VQ_NAME_LEN];
-+} ____cacheline_aligned_in_smp;
-+
- struct virtio_blk
- {
- 	struct virtio_device *vdev;
--	struct virtqueue *vq;
--	spinlock_t vq_lock;
- 
- 	/* The disk structure for the kernel. */
- 	struct gendisk *disk;
-@@ -47,6 +52,10 @@ struct virtio_blk
- 
- 	/* Ida index - used to track minor number allocations. */
- 	int index;
-+
-+	/* num of vqs */
-+	int num_vqs;
-+	struct virtio_blk_vq *vqs;
- };
- 
- struct virtblk_req
-@@ -133,14 +142,15 @@ static void virtblk_done(struct virtqueue *vq)
- {
- 	struct virtio_blk *vblk = vq->vdev->priv;
- 	bool req_done = false;
-+	int qid = vq->index;
- 	struct virtblk_req *vbr;
- 	unsigned long flags;
- 	unsigned int len;
- 
--	spin_lock_irqsave(&vblk->vq_lock, flags);
-+	spin_lock_irqsave(&vblk->vqs[qid].lock, flags);
- 	do {
- 		virtqueue_disable_cb(vq);
--		while ((vbr = virtqueue_get_buf(vblk->vq, &len)) != NULL) {
-+		while ((vbr = virtqueue_get_buf(vblk->vqs[qid].vq, &len)) != NULL) {
- 			blk_mq_complete_request(vbr->req);
- 			req_done = true;
- 		}
-@@ -151,7 +161,7 @@ static void virtblk_done(struct virtqueue *vq)
- 	/* In case queue is stopped waiting for more buffers. */
- 	if (req_done)
- 		blk_mq_start_stopped_hw_queues(vblk->disk->queue, true);
--	spin_unlock_irqrestore(&vblk->vq_lock, flags);
-+	spin_unlock_irqrestore(&vblk->vqs[qid].lock, flags);
- }
- 
- static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
-@@ -160,6 +170,7 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
- 	struct virtblk_req *vbr = blk_mq_rq_to_pdu(req);
- 	unsigned long flags;
- 	unsigned int num;
-+	int qid = hctx->queue_num;
- 	const bool last = (req->cmd_flags & REQ_END) != 0;
- 	int err;
- 	bool notify = false;
-@@ -202,12 +213,12 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
- 			vbr->out_hdr.type |= VIRTIO_BLK_T_IN;
- 	}
- 
--	spin_lock_irqsave(&vblk->vq_lock, flags);
--	err = __virtblk_add_req(vblk->vq, vbr, vbr->sg, num);
-+	spin_lock_irqsave(&vblk->vqs[qid].lock, flags);
-+	err = __virtblk_add_req(vblk->vqs[qid].vq, vbr, vbr->sg, num);
- 	if (err) {
--		virtqueue_kick(vblk->vq);
-+		virtqueue_kick(vblk->vqs[qid].vq);
- 		blk_mq_stop_hw_queue(hctx);
--		spin_unlock_irqrestore(&vblk->vq_lock, flags);
-+		spin_unlock_irqrestore(&vblk->vqs[qid].lock, flags);
- 		/* Out of mem doesn't actually happen, since we fall back
- 		 * to direct descriptors */
- 		if (err == -ENOMEM || err == -ENOSPC)
-@@ -215,12 +226,12 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req)
- 		return BLK_MQ_RQ_QUEUE_ERROR;
- 	}
- 
--	if (last && virtqueue_kick_prepare(vblk->vq))
-+	if (last && virtqueue_kick_prepare(vblk->vqs[qid].vq))
- 		notify = true;
--	spin_unlock_irqrestore(&vblk->vq_lock, flags);
-+	spin_unlock_irqrestore(&vblk->vqs[qid].lock, flags);
- 
- 	if (notify)
--		virtqueue_notify(vblk->vq);
-+		virtqueue_notify(vblk->vqs[qid].vq);
- 	return BLK_MQ_RQ_QUEUE_OK;
- }
- 
-@@ -377,12 +388,64 @@ static void virtblk_config_changed(struct virtio_device *vdev)
- static int init_vq(struct virtio_blk *vblk)
- {
- 	int err = 0;
-+	int i;
-+	vq_callback_t **callbacks;
-+	const char **names;
-+	struct virtqueue **vqs;
-+	unsigned short num_vqs;
-+	struct virtio_device *vdev = vblk->vdev;
-+
-+	err = virtio_cread_feature(vdev, VIRTIO_BLK_F_MQ,
-+				   struct virtio_blk_config, num_queues,
-+				   &num_vqs);
-+	if (err)
-+		num_vqs = 1;
-+
-+	vblk->vqs = kmalloc(sizeof(*vblk->vqs) * num_vqs, GFP_KERNEL);
-+	if (!vblk->vqs) {
-+		err = -ENOMEM;
-+		goto out;
-+	}
-+
-+	names = kmalloc(sizeof(*names) * num_vqs, GFP_KERNEL);
-+	if (!names)
-+		goto err_names;
-+
-+	callbacks = kmalloc(sizeof(*callbacks) * num_vqs, GFP_KERNEL);
-+	if (!callbacks)
-+		goto err_callbacks;
-+
-+	vqs = kmalloc(sizeof(*vqs) * num_vqs, GFP_KERNEL);
-+	if (!vqs)
-+		goto err_vqs;
- 
--	/* We expect one virtqueue, for output. */
--	vblk->vq = virtio_find_single_vq(vblk->vdev, virtblk_done, "requests");
--	if (IS_ERR(vblk->vq))
--		err = PTR_ERR(vblk->vq);
-+	for (i = 0; i < num_vqs; i++) {
-+		callbacks[i] = virtblk_done;
-+		snprintf(vblk->vqs[i].name, VQ_NAME_LEN, "req.%d", i);
-+		names[i] = vblk->vqs[i].name;
-+	}
-+
-+	/* Discover virtqueues and write information to configuration.  */
-+	err = vdev->config->find_vqs(vdev, num_vqs, vqs, callbacks, names);
-+	if (err)
-+		goto err_find_vqs;
- 
-+	for (i = 0; i < num_vqs; i++) {
-+		spin_lock_init(&vblk->vqs[i].lock);
-+		vblk->vqs[i].vq = vqs[i];
-+	}
-+	vblk->num_vqs = num_vqs;
-+
-+ err_find_vqs:
-+	kfree(vqs);
-+ err_vqs:
-+	kfree(callbacks);
-+ err_callbacks:
-+	kfree(names);
-+ err_names:
-+	if (err)
-+		kfree(vblk->vqs);
-+ out:
- 	return err;
- }
- 
-@@ -551,7 +614,6 @@ static int virtblk_probe(struct virtio_device *vdev)
- 	err = init_vq(vblk);
- 	if (err)
- 		goto out_free_vblk;
--	spin_lock_init(&vblk->vq_lock);
- 
- 	/* FIXME: How many partitions?  How long is a piece of string? */
- 	vblk->disk = alloc_disk(1 << PART_BITS);
-@@ -562,7 +624,7 @@ static int virtblk_probe(struct virtio_device *vdev)
- 
- 	/* Default queue sizing is to fill the ring. */
- 	if (!virtblk_queue_depth) {
--		virtblk_queue_depth = vblk->vq->num_free;
-+		virtblk_queue_depth = vblk->vqs[0].vq->num_free;
- 		/* ... but without indirect descs, we use 2 descs per req */
- 		if (!virtio_has_feature(vdev, VIRTIO_RING_F_INDIRECT_DESC))
- 			virtblk_queue_depth /= 2;
-@@ -570,7 +632,6 @@ static int virtblk_probe(struct virtio_device *vdev)
- 
- 	memset(&vblk->tag_set, 0, sizeof(vblk->tag_set));
- 	vblk->tag_set.ops = &virtio_mq_ops;
--	vblk->tag_set.nr_hw_queues = 1;
- 	vblk->tag_set.queue_depth = virtblk_queue_depth;
- 	vblk->tag_set.numa_node = NUMA_NO_NODE;
- 	vblk->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
-@@ -578,6 +639,7 @@ static int virtblk_probe(struct virtio_device *vdev)
- 		sizeof(struct virtblk_req) +
- 		sizeof(struct scatterlist) * sg_elems;
- 	vblk->tag_set.driver_data = vblk;
-+	vblk->tag_set.nr_hw_queues = vblk->num_vqs;
- 
- 	err = blk_mq_alloc_tag_set(&vblk->tag_set);
- 	if (err)
-@@ -727,6 +789,7 @@ static void virtblk_remove(struct virtio_device *vdev)
- 	refc = atomic_read(&disk_to_dev(vblk->disk)->kobj.kref.refcount);
- 	put_disk(vblk->disk);
- 	vdev->config->del_vqs(vdev);
-+	kfree(vblk->vqs);
- 	kfree(vblk);
- 
- 	/* Only free device id if we don't have any users */
-@@ -777,7 +840,8 @@ static const struct virtio_device_id id_table[] = {
- static unsigned int features[] = {
- 	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
- 	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE, VIRTIO_BLK_F_SCSI,
--	VIRTIO_BLK_F_WCE, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE
-+	VIRTIO_BLK_F_WCE, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE,
-+	VIRTIO_BLK_F_MQ,
- };
- 
- static struct virtio_driver virtio_blk = {
--- 
-1.7.9.5
+DQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogU2VyZ2UgSGFsbHluIFtt
+YWlsdG86c2VyZ2UuaGFsbHluQHVidW50dS5jb21dDQo+IFNlbnQ6IFdlZG5lc2RheSwgSnVuZSAy
+NSwgMjAxNCAxMDozOSBQTQ0KPiBUbzogQ2hlbiwgSGFueGlhby/pmYgg5pmX6ZyEDQo+IENjOiBT
+ZXJnZSBFLiBIYWxseW47IEVyaWMgVy4gQmllZGVybWFuOyBSaWNoYXJkIFdlaW5iZXJnZXI7DQo+
+IGNvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmc7IGxpbnV4LWtlcm5lbEB2Z2Vy
+Lmtlcm5lbC5vcmc7IE9sZWcNCj4gTmVzdGVyb3Y7IERhdmlkIEhvd2VsbHM7IEFsIFZpcm87IGxp
+bnV4LWFwaUB2Z2VyLmtlcm5lbC5vcmcNCj4gPiA+ID4gPiA+DQo+ID4gPiA+ID4NCj4gPiA+ID4g
+PiBJIGRvbid0IHRoaW5rIHRoYXQgYWRkaW5nIGEgbmV3IHN5c3RlbSBjYWxsIGZvciB0aGlzIGlz
+IGEgZ29vZCBzb2x1dGlvbi4NCj4gPiA+ID4gPiBXZSBuZWVkIGEgbW9yZSBnZW5lcmljIHdheS4g
+SSBiZXQgcGVvcGxlIGFyZSBpbnRlcmVzdGVkIGluIG1vcmUgdGhhbiBqdXN0DQo+ID4gPiBQSUQN
+Cj4gPiA+ID4gPiBudW1iZXJzLg0KPiA+ID4gPg0KPiA+ID4gPiBDb3VsZCB5b3UgcGxlYXNlIGdp
+dmUgc29tZSBoaW50cyBvbiBob3cgdG8gZXhwYW5kIHRoaXMgaW50ZXJmYWNlPw0KPiA+ID4gPg0K
+PiA+ID4gPiA+DQo+ID4gPiA+ID4gSSBhZ3JlZSB3aXRoIEVyaWMgdGhhdCBhIHByb2NmcyBzb2x1
+dGlvbiBpcyBtb3JlIGFwcHJvcHJpYXRlLg0KPiA+ID4gPiA+DQo+ID4gPiA+DQo+ID4gPiA+IFBy
+b2NmcyBpcyBhIGdvb2Qgc29sdXRpb24sIGJ1dCBzeXNjYWxsIGlzIG5vdCBiYWQgdGhvdWdoLg0K
+PiA+ID4NCj4gPiA+IEkgbWlnaHQgYmUgaW5jbGluZWQgdG8gYWdyZWUsIGV4Y2VwdCB0aGF0IGlu
+IHRoaXMgY2FzZSB5b3UgYXJlIHN0aWxsDQo+ID4gPiBuZWVkaW5nIG1vdW50ZWQgcHJvY2ZzIGFu
+eXdheSB0byBnZXQgdGhlIHByb2MvJHBpZC9ucy9waWQgZmRzLg0KPiA+ID4NCj4gPiA+IEknbSBz
+b3JyeSwgSSd2ZSBub3QgYmVlbiB3YXRjaGluZyB0aGlzIHRocmVhZCwgc28gdGhpcyBwcm9iYWJs
+eSBoYXMgYmVlbg0KPiA+ID4gY29uc2lkZXJlZCBhbmQgZGVjaWRlZCBhZ2FpbnN0LCBidXQgSSdt
+IGdvaW5nIHRvIGFzayBhbnl3YXkuICBLZWVwaW5nDQo+ID4gPiBpbiBtaW5kIGJvdGggY2hlY2tw
+b2ludC1yZXN0YXJ0IGFuZCBhbmQgaW50cm9zcGVjdGlvbiBmb3IgdXNlIGluIGENCj4gPiA+IHNl
+dG5zJ2QgY29tbWVuZCwgd2h5IG5vdCBtYWtlIGl0DQo+ID4gPg0KPiA+ID4gcGlkX3QgZ2V0bnNw
+aWQocGlkX3QgcXVlcnlfcGlkLCBwaWRfdCBvYnNlcnZlcl9waWQpDQo+ID4gPg0KPiA+ID4gd2hp
+Y2ggcmV0dXJucyB0aGUgcHJvY2VzcyBpZCBvZiBxdWVyeV9waWQgYXMgc2VlbiBmcm9tIG9ic2Vy
+dmVyX3BpZCdzDQo+ID4gPiBwaWRucz8NCj4gPiA+DQo+ID4NCj4gPiBCdXQgdGhpcyBjb3VsZCBi
+ZSBjb25mdXNlZCBpbiBuZXN0ZWQgbnMuDQo+ID4NCj4gPiBFeDoNCj4gPiAodGhhbmtzIGZvciBQ
+YXZlbCdzIGZpZ3VyZSkNCj4gPiAgICAgaW5pdF9waWRfbnMgICAgbnMxICAgICAgICAgbnMyDQo+
+ID4gdDEgIDINCj4gPiB0MiAgIGAtIDMgICAgICAgICAgMQ0KPiA+IHQzICAgICAgIGAtIDQgICAg
+ICBgLSA1ICAgICAgICAxDQo+ID4gdDQgIDUNCj4gPg0KPiA+IGEpIGdldG5zcGlkKDEsIDEpOg0K
+PiA+IFdlIGV4cGVjdGVkIGl0IGNvdWxkIHJldHVybiB0MidzIHBpZCgybmQgMSBhcyBwaWQNCj4g
+DQo+IENsZWFybHkgdGhlIHBhc3NlZC1pbiBwaWRzIHNob3VsZCBiZSBpbnRlcnByZXRlZCBhcyBy
+ZWxhdGl2ZQ0KPiB0byBjdXJyZW50J3MgcGlkbnMuICBUaGVyZSBjYW4gYmUgbm8gYW1iaWd1aXR5
+IGF0IHRoYXQgcG9pbnQsDQo+IHVubGVzcyBJJ20gb3Zlcmxvb2tpbmcgc29tZXRoaW5nLg0KPiAN
+Cg0KRGVmYXVsdCB0byBjdXJyZW50J3MgcGlkbnMgbG9va3MgcmVhc29uYWJsZS4NCkJ1dCBuZXN0
+ZWQgbmFtZXNwYWNlIHdpbGwgc3RpbGwgYnJpbmcgdHJvdWJsZSB0byB1cy4NClNpbmNlIHRoZSBt
+aWRkbGUgbGV2ZWwgb2YgbmFtZXNwYWNlIGxvb2tzIGxlc3MgYXR0cmFjdGl2ZSB0byB1c2VycywN
+CmhvdyBhYm91dCBpZ25vcmUgdGhlbSwgYW5kIGp1c3Qgc2hvdyB0aGUgZGVlcGVzdCBsZXZlbCdz
+IHBpZD8NCg0KRXg6DQooVGhhbmtzIGZvciBQYXZlbCdzIGZpZ3VyZSBhZ2FpbikNCiAgICBpbml0
+X3BpZF9ucyAgICBuczEgICAgICAgICBuczINCnQxICAyDQp0MiAgIGAtIDMgICAgICAgICAgMQ0K
+dDMgICAgICAgYC0gNCAgICAgIGAtIDUgICAgICAgIDENCnQ0ICAgICAgICAgICBgLSA1ICAgICAg
+IGAtNyAgICAgIGAtIDINCg0KMS4gSW4gaW5pdF9waWRfbnM6DQphKSBnZXRuc3BpZCgyLCAxKToN
+CnJldHVybnMgMiAodDEpDQoNCmIpIGdldG5zcGlkKDEsIDMpOg0KcmV0dXJucyAzICh0MikNCg0K
+YykgZ2V0bnNwaWQoMSwgNCk6DQpyZXR1cm5zIDQgKHQzKQ0KDQpnZXRuc3BpZCgyLCA0KToNCnJl
+dHVybnMgNSAodDMpDQoNCjIuIEluIG5zMQ0KYSkgZ2V0bnNwaWQoMiwgNSk6DQpyZXR1cm5zIDcg
+KHQ0KQ0KDQpIb3cgZG8geW91IGxpa2UgdGhpcyBpZGVhPw0KDQpUaGFua3MsDQotIENoZW4NCg0K
+PiA+IHN1Y2ggYXMgc3lzdGVtZCBpbiBpbml0X3BpZF9ucyksDQo+ID4gYnV0IHQzJ3BpZCBpcyBh
+bHNvIGFuIGFwcHJvcHJpYXRlIHJlc3VsdC4NCj4gPiBXZSBtYXkgZ2V0IG1vcmUgdGhhbiBvbmUg
+cmV0dXJucy4NCj4gPg0KPiA+IGIpIGdldG5zcGlkKDUsIDEpOg0KPiA+ICgxc3QgNSB3YXMgZXhw
+ZWN0ZWQgYXMgIHBpZCBpbiBuczEpDQo+ID4gdDMncGlkIGFuZCB0NCdzIHBpZCBjb3VsZCBib3Ro
+IGJlIHRoZSBhbnN3ZXIuDQo+ID4gV2UgY291bGQgbm90IGRldGVybWluZSB3aGljaCBvbmUgaXMg
+d2hhdCB3ZSB3YW50Lg0KPiA+DQo+ID4gU28gc29tZXRoaW5nIHVuaXF1ZSBsaWtlIGZkcyBvZiBu
+cyBzaG91bGQgYmUNCj4gPiBhIGJldHRlciByZWZlcmVuY2UuDQo+ID4NCj4gPiBUaGFua3MsDQo+
+ID4gLSBDaGVuDQo+ID4NCj4gPiA+DQo+ID4gPiA+IFByb2NmcyB3b3JrcyBmb3IgbWUsIGJ1dCB0
+aGF0IHNlZW1zIGNvdWxkIG5vdCBmaXQNCj4gPiA+ID4gUGF2ZWwncyByZXF1aXJlbWVudC4NCj4g
+PiA+ID4gSGlzIG9waW5pb24gaXMgdGhhdCBhIHN5c2NhbGwgaXMgYSBtb3JlIGdlbmVyaWMgaW50
+ZXJmYWNlDQo+ID4gPiA+IHRoYW4gcHJvYyBmaWxlcywgYW5kICBhbHNvIHZlcnkgaGVscGZ1bC4N
+Cj4gPiA+ID4gQW5kIHN5c2NhbGwgY291bGQgdGVsbCB3aGV0aGVyIGEgcGlkIGxpdmVzIGluIGEg
+c3BlY2lmaWMgcGlkIG5hbWVzcGFjZSwNCj4gPiA+ID4gbXVjaCBjb252ZW5pZW50IHRoYW4gcHJv
+Y2ZzLg0KPiA+ID4gPg0KPiA+ID4gPiBUaGFua3MsDQo+ID4gPiA+IC0gQ2hlbg0KPiA+ID4NCj4g
+PiA+ID4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18NCj4g
+PiA+ID4gQ29udGFpbmVycyBtYWlsaW5nIGxpc3QNCj4gPiA+ID4gQ29udGFpbmVyc0BsaXN0cy5s
+aW51eC1mb3VuZGF0aW9uLm9yZw0KPiA+ID4gPiBodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlv
+bi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWluZXJzDQo+ID4NCj4gPiBfX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXw0KPiA+IENvbnRhaW5lcnMgbWFpbGlu
+ZyBsaXN0DQo+ID4gQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZw0KPiA+IGh0
+dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5l
+cnMNCg==
