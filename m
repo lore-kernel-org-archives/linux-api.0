@@ -1,93 +1,49 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: Re: [PATCH v3 0/2] block: virtio-blk: support multi vq per virtio-blk
-Date: Thu, 26 Jun 2014 20:04:41 +0800
-Message-ID: <CACVXFVMHPdEzai32jRmLt7qGMFcUqFb8OunF0tzySpKoLWWiwQ@mail.gmail.com>
-References: <1403775708-22244-1-git-send-email-ming.lei@canonical.com>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCH v7 2/9] seccomp: split filter prep from check and apply
+Date: Thu, 26 Jun 2014 13:37:10 +0100
+Message-ID: <20140626123710.GA16204@google.com>
+References: <1403560693-21809-1-git-send-email-keescook@chromium.org>
+ <1403560693-21809-3-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <1403775708-22244-1-git-send-email-ming.lei@canonical.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Jens Axboe <axboe@kernel.dk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-Cc: "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, Linux Virtualization <virtualization@lists.linux-foundation.org>, Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1403560693-21809-3-git-send-email-keescook@chromium.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 26, 2014 at 5:41 PM, Ming Lei <ming.lei@canonical.com> wrote:
-> Hi,
->
-> These patches try to support multi virtual queues(multi-vq) in one
-> virtio-blk device, and maps each virtual queue(vq) to blk-mq's
-> hardware queue.
->
-> With this approach, both scalability and performance on virtio-blk
-> device can get improved.
->
-> For verifying the improvement, I implements virtio-blk multi-vq over
-> qemu's dataplane feature, and both handling host notification
-> from each vq and processing host I/O are still kept in the per-device
-> iothread context, the change is based on qemu v2.0.0 release, and
-> can be accessed from below tree:
->
->         git://kernel.ubuntu.com/ming/qemu.git #v2.0.0-virtblk-mq.1
->
-> For enabling the multi-vq feature, 'num_queues=N' need to be added into
-> '-device virtio-blk-pci ...' of qemu command line, and suggest to pass
-> 'vectors=N+1' to keep one MSI irq vector per each vq, and the feature
-> depends on x-data-plane.
->
-> Fio(libaio, randread, iodepth=64, bs=4K, jobs=N) is run inside VM to
-> verify the improvement.
->
-> I just create a small quadcore VM and run fio inside the VM, and
-> num_queues of the virtio-blk device is set as 2, but looks the
-> improvement is still obvious. The host is 2 sockets, 8cores(16threads)
-> server.
->
-> 1), about scalability
-> - jobs = 2, thoughput: +33%
-> - jobs = 4, thoughput: +100%
->
-> 2), about top thoughput: +39%
->
-> So in my test, even for a quad-core VM, if the virtqueue number
-> is increased from 1 to 2, both scalability and performance can
-> get improved a lot.
->
-> In above qemu implementation of virtio-blk-mq device, only one
-> IOthread handles requests from all vqs, and the above throughput
-> data has been very close to same fio test in host side with single
-> job. So more improvement should be observed once more IOthreads are
-> used for handling requests from multi vqs.
->
-> TODO:
->         - adjust vq's irq smp_affinity according to blk-mq hw queue's cpumask
->
-> V3:
->         - fix use-after-free on vq->name reported by Michael
->
-> V2: (suggestions from Michael and Dave Chinner)
->         - allocate virtqueues' pointers dynamically
->         - make sure the per-queue spinlock isn't kept in same cache line
->         - make each queue's name different
->
-> V1:
->         - remove RFC since no one objects
->         - add '__u8 unused' for pending as suggested by Rusty
->         - use virtio_cread_feature() directly, suggested by Rusty
+On Mon, Jun 23, 2014 at 02:58:06PM -0700, Kees Cook wrote:
+> In preparation for adding seccomp locking, move filter creation away
+> from where it is checked and applied. This will allow for locking whe=
+re
+> no memory allocation is happening. The validation, filter attachment,
+> and seccomp mode setting can all happen under the future locks.
+>=20
+> Signed-off-by: Kees Cook <keescook@chromium.org>
+> ---
+>  kernel/seccomp.c |   97 +++++++++++++++++++++++++++++++++++++-------=
+----------
+>  1 file changed, 67 insertions(+), 30 deletions(-)
+>=20
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index afb916c7e890..edc8c79ed16d 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -515,6 +551,7 @@ static long seccomp_set_mode(unsigned long seccom=
+p_mode, char __user *filter)
+>  	current->seccomp.mode =3D seccomp_mode;
+>  	set_thread_flag(TIF_SECCOMP);
+>  out:
+> +	seccomp_filter_free(prepared);
+>  	return ret;
+>  }
 
-Sorry, please add Jens' reviewed-by.
+I think this needs to be inside #ifdef CONFIG_SECCOMP_FILTER to match
+the definition of seccomp_filter_free:
 
-    Reviewed-by: Jens Axboe <axboe@kernel.dk>
-
-Thanks,
---
-Ming Lei
+=2E./kernel/seccomp.c:554:2: error: implicit declaration of function =E2=
+=80=98seccomp_filter_free=E2=80=99 [-Werror=3Dimplicit-function-declara=
+tion]
