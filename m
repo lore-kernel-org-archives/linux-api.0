@@ -1,89 +1,93 @@
-From: "chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Subject: RE: [PATCH v2] ns: introduce getnspid syscall
-Date: Thu, 26 Jun 2014 10:19:55 +0000
-Message-ID: <5871495633F38949900D2BF2DC04883E5538AC@G08CNEXMBPEKD02.g08.fujitsu.local>
-References: <1403259512-10510-1-git-send-email-chenhanxiao@cn.fujitsu.com>
- <53A414B2.20108@nod.at>
- <5871495633F38949900D2BF2DC04883E54ECC5@G08CNEXMBPEKD02.g08.fujitsu.local>
- <20140623133230.GA31817@mail.hallyn.com>
- <5871495633F38949900D2BF2DC04883E551F09@G08CNEXMBPEKD02.g08.fujitsu.local>
- <20140625143831.GB17169@ubuntumail>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: Re: [PATCH v3 0/2] block: virtio-blk: support multi vq per virtio-blk
+Date: Thu, 26 Jun 2014 20:04:41 +0800
+Message-ID: <CACVXFVMHPdEzai32jRmLt7qGMFcUqFb8OunF0tzySpKoLWWiwQ@mail.gmail.com>
+References: <1403775708-22244-1-git-send-email-ming.lei@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140625143831.GB17169@ubuntumail>
-Content-Language: zh-CN
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, "containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Gotou, Yasunori" <y-goto-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <1403775708-22244-1-git-send-email-ming.lei@canonical.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Jens Axboe <axboe@kernel.dk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, Linux Virtualization <virtualization@lists.linux-foundation.org>, Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-DQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogU2VyZ2UgSGFsbHluIFtt
-YWlsdG86c2VyZ2UuaGFsbHluQHVidW50dS5jb21dDQo+IFNlbnQ6IFdlZG5lc2RheSwgSnVuZSAy
-NSwgMjAxNCAxMDozOSBQTQ0KPiBUbzogQ2hlbiwgSGFueGlhby/pmYgg5pmX6ZyEDQo+IENjOiBT
-ZXJnZSBFLiBIYWxseW47IEVyaWMgVy4gQmllZGVybWFuOyBSaWNoYXJkIFdlaW5iZXJnZXI7DQo+
-IGNvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmc7IGxpbnV4LWtlcm5lbEB2Z2Vy
-Lmtlcm5lbC5vcmc7IE9sZWcNCj4gTmVzdGVyb3Y7IERhdmlkIEhvd2VsbHM7IEFsIFZpcm87IGxp
-bnV4LWFwaUB2Z2VyLmtlcm5lbC5vcmcNCj4gPiA+ID4gPiA+DQo+ID4gPiA+ID4NCj4gPiA+ID4g
-PiBJIGRvbid0IHRoaW5rIHRoYXQgYWRkaW5nIGEgbmV3IHN5c3RlbSBjYWxsIGZvciB0aGlzIGlz
-IGEgZ29vZCBzb2x1dGlvbi4NCj4gPiA+ID4gPiBXZSBuZWVkIGEgbW9yZSBnZW5lcmljIHdheS4g
-SSBiZXQgcGVvcGxlIGFyZSBpbnRlcmVzdGVkIGluIG1vcmUgdGhhbiBqdXN0DQo+ID4gPiBQSUQN
-Cj4gPiA+ID4gPiBudW1iZXJzLg0KPiA+ID4gPg0KPiA+ID4gPiBDb3VsZCB5b3UgcGxlYXNlIGdp
-dmUgc29tZSBoaW50cyBvbiBob3cgdG8gZXhwYW5kIHRoaXMgaW50ZXJmYWNlPw0KPiA+ID4gPg0K
-PiA+ID4gPiA+DQo+ID4gPiA+ID4gSSBhZ3JlZSB3aXRoIEVyaWMgdGhhdCBhIHByb2NmcyBzb2x1
-dGlvbiBpcyBtb3JlIGFwcHJvcHJpYXRlLg0KPiA+ID4gPiA+DQo+ID4gPiA+DQo+ID4gPiA+IFBy
-b2NmcyBpcyBhIGdvb2Qgc29sdXRpb24sIGJ1dCBzeXNjYWxsIGlzIG5vdCBiYWQgdGhvdWdoLg0K
-PiA+ID4NCj4gPiA+IEkgbWlnaHQgYmUgaW5jbGluZWQgdG8gYWdyZWUsIGV4Y2VwdCB0aGF0IGlu
-IHRoaXMgY2FzZSB5b3UgYXJlIHN0aWxsDQo+ID4gPiBuZWVkaW5nIG1vdW50ZWQgcHJvY2ZzIGFu
-eXdheSB0byBnZXQgdGhlIHByb2MvJHBpZC9ucy9waWQgZmRzLg0KPiA+ID4NCj4gPiA+IEknbSBz
-b3JyeSwgSSd2ZSBub3QgYmVlbiB3YXRjaGluZyB0aGlzIHRocmVhZCwgc28gdGhpcyBwcm9iYWJs
-eSBoYXMgYmVlbg0KPiA+ID4gY29uc2lkZXJlZCBhbmQgZGVjaWRlZCBhZ2FpbnN0LCBidXQgSSdt
-IGdvaW5nIHRvIGFzayBhbnl3YXkuICBLZWVwaW5nDQo+ID4gPiBpbiBtaW5kIGJvdGggY2hlY2tw
-b2ludC1yZXN0YXJ0IGFuZCBhbmQgaW50cm9zcGVjdGlvbiBmb3IgdXNlIGluIGENCj4gPiA+IHNl
-dG5zJ2QgY29tbWVuZCwgd2h5IG5vdCBtYWtlIGl0DQo+ID4gPg0KPiA+ID4gcGlkX3QgZ2V0bnNw
-aWQocGlkX3QgcXVlcnlfcGlkLCBwaWRfdCBvYnNlcnZlcl9waWQpDQo+ID4gPg0KPiA+ID4gd2hp
-Y2ggcmV0dXJucyB0aGUgcHJvY2VzcyBpZCBvZiBxdWVyeV9waWQgYXMgc2VlbiBmcm9tIG9ic2Vy
-dmVyX3BpZCdzDQo+ID4gPiBwaWRucz8NCj4gPiA+DQo+ID4NCj4gPiBCdXQgdGhpcyBjb3VsZCBi
-ZSBjb25mdXNlZCBpbiBuZXN0ZWQgbnMuDQo+ID4NCj4gPiBFeDoNCj4gPiAodGhhbmtzIGZvciBQ
-YXZlbCdzIGZpZ3VyZSkNCj4gPiAgICAgaW5pdF9waWRfbnMgICAgbnMxICAgICAgICAgbnMyDQo+
-ID4gdDEgIDINCj4gPiB0MiAgIGAtIDMgICAgICAgICAgMQ0KPiA+IHQzICAgICAgIGAtIDQgICAg
-ICBgLSA1ICAgICAgICAxDQo+ID4gdDQgIDUNCj4gPg0KPiA+IGEpIGdldG5zcGlkKDEsIDEpOg0K
-PiA+IFdlIGV4cGVjdGVkIGl0IGNvdWxkIHJldHVybiB0MidzIHBpZCgybmQgMSBhcyBwaWQNCj4g
-DQo+IENsZWFybHkgdGhlIHBhc3NlZC1pbiBwaWRzIHNob3VsZCBiZSBpbnRlcnByZXRlZCBhcyBy
-ZWxhdGl2ZQ0KPiB0byBjdXJyZW50J3MgcGlkbnMuICBUaGVyZSBjYW4gYmUgbm8gYW1iaWd1aXR5
-IGF0IHRoYXQgcG9pbnQsDQo+IHVubGVzcyBJJ20gb3Zlcmxvb2tpbmcgc29tZXRoaW5nLg0KPiAN
-Cg0KRGVmYXVsdCB0byBjdXJyZW50J3MgcGlkbnMgbG9va3MgcmVhc29uYWJsZS4NCkJ1dCBuZXN0
-ZWQgbmFtZXNwYWNlIHdpbGwgc3RpbGwgYnJpbmcgdHJvdWJsZSB0byB1cy4NClNpbmNlIHRoZSBt
-aWRkbGUgbGV2ZWwgb2YgbmFtZXNwYWNlIGxvb2tzIGxlc3MgYXR0cmFjdGl2ZSB0byB1c2VycywN
-CmhvdyBhYm91dCBpZ25vcmUgdGhlbSwgYW5kIGp1c3Qgc2hvdyB0aGUgZGVlcGVzdCBsZXZlbCdz
-IHBpZD8NCg0KRXg6DQooVGhhbmtzIGZvciBQYXZlbCdzIGZpZ3VyZSBhZ2FpbikNCiAgICBpbml0
-X3BpZF9ucyAgICBuczEgICAgICAgICBuczINCnQxICAyDQp0MiAgIGAtIDMgICAgICAgICAgMQ0K
-dDMgICAgICAgYC0gNCAgICAgIGAtIDUgICAgICAgIDENCnQ0ICAgICAgICAgICBgLSA1ICAgICAg
-IGAtNyAgICAgIGAtIDINCg0KMS4gSW4gaW5pdF9waWRfbnM6DQphKSBnZXRuc3BpZCgyLCAxKToN
-CnJldHVybnMgMiAodDEpDQoNCmIpIGdldG5zcGlkKDEsIDMpOg0KcmV0dXJucyAzICh0MikNCg0K
-YykgZ2V0bnNwaWQoMSwgNCk6DQpyZXR1cm5zIDQgKHQzKQ0KDQpnZXRuc3BpZCgyLCA0KToNCnJl
-dHVybnMgNSAodDMpDQoNCjIuIEluIG5zMQ0KYSkgZ2V0bnNwaWQoMiwgNSk6DQpyZXR1cm5zIDcg
-KHQ0KQ0KDQpIb3cgZG8geW91IGxpa2UgdGhpcyBpZGVhPw0KDQpUaGFua3MsDQotIENoZW4NCg0K
-PiA+IHN1Y2ggYXMgc3lzdGVtZCBpbiBpbml0X3BpZF9ucyksDQo+ID4gYnV0IHQzJ3BpZCBpcyBh
-bHNvIGFuIGFwcHJvcHJpYXRlIHJlc3VsdC4NCj4gPiBXZSBtYXkgZ2V0IG1vcmUgdGhhbiBvbmUg
-cmV0dXJucy4NCj4gPg0KPiA+IGIpIGdldG5zcGlkKDUsIDEpOg0KPiA+ICgxc3QgNSB3YXMgZXhw
-ZWN0ZWQgYXMgIHBpZCBpbiBuczEpDQo+ID4gdDMncGlkIGFuZCB0NCdzIHBpZCBjb3VsZCBib3Ro
-IGJlIHRoZSBhbnN3ZXIuDQo+ID4gV2UgY291bGQgbm90IGRldGVybWluZSB3aGljaCBvbmUgaXMg
-d2hhdCB3ZSB3YW50Lg0KPiA+DQo+ID4gU28gc29tZXRoaW5nIHVuaXF1ZSBsaWtlIGZkcyBvZiBu
-cyBzaG91bGQgYmUNCj4gPiBhIGJldHRlciByZWZlcmVuY2UuDQo+ID4NCj4gPiBUaGFua3MsDQo+
-ID4gLSBDaGVuDQo+ID4NCj4gPiA+DQo+ID4gPiA+IFByb2NmcyB3b3JrcyBmb3IgbWUsIGJ1dCB0
-aGF0IHNlZW1zIGNvdWxkIG5vdCBmaXQNCj4gPiA+ID4gUGF2ZWwncyByZXF1aXJlbWVudC4NCj4g
-PiA+ID4gSGlzIG9waW5pb24gaXMgdGhhdCBhIHN5c2NhbGwgaXMgYSBtb3JlIGdlbmVyaWMgaW50
-ZXJmYWNlDQo+ID4gPiA+IHRoYW4gcHJvYyBmaWxlcywgYW5kICBhbHNvIHZlcnkgaGVscGZ1bC4N
-Cj4gPiA+ID4gQW5kIHN5c2NhbGwgY291bGQgdGVsbCB3aGV0aGVyIGEgcGlkIGxpdmVzIGluIGEg
-c3BlY2lmaWMgcGlkIG5hbWVzcGFjZSwNCj4gPiA+ID4gbXVjaCBjb252ZW5pZW50IHRoYW4gcHJv
-Y2ZzLg0KPiA+ID4gPg0KPiA+ID4gPiBUaGFua3MsDQo+ID4gPiA+IC0gQ2hlbg0KPiA+ID4NCj4g
-PiA+ID4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18NCj4g
-PiA+ID4gQ29udGFpbmVycyBtYWlsaW5nIGxpc3QNCj4gPiA+ID4gQ29udGFpbmVyc0BsaXN0cy5s
-aW51eC1mb3VuZGF0aW9uLm9yZw0KPiA+ID4gPiBodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlv
-bi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWluZXJzDQo+ID4NCj4gPiBfX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXw0KPiA+IENvbnRhaW5lcnMgbWFpbGlu
-ZyBsaXN0DQo+ID4gQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZw0KPiA+IGh0
-dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5l
-cnMNCg==
+On Thu, Jun 26, 2014 at 5:41 PM, Ming Lei <ming.lei@canonical.com> wrote:
+> Hi,
+>
+> These patches try to support multi virtual queues(multi-vq) in one
+> virtio-blk device, and maps each virtual queue(vq) to blk-mq's
+> hardware queue.
+>
+> With this approach, both scalability and performance on virtio-blk
+> device can get improved.
+>
+> For verifying the improvement, I implements virtio-blk multi-vq over
+> qemu's dataplane feature, and both handling host notification
+> from each vq and processing host I/O are still kept in the per-device
+> iothread context, the change is based on qemu v2.0.0 release, and
+> can be accessed from below tree:
+>
+>         git://kernel.ubuntu.com/ming/qemu.git #v2.0.0-virtblk-mq.1
+>
+> For enabling the multi-vq feature, 'num_queues=N' need to be added into
+> '-device virtio-blk-pci ...' of qemu command line, and suggest to pass
+> 'vectors=N+1' to keep one MSI irq vector per each vq, and the feature
+> depends on x-data-plane.
+>
+> Fio(libaio, randread, iodepth=64, bs=4K, jobs=N) is run inside VM to
+> verify the improvement.
+>
+> I just create a small quadcore VM and run fio inside the VM, and
+> num_queues of the virtio-blk device is set as 2, but looks the
+> improvement is still obvious. The host is 2 sockets, 8cores(16threads)
+> server.
+>
+> 1), about scalability
+> - jobs = 2, thoughput: +33%
+> - jobs = 4, thoughput: +100%
+>
+> 2), about top thoughput: +39%
+>
+> So in my test, even for a quad-core VM, if the virtqueue number
+> is increased from 1 to 2, both scalability and performance can
+> get improved a lot.
+>
+> In above qemu implementation of virtio-blk-mq device, only one
+> IOthread handles requests from all vqs, and the above throughput
+> data has been very close to same fio test in host side with single
+> job. So more improvement should be observed once more IOthreads are
+> used for handling requests from multi vqs.
+>
+> TODO:
+>         - adjust vq's irq smp_affinity according to blk-mq hw queue's cpumask
+>
+> V3:
+>         - fix use-after-free on vq->name reported by Michael
+>
+> V2: (suggestions from Michael and Dave Chinner)
+>         - allocate virtqueues' pointers dynamically
+>         - make sure the per-queue spinlock isn't kept in same cache line
+>         - make each queue's name different
+>
+> V1:
+>         - remove RFC since no one objects
+>         - add '__u8 unused' for pending as suggested by Rusty
+>         - use virtio_cread_feature() directly, suggested by Rusty
+
+Sorry, please add Jens' reviewed-by.
+
+    Reviewed-by: Jens Axboe <axboe@kernel.dk>
+
+Thanks,
+--
+Ming Lei
