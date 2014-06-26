@@ -1,49 +1,90 @@
-From: David Drysdale <drysdale@google.com>
-Subject: Re: [PATCH v7 2/9] seccomp: split filter prep from check and apply
-Date: Thu, 26 Jun 2014 13:37:10 +0100
-Message-ID: <20140626123710.GA16204@google.com>
-References: <1403560693-21809-1-git-send-email-keescook@chromium.org>
- <1403560693-21809-3-git-send-email-keescook@chromium.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1403560693-21809-3-git-send-email-keescook@chromium.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+From: Rafael Aquini <aquini@redhat.com>
+Subject: [PATCH v2] mm: export NR_SHMEM via sysinfo(2) / si_meminfo() interfaces
+Date: Thu, 26 Jun 2014 17:00:17 -0300
+Message-ID: <198dc298821a20a476656dccc85a8d77f166c61a.1403812625.git.aquini@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org
+Cc: Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Johannes Weiner <hannes@cmpxchg.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 23, 2014 at 02:58:06PM -0700, Kees Cook wrote:
-> In preparation for adding seccomp locking, move filter creation away
-> from where it is checked and applied. This will allow for locking whe=
-re
-> no memory allocation is happening. The validation, filter attachment,
-> and seccomp mode setting can all happen under the future locks.
->=20
-> Signed-off-by: Kees Cook <keescook@chromium.org>
-> ---
->  kernel/seccomp.c |   97 +++++++++++++++++++++++++++++++++++++-------=
-----------
->  1 file changed, 67 insertions(+), 30 deletions(-)
->=20
-> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> index afb916c7e890..edc8c79ed16d 100644
-> --- a/kernel/seccomp.c
-> +++ b/kernel/seccomp.c
-> @@ -515,6 +551,7 @@ static long seccomp_set_mode(unsigned long seccom=
-p_mode, char __user *filter)
->  	current->seccomp.mode =3D seccomp_mode;
->  	set_thread_flag(TIF_SECCOMP);
->  out:
-> +	seccomp_filter_free(prepared);
->  	return ret;
->  }
+Historically, we exported shared pages to userspace via sysinfo(2) sharedram
+and /proc/meminfo's "MemShared" fields. With the advent of tmpfs, from kernel
+v2.4 onward, that old way for accounting shared mem was deemed inaccurate and
+we started to export a hard-coded 0 for sysinfo.sharedram. Later on, during
+the 2.6 timeframe, "MemShared" got re-introduced to /proc/meminfo re-branded
+as "Shmem", but we're still reporting sysinfo.sharedmem as that old hard-coded
+zero, which makes the "shared memory" report inconsistent across interfaces.
 
-I think this needs to be inside #ifdef CONFIG_SECCOMP_FILTER to match
-the definition of seccomp_filter_free:
+This patch leverages the addition of explicit accounting for pages used by
+shmem/tmpfs -- "4b02108 mm: oom analysis: add shmem vmstat" -- in order to
+make the users of sysinfo(2) and si_meminfo*() friends aware of that
+vmstat entry and make them report it consistently across the interfaces,
+as well to make sysinfo(2) returned data consistent with our current API
+documentation states.
 
-=2E./kernel/seccomp.c:554:2: error: implicit declaration of function =E2=
-=80=98seccomp_filter_free=E2=80=99 [-Werror=3Dimplicit-function-declara=
-tion]
+Signed-off-by: Rafael Aquini <aquini@redhat.com>
+---
+Changelog from v1:
+- updated commit log message to include historical context       (kosaki-san)
+
+ drivers/base/node.c | 2 +-
+ fs/proc/meminfo.c   | 2 +-
+ mm/page_alloc.c     | 3 ++-
+ 3 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index 8f7ed99..c6d3ae0 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -126,7 +126,7 @@ static ssize_t node_read_meminfo(struct device *dev,
+ 		       nid, K(node_page_state(nid, NR_FILE_PAGES)),
+ 		       nid, K(node_page_state(nid, NR_FILE_MAPPED)),
+ 		       nid, K(node_page_state(nid, NR_ANON_PAGES)),
+-		       nid, K(node_page_state(nid, NR_SHMEM)),
++		       nid, K(i.sharedram),
+ 		       nid, node_page_state(nid, NR_KERNEL_STACK) *
+ 				THREAD_SIZE / 1024,
+ 		       nid, K(node_page_state(nid, NR_PAGETABLE)),
+diff --git a/fs/proc/meminfo.c b/fs/proc/meminfo.c
+index 7445af0..aa1eee0 100644
+--- a/fs/proc/meminfo.c
++++ b/fs/proc/meminfo.c
+@@ -168,7 +168,7 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
+ 		K(global_page_state(NR_WRITEBACK)),
+ 		K(global_page_state(NR_ANON_PAGES)),
+ 		K(global_page_state(NR_FILE_MAPPED)),
+-		K(global_page_state(NR_SHMEM)),
++		K(i.sharedram),
+ 		K(global_page_state(NR_SLAB_RECLAIMABLE) +
+ 				global_page_state(NR_SLAB_UNRECLAIMABLE)),
+ 		K(global_page_state(NR_SLAB_RECLAIMABLE)),
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 20d17f8..f72ea38 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -3040,7 +3040,7 @@ static inline void show_node(struct zone *zone)
+ void si_meminfo(struct sysinfo *val)
+ {
+ 	val->totalram = totalram_pages;
+-	val->sharedram = 0;
++	val->sharedram = global_page_state(NR_SHMEM);
+ 	val->freeram = global_page_state(NR_FREE_PAGES);
+ 	val->bufferram = nr_blockdev_pages();
+ 	val->totalhigh = totalhigh_pages;
+@@ -3060,6 +3060,7 @@ void si_meminfo_node(struct sysinfo *val, int nid)
+ 	for (zone_type = 0; zone_type < MAX_NR_ZONES; zone_type++)
+ 		managed_pages += pgdat->node_zones[zone_type].managed_pages;
+ 	val->totalram = managed_pages;
++	val->sharedram = node_page_state(nid, NR_SHMEM);
+ 	val->freeram = node_page_state(nid, NR_FREE_PAGES);
+ #ifdef CONFIG_HIGHMEM
+ 	val->totalhigh = pgdat->node_zones[ZONE_HIGHMEM].managed_pages;
+-- 
+1.9.3
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
