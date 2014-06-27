@@ -1,116 +1,105 @@
-From: =?UTF-8?Q?St=C3=A9phane_Marchesin?= <marcheu@chromium.org>
-Subject: Re: [PATCH v2 3/4] drm/tegra: Add SET/GET_FLAGS IOCTLs
-Date: Fri, 27 Jun 2014 11:04:18 -0700
-Message-ID: <CADMs+9a24ED8eJKL9ruppF6S4i+qOG=itU9SS_D-oc9Oxp90Zw@mail.gmail.com>
-References: <1403857706-15989-1-git-send-email-thierry.reding@gmail.com>
- <1403857706-15989-3-git-send-email-thierry.reding@gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v8 5/9] seccomp: split mode set routines
+Date: Fri, 27 Jun 2014 11:33:46 -0700
+Message-ID: <CAGXu5jLavA8FJD8m-1y4wO0uzh3qvvMmajAg0Lrr1Cn_Om3a3w@mail.gmail.com>
+References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
+	<1403642893-23107-6-git-send-email-keescook@chromium.org>
+	<20140625135121.GB7892@redhat.com>
+	<CAGXu5jJkFxh4K=40xuh6tu3kUf4oJM8Dry+4upBdRieW3FNLgw@mail.gmail.com>
+	<CALCETrUBNmLnpa+LM91om2RSpR6SjupP-EdefzhU1Me4nv3Dfw@mail.gmail.com>
+	<CAGXu5j+J11zJnuFR8bYKAXizAHhCx4R+uJE_QH6zC3q2udkpaQ@mail.gmail.com>
+	<CALCETrVrs8sb19+UUqyFEpAFzTih5dkAwn-WpQjfgPcPJMpP5g@mail.gmail.com>
+	<20140625173245.GA17695@redhat.com>
+	<CALCETrUc65H+fn6dtMdYnB_xR39wcmgDdTbdR3fFRjyrndJhgA@mail.gmail.com>
+	<20140625175136.GA18185@redhat.com>
+	<CAGXu5jL17k6=GXju6x+eLU20FMwBHhnuRiHoQD1Bzj_EmpiKjg@mail.gmail.com>
+	<CALCETrVNwhWSPNiBiZmgP1nD9zLJPTk6cH0yo=85rbxTPTYFRg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1403857706-15989-3-git-send-email-thierry.reding@gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Thierry Reding <thierry.reding@gmail.com>
-Cc: linux-tegra@vger.kernel.org, linux-api@vger.kernel.org, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <CALCETrVNwhWSPNiBiZmgP1nD9zLJPTk6cH0yo=85rbxTPTYFRg@mail.gmail.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Linux API <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-mips@linux-mips.org, linux-arch <linux-arch@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCBKdW4gMjcsIDIwMTQgYXQgMToyOCBBTSwgVGhpZXJyeSBSZWRpbmcKPHRoaWVycnku
-cmVkaW5nQGdtYWlsLmNvbT4gd3JvdGU6Cj4gRnJvbTogVGhpZXJyeSBSZWRpbmcgPHRyZWRpbmdA
-bnZpZGlhLmNvbT4KPgo+IFRoZSBEUk1fVEVHUkFfR0VNX1NFVF9GTEFHUyBJT0NUTCBjYW4gYmUg
-dXNlZCB0byBzZXQgdGhlIGZsYWdzIG9mIGEKPiBidWZmZXIgb2JqZWN0IGFmdGVyIGl0IGhhcyBi
-ZWVuIGFsbG9jYXRlZCBvciBpbXBvcnRlZC4gRmxhZ3MgYXNzb2NpYXRlZAo+IHdpdGggYSBidWZm
-ZXIgb2JqZWN0IGNhbiBiZSBxdWVyaWVkIHVzaW5nIHRoZSBEUk1fVEVHUkFfR0VNX0dFVF9GTEFH
-Uwo+IElPQ1RMLgo+Cj4gU2lnbmVkLW9mZi1ieTogVGhpZXJyeSBSZWRpbmcgPHRyZWRpbmdAbnZp
-ZGlhLmNvbT4KClJldmlld2VkLWJ5OiBTdMOpcGhhbmUgTWFyY2hlc2luIDxtYXJjaGV1QGNocm9t
-aXVtLm9yZz4KCj4gLS0tCj4gQ2hhbmdlcyBpbiB2MjoKPiAtIHVzZSAtRU5PRU5UIGlmIG5vIEdF
-TSBvYmplY3QgaXMgZm91bmQKPgo+ICBkcml2ZXJzL2dwdS9kcm0vdGVncmEvZHJtLmMgIHwgNDkg
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKPiAgaW5jbHVkZS91
-YXBpL2RybS90ZWdyYV9kcm0uaCB8IDIxICsrKysrKysrKysrKysrKysrKysKPiAgMiBmaWxlcyBj
-aGFuZ2VkLCA3MCBpbnNlcnRpb25zKCspCj4KPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9ncHUvZHJt
-L3RlZ3JhL2RybS5jIGIvZHJpdmVycy9ncHUvZHJtL3RlZ3JhL2RybS5jCj4gaW5kZXggYTAyOTUy
-NWI1OThmLi42ZTJlNzE0YTA2NDkgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9ncHUvZHJtL3RlZ3Jh
-L2RybS5jCj4gKysrIGIvZHJpdmVycy9ncHUvZHJtL3RlZ3JhL2RybS5jCj4gQEAgLTU0OCw2ICs1
-NDgsNTMgQEAgc3RhdGljIGludCB0ZWdyYV9nZW1fZ2V0X3RpbGluZyhzdHJ1Y3QgZHJtX2Rldmlj
-ZSAqZHJtLCB2b2lkICpkYXRhLAo+Cj4gICAgICAgICByZXR1cm4gZXJyOwo+ICB9Cj4gKwo+ICtz
-dGF0aWMgaW50IHRlZ3JhX2dlbV9zZXRfZmxhZ3Moc3RydWN0IGRybV9kZXZpY2UgKmRybSwgdm9p
-ZCAqZGF0YSwKPiArICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3RydWN0IGRybV9maWxl
-ICpmaWxlKQo+ICt7Cj4gKyAgICAgICBzdHJ1Y3QgZHJtX3RlZ3JhX2dlbV9zZXRfZmxhZ3MgKmFy
-Z3MgPSBkYXRhOwo+ICsgICAgICAgc3RydWN0IGRybV9nZW1fb2JqZWN0ICpnZW07Cj4gKyAgICAg
-ICBzdHJ1Y3QgdGVncmFfYm8gKmJvOwo+ICsKPiArICAgICAgIGlmIChhcmdzLT5mbGFncyAmIH5E
-Uk1fVEVHUkFfR0VNX0ZMQUdTKQo+ICsgICAgICAgICAgICAgICByZXR1cm4gLUVJTlZBTDsKPiAr
-Cj4gKyAgICAgICBnZW0gPSBkcm1fZ2VtX29iamVjdF9sb29rdXAoZHJtLCBmaWxlLCBhcmdzLT5o
-YW5kbGUpOwo+ICsgICAgICAgaWYgKCFnZW0pCj4gKyAgICAgICAgICAgICAgIHJldHVybiAtRU5P
-RU5UOwo+ICsKPiArICAgICAgIGJvID0gdG9fdGVncmFfYm8oZ2VtKTsKPiArICAgICAgIGJvLT5m
-bGFncyA9IDA7Cj4gKwo+ICsgICAgICAgaWYgKGFyZ3MtPmZsYWdzICYgRFJNX1RFR1JBX0dFTV9C
-T1RUT01fVVApCj4gKyAgICAgICAgICAgICAgIGJvLT5mbGFncyB8PSBURUdSQV9CT19CT1RUT01f
-VVA7Cj4gKwo+ICsgICAgICAgZHJtX2dlbV9vYmplY3RfdW5yZWZlcmVuY2UoZ2VtKTsKPiArCj4g
-KyAgICAgICByZXR1cm4gMDsKPiArfQo+ICsKPiArc3RhdGljIGludCB0ZWdyYV9nZW1fZ2V0X2Zs
-YWdzKHN0cnVjdCBkcm1fZGV2aWNlICpkcm0sIHZvaWQgKmRhdGEsCj4gKyAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIHN0cnVjdCBkcm1fZmlsZSAqZmlsZSkKPiArewo+ICsgICAgICAgc3Ry
-dWN0IGRybV90ZWdyYV9nZW1fZ2V0X2ZsYWdzICphcmdzID0gZGF0YTsKPiArICAgICAgIHN0cnVj
-dCBkcm1fZ2VtX29iamVjdCAqZ2VtOwo+ICsgICAgICAgc3RydWN0IHRlZ3JhX2JvICpibzsKPiAr
-Cj4gKyAgICAgICBnZW0gPSBkcm1fZ2VtX29iamVjdF9sb29rdXAoZHJtLCBmaWxlLCBhcmdzLT5o
-YW5kbGUpOwo+ICsgICAgICAgaWYgKCFnZW0pCj4gKyAgICAgICAgICAgICAgIHJldHVybiAtRU5P
-RU5UOwo+ICsKPiArICAgICAgIGJvID0gdG9fdGVncmFfYm8oZ2VtKTsKPiArICAgICAgIGFyZ3Mt
-PmZsYWdzID0gMDsKPiArCj4gKyAgICAgICBpZiAoYm8tPmZsYWdzICYgVEVHUkFfQk9fQk9UVE9N
-X1VQKQo+ICsgICAgICAgICAgICAgICBhcmdzLT5mbGFncyB8PSBEUk1fVEVHUkFfR0VNX0JPVFRP
-TV9VUDsKPiArCj4gKyAgICAgICBkcm1fZ2VtX29iamVjdF91bnJlZmVyZW5jZShnZW0pOwo+ICsK
-PiArICAgICAgIHJldHVybiAwOwo+ICt9Cj4gICNlbmRpZgo+Cj4gIHN0YXRpYyBjb25zdCBzdHJ1
-Y3QgZHJtX2lvY3RsX2Rlc2MgdGVncmFfZHJtX2lvY3Rsc1tdID0gewo+IEBAIC01NjQsNiArNjEx
-LDggQEAgc3RhdGljIGNvbnN0IHN0cnVjdCBkcm1faW9jdGxfZGVzYyB0ZWdyYV9kcm1faW9jdGxz
-W10gPSB7Cj4gICAgICAgICBEUk1fSU9DVExfREVGX0RSVihURUdSQV9HRVRfU1lOQ1BUX0JBU0Us
-IHRlZ3JhX2dldF9zeW5jcHRfYmFzZSwgRFJNX1VOTE9DS0VEKSwKPiAgICAgICAgIERSTV9JT0NU
-TF9ERUZfRFJWKFRFR1JBX0dFTV9TRVRfVElMSU5HLCB0ZWdyYV9nZW1fc2V0X3RpbGluZywgRFJN
-X1VOTE9DS0VEKSwKPiAgICAgICAgIERSTV9JT0NUTF9ERUZfRFJWKFRFR1JBX0dFTV9HRVRfVElM
-SU5HLCB0ZWdyYV9nZW1fZ2V0X3RpbGluZywgRFJNX1VOTE9DS0VEKSwKPiArICAgICAgIERSTV9J
-T0NUTF9ERUZfRFJWKFRFR1JBX0dFTV9TRVRfRkxBR1MsIHRlZ3JhX2dlbV9zZXRfZmxhZ3MsIERS
-TV9VTkxPQ0tFRCksCj4gKyAgICAgICBEUk1fSU9DVExfREVGX0RSVihURUdSQV9HRU1fR0VUX0ZM
-QUdTLCB0ZWdyYV9nZW1fZ2V0X2ZsYWdzLCBEUk1fVU5MT0NLRUQpLAo+ICAjZW5kaWYKPiAgfTsK
-Pgo+IGRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvZHJtL3RlZ3JhX2RybS5oIGIvaW5jbHVkZS91
-YXBpL2RybS90ZWdyYV9kcm0uaAo+IGluZGV4IDA4MjlmNzVlYjk4Ni4uYzE1ZDc4MWVjYzBmIDEw
-MDY0NAo+IC0tLSBhL2luY2x1ZGUvdWFwaS9kcm0vdGVncmFfZHJtLmgKPiArKysgYi9pbmNsdWRl
-L3VhcGkvZHJtL3RlZ3JhX2RybS5oCj4gQEAgLTE1MCw2ICsxNTAsMjMgQEAgc3RydWN0IGRybV90
-ZWdyYV9nZW1fZ2V0X3RpbGluZyB7Cj4gICAgICAgICBfX3UzMiBwYWQ7Cj4gIH07Cj4KPiArI2Rl
-ZmluZSBEUk1fVEVHUkFfR0VNX0JPVFRPTV9VUCAgICAgICAgICAgICAgICAoMSA8PCAwKQo+ICsj
-ZGVmaW5lIERSTV9URUdSQV9HRU1fRkxBR1MgICAgICAgICAgICAoRFJNX1RFR1JBX0dFTV9CT1RU
-T01fVVApCj4gKwo+ICtzdHJ1Y3QgZHJtX3RlZ3JhX2dlbV9zZXRfZmxhZ3Mgewo+ICsgICAgICAg
-LyogaW5wdXQgKi8KPiArICAgICAgIF9fdTMyIGhhbmRsZTsKPiArICAgICAgIC8qIG91dHB1dCAq
-Lwo+ICsgICAgICAgX191MzIgZmxhZ3M7Cj4gK307Cj4gKwo+ICtzdHJ1Y3QgZHJtX3RlZ3JhX2dl
-bV9nZXRfZmxhZ3Mgewo+ICsgICAgICAgLyogaW5wdXQgKi8KPiArICAgICAgIF9fdTMyIGhhbmRs
-ZTsKPiArICAgICAgIC8qIG91dHB1dCAqLwo+ICsgICAgICAgX191MzIgZmxhZ3M7Cj4gK307Cj4g
-Kwo+ICAjZGVmaW5lIERSTV9URUdSQV9HRU1fQ1JFQVRFICAgICAgICAgICAweDAwCj4gICNkZWZp
-bmUgRFJNX1RFR1JBX0dFTV9NTUFQICAgICAgICAgICAgIDB4MDEKPiAgI2RlZmluZSBEUk1fVEVH
-UkFfU1lOQ1BUX1JFQUQgICAgICAgICAgMHgwMgo+IEBAIC0xNjIsNiArMTc5LDggQEAgc3RydWN0
-IGRybV90ZWdyYV9nZW1fZ2V0X3RpbGluZyB7Cj4gICNkZWZpbmUgRFJNX1RFR1JBX0dFVF9TWU5D
-UFRfQkFTRSAgICAgIDB4MDkKPiAgI2RlZmluZSBEUk1fVEVHUkFfR0VNX1NFVF9USUxJTkcgICAg
-ICAgMHgwYQo+ICAjZGVmaW5lIERSTV9URUdSQV9HRU1fR0VUX1RJTElORyAgICAgICAweDBiCj4g
-KyNkZWZpbmUgRFJNX1RFR1JBX0dFTV9TRVRfRkxBR1MgICAgICAgICAgICAgICAgMHgwYwo+ICsj
-ZGVmaW5lIERSTV9URUdSQV9HRU1fR0VUX0ZMQUdTICAgICAgICAgICAgICAgIDB4MGQKPgo+ICAj
-ZGVmaW5lIERSTV9JT0NUTF9URUdSQV9HRU1fQ1JFQVRFIERSTV9JT1dSKERSTV9DT01NQU5EX0JB
-U0UgKyBEUk1fVEVHUkFfR0VNX0NSRUFURSwgc3RydWN0IGRybV90ZWdyYV9nZW1fY3JlYXRlKQo+
-ICAjZGVmaW5lIERSTV9JT0NUTF9URUdSQV9HRU1fTU1BUCBEUk1fSU9XUihEUk1fQ09NTUFORF9C
-QVNFICsgRFJNX1RFR1JBX0dFTV9NTUFQLCBzdHJ1Y3QgZHJtX3RlZ3JhX2dlbV9tbWFwKQo+IEBA
-IC0xNzUsNSArMTk0LDcgQEAgc3RydWN0IGRybV90ZWdyYV9nZW1fZ2V0X3RpbGluZyB7Cj4gICNk
-ZWZpbmUgRFJNX0lPQ1RMX1RFR1JBX0dFVF9TWU5DUFRfQkFTRSBEUk1fSU9XUihEUk1fQ09NTUFO
-RF9CQVNFICsgRFJNX1RFR1JBX0dFVF9TWU5DUFRfQkFTRSwgc3RydWN0IGRybV90ZWdyYV9nZXRf
-c3luY3B0X2Jhc2UpCj4gICNkZWZpbmUgRFJNX0lPQ1RMX1RFR1JBX0dFTV9TRVRfVElMSU5HIERS
-TV9JT1dSKERSTV9DT01NQU5EX0JBU0UgKyBEUk1fVEVHUkFfR0VNX1NFVF9USUxJTkcsIHN0cnVj
-dCBkcm1fdGVncmFfZ2VtX3NldF90aWxpbmcpCj4gICNkZWZpbmUgRFJNX0lPQ1RMX1RFR1JBX0dF
-TV9HRVRfVElMSU5HIERSTV9JT1dSKERSTV9DT01NQU5EX0JBU0UgKyBEUk1fVEVHUkFfR0VNX0dF
-VF9USUxJTkcsIHN0cnVjdCBkcm1fdGVncmFfZ2VtX2dldF90aWxpbmcpCj4gKyNkZWZpbmUgRFJN
-X0lPQ1RMX1RFR1JBX0dFTV9TRVRfRkxBR1MgRFJNX0lPV1IoRFJNX0NPTU1BTkRfQkFTRSArIERS
-TV9URUdSQV9HRU1fU0VUX0ZMQUdTLCBzdHJ1Y3QgZHJtX3RlZ3JhX2dlbV9zZXRfZmxhZ3MpCj4g
-KyNkZWZpbmUgRFJNX0lPQ1RMX1RFR1JBX0dFTV9HRVRfRkxBR1MgRFJNX0lPV1IoRFJNX0NPTU1B
-TkRfQkFTRSArIERSTV9URUdSQV9HRU1fR0VUX0ZMQUdTLCBzdHJ1Y3QgZHJtX3RlZ3JhX2dlbV9n
-ZXRfZmxhZ3MpCj4KPiAgI2VuZGlmCj4gLS0KPiAyLjAuMAo+Cl9fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRl
-dmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21h
-aWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+On Wed, Jun 25, 2014 at 11:07 AM, Andy Lutomirski <luto@amacapital.net> wrote:
+> On Wed, Jun 25, 2014 at 11:00 AM, Kees Cook <keescook@chromium.org> wrote:
+>> On Wed, Jun 25, 2014 at 10:51 AM, Oleg Nesterov <oleg@redhat.com> wrote:
+>>> On 06/25, Andy Lutomirski wrote:
+>>>>
+>>>> On Wed, Jun 25, 2014 at 10:32 AM, Oleg Nesterov <oleg@redhat.com> wrote:
+>>>> > On 06/25, Andy Lutomirski wrote:
+>>>> >>
+>>>> >> Write the filter, then smp_mb (or maybe a weaker barrier is okay),
+>>>> >> then set the bit.
+>>>> >
+>>>> > Yes, exactly, this is what I meant. Plas rmb() in __secure_computing().
+>>>> >
+>>>> > But I still can't understand the rest of your discussion about the
+>>>> > ordering we need ;)
+>>>>
+>>>> Let me try again from scratch.
+>>>>
+>>>> Currently there are three relevant variables: TIF_SECCOMP,
+>>>> seccomp.mode, and seccomp.filter.  __secure_computing needs
+>>>> seccomp.mode and seccomp.filter to be in sync, and it wants (but
+>>>> doesn't really need) TIF_SECCOMP to be in sync as well.
+>>>>
+>>>> My suggestion is to rearrange it a bit.  Move mode into seccomp.filter
+>>>> (so that filter == NULL implies no seccomp) and don't check
+>>
+>> This would require that we reimplement mode 1 seccomp via mode 2
+>> filters. Which isn't too hard, but may add complexity.
+>>
+>>>> TIF_SECCOMP in secure_computing.  Then turning on seccomp is entirely
+>>>> atomic except for the fact that the seccomp hooks won't be called if
+>>>> filter != NULL but !TIF_SECCOMP.  This removes all ordering
+>>>> requirements.
+>>>
+>>> Ah, got it, thanks. Perhaps I missed somehing, but to me this looks like
+>>> unnecessary complication at first glance.
+>>>
+>>> We alredy have TIF_SECCOMP, we need it anyway, and we should only care
+>>> about the case when this bit is actually set, so that we can race with
+>>> the 1st call of __secure_computing().
+>>>
+>>> Otherwise we are fine: we can miss the new filter anyway, ->mode can't
+>>> be changed it is already nonzero.
+>>>
+>>>> Alternatively, __secure_computing could still BUG_ON(!seccomp.filter).
+>>>> In that case, filter needs to be set before TIF_SECCOMP is set, but
+>>>> that's straightforward.
+>>>
+>>> Yep. And this is how seccomp_assign_mode() already works? It is called
+>>> after we change ->filter chain, it changes ->mode before set(TIF_SECCOMP)
+>>> just it lacks a barrier.
+>>
+>> Right, I think the best solution is to add the barrier. I was
+>> concerned that adding the read barrier in secure_computing would have
+>> a performance impact, though.
+>>
+>
+> I can't speak for ARM, but I think that all of the read barriers are
+> essentially free on x86.  (smp_mb is a very different story, but that
+> shouldn't be needed here.)
+
+It looks like SMP ARM issues dsb for rmb, which seems a bit expensive.
+http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0204g/CIHJFGFE.html
+
+If I skip the rmb in the secure_computing call before checking mode,
+it sounds like I run the risk of racing an out-of-order TIF_SECCOMP vs
+mode and filter. This seems unlikely to me, given an addition of the
+smp_mb__before_atomic() during the seccomp_assign_mode()? I guess I
+don't have a sense of how aggressively ARM might do data caching in
+this area. Could the other thread actually see TIF_SECCOMP get set but
+still have an out of date copy of seccomp.mode?
+
+I really want to avoid adding anything to the secure_computing()
+execution path. :(
+
+-Kees
+
+-- 
+Kees Cook
+Chrome OS Security
