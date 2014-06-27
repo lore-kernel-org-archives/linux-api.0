@@ -1,70 +1,51 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 08/15] kexec: New syscall kexec_file_load() declaration
-Date: Fri, 27 Jun 2014 14:20:24 +0200
-Message-ID: <CAKgNAkioWzEgTXUP-r9u+WvkhqfX4=76gtsKs0AE5SHyT2TL=Q@mail.gmail.com>
-References: <1403814824-7587-1-git-send-email-vgoyal@redhat.com>
- <1403814824-7587-9-git-send-email-vgoyal@redhat.com> <20140626204303.GE11136@redhat.com>
- <CALCETrU8mixFxpS2Bt2Q7S08zUFxZwE1zfqHw8PEetqewgR7RQ@mail.gmail.com> <20140627115057.GC13337@redhat.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v8 3/9] seccomp: introduce writer locking
+Date: Fri, 27 Jun 2014 10:27:05 -0700
+Message-ID: <CAGXu5j+97V=8H-ft0Rmn8PPR7X=m_L5vLzgneUvbv920+8Yc2w@mail.gmail.com>
+References: <1403642893-23107-1-git-send-email-keescook@chromium.org>
+	<1403642893-23107-4-git-send-email-keescook@chromium.org>
+	<20140625180705.GB18185@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140627115057.GC13337-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kexec Mailing List <kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Greg Kroah-Hartman <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, WANG Chao <chaowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20140625180705.GB18185@redhat.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Linux API <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-mips@linux-mips.org, linux-arch <linux-arch@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 27, 2014 at 1:50 PM, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Thu, Jun 26, 2014 at 02:03:17PM -0700, Andy Lutomirski wrote:
->> On Thu, Jun 26, 2014 at 1:43 PM, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> > On Thu, Jun 26, 2014 at 04:33:37PM -0400, Vivek Goyal wrote:
->> >> This is the new syscall kexec_file_load() declaration/interface. I have
->> >> reserved the syscall number only for x86_64 so far. Other architectures
->> >> (including i386) can reserve syscall number when they enable the support
->> >> for this new syscall.
->> >>
->> >> Signed-off-by: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> >> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> >
->> > +.BR KEXEC_FILE_NO_INITRAMFS
->> > +Loading initrd/initramfs is optional. Specify this flag if no initramfs
->> > +is being loaded. If this flag is set, kernel will ignore the value passed
->> > +in
+On Wed, Jun 25, 2014 at 11:07 AM, Oleg Nesterov <oleg@redhat.com> wrote:
+> On 06/24, Kees Cook wrote:
 >>
->> This seems pointless.  Why not just pass -1 for initrd_fd to indicate
->> that no initrd is needed?
+>> +static void copy_seccomp(struct task_struct *p)
+>> +{
+>> +#ifdef CONFIG_SECCOMP
+>> +     /*
+>> +      * Must be called with sighand->lock held, which is common to
+>> +      * all threads in the group. Regardless, nothing special is
+>> +      * needed for the child since it is not yet in the tasklist.
+>> +      */
+>> +     BUG_ON(!spin_is_locked(&current->sighand->siglock));
+>> +
+>> +     get_seccomp_filter(current);
+>> +     p->seccomp = current->seccomp;
+>> +
+>> +     if (p->seccomp.mode != SECCOMP_MODE_DISABLED)
+>> +             set_tsk_thread_flag(p, TIF_SECCOMP);
+>> +#endif
+>> +}
 >
-> I was not sure whether negative fd should be treated as error and system
-> call should fail or it should be treated as user does not want to load
-> initrd and system call succeeds.
+> Wait. But what about no_new_privs? We should copy it as well...
 >
-> I was concerned about the cases where application does an fd = open(),
-> operation fails and fd contains -1. Caller does not check fd and
-> passed it to kexec system call.
->
-> I thought that in such cases we should error out saying initrd fd is
-> not valid. Instead of continuing and loading kernel without initrd. A
-> user might be surprised.
->
-> This is little defensive programming. But I am open to change it if
-> the perception is that above is not a valid concern.
+> Perhaps this helper should be updated a bit and moved into seccomp.c so
+> that seccomp_sync_threads() could use it too.
 
-Your logic for using a flag rather than -1 sounds reasonable to me.
-The nearest precedent I can think of offhand is mmap(), which also
-takes a file descriptor argument for some use cases. However, if
-MAP_ANONYMOUS is specified, no file descriptor ir required. The
-treatment of the 'fd' argument in that case depends on the system. On
-Linux, the fd argument is just ignored. However, many other systems
-require 'fd' to be negative when MAP_ANONYMOUS is specified; one
-presumes as a kind of safety check.
+Ah! Yes. I had been thinking it had been copied during the task_struct
+duplication, but that would have been before holding sighand->lock, so
+it needs explicit recopying. Thanks!
 
-Cheers,
-
-Michael
-
+-Kees
 
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Kees Cook
+Chrome OS Security
