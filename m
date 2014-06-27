@@ -1,65 +1,54 @@
-From: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 1/4] drm/tegra: Implement more tiling modes
-Date: Fri, 27 Jun 2014 12:45:25 +0200
-Message-ID: <20140627104524.GA2797@ulmo>
-References: <1403857706-15989-1-git-send-email-thierry.reding@gmail.com>
- <CAAVeFu+ja-PvqMyJuCPjkTu+e7jf4rgFLPsjFD3=7CmAEfjs5A@mail.gmail.com>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 08/15] kexec: New syscall kexec_file_load() declaration
+Date: Fri, 27 Jun 2014 07:50:58 -0400
+Message-ID: <20140627115057.GC13337@redhat.com>
+References: <1403814824-7587-1-git-send-email-vgoyal@redhat.com>
+ <1403814824-7587-9-git-send-email-vgoyal@redhat.com>
+ <20140626204303.GE11136@redhat.com>
+ <CALCETrU8mixFxpS2Bt2Q7S08zUFxZwE1zfqHw8PEetqewgR7RQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="W/nzBZO5zC0uMSeA"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAAVeFu+ja-PvqMyJuCPjkTu+e7jf4rgFLPsjFD3=7CmAEfjs5A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CALCETrU8mixFxpS2Bt2Q7S08zUFxZwE1zfqHw8PEetqewgR7RQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexandre Courbot <gnurou-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, Erik Faye-Lund <kusmabite-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?B?U3TDqXBoYW5l?= Marchesin <marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, "linux-tegra-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-tegra-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Greg Kroah-Hartman <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, chaowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
---W/nzBZO5zC0uMSeA
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Fri, Jun 27, 2014 at 07:17:24PM +0900, Alexandre Courbot wrote:
-> On Fri, Jun 27, 2014 at 5:28 PM, Thierry Reding
-> <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > From: Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
+On Thu, Jun 26, 2014 at 02:03:17PM -0700, Andy Lutomirski wrote:
+> On Thu, Jun 26, 2014 at 1:43 PM, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> > On Thu, Jun 26, 2014 at 04:33:37PM -0400, Vivek Goyal wrote:
+> >> This is the new syscall kexec_file_load() declaration/interface. I have
+> >> reserved the syscall number only for x86_64 so far. Other architectures
+> >> (including i386) can reserve syscall number when they enable the support
+> >> for this new syscall.
+> >>
+> >> Signed-off-by: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > >
-> > Tegra124 supports a block-linear mode in addition to the regular pitch
-> > linear and tiled modes. Add support for these by moving the internal
-> > representation into a structure rather than a simple flag.
->=20
-> Tested-by: Alexandre Courbot <acourbot-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
->=20
-> For the 4 patches. The first one has a trivial conflict on drm.h when
-> applied on today's -next.
+> > +.BR KEXEC_FILE_NO_INITRAMFS
+> > +Loading initrd/initramfs is optional. Specify this flag if no initramfs
+> > +is being loaded. If this flag is set, kernel will ignore the value passed
+> > +in
+> 
+> This seems pointless.  Why not just pass -1 for initrd_fd to indicate
+> that no initrd is needed?
 
-That conflict is caused by another patch I have in my tree. I can easily
-resolve that when pulling this patch to my drm/tegra/for-next branch.
+I was not sure whether negative fd should be treated as error and system
+call should fail or it should be treated as user does not want to load
+initrd and system call succeeds.
 
-Thanks for testing!
-Thierry
+I was concerned about the cases where application does an fd = open(),
+operation fails and fd contains -1. Caller does not check fd and
+passed it to kexec system call.
 
---W/nzBZO5zC0uMSeA
-Content-Type: application/pgp-signature
+I thought that in such cases we should error out saying initrd fd is
+not valid. Instead of continuing and loading kernel without initrd. A
+user might be surprised.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+This is little defensive programming. But I am open to change it if
+the perception is that above is not a valid concern.
 
-iQIcBAEBAgAGBQJTrUtEAAoJEN0jrNd/PrOhEcYP/2zDTz2l8qckplzMNEYjDkUe
-vrVSlQoiTMb1q1RpT53L6B0AFSuDRUdwgSj3sNBhF+ZkfOXUjuV0w/RLdUq8LJmV
-8lSevgtEwb66cE8XWk1yT3qjf0MOs2flZ90CqjtiWUZoj99cQj7Hqaiy7sBhS0GV
-iYPH3psZTz9sJn5NQ/4Ti7IFPa6fG2tnrzDdXEnDM3DOBjFcSSA9l3Kx7Qicua8f
-W/d5z2JDkSTf2+EoFkKnvazdYTmOxXM0s+DlQ1Ae3SPD65rTAI5Sa9TuYU1x875N
-yknhN7ZagxIgtx6jplT/8U5jfZpZHjCZsl67nmXbT2NyQKsIj4k535SU9GOhGd7J
-LHy9zzANTxqH8WaG/Z6Vs6ZTJe0XesVK0xqRhUliG0mi44aV4e3Sctf5QF6J2t76
-Y0kIIivn48bQvdAIamOJFVEPO6dXWM0zLdeCOIUOr5RWAQyf2nO2ZQ3pqKMcPcoy
-R18s+dGhUBwdn9ENbA/xtuduxL4VZvje99J3srXEDvHw4feaqeUcH408i7HK8ecn
-4lmMCM8CBjQZhXZtQ3hmcsixqzSyoEq70Cs81zSrbyhERy+NFbSn+ruxYEd8Rkx+
-PNBTeZJ6GUrbVjQ5/ueS51YiFlr5zGLIRZyZVLUvpjyewVxIqARZ0IXBrksOpI3k
-gj7Mz0rn7KrWfGoXTXqx
-=EQR8
------END PGP SIGNATURE-----
-
---W/nzBZO5zC0uMSeA--
+Thanks
+Vivek
