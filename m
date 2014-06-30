@@ -1,30 +1,34 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 01/11] fs: add O_BENEATH_ONLY flag to openat(2)
-Date: Mon, 30 Jun 2014 14:11:49 -0700
-Message-ID: <CALCETrUXgkiNf+pCKL5dyAFRbm4dF4R-E=qf6CzpV5pnsdrBkQ@mail.gmail.com>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
- <1404124096-21445-2-git-send-email-drysdale@google.com> <87mwcuw2pj.fsf@tassilo.jf.intel.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: Does it make sense to define a constant for openat and such that
+ is guaranteed not to be used for special purposes later on?
+Date: Mon, 30 Jun 2014 15:08:10 -0700
+Message-ID: <CALCETrUp=UYKEnhN9qf2vYToCV7YsLfL3+UGS-p9aY=_zMQMJA@mail.gmail.com>
+References: <fb54be9c497f.53af14a5@langara.bc.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <87mwcuw2pj.fsf@tassilo.jf.intel.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Andi Kleen <andi@firstfloor.org>
-Cc: David Drysdale <drysdale@google.com>, LSM List <linux-security-module@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <fb54be9c497f.53af14a5-BTv7Ps/Sm75C8prJL3GQQw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 30, 2014 at 1:40 PM, Andi Kleen <andi@firstfloor.org> wrote:
-> David Drysdale <drysdale@google.com> writes:
+On Sat, Jun 28, 2014 at 12:16 PM, Steven Stewart-Gallus
+<sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org> wrote:
+> Hello,
 >
->> Add a new O_BENEATH_ONLY flag for openat(2) which restricts the
->> provided path, rejecting (with -EACCES) paths that are not beneath
->> the provided dfd.  In particular, reject:
->>  - paths that contain .. components
->>  - paths that begin with /
->>  - symlinks that have paths as above.
+> For system calls such as openat I might wish to use the value -1 for
+> the directory file descriptor parameter to indicate that a path passed
+> in must be an absolute path. However, it has occurred to me that such
+> a usage isn't defined by POSIX and isn't safe for the future. In the
+> future -1 may be taken to be used for some other special purpose. I
+> would like a solution for that problem.
 >
-> How about bind mounts?
+> It'd be nice if we could define a constant (maybe call it AT_FDNODIR)
+> to maybe -1 that is set aside to mean that no directory is to be used
+> and that will not ever be ever used for some other purpose in the
+> future.
 
-What's the problematic scenario?
+I like this.  Want to submit a patch?
 
 --Andy
