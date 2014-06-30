@@ -1,26 +1,50 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [patch 0/4] timerfd c/r support, v4
-Date: Mon, 30 Jun 2014 23:43:54 +0400
-Message-ID: <20140630194354.GB2305@moon>
-References: <20140623185431.396309193@openvz.org>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH RFC net-next 07/14] bpf: expand BPF syscall with program load/unload
+Date: Mon, 30 Jun 2014 13:39:31 -0700
+Message-ID: <CAMEtUuxSdw+9WiB2ps0aYE5hdH9NTnq48VdELLEg17tz1B96WQ@mail.gmail.com>
+References: <1403913966-4927-1-git-send-email-ast@plumgrid.com>
+	<1403913966-4927-8-git-send-email-ast@plumgrid.com>
+	<CALCETrXDR1LVmbigTicBiddgvcucM1dGk1R7rxdJyBCvGEBQMw@mail.gmail.com>
+	<CAMEtUuywNHVcZ__296NzXK7RPXUBOf7gNQY9JFx0a9PV0Se+wA@mail.gmail.com>
+	<CALCETrXQ60J+UqafHRKPbgQ37zhstW+E8xAponWs7AQ-DCgaWA@mail.gmail.com>
+	<CAMEtUuwmxgrGMigmh1vZ7qCh9qB9ph9uFbPmVmmbqZvC5N9WyA@mail.gmail.com>
+	<20140628152104.GB29548@kroah.com>
+	<CALCETrUs8mmVK70rwkQz=Dzu2ZjPYU_TMuydnXsJM8jAxTv0WQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140623185431.396309193@openvz.org>
+In-Reply-To: <CALCETrUs8mmVK70rwkQz=Dzu2ZjPYU_TMuydnXsJM8jAxTv0WQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrey Vagin <avagin@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Vladimir Davydov <vdavydov@parallels.com>
+To: Andy Lutomirski <luto@amacapital.net>, David Laight <David.Laight@aculab.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>, "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 23, 2014 at 10:54:31PM +0400, Cyrill Gorcunov wrote:
+On Sat, Jun 28, 2014 at 8:35 AM, Andy Lutomirski <luto@amacapital.net> wrote:
+> On Sat, Jun 28, 2014 at 8:21 AM, Greg KH <gregkh@linuxfoundation.org> wrote:
+>> On Sat, Jun 28, 2014 at 12:26:14AM -0700, Alexei Starovoitov wrote:
+>>> On Fri, Jun 27, 2014 at 11:28 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>>> > On Fri, Jun 27, 2014 at 11:12 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
+>>> > If you want to add GPL-only functions in the future, that would be one
+>>> > thing.  But if someone writes a nice eBPF compiler, and someone else
+>>> > writes a little program that filters on network packets, I see no
+>>> > reason to claim that the little program is a derivative work of the
+>>> > kernel and therefore must be GPL.
+>>>
+>>> I think we have to draw a line somewhere. Say, tomorrow I want
+>>> to modify libpcap to emit eBPF based on existing tcpdump syntax.
+>>> Would it mean that tcpdump filter strings are GPLed? Definitely not,
+>>> since they existed before and can function without new libpcap.
+>>> But if I write a new packet filtering program in C, compile it
+>>> using LLVM->eBPF and call into in-kernel helper functions
+>>> (like bpf_map_lookup_elem()),  I think it's exactly the derivative work.
+>>> It's analogous to kernel modules. If module wants to call
+>>> export_symbol_gpl() functions, it needs to be GPLed. Here all helper
+>>> functions are GPL. So we just have a blank check for eBPF program.
+>>
+>> I agree, these eBFP programs should be GPL-compatible licensed as well.
 >
-> Hi guys, here is an updated version of c/r support for timerfd files. The main change
-> is in how @ticks are restored in patch 3 -- I switched to ioctl code, which is wrapped
-> with CONFIG because I still think that while there is only one ioctl designated
-> solely for c/r needs no need to build it all the time until explicitly requested.
-> Please take a look once time permit. Comments are highly appreciated.
-> Also note the last patch is for man-page git repo, not for kernel.
+> I think I'd be happy with an export_symbol_gpl analogue.  I might
+> argue that bpf_map_lookup_elem shouldn't be gpl-only, though.
 
-Gentlemen, could you please point me if there something preventing the
-series from being picked up? Or there some way to improve the series?
+ok. sounds like module-like approach will be more acceptable to potential
+user base. Will change it. Last thing I want to do is to scary users away.
