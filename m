@@ -1,40 +1,34 @@
 From: David Drysdale <drysdale@google.com>
-Subject: [PATCH 3/5] man-pages: rights.7: Describe Capsicum primary rights
-Date: Mon, 30 Jun 2014 11:28:14 +0100
-Message-ID: <1404124096-21445-15-git-send-email-drysdale@google.com>
+Subject: [PATCH 4/5] man-pages: cap_rights_limit.2: limit FD rights for Capsicum
+Date: Mon, 30 Jun 2014 11:28:15 +0100
+Message-ID: <1404124096-21445-16-git-send-email-drysdale@google.com>
 References: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
 In-Reply-To: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-security-module-owner@vger.kernel.org
 To: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: David Drysdale <drysdale@google.com>
 ---
- man7/rights.7 | 525 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 525 insertions(+)
- create mode 100644 man7/rights.7
+ man2/cap_rights_limit.2 | 171 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 171 insertions(+)
+ create mode 100644 man2/cap_rights_limit.2
 
-diff --git a/man7/rights.7 b/man7/rights.7
+diff --git a/man2/cap_rights_limit.2 b/man2/cap_rights_limit.2
 new file mode 100644
-index 000000000000..33bb8e48d12f
+index 000000000000..3484ee1076aa
 --- /dev/null
-+++ b/man7/rights.7
-@@ -0,0 +1,525 @@
++++ b/man2/cap_rights_limit.2
+@@ -0,0 +1,171 @@
 +.\"
-+.\" Copyright (c) 2014 Google, Inc.
-+.\" Copyright (c) 2012-2013 The FreeBSD Foundation
 +.\" Copyright (c) 2008-2010 Robert N. M. Watson
++.\" Copyright (c) 2012-2013 The FreeBSD Foundation
++.\" Copyright (c) 2013-2014 Google, Inc.
 +.\" All rights reserved.
 +.\"
-+.\" This software was developed at the University of Cambridge Computer
-+.\" Laboratory with support from a grant from Google, Inc.
-+.\"
 +.\" %%%LICENSE_START(BSD_2_CLAUSE)
-+.\" Portions of this documentation were written by Pawel Jakub Dawidek
-+.\" under sponsorship from the FreeBSD Foundation.
-+.\"
 +.\" Redistribution and use in source and binary forms, with or without
 +.\" modification, are permitted provided that the following conditions
 +.\" are met:
@@ -57,11 +51,16 @@ index 000000000000..33bb8e48d12f
 +.\" SUCH DAMAGE.
 +.\" %%%LICENSE_END
 +.\"
-+.TH RIGHTS 7 2014-05-07 "Linux" "Linux Programmer's Manual"
++.TH CAP_RIGHTS_LIMIT 2 2014-05-07 "Linux" "Linux Programmer's Manual"
 +.SH NAME
-+Capsicum capability rights for file descriptors
++cap_rights_limit \- limit Capsicum capability rights
 +.SH SYNOPSIS
-+.B #include <linux/capsicum.h>
++.nf
++.B #include <sys/capsicum.h>
++.sp
++.BI "int cap_rights_limit(int " fd ", const struct cap_rights *" rights ,
++.BI "                     unsigned int " fcntls ,
++.BI "                     int " nioctls ", unsigned int *" ioctls );
 +.SH DESCRIPTION
 +When a file descriptor is created by a function such as
 +.BR accept (2),
@@ -82,470 +81,118 @@ index 000000000000..33bb8e48d12f
 +.BR timerfd_create (2),
 +it implicitly has all Capsicum capability rights.
 +Those rights can be reduced (but never expanded) by using the
-+.BR cap_rights_limit (2)
++.BR cap_rights_limit ()
 +system call.
-+Once capability rights are reduced, operations on the file descriptor will be
-+limited to those permitted by the associated rights.
-+.Pp
-+The list of primary capability rights is provided below. In addition,
-+.BR ioctl (2)
-+and
-+.BR fcntl (2)
-+can also be restricted to only allow specific commands.
++Once Capsicum capability rights are reduced, operations on the file descriptor
++.I fd
++will be limited to those permitted by the remainder of the arguments.
 +.PP
 +The
-+.I "struct cap_rights"
-+type is used to store a list of primary capability rights; the
++.I rights
++argument describes the primary rights for the file descriptor, and
++should be prepared using
 +.BR cap_rights_init (3)
-+family of functions should be used to manage the structure.
-+.SH RIGHTS
-+The following rights may be specified in a rights mask:
-+.TP
-+.B CAP_ACCEPT
-+Permit
-+.BR accept (2)
-+and
-+.BR accept4 (2).
-+.TP
-+.B CAP_BIND
-+Permit
-+.BR bind (2).
-+Note that sockets can also become bound implicitly as a result of
-+.BR connect (2)
-+or
-+.BR send (2),
-+and that socket options set with
-+.BR setsockopt (2)
-+may also affect binding behavior.
-+.TP
-+.B CAP_CONNECT
-+Permit
-+.BR connect (2);
-+also required for
-+.BR sendto (2)
-+with a non-NULL destination address.
-+.TP
-+.B CAP_CREATE
-+Permit
-+.BR openat (2)
-+with the
-+.B O_CREAT
-+flag.
-+.TP
-+.B CAP_EVENT
-+Permit
-+.BR select (2),
-+.BR poll (2),
-+and
-+.BR epoll (7)
-+to be used in monitoring the file descriptor for events.
-+.TP
-+.B CAP_EXTATTR_DELETE
-+Permit
-+.BR fremovexattr (2).
-+.TP
-+.B CAP_EXTATTR_GET
-+Permit
-+.BR fgetxattr (2).
-+.TP
-+.B CAP_EXTATTR_LIST
-+Permit
-+.BR flistxattr (2).
-+.TP
-+.B CAP_EXTATTR_SET
-+Permit
-+.BR fsetxattr (2).
-+.TP
-+.B CAP_FCHDIR
-+Permit
-+.BR fchdir (2).
-+.TP
-+.B CAP_FCHMOD
-+Permit
-+.BR fchmod (2)
-+and
-+.BR fchmodat (2)
-+if the
-+.B CAP_LOOKUP
-+right is also present.
-+.TP
-+.B CAP_FCHMODAT
-+An alias to
-+.B CAP_FCHMOD
-+and
-+.BR CAP_LOOKUP .
-+.TP
-+.B CAP_FCHOWN
-+Permit
-+.BR fchown (2)
-+and
-+.BR fchownat (2)
-+if the
-+.B CAP_LOOKUP
-+right is also present.
-+.TP
-+.B CAP_FCHOWNAT
-+An alias to
-+.B CAP_FCHOWN
-+and
-+.BR CAP_LOOKUP .
-+.TP
++family of functions.  The complete list of primary rights can be found in the
++.BR rights (7)
++manual page.
++.PP
++If a file descriptor is granted the
 +.B CAP_FCNTL
-+Permit
-+.BR fcntl (2).
-+Note that only the
-+.BR F_GETFL ,
-+.BR F_SETFL ,
-+.B F_GETOWN ,
-+.B F_SETOWN ,
-+.B F_GETOWN_EX
-+and
-+.B F_SETOWN_EX
-+commands require this capability right.
-+Also note that the list of permitted commands can be further limited with the
-+.BR cap_rights_limit (2)
-+system call.
-+.TP
-+.B CAP_FEXECVE
-+Permit
-+.BR execveat (2)
-+and
-+.BR openat (2)
-+with the
-+.B O_EXEC
-+flag;
-+.B CAP_READ
-+is also required.
-+.TP
-+.B CAP_FLOCK
-+Permit
-+.BR flock (2)
-+and
++primary capability right, the list of allowed
 +.BR fcntl (2)
-+(with
-+.BR F_GETLK ,
-+.BR F_SETLK
-+or
-+.B F_SETLKW
-+flag).
++commands can be selectively reduced (but never expanded) with the
++.I fcntls
++argument.  The following flags may be specified in the
++.I fcntls
++argument:
 +.TP
-+.B CAP_FSTAT
++.B CAP_FCNTL_GETFL
 +Permit
-+.BR fstat (2).
++.B F_GETFL
++command.
 +.TP
-+.B CAP_FSTATFS
++.B CAP_FCNTL_SETFL
 +Permit
-+.BR fstatfs (2).
++.B F_SETFL
++command.
 +.TP
-+.B CAP_FSYNC
++.B CAP_FCNTL_GETOWN
 +Permit
-+.BR fsync (2)
-+and
-+.BR openat (2)
-+with the
-+.B O_SYNC
-+flag.
++.B F_GETOWN
++command.
 +.TP
-+.B CAP_FTRUNCATE
++.B CAP_FCNTL_SETOWN
 +Permit
-+.BR ftruncate (2)
-+and
-+.BR openat (2)
-+with the
-+.B O_TRUNC
-+flag.
-+.TP
-+.B CAP_FUTIMES
-+Permit
-+.BR futimesat (2)
-+if the
-+.B CAP_LOOKUP
-+right is also present.
-+.TP
-+.B CAP_FUTIMESAT
-+An alias to
-+.B CAP_FUTIMES
-+and
-+.BR CAP_LOOKUP .
-+.TP
-+.B CAP_GETPEERNAME
-+Permit
-+.BR getpeername (2).
-+.TP
-+.B CAP_GETSOCKNAME
-+Permit
-+.BR getsockname (2).
-+.TP
-+.B CAP_GETSOCKOPT
-+Permit
-+.BR getsockopt (2).
-+.TP
++.B F_SETOWN
++command.
++.PP
++A value of
++.B CAP_FCNTL_ALL
++for the
++.I fcntls
++argument leaves the set of allowed
++.BR fcntl (2)
++commands unchanged.
++.PP
++If a file descriptor is granted the
 +.B CAP_IOCTL
-+Permit
-+.BR ioctl (2).
-+Be aware that this system call has enormous scope, including potentially
-+global scope for some objects.
-+The list of permitted ioctl commands can be further limited with the
-+.BR cap_rights_limit (2)
++capability right, the list of allowed
++.BR ioctl (2)
++commands can be selectively reduced (but never expanded) using the
++.I nioctls
++and
++.I ioctls
++arguments.
++The
++.I ioctls
++argument is an array of
++.BR ioctl (2)
++command values and the
++.I nioctls
++argument specifies the number of elements in the array.
++.PP
++If the
++.I nioctls
++argument is -1 or 0, the
++.I ioctls
++argument is ignored, and either all
++.BR ioctl (2)
++operations or no
++.BR ioctl (2)
++operations (respectively) will be allowed.
++.PP
++Capsicum capability rights assigned to a file descriptor can be obtained with the
++.BR cap_rights_get (2)
 +system call.
++.SH RETURN VALUE
++.BR cap_rights_limit ()
++returns zero on success. On error, -1 is returned and
++.I errno
++is set appropriately.
++.SH ERRORS
 +.TP
-+.B CAP_LINKAT
-+Permit
-+.BR linkat (2)
-+and
-+.BR renameat (2)
-+on the destination directory descriptor.
-+This right includes the
-+.B CAP_LOOKUP
-+right.
++.B EBADF
++.I fd
++isn't a valid open file descriptor.
 +.TP
-+.B CAP_LISTEN
-+Permit
-+.BR listen (2);
-+not much use (generally) without
-+.BR CAP_BIND .
++.B EINVAL
++An invalid set of rights has been requested in
++.IR rights .
 +.TP
-+.B CAP_LOOKUP
-+Permit the file descriptor to be used as a starting directory for calls such as
-+.BR linkat (2),
-+.BR openat (2),
-+and
-+.BR unlinkat (2).
++.B ENOMEM
++Out of memory.
 +.TP
-+.B CAP_MKDIRAT
-+Permit
-+.BR mkdirat (2).
-+This right includes the
-+.B CAP_LOOKUP
-+right.
-+.TP
-+.B CAP_MKFIFOAT
-+Permit
-+.BR mkfifoat (2).
-+This right includes the
-+.B CAP_LOOKUP
-+right.
-+.TP
-+.B CAP_MKNODAT
-+Permit
-+.BR mknodat (2).
-+This right includes the
-+.B CAP_LOOKUP
-+right.
-+.TP
-+.B CAP_MMAP
-+Permit
-+.BR mmap (2)
-+with the
-+.B PROT_NONE
-+protection.
-+.TP
-+.B CAP_MMAP_R
-+Permit
-+.BR mmap (2)
-+with the
-+.B PROT_READ
-+protection.
-+This right includes the
-+.B CAP_READ
-+and
-+.B CAP_SEEK
-+rights.
-+.TP
-+.B CAP_MMAP_RW
-+An alias to
-+.B CAP_MMAP_R
-+and
-+.BR CAP_MMAP_W .
-+.TP
-+.B CAP_MMAP_RWX
-+An alias to
-+.BR CAP_MMAP_R ,
-+.B CAP_MMAP_W
-+and
-+.BR CAP_MMAP_X .
-+.TP
-+.B CAP_MMAP_RX
-+An alias to
-+.B CAP_MMAP_R
-+and
-+.BR CAP_MMAP_X .
-+.TP
-+.B CAP_MMAP_W
-+Permit
-+.BR mmap (2)
-+with the
-+.B PROT_WRITE
-+protection.
-+This right includes the
-+.B CAP_WRITE
-+and
-+.B CAP_SEEK
-+rights.
-+.TP
-+.B CAP_MMAP_WX
-+An alias to
-+.B CAP_MMAP_W
-+and
-+.BR CAP_MMAP_X .
-+.TP
-+.B CAP_MMAP_X
-+Permit
-+.BR mmap (2)
-+with the
-+.B PROT_EXEC
-+protection.
-+This right includes the
-+.B CAP_SEEK
-+right.
-+.TP
-+.B CAP_PDGETPID
-+Permit
-+.BR pdgetpid (2).
-+.TP
-+.B CAP_PDKILL
-+Permit
-+.BR pdkill (2).
-+.TP
-+.B CAP_PDWAIT
-+Permit
-+.BR pdwait4 (2).
-+.TP
-+.B CAP_PEELOFF
-+Permit
-+.BR sctp_peeloff (3).
-+.TP
-+.B CAP_PREAD
-+An alias to
-+.B CAP_READ
-+and
-+.BR CAP_SEEK .
-+.TP
-+.B CAP_PWRITE
-+An alias to
-+.B CAP_SEEK
-+and
-+.BR CAP_WRITE .
-+.TP
-+.B CAP_READ
-+Permit
-+.BR openat (2)
-+with the
-+.BR O_RDONLY flag,
-+.BR read (2),
-+.BR readv (2),
-+.BR recv (2),
-+.BR recvfrom (2),
-+.BR recvmsg (2),
-+.BR pread (2)
-+(
-+.B CAP_SEEK
-+is also required),
-+.BR preadv (2)
-+(
-+.B CAP_SEEK
-+is also required) and related system calls.
-+.TP
-+.B CAP_RECV
-+An alias to
-+.BR CAP_READ .
-+.TP
-+.B CAP_RENAMEAT
-+Permit
-+.BR renameat (2).
-+This right is required on the source directory descriptor.
-+This right includes the
-+.B CAP_LOOKUP
-+right.
-+.TP
-+.B CAP_SEEK
-+Permit operations that seek on the file descriptor, such as
-+.BR lseek (2),
-+but also required for I/O system calls that can read or write at any position
-+in the file, such as
-+.BR pread (2)
-+and
-+.BR pwrite (2).
-+.TP
-+.B CAP_SEND
-+An alias to
-+.BR CAP_WRITE .
-+.TP
-+.B CAP_SETSOCKOPT
-+Permit
-+.BR setsockopt (2);
-+this controls various aspects of socket behavior and may affect binding,
-+connecting, and other behaviors with global scope.
-+.TP
-+.B CAP_SHUTDOWN
-+Permit explicit
-+.BR shutdown (2);
-+closing the socket will also generally shut down any connections on it.
-+.TP
-+.B CAP_SYMLINKAT
-+Permit
-+.BR symlinkat (2).
-+This right includes the
-+.B CAP_LOOKUP
-+right.
-+.TP
-+.B CAP_UNLINKAT
-+Permit
-+.BR unlinkat (2)
-+and
-+.BR renameat (2).
-+This right is only required for
-+.BR renameat (2)
-+on the destination directory descriptor if the destination object already
-+exists and will be removed by the rename.
-+This right includes the
-+.B CAP_LOOKUP
-+right.
-+.TP
-+.B CAP_WRITE
-+Allow
-+.BR openat (2)
-+with
-+.B O_WRONLY
-+and
-+.B O_APPEND
-+flags set,
-+.BR send (2),
-+.BR sendmsg (2),
-+.BR sendto (2),
-+.BR write (2),
-+.BR writev (2),
-+.BR pwrite (2),
-+.BR pwritev (2)
-+and related system calls.
-+For
-+.BR sendto (2)
-+with a non-NULL connection address,
-+.B CAP_CONNECT
-+is also required.
-+For
-+.BR openat (2)
-+with the
-+.B O_WRONLY
-+flag, but without the
-+.B O_APPEND
-+flag,
-+.B CAP_SEEK
-+is also required.
-+For
-+.BR pwrite (2)
-+and
-+.BR pwritev (2)
-+.B CAP_SEEK
-+is also required.
-+.SH VERSIONS
-+Capsicum support was originally added to the kernel in version 3.???.
++.B ENOTCAPABLE
++The arguments contain capability rights not present for the given file descriptor (Capsicum
++capability rights list can only be reduced, never expanded).
++.SH VERSION
++Capsicum support was added to the kernel in version 3.???.
 +.SH SEE ALSO
-+.BR cap_enter (3),
-+.BR cap_fcntls_limit (3),
-+.BR cap_ioctls_limit (3),
-+.BR cap_rights_limit (2),
-+.BR cap_rights_limit (3),
-+.BR capsicum (7)
++.BR cap_enter (2),
++.BR cap_rights_get (2),
++.BR cap_rights_init (3),
++.BR capsicum (7),
++.BR rights (7)
 --
 2.0.0.526.g5318336
+
