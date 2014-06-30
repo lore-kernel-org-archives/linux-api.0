@@ -1,256 +1,138 @@
 From: David Drysdale <drysdale@google.com>
-Subject: [PATCH 11/11] capsicum: add syscalls to limit FD rights
-Date: Mon, 30 Jun 2014 11:28:11 +0100
-Message-ID: <1404124096-21445-12-git-send-email-drysdale@google.com>
+Subject: [PATCH 08/11] capsicum: add new LSM hooks on FD/file conversion
+Date: Mon, 30 Jun 2014 11:28:08 +0100
+Message-ID: <1404124096-21445-9-git-send-email-drysdale@google.com>
 References: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Return-path: <linux-security-module-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Sender: linux-security-module-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Add the cap_rights_get(2) and cap_rights_set(2) syscalls to
-allow retrieval and modification of the rights associated with
-a file descriptor.
-
-When a normal file descriptor has its rights restricted in any
-way, it becomes a Capsicum capability file descriptor.  This is
-a wrapper struct file that is installed in the fdtable in place
-of the original file.  From this point on, when the FD is converted
-to a struct file by fget() (or equivalent), the wrapper is checked
-for the appropriate rights and the wrapped inner normal file is
-returned.
-
-When a Capsicum capability file descriptor has its rights restricted
-further (they cannot be expanded), a new wrapper is created with
-the restricted rights, also wrapping the same inner normal file.
-In other words, the .underlying field in a struct capsicum_capability
-is always a normal file, never another Capsicum capability file.
-
-These syscalls specify the different components of the compound
-rights structure separately, allowing components to be unspecified
-for no change.
-
-Note that in FreeBSD 10.x the function of this pair of syscalls
-is implemented as 3 distinct pairs of syscalls, one pair for each
-component of the compound rights (primary/fcntl/ioctl).
+Add the following new LSM hooks:
+ - file_lookup: check an fd->struct file conversion operation,
+   potentially failing the lookup or potentially altering the looked
+   up file
+ - file_install: check a file to be installed in the fd table, to
+   potentially allow the LSM to replace it.
 
 Signed-off-by: David Drysdale <drysdale@google.com>
 ---
- arch/x86/syscalls/syscall_64.tbl |   2 +
- include/linux/syscalls.h         |  12 ++++
- kernel/sys_ni.c                  |   4 ++
- security/capsicum.c              | 143 +++++++++++++++++++++++++++++++++++++++
- 4 files changed, 161 insertions(+)
+ include/linux/security.h | 48 ++++++++++++++++++++++++++++++++++++++++++++++++
+ security/security.c      | 13 +++++++++++++
+ 2 files changed, 61 insertions(+)
 
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index 04376ac3d9ef..d408116dace5 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -323,6 +323,8 @@
- 314	common	sched_setattr		sys_sched_setattr
- 315	common	sched_getattr		sys_sched_getattr
- 316	common	renameat2		sys_renameat2
-+318	common	cap_rights_limit	sys_cap_rights_limit
-+319	common	cap_rights_get		sys_cap_rights_get
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 6478ce3252c7..4d0c079187d4 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -53,6 +53,7 @@ struct msg_queue;
+ struct xattr;
+ struct xfrm_sec_ctx;
+ struct mm_struct;
++struct capsicum_rights;
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a4a0588c5397..55666f3a4185 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -65,6 +65,7 @@ struct old_linux_dirent;
- struct perf_event_attr;
- struct file_handle;
- struct sigaltstack;
-+struct cap_rights;
+ /* Maximum number of letters for an LSM name string */
+ #define SECURITY_NAME_MAX	10
+@@ -656,6 +657,28 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
+  *	to receive an open file descriptor via socket IPC.
+  *	@file contains the file structure being received.
+  *	Return 0 if permission is granted.
++ * @file_lookup:
++ *	This hook allows security modules to intercept file descriptor lookups
++ *	to check whether a required set of rights are available for the file
++ *	descriptor. This allows the security model to fail the lookup, or to
++ *	substitute a new return value for fget().
++ *	@file is the file in the process's file table, which may be replaced by
++ *	another file as the return value from the hook.
++ *	@required_rights is the rights that the file descriptor should hold, or
++ *	may be NULL to indicate that no specific rights are needed.
++ *	@actual_rights is returned (if it is non-NULL) as a pointer to the
++ *	rights that the file descriptor has.  The caller does not own this
++ *	memory, and should only use if while maintaining a refcount to the
++ *	returned unwrapped file.
++ *	Return PTR_ERR holding the unwrapped file.
++ * @file_install:
++ *	This hook allows security modules to intercept newly created files that
++ *	are about to be installed in the file descriptor table, to potentially
++ *	substitute a different file for the newly opened file.
++ *	@base_rights is the rights associated with an existing file that the
++ *	new file is derived from; CAP_ALL for non-capabilities.
++ *	@file is the newly opened struct file.
++ *	Return PTR_ERR holding the struct file to be used.
+  * @file_open
+  *	Save open-time permission checking state for later use upon
+  *	file_permission, and recheck access if anything has changed
+@@ -1555,6 +1578,11 @@ struct security_operations {
+ 				    struct fown_struct *fown, int sig);
+ 	int (*file_receive) (struct file *file);
+ 	int (*file_open) (struct file *file, const struct cred *cred);
++	struct file * (*file_lookup)(struct file *orig,
++				const struct capsicum_rights *required_rights,
++				const struct capsicum_rights **actual_rights);
++	struct file * (*file_install)(const struct capsicum_rights *base_rights,
++				      struct file *file);
  
- #include <linux/types.h>
- #include <linux/aio_abi.h>
-@@ -866,4 +867,15 @@ asmlinkage long sys_process_vm_writev(pid_t pid,
- asmlinkage long sys_kcmp(pid_t pid1, pid_t pid2, int type,
- 			 unsigned long idx1, unsigned long idx2);
- asmlinkage long sys_finit_module(int fd, const char __user *uargs, int flags);
-+asmlinkage long sys_cap_rights_limit(unsigned int orig_fd,
-+				     const struct cap_rights __user *new_rights,
-+				     unsigned int fcntls,
-+				     int nioctls,
-+				     unsigned int __user *ioctls);
-+asmlinkage long sys_cap_rights_get(unsigned int fd,
-+				   struct cap_rights __user *rightsp,
-+				   unsigned int __user *fcntls,
-+				   int __user *nioctls,
-+				   unsigned int __user *ioctls);
-+
- #endif
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index bc8d1b74a6b9..2f09e5ee64f7 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -211,3 +211,7 @@ cond_syscall(compat_sys_open_by_handle_at);
- 
- /* compare kernel pointers */
- cond_syscall(sys_kcmp);
-+
-+/* capsicum object capabilities */
-+cond_syscall(sys_cap_rights_get);
-+cond_syscall(sys_cap_rights_limit);
-diff --git a/security/capsicum.c b/security/capsicum.c
-index 83677eef3fb6..4e4458801866 100644
---- a/security/capsicum.c
-+++ b/security/capsicum.c
-@@ -125,6 +125,149 @@ out_err:
- 	return ERR_PTR(err);
+ 	int (*task_create) (unsigned long clone_flags);
+ 	void (*task_free) (struct task_struct *task);
+@@ -1829,6 +1857,11 @@ int security_file_send_sigiotask(struct task_struct *tsk,
+ 				 struct fown_struct *fown, int sig);
+ int security_file_receive(struct file *file);
+ int security_file_open(struct file *file, const struct cred *cred);
++struct file *security_file_lookup(struct file *orig,
++				  const struct capsicum_rights *required_rights,
++				  const struct capsicum_rights **actual_rights);
++struct file *security_file_install(const struct capsicum_rights *base_rights,
++				   struct file *file);
+ int security_task_create(unsigned long clone_flags);
+ void security_task_free(struct task_struct *task);
+ int security_cred_alloc_blank(struct cred *cred, gfp_t gfp);
+@@ -2324,6 +2357,21 @@ static inline int security_file_open(struct file *file,
+ 	return 0;
  }
  
-+/* Takes ownership of rights->ioctls */
-+static int capsicum_rights_limit(unsigned int fd,
-+				 struct capsicum_rights *rights)
++static inline struct file *
++security_file_lookup(struct file *orig,
++		     const struct capsicum_rights *required_rights,
++		     const struct capsicum_rights **actual_rights)
 +{
-+	int rc = -EBADF;
-+	struct capsicum_capability *cap;
-+	struct file *capf = NULL;
-+	struct file *file;  /* current file for fd */
-+	struct file *underlying; /* base file for capability */
-+	struct files_struct *files = current->files;
-+	struct fdtable *fdt;
-+
-+	/* Allocate capability before taking files->file_lock */
-+	capf = capsicum_cap_alloc(rights, true);
-+	rights->ioctls = NULL;  /* capsicum_cap_alloc took ownership */
-+	if (IS_ERR(capf))
-+		return PTR_ERR(capf);
-+	cap = capf->private_data;
-+
-+	spin_lock(&files->file_lock);
-+	fdt = files_fdtable(files);
-+	if (fd >= fdt->max_fds)
-+		goto out_err;
-+	file = fdt->fd[fd];
-+	if (!file)
-+		goto out_err;
-+
-+	/* If we're limiting an existing Capsicum capability object, ensure
-+	 * we wrap its underlying normal file. */
-+	if (capsicum_is_cap(file)) {
-+		struct capsicum_capability *old_cap = file->private_data;
-+		/* Reject attempts to widen existing rights */
-+		if (!cap_rights_contains(&old_cap->rights, &cap->rights)) {
-+			rc = -ENOTCAPABLE;
-+			goto out_err;
-+		}
-+		underlying = old_cap->underlying;
-+	} else {
-+		underlying = file;
-+	}
-+	if (!atomic_long_inc_not_zero(&underlying->f_count)) {
-+		rc = -EBADF;
-+		goto out_err;
-+	}
-+	cap->underlying = underlying;
-+
-+	fput(file);
-+	rcu_assign_pointer(fdt->fd[fd], capf);
-+	spin_unlock(&files->file_lock);
-+	return 0;
-+out_err:
-+	spin_unlock(&files->file_lock);
-+	fput(capf);
-+	return rc;
++	return orig;
 +}
 +
-+SYSCALL_DEFINE5(cap_rights_limit,
-+		unsigned int, fd,
-+		const struct cap_rights __user *, new_rights,
-+		unsigned int, new_fcntls,
-+		int, nioctls,
-+		unsigned int __user *, new_ioctls)
++static inline struct file *
++security_file_install(const struct capsicum_rights *base_rights,
++		      struct file *file)
 +{
-+	struct capsicum_rights rights;
-+
-+	if (!new_rights)
-+		return -EFAULT;
-+	if (nioctls < 0 && nioctls != -1)
-+		return -EINVAL;
-+	if (copy_from_user(&rights.primary, new_rights,
-+			   sizeof(struct cap_rights)))
-+		return -EFAULT;
-+	rights.fcntls = new_fcntls;
-+	rights.nioctls = nioctls;
-+	if (rights.nioctls > 0) {
-+		size_t size;
-+		if (!new_ioctls)
-+			return -EINVAL;
-+		size = rights.nioctls * sizeof(unsigned int);
-+		rights.ioctls = kmalloc(size, GFP_KERNEL);
-+		if (!rights.ioctls)
-+			return -ENOMEM;
-+		if (copy_from_user(rights.ioctls, new_ioctls, size)) {
-+			kfree(rights.ioctls);
-+			return -EFAULT;
-+		}
-+	} else {
-+		rights.ioctls = NULL;
-+	}
-+	if (cap_rights_regularize(&rights))
-+		return -ENOTCAPABLE;
-+
-+	return capsicum_rights_limit(fd, &rights);
++	return file;
 +}
 +
-+SYSCALL_DEFINE5(cap_rights_get,
-+		unsigned int, fd,
-+		struct cap_rights __user *, rightsp,
-+		unsigned int __user *, fcntls,
-+		int __user *, nioctls,
-+		unsigned int __user *, ioctls)
+ static inline int security_task_create(unsigned long clone_flags)
+ {
+ 	return 0;
+diff --git a/security/security.c b/security/security.c
+index 8b774f362a3d..5ab3e893b46c 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -802,6 +802,19 @@ int security_file_open(struct file *file, const struct cred *cred)
+ 	return fsnotify_perm(file, MAY_OPEN);
+ }
+ 
++struct file *security_file_lookup(struct file *file,
++				  const struct capsicum_rights *required_rights,
++				  const struct capsicum_rights **actual_rights)
 +{
-+	int result = -EFAULT;
-+	struct file *file;
-+	struct capsicum_rights *rights = &all_rights;
-+	int ioctls_to_copy = -1;
-+
-+	file = fget_raw(fd);
-+	if (file == NULL)
-+		return -EBADF;
-+	if (capsicum_is_cap(file)) {
-+		struct capsicum_capability *cap = file->private_data;
-+		rights = &cap->rights;
-+	}
-+
-+	if (rightsp) {
-+		if (copy_to_user(rightsp, &rights->primary,
-+				 sizeof(struct cap_rights)))
-+			goto out;
-+	}
-+	if (fcntls) {
-+		if (put_user(rights->fcntls, fcntls))
-+			goto out;
-+	}
-+	if (nioctls) {
-+		int n;
-+		if (get_user(n, nioctls))
-+			goto out;
-+		if (put_user(rights->nioctls, nioctls))
-+			goto out;
-+		ioctls_to_copy = min(rights->nioctls, n);
-+	}
-+	if (ioctls && ioctls_to_copy > 0) {
-+		if (copy_to_user(ioctls, rights->ioctls,
-+				 ioctls_to_copy * sizeof(unsigned int)))
-+			goto out;
-+	}
-+	result = 0;
-+out:
-+	fput(file);
-+	return result;
++	return security_ops->file_lookup(file, required_rights, actual_rights);
 +}
 +
- /*
-  * File operations functions.
-  */
++struct file *security_file_install(const struct capsicum_rights *base_rights,
++				   struct file *file)
++{
++	return security_ops->file_install(base_rights, file);
++}
++
+ int security_task_create(unsigned long clone_flags)
+ {
+ 	return security_ops->task_create(clone_flags);
 -- 
 2.0.0.526.g5318336
-
