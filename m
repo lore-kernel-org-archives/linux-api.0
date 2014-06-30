@@ -1,748 +1,580 @@
 From: David Drysdale <drysdale@google.com>
-Subject: [PATCH 10/11] capsicum: invocation of new LSM hooks
-Date: Mon, 30 Jun 2014 11:28:10 +0100
-Message-ID: <1404124096-21445-11-git-send-email-drysdale@google.com>
+Subject: [PATCH 07/11] capsicum: convert callers to use sockfd_lookupr() etc
+Date: Mon, 30 Jun 2014 11:28:07 +0100
+Message-ID: <1404124096-21445-8-git-send-email-drysdale@google.com>
 References: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
 In-Reply-To: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-security-module-owner@vger.kernel.org
 To: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Places that call fcheck() to convert a file descriptor into a
-struct file need to call the new .file_lookup LSM hook.  The
-most important instances of this are in the fget() function,
-but there are a few other direct users of fcheck().
+Convert places that use sockfd_lookup() functions to use the
+equivalent sockfd_lookupr() variant instead.
 
-If a new file descriptor is created from an existing file
-descriptor, then any rights associated with the original FD
-need to be propagated to the new FD.  The .file_install LSM
-hook takes care of this, by potentially changing the struct
-file that is about to be installed into the FD table.  This
-affects accept(2) and openat(2); for the latter, the rights
-associated with the dfd need to be propagated through the
-code in fs/namei.c to allow this.
-
-The path walking code in fs/namei.c is also modified to enable
-the O_BENEATH_ONLY flag if the process is in capability mode,
-or if the dfd is a Capsicum capability.
+Annotate each such call with an indication of what operations will
+be performed on the retrieved socket, to allow future policing
+of rights associated with file descriptors.
 
 Signed-off-by: David Drysdale <drysdale@google.com>
 ---
- arch/powerpc/platforms/cell/spufs/coredump.c |   2 +
- fs/file.c                                    |   2 +-
- fs/locks.c                                   |   2 +
- fs/namei.c                                   | 217 ++++++++++++++++++++-------
- fs/notify/dnotify/dnotify.c                  |   2 +
- fs/proc/fd.c                                 |  16 +-
- net/socket.c                                 |  10 +-
- 7 files changed, 192 insertions(+), 59 deletions(-)
+ drivers/block/nbd.c                |   3 +-
+ drivers/scsi/iscsi_tcp.c           |   2 +-
+ drivers/staging/usbip/stub_dev.c   |   2 +-
+ drivers/staging/usbip/vhci_sysfs.c |   2 +-
+ drivers/vhost/net.c                |   2 +-
+ fs/ncpfs/inode.c                   |   5 +-
+ net/bluetooth/bnep/sock.c          |   2 +-
+ net/bluetooth/cmtp/sock.c          |   2 +-
+ net/bluetooth/hidp/sock.c          |   4 +-
+ net/compat.c                       |   4 +-
+ net/l2tp/l2tp_core.c               |  11 ++--
+ net/l2tp/l2tp_core.h               |   2 +
+ net/sched/sch_atm.c                |   2 +-
+ net/socket.c                       | 115 +++++++++++++++++++++++--------------
+ net/sunrpc/svcsock.c               |   4 +-
+ 15 files changed, 98 insertions(+), 64 deletions(-)
 
-diff --git a/arch/powerpc/platforms/cell/spufs/coredump.c b/arch/powerpc/platforms/cell/spufs/coredump.c
-index be6212ddbf06..589fad12c715 100644
---- a/arch/powerpc/platforms/cell/spufs/coredump.c
-+++ b/arch/powerpc/platforms/cell/spufs/coredump.c
-@@ -29,6 +29,7 @@
- #include <linux/syscalls.h>
- #include <linux/coredump.h>
- #include <linux/binfmts.h>
-+#include <linux/security.h>
- 
- #include <asm/uaccess.h>
- 
-@@ -101,6 +102,7 @@ static struct spu_context *coredump_next_context(int *fd)
- 		return NULL;
- 	*fd = n - 1;
- 	file = fcheck(*fd);
-+	file = security_file_lookup(file, NULL, NULL);
- 	return SPUFS_I(file_inode(file))->i_ctx;
- }
- 
-diff --git a/fs/file.c b/fs/file.c
-index 562cc82ba442..5a784234fd3a 100644
---- a/fs/file.c
-+++ b/fs/file.c
-@@ -742,7 +742,7 @@ static struct file *unwrap_file(struct file *orig,
- 		return ERR_PTR(-EBADF);
- 	if (IS_ERR(orig))
- 		return orig;
--	f = orig;  /* TODO: pass to an LSM hook here */
-+	f = security_file_lookup(orig, required_rights, actual_rights);
- 	if (f != orig && update_refcnt) {
- 		/* We're not returning the original, and the calling code
- 		 * has already incremented the refcount on it, we need to
-diff --git a/fs/locks.c b/fs/locks.c
-index 375fac3392b9..fd95ced5ced1 100644
---- a/fs/locks.c
-+++ b/fs/locks.c
-@@ -2121,6 +2121,7 @@ again:
- 	 */
- 	spin_lock(&current->files->file_lock);
- 	f = fcheck(fd);
-+	f = security_file_lookup(f, NULL, NULL);
- 	spin_unlock(&current->files->file_lock);
- 	if (!error && f != filp && flock.l_type != F_UNLCK) {
- 		flock.l_type = F_UNLCK;
-@@ -2255,6 +2256,7 @@ again:
- 	 */
- 	spin_lock(&current->files->file_lock);
- 	f = fcheck(fd);
-+	f = security_file_lookup(f, NULL, NULL);
- 	spin_unlock(&current->files->file_lock);
- 	if (!error && f != filp && flock.l_type != F_UNLCK) {
- 		flock.l_type = F_UNLCK;
-diff --git a/fs/namei.c b/fs/namei.c
-index c93f7993960e..001baf46b7a5 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -34,6 +34,7 @@
- #include <linux/device_cgroup.h>
- #include <linux/fs_struct.h>
- #include <linux/posix_acl.h>
-+#include <linux/capsicum.h>
- #include <asm/uaccess.h>
- 
- #include "internal.h"
-@@ -1750,7 +1751,7 @@ static int link_path_walk(const char *name, struct nameidata *nd,
- {
- 	struct path next;
- 	int err;
--	
-+
- 	while (*name == '/') {
- 		if (flags & LOOKUP_BENEATH_ONLY) {
- 			err = -EACCES;
-@@ -1836,15 +1837,18 @@ exit:
- 	return err;
- }
- 
--static int path_init(int dfd, const char *name, unsigned int flags,
--		     struct nameidata *nd, struct file **fp)
-+static int path_init(int dfd, const char *name, unsigned int *flags,
-+		struct nameidata *nd, struct file **fp,
-+		const struct capsicum_rights **dfd_rights,
-+		const struct capsicum_rights *rights)
- {
- 	int retval = 0;
- 
- 	nd->last_type = LAST_ROOT; /* if there are only slashes... */
--	nd->flags = flags | LOOKUP_JUMPED;
-+	nd->flags = (*flags) | LOOKUP_PARENT | LOOKUP_JUMPED;
- 	nd->depth = 0;
--	if (flags & LOOKUP_ROOT) {
-+
-+	if ((*flags) & LOOKUP_ROOT) {
- 		struct dentry *root = nd->root.dentry;
- 		struct inode *inode = root->d_inode;
- 		if (*name) {
-@@ -1856,7 +1860,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
- 		}
- 		nd->path = nd->root;
- 		nd->inode = inode;
--		if (flags & LOOKUP_RCU) {
-+		if ((*flags) & LOOKUP_RCU) {
- 			rcu_read_lock();
- 			nd->seq = __read_seqcount_begin(&nd->path.dentry->d_seq);
- 			nd->m_seq = read_seqbegin(&mount_lock);
-@@ -1870,9 +1874,11 @@ static int path_init(int dfd, const char *name, unsigned int flags,
- 
- 	nd->m_seq = read_seqbegin(&mount_lock);
- 	if (*name=='/') {
--		if (flags & LOOKUP_BENEATH_ONLY)
-+		if ((*flags) & LOOKUP_BENEATH_ONLY)
- 			return -EACCES;
--		if (flags & LOOKUP_RCU) {
-+		if (dfd_rights)
-+			*dfd_rights = NULL;
-+		if ((*flags) & LOOKUP_RCU) {
- 			rcu_read_lock();
- 			set_root_rcu(nd);
- 		} else {
-@@ -1881,7 +1887,9 @@ static int path_init(int dfd, const char *name, unsigned int flags,
- 		}
- 		nd->path = nd->root;
- 	} else if (dfd == AT_FDCWD) {
--		if (flags & LOOKUP_RCU) {
-+		if (dfd_rights)
-+			*dfd_rights = NULL;
-+		if ((*flags) & LOOKUP_RCU) {
- 			struct fs_struct *fs = current->fs;
- 			unsigned seq;
- 
-@@ -1897,11 +1905,13 @@ static int path_init(int dfd, const char *name, unsigned int flags,
- 		}
- 	} else {
- 		/* Caller must check execute permissions on the starting path component */
--		struct fd f = fdget_raw(dfd);
-+		struct fd f = fdget_raw_rights(dfd, dfd_rights, rights);
- 		struct dentry *dentry;
- 
--		if (!f.file)
--			return -EBADF;
-+		if (IS_ERR(f.file))
-+			return PTR_ERR(f.file);
-+		if (!cap_rights_is_all(*dfd_rights))
-+			*flags |= LOOKUP_BENEATH_ONLY;
- 
- 		dentry = f.file->f_path.dentry;
- 
-@@ -1913,7 +1923,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
- 		}
- 
- 		nd->path = f.file->f_path;
--		if (flags & LOOKUP_RCU) {
-+		if ((*flags) & LOOKUP_RCU) {
- 			if (f.flags & FDPUT_FPUT)
- 				*fp = f.file;
- 			nd->seq = __read_seqcount_begin(&nd->path.dentry->d_seq);
-@@ -1938,9 +1948,12 @@ static inline int lookup_last(struct nameidata *nd, struct path *path)
- }
- 
- /* Returns 0 and nd will be valid on success; Retuns error, otherwise. */
--static int path_lookupat(int dfd, const char *name,
--				unsigned int flags, struct nameidata *nd)
-+static int path_lookupat(int dfd,
-+			 const char *name, unsigned int flags,
-+			 struct nameidata *nd,
-+			 const struct capsicum_rights *rights)
- {
-+	const struct capsicum_rights *dfd_rights;
- 	struct file *base = NULL;
- 	struct path path;
- 	int err;
-@@ -1959,7 +1972,7 @@ static int path_lookupat(int dfd, const char *name,
- 	 * be handled by restarting a traditional ref-walk (which will always
- 	 * be able to complete).
- 	 */
--	err = path_init(dfd, name, flags | LOOKUP_PARENT, nd, &base);
-+	err = path_init(dfd, name, &flags, nd, &base, &dfd_rights, rights);
- 
- 	if (unlikely(err))
- 		return err;
-@@ -2004,27 +2017,32 @@ static int path_lookupat(int dfd, const char *name,
- 	return err;
- }
- 
--static int filename_lookup(int dfd, struct filename *name,
--				unsigned int flags, struct nameidata *nd)
-+static int filename_lookup(int dfd,
-+			struct filename *name, unsigned int flags,
-+			struct nameidata *nd,
-+			const struct capsicum_rights *rights)
- {
--	int retval = path_lookupat(dfd, name->name, flags | LOOKUP_RCU, nd);
-+	int retval = path_lookupat(dfd, name->name, flags | LOOKUP_RCU, nd,
-+				   rights);
- 	if (unlikely(retval == -ECHILD))
--		retval = path_lookupat(dfd, name->name, flags, nd);
-+		retval = path_lookupat(dfd, name->name, flags, nd, rights);
- 	if (unlikely(retval == -ESTALE))
--		retval = path_lookupat(dfd, name->name,
--						flags | LOOKUP_REVAL, nd);
-+		retval = path_lookupat(dfd, name->name, flags | LOOKUP_REVAL,
-+				       nd, rights);
- 
- 	if (likely(!retval))
- 		audit_inode(name, nd->path.dentry, flags & LOOKUP_PARENT);
- 	return retval;
- }
- 
--static int do_path_lookup(int dfd, const char *name,
--				unsigned int flags, struct nameidata *nd)
-+static int do_path_lookup(int dfd,
-+			  const char *name, unsigned int flags,
-+			  struct nameidata *nd,
-+			  const struct capsicum_rights *rights)
- {
- 	struct filename filename = { .name = name };
- 
--	return filename_lookup(dfd, &filename, flags, nd);
-+	return filename_lookup(dfd, &filename, flags, nd, rights);
- }
- 
- /* does lookup, returns the object with parent locked */
-@@ -2032,7 +2050,8 @@ struct dentry *kern_path_locked(const char *name, struct path *path)
- {
- 	struct nameidata nd;
- 	struct dentry *d;
--	int err = do_path_lookup(AT_FDCWD, name, LOOKUP_PARENT, &nd);
-+	int err;
-+	err = do_path_lookup(AT_FDCWD, name, LOOKUP_PARENT, &nd, NULL);
- 	if (err)
- 		return ERR_PTR(err);
- 	if (nd.last_type != LAST_NORM) {
-@@ -2053,7 +2072,8 @@ struct dentry *kern_path_locked(const char *name, struct path *path)
- int kern_path(const char *name, unsigned int flags, struct path *path)
- {
- 	struct nameidata nd;
--	int res = do_path_lookup(AT_FDCWD, name, flags, &nd);
-+	int res;
-+	res = do_path_lookup(AT_FDCWD, name, flags, &nd, NULL);
- 	if (!res)
- 		*path = nd.path;
- 	return res;
-@@ -2078,7 +2098,7 @@ int vfs_path_lookup(struct dentry *dentry, struct vfsmount *mnt,
- 	nd.root.mnt = mnt;
- 	BUG_ON(flags & LOOKUP_PARENT);
- 	/* the first argument of do_path_lookup() is ignored with LOOKUP_ROOT */
--	err = do_path_lookup(AT_FDCWD, name, flags | LOOKUP_ROOT, &nd);
-+	err = do_path_lookup(AT_FDCWD, name, flags | LOOKUP_ROOT, &nd, NULL);
- 	if (!err)
- 		*path = nd.path;
- 	return err;
-@@ -2161,8 +2181,7 @@ static int user_path_at_empty_rights(int dfd,
- 	if (!IS_ERR(tmp)) {
- 
- 		BUG_ON(flags & LOOKUP_PARENT);
--
--		err = filename_lookup(dfd, tmp, flags, &nd);
-+		err = filename_lookup(dfd, tmp, flags, &nd, rights);
- 		putname(tmp);
- 		if (!err)
- 			*path = nd.path;
-@@ -2211,7 +2230,7 @@ int _user_path_atr(int dfd,
-  */
- static struct filename *
- user_path_parent(int dfd, const char __user *path, struct nameidata *nd,
--		 unsigned int flags)
-+		 unsigned int flags, const struct capsicum_rights *rights)
- {
- 	struct filename *s = getname(path);
- 	int error;
-@@ -2222,7 +2241,7 @@ user_path_parent(int dfd, const char __user *path, struct nameidata *nd,
- 	if (IS_ERR(s))
- 		return s;
- 
--	error = filename_lookup(dfd, s, flags | LOOKUP_PARENT, nd);
-+	error = filename_lookup(dfd, s, flags | LOOKUP_PARENT, nd, rights);
- 	if (error) {
- 		putname(s);
- 		return ERR_PTR(error);
-@@ -2338,9 +2357,11 @@ path_mountpoint(int dfd, const char *name, struct path *path, unsigned int flags
- {
- 	struct file *base = NULL;
- 	struct nameidata nd;
-+	const struct capsicum_rights *dfd_rights;
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index d6f55e3052fb..8439bbd1ad17 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -646,7 +646,8 @@ static int __nbd_ioctl(struct block_device *bdev, struct nbd_device *nbd,
+ 		int err;
+ 		if (nbd->sock)
+ 			return -EBUSY;
+-		sock = sockfd_lookup(arg, &err);
++		sock = sockfd_lookupr(arg, &err,
++				      CAP_READ, CAP_WRITE, CAP_SHUTDOWN);
+ 		if (sock) {
+ 			nbd->sock = sock;
+ 			if (max_part > 0)
+diff --git a/drivers/scsi/iscsi_tcp.c b/drivers/scsi/iscsi_tcp.c
+index 11854845393b..9354b333887c 100644
+--- a/drivers/scsi/iscsi_tcp.c
++++ b/drivers/scsi/iscsi_tcp.c
+@@ -652,7 +652,7 @@ iscsi_sw_tcp_conn_bind(struct iscsi_cls_session *cls_session,
  	int err;
  
--	err = path_init(dfd, name, flags | LOOKUP_PARENT, &nd, &base);
-+	err = path_init(dfd, name, &flags, &nd, &base,
-+			&dfd_rights, &lookup_rights);
- 	if (unlikely(err))
- 		return err;
+ 	/* lookup for existing socket */
+-	sock = sockfd_lookup((int)transport_eph, &err);
++	sock = sockfd_lookupr((int)transport_eph, &err, CAP_SOCK_SERVER);
+ 	if (!sock) {
+ 		iscsi_conn_printk(KERN_ERR, conn,
+ 				  "sockfd_lookup failed %d\n", err);
+diff --git a/drivers/staging/usbip/stub_dev.c b/drivers/staging/usbip/stub_dev.c
+index de692d7011a5..3ac80c595343 100644
+--- a/drivers/staging/usbip/stub_dev.c
++++ b/drivers/staging/usbip/stub_dev.c
+@@ -108,7 +108,7 @@ static ssize_t store_sockfd(struct device *dev, struct device_attribute *attr,
+ 			goto err;
+ 		}
  
-@@ -3165,8 +3186,9 @@ static int do_tmpfile(int dfd, struct filename *pathname,
- 	static const struct qstr name = QSTR_INIT("/", 1);
- 	struct dentry *dentry, *child;
- 	struct inode *dir;
--	int error = path_lookupat(dfd, pathname->name,
--				  flags | LOOKUP_DIRECTORY, nd);
-+	int error;
-+	error = path_lookupat(dfd, pathname->name, flags | LOOKUP_DIRECTORY, nd,
-+			      &lookup_rights);
- 	if (unlikely(error))
- 		return error;
- 	error = mnt_want_write(nd->path.mnt);
-@@ -3218,15 +3240,42 @@ out:
- 	return error;
- }
+-		socket = sockfd_lookup(sockfd, &err);
++		socket = sockfd_lookupr(sockfd, &err, CAP_LIST_END);
+ 		if (!socket)
+ 			goto err;
  
-+static void openat_primary_rights(struct capsicum_rights *rights,
-+				  unsigned int flags)
-+{
-+	switch (flags & O_ACCMODE) {
-+	case O_RDONLY:
-+		cap_rights_set(rights, CAP_READ);
-+		break;
-+	case O_RDWR:
-+		cap_rights_set(rights, CAP_READ);
-+		/* FALLTHRU */
-+	case O_WRONLY:
-+		cap_rights_set(rights, CAP_WRITE);
-+		if (!(flags & (O_APPEND | O_TRUNC)))
-+			cap_rights_set(rights, CAP_SEEK);
-+		break;
-+	}
-+	if (flags & O_CREAT)
-+		cap_rights_set(rights, CAP_CREATE);
-+	if (flags & O_TRUNC)
-+		cap_rights_set(rights, CAP_FTRUNCATE);
-+	if (flags & (O_DSYNC|FASYNC))
-+		cap_rights_set(rights, CAP_FSYNC);
-+}
-+
- static struct file *path_openat(int dfd, struct filename *pathname,
- 		struct nameidata *nd, const struct open_flags *op, int flags)
- {
-+	struct capsicum_rights rights;
-+	const struct capsicum_rights *dfd_rights;
- 	struct file *base = NULL;
- 	struct file *file;
- 	struct path path;
- 	int opened = 0;
- 	int error;
- 
-+	cap_rights_init(&rights, CAP_LOOKUP);
- 	file = get_empty_filp();
- 	if (IS_ERR(file))
- 		return file;
-@@ -3238,7 +3287,9 @@ static struct file *path_openat(int dfd, struct filename *pathname,
- 		goto out;
- 	}
- 
--	error = path_init(dfd, pathname->name, flags | LOOKUP_PARENT, nd, &base);
-+	openat_primary_rights(&rights, file->f_flags);
-+	error = path_init(dfd, pathname->name, &flags, nd, &base,
-+			  &dfd_rights, &rights);
- 	if (unlikely(error))
- 		goto out;
- 
-@@ -3268,6 +3319,16 @@ static struct file *path_openat(int dfd, struct filename *pathname,
- 		error = do_last(nd, &path, file, op, &opened, pathname);
- 		put_link(nd, &link, cookie);
- 	}
-+	if (!error) {
-+		struct file *install_file;
-+		install_file = security_file_install(dfd_rights, file);
-+		if (IS_ERR(install_file)) {
-+			error = PTR_ERR(install_file);
-+			goto out;
-+		} else {
-+			file = install_file;
-+		}
-+	}
- out:
- 	if (nd->root.mnt && !(nd->flags & LOOKUP_ROOT))
- 		path_put(&nd->root);
-@@ -3326,8 +3387,12 @@ struct file *do_file_open_root(struct dentry *dentry, struct vfsmount *mnt,
- 	return file;
- }
- 
--struct dentry *kern_path_create(int dfd, const char *pathname,
--				struct path *path, unsigned int lookup_flags)
-+static struct dentry *
-+kern_path_create_rights(int dfd,
-+			const char *pathname,
-+			struct path *path,
-+			unsigned int lookup_flags,
-+			const struct capsicum_rights *rights)
- {
- 	struct dentry *dentry = ERR_PTR(-EEXIST);
- 	struct nameidata nd;
-@@ -3341,7 +3406,8 @@ struct dentry *kern_path_create(int dfd, const char *pathname,
- 	 */
- 	lookup_flags &= LOOKUP_REVAL;
- 
--	error = do_path_lookup(dfd, pathname, LOOKUP_PARENT|lookup_flags, &nd);
-+	error = do_path_lookup(dfd, pathname, LOOKUP_PARENT|lookup_flags, &nd,
-+			       rights);
- 	if (error)
- 		return ERR_PTR(error);
- 
-@@ -3395,6 +3461,13 @@ out:
- 	path_put(&nd.path);
- 	return dentry;
- }
-+
-+struct dentry *kern_path_create(int dfd, const char *pathname,
-+				struct path *path, unsigned int lookup_flags)
-+{
-+	return kern_path_create_rights(dfd, pathname, path, lookup_flags,
-+				       &lookup_rights);
-+}
- EXPORT_SYMBOL(kern_path_create);
- 
- void done_path_create(struct path *path, struct dentry *dentry)
-@@ -3406,17 +3479,29 @@ void done_path_create(struct path *path, struct dentry *dentry)
- }
- EXPORT_SYMBOL(done_path_create);
- 
--struct dentry *user_path_create(int dfd, const char __user *pathname,
--				struct path *path, unsigned int lookup_flags)
-+static struct dentry *
-+user_path_create_rights(int dfd,
-+			const char __user *pathname,
-+			struct path *path,
-+			unsigned int lookup_flags,
-+			const struct capsicum_rights *rights)
- {
- 	struct filename *tmp = getname(pathname);
- 	struct dentry *res;
- 	if (IS_ERR(tmp))
- 		return ERR_CAST(tmp);
--	res = kern_path_create(dfd, tmp->name, path, lookup_flags);
-+	res = kern_path_create_rights(dfd, tmp->name, path, lookup_flags,
-+				      rights);
- 	putname(tmp);
- 	return res;
- }
-+
-+struct dentry *user_path_create(int dfd, const char __user *pathname,
-+				struct path *path, unsigned int lookup_flags)
-+{
-+	return user_path_create_rights(dfd, pathname, path, lookup_flags,
-+				       &lookup_rights);
-+}
- EXPORT_SYMBOL(user_path_create);
- 
- int vfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
-@@ -3467,16 +3552,28 @@ static int may_mknod(umode_t mode)
- SYSCALL_DEFINE4(mknodat, int, dfd, const char __user *, filename, umode_t, mode,
- 		unsigned, dev)
- {
-+	struct capsicum_rights rights;
- 	struct dentry *dentry;
- 	struct path path;
- 	int error;
- 	unsigned int lookup_flags = 0;
- 
-+	cap_rights_init(&rights, CAP_LOOKUP);
- 	error = may_mknod(mode);
- 	if (error)
- 		return error;
-+
-+	switch (mode & S_IFMT) {
-+	case S_IFCHR: case S_IFBLK:
-+		cap_rights_set(&rights, CAP_MKNODAT);
-+		break;
-+	case S_IFIFO:
-+		cap_rights_set(&rights, CAP_MKFIFOAT);
-+		break;
-+	}
- retry:
--	dentry = user_path_create(dfd, filename, &path, lookup_flags);
-+	dentry = user_path_create_rights(dfd, filename, &path, lookup_flags,
-+					 &rights);
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
- 
-@@ -3543,9 +3640,12 @@ SYSCALL_DEFINE3(mkdirat, int, dfd, const char __user *, pathname, umode_t, mode)
- 	struct path path;
- 	int error;
- 	unsigned int lookup_flags = LOOKUP_DIRECTORY;
-+	struct capsicum_rights rights;
-+	cap_rights_init(&rights, CAP_LOOKUP, CAP_MKDIRAT);
- 
- retry:
--	dentry = user_path_create(dfd, pathname, &path, lookup_flags);
-+	dentry = user_path_create_rights(dfd, pathname, &path, lookup_flags,
-+					 &rights);
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
- 
-@@ -3636,9 +3736,11 @@ static long do_rmdir(int dfd, const char __user *pathname)
- 	struct filename *name;
- 	struct dentry *dentry;
- 	struct nameidata nd;
-+	struct capsicum_rights rights;
- 	unsigned int lookup_flags = 0;
-+	cap_rights_init(&rights, CAP_UNLINKAT);
- retry:
--	name = user_path_parent(dfd, pathname, &nd, lookup_flags);
-+	name = user_path_parent(dfd, pathname, &nd, lookup_flags, &rights);
- 	if (IS_ERR(name))
- 		return PTR_ERR(name);
- 
-@@ -3763,8 +3865,10 @@ static long do_unlinkat(int dfd, const char __user *pathname)
- 	struct inode *inode = NULL;
- 	struct inode *delegated_inode = NULL;
- 	unsigned int lookup_flags = 0;
-+	struct capsicum_rights rights;
-+	cap_rights_init(&rights, CAP_UNLINKAT);
- retry:
--	name = user_path_parent(dfd, pathname, &nd, lookup_flags);
-+	name = user_path_parent(dfd, pathname, &nd, lookup_flags, &rights);
- 	if (IS_ERR(name))
- 		return PTR_ERR(name);
- 
-@@ -3870,12 +3974,15 @@ SYSCALL_DEFINE3(symlinkat, const char __user *, oldname,
- 	struct dentry *dentry;
- 	struct path path;
- 	unsigned int lookup_flags = 0;
-+	struct capsicum_rights rights;
- 
- 	from = getname(oldname);
- 	if (IS_ERR(from))
- 		return PTR_ERR(from);
-+	cap_rights_init(&rights, CAP_SYMLINKAT);
- retry:
--	dentry = user_path_create(newdfd, newname, &path, lookup_flags);
-+	dentry = user_path_create_rights(newdfd, newname, &path, lookup_flags,
-+					 &rights);
- 	error = PTR_ERR(dentry);
- 	if (IS_ERR(dentry))
- 		goto out_putname;
-@@ -3986,6 +4093,7 @@ SYSCALL_DEFINE5(linkat, int, olddfd, const char __user *, oldname,
- 	struct dentry *new_dentry;
- 	struct path old_path, new_path;
- 	struct inode *delegated_inode = NULL;
-+	struct capsicum_rights rights;
- 	int how = 0;
- 	int error;
- 
-@@ -4004,13 +4112,14 @@ SYSCALL_DEFINE5(linkat, int, olddfd, const char __user *, oldname,
- 
- 	if (flags & AT_SYMLINK_FOLLOW)
- 		how |= LOOKUP_FOLLOW;
-+	cap_rights_init(&rights, CAP_LINKAT);
- retry:
- 	error = user_path_at(olddfd, oldname, how, &old_path);
- 	if (error)
- 		return error;
- 
--	new_dentry = user_path_create(newdfd, newname, &new_path,
--					(how & LOOKUP_REVAL));
-+	new_dentry = user_path_create_rights(newdfd, newname, &new_path,
-+					     (how & LOOKUP_REVAL), &rights);
- 	error = PTR_ERR(new_dentry);
- 	if (IS_ERR(new_dentry))
- 		goto out;
-@@ -4241,6 +4350,8 @@ SYSCALL_DEFINE5(renameat2, int, olddfd, const char __user *, oldname,
- 	struct inode *delegated_inode = NULL;
- 	struct filename *from;
- 	struct filename *to;
-+	struct capsicum_rights old_rights;
-+	struct capsicum_rights new_rights;
- 	unsigned int lookup_flags = 0;
- 	bool should_retry = false;
- 	int error;
-@@ -4251,14 +4362,18 @@ SYSCALL_DEFINE5(renameat2, int, olddfd, const char __user *, oldname,
- 	if ((flags & RENAME_NOREPLACE) && (flags & RENAME_EXCHANGE))
+diff --git a/drivers/staging/usbip/vhci_sysfs.c b/drivers/staging/usbip/vhci_sysfs.c
+index 211f43f67ea2..efe9d7625433 100644
+--- a/drivers/staging/usbip/vhci_sysfs.c
++++ b/drivers/staging/usbip/vhci_sysfs.c
+@@ -195,7 +195,7 @@ static ssize_t store_attach(struct device *dev, struct device_attribute *attr,
  		return -EINVAL;
  
-+	cap_rights_init(&old_rights, CAP_RENAMEAT);
-+	cap_rights_init(&new_rights, CAP_LINKAT);
- retry:
--	from = user_path_parent(olddfd, oldname, &oldnd, lookup_flags);
-+	from = user_path_parent(olddfd, oldname, &oldnd, lookup_flags,
-+				&old_rights);
- 	if (IS_ERR(from)) {
- 		error = PTR_ERR(from);
- 		goto exit;
+ 	/* Extract socket from fd. */
+-	socket = sockfd_lookup(sockfd, &err);
++	socket = sockfd_lookupr(sockfd, &err, CAP_LIST_END);
+ 	if (!socket)
+ 		return -EINVAL;
+ 
+diff --git a/drivers/vhost/net.c b/drivers/vhost/net.c
+index 6fed594f12d3..f4db0caf817d 100644
+--- a/drivers/vhost/net.c
++++ b/drivers/vhost/net.c
+@@ -838,7 +838,7 @@ static struct socket *get_raw_socket(int fd)
+ 		char  buf[MAX_ADDR_LEN];
+ 	} uaddr;
+ 	int uaddr_len = sizeof uaddr, r;
+-	struct socket *sock = sockfd_lookup(fd, &r);
++	struct socket *sock = sockfd_lookupr(fd, &r, CAP_READ, CAP_WRITE);
+ 
+ 	if (!sock)
+ 		return ERR_PTR(-ENOTSOCK);
+diff --git a/fs/ncpfs/inode.c b/fs/ncpfs/inode.c
+index e31e589369a4..580024e60d20 100644
+--- a/fs/ncpfs/inode.c
++++ b/fs/ncpfs/inode.c
+@@ -539,7 +539,7 @@ static int ncp_fill_super(struct super_block *sb, void *raw_data, int silent)
+ 	if (!uid_valid(data.mounted_uid) || !uid_valid(data.uid) ||
+ 	    !gid_valid(data.gid))
+ 		goto out;
+-	sock = sockfd_lookup(data.ncp_fd, &error);
++	sock = sockfd_lookupr(data.ncp_fd, &error, CAP_WRITE, CAP_FSTAT);
+ 	if (!sock)
+ 		goto out;
+ 
+@@ -567,7 +567,8 @@ static int ncp_fill_super(struct super_block *sb, void *raw_data, int silent)
+ 	server->ncp_sock = sock;
+ 	
+ 	if (data.info_fd != -1) {
+-		struct socket *info_sock = sockfd_lookup(data.info_fd, &error);
++		struct socket *info_sock = sockfd_lookupr(data.info_fd, &error,
++							  CAP_WRITE, CAP_FSTAT);
+ 		if (!info_sock)
+ 			goto out_bdi;
+ 		server->info_sock = info_sock;
+diff --git a/net/bluetooth/bnep/sock.c b/net/bluetooth/bnep/sock.c
+index 5f051290daba..1a69b6b05d2e 100644
+--- a/net/bluetooth/bnep/sock.c
++++ b/net/bluetooth/bnep/sock.c
+@@ -69,7 +69,7 @@ static int bnep_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long
+ 		if (copy_from_user(&ca, argp, sizeof(ca)))
+ 			return -EFAULT;
+ 
+-		nsock = sockfd_lookup(ca.sock, &err);
++		nsock = sockfd_lookupr(ca.sock, &err, CAP_READ, CAP_WRITE);
+ 		if (!nsock)
+ 			return err;
+ 
+diff --git a/net/bluetooth/cmtp/sock.c b/net/bluetooth/cmtp/sock.c
+index d82787d417bd..4033b771e6ca 100644
+--- a/net/bluetooth/cmtp/sock.c
++++ b/net/bluetooth/cmtp/sock.c
+@@ -83,7 +83,7 @@ static int cmtp_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long
+ 		if (copy_from_user(&ca, argp, sizeof(ca)))
+ 			return -EFAULT;
+ 
+-		nsock = sockfd_lookup(ca.sock, &err);
++		nsock = sockfd_lookupr(ca.sock, &err, CAP_READ, CAP_WRITE);
+ 		if (!nsock)
+ 			return err;
+ 
+diff --git a/net/bluetooth/hidp/sock.c b/net/bluetooth/hidp/sock.c
+index cb3fdde1968a..85afd39595f3 100644
+--- a/net/bluetooth/hidp/sock.c
++++ b/net/bluetooth/hidp/sock.c
+@@ -67,11 +67,11 @@ static int hidp_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long
+ 		if (copy_from_user(&ca, argp, sizeof(ca)))
+ 			return -EFAULT;
+ 
+-		csock = sockfd_lookup(ca.ctrl_sock, &err);
++		csock = sockfd_lookupr(ca.ctrl_sock, &err, CAP_READ, CAP_WRITE);
+ 		if (!csock)
+ 			return err;
+ 
+-		isock = sockfd_lookup(ca.intr_sock, &err);
++		isock = sockfd_lookupr(ca.intr_sock, &err, CAP_READ, CAP_WRITE);
+ 		if (!isock) {
+ 			sockfd_put(csock);
+ 			return err;
+diff --git a/net/compat.c b/net/compat.c
+index 9a76eaf63184..06655190173e 100644
+--- a/net/compat.c
++++ b/net/compat.c
+@@ -388,7 +388,7 @@ COMPAT_SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
+ 		       char __user *, optval, unsigned int, optlen)
+ {
+ 	int err;
+-	struct socket *sock = sockfd_lookup(fd, &err);
++	struct socket *sock = sockfd_lookupr(fd, &err, CAP_SETSOCKOPT);
+ 
+ 	if (sock) {
+ 		err = security_socket_setsockopt(sock, level, optname);
+@@ -508,7 +508,7 @@ COMPAT_SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
+ 		       char __user *, optval, int __user *, optlen)
+ {
+ 	int err;
+-	struct socket *sock = sockfd_lookup(fd, &err);
++	struct socket *sock = sockfd_lookupr(fd, &err, CAP_GETSOCKOPT);
+ 
+ 	if (sock) {
+ 		err = security_socket_getsockopt(sock, level, optname);
+diff --git a/net/l2tp/l2tp_core.c b/net/l2tp/l2tp_core.c
+index a4e37d7158dc..64e6df42cfda 100644
+--- a/net/l2tp/l2tp_core.c
++++ b/net/l2tp/l2tp_core.c
+@@ -175,7 +175,8 @@ l2tp_session_id_hash_2(struct l2tp_net *pn, u32 session_id)
+  * owned by userspace.  A struct sock returned from this function must be
+  * released using l2tp_tunnel_sock_put once you're done with it.
+  */
+-static struct sock *l2tp_tunnel_sock_lookup(struct l2tp_tunnel *tunnel)
++static struct sock *l2tp_tunnel_sock_lookup(struct l2tp_tunnel *tunnel,
++					    struct capsicum_rights *rights)
+ {
+ 	int err = 0;
+ 	struct socket *sock = NULL;
+@@ -189,7 +190,7 @@ static struct sock *l2tp_tunnel_sock_lookup(struct l2tp_tunnel *tunnel)
+ 		 * of closing it.  Look the socket up using the fd to ensure
+ 		 * consistency.
+ 		 */
+-		sock = sockfd_lookup(tunnel->fd, &err);
++		sock = sockfd_lookup_rights(tunnel->fd, &err, rights);
+ 		if (sock)
+ 			sk = sock->sk;
+ 	} else {
+@@ -1411,9 +1412,11 @@ static void l2tp_tunnel_del_work(struct work_struct *work)
+ 	struct l2tp_tunnel *tunnel = NULL;
+ 	struct socket *sock = NULL;
+ 	struct sock *sk = NULL;
++	struct capsicum_rights rights;
+ 
+ 	tunnel = container_of(work, struct l2tp_tunnel, del_work);
+-	sk = l2tp_tunnel_sock_lookup(tunnel);
++	sk = l2tp_tunnel_sock_lookup(tunnel,
++				     cap_rights_init(&rights, CAP_SHUTDOWN));
+ 	if (!sk)
+ 		return;
+ 
+@@ -1614,7 +1617,7 @@ int l2tp_tunnel_create(struct net *net, int fd, int version, u32 tunnel_id, u32
+ 		if (err < 0)
+ 			goto err;
+ 	} else {
+-		sock = sockfd_lookup(fd, &err);
++		sock = sockfd_lookupr(fd, &err, CAP_READ, CAP_WRITE);
+ 		if (!sock) {
+ 			pr_err("tunl %u: sockfd_lookup(fd=%d) returned %d\n",
+ 			       tunnel_id, fd, err);
+diff --git a/net/l2tp/l2tp_core.h b/net/l2tp/l2tp_core.h
+index 3f93ccd6ba97..fd1e282d4e8a 100644
+--- a/net/l2tp/l2tp_core.h
++++ b/net/l2tp/l2tp_core.h
+@@ -11,6 +11,8 @@
+ #ifndef _L2TP_CORE_H_
+ #define _L2TP_CORE_H_
+ 
++#include <linux/capsicum.h>
++
+ /* Just some random numbers */
+ #define L2TP_TUNNEL_MAGIC	0x42114DDA
+ #define L2TP_SESSION_MAGIC	0x0C04EB7D
+diff --git a/net/sched/sch_atm.c b/net/sched/sch_atm.c
+index 8449b337f9e3..8131efa6d164 100644
+--- a/net/sched/sch_atm.c
++++ b/net/sched/sch_atm.c
+@@ -238,7 +238,7 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
  	}
- 
--	to = user_path_parent(newdfd, newname, &newnd, lookup_flags);
-+	to = user_path_parent(newdfd, newname, &newnd, lookup_flags,
-+			      &new_rights);
- 	if (IS_ERR(to)) {
- 		error = PTR_ERR(to);
- 		goto exit1;
-diff --git a/fs/notify/dnotify/dnotify.c b/fs/notify/dnotify/dnotify.c
-index abc8cbcfe90e..33a269166b05 100644
---- a/fs/notify/dnotify/dnotify.c
-+++ b/fs/notify/dnotify/dnotify.c
-@@ -25,6 +25,7 @@
- #include <linux/slab.h>
- #include <linux/fdtable.h>
- #include <linux/fsnotify_backend.h>
-+#include <linux/security.h>
- 
- int dir_notify_enable __read_mostly = 1;
- 
-@@ -327,6 +328,7 @@ int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
- 
- 	rcu_read_lock();
- 	f = fcheck(fd);
-+	f = security_file_lookup(f, NULL, NULL);
- 	rcu_read_unlock();
- 
- 	/* if (f != filp) means that we lost a race and another task/thread
-diff --git a/fs/proc/fd.c b/fs/proc/fd.c
-index 0788d093f5d8..d260dd1acdee 100644
---- a/fs/proc/fd.c
-+++ b/fs/proc/fd.c
-@@ -20,6 +20,7 @@ static int seq_show(struct seq_file *m, void *v)
- 	struct files_struct *files = NULL;
- 	int f_flags = 0, ret = -ENOENT;
- 	struct file *file = NULL;
-+	struct file *underlying = NULL;
- 	struct task_struct *task;
- 
- 	task = get_proc_task(m->private);
-@@ -36,12 +37,13 @@ static int seq_show(struct seq_file *m, void *v)
- 		file = fcheck_files(files, fd);
- 		if (file) {
- 			struct fdtable *fdt = files_fdtable(files);
--
--			f_flags = file->f_flags;
-+			underlying = security_file_lookup(file, NULL, NULL);
-+			f_flags = underlying->f_flags;
- 			if (close_on_exec(fd, fdt))
- 				f_flags |= O_CLOEXEC;
- 
- 			get_file(file);
-+			get_file(underlying);
- 			ret = 0;
- 		}
- 		spin_unlock(&files->file_lock);
-@@ -50,10 +52,11 @@ static int seq_show(struct seq_file *m, void *v)
- 
- 	if (!ret) {
- 		seq_printf(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\n",
--			   (long long)file->f_pos, f_flags,
--			   real_mount(file->f_path.mnt)->mnt_id);
-+			   (long long)underlying->f_pos, f_flags,
-+			   real_mount(underlying->f_path.mnt)->mnt_id);
- 		if (file->f_op->show_fdinfo)
- 			ret = file->f_op->show_fdinfo(m, file);
-+		fput(underlying);
- 		fput(file);
- 	}
- 
-@@ -95,7 +98,9 @@ static int tid_fd_revalidate(struct dentry *dentry, unsigned int flags)
- 			rcu_read_lock();
- 			file = fcheck_files(files, fd);
- 			if (file) {
--				unsigned f_mode = file->f_mode;
-+				unsigned f_mode;
-+				file = security_file_lookup(file, NULL, NULL);
-+				f_mode = file->f_mode;
- 
- 				rcu_read_unlock();
- 				put_files_struct(files);
-@@ -158,6 +163,7 @@ static int proc_fd_link(struct dentry *dentry, struct path *path)
- 		spin_lock(&files->file_lock);
- 		fd_file = fcheck_files(files, fd);
- 		if (fd_file) {
-+			fd_file = security_file_lookup(fd_file, NULL, NULL);
- 			*path = fd_file->f_path;
- 			path_get(&fd_file->f_path);
- 			ret = 0;
+ 	pr_debug("atm_tc_change: type %d, payload %d, hdr_len %d\n",
+ 		 opt->nla_type, nla_len(opt), hdr_len);
+-	sock = sockfd_lookup(fd, &error);
++	sock = sockfd_lookupr(fd, &error, CAP_GETSOCKNAME);
+ 	if (!sock)
+ 		return error;	/* f_count++ */
+ 	pr_debug("atm_tc_change: f_count %ld\n", file_count(sock->file));
 diff --git a/net/socket.c b/net/socket.c
-index dbc00f0b992a..f635dc3f9a3c 100644
+index f254e9bf9c4d..dbc00f0b992a 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -1669,6 +1669,7 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
- {
- 	struct socket *sock, *newsock;
+@@ -419,23 +419,6 @@ struct socket *sock_from_file(struct file *file, int *err)
+ }
+ EXPORT_SYMBOL(sock_from_file);
+ 
+-static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
+-{
+-	struct fd f = fdget(fd);
+-	struct socket *sock;
+-
+-	*err = -EBADF;
+-	if (f.file) {
+-		sock = sock_from_file(f.file, err);
+-		if (likely(sock)) {
+-			*fput_needed = f.flags;
+-			return sock;
+-		}
+-		fdput(f);
+-	}
+-	return NULL;
+-}
+-
+ #ifdef CONFIG_SECURITY_CAPSICUM
+ struct socket *sockfd_lookup_rights(int fd, int *err,
+ 				    struct capsicum_rights *rights)
+@@ -506,6 +489,23 @@ struct socket *_sockfd_lookupr_light(int fd, int *err, int *fput_needed, ...)
+ 
+ #else
+ 
++static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
++{
++	struct fd f = fdget(fd);
++	struct socket *sock;
++
++	*err = -EBADF;
++	if (f.file) {
++		sock = sock_from_file(f.file, err);
++		if (likely(sock)) {
++			*fput_needed = f.flags;
++			return sock;
++		}
++		fdput(f);
++	}
++	return NULL;
++}
++
+ static inline struct socket *
+ sockfd_lookup_light_rights(int fd, int *err, int *fput_needed,
+ 			   const struct capsicum_rights **actual_rights,
+@@ -1608,7 +1608,7 @@ SYSCALL_DEFINE3(bind, int, fd, struct sockaddr __user *, umyaddr, int, addrlen)
+ 	struct sockaddr_storage address;
+ 	int err, fput_needed;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_BIND);
+ 	if (sock) {
+ 		err = move_addr_to_kernel(umyaddr, addrlen, &address);
+ 		if (err >= 0) {
+@@ -1637,7 +1637,7 @@ SYSCALL_DEFINE2(listen, int, fd, int, backlog)
+ 	int err, fput_needed;
+ 	int somaxconn;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_LISTEN);
+ 	if (sock) {
+ 		somaxconn = sock_net(sock->sk)->core.sysctl_somaxconn;
+ 		if ((unsigned int)backlog > somaxconn)
+@@ -1671,6 +1671,8 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
  	struct file *newfile;
-+	struct file *installfile;
  	int err, len, newfd, fput_needed;
  	struct sockaddr_storage address;
- 	struct capsicum_rights rights;
-@@ -1736,7 +1737,12 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
++	struct capsicum_rights rights;
++	const struct capsicum_rights *listen_rights = NULL;
  
- 	/* File flags are not inherited via accept() unlike another OSes. */
+ 	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
+ 		return -EINVAL;
+@@ -1678,7 +1680,9 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
+ 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
+ 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
  
--	fd_install(newfd, newfile);
-+	installfile = security_file_install(listen_rights, newfile);
-+	if (IS_ERR(installfile)) {
-+		err = PTR_ERR(installfile);
-+		goto out_fd;
-+	}
-+	fd_install(newfd, installfile);
- 	err = newfd;
- 
- out_put:
-@@ -2115,7 +2121,7 @@ static int ___sys_sendmsg(struct socket *sock_noaddr, struct socket *sock_addr,
- 	}
- 	sock = (msg_sys->msg_name ? sock_addr : sock_noaddr);
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookup_light_rights(fd, &err, &fput_needed,
++					  &listen_rights,
++					  cap_rights_init(&rights, CAP_ACCEPT));
  	if (!sock)
--		return -EBADF;
-+		return -ENOTCAPABLE;
+ 		goto out;
+ 
+@@ -1770,7 +1774,7 @@ SYSCALL_DEFINE3(connect, int, fd, struct sockaddr __user *, uservaddr,
+ 	struct sockaddr_storage address;
+ 	int err, fput_needed;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_CONNECT);
+ 	if (!sock)
+ 		goto out;
+ 	err = move_addr_to_kernel(uservaddr, addrlen, &address);
+@@ -1802,7 +1806,7 @@ SYSCALL_DEFINE3(getsockname, int, fd, struct sockaddr __user *, usockaddr,
+ 	struct sockaddr_storage address;
+ 	int len, err, fput_needed;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_GETSOCKNAME);
+ 	if (!sock)
+ 		goto out;
+ 
+@@ -1833,7 +1837,7 @@ SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr __user *, usockaddr,
+ 	struct sockaddr_storage address;
+ 	int len, err, fput_needed;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_GETPEERNAME);
+ 	if (sock != NULL) {
+ 		err = security_socket_getpeername(sock);
+ 		if (err) {
+@@ -1871,7 +1875,8 @@ SYSCALL_DEFINE6(sendto, int, fd, void __user *, buff, size_t, len,
+ 
+ 	if (len > INT_MAX)
+ 		len = INT_MAX;
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed,
++				    CAP_WRITE, addr ? CAP_CONNECT : 0ULL);
+ 	if (!sock)
+ 		goto out;
+ 
+@@ -1930,7 +1935,7 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
+ 
+ 	if (size > INT_MAX)
+ 		size = INT_MAX;
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_READ);
+ 	if (!sock)
+ 		goto out;
+ 
+@@ -1984,7 +1989,7 @@ SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
+ 	if (optlen < 0)
+ 		return -EINVAL;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_SETSOCKOPT);
+ 	if (sock != NULL) {
+ 		err = security_socket_setsockopt(sock, level, optname);
+ 		if (err)
+@@ -2015,7 +2020,10 @@ SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
+ 	int err, fput_needed;
+ 	struct socket *sock;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_GETSOCKOPT,
++				(level == SOL_SCTP &&
++				 optname == SCTP_SOCKOPT_PEELOFF)
++				? CAP_PEELOFF : 0ULL);
+ 	if (sock != NULL) {
+ 		err = security_socket_getsockopt(sock, level, optname);
+ 		if (err)
+@@ -2044,7 +2052,7 @@ SYSCALL_DEFINE2(shutdown, int, fd, int, how)
+ 	int err, fput_needed;
+ 	struct socket *sock;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_SHUTDOWN);
+ 	if (sock != NULL) {
+ 		err = security_socket_shutdown(sock, how);
+ 		if (!err)
+@@ -2080,10 +2088,12 @@ static int copy_msghdr_from_user(struct msghdr *kmsg,
+ 	return 0;
+ }
+ 
+-static int ___sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
++static int ___sys_sendmsg(struct socket *sock_noaddr, struct socket *sock_addr,
++			 struct msghdr __user *msg,
+ 			 struct msghdr *msg_sys, unsigned int flags,
+ 			 struct used_address *used_address)
+ {
++	struct socket *sock;
+ 	struct compat_msghdr __user *msg_compat =
+ 	    (struct compat_msghdr __user *)msg;
+ 	struct sockaddr_storage address;
+@@ -2103,6 +2113,9 @@ static int ___sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
+ 		if (err)
+ 			return err;
+ 	}
++	sock = (msg_sys->msg_name ? sock_addr : sock_noaddr);
++	if (!sock)
++		return -EBADF;
  
  	if (msg_sys->msg_iovlen > UIO_FASTIOV) {
  		err = -EMSGSIZE;
+@@ -2202,15 +2215,22 @@ long __sys_sendmsg(int fd, struct msghdr __user *msg, unsigned flags)
+ {
+ 	int fput_needed, err;
+ 	struct msghdr msg_sys;
+-	struct socket *sock;
+-
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+-	if (!sock)
++	struct socket *sock_addr;
++	struct socket *sock_noaddr;
++
++	sock_addr = sockfd_lookupr_light(fd, &err, &fput_needed,
++					 CAP_WRITE, CAP_CONNECT);
++	sock_noaddr = sock_addr;
++	if (!sock_noaddr)
++		sock_noaddr = sockfd_lookupr_light(fd, &err, &fput_needed,
++						   CAP_WRITE);
++	if (!sock_noaddr)
+ 		goto out;
+ 
+-	err = ___sys_sendmsg(sock, msg, &msg_sys, flags, NULL);
++	err = ___sys_sendmsg(sock_noaddr, sock_addr, msg, &msg_sys, flags,
++			     NULL);
+ 
+-	fput_light(sock->file, fput_needed);
++	fput_light(sock_noaddr->file, fput_needed);
+ out:
+ 	return err;
+ }
+@@ -2230,7 +2250,8 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
+ 		   unsigned int flags)
+ {
+ 	int fput_needed, err, datagrams;
+-	struct socket *sock;
++	struct socket *sock_addr;
++	struct socket *sock_noaddr;
+ 	struct mmsghdr __user *entry;
+ 	struct compat_mmsghdr __user *compat_entry;
+ 	struct msghdr msg_sys;
+@@ -2241,8 +2262,13 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
+ 
+ 	datagrams = 0;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+-	if (!sock)
++	sock_addr = sockfd_lookupr_light(fd, &err, &fput_needed,
++					 CAP_WRITE, CAP_CONNECT);
++	sock_noaddr = sock_addr;
++	if (!sock_noaddr)
++		sock_noaddr = sockfd_lookupr_light(fd, &err, &fput_needed,
++						   CAP_WRITE);
++	if (!sock_noaddr)
+ 		return err;
+ 
+ 	used_address.name_len = UINT_MAX;
+@@ -2252,14 +2278,15 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
+ 
+ 	while (datagrams < vlen) {
+ 		if (MSG_CMSG_COMPAT & flags) {
+-			err = ___sys_sendmsg(sock, (struct msghdr __user *)compat_entry,
+-					     &msg_sys, flags, &used_address);
++			err = ___sys_sendmsg(sock_noaddr, sock_addr,
++					(struct msghdr __user *)compat_entry,
++					&msg_sys, flags, &used_address);
+ 			if (err < 0)
+ 				break;
+ 			err = __put_user(err, &compat_entry->msg_len);
+ 			++compat_entry;
+ 		} else {
+-			err = ___sys_sendmsg(sock,
++			err = ___sys_sendmsg(sock_noaddr, sock_addr,
+ 					     (struct msghdr __user *)entry,
+ 					     &msg_sys, flags, &used_address);
+ 			if (err < 0)
+@@ -2273,7 +2300,7 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
+ 		++datagrams;
+ 	}
+ 
+-	fput_light(sock->file, fput_needed);
++	fput_light(sock_noaddr->file, fput_needed);
+ 
+ 	/* We only return an error if no datagrams were able to be sent */
+ 	if (datagrams != 0)
+@@ -2392,7 +2419,7 @@ long __sys_recvmsg(int fd, struct msghdr __user *msg, unsigned flags)
+ 	struct msghdr msg_sys;
+ 	struct socket *sock;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_READ);
+ 	if (!sock)
+ 		goto out;
+ 
+@@ -2432,7 +2459,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
+ 
+ 	datagrams = 0;
+ 
+-	sock = sockfd_lookup_light(fd, &err, &fput_needed);
++	sock = sockfd_lookupr_light(fd, &err, &fput_needed, CAP_READ);
+ 	if (!sock)
+ 		return err;
+ 
+diff --git a/net/sunrpc/svcsock.c b/net/sunrpc/svcsock.c
+index 43bcb4699d69..9568b63b8aef 100644
+--- a/net/sunrpc/svcsock.c
++++ b/net/sunrpc/svcsock.c
+@@ -1400,7 +1400,7 @@ static struct svc_sock *svc_setup_socket(struct svc_serv *serv,
+ bool svc_alien_sock(struct net *net, int fd)
+ {
+ 	int err;
+-	struct socket *sock = sockfd_lookup(fd, &err);
++	struct socket *sock = sockfd_lookupr(fd, &err, CAP_LIST_END);
+ 	bool ret = false;
+ 
+ 	if (!sock)
+@@ -1428,7 +1428,7 @@ int svc_addsock(struct svc_serv *serv, const int fd, char *name_return,
+ 		const size_t len)
+ {
+ 	int err = 0;
+-	struct socket *so = sockfd_lookup(fd, &err);
++	struct socket *so = sockfd_lookupr(fd, &err, CAP_LISTEN);
+ 	struct svc_sock *svsk = NULL;
+ 	struct sockaddr_storage addr;
+ 	struct sockaddr *sin = (struct sockaddr *)&addr;
 -- 
 2.0.0.526.g5318336
+
