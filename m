@@ -1,198 +1,461 @@
-From: David Drysdale <drysdale@google.com>
-Subject: [PATCH 4/5] man-pages: cap_rights_limit.2: limit FD rights for Capsicum
-Date: Mon, 30 Jun 2014 11:28:15 +0100
-Message-ID: <1404124096-21445-16-git-send-email-drysdale@google.com>
+From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 04/11] capsicum: implement fgetr() and friends
+Date: Mon, 30 Jun 2014 11:28:04 +0100
+Message-ID: <1404124096-21445-5-git-send-email-drysdale@google.com>
 References: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <1404124096-21445-1-git-send-email-drysdale@google.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1404124096-21445-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: David Drysdale <drysdale@google.com>
+Add variants of fget() and related functions where the caller
+indicates the operations that will be performed on the file.
+
+If CONFIG_SECURITY_CAPSICUM is defined, these variants build a
+struct capsicum_rights instance holding the rights associated
+with the file operations; this will allow a future hook to check
+whether a rights-restricted file has those specific rights
+available.
+
+If CONFIG_SECURITY_CAPSICUM is not defined, these variants expand
+to the underlying fget() function, with one difference: failures
+are returned as an ERR_PTR value rather than just NULL.
+
+Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- man2/cap_rights_limit.2 | 171 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 171 insertions(+)
- create mode 100644 man2/cap_rights_limit.2
+ fs/file.c             | 130 +++++++++++++++++++++++++++++++++++++++++++++++
+ fs/namei.c            |  49 ++++++++++++++++--
+ fs/read_write.c       |   5 --
+ include/linux/file.h  | 136 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/namei.h |   9 ++++
+ 5 files changed, 321 insertions(+), 8 deletions(-)
 
-diff --git a/man2/cap_rights_limit.2 b/man2/cap_rights_limit.2
-new file mode 100644
-index 000000000000..3484ee1076aa
---- /dev/null
-+++ b/man2/cap_rights_limit.2
-@@ -0,0 +1,171 @@
-+.\"
-+.\" Copyright (c) 2008-2010 Robert N. M. Watson
-+.\" Copyright (c) 2012-2013 The FreeBSD Foundation
-+.\" Copyright (c) 2013-2014 Google, Inc.
-+.\" All rights reserved.
-+.\"
-+.\" %%%LICENSE_START(BSD_2_CLAUSE)
-+.\" Redistribution and use in source and binary forms, with or without
-+.\" modification, are permitted provided that the following conditions
-+.\" are met:
-+.\" 1. Redistributions of source code must retain the above copyright
-+.\"    notice, this list of conditions and the following disclaimer.
-+.\" 2. Redistributions in binary form must reproduce the above copyright
-+.\"    notice, this list of conditions and the following disclaimer in the
-+.\"    documentation and/or other materials provided with the distribution.
-+.\"
-+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-+.\" SUCH DAMAGE.
-+.\" %%%LICENSE_END
-+.\"
-+.TH CAP_RIGHTS_LIMIT 2 2014-05-07 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+cap_rights_limit \- limit Capsicum capability rights
-+.SH SYNOPSIS
-+.nf
-+.B #include <sys/capsicum.h>
-+.sp
-+.BI "int cap_rights_limit(int " fd ", const struct cap_rights *" rights ,
-+.BI "                     unsigned int " fcntls ,
-+.BI "                     int " nioctls ", unsigned int *" ioctls );
-+.SH DESCRIPTION
-+When a file descriptor is created by a function such as
-+.BR accept (2),
-+.BR accept4 (2),
-+.BR creat (2),
-+.BR epoll_create (2),
-+.BR eventfd (2),
-+.BR mq_open (2),
-+.BR open (2),
-+.BR openat (2),
-+.BR pdfork (2),
-+.BR pipe (2),
-+.BR pipe2 (2),
-+.BR signalfd (2),
-+.BR socket (2),
-+.BR socketpair (2)
-+or
-+.BR timerfd_create (2),
-+it implicitly has all Capsicum capability rights.
-+Those rights can be reduced (but never expanded) by using the
-+.BR cap_rights_limit ()
-+system call.
-+Once Capsicum capability rights are reduced, operations on the file descriptor
-+.I fd
-+will be limited to those permitted by the remainder of the arguments.
-+.PP
-+The
-+.I rights
-+argument describes the primary rights for the file descriptor, and
-+should be prepared using
-+.BR cap_rights_init (3)
-+family of functions.  The complete list of primary rights can be found in the
-+.BR rights (7)
-+manual page.
-+.PP
-+If a file descriptor is granted the
-+.B CAP_FCNTL
-+primary capability right, the list of allowed
-+.BR fcntl (2)
-+commands can be selectively reduced (but never expanded) with the
-+.I fcntls
-+argument.  The following flags may be specified in the
-+.I fcntls
-+argument:
-+.TP
-+.B CAP_FCNTL_GETFL
-+Permit
-+.B F_GETFL
-+command.
-+.TP
-+.B CAP_FCNTL_SETFL
-+Permit
-+.B F_SETFL
-+command.
-+.TP
-+.B CAP_FCNTL_GETOWN
-+Permit
-+.B F_GETOWN
-+command.
-+.TP
-+.B CAP_FCNTL_SETOWN
-+Permit
-+.B F_SETOWN
-+command.
-+.PP
-+A value of
-+.B CAP_FCNTL_ALL
-+for the
-+.I fcntls
-+argument leaves the set of allowed
-+.BR fcntl (2)
-+commands unchanged.
-+.PP
-+If a file descriptor is granted the
-+.B CAP_IOCTL
-+capability right, the list of allowed
-+.BR ioctl (2)
-+commands can be selectively reduced (but never expanded) using the
-+.I nioctls
-+and
-+.I ioctls
-+arguments.
-+The
-+.I ioctls
-+argument is an array of
-+.BR ioctl (2)
-+command values and the
-+.I nioctls
-+argument specifies the number of elements in the array.
-+.PP
-+If the
-+.I nioctls
-+argument is -1 or 0, the
-+.I ioctls
-+argument is ignored, and either all
-+.BR ioctl (2)
-+operations or no
-+.BR ioctl (2)
-+operations (respectively) will be allowed.
-+.PP
-+Capsicum capability rights assigned to a file descriptor can be obtained with the
-+.BR cap_rights_get (2)
-+system call.
-+.SH RETURN VALUE
-+.BR cap_rights_limit ()
-+returns zero on success. On error, -1 is returned and
-+.I errno
-+is set appropriately.
-+.SH ERRORS
-+.TP
-+.B EBADF
-+.I fd
-+isn't a valid open file descriptor.
-+.TP
-+.B EINVAL
-+An invalid set of rights has been requested in
-+.IR rights .
-+.TP
-+.B ENOMEM
-+Out of memory.
-+.TP
-+.B ENOTCAPABLE
-+The arguments contain capability rights not present for the given file descriptor (Capsicum
-+capability rights list can only be reduced, never expanded).
-+.SH VERSION
-+Capsicum support was added to the kernel in version 3.???.
-+.SH SEE ALSO
-+.BR cap_enter (2),
-+.BR cap_rights_get (2),
-+.BR cap_rights_init (3),
-+.BR capsicum (7),
-+.BR rights (7)
---
+diff --git a/fs/file.c b/fs/file.c
+index 8f294cfac697..562cc82ba442 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -13,6 +13,7 @@
+ #include <linux/mmzone.h>
+ #include <linux/time.h>
+ #include <linux/sched.h>
++#include <linux/security.h>
+ #include <linux/slab.h>
+ #include <linux/vmalloc.h>
+ #include <linux/file.h>
+@@ -722,6 +723,135 @@ unsigned long __fdget_pos(unsigned int fd)
+ 	return v;
+ }
+ 
++#ifdef CONFIG_SECURITY_CAPSICUM
++/*
++ * The LSM might want to change the return value of fget() and friends.
++ * This function is called with the intended return value, and fget()
++ * will /actually/ return whatever is returned from here. We call an
++ * LSM hook, and return what it returns. We adjust the reference counter
++ * if necessary.
++ */
++static struct file *unwrap_file(struct file *orig,
++				const struct capsicum_rights *required_rights,
++				const struct capsicum_rights **actual_rights,
++				bool update_refcnt)
++{
++	struct file *f;
++
++	if (orig == NULL)
++		return ERR_PTR(-EBADF);
++	if (IS_ERR(orig))
++		return orig;
++	f = orig;  /* TODO: pass to an LSM hook here */
++	if (f != orig && update_refcnt) {
++		/* We're not returning the original, and the calling code
++		 * has already incremented the refcount on it, we need to
++		 * release that reference and obtain a reference to the new
++		 * return value, if any.
++		 */
++		if (!IS_ERR(f) && !atomic_long_inc_not_zero(&f->f_count))
++			f = ERR_PTR(-EBADF);
++		atomic_long_dec(&orig->f_count);
++	}
++
++	return f;
++}
++
++struct file *fget_rights(unsigned int fd, const struct capsicum_rights *rights)
++{
++	return unwrap_file(fget(fd), rights, NULL, true);
++}
++EXPORT_SYMBOL(fget_rights);
++
++struct file *fget_raw_rights(unsigned int fd,
++			     const struct capsicum_rights *rights)
++{
++	return unwrap_file(fget_raw(fd), rights, NULL, true);
++}
++EXPORT_SYMBOL(fget_raw_rights);
++
++struct fd fdget_rights(unsigned int fd, const struct capsicum_rights *rights)
++{
++	struct fd f = fdget(fd);
++	f.file = unwrap_file(f.file, rights, NULL, (f.flags & FDPUT_FPUT));
++	return f;
++}
++EXPORT_SYMBOL(fdget_rights);
++
++struct fd fdget_raw_rights(unsigned int fd,
++			   const struct capsicum_rights **actual_rights,
++			   const struct capsicum_rights *rights)
++{
++	struct fd f = fdget_raw(fd);
++	f.file = unwrap_file(f.file, rights, actual_rights,
++			     (f.flags & FDPUT_FPUT));
++	return f;
++}
++EXPORT_SYMBOL(fdget_raw_rights);
++
++struct file *_fgetr(unsigned int fd, ...)
++{
++	struct capsicum_rights rights;
++	struct file *f;
++	va_list ap;
++	va_start(ap, fd);
++	f = fget_rights(fd, cap_rights_vinit(&rights, ap));
++	va_end(ap);
++	return f;
++}
++EXPORT_SYMBOL(_fgetr);
++
++struct file *_fgetr_raw(unsigned int fd, ...)
++{
++	struct capsicum_rights rights;
++	struct file *f;
++	va_list ap;
++	va_start(ap, fd);
++	f = fget_raw_rights(fd, cap_rights_vinit(&rights, ap));
++	va_end(ap);
++	return f;
++}
++EXPORT_SYMBOL(_fgetr_raw);
++
++struct fd _fdgetr(unsigned int fd, ...)
++{
++	struct fd f;
++	struct capsicum_rights rights;
++	va_list ap;
++	va_start(ap, fd);
++	f = fdget_rights(fd, cap_rights_vinit(&rights, ap));
++	va_end(ap);
++	return f;
++}
++EXPORT_SYMBOL(_fdgetr);
++
++struct fd _fdgetr_raw(unsigned int fd, ...)
++{
++	struct fd f;
++	struct capsicum_rights rights;
++	va_list ap;
++	va_start(ap, fd);
++	f = fdget_raw_rights(fd, NULL, cap_rights_vinit(&rights, ap));
++	va_end(ap);
++	return f;
++}
++EXPORT_SYMBOL(_fdgetr_raw);
++
++struct fd _fdgetr_pos(unsigned int fd, ...)
++{
++	struct fd f;
++	struct capsicum_rights rights;
++	va_list ap;
++	f = __to_fd(__fdget_pos(fd));
++	va_start(ap, fd);
++	f.file = unwrap_file(f.file, cap_rights_vinit(&rights, ap), NULL,
++			     (f.flags & FDPUT_FPUT));
++	va_end(ap);
++	return f;
++}
++EXPORT_SYMBOL(_fdgetr_pos);
++#endif
++
+ /*
+  * We only lock f_pos if we have threads or if the file might be
+  * shared with another process. In both cases we'll have an elevated
+diff --git a/fs/namei.c b/fs/namei.c
+index e6b72531dfc7..c93f7993960e 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -646,6 +646,19 @@ static __always_inline void set_root(struct nameidata *nd)
+ 		get_fs_root(current->fs, &nd->root);
+ }
+ 
++/*
++ * Retrieval of files against a directory file descriptor requires
++ * CAP_LOOKUP. As this is common in this file, set up the required rights once
++ * and for all.
++ */
++static struct capsicum_rights lookup_rights;
++static int __init init_lookup_rights(void)
++{
++	cap_rights_init(&lookup_rights, CAP_LOOKUP);
++	return 0;
++}
++fs_initcall(init_lookup_rights);
++
+ static int link_path_walk(const char *, struct nameidata *, unsigned int);
+ 
+ static __always_inline void set_root_rcu(struct nameidata *nd)
+@@ -2135,8 +2148,12 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
+ }
+ EXPORT_SYMBOL(lookup_one_len);
+ 
+-int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
+-		 struct path *path, int *empty)
++static int user_path_at_empty_rights(int dfd,
++				const char __user *name,
++				unsigned flags,
++				struct path *path,
++				int *empty,
++				const struct capsicum_rights *rights)
+ {
+ 	struct nameidata nd;
+ 	struct filename *tmp = getname_flags(name, flags, empty);
+@@ -2153,13 +2170,39 @@ int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
+ 	return err;
+ }
+ 
++int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
++		 struct path *path, int *empty)
++{
++	return user_path_at_empty_rights(dfd, name, flags, path, empty,
++					 &lookup_rights);
++}
++
+ int user_path_at(int dfd, const char __user *name, unsigned flags,
+ 		 struct path *path)
+ {
+-	return user_path_at_empty(dfd, name, flags, path, NULL);
++	return user_path_at_empty_rights(dfd, name, flags, path, NULL,
++					 &lookup_rights);
+ }
+ EXPORT_SYMBOL(user_path_at);
+ 
++#ifdef CONFIG_SECURITY_CAPSICUM
++int _user_path_atr(int dfd,
++		   const char __user *name,
++		   unsigned flags,
++		   struct path *path,
++		   ...)
++{
++	struct capsicum_rights rights;
++	int rc;
++	va_list ap;
++	va_start(ap, path);
++	rc = user_path_at_empty_rights(dfd, name, flags, path, NULL,
++				       cap_rights_vinit(&rights, ap));
++	va_end(ap);
++	return rc;
++}
++#endif
++
+ /*
+  * NB: most callers don't do anything directly with the reference to the
+  *     to struct filename, but the nd->last pointer points into the name string
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 31c6efa43183..bd4cc3770b42 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -264,11 +264,6 @@ loff_t vfs_llseek(struct file *file, loff_t offset, int whence)
+ }
+ EXPORT_SYMBOL(vfs_llseek);
+ 
+-static inline struct fd fdget_pos(int fd)
+-{
+-	return __to_fd(__fdget_pos(fd));
+-}
+-
+ static inline void fdput_pos(struct fd f)
+ {
+ 	if (f.flags & FDPUT_POS_UNLOCK)
+diff --git a/include/linux/file.h b/include/linux/file.h
+index 4d69123377a2..22952e26ab19 100644
+--- a/include/linux/file.h
++++ b/include/linux/file.h
+@@ -8,6 +8,8 @@
+ #include <linux/compiler.h>
+ #include <linux/types.h>
+ #include <linux/posix_types.h>
++#include <linux/err.h>
++#include <linux/capsicum.h>
+ 
+ struct file;
+ 
+@@ -39,6 +41,21 @@ static inline void fdput(struct fd fd)
+ 		fput(fd.file);
+ }
+ 
++/*
++ * The base functions for converting a file descriptor to a struct file are:
++ *  - fget() always increments refcount, doesn't work on O_PATH files.
++ *  - fget_raw() always increments refcount, and does work on O_PATH files.
++ *  - fdget() only increments refcount if needed, doesn't work on O_PATH files.
++ *  - fdget_raw() only increments refcount if needed, works on O_PATH files.
++ *  - fdget_pos() as fdget(), but also locks the file position lock (for
++ *    operations that POSIX requires to be atomic w.r.t file position).
++ * These functions return NULL on failure, and return the actual entry in the
++ * fdtable (which may be a wrapper if the file is a Capsicum capability).
++ *
++ * These functions should normally only be used when a file is being
++ * transferred (e.g. dup(2)) or manipulated as-is; normal users should stick
++ * to the fgetr() variants below.
++ */
+ extern struct file *fget(unsigned int fd);
+ extern struct file *fget_raw(unsigned int fd);
+ extern unsigned long __fdget(unsigned int fd);
+@@ -60,6 +77,125 @@ static inline struct fd fdget_raw(unsigned int fd)
+ 	return __to_fd(__fdget_raw(fd));
+ }
+ 
++static inline struct fd fdget_pos(unsigned int fd)
++{
++	return __to_fd(__fdget_pos(fd));
++}
++
++#ifdef CONFIG_SECURITY_CAPSICUM
++/*
++ * The full unwrapping variant functions are:
++ *  - fget_rights()
++ *  - fget_raw_rights()
++ *  - fdget_rights()
++ *  - fdget_raw_rights()
++ * These versions have the same behavior as the equivalent base functions, but:
++ *  - They also take a struct capsicum_rights argument describing the details
++ *    of the operations to be performed on the file.
++ *  - They remove any Capsicum capability wrapper for the file, returning the
++ *    normal underlying file.
++ *  - They return an ERR_PTR on failure (typically with either -EBADF for an
++ *    unrecognized FD, or -ENOTCAPABLE for a Capsicum capability FD that does
++ *    not have the requisite rights).
++ *
++ * The fdget_raw_rights() function also optionally returns the actual Capsicum
++ * rights associated with the file descriptor; the caller should only access
++ * this structure while it holds a reference to the file.
++ *
++ * These functions should normally only be used:
++ *  - when the operation being performed on the file requires more detailed
++ *    specification (in particular: the ioctl(2) or fcntl(2) command invoked)
++ *  - (for fdget_raw_rights()) when a new file descriptor will be created from
++ *    this file descriptor, and so should potentially inherit its rights (if
++ *    it is a Capsicum capability file descriptor).
++ * Otherwise users should stick to the simpler fgetr() variants below.
++ */
++extern struct file *fget_rights(unsigned int fd,
++				const struct capsicum_rights *rights);
++extern struct file *fget_raw_rights(unsigned int fd,
++				    const struct capsicum_rights *rights);
++extern struct fd fdget_rights(unsigned int fd,
++			      const struct capsicum_rights *rights);
++extern struct fd fdget_raw_rights(unsigned int fd,
++				  const struct capsicum_rights **actual_rights,
++				  const struct capsicum_rights *rights);
++
++/*
++ * The simple unwrapping variant functions are:
++ *  - fgetr()
++ *  - fgetr_raw()
++ *  - fdgetr()
++ *  - fdgetr_raw()
++ *  - fdgetr_pos()
++ * These versions have the same behavior as the equivalent base functions, but:
++ *  - They also take variable arguments indicating the operations to be
++ *    performed on the file.
++ *  - They remove any Capsicum capability wrapper for the file, returning the
++ *    normal underlying file.
++ *  - They return an ERR_PTR on failure (typically with either -EBADF for an
++ *    unrecognized FD, or -ENOTCAPABLE for a Capsicum capability FD that does
++ *    not have the requisite rights).
++ *
++ * These functions should normally be used for FD->file conversion.
++ */
++#define fgetr(fd, ...)		_fgetr((fd), __VA_ARGS__, CAP_LIST_END)
++#define fgetr_raw(fd, ...)	_fgetr_raw((fd), __VA_ARGS__, CAP_LIST_END)
++#define fdgetr(fd, ...)	_fdgetr((fd), __VA_ARGS__, CAP_LIST_END)
++#define fdgetr_raw(fd, ...)	_fdgetr_raw((fd), __VA_ARGS__, CAP_LIST_END)
++#define fdgetr_pos(fd, ...)	_fdgetr_pos((fd), __VA_ARGS__, CAP_LIST_END)
++extern struct file *_fgetr(unsigned int fd, ...);
++extern struct file *_fgetr_raw(unsigned int fd, ...);
++extern struct fd _fdgetr(unsigned int fd, ...);
++extern struct fd _fdgetr_raw(unsigned int fd, ...);
++extern struct fd _fdgetr_pos(unsigned int fd, ...);
++
++#else
++/*
++ * In a non-Capsicum build, all rights-checking fget() variants fall back to the
++ * normal versions (but still return errors as ERR_PTR values not just NULL).
++ */
++static inline struct file *fget_rights(unsigned int fd,
++				       const struct capsicum_rights *rights)
++{
++	return fget(fd) ?: ERR_PTR(-EBADF);
++}
++static inline struct file *fget_raw_rights(unsigned int fd,
++					   const struct capsicum_rights *rights)
++{
++	return fget_raw(fd) ?: ERR_PTR(-EBADF);
++}
++static inline struct fd fdget_rights(unsigned int fd,
++				     const struct capsicum_rights *rights)
++{
++	struct fd f = fdget(fd);
++	if (f.file == NULL)
++		f.file = ERR_PTR(-EBADF);
++	return f;
++}
++static inline struct fd
++fdget_raw_rights(unsigned int fd,
++		 const struct capsicum_rights **actual_rights,
++		 const struct capsicum_rights *rights)
++{
++	struct fd f = fdget_raw(fd);
++	if (f.file == NULL)
++		f.file = ERR_PTR(-EBADF);
++	return f;
++}
++
++#define fgetr(fd, ...)		(fget(fd) ?: ERR_PTR(-EBADF))
++#define fgetr_raw(fd, ...)	(fget_raw(fd) ?: ERR_PTR(-EBADF))
++#define fdgetr(fd, ...)	fdget_rights((fd), NULL)
++#define fdgetr_raw(fd, ...)	fdget_raw_rights((fd), NULL, NULL)
++static inline struct fd fdgetr_pos(int fd, ...)
++{
++	struct fd f = fdget_pos(fd);
++	if (f.file == NULL)
++		f.file = ERR_PTR(-EBADF);
++	return f;
++}
++#endif
++
+ extern int f_dupfd(unsigned int from, struct file *file, unsigned flags);
+ extern int replace_fd(unsigned fd, struct file *file, unsigned flags);
+ extern void set_close_on_exec(unsigned int fd, int flag);
+diff --git a/include/linux/namei.h b/include/linux/namei.h
+index cd56c50109fc..ce6f2fe11bcd 100644
+--- a/include/linux/namei.h
++++ b/include/linux/namei.h
+@@ -59,6 +59,15 @@ enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
+ 
+ extern int user_path_at(int, const char __user *, unsigned, struct path *);
+ extern int user_path_at_empty(int, const char __user *, unsigned, struct path *, int *empty);
++#ifdef CONFIG_SECURITY_CAPSICUM
++extern int _user_path_atr(int, const char __user *, unsigned,
++			  struct path *, ...);
++#define user_path_atr(f, n, x, p, ...) \
++	_user_path_atr((f), (n), (x), (p), __VA_ARGS__, 0ULL)
++#else
++#define user_path_atr(f, n, x, p, ...) \
++	user_path_at((f), (n), (x), (p))
++#endif
+ 
+ #define user_path(name, path) user_path_at(AT_FDCWD, name, LOOKUP_FOLLOW, path)
+ #define user_lpath(name, path) user_path_at(AT_FDCWD, name, 0, path)
+-- 
 2.0.0.526.g5318336
-
