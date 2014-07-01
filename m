@@ -1,50 +1,130 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH v9] mm: support madvise(MADV_FREE)
-Date: Tue, 1 Jul 2014 17:50:58 +0300
-Message-ID: <20140701145058.GA2084@node.dhcp.inet.fi>
-References: <1404174975-22019-1-git-send-email-minchan@kernel.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH RFC net-next 03/14] bpf: introduce syscall(BPF, ...) and
+ BPF maps
+Date: Tue, 1 Jul 2014 08:11:03 -0700
+Message-ID: <CALCETrWpA5M74pKJLFJ0t-2hi2TXMi_BV6DbJMmdDOJyOoHOyg@mail.gmail.com>
+References: <1403913966-4927-1-git-send-email-ast@plumgrid.com>
+ <1403913966-4927-4-git-send-email-ast@plumgrid.com> <CALCETrV3WLBmHewCZgfhCkjODWfq_byRg6sF7HpqZ6n9BVMBVQ@mail.gmail.com>
+ <CAMEtUuzWs+MbSOGGD-Rc01DHKASa4GxbHdtCrSCLit4cUM35mA@mail.gmail.com>
+ <CALCETrWy6=dzTycy-ckiMR92+nQeqAWp_Hw=hi__VSzVWZ43Ag@mail.gmail.com>
+ <CAMEtUuwRf--qyPu3rKB7-57KAu2NdsQdEpVRckqabmf61g+h-g@mail.gmail.com>
+ <CALCETrUoOTtQ1R1A8Ak35fxHxaFTPHWP6oZWnXDVLKa_ESziWw@mail.gmail.com>
+ <CAMEtUuzS=9Y_ZjigofvQ5d3=89RS=+d8-WGPk9VVSMc3qawWsw@mail.gmail.com>
+ <CALCETrWq+=Q3G2Smjd2RYES42UagpmD0EKxFM+jNufi6_qitWg@mail.gmail.com>
+ <CAMEtUuyKY=haqP11VgXHdfHBkqfB-KxuswygUd7hDPLkOFz9HQ@mail.gmail.com>
+ <CALCETrW3=idHOKF56d94suiA0NoiUGwr7pENm13q6=1XMbBPdw@mail.gmail.com> <CAMEtUuyX-tybpMEW=f-00qgq9h3AcHovLNW0_bak3oT4Oj3FuA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1404174975-22019-1-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMEtUuyX-tybpMEW=f-00qgq9h3AcHovLNW0_bak3oT4Oj3FuA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 01, 2014 at 09:36:15AM +0900, Minchan Kim wrote:
-> +	do {
-> +		/*
-> +		 * XXX: We can optimize with supporting Hugepage free
-> +		 * if the range covers.
-> +		 */
-> +		next = pmd_addr_end(addr, end);
-> +		if (pmd_trans_huge(*pmd))
-> +			split_huge_page_pmd(vma, addr, pmd);
+On Mon, Jun 30, 2014 at 10:47 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>=
+ wrote:
+> On Mon, Jun 30, 2014 at 3:09 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org=
+> wrote:
+>> On Sat, Jun 28, 2014 at 11:36 PM, Alexei Starovoitov <ast@plumgrid.c=
+om> wrote:
+>>> On Sat, Jun 28, 2014 at 6:52 PM, Andy Lutomirski <luto@amacapital.n=
+et> wrote:
+>>>> On Sat, Jun 28, 2014 at 1:49 PM, Alexei Starovoitov <ast@plumgrid.=
+com> wrote:
+>>>>>
+>>>>> Sorry I don't like 'fd' direction at all.
+>>>>> 1. it will make the whole thing very socket specific and 'net' de=
+pendent.
+>>>>> but the goal here is to be able to use eBPF for tracing in embedd=
+ed
+>>>>> setups. So it's gotta be net independent.
+>>>>> 2. sockets are already overloaded with all sorts of stuff. Adding=
+ more
+>>>>> types of sockets will complicate it a lot.
+>>>>> 3. and most important. read/write operations on sockets are not
+>>>>> done every nanosecond, whereas lookup operations on bpf maps
+>>>>> are done every dozen instructions, so we cannot have any overhead
+>>>>> when accessing maps.
+>>>>> In other words the verifier is done as static analyzer. I moved a=
+ll
+>>>>> the complexity to verify time, so at run-time the programs are as
+>>>>> fast as possible. I'm strongly against run-time checks in critica=
+l path,
+>>>>> since they kill performance and make the whole approach a lot les=
+s usable.
+>>>>
+>>>> I may have described my suggestion poorly.  I'm suggesting that al=
+l of
+>>>> these global ids be replaced *for userspace's benefit* with fds.  =
+That
+>>>> is, a map would have an associated struct inode, and, when you loa=
+d an
+>>>> eBPF program, you'd pass fds into the kernel instead of global ids=
+=2E
+>>>> The kernel would still compile the eBPF program to use the global =
+ids,
+>>>> though.
+>>>
+>>> Hmm. If I understood you correctly, you're suggesting to do it simi=
+lar
+>>> to ipc/mqueue, shmem, sockets do. By registering and mounting
+>>> a file system and providing all superblock and inode hooks=E2=80=A6=
+ and
+>>> probably have its own namespace type=E2=80=A6 hmm=E2=80=A6 may be. =
+That's
+>>> quite a bit of work to put lightly. As I said in the other email th=
+e first
+>>> step is root only and all these complexity just not worth doing
+>>> at this stage.
+>>
+>> The downside of not doing it right away is that it's harder to
+>> retrofit in without breaking early users.
+>>
+>> You might be able to get away with using anon_inodes.  That will
+>
+> Spent quite a bit of time playing with anon_inode_getfd(). The model
+> works ok for seccomp, but doesn't seem to work for tracing,
+> since tracepoints are global. Say, syscall(bpf, load_prog) returns
+> a process-local fd. This 'fd' as a string can be written to
+> debugfs/tracing/events/.../filter which will increment a refcnt of a =
+global
+> ebpf_program structure and will keep using it. When process exits it =
+will
+> close all fds which in case of ebpf_prog_fd should be a nop, since
+> the program is still attached to a global event. Now we have a
+> program and maps that still alive and dangling, since tracepoint even=
+ts
+> keep coming, but no new process can access it. Here we just lost all
+> benefits of making it 'fd' based. Theoretically we can extend tracing=
+ to
+> be fd-based too and tracepoints will auto-detach upon process exit,
+> but that's not going to work for all other global events. Like networ=
+king
+> components (bridge, ovs, =E2=80=A6) are global and they won't be addi=
+ng
+> fd-based interfaces.
+> I'm still thinking about it, but it looks like that any process-local
+> ebpf_prog_id scheme is not going to work for global events. Thoughts?
 
-Could you implement proper THP support before upstreaming the feature?
-It shouldn't be a big deal.
+Hmm.  Maybe these things do need global ids for tracing, or at least
+there need to be some way to stash them somewhere and find them again.
+I suppose that debugfs could have symlinks to them, but I don't know
+how hard that would be to implement or how awkward it would be to use.
 
-> +		/*
-> +		 * Here there can be other concurrent MADV_DONTNEED or
-> +		 * trans huge page faults running, and if the pmd is
-> +		 * none or trans huge it can change under us. This is
-> +		 * because MADV_LAZYFREE holds the mmap_sem in read
-> +		 * mode.
-> +		 */
-> +		if (pmd_none_or_trans_huge_or_clear_bad(pmd))
-> +			goto next;
-> +		next = madvise_free_pte_range(tlb, vma, pmd, addr, next);
-> +next:
-> +		cond_resched();
-> +	} while (pmd++, addr = next, addr != end);
+I imagine there's some awkwardness regardless.  For tracing, if I
+create map 75 and eBPF program 492 that uses map 75, then I still need
+to remember that map 75 is the map I want (or I need to parse the eBPF
+program later on).
 
--- 
- Kirill A. Shutemov
+How do you imagine the userspace code working?  Maybe it would make
+sense to add some nlattrs for eBPF programs to map between referenced
+objects and nicknames for them.  Then user code could look at
+/sys/kernel/debug/whatever/nickname_of_map to resolve the map id or
+even just open it directly.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I admit that I'm much more familiar with seccomp and even socket
+filters than I am with tracing.
+
+--Andy
