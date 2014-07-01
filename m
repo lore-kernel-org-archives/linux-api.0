@@ -1,49 +1,162 @@
-From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC net-next 11/14] tracing: allow eBPF programs to be
- attached to events
-Date: Tue, 01 Jul 2014 10:30:56 +0200
-Message-ID: <53B271C0.5090008@redhat.com>
-References: <1403913966-4927-1-git-send-email-ast@plumgrid.com> <1403913966-4927-12-git-send-email-ast@plumgrid.com>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCH 5/5] man-pages: cap_rights_get: retrieve Capsicum fd
+ rights
+Date: Tue, 1 Jul 2014 10:19:00 +0100
+Message-ID: <20140701091900.GB2242@google.com>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com>
+ <1404124096-21445-17-git-send-email-drysdale@google.com>
+ <CALCETrW94NY+SNGsW3PYsdHfwpykPYs55FFDztQ2MVwMLmwJ4Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1403913966-4927-12-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrW94NY+SNGsW3PYsdHfwpykPYs55FFDztQ2MVwMLmwJ4Q@mail.gmail.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: LSM List <linux-security-module@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 06/28/2014 02:06 AM, Alexei Starovoitov wrote:
-> User interface:
-> cat bpf_123 > /sys/kernel/debug/tracing/__event__/filter
->
-> where 123 is an id of the eBPF program priorly loaded.
-> __event__ is static tracepoint event.
-> (kprobe events will be supported in the future patches)
->
-> eBPF programs can call in-kernel helper functions to:
-> - lookup/update/delete elements in maps
-> - memcmp
-> - trace_printk
-> - load_pointer
-> - dump_stack
+On Mon, Jun 30, 2014 at 03:28:14PM -0700, Andy Lutomirski wrote:
+> On Mon, Jun 30, 2014 at 3:28 AM, David Drysdale <drysdale@google.com>=
+ wrote:
+> > Signed-off-by: David Drysdale <drysdale@google.com>
+> > ---
+> >  man2/cap_rights_get.2 | 126 ++++++++++++++++++++++++++++++++++++++=
+++++++++++++
+> >  1 file changed, 126 insertions(+)
+> >  create mode 100644 man2/cap_rights_get.2
+> >
+> > diff --git a/man2/cap_rights_get.2 b/man2/cap_rights_get.2
+> > new file mode 100644
+> > index 000000000000..966c0ed7e336
+> > --- /dev/null
+> > +++ b/man2/cap_rights_get.2
+> > @@ -0,0 +1,126 @@
+> > +.\"
+> > +.\" Copyright (c) 2008-2010 Robert N. M. Watson
+> > +.\" Copyright (c) 2012-2013 The FreeBSD Foundation
+> > +.\" Copyright (c) 2013-2014 Google, Inc.
+> > +.\" All rights reserved.
+> > +.\"
+> > +.\" %%%LICENSE_START(BSD_2_CLAUSE)
+> > +.\" Redistribution and use in source and binary forms, with or wit=
+hout
+> > +.\" modification, are permitted provided that the following condit=
+ions
+> > +.\" are met:
+> > +.\" 1. Redistributions of source code must retain the above copyri=
+ght
+> > +.\"    notice, this list of conditions and the following disclaime=
+r.
+> > +.\" 2. Redistributions in binary form must reproduce the above cop=
+yright
+> > +.\"    notice, this list of conditions and the following disclaime=
+r in the
+> > +.\"    documentation and/or other materials provided with the dist=
+ribution.
+> > +.\"
+> > +.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS =
+IS'' AND
+> > +.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED =
+TO, THE
+> > +.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTIC=
+ULAR PURPOSE
+> > +.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS =
+BE LIABLE
+> > +.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR C=
+ONSEQUENTIAL
+> > +.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTIT=
+UTE GOODS
+> > +.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERR=
+UPTION)
+> > +.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONT=
+RACT, STRICT
+> > +.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING=
+ IN ANY WAY
+> > +.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIB=
+ILITY OF
+> > +.\" SUCH DAMAGE.
+> > +.\" %%%LICENSE_END
+> > +.\"
+> > +.TH CAP_RIGHTS_GET 2 2014-05-07 "Linux" "Linux Programmer's Manual=
+"
+> > +.SH NAME
+> > +cap_rights_get \- retrieve Capsicum capability rights
+> > +.SH SYNOPSIS
+> > +.nf
+> > +.B #include <sys/capsicum.h>
+> > +.sp
+> > +.BI "int cap_rights_get(int " fd ", struct cap_rights *" rights ,
+> > +.BI "                   unsigned int *" fcntls ,
+> > +.BI "                   int *" nioctls ", unsigned int *" ioctls )=
+;
+> > +.SH DESCRIPTION
+> > +Obtain the current Capsicum capability rights for a file descripto=
+r.
+> > +.PP
+> > +The function will fill the
+> > +.I rights
+> > +argument (if non-NULL) with the primary capability rights of the
+> > +.I fd
+> > +descriptor.  The result can be examined with the
+> > +.BR cap_rights_is_set (3)
+> > +family of functions.  The complete list of primary rights can be f=
+ound in the
+> > +.BR rights (7)
+> > +manual page.
+> > +.PP
+> > +If the
+> > +.I fcntls
+> > +argument is non-NULL, it will be filled in with a bitmask of allow=
+ed
+> > +.BR fcntl (2)
+> > +commands; see
+> > +.BR cap_rights_limit (2)
+> > +for values.  If the file descriptor does not have the
+> > +.B CAP_FCNTL
+> > +primary right, the returned
+> > +.I fcntls
+> > +value will be zero.
+> > +.PP
+> > +If the
+> > +.I nioctls
+> > +argument is non-NULL, it will be filled in with the number of allo=
+wed
+> > +.BR ioctl (2)
+> > +commands, or with the value CAP_IOCTLS_ALL to indicate that all
+> > +.BR ioctl (2)
+> > +commands are allowed.  If the file descriptor does not have the
+> > +.B CAP_IOCTL
+> > +primary right, the returned
+> > +.I nioctls
+> > +value will be zero.
+> > +.PP
+> > +The
+> > +.I ioctls
+> > +argument (if non-NULL) should point at memory that can hold up to
+> > +.I nioctls
+> > +values.
+> > +The system call populates the provided buffer with up to
+> > +.I nioctls
+> > +elements, but always returns the total number of
+>=20
+> I assume you mean "up to the initial value of *nioctls elements" or
+> something.  Can you clarify?
+>=20
+> --Andy
 
-Are there plans to let eBPF replace the generic event
-filtering framework in tracing?
+Yeah, that's what I meant.  Is this clearer?
 
-> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-> ---
->   include/linux/ftrace_event.h       |    5 +
->   include/trace/bpf_trace.h          |   29 +++++
->   include/trace/ftrace.h             |   10 ++
->   include/uapi/linux/bpf.h           |    5 +
->   kernel/trace/Kconfig               |    1 +
->   kernel/trace/Makefile              |    1 +
->   kernel/trace/bpf_trace.c           |  217 ++++++++++++++++++++++++++++++++++++
->   kernel/trace/trace.h               |    3 +
->   kernel/trace/trace_events.c        |    7 ++
->   kernel/trace/trace_events_filter.c |   72 +++++++++++-
->   10 files changed, 349 insertions(+), 1 deletion(-)
->   create mode 100644 include/trace/bpf_trace.h
->   create mode 100644 kernel/trace/bpf_trace.c
+  If  the  ioctls argument is non-NULL, the caller should specify
+  the size of the provided buffer as the  initial  value  of  the
+  nioctls  argument (as a count of the number of ioctl(2) command
+  values the buffer can hold).  On successful completion  of  the
+  system call, the ioctls buffer is filled with the ioctl(2) com=E2=80=90
+  mand values, up to maximum of the initial value of nioctls.
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-securit=
+y-module" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
