@@ -1,39 +1,61 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 01/11] fs: add O_BENEATH_ONLY flag to openat(2)
-Date: Tue, 1 Jul 2014 10:53:56 +0100
-Message-ID: <20140701095356.GC2242@google.com>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
- <1404124096-21445-2-git-send-email-drysdale@google.com>
- <87mwcuw2pj.fsf@tassilo.jf.intel.com>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [PATCH v9] mm: support madvise(MADV_FREE)
+Date: Tue, 01 Jul 2014 10:16:09 -0400
+Message-ID: <53B2C2A9.7030900@redhat.com>
+References: <1404174975-22019-1-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87mwcuw2pj.fsf-KWJ+5VKanrL29G5dvP0v1laTQe2KTcn/@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-Cc: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1404174975-22019-1-git-send-email-minchan@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 30, 2014 at 01:40:40PM -0700, Andi Kleen wrote:
-> David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> writes:
-> 
-> > Add a new O_BENEATH_ONLY flag for openat(2) which restricts the
-> > provided path, rejecting (with -EACCES) paths that are not beneath
-> > the provided dfd.  In particular, reject:
-> >  - paths that contain .. components
-> >  - paths that begin with /
-> >  - symlinks that have paths as above.
-> 
-> How about bind mounts?
-> 
-> -Andi
-> 
-> -- 
-> ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org -- Speaking for myself only
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Bind mounts won't get rejected because they just look like normal
-path components.  In other words, if dir/subdir is a bind mount to
-/root/dir then:
-  fd = openat(AT_FDCWD, "dir/subdir", O_RDONLY|O_BENEATH_ONLY);
-will work fine.
+On 06/30/2014 08:36 PM, Minchan Kim wrote:
+> Linux doesn't have an ability to free pages lazy while other OS 
+> already have been supported that named by madvise(MADV_FREE).
+> 
+> The gain is clear that kernel can discard freed pages rather than 
+> swapping out or OOM if memory pressure happens.
+> 
+> Without memory pressure, freed pages would be reused by userspace 
+> without another additional overhead(ex, page fault + allocation +
+> zeroing).
+
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com> Cc: Linux API
+> <linux-api@vger.kernel.org> Cc: Hugh Dickins <hughd@google.com> Cc:
+> Johannes Weiner <hannes@cmpxchg.org> Cc: Rik van Riel
+> <riel@redhat.com> Cc: KOSAKI Motohiro
+> <kosaki.motohiro@jp.fujitsu.com> Cc: Mel Gorman <mgorman@suse.de> 
+> Cc: Jason Evans <je@fb.com> Cc: Zhang Yanfei
+> <zhangyanfei@cn.fujitsu.com> Signed-off-by: Minchan Kim
+> <minchan@kernel.org>
+
+Acked-by: Rik van Riel <riel@redhat.com>
+
+
+- -- 
+All rights reversed
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+Comment: Using GnuPG with Thunderbird - http://www.enigmail.net/
+
+iQEcBAEBAgAGBQJTssKpAAoJEM553pKExN6DspUH/3fdn95zVIA6GGfmFG/g05Fm
+SYv82v0ee2gGM7yRGeVkFSVuj5qYCneyJeprERHBs43huafqqnWd9MMcZxxskNk7
+MpyVmRsCh54qC2Y6Rqu5E15jEKjCcxss1vCbHp0ExtZHnfU29re+JB0oRE9IKszW
+p2r6rsolHtNY4otTAQ6pAtA6ioH1E0xppK5mpqHAUpFJuq3PqXbSsptFdl6AJciw
+25zBB6iOdVgpciYwkn7yBvaZiY+sRuiRFSAH0klQVHlX0ZueIXYnJtybVhHSqGs/
+Nu1/zhrRrohOcj0Ka6cTJBBH2RyXTmgcurfTUlI4IZzcDqJWtuXjXBty0wkhIZQ=
+=RjYx
+-----END PGP SIGNATURE-----
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
