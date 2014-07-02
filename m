@@ -1,54 +1,102 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH RFC net-next 01/14] net: filter: split filter.c into two files
-Date: Tue, 1 Jul 2014 22:35:20 -0700
-Message-ID: <CAMEtUuxs55tUtXCq5AuJcRhZYPbSX4bLTEc66e94M6WOQH5pWA@mail.gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH RFC net-next 08/14] bpf: add eBPF verifier
+Date: Tue, 1 Jul 2014 22:57:49 -0700
+Message-ID: <CAMEtUuztwZQ_kvKEYKgjUp0yRdkao=yCdp3xXkXQJCMYXos2Qg@mail.gmail.com>
 References: <1403913966-4927-1-git-send-email-ast@plumgrid.com>
-	<1403913966-4927-2-git-send-email-ast@plumgrid.com>
-	<8738ek5qyh.fsf@sejong.aot.lge.com>
+	<1403913966-4927-9-git-send-email-ast@plumgrid.com>
+	<87y4wc4aff.fsf@sejong.aot.lge.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8738ek5qyh.fsf-vfBCOVm4yAnB69T4xOojN9BPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Namhyung Kim <namhyung-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87y4wc4aff.fsf@sejong.aot.lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Namhyung Kim <namhyung@gmail.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 1, 2014 at 9:23 PM, Namhyung Kim <namhyung-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hi Alexei,
->
-> On Fri, 27 Jun 2014 17:05:53 -0700, Alexei Starovoitov wrote:
->> BPF is used in several kernel components. This split creates logical boundary
->> between generic eBPF core and the rest
->>
->> kernel/bpf/core.c: eBPF interpreter
->>
->> net/core/filter.c: classic->eBPF converter, classic verifiers, socket filters
->>
->> This patch only moves functions.
->>
->> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
->> ---
->>  kernel/Makefile     |    1 +
->>  kernel/bpf/Makefile |    1 +
->>  kernel/bpf/core.c   |  545 +++++++++++++++++++++++++++++++++++++++++++++++++++
->>  net/core/filter.c   |  520 ------------------------------------------------
->>  4 files changed, 547 insertions(+), 520 deletions(-)
->>  create mode 100644 kernel/bpf/Makefile
->>  create mode 100644 kernel/bpf/core.c
->>
->> diff --git a/kernel/Makefile b/kernel/Makefile
->> index f2a8b6246ce9..e7360b7c2c0e 100644
->> --- a/kernel/Makefile
->> +++ b/kernel/Makefile
->> @@ -87,6 +87,7 @@ obj-$(CONFIG_RING_BUFFER) += trace/
->>  obj-$(CONFIG_TRACEPOINTS) += trace/
->>  obj-$(CONFIG_IRQ_WORK) += irq_work.o
->>  obj-$(CONFIG_CPU_PM) += cpu_pm.o
->> +obj-$(CONFIG_NET) += bpf/
->
-> But this still requires CONFIG_NET to use bpf.  Why not adding
-> CONFIG_BPF and making CONFIG_NET selects it?
+On Tue, Jul 1, 2014 at 10:05 PM, Namhyung Kim <namhyung@gmail.com> wrote:
+> Mostly questions and few nitpicks.. :)
 
-This is the first patch that does 'split only'. Later patch replaces this line
-with CONFIG_BPF.
+great questions. Thank you for review! Answers below:
+
+> On Fri, 27 Jun 2014 17:06:00 -0700, Alexei Starovoitov wrote:
+>> +/* types of values:
+>> + * - stored in an eBPF register
+>> + * - passed into helper functions as an argument
+>> + * - returned from helper functions
+>> + */
+>> +enum bpf_reg_type {
+>> +     INVALID_PTR,                    /* reg doesn't contain a valid pointer */
+>
+> I don't think it's a good name.  The INVALID_PTR can be read as it
+> contains a "pointer" which is invalid.  Maybe INTEGER, NUMBER or
+> something different can be used.  And I think the struct reg_state->ptr
+> should be renamed also.
+
+ok. I agree that 'invalid' part of the name is too negative.
+May be 'unknown_value' ?
+
+>> +     PTR_TO_CTX,                     /* reg points to bpf_context */
+>> +     PTR_TO_MAP,                     /* reg points to map element value */
+>> +     PTR_TO_MAP_CONDITIONAL,         /* points to map element value or NULL */
+>> +     PTR_TO_STACK,                   /* reg == frame_pointer */
+>> +     PTR_TO_STACK_IMM,               /* reg == frame_pointer + imm */
+>> +     PTR_TO_STACK_IMM_MAP_KEY,       /* pointer to stack used as map key */
+>> +     PTR_TO_STACK_IMM_MAP_VALUE,     /* pointer to stack used as map elem */
+>
+> So, these PTR_TO_STACK_IMM[_*] types are only for function argument,
+> right?  I guessed it could be used to access memory in general too, but
+> then I thought it'd make verification complicated..
+>
+> And I also agree that it'd better splitting reg types and function
+> argument constraints.
+
+Ok. Will split this enum into three.
+
+>> +
+>> +/* check read/write into map element returned by bpf_table_lookup() */
+>> +static int check_table_access(struct verifier_env *env, int regno, int off,
+>> +                           int size)
+>
+> I guess the "table" is an old name of the "map"?
+
+oops :) Yes. I've been calling them 'bpf tables' initially, but it created too
+strong of a correlation to 'hash table', so I've changed the name to 'map'
+to stress that this is a generic key/value and not just hash table.
+
+>> +     } else if (state->regs[regno].ptr == PTR_TO_STACK) {
+>> +             if (off >= 0 || off < -MAX_BPF_STACK) {
+>> +                     verbose("invalid stack off=%d size=%d\n", off, size);
+>> +                     return -EACCES;
+>> +             }
+>
+> So memory (stack) access is only allowed for a stack base regsiter and a
+> constant offset, right?
+
+Correct.
+In other words it allows instructions:
+BPF_STX_MEM(BPF_W, BPF_REG_10, BPF_REG_xx, -stack_offset);
+
+Verifier makes no attempt to track pointer arithmetic and just marks
+the result as 'invalid_ptr'.
+For non-root programs it will reject programs that are trying to do
+arithmetic on pointers (it's not part of this patch yet).
+
+>> +     /* check args */
+>> +     _(check_func_arg(env, BPF_REG_1, fn->arg1_type, &map_id, &map));
+>> +     _(check_func_arg(env, BPF_REG_2, fn->arg2_type, &map_id, &map));
+>> +     _(check_func_arg(env, BPF_REG_3, fn->arg3_type, &map_id, &map));
+>> +     _(check_func_arg(env, BPF_REG_4, fn->arg4_type, &map_id, &map));
+>
+> Missing BPF_REG_5?
+
+yes. good catch.
+I guess this shows that we didn't have a use case for function with 5 args :)
+Will fix this.
+
+>> +#define PEAK_INT() \
+>
+> s/PEAK/PEEK/ ?
+
+aren't these the same? ;))
+Will fix. Thanks!
