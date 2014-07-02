@@ -1,32 +1,61 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH RFC net-next 08/14] bpf: add eBPF verifier
-Date: Wed, 2 Jul 2014 08:11:20 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1726B207@AcuExch.aculab.com>
-References: <1403913966-4927-1-git-send-email-ast@plumgrid.com>
-	<1403913966-4927-9-git-send-email-ast@plumgrid.com>
-	<53B26BB0.90209@redhat.com>
- <CAMEtUuyc3+jrxG4r4=fk=Gc9OMhO8a2X1oyWPx1LsKzewVf01w@mail.gmail.com>
+From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Subject: [PATCH v2] Documentation: sysfs-bus-usb: update power/persist
+ description
+Date: Wed, 02 Jul 2014 12:10:45 +0200
+Message-ID: <1404295845.12021.29.camel@x220>
+References: <Pine.LNX.4.44L0.1406241316550.888-100000@iolanthe.rowland.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMEtUuyc3+jrxG4r4=fk=Gc9OMhO8a2X1oyWPx1LsKzewVf01w@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Alexei Starovoitov' <ast@plumgrid.com>, Daniel Borkmann <dborkman@redhat.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <Pine.LNX.4.44L0.1406241316550.888-100000-IYeN2dnnYyZXsRXLowluHWD2FQJk+8+b@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogQWxleGVpIFN0YXJvdm9pdG92DQouLi4NCj4gPj4gKyNkZWZpbmUgXyhPUCkgKHsgaW50
-IHJldCA9IE9QOyBpZiAocmV0IDwgMCkgcmV0dXJuIHJldDsgfSkNCi4uLg0KPiA+PiArICAgICAg
-IF8oZ2V0X21hcF9pbmZvKGVudiwgbWFwX2lkLCAmbWFwKSk7DQo+ID4NCj4gPiBOaXQ6IHN1Y2gg
-bWFjcm9zIHNob3VsZCBiZSByZW1vdmVkLCBwbGVhc2UuDQo+IA0KPiBJdCBtYXkgc3VyZWx5IGxv
-b2sgdW5jb252ZW50aW9uYWwsIGJ1dCBhbHRlcm5hdGl2ZSBpcyB0byByZXBsYWNlDQo+IGV2ZXJ5
-IHVzYWdlIG9mIF8gbWFjcm8gd2l0aDoNCj4gZXJyID0NCj4gaWYgKGVycikNCj4gICByZXR1cm4g
-ZXJyOw0KPiANCj4gYW5kIHNpbmNlIHRoaXMgbWFjcm8gaXMgdXNlZCAzOCB0aW1lcywgaXQgd2ls
-bCBhZGQgfjEyMCB1bm5lY2Vzc2FyeQ0KPiBsaW5lcyB0aGF0IHdpbGwgb25seSBtYWtlIGNvZGUg
-bXVjaCBoYXJkZXIgdG8gZm9sbG93Lg0KPiBJIHRyaWVkIG5vdCB1c2luZyBtYWNybyBhbmQgcmVz
-dWx0cyB3ZXJlIG5vdCBwbGVhc2luZy4NCg0KVGhlIHByb2JsZW0gaXMgdGhhdCB0aGV5IGFyZSBo
-aWRkZW4gY29udHJvbCBmbG93Lg0KQXMgc3VjaCB0aGV5IG1ha2UgZmxvdyBhbmFseXNpcyBoYXJk
-ZXIgZm9yIHRoZSBjYXN1YWwgcmVhZGVyLg0KDQpUaGUgZXh0cmEgbGluZXMgcmVhbGx5IHNob3Vs
-ZG4ndCBtYXR0ZXIuDQoNCglEYXZpZA0KDQo=
+There's no power/persist file for hubs. And CONFIG_USB_PERSIST was
+removed in v2.6.26. Update the description of power/persist accordingly.
+Also remove the line on its default value. It is not entirely correct, as
+CONFIG_USB_DEFAULT_PERSIST and the USB_QUIRK_RESET flag influence the
+default. It is not needed to understand this file anyhow.
+
+Signed-off-by: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+---
+v2: incorporate Alan's feedback. The clearest way to do that was to not
+mention the default value at all. Trying to do handle the default
+correctly made the text way too complicated. I hope Alan agrees.
+
+Perhaps the line on hubs should not be added, as the text now states
+that device directories "can" contain this file.
+
+ Documentation/ABI/stable/sysfs-bus-usb | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/Documentation/ABI/stable/sysfs-bus-usb b/Documentation/ABI/stable/sysfs-bus-usb
+index a6b685724740..e2bc700a6f9c 100644
+--- a/Documentation/ABI/stable/sysfs-bus-usb
++++ b/Documentation/ABI/stable/sysfs-bus-usb
+@@ -3,13 +3,13 @@ Date:		May 2007
+ KernelVersion:	2.6.23
+ Contact:	Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+ Description:
+-		If CONFIG_USB_PERSIST is set, then each USB device directory
+-		will contain a file named power/persist.  The file holds a
+-		boolean value (0 or 1) indicating whether or not the
+-		"USB-Persist" facility is enabled for the device.  Since the
+-		facility is inherently dangerous, it is disabled by default
+-		for all devices except hubs.  For more information, see
+-		Documentation/usb/persist.txt.
++		USB device directories can contain a file named power/persist.
++		The file holds a boolean value (0 or 1) indicating whether or
++		not the "USB-Persist" facility is enabled for the device.  For
++		hubs this facility is always enabled and their device
++		directories will not contain this file.
++
++		For more information, see Documentation/usb/persist.txt.
+ 
+ What:		/sys/bus/usb/devices/.../power/autosuspend
+ Date:		March 2007
+-- 
+1.9.3
