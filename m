@@ -1,43 +1,34 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [patch 3/4] timerfd: Implement timerfd_ioctl method to restore timerfd_ctx::ticks
-Date: Wed, 02 Jul 2014 21:01:02 +0200
-Message-ID: <4188254.Av1Z2pQssC@wuerfel>
-References: <20140623185431.396309193@openvz.org> <53B4382F.9030908@codeaurora.org> <20140702170416.GG12440@moon>
+From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [patch 3/4] timerfd: Implement timerfd_ioctl method to restore
+ timerfd_ctx::ticks
+Date: Wed, 2 Jul 2014 23:07:06 +0400
+Message-ID: <20140702190706.GH12440@moon>
+References: <20140623185431.396309193@openvz.org>
+ <53B4382F.9030908@codeaurora.org>
+ <20140702170416.GG12440@moon>
+ <4188254.Av1Z2pQssC@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140702170416.GG12440@moon>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: Christopher Covington <cov@codeaurora.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Andrey Vagin <avagin@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Vladimir Davydov <vdavydov@parallels.com>, Linux ARM kernel mailing list <linux-arm-kernel@lists.infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <4188254.Av1Z2pQssC@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linux ARM kernel mailing list <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 02 July 2014 21:04:16 Cyrill Gorcunov wrote:
-> On Wed, Jul 02, 2014 at 12:49:51PM -0400, Christopher Covington wrote:
-> > >  
-> > > +#ifdef CONFIG_CHECKPOINT_RESTORE
-> > > +static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-> > > +{
-> > > +   struct timerfd_ctx *ctx = file->private_data;
-> > > +   int ret = 0;
-> > > +
-> > > +   switch (cmd) {
-> > > +   case TFD_IOC_SET_TICKS: {
-> > > +           u64 ticks;
-> > > +
-> > > +           if (get_user(ticks, (u64 __user *)arg))
+On Wed, Jul 02, 2014 at 09:01:02PM +0200, Arnd Bergmann wrote:
+> > > 
+> > > 64-bit get_user is currently unsupported on ARM, although it appears work is
+> > > ongoing [1].
+> > > 
+> > > 1. https://lkml.org/lkml/2014/6/17/260
 > > 
-> > 64-bit get_user is currently unsupported on ARM, although it appears work is
-> > ongoing [1].
+> > Thanks for info, Christopher! What arm camp is using then, copy-from-user?
 > > 
-> > 1. https://lkml.org/lkml/2014/6/17/260
 > 
-> Thanks for info, Christopher! What arm camp is using then, copy-from-user?
-> 
+> copy_from_user should work on all architectures. I believe a 64-bit get_user
+> is currently unsupported on most 32-bit architectures, x86-32 being a notable
+> exception.
 
-copy_from_user should work on all architectures. I believe a 64-bit get_user
-is currently unsupported on most 32-bit architectures, x86-32 being a notable
-exception.
-
-	Arnd
+Thanks, I'll update.
