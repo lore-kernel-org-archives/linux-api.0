@@ -1,135 +1,82 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH RFC net-next 00/14] BPF syscall, maps, verifier, samples
-Date: Wed, 2 Jul 2014 09:39:04 -0700
-Message-ID: <CAGXu5jK8_zPPpKgCzad67QZkggtr-ZTdPc_NyMBwkVkOTgtchg@mail.gmail.com>
-References: <1403913966-4927-1-git-send-email-ast@plumgrid.com>
-	<CAGXu5jK9Bwocjz8y26=GEk0qg5ru1Mu7j9FVuu20KfTDUrSkuQ@mail.gmail.com>
-	<53B260B3.4040108@redhat.com>
+From: Christopher Covington <cov@codeaurora.org>
+Subject: Re: [patch 3/4] timerfd: Implement timerfd_ioctl method to restore
+ timerfd_ctx::ticks
+Date: Wed, 02 Jul 2014 12:49:51 -0400
+Message-ID: <53B4382F.9030908@codeaurora.org>
+References: <20140623185431.396309193@openvz.org> <20140623190345.499956567@openvz.org> <20140624220351.GZ2095@moon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <53B260B3.4040108-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140624220351.GZ2095@moon>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Cyrill Gorcunov <gorcunov@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Andrey Vagin <avagin@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Vladimir Davydov <vdavydov@parallels.com>, Linux ARM kernel mailing list <linux-arm-kernel@lists.infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 1, 2014 at 12:18 AM, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On 07/01/2014 01:09 AM, Kees Cook wrote:
->>
->> On Fri, Jun 27, 2014 at 5:05 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
->> wrote:
->>>
->>> Hi All,
->>>
->>> this patch set demonstrates the potential of eBPF.
->>>
->>> First patch "net: filter: split filter.c into two files" splits eBPF
->>> interpreter
->>> out of networking into kernel/bpf/. The goal for BPF subsystem is to be
->>> usable
->>> in NET-less configuration. Though the whole set is marked is RFC, the 1st
->>> patch
->>> is good to go. Similar version of the patch that was posted few weeks
->>> ago, but
->>> was deferred. I'm assuming due to lack of forward visibility. I hope that
->>> this
->>> patch set shows what eBPF is capable of and where it's heading.
->>>
->>> Other patches expose eBPF instruction set to user space and introduce
->>> concepts
->>> of maps and programs accessible via syscall.
->>>
->>> 'maps' is a generic storage of different types for sharing data between
->>> kernel
->>> and userspace. Maps are referrenced by global id. Root can create
->>> multiple
->>> maps of different types where key/value are opaque bytes of data. It's up
->>> to
->>> user space and eBPF program to decide what they store in the maps.
->>>
->>> eBPF programs are similar to kernel modules. They live in global space
->>> and
->>> have unique prog_id. Each program is a safe run-to-completion set of
->>> instructions. eBPF verifier statically determines that the program
->>> terminates
->>> and safe to execute. During verification the program takes a hold of maps
->>> that it intends to use, so selected maps cannot be removed until program
->>> is
->>> unloaded. The program can be attached to different events. These events
->>> can
->>> be packets, tracepoint events and other types in the future. New event
->>> triggers
->>> execution of the program which may store information about the event in
->>> the maps.
->>> Beyond storing data the programs may call into in-kernel helper functions
->>> which may, for example, dump stack, do trace_printk or other forms of
->>> live
->>> kernel debugging. Same program can be attached to multiple events.
->>> Different
->>> programs can access the same map:
->>>
->>>    tracepoint  tracepoint  tracepoint    sk_buff    sk_buff
->>>     event A     event B     event C      on eth0    on eth1
->>>      |             |          |            |          |
->>>      |             |          |            |          |
->>>      --> tracing <--      tracing       socket      socket
->>>           prog_1           prog_2       prog_3      prog_4
->>>           |  |               |            |
->>>        |---  -----|  |-------|           map_3
->>>      map_1       map_2
->>>
->>> User space (via syscall) and eBPF programs access maps concurrently.
->>>
->>> Last two patches are sample code. 1st demonstrates stateful packet
->>> inspection.
->>> It counts tcp and udp packets on eth0. Should be easy to see how this
->>> eBPF
->>> framework can be used for network analytics.
->>> 2nd sample does simple 'drop monitor'. It attaches to kfree_skb
->>> tracepoint
->>> event and counts number of packet drops at particular $pc location.
->>> User space periodically summarizes what eBPF programs recorded.
->>> In these two samples the eBPF programs are tiny and written in
->>> 'assembler'
->>> with macroses. More complex programs can be written C (llvm backend is
->>> not
->>> part of this diff to reduce 'huge' perception).
->>> Since eBPF is fully JITed on x64, the cost of running eBPF program is
->>> very
->>> small even for high frequency events. Here are the numbers comparing
->>> flow_dissector in C vs eBPF:
->>>    x86_64 skb_flow_dissect() same skb (all cached)         -  42 nsec per
->>> call
->>>    x86_64 skb_flow_dissect() different skbs (cache misses) - 141 nsec per
->>> call
->>> eBPF+jit skb_flow_dissect() same skb (all cached)         -  51 nsec per
->>> call
->>> eBPF+jit skb_flow_dissect() different skbs (cache misses) - 135 nsec per
->>> call
->>>
->>> Detailed explanation on eBPF verifier and safety is in patch 08/14
->>
->>
->> This is very exciting! Thanks for working on it. :)
->>
->> Between the new eBPF syscall and the new seccomp syscall, I'm really
->> looking forward to using lookup tables for seccomp filters. Under
->> certain types of filters, we'll likely see some non-trivial
->> performance improvements.
->
-> Well, if I read this correctly, the eBPF syscall lets you set up maps, etc,
-> but the only way to attach eBPF is via setsockopt for network filters right
-> now (and via tracing). Seccomp will still make use of classic BPF, so you
-> won't be able to use it there.
+Hi Cyrill,
 
-Currently, yes. But once this is in, and the new seccomp syscall is
-in, we can add a SECCOMP_FILTER_EBPF flag to the "flags" field to
-instruct seccomp to load an eBPF instead of a classic BPF. I'm excited
-for the future. :)
+On 06/24/2014 06:03 PM, Cyrill Gorcunov wrote:
+> The read() of timerfd files allows to fetch the number of timer ticks
+> while there is no way to set it back from userspace.
+> 
+> To restore the timer's state as it was at checkpoint moment we need
+> a path to bring @ticks back. Initially I thought about writing ticks
+> back via write() interface but it seems such API is somehow obscure.
+> 
+> Instead implement timerfd_ioctl() method with TFD_IOC_SET_TICKS
+> command which allows to adjust @ticks into non-zero value waking
+> up the waiters.
+> 
+> I wrapped code with CONFIG_CHECKPOINT_RESTORE which can be
+> dropped off if there users except c/r camp appear.
+> 
+> v2 (by akpm@):
+>  -Use define timerfd_ioctl NULL for non c/r config
+> 
+> CC: Thomas Gleixner <tglx@linutronix.de>
+> CC: Andrew Morton <akpm@linux-foundation.org>
+> CC: Andrey Vagin <avagin@openvz.org>
+> CC: Pavel Emelyanov <xemul@parallels.com>
+> CC: Vladimir Davydov <vdavydov@parallels.com>
+> Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
+> ---
+> 
+> A nit fixed for for non c/r config in timerfd_ioctl declaration
+> 
+>  fs/timerfd.c            |   37 +++++++++++++++++++++++++++++++++++++
+>  include/linux/timerfd.h |    5 +++++
+>  2 files changed, 42 insertions(+)
+> 
+> Index: linux-2.6.git/fs/timerfd.c
+> ===================================================================
+> --- linux-2.6.git.orig/fs/timerfd.c
+> +++ linux-2.6.git/fs/timerfd.c
+> @@ -315,12 +315,49 @@ static int timerfd_show(struct seq_file
+>  #define timerfd_show NULL
+>  #endif
+>  
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+> +{
+> +	struct timerfd_ctx *ctx = file->private_data;
+> +	int ret = 0;
+> +
+> +	switch (cmd) {
+> +	case TFD_IOC_SET_TICKS: {
+> +		u64 ticks;
+> +
+> +		if (get_user(ticks, (u64 __user *)arg))
 
--Kees
+64-bit get_user is currently unsupported on ARM, although it appears work is
+ongoing [1].
+
+1. https://lkml.org/lkml/2014/6/17/260
+
+Regards,
+Christopher
 
 -- 
-Kees Cook
-Chrome OS Security
+Employee of Qualcomm Innovation Center, Inc.
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+hosted by the Linux Foundation.
