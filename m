@@ -1,41 +1,63 @@
-From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Subject: Re: [PATCH 09/11] capsicum: implementations of new LSM hooks
-Date: Wed, 02 Jul 2014 09:49:24 -0400
-Message-ID: <1871630.hB3tXi0r3a@sifl>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com> <1404124096-21445-10-git-send-email-drysdale@google.com> <CALCETrUBCL1jKfooLaqrJCb-uYrMwYPQL2v-M04NTVf2LoD_fw@mail.gmail.com>
+From: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+Subject: Re: [PATCH v2] Documentation: sysfs-bus-usb: update power/persist
+ description
+Date: Wed, 2 Jul 2014 10:36:09 -0400 (EDT)
+Message-ID: <Pine.LNX.4.44L0.1407021035480.874-100000@iolanthe.rowland.org>
+References: <1404295845.12021.29.camel@x220>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUBCL1jKfooLaqrJCb-uYrMwYPQL2v-M04NTVf2LoD_fw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1404295845.12021.29.camel@x220>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Monday, June 30, 2014 09:05:38 AM Andy Lutomirski wrote:
-> On Mon, Jun 30, 2014 at 3:28 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> > If the LSM does not provide implementations of the .file_lookup and
-> > .file_install LSM hooks, always use the Capsicum implementations.
-> > 
-> > The Capsicum implementation of file_lookup checks for a Capsicum
-> > capability wrapper file and unwraps to if the appropriate rights
-> > are available.
-> > 
-> > The Capsicum implementation of file_install checks whether the file
-> > has restricted rights associated with it.  If it does, it is replaced
-> > with a Capsicum capability wrapper file before installation into the
-> > fdtable.
+On Wed, 2 Jul 2014, Paul Bolle wrote:
+
+> There's no power/persist file for hubs. And CONFIG_USB_PERSIST was
+> removed in v2.6.26. Update the description of power/persist accordingly.
+> Also remove the line on its default value. It is not entirely correct, as
+> CONFIG_USB_DEFAULT_PERSIST and the USB_QUIRK_RESET flag influence the
+> default. It is not needed to understand this file anyhow.
 > 
-> I think I fall on the "no LSM" side of the fence.  This kind of stuff
-> should be available regardless of selected LSM (as it is in your
-> code) ...
+> Signed-off-by: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+> ---
+> v2: incorporate Alan's feedback. The clearest way to do that was to not
+> mention the default value at all. Trying to do handle the default
+> correctly made the text way too complicated. I hope Alan agrees.
+> 
+> Perhaps the line on hubs should not be added, as the text now states
+> that device directories "can" contain this file.
+> 
+>  Documentation/ABI/stable/sysfs-bus-usb | 14 +++++++-------
+>  1 file changed, 7 insertions(+), 7 deletions(-)
+> 
+> diff --git a/Documentation/ABI/stable/sysfs-bus-usb b/Documentation/ABI/stable/sysfs-bus-usb
+> index a6b685724740..e2bc700a6f9c 100644
+> --- a/Documentation/ABI/stable/sysfs-bus-usb
+> +++ b/Documentation/ABI/stable/sysfs-bus-usb
+> @@ -3,13 +3,13 @@ Date:		May 2007
+>  KernelVersion:	2.6.23
+>  Contact:	Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+>  Description:
+> -		If CONFIG_USB_PERSIST is set, then each USB device directory
+> -		will contain a file named power/persist.  The file holds a
+> -		boolean value (0 or 1) indicating whether or not the
+> -		"USB-Persist" facility is enabled for the device.  Since the
+> -		facility is inherently dangerous, it is disabled by default
+> -		for all devices except hubs.  For more information, see
+> -		Documentation/usb/persist.txt.
+> +		USB device directories can contain a file named power/persist.
+> +		The file holds a boolean value (0 or 1) indicating whether or
+> +		not the "USB-Persist" facility is enabled for the device.  For
+> +		hubs this facility is always enabled and their device
+> +		directories will not contain this file.
+> +
+> +		For more information, see Documentation/usb/persist.txt.
+>  
+>  What:		/sys/bus/usb/devices/.../power/autosuspend
+>  Date:		March 2007
+> 
 
-I agree.  Looking quickly at the patches, the code seems to take an odd 
-approach of living largely outside the LSM framework, but then relying on a 
-couple of LSM hooks.  Capsicum should either live fully as a LSM or fully 
-outside of it, this mix seems a bit silly to me.
-
--- 
-paul moore
-www.paul-moore.com
+Acked-by: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
