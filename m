@@ -1,38 +1,99 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH RFC net-next 08/14] bpf: add eBPF verifier
-Date: Thu, 3 Jul 2014 09:13:33 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1726BF1A@AcuExch.aculab.com>
-References: <1403913966-4927-1-git-send-email-ast@plumgrid.com>
-	<1403913966-4927-9-git-send-email-ast@plumgrid.com>
-	<CA+ZOOTODDPN=6SECq1uPPD7AGP1zgBJ+bfYaX9o3YhnaCTiHYQ@mail.gmail.com>
- <CAMEtUuxfrAUDDQVGNsNV2PeDii-6LAwQCbB2XGEHTJDwkkvyWg@mail.gmail.com>
+From: Loganaden Velvindron <loganaden@gmail.com>
+Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
+ (part 1)
+Date: Thu, 3 Jul 2014 14:01:02 +0400
+Message-ID: <CAOp4FwQzN5Wuz60gtxx5kEDCXS0Q9ohL_hVFnDGEJkQ6sM+Hrg@mail.gmail.com>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com>
+	<53B51E81.4090700@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMEtUuxfrAUDDQVGNsNV2PeDii-6LAwQCbB2XGEHTJDwkkvyWg@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <53B51E81.4090700@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: 'Alexei Starovoitov' <ast@plumgrid.com>, Chema Gonzalez <chema@google.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Paolo Bonzini <pbonzini@redhat.com>
+Cc: David Drysdale <drysdale@google.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, linux-api@vger.kernel.org, qemu-devel <qemu-devel@nongnu.org>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogQWxleGVpIFN0YXJvdm9pdG92DQo+ID4+ICsjZGVmaW5lIF8oT1ApICh7IGludCByZXQg
-PSBPUDsgaWYgKHJldCA8IDApIHJldHVybiByZXQ7IH0pDQo+ID4gKzEgdG8gcmVtb3ZpbmcgdGhl
-IF8gbWFjcm8uIElmIHlvdSB3YW50IHRvIGF2b2lkIHRoZSAzIGxpbmVzIChpcyB0aGVyZQ0KPiA+
-IGFueXRoaW5nIGluIHRoZSBzdHlsZSBndWlkZSBhZ2FpbnN0ICJpZiAoKGVycj1PUCkgPCAwKSAu
-Li4iID8pLCBhdA0KPiANCj4gYXNzaWdubWVudCBhbmQgZnVuY3Rpb24gY2FsbCBpbnNpZGUgJ2lm
-JyA/IEkgZG9uJ3QgbGlrZSBzdWNoIHN0eWxlLg0KPiANCj4gPiBsZWFzdCB1c2Ugc29tZSBtZWFu
-aW5nZnVsIG1hY3JvIG5hbWUgKERPX0FORF9DSEVDSywgb3Igc29tZXRoaW5nIGxpa2UNCj4gPiB0
-aGF0KS4NCg0KSXQgd291bGQgaGF2ZSB0byBiZSBSRVRVUk5fSUZfTkVHQVRJVkUoKS4NCkJ1dCBl
-dmVuIHRoZW4gaXQgaXMgc2tpcHBlZCBieSBzZWFyY2hlcyBmb3IgJ3JldHVybicuDQoNCj4gVHJ5
-IHJlcGxhY2luZyBfIHdpdGggYW55IG90aGVyIG5hbWUgYW5kIHNlZSBob3cgYmFkIGl0IHdpbGwg
-bG9vay4NCj4gSSB0cmllZCB3aXRoIE1BQ1JPX05BTUUgYW5kIHdpdGggJ2lmIChlcnIpIGdvdG8n
-IGFuZCB3aXRoICdpZiAoZXJyKSByZXR1cm4nLA0KPiBiZWZvcmUgSSBjb252ZXJnZWQgb24gXyBt
-YWNyby4NCj4gSSB0aGluayBpdCdzIGEgaGlkZGVuIGdlbSBvZiB0aGlzIHBhdGNoLg0KDQpObywg
-aXQgaXMgb25lIG9mIHRob3NlIHRoaW5ncyB0aGF0ICdzZWVtcyBsaWtlIGEgZ29vZCBpZGVhIGF0
-IHRoZSB0aW1lJywNCmJ1dCBjYXVzZXMgZ3JpZWYgbXVjaCBsYXRlciBvbi4NCg0KSGF2ZSB5b3Ug
-Y29uc2lkZXJlZCBzYXZpbmcgdGhlIGVycm9yIGNvZGUgaW50byAnZW52JyBhbmQgbWFraW5nIG1v
-c3Qgb2YNCnRoZSBmdW5jdGlvbnMgcmV0dXJuIGlmIGFuIGVycm9yIGlzIHNldD8NClRoZW4gdGhl
-IGNhbGxpbmcgY29kZSBuZWVkIG5vdCBjaGVjayB0aGUgcmVzdWx0IG9mIGV2ZXJ5IGZ1bmN0aW9u
-IGNhbGwuDQoNCglEYXZpZA0KDQo=
+On Thu, Jul 3, 2014 at 1:12 PM, Paolo Bonzini <pbonzini@redhat.com> wrote:
+> Il 30/06/2014 12:28, David Drysdale ha scritto:
+>>
+>> Hi all,
+>>
+>> The last couple of versions of FreeBSD (9.x/10.x) have included the
+>> Capsicum security framework [1], which allows security-aware
+>> applications to sandbox themselves in a very fine-grained way.  For
+>> example, OpenSSH now (>= 6.5) uses Capsicum in its FreeBSD version to
+>> restrict sshd's credentials checking process, to reduce the chances of
+>> credential leakage.
+
+Aside from OpenSSH, I've also been working on implementing Capsicum,
+in other userspace software.
+
+
+
+>
+>
+> Hi David,
+>
+> we've had similar goals in QEMU.  QEMU can be used as a virtual machine
+> monitor from the command line, but it also has an API that lets a management
+> tool drive QEMU via AF_UNIX sockets.  Long term, we would like to have a
+> restricted mode for QEMU where all file descriptors are obtained via
+> SCM_RIGHTS or /dev/fd, and syscalls can be locked down.
+>
+> Currently we do use seccomp v2 BPF filters, but unfortunately this didn't
+> help very much.  QEMU supports hotplugging hence the filter must whitelist
+> anything that _might_ be used in the future, which is generally... too much.
+>
+> Something like Capsicum would be really nice because it attaches
+> capabilities to file descriptors.  However, I wonder however how extensible
+> Capsicum could be, and I am worried about the proliferation of capabilities
+> that its design naturally leads to.
+>
+> Given Linux's previous experience with BPF filters, what do you think about
+> attaching specific BPF programs to file descriptors?  Then whenever a
+> syscall is run that affects a file descriptor, the BPF program for the file
+> descriptor (attached to a struct file* as in Capsicum) would run in addition
+> to the process-wide filter.
+>
+> An equivalent of PR_SET_NO_NEW_PRIVS can also be added to file descriptors,
+> so that a program that doesn't lock down syscalls can still lock down the
+> operations (including fcntls and ioctls) on specific file descriptors.
+>
+> Converting FreeBSD capabilities to BPF programs can be easily implemented in
+> userspace.
+>
+>>   [Capsicum also includes 'capability mode', which locks down the
+>>   available syscalls so the rights restrictions can't just be bypassed
+>>   by opening new file descriptors; I'll describe that separately later.]
+>
+>
+> This can also be implemented in userspace via seccomp and
+> PR_SET_NO_NEW_PRIVS.
+>
+>>   [Policing the rights checks anywhere else, for example at the system
+>>   call boundary, isn't a good idea because it opens up the possibility
+>>   of time-of-check/time-of-use (TOCTOU) attacks [2] where FDs are
+>>   changed (as openat/close/dup2 are allowed in capability mode) between
+>>   the 'check' at syscall entry and the 'use' at fget() invocation.]
+>
+>
+> In the case of BPF filters, I wonder if you could stash the BPF
+> "environment" somewhere and then use it at fget() invocation. Alternatively,
+> it can be reconstructed at fget() time, similar to your introduction of
+> fgetr().
+>
+> Thanks,
+>
+> Paolo
+> --
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-security-module" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
+-- 
+This message is strictly personal and the opinions expressed do not
+represent those of my employers, either past or present.
