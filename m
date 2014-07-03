@@ -1,99 +1,249 @@
-From: Loganaden Velvindron <loganaden@gmail.com>
-Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
- (part 1)
-Date: Thu, 3 Jul 2014 14:01:02 +0400
-Message-ID: <CAOp4FwQzN5Wuz60gtxx5kEDCXS0Q9ohL_hVFnDGEJkQ6sM+Hrg@mail.gmail.com>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
-	<53B51E81.4090700@redhat.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [PATCH 08/10] userfaultfd: add new syscall to provide memory
+ externalization
+Date: Thu, 3 Jul 2014 15:19:08 +0200
+Message-ID: <20140703131908.GD21667@redhat.com>
+References: <1404319816-30229-1-git-send-email-aarcange@redhat.com>
+ <1404319816-30229-9-git-send-email-aarcange@redhat.com>
+ <53B4B833.9010508@mit.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <53B51E81.4090700@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paolo Bonzini <pbonzini@redhat.com>
-Cc: David Drysdale <drysdale@google.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, linux-api@vger.kernel.org, qemu-devel <qemu-devel@nongnu.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <53B4B833.9010508@mit.edu>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "\"Dr. David Alan Gilbert\"" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Andrew Morton <akpm@linux-foundation.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Mel Gorman <mel@csn.ul.ie>, Hugh Dickins <hughd@google.com>, Dave Hansen <dave@sr71.net>, Rik van Riel <riel@redhat.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>, Neil Brown <neilb@suse.de>, Mike Hommey <mh@glandium.org>, Taras Glek <tglek@mozilla.com>, Jan Kara <jack@suse.cz>, KOSAKI Motohiro <kosaki.motohiro@gmail.com>, Michel Lespinasse <walken@google.com>, Minchan Kim <minchan@kernel.org>, Keith Packard <keithp@keithp.com>, "Huangpeng (Peter)" <peter.huang>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 3, 2014 at 1:12 PM, Paolo Bonzini <pbonzini@redhat.com> wrote:
-> Il 30/06/2014 12:28, David Drysdale ha scritto:
->>
->> Hi all,
->>
->> The last couple of versions of FreeBSD (9.x/10.x) have included the
->> Capsicum security framework [1], which allows security-aware
->> applications to sandbox themselves in a very fine-grained way.  For
->> example, OpenSSH now (>= 6.5) uses Capsicum in its FreeBSD version to
->> restrict sshd's credentials checking process, to reduce the chances of
->> credential leakage.
+Hi Andy,
 
-Aside from OpenSSH, I've also been working on implementing Capsicum,
-in other userspace software.
+thanks for CC'ing linux-api.
 
+On Wed, Jul 02, 2014 at 06:56:03PM -0700, Andy Lutomirski wrote:
+> On 07/02/2014 09:50 AM, Andrea Arcangeli wrote:
+> > Once an userfaultfd is created MADV_USERFAULT regions talks through
+> > the userfaultfd protocol with the thread responsible for doing the
+> > memory externalization of the process.
+> > 
+> > The protocol starts by userland writing the requested/preferred
+> > USERFAULT_PROTOCOL version into the userfault fd (64bit write), if
+> > kernel knows it, it will ack it by allowing userland to read 64bit
+> > from the userfault fd that will contain the same 64bit
+> > USERFAULT_PROTOCOL version that userland asked. Otherwise userfault
+> > will read __u64 value -1ULL (aka USERFAULTFD_UNKNOWN_PROTOCOL) and it
+> > will have to try again by writing an older protocol version if
+> > suitable for its usage too, and read it back again until it stops
+> > reading -1ULL. After that the userfaultfd protocol starts.
+> > 
+> > The protocol consists in the userfault fd reads 64bit in size
+> > providing userland the fault addresses. After a userfault address has
+> > been read and the fault is resolved by userland, the application must
+> > write back 128bits in the form of [ start, end ] range (64bit each)
+> > that will tell the kernel such a range has been mapped. Multiple read
+> > userfaults can be resolved in a single range write. poll() can be used
+> > to know when there are new userfaults to read (POLLIN) and when there
+> > are threads waiting a wakeup through a range write (POLLOUT).
+> > 
+> > Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
+> 
+> > +#ifdef CONFIG_PROC_FS
+> > +static int userfaultfd_show_fdinfo(struct seq_file *m, struct file *f)
+> > +{
+> > +	struct userfaultfd_ctx *ctx = f->private_data;
+> > +	int ret;
+> > +	wait_queue_t *wq;
+> > +	struct userfaultfd_wait_queue *uwq;
+> > +	unsigned long pending = 0, total = 0;
+> > +
+> > +	spin_lock(&ctx->fault_wqh.lock);
+> > +	list_for_each_entry(wq, &ctx->fault_wqh.task_list, task_list) {
+> > +		uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
+> > +		if (uwq->pending)
+> > +			pending++;
+> > +		total++;
+> > +	}
+> > +	spin_unlock(&ctx->fault_wqh.lock);
+> > +
+> > +	ret = seq_printf(m, "pending:\t%lu\ntotal:\t%lu\n", pending, total);
+> 
+> This should show the protocol version, too.
 
+Ok, does the below look ok?
 
->
->
-> Hi David,
->
-> we've had similar goals in QEMU.  QEMU can be used as a virtual machine
-> monitor from the command line, but it also has an API that lets a management
-> tool drive QEMU via AF_UNIX sockets.  Long term, we would like to have a
-> restricted mode for QEMU where all file descriptors are obtained via
-> SCM_RIGHTS or /dev/fd, and syscalls can be locked down.
->
-> Currently we do use seccomp v2 BPF filters, but unfortunately this didn't
-> help very much.  QEMU supports hotplugging hence the filter must whitelist
-> anything that _might_ be used in the future, which is generally... too much.
->
-> Something like Capsicum would be really nice because it attaches
-> capabilities to file descriptors.  However, I wonder however how extensible
-> Capsicum could be, and I am worried about the proliferation of capabilities
-> that its design naturally leads to.
->
-> Given Linux's previous experience with BPF filters, what do you think about
-> attaching specific BPF programs to file descriptors?  Then whenever a
-> syscall is run that affects a file descriptor, the BPF program for the file
-> descriptor (attached to a struct file* as in Capsicum) would run in addition
-> to the process-wide filter.
->
-> An equivalent of PR_SET_NO_NEW_PRIVS can also be added to file descriptors,
-> so that a program that doesn't lock down syscalls can still lock down the
-> operations (including fcntls and ioctls) on specific file descriptors.
->
-> Converting FreeBSD capabilities to BPF programs can be easily implemented in
-> userspace.
->
->>   [Capsicum also includes 'capability mode', which locks down the
->>   available syscalls so the rights restrictions can't just be bypassed
->>   by opening new file descriptors; I'll describe that separately later.]
->
->
-> This can also be implemented in userspace via seccomp and
-> PR_SET_NO_NEW_PRIVS.
->
->>   [Policing the rights checks anywhere else, for example at the system
->>   call boundary, isn't a good idea because it opens up the possibility
->>   of time-of-check/time-of-use (TOCTOU) attacks [2] where FDs are
->>   changed (as openat/close/dup2 are allowed in capability mode) between
->>   the 'check' at syscall entry and the 'use' at fget() invocation.]
->
->
-> In the case of BPF filters, I wonder if you could stash the BPF
-> "environment" somewhere and then use it at fget() invocation. Alternatively,
-> it can be reconstructed at fget() time, similar to your introduction of
-> fgetr().
->
-> Thanks,
->
-> Paolo
-> --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-security-module" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index 388553e..f9d3e9f 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -493,7 +493,13 @@ static int userfaultfd_show_fdinfo(struct seq_file *m, struct file *f)
+ 	}
+ 	spin_unlock(&ctx->fault_wqh.lock);
+ 
+-	ret = seq_printf(m, "pending:\t%lu\ntotal:\t%lu\n", pending, total);
++	/*
++	 * If more protocols will be added, there will be all shown
++	 * separated by a space. Like this:
++	 *	protocols: 0xaa 0xbb
++	 */
++	ret = seq_printf(m, "pending:\t%lu\ntotal:\t%lu\nprotocols:\t%Lx\n",
++			 pending, total, USERFAULTFD_PROTOCOL);
+ 
+ 	return ret;
+ }
 
 
+> > +
+> > +SYSCALL_DEFINE1(userfaultfd, int, flags)
+> > +{
+> > +	int fd, error;
+> > +	struct file *file;
+> 
+> This looks like it can't be used more than once in a process.  That will
 
--- 
-This message is strictly personal and the opinions expressed do not
-represent those of my employers, either past or present.
+It can't be used more than once, correct.
+
+	file = ERR_PTR(-EBUSY);
+	if (get_mm_slot(current->mm))
+		goto out_free_unlock;
+
+If a userfaultfd is already registered for the current mm the second
+one gets -EBUSY.
+
+> be unfortunate for libraries.  Would it be feasible to either have
+
+So you envision two userfaultfd memory managers for the same process?
+I assume each one would claim separate ranges of memory?
+
+For that case the demultiplexing of userfaults can be entirely managed
+by userland.
+
+One libuserfault library can actually register the userfaultfd, and
+then the two libs can register into libuserfault and claim their own
+ranges. It could run the code of the two libs in the thread context
+that waits on the userfaultfd with zero overhead, or message passing
+across threads can be used to run both libs in parallel in their own
+thread. The demultiplexing code wouldn't be CPU intensive. The
+downside are two schedule event required if they want to run their lib
+code in a separate thread. If we'd claim the two different ranges in
+the kernel for two different userfaultfd, the kernel would be speaking
+directly with each library thread. That'd be the only advantage if
+they don't want to run in the context of the thread that waits on the
+userfaultfd.
+
+To increase SMP scalability in the future we could also add a
+UFFD_LOAD_BALANCE to distribute userfaults to different userfaultfd,
+that if used could relax the -EBUSY (but it wouldn't be two different
+claimed ranges for two different libs).
+
+If passing UFFD_LOAD_BALANCE to the current code sys_userfaultfd would
+return -EINVAL. I haven't implemented it because I'm not sure if such
+thing would ever be needed. Compared to distributing the userfaults in
+userland to different threads that would only save two context
+switches per event. I don't see a problem in adding this later if a
+need emerges though.
+
+I think the best model for two libs claiming different userfault
+ranges, is to run the userfault code of each lib in the context of the
+thread that waits on the userfaultfd, and if there's a need to scale
+in SMP we'd add UFFD_LOAD_BALANCE so multiple threads can wait on
+different userfaultfd and scale optimally in SMP without any need of
+spurious context switches.
+
+With the volatile pages current code, the SIGBUS event would also be
+mm-wide and require demultiplexing inside the sigbus handler if two
+different libs wants to claim different ranges. Furthermore the sigbus
+would run in the context of the faulting thread so it would still need
+to context switch to scale (with userfaultfd we let the current thread
+continue by triggering a schedule in the guest, if FOLL_NOWAIT fails
+and we spawn a kworker thread doing the async page fault, then the
+kworker kernel thread stops in the userfault and the migration thread
+waiting on the userfaultfd is woken up to resolve the userfault).
+
+Programs like qemu are unlikely to ever need more than one
+userfaultfd, so it wouldn't need to use the demultiplexing
+library. Currently we don't feel a need for UFFD_LOAD_BALANCE either.
+
+However I'd rather implement UFFD_LOAD_BALANCE now, than claiming
+different ranges in kernel that would require to build a lookup
+structure that lives on top of the vmas and it wouldn't be less
+efficient to write such a thing in userland inside a libuserfaultfd
+(that qemu would likely never need).
+
+In short I see no benefit in claiming different ranges for the same mm
+in the kernel API (that can be done equally efficient in userland),
+but I could see a benefit in a load balancing feature to scale the
+load to multiple userfaultfd if passing UFFD_LOAD_BALANCE (it could
+also be done by default by just removing the -EBUSY failure and
+without new flags, but it sounds safer to keep -EBUSY if
+UFFD_LOAD_BALANCE is not passed to userfaultfd through the flags).
+
+> userfaultfd claim a range of addresses or for a vma to be explicitly
+> associated with a userfaultfd?  (In the latter case, giant PROT_NONE
+> MAP_NORESERVE mappings could be used.)
+
+To claim ranges MADV_USERFAULT is used and the vmas are
+mm-wide. Instead of creating another range lookup on top the vmas, I
+used the vma itself to tell which ranges are claimed for userfaultfd
+(or SIGBUS behavior if userfaultfd isn't open).
+
+This API model with MADV_USERFAULT to claim the userfaultfd ranges is
+want fundamentally prevents you to claim different ranges for two
+different userfaultfd.
+
+About PROT_NONE, note that if you set the mapping as MADV_USERFAULT
+there's no point in setting PROT_NONE too, MAP_NORESERVE instead
+should already work just fine and it's orthogonal.
+
+PROT_NONE is kind of an alternative to userfaults without
+MADV_USERFAULT. Problem is that PROT_NONE requires to split VMAs (and
+take the mmap_sem for writing and mangle and allocate vmas), until you
+actually run out of vmas and you get -ENOMEM and the app crashes. The
+whole point of postcopy live migration is that it will work with
+massively large guests so we cannot risk running out of vmas.
+
+With MADV_USERFAULT you never mangle the vma and you work with a
+single gigantic vma that never gets split. You don't need to mremap
+over the PROT_NONE to handle the fault.
+
+Even without userfaultfd and just with MADV_USERFAULT+remap_anon_pages
+using SIGBUS is a much more efficient and more reliable alternative
+than PROT_NONE.
+
+With userfaultfd + remap_anon_pages things are even more efficient
+because there are no signals involved at all, and syscalls won't
+return weird errors to userland like it would happen with SIGBUS and
+without userfaultfd. With userfaultfd the thread stopping in the
+userfault won't even exit the kernel, it'll wait a wakeup within the
+kernel. And remap_anon_pages that resolves the fault, just updates the
+ptes or hugepmds without touching the vma (plus remap_anon_pages is
+very strict so the chance of memory corruption going unnoticed is next
+to nil, unlike mremap).
+
+Other things that people should comment on is that currently you
+cannot set MADV_USERFAULT on filebacked vmas, that sounds like an
+issue for volatile pages that should be fixed. Currently -EINVAL is
+returned if MADV_USERFAULT is run on non anonymous vmas. I don't think
+it's a problem to add it. The do_linear_fault would just trigger an
+userfault too. Then it's up to userland how it resolves it before
+sending the wakeup to the stopped thread with userfaultfd_write. As
+long as it doesn't fault in do_linear_fault again it'll just work.
+
+How you solve the fault before acking it with userfaultfd_write
+(remap_file_pages, remap_anon_pages, mremap, mmap, anything) is
+entirely up to userland. The only faults the userfault tracks are the
+pte_none/pmd_none kind (same as PROT_NONE). As long as you put
+something in the pte/pmd and it's not none anymore you can
+userfaultfd_write and it'll just work. Clearing VM_USERFAULT would
+also work to resolve the fault of course (and then it'd pagein from
+disk if it was filebacked or it'd map a zero page if it was an
+anonymous vma) but clearing VM_USERFAULT (with MADV_NOUSERFAULT)
+would split the vma so it's not recommended...
+
+Thanks,
+Andrea
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
