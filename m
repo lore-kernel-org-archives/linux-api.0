@@ -1,108 +1,71 @@
-From: Martin Schwidefsky <schwidefsky@de.ibm.com>
-Subject: Re: [PATCH v9] mm: support madvise(MADV_FREE)
-Date: Thu, 3 Jul 2014 18:01:00 +0200
-Message-ID: <20140703180100.5f24a139@mschwide>
-References: <1404174975-22019-1-git-send-email-minchan@kernel.org>
-	<20140701145058.GA2084@node.dhcp.inet.fi>
-	<20140703010318.GA2939@bbox>
-	<20140703072954.GC2939@bbox>
-	<20140703102901.322bfdb0@mschwide>
-	<20140703083729.GE2939@bbox>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH RFC net-next 08/14] bpf: add eBPF verifier
+Date: Thu, 3 Jul 2014 10:41:10 -0700
+Message-ID: <CAMEtUuzfU6APGmWrCXVR-18P531vSAEOaC=x8wtyr+4yegTq3w@mail.gmail.com>
+References: <1403913966-4927-1-git-send-email-ast@plumgrid.com>
+	<1403913966-4927-9-git-send-email-ast@plumgrid.com>
+	<CA+ZOOTODDPN=6SECq1uPPD7AGP1zgBJ+bfYaX9o3YhnaCTiHYQ@mail.gmail.com>
+	<CAMEtUuxfrAUDDQVGNsNV2PeDii-6LAwQCbB2XGEHTJDwkkvyWg@mail.gmail.com>
+	<063D6719AE5E284EB5DD2968C1650D6D1726BF1A@AcuExch.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20140703083729.GE2939@bbox>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux390@de.ibm.com, Gerald Schaefer <gerald.schaefer@de.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6D1726BF1A@AcuExch.aculab.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Laight <David.Laight@aculab.com>
+Cc: Chema Gonzalez <chema@google.com>, "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 3 Jul 2014 17:37:29 +0900
-Minchan Kim <minchan@kernel.org> wrote:
+On Thu, Jul 3, 2014 at 2:13 AM, David Laight <David.Laight@aculab.com> =
+wrote:
+> From: Alexei Starovoitov
+>> >> +#define _(OP) ({ int ret =3D OP; if (ret < 0) return ret; })
+>> > +1 to removing the _ macro. If you want to avoid the 3 lines (is t=
+here
+>> > anything in the style guide against "if ((err=3DOP) < 0) ..." ?), =
+at
+>>
+>> assignment and function call inside 'if' ? I don't like such style.
+>>
+>> > least use some meaningful macro name (DO_AND_CHECK, or something l=
+ike
+>> > that).
+>
+> It would have to be RETURN_IF_NEGATIVE().
+> But even then it is skipped by searches for 'return'.
 
-> Hello,
-> 
-> On Thu, Jul 03, 2014 at 10:29:01AM +0200, Martin Schwidefsky wrote:
-> > On Thu, 3 Jul 2014 16:29:54 +0900
-> > Minchan Kim <minchan@kernel.org> wrote:
-> > 
-> > > Hello,
-> > > 
-> > > On Thu, Jul 03, 2014 at 10:03:19AM +0900, Minchan Kim wrote:
-> > > > Hello,
-> > > > 
-> > > > On Tue, Jul 01, 2014 at 05:50:58PM +0300, Kirill A. Shutemov wrote:
-> > > > > On Tue, Jul 01, 2014 at 09:36:15AM +0900, Minchan Kim wrote:
-> > > > > > +	do {
-> > > > > > +		/*
-> > > > > > +		 * XXX: We can optimize with supporting Hugepage free
-> > > > > > +		 * if the range covers.
-> > > > > > +		 */
-> > > > > > +		next = pmd_addr_end(addr, end);
-> > > > > > +		if (pmd_trans_huge(*pmd))
-> > > > > > +			split_huge_page_pmd(vma, addr, pmd);
-> > > > > 
-> > > > > Could you implement proper THP support before upstreaming the feature?
-> > > > > It shouldn't be a big deal.
-> > > > 
-> > > > Okay, Hope to review.
-> > > > 
-> > > > Thanks for the feedback!
-> > > > 
-> > > 
-> > > I tried to implement it but had a issue.
-> > > 
-> > > I need pmd_mkold, pmd_mkclean for MADV_FREE operation and pmd_dirty for
-> > > page_referenced. When I investigate all of arches supported THP,
-> > > it's not a big deal but s390 is not sure to me who has no idea of
-> > > soft tracking of s390 by storage key instead of page table information.
-> > > Cced s390 maintainer. Hope to help.
-> > 
-> > Storage key for dirty and referenced tracking is a thing of the past.
-> > The current code for s390 uses software tracking for dirty and referenced.
-> > There is one catch though, for ptes the software implementation covers
-> > dirty and referenced bit but for pmds only referenced bit is available.
-> > The reason is that there is no free bit left in the pmd entry for the
-> > software dirty bit.
-> 
-> Thanks for the quick reply.
-> 
-> >  
-> > > So, if there isn't any help from s390, I should introduce
-> > > HAVE_ARCH_THP_MADVFREE to disable MADV_FREE support of THP in s390 but
-> > > not want to introduce such new config.
-> > 
-> > Why is the dirty bit for pmds needed for the MADV_FREE implementation?
-> 
-> MADV_FREE semantic want it.
-> 
-> When madvise syscall is called, VM clears dirty bit of ptes of
-> the range. If memory pressure happens, VM checks dirty bit of
-> page table and if it found still "clean", it means it's a
-> "lazyfree pages" so VM could discard the page instead of swapping out.
-> Once there was store operation for the page before VM peek a page
-> to reclaim, dirty bit is set so VM can swap out the page instead of
-> discarding to keep up-to-date contents.
-> 
-> If it's hard on s390, maybe we could use just reference bit
-> instead of dirty bit to check recent access but it might change
-> semantic a bit with other OSes. :(
+try s/\<_\>/RETURN_IF_NEGATIVE/ and see how ugly it looks=E2=80=A6
 
-Just discussed this with Gerald and we found a trick how we can add
-a dirty bit to the pmd entries. That will be a non-trivial patch but
-we can do it. Until that time you could just define pmd_dirty to 
-always return true and the code should "work" in the sense that it
-does not break anything.
+>> Try replacing _ with any other name and see how bad it will look.
+>> I tried with MACRO_NAME and with 'if (err) goto' and with 'if (err) =
+return',
+>> before I converged on _ macro.
+>> I think it's a hidden gem of this patch.
+>
+> No, it is one of those things that 'seems like a good idea at the tim=
+e',
+> but causes grief much later on.
 
--- 
-blue skies,
-   Martin.
+Disagree. The _ macro in this code has been around for
+almost 2 years and survived all sorts of changes all over the verifier.
+The macro proved to be very effective in reducing code noise.
 
-"Reality continues to ruin my life." - Calvin.
+> Have you considered saving the error code into 'env' and making most =
+of
+> the functions return if an error is set?
+> Then the calling code need not check the result of every function cal=
+l.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+that won't work, since err =3D check1(); err =3D check2(); if (err) is =
+just wrong,
+then err |=3D check1(); err |=3D check2() is even worse.
+Even if it was possible, continuing verification and printing multiple
+errors is too confusing for users. While writing programs and
+dealing with verifier rejects we found that the first error is more tha=
+n
+enough to go back and analyze what's wrong with C source.
+Notice that verifier prints full verification trace. Without it it was =
+very
+hard to understand why particular register at some point has
+invalid type.
