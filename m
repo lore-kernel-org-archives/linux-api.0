@@ -1,109 +1,79 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v9] mm: support madvise(MADV_FREE)
-Date: Thu, 3 Jul 2014 17:37:29 +0900
-Message-ID: <20140703083729.GE2939@bbox>
-References: <1404174975-22019-1-git-send-email-minchan@kernel.org>
- <20140701145058.GA2084@node.dhcp.inet.fi>
- <20140703010318.GA2939@bbox>
- <20140703072954.GC2939@bbox>
- <20140703102901.322bfdb0@mschwide>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
+ (part 1)
+Date: Thu, 03 Jul 2014 11:12:33 +0200
+Message-ID: <53B51E81.4090700@redhat.com>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20140703102901.322bfdb0@mschwide>
-Sender: owner-linux-mm@kvack.org
-To: Martin Schwidefsky <schwidefsky@de.ibm.com>
-Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux390@de.ibm.com, Gerald Schaefer <gerald.schaefer@de.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <1404124096-21445-1-git-send-email-drysdale@google.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, linux-api@vger.kernel.org, qemu-devel <qemu-devel@nongnu.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+Il 30/06/2014 12:28, David Drysdale ha scritto:
+> Hi all,
+>
+> The last couple of versions of FreeBSD (9.x/10.x) have included the
+> Capsicum security framework [1], which allows security-aware
+> applications to sandbox themselves in a very fine-grained way.  For
+> example, OpenSSH now (>= 6.5) uses Capsicum in its FreeBSD version to
+> restrict sshd's credentials checking process, to reduce the chances of
+> credential leakage.
 
-On Thu, Jul 03, 2014 at 10:29:01AM +0200, Martin Schwidefsky wrote:
-> On Thu, 3 Jul 2014 16:29:54 +0900
-> Minchan Kim <minchan@kernel.org> wrote:
-> 
-> > Hello,
-> > 
-> > On Thu, Jul 03, 2014 at 10:03:19AM +0900, Minchan Kim wrote:
-> > > Hello,
-> > > 
-> > > On Tue, Jul 01, 2014 at 05:50:58PM +0300, Kirill A. Shutemov wrote:
-> > > > On Tue, Jul 01, 2014 at 09:36:15AM +0900, Minchan Kim wrote:
-> > > > > +	do {
-> > > > > +		/*
-> > > > > +		 * XXX: We can optimize with supporting Hugepage free
-> > > > > +		 * if the range covers.
-> > > > > +		 */
-> > > > > +		next = pmd_addr_end(addr, end);
-> > > > > +		if (pmd_trans_huge(*pmd))
-> > > > > +			split_huge_page_pmd(vma, addr, pmd);
-> > > > 
-> > > > Could you implement proper THP support before upstreaming the feature?
-> > > > It shouldn't be a big deal.
-> > > 
-> > > Okay, Hope to review.
-> > > 
-> > > Thanks for the feedback!
-> > > 
-> > 
-> > I tried to implement it but had a issue.
-> > 
-> > I need pmd_mkold, pmd_mkclean for MADV_FREE operation and pmd_dirty for
-> > page_referenced. When I investigate all of arches supported THP,
-> > it's not a big deal but s390 is not sure to me who has no idea of
-> > soft tracking of s390 by storage key instead of page table information.
-> > Cced s390 maintainer. Hope to help.
-> 
-> Storage key for dirty and referenced tracking is a thing of the past.
-> The current code for s390 uses software tracking for dirty and referenced.
-> There is one catch though, for ptes the software implementation covers
-> dirty and referenced bit but for pmds only referenced bit is available.
-> The reason is that there is no free bit left in the pmd entry for the
-> software dirty bit.
+Hi David,
 
-Thanks for the quick reply.
+we've had similar goals in QEMU.  QEMU can be used as a virtual machine 
+monitor from the command line, but it also has an API that lets a 
+management tool drive QEMU via AF_UNIX sockets.  Long term, we would 
+like to have a restricted mode for QEMU where all file descriptors are 
+obtained via SCM_RIGHTS or /dev/fd, and syscalls can be locked down.
 
->  
-> > So, if there isn't any help from s390, I should introduce
-> > HAVE_ARCH_THP_MADVFREE to disable MADV_FREE support of THP in s390 but
-> > not want to introduce such new config.
-> 
-> Why is the dirty bit for pmds needed for the MADV_FREE implementation?
+Currently we do use seccomp v2 BPF filters, but unfortunately this 
+didn't help very much.  QEMU supports hotplugging hence the filter must 
+whitelist anything that _might_ be used in the future, which is 
+generally... too much.
 
-MADV_FREE semantic want it.
+Something like Capsicum would be really nice because it attaches 
+capabilities to file descriptors.  However, I wonder however how 
+extensible Capsicum could be, and I am worried about the proliferation 
+of capabilities that its design naturally leads to.
 
-When madvise syscall is called, VM clears dirty bit of ptes of
-the range. If memory pressure happens, VM checks dirty bit of
-page table and if it found still "clean", it means it's a
-"lazyfree pages" so VM could discard the page instead of swapping out.
-Once there was store operation for the page before VM peek a page
-to reclaim, dirty bit is set so VM can swap out the page instead of
-discarding to keep up-to-date contents.
+Given Linux's previous experience with BPF filters, what do you think 
+about attaching specific BPF programs to file descriptors?  Then 
+whenever a syscall is run that affects a file descriptor, the BPF 
+program for the file descriptor (attached to a struct file* as in 
+Capsicum) would run in addition to the process-wide filter.
 
-If it's hard on s390, maybe we could use just reference bit
-instead of dirty bit to check recent access but it might change
-semantic a bit with other OSes. :(
+An equivalent of PR_SET_NO_NEW_PRIVS can also be added to file 
+descriptors, so that a program that doesn't lock down syscalls can still 
+lock down the operations (including fcntls and ioctls) on specific file 
+descriptors.
 
-> 
-> -- 
-> blue skies,
->    Martin.
-> 
-> "Reality continues to ruin my life." - Calvin.
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Converting FreeBSD capabilities to BPF programs can be easily 
+implemented in userspace.
 
--- 
-Kind regards,
-Minchan Kim
+>   [Capsicum also includes 'capability mode', which locks down the
+>   available syscalls so the rights restrictions can't just be bypassed
+>   by opening new file descriptors; I'll describe that separately later.]
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+This can also be implemented in userspace via seccomp and 
+PR_SET_NO_NEW_PRIVS.
+
+>   [Policing the rights checks anywhere else, for example at the system
+>   call boundary, isn't a good idea because it opens up the possibility
+>   of time-of-check/time-of-use (TOCTOU) attacks [2] where FDs are
+>   changed (as openat/close/dup2 are allowed in capability mode) between
+>   the 'check' at syscall entry and the 'use' at fget() invocation.]
+
+In the case of BPF filters, I wonder if you could stash the BPF 
+"environment" somewhere and then use it at fget() invocation. 
+Alternatively, it can be reconstructed at fget() time, similar to your 
+introduction of fgetr().
+
+Thanks,
+
+Paolo
