@@ -1,77 +1,34 @@
-From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3 0/6] charger/mfd: max14577: Add support for MAX77836
-Date: Fri, 04 Jul 2014 12:12:39 +0200
-Message-ID: <1404468765-10818-1-git-send-email-k.kozlowski@samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v2 2/4] mm: introduce fincore()
+Date: Fri, 4 Jul 2014 03:12:30 -0700
+Message-ID: <20140704101230.GA24688@infradead.org>
+References: <1404424335-30128-1-git-send-email-n-horiguchi@ah.jp.nec.com>
+ <1404424335-30128-3-git-send-email-n-horiguchi@ah.jp.nec.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1404424335-30128-3-git-send-email-n-horiguchi@ah.jp.nec.com>
+Sender: owner-linux-mm@kvack.org
+To: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On Thu, Jul 03, 2014 at 05:52:13PM -0400, Naoya Horiguchi wrote:
+> This patch provides a new system call fincore(2), which provides mincore()-
+> like information, i.e. page residency of a given file. But unlike mincore(),
+> fincore() has a mode flag which allows us to extract detailed information
+> about page cache like pfn and page flag. This kind of information is very
+> helpful, for example when applications want to know the file cache status
+> to control the IO on their own way.
 
+It's still a nasty multiplexer for multiple different reporting formats
+in a single system call.  How about your really just do a fincore that
+mirrors mincore instead of piggybacking exports of various internal
+flags (tags and page flags onto it.
 
-This is third version of patches adding support for MAX77836
-device to the max14577 drivers. The first part of patches (main MFD,
-extcon and regulator drivers) was merged already.
-
-The patches 1, 2 and 3 depend on each other so they should be
-pulled at once. Patches 4, 5 and 6 can be applied independently.
-
-This patchset was already reviewed by some of the maintainers during
-previous submissions.
-
-I only need acks from power tree (patches: 1, 3, 4, 6).
-
-
-Changes since v2
-================
-1. charger: Use sysfs instead of DTS for setting the fast charge timer.
-   The charger driver now selects the CONFIG_SYSFS and exports
-   a DEVICE_ATTR. (suggested by Mark Rutland)
-2. Add patch 6 with documentation of exported sysfs entry for fast
-   charge timer.
-3. charger 3/6: Add missing 'break' in switch parsing valid values
-   for fast charge timer.
-
-Changes since v1
-================
-1. charger 3/5: Add an error message for each unsuccessful parse of DT
-   property (suggested by Mark Rutland).
-2. charger 3/5: Use 'u32' type for storing values from DT (suggested
-   by Mark Rutland).
-3. charger 3/5: Remove an error message for memory allocation failure.
-
-
-The patchset (first and second part of the MAX77836 drivers) has been
-on the lists since January. Changelog for the first part of drivers:
-https://www.mail-archive.com/linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg628696.html
-
-
-Best regards,
-Krzysztof Kozlowski
-
-Krzysztof Kozlowski (6):
-  charger: max14577: Add support for MAX77836 charger
-  regulator/mfd: max14577: Export symbols for calculating charger
-    current
-  charger: max14577: Configure battery-dependent settings from DTS and
-    sysfs
-  power: max17040: Add ID for MAX77836 Fuel Gauge block
-  devicetree: mfd: max14577: Add device tree bindings document
-  Documentation: charger: max14577: Document exported sysfs entry
-
- Documentation/ABI/testing/sysfs-class-power        |  14 +
- Documentation/devicetree/bindings/mfd/max14577.txt | 146 ++++++++
- drivers/mfd/max14577.c                             | 100 +++++-
- drivers/power/Kconfig                              |   5 +-
- drivers/power/max14577_charger.c                   | 370 +++++++++++++++++++--
- drivers/power/max17040_battery.c                   |   1 +
- drivers/regulator/max14577.c                       |  80 +----
- include/linux/mfd/max14577-private.h               |  95 ++++--
- include/linux/mfd/max14577.h                       |  30 ++
- 9 files changed, 703 insertions(+), 138 deletions(-)
- create mode 100644 Documentation/devicetree/bindings/mfd/max14577.txt
-
--- 
-1.9.1
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
