@@ -1,122 +1,133 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v9] mm: support madvise(MADV_FREE)
-Date: Fri, 4 Jul 2014 15:41:02 +0900
-Message-ID: <20140704064102.GH2939@bbox>
-References: <1404174975-22019-1-git-send-email-minchan@kernel.org>
- <20140701145058.GA2084@node.dhcp.inet.fi>
- <20140703010318.GA2939@bbox>
- <20140703072954.GC2939@bbox>
- <20140703102901.322bfdb0@mschwide>
- <20140703083729.GE2939@bbox>
- <20140703180100.5f24a139@mschwide>
+From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
+ (part 1)
+Date: Fri, 04 Jul 2014 09:03:33 +0200
+Message-ID: <53B651C5.80602@redhat.com>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com> <53B51E81.4090700@redhat.com> <20140703183927.GA1629@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140703180100.5f24a139@mschwide>
+In-Reply-To: <20140703183927.GA1629-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux390-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, qemu-devel <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
 
-On Thu, Jul 03, 2014 at 06:01:00PM +0200, Martin Schwidefsky wrote:
-> On Thu, 3 Jul 2014 17:37:29 +0900
-> Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> 
-> > Hello,
-> > 
-> > On Thu, Jul 03, 2014 at 10:29:01AM +0200, Martin Schwidefsky wrote:
-> > > On Thu, 3 Jul 2014 16:29:54 +0900
-> > > Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> > > 
-> > > > Hello,
-> > > > 
-> > > > On Thu, Jul 03, 2014 at 10:03:19AM +0900, Minchan Kim wrote:
-> > > > > Hello,
-> > > > > 
-> > > > > On Tue, Jul 01, 2014 at 05:50:58PM +0300, Kirill A. Shutemov wrote:
-> > > > > > On Tue, Jul 01, 2014 at 09:36:15AM +0900, Minchan Kim wrote:
-> > > > > > > +	do {
-> > > > > > > +		/*
-> > > > > > > +		 * XXX: We can optimize with supporting Hugepage free
-> > > > > > > +		 * if the range covers.
-> > > > > > > +		 */
-> > > > > > > +		next = pmd_addr_end(addr, end);
-> > > > > > > +		if (pmd_trans_huge(*pmd))
-> > > > > > > +			split_huge_page_pmd(vma, addr, pmd);
-> > > > > > 
-> > > > > > Could you implement proper THP support before upstreaming the feature?
-> > > > > > It shouldn't be a big deal.
-> > > > > 
-> > > > > Okay, Hope to review.
-> > > > > 
-> > > > > Thanks for the feedback!
-> > > > > 
-> > > > 
-> > > > I tried to implement it but had a issue.
-> > > > 
-> > > > I need pmd_mkold, pmd_mkclean for MADV_FREE operation and pmd_dirty for
-> > > > page_referenced. When I investigate all of arches supported THP,
-> > > > it's not a big deal but s390 is not sure to me who has no idea of
-> > > > soft tracking of s390 by storage key instead of page table information.
-> > > > Cced s390 maintainer. Hope to help.
-> > > 
-> > > Storage key for dirty and referenced tracking is a thing of the past.
-> > > The current code for s390 uses software tracking for dirty and referenced.
-> > > There is one catch though, for ptes the software implementation covers
-> > > dirty and referenced bit but for pmds only referenced bit is available.
-> > > The reason is that there is no free bit left in the pmd entry for the
-> > > software dirty bit.
-> > 
-> > Thanks for the quick reply.
-> > 
-> > >  
-> > > > So, if there isn't any help from s390, I should introduce
-> > > > HAVE_ARCH_THP_MADVFREE to disable MADV_FREE support of THP in s390 but
-> > > > not want to introduce such new config.
-> > > 
-> > > Why is the dirty bit for pmds needed for the MADV_FREE implementation?
-> > 
-> > MADV_FREE semantic want it.
-> > 
-> > When madvise syscall is called, VM clears dirty bit of ptes of
-> > the range. If memory pressure happens, VM checks dirty bit of
-> > page table and if it found still "clean", it means it's a
-> > "lazyfree pages" so VM could discard the page instead of swapping out.
-> > Once there was store operation for the page before VM peek a page
-> > to reclaim, dirty bit is set so VM can swap out the page instead of
-> > discarding to keep up-to-date contents.
-> > 
-> > If it's hard on s390, maybe we could use just reference bit
-> > instead of dirty bit to check recent access but it might change
-> > semantic a bit with other OSes. :(
-> 
-> Just discussed this with Gerald and we found a trick how we can add
-> a dirty bit to the pmd entries. That will be a non-trivial patch but
-> we can do it. Until that time you could just define pmd_dirty to 
-> always return true and the code should "work" in the sense that it
-> does not break anything.
+Il 03/07/2014 20:39, David Drysdale ha scritto:
+> On Thu, Jul 03, 2014 at 11:12:33AM +0200, Paolo Bonzini wrote:
+>> Given Linux's previous experience with BPF filters, what do you
+>> think about attaching specific BPF programs to file descriptors?
+>> Then whenever a syscall is run that affects a file descriptor, the
+>> BPF program for the file descriptor (attached to a struct file* as
+>> in Capsicum) would run in addition to the process-wide filter.
+>
+> That sounds kind of clever, but also kind of complicated.
+>
+> Off the top of my head, one particular problem is that not all
+> fd->struct file conversions in the kernel are completely specified
+> by an enclosing syscall and the explicit values of its parameters.
+>
+> For example, the actual contents of the arguments to io_submit(2)
+> aren't visible to a seccomp-bpf program (as it can't read the __user
+> memory for the iocb structures), and so it can't distinguish a
+> read from a write.
 
-Will work.
-I will post a patch when I finish the work.
-Hope to review.
-Thanks for your advise!
+I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
+/O_RDWR.   You could do it by running the file descriptor's seccomp-bpf 
+program once per iocb with synthesized syscall numbers and argument 
+vectors.
 
-> 
-> -- 
-> blue skies,
->    Martin.
-> 
-> "Reality continues to ruin my life." - Calvin.
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+BTW, there's one thing I'm not sure I understand (because my knowledge 
+of VFS is really only cursory).  Are the capabilities associated to the 
+file _descriptor_ (a la F_GETFD/SETFD) or _description_ 
+(F_GETFL/SETFL)?!?
 
--- 
-Kind regards,
-Minchan Kim
+If it is the former, there is some value in read/write capabilities 
+because you could for example block a child process from reading an 
+eventfd and simulate the two file descriptors returned by pipe(2).  But 
+if it is the latter, it looks like an important usability problem in 
+the Capsicum model.  (Granted, it's just about usability---in the end 
+it does exactly what it's meant and documented to do).
+
+> Also, there could potentially be some odd interactions with file
+> descriptors passed between processes, if the BPF program relies
+> on assumptions about the environment of the original process.  For
+> example, what happens if an x86_64 process passes a filter-attached
+> FD to an ia32 process?  Given that the syscall numbers are
+> arch-specific, I guess that means the filter program would have
+> to include arch-specific branches for any possible variant.
+
+This is the same for using seccompv2 to limit child processes, no?  So 
+there may be a problem but it has to be solved anyway by libseccomp.
+
+> More generally, I suspect that keeping things simpler will end
+> up being more secure.  Capsicum was based on well-studied ideas
+> from the world of object capability-based security, and I'd be
+> nervous about adding complications that take us further away from
+> that.
+
+True.
+
+> That mapping would also need be kept closely in sync with the kernel
+> and other system libraries -- if a new syscall is added and libc (or
+> some other library) started using it, the equivalent BPF chunks would
+> need to be updated to cope.
+
+Again, this is the same problem that has to be solved for process-wide 
+seccompv2.
+
+>>>  [Capsicum also includes 'capability mode', which locks down the
+>>>  available syscalls so the rights restrictions can't just be bypassed
+>>>  by opening new file descriptors; I'll describe that separately later.]
+>>
+>> This can also be implemented in userspace via seccomp and
+>> PR_SET_NO_NEW_PRIVS.
+>
+> Well, mostly (and in fact I've got an attempt to do exactly that at
+> https://github.com/google/capsicum-test/blob/dev/linux-bpf-capmode.c).
+>
+> [..] there's one awkward syscall case.  In capability mode we'd like
+> to prevent processes from sending signals with kill(2)/tgkill(2)
+> to other processes, but they should still be able to send themselves
+> signals.  For example, abort(3) generates:
+>   tgkill(gettid(), gettid(), SIGABRT)
+>
+> Only allowing kill(self) is hard to encode in a seccomp-bpf program, at
+> least in a way that survives forking.
+
+I guess the thread id could be added as a special seccomp-bpf argument 
+(ancillary datum?).
+
+> Finally, capability mode also turns on strict-relative lookups
+> process-wide; in other words, every openat(dfd, ...) operation
+> acts as though it has the O_BENEATH_ONLY flag set, regardless of
+> whether the dfd is a Capsicum capability.  I can't see a way to
+> do that with a BPF program (although it would be possible to add
+> a filter that polices the requirement to include O_BENEATH_ONLY
+> rather than implicitly adding it).
+
+That can be a new prctl (one that PR_SET_NO_NEW_PRIVS would lock up). 
+It seems useful independent of Capsicum, and the Linux APIs tend to be 
+fine-grained more often than coarse-grained.
+
+>>>  [Policing the rights checks anywhere else, for example at the system
+>>>  call boundary, isn't a good idea because it opens up the possibility
+>>>  of time-of-check/time-of-use (TOCTOU) attacks [2] where FDs are
+>>>  changed (as openat/close/dup2 are allowed in capability mode) between
+>>>  the 'check' at syscall entry and the 'use' at fget() invocation.]
+>>
+>> In the case of BPF filters, I wonder if you could stash the BPF
+>> "environment" somewhere and then use it at fget() invocation.
+>> Alternatively, it can be reconstructed at fget() time, similar to
+>> your introduction of fgetr().
+>
+> Stashing something at syscall entry to be referred to later always
+> makes me worry about TOCTOU vulnerabilities, but the details might
+> be OK in this case (given that no check occurs at syscall entry)...
+
+Yeah, that was pretty much the idea.  But I was cautious enough to 
+label it with "I wonder"...
+
+Paolo
