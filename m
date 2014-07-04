@@ -1,133 +1,77 @@
-From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
- (part 1)
-Date: Fri, 04 Jul 2014 09:03:33 +0200
-Message-ID: <53B651C5.80602@redhat.com>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com> <53B51E81.4090700@redhat.com> <20140703183927.GA1629@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v3 0/6] charger/mfd: max14577: Add support for MAX77836
+Date: Fri, 04 Jul 2014 12:12:39 +0200
+Message-ID: <1404468765-10818-1-git-send-email-k.kozlowski@samsung.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140703183927.GA1629-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, qemu-devel <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
+To: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi,
 
-Il 03/07/2014 20:39, David Drysdale ha scritto:
-> On Thu, Jul 03, 2014 at 11:12:33AM +0200, Paolo Bonzini wrote:
->> Given Linux's previous experience with BPF filters, what do you
->> think about attaching specific BPF programs to file descriptors?
->> Then whenever a syscall is run that affects a file descriptor, the
->> BPF program for the file descriptor (attached to a struct file* as
->> in Capsicum) would run in addition to the process-wide filter.
->
-> That sounds kind of clever, but also kind of complicated.
->
-> Off the top of my head, one particular problem is that not all
-> fd->struct file conversions in the kernel are completely specified
-> by an enclosing syscall and the explicit values of its parameters.
->
-> For example, the actual contents of the arguments to io_submit(2)
-> aren't visible to a seccomp-bpf program (as it can't read the __user
-> memory for the iocb structures), and so it can't distinguish a
-> read from a write.
 
-I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
-/O_RDWR.   You could do it by running the file descriptor's seccomp-bpf 
-program once per iocb with synthesized syscall numbers and argument 
-vectors.
+This is third version of patches adding support for MAX77836
+device to the max14577 drivers. The first part of patches (main MFD,
+extcon and regulator drivers) was merged already.
 
-BTW, there's one thing I'm not sure I understand (because my knowledge 
-of VFS is really only cursory).  Are the capabilities associated to the 
-file _descriptor_ (a la F_GETFD/SETFD) or _description_ 
-(F_GETFL/SETFL)?!?
+The patches 1, 2 and 3 depend on each other so they should be
+pulled at once. Patches 4, 5 and 6 can be applied independently.
 
-If it is the former, there is some value in read/write capabilities 
-because you could for example block a child process from reading an 
-eventfd and simulate the two file descriptors returned by pipe(2).  But 
-if it is the latter, it looks like an important usability problem in 
-the Capsicum model.  (Granted, it's just about usability---in the end 
-it does exactly what it's meant and documented to do).
+This patchset was already reviewed by some of the maintainers during
+previous submissions.
 
-> Also, there could potentially be some odd interactions with file
-> descriptors passed between processes, if the BPF program relies
-> on assumptions about the environment of the original process.  For
-> example, what happens if an x86_64 process passes a filter-attached
-> FD to an ia32 process?  Given that the syscall numbers are
-> arch-specific, I guess that means the filter program would have
-> to include arch-specific branches for any possible variant.
+I only need acks from power tree (patches: 1, 3, 4, 6).
 
-This is the same for using seccompv2 to limit child processes, no?  So 
-there may be a problem but it has to be solved anyway by libseccomp.
 
-> More generally, I suspect that keeping things simpler will end
-> up being more secure.  Capsicum was based on well-studied ideas
-> from the world of object capability-based security, and I'd be
-> nervous about adding complications that take us further away from
-> that.
+Changes since v2
+================
+1. charger: Use sysfs instead of DTS for setting the fast charge timer.
+   The charger driver now selects the CONFIG_SYSFS and exports
+   a DEVICE_ATTR. (suggested by Mark Rutland)
+2. Add patch 6 with documentation of exported sysfs entry for fast
+   charge timer.
+3. charger 3/6: Add missing 'break' in switch parsing valid values
+   for fast charge timer.
 
-True.
+Changes since v1
+================
+1. charger 3/5: Add an error message for each unsuccessful parse of DT
+   property (suggested by Mark Rutland).
+2. charger 3/5: Use 'u32' type for storing values from DT (suggested
+   by Mark Rutland).
+3. charger 3/5: Remove an error message for memory allocation failure.
 
-> That mapping would also need be kept closely in sync with the kernel
-> and other system libraries -- if a new syscall is added and libc (or
-> some other library) started using it, the equivalent BPF chunks would
-> need to be updated to cope.
 
-Again, this is the same problem that has to be solved for process-wide 
-seccompv2.
+The patchset (first and second part of the MAX77836 drivers) has been
+on the lists since January. Changelog for the first part of drivers:
+https://www.mail-archive.com/linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg628696.html
 
->>>  [Capsicum also includes 'capability mode', which locks down the
->>>  available syscalls so the rights restrictions can't just be bypassed
->>>  by opening new file descriptors; I'll describe that separately later.]
->>
->> This can also be implemented in userspace via seccomp and
->> PR_SET_NO_NEW_PRIVS.
->
-> Well, mostly (and in fact I've got an attempt to do exactly that at
-> https://github.com/google/capsicum-test/blob/dev/linux-bpf-capmode.c).
->
-> [..] there's one awkward syscall case.  In capability mode we'd like
-> to prevent processes from sending signals with kill(2)/tgkill(2)
-> to other processes, but they should still be able to send themselves
-> signals.  For example, abort(3) generates:
->   tgkill(gettid(), gettid(), SIGABRT)
->
-> Only allowing kill(self) is hard to encode in a seccomp-bpf program, at
-> least in a way that survives forking.
 
-I guess the thread id could be added as a special seccomp-bpf argument 
-(ancillary datum?).
+Best regards,
+Krzysztof Kozlowski
 
-> Finally, capability mode also turns on strict-relative lookups
-> process-wide; in other words, every openat(dfd, ...) operation
-> acts as though it has the O_BENEATH_ONLY flag set, regardless of
-> whether the dfd is a Capsicum capability.  I can't see a way to
-> do that with a BPF program (although it would be possible to add
-> a filter that polices the requirement to include O_BENEATH_ONLY
-> rather than implicitly adding it).
+Krzysztof Kozlowski (6):
+  charger: max14577: Add support for MAX77836 charger
+  regulator/mfd: max14577: Export symbols for calculating charger
+    current
+  charger: max14577: Configure battery-dependent settings from DTS and
+    sysfs
+  power: max17040: Add ID for MAX77836 Fuel Gauge block
+  devicetree: mfd: max14577: Add device tree bindings document
+  Documentation: charger: max14577: Document exported sysfs entry
 
-That can be a new prctl (one that PR_SET_NO_NEW_PRIVS would lock up). 
-It seems useful independent of Capsicum, and the Linux APIs tend to be 
-fine-grained more often than coarse-grained.
+ Documentation/ABI/testing/sysfs-class-power        |  14 +
+ Documentation/devicetree/bindings/mfd/max14577.txt | 146 ++++++++
+ drivers/mfd/max14577.c                             | 100 +++++-
+ drivers/power/Kconfig                              |   5 +-
+ drivers/power/max14577_charger.c                   | 370 +++++++++++++++++++--
+ drivers/power/max17040_battery.c                   |   1 +
+ drivers/regulator/max14577.c                       |  80 +----
+ include/linux/mfd/max14577-private.h               |  95 ++++--
+ include/linux/mfd/max14577.h                       |  30 ++
+ 9 files changed, 703 insertions(+), 138 deletions(-)
+ create mode 100644 Documentation/devicetree/bindings/mfd/max14577.txt
 
->>>  [Policing the rights checks anywhere else, for example at the system
->>>  call boundary, isn't a good idea because it opens up the possibility
->>>  of time-of-check/time-of-use (TOCTOU) attacks [2] where FDs are
->>>  changed (as openat/close/dup2 are allowed in capability mode) between
->>>  the 'check' at syscall entry and the 'use' at fget() invocation.]
->>
->> In the case of BPF filters, I wonder if you could stash the BPF
->> "environment" somewhere and then use it at fget() invocation.
->> Alternatively, it can be reconstructed at fget() time, similar to
->> your introduction of fgetr().
->
-> Stashing something at syscall entry to be referred to later always
-> makes me worry about TOCTOU vulnerabilities, but the details might
-> be OK in this case (given that no check occurs at syscall entry)...
-
-Yeah, that was pretty much the idea.  But I was cautious enough to 
-label it with "I wonder"...
-
-Paolo
+-- 
+1.9.1
