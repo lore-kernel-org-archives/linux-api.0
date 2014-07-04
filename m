@@ -1,31 +1,59 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: Does it make sense to define a constant for openat and such that
- is guaranteed not to be used for special purposes later on?
-Date: Fri, 4 Jul 2014 10:20:40 -0700
-Message-ID: <CALCETrXVjUrbJwwu9OyphG56Nr6n0igvUzGCFdFJo23NiJoFOw@mail.gmail.com>
-References: <fb54be9c497f.53af14a5@langara.bc.ca> <CALCETrUp=UYKEnhN9qf2vYToCV7YsLfL3+UGS-p9aY=_zMQMJA@mail.gmail.com>
- <fb54f255442.53b36c26@langara.bc.ca>
+From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Subject: Re: [PATCH v2 2/4] mm: introduce fincore()
+Date: Fri, 4 Jul 2014 12:31:07 -0400
+Message-ID: <20140704163107.GA17877@nhori>
+References: <1404424335-30128-1-git-send-email-n-horiguchi@ah.jp.nec.com>
+ <1404424335-30128-3-git-send-email-n-horiguchi@ah.jp.nec.com>
+ <20140704101230.GA24688@infradead.org>
+ <5816450.BPnLjGgtl5@obelix>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <fb54f255442.53b36c26-BTv7Ps/Sm75C8prJL3GQQw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <5816450.BPnLjGgtl5@obelix>
+Sender: owner-linux-mm@kvack.org
+To: =?iso-8859-1?Q?C=E9dric?= Villemain <cedric@2ndquadrant.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Jul 1, 2014 7:19 PM, "Steven Stewart-Gallus"
-<sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org> wrote:
->
-> > I like this.  Want to submit a patch?
-> >
-> > --Andy
-> >
->
-> Sure I'd love to patch the documentation. So I can just submit a man pages patch
-> for this and I don't have to coordinate with GLibc (or other liibcs like Musl)
-> for this or modify any in kernel tree documentation?
+On Fri, Jul 04, 2014 at 05:15:59PM +0200, C=E9dric Villemain wrote:
+> Le vendredi 4 juillet 2014 03:12:30 Christoph Hellwig a =E9crit :
+> > On Thu, Jul 03, 2014 at 05:52:13PM -0400, Naoya Horiguchi wrote:
+> > > This patch provides a new system call fincore(2), which provides
+> > > mincore()- like information, i.e. page residency of a given file.
+> > > But unlike mincore(), fincore() has a mode flag which allows us to
+> > > extract detailed information about page cache like pfn and page
+> > > flag. This kind of information is very helpful, for example when
+> > > applications want to know the file cache status to control the IO
+> > > on their own way.
+> >=20
+> > It's still a nasty multiplexer for multiple different reporting
+> > formats in a single system call.  How about your really just do a
+> > fincore that mirrors mincore instead of piggybacking exports of
+> > various internal flags (tags and page flags onto it.
 
-I'd suggest adding it to whatever file defines AT_FDCWD.
+We can do it in mincore-compatible way with FINCORE_BMAP mode.
+If you choose it, you don't care about any details about other modes.
+I don't make no default mode, but if we have a good reason, I'm OK
+to set FINCORE_BMAP as default mode.
 
---Andy
+> The fincore =E0 la mincore got some arguments against it too. It seems =
+this=20
+> implementations try (I've not tested nor have a close look yet) to=20
+> answer both concerns : have details and also possible to have=20
+> aggregation function not too expansive.
+
+Correct, that's the motivation of this non-trivial interface.
+This could finally obsoletes messy /proc/kpage{flags,count} and/or
+/proc/pid/pagemap kind of things, and we will not have to collect
+information over all these interfaces (so that's less expensive.)
+
+Thanks,
+Naoya Horiguchi
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
