@@ -1,59 +1,48 @@
-From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-Subject: Re: [PATCH v2 2/4] mm: introduce fincore()
-Date: Fri, 4 Jul 2014 12:31:07 -0400
-Message-ID: <20140704163107.GA17877@nhori>
-References: <1404424335-30128-1-git-send-email-n-horiguchi@ah.jp.nec.com>
- <1404424335-30128-3-git-send-email-n-horiguchi@ah.jp.nec.com>
- <20140704101230.GA24688@infradead.org>
- <5816450.BPnLjGgtl5@obelix>
+From: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
+Subject: [PATCH 1/1] include/uapi: Define AT_FDNODIR constant as future
+ guarantee
+Date: Sat, 05 Jul 2014 19:51:19 +0000 (GMT)
+Message-ID: <fb469d6277ef.53b85737@langara.bc.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <5816450.BPnLjGgtl5@obelix>
-Sender: owner-linux-mm@kvack.org
-To: =?iso-8859-1?Q?C=E9dric?= Villemain <cedric@2ndquadrant.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-disposition: inline
+Content-language: en
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 04, 2014 at 05:15:59PM +0200, C=E9dric Villemain wrote:
-> Le vendredi 4 juillet 2014 03:12:30 Christoph Hellwig a =E9crit :
-> > On Thu, Jul 03, 2014 at 05:52:13PM -0400, Naoya Horiguchi wrote:
-> > > This patch provides a new system call fincore(2), which provides
-> > > mincore()- like information, i.e. page residency of a given file.
-> > > But unlike mincore(), fincore() has a mode flag which allows us to
-> > > extract detailed information about page cache like pfn and page
-> > > flag. This kind of information is very helpful, for example when
-> > > applications want to know the file cache status to control the IO
-> > > on their own way.
-> >=20
-> > It's still a nasty multiplexer for multiple different reporting
-> > formats in a single system call.  How about your really just do a
-> > fincore that mirrors mincore instead of piggybacking exports of
-> > various internal flags (tags and page flags onto it.
+From: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org
 
-We can do it in mincore-compatible way with FINCORE_BMAP mode.
-If you choose it, you don't care about any details about other modes.
-I don't make no default mode, but if we have a good reason, I'm OK
-to set FINCORE_BMAP as default mode.
+This constant means that in the far future it might be possible to
+define other AT_FD* constants.
 
-> The fincore =E0 la mincore got some arguments against it too. It seems =
-this=20
-> implementations try (I've not tested nor have a close look yet) to=20
-> answer both concerns : have details and also possible to have=20
-> aggregation function not too expansive.
+Signed-off-by: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
+---
 
-Correct, that's the motivation of this non-trivial interface.
-This could finally obsoletes messy /proc/kpage{flags,count} and/or
-/proc/pid/pagemap kind of things, and we will not have to collect
-information over all these interfaces (so that's less expensive.)
+This is my first kernel patch but this is really trivial so I hope I'm doing
+this right.
 
-Thanks,
-Naoya Horiguchi
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+index 074b886..92223f0 100644
+--- a/include/uapi/linux/fcntl.h
++++ b/include/uapi/linux/fcntl.h
+@@ -38,9 +38,15 @@
+ #define DN_ATTRIB	0x00000020	/* File changed attibutes */
+ #define DN_MULTISHOT	0x80000000	/* Don't remove notifier */
+ 
++#define AT_FDNODDIR		-1      /* Special value used to indicate
++					   openat should not use any directory.
++					   Currently, other values work for this
++					   but in the future that might
++					   change. */
+ #define AT_FDCWD		-100    /* Special value used to indicate
+-                                           openat should use the current
+-                                           working directory. */
++					   openat should use the current
++					   working directory. */
++
+ #define AT_SYMLINK_NOFOLLOW	0x100   /* Do not follow symbolic links.  */
+ #define AT_REMOVEDIR		0x200   /* Remove directory instead of
+                                            unlinking file.  */
