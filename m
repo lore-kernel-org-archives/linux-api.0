@@ -1,81 +1,82 @@
-From: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
- (part 1)
-Date: Mon, 7 Jul 2014 15:33:52 -0700
-Message-ID: <CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ@mail.gmail.com>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
-	<53B51E81.4090700@redhat.com>
-	<20140703183927.GA1629@google.com>
-	<53B651C5.80602@redhat.com>
-	<CAHse=S83APPfnEwO1fQbV_tNd=9zsAsZr42KbYM_He-c3C3P6A@mail.gmail.com>
-	<53BA9094.9080401@redhat.com>
+From: Dave Hansen <dave.hansen@intel.com>
+Subject: Re: [PATCH v3 3/3] man2/fincore.2: document general description about
+ fincore(2)
+Date: Mon, 07 Jul 2014 15:34:06 -0700
+Message-ID: <53BB205E.5080801@intel.com>
+References: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com> <1404756006-23794-4-git-send-email-n-horiguchi@ah.jp.nec.com> <53BAF01C.8010700@intel.com> <20140707205956.GB5031@nhori.bos.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <53BA9094.9080401-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, qemu-devel <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20140707205956.GB5031@nhori.bos.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 7, 2014 at 5:20 AM, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Il 07/07/2014 12:29, David Drysdale ha scritto:
->
->>> I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
->>> /O_RDWR.   You could do it by running the file descriptor's seccomp-bpf
->>> program once per iocb with synthesized syscall numbers and argument
->>> vectors.
+On 07/07/2014 01:59 PM, Naoya Horiguchi wrote:
+> On Mon, Jul 07, 2014 at 12:08:12PM -0700, Dave Hansen wrote:
+>> On 07/07/2014 11:00 AM, Naoya Horiguchi wrote:
+>>> +.SH RETURN VALUE
+>>> +On success,
+>>> +.BR fincore ()
+>>> +returns 0.
+>>> +On error, \-1 is returned, and
+>>> +.I errno
+>>> +is set appropriately.
 >>
+>> Is this accurate?  From reading the syscall itself, it looked like it
+>> did this:
 >>
->> Right, but generating the equivalent seccomp input environment for an
->> equivalent single-fd syscall is going to be subtle and complex (which
->> are worrying words to mention in a security context).  And how many
->> other syscalls are going to need similar special-case processing?
->> (poll? select? send[m]msg? ...)
->
->
-> Yeah, the difficult part is getting the right balance between:
->
-> 1) limitations due to seccomp's impossibility to chase pointers (which is
-> not something that can be lifted, as it's required for correctness)
+>>> + * Return value is the number of pages whose data is stored in fc->buffer.
+>>> + */
+>>> +static long do_fincore(struct fincore_control *fc, int nr_pages)
+>>
+>> and:
+>>
+>>> +SYSCALL_DEFINE6(fincore, int, fd, loff_t, start, long, nr_pages,
+>> ...
+>>> +	while (fc.nr_pages > 0) {
+>>> +		memset(fc.buffer, 0, fc.buffer_size);
+>>> +		ret = do_fincore(&fc, min(step, fc.nr_pages));
+>>> +		/* Reached the end of the file */
+>>> +		if (ret == 0)
+>>> +			break;
+>>> +		if (ret < 0)
+>>> +			break;
+>> ...
+>>> +	}
+>> ...
+>>> +	return ret;
+>>> +}
+>>
+>> Which seems that for a given loop of do_fincore(), you might end up
+>> returning the result of that *single* iteration of do_fincore() instead
+>> of the aggregate of the entire syscall.
+>>
+>> So, it can return <0 on failure, 0 on success, or also an essentially
+>> random >0 number on success too.
+> 
+> We don't break this while loop if do_fincore() returned a positive value
+> unless copy_to_user() fails. And in that case ret is set to -EFAULT.
+> So I think sys_fincore() never returns a positive value.
 
-btw once seccomp moves to eBPF it will be able to 'chase pointers',
-since pointer walking will be possible via bpf_load_pointer() function call,
-which is a wrapper of:
-  probe_kernel_read(&ptr, unsafe_ptr, sizeof(void *));
-  return ptr;
-Not sure whether it helps this case or not. Just fyi.
+OK, that makes sense as I'm reading it again.
 
-> 2) subtlety and complexity of the resulting code.
->
-> The problem stems when you have a single a single syscall operating on
-> multiple file descriptors.  So for example among the cases you mention poll
-> and select are problematic; sendm?msg are not.  They would be if Capsicum
-> had a capability for SCM_RIGHTS file descriptor passing, but I cannot find
-> it.
->
-> But then you also have to strike the right balance between a complete
-> solution and an overengineered one.
->
-> For example, even though poll and select are problematic, I wonder what
-> would really the point be in blocking them; poll/select are level-triggered,
-> and calling them should be idempotent as far as the file descriptor is
-> concerned.  If you want to prevent a process/thread from issuing blocking
-> system calls, but you'd do that with a per-process filter, not with
-> per-file-descriptor filters or capabilities.
->
->
->> Capsicum capabilities are associated with the file descriptor (a la
->> F_GETFD), not the open file itself -- different FDs with different
->> associated rights can map to the same underlying open file.
->
->
-> Good to know, thanks.  I suppose you have testcases that cover this.
->
-> Paolo
-> --
->
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+>> Why not just use the return value for something useful instead of
+>> hacking in the extras->nr_entries stuff?
+> 
+> Hmm, I got the opposite complaint previously, where we shouldn't
+> interpret the return value differently depending on the flag.
+> And I'd like to keep the extra argument for future extensibility.
+> For example, if we want to collect pages only with a specific
+> set of page flags, this extra argument will be necessary.
+
+Couldn't it simply be the number of elements that it wrote in to the
+buffer, or even the number of bytes?
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
