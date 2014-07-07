@@ -1,64 +1,158 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v10 5/7] s390: add pmd_[dirty|mkclean] for THP
-Date: Mon,  7 Jul 2014 09:53:56 +0900
-Message-ID: <1404694438-10272-6-git-send-email-minchan@kernel.org>
+Subject: [PATCH v10 7/7] mm: Don't split THP page when syscall is called
+Date: Mon,  7 Jul 2014 09:53:58 +0900
+Message-ID: <1404694438-10272-8-git-send-email-minchan@kernel.org>
 References: <1404694438-10272-1-git-send-email-minchan@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1404694438-10272-1-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Gerald Schaefer <gerald.schaefer@de.ibm.com>, Dominik Dingel <dingel@linux.vnet.ibm.com>, Christian Borntraeger <borntraeger@de.ibm.com>, linux-s390@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
-overwrite of the contents since MADV_FREE syscall is called for
-THP page but for s390 pmds only referenced bit is available
-because there is no free bit left in the pmd entry for the
-software dirty bit so this patch adds dumb pmd_dirty which
-returns always true by suggesting by Martin.
+We don't need to split THP page when MADV_FREE syscall is
+called. It could be done when VM decide really frees it so
+we could reduce the number of THP split.
 
-They finally find a solution in future.
-http://marc.info/?l=linux-api&m=140440328820808&w=2
-
-Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: Gerald Schaefer <gerald.schaefer@de.ibm.com>
-Cc: Dominik Dingel <dingel@linux.vnet.ibm.com>
-Cc: Christian Borntraeger <borntraeger@de.ibm.com>
-Cc: linux-s390@vger.kernel.org
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- arch/s390/include/asm/pgtable.h | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ include/linux/huge_mm.h |  3 +++
+ mm/huge_memory.c        | 25 +++++++++++++++++++++++++
+ mm/madvise.c            | 19 +++++++++++++++++--
+ mm/rmap.c               |  4 ++++
+ mm/vmscan.c             | 24 ++++++++++++++++--------
+ 5 files changed, 65 insertions(+), 10 deletions(-)
 
-diff --git a/arch/s390/include/asm/pgtable.h b/arch/s390/include/asm/pgtable.h
-index fcba5e03839f..9862fcb0592b 100644
---- a/arch/s390/include/asm/pgtable.h
-+++ b/arch/s390/include/asm/pgtable.h
-@@ -1586,6 +1586,18 @@ static inline pmd_t pmd_mkdirty(pmd_t pmd)
- 	return pmd;
+diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
+index 63579cb8d3dc..f0d37238cf8f 100644
+--- a/include/linux/huge_mm.h
++++ b/include/linux/huge_mm.h
+@@ -19,6 +19,9 @@ extern struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 					  unsigned long addr,
+ 					  pmd_t *pmd,
+ 					  unsigned int flags);
++extern int madvise_free_pmd(struct mmu_gather *tlb,
++			struct vm_area_struct *vma,
++			pmd_t *pmd, unsigned long addr);
+ extern int zap_huge_pmd(struct mmu_gather *tlb,
+ 			struct vm_area_struct *vma,
+ 			pmd_t *pmd, unsigned long addr);
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 5d562a9fe931..2a70069dcfc0 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1384,6 +1384,31 @@ out:
+ 	return 0;
  }
  
-+static inline int pmd_dirty(pmd_t pmd)
++int madvise_free_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
++		 pmd_t *pmd, unsigned long addr)
 +{
-+	/* No dirty bit in the segment table entry */
-+	return 1;
++	spinlock_t *ptl;
++	int ret = 0;
++
++	if (__pmd_trans_huge_lock(pmd, vma, &ptl) == 1) {
++		pmd_t orig_pmd;
++		struct mm_struct *mm = vma->vm_mm;
++
++		/* No hugepage in swapcache */
++		VM_BUG_ON(PageSwapCache(pmd_page(orig_pmd)));
++
++		orig_pmd = pmdp_get_and_clear(tlb->mm, addr, pmd);
++		orig_pmd = pmd_mkold(orig_pmd);
++		orig_pmd = pmd_mkclean(orig_pmd);
++
++		set_pmd_at(mm, addr, pmd, orig_pmd);
++		tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
++		spin_unlock(ptl);
++		ret = 1;
++	}
++	return ret;
 +}
 +
-+static inline pmd_t pmd_mkclean(pmd_t pmd)
-+{
-+	/* No dirty bit in the segment table entry */
-+	return pmd;
-+}
+ int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
+ 		 pmd_t *pmd, unsigned long addr)
+ {
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 372a25a8ea82..3c99919ee094 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -320,8 +320,23 @@ static inline unsigned long madvise_free_pmd_range(struct mmu_gather *tlb,
+ 		 * if the range covers.
+ 		 */
+ 		next = pmd_addr_end(addr, end);
+-		if (pmd_trans_huge(*pmd))
+-			split_huge_page_pmd(vma, addr, pmd);
++		if (pmd_trans_huge(*pmd)) {
++			if (next - addr != HPAGE_PMD_SIZE) {
++#ifdef CONFIG_DEBUG_VM
++				if (!rwsem_is_locked(&tlb->mm->mmap_sem)) {
++					pr_err("%s: mmap_sem is unlocked! addr=0x%lx end=0x%lx vma->vm_start=0x%lx vma->vm_end=0x%lx\n",
++						__func__, addr, end,
++						vma->vm_start,
++						vma->vm_end);
++					BUG();
++				}
++#endif
++				split_huge_page_pmd(vma, addr, pmd);
++			} else if (madvise_free_pmd(tlb, vma, pmd, addr))
++				goto next;
++			/* fall through */
++		}
 +
- #define __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG
- static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,
- 					    unsigned long address, pmd_t *pmdp)
+ 		/*
+ 		 * Here there can be other concurrent MADV_DONTNEED or
+ 		 * trans huge page faults running, and if the pmd is
+diff --git a/mm/rmap.c b/mm/rmap.c
+index ee495d84c8b3..3c415eb8b6f0 100644
+--- a/mm/rmap.c
++++ b/mm/rmap.c
+@@ -702,6 +702,10 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
+ 		/* go ahead even if the pmd is pmd_trans_splitting() */
+ 		if (pmdp_clear_flush_young_notify(vma, address, pmd))
+ 			referenced++;
++
++		if (pmd_dirty(*pmd))
++			dirty++;
++
+ 		spin_unlock(ptl);
+ 	} else {
+ 		pte_t *pte;
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index f7a45600846f..4e15babf4414 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -971,15 +971,23 @@ static unsigned long shrink_page_list(struct list_head *page_list,
+ 		 * Anonymous process memory has backing store?
+ 		 * Try to allocate it some swap space here.
+ 		 */
+-		if (PageAnon(page) && !PageSwapCache(page) && !freeable) {
+-			if (!(sc->gfp_mask & __GFP_IO))
+-				goto keep_locked;
+-			if (!add_to_swap(page, page_list))
+-				goto activate_locked;
+-			may_enter_fs = 1;
++		if (PageAnon(page) && !PageSwapCache(page)) {
++			if (!freeable) {
++				if (!(sc->gfp_mask & __GFP_IO))
++					goto keep_locked;
++				if (!add_to_swap(page, page_list))
++					goto activate_locked;
++				may_enter_fs = 1;
+ 
+-			/* Adding to swap updated mapping */
+-			mapping = page_mapping(page);
++				/* Adding to swap updated mapping */
++				mapping = page_mapping(page);
++			} else {
++				if (unlikely(PageTransHuge(page))) {
++					if (unlikely(split_huge_page_to_list(
++						page, page_list)))
++						goto keep_locked;
++				}
++			}
+ 		}
+ 
+ 		/*
 -- 
 2.0.0
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
