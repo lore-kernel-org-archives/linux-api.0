@@ -1,94 +1,81 @@
-From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-Subject: Re: [PATCH v3 1/3] mm: introduce fincore()
-Date: Mon, 7 Jul 2014 17:48:20 -0400
-Message-ID: <20140707214820.GA13596@nhori.bos.redhat.com>
-References: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com>
- <1404756006-23794-2-git-send-email-n-horiguchi@ah.jp.nec.com>
- <53BAEE95.50807@intel.com>
- <20140707202108.GA5031@nhori.bos.redhat.com>
- <53BB0673.8020604@intel.com>
+From: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
+ (part 1)
+Date: Mon, 7 Jul 2014 15:33:52 -0700
+Message-ID: <CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ@mail.gmail.com>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com>
+	<53B51E81.4090700@redhat.com>
+	<20140703183927.GA1629@google.com>
+	<53B651C5.80602@redhat.com>
+	<CAHse=S83APPfnEwO1fQbV_tNd=9zsAsZr42KbYM_He-c3C3P6A@mail.gmail.com>
+	<53BA9094.9080401@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <53BB0673.8020604@intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>, Kees Cook <kees@outflux.net>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <53BA9094.9080401-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, qemu-devel <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 07, 2014 at 01:43:31PM -0700, Dave Hansen wrote:
-> On 07/07/2014 01:21 PM, Naoya Horiguchi wrote:
-> > On Mon, Jul 07, 2014 at 12:01:41PM -0700, Dave Hansen wrote:
-> >> But, is this trying to do too many things at once?  Do we have solid use
-> >> cases spelled out for each of these modes?  Have we thought out how they
-> >> will be used in practice?
-> > 
-> > tools/vm/page-types.c will be an in-kernel user after this base code is
-> > accepted. The idea of doing fincore() thing comes up during the discussion
-> > with Konstantin over file cache mode of this tool.
-> > pfn and page flag are needed there, so I think it's one clear usecase.
-> 
-> I'm going to take that as a no. :)
+On Mon, Jul 7, 2014 at 5:20 AM, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> Il 07/07/2014 12:29, David Drysdale ha scritto:
+>
+>>> I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
+>>> /O_RDWR.   You could do it by running the file descriptor's seccomp-bpf
+>>> program once per iocb with synthesized syscall numbers and argument
+>>> vectors.
+>>
+>>
+>> Right, but generating the equivalent seccomp input environment for an
+>> equivalent single-fd syscall is going to be subtle and complex (which
+>> are worrying words to mention in a security context).  And how many
+>> other syscalls are going to need similar special-case processing?
+>> (poll? select? send[m]msg? ...)
+>
+>
+> Yeah, the difficult part is getting the right balance between:
+>
+> 1) limitations due to seccomp's impossibility to chase pointers (which is
+> not something that can be lifted, as it's required for correctness)
 
-As for other usecases, database developers should have some demand for
-physical addresses (especially numa node?) or page flags (especially
-page reclaim or writeback related ones).
-But I'm not a database expert so can't say how, sorry.
+btw once seccomp moves to eBPF it will be able to 'chase pointers',
+since pointer walking will be possible via bpf_load_pointer() function call,
+which is a wrapper of:
+  probe_kernel_read(&ptr, unsafe_ptr, sizeof(void *));
+  return ptr;
+Not sure whether it helps this case or not. Just fyi.
 
-> The whole FINCORE_PGOFF vs. FINCORE_BMAP issue is something that will
-> come up in practice.  We just don't have the interfaces for an end user
-> to pick which one they want to use.
-> 
-> >> Is it really right to say this is going to be 8 bytes?  Would we want it
-> >> to share types with something else, like be an loff_t?
-> > 
-> > Could you elaborate it more?
-> 
-> We specify file offsets in other system calls, like the lseek family.  I
-> was just thinking that this type should match up with those calls since
-> they are expressing the same data type with the same ranges and limitations.
-
-The 2nd parameter is loff_t, do we already do this?
-
-> >>> + * - FINCORE_PFN:
-> >>> + *     stores pfn, using 8 bytes.
-> >>
-> >> These are all an unprivileged operations from what I can tell.  I know
-> >> we're going to a lot of trouble to hide kernel addresses from being seen
-> >> in userspace.  This seems like it would be undesirable for the folks
-> >> that care about not leaking kernel addresses, especially for
-> >> unprivileged users.
-> >>
-> >> This would essentially tell userspace where in the kernel's address
-> >> space some user-controlled data will be.
-> > 
-> > OK, so this and FINCORE_PAGEFLAGS will be limited for privileged users.
-
-Sorry, this statement of mine might a bit short-sighted, and I'd like
-to revoke it.
-I think that some page flags and/or numa info should be useful outside
-the debugging environment, and safe to expose to userspace. So limiting
-to bitmap-one for unprivileged users is too strict.
-
-> Then I'd just question their usefulness outside of a debugging
-> environment, especially when you can get at them in other (more
-> roundabout) ways in a debugging environment.
-> 
-> This is really looking to me like two system calls.  The bitmap-based
-> one, and another more extensible one.  I don't think there's any harm in
-> having two system calls, especially when they're trying to glue together
-> two disparate interfaces.
-
-I think that if separating syscall into two, one for privileged users
-and one for unprivileged users migth be fine (rather than bitmap-based
-one and extensible one.)
-
-Thanks,
-Naoya Horiguchi
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 2) subtlety and complexity of the resulting code.
+>
+> The problem stems when you have a single a single syscall operating on
+> multiple file descriptors.  So for example among the cases you mention poll
+> and select are problematic; sendm?msg are not.  They would be if Capsicum
+> had a capability for SCM_RIGHTS file descriptor passing, but I cannot find
+> it.
+>
+> But then you also have to strike the right balance between a complete
+> solution and an overengineered one.
+>
+> For example, even though poll and select are problematic, I wonder what
+> would really the point be in blocking them; poll/select are level-triggered,
+> and calling them should be idempotent as far as the file descriptor is
+> concerned.  If you want to prevent a process/thread from issuing blocking
+> system calls, but you'd do that with a per-process filter, not with
+> per-file-descriptor filters or capabilities.
+>
+>
+>> Capsicum capabilities are associated with the file descriptor (a la
+>> F_GETFD), not the open file itself -- different FDs with different
+>> associated rights can map to the same underlying open file.
+>
+>
+> Good to know, thanks.  I suppose you have testcases that cover this.
+>
+> Paolo
+> --
+>
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
