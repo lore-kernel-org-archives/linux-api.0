@@ -1,170 +1,203 @@
-From: David Drysdale <drysdale@google.com>
-Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
- (part 1)
-Date: Mon, 7 Jul 2014 11:29:36 +0100
-Message-ID: <CAHse=S83APPfnEwO1fQbV_tNd=9zsAsZr42KbYM_He-c3C3P6A@mail.gmail.com>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
- <53B51E81.4090700@redhat.com> <20140703183927.GA1629@google.com> <53B651C5.80602@redhat.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH v10 1/7] mm: support madvise(MADV_FREE)
+Date: Mon, 7 Jul 2014 13:41:37 +0300
+Message-ID: <20140707104137.GA23150@node.dhcp.inet.fi>
+References: <1404694438-10272-1-git-send-email-minchan@kernel.org>
+ <1404694438-10272-2-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <53B651C5.80602@redhat.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Paolo Bonzini <pbonzini@redhat.com>
-Cc: LSM List <linux-security-module@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, qemu-devel <qemu-devel@nongnu.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1404694438-10272-2-git-send-email-minchan@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 4, 2014 at 8:03 AM, Paolo Bonzini <pbonzini@redhat.com> wrote:
->
-> Il 03/07/2014 20:39, David Drysdale ha scritto:
->> On Thu, Jul 03, 2014 at 11:12:33AM +0200, Paolo Bonzini wrote:
->>> Given Linux's previous experience with BPF filters, what do you
->>> think about attaching specific BPF programs to file descriptors?
->>> Then whenever a syscall is run that affects a file descriptor, the
->>> BPF program for the file descriptor (attached to a struct file* as
->>> in Capsicum) would run in addition to the process-wide filter.
->>
->> That sounds kind of clever, but also kind of complicated.
->>
->> Off the top of my head, one particular problem is that not all
->> fd->struct file conversions in the kernel are completely specified
->> by an enclosing syscall and the explicit values of its parameters.
->>
->> For example, the actual contents of the arguments to io_submit(2)
->> aren't visible to a seccomp-bpf program (as it can't read the __user
->> memory for the iocb structures), and so it can't distinguish a
->> read from a write.
->
-> I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
-> /O_RDWR.   You could do it by running the file descriptor's seccomp-bpf
-> program once per iocb with synthesized syscall numbers and argument
-> vectors.
+On Mon, Jul 07, 2014 at 09:53:52AM +0900, Minchan Kim wrote:
+> Linux doesn't have an ability to free pages lazy while other OS
+> already have been supported that named by madvise(MADV_FREE).
+> 
+> The gain is clear that kernel can discard freed pages rather than
+> swapping out or OOM if memory pressure happens.
+> 
+> Without memory pressure, freed pages would be reused by userspace
+> without another additional overhead(ex, page fault + allocation
+> + zeroing).
+> 
+> How to work is following as.
+> 
+> When madvise syscall is called, VM clears dirty bit of ptes of
+> the range. If memory pressure happens, VM checks dirty bit of
+> page table and if it found still "clean", it means it's a
+> "lazyfree pages" so VM could discard the page instead of swapping out.
+> Once there was store operation for the page before VM peek a page
+> to reclaim, dirty bit is set so VM can swap out the page instead of
+> discarding.
+> 
+> Firstly, heavy users would be general allocators(ex, jemalloc,
+> tcmalloc and hope glibc supports it) and jemalloc/tcmalloc already
+> have supported the feature for other OS(ex, FreeBSD)
+> 
+> barrios@blaptop:~/benchmark/ebizzy$ lscpu
+> Architecture:          x86_64
+> CPU op-mode(s):        32-bit, 64-bit
+> Byte Order:            Little Endian
+> CPU(s):                4
+> On-line CPU(s) list:   0-3
+> Thread(s) per core:    2
+> Core(s) per socket:    2
+> Socket(s):             1
+> NUMA node(s):          1
+> Vendor ID:             GenuineIntel
+> CPU family:            6
+> Model:                 42
+> Stepping:              7
+> CPU MHz:               2801.000
+> BogoMIPS:              5581.64
+> Virtualization:        VT-x
+> L1d cache:             32K
+> L1i cache:             32K
+> L2 cache:              256K
+> L3 cache:              4096K
+> NUMA node0 CPU(s):     0-3
+> 
+> ebizzy benchmark(./ebizzy -S 10 -n 512)
+> 
+>  vanilla-jemalloc		MADV_free-jemalloc
+> 
+> 1 thread
+> records:  10              records:  10
+> avg:      7682.10         avg:      15306.10
+> std:      62.35(0.81%)    std:      347.99(2.27%)
+> max:      7770.00         max:      15622.00
+> min:      7598.00         min:      14772.00
+> 
+> 2 thread
+> records:  10              records:  10
+> avg:      12747.50        avg:      24171.00
+> std:      792.06(6.21%)   std:      895.18(3.70%)
+> max:      13337.00        max:      26023.00
+> min:      10535.00        min:      23152.00
+> 
+> 4 thread
+> records:  10              records:  10
+> avg:      16474.60        avg:      33717.90
+> std:      1496.45(9.08%)  std:      2008.97(5.96%)
+> max:      17877.00        max:      35958.00
+> min:      12224.00        min:      29565.00
+> 
+> 8 thread
+> records:  10              records:  10
+> avg:      16778.50        avg:      33308.10
+> std:      825.53(4.92%)   std:      1668.30(5.01%)
+> max:      17543.00        max:      36010.00
+> min:      14576.00        min:      29577.00
+> 
+> 16 thread
+> records:  10              records:  10
+> avg:      20614.40        avg:      35516.30
+> std:      602.95(2.92%)   std:      1283.65(3.61%)
+> max:      21753.00        max:      37178.00
+> min:      19605.00        min:      33217.00
+> 
+> 32 thread
+> records:  10              records:  10
+> avg:      22771.70        avg:      36018.50
+> std:      598.94(2.63%)   std:      1046.76(2.91%)
+> max:      24035.00        max:      37266.00
+> min:      22108.00        min:      34149.00
+> 
+> In summary, MADV_FREE is about 2 time faster than MADV_DONTNEED.
+> 
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+> Cc: Linux API <linux-api@vger.kernel.org>
+> Cc: Hugh Dickins <hughd@google.com>
+> Cc: Johannes Weiner <hannes@cmpxchg.org>
+> Cc: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+> Cc: Mel Gorman <mgorman@suse.de>
+> Cc: Jason Evans <je@fb.com>
+> Cc: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+> Acked-by: Rik van Riel <riel@redhat.com>
+> Signed-off-by: Minchan Kim <minchan@kernel.org>
+> ---
 
-Right, but generating the equivalent seccomp input environment for an
-equivalent single-fd syscall is going to be subtle and complex (which
-are worrying words to mention in a security context).  And how many
-other syscalls are going to need similar special-case processing?
-(poll? select? send[m]msg? ...)
+...
 
-> BTW, there's one thing I'm not sure I understand (because my knowledge
-> of VFS is really only cursory).  Are the capabilities associated to the
-> file _descriptor_ (a la F_GETFD/SETFD) or _description_
-> (F_GETFL/SETFL)?!?
+> +static void madvise_free_page_range(struct mmu_gather *tlb,
+> +			     struct vm_area_struct *vma,
+> +			     unsigned long addr, unsigned long end)
+> +{
+> +	pgd_t *pgd;
+> +	unsigned long next;
+> +
+> +	BUG_ON(addr >= end);
+> +	tlb_start_vma(tlb, vma);
+> +	pgd = pgd_offset(vma->vm_mm, addr);
+> +	do {
+> +		next = pgd_addr_end(addr, end);
+> +		if (pgd_none_or_clear_bad(pgd))
+> +			continue;
+> +		next = madvise_free_pud_range(tlb, vma, pgd, addr, next);
+> +	} while (pgd++, addr = next, addr != end);
+> +	tlb_end_vma(tlb, vma);
 
-Capsicum capabilities are associated with the file descriptor (a la
-F_GETFD), not the open file itself -- different FDs with different
-associated rights can map to the same underlying open file.
+Any particular reason why pagewalker can't be used here?
 
-> If it is the former, there is some value in read/write capabilities
-> because you could for example block a child process from reading an
-> eventfd and simulate the two file descriptors returned by pipe(2).  But
-> if it is the latter, it looks like an important usability problem in
-> the Capsicum model.  (Granted, it's just about usability---in the end
-> it does exactly what it's meant and documented to do).
+> +}
 
-Attaching the rights to the FD also comes back to the association with
-object-capability security.  The FD is an unforgeable reference to the
-object (file) in question, but these references (with their rights) can
-be transferred to other programs -- either by inheritance after fork, or
-by explicitly passing the FD across a Unix domain socket.
+...
 
->> Also, there could potentially be some odd interactions with file
->> descriptors passed between processes, if the BPF program relies
->> on assumptions about the environment of the original process.  For
->> example, what happens if an x86_64 process passes a filter-attached
->> FD to an ia32 process?  Given that the syscall numbers are
->> arch-specific, I guess that means the filter program would have
->> to include arch-specific branches for any possible variant.
->
-> This is the same for using seccompv2 to limit child processes, no?  So
-> there may be a problem but it has to be solved anyway by libseccomp.
+> @@ -381,6 +547,13 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
+>  		return madvise_remove(vma, prev, start, end);
+>  	case MADV_WILLNEED:
+>  		return madvise_willneed(vma, prev, start, end);
+> +	case MADV_FREE:
+> +		/*
+> +		 * XXX: In this implementation, MADV_FREE works like
+> +		 * MADV_DONTNEED on swapless system or full swap.
+> +		 */
+> +		if (get_nr_swap_pages() > 0)
+> +			return madvise_free(vma, prev, start, end);
 
-I don't know whether libseccomp would worry about this, but being able
-to send FDs between processes via Unix domain sockets makes this more
-visible in the Capsicum case.
+Looks racy wrt to full swap. What will happen if we will do madvise_free()
+on full swap?
 
->> More generally, I suspect that keeping things simpler will end
->> up being more secure.  Capsicum was based on well-studied ideas
->> from the world of object capability-based security, and I'd be
->> nervous about adding complications that take us further away from
->> that.
->
-> True.
->
->> That mapping would also need be kept closely in sync with the kernel
->> and other system libraries -- if a new syscall is added and libc (or
->> some other library) started using it, the equivalent BPF chunks would
->> need to be updated to cope.
->
-> Again, this is the same problem that has to be solved for process-wide
-> seccompv2.
+>  	case MADV_DONTNEED:
+>  		return madvise_dontneed(vma, prev, start, end);
+>  	default:
 
-True.  I guess new syscalls are sufficiently rare in practice that this
-isn't a serious concern.
+...
 
->>>>  [Capsicum also includes 'capability mode', which locks down the
->>>>  available syscalls so the rights restrictions can't just be bypassed
->>>>  by opening new file descriptors; I'll describe that separately later.]
->>>
->>> This can also be implemented in userspace via seccomp and
->>> PR_SET_NO_NEW_PRIVS.
->>
->> Well, mostly (and in fact I've got an attempt to do exactly that at
->> https://github.com/google/capsicum-test/blob/dev/linux-bpf-capmode.c).
->>
->> [..] there's one awkward syscall case.  In capability mode we'd like
->> to prevent processes from sending signals with kill(2)/tgkill(2)
->> to other processes, but they should still be able to send themselves
->> signals.  For example, abort(3) generates:
->>   tgkill(gettid(), gettid(), SIGABRT)
->>
->> Only allowing kill(self) is hard to encode in a seccomp-bpf program, at
->> least in a way that survives forking.
->
-> I guess the thread id could be added as a special seccomp-bpf argument
-> (ancillary datum?).
+> @@ -1204,6 +1223,16 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+>  			}
+>  			dec_mm_counter(mm, MM_ANONPAGES);
+>  			inc_mm_counter(mm, MM_SWAPENTS);
+> +		} else if (flags & TTU_UNMAP) {
+> +			if (dirty || PageDirty(page)) {
+> +				set_pte_at(mm, address, pte, pteval);
+> +				ret = SWAP_FAIL;
+> +				goto out_unmap;
 
-Yeah, I tried exactly that a while ago
-(https://github.com/google/capsicum-linux/commit/e163c6348328)
-but didn't run with it because of the process-wide beneath-only issue below.
-But a combination of that and your new prctl() suggestion below might do
-the trick.
+I don't get this part.
+Looks like it will fail to unmap the page if it's dirty and not backed by
+swapcache. Current code doesn't have such limitation.
+Do we really need this?
 
->> Finally, capability mode also turns on strict-relative lookups
->> process-wide; in other words, every openat(dfd, ...) operation
->> acts as though it has the O_BENEATH_ONLY flag set, regardless of
->> whether the dfd is a Capsicum capability.  I can't see a way to
->> do that with a BPF program (although it would be possible to add
->> a filter that polices the requirement to include O_BENEATH_ONLY
->> rather than implicitly adding it).
->
-> That can be a new prctl (one that PR_SET_NO_NEW_PRIVS would lock up).
-> It seems useful independent of Capsicum, and the Linux APIs tend to be
-> fine-grained more often than coarse-grained.
+> +			} else {
+> +				/* It's a freeable page by madvise_free */
+> +				dec_mm_counter(mm, MM_ANONPAGES);
+> +				goto discard;
+> +			}
+>  		} else if (IS_ENABLED(CONFIG_MIGRATION)) {
+>  			/*
+>  			 * Store the pfn of the page in a special migration
 
-That sounds like a good idea, particularly in combination with the idea
-above -- thanks!  I'll have a think/investigate...
+-- 
+ Kirill A. Shutemov
 
->>>>  [Policing the rights checks anywhere else, for example at the system
->>>>  call boundary, isn't a good idea because it opens up the possibility
->>>>  of time-of-check/time-of-use (TOCTOU) attacks [2] where FDs are
->>>>  changed (as openat/close/dup2 are allowed in capability mode) between
->>>>  the 'check' at syscall entry and the 'use' at fget() invocation.]
->>>
->>> In the case of BPF filters, I wonder if you could stash the BPF
->>> "environment" somewhere and then use it at fget() invocation.
->>> Alternatively, it can be reconstructed at fget() time, similar to
->>> your introduction of fgetr().
->>
->> Stashing something at syscall entry to be referred to later always
->> makes me worry about TOCTOU vulnerabilities, but the details might
->> be OK in this case (given that no check occurs at syscall entry)...
->
-> Yeah, that was pretty much the idea.  But I was cautious enough to
-> label it with "I wonder"...
->
-> Paolo
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-security-module" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
