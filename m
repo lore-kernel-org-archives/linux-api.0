@@ -1,89 +1,36 @@
-From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-Subject: Re: [PATCH v3 3/3] man2/fincore.2: document general description
- about fincore(2)
-Date: Tue, 8 Jul 2014 11:43:03 -0400
-Message-ID: <20140708154303.GA22589@nhori.redhat.com>
-References: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com>
- <1404756006-23794-4-git-send-email-n-horiguchi@ah.jp.nec.com>
- <53BAF01C.8010700@intel.com>
- <20140707205956.GB5031@nhori.bos.redhat.com>
- <53BB205E.5080801@intel.com>
+From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 01/11] fs: add O_BENEATH_ONLY flag to openat(2)
+Date: Tue, 8 Jul 2014 17:54:24 +0100
+Message-ID: <CAHse=S-gBbYe65mo6tBSJ2p=Z5aswgJTFvt9r29aHP3ALfJ0Mw@mail.gmail.com>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com>
+ <1404124096-21445-2-git-send-email-drysdale@google.com> <20140708120331.GA30459@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <53BB205E.5080801@intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20140708120331.GA30459-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 07, 2014 at 03:34:06PM -0700, Dave Hansen wrote:
-> On 07/07/2014 01:59 PM, Naoya Horiguchi wrote:
-> > On Mon, Jul 07, 2014 at 12:08:12PM -0700, Dave Hansen wrote:
-> >> On 07/07/2014 11:00 AM, Naoya Horiguchi wrote:
-> >>> +.SH RETURN VALUE
-> >>> +On success,
-> >>> +.BR fincore ()
-> >>> +returns 0.
-> >>> +On error, \-1 is returned, and
-> >>> +.I errno
-> >>> +is set appropriately.
-> >>
-> >> Is this accurate?  From reading the syscall itself, it looked like it
-> >> did this:
-> >>
-> >>> + * Return value is the number of pages whose data is stored in fc->buffer.
-> >>> + */
-> >>> +static long do_fincore(struct fincore_control *fc, int nr_pages)
-> >>
-> >> and:
-> >>
-> >>> +SYSCALL_DEFINE6(fincore, int, fd, loff_t, start, long, nr_pages,
-> >> ...
-> >>> +	while (fc.nr_pages > 0) {
-> >>> +		memset(fc.buffer, 0, fc.buffer_size);
-> >>> +		ret = do_fincore(&fc, min(step, fc.nr_pages));
-> >>> +		/* Reached the end of the file */
-> >>> +		if (ret == 0)
-> >>> +			break;
-> >>> +		if (ret < 0)
-> >>> +			break;
-> >> ...
-> >>> +	}
-> >> ...
-> >>> +	return ret;
-> >>> +}
-> >>
-> >> Which seems that for a given loop of do_fincore(), you might end up
-> >> returning the result of that *single* iteration of do_fincore() instead
-> >> of the aggregate of the entire syscall.
-> >>
-> >> So, it can return <0 on failure, 0 on success, or also an essentially
-> >> random >0 number on success too.
-> > 
-> > We don't break this while loop if do_fincore() returned a positive value
-> > unless copy_to_user() fails. And in that case ret is set to -EFAULT.
-> > So I think sys_fincore() never returns a positive value.
-> 
-> OK, that makes sense as I'm reading it again.
-> 
-> >> Why not just use the return value for something useful instead of
-> >> hacking in the extras->nr_entries stuff?
-> > 
-> > Hmm, I got the opposite complaint previously, where we shouldn't
-> > interpret the return value differently depending on the flag.
-> > And I'd like to keep the extra argument for future extensibility.
-> > For example, if we want to collect pages only with a specific
-> > set of page flags, this extra argument will be necessary.
-> 
-> Couldn't it simply be the number of elements that it wrote in to the
-> buffer, or even the number of bytes?
+On Tue, Jul 8, 2014 at 1:03 PM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> On Mon, Jun 30, 2014 at 11:28:01AM +0100, David Drysdale wrote:
+>> Add a new O_BENEATH_ONLY flag for openat(2) which restricts the
+>> provided path, rejecting (with -EACCES) paths that are not beneath
+>> the provided dfd.  In particular, reject:
+>>  - paths that contain .. components
+>>  - paths that begin with /
+>>  - symlinks that have paths as above.
+>
+>
+> How is this implemented in FreeBSD?  I can't find any references to
+> O_BENEATH_ONLY except for your patchset.
 
-Yes, returning the number of elements looks clearer to me.
+FreeBSD have the relative-only behaviour for openat() relative to a
+Capsicum capability dfd [1], and for a process in capability-mode [2],
+but they don't have the O_BENEATH_ONLY as a separately-accessible
+openat() flag.  However, it seemed like a more widely useful idea so
+separating it out was suggested.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+[1] http://fxr.watson.org/fxr/source/kern/vfs_lookup.c?v=FREEBSD10#L238
+[2] http://fxr.watson.org/fxr/source/kern/vfs_lookup.c?v=FREEBSD10#L171
