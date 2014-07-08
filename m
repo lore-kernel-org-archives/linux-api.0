@@ -1,64 +1,108 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
- (part 1)
-Date: Tue, 8 Jul 2014 07:58:08 -0700
-Message-ID: <CAGXu5jLoO9QsrT6koUEXebXPh3nBpLfanxqfm0bT7Js+_Fxq4g@mail.gmail.com>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
-	<53B51E81.4090700@redhat.com>
-	<20140703183927.GA1629@google.com>
-	<53B651C5.80602@redhat.com>
-	<CAHse=S83APPfnEwO1fQbV_tNd=9zsAsZr42KbYM_He-c3C3P6A@mail.gmail.com>
-	<53BA9094.9080401@redhat.com>
-	<CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ@mail.gmail.com>
+From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Subject: Re: [PATCH v3 1/3] mm: introduce fincore()
+Date: Tue, 8 Jul 2014 11:35:58 -0400
+Message-ID: <20140708153558.GB24698@nhori>
+References: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com>
+ <1404756006-23794-2-git-send-email-n-horiguchi@ah.jp.nec.com>
+ <53BAEE95.50807@intel.com>
+ <20140707202108.GA5031@nhori.bos.redhat.com>
+ <53BB0673.8020604@intel.com>
+ <20140707214820.GA13596@nhori.bos.redhat.com>
+ <53BB22C6.2020502@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, qemu-devel <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <53BB22C6.2020502@intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>, Kees Cook <kees@outflux.net>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 7, 2014 at 3:33 PM, Alexei Starovoitov
-<alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Mon, Jul 7, 2014 at 5:20 AM, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> Il 07/07/2014 12:29, David Drysdale ha scritto:
->>
->>>> I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
->>>> /O_RDWR.   You could do it by running the file descriptor's seccomp-bpf
->>>> program once per iocb with synthesized syscall numbers and argument
->>>> vectors.
->>>
->>>
->>> Right, but generating the equivalent seccomp input environment for an
->>> equivalent single-fd syscall is going to be subtle and complex (which
->>> are worrying words to mention in a security context).  And how many
->>> other syscalls are going to need similar special-case processing?
->>> (poll? select? send[m]msg? ...)
->>
->>
->> Yeah, the difficult part is getting the right balance between:
->>
->> 1) limitations due to seccomp's impossibility to chase pointers (which is
->> not something that can be lifted, as it's required for correctness)
->
-> btw once seccomp moves to eBPF it will be able to 'chase pointers',
-> since pointer walking will be possible via bpf_load_pointer() function call,
-> which is a wrapper of:
->   probe_kernel_read(&ptr, unsafe_ptr, sizeof(void *));
->   return ptr;
-> Not sure whether it helps this case or not. Just fyi.
+On Mon, Jul 07, 2014 at 03:44:22PM -0700, Dave Hansen wrote:
+> On 07/07/2014 02:48 PM, Naoya Horiguchi wrote:
+> > On Mon, Jul 07, 2014 at 01:43:31PM -0700, Dave Hansen wrote:
+> >> The whole FINCORE_PGOFF vs. FINCORE_BMAP issue is something that will
+> >> come up in practice.  We just don't have the interfaces for an end user
+> >> to pick which one they want to use.
+> >>
+> >>>> Is it really right to say this is going to be 8 bytes?  Would we want it
+> >>>> to share types with something else, like be an loff_t?
+> >>>
+> >>> Could you elaborate it more?
+> >>
+> >> We specify file offsets in other system calls, like the lseek family.  I
+> >> was just thinking that this type should match up with those calls since
+> >> they are expressing the same data type with the same ranges and limitations.
+> > 
+> > The 2nd parameter is loff_t, do we already do this?
+> 
+> I mean the fields in the buffer, like:
+> 
+> > +Any of the following flags are to be set to add an 8 byte field in each entry.
+> > +You can set any of these flags at the same time, although you can't set
+> > +FINCORE_BMAP combined with these 8 byte field flags.
 
-It won't immediately help, since threads can race pointer target
-contents (i.e. seccomp sees one thing, and then the syscall see
-another thing). Having an immutable memory area could help with this
-(i.e. some kind of "locked" memory range that holds all the "approved"
-argument strings, at which point seccomp could then trust the chased
-pointers that land in this range.) Obviously eBPF is a prerequisite to
-this, but it isn't the full solution, as far as I understand it.
+Thanks. And OK, we can make it depending on arch or config
+(although in currnet version only x86_64 is supported.)
 
--Kees
+> 
+> >>>> This would essentially tell userspace where in the kernel's address
+> >>>> space some user-controlled data will be.
+> >>>
+> >>> OK, so this and FINCORE_PAGEFLAGS will be limited for privileged users.
+> > 
+> > Sorry, this statement of mine might a bit short-sighted, and I'd like
+> > to revoke it.
+> > I think that some page flags and/or numa info should be useful outside
+> > the debugging environment, and safe to expose to userspace. So limiting
+> > to bitmap-one for unprivileged users is too strict.
+> 
+> The PFN is not the same as NUMA information, and the PFN is insufficient
+> to describe the NUMA node on all systems that Linux supports.
 
--- 
-Kees Cook
-Chrome OS Security
+Agree.
+
+> Trying to get NUMA information back out is a good goal, but doing it
+> with PFNs is a bad idea since they have so many consequences.
+
+Yes, so a separate field for NUMA node is helpful. PFN is purely for
+debugging.
+
+> I'm also bummed exporting NUMA information was a design goal of these
+> patches, but they weren't mentioned in any of the patch descriptions.
+
+OK, I'll add it with some documentation in the next post.
+
+> >> Then I'd just question their usefulness outside of a debugging
+> >> environment, especially when you can get at them in other (more
+> >> roundabout) ways in a debugging environment.
+> >>
+> >> This is really looking to me like two system calls.  The bitmap-based
+> >> one, and another more extensible one.  I don't think there's any harm in
+> >> having two system calls, especially when they're trying to glue together
+> >> two disparate interfaces.
+> > 
+> > I think that if separating syscall into two, one for privileged users
+> > and one for unprivileged users migth be fine (rather than bitmap-based
+> > one and extensible one.)
+> 
+> The problem as I see it is shoehorning two interfaces in to the same
+> syscall.  If there are privileged and unprivileged operations that use
+> the same _interfaces_ I think they should share a syscall.
+
+Hmm, if we think that bitmap one and extensible one are using different
+interfaces, should we also consider that different modes in extensible
+one are using different interfaces (whose entry per page is variable in
+length)?
+It seems to me just a problem about how differently we use the user buffer,
+rather than about different interfaces.
+
+Thanks,
+Naoya Horiguchi
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
