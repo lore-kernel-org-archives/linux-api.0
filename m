@@ -1,48 +1,23 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 1/1] include/uapi: Define AT_FDNODIR constant as future
- guarantee
-Date: Tue, 8 Jul 2014 05:12:29 -0700
-Message-ID: <20140708121229.GA21107@infradead.org>
-References: <fb469d6277ef.53b85737@langara.bc.ca>
+Subject: Re: [PATCH v3 0/3] mm: introduce fincore() v3
+Date: Tue, 8 Jul 2014 05:16:18 -0700
+Message-ID: <20140708121618.GA2554@infradead.org>
+References: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <fb469d6277ef.53b85737@langara.bc.ca>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Stewart-Gallus <sstewartgallus00@mylangara.bc.ca>
-Cc: linux-kernel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, linux-man@vger.kernel.org
+In-Reply-To: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com>
+Sender: owner-linux-mm@kvack.org
+To: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jul 05, 2014 at 07:51:19PM +0000, Steven Stewart-Gallus wrote:
-> From: Steven Stewart-Gallus <sstewartgallus00@mylangara.bc.ca
-> 
-> This constant means that in the far future it might be possible to
-> define other AT_FD* constants.
-> 
-> Signed-off-by: Steven Stewart-Gallus <sstewartgallus00@mylangara.bc.ca>
-> ---
-> 
-> This is my first kernel patch but this is really trivial so I hope I'm doing
-> this right.
+Still a hard NAK for exposing page flags in a syscall ABI.  These are
+way to volatile to go into an application interface.
 
-Almost.  For one you really should explain what the flag does,
-especially if it's not actually use.
-
-It took me a while that you're trying to document the way Linux
-currently behaves for the cases where the dfd argument to the various
-*at is neither a valid file descriptor nor the magic AT_FDCWD constant.
-
-Posix says that openat with an absolute path is equivalent to open, so
-the only strictly allowed other flags would those that allow some form
-of relative path, but treat it differently than the currently possible
-options.  I can't really think of a good way to do that, although we
-recently had a case where a different AT_* value would be useful, even
-if not fully conforming to that Posix wording.
-
-Your explanation of what this constant does should also go into the man
-page, so in addition to the kernel patch you should also propose a patch
-to the man page documenting it.
-
-Also I don't think AT_FDNODIR is a good choice of name, AT_ABSOLUTE
-would be a lot more descriptive.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
