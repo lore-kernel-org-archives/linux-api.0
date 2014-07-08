@@ -1,36 +1,31 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 01/11] fs: add O_BENEATH_ONLY flag to openat(2)
-Date: Tue, 8 Jul 2014 06:12:55 -0700
-Message-ID: <20140708131255.GA25362@infradead.org>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
- <1404124096-21445-2-git-send-email-drysdale@google.com>
- <CALCETrU=HLmw9n-DxPkFV1xP5wtzQ7-YF3-uao6YiGZODA9kdw@mail.gmail.com>
- <20140630154928.GB10375@google.com>
- <CALCETrWJ-rqDo8OvSZWPUt1806gObNtwVHvC4M6kfQgvd3Eg9w@mail.gmail.com>
- <20140708120702.GB30459@infradead.org>
- <CAD=T17FQEZV+iy91wQAvAdd0PW2tsfjpU7atp-xeatm5sEGz5Q@mail.gmail.com>
- <20140708125138.GA4749@infradead.org>
- <CAD=T17FcSKCkEwGMDtcss0Ye-EwuW4Gd2bmXiVj0YV2JG3xeWQ@mail.gmail.com>
+From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Subject: Re: [PATCH v3 0/3] mm: introduce fincore() v3
+Date: Tue, 8 Jul 2014 09:27:55 -0400
+Message-ID: <20140708132755.GA24698@nhori>
+References: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com>
+ <20140708121618.GA2554@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CAD=T17FcSKCkEwGMDtcss0Ye-EwuW4Gd2bmXiVj0YV2JG3xeWQ@mail.gmail.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Meredydd Luff <meredydd@senatehouse.org>
-Cc: Christoph Hellwig <hch@infradead.org>, Andy Lutomirski <luto@amacapital.net>, David Drysdale <drysdale@google.com>, Al Viro <viro@zeniv.linux.org.uk>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+In-Reply-To: <20140708121618.GA2554@infradead.org>
+Sender: owner-linux-mm@kvack.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, Dave Chinner <david@fromorbit.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 08, 2014 at 02:04:45PM +0100, Meredydd Luff wrote:
-> On 8 July 2014 13:51, Christoph Hellwig <hch@infradead.org> wrote:
-> > Yeah, it won't work for an explicit directory - I was thinking of
-> > working relative to $CWD.
-> 
-> I think that would sacrifice far too much flexibility. Even without
-> Capsicum, it would be worthwhile to be able to wire up a static
-> seccomp-bpf filter to enforce constraints such as "you can open files
-> under fd#5 for reading, but you can only write to files under fd#6,
-> and you can't do any global lookups."
+On Tue, Jul 08, 2014 at 05:16:18AM -0700, Christoph Hellwig wrote:
+> Still a hard NAK for exposing page flags in a syscall ABI.  These are
+> way to volatile to go into an application interface.
 
-Yeah, I didn't intend to advocate this further after your reply.
+Is there any specific reason that exporting via syscall ABI is more
+volatile than exporting via procfs as /proc/kpageflags alreadly does?
 
+Thanks,
+Naoya Horiguchi
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
