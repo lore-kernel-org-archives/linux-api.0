@@ -1,207 +1,41 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v10 7/7] mm: Don't split THP page when syscall is called
-Date: Tue, 8 Jul 2014 10:30:38 +0900
-Message-ID: <20140708013038.GD6076@bbox>
-References: <1404694438-10272-1-git-send-email-minchan@kernel.org>
- <1404694438-10272-8-git-send-email-minchan@kernel.org>
- <20140707111303.GC23150@node.dhcp.inet.fi>
+From: Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: Re: [PATCH v10 1/7] mm: support madvise(MADV_FREE)
+Date: Tue, 8 Jul 2014 11:54:12 +0800
+Message-ID: <53BB6B64.1080807@cn.fujitsu.com>
+References: <1404694438-10272-1-git-send-email-minchan@kernel.org> <1404694438-10272-2-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140707111303.GC23150-nhfs4B5ZimeFUdmeq17FyvUpdFzICT1y@public.gmane.org>
+In-Reply-To: <1404694438-10272-2-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 07, 2014 at 02:13:03PM +0300, Kirill A. Shutemov wrote:
-> On Mon, Jul 07, 2014 at 09:53:58AM +0900, Minchan Kim wrote:
-> > We don't need to split THP page when MADV_FREE syscall is
-> > called. It could be done when VM decide really frees it so
-> > we could reduce the number of THP split.
-> > 
-> > Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> > ---
-> >  include/linux/huge_mm.h |  3 +++
-> >  mm/huge_memory.c        | 25 +++++++++++++++++++++++++
-> >  mm/madvise.c            | 19 +++++++++++++++++--
-> >  mm/rmap.c               |  4 ++++
-> >  mm/vmscan.c             | 24 ++++++++++++++++--------
-> >  5 files changed, 65 insertions(+), 10 deletions(-)
-> > 
-> > diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
-> > index 63579cb8d3dc..f0d37238cf8f 100644
-> > --- a/include/linux/huge_mm.h
-> > +++ b/include/linux/huge_mm.h
-> > @@ -19,6 +19,9 @@ extern struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-> >  					  unsigned long addr,
-> >  					  pmd_t *pmd,
-> >  					  unsigned int flags);
-> > +extern int madvise_free_pmd(struct mmu_gather *tlb,
-> > +			struct vm_area_struct *vma,
-> > +			pmd_t *pmd, unsigned long addr);
-> >  extern int zap_huge_pmd(struct mmu_gather *tlb,
-> >  			struct vm_area_struct *vma,
-> >  			pmd_t *pmd, unsigned long addr);
-> > diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-> > index 5d562a9fe931..2a70069dcfc0 100644
-> > --- a/mm/huge_memory.c
-> > +++ b/mm/huge_memory.c
-> > @@ -1384,6 +1384,31 @@ out:
-> >  	return 0;
-> >  }
-> >  
-> > +int madvise_free_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
-> > +		 pmd_t *pmd, unsigned long addr)
-> > +{
-> > +	spinlock_t *ptl;
-> > +	int ret = 0;
-> > +
-> > +	if (__pmd_trans_huge_lock(pmd, vma, &ptl) == 1) {
-> > +		pmd_t orig_pmd;
-> > +		struct mm_struct *mm = vma->vm_mm;
-> > +
-> > +		/* No hugepage in swapcache */
-> > +		VM_BUG_ON(PageSwapCache(pmd_page(orig_pmd)));
+Hi Minchan,
+
+On 07/07/2014 08:53 AM, Minchan Kim wrote:
+> Linux doesn't have an ability to free pages lazy while other OS
+> already have been supported that named by madvise(MADV_FREE).
 > 
-> VM_BUG_ON_PAGE() ?
-
-NP.
-
+> The gain is clear that kernel can discard freed pages rather than
+> swapping out or OOM if memory pressure happens.
 > 
-> > +
-> > +		orig_pmd = pmdp_get_and_clear(tlb->mm, addr, pmd);
-> > +		orig_pmd = pmd_mkold(orig_pmd);
-> > +		orig_pmd = pmd_mkclean(orig_pmd);
-> > +
-> > +		set_pmd_at(mm, addr, pmd, orig_pmd);
-> > +		tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
-> > +		spin_unlock(ptl);
-> > +		ret = 1;
-> > +	}
-> > +	return ret;
-> > +}
-> > +
-> >  int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
-> >  		 pmd_t *pmd, unsigned long addr)
-> >  {
-> > diff --git a/mm/madvise.c b/mm/madvise.c
-> > index 372a25a8ea82..3c99919ee094 100644
-> > --- a/mm/madvise.c
-> > +++ b/mm/madvise.c
-> > @@ -320,8 +320,23 @@ static inline unsigned long madvise_free_pmd_range(struct mmu_gather *tlb,
-> >  		 * if the range covers.
-> >  		 */
-> >  		next = pmd_addr_end(addr, end);
-> > -		if (pmd_trans_huge(*pmd))
-> > -			split_huge_page_pmd(vma, addr, pmd);
-> > +		if (pmd_trans_huge(*pmd)) {
-> > +			if (next - addr != HPAGE_PMD_SIZE) {
-> > +#ifdef CONFIG_DEBUG_VM
-> > +				if (!rwsem_is_locked(&tlb->mm->mmap_sem)) {
-> > +					pr_err("%s: mmap_sem is unlocked! addr=0x%lx end=0x%lx vma->vm_start=0x%lx vma->vm_end=0x%lx\n",
-> > +						__func__, addr, end,
-> > +						vma->vm_start,
-> > +						vma->vm_end);
-> > +					BUG();
-> > +				}
-> > +#endif
-> > +				split_huge_page_pmd(vma, addr, pmd);
-> > +			} else if (madvise_free_pmd(tlb, vma, pmd, addr))
-> > +				goto next;
-> > +			/* fall through */
-> > +		}
-> > +
-> >  		/*
-> >  		 * Here there can be other concurrent MADV_DONTNEED or
-> >  		 * trans huge page faults running, and if the pmd is
-> > diff --git a/mm/rmap.c b/mm/rmap.c
-> > index ee495d84c8b3..3c415eb8b6f0 100644
-> > --- a/mm/rmap.c
-> > +++ b/mm/rmap.c
-> > @@ -702,6 +702,10 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
-> >  		/* go ahead even if the pmd is pmd_trans_splitting() */
-> >  		if (pmdp_clear_flush_young_notify(vma, address, pmd))
-> >  			referenced++;
-> > +
-> > +		if (pmd_dirty(*pmd))
-> > +			dirty++;
-> > +
-> >  		spin_unlock(ptl);
-> >  	} else {
-> >  		pte_t *pte;
-> > diff --git a/mm/vmscan.c b/mm/vmscan.c
-> > index f7a45600846f..4e15babf4414 100644
-> > --- a/mm/vmscan.c
-> > +++ b/mm/vmscan.c
-> > @@ -971,15 +971,23 @@ static unsigned long shrink_page_list(struct list_head *page_list,
-> >  		 * Anonymous process memory has backing store?
-> >  		 * Try to allocate it some swap space here.
-> >  		 */
-> > -		if (PageAnon(page) && !PageSwapCache(page) && !freeable) {
-> > -			if (!(sc->gfp_mask & __GFP_IO))
-> > -				goto keep_locked;
-> > -			if (!add_to_swap(page, page_list))
-> > -				goto activate_locked;
-> > -			may_enter_fs = 1;
-> > +		if (PageAnon(page) && !PageSwapCache(page)) {
-> > +			if (!freeable) {
-> > +				if (!(sc->gfp_mask & __GFP_IO))
-> > +					goto keep_locked;
-> > +				if (!add_to_swap(page, page_list))
-> > +					goto activate_locked;
-> > +				may_enter_fs = 1;
-> >  
-> > -			/* Adding to swap updated mapping */
-> > -			mapping = page_mapping(page);
-> > +				/* Adding to swap updated mapping */
-> > +				mapping = page_mapping(page);
-> > +			} else {
-> > +				if (unlikely(PageTransHuge(page))) {
-> > +					if (unlikely(split_huge_page_to_list(
-> > +						page, page_list)))
-> > +						goto keep_locked;
+> Without memory pressure, freed pages would be reused by userspace
+> without another additional overhead(ex, page fault + allocation
+> + zeroing).
 > 
-> Hm. It would be better to free the huge page without splitting. 
-> It shouldn't be a big deal: walk over rmap and zap all pmds.
-> Or I miss something?
-
-Actually, I did but found no problem except CONFIG_DEBUG_VM but rollback
-after peeking [1].
-When I read the description in detail by your review, I think we can remove
-BUG_ON(PageTransHuge(page)) in try_to_unmap and go with no split for lazyfree
-page because they are not in swapcache any more so the assumption of [1] is
-not valid. Will do it in next revision.
-
-Thanks for the review, Kirill!
-
-[1] thp: split_huge_page paging, 3f04f62f9
-
-
+> How to work is following as.
 > 
-> > +				}
-> > +			}
-> >  		}
-> >  
-> >  		/*
-> > -- 
-> > 2.0.0
-> > 
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-> -- 
->  Kirill A. Shutemov
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+> When madvise syscall is called, VM clears dirty bit of ptes of
+> the range. 
+
+This should be updated because the implementation has been changed.
+It also remove the page from the swapcache if it is.
+
+Thank you for your effort!
 
 -- 
-Kind regards,
-Minchan Kim
+Thanks.
+Zhang Yanfei
