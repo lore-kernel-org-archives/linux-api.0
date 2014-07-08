@@ -1,82 +1,73 @@
 From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: [PATCH v3 0/7] File Sealing & memfd_create()
-Date: Tue, 8 Jul 2014 18:54:56 +0200
-Message-ID: <CANq1E4QZ95RmJ7i=6TzEP4e+WREzKtXmmjjDrvz4BgAhVHoeuQ@mail.gmail.com>
+Subject: Re: [PATCH v3 3/7] shm: add memfd_create() syscall
+Date: Tue, 8 Jul 2014 20:39:47 +0200
+Message-ID: <CANq1E4RYWb9WbXD+Vj0SYDAZqym4mc4u6+HQJbjDeS+wQeG2Uw@mail.gmail.com>
 References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
+	<1402655819-14325-4-git-send-email-dh.herrmann@gmail.com>
+	<CAKgNAkgnnWjrbE+2KAETsmiyrnrMQu0h7-MrYLvkiwj--_nxcQ@mail.gmail.com>
+	<CANq1E4R2K+eq9AxtFewp4YUL2cujg+dg+sN19Anvf-zWuvgyWw@mail.gmail.com>
+	<CAKgNAkgMA39AfoSoA5Pe1r9N+ZzfYQNvNPvcRN7tOvRb8+v06Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com>
+In-Reply-To: <CAKgNAkgMA39AfoSoA5Pe1r9N+ZzfYQNvNPvcRN7tOvRb8+v06Q@mail.gmail.com>
 Sender: owner-linux-mm@kvack.org
-To: linux-kernel <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, linux-mm <linux-mm@kvack.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <greg@kroah.com>, John Stultz <john.stultz@linaro.org>, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Tony Battersby <tonyb@cybernetics.com>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>
+To: Michael Kerrisk-manpages <mtk.manpages@gmail.com>
+Cc: lkml <linux-kernel@vger.kernel.org>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <greg@kroah.com>, John Stultz <john.stultz@linaro.org>, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
 Hi
 
-On Fri, Jun 13, 2014 at 12:36 PM, David Herrmann <dh.herrmann@gmail.com> wrote:
-> Hi
+On Fri, Jun 13, 2014 at 4:20 PM, Michael Kerrisk (man-pages)
+<mtk.manpages@gmail.com> wrote:
+> Hi David,
 >
-> This is v3 of the File-Sealing and memfd_create() patches. You can find v1 with
-> a longer introduction at gmane:
->   http://thread.gmane.org/gmane.comp.video.dri.devel/102241
-> An LWN article about memfd+sealing is available, too:
->   https://lwn.net/Articles/593918/
-> v2 with some more discussions can be found here:
->   http://thread.gmane.org/gmane.linux.kernel.mm/115713
+> On Fri, Jun 13, 2014 at 2:41 PM, David Herrmann <dh.herrmann@gmail.com> wrote:
+>> Hi
+>>
+>> On Fri, Jun 13, 2014 at 2:27 PM, Michael Kerrisk (man-pages)
+>> <mtk.manpages@gmail.com> wrote:
+>>> Hi David,
+>>>
+>>> On Fri, Jun 13, 2014 at 12:36 PM, David Herrmann <dh.herrmann@gmail.com> wrote:
+>>>> memfd_create() is similar to mmap(MAP_ANON), but returns a file-descriptor
+>>>> that you can pass to mmap(). It can support sealing and avoids any
+>>>> connection to user-visible mount-points. Thus, it's not subject to quotas
+>>>> on mounted file-systems, but can be used like malloc()'ed memory, but
+>>>> with a file-descriptor to it.
+>>>>
+>>>> memfd_create() returns the raw shmem file, so calls like ftruncate() can
+>>>> be used to modify the underlying inode. Also calls like fstat()
+>>>> will return proper information and mark the file as regular file. If you
+>>>> want sealing, you can specify MFD_ALLOW_SEALING. Otherwise, sealing is not
+>>>> supported (like on all other regular files).
+>>>>
+>>>> Compared to O_TMPFILE, it does not require a tmpfs mount-point and is not
+>>>> subject to quotas and alike. It is still properly accounted to memcg
+>>>> limits, though.
+>>>
+>>> Where do I find / is there detailed documentation (ideally, a man
+>>> page) for this new system call?
+>>
+>> I did write a man-page proposal for memfd_create() and a patch for
+>> fcntl() for v1,
 >
-> This series introduces two new APIs:
->   memfd_create(): Think of this syscall as malloc() but it returns a
->                   file-descriptor instead of a pointer. That file-descriptor is
->                   backed by anon-memory and can be memory-mapped for access.
->   sealing: The sealing API can be used to prevent a specific set of operations
->            on a file-descriptor. You 'seal' the file and give thus the
->            guarantee, that it cannot be modified in the specific ways.
+> Ahh -- that's why I had a recollection of such a page ;-).
 >
-> A short high-level introduction is also available here:
->   http://dvdhrm.wordpress.com/2014/06/10/memfd_create2/
+>> however, the API changed several times so I didn't
+>> keep them up to date (the man-page patches are on LKML). However, I
+>> wrote a short introduction to memfd+sealing v3, that I recommend
+>> reading first:
+>>   http://dvdhrm.wordpress.com/2014/06/10/memfd_create2/
 >
->
-> Changed in v3:
->  - fcntl() now returns EINVAL if the FD does not support sealing. We used to
->    return EBADF like pipe_fcntl() does, but that is really weird and I don't
->    like repeating that.
->  - seals are now saved as "unsigned int" instead of "u32".
->  - i_mmap_writable is now an atomic so we can deny writable mappings just like
->    i_writecount does.
->  - SHMEM_ALLOW_SEALING is dropped. We initialize all objects with F_SEAL_SEAL
->    and only unset it for memfds that shall support sealing.
->  - memfd_create() no longer has a size argument. It was redundant, use
->    ftruncate() or fallocate().
->  - memfd_create() flags are "unsigned int" now, instead of "u64".
->  - NAME_MAX off-by-one fix
->  - several cosmetic changes
->  - Added AIO/Direct-IO page-pinning protection
->
-> The last point is the most important change in this version: We now bail out if
-> any page-refcount is elevated while setting SEAL_WRITE. This prevents parallel
-> GUP users from writing to sealed files _after_ they were sealed. There is also a
-> new FUSE-based test-case to trigger such situations.
->
-> The last 2 patches try to improve the page-pinning handling. I included both in
-> this series, but obviously only one of them is needed (or we could stack them):
->  - 6/7: This waits for up to 150ms for pages to be unpinned
->  - 7/7: This isolates pinned pages and replaces them with a fresh copy
->
-> Hugh, patch 6 is basically your code. In case that gets merged, can I put your
-> Signed-off-by on it?
+> Yes, I saw it already. (It's good, but I want more.)
 
-Hugh, any comments on patch 5, 6 and 7? Those are the last outstanding
-issues with memfd+sealing. Patch 7 (isolating pages) is still my
-favorite and has been running just fine on my machine for the last
-months. I think it'd be nice if we could give it a try in -next. We
-can always fall back to Patch 5 or Patch 5+6. Those will detect any
-racing AIO and just fail or wait for the IO to finish for a short
-period.
+Sorry, totally forgot about that one. I now pushed the man-pages out.
+They're available here:
 
-Are there any other blockers for this?
+http://cgit.freedesktop.org/~dvdhrm/man-pages/log/?h=memfd
 
-Thanks
+Thanks!
 David
 
 --
