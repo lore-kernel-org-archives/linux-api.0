@@ -1,36 +1,31 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v9 09/11] seccomp: introduce writer locking
-Date: Wed, 9 Jul 2014 20:59:36 +0200
-Message-ID: <20140709185936.GA6043@redhat.com>
-References: <1403911380-27787-1-git-send-email-keescook@chromium.org> <1403911380-27787-10-git-send-email-keescook@chromium.org>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [net-next PATCH v2 0/3] Broadcast/Multicast rate limit via
+ Ethtool Coalesce
+Date: Wed, 09 Jul 2014 16:44:20 -0700 (PDT)
+Message-ID: <20140709.164420.157865201153845876.davem@davemloft.net>
+References: <1404890050-4020-1-git-send-email-mugunthanvnm@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-mips-bounce@linux-mips.org>
-Content-Disposition: inline
-In-Reply-To: <1403911380-27787-10-git-send-email-keescook@chromium.org>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: Kees Cook <keescook@chromium.org>
-Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1404890050-4020-1-git-send-email-mugunthanvnm-l0cyMroinI0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mugunthanvnm-l0cyMroinI0@public.gmane.org
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/27, Kees Cook wrote:
->
->  void put_seccomp_filter(struct task_struct *tsk)
->  {
-> -	struct seccomp_filter *orig = tsk->seccomp.filter;
-> +	struct seccomp_filter *orig = smp_load_acquire(&tsk->seccomp.filter);
->  	/* Clean up single-reference branches iteratively. */
->  	while (orig && atomic_dec_and_test(&orig->usage)) {
+From: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
+Date: Wed, 9 Jul 2014 12:44:07 +0530
 
-And this smp_load_acquire() looks unnecessary. atomic_dec_and_test()
-is a barrier.
+> A system/cpu can be loaded by a hacker with flooding of broadcast or
+> multicast packets, to prevent this some Ethernet controllers like CPSW
+> provide a mechanism to limit the broadcast/multicast packet rate via
+> hardware limiters. This patch series enables this feature via
+> Ethtool Coalesce.
 
-Oleg.
+This is pretty bogus if you ask me.
+
+What is the difference from accepting a high rate of unicast packets?
+I say it is no different.
+
+Therefore, this feature makes no sense to me at all.
