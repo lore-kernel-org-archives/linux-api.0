@@ -1,31 +1,33 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 01/11] fs: add O_BENEATH_ONLY flag to openat(2)
-Date: Wed, 9 Jul 2014 01:48:59 -0700
-Message-ID: <20140709084859.GA4618@infradead.org>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
- <1404124096-21445-2-git-send-email-drysdale@google.com>
- <20140708120331.GA30459@infradead.org>
- <CAHse=S-gBbYe65mo6tBSJ2p=Z5aswgJTFvt9r29aHP3ALfJ0Mw@mail.gmail.com>
+Subject: Re: [PATCH v3 0/3] mm: introduce fincore() v3
+Date: Wed, 9 Jul 2014 01:51:59 -0700
+Message-ID: <20140709085159.GA10693@infradead.org>
+References: <1404756006-23794-1-git-send-email-n-horiguchi@ah.jp.nec.com>
+ <20140708121618.GA2554@infradead.org>
+ <20140708132755.GA24698@nhori>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CAHse=S-gBbYe65mo6tBSJ2p=Z5aswgJTFvt9r29aHP3ALfJ0Mw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: Christoph Hellwig <hch@infradead.org>, LSM List <linux-security-module@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <20140708132755.GA24698@nhori>
+Sender: owner-linux-mm@kvack.org
+To: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Wu Fengguang <fengguang.wu@intel.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Borislav Petkov <bp@alien8.de>, "Kirill A. Shutemov" <kirill@shutemov.name>, Johannes Weiner <hannes@cmpxchg.org>, Rusty Russell <rusty@rustcorp.com.au>, David Miller <davem@davemloft.net>, Andres Freund <andres@2ndquadrant.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, Dave Chinner <david@fromorbit.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 08, 2014 at 05:54:24PM +0100, David Drysdale wrote:
-> > How is this implemented in FreeBSD?  I can't find any references to
-> > O_BENEATH_ONLY except for your patchset.
+On Tue, Jul 08, 2014 at 09:27:55AM -0400, Naoya Horiguchi wrote:
+> On Tue, Jul 08, 2014 at 05:16:18AM -0700, Christoph Hellwig wrote:
+> > Still a hard NAK for exposing page flags in a syscall ABI.  These are
+> > way to volatile to go into an application interface.
 > 
-> FreeBSD have the relative-only behaviour for openat() relative to a
-> Capsicum capability dfd [1], and for a process in capability-mode [2],
-> but they don't have the O_BENEATH_ONLY as a separately-accessible
-> openat() flag.  However, it seemed like a more widely useful idea so
-> separating it out was suggested.
+> Is there any specific reason that exporting via syscall ABI is more
+> volatile than exporting via procfs as /proc/kpageflags alreadly does?
 
-In that case we should make sure to use the same name and semantics for
-it.  As far as I'm concerned I'd prefer a less clumsy name like
-O_BENEATH.
+An optional proc debug output is very different from an actual system
+call.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
