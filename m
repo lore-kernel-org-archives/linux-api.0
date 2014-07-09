@@ -1,38 +1,31 @@
-From: Mugunthan V N <mugunthanvnm@ti.com>
-Subject: [net-next PATCH v2 2/3] drivers: net: cpsw: remove redundancy check
-Date: Wed, 9 Jul 2014 12:44:09 +0530
-Message-ID: <1404890050-4020-3-git-send-email-mugunthanvnm@ti.com>
-References: <1404890050-4020-1-git-send-email-mugunthanvnm@ti.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 01/11] fs: add O_BENEATH_ONLY flag to openat(2)
+Date: Wed, 9 Jul 2014 01:48:59 -0700
+Message-ID: <20140709084859.GA4618@infradead.org>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com>
+ <1404124096-21445-2-git-send-email-drysdale@google.com>
+ <20140708120331.GA30459@infradead.org>
+ <CAHse=S-gBbYe65mo6tBSJ2p=Z5aswgJTFvt9r29aHP3ALfJ0Mw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1404890050-4020-1-git-send-email-mugunthanvnm@ti.com>
-Sender: netdev-owner@vger.kernel.org
-To: netdev@vger.kernel.org
-Cc: davem@davemloft.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Mugunthan V N <mugunthanvnm@ti.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAHse=S-gBbYe65mo6tBSJ2p=Z5aswgJTFvt9r29aHP3ALfJ0Mw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: Christoph Hellwig <hch@infradead.org>, LSM List <linux-security-module@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-In cpsw_set_coalesce, rx_coalesce_usecs is already checked before
-calling this function, so removing redundancy check.
+On Tue, Jul 08, 2014 at 05:54:24PM +0100, David Drysdale wrote:
+> > How is this implemented in FreeBSD?  I can't find any references to
+> > O_BENEATH_ONLY except for your patchset.
+> 
+> FreeBSD have the relative-only behaviour for openat() relative to a
+> Capsicum capability dfd [1], and for a process in capability-mode [2],
+> but they don't have the O_BENEATH_ONLY as a separately-accessible
+> openat() flag.  However, it seemed like a more widely useful idea so
+> separating it out was suggested.
 
-Signed-off-by: Mugunthan V N <mugunthanvnm@ti.com>
----
- drivers/net/ethernet/ti/cpsw.c | 3 ---
- 1 file changed, 3 deletions(-)
-
-diff --git a/drivers/net/ethernet/ti/cpsw.c b/drivers/net/ethernet/ti/cpsw.c
-index b988d16..a6117e6 100644
---- a/drivers/net/ethernet/ti/cpsw.c
-+++ b/drivers/net/ethernet/ti/cpsw.c
-@@ -884,9 +884,6 @@ static int cpsw_set_coalesce(struct net_device *ndev,
- 	u32 addnl_dvdr = 1;
- 	u32 coal_intvl = 0;
- 
--	if (!coal->rx_coalesce_usecs)
--		return -EINVAL;
--
- 	coal_intvl = coal->rx_coalesce_usecs;
- 
- 	int_ctrl =  readl(&priv->wr_regs->int_control);
--- 
-2.0.0.390.gcb682f8
+In that case we should make sure to use the same name and semantics for
+it.  As far as I'm concerned I'd prefer a less clumsy name like
+O_BENEATH.
