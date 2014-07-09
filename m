@@ -1,64 +1,30 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v12 5/8] s390: add pmd_[dirty|mkclean] for THP
-Date: Wed,  9 Jul 2014 15:22:26 +0900
-Message-ID: <1404886949-17695-6-git-send-email-minchan@kernel.org>
-References: <1404886949-17695-1-git-send-email-minchan@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1404886949-17695-1-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dominik Dingel <dingel@linux.vnet.ibm.com>, Christian Borntraeger <borntraeger@de.ibm.com>, linux-s390@vger.kernel.org
+From: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
+Subject: [net-next PATCH v2 0/3] Broadcast/Multicast rate limit via Ethtool Coalesce
+Date: Wed, 9 Jul 2014 12:44:07 +0530
+Message-ID: <1404890050-4020-1-git-send-email-mugunthanvnm@ti.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
-overwrite of the contents since MADV_FREE syscall is called for
-THP page but for s390 pmds only referenced bit is available
-because there is no free bit left in the pmd entry for the
-software dirty bit so this patch adds dumb pmd_dirty which
-returns always true by suggesting by Martin.
+A system/cpu can be loaded by a hacker with flooding of broadcast or
+multicast packets, to prevent this some Ethernet controllers like CPSW
+provide a mechanism to limit the broadcast/multicast packet rate via
+hardware limiters. This patch series enables this feature via
+Ethtool Coalesce.
 
-They finally find a solution in future.
-http://marc.info/?l=linux-api&m=140440328820808&w=2
+Mugunthan V N (3):
+  net: ethtool: Add Multicast and broadcast rate limit coalescing
+    feature
+  drivers: net: cpsw: remove redundancy check
+  drivers: net: cpsw: Add support for multicast/broadcast rate limit
 
-Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: Dominik Dingel <dingel@linux.vnet.ibm.com>
-Cc: Christian Borntraeger <borntraeger@de.ibm.com>
-Cc: linux-s390@vger.kernel.org
-Acked-by: Gerald Schaefer <gerald.schaefer@de.ibm.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- arch/s390/include/asm/pgtable.h | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ drivers/net/ethernet/ti/cpsw.c | 83 +++++++++++++++++++++++++++++++++++++++---
+ include/uapi/linux/ethtool.h   |  4 ++
+ 2 files changed, 82 insertions(+), 5 deletions(-)
 
-diff --git a/arch/s390/include/asm/pgtable.h b/arch/s390/include/asm/pgtable.h
-index fcba5e03839f..9862fcb0592b 100644
---- a/arch/s390/include/asm/pgtable.h
-+++ b/arch/s390/include/asm/pgtable.h
-@@ -1586,6 +1586,18 @@ static inline pmd_t pmd_mkdirty(pmd_t pmd)
- 	return pmd;
- }
- 
-+static inline int pmd_dirty(pmd_t pmd)
-+{
-+	/* No dirty bit in the segment table entry */
-+	return 1;
-+}
-+
-+static inline pmd_t pmd_mkclean(pmd_t pmd)
-+{
-+	/* No dirty bit in the segment table entry */
-+	return pmd;
-+}
-+
- #define __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG
- static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,
- 					    unsigned long address, pmd_t *pmdp)
 -- 
-2.0.0
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+2.0.0.390.gcb682f8
