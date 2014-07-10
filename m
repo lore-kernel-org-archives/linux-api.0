@@ -1,240 +1,313 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v10 08/11] seccomp: split filter prep from check and apply
-Date: Thu, 10 Jul 2014 11:40:28 -0700
-Message-ID: <1405017631-27346-9-git-send-email-keescook@chromium.org>
-References: <1405017631-27346-1-git-send-email-keescook@chromium.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1405017631-27346-1-git-send-email-keescook@chromium.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-arch@vger.kernel.org, linux-mips@linux-mips.org, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <dborkman@redhat.com>, Julien Tinnes <jln@chromium.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, David Drysdale <drysdale@google.com>, linux-arm-kernel@lists.infradead.org, Alexei Starovoitov <ast@plumgrid.com>
+From: Oded Gabbay <oded.gabbay@gmail.com>
+Subject: [PATCH 13/83] hsa/radeon: Add 2 new IOCTL to kfd, CREATE_QUEUE and DESTROY_QUEUE
+Date: Fri, 11 Jul 2014 00:50:13 +0300
+Message-ID: <1405029027-6085-12-git-send-email-oded.gabbay@amd.com>
+References: <1405029027-6085-1-git-send-email-oded.gabbay@amd.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1405029027-6085-1-git-send-email-oded.gabbay@amd.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Airlie <airlied@linux.ie>, Alex Deucher <alexander.deucher@amd.com>, Jerome Glisse <j.glisse@gmail.com>
+Cc: linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, John Bridgman <John.Bridgman@amd.com>, Andrew Lewycky <Andrew.Lewycky@amd.com>, Joerg Roedel <joro@8bytes.org>, Oded Gabbay <oded.gabbay@amd.com>, Alexey Skidanov <Alexey.Skidanov@amd.com>, Ben Goz <ben.goz@amd.com>, Evgeny Pinchuk <evgeny.pinchuk@amd.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-In preparation for adding seccomp locking, move filter creation away
-from where it is checked and applied. This will allow for locking where
-no memory allocation is happening. The validation, filter attachment,
-and seccomp mode setting can all happen under the future locks.
+This patch adds 2 new IOCTL to kfd driver.
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
+The first IOCTL is KFD_IOC_CREATE_QUEUE that is used by the user-mode
+application to create a compute queue on the GPU.
+
+The second IOCTL is KFD_IOC_DESTROY_QUEUE that is used by the
+user-mode application to destroy an existing compute queue on the GPU.
+
+Signed-off-by: Oded Gabbay <oded.gabbay@amd.com>
 ---
- kernel/seccomp.c |   93 +++++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 64 insertions(+), 29 deletions(-)
+ drivers/gpu/hsa/radeon/kfd_chardev.c  | 155 ++++++++++++++++++++++++++++++++++
+ drivers/gpu/hsa/radeon/kfd_doorbell.c |  11 +++
+ include/uapi/linux/kfd_ioctl.h        |  69 +++++++++++++++
+ 3 files changed, 235 insertions(+)
+ create mode 100644 include/uapi/linux/kfd_ioctl.h
 
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 137e40c7ae3b..502e54d7f86d 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -18,6 +18,7 @@
- #include <linux/compat.h>
+diff --git a/drivers/gpu/hsa/radeon/kfd_chardev.c b/drivers/gpu/hsa/radeon/kfd_chardev.c
+index 0b5bc74..4e7d5d0 100644
+--- a/drivers/gpu/hsa/radeon/kfd_chardev.c
++++ b/drivers/gpu/hsa/radeon/kfd_chardev.c
+@@ -27,11 +27,13 @@
  #include <linux/sched.h>
- #include <linux/seccomp.h>
-+#include <linux/slab.h>
- #include <linux/syscalls.h>
- 
- /* #define SECCOMP_DEBUG 1 */
-@@ -27,7 +28,6 @@
- #include <linux/filter.h>
- #include <linux/ptrace.h>
- #include <linux/security.h>
--#include <linux/slab.h>
- #include <linux/tracehook.h>
+ #include <linux/slab.h>
  #include <linux/uaccess.h>
++#include <uapi/linux/kfd_ioctl.h>
+ #include "kfd_priv.h"
+ #include "kfd_scheduler.h"
  
-@@ -213,27 +213,21 @@ static inline void seccomp_assign_mode(unsigned long seccomp_mode)
+ static long kfd_ioctl(struct file *, unsigned int, unsigned long);
+ static int kfd_open(struct inode *, struct file *);
++static int kfd_mmap(struct file *, struct vm_area_struct *);
  
- #ifdef CONFIG_SECCOMP_FILTER
- /**
-- * seccomp_attach_filter: Attaches a seccomp filter to current.
-+ * seccomp_prepare_filter: Prepares a seccomp filter for use.
-  * @fprog: BPF program to install
-  *
-- * Returns 0 on success or an errno on failure.
-+ * Returns filter on success or an ERR_PTR on failure.
-  */
--static long seccomp_attach_filter(struct sock_fprog *fprog)
-+static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
- {
- 	struct seccomp_filter *filter;
- 	unsigned long fp_size = fprog->len * sizeof(struct sock_filter);
--	unsigned long total_insns = fprog->len;
- 	struct sock_filter *fp;
- 	int new_len;
- 	long ret;
+ static const char kfd_dev_name[] = "kfd";
  
- 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
--		return -EINVAL;
--
--	for (filter = current->seccomp.filter; filter; filter = filter->prev)
--		total_insns += filter->prog->len + 4;  /* include a 4 instr penalty */
--	if (total_insns > MAX_INSNS_PER_PATH)
--		return -ENOMEM;
-+		return ERR_PTR(-EINVAL);
- 
- 	/*
- 	 * Installing a seccomp filter requires that the task has
-@@ -244,11 +238,11 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
- 	if (!task_no_new_privs(current) &&
- 	    security_capable_noaudit(current_cred(), current_user_ns(),
- 				     CAP_SYS_ADMIN) != 0)
--		return -EACCES;
-+		return ERR_PTR(-EACCES);
- 
- 	fp = kzalloc(fp_size, GFP_KERNEL|__GFP_NOWARN);
- 	if (!fp)
--		return -ENOMEM;
-+		return ERR_PTR(-ENOMEM);
- 
- 	/* Copy the instructions from fprog. */
- 	ret = -EFAULT;
-@@ -292,13 +286,7 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
- 
- 	sk_filter_select_runtime(filter->prog);
- 
--	/*
--	 * If there is an existing filter, make it the prev and don't drop its
--	 * task reference.
--	 */
--	filter->prev = current->seccomp.filter;
--	current->seccomp.filter = filter;
--	return 0;
-+	return filter;
- 
- free_filter_prog:
- 	kfree(filter->prog);
-@@ -306,19 +294,20 @@ free_filter:
- 	kfree(filter);
- free_prog:
- 	kfree(fp);
--	return ret;
-+	return ERR_PTR(ret);
+@@ -108,17 +110,170 @@ kfd_open(struct inode *inode, struct file *filep)
+ 	return 0;
  }
  
- /**
-- * seccomp_attach_user_filter - attaches a user-supplied sock_fprog
-+ * seccomp_prepare_user_filter - prepares a user-supplied sock_fprog
-  * @user_filter: pointer to the user data containing a sock_fprog.
-  *
-  * Returns 0 on success and non-zero otherwise.
-  */
--static long seccomp_attach_user_filter(const char __user *user_filter)
-+static struct seccomp_filter *
-+seccomp_prepare_user_filter(const char __user *user_filter)
- {
- 	struct sock_fprog fprog;
--	long ret = -EFAULT;
-+	struct seccomp_filter *filter = ERR_PTR(-EFAULT);
- 
- #ifdef CONFIG_COMPAT
- 	if (is_compat_task()) {
-@@ -331,9 +320,39 @@ static long seccomp_attach_user_filter(const char __user *user_filter)
- #endif
- 	if (copy_from_user(&fprog, user_filter, sizeof(fprog)))
- 		goto out;
--	ret = seccomp_attach_filter(&fprog);
-+	filter = seccomp_prepare_filter(&fprog);
- out:
--	return ret;
-+	return filter;
-+}
-+
-+/**
-+ * seccomp_attach_filter: validate and attach filter
-+ * @flags:  flags to change filter behavior
-+ * @filter: seccomp filter to add to the current process
-+ *
-+ * Returns 0 on success, -ve on error.
-+ */
-+static long seccomp_attach_filter(unsigned int flags,
-+				  struct seccomp_filter *filter)
++static long
++kfd_ioctl_create_queue(struct file *filep, struct kfd_process *p, void __user *arg)
 +{
-+	unsigned long total_insns;
-+	struct seccomp_filter *walker;
++	struct kfd_ioctl_create_queue_args args;
++	struct kfd_dev *dev;
++	int err = 0;
++	unsigned int queue_id;
++	struct kfd_queue *queue;
++	struct kfd_process_device *pdd;
 +
-+	/* Validate resulting filter length. */
-+	total_insns = filter->prog->len;
-+	for (walker = current->seccomp.filter; walker; walker = walker->prev)
-+		total_insns += walker->prog->len + 4;  /* 4 instr penalty */
-+	if (total_insns > MAX_INSNS_PER_PATH)
++	if (copy_from_user(&args, arg, sizeof(args)))
++		return -EFAULT;
++
++	dev = radeon_kfd_device_by_id(args.gpu_id);
++	if (dev == NULL)
++		return -EINVAL;
++
++	queue = kzalloc(
++		offsetof(struct kfd_queue, scheduler_queue) + dev->device_info->scheduler_class->queue_size,
++		GFP_KERNEL);
++
++	if (!queue)
 +		return -ENOMEM;
 +
-+	/*
-+	 * If there is an existing filter, make it the prev and don't drop its
-+	 * task reference.
-+	 */
-+	filter->prev = current->seccomp.filter;
-+	current->seccomp.filter = filter;
++	queue->dev = dev;
++
++	mutex_lock(&p->mutex);
++
++	pdd = radeon_kfd_bind_process_to_device(dev, p);
++	if (IS_ERR(pdd) < 0) {
++		err = PTR_ERR(pdd);
++		goto err_bind_pasid;
++	}
++
++	pr_debug("kfd: creating queue number %d for PASID %d on GPU 0x%x\n",
++			pdd->queue_count,
++			p->pasid,
++			dev->id);
++
++	if (pdd->queue_count++ == 0) {
++		err = dev->device_info->scheduler_class->register_process(dev->scheduler, p, &pdd->scheduler_process);
++		if (err < 0)
++			goto err_register_process;
++	}
++
++	if (!radeon_kfd_allocate_queue_id(p, &queue_id))
++		goto err_allocate_queue_id;
++
++	err = dev->device_info->scheduler_class->create_queue(dev->scheduler, pdd->scheduler_process,
++							      &queue->scheduler_queue,
++							      (void __user *)args.ring_base_address,
++							      args.ring_size,
++							      (void __user *)args.read_pointer_address,
++							      (void __user *)args.write_pointer_address,
++							      radeon_kfd_queue_id_to_doorbell(dev, p, queue_id));
++	if (err)
++		goto err_create_queue;
++
++	radeon_kfd_install_queue(p, queue_id, queue);
++
++	args.queue_id = queue_id;
++	args.doorbell_address = (uint64_t)(uintptr_t)radeon_kfd_get_doorbell(filep, p, dev, queue_id);
++
++	if (copy_to_user(arg, &args, sizeof(args))) {
++		err = -EFAULT;
++		goto err_copy_args_out;
++	}
++
++	mutex_unlock(&p->mutex);
++
++	pr_debug("kfd: queue id %d was created successfully.\n"
++		 "     ring buffer address == 0x%016llX\n"
++		 "     read ptr address    == 0x%016llX\n"
++		 "     write ptr address   == 0x%016llX\n"
++		 "     doorbell address    == 0x%016llX\n",
++			args.queue_id,
++			args.ring_base_address,
++			args.read_pointer_address,
++			args.write_pointer_address,
++			args.doorbell_address);
 +
 +	return 0;
- }
- 
- /* get_seccomp_filter - increments the reference count of the filter on @tsk */
-@@ -346,6 +365,14 @@ void get_seccomp_filter(struct task_struct *tsk)
- 	atomic_inc(&orig->usage);
- }
- 
-+static inline void seccomp_filter_free(struct seccomp_filter *filter)
-+{
-+	if (filter) {
-+		sk_filter_free(filter->prog);
-+		kfree(filter);
++
++err_copy_args_out:
++	dev->device_info->scheduler_class->destroy_queue(dev->scheduler, &queue->scheduler_queue);
++err_create_queue:
++	radeon_kfd_remove_queue(p, queue_id);
++err_allocate_queue_id:
++	if (--pdd->queue_count == 0) {
++		dev->device_info->scheduler_class->deregister_process(dev->scheduler, pdd->scheduler_process);
++		pdd->scheduler_process = NULL;
 +	}
++err_register_process:
++err_bind_pasid:
++	kfree(queue);
++	mutex_unlock(&p->mutex);
++	return err;
 +}
 +
- /* put_seccomp_filter - decrements the ref count of tsk->seccomp.filter */
- void put_seccomp_filter(struct task_struct *tsk)
- {
-@@ -354,8 +381,7 @@ void put_seccomp_filter(struct task_struct *tsk)
- 	while (orig && atomic_dec_and_test(&orig->usage)) {
- 		struct seccomp_filter *freeme = orig;
- 		orig = orig->prev;
--		sk_filter_free(freeme->prog);
--		kfree(freeme);
-+		seccomp_filter_free(freeme);
- 	}
- }
- 
-@@ -533,21 +559,30 @@ static long seccomp_set_mode_filter(unsigned int flags,
- 				    const char __user *filter)
- {
- 	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
-+	struct seccomp_filter *prepared = NULL;
- 	long ret = -EINVAL;
- 
- 	/* Validate flags. */
- 	if (flags != 0)
- 		goto out;
- 
-+	/* Prepare the new filter before holding any locks. */
-+	prepared = seccomp_prepare_user_filter(filter);
-+	if (IS_ERR(prepared))
-+		return PTR_ERR(prepared);
++static int
++kfd_ioctl_destroy_queue(struct file *filp, struct kfd_process *p, void __user *arg)
++{
++	struct kfd_ioctl_destroy_queue_args args;
++	struct kfd_queue *queue;
++	struct kfd_dev *dev;
++	struct kfd_process_device *pdd;
 +
- 	if (!seccomp_check_mode(seccomp_mode))
- 		goto out;
++	if (copy_from_user(&args, arg, sizeof(args)))
++		return -EFAULT;
++
++	mutex_lock(&p->mutex);
++
++	queue = radeon_kfd_get_queue(p, args.queue_id);
++	if (!queue) {
++		mutex_unlock(&p->mutex);
++		return -EINVAL;
++	}
++
++	dev = queue->dev;
++
++	pr_debug("kfd: destroying queue id %d for PASID %d\n",
++			args.queue_id,
++			p->pasid);
++
++	radeon_kfd_remove_queue(p, args.queue_id);
++	dev->device_info->scheduler_class->destroy_queue(dev->scheduler, &queue->scheduler_queue);
++
++	kfree(queue);
++
++	pdd = radeon_kfd_get_process_device_data(dev, p);
++	BUG_ON(pdd == NULL); /* Because a queue exists. */
++
++	if (--pdd->queue_count == 0) {
++		dev->device_info->scheduler_class->deregister_process(dev->scheduler, pdd->scheduler_process);
++		pdd->scheduler_process = NULL;
++	}
++
++	mutex_unlock(&p->mutex);
++	return 0;
++}
  
--	ret = seccomp_attach_user_filter(filter);
-+	ret = seccomp_attach_filter(flags, prepared);
- 	if (ret)
- 		goto out;
-+	/* Do not free the successfully attached filter. */
-+	prepared = NULL;
+ static long
+ kfd_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
+ {
++	struct kfd_process *process;
+ 	long err = -EINVAL;
  
- 	seccomp_assign_mode(seccomp_mode);
- out:
-+	seccomp_filter_free(prepared);
- 	return ret;
+ 	dev_info(kfd_device,
+ 		 "ioctl cmd 0x%x (#%d), arg 0x%lx\n",
+ 		 cmd, _IOC_NR(cmd), arg);
+ 
++	process = radeon_kfd_get_process(current);
++	if (IS_ERR(process))
++		return PTR_ERR(process);
++
+ 	switch (cmd) {
++	case KFD_IOC_CREATE_QUEUE:
++		err = kfd_ioctl_create_queue(filep, process, (void __user *)arg);
++		break;
++
++	case KFD_IOC_DESTROY_QUEUE:
++		err = kfd_ioctl_destroy_queue(filep, process, (void __user *)arg);
++		break;
++
+ 	default:
+ 		dev_err(kfd_device,
+ 			"unknown ioctl cmd 0x%x, arg 0x%lx)\n",
+diff --git a/drivers/gpu/hsa/radeon/kfd_doorbell.c b/drivers/gpu/hsa/radeon/kfd_doorbell.c
+index e1d8506..3de8a02 100644
+--- a/drivers/gpu/hsa/radeon/kfd_doorbell.c
++++ b/drivers/gpu/hsa/radeon/kfd_doorbell.c
+@@ -155,3 +155,14 @@ doorbell_t __user *radeon_kfd_get_doorbell(struct file *devkfd, struct kfd_proce
+ 	return &pdd->doorbell_mapping[doorbell_index];
  }
- #else
+ 
++/*
++ * queue_ids are in the range [0,MAX_PROCESS_QUEUES) and are mapped 1:1
++ * to doorbells with the process's doorbell page
++ */
++unsigned int radeon_kfd_queue_id_to_doorbell(struct kfd_dev *kfd, struct kfd_process *process, unsigned int queue_id)
++{
++	/* doorbell_id_offset accounts for doorbells taken by KGD.
++	 * pasid * doorbell_process_allocation/sizeof(doorbell_t) adjusts to the process's doorbells */
++	return kfd->doorbell_id_offset + process->pasid * (doorbell_process_allocation()/sizeof(doorbell_t)) + queue_id;
++}
++
+diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
+new file mode 100644
+index 0000000..dcc5fe0
+--- /dev/null
++++ b/include/uapi/linux/kfd_ioctl.h
+@@ -0,0 +1,69 @@
++/*
++ * Copyright 2014 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++#ifndef KFD_IOCTL_H_INCLUDED
++#define KFD_IOCTL_H_INCLUDED
++
++#include <linux/types.h>
++#include <linux/ioctl.h>
++
++#define KFD_IOCTL_CURRENT_VERSION 1
++
++/* The 64-bit ABI is the authoritative version. */
++#pragma pack(push, 8)
++
++struct kfd_ioctl_get_version_args {
++	uint32_t min_supported_version;	/* from KFD */
++	uint32_t max_supported_version;	/* from KFD */
++};
++
++/* For kfd_ioctl_create_queue_args.queue_type. */
++#define KFD_IOC_QUEUE_TYPE_COMPUTE   0
++#define KFD_IOC_QUEUE_TYPE_SDMA      1
++
++struct kfd_ioctl_create_queue_args {
++	uint64_t ring_base_address;	/* to KFD */
++	uint32_t ring_size;		/* to KFD */
++	uint32_t gpu_id;		/* to KFD */
++	uint32_t queue_type;		/* to KFD */
++	uint32_t queue_percentage;	/* to KFD */
++	uint32_t queue_priority;	/* to KFD */
++	uint64_t write_pointer_address;	/* to KFD */
++	uint64_t read_pointer_address;	/* to KFD */
++
++	uint64_t doorbell_address;	/* from KFD */
++	uint32_t queue_id;		/* from KFD */
++};
++
++struct kfd_ioctl_destroy_queue_args {
++	uint32_t queue_id;		/* to KFD */
++};
++
++#define KFD_IOC_MAGIC 'K'
++
++#define KFD_IOC_GET_VERSION	_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
++#define KFD_IOC_CREATE_QUEUE	_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
++#define KFD_IOC_DESTROY_QUEUE	_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
++
++#pragma pack(pop)
++
++#endif
 -- 
-1.7.9.5
+1.9.1
