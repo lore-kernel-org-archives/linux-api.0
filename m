@@ -1,7 +1,7 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v10 10/11] seccomp: allow mode setting across threads
-Date: Thu, 10 Jul 2014 11:40:30 -0700
-Message-ID: <1405017631-27346-11-git-send-email-keescook@chromium.org>
+Subject: [PATCH v10 07/11] sched: move no_new_privs into new atomic flags
+Date: Thu, 10 Jul 2014 11:40:27 -0700
+Message-ID: <1405017631-27346-8-git-send-email-keescook@chromium.org>
 References: <1405017631-27346-1-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,107 +21,135 @@ To: linux-kernel@vger.kernel.org
 Cc: linux-arch@vger.kernel.org, linux-mips@linux-mips.org, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <dborkman@redhat.com>, Julien Tinnes <jln@chromium.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, David Drysdale <drysdale@google.com>, linux-arm-kernel@lists.infradead.org, Alexei Starovoitov <ast@plumgrid.com>
 List-Id: linux-api@vger.kernel.org
 
-This changes the mode setting helper to allow threads to change the
-seccomp mode from another thread. We must maintain barriers to keep
-TIF_SECCOMP synchronized with the rest of the seccomp state.
+Since seccomp transitions between threads requires updates to the
+no_new_privs flag to be atomic, the flag must be part of an atomic flag
+set. This moves the nnp flag into a separate task field, and introduces
+accessors.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- kernel/seccomp.c |   36 +++++++++++++++++++++++++-----------
- 1 file changed, 25 insertions(+), 11 deletions(-)
+ fs/exec.c                  |    4 ++--
+ include/linux/sched.h      |   18 +++++++++++++++---
+ kernel/seccomp.c           |    2 +-
+ kernel/sys.c               |    4 ++--
+ security/apparmor/domain.c |    4 ++--
+ 5 files changed, 22 insertions(+), 10 deletions(-)
 
+diff --git a/fs/exec.c b/fs/exec.c
+index a3d33fe592d6..0f5c272410f6 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1234,7 +1234,7 @@ static void check_unsafe_exec(struct linux_binprm *bprm)
+ 	 * This isn't strictly necessary, but it makes it harder for LSMs to
+ 	 * mess up.
+ 	 */
+-	if (current->no_new_privs)
++	if (task_no_new_privs(current))
+ 		bprm->unsafe |= LSM_UNSAFE_NO_NEW_PRIVS;
+ 
+ 	t = p;
+@@ -1272,7 +1272,7 @@ int prepare_binprm(struct linux_binprm *bprm)
+ 	bprm->cred->egid = current_egid();
+ 
+ 	if (!(bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID) &&
+-	    !current->no_new_privs &&
++	    !task_no_new_privs(current) &&
+ 	    kuid_has_mapping(bprm->cred->user_ns, inode->i_uid) &&
+ 	    kgid_has_mapping(bprm->cred->user_ns, inode->i_gid)) {
+ 		/* Set-uid? */
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 306f4f0c987a..0fd19055bb64 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1307,13 +1307,12 @@ struct task_struct {
+ 				 * execve */
+ 	unsigned in_iowait:1;
+ 
+-	/* task may not gain privileges */
+-	unsigned no_new_privs:1;
+-
+ 	/* Revert to default priority/policy when forking */
+ 	unsigned sched_reset_on_fork:1;
+ 	unsigned sched_contributes_to_load:1;
+ 
++	unsigned long atomic_flags; /* Flags needing atomic access. */
++
+ 	pid_t pid;
+ 	pid_t tgid;
+ 
+@@ -1967,6 +1966,19 @@ static inline void memalloc_noio_restore(unsigned int flags)
+ 	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
+ }
+ 
++/* Per-process atomic flags. */
++#define PFA_NO_NEW_PRIVS 0x00000001	/* May not gain new privileges. */
++
++static inline bool task_no_new_privs(struct task_struct *p)
++{
++	return test_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
++}
++
++static inline void task_set_no_new_privs(struct task_struct *p)
++{
++	set_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
++}
++
+ /*
+  * task->jobctl flags
+  */
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 6087e018155c..c6bd5f196d9f 100644
+index 2f83496d6016..137e40c7ae3b 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -173,21 +173,24 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
-  */
- static u32 seccomp_run_filters(int syscall)
- {
--	struct seccomp_filter *f;
-+	struct seccomp_filter *f = ACCESS_ONCE(current->seccomp.filter);
- 	struct seccomp_data sd;
- 	u32 ret = SECCOMP_RET_ALLOW;
- 
- 	/* Ensure unexpected behavior doesn't result in failing open. */
--	if (WARN_ON(current->seccomp.filter == NULL))
-+	if (unlikely(WARN_ON(f == NULL)))
- 		return SECCOMP_RET_KILL;
- 
-+	/* Make sure cross-thread synced filter points somewhere sane. */
-+	smp_read_barrier_depends();
-+
- 	populate_seccomp_data(&sd);
- 
- 	/*
- 	 * All filters in the list are evaluated and the lowest BPF return
- 	 * value always takes priority (ignoring the DATA).
+@@ -241,7 +241,7 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
+ 	 * This avoids scenarios where unprivileged tasks can affect the
+ 	 * behavior of privileged children.
  	 */
--	for (f = current->seccomp.filter; f; f = f->prev) {
-+	for (; f; f = f->prev) {
- 		u32 cur_ret = SK_RUN_FILTER(f->prog, (void *)&sd);
+-	if (!current->no_new_privs &&
++	if (!task_no_new_privs(current) &&
+ 	    security_capable_noaudit(current_cred(), current_user_ns(),
+ 				     CAP_SYS_ADMIN) != 0)
+ 		return -EACCES;
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 66a751ebf9d9..ce8129192a26 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1990,12 +1990,12 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		if (arg2 != 1 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
  
- 		if ((cur_ret & SECCOMP_RET_ACTION) < (ret & SECCOMP_RET_ACTION))
-@@ -207,12 +210,18 @@ static inline bool seccomp_check_mode(unsigned long seccomp_mode)
- 	return true;
- }
+-		current->no_new_privs = 1;
++		task_set_no_new_privs(current);
+ 		break;
+ 	case PR_GET_NO_NEW_PRIVS:
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+-		return current->no_new_privs ? 1 : 0;
++		return task_no_new_privs(current) ? 1 : 0;
+ 	case PR_GET_THP_DISABLE:
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
+index 452567d3a08e..d97cba3e3849 100644
+--- a/security/apparmor/domain.c
++++ b/security/apparmor/domain.c
+@@ -621,7 +621,7 @@ int aa_change_hat(const char *hats[], int count, u64 token, bool permtest)
+ 	 * There is no exception for unconfined as change_hat is not
+ 	 * available.
+ 	 */
+-	if (current->no_new_privs)
++	if (task_no_new_privs(current))
+ 		return -EPERM;
  
--static inline void seccomp_assign_mode(unsigned long seccomp_mode)
-+static inline void seccomp_assign_mode(struct task_struct *task,
-+				       unsigned long seccomp_mode)
- {
--	BUG_ON(!spin_is_locked(&current->sighand->siglock));
-+	BUG_ON(!spin_is_locked(&task->sighand->siglock));
- 
--	current->seccomp.mode = seccomp_mode;
--	set_tsk_thread_flag(current, TIF_SECCOMP);
-+	task->seccomp.mode = seccomp_mode;
-+	/*
-+	 * Make sure TIF_SECCOMP cannot be set before the mode (and
-+	 * filter) is set.
-+	 */
-+	smp_mb__before_atomic();
-+	set_tsk_thread_flag(task, TIF_SECCOMP);
- }
- 
- #ifdef CONFIG_SECCOMP_FILTER
-@@ -433,12 +442,17 @@ static int mode1_syscalls_32[] = {
- 
- int __secure_computing(int this_syscall)
- {
--	int mode = current->seccomp.mode;
- 	int exit_sig = 0;
- 	int *syscall;
- 	u32 ret;
- 
--	switch (mode) {
-+	/*
-+	 * Make sure that any changes to mode from another thread have
-+	 * been seen after TIF_SECCOMP was seen.
-+	 */
-+	rmb();
-+
-+	switch (current->seccomp.mode) {
- 	case SECCOMP_MODE_STRICT:
- 		syscall = mode1_syscalls;
- #ifdef CONFIG_COMPAT
-@@ -543,7 +557,7 @@ static long seccomp_set_mode_strict(void)
- #ifdef TIF_NOTSC
- 	disable_TSC();
- #endif
--	seccomp_assign_mode(seccomp_mode);
-+	seccomp_assign_mode(current, seccomp_mode);
- 	ret = 0;
- 
- out:
-@@ -593,7 +607,7 @@ static long seccomp_set_mode_filter(unsigned int flags,
- 	/* Do not free the successfully attached filter. */
- 	prepared = NULL;
- 
--	seccomp_assign_mode(seccomp_mode);
-+	seccomp_assign_mode(current, seccomp_mode);
- out:
- 	spin_unlock_irq(&current->sighand->siglock);
- 	seccomp_filter_free(prepared);
+ 	/* released below */
+@@ -776,7 +776,7 @@ int aa_change_profile(const char *ns_name, const char *hname, bool onexec,
+ 	 * no_new_privs is set because this aways results in a reduction
+ 	 * of permissions.
+ 	 */
+-	if (current->no_new_privs && !unconfined(profile)) {
++	if (task_no_new_privs(current) && !unconfined(profile)) {
+ 		put_cred(cred);
+ 		return -EPERM;
+ 	}
 -- 
 1.7.9.5
