@@ -1,187 +1,136 @@
 From: Oded Gabbay <oded.gabbay@gmail.com>
-Subject: [PATCH 59/83] hsa/radeon: Exclusive access for perf. counters
-Date: Fri, 11 Jul 2014 00:54:15 +0300
-Message-ID: <1405029279-6894-31-git-send-email-oded.gabbay@amd.com>
+Subject: [PATCH 60/83] hsa/radeon: Rearrange structures in kfd_ioctl.h
+Date: Fri, 11 Jul 2014 00:54:16 +0300
+Message-ID: <1405029279-6894-32-git-send-email-oded.gabbay@amd.com>
 References: <1405029279-6894-1-git-send-email-oded.gabbay@amd.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1405029279-6894-1-git-send-email-oded.gabbay@amd.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: David Airlie <airlied@linux.ie>, Alex Deucher <alexander.deucher@amd.com>, Jerome Glisse <j.glisse@gmail.com>
-Cc: linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, John Bridgman <John.Bridgman@amd.com>, Andrew Lewycky <Andrew.Lewycky@amd.com>, Joerg Roedel <joro@8bytes.org>, Evgeny Pinchuk <evgeny.pinchuk@amd.com>, Oded Gabbay <oded.gabbay@amd.com>, Ben Goz <ben.goz@amd.com>, Alexey Skidanov <Alexey.Skidanov@amd.com>, linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, John Bridgman <John.Bridgman@amd.com>, Andrew Lewycky <Andrew.Lewycky@amd.com>, Joerg Roedel <joro@8bytes.org>, Oded Gabbay <oded.gabbay@amd.com>, Ben Goz <ben.goz@amd.com>, Evgeny Pinchuk <evgeny.pinchuk@amd.com>, Alexey Skidanov <Alexey.Skidanov@amd.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Evgeny Pinchuk <evgeny.pinchuk@amd.com>
+This patch rearranges the structures defined in kfd_ioctl.h so that
+all the uint64_t variables are located at the start of each structure and
+then all the uint32_t variables are located.
 
-Introducing IOCTL implementation for controlling exclusive access to performace counters.
-The exclusive access is per GPU device.
-
-Signed-off-by: Evgeny Pinchuk <evgeny.pinchuk@amd.com>
 Signed-off-by: Oded Gabbay <oded.gabbay@amd.com>
 ---
- drivers/gpu/hsa/radeon/kfd_chardev.c | 61 ++++++++++++++++++++++++++++++++++++
- drivers/gpu/hsa/radeon/kfd_device.c  |  2 ++
- drivers/gpu/hsa/radeon/kfd_priv.h    |  5 +++
- drivers/gpu/hsa/radeon/kfd_process.c |  8 +++--
- include/uapi/linux/kfd_ioctl.h       | 12 +++++++
- 5 files changed, 86 insertions(+), 2 deletions(-)
+ include/uapi/linux/kfd_ioctl.h | 51 ++++++++++++++++++++++--------------------
+ 1 file changed, 27 insertions(+), 24 deletions(-)
 
-diff --git a/drivers/gpu/hsa/radeon/kfd_chardev.c b/drivers/gpu/hsa/radeon/kfd_chardev.c
-index 80b702e..b39df68 100644
---- a/drivers/gpu/hsa/radeon/kfd_chardev.c
-+++ b/drivers/gpu/hsa/radeon/kfd_chardev.c
-@@ -387,6 +387,59 @@ static int kfd_ioctl_get_process_apertures(struct file *filp, struct kfd_process
- 	return 0;
- }
- 
-+static long
-+kfd_ioctl_pmc_acquire_access(struct file *filp, struct kfd_process *p, void __user *arg)
-+{
-+	struct kfd_ioctl_pmc_acquire_access_args args;
-+	struct kfd_dev *dev;
-+	int err = -EBUSY;
-+
-+	if (copy_from_user(&args, arg, sizeof(args)))
-+		return -EFAULT;
-+
-+	dev = radeon_kfd_device_by_id(args.gpu_id);
-+	if (dev == NULL)
-+		return -EINVAL;
-+
-+	spin_lock(&dev->pmc_access_lock);
-+	if (dev->pmc_locking_process == NULL) {
-+		dev->pmc_locking_process = p;
-+		dev->pmc_locking_trace = args.trace_id;
-+		err = 0;
-+	} else if (dev->pmc_locking_process == p && dev->pmc_locking_trace == args.trace_id) {
-+		/* Same trace already has an access. Returning success */
-+		err = 0;
-+	}
-+
-+	spin_unlock(&dev->pmc_access_lock);
-+
-+	return err;
-+}
-+
-+static long
-+kfd_ioctl_pmc_release_access(struct file *filp, struct kfd_process *p, void __user *arg)
-+{
-+	struct kfd_ioctl_pmc_release_access_args args;
-+	struct kfd_dev *dev;
-+	int err = -EINVAL;
-+
-+	if (copy_from_user(&args, arg, sizeof(args)))
-+		return -EFAULT;
-+
-+	dev = radeon_kfd_device_by_id(args.gpu_id);
-+	if (dev == NULL)
-+		return -EINVAL;
-+
-+	spin_lock(&dev->pmc_access_lock);
-+	if (dev->pmc_locking_process == p && dev->pmc_locking_trace == args.trace_id) {
-+		dev->pmc_locking_process = NULL;
-+		dev->pmc_locking_trace = 0;
-+		err = 0;
-+	}
-+	spin_unlock(&dev->pmc_access_lock);
-+
-+	return err;
-+}
- 
- static long
- kfd_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
-@@ -427,6 +480,14 @@ kfd_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
- 		err = kfd_ioctl_update_queue(filep, process, (void __user *)arg);
- 		break;
- 
-+	case KFD_IOC_PMC_ACQUIRE_ACCESS:
-+		err = kfd_ioctl_pmc_acquire_access(filep, process, (void __user *) arg);
-+		break;
-+
-+	case KFD_IOC_PMC_RELEASE_ACCESS:
-+		err = kfd_ioctl_pmc_release_access(filep, process, (void __user *) arg);
-+		break;
-+
- 	default:
- 		dev_err(kfd_device,
- 			"unknown ioctl cmd 0x%x, arg 0x%lx)\n",
-diff --git a/drivers/gpu/hsa/radeon/kfd_device.c b/drivers/gpu/hsa/radeon/kfd_device.c
-index c602e16..9af812b 100644
---- a/drivers/gpu/hsa/radeon/kfd_device.c
-+++ b/drivers/gpu/hsa/radeon/kfd_device.c
-@@ -185,6 +185,8 @@ bool kgd2kfd_device_init(struct kfd_dev *kfd,
- 		return false;
- 	}
- 
-+	spin_lock_init(&kfd->pmc_access_lock);
-+
- 	kfd->init_complete = true;
- 	dev_info(kfd_device, "added device (%x:%x)\n", kfd->pdev->vendor,
- 		 kfd->pdev->device);
-diff --git a/drivers/gpu/hsa/radeon/kfd_priv.h b/drivers/gpu/hsa/radeon/kfd_priv.h
-index 049671b..e6d4993 100644
---- a/drivers/gpu/hsa/radeon/kfd_priv.h
-+++ b/drivers/gpu/hsa/radeon/kfd_priv.h
-@@ -135,6 +135,11 @@ struct kfd_dev {
- 
- 	/* QCM Device instance */
- 	struct device_queue_manager *dqm;
-+
-+	/* Performance counters exclusivity lock */
-+	spinlock_t pmc_access_lock;
-+	struct kfd_process *pmc_locking_process;
-+	uint64_t pmc_locking_trace;
- };
- 
- /* KGD2KFD callbacks */
-diff --git a/drivers/gpu/hsa/radeon/kfd_process.c b/drivers/gpu/hsa/radeon/kfd_process.c
-index f967c15..9bb5cab 100644
---- a/drivers/gpu/hsa/radeon/kfd_process.c
-+++ b/drivers/gpu/hsa/radeon/kfd_process.c
-@@ -96,9 +96,13 @@ static void free_process(struct kfd_process *p)
- 
- 	BUG_ON(p == NULL);
- 
--	/* doorbell mappings: automatic */
--
- 	list_for_each_entry_safe(pdd, temp, &p->per_device_data, per_device_list) {
-+		spin_lock(&pdd->dev->pmc_access_lock);
-+		if (pdd->dev->pmc_locking_process == p) {
-+			pdd->dev->pmc_locking_process = NULL;
-+			pdd->dev->pmc_locking_trace = 0;
-+		}
-+		spin_unlock(&pdd->dev->pmc_access_lock);
- 		amd_iommu_unbind_pasid(pdd->dev->pdev, p->pasid);
- 		list_del(&pdd->per_device_list);
- 		kfree(pdd);
 diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
-index d58231d..509c4a0 100644
+index 509c4a0..3cedd1a 100644
 --- a/include/uapi/linux/kfd_ioctl.h
 +++ b/include/uapi/linux/kfd_ioctl.h
-@@ -103,6 +103,16 @@ struct kfd_ioctl_get_process_apertures_args {
- 	uint8_t num_of_nodes; /* from KFD, should be in the range [1 - NUM_OF_SUPPORTED_GPUS]*/
+@@ -42,15 +42,15 @@ struct kfd_ioctl_get_version_args {
+ 
+ struct kfd_ioctl_create_queue_args {
+ 	uint64_t ring_base_address;	/* to KFD */
++	uint64_t write_pointer_address;	/* from KFD */
++	uint64_t read_pointer_address;	/* from KFD */
++	uint64_t doorbell_address;	/* from KFD */
++
+ 	uint32_t ring_size;		/* to KFD */
+ 	uint32_t gpu_id;		/* to KFD */
+ 	uint32_t queue_type;		/* to KFD */
+ 	uint32_t queue_percentage;	/* to KFD */
+ 	uint32_t queue_priority;	/* to KFD */
+-
+-	uint64_t write_pointer_address;	/* from KFD */
+-	uint64_t read_pointer_address;	/* from KFD */
+-	uint64_t doorbell_address;	/* from KFD */
+ 	uint32_t queue_id;		/* from KFD */
  };
  
-+struct kfd_ioctl_pmc_acquire_access_args {
-+	uint32_t gpu_id;	/* to KFD */
-+	uint64_t trace_id;	/* to KFD */
-+};
+@@ -59,8 +59,9 @@ struct kfd_ioctl_destroy_queue_args {
+ };
+ 
+ struct kfd_ioctl_update_queue_args {
+-	uint32_t queue_id;		/* to KFD */
+ 	uint64_t ring_base_address;	/* to KFD */
 +
-+struct kfd_ioctl_pmc_release_access_args {
-+	uint32_t gpu_id;	/* to KFD */
-+	uint64_t trace_id;	/* to KFD */
-+};
++	uint32_t queue_id;		/* to KFD */
+ 	uint32_t ring_size;		/* to KFD */
+ 	uint32_t queue_percentage;	/* to KFD */
+ 	uint32_t queue_priority;	/* to KFD */
+@@ -71,31 +72,33 @@ struct kfd_ioctl_update_queue_args {
+ #define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
+ 
+ struct kfd_ioctl_set_memory_policy_args {
++	uint64_t alternate_aperture_base;	/* to KFD */
++	uint64_t alternate_aperture_size;	/* to KFD */
 +
+ 	uint32_t gpu_id;			/* to KFD */
+ 	uint32_t default_policy;		/* to KFD */
+ 	uint32_t alternate_policy;		/* to KFD */
+-	uint64_t alternate_aperture_base;	/* to KFD */
+-	uint64_t alternate_aperture_size;	/* to KFD */
+ };
+ 
+ struct kfd_ioctl_get_clock_counters_args {
+-	uint32_t gpu_id;		/* to KFD */
+ 	uint64_t gpu_clock_counter;	/* from KFD */
+ 	uint64_t cpu_clock_counter;	/* from KFD */
+ 	uint64_t system_clock_counter;	/* from KFD */
+ 	uint64_t system_clock_freq;	/* from KFD */
++
++	uint32_t gpu_id;		/* to KFD */
+ };
+ 
+ #define NUM_OF_SUPPORTED_GPUS 7
+ 
+ struct kfd_process_device_apertures {
+-	uint64_t lds_base;/* from KFD */
+-	uint64_t lds_limit;/* from KFD */
+-	uint64_t scratch_base;/* from KFD */
+-	uint64_t scratch_limit;/* from KFD */
+-	uint64_t gpuvm_base;/* from KFD */
+-	uint64_t gpuvm_limit;/* from KFD */
+-	uint32_t gpu_id;/* from KFD */
++	uint64_t lds_base;		/* from KFD */
++	uint64_t lds_limit;		/* from KFD */
++	uint64_t scratch_base;		/* from KFD */
++	uint64_t scratch_limit;		/* from KFD */
++	uint64_t gpuvm_base;		/* from KFD */
++	uint64_t gpuvm_limit;		/* from KFD */
++	uint32_t gpu_id;		/* from KFD */
+ };
+ 
+ struct kfd_ioctl_get_process_apertures_args {
+@@ -104,24 +107,24 @@ struct kfd_ioctl_get_process_apertures_args {
+ };
+ 
+ struct kfd_ioctl_pmc_acquire_access_args {
+-	uint32_t gpu_id;	/* to KFD */
+-	uint64_t trace_id;	/* to KFD */
++	uint64_t trace_id;		/* to KFD */
++	uint32_t gpu_id;		/* to KFD */
+ };
+ 
+ struct kfd_ioctl_pmc_release_access_args {
+-	uint32_t gpu_id;	/* to KFD */
+-	uint64_t trace_id;	/* to KFD */
++	uint64_t trace_id;		/* to KFD */
++	uint32_t gpu_id;		/* to KFD */
+ };
+ 
  #define KFD_IOC_MAGIC 'K'
  
- #define KFD_IOC_GET_VERSION	_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
-@@ -112,6 +122,8 @@ struct kfd_ioctl_get_process_apertures_args {
+-#define KFD_IOC_GET_VERSION	_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
+-#define KFD_IOC_CREATE_QUEUE	_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
+-#define KFD_IOC_DESTROY_QUEUE	_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
++#define KFD_IOC_GET_VERSION		_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
++#define KFD_IOC_CREATE_QUEUE		_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
++#define KFD_IOC_DESTROY_QUEUE		_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
+ #define KFD_IOC_SET_MEMORY_POLICY	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
  #define KFD_IOC_GET_CLOCK_COUNTERS	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
- #define KFD_IOC_GET_PROCESS_APERTURES _IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
- #define KFD_IOC_UPDATE_QUEUE	_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
-+#define KFD_IOC_PMC_ACQUIRE_ACCESS	_IOW(KFD_IOC_MAGIC, 12, struct kfd_ioctl_pmc_acquire_access_args)
-+#define KFD_IOC_PMC_RELEASE_ACCESS	_IOW(KFD_IOC_MAGIC, 13, struct kfd_ioctl_pmc_release_access_args)
- 
- #pragma pack(pop)
+-#define KFD_IOC_GET_PROCESS_APERTURES _IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
+-#define KFD_IOC_UPDATE_QUEUE	_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
++#define KFD_IOC_GET_PROCESS_APERTURES	_IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
++#define KFD_IOC_UPDATE_QUEUE		_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
+ #define KFD_IOC_PMC_ACQUIRE_ACCESS	_IOW(KFD_IOC_MAGIC, 12, struct kfd_ioctl_pmc_acquire_access_args)
+ #define KFD_IOC_PMC_RELEASE_ACCESS	_IOW(KFD_IOC_MAGIC, 13, struct kfd_ioctl_pmc_release_access_args)
  
 -- 
 1.9.1
