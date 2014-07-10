@@ -1,113 +1,86 @@
-From: Oded Gabbay <oded.gabbay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 32/83] hsa/radeon: implementing IOCTL for clock counters
-Date: Fri, 11 Jul 2014 00:53:48 +0300
-Message-ID: <1405029279-6894-4-git-send-email-oded.gabbay@amd.com>
+From: Oded Gabbay <oded.gabbay@gmail.com>
+Subject: [PATCH 42/83] hsa/radeon: 32-bit processes support
+Date: Fri, 11 Jul 2014 00:53:58 +0300
+Message-ID: <1405029279-6894-14-git-send-email-oded.gabbay@amd.com>
 References: <1405029279-6894-1-git-send-email-oded.gabbay@amd.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1405029279-6894-1-git-send-email-oded.gabbay-5C7GfCeVMHo@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Alex Deucher <alexander.deucher-5C7GfCeVMHo@public.gmane.org>, Jerome Glisse <j.glisse-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, John Bridgman <John.Bridgman-5C7GfCeVMHo@public.gmane.org>, Andrew Lewycky <Andrew.Lewycky-5C7GfCeVMHo@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Evgeny Pinchuk <evgeny.pinchuk-5C7GfCeVMHo@public.gmane.org>, Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>, Ben Goz <ben.goz-5C7GfCeVMHo@public.gmane.org>, Alexey Skidanov <Alexey.Skidanov-5C7GfCeVMHo@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1405029279-6894-1-git-send-email-oded.gabbay@amd.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Airlie <airlied@linux.ie>, Alex Deucher <alexander.deucher@amd.com>, Jerome Glisse <j.glisse@gmail.com>
+Cc: linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, John Bridgman <John.Bridgman@amd.com>, Andrew Lewycky <Andrew.Lewycky@amd.com>, Joerg Roedel <joro@8bytes.org>, Alexey Skidanov <Alexey.Skidanov@amd.com>, Oded Gabbay <oded.gabbay@amd.com>, Ben Goz <ben.goz@amd.com>, Evgeny Pinchuk <evgeny.pinchuk@amd.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Evgeny Pinchuk <evgeny.pinchuk-5C7GfCeVMHo@public.gmane.org>
+From: Alexey Skidanov <Alexey.Skidanov@amd.com>
 
-Implemented new IOCTL to query the CPU and GPU clock counters.
+Initializing compat_ioctl properly. All ioctls args are packed.
 
-Signed-off-by: Evgeny Pinchuk <evgeny.pinchuk-5C7GfCeVMHo@public.gmane.org>
-Signed-off-by: Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>
+Signed-off-by: Alexey Skidanov <Alexey.Skidanov@amd.com>
+Signed-off-by: Oded Gabbay <oded.gabbay@amd.com>
 ---
- drivers/gpu/hsa/radeon/kfd_chardev.c | 37 ++++++++++++++++++++++++++++++++++++
- include/uapi/linux/kfd_ioctl.h       |  9 +++++++++
- 2 files changed, 46 insertions(+)
+ drivers/gpu/hsa/radeon/kfd_chardev.c | 7 +++++--
+ drivers/gpu/hsa/radeon/kfd_priv.h    | 4 ++++
+ include/uapi/linux/kfd_ioctl.h       | 2 +-
+ 3 files changed, 10 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/hsa/radeon/kfd_chardev.c b/drivers/gpu/hsa/radeon/kfd_chardev.c
-index ddaf357..d6fa980 100644
+index 75fe11f..e95d597 100644
 --- a/drivers/gpu/hsa/radeon/kfd_chardev.c
 +++ b/drivers/gpu/hsa/radeon/kfd_chardev.c
-@@ -28,6 +28,7 @@
+@@ -27,6 +27,7 @@
+ #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/uaccess.h>
++#include <linux/compat.h>
  #include <uapi/linux/kfd_ioctl.h>
-+#include <linux/time.h>
+ #include <linux/time.h>
  #include "kfd_priv.h"
- #include "kfd_scheduler.h"
+@@ -41,6 +42,7 @@ static const char kfd_dev_name[] = "kfd";
+ static const struct file_operations kfd_fops = {
+ 	.owner = THIS_MODULE,
+ 	.unlocked_ioctl = kfd_ioctl,
++	.compat_ioctl = kfd_ioctl,
+ 	.open = kfd_open,
+ 	.mmap = kfd_mmap,
+ };
+@@ -105,8 +107,9 @@ kfd_open(struct inode *inode, struct file *filep)
+ 	process = radeon_kfd_create_process(current);
+ 	if (IS_ERR(process))
+ 		return PTR_ERR(process);
+-
+-	pr_debug("\nkfd: process %d opened dev/kfd", process->pasid);
++	process->is_32bit_user_mode = is_compat_task();
++	dev_info(kfd_device, "process %d opened, compat mode (32 bit) - %d\n",
++				process->pasid, process->is_32bit_user_mode);
  
-@@ -284,6 +285,38 @@ out:
- 	return err;
+ 	return 0;
  }
- 
-+static long
-+kfd_ioctl_get_clock_counters(struct file *filep, struct kfd_process *p, void __user *arg)
-+{
-+	struct kfd_ioctl_get_clock_counters_args args;
-+	struct kfd_dev *dev;
-+	struct timespec time;
+diff --git a/drivers/gpu/hsa/radeon/kfd_priv.h b/drivers/gpu/hsa/radeon/kfd_priv.h
+index 8b877ca..9d3b1fc 100644
+--- a/drivers/gpu/hsa/radeon/kfd_priv.h
++++ b/drivers/gpu/hsa/radeon/kfd_priv.h
+@@ -194,6 +194,10 @@ struct kfd_process {
+ 	size_t queue_array_size;
+ 	struct kfd_queue **queues;	/* Size is queue_array_size, up to MAX_PROCESS_QUEUES. */
+ 	unsigned long allocated_queue_bitmap[DIV_ROUND_UP(MAX_PROCESS_QUEUES, BITS_PER_LONG)];
 +
-+	if (copy_from_user(&args, arg, sizeof(args)))
-+		return -EFAULT;
++	/*Is the user space process 32 bit?*/
++	bool is_32bit_user_mode;
 +
-+	dev = radeon_kfd_device_by_id(args.gpu_id);
-+	if (dev == NULL)
-+		return -EINVAL;
-+
-+	/* Reading GPU clock counter from KGD */
-+	args.gpu_clock_counter = kfd2kgd->get_gpu_clock_counter(dev->kgd);
-+
-+	/* No access to rdtsc. Using raw monotonic time */
-+	getrawmonotonic(&time);
-+	args.cpu_clock_counter = time.tv_nsec;
-+
-+	get_monotonic_boottime(&time);
-+	args.system_clock_counter = time.tv_nsec;
-+
-+	/* Since the counter is in nano-seconds we use 1GHz frequency */
-+	args.system_clock_freq = 1000000000;
-+
-+	if (copy_to_user(arg, &args, sizeof(args)))
-+		return -EFAULT;
-+
-+	return 0;
-+}
- 
- static long
- kfd_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
-@@ -312,6 +345,10 @@ kfd_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
- 		err = kfd_ioctl_set_memory_policy(filep, process, (void __user *)arg);
- 		break;
- 
-+	case KFD_IOC_GET_CLOCK_COUNTERS:
-+		err = kfd_ioctl_get_clock_counters(filep, process, (void __user *)arg);
-+		break;
-+
- 	default:
- 		dev_err(kfd_device,
- 			"unknown ioctl cmd 0x%x, arg 0x%lx)\n",
-diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
-index 928e628..5b9517e 100644
---- a/include/uapi/linux/kfd_ioctl.h
-+++ b/include/uapi/linux/kfd_ioctl.h
-@@ -70,12 +70,21 @@ struct kfd_ioctl_set_memory_policy_args {
- 	uint64_t alternate_aperture_size;	/* to KFD */
  };
  
-+struct kfd_ioctl_get_clock_counters_args {
-+	uint32_t gpu_id;		/* to KFD */
-+	uint64_t gpu_clock_counter;	/* from KFD */
-+	uint64_t cpu_clock_counter;	/* from KFD */
-+	uint64_t system_clock_counter;	/* from KFD */
-+	uint64_t system_clock_freq;	/* from KFD */
-+};
-+
- #define KFD_IOC_MAGIC 'K'
+ struct kfd_process *radeon_kfd_create_process(const struct task_struct *);
+diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
+index 5b9517e..a7c3abd 100644
+--- a/include/uapi/linux/kfd_ioctl.h
++++ b/include/uapi/linux/kfd_ioctl.h
+@@ -29,7 +29,7 @@
+ #define KFD_IOCTL_CURRENT_VERSION 1
  
- #define KFD_IOC_GET_VERSION	_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
- #define KFD_IOC_CREATE_QUEUE	_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
- #define KFD_IOC_DESTROY_QUEUE	_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
- #define KFD_IOC_SET_MEMORY_POLICY	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
-+#define KFD_IOC_GET_CLOCK_COUNTERS	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
+ /* The 64-bit ABI is the authoritative version. */
+-#pragma pack(push, 8)
++#pragma pack(push, 1)
  
- #pragma pack(pop)
- 
+ struct kfd_ioctl_get_version_args {
+ 	uint32_t min_supported_version;	/* from KFD */
 -- 
 1.9.1
