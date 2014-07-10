@@ -1,13 +1,13 @@
 From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v9 11/11] seccomp: implement SECCOMP_FILTER_FLAG_TSYNC
-Date: Thu, 10 Jul 2014 17:08:32 +0200
-Message-ID: <20140710150832.GA20861@redhat.com>
-References: <1403911380-27787-1-git-send-email-keescook@chromium.org> <1403911380-27787-12-git-send-email-keescook@chromium.org> <20140709180520.GA2560@redhat.com> <CAGXu5jLUqz-T1tRBCpPLkzWijyAF-Vjw_7PnQ1EvUh4urwyaUg@mail.gmail.com>
+Subject: Re: [PATCH v9 09/11] seccomp: introduce writer locking
+Date: Thu, 10 Jul 2014 17:24:18 +0200
+Message-ID: <20140710152418.GB20861@redhat.com>
+References: <1403911380-27787-1-git-send-email-keescook@chromium.org> <1403911380-27787-10-git-send-email-keescook@chromium.org> <20140709184215.GA4866@redhat.com> <20140709185549.GB4866@redhat.com> <CAGXu5jL6q1d16uA1Yu+QO4eV7zWwcWEWgkZrwmsfymbMvEr6+Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-mips-bounce@linux-mips.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jLUqz-T1tRBCpPLkzWijyAF-Vjw_7PnQ1EvUh4urwyaUg@mail.gmail.com>
+In-Reply-To: <CAGXu5jL6q1d16uA1Yu+QO4eV7zWwcWEWgkZrwmsfymbMvEr6+Q@mail.gmail.com>
 Sender: linux-mips-bounce@linux-mips.org
 Errors-to: linux-mips-bounce@linux-mips.org
 List-help: <mailto:ecartis@linux-mips.org?Subject=help>
@@ -23,74 +23,65 @@ List-Id: linux-api@vger.kernel.org
 
 On 07/10, Kees Cook wrote:
 >
-> On Wed, Jul 9, 2014 at 11:05 AM, Oleg Nesterov <oleg@redhat.com> wrote:
+> On Wed, Jul 9, 2014 at 11:55 AM, Oleg Nesterov <oleg@redhat.com> wrote:
+> > On 07/09, Oleg Nesterov wrote:
+> >>
+> >> On 06/27, Kees Cook wrote:
+> >> >
+> >> >  static u32 seccomp_run_filters(int syscall)
+> >> >  {
+> >> > -   struct seccomp_filter *f;
+> >> > +   struct seccomp_filter *f = ACCESS_ONCE(current->seccomp.filter);
+> >>
+> >> I am not sure...
+> >>
+> >> This is fine if this ->filter is the 1st (and only) one, in this case
+> >> we can rely on rmb() in the caller.
+> >>
+> >> But the new filter can be installed at any moment. Say, right after that
+> >> rmb() although this doesn't matter. Either we need smp_read_barrier_depends()
+> >> after that, or smp_load_acquire() like the previous version did?
 > >
-> >> +     /*
-> >> +      * Make sure we cannot change seccomp or nnp state via TSYNC
-> >> +      * while another thread is in the middle of calling exec.
-> >> +      */
-> >> +     if (flags & SECCOMP_FILTER_FLAG_TSYNC &&
-> >> +         mutex_lock_killable(&current->signal->cred_guard_mutex))
-> >> +             goto out_free;
+> > Wait... and it seems that seccomp_sync_threads() needs smp_store_release()
+> > when it sets thread->filter = current->filter by the same reason?
 > >
-> > -EINVAL looks a bit confusing in this case, but this is cosemtic because
-> > userspace won't see this error-code anyway.
+> > OTOH. smp_store_release() in seccomp_attach_filter() can die, "current"
+> > doesn't need a barrier to serialize with itself.
 >
-> Happy to use whatever since, as you say, it's cosmetic. Perhaps -EAGAIN?
+> I have lost track of what you're suggesting to change. :)
 
-Or -EINTR. I do not really mind, I only mentioned this because I had another
-nit.
+Perhaps I am just trying to confuse you and myself ;)
 
-> >>       spin_lock_irq(&current->sighand->siglock);
-> >> +     if (unlikely(signal_group_exit(current->signal))) {
-> >> +             /* If thread is dying, return to process the signal. */
-> >
-> > OK, this doesn't hurt, but why?
-> >
-> > You could check __fatal_signal_pending() with the same effect. And since
-> > we hold this mutex, exec (de_thread) can be the source of that SIGKILL.
-> > We take this mutex specially to avoid the race with exec.
-> >
-> > So why do we need to abort if we race with kill() or exit_grouo() ?
->
-> In my initial code inspection that we could block waiting for the
-> cred_guard mutex, with exec holding it, exec would schedule death in
-> de_thread, and then once it released, the tsync thread would try to
-> keep running.
->
-> However, in looking at this again, now I'm concerned this produces a
-> dead-lock in de_thread, since it waits for all threads to actually
-> die, but tsync will be waiting with the killable mutex.
+But,
 
-That is why you should always use _killable (or _interruptible) if you
-want to take ->cred_guard_mutex.
+> Since rmb() happens before run_filters, isn't the ACCESS_ONCE
+> sufficient?
 
-If this thread races with de_thread() which holds this mutex, it will
-be killed and mutex_lock_killable() will fail.
+Yes. But see above. ACCESS_ONCE is sufficient if we read the first filter
+installed by another thread, in this case rmb() pairs with mb_before_atomic()
+before set_bit(TIF_SECCOMP).
 
-(to clarify; this deadlock is not "fatal", de_thread() can be killed too,
- but this doesn't really matter).
+IOW, if this threads sees TIF_SECCOMP, it should also see all modifications
+which were done before set_bit, including the data in ->filter points to.
 
-> So I think I got too defensive when I read the top of de_thread where
-> it checks for pending signals itself.
->
-> It seems like I can just safely remove the singal_group_exit checks?
-> The other paths (non-tsync seccomp_set_mode_filter, and
-> seccomp_set_mode_strict)
+> We only care that TIF_SECCOMP, mode, and some filter is
+> valid. In a tsync thread race, it's okay to use not use the deepest
+> filter node in the list,
 
-Yes, I missed another signal_group_exit() in seccomp_set_mode_strict().
-It looks equally unneeded.
+Yes, it is fine if we miss yet another filter which was just installed by
+another thread.
 
-> I can't decide which feels cleaner: just letting stuff
-> clean up naturally on death or to short-circuit after taking
-> sighand->siglock.
+But, unless I missed something, the problem is that we can get this new
+filter.
 
-I'd prefer to simply remove the singal_group_exit checks.
+Just to simplify. Suppose TIF_SECCOMP was set a long ago. This thread
+has a single filter F1 and it enters seccomp_run_filters().
 
-I won't argue if you prefer to keep them, but then please add a comment
-to explain that this is not needed for correctness.
+Right before it does ACCESS_ONCE() to read the pointer, another thread
+does seccomp_sync_threads() and sets .filter = F2.
 
-Because otherwise the code looks confusing, as if there is a subtle reason
-why we must not do this if killed.
+If ACCESS_ONCE() returns F1 - everything is fine. But it can see the new
+pointer F2, and in this case we need a barrier to ensure that, say,
+LOAD(F2->prog) will see all the preceding changes in this memory.
 
 Oleg.
