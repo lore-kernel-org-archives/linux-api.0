@@ -1,52 +1,62 @@
-From: Hugh Dickins <hughd@google.com>
-Subject: Re: [RFC v3 6/7] shm: wait for pins to be released when sealing
-Date: Wed, 16 Jul 2014 03:09:58 -0700 (PDT)
-Message-ID: <alpine.LSU.2.11.1407160308550.1775@eggly.anvils>
-References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com> <1402655819-14325-7-git-send-email-dh.herrmann@gmail.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH v10 0/11] seccomp: add thread sync ability
+Date: Thu, 17 Jul 2014 02:44:20 +1000 (EST)
+Message-ID: <alpine.LRH.2.11.1407170243480.22946@namei.org>
+References: <1405017631-27346-1-git-send-email-keescook@chromium.org> <20140711164931.GA18473@redhat.com> <CAGXu5jK-x0=Rr7kX2a=b4Z8ueA77uwmhNZZAayG8cwmNOKa8Ug@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1402655819-14325-7-git-send-email-dh.herrmann@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: David Herrmann <dh.herrmann@gmail.com>
-Cc: linux-kernel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>, Andy Lutomirski <luto@amacapital.net>
+Return-path: <linux-mips-bounce@linux-mips.org>
+In-Reply-To: <CAGXu5jK-x0=Rr7kX2a=b4Z8ueA77uwmhNZZAayG8cwmNOKa8Ug@mail.gmail.com>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: Kees Cook <keescook@chromium.org>
+Cc: Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@plumgrid.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, Linux API <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-mips@linux-mips.org, linux-arch <linux-arch@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 13 Jun 2014, David Herrmann wrote:
+On Fri, 11 Jul 2014, Kees Cook wrote:
 
-> We currently fail setting SEAL_WRITE in case there're pending page
-> references. This patch extends the pin-tests to wait up to 150ms for all
-> references to be dropped. This is still not perfect in that it doesn't
-> account for harmless read-only pins, but it's much better than a hard
-> failure.
+> On Fri, Jul 11, 2014 at 9:49 AM, Oleg Nesterov <oleg@redhat.com> wrote:
+> > On 07/10, Kees Cook wrote:
+> >>
+> >> This adds the ability for threads to request seccomp filter
+> >> synchronization across their thread group (at filter attach time).
+> >> For example, for Chrome to make sure graphic driver threads are fully
+> >> confined after seccomp filters have been attached.
+> >>
+> >> To support this, locking on seccomp changes via thread-group-shared
+> >> sighand lock is introduced, along with refactoring of no_new_privs. Races
+> >> with thread creation are handled via delayed duplication of the seccomp
+> >> task struct field and cred_guard_mutex.
+> >>
+> >> This includes a new syscall (instead of adding a new prctl option),
+> >> as suggested by Andy Lutomirski and Michael Kerrisk.
+> >
+> > I do not not see any problems in this version,
 > 
-> Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
+> Awesome! Thank you for all the reviews. :) If Andy and Michael are
+> happy with this too, I think this is in good shape. \o/
+> 
+> -Kees
 
-Right, I didn't look through the patch itself, just compared the result
-with what I sent.  Okay, you prefer to separate out shmem_tag_pins().
+If you re-send this, please add Oleg's Reviewed-by to each patch.
 
-Yes, it looks fine.  There's just one change I'd like at this stage,
-something I realized shortly after sending the code fragment: please
-add a call to lru_add_drain() at the head of shmem_tag_pins().  The
-reason being that lru_add_drain() is local to the cpu, so cheap, and
-in many cases will bring down all the raised refcounts right then.
 
-Whereas lru_add_drain_all() in the first scan of shmem_wait_for_pins()
-is much more expensive, involving inter-processor interrupts to do
-that on all cpus: it is appropriate to call it at that point, but we
-really ought to try the cheaper lru_add_drain() at the earlier stage.
+> 
+> >
+> > Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+> >
+> 
+> 
+> 
+> 
 
-I would also like never to embark on this scan of the radix_tree
-and wait for pins, if the pages were never given out in a VM_SHARED
-mapping - or is that unrealistic, because every memfd is read-write,
-and typical initialization expected to be by mmap() rather than write()?
-But anyway, you're quite right not to get into that at this stage:
-it's best left as an optimization once the basics are safely in.
-
-Hugh
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+James Morris
+<jmorris@namei.org>
