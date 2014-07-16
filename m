@@ -1,12 +1,12 @@
 From: Hugh Dickins <hughd@google.com>
-Subject: Re: [PATCH v3 4/7] selftests: add memfd_create() + sealing tests
-Date: Wed, 16 Jul 2014 03:07:37 -0700 (PDT)
-Message-ID: <alpine.LSU.2.11.1407160307160.1775@eggly.anvils>
-References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com> <1402655819-14325-5-git-send-email-dh.herrmann@gmail.com>
+Subject: Re: [PATCH v3 5/7] selftests: add memfd/sealing page-pinning tests
+Date: Wed, 16 Jul 2014 03:08:31 -0700 (PDT)
+Message-ID: <alpine.LSU.2.11.1407160307460.1775@eggly.anvils>
+References: <1402655819-14325-1-git-send-email-dh.herrmann@gmail.com> <1402655819-14325-6-git-send-email-dh.herrmann@gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1402655819-14325-5-git-send-email-dh.herrmann@gmail.com>
+In-Reply-To: <1402655819-14325-6-git-send-email-dh.herrmann@gmail.com>
 Sender: owner-linux-mm@kvack.org
 To: David Herrmann <dh.herrmann@gmail.com>
 Cc: linux-kernel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Tony Battersby <tonyb@cybernetics.com>, Andy Lutomirski <luto@amacapital.net>
@@ -14,13 +14,27 @@ List-Id: linux-api@vger.kernel.org
 
 On Fri, 13 Jun 2014, David Herrmann wrote:
 
-> Some basic tests to verify sealing on memfds works as expected and
-> guarantees the advertised semantics.
+> Setting SEAL_WRITE is not possible if there're pending GUP users. This
+> commit adds selftests for memfd+sealing that use FUSE to create pending
+> page-references. FUSE is very helpful here in that it allows us to delay
+> direct-IO operations for an arbitrary amount of time. This way, we can
+> force the kernel to pin pages and then run our normal selftests.
 > 
 > Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
 
-Thanks for whatever the fix was, I didn't hit any problem running
-this version repeatedly, on 64-bit and on 32-bit.
+I had a number of problems in getting this working (on openSUSE 13.1):
+rpm told me I had fuse installed, yet I had to download and install
+the tarball to get header files needed; then "make fuse_mnt" told me
+to add -D_FILE_OFFSET_BITS=64 to the compile flags; after which I
+got "undefined reference to `fuse_main_real'"; but then I tried
+"make run_fuse" as root, and it seemed to sort these issues out
+for itself, aside from "./run_fuse_test.sh: Permission denied" -
+which was within my bounds of comprehension unlike the rest!
+
+No complaint, thanks for providing the test (though I didn't check
+the source to convince myself that "DONE" has done what's claimed):
+some rainy day someone can get the Makefile working more smoothly,
+no need to delay the patchset for this.
 
 Hugh
 
