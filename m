@@ -1,225 +1,146 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: [PATCH v11 09/11] seccomp: introduce writer locking
-Date: Wed, 16 Jul 2014 14:50:40 -0700
-Message-ID: <1405547442-26641-10-git-send-email-keescook@chromium.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v11 07/11] sched: move no_new_privs into new atomic flags
+Date: Wed, 16 Jul 2014 14:50:38 -0700
+Message-ID: <1405547442-26641-8-git-send-email-keescook@chromium.org>
 References: <1405547442-26641-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1405547442-26641-1-git-send-email-keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1405547442-26641-1-git-send-email-keescook@chromium.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, James Morris <jmorris@namei.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Normally, task_struct.seccomp.filter is only ever read or modified by
-the task that owns it (current). This property aids in fast access
-during system call filtering as read access is lockless.
+Since seccomp transitions between threads requires updates to the
+no_new_privs flag to be atomic, the flag must be part of an atomic flag
+set. This moves the nnp flag into a separate task field, and introduces
+accessors.
 
-Updating the pointer from another task, however, opens up race
-conditions. To allow cross-thread filter pointer updates, writes to the
-seccomp fields are now protected by the sighand spinlock (which is shared
-by all threads in the thread group). Read access remains lockless because
-pointer updates themselves are atomic.  However, writes (or cloning)
-often entail additional checking (like maximum instruction counts)
-which require locking to perform safely.
-
-In the case of cloning threads, the child is invisible to the system
-until it enters the task list. To make sure a child can't be cloned from
-a thread and left in a prior state, seccomp duplication is additionally
-moved under the sighand lock. Then parent and child are certain have
-the same seccomp state when they exit the lock.
-
-Based on patches by Will Drewry and David Drysdale.
-
-Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Reviewed-by: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Reviewed-by: Andy Lutomirski <luto@amacapital.net>
 ---
- include/linux/seccomp.h |    6 +++---
- kernel/fork.c           |   49 ++++++++++++++++++++++++++++++++++++++++++++++-
- kernel/seccomp.c        |   16 +++++++++++++++-
- 3 files changed, 66 insertions(+), 5 deletions(-)
+ fs/exec.c                  |    4 ++--
+ include/linux/sched.h      |   18 +++++++++++++++---
+ kernel/seccomp.c           |    2 +-
+ kernel/sys.c               |    4 ++--
+ security/apparmor/domain.c |    4 ++--
+ 5 files changed, 22 insertions(+), 10 deletions(-)
 
-diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
-index 4054b0994071..9ff98b4bfe2e 100644
---- a/include/linux/seccomp.h
-+++ b/include/linux/seccomp.h
-@@ -14,11 +14,11 @@ struct seccomp_filter;
-  *
-  * @mode:  indicates one of the valid values above for controlled
-  *         system calls available to a process.
-- * @filter: The metadata and ruleset for determining what system calls
-- *          are allowed for a task.
-+ * @filter: must always point to a valid seccomp-filter or NULL as it is
-+ *          accessed without locking during system call entry.
-  *
-  *          @filter must only be accessed from the context of current as there
-- *          is no locking.
-+ *          is no read locking.
-  */
- struct seccomp {
- 	int mode;
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 6a13c46cd87d..ed4bc339c9dc 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -315,6 +315,15 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
- 		goto free_ti;
+diff --git a/fs/exec.c b/fs/exec.c
+index a3d33fe592d6..0f5c272410f6 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1234,7 +1234,7 @@ static void check_unsafe_exec(struct linux_binprm *bprm)
+ 	 * This isn't strictly necessary, but it makes it harder for LSMs to
+ 	 * mess up.
+ 	 */
+-	if (current->no_new_privs)
++	if (task_no_new_privs(current))
+ 		bprm->unsafe |= LSM_UNSAFE_NO_NEW_PRIVS;
  
- 	tsk->stack = ti;
-+#ifdef CONFIG_SECCOMP
-+	/*
-+	 * We must handle setting up seccomp filters once we're under
-+	 * the sighand lock in case orig has changed between now and
-+	 * then. Until then, filter must be NULL to avoid messing up
-+	 * the usage counts on the error path calling free_task.
-+	 */
-+	tsk->seccomp.filter = NULL;
-+#endif
+ 	t = p;
+@@ -1272,7 +1272,7 @@ int prepare_binprm(struct linux_binprm *bprm)
+ 	bprm->cred->egid = current_egid();
  
- 	setup_thread_stack(tsk, orig);
- 	clear_user_return_notifier(tsk);
-@@ -1081,6 +1090,39 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
- 	return 0;
+ 	if (!(bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID) &&
+-	    !current->no_new_privs &&
++	    !task_no_new_privs(current) &&
+ 	    kuid_has_mapping(bprm->cred->user_ns, inode->i_uid) &&
+ 	    kgid_has_mapping(bprm->cred->user_ns, inode->i_gid)) {
+ 		/* Set-uid? */
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 306f4f0c987a..0fd19055bb64 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1307,13 +1307,12 @@ struct task_struct {
+ 				 * execve */
+ 	unsigned in_iowait:1;
+ 
+-	/* task may not gain privileges */
+-	unsigned no_new_privs:1;
+-
+ 	/* Revert to default priority/policy when forking */
+ 	unsigned sched_reset_on_fork:1;
+ 	unsigned sched_contributes_to_load:1;
+ 
++	unsigned long atomic_flags; /* Flags needing atomic access. */
++
+ 	pid_t pid;
+ 	pid_t tgid;
+ 
+@@ -1967,6 +1966,19 @@ static inline void memalloc_noio_restore(unsigned int flags)
+ 	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
  }
  
-+static void copy_seccomp(struct task_struct *p)
++/* Per-process atomic flags. */
++#define PFA_NO_NEW_PRIVS 0x00000001	/* May not gain new privileges. */
++
++static inline bool task_no_new_privs(struct task_struct *p)
 +{
-+#ifdef CONFIG_SECCOMP
-+	/*
-+	 * Must be called with sighand->lock held, which is common to
-+	 * all threads in the group. Holding cred_guard_mutex is not
-+	 * needed because this new task is not yet running and cannot
-+	 * be racing exec.
-+	 */
-+	BUG_ON(!spin_is_locked(&current->sighand->siglock));
-+
-+	/* Ref-count the new filter user, and assign it. */
-+	get_seccomp_filter(current);
-+	p->seccomp = current->seccomp;
-+
-+	/*
-+	 * Explicitly enable no_new_privs here in case it got set
-+	 * between the task_struct being duplicated and holding the
-+	 * sighand lock. The seccomp state and nnp must be in sync.
-+	 */
-+	if (task_no_new_privs(current))
-+		task_set_no_new_privs(p);
-+
-+	/*
-+	 * If the parent gained a seccomp mode after copying thread
-+	 * flags and between before we held the sighand lock, we have
-+	 * to manually enable the seccomp thread flag here.
-+	 */
-+	if (p->seccomp.mode != SECCOMP_MODE_DISABLED)
-+		set_tsk_thread_flag(p, TIF_SECCOMP);
-+#endif
++	return test_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
 +}
 +
- SYSCALL_DEFINE1(set_tid_address, int __user *, tidptr)
- {
- 	current->clear_child_tid = tidptr;
-@@ -1196,7 +1238,6 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 		goto fork_out;
- 
- 	ftrace_graph_init_task(p);
--	get_seccomp_filter(p);
- 
- 	rt_mutex_init_task(p);
- 
-@@ -1437,6 +1478,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 	spin_lock(&current->sighand->siglock);
- 
- 	/*
-+	 * Copy seccomp details explicitly here, in case they were changed
-+	 * before holding sighand lock.
-+	 */
-+	copy_seccomp(p);
++static inline void task_set_no_new_privs(struct task_struct *p)
++{
++	set_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
++}
 +
-+	/*
- 	 * Process group and session signals need to be delivered to just the
- 	 * parent before the fork or both the parent and the child after the
- 	 * fork. Restart if a signal comes in before we add the new process to
+ /*
+  * task->jobctl flags
+  */
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 58125160417c..d5543e787e4e 100644
+index f0652578af75..d2596136b0d1 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -199,6 +199,8 @@ static u32 seccomp_run_filters(int syscall)
+@@ -241,7 +241,7 @@ static long seccomp_attach_filter(struct sock_fprog *fprog)
+ 	 * This avoids scenarios where unprivileged tasks can affect the
+ 	 * behavior of privileged children.
+ 	 */
+-	if (!current->no_new_privs &&
++	if (!task_no_new_privs(current) &&
+ 	    security_capable_noaudit(current_cred(), current_user_ns(),
+ 				     CAP_SYS_ADMIN) != 0)
+ 		return -EACCES;
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 66a751ebf9d9..ce8129192a26 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1990,12 +1990,12 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		if (arg2 != 1 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
  
- static inline bool seccomp_may_assign_mode(unsigned long seccomp_mode)
- {
-+	BUG_ON(!spin_is_locked(&current->sighand->siglock));
-+
- 	if (current->seccomp.mode && current->seccomp.mode != seccomp_mode)
- 		return false;
+-		current->no_new_privs = 1;
++		task_set_no_new_privs(current);
+ 		break;
+ 	case PR_GET_NO_NEW_PRIVS:
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+-		return current->no_new_privs ? 1 : 0;
++		return task_no_new_privs(current) ? 1 : 0;
+ 	case PR_GET_THP_DISABLE:
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
+index 452567d3a08e..d97cba3e3849 100644
+--- a/security/apparmor/domain.c
++++ b/security/apparmor/domain.c
+@@ -621,7 +621,7 @@ int aa_change_hat(const char *hats[], int count, u64 token, bool permtest)
+ 	 * There is no exception for unconfined as change_hat is not
+ 	 * available.
+ 	 */
+-	if (current->no_new_privs)
++	if (task_no_new_privs(current))
+ 		return -EPERM;
  
-@@ -207,6 +209,8 @@ static inline bool seccomp_may_assign_mode(unsigned long seccomp_mode)
- 
- static inline void seccomp_assign_mode(unsigned long seccomp_mode)
- {
-+	BUG_ON(!spin_is_locked(&current->sighand->siglock));
-+
- 	current->seccomp.mode = seccomp_mode;
- 	set_tsk_thread_flag(current, TIF_SECCOMP);
- }
-@@ -332,6 +336,8 @@ out:
-  * @flags:  flags to change filter behavior
-  * @filter: seccomp filter to add to the current process
-  *
-+ * Caller must be holding current->sighand->siglock lock.
-+ *
-  * Returns 0 on success, -ve on error.
-  */
- static long seccomp_attach_filter(unsigned int flags,
-@@ -340,6 +346,8 @@ static long seccomp_attach_filter(unsigned int flags,
- 	unsigned long total_insns;
- 	struct seccomp_filter *walker;
- 
-+	BUG_ON(!spin_is_locked(&current->sighand->siglock));
-+
- 	/* Validate resulting filter length. */
- 	total_insns = filter->prog->len;
- 	for (walker = current->seccomp.filter; walker; walker = walker->prev)
-@@ -529,6 +537,8 @@ static long seccomp_set_mode_strict(void)
- 	const unsigned long seccomp_mode = SECCOMP_MODE_STRICT;
- 	long ret = -EINVAL;
- 
-+	spin_lock_irq(&current->sighand->siglock);
-+
- 	if (!seccomp_may_assign_mode(seccomp_mode))
- 		goto out;
- 
-@@ -539,6 +549,7 @@ static long seccomp_set_mode_strict(void)
- 	ret = 0;
- 
- out:
-+	spin_unlock_irq(&current->sighand->siglock);
- 
- 	return ret;
- }
-@@ -566,13 +577,15 @@ static long seccomp_set_mode_filter(unsigned int flags,
- 
- 	/* Validate flags. */
- 	if (flags != 0)
--		goto out;
-+		return -EINVAL;
- 
- 	/* Prepare the new filter before holding any locks. */
- 	prepared = seccomp_prepare_user_filter(filter);
- 	if (IS_ERR(prepared))
- 		return PTR_ERR(prepared);
- 
-+	spin_lock_irq(&current->sighand->siglock);
-+
- 	if (!seccomp_may_assign_mode(seccomp_mode))
- 		goto out;
- 
-@@ -584,6 +597,7 @@ static long seccomp_set_mode_filter(unsigned int flags,
- 
- 	seccomp_assign_mode(seccomp_mode);
- out:
-+	spin_unlock_irq(&current->sighand->siglock);
- 	seccomp_filter_free(prepared);
- 	return ret;
- }
+ 	/* released below */
+@@ -776,7 +776,7 @@ int aa_change_profile(const char *ns_name, const char *hname, bool onexec,
+ 	 * no_new_privs is set because this aways results in a reduction
+ 	 * of permissions.
+ 	 */
+-	if (current->no_new_privs && !unconfined(profile)) {
++	if (task_no_new_privs(current) && !unconfined(profile)) {
+ 		put_cred(cred);
+ 		return -EPERM;
+ 	}
 -- 
 1.7.9.5
