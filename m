@@ -1,72 +1,131 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v12 11/11] seccomp: add thread sync ability
-Date: Thu, 17 Jul 2014 11:08:27 -0700
-Message-ID: <1405620518-18495-1-git-send-email-keescook@chromium.org>
-Return-path: <linux-arch-owner@vger.kernel.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, David Drysdale <drysdale@google.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: [PATCH v12 03/11] seccomp: split mode setting routines
+Date: Thu, 17 Jul 2014 11:08:30 -0700
+Message-ID: <1405620518-18495-4-git-send-email-keescook@chromium.org>
+References: <1405620518-18495-1-git-send-email-keescook@chromium.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1405620518-18495-1-git-send-email-keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Twelfth time's the charm! :)
+Separates the two mode setting paths to make things more readable with
+fewer #ifdefs within function bodies.
 
-This adds the ability for threads to request seccomp filter
-synchronization across their thread group (at filter attach time).
-For example, for Chrome to make sure graphic driver threads are fully
-confined after seccomp filters have been attached.
+Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Reviewed-by: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+---
+ kernel/seccomp.c |   71 ++++++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 48 insertions(+), 23 deletions(-)
 
-To support this, locking on seccomp changes via thread-group-shared
-sighand lock is introduced, along with refactoring of no_new_privs. Races
-with thread creation are handled via delayed duplication of the seccomp
-task struct field and cred_guard_mutex.
-
-This includes a new syscall (instead of adding a new prctl option),
-as suggested by Andy Lutomirski and Michael Kerrisk.
-
-Thanks!
-
--Kees
-
-v12:
- - fixed bug where initial filter wouldn't allow TSYNC flag (drysdale)
- - optimized thread loops (drysdale)
-v11:
- - updated writer locking commit log for clarity (luto)
- - clarified writer lock thread flag setting comment (luto)
- - inverted SECCOMP_FILTER_FLAG_MASK (luto)
- - renamed is_acestor parameter (luto)
- - added BUG_ON to catch currently impossible integer overflow (luto)
-v10:
- - dropped pending-kill checks (oleg)
- - tweaked memory barriers (oleg)
-v9:
- - rearranged/split patches to make things more reviewable
- - added use of cred_guard_mutex to solve exec race (oleg, luto)
- - added barriers for TIF_SECCOMP vs seccomp.mode race (oleg, luto)
- - fixed missed copying of nnp state after v8 refactor (oleg)
-v8:
- - drop use of tasklist_lock, appears redundant against sighand (oleg)
- - reduced use of smp_load_acquire to logical minimum (oleg)
- - change nnp to a task struct held atomic flags field (oleg, luto)
- - drop needless irqflags changes in fork.c for holding sighand lock (oleg)
- - cleaned up use of thread for-each loop (oleg)
- - rearranged patch order to keep syscall changes adjacent
- - added example code to manpage (mtk)
-v7:
- - rebase on Linus's tree (merged with network bpf changes)
- - wrote manpage text documenting API (follows this series)
-v6:
- - switch from seccomp-specific lock to thread-group lock to gain atomicity
- - implement seccomp syscall across all architectures with seccomp filter
- - clean up sparse warnings around locking
-v5:
- - move includes around (drysdale)
- - drop set_nnp return value (luto)
- - use smp_load_acquire/store_release (luto)
- - merge nnp changes to seccomp always, fewer ifdef (luto)
-v4:
- - cleaned up locking further, as noticed by David Drysdale
-v3:
- - added SECCOMP_EXT_ACT_FILTER for new filter install options
-v2:
- - reworked to avoid clone races
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 9df7def86c3b..05cac2c2eca1 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -489,48 +489,66 @@ long prctl_get_seccomp(void)
+ }
+ 
+ /**
+- * seccomp_set_mode: internal function for setting seccomp mode
+- * @seccomp_mode: requested mode to use
+- * @filter: optional struct sock_fprog for use with SECCOMP_MODE_FILTER
+- *
+- * This function may be called repeatedly with a @seccomp_mode of
+- * SECCOMP_MODE_FILTER to install additional filters.  Every filter
+- * successfully installed will be evaluated (in reverse order) for each system
+- * call the task makes.
++ * seccomp_set_mode_strict: internal function for setting strict seccomp
+  *
+  * Once current->seccomp.mode is non-zero, it may not be changed.
+  *
+  * Returns 0 on success or -EINVAL on failure.
+  */
+-static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
++static long seccomp_set_mode_strict(void)
+ {
++	const unsigned long seccomp_mode = SECCOMP_MODE_STRICT;
+ 	long ret = -EINVAL;
+ 
+ 	if (!seccomp_may_assign_mode(seccomp_mode))
+ 		goto out;
+ 
+-	switch (seccomp_mode) {
+-	case SECCOMP_MODE_STRICT:
+-		ret = 0;
+ #ifdef TIF_NOTSC
+-		disable_TSC();
++	disable_TSC();
+ #endif
+-		break;
++	seccomp_assign_mode(seccomp_mode);
++	ret = 0;
++
++out:
++
++	return ret;
++}
++
+ #ifdef CONFIG_SECCOMP_FILTER
+-	case SECCOMP_MODE_FILTER:
+-		ret = seccomp_attach_user_filter(filter);
+-		if (ret)
+-			goto out;
+-		break;
+-#endif
+-	default:
++/**
++ * seccomp_set_mode_filter: internal function for setting seccomp filter
++ * @filter: struct sock_fprog containing filter
++ *
++ * This function may be called repeatedly to install additional filters.
++ * Every filter successfully installed will be evaluated (in reverse order)
++ * for each system call the task makes.
++ *
++ * Once current->seccomp.mode is non-zero, it may not be changed.
++ *
++ * Returns 0 on success or -EINVAL on failure.
++ */
++static long seccomp_set_mode_filter(char __user *filter)
++{
++	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
++	long ret = -EINVAL;
++
++	if (!seccomp_may_assign_mode(seccomp_mode))
++		goto out;
++
++	ret = seccomp_attach_user_filter(filter);
++	if (ret)
+ 		goto out;
+-	}
+ 
+ 	seccomp_assign_mode(seccomp_mode);
+ out:
+ 	return ret;
+ }
++#else
++static inline long seccomp_set_mode_filter(char __user *filter)
++{
++	return -EINVAL;
++}
++#endif
+ 
+ /**
+  * prctl_set_seccomp: configures current->seccomp.mode
+@@ -541,5 +559,12 @@ out:
+  */
+ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+ {
+-	return seccomp_set_mode(seccomp_mode, filter);
++	switch (seccomp_mode) {
++	case SECCOMP_MODE_STRICT:
++		return seccomp_set_mode_strict();
++	case SECCOMP_MODE_FILTER:
++		return seccomp_set_mode_filter(filter);
++	default:
++		return -EINVAL;
++	}
+ }
+-- 
+1.7.9.5
