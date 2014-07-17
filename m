@@ -1,82 +1,224 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v12 02/11] seccomp: extract check/assign mode helpers
-Date: Thu, 17 Jul 2014 11:08:29 -0700
-Message-ID: <1405620518-18495-3-git-send-email-keescook@chromium.org>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: [PATCH v12 09/11] seccomp: introduce writer locking
+Date: Thu, 17 Jul 2014 11:08:36 -0700
+Message-ID: <1405620518-18495-10-git-send-email-keescook@chromium.org>
 References: <1405620518-18495-1-git-send-email-keescook@chromium.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1405620518-18495-1-git-send-email-keescook@chromium.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-arch@vger.kernel.org, linux-mips@linux-mips.org, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, x86@kernel.org, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, linux-security-module@vger.kernel.org, Julien Tinnes <jln@chromium.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, James Morris <james.l.morris@oracle.com>, David Drysdale <drysdale@google.com>, linux-arm-kernel@lists.infradead.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1405620518-18495-1-git-send-email-keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-To support splitting mode 1 from mode 2, extract the mode checking and
-assignment logic into common functions.
+Normally, task_struct.seccomp.filter is only ever read or modified by
+the task that owns it (current). This property aids in fast access
+during system call filtering as read access is lockless.
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Reviewed-by: Andy Lutomirski <luto@amacapital.net>
+Updating the pointer from another task, however, opens up race
+conditions. To allow cross-thread filter pointer updates, writes to the
+seccomp fields are now protected by the sighand spinlock (which is shared
+by all threads in the thread group). Read access remains lockless because
+pointer updates themselves are atomic.  However, writes (or cloning)
+often entail additional checking (like maximum instruction counts)
+which require locking to perform safely.
+
+In the case of cloning threads, the child is invisible to the system
+until it enters the task list. To make sure a child can't be cloned from
+a thread and left in a prior state, seccomp duplication is additionally
+moved under the sighand lock. Then parent and child are certain have
+the same seccomp state when they exit the lock.
+
+Based on patches by Will Drewry and David Drysdale.
+
+Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Reviewed-by: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 ---
- kernel/seccomp.c |   22 ++++++++++++++++++----
- 1 file changed, 18 insertions(+), 4 deletions(-)
+ include/linux/seccomp.h |    6 +++---
+ kernel/fork.c           |   49 ++++++++++++++++++++++++++++++++++++++++++++++-
+ kernel/seccomp.c        |   16 +++++++++++++++-
+ 3 files changed, 66 insertions(+), 5 deletions(-)
 
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index 4054b0994071..9ff98b4bfe2e 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -14,11 +14,11 @@ struct seccomp_filter;
+  *
+  * @mode:  indicates one of the valid values above for controlled
+  *         system calls available to a process.
+- * @filter: The metadata and ruleset for determining what system calls
+- *          are allowed for a task.
++ * @filter: must always point to a valid seccomp-filter or NULL as it is
++ *          accessed without locking during system call entry.
+  *
+  *          @filter must only be accessed from the context of current as there
+- *          is no locking.
++ *          is no read locking.
+  */
+ struct seccomp {
+ 	int mode;
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 6a13c46cd87d..ed4bc339c9dc 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -315,6 +315,15 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
+ 		goto free_ti;
+ 
+ 	tsk->stack = ti;
++#ifdef CONFIG_SECCOMP
++	/*
++	 * We must handle setting up seccomp filters once we're under
++	 * the sighand lock in case orig has changed between now and
++	 * then. Until then, filter must be NULL to avoid messing up
++	 * the usage counts on the error path calling free_task.
++	 */
++	tsk->seccomp.filter = NULL;
++#endif
+ 
+ 	setup_thread_stack(tsk, orig);
+ 	clear_user_return_notifier(tsk);
+@@ -1081,6 +1090,39 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
+ 	return 0;
+ }
+ 
++static void copy_seccomp(struct task_struct *p)
++{
++#ifdef CONFIG_SECCOMP
++	/*
++	 * Must be called with sighand->lock held, which is common to
++	 * all threads in the group. Holding cred_guard_mutex is not
++	 * needed because this new task is not yet running and cannot
++	 * be racing exec.
++	 */
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
++
++	/* Ref-count the new filter user, and assign it. */
++	get_seccomp_filter(current);
++	p->seccomp = current->seccomp;
++
++	/*
++	 * Explicitly enable no_new_privs here in case it got set
++	 * between the task_struct being duplicated and holding the
++	 * sighand lock. The seccomp state and nnp must be in sync.
++	 */
++	if (task_no_new_privs(current))
++		task_set_no_new_privs(p);
++
++	/*
++	 * If the parent gained a seccomp mode after copying thread
++	 * flags and between before we held the sighand lock, we have
++	 * to manually enable the seccomp thread flag here.
++	 */
++	if (p->seccomp.mode != SECCOMP_MODE_DISABLED)
++		set_tsk_thread_flag(p, TIF_SECCOMP);
++#endif
++}
++
+ SYSCALL_DEFINE1(set_tid_address, int __user *, tidptr)
+ {
+ 	current->clear_child_tid = tidptr;
+@@ -1196,7 +1238,6 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 		goto fork_out;
+ 
+ 	ftrace_graph_init_task(p);
+-	get_seccomp_filter(p);
+ 
+ 	rt_mutex_init_task(p);
+ 
+@@ -1437,6 +1478,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	spin_lock(&current->sighand->siglock);
+ 
+ 	/*
++	 * Copy seccomp details explicitly here, in case they were changed
++	 * before holding sighand lock.
++	 */
++	copy_seccomp(p);
++
++	/*
+ 	 * Process group and session signals need to be delivered to just the
+ 	 * parent before the fork or both the parent and the child after the
+ 	 * fork. Restart if a signal comes in before we add the new process to
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index afb916c7e890..9df7def86c3b 100644
+index 58125160417c..d5543e787e4e 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -194,7 +194,23 @@ static u32 seccomp_run_filters(int syscall)
- 	}
- 	return ret;
- }
-+#endif /* CONFIG_SECCOMP_FILTER */
+@@ -199,6 +199,8 @@ static u32 seccomp_run_filters(int syscall)
  
-+static inline bool seccomp_may_assign_mode(unsigned long seccomp_mode)
-+{
-+	if (current->seccomp.mode && current->seccomp.mode != seccomp_mode)
-+		return false;
-+
-+	return true;
-+}
-+
-+static inline void seccomp_assign_mode(unsigned long seccomp_mode)
-+{
-+	current->seccomp.mode = seccomp_mode;
-+	set_tsk_thread_flag(current, TIF_SECCOMP);
-+}
-+
-+#ifdef CONFIG_SECCOMP_FILTER
- /**
-  * seccomp_attach_filter: Attaches a seccomp filter to current.
-  * @fprog: BPF program to install
-@@ -490,8 +506,7 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
+ static inline bool seccomp_may_assign_mode(unsigned long seccomp_mode)
  {
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
++
+ 	if (current->seccomp.mode && current->seccomp.mode != seccomp_mode)
+ 		return false;
+ 
+@@ -207,6 +209,8 @@ static inline bool seccomp_may_assign_mode(unsigned long seccomp_mode)
+ 
+ static inline void seccomp_assign_mode(unsigned long seccomp_mode)
+ {
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
++
+ 	current->seccomp.mode = seccomp_mode;
+ 	set_tsk_thread_flag(current, TIF_SECCOMP);
+ }
+@@ -332,6 +336,8 @@ out:
+  * @flags:  flags to change filter behavior
+  * @filter: seccomp filter to add to the current process
+  *
++ * Caller must be holding current->sighand->siglock lock.
++ *
+  * Returns 0 on success, -ve on error.
+  */
+ static long seccomp_attach_filter(unsigned int flags,
+@@ -340,6 +346,8 @@ static long seccomp_attach_filter(unsigned int flags,
+ 	unsigned long total_insns;
+ 	struct seccomp_filter *walker;
+ 
++	BUG_ON(!spin_is_locked(&current->sighand->siglock));
++
+ 	/* Validate resulting filter length. */
+ 	total_insns = filter->prog->len;
+ 	for (walker = current->seccomp.filter; walker; walker = walker->prev)
+@@ -529,6 +537,8 @@ static long seccomp_set_mode_strict(void)
+ 	const unsigned long seccomp_mode = SECCOMP_MODE_STRICT;
  	long ret = -EINVAL;
  
--	if (current->seccomp.mode &&
--	    current->seccomp.mode != seccomp_mode)
-+	if (!seccomp_may_assign_mode(seccomp_mode))
++	spin_lock_irq(&current->sighand->siglock);
++
+ 	if (!seccomp_may_assign_mode(seccomp_mode))
  		goto out;
  
- 	switch (seccomp_mode) {
-@@ -512,8 +527,7 @@ static long seccomp_set_mode(unsigned long seccomp_mode, char __user *filter)
- 		goto out;
- 	}
+@@ -539,6 +549,7 @@ static long seccomp_set_mode_strict(void)
+ 	ret = 0;
  
--	current->seccomp.mode = seccomp_mode;
--	set_thread_flag(TIF_SECCOMP);
-+	seccomp_assign_mode(seccomp_mode);
  out:
++	spin_unlock_irq(&current->sighand->siglock);
+ 
+ 	return ret;
+ }
+@@ -566,13 +577,15 @@ static long seccomp_set_mode_filter(unsigned int flags,
+ 
+ 	/* Validate flags. */
+ 	if (flags != 0)
+-		goto out;
++		return -EINVAL;
+ 
+ 	/* Prepare the new filter before holding any locks. */
+ 	prepared = seccomp_prepare_user_filter(filter);
+ 	if (IS_ERR(prepared))
+ 		return PTR_ERR(prepared);
+ 
++	spin_lock_irq(&current->sighand->siglock);
++
+ 	if (!seccomp_may_assign_mode(seccomp_mode))
+ 		goto out;
+ 
+@@ -584,6 +597,7 @@ static long seccomp_set_mode_filter(unsigned int flags,
+ 
+ 	seccomp_assign_mode(seccomp_mode);
+ out:
++	spin_unlock_irq(&current->sighand->siglock);
+ 	seccomp_filter_free(prepared);
  	return ret;
  }
 -- 
