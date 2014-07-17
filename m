@@ -1,53 +1,54 @@
-From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 5/5] cgroup: introduce cgroup namespaces
-Date: Thu, 17 Jul 2014 13:55:43 -0700
-Message-ID: <CAGr1F2Ht1q_nYGJwmQvEEyj8r3R1stgD=g3s8_5zYOTogjz-UQ@mail.gmail.com>
-References: <1405626731-12220-1-git-send-email-adityakali@google.com>
-	<1405626731-12220-6-git-send-email-adityakali@google.com>
-	<CALCETrWXMMGzptvEu6TfzTjBou4t==W39_nNB5FJwSk2Zy8uCQ@mail.gmail.com>
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: Re: [PATCH, RFC] random: introduce getrandom(2) system call
+Date: Thu, 17 Jul 2014 17:14:25 -0400
+Message-ID: <20140717211425.GU1491@thunk.org>
+References: <1405588695-12014-1-git-send-email-tytso@mit.edu>
+ <53C8319A.8090108@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CALCETrWXMMGzptvEu6TfzTjBou4t==W39_nNB5FJwSk2Zy8uCQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <53C8319A.8090108-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, beck-7YlrpqBBQ3VAfugRpC6u6w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 17, 2014 at 12:57 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Thu, Jul 17, 2014 at 12:52 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->> Introduce the ability to create new cgroup namespace. The newly created
->> cgroup namespace remembers the 'struct cgroup *root_cgrp' at the point
->> of creation of the cgroup namespace. The task that creates the new
->> cgroup namespace and all its future children will now be restricted only
->> to the cgroup hierarchy under this root_cgrp. In the first version,
->> setns() is not supported for cgroup namespaces.
->> The main purpose of cgroup namespace is to virtualize the contents
->> of /proc/self/cgroup file. Processes inside a cgroup namespace
->> are only able to see paths relative to their namespace root.
->> This allows container-tools (like libcontainer, lxc, lmctfy, etc.)
->> to create completely virtualized containers without leaking system
->> level cgroup hierarchy to the task.
->
-> What happens if someone moves a task in a cgroup namespace outside of
-> the namespace root cgroup?
->
+On Thu, Jul 17, 2014 at 01:27:06PM -0700, Andy Lutomirski wrote:
+> > +	return urandom_read(NULL, buf, count, NULL);
+> 
+> This can return -ERESTARTSYS.  Does it need any logic to restart correctly?
 
-Attempt to move a task outside of cgroupns root will fail with EPERM.
-This is true irrespective of the privileges of the process attempting
-this. Once cgroupns is created, the task will be confined to the
-cgroup hierarchy under its cgroupns root until it dies.
+Nope; because we only return -ERESTARTSYS when we haven't generated
+any randomness yet.  The way /dev/urandom and /dev/random devices work
+is that if we get interrupted, we return a short read.  We do *not*
+resume generation of random bytes from where we got interrupted from
+the signal handler.
 
-> --Andy
+This is consistent with the definition in the signal(7) man page:
 
--- 
-Aditya
+       If a blocked call to one of the following interfaces is
+       interrupted by a signal handler, then the call will be
+       automatically restarted after the signal handler returns if the
+       SA_RESTART flag was used; otherwise the call will fail with the
+       error EINTR:
+
+           * read(2), readv(2), write(2), writev(2), and ioctl(2)
+             calls on "slow" devices.  A "slow" device is one where
+             the I/O call may block for an indefinite time, for
+             example, a terminal, pipe, or socket.  (A disk is not a
+             slow device according to this definition.)  If an I/O
+             call on a slow device has already transferred some data
+             by the time it is interrupted by a signal handler, then
+             the call will return a success status (normally, the
+             number of bytes transferred).
+
+And in answer to Zach's question along these lines, ERESTARTSYS gets
+restarted or transformed into EINTR by the system call layer, so long
+as you only set ERESTARTSYS when signal_pending(current) is true.  If
+you accidentally set the return value to ERESTARTSYS when a signal is
+not pending, this error code can escape out to user space, which is
+considered a bug.  But we're using this correctly in
+drivers/char/random.c.
+
+						- Ted
