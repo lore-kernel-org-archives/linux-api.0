@@ -1,35 +1,65 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH v12 8/8] mm: Don't split THP page when syscall is called
-Date: Thu, 17 Jul 2014 14:30:40 +0300
-Message-ID: <20140717113040.GB10127@node.dhcp.inet.fi>
-References: <1404886949-17695-1-git-send-email-minchan@kernel.org>
- <1404886949-17695-9-git-send-email-minchan@kernel.org>
+From: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
+Subject: RE: [net-next PATCH v2 0/3] Broadcast/Multicast rate limit via
+ Ethtool Coalesce
+Date: Thu, 17 Jul 2014 12:53:41 +0000
+Message-ID: <063D6719AE5E284EB5DD2968C1650D6D172768B0@AcuExch.aculab.com>
+References: <1404890050-4020-1-git-send-email-mugunthanvnm@ti.com>
+ <20140709.164420.157865201153845876.davem@davemloft.net>
+ <53C76990.3000304@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1404886949-17695-9-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, Andrea Arcangeli <aarcange@redhat.com>
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <53C76990.3000304-l0cyMroinI0@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Mugunthan V N' <mugunthanvnm-l0cyMroinI0@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 09, 2014 at 03:22:29PM +0900, Minchan Kim wrote:
-> We don't need to split THP page when MADV_FREE syscall is
-> called. It could be done when VM decide really frees it so
-> we could avoid unnecessary THP split.
+> From: Mugunthan V N
+> On Thursday 10 July 2014 05:14 AM, David Miller wrote:
+> > From: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
+> > Date: Wed, 9 Jul 2014 12:44:07 +0530
+> >
+> >> A system/cpu can be loaded by a hacker with flooding of broadcast or
+> >> multicast packets, to prevent this some Ethernet controllers like CPSW
+> >> provide a mechanism to limit the broadcast/multicast packet rate via
+> >> hardware limiters. This patch series enables this feature via
+> >> Ethtool Coalesce.
+> > This is pretty bogus if you ask me.
+> >
+> > What is the difference from accepting a high rate of unicast packets?
+> > I say it is no different.
+> >
+> > Therefore, this feature makes no sense to me at all.
 > 
-> Cc: Andrea Arcangeli <aarcange@redhat.com>
-> Signed-off-by: Minchan Kim <minchan@kernel.org>
+> Any packet storm can cause an endpoint some issues. Typically packet
+> storms will cause the system CPU to thrash resulting is very low system
+> performance.
+> 
+> Unicast storms only target a single destination end station, it can be
+> easily mitigated by the host adding a blocking entry in the LUT for each
+> aggressor.
+> 
+> Broadcast and multicast target multiple end stations, or an entire
+> network, not only can it cause CPU thrashing, it can result in loss of
+> other broadcast and multicast services. The rate limiting feature allow
+> the broadcast and or multicast traffic to be dropped if the rates are
+> too high. This eliminates the CPU thrashing issue. It also allows the
+> system to analyze the aggressors and block them for future transgressions.
 
-I would like to free THP without splitting. But good enough for now.
+Rate limiting multicast traffic will definitely cause the loss of multicast
+services.
 
-Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
--- 
- Kirill A. Shutemov
+My experience of broadcast storms is that many of the ethernet switches
+(probably especially the cheap ones) end up using a much slower software?
+path for broadcasts. In a broadcast storm they start discarding normal
+traffic - to point where a single ssh session becomes unusable.
+This is true even when isolated from the storm by a 10M hub.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Broadcast storms are probably mostly caused by network topology issues.
+Especially is switches are sending traffic to 'all ports' while resetting
+the spanning tree tables.
+
+	David
