@@ -1,73 +1,55 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v11 11/11] seccomp: implement SECCOMP_FILTER_FLAG_TSYNC
-Date: Thu, 17 Jul 2014 10:52:50 -0700
-Message-ID: <CAGXu5jJy0pW9X8YMhnfChtBO55EZKW6J7-+svKMBYP7WGM4PaA@mail.gmail.com>
-References: <1405547442-26641-1-git-send-email-keescook@chromium.org>
-	<1405547442-26641-12-git-send-email-keescook@chromium.org>
-	<CAHse=S_32tmusk4ceY4U6GbNpX4PkX12iPPDZFVZ7qgv-RAooA@mail.gmail.com>
-	<CAGXu5j+dFZdnnK8f-HRrUs2vLeyhWyHh_AY-OynDcp-Ye+dy7Q@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+dFZdnnK8f-HRrUs2vLeyhWyHh_AY-OynDcp-Ye+dy7Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Linux MIPS Mailing List <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v12 05/11] ARM: add seccomp syscall
+Date: Thu, 17 Jul 2014 11:08:32 -0700
+Message-ID: <1405620518-18495-6-git-send-email-keescook@chromium.org>
+References: <1405620518-18495-1-git-send-email-keescook@chromium.org>
+Return-path: <linux-mips-bounce@linux-mips.org>
+In-Reply-To: <1405620518-18495-1-git-send-email-keescook@chromium.org>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: linux-kernel@vger.kernel.org
+Cc: Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, David Drysdale <drysdale@google.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 17, 2014 at 8:45 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> On Thu, Jul 17, 2014 at 8:04 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->> On Wed, Jul 16, 2014 at 10:50 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
->>> index 9065d2c79c56..2125b83ccfd4 100644
->>> +/**
->>> + * seccomp_can_sync_threads: checks if all threads can be synchronized
->>> + *
->>> + * Expects sighand and cred_guard_mutex locks to be held.
->>> + *
->>> + * Returns 0 on success, -ve on error, or the pid of a thread which was
->>> + * either not in the correct seccomp mode or it did not have an ancestral
->>> + * seccomp filter.
->>> + */
->>> +static inline pid_t seccomp_can_sync_threads(void)
->>> +{
->>> +       struct task_struct *thread, *caller;
->>> +
->>> +       BUG_ON(!mutex_is_locked(&current->signal->cred_guard_mutex));
->>> +       BUG_ON(!spin_is_locked(&current->sighand->siglock));
->>> +
->>> +       if (current->seccomp.mode != SECCOMP_MODE_FILTER)
->>> +               return -EACCES;
->>
->> Quick question -- is it possible to apply the first filter and also synchronize
->> it across threads in the same operation?  If so, does this arm also need to
->> cope with seccomp.mode being SECCOMP_MODE_DISABLED?
->>
->> [seccomp_set_mode_filter() looks to call this via seccomp_attach_filter()
->> before it does seccomp_assign_mode()]
->
-> I don't entirely understand what you're asking. The threads gain the
-> filter and the mode before the current thread may gain the mode (if
-> it's the first time this has been called). Due to all the locks,
-> though, this isn't a problem. Is there a situation you see where there
-> might be a problem?
+Wires up the new seccomp syscall.
 
-Just to follow up for posterity on lkml: the problem was that mode was
-being set in "current" _after_ sync, so the mode check in can_sync
-would fail if "current" was not yet in filter mode. (i.e. the first
-attached filter could not have the TSYNC flag.) This check was
-redundant with the attach_filter entry point checks, and protected
-nothing, so it has been removed and a new test added to the seccomp
-regression test suite. :)
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+---
+ arch/arm/include/uapi/asm/unistd.h |    1 +
+ arch/arm/kernel/calls.S            |    1 +
+ 2 files changed, 2 insertions(+)
 
-I sent it as a new patch on top of v11, instead of respinning
-everything as v12. If that's not preferred, I can send v12 with this
-fix incorporated.
-
-Thanks!
-
--Kees
-
+diff --git a/arch/arm/include/uapi/asm/unistd.h b/arch/arm/include/uapi/asm/unistd.h
+index ba94446c72d9..e21b4a069701 100644
+--- a/arch/arm/include/uapi/asm/unistd.h
++++ b/arch/arm/include/uapi/asm/unistd.h
+@@ -409,6 +409,7 @@
+ #define __NR_sched_setattr		(__NR_SYSCALL_BASE+380)
+ #define __NR_sched_getattr		(__NR_SYSCALL_BASE+381)
+ #define __NR_renameat2			(__NR_SYSCALL_BASE+382)
++#define __NR_seccomp			(__NR_SYSCALL_BASE+383)
+ 
+ /*
+  * This may need to be greater than __NR_last_syscall+1 in order to
+diff --git a/arch/arm/kernel/calls.S b/arch/arm/kernel/calls.S
+index 8f51bdcdacbb..bea85f97f363 100644
+--- a/arch/arm/kernel/calls.S
++++ b/arch/arm/kernel/calls.S
+@@ -392,6 +392,7 @@
+ /* 380 */	CALL(sys_sched_setattr)
+ 		CALL(sys_sched_getattr)
+ 		CALL(sys_renameat2)
++		CALL(sys_seccomp)
+ #ifndef syscalls_counted
+ .equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
+ #define syscalls_counted
 -- 
-Kees Cook
-Chrome OS Security
+1.7.9.5
