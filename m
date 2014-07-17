@@ -1,190 +1,65 @@
-From: Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>
-Subject: [PATCH v2 08/25] amdkfd: Add IOCTL set definitions of amdkfd
-Date: Thu, 17 Jul 2014 16:29:15 +0300
-Message-ID: <1405603773-32688-9-git-send-email-oded.gabbay@amd.com>
-References: <1405603773-32688-1-git-send-email-oded.gabbay@amd.com>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCH v11 11/11] seccomp: implement SECCOMP_FILTER_FLAG_TSYNC
+Date: Thu, 17 Jul 2014 16:04:56 +0100
+Message-ID: <CAHse=S_32tmusk4ceY4U6GbNpX4PkX12iPPDZFVZ7qgv-RAooA@mail.gmail.com>
+References: <1405547442-26641-1-git-send-email-keescook@chromium.org> <1405547442-26641-12-git-send-email-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1405603773-32688-1-git-send-email-oded.gabbay-5C7GfCeVMHo@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Jerome Glisse <j.glisse-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: John Bridgman <John.Bridgman-5C7GfCeVMHo@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Andrew Lewycky <Andrew.Lewycky-5C7GfCeVMHo@public.gmane.org>, =?UTF-8?q?Christian=20K=C3=B6nig?= <deathsimple-ANTagKRnAhcb1SvskN2V4Q@public.gmane.org>, =?UTF-8?q?Michel=20D=C3=A4nzer?= <michel.daenzer-5C7GfCeVMHo@public.gmane.org>, Ben Goz <Ben.Goz-5C7GfCeVMHo@public.gmane.org>, Alexey Skidanov <Alexey.Skidanov-5C7GfCeVMHo@public.gmane.org>, Evgeny Pinchuk <Evgeny.Pinchuk-5C7GfCeVMHo@public.gmane.org>, Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <1405547442-26641-12-git-send-email-keescook@chromium.org>
+Sender: linux-security-module-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, James Morris <jmorris@namei.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Daniel Borkmann <dborkman@redhat.com>, Will Drewry <wad@chromium.org>, Julien Tinnes <jln@chromium.org>, Linux API <linux-api@vger.kernel.org>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-- KFD_IOC_GET_VERSION:
-	Retrieves the interface version of amdkfd
+On Wed, Jul 16, 2014 at 10:50 PM, Kees Cook <keescook@chromium.org> wrote:
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index 9065d2c79c56..2125b83ccfd4 100644
+> +/**
+> + * seccomp_can_sync_threads: checks if all threads can be synchronized
+> + *
+> + * Expects sighand and cred_guard_mutex locks to be held.
+> + *
+> + * Returns 0 on success, -ve on error, or the pid of a thread which was
+> + * either not in the correct seccomp mode or it did not have an ancestral
+> + * seccomp filter.
+> + */
+> +static inline pid_t seccomp_can_sync_threads(void)
+> +{
+> +       struct task_struct *thread, *caller;
+> +
+> +       BUG_ON(!mutex_is_locked(&current->signal->cred_guard_mutex));
+> +       BUG_ON(!spin_is_locked(&current->sighand->siglock));
+> +
+> +       if (current->seccomp.mode != SECCOMP_MODE_FILTER)
+> +               return -EACCES;
 
-- KFD_IOC_CREATE_QUEUE:
-	Creates a usermode queue that runs on a specific GPU device
+Quick question -- is it possible to apply the first filter and also synchronize
+it across threads in the same operation?  If so, does this arm also need to
+cope with seccomp.mode being SECCOMP_MODE_DISABLED?
 
-- KFD_IOC_DESTROY_QUEUE:
-	Destroys an existing usermode queue
+[seccomp_set_mode_filter() looks to call this via seccomp_attach_filter()
+before it does seccomp_assign_mode()]
 
-- KFD_IOC_SET_MEMORY_POLICY:
-	Sets the memory policy of the default and alternate aperture of the calling process
-
-- KFD_IOC_GET_CLOCK_COUNTERS:
-	Retrieves counters (timestamps) of CPU and GPU
-
-- KFD_IOC_GET_PROCESS_APERTURES:
-	Retrieves information about process apertures that were initialized
-during the open() call of the amdkfd device
-
-- KFD_IOC_UPDATE_QUEUE:
-	Updates configuration of an existing usermode queue
-
-- KFD_IOC_PMC_ACQUIRE_ACCESS:
-	Acquires exclusive access (from other HSA processes) to the performance
-counters of the GPU
-
-- KFD_IOC_PMC_RELEASE_ACCESS:
-	Releases exclusive access of the GPU's performance counters
-
-Signed-off-by: Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>
----
- include/uapi/linux/kfd_ioctl.h | 133 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 133 insertions(+)
- create mode 100644 include/uapi/linux/kfd_ioctl.h
-
-diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
-new file mode 100644
-index 0000000..3cedd1a
---- /dev/null
-+++ b/include/uapi/linux/kfd_ioctl.h
-@@ -0,0 +1,133 @@
-+/*
-+ * Copyright 2014 Advanced Micro Devices, Inc.
-+ *
-+ * Permission is hereby granted, free of charge, to any person obtaining a
-+ * copy of this software and associated documentation files (the "Software"),
-+ * to deal in the Software without restriction, including without limitation
-+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-+ * and/or sell copies of the Software, and to permit persons to whom the
-+ * Software is furnished to do so, subject to the following conditions:
-+ *
-+ * The above copyright notice and this permission notice shall be included in
-+ * all copies or substantial portions of the Software.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
-+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ * OTHER DEALINGS IN THE SOFTWARE.
-+ */
-+
-+#ifndef KFD_IOCTL_H_INCLUDED
-+#define KFD_IOCTL_H_INCLUDED
-+
-+#include <linux/types.h>
-+#include <linux/ioctl.h>
-+
-+#define KFD_IOCTL_CURRENT_VERSION 1
-+
-+/* The 64-bit ABI is the authoritative version. */
-+#pragma pack(push, 1)
-+
-+struct kfd_ioctl_get_version_args {
-+	uint32_t min_supported_version;	/* from KFD */
-+	uint32_t max_supported_version;	/* from KFD */
-+};
-+
-+/* For kfd_ioctl_create_queue_args.queue_type. */
-+#define KFD_IOC_QUEUE_TYPE_COMPUTE   0
-+#define KFD_IOC_QUEUE_TYPE_SDMA      1
-+
-+struct kfd_ioctl_create_queue_args {
-+	uint64_t ring_base_address;	/* to KFD */
-+	uint64_t write_pointer_address;	/* from KFD */
-+	uint64_t read_pointer_address;	/* from KFD */
-+	uint64_t doorbell_address;	/* from KFD */
-+
-+	uint32_t ring_size;		/* to KFD */
-+	uint32_t gpu_id;		/* to KFD */
-+	uint32_t queue_type;		/* to KFD */
-+	uint32_t queue_percentage;	/* to KFD */
-+	uint32_t queue_priority;	/* to KFD */
-+	uint32_t queue_id;		/* from KFD */
-+};
-+
-+struct kfd_ioctl_destroy_queue_args {
-+	uint32_t queue_id;		/* to KFD */
-+};
-+
-+struct kfd_ioctl_update_queue_args {
-+	uint64_t ring_base_address;	/* to KFD */
-+
-+	uint32_t queue_id;		/* to KFD */
-+	uint32_t ring_size;		/* to KFD */
-+	uint32_t queue_percentage;	/* to KFD */
-+	uint32_t queue_priority;	/* to KFD */
-+};
-+
-+/* For kfd_ioctl_set_memory_policy_args.default_policy and alternate_policy */
-+#define KFD_IOC_CACHE_POLICY_COHERENT 0
-+#define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
-+
-+struct kfd_ioctl_set_memory_policy_args {
-+	uint64_t alternate_aperture_base;	/* to KFD */
-+	uint64_t alternate_aperture_size;	/* to KFD */
-+
-+	uint32_t gpu_id;			/* to KFD */
-+	uint32_t default_policy;		/* to KFD */
-+	uint32_t alternate_policy;		/* to KFD */
-+};
-+
-+struct kfd_ioctl_get_clock_counters_args {
-+	uint64_t gpu_clock_counter;	/* from KFD */
-+	uint64_t cpu_clock_counter;	/* from KFD */
-+	uint64_t system_clock_counter;	/* from KFD */
-+	uint64_t system_clock_freq;	/* from KFD */
-+
-+	uint32_t gpu_id;		/* to KFD */
-+};
-+
-+#define NUM_OF_SUPPORTED_GPUS 7
-+
-+struct kfd_process_device_apertures {
-+	uint64_t lds_base;		/* from KFD */
-+	uint64_t lds_limit;		/* from KFD */
-+	uint64_t scratch_base;		/* from KFD */
-+	uint64_t scratch_limit;		/* from KFD */
-+	uint64_t gpuvm_base;		/* from KFD */
-+	uint64_t gpuvm_limit;		/* from KFD */
-+	uint32_t gpu_id;		/* from KFD */
-+};
-+
-+struct kfd_ioctl_get_process_apertures_args {
-+	struct kfd_process_device_apertures process_apertures[NUM_OF_SUPPORTED_GPUS];/* from KFD */
-+	uint8_t num_of_nodes; /* from KFD, should be in the range [1 - NUM_OF_SUPPORTED_GPUS]*/
-+};
-+
-+struct kfd_ioctl_pmc_acquire_access_args {
-+	uint64_t trace_id;		/* to KFD */
-+	uint32_t gpu_id;		/* to KFD */
-+};
-+
-+struct kfd_ioctl_pmc_release_access_args {
-+	uint64_t trace_id;		/* to KFD */
-+	uint32_t gpu_id;		/* to KFD */
-+};
-+
-+#define KFD_IOC_MAGIC 'K'
-+
-+#define KFD_IOC_GET_VERSION		_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
-+#define KFD_IOC_CREATE_QUEUE		_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
-+#define KFD_IOC_DESTROY_QUEUE		_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
-+#define KFD_IOC_SET_MEMORY_POLICY	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
-+#define KFD_IOC_GET_CLOCK_COUNTERS	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
-+#define KFD_IOC_GET_PROCESS_APERTURES	_IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
-+#define KFD_IOC_UPDATE_QUEUE		_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
-+#define KFD_IOC_PMC_ACQUIRE_ACCESS	_IOW(KFD_IOC_MAGIC, 12, struct kfd_ioctl_pmc_acquire_access_args)
-+#define KFD_IOC_PMC_RELEASE_ACCESS	_IOW(KFD_IOC_MAGIC, 13, struct kfd_ioctl_pmc_release_access_args)
-+
-+#pragma pack(pop)
-+
-+#endif
--- 
-1.9.1
+> +
+> +       /* Validate all threads being eligible for synchronization. */
+> +       caller = current;
+> +       for_each_thread(caller, thread) {
+> +               pid_t failed;
+> +
+> +               if (thread->seccomp.mode == SECCOMP_MODE_DISABLED ||
+> +                   (thread->seccomp.mode == SECCOMP_MODE_FILTER &&
+> +                    is_ancestor(thread->seccomp.filter,
+> +                                caller->seccomp.filter)))
+> +                       continue;
+> +
+> +               /* Return the first thread that cannot be synchronized. */
+> +               failed = task_pid_vnr(thread);
+> +               /* If the pid cannot be resolved, then return -ESRCH */
+> +               if (unlikely(WARN_ON(failed == 0)))
+> +                       failed = -ESRCH;
+> +               return failed;
+> +       }
+> +
+> +       return 0;
+> +}
