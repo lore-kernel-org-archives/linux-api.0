@@ -1,129 +1,125 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v11 10/11] seccomp: allow mode setting across threads
-Date: Wed, 16 Jul 2014 14:50:41 -0700
-Message-ID: <1405547442-26641-11-git-send-email-keescook@chromium.org>
-References: <1405547442-26641-1-git-send-email-keescook@chromium.org>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v12 0/8] MADV_FREE support
+Date: Thu, 17 Jul 2014 14:02:30 +0900
+Message-ID: <20140717050230.GB12333@bbox>
+References: <1404886949-17695-1-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1405547442-26641-1-git-send-email-keescook@chromium.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-arch@vger.kernel.org, linux-mips@linux-mips.org, Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, James Morris <jmorris@namei.org>, Oleg Nesterov <oleg@redhat.com>, Daniel Borkmann <dborkman@redhat.com>, Julien Tinnes <jln@chromium.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, David Drysdale <drysdale@google.com>, linux-arm-kernel@lists.infradead.org, Alexei Starovoitov <ast@plumgrid.com>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1404886949-17695-1-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This changes the mode setting helper to allow threads to change the
-seccomp mode from another thread. We must maintain barriers to keep
-TIF_SECCOMP synchronized with the rest of the seccomp state.
+Kirill, Do you have any comment?
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Reviewed-by: Andy Lutomirski <luto@amacapital.net>
----
- kernel/seccomp.c |   36 +++++++++++++++++++++++++-----------
- 1 file changed, 25 insertions(+), 11 deletions(-)
+On Wed, Jul 09, 2014 at 03:22:21PM +0900, Minchan Kim wrote:
+> This patch enable MADV_FREE hint for madvise syscall, which have
+> been supported by other OSes. [PATCH 1] includes the details.
+> 
+> [1] support MADVISE_FREE for !THP page so if VM encounter
+> THP page in syscall context, it splits THP page.
+> [2-7] is to preparing to call madvise syscall without THP plitting
+> [8] enable THP page support for MADV_FREE.
+> 
+> 
+> * From v11
+>  * Fix arm build - Steve
+>  * Separate patch for arm and arm64 - Steve
+>  * Remove unnecessary check - Kirill
+>  * Skip non-vm_normal page - Kirill
+>  * Add Acked-by - Zhang
+>  * Sparc64 build fix
+>  * Pagetable walker THP handling fix
+> 
+> * From v10
+>  * Add Acked-by from arch stuff(x86, s390)
+>  * Pagewalker based pagetable working - Kirill
+>  * Fix try_to_unmap_one broken with hwpoison - Kirill
+>  * Use VM_BUG_ON_PAGE in madvise_free_pmd - Kirill
+>  * Fix pgtable-3level.h for arm - Steve
+> 
+> * From v9
+>  * Add Acked-by - Rik
+>  * Add THP page support - Kirill
+> 
+> * From v8
+>  * Rebased-on v3.16-rc2-mmotm-2014-06-25-16-44
+> 
+> * From v7
+>  * Rebased-on next-20140613
+> 
+> * From v6
+>  * Remove page from swapcache in syscal time
+>  * Move utility functions from memory.c to madvise.c - Johannes
+>  * Rename untilify functtions - Johannes
+>  * Remove unnecessary checks from vmscan.c - Johannes
+>  * Rebased-on v3.15-rc5-mmotm-2014-05-16-16-56
+>  * Drop Reviewe-by because there was some changes since then.
+> 
+> * From v5
+>  * Fix PPC problem which don't flush TLB - Rik
+>  * Remove unnecessary lazyfree_range stub function - Rik
+>  * Rebased on v3.15-rc5
+> 
+> * From v4
+>  * Add Reviewed-by: Zhang Yanfei
+>  * Rebase on v3.15-rc1-mmotm-2014-04-15-16-14
+> 
+> * From v3
+>  * Add "how to work part" in description - Zhang
+>  * Add page_discardable utility function - Zhang
+>  * Clean up
+> 
+> * From v2
+>  * Remove forceful dirty marking of swap-readed page - Johannes
+>  * Remove deactivation logic of lazyfreed page
+>  * Rebased on 3.14
+>  * Remove RFC tag
+> 
+> * From v1
+>  * Use custom page table walker for madvise_free - Johannes
+>  * Remove PG_lazypage flag - Johannes
+>  * Do madvise_dontneed instead of madvise_freein swapless system
+> 
+> Minchan Kim (8):
+>   [1] mm: support madvise(MADV_FREE)
+>   [2] x86: add pmd_[dirty|mkclean] for THP
+>   [3] sparc: add pmd_[dirty|mkclean] for THP
+>   [4] powerpc: add pmd_[dirty|mkclean] for THP
+>   [5] s390: add pmd_[dirty|mkclean] for THP
+>   [6] arm: add pmd_[dirty|mkclean] for THP
+>   [7] arm64: add pmd_[dirty|mkclean] for THP
+>   [8] mm: Don't split THP page when syscall is called
+> 
+>  arch/arm/include/asm/pgtable-3level.h    |   3 +
+>  arch/arm64/include/asm/pgtable.h         |   2 +
+>  arch/powerpc/include/asm/pgtable-ppc64.h |   2 +
+>  arch/s390/include/asm/pgtable.h          |  12 +++
+>  arch/sparc/include/asm/pgtable_64.h      |  16 ++++
+>  arch/x86/include/asm/pgtable.h           |  10 ++
+>  include/linux/huge_mm.h                  |   4 +
+>  include/linux/rmap.h                     |   9 +-
+>  include/linux/vm_event_item.h            |   1 +
+>  include/uapi/asm-generic/mman-common.h   |   1 +
+>  mm/huge_memory.c                         |  35 +++++++
+>  mm/madvise.c                             | 155 +++++++++++++++++++++++++++++++
+>  mm/rmap.c                                |  46 ++++++++-
+>  mm/vmscan.c                              |  64 +++++++++----
+>  mm/vmstat.c                              |   1 +
+>  15 files changed, 341 insertions(+), 20 deletions(-)
+> 
+> -- 
+> 2.0.0
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
 
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index d5543e787e4e..9065d2c79c56 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -173,21 +173,24 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
-  */
- static u32 seccomp_run_filters(int syscall)
- {
--	struct seccomp_filter *f;
-+	struct seccomp_filter *f = ACCESS_ONCE(current->seccomp.filter);
- 	struct seccomp_data sd;
- 	u32 ret = SECCOMP_RET_ALLOW;
- 
- 	/* Ensure unexpected behavior doesn't result in failing open. */
--	if (WARN_ON(current->seccomp.filter == NULL))
-+	if (unlikely(WARN_ON(f == NULL)))
- 		return SECCOMP_RET_KILL;
- 
-+	/* Make sure cross-thread synced filter points somewhere sane. */
-+	smp_read_barrier_depends();
-+
- 	populate_seccomp_data(&sd);
- 
- 	/*
- 	 * All filters in the list are evaluated and the lowest BPF return
- 	 * value always takes priority (ignoring the DATA).
- 	 */
--	for (f = current->seccomp.filter; f; f = f->prev) {
-+	for (; f; f = f->prev) {
- 		u32 cur_ret = SK_RUN_FILTER(f->prog, (void *)&sd);
- 
- 		if ((cur_ret & SECCOMP_RET_ACTION) < (ret & SECCOMP_RET_ACTION))
-@@ -207,12 +210,18 @@ static inline bool seccomp_may_assign_mode(unsigned long seccomp_mode)
- 	return true;
- }
- 
--static inline void seccomp_assign_mode(unsigned long seccomp_mode)
-+static inline void seccomp_assign_mode(struct task_struct *task,
-+				       unsigned long seccomp_mode)
- {
--	BUG_ON(!spin_is_locked(&current->sighand->siglock));
-+	BUG_ON(!spin_is_locked(&task->sighand->siglock));
- 
--	current->seccomp.mode = seccomp_mode;
--	set_tsk_thread_flag(current, TIF_SECCOMP);
-+	task->seccomp.mode = seccomp_mode;
-+	/*
-+	 * Make sure TIF_SECCOMP cannot be set before the mode (and
-+	 * filter) is set.
-+	 */
-+	smp_mb__before_atomic();
-+	set_tsk_thread_flag(task, TIF_SECCOMP);
- }
- 
- #ifdef CONFIG_SECCOMP_FILTER
-@@ -435,12 +444,17 @@ static int mode1_syscalls_32[] = {
- 
- int __secure_computing(int this_syscall)
- {
--	int mode = current->seccomp.mode;
- 	int exit_sig = 0;
- 	int *syscall;
- 	u32 ret;
- 
--	switch (mode) {
-+	/*
-+	 * Make sure that any changes to mode from another thread have
-+	 * been seen after TIF_SECCOMP was seen.
-+	 */
-+	rmb();
-+
-+	switch (current->seccomp.mode) {
- 	case SECCOMP_MODE_STRICT:
- 		syscall = mode1_syscalls;
- #ifdef CONFIG_COMPAT
-@@ -545,7 +559,7 @@ static long seccomp_set_mode_strict(void)
- #ifdef TIF_NOTSC
- 	disable_TSC();
- #endif
--	seccomp_assign_mode(seccomp_mode);
-+	seccomp_assign_mode(current, seccomp_mode);
- 	ret = 0;
- 
- out:
-@@ -595,7 +609,7 @@ static long seccomp_set_mode_filter(unsigned int flags,
- 	/* Do not free the successfully attached filter. */
- 	prepared = NULL;
- 
--	seccomp_assign_mode(seccomp_mode);
-+	seccomp_assign_mode(current, seccomp_mode);
- out:
- 	spin_unlock_irq(&current->sighand->siglock);
- 	seccomp_filter_free(prepared);
 -- 
-1.7.9.5
+Kind regards,
+Minchan Kim
