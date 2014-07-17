@@ -1,82 +1,42 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v10 0/11] seccomp: add thread sync ability
-Date: Thu, 17 Jul 2014 14:39:46 -0700
-Message-ID: <CALCETrUf-Tei+R32SR-KKLD50zWa89Vrfu4S4uZ+4jh4eEFOdg@mail.gmail.com>
-References: <1405017631-27346-1-git-send-email-keescook@chromium.org>
- <20140711164931.GA18473@redhat.com> <CAGXu5jK-x0=Rr7kX2a=b4Z8ueA77uwmhNZZAayG8cwmNOKa8Ug@mail.gmail.com>
- <CAGXu5jJJsiTxxn5UijkBz7jpWgqg01BS=Zc0WbHXbs0vH_xPMQ@mail.gmail.com> <53C48986.5010109@oracle.com>
+From: Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>
+Subject: Re: [PATCH, RFC] random: introduce getrandom(2) system call
+Date: Thu, 17 Jul 2014 14:44:50 -0700
+Message-ID: <20140717214450.GE24196@lenny.home.zabbo.net>
+References: <1405588695-12014-1-git-send-email-tytso@mit.edu>
+ <20140717161215.GA14951@infradead.org>
+ <20140717170115.GO1491@thunk.org>
+ <CAComcpObt4y--GEuAZgzkaDWnrJYBKhwsvqjOkdiXU_yGnV2Tg@mail.gmail.com>
+ <20140717204340.GS1491@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <53C48986.5010109-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20140717204340.GS1491-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Linux MIPS Mailing List <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Cc: Bob Beck <beck-7YlrpqBBQ3VAfugRpC6u6w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 14, 2014 at 6:53 PM, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> On 07/15/2014 04:59 AM, Kees Cook wrote:
->>
->> Hi James,
->>
->> Is this series something you would carry in the security-next tree?
->> That has traditionally been where seccomp features have landed in the
->> past.
->>
->> -Kees
->>
->>
->> On Fri, Jul 11, 2014 at 10:55 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->>>
->>> On Fri, Jul 11, 2014 at 9:49 AM, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>>>
->>>> On 07/10, Kees Cook wrote:
->>>>>
->>>>>
->>>>> This adds the ability for threads to request seccomp filter
->>>>> synchronization across their thread group (at filter attach time).
->>>>> For example, for Chrome to make sure graphic driver threads are fully
->>>>> confined after seccomp filters have been attached.
->>>>>
->>>>> To support this, locking on seccomp changes via thread-group-shared
->>>>> sighand lock is introduced, along with refactoring of no_new_privs.
->>>>> Races
->>>>> with thread creation are handled via delayed duplication of the seccomp
->>>>> task struct field and cred_guard_mutex.
->>>>>
->>>>> This includes a new syscall (instead of adding a new prctl option),
->>>>> as suggested by Andy Lutomirski and Michael Kerrisk.
->>>>
->>>>
->>>> I do not not see any problems in this version,
->>>
->>>
->>> Awesome! Thank you for all the reviews. :) If Andy and Michael are
->>> happy with this too, I think this is in good shape. \o/
->>>
->>> -Kees
->>>
->>>>
->>>> Reviewed-by: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>>
->>>
->>>
->>>
->>> --
->>> Kees Cook
->>> Chrome OS Security
->>
->>
->>
->>
->
-> Yep, certainly.
->
+On Thu, Jul 17, 2014 at 04:43:40PM -0400, Theodore Ts'o wrote:
 
-Any ETA?  I'm currently blocking on having stable commit hashes for these.
+> So in practice, the fact that we block at system init time shouldn't
+> be a hardship for LibreSSL in most cases --- and in the case where you
+> are running on an embedded system where there are barely any devices,
+> no cycle counter, and nothing that produces enough interrupts to
+> initialize the pool, what would you prefer that we do?  Return data
+> that might not be fully "seed grade entropy"?
+> 
+> If you are determined to get data from a not a fully initialized
+> entropy pool, then you can open /dev/urandom and get it via the old
+> interface.
 
-If you're planning on pulling from Kees' tree instead of importing the
-patches, I can work with that, too.
+That sounds reasonable.  Maybe a slightly edited version of this writeup
+could be dropped in the man page to give people context?
 
-Thanks,
-Andy
+> (The fact that most systems try to create OpenSSH's host keys as the
+> first thing after an out-of-the-Box first boot situation is something
+> I've always considered Crazy-Eddie Bat-Shit Insane....)
+
+(Seriously.  My atrophied sysadmin muscles still still cringe at that.)
+
+- z
