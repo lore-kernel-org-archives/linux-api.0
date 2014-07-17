@@ -1,65 +1,190 @@
-From: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
-Subject: RE: [net-next PATCH v2 0/3] Broadcast/Multicast rate limit via
- Ethtool Coalesce
-Date: Thu, 17 Jul 2014 12:53:41 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6D172768B0@AcuExch.aculab.com>
-References: <1404890050-4020-1-git-send-email-mugunthanvnm@ti.com>
- <20140709.164420.157865201153845876.davem@davemloft.net>
- <53C76990.3000304@ti.com>
+From: Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>
+Subject: [PATCH v2 08/25] amdkfd: Add IOCTL set definitions of amdkfd
+Date: Thu, 17 Jul 2014 16:29:15 +0300
+Message-ID: <1405603773-32688-9-git-send-email-oded.gabbay@amd.com>
+References: <1405603773-32688-1-git-send-email-oded.gabbay@amd.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <53C76990.3000304-l0cyMroinI0@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <1405603773-32688-1-git-send-email-oded.gabbay-5C7GfCeVMHo@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: 'Mugunthan V N' <mugunthanvnm-l0cyMroinI0@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Jerome Glisse <j.glisse-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: John Bridgman <John.Bridgman-5C7GfCeVMHo@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Andrew Lewycky <Andrew.Lewycky-5C7GfCeVMHo@public.gmane.org>, =?UTF-8?q?Christian=20K=C3=B6nig?= <deathsimple-ANTagKRnAhcb1SvskN2V4Q@public.gmane.org>, =?UTF-8?q?Michel=20D=C3=A4nzer?= <michel.daenzer-5C7GfCeVMHo@public.gmane.org>, Ben Goz <Ben.Goz-5C7GfCeVMHo@public.gmane.org>, Alexey Skidanov <Alexey.Skidanov-5C7GfCeVMHo@public.gmane.org>, Evgeny Pinchuk <Evgeny.Pinchuk-5C7GfCeVMHo@public.gmane.org>, Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-> From: Mugunthan V N
-> On Thursday 10 July 2014 05:14 AM, David Miller wrote:
-> > From: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
-> > Date: Wed, 9 Jul 2014 12:44:07 +0530
-> >
-> >> A system/cpu can be loaded by a hacker with flooding of broadcast or
-> >> multicast packets, to prevent this some Ethernet controllers like CPSW
-> >> provide a mechanism to limit the broadcast/multicast packet rate via
-> >> hardware limiters. This patch series enables this feature via
-> >> Ethtool Coalesce.
-> > This is pretty bogus if you ask me.
-> >
-> > What is the difference from accepting a high rate of unicast packets?
-> > I say it is no different.
-> >
-> > Therefore, this feature makes no sense to me at all.
-> 
-> Any packet storm can cause an endpoint some issues. Typically packet
-> storms will cause the system CPU to thrash resulting is very low system
-> performance.
-> 
-> Unicast storms only target a single destination end station, it can be
-> easily mitigated by the host adding a blocking entry in the LUT for each
-> aggressor.
-> 
-> Broadcast and multicast target multiple end stations, or an entire
-> network, not only can it cause CPU thrashing, it can result in loss of
-> other broadcast and multicast services. The rate limiting feature allow
-> the broadcast and or multicast traffic to be dropped if the rates are
-> too high. This eliminates the CPU thrashing issue. It also allows the
-> system to analyze the aggressors and block them for future transgressions.
+- KFD_IOC_GET_VERSION:
+	Retrieves the interface version of amdkfd
 
-Rate limiting multicast traffic will definitely cause the loss of multicast
-services.
+- KFD_IOC_CREATE_QUEUE:
+	Creates a usermode queue that runs on a specific GPU device
 
-My experience of broadcast storms is that many of the ethernet switches
-(probably especially the cheap ones) end up using a much slower software?
-path for broadcasts. In a broadcast storm they start discarding normal
-traffic - to point where a single ssh session becomes unusable.
-This is true even when isolated from the storm by a 10M hub.
+- KFD_IOC_DESTROY_QUEUE:
+	Destroys an existing usermode queue
 
-Broadcast storms are probably mostly caused by network topology issues.
-Especially is switches are sending traffic to 'all ports' while resetting
-the spanning tree tables.
+- KFD_IOC_SET_MEMORY_POLICY:
+	Sets the memory policy of the default and alternate aperture of the calling process
 
-	David
+- KFD_IOC_GET_CLOCK_COUNTERS:
+	Retrieves counters (timestamps) of CPU and GPU
+
+- KFD_IOC_GET_PROCESS_APERTURES:
+	Retrieves information about process apertures that were initialized
+during the open() call of the amdkfd device
+
+- KFD_IOC_UPDATE_QUEUE:
+	Updates configuration of an existing usermode queue
+
+- KFD_IOC_PMC_ACQUIRE_ACCESS:
+	Acquires exclusive access (from other HSA processes) to the performance
+counters of the GPU
+
+- KFD_IOC_PMC_RELEASE_ACCESS:
+	Releases exclusive access of the GPU's performance counters
+
+Signed-off-by: Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>
+---
+ include/uapi/linux/kfd_ioctl.h | 133 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 133 insertions(+)
+ create mode 100644 include/uapi/linux/kfd_ioctl.h
+
+diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
+new file mode 100644
+index 0000000..3cedd1a
+--- /dev/null
++++ b/include/uapi/linux/kfd_ioctl.h
+@@ -0,0 +1,133 @@
++/*
++ * Copyright 2014 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++#ifndef KFD_IOCTL_H_INCLUDED
++#define KFD_IOCTL_H_INCLUDED
++
++#include <linux/types.h>
++#include <linux/ioctl.h>
++
++#define KFD_IOCTL_CURRENT_VERSION 1
++
++/* The 64-bit ABI is the authoritative version. */
++#pragma pack(push, 1)
++
++struct kfd_ioctl_get_version_args {
++	uint32_t min_supported_version;	/* from KFD */
++	uint32_t max_supported_version;	/* from KFD */
++};
++
++/* For kfd_ioctl_create_queue_args.queue_type. */
++#define KFD_IOC_QUEUE_TYPE_COMPUTE   0
++#define KFD_IOC_QUEUE_TYPE_SDMA      1
++
++struct kfd_ioctl_create_queue_args {
++	uint64_t ring_base_address;	/* to KFD */
++	uint64_t write_pointer_address;	/* from KFD */
++	uint64_t read_pointer_address;	/* from KFD */
++	uint64_t doorbell_address;	/* from KFD */
++
++	uint32_t ring_size;		/* to KFD */
++	uint32_t gpu_id;		/* to KFD */
++	uint32_t queue_type;		/* to KFD */
++	uint32_t queue_percentage;	/* to KFD */
++	uint32_t queue_priority;	/* to KFD */
++	uint32_t queue_id;		/* from KFD */
++};
++
++struct kfd_ioctl_destroy_queue_args {
++	uint32_t queue_id;		/* to KFD */
++};
++
++struct kfd_ioctl_update_queue_args {
++	uint64_t ring_base_address;	/* to KFD */
++
++	uint32_t queue_id;		/* to KFD */
++	uint32_t ring_size;		/* to KFD */
++	uint32_t queue_percentage;	/* to KFD */
++	uint32_t queue_priority;	/* to KFD */
++};
++
++/* For kfd_ioctl_set_memory_policy_args.default_policy and alternate_policy */
++#define KFD_IOC_CACHE_POLICY_COHERENT 0
++#define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
++
++struct kfd_ioctl_set_memory_policy_args {
++	uint64_t alternate_aperture_base;	/* to KFD */
++	uint64_t alternate_aperture_size;	/* to KFD */
++
++	uint32_t gpu_id;			/* to KFD */
++	uint32_t default_policy;		/* to KFD */
++	uint32_t alternate_policy;		/* to KFD */
++};
++
++struct kfd_ioctl_get_clock_counters_args {
++	uint64_t gpu_clock_counter;	/* from KFD */
++	uint64_t cpu_clock_counter;	/* from KFD */
++	uint64_t system_clock_counter;	/* from KFD */
++	uint64_t system_clock_freq;	/* from KFD */
++
++	uint32_t gpu_id;		/* to KFD */
++};
++
++#define NUM_OF_SUPPORTED_GPUS 7
++
++struct kfd_process_device_apertures {
++	uint64_t lds_base;		/* from KFD */
++	uint64_t lds_limit;		/* from KFD */
++	uint64_t scratch_base;		/* from KFD */
++	uint64_t scratch_limit;		/* from KFD */
++	uint64_t gpuvm_base;		/* from KFD */
++	uint64_t gpuvm_limit;		/* from KFD */
++	uint32_t gpu_id;		/* from KFD */
++};
++
++struct kfd_ioctl_get_process_apertures_args {
++	struct kfd_process_device_apertures process_apertures[NUM_OF_SUPPORTED_GPUS];/* from KFD */
++	uint8_t num_of_nodes; /* from KFD, should be in the range [1 - NUM_OF_SUPPORTED_GPUS]*/
++};
++
++struct kfd_ioctl_pmc_acquire_access_args {
++	uint64_t trace_id;		/* to KFD */
++	uint32_t gpu_id;		/* to KFD */
++};
++
++struct kfd_ioctl_pmc_release_access_args {
++	uint64_t trace_id;		/* to KFD */
++	uint32_t gpu_id;		/* to KFD */
++};
++
++#define KFD_IOC_MAGIC 'K'
++
++#define KFD_IOC_GET_VERSION		_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
++#define KFD_IOC_CREATE_QUEUE		_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
++#define KFD_IOC_DESTROY_QUEUE		_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
++#define KFD_IOC_SET_MEMORY_POLICY	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
++#define KFD_IOC_GET_CLOCK_COUNTERS	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
++#define KFD_IOC_GET_PROCESS_APERTURES	_IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
++#define KFD_IOC_UPDATE_QUEUE		_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
++#define KFD_IOC_PMC_ACQUIRE_ACCESS	_IOW(KFD_IOC_MAGIC, 12, struct kfd_ioctl_pmc_acquire_access_args)
++#define KFD_IOC_PMC_RELEASE_ACCESS	_IOW(KFD_IOC_MAGIC, 13, struct kfd_ioctl_pmc_release_access_args)
++
++#pragma pack(pop)
++
++#endif
+-- 
+1.9.1
