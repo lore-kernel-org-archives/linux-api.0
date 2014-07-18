@@ -1,81 +1,54 @@
-From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 0/5] RFC: CGroup Namespaces
-Date: Fri, 18 Jul 2014 16:00:04 +0000
-Message-ID: <20140718160004.GC20686@ubuntumail>
-References: <adityakali-cgroupns>
- <1405626731-12220-1-git-send-email-adityakali@google.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 5/5] cgroup: introduce cgroup namespaces
+Date: Fri, 18 Jul 2014 09:51:33 -0700
+Message-ID: <CALCETrW6YpyJBmr3sZC6KL03GP4dcGYavQF5DFZfys6Cok-vpw@mail.gmail.com>
+References: <1405626731-12220-1-git-send-email-adityakali@google.com>
+ <1405626731-12220-6-git-send-email-adityakali@google.com> <CALCETrWXMMGzptvEu6TfzTjBou4t==W39_nNB5FJwSk2Zy8uCQ@mail.gmail.com>
+ <CAGr1F2Ht1q_nYGJwmQvEEyj8r3R1stgD=g3s8_5zYOTogjz-UQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=UTF-8
 Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1405626731-12220-1-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <CAGr1F2Ht1q_nYGJwmQvEEyj8r3R1stgD=g3s8_5zYOTogjz-UQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Cc: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
-> Background
->   Cgroups and Namespaces are used together to create =E2=80=9Cvirtual=
-=E2=80=9D
->   containers that isolates the host environment from the processes
->   running in container. But since cgroups themselves are not
->   =E2=80=9Cvirtualized=E2=80=9D, the task is always able to see globa=
-l cgroups view
->   through cgroupfs mount and via /proc/self/cgroup file.
->=20
->   $ cat /proc/self/cgroup=20
->   0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/c_jo=
-b_id1
->=20
->   This exposure of cgroup names to the processes running inside a
->   container results in some problems:
->   (1) The container names are typically host-container-management-age=
-nt
->       (systemd, docker/libcontainer, etc.) data and leaking its name =
-(or
->       leaking the hierarchy) reveals too much information about the h=
-ost
->       system.
->   (2) It makes the container migration across machines (CRIU) more
->       difficult as the container names need to be unique across the
->       machines in the migration domain.
->   (3) It makes it difficult to run container management tools (like
->       docker/libcontainer, lmctfy, etc.) within virtual containers
->       without adding dependency on some state/agent present outside t=
-he
->       container.
->=20
->   Note that the feature proposed here is completely different than th=
-e
->   =E2=80=9Cns cgroup=E2=80=9D feature which existed in the linux kern=
-el until recently.
->   The ns cgroup also attempted to connect cgroups and namespaces by
->   creating a new cgroup every time a new namespace was created. It di=
-d
->   not solve any of the above mentioned problems and was later dropped
->   from the kernel.
->=20
-> Introducing CGroup Namespaces
->   With unified cgroup hierarchy
->   (Documentation/cgroups/unified-hierarchy.txt), the containers can n=
-ow
->   have a much more coherent cgroup view and its easy to associate a
->   container with a single cgroup. This also allows us to virtualize t=
-he
->   cgroup view for tasks inside the container.
+On Jul 17, 2014 1:56 PM, "Aditya Kali" <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>
+> On Thu, Jul 17, 2014 at 12:57 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> > On Thu, Jul 17, 2014 at 12:52 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> >> Introduce the ability to create new cgroup namespace. The newly created
+> >> cgroup namespace remembers the 'struct cgroup *root_cgrp' at the point
+> >> of creation of the cgroup namespace. The task that creates the new
+> >> cgroup namespace and all its future children will now be restricted only
+> >> to the cgroup hierarchy under this root_cgrp. In the first version,
+> >> setns() is not supported for cgroup namespaces.
+> >> The main purpose of cgroup namespace is to virtualize the contents
+> >> of /proc/self/cgroup file. Processes inside a cgroup namespace
+> >> are only able to see paths relative to their namespace root.
+> >> This allows container-tools (like libcontainer, lxc, lmctfy, etc.)
+> >> to create completely virtualized containers without leaking system
+> >> level cgroup hierarchy to the task.
+> >
+> > What happens if someone moves a task in a cgroup namespace outside of
+> > the namespace root cgroup?
+> >
+>
+> Attempt to move a task outside of cgroupns root will fail with EPERM.
+> This is true irrespective of the privileges of the process attempting
+> this. Once cgroupns is created, the task will be confined to the
+> cgroup hierarchy under its cgroupns root until it dies.
 
-Hi,
+Can a task in a non-init userns create a cgroupns?  If not, that's
+unusual.  If so, is it problematic if they can prevent themselves from
+being moved?
 
-So right now we basically do this in userspace using cgmanager.  Each
-container/chroot/whatever that has a cgproxy is 'locked' under that
-proxy's cgroup.  So if root in a container asks the cgproxy for the
-cgroup of pid 2000, and cgproxy is in /lxc/u1 while pid 2000 in the
-container is in /lxc/u1/service1, then the response will be '/service1'=
-=2E
-Same happens with creating cgroups, moving pids into cgroups, etc.
+I hate to say it, but it might be worth requiring explicit permission
+from the cgroup manager for this.  For example, there could be a new
+cgroup attribute may_unshare, and any attempt to unshare the cgroup ns
+will fail with -EPERM unless the caller is in a may_share=1 cgroup.
+may_unshare in a parent cgroup would not give child cgroups the
+ability to unshare.
 
-(Hoping to take a close look at this set early next week)
-
--serge
+--Andy
