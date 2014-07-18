@@ -1,210 +1,59 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v13 8/8] mm: Don't split THP page when syscall is called
-Date: Fri, 18 Jul 2014 15:53:06 +0900
-Message-ID: <1405666386-15095-9-git-send-email-minchan@kernel.org>
+From: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v13 6/8] arm: add pmd_[dirty|mkclean] for THP
+Date: Fri, 18 Jul 2014 09:48:47 +0100
+Message-ID: <20140718084847.GC9548@arm.com>
 References: <1405666386-15095-1-git-send-email-minchan@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1405666386-15095-1-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Andrea Arcangeli <aarcange@redhat.com>
+ <1405666386-15095-7-git-send-email-minchan@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1405666386-15095-7-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Catalin Marinas <Catalin.Marinas-5wv7dgnIgG8@public.gmane.org>, Steve Capper <steve.capper-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-We don't need to split THP page when MADV_FREE syscall is
-called. It could be done when VM decide really frees it so
-we could avoid unnecessary THP split.
+On Fri, Jul 18, 2014 at 07:53:04AM +0100, Minchan Kim wrote:
+> MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
+> overwrite of the contents since MADV_FREE syscall is called for
+> THP page.
+> 
+> This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
+> support.
+> 
+> Cc: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+> Cc: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+> Cc: Steve Capper <steve.capper-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> Cc: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+> Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+> Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> ---
+>  arch/arm/include/asm/pgtable-3level.h | 3 +++
+>  1 file changed, 3 insertions(+)
+> 
+> diff --git a/arch/arm/include/asm/pgtable-3level.h b/arch/arm/include/asm/pgtable-3level.h
+> index 85c60adc8b60..830f84f2d277 100644
+> --- a/arch/arm/include/asm/pgtable-3level.h
+> +++ b/arch/arm/include/asm/pgtable-3level.h
+> @@ -220,6 +220,8 @@ static inline pmd_t *pmd_offset(pud_t *pud, unsigned long addr)
+>  #define pmd_trans_splitting(pmd) (pmd_val(pmd) & PMD_SECT_SPLITTING)
+>  #endif
+>  
+> +#define pmd_dirty(pmd)		(pmd_val(pmd) & PMD_SECT_DIRTY)
+> +
+>  #define PMD_BIT_FUNC(fn,op) \
+>  static inline pmd_t pmd_##fn(pmd_t pmd) { pmd_val(pmd) op; return pmd; }
+>  
+> @@ -228,6 +230,7 @@ PMD_BIT_FUNC(mkold,	&= ~PMD_SECT_AF);
+>  PMD_BIT_FUNC(mksplitting, |= PMD_SECT_SPLITTING);
+>  PMD_BIT_FUNC(mkwrite,   &= ~PMD_SECT_RDONLY);
+>  PMD_BIT_FUNC(mkdirty,   |= PMD_SECT_DIRTY);
+> +PMD_BIT_FUNC(mkclean,   &= ~PMD_SECT_DIRTY);
+>  PMD_BIT_FUNC(mkyoung,   |= PMD_SECT_AF);
+>  
+>  #define pmd_mkhuge(pmd)		(__pmd(pmd_val(pmd) & ~PMD_TABLE_BIT))
 
-Cc: Andrea Arcangeli <aarcange@redhat.com>
-Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- include/linux/huge_mm.h |  4 ++++
- mm/huge_memory.c        | 35 +++++++++++++++++++++++++++++++++++
- mm/madvise.c            | 21 ++++++++++++++++++++-
- mm/rmap.c               |  8 ++++++--
- mm/vmscan.c             | 28 ++++++++++++++++++----------
- 5 files changed, 83 insertions(+), 13 deletions(-)
+Looks fine to me, but again, it would be great if Steve can take a look too.
 
-diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
-index 63579cb8d3dc..25a961256d9f 100644
---- a/include/linux/huge_mm.h
-+++ b/include/linux/huge_mm.h
-@@ -19,6 +19,9 @@ extern struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
- 					  unsigned long addr,
- 					  pmd_t *pmd,
- 					  unsigned int flags);
-+extern int madvise_free_huge_pmd(struct mmu_gather *tlb,
-+			struct vm_area_struct *vma,
-+			pmd_t *pmd, unsigned long addr);
- extern int zap_huge_pmd(struct mmu_gather *tlb,
- 			struct vm_area_struct *vma,
- 			pmd_t *pmd, unsigned long addr);
-@@ -56,6 +59,7 @@ extern pmd_t *page_check_address_pmd(struct page *page,
- 				     unsigned long address,
- 				     enum page_check_address_pmd_flag flag,
- 				     spinlock_t **ptl);
-+extern int pmd_freeable(pmd_t pmd);
- 
- #define HPAGE_PMD_ORDER (HPAGE_PMD_SHIFT-PAGE_SHIFT)
- #define HPAGE_PMD_NR (1<<HPAGE_PMD_ORDER)
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 02559efd9827..c238a19a648f 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1384,6 +1384,36 @@ out:
- 	return 0;
- }
- 
-+int madvise_free_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
-+		 pmd_t *pmd, unsigned long addr)
-+
-+{
-+	spinlock_t *ptl;
-+	struct mm_struct *mm = tlb->mm;
-+	int ret = 1;
-+
-+	if (pmd_trans_huge_lock(pmd, vma, &ptl) == 1) {
-+		struct page *page;
-+		pmd_t orig_pmd;
-+
-+		orig_pmd = pmdp_get_and_clear(mm, addr, pmd);
-+
-+		/* No hugepage in swapcache */
-+		page = pmd_page(orig_pmd);
-+		VM_BUG_ON_PAGE(PageSwapCache(page), page);
-+
-+		orig_pmd = pmd_mkold(orig_pmd);
-+		orig_pmd = pmd_mkclean(orig_pmd);
-+
-+		set_pmd_at(mm, addr, pmd, orig_pmd);
-+		tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
-+		spin_unlock(ptl);
-+		ret = 0;
-+	}
-+
-+	return ret;
-+}
-+
- int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
- 		 pmd_t *pmd, unsigned long addr)
- {
-@@ -1620,6 +1650,11 @@ unlock:
- 	return NULL;
- }
- 
-+int pmd_freeable(pmd_t pmd)
-+{
-+	return !pmd_dirty(pmd);
-+}
-+
- static int __split_huge_page_splitting(struct page *page,
- 				       struct vm_area_struct *vma,
- 				       unsigned long address)
-diff --git a/mm/madvise.c b/mm/madvise.c
-index a21584235bb6..84badee5f46d 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -271,8 +271,26 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
- 	spinlock_t *ptl;
- 	pte_t *pte, ptent;
- 	struct page *page;
-+	unsigned long next;
-+
-+	next = pmd_addr_end(addr, end);
-+	if (pmd_trans_huge(*pmd)) {
-+		if (next - addr != HPAGE_PMD_SIZE) {
-+#ifdef CONFIG_DEBUG_VM
-+			if (!rwsem_is_locked(&mm->mmap_sem)) {
-+				pr_err("%s: mmap_sem is unlocked! addr=0x%lx end=0x%lx vma->vm_start=0x%lx vma->vm_end=0x%lx\n",
-+					__func__, addr, end,
-+					vma->vm_start,
-+					vma->vm_end);
-+				BUG();
-+			}
-+#endif
-+			split_huge_page_pmd(vma, addr, pmd);
-+		} else if (!madvise_free_huge_pmd(tlb, vma, pmd, addr))
-+			goto next;
-+		/* fall through */
-+	}
- 
--	split_huge_page_pmd(vma, addr, pmd);
- 	if (pmd_trans_unstable(pmd))
- 		return 0;
- 
-@@ -316,6 +334,7 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
- 	}
- 	arch_leave_lazy_mmu_mode();
- 	pte_unmap_unlock(pte - 1, ptl);
-+next:
- 	cond_resched();
- 	return 0;
- }
-diff --git a/mm/rmap.c b/mm/rmap.c
-index 04c181133890..9c407576ff8e 100644
---- a/mm/rmap.c
-+++ b/mm/rmap.c
-@@ -704,9 +704,13 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
- 			referenced++;
- 
- 		/*
--		 * In this implmentation, MADV_FREE doesn't support THP free
-+		 * Use pmd_freeable instead of raw pmd_dirty because in some
-+		 * of architecture, pmd_dirty is not defined unless
-+		 * CONFIG_TRANSPARNTE_HUGE is enabled
- 		 */
--		dirty++;
-+		if (!pmd_freeable(*pmd))
-+			dirty++;
-+
- 		spin_unlock(ptl);
- 	} else {
- 		pte_t *pte;
-diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 598e2ade21f7..b1428bdad88e 100644
---- a/mm/vmscan.c
-+++ b/mm/vmscan.c
-@@ -973,17 +973,25 @@ static unsigned long shrink_page_list(struct list_head *page_list,
- 		 * Anonymous process memory has backing store?
- 		 * Try to allocate it some swap space here.
- 		 */
--		if (PageAnon(page) && !PageSwapCache(page) && !freeable) {
--			if (!(sc->gfp_mask & __GFP_IO))
--				goto keep_locked;
--			if (!add_to_swap(page, page_list))
--				goto activate_locked;
--			may_enter_fs = 1;
--
--			/* Adding to swap updated mapping */
--			mapping = page_mapping(page);
-+		if (PageAnon(page) && !PageSwapCache(page)) {
-+			if (!freeable) {
-+				if (!(sc->gfp_mask & __GFP_IO))
-+					goto keep_locked;
-+				if (!add_to_swap(page, page_list))
-+					goto activate_locked;
-+				may_enter_fs = 1;
-+				/* Adding to swap updated mapping */
-+				mapping = page_mapping(page);
-+			} else {
-+				if (likely(!PageTransHuge(page)))
-+					goto unmap;
-+				/* try_to_unmap isn't aware of THP page */
-+				if (unlikely(split_huge_page_to_list(page,
-+								page_list)))
-+					goto keep_locked;
-+			}
- 		}
--
-+unmap:
- 		/*
- 		 * The page is mapped into the page tables of one or more
- 		 * processes. Try to unmap it here.
--- 
-2.0.0
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Will
