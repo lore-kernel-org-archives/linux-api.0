@@ -1,74 +1,75 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [tytso-DPNOqEs/LNQ@public.gmane.org: [PATCH, RFC -v3] random: introduce getrandom(2) system call]
-Date: Fri, 18 Jul 2014 15:16:18 +0200
-Message-ID: <5293846.HEIrYe5Drj@wuerfel>
-References: <20140718125606.GH1491@thunk.org>
+From: Steve Capper <steve.capper-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v13 6/8] arm: add pmd_[dirty|mkclean] for THP
+Date: Fri, 18 Jul 2014 15:54:22 +0100
+Message-ID: <20140718145421.GA18569@linaro.org>
+References: <1405666386-15095-1-git-send-email-minchan@kernel.org>
+ <1405666386-15095-7-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140718125606.GH1491-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1405666386-15095-7-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday 18 July 2014 08:56:06 Theodore Ts'o wrote:
+On Fri, Jul 18, 2014 at 03:53:04PM +0900, Minchan Kim wrote:
+> MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
+> overwrite of the contents since MADV_FREE syscall is called for
+> THP page.
 > 
-> The change in the v3 version of the commit was to eliminate potential
-> short reads and EINTR returns when reading from urandom (once the
-> urandom pool is initialized).  This was based on comments and requests
-> from Theo de Raadt.  See the NOTES section in the suggested man page for
-> a more in-depth discussion of the issues involved.
+> This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
+> support.
+> 
+> Cc: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+> Cc: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+> Cc: Steve Capper <steve.capper-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> Cc: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+> Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+> Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
-I think there is a problem with the completion:
+This patch looks good to me:
+Acked-by: Steve Capper <steve.capper-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 
-> @@ -657,6 +661,7 @@ retry:
->                 r->entropy_total = 0;
->                 if (r == &nonblocking_pool) {
->                         prandom_reseed_late();
-> +                       complete_all(&urandom_initialized);
->                         pr_notice("random: %s pool is initialized\n", r->name);
->                 }
->         }
+There is another patch that introduces a helper function to test for
+pmd bits, please see below.
 
-complete_all() sets the 'done' part of the completion to 'UINT_MAX/2',
-which is enough to ensure that everyone waiting for the completion
-at a given time will wake up, but a completion should not
-be reused without calling init_completion again after a call to
-complete_all().
+> ---
+>  arch/arm/include/asm/pgtable-3level.h | 3 +++
+>  1 file changed, 3 insertions(+)
+> 
+> diff --git a/arch/arm/include/asm/pgtable-3level.h b/arch/arm/include/asm/pgtable-3level.h
+> index 85c60adc8b60..830f84f2d277 100644
+> --- a/arch/arm/include/asm/pgtable-3level.h
+> +++ b/arch/arm/include/asm/pgtable-3level.h
+> @@ -220,6 +220,8 @@ static inline pmd_t *pmd_offset(pud_t *pud, unsigned long addr)
+>  #define pmd_trans_splitting(pmd) (pmd_val(pmd) & PMD_SECT_SPLITTING)
+>  #endif
+>  
+> +#define pmd_dirty(pmd)		(pmd_val(pmd) & PMD_SECT_DIRTY)
 
-> +SYSCALL_DEFINE3(getrandom, char __user *, buf, size_t, count,
-> +               unsigned int, flags)
-> +{
-> +       int r;
+Russell,
+Should this be folded into my {pte|pmd}_isset patch?
+http://lists.infradead.org/pipermail/linux-arm-kernel/2014-July/268979.html
+
+Cheers,
+-- 
+Steve
+
+
 > +
-> +       if (flags & ~(GRND_NONBLOCK|GRND_RANDOM))
-> +               return -EINVAL;
-> +
-> +       if (count > INT_MAX)
-> +               count = INT_MAX;
-> +
-> +       if (flags & GRND_RANDOM)
-> +               return _random_read(flags & GRND_NONBLOCK, buf, count);
-> +       if (flags & GRND_NONBLOCK) {
-> +               if (!completion_done(&urandom_initialized))
-> +                       return -EAGAIN;
-> +       } else {
-> +               r = wait_for_completion_interruptible(&urandom_initialized);
-> +               if (r)
-> +                       return r;
-> +       }
-> +       return urandom_read(NULL, buf, count, NULL);
-> +}
-> +
-
-However, here you can get called an arbitrary number of times.
-It seems entirely possible than an attacker can manage to call
-this function 2 billion times. Assuming a latency of 1 microsecond
-per syscall, that would take about half an hour. After that, you
-never again get any urandom data out of the syscall.
-
-I think you are better off using a plain wait_event() here.
-
-	Arnd
+>  #define PMD_BIT_FUNC(fn,op) \
+>  static inline pmd_t pmd_##fn(pmd_t pmd) { pmd_val(pmd) op; return pmd; }
+>  
+> @@ -228,6 +230,7 @@ PMD_BIT_FUNC(mkold,	&= ~PMD_SECT_AF);
+>  PMD_BIT_FUNC(mksplitting, |= PMD_SECT_SPLITTING);
+>  PMD_BIT_FUNC(mkwrite,   &= ~PMD_SECT_RDONLY);
+>  PMD_BIT_FUNC(mkdirty,   |= PMD_SECT_DIRTY);
+> +PMD_BIT_FUNC(mkclean,   &= ~PMD_SECT_DIRTY);
+>  PMD_BIT_FUNC(mkyoung,   |= PMD_SECT_AF);
+>  
+>  #define pmd_mkhuge(pmd)		(__pmd(pmd_val(pmd) & ~PMD_TABLE_BIT))
+> -- 
+> 2.0.0
+> 
