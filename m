@@ -1,226 +1,103 @@
-From: Jerome Glisse <j.glisse-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 08/25] amdkfd: Add IOCTL set definitions of amdkfd
-Date: Sun, 20 Jul 2014 12:54:33 -0400
-Message-ID: <20140720165432.GB3068@gmail.com>
-References: <1405603773-32688-1-git-send-email-oded.gabbay@amd.com>
- <1405603773-32688-9-git-send-email-oded.gabbay@amd.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1405603773-32688-9-git-send-email-oded.gabbay-5C7GfCeVMHo@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>
-Cc: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, John Bridgman <John.Bridgman-5C7GfCeVMHo@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Andrew Lewycky <Andrew.Lewycky-5C7GfCeVMHo@public.gmane.org>, Christian =?iso-8859-1?Q?K=F6nig?= <deathsimple-ANTagKRnAhcb1SvskN2V4Q@public.gmane.org>, Michel =?iso-8859-1?Q?D=E4nzer?= <michel.daenzer-5C7GfCeVMHo@public.gmane.org>, Ben Goz <Ben.Goz-5C7GfCeVMHo@public.gmane.org>, Alexey Skidanov <Alexey.Skidanov-5C7GfCeVMHo@public.gmane.org>, Evgeny Pinchuk <Evgeny.Pinchuk-5C7GfCeVMHo@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: [PATCH v4 0/6] File Sealing & memfd_create()
+Date: Sun, 20 Jul 2014 19:34:34 +0200
+Message-ID: <1405877680-999-1-git-send-email-dh.herrmann@gmail.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, David Herrmann <dh.herrmann@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 17, 2014 at 04:29:15PM +0300, Oded Gabbay wrote:
-> - KFD_IOC_GET_VERSION:
-> 	Retrieves the interface version of amdkfd
-> 
-> - KFD_IOC_CREATE_QUEUE:
-> 	Creates a usermode queue that runs on a specific GPU device
-> 
-> - KFD_IOC_DESTROY_QUEUE:
-> 	Destroys an existing usermode queue
-> 
-> - KFD_IOC_SET_MEMORY_POLICY:
-> 	Sets the memory policy of the default and alternate aperture of the calling process
-> 
-> - KFD_IOC_GET_CLOCK_COUNTERS:
-> 	Retrieves counters (timestamps) of CPU and GPU
-> 
-> - KFD_IOC_GET_PROCESS_APERTURES:
-> 	Retrieves information about process apertures that were initialized
-> during the open() call of the amdkfd device
-> 
-> - KFD_IOC_UPDATE_QUEUE:
-> 	Updates configuration of an existing usermode queue
-> 
-> - KFD_IOC_PMC_ACQUIRE_ACCESS:
-> 	Acquires exclusive access (from other HSA processes) to the performance
-> counters of the GPU
-> 
-> - KFD_IOC_PMC_RELEASE_ACCESS:
-> 	Releases exclusive access of the GPU's performance counters
+Hi
 
-Exclusive userspace access is recipie for failure. This must go and you must
-come up with better model. Which in my mind involve an ioctl for each command
-buffer submission.
+This is v4 of the File-Sealing and memfd_create() patches. You can find v1 with
+a longer introduction at gmane [1], there's also v2 [2] and v3 [3] available.
+See also the article about sealing on LWN [4], and a high-level introduction on
+the new API in my blog [5]. Last but not least, man-page proposals are
+available in my private repository [6].
 
-> 
-> Signed-off-by: Oded Gabbay <oded.gabbay-5C7GfCeVMHo@public.gmane.org>
-> ---
->  include/uapi/linux/kfd_ioctl.h | 133 +++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 133 insertions(+)
->  create mode 100644 include/uapi/linux/kfd_ioctl.h
-> 
-> diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
-> new file mode 100644
-> index 0000000..3cedd1a
-> --- /dev/null
-> +++ b/include/uapi/linux/kfd_ioctl.h
-> @@ -0,0 +1,133 @@
-> +/*
-> + * Copyright 2014 Advanced Micro Devices, Inc.
-> + *
-> + * Permission is hereby granted, free of charge, to any person obtaining a
-> + * copy of this software and associated documentation files (the "Software"),
-> + * to deal in the Software without restriction, including without limitation
-> + * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-> + * and/or sell copies of the Software, and to permit persons to whom the
-> + * Software is furnished to do so, subject to the following conditions:
-> + *
-> + * The above copyright notice and this permission notice shall be included in
-> + * all copies or substantial portions of the Software.
-> + *
-> + * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-> + * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-> + * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-> + * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
-> + * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-> + * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-> + * OTHER DEALINGS IN THE SOFTWARE.
-> + */
-> +
-> +#ifndef KFD_IOCTL_H_INCLUDED
-> +#define KFD_IOCTL_H_INCLUDED
-> +
-> +#include <linux/types.h>
-> +#include <linux/ioctl.h>
-> +
-> +#define KFD_IOCTL_CURRENT_VERSION 1
-> +
-> +/* The 64-bit ABI is the authoritative version. */
-> +#pragma pack(push, 1)
+This series introduces two new APIs:
+  memfd_create(): Think of this syscall as malloc() but it returns a
+                  file-descriptor instead of a pointer. That file-descriptor is
+                  backed by anon-memory and can be memory-mapped for access.
+  sealing: The sealing API can be used to prevent a specific set of operations
+           on a file-descriptor. You 'seal' the file and give thus the
+           guarantee, that those operations will be rejected from now on.
 
-pagram pack must be remove do not use that.
+This series adds the memfd_create(2) syscall only to x86 and x86-64. Patches for
+most other architectures are available in my private repository [7]. Missing
+architectures are:
+    alpha, avr32, blackfin, cris, frv, m32r, microblaze, mn10300, sh, sparc,
+    um, xtensa
+These architectures lack several newer syscalls, so those should be added first
+before adding memfd_create(2). I can provide patches for those, if required.
+However, I think it should be kept separate from this series.
 
-> +
-> +struct kfd_ioctl_get_version_args {
-> +	uint32_t min_supported_version;	/* from KFD */
-> +	uint32_t max_supported_version;	/* from KFD */
-> +};
-> +
-> +/* For kfd_ioctl_create_queue_args.queue_type. */
-> +#define KFD_IOC_QUEUE_TYPE_COMPUTE   0
-> +#define KFD_IOC_QUEUE_TYPE_SDMA      1
-> +
-> +struct kfd_ioctl_create_queue_args {
-> +	uint64_t ring_base_address;	/* to KFD */
-> +	uint64_t write_pointer_address;	/* from KFD */
-> +	uint64_t read_pointer_address;	/* from KFD */
-> +	uint64_t doorbell_address;	/* from KFD */
-> +
-> +	uint32_t ring_size;		/* to KFD */
-> +	uint32_t gpu_id;		/* to KFD */
-> +	uint32_t queue_type;		/* to KFD */
-> +	uint32_t queue_percentage;	/* to KFD */
-> +	uint32_t queue_priority;	/* to KFD */
-> +	uint32_t queue_id;		/* from KFD */
-> +};
-> +
-> +struct kfd_ioctl_destroy_queue_args {
-> +	uint32_t queue_id;		/* to KFD */
-> +};
-> +
-> +struct kfd_ioctl_update_queue_args {
-> +	uint64_t ring_base_address;	/* to KFD */
-> +
-> +	uint32_t queue_id;		/* to KFD */
-> +	uint32_t ring_size;		/* to KFD */
-> +	uint32_t queue_percentage;	/* to KFD */
-> +	uint32_t queue_priority;	/* to KFD */
-> +};
+Changes in v4:
+  - drop page-isolation in favor of shmem_wait_for_pins()
+  - add unlikely(info->seals) to write_begin hot-path
+  - return EPERM for F_ADD_SEALS if file is not writable
+  - moved shmem_wait_for_pins() entirely into it's own commit
+  - make O_LARGEFILE mandatory part of memfd_create() ABI
+  - add lru_add_drain() to shmem_tag_pins() hot-path
+  - minor coding-style changes
 
-The queue_percentage and queue_priority really needs some explanations. I guess
-userspace would shed some light on those but still this should be properly explain.
+Thanks
+David
 
-> +
-> +/* For kfd_ioctl_set_memory_policy_args.default_policy and alternate_policy */
-> +#define KFD_IOC_CACHE_POLICY_COHERENT 0
-> +#define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
-> +
-> +struct kfd_ioctl_set_memory_policy_args {
-> +	uint64_t alternate_aperture_base;	/* to KFD */
-> +	uint64_t alternate_aperture_size;	/* to KFD */
-> +
-> +	uint32_t gpu_id;			/* to KFD */
-> +	uint32_t default_policy;		/* to KFD */
-> +	uint32_t alternate_policy;		/* to KFD */
-> +};
 
-Same what is aperture in this context. I know about all this stuff but i have no
-idea what aperture is in this context.
+[1]    memfd v1: http://thread.gmane.org/gmane.comp.video.dri.devel/102241
+[2]    memfd v2: http://thread.gmane.org/gmane.linux.kernel.mm/115713
+[3]    memfd v3: http://thread.gmane.org/gmane.linux.kernel.mm/118721
+[4] LWN article: https://lwn.net/Articles/593918/
+[5]   API Intro: http://dvdhrm.wordpress.com/2014/06/10/memfd_create2/
+[6]   Man-pages: http://cgit.freedesktop.org/~dvdhrm/man-pages/log/?h=memfd
+[7]    Dev-repo: http://cgit.freedesktop.org/~dvdhrm/linux/log/?h=memfd
 
-> +
-> +struct kfd_ioctl_get_clock_counters_args {
-> +	uint64_t gpu_clock_counter;	/* from KFD */
-> +	uint64_t cpu_clock_counter;	/* from KFD */
-> +	uint64_t system_clock_counter;	/* from KFD */
-> +	uint64_t system_clock_freq;	/* from KFD */
-> +
-> +	uint32_t gpu_id;		/* to KFD */
-> +};
 
-Again comment about what kind of counter this is, monotonic, ...
+David Herrmann (6):
+  mm: allow drivers to prevent new writable mappings
+  shm: add sealing API
+  shm: add memfd_create() syscall
+  selftests: add memfd_create() + sealing tests
+  selftests: add memfd/sealing page-pinning tests
+  shm: wait for pins to be released when sealing
 
-> +
-> +#define NUM_OF_SUPPORTED_GPUS 7
-> +
-> +struct kfd_process_device_apertures {
-> +	uint64_t lds_base;		/* from KFD */
-> +	uint64_t lds_limit;		/* from KFD */
-> +	uint64_t scratch_base;		/* from KFD */
-> +	uint64_t scratch_limit;		/* from KFD */
-> +	uint64_t gpuvm_base;		/* from KFD */
-> +	uint64_t gpuvm_limit;		/* from KFD */
-> +	uint32_t gpu_id;		/* from KFD */
-> +};
-> +
-> +struct kfd_ioctl_get_process_apertures_args {
-> +	struct kfd_process_device_apertures process_apertures[NUM_OF_SUPPORTED_GPUS];/* from KFD */
-> +	uint8_t num_of_nodes; /* from KFD, should be in the range [1 - NUM_OF_SUPPORTED_GPUS]*/
-> +};
+ arch/x86/syscalls/syscall_32.tbl               |   1 +
+ arch/x86/syscalls/syscall_64.tbl               |   1 +
+ fs/fcntl.c                                     |   5 +
+ fs/inode.c                                     |   1 +
+ include/linux/fs.h                             |  29 +-
+ include/linux/shmem_fs.h                       |  17 +
+ include/linux/syscalls.h                       |   1 +
+ include/uapi/linux/fcntl.h                     |  15 +
+ include/uapi/linux/memfd.h                     |   8 +
+ kernel/fork.c                                  |   2 +-
+ kernel/sys_ni.c                                |   1 +
+ mm/mmap.c                                      |  30 +-
+ mm/shmem.c                                     | 324 +++++++++
+ mm/swap_state.c                                |   1 +
+ tools/testing/selftests/Makefile               |   1 +
+ tools/testing/selftests/memfd/.gitignore       |   4 +
+ tools/testing/selftests/memfd/Makefile         |  41 ++
+ tools/testing/selftests/memfd/fuse_mnt.c       | 110 +++
+ tools/testing/selftests/memfd/fuse_test.c      | 311 +++++++++
+ tools/testing/selftests/memfd/memfd_test.c     | 913 +++++++++++++++++++++++++
+ tools/testing/selftests/memfd/run_fuse_test.sh |  14 +
+ 21 files changed, 1821 insertions(+), 9 deletions(-)
+ create mode 100644 include/uapi/linux/memfd.h
+ create mode 100644 tools/testing/selftests/memfd/.gitignore
+ create mode 100644 tools/testing/selftests/memfd/Makefile
+ create mode 100755 tools/testing/selftests/memfd/fuse_mnt.c
+ create mode 100644 tools/testing/selftests/memfd/fuse_test.c
+ create mode 100644 tools/testing/selftests/memfd/memfd_test.c
+ create mode 100755 tools/testing/selftests/memfd/run_fuse_test.sh
 
-I would rather see userspace provide a pointer to an array and the size of that
-array and possibly size of individual element. This would allow you to grow the
-kfd_process_device_apertures if needs be. Thought as i understand it this is a
-temporary driver.
+-- 
+2.0.2
 
-> +
-> +struct kfd_ioctl_pmc_acquire_access_args {
-> +	uint64_t trace_id;		/* to KFD */
-> +	uint32_t gpu_id;		/* to KFD */
-> +};
-> +
-> +struct kfd_ioctl_pmc_release_access_args {
-> +	uint64_t trace_id;		/* to KFD */
-> +	uint32_t gpu_id;		/* to KFD */
-> +};
-
-As said above no ioctl to have some exclusive access you can not trust userspace
-that's rules NUMBER ONE.
-
-> +
-> +#define KFD_IOC_MAGIC 'K'
-> +
-> +#define KFD_IOC_GET_VERSION		_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
-> +#define KFD_IOC_CREATE_QUEUE		_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
-> +#define KFD_IOC_DESTROY_QUEUE		_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
-> +#define KFD_IOC_SET_MEMORY_POLICY	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
-> +#define KFD_IOC_GET_CLOCK_COUNTERS	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
-> +#define KFD_IOC_GET_PROCESS_APERTURES	_IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
-> +#define KFD_IOC_UPDATE_QUEUE		_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
-> +#define KFD_IOC_PMC_ACQUIRE_ACCESS	_IOW(KFD_IOC_MAGIC, 12, struct kfd_ioctl_pmc_acquire_access_args)
-> +#define KFD_IOC_PMC_RELEASE_ACCESS	_IOW(KFD_IOC_MAGIC, 13, struct kfd_ioctl_pmc_release_access_args)
-> +
-> +#pragma pack(pop)
-
-No pragma packing.
-
-> +
-> +#endif
-> -- 
-> 1.9.1
-> 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
