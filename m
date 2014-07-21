@@ -1,162 +1,79 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: [PATCH v4 6/6] shm: wait for pins to be released when sealing
-Date: Sun, 20 Jul 2014 19:34:40 +0200
-Message-ID: <1405877680-999-7-git-send-email-dh.herrmann@gmail.com>
-References: <1405877680-999-1-git-send-email-dh.herrmann@gmail.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1405877680-999-1-git-send-email-dh.herrmann@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, David Herrmann <dh.herrmann@gmail.com>
+From: Waiman Long <Waiman.Long@hp.com>
+Subject: [RFC PATCH 0/5] futex: introduce an optimistic spinning futex
+Date: Mon, 21 Jul 2014 11:24:26 -0400
+Message-ID: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>, Waiman Long <Waiman.Long@hp.com>
 List-Id: linux-api@vger.kernel.org
 
-If we set SEAL_WRITE on a file, we must make sure there cannot be any
-ongoing write-operations on the file. For write() calls, we simply lock
-the inode mutex, for mmap() we simply verify there're no writable
-mappings. However, there might be pages pinned by AIO, Direct-IO and
-similar operations via GUP. We must make sure those do not write to the
-memfd file after we set SEAL_WRITE.
+This patch series introduces two new futex command codes to support
+a new optimistic spinning futex for implementing an exclusive lock
+primitive that should perform better than the same primitive using
+the wait-wake futex in cases where the lock owner is actively working
+instead of waiting for I/O completion.
 
-As there is no way to notify GUP users to drop pages or to wait for them
-to be done, we implement the wait ourself: When setting SEAL_WRITE, we
-check all pages for their ref-count. If it's bigger than 1, we know
-there's some user of the page. We then mark the page and wait for up to
-150ms for those ref-counts to be dropped. If the ref-counts are not
-dropped in time, we refuse the seal operation.
+Optimistic spinning means that the waiting tasks spin within the
+kernel for the lock owner to release the lock while it is running
+instead of going to sleep and to be woken up later on. It is the same
+mechanism that improves kernel mutex and rw semaphore performance,
+especially on large system with many sockets and CPUs.
 
-Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
----
- mm/shmem.c | 110 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 109 insertions(+), 1 deletion(-)
+This patch series improves futex performance on two different fronts:
+ 1) Reducing the amount of the futex spinlock contention by using 2
+    different spinlocks instead of just one for the wait-wake futex.
+ 2) Eliminating the context switching overhead and latency due to the
+    sleeping and the waking of the waiting tasks.
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 770e072..df1aceb 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1780,9 +1780,117 @@ static loff_t shmem_file_llseek(struct file *file, loff_t offset, int whence)
- 	return offset;
- }
- 
-+/*
-+ * We need a tag: a new tag would expand every radix_tree_node by 8 bytes,
-+ * so reuse a tag which we firmly believe is never set or cleared on shmem.
-+ */
-+#define SHMEM_TAG_PINNED        PAGECACHE_TAG_TOWRITE
-+#define LAST_SCAN               4       /* about 150ms max */
-+
-+static void shmem_tag_pins(struct address_space *mapping)
-+{
-+	struct radix_tree_iter iter;
-+	void **slot;
-+	pgoff_t start;
-+	struct page *page;
-+
-+	lru_add_drain();
-+	start = 0;
-+	rcu_read_lock();
-+
-+restart:
-+	radix_tree_for_each_slot(slot, &mapping->page_tree, &iter, start) {
-+		page = radix_tree_deref_slot(slot);
-+		if (!page || radix_tree_exception(page)) {
-+			if (radix_tree_deref_retry(page))
-+				goto restart;
-+		} else if (page_count(page) - page_mapcount(page) > 1) {
-+			spin_lock_irq(&mapping->tree_lock);
-+			radix_tree_tag_set(&mapping->page_tree, iter.index,
-+					   SHMEM_TAG_PINNED);
-+			spin_unlock_irq(&mapping->tree_lock);
-+		}
-+
-+		if (need_resched()) {
-+			cond_resched_rcu();
-+			start = iter.index + 1;
-+			goto restart;
-+		}
-+	}
-+	rcu_read_unlock();
-+}
-+
-+/*
-+ * Setting SEAL_WRITE requires us to verify there's no pending writer. However,
-+ * via get_user_pages(), drivers might have some pending I/O without any active
-+ * user-space mappings (eg., direct-IO, AIO). Therefore, we look at all pages
-+ * and see whether it has an elevated ref-count. If so, we tag them and wait for
-+ * them to be dropped.
-+ * The caller must guarantee that no new user will acquire writable references
-+ * to those pages to avoid races.
-+ */
- static int shmem_wait_for_pins(struct address_space *mapping)
- {
--	return 0;
-+	struct radix_tree_iter iter;
-+	void **slot;
-+	pgoff_t start;
-+	struct page *page;
-+	int error, scan;
-+
-+	shmem_tag_pins(mapping);
-+
-+	error = 0;
-+	for (scan = 0; scan <= LAST_SCAN; scan++) {
-+		if (!radix_tree_tagged(&mapping->page_tree, SHMEM_TAG_PINNED))
-+			break;
-+
-+		if (!scan)
-+			lru_add_drain_all();
-+		else if (schedule_timeout_killable((HZ << scan) / 200))
-+			scan = LAST_SCAN;
-+
-+		start = 0;
-+		rcu_read_lock();
-+restart:
-+		radix_tree_for_each_tagged(slot, &mapping->page_tree, &iter,
-+					   start, SHMEM_TAG_PINNED) {
-+
-+			page = radix_tree_deref_slot(slot);
-+			if (radix_tree_exception(page)) {
-+				if (radix_tree_deref_retry(page))
-+					goto restart;
-+
-+				page = NULL;
-+			}
-+
-+			if (page &&
-+			    page_count(page) - page_mapcount(page) != 1) {
-+				if (scan < LAST_SCAN)
-+					goto continue_resched;
-+
-+				/*
-+				 * On the last scan, we clean up all those tags
-+				 * we inserted; but make a note that we still
-+				 * found pages pinned.
-+				 */
-+				error = -EBUSY;
-+			}
-+
-+			spin_lock_irq(&mapping->tree_lock);
-+			radix_tree_tag_clear(&mapping->page_tree,
-+					     iter.index, SHMEM_TAG_PINNED);
-+			spin_unlock_irq(&mapping->tree_lock);
-+continue_resched:
-+			if (need_resched()) {
-+				cond_resched_rcu();
-+				start = iter.index + 1;
-+				goto restart;
-+			}
-+		}
-+		rcu_read_unlock();
-+	}
-+
-+	return error;
- }
- 
- #define F_ALL_SEALS (F_SEAL_SEAL | \
--- 
-2.0.2
+The performance improvement varies depending on, to a certain extent,
+the length of the critical section protected by futex.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Testing done on a 4-socket Westmere-EX boxes with 40 cores (HT off)
+showed the following performance data (average kops/s) with various
+load factor (number of pause instructions) used in the critical
+section using an userspace mutex microbenchmark.
+
+  Threads  Load	Waiting Futex	Spinning Futex 	  %Change
+  -------  ----	-------------	--------------	  -------
+    256	     1	     6894	    8883	    +29%
+    256	    10	     3656	    4912	    +34%
+    256	    50	     1332	    4358	   +227%
+    256	   100	      792	    2753	   +248%
+     10	     1	     6382	    4838	    -24%
+     10	    10	     3614	    4748	    +31%
+     10	    50	     1319	    3900	   +196%
+     10	   100	      782	    2459	   +214%
+      2	     1	     7905	    7194	   -9.0%
+      2	    10	     4556	    4717	   +3.5%
+      2	    50	     2191	    4167	    +90%
+      2	   100	     1767	    2407	    +36%
+
+Patch 1 introduces new futex command codes to provide a
+mutex abstraction where the waiting tasks just go to sleep (no
+spinning).
+
+Patch 2 adds spinning to the mix.
+
+Patch 3 enables wakened tasks to go back to the spinning state if
+the owner is running.
+
+Patch 4 changes sleeping queue from a simple FIFO list to an rbtree
+sorted by process priority as well as the sequeunce the tasks enter
+the kernel.
+
+Patch 5 adds a new document file to describe the spinning futex.
+
+Waiman Long (5):
+  futex: add new exclusive lock & unlock command codes
+  futex: add optimistic spinning to FUTEX_SPIN_LOCK
+  spinning futex: move a wakened task to spinning
+  spinning futex: put waiting tasks in a sorted rbtree
+  futex, doc: add a document on how to use the spinning futexes
+
+ Documentation/spinning-futex.txt |  109 +++++++
+ include/uapi/linux/futex.h       |    4 +
+ kernel/futex.c                   |  659 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 772 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/spinning-futex.txt
+
