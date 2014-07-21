@@ -1,48 +1,32 @@
-From: Jason Low <jason.low2@hp.com>
-Subject: Re: [RFC PATCH 2/5] futex: add optimistic spinning to
- FUTEX_SPIN_LOCK
-Date: Mon, 21 Jul 2014 13:17:18 -0700
-Message-ID: <1405973838.4677.11.camel@j-VirtualBox>
-References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
-	 <1405956271-34339-3-git-send-email-Waiman.Long@hp.com>
+From: Till Smejkal <till.smejkal-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
+Subject: Re: [PATCH -v4] random: introduce getrandom(2) system call
+Date: Mon, 21 Jul 2014 22:21:26 +0200
+Message-ID: <20140721202125.GF1158@osiris>
+References: <1405718127-30042-1-git-send-email-tytso@mit.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1405956271-34339-3-git-send-email-Waiman.Long@hp.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Waiman Long <Waiman.Long@hp.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Scott J Norton <scott.norton@hp.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1405718127-30042-1-git-send-email-tytso-3s7WtUTddSA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, beck-7YlrpqBBQ3VAfugRpC6u6w@public.gmane.org, deraadt-VON6Tr2NNtkmbxgs1yVkuA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2014-07-21 at 11:24 -0400, Waiman Long wrote:
-> This patch adds code to do optimistic spinning for the FUTEX_SPIN_LOCK
-> primitive on the futex value when the lock owner is running. It is
-> the same optimistic spinning technique that is done in the mutex and
-> rw semaphore code to improve their performance especially on large
-> systems with large number of CPUs. When the lock owner is not running,
-> the spinning tasks will go to sleep.
+Hi,
 
-Perhaps we could introduce a "CONFIG_FUTEX_SPIN_ON_OWNER" that depends
-on SMP and ARCH_SUPPORTS_ATOMIC_RMW?
+On Fri, 18 Jul 2014, Theodore Ts'o wrote:
+[...]
+> 	If the GRND_RANDOM bit is not set, then the /dev/urandom pool
+> 	will be used.  Unlike using read(2) to fetch data from
+> 	/dev/urandom, if the urandom pool has not been sufficiently
+> 	initialized, getrandom(2) will block or return -1 with the
+> 	errno set to EGAIN if the GRND_NONBLOCK bit is set in flags.
+                 ^^^^^
+Small typo: this should be EAGAIN.
 
-> There is 2 major advantages of doing optimistic spinning here:
->  1) It eliminates the context switching latency and overhead (at
->     least a few us) associated with sleeping and wakeup.
->  2) It eliminates most of the need to call futex(2) with
->     FUTEX_SPIN_UNLOCK as spinning is done without the need to set
->     the FUTEX_WAITERS bit.
+[...]
 
->  struct futex_q_head {
->  	struct list_head	      hnode;
->  	struct list_head	      waitq;
->  	union futex_key		      key;
-> +	struct optimistic_spin_queue *osq;
+Regards
 
-And this would have to be updated to
-
-+	struct optimistic_spin_queue osq;
-
-given the recent changes to the osq lock.
-
-
+Till Smejkal
