@@ -1,160 +1,244 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [RFC PATCH 5/5] futex, doc: add a document on how to use the
- spinning futexes
-Date: Mon, 21 Jul 2014 08:45:06 -0700
-Message-ID: <53CD3582.707@infradead.org>
-References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com> <1405956271-34339-6-git-send-email-Waiman.Long@hp.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC PATCH 1/5] futex: add new exclusive lock & unlock command
+ codes
+Date: Mon, 21 Jul 2014 18:42:16 +0200 (CEST)
+Message-ID: <alpine.DEB.2.10.1407211811360.20847@nanos>
+References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com> <1405956271-34339-2-git-send-email-Waiman.Long@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1405956271-34339-6-git-send-email-Waiman.Long@hp.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Waiman Long <Waiman.Long@hp.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1405956271-34339-2-git-send-email-Waiman.Long@hp.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Waiman Long <Waiman.Long@hp.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
 List-Id: linux-api@vger.kernel.org
 
-On 07/21/2014 08:24 AM, Waiman Long wrote:
-> This patch adds a new document file on how to use the spinning futexes.
-> 
-> Signed-off-by: Waiman Long <Waiman.Long@hp.com>
-> ---
->  Documentation/spinning-futex.txt |  109 ++++++++++++++++++++++++++++++++++++++
->  1 files changed, 109 insertions(+), 0 deletions(-)
->  create mode 100644 Documentation/spinning-futex.txt
-> 
-> diff --git a/Documentation/spinning-futex.txt b/Documentation/spinning-futex.txt
-> new file mode 100644
-> index 0000000..e3cb5a2
-> --- /dev/null
-> +++ b/Documentation/spinning-futex.txt
-> @@ -0,0 +1,109 @@
-> +Started by: Waiman Long <waiman.long@hp.com>
-> +
-> +Spinning Futex
-> +--------------
-> +
-> +There are two main problems for a wait-wake futex (FUTEX_WAIT and
-> +FUTEX_WAKE) when used for creating user-space lock primitives:
-> +
-> + 1) With a wait-wake futex, tasks waiting for a lock are put to sleep
-> +    in the futex queue to be woken up by the lock owner when it is done
-> +    with the lock. Waking up a sleeping task, however, introduces some
-> +    additional latency which can be large especially if the critical
-> +    section protected by the lock is relatively short. This may cause
-> +    a performance bottleneck on large systems with many CPUs running
-> +    applications that need a lot of inter-thread synchronization.
-> +
-> + 2) The performance of the wait-wake futex is currently
-> +    spinlock-constrained.  When many threads are contending for a
-> +    futex in a large system with many CPUs, it is not unusual to have
-> +    spinlock contention accounting for more than 90% of the total
-> +    CPU cycles consumed at various points in time.
-> +
-> +Spinning futex is a solution to both the wakeup latency and spinlock
-> +contention problems by optimistically spinning on a locked futex
-> +when the lock owner is running within the kernel until the lock is
-> +free. This is the same optimistic spinning mechanism used by the kernel
-> +mutex and rw semaphore implementations to improve performance. The
-> +optimistic spinning was done without taking any lock.
+On Mon, 21 Jul 2014, Waiman Long wrote:
 
-                       is done
+> +#define FUTEX_TID(u)		(pid_t)((u) & FUTEX_TID_MASK)
+> +#define FUTEX_HAS_WAITERS(u)	((u) & FUTEX_WAITERS)
 
-> +
-> +Implementation
-> +--------------
-> +
-> +Like the PI and robust futexes, a lock acquirer has to atomically
-> +put its thread ID (TID) into the lower 30 bits of the 32-bit futex
-> +which should has an original value of 0. If it succeeds, it will be
+You love ugly macros, right?
 
-                have
-
-> +the owner of the futex. Otherwise, it has to call into the kernel
-> +using the new FUTEX_SPIN_LOCK futex(2) syscall.
-> +
-> +The kernel will use the setting of the most significant bit
-> +(FUTEX_WAITERS) in the futex value to indicate one or more waiters
-> +are sleeping and need to be woken up later on.
-> +
-> +When it is time to unlock, the lock owner has to atomically clear
-> +the TID portion of the futex value. If the FUTEX_WAITERS bit is set,
-> +it has to issue a FUTEX_SPIN_UNLOCK futex system call to wake up the
-> +sleeping task.
-> +
-> +A return value of 1 from the FUTEX_SPIN_UNLOCK futex(2) syscall
-> +indicates a task has been woken up. The syscall returns 0 if no
-> +sleeping task is found or spinners are present to take the lock.
-> +
-> +The error number returned by a FUTEX_SPIN_UNLOCK call on an empty
-> +futex can be used to decide if the spinning futex functionality is
-> +implemented in the kernel. If it is present, the returned error number
-> +should be ESRCH. Otherwise it will be ENOSYS.
-> +
-> +Currently, only the first and the second arguments (the futex address
-> +and the opcode) of the futex(2) syscall is used. All the other
-
-                                           are used.
-
-> +arguments must be set to 0 or NULL to avoid forward compatibility
-> +problem.
-> +
-> +The spinning futex requires the kernel to have support for the cmpxchg
-> +functionality. For architectures that don't support cmpxchg, spinning
-> +futex will not be supported as well.
-> +
-> +Usage Scenario
-> +--------------
-> +
-> +A spinning futex can be used as an exclusive lock to guard a critical
-> +section which are unlikely to go to sleep in the kernel. The spinners
-
-                 is
-
-> +in a spinning futex, however, will fall back to sleep in a wait queue
-> +if the lock owner isn't running. Therefore, it can also be used when
-> +the critical section is long and prone to sleeping. However, it may
-> +not have the performance benefit when compared with a wait-wake futex
-> +in this case.
-> +
-> +Sample Code
-> +-----------
-> +
-> +The following are sample code to implement a simple lock and unlock
-
-                 is
-
-> +function.
-> +
-> +__thread int tid;	/* Thread ID */
-> +
-> +void mutex_lock(int *faddr)
+> +/*
+> + * futex_spin_trylock - attempt to take the lock
+> + * Return: 1 if successful or an error happen
+> + *	   0 otherwise
+> + *
+> + * Side effect: The uval and ret will be updated.
+> + */
+> +static inline int futex_spin_trylock(u32 __user *uaddr, u32 *puval,
+> +				       int *pret, u32 vpid)
 > +{
-> +	if (cmpxchg(faddr, 0, tid) == 0)
-> +		return;
-> +	for (;;)
-> +		if (futex(faddr, FUTEX_SPIN_LOCK, ...) == 0)
-> +			break;
-> +}
+> +	u32	  old;
 > +
-> +void mutex_unlock(int *faddr)
-> +{
-> +	int old, fval;
+> +	*pret = get_futex_value_locked(puval, uaddr);
+> +	if (*pret)
+> +		return 1;
 > +
-> +	if ((fval = cmpxchg(faddr, tid, 0)) == tid)
-> +		return;
-> +	/* Clear only the TID portion of the futex */
-> +	for (;;) {
-> +		old  = fval;
-> +		fval = cmpxchg(faddr, old, old & ~FUTEX_TID_MASK);
-> +		if (fval == old)
-> +			break;
+> +	if (FUTEX_TID(*puval))
+> +		return 0;	/* The mutex is not free */
+> +
+> +	old = *puval;
+> +
+> +	*pret = cmpxchg_futex_value_locked(puval, uaddr, old, vpid | old);
+> +	if (*pret)
+> +		return 1;
+> +	if (*puval == old) {
+> +		/* Adjust uval to reflect current value */
+> +		*puval = vpid | old;
+> +		return 1;
 > +	}
-> +	if (fval & FUTEX_WAITERS)
-> +		futex(faddr, FUTEX_SPIN_UNLOCK, ...);
+> +	return 0;
+
+What's the point if all of this?
+
+A simple cmpxchg_futex_value_locked() does all of this, just less ugly
+and without all these extra indirections and totally uncomprehensible
+conditionals.
+
 > +}
-> 
+> +
+> +/*
+> + * futex_spin_lock
+> + */
+> +static noinline int futex_spin_lock(u32 __user *uaddr, unsigned int flags)
+> +{
+
+So this lacks a timeout. If we provide this, then we need to have the
+timeout supported as well.
+
+> +	struct futex_hash_bucket *hb;
+> +	struct futex_q_head	 *qh = NULL;
+> +	struct futex_q_node	  qnode;
+> +	union futex_key		  key;
+> +	bool			  gotlock;
+> +	int			  ret, cnt;
+> +	u32			  uval, vpid, old;
+> +
+> +	qnode.task  = current;
+> +	vpid = task_pid_vnr(qnode.task);
+> +
+> +	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &key, VERIFY_WRITE);
+> +	if (unlikely(ret))
+
+Stop sprinkling the code with unlikelys
+
+> +		return ret;
+> +
+> +	hb = hash_futex(&key);
+> +	spin_lock(&hb->lock);
+> +
+> +	/*
+> +	 * Locate the queue head for the given key
+> +	 */
+
+Brilliant comment. If you'd comment the stuff which really matters and
+leave out the obvious, then your code might be readable some day.
+
+> +	qh = find_qhead(hb, &key);
+> +
+> +	/*
+> +	 * Check the futex value under the hash bucket lock as it might
+> +	 * be changed.
+> +	 */
+
+What might have changed? You enter the function with uaddr, but no
+uval. So what changed? 
+
+> +	if (futex_spin_trylock(uaddr, &uval, &ret, vpid))
+> +		goto hbunlock_out;
+> +
+> +	if (!qh) {
+> +		/*
+> +		 * First waiter:
+> +		 * Allocate a queue head structure & initialize it
+> +		 */
+> +		qh = qhead_alloc_init(hb, &key);
+> +		if (unlikely(!qh)) {
+> +			ret = -ENOMEM;
+> +			goto hbunlock_out;
+> +		}
+> +	} else {
+> +		atomic_inc(&qh->lcnt);
+> +	}
+> +	spin_unlock(&hb->lock);
+> +
+> +	/*
+> +	 * Put the task into the wait queue and sleep
+> +	 */
+> +	preempt_disable();
+
+Why?
+
+> +	get_task_struct(qnode.task);
+
+So you get a task reference on current? What the heck is this for?
+
+> +	spin_lock(&qh->wlock);
+> +	list_add_tail(&qnode.wnode, &qh->waitq);
+> +	__set_current_state(TASK_INTERRUPTIBLE);
+> +	spin_unlock(&qh->wlock);
+> +	gotlock = false;
+> +	for (;;) {
+> +		ret = get_user(uval, uaddr);
+> +		if (ret)
+> +			break;
+
+So you let user space handle EFAULT? 
+
+> +dequeue:
+> +	__set_current_state(TASK_RUNNING);
+> +	/*
+> +	 * Remove itself from the wait queue and go back to optimistic
+> +	 * spinning if it hasn't got the lock yet.
+> +	 */
+> +	put_task_struct(qnode.task);
+> +	spin_lock(&qh->wlock);
+> +	list_del(&qnode.wnode);
+> +
+> +	/*
+> +	 * Try to clear the waiter bit if the wait queue is empty
+> +	 */
+> +	if (list_empty(&qh->waitq)) {
+> +		int retval = get_futex_value_locked(&uval, uaddr);
+> +
+> +		if (!retval && FUTEX_HAS_WAITERS(uval)) {
+> +			old   = uval;
+> +			uval &= ~FUTEX_WAITERS;
+> +			(void)cmpxchg_futex_value_locked(&uval, uaddr, old,
+> +							  uval);
+> +		}
+> +	}
+> +	spin_unlock(&qh->wlock);
+> +	preempt_enable();
+> +
+> +	cnt = atomic_dec_return(&qh->lcnt);
+> +	if (cnt == 0)
+> +		qhead_free(qh, hb);
+> +	/*
+> +	 * Need to set the waiters bit there are still waiters
+> +	 */
+> +	else if (!ret)
+> +		ret = put_user(vpid | FUTEX_WAITERS, uaddr);
+
+WTF? You fiddle with the uaddr completely unprotected. 
+
+> +out:
+> +	put_futex_key(&key);
+> +	return ret;
+> +
+> +hbunlock_out:
+> +	spin_unlock(&hb->lock);
+> +	goto out;
+> +}
+> +
+> +/*
+> + * futex_spin_unlock
+> + */
+> +static noinline int futex_spin_unlock(u32 __user *uaddr, unsigned int flags)
+> +{
+> +	struct futex_hash_bucket *hb;
+> +	struct futex_q_head	 *qh;
+> +	union futex_key		  key;
+> +	struct task_struct	 *wtask;	/* Task to be woken */
+> +	int			  ret, lcnt;
+> +	u32			  uval, old, vpid = task_pid_vnr(current);
+> +
+> +	ret = get_user(uval, uaddr);
+> +	if (ret)
+> +		return ret;
+> +
+> +	/*
+> +	 * The unlocker may have cleared the TID value and another task may
+> +	 * steal it. However, if its TID is still set, we need to clear
+> +	 * it as well as the FUTEX_WAITERS bit.
+
+No, that's complete and utter crap. The unlocker is current and it may
+not have cleared anything.
+
+Your design or the lack thereof is a complete disaster.
+
+Sit down first and define the exact semantics of the new opcode. That
+includes user and kernel space and the interaction with robust list,
+which you happily ignored.
+
+What are the semantics of uval? When can it be changed in kernel and
+in user space? How do we deal with corruption of the user space value?
+
+How does that new opcode provide robustness?
+
+How are faults handled?
+
+....
+
+Before you can't provide a coherent description of that, nothing of
+this is going to happen. And after that, it's definitely not going to
+look like the hackery you delivered now.
+
+Thanks,
+
+	tglx
 
 
--- 
-~Randy
+
