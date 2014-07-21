@@ -1,32 +1,46 @@
-From: Till Smejkal <till.smejkal-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
-Subject: Re: [PATCH -v4] random: introduce getrandom(2) system call
-Date: Mon, 21 Jul 2014 22:21:26 +0200
-Message-ID: <20140721202125.GF1158@osiris>
-References: <1405718127-30042-1-git-send-email-tytso@mit.edu>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [RFC PATCH 0/5] futex: introduce an optimistic spinning futex
+Date: Mon, 21 Jul 2014 23:18:01 +0200
+Message-ID: <20140721211801.GA12149@gmail.com>
+References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1405718127-30042-1-git-send-email-tytso-3s7WtUTddSA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, beck-7YlrpqBBQ3VAfugRpC6u6w@public.gmane.org, deraadt-VON6Tr2NNtkmbxgs1yVkuA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+In-Reply-To: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Waiman Long <Waiman.Long@hp.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
 
-On Fri, 18 Jul 2014, Theodore Ts'o wrote:
-[...]
-> 	If the GRND_RANDOM bit is not set, then the /dev/urandom pool
-> 	will be used.  Unlike using read(2) to fetch data from
-> 	/dev/urandom, if the urandom pool has not been sufficiently
-> 	initialized, getrandom(2) will block or return -1 with the
-> 	errno set to EGAIN if the GRND_NONBLOCK bit is set in flags.
-                 ^^^^^
-Small typo: this should be EAGAIN.
+* Waiman Long <Waiman.Long@hp.com> wrote:
 
-[...]
+> Testing done on a 4-socket Westmere-EX boxes with 40 cores (HT off) 
+> showed the following performance data (average kops/s) with various 
+> load factor (number of pause instructions) used in the critical 
+> section using an userspace mutex microbenchmark.
+> 
+>   Threads  Load	Waiting Futex	Spinning Futex 	  %Change
+>   -------  ----	-------------	--------------	  -------
+>     256	     1	     6894	    8883	    +29%
+>     256	    10	     3656	    4912	    +34%
+>     256	    50	     1332	    4358	   +227%
+>     256	   100	      792	    2753	   +248%
+>      10	     1	     6382	    4838	    -24%
+>      10	    10	     3614	    4748	    +31%
+>      10	    50	     1319	    3900	   +196%
+>      10	   100	      782	    2459	   +214%
+>       2	     1	     7905	    7194	   -9.0%
+>       2	    10	     4556	    4717	   +3.5%
+>       2	    50	     2191	    4167	    +90%
+>       2	   100	     1767	    2407	    +36%
 
-Regards
+So the numbers look interesting - but it would be _really_ important 
+to provide noise/sttdev figures in a sixth column as well (denoted in 
+percentage units, not in benchmark units), so that we know how 
+significant a particular speedup (or slowdown) is.
 
-Till Smejkal
+Thanks,
+
+	Ingo
