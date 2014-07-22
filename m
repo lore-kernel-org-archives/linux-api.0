@@ -1,8 +1,7 @@
 From: Boris BREZILLON <boris.brezillon@free-electrons.com>
-Subject: [PATCH 4/5] drm: panel: simple-panel: add support for bus_format
- retrieval
-Date: Tue, 22 Jul 2014 14:23:46 +0200
-Message-ID: <1406031827-12432-5-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH 2/5] video: add RGB444_1X12 and RGB565_1X16 bus formats
+Date: Tue, 22 Jul 2014 14:23:44 +0200
+Message-ID: <1406031827-12432-3-git-send-email-boris.brezillon@free-electrons.com>
 References: <1406031827-12432-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,36 +21,50 @@ To: Thierry Reding <thierry.reding@gmail.com>, Laurent Pinchart <laurent.pinchar
 Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, Mauro Carvalho Chehab <m.chehab@samsung.com>, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Provide a way to specify panel requirement in terms of supported media bus
-format (particularly useful for panels connected to an RGB or LVDS bus).
+Add RGB444 format using a 12 bits bus and RGB565 using a 16 bits bus.
+
+These formats will later be used by atmel-hlcdc driver.
 
 Signed-off-by: Boris BREZILLON <boris.brezillon@free-electrons.com>
 ---
- drivers/gpu/drm/panel/panel-simple.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ include/uapi/linux/v4l2-mediabus.h    | 2 ++
+ include/uapi/linux/video-bus-format.h | 4 +++-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/gpu/drm/panel/panel-simple.c b/drivers/gpu/drm/panel/panel-simple.c
-index 3f76944..42fd6d1 100644
---- a/drivers/gpu/drm/panel/panel-simple.c
-+++ b/drivers/gpu/drm/panel/panel-simple.c
-@@ -41,6 +41,8 @@ struct panel_desc {
- 		unsigned int width;
- 		unsigned int height;
- 	} size;
-+
-+	enum video_bus_format bus_format;
- };
+diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
+index 8c31f11..319f860 100644
+--- a/include/uapi/linux/v4l2-mediabus.h
++++ b/include/uapi/linux/v4l2-mediabus.h
+@@ -30,6 +30,8 @@
+ #define V4L2_MBUS_FMT_RGB888_2X12_BE		VIDEO_BUS_FMT_RGB888_2X12_BE
+ #define V4L2_MBUS_FMT_RGB888_2X12_LE		VIDEO_BUS_FMT_RGB888_2X12_LE
+ #define V4L2_MBUS_FMT_ARGB8888_1X32		VIDEO_BUS_FMT_ARGB8888_1X32
++#define V4L2_BUS_FMT_RGB444_1X12		VIDEO_BUS_FMT_RGB444_1X12
++#define V4L2_BUS_FMT_RGB565_1X16		VIDEO_BUS_FMT_RGB565_1X16
  
- struct panel_simple {
-@@ -89,6 +91,9 @@ static int panel_simple_get_fixed_modes(struct panel_simple *panel)
+ #define V4L2_MBUS_FMT_Y8_1X8			VIDEO_BUS_FMT_Y8_1X8
+ #define V4L2_MBUS_FMT_UV8_1X8			VIDEO_BUS_FMT_UV8_1X8
+diff --git a/include/uapi/linux/video-bus-format.h b/include/uapi/linux/video-bus-format.h
+index 4abbd5d..f85f7ee 100644
+--- a/include/uapi/linux/video-bus-format.h
++++ b/include/uapi/linux/video-bus-format.h
+@@ -34,7 +34,7 @@
+ enum video_bus_format {
+ 	VIDEO_BUS_FMT_FIXED = 0x0001,
  
- 	connector->display_info.width_mm = panel->desc->size.width;
- 	connector->display_info.height_mm = panel->desc->size.height;
-+	if (panel->desc->bus_format)
-+		drm_display_info_set_bus_formats(&connector->display_info,
-+						 &panel->desc->bus_format, 1);
+-	/* RGB - next is 0x100e */
++	/* RGB - next is 0x1010 */
+ 	VIDEO_BUS_FMT_RGB444_2X8_PADHI_BE = 0x1001,
+ 	VIDEO_BUS_FMT_RGB444_2X8_PADHI_LE = 0x1002,
+ 	VIDEO_BUS_FMT_RGB555_2X8_PADHI_BE = 0x1003,
+@@ -48,6 +48,8 @@ enum video_bus_format {
+ 	VIDEO_BUS_FMT_RGB888_2X12_BE = 0x100b,
+ 	VIDEO_BUS_FMT_RGB888_2X12_LE = 0x100c,
+ 	VIDEO_BUS_FMT_ARGB8888_1X32 = 0x100d,
++	VIDEO_BUS_FMT_RGB444_1X12 = 0x100e,
++	VIDEO_BUS_FMT_RGB565_1X16 = 0x100f,
  
- 	return num;
- }
+ 	/* YUV (including grey) - next is 0x2024 */
+ 	VIDEO_BUS_FMT_Y8_1X8 = 0x2001,
 -- 
 1.8.3.2
