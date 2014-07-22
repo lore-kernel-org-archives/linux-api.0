@@ -1,87 +1,157 @@
-From: Davidlohr Bueso <davidlohr@hp.com>
-Subject: Re: [RFC PATCH 0/5] futex: introduce an optimistic spinning futex
-Date: Mon, 21 Jul 2014 20:06:19 -0700
-Message-ID: <1405998379.25048.16.camel@buesod1.americas.hpqcorp.net>
-References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
-	 <8761iq3bp3.fsf@tassilo.jf.intel.com> <871tte3bjw.fsf@tassilo.jf.intel.com>
-	 <CFF29A00.9D44A%dvhart@linux.intel.com>
-	 <CFF29E4A.9D44E%dvhart@linux.intel.com>
-	 <alpine.DEB.2.10.1407212025130.20847@nanos> <20140721212740.GS3935@laptop>
-	 <CALCETrXSaWM6-nxr4ggtMh5qcfTQg4wRvkW8FTSbri5+_1ZbVg@mail.gmail.com>
-	 <alpine.DEB.2.10.1407212344130.20847@nanos>
-	 <CFF2E3D6.9D525%dvhart@linux.intel.com>
-	 <alpine.DEB.2.10.1407220047490.20847@nanos>
-	 <20140721213457.46623e2f@gandalf.local.home>
+From: Waiman Long <waiman.long@hp.com>
+Subject: Re: [RFC PATCH 5/5] futex, doc: add a document on how to use the
+ spinning futexes
+Date: Mon, 21 Jul 2014 23:19:02 -0400
+Message-ID: <53CDD826.8050807@hp.com>
+References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com> <1405956271-34339-6-git-send-email-Waiman.Long@hp.com> <53CD3582.707@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140721213457.46623e2f@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Darren Hart <dvhart@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, Peter Zijlstra <peterz@infradead.org>, Andi Kleen <andi@firstfloor.org>, Waiman Long <Waiman.Long@hp.com>, Ingo Molnar <mingo@kernel.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>, Robert Haas <robertmhaas@gmail.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <53CD3582.707@infradead.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2014-07-21 at 21:34 -0400, Steven Rostedt wrote:
-> On Tue, 22 Jul 2014 03:01:00 +0200 (CEST)
-> Thomas Gleixner <tglx@linutronix.de> wrote:
-> 
-> > On Mon, 21 Jul 2014, Darren Hart wrote:
-> > > On 7/21/14, 14:47, "Thomas Gleixner" <tglx@linutronix.de> wrote:
-> > > 
-> > > >On Mon, 21 Jul 2014, Andy Lutomirski wrote:
-> > > >> On Mon, Jul 21, 2014 at 2:27 PM, Peter Zijlstra <peterz@infradead.org>
-> > > >>wrote:
-> > > >> > All this is predicated on the fact that syscalls are 'expensive'.
-> > > >> > Weren't syscalls only 100s of cycles? All this bitmap mucking is far
-> > > >> > more expensive due to cacheline misses, which due to the size of the
-> > > >> > things is almost guaranteed.
-> > > >> 
-> > > >> 120 - 300 cycles for me, unless tracing happens, and I'm working on
-> > > >> reducing the incidence of tracing.
-> > > >
-> > > >So it's a non issue indeed and definitely not worth the trouble of
-> > > >that extra storage, the scheduler overhead, etc.
-> > > >
-> > > >Summary: Once you can't take it atomically in user space, you've lost
-> > > >	 anyway. And we are better off to do the magic spinning in
-> > > >	 kernel where we have all the information accessible already.
-> 
-> I just want to point out that I was having a very nice conversation
-> with Robert Haas (Cc'd) in Napa Valley at Linux Collaboration about
-> this very topic. Robert is a PostgeSQL developer who told me that they
-> implement their spin locks completely in userspace (no futex, just raw
-> spinning on shared memory). This is because the sleep on contention of a
-> futex has shown to be very expensive in their benchmarks. 
+On 07/21/2014 11:45 AM, Randy Dunlap wrote:
+> On 07/21/2014 08:24 AM, Waiman Long wrote:
+>> This patch adds a new document file on how to use the spinning futexes.
+>>
+>> Signed-off-by: Waiman Long<Waiman.Long@hp.com>
+>> ---
+>>   Documentation/spinning-futex.txt |  109 ++++++++++++++++++++++++++++++++++++++
+>>   1 files changed, 109 insertions(+), 0 deletions(-)
+>>   create mode 100644 Documentation/spinning-futex.txt
+>>
+>> diff --git a/Documentation/spinning-futex.txt b/Documentation/spinning-futex.txt
+>> new file mode 100644
+>> index 0000000..e3cb5a2
+>> --- /dev/null
+>> +++ b/Documentation/spinning-futex.txt
+>> @@ -0,0 +1,109 @@
+>> +Started by: Waiman Long<waiman.long@hp.com>
+>> +
+>> +Spinning Futex
+>> +--------------
+>> +
+>> +There are two main problems for a wait-wake futex (FUTEX_WAIT and
+>> +FUTEX_WAKE) when used for creating user-space lock primitives:
+>> +
+>> + 1) With a wait-wake futex, tasks waiting for a lock are put to sleep
+>> +    in the futex queue to be woken up by the lock owner when it is done
+>> +    with the lock. Waking up a sleeping task, however, introduces some
+>> +    additional latency which can be large especially if the critical
+>> +    section protected by the lock is relatively short. This may cause
+>> +    a performance bottleneck on large systems with many CPUs running
+>> +    applications that need a lot of inter-thread synchronization.
+>> +
+>> + 2) The performance of the wait-wake futex is currently
+>> +    spinlock-constrained.  When many threads are contending for a
+>> +    futex in a large system with many CPUs, it is not unusual to have
+>> +    spinlock contention accounting for more than 90% of the total
+>> +    CPU cycles consumed at various points in time.
+>> +
+>> +Spinning futex is a solution to both the wakeup latency and spinlock
+>> +contention problems by optimistically spinning on a locked futex
+>> +when the lock owner is running within the kernel until the lock is
+>> +free. This is the same optimistic spinning mechanism used by the kernel
+>> +mutex and rw semaphore implementations to improve performance. The
+>> +optimistic spinning was done without taking any lock.
+>                         is done
+>
+>> +
+>> +Implementation
+>> +--------------
+>> +
+>> +Like the PI and robust futexes, a lock acquirer has to atomically
+>> +put its thread ID (TID) into the lower 30 bits of the 32-bit futex
+>> +which should has an original value of 0. If it succeeds, it will be
+>                  have
+>
+>> +the owner of the futex. Otherwise, it has to call into the kernel
+>> +using the new FUTEX_SPIN_LOCK futex(2) syscall.
+>> +
+>> +The kernel will use the setting of the most significant bit
+>> +(FUTEX_WAITERS) in the futex value to indicate one or more waiters
+>> +are sleeping and need to be woken up later on.
+>> +
+>> +When it is time to unlock, the lock owner has to atomically clear
+>> +the TID portion of the futex value. If the FUTEX_WAITERS bit is set,
+>> +it has to issue a FUTEX_SPIN_UNLOCK futex system call to wake up the
+>> +sleeping task.
+>> +
+>> +A return value of 1 from the FUTEX_SPIN_UNLOCK futex(2) syscall
+>> +indicates a task has been woken up. The syscall returns 0 if no
+>> +sleeping task is found or spinners are present to take the lock.
+>> +
+>> +The error number returned by a FUTEX_SPIN_UNLOCK call on an empty
+>> +futex can be used to decide if the spinning futex functionality is
+>> +implemented in the kernel. If it is present, the returned error number
+>> +should be ESRCH. Otherwise it will be ENOSYS.
+>> +
+>> +Currently, only the first and the second arguments (the futex address
+>> +and the opcode) of the futex(2) syscall is used. All the other
+>                                             are used.
+>
+>> +arguments must be set to 0 or NULL to avoid forward compatibility
+>> +problem.
+>> +
+>> +The spinning futex requires the kernel to have support for the cmpxchg
+>> +functionality. For architectures that don't support cmpxchg, spinning
+>> +futex will not be supported as well.
+>> +
+>> +Usage Scenario
+>> +--------------
+>> +
+>> +A spinning futex can be used as an exclusive lock to guard a critical
+>> +section which are unlikely to go to sleep in the kernel. The spinners
+>                   is
+>
+>> +in a spinning futex, however, will fall back to sleep in a wait queue
+>> +if the lock owner isn't running. Therefore, it can also be used when
+>> +the critical section is long and prone to sleeping. However, it may
+>> +not have the performance benefit when compared with a wait-wake futex
+>> +in this case.
+>> +
+>> +Sample Code
+>> +-----------
+>> +
+>> +The following are sample code to implement a simple lock and unlock
+>                   is
+>
+>> +function.
+>> +
+>> +__thread int tid;	/* Thread ID */
+>> +
+>> +void mutex_lock(int *faddr)
+>> +{
+>> +	if (cmpxchg(faddr, 0, tid) == 0)
+>> +		return;
+>> +	for (;;)
+>> +		if (futex(faddr, FUTEX_SPIN_LOCK, ...) == 0)
+>> +			break;
+>> +}
+>> +
+>> +void mutex_unlock(int *faddr)
+>> +{
+>> +	int old, fval;
+>> +
+>> +	if ((fval = cmpxchg(faddr, tid, 0)) == tid)
+>> +		return;
+>> +	/* Clear only the TID portion of the futex */
+>> +	for (;;) {
+>> +		old  = fval;
+>> +		fval = cmpxchg(faddr, old, old&  ~FUTEX_TID_MASK);
+>> +		if (fval == old)
+>> +			break;
+>> +	}
+>> +	if (fval&  FUTEX_WAITERS)
+>> +		futex(faddr, FUTEX_SPIN_UNLOCK, ...);
+>> +}
+>>
+>
 
-Well sure, hashing, plist handling, wakeups etc. (not to mention
-dirtying cachelines). The "fast" in futex is only due to the fact that
-there is no jump to kernel space when the lock is uncontended after say,
-a successful cmpxchg in user space. Once futex(2) is actually called,
-performance is quite a different story.
+Thank for the grammar corrections. Will apply those to the documents.
 
-> His work is
-> not a micro benchmark but for a very popular database where locking is
-> crucial.
-> 
-> I was telling Robert that if futexes get optimistic spinning, he should
-> reconsider their use of userspace spinlocks in favor of this, because
-> I'm pretty sure that they will see a great improvement.
-
-Agreed, with the critical regions being correctly sized for spinning
-locks.
-
-> Now Robert will be the best one to answer if the system call is indeed
-> more expensive than doing full spins in userspace. If the spin is done
-> in the kernel and they still get better performance by just spinning
-> blindly in userspace even if the owner is asleep, I think we will have
-> our answer.
-> 
-> Note, I believe they only care about shared threads, and this
-> optimistic spinning does not need to be something done between
-> processes.
-
-With the pi_state there would be no such distinction.
-
-Thanks,
-Davidlohr
+-Longman
