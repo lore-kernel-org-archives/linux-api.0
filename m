@@ -1,70 +1,78 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 0/5] futex: introduce an optimistic spinning futex
-Date: Tue, 22 Jul 2014 09:35:25 +0200
-Message-ID: <20140722073525.GU3935@laptop>
-References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
- <8761iq3bp3.fsf@tassilo.jf.intel.com>
- <871tte3bjw.fsf@tassilo.jf.intel.com>
- <CFF29A00.9D44A%dvhart@linux.intel.com>
- <CFF29E4A.9D44E%dvhart@linux.intel.com>
- <alpine.DEB.2.10.1407212025130.20847@nanos>
- <20140721212740.GS3935@laptop>
- <CALCETrXSaWM6-nxr4ggtMh5qcfTQg4wRvkW8FTSbri5+_1ZbVg@mail.gmail.com>
- <1405989175.25048.5.camel@buesod1.americas.hpqcorp.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1405989175.25048.5.camel@buesod1.americas.hpqcorp.net>
-Sender: linux-doc-owner@vger.kernel.org
-To: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Thomas Gleixner <tglx@linutronix.de>, Darren Hart <dvhart@linux.intel.com>, Andi Kleen <andi@firstfloor.org>, Waiman Long <Waiman.Long@hp.com>, Ingo Molnar <mingo@kernel.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
+From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [RESEND PATCH v3 0/6] charger/mfd: max14577: Add support for MAX77836
+Date: Tue, 22 Jul 2014 09:41:00 +0200
+Message-ID: <1406014866-17744-1-git-send-email-k.kozlowski@samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 21, 2014 at 05:32:55PM -0700, Davidlohr Bueso wrote:
-> On Mon, 2014-07-21 at 14:31 -0700, Andy Lutomirski wrote:
-> > On Mon, Jul 21, 2014 at 2:27 PM, Peter Zijlstra <peterz@infradead.org> wrote:
-> > > All this is predicated on the fact that syscalls are 'expensive'.
-> > > Weren't syscalls only 100s of cycles? All this bitmap mucking is far
-> > > more expensive due to cacheline misses, which due to the size of the
-> > > things is almost guaranteed.
-> > 
-> > 120 - 300 cycles for me, unless tracing happens, and I'm working on
-> > reducing the incidence of tracing.
-> 
-> fwiw here's what lmbench's lat_ctx says on my system . For 'accuracy', I
-> kept the runs short.
-> 
-> http://www.stgolabs.net/lat_ctx.png
+Hi,
 
-Create a syscall without 'work body', so say something like the below.
-Context switches do quite a lot of work (unfortunately).
 
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index ec255a1646d2..daf27ec10e29 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -323,6 +323,7 @@
- 314	common	sched_setattr		sys_sched_setattr
- 315	common	sched_getattr		sys_sched_getattr
- 316	common	renameat2		sys_renameat2
-+317	common	nop			sys_nop
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 66a751ebf9d9..1b86614bb551 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -2108,6 +2108,11 @@ SYSCALL_DEFINE1(sysinfo, struct sysinfo __user *, info)
- 	return 0;
- }
- 
-+SYSCALL_DEFINE0(nop)
-+{
-+	return 0;
-+}
-+
- #ifdef CONFIG_COMPAT
- struct compat_sysinfo {
- 	s32 uptime;
+This is a resend of third version of patches adding support for
+MAX77836 device to the max14577 drivers.
+
+This patchset was already reviewed by some of the maintainers during
+previous submissions.
+I only need acks from power tree (patches: 1, 3, 4, 6).
+
+The patches 1, 2 and 3 depend on each other so they should be
+pulled at once. Patches 4, 5 and 6 can be applied independently.
+Lee Jones said he can take the set through his tree. Still I need acks
+from power subsystem.
+
+
+Changes since v2
+================
+1. charger: Use sysfs instead of DTS for setting the fast charge timer.
+   The charger driver now selects the CONFIG_SYSFS and exports
+   a DEVICE_ATTR. (suggested by Mark Rutland)
+2. Add patch 6 with documentation of exported sysfs entry for fast
+   charge timer.
+3. charger 3/6: Add missing 'break' in switch parsing valid values
+   for fast charge timer.
+
+Changes since v1
+================
+1. charger 3/5: Add an error message for each unsuccessful parse of DT
+   property (suggested by Mark Rutland).
+2. charger 3/5: Use 'u32' type for storing values from DT (suggested
+   by Mark Rutland).
+3. charger 3/5: Remove an error message for memory allocation failure.
+
+
+The patchset (first and second part of the MAX77836 drivers) has been
+on the lists since January. Changelog for the first part of drivers:
+https://www.mail-archive.com/linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg628696.html
+
+
+Best regards,
+Krzysztof Kozlowski
+
+
+Krzysztof Kozlowski (6):
+  charger: max14577: Add support for MAX77836 charger
+  regulator/mfd: max14577: Export symbols for calculating charger
+    current
+  charger: max14577: Configure battery-dependent settings from DTS and
+    sysfs
+  power: max17040: Add ID for MAX77836 Fuel Gauge block
+  devicetree: mfd: max14577: Add device tree bindings document
+  Documentation: charger: max14577: Document exported sysfs entry
+
+ Documentation/ABI/testing/sysfs-class-power        |  14 +
+ Documentation/devicetree/bindings/mfd/max14577.txt | 146 ++++++++
+ drivers/mfd/max14577.c                             | 100 +++++-
+ drivers/power/Kconfig                              |   5 +-
+ drivers/power/max14577_charger.c                   | 370 +++++++++++++++++++--
+ drivers/power/max17040_battery.c                   |   1 +
+ drivers/regulator/max14577.c                       |  80 +----
+ include/linux/mfd/max14577-private.h               |  95 ++++--
+ include/linux/mfd/max14577.h                       |  30 ++
+ 9 files changed, 703 insertions(+), 138 deletions(-)
+ create mode 100644 Documentation/devicetree/bindings/mfd/max14577.txt
+
+-- 
+1.9.1
