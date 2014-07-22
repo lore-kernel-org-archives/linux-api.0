@@ -1,84 +1,113 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC PATCH 0/5] futex: introduce an optimistic spinning futex
-Date: Tue, 22 Jul 2014 22:52:39 +0200 (CEST)
-Message-ID: <alpine.DEB.2.10.1407222243210.23352@nanos>
-References: <CFF29E4A.9D44E%dvhart@linux.intel.com> <alpine.DEB.2.10.1407212025130.20847@nanos> <20140721212740.GS3935@laptop> <CALCETrXSaWM6-nxr4ggtMh5qcfTQg4wRvkW8FTSbri5+_1ZbVg@mail.gmail.com> <alpine.DEB.2.10.1407212344130.20847@nanos>
- <CFF2E3D6.9D525%dvhart@linux.intel.com> <alpine.DEB.2.10.1407220047490.20847@nanos> <20140721213457.46623e2f@gandalf.local.home> <20140722074719.GV3935@laptop> <alpine.DEB.2.10.1407221034260.20847@nanos> <20140722084842.GZ3935@laptop>
- <alpine.DEB.2.10.1407221057230.20847@nanos> <53CEC8AC.7020700@hp.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [RFC PATCH 1/5] futex: add new exclusive lock & unlock command
+ codes
+Date: Tue, 22 Jul 2014 23:00:13 +0200 (CEST)
+Message-ID: <alpine.DEB.2.10.1407222217230.23352@nanos>
+References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com> <1405956271-34339-2-git-send-email-Waiman.Long@hp.com> <alpine.DEB.2.10.1407211811360.20847@nanos> <53CEABD7.3030509@hp.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <53CEC8AC.7020700@hp.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Waiman Long <waiman.long@hp.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Darren Hart <dvhart@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Ingo Molnar <mingo@kernel.org>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>, Robert Haas <robertmhaas@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <53CEABD7.3030509-VXdhtT5mjnY@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Waiman Long <waiman.long-VXdhtT5mjnY@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Scott J Norton <scott.norton-VXdhtT5mjnY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 On Tue, 22 Jul 2014, Waiman Long wrote:
-
-> On 07/22/2014 05:59 AM, Thomas Gleixner wrote:
-> > On Tue, 22 Jul 2014, Peter Zijlstra wrote:
-> > > On Tue, Jul 22, 2014 at 10:39:17AM +0200, Thomas Gleixner wrote:
-> > > > On Tue, 22 Jul 2014, Peter Zijlstra wrote:
-> > > > > Anyway, there is one big fail in the entire futex stack that we 'need'
-> > > > > to sort some day and that is NUMA. Some people (again database people)
-> > > > > explicitly do not use futexes and instead use sysvsem because of this.
-> > > > > 
-> > > > > The problem with numa futexes is that because they're vaddr based
-> > > > > there
-> > > > > is no (persistent) node information. You always end up having to fall
-> > > > > back to looking in all nodes before you can guarantee there is no
-> > > > > matching futex.
-> > > > > 
-> > > > > One way to achieve it is by extending the futex value to include a
-> > > > > node
-> > > > > number, but that's obviously a complete ABI break. Then again, it
-> > > > > should
-> > > > > be pretty straight fwd, since the node number doesn't need to be part
-> > > > > of
-> > > > > the actual atomic update part, just part of the userspace storage.
-> > > > So you want per node hash buckets, right? Fair enough, but how do you
-> > > > make sure, that no thread/process on a different node is fiddling with
-> > > > that "node bound" futex as well?
-> > > You don't and that should work just as well, just slower. But since the
-> > > node id is in the futex 'value' we'll always end up in the right
-> > > node-hash, even if its a remote one.
-> > > 
-> > > So yes, per node hashes, and a persistent futex->node map.
-> > Which works fine as long as you only have the futex_q on the stack of
-> > the blocked task. If user space is lying to you, then you just end up
-> > with a bunch of threads sleeping forever. Who cares?
+> On 07/21/2014 12:42 PM, Thomas Gleixner wrote:
+> > > +	/*
+> > > +	 * The unlocker may have cleared the TID value and another task may
+> > > +	 * steal it. However, if its TID is still set, we need to clear
+> > > +	 * it as well as the FUTEX_WAITERS bit.
+> >
+> > No, that's complete and utter crap. The unlocker is current and it may
+> > not have cleared anything.
 > > 
-> > But if you create independent kernel state, which we have with
-> > pi_state and which you need for finegrained locking and further
-> > spinning fun, you open up another can of worms. Simply because this
-> > would enable rogue user space to create multiple instances of the
-> > kernel internal state. I can predict the CVEs resulting from that
-> > even without using a crystal ball.
-> > 
-> > Thanks,
-> > 
-> > 	tglx
+> > Your design or the lack thereof is a complete disaster.
 > 
-> I think NUMA futex, if implemented, is a completely independent piece that
-> have no direct relationship with optimistic spinning futex. It should be a
-> separate patch and not mixing with optimistic spinning patch which will only
-> make the latter one more complicated.
+> In patch 5, the documentation and the sample unlock does clear the TID before
+> going in. The code here is just a safety measure in case the unlocker doesn't
+> follow the recommendation.
 
-Bullshit. Of course it handles separate issues, but Peter is
-completely right, that the NUMA aspect is a far bigger issue than the
-optimistic spinning stuff. Do you have an idea what the costs of cross
-node memory access and cacheline bouncing are? Obviously not, as you
-only interest seems to be to slap optimistic spinning to every place
-which deals with locking.
+I don't care about patch 5 at all. I'm already fed up reading 1/5. The
+code is no safety measure it's a completely disastrous workaround.
 
-And if you had tried to read _AND_ understand the discussion above,
-you might have noticed that providing NUMA awareness requires a lot of
-the functionality which is needed for optimistic spinning as well.
+We do not care whether user space follows recommendations. We set
+rules and if the rules are violated then we act accordingly. Did you
+even take the time to read the git history of futex.c? Did you notice
+that we had a major security incident related to that code which we
+fixed not long ago?
+ 
+No, you obviously did not, otherwise you would not come up with
+hackery which is going to explode in your face if exposed to a simple
+syscall fuzzer, not to talk about a competent hacker. Without even
+looking too deep I found two simple ways to leak kernel state and one
+to corrupt kernel state. Brilliant stuff, really!
 
-But no, you did not even take the time to think about it, you just
-claim that it makes your optimistic stuff more complicated. Just get
-it, there is a world outside of optimistic spinning.
+> > Sit down first and define the exact semantics of the new opcode. That
+> > includes user and kernel space and the interaction with robust list,
+> > which you happily ignored.
+> > 
+> > What are the semantics of uval? When can it be changed in kernel and
+> > in user space? How do we deal with corruption of the user space value?
+> 
+> The semantics of the uval is the same as that of PI and robust futex where the
+> TID portion contains the thread ID of the lock owner. It is my intention to
+> make it works with the robust futex mechanism before it can be merged. This
+> RPC patch series is for soliciting feedbacks and make the necessary changes
+> that make the patch acceptable before I go deep into making it works with
+> robust futex.
+
+No, the semantics are not the same. PI and robust futexes have
+different semantics, but you did not notice that at all.
+
+Your so called semantics are really well thought out as as you have
+proven with completely uncomprehensible hackeries, which you call
+"safety measures".
+
+And I do not care about your intention to make it work with robustness
+etc. If you do not design it upfront to do so, then this code is going
+to be a complete disaster. But to do that you need to sit down and
+provide a proper design document and that wants to be patch 1/x not
+the last one. And the code actually needs to follow that design.
+
+> > How are faults handled?
+> 
+> As you have a lot more experience working with futexes than me, any
+> suggestions on what kind of faults will happen and what are the best practices
+> to handle them will be highly appreciated.
+
+So shall I fly over and read you the source code of futex.c as a
+bedtime story?
+
+You did not even try to understand how futexes work and what corner
+cases they have by studying the existing code and reading the git
+history.
+
+No, you simply cobbled something together and created random
+performance numbers and because they are so wonderful, you expect that
+I and the other people who worked hard on that code do your homework.
+
+No, that's not how it works.
+
+Your numbers are completely useless because they just measure the fast
+path by omitting all the required security measures and corner case
+handling.
+
+Darren had his version of spinning done years ago, but we had to
+ground it due to not resolvable issues at that point. I'm quite sure,
+that you did not even try to figure out whether people had looked into
+that issue before and tried to understand why it failed, otherwise you
+would have been clever enough to provide a reference and explain why
+your approach is better or solves the underlying problems.
+
+So your RFC is not impressive at all. It's just an inferior
+implementation of something we are aware of for a very long time.
+
+I'm already tired of this, really. Unless you start to understand the
+problem of futexes in the first place and you should ask your coworker
+how mind boggling that can be, do not even bother to send another half
+arsed patch. Spare the electrons and the time of everyone involved.
 
 Thanks,
 
