@@ -1,122 +1,70 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: [PATCH RFC v3 net-next 2/3] samples: bpf: eBPF example in C
-Date: Mon, 21 Jul 2014 20:45:22 -0700
-Message-ID: <1406000723-4872-3-git-send-email-ast@plumgrid.com>
-References: <1406000723-4872-1-git-send-email-ast@plumgrid.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1406000723-4872-1-git-send-email-ast@plumgrid.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "David S. Miller" <davem@davemloft.net>
-Cc: Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC PATCH 0/5] futex: introduce an optimistic spinning futex
+Date: Tue, 22 Jul 2014 09:35:25 +0200
+Message-ID: <20140722073525.GU3935@laptop>
+References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
+ <8761iq3bp3.fsf@tassilo.jf.intel.com>
+ <871tte3bjw.fsf@tassilo.jf.intel.com>
+ <CFF29A00.9D44A%dvhart@linux.intel.com>
+ <CFF29E4A.9D44E%dvhart@linux.intel.com>
+ <alpine.DEB.2.10.1407212025130.20847@nanos>
+ <20140721212740.GS3935@laptop>
+ <CALCETrXSaWM6-nxr4ggtMh5qcfTQg4wRvkW8FTSbri5+_1ZbVg@mail.gmail.com>
+ <1405989175.25048.5.camel@buesod1.americas.hpqcorp.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1405989175.25048.5.camel@buesod1.americas.hpqcorp.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Thomas Gleixner <tglx@linutronix.de>, Darren Hart <dvhart@linux.intel.com>, Andi Kleen <andi@firstfloor.org>, Waiman Long <Waiman.Long@hp.com>, Ingo Molnar <mingo@kernel.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
 List-Id: linux-api@vger.kernel.org
 
-ex1_kern.c - C program which will be compiled into eBPF
-to filter netif_receive_skb events on skb->dev->name == "lo"
+On Mon, Jul 21, 2014 at 05:32:55PM -0700, Davidlohr Bueso wrote:
+> On Mon, 2014-07-21 at 14:31 -0700, Andy Lutomirski wrote:
+> > On Mon, Jul 21, 2014 at 2:27 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+> > > All this is predicated on the fact that syscalls are 'expensive'.
+> > > Weren't syscalls only 100s of cycles? All this bitmap mucking is far
+> > > more expensive due to cacheline misses, which due to the size of the
+> > > things is almost guaranteed.
+> > 
+> > 120 - 300 cycles for me, unless tracing happens, and I'm working on
+> > reducing the incidence of tracing.
+> 
+> fwiw here's what lmbench's lat_ctx says on my system . For 'accuracy', I
+> kept the runs short.
+> 
+> http://www.stgolabs.net/lat_ctx.png
 
-ex1_user.c - corresponding user space component that
-forever reads /sys/.../trace_pipe
+Create a syscall without 'work body', so say something like the below.
+Context switches do quite a lot of work (unfortunately).
 
-Usage:
-$ sudo ex1 ex1_kern.o
-
-should see:
-writing bpf-4 -> /sys/kernel/debug/tracing/events/net/netif_receive_skb/filter
-  ping-25476 [001] ..s3  5639.718218: __netif_receive_skb_core: skb 4d51700 dev b9e6000
-  ping-25476 [001] ..s3  5639.718262: __netif_receive_skb_core: skb 4d51400 dev b9e6000
-
-  ping-25476 [002] ..s3  5640.716233: __netif_receive_skb_core: skb 5d06500 dev b9e6000
-  ping-25476 [002] ..s3  5640.716272: __netif_receive_skb_core: skb 5d06300 dev b9e6000
-
-Ctrl-C at any time, kernel will auto cleanup
-
-Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
----
- samples/bpf/Makefile   |   15 +++++++++++++--
- samples/bpf/ex1_kern.c |   27 +++++++++++++++++++++++++++
- samples/bpf/ex1_user.c |   11 +++++++++++
- 3 files changed, 51 insertions(+), 2 deletions(-)
- create mode 100644 samples/bpf/ex1_kern.c
- create mode 100644 samples/bpf/ex1_user.c
-
-diff --git a/samples/bpf/Makefile b/samples/bpf/Makefile
-index caf1ab93b37c..c97f408fcd6d 100644
---- a/samples/bpf/Makefile
-+++ b/samples/bpf/Makefile
-@@ -2,12 +2,23 @@
- obj- := dummy.o
+diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
+index ec255a1646d2..daf27ec10e29 100644
+--- a/arch/x86/syscalls/syscall_64.tbl
++++ b/arch/x86/syscalls/syscall_64.tbl
+@@ -323,6 +323,7 @@
+ 314	common	sched_setattr		sys_sched_setattr
+ 315	common	sched_getattr		sys_sched_getattr
+ 316	common	renameat2		sys_renameat2
++317	common	nop			sys_nop
  
- # List of programs to build
--hostprogs-y := sock_example dropmon
-+hostprogs-y := sock_example dropmon ex1
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 66a751ebf9d9..1b86614bb551 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2108,6 +2108,11 @@ SYSCALL_DEFINE1(sysinfo, struct sysinfo __user *, info)
+ 	return 0;
+ }
  
- sock_example-objs := sock_example.o libbpf.o
- dropmon-objs := dropmon.o libbpf.o
-+ex1-objs := bpf_load.o libbpf.o ex1_user.o
- 
- # Tell kbuild to always build the programs
--always := $(hostprogs-y)
-+always := $(hostprogs-y) ex1_kern.o
- 
- HOSTCFLAGS += -I$(objtree)/usr/include
-+
-+HOSTCFLAGS_bpf_load.o += -I$(objtree)/usr/include -Wno-unused-variable
-+HOSTLOADLIBES_ex1 += -lelf
-+
-+LLC=$(srctree)/tools/bpf/llvm/bld/Debug+Asserts/bin/llc
-+
-+%.o: %.c
-+	clang $(NOSTDINC_FLAGS) $(LINUXINCLUDE) $(EXTRA_CFLAGS) \
-+		-D__KERNEL__ -Wno-unused-value -Wno-pointer-sign \
-+		-O2 -emit-llvm -c $< -o -| $(LLC) -o $@
-diff --git a/samples/bpf/ex1_kern.c b/samples/bpf/ex1_kern.c
-new file mode 100644
-index 000000000000..3fa7e4db0be6
---- /dev/null
-+++ b/samples/bpf/ex1_kern.c
-@@ -0,0 +1,27 @@
-+#include <linux/skbuff.h>
-+#include <linux/netdevice.h>
-+#include <uapi/linux/bpf.h>
-+#include <trace/bpf_trace.h>
-+#include "bpf_helpers.h"
-+
-+SEC("events/net/netif_receive_skb")
-+int bpf_prog1(struct bpf_context *ctx)
++SYSCALL_DEFINE0(nop)
 +{
-+	/*
-+	 * attaches to /sys/kernel/debug/tracing/events/net/netif_receive_skb
-+	 * prints events for loobpack device only
-+	 */
-+	char devname[] = "lo";
-+	struct net_device *dev;
-+	struct sk_buff *skb = 0;
-+
-+	skb = (struct sk_buff *) ctx->arg1;
-+	dev = bpf_load_pointer(&skb->dev);
-+	if (bpf_memcmp(dev->name, devname, 2) == 0) {
-+		char fmt[] = "skb %x dev %x\n";
-+		bpf_printk(fmt, sizeof(fmt), skb, dev);
-+	}
 +	return 0;
 +}
 +
-+char license[] SEC("license") = "GPL";
-diff --git a/samples/bpf/ex1_user.c b/samples/bpf/ex1_user.c
-new file mode 100644
-index 000000000000..d90c543ba30c
---- /dev/null
-+++ b/samples/bpf/ex1_user.c
-@@ -0,0 +1,11 @@
-+#include "bpf_load.h"
-+
-+int main(int ac, char **argv)
-+{
-+	if (load_bpf_file(argv[1]))
-+		return 1;
-+
-+	read_trace_pipe();
-+
-+	return 0;
-+}
--- 
-1.7.9.5
+ #ifdef CONFIG_COMPAT
+ struct compat_sysinfo {
+ 	s32 uptime;
