@@ -1,157 +1,98 @@
-From: Waiman Long <waiman.long@hp.com>
-Subject: Re: [RFC PATCH 5/5] futex, doc: add a document on how to use the
- spinning futexes
-Date: Mon, 21 Jul 2014 23:19:02 -0400
-Message-ID: <53CDD826.8050807@hp.com>
-References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com> <1405956271-34339-6-git-send-email-Waiman.Long@hp.com> <53CD3582.707@infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <53CD3582.707@infradead.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: [PATCH RFC v3 net-next 0/3] eBPF examples in C
+Date: Mon, 21 Jul 2014 20:45:20 -0700
+Message-ID: <1406000723-4872-1-git-send-email-ast@plumgrid.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "David S. Miller" <davem@davemloft.net>
+Cc: Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/21/2014 11:45 AM, Randy Dunlap wrote:
-> On 07/21/2014 08:24 AM, Waiman Long wrote:
->> This patch adds a new document file on how to use the spinning futexes.
->>
->> Signed-off-by: Waiman Long<Waiman.Long@hp.com>
->> ---
->>   Documentation/spinning-futex.txt |  109 ++++++++++++++++++++++++++++++++++++++
->>   1 files changed, 109 insertions(+), 0 deletions(-)
->>   create mode 100644 Documentation/spinning-futex.txt
->>
->> diff --git a/Documentation/spinning-futex.txt b/Documentation/spinning-futex.txt
->> new file mode 100644
->> index 0000000..e3cb5a2
->> --- /dev/null
->> +++ b/Documentation/spinning-futex.txt
->> @@ -0,0 +1,109 @@
->> +Started by: Waiman Long<waiman.long@hp.com>
->> +
->> +Spinning Futex
->> +--------------
->> +
->> +There are two main problems for a wait-wake futex (FUTEX_WAIT and
->> +FUTEX_WAKE) when used for creating user-space lock primitives:
->> +
->> + 1) With a wait-wake futex, tasks waiting for a lock are put to sleep
->> +    in the futex queue to be woken up by the lock owner when it is done
->> +    with the lock. Waking up a sleeping task, however, introduces some
->> +    additional latency which can be large especially if the critical
->> +    section protected by the lock is relatively short. This may cause
->> +    a performance bottleneck on large systems with many CPUs running
->> +    applications that need a lot of inter-thread synchronization.
->> +
->> + 2) The performance of the wait-wake futex is currently
->> +    spinlock-constrained.  When many threads are contending for a
->> +    futex in a large system with many CPUs, it is not unusual to have
->> +    spinlock contention accounting for more than 90% of the total
->> +    CPU cycles consumed at various points in time.
->> +
->> +Spinning futex is a solution to both the wakeup latency and spinlock
->> +contention problems by optimistically spinning on a locked futex
->> +when the lock owner is running within the kernel until the lock is
->> +free. This is the same optimistic spinning mechanism used by the kernel
->> +mutex and rw semaphore implementations to improve performance. The
->> +optimistic spinning was done without taking any lock.
->                         is done
->
->> +
->> +Implementation
->> +--------------
->> +
->> +Like the PI and robust futexes, a lock acquirer has to atomically
->> +put its thread ID (TID) into the lower 30 bits of the 32-bit futex
->> +which should has an original value of 0. If it succeeds, it will be
->                  have
->
->> +the owner of the futex. Otherwise, it has to call into the kernel
->> +using the new FUTEX_SPIN_LOCK futex(2) syscall.
->> +
->> +The kernel will use the setting of the most significant bit
->> +(FUTEX_WAITERS) in the futex value to indicate one or more waiters
->> +are sleeping and need to be woken up later on.
->> +
->> +When it is time to unlock, the lock owner has to atomically clear
->> +the TID portion of the futex value. If the FUTEX_WAITERS bit is set,
->> +it has to issue a FUTEX_SPIN_UNLOCK futex system call to wake up the
->> +sleeping task.
->> +
->> +A return value of 1 from the FUTEX_SPIN_UNLOCK futex(2) syscall
->> +indicates a task has been woken up. The syscall returns 0 if no
->> +sleeping task is found or spinners are present to take the lock.
->> +
->> +The error number returned by a FUTEX_SPIN_UNLOCK call on an empty
->> +futex can be used to decide if the spinning futex functionality is
->> +implemented in the kernel. If it is present, the returned error number
->> +should be ESRCH. Otherwise it will be ENOSYS.
->> +
->> +Currently, only the first and the second arguments (the futex address
->> +and the opcode) of the futex(2) syscall is used. All the other
->                                             are used.
->
->> +arguments must be set to 0 or NULL to avoid forward compatibility
->> +problem.
->> +
->> +The spinning futex requires the kernel to have support for the cmpxchg
->> +functionality. For architectures that don't support cmpxchg, spinning
->> +futex will not be supported as well.
->> +
->> +Usage Scenario
->> +--------------
->> +
->> +A spinning futex can be used as an exclusive lock to guard a critical
->> +section which are unlikely to go to sleep in the kernel. The spinners
->                   is
->
->> +in a spinning futex, however, will fall back to sleep in a wait queue
->> +if the lock owner isn't running. Therefore, it can also be used when
->> +the critical section is long and prone to sleeping. However, it may
->> +not have the performance benefit when compared with a wait-wake futex
->> +in this case.
->> +
->> +Sample Code
->> +-----------
->> +
->> +The following are sample code to implement a simple lock and unlock
->                   is
->
->> +function.
->> +
->> +__thread int tid;	/* Thread ID */
->> +
->> +void mutex_lock(int *faddr)
->> +{
->> +	if (cmpxchg(faddr, 0, tid) == 0)
->> +		return;
->> +	for (;;)
->> +		if (futex(faddr, FUTEX_SPIN_LOCK, ...) == 0)
->> +			break;
->> +}
->> +
->> +void mutex_unlock(int *faddr)
->> +{
->> +	int old, fval;
->> +
->> +	if ((fval = cmpxchg(faddr, tid, 0)) == tid)
->> +		return;
->> +	/* Clear only the TID portion of the futex */
->> +	for (;;) {
->> +		old  = fval;
->> +		fval = cmpxchg(faddr, old, old&  ~FUTEX_TID_MASK);
->> +		if (fval == old)
->> +			break;
->> +	}
->> +	if (fval&  FUTEX_WAITERS)
->> +		futex(faddr, FUTEX_SPIN_UNLOCK, ...);
->> +}
->>
->
+Hi,
 
-Thank for the grammar corrections. Will apply those to the documents.
+I've been asked to repost LLVM eBPF backend and examples in C, so here they are.
+LLVM backend is 99% the same as it was in Feb. Not resending it to the list,
+since I only fixed minor things there. See it in my tree.
 
--Longman
+ex1 - is the same example I showed in Feb, but now it works through BPF syscall
+  and Ctrl-C does auto cleanup. This is patch 2/3
+
+ex2 - is a new example that demonstrates key feature of eBPF programs
+  for kernel debugging/tracing. This is patch 3/3
+
+dtrace/systemtap/ktap approach is to use one script file that should provide
+all desired functionality. That architectural decision overcomplicated their
+implementations.
+eBPF follows split model: everything that needs to process millions of events
+per second needs to run in kernel and needs to be short and deterministic,
+all other things like aggregation and nice graphs should run in user space.
+
+In the patch 3/3, kfree_skb events are counted by a program written in C,
+compiled into eBPF and attached to the event. That's ex2_kern.c file.
+The corresponding user space part is ex2_user.c which walks in-kernel map
+every second and prints its contents. So user space and kernel are
+accessing BPF maps in parallel. Kernel is counting events, user space
+prints them.
+
+Patch 1/3 is a parser of .o file generated by LLVM. It looks for pre-defined
+ELF sections like 'license', 'maps', 'events' and loads bpf maps/programs
+via BPF syscall that I posted earlier.
+
+Alexei Starovoitov (3):
+  samples: bpf: elf file loader
+  samples: bpf: eBPF example in C
+  samples: bpf: eBPF dropmon example in C
+
+ samples/bpf/Makefile      |   17 +++-
+ samples/bpf/bpf_helpers.h |   21 +++++
+ samples/bpf/bpf_load.c    |  228 +++++++++++++++++++++++++++++++++++++++++++++
+ samples/bpf/bpf_load.h    |   18 ++++
+ samples/bpf/ex1_kern.c    |   27 ++++++
+ samples/bpf/ex1_user.c    |   11 +++
+ samples/bpf/ex2_kern.c    |   29 ++++++
+ samples/bpf/ex2_user.c    |   28 ++++++
+ 8 files changed, 377 insertions(+), 2 deletions(-)
+ create mode 100644 samples/bpf/bpf_helpers.h
+ create mode 100644 samples/bpf/bpf_load.c
+ create mode 100644 samples/bpf/bpf_load.h
+ create mode 100644 samples/bpf/ex1_kern.c
+ create mode 100644 samples/bpf/ex1_user.c
+ create mode 100644 samples/bpf/ex2_kern.c
+ create mode 100644 samples/bpf/ex2_user.c
+
+----
+
+The following changes since commit 240524089d7a5c0396656574e299beb3a55461e3:
+
+  net: bcmgenet: only update UMAC_CMD if something changed (2014-07-21 19:49:11 -0700)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/ast/bpf master
+
+for you to fetch changes up to 27ae0cec12d0aac6f0705b0269ee705a0c599571:
+
+  samples: bpf: eBPF dropmon example in C (2014-07-21 20:01:29 -0700)
+
+----------------------------------------------------------------
+Alexei Starovoitov (20):
+      net: filter: split filter.c into two files
+      bpf: update MAINTAINERS entry
+      net: filter: rename struct sock_filter_int into bpf_insn
+      net: filter: split filter.h and expose eBPF to user space
+      bpf: introduce syscall(BPF, ...) and BPF maps
+      bpf: enable bpf syscall on x64
+      bpf: add lookup/update/delete/iterate methods to BPF maps
+      bpf: add hashtable type of BPF maps
+      bpf: expand BPF syscall with program load/unload
+      bpf: add eBPF verifier
+      bpf: allow eBPF programs to use maps
+      net: sock: allow eBPF programs to be attached to sockets
+      tracing: allow eBPF programs to be attached to events
+      samples: bpf: add mini eBPF library to manipulate maps and programs
+      samples: bpf: example of stateful socket filtering
+      samples: bpf: example of tracing filters with eBPF
+      bpf: llvm backend
+      samples: bpf: elf file loader
+      samples: bpf: eBPF example in C
+      samples: bpf: eBPF dropmon example in C
