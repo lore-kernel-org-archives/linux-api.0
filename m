@@ -1,70 +1,58 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH RFC v2 net-next 08/16] bpf: add hashtable type of BPF maps
-Date: Wed, 23 Jul 2014 13:33:29 -0700
-Message-ID: <CAGXu5jLbcrR76=omiqRNERhjZS8bsR1-jG+Ctra97uCrpHLPUA@mail.gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH RFC v2 net-next 07/16] bpf: add lookup/update/delete/iterate
+ methods to BPF maps
+Date: Wed, 23 Jul 2014 14:22:24 -0700
+Message-ID: <CAMEtUuy6DsrTF1ejA64nfYvBUJ2mUb4M=sjkVAwswf4Ot=P7Gw@mail.gmail.com>
 References: <1405657206-12060-1-git-send-email-ast@plumgrid.com>
-	<1405657206-12060-9-git-send-email-ast@plumgrid.com>
-	<CAGXu5jK1hrwvPs7f+mSOer+81J9SBxwMrqb=6fFeZQ7hd-FMzA@mail.gmail.com>
-	<CAMEtUuyRUG6ZdRvL0JuakD0zPdYo3WoqQepK7_b_MW+r2aVzVA@mail.gmail.com>
+	<1405657206-12060-8-git-send-email-ast@plumgrid.com>
+	<CAGXu5j+cvG5BhNSA=UrcbYs3LPSZUZyj4_ey8=9O0KgbUYUd9g@mail.gmail.com>
+	<CAMEtUuwE1oLUZb2QM243uKGSAfT_ahozducakpi9uvADzsj5XA@mail.gmail.com>
+	<CAGXu5jKA9gArKaqODsD0kswmP0Q77w152VXhq9zCS4pgTZf+Jg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMEtUuyRUG6ZdRvL0JuakD0zPdYo3WoqQepK7_b_MW+r2aVzVA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5jKA9gArKaqODsD0kswmP0Q77w152VXhq9zCS4pgTZf+Jg@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 23, 2014 at 12:57 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
-> On Wed, Jul 23, 2014 at 11:36 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->>> +static struct bpf_map *htab_map_alloc(struct nlattr *attr[BPF_MAP_ATTR_MAX + 1])
->>> +{
->>> +       struct bpf_htab *htab;
->>> +       int err, i;
->>> +
->>> +       htab = kmalloc(sizeof(*htab), GFP_USER);
+On Wed, Jul 23, 2014 at 1:25 PM, Kees Cook <keescook@chromium.org> wrote:
+> On Wed, Jul 23, 2014 at 12:49 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
+>> On Wed, Jul 23, 2014 at 11:25 AM, Kees Cook <keescook@chromium.org> wrote:
+>>>> +
+>>>> +       /* lookup key in a given map referenced by map_id
+>>>> +        * err = bpf_map_lookup_elem(int map_id, void *key, void *value)
+>>>
+>>> This needs map_id documentation updates too?
 >>
->> I'd prefer kzalloc here.
->
-> in this case I agree. will change, since it's not in critical path and we
-> can waste few cycles zeroing memory.
->
->>> +       err = -ENOMEM;
->>> +       htab->buckets = kmalloc(htab->n_buckets * sizeof(struct hlist_head),
->>> +                               GFP_USER);
+>> yes. will grep for it just to make sure.
 >>
->> I'd prefer kcalloc here, even though n_buckets can't currently trigger
->> an integer overflow.
->
-> hmm, I would argue that kmalloc_array is a preferred way, but kcalloc ?
-> Few lines below the whole array is inited with INIT_HLIST_HEAD...
-
-Ah! I didn't realize kmalloc_array existed! Perfect. Yes, that would
-be great to use. The zeroing is not needed, due to the init below, as
-you say.
-
->
->>> +       for (i = 0; i < htab->n_buckets; i++)
->>> +               INIT_HLIST_HEAD(&htab->buckets[i]);
->
->>> +       htab->slab_name = kasprintf(GFP_USER, "bpf_htab_%p", htab);
+>>>> +static int get_map_id(struct fd f)
+>>>> +{
+>>>> +       struct bpf_map *map;
+>>>> +
+>>>> +       if (!f.file)
+>>>> +               return -EBADF;
+>>>> +
+>>>> +       if (f.file->f_op != &bpf_map_fops) {
+>>>> +               fdput(f);
+>>>
+>>> It feels weird to me to do the fdput inside this function. Instead,
+>>> should map_lookup_elem get a "err_put" label, instead?
 >>
->> This leaks a kernel heap memory pointer to userspace. If a unique name
->> needed, I think map_id should be used instead.
+>> I don't think it will work, since I'm not sure that fd.flags will be zero
+>> when fd.file == NULL. It looks so by analyzing return code path
+>> in fs/file.c, but I wasn't sure that I followed all code paths,
+>> so I just picked this style from fs/timerfd.c assuming it was
+>> done this away on purpose and there can be the case where
+>> fd.file == null and fd.flags !=0. In such case we cannot call fdput().
 >
-> it leaks, how? slabinfo is only available to root.
-> The same code exists in conntrack:
-> net/netfilter/nf_conntrack_core.c:1767
+> Yeah, hm, looking around, this does seem to be the case. I guess the
+> thought is that when get_map_id fails, struct fd has been handled.
 
-Right, in extreme cases, there are system configurations where leaking
-addresses even to root can be considered a bug. There are a lot of
-these situations in the kernel still, that's true. However, if we can
-at all avoid it, I'd really like to avoid adding new ones. Nearly all
-the cases of using a memory pointer is for uniqueness concerns, but I
-think can already get that from the map_id.
+correct.
 
--Kees
+> Maybe add a comment above that function as a reminder?
 
--- 
-Kees Cook
-Chrome OS Security
+yes. will do.
