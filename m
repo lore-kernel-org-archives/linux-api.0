@@ -1,33 +1,55 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 0/5] futex: introduce an optimistic spinning futex
-Date: Wed, 23 Jul 2014 09:52:19 +0200
-Message-ID: <20140723075219.GQ3935@laptop>
-References: <1405956271-34339-1-git-send-email-Waiman.Long@hp.com>
- <8761iq3bp3.fsf@tassilo.jf.intel.com>
- <1406091303.5076.33.camel@marge.simpson.net>
- <20140723065736.GM3935@laptop>
- <1406100346.5076.98.camel@marge.simpson.net>
- <20140723073518.GP3935@laptop>
- <1406101143.5076.100.camel@marge.simpson.net>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH RFC v2 net-next 02/16] bpf: update MAINTAINERS entry
+Date: Wed, 23 Jul 2014 10:37:40 -0700
+Message-ID: <CAGXu5j+mGDEPx5rCdVXzAdxR9SwQQ4ERM-Brxt4TmmncdPjzzg@mail.gmail.com>
+References: <1405657206-12060-1-git-send-email-ast@plumgrid.com>
+	<1405657206-12060-3-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1406101143.5076.100.camel@marge.simpson.net>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Cc: Andi Kleen <andi@firstfloor.org>, Waiman Long <Waiman.Long@hp.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Darren Hart <dvhart@linux.intel.com>, Davidlohr Bueso <davidlohr@hp.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1405657206-12060-3-git-send-email-ast@plumgrid.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 23, 2014 at 09:39:03AM +0200, Mike Galbraith wrote:
-> On Wed, 2014-07-23 at 09:35 +0200, Peter Zijlstra wrote: 
-> > On Wed, Jul 23, 2014 at 09:25:46AM +0200, Mike Galbraith wrote:
-> > > I also resurrect mwait_idle(), as while you may consider it obsolete, I
-> > > still love my lovely little Q6600 box (power sucking pig) dearly :)
-> > 
-> > Yeah, I keep forgetting about that one.. we should get that fixed.
-> 
-> (it is an obsolete pig, and nobody else seems to mind, so I don't mind)
+On Thu, Jul 17, 2014 at 9:19 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
+> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+> ---
+>  MAINTAINERS |    7 +++++++
+>  1 file changed, 7 insertions(+)
+>
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index ae8cd00215b2..32e24ff46da3 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -1912,6 +1912,13 @@ S:       Supported
+>  F:     drivers/net/bonding/
+>  F:     include/uapi/linux/if_bonding.h
+>
+> +BPF (Safe dynamic programs and tools)
 
-Hey, I fixed early P4 topology setup yesterday, core2 is like brand
-spanking new compared :-)
+bikeshed: I feel like this shouldn't be an acronym. Maybe instead:
+
+BERKELEY PACKET FILTER (BPF: Safe dynamic programs and tools)
+
+-Kees
+
+> +M:     Alexei Starovoitov <ast@kernel.org>
+> +L:     netdev@vger.kernel.org
+> +L:     linux-kernel@vger.kernel.org
+> +S:     Supported
+> +F:     kernel/bpf/
+> +
+>  BROADCOM B44 10/100 ETHERNET DRIVER
+>  M:     Gary Zambrano <zambrano@broadcom.com>
+>  L:     netdev@vger.kernel.org
+> --
+> 1.7.9.5
+>
+
+
+
+-- 
+Kees Cook
+Chrome OS Security
