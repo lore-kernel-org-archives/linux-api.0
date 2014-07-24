@@ -1,16 +1,16 @@
 From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 0/5] RFC: CGroup Namespaces
-Date: Thu, 24 Jul 2014 16:10:18 +0000
-Message-ID: <20140724161018.GL26600@ubuntumail>
+Date: Thu, 24 Jul 2014 16:36:28 +0000
+Message-ID: <20140724163628.GN26600@ubuntumail>
 References: <adityakali-cgroupns>
  <1405626731-12220-1-git-send-email-adityakali@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
 In-Reply-To: <1405626731-12220-1-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
@@ -24,31 +24,6 @@ Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
 >   =E2=80=9Cvirtualized=E2=80=9D, the task is always able to see globa=
 l cgroups view
 >   through cgroupfs mount and via /proc/self/cgroup file.
-
-Hi,
-
-A few questions/comments:
-
-1. Based on this description, am I to understand that after doing a
-   cgroupns unshare, 'mount -t cgroup cgroup /mnt' by default will
-   still mount the global root cgroup?  Any plans on "changing" that?
-   Will attempts to change settings of a cgroup which is not under
-   our current ns be rejected?  (That should be easy to do given your
-   patch 1/5).  Sorry if it's done in the set, I'm jumping around...
-
-2. What would be the reprecussions of allowing cgroupns unshare so
-   long as you have ns_capable(CAP_SYS_ADMIN) to the user_ns which
-   created your current ns cgroup?  It'd be a shame if that wasn't
-   on the roadmap.
-
-3. The un-namespaced view of /proc/self/cgroup from a sibling cgroupns
-   makes me wonder whether it wouldn't be more appropriate to leave
-   /proc/self/cgroup always un-filtered, and use /proc/self/nscgroup
-   (or somesuch) to provide the namespaced view.  /proc/self/nscgroup
-   would simply be empty (or say (invalid) or (unreachable)) from a
-   sibling ns.  That will give criu and admin tools like lxc/docker all
-   they need to do simple cgroup setup.
-
 >=20
 >   $ cat /proc/self/cgroup=20
 >   0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/c_jo=
@@ -189,7 +164,13 @@ c_job_id1/sub_cgrp_1
 >=20
 >   (5) setns() is not supported for cgroup namespace in the initial
 >       version.
->=20
+
+This combined with the full-path reporting for peer ns cgroups could ma=
+ke
+for fun antics when attaching to an existing container (since we'd have
+to unshare into a new ns cgroup with the same roto as the container).
+I understand you are implying this will be fixed soon though.
+
 >   (6) When some thread from a multi-threaded process unshares its
 >       cgroup-namespace, the new cgroupns gets applied to the entire
 >       process (all the threads). This should be OK since
@@ -221,7 +202,9 @@ p
 ght
 >       be possible to delegate administration of sub-cgroups under a
 >       cgroupns-root to the cgroupns owner.
->=20
+
+That would be nice.
+
 >   (2) Provide a cgroupns specific cgroupfs mount. i.e., the following
 >       command when ran from inside a cgroupns should only mount the
 >       hierarchy from cgroupns-root cgroup:
@@ -231,33 +214,20 @@ ght
 >       This is similar to how procfs can be mounted for every PIDNS. T=
 his
 >       may have some usecases.
->=20
-> ---
->  fs/kernfs/dir.c                  |  51 +++++++++++++---
->  fs/proc/namespaces.c             |   3 +
->  include/linux/cgroup.h           |  36 ++++++++++-
->  include/linux/cgroup_namespace.h |  62 +++++++++++++++++++
->  include/linux/kernfs.h           |   3 +
->  include/linux/nsproxy.h          |   2 +
->  include/linux/proc_ns.h          |   4 ++
->  include/uapi/linux/sched.h       |   3 +-
->  init/Kconfig                     |   9 +++
->  kernel/Makefile                  |   1 +
->  kernel/cgroup.c                  |  75 +++++++++++++++++------
->  kernel/cgroup_namespace.c        | 128 +++++++++++++++++++++++++++++=
-++++++++++
->  kernel/fork.c                    |   2 +-
->  kernel/nsproxy.c                 |  19 +++++-
->  14 files changed, 364 insertions(+), 34 deletions(-)
->  create mode 100644 include/linux/cgroup_namespace.h
->  create mode 100644 kernel/cgroup_namespace.c
->=20
-> [PATCH 1/5] kernfs: Add API to get generate relative kernfs path
-> [PATCH 2/5] sched: new clone flag CLONE_NEWCGROUP for cgroup
-> [PATCH 3/5] cgroup: add function to get task's cgroup on default
-> [PATCH 4/5] cgroup: export cgroup_get() and cgroup_put()
-> [PATCH 5/5] cgroup: introduce cgroup namespaces
-> _______________________________________________
-> Containers mailing list
-> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> https://lists.linuxfoundation.org/mailman/listinfo/containers
+
+Sorry - I see this answers the first part of a question in my previous =
+email.
+However, the question of whether changes to limits in cgroups which are=
+ not
+under our cgroup-ns-root are allowed.
+
+Admittedly the current case with cgmanager is the same - in that it dep=
+ends
+on proper setup of the container - but cgmanager is geared to recommend
+not mounting the cgroups in the container at all (and we can reject suc=
+h
+mounts in the contaienr altogether with no loss in functionality) where=
+as
+you are here encouraging such mounts.  Which is fine - so long as you t=
+hen
+fully address the potential issues.
