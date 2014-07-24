@@ -1,162 +1,213 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH RFC v2 net-next 10/16] bpf: add eBPF verifier
-Date: Wed, 23 Jul 2014 17:48:26 -0700
-Message-ID: <CAMEtUuzWcNLYUOALQbyQ48+GfATrB-wdZP0Y+rVuF=u7m+H=kg@mail.gmail.com>
-References: <1405657206-12060-1-git-send-email-ast@plumgrid.com>
-	<1405657206-12060-11-git-send-email-ast@plumgrid.com>
-	<CAGXu5j+HJ-sSkjE_1+UZXZiL19u0oOA8QSrOmkepWPaMBsv9eg@mail.gmail.com>
+From: Hugh Dickins <hughd@google.com>
+Subject: Re: [PATCH v4 1/6] mm: allow drivers to prevent new writable
+ mappings
+Date: Wed, 23 Jul 2014 21:07:32 -0700 (PDT)
+Message-ID: <alpine.LSU.2.11.1407232106120.991@eggly.anvils>
+References: <1405877680-999-1-git-send-email-dh.herrmann@gmail.com> <1405877680-999-2-git-send-email-dh.herrmann@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5j+HJ-sSkjE_1+UZXZiL19u0oOA8QSrOmkepWPaMBsv9eg@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1405877680-999-2-git-send-email-dh.herrmann@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: linux-kernel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 23, 2014 at 4:38 PM, Kees Cook <keescook@chromium.org> wrote:
->> +Program that doesn't check return value of map_lookup_elem() before accessing
->> +map element:
->> +  BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
->> +  BPF_ALU64_REG(BPF_MOV, BPF_REG_2, BPF_REG_10),
->> +  BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
->> +  BPF_ALU64_IMM(BPF_MOV, BPF_REG_1, 1),
->> +  BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
->
-> Is the expectation that these pointers are direct kernel function
-> addresses? It looks like they're indexes in the check_call routine
-> below. What specifically were the pointer leaks you'd mentioned?
+On Sun, 20 Jul 2014, David Herrmann wrote:
 
-yes, the pointer returned from map_lookup_elem() is a direct pointer
-to map element value. If program prints it, that obviously a leak.
-Therefore I'm planning to add 'secure' mode to verifier where such
-pointer leaks are detected and rejected. This mode will be on for
-any non-root syscall.
+> The i_mmap_writable field counts existing writable mappings of an
+> address_space. To allow drivers to prevent new writable mappings, make
+> this counter signed and prevent new writable mappings if it is negative.
+> This is modelled after i_writecount and DENYWRITE.
+> 
+> This will be required by the shmem-sealing infrastructure to prevent any
+> new writable mappings after the WRITE seal has been set. In case there
+> exists a writable mapping, this operation will fail with EBUSY.
+> 
+> Note that we rely on the fact that iff you already own a writable mapping,
+> you can increase the counter without using the helpers. This is the same
+> that we do for i_writecount.
+> 
+> Acked-by: Hugh Dickins <hughd@google.com>
 
->> +#define _(OP) ({ int ret = OP; if (ret < 0) return ret; })
->
-> This seems overly terse. :) And the meaning tends to be overloaded
-> (this obviously isn't a translatable string, etc). Perhaps call it
-> "chk" or "ret_fail"? And I think OP in the body should have ()s around
-> it to avoid potential macro expansion silliness.
+Yup!
 
-Sure, I'll wrap OP in ().
-you've missed the previous thread about my favorite _ macro:
-http://www.spinics.net/lists/netdev/msg288070.html
-I think I gave a ton of 'pro' arguments already.
-Looks like I have to order a bunch of t-shirts with '#define _()' on
-them and give it to everyone on the next conference :)
+> Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
+> ---
+>  fs/inode.c         |  1 +
+>  include/linux/fs.h | 29 +++++++++++++++++++++++++++--
+>  kernel/fork.c      |  2 +-
+>  mm/mmap.c          | 30 ++++++++++++++++++++++++------
+>  mm/swap_state.c    |  1 +
+>  5 files changed, 54 insertions(+), 9 deletions(-)
+> 
+> diff --git a/fs/inode.c b/fs/inode.c
+> index 6eecb7f..9945b11 100644
+> --- a/fs/inode.c
+> +++ b/fs/inode.c
+> @@ -165,6 +165,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
+>  	mapping->a_ops = &empty_aops;
+>  	mapping->host = inode;
+>  	mapping->flags = 0;
+> +	atomic_set(&mapping->i_mmap_writable, 0);
+>  	mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE);
+>  	mapping->private_data = NULL;
+>  	mapping->backing_dev_info = &default_backing_dev_info;
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index e11d60c..152b254 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -387,7 +387,7 @@ struct address_space {
+>  	struct inode		*host;		/* owner: inode, block_device */
+>  	struct radix_tree_root	page_tree;	/* radix tree of all pages */
+>  	spinlock_t		tree_lock;	/* and lock protecting it */
+> -	unsigned int		i_mmap_writable;/* count VM_SHARED mappings */
+> +	atomic_t		i_mmap_writable;/* count VM_SHARED mappings */
+>  	struct rb_root		i_mmap;		/* tree of private and shared mappings */
+>  	struct list_head	i_mmap_nonlinear;/*list VM_NONLINEAR mappings */
+>  	struct mutex		i_mmap_mutex;	/* protect tree, count, list */
+> @@ -470,10 +470,35 @@ static inline int mapping_mapped(struct address_space *mapping)
+>   * Note that i_mmap_writable counts all VM_SHARED vmas: do_mmap_pgoff
+>   * marks vma as VM_SHARED if it is shared, and the file was opened for
+>   * writing i.e. vma may be mprotected writable even if now readonly.
+> + *
+> + * If i_mmap_writable is negative, no new writable mappings are allowed. You
+> + * can only deny writable mappings, if none exists right now.
+>   */
+>  static inline int mapping_writably_mapped(struct address_space *mapping)
+>  {
+> -	return mapping->i_mmap_writable != 0;
+> +	return atomic_read(&mapping->i_mmap_writable) > 0;
+> +}
+> +
+> +static inline int mapping_map_writable(struct address_space *mapping)
+> +{
+> +	return atomic_inc_unless_negative(&mapping->i_mmap_writable) ?
+> +		0 : -EPERM;
+> +}
+> +
+> +static inline void mapping_unmap_writable(struct address_space *mapping)
+> +{
+> +	atomic_dec(&mapping->i_mmap_writable);
+> +}
+> +
+> +static inline int mapping_deny_writable(struct address_space *mapping)
+> +{
+> +	return atomic_dec_unless_positive(&mapping->i_mmap_writable) ?
+> +		0 : -EBUSY;
+> +}
+> +
+> +static inline void mapping_allow_writable(struct address_space *mapping)
+> +{
+> +	atomic_inc(&mapping->i_mmap_writable);
+>  }
+>  
+>  /*
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index 6a13c46..9d37dfd 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -421,7 +421,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
+>  				atomic_dec(&inode->i_writecount);
+>  			mutex_lock(&mapping->i_mmap_mutex);
+>  			if (tmp->vm_flags & VM_SHARED)
+> -				mapping->i_mmap_writable++;
+> +				atomic_inc(&mapping->i_mmap_writable);
+>  			flush_dcache_mmap_lock(mapping);
+>  			/* insert tmp into the share list, just after mpnt */
+>  			if (unlikely(tmp->vm_flags & VM_NONLINEAR))
+> diff --git a/mm/mmap.c b/mm/mmap.c
+> index 129b847..7f548e4 100644
+> --- a/mm/mmap.c
+> +++ b/mm/mmap.c
+> @@ -216,7 +216,7 @@ static void __remove_shared_vm_struct(struct vm_area_struct *vma,
+>  	if (vma->vm_flags & VM_DENYWRITE)
+>  		atomic_inc(&file_inode(file)->i_writecount);
+>  	if (vma->vm_flags & VM_SHARED)
+> -		mapping->i_mmap_writable--;
+> +		mapping_unmap_writable(mapping);
+>  
+>  	flush_dcache_mmap_lock(mapping);
+>  	if (unlikely(vma->vm_flags & VM_NONLINEAR))
+> @@ -617,7 +617,7 @@ static void __vma_link_file(struct vm_area_struct *vma)
+>  		if (vma->vm_flags & VM_DENYWRITE)
+>  			atomic_dec(&file_inode(file)->i_writecount);
+>  		if (vma->vm_flags & VM_SHARED)
+> -			mapping->i_mmap_writable++;
+> +			atomic_inc(&mapping->i_mmap_writable);
+>  
+>  		flush_dcache_mmap_lock(mapping);
+>  		if (unlikely(vma->vm_flags & VM_NONLINEAR))
+> @@ -1572,6 +1572,17 @@ munmap_back:
+>  			if (error)
+>  				goto free_vma;
+>  		}
+> +		if (vm_flags & VM_SHARED) {
+> +			error = mapping_map_writable(file->f_mapping);
+> +			if (error)
+> +				goto allow_write_and_free_vma;
+> +		}
+> +
+> +		/* ->mmap() can change vma->vm_file, but must guarantee that
+> +		 * vma_link() below can deny write-access if VM_DENYWRITE is set
+> +		 * and map writably if VM_SHARED is set. This usually means the
+> +		 * new file must not have been exposed to user-space, yet.
+> +		 */
+>  		vma->vm_file = get_file(file);
+>  		error = file->f_op->mmap(file, vma);
+>  		if (error)
+> @@ -1611,8 +1622,12 @@ munmap_back:
+>  
+>  	vma_link(mm, vma, prev, rb_link, rb_parent);
+>  	/* Once vma denies write, undo our temporary denial count */
+> -	if (vm_flags & VM_DENYWRITE)
+> -		allow_write_access(file);
+> +	if (file) {
+> +		if (vm_flags & VM_SHARED)
+> +			mapping_unmap_writable(file->f_mapping);
+> +		if (vm_flags & VM_DENYWRITE)
+> +			allow_write_access(file);
+> +	}
+>  	file = vma->vm_file;
+>  out:
+>  	perf_event_mmap(vma);
+> @@ -1641,14 +1656,17 @@ out:
+>  	return addr;
+>  
+>  unmap_and_free_vma:
+> -	if (vm_flags & VM_DENYWRITE)
+> -		allow_write_access(file);
+>  	vma->vm_file = NULL;
+>  	fput(file);
+>  
+>  	/* Undo any partial mapping done by a device driver. */
+>  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
+>  	charged = 0;
+> +	if (vm_flags & VM_SHARED)
+> +		mapping_unmap_writable(file->f_mapping);
+> +allow_write_and_free_vma:
+> +	if (vm_flags & VM_DENYWRITE)
+> +		allow_write_access(file);
+>  free_vma:
+>  	kmem_cache_free(vm_area_cachep, vma);
+>  unacct_error:
+> diff --git a/mm/swap_state.c b/mm/swap_state.c
+> index 2972eee..31321fa 100644
+> --- a/mm/swap_state.c
+> +++ b/mm/swap_state.c
+> @@ -39,6 +39,7 @@ static struct backing_dev_info swap_backing_dev_info = {
+>  struct address_space swapper_spaces[MAX_SWAPFILES] = {
+>  	[0 ... MAX_SWAPFILES - 1] = {
+>  		.page_tree	= RADIX_TREE_INIT(GFP_ATOMIC|__GFP_NOWARN),
+> +		.i_mmap_writable = ATOMIC_INIT(0),
+>  		.a_ops		= &swap_aops,
+>  		.backing_dev_info = &swap_backing_dev_info,
+>  	}
+> -- 
+> 2.0.2
 
->> +static const char *const bpf_jmp_string[] = {
->> +       "jmp", "==", ">", ">=", "&", "!=", "s>", "s>=", "call", "exit"
->> +};
->
-> It seems like these string arrays should have literal initializers
-> like reg_type_str does.
-
-yeah. good point. will do.
-
->> +static int check_reg_arg(struct reg_state *regs, int regno, bool is_src)
->> +{
->
-> Since regno is always populated with dst_reg/src_reg (u8 :4 sized),
-> shouldn't this be u8 instead of int? (And in check_* below too?) More
-
-why? 'int' type is much friendlier to compiler. u8,u16 is a pain to deal with.
-unsigned types in general are much harder for optimizer.
-
-> importantly, regno needs bounds checking. MAX_BPF_REG is 10, but
-> dst_reg/src_reg could be up to 15, IIUC.
-
-grr. yes. somehow lost this check in this version. good catch.
-
->> +       } else {
->> +               if (regno == BPF_REG_FP)
->> +                       /* frame pointer is read only */
->
-> Why no verbose() call here?
-
-no good reason.will add.
-
->> +               slot = &state->stack[MAX_BPF_STACK + off];
->> +               slot->stype = STACK_SPILL;
->> +               /* save register state */
->> +               slot->type = state->regs[value_regno].type;
->> +               slot->imm = state->regs[value_regno].imm;
->> +               for (i = 1; i < 8; i++) {
->> +                       slot = &state->stack[MAX_BPF_STACK + off + i];
->
-> off and size need bounds checking here and below.
-
-off and size were checked in check_mem_access().
-Here size is 1,2,4,8 and off is within [-MAX_BPF_STACK,0)
-so no extra checks needed.
-
->> +/* check read/write into map element returned by bpf_map_lookup_elem() */
->> +static int check_map_access(struct verifier_env *env, int regno, int off,
->> +                           int size)
->> +{
->> +       struct bpf_map *map;
->> +       int map_id = env->cur_state.regs[regno].imm;
->> +
->> +       _(get_map_info(env, map_id, &map));
->> +
->> +       if (off < 0 || off + size > map->value_size) {
->
-> This could be tricked with a negative size, or a giant size, wrapping negative.
-
-nope. cannot. check_map_access() is called from check_mem_access()
-where off and size were checked.
-
->> +static int check_mem_access(struct verifier_env *env, int regno, int off,
->> +                           int bpf_size, enum bpf_access_type t,
->> +                           int value_regno)
->> +{
->> +       struct verifier_state *state = &env->cur_state;
->> +       int size;
->> +
->> +       _(size = bpf_size_to_bytes(bpf_size));
->> +
->> +       if (off % size != 0) {
->> +               verbose("misaligned access off %d size %d\n", off, size);
->> +               return -EACCES;
->> +       }
->
-> I think more off and size checking is needed here.
-
-I don't see the problem. Here it's the main entry into other checks.
-alignment check above is a common check for all memory accesses.
-All other stricter checks are in check_map_access(), check_stack_*(),
-check_ctx_access() that are called from this check_mem_access() func.
-Why do you think more checking is needed?
-
->> +/* when register 'regno' is passed into function that will read 'access_size'
->> + * bytes from that pointer, make sure that it's within stack boundary
->> + * and all elements of stack are initialized
->> + */
->> +static int check_stack_boundary(struct verifier_env *env,
->> +                               int regno, int access_size)
->> +{
->> +       struct verifier_state *state = &env->cur_state;
->> +       struct reg_state *regs = state->regs;
->> +       int off, i;
->> +
->
-> regno bounds checking needed.
-
-nope. check_stack_boundary() is called from check_func_arg()
-which is called only with constant regnos: 1,2,3,4,5 to check function
-arguments.
-
-> Unless I've overlooked something, I think this needs much stricter
-> evaluation of register numbers, offsets, and sizes.
-
-sorry to hear that first glance was disappointing :)
-I hope my explanation made it more clear.
-The only check that I forgot to carry over the last year is in
-check_reg_arg(). Around november last year the verifier patches I keep
-posting diverged a little bit from the one we keep running in production,
-since eBPF got few instruction renamed, so I had to keep tracking the two.
-Once this version gets upstreamed we can finally drop the internal one.
-check_reg_arg() is indeed incorrect here. Will fix. That was a good catch.
-Thank you for review!
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
