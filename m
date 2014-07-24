@@ -1,47 +1,66 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH -v5] random: introduce getrandom(2) system call
-Date: Thu, 24 Jul 2014 13:54:05 -0700
-Message-ID: <CALCETrXtNUSCQEZ+SKJ5Br41rnF35kGqStkFuX6dN-3z5hVdmQ@mail.gmail.com>
-References: <1406212287-9855-1-git-send-email-tytso@mit.edu>
- <20140724151814.GE32421@khazad-dum.debian.net> <CALCETrXAA=UzS-pRCo5tKSjSCOP9xfu66BG9QbRefVrovkavhQ@mail.gmail.com>
- <20140724190206.GL6673@thunk.org> <20140724203019.GA20737@khazad-dum.debian.net>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v4 0/6] File Sealing & memfd_create()
+Date: Thu, 24 Jul 2014 14:47:47 -0700
+Message-ID: <20140724144747.3041b208832bbdf9fbce5d96@linux-foundation.org>
+References: <1405877680-999-1-git-send-email-dh.herrmann@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140724203019.GA20737@khazad-dum.debian.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Henrique de Moraes Holschuh <hmh@hmh.eng.br>
-Cc: Theodore Ts'o <tytso@mit.edu>, Linux Kernel Developers List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1405877680-999-1-git-send-email-dh.herrmann@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: linux-kernel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Ryan Lortie <desrt@desrt.ca>, Linus Torvalds <torvalds@linux-foundation.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <greg@kroah.com>, john.stultz@linaro.org, Lennart Poettering <lennart@poettering.net>, Daniel Mack <zonque@gmail.com>, Kay Sievers <kay@vrfy.org>, Hugh Dickins <hughd@google.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 24, 2014 at 1:30 PM, Henrique de Moraes Holschuh
-<hmh@hmh.eng.br> wrote:
-> On Thu, 24 Jul 2014, Theodore Ts'o wrote:
->> On Thu, Jul 24, 2014 at 08:21:38AM -0700, Andy Lutomirski wrote:
->> > > Should we add E<SOMETHING> to be able to deny access to GRND_RANDOM or some
->> > > future extension ?
->> >
->> > This might actually be needed sooner rather than later.  There are
->> > programs that use containers and intentionally don't pass /dev/random
->> > through into the container.  I know that Sandstorm does this, and I
->> > wouldn't be surprised if other things (Docker?) do the same thing.
->>
->> I wouldn't add the error to the man page until we actually modify the
->> kernel to add such a restriction.
->
-> By then, it might be too late.  It would be really sad to find ourselves
-> forced to return ENOSYS to getrandom(GRND_RANDOM) when we actually wanted to
-> return EPERM/EACCES.
->
-> Actually, we might not be able to do even that much: all it takes is for
-> someone to have the bright idea of deploying userspace code that checks for
-> ENOSYS only on a first "probe" getrandom() syscall without GRND_RANDOM, and
-> does something idiotic when it gets ENOSYS later on a
-> getrandom(GRND_RANDOM).  meh.  We can't even abuse the system ourselves :-)
->
+On Sun, 20 Jul 2014 19:34:34 +0200 David Herrmann <dh.herrmann@gmail.com> wrote:
 
-Or that someone writes userspace code that gets -EPERM/-EACCESS on
-getrandom with GRND_RANDOM and falls back to something worse than
-getrandom w/o GRND_RANDOM.
+> This is v4 of the File-Sealing and memfd_create() patches. You can find v1 with
+> a longer introduction at gmane [1], there's also v2 [2] and v3 [3] available.
+> See also the article about sealing on LWN [4], and a high-level introduction on
+> the new API in my blog [5]. Last but not least, man-page proposals are
+> available in my private repository [6].
+>
+> ...
+>
+>
+> [1]    memfd v1: http://thread.gmane.org/gmane.comp.video.dri.devel/102241
+> [2]    memfd v2: http://thread.gmane.org/gmane.linux.kernel.mm/115713
+> [3]    memfd v3: http://thread.gmane.org/gmane.linux.kernel.mm/118721
+> [4] LWN article: https://lwn.net/Articles/593918/
+> [5]   API Intro: http://dvdhrm.wordpress.com/2014/06/10/memfd_create2/
+> [6]   Man-pages: http://cgit.freedesktop.org/~dvdhrm/man-pages/log/?h=memfd
+> [7]    Dev-repo: http://cgit.freedesktop.org/~dvdhrm/linux/log/?h=memfd
 
---Andy
+This is unconventional and a little irritating.  I'm OK with running
+around chasing down web pages but we generally don't do that in
+changelogs.  I'm not sure why really, maybe partly because things
+bitrot, partly because that's where people expect to find things,
+partly because people like work down caves and on airplanes ;)
+
+Another downside is that if a reviewer wants to comment on some piece
+of text, it isn't available for the usual reply-to-all quoting.
+
+
+So...  Could you please put together a plain old text/plain changelog
+which actually describes this patchset and send it along?  Everything
+which people need/want to know, all in one place?  That text should be
+maintained alongside the patches themselves, should there be future
+versions.
+
+Now excuse me, I have a bunch of web pages to go and read ;)
+
+<reads "[1]    memfd v1">
+
+OK, I immediately have questions and I see significant review feedback,
+so either that document is out of date or that review feedback was
+ignored.
+
+Help.  Where do I (and all future readers of these patches) go to get
+an up to date and complete description of this patchset??
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
