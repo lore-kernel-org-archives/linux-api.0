@@ -1,108 +1,30 @@
-From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 4/5] cgroup: export cgroup_get() and cgroup_put()
-Date: Thu, 24 Jul 2014 17:03:16 +0000
-Message-ID: <20140724170316.GS26600@ubuntumail>
-References: <adityakali-cgroupns>
- <1405626731-12220-1-git-send-email-adityakali@google.com>
- <1405626731-12220-5-git-send-email-adityakali@google.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH RFC v2 net-next 10/16] bpf: add eBPF verifier
+Date: Thu, 24 Jul 2014 11:25:23 -0700
+Message-ID: <CALCETrUt1yLXTt5pDZJd0s4s+4dhs0LB7tbJYd6p1+EbdNWw7w@mail.gmail.com>
+References: <1405657206-12060-1-git-send-email-ast@plumgrid.com> <1405657206-12060-11-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1405626731-12220-5-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1405657206-12060-11-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
-> move cgroup_get() and cgroup_put() into cgroup.h so that
-> they can be called from other places.
-> 
-> Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+On Thu, Jul 17, 2014 at 9:20 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+> Safety of eBPF programs is statically determined by the verifier, which detects:
+> - loops
+> - out of range jumps
+> - unreachable instructions
+> - invalid instructions
+> - uninitialized register access
+> - uninitialized stack access
+> - misaligned stack access
+> - out of range stack access
+> - invalid calling convention
 
-Acked-by: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Is there something that documents exactly what conditions an eBPF
+program must satisfy in order to be considered valid?
 
-> ---
->  include/linux/cgroup.h | 17 +++++++++++++++++
->  kernel/cgroup.c        | 18 ------------------
->  2 files changed, 17 insertions(+), 18 deletions(-)
-> 
-> diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
-> index 707c302..4ea477f 100644
-> --- a/include/linux/cgroup.h
-> +++ b/include/linux/cgroup.h
-> @@ -530,6 +530,23 @@ static inline bool cgroup_on_dfl(const struct cgroup *cgrp)
->  	return cgrp->root == &cgrp_dfl_root;
->  }
->  
-> +/* convenient tests for these bits */
-> +static inline bool cgroup_is_dead(const struct cgroup *cgrp)
-> +{
-> +	return !(cgrp->self.flags & CSS_ONLINE);
-> +}
-> +
-> +static inline void cgroup_get(struct cgroup *cgrp)
-> +{
-> +	WARN_ON_ONCE(cgroup_is_dead(cgrp));
-> +	css_get(&cgrp->self);
-> +}
-> +
-> +static inline void cgroup_put(struct cgroup *cgrp)
-> +{
-> +	css_put(&cgrp->self);
-> +}
-> +
->  /* no synchronization, the result can only be used as a hint */
->  static inline bool cgroup_has_tasks(struct cgroup *cgrp)
->  {
-> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-> index 1671345..8552513 100644
-> --- a/kernel/cgroup.c
-> +++ b/kernel/cgroup.c
-> @@ -185,7 +185,6 @@ static int need_forkexit_callback __read_mostly;
->  static struct cftype cgroup_dfl_base_files[];
->  static struct cftype cgroup_legacy_base_files[];
->  
-> -static void cgroup_put(struct cgroup *cgrp);
->  static int rebind_subsystems(struct cgroup_root *dst_root,
->  			     unsigned int ss_mask);
->  static int cgroup_destroy_locked(struct cgroup *cgrp);
-> @@ -286,12 +285,6 @@ static struct cgroup_subsys_state *cgroup_e_css(struct cgroup *cgrp,
->  	return cgroup_css(cgrp, ss);
->  }
->  
-> -/* convenient tests for these bits */
-> -static inline bool cgroup_is_dead(const struct cgroup *cgrp)
-> -{
-> -	return !(cgrp->self.flags & CSS_ONLINE);
-> -}
-> -
->  struct cgroup_subsys_state *of_css(struct kernfs_open_file *of)
->  {
->  	struct cgroup *cgrp = of->kn->parent->priv;
-> @@ -1029,17 +1022,6 @@ static umode_t cgroup_file_mode(const struct cftype *cft)
->  	return mode;
->  }
->  
-> -static void cgroup_get(struct cgroup *cgrp)
-> -{
-> -	WARN_ON_ONCE(cgroup_is_dead(cgrp));
-> -	css_get(&cgrp->self);
-> -}
-> -
-> -static void cgroup_put(struct cgroup *cgrp)
-> -{
-> -	css_put(&cgrp->self);
-> -}
-> -
->  /**
->   * cgroup_refresh_child_subsys_mask - update child_subsys_mask
->   * @cgrp: the target cgroup
-> -- 
-> 2.0.0.526.g5318336
-> 
-> _______________________________________________
-> Containers mailing list
-> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> https://lists.linuxfoundation.org/mailman/listinfo/containers
+--Andy
