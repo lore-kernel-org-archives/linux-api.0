@@ -1,77 +1,126 @@
-From: David Drysdale <drysdale@google.com>
-Subject: [PATCH 1/6] open.2: describe O_BENEATH flag
-Date: Fri, 25 Jul 2014 14:47:08 +0100
-Message-ID: <1406296033-32693-13-git-send-email-drysdale@google.com>
+From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 10/11] capsicum: prctl(2) to force use of O_BENEATH
+Date: Fri, 25 Jul 2014 14:47:06 +0100
+Message-ID: <1406296033-32693-11-git-send-email-drysdale@google.com>
 References: <1406296033-32693-1-git-send-email-drysdale@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1406296033-32693-1-git-send-email-drysdale@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1406296033-32693-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: David Drysdale <drysdale@google.com>
----
- man2/open.2 | 33 +++++++++++++++++++++++++++++++--
- 1 file changed, 31 insertions(+), 2 deletions(-)
+Add a per-task flag that indicates all openat(2) operations
+should implicitly have the O_BENEATH flag set.
 
-diff --git a/man2/open.2 b/man2/open.2
-index 475d9e405908..c3d080fb3bea 100644
---- a/man2/open.2
-+++ b/man2/open.2
-@@ -705,7 +705,7 @@ in a fully formed state (using
- as described above).
- .RE
- .IP
--.B O_TMPFILE
-+.B O_TMPFILE " (since Linux 3.??)"
- requires support by the underlying filesystem;
- only a subset of Linux filesystems provide that support.
- In the initial implementation, support was provided in
-@@ -715,6 +715,31 @@ XFS support was added
- .\" commit ab29743117f9f4c22ac44c13c1647fb24fb2bafe
- in Linux 3.15.
- .TP
-+.B O_BENEATH
-+Ensure that the
-+.I pathname
-+is beneath the current working directory (for
-+.BR open (2))
-+or the
-+.I dirfd
-+(for
-+.BR openat (2)).
-+If the
-+.I pathname
-+is absolute or contains a path component of "..", the
-+.BR open ()
-+fails with the error
-+.BR EACCES.
-+This occurs even if ".." path component would not actually
-+escape the original directory; for example, a
-+.I pathname
-+of "subdir/../filename" would be rejected.
-+Path components that are symbolic links to absolute paths, or that are
-+relative paths containing a ".." component, will also cause the
-+.BR open ()
-+operation to fail with the error
-+.BR EACCES.
-+.TP
- .B O_TRUNC
- If the file already exists and is a regular file and the access mode allows
- writing (i.e., is
-@@ -791,7 +816,11 @@ The requested access to the file is not allowed, or search permission
- is denied for one of the directories in the path prefix of
- .IR pathname ,
- or the file did not exist yet and write access to the parent directory
--is not allowed.
-+is not allowed, or the
-+.B O_BENEATH
-+flag was specified and the
-+.I pathname
-+was not beneath the relevant directory.
- (See also
- .BR path_resolution (7).)
- .TP
---
+Add a prctl(2) command to set this flag (irrevocably). Include
+an option to force the flag set to be synchronized across all
+tasks in the thread group.
+
+Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+---
+ fs/namei.c                 |  3 +++
+ include/linux/sched.h      |  3 +++
+ include/uapi/linux/prctl.h | 14 ++++++++++++++
+ kernel/sys.c               | 28 ++++++++++++++++++++++++++++
+ 4 files changed, 48 insertions(+)
+
+diff --git a/fs/namei.c b/fs/namei.c
+index fe03a7dd7537..5d3b440869df 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -1849,6 +1849,9 @@ static int path_init(int dfd, const char *name, unsigned int *flags,
+ 	nd->flags = (*flags) | LOOKUP_PARENT | LOOKUP_JUMPED;
+ 	nd->depth = 0;
+ 
++	if (current->openat_beneath)
++		*flags |= LOOKUP_BENEATH;
++
+ 	if ((*flags) & LOOKUP_ROOT) {
+ 		struct dentry *root = nd->root.dentry;
+ 		struct inode *inode = root->d_inode;
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 306f4f0c987a..8d2943879b7b 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1303,6 +1303,9 @@ struct task_struct {
+ 	/* Used for emulating ABI behavior of previous Linux versions */
+ 	unsigned int personality;
+ 
++	/* Indicate that openat(2) operations implictly have O_BENEATH */
++	unsigned openat_beneath:1;
++
+ 	unsigned in_execve:1;	/* Tell the LSMs that the process is doing an
+ 				 * execve */
+ 	unsigned in_iowait:1;
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 58afc04c107e..b34fb2bbdaf8 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -152,4 +152,18 @@
+ #define PR_SET_THP_DISABLE	41
+ #define PR_GET_THP_DISABLE	42
+ 
++/*
++ * If openat_beneath is set for a task, then all openat(2) operations will
++ * implicitly have the O_BENEATH flag set for them.  Once set, this flag cannot
++ * be cleared.
++ */
++#define PR_SET_OPENAT_BENEATH	44
++#define PR_GET_OPENAT_BENEATH	45
++
++/*
++  Indicate that the openat_beneath flag should be synchronized across all
++ * threads in the process.
++ */
++#define PR_SET_OPENAT_BENEATH_TSYNC	0x01
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 8d8ccf6cfb38..cf2530c41982 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1821,6 +1821,23 @@ out:
+ 	return error;
+ }
+ 
++static int prctl_set_openat_beneath(struct task_struct *me, unsigned long flags)
++{
++	me->openat_beneath = 1;
++	if (flags & PR_SET_OPENAT_BENEATH_TSYNC) {
++		struct task_struct *thread, *caller;
++		unsigned long tflags;
++
++		write_lock_irqsave(&tasklist_lock, tflags);
++		thread = caller = me;
++		while_each_thread(caller, thread) {
++			thread->openat_beneath = 1;
++		}
++		write_unlock_irqrestore(&tasklist_lock, tflags);
++	}
++	return 0;
++}
++
+ #ifdef CONFIG_CHECKPOINT_RESTORE
+ static int prctl_get_tid_address(struct task_struct *me, int __user **tid_addr)
+ {
+@@ -1996,6 +2013,17 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+ 		return current->no_new_privs ? 1 : 0;
++	case PR_SET_OPENAT_BENEATH:
++		if (arg2 != 1 || arg4 || arg5)
++			return -EINVAL;
++		if ((arg3 & ~(PR_SET_OPENAT_BENEATH_TSYNC)) != 0)
++			return -EINVAL;
++		error = prctl_set_openat_beneath(me, arg3);
++		break;
++	case PR_GET_OPENAT_BENEATH:
++		if (arg2 || arg3 || arg4 || arg5)
++			return -EINVAL;
++		return me->openat_beneath;
+ 	case PR_GET_THP_DISABLE:
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+-- 
 2.0.0.526.g5318336
