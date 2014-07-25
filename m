@@ -1,55 +1,79 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [PATCH 10/11] capsicum: prctl(2) to force use of O_BENEATH
-Date: Fri, 25 Jul 2014 16:01:57 +0200
-Message-ID: <53D26355.9020809@redhat.com>
-References: <1406296033-32693-1-git-send-email-drysdale@google.com> <1406296033-32693-11-git-send-email-drysdale@google.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 11/11] seccomp: Add tgid and tid into seccomp_data
+Date: Fri, 25 Jul 2014 08:59:30 -0700
+Message-ID: <CALCETrVJX4+-6vkRaDj4kV_bXiYL5fj_PtO53g9fRf=i4X2Tww@mail.gmail.com>
+References: <1406296033-32693-1-git-send-email-drysdale@google.com> <1406296033-32693-12-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <1406296033-32693-11-git-send-email-drysdale@google.com>
+In-Reply-To: <1406296033-32693-12-git-send-email-drysdale@google.com>
 Sender: linux-security-module-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Il 25/07/2014 15:47, David Drysdale ha scritto:
-> @@ -1996,6 +2013,17 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
->  		if (arg2 || arg3 || arg4 || arg5)
->  			return -EINVAL;
->  		return current->no_new_privs ? 1 : 0;
-> +	case PR_SET_OPENAT_BENEATH:
-> +		if (arg2 != 1 || arg4 || arg5)
-> +			return -EINVAL;
-> +		if ((arg3 & ~(PR_SET_OPENAT_BENEATH_TSYNC)) != 0)
-> +			return -EINVAL;
-> +		error = prctl_set_openat_beneath(me, arg3);
-> +		break;
-> +	case PR_GET_OPENAT_BENEATH:
-> +		if (arg2 || arg3 || arg4 || arg5)
-> +			return -EINVAL;
-> +		return me->openat_beneath;
->  	case PR_GET_THP_DISABLE:
->  		if (arg2 || arg3 || arg4 || arg5)
->  			return -EINVAL;
-> 
+On Jul 25, 2014 6:48 AM, "David Drysdale" <drysdale@google.com> wrote:
+>
+> Add the current thread and thread group IDs into the data
+> available for seccomp-bpf programs to work on.  This allows
+> installation of filters that police syscalls based on thread
+> or process ID, e.g. tgkill(2)/kill(2)/prctl(2).
+>
+> Signed-off-by: David Drysdale <drysdale@google.com>
+> ---
+>  include/uapi/linux/seccomp.h | 10 ++++++++++
+>  kernel/seccomp.c             |  2 ++
+>  2 files changed, 12 insertions(+)
+>
+> diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+> index ac2dc9f72973..b88370d6f6ca 100644
+> --- a/include/uapi/linux/seccomp.h
+> +++ b/include/uapi/linux/seccomp.h
+> @@ -36,12 +36,22 @@
+>   * @instruction_pointer: at the time of the system call.
+>   * @args: up to 6 system call arguments always stored as 64-bit values
+>   *        regardless of the architecture.
+> + * @tgid: thread group ID of the thread executing the BPF program.
+> + * @tid: thread ID of the thread executing the BPF program.
+> + * The SECCOMP_DATA_TID_PRESENT macro indicates the presence of the
+> + * tgid and tid fields; user programs may use this macro to conditionally
+> + * compile code against older versions of the kernel.  Note also that
+> + * BPF programs should cope with the absence of these fields by testing
+> + * the length of data available.
+>   */
+>  struct seccomp_data {
+>         int nr;
+>         __u32 arch;
+>         __u64 instruction_pointer;
+>         __u64 args[6];
+> +       __u32 tgid;
+> +       __u32 tid;
+>  };
+> +#define SECCOMP_DATA_TID_PRESENT       1
+>
+>  #endif /* _UAPI_LINUX_SECCOMP_H */
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index 301bbc24739c..dd5146f15d6d 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -80,6 +80,8 @@ static void populate_seccomp_data(struct seccomp_data *sd)
+>         sd->args[4] = args[4];
+>         sd->args[5] = args[5];
+>         sd->instruction_pointer = KSTK_EIP(task);
+> +       sd->tgid = task_tgid_vnr(current);
+> +       sd->tid = task_pid_vnr(current);
+>  }
 
-Why are you always forbidding a change of prctl from 1 to 0?  It should
-be safe if current->no_new_privs is clear.
+This is, IMO, problematic.  These should probably be relative to the
+filter creator, not the filtered task.  This will also hurt
+performance.
 
-Do new threads inherit from the parent?
+What's the use case?  Can it be better achieved with a new eBPF function?
 
-Also, I wonder if you need something like this check:
+--Andy
 
-        /*
-         * Installing a seccomp filter requires that the task has
-         * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
-         * This avoids scenarios where unprivileged tasks can affect the
-         * behavior of privileged children.
-         */
-        if (!current->no_new_privs &&
-            security_capable_noaudit(current_cred(), current_user_ns(),
-                                     CAP_SYS_ADMIN) != 0)
-                return -EACCES;
-
-Paolo
+>
+>  /**
+> --
+> 2.0.0.526.g5318336
+>
