@@ -1,64 +1,123 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 6/6] prctl.2: describe PR_SET_OPENAT_BENEATH/PR_GET_OPENAT_BENEATH
-Date: Fri, 25 Jul 2014 14:47:13 +0100
-Message-ID: <1406296033-32693-18-git-send-email-drysdale@google.com>
+From: David Drysdale <drysdale@google.com>
+Subject: [PATCH 2/6] capsicum.7: describe Capsicum capability framework
+Date: Fri, 25 Jul 2014 14:47:09 +0100
+Message-ID: <1406296033-32693-14-git-send-email-drysdale@google.com>
 References: <1406296033-32693-1-git-send-email-drysdale@google.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1406296033-32693-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1406296033-32693-1-git-send-email-drysdale@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, Kees Cook <keescook@chromium.org>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
+Signed-off-by: David Drysdale <drysdale@google.com>
 ---
- man2/prctl.2 | 35 +++++++++++++++++++++++++++++++++++
- 1 file changed, 35 insertions(+)
+ man7/capsicum.7 | 97 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 97 insertions(+)
+ create mode 100644 man7/capsicum.7
 
-diff --git a/man2/prctl.2 b/man2/prctl.2
-index 119989183ed3..f5f71af249f2 100644
---- a/man2/prctl.2
-+++ b/man2/prctl.2
-@@ -295,6 +295,41 @@ A value of 1 indicates
- .BR execve (2)
- will operate in the privilege-restricting mode described above.
- .TP
-+.BR PR_SET_OPENAT_BENEATH " (since Linux 3.??)"
-+Set the calling process's
-+.I openat_beneath
-+bit to the value in
-+.IR arg2 .
-+With
-+.I openat_beneath
-+set to 1, all
-+.BR openat (2)
+diff --git a/man7/capsicum.7 b/man7/capsicum.7
+new file mode 100644
+index 000000000000..e736060bb5bc
+--- /dev/null
++++ b/man7/capsicum.7
+@@ -0,0 +1,97 @@
++.\"
++.\" Copyright (c) 2014 Google, Inc.
++.\" Copyright (c) 2011, 2013 Robert N. M. Watson
++.\" Copyright (c) 2011 Jonathan Anderson
++.\" All rights reserved.
++.\"
++.\" %%%LICENSE_START(BSD_2_CLAUSE)
++.\" Redistribution and use in source and binary forms, with or without
++.\" modification, are permitted provided that the following conditions
++.\" are met:
++.\" 1. Redistributions of source code must retain the above copyright
++.\"    notice, this list of conditions and the following disclaimer.
++.\" 2. Redistributions in binary form must reproduce the above copyright
++.\"    notice, this list of conditions and the following disclaimer in the
++.\"    documentation and/or other materials provided with the distribution.
++.\"
++.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
++.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
++.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++.\" SUCH DAMAGE.
++.\" %%%LICENSE_END
++.\"
++.TH CAPSICUM 7 2014-05-07 "Linux" "Linux Programmer's Manual"
++.SH NAME
++capsicum \- lightweight OS capability and sandbox framework
++.SH SYNOPSIS
++.B #include <sys/capsicum.h>
++.SH DESCRIPTION
++Capsicum is a lightweight OS capability and sandbox framework implementing a hybrid
++capability system model.
++Capsicum can be used for application and library compartmentalisation, the
++decomposition of larger bodies of software into isolated (sandboxed)
++components in order to implement security policies and limit the impact of
++software vulnerabilities.
++.PP
++Capsicum provides three core kernel mechanisms,
++.IR "Capsicum capabilities",
++.I "capability mode"
 +and
++.IR "process descriptors",
++each described below.
++
++.SS Capsicum Capabilities
++A
++.I Capsicum capability
++is a file descriptor that has been limited so that only
++certain operations can be performed on it.
++For example, a file descriptor returned by
 +.BR open (2)
-+operations act as though the
-+.B O_BENEATH
-+flag is set.
-+Once set, this bit cannot be unset.
-+The setting of this bit is inherited by children created by
-+.BR fork (2)
++may be refined using
++.BR cap_rights_limit (2)
++so that only
++.BR read (2)
 +and
-+.BR clone (2),
-+and preserved across
-+.BR execve (2).
-+.TP
-+.BR PR_GET_OPENAT_BENEATH " (since Linux 3.??)"
-+Return (as the function result) the value of the
-+.I openat_beneath
-+bit for the current process.
-+A value of 0 indicates the regular behavior.
-+A value of 1 indicates that
-+.BR openat (2)
-+and
-+.BR open (2)
-+will operate in the implicit
-+.B O_BENEATH
-+mode described above.
-+.TP
- .BR PR_SET_PDEATHSIG " (since Linux 2.1.57)"
- Set the parent process death signal
- of the calling process to \fIarg2\fP (either a signal value
--- 
++.BR write (2)
++can be called on it, but not
++.BR fchmod (2).
++The complete list of the capability rights can be found in the
++.BR rights (7)
++manual page.
++
++.SS Capability Mode
++Capsicum capability mode is a process mode, entered by invoking
++.BR cap_enter (3),
++in which access to global OS namespaces (such as the file system and PID
++namespaces) is restricted; only explicitly delegated rights, referenced by
++memory mappings or file descriptors, may be used.
++Once set, the flag is inherited by future children processes, and may not be
++cleared.
++
++.SS Process Descriptors
++.I Process descriptors
++are file descriptors representing processes, allowing parent processes to manage
++child processes without requiring access to the PID namespace, and are described in
++greater detail in
++.BR procdesc (7).
++.SH VERSIONS
++Capsicum support is available in the kernel since version 3.???.
++.SH SEE ALSO
++.BR cap_enter (3),
++.BR cap_getmode (3) ,
++.BR cap_rights_get (2),
++.BR cap_rights_limit (2) ,
++.BR pdfork (2),
++.BR pdgetpid (2),
++.BR pdkill (2),
++.BR pdwait4 (2),
++.BR procdesc (7),
++.BR rights (7)
++
+--
 2.0.0.526.g5318336
