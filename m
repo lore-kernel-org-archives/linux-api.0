@@ -1,29 +1,43 @@
-From: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
-Date: Fri, 25 Jul 2014 22:35:50 +0100
-Message-ID: <20140725223550.3153f436@alan.etchedpixels.co.uk>
+Date: Fri, 25 Jul 2014 14:41:47 -0700
+Message-ID: <CALCETrXHNFYaQjksBJyN3O0HJpKw_D_tU7b4O23=nyJt9CPSLg@mail.gmail.com>
 References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
+ <20140725223550.3153f436@alan.etchedpixels.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Henrique de Moraes Holschuh <hmh-N3TV7GIv+o9fyO9Q7EP/yw@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20140725223550.3153f436@alan.etchedpixels.co.uk>
+Sender: linux-crypto-owner@vger.kernel.org
+To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Julien Tinnes <jln@google.com>, David Drysdale <drysdale@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Theodore Ts'o <tytso@mit.edu>, Henrique de Moraes Holschuh <hmh@hmh.eng.br>, linux-crypto@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 25 Jul 2014 11:30:48 -0700
-Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+On Fri, Jul 25, 2014 at 2:35 PM, One Thousand Gnomes
+<gnomes@lxorguk.ukuu.org.uk> wrote:
+> On Fri, 25 Jul 2014 11:30:48 -0700
+> Andy Lutomirski <luto@amacapital.net> wrote:
+>
+>> [new thread because this sort of combines two threads]
+>>
+>> There is recent interest in having a way to turn generally-available
+>> kernel features off.  Maybe we should add a good one so we can stop
+>> bikeshedding and avoid proliferating dumb interfaces.
+>
+> We sort of have one. It's called capable(). Just needs extending to cover
+> anything else you care about, and probably all the numeric constants
+> replacing with textual names.
+>
 
-> [new thread because this sort of combines two threads]
-> 
-> There is recent interest in having a way to turn generally-available
-> kernel features off.  Maybe we should add a good one so we can stop
-> bikeshedding and avoid proliferating dumb interfaces.
+Except that it's all backwards: these are things that default to *on*,
+and people might want them to turn off.  capable() is totally fscked
+if you want otherwise unprivileged users to carry capabilities around,
+and fixing it seems to run into endless claims that the "capability"
+system is carefully designed, flawless, perfect, ideal, amazing, and
+shouldn't be changed, despite the fact that it's empirically damn near
+useless.
 
-We sort of have one. It's called capable(). Just needs extending to cover
-anything else you care about, and probably all the numeric constants
-replacing with textual names.
+Also, capabilities do the wrong thing wrt namespaces.  The things I'm
+talking about aren't namespaced.  They're either on or off.
 
-Alan
+--Andy
