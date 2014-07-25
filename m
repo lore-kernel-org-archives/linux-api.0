@@ -1,57 +1,133 @@
 From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
-Date: Fri, 25 Jul 2014 13:21:31 -0700
-Message-ID: <CALCETrULRhQCSPsgepntRuCbvx-guEKzpBUT4EoQi2-VU0P8bQ@mail.gmail.com>
-References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
- <20140725201507.GA23410@redhat.com>
+Subject: Re: [PATCH 0/5] RFC: CGroup Namespaces
+Date: Fri, 25 Jul 2014 13:27:50 -0700
+Message-ID: <CALCETrW7im0CHp9z_n4ZaaiNVqz6hcXdXqFpT9iO3P4c92aJyg@mail.gmail.com>
+References: <1405626731-12220-1-git-send-email-adityakali@google.com>
+ <20140724163628.GN26600@ubuntumail> <CAGr1F2GcAema-E2q6PFj=R0Z505iD7JshrMuMdfPTJ95wMiQMA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140725201507.GA23410-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Henrique de Moraes Holschuh <hmh-N3TV7GIv+o9fyO9Q7EP/yw@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGr1F2GcAema-E2q6PFj=R0Z505iD7JshrMuMdfPTJ95wMiQMA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 25, 2014 at 1:15 PM, Dave Jones <davej-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Fri, Jul 25, 2014 at 11:30:48AM -0700, Andy Lutomirski wrote:
+On Fri, Jul 25, 2014 at 12:29 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> Thank you for your review. I have tried to respond to both your emails here.
 >
->  > There is recent interest in having a way to turn generally-available
->  > kernel features off.  Maybe we should add a good one so we can stop
->  > bikeshedding and avoid proliferating dumb interfaces.
->  >
->  > Things that might want to be turn-off-able include:
->  >  - getrandom with GRND_RANDOM [from the getrandom threads]
->  >  - Any lookup of a non-self pid [from the capsicum thread]
->  >  - Any lookup of a pid outside the caller thread group [capsicum]
->  >  - Various architectural things (personal wishlist), e.g.:
->  >     - RDTSC and userspace HPET access
->  >     - CPUID?
->  >     - 32-bit GDT code segments [huge attack surface]
->  >     - 64-bit GDT code segments [probably pointless]
+> On Thu, Jul 24, 2014 at 9:36 AM, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
+>> 2. What would be the reprecussions of allowing cgroupns unshare so
+>>    long as you have ns_capable(CAP_SYS_ADMIN) to the user_ns which
+>>    created your current ns cgroup?  It'd be a shame if that wasn't
+>>    on the roadmap.
+>>
 >
-> I'm not sure there's value in disabling cpuid dev interface,
-> when the instruction is unprivileged.
-
-I meant the CPUID instruction.  Some CPUs have a setting that turns
-off the CPUID instruction for user code.  In principle, all VMs can do
-this, too, if the hypervisor would be kind enough to help out.
-
-I only mentioned the x86 stuff here to make the point that there are
-quite a few possibilities along these lines.  There's actually already
-a way to turn off RDTSC, but it's not currently very useful because it
-doesn't do the right thing for the vDSO.  That could be fixed, but
-there's certainly no reason to make any of the other stuff here wait
-for that.
-
+> Its certainly on the roadmap, just that some logistics were not clear
+> at this time. As pointed out by Andy Lutomirski on [PATCH 5/5] of this
+> series, if we allow cgroupns creation to ns_capable(CAP_SYS_ADMIN)
+> processes, we may need some kind of explicit permission from the
+> cgroup subsystem to allow this. One approach could be an explicit
+> cgroup.may_unshare setting. Alternatively, the cgroup directory (which
+> is going to become the cgroupns-root) ownership could also be used
+> here. i.e., the process is ns_capable(CAP_SYS_ADMIN) && it owns the
+> cgroup directory. There seems to be already a function that allows
+> similar thing and might be sufficient:
 >
->  > I would propose a new syscall for this:
->  >
->  > long restrict_userspace(int mode, int type, int value, int flags);
+> /**
+>  * capable_wrt_inode_uidgid - Check nsown_capable and uid and gid mapped
+>  * @inode: The inode in question
+>  * @cap: The capability in question
+>  *
+>  * Return true if the current task has the given capability targeted at
+>  * its own user namespace and that the given inode's uid and gid are
+>  * mapped into the current user namespace.
+>  */
+> bool capable_wrt_inode_uidgid(const struct inode *inode, int cap)
 >
-> do the restrictions happen system-wide like in say SELinux,
-> or only within the calling process, like seccomp ?
+> What do you think? We can enable this for non-init userns once this is
+> decided on.
 >
 
-The calling process and children, like seccomp.
+I think I'd rather it just check that it's owned by the userns owner
+if we were going down that route.  But maybe there's a good reason to
+do it this way.
+
+>
+>> 3. The un-namespaced view of /proc/self/cgroup from a sibling cgroupns
+>>    makes me wonder whether it wouldn't be more appropriate to leave
+>>    /proc/self/cgroup always un-filtered, and use /proc/self/nscgroup
+>>    (or somesuch) to provide the namespaced view.  /proc/self/nscgroup
+>>    would simply be empty (or say (invalid) or (unreachable)) from a
+>>    sibling ns.  That will give criu and admin tools like lxc/docker all
+>>    they need to do simple cgroup setup.
+>>
+>
+> It may work for lxc/docker and new applications that use the new
+> interface. But its difficult to change numerous existing user
+> applications and libraries that depend on /proc/self/cgroup. Moreover,
+> even with the new interface, /proc/self/cgroup will continue to leak
+> system level cgroup information. And fixing this leak is critical to
+> make the container migratable.
+>
+> Its easy to correctly handle the read of /proc/<pid>/cgroup from a
+> sibling cgroupns. Instead of showing unfiltered view, we could just
+> not show anything (same behavior when the cgroup hierarchy is not
+> mounted). Will that be more acceptable? I can make that change in the
+> next version of this series.
+>
+>
+
+
+>>>   (5) setns() is not supported for cgroup namespace in the initial
+>>>       version.
+>>
+>> This combined with the full-path reporting for peer ns cgroups could make
+>> for fun antics when attaching to an existing container (since we'd have
+>> to unshare into a new ns cgroup with the same roto as the container).
+>> I understand you are implying this will be fixed soon though.
+>>
+>
+> I am thinking the setns() will be only allowed if
+> target_cgrpns->cgroupns_root is_descendant_of
+> current_cgrpns->cgroupns_root. i.e., you will only be setns to a
+> cgroup namespace which is rooted deeper in hierarchy than your own (in
+> addition to checking capable_wrt_inode_uidgid(target_cgrpns_inode)).
+
+I'm not sure why the capable_wrt_inode_uidgid is needed here -- I
+imagine that the hierarchy check and the usual CAP_SYS_ADMIN check on
+the cgroupns's userns would be sufficient.
+
+>
+> In addition to this, we need to decide whether its OK for setns() to
+> also change the cgroup of the task. Consider following example:
+>
+> [A] ----> [B] ----> C
+>     ----> D
+>
+> [A] and [B] are cgroupns-roots. Now, if a task in Cgroup D (which is
+> under cgroupns [A]) attempts to setns() to cgroupns [B], then its
+> cgroup should change from /A/D to /A/B. I am concerned about the
+> side-effects this might cause. Though otherwise, this is a very useful
+> feature for containers. One could argue that this is similar to
+> setns() to a mount-namespace which is pivot_root'd somewhere else (in
+> which case, the attaching task's root "/" moves implicitly with
+> setns).
+
+Off the top of my head, I think that making setns do this would be too
+magical.  How about just requiring that you already be in (a
+descendent of) the requested cgroupns's root cgroup if you try to
+setns?
+
+>
+> Alternatively, we could only allow setns() if
+> target_cgrpns->cgroupns_root == current->cgroup . I.e., taking above
+> example again, if process in Cgroup D wants to setns() to cgroupns
+> [B], then it will first need to move to Cgroup B, and only then the
+> setns() will succeed. This makes sure that there is no implicit cgroup
+> move.
+
+I like this one, but I think that descendant cgroups should probably
+be allowed, too.
 
 --Andy
