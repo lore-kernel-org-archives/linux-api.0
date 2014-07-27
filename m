@@ -1,55 +1,31 @@
-From: John Fastabend <john.fastabend@gmail.com>
-Subject: Re: [RFC PATCH 1/1] ethtool: adding support for multiple slave port
- configuration
-Date: Sun, 27 Jul 2014 09:09:54 -0700
-Message-ID: <53D52452.2020300@gmail.com>
-References: <1406291305-22286-1-git-send-email-mugunthanvnm@ti.com> <1406429221.29010.151.camel@deadeye.wl.decadent.org.uk>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
+Date: Sun, 27 Jul 2014 17:06:17 -0400
+Message-ID: <20140727210617.GY6725@thunk.org>
+References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1406429221.29010.151.camel@deadeye.wl.decadent.org.uk>
-Sender: netdev-owner@vger.kernel.org
-To: Ben Hutchings <ben@decadent.org.uk>, Mugunthan V N <mugunthanvnm@ti.com>
-Cc: netdev@vger.kernel.org, davem@davemloft.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Julien Tinnes <jln@google.com>, David Drysdale <drysdale@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Henrique de Moraes Holschuh <hmh@hmh.eng.br>, linux-crypto@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/26/2014 07:47 PM, Ben Hutchings wrote:
-> On Fri, 2014-07-25 at 17:58 +0530, Mugunthan V N wrote:
->> Some Ethernet Swtich controllers like CPSW in AM335x, TI814x, DRA7x and
->> AM43xx SoCs, Network Coprocessor in AM5K2E0x, Realtek Switch controllers
->> etc has to capability of conneting multiple networks using L2 switching
->> and has multiple phys. With the existing code, ethtool can communicate
->> only to one phy.
->>
->> To enable user to communicate multiple phy connected to single Ethernet
->> Switch controller, intoducing a optional new parameter in Ethtool interface
->> to pass which slave to set/get the phy configuration.
->
-> There was some discussion about configuration APIs for hardware/firmware
-> bridges earlier this year and I thought there was a consensus for
-> assigning a network device to each port.  This would remove the need to
-> identify ports within a device.  But I may have misremembered.
->
+On Fri, Jul 25, 2014 at 11:30:48AM -0700, Andy Lutomirski wrote:
+> 
+> There is recent interest in having a way to turn generally-available
+> kernel features off.  Maybe we should add a good one so we can stop
+> bikeshedding and avoid proliferating dumb interfaces.
 
-I like the approach of creating a network device for each port over
-having to use ethtool to program/discover them. I am currently looking
-at writing management applications for this and IMO it is much easier
-to discover and listen for events on network devices vs polling ethtool
-and iterating through slave indexs. Also you miss a lot of functionality
-that may be useful MTU for example that is not available configured via
-ethtool.
+I believe the seccomp infrastructure (which is already upstream)
+should be able to do most of what you want, at least with respect to
+features which are exposed via system calls (which was most of your
+list).
 
-One of the sticking points in earlier discussions was how to handle
-devices that have limited support for slave devices. When we create a
-netdev we expect the stack can bind to it and TX/RX packets which as
-I understand is not always possible? (I missed why we couldn't recv the
-packets over a switch port though with some skb->dev manipulation). In
-this case a feature flag could be used to resolve the feature
-dependencies.
+It won't cover x86 specific things like restricting RDTSC or CPUID
+(and as far as I know you can't intercept the CPUID instruction), but
+I'm not sure it matters.  I don't really see the point, myself.
 
-.John
-
-
--- 
-John Fastabend         Intel Corporation
+    	     		    	  	 - Ted
