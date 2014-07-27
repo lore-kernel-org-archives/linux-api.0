@@ -1,128 +1,97 @@
-From: David Drysdale <drysdale@google.com>
+From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 11/11] seccomp: Add tgid and tid into seccomp_data
-Date: Sun, 27 Jul 2014 13:09:00 +0100
-Message-ID: <CAHse=S_h9LegwifRaCbGdwqkOKG0BmXF5J+0ynvVJ-re_u-2ww@mail.gmail.com>
+Date: Sun, 27 Jul 2014 13:10:10 +0100
+Message-ID: <CAHse=S-9L5no=+R6Oh4KcMZ6C2sK+7EVLckuQikQgmA+MFD2oA@mail.gmail.com>
 References: <1406296033-32693-1-git-send-email-drysdale@google.com>
  <1406296033-32693-12-git-send-email-drysdale@google.com> <CALCETrVJX4+-6vkRaDj4kV_bXiYL5fj_PtO53g9fRf=i4X2Tww@mail.gmail.com>
- <CAGXu5jJZ7mhmq1BrdTP5Ww15+C2iLQKjLy1Xh0=9qZvVK5E9Cw@mail.gmail.com> <CALCETrVChObsQpL6dt-ByiCjbPrtpXAXQgy_apBY-OpGQHaPjg@mail.gmail.com>
+ <CAGXu5jJZ7mhmq1BrdTP5Ww15+C2iLQKjLy1Xh0=9qZvVK5E9Cw@mail.gmail.com>
+ <CALCETrVChObsQpL6dt-ByiCjbPrtpXAXQgy_apBY-OpGQHaPjg@mail.gmail.com>
+ <CAGXu5jLPrKA5LR-9=M6jAfPXYoztGzXPiaSiXgEcUE=+na73GA@mail.gmail.com>
+ <CAKyRK=j-f92xHTL3+TNr9WOv_y47dkZR=WZkpY_a5YW3Q8HfaQ@mail.gmail.com> <CALCETrWrCU1bw+-xP_xxoRfv6L7j+GhZS_YwrWFHd2uhSp8ySw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVChObsQpL6dt-ByiCjbPrtpXAXQgy_apBY-OpGQHaPjg@mail.gmail.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Kees Cook <keescook@chromium.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Julien Tinnes <jln@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrWrCU1bw+-xP_xxoRfv6L7j+GhZS_YwrWFHd2uhSp8ySw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 25, 2014 at 6:18 PM, Andy Lutomirski <luto@amacapital.net> wrote:
-> [cc: Eric Biederman]
->
-> On Fri, Jul 25, 2014 at 10:10 AM, Kees Cook <keescook@chromium.org> wrote:
->> On Fri, Jul 25, 2014 at 8:59 AM, Andy Lutomirski <luto@amacapital.net> wrote:
->>> On Jul 25, 2014 6:48 AM, "David Drysdale" <drysdale@google.com> wrote:
->>>>
->>>> Add the current thread and thread group IDs into the data
->>>> available for seccomp-bpf programs to work on.  This allows
->>>> installation of filters that police syscalls based on thread
->>>> or process ID, e.g. tgkill(2)/kill(2)/prctl(2).
->>>>
->>>> Signed-off-by: David Drysdale <drysdale@google.com>
->>>> ---
->>>>  include/uapi/linux/seccomp.h | 10 ++++++++++
->>>>  kernel/seccomp.c             |  2 ++
->>>>  2 files changed, 12 insertions(+)
->>>>
->>>> diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
->>>> index ac2dc9f72973..b88370d6f6ca 100644
->>>> --- a/include/uapi/linux/seccomp.h
->>>> +++ b/include/uapi/linux/seccomp.h
->>>> @@ -36,12 +36,22 @@
->>>>   * @instruction_pointer: at the time of the system call.
->>>>   * @args: up to 6 system call arguments always stored as 64-bit values
->>>>   *        regardless of the architecture.
->>>> + * @tgid: thread group ID of the thread executing the BPF program.
->>>> + * @tid: thread ID of the thread executing the BPF program.
->>>> + * The SECCOMP_DATA_TID_PRESENT macro indicates the presence of the
->>>> + * tgid and tid fields; user programs may use this macro to conditionally
->>>> + * compile code against older versions of the kernel.  Note also that
->>>> + * BPF programs should cope with the absence of these fields by testing
->>>> + * the length of data available.
->>>>   */
->>>>  struct seccomp_data {
->>>>         int nr;
->>>>         __u32 arch;
->>>>         __u64 instruction_pointer;
->>>>         __u64 args[6];
->>>> +       __u32 tgid;
->>>> +       __u32 tid;
->>>>  };
->>>> +#define SECCOMP_DATA_TID_PRESENT       1
->>>>
->>>>  #endif /* _UAPI_LINUX_SECCOMP_H */
->>>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
->>>> index 301bbc24739c..dd5146f15d6d 100644
->>>> --- a/kernel/seccomp.c
->>>> +++ b/kernel/seccomp.c
->>>> @@ -80,6 +80,8 @@ static void populate_seccomp_data(struct seccomp_data *sd)
->>>>         sd->args[4] = args[4];
->>>>         sd->args[5] = args[5];
->>>>         sd->instruction_pointer = KSTK_EIP(task);
->>>> +       sd->tgid = task_tgid_vnr(current);
->>>> +       sd->tid = task_pid_vnr(current);
->>>>  }
+On Fri, Jul 25, 2014 at 7:32 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Fri, Jul 25, 2014 at 11:22 AM, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>> On Fri, Jul 25, 2014 at 10:38 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
 >>>
->>> This is, IMO, problematic.  These should probably be relative to the
->>> filter creator, not the filtered task.  This will also hurt
->>> performance.
->>
->> Yeah, we can't change the seccomp_data structure without a lot of
->> care, and tgid/tid really should be encoded in the filter. However, it
->> is tricky in the forking case.
->>
+>>> On Fri, Jul 25, 2014 at 10:18 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+>>> wrote:
+>>> > [cc: Eric Biederman]
+>>> >
+>>> > On Fri, Jul 25, 2014 at 10:10 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>>> > wrote:
 >>>
->>> What's the use case?  Can it be better achieved with a new eBPF function?
-
-The specific use case is to be able to write a filter that allows kill(2)
-or tgkill(2) to self, where the filter still works after forking.  Capsicum
-capability mode in general locks down system calls that access PIDs
-(as they're a global namespace), but allows kill(self) as a pragmatic
-compromise to make it easier to migrate applications to use Capsicum.
-
->> Julien had been wanting something like this too (though he'd suggested
->> it via prctl): limit the signal functions to "self" only. I wonder if
->> adding a prctl like done for O_BENEATH could work for signal sending?
+>>> >> Julien had been wanting something like this too (though he'd suggested
+>>> >> it via prctl): limit the signal functions to "self" only. I wonder if
+>>> >> adding a prctl like done for O_BENEATH could work for signal sending?
+>>> >>
+>>> >
+>>> >
+>>> > Can we do one better and add a flag to prevent any non-self pid
+>>> > lookups?  This might actually be easy on top of the pid namespace work
+>>> > (e.g. we could change the way that find_task_by_vpid works).
+>>>
+>>> Ooh, that would be extremely interesting, yes. Kind of an extreme form
+>>> of pid namespace without actually being a namespace.
+>>>
+>>> > It's far from just being signals.  There's access_process_vm, ptrace,
+>>> > all the signal functions, clock_gettime (see CPUCLOCK_PID -- yes, this
+>>> > is ridiculous), and probably some others that I've forgotten about or
+>>> > never noticed in the first place.
+>>>
+>>> Yeah, that would be very interesting.
 >>
+>>
+>> Yes, this would be incredibly useful.
+>>
+>> 1. For Chromium [1], I dislike relying on seccomp purely for
+>> "access-control" (to other processes or files). Because it's really hard to
+>> think about everything (things like CPUCLOCK_PID bite, see
+>> https://crbug.com/374479).
 >
+> Not public :(
 >
-> Can we do one better and add a flag to prevent any non-self pid
-> lookups?  This might actually be easy on top of the pid namespace work
-> (e.g. we could change the way that find_task_by_vpid works).
+>> Se we have a first layer of sandboxing (using PID + NET namespaces and
+>> chroot) for "access-control" and a second layer for kernel attack surface
+>> reduction and a few other things using seccomp-bpf.
+>>
+>> The first layer isn't currently very good; it's heavyweight and complex (you
+>> need an init(1) per namespace and that init cannot be multi-purposed as a
+>> useful process because pid = 1 can never receive signals). One PID namespace
+>> per process isn't something that scales well. (Also before USER_NS it
+>> required a setuid root program).
+>>
+>> 2. Even with a safe pure seccomp-bpf sandbox that prevents sending signals
+>> to other process / ptrace() et al and that restrict clock_gettime(2)
+>> properly, things become quickly very tedious because as far as the kernel is
+>> concerned, the process under this BPF program can still pass
+>> ptrace_may_access() to other processes. This means for instance that no
+>> matter what you do, a model where open() is allowed can't work if /proc is
+>> available. We need a mode that says "ptrace_may_access()" will never pass.
+>>
+>> So yes, I really would like:
+>> - a prctl that says: "I'm dropping privileges and I now can't interact with
+>> other thread groups (via signals, ptrace, etc..)".
+>> - Something to drop access to the file system. It could be an unprivileged
+>> way to chroot() to an empty directory (unprivileged namespaces work for
+>> that, - except if you're already in a chroot -). This is a little tricky
+>> without allowing chroot escapes, so I suspect we would want to express it in
+>> terms of mount namespace, or something else, rather than chroot.
+>
+> Capsicum will give you this.
 
-That sounds like a good idea, as long as it's possible for
-non-CAP_SYS_ADMIN processes to do....
+Yep, that's the idea.  As long as there aren't any open DFDs for "/proc" on
+entry to capability mode, there shouldn't be a way to access it later -- but it
+is still possible to openat(2) new files (relative to a pre-opened DFD).
 
-> It's far from just being signals.  There's access_process_vm, ptrace,
-> all the signal functions, clock_gettime (see CPUCLOCK_PID -- yes, this
-> is ridiculous), and probably some others that I've forgotten about or
-> never noticed in the first place.
-
-For the Capsicum case in particular, most of these are restricted
-by the capability mode filter anyhow (although I need to fix it for
-CPUCLOCK_PID -- thanks for pointing that out); the kill(2) case
-was a special case to make migrations easier.  But a more general
-mechanism seems sensible.
-
-
+> See the other thread for a more concrete proposal.  prctl is getting
+> out of hand.
+>
 > --Andy
->
->> -Kees
->>
->> --
->> Kees Cook
->> Chrome OS Security
->
->
->
-> --
-> Andy Lutomirski
-> AMA Capital Management, LLC
