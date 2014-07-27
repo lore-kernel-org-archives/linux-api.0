@@ -1,110 +1,84 @@
-From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Subject: Re: [RFC PATCH 1/1] ethtool: adding support for multiple slave port
- configuration
-Date: Sun, 27 Jul 2014 03:47:01 +0100
-Message-ID: <1406429221.29010.151.camel@deadeye.wl.decadent.org.uk>
-References: <1406291305-22286-1-git-send-email-mugunthanvnm@ti.com>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCH 10/11] capsicum: prctl(2) to force use of O_BENEATH
+Date: Sun, 27 Jul 2014 13:08:11 +0100
+Message-ID: <CAHse=S_tCRsM77EKr=M+zP1pLg2y1EJRG-h=RUJau8Fm6RR2cw@mail.gmail.com>
+References: <1406296033-32693-1-git-send-email-drysdale@google.com>
+ <1406296033-32693-11-git-send-email-drysdale@google.com> <53D26355.9020809@redhat.com>
+ <CALCETrUGUuYzvQtHLABh78V4fZJmwqb1Lqk-P65VUdRyrDWLug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-	protocol="application/pgp-signature"; boundary="=-KYnuXAhc5cLSnEbs1fqH"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1406291305-22286-1-git-send-email-mugunthanvnm-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <CALCETrUGUuYzvQtHLABh78V4fZJmwqb1Lqk-P65VUdRyrDWLug@mail.gmail.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Paolo Bonzini <pbonzini@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Jul 25, 2014 at 5:00 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>
+> On Jul 25, 2014 7:02 AM, "Paolo Bonzini" <pbonzini@redhat.com> wrote:
+> >
+> > Il 25/07/2014 15:47, David Drysdale ha scritto:
+> > > @@ -1996,6 +2013,17 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+> > >               if (arg2 || arg3 || arg4 || arg5)
+> > >                       return -EINVAL;
+> > >               return current->no_new_privs ? 1 : 0;
+> > > +     case PR_SET_OPENAT_BENEATH:
+> > > +             if (arg2 != 1 || arg4 || arg5)
+> > > +                     return -EINVAL;
+> > > +             if ((arg3 & ~(PR_SET_OPENAT_BENEATH_TSYNC)) != 0)
+> > > +                     return -EINVAL;
+> > > +             error = prctl_set_openat_beneath(me, arg3);
+> > > +             break;
+> > > +     case PR_GET_OPENAT_BENEATH:
+> > > +             if (arg2 || arg3 || arg4 || arg5)
+> > > +                     return -EINVAL;
+> > > +             return me->openat_beneath;
+> > >       case PR_GET_THP_DISABLE:
+> > >               if (arg2 || arg3 || arg4 || arg5)
+> > >                       return -EINVAL;
+> > >
+> >
+> > Why are you always forbidding a change of prctl from 1 to 0?  It should
+> > be safe if current->no_new_privs is clear.
+>
+> I don't immediately see why you're forbidding unsettling it at all.
+> If you need it to be sticky, then use seccomp or Capsicum to make it
+> sticky.
 
---=-KYnuXAhc5cLSnEbs1fqH
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Good point, that would make the function more generic -- needing to
+latch is specific to Capsicum's use of it.
 
-On Fri, 2014-07-25 at 17:58 +0530, Mugunthan V N wrote:
-> Some Ethernet Swtich controllers like CPSW in AM335x, TI814x, DRA7x and
-> AM43xx SoCs, Network Coprocessor in AM5K2E0x, Realtek Switch controllers
-> etc has to capability of conneting multiple networks using L2 switching
-> and has multiple phys. With the existing code, ethtool can communicate
-> only to one phy.
->=20
-> To enable user to communicate multiple phy connected to single Ethernet
-> Switch controller, intoducing a optional new parameter in Ethtool interfa=
-ce
-> to pass which slave to set/get the phy configuration.
+>
+> Also, the way implementation is dangerously racy -- if anyone pokes at
+> adjacent bitfields without the lock, they can get corrupted.  Try
+> basing on Kees' seccomp tree or security-next and using the new atomic
+> flags field.
 
-There was some discussion about configuration APIs for hardware/firmware
-bridges earlier this year and I thought there was a consensus for
-assigning a network device to each port.  This would remove the need to
-identify ports within a device.  But I may have misremembered.
+Ah yes, sorry -- I hadn't yet shifted the implementation to line up with
+the work you and Kees have put into the seccomp stuff.
 
-> Signed-off-by: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
-> ---
->  include/uapi/linux/ethtool.h | 6 +++++-
->  1 file changed, 5 insertions(+), 1 deletion(-)
->=20
-> diff --git a/include/uapi/linux/ethtool.h b/include/uapi/linux/ethtool.h
-> index 96ade34..3011427 100644
-> --- a/include/uapi/linux/ethtool.h
-> +++ b/include/uapi/linux/ethtool.h
-> @@ -60,6 +60,9 @@
->   *	and other link features that the link partner advertised
->   *	through autonegotiation; 0 if unknown or not applicable.
->   *	Read-only.
-> + * @slave_port: Specify which slave port to be used to set/get
-> + *	parmeters, for example which slave port phy to be used for
-> + *	set/get phy capabilities
+>
+>
+> --Andy
+>
+> >
+> > Do new threads inherit from the parent?
+> >
+> > Also, I wonder if you need something like this check:
+> >
+> >         /*
+> >          * Installing a seccomp filter requires that the task has
+> >          * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
+> >          * This avoids scenarios where unprivileged tasks can affect the
+> >          * behavior of privileged children.
+> >          */
+> >         if (!current->no_new_privs &&
+> >             security_capable_noaudit(current_cred(), current_user_ns(),
+> >                                      CAP_SYS_ADMIN) != 0)
+> >                 return -EACCES;
+> >
+> > Paolo
 
-The difficulty with assigning the reserved fields in struct ethtool_cmd
-is that nothing has ever checked that they are set to 0.  So if we were
-to assign this field and support it in ethtool, someone might run it on
-an older kernel version and all configuration changes will be made to
-port 0 rather than the one they specified.  I don't think it would be
-acceptable to tell users that 'oh, the port number option silently fails
-on older kernel versions'.
-
-So at the very least you would also need to add some way for userland to
-find out whether the driver will check the value of this field.
-
-Ben.
-
->   * The link speed in Mbps is split between @speed and @speed_hi.  Use
->   * the ethtool_cmd_speed() and ethtool_cmd_speed_set() functions to
-> @@ -107,7 +110,8 @@ struct ethtool_cmd {
->  	__u8	eth_tp_mdix;
->  	__u8	eth_tp_mdix_ctrl;
->  	__u32	lp_advertising;
-> -	__u32	reserved[2];
-> +	__u32	slave_port;
-> +	__u32	reserved;
->  };
-> =20
->  static inline void ethtool_cmd_speed_set(struct ethtool_cmd *ep,
-
---=20
-Ben Hutchings
-The generation of random numbers is too important to be left to chance.
-                                                            - Robert Coveyo=
-u
-
---=-KYnuXAhc5cLSnEbs1fqH
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIVAwUAU9RoKue/yOyVhhEJAQpkHQ/8DxYhjnBZN0JCfeowRW7y2q2AXu48uC0o
-o7ARtOlIZcpGKYNmQT/cYxheLGOPfaN9UmhoPMuKYLfEqYiNrXDHqhDlCpwZzTzA
-2T3ngvd+pCb0tqAMxEWStN7oSPgq4QnrMgBCMBtmcbtzeH9c1V6+ZHknJkHC7Kv3
-RNWilpL9mt/E4AAjAwoY33J/WZmaq6BtOHnDLafJlP4jEfcp1BPbOdjZpnipn3Ol
-F1c/G5mEHXXaEcAMo8A9U4tFkvU970G7nuuJG5ltRlCVZ9A7r0WGenZgzsXJY1fy
-jv2mIJXEY/BRuNf1CNkEWzl2fMDnqUhD2ajsU0zzPlEw4X3hW79MBF7hRf8T0vKF
-ZZrffxpoo/E9d6edM9GNVwJSBnSjOU/bnAVYC1LFLNoQ1T2kimQDgg2tPaqALM1E
-K5p60JC53i2+892dbgFQg0961M2rSzqbtuze7RzVPNgRcVEw/WJZPVgM4Bc4PEYi
-Kjj4FWOZPp9mt431GyvVk7njPFi0yacYPJmX6ZSULXQX5dpjAQzHCK9ZynQCakcv
-lgu95uvpvCAew7PtKGImM9HMflzh5OFHqGxoa5G6CEMnIlclewsvwsQsnvnONseT
-26DJwOkpMoZqQ5lDcrjV+zMFdSmvEZ+4n0YbWtvm9j+YvFWKRmZxt/aKggEcfC9O
-VdY1Q9V5rNo=
-=GvEY
------END PGP SIGNATURE-----
-
---=-KYnuXAhc5cLSnEbs1fqH--
+Yes, new threads inherit the flag from the parent so the
+NNP||CAP_SYS_ADMIN check is probably needed.
