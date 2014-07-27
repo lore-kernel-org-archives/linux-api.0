@@ -1,84 +1,128 @@
 From: David Drysdale <drysdale@google.com>
-Subject: Re: [PATCH 10/11] capsicum: prctl(2) to force use of O_BENEATH
-Date: Sun, 27 Jul 2014 13:08:11 +0100
-Message-ID: <CAHse=S_tCRsM77EKr=M+zP1pLg2y1EJRG-h=RUJau8Fm6RR2cw@mail.gmail.com>
+Subject: Re: [PATCH 11/11] seccomp: Add tgid and tid into seccomp_data
+Date: Sun, 27 Jul 2014 13:09:00 +0100
+Message-ID: <CAHse=S_h9LegwifRaCbGdwqkOKG0BmXF5J+0ynvVJ-re_u-2ww@mail.gmail.com>
 References: <1406296033-32693-1-git-send-email-drysdale@google.com>
- <1406296033-32693-11-git-send-email-drysdale@google.com> <53D26355.9020809@redhat.com>
- <CALCETrUGUuYzvQtHLABh78V4fZJmwqb1Lqk-P65VUdRyrDWLug@mail.gmail.com>
+ <1406296033-32693-12-git-send-email-drysdale@google.com> <CALCETrVJX4+-6vkRaDj4kV_bXiYL5fj_PtO53g9fRf=i4X2Tww@mail.gmail.com>
+ <CAGXu5jJZ7mhmq1BrdTP5Ww15+C2iLQKjLy1Xh0=9qZvVK5E9Cw@mail.gmail.com> <CALCETrVChObsQpL6dt-ByiCjbPrtpXAXQgy_apBY-OpGQHaPjg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUGUuYzvQtHLABh78V4fZJmwqb1Lqk-P65VUdRyrDWLug@mail.gmail.com>
+In-Reply-To: <CALCETrVChObsQpL6dt-ByiCjbPrtpXAXQgy_apBY-OpGQHaPjg@mail.gmail.com>
 Sender: linux-security-module-owner@vger.kernel.org
 To: Andy Lutomirski <luto@amacapital.net>
-Cc: Paolo Bonzini <pbonzini@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Cc: Kees Cook <keescook@chromium.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Julien Tinnes <jln@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 25, 2014 at 5:00 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+On Fri, Jul 25, 2014 at 6:18 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+> [cc: Eric Biederman]
 >
-> On Jul 25, 2014 7:02 AM, "Paolo Bonzini" <pbonzini@redhat.com> wrote:
-> >
-> > Il 25/07/2014 15:47, David Drysdale ha scritto:
-> > > @@ -1996,6 +2013,17 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
-> > >               if (arg2 || arg3 || arg4 || arg5)
-> > >                       return -EINVAL;
-> > >               return current->no_new_privs ? 1 : 0;
-> > > +     case PR_SET_OPENAT_BENEATH:
-> > > +             if (arg2 != 1 || arg4 || arg5)
-> > > +                     return -EINVAL;
-> > > +             if ((arg3 & ~(PR_SET_OPENAT_BENEATH_TSYNC)) != 0)
-> > > +                     return -EINVAL;
-> > > +             error = prctl_set_openat_beneath(me, arg3);
-> > > +             break;
-> > > +     case PR_GET_OPENAT_BENEATH:
-> > > +             if (arg2 || arg3 || arg4 || arg5)
-> > > +                     return -EINVAL;
-> > > +             return me->openat_beneath;
-> > >       case PR_GET_THP_DISABLE:
-> > >               if (arg2 || arg3 || arg4 || arg5)
-> > >                       return -EINVAL;
-> > >
-> >
-> > Why are you always forbidding a change of prctl from 1 to 0?  It should
-> > be safe if current->no_new_privs is clear.
->
-> I don't immediately see why you're forbidding unsettling it at all.
-> If you need it to be sticky, then use seccomp or Capsicum to make it
-> sticky.
+> On Fri, Jul 25, 2014 at 10:10 AM, Kees Cook <keescook@chromium.org> wrote:
+>> On Fri, Jul 25, 2014 at 8:59 AM, Andy Lutomirski <luto@amacapital.net> wrote:
+>>> On Jul 25, 2014 6:48 AM, "David Drysdale" <drysdale@google.com> wrote:
+>>>>
+>>>> Add the current thread and thread group IDs into the data
+>>>> available for seccomp-bpf programs to work on.  This allows
+>>>> installation of filters that police syscalls based on thread
+>>>> or process ID, e.g. tgkill(2)/kill(2)/prctl(2).
+>>>>
+>>>> Signed-off-by: David Drysdale <drysdale@google.com>
+>>>> ---
+>>>>  include/uapi/linux/seccomp.h | 10 ++++++++++
+>>>>  kernel/seccomp.c             |  2 ++
+>>>>  2 files changed, 12 insertions(+)
+>>>>
+>>>> diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+>>>> index ac2dc9f72973..b88370d6f6ca 100644
+>>>> --- a/include/uapi/linux/seccomp.h
+>>>> +++ b/include/uapi/linux/seccomp.h
+>>>> @@ -36,12 +36,22 @@
+>>>>   * @instruction_pointer: at the time of the system call.
+>>>>   * @args: up to 6 system call arguments always stored as 64-bit values
+>>>>   *        regardless of the architecture.
+>>>> + * @tgid: thread group ID of the thread executing the BPF program.
+>>>> + * @tid: thread ID of the thread executing the BPF program.
+>>>> + * The SECCOMP_DATA_TID_PRESENT macro indicates the presence of the
+>>>> + * tgid and tid fields; user programs may use this macro to conditionally
+>>>> + * compile code against older versions of the kernel.  Note also that
+>>>> + * BPF programs should cope with the absence of these fields by testing
+>>>> + * the length of data available.
+>>>>   */
+>>>>  struct seccomp_data {
+>>>>         int nr;
+>>>>         __u32 arch;
+>>>>         __u64 instruction_pointer;
+>>>>         __u64 args[6];
+>>>> +       __u32 tgid;
+>>>> +       __u32 tid;
+>>>>  };
+>>>> +#define SECCOMP_DATA_TID_PRESENT       1
+>>>>
+>>>>  #endif /* _UAPI_LINUX_SECCOMP_H */
+>>>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+>>>> index 301bbc24739c..dd5146f15d6d 100644
+>>>> --- a/kernel/seccomp.c
+>>>> +++ b/kernel/seccomp.c
+>>>> @@ -80,6 +80,8 @@ static void populate_seccomp_data(struct seccomp_data *sd)
+>>>>         sd->args[4] = args[4];
+>>>>         sd->args[5] = args[5];
+>>>>         sd->instruction_pointer = KSTK_EIP(task);
+>>>> +       sd->tgid = task_tgid_vnr(current);
+>>>> +       sd->tid = task_pid_vnr(current);
+>>>>  }
+>>>
+>>> This is, IMO, problematic.  These should probably be relative to the
+>>> filter creator, not the filtered task.  This will also hurt
+>>> performance.
+>>
+>> Yeah, we can't change the seccomp_data structure without a lot of
+>> care, and tgid/tid really should be encoded in the filter. However, it
+>> is tricky in the forking case.
+>>
+>>>
+>>> What's the use case?  Can it be better achieved with a new eBPF function?
 
-Good point, that would make the function more generic -- needing to
-latch is specific to Capsicum's use of it.
+The specific use case is to be able to write a filter that allows kill(2)
+or tgkill(2) to self, where the filter still works after forking.  Capsicum
+capability mode in general locks down system calls that access PIDs
+(as they're a global namespace), but allows kill(self) as a pragmatic
+compromise to make it easier to migrate applications to use Capsicum.
 
->
-> Also, the way implementation is dangerously racy -- if anyone pokes at
-> adjacent bitfields without the lock, they can get corrupted.  Try
-> basing on Kees' seccomp tree or security-next and using the new atomic
-> flags field.
-
-Ah yes, sorry -- I hadn't yet shifted the implementation to line up with
-the work you and Kees have put into the seccomp stuff.
-
+>> Julien had been wanting something like this too (though he'd suggested
+>> it via prctl): limit the signal functions to "self" only. I wonder if
+>> adding a prctl like done for O_BENEATH could work for signal sending?
+>>
 >
 >
+> Can we do one better and add a flag to prevent any non-self pid
+> lookups?  This might actually be easy on top of the pid namespace work
+> (e.g. we could change the way that find_task_by_vpid works).
+
+That sounds like a good idea, as long as it's possible for
+non-CAP_SYS_ADMIN processes to do....
+
+> It's far from just being signals.  There's access_process_vm, ptrace,
+> all the signal functions, clock_gettime (see CPUCLOCK_PID -- yes, this
+> is ridiculous), and probably some others that I've forgotten about or
+> never noticed in the first place.
+
+For the Capsicum case in particular, most of these are restricted
+by the capability mode filter anyhow (although I need to fix it for
+CPUCLOCK_PID -- thanks for pointing that out); the kill(2) case
+was a special case to make migrations easier.  But a more general
+mechanism seems sensible.
+
+
 > --Andy
 >
-> >
-> > Do new threads inherit from the parent?
-> >
-> > Also, I wonder if you need something like this check:
-> >
-> >         /*
-> >          * Installing a seccomp filter requires that the task has
-> >          * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
-> >          * This avoids scenarios where unprivileged tasks can affect the
-> >          * behavior of privileged children.
-> >          */
-> >         if (!current->no_new_privs &&
-> >             security_capable_noaudit(current_cred(), current_user_ns(),
-> >                                      CAP_SYS_ADMIN) != 0)
-> >                 return -EACCES;
-> >
-> > Paolo
-
-Yes, new threads inherit the flag from the parent so the
-NNP||CAP_SYS_ADMIN check is probably needed.
+>> -Kees
+>>
+>> --
+>> Kees Cook
+>> Chrome OS Security
+>
+>
+>
+> --
+> Andy Lutomirski
+> AMA Capital Management, LLC
