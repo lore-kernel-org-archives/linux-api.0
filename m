@@ -1,58 +1,55 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
-Date: Sun, 27 Jul 2014 13:26:11 +0100
-Message-ID: <CAHse=S-UoSgLoV4nwv3rbTHZjdVWAy44AAXLVoZ7N4kynZwGJA@mail.gmail.com>
-References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
+From: John Fastabend <john.fastabend@gmail.com>
+Subject: Re: [RFC PATCH 1/1] ethtool: adding support for multiple slave port
+ configuration
+Date: Sun, 27 Jul 2014 09:09:54 -0700
+Message-ID: <53D52452.2020300@gmail.com>
+References: <1406291305-22286-1-git-send-email-mugunthanvnm@ti.com> <1406429221.29010.151.camel@deadeye.wl.decadent.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Henrique de Moraes Holschuh <hmh-N3TV7GIv+o9fyO9Q7EP/yw@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1406429221.29010.151.camel@deadeye.wl.decadent.org.uk>
+Sender: netdev-owner@vger.kernel.org
+To: Ben Hutchings <ben@decadent.org.uk>, Mugunthan V N <mugunthanvnm@ti.com>
+Cc: netdev@vger.kernel.org, davem@davemloft.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 25, 2014 at 7:30 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> [new thread because this sort of combines two threads]
+On 07/26/2014 07:47 PM, Ben Hutchings wrote:
+> On Fri, 2014-07-25 at 17:58 +0530, Mugunthan V N wrote:
+>> Some Ethernet Swtich controllers like CPSW in AM335x, TI814x, DRA7x and
+>> AM43xx SoCs, Network Coprocessor in AM5K2E0x, Realtek Switch controllers
+>> etc has to capability of conneting multiple networks using L2 switching
+>> and has multiple phys. With the existing code, ethtool can communicate
+>> only to one phy.
+>>
+>> To enable user to communicate multiple phy connected to single Ethernet
+>> Switch controller, intoducing a optional new parameter in Ethtool interface
+>> to pass which slave to set/get the phy configuration.
 >
-> There is recent interest in having a way to turn generally-available
-> kernel features off.  Maybe we should add a good one so we can stop
-> bikeshedding and avoid proliferating dumb interfaces.
+> There was some discussion about configuration APIs for hardware/firmware
+> bridges earlier this year and I thought there was a consensus for
+> assigning a network device to each port.  This would remove the need to
+> identify ports within a device.  But I may have misremembered.
 >
-> Things that might want to be turn-off-able include:
->  - getrandom with GRND_RANDOM [from the getrandom threads]
->  - Any lookup of a non-self pid [from the capsicum thread]
->  - Any lookup of a pid outside the caller thread group [capsicum]
->  - Various architectural things (personal wishlist), e.g.:
->     - RDTSC and userspace HPET access
->     - CPUID?
->     - 32-bit GDT code segments [huge attack surface]
->     - 64-bit GDT code segments [probably pointless]
->
-> I would propose a new syscall for this:
->
-> long restrict_userspace(int mode, int type, int value, int flags);
->
-> mode is RESTRICT_SET, RESTRICT_GET, or RESTRICT_LOCK.
->
-> type is RESTRICT_GRND_RANDOM, RESTRICT_PID_SCOPE, RESTRICT_X86_TIMING, etc.
->
-> Value is zero if RESTRICT_GET.  Otherwise value is the desired value,
-> generally 0 or 1.  For RESTRICT_PID_SCOPE, value would be
-> RESTRICT_PID_SCOPE_ANY, RESTRICT_PID_SCOPE_THREADGROUP, or
-> RESTRICT_PID_SCOPE_SELF.
->
-> flags must be zero.  Someday, someone will propose a thread-sync flag.
 
-Today, me: proposed :-)
+I like the approach of creating a network device for each port over
+having to use ethtool to program/discover them. I am currently looking
+at writing management applications for this and IMO it is much easier
+to discover and listen for events on network devices vs polling ethtool
+and iterating through slave indexs. Also you miss a lot of functionality
+that may be useful MTU for example that is not available configured via
+ethtool.
 
-> restrict_userspace requires either no_new_privs or CAP_SYS_ADMIN in
-> the current user namespace.
->
-> Thoughts?
->
-> --Andy
->
-> --
-> Andy Lutomirski
-> AMA Capital Management, LLC
+One of the sticking points in earlier discussions was how to handle
+devices that have limited support for slave devices. When we create a
+netdev we expect the stack can bind to it and TX/RX packets which as
+I understand is not always possible? (I missed why we couldn't recv the
+packets over a switch port though with some skb->dev manipulation). In
+this case a feature flag could be used to resolve the feature
+dependencies.
+
+.John
+
+
+-- 
+John Fastabend         Intel Corporation
