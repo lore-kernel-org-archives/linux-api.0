@@ -1,70 +1,155 @@
-From: Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: Re: [RFC PATCH 0/2] dirreadahead system call
-Date: Tue, 29 Jul 2014 10:19:58 +0200
-Message-ID: <CAHO5Pa3FO+oRQY3U+7xdQ3ahS=d8YZMO2eDLJdQ81+1GsnoOmA@mail.gmail.com>
-References: <1406309851-10628-1-git-send-email-adas@redhat.com>
+From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 1/2] fs: Add dirreadahead syscall and VFS hooks
+Date: Tue, 29 Jul 2014 10:21:50 +0200
+Message-ID: <CAHO5Pa2fW6mZRTao3uEx2p_X9GvO1btrbb9Bg2ns94+p4biKAQ@mail.gmail.com>
+References: <1406309851-10628-1-git-send-email-adas@redhat.com> <1406309851-10628-2-git-send-email-adas@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1406309851-10628-1-git-send-email-adas@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Abhi Das <adas@redhat.com>
-Cc: Linux Kernel <linux-kernel@vger.kernel.org>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, cluster-devel <cluster-devel@redhat.com>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1406309851-10628-2-git-send-email-adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, cluster-devel <cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 25, 2014 at 7:37 PM, Abhi Das <adas@redhat.com> wrote:
-> This system call takes 3 arguments:
-> fd      - file descriptor of the directory being readahead
-> *offset - offset in dir from which to resume. This is updated
->           as we move along in the directory
-> count   - The max number of entries to readahead
+[CC+=linux-api]
+
+On Fri, Jul 25, 2014 at 7:37 PM, Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> Also adds a void *opaque field to struct dir_context that can be
+> used by filesystems to temporarily store any context as this
+> struct gets passed around in the fs.
 >
-> The syscall is supposed to read upto 'count' entries starting at
-> '*offset' and cache the inodes corresponding to those entries. It
-> returns a negative error code or a positive number indicating
-> the number of inodes it has issued readaheads for. It also
-> updates the '*offset' value so that repeated calls to dirreadahead
-> can resume at the right location. Returns 0 when there are no more
-> entries left.
-
-Hello Abhi,
-
-As per Documentation/SubmitChecklist, please CC linux-api on patches
-that change the kerne-user-space API/ABI. (See
-https://www.kernel.org/doc/man-pages/linux-api-ml.html for more
-details.)
-
-Cheers,
-
-Michael
-
-
-> Abhi Das (2):
->   fs: Add dirreadahead syscall and VFS hooks
->   gfs2: GFS2's implementation of the dir_readahead file operation
+> Signed-off-by: Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  arch/x86/syscalls/syscall_32.tbl |  1 +
+>  arch/x86/syscalls/syscall_64.tbl |  1 +
+>  fs/readdir.c                     | 49 ++++++++++++++++++++++++++++++++++++++++
+>  include/linux/fs.h               |  3 +++
+>  4 files changed, 54 insertions(+)
 >
->  arch/x86/syscalls/syscall_32.tbl |   1 +
->  arch/x86/syscalls/syscall_64.tbl |   1 +
->  fs/gfs2/Makefile                 |   3 +-
->  fs/gfs2/dir.c                    |  49 ++++++---
->  fs/gfs2/dir.h                    |  15 +++
->  fs/gfs2/dir_readahead.c          | 209 +++++++++++++++++++++++++++++++++++++++
->  fs/gfs2/file.c                   |   2 +
->  fs/gfs2/main.c                   |  10 +-
->  fs/gfs2/super.c                  |   1 +
->  fs/readdir.c                     |  49 +++++++++
->  include/linux/fs.h               |   3 +
->  11 files changed, 328 insertions(+), 15 deletions(-)
->  create mode 100644 fs/gfs2/dir_readahead.c
+> diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
+> index d6b8679..3e0ef85 100644
+> --- a/arch/x86/syscalls/syscall_32.tbl
+> +++ b/arch/x86/syscalls/syscall_32.tbl
+> @@ -360,3 +360,4 @@
+>  351    i386    sched_setattr           sys_sched_setattr
+>  352    i386    sched_getattr           sys_sched_getattr
+>  353    i386    renameat2               sys_renameat2
+> +354    i386    dirreadahead            sys_dirreadahead
+> diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
+> index ec255a1..2ec0991 100644
+> --- a/arch/x86/syscalls/syscall_64.tbl
+> +++ b/arch/x86/syscalls/syscall_64.tbl
+> @@ -323,6 +323,7 @@
+>  314    common  sched_setattr           sys_sched_setattr
+>  315    common  sched_getattr           sys_sched_getattr
+>  316    common  renameat2               sys_renameat2
+> +317    common  dirreadahead            sys_dirreadahead
 >
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/fs/readdir.c b/fs/readdir.c
+> index 33fd922..d216db7 100644
+> --- a/fs/readdir.c
+> +++ b/fs/readdir.c
+> @@ -198,6 +198,7 @@ SYSCALL_DEFINE3(getdents, unsigned int, fd,
+>         struct linux_dirent __user * lastdirent;
+>         struct getdents_callback buf = {
+>                 .ctx.actor = filldir,
+> +               .ctx.opaque = NULL,
+>                 .count = count,
+>                 .current_dir = dirent
+>         };
+> @@ -278,6 +279,7 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
+>         struct linux_dirent64 __user * lastdirent;
+>         struct getdents_callback64 buf = {
+>                 .ctx.actor = filldir64,
+> +               .ctx.opaque = NULL,
+>                 .count = count,
+>                 .current_dir = dirent
+>         };
+> @@ -304,3 +306,50 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
+>         fdput(f);
+>         return error;
+>  }
+> +
+> +SYSCALL_DEFINE3(dirreadahead, unsigned int, fd,
+> +               loff_t __user *, offset, unsigned int, count)
+> +{
+> +       struct fd f;
+> +       struct inode *inode;
+> +       int error = -ENOTDIR;
+> +       loff_t off = 0;
+> +       struct dir_context ctx = {.actor = NULL, .opaque = NULL};
+> +
+> +       if (!count)
+> +               return -EINVAL;
+> +
+> +       f = fdget(fd);
+> +       if (!f.file)
+> +               return -EBADF;
+> +
+> +       inode = f.file->f_path.dentry->d_inode;
+> +
+> +       error = -ENOTSUPP;
+> +       if (!f.file->f_op || !f.file->f_op->dir_readahead)
+> +               goto out;
+> +
+> +       error = security_file_permission(f.file, MAY_READ);
+> +       if (error)
+> +               goto out;
+> +
+> +       error = -EFAULT;
+> +       if (__get_user(ctx.pos, offset))
+> +               goto out;
+> +
+> +       error = mutex_lock_killable(&inode->i_mutex);
+> +       if (error)
+> +               goto out;
+> +
+> +       error = -ENOENT;
+> +       if (!IS_DEADDIR(inode)) {
+> +               error = f.file->f_op->dir_readahead(f.file, &ctx, count);
+> +               if (__put_user(ctx.pos, offset))
+> +                       error = -EFAULT;
+> +               file_accessed(f.file);
+> +       }
+> +       mutex_unlock(&inode->i_mutex);
+> +out:
+> +       fdput(f);
+> +       return error;
+> +}
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 338e6f7..fae4a6e 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1438,9 +1438,11 @@ int fiemap_check_flags(struct fiemap_extent_info *fieinfo, u32 fs_flags);
+>   * to have different dirent layouts depending on the binary type.
+>   */
+>  typedef int (*filldir_t)(void *, const char *, int, loff_t, u64, unsigned);
+> +
+>  struct dir_context {
+>         const filldir_t actor;
+>         loff_t pos;
+> +       void *opaque;
+>  };
+>
+>  struct block_device_operations;
+> @@ -1463,6 +1465,7 @@ struct file_operations {
+>         ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+>         ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+>         int (*iterate) (struct file *, struct dir_context *);
+> +       int (*dir_readahead) (struct file *, struct dir_context *, unsigned int);
+>         unsigned int (*poll) (struct file *, struct poll_table_struct *);
+>         long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>         long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
 > --
 > 1.8.1.4
 >
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
 
 
 
