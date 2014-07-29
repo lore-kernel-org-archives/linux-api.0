@@ -1,159 +1,48 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH 1/2] fs: Add dirreadahead syscall and VFS hooks
-Date: Tue, 29 Jul 2014 10:21:50 +0200
-Message-ID: <CAHO5Pa2fW6mZRTao3uEx2p_X9GvO1btrbb9Bg2ns94+p4biKAQ@mail.gmail.com>
-References: <1406309851-10628-1-git-send-email-adas@redhat.com> <1406309851-10628-2-git-send-email-adas@redhat.com>
+From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCHv2 00/11] Adding FreeBSD's Capsicum security framework
+Date: Tue, 29 Jul 2014 10:43:34 +0200
+Message-ID: <53D75EB6.1090301@redhat.com>
+References: <1406296033-32693-1-git-send-email-drysdale@google.com>	<871tt796i0.fsf@x220.int.ebiederm.org>	<CAHse=S_7Jpb9bTXHgU8q8_UZ=ce2gwdq8C15a+jbfO_pHmV_iA@mail.gmail.com> <87ha21qja0.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1406309851-10628-2-git-send-email-adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <87ha21qja0.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, cluster-devel <cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC+=linux-api]
+Il 28/07/2014 23:13, Eric W. Biederman ha scritto:
+> This notion that a shared structure should have different semantics
+> depending on who is looking at it, sounds like a maintenance nightmare
+> to me. 
 
-On Fri, Jul 25, 2014 at 7:37 PM, Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Also adds a void *opaque field to struct dir_context that can be
-> used by filesystems to temporarily store any context as this
-> struct gets passed around in the fs.
->
-> Signed-off-by: Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  arch/x86/syscalls/syscall_32.tbl |  1 +
->  arch/x86/syscalls/syscall_64.tbl |  1 +
->  fs/readdir.c                     | 49 ++++++++++++++++++++++++++++++++++++++++
->  include/linux/fs.h               |  3 +++
->  4 files changed, 54 insertions(+)
->
-> diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-> index d6b8679..3e0ef85 100644
-> --- a/arch/x86/syscalls/syscall_32.tbl
-> +++ b/arch/x86/syscalls/syscall_32.tbl
-> @@ -360,3 +360,4 @@
->  351    i386    sched_setattr           sys_sched_setattr
->  352    i386    sched_getattr           sys_sched_getattr
->  353    i386    renameat2               sys_renameat2
-> +354    i386    dirreadahead            sys_dirreadahead
-> diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-> index ec255a1..2ec0991 100644
-> --- a/arch/x86/syscalls/syscall_64.tbl
-> +++ b/arch/x86/syscalls/syscall_64.tbl
-> @@ -323,6 +323,7 @@
->  314    common  sched_setattr           sys_sched_setattr
->  315    common  sched_getattr           sys_sched_getattr
->  316    common  renameat2               sys_renameat2
-> +317    common  dirreadahead            sys_dirreadahead
->
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> diff --git a/fs/readdir.c b/fs/readdir.c
-> index 33fd922..d216db7 100644
-> --- a/fs/readdir.c
-> +++ b/fs/readdir.c
-> @@ -198,6 +198,7 @@ SYSCALL_DEFINE3(getdents, unsigned int, fd,
->         struct linux_dirent __user * lastdirent;
->         struct getdents_callback buf = {
->                 .ctx.actor = filldir,
-> +               .ctx.opaque = NULL,
->                 .count = count,
->                 .current_dir = dirent
->         };
-> @@ -278,6 +279,7 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
->         struct linux_dirent64 __user * lastdirent;
->         struct getdents_callback64 buf = {
->                 .ctx.actor = filldir64,
-> +               .ctx.opaque = NULL,
->                 .count = count,
->                 .current_dir = dirent
->         };
-> @@ -304,3 +306,50 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
->         fdput(f);
->         return error;
->  }
-> +
-> +SYSCALL_DEFINE3(dirreadahead, unsigned int, fd,
-> +               loff_t __user *, offset, unsigned int, count)
-> +{
-> +       struct fd f;
-> +       struct inode *inode;
-> +       int error = -ENOTDIR;
-> +       loff_t off = 0;
-> +       struct dir_context ctx = {.actor = NULL, .opaque = NULL};
-> +
-> +       if (!count)
-> +               return -EINVAL;
-> +
-> +       f = fdget(fd);
-> +       if (!f.file)
-> +               return -EBADF;
-> +
-> +       inode = f.file->f_path.dentry->d_inode;
-> +
-> +       error = -ENOTSUPP;
-> +       if (!f.file->f_op || !f.file->f_op->dir_readahead)
-> +               goto out;
-> +
-> +       error = security_file_permission(f.file, MAY_READ);
-> +       if (error)
-> +               goto out;
-> +
-> +       error = -EFAULT;
-> +       if (__get_user(ctx.pos, offset))
-> +               goto out;
-> +
-> +       error = mutex_lock_killable(&inode->i_mutex);
-> +       if (error)
-> +               goto out;
-> +
-> +       error = -ENOENT;
-> +       if (!IS_DEADDIR(inode)) {
-> +               error = f.file->f_op->dir_readahead(f.file, &ctx, count);
-> +               if (__put_user(ctx.pos, offset))
-> +                       error = -EFAULT;
-> +               file_accessed(f.file);
-> +       }
-> +       mutex_unlock(&inode->i_mutex);
-> +out:
-> +       fdput(f);
-> +       return error;
-> +}
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 338e6f7..fae4a6e 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -1438,9 +1438,11 @@ int fiemap_check_flags(struct fiemap_extent_info *fieinfo, u32 fs_flags);
->   * to have different dirent layouts depending on the binary type.
->   */
->  typedef int (*filldir_t)(void *, const char *, int, loff_t, u64, unsigned);
-> +
->  struct dir_context {
->         const filldir_t actor;
->         loff_t pos;
-> +       void *opaque;
->  };
->
->  struct block_device_operations;
-> @@ -1463,6 +1465,7 @@ struct file_operations {
->         ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
->         ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
->         int (*iterate) (struct file *, struct dir_context *);
-> +       int (*dir_readahead) (struct file *, struct dir_context *, unsigned int);
->         unsigned int (*poll) (struct file *, struct poll_table_struct *);
->         long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->         long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
-> --
-> 1.8.1.4
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Isn't that already with seccomp BPF filters?  You can have the parent
+process set a BPF filter that forbids read on that file descriptor or
+write on that file descriptor.
 
+Effectively, this patchset provides the functionality to "hotplug" BPF
+filters on a running process as more file descriptors are passed via
+SCM_RIGHTS.  Except it doesn't use BPF filters, and instead uses a
+separate set of discrete capabilities.
 
+> I see two sensible implementations:
+> - Add a seccomp bpf filter to struct file.
 
--- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+I proposed something like this, but it has some additional
+implementation complications.  See the v1 thread.
+
+But it does have to be in a file descriptor rather than a struct file.
+It's part of the model that two processes can have different views of
+the file descriptor (again my toy example is that of an eventfd that an
+unprivileged child process can only write to).
+
+> Additionally unless there is a process wide restriction to relative
+> paths I can trivially escape your relative path implementation by simply
+> doing open(.) and getting a struct file without any of those
+> restrictions.
+
+Yes, there is a prctl for that.
+
+Paolo
