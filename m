@@ -1,91 +1,36 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 0/5] RFC: CGroup Namespaces
-Date: Tue, 29 Jul 2014 18:06:56 +0200
-Message-ID: <20140729160656.GA6980@mail.hallyn.com>
-References: <1405626731-12220-1-git-send-email-adityakali@google.com>
-	<20140724163628.GN26600@ubuntumail>
-	<CAGr1F2GcAema-E2q6PFj=R0Z505iD7JshrMuMdfPTJ95wMiQMA@mail.gmail.com>
-	<20140729045159.GB31047@mail.hallyn.com>
-	<CALCETrW5yQLo-SvDgqjt881OD1GnuxMmGKjoohYT4nwtYw=9+w@mail.gmail.com>
+From: Steven Stewart-Gallus <sstewartgallus00@mylangara.bc.ca>
+Subject: Does anyone know when FUTEX_WAIT can fail with EAGAIN?
+Date: Tue, 29 Jul 2014 21:55:56 +0000 (GMT)
+Message-ID: <fb82d1d46d8f.53d8186c@langara.bc.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrW5yQLo-SvDgqjt881OD1GnuxMmGKjoohYT4nwtYw=9+w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-disposition: inline
+Content-language: en
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, mtk@man7.org
 List-Id: linux-api@vger.kernel.org
 
-UXVvdGluZyBBbmR5IEx1dG9taXJza2kgKGx1dG9AYW1hY2FwaXRhbC5uZXQpOgo+IE9uIE1vbiwg
-SnVsIDI4LCAyMDE0IGF0IDk6NTEgUE0sIFNlcmdlIEUuIEhhbGx5biA8c2VyZ2VAaGFsbHluLmNv
-bT4gd3JvdGU6Cj4gPiBRdW90aW5nIEFkaXR5YSBLYWxpIChhZGl0eWFrYWxpQGdvb2dsZS5jb20p
-Ogo+ID4+IFRoYW5rIHlvdSBmb3IgeW91ciByZXZpZXcuIEkgaGF2ZSB0cmllZCB0byByZXNwb25k
-IHRvIGJvdGggeW91ciBlbWFpbHMgaGVyZS4KPiA+Pgo+ID4+IE9uIFRodSwgSnVsIDI0LCAyMDE0
-IGF0IDk6MzYgQU0sIFNlcmdlIEhhbGx5biA8c2VyZ2UuaGFsbHluQHVidW50dS5jb20+IHdyb3Rl
-Ogo+ID4+ID4gUXVvdGluZyBBZGl0eWEgS2FsaSAoYWRpdHlha2FsaUBnb29nbGUuY29tKToKPiA+
-PiA+PiBCYWNrZ3JvdW5kCj4gPj4gPj4gICBDZ3JvdXBzIGFuZCBOYW1lc3BhY2VzIGFyZSB1c2Vk
-IHRvZ2V0aGVyIHRvIGNyZWF0ZSDigJx2aXJ0dWFs4oCdCj4gPj4gPj4gICBjb250YWluZXJzIHRo
-YXQgaXNvbGF0ZXMgdGhlIGhvc3QgZW52aXJvbm1lbnQgZnJvbSB0aGUgcHJvY2Vzc2VzCj4gPj4g
-Pj4gICBydW5uaW5nIGluIGNvbnRhaW5lci4gQnV0IHNpbmNlIGNncm91cHMgdGhlbXNlbHZlcyBh
-cmUgbm90Cj4gPj4gPj4gICDigJx2aXJ0dWFsaXplZOKAnSwgdGhlIHRhc2sgaXMgYWx3YXlzIGFi
-bGUgdG8gc2VlIGdsb2JhbCBjZ3JvdXBzIHZpZXcKPiA+PiA+PiAgIHRocm91Z2ggY2dyb3VwZnMg
-bW91bnQgYW5kIHZpYSAvcHJvYy9zZWxmL2Nncm91cCBmaWxlLgo+ID4+ID4+Cj4gPj4gPiBIaSwK
-PiA+PiA+Cj4gPj4gPiBBIGZldyBxdWVzdGlvbnMvY29tbWVudHM6Cj4gPj4gPgo+ID4+ID4gMS4g
-QmFzZWQgb24gdGhpcyBkZXNjcmlwdGlvbiwgYW0gSSB0byB1bmRlcnN0YW5kIHRoYXQgYWZ0ZXIg
-ZG9pbmcgYQo+ID4+ID4gICAgY2dyb3VwbnMgdW5zaGFyZSwgJ21vdW50IC10IGNncm91cCBjZ3Jv
-dXAgL21udCcgYnkgZGVmYXVsdCB3aWxsCj4gPj4gPiAgICBzdGlsbCBtb3VudCB0aGUgZ2xvYmFs
-IHJvb3QgY2dyb3VwPyAgQW55IHBsYW5zIG9uICJjaGFuZ2luZyIgdGhhdD8KPiA+Pgo+ID4+IFRo
-aXMgaXMgc3VnZ2VzdGVkIGluIHRoZSAiUG9zc2libGUgRXh0ZW5zaW9ucyBvZiBDR1JPVVBOUyIg
-c2VjdGlvbi4KPiA+PiBNb3JlIGRldGFpbHMgYmVsb3cuCj4gPj4KPiA+PiA+ICAgIFdpbGwgYXR0
-ZW1wdHMgdG8gY2hhbmdlIHNldHRpbmdzIG9mIGEgY2dyb3VwIHdoaWNoIGlzIG5vdCB1bmRlcgo+
-ID4+ID4gICAgb3VyIGN1cnJlbnQgbnMgYmUgcmVqZWN0ZWQ/ICAoVGhhdCBzaG91bGQgYmUgZWFz
-eSB0byBkbyBnaXZlbiB5b3VyCj4gPj4gPiAgICBwYXRjaCAxLzUpLiAgU29ycnkgaWYgaXQncyBk
-b25lIGluIHRoZSBzZXQsIEknbSBqdW1waW5nIGFyb3VuZC4uLgo+ID4+ID4KPiA+Pgo+ID4+IEN1
-cnJlbnRseSwgb25seSAnY2dyb3VwX2F0dGFjaF90YXNrJywgJ2Nncm91cF9ta2RpcicgYW5kCj4g
-Pj4gJ2Nncm91cF9ybWRpcicgb2YgY2dyb3VwcyBvdXRzaWRlIG9mIGNncm91cG5zLXJvb3QgYXJl
-IHByZXZlbnRlZC4gVGhlCj4gPj4gcmVhZC93cml0ZSBvZiBhY3R1YWwgY2dyb3VwIHByb3BlcnRp
-ZXMgYXJlIG5vdCBwcmV2ZW50ZWQuIFVzdWFsCj4gPj4gcGVybWlzc2lvbiBjaGVja3MgY29udGlu
-dWUgdG8gYXBwbHkgZm9yIHRob3NlLiBJIHdhcyBob3BpbmcgdGhhdAo+ID4+IHNob3VsZCBiZSBl
-bm91Z2gsIGJ1dCBzZWUgbW9yZSBjb21tZW50cyB0b3dhcmRzIHRoZSBlbmQuCj4gPj4KPiA+PiA+
-IDIuIFdoYXQgd291bGQgYmUgdGhlIHJlcHJlY3Vzc2lvbnMgb2YgYWxsb3dpbmcgY2dyb3VwbnMg
-dW5zaGFyZSBzbwo+ID4+ID4gICAgbG9uZyBhcyB5b3UgaGF2ZSBuc19jYXBhYmxlKENBUF9TWVNf
-QURNSU4pIHRvIHRoZSB1c2VyX25zIHdoaWNoCj4gPj4gPiAgICBjcmVhdGVkIHlvdXIgY3VycmVu
-dCBucyBjZ3JvdXA/ICBJdCdkIGJlIGEgc2hhbWUgaWYgdGhhdCB3YXNuJ3QKPiA+PiA+ICAgIG9u
-IHRoZSByb2FkbWFwLgo+ID4+ID4KPiA+Pgo+ID4+IEl0cyBjZXJ0YWlubHkgb24gdGhlIHJvYWRt
-YXAsIGp1c3QgdGhhdCBzb21lIGxvZ2lzdGljcyB3ZXJlIG5vdCBjbGVhcgo+ID4+IGF0IHRoaXMg
-dGltZS4gQXMgcG9pbnRlZCBvdXQgYnkgQW5keSBMdXRvbWlyc2tpIG9uIFtQQVRDSCA1LzVdIG9m
-IHRoaXMKPiA+PiBzZXJpZXMsIGlmIHdlIGFsbG93IGNncm91cG5zIGNyZWF0aW9uIHRvIG5zX2Nh
-cGFibGUoQ0FQX1NZU19BRE1JTikKPiA+PiBwcm9jZXNzZXMsIHdlIG1heSBuZWVkIHNvbWUga2lu
-ZCBvZiBleHBsaWNpdCBwZXJtaXNzaW9uIGZyb20gdGhlCj4gPj4gY2dyb3VwIHN1YnN5c3RlbSB0
-byBhbGxvdyB0aGlzLiBPbmUgYXBwcm9hY2ggY291bGQgYmUgYW4gZXhwbGljaXQKPiA+Cj4gPiBT
-byBsb25nIGFzIHlvdSBkbyBuc19jYXBhYmxlKGNncm91cF9ucy0+dXNlcl9ucywgQ0FQX1NZU19B
-RE1JTikgSSB0aGluawo+ID4geW91J3JlIGZpbmUuCj4gPgo+ID4gVGhlIG9ubHkgcmVhbCBwcm9i
-bGVtIEkgY2FuIHRoaW5rIG9mIHdpdGggdW5zaGFyaW5nIGEgY2dyb3VwX25zIGlzIHRoYXQKPiA+
-IHlvdSBjb3VsZCBsb2NrIGEgc2V0dWlkLXJvb3QgYXBwbGljYXRpb24gc29tZXBsYWNlIGl0IHdh
-c24ndCBleHBlY3RpbmcuCj4gPiBUaGUgYWJvdmUgY2hlY2sgZ3VhcmFudGVlcyB0aGF0IHlvdSB3
-ZXJlIHByaXZpbGVnZWQgZW5vdWdoIHRoYXQgeW91J2QKPiA+IGJldHRlciBiZSB0cnVzdGVkIGlu
-IHRoaXMgdXNlciBuYW1lc3BhY2UuCj4gPgo+ID4gKFVubGVzcyB0aGVyZSBpcyBzb21lIHBvc3Np
-YmxlIGludGVyYWN0aW9uIEknbSBvdmVybG9va2luZykKPiAKPiBJIHRoaW5rIHRoYXQsIGlmIGl0
-J3MgZG9uZSB0aGlzIHdheSwgeW91J2QgaGF2ZSB0byB1bnNoYXJlIGNncm91cG5zCj4gYmVmb3Jl
-IHVuc2hhcmluZyB1c2VybnMsIHNpbmNlIHlvdSBmb3JmZWl0IHRoYXQgY2FwYWJpbGl0eSB3aGVu
-IHlvdQo+IHVuc2hhcmUgeW91ciB1c2VybnMuICBUaGF0IG1lYW5zIHRoYXQgdGhlIG5ldyBjZ3Jv
-dXBucyBlbmRzIHVwIGJlaW5nCj4gYXNzb2NpYXRlZCB3LyB0aGUgcm9vdCB1c2VybnMsIHdoaWNo
-IG1heSBub3QgYmUgd2hhdCB5b3Ugd2FudC4KPiAKPiBZb3UgY291bGQgdW5zaGFyZSBib3RoIG5h
-bWVzcGFjZXMgaW4gb25lIHN5c2NhbGwgYW5kIGdpdmUgdGhhdCBzb21lCj4gbWFnaWMgc2VtYW50
-aWNzLCBidXQgdGhhdCdzIGtpbmQgb2Ygd2VpcmQuICBJdCB3b3VsZCBiZSBuaWNlIGlmIHlvdQo+
-IGNvdWxkIHVuc2hhcmUgeW91ciB1c2VybnMgYW5kIHRlbXBvcmFyaWx5IHJldGFpbnMgY2FwcyBp
-biB0aGUgcGFyZW50LAo+IGJ1dCB0aGVyZSBpcyBubyBzdWNoIG1lY2hhbmlzbSByaWdodCBub3cu
-CgpIbSwgZ29vZCBwb2ludC4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX18KQ29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1m
-b3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9s
-aXN0aW5mby9jb250YWluZXJz
+Hello,
+
+I'm trying to debug a hangup where my program loops with FUTEX_WAIT (actually
+FUTEX_WAIT_PRIVATE but same thing)  endlessly erring out with EAGAIN. I would
+like to know if anyone on the mailing list knows when FUTEX_WAIT can fail with
+EAGAIN.
+
+Some info for people who are interested in what I'm working on.
+
+I'm working on sand boxing my program at gitorious.org/linted with namespaces
+and chroot.
+
+The error only appeared after changing unshare then fork code into a direct
+clone call.
+
+> | uname -a
+> Linux alonzo 3.13.0-24-generic #1trisquel1 SMP Tue May 13 15:17:50 UTC 2014
+x86_64 x86_64 x86_64 GNU/Linux
+
+Thank you,
+Steven Stewart-Gallus
