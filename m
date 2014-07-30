@@ -1,59 +1,44 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [RFC PATCHv2 00/11] Adding FreeBSD's Capsicum security framework
-Date: Tue, 29 Jul 2014 23:22:01 -0700
-Message-ID: <87iomfgyd2.fsf@x220.int.ebiederm.org>
-References: <1406296033-32693-1-git-send-email-drysdale@google.com>
-	<871tt796i0.fsf@x220.int.ebiederm.org>
-	<CAHse=S_7Jpb9bTXHgU8q8_UZ=ce2gwdq8C15a+jbfO_pHmV_iA@mail.gmail.com>
-	<87ha21qja0.fsf@x220.int.ebiederm.org>
-	<CAHse=S_w4+AMuc=-XbAK_PiaD56_ks13R53RENMHif5KRN_Kiw@mail.gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH -v4] random: introduce getrandom(2) system call
+Date: Wed, 30 Jul 2014 14:26:20 +0200
+Message-ID: <20140730122620.GC13965@amd.pavel.ucw.cz>
+References: <1405718127-30042-1-git-send-email-tytso@mit.edu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHse=S_w4+AMuc=-XbAK_PiaD56_ks13R53RENMHif5KRN_Kiw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-	(David Drysdale's message of "Tue, 29 Jul 2014 11:58:21 +0100")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1405718127-30042-1-git-send-email-tytso@mit.edu>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, beck@openbsd.org, deraadt@cvs.openbsd.org
 List-Id: linux-api@vger.kernel.org
 
+Hi!
 
-I have cut this down to just focus on O_BENEATH openat case.
+> The rationale of this system call is to provide resiliance against
+> file descriptor exhaustion attacks, where the attacker consumes all
+> available file descriptors, forcing the use of the fallback code where
+> /dev/[u]random is not available.  Since the fallback code is often not
+> well-tested, it is better to eliminate this potential failure mode
+> entirely.
 
-David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> writes:
+I'm not sure I understand the rationale; if someone can eat all your
+file descriptors, he can make you stop working. So you can just stop
+working when you can't open /dev/urandom, no?
 
-> On Mon, Jul 28, 2014 at 10:13 PM, Eric W. Biederman
-> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+Fallback code is probably very bad idea to use...
 
->> Nope.  What you can implement today if you want fine grained limitations
->> like this is to create a mount namespace with exactly the subdirectory
->> tree you want to allow access to and to return a file descriptor that
->> points into that mount namespace.  (When complete the only user of that
->> mount namespace would be your file descriptor).
->
-> How does that solve the particular example I mentioned?  The DFD
-> within the mount namespace will still allow any operation on any file
-> that's already in the subdirectory -- or am I misunderstanding
-> something?
+> The other feature provided by this new system call is the ability to
+> request randomness from the /dev/urandom entropy pool, but to block
+> until at least 128 bits of entropy has been accumulated in the
+> /dev/urandom entropy pool.  Historically, the emphasis in the
+> /dev/urandom development has been to ensure that urandom pool is
+> initialized as quickly as possible after system boot, and preferably
+> before the init scripts start execution.
 
-The goal was to bound the DFD to the directory and all of it's
-subdirectories such that openat(dfd, "../../..") would open
-the dfd, and that further opens of other directories would also not
-allow you to escape.
+Sounds like ioctl() for /dev/urandom for this behaviour would be nice?
 
-Since the mount namespace only contains the choosen directory and it's
-subdirectories that works easily and trivially.
-
-So while you can indeed perform any file operation on that dfd who
-cares because none of those operations can get you anywhere you aren't
-supposed to be.
-
-My point was that you can as granular as you would like by binding a dfd
-to a mount namespace instead of binding a process to a mount namespace,
-and the code already exists and is being maintained.
-
-So while things are not packaged in the form that has been requested it
-looks to me as if the functionality for directories already exists
-within the Linux kernel.
-
-Eric
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
