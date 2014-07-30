@@ -1,62 +1,71 @@
-From: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
-Subject: Re: [RFC PATCH 1/1] ethtool: adding support for multiple slave port
- configuration
-Date: Wed, 30 Jul 2014 23:04:36 +0530
-Message-ID: <53D92CAC.3070002@ti.com>
-References: <1406291305-22286-1-git-send-email-mugunthanvnm@ti.com> <1406429221.29010.151.camel@deadeye.wl.decadent.org.uk> <53D52452.2020300@gmail.com>
+From: "Frank Ch. Eigler" <fche@redhat.com>
+Subject: Re: [PATCH RFC v3 net-next 3/3] samples: bpf: eBPF dropmon example in C
+Date: Wed, 30 Jul 2014 13:36:38 -0400
+Message-ID: <20140730173638.GB8745@redhat.com>
+References: <1406000723-4872-1-git-send-email-ast@plumgrid.com> <1406000723-4872-4-git-send-email-ast@plumgrid.com> <y0m1tt226lj.fsf@fche.csb> <CAMEtUuxNs=HBhtFwhBX3HOU6+QqtYZ+v7sJ74+cg-o+bi5GdoA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <53D52452.2020300-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: John Fastabend <john.fastabend-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAMEtUuxNs=HBhtFwhBX3HOU6+QqtYZ+v7sJ74+cg-o+bi5GdoA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sunday 27 July 2014 09:39 PM, John Fastabend wrote:
-> On 07/26/2014 07:47 PM, Ben Hutchings wrote:
->> On Fri, 2014-07-25 at 17:58 +0530, Mugunthan V N wrote:
->>> Some Ethernet Swtich controllers like CPSW in AM335x, TI814x, DRA7x and
->>> AM43xx SoCs, Network Coprocessor in AM5K2E0x, Realtek Switch
->>> controllers
->>> etc has to capability of conneting multiple networks using L2 switching
->>> and has multiple phys. With the existing code, ethtool can communicate
->>> only to one phy.
->>>
->>> To enable user to communicate multiple phy connected to single Ethernet
->>> Switch controller, intoducing a optional new parameter in Ethtool
->>> interface
->>> to pass which slave to set/get the phy configuration.
->>
->> There was some discussion about configuration APIs for hardware/firmware
->> bridges earlier this year and I thought there was a consensus for
->> assigning a network device to each port.  This would remove the need to
->> identify ports within a device.  But I may have misremembered.
->>
->
-> I like the approach of creating a network device for each port over
-> having to use ethtool to program/discover them. I am currently looking
-> at writing management applications for this and IMO it is much easier
-> to discover and listen for events on network devices vs polling ethtool
-> and iterating through slave indexs. Also you miss a lot of functionality
-> that may be useful MTU for example that is not available configured via
-> ethtool.
->
-> One of the sticking points in earlier discussions was how to handle
-> devices that have limited support for slave devices. When we create a
-> netdev we expect the stack can bind to it and TX/RX packets which as
-> I understand is not always possible? (I missed why we couldn't recv the
-> packets over a switch port though with some skb->dev manipulation). In
-> this case a feature flag could be used to resolve the feature
-> dependencies.
->
->
+Hi, Alexei -
 
-John
+> My understanding of systemtap is that the whole .stp script is converted
+> to C, compiled as .ko and loaded, so all map walking and prints are
+> happening in the kernel. Similarly for ktap which has special functions
+> in kernel to print histograms.
 
-I am also interested in participating in the above management api
-development.
+That is correct.
 
-Regards
-Mugunthan V N
+> I thought dtrace printf are also happening from the kernel. What is
+> the trick they use to know which pieces of dtrace script should be
+> run in user space?
+
+It appears as though the bytecode language running in the kernel sends
+some action commands back out to userspace, not just plain data.
+
+
+> In ebpf examples there are two C files: one for kernel with ebpf isa
+> and one for userspace as native. I thought about combining them,
+> but couldn't figure out a clean way of doing it.
+
+(#if ?)
+
+
+> > What kind of locking/serialization is provided by the ebpf runtime
+> > over shared variables such as my_map?
+> 
+> it's traditional rcu scheme.
+
+OK, that protects the table structure, but:
+
+> [...] In such case concurrent write access to map value can be done
+> with bpf_xadd instruction, though using normal read/write is also
+> allowed. In some cases the speed of racy var++ is preferred over
+> 'lock xadd'.
+
+... so concurrency control over shared values is left up to the
+programmer.
+
+> There are no lock/unlock function helpers available to ebpf
+> programs, since program may terminate early with div by zero
+> for example, so in-kernel lock helper implementation would
+> be complicated and slow. It's possible to do, but for the use
+> cases so far there is no need.
+
+OK, I hope that works out.  I've been told that dtrace does something
+similiar (!)  by eschewing protection on global variables such as
+strings.  In their case it's less bad than it sounds because they are
+used to offloading computation to userspace or to store only
+thread-local state, and accept the corollary limitations on control.
+
+(Systemtap does fully & automatically protect shared variables, even
+in the face of run-time script errors.)
+
+
+- FChE
