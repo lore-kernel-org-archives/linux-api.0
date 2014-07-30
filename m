@@ -1,36 +1,62 @@
-From: Steven Stewart-Gallus <sstewartgallus00@mylangara.bc.ca>
-Subject: Does anyone know when FUTEX_WAIT can fail with EAGAIN?
-Date: Tue, 29 Jul 2014 21:55:56 +0000 (GMT)
-Message-ID: <fb82d1d46d8f.53d8186c@langara.bc.ca>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 11/11] seccomp: Add tgid and tid into seccomp_data
+Date: Tue, 29 Jul 2014 21:05:42 -0700
+Message-ID: <CALCETrWaUsi1Ea3YTXLN6BFqcoHnbFTuMvcNncS5rq0nSgOatA@mail.gmail.com>
+References: <1406296033-32693-1-git-send-email-drysdale@google.com>
+ <1406296033-32693-12-git-send-email-drysdale@google.com> <CALCETrVJX4+-6vkRaDj4kV_bXiYL5fj_PtO53g9fRf=i4X2Tww@mail.gmail.com>
+ <CAGXu5jJZ7mhmq1BrdTP5Ww15+C2iLQKjLy1Xh0=9qZvVK5E9Cw@mail.gmail.com>
+ <CALCETrVChObsQpL6dt-ByiCjbPrtpXAXQgy_apBY-OpGQHaPjg@mail.gmail.com> <87vbqhp4hf.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-disposition: inline
-Content-language: en
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, mtk@man7.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87vbqhp4hf.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+On Mon, Jul 28, 2014 at 2:18 PM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+>
+>> [cc: Eric Biederman]
+>>
+>
+>> Can we do one better and add a flag to prevent any non-self pid
+>> lookups?  This might actually be easy on top of the pid namespace work
+>> (e.g. we could change the way that find_task_by_vpid works).
+>>
+>> It's far from just being signals.  There's access_process_vm, ptrace,
+>> all the signal functions, clock_gettime (see CPUCLOCK_PID -- yes, this
+>> is ridiculous), and probably some others that I've forgotten about or
+>> never noticed in the first place.
+>
+> So here is the practical question.
+>
+> Are these processes that only can send signals to their thread group
+> allowed to call fork()?
+>
+>
+> If fork is allowed and all pid lookups are restricted to their own
+> thread group that wait, waitpid, and all of the rest of the wait family
+> will never return the pids of their children, and zombies will
+> accumulate.  Aka the semantics are fundamentally broken.
 
-I'm trying to debug a hangup where my program loops with FUTEX_WAIT (actually
-FUTEX_WAIT_PRIVATE but same thing)  endlessly erring out with EAGAIN. I would
-like to know if anyone on the mailing list knows when FUTEX_WAIT can fail with
-EAGAIN.
+Good point.
 
-Some info for people who are interested in what I'm working on.
+I can imagine at least three ways that fork() could continue working, though:
 
-I'm working on sand boxing my program at gitorious.org/linted with namespaces
-and chroot.
+1. Allow lookups of immediate children, too.  (I don't love this one.)
+2. Allow non-self pids to be translated in but not out.  This way
+P_ALL will continue working.
+3. Have the kernel treat any PID-restricted process as though it were NOCLDWAIT.
 
-The error only appeared after changing unshare then fork code into a direct
-clone call.
+I think I like #3.  Thoughts?
 
-> | uname -a
-> Linux alonzo 3.13.0-24-generic #1trisquel1 SMP Tue May 13 15:17:50 UTC 2014
-x86_64 x86_64 x86_64 GNU/Linux
+>
+> If fork is not allowed pid namespaces already solve this problem.
 
-Thank you,
-Steven Stewart-Gallus
+PID namespaces are fairly heavyweight.  Julien pointed out that using
+PID namespaces requires a bunch of dummy PID 1 processes.
+
+--Andy
