@@ -1,53 +1,70 @@
-From: fche-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org (Frank Ch. Eigler)
+From: Alexei Starovoitov <ast@plumgrid.com>
 Subject: Re: [PATCH RFC v3 net-next 3/3] samples: bpf: eBPF dropmon example in C
-Date: Wed, 30 Jul 2014 11:45:28 -0400
-Message-ID: <y0m1tt226lj.fsf@fche.csb>
+Date: Wed, 30 Jul 2014 10:17:17 -0700
+Message-ID: <CAMEtUuxNs=HBhtFwhBX3HOU6+QqtYZ+v7sJ74+cg-o+bi5GdoA@mail.gmail.com>
 References: <1406000723-4872-1-git-send-email-ast@plumgrid.com>
 	<1406000723-4872-4-git-send-email-ast@plumgrid.com>
+	<y0m1tt226lj.fsf@fche.csb>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1406000723-4872-4-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> (Alexei Starovoitov's message of "Mon, 21 Jul 2014 20:45:23 -0700")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <y0m1tt226lj.fsf@fche.csb>
+Sender: netdev-owner@vger.kernel.org
+To: "Frank Ch. Eigler" <fche@redhat.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Jul 30, 2014 at 8:45 AM, Frank Ch. Eigler <fche@redhat.com> wrote:
+> For the record, this is not entirely accurate as to dtrace.  dtrace
+> delegates aggregation and most reporting to userspace.  Also,
+> systemtap is "short and deterministic" even for aggregations & nice
+> graphs, but since it limits its storage & cpu consumption, its
+> arrays/reports cannot get super large.
 
-ast wrote earlier:
+My understanding of systemtap is that the whole .stp script is converted
+to C, compiled as .ko and loaded, so all map walking and prints are
+happening in the kernel. Similarly for ktap which has special functions
+in kernel to print histograms.
+I thought dtrace printf are also happening from the kernel. What is the
+trick they use to know which pieces of dtrace script should be run in
+user space?
+In ebpf examples there are two C files: one for kernel with ebpf isa
+and one for userspace as native. I thought about combining them,
+but couldn't figure out a clean way of doing it.
 
-> [...]
-> dtrace/systemtap/ktap approach is to use one script file that should provide
-> all desired functionality. That architectural decision overcomplicated their
-> implementations.
+>> [...]
+>> +SEC("events/skb/kfree_skb")
+>> +int bpf_prog2(struct bpf_context *ctx)
+>> +{
+>> +[...]
+>> +     value = bpf_map_lookup_elem(&my_map, &loc);
+>> +     if (value)
+>> +             (*(long *) value) += 1;
+>> +     else
+>> +             bpf_map_update_elem(&my_map, &loc, &init_val);
+>> +     return 0;
+>> +}
 >
-> eBPF follows split model: everything that needs to process millions of events
-> per second needs to run in kernel and needs to be short and deterministic,
-> all other things like aggregation and nice graphs should run in user space.
-> [...]
+> What kind of locking/serialization is provided by the ebpf runtime
+> over shared variables such as my_map?
 
-For the record, this is not entirely accurate as to dtrace.  dtrace
-delegates aggregation and most reporting to userspace.  Also,
-systemtap is "short and deterministic" even for aggregations & nice
-graphs, but since it limits its storage & cpu consumption, its
-arrays/reports cannot get super large.
-
-
-> [...]
-> +SEC("events/skb/kfree_skb")
-> +int bpf_prog2(struct bpf_context *ctx)
-> +{
-> +[...]
-> +	value = bpf_map_lookup_elem(&my_map, &loc);
-> +	if (value)
-> +		(*(long *) value) += 1;
-> +	else
-> +		bpf_map_update_elem(&my_map, &loc, &init_val);
-> +	return 0;
-> +}
-
-What kind of locking/serialization is provided by the ebpf runtime
-over shared variables such as my_map?
-
-
-- FChE
+it's traditional rcu scheme.
+Programs are running under rcu_read_lock(), so that
+bpf_map_lookup_elem() can return pointer to map value which
+won't disappear while program is running.
+In-kernel map implementation needs to use rcu style to match
+ebpf program assumptions. map implementation is enforcing
+the limit to the number of elements.
+I didn't post 'array' type of map yet. bpf_map_lookup in this
+implementation will just return 'base + index' pointer.
+Regardless of type of map the same ebpf program running on
+different cpus may lookup the same 'key' and receive the same
+map value pointer. In such case concurrent write access to
+map value can be done with bpf_xadd instruction, though
+using normal read/write is also allowed. In some cases
+the speed of racy var++ is preferred over 'lock xadd'.
+There are no lock/unlock function helpers available to ebpf
+programs, since program may terminate early with div by zero
+for example, so in-kernel lock helper implementation would
+be complicated and slow. It's possible to do, but for the use
+cases so far there is no need.
