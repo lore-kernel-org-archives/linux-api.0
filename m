@@ -1,85 +1,59 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 11/11] seccomp: Add tgid and tid into seccomp_data
-Date: Tue, 29 Jul 2014 21:35:00 -0700
-Message-ID: <CALCETrVWn1SmLN3b7Z3NXzSQcKgSLx7mF=ynNyu-GLnKE5eQMA@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [RFC PATCHv2 00/11] Adding FreeBSD's Capsicum security framework
+Date: Tue, 29 Jul 2014 23:22:01 -0700
+Message-ID: <87iomfgyd2.fsf@x220.int.ebiederm.org>
 References: <1406296033-32693-1-git-send-email-drysdale@google.com>
- <1406296033-32693-12-git-send-email-drysdale@google.com> <CALCETrVJX4+-6vkRaDj4kV_bXiYL5fj_PtO53g9fRf=i4X2Tww@mail.gmail.com>
- <CAGXu5jJZ7mhmq1BrdTP5Ww15+C2iLQKjLy1Xh0=9qZvVK5E9Cw@mail.gmail.com>
- <CALCETrVChObsQpL6dt-ByiCjbPrtpXAXQgy_apBY-OpGQHaPjg@mail.gmail.com>
- <87vbqhp4hf.fsf@x220.int.ebiederm.org> <CALCETrWaUsi1Ea3YTXLN6BFqcoHnbFTuMvcNncS5rq0nSgOatA@mail.gmail.com>
- <87oaw7ij4k.fsf@x220.int.ebiederm.org>
+	<871tt796i0.fsf@x220.int.ebiederm.org>
+	<CAHse=S_7Jpb9bTXHgU8q8_UZ=ce2gwdq8C15a+jbfO_pHmV_iA@mail.gmail.com>
+	<87ha21qja0.fsf@x220.int.ebiederm.org>
+	<CAHse=S_w4+AMuc=-XbAK_PiaD56_ks13R53RENMHif5KRN_Kiw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <87oaw7ij4k.fsf@x220.int.ebiederm.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kees Cook <keescook@chromium.org>, Julien Tinnes <jln@google.com>, David Drysdale <drysdale@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHse=S_w4+AMuc=-XbAK_PiaD56_ks13R53RENMHif5KRN_Kiw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(David Drysdale's message of "Tue, 29 Jul 2014 11:58:21 +0100")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 29, 2014 at 9:08 PM, Eric W. Biederman
-<ebiederm@xmission.com> wrote:
-> Andy Lutomirski <luto@amacapital.net> writes:
+
+I have cut this down to just focus on O_BENEATH openat case.
+
+David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> writes:
+
+> On Mon, Jul 28, 2014 at 10:13 PM, Eric W. Biederman
+> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+
+>> Nope.  What you can implement today if you want fine grained limitations
+>> like this is to create a mount namespace with exactly the subdirectory
+>> tree you want to allow access to and to return a file descriptor that
+>> points into that mount namespace.  (When complete the only user of that
+>> mount namespace would be your file descriptor).
 >
->> On Mon, Jul 28, 2014 at 2:18 PM, Eric W. Biederman
->> <ebiederm@xmission.com> wrote:
->>> Andy Lutomirski <luto@amacapital.net> writes:
->>>
->>>> [cc: Eric Biederman]
->>>>
->>>
->>>> Can we do one better and add a flag to prevent any non-self pid
->>>> lookups?  This might actually be easy on top of the pid namespace work
->>>> (e.g. we could change the way that find_task_by_vpid works).
->>>>
->>>> It's far from just being signals.  There's access_process_vm, ptrace,
->>>> all the signal functions, clock_gettime (see CPUCLOCK_PID -- yes, this
->>>> is ridiculous), and probably some others that I've forgotten about or
->>>> never noticed in the first place.
->>>
->>> So here is the practical question.
->>>
->>> Are these processes that only can send signals to their thread group
->>> allowed to call fork()?
->>>
->>>
->>> If fork is allowed and all pid lookups are restricted to their own
->>> thread group that wait, waitpid, and all of the rest of the wait family
->>> will never return the pids of their children, and zombies will
->>> accumulate.  Aka the semantics are fundamentally broken.
->>
->> Good point.
->>
->> I can imagine at least three ways that fork() could continue working, though:
->>
->> 1. Allow lookups of immediate children, too.  (I don't love this one.)
->> 2. Allow non-self pids to be translated in but not out.  This way
->> P_ALL will continue working.
->> 3. Have the kernel treat any PID-restricted process as though it were NOCLDWAIT.
->>
->> I think I like #3.  Thoughts?
->>
->>>
->>> If fork is not allowed pid namespaces already solve this problem.
->>
->> PID namespaces are fairly heavyweight.  Julien pointed out that using
->> PID namespaces requires a bunch of dummy PID 1 processes.
->
-> Only if you can't tolerate init exiting.  The reasoning with respect to
-> signals and signals being ignored was wrong.  And if you only have one
-> process you care about and no children to worry about neither the
-> difference in signal handling nor the world dies whe init exits applies.
+> How does that solve the particular example I mentioned?  The DFD
+> within the mount namespace will still allow any operation on any file
+> that's already in the subdirectory -- or am I misunderstanding
+> something?
 
-Can you elaborate?  It seems entirely plausible to me that there are
-programs that won't work right as PID 1 without considerable
-adaptation.
+The goal was to bound the DFD to the directory and all of it's
+subdirectories such that openat(dfd, "../../..") would open
+the dfd, and that further opens of other directories would also not
+allow you to escape.
 
->
-> Therefore given what I have read described pid namespaces are a trivial
-> solution to this problem space.
+Since the mount namespace only contains the choosen directory and it's
+subdirectories that works easily and trivially.
 
-pid namespaces also won't work in the context of Capsicum unless you
-want every single Capsicum process to be its own pid namespace.  Also,
-pid namespaces don't offer any way to protect children from parents.
+So while you can indeed perform any file operation on that dfd who
+cares because none of those operations can get you anywhere you aren't
+supposed to be.
 
---Andy
+My point was that you can as granular as you would like by binding a dfd
+to a mount namespace instead of binding a process to a mount namespace,
+and the code already exists and is being maintained.
+
+So while things are not packaged in the form that has been requested it
+looks to me as if the functionality for directories already exists
+within the Linux kernel.
+
+Eric
