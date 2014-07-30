@@ -1,36 +1,31 @@
 From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
 Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
-Date: Wed, 30 Jul 2014 15:37:12 +0100
-Message-ID: <20140730153713.736881f0@alan.etchedpixels.co.uk>
+Date: Wed, 30 Jul 2014 15:37:58 +0100
+Message-ID: <20140730153758.6431fafa@alan.etchedpixels.co.uk>
 References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
-	<20140727210617.GY6725@thunk.org>
-	<CALCETrXfzOZEC3mOKkm3_GvitvkEu4kAa3LowRv-fjHnzrQnBg@mail.gmail.com>
-	<87oawa740c.fsf@x220.int.ebiederm.org>
+	<20140725223550.3153f436@alan.etchedpixels.co.uk>
+	<CALCETrXHNFYaQjksBJyN3O0HJpKw_D_tU7b4O23=nyJt9CPSLg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <87oawa740c.fsf@x220.int.ebiederm.org>
+In-Reply-To: <CALCETrXHNFYaQjksBJyN3O0HJpKw_D_tU7b4O23=nyJt9CPSLg@mail.gmail.com>
 Sender: linux-crypto-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, linux-crypto@vger.kernel.org, Henrique de Moraes Holschuh <hmh@hmh.eng.br>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, James Morris <james.l.morris@oracle.com>, LSM List <linux-security-module@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Julien Tinnes <jln@google.com>, Theodore Ts'o <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, David Drysdale <drysdale@google.com>, Kees Cook <keescook@chromium.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Julien Tinnes <jln@google.com>, David Drysdale <drysdale@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Theodore Ts'o <tytso@mit.edu>, Henrique de Moraes Holschuh <hmh@hmh.eng.br>, linux-crypto@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-> Andy you seem to be arguing here for two system calls.
-> get_urandom() and get_random().
+> > We sort of have one. It's called capable(). Just needs extending to cover
+> > anything else you care about, and probably all the numeric constants
+> > replacing with textual names.
+> >
 > 
-> Where get_urandom only blocks if there is not enough starting entropy,
-> and get_random(GRND_RANDOM) blocks if there is currently not enough
-> entropy.
-> 
-> That would allow -ENOSYS to be the right return value and it would
-> simply things for everyone.
+> Except that it's all backwards: these are things that default to *on*,
+> and people might want them to turn off.  capable() is totally fscked
+> if you want otherwise unprivileged users to carry capabilities around
 
-So you replace the "no file handle" special case with the "unsupported or
-disabled syscall" special case, which is even harder to test.
+The userspace API is, but capable() as a userspace API and capable() as
+an in kernel check are only connected by history.
 
-Interfaces have failure modes. People who can't deal with that shouldn't
-be writing code that does anything important in languages which don't
-handle it for them.
-
-Alan
+For the in kernel part you can either teach everyone another disjoint API
+or we can have a single API in kernel for saying "is XYZ allowed".
