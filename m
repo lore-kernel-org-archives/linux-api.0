@@ -1,70 +1,62 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH RFC v3 net-next 3/3] samples: bpf: eBPF dropmon example in C
-Date: Wed, 30 Jul 2014 10:17:17 -0700
-Message-ID: <CAMEtUuxNs=HBhtFwhBX3HOU6+QqtYZ+v7sJ74+cg-o+bi5GdoA@mail.gmail.com>
-References: <1406000723-4872-1-git-send-email-ast@plumgrid.com>
-	<1406000723-4872-4-git-send-email-ast@plumgrid.com>
-	<y0m1tt226lj.fsf@fche.csb>
+From: Mugunthan V N <mugunthanvnm-l0cyMroinI0@public.gmane.org>
+Subject: Re: [RFC PATCH 1/1] ethtool: adding support for multiple slave port
+ configuration
+Date: Wed, 30 Jul 2014 23:04:36 +0530
+Message-ID: <53D92CAC.3070002@ti.com>
+References: <1406291305-22286-1-git-send-email-mugunthanvnm@ti.com> <1406429221.29010.151.camel@deadeye.wl.decadent.org.uk> <53D52452.2020300@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <y0m1tt226lj.fsf@fche.csb>
-Sender: netdev-owner@vger.kernel.org
-To: "Frank Ch. Eigler" <fche@redhat.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <53D52452.2020300-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: John Fastabend <john.fastabend-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 30, 2014 at 8:45 AM, Frank Ch. Eigler <fche@redhat.com> wrote:
-> For the record, this is not entirely accurate as to dtrace.  dtrace
-> delegates aggregation and most reporting to userspace.  Also,
-> systemtap is "short and deterministic" even for aggregations & nice
-> graphs, but since it limits its storage & cpu consumption, its
-> arrays/reports cannot get super large.
-
-My understanding of systemtap is that the whole .stp script is converted
-to C, compiled as .ko and loaded, so all map walking and prints are
-happening in the kernel. Similarly for ktap which has special functions
-in kernel to print histograms.
-I thought dtrace printf are also happening from the kernel. What is the
-trick they use to know which pieces of dtrace script should be run in
-user space?
-In ebpf examples there are two C files: one for kernel with ebpf isa
-and one for userspace as native. I thought about combining them,
-but couldn't figure out a clean way of doing it.
-
->> [...]
->> +SEC("events/skb/kfree_skb")
->> +int bpf_prog2(struct bpf_context *ctx)
->> +{
->> +[...]
->> +     value = bpf_map_lookup_elem(&my_map, &loc);
->> +     if (value)
->> +             (*(long *) value) += 1;
->> +     else
->> +             bpf_map_update_elem(&my_map, &loc, &init_val);
->> +     return 0;
->> +}
+On Sunday 27 July 2014 09:39 PM, John Fastabend wrote:
+> On 07/26/2014 07:47 PM, Ben Hutchings wrote:
+>> On Fri, 2014-07-25 at 17:58 +0530, Mugunthan V N wrote:
+>>> Some Ethernet Swtich controllers like CPSW in AM335x, TI814x, DRA7x and
+>>> AM43xx SoCs, Network Coprocessor in AM5K2E0x, Realtek Switch
+>>> controllers
+>>> etc has to capability of conneting multiple networks using L2 switching
+>>> and has multiple phys. With the existing code, ethtool can communicate
+>>> only to one phy.
+>>>
+>>> To enable user to communicate multiple phy connected to single Ethernet
+>>> Switch controller, intoducing a optional new parameter in Ethtool
+>>> interface
+>>> to pass which slave to set/get the phy configuration.
+>>
+>> There was some discussion about configuration APIs for hardware/firmware
+>> bridges earlier this year and I thought there was a consensus for
+>> assigning a network device to each port.  This would remove the need to
+>> identify ports within a device.  But I may have misremembered.
+>>
 >
-> What kind of locking/serialization is provided by the ebpf runtime
-> over shared variables such as my_map?
+> I like the approach of creating a network device for each port over
+> having to use ethtool to program/discover them. I am currently looking
+> at writing management applications for this and IMO it is much easier
+> to discover and listen for events on network devices vs polling ethtool
+> and iterating through slave indexs. Also you miss a lot of functionality
+> that may be useful MTU for example that is not available configured via
+> ethtool.
+>
+> One of the sticking points in earlier discussions was how to handle
+> devices that have limited support for slave devices. When we create a
+> netdev we expect the stack can bind to it and TX/RX packets which as
+> I understand is not always possible? (I missed why we couldn't recv the
+> packets over a switch port though with some skb->dev manipulation). In
+> this case a feature flag could be used to resolve the feature
+> dependencies.
+>
+>
 
-it's traditional rcu scheme.
-Programs are running under rcu_read_lock(), so that
-bpf_map_lookup_elem() can return pointer to map value which
-won't disappear while program is running.
-In-kernel map implementation needs to use rcu style to match
-ebpf program assumptions. map implementation is enforcing
-the limit to the number of elements.
-I didn't post 'array' type of map yet. bpf_map_lookup in this
-implementation will just return 'base + index' pointer.
-Regardless of type of map the same ebpf program running on
-different cpus may lookup the same 'key' and receive the same
-map value pointer. In such case concurrent write access to
-map value can be done with bpf_xadd instruction, though
-using normal read/write is also allowed. In some cases
-the speed of racy var++ is preferred over 'lock xadd'.
-There are no lock/unlock function helpers available to ebpf
-programs, since program may terminate early with div by zero
-for example, so in-kernel lock helper implementation would
-be complicated and slow. It's possible to do, but for the use
-cases so far there is no need.
+John
+
+I am also interested in participating in the above management api
+development.
+
+Regards
+Mugunthan V N
