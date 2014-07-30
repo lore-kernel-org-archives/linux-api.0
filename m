@@ -1,71 +1,54 @@
-From: "Frank Ch. Eigler" <fche@redhat.com>
-Subject: Re: [PATCH RFC v3 net-next 3/3] samples: bpf: eBPF dropmon example in C
-Date: Wed, 30 Jul 2014 13:36:38 -0400
-Message-ID: <20140730173638.GB8745@redhat.com>
-References: <1406000723-4872-1-git-send-email-ast@plumgrid.com> <1406000723-4872-4-git-send-email-ast@plumgrid.com> <y0m1tt226lj.fsf@fche.csb> <CAMEtUuxNs=HBhtFwhBX3HOU6+QqtYZ+v7sJ74+cg-o+bi5GdoA@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
+Date: Wed, 30 Jul 2014 11:41:41 -0700
+Message-ID: <87r412g04a.fsf@x220.int.ebiederm.org>
+References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
+	<20140727210617.GY6725@thunk.org>
+	<CALCETrXfzOZEC3mOKkm3_GvitvkEu4kAa3LowRv-fjHnzrQnBg@mail.gmail.com>
+	<87oawa740c.fsf@x220.int.ebiederm.org>
+	<20140730153713.736881f0@alan.etchedpixels.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAMEtUuxNs=HBhtFwhBX3HOU6+QqtYZ+v7sJ74+cg-o+bi5GdoA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20140730153713.736881f0@alan.etchedpixels.co.uk> (One Thousand
+	Gnomes's message of "Wed, 30 Jul 2014 15:37:12 +0100")
+Sender: linux-crypto-owner@vger.kernel.org
+To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+Cc: Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, linux-crypto@vger.kernel.org, Henrique de Moraes Holschuh <hmh@hmh.eng.br>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, James Morris <james.l.morris@oracle.com>, LSM List <linux-security-module@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Julien Tinnes <jln@google.com>, Theodore Ts'o <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, David Drysdale <drysdale@google.com>, Kees Cook <keescook@chromium.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi, Alexei -
+One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk> writes:
 
-> My understanding of systemtap is that the whole .stp script is converted
-> to C, compiled as .ko and loaded, so all map walking and prints are
-> happening in the kernel. Similarly for ktap which has special functions
-> in kernel to print histograms.
+>> Andy you seem to be arguing here for two system calls.
+>> get_urandom() and get_random().
+>> 
+>> Where get_urandom only blocks if there is not enough starting entropy,
+>> and get_random(GRND_RANDOM) blocks if there is currently not enough
+>> entropy.
+>> 
+>> That would allow -ENOSYS to be the right return value and it would
+>> simply things for everyone.
+>
+> So you replace the "no file handle" special case with the "unsupported or
+> disabled syscall" special case, which is even harder to test.
+>
+> Interfaces have failure modes. People who can't deal with that shouldn't
+> be writing code that does anything important in languages which don't
+> handle it for them.
 
-That is correct.
+Perhaps I misread the earlier conversation but it what I have read of
+this discussion people want to disable some of get_random() modes with
+seccomp.  Today get_random does not have any failure codes define except
+-ENOSYS.
 
-> I thought dtrace printf are also happening from the kernel. What is
-> the trick they use to know which pieces of dtrace script should be
-> run in user space?
+get_random(0) succeeding and get_random(GRND_RANDOM) returning -ENOSYS
+has every chance of causing applications to legitimately assume the
+get_random system call is not available in any mode.
 
-It appears as though the bytecode language running in the kernel sends
-some action commands back out to userspace, not just plain data.
+So the code either needs a defined error code for bad flags (-EINVAL) or
+we need to split the syscall in two.  Now that I think about it having
+the seccomp filter return -EINVAL if it doesn't like the parameter is
+better that splitting a syscall.  Presumably that is what
+get_random(UNSUPPORTED_FLAG) returns.
 
-
-> In ebpf examples there are two C files: one for kernel with ebpf isa
-> and one for userspace as native. I thought about combining them,
-> but couldn't figure out a clean way of doing it.
-
-(#if ?)
-
-
-> > What kind of locking/serialization is provided by the ebpf runtime
-> > over shared variables such as my_map?
-> 
-> it's traditional rcu scheme.
-
-OK, that protects the table structure, but:
-
-> [...] In such case concurrent write access to map value can be done
-> with bpf_xadd instruction, though using normal read/write is also
-> allowed. In some cases the speed of racy var++ is preferred over
-> 'lock xadd'.
-
-... so concurrency control over shared values is left up to the
-programmer.
-
-> There are no lock/unlock function helpers available to ebpf
-> programs, since program may terminate early with div by zero
-> for example, so in-kernel lock helper implementation would
-> be complicated and slow. It's possible to do, but for the use
-> cases so far there is no need.
-
-OK, I hope that works out.  I've been told that dtrace does something
-similiar (!)  by eschewing protection on global variables such as
-strings.  In their case it's less bad than it sounds because they are
-used to offloading computation to userspace or to store only
-thread-local state, and accept the corollary limitations on control.
-
-(Systemtap does fully & automatically protect shared variables, even
-in the face of run-time script errors.)
-
-
-- FChE
+Eric
