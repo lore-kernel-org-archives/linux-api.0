@@ -1,31 +1,36 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
-Date: Wed, 30 Jul 2014 15:37:58 +0100
-Message-ID: <20140730153758.6431fafa@alan.etchedpixels.co.uk>
-References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
-	<20140725223550.3153f436@alan.etchedpixels.co.uk>
-	<CALCETrXHNFYaQjksBJyN3O0HJpKw_D_tU7b4O23=nyJt9CPSLg@mail.gmail.com>
+From: Bernd Petrovitsch <bernd@petrovitsch.priv.at>
+Subject: Re: [PATCH -v4] random: introduce getrandom(2) system call
+Date: Wed, 30 Jul 2014 16:40:52 +0200
+Message-ID: <1406731254.26034.4.camel@thorin>
+References: <1405718127-30042-1-git-send-email-tytso@mit.edu>
+	 <20140730122620.GC13965@amd.pavel.ucw.cz>
+	 <CAComcpMnAdOk=Hs8Dtc7VZeJDHnpKQtzZ_=_67tqCeYU3pdJ_Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXHNFYaQjksBJyN3O0HJpKw_D_tU7b4O23=nyJt9CPSLg@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Julien Tinnes <jln@google.com>, David Drysdale <drysdale@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Paolo Bonzini <pbonzini@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, James Morris <james.l.morris@oracle.com>, Linux API <linux-api@vger.kernel.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Theodore Ts'o <tytso@mit.edu>, Henrique de Moraes Holschuh <hmh@hmh.eng.br>, linux-crypto@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAComcpMnAdOk=Hs8Dtc7VZeJDHnpKQtzZ_=_67tqCeYU3pdJ_Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Bob Beck <beck@openbsd.org>
+Cc: Pavel Machek <pavel@ucw.cz>, Theodore Ts'o <tytso@mit.edu>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-crypto <linux-crypto@vger.kernel.org>, Theo de Raadt <deraadt@cvs.openbsd.org>
 List-Id: linux-api@vger.kernel.org
 
-> > We sort of have one. It's called capable(). Just needs extending to cover
-> > anything else you care about, and probably all the numeric constants
-> > replacing with textual names.
-> >
-> 
-> Except that it's all backwards: these are things that default to *on*,
-> and people might want them to turn off.  capable() is totally fscked
-> if you want otherwise unprivileged users to carry capabilities around
+On Mit, 2014-07-30 at 07:56 -0600, Bob Beck wrote:
+> Pavel. I have bit 'ol enterprise daemon running with established file
+> descriptors serving thousands of connections
+> which periodically require entropy.  Now I run out of descriptors. I
+> can't establish new connections. but I should
+> now halt all the other ones that require entropy?  I should raise
+> SIGKILL on my process serving these thousands
+> of connetions?  I don't think so.
 
-The userspace API is, but capable() as a userspace API and capable() as
-an in kernel check are only connected by history.
+If that long-running daemon periodically needs something from a device,
+one would better keep the fd for that open the whole time. Saves some
+CPU cycles and latency too BTW.
 
-For the in kernel part you can either teach everyone another disjoint API
-or we can have a single API in kernel for saying "is XYZ allowed".
+	Bernd
+-- 
+"I dislike type abstraction if it has no real reason. And saving
+on typing is not a good reason - if your typing speed is the main
+issue when you're coding, you're doing something seriously wrong."
+    - Linus Torvalds
