@@ -1,44 +1,63 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [RFC PATCH 1/2] fs: Add dirreadahead syscall and VFS hooks
-Date: Thu, 31 Jul 2014 13:31:56 +1000
-Message-ID: <20140731033156.GQ26465@dastard>
-References: <1406309851-10628-1-git-send-email-adas@redhat.com>
- <1406309851-10628-2-git-send-email-adas@redhat.com>
- <CAHO5Pa2fW6mZRTao3uEx2p_X9GvO1btrbb9Bg2ns94+p4biKAQ@mail.gmail.com>
+From: Bernd Petrovitsch <bernd@petrovitsch.priv.at>
+Subject: Re: [PATCH -v4] random: introduce getrandom(2) system call
+Date: Thu, 31 Jul 2014 10:06:37 +0200
+Message-ID: <1406794012.26034.14.camel@thorin>
+References: <1405718127-30042-1-git-send-email-tytso@mit.edu>
+	 <20140730122620.GC13965@amd.pavel.ucw.cz>
+	 <CAComcpMnAdOk=Hs8Dtc7VZeJDHnpKQtzZ_=_67tqCeYU3pdJ_Q@mail.gmail.com>
+	 <1406731254.26034.4.camel@thorin> <20140730221819.GB18189@amd.pavel.ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHO5Pa2fW6mZRTao3uEx2p_X9GvO1btrbb9Bg2ns94+p4biKAQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, cluster-devel <cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20140730221819.GB18189@amd.pavel.ucw.cz>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Bob Beck <beck@openbsd.org>, Theodore Ts'o <tytso@mit.edu>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-crypto <linux-crypto@vger.kernel.org>, Theo de Raadt <deraadt@cvs.openbsd.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 29, 2014 at 10:21:50AM +0200, Michael Kerrisk wrote:
-> [CC+=linux-api]
+On Don, 2014-07-31 at 00:18 +0200, Pavel Machek wrote:
+> On Wed 2014-07-30 16:40:52, Bernd Petrovitsch wrote:
+> > On Mit, 2014-07-30 at 07:56 -0600, Bob Beck wrote:
+> > > Pavel. I have bit 'ol enterprise daemon running with established file
+> > > descriptors serving thousands of connections
+> > > which periodically require entropy.  Now I run out of descriptors. I
+> > > can't establish new connections. but I should
+> > > now halt all the other ones that require entropy?  I should raise
+> > > SIGKILL on my process serving these thousands
+> > > of connetions?  I don't think so.
+> > 
+> > If that long-running daemon periodically needs something from a device,
+> > one would better keep the fd for that open the whole time. Saves some
+> > CPU cycles and latency too BTW.
 > 
-> On Fri, Jul 25, 2014 at 7:37 PM, Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > Also adds a void *opaque field to struct dir_context that can be
-> > used by filesystems to temporarily store any context as this
-> > struct gets passed around in the fs.
+> Agreed.
+> 
+> On the other hand, keeping a fd open is quite tricky for a
+> library. But better solution might be to make that easier.
 
-So the prototype is:
+Yes, in a (full-fledged, standalone) library seems at least tricky (also
+referring to some off-list mails here: think about fork() - which could
+be inside system() or popen() or similar). 
 
-int dir_readahead(int fd, off64_t offset, unsigned int count);
+But as part of the *application* (where one has control over fork()
+etc.), this should be somewhat less risky. Yes, that doesn't really help
+libssl;-)
 
-Why do we need a new syscall for this?
+Hehe, we (Unix!) have (had) gettimeofday(), time() and similar sys-calls
+since ages and no one proposed to make devices for them and get rid of
+the system-calls.
 
-$ man 2 readahead
-....
-ssize_t readahead(int fd, off64_t offset, size_t count);
-....
-	EINVAL fd does not refer to a file type to which readahead() can be applied.
+> open( , O_IM_A_LIBRARY_GIVE_ME_ONE_OF_THREE_RESERVED_FDS) might be one
+> solution. Actually, one reserved fd should be enough.
 
+Well, this can also be DoSed and the proposal aims to make that
+impossible (and where does this reserved count against? process-limits,
+kernel-wide limit?).
 
-Cheers,
-
-Dave.
+	Bernd
 -- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+"I dislike type abstraction if it has no real reason. And saving
+on typing is not a good reason - if your typing speed is the main
+issue when you're coding, you're doing something seriously wrong."
+    - Linus Torvalds
