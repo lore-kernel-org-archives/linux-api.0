@@ -1,100 +1,44 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: General flags to turn things off (getrandom, pid lookup, etc)
-Date: Wed, 30 Jul 2014 19:37:47 -0700
-Message-ID: <87wqaudzic.fsf@x220.int.ebiederm.org>
-References: <CALCETrWGvBfrX1W5XaFgJZhKHLf+oac9YrwPR3ppK=deQtu5hA@mail.gmail.com>
-	<20140727210617.GY6725@thunk.org>
-	<CALCETrXfzOZEC3mOKkm3_GvitvkEu4kAa3LowRv-fjHnzrQnBg@mail.gmail.com>
-	<87oawa740c.fsf@x220.int.ebiederm.org>
-	<20140730153713.736881f0@alan.etchedpixels.co.uk>
-	<87r412g04a.fsf@x220.int.ebiederm.org>
-	<20140730222903.4c83a652@alan.etchedpixels.co.uk>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [RFC PATCH 1/2] fs: Add dirreadahead syscall and VFS hooks
+Date: Thu, 31 Jul 2014 13:31:56 +1000
+Message-ID: <20140731033156.GQ26465@dastard>
+References: <1406309851-10628-1-git-send-email-adas@redhat.com>
+ <1406309851-10628-2-git-send-email-adas@redhat.com>
+ <CAHO5Pa2fW6mZRTao3uEx2p_X9GvO1btrbb9Bg2ns94+p4biKAQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <20140730222903.4c83a652@alan.etchedpixels.co.uk> (One Thousand
-	Gnomes's message of "Wed, 30 Jul 2014 22:29:03 +0100")
-Sender: linux-security-module-owner@vger.kernel.org
-To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Cc: Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, linux-crypto@vger.kernel.org, Henrique de Moraes Holschuh <hmh@hmh.eng.br>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, James Morris <james.l.morris@oracle.com>, LSM List <linux-security-module@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Julien Tinnes <jln@google.com>, Theodore Ts'o <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Moore <paul@paul-moore.com>, David Drysdale <drysdale@google.com>, Kees Cook <keescook@chromium.org>, Meredydd Luff <meredydd@senatehouse.org>, Christoph Hellwig <hch@infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAHO5Pa2fW6mZRTao3uEx2p_X9GvO1btrbb9Bg2ns94+p4biKAQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, cluster-devel <cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk> writes:
+On Tue, Jul 29, 2014 at 10:21:50AM +0200, Michael Kerrisk wrote:
+> [CC+=linux-api]
+> 
+> On Fri, Jul 25, 2014 at 7:37 PM, Abhi Das <adas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> > Also adds a void *opaque field to struct dir_context that can be
+> > used by filesystems to temporarily store any context as this
+> > struct gets passed around in the fs.
 
-> On Wed, 30 Jul 2014 11:41:41 -0700
-> ebiederm@xmission.com (Eric W. Biederman) wrote:
->
->> One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk> writes:
->> 
->> >> Andy you seem to be arguing here for two system calls.
->> >> get_urandom() and get_random().
->> >> 
->> >> Where get_urandom only blocks if there is not enough starting entropy,
->> >> and get_random(GRND_RANDOM) blocks if there is currently not enough
->> >> entropy.
->> >> 
->> >> That would allow -ENOSYS to be the right return value and it would
->> >> simply things for everyone.
->> >
->> > So you replace the "no file handle" special case with the "unsupported or
->> > disabled syscall" special case, which is even harder to test.
->> >
->> > Interfaces have failure modes. People who can't deal with that shouldn't
->> > be writing code that does anything important in languages which don't
->> > handle it for them.
->> 
->> Perhaps I misread the earlier conversation but it what I have read of
->> this discussion people want to disable some of get_random() modes with
->> seccomp.  Today get_random does not have any failure codes define except
->> -ENOSYS.
->> 
->> get_random(0) succeeding and get_random(GRND_RANDOM) returning -ENOSYS
->> has every chance of causing applications to legitimately assume the
->> get_random system call is not available in any mode.
->
-> Or more likely it'll be used like this
->
-> 	get_random(foo);		/* always works */
->
->
-> Now the existing failure mode is is
->
-> 	open(...)
-> 	/* forget the check */
-> 	read()
-> 	/* forget the check */
->
-> and triggered by evil local attacks on file handles. The "improved"
-> behaviour is unchecked -ENOSYS returns which are likely to occur
-> systemically when users run stuff on old kernels, in vm's with it off etc.
->
-> So you've swapped the odd evil user attack on a single target for the
-> likelyhood of mass generation of flawed keys with no error reporting.
->
-> In fact you could do a better job of the whole mess in libc rather than
-> the kernel, because in libc you'd write it like this
->
->          if (open(.. ) < 0)
-> 		kill(getpid(), 9);
-> 	 if (read(...) < expected)
-> 		kill(getpid(), 9);
-> 	 close(fd);
->
-> and 
-> a) on an older library you'd get a good failure (unable to execute the
-> binary)
-> b) on a newer system you'd get "do or die" behaviour and can improve its
-> robustness as desired
+So the prototype is:
 
-I have said enough about the silliness of disabling this syscall with
-seccomp or related infrastructure.
+int dir_readahead(int fd, off64_t offset, unsigned int count);
 
-The aspect I like about get_random() is that it will silence the
-requests from people to enable binary sysctl support in the kernel.
-Just so they can get random numbers when /dev/random and /dev/urandom
-are absent in their chroots.
+Why do we need a new syscall for this?
 
-sysctl(2) is finally legitmately going fading away.
+$ man 2 readahead
+....
+ssize_t readahead(int fd, off64_t offset, size_t count);
+....
+	EINVAL fd does not refer to a file type to which readahead() can be applied.
 
-Eric
 
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
