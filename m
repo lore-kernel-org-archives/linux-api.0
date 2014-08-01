@@ -1,40 +1,23 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: Re: [PATCH 2/5] raid: Require designated initialization of structures
-Date: Thu, 31 Jul 2014 18:30:30 -0700
-Message-ID: <20140801013030.GA20935@thin>
-References: <3130b0553b15518e3bef6d14c80280beed0f5ff9.1406850006.git.josh@joshtriplett.org>
- <1d468224409ef2bf46874f817d19389ac5d1b26d.1406850006.git.josh@joshtriplett.org>
- <20140801111055.59419950@notabene.brown>
+From: Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>
+Subject: Re: [REVIEW][PATCH 0/4] /proc/thread-self
+Date: Thu, 31 Jul 2014 19:39:55 -0700
+Message-ID: <1406860795.3036.3.camel@buesod1.americas.hpqcorp.net>
+References: <87oaw5caq1.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140801111055.59419950@notabene.brown>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: akpm@linux-foundation.org, "J. Bruce Fields" <bfields@fieldses.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Christopher Li <sparse@chrisli.org>, Ingo Molnar <mingo@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Michal Marek <mmarek@suse.cz>, Steven Rostedt <rostedt@goodmis.org>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-sparse@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87oaw5caq1.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 01, 2014 at 11:10:55AM +1000, NeilBrown wrote:
-> On Thu, 31 Jul 2014 16:47:35 -0700 Josh Triplett <josh@joshtriplett.org>
-> wrote:
-> 
-> > Mark raid6_calls and other structures containing function pointers with
-> > __designated_init.  Fix implementations in lib/raid6/ to use designated
-> > initializers; this also simplifies those initializers using the default
-> > initialization of fields to 0.
-> > 
-> > Signed-off-by: Josh Triplett <josh@joshtriplett.org>
-> 
-> Looks like an excellent idea!
-> Feel free to forward this upstream on my behalf, or remind me once the first
-> patch is in -next, and I'll take this one myself - whichever you prefer.
-> 
->  Acked-by: NeilBrown <neilb@suse.de>
+On Thu, 2014-07-31 at 17:30 -0700, Eric W. Biederman wrote:
+> This is small chance changing /proc/net and /proc/mounts will cause
+> userspace regressions (although nothing has shown up in my testing) if
+> that happens we can just point the change that moves them from
+> /proc/self/... to /proc/thread-self/...
 
-Thanks!  Ideally, I'd like to see the whole series go in through one
-tree, which is why I CCed Andrew.  I can easily produce several dozen
-more patches like these, but I just included enough examples to motivate
-patch 1, and I can send more in any order once that one goes in.
-
-- Josh Triplett
+Isn't breaking userspace a no no, no matter what? At least some
+util-linux programs makes use of both /proc/mounts and /proc/net.
