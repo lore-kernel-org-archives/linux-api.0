@@ -1,104 +1,250 @@
-From: josh@joshtriplett.org
-Subject: Re: [PATCH 1/5] Add __designated_init, wrapping
- __attribute__((designated_init))
-Date: Fri, 1 Aug 2014 14:36:17 -0700
-Message-ID: <20140801213617.GB20310@cloud>
-References: <3130b0553b15518e3bef6d14c80280beed0f5ff9.1406850006.git.josh@joshtriplett.org>
- <20140801134529.40b46e92a48d9bf0c0abc139@linux-foundation.org>
+From: Oded Gabbay <oded.gabbay@amd.com>
+Subject: Re: [PATCH v2 08/25] amdkfd: Add IOCTL set definitions of amdkfd
+Date: Sat, 2 Aug 2014 23:00:50 +0300
+Message-ID: <53DD4372.3040108@amd.com>
+References: <1405603773-32688-1-git-send-email-oded.gabbay@amd.com>
+ <1405603773-32688-9-git-send-email-oded.gabbay@amd.com>
+ <20140720165432.GB3068@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140801134529.40b46e92a48d9bf0c0abc139@linux-foundation.org>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Christopher Li <sparse@chrisli.org>, Ingo Molnar <mingo@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Michal Marek <mmarek@suse.cz>, Neil Brown <neilb@suse.de>, Steven Rostedt <rostedt@goodmis.org>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-sparse@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20140720165432.GB3068@gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Jerome Glisse <j.glisse@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>
+Cc: Andrew Lewycky <Andrew.Lewycky@amd.com>, =?UTF-8?B?TWljaGVsIETDpG56ZXI=?= <michel.daenzer@amd.com>, Alexey Skidanov <Alexey.Skidanov@amd.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 01, 2014 at 01:45:29PM -0700, Andrew Morton wrote:
-> On Thu, 31 Jul 2014 16:47:23 -0700 Josh Triplett <josh@joshtriplett.org> wrote:
+
+
+On 20/07/14 19:54, Jerome Glisse wrote:
+> On Thu, Jul 17, 2014 at 04:29:15PM +0300, Oded Gabbay wrote:
+>> - KFD_IOC_GET_VERSION:
+>> 	Retrieves the interface version of amdkfd
+>>
+>> - KFD_IOC_CREATE_QUEUE:
+>> 	Creates a usermode queue that runs on a specific GPU device
+>>
+>> - KFD_IOC_DESTROY_QUEUE:
+>> 	Destroys an existing usermode queue
+>>
+>> - KFD_IOC_SET_MEMORY_POLICY:
+>> 	Sets the memory policy of the default and alternate aperture of the calling process
+>>
+>> - KFD_IOC_GET_CLOCK_COUNTERS:
+>> 	Retrieves counters (timestamps) of CPU and GPU
+>>
+>> - KFD_IOC_GET_PROCESS_APERTURES:
+>> 	Retrieves information about process apertures that were initialized
+>> during the open() call of the amdkfd device
+>>
+>> - KFD_IOC_UPDATE_QUEUE:
+>> 	Updates configuration of an existing usermode queue
+>>
+>> - KFD_IOC_PMC_ACQUIRE_ACCESS:
+>> 	Acquires exclusive access (from other HSA processes) to the performance
+>> counters of the GPU
+>>
+>> - KFD_IOC_PMC_RELEASE_ACCESS:
+>> 	Releases exclusive access of the GPU's performance counters
 > 
-> > GCC 4.10 and newer, and Sparse, supports
-> > __attribute__((designated_init)), which marks a structure as requiring
-> > a designated initializer rather than a positional one.  This helps
-> > reduce churn and errors when used with _ops structures and similar
-> > structures designed for future extension.
-> > 
-> > Add a wrapper __designated_init, which turns into
-> > __attribute__((designated_init)) for Sparse or sufficiently new GCC.
-> > Enable the corresponding warning as an error.
-> > 
-> > The following semantic patch can help mark structures containing
-> > function pointers as requiring designated initializers:
-> > 
-> > @@
-> > identifier I, f;
-> > type T;
-> > @@
-> > 
-> > struct I {
-> > 	...
-> > 	T (*f)(...);
-> > 	...
-> > }
-> > + __designated_init
+> Exclusive userspace access is recipie for failure. This must go and you must
+> come up with better model. Which in my mind involve an ioctl for each command
+> buffer submission.
 > 
-> hm, dunno about this.
+Removed these 2 ioctls in v3
+>>
+>> Signed-off-by: Oded Gabbay <oded.gabbay@amd.com>
+>> ---
+>>  include/uapi/linux/kfd_ioctl.h | 133 +++++++++++++++++++++++++++++++++++++++++
+>>  1 file changed, 133 insertions(+)
+>>  create mode 100644 include/uapi/linux/kfd_ioctl.h
+>>
+>> diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
+>> new file mode 100644
+>> index 0000000..3cedd1a
+>> --- /dev/null
+>> +++ b/include/uapi/linux/kfd_ioctl.h
+>> @@ -0,0 +1,133 @@
+>> +/*
+>> + * Copyright 2014 Advanced Micro Devices, Inc.
+>> + *
+>> + * Permission is hereby granted, free of charge, to any person obtaining a
+>> + * copy of this software and associated documentation files (the "Software"),
+>> + * to deal in the Software without restriction, including without limitation
+>> + * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+>> + * and/or sell copies of the Software, and to permit persons to whom the
+>> + * Software is furnished to do so, subject to the following conditions:
+>> + *
+>> + * The above copyright notice and this permission notice shall be included in
+>> + * all copies or substantial portions of the Software.
+>> + *
+>> + * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+>> + * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+>> + * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+>> + * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+>> + * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+>> + * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+>> + * OTHER DEALINGS IN THE SOFTWARE.
+>> + */
+>> +
+>> +#ifndef KFD_IOCTL_H_INCLUDED
+>> +#define KFD_IOCTL_H_INCLUDED
+>> +
+>> +#include <linux/types.h>
+>> +#include <linux/ioctl.h>
+>> +
+>> +#define KFD_IOCTL_CURRENT_VERSION 1
+>> +
+>> +/* The 64-bit ABI is the authoritative version. */
+>> +#pragma pack(push, 1)
 > 
-> I think that the kernel should always use designated initializers
-> everywhere.  Perhaps there are a few special cases where positional
-> initializers provide a superior result but I'm not sure where those
-> might be.
+> pagram pack must be remove do not use that.
 > 
-> In which case what we should do is to teach sparse to warn about
-> positional initializers then go fix them all up (lol).  After that
-> process is complete, this __designated_init tag would be just noise.
+Removed in v3
+>> +
+>> +struct kfd_ioctl_get_version_args {
+>> +	uint32_t min_supported_version;	/* from KFD */
+>> +	uint32_t max_supported_version;	/* from KFD */
+>> +};
+>> +
+>> +/* For kfd_ioctl_create_queue_args.queue_type. */
+>> +#define KFD_IOC_QUEUE_TYPE_COMPUTE   0
+>> +#define KFD_IOC_QUEUE_TYPE_SDMA      1
+>> +
+>> +struct kfd_ioctl_create_queue_args {
+>> +	uint64_t ring_base_address;	/* to KFD */
+>> +	uint64_t write_pointer_address;	/* from KFD */
+>> +	uint64_t read_pointer_address;	/* from KFD */
+>> +	uint64_t doorbell_address;	/* from KFD */
+>> +
+>> +	uint32_t ring_size;		/* to KFD */
+>> +	uint32_t gpu_id;		/* to KFD */
+>> +	uint32_t queue_type;		/* to KFD */
+>> +	uint32_t queue_percentage;	/* to KFD */
+>> +	uint32_t queue_priority;	/* to KFD */
+>> +	uint32_t queue_id;		/* from KFD */
+>> +};
+>> +
+>> +struct kfd_ioctl_destroy_queue_args {
+>> +	uint32_t queue_id;		/* to KFD */
+>> +};
+>> +
+>> +struct kfd_ioctl_update_queue_args {
+>> +	uint64_t ring_base_address;	/* to KFD */
+>> +
+>> +	uint32_t queue_id;		/* to KFD */
+>> +	uint32_t ring_size;		/* to KFD */
+>> +	uint32_t queue_percentage;	/* to KFD */
+>> +	uint32_t queue_priority;	/* to KFD */
+>> +};
 > 
-> To support this perhaps a sparse tag would be needed which says
-> "positional initializers are OK here".  This way we're adding the
-> annotation to the exceptional cases, not to the common cases.
-
-Before submitting this series, I actually used coccinelle to
-automatically add __designated_init to nearly a thousand structures
-(just in include/linux/ alone), and did a build with that.  Even just
-adding it to structures with function pointers, some cases produce a
-*huge* number of warnings.  I think it might make sense to work our way
-through those warnings, but "go fix them all up" would be a gargantuan
-effort.  (For an idea of scale: there were more warnings about
-positional initialization than everything other warning combined, by a
-substantial factor, and that's just from changing a few hundred
-structures.)
-
-I'm not at all convinced that we want to universally enforce designated
-initializers *yet*.  They make sense for _ops structures and other
-structures that contain function pointers (which is a small subset), but
-for many other structures they just add a large amount of noise to
-initialization.  If we could say "automatically add __designated_init to
-structures matching these criteria", that could work, but "all
-structures" not so much.  (For instance, a structure with a single
-field, or two fields of incompatible types with an intuitive ordering,
-doesn't gain much value from designated initialization.)
-
-Now, some cases may make sense to fix despite the large volume.  For
-instance, many users of dmi_system_id initialize it positionally, and
-shouldn't; I've already written patches for quite a few of them, with
-many more to go.  But, for instance, obs_kernel_param seems much less
-worthwhile to fix, because we shouldn't add any new instances of it, and
-we likely won't ever extend it.  The value in fixing this issue mostly
-comes not with the current code, but with future changes to the
-structure.  (And, as always happens with this kind of change, we'll end
-up with a few holdouts who don't want to change their code, which will
-stop us from eliminating the warning completely.)
-
-In the course of introducing this change, we'll end up fixing a large
-number of positional init warnings.  If in the course of doing so, it
-starts making sense to enforce it everywhere, it seems easy enough to
-sed away all the __designated_init tags.  But in terms of noise, the
-actual additions of __designated_init will pale in comparison to the
-patches fixing positional initializers.
-
-Finally, by migrating over to this incrementally, structure by
-structure, we can safely make the warning an error, which we could not
-do if we applied it to every struct immediately.
-
-- Josh Triplett
+> The queue_percentage and queue_priority really needs some explanations. I guess
+> userspace would shed some light on those but still this should be properly explain.
+> 
+Added explanation in v3
+>> +
+>> +/* For kfd_ioctl_set_memory_policy_args.default_policy and alternate_policy */
+>> +#define KFD_IOC_CACHE_POLICY_COHERENT 0
+>> +#define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
+>> +
+>> +struct kfd_ioctl_set_memory_policy_args {
+>> +	uint64_t alternate_aperture_base;	/* to KFD */
+>> +	uint64_t alternate_aperture_size;	/* to KFD */
+>> +
+>> +	uint32_t gpu_id;			/* to KFD */
+>> +	uint32_t default_policy;		/* to KFD */
+>> +	uint32_t alternate_policy;		/* to KFD */
+>> +};
+> 
+> Same what is aperture in this context. I know about all this stuff but i have no
+> idea what aperture is in this context.
+> 
+Added explanation in v3
+>> +
+>> +struct kfd_ioctl_get_clock_counters_args {
+>> +	uint64_t gpu_clock_counter;	/* from KFD */
+>> +	uint64_t cpu_clock_counter;	/* from KFD */
+>> +	uint64_t system_clock_counter;	/* from KFD */
+>> +	uint64_t system_clock_freq;	/* from KFD */
+>> +
+>> +	uint32_t gpu_id;		/* to KFD */
+>> +};
+> 
+> Again comment about what kind of counter this is, monotonic, ...
+> 
+Added explanation in v3
+>> +
+>> +#define NUM_OF_SUPPORTED_GPUS 7
+>> +
+>> +struct kfd_process_device_apertures {
+>> +	uint64_t lds_base;		/* from KFD */
+>> +	uint64_t lds_limit;		/* from KFD */
+>> +	uint64_t scratch_base;		/* from KFD */
+>> +	uint64_t scratch_limit;		/* from KFD */
+>> +	uint64_t gpuvm_base;		/* from KFD */
+>> +	uint64_t gpuvm_limit;		/* from KFD */
+>> +	uint32_t gpu_id;		/* from KFD */
+>> +};
+>> +
+>> +struct kfd_ioctl_get_process_apertures_args {
+>> +	struct kfd_process_device_apertures process_apertures[NUM_OF_SUPPORTED_GPUS];/* from KFD */
+>> +	uint8_t num_of_nodes; /* from KFD, should be in the range [1 - NUM_OF_SUPPORTED_GPUS]*/
+>> +};
+> 
+> I would rather see userspace provide a pointer to an array and the size of that
+> array and possibly size of individual element. This would allow you to grow the
+> kfd_process_device_apertures if needs be. Thought as i understand it this is a
+> temporary driver.
+> 
+This is not going to change in the near or far future. I also agree that
+we would probably see a common framework before NUM_OF_SUPPORTED_GPUS
+increases.
+If you insist, I'll try to squeeze it in at v4
+>> +
+>> +struct kfd_ioctl_pmc_acquire_access_args {
+>> +	uint64_t trace_id;		/* to KFD */
+>> +	uint32_t gpu_id;		/* to KFD */
+>> +};
+>> +
+>> +struct kfd_ioctl_pmc_release_access_args {
+>> +	uint64_t trace_id;		/* to KFD */
+>> +	uint32_t gpu_id;		/* to KFD */
+>> +};
+> 
+> As said above no ioctl to have some exclusive access you can not trust userspace
+> that's rules NUMBER ONE.
+> 
+Removed in v3.
+>> +
+>> +#define KFD_IOC_MAGIC 'K'
+>> +
+>> +#define KFD_IOC_GET_VERSION		_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
+>> +#define KFD_IOC_CREATE_QUEUE		_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
+>> +#define KFD_IOC_DESTROY_QUEUE		_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
+>> +#define KFD_IOC_SET_MEMORY_POLICY	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
+>> +#define KFD_IOC_GET_CLOCK_COUNTERS	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
+>> +#define KFD_IOC_GET_PROCESS_APERTURES	_IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
+>> +#define KFD_IOC_UPDATE_QUEUE		_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
+>> +#define KFD_IOC_PMC_ACQUIRE_ACCESS	_IOW(KFD_IOC_MAGIC, 12, struct kfd_ioctl_pmc_acquire_access_args)
+>> +#define KFD_IOC_PMC_RELEASE_ACCESS	_IOW(KFD_IOC_MAGIC, 13, struct kfd_ioctl_pmc_release_access_args)
+>> +
+>> +#pragma pack(pop)
+> 
+> No pragma packing.
+> 
+Removed in v3
+>> +
+>> +#endif
+>> -- 
+>> 1.9.1
+>>
+Oded
