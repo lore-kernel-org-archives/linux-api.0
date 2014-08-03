@@ -1,250 +1,72 @@
-From: Oded Gabbay <oded.gabbay@amd.com>
-Subject: Re: [PATCH v2 08/25] amdkfd: Add IOCTL set definitions of amdkfd
-Date: Sat, 2 Aug 2014 23:00:50 +0300
-Message-ID: <53DD4372.3040108@amd.com>
-References: <1405603773-32688-1-git-send-email-oded.gabbay@amd.com>
- <1405603773-32688-9-git-send-email-oded.gabbay@amd.com>
- <20140720165432.GB3068@gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH -v4] random: introduce getrandom(2) system call
+Date: Sun, 3 Aug 2014 13:38:59 +0200
+Message-ID: <20140803113859.GB5818@amd.pavel.ucw.cz>
+References: <1405718127-30042-1-git-send-email-tytso@mit.edu>
+ <20140730122620.GC13965@amd.pavel.ucw.cz>
+ <CAComcpMnAdOk=Hs8Dtc7VZeJDHnpKQtzZ_=_67tqCeYU3pdJ_Q@mail.gmail.com>
+ <1406731254.26034.4.camel@thorin>
+ <20140730221819.GB18189@amd.pavel.ucw.cz>
+ <1406794012.26034.14.camel@thorin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20140720165432.GB3068@gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Jerome Glisse <j.glisse@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>
-Cc: Andrew Lewycky <Andrew.Lewycky@amd.com>, =?UTF-8?B?TWljaGVsIETDpG56ZXI=?= <michel.daenzer@amd.com>, Alexey Skidanov <Alexey.Skidanov@amd.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1406794012.26034.14.camel@thorin>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Bernd Petrovitsch <bernd@petrovitsch.priv.at>
+Cc: Bob Beck <beck@openbsd.org>, Theodore Ts'o <tytso@mit.edu>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-crypto <linux-crypto@vger.kernel.org>, Theo de Raadt <deraadt@cvs.openbsd.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu 2014-07-31 10:06:37, Bernd Petrovitsch wrote:
+> On Don, 2014-07-31 at 00:18 +0200, Pavel Machek wrote:
+> > On Wed 2014-07-30 16:40:52, Bernd Petrovitsch wrote:
+> > > On Mit, 2014-07-30 at 07:56 -0600, Bob Beck wrote:
+> > > > Pavel. I have bit 'ol enterprise daemon running with established file
+> > > > descriptors serving thousands of connections
+> > > > which periodically require entropy.  Now I run out of descriptors. I
+> > > > can't establish new connections. but I should
+> > > > now halt all the other ones that require entropy?  I should raise
+> > > > SIGKILL on my process serving these thousands
+> > > > of connetions?  I don't think so.
+> > > 
+> > > If that long-running daemon periodically needs something from a device,
+> > > one would better keep the fd for that open the whole time. Saves some
+> > > CPU cycles and latency too BTW.
+> > 
+> > Agreed.
+> > 
+> > On the other hand, keeping a fd open is quite tricky for a
+> > library. But better solution might be to make that easier.
+> 
+> Yes, in a (full-fledged, standalone) library seems at least tricky (also
+> referring to some off-list mails here: think about fork() - which could
+> be inside system() or popen() or similar). 
+> 
+> But as part of the *application* (where one has control over fork()
+> etc.), this should be somewhat less risky. Yes, that doesn't really help
+> libssl;-)
 
+...
 
-On 20/07/14 19:54, Jerome Glisse wrote:
-> On Thu, Jul 17, 2014 at 04:29:15PM +0300, Oded Gabbay wrote:
->> - KFD_IOC_GET_VERSION:
->> 	Retrieves the interface version of amdkfd
->>
->> - KFD_IOC_CREATE_QUEUE:
->> 	Creates a usermode queue that runs on a specific GPU device
->>
->> - KFD_IOC_DESTROY_QUEUE:
->> 	Destroys an existing usermode queue
->>
->> - KFD_IOC_SET_MEMORY_POLICY:
->> 	Sets the memory policy of the default and alternate aperture of the calling process
->>
->> - KFD_IOC_GET_CLOCK_COUNTERS:
->> 	Retrieves counters (timestamps) of CPU and GPU
->>
->> - KFD_IOC_GET_PROCESS_APERTURES:
->> 	Retrieves information about process apertures that were initialized
->> during the open() call of the amdkfd device
->>
->> - KFD_IOC_UPDATE_QUEUE:
->> 	Updates configuration of an existing usermode queue
->>
->> - KFD_IOC_PMC_ACQUIRE_ACCESS:
->> 	Acquires exclusive access (from other HSA processes) to the performance
->> counters of the GPU
->>
->> - KFD_IOC_PMC_RELEASE_ACCESS:
->> 	Releases exclusive access of the GPU's performance counters
+> Hehe, we (Unix!) have (had) gettimeofday(), time() and similar sys-calls
+> since ages and no one proposed to make devices for them and get rid of
+> the system-calls.
+
+Well, but we do open(/dev/sda), read(1); not read_from_sda(...). And
+cat /dev/urandom > file is useful operation. So it is not like
+getentropy() can replace /dev/*random.
+
+> > open( , O_IM_A_LIBRARY_GIVE_ME_ONE_OF_THREE_RESERVED_FDS) might be one
+> > solution. Actually, one reserved fd should be enough.
 > 
-> Exclusive userspace access is recipie for failure. This must go and you must
-> come up with better model. Which in my mind involve an ioctl for each command
-> buffer submission.
-> 
-Removed these 2 ioctls in v3
->>
->> Signed-off-by: Oded Gabbay <oded.gabbay@amd.com>
->> ---
->>  include/uapi/linux/kfd_ioctl.h | 133 +++++++++++++++++++++++++++++++++++++++++
->>  1 file changed, 133 insertions(+)
->>  create mode 100644 include/uapi/linux/kfd_ioctl.h
->>
->> diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
->> new file mode 100644
->> index 0000000..3cedd1a
->> --- /dev/null
->> +++ b/include/uapi/linux/kfd_ioctl.h
->> @@ -0,0 +1,133 @@
->> +/*
->> + * Copyright 2014 Advanced Micro Devices, Inc.
->> + *
->> + * Permission is hereby granted, free of charge, to any person obtaining a
->> + * copy of this software and associated documentation files (the "Software"),
->> + * to deal in the Software without restriction, including without limitation
->> + * the rights to use, copy, modify, merge, publish, distribute, sublicense,
->> + * and/or sell copies of the Software, and to permit persons to whom the
->> + * Software is furnished to do so, subject to the following conditions:
->> + *
->> + * The above copyright notice and this permission notice shall be included in
->> + * all copies or substantial portions of the Software.
->> + *
->> + * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
->> + * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
->> + * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
->> + * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
->> + * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
->> + * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
->> + * OTHER DEALINGS IN THE SOFTWARE.
->> + */
->> +
->> +#ifndef KFD_IOCTL_H_INCLUDED
->> +#define KFD_IOCTL_H_INCLUDED
->> +
->> +#include <linux/types.h>
->> +#include <linux/ioctl.h>
->> +
->> +#define KFD_IOCTL_CURRENT_VERSION 1
->> +
->> +/* The 64-bit ABI is the authoritative version. */
->> +#pragma pack(push, 1)
-> 
-> pagram pack must be remove do not use that.
-> 
-Removed in v3
->> +
->> +struct kfd_ioctl_get_version_args {
->> +	uint32_t min_supported_version;	/* from KFD */
->> +	uint32_t max_supported_version;	/* from KFD */
->> +};
->> +
->> +/* For kfd_ioctl_create_queue_args.queue_type. */
->> +#define KFD_IOC_QUEUE_TYPE_COMPUTE   0
->> +#define KFD_IOC_QUEUE_TYPE_SDMA      1
->> +
->> +struct kfd_ioctl_create_queue_args {
->> +	uint64_t ring_base_address;	/* to KFD */
->> +	uint64_t write_pointer_address;	/* from KFD */
->> +	uint64_t read_pointer_address;	/* from KFD */
->> +	uint64_t doorbell_address;	/* from KFD */
->> +
->> +	uint32_t ring_size;		/* to KFD */
->> +	uint32_t gpu_id;		/* to KFD */
->> +	uint32_t queue_type;		/* to KFD */
->> +	uint32_t queue_percentage;	/* to KFD */
->> +	uint32_t queue_priority;	/* to KFD */
->> +	uint32_t queue_id;		/* from KFD */
->> +};
->> +
->> +struct kfd_ioctl_destroy_queue_args {
->> +	uint32_t queue_id;		/* to KFD */
->> +};
->> +
->> +struct kfd_ioctl_update_queue_args {
->> +	uint64_t ring_base_address;	/* to KFD */
->> +
->> +	uint32_t queue_id;		/* to KFD */
->> +	uint32_t ring_size;		/* to KFD */
->> +	uint32_t queue_percentage;	/* to KFD */
->> +	uint32_t queue_priority;	/* to KFD */
->> +};
-> 
-> The queue_percentage and queue_priority really needs some explanations. I guess
-> userspace would shed some light on those but still this should be properly explain.
-> 
-Added explanation in v3
->> +
->> +/* For kfd_ioctl_set_memory_policy_args.default_policy and alternate_policy */
->> +#define KFD_IOC_CACHE_POLICY_COHERENT 0
->> +#define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
->> +
->> +struct kfd_ioctl_set_memory_policy_args {
->> +	uint64_t alternate_aperture_base;	/* to KFD */
->> +	uint64_t alternate_aperture_size;	/* to KFD */
->> +
->> +	uint32_t gpu_id;			/* to KFD */
->> +	uint32_t default_policy;		/* to KFD */
->> +	uint32_t alternate_policy;		/* to KFD */
->> +};
-> 
-> Same what is aperture in this context. I know about all this stuff but i have no
-> idea what aperture is in this context.
-> 
-Added explanation in v3
->> +
->> +struct kfd_ioctl_get_clock_counters_args {
->> +	uint64_t gpu_clock_counter;	/* from KFD */
->> +	uint64_t cpu_clock_counter;	/* from KFD */
->> +	uint64_t system_clock_counter;	/* from KFD */
->> +	uint64_t system_clock_freq;	/* from KFD */
->> +
->> +	uint32_t gpu_id;		/* to KFD */
->> +};
-> 
-> Again comment about what kind of counter this is, monotonic, ...
-> 
-Added explanation in v3
->> +
->> +#define NUM_OF_SUPPORTED_GPUS 7
->> +
->> +struct kfd_process_device_apertures {
->> +	uint64_t lds_base;		/* from KFD */
->> +	uint64_t lds_limit;		/* from KFD */
->> +	uint64_t scratch_base;		/* from KFD */
->> +	uint64_t scratch_limit;		/* from KFD */
->> +	uint64_t gpuvm_base;		/* from KFD */
->> +	uint64_t gpuvm_limit;		/* from KFD */
->> +	uint32_t gpu_id;		/* from KFD */
->> +};
->> +
->> +struct kfd_ioctl_get_process_apertures_args {
->> +	struct kfd_process_device_apertures process_apertures[NUM_OF_SUPPORTED_GPUS];/* from KFD */
->> +	uint8_t num_of_nodes; /* from KFD, should be in the range [1 - NUM_OF_SUPPORTED_GPUS]*/
->> +};
-> 
-> I would rather see userspace provide a pointer to an array and the size of that
-> array and possibly size of individual element. This would allow you to grow the
-> kfd_process_device_apertures if needs be. Thought as i understand it this is a
-> temporary driver.
-> 
-This is not going to change in the near or far future. I also agree that
-we would probably see a common framework before NUM_OF_SUPPORTED_GPUS
-increases.
-If you insist, I'll try to squeeze it in at v4
->> +
->> +struct kfd_ioctl_pmc_acquire_access_args {
->> +	uint64_t trace_id;		/* to KFD */
->> +	uint32_t gpu_id;		/* to KFD */
->> +};
->> +
->> +struct kfd_ioctl_pmc_release_access_args {
->> +	uint64_t trace_id;		/* to KFD */
->> +	uint32_t gpu_id;		/* to KFD */
->> +};
-> 
-> As said above no ioctl to have some exclusive access you can not trust userspace
-> that's rules NUMBER ONE.
-> 
-Removed in v3.
->> +
->> +#define KFD_IOC_MAGIC 'K'
->> +
->> +#define KFD_IOC_GET_VERSION		_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
->> +#define KFD_IOC_CREATE_QUEUE		_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
->> +#define KFD_IOC_DESTROY_QUEUE		_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
->> +#define KFD_IOC_SET_MEMORY_POLICY	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
->> +#define KFD_IOC_GET_CLOCK_COUNTERS	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
->> +#define KFD_IOC_GET_PROCESS_APERTURES	_IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
->> +#define KFD_IOC_UPDATE_QUEUE		_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
->> +#define KFD_IOC_PMC_ACQUIRE_ACCESS	_IOW(KFD_IOC_MAGIC, 12, struct kfd_ioctl_pmc_acquire_access_args)
->> +#define KFD_IOC_PMC_RELEASE_ACCESS	_IOW(KFD_IOC_MAGIC, 13, struct kfd_ioctl_pmc_release_access_args)
->> +
->> +#pragma pack(pop)
-> 
-> No pragma packing.
-> 
-Removed in v3
->> +
->> +#endif
->> -- 
->> 1.9.1
->>
-Oded
+> Well, this can also be DoSed and the proposal aims to make that
+> impossible (and where does this reserved count against? process-limits,
+> kernel-wide limit?).
+
+Process limit. DoS should not be an issue here. Remember, we are doing
+this to help libraries.
+								Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
