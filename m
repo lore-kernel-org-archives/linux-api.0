@@ -1,35 +1,83 @@
-From: Waiman Long <waiman.long-VXdhtT5mjnY@public.gmane.org>
-Subject: Re: [PATCH 1/7] locking/rwsem: don't resched at the end of optimistic
- spinning
-Date: Mon, 04 Aug 2014 14:36:35 -0400
-Message-ID: <53DFD2B3.3090101@hp.com>
-References: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com> <1407119782-41119-2-git-send-email-Waiman.Long@hp.com> <20140804075528.GI9918@twins.programming.kicks-ass.net>
+From: Heiko =?ISO-8859-1?Q?St=FCbner?= <heiko@sntech.de>
+Subject: Re: [PATCH 8/9] Add devicetree bindings for Rockchip Soc EDP
+Date: Mon, 04 Aug 2014 21:39:34 +0200
+Message-ID: <4758549.OE3inCP7ZI@diego>
+References: <1407127274-1356-1-git-send-email-mark.yao@rock-chips.com> <1407128159-1930-1-git-send-email-yzq@rock-chips.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140804075528.GI9918-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Scott J Norton <scott.norton-VXdhtT5mjnY@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1407128159-1930-1-git-send-email-yzq@rock-chips.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: mark yao <yzq@rock-chips.com>
+Cc: Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, David Airlie <airlied@linux.ie>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, zwl@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, zhangqing@rock-chips.com, yxj@rock-chips.com, wxt@roc
 List-Id: linux-api@vger.kernel.org
 
-On 08/04/2014 03:55 AM, Peter Zijlstra wrote:
-> On Sun, Aug 03, 2014 at 10:36:16PM -0400, Waiman Long wrote:
->> For a fully preemptive kernel, a call to preempt_enable() could
->> potentially trigger a task rescheduling event. In the case of rwsem
->> optimistic spinning, the task has either gotten the lock or is going
->> to sleep soon. So there is no point to do rescheduling here.
-> Uh what? Why shouldn't we preempt if we've gotten the lock? What if a
-> FIFO task just woke up?
+Am Montag, 4. August 2014, 12:55:59 schrieb mark yao:
+> Signed-off-by: mark yao <yzq@rock-chips.com>
+> ---
+>  .../devicetree/bindings/video/rockchip-panel.txt   |   34
+> ++++++++++++++++++++ 1 file changed, 34 insertions(+)
+> 
+> diff --git a/Documentation/devicetree/bindings/video/rockchip-panel.txt
+> b/Documentation/devicetree/bindings/video/rockchip-panel.txt index
+> f599806..f6d80f6 100644
+> --- a/Documentation/devicetree/bindings/video/rockchip-panel.txt
+> +++ b/Documentation/devicetree/bindings/video/rockchip-panel.txt
+> @@ -80,3 +80,37 @@ Example:
+>  		rockchip,data-width = <24>;
+>  		rockchip,panel = <&panel>;
+>  	};
+> +
+> +Rockchip RK3288 EDP interface
+> +================================
+> +Required properties:
+> +-compatible: "rockchip,rk3288-edp";
+> +
+> +- reg: physical base address of the controller and length
+> +- clocks: from common clock binding: handle to dp clock.
+> +	of memory mapped region.
+> +- clock-names: from common clock binding:
+> +	Required elements: "clk_edp"
+> +			"clk_edp_24m"
+> +			"clk_edp_24m_parent"
+> +			"pclk_edp"
+> +- rockchip,grf: this soc should set GRF regs, so need get grf here.
+> +- resets: Must contain an entry for each entry in reset-names.
+> +	See ../reset/reset.txt for details.
+> +- reset-names: Must include the following entries:
+> +  - edp
+> +- rockchip,panel: required a panel node
+> +
+> +Example:
+> +	edp: edp@ff970000 {
+> +		compatible = "rockchip,rk3288-edp";
+> +                reg = <0xff970000 0x4000>;
+> +                interrupts = <GIC_SPI 98 IRQ_TYPE_LEVEL_HIGH>;
+> +                clocks = <&cru SCLK_EDP>, <&cru SCLK_EDP_24M>, <&cru
+> PCLK_EDP_CTRL>, <&xin24m>; +                clock-names = "clk_edp",
+> "clk_edp_24m", "pclk_edp", "clk_edp_24m_parent"; +
 
-I didn't mean that we shouldn't preempt if there is a higher priority 
-task. I am sure that there will be other preemption points along the way 
-that a higher priority task can take over the CPU. I just want to say 
-that doing it here may not be the best place especially if the task is 
-going to sleep soon.
+clk_epd_24m_parent is not part of the hardware, so instead of referencing the 
+target-parent as part of the device clocks, the new
+	"clk: Support for clock parents and rates assigned from device tree"
+should be used for setting the target parent - so the re-parenting code should 
+also move out of the driver.
 
-If you think this patch does not make sense, I can remove it as other 
-patches in the set has no dependency on this one.
+This commit [0] is part of the clk-pull request and thus will most likely be 
+part of 3.17.
 
--Longman
+
+Heiko
+
+[0] 
+http://git.linaro.org/people/mike.turquette/linux.git/commitdiff/86be408bfbd846fab3c4ac21d6f9298bd2e4b790?hp=09575693a2511b5ddae0105546e0d9cefc936e34
+
+
+
+> +                rockchip,grf = <&grf>;
+> +                resets = <&cru 111>;
+> +                reset-names = "edp";
+> +		rockchip,panel = <&panel>;
+> +	};
+
