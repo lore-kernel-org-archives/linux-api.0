@@ -1,55 +1,59 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 1/7] locking/rwsem: don't resched at the end of
- optimistic spinning
-Date: Mon, 4 Aug 2014 09:55:28 +0200
-Message-ID: <20140804075528.GI9918@twins.programming.kicks-ass.net>
-References: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com>
- <1407119782-41119-2-git-send-email-Waiman.Long@hp.com>
+From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+Subject: Re: [PATCH v13 4/8] powerpc: add pmd_[dirty|mkclean] for THP
+Date: Mon, 04 Aug 2014 16:20:07 +0530
+Message-ID: <87ppggedgg.fsf@linux.vnet.ibm.com>
+References: <1405666386-15095-1-git-send-email-minchan@kernel.org> <1405666386-15095-5-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="vzhXYRv6YJrvJIA1"
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1407119782-41119-2-git-send-email-Waiman.Long@hp.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Waiman Long <Waiman.Long@hp.com>
-Cc: Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Davidlohr Bueso <davidlohr@hp.com>, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>
+Content-Type: text/plain
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1405666386-15095-5-git-send-email-minchan@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
+Minchan Kim <minchan@kernel.org> writes:
 
---vzhXYRv6YJrvJIA1
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
+> overwrite of the contents since MADV_FREE syscall is called for
+> THP page.
+>
+> This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
+> support.
+>
+> Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+> Cc: Paul Mackerras <paulus@samba.org>
+> Cc: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+> Cc: linuxppc-dev@lists.ozlabs.org
 
-On Sun, Aug 03, 2014 at 10:36:16PM -0400, Waiman Long wrote:
-> For a fully preemptive kernel, a call to preempt_enable() could
-> potentially trigger a task rescheduling event. In the case of rwsem
-> optimistic spinning, the task has either gotten the lock or is going
-> to sleep soon. So there is no point to do rescheduling here.
+Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
 
-Uh what? Why shouldn't we preempt if we've gotten the lock? What if a
-FIFO task just woke up?=20
+> Signed-off-by: Minchan Kim <minchan@kernel.org>
+> ---
+>  arch/powerpc/include/asm/pgtable-ppc64.h | 2 ++
+>  1 file changed, 2 insertions(+)
+>
+> diff --git a/arch/powerpc/include/asm/pgtable-ppc64.h b/arch/powerpc/include/asm/pgtable-ppc64.h
+> index eb9261024f51..c9a4bbe8e179 100644
+> --- a/arch/powerpc/include/asm/pgtable-ppc64.h
+> +++ b/arch/powerpc/include/asm/pgtable-ppc64.h
+> @@ -468,9 +468,11 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
+>
+>  #define pmd_pfn(pmd)		pte_pfn(pmd_pte(pmd))
+>  #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
+> +#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
+>  #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
+>  #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
+>  #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
+> +#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
+>  #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
+>  #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
+>
+> -- 
+> 2.0.0
 
---vzhXYRv6YJrvJIA1
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQIcBAEBAgAGBQJT3zxwAAoJEHZH4aRLwOS6RYMP/RKT7ZtZg1Gg4KJhJJHMgXcg
-SbnhqX5QJdJxu4KZ9w9KqmODKp6zUdBUI1Y70Qg/Xhafrkqcpt2qnfShfITQGaVk
-smm1gje+0ZAZzQeW01Hj1bZcj6WIRVoFVcXMsNvO+bamtyI4oOrGlSOggo8XI6+h
-NZW8YZClw4Ui5qy+OiOCBToU41XI/eUka7Y5QTU3FR5cNL4W0e0TMCmgSlfleIWt
-J20HdykK7arBfOGew1DQ3/Uau/lAb1X+YZIWtYes1g76wLXAoteGVOHCsGoeNk6o
-5SsPVq9diI33wd4jseZ/3co87R2gPxabmmQLFQOnhMgI/wdisKux4GTv1FWyENsW
-+IfeF2ZvssuYvcT6fyGWncuosNeQTMlf9r4b/xDzr47f3xugQaLv3KPy2QowVTEG
-jVTuNyh2sKs8V9EWgdzpTzrk5XaIudoqnAwYHYNkh22zYv/5pTogScSMWPEFd9ZT
-KH808BZ4A0B/wsbeqhf23MRyPv7f049bg4V7sq/lWdxDB9OvSUa+hPnKKBd1FYde
-e+jllWEE33X4iDuxBY41bUOGOIuuMTPdFe7qlCe25PWUF8hLe8us9w/UF1ra6xHD
-ByzdJDvCa6PxknJmRNayQOR8iSNkQ/7QFpnS7dyMRpU49DWwjgAG9QIpwYVTpWQu
-vuIEWMl/YIvIiqJi5Kuy
-=upai
------END PGP SIGNATURE-----
-
---vzhXYRv6YJrvJIA1--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
