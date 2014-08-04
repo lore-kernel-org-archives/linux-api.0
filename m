@@ -1,59 +1,43 @@
-From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
-Subject: Re: [PATCH v13 4/8] powerpc: add pmd_[dirty|mkclean] for THP
-Date: Mon, 04 Aug 2014 16:20:07 +0530
-Message-ID: <87ppggedgg.fsf@linux.vnet.ibm.com>
-References: <1405666386-15095-1-git-send-email-minchan@kernel.org> <1405666386-15095-5-git-send-email-minchan@kernel.org>
+From: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [REVIEW][PATCH 0/4] /proc/thread-self
+Date: Mon, 4 Aug 2014 15:12:49 +0200
+Message-ID: <20140804131249.GD6923@x2.net.home>
+References: <87oaw5caq1.fsf@x220.int.ebiederm.org>
+ <1406860795.3036.3.camel@buesod1.americas.hpqcorp.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1405666386-15095-5-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, Zhang Yanfei <zhangyanfei@cn.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, linuxppc-dev@lists.ozlabs.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1406860795.3036.3.camel-5JQ4ckphU/8SZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Minchan Kim <minchan@kernel.org> writes:
+On Thu, Jul 31, 2014 at 07:39:55PM -0700, Davidlohr Bueso wrote:
+> On Thu, 2014-07-31 at 17:30 -0700, Eric W. Biederman wrote:
+> > This is small chance changing /proc/net and /proc/mounts will cause
+> > userspace regressions (although nothing has shown up in my testing) if
+> > that happens we can just point the change that moves them from
+> > /proc/self/... to /proc/thread-self/...
+> 
+> Isn't breaking userspace a no no, no matter what? At least some
+> util-linux programs makes use of both /proc/mounts and /proc/net.
 
-> MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
-> overwrite of the contents since MADV_FREE syscall is called for
-> THP page.
->
-> This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
-> support.
->
-> Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-> Cc: Paul Mackerras <paulus@samba.org>
-> Cc: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
-> Cc: linuxppc-dev@lists.ozlabs.org
+Frankly, I don't care about /proc/mount, this file is more about backward
+compatibility than about any real informations ;-)
 
-Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+The really important file is /proc/self/mountinfo. We use this file on
+many places including shared libs and it seems (according to Eric's
+suggestion), that the right think will be to update the libs to use
+/proc/thread-self/mountinfo.
 
-> Signed-off-by: Minchan Kim <minchan@kernel.org>
-> ---
->  arch/powerpc/include/asm/pgtable-ppc64.h | 2 ++
->  1 file changed, 2 insertions(+)
->
-> diff --git a/arch/powerpc/include/asm/pgtable-ppc64.h b/arch/powerpc/include/asm/pgtable-ppc64.h
-> index eb9261024f51..c9a4bbe8e179 100644
-> --- a/arch/powerpc/include/asm/pgtable-ppc64.h
-> +++ b/arch/powerpc/include/asm/pgtable-ppc64.h
-> @@ -468,9 +468,11 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
->
->  #define pmd_pfn(pmd)		pte_pfn(pmd_pte(pmd))
->  #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
-> +#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
->  #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
->  #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
->  #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
-> +#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
->  #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
->  #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
->
-> -- 
-> 2.0.0
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Note that I like the idea to have the magic symlink to access thread
+specific /proc stuff. It's definitely nice thing for userspace.
+
+    Karel
+
+-- 
+ Karel Zak  <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+ http://karelzak.blogspot.com
