@@ -1,132 +1,79 @@
 From: Waiman Long <Waiman.Long@hp.com>
-Subject: [PATCH 3/7] locking/rwsem: check for active writer/spinner before wakeup
-Date: Sun,  3 Aug 2014 22:36:18 -0400
-Message-ID: <1407119782-41119-4-git-send-email-Waiman.Long@hp.com>
-References: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com>
+Subject: [PATCH 0/7] locking/rwsem: enable reader opt-spinning & writer respin
+Date: Sun,  3 Aug 2014 22:36:15 -0400
+Message-ID: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Davidlohr Bueso <davidlohr@hp.com>, Jason Low <jason.low2@hp.com>, Scott J Norton <scott.norton@hp.com>, Waiman Long <Waiman.Long@hp.com>
 List-Id: linux-api@vger.kernel.org
 
-On a highly contended rwsem, spinlock contention due to the slow
-rwsem_wake() call can be a significant portion of the total CPU cycles
-used. With writer lock stealing and writer optimistic spinning, there
-is also a pretty good chance that the lock may have been stolen
-before the waker wakes up the waiters. The woken tasks, if any,
-will have to go back to sleep again.
+This patch set improves upon the rwsem optimistic spinning patch set
+from Davidlohr to enable better performing rwsem and more aggressive
+use of optimistic spinning.
 
-This patch adds checking code at the beginning of the rwsem_wake()
-and __rwsem_do_wake() function to look for spinner and active
-writer respectively.  The presence of an active writer will abort the
-wakeup operation.  The presence of a spinner will still allow wakeup
-operation to proceed as long as the trylock operation succeeds. This
-strikes a good balance between excessive spinlock contention especially
-when there are a lot of active readers and a lot of failed fastpath
-operations because there are tasks waiting in the queue.
+By using a microbenchmark running 1 million lock-unlock operations per
+thread on a 4-socket 40-core Westmere-EX x86-64 test machine running
+3.16-rc7 based kernels, the following table shows the execution times
+with 2/10 threads running on different CPUs on the same socket where
+load is the number of pause instructions in the critical section:
 
-Signed-off-by: Waiman Long <Waiman.Long@hp.com>
----
- include/linux/osq_lock.h    |    5 ++++
- kernel/locking/rwsem-xadd.c |   57 ++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 61 insertions(+), 1 deletions(-)
+  lock/r:w ratio # of threads	Load:Execution Time (ms)
+  -------------- ------------	------------------------
+  mutex		      2		1:530.7, 5:406.0, 10:472.7
+  mutex		     10		1:1848 , 5:2046 , 10:4394
 
-diff --git a/include/linux/osq_lock.h b/include/linux/osq_lock.h
-index 90230d5..79db546 100644
---- a/include/linux/osq_lock.h
-+++ b/include/linux/osq_lock.h
-@@ -24,4 +24,9 @@ static inline void osq_lock_init(struct optimistic_spin_queue *lock)
- 	atomic_set(&lock->tail, OSQ_UNLOCKED_VAL);
- }
- 
-+static inline bool osq_has_spinner(struct optimistic_spin_queue *lock)
-+{
-+	return atomic_read(&lock->tail) != OSQ_UNLOCKED_VAL;
-+}
-+
- #endif
-diff --git a/kernel/locking/rwsem-xadd.c b/kernel/locking/rwsem-xadd.c
-index dce22b8..9f71a67 100644
---- a/kernel/locking/rwsem-xadd.c
-+++ b/kernel/locking/rwsem-xadd.c
-@@ -107,6 +107,37 @@ enum rwsem_wake_type {
- 	RWSEM_WAKE_READ_OWNED	/* Waker thread holds the read lock */
- };
- 
-+#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-+/*
-+ * return true if there is an active writer by checking the owner field which
-+ * should be set (not RWSEM_READ_OWNED) if there is one.
-+ */
-+static inline bool rwsem_has_active_writer(struct rw_semaphore *sem)
-+{
-+	struct task_struct *owner = ACCESS_ONCE(sem->owner);
-+
-+	return owner && (owner != RWSEM_READ_OWNED);
-+}
-+
-+/*
-+ * Return true if the rwsem has active spinner
-+ */
-+static inline bool rwsem_has_spinner(struct rw_semaphore *sem)
-+{
-+	return osq_has_spinner(&sem->osq);
-+}
-+#else /* CONFIG_RWSEM_SPIN_ON_OWNER */
-+static inline bool rwsem_has_active_writer(struct rw_semaphore *sem)
-+{
-+	return false;	/* Assume it has no active writer */
-+}
-+
-+static inline bool rwsem_has_spinner(struct rw_semaphore *sem)
-+{
-+	return false;
-+}
-+#endif /* CONFIG_RWSEM_SPIN_ON_OWNER */
-+
- /*
-  * handle the lock release when processes blocked on it that can now run
-  * - if we come here from up_xxxx(), then:
-@@ -125,6 +156,15 @@ __rwsem_do_wake(struct rw_semaphore *sem, enum rwsem_wake_type wake_type)
- 	struct list_head *next;
- 	long oldcount, woken, loop, adjustment;
- 
-+	/*
-+	 * Abort the wakeup operation if there is an active writer as the
-+	 * lock was stolen. up_write() should have cleared the owner field
-+	 * before calling this function. If that field is now set, there must
-+	 * be an active writer present.
-+	 */
-+	if (rwsem_has_active_writer(sem))
-+		goto out;
-+
- 	waiter = list_entry(sem->wait_list.next, struct rwsem_waiter, list);
- 	if (waiter->type == RWSEM_WAITING_FOR_WRITE) {
- 		if (wake_type == RWSEM_WAKE_ANY)
-@@ -479,7 +519,22 @@ struct rw_semaphore *rwsem_wake(struct rw_semaphore *sem)
- {
- 	unsigned long flags;
- 
--	raw_spin_lock_irqsave(&sem->wait_lock, flags);
-+	/*
-+	 * If a spinner is present, it is not necessary to do the wakeup.
-+	 * Try to do wakeup when the trylock succeeds to avoid potential
-+	 * spinlock contention which may introduce too much delay in the
-+	 * unlock operation.
-+	 *
-+	 * In case the spinning writer is just going to break out of the loop,
-+	 * it will still do a trylock in rwsem_down_write_failed() before
-+	 * sleeping.
-+	 */
-+	if (rwsem_has_spinner(sem)) {
-+		if (!raw_spin_trylock_irqsave(&sem->wait_lock, flags))
-+			return sem;
-+	} else {
-+		raw_spin_lock_irqsave(&sem->wait_lock, flags);
-+	}
- 
- 	/* do nothing if list empty */
- 	if (!list_empty(&sem->wait_list))
--- 
-1.7.1
+Before patch:
+  rwsem/0:1	      2		1:339.4, 5:368.9, 10:394.0
+  rwsem/1:1	      2		1:2915 , 5:2621 , 10:2764
+  rwsem/10:1	      2		1:891.2, 5:779.2, 10:827.2
+  rwsem/0:1	     10		1:5618 , 5:5722 , 10:5683
+  rwsem/1:1	     10		1:14562, 5:14561, 10:14770
+  rwsem/10:1	     10		1:5914 , 5:5971 , 10:5912
+
+After patch:
+  rwsem/0:1	     2		1:161.1, 5:244.4, 10:271.4
+  rwsem/1:1	     2		1:188.8, 5:212.4, 10:312.9
+  rwsem/10:1	     2		1:168.8, 5:179.5, 10:209.8
+  rwsem/0:1	    10		1:1306 , 5:1733 , 10:1998
+  rwsem/1:1	    10		1:1512 , 5:1602 , 10:2093
+  rwsem/10:1	    10		1:1267 , 5:1458 , 10:2233
+
+% Change:
+  rwsem/0:1	     2		1:-52.5%, 5:-33.7%, 10:-31.1%
+  rwsem/1:1	     2		1:-93.5%, 5:-91.9%, 10:-88.7%
+  rwsem/10:1	     2		1:-81.1%, 5:-77.0%, 10:-74.6%
+  rwsem/0:1	    10		1:-76.8%, 5:-69.7%, 10:-64.8%
+  rwsem/1:1	    10		1:-89.6%, 5:-89.0%, 10:-85.8%
+  rwsem/10:1	    10		1:-78.6%, 5:-75.6%, 10:-62.2%
+
+It can be seen that there is dramatic reduction in the execution
+times. The new rwsem is now even faster than mutex whether it is all
+writers or a mixture of writers and readers.
+
+Running the AIM7 benchmarks on the same 40-core system (HT off),
+the performance improvements on some of the workloads were as follows:
+
+      Workload	     Before Patch	After Patch	% Change
+      --------	     ------------	-----------	--------
+  custom (200-1000)	446135		  477404	 +7.0%
+  custom (1100-2000)	449665		  484734	 +7.8%
+  high_systime		152437		  154217	 +1.2%
+   (200-1000)
+  high_systime		269695		  278942	 +3.4%
+   (1100-2000)
+
+Waiman Long (7):
+  locking/rwsem: don't resched at the end of optimistic spinning
+  locking/rwsem: more aggressive use of optimistic spinning
+  locking/rwsem: check for active writer/spinner before wakeup
+  locking/rwsem: threshold limited spinning for active readers
+  locking/rwsem: move down rwsem_down_read_failed function
+  locking/rwsem: enables optimistic spinning for readers
+  locking/rwsem: allow waiting writers to go back to optimistic spinning
+
+ include/linux/osq_lock.h    |    5 +
+ include/linux/rwsem.h       |    7 +
+ kernel/locking/rwsem-xadd.c |  328 ++++++++++++++++++++++++++++++++++---------
+ kernel/locking/rwsem.c      |   17 ++-
+ 4 files changed, 288 insertions(+), 69 deletions(-)
