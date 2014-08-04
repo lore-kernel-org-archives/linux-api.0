@@ -1,43 +1,51 @@
-From: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [REVIEW][PATCH 0/4] /proc/thread-self
-Date: Mon, 4 Aug 2014 15:12:49 +0200
-Message-ID: <20140804131249.GD6923@x2.net.home>
-References: <87oaw5caq1.fsf@x220.int.ebiederm.org>
- <1406860795.3036.3.camel@buesod1.americas.hpqcorp.net>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [PATCH 1/9] drm: Add drm driver for Rockchip Socs
+Date: Mon, 4 Aug 2014 16:46:43 +0200
+Message-ID: <20140804144643.GV8727@phenom.ffwll.local>
+References: <1407127274-1356-1-git-send-email-mark.yao@rock-chips.com>
+ <1407127507-1612-1-git-send-email-yzq@rock-chips.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1406860795.3036.3.camel-5JQ4ckphU/8SZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1407127507-1612-1-git-send-email-yzq@rock-chips.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: mark yao <yzq@rock-chips.com>
+Cc: heiko@sntech.de, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, David Airlie <airlied@linux.ie>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, huangtao@rock-chips.com, devicetree@vger.kernel.org, zwl@rock-chips.com, cym@rock-chips.com, linux-doc@vger.kernel.org, xw@rock-chips.com, linux-api@vger.kernel.org, zyw@rock-chips.com, zhangqing@rock-chips.com, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, kever.yang@rock-chips.com, cf@rock-chips.com, xjq@rock-chips.com, xxm@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, kfx@rock
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 31, 2014 at 07:39:55PM -0700, Davidlohr Bueso wrote:
-> On Thu, 2014-07-31 at 17:30 -0700, Eric W. Biederman wrote:
-> > This is small chance changing /proc/net and /proc/mounts will cause
-> > userspace regressions (although nothing has shown up in my testing) if
-> > that happens we can just point the change that moves them from
-> > /proc/self/... to /proc/thread-self/...
+On Mon, Aug 04, 2014 at 12:45:07PM +0800, mark yao wrote:
+> This patch is a DRM Driver for Rockchip Socs, driver provides an abstraction
+> for the graphics hardware, such as lcd controller and connector interface.
 > 
-> Isn't breaking userspace a no no, no matter what? At least some
-> util-linux programs makes use of both /proc/mounts and /proc/net.
+> Signed-off-by: mark yao <yzq@rock-chips.com>
+> ---
 
-Frankly, I don't care about /proc/mount, this file is more about backward
-compatibility than about any real informations ;-)
+Just a quick drive-by comment below, don't consider this a full review by
+far ;-)
 
-The really important file is /proc/self/mountinfo. We use this file on
-many places including shared libs and it seems (according to Eric's
-suggestion), that the right think will be to update the libs to use
-/proc/thread-self/mountinfo.
+> +static int lcdc_bind(struct device *dev, struct device *master, void *data)
+> +{
+> +	struct drm_device *drm_dev = data;
+> +	struct rockchip_drm_private *private = drm_dev->dev_private;
+> +	struct lcdc_context *ctx = dev_get_drvdata(dev);
+> +	struct drm_crtc *crtc;
+> +
+> +	ctx->drm_dev = drm_dev;
+> +
+> +	ctx->pipe = rockchip_drm_pipe_get(dev);
+> +	ctx->dpms = DRM_MODE_DPMS_OFF;
+> +	crtc = &ctx->crtc;
+> +
+> +	private->crtc[ctx->pipe] = crtc;
+> +	ctx->plane = rockchip_plane_init(drm_dev, 1 << ctx->pipe, true);
+> +	drm_crtc_init(drm_dev, crtc, &rockchip_crtc_funcs);
 
+This function is deprecated, please use the _with_planes versions so that
+this new driver supports universal planes properly.
 
-Note that I like the idea to have the magic symlink to access thread
-specific /proc stuff. It's definitely nice thing for userspace.
-
-    Karel
-
+Thanks, Daniel
 -- 
- Karel Zak  <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
- http://karelzak.blogspot.com
+Daniel Vetter
+Software Engineer, Intel Corporation
++41 (0) 79 365 57 48 - http://blog.ffwll.ch
