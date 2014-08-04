@@ -1,86 +1,35 @@
 From: Waiman Long <waiman.long-VXdhtT5mjnY@public.gmane.org>
-Subject: Re: [PATCH 0/7] locking/rwsem: enable reader opt-spinning & writer
- respin
-Date: Mon, 04 Aug 2014 14:07:48 -0400
-Message-ID: <53DFCBF4.5010904@hp.com>
-References: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com> <1407126313.3216.10.camel@buesod1.americas.hpqcorp.net>
+Subject: Re: [PATCH 1/7] locking/rwsem: don't resched at the end of optimistic
+ spinning
+Date: Mon, 04 Aug 2014 14:36:35 -0400
+Message-ID: <53DFD2B3.3090101@hp.com>
+References: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com> <1407119782-41119-2-git-send-email-Waiman.Long@hp.com> <20140804075528.GI9918@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1407126313.3216.10.camel-5JQ4ckphU/8SZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
+In-Reply-To: <20140804075528.GI9918-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Scott J Norton <scott.norton-VXdhtT5mjnY@public.gmane.org>
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Scott J Norton <scott.norton-VXdhtT5mjnY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/04/2014 12:25 AM, Davidlohr Bueso wrote:
-> On Sun, 2014-08-03 at 22:36 -0400, Waiman Long wrote:
->> This patch set improves upon the rwsem optimistic spinning patch set
->> from Davidlohr to enable better performing rwsem and more aggressive
->> use of optimistic spinning.
->>
->> By using a microbenchmark running 1 million lock-unlock operations per
->> thread on a 4-socket 40-core Westmere-EX x86-64 test machine running
->> 3.16-rc7 based kernels, the following table shows the execution times
->> with 2/10 threads running on different CPUs on the same socket where
->> load is the number of pause instructions in the critical section:
->>
->>    lock/r:w ratio # of threads	Load:Execution Time (ms)
->>    -------------- ------------	------------------------
->>    mutex		      2		1:530.7, 5:406.0, 10:472.7
->>    mutex		     10		1:1848 , 5:2046 , 10:4394
->>
->> Before patch:
->>    rwsem/0:1	      2		1:339.4, 5:368.9, 10:394.0
->>    rwsem/1:1	      2		1:2915 , 5:2621 , 10:2764
->>    rwsem/10:1	      2		1:891.2, 5:779.2, 10:827.2
->>    rwsem/0:1	     10		1:5618 , 5:5722 , 10:5683
->>    rwsem/1:1	     10		1:14562, 5:14561, 10:14770
->>    rwsem/10:1	     10		1:5914 , 5:5971 , 10:5912
->>
->> After patch:
->>    rwsem/0:1	     2		1:161.1, 5:244.4, 10:271.4
->>    rwsem/1:1	     2		1:188.8, 5:212.4, 10:312.9
->>    rwsem/10:1	     2		1:168.8, 5:179.5, 10:209.8
->>    rwsem/0:1	    10		1:1306 , 5:1733 , 10:1998
->>    rwsem/1:1	    10		1:1512 , 5:1602 , 10:2093
->>    rwsem/10:1	    10		1:1267 , 5:1458 , 10:2233
->>
->> % Change:
->>    rwsem/0:1	     2		1:-52.5%, 5:-33.7%, 10:-31.1%
->>    rwsem/1:1	     2		1:-93.5%, 5:-91.9%, 10:-88.7%
->>    rwsem/10:1	     2		1:-81.1%, 5:-77.0%, 10:-74.6%
->>    rwsem/0:1	    10		1:-76.8%, 5:-69.7%, 10:-64.8%
->>    rwsem/1:1	    10		1:-89.6%, 5:-89.0%, 10:-85.8%
->>    rwsem/10:1	    10		1:-78.6%, 5:-75.6%, 10:-62.2%
-> So at a very low level you see nicer results, which aren't really
-> translating to much of a significant impact at a higher level (aim7).
+On 08/04/2014 03:55 AM, Peter Zijlstra wrote:
+> On Sun, Aug 03, 2014 at 10:36:16PM -0400, Waiman Long wrote:
+>> For a fully preemptive kernel, a call to preempt_enable() could
+>> potentially trigger a task rescheduling event. In the case of rwsem
+>> optimistic spinning, the task has either gotten the lock or is going
+>> to sleep soon. So there is no point to do rescheduling here.
+> Uh what? Why shouldn't we preempt if we've gotten the lock? What if a
+> FIFO task just woke up?
 
-I was using a 4-socket system for testing. I believe the performance 
-gain will be higher on larger machine. I will run some tests on those 
-larger machine as well.
->> It can be seen that there is dramatic reduction in the execution
->> times. The new rwsem is now even faster than mutex whether it is all
->> writers or a mixture of writers and readers.
->>
->> Running the AIM7 benchmarks on the same 40-core system (HT off),
->> the performance improvements on some of the workloads were as follows:
->>
->>        Workload	     Before Patch	After Patch	% Change
->>        --------	     ------------	-----------	--------
->>    custom (200-1000)	446135		  477404	 +7.0%
->>    custom (1100-2000)	449665		  484734	 +7.8%
->>    high_systime		152437		  154217	 +1.2%
->>     (200-1000)
->>    high_systime		269695		  278942	 +3.4%
->>     (1100-2000)
-> I worry about complicating rwsems even _more_ than they are, specially
-> for such a marginal gain. You might want to try other workloads -- ie:
-> postgresql (pgbench), I normally get pretty useful data when dealing
-> with rwsems.
->
+I didn't mean that we shouldn't preempt if there is a higher priority 
+task. I am sure that there will be other preemption points along the way 
+that a higher priority task can take over the CPU. I just want to say 
+that doing it here may not be the best place especially if the task is 
+going to sleep soon.
 
-Thank for the info. I will try running pgbench as well.
+If you think this patch does not make sense, I can remove it as other 
+patches in the set has no dependency on this one.
 
 -Longman
