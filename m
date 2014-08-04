@@ -1,51 +1,45 @@
-From: Daniel Vetter <daniel@ffwll.ch>
-Subject: Re: [PATCH 1/9] drm: Add drm driver for Rockchip Socs
-Date: Mon, 4 Aug 2014 16:46:43 +0200
-Message-ID: <20140804144643.GV8727@phenom.ffwll.local>
-References: <1407127274-1356-1-git-send-email-mark.yao@rock-chips.com>
- <1407127507-1612-1-git-send-email-yzq@rock-chips.com>
+From: "Carlos O'Donell" <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: futex(2) man page update help request
+Date: Mon, 04 Aug 2014 10:46:30 -0400
+Message-ID: <53DF9CC6.3090003@redhat.com>
+References: <537346E5.4050407@gmail.com> <CF98E3EF.90564%dvhart@linux.intel.com> <CAKgNAkh+PWzT2SByaLk_OtiAXeZSkWoMgu+ivDOt1dTWVtaatQ@mail.gmail.com> <5373D0CA.2050204@redhat.com> <alpine.DEB.2.02.1405150121230.6261@ionos.tec.linutronix.de> <CAKgNAkjQ5Dd_U9OojXdgeforpRevvPHNFAw99kBFPCwHgf7Ggg@mail.gmail.com> <alpine.DEB.2.02.1405151144390.6261@ionos.tec.linutronix.de> <53752157.9070803@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1407127507-1612-1-git-send-email-yzq@rock-chips.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: mark yao <yzq@rock-chips.com>
-Cc: heiko@sntech.de, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, David Airlie <airlied@linux.ie>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, huangtao@rock-chips.com, devicetree@vger.kernel.org, zwl@rock-chips.com, cym@rock-chips.com, linux-doc@vger.kernel.org, xw@rock-chips.com, linux-api@vger.kernel.org, zyw@rock-chips.com, zhangqing@rock-chips.com, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, kever.yang@rock-chips.com, cf@rock-chips.com, xjq@rock-chips.com, xxm@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, kfx@rock
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <53752157.9070803-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <davidlohr.bueso-VXdhtT5mjnY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 04, 2014 at 12:45:07PM +0800, mark yao wrote:
-> This patch is a DRM Driver for Rockchip Socs, driver provides an abstraction
-> for the graphics hardware, such as lcd controller and connector interface.
+On 05/15/2014 04:19 PM, Michael Kerrisk (man-pages) wrote:
+> On 05/15/2014 04:14 PM, Thomas Gleixner wrote:
+>> On Thu, 15 May 2014, Michael Kerrisk (man-pages) wrote:
+>>> And that universe would love to have your documentation of
+>>> FUTEX_WAKE_BITSET and FUTEX_WAIT_BITSET ;-),
+>>
+>> I give you almost the full treatment, but I leave REQUEUE_PI to Darren
+>> and FUTEX_WAKE_OP to Jakub. :)
 > 
-> Signed-off-by: mark yao <yzq@rock-chips.com>
-> ---
+> Thanks Thomas--that's fantastic! Hopefully, Darren and Jakub fill in those
+> missing pieces...
 
-Just a quick drive-by comment below, don't consider this a full review by
-far ;-)
+Michael,
 
-> +static int lcdc_bind(struct device *dev, struct device *master, void *data)
-> +{
-> +	struct drm_device *drm_dev = data;
-> +	struct rockchip_drm_private *private = drm_dev->dev_private;
-> +	struct lcdc_context *ctx = dev_get_drvdata(dev);
-> +	struct drm_crtc *crtc;
-> +
-> +	ctx->drm_dev = drm_dev;
-> +
-> +	ctx->pipe = rockchip_drm_pipe_get(dev);
-> +	ctx->dpms = DRM_MODE_DPMS_OFF;
-> +	crtc = &ctx->crtc;
-> +
-> +	private->crtc[ctx->pipe] = crtc;
-> +	ctx->plane = rockchip_plane_init(drm_dev, 1 << ctx->pipe, true);
-> +	drm_crtc_init(drm_dev, crtc, &rockchip_crtc_funcs);
+Do you need any help getting these additional futex error codes
+into the linux kernel man pages project? Thomas provided the
+missing bits and Darren commented... what else do we need?
 
-This function is deprecated, please use the _with_planes versions so that
-this new driver supports universal planes properly.
+I'm asking because I want to point other Red Hat engineers at
+these pages to say: "these are the canonical error codes." 
 
-Thanks, Daniel
--- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-+41 (0) 79 365 57 48 - http://blog.ffwll.ch
+We're trying to cleanup the userspace side of things.
+
+Cheers,
+Carlos.
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
