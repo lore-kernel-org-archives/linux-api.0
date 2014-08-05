@@ -1,24 +1,44 @@
-From: David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/2] xen: Implement ioctl to restrict privcmd to a specific
- domain
-Date: Tue, 5 Aug 2014 14:45:34 +0100
-Message-ID: <53E0DFFE.9090202@citrix.com>
-References: <201407311317.s6VDHJV9013633@aserp1020.oracle.com> <20140804202633.GC6380@laptop.dumpdata.com> <1407229819.26842.4.camel@hamster.uk.xensource.com> <20140805134220.GD13057@laptop.dumpdata.com>
+From: Waiman Long <waiman.long-VXdhtT5mjnY@public.gmane.org>
+Subject: Re: [PATCH 1/7] locking/rwsem: don't resched at the end of optimistic
+ spinning
+Date: Tue, 05 Aug 2014 13:54:37 -0400
+Message-ID: <53E11A5D.2060303@hp.com>
+References: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com> <1407119782-41119-2-git-send-email-Waiman.Long@hp.com> <20140804075528.GI9918@twins.programming.kicks-ass.net> <53DFD2B3.3090101@hp.com> <20140804204824.GT3935@laptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140805134220.GD13057-0iZWjJA6G8GSPmnEAIUT9EEOCMrvLtNR@public.gmane.org>
+In-Reply-To: <20140804204824.GT3935@laptop>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konrad Rzeszutek Wilk <konrad.wilk-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Frediano Ziglio <frediano.ziglio-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
-Cc: Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, xen-devel <xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Scott J Norton <scott.norton-VXdhtT5mjnY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/08/14 14:42, Konrad Rzeszutek Wilk wrote:
-> 
->  - Some of these hypercalls don't have an ABI so we can't depend
->    on them being stable. How do you want to handle that?
+On 08/04/2014 04:48 PM, Peter Zijlstra wrote:
+> On Mon, Aug 04, 2014 at 02:36:35PM -0400, Waiman Long wrote:
+>> On 08/04/2014 03:55 AM, Peter Zijlstra wrote:
+>>> On Sun, Aug 03, 2014 at 10:36:16PM -0400, Waiman Long wrote:
+>>>> For a fully preemptive kernel, a call to preempt_enable() could
+>>>> potentially trigger a task rescheduling event. In the case of rwsem
+>>>> optimistic spinning, the task has either gotten the lock or is going
+>>>> to sleep soon. So there is no point to do rescheduling here.
+>>> Uh what? Why shouldn't we preempt if we've gotten the lock? What if a
+>>> FIFO task just woke up?
+>> I didn't mean that we shouldn't preempt if there is a higher priority task.
+>> I am sure that there will be other preemption points along the way that a
+>> higher priority task can take over the CPU. I just want to say that doing it
+>> here may not be the best place especially if the task is going to sleep
+>> soon.
+>>
+>> If you think this patch does not make sense, I can remove it as other
+>> patches in the set has no dependency on this one.
+> Yeah, its actively harmful, you delay preemption by an unspecified
+> amount of time in case of the spin-acquire. We've had such bugs in -rt
+> and they're not fun.
+>
+> Basically the only time you should use no_resched is if the very next
+> statement is schedule().
 
-We are not going any further with this series because of this.
+Thank for the clarification. I will remove patch 1 from the patch set.
 
-David
+-Longman
