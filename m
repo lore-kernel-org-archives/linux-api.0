@@ -1,89 +1,99 @@
-From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 2/5] sched: new clone flag CLONE_NEWCGROUP for cgroup
- namespace
-Date: Mon, 4 Aug 2014 23:12:55 +0000
-Message-ID: <20140804231255.GM12438@ubuntumail>
-References: <1405626731-12220-1-git-send-email-adityakali@google.com>
- <1405626731-12220-3-git-send-email-adityakali@google.com>
- <20140724170119.GR26600@ubuntumail>
- <CAGr1F2FAiSFR_Y3t1=eBVoAtJvh4m=cNUi+vG146nDkgtBjisQ@mail.gmail.com>
+From: Davidlohr Bueso <davidlohr-VXdhtT5mjnY@public.gmane.org>
+Subject: Re: [PATCH 4/7] locking/rwsem: threshold limited spinning for
+ active readers
+Date: Mon, 04 Aug 2014 21:54:21 -0700
+Message-ID: <1407214461.2566.14.camel@buesod1.americas.hpqcorp.net>
+References: <1407119782-41119-1-git-send-email-Waiman.Long@hp.com>
+	 <1407119782-41119-5-git-send-email-Waiman.Long@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAGr1F2FAiSFR_Y3t1=eBVoAtJvh4m=cNUi+vG146nDkgtBjisQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1407119782-41119-5-git-send-email-Waiman.Long-VXdhtT5mjnY@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Waiman Long <Waiman.Long-VXdhtT5mjnY@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Scott J Norton <scott.norton-VXdhtT5mjnY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
-> On Thu, Jul 24, 2014 at 10:01 AM, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
-> > Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
-> >> CLONE_NEWCGROUP will be used to create new cgroup namespace.
-> >>
-> >
-> > This is fine and I'm not looking to bikeshed, but am wondering - did
-> > you consider any other ways beside unshare (i.e. a new mount option
-> > to cgroupfs)?  If so, do you have a list of the downsides of those?
-> > (I mainly ask bc clone flags are still a scarce commodity)
-> >
-> 
-> I did consider couple of other ways:
-> 
-> (1) having a cgroup.ns_root (or something) cgroup file. If this value
-> is '1', it would mean that all processes it and its descendant cgroups
-> will have their cgroup paths in /proc/self/cgroup terminated at this
-> cgroup.
->  For ex:
-> [A] --> [B] --> C
->     | --> [D] --> E
-> 
-> [A], [B] and [D] has cgroup.ns_root = 1.
-> * all processes in cgroup C & E will see their cgroup path as /C and
-> /E respectively
-> * all processes in cgroup B & D will see their own cgroup path as /
-> 
-> In this model, its easy to know what to show if process is looking at
-> its own cgroup paths (/proc/self/cgroup). It gets tricky when you are
-> looking at other process's /proc/<pid>/cgroup. We may be able to come
-> up with some hacky way read correct value, but depending on the
-> cgroupfs mount, it may not make sense.
-> One other major drawback of this approach is that "every" process in
-> the cgroup will now get a restricted view. i.e., you cannot change
-> cgroups without affecting your view. And this is undesirable for
-> administrative processes.
-> 
-> (2) Another idea that I didn't pursue further (and is a bit hacky as
-> above) was having cgroup.ns_procs (like cgroup.procs, but all the pids
-> in cgroup.ns_procs will have their /proc/self/cgroup restricted).
-> Writing a pid to cgroup.ns_procs implies that you are writing it to
-> cgroup.procs too. But, not vise-versa. So, you could move yourself in
-> another cgroup by writing your pid in cgroup.procs, but not in
-> cgroup.ns_procs, thus preventing from getting "rooted". I This was to
-> solve administrative process issue in the above appraoch. But I think
-> this is very clunky too and I find semantics for this approach to be
-> non-intuitive. It almost looks like moving towards a separate "ns"
-> subsystem. But as we already know, its a path to failure.
-> 
-> I didn't think of using a mount option. I imagine the mount option
-> (something like -o root=/bathjobs/container_1) could be used to
-> restrict the visibility of cgroupfs inside the container's mount
-> namespace. i.e., the value you read from /proc/<pid>/cgroup now
-> depends on what mount namespace you are in. Its similar to cgroup
-> namespace, but just that the cgroupns_root is now stored in the
-> 'struct mnt_namespace' instead of a separate 'struct
-> cgroup_namespace'. But, since mount namespace on creation inherits
-> mounts from its parent, the first cgroupfs mount in a mount namespace
-> is now treated specially. Also, its not possible to restrict cgroups
-> without mount namespace now. This is interesting and may not be too
-> bad. I am willing to give this a try. But I feel the cgroup namespace
-> approach fits well in-line with other namespaces where it does one
-> thing - virtualize the view of /proc/<pid>/cgroup file for processes
-> inside the namespace. The semantics are more intuitive as they are
-> similar to other namespaces.
+On Sun, 2014-08-03 at 22:36 -0400, Waiman Long wrote:
+> Even thought only the writers can perform optimistic spinning, there
+> is still a chance that readers may take the lock before a spinning
+> writer can get it. In that case, the owner field will be NULL and the
+> spinning writer can spin indefinitely until its time quantum expires
+> when some lock owning readers are not running.
 
-Yeah, let's stick with what you have :)
+Right, now I understand where you were coming from in patch 3/7 ;)
 
-thanks,
--serge
+> This patch tries to handle this special case by:
+>  1) setting the owner field to a special value RWSEM_READ_OWNED
+>     to indicate that the current or last owner is a reader.
+>  2) seting a threshold on how many times (currently 100) spinning will
+     ^^setting
+>     be done with active readers before giving up as there is no easy
+>     way to determine if all of them are currently running.
+> 
+> By doing so, it tries to strike a balance between giving up too early
+> and losing potential performance gain and wasting too many precious
+> CPU cycles when some lock owning readers are not running.
+
+That's exactly why these kind of magic things aren't a good thing, much
+less in locking. And other alternatives are much more involved, creating
+more overhead, which can make the whole thing pretty much useless.
+
+Nor does the amount of times trying to spin strike me as the correct
+metric to determine such things. Instead something y cycles or time
+based.
+
+[...]
+>  #ifdef CONFIG_RWSEM_SPIN_ON_OWNER
+> +/*
+> + * The owner field is set to RWSEM_READ_OWNED if the last owner(s) are
+> + * readers. It is not reset until a writer takes over and set it to its
+> + * task structure pointer or NULL when it frees the lock. So a value
+> + * of RWSEM_READ_OWNED doesn't mean it currently has active readers.
+> + */
+> +#define RWSEM_READ_OWNED	((struct task_struct *)-1)
+
+Looks rather weird...
+
+>  #define __RWSEM_OPT_INIT(lockname) , .osq = OSQ_LOCK_UNLOCKED, .owner = NULL
+>  #else
+>  #define __RWSEM_OPT_INIT(lockname)
+> diff --git a/kernel/locking/rwsem-xadd.c b/kernel/locking/rwsem-xadd.c
+> index 9f71a67..576d4cd 100644
+> --- a/kernel/locking/rwsem-xadd.c
+> +++ b/kernel/locking/rwsem-xadd.c
+> @@ -304,6 +304,11 @@ static inline bool rwsem_try_write_lock(long count, struct rw_semaphore *sem)
+>  
+>  #ifdef CONFIG_RWSEM_SPIN_ON_OWNER
+>  /*
+> + * Threshold for optimistic spinning on readers
+> + */
+> +#define RWSEM_READ_SPIN_THRESHOLD	100
+
+I dislike this for the same reasons they weren't welcomed in spinlocks.
+We don't know how it can impact workloads that have not been tested.
+
+[...]
+>  static bool rwsem_optimistic_spin(struct rw_semaphore *sem)
+>  {
+>  	struct task_struct *owner;
+>  	bool taken = false;
+> +	int  read_spincnt = 0;
+>  
+>  	preempt_disable();
+>  
+> @@ -397,8 +409,12 @@ static bool rwsem_optimistic_spin(struct rw_semaphore *sem)
+>  
+>  	while (true) {
+>  		owner = ACCESS_ONCE(sem->owner);
+> -		if (owner && !rwsem_spin_on_owner(sem, owner))
+> +		if (owner == RWSEM_READ_OWNED) {
+> +			if (++read_spincnt > RWSEM_READ_SPIN_THRESHOLD)
+> +				break;
+
+This is still a pretty fast-path and is going to affect writers, so we
+really want to keep it un-clobbered.
+
+Thanks,
+Davidlohr
