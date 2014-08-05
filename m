@@ -1,40 +1,105 @@
-From: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
-Subject: Re: [PATCH 1/3] tty: serial: 8250: Add new capability for highspeed
- register
-Date: Tue, 5 Aug 2014 12:43:43 +0100
-Message-ID: <20140805124343.27ff9b32@alan.etchedpixels.co.uk>
-References: <1407236054-30994-1-git-send-email-matthias.bgg@gmail.com>
-	<1407236054-30994-2-git-send-email-matthias.bgg@gmail.com>
+From: Varka Bhadram <varkabhadram@gmail.com>
+Subject: Re: [PATCH 2/3] tty: serial: 8250: Add Mediatek UART driver
+Date: Tue, 05 Aug 2014 17:25:31 +0530
+Message-ID: <53E0C633.7060600@gmail.com>
+References: <1407236054-30994-1-git-send-email-matthias.bgg@gmail.com> <1407236054-30994-3-git-send-email-matthias.bgg@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1407236054-30994-2-git-send-email-matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matthias Brugger <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, heikki.krogerus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, asierra-AQeFf1F/bRxBDgjK7y7TUQ@public.gmane.org, mwelling-EkmVulN54Sk@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, m-karicheri2-l0cyMroinI0@public.gmane.org, jschultz-AQeFf1F/bRxBDgjK7y7TUQ@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, balbi-l0cyMroinI0@public.gmane.org, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1407236054-30994-3-git-send-email-matthias.bgg@gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Matthias Brugger <matthias.bgg@gmail.com>, linux-kernel@vger.kernel.org
+Cc: robh+dt@kernel.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, rdunlap@infradead.org, gregkh@linuxfoundation.org, jslaby@suse.cz, grant.likely@linaro.org, heikki.krogerus@linux.intel.com, alan@linux.intel.com, paul.gortmaker@windriver.com, asierra@xes-inc.com, mwelling@ieee.org, dianders@chromium.org, m-karicheri2@ti.com, jschultz@xes-inc.com, mingo@elte.hu, balbi@ti.com, heiko@sntech.de, devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
->  
->  	/*
-> +	 * Mediatek UARTs use an extra highspeed register (UART_MTK_HIGHS)
-> +	 *
-> +	 * We need to recalcualte the quot register, as the claculation depends
-> +	 * on the vaule in the highspeed register.
-> +	 *
-> +	 * Some baudrates are not supported by the chip, so we use the next
-> +	 * lower rate supported.
-> +	 *
-> +	 * If highspeed register is set to 3, we need to specify sample count
-> +	 * and sample point to increase accuracy. If not, we reset the
-> +	 * registers to their default values.
-> +	 */
+On 08/05/2014 04:24 PM, Matthias Brugger wrote:
 
-Don't put stuff in the core driver core for your chip specific weirdness,
-wrap the termios method with your own in your driver code as a fair
-number of other 8250ish drivers do.
+(...)
 
-If you do that then you don't need to waste a UART CAPS flag and you
-don't need to put anything in the core driver code.
+> +#include <linux/io.h>
+> +#include <linux/module.h>
+> +#include <linux/serial_8250.h>
+> +#include <linux/of_irq.h>
+> +#include <linux/of_platform.h>
+> +#include <linux/platform_device.h>
+> +#include <linux/clk.h>
+> +#include <linux/pm_runtime.h>
+> +#include "8250.h"
+> +
 
-Alan
+Better if we have includes in alphabetical order..
+
+> +#define MTK_UART_RATE_FIX 0x0D /* UART Rate Fix Register */
+> +
+> +struct mtk8250_data {
+> +	int			line;
+> +	struct clk		*clk;
+> +};
+> +
+> +static void
+> +mtk8250_do_pm(struct uart_port *port, unsigned int state, unsigned int old)
+> +{
+> +	if (!state)
+> +		pm_runtime_get_sync(port->dev);
+> +
+> +	serial8250_do_pm(port, state, old);
+> +
+> +	if (state)
+> +		pm_runtime_put_sync_suspend(port->dev);
+> +}
+> +
+> +static int mtk8250_probe_of(struct uart_port *p,
+> +			   struct mtk8250_data *data)
+
+static int mtk8250_probe_of(struct uart_port *p,
+			    struct mtk8250_data *data)
+
+> +{
+> +	int err;
+> +	struct device_node	*np = p->dev->of_node;
+> +
+> +	data->clk = of_clk_get(np, 0);
+> +	if (IS_ERR(data->clk)) {
+> +		pr_warn("Can't get timer clock");
+
+missed terminating new line...
+
+> +		return PTR_ERR(data->clk);
+> +	}
+> +
+> +	err = clk_prepare_enable(data->clk);
+> +	if (err) {
+> +		pr_warn("Can't prepare clock");
+
+same...
+
+> +		clk_put(data->clk);
+> +		return err;
+> +	}
+> +	p->uartclk = clk_get_rate(data->clk);
+> +
+> +	return 0;
+> +}
+
+(...)
+
+> +static struct platform_driver mtk8250_platform_driver = {
+> +	.driver = {
+> +		.name		= "mt6577-uart",
+> +		.owner		= THIS_MODULE,
+
+No need to update this field...
+
+> +		.pm		= &mtk8250_pm_ops,
+> +		.of_match_table	= mtk8250_of_match,
+> +	},
+> +	.probe			= mtk8250_probe,
+> +	.remove			= mtk8250_remove,
+> +};
+> +module_platform_driver(mtk8250_platform_driver);
+>
+-- 
+Regards,
+Varka Bhadram.
+
