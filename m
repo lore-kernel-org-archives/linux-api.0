@@ -1,57 +1,48 @@
-From: chrubis-AlSwsSmVLrQ@public.gmane.org
-Subject: Re: futex(2) man page update help request
-Date: Mon, 11 Aug 2014 12:19:16 +0200
-Message-ID: <20140811101916.GA17310@rei.suse.cz>
-References: <537346E5.4050407@gmail.com>
- <CF98E3EF.90564%dvhart@linux.intel.com>
- <20140515152834.GA6926@rei.Home>
- <CF9A3521.90ECC%dvhart@linux.intel.com>
- <20140515163004.GB7959@rei.Home>
- <CF9A3A75.90F40%dvhart@linux.intel.com>
- <20140515190529.GA8887@rei.Home>
- <CF9A658E.91322%dvhart@linux.intel.com>
+From: Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH 0/5] video: describe data bus formats
+Date: Tue, 12 Aug 2014 13:02:37 +0200
+Message-ID: <20140812130237.36ec613e@bbrezillon>
+References: <1406031827-12432-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CF9A658E.91322%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <davidlohr.bueso-VXdhtT5mjnY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1406031827-12432-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Cc: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
-> >> How much LTP harness type code needs to be used?
-> >
-> >Not much.
-> >
-> >For this complexity of tests you would just need to call the tst_resm()
-> >interface to report success/failure and, at the end of the test,
-> >tst_exit() to return the stored overall test status.
-> >
-> >And ideally call the standard option parsing code and call the test in
-> >standard loop so that the test can take advantage of standard options as
-> >number of iterations to run, etc.
-> >
-> >Have a look at:
-> >
-> >https://github.com/linux-test-project/ltp/wiki/Test-Writing-Guidelines
-> >
-> >there is simple test example as well as description of the interfaces.
-> 
-> 
-> Thanks Cyril,
-> 
-> I'll follow up with you in a couple weeks most likely. I have some urgent
-> things that will be taking all my time and then some until then. Feel free
-> to poke me though if I lose track of it :-)
+Hi,
 
-Ping :)
+On Tue, 22 Jul 2014 14:23:42 +0200
+Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org> wrote:
 
+> Hello,
+> 
+> This patch series is a proposal to describe the different data formats used
+> by HW components to connect with each other.
+> 
+> This is just a copy of the existing V4L2_MBUS_FMT defintions with a neutral
+> name so that it can be used by V4L2 and DRM/KMS subsystem.
+> 
+> This series also makes use of this video_bus_format enum in the DRM/KMS
+> subsystem to define the data fomats supported on the connector <-> device
+> link.
+> 
+> The video bus formats are not documented yet (and I don't know where this doc
+> should be stored), but I'm pretty sure this version won't be the last one ;-).
+
+Laurent, Thierry (and other DRM/KMS folks), any comments on this
+series ?
+
+I'd really like to get the HLCDC driver mainlined for 3.18 and it
+depends on this series now...
+
+Best Regards,
+
+Boris
 -- 
-Cyril Hrubis
-chrubis-AlSwsSmVLrQ@public.gmane.org
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Boris Brezillon, Free Electrons
+Embedded Linux and Kernel engineering
+http://free-electrons.com
