@@ -1,74 +1,72 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: seccomp: add "seccomp" syscall
-Date: Tue, 12 Aug 2014 09:25:43 -0700
-Message-ID: <CAGXu5jLxkhaDU7KtHLLXAbseHXc9nEuj93EYM9JvtWvPLzW=ug@mail.gmail.com>
-References: <20140806162754.3BCA1660E61@gitolite.kernel.org>
-	<CAMuHMdWp1iWm9xLqRN0q3hV72bD8jPRLDW74Cm+Gxp3gB76asQ@mail.gmail.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH RFC v2 net-next 10/16] bpf: add eBPF verifier
+Date: Tue, 12 Aug 2014 12:32:31 -0700
+Message-ID: <CALCETrUDb6kLH_Qp=YMm=m3P_hmEu3dfDTse=ptCsdpO9EEcAQ@mail.gmail.com>
+References: <1405657206-12060-1-git-send-email-ast@plumgrid.com>
+ <1405657206-12060-11-git-send-email-ast@plumgrid.com> <CALCETrUt1yLXTt5pDZJd0s4s+4dhs0LB7tbJYd6p1+EbdNWw7w@mail.gmail.com>
+ <CAMEtUuygJoH+PBNksTwRHyRObCZixoTDFzmnHroErZHZLaGNbg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMuHMdWp1iWm9xLqRN0q3hV72bD8jPRLDW74Cm+Gxp3gB76asQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Geert Uytterhoeven <geert@linux-m68k.org>
-Cc: Linux-Arch <linux-arch@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMEtUuygJoH+PBNksTwRHyRObCZixoTDFzmnHroErZHZLaGNbg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 11, 2014 at 1:07 PM, Geert Uytterhoeven
-<geert@linux-m68k.org> wrote:
-> Hi Kees,
->
-> v3.17 is gonna get a lot of new syscalls...
-
-4 so far! :P
-
->
-> On Wed, Aug 6, 2014 at 6:27 PM, Linux Kernel Mailing List
-> <linux-kernel@vger.kernel.org> wrote:
->> Gitweb:     http://git.kernel.org/linus/;a=commit;h=48dc92b9fc3926844257316e75ba11eb5c742b2c
->> Commit:     48dc92b9fc3926844257316e75ba11eb5c742b2c
->> Parent:     3b23dd12846215eff4afb073366b80c0c4d7543e
->> Refname:    refs/heads/master
->> Author:     Kees Cook <keescook@chromium.org>
->> AuthorDate: Wed Jun 25 16:08:24 2014 -0700
->> Committer:  Kees Cook <keescook@chromium.org>
->> CommitDate: Fri Jul 18 12:13:37 2014 -0700
+On Thu, Jul 24, 2014 at 12:25 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+> On Thu, Jul 24, 2014 at 11:25 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>> On Thu, Jul 17, 2014 at 9:20 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+>>> Safety of eBPF programs is statically determined by the verifier, which detects:
+>>> - loops
+>>> - out of range jumps
+>>> - unreachable instructions
+>>> - invalid instructions
+>>> - uninitialized register access
+>>> - uninitialized stack access
+>>> - misaligned stack access
+>>> - out of range stack access
+>>> - invalid calling convention
 >>
->>     seccomp: add "seccomp" syscall
->>
->>     This adds the new "seccomp" syscall with both an "operation" and "flags"
->>     parameter for future expansion. The third argument is a pointer value,
->>     used with the SECCOMP_SET_MODE_FILTER operation. Currently, flags must
->>     be 0. This is functionally equivalent to prctl(PR_SET_SECCOMP, ...).
->>
->>     In addition to the TSYNC flag later in this patch series, there is a
->>     non-zero chance that this syscall could be used for configuring a fixed
->>     argument area for seccomp-tracer-aware processes to pass syscall arguments
->>     in the future. Hence, the use of "seccomp" not simply "seccomp_add_filter"
->>     for this syscall. Additionally, this syscall uses operation, flags,
->>     and user pointer for arguments because strictly passing arguments via
->>     a user pointer would mean seccomp itself would be unable to trivially
->>     filter the seccomp syscall itself.
->>
->>     Signed-off-by: Kees Cook <keescook@chromium.org>
->>     Reviewed-by: Oleg Nesterov <oleg@redhat.com>
->>     Reviewed-by: Andy Lutomirski <luto@amacapital.net>
+>> Is there something that documents exactly what conditions an eBPF
+>> program must satisfy in order to be considered valid?
 >
-> Is this something that I should enable?
+> I did a writeup in the past on things that verifiers checks and gave it
+> to internal folks to review. Guys have said that now they understand very
+> well how it works, but in reality it didn't help at all to write valid programs.
+> What worked is 'verification trace' = the instruction by instruction dump
+> of verifier state while it's analyzing the program.
+> I gave few simple examples of it in
+> 'Understanding eBPF verifier messages' section:
+> https://git.kernel.org/cgit/linux/kernel/git/ast/bpf.git/diff/Documentation/networking/filter.txt?id=b22459133b9f52d2176c8c0f8b5eb036478a40c9
+> Every example there is what "program must satisfy to be valid"...
 >
-> As it depends on CONFIG_SECCOMP, it only makes sense on architectures that
-> already support CONFIG_SECCOMP, right?
-> Does it make sense to reserve a syscall slot for it on architectures that
-> don't support it yet?
+> Therefore I'm addressing two things:
+> 1. how verifier works and what it checks for.
+>   that is described in 'eBPF verifier' section of the doc and
+>   in 200 lines of comments inside verifier.c
 
-I don't see a good reason to reserve the syscall slot if seccomp
-filter is not already implemented. I've CCed linux-api in case there
-is something I'm not considering, though.
+That doc is pretty good.  I'll try to read it carefully soon.  Sorry
+for the huge delay here -- I've been on vacation.
 
-FWIW, if someone wants to add it for m68k, the steps to support
-seccomp are listed in the arch/Kconfig for HAVE_ARCH_SECCOMP_FILTER.
+--Andy
 
--Kees
+> 2. how to write valid programs
+>  that's more important one, since it's a key to happy users.
+>  'verification trace' is the first step. I'm planning to add debug info and
+>  user space tool that points out to line in C instead of assembler trace.
+>  In other words to bring errors to user as early as possible during
+>  compilation process.
+>  This is not a concern when programs are written in assembler,
+>  since the programs will be much shorter and thought through by
+>  the author. However I don't think there will be too many users
+>  willing to understand ebpf assembler.
+>
+> I suspect you're more concerned about #1 at this point whereas
+> I'm concerned about #2.
+
+
 
 -- 
-Kees Cook
-Chrome OS Security
+Andy Lutomirski
+AMA Capital Management, LLC
