@@ -1,51 +1,45 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH RFC v4 net-next 01/26] net: filter: add "load 64-bit
- immediate" eBPF instruction
-Date: Wed, 13 Aug 2014 14:56:44 -0700
-Message-ID: <CAMEtUuzqjNnLRML=4Npda5FpU+B6-PCaKTySKfJw4Z+-Mg=KLQ@mail.gmail.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH RFC v4 net-next 00/26] BPF syscall, maps, verifier,
+ samples, llvm
+Date: Wed, 13 Aug 2014 16:25:16 -0700 (PDT)
+Message-ID: <20140813.162516.1876660483788283579.davem@davemloft.net>
 References: <1407916658-8731-1-git-send-email-ast@plumgrid.com>
-	<1407916658-8731-2-git-send-email-ast@plumgrid.com>
-	<CALCETrXzZVxMGUgDPOKwN0DPLvupU=ew1z6D4U-jHg+RoyZyLg@mail.gmail.com>
-	<CAMEtUuxog0w-XkYMHM=Zto_gejy8x5agxohAWOs1zPEtXTr0Sw@mail.gmail.com>
-	<CALCETrXfp+7FmEzAoLiqzqY73NBzt8JsD40hzvhT3=gr-Scp=g@mail.gmail.com>
-	<CAMEtUuwx6Y4qxyz4TGK9=M2BH-dXnPsm+JrusqbyjzK20yUv6A@mail.gmail.com>
-	<CALCETrVDrbD3goYmZsUdmEhVfaNxovyghCz6y+_q5+G+rVwtWg@mail.gmail.com>
-	<53EBD6D5.3050706@zytor.com>
-	<CALCETrUghSd-Z3+z_MUierWHQnA_dDOQcJ++EKryUeGTh5LbbA@mail.gmail.com>
-	<53EBD848.1060203@zytor.com>
-	<CAMEtUuwO028MV8TQXQew1SOQjUvSbQ_bazAqorGRxojXXYXEnA@mail.gmail.com>
+	<063D6719AE5E284EB5DD2968C1650D6D174760F3@AcuExch.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMEtUuwO028MV8TQXQew1SOQjUvSbQ_bazAqorGRxojXXYXEnA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6D174760F3-VkEWCZq2GCInGFn1LkZF6NBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org
+Cc: ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 13, 2014 at 2:38 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
-> On Wed, Aug 13, 2014 at 2:27 PM, H. Peter Anvin <hpa@zytor.com> wrote:
->> On 08/13/2014 02:23 PM, Andy Lutomirski wrote:
->>> On Wed, Aug 13, 2014 at 2:21 PM, H. Peter Anvin <hpa@zytor.com> wrote:
->>>> One thing about this that may be a serious concern: allowing the user to
->>>> control 8 contiguous bytes of kernel memory may be a security hazard.
->>>
->>> I'm confused.  What kind of memory?  I can control a lot more than 8
->>> bytes of stack very easily.
->>>
->>> Or are you concerned about 8 contiguous bytes of *executable* memory?
->>>
->>
->> Yes.  Useful for some kinds of ROP custom gadgets.
->
-> I don't get it. What is ROP ?
-> What is the concern about 8 bytes ?
+From: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
+Date: Wed, 13 Aug 2014 08:52:30 +0000
 
-looked it up. too many abbreviations now days.
-x64 jit spraying was fixed by Eric some time ago, so JIT emitting
-movabsq doesn't increase attack surface. various movs of 32-bit
-immediates can be used for 'custom gadget' just as well.
-Worst case JIT won't be enabled.
-In classic BPF we allow junk to be stored in used fields of
-'struct sock_filter' and so far that wasn't a problem.
-eBPF is more paranoid regarding verification.
+> From: Of Alexei Starovoitov
+>> one more RFC...
+>> 
+>> Major difference vs previous set is a new 'load 64-bit immediate' eBPF insn.
+>> Which is first 16-byte instruction. It shows how eBPF ISA can be extended
+>> while maintaining backward compatibility, but mainly it cleans up eBPF
+>> program access to maps and improves run-time performance.
+> 
+> Wouldn't it be more sensible to follow the scheme used by a lot of cpus
+> and add a 'load high' instruction (follow with 'add' or 'or').
+> It still takes 16 bytes to load a 64bit immediate value, but the instruction
+> size remains constant.
+> There is nothing to stop any JIT software detecting the instruction pair.
+
+The opposite argument is that JITs can expand the IMM64 load into whatever
+sequence of instructions is most optimal.
+
+My only real gripe with IMM64 loads is that it's not mainly for
+loading an immediate, it's for loading a pointer.  And this
+distinction is important for some JITs.
+
+For example, on sparc64 all symbol based addresses are actually 32-bit
+because of the code model we use to compile the kernel and all modules.
+So if we knew this is a pointer load and it's to a symbol in a kernel
+or module image, we could do a 32-bit load.
