@@ -1,82 +1,51 @@
 From: Alexei Starovoitov <ast@plumgrid.com>
 Subject: Re: [PATCH RFC v4 net-next 17/26] tracing: allow eBPF programs to be
  attached to events
-Date: Fri, 15 Aug 2014 12:07:42 -0700
-Message-ID: <CAMEtUuyDJeEJjzsZemFLT_y_QJ+vnJjze=KOxV+7g58Tsf4cTw@mail.gmail.com>
+Date: Fri, 15 Aug 2014 12:16:11 -0700
+Message-ID: <CAMEtUuwF2_+qzkaW6rkw9cyYJ2eb01B_ZyBcwrJ7nd+GqN5-mQ@mail.gmail.com>
 References: <1407916658-8731-1-git-send-email-ast@plumgrid.com>
 	<1407916658-8731-18-git-send-email-ast@plumgrid.com>
-	<CALCETrV7vO6r--G2ns+A6qmDQYSzNXeemT=x41EF+XWmayM95g@mail.gmail.com>
-	<CAMEtUuzCyxdOo+yYYZfDPRAu2yeQOw8TbUABwU-HD0+78PnV7A@mail.gmail.com>
-	<CALCETrUQN=vt3EUO=jNFC+sDHAiJdNyZWg4rwiEF7WKjPLi8Bg@mail.gmail.com>
+	<CAE40pdf0pNYyazjpdkzxNJi7iC4LOOr_XEu078OUqP_uoCXnHg@mail.gmail.com>
+	<CAMEtUuymPDhYBe42i4DJNXsdgZRaq9LuEU_nGSsqrY1FcFHqhQ@mail.gmail.com>
+	<CALCETrVH8KXr8uSHAVy5eBsqmi1LjB5QZpboAGcjYswXvW1opA@mail.gmail.com>
+	<CAMEtUuzey7PanznrAguOpvPLxyhgJB++ovE8RNys7srs=EY1qg@mail.gmail.com>
+	<CALCETrVhjO5c7ob1vntx031c5RmxRHimkRt1F2EsmzdKB53_NA@mail.gmail.com>
+	<CAMEtUuzT53jeH-L+saW-RopSR2EERO5UKVHyeORTGHVMCHbYag@mail.gmail.com>
+	<CALCETrUNvg88_VrwE+9RKnSgts=3zVcXbX6tuNLgUxJU436CrQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUQN=vt3EUO=jNFC+sDHAiJdNyZWg4rwiEF7WKjPLi8Bg@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrUNvg88_VrwE+9RKnSgts=3zVcXbX6tuNLgUxJU436CrQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andy Lutomirski <luto@amacapital.net>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, Daniel Borkmann <dborkman@redhat.com>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Cc: Daniel Borkmann <dborkman@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, "David S. Miller" <davem@davemloft.net>, Brendan Gregg <brendan.d.gregg@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Steven Rostedt <rostedt@goodmis.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Kees Cook <keescook@chromium.org>, Network Development <netdev@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 15, 2014 at 11:53 AM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Fri, Aug 15, 2014 at 10:51 AM, Alexei Starovoitov <ast@plumgrid.com> wrote:
->> On Fri, Aug 15, 2014 at 10:25 AM, Andy Lutomirski <luto@amacapital.net> wrote:
->>> On Wed, Aug 13, 2014 at 12:57 AM, Alexei Starovoitov <ast@plumgrid.com> wrote:
->>>> User interface:
->>>> fd = open("/sys/kernel/debug/tracing/__event__/filter")
->>>>
->>>> write(fd, "bpf_123")
->>>
->>> I didn't follow all the code flow leading to parsing the "bpf_123"
->>> string, but if it works the way I imagine it does, it's a security
->>> problem.  In general, write(2) should never do anything that involves
->>> any security-relevant context of the caller.
->>>
->>> Ideally, you would look up fd 123 in the file table of whomever called
->>> open.  If that's difficult to implement efficiently, then it would be
->>> nice to have some check that the callers of write(2) and open(2) are
->>> the same task and that exec wasn't called in between.
->>>
->>> This isn't a very severe security issue because you need privilege to
->>> open the thing in the first place, but it would still be nice to
->>> address.
+On Fri, Aug 15, 2014 at 12:02 PM, Andy Lutomirski <luto@amacapital.net> wrote:
 >>
->> hmm. you need to be root to open the events anyway.
->> pretty much the whole tracing for root only, since any kernel data
->> structures can be printed, stored into maps and so on.
->> So I don't quite follow your security concern here.
->>
->> Even say root opens a tracepoint and does exec() of another
->> app that uploads ebpf program, gets program_fd and does
->> write into tracepoint fd. The root app that did this open() is
->> doing exec() on purpose. It's not like it's exec-ing something
->> it doesn't know about.
+>> correct. eBPF program would be using 8-byte read on 64-bit kernel
+>> and 4-byte read on 32-bit kernel. Same with access to ptrace fields
+>> and pretty much all other fields in the kernel. The program will be
+>> different on different kernels.
+>> Say, this bpf_context struct doesn't exist at all. The programs would
+>> still need to be different to walk in-kernel data structures...
 >
-> As long as everyone who can debugfs/tracing/whatever has all
-> privileges, then this is fine.
+> Hmm.  I guess this isn't so bad.
 >
-> If not, then it's a minor capability or MAC bypass.  Suppose you only
-> have one capability or, more realistically, limited MAC permissions.
+> What's the actual difficulty with using u64?  ISTM that, if the clang
+> front-end can't deal with u64, there's a bigger problem.  Or is it
+> something else I don't understand.
 
-Hard to think of MAC abbreviation other than in networking way... ;)
-MAC bypass... kinda sounds like L3 networking without L2... ;)
-
-> You can still open the tracing file, pass it to an unwitting program
-> with elevated permission (e.g. using selinux's entrypoint mechanism),
-> and trick that program into writing bpf_123.
-
-hmm, but to open tracing file you'd need to be root already...
-otherwise yeah, if non-root could open it and pass it, then it
-would be nasty.
-
-> Admittedly, it's unlikely that fd 123 will be an *eBPF* fd, but the
-> attack is possible.
->
-> I don't think that fixing this should be a prerequisite for merging,
-> since the risk is so small.  Nonetheless, it would be nice.  (This
-> family of attacks has lead to several root vulnerabilities in the
-> past.)
-
-Ok. I think keeping a track of pid between open and write is kinda
-ugly. Should we add some new CAP flag and check it for all file
-ops? Another option is to conditionally make open() of tracing
-files as cloexec...
+clang/llvm has no problem with u64 :)
+This bpf_context struct for tracing is trying to answer the question:
+ 'what's the most convenient way to access tracepoint arguments
+from a script'.
+When kernel code has something like:
+ trace_kfree_skb(skb, net_tx_action);
+the script needs to be able to access this 'skb' and 'net_tx_action'
+values through _single_ data structure.
+In this proposal they are ctx->arg1 and ctx->arg2.
+I've considered having different bpf_context's for every event, but
+the complexity explodes. I need to hack all event definitions and so on.
+imo it's better to move complexity to userspace, so program author
+or high level language abstracts these details.
