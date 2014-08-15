@@ -1,62 +1,24 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH RFC v4 net-next 03/26] bpf: introduce syscall(BPF, ...)
- and BPF maps
-Date: Thu, 14 Aug 2014 23:40:53 -0700
-Message-ID: <CAMEtUux5UCxvJyVSXDixy2fjHOXhRFLipgN7aLj_ovYm2Svy9g@mail.gmail.com>
-References: <1407916658-8731-1-git-send-email-ast@plumgrid.com>
-	<1407916658-8731-4-git-send-email-ast@plumgrid.com>
-	<CAE40pdcCqu6zBqDgAXBpKHzX=y7hXtz83yEadYTE2yACiqyT3g@mail.gmail.com>
+From: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v14 6/8] arm: add pmd_mkclean for THP
+Date: Fri, 15 Aug 2014 11:55:38 +0100
+Message-ID: <20140815105538.GK27466@arm.com>
+References: <1407981212-17818-1-git-send-email-minchan@kernel.org>
+ <1407981212-17818-7-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAE40pdcCqu6zBqDgAXBpKHzX=y7hXtz83yEadYTE2yACiqyT3g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1407981212-17818-7-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brendan Gregg <brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Catalin Marinas <Catalin.Marinas-5wv7dgnIgG8@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Steve Capper <steve.capper-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 14, 2014 at 3:28 PM, Brendan Gregg
-<brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Wed, Aug 13, 2014 at 12:57 AM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
-> [...]
->> maps can have different types: hash, bloom filter, radix-tree, etc.
->>
->> The map is defined by:
->>   . type
->>   . max number of elements
->>   . key size in bytes
->>   . value size in bytes
->
-> Can values be strings or byte arrays? How would user-level bpf read
-> them? The two types of uses I'm thinking are:
->
-> A. Constructing a custom string in kernel-context, and using that as
-> the value. Eg, a truncated filename, or a dotted quad IP address, or
-> the raw contents of a packet.
-> B. I have a pointer to an existing buffer or string, eg a filename,
-> that will likely be around for some time (>1s). Instead of the value
-> storing the string, it could just be a ptr, so long as user-level bpf
-> has a way to read it.
->
-> Also, can keys be strings? I'd ask about multiple keys, but if they
-> can be a string, I can delimit in the key (eg, "PID:filename").
+On Thu, Aug 14, 2014 at 02:53:30AM +0100, Minchan Kim wrote:
+> MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
+> overwrite of the contents since MADV_FREE syscall is called for
+> THP page.
+> 
+> This patch adds pmd_mkclean for THP page MADV_FREE support.
 
-Both map keys and values are opaque byte arrays. eBPF program
-can decide to store strings in there. Or concatenate multiple
-strings as long as sizes are bounded.
-High level scripting languages are dazzling with native strings
-support, but I'm trying to stay away from it in the kernel.
-Scripting languages should be able to convert string operations
-into low level eBPF primitives which are being worked on.
-So far I've been able to use ids and pointers and concatenations
-of binary things as keys and values, and have user space interpret
-them. I agree that having a script that does map[probe_name()]++
-is definitely more human readable than storing probe ip into
-ebpf map and converting addresses to names in userspace.
-I'm hoping that the urge to make cool scripting language will push
-somebody to have a dtrace/ktap/stap language compiler into eBPF :)
-That will also address your concern of embedded setup where
-full llvm is too big, but dtrace_into_ebpf compiler may be just right.
-At the same time people who care about last bit of performance
-will be using C and llvm or ebpf assembler directly.
-Anyway will share string related ebpf helpers soon (not in V5 though)
+Acked-by: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
