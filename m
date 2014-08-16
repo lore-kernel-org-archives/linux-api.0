@@ -1,46 +1,55 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH RFC v4 net-next 17/26] tracing: allow eBPF programs to be
- attached to events
-Date: Fri, 15 Aug 2014 12:35:20 -0700
-Message-ID: <CAMEtUuzbP5iUjGZaRxE=gmthpdL37HJkGcOnO5Jxa_7ESGkkgg@mail.gmail.com>
-References: <1407916658-8731-1-git-send-email-ast@plumgrid.com>
-	<1407916658-8731-18-git-send-email-ast@plumgrid.com>
-	<CAE40pdf0pNYyazjpdkzxNJi7iC4LOOr_XEu078OUqP_uoCXnHg@mail.gmail.com>
-	<CAMEtUuymPDhYBe42i4DJNXsdgZRaq9LuEU_nGSsqrY1FcFHqhQ@mail.gmail.com>
-	<CALCETrVH8KXr8uSHAVy5eBsqmi1LjB5QZpboAGcjYswXvW1opA@mail.gmail.com>
-	<CAMEtUuzey7PanznrAguOpvPLxyhgJB++ovE8RNys7srs=EY1qg@mail.gmail.com>
-	<CALCETrVhjO5c7ob1vntx031c5RmxRHimkRt1F2EsmzdKB53_NA@mail.gmail.com>
-	<CAMEtUuzT53jeH-L+saW-RopSR2EERO5UKVHyeORTGHVMCHbYag@mail.gmail.com>
-	<CALCETrUNvg88_VrwE+9RKnSgts=3zVcXbX6tuNLgUxJU436CrQ@mail.gmail.com>
-	<CAMEtUuwF2_+qzkaW6rkw9cyYJ2eb01B_ZyBcwrJ7nd+GqN5-mQ@mail.gmail.com>
-	<CALCETrUqop+UB-BhyX4Y41kELO+6kcFdS1F7ZyN0CzRwg4UGhA@mail.gmail.com>
+From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
+ (part 1)
+Date: Sat, 16 Aug 2014 17:41:54 +0200
+Message-ID: <20140816154154.GA12400@Nokia-N900>
+References: <1404124096-21445-1-git-send-email-drysdale@google.com>
+ <53B51E81.4090700@redhat.com>
+ <20140703183927.GA1629@google.com>
+ <53B651C5.80602@redhat.com>
+ <CAHse=S83APPfnEwO1fQbV_tNd=9zsAsZr42KbYM_He-c3C3P6A@mail.gmail.com>
+ <53BA9094.9080401@redhat.com>
+ <CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUqop+UB-BhyX4Y41kELO+6kcFdS1F7ZyN0CzRwg4UGhA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Brendan Gregg <brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, qemu-devel <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 15, 2014 at 12:18 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>
->> clang/llvm has no problem with u64 :)
->> This bpf_context struct for tracing is trying to answer the question:
->>  'what's the most convenient way to access tracepoint arguments
->> from a script'.
->> When kernel code has something like:
->>  trace_kfree_skb(skb, net_tx_action);
->> the script needs to be able to access this 'skb' and 'net_tx_action'
->> values through _single_ data structure.
->> In this proposal they are ctx->arg1 and ctx->arg2.
->> I've considered having different bpf_context's for every event, but
->> the complexity explodes. I need to hack all event definitions and so on.
->> imo it's better to move complexity to userspace, so program author
->> or high level language abstracts these details.
->
-> I still don't understand why making them long instead of u64 is
-> helpful, though.  I feel like I'm missing obvious here.
+Hi!
 
-I promise to come back to this... Have to go off grid...
-will think of it in the mean time... Appreciate this discussion!!
+> >>> I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
+> >>> /O_RDWR.   You could do it by running the file descriptor's seccomp-bpf
+> >>> program once per iocb with synthesized syscall numbers and argument
+> >>> vectors.
+> >>
+> >>
+> >> Right, but generating the equivalent seccomp input environment for an
+> >> equivalent single-fd syscall is going to be subtle and complex (which
+> >> are worrying words to mention in a security context).  And how many
+> >> other syscalls are going to need similar special-case processing?
+> >> (poll? select? send[m]msg? ...)
+> >
+> >
+> > Yeah, the difficult part is getting the right balance between:
+> >
+> > 1) limitations due to seccomp's impossibility to chase pointers (which is
+> > not something that can be lifted, as it's required for correctness)
+> 
+> btw once seccomp moves to eBPF it will be able to 'chase pointers',
+> since pointer walking will be possible via bpf_load_pointer() function call,
+> which is a wrapper of:
+
+Even if you could make capscium work with eBPF... please don't.
+
+Capscium is kind of obvious, elegant solution. BPF is quite
+complex. And security semantics should not be pushed to userspace...
+
+						Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
