@@ -1,55 +1,44 @@
-From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Subject: Re: [RFC PATCH 00/11] Adding FreeBSD's Capsicum security framework
- (part 1)
-Date: Sat, 16 Aug 2014 17:41:54 +0200
-Message-ID: <20140816154154.GA12400@Nokia-N900>
-References: <1404124096-21445-1-git-send-email-drysdale@google.com>
- <53B51E81.4090700@redhat.com>
- <20140703183927.GA1629@google.com>
- <53B651C5.80602@redhat.com>
- <CAHse=S83APPfnEwO1fQbV_tNd=9zsAsZr42KbYM_He-c3C3P6A@mail.gmail.com>
- <53BA9094.9080401@redhat.com>
- <CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ@mail.gmail.com>
+From: Eric Wong <normalperson@yhbt.net>
+Subject: Re: Does anyone know when FUTEX_WAIT can fail with EAGAIN?
+Date: Sat, 16 Aug 2014 21:51:04 +0000
+Message-ID: <20140816215104.GA19006@dcvr.yhbt.net>
+References: <fb82d1d46d8f.53d8186c@langara.bc.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAADnVQ+c2E6eG_juEDh-GyheveqScxQ=98jqO1ZOjp1PgfVBGQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, qemu-devel <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <fb82d1d46d8f.53d8186c@langara.bc.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Steven Stewart-Gallus <sstewartgallus00@mylangara.bc.ca>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, mtk@man7.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+Steven Stewart-Gallus <sstewartgallus00@mylangara.bc.ca> wrote:
+> I'm trying to debug a hangup where my program loops with FUTEX_WAIT (actually
+> FUTEX_WAIT_PRIVATE but same thing)  endlessly erring out with EAGAIN. I would
+> like to know if anyone on the mailing list knows when FUTEX_WAIT can fail with
+> EAGAIN.
 
-> >>> I think that's more easily done by opening the file as O_RDONLY/O_WRONLY
-> >>> /O_RDWR.   You could do it by running the file descriptor's seccomp-bpf
-> >>> program once per iocb with synthesized syscall numbers and argument
-> >>> vectors.
-> >>
-> >>
-> >> Right, but generating the equivalent seccomp input environment for an
-> >> equivalent single-fd syscall is going to be subtle and complex (which
-> >> are worrying words to mention in a security context).  And how many
-> >> other syscalls are going to need similar special-case processing?
-> >> (poll? select? send[m]msg? ...)
-> >
-> >
-> > Yeah, the difficult part is getting the right balance between:
-> >
-> > 1) limitations due to seccomp's impossibility to chase pointers (which is
-> > not something that can be lifted, as it's required for correctness)
-> 
-> btw once seccomp moves to eBPF it will be able to 'chase pointers',
-> since pointer walking will be possible via bpf_load_pointer() function call,
-> which is a wrapper of:
+FUTEX_WAIT fails with EAGAIN if the value of *uaddr no longer matches
+the expected val.
+---
+#include <linux/futex.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <errno.h>
+int main(void) {
+	int op = FUTEX_WAIT;
+	int exp = 1;
+	int *addr = &exp;
+	int val = 1; /* XXX change this to anything else to get EAGAIN */
+	int rc = syscall(SYS_futex, addr, op, val, 0, 0, 0);
 
-Even if you could make capscium work with eBPF... please don't.
+	if (rc < 0 && errno == EAGAIN)
+		write(1, "EAGAIN\n", 7);
 
-Capscium is kind of obvious, elegant solution. BPF is quite
-complex. And security semantics should not be pushed to userspace...
-
-						Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+	return 0;
+}
+---
+I just encountered this myself yesterday while implementing futex-based
+locks/condvars for Ruby:
+https://bugs.ruby-lang.org/issues/10009#change-48372
