@@ -1,37 +1,53 @@
-From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Subject: Re: Does anyone know when FUTEX_WAIT can fail with EAGAIN?
-Date: Sun, 17 Aug 2014 08:48:00 -0700
-Message-ID: <1408290480.3306.17.camel@buesod1.americas.hpqcorp.net>
-References: <fb82d1d46d8f.53d8186c@langara.bc.ca>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v14 5/8] s390: add pmd_[dirty|mkclean] for THP
+Date: Mon, 18 Aug 2014 09:06:30 +0900
+Message-ID: <20140818000630.GA32075@bbox>
+References: <1407981212-17818-1-git-send-email-minchan@kernel.org>
+ <1407981212-17818-6-git-send-email-minchan@kernel.org>
+ <20140814091614.4a0d5178@mschwide>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <fb82d1d46d8f.53d8186c-BTv7Ps/Sm75C8prJL3GQQw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20140814091614.4a0d5178@mschwide>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk-ASgREoAs3yw@public.gmane.org, davidlohr-VXdhtT5mjnY@public.gmane.org
+To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Zhang Yanfei <zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dominik Dingel <dingel-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2014-07-29 at 21:55 +0000, Steven Stewart-Gallus wrote:
-> Hello,
+Hello,
+
+On Thu, Aug 14, 2014 at 09:16:14AM +0200, Martin Schwidefsky wrote:
+> On Thu, 14 Aug 2014 10:53:29 +0900
+> Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
 > 
-> I'm trying to debug a hangup where my program loops with FUTEX_WAIT (actually
-> FUTEX_WAIT_PRIVATE but same thing)  endlessly erring out with EAGAIN. I would
-> like to know if anyone on the mailing list knows when FUTEX_WAIT can fail with
-> EAGAIN.
+> > MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
+> > overwrite of the contents since MADV_FREE syscall is called for
+> > THP page but for s390 pmds only referenced bit is available
+> > because there is no free bit left in the pmd entry for the
+> > software dirty bit so this patch adds dumb pmd_dirty which
+> > returns always true by suggesting by Martin.
+> > 
+> > They finally find a solution in future.
+> > http://marc.info/?l=linux-api&m=140440328820808&w=2
+> 
+> The solution is already there, see git commit 152125b7a882df36.
+> You can drop this patch.
 
-You're probably running into the EWOULDBLOCK return -- which on Linux is
-just another name for EAGAIN. So if you didn't know this, and were
-reading the code related to FUTEX_WAIT, you'd get mislead by this.
+Thanks for the heads up. I will drop it in next spin.
+> 
+> -- 
+> blue skies,
+>    Martin.
+> 
+> "Reality continues to ruin my life." - Calvin.
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
 
-The check is there to avoid userspace misusing futexes and screwing up
-applications. When the futex_wait() call is issued, a lot can happen in
-the kernel before the task is blocked (key hashing, reference counting,
-acquire internal spinlock, etc.). At any point while preparing to block,
-another userspace thread could have changed the futex value, and thus
-the condition for which futex_wait() call was issued in the first place
-might no longer be true.
-
-Thanks,
-Davidlohr
+-- 
+Kind regards,
+Minchan Kim
