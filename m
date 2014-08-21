@@ -1,14 +1,15 @@
-From: Aristeu Rozanski <arozansk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V4 0/8] namespaces: log namespaces per task
-Date: Thu, 21 Aug 2014 16:05:55 -0400
-Message-ID: <20140821200555.GK5620@redhat.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH V4 3/8] namespaces: expose ns instance serial numbers in
+	proc
+Date: Thu, 21 Aug 2014 14:13:28 -0700
+Message-ID: <CALCETrUnzG1V8w+H9ctAJP+Hvo8LQax=dhLG4bBpBKmVi+C1cQ@mail.gmail.com>
 References: <cover.1408581429.git.rgb@redhat.com>
+	<cd6cd0622ce677b639afae18a69ff79c72490bab.1408581429.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1408581429.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <cd6cd0622ce677b639afae18a69ff79c72490bab.1408581429.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -19,29 +20,118 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Richard,
-On Wed, Aug 20, 2014 at 09:09:33PM -0400, Richard Guy Briggs wrote:
-> Is there a way to link serial numbers of namespaces involved in migration of a
-> container to another kernel?  It sounds like what is needed is a part of a
-> mangement application that is able to pull the audit records from constituent
-> hosts to build an audit trail of a container.
+On Aug 20, 2014 8:12 PM, "Richard Guy Briggs" <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>
+> Expose the namespace instace serial numbers in the proc filesystem at
+> /proc/<pid>/ns/<ns>_snum.  The link text gives the serial number in hex.
 
-since you're introducing a brand new serial number to make it unique
-across different procfs mounts, why not instead of a simple counter,
-use the hash output of say, $hostname-$creation_time-$random? Or perhaps
-get a short hash of the hostname (generated once whenever hostname is
-set) and append the serial number you're implementing? It'd be way less human
-readable than your current proposal but it'd be unique "globally" (as long you
-don't have machines with the same hostname migrating containers between them),
-allowing the migrated namespaces to retain their unique identification across
-audit logs. It'd of course be way more costly than just using an atomic counter,
-but could be useful to anything that needs to refer to a namespace and could be
-migrated to another machine.
+What's the use case?
 
-What you think? Sounds too crazy? :)
+I understand the utility of giving unique numbers to the audit code,
+but I don't think this part is necessary for that, and I'd like to
+understand what else will use this before committing to a duplicative
+API like this.
 
--- 
-Aristeu
+Note that this API is thoroughly incompatible with CRIU.  If we do
+this, someone will ask for a namespace number namespace, and that way
+lies madness.
+
+--Andy
+
+>
+> "snum" was chosen instead of "seq" for consistency with inum and there are a
+> number of other uses of "seq" in the namespace code.
+>
+> Suggested-by: Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/proc/namespaces.c |   33 +++++++++++++++++++++++++--------
+>  1 files changed, 25 insertions(+), 8 deletions(-)
+>
+> diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+> index 8902609..e953e0a 100644
+> --- a/fs/proc/namespaces.c
+> +++ b/fs/proc/namespaces.c
+> @@ -47,12 +47,15 @@ static char *ns_dname(struct dentry *dentry, char *buffer, int buflen)
+>         struct inode *inode = dentry->d_inode;
+>         const struct proc_ns_operations *ns_ops = PROC_I(inode)->ns.ns_ops;
+>
+> -       return dynamic_dname(dentry, buffer, buflen, "%s:[%lu]",
+> -               ns_ops->name, inode->i_ino);
+> +       if (strstr(dentry->d_iname, "_snum"))
+> +               return dynamic_dname(dentry, buffer, buflen, "%s_snum:[%llx]",
+> +                       ns_ops->name, ns_ops->snum(PROC_I(inode)->ns.ns));
+> +       else
+> +               return dynamic_dname(dentry, buffer, buflen, "%s:[%lu]",
+> +                       ns_ops->name, inode->i_ino);
+>  }
+>
+> -const struct dentry_operations ns_dentry_operations =
+> -{
+> +const struct dentry_operations ns_dentry_operations = {
+>         .d_delete       = always_delete_dentry,
+>         .d_dname        = ns_dname,
+>  };
+> @@ -160,7 +163,10 @@ static int proc_ns_readlink(struct dentry *dentry, char __user *buffer, int bufl
+>         if (!ns)
+>                 goto out_put_task;
+>
+> -       snprintf(name, sizeof(name), "%s:[%u]", ns_ops->name, ns_ops->inum(ns));
+> +       if (strstr(dentry->d_iname, "_snum"))
+> +               snprintf(name, sizeof(name), "%s_snum:[%llx]", ns_ops->name, ns_ops->snum(ns));
+> +       else
+> +               snprintf(name, sizeof(name), "%s:[%u]", ns_ops->name, ns_ops->inum(ns));
+>         res = readlink_copy(buffer, buflen, name);
+>         ns_ops->put(ns);
+>  out_put_task:
+> @@ -210,16 +216,23 @@ static int proc_ns_dir_readdir(struct file *file, struct dir_context *ctx)
+>
+>         if (!dir_emit_dots(file, ctx))
+>                 goto out;
+> -       if (ctx->pos >= 2 + ARRAY_SIZE(ns_entries))
+> +       if (ctx->pos >= 2 + 2 * ARRAY_SIZE(ns_entries))
+>                 goto out;
+>         entry = ns_entries + (ctx->pos - 2);
+>         last = &ns_entries[ARRAY_SIZE(ns_entries) - 1];
+>         while (entry <= last) {
+>                 const struct proc_ns_operations *ops = *entry;
+> +               char name[50];
+> +
+>                 if (!proc_fill_cache(file, ctx, ops->name, strlen(ops->name),
+>                                      proc_ns_instantiate, task, ops))
+>                         break;
+>                 ctx->pos++;
+> +               snprintf(name, sizeof(name), "%s_snum", ops->name);
+> +               if (!proc_fill_cache(file, ctx, name, strlen(name),
+> +                                    proc_ns_instantiate, task, ops))
+> +                       break;
+> +               ctx->pos++;
+>                 entry++;
+>         }
+>  out:
+> @@ -247,9 +260,13 @@ static struct dentry *proc_ns_dir_lookup(struct inode *dir,
+>
+>         last = &ns_entries[ARRAY_SIZE(ns_entries)];
+>         for (entry = ns_entries; entry < last; entry++) {
+> -               if (strlen((*entry)->name) != len)
+> +               char name[50];
+> +
+> +               snprintf(name, sizeof(name), "%s_snum", (*entry)->name);
+> +               if (strlen((*entry)->name) != len && strlen(name) != len)
+>                         continue;
+> -               if (!memcmp(dentry->d_name.name, (*entry)->name, len))
+> +               if (!memcmp(dentry->d_name.name, (*entry)->name, len)
+> +                   || !memcmp(dentry->d_name.name, name, len))
+>                         break;
+>         }
+>         if (entry == last)
+> --
+> 1.7.1
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
