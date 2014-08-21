@@ -1,7 +1,8 @@
 From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH V4 3/8] namespaces: expose ns instance serial numbers in proc
-Date: Wed, 20 Aug 2014 21:09:36 -0400
-Message-ID: <cd6cd0622ce677b639afae18a69ff79c72490bab.1408581429.git.rgb@redhat.com>
+Subject: [PATCH V4 2/8] namespaces: expose namespace instance serial number in
+	proc_ns_operations
+Date: Wed, 20 Aug 2014 21:09:35 -0400
+Message-ID: <7efab83c498dd5835c65b4445771f23fadc60d9e.1408581429.git.rgb@redhat.com>
 References: <cover.1408581429.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,94 +24,176 @@ To: linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29T
 Cc: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Expose the namespace instace serial numbers in the proc filesystem at
-/proc/<pid>/ns/<ns>_snum.  The link text gives the serial number in hex.
+Expose the namespace instance serial number for each namespace type in the proc
+namespace operations structure to make it available for the proc filesystem.
 
-"snum" was chosen instead of "seq" for consistency with inum and there are a
-number of other uses of "seq" in the namespace code.
-
-Suggested-by: Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/proc/namespaces.c |   33 +++++++++++++++++++++++++--------
- 1 files changed, 25 insertions(+), 8 deletions(-)
+ fs/namespace.c           |    7 +++++++
+ include/linux/proc_ns.h  |    1 +
+ ipc/namespace.c          |    8 ++++++++
+ kernel/pid_namespace.c   |    7 +++++++
+ kernel/user_namespace.c  |    7 +++++++
+ kernel/utsname.c         |    8 ++++++++
+ net/core/net_namespace.c |    7 +++++++
+ 7 files changed, 45 insertions(+), 0 deletions(-)
 
-diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
-index 8902609..e953e0a 100644
---- a/fs/proc/namespaces.c
-+++ b/fs/proc/namespaces.c
-@@ -47,12 +47,15 @@ static char *ns_dname(struct dentry *dentry, char *buffer, int buflen)
- 	struct inode *inode = dentry->d_inode;
- 	const struct proc_ns_operations *ns_ops = PROC_I(inode)->ns.ns_ops;
- 
--	return dynamic_dname(dentry, buffer, buflen, "%s:[%lu]",
--		ns_ops->name, inode->i_ino);
-+	if (strstr(dentry->d_iname, "_snum"))
-+		return dynamic_dname(dentry, buffer, buflen, "%s_snum:[%llx]",
-+			ns_ops->name, ns_ops->snum(PROC_I(inode)->ns.ns));
-+	else
-+		return dynamic_dname(dentry, buffer, buflen, "%s:[%lu]",
-+			ns_ops->name, inode->i_ino);
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 9af49ff..f433f21 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -3028,6 +3028,12 @@ static unsigned int mntns_inum(void *ns)
+ 	return mnt_ns->proc_inum;
  }
  
--const struct dentry_operations ns_dentry_operations =
--{
-+const struct dentry_operations ns_dentry_operations = {
- 	.d_delete	= always_delete_dentry,
- 	.d_dname	= ns_dname,
++static long long mntns_snum(void *ns)
++{
++	struct mnt_namespace *mnt_ns = ns;
++	return mnt_ns->serial_num;
++}
++
+ const struct proc_ns_operations mntns_operations = {
+ 	.name		= "mnt",
+ 	.type		= CLONE_NEWNS,
+@@ -3035,4 +3041,5 @@ const struct proc_ns_operations mntns_operations = {
+ 	.put		= mntns_put,
+ 	.install	= mntns_install,
+ 	.inum		= mntns_inum,
++	.snum		= mntns_snum,
  };
-@@ -160,7 +163,10 @@ static int proc_ns_readlink(struct dentry *dentry, char __user *buffer, int bufl
- 	if (!ns)
- 		goto out_put_task;
+diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
+index 34a1e10..aaafe3e 100644
+--- a/include/linux/proc_ns.h
++++ b/include/linux/proc_ns.h
+@@ -14,6 +14,7 @@ struct proc_ns_operations {
+ 	void (*put)(void *ns);
+ 	int (*install)(struct nsproxy *nsproxy, void *ns);
+ 	unsigned int (*inum)(void *ns);
++	long long (*snum)(void *ns);
+ };
  
--	snprintf(name, sizeof(name), "%s:[%u]", ns_ops->name, ns_ops->inum(ns));
-+	if (strstr(dentry->d_iname, "_snum"))
-+		snprintf(name, sizeof(name), "%s_snum:[%llx]", ns_ops->name, ns_ops->snum(ns));
-+	else
-+		snprintf(name, sizeof(name), "%s:[%u]", ns_ops->name, ns_ops->inum(ns));
- 	res = readlink_copy(buffer, buflen, name);
- 	ns_ops->put(ns);
- out_put_task:
-@@ -210,16 +216,23 @@ static int proc_ns_dir_readdir(struct file *file, struct dir_context *ctx)
+ struct proc_ns {
+diff --git a/ipc/namespace.c b/ipc/namespace.c
+index 76dac5c..36ce7ff 100644
+--- a/ipc/namespace.c
++++ b/ipc/namespace.c
+@@ -191,6 +191,13 @@ static unsigned int ipcns_inum(void *vp)
+ 	return ns->proc_inum;
+ }
  
- 	if (!dir_emit_dots(file, ctx))
- 		goto out;
--	if (ctx->pos >= 2 + ARRAY_SIZE(ns_entries))
-+	if (ctx->pos >= 2 + 2 * ARRAY_SIZE(ns_entries))
- 		goto out;
- 	entry = ns_entries + (ctx->pos - 2);
- 	last = &ns_entries[ARRAY_SIZE(ns_entries) - 1];
- 	while (entry <= last) {
- 		const struct proc_ns_operations *ops = *entry;
-+		char name[50];
++static long long ipcns_snum(void *vp)
++{
++	struct ipc_namespace *ns = vp;
 +
- 		if (!proc_fill_cache(file, ctx, ops->name, strlen(ops->name),
- 				     proc_ns_instantiate, task, ops))
- 			break;
- 		ctx->pos++;
-+		snprintf(name, sizeof(name), "%s_snum", ops->name);
-+		if (!proc_fill_cache(file, ctx, name, strlen(name),
-+				     proc_ns_instantiate, task, ops))
-+			break;
-+		ctx->pos++;
- 		entry++;
- 	}
- out:
-@@ -247,9 +260,13 @@ static struct dentry *proc_ns_dir_lookup(struct inode *dir,
- 
- 	last = &ns_entries[ARRAY_SIZE(ns_entries)];
- 	for (entry = ns_entries; entry < last; entry++) {
--		if (strlen((*entry)->name) != len)
-+		char name[50];
++	return ns->serial_num;
++}
 +
-+		snprintf(name, sizeof(name), "%s_snum", (*entry)->name);
-+		if (strlen((*entry)->name) != len && strlen(name) != len)
- 			continue;
--		if (!memcmp(dentry->d_name.name, (*entry)->name, len))
-+		if (!memcmp(dentry->d_name.name, (*entry)->name, len)
-+		    || !memcmp(dentry->d_name.name, name, len))
- 			break;
- 	}
- 	if (entry == last)
+ const struct proc_ns_operations ipcns_operations = {
+ 	.name		= "ipc",
+ 	.type		= CLONE_NEWIPC,
+@@ -198,4 +205,5 @@ const struct proc_ns_operations ipcns_operations = {
+ 	.put		= ipcns_put,
+ 	.install	= ipcns_install,
+ 	.inum		= ipcns_inum,
++	.snum		= ipcns_snum,
+ };
+diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+index 40a8b36..059b330 100644
+--- a/kernel/pid_namespace.c
++++ b/kernel/pid_namespace.c
+@@ -370,6 +370,12 @@ static unsigned int pidns_inum(void *ns)
+ 	return pid_ns->proc_inum;
+ }
+ 
++static long long pidns_snum(void *ns)
++{
++	struct pid_namespace *pid_ns = ns;
++	return pid_ns->serial_num;
++}
++
+ const struct proc_ns_operations pidns_operations = {
+ 	.name		= "pid",
+ 	.type		= CLONE_NEWPID,
+@@ -377,6 +383,7 @@ const struct proc_ns_operations pidns_operations = {
+ 	.put		= pidns_put,
+ 	.install	= pidns_install,
+ 	.inum		= pidns_inum,
++	.snum		= pidns_snum,
+ };
+ 
+ static __init int pid_namespaces_init(void)
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index 5c5c399..3f04df5 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -896,6 +896,12 @@ static unsigned int userns_inum(void *ns)
+ 	return user_ns->proc_inum;
+ }
+ 
++static long long userns_snum(void *ns)
++{
++	struct user_namespace *user_ns = ns;
++	return user_ns->serial_num;
++}
++
+ const struct proc_ns_operations userns_operations = {
+ 	.name		= "user",
+ 	.type		= CLONE_NEWUSER,
+@@ -903,6 +909,7 @@ const struct proc_ns_operations userns_operations = {
+ 	.put		= userns_put,
+ 	.install	= userns_install,
+ 	.inum		= userns_inum,
++	.snum		= userns_snum,
+ };
+ 
+ static __init int user_namespaces_init(void)
+diff --git a/kernel/utsname.c b/kernel/utsname.c
+index d0cf7b5..ffeac1b 100644
+--- a/kernel/utsname.c
++++ b/kernel/utsname.c
+@@ -132,6 +132,13 @@ static unsigned int utsns_inum(void *vp)
+ 	return ns->proc_inum;
+ }
+ 
++static long long utsns_snum(void *vp)
++{
++	struct uts_namespace *ns = vp;
++
++	return ns->serial_num;
++}
++
+ const struct proc_ns_operations utsns_operations = {
+ 	.name		= "uts",
+ 	.type		= CLONE_NEWUTS,
+@@ -139,4 +146,5 @@ const struct proc_ns_operations utsns_operations = {
+ 	.put		= utsns_put,
+ 	.install	= utsns_install,
+ 	.inum		= utsns_inum,
++	.snum		= utsns_snum,
+ };
+diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
+index 3b5cfdb..c402eea 100644
+--- a/net/core/net_namespace.c
++++ b/net/core/net_namespace.c
+@@ -671,6 +671,12 @@ static unsigned int netns_inum(void *ns)
+ 	return net->proc_inum;
+ }
+ 
++static long long netns_snum(void *ns)
++{
++	struct net *net = ns;
++	return net->serial_num;
++}
++
+ const struct proc_ns_operations netns_operations = {
+ 	.name		= "net",
+ 	.type		= CLONE_NEWNET,
+@@ -678,5 +684,6 @@ const struct proc_ns_operations netns_operations = {
+ 	.put		= netns_put,
+ 	.install	= netns_install,
+ 	.inum		= netns_inum,
++	.snum		= netns_snum,
+ };
+ #endif
 -- 
 1.7.1
