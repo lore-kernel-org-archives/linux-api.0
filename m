@@ -1,122 +1,243 @@
-From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V4 3/8] namespaces: expose ns instance serial numbers in
-	proc
-Date: Sun, 24 Aug 2014 16:28:26 -0400
-Message-ID: <20140824202826.GH9003@madcap2.tricolour.ca>
-References: <cover.1408581429.git.rgb@redhat.com>
-	<cd6cd0622ce677b639afae18a69ff79c72490bab.1408581429.git.rgb@redhat.com>
-	<CALCETrUnzG1V8w+H9ctAJP+Hvo8LQax=dhLG4bBpBKmVi+C1cQ@mail.gmail.com>
-	<20140822015803.GG20529@madcap2.tricolour.ca>
-	<CALCETrUkFD0iNi1SV_6ypN5Kf4GYybT5tzjRjRQuLzT9iBnQAg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrUkFD0iNi1SV_6ypN5Kf4GYybT5tzjRjRQuLzT9iBnQAg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v5 net-next 12/29] bpf: handle pseudo BPF_LD_IMM64 insn
+Date: Sun, 24 Aug 2014 13:21:13 -0700
+Message-ID: <1408911690-7598-13-git-send-email-ast@plumgrid.com>
+References: <1408911690-7598-1-git-send-email-ast@plumgrid.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1408911690-7598-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Brendan Gregg <brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 14/08/24, Andy Lutomirski wrote:
-> On Thu, Aug 21, 2014 at 6:58 PM, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > On 14/08/21, Andy Lutomirski wrote:
-> >> On Aug 20, 2014 8:12 PM, "Richard Guy Briggs" <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> > Expose the namespace instace serial numbers in the proc filesystem at
-> >> > /proc/<pid>/ns/<ns>_snum.  The link text gives the serial number in hex.
-> >>
-> >> What's the use case?
-> >>
-> >> I understand the utility of giving unique numbers to the audit code,
-> >> but I don't think this part is necessary for that, and I'd like to
-> >> understand what else will use this before committing to a duplicative
-> >> API like this.
-> >
-> > How does a container manager get those numbers?  It could provoke a task
-> > to cause an audit event that emits a NS_INFO message, or it could run a
-> > task in that container to report its namespace serial numbers directly
-> > from its /proc mount.
-> 
-> Why does a container manager need them?  Is there any reason that
-> keeping them entirely contained within the audit system would be a
-> problem?
+eBPF programs passed from userspace are using pseudo BPF_LD_IMM64 instructions
+to refer to process-local map_fd. Scan the program for such instructions and
+if FDs are valid, convert them to 'struct bpf_map' pointers which will be used
+by verifier to check access to maps in bpf_map_lookup/update() calls.
+If program passes verifier, convert pseudo BPF_LD_IMM64 into generic by dropping
+BPF_PSEUDO_MAP_FD flag.
 
-The audit system is currently per-kernel.  If a container is migrated
-from one kernel to another, the first audit system is no longer able to
-monitor or care about it.  It is the container manager's scope that has
-the capability to monitor and care about it.
+Note that eBPF interpreter is generic and knows nothing about pseudo insns.
 
-This might be a good argument to augment the audit system as we
-currently know it to be able to do this across kernels, but that isn't
-currently the case.
+Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+---
+ include/uapi/linux/bpf.h |    6 ++
+ kernel/bpf/verifier.c    |  147 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 153 insertions(+)
 
-> > The discussion in this thread touches on the use cases:
-> >         https://lkml.org/lkml/2014/4/22/662
-> >
-> >> Note that this API is thoroughly incompatible with CRIU.  If we do
-> >> this, someone will ask for a namespace number namespace, and that way
-> >> lies madness.
-> >
-> > I had a very brief look at CRIU, but not enough to understand the issue.
-> > Others have hinted at this problem.
-> >
-> > Do you have a suggestion of a different approach that would be
-> > compatible with CRIU?
-> >
-> > I'd originally considered some sort of UUID that would be globally
-> > unique, but that would be very hard to devise or guarantee, and besides,
-> > namespaces aren't only used by containers and could be shared in other
-> > ways.  Tracking the usage and migration of namespaces should be the task
-> > of an upper layer.
-> 
-> CRIU wants to save the complete state of a namespace and then restore
-> it.  For that to work, any information exposed to things in the
-> namespace *cannot* be globally unique or unique per boot, since CRIU
-> needs to arrange for that information to match whatever it was when
-> CRIU saved it.
-
-So are you agreeing with Eric Biederman's idea that its proc inode
-number should be initially assigned serially, but reserve the right to
-be settable on a restore of a namespace from another host?  What if that
-inode number collides with an existing one?
-
-Does CRIU have no lattitude at all to be able to track a new namespace
-ID?
-
-> Also, I think that code running in a namespace has no business even
-> knowing a unique identity of that namespace from the perspective of
-> the host.
-
-Too late.  There is already the namespace proc inode numbers.  That
-number is almost completely meaningless to the code running inside the
-container/namespace.
-
-> Here's a specific use case for *not* exposing this: Tor.  Ideally, Tor
-> clients would run in a namespace that does not know about any global
-> identity.  That means no IP addresses, but it also means no global
-> namespace serial numbers.
-
-Well, it already has an IP address (which might be masqueraded by the
-host or another upstream router) and a namespace inode number.
-
-I'm not aware of support for anonymous namespaces, let along anonymous
-containers yet.
-
-> --Andy
-
-- RGB
-
---
-Richard Guy Briggs <rbriggs-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
-Remote, Ottawa, Canada
-Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
+diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+index d280acad4b28..2f4d92df4fbe 100644
+--- a/include/uapi/linux/bpf.h
++++ b/include/uapi/linux/bpf.h
+@@ -176,6 +176,12 @@ enum {
+ 		.off   = 0,					\
+ 		.imm   = ((__u64) (IMM)) >> 32 })
+ 
++#define BPF_PSEUDO_MAP_FD	1
++
++/* pseudo BPF_LD_IMM64 insn used to refer to process-local map_fd */
++#define BPF_LD_MAP_FD(DST, MAP_FD)				\
++	BPF_LD_IMM64_RAW(DST, BPF_PSEUDO_MAP_FD, MAP_FD)
++
+ /* Short form of mov based on type, BPF_X: dst_reg = src_reg, BPF_K: dst_reg = imm32 */
+ 
+ #define BPF_MOV64_RAW(TYPE, DST, SRC, IMM)			\
+diff --git a/kernel/bpf/verifier.c b/kernel/bpf/verifier.c
+index 2484a3387ca2..28ce2cfa49db 100644
+--- a/kernel/bpf/verifier.c
++++ b/kernel/bpf/verifier.c
+@@ -144,10 +144,15 @@
+  * load/store to bpf_context are checked against known fields
+  */
+ 
++#define MAX_USED_MAPS 64 /* max number of maps accessed by one eBPF program */
++
+ /* single container for all structs
+  * one verifier_env per bpf_check() call
+  */
+ struct verifier_env {
++	struct bpf_prog *prog;		/* eBPF program being verified */
++	struct bpf_map *used_maps[MAX_USED_MAPS]; /* array of map's used by eBPF program */
++	u32 used_map_cnt;		/* number of used maps */
+ };
+ 
+ /* verbose verifier prints what it's seeing
+@@ -319,6 +324,115 @@ static void print_bpf_insn(struct bpf_insn *insn)
+ 	}
+ }
+ 
++/* return the map pointer stored inside BPF_LD_IMM64 instruction */
++static struct bpf_map *ld_imm64_to_map_ptr(struct bpf_insn *insn)
++{
++	u64 imm64 = ((u64) (u32) insn[0].imm) | ((u64) (u32) insn[1].imm) << 32;
++
++	return (struct bpf_map *) (unsigned long) imm64;
++}
++
++/* look for pseudo eBPF instructions that access map FDs and
++ * replace them with actual map pointers
++ */
++static int replace_map_fd_with_map_ptr(struct verifier_env *env)
++{
++	struct bpf_insn *insn = env->prog->insnsi;
++	int insn_cnt = env->prog->len;
++	int i, j;
++
++	for (i = 0; i < insn_cnt; i++, insn++) {
++		if (insn[0].code == (BPF_LD | BPF_IMM | BPF_DW)) {
++			struct bpf_map *map;
++			struct fd f;
++
++			if (i == insn_cnt - 1 || insn[1].code != 0 ||
++			    insn[1].dst_reg != 0 || insn[1].src_reg != 0 ||
++			    insn[1].off != 0) {
++				verbose("invalid bpf_ld_imm64 insn\n");
++				return -EINVAL;
++			}
++
++			if (insn->src_reg == 0)
++				/* valid generic load 64-bit imm */
++				goto next_insn;
++
++			if (insn->src_reg != BPF_PSEUDO_MAP_FD) {
++				verbose("unrecognized bpf_ld_imm64 insn\n");
++				return -EINVAL;
++			}
++
++			f = fdget(insn->imm);
++
++			map = bpf_map_get(f);
++			if (IS_ERR(map)) {
++				verbose("fd %d is not pointing to valid bpf_map\n",
++					insn->imm);
++				fdput(f);
++				return PTR_ERR(map);
++			}
++
++			/* store map pointer inside BPF_LD_IMM64 instruction */
++			insn[0].imm = (u32) (unsigned long) map;
++			insn[1].imm = ((u64) (unsigned long) map) >> 32;
++
++			/* check whether we recorded this map already */
++			for (j = 0; j < env->used_map_cnt; j++)
++				if (env->used_maps[j] == map) {
++					fdput(f);
++					goto next_insn;
++				}
++
++			if (env->used_map_cnt >= MAX_USED_MAPS) {
++				fdput(f);
++				return -E2BIG;
++			}
++
++			/* remember this map */
++			env->used_maps[env->used_map_cnt++] = map;
++
++			/* hold the map. If the program is rejected by verifier,
++			 * the map will be released by release_maps() or it
++			 * will be used by the valid program until it's unloaded
++			 * and all maps are released in free_bpf_prog_info()
++			 */
++			atomic_inc(&map->refcnt);
++
++			fdput(f);
++next_insn:
++			insn++;
++			i++;
++		}
++	}
++
++	/* now all pseudo BPF_LD_IMM64 instructions load valid
++	 * 'struct bpf_map *' into a register instead of user map_fd.
++	 * These pointers will be used later by verifier to validate map access.
++	 */
++	return 0;
++}
++
++/* drop refcnt of maps used by the rejected program */
++static void release_maps(struct verifier_env *env)
++{
++	int i;
++
++	for (i = 0; i < env->used_map_cnt; i++)
++		bpf_map_put(env->used_maps[i]);
++}
++
++/* convert pseudo BPF_LD_IMM64 into generic BPF_LD_IMM64 */
++static void convert_pseudo_ld_imm64(struct verifier_env *env)
++{
++	struct bpf_insn *insn = env->prog->insnsi;
++	int insn_cnt = env->prog->len;
++	int i;
++
++	for (i = 0; i < insn_cnt; i++, insn++)
++		if (insn->code == (BPF_LD | BPF_IMM | BPF_DW))
++			insn->src_reg = 0;
++}
++
+ int bpf_check(struct bpf_prog *prog, struct nlattr *tb[BPF_PROG_ATTR_MAX + 1])
+ {
+ 	void __user *log_ubuf = NULL;
+@@ -335,6 +449,8 @@ int bpf_check(struct bpf_prog *prog, struct nlattr *tb[BPF_PROG_ATTR_MAX + 1])
+ 	if (!env)
+ 		return -ENOMEM;
+ 
++	env->prog = prog;
++
+ 	/* grab the mutex to protect few globals used by verifier */
+ 	mutex_lock(&bpf_verifier_lock);
+ 
+@@ -362,8 +478,14 @@ int bpf_check(struct bpf_prog *prog, struct nlattr *tb[BPF_PROG_ATTR_MAX + 1])
+ 		log_level = 0;
+ 	}
+ 
++	ret = replace_map_fd_with_map_ptr(env);
++	if (ret < 0)
++		goto skip_full_check;
++
+ 	/* ret = do_check(env); */
+ 
++skip_full_check:
++
+ 	if (log_level && log_len >= log_size - 1) {
+ 		BUG_ON(log_len >= log_size);
+ 		/* verifier log exceeded user supplied buffer */
+@@ -377,11 +499,36 @@ int bpf_check(struct bpf_prog *prog, struct nlattr *tb[BPF_PROG_ATTR_MAX + 1])
+ 		goto free_log_buf;
+ 	}
+ 
++	if (ret == 0 && env->used_map_cnt) {
++		/* if program passed verifier, update used_maps in bpf_prog_info */
++		prog->info->used_maps = kmalloc_array(env->used_map_cnt,
++						      sizeof(env->used_maps[0]),
++						      GFP_KERNEL);
++
++		if (!prog->info->used_maps) {
++			ret = -ENOMEM;
++			goto free_log_buf;
++		}
++
++		memcpy(prog->info->used_maps, env->used_maps,
++		       sizeof(env->used_maps[0]) * env->used_map_cnt);
++		prog->info->used_map_cnt = env->used_map_cnt;
++
++		/* program is valid. Convert pseudo bpf_ld_imm64 into generic
++		 * bpf_ld_imm64 instructions
++		 */
++		convert_pseudo_ld_imm64(env);
++	}
+ 
+ free_log_buf:
+ 	if (log_level)
+ 		vfree(log_buf);
+ free_env:
++	if (!prog->info->used_maps)
++		/* if we didn't copy map pointers into bpf_prog_info, release
++		 * them now. Otherwise free_bpf_prog_info() will release them.
++		 */
++		release_maps(env);
+ 	kfree(env);
+ 	mutex_unlock(&bpf_verifier_lock);
+ 	return ret;
+-- 
+1.7.9.5
