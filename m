@@ -1,412 +1,285 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH 1/1] add selftest for virtio-net
-Date: Wed, 27 Aug 2014 16:28:24 +0200
-Message-ID: <20140827142824.GA18900@redhat.com>
-References: <1409103921-2879-1-git-send-email-hjxiaohust@gmail.com>
-	<53FD6542.10708@redhat.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH V4 3/8] namespaces: expose ns instance serial numbers in
+	proc
+Date: Wed, 27 Aug 2014 11:17:01 -0400
+Message-ID: <20140827151701.GO20529@madcap2.tricolour.ca>
+References: <cd6cd0622ce677b639afae18a69ff79c72490bab.1408581429.git.rgb@redhat.com>
+	<CALCETrUnzG1V8w+H9ctAJP+Hvo8LQax=dhLG4bBpBKmVi+C1cQ@mail.gmail.com>
+	<20140822015803.GG20529@madcap2.tricolour.ca>
+	<CALCETrUkFD0iNi1SV_6ypN5Kf4GYybT5tzjRjRQuLzT9iBnQAg@mail.gmail.com>
+	<53FB3A86.2060203@6wind.com>
+	<CALCETrW1Lv0qeccMjNHSEzgtiaNN3NgJVR1dFjjR_dw5KVVnqA@mail.gmail.com>
+	<53FB59A3.5030804@6wind.com>
+	<CALCETrWHrWhm89B5s=pLt_9eTx3ZF8ifA6y6CwknWaWU7dp=sQ@mail.gmail.com>
+	<53FB673F.8070200@6wind.com>
+	<CALCETrVVQ2Ugesq8zWK_gmj46Zr6mFL2Riyf=Lrdqy8ze3YfPA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-audit-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <53FD6542.10708@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Jason Wang <jasowang@redhat.com>
-Cc: Hengjinxiao <hjxiaohust@gmail.com>, famz@redhat.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
+In-Reply-To: <CALCETrVVQ2Ugesq8zWK_gmj46Zr6mFL2Riyf=Lrdqy8ze3YfPA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-audit>
+List-Post: <mailto:linux-audit@redhat.com>
+List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=subscribe>
+Sender: linux-audit-bounces@redhat.com
+Errors-To: linux-audit-bounces@redhat.com
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-audit@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, netdev <netdev@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 27, 2014 at 12:57:38PM +0800, Jason Wang wrote:
-> On 08/27/2014 09:45 AM, Hengjinxiao wrote:
-> > Selftest is an important part of network driver, this patch adds selftest for
-> > virtio-net, including loopback test, negotiate test and reset test. Loopback 
-> > test checks whether virtio-net can send and receive packets normally. Negotiate test
-> > executes feature negotiation between virtio-net driver in Guest OS and virtio-net 
-> > device in Host OS. Reset test resets virtio-net.
-> 
-> Thanks for the patch. Feature negotiation part brings some complicity
-> and need more through. And this could be extended for CVE regression in
-> the future. And you probably also need to send a patch of virtio spec to
-> implement the loop back mode.
-> 
-> See comments inline.
+On 14/08/25, Andy Lutomirski wrote:
+> On Mon, Aug 25, 2014 at 9:41 AM, Nicolas Dichtel
+> <nicolas.dichtel@6wind.com> wrote:
+> > Le 25/08/2014 18:13, Andy Lutomirski a =E9crit :
 > >
-> > Signed-off-by: Hengjinxiao <hjxiaohust@gmail.com>
+> >> On Mon, Aug 25, 2014 at 8:43 AM, Nicolas Dichtel
+> >> <nicolas.dichtel@6wind.com> wrote:
+> >>>
+> >>> Le 25/08/2014 16:04, Andy Lutomirski a =E9crit :
+> >>>
+> >>>> On Aug 25, 2014 6:30 AM, "Nicolas Dichtel" <nicolas.dichtel@6wind.co=
+m>
+> >>>> wrote:
+> >>>>>>
+> >>>>>>
+> >>>>>> CRIU wants to save the complete state of a namespace and then rest=
+ore
+> >>>>>> it.  For that to work, any information exposed to things in the
+> >>>>>> namespace *cannot* be globally unique or unique per boot, since CR=
+IU
+> >>>>>> needs to arrange for that information to match whatever it was when
+> >>>>>> CRIU saved it.
+> >>>>>
+> >>>>>
+> >>>>>
+> >>>>> How are ifindex of network devices managed? These ifindexes are uni=
+que
+> >>>>> per boot,
+> >>>>> thus can change depending on the order in which netdev are created.
+> >>>>> These ifindexes are unique per boot and exposed to userspace ...
+> >>>>>
+> >>>>
+> >>>> This does not appear to be true.
+> >>>>
+> >>>> $ sudo unshare --net
+> >>>> # ip link add veth0 type veth peer name veth1
+> >>>> # ip link
+> >>>> 1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group
+> >>>> default
+> >>>>       link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+> >>>> 2: veth1: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode
+> >>>> DEFAULT group default qlen 1000
+> >>>>       link/ether 06:0d:59:c7:a6:a8 brd ff:ff:ff:ff:ff:ff
+> >>>> 3: veth0: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode
+> >>>> DEFAULT group default qlen 1000
+> >>>>       link/ether b2:5c:8b:f2:12:28 brd ff:ff:ff:ff:ff:ff
+> >>>> # logout
+> >>>> $ ip link
+> >>>> 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+> >>>>       link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+> >>>> 3: em1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc pfifo_fast
+> >>>> state DOWN qlen 1000
+> >>>>
+> >>> I've probably misunderstood what you're trying to say. ifindexes are
+> >>> unique
+> >>> per
+> >>> boot and per netns.
+> >>
+> >>
+> >> I think we both misunderstood each other.  The ifindexes are unique
+> >> *per netns*, which means that, if you're unprivileged in a netns,
+> >> global information doesn't leak to you.  I think this is good.
 > >
-> > ---
-> >  drivers/net/virtio_net.c        | 233 +++++++++++++++++++++++++++++++++++++++-
-> >  include/uapi/linux/virtio_net.h |   9 ++
-> >  2 files changed, 241 insertions(+), 1 deletion(-)
+> > Ok, I agree. I think audit daemons are always running under privileged
+> > users.
 > >
-> > diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
-> > index 59caa06..f83f6e4 100644
-> > --- a/drivers/net/virtio_net.c
-> > +++ b/drivers/net/virtio_net.c
-> > @@ -28,6 +28,7 @@
-> >  #include <linux/cpu.h>
-> >  #include <linux/average.h>
-> >  #include <net/busy_poll.h>
-> > +#include <linux/pci.h>
-> >  
-> >  static int napi_weight = NAPI_POLL_WEIGHT;
-> >  module_param(napi_weight, int, 0444);
-> > @@ -51,6 +52,23 @@ module_param(gso, bool, 0444);
-> >  #define MERGEABLE_BUFFER_ALIGN max(L1_CACHE_BYTES, 256)
-> >  
-> >  #define VIRTNET_DRIVER_VERSION "1.0.0"
-> > +#define __VIRTNET_TESTING  0
-> > +
-> 
-> Why need this marco?
-> > +enum {
-> > +	VIRTNET_LOOPBACK_TEST,
-> > +	VIRTNET_FEATURE_NEG_TEST,
-> > +	VIRTNET_RESET_TEST,
-> > +};
-> > +
-> > +static const struct {
-> > +	const char string[ETH_GSTRING_LEN];
-> > +} virtnet_gstrings_test[] = {
-> > +	[VIRTNET_LOOPBACK_TEST]	= { "loopback test   (offline)" },
-> > +	[VIRTNET_FEATURE_NEG_TEST]	= { "negotiate test  (offline)" },
-> > +	[VIRTNET_RESET_TEST]	= { "reset test     (offline)" },
-> > +};
-> > +
-> > +#define VIRTNET_NUM_TEST	ARRAY_SIZE(virtnet_gstrings_test)
-> >  
-> >  struct virtnet_stats {
-> >  	struct u64_stats_sync tx_syncp;
-> > @@ -104,6 +122,8 @@ struct virtnet_info {
-> >  	struct send_queue *sq;
-> >  	struct receive_queue *rq;
-> >  	unsigned int status;
-> > +	unsigned long flags;
-> > +	atomic_t lb_count;
-> >  
-> >  	/* Max # of queue pairs supported by the device */
-> >  	u16 max_queue_pairs;
-> > @@ -436,6 +456,19 @@ err_buf:
-> >  	return NULL;
-> >  }
-> >  
-> > +void virtnet_check_lb_frame(struct virtnet_info *vi,
-> > +				   struct sk_buff *skb)
-> > +{
-> > +	unsigned int frame_size = skb->len;
-> > +
-> > +	if (*(skb->data + 3) == 0xFF) {
-> > +		if ((*(skb->data + frame_size / 2 + 10) == 0xBE) &&
-> > +		   (*(skb->data + frame_size / 2 + 12) == 0xAF)) {
-> > +			atomic_dec(&vi->lb_count);
-> > +		}
-> > +	}
-> > +}
-> > +
-> >  static void receive_buf(struct receive_queue *rq, void *buf, unsigned int len)
-> >  {
-> >  	struct virtnet_info *vi = rq->vq->vdev->priv;
-> > @@ -485,7 +518,12 @@ static void receive_buf(struct receive_queue *rq, void *buf, unsigned int len)
-> >  	} else if (hdr->hdr.flags & VIRTIO_NET_HDR_F_DATA_VALID) {
-> >  		skb->ip_summed = CHECKSUM_UNNECESSARY;
-> >  	}
-> > -
-> > +	/* loopback self test for ethtool */
-> > +	if (test_bit(__VIRTNET_TESTING, &vi->flags)) {
-> > +		virtnet_check_lb_frame(vi, skb);
-> > +		dev_kfree_skb_any(skb);
-> > +		return;
-> > +	}
-> 
-> Not sure it's a good choice for adding such in fast path. We may need a
-> test specific rx interrupt handler (and disable NAPI) for this.
+> >
+> >>
+> >>>>
+> >>>> Let me try again, with emphasis in the right place.
+> >>>>
+> >>>> I think that *code running in a namespace* has no business even
+> >>>> knowing a unique identity of *that namespace* from the perspective of
+> >>>> the host.
+> >>>>
+> >>>> In your example, if there's a veth device between netns A and netns =
+B,
+> >>>> then code *in netns A* has no business knowing the identity of its
+> >>>> veth peer if its peer (B) is a sibling or ancestor.  It also IMO has
+> >>>> no business knowing the identity of its own netns (A) other than as
+> >>>> "my netns".
+> >>>
+> >>>
+> >>> I do not agree (see the example below).
+> >>>
+> >>>
+> >>>>
+> >>>> If A and B are siblings, then their parent needs to know where that
+> >>>> veth device goes, but I think this is already the case to a sufficie=
+nt
+> >>>> extent today.
+> >>>
+> >>>
+> >>> I'm not aware of a hierarchy between netns. A daemon should be able to
+> >>> got the full network configuration, even if it's started when this
+> >>> configuration
+> >>> is already applied, ie even if it doesn't know what happen before it
+> >>> starts.
+> >>>
+> >>
+> >> I don't know exactly which namespaces have an explicit hierarchy, but
+> >> there is certainly a hierarchy of *user* namespaces, and network
+> >> namespaces live in user namespaces, so they at least have somewhat of
+> >> a hierarchy.
+> >>
+> >>>
+> >>>>
+> >>>> I feel like this discussion is falling into a common trap of new API
+> >>>> discussions.  Can one of you who wants this API please articulate,
+> >>>> with a reasonably precise example, what it is that you want to do, w=
+hy
+> >>>> you can't easily do it already, and how this API helps?  I currently
+> >>>> understand how the API creates problems, but I don't understand how =
+it
+> >>>> solves any problems, and I will NAK it (and I suspect that Eric will,
+> >>>> too, which is pretty much fatal) unless that changes.
+> >>>
+> >>>
+> >>> What I'm trying to solve is to have full info in netlink messages sen=
+t by
+> >>> the
+> >>> kernel, thus beeing able to identify a peer netns (and this is close =
+from
+> >>> what
+> >>> audit guys are trying to have). Theorically, messages sent by the ker=
+nel
+> >>> can
+> >>> be
+> >>> reused as is to have the same configuration. This is not the case with
+> >>> x-netns
+> >>> devices. Here is an example, with ip tunnels:
+> >>>
+> >>> $ ip netns add 1
+> >>> $ ip link add ipip1 type ipip remote 10.16.0.121 local 10.16.0.249 dev
+> >>> eth0
+> >>> $ ip -d link ls ipip1
+> >>> 8: ipip1@eth0: <POINTOPOINT,NOARP> mtu 1480 qdisc noop state DOWN mode
+> >>> DEFAULT group default
+> >>>      link/ipip 10.16.0.249 peer 10.16.0.121 promiscuity 0
+> >>>      ipip remote 10.16.0.121 local 10.16.0.249 dev eth0 ttl inherit
+> >>> pmtudisc
+> >>> $ ip link set ipip1 netns 1
+> >>> $ ip netns exec 1 ip -d link ls ipip1
+> >>> 8: ipip1@tunl0: <POINTOPOINT,NOARP,M-DOWN> mtu 1480 qdisc noop state =
+DOWN
+> >>> mode DEFAULT group default
+> >>>      link/ipip 10.16.0.249 peer 10.16.0.121 promiscuity 0
+> >>>      ipip remote 10.16.0.121 local 10.16.0.249 dev tunl0 ttl inherit
+> >>> pmtudisc
+> >>>
+> >>> Now informations got with 'ip link' are wrong and incomplete:
+> >>>   - the link dev is now tunl0 instead of eth0, because we only got an
+> >>> ifindex
+> >>>     from the kernel without any netns informations.
+> >>>   - the encapsulation addresses are not part of this netns but the us=
+er
+> >>> doesn't
+> >>>     known that (still because netns info is missing). These IPv4
+> >>> addresses
+> >>> may
+> >>>     exist into this netns.
+> >>>   - it's not possible to create the same netdevice with these infos.
+> >>>
+> >>
+> >> Aha.  That's a genuine problem.
+> >>
+> >> Perhaps we need a concept of which netnses should be able to see each
+> >> other.
+> >
+> > Yes, I agree. This is not required for all netns, only a subset of netns
+> > should
+> >
+> > be able to see each other.
+> >
+> >>
+> >> I think I would be okay with a somewhat different outcome from your
+> >> example:
+> >>
+> >> $ ip netns exec 1 ip -d link ls ipip1
+> >> 8: ipip1@[unknown device in another namespace]:
+> >> <POINTOPOINT,NOARP,M-DOWN> mtu 1480 qdisc noop state DOWN
+> >>
+> >> I think this outcome is mandatory if netns 1 lives in a subsidiary
+> >> user namespace.
+> >
+> > Yes.
+> >
+> >
+> >>
+> >> Certainly, if you do the 'ip link' in the original namespace, I agree
+> >> that this should work.
+> >
+> > And yes :)
+> >
+> > I will update my previous proposal
+> > (http://thread.gmane.org/gmane.linux.network/315933/focus=3D321753)
+> > to allow to get an id for a peer netns only when the user namespace is =
+the
+> > same.
+> =
 
-I agree here.
-Since it's an offline test, there's no need to mix
-it up with the main mode.
+> I think it should work if the peer userns is the same or a descendent.
+> I also wonder whether the peer's ifindex should be suppressed if peer
+> userns is not the same or a descendent.
+> =
 
+> Now you just have to get Eric to be happy with the id allocation. :)
+> This may be nontrivial.
+> =
 
+> >> For most namespace types, this all works transparently, since
+> >> everything has an real identity all the way up the hierarchy.  Network
+> >> namespaces are different.
+> >>
+> >> I don't think that exposing serial numbers in /proc is a good
+> >> solution, both for the reasons already described and because I don't
+> >> think that iproute2 should need to muck around with /proc to function
+> >
+> > A netlink API is probably enough. But it will help only for the network
+> > problem, not for audit. I was hoping to find a common solution.
+> =
 
-> >  	skb->protocol = eth_type_trans(skb, dev);
-> >  	pr_debug("Receiving skb proto 0x%04x len %i type %i\n",
-> >  		 ntohs(skb->protocol), skb->len, skb->pkt_type);
-> > @@ -813,6 +851,9 @@ static int virtnet_open(struct net_device *dev)
-> >  {
-> >  	struct virtnet_info *vi = netdev_priv(dev);
-> >  	int i;
-> > +	/* disallow open during test */
-> > +	if (test_bit(__VIRTNET_TESTING, &vi->flags))
-> > +		return -EBUSY;
-> >  
-> >  	for (i = 0; i < vi->max_queue_pairs; i++) {
-> >  		if (i < vi->curr_queue_pairs)
-> > @@ -1363,12 +1404,158 @@ static void virtnet_get_channels(struct net_device *dev,
-> >  	channels->other_count = 0;
-> >  }
-> >  
-> > +static int virtnet_reset(struct virtnet_info *vi);
-> > +
+> I still don't understand why audit needs anything beyond the audit
+> part of this patch set.  I have no problem with audit seeing that
+> migrated/restored namespaces are really brand-new namespaces, as long
+> as the code in those namespaces isn't exposed to it.
 
-Pls avoid forward declarations.
-Also this seems to duplicate a bunch of code.
-Please don't duplicate code, use functions to
-reuse it.
+Ok, I'm starting to get this...  Perhaps /proc wasn't the best place to
+expose this.  Audit or an audit aggregator is the only one that needs to
+know any of this information.  This could be accomplished with
+CAP_AUDIT_CONTROL and a new netlink audit message type to fetch
+individual or all namespace IDs for a particular PID via auditctl, or by
+having a CAP_AUDIT_WRITE-capable application pull the trigger to simply
+dump that information to the log.
 
-> > +static void virtnet_create_lb_frame(struct sk_buff *skb,
-> > +					unsigned int frame_size)
-> > +{
-> > +	memset(skb->data, 0xFF, frame_size);
-> > +	frame_size &= ~1;
-> > +	memset(&skb->data[frame_size / 2], 0xAA, frame_size / 2 - 1);
-> > +	memset(&skb->data[frame_size / 2 + 10], 0xBE, 1);
-> > +	memset(&skb->data[frame_size / 2 + 12], 0xAF, 1);
-> > +}
-> > +
-> > +static int virtnet_start_loopback(struct virtnet_info *vi)
-> > +{
-> > +	if (!virtnet_send_command(vi, VIRTIO_NET_CTRL_LOOPBACK,
-> > +				  VIRTIO_NET_CTRL_LOOPBACK_SET, NULL, NULL)) {
-> > +		dev_warn(&vi->dev->dev, "Failed to set loopback.\n");
-> > +		return -EINVAL;
-> > +	}
-> > +	return 0;
-> 
-> You may need to test the feature bit of loop back first and report the
-> card does not support loop back in some way.
-> > +}
-> > +
-> > +static int virtnet_run_loopback_test(struct virtnet_info *vi)
-> > +{
-> > +	int i;
-> > +	netdev_tx_t rc;
-> > +	struct sk_buff *skb;
-> > +	unsigned int size = GOOD_COPY_LEN;
-> > +
-> > +	for (i = 0; i < 100; i++) {
-> > +		skb = netdev_alloc_skb(vi->dev, size);
-> > +		if (!skb)
-> > +			return -ENOMEM;
-> > +
-> > +		skb->queue_mapping = 0;
-> > +		skb_put(skb, size);
-> > +		virtnet_create_lb_frame(skb, size);
-> > +		rc = start_xmit(skb, vi->dev);
-> 
-> virtio_net does not use tx interrupt to free old xmit skbs. It poll tx
-> completion only during xmit_skb(). So at least the last skb is leaked
-> since it was not freed. A possible solution is using tx interrupt here.
-> > +		if (rc != NETDEV_TX_OK)
-> > +			return -EPIPE;
-> 
-> It looks to me that start_xmit() never return other value than NETDEV_TX_OK.
-> > +		atomic_inc(&vi->lb_count);
-> > +	}
-> > +	/* Give queue time to settle before testing results. */
-> > +	msleep(20);
-> 
-> Need to make sure this value is also ok for qemu. ixgbe use 200 to 64
-> packets.
+> >> correctly.  Eric, any clever ideas here?  Do we need fancier netlink
+> >> messages for this?
+> >>
+> >> --Andy
+> =
 
-Yea this looks very ugly.
-Do we really need hard-coded timeouts?
+> Andy Lutomirski
 
-> > +	return atomic_read(&vi->lb_count) ? -EIO : 0;
-> > +}
-> > +
-> > +static int virtnet_stop_loopback(struct virtnet_info *vi)
-> > +{
-> > +	if (!virtnet_send_command(vi, VIRTIO_NET_CTRL_LOOPBACK,
-> > +				  VIRTIO_NET_CTRL_LOOPBACK_UNSET, NULL, NULL)) {
-> > +		dev_warn(&vi->dev->dev, "Failed to unset loopback.\n");
-> > +		return -EINVAL;
-> > +	}
-> > +	return 0;
-> > +}
-> > +
-> > +static int virtnet_loopback_test(struct virtnet_info *vi, u64 *data)
-> > +{
-> > +	*data = virtnet_start_loopback(vi);
-> > +	if (*data)
-> > +		goto out;
-> > +	*data = virtnet_run_loopback_test(vi);
-> > +	if (*data)
-> 
-> Do we need to stop loopback here?
-> > +		goto out;
-> > +	*data = virtnet_stop_loopback(vi);
-> > +out:
-> > +	return *data;
-> > +}
-> > +
-> > +static void virtnet_feature_neg_test(struct virtnet_info *vi)
-> > +{
-> > +	struct virtio_device *dev = vi->vdev;
-> > +	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
-> > +	int i;
-> > +	u32 device_features;
-> > +
-> > +	/* Figure out what features the device supports. */
-> > +	device_features = dev->config->get_features(dev);
-> > +
-> > +	/* Features supported by both device and driver into dev->features. */
-> > +	memset(dev->features, 0, sizeof(dev->features));
-> > +	for (i = 0; i < drv->feature_table_size; i++) {
-> > +		unsigned int f = drv->feature_table[i];
-> > +
-> > +		BUG_ON(f >= 32);
-> > +		if (device_features & (1 << f))
-> > +			set_bit(f, dev->features);
-> > +	}
-> > +
-> > +	/* Transport features always preserved to pass to finalize_features. */
-> > +	for (i = VIRTIO_TRANSPORT_F_START; i < VIRTIO_TRANSPORT_F_END; i++)
-> > +		if (device_features & (1 << i))
-> > +			set_bit(i, dev->features);
-> > +
-> > +	dev->config->finalize_features(dev);
-> > +}
-> 
-> A problem of the function is it may be called during DRIVER_OK, not sure
-> this is ok since spec suggest to do the feature negotiation after DRIVER
-> bit but before DRIVER_OK bit. And this function duplicates some of the
-> code from virtio core, may consider a method to share between them.
-> 
-> Another issue is the test never fail which needs more thought.
-> > +
-> > +static int virtnet_get_sset_count(struct net_device *netdev, int sset)
-> > +{
-> > +	switch (sset) {
-> > +	case ETH_SS_TEST:
-> > +		return VIRTNET_NUM_TEST;
-> > +	default:
-> > +		return -EOPNOTSUPP;
-> > +	}
-> > +}
-> > +
-> > +static void virtnet_get_strings(struct net_device *dev, u32 stringset, u8 *buf)
-> > +{
-> > +	switch (stringset) {
-> > +	case ETH_SS_TEST:
-> > +		memcpy(buf, &virtnet_gstrings_test,
-> > +			sizeof(virtnet_gstrings_test));
-> > +		break;
-> > +	default:
-> > +		break;
-> > +	}
-> > +}
-> > +
-> > +static void virtnet_self_test(struct net_device *netdev,
-> > +			    struct ethtool_test *eth_test, u64 *data)
-> > +{
-> > +	struct virtnet_info *vi = netdev_priv(netdev);
-> > +	bool if_running = netif_running(netdev);
-> > +
-> > +	set_bit(__VIRTNET_TESTING, &vi->flags);
-> > +	memset(data, 0, sizeof(u64) * VIRTNET_NUM_TEST);
-> > +
-> > +	if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
-> > +		if (!if_running) {
-> > +			dev_warn(&vi->dev->dev, "Failed to execute self test.\n");
-> > +			eth_test->flags |= ETH_TEST_FL_FAILED;
-> > +			return;
-> > +		}
-> > +		if (virtnet_loopback_test(vi, &data[VIRTNET_LOOPBACK_TEST]))
-> > +			eth_test->flags |= ETH_TEST_FL_FAILED;
-> > +		virtnet_feature_neg_test(vi);
-> > +		virtnet_reset(vi);
-> > +	}
-> > +	clear_bit(__VIRTNET_TESTING, &vi->flags);
-> > +}
-> > +
-> >  static const struct ethtool_ops virtnet_ethtool_ops = {
-> >  	.get_drvinfo = virtnet_get_drvinfo,
-> >  	.get_link = ethtool_op_get_link,
-> >  	.get_ringparam = virtnet_get_ringparam,
-> >  	.set_channels = virtnet_set_channels,
-> >  	.get_channels = virtnet_get_channels,
-> > +	.self_test = virtnet_self_test,
-> > +	.get_strings		= virtnet_get_strings,
-> > +	.get_sset_count = virtnet_get_sset_count,
-> >  };
-> >  
-> >  #define MIN_MTU 68
-> > @@ -1957,6 +2144,50 @@ static int virtnet_restore(struct virtio_device *vdev)
-> >  }
-> >  #endif
-> >  
-> > +static int virtnet_reset(struct virtnet_info *vi)
-> 
-> If this is needed, better split this into anther patch.
-> > +{
-> > +	struct virtio_device *vdev = vi->vdev;
-> > +	int err, i;
-> > +	u8 status;
-> > +
-> > +	mutex_lock(&vi->config_lock);
-> > +	vi->config_enable = false;
-> > +	mutex_unlock(&vi->config_lock);
-> > +
-> > +	cancel_delayed_work_sync(&vi->refill);
-> > +
-> > +	if (netif_running(vi->dev))
-> > +		for (i = 0; i < vi->max_queue_pairs; i++) {
-> > +			napi_disable(&vi->rq[i].napi);
-> > +			netif_napi_del(&vi->rq[i].napi);
-> > +		}
-> > +
-> > +	remove_vq_common(vi);
-> > +	flush_work(&vi->config_work);
-> > +
-> > +	virtnet_feature_neg_test(vi);
-> 
-> Is this used for feature negotiation? If yes, need a better name and can
-> we reuse virtio core function to do this?
-> > +	err = init_vqs(vi);
-> > +	if (err)
-> > +		return err;
-> > +	if (netif_running(vi->dev)) {
-> > +		for (i = 0; i < vi->curr_queue_pairs; i++)
-> > +			if (!try_fill_recv(&vi->rq[i], GFP_KERNEL))
-> > +				schedule_delayed_work(&vi->refill, 0);
-> > +
-> > +		for (i = 0; i < vi->max_queue_pairs; i++)
-> > +			virtnet_napi_enable(&vi->rq[i]);
-> > +	}
-> > +
-> > +	mutex_lock(&vi->config_lock);
-> > +	vi->config_enable = true;
-> > +	mutex_unlock(&vi->config_lock);
-> > +
-> > +	virtnet_set_queues(vi, vi->curr_queue_pairs);
-> > +	status = vdev->config->get_status(vdev);
-> > +	vdev->config->set_status(vdev, status | VIRTIO_CONFIG_S_DRIVER_OK);
-> > +	return 0;
-> > +}
-> > +
-> >  static struct virtio_device_id id_table[] = {
-> >  	{ VIRTIO_ID_NET, VIRTIO_DEV_ANY_ID },
-> >  	{ 0 },
-> > diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
-> > index 172a7f0..1f31f90 100644
-> > --- a/include/uapi/linux/virtio_net.h
-> > +++ b/include/uapi/linux/virtio_net.h
-> > @@ -201,4 +201,13 @@ struct virtio_net_ctrl_mq {
-> >   #define VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MIN        1
-> >   #define VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MAX        0x8000
-> >  
-> > + /*
-> > +  * Control Loopback(5 is used by VIRTIO_NET_CTRL_GUEST_OFFLOADS in latest qemu)
-> > +  *
-> > +  * The command VIRTIO_NET_CTRL_LOOPBACK_SET is used to require the device come
-> > +  * into loopback state.
-> > +  */
-> > +#define VIRTIO_NET_CTRL_LOOPBACK   6
-> > + #define VIRTIO_NET_CTRL_LOOPBACK_SET        0
-> > + #define VIRTIO_NET_CTRL_LOOPBACK_UNSET        1
-> >  #endif /* _LINUX_VIRTIO_NET_H */
+- RGB
+
+--
+Richard Guy Briggs <rbriggs@redhat.com>
+Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems,=
+ Red Hat
+Remote, Ottawa, Canada
+Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
