@@ -1,69 +1,28 @@
-From: Lee Jones <lee.jones@linaro.org>
-Subject: Re: [RESEND PATCH v3 3/6] charger: max14577: Configure
- battery-dependent settings from DTS and sysfs
-Date: Wed, 27 Aug 2014 18:05:03 +0100
-Message-ID: <20140827170503.GD24579@lee--X1>
-References: <1409146282-25075-1-git-send-email-k.kozlowski@samsung.com>
- <1409146282-25075-4-git-send-email-k.kozlowski@samsung.com>
- <20140827135027.GF6364@lee--X1>
- <1409147725.25748.1.camel@AMDC1943>
+From: Steven Stewart-Gallus <sstewartgallus00-QKvm5KDIoDa7M0a00MdBSQ@public.gmane.org>
+Subject: Re: [PATCH RFC v7 net-next 00/28] BPF syscall
+Date: Wed, 27 Aug 2014 18:24:42 +0000 (GMT)
+Message-ID: <fb54e7de5f38.53fe226a@langara.bc.ca>
+References: <1409106582-10095-1-git-send-email-ast@plumgrid.com>
+ <20140826.231155.421325307812864648.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-pm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1409147725.25748.1.camel@AMDC1943>
-Sender: linux-pm-owner@vger.kernel.org
-To: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-pm@vger.kernel.org, Samuel Ortiz <sameo@linux.intel.com>, Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Jenny Tc <jenny.tc@intel.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-disposition: inline
+Content-language: en
+In-reply-to: <20140826.231155.421325307812864648.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 27 Aug 2014, Krzysztof Kozlowski wrote:
+> I'm personally not reviewing such a large patch series, sorry.
+> 
+> You need to submit smaller sets if you want to get reasonable
+> review of your changes and ideas.
 
-> On =C5=9Bro, 2014-08-27 at 14:50 +0100, Lee Jones wrote:
-> > On Wed, 27 Aug 2014, Krzysztof Kozlowski wrote:
-> >=20
-> > > Remove hard-coded values for:
-> > >  - Fast Charge current,
-> > >  - End Of Charge current,
-> > >  - Fast Charge timer,
-> > >  - Overvoltage Protection Threshold,
-> > >  - Battery Constant Voltage,
-> > > and use DTS or sysfs to configure them. This allows using the max=
-14577 charger
-> > > driver with different batteries.
-> > >=20
-> > > Now the charger driver requires valid configuration data from DTS=
-=2E In
-> > > case of wrong configuration data it fails during probe. Patch add=
-s
-> > > of_compatible to the charger mfd cell in MFD driver core.
-> > >=20
-> > > The fast charge timer is configured through sysfs entry.
-> > >=20
-> > > Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-> > > Cc: Kyungmin Park <kyungmin.park@samsung.com>
-> > > Cc: Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
-> > > Cc: David Woodhouse <dwmw2@infradead.org>
-> > > Cc: Jenny Tc <jenny.tc@intel.com>
-> > > Cc: Mark Rutland <mark.rutland@arm.com>
-> > > Acked-by: Lee Jones <lee.jones@linaro.org>
-> > > ---
-> > >  drivers/mfd/max14577.c               |   5 +-
-> >=20
-> > Hmm... not sure why I Acked this.  The code looks okay, but can you
-> > break out the MFD changed into a separate patch please?  You can ad=
-d
-> > my Ack to the broken out patch though.
->=20
-> Sure, I'll split it however the compatible here in mfd_cell makes sen=
-se
-> only with this patch.
+Hello. As well, this clogs up the mailing boxes of other people who
+have no interest in the patch set.
 
-That's completely fine.
-
---=20
-Lee Jones
-Linaro STMicroelectronics Landing Team Lead
-Linaro.org =E2=94=82 Open source software for ARM SoCs
-=46ollow Linaro: Facebook | Twitter | Blog
+Thank you,
+Steven Stewart-Gallus
