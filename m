@@ -1,41 +1,75 @@
-From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v4 2/8] mfd: max14577: Map charger device to its own of_node
-Date: Wed, 27 Aug 2014 17:20:08 +0200
-Message-ID: <1409152814-17302-3-git-send-email-k.kozlowski@samsung.com>
-References: <1409152814-17302-1-git-send-email-k.kozlowski@samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1409152814-17302-1-git-send-email-k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Lee Jones <lee.jones@linaro.org>
+Subject: Re: [RESEND PATCH v3 1/6] charger: max14577: Add support for
+ MAX77836 charger
+Date: Wed, 27 Aug 2014 18:04:16 +0100
+Message-ID: <20140827170416.GC24579@lee--X1>
+References: <1409146282-25075-1-git-send-email-k.kozlowski@samsung.com>
+ <1409146282-25075-2-git-send-email-k.kozlowski@samsung.com>
+ <20140827135218.GG6364@lee--X1>
+ <1409148089.25748.5.camel@AMDC1943>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1409148089.25748.5.camel@AMDC1943>
+Sender: linux-pm-owner@vger.kernel.org
+To: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Cc: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-pm@vger.kernel.org, Samuel Ortiz <sameo@linux.intel.com>, Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Anton Vorontsov <anton@enomsg.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a "maxim,max14577-charger" of_compatible to the mfd_cell so the
-MFD child device (the charger) will have its own of_node set. This will
-be used by the max14577 charger driver in next patches to obtain battery
-configuration from DTS.
+On Wed, 27 Aug 2014, Krzysztof Kozlowski wrote:
 
-Signed-off-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> On =C5=9Bro, 2014-08-27 at 14:52 +0100, Lee Jones wrote:
+> > On Wed, 27 Aug 2014, Krzysztof Kozlowski wrote:
+> >=20
+> > > Add support for MAX77836 charger to the max14577 driver. The MAX7=
+7836
+> > > charger is almost the same as 14577 model except:
+> > >  - No dead-battery detection;
+> > >  - Support for special charger (like in MAX77693);
+> > >  - Support for DX over-voltage protection (like in MAX77693);
+> > >  - Lower values of charging current (two times lower current for
+> > >    slow/fast charge, much lower EOC current);
+> > >  - Slightly different values in ChgTyp field of STATUS2 register.=
+ On
+> > >    MAX14577 0x6 is reserved and 0x7 dead battery. On the MAX77836=
+ the
+> > >    0x6 means special charger and 0x7 is reserved. Regardless of t=
+hese
+> > >    differences the driver maps them to one enum max14577_muic_cha=
+rger_type.
+> > >=20
+> > > Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+> > > Cc: Kyungmin Park <kyungmin.park@samsung.com>
+> > > Cc: Anton Vorontsov <anton@enomsg.org>
+> > > Cc: Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
+> > > Cc: David Woodhouse <dwmw2@infradead.org>
+> > > Acked-by: Lee Jones <lee.jones@linaro.org>
+> > > ---
+> > >  drivers/power/Kconfig                |  4 +-
+> > >  drivers/power/max14577_charger.c     | 77 ++++++++++++++++++++++=
++++++++-------
+> > >  include/linux/mfd/max14577-private.h | 54 ++++++++++++++++++----=
 ---
- drivers/mfd/max14577.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+> >=20
+> > Not quite so important here, but better to break these out too.  We
+> > can arrange ourselves to that the set can go in together.  Just mak=
+e
+> > sure it's bisectable.
+>=20
+> Are you sure? This will result in a patch which adds some
+> code/symbols/defines used only by next (future) patch. Independent ap=
+ply
+> of such patch still won't make any sense because there won't be any u=
+ser
+> of this code.
 
-diff --git a/drivers/mfd/max14577.c b/drivers/mfd/max14577.c
-index 4a5e885383f8..6599407b5624 100644
---- a/drivers/mfd/max14577.c
-+++ b/drivers/mfd/max14577.c
-@@ -35,7 +35,10 @@ static const struct mfd_cell max14577_devs[] = {
- 		.name = "max14577-regulator",
- 		.of_compatible = "maxim,max14577-regulator",
- 	},
--	{ .name = "max14577-charger", },
-+	{
-+		.name = "max14577-charger",
-+		.of_compatible = "maxim,max14577-charger",
-+	},
- };
- 
- static const struct mfd_cell max77836_devs[] = {
--- 
-1.9.1
+That's fine.  I take in lots of patches which do nothing more than
+adds/updates infrastructure.
+
+--=20
+Lee Jones
+Linaro STMicroelectronics Landing Team Lead
+Linaro.org =E2=94=82 Open source software for ARM SoCs
+=46ollow Linaro: Facebook | Twitter | Blog
