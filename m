@@ -1,342 +1,257 @@
-From: Hengjinxiao <hjxiaohust-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/1] add selftest for virtio-net
-Date: Wed, 27 Aug 2014 09:45:21 +0800
-Message-ID: <1409103921-2879-1-git-send-email-hjxiaohust@gmail.com>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH RFC v7 net-next 00/28] BPF syscall
+Date: Tue, 26 Aug 2014 19:29:14 -0700
+Message-ID: <1409106582-10095-1-git-send-email-ast@plumgrid.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org, famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Brendan Gregg <brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Selftest is an important part of network driver, this patch adds selftest for
-virtio-net, including loopback test, negotiate test and reset test. Loopback 
-test checks whether virtio-net can send and receive packets normally. Negotiate test
-executes feature negotiation between virtio-net driver in Guest OS and virtio-net 
-device in Host OS. Reset test resets virtio-net.
+Hi Ingo, David,
 
-Signed-off-by: Hengjinxiao <hjxiaohust-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+posting whole thing again as RFC to get feedback on syscall only.
+If syscall bpf(int cmd, union bpf_attr *attr, unsigned int size) is ok,
+I'll split them into small chunks as requested and will repost without RFC.
 
----
- drivers/net/virtio_net.c        | 233 +++++++++++++++++++++++++++++++++++++++-
- include/uapi/linux/virtio_net.h |   9 ++
- 2 files changed, 241 insertions(+), 1 deletion(-)
+Right now please only review syscall API
+patch 0003 introduces sys_bpf and first BPF_MAP_CREATE command
+patch 0005 adds four more commands to the same syscall
+patch 0007 adds BPF_PROG_LOAD command
+patch 0010 extends BPF_PROG_LOAD command with 3 more attributes
+patch 0021 adds user space wrapper for BPF syscall
+patch 0023 uses these wrappers in verifier testsuite
 
-diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
-index 59caa06..f83f6e4 100644
---- a/drivers/net/virtio_net.c
-+++ b/drivers/net/virtio_net.c
-@@ -28,6 +28,7 @@
- #include <linux/cpu.h>
- #include <linux/average.h>
- #include <net/busy_poll.h>
-+#include <linux/pci.h>
- 
- static int napi_weight = NAPI_POLL_WEIGHT;
- module_param(napi_weight, int, 0444);
-@@ -51,6 +52,23 @@ module_param(gso, bool, 0444);
- #define MERGEABLE_BUFFER_ALIGN max(L1_CACHE_BYTES, 256)
- 
- #define VIRTNET_DRIVER_VERSION "1.0.0"
-+#define __VIRTNET_TESTING  0
-+
-+enum {
-+	VIRTNET_LOOPBACK_TEST,
-+	VIRTNET_FEATURE_NEG_TEST,
-+	VIRTNET_RESET_TEST,
-+};
-+
-+static const struct {
-+	const char string[ETH_GSTRING_LEN];
-+} virtnet_gstrings_test[] = {
-+	[VIRTNET_LOOPBACK_TEST]	= { "loopback test   (offline)" },
-+	[VIRTNET_FEATURE_NEG_TEST]	= { "negotiate test  (offline)" },
-+	[VIRTNET_RESET_TEST]	= { "reset test     (offline)" },
-+};
-+
-+#define VIRTNET_NUM_TEST	ARRAY_SIZE(virtnet_gstrings_test)
- 
- struct virtnet_stats {
- 	struct u64_stats_sync tx_syncp;
-@@ -104,6 +122,8 @@ struct virtnet_info {
- 	struct send_queue *sq;
- 	struct receive_queue *rq;
- 	unsigned int status;
-+	unsigned long flags;
-+	atomic_t lb_count;
- 
- 	/* Max # of queue pairs supported by the device */
- 	u16 max_queue_pairs;
-@@ -436,6 +456,19 @@ err_buf:
- 	return NULL;
- }
- 
-+void virtnet_check_lb_frame(struct virtnet_info *vi,
-+				   struct sk_buff *skb)
-+{
-+	unsigned int frame_size = skb->len;
-+
-+	if (*(skb->data + 3) == 0xFF) {
-+		if ((*(skb->data + frame_size / 2 + 10) == 0xBE) &&
-+		   (*(skb->data + frame_size / 2 + 12) == 0xAF)) {
-+			atomic_dec(&vi->lb_count);
-+		}
-+	}
-+}
-+
- static void receive_buf(struct receive_queue *rq, void *buf, unsigned int len)
- {
- 	struct virtnet_info *vi = rq->vq->vdev->priv;
-@@ -485,7 +518,12 @@ static void receive_buf(struct receive_queue *rq, void *buf, unsigned int len)
- 	} else if (hdr->hdr.flags & VIRTIO_NET_HDR_F_DATA_VALID) {
- 		skb->ip_summed = CHECKSUM_UNNECESSARY;
- 	}
--
-+	/* loopback self test for ethtool */
-+	if (test_bit(__VIRTNET_TESTING, &vi->flags)) {
-+		virtnet_check_lb_frame(vi, skb);
-+		dev_kfree_skb_any(skb);
-+		return;
-+	}
- 	skb->protocol = eth_type_trans(skb, dev);
- 	pr_debug("Receiving skb proto 0x%04x len %i type %i\n",
- 		 ntohs(skb->protocol), skb->len, skb->pkt_type);
-@@ -813,6 +851,9 @@ static int virtnet_open(struct net_device *dev)
- {
- 	struct virtnet_info *vi = netdev_priv(dev);
- 	int i;
-+	/* disallow open during test */
-+	if (test_bit(__VIRTNET_TESTING, &vi->flags))
-+		return -EBUSY;
- 
- 	for (i = 0; i < vi->max_queue_pairs; i++) {
- 		if (i < vi->curr_queue_pairs)
-@@ -1363,12 +1404,158 @@ static void virtnet_get_channels(struct net_device *dev,
- 	channels->other_count = 0;
- }
- 
-+static int virtnet_reset(struct virtnet_info *vi);
-+
-+static void virtnet_create_lb_frame(struct sk_buff *skb,
-+					unsigned int frame_size)
-+{
-+	memset(skb->data, 0xFF, frame_size);
-+	frame_size &= ~1;
-+	memset(&skb->data[frame_size / 2], 0xAA, frame_size / 2 - 1);
-+	memset(&skb->data[frame_size / 2 + 10], 0xBE, 1);
-+	memset(&skb->data[frame_size / 2 + 12], 0xAF, 1);
-+}
-+
-+static int virtnet_start_loopback(struct virtnet_info *vi)
-+{
-+	if (!virtnet_send_command(vi, VIRTIO_NET_CTRL_LOOPBACK,
-+				  VIRTIO_NET_CTRL_LOOPBACK_SET, NULL, NULL)) {
-+		dev_warn(&vi->dev->dev, "Failed to set loopback.\n");
-+		return -EINVAL;
-+	}
-+	return 0;
-+}
-+
-+static int virtnet_run_loopback_test(struct virtnet_info *vi)
-+{
-+	int i;
-+	netdev_tx_t rc;
-+	struct sk_buff *skb;
-+	unsigned int size = GOOD_COPY_LEN;
-+
-+	for (i = 0; i < 100; i++) {
-+		skb = netdev_alloc_skb(vi->dev, size);
-+		if (!skb)
-+			return -ENOMEM;
-+
-+		skb->queue_mapping = 0;
-+		skb_put(skb, size);
-+		virtnet_create_lb_frame(skb, size);
-+		rc = start_xmit(skb, vi->dev);
-+		if (rc != NETDEV_TX_OK)
-+			return -EPIPE;
-+		atomic_inc(&vi->lb_count);
-+	}
-+	/* Give queue time to settle before testing results. */
-+	msleep(20);
-+	return atomic_read(&vi->lb_count) ? -EIO : 0;
-+}
-+
-+static int virtnet_stop_loopback(struct virtnet_info *vi)
-+{
-+	if (!virtnet_send_command(vi, VIRTIO_NET_CTRL_LOOPBACK,
-+				  VIRTIO_NET_CTRL_LOOPBACK_UNSET, NULL, NULL)) {
-+		dev_warn(&vi->dev->dev, "Failed to unset loopback.\n");
-+		return -EINVAL;
-+	}
-+	return 0;
-+}
-+
-+static int virtnet_loopback_test(struct virtnet_info *vi, u64 *data)
-+{
-+	*data = virtnet_start_loopback(vi);
-+	if (*data)
-+		goto out;
-+	*data = virtnet_run_loopback_test(vi);
-+	if (*data)
-+		goto out;
-+	*data = virtnet_stop_loopback(vi);
-+out:
-+	return *data;
-+}
-+
-+static void virtnet_feature_neg_test(struct virtnet_info *vi)
-+{
-+	struct virtio_device *dev = vi->vdev;
-+	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
-+	int i;
-+	u32 device_features;
-+
-+	/* Figure out what features the device supports. */
-+	device_features = dev->config->get_features(dev);
-+
-+	/* Features supported by both device and driver into dev->features. */
-+	memset(dev->features, 0, sizeof(dev->features));
-+	for (i = 0; i < drv->feature_table_size; i++) {
-+		unsigned int f = drv->feature_table[i];
-+
-+		BUG_ON(f >= 32);
-+		if (device_features & (1 << f))
-+			set_bit(f, dev->features);
-+	}
-+
-+	/* Transport features always preserved to pass to finalize_features. */
-+	for (i = VIRTIO_TRANSPORT_F_START; i < VIRTIO_TRANSPORT_F_END; i++)
-+		if (device_features & (1 << i))
-+			set_bit(i, dev->features);
-+
-+	dev->config->finalize_features(dev);
-+}
-+
-+static int virtnet_get_sset_count(struct net_device *netdev, int sset)
-+{
-+	switch (sset) {
-+	case ETH_SS_TEST:
-+		return VIRTNET_NUM_TEST;
-+	default:
-+		return -EOPNOTSUPP;
-+	}
-+}
-+
-+static void virtnet_get_strings(struct net_device *dev, u32 stringset, u8 *buf)
-+{
-+	switch (stringset) {
-+	case ETH_SS_TEST:
-+		memcpy(buf, &virtnet_gstrings_test,
-+			sizeof(virtnet_gstrings_test));
-+		break;
-+	default:
-+		break;
-+	}
-+}
-+
-+static void virtnet_self_test(struct net_device *netdev,
-+			    struct ethtool_test *eth_test, u64 *data)
-+{
-+	struct virtnet_info *vi = netdev_priv(netdev);
-+	bool if_running = netif_running(netdev);
-+
-+	set_bit(__VIRTNET_TESTING, &vi->flags);
-+	memset(data, 0, sizeof(u64) * VIRTNET_NUM_TEST);
-+
-+	if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
-+		if (!if_running) {
-+			dev_warn(&vi->dev->dev, "Failed to execute self test.\n");
-+			eth_test->flags |= ETH_TEST_FL_FAILED;
-+			return;
-+		}
-+		if (virtnet_loopback_test(vi, &data[VIRTNET_LOOPBACK_TEST]))
-+			eth_test->flags |= ETH_TEST_FL_FAILED;
-+		virtnet_feature_neg_test(vi);
-+		virtnet_reset(vi);
-+	}
-+	clear_bit(__VIRTNET_TESTING, &vi->flags);
-+}
-+
- static const struct ethtool_ops virtnet_ethtool_ops = {
- 	.get_drvinfo = virtnet_get_drvinfo,
- 	.get_link = ethtool_op_get_link,
- 	.get_ringparam = virtnet_get_ringparam,
- 	.set_channels = virtnet_set_channels,
- 	.get_channels = virtnet_get_channels,
-+	.self_test = virtnet_self_test,
-+	.get_strings		= virtnet_get_strings,
-+	.get_sset_count = virtnet_get_sset_count,
- };
- 
- #define MIN_MTU 68
-@@ -1957,6 +2144,50 @@ static int virtnet_restore(struct virtio_device *vdev)
- }
- #endif
- 
-+static int virtnet_reset(struct virtnet_info *vi)
-+{
-+	struct virtio_device *vdev = vi->vdev;
-+	int err, i;
-+	u8 status;
-+
-+	mutex_lock(&vi->config_lock);
-+	vi->config_enable = false;
-+	mutex_unlock(&vi->config_lock);
-+
-+	cancel_delayed_work_sync(&vi->refill);
-+
-+	if (netif_running(vi->dev))
-+		for (i = 0; i < vi->max_queue_pairs; i++) {
-+			napi_disable(&vi->rq[i].napi);
-+			netif_napi_del(&vi->rq[i].napi);
-+		}
-+
-+	remove_vq_common(vi);
-+	flush_work(&vi->config_work);
-+
-+	virtnet_feature_neg_test(vi);
-+	err = init_vqs(vi);
-+	if (err)
-+		return err;
-+	if (netif_running(vi->dev)) {
-+		for (i = 0; i < vi->curr_queue_pairs; i++)
-+			if (!try_fill_recv(&vi->rq[i], GFP_KERNEL))
-+				schedule_delayed_work(&vi->refill, 0);
-+
-+		for (i = 0; i < vi->max_queue_pairs; i++)
-+			virtnet_napi_enable(&vi->rq[i]);
-+	}
-+
-+	mutex_lock(&vi->config_lock);
-+	vi->config_enable = true;
-+	mutex_unlock(&vi->config_lock);
-+
-+	virtnet_set_queues(vi, vi->curr_queue_pairs);
-+	status = vdev->config->get_status(vdev);
-+	vdev->config->set_status(vdev, status | VIRTIO_CONFIG_S_DRIVER_OK);
-+	return 0;
-+}
-+
- static struct virtio_device_id id_table[] = {
- 	{ VIRTIO_ID_NET, VIRTIO_DEV_ANY_ID },
- 	{ 0 },
-diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
-index 172a7f0..1f31f90 100644
---- a/include/uapi/linux/virtio_net.h
-+++ b/include/uapi/linux/virtio_net.h
-@@ -201,4 +201,13 @@ struct virtio_net_ctrl_mq {
-  #define VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MIN        1
-  #define VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MAX        0x8000
- 
-+ /*
-+  * Control Loopback(5 is used by VIRTIO_NET_CTRL_GUEST_OFFLOADS in latest qemu)
-+  *
-+  * The command VIRTIO_NET_CTRL_LOOPBACK_SET is used to require the device come
-+  * into loopback state.
-+  */
-+#define VIRTIO_NET_CTRL_LOOPBACK   6
-+ #define VIRTIO_NET_CTRL_LOOPBACK_SET        0
-+ #define VIRTIO_NET_CTRL_LOOPBACK_UNSET        1
- #endif /* _LINUX_VIRTIO_NET_H */
+Note that additions of commands and attributes kept this syscall
+backwards compatible from one patch to another.
+I've decided not to bother with forward compatiblity for now.
+We can address it later the way perf_event_open did.
+
+Please ignore other patches, since I cannot easily remove them
+without breaking compilation
+
+btw, tested on x64/i386 and comiled tested on arm with NET-less config.
+
+V6->V7:
+- only BPF syscall interface changed from long+nlattr+a_lot_of_type_casts to
+  single 'union bpf_attr'.
+  It pretty much removed all type casts in kernel and in user space that
+  were there because of 'long' and because of 'nlattr'
+
+Thanks for feedback. I think this version is definitely cleaner.
+As a side note I've addressed Cong's comment regarding commit log.
+Now it documents syscall itself instead of wrappers of syscall.
+
+If anyone prefers to see patches in the browser, they are here:
+https://git.kernel.org/cgit/linux/kernel/git/ast/bpf.git/log/?h=v7
+
+Thanks!
+
+Alexei Starovoitov (28):
+  net: filter: add "load 64-bit immediate" eBPF instruction
+  net: filter: split filter.h and expose eBPF to user space
+  bpf: introduce syscall(BPF, ...) and BPF maps
+  bpf: enable bpf syscall on x64 and i386
+  bpf: add lookup/update/delete/iterate methods to BPF maps
+  bpf: add hashtable type of BPF maps
+  bpf: expand BPF syscall with program load/unload
+  bpf: handle pseudo BPF_CALL insn
+  bpf: verifier (add docs)
+  bpf: verifier (add ability to receive verification log)
+  bpf: handle pseudo BPF_LD_IMM64 insn
+  bpf: verifier (add branch/goto checks)
+  bpf: verifier (add verifier core)
+  bpf: verifier (add state prunning optimization)
+  bpf: allow eBPF programs to use maps
+  bpf: split eBPF out of NET
+  tracing: allow eBPF programs to be attached to events
+  tracing: allow eBPF programs call printk()
+  tracing: allow eBPF programs to be attached to kprobe/kretprobe
+  tracing: allow eBPF programs to call ktime_get_ns() and get_current()
+  samples: bpf: add mini eBPF library to manipulate maps and programs
+  samples: bpf: example of tracing filters with eBPF
+  bpf: verifier test
+  bpf: llvm backend
+  samples: bpf: elf file loader
+  samples: bpf: eBPF example in C
+  samples: bpf: counting eBPF example in C
+  samples: bpf: IO latency analysis (iosnoop/heatmap)
+
+ Documentation/networking/filter.txt                |  313 +++-
+ arch/Kconfig                                       |    3 +
+ arch/x86/net/bpf_jit_comp.c                        |   17 +
+ arch/x86/syscalls/syscall_32.tbl                   |    1 +
+ arch/x86/syscalls/syscall_64.tbl                   |    1 +
+ fs/btrfs/super.c                                   |    3 +
+ include/linux/bpf.h                                |  139 ++
+ include/linux/filter.h                             |  303 +---
+ include/linux/ftrace_event.h                       |    5 +
+ include/linux/syscalls.h                           |    3 +-
+ include/trace/bpf_trace.h                          |   23 +
+ include/trace/ftrace.h                             |   25 +
+ include/uapi/asm-generic/unistd.h                  |    4 +-
+ include/uapi/linux/Kbuild                          |    1 +
+ include/uapi/linux/bpf.h                           |  439 +++++
+ kernel/Makefile                                    |    2 +-
+ kernel/bpf/Makefile                                |    2 +-
+ kernel/bpf/core.c                                  |   17 +
+ kernel/bpf/hashtab.c                               |  365 ++++
+ kernel/bpf/syscall.c                               |  645 +++++++
+ kernel/bpf/verifier.c                              | 1910 ++++++++++++++++++++
+ kernel/sys_ni.c                                    |    3 +
+ kernel/trace/Kconfig                               |    1 +
+ kernel/trace/Makefile                              |    1 +
+ kernel/trace/bpf_trace.c                           |  264 +++
+ kernel/trace/trace.h                               |    3 +
+ kernel/trace/trace_events.c                        |   41 +-
+ kernel/trace/trace_events_filter.c                 |   72 +-
+ kernel/trace/trace_kprobe.c                        |   28 +
+ kernel/trace/trace_syscalls.c                      |   32 +
+ lib/test_bpf.c                                     |   21 +
+ net/Kconfig                                        |    1 +
+ net/core/filter.c                                  |    2 +
+ samples/bpf/Makefile                               |   28 +
+ samples/bpf/bpf_helpers.h                          |   27 +
+ samples/bpf/bpf_load.c                             |  234 +++
+ samples/bpf/bpf_load.h                             |   26 +
+ samples/bpf/dropmon.c                              |  122 ++
+ samples/bpf/ex1_kern.c                             |   27 +
+ samples/bpf/ex1_user.c                             |   24 +
+ samples/bpf/ex2_kern.c                             |   73 +
+ samples/bpf/ex2_user.c                             |   94 +
+ samples/bpf/ex3_kern.c                             |  104 ++
+ samples/bpf/ex3_user.c                             |  149 ++
+ samples/bpf/libbpf.c                               |   89 +
+ samples/bpf/libbpf.h                               |   21 +
+ samples/bpf/test_verifier.c                        |  599 ++++++
+ tools/bpf/llvm/.gitignore                          |   54 +
+ tools/bpf/llvm/LICENSE.TXT                         |   70 +
+ tools/bpf/llvm/Makefile.rules                      |  641 +++++++
+ tools/bpf/llvm/README.txt                          |   23 +
+ tools/bpf/llvm/bld/Makefile                        |   27 +
+ tools/bpf/llvm/bld/Makefile.common                 |   14 +
+ tools/bpf/llvm/bld/Makefile.config                 |  124 ++
+ .../llvm/bld/include/llvm/Config/AsmParsers.def    |    8 +
+ .../llvm/bld/include/llvm/Config/AsmPrinters.def   |    9 +
+ .../llvm/bld/include/llvm/Config/Disassemblers.def |    8 +
+ tools/bpf/llvm/bld/include/llvm/Config/Targets.def |    9 +
+ .../bpf/llvm/bld/include/llvm/Support/DataTypes.h  |   96 +
+ tools/bpf/llvm/bld/lib/Makefile                    |   11 +
+ .../llvm/bld/lib/Target/BPF/InstPrinter/Makefile   |   10 +
+ .../llvm/bld/lib/Target/BPF/MCTargetDesc/Makefile  |   11 +
+ tools/bpf/llvm/bld/lib/Target/BPF/Makefile         |   17 +
+ .../llvm/bld/lib/Target/BPF/TargetInfo/Makefile    |   10 +
+ tools/bpf/llvm/bld/lib/Target/Makefile             |   11 +
+ tools/bpf/llvm/bld/tools/Makefile                  |   12 +
+ tools/bpf/llvm/bld/tools/llc/Makefile              |   15 +
+ tools/bpf/llvm/lib/Target/BPF/BPF.h                |   28 +
+ tools/bpf/llvm/lib/Target/BPF/BPF.td               |   29 +
+ tools/bpf/llvm/lib/Target/BPF/BPFAsmPrinter.cpp    |  100 +
+ tools/bpf/llvm/lib/Target/BPF/BPFCallingConv.td    |   24 +
+ tools/bpf/llvm/lib/Target/BPF/BPFFrameLowering.cpp |   36 +
+ tools/bpf/llvm/lib/Target/BPF/BPFFrameLowering.h   |   35 +
+ tools/bpf/llvm/lib/Target/BPF/BPFISelDAGToDAG.cpp  |  182 ++
+ tools/bpf/llvm/lib/Target/BPF/BPFISelLowering.cpp  |  683 +++++++
+ tools/bpf/llvm/lib/Target/BPF/BPFISelLowering.h    |  105 ++
+ tools/bpf/llvm/lib/Target/BPF/BPFInstrFormats.td   |   29 +
+ tools/bpf/llvm/lib/Target/BPF/BPFInstrInfo.cpp     |  162 ++
+ tools/bpf/llvm/lib/Target/BPF/BPFInstrInfo.h       |   53 +
+ tools/bpf/llvm/lib/Target/BPF/BPFInstrInfo.td      |  498 +++++
+ tools/bpf/llvm/lib/Target/BPF/BPFMCInstLower.cpp   |   77 +
+ tools/bpf/llvm/lib/Target/BPF/BPFMCInstLower.h     |   40 +
+ tools/bpf/llvm/lib/Target/BPF/BPFRegisterInfo.cpp  |  122 ++
+ tools/bpf/llvm/lib/Target/BPF/BPFRegisterInfo.h    |   65 +
+ tools/bpf/llvm/lib/Target/BPF/BPFRegisterInfo.td   |   39 +
+ tools/bpf/llvm/lib/Target/BPF/BPFSubtarget.cpp     |   23 +
+ tools/bpf/llvm/lib/Target/BPF/BPFSubtarget.h       |   33 +
+ tools/bpf/llvm/lib/Target/BPF/BPFTargetMachine.cpp |   66 +
+ tools/bpf/llvm/lib/Target/BPF/BPFTargetMachine.h   |   69 +
+ .../lib/Target/BPF/InstPrinter/BPFInstPrinter.cpp  |   81 +
+ .../lib/Target/BPF/InstPrinter/BPFInstPrinter.h    |   34 +
+ .../lib/Target/BPF/MCTargetDesc/BPFAsmBackend.cpp  |   89 +
+ .../llvm/lib/Target/BPF/MCTargetDesc/BPFBaseInfo.h |   33 +
+ .../Target/BPF/MCTargetDesc/BPFELFObjectWriter.cpp |   56 +
+ .../lib/Target/BPF/MCTargetDesc/BPFMCAsmInfo.h     |   34 +
+ .../Target/BPF/MCTargetDesc/BPFMCCodeEmitter.cpp   |  167 ++
+ .../Target/BPF/MCTargetDesc/BPFMCTargetDesc.cpp    |  115 ++
+ .../lib/Target/BPF/MCTargetDesc/BPFMCTargetDesc.h  |   56 +
+ .../lib/Target/BPF/TargetInfo/BPFTargetInfo.cpp    |   13 +
+ tools/bpf/llvm/tools/llc/llc.cpp                   |  381 ++++
+ 100 files changed, 10742 insertions(+), 302 deletions(-)
+ create mode 100644 include/linux/bpf.h
+ create mode 100644 include/trace/bpf_trace.h
+ create mode 100644 include/uapi/linux/bpf.h
+ create mode 100644 kernel/bpf/hashtab.c
+ create mode 100644 kernel/bpf/syscall.c
+ create mode 100644 kernel/bpf/verifier.c
+ create mode 100644 kernel/trace/bpf_trace.c
+ create mode 100644 samples/bpf/Makefile
+ create mode 100644 samples/bpf/bpf_helpers.h
+ create mode 100644 samples/bpf/bpf_load.c
+ create mode 100644 samples/bpf/bpf_load.h
+ create mode 100644 samples/bpf/dropmon.c
+ create mode 100644 samples/bpf/ex1_kern.c
+ create mode 100644 samples/bpf/ex1_user.c
+ create mode 100644 samples/bpf/ex2_kern.c
+ create mode 100644 samples/bpf/ex2_user.c
+ create mode 100644 samples/bpf/ex3_kern.c
+ create mode 100644 samples/bpf/ex3_user.c
+ create mode 100644 samples/bpf/libbpf.c
+ create mode 100644 samples/bpf/libbpf.h
+ create mode 100644 samples/bpf/test_verifier.c
+ create mode 100644 tools/bpf/llvm/.gitignore
+ create mode 100644 tools/bpf/llvm/LICENSE.TXT
+ create mode 100644 tools/bpf/llvm/Makefile.rules
+ create mode 100644 tools/bpf/llvm/README.txt
+ create mode 100644 tools/bpf/llvm/bld/Makefile
+ create mode 100644 tools/bpf/llvm/bld/Makefile.common
+ create mode 100644 tools/bpf/llvm/bld/Makefile.config
+ create mode 100644 tools/bpf/llvm/bld/include/llvm/Config/AsmParsers.def
+ create mode 100644 tools/bpf/llvm/bld/include/llvm/Config/AsmPrinters.def
+ create mode 100644 tools/bpf/llvm/bld/include/llvm/Config/Disassemblers.def
+ create mode 100644 tools/bpf/llvm/bld/include/llvm/Config/Targets.def
+ create mode 100644 tools/bpf/llvm/bld/include/llvm/Support/DataTypes.h
+ create mode 100644 tools/bpf/llvm/bld/lib/Makefile
+ create mode 100644 tools/bpf/llvm/bld/lib/Target/BPF/InstPrinter/Makefile
+ create mode 100644 tools/bpf/llvm/bld/lib/Target/BPF/MCTargetDesc/Makefile
+ create mode 100644 tools/bpf/llvm/bld/lib/Target/BPF/Makefile
+ create mode 100644 tools/bpf/llvm/bld/lib/Target/BPF/TargetInfo/Makefile
+ create mode 100644 tools/bpf/llvm/bld/lib/Target/Makefile
+ create mode 100644 tools/bpf/llvm/bld/tools/Makefile
+ create mode 100644 tools/bpf/llvm/bld/tools/llc/Makefile
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPF.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPF.td
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFAsmPrinter.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFCallingConv.td
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFFrameLowering.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFFrameLowering.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFISelDAGToDAG.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFISelLowering.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFISelLowering.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFInstrFormats.td
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFInstrInfo.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFInstrInfo.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFInstrInfo.td
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFMCInstLower.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFMCInstLower.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFRegisterInfo.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFRegisterInfo.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFRegisterInfo.td
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFSubtarget.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFSubtarget.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFTargetMachine.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/BPFTargetMachine.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/InstPrinter/BPFInstPrinter.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/InstPrinter/BPFInstPrinter.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/MCTargetDesc/BPFAsmBackend.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/MCTargetDesc/BPFBaseInfo.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/MCTargetDesc/BPFELFObjectWriter.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/MCTargetDesc/BPFMCAsmInfo.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/MCTargetDesc/BPFMCCodeEmitter.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/MCTargetDesc/BPFMCTargetDesc.cpp
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/MCTargetDesc/BPFMCTargetDesc.h
+ create mode 100644 tools/bpf/llvm/lib/Target/BPF/TargetInfo/BPFTargetInfo.cpp
+ create mode 100644 tools/bpf/llvm/tools/llc/llc.cpp
+
 -- 
-1.8.3.2
+1.7.9.5
