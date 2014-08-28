@@ -1,193 +1,159 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: [PATCH v8 net-next 2/2] net: filter: split filter.h and expose eBPF to user space
-Date: Wed, 27 Aug 2014 13:37:13 -0700
-Message-ID: <1409171833-6979-3-git-send-email-ast@plumgrid.com>
-References: <1409171833-6979-1-git-send-email-ast@plumgrid.com>
+From: Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4 1/8] mfd: max14577: Add defines for MAX77836 charger
+Date: Thu, 28 Aug 2014 12:50:14 +0100
+Message-ID: <20140828115014.GO24579@lee--X1>
+References: <1409152814-17302-1-git-send-email-k.kozlowski@samsung.com>
+ <1409152814-17302-2-git-send-email-k.kozlowski@samsung.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1409171833-6979-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1409152814-17302-2-git-send-email-k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Brendan Gregg <brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-allow user space to generate eBPF programs
+On Wed, 27 Aug 2014, Krzysztof Kozlowski wrote:
 
-uapi/linux/bpf.h: eBPF instruction set definition
+> Prepare for adding support for MAX77836 charger to the max14577 charg=
+er
+> driver by adding necessary new defines and prefixes to existing ones.
+>=20
+> The MAX77836 uses slightly different values for ChgTyp field of STATU=
+S2
+> register. On the MAX14577 value of 0x6 is reserved and 0x7 dead batte=
+ry.
+> On the MAX77836 the opposite:
+>  - 0x6 means special charger,
+>  - 0x7 is reserved.
+> Regardless of these differences use one common enum
+> max14577_muic_charger_type.
+>=20
+> Signed-off-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> Cc: Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> ---
+>  include/linux/mfd/max14577-private.h | 54 ++++++++++++++++++++++++++=
+----------
+>  1 file changed, 40 insertions(+), 14 deletions(-)
 
-linux/filter.h: the rest
+Acked-by: Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 
-This patch only moves macro definitions, but practically it freezes existing
-eBPF instruction set, though new instructions can still be added in the future.
+> diff --git a/include/linux/mfd/max14577-private.h b/include/linux/mfd=
+/max14577-private.h
+> index 499253604026..d6f321699b89 100644
+> --- a/include/linux/mfd/max14577-private.h
+> +++ b/include/linux/mfd/max14577-private.h
+> @@ -72,15 +72,33 @@ enum max14577_muic_reg {
+>  	MAX14577_MUIC_REG_END,
+>  };
+> =20
+> +/*
+> + * Combined charger types for max14577 and max77836.
+> + *
+> + * On max14577 three lower bits map to STATUS2/CHGTYP field.
+> + * However the max77836 has different two last values of STATUS2/CHG=
+TYP.
+> + * To indicate the difference enum has two additional values for max=
+77836.
+> + * These values are just a register value bitwise OR with 0x8.
+> + */
+>  enum max14577_muic_charger_type {
+> -	MAX14577_CHARGER_TYPE_NONE =3D 0,
+> -	MAX14577_CHARGER_TYPE_USB,
+> -	MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT,
+> -	MAX14577_CHARGER_TYPE_DEDICATED_CHG,
+> -	MAX14577_CHARGER_TYPE_SPECIAL_500MA,
+> -	MAX14577_CHARGER_TYPE_SPECIAL_1A,
+> -	MAX14577_CHARGER_TYPE_RESERVED,
+> -	MAX14577_CHARGER_TYPE_DEAD_BATTERY =3D 7,
+> +	MAX14577_CHARGER_TYPE_NONE		=3D 0x0,
+> +	MAX14577_CHARGER_TYPE_USB		=3D 0x1,
+> +	MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT	=3D 0x2,
+> +	MAX14577_CHARGER_TYPE_DEDICATED_CHG	=3D 0x3,
+> +	MAX14577_CHARGER_TYPE_SPECIAL_500MA	=3D 0x4,
+> +	/* Special 1A or 2A charger */
+> +	MAX14577_CHARGER_TYPE_SPECIAL_1A	=3D 0x5,
+> +	/* max14577: reserved, used on max77836 */
+> +	MAX14577_CHARGER_TYPE_RESERVED		=3D 0x6,
+> +	/* max14577: dead-battery charing with maximum current 100mA */
+> +	MAX14577_CHARGER_TYPE_DEAD_BATTERY	=3D 0x7,
+> +	/*
+> +	 * max77836: special charger (bias on D+/D-),
+> +	 * matches register value of 0x6
+> +	 */
+> +	MAX77836_CHARGER_TYPE_SPECIAL_BIAS	=3D 0xe,
+> +	/* max77836: reserved, register value 0x7 */
+> +	MAX77836_CHARGER_TYPE_RESERVED		=3D 0xf,
+>  };
+> =20
+>  /* MAX14577 interrupts */
+> @@ -121,13 +139,15 @@ enum max14577_muic_charger_type {
+>  #define STATUS2_CHGTYP_SHIFT		0
+>  #define STATUS2_CHGDETRUN_SHIFT		3
+>  #define STATUS2_DCDTMR_SHIFT		4
+> -#define STATUS2_DBCHG_SHIFT		5
+> +#define MAX14577_STATUS2_DBCHG_SHIFT	5
+> +#define MAX77836_STATUS2_DXOVP_SHIFT	5
+>  #define STATUS2_VBVOLT_SHIFT		6
+>  #define MAX77836_STATUS2_VIDRM_SHIFT	7
+>  #define STATUS2_CHGTYP_MASK		(0x7 << STATUS2_CHGTYP_SHIFT)
+>  #define STATUS2_CHGDETRUN_MASK		BIT(STATUS2_CHGDETRUN_SHIFT)
+>  #define STATUS2_DCDTMR_MASK		BIT(STATUS2_DCDTMR_SHIFT)
+> -#define STATUS2_DBCHG_MASK		BIT(STATUS2_DBCHG_SHIFT)
+> +#define MAX14577_STATUS2_DBCHG_MASK	BIT(MAX14577_STATUS2_DBCHG_SHIFT=
+)
+> +#define MAX77836_STATUS2_DXOVP_MASK	BIT(MAX77836_STATUS2_DXOVP_SHIFT=
+)
+>  #define STATUS2_VBVOLT_MASK		BIT(STATUS2_VBVOLT_SHIFT)
+>  #define MAX77836_STATUS2_VIDRM_MASK	BIT(MAX77836_STATUS2_VIDRM_SHIFT=
+)
+> =20
+> @@ -177,9 +197,11 @@ enum max14577_muic_charger_type {
+>  #define CTRL3_JIGSET_SHIFT		0
+>  #define CTRL3_BOOTSET_SHIFT		2
+>  #define CTRL3_ADCDBSET_SHIFT		4
+> +#define CTRL3_WBTH_SHIFT		6
+>  #define CTRL3_JIGSET_MASK		(0x3 << CTRL3_JIGSET_SHIFT)
+>  #define CTRL3_BOOTSET_MASK		(0x3 << CTRL3_BOOTSET_SHIFT)
+>  #define CTRL3_ADCDBSET_MASK		(0x3 << CTRL3_ADCDBSET_SHIFT)
+> +#define CTRL3_WBTH_MASK			(0x3 << CTRL3_WBTH_SHIFT)
+> =20
+>  /* Slave addr =3D 0x4A: Charger */
+>  enum max14577_charger_reg {
+> @@ -210,16 +232,20 @@ enum max14577_charger_reg {
+>  #define CDETCTRL1_CHGTYPMAN_SHIFT	1
+>  #define CDETCTRL1_DCDEN_SHIFT		2
+>  #define CDETCTRL1_DCD2SCT_SHIFT		3
+> -#define CDETCTRL1_DCHKTM_SHIFT		4
+> -#define CDETCTRL1_DBEXIT_SHIFT		5
+> +#define MAX14577_CDETCTRL1_DCHKTM_SHIFT	4
+> +#define MAX77836_CDETCTRL1_CDLY_SHIFT	4
+> +#define MAX14577_CDETCTRL1_DBEXIT_SHIFT	5
+> +#define MAX77836_CDETCTRL1_DCDCPL_SHIFT	5
+>  #define CDETCTRL1_DBIDLE_SHIFT		6
+>  #define CDETCTRL1_CDPDET_SHIFT		7
+>  #define CDETCTRL1_CHGDETEN_MASK		BIT(CDETCTRL1_CHGDETEN_SHIFT)
+>  #define CDETCTRL1_CHGTYPMAN_MASK	BIT(CDETCTRL1_CHGTYPMAN_SHIFT)
+>  #define CDETCTRL1_DCDEN_MASK		BIT(CDETCTRL1_DCDEN_SHIFT)
+>  #define CDETCTRL1_DCD2SCT_MASK		BIT(CDETCTRL1_DCD2SCT_SHIFT)
+> -#define CDETCTRL1_DCHKTM_MASK		BIT(CDETCTRL1_DCHKTM_SHIFT)
+> -#define CDETCTRL1_DBEXIT_MASK		BIT(CDETCTRL1_DBEXIT_SHIFT)
+> +#define MAX14577_CDETCTRL1_DCHKTM_MASK	BIT(MAX14577_CDETCTRL1_DCHKTM=
+_SHIFT)
+> +#define MAX77836_CDETCTRL1_CDDLY_MASK	BIT(MAX77836_CDETCTRL1_CDDLY_S=
+HIFT)
+> +#define MAX14577_CDETCTRL1_DBEXIT_MASK	BIT(MAX14577_CDETCTRL1_DBEXIT=
+_SHIFT)
+> +#define MAX77836_CDETCTRL1_DCDCPL_MASK	BIT(MAX77836_CDETCTRL1_DCDCPL=
+_SHIFT)
+>  #define CDETCTRL1_DBIDLE_MASK		BIT(CDETCTRL1_DBIDLE_SHIFT)
+>  #define CDETCTRL1_CDPDET_MASK		BIT(CDETCTRL1_CDPDET_SHIFT)
+> =20
 
-These eBPF definitions cannot go into uapi/linux/filter.h, since the names
-may conflict with existing applications.
-
-Full eBPF ISA description is in Documentation/networking/filter.txt
-
-Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
----
- include/linux/filter.h    |   56 +-------------------------------------
- include/uapi/linux/Kbuild |    1 +
- include/uapi/linux/bpf.h  |   65 +++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 67 insertions(+), 55 deletions(-)
- create mode 100644 include/uapi/linux/bpf.h
-
-diff --git a/include/linux/filter.h b/include/linux/filter.h
-index f3262b598262..3150666cd4b9 100644
---- a/include/linux/filter.h
-+++ b/include/linux/filter.h
-@@ -9,53 +9,7 @@
- #include <linux/skbuff.h>
- #include <linux/workqueue.h>
- #include <uapi/linux/filter.h>
--
--/* Internally used and optimized filter representation with extended
-- * instruction set based on top of classic BPF.
-- */
--
--/* instruction classes */
--#define BPF_ALU64	0x07	/* alu mode in double word width */
--
--/* ld/ldx fields */
--#define BPF_DW		0x18	/* double word */
--#define BPF_XADD	0xc0	/* exclusive add */
--
--/* alu/jmp fields */
--#define BPF_MOV		0xb0	/* mov reg to reg */
--#define BPF_ARSH	0xc0	/* sign extending arithmetic shift right */
--
--/* change endianness of a register */
--#define BPF_END		0xd0	/* flags for endianness conversion: */
--#define BPF_TO_LE	0x00	/* convert to little-endian */
--#define BPF_TO_BE	0x08	/* convert to big-endian */
--#define BPF_FROM_LE	BPF_TO_LE
--#define BPF_FROM_BE	BPF_TO_BE
--
--#define BPF_JNE		0x50	/* jump != */
--#define BPF_JSGT	0x60	/* SGT is signed '>', GT in x86 */
--#define BPF_JSGE	0x70	/* SGE is signed '>=', GE in x86 */
--#define BPF_CALL	0x80	/* function call */
--#define BPF_EXIT	0x90	/* function return */
--
--/* Register numbers */
--enum {
--	BPF_REG_0 = 0,
--	BPF_REG_1,
--	BPF_REG_2,
--	BPF_REG_3,
--	BPF_REG_4,
--	BPF_REG_5,
--	BPF_REG_6,
--	BPF_REG_7,
--	BPF_REG_8,
--	BPF_REG_9,
--	BPF_REG_10,
--	__MAX_BPF_REG,
--};
--
--/* BPF has 10 general purpose 64-bit registers and stack frame. */
--#define MAX_BPF_REG	__MAX_BPF_REG
-+#include <uapi/linux/bpf.h>
- 
- /* ArgX, context and stack frame pointer register positions. Note,
-  * Arg1, Arg2, Arg3, etc are used as argument mappings of function
-@@ -317,14 +271,6 @@ enum {
- #define SK_RUN_FILTER(filter, ctx) \
- 	(*filter->prog->bpf_func)(ctx, filter->prog->insnsi)
- 
--struct bpf_insn {
--	__u8	code;		/* opcode */
--	__u8	dst_reg:4;	/* dest register */
--	__u8	src_reg:4;	/* source register */
--	__s16	off;		/* signed offset */
--	__s32	imm;		/* signed immediate constant */
--};
--
- #ifdef CONFIG_COMPAT
- /* A struct sock_filter is architecture independent. */
- struct compat_sock_fprog {
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 24e9033f8b3f..fb3f7b675229 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -67,6 +67,7 @@ header-y += bfs_fs.h
- header-y += binfmts.h
- header-y += blkpg.h
- header-y += blktrace_api.h
-+header-y += bpf.h
- header-y += bpqether.h
- header-y += bsg.h
- header-y += btrfs.h
-diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-new file mode 100644
-index 000000000000..479ed0b6be16
---- /dev/null
-+++ b/include/uapi/linux/bpf.h
-@@ -0,0 +1,65 @@
-+/* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of version 2 of the GNU General Public
-+ * License as published by the Free Software Foundation.
-+ */
-+#ifndef _UAPI__LINUX_BPF_H__
-+#define _UAPI__LINUX_BPF_H__
-+
-+#include <linux/types.h>
-+
-+/* Extended instruction set based on top of classic BPF */
-+
-+/* instruction classes */
-+#define BPF_ALU64	0x07	/* alu mode in double word width */
-+
-+/* ld/ldx fields */
-+#define BPF_DW		0x18	/* double word */
-+#define BPF_XADD	0xc0	/* exclusive add */
-+
-+/* alu/jmp fields */
-+#define BPF_MOV		0xb0	/* mov reg to reg */
-+#define BPF_ARSH	0xc0	/* sign extending arithmetic shift right */
-+
-+/* change endianness of a register */
-+#define BPF_END		0xd0	/* flags for endianness conversion: */
-+#define BPF_TO_LE	0x00	/* convert to little-endian */
-+#define BPF_TO_BE	0x08	/* convert to big-endian */
-+#define BPF_FROM_LE	BPF_TO_LE
-+#define BPF_FROM_BE	BPF_TO_BE
-+
-+#define BPF_JNE		0x50	/* jump != */
-+#define BPF_JSGT	0x60	/* SGT is signed '>', GT in x86 */
-+#define BPF_JSGE	0x70	/* SGE is signed '>=', GE in x86 */
-+#define BPF_CALL	0x80	/* function call */
-+#define BPF_EXIT	0x90	/* function return */
-+
-+/* Register numbers */
-+enum {
-+	BPF_REG_0 = 0,
-+	BPF_REG_1,
-+	BPF_REG_2,
-+	BPF_REG_3,
-+	BPF_REG_4,
-+	BPF_REG_5,
-+	BPF_REG_6,
-+	BPF_REG_7,
-+	BPF_REG_8,
-+	BPF_REG_9,
-+	BPF_REG_10,
-+	__MAX_BPF_REG,
-+};
-+
-+/* BPF has 10 general purpose 64-bit registers and stack frame. */
-+#define MAX_BPF_REG	__MAX_BPF_REG
-+
-+struct bpf_insn {
-+	__u8	code;		/* opcode */
-+	__u8	dst_reg:4;	/* dest register */
-+	__u8	src_reg:4;	/* source register */
-+	__s16	off;		/* signed offset */
-+	__s32	imm;		/* signed immediate constant */
-+};
-+
-+#endif /* _UAPI__LINUX_BPF_H__ */
--- 
-1.7.9.5
+--=20
+Lee Jones
+Linaro STMicroelectronics Landing Team Lead
+Linaro.org =E2=94=82 Open source software for ARM SoCs
+=46ollow Linaro: Facebook | Twitter | Blog
