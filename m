@@ -1,40 +1,46 @@
-From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v5 6/8] power: max17040: Add ID for MAX77836 Fuel Gauge block
-Date: Thu, 28 Aug 2014 15:05:48 +0200
-Message-ID: <1409231150-2701-7-git-send-email-k.kozlowski@samsung.com>
+From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v5 8/8] Documentation: charger: max14577: Document exported
+ sysfs entry
+Date: Thu, 28 Aug 2014 15:05:50 +0200
+Message-ID: <1409231150-2701-9-git-send-email-k.kozlowski@samsung.com>
 References: <1409231150-2701-1-git-send-email-k.kozlowski@samsung.com>
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-reply-to: <1409231150-2701-1-git-send-email-k.kozlowski@samsung.com>
-Sender: linux-pm-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Samuel Ortiz <sameo@linux.intel.com>, Lee Jones <lee.jones@linaro.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-pm@vger.kernel.org
-Cc: Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1409231150-2701-1-git-send-email-k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-MAX77836 has the same Fuel Gauge as MAX17040/17048. The max17040 driver
-can be safely re-used. The patch adds MAX77836 device to the array of
-i2c_device_id. Additionally it removes the id associated with MAX17040
-device as the value is not used.
+Document the 'fast charge timer' setting exported by max14577 driver
+through sysfs entry.
 
-Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Kyungmin Park <kyungmin.park@samsung.com>
+Signed-off-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- drivers/power/max17040_battery.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ Documentation/ABI/testing/sysfs-class-power | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
-diff --git a/drivers/power/max17040_battery.c b/drivers/power/max17040_battery.c
-index 0fbac861080d..14d44706327b 100644
---- a/drivers/power/max17040_battery.c
-+++ b/drivers/power/max17040_battery.c
-@@ -277,7 +277,8 @@ static SIMPLE_DEV_PM_OPS(max17040_pm_ops, max17040_suspend, max17040_resume);
- #endif /* CONFIG_PM_SLEEP */
- 
- static const struct i2c_device_id max17040_id[] = {
--	{ "max17040", 0 },
-+	{ "max17040" },
-+	{ "max77836-battery" },
- 	{ }
- };
- MODULE_DEVICE_TABLE(i2c, max17040_id);
+diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
+index 78c7baca3587..83ee67ebf0e9 100644
+--- a/Documentation/ABI/testing/sysfs-class-power
++++ b/Documentation/ABI/testing/sysfs-class-power
+@@ -18,3 +18,17 @@ Description:
+ 		This file is writeable and can be used to set the assumed
+ 		battery 'full level'. As batteries age, this value has to be
+ 		amended over time.
++
++What:		/sys/class/power_supply/max14577-charger/device/fast_charge_timer
++Date:		July 2014
++KernelVersion:	3.17.0
++Contact:	Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
++Description:
++		This entry shows and sets the maximum time the max14577
++		charger operates in fast-charge mode. When the timer expires
++		the device will terminate fast-charge mode (charging current
++		will drop to 0 A) and will trigger interrupt.
++
++		Valid values:
++		- 5, 6 or 7 (hours),
++		- 0: disabled.
 -- 
 1.9.1
-
