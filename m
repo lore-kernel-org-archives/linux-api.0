@@ -1,42 +1,133 @@
-From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v5 2/8] mfd: max14577: Map charger device to its own of_node
-Date: Thu, 28 Aug 2014 15:05:44 +0200
-Message-ID: <1409231150-2701-3-git-send-email-k.kozlowski@samsung.com>
+From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v5 1/8] mfd: max14577: Add defines for MAX77836 charger
+Date: Thu, 28 Aug 2014 15:05:43 +0200
+Message-ID: <1409231150-2701-2-git-send-email-k.kozlowski@samsung.com>
 References: <1409231150-2701-1-git-send-email-k.kozlowski@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1409231150-2701-1-git-send-email-k.kozlowski@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Samuel Ortiz <sameo@linux.intel.com>, Lee Jones <lee.jones@linaro.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-pm@vger.kernel.org
-Cc: Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1409231150-2701-1-git-send-email-k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a "maxim,max14577-charger" of_compatible to the mfd_cell so the
-MFD child device (the charger) will have its own of_node set. This will
-be used by the max14577 charger driver in next patches to obtain battery
-configuration from DTS.
+Prepare for adding support for MAX77836 charger to the max14577 charger
+driver by adding necessary new defines and prefixes to existing ones.
 
-Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Kyungmin Park <kyungmin.park@samsung.com>
-Acked-by: Lee Jones <lee.jones@linaro.org>
+The MAX77836 uses slightly different values for ChgTyp field of STATUS2
+register. On the MAX14577 value of 0x6 is reserved and 0x7 dead battery.
+On the MAX77836 the opposite:
+ - 0x6 means special charger,
+ - 0x7 is reserved.
+Regardless of these differences use one common enum
+max14577_muic_charger_type.
+
+Signed-off-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Acked-by: Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 ---
- drivers/mfd/max14577.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ include/linux/mfd/max14577-private.h | 54 ++++++++++++++++++++++++++----------
+ 1 file changed, 40 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/mfd/max14577.c b/drivers/mfd/max14577.c
-index 4a5e885383f8..6599407b5624 100644
---- a/drivers/mfd/max14577.c
-+++ b/drivers/mfd/max14577.c
-@@ -35,7 +35,10 @@ static const struct mfd_cell max14577_devs[] = {
- 		.name = "max14577-regulator",
- 		.of_compatible = "maxim,max14577-regulator",
- 	},
--	{ .name = "max14577-charger", },
-+	{
-+		.name = "max14577-charger",
-+		.of_compatible = "maxim,max14577-charger",
-+	},
+diff --git a/include/linux/mfd/max14577-private.h b/include/linux/mfd/max14577-private.h
+index 499253604026..d6f321699b89 100644
+--- a/include/linux/mfd/max14577-private.h
++++ b/include/linux/mfd/max14577-private.h
+@@ -72,15 +72,33 @@ enum max14577_muic_reg {
+ 	MAX14577_MUIC_REG_END,
  };
  
- static const struct mfd_cell max77836_devs[] = {
++/*
++ * Combined charger types for max14577 and max77836.
++ *
++ * On max14577 three lower bits map to STATUS2/CHGTYP field.
++ * However the max77836 has different two last values of STATUS2/CHGTYP.
++ * To indicate the difference enum has two additional values for max77836.
++ * These values are just a register value bitwise OR with 0x8.
++ */
+ enum max14577_muic_charger_type {
+-	MAX14577_CHARGER_TYPE_NONE = 0,
+-	MAX14577_CHARGER_TYPE_USB,
+-	MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT,
+-	MAX14577_CHARGER_TYPE_DEDICATED_CHG,
+-	MAX14577_CHARGER_TYPE_SPECIAL_500MA,
+-	MAX14577_CHARGER_TYPE_SPECIAL_1A,
+-	MAX14577_CHARGER_TYPE_RESERVED,
+-	MAX14577_CHARGER_TYPE_DEAD_BATTERY = 7,
++	MAX14577_CHARGER_TYPE_NONE		= 0x0,
++	MAX14577_CHARGER_TYPE_USB		= 0x1,
++	MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT	= 0x2,
++	MAX14577_CHARGER_TYPE_DEDICATED_CHG	= 0x3,
++	MAX14577_CHARGER_TYPE_SPECIAL_500MA	= 0x4,
++	/* Special 1A or 2A charger */
++	MAX14577_CHARGER_TYPE_SPECIAL_1A	= 0x5,
++	/* max14577: reserved, used on max77836 */
++	MAX14577_CHARGER_TYPE_RESERVED		= 0x6,
++	/* max14577: dead-battery charing with maximum current 100mA */
++	MAX14577_CHARGER_TYPE_DEAD_BATTERY	= 0x7,
++	/*
++	 * max77836: special charger (bias on D+/D-),
++	 * matches register value of 0x6
++	 */
++	MAX77836_CHARGER_TYPE_SPECIAL_BIAS	= 0xe,
++	/* max77836: reserved, register value 0x7 */
++	MAX77836_CHARGER_TYPE_RESERVED		= 0xf,
+ };
+ 
+ /* MAX14577 interrupts */
+@@ -121,13 +139,15 @@ enum max14577_muic_charger_type {
+ #define STATUS2_CHGTYP_SHIFT		0
+ #define STATUS2_CHGDETRUN_SHIFT		3
+ #define STATUS2_DCDTMR_SHIFT		4
+-#define STATUS2_DBCHG_SHIFT		5
++#define MAX14577_STATUS2_DBCHG_SHIFT	5
++#define MAX77836_STATUS2_DXOVP_SHIFT	5
+ #define STATUS2_VBVOLT_SHIFT		6
+ #define MAX77836_STATUS2_VIDRM_SHIFT	7
+ #define STATUS2_CHGTYP_MASK		(0x7 << STATUS2_CHGTYP_SHIFT)
+ #define STATUS2_CHGDETRUN_MASK		BIT(STATUS2_CHGDETRUN_SHIFT)
+ #define STATUS2_DCDTMR_MASK		BIT(STATUS2_DCDTMR_SHIFT)
+-#define STATUS2_DBCHG_MASK		BIT(STATUS2_DBCHG_SHIFT)
++#define MAX14577_STATUS2_DBCHG_MASK	BIT(MAX14577_STATUS2_DBCHG_SHIFT)
++#define MAX77836_STATUS2_DXOVP_MASK	BIT(MAX77836_STATUS2_DXOVP_SHIFT)
+ #define STATUS2_VBVOLT_MASK		BIT(STATUS2_VBVOLT_SHIFT)
+ #define MAX77836_STATUS2_VIDRM_MASK	BIT(MAX77836_STATUS2_VIDRM_SHIFT)
+ 
+@@ -177,9 +197,11 @@ enum max14577_muic_charger_type {
+ #define CTRL3_JIGSET_SHIFT		0
+ #define CTRL3_BOOTSET_SHIFT		2
+ #define CTRL3_ADCDBSET_SHIFT		4
++#define CTRL3_WBTH_SHIFT		6
+ #define CTRL3_JIGSET_MASK		(0x3 << CTRL3_JIGSET_SHIFT)
+ #define CTRL3_BOOTSET_MASK		(0x3 << CTRL3_BOOTSET_SHIFT)
+ #define CTRL3_ADCDBSET_MASK		(0x3 << CTRL3_ADCDBSET_SHIFT)
++#define CTRL3_WBTH_MASK			(0x3 << CTRL3_WBTH_SHIFT)
+ 
+ /* Slave addr = 0x4A: Charger */
+ enum max14577_charger_reg {
+@@ -210,16 +232,20 @@ enum max14577_charger_reg {
+ #define CDETCTRL1_CHGTYPMAN_SHIFT	1
+ #define CDETCTRL1_DCDEN_SHIFT		2
+ #define CDETCTRL1_DCD2SCT_SHIFT		3
+-#define CDETCTRL1_DCHKTM_SHIFT		4
+-#define CDETCTRL1_DBEXIT_SHIFT		5
++#define MAX14577_CDETCTRL1_DCHKTM_SHIFT	4
++#define MAX77836_CDETCTRL1_CDLY_SHIFT	4
++#define MAX14577_CDETCTRL1_DBEXIT_SHIFT	5
++#define MAX77836_CDETCTRL1_DCDCPL_SHIFT	5
+ #define CDETCTRL1_DBIDLE_SHIFT		6
+ #define CDETCTRL1_CDPDET_SHIFT		7
+ #define CDETCTRL1_CHGDETEN_MASK		BIT(CDETCTRL1_CHGDETEN_SHIFT)
+ #define CDETCTRL1_CHGTYPMAN_MASK	BIT(CDETCTRL1_CHGTYPMAN_SHIFT)
+ #define CDETCTRL1_DCDEN_MASK		BIT(CDETCTRL1_DCDEN_SHIFT)
+ #define CDETCTRL1_DCD2SCT_MASK		BIT(CDETCTRL1_DCD2SCT_SHIFT)
+-#define CDETCTRL1_DCHKTM_MASK		BIT(CDETCTRL1_DCHKTM_SHIFT)
+-#define CDETCTRL1_DBEXIT_MASK		BIT(CDETCTRL1_DBEXIT_SHIFT)
++#define MAX14577_CDETCTRL1_DCHKTM_MASK	BIT(MAX14577_CDETCTRL1_DCHKTM_SHIFT)
++#define MAX77836_CDETCTRL1_CDDLY_MASK	BIT(MAX77836_CDETCTRL1_CDDLY_SHIFT)
++#define MAX14577_CDETCTRL1_DBEXIT_MASK	BIT(MAX14577_CDETCTRL1_DBEXIT_SHIFT)
++#define MAX77836_CDETCTRL1_DCDCPL_MASK	BIT(MAX77836_CDETCTRL1_DCDCPL_SHIFT)
+ #define CDETCTRL1_DBIDLE_MASK		BIT(CDETCTRL1_DBIDLE_SHIFT)
+ #define CDETCTRL1_CDPDET_MASK		BIT(CDETCTRL1_CDPDET_SHIFT)
+ 
 -- 
 1.9.1
