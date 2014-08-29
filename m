@@ -1,164 +1,234 @@
-From: Alexey Kardashevskiy <aik@ozlabs.ru>
-Subject: [PATCH 02/13] powerpc/powernv: Make invalidate() a callback
-Date: Fri, 29 Aug 2014 17:59:05 +1000
-Message-ID: <1409299156-618-3-git-send-email-aik@ozlabs.ru>
+From: Alexey Kardashevskiy <aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>
+Subject: [PATCH 08/13] powerpc/powernv: Release replaced TCE
+Date: Fri, 29 Aug 2014 17:59:11 +1000
+Message-ID: <1409299156-618-9-git-send-email-aik@ozlabs.ru>
 References: <1409299156-618-1-git-send-email-aik@ozlabs.ru>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <1409299156-618-1-git-send-email-aik@ozlabs.ru>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: linuxppc-dev@lists.ozlabs.org
-Cc: cbe-oss-dev@lists.ozlabs.org, kvm@vger.kernel.org, Alexey Kardashevskiy <aik@ozlabs.ru>, Gavin Shan <gwshan@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, Alex Williamson <alex.williamson@redhat.com>, Paul Mackerras <paulus@samba.org>, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1409299156-618-1-git-send-email-aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
+Cc: Alexey Kardashevskiy <aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Gavin Shan <gwshan-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cbe-oss-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-QXQgdGhlIG1vbWVudCBwbnZfcGNpX2lvZGFfdGNlX2ludmFsaWRhdGUoKSBnZXRzIHRoZSBQRSBw
-b2ludGVyIHZpYQpjb250YWluZXJfb2YodGJsKS4gU2luY2Ugd2UgYXJlIGdvaW5nIHRvIGhhdmUg
-dG8gYWRkIER5bmFtaWMgRE1BIHdpbmRvd3MKYW5kIHRoYXQgbWVhbnMgaGF2aW5nIDIgSU9NTVUg
-dGFibGVzIHBlciBQRSwgdGhpcyBpcyBub3QgZ29pbmcgdG8gd29yay4KClRoaXMgaW1wbGVtZW50
-cyBwbnZfcGNpX2lvZGEoMXwyKV90Y2VfaW52YWxpZGF0ZSBhcyBhIHBudl9pb2RhX3BlIGNhbGxi
-YWNrLgoKVGhpcyBhZGRzIGEgcG52X2lvbW11X3RhYmxlIHdyYXBwZXIgYXJvdW5kIGlvbW11X3Rh
-YmxlIGFuZCBzdG9yZXMgYSBwb2ludGVyCnRvIFBFIHRoZXJlLiBQTlYncyBwcGNfbWQudGNlX2J1
-aWxkKCkgY2FsbCB1c2VzIHRoaXMgdG8gZmluZCBQRSBhbmQKZG8gdGhlIGludmFsaWRhdGlvbi4g
-VGhpcyB3aWxsIGJlIHVzZWQgbGF0ZXIgZm9yIER5bmFtaWMgRE1BIHdpbmRvd3MgdG9vLgoKVGhp
-cyByZWdpc3RlcnMgaW52YWxpZGF0ZSgpIGNhbGxiYWNrcyBmb3IgSU9EQTEgYW5kIElPREEyOgot
-IHBudl9wY2lfaW9kYTFfdGNlX2ludmFsaWRhdGU7Ci0gcG52X3BjaV9pb2RhMl90Y2VfaW52YWxp
-ZGF0ZS4KClNpZ25lZC1vZmYtYnk6IEFsZXhleSBLYXJkYXNoZXZza2l5IDxhaWtAb3psYWJzLnJ1
-PgotLS0KIGFyY2gvcG93ZXJwYy9wbGF0Zm9ybXMvcG93ZXJudi9wY2ktaW9kYS5jIHwgMzUgKysr
-KysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLQogYXJjaC9wb3dlcnBjL3BsYXRmb3Jtcy9wb3dl
-cm52L3BjaS5jICAgICAgfCAzMSArKysrKysrKysrKysrKysrKysrKy0tLS0tLS0KIGFyY2gvcG93
-ZXJwYy9wbGF0Zm9ybXMvcG93ZXJudi9wY2kuaCAgICAgIHwgMTMgKysrKysrKysrKystCiAzIGZp
-bGVzIGNoYW5nZWQsIDQ4IGluc2VydGlvbnMoKyksIDMxIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdp
-dCBhL2FyY2gvcG93ZXJwYy9wbGF0Zm9ybXMvcG93ZXJudi9wY2ktaW9kYS5jIGIvYXJjaC9wb3dl
-cnBjL3BsYXRmb3Jtcy9wb3dlcm52L3BjaS1pb2RhLmMKaW5kZXggZGYyNDFiMS4uMTM2ZTc2NSAx
-MDA2NDQKLS0tIGEvYXJjaC9wb3dlcnBjL3BsYXRmb3Jtcy9wb3dlcm52L3BjaS1pb2RhLmMKKysr
-IGIvYXJjaC9wb3dlcnBjL3BsYXRmb3Jtcy9wb3dlcm52L3BjaS1pb2RhLmMKQEAgLTg1Nyw3ICs4
-NTcsNyBAQCBzdGF0aWMgdm9pZCBwbnZfcGNpX2lvZGFfZG1hX2Rldl9zZXR1cChzdHJ1Y3QgcG52
-X3BoYiAqcGhiLCBzdHJ1Y3QgcGNpX2RldiAqcGRldgogCiAJcGUgPSAmcGhiLT5pb2RhLnBlX2Fy
-cmF5W3Bkbi0+cGVfbnVtYmVyXTsKIAlXQVJOX09OKGdldF9kbWFfb3BzKCZwZGV2LT5kZXYpICE9
-ICZkbWFfaW9tbXVfb3BzKTsKLQlzZXRfaW9tbXVfdGFibGVfYmFzZV9hbmRfZ3JvdXAoJnBkZXYt
-PmRldiwgJnBlLT50Y2UzMl90YWJsZSk7CisJc2V0X2lvbW11X3RhYmxlX2Jhc2VfYW5kX2dyb3Vw
-KCZwZGV2LT5kZXYsICZwZS0+dGNlMzIudGFibGUpOwogfQogCiBzdGF0aWMgaW50IHBudl9wY2lf
-aW9kYV9kbWFfc2V0X21hc2soc3RydWN0IHBudl9waGIgKnBoYiwKQEAgLTg4NCw3ICs4ODQsNyBA
-QCBzdGF0aWMgaW50IHBudl9wY2lfaW9kYV9kbWFfc2V0X21hc2soc3RydWN0IHBudl9waGIgKnBo
-YiwKIAl9IGVsc2UgewogCQlkZXZfaW5mbygmcGRldi0+ZGV2LCAiVXNpbmcgMzItYml0IERNQSB2
-aWEgaW9tbXVcbiIpOwogCQlzZXRfZG1hX29wcygmcGRldi0+ZGV2LCAmZG1hX2lvbW11X29wcyk7
-Ci0JCXNldF9pb21tdV90YWJsZV9iYXNlKCZwZGV2LT5kZXYsICZwZS0+dGNlMzJfdGFibGUpOwor
-CQlzZXRfaW9tbXVfdGFibGVfYmFzZSgmcGRldi0+ZGV2LCAmcGUtPnRjZTMyLnRhYmxlKTsKIAl9
-CiAJKnBkZXYtPmRldi5kbWFfbWFzayA9IGRtYV9tYXNrOwogCXJldHVybiAwOwpAQCAtODk5LDkg
-Kzg5OSw5IEBAIHN0YXRpYyB2b2lkIHBudl9pb2RhX3NldHVwX2J1c19kbWEoc3RydWN0IHBudl9p
-b2RhX3BlICpwZSwKIAlsaXN0X2Zvcl9lYWNoX2VudHJ5KGRldiwgJmJ1cy0+ZGV2aWNlcywgYnVz
-X2xpc3QpIHsKIAkJaWYgKGFkZF90b19pb21tdV9ncm91cCkKIAkJCXNldF9pb21tdV90YWJsZV9i
-YXNlX2FuZF9ncm91cCgmZGV2LT5kZXYsCi0JCQkJCQkgICAgICAgJnBlLT50Y2UzMl90YWJsZSk7
-CisJCQkJCQkgICAgICAgJnBlLT50Y2UzMi50YWJsZSk7CiAJCWVsc2UKLQkJCXNldF9pb21tdV90
-YWJsZV9iYXNlKCZkZXYtPmRldiwgJnBlLT50Y2UzMl90YWJsZSk7CisJCQlzZXRfaW9tbXVfdGFi
-bGVfYmFzZSgmZGV2LT5kZXYsICZwZS0+dGNlMzIudGFibGUpOwogCiAJCWlmIChkZXYtPnN1Ym9y
-ZGluYXRlKQogCQkJcG52X2lvZGFfc2V0dXBfYnVzX2RtYShwZSwgZGV2LT5zdWJvcmRpbmF0ZSwK
-QEAgLTk4OCwxOSArOTg4LDYgQEAgc3RhdGljIHZvaWQgcG52X3BjaV9pb2RhMl90Y2VfaW52YWxp
-ZGF0ZShzdHJ1Y3QgcG52X2lvZGFfcGUgKnBlLAogCX0KIH0KIAotdm9pZCBwbnZfcGNpX2lvZGFf
-dGNlX2ludmFsaWRhdGUoc3RydWN0IGlvbW11X3RhYmxlICp0YmwsCi0JCQkJIF9fYmU2NCAqc3Rh
-cnRwLCBfX2JlNjQgKmVuZHAsIGJvb2wgcm0pCi17Ci0Jc3RydWN0IHBudl9pb2RhX3BlICpwZSA9
-IGNvbnRhaW5lcl9vZih0YmwsIHN0cnVjdCBwbnZfaW9kYV9wZSwKLQkJCQkJICAgICAgdGNlMzJf
-dGFibGUpOwotCXN0cnVjdCBwbnZfcGhiICpwaGIgPSBwZS0+cGhiOwotCi0JaWYgKHBoYi0+dHlw
-ZSA9PSBQTlZfUEhCX0lPREExKQotCQlwbnZfcGNpX2lvZGExX3RjZV9pbnZhbGlkYXRlKHBlLCB0
-YmwsIHN0YXJ0cCwgZW5kcCwgcm0pOwotCWVsc2UKLQkJcG52X3BjaV9pb2RhMl90Y2VfaW52YWxp
-ZGF0ZShwZSwgdGJsLCBzdGFydHAsIGVuZHAsIHJtKTsKLX0KLQogc3RhdGljIHZvaWQgcG52X3Bj
-aV9pb2RhX3NldHVwX2RtYV9wZShzdHJ1Y3QgcG52X3BoYiAqcGhiLAogCQkJCSAgICAgIHN0cnVj
-dCBwbnZfaW9kYV9wZSAqcGUsIHVuc2lnbmVkIGludCBiYXNlLAogCQkJCSAgICAgIHVuc2lnbmVk
-IGludCBzZWdzKQpAQCAtMTA1OCw5ICsxMDQ1LDExIEBAIHN0YXRpYyB2b2lkIHBudl9wY2lfaW9k
-YV9zZXR1cF9kbWFfcGUoc3RydWN0IHBudl9waGIgKnBoYiwKIAl9CiAKIAkvKiBTZXR1cCBsaW51
-eCBpb21tdSB0YWJsZSAqLwotCXRibCA9ICZwZS0+dGNlMzJfdGFibGU7CisJdGJsID0gJnBlLT50
-Y2UzMi50YWJsZTsKIAlwbnZfcGNpX3NldHVwX2lvbW11X3RhYmxlKHRibCwgYWRkciwgVENFMzJf
-VEFCTEVfU0laRSAqIHNlZ3MsCiAJCQkJICBiYXNlIDw8IDI4LCBJT01NVV9QQUdFX1NISUZUXzRL
-KTsKKwlwZS0+dGNlMzIucGUgPSBwZTsKKwlwZS0+dGNlMzIuaW52YWxpZGF0ZV9mbiA9IHBudl9w
-Y2lfaW9kYTFfdGNlX2ludmFsaWRhdGU7CiAKIAkvKiBPUEFMIHZhcmlhbnQgb2YgUDdJT0MgU1cg
-aW52YWxpZGF0ZWQgVENFcyAqLwogCXN3aW52cCA9IG9mX2dldF9wcm9wZXJ0eShwaGItPmhvc2Ut
-PmRuLCAiaWJtLG9wYWwtdGNlLWtpbGwiLCBOVUxMKTsKQEAgLTEwOTcsNyArMTA4Niw3IEBAIHN0
-YXRpYyB2b2lkIHBudl9wY2lfaW9kYV9zZXR1cF9kbWFfcGUoc3RydWN0IHBudl9waGIgKnBoYiwK
-IHN0YXRpYyB2b2lkIHBudl9wY2lfaW9kYTJfc2V0X2J5cGFzcyhzdHJ1Y3QgaW9tbXVfdGFibGUg
-KnRibCwgYm9vbCBlbmFibGUpCiB7CiAJc3RydWN0IHBudl9pb2RhX3BlICpwZSA9IGNvbnRhaW5l
-cl9vZih0YmwsIHN0cnVjdCBwbnZfaW9kYV9wZSwKLQkJCQkJICAgICAgdGNlMzJfdGFibGUpOwor
-CQkJCQkgICAgICB0Y2UzMi50YWJsZSk7CiAJdWludDE2X3Qgd2luZG93X2lkID0gKHBlLT5wZV9u
-dW1iZXIgPDwgMSApICsgMTsKIAlpbnQ2NF90IHJjOwogCkBAIC0xMTQyLDEwICsxMTMxLDEwIEBA
-IHN0YXRpYyB2b2lkIHBudl9wY2lfaW9kYTJfc2V0dXBfYnlwYXNzX3BlKHN0cnVjdCBwbnZfcGhi
-ICpwaGIsCiAJcGUtPnRjZV9ieXBhc3NfYmFzZSA9IDF1bGwgPDwgNTk7CiAKIAkvKiBJbnN0YWxs
-IHNldF9ieXBhc3MgY2FsbGJhY2sgZm9yIFZGSU8gKi8KLQlwZS0+dGNlMzJfdGFibGUuc2V0X2J5
-cGFzcyA9IHBudl9wY2lfaW9kYTJfc2V0X2J5cGFzczsKKwlwZS0+dGNlMzIudGFibGUuc2V0X2J5
-cGFzcyA9IHBudl9wY2lfaW9kYTJfc2V0X2J5cGFzczsKIAogCS8qIEVuYWJsZSBieXBhc3MgYnkg
-ZGVmYXVsdCAqLwotCXBudl9wY2lfaW9kYTJfc2V0X2J5cGFzcygmcGUtPnRjZTMyX3RhYmxlLCB0
-cnVlKTsKKwlwbnZfcGNpX2lvZGEyX3NldF9ieXBhc3MoJnBlLT50Y2UzMi50YWJsZSwgdHJ1ZSk7
-CiB9CiAKIHN0YXRpYyB2b2lkIHBudl9wY2lfaW9kYTJfc2V0dXBfZG1hX3BlKHN0cnVjdCBwbnZf
-cGhiICpwaGIsCkBAIC0xMTkzLDkgKzExODIsMTEgQEAgc3RhdGljIHZvaWQgcG52X3BjaV9pb2Rh
-Ml9zZXR1cF9kbWFfcGUoc3RydWN0IHBudl9waGIgKnBoYiwKIAl9CiAKIAkvKiBTZXR1cCBsaW51
-eCBpb21tdSB0YWJsZSAqLwotCXRibCA9ICZwZS0+dGNlMzJfdGFibGU7CisJdGJsID0gJnBlLT50
-Y2UzMi50YWJsZTsKIAlwbnZfcGNpX3NldHVwX2lvbW11X3RhYmxlKHRibCwgYWRkciwgdGNlX3Rh
-YmxlX3NpemUsIDAsCiAJCQlJT01NVV9QQUdFX1NISUZUXzRLKTsKKwlwZS0+dGNlMzIucGUgPSBw
-ZTsKKwlwZS0+dGNlMzIuaW52YWxpZGF0ZV9mbiA9IHBudl9wY2lfaW9kYTJfdGNlX2ludmFsaWRh
-dGU7CiAKIAkvKiBPUEFMIHZhcmlhbnQgb2YgUEhCMyBpbnZhbGlkYXRlZCBUQ0VzICovCiAJc3dp
-bnZwID0gb2ZfZ2V0X3Byb3BlcnR5KHBoYi0+aG9zZS0+ZG4sICJpYm0sb3BhbC10Y2Uta2lsbCIs
-IE5VTEwpOwpkaWZmIC0tZ2l0IGEvYXJjaC9wb3dlcnBjL3BsYXRmb3Jtcy9wb3dlcm52L3BjaS5j
-IGIvYXJjaC9wb3dlcnBjL3BsYXRmb3Jtcy9wb3dlcm52L3BjaS5jCmluZGV4IGI4NTRiNTcuLjk3
-ODk1ZDQgMTAwNjQ0Ci0tLSBhL2FyY2gvcG93ZXJwYy9wbGF0Zm9ybXMvcG93ZXJudi9wY2kuYwor
-KysgYi9hcmNoL3Bvd2VycGMvcGxhdGZvcm1zL3Bvd2VybnYvcGNpLmMKQEAgLTU5OSw2ICs1OTks
-MjcgQEAgc3RydWN0IHBjaV9vcHMgcG52X3BjaV9vcHMgPSB7CiAJLndyaXRlID0gcG52X3BjaV93
-cml0ZV9jb25maWcsCiB9OwogCitzdGF0aWMgdm9pZCBwbnZfdGNlX2ludmFsaWRhdGUoc3RydWN0
-IGlvbW11X3RhYmxlICp0YmwsIF9fYmU2NCAqc3RhcnRwLAorCV9fYmU2NCAqZW5kcCwgYm9vbCBy
-bSkKK3sKKwlzdHJ1Y3QgcG52X2lvbW11X3RhYmxlICpwdGJsID0gY29udGFpbmVyX29mKHRibCwK
-KwkJCXN0cnVjdCBwbnZfaW9tbXVfdGFibGUsIHRhYmxlKTsKKwlzdHJ1Y3QgcG52X2lvZGFfcGUg
-KnBlID0gcHRibC0+cGU7CisKKwkvKgorCSAqIFNvbWUgaW1wbGVtZW50YXRpb25zIHdvbid0IGNh
-Y2hlIGludmFsaWQgVENFcyBhbmQgdGh1cyBtYXkgbm90CisJICogbmVlZCB0aGF0IGZsdXNoLiBX
-ZSdsbCBwcm9iYWJseSB0dXJuIGl0X3R5cGUgaW50byBhIGJpdCBtYXNrCisJICogb2YgZmxhZ3Mg
-aWYgdGhhdCBiZWNvbWVzIHRoZSBjYXNlCisJICovCisJaWYgKCEodGJsLT5pdF90eXBlICYgVENF
-X1BDSV9TV0lOVl9GUkVFKSkKKwkJcmV0dXJuOworCisJaWYgKCFwZSB8fCAhcHRibC0+aW52YWxp
-ZGF0ZV9mbikKKwkJcmV0dXJuOworCisJcHRibC0+aW52YWxpZGF0ZV9mbihwZSwgdGJsLCBzdGFy
-dHAsIGVuZHAsIHJtKTsKK30KKwogc3RhdGljIGludCBwbnZfdGNlX2J1aWxkKHN0cnVjdCBpb21t
-dV90YWJsZSAqdGJsLCBsb25nIGluZGV4LCBsb25nIG5wYWdlcywKIAkJCSB1bnNpZ25lZCBsb25n
-IHVhZGRyLCBlbnVtIGRtYV9kYXRhX2RpcmVjdGlvbiBkaXJlY3Rpb24sCiAJCQkgc3RydWN0IGRt
-YV9hdHRycyAqYXR0cnMsIGJvb2wgcm0pCkBAIC02MTksMTIgKzY0MCw3IEBAIHN0YXRpYyBpbnQg
-cG52X3RjZV9idWlsZChzdHJ1Y3QgaW9tbXVfdGFibGUgKnRibCwgbG9uZyBpbmRleCwgbG9uZyBu
-cGFnZXMsCiAJCSoodGNlcCsrKSA9IGNwdV90b19iZTY0KHByb3RvX3RjZSB8CiAJCQkJKHJwbisr
-IDw8IHRibC0+aXRfcGFnZV9zaGlmdCkpOwogCi0JLyogU29tZSBpbXBsZW1lbnRhdGlvbnMgd29u
-J3QgY2FjaGUgaW52YWxpZCBUQ0VzIGFuZCB0aHVzIG1heSBub3QKLQkgKiBuZWVkIHRoYXQgZmx1
-c2guIFdlJ2xsIHByb2JhYmx5IHR1cm4gaXRfdHlwZSBpbnRvIGEgYml0IG1hc2sKLQkgKiBvZiBm
-bGFncyBpZiB0aGF0IGJlY29tZXMgdGhlIGNhc2UKLQkgKi8KLQlpZiAodGJsLT5pdF90eXBlICYg
-VENFX1BDSV9TV0lOVl9DUkVBVEUpCi0JCXBudl9wY2lfaW9kYV90Y2VfaW52YWxpZGF0ZSh0Ymws
-IHRjZXMsIHRjZXAgLSAxLCBybSk7CisJcG52X3RjZV9pbnZhbGlkYXRlKHRibCwgdGNlcywgdGNl
-cCAtIDEsIHJtKTsKIAogCXJldHVybiAwOwogfQpAQCAtNjQ4LDggKzY2NCw3IEBAIHN0YXRpYyB2
-b2lkIHBudl90Y2VfZnJlZShzdHJ1Y3QgaW9tbXVfdGFibGUgKnRibCwgbG9uZyBpbmRleCwgbG9u
-ZyBucGFnZXMsCiAJd2hpbGUgKG5wYWdlcy0tKQogCQkqKHRjZXArKykgPSBjcHVfdG9fYmU2NCgw
-KTsKIAotCWlmICh0YmwtPml0X3R5cGUgJiBUQ0VfUENJX1NXSU5WX0ZSRUUpCi0JCXBudl9wY2lf
-aW9kYV90Y2VfaW52YWxpZGF0ZSh0YmwsIHRjZXMsIHRjZXAgLSAxLCBybSk7CisJcG52X3RjZV9p
-bnZhbGlkYXRlKHRibCwgdGNlcywgdGNlcCAtIDEsIHJtKTsKIH0KIAogc3RhdGljIHZvaWQgcG52
-X3RjZV9mcmVlX3ZtKHN0cnVjdCBpb21tdV90YWJsZSAqdGJsLCBsb25nIGluZGV4LCBsb25nIG5w
-YWdlcykKZGlmZiAtLWdpdCBhL2FyY2gvcG93ZXJwYy9wbGF0Zm9ybXMvcG93ZXJudi9wY2kuaCBi
-L2FyY2gvcG93ZXJwYy9wbGF0Zm9ybXMvcG93ZXJudi9wY2kuaAppbmRleCA0ODQ5NGQ0Li4wOTVk
-YjQzIDEwMDY0NAotLS0gYS9hcmNoL3Bvd2VycGMvcGxhdGZvcm1zL3Bvd2VybnYvcGNpLmgKKysr
-IGIvYXJjaC9wb3dlcnBjL3BsYXRmb3Jtcy9wb3dlcm52L3BjaS5oCkBAIC0yNCw2ICsyNCwxNyBA
-QCBlbnVtIHBudl9waGJfbW9kZWwgewogI2RlZmluZSBQTlZfSU9EQV9QRV9NQVNURVIJKDEgPDwg
-MykJLyogTWFzdGVyIFBFIGluIGNvbXBvdW5kIGNhc2UJKi8KICNkZWZpbmUgUE5WX0lPREFfUEVf
-U0xBVkUJKDEgPDwgNCkJLyogU2xhdmUgUEUgaW4gY29tcG91bmQgY2FzZQkqLwogCitzdHJ1Y3Qg
-cG52X2lvZGFfcGU7Cit0eXBlZGVmIHZvaWQgKCpwbnZfaW52YWxpZGF0ZV9mbikoc3RydWN0IHBu
-dl9pb2RhX3BlICpwZSwKKwkJc3RydWN0IGlvbW11X3RhYmxlICp0YmwsCisJCV9fYmU2NCAqc3Rh
-cnRwLCBfX2JlNjQgKmVuZHAsIGJvb2wgcm0pOworCitzdHJ1Y3QgcG52X2lvbW11X3RhYmxlIHsK
-KwlzdHJ1Y3QgaW9tbXVfdGFibGUJdGFibGU7CisJc3RydWN0IHBudl9pb2RhX3BlCSpwZTsKKwlw
-bnZfaW52YWxpZGF0ZV9mbglpbnZhbGlkYXRlX2ZuOworfTsKKwogLyogRGF0YSBhc3NvY2lhdGVk
-IHdpdGggYSBQRSwgaW5jbHVkaW5nIElPTU1VIHRyYWNraW5nIGV0Yy4uICovCiBzdHJ1Y3QgcG52
-X3BoYjsKIHN0cnVjdCBwbnZfaW9kYV9wZSB7CkBAIC01Myw3ICs2NCw3IEBAIHN0cnVjdCBwbnZf
-aW9kYV9wZSB7CiAJLyogIkJhc2UiIGlvbW11IHRhYmxlLCBpZSwgNEsgVENFcywgMzItYml0IERN
-QSAqLwogCWludAkJCXRjZTMyX3NlZzsKIAlpbnQJCQl0Y2UzMl9zZWdjb3VudDsKLQlzdHJ1Y3Qg
-aW9tbXVfdGFibGUJdGNlMzJfdGFibGU7CisJc3RydWN0IHBudl9pb21tdV90YWJsZQl0Y2UzMjsK
-IAlwaHlzX2FkZHJfdAkJdGNlX2ludmFsX3JlZ19waHlzOwogCiAJLyogNjQtYml0IFRDRSBieXBh
-c3MgcmVnaW9uICovCi0tIAoyLjAuMAoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX18KTGludXhwcGMtZGV2IG1haWxpbmcgbGlzdApMaW51eHBwYy1kZXZAbGlz
-dHMub3psYWJzLm9yZwpodHRwczovL2xpc3RzLm96bGFicy5vcmcvbGlzdGluZm8vbGludXhwcGMt
-ZGV2
+At the moment writing new TCE value to the IOMMU table fails with EBUSY
+if there is a valid entry already. However PAPR specification allows
+the guest to write new TCE value without clearing it first.
+
+Another problem this patch is addressing is the use of pool locks for
+external IOMMU users such as VFIO. The pool locks are to protect
+DMA page allocator rather than entries and since the host kernel does
+not control what pages are in use, there is no point in pool locks and
+exchange()+put_page(oldtce) is sufficient to avoid possible races.
+
+This adds an exchange() callback to iommu_table_ops which does the same
+thing as set() plus it returns replaced TCE(s) so the caller can release
+the pages afterwards.
+
+This makes iommu_tce_build() put pages returned by exchange().
+
+This replaces iommu_clear_tce() with iommu_tce_build which now
+can call exchange() with TCE==NULL (i.e. clear).
+
+This preserves permission bits in TCE in iommu_put_tce_user_mode().
+
+This removes use of pool locks for external IOMMU uses.
+
+This disables external IOMMU use (i.e. VFIO) for IOMMUs which do not
+implement exchange() callback. Therefore the "powernv" platform is
+the only supported one after this patch.
+
+Signed-off-by: Alexey Kardashevskiy <aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>
+---
+ arch/powerpc/include/asm/iommu.h     |  8 +++--
+ arch/powerpc/kernel/iommu.c          | 62 ++++++++++++------------------------
+ arch/powerpc/platforms/powernv/pci.c | 40 +++++++++++++++++++++++
+ 3 files changed, 67 insertions(+), 43 deletions(-)
+
+diff --git a/arch/powerpc/include/asm/iommu.h b/arch/powerpc/include/asm/iommu.h
+index c725e4a..8e0537d 100644
+--- a/arch/powerpc/include/asm/iommu.h
++++ b/arch/powerpc/include/asm/iommu.h
+@@ -49,6 +49,12 @@ struct iommu_table_ops {
+ 			unsigned long uaddr,
+ 			enum dma_data_direction direction,
+ 			struct dma_attrs *attrs);
++	int (*exchange)(struct iommu_table *tbl,
++			long index, long npages,
++			unsigned long uaddr,
++			unsigned long *old_tces,
++			enum dma_data_direction direction,
++			struct dma_attrs *attrs);
+ 	void (*clear)(struct iommu_table *tbl,
+ 			long index, long npages);
+ 	unsigned long (*get)(struct iommu_table *tbl, long index);
+@@ -209,8 +215,6 @@ extern int iommu_tce_put_param_check(struct iommu_table *tbl,
+ 		unsigned long ioba, unsigned long tce);
+ extern int iommu_tce_build(struct iommu_table *tbl, unsigned long entry,
+ 		unsigned long hwaddr, enum dma_data_direction direction);
+-extern unsigned long iommu_clear_tce(struct iommu_table *tbl,
+-		unsigned long entry);
+ extern int iommu_clear_tces_and_put_pages(struct iommu_table *tbl,
+ 		unsigned long entry, unsigned long pages);
+ extern int iommu_put_tce_user_mode(struct iommu_table *tbl,
+diff --git a/arch/powerpc/kernel/iommu.c b/arch/powerpc/kernel/iommu.c
+index 678fee8..39ccce7 100644
+--- a/arch/powerpc/kernel/iommu.c
++++ b/arch/powerpc/kernel/iommu.c
+@@ -1006,43 +1006,11 @@ int iommu_tce_put_param_check(struct iommu_table *tbl,
+ }
+ EXPORT_SYMBOL_GPL(iommu_tce_put_param_check);
+ 
+-unsigned long iommu_clear_tce(struct iommu_table *tbl, unsigned long entry)
+-{
+-	unsigned long oldtce;
+-	struct iommu_pool *pool = get_pool(tbl, entry);
+-
+-	spin_lock(&(pool->lock));
+-
+-	oldtce = tbl->it_ops->get(tbl, entry);
+-	if (oldtce & (TCE_PCI_WRITE | TCE_PCI_READ))
+-		tbl->it_ops->clear(tbl, entry, 1);
+-	else
+-		oldtce = 0;
+-
+-	spin_unlock(&(pool->lock));
+-
+-	return oldtce;
+-}
+-EXPORT_SYMBOL_GPL(iommu_clear_tce);
+-
+ int iommu_clear_tces_and_put_pages(struct iommu_table *tbl,
+ 		unsigned long entry, unsigned long pages)
+ {
+-	unsigned long oldtce;
+-	struct page *page;
+-
+ 	for ( ; pages; --pages, ++entry) {
+-		oldtce = iommu_clear_tce(tbl, entry);
+-		if (!oldtce)
+-			continue;
+-
+-		page = pfn_to_page(oldtce >> PAGE_SHIFT);
+-		WARN_ON(!page);
+-		if (page) {
+-			if (oldtce & TCE_PCI_WRITE)
+-				SetPageDirty(page);
+-			put_page(page);
+-		}
++		iommu_tce_build(tbl, entry, 0, DMA_NONE);
+ 	}
+ 
+ 	return 0;
+@@ -1056,18 +1024,19 @@ EXPORT_SYMBOL_GPL(iommu_clear_tces_and_put_pages);
+ int iommu_tce_build(struct iommu_table *tbl, unsigned long entry,
+ 		unsigned long hwaddr, enum dma_data_direction direction)
+ {
+-	int ret = -EBUSY;
++	int ret;
+ 	unsigned long oldtce;
+-	struct iommu_pool *pool = get_pool(tbl, entry);
+ 
+-	spin_lock(&(pool->lock));
++	ret = tbl->it_ops->exchange(tbl, entry, 1, hwaddr, &oldtce,
++			direction, NULL);
+ 
+-	oldtce = tbl->it_ops->get(tbl, entry);
+-	/* Add new entry if it is not busy */
+-	if (!(oldtce & (TCE_PCI_WRITE | TCE_PCI_READ)))
+-		ret = tbl->it_ops->set(tbl, entry, 1, hwaddr, direction, NULL);
++	if (oldtce & (TCE_PCI_WRITE | TCE_PCI_READ)) {
++		struct page *pg = pfn_to_page(__pa(oldtce) >> PAGE_SHIFT);
+ 
+-	spin_unlock(&(pool->lock));
++		if (oldtce & TCE_PCI_WRITE)
++			SetPageDirty(pg);
++		put_page(pg);
++	}
+ 
+ 	/* if (unlikely(ret))
+ 		pr_err("iommu_tce: %s failed on hwaddr=%lx ioba=%lx kva=%lx ret=%d\n",
+@@ -1111,6 +1080,7 @@ int iommu_put_tce_user_mode(struct iommu_table *tbl, unsigned long entry,
+ 	}
+ 
+ 	hwaddr = (unsigned long) page_address(page) + offset;
++	hwaddr |= tce & (TCE_PCI_READ | TCE_PCI_WRITE);
+ 
+ 	ret = iommu_tce_build(tbl, entry, hwaddr, direction);
+ 	if (ret)
+@@ -1133,6 +1103,16 @@ int iommu_take_ownership(struct iommu_table *tbl)
+ 	unsigned long flags, i, sz = (tbl->it_size + 7) >> 3;
+ 	int ret = 0, bit0 = 0;
+ 
++	/*
++	 * VFIO does not control TCE entries allocation and the guest
++	 * can write new TCEs on top of existing ones so iommu_tce_build()
++	 * must be able to release old pages. This functionality
++	 * requires exchange() callback defined so if it is not
++	 * implemented, we disallow taking ownership over the table.
++	 */
++	if (!tbl->it_ops->exchange)
++		return -EINVAL;
++
+ 	spin_lock_irqsave(&tbl->large_pool.lock, flags);
+ 	for (i = 0; i < tbl->nr_pools; i++)
+ 		spin_lock(&tbl->pools[i].lock);
+diff --git a/arch/powerpc/platforms/powernv/pci.c b/arch/powerpc/platforms/powernv/pci.c
+index ab79e2d..fd1ecc8 100644
+--- a/arch/powerpc/platforms/powernv/pci.c
++++ b/arch/powerpc/platforms/powernv/pci.c
+@@ -662,6 +662,45 @@ static int pnv_tce_build_vm(struct iommu_table *tbl, long index, long npages,
+ 			false);
+ }
+ 
++static int pnv_tce_xchg_vm(struct iommu_table *tbl, long index,
++			   long npages,
++			   unsigned long uaddr, unsigned long *old_tces,
++			   enum dma_data_direction direction,
++			   struct dma_attrs *attrs)
++{
++	u64 rpn, proto_tce;
++	__be64 *tcep, *tces;
++	long i;
++
++	switch (direction) {
++	case DMA_BIDIRECTIONAL:
++	case DMA_FROM_DEVICE:
++		proto_tce = TCE_PCI_READ | TCE_PCI_WRITE;
++		break;
++	case DMA_TO_DEVICE:
++		proto_tce = TCE_PCI_READ;
++		break;
++	default:
++		proto_tce = 0;
++		break;
++	}
++
++	tces = tcep = ((__be64 *)tbl->it_base) + index - tbl->it_offset;
++	rpn = __pa(uaddr) >> tbl->it_page_shift;
++
++	for (i = 0; i < npages; i++) {
++		unsigned long oldtce = xchg(tcep, cpu_to_be64(proto_tce |
++				(rpn++ << tbl->it_page_shift)));
++
++		old_tces[i] = (unsigned long) __va(oldtce);
++		tcep++;
++	}
++
++	pnv_tce_invalidate(tbl, tces, tcep - 1, false);
++
++	return 0;
++}
++
+ static void pnv_tce_free(struct iommu_table *tbl, long index, long npages,
+ 		bool rm)
+ {
+@@ -687,6 +726,7 @@ static unsigned long pnv_tce_get(struct iommu_table *tbl, long index)
+ 
+ struct iommu_table_ops pnv_iommu_ops = {
+ 	.set = pnv_tce_build_vm,
++	.exchange = pnv_tce_xchg_vm,
+ 	.clear = pnv_tce_free_vm,
+ 	.get = pnv_tce_get,
+ };
+-- 
+2.0.0
