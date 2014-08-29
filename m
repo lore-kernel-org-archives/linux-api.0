@@ -1,647 +1,137 @@
-From: Alexey Kardashevskiy <aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>
-Subject: [PATCH 06/13] powerpc/iommu: Move tce_xxx callbacks from ppc_md to iommu_table
-Date: Fri, 29 Aug 2014 17:59:09 +1000
-Message-ID: <1409299156-618-7-git-send-email-aik@ozlabs.ru>
+From: Alexey Kardashevskiy <aik@ozlabs.ru>
+Subject: [PATCH 04/13] powerpc/powernv: Convert/move set_bypass() callback to
+ take_ownership()
+Date: Fri, 29 Aug 2014 17:59:07 +1000
+Message-ID: <1409299156-618-5-git-send-email-aik@ozlabs.ru>
 References: <1409299156-618-1-git-send-email-aik@ozlabs.ru>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1409299156-618-1-git-send-email-aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
-Cc: Alexey Kardashevskiy <aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Gavin Shan <gwshan-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cbe-oss-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <1409299156-618-1-git-send-email-aik@ozlabs.ru>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: linuxppc-dev@lists.ozlabs.org
+Cc: cbe-oss-dev@lists.ozlabs.org, kvm@vger.kernel.org, Alexey Kardashevskiy <aik@ozlabs.ru>, Gavin Shan <gwshan@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, Alex Williamson <alex.williamson@redhat.com>, Paul Mackerras <paulus@samba.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds a iommu_table_ops struct and puts pointer to it into
-the iommu_table struct. This moves tce_build/tce_free/tce_get/tce_flush
-callbacks from ppc_md to the new struct where they really belong to.
-
-This adds an extra @ops parameter to iommu_init_table() to make sure
-that we do not leave any IOMMU table without iommu_table_ops. @it_ops is
-initialized in the very beginning as iommu_init_table() calls
-iommu_table_clear() and the latter uses callbacks already.
-
-This does s/tce_build/set/, s/tce_free/clear/ and removes "tce_" prefixes
-for better readability.
-
-This removes tce_xxx_rm handlers from ppc_md as well but does not add
-them to iommu_table_ops, this will be done later if we decide to support
-TCE hypercalls in real mode.
-
-This always uses tce_buildmulti_pSeriesLP/tce_buildmulti_pSeriesLP as
-callbacks for pseries. This changes "multi" callbacks to fall back to
-tce_build_pSeriesLP/tce_free_pSeriesLP if FW_FEATURE_MULTITCE is not
-present. The reason for this is we still have to support "multitce=off"
-boot parameter in disable_multitce() and we do not want to walk through
-all IOMMU tables in the system and replace "multi" callbacks with single
-ones.
-
-Signed-off-by: Alexey Kardashevskiy <aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>
----
- arch/powerpc/include/asm/iommu.h            | 20 +++++++++++-
- arch/powerpc/include/asm/machdep.h          | 25 ---------------
- arch/powerpc/kernel/iommu.c                 | 50 ++++++++++++++++-------------
- arch/powerpc/kernel/vio.c                   |  5 ++-
- arch/powerpc/platforms/cell/iommu.c         |  9 ++++--
- arch/powerpc/platforms/pasemi/iommu.c       |  8 +++--
- arch/powerpc/platforms/powernv/pci-ioda.c   |  4 +--
- arch/powerpc/platforms/powernv/pci-p5ioc2.c |  3 +-
- arch/powerpc/platforms/powernv/pci.c        | 24 ++++----------
- arch/powerpc/platforms/powernv/pci.h        |  1 +
- arch/powerpc/platforms/pseries/iommu.c      | 42 +++++++++++++-----------
- arch/powerpc/sysdev/dart_iommu.c            | 13 ++++----
- 12 files changed, 102 insertions(+), 102 deletions(-)
-
-diff --git a/arch/powerpc/include/asm/iommu.h b/arch/powerpc/include/asm/iommu.h
-index 2b0b01d..c725e4a 100644
---- a/arch/powerpc/include/asm/iommu.h
-+++ b/arch/powerpc/include/asm/iommu.h
-@@ -43,6 +43,22 @@
- extern int iommu_is_off;
- extern int iommu_force_on;
- 
-+struct iommu_table_ops {
-+	int (*set)(struct iommu_table *tbl,
-+			long index, long npages,
-+			unsigned long uaddr,
-+			enum dma_data_direction direction,
-+			struct dma_attrs *attrs);
-+	void (*clear)(struct iommu_table *tbl,
-+			long index, long npages);
-+	unsigned long (*get)(struct iommu_table *tbl, long index);
-+	void (*flush)(struct iommu_table *tbl);
-+};
-+
-+/* These are used by VIO */
-+extern struct iommu_table_ops iommu_table_lpar_multi_ops;
-+extern struct iommu_table_ops iommu_table_pseries_ops;
-+
- /*
-  * IOMAP_MAX_ORDER defines the largest contiguous block
-  * of dma space we can get.  IOMAP_MAX_ORDER = 13
-@@ -77,6 +93,7 @@ struct iommu_table {
- #ifdef CONFIG_IOMMU_API
- 	struct iommu_group *it_group;
- #endif
-+	struct iommu_table_ops *it_ops;
- };
- 
- /* Pure 2^n version of get_order */
-@@ -106,7 +123,8 @@ extern void iommu_free_table(struct iommu_table *tbl, const char *node_name);
-  * structure
-  */
- extern struct iommu_table *iommu_init_table(struct iommu_table * tbl,
--					    int nid);
-+					    int nid,
-+					    struct iommu_table_ops *ops);
- 
- struct spapr_tce_iommu_ops;
- #ifdef CONFIG_IOMMU_API
-diff --git a/arch/powerpc/include/asm/machdep.h b/arch/powerpc/include/asm/machdep.h
-index b125cea..1fc824d 100644
---- a/arch/powerpc/include/asm/machdep.h
-+++ b/arch/powerpc/include/asm/machdep.h
-@@ -65,31 +65,6 @@ struct machdep_calls {
- 	 * destroyed as well */
- 	void		(*hpte_clear_all)(void);
- 
--	int		(*tce_build)(struct iommu_table *tbl,
--				     long index,
--				     long npages,
--				     unsigned long uaddr,
--				     enum dma_data_direction direction,
--				     struct dma_attrs *attrs);
--	void		(*tce_free)(struct iommu_table *tbl,
--				    long index,
--				    long npages);
--	unsigned long	(*tce_get)(struct iommu_table *tbl,
--				    long index);
--	void		(*tce_flush)(struct iommu_table *tbl);
--
--	/* _rm versions are for real mode use only */
--	int		(*tce_build_rm)(struct iommu_table *tbl,
--				     long index,
--				     long npages,
--				     unsigned long uaddr,
--				     enum dma_data_direction direction,
--				     struct dma_attrs *attrs);
--	void		(*tce_free_rm)(struct iommu_table *tbl,
--				    long index,
--				    long npages);
--	void		(*tce_flush_rm)(struct iommu_table *tbl);
--
- 	void __iomem *	(*ioremap)(phys_addr_t addr, unsigned long size,
- 				   unsigned long flags, void *caller);
- 	void		(*iounmap)(volatile void __iomem *token);
-diff --git a/arch/powerpc/kernel/iommu.c b/arch/powerpc/kernel/iommu.c
-index cd80867..678fee8 100644
---- a/arch/powerpc/kernel/iommu.c
-+++ b/arch/powerpc/kernel/iommu.c
-@@ -323,11 +323,11 @@ static dma_addr_t iommu_alloc(struct device *dev, struct iommu_table *tbl,
- 	ret = entry << tbl->it_page_shift;	/* Set the return dma address */
- 
- 	/* Put the TCEs in the HW table */
--	build_fail = ppc_md.tce_build(tbl, entry, npages,
-+	build_fail = tbl->it_ops->set(tbl, entry, npages,
- 				      (unsigned long)page &
- 				      IOMMU_PAGE_MASK(tbl), direction, attrs);
- 
--	/* ppc_md.tce_build() only returns non-zero for transient errors.
-+	/* tbl->it_ops->set() only returns non-zero for transient errors.
- 	 * Clean up the table bitmap in this case and return
- 	 * DMA_ERROR_CODE. For all other errors the functionality is
- 	 * not altered.
-@@ -338,8 +338,8 @@ static dma_addr_t iommu_alloc(struct device *dev, struct iommu_table *tbl,
- 	}
- 
- 	/* Flush/invalidate TLB caches if necessary */
--	if (ppc_md.tce_flush)
--		ppc_md.tce_flush(tbl);
-+	if (tbl->it_ops->flush)
-+		tbl->it_ops->flush(tbl);
- 
- 	/* Make sure updates are seen by hardware */
- 	mb();
-@@ -409,7 +409,7 @@ static void __iommu_free(struct iommu_table *tbl, dma_addr_t dma_addr,
- 	if (!iommu_free_check(tbl, dma_addr, npages))
- 		return;
- 
--	ppc_md.tce_free(tbl, entry, npages);
-+	tbl->it_ops->clear(tbl, entry, npages);
- 
- 	spin_lock_irqsave(&(pool->lock), flags);
- 	bitmap_clear(tbl->it_map, free_entry, npages);
-@@ -425,8 +425,8 @@ static void iommu_free(struct iommu_table *tbl, dma_addr_t dma_addr,
- 	 * not do an mb() here on purpose, it is not needed on any of
- 	 * the current platforms.
- 	 */
--	if (ppc_md.tce_flush)
--		ppc_md.tce_flush(tbl);
-+	if (tbl->it_ops->flush)
-+		tbl->it_ops->flush(tbl);
- }
- 
- int iommu_map_sg(struct device *dev, struct iommu_table *tbl,
-@@ -496,7 +496,7 @@ int iommu_map_sg(struct device *dev, struct iommu_table *tbl,
- 			    npages, entry, dma_addr);
- 
- 		/* Insert into HW table */
--		build_fail = ppc_md.tce_build(tbl, entry, npages,
-+		build_fail = tbl->it_ops->set(tbl, entry, npages,
- 					      vaddr & IOMMU_PAGE_MASK(tbl),
- 					      direction, attrs);
- 		if(unlikely(build_fail))
-@@ -535,8 +535,8 @@ int iommu_map_sg(struct device *dev, struct iommu_table *tbl,
- 	}
- 
- 	/* Flush/invalidate TLB caches if necessary */
--	if (ppc_md.tce_flush)
--		ppc_md.tce_flush(tbl);
-+	if (tbl->it_ops->flush)
-+		tbl->it_ops->flush(tbl);
- 
- 	DBG("mapped %d elements:\n", outcount);
- 
-@@ -601,8 +601,8 @@ void iommu_unmap_sg(struct iommu_table *tbl, struct scatterlist *sglist,
- 	 * do not do an mb() here, the affected platforms do not need it
- 	 * when freeing.
- 	 */
--	if (ppc_md.tce_flush)
--		ppc_md.tce_flush(tbl);
-+	if (tbl->it_ops->flush)
-+		tbl->it_ops->flush(tbl);
- }
- 
- static void iommu_table_clear(struct iommu_table *tbl)
-@@ -614,17 +614,17 @@ static void iommu_table_clear(struct iommu_table *tbl)
- 	 */
- 	if (!is_kdump_kernel() || is_fadump_active()) {
- 		/* Clear the table in case firmware left allocations in it */
--		ppc_md.tce_free(tbl, tbl->it_offset, tbl->it_size);
-+		tbl->it_ops->clear(tbl, tbl->it_offset, tbl->it_size);
- 		return;
- 	}
- 
- #ifdef CONFIG_CRASH_DUMP
--	if (ppc_md.tce_get) {
-+	if (tbl->it_ops->get) {
- 		unsigned long index, tceval, tcecount = 0;
- 
- 		/* Reserve the existing mappings left by the first kernel. */
- 		for (index = 0; index < tbl->it_size; index++) {
--			tceval = ppc_md.tce_get(tbl, index + tbl->it_offset);
-+			tceval = tbl->it_ops->get(tbl, index + tbl->it_offset);
- 			/*
- 			 * Freed TCE entry contains 0x7fffffffffffffff on JS20
- 			 */
-@@ -650,7 +650,8 @@ static void iommu_table_clear(struct iommu_table *tbl)
-  * Build a iommu_table structure.  This contains a bit map which
-  * is used to manage allocation of the tce space.
-  */
--struct iommu_table *iommu_init_table(struct iommu_table *tbl, int nid)
-+struct iommu_table *iommu_init_table(struct iommu_table *tbl, int nid,
-+		struct iommu_table_ops *ops)
- {
- 	unsigned long sz;
- 	static int welcomed = 0;
-@@ -658,6 +659,9 @@ struct iommu_table *iommu_init_table(struct iommu_table *tbl, int nid)
- 	unsigned int i;
- 	struct iommu_pool *p;
- 
-+	BUG_ON(!ops);
-+	tbl->it_ops = ops;
-+
- 	/* number of bytes needed for the bitmap */
- 	sz = BITS_TO_LONGS(tbl->it_size) * sizeof(unsigned long);
- 
-@@ -949,8 +953,8 @@ EXPORT_SYMBOL_GPL(iommu_tce_direction);
- void iommu_flush_tce(struct iommu_table *tbl)
- {
- 	/* Flush/invalidate TLB caches if necessary */
--	if (ppc_md.tce_flush)
--		ppc_md.tce_flush(tbl);
-+	if (tbl->it_ops->flush)
-+		tbl->it_ops->flush(tbl);
- 
- 	/* Make sure updates are seen by hardware */
- 	mb();
-@@ -961,7 +965,7 @@ int iommu_tce_clear_param_check(struct iommu_table *tbl,
- 		unsigned long ioba, unsigned long tce_value,
- 		unsigned long npages)
- {
--	/* ppc_md.tce_free() does not support any value but 0 */
-+	/* tbl->it_ops->clear() does not support any value but 0 */
- 	if (tce_value)
- 		return -EINVAL;
- 
-@@ -1009,9 +1013,9 @@ unsigned long iommu_clear_tce(struct iommu_table *tbl, unsigned long entry)
- 
- 	spin_lock(&(pool->lock));
- 
--	oldtce = ppc_md.tce_get(tbl, entry);
-+	oldtce = tbl->it_ops->get(tbl, entry);
- 	if (oldtce & (TCE_PCI_WRITE | TCE_PCI_READ))
--		ppc_md.tce_free(tbl, entry, 1);
-+		tbl->it_ops->clear(tbl, entry, 1);
- 	else
- 		oldtce = 0;
- 
-@@ -1058,10 +1062,10 @@ int iommu_tce_build(struct iommu_table *tbl, unsigned long entry,
- 
- 	spin_lock(&(pool->lock));
- 
--	oldtce = ppc_md.tce_get(tbl, entry);
-+	oldtce = tbl->it_ops->get(tbl, entry);
- 	/* Add new entry if it is not busy */
- 	if (!(oldtce & (TCE_PCI_WRITE | TCE_PCI_READ)))
--		ret = ppc_md.tce_build(tbl, entry, 1, hwaddr, direction, NULL);
-+		ret = tbl->it_ops->set(tbl, entry, 1, hwaddr, direction, NULL);
- 
- 	spin_unlock(&(pool->lock));
- 
-diff --git a/arch/powerpc/kernel/vio.c b/arch/powerpc/kernel/vio.c
-index 5bfdab9..c61ce7a 100644
---- a/arch/powerpc/kernel/vio.c
-+++ b/arch/powerpc/kernel/vio.c
-@@ -1196,7 +1196,10 @@ static struct iommu_table *vio_build_iommu_table(struct vio_dev *dev)
- 	tbl->it_type = TCE_VB;
- 	tbl->it_blocksize = 16;
- 
--	return iommu_init_table(tbl, -1);
-+	return iommu_init_table(tbl, -1,
-+			firmware_has_feature(FW_FEATURE_LPAR) ?
-+			&iommu_table_lpar_multi_ops :
-+			&iommu_table_pseries_ops);
- }
- 
- /**
-diff --git a/arch/powerpc/platforms/cell/iommu.c b/arch/powerpc/platforms/cell/iommu.c
-index 2b90ff8..f6254f7 100644
---- a/arch/powerpc/platforms/cell/iommu.c
-+++ b/arch/powerpc/platforms/cell/iommu.c
-@@ -465,6 +465,11 @@ static inline u32 cell_iommu_get_ioid(struct device_node *np)
- 	return *ioid;
- }
- 
-+static struct iommu_table_ops cell_iommu_ops = {
-+	.set = tce_build_cell,
-+	.clear = tce_free_cell
-+};
-+
- static struct iommu_window * __init
- cell_iommu_setup_window(struct cbe_iommu *iommu, struct device_node *np,
- 			unsigned long offset, unsigned long size,
-@@ -492,7 +497,7 @@ cell_iommu_setup_window(struct cbe_iommu *iommu, struct device_node *np,
- 		(offset >> window->table.it_page_shift) + pte_offset;
- 	window->table.it_size = size >> window->table.it_page_shift;
- 
--	iommu_init_table(&window->table, iommu->nid);
-+	iommu_init_table(&window->table, iommu->nid, &cell_iommu_ops);
- 
- 	pr_debug("\tioid      %d\n", window->ioid);
- 	pr_debug("\tblocksize %ld\n", window->table.it_blocksize);
-@@ -1199,8 +1204,6 @@ static int __init cell_iommu_init(void)
- 	/* Setup various ppc_md. callbacks */
- 	ppc_md.pci_dma_dev_setup = cell_pci_dma_dev_setup;
- 	ppc_md.dma_get_required_mask = cell_dma_get_required_mask;
--	ppc_md.tce_build = tce_build_cell;
--	ppc_md.tce_free = tce_free_cell;
- 
- 	if (!iommu_fixed_disabled && cell_iommu_fixed_mapping_init() == 0)
- 		goto bail;
-diff --git a/arch/powerpc/platforms/pasemi/iommu.c b/arch/powerpc/platforms/pasemi/iommu.c
-index 2e576f2..eac33f4 100644
---- a/arch/powerpc/platforms/pasemi/iommu.c
-+++ b/arch/powerpc/platforms/pasemi/iommu.c
-@@ -132,6 +132,10 @@ static void iobmap_free(struct iommu_table *tbl, long index,
- 	}
- }
- 
-+static struct iommu_table_ops iommu_table_iobmap_ops = {
-+	.set = iobmap_build,
-+	.clear  = iobmap_free
-+};
- 
- static void iommu_table_iobmap_setup(void)
- {
-@@ -151,7 +155,7 @@ static void iommu_table_iobmap_setup(void)
- 	 * Should probably be 8 (64 bytes)
- 	 */
- 	iommu_table_iobmap.it_blocksize = 4;
--	iommu_init_table(&iommu_table_iobmap, 0);
-+	iommu_init_table(&iommu_table_iobmap, 0, &iommu_table_iobmap_ops);
- 	pr_debug(" <- %s\n", __func__);
- }
- 
-@@ -250,8 +254,6 @@ void __init iommu_init_early_pasemi(void)
- 
- 	ppc_md.pci_dma_dev_setup = pci_dma_dev_setup_pasemi;
- 	ppc_md.pci_dma_bus_setup = pci_dma_bus_setup_pasemi;
--	ppc_md.tce_build = iobmap_build;
--	ppc_md.tce_free  = iobmap_free;
- 	set_pci_dma_ops(&dma_iommu_ops);
- }
- 
-diff --git a/arch/powerpc/platforms/powernv/pci-ioda.c b/arch/powerpc/platforms/powernv/pci-ioda.c
-index 8cb2f31..296f49b 100644
---- a/arch/powerpc/platforms/powernv/pci-ioda.c
-+++ b/arch/powerpc/platforms/powernv/pci-ioda.c
-@@ -1087,7 +1087,7 @@ static void pnv_pci_ioda_setup_dma_pe(struct pnv_phb *phb,
- 				 TCE_PCI_SWINV_FREE   |
- 				 TCE_PCI_SWINV_PAIR);
- 	}
--	iommu_init_table(tbl, phb->hose->node);
-+	iommu_init_table(tbl, phb->hose->node, &pnv_iommu_ops);
- 	iommu_register_group(tbl, pe, &pnv_pci_ioda1_ops,
- 			phb->hose->global_number, pe->pe_number);
- 
-@@ -1231,7 +1231,7 @@ static void pnv_pci_ioda2_setup_dma_pe(struct pnv_phb *phb,
- 				8);
- 		tbl->it_type |= (TCE_PCI_SWINV_CREATE | TCE_PCI_SWINV_FREE);
- 	}
--	iommu_init_table(tbl, phb->hose->node);
-+	iommu_init_table(tbl, phb->hose->node, &pnv_iommu_ops);
- 	iommu_register_group(tbl, pe, &pnv_pci_ioda2_ops,
- 			phb->hose->global_number, pe->pe_number);
- 
-diff --git a/arch/powerpc/platforms/powernv/pci-p5ioc2.c b/arch/powerpc/platforms/powernv/pci-p5ioc2.c
-index b79066d..ea97414 100644
---- a/arch/powerpc/platforms/powernv/pci-p5ioc2.c
-+++ b/arch/powerpc/platforms/powernv/pci-p5ioc2.c
-@@ -87,7 +87,8 @@ static void pnv_pci_p5ioc2_dma_dev_setup(struct pnv_phb *phb,
- 					 struct pci_dev *pdev)
- {
- 	if (phb->p5ioc2.iommu_table.it_map == NULL) {
--		iommu_init_table(&phb->p5ioc2.iommu_table, phb->hose->node);
-+		iommu_init_table(&phb->p5ioc2.iommu_table, phb->hose->node,
-+				&pnv_iommu_ops);
- 		iommu_register_group(&phb->p5ioc2.iommu_table,
- 				NULL, NULL,
- 				pci_domain_nr(phb->hose->bus), phb->opal_id);
-diff --git a/arch/powerpc/platforms/powernv/pci.c b/arch/powerpc/platforms/powernv/pci.c
-index 6ffac79..deddcad 100644
---- a/arch/powerpc/platforms/powernv/pci.c
-+++ b/arch/powerpc/platforms/powernv/pci.c
-@@ -677,18 +677,11 @@ static unsigned long pnv_tce_get(struct iommu_table *tbl, long index)
- 	return ((u64 *)tbl->it_base)[index - tbl->it_offset];
- }
- 
--static int pnv_tce_build_rm(struct iommu_table *tbl, long index, long npages,
--			    unsigned long uaddr,
--			    enum dma_data_direction direction,
--			    struct dma_attrs *attrs)
--{
--	return pnv_tce_build(tbl, index, npages, uaddr, direction, attrs, true);
--}
--
--static void pnv_tce_free_rm(struct iommu_table *tbl, long index, long npages)
--{
--	pnv_tce_free(tbl, index, npages, true);
--}
-+struct iommu_table_ops pnv_iommu_ops = {
-+	.set = pnv_tce_build_vm,
-+	.clear = pnv_tce_free_vm,
-+	.get = pnv_tce_get,
-+};
- 
- void pnv_pci_setup_iommu_table(struct iommu_table *tbl,
- 			       void *tce_mem, u64 tce_size,
-@@ -722,7 +715,7 @@ static struct iommu_table *pnv_pci_setup_bml_iommu(struct pci_controller *hose)
- 		return NULL;
- 	pnv_pci_setup_iommu_table(tbl, __va(be64_to_cpup(basep)),
- 				  be32_to_cpup(sizep), 0, IOMMU_PAGE_SHIFT_4K);
--	iommu_init_table(tbl, hose->node);
-+	iommu_init_table(tbl, hose->node, &pnv_iommu_ops);
- 	iommu_register_group(tbl, NULL, NULL, pci_domain_nr(hose->bus), 0);
- 
- 	/* Deal with SW invalidated TCEs when needed (BML way) */
-@@ -865,11 +858,6 @@ void __init pnv_pci_init(void)
- 
- 	/* Configure IOMMU DMA hooks */
- 	ppc_md.pci_dma_dev_setup = pnv_pci_dma_dev_setup;
--	ppc_md.tce_build = pnv_tce_build_vm;
--	ppc_md.tce_free = pnv_tce_free_vm;
--	ppc_md.tce_build_rm = pnv_tce_build_rm;
--	ppc_md.tce_free_rm = pnv_tce_free_rm;
--	ppc_md.tce_get = pnv_tce_get;
- 	ppc_md.pci_probe_mode = pnv_pci_probe_mode;
- 	set_pci_dma_ops(&dma_iommu_ops);
- 
-diff --git a/arch/powerpc/platforms/powernv/pci.h b/arch/powerpc/platforms/powernv/pci.h
-index 095db43..cf68c4b 100644
---- a/arch/powerpc/platforms/powernv/pci.h
-+++ b/arch/powerpc/platforms/powernv/pci.h
-@@ -223,6 +223,7 @@ extern struct pci_ops pnv_pci_ops;
- #ifdef CONFIG_EEH
- extern struct pnv_eeh_ops ioda_eeh_ops;
- #endif
-+extern struct iommu_table_ops pnv_iommu_ops;
- 
- void pnv_pci_dump_phb_diag_data(struct pci_controller *hose,
- 				unsigned char *log_buff);
-diff --git a/arch/powerpc/platforms/pseries/iommu.c b/arch/powerpc/platforms/pseries/iommu.c
-index b95f8cf..9a7364f 100644
---- a/arch/powerpc/platforms/pseries/iommu.c
-+++ b/arch/powerpc/platforms/pseries/iommu.c
-@@ -193,7 +193,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 	int ret = 0;
- 	unsigned long flags;
- 
--	if (npages == 1) {
-+	if ((npages == 1) || !firmware_has_feature(FW_FEATURE_MULTITCE)) {
- 		return tce_build_pSeriesLP(tbl, tcenum, npages, uaddr,
- 		                           direction, attrs);
- 	}
-@@ -285,6 +285,9 @@ static void tce_freemulti_pSeriesLP(struct iommu_table *tbl, long tcenum, long n
- {
- 	u64 rc;
- 
-+	if (!firmware_has_feature(FW_FEATURE_MULTITCE))
-+		return tce_free_pSeriesLP(tbl, tcenum, npages);
-+
- 	rc = plpar_tce_stuff((u64)tbl->it_index, (u64)tcenum << 12, 0, npages);
- 
- 	if (rc && printk_ratelimit()) {
-@@ -460,7 +463,6 @@ static int tce_setrange_multi_pSeriesLP_walk(unsigned long start_pfn,
- 	return tce_setrange_multi_pSeriesLP(start_pfn, num_pfn, arg);
- }
- 
--
- #ifdef CONFIG_PCI
- static void iommu_table_setparms(struct pci_controller *phb,
- 				 struct device_node *dn,
-@@ -546,6 +548,12 @@ static void iommu_table_setparms_lpar(struct pci_controller *phb,
- 	tbl->it_size = size >> tbl->it_page_shift;
- }
- 
-+struct iommu_table_ops iommu_table_pseries_ops = {
-+	.set = tce_build_pSeries,
-+	.clear = tce_free_pSeries,
-+	.get = tce_get_pseries
-+};
-+
- static void pci_dma_bus_setup_pSeries(struct pci_bus *bus)
- {
- 	struct device_node *dn;
-@@ -615,7 +623,8 @@ static void pci_dma_bus_setup_pSeries(struct pci_bus *bus)
- 			   pci->phb->node);
- 
- 	iommu_table_setparms(pci->phb, dn, tbl);
--	pci->iommu_table = iommu_init_table(tbl, pci->phb->node);
-+	pci->iommu_table = iommu_init_table(tbl, pci->phb->node,
-+			&iommu_table_pseries_ops);
- 	iommu_register_group(tbl, NULL, NULL, pci_domain_nr(bus), 0);
- 
- 	/* Divide the rest (1.75GB) among the children */
-@@ -626,6 +635,11 @@ static void pci_dma_bus_setup_pSeries(struct pci_bus *bus)
- 	pr_debug("ISA/IDE, window size is 0x%llx\n", pci->phb->dma_window_size);
- }
- 
-+struct iommu_table_ops iommu_table_lpar_multi_ops = {
-+	.set = tce_buildmulti_pSeriesLP,
-+	.clear = tce_freemulti_pSeriesLP,
-+	.get = tce_get_pSeriesLP
-+};
- 
- static void pci_dma_bus_setup_pSeriesLP(struct pci_bus *bus)
- {
-@@ -660,7 +674,8 @@ static void pci_dma_bus_setup_pSeriesLP(struct pci_bus *bus)
- 		tbl = kzalloc_node(sizeof(struct iommu_table), GFP_KERNEL,
- 				   ppci->phb->node);
- 		iommu_table_setparms_lpar(ppci->phb, pdn, tbl, dma_window);
--		ppci->iommu_table = iommu_init_table(tbl, ppci->phb->node);
-+		ppci->iommu_table = iommu_init_table(tbl, ppci->phb->node,
-+				&iommu_table_lpar_multi_ops);
- 		iommu_register_group(tbl, NULL, NULL, pci_domain_nr(bus), 0);
- 		pr_debug("  created table: %p\n", ppci->iommu_table);
- 	}
-@@ -687,7 +702,8 @@ static void pci_dma_dev_setup_pSeries(struct pci_dev *dev)
- 		tbl = kzalloc_node(sizeof(struct iommu_table), GFP_KERNEL,
- 				   phb->node);
- 		iommu_table_setparms(phb, dn, tbl);
--		PCI_DN(dn)->iommu_table = iommu_init_table(tbl, phb->node);
-+		PCI_DN(dn)->iommu_table = iommu_init_table(tbl, phb->node,
-+				&iommu_table_pseries_ops);
- 		iommu_register_group(tbl, NULL, NULL,
- 				pci_domain_nr(phb->bus), 0);
- 		set_iommu_table_base_and_group(&dev->dev,
-@@ -1105,7 +1121,8 @@ static void pci_dma_dev_setup_pSeriesLP(struct pci_dev *dev)
- 		tbl = kzalloc_node(sizeof(struct iommu_table), GFP_KERNEL,
- 				   pci->phb->node);
- 		iommu_table_setparms_lpar(pci->phb, pdn, tbl, dma_window);
--		pci->iommu_table = iommu_init_table(tbl, pci->phb->node);
-+		pci->iommu_table = iommu_init_table(tbl, pci->phb->node,
-+				&iommu_table_lpar_multi_ops);
- 		iommu_register_group(tbl, NULL, NULL,
- 				pci_domain_nr(pci->phb->bus), 0);
- 		pr_debug("  created table: %p\n", pci->iommu_table);
-@@ -1297,22 +1314,11 @@ void iommu_init_early_pSeries(void)
- 		return;
- 
- 	if (firmware_has_feature(FW_FEATURE_LPAR)) {
--		if (firmware_has_feature(FW_FEATURE_MULTITCE)) {
--			ppc_md.tce_build = tce_buildmulti_pSeriesLP;
--			ppc_md.tce_free	 = tce_freemulti_pSeriesLP;
--		} else {
--			ppc_md.tce_build = tce_build_pSeriesLP;
--			ppc_md.tce_free	 = tce_free_pSeriesLP;
--		}
--		ppc_md.tce_get   = tce_get_pSeriesLP;
- 		ppc_md.pci_dma_bus_setup = pci_dma_bus_setup_pSeriesLP;
- 		ppc_md.pci_dma_dev_setup = pci_dma_dev_setup_pSeriesLP;
- 		ppc_md.dma_set_mask = dma_set_mask_pSeriesLP;
- 		ppc_md.dma_get_required_mask = dma_get_required_mask_pSeriesLP;
- 	} else {
--		ppc_md.tce_build = tce_build_pSeries;
--		ppc_md.tce_free  = tce_free_pSeries;
--		ppc_md.tce_get   = tce_get_pseries;
- 		ppc_md.pci_dma_bus_setup = pci_dma_bus_setup_pSeries;
- 		ppc_md.pci_dma_dev_setup = pci_dma_dev_setup_pSeries;
- 	}
-@@ -1330,8 +1336,6 @@ static int __init disable_multitce(char *str)
- 	    firmware_has_feature(FW_FEATURE_LPAR) &&
- 	    firmware_has_feature(FW_FEATURE_MULTITCE)) {
- 		printk(KERN_INFO "Disabling MULTITCE firmware feature\n");
--		ppc_md.tce_build = tce_build_pSeriesLP;
--		ppc_md.tce_free	 = tce_free_pSeriesLP;
- 		powerpc_firmware_features &= ~FW_FEATURE_MULTITCE;
- 	}
- 	return 1;
-diff --git a/arch/powerpc/sysdev/dart_iommu.c b/arch/powerpc/sysdev/dart_iommu.c
-index 9e5353f..27721f5 100644
---- a/arch/powerpc/sysdev/dart_iommu.c
-+++ b/arch/powerpc/sysdev/dart_iommu.c
-@@ -286,6 +286,12 @@ static int __init dart_init(struct device_node *dart_node)
- 	return 0;
- }
- 
-+static struct iommu_table_ops iommu_dart_ops = {
-+	.set = dart_build,
-+	.clear = dart_free,
-+	.flush = dart_flush,
-+};
-+
- static void iommu_table_dart_setup(void)
- {
- 	iommu_table_dart.it_busno = 0;
-@@ -298,7 +304,7 @@ static void iommu_table_dart_setup(void)
- 	iommu_table_dart.it_base = (unsigned long)dart_vbase;
- 	iommu_table_dart.it_index = 0;
- 	iommu_table_dart.it_blocksize = 1;
--	iommu_init_table(&iommu_table_dart, -1);
-+	iommu_init_table(&iommu_table_dart, -1, &iommu_dart_ops);
- 
- 	/* Reserve the last page of the DART to avoid possible prefetch
- 	 * past the DART mapped area
-@@ -386,11 +392,6 @@ void __init iommu_init_early_dart(void)
- 	if (dart_init(dn) != 0)
- 		goto bail;
- 
--	/* Setup low level TCE operations for the core IOMMU code */
--	ppc_md.tce_build = dart_build;
--	ppc_md.tce_free  = dart_free;
--	ppc_md.tce_flush = dart_flush;
--
- 	/* Setup bypass if supported */
- 	if (dart_is_u4)
- 		ppc_md.dma_set_mask = dart_dma_set_mask;
--- 
-2.0.0
+QXQgdGhlIG1vbWVudCB0aGUgaW9tbXVfdGFibGUgc3RydWN0IGhhcyBhIHNldF9ieXBhc3MoKSB3
+aGljaCBlbmFibGVzLwpkaXNhYmxlcyBETUEgYnlwYXNzIG9uIElPREEyIFBIQi4gVGhpcyBpcyBl
+eHBvc2VkIHRvIFBPV0VSUEMgSU9NTVUgY29kZQp3aGljaCBjYWxscyB0aGlzIGNhbGxiYWNrIHdo
+ZW4gZXh0ZXJuYWwgSU9NTVUgdXNlcnMgc3VjaCBhcyBWRklPIGFyZQphYm91dCB0byBnZXQgb3Zl
+ciBhIFBIQi4KClNpbmNlIHRoZSBzZXRfYnlwYXNzKCkgaXMgbm90IHJlYWxseSBhbiBpb21tdV90
+YWJsZSBmdW5jdGlvbiBidXQgUEUncwpmdW5jdGlvbiwgYW5kIHdlIGhhdmUgYW4gb3BzIHN0cnVj
+dCBwZXIgSU9NTVUgb3duZXIsIGxldCdzIG1vdmUKc2V0X2J5cGFzcygpIHRvIHRoZSBzcGFwcl90
+Y2VfaW9tbXVfb3BzIHN0cnVjdC4KCkFzIGFyY2gvcG93ZXJwYy9rZXJuZWwvaW9tbXUuYyBpcyBt
+b3JlIGFib3V0IFBPV0VSUEMgSU9NTVUgdGFibGVzIGFuZApoYXMgdmVyeSBsaXR0bGUgdG8gZG8g
+d2l0aCBQRXMsIHRoaXMgbW92ZXMgdGFrZV9vd25lcnNoaXAoKSBjYWxscyB0bwp0aGUgVkZJTyBT
+UEFQUiBUQ0UgZHJpdmVyLgoKVGhpcyByZW5hbWVzIHNldF9ieXBhc3MoKSB0byB0YWtlX293bmVy
+c2hpcCgpIGFzIGl0IGlzIG5vdCBuZWNlc3NhcmlseQpqdXN0IGVuYWJsaW5nIGJ5cGFzc2luZywg
+aXQgY2FuIGJlIHNvbWV0aGluZyBlbHNlL21vcmUgc28gbGV0J3MgZ2l2ZSBpdAphIGdlbmVyaWMg
+bmFtZS4gVGhlIGJvb2wgcGFyYW1ldGVyIGlzIGludmVydGVkLgoKU2lnbmVkLW9mZi1ieTogQWxl
+eGV5IEthcmRhc2hldnNraXkgPGFpa0BvemxhYnMucnU+ClJldmlld2VkLWJ5OiBHYXZpbiBTaGFu
+IDxnd3NoYW5AbGludXgudm5ldC5pYm0uY29tPgotLS0KIGFyY2gvcG93ZXJwYy9pbmNsdWRlL2Fz
+bS9pb21tdS5oICAgICAgICAgIHwgIDEgLQogYXJjaC9wb3dlcnBjL2luY2x1ZGUvYXNtL3RjZS5o
+ICAgICAgICAgICAgfCAgMiArKwogYXJjaC9wb3dlcnBjL2tlcm5lbC9pb21tdS5jICAgICAgICAg
+ICAgICAgfCAxMiAtLS0tLS0tLS0tLS0KIGFyY2gvcG93ZXJwYy9wbGF0Zm9ybXMvcG93ZXJudi9w
+Y2ktaW9kYS5jIHwgMjAgKysrKysrKysrKysrLS0tLS0tLS0KIGRyaXZlcnMvdmZpby92ZmlvX2lv
+bW11X3NwYXByX3RjZS5jICAgICAgIHwgMTYgKysrKysrKysrKysrKysrKwogNSBmaWxlcyBjaGFu
+Z2VkLCAzMCBpbnNlcnRpb25zKCspLCAyMSBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9hcmNo
+L3Bvd2VycGMvaW5jbHVkZS9hc20vaW9tbXUuaCBiL2FyY2gvcG93ZXJwYy9pbmNsdWRlL2FzbS9p
+b21tdS5oCmluZGV4IDg0ZWUzMzkuLjJiMGIwMWQgMTAwNjQ0Ci0tLSBhL2FyY2gvcG93ZXJwYy9p
+bmNsdWRlL2FzbS9pb21tdS5oCisrKyBiL2FyY2gvcG93ZXJwYy9pbmNsdWRlL2FzbS9pb21tdS5o
+CkBAIC03Nyw3ICs3Nyw2IEBAIHN0cnVjdCBpb21tdV90YWJsZSB7CiAjaWZkZWYgQ09ORklHX0lP
+TU1VX0FQSQogCXN0cnVjdCBpb21tdV9ncm91cCAqaXRfZ3JvdXA7CiAjZW5kaWYKLQl2b2lkICgq
+c2V0X2J5cGFzcykoc3RydWN0IGlvbW11X3RhYmxlICp0YmwsIGJvb2wgZW5hYmxlKTsKIH07CiAK
+IC8qIFB1cmUgMl5uIHZlcnNpb24gb2YgZ2V0X29yZGVyICovCmRpZmYgLS1naXQgYS9hcmNoL3Bv
+d2VycGMvaW5jbHVkZS9hc20vdGNlLmggYi9hcmNoL3Bvd2VycGMvaW5jbHVkZS9hc20vdGNlLmgK
+aW5kZXggOWYxNTllYi4uZTYzNTVmOSAxMDA2NDQKLS0tIGEvYXJjaC9wb3dlcnBjL2luY2x1ZGUv
+YXNtL3RjZS5oCisrKyBiL2FyY2gvcG93ZXJwYy9pbmNsdWRlL2FzbS90Y2UuaApAQCAtNTYsNiAr
+NTYsOCBAQCBzdHJ1Y3Qgc3BhcHJfdGNlX2lvbW11X29wcyB7CiAJc3RydWN0IGlvbW11X3RhYmxl
+ICooKmdldF90YWJsZSkoCiAJCQlzdHJ1Y3Qgc3BhcHJfdGNlX2lvbW11X2dyb3VwICpkYXRhLAog
+CQkJaW50IG51bSk7CisJdm9pZCAoKnRha2Vfb3duZXJzaGlwKShzdHJ1Y3Qgc3BhcHJfdGNlX2lv
+bW11X2dyb3VwICpkYXRhLAorCQkJYm9vbCBlbmFibGUpOwogfTsKIAogc3RydWN0IHNwYXByX3Rj
+ZV9pb21tdV9ncm91cCB7CmRpZmYgLS1naXQgYS9hcmNoL3Bvd2VycGMva2VybmVsL2lvbW11LmMg
+Yi9hcmNoL3Bvd2VycGMva2VybmVsL2lvbW11LmMKaW5kZXggMWM1ZGFlNy4uYzJjOGQ5ZCAxMDA2
+NDQKLS0tIGEvYXJjaC9wb3dlcnBjL2tlcm5lbC9pb21tdS5jCisrKyBiL2FyY2gvcG93ZXJwYy9r
+ZXJuZWwvaW9tbXUuYwpAQCAtMTEzOSwxNCArMTEzOSw2IEBAIGludCBpb21tdV90YWtlX293bmVy
+c2hpcChzdHJ1Y3QgaW9tbXVfdGFibGUgKnRibCkKIAltZW1zZXQodGJsLT5pdF9tYXAsIDB4ZmYs
+IHN6KTsKIAlpb21tdV9jbGVhcl90Y2VzX2FuZF9wdXRfcGFnZXModGJsLCB0YmwtPml0X29mZnNl
+dCwgdGJsLT5pdF9zaXplKTsKIAotCS8qCi0JICogRGlzYWJsZSBpb21tdSBieXBhc3MsIG90aGVy
+d2lzZSB0aGUgdXNlciBjYW4gRE1BIHRvIGFsbCBvZgotCSAqIG91ciBwaHlzaWNhbCBtZW1vcnkg
+dmlhIHRoZSBieXBhc3Mgd2luZG93IGluc3RlYWQgb2YganVzdAotCSAqIHRoZSBwYWdlcyB0aGF0
+IGhhcyBiZWVuIGV4cGxpY2l0bHkgbWFwcGVkIGludG8gdGhlIGlvbW11Ci0JICovCi0JaWYgKHRi
+bC0+c2V0X2J5cGFzcykKLQkJdGJsLT5zZXRfYnlwYXNzKHRibCwgZmFsc2UpOwotCiAJcmV0dXJu
+IDA7CiB9CiBFWFBPUlRfU1lNQk9MX0dQTChpb21tdV90YWtlX293bmVyc2hpcCk7CkBAIC0xMTYx
+LDEwICsxMTUzLDYgQEAgdm9pZCBpb21tdV9yZWxlYXNlX293bmVyc2hpcChzdHJ1Y3QgaW9tbXVf
+dGFibGUgKnRibCkKIAkvKiBSZXN0b3JlIGJpdCMwIHNldCBieSBpb21tdV9pbml0X3RhYmxlKCkg
+Ki8KIAlpZiAodGJsLT5pdF9vZmZzZXQgPT0gMCkKIAkJc2V0X2JpdCgwLCB0YmwtPml0X21hcCk7
+Ci0KLQkvKiBUaGUga2VybmVsIG93bnMgdGhlIGRldmljZSBub3csIHdlIGNhbiByZXN0b3JlIHRo
+ZSBpb21tdSBieXBhc3MgKi8KLQlpZiAodGJsLT5zZXRfYnlwYXNzKQotCQl0YmwtPnNldF9ieXBh
+c3ModGJsLCB0cnVlKTsKIH0KIEVYUE9SVF9TWU1CT0xfR1BMKGlvbW11X3JlbGVhc2Vfb3duZXJz
+aGlwKTsKIApkaWZmIC0tZ2l0IGEvYXJjaC9wb3dlcnBjL3BsYXRmb3Jtcy9wb3dlcm52L3BjaS1p
+b2RhLmMgYi9hcmNoL3Bvd2VycGMvcGxhdGZvcm1zL3Bvd2VybnYvcGNpLWlvZGEuYwppbmRleCAy
+ZDMyYTFjLi44Y2IyZjMxIDEwMDY0NAotLS0gYS9hcmNoL3Bvd2VycGMvcGxhdGZvcm1zL3Bvd2Vy
+bnYvcGNpLWlvZGEuYworKysgYi9hcmNoL3Bvd2VycGMvcGxhdGZvcm1zL3Bvd2VybnYvcGNpLWlv
+ZGEuYwpAQCAtMTEwNSwxMCArMTEwNSw4IEBAIHN0YXRpYyB2b2lkIHBudl9wY2lfaW9kYV9zZXR1
+cF9kbWFfcGUoc3RydWN0IHBudl9waGIgKnBoYiwKIAkJX19mcmVlX3BhZ2VzKHRjZV9tZW0sIGdl
+dF9vcmRlcihUQ0UzMl9UQUJMRV9TSVpFICogc2VncykpOwogfQogCi1zdGF0aWMgdm9pZCBwbnZf
+cGNpX2lvZGEyX3NldF9ieXBhc3Moc3RydWN0IGlvbW11X3RhYmxlICp0YmwsIGJvb2wgZW5hYmxl
+KQorc3RhdGljIHZvaWQgcG52X3BjaV9pb2RhMl9zZXRfYnlwYXNzKHN0cnVjdCBwbnZfaW9kYV9w
+ZSAqcGUsIGJvb2wgZW5hYmxlKQogewotCXN0cnVjdCBwbnZfaW9kYV9wZSAqcGUgPSBjb250YWlu
+ZXJfb2YodGJsLCBzdHJ1Y3QgcG52X2lvZGFfcGUsCi0JCQkJCSAgICAgIHRjZTMyLnRhYmxlKTsK
+IAl1aW50MTZfdCB3aW5kb3dfaWQgPSAocGUtPnBlX251bWJlciA8PCAxICkgKyAxOwogCWludDY0
+X3QgcmM7CiAKQEAgLTExMzYsNyArMTEzNCw3IEBAIHN0YXRpYyB2b2lkIHBudl9wY2lfaW9kYTJf
+c2V0X2J5cGFzcyhzdHJ1Y3QgaW9tbXVfdGFibGUgKnRibCwgYm9vbCBlbmFibGUpCiAJCSAqIGhv
+c3Qgc2lkZS4KIAkJICovCiAJCWlmIChwZS0+cGRldikKLQkJCXNldF9pb21tdV90YWJsZV9iYXNl
+KCZwZS0+cGRldi0+ZGV2LCB0YmwpOworCQkJc2V0X2lvbW11X3RhYmxlX2Jhc2UoJnBlLT5wZGV2
+LT5kZXYsICZwZS0+dGNlMzIudGFibGUpOwogCQllbHNlCiAJCQlwbnZfaW9kYV9zZXR1cF9idXNf
+ZG1hKHBlLCBwZS0+cGJ1cywgZmFsc2UpOwogCX0KQEAgLTExNTIsMTUgKzExNTAsMjEgQEAgc3Rh
+dGljIHZvaWQgcG52X3BjaV9pb2RhMl9zZXR1cF9ieXBhc3NfcGUoc3RydWN0IHBudl9waGIgKnBo
+YiwKIAkvKiBUVkUgIzEgaXMgc2VsZWN0ZWQgYnkgUENJIGFkZHJlc3MgYml0IDU5ICovCiAJcGUt
+PnRjZV9ieXBhc3NfYmFzZSA9IDF1bGwgPDwgNTk7CiAKLQkvKiBJbnN0YWxsIHNldF9ieXBhc3Mg
+Y2FsbGJhY2sgZm9yIFZGSU8gKi8KLQlwZS0+dGNlMzIudGFibGUuc2V0X2J5cGFzcyA9IHBudl9w
+Y2lfaW9kYTJfc2V0X2J5cGFzczsKLQogCS8qIEVuYWJsZSBieXBhc3MgYnkgZGVmYXVsdCAqLwot
+CXBudl9wY2lfaW9kYTJfc2V0X2J5cGFzcygmcGUtPnRjZTMyLnRhYmxlLCB0cnVlKTsKKwlwbnZf
+cGNpX2lvZGEyX3NldF9ieXBhc3MocGUsIHRydWUpOworfQorCitzdGF0aWMgdm9pZCBwbnZfaW9k
+YTJfdGFrZV9vd25lcnNoaXAoc3RydWN0IHNwYXByX3RjZV9pb21tdV9ncm91cCAqZGF0YSwKKwkJ
+CQkgICAgIGJvb2wgZW5hYmxlKQoreworCXN0cnVjdCBwbnZfaW9kYV9wZSAqcGUgPSBkYXRhLT5p
+b21tdV9vd25lcjsKKworCXBudl9wY2lfaW9kYTJfc2V0X2J5cGFzcyhwZSwgIWVuYWJsZSk7CiB9
+CiAKIHN0YXRpYyBzdHJ1Y3Qgc3BhcHJfdGNlX2lvbW11X29wcyBwbnZfcGNpX2lvZGEyX29wcyA9
+IHsKIAkuZ2V0X3RhYmxlID0gcG52X2lvZGExX2lvbW11X2dldF90YWJsZSwKKwkudGFrZV9vd25l
+cnNoaXAgPSBwbnZfaW9kYTJfdGFrZV9vd25lcnNoaXAsCiB9OwogCiBzdGF0aWMgdm9pZCBwbnZf
+cGNpX2lvZGEyX3NldHVwX2RtYV9wZShzdHJ1Y3QgcG52X3BoYiAqcGhiLApkaWZmIC0tZ2l0IGEv
+ZHJpdmVycy92ZmlvL3ZmaW9faW9tbXVfc3BhcHJfdGNlLmMgYi9kcml2ZXJzL3ZmaW8vdmZpb19p
+b21tdV9zcGFwcl90Y2UuYwppbmRleCBhOGFkZmJkLi4xYzFhOWM0IDEwMDY0NAotLS0gYS9kcml2
+ZXJzL3ZmaW8vdmZpb19pb21tdV9zcGFwcl90Y2UuYworKysgYi9kcml2ZXJzL3ZmaW8vdmZpb19p
+b21tdV9zcGFwcl90Y2UuYwpAQCAtNzYsNiArNzYsMTMgQEAgc3RhdGljIHN0cnVjdCBpb21tdV90
+YWJsZSAqc3BhcHJfdGNlX2ZpbmRfdGFibGUoCiAJcmV0dXJuIHJldDsKIH0KIAorc3RhdGljIHZv
+aWQgdGNlX2lvbW11X3Rha2Vfb3duZXJzaGlwX25vdGlmeShzdHJ1Y3Qgc3BhcHJfdGNlX2lvbW11
+X2dyb3VwICpkYXRhLAorCQlib29sIGVuYWJsZSkKK3sKKwlpZiAoZGF0YSAmJiBkYXRhLT5vcHMg
+JiYgZGF0YS0+b3BzLT50YWtlX293bmVyc2hpcCkKKwkJZGF0YS0+b3BzLT50YWtlX293bmVyc2hp
+cChkYXRhLCBlbmFibGUpOworfQorCiBzdGF0aWMgaW50IHRjZV9pb21tdV9lbmFibGUoc3RydWN0
+IHRjZV9jb250YWluZXIgKmNvbnRhaW5lcikKIHsKIAlpbnQgcmV0ID0gMDsKQEAgLTQxMyw2ICs0
+MjAsMTIgQEAgc3RhdGljIGludCB0Y2VfaW9tbXVfYXR0YWNoX2dyb3VwKHZvaWQgKmlvbW11X2Rh
+dGEsCiAJCXJldCA9IGlvbW11X3Rha2Vfb3duZXJzaGlwKHRibCk7CiAJCWlmICghcmV0KQogCQkJ
+Y29udGFpbmVyLT5ncnAgPSBpb21tdV9ncm91cDsKKwkJLyoKKwkJICogRGlzYWJsZSBpb21tdSBi
+eXBhc3MsIG90aGVyd2lzZSB0aGUgdXNlciBjYW4gRE1BIHRvIGFsbCBvZgorCQkgKiBvdXIgcGh5
+c2ljYWwgbWVtb3J5IHZpYSB0aGUgYnlwYXNzIHdpbmRvdyBpbnN0ZWFkIG9mIGp1c3QKKwkJICog
+dGhlIHBhZ2VzIHRoYXQgaGFzIGJlZW4gZXhwbGljaXRseSBtYXBwZWQgaW50byB0aGUgaW9tbXUK
+KwkJICovCisJCXRjZV9pb21tdV90YWtlX293bmVyc2hpcF9ub3RpZnkoZGF0YSwgdHJ1ZSk7CiAJ
+fQogCiAJbXV0ZXhfdW5sb2NrKCZjb250YWluZXItPmxvY2spOwpAQCAtNDUwLDYgKzQ2Myw5IEBA
+IHN0YXRpYyB2b2lkIHRjZV9pb21tdV9kZXRhY2hfZ3JvdXAodm9pZCAqaW9tbXVfZGF0YSwKIAkJ
+QlVHX09OKCF0YmwpOwogCiAJCWlvbW11X3JlbGVhc2Vfb3duZXJzaGlwKHRibCk7CisKKwkJLyog
+S2VybmVsIG93bnMgdGhlIGRldmljZSBub3csIHdlIGNhbiByZXN0b3JlIGJ5cGFzcyAqLworCQl0
+Y2VfaW9tbXVfdGFrZV9vd25lcnNoaXBfbm90aWZ5KGRhdGEsIGZhbHNlKTsKIAl9CiAJbXV0ZXhf
+dW5sb2NrKCZjb250YWluZXItPmxvY2spOwogfQotLSAKMi4wLjAKCl9fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4cHBjLWRldiBtYWlsaW5nIGxpc3QK
+TGludXhwcGMtZGV2QGxpc3RzLm96bGFicy5vcmcKaHR0cHM6Ly9saXN0cy5vemxhYnMub3JnL2xp
+c3RpbmZvL2xpbnV4cHBjLWRldg==
