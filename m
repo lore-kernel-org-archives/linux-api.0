@@ -1,13 +1,13 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v16 3/7] sparc: add pmd_[dirty|mkclean] for THP
-Date: Mon,  1 Sep 2014 16:20:44 +0900
-Message-ID: <1409556048-5045-4-git-send-email-minchan@kernel.org>
+Subject: [PATCH v16 2/7] x86: add pmd_[dirty|mkclean] for THP
+Date: Mon,  1 Sep 2014 16:20:43 +0900
+Message-ID: <1409556048-5045-3-git-send-email-minchan@kernel.org>
 References: <1409556048-5045-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1409556048-5045-1-git-send-email-minchan@kernel.org>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, sparclinux@vger.kernel.org, "David S. Miller" <davem@davemloft.net>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
 MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
@@ -17,47 +17,47 @@ THP page.
 This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
 support.
 
-Acked-by: David S. Miller <davem@davemloft.net>
-Cc: sparclinux@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: x86@kernel.org
+
+Acked-by: Rik van Riel <riel@redhat.com>
+Acked-by: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- arch/sparc/include/asm/pgtable_64.h | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ arch/x86/include/asm/pgtable.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/arch/sparc/include/asm/pgtable_64.h b/arch/sparc/include/asm/pgtable_64.h
-index 3770bf5c6e1b..b80a309d7e00 100644
---- a/arch/sparc/include/asm/pgtable_64.h
-+++ b/arch/sparc/include/asm/pgtable_64.h
-@@ -666,6 +666,13 @@ static inline unsigned long pmd_young(pmd_t pmd)
- 	return pte_young(pte);
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index aa97a070f09f..2259de0ccd79 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -104,6 +104,11 @@ static inline int pmd_young(pmd_t pmd)
+ 	return pmd_flags(pmd) & _PAGE_ACCESSED;
  }
  
 +static inline int pmd_dirty(pmd_t pmd)
 +{
-+	pte_t pte = __pte(pmd_val(pmd));
-+
-+	return pte_dirty(pte);
++	return pmd_flags(pmd) & _PAGE_DIRTY;
 +}
 +
- static inline unsigned long pmd_write(pmd_t pmd)
+ static inline int pte_write(pte_t pte)
  {
- 	pte_t pte = __pte(pmd_val(pmd));
-@@ -723,6 +730,15 @@ static inline pmd_t pmd_mkdirty(pmd_t pmd)
- 	return __pmd(pte_val(pte));
+ 	return pte_flags(pte) & _PAGE_RW;
+@@ -272,6 +277,11 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
+ 	return pmd_clear_flags(pmd, _PAGE_ACCESSED);
  }
  
 +static inline pmd_t pmd_mkclean(pmd_t pmd)
 +{
-+	pte_t pte = __pte(pmd_val(pmd));
-+
-+	pte = pte_mkclean(pte);
-+
-+	return __pmd(pte_val(pte));
++	return pmd_clear_flags(pmd, _PAGE_DIRTY);
 +}
 +
- static inline pmd_t pmd_mkyoung(pmd_t pmd)
+ static inline pmd_t pmd_wrprotect(pmd_t pmd)
  {
- 	pte_t pte = __pte(pmd_val(pmd));
+ 	return pmd_clear_flags(pmd, _PAGE_RW);
 -- 
 2.0.0
 
