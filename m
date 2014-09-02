@@ -1,54 +1,44 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v16 6/7] arm64: add pmd_[dirty|mkclean] for THP
-Date: Mon,  1 Sep 2014 16:20:47 +0900
-Message-ID: <1409556048-5045-7-git-send-email-minchan@kernel.org>
-References: <1409556048-5045-1-git-send-email-minchan@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1409556048-5045-1-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Russell King <linux@arm.linux.org.uk>, linux-arm-kernel@lists.infradead.org, Will Deacon <will.deacon@arm.com>, Steve Capper <steve.capper@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>
+From: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] usb: gadget: f_fs: add usb_functionfs_descs_head_v2
+Date: Tue, 2 Sep 2014 14:58:36 +0800
+Message-ID: <20140902065836.GA23094@intel.com>
+Reply-To: jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org, balbi-l0cyMroinI0@public.gmane.org, mgautam-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
+Cc: jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, david.a.cohen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hang.yuan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
-overwrite of the contents since MADV_FREE syscall is called for
-THP page.
+Add usb_functionfs_descs_head_v2 structure for the new layout of
+descriptors.
 
-This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
-support.
-
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: linux-arm-kernel@lists.infradead.org
-Acked-by: Will Deacon <will.deacon@arm.com>
-Acked-by: Steve Capper <steve.capper@linaro.org>
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
+Signed-off-by: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- arch/arm64/include/asm/pgtable.h | 2 ++
- 1 file changed, 2 insertions(+)
+ include/uapi/linux/usb/functionfs.h |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
-index ffe1ba0506d1..efb1b2fc4d39 100644
---- a/arch/arm64/include/asm/pgtable.h
-+++ b/arch/arm64/include/asm/pgtable.h
-@@ -259,10 +259,12 @@ static inline pmd_t pte_pmd(pte_t pte)
- #endif
+diff --git a/include/uapi/linux/usb/functionfs.h b/include/uapi/linux/usb/functionfs.h
+index 0154b28..0b3f9fc 100644
+--- a/include/uapi/linux/usb/functionfs.h
++++ b/include/uapi/linux/usb/functionfs.h
+@@ -32,6 +32,15 @@ struct usb_endpoint_descriptor_no_audio {
+ 	__u8  bInterval;
+ } __attribute__((packed));
  
- #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
-+#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
- #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
- #define pmd_mksplitting(pmd)	pte_pmd(pte_mkspecial(pmd_pte(pmd)))
- #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
- #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
-+#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
- #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
- #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
- #define pmd_mknotpresent(pmd)	(__pmd(pmd_val(pmd) & ~PMD_TYPE_MASK))
++struct usb_functionfs_descs_head_v2 {
++	__le32 magic;
++	__le32 length;
++	__le32 flags;
++	__le32 fs_count;
++	__le32 hs_count;
++	__le32 ss_count;
++} __attribute__((packed));
++
+ /* Legacy format, deprecated as of 3.14. */
+ struct usb_functionfs_descs_head {
+ 	__le32 magic;
 -- 
-2.0.0
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+1.7.9.5
