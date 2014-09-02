@@ -1,121 +1,142 @@
-From: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
-Subject: Re: [PATCH] locks: Ability to test for flock presence on fd
-Date: Tue, 2 Sep 2014 15:53:51 -0400
-Message-ID: <20140902155351.79183446@tlielax.poochiereds.net>
-References: <5405FBAE.5020303@parallels.com>
-	<20140902184456.GC31793@fieldses.org>
-	<54061562.4080306@parallels.com>
-	<20140902194300.GE31793@fieldses.org>
+From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH V4 1/8] namespaces: assign each namespace instance a
+	serial number
+Date: Tue, 2 Sep 2014 17:40:35 -0400
+Message-ID: <20140902214035.GT4462@madcap2.tricolour.ca>
+References: <cover.1408581429.git.rgb@redhat.com>
+	<cover.1408581429.git.rgb@redhat.com>
+	<d5bfd81a219c5c45c910494d6a3478ce83052e1f.1408581429.git.rgb@redhat.com>
+	<87ioljs968.fsf@x220.int.ebiederm.org>
+	<20140824203827.GI9003@madcap2.tricolour.ca>
+	<87tx4wmlcj.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140902194300.GE31793-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87tx4wmlcj.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2 Sep 2014 15:43:00 -0400
-"J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org> wrote:
-
-> On Tue, Sep 02, 2014 at 11:07:14PM +0400, Pavel Emelyanov wrote:
-> > On 09/02/2014 10:44 PM, J. Bruce Fields wrote:
-> > > On Tue, Sep 02, 2014 at 09:17:34PM +0400, Pavel Emelyanov wrote:
-> > >> Hi,
-> > >>
-> > >> There's a problem with getting information about who has a flock on
-> > >> a specific file. The thing is that the "owner" field, that is shown in
-> > >> /proc/locks is the pid of the task who created the flock, not the one
-> > >> who _may_ hold it.
-> > >>
-> > >> If the flock creator shared the file with some other task (by forking
-> > >> or via scm_rights) and then died or closed the file, the information
-> > >> shown in proc no longer corresponds to the reality.
-> > >>
-> > >> This is critical for CRIU project, that tries to dump (and restore)
-> > >> the state of running tasks. For example, let's take two tasks A and B
-> > >> both opened a file "/foo", one of tasks places a LOCK_SH lock on the 
-> > >> file and then "obfuscated" the owner field in /proc/locks. After this
-> > >> we have no ways to find out who is the lock holder.
-> > >>
-> > >> I'd like to note, that for LOCK_EX this problem is not critical -- we
-> > >> may go to both tasks and "ask" them to LOCK_EX the file again (we can
-> > >> do it in CRIU, I can tell more if required). The one who succeeds is 
-> > >> the lock holder.
-> > > 
-> > > It could be both, actually, right?
-> > 
-> > Two succeeding with LOCK_EX? AFAIU no. Am I missing something?
+On 14/08/28, Eric W. Biederman wrote:
+> Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+> > On 14/08/23, Eric W. Biederman wrote:
+> >> Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+> >> 
+> >> > Generate and assign a serial number per namespace instance since boot.
+> >> >
+> >> > Use a serial number per namespace (unique across one boot of one kernel)
+> >> > instead of the inode number (which is claimed to have had the right to change
+> >> > reserved and is not necessarily unique if there is more than one proc fs) to
+> >> > uniquely identify it per kernel boot.
+> >> 
+> >> This approach is just broken.
+> >> 
+> >> For this to work with migration (aka criu) you need to implement a
+> >> namespace of namespaces.  You haven't done this, and therefore
+> >> such an interface will break existing userspace.
+> >> 
+> >> Inside of audit I can understand not caring about these issues,
+> >> but you go foward and expose these serial numbers in proc,
+> >> and generally make this infrastructure available to others.
+> >> 
+> >> The deep issue with migration is that we move tasks from one machine
+> >> from another and on the destination machine we need to have all of the
+> >> same global identifiers for software to function properly.
+> >> 
+> >> My weasel words around the proc inode numbers is to preserve to allow us
+> >> room to be able to restore those ids if it every becomes relevant for
+> >> migration.
+> >
+> > What do you do if the inode number is already in use on the target
+> > host?
 > 
-> After a fork, two processes "own" the lock, right?:
-> 
-> 	int main(int argc, char *argv[])
-> 	{
-> 		int fd, ret;
-> 	
-> 		fd = open(argv[1], O_RDWR);
-> 		ret = flock(fd, LOCK_EX);
-> 		if (ret)
-> 			err(1, "flock");
-> 		ret = fork();
-> 		if (ret == -1)
-> 			err(1, "flock");
-> 		ret = flock(fd, LOCK_EX);
-> 		if (ret)
-> 			err(1, "flock");
-> 		printf("%d got exclusive lock\n", getpid());
-> 		sleep(1000);
-> 	}
-> 
-> 	$ touch TMP
-> 	$ ./test TMP
-> 	15882 got exclusive lock
-> 	15883 got exclusive lock
-> 	^C
-> 
-> I may misunderstand what you're doing.
-> 
+> Since the inode numbers are relative to a superblock or a pid namespace
+> the numbers that are in use can be restored on the target system
+> by creating them in the appropriate namespace.
 
-Yeah, I don't understand either.
+So you seem to be advocating for a namespace of namespaces, since
+neither host can create a new namespace without consulting the others in
+its pool for a new free number.
 
-Flock locks are owned by the file description. The task that set
-them is really irrelevant once they are set.
-
-In the second flock() call there, you're just "modifying" an existing
-lock (which turns out to be a noop here).
-
-So, I don't quite understand the problem this solves. I get that you're
-trying to reestablish the flock "state" after a checkpoint/restore
-event, but why does it matter what task actually sets the locks as long
-as they're set on the correct set of fds?
-
-> > >> With LOCK_SH this doesn't work. Trying to drop the
-> > >> lock doesn't work either, as flock(LOCK_UN) reports 0 in both cases:
-> > >> if the file is locked and if it is not.
-> > >>
-> > >> That said, I'd like to propose the LOCK_TEST flag to the flock call,
-> > >> that would check whether the lock of the given type (LOCK_SH or LOCK_EX)
-> > >> exists on the file we test. It's not the same as the existing in-kernel
-> > >> FL_ACCESS flag, which checks whether the new lock is possible, but
-> > >> it's a new FL_TEST flag, that checks whether the existing lock is there.
-> > >>
-> > >> What do you think?
-> > > 
-> > > I guess I can't see anything really wrong with it.
-> > > 
-> > > It ignores the (poorly documented) LOCK_MAND case, but maybe that's OK.
-> > 
-> > I actually checked it and it seemed to work. What problems do
-> > you see with this case?
+> The support does not exist in the kernel today for doing that because no
+> one has cared but as architected the support can be added if needed to
+> support migration.
 > 
-> On its own it just doesn't tell you whether or not LOCK_MAND is set.
-> But I guess you can still get that out of /proc/locks.
+> >> That is the proc inode numbers (technically) live in a pid namespace,
+> >> (aka a mount of proc).  So depending on the pid namespace you are in
+> >> or the mount of proc you look in the numbers could change.
+> >> 
+> >> Qualifications like that must exist to have a prayer of ever supporting
+> >> process migration in the crazy corner cases where people start caring
+> >> about inode numbers.
+> >> 
+> >> We currently don't and inode numbers for a namespace will never change
+> >> after a namespace is created.  So I think you really are ok using the
+> >> proc inode numbers.  I am happy declaring by fiat that the inode numbers
+> >> that audit uses are the numbers connected to the initial pid namespace.
+> >
+> > But once a namespace/container is migrated, it is a different audit that
+> > is looking at it (unless we create an audit manager or entity that
+> > functions at the level of a container manager), so audit should not care.
 > 
-> To be honest I don't really know whether LOCK_MAND works or is used.
+> These numbers were exported to everyone as a general purpose facility in
+> proc.  If audit is global and audit doesn't migrate you are right it
+> doesn't matter.  However if these numbers are used by anyone else for
+> anything else it causes a problem.
+
+So let us restrict their use to audit, by removing them from
+/proc/<pid>/ns/ and only exposing them via netlink calls to audit gated
+by CAP_AUDIT_WRITE or CAP_AUDIT_CONTROL.
+
+> Further given that people run entire distributions in containers we may
+> reach the point where we wish to run auditd in a container in the
+> future.  I would hate to paint ourselves into a corner with a design
+> that could never allow audit to migrate.  Support that case someday
+> seems a valid naive desire.
+
+Agreed.  That is an option we do not want to rule out at this point.
+I'll need to think about this one more.
+
+> >> At a fairly basic level anything that is used to identify namespaces for
+> >> any general purpose use needs to have most if not all of the same
+> >> properties of the proc inode numbers.  The most important of which is
+> >> being tied to some context/namespace so there is a ability if we ever
+> >> need it to migrate those numbers from one machine to another.
+> >
+> > Sooo...  does it make any sense to have those inode or serial numbers be
+> > blank inside the namespace/container itself, but only visible to its
+> > manager outside the container (unless it is the initial namespace)?
 > 
-> --b.
+> Mostly I think it makes sense to use the inode numbers from the initial
+> pid namespace.  They already exist.  They already are unique.  (Which
+> means I don't need to maintain more code and more special cases).  And
+> the do what you need now.
 
+Will inode numbers never be re-used once they are freed?  Guaranteed?
 
--- 
-Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
+> I probably haven't followed closely enough but I don't see what makes
+> inode numbers undesirable.
+
+This posting:
+	https://www.redhat.com/archives/linux-audit/2013-March/msg00032.html
+
+> Eric
+
+- RGB
+
+--
+Richard Guy Briggs <rbriggs-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
+Remote, Ottawa, Canada
+Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
