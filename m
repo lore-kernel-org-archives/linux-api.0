@@ -1,44 +1,58 @@
-From: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] usb: gadget: f_fs: add usb_functionfs_descs_head_v2
-Date: Tue, 2 Sep 2014 14:58:36 +0800
-Message-ID: <20140902065836.GA23094@intel.com>
-Reply-To: jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+From: Michal Nazarewicz <mina86@mina86.com>
+Subject: Re: [PATCH] usb: gadget: f_fs: add usb_functionfs_descs_head_v2
+Date: Tue, 02 Sep 2014 14:45:44 +0200
+Message-ID: <xa1twq9mry13.fsf@mina86.com>
+References: <20140902065836.GA23094@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org, balbi-l0cyMroinI0@public.gmane.org, mgautam-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
-Cc: jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, david.a.cohen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hang.yuan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140902065836.GA23094@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: balbi@ti.com, mgautam@codeaurora.org, andrzej.p@samsung.com
+Cc: jin.can.zhuang@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, david.a.cohen@intel.com, hang.yuan@intel.com
 List-Id: linux-api@vger.kernel.org
 
-Add usb_functionfs_descs_head_v2 structure for the new layout of
-descriptors.
+On Tue, Sep 02 2014, Zhuang Jin Can <jin.can.zhuang@intel.com> wrote:
+> Add usb_functionfs_descs_head_v2 structure for the new layout of
+> descriptors.
 
-Signed-off-by: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- include/uapi/linux/usb/functionfs.h |    9 +++++++++
- 1 file changed, 9 insertions(+)
+NAK.  It's a duplicate of <https://lkml.org/lkml/2014/6/6/128> and even
+more importantly, the format of the header is not fixed past the flags
+field (e.g. fs_count may be missing), so fs_count, hs_count and ss_coun=
+t
+cannot be in the structure.
 
-diff --git a/include/uapi/linux/usb/functionfs.h b/include/uapi/linux/usb/functionfs.h
-index 0154b28..0b3f9fc 100644
---- a/include/uapi/linux/usb/functionfs.h
-+++ b/include/uapi/linux/usb/functionfs.h
-@@ -32,6 +32,15 @@ struct usb_endpoint_descriptor_no_audio {
- 	__u8  bInterval;
- } __attribute__((packed));
- 
-+struct usb_functionfs_descs_head_v2 {
-+	__le32 magic;
-+	__le32 length;
-+	__le32 flags;
-+	__le32 fs_count;
-+	__le32 hs_count;
-+	__le32 ss_count;
-+} __attribute__((packed));
-+
- /* Legacy format, deprecated as of 3.14. */
- struct usb_functionfs_descs_head {
- 	__le32 magic;
--- 
-1.7.9.5
+> Signed-off-by: Zhuang Jin Can <jin.can.zhuang@intel.com>
+> ---
+>  include/uapi/linux/usb/functionfs.h |    9 +++++++++
+>  1 file changed, 9 insertions(+)
+>
+> diff --git a/include/uapi/linux/usb/functionfs.h b/include/uapi/linux=
+/usb/functionfs.h
+> index 0154b28..0b3f9fc 100644
+> --- a/include/uapi/linux/usb/functionfs.h
+> +++ b/include/uapi/linux/usb/functionfs.h
+> @@ -32,6 +32,15 @@ struct usb_endpoint_descriptor_no_audio {
+>  	__u8  bInterval;
+>  } __attribute__((packed));
+> =20
+> +struct usb_functionfs_descs_head_v2 {
+> +	__le32 magic;
+> +	__le32 length;
+> +	__le32 flags;
+> +	__le32 fs_count;
+> +	__le32 hs_count;
+> +	__le32 ss_count;
+> +} __attribute__((packed));
+> +
+>  /* Legacy format, deprecated as of 3.14. */
+>  struct usb_functionfs_descs_head {
+>  	__le32 magic;
+
+--=20
+Best regards,                                         _     _
+=2Eo. | Liege of Serenely Enlightened Majesty of      o' \,=3D./ `o
+=2E.o | Computer Science,  Micha=C5=82 =E2=80=9Cmina86=E2=80=9D Nazarew=
+icz    (o o)
+ooo +--<mpn@google.com>--<xmpp:mina86@jabber.org>--ooO--(_)--Ooo--
