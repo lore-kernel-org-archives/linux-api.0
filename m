@@ -1,37 +1,30 @@
-From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v9 net-next 2/4] net: filter: split filter.h and expose
- eBPF to user space
-Date: Wed, 03 Sep 2014 17:46:39 +0200
-Message-ID: <540737DF.1010801@redhat.com>
-References: <1409714246-31054-1-git-send-email-ast@plumgrid.com> <1409714246-31054-3-git-send-email-ast@plumgrid.com>
+From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: Re: [PATCH] locks: Ability to test for flock presence on fd
+Date: Wed, 3 Sep 2014 19:47:57 +0400
+Message-ID: <5407382D.1020809@parallels.com>
+References: <5405FBAE.5020303@parallels.com> <20140902184456.GC31793@fieldses.org> <54061562.4080306@parallels.com> <20140902194300.GE31793@fieldses.org> <20140902155351.79183446@tlielax.poochiereds.net> <540727E0.6030005@parallels.com> <20140903154434.GC22731@fieldses.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1409714246-31054-3-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+In-Reply-To: <20140903154434.GC22731-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/03/2014 05:17 AM, Alexei Starovoitov wrote:
-> allow user space to generate eBPF programs
->
-> uapi/linux/bpf.h: eBPF instruction set definition
->
-> linux/filter.h: the rest
->
-> This patch only moves macro definitions, but practically it freezes existing
-> eBPF instruction set, though new instructions can still be added in the future.
->
-> These eBPF definitions cannot go into uapi/linux/filter.h, since the names
-> may conflict with existing applications.
->
-> Full eBPF ISA description is in Documentation/networking/filter.txt
->
-> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+On 09/03/2014 07:44 PM, J. Bruce Fields wrote:
+...
 
-Ok, given you post the remaining two RFCs later on this window as
-you indicate, I have no objections:
+>> Hope this explanation is more clear.
+> 
+> Thanks, I think I understand.
+> 
+> Remind me how you figure out which file descriptors point to the same
+> file description (struct file)?
 
-Acked-by: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+We do it with the help of kcmp() syscall:
+https://github.com/cyrillos/linux-2.6/commit/951bc60c6a
+
+Thanks,
+Pavel
