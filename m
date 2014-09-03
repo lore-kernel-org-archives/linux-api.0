@@ -1,142 +1,35 @@
-From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V4 1/8] namespaces: assign each namespace instance a
-	serial number
-Date: Tue, 2 Sep 2014 17:40:35 -0400
-Message-ID: <20140902214035.GT4462@madcap2.tricolour.ca>
-References: <cover.1408581429.git.rgb@redhat.com>
-	<cover.1408581429.git.rgb@redhat.com>
-	<d5bfd81a219c5c45c910494d6a3478ce83052e1f.1408581429.git.rgb@redhat.com>
-	<87ioljs968.fsf@x220.int.ebiederm.org>
-	<20140824203827.GI9003@madcap2.tricolour.ca>
-	<87tx4wmlcj.fsf@x220.int.ebiederm.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87tx4wmlcj.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v9 net-next 0/4] load imm64 insn and uapi/linux/bpf.h
+Date: Tue,  2 Sep 2014 20:17:22 -0700
+Message-ID: <1409714246-31054-1-git-send-email-ast@plumgrid.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 14/08/28, Eric W. Biederman wrote:
-> Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
-> > On 14/08/23, Eric W. Biederman wrote:
-> >> Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
-> >> 
-> >> > Generate and assign a serial number per namespace instance since boot.
-> >> >
-> >> > Use a serial number per namespace (unique across one boot of one kernel)
-> >> > instead of the inode number (which is claimed to have had the right to change
-> >> > reserved and is not necessarily unique if there is more than one proc fs) to
-> >> > uniquely identify it per kernel boot.
-> >> 
-> >> This approach is just broken.
-> >> 
-> >> For this to work with migration (aka criu) you need to implement a
-> >> namespace of namespaces.  You haven't done this, and therefore
-> >> such an interface will break existing userspace.
-> >> 
-> >> Inside of audit I can understand not caring about these issues,
-> >> but you go foward and expose these serial numbers in proc,
-> >> and generally make this infrastructure available to others.
-> >> 
-> >> The deep issue with migration is that we move tasks from one machine
-> >> from another and on the destination machine we need to have all of the
-> >> same global identifiers for software to function properly.
-> >> 
-> >> My weasel words around the proc inode numbers is to preserve to allow us
-> >> room to be able to restore those ids if it every becomes relevant for
-> >> migration.
-> >
-> > What do you do if the inode number is already in use on the target
-> > host?
-> 
-> Since the inode numbers are relative to a superblock or a pid namespace
-> the numbers that are in use can be restored on the target system
-> by creating them in the appropriate namespace.
+Hi,
 
-So you seem to be advocating for a namespace of namespaces, since
-neither host can create a new namespace without consulting the others in
-its pool for a new free number.
+V8->V9
+- rebase on top of Hannes's patch in the same area [1]
+- no changes to patches 1 and 2
+- added patches 3 and 4 as RFC to address Daniel's concern.
+  patch 3 moves eBPF instruction macros and
+  patch 4 split macros which are shared between classic and eBPF
+  into bpf_common.h
+  3 and 4 will be used by verifier testsuite and will be reposted later
+  during stage III
 
-> The support does not exist in the kernel today for doing that because no
-> one has cared but as architected the support can be added if needed to
-> support migration.
-> 
-> >> That is the proc inode numbers (technically) live in a pid namespace,
-> >> (aka a mount of proc).  So depending on the pid namespace you are in
-> >> or the mount of proc you look in the numbers could change.
-> >> 
-> >> Qualifications like that must exist to have a prayer of ever supporting
-> >> process migration in the crazy corner cases where people start caring
-> >> about inode numbers.
-> >> 
-> >> We currently don't and inode numbers for a namespace will never change
-> >> after a namespace is created.  So I think you really are ok using the
-> >> proc inode numbers.  I am happy declaring by fiat that the inode numbers
-> >> that audit uses are the numbers connected to the initial pid namespace.
-> >
-> > But once a namespace/container is migrated, it is a different audit that
-> > is looking at it (unless we create an audit manager or entity that
-> > functions at the level of a container manager), so audit should not care.
-> 
-> These numbers were exported to everyone as a general purpose facility in
-> proc.  If audit is global and audit doesn't migrate you are right it
-> doesn't matter.  However if these numbers are used by anyone else for
-> anything else it causes a problem.
+V8 thread with 'why' reasoning and end goal:
+https://lkml.org/lkml/2014/8/27/628
 
-So let us restrict their use to audit, by removing them from
-/proc/<pid>/ns/ and only exposing them via netlink calls to audit gated
-by CAP_AUDIT_WRITE or CAP_AUDIT_CONTROL.
+Original set [2] of ~28 patches I'm planning to present in 4 stages:
 
-> Further given that people run entire distributions in containers we may
-> reach the point where we wish to run auditd in a container in the
-> future.  I would hate to paint ourselves into a corner with a design
-> that could never allow audit to migrate.  Support that case someday
-> seems a valid naive desire.
+  I. this 2 patches to fork off llvm upstreaming
+ II. bpf syscall with manpage and map implementation
+III. bpf program load/unload with verifier testsuite (1st user of
+     instruction macros from bpf.h and 1st user of load imm64 insn)
+ IV. tracing, etc
 
-Agreed.  That is an option we do not want to rule out at this point.
-I'll need to think about this one more.
-
-> >> At a fairly basic level anything that is used to identify namespaces for
-> >> any general purpose use needs to have most if not all of the same
-> >> properties of the proc inode numbers.  The most important of which is
-> >> being tied to some context/namespace so there is a ability if we ever
-> >> need it to migrate those numbers from one machine to another.
-> >
-> > Sooo...  does it make any sense to have those inode or serial numbers be
-> > blank inside the namespace/container itself, but only visible to its
-> > manager outside the container (unless it is the initial namespace)?
-> 
-> Mostly I think it makes sense to use the inode numbers from the initial
-> pid namespace.  They already exist.  They already are unique.  (Which
-> means I don't need to maintain more code and more special cases).  And
-> the do what you need now.
-
-Will inode numbers never be re-used once they are freed?  Guaranteed?
-
-> I probably haven't followed closely enough but I don't see what makes
-> inode numbers undesirable.
-
-This posting:
-	https://www.redhat.com/archives/linux-audit/2013-March/msg00032.html
-
-> Eric
-
-- RGB
-
---
-Richard Guy Briggs <rbriggs-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
-Remote, Ottawa, Canada
-Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
+[1] http://patchwork.ozlabs.org/patch/385266/
+[2] https://lkml.org/lkml/2014/8/26/859
