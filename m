@@ -1,47 +1,23 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH Resend] memfd_test: Add missing argument to printf()
-Date: Thu, 04 Sep 2014 12:31:57 -0600
-Message-ID: <5408B01D.50804@osg.samsung.com>
-References: <1409846302-3513-1-git-send-email-bobby.prani@gmail.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH v9 net-next 2/4] net: filter: split filter.h and expose
+ eBPF to user space
+Date: Thu, 04 Sep 2014 14:49:15 -0700 (PDT)
+Message-ID: <20140904.144915.2011704191141142761.davem@davemloft.net>
+References: <CAMEtUuz6zraph_8xXW43bNbh5uPRki0yOufMfV5pKMRLhDrQQA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1409846302-3513-1-git-send-email-bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <CAMEtUuz6zraph_8xXW43bNbh5uPRki0yOufMfV5pKMRLhDrQQA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "open list:KERNEL SELFTEST F..." <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org
+Cc: mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/04/2014 09:58 AM, Pranith Kumar wrote:
-> Add a missing path argument buf to printf() 
-> 
-> Signed-off-by: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Reviewed-by: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  tools/testing/selftests/memfd/memfd_test.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/tools/testing/selftests/memfd/memfd_test.c b/tools/testing/selftests/memfd/memfd_test.c
-> index 3634c90..c343df8 100644
-> --- a/tools/testing/selftests/memfd/memfd_test.c
-> +++ b/tools/testing/selftests/memfd/memfd_test.c
-> @@ -205,7 +205,7 @@ static void mfd_fail_open(int fd, int flags, mode_t mode)
->  	sprintf(buf, "/proc/self/fd/%d", fd);
->  	r = open(buf, flags, mode);
->  	if (r >= 0) {
-> -		printf("open(%s) didn't fail as expected\n");
-> +		printf("open(%s) didn't fail as expected\n", buf);
->  		abort();
->  	}
->  }
-> 
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Date: Wed, 3 Sep 2014 22:41:48 -0700
 
-Thanks. I queued it for 3.17 fixes.
+> Do you want me to resubmit just first two?
 
--- Shuah
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Yes, you can't submit hodge-podge path series, either it's all to
+be applied or it's all RFC material.
