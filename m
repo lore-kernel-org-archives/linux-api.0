@@ -1,38 +1,52 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH v3] memfd_test: Make it work on 32-bit systems
-Date: Wed, 03 Sep 2014 15:41:54 -0600
-Message-ID: <54078B22.5020200@osg.samsung.com>
-References: <1409754679-22667-1-git-send-email-bobby.prani@gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH v9 net-next 2/4] net: filter: split filter.h and expose
+ eBPF to user space
+Date: Wed, 3 Sep 2014 22:41:48 -0700
+Message-ID: <CAMEtUuz6zraph_8xXW43bNbh5uPRki0yOufMfV5pKMRLhDrQQA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1409754679-22667-1-git-send-email-bobby.prani@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pranith Kumar <bobby.prani@gmail.com>, David Herrmann <dh.herrmann@gmail.com>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, "open list:KERNEL SELFTEST F..." <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
+To: "David S. Miller" <davem@davemloft.net>
+Cc: Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Daniel Borkmann <dborkman@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On 09/03/2014 08:31 AM, Pranith Kumar wrote:
-> This test currently fails on 32-bit systems since we use u64 type to pass the
-> flags to fcntl.
-> 
-> This commit changes this to use 'unsigned int' type for flags to fcntl making it
-> work on 32-bit systems.
-> 
-> Signed-off-by: Pranith Kumar <bobby.prani@gmail.com>
-> Reviewed-by: David Herrmann <dh.herrmann@gmail.com>
-> ---
+On Wed, Sep 3, 2014 at 8:46 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
+> On 09/03/2014 05:17 AM, Alexei Starovoitov wrote:
+>>
+>> allow user space to generate eBPF programs
+>>
+>> uapi/linux/bpf.h: eBPF instruction set definition
+>>
+>> linux/filter.h: the rest
+>>
+>> This patch only moves macro definitions, but practically it freezes
+>> existing
+>> eBPF instruction set, though new instructions can still be added in the
+>> future.
+>>
+>> These eBPF definitions cannot go into uapi/linux/filter.h, since the names
+>> may conflict with existing applications.
+>>
+>> Full eBPF ISA description is in Documentation/networking/filter.txt
+>>
+>> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+>
+>
+> Ok, given you post the remaining two RFCs later on this window as
+> you indicate, I have no objections:
+>
+> Acked-by: Daniel Borkmann <dborkman@redhat.com>
 
-I will queue this up for 3.17-fixes. I am in the process of
-setting up kselftest git for fixes.
+David,
 
-thanks,
--- Shuah
+I see that all 4 patches are marked as rfc, whereas I tagged
+only 3 and 4 as 'rfc' and mentioned in cover letter that they
+will be coming for real in stage III. Here they support patch 2
+and show the future changes to bpf.h file.
+Patches 1 and 2 are good to go.
+Note that they're on top of Hannes's patch:
+http://patchwork.ozlabs.org/patch/385266/
+Do you want me to resubmit just first two?
 
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Thanks
