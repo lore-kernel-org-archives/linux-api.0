@@ -1,66 +1,45 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v10 net-next 2/2] net: filter: split filter.h and expose
- eBPF to user space
-Date: Mon, 8 Sep 2014 08:37:23 +0200
-Message-ID: <20140908063723.GA8219@gmail.com>
-References: <20140907180737.GA5057@salvia>
- <CAMEtUuxJLDu8AAsZQdtG781vwC8y60Ygdt4ji5tbeyTE8YbWbQ@mail.gmail.com>
- <20140908052329.GA30461@gmail.com>
- <20140907.222841.1933004265241590374.davem@davemloft.net>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: Request to add linux-kselftest to linux-next
+Date: Mon, 08 Sep 2014 17:07:41 -0600
+Message-ID: <540E36BD.4060607@osg.samsung.com>
+References: <540DC2BD.7030506@osg.samsung.com> <20140909085841.2ec2871e@canb.auug.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140907.222841.1933004265241590374.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, torvalds-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-next-owner@vger.kernel.org>
+In-Reply-To: <20140909085841.2ec2871e@canb.auug.org.au>
+Sender: linux-next-owner@vger.kernel.org
+To: Stephen Rothwell <sfr@canb.auug.org.au>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-next@vger.kernel.org, greg Kroah-Hartman <gregkh@linuxfoundation.org>, fengguang.wu@intel.com, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-
-* David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org> wrote:
-
-> From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> Date: Mon, 8 Sep 2014 07:23:29 +0200
+On 09/08/2014 04:58 PM, Stephen Rothwell wrote:
+> Hi Shuah,
 > 
-> > 
-> > * Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
-> > 
-> >> > I don't think the speed up of the llvm submission is a 
-> >> > good argument, this sounds to me similar to the "please 
-> >> > apply this patch that reserves this new netlink family in 
-> >> > include/linux/netlink.h, I promise this new subsystem will 
-> >> > be submitted soon though. Meanwhile this will speed up 
-> >> > submission of my userspace software to distributions for 
-> >> > packaging" argument.
-> >> 
-> >> You're not correct here. I'm not saying 'I promise it will 
-> >> be submitted'. There _were_ already submitted. [...]
-> > 
-> > And this split-up smaller submissions was requested by David 
-> > Miller, the networking maintainer, so if Pablo wants another 
-> > submission format, he needs to take it up with David - we 
-> > can't do both at once obviously.
+> On Mon, 08 Sep 2014 08:52:45 -0600 Shuah Khan 
+> <shuahkh@osg.samsung.com> wrote:
+>> 
+>> Could you please add linux-kselftest tree to linux-next. I plan 
+>> to maintain two branches:
+>> 
+>> linux-kselftest for Kselftest Framework
+>> 
+>> fixes - Contains changes intended for merging before the next 
+>> major release, including fixes for regressions introduced during
+>>  merge window. next  - Contains changes intended for merging 
+>> during the next merge window between a major release and -rc1.
 > 
-> I think that just because I asked the submission size to be 
-> smaller, it does not mean that you can submit things before you 
-> provide the initial user as well.
+> Umm, a git URL would be helpful :-)
 > 
-> And how to work that out and keep the submission size 
-> reasonable is the submitter's problem, not mine.
 
-That's a pretty harsh requirement but might be doable 
-technically: Alexei, please submit a series that is large enough 
-to provide self-sufficient functionality as per Pablo's request,
-but is also small and minimal, as per David's request.
+Sorry: here it is:
 
-If that fails then another route would be to decouple from 
-networking initially and create something new and stand-alone in 
-kernel/ebpf/ (or any other name really), with tracing and perf 
-usecases, with networking integration and code deduplication to 
-be done at the end, when there can be no legitimate argument 
-about its utility.
+https://git.kernel.org/cgit/linux/kernel/git/shuah/linux-kselftest.git/
 
-Thanks,
+-- Shuah
 
-	Ingo
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
