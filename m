@@ -1,35 +1,53 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH] locks: Ability to test for flock presence on fd
-Date: Tue, 9 Sep 2014 12:18:21 -0400
-Message-ID: <20140909161820.GH1776@fieldses.org>
-References: <5405FBAE.5020303@parallels.com>
- <20140902184456.GC31793@fieldses.org>
- <54061562.4080306@parallels.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH v10 net-next 0/2] load imm64 insn and uapi/linux/bpf.h
+Date: Tue, 09 Sep 2014 10:30:59 -0700 (PDT)
+Message-ID: <20140909.103059.1330265085939107782.davem@davemloft.net>
+References: <1409894238-9055-1-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54061562.4080306-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+In-Reply-To: <1409894238-9055-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org
+Cc: mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 02, 2014 at 11:07:14PM +0400, Pavel Emelyanov wrote:
-> > Would it make sense to return the lock type held instead, so you could
-> > do one flock(fd, LOCK_TEST) instead of flock(fd, LOCK_TEST|LOCK_SH) and
-> > flock(fd, LOCK_TEST|LOCK_EX) ?
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Date: Thu,  4 Sep 2014 22:17:16 -0700
+
+> V9->V10
+> - no changes, added Daniel's ack
 > 
-> Well, in our case we parse /proc/locks anyway to see what
-> files at least to test for being locked. But what you propose
-> looks even better. I'll look what can be done here.
+> Note they're on top of Hannes's patch in the same area [1]
+> 
+> V8 thread with 'why' reasoning and end goal [2]
+> 
+> Original set [3] of ~28 patches I'm planning to present in 4 stages:
+> 
+>   I. this 2 patches to fork off llvm upstreaming
+>  II. bpf syscall with manpage and map implementation
+> III. bpf program load/unload with verifier testsuite (1st user of
+>      instruction macros from bpf.h and 1st user of load imm64 insn)
+>  IV. tracing, etc
+> 
+> [1] http://patchwork.ozlabs.org/patch/385266/
+> [2] https://lkml.org/lkml/2014/8/27/628
+> [3] https://lkml.org/lkml/2014/8/26/859
 
-Actually I think I prefer your version.  It seems cleaner to define
-LOCK_TEST as returning the same result as you'd get if you actually
-tried the lock, just without applying the lock.  It avoids having a
-different return-value convention for this one command.  It might avoid
-some ambiguity in cases where the flock might be denied for reasons
-other than a conflicting flock (e.g. on NFS where flocks and fcntl locks
-conflict).  It's closer to what GETLK does in the fcntl case.
+Begrudgingly, I've applied this series.
 
---b.
+Although I really wish you had included the mechanism for userland to
+use the eBPF instructions alongside exporting them to userspace.
+
+You kept saying "LLVM is the user" but that's a bullshit argument
+because you aren't including the patches necessary to actually
+propagate native eBPF programs into the kernel.
+
+That's what, 1 or 2 patches, right?  Which is not an unreasonable
+request.
+
+Anyways, I'm just extremely frustrated with how you operate and work,
+you push things way too hard.  I hate to say this, but you are the
+kind of submitter who gets his way by being persistent rather than
+making well formed pleasant submissions that are easy to integrate.
