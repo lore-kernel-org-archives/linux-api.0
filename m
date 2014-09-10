@@ -1,54 +1,77 @@
-From: Jeff Layton <jlayton@poochiereds.net>
-Subject: Re: [PATCH] locks: Ability to test for flock presence on fd
-Date: Wed, 10 Sep 2014 09:32:32 -0400
-Message-ID: <20140910093232.1252707e@tlielax.poochiereds.net>
-References: <5405FBAE.5020303@parallels.com>
-	<20140902184456.GC31793@fieldses.org>
-	<54061562.4080306@parallels.com>
-	<20140909161820.GH1776@fieldses.org>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH v11 net-next 04/12] bpf: expand BPF syscall with program load/unload
+Date: Wed, 10 Sep 2014 10:19:39 -0700
+Message-ID: <CAMEtUuxuTrhJ-Eyqc+sXK_5DeDccpN7EZ9kejS1fif-QxCOMqA@mail.gmail.com>
+References: <1410325808-3657-1-git-send-email-ast@plumgrid.com>
+	<1410325808-3657-5-git-send-email-ast@plumgrid.com>
+	<5410062A.4090003@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140909161820.GH1776@fieldses.org>
+In-Reply-To: <5410062A.4090003@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Emelyanov <xemul@parallels.com>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+To: Daniel Borkmann <dborkman@redhat.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Pablo Neira Ayuso <pablo@netfilter.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linuxfoundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 9 Sep 2014 12:18:21 -0400
-"J. Bruce Fields" <bfields@fieldses.org> wrote:
+On Wed, Sep 10, 2014 at 1:04 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
+>> +       bool                    has_info;       /* whether 'info' is valid
+>>         u32                     len;            /* Number of filter blocks
+>> -       struct sock_fprog_kern  *orig_prog;     /* Original BPF program */
+>> +       union {
+>> +               struct sock_fprog_kern  *orig_prog;     /* Original BPF
+>> program */
+>> +               struct bpf_prog_info    *info;
+>> +       };
+>
+>
+> All members of this bpf_prog_info should go into bpf_work_struct,
+> as I have intended this to be a ancillary structure here. Since
+> we already allocate this anyway, you can reduce complexity by doing
+> the additional allocation plus remove the has_info member.
 
-> On Tue, Sep 02, 2014 at 11:07:14PM +0400, Pavel Emelyanov wrote:
-> > > Would it make sense to return the lock type held instead, so you could
-> > > do one flock(fd, LOCK_TEST) instead of flock(fd, LOCK_TEST|LOCK_SH) and
-> > > flock(fd, LOCK_TEST|LOCK_EX) ?
-> > 
-> > Well, in our case we parse /proc/locks anyway to see what
-> > files at least to test for being locked. But what you propose
-> > looks even better. I'll look what can be done here.
-> 
-> Actually I think I prefer your version.  It seems cleaner to define
-> LOCK_TEST as returning the same result as you'd get if you actually
-> tried the lock, just without applying the lock.  It avoids having a
-> different return-value convention for this one command.  It might avoid
-> some ambiguity in cases where the flock might be denied for reasons
-> other than a conflicting flock (e.g. on NFS where flocks and fcntl locks
-> conflict).  It's closer to what GETLK does in the fcntl case.
-> 
+that's doable, but won't you be worried about extra 6 fields
+in there that only used by native eBPF programs?
+I kept them separate not to introduce any overhead
+to classic programs.
 
-Yeah, I think I agree here too. Best to keep the interface as simple
-as possible, and the principle of least surprise would dictate that the
-return value match how other flock() calls work.
+>>         struct bpf_work_struct  *work;          /* Deferred free work
+>> struct */
 
-I would still like to see a proposed manpage update for it. For bonus
-points, writing a section on flock() for the glibc manual might help
-get that piece merged as well.
+Also we'd need to rename it, adjust the comment above
+and move into linux/bpf.h, since it don't want to overload
+linux/filter.h with native eBPF stuff. In my mind filter.h
+is for classic and socket things, whereas bpf.h is net-less.
+So I'm 50/50 on this one.
+Dropping has_info flag is definitely a plus.
 
-It was my experience that getting the small header file #defines into
-glibc for OFD locks was much more difficult than the kernel piece. YMMV
-of course, but getting the glibc folks to buy into the idea ahead of
-time would be good if possible.
+Rename 'struct bpf_work_struct' to 'struct bpf_prog_info' ?
+bpf_prog_aux_data? bpf_prog_extra ?
+Naming is hard.
 
--- 
-Jeff Layton <jlayton@poochiereds.net>
+> But seccomp already does refcounting on each BPF filter. Or, is the
+> intention to remove this from seccomp?
+
+seccomp refcounts its own wrapper struct on top of classic bpf.
+It gets incremented when task is forked, so I suspect it will
+be needed even when seccomp moves to native.
+Note that 'struct sk_filter' has its own refcnt as well which
+gets incremented when socket is cloned. It's independent from
+eBPF program refcnt which is part of 'struct bpf_prog_info',
+since the same eBPF program can be attached to multiple
+sockets. So both are needed. Seccomp may want to attach
+the same eBPF program to multiple tasks as well to save
+some memory.
+In classic BPF we may open multiple sockets and attach
+the same classic BPF prog to all. prog is allocated multiple
+times. JIT is called multiple times, but overhead is not huge.
+For eBPF is not an option. In eBPF+tracing single program
+may be attached to hundreds of events.
+
+>> +       BUG_ON(fp->has_info);
+>
+> Why BUG_ON() (also in so many other places)?
+
+because struct bpf_prog can be created in many different
+ways and I had a painful bug here while developing.
+I think it can be dropped now.
