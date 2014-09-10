@@ -1,70 +1,37 @@
-From: Daniel Borkmann <dborkman@redhat.com>
-Subject: Re: [PATCH v11 net-next 00/12] eBPF syscall, verifier, testsuite
-Date: Wed, 10 Sep 2014 11:21:01 +0200
-Message-ID: <541017FD.1030308@redhat.com>
-References: <1410325808-3657-1-git-send-email-ast@plumgrid.com>
+From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v11 net-next 11/12] net: filter: move eBPF instruction
+ macros
+Date: Wed, 10 Sep 2014 13:24:54 +0200
+Message-ID: <54103506.1030501@redhat.com>
+References: <1410325808-3657-1-git-send-email-ast@plumgrid.com> <1410325808-3657-12-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1410325808-3657-1-git-send-email-ast@plumgrid.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Pablo Neira Ayuso <pablo@netfilter.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linuxfoundation.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1410325808-3657-12-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/10/2014 07:09 AM, Alexei Starovoitov wrote:
-....
-> BPF(2)                     Linux Programmer's Manual                    BPF(2)
-...
->         union bpf_attr {
->             struct { /* anonymous struct used by BPF_MAP_CREATE command */
->                 enum bpf_map_type map_type;
->                 __u32             key_size;    /* size of key in bytes */
->                 __u32             value_size;  /* size of value in bytes */
->                 __u32             max_entries; /* max number of entries in a map */
->             };
+On 09/10/2014 07:10 AM, Alexei Starovoitov wrote:
+> move instruction macros (like BPF_MOV64_REG or BPF_ALU32_IMM)
+> from linux/filter.h into uapi/linux/bpf.h
+> so that userspace programs can use them.
 >
->             struct { /* anonymous struct used by BPF_MAP_*_ELEM commands */
->                 int map_fd;
->                 void *key;
->                 union {
->                     void *value;
->                     void *next_key;
->                 };
-
-When you pass in these structs with pointers in it to other user space
-buffers, how do you handle this with mixed 32/64 bit user/kernel space?
-
-As an example, for the current way to load BPF although we export ...
-
-struct sock_fprog {
-	unsigned short len;
-	struct sock_filter __user *filter;
-};
-
-... through uapi, we still need to handle this via compat_sock_fprog
-to take care of different pointer sizes via compat_uptr_t :
-
-#ifdef CONFIG_COMPAT
-struct compat_sock_fprog {
-	u16 len;
-	compat_uptr_t filter;
-};
-#endif
-
-Perhaps I'm missing something, but I think, that would currently break in
-your syscall handler, no?
-
->             };
+> verifier testsuite (in later patches) will be using them.
 >
->             struct { /* anonymous struct used by BPF_PROG_LOAD command */
->                 enum bpf_prog_type    prog_type;
->                 __u32                 insn_cnt;
->                 const struct bpf_insn *insns;
->                 const char            *license;
->                 __u32                 log_level; /* verbosity level of eBPF verifier */
->                 __u32                 log_size;  /* size of user buffer */
->                 void                  *log_buf;  /* user supplied buffer */
->             };
->         };
+> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+
+I don't think we need this commit at all. These macros are not really
+part of the ABI and we should expose __as less as possible__, otherwise
+we won't be able to alter them anymore. Plus, based on your previous
+argumentation regarding the header file expose, we also won't be able
+to add any new macros anymore since you could run into name collisions.
+
+Anyway, I don't see a reason why a e.g. central user space eBPF library
+cannot live with, for example, a private copy of these helper macros or
+whatever it wants to define by itself.
+
+I know in classic BPF there's BPF_STMT() and BPF_JUMP() but it's much
+less complicated than eBPF and less likely to changes.
