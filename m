@@ -1,123 +1,40 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH v11 net-next 11/12] net: filter: move eBPF instruction macros
-Date: Wed, 10 Sep 2014 23:45:41 -0700
-Message-ID: <CAMEtUuxkSuvj04AQAmP4LgF_qUV77i_Gzw5KrAHyi6xDUJApMw@mail.gmail.com>
-References: <1410325808-3657-1-git-send-email-ast@plumgrid.com>
-	<1410325808-3657-12-git-send-email-ast@plumgrid.com>
-	<54103506.1030501@redhat.com>
-	<CAMEtUuwQXj=oWzyBkogTSfOAhjhx0oyB5gC4+HoccTGWg8Obfg@mail.gmail.com>
-	<5411415D.4060103@redhat.com>
+From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v11 net-next 00/12] eBPF syscall, verifier, testsuite
+Date: Thu, 11 Sep 2014 21:47:14 +0200
+Message-ID: <5411FC42.3070505@redhat.com>
+References: <1410325808-3657-1-git-send-email-ast@plumgrid.com> <541013CE.6020307@redhat.com> <CAMEtUuwrHX4ENK9cZ0C+XVB=wkMz1=wLphX_GVLvd8pyJKMXeQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=089e011829146753170502c48430
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5411415D.4060103@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <dborkman@redhat.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Pablo Neira Ayuso <pablo@netfilter.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linuxfoundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMEtUuwrHX4ENK9cZ0C+XVB=wkMz1=wLphX_GVLvd8pyJKMXeQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---089e011829146753170502c48430
-Content-Type: text/plain; charset=UTF-8
-
-On Wed, Sep 10, 2014 at 11:29 PM, Daniel Borkmann <dborkman@redhat.com> wrote:
+On 09/10/2014 07:32 PM, Alexei Starovoitov wrote:
+> On Wed, Sep 10, 2014 at 2:03 AM, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>>>              struct { /* anonymous struct used by BPF_PROG_LOAD command */
+>>>                  enum bpf_prog_type    prog_type;
+>>>                  __u32                 insn_cnt;
+>>>                  const struct bpf_insn *insns;
+>>>                  const char            *license;
+>>>                  __u32                 log_level; /* verbosity level of
+>>> eBPF verifier */
+>>>                  __u32                 log_size;  /* size of user buffer */
+>>>                  void                  *log_buf;  /* user supplied buffer
+>>> */
 >>
->> Interesting idea. Are you saying just copy paste these
->> 226 lines into user libbpf.h for now to use them in testsuite
->> and examples ? Hmm.
->> Indeed the less lines we add to uapi the better. I'll do that.
+>>
+>> What is log buffer? Would that mean the verifier will return an error
+>> string if the program will not pass it, or if not, what other data?
+>> I think the man page is missing how to examine the returned verifier
+>> log buffer data.
 >
->
-> Yes, that should be just fine, the existing ABI is not allowed to
-> change anyway and we're running into less pain if we decide to change
-> existing or add new macros internally.
+> yes. it's an error log (as text string for humans) from verifier.
 
-ok. will do that in the next set.
-
-btw, preliminary compat support in the attached patch.
-It works fine, but Andy's concern about enum is starting
-to get on me. May be we should replace
-enum bpf_.._type with u32 just to be safe...
-
---089e011829146753170502c48430
-Content-Type: application/octet-stream;
-	name="0001-bpf-add-compat_sys_bpf-wrapper.patch"
-Content-Disposition: attachment;
-	filename="0001-bpf-add-compat_sys_bpf-wrapper.patch"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_hzxqdrnl0
-
-RnJvbSA5YzA1Y2MxYmQxOGUyNzhmMGNmZDVhNDkwNjQ0MTA1YWE3Y2JiZjUyIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbGV4ZWkgU3Rhcm92b2l0b3YgPGFzdEBwbHVtZ3JpZC5jb20+
-CkRhdGU6IFdlZCwgMTAgU2VwIDIwMTQgMTk6NDE6MzEgLTA3MDAKU3ViamVjdDogW1BBVENIXSBi
-cGY6IGFkZCBjb21wYXRfc3lzX2JwZiB3cmFwcGVyCgp0byBzdXBwb3J0IDMyLWJpdCB1c2VyIHNw
-YWNlIHdpdGggNjQtYml0IGtlcm5lbAoKU2lnbmVkLW9mZi1ieTogQWxleGVpIFN0YXJvdm9pdG92
-IDxhc3RAcGx1bWdyaWQuY29tPgotLS0KIGFyY2gveDg2L3N5c2NhbGxzL3N5c2NhbGxfMzIudGJs
-ICB8ICAgIDIgKy0KIGluY2x1ZGUvdWFwaS9hc20tZ2VuZXJpYy91bmlzdGQuaCB8ICAgIDIgKy0K
-IGtlcm5lbC9icGYvc3lzY2FsbC5jICAgICAgICAgICAgICB8ICAgOTUgKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKwogMyBmaWxlcyBjaGFuZ2VkLCA5NyBpbnNlcnRpb25zKCsp
-LCAyIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2FyY2gveDg2L3N5c2NhbGxzL3N5c2NhbGxf
-MzIudGJsIGIvYXJjaC94ODYvc3lzY2FsbHMvc3lzY2FsbF8zMi50YmwKaW5kZXggOWZlMWI1ZDAw
-MmYwLi4yYjFkZGYxZGRiNWUgMTAwNjQ0Ci0tLSBhL2FyY2gveDg2L3N5c2NhbGxzL3N5c2NhbGxf
-MzIudGJsCisrKyBiL2FyY2gveDg2L3N5c2NhbGxzL3N5c2NhbGxfMzIudGJsCkBAIC0zNjMsNCAr
-MzYzLDQgQEAKIDM1NAlpMzg2CXNlY2NvbXAJCQlzeXNfc2VjY29tcAogMzU1CWkzODYJZ2V0cmFu
-ZG9tCQlzeXNfZ2V0cmFuZG9tCiAzNTYJaTM4NgltZW1mZF9jcmVhdGUJCXN5c19tZW1mZF9jcmVh
-dGUKLTM1NwlpMzg2CWJwZgkJCXN5c19icGYKKzM1NwlpMzg2CWJwZgkJCXN5c19icGYJCQkJY29t
-cGF0X3N5c19icGYKZGlmZiAtLWdpdCBhL2luY2x1ZGUvdWFwaS9hc20tZ2VuZXJpYy91bmlzdGQu
-aCBiL2luY2x1ZGUvdWFwaS9hc20tZ2VuZXJpYy91bmlzdGQuaAppbmRleCAyMjc0OWMxMzQxMTcu
-Ljk0YWZlZDkzZjNjYyAxMDA2NDQKLS0tIGEvaW5jbHVkZS91YXBpL2FzbS1nZW5lcmljL3VuaXN0
-ZC5oCisrKyBiL2luY2x1ZGUvdWFwaS9hc20tZ2VuZXJpYy91bmlzdGQuaApAQCAtNzA2LDcgKzcw
-Niw3IEBAIF9fU1lTQ0FMTChfX05SX2dldHJhbmRvbSwgc3lzX2dldHJhbmRvbSkKICNkZWZpbmUg
-X19OUl9tZW1mZF9jcmVhdGUgMjc5CiBfX1NZU0NBTEwoX19OUl9tZW1mZF9jcmVhdGUsIHN5c19t
-ZW1mZF9jcmVhdGUpCiAjZGVmaW5lIF9fTlJfYnBmIDI4MAotX19TWVNDQUxMKF9fTlJfYnBmLCBz
-eXNfYnBmKQorX19TQ19DT01QKF9fTlJfYnBmLCBzeXNfYnBmLCBjb21wYXRfc3lzX2JwZikKIAog
-I3VuZGVmIF9fTlJfc3lzY2FsbHMKICNkZWZpbmUgX19OUl9zeXNjYWxscyAyODEKZGlmZiAtLWdp
-dCBhL2tlcm5lbC9icGYvc3lzY2FsbC5jIGIva2VybmVsL2JwZi9zeXNjYWxsLmMKaW5kZXggNmNk
-ZmUzODhjNzg5Li40ZjJjNTQ0MWUxNzUgMTAwNjQ0Ci0tLSBhL2tlcm5lbC9icGYvc3lzY2FsbC5j
-CisrKyBiL2tlcm5lbC9icGYvc3lzY2FsbC5jCkBAIC0xNiw2ICsxNiw3IEBACiAjaW5jbHVkZSA8
-bGludXgvZmlsZS5oPgogI2luY2x1ZGUgPGxpbnV4L2xpY2Vuc2UuaD4KICNpbmNsdWRlIDxsaW51
-eC9maWx0ZXIuaD4KKyNpbmNsdWRlIDxsaW51eC9jb21wYXQuaD4KIAogc3RhdGljIExJU1RfSEVB
-RChicGZfbWFwX3R5cGVzKTsKIApAQCAtNTc2LDYgKzU3NywxMDAgQEAgZnJlZV9hdHRyOgogCXJl
-dHVybiBlcnI7CiB9CiAKKyNpZmRlZiBDT05GSUdfQ09NUEFUCit1bmlvbiBjb21wYXRfYnBmX2F0
-dHIgeworCXN0cnVjdCB7CisJCWVudW0gYnBmX21hcF90eXBlIG1hcF90eXBlOworCQlfX3UzMglr
-ZXlfc2l6ZTsKKwkJX191MzIJdmFsdWVfc2l6ZTsKKwkJX191MzIJbWF4X2VudHJpZXM7CisJfTsK
-KworCXN0cnVjdCB7CisJCWludCBtYXBfZmQ7CisJCWNvbXBhdF91cHRyX3Qga2V5OworCQl1bmlv
-biB7CisJCQljb21wYXRfdXB0cl90IHZhbHVlOworCQkJY29tcGF0X3VwdHJfdCBuZXh0X2tleTsK
-KwkJfTsKKwl9OworCisJc3RydWN0IHsKKwkJZW51bSBicGZfcHJvZ190eXBlIHByb2dfdHlwZTsK
-KwkJX191MzIgaW5zbl9jbnQ7CisJCWNvbXBhdF91cHRyX3QgaW5zbnM7CisJCWNvbXBhdF91cHRy
-X3QgbGljZW5zZTsKKwkJX191MzIgbG9nX2xldmVsOworCQlfX3UzMiBsb2dfc2l6ZTsKKwkJY29t
-cGF0X3VwdHJfdCBsb2dfYnVmOworCX07Cit9OworQ09NUEFUX1NZU0NBTExfREVGSU5FMyhicGYs
-IGludCwgY21kLCB1bmlvbiBjb21wYXRfYnBmX2F0dHIgX191c2VyICosIHVhdHRyLAorCQkgICAg
-ICAgdW5zaWduZWQgaW50LCBzaXplKQoreworCXVuaW9uIGNvbXBhdF9icGZfYXR0ciBjb21wYXRf
-YXR0ciA9IHt9OworCXVuaW9uIGJwZl9hdHRyIGF0dHIgPSB7fTsKKwlpbnQgZXJyOworCisJaWYg
-KCFjYXBhYmxlKENBUF9TWVNfQURNSU4pKQorCQlyZXR1cm4gLUVQRVJNOworCisJaWYgKHNpemUg
-PiBzaXplb2YoY29tcGF0X2F0dHIpKQorCQlyZXR1cm4gLUVJTlZBTDsKKworCWlmIChjb3B5X2Zy
-b21fdXNlcigmY29tcGF0X2F0dHIsIHVhdHRyLCBzaXplKSAhPSAwKQorCQlyZXR1cm4gLUVGQVVM
-VDsKKworCXN3aXRjaCAoY21kKSB7CisJY2FzZSBCUEZfTUFQX0NSRUFURToKKwkJYXR0ci5tYXBf
-dHlwZSA9IGNvbXBhdF9hdHRyLm1hcF90eXBlOworCQlhdHRyLmtleV9zaXplID0gY29tcGF0X2F0
-dHIua2V5X3NpemU7CisJCWF0dHIudmFsdWVfc2l6ZSA9IGNvbXBhdF9hdHRyLnZhbHVlX3NpemU7
-CisJCWF0dHIubWF4X2VudHJpZXMgPSBjb21wYXRfYXR0ci5tYXhfZW50cmllczsKKwkJZXJyID0g
-bWFwX2NyZWF0ZSgmYXR0cik7CisJCWJyZWFrOworCWNhc2UgQlBGX01BUF9MT09LVVBfRUxFTToK
-KwkJYXR0ci5tYXBfZmQgPSBjb21wYXRfYXR0ci5tYXBfZmQ7CisJCWF0dHIua2V5ID0gY29tcGF0
-X3B0cihjb21wYXRfYXR0ci5rZXkpOworCQlhdHRyLnZhbHVlID0gY29tcGF0X3B0cihjb21wYXRf
-YXR0ci52YWx1ZSk7CisJCWVyciA9IG1hcF9sb29rdXBfZWxlbSgmYXR0cik7CisJCWJyZWFrOwor
-CWNhc2UgQlBGX01BUF9VUERBVEVfRUxFTToKKwkJYXR0ci5tYXBfZmQgPSBjb21wYXRfYXR0ci5t
-YXBfZmQ7CisJCWF0dHIua2V5ID0gY29tcGF0X3B0cihjb21wYXRfYXR0ci5rZXkpOworCQlhdHRy
-LnZhbHVlID0gY29tcGF0X3B0cihjb21wYXRfYXR0ci52YWx1ZSk7CisJCWVyciA9IG1hcF91cGRh
-dGVfZWxlbSgmYXR0cik7CisJCWJyZWFrOworCWNhc2UgQlBGX01BUF9ERUxFVEVfRUxFTToKKwkJ
-YXR0ci5tYXBfZmQgPSBjb21wYXRfYXR0ci5tYXBfZmQ7CisJCWF0dHIua2V5ID0gY29tcGF0X3B0
-cihjb21wYXRfYXR0ci5rZXkpOworCQllcnIgPSBtYXBfZGVsZXRlX2VsZW0oJmF0dHIpOworCQli
-cmVhazsKKwljYXNlIEJQRl9NQVBfR0VUX05FWFRfS0VZOgorCQlhdHRyLm1hcF9mZCA9IGNvbXBh
-dF9hdHRyLm1hcF9mZDsKKwkJYXR0ci5rZXkgPSBjb21wYXRfcHRyKGNvbXBhdF9hdHRyLmtleSk7
-CisJCWF0dHIubmV4dF9rZXkgPSBjb21wYXRfcHRyKGNvbXBhdF9hdHRyLm5leHRfa2V5KTsKKwkJ
-ZXJyID0gbWFwX2dldF9uZXh0X2tleSgmYXR0cik7CisJCWJyZWFrOworCWNhc2UgQlBGX1BST0df
-TE9BRDoKKwkJYXR0ci5wcm9nX3R5cGUgPSBjb21wYXRfYXR0ci5wcm9nX3R5cGU7CisJCWF0dHIu
-aW5zbl9jbnQgPSBjb21wYXRfYXR0ci5pbnNuX2NudDsKKwkJYXR0ci5pbnNucyA9IGNvbXBhdF9w
-dHIoY29tcGF0X2F0dHIuaW5zbnMpOworCQlhdHRyLmxpY2Vuc2UgPSBjb21wYXRfcHRyKGNvbXBh
-dF9hdHRyLmxpY2Vuc2UpOworCQlhdHRyLmxvZ19sZXZlbCA9IGNvbXBhdF9hdHRyLmxvZ19sZXZl
-bDsKKwkJYXR0ci5sb2dfc2l6ZSA9IGNvbXBhdF9hdHRyLmxvZ19zaXplOworCQlhdHRyLmxvZ19i
-dWYgPSBjb21wYXRfcHRyKGNvbXBhdF9hdHRyLmxvZ19idWYpOworCQllcnIgPSBicGZfcHJvZ19s
-b2FkKCZhdHRyKTsKKwkJYnJlYWs7CisJZGVmYXVsdDoKKwkJZXJyID0gLUVJTlZBTDsKKwkJYnJl
-YWs7CisJfQorCisJcmV0dXJuIGVycjsKK30KKyNlbmRpZgorCiAvKiBjYWxsZWQgZnJvbSBlQlBG
-IHByb2dyYW0gdW5kZXIgcmN1IGxvY2sKICAqCiAgKiBpZiBrZXJuZWwgc3Vic3lzdGVtIGlzIGFs
-bG93aW5nIGVCUEYgcHJvZ3JhbXMgdG8gY2FsbCB0aGlzIGZ1bmN0aW9uLAotLSAKMS43LjkuNQoK
---089e011829146753170502c48430--
+I was confused due to the void pointer. But that also means that the text
+string becomes part of the ABI; aren't eBPF specific error codes (perhaps
+a tuple of [line + error code]), though ugly as well, but perhaps the better
+solution to this [which user space can then map to an actual string]?
