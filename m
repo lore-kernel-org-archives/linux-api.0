@@ -1,89 +1,141 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v11 net-next 00/12] eBPF syscall, verifier, testsuite
-Date: Thu, 11 Sep 2014 15:29:30 -0700
-Message-ID: <CAMEtUuyzOgCZutgsAXs60BO0=0WJGpVAeTYN2hf0Bh1sZ5PMVg@mail.gmail.com>
-References: <1410325808-3657-1-git-send-email-ast@plumgrid.com>
-	<541013CE.6020307@redhat.com>
-	<CAMEtUuwrHX4ENK9cZ0C+XVB=wkMz1=wLphX_GVLvd8pyJKMXeQ@mail.gmail.com>
-	<5411FC42.3070505@redhat.com>
-	<CAMEtUuziPptHxtw_7fkOdR-paB+8BatNmRPoo3txP8wOp9D6Tw@mail.gmail.com>
-	<CALCETrWCEwscbbfX7wAW-A+VQ5Y92igD36BmTXqFra04Qdwk0Q@mail.gmail.com>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v16 0/7] MADV_FREE support
+Date: Fri, 12 Sep 2014 08:10:56 +0900
+Message-ID: <20140911231056.GA4652@bbox>
+References: <1409556048-5045-1-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWCEwscbbfX7wAW-A+VQ5Y92igD36BmTXqFra04Qdwk0Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1409556048-5045-1-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 11, 2014 at 2:54 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>
->> the verifier log contains full trace. Last unsafe instruction + error
->> in many cases is useless. What we found empirically from using
->> it over last 2 years is that developers have different learning curve
->> to adjust to 'safe' style of C. Pretty much everyone couldn't
->> figure out why program is rejected based on last error. Therefore
->> verifier emits full log. From the 1st insn all the way till the last
->> 'unsafe' instruction. So the log is multiline output.
->> 'Understanding eBPF verifier messages' section of
->> Documentation/networking/filter.txt provides few trivial
->> examples of these multiline messages.
->> Like for the program:
->>   BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
->>   BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
->>   BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
->>   BPF_LD_MAP_FD(BPF_REG_1, 0),
->>   BPF_CALL_FUNC(BPF_FUNC_map_lookup_elem),
->>   BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
->>   BPF_ST_MEM(BPF_DW, BPF_REG_0, 4, 0),
->>   BPF_EXIT_INSN(),
->> the verifier log_buf is:
->>   0: (7a) *(u64 *)(r10 -8) = 0
->>   1: (bf) r2 = r10
->>   2: (07) r2 += -8
->>   3: (b7) r1 = 0
->>   4: (85) call 1
->>   5: (15) if r0 == 0x0 goto pc+1
->>    R0=map_ptr R10=fp
->>   6: (7a) *(u64 *)(r0 +4) = 0
->>   misaligned access off 4 size 8
->>
->> It will surely change over time as verifier becomes smarter,
->> supports new types, optimizations and so on.
->> So this log is not an ABI. It's for humans to read.
->> The log explains _how_ verifier came to conclusion
->> that the program is unsafe.
->
-> Given that you've already arranged (I think) for the verifier to be
-> compilable in the kernel and in userspace, would it make more sense to
-> have the kernel version just say yes or no and to make it easy for
-> user code to retry verification in userspace if they want a full
-> explanation?
+Hello Andrew,
 
-Good memory :) Long ago I had a hack where I compiled
-verifier.o for kernel and linked it with userspace wrappers to
-have the same verifier for userspace. It was very fragile.
-and maps were not separate objects and there were no fds.
-It's not feasible anymore, since different subsystems
-will configure different bpf_context and helper functions and
-verifier output is dynamic based on maps that were created.
-For example, if user's samples/bpf/sock_example.c does
-bpf_create_map(HASH, sizeof(key) * 2, ...);
-instead of
-bpf_create_map(HASH, sizeof(key), ...);
-the same program will be rejected in first case and will be
-accepted in the second, because map sizes and ebpf
-program expectations are mismatching.
-For the 1st case verifier will complain that program is
-trying to pass uninitialized stack into bpf_lookup(key,...)
-method or stack may be out of bounds.
-Human insight is needed to understand what is going on.
+This patchset have been pended for a long time.
+Is there any problem to proceed?
 
-I think more important is that source of truth needs to be
-in one place == kernel. If we have two verifiers they will
-diverge sooner or later and cause confusion for users.
-I think as long as we document that verifier log
-messages are not cast in stone and will change, we're fine.
-I consider them as continuation of compiler warnings/errors.
-They are meant for humans and do change from time to time.
+On Mon, Sep 01, 2014 at 04:20:41PM +0900, Minchan Kim wrote:
+> This patch enable MADV_FREE hint for madvise syscall, which have
+> been supported by other OSes. [PATCH 1] includes the details.
+> 
+> [1] support MADVISE_FREE for !THP page so if VM encounter
+> THP page in syscall context, it splits THP page.
+> [2-6] is to preparing to call madvise syscall without THP plitting
+> [7] enable THP page support for MADV_FREE.
+> 
+> * from v15
+>  * Add more Acked-by - Rik van Riel
+>  * Rebased on mmotom-08-29-15-15
+> 
+> * from v14
+>  * Add more Ackedy-by from arch people(sparc, arm64 and arm)
+>  * Drop s390 since pmd_dirty/clean was merged
+> 
+> * from v13
+>  * Add more Ackedy-by from arch people(arm, arm64 and ppc)
+>  * Rebased on mmotm 2014-08-13-14-29
+> 
+> * from v12
+>  * Fix - skip to mark free pte on try_to_free_swap failed page - Kirill
+>  * Add more Acked-by from arch maintainers and Kirill
+> 
+> * From v11
+>  * Fix arm build - Steve
+>  * Separate patch for arm and arm64 - Steve
+>  * Remove unnecessary check - Kirill
+>  * Skip non-vm_normal page - Kirill
+>  * Add Acked-by - Zhang
+>  * Sparc64 build fix
+>  * Pagetable walker THP handling fix
+> 
+> * From v10
+>  * Add Acked-by from arch stuff(x86, s390)
+>  * Pagewalker based pagetable working - Kirill
+>  * Fix try_to_unmap_one broken with hwpoison - Kirill
+>  * Use VM_BUG_ON_PAGE in madvise_free_pmd - Kirill
+>  * Fix pgtable-3level.h for arm - Steve
+> 
+> * From v9
+>  * Add Acked-by - Rik
+>  * Add THP page support - Kirill
+> 
+> * From v8
+>  * Rebased-on v3.16-rc2-mmotm-2014-06-25-16-44
+> 
+> * From v7
+>  * Rebased-on next-20140613
+> 
+> * From v6
+>  * Remove page from swapcache in syscal time
+>  * Move utility functions from memory.c to madvise.c - Johannes
+>  * Rename untilify functtions - Johannes
+>  * Remove unnecessary checks from vmscan.c - Johannes
+>  * Rebased-on v3.15-rc5-mmotm-2014-05-16-16-56
+>  * Drop Reviewe-by because there was some changes since then.
+> 
+> * From v5
+>  * Fix PPC problem which don't flush TLB - Rik
+>  * Remove unnecessary lazyfree_range stub function - Rik
+>  * Rebased on v3.15-rc5
+> 
+> * From v4
+>  * Add Reviewed-by: Zhang Yanfei
+>  * Rebase on v3.15-rc1-mmotm-2014-04-15-16-14
+> 
+> * From v3
+>  * Add "how to work part" in description - Zhang
+>  * Add page_discardable utility function - Zhang
+>  * Clean up
+> 
+> * From v2
+>  * Remove forceful dirty marking of swap-readed page - Johannes
+>  * Remove deactivation logic of lazyfreed page
+>  * Rebased on 3.14
+>  * Remove RFC tag
+> 
+> * From v1
+>  * Use custom page table walker for madvise_free - Johannes
+>  * Remove PG_lazypage flag - Johannes
+>  * Do madvise_dontneed instead of madvise_freein swapless system
+> 
+> Minchan Kim (7):
+>   mm: support madvise(MADV_FREE)
+>   x86: add pmd_[dirty|mkclean] for THP
+>   sparc: add pmd_[dirty|mkclean] for THP
+>   powerpc: add pmd_[dirty|mkclean] for THP
+>   arm: add pmd_mkclean for THP
+>   arm64: add pmd_[dirty|mkclean] for THP
+>   mm: Don't split THP page when syscall is called
+> 
+>  arch/arm/include/asm/pgtable-3level.h    |   1 +
+>  arch/arm64/include/asm/pgtable.h         |   2 +
+>  arch/powerpc/include/asm/pgtable-ppc64.h |   2 +
+>  arch/sparc/include/asm/pgtable_64.h      |  16 ++++
+>  arch/x86/include/asm/pgtable.h           |  10 ++
+>  include/linux/huge_mm.h                  |   4 +
+>  include/linux/rmap.h                     |   9 +-
+>  include/linux/vm_event_item.h            |   1 +
+>  include/uapi/asm-generic/mman-common.h   |   1 +
+>  mm/huge_memory.c                         |  35 +++++++
+>  mm/madvise.c                             | 159 +++++++++++++++++++++++++++++++
+>  mm/rmap.c                                |  46 ++++++++-
+>  mm/vmscan.c                              |  64 +++++++++----
+>  mm/vmstat.c                              |   1 +
+>  14 files changed, 331 insertions(+), 20 deletions(-)
+> 
+> -- 
+> 2.0.0
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+
+-- 
+Kind regards,
+Minchan Kim
