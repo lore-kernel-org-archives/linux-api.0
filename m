@@ -1,94 +1,105 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH v11 net-next 00/12] eBPF syscall, verifier, testsuite
-Date: Thu, 11 Sep 2014 18:29:11 -0700
-Message-ID: <CAMEtUuyez57dMCpVAXVMUjHmKKDuD4X2uniVkG=d-bvT7uDFNw@mail.gmail.com>
-References: <1410325808-3657-1-git-send-email-ast@plumgrid.com>
-	<541013CE.6020307@redhat.com>
-	<CAMEtUuwrHX4ENK9cZ0C+XVB=wkMz1=wLphX_GVLvd8pyJKMXeQ@mail.gmail.com>
-	<5411FC42.3070505@redhat.com>
-	<CAMEtUuziPptHxtw_7fkOdR-paB+8BatNmRPoo3txP8wOp9D6Tw@mail.gmail.com>
-	<CALCETrWCEwscbbfX7wAW-A+VQ5Y92igD36BmTXqFra04Qdwk0Q@mail.gmail.com>
-	<CAMEtUuyzOgCZutgsAXs60BO0=0WJGpVAeTYN2hf0Bh1sZ5PMVg@mail.gmail.com>
-	<CALCETrXqwd=dp31fckMPruQMwVw+UAjaf=SSWp8wr_Cdz_tQdw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXqwd=dp31fckMPruQMwVw+UAjaf=SSWp8wr_Cdz_tQdw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Daniel Borkmann <dborkman@redhat.com>, "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Pablo Neira Ayuso <pablo@netfilter.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linuxfoundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v6 0/8] charger/mfd: max14577: Add support for MAX77836
+Date: Fri, 12 Sep 2014 08:53:52 +0200
+Message-ID: <1410504840-23543-1-git-send-email-k.kozlowski@samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 11, 2014 at 6:17 PM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Thu, Sep 11, 2014 at 3:29 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
->> On Thu, Sep 11, 2014 at 2:54 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>>
->>>> the verifier log contains full trace. Last unsafe instruction + error
->>>> in many cases is useless. What we found empirically from using
->>>> it over last 2 years is that developers have different learning curve
->>>> to adjust to 'safe' style of C. Pretty much everyone couldn't
->>>> figure out why program is rejected based on last error. Therefore
->>>> verifier emits full log. From the 1st insn all the way till the last
->>>> 'unsafe' instruction. So the log is multiline output.
->>>> 'Understanding eBPF verifier messages' section of
->>>> Documentation/networking/filter.txt provides few trivial
->>>> examples of these multiline messages.
->>>> Like for the program:
->>>>   BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
->>>>   BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
->>>>   BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
->>>>   BPF_LD_MAP_FD(BPF_REG_1, 0),
->>>>   BPF_CALL_FUNC(BPF_FUNC_map_lookup_elem),
->>>>   BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
->>>>   BPF_ST_MEM(BPF_DW, BPF_REG_0, 4, 0),
->>>>   BPF_EXIT_INSN(),
->>>> the verifier log_buf is:
->>>>   0: (7a) *(u64 *)(r10 -8) = 0
->>>>   1: (bf) r2 = r10
->>>>   2: (07) r2 += -8
->>>>   3: (b7) r1 = 0
->>>>   4: (85) call 1
->>>>   5: (15) if r0 == 0x0 goto pc+1
->>>>    R0=map_ptr R10=fp
->>>>   6: (7a) *(u64 *)(r0 +4) = 0
->>>>   misaligned access off 4 size 8
->>>>
->>>> It will surely change over time as verifier becomes smarter,
->>>> supports new types, optimizations and so on.
->>>> So this log is not an ABI. It's for humans to read.
->>>> The log explains _how_ verifier came to conclusion
->>>> that the program is unsafe.
->>>
->>> Given that you've already arranged (I think) for the verifier to be
->>> compilable in the kernel and in userspace, would it make more sense to
->>> have the kernel version just say yes or no and to make it easy for
->>> user code to retry verification in userspace if they want a full
->>> explanation?
->>
->> Good memory :) Long ago I had a hack where I compiled
->> verifier.o for kernel and linked it with userspace wrappers to
->> have the same verifier for userspace. It was very fragile.
->> and maps were not separate objects and there were no fds.
->> It's not feasible anymore, since different subsystems
->> will configure different bpf_context and helper functions and
->> verifier output is dynamic based on maps that were created.
->> For example, if user's samples/bpf/sock_example.c does
->> bpf_create_map(HASH, sizeof(key) * 2, ...);
->> instead of
->> bpf_create_map(HASH, sizeof(key), ...);
->> the same program will be rejected in first case and will be
->> accepted in the second, because map sizes and ebpf
->> program expectations are mismatching.
->
-> Hmm.
->
-> This actually furthers my thought that the relocations should be a
-> real relocation table.  Then you could encode the types of the
-> referenced objects in the table, and a program could be verified
-> without looking up the fds.  The only extra step would be to confirm
-> that the actual types referenced match those in the table.
+Hi,
 
-It's not the type is being checked, but one particular map instance
-with user specified key/value sizes. type is not helpful. type is not
-even used during verification. Only key_size and value_size of
-elements are meaningful and they're looked up dynamically by fd.
+
+This is a sixth version of patches adding support for
+MAX77836 device to the max14577 drivers.
+
+This patchset has been on the lists for quite long time and was already
+reviewed by all necessary maintainers except power supply.
+I need acks from power supply subsystem (patches: 3, 5-8).
+
+Generally this should be pulled at once but some parts may be split
+and pulled separately in following batches:
+ - Patches 1 and 2: as MFD prerequisites,
+ - Patches 3-5: adding actual charger code, depends on 1 and 2,
+ - Patch 6: fuel-gauge, independent,
+ - Patches 7 and 8: only documentation.
+
+Lee Jones said he can take the set through his tree. Still I need acks
+from power subsystem.
+
+Everything rebased on Linus' tree (v3.17-rc2-9-g68e370289c29).
+
+Changes since v5
+================
+1. 5/8: Remove 'inline' from functions (suggested by Andrew Morton).
+2. Add Andrew Morton's acks.
+
+Changes since v4
+================
+1. Add Lee Jones' acks to patch 1 and 2 (mfd).
+2. power max17040 6/8: Remove duplicated (and not used) value of id
+   in array of i2c_device_id. (suggested by Lee Jones)
+
+Changes since v3
+================
+1. Split MFD changes into separate new patches:
+   1/8: mfd: max14577: Add defines for MAX77836 charger
+   2/8: Map charger device to its own of_node
+   Suggested by Lee Jones.
+
+Changes since v2
+================
+1. charger: Use sysfs instead of DTS for setting the fast charge timer.
+   The charger driver now selects the CONFIG_SYSFS and exports
+   a DEVICE_ATTR. (suggested by Mark Rutland)
+2. Add patch 6 with documentation of exported sysfs entry for fast
+   charge timer.
+3. charger 3/6: Add missing 'break' in switch parsing valid values
+   for fast charge timer.
+
+Changes since v1
+================
+1. charger 3/5: Add an error message for each unsuccessful parse of DT
+   property (suggested by Mark Rutland).
+2. charger 3/5: Use 'u32' type for storing values from DT (suggested
+   by Mark Rutland).
+3. charger 3/5: Remove an error message for memory allocation failure.
+
+
+The patchset (first and second part of the MAX77836 drivers) has been
+on the lists since January. Changelog for the first part of the drivers
+(merged):
+https://www.mail-archive.com/linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg628696.html
+
+
+Best regards,
+Krzysztof Kozlowski
+
+
+Krzysztof Kozlowski (8):
+  mfd: max14577: Add defines for MAX77836 charger
+  mfd: max14577: Map charger device to its own of_node
+  charger: max14577: Add support for MAX77836 charger
+  regulator/mfd: max14577: Export symbols for calculating charger
+    current
+  charger: max14577: Configure battery-dependent settings from DTS and
+    sysfs
+  power: max17040: Add ID for MAX77836 Fuel Gauge block
+  devicetree: mfd: max14577: Add device tree bindings document
+  Documentation: charger: max14577: Document exported sysfs entry
+
+ Documentation/ABI/testing/sysfs-class-power        |  14 +
+ Documentation/devicetree/bindings/mfd/max14577.txt | 146 ++++++++
+ drivers/mfd/max14577.c                             | 100 +++++-
+ drivers/power/Kconfig                              |   5 +-
+ drivers/power/max14577_charger.c                   | 370 +++++++++++++++++++--
+ drivers/power/max17040_battery.c                   |   3 +-
+ drivers/regulator/max14577.c                       |  80 +----
+ include/linux/mfd/max14577-private.h               |  95 ++++--
+ include/linux/mfd/max14577.h                       |  30 ++
+ 9 files changed, 704 insertions(+), 139 deletions(-)
+ create mode 100644 Documentation/devicetree/bindings/mfd/max14577.txt
+
+-- 
+1.9.1
