@@ -1,71 +1,67 @@
-From: Pawel Moll <pawel.moll@arm.com>
-Subject: [RFC 0/2] Yet another take at user/kernel time correlation problem
-Date: Fri, 12 Sep 2014 12:48:31 +0100
-Message-ID: <1410522513-1045-1-git-send-email-pawel.moll@arm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>
+From: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Subject: Re: [RFC 2/2] perf: Marker software event and ioctl
+Date: Fri, 12 Sep 2014 08:43:38 -0400
+Message-ID: <5412EA7A.9020807@codeaurora.org>
+References: <1410522513-1045-1-git-send-email-pawel.moll@arm.com> <1410522513-1045-3-git-send-email-pawel.moll@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1410522513-1045-3-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Greetings,
+Hi Pawel,
 
-Here comes yet another take at the problem of correlating perf
-samples, timestamped in kernel (with - de-facto - sched_clock values),
-with performance-related events (be it debug information from JIT
-engines or energy sensor data obtained via USB or hwmon) generated
-in user space.
+On 09/12/2014 07:48 AM, Pawel Moll wrote:
+> This patch adds a PERF_COUNT_SW_MARKER event type, which
+> can be requested by user and a PERF_EVENT_IOC_MARKER
+> ioctl command which will inject an event of said type into
+> the perf buffer. The ioctl can take a zero-terminated
+> string argument, similar to tracing_marker in ftrace,
+> which will be kept in the "raw" field of the sample.
+> 
+> The main use case for this is synchronisation of
+> performance data generated in user space with the perf
+> stream coming from the kernel. For example, the marker
+> can be inserted by a JIT engine after it generated
+> portion of the code, but before the code is executed
+> for the first time, allowing the post-processor to
+> pick the correct debugging information. Other example
+> is a system profiling tool taking data from other
+> sources than just perf, which generates a marker
+> at the beginning at at the end of the session
+> (also possibly periodically during the session) to
+> synchronise kernel timestamps with clock values
+> obtained in userspace (gtod or raw_monotonic).
 
-The first patch adds an additional timestamp field in the perf
-sample data, which can be requested for any perf event along
-with normal PERF_SAMPLE_TIME. Events with both values appearing
-periodically in the perf data allow user code to translate
-raw monotonic time (obtained via POSIX clock API) to sched_clock
-domain. Although any perf event can be used, the natural choice
-would be a sched_switch trace event (for processes with root
-permissions) or a hrtimer-based PERF_COUNT_SW_CPU_CLOCK.
+> @@ -5960,6 +5965,44 @@ static struct pmu perf_swevent = {
+>  	.event_idx	= perf_swevent_event_idx,
+>  };
+>  
+> +static int perf_sw_event_marker(struct perf_event *event, char __user *arg)
+> +{
+> +	struct perf_sample_data data;
+> +	struct pt_regs *regs = current_pt_regs();
+> +	struct perf_raw_record raw = { 0, };
+> +
+> +	if (!static_key_false(&perf_swevent_enabled[PERF_COUNT_SW_MARKER]))
+> +		return 0;
+> +
+> +	perf_sample_data_init(&data, 0, 0);
+> +
+> +	if (arg) {
+> +		long len = strnlen_user(arg, PAGE_SIZE);
 
-One question I haven't found answer to is: could it be even more
-generic? As in: would it be possible to request a time value from
-any of the available time sources? It doesn't make sense, I
-believe, to have a PERF_SAMPLE_* for each possibility. An extra
-flags in perf_event_attrs maybe? (we still have 39 spare bits there)
+Just to ask the dumb questions in case the answers I've come up with are
+wrong: What is PAGE_SIZE on an arm64 kernel? How does userspace know?
 
-The second patch, functionally orthogonal but complementing
-the first one, replicates the "trace_maker" idea from ftrace
-in the perf world. Instead of a sysfs file, there is an ioctl
-command, which simply injects a new type of software event into
-the buffer. The argument can point at a zero-terminated string
-of PAGE_SIZE max lenght. If provided, it will be copied to
-the "raw" part of a sample. Of course the event can sample
-a monotonic clock as well, if used with the above, so one
-gets means of both synchronisation and time stamp approximation.
-
-One doubt I have here is the ioctl argument. It takes
-a strong now, like trace_marker does. But maybe a simple
-integer value would suffice? After all the ioctl can be
-only generated by the "owner" of the perf stream (unlike
-in trace_marker case, where "anyone" can write to it), so
-we could rely on him to have a dictionary of events of
-some sort.
-
-On another note, I proposed this subject for the tracing
-microconference on Plumbers next month. Hope to have some good
-discussion there. Maybe even a conclusion? (I wish... ;-)
-
-Thanks!
-
-Pawel
-
-
-Pawel Moll (2):
-  perf: Add sampling of the raw monotonic clock
-  perf: Marker software event and ioctl
-
- include/linux/perf_event.h      |  2 ++
- include/uapi/linux/perf_event.h |  6 ++++-
- kernel/events/core.c            | 55 +++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 62 insertions(+), 1 deletion(-)
+Thanks,
+Christopher
 
 -- 
-1.9.1
+Employee of Qualcomm Innovation Center, Inc.
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+hosted by the Linux Foundation.
