@@ -1,67 +1,51 @@
-From: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
 Subject: Re: [RFC 2/2] perf: Marker software event and ioctl
-Date: Fri, 12 Sep 2014 08:43:38 -0400
-Message-ID: <5412EA7A.9020807@codeaurora.org>
-References: <1410522513-1045-1-git-send-email-pawel.moll@arm.com> <1410522513-1045-3-git-send-email-pawel.moll@arm.com>
+Date: Fri, 12 Sep 2014 13:57:52 +0100
+Message-ID: <1410526672.16936.52.camel@hornet>
+References: <1410522513-1045-1-git-send-email-pawel.moll@arm.com>
+	 <1410522513-1045-3-git-send-email-pawel.moll@arm.com>
+	 <5412EA7A.9020807@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1410522513-1045-3-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
+In-Reply-To: <5412EA7A.9020807-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Pawel,
+On Fri, 2014-09-12 at 13:43 +0100, Christopher Covington wrote:
+> Just to ask the dumb questions in case the answers I've come up with are
+> wrong: What is PAGE_SIZE on an arm64 kernel? 
 
-On 09/12/2014 07:48 AM, Pawel Moll wrote:
-> This patch adds a PERF_COUNT_SW_MARKER event type, which
-> can be requested by user and a PERF_EVENT_IOC_MARKER
-> ioctl command which will inject an event of said type into
-> the perf buffer. The ioctl can take a zero-terminated
-> string argument, similar to tracing_marker in ftrace,
-> which will be kept in the "raw" field of the sample.
+It's either 4 or 64k, depending on CONFIG_ARM64_64K_PAGES.
+
+> How does userspace know?
 > 
-> The main use case for this is synchronisation of
-> performance data generated in user space with the perf
-> stream coming from the kernel. For example, the marker
-> can be inserted by a JIT engine after it generated
-> portion of the code, but before the code is executed
-> for the first time, allowing the post-processor to
-> pick the correct debugging information. Other example
-> is a system profiling tool taking data from other
-> sources than just perf, which generates a marker
-> at the beginning at at the end of the session
-> (also possibly periodically during the session) to
-> synchronise kernel timestamps with clock values
-> obtained in userspace (gtod or raw_monotonic).
+#include <unistd.h>
+#include <stdio.h>
 
-> @@ -5960,6 +5965,44 @@ static struct pmu perf_swevent = {
->  	.event_idx	= perf_swevent_event_idx,
->  };
->  
-> +static int perf_sw_event_marker(struct perf_event *event, char __user *arg)
-> +{
-> +	struct perf_sample_data data;
-> +	struct pt_regs *regs = current_pt_regs();
-> +	struct perf_raw_record raw = { 0, };
-> +
-> +	if (!static_key_false(&perf_swevent_enabled[PERF_COUNT_SW_MARKER]))
-> +		return 0;
-> +
-> +	perf_sample_data_init(&data, 0, 0);
-> +
-> +	if (arg) {
-> +		long len = strnlen_user(arg, PAGE_SIZE);
+int main(void)
+{
+	printf("%ld\n", sysconf(_SC_PAGESIZE));
+	return 0;
+}
 
-Just to ask the dumb questions in case the answers I've come up with are
-wrong: What is PAGE_SIZE on an arm64 kernel? How does userspace know?
+Now a word of explanation. The PAGE_SIZE limitation was shamelessly
+stolen from perf_event_set_filter() (so PERF_EVENT_IOC_SET_FILTER) as an
+attempt to address a problem of passing a zero-terminated string from
+userspace. Simply speaking - there must be some limitation, and a page
+size seem as good as any other. I have strong doubts about this myself,
+so all alternative ideas are more than welcome.
 
-Thanks,
-Christopher
+As I mentioned in the cover letter, maybe this simply shouldn't be a
+string? I made it like this to mimic trace_marker, but maybe an integer
+value + some kind of a dictionary in userspace is a better approach? I
+belive that ftrace's maker is taking a string, because it's: 1. natural
+for its interface and 2. anyone (sort of) can write to it, so it's hard
+to assume anything. In this case the user "owns" the perf data, so he
+could handle int<->whatever-else relation table...
 
--- 
-Employee of Qualcomm Innovation Center, Inc.
-Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
-hosted by the Linux Foundation.
+Pawel
+> 
