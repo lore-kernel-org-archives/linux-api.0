@@ -1,60 +1,73 @@
-From: David Ahern <dsahern@gmail.com>
-Subject: Re: [RFC 2/2] perf: Marker software event and ioctl
-Date: Sun, 14 Sep 2014 09:43:12 -0600
-Message-ID: <5415B790.5010607@gmail.com>
-References: <1410522513-1045-1-git-send-email-pawel.moll@arm.com> <1410522513-1045-3-git-send-email-pawel.moll@arm.com> <54132F63.1010401@gmail.com> <20140912204444.GA11199@kernel.org>
+From: =?ISO-8859-15?Q?Stephan_M=FCller?= <fruktopus-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] Change userspace MKDEV, MAJOR, MINOR-macros from 8+8 bit,
+ to 12+20 bit layout
+Date: Sun, 14 Sep 2014 19:35:28 +0200
+Message-ID: <5415D1E0.3020905@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140912204444.GA11199@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
-Cc: Pawel Moll <pawel.moll@arm.com>, Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, John Stultz <john.stultz@linaro.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 9/12/14, 2:44 PM, Arnaldo Carvalho de Melo wrote:
-> Em Fri, Sep 12, 2014 at 10:37:39AM -0700, David Ahern escreveu:
->> On 9/12/14, 4:48 AM, Pawel Moll wrote:
->>> This patch adds a PERF_COUNT_SW_MARKER event type, which
->>> can be requested by user and a PERF_EVENT_IOC_MARKER
->>> ioctl command which will inject an event of said type into
->>> the perf buffer. The ioctl can take a zero-terminated
->>> string argument, similar to tracing_marker in ftrace,
->>> which will be kept in the "raw" field of the sample.
->>>
->>> The main use case for this is synchronisation of
->>> performance data generated in user space with the perf
->>> stream coming from the kernel. For example, the marker
->>> can be inserted by a JIT engine after it generated
->>> portion of the code, but before the code is executed
->>> for the first time, allowing the post-processor to
->>> pick the correct debugging information. Other example
->>> is a system profiling tool taking data from other
->>> sources than just perf, which generates a marker
->>> at the beginning at at the end of the session
->>> (also possibly periodically during the session) to
->>> synchronise kernel timestamps with clock values
->>> obtained in userspace (gtod or raw_monotonic).
->>
->> Seems really similar to what I proposed in the past:
->>
->> https://lkml.org/lkml/2011/2/27/159
->>
->> Which was rejected.
->
-> I took a look at that thread, but just barely, emphasis on that.
->
-> Injecting something from userspace, a la ftrace, seems to be something,
-> as tglx mentioned, "buried" in that patchset.
+Delete old userspace-only versions (8+8 bit). Instead expose the kernel-space
+definitions (12+20 bit).
 
-Thomas object to an ioctl buried deep in a patch -- newbie mistake.
+Signed-off-by: Stephan Mueller <fruktopus-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
 
-Peter objected to the ioctl https://lkml.org/lkml/2011/3/1/229
+Browsing some code I found that user-space and kernel-space macros for (un-)packing major/minor device numbers differ. The user-space ones using still the old 16 bit scheme. There was no explaining comment around and most libraries have their own macros anyway so it should not be a problematic UAPI change. So IMHO we could win some coherence in abandon this discrepancy.
+Please correct me if I am wrong.
 
-It was not userspace injecting random data into the stream but rather 
-forcing the sample to be generated and added to the stream.
 
-David
+ include/linux/kdev_t.h      |  7 -------
+ include/uapi/linux/kdev_t.h | 16 +++++++---------
+ 2 files changed, 7 insertions(+), 16 deletions(-)
 
-David
+diff --git a/include/linux/kdev_t.h b/include/linux/kdev_t.h
+index c838abe..0b09c12 100644
+--- a/include/linux/kdev_t.h
++++ b/include/linux/kdev_t.h
+@@ -3,13 +3,6 @@
+ 
+ #include <uapi/linux/kdev_t.h>
+ 
+-#define MINORBITS	20
+-#define MINORMASK	((1U << MINORBITS) - 1)
+-
+-#define MAJOR(dev)	((unsigned int) ((dev) >> MINORBITS))
+-#define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
+-#define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
+-
+ #define print_dev_t(buffer, dev)					\
+ 	sprintf((buffer), "%u:%u\n", MAJOR(dev), MINOR(dev))
+ 
+diff --git a/include/uapi/linux/kdev_t.h b/include/uapi/linux/kdev_t.h
+index 0d881fa..6a8356b 100644
+--- a/include/uapi/linux/kdev_t.h
++++ b/include/uapi/linux/kdev_t.h
+@@ -1,13 +1,11 @@
+ #ifndef _UAPI_LINUX_KDEV_T_H
+ #define _UAPI_LINUX_KDEV_T_H
+-#ifndef __KERNEL__
+ 
+-/*
+-Some programs want their definitions of MAJOR and MINOR and MKDEV
+-from the kernel sources. These must be the externally visible ones.
+-*/
+-#define MAJOR(dev)	((dev)>>8)
+-#define MINOR(dev)	((dev) & 0xff)
+-#define MKDEV(ma,mi)	((ma)<<8 | (mi))
+-#endif /* __KERNEL__ */
++#define MINORBITS	20
++#define MINORMASK	((1U << MINORBITS) - 1)
++
++#define MAJOR(dev)	((unsigned int) ((dev) >> MINORBITS))
++#define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
++#define MKDEV(ma, mi)	(((ma) << MINORBITS) | (mi))
++
+ #endif /* _UAPI_LINUX_KDEV_T_H */
+-- 
+1.9.3
