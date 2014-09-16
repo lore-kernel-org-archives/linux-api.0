@@ -1,42 +1,126 @@
-From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v6 0/8] charger/mfd: max14577: Add support for MAX77836
-Date: Tue, 16 Sep 2014 11:47:02 +0200
-Message-ID: <1410860822.16106.3.camel@AMDC1943>
-References: <1410504840-23543-1-git-send-email-k.kozlowski@samsung.com>
- <20140915225220.GH25162@lee--X1> <20140916093000.GA31655@earth.universe>
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [RFC 2/2] perf: Marker software event and ioctl
+Date: Tue, 16 Sep 2014 17:33:47 +0100
+Message-ID: <1410885227.12376.20.camel@hornet>
+References: <1410522513-1045-1-git-send-email-pawel.moll@arm.com>
+	 <1410522513-1045-3-git-send-email-pawel.moll@arm.com>
+	 <5412EA7A.9020807@codeaurora.org> <1410526672.16936.52.camel@hornet>
+	 <20140912134910.GG1801@kernel.org> <1410530335.16936.60.camel@hornet>
+	 <20140912161934.GJ1801@kernel.org> <1410802034.3817.21.camel@hornet>
+	 <20140915183101.GE11199@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <20140916093000.GA31655-SfvFxonMDyemK9LvCR3Hrw@public.gmane.org>
+In-Reply-To: <20140915183101.GE11199-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On wto, 2014-09-16 at 11:30 +0200, Sebastian Reichel wrote:
-> Hi,
-> 
-> On Mon, Sep 15, 2014 at 11:52:20PM +0100, Lee Jones wrote:
-> > On Fri, 12 Sep 2014, Krzysztof Kozlowski wrote:
-> > > This is a sixth version of patches adding support for
-> > > MAX77836 device to the max14577 drivers.
-> > > 
-> > > This patchset has been on the lists for quite long time and was already
-> > > reviewed by all necessary maintainers except power supply.
-> > > I need acks from power supply subsystem (patches: 3, 5-8).
-> > 
-> > Give this set a few more days for the Power guys to respond.  If they
-> > don't, ping me and I will just apply the set.
-> 
-> Acked-By: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> 
-> -- Sebastian
+On Mon, 2014-09-15 at 19:31 +0100, Arnaldo Carvalho de Melo wrote:
+> Em Mon, Sep 15, 2014 at 06:27:14PM +0100, Pawel Moll escreveu:
+> > On Fri, 2014-09-12 at 17:19 +0100, Arnaldo Carvalho de Melo wrote:
+> > > Em Fri, Sep 12, 2014 at 02:58:55PM +0100, Pawel Moll escreveu:
+> > > > On Fri, 2014-09-12 at 14:49 +0100, Arnaldo Carvalho de Melo wro=
+te:
+> > > > > Perhaps both? I.e. an u64 followed from a string, if the u64 =
+is zero,
+> > > > > then there is a string right after it?
+> > > =20
+> > > > How would this look like in userspace? Something like this?
+> > > =20
+> > > > 8<----
+> > > > struct perf_event_marker {
+> > > > 	uint64_t value;
+> > > > 	char *string;
+> > > > } arg;
+> > > =20
+> > > > arg.value =3D 0x1234;
+> > > =20
+> > > > /* or */
+> > > =20
+> > > > arg.value =3D 0;
+> > > > arg.string =3D "abcd";
+> > > =20
+> > > > ioctl(fd, PERF_EVENT_IOC_MARKER, &arg)
+> > > > 8<----
+> > > =20
+> > > > If so, maybe it would simpler just to go for classic size/data
+> > > > structure?
+> > > =20
+> > > > 8<-----
+> > > > struct perf_event_marker {
+> > > > 	uint32_t size;
+> > > > 	void *data;
+> > > > }
+> > > > 8<-----
+> > > =20
+> > > > This would directly map into struct perf_raw_record...
+> > >=20
+> > > I can see the usefulness of having it all, i.e. if we do just:
+> > >=20
+> > > perf trace --pid `pidof some-tool-in-debug-mode-using-this-interf=
+ace`
+> >=20
+> > Hm. I haven't thought about a situation when 3rd party wants to inj=
+ect
+> > something into "my" data stream... I guess it could be implemented =
+(a
+>=20
+> I was thinking about intercepting calls that pass some logging data, =
+as
+> strings, and 'tee' them to the 'perf trace' 'data stream'.
 
-Thank you.
+Right, ok, like LD_PRELOADing printf (a stupid example of course) and
+piping it inside perf... So if I'm getting it right, it's the perf
+process that would eventually do the ioctl(PERF_EVENT_IOC_MARKER), not
+the traced process, correct? This makes sense. Another use case for
+ioctl justification, thanks :-)
 
-Lee,
-Could you pick up whole patchset with Sebastian's ack?
+> > "myself"?), but will definitely complicate the patch. Should I have=
+ a
+> > look at it now or maybe leave it till we get a general agreement ab=
+out
+> > the marker ioctl existence?
+> >=20
+> > > Then 'perf trace' doesn't know about any binary format a tool may=
+ have,
+> > > getting strings there (hey, LD_PRELOADing some logging library to=
+ hook
+> > > into this comes to mind) and having it merged with other events
+> > > (syscalls, pagefaults, etc) looks useful.
+> >=20
+> > But do you still mean a "magic" u64 before the rest? Injecting a st=
+ring
+> > would just mean:
+> >=20
+> > 	marker.size =3D strlen(s) + 1;
+> > 	marker.data =3D s;
+> >=20
+> > > As well as some specialized version of 'perf trace' that knows ab=
+out
+> > > some binary protocol that would get app specific stats or lock st=
+atus,
+> > > etc, perhaps even plugins for 'perf trace' that would be selected=
+ by
+> > > that first u64? Also seems useful.
+> > > 	 =20
+> > > I.e. having a way to provide just strings and another that would =
+allow
+> > > passing perf_raw_record.
+> >=20
+> > Sounds interesting. But then maybe this stuff shouldn't go into "ra=
+w"
+> > then? It could be something like this in the sample:
+> >=20
+> > 	{ u64 type; /* 0 means zero-terminated string in data */
+> > 	  u32 size;
+> > 	  char data[size]; } && PERF_SAMPLE_MARKER
+>=20
+> Yes, this is how I think it should be.
 
-Best regards,
-Krzysztof
+Seems that Ingo had exactly the same thing on mind. I'll get a patch
+done.
+
+Pawe=C5=82
