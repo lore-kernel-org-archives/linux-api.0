@@ -1,83 +1,64 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC 2/2] perf: Marker software event and ioctl
-Date: Tue, 16 Sep 2014 09:44:21 +0200
-Message-ID: <20140916074421.GA21295@gmail.com>
-References: <1410522513-1045-1-git-send-email-pawel.moll@arm.com>
- <1410522513-1045-3-git-send-email-pawel.moll@arm.com>
- <54132F63.1010401@gmail.com>
- <20140912204444.GA11199@kernel.org>
- <5415B790.5010607@gmail.com>
+From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v6 0/8] charger/mfd: max14577: Add support for MAX77836
+Date: Tue, 16 Sep 2014 11:30:00 +0200
+Message-ID: <20140916093000.GA31655@earth.universe>
+References: <1410504840-23543-1-git-send-email-k.kozlowski@samsung.com>
+ <20140915225220.GH25162@lee--X1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="W/nzBZO5zC0uMSeA"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5415B790.5010607-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20140915225220.GH25162@lee--X1>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Arnaldo Carvalho de Melo <acme-f8uhVLnGfZaxAyOMLChx1axOck334EZe@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
-* David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+--W/nzBZO5zC0uMSeA
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> On 9/12/14, 2:44 PM, Arnaldo Carvalho de Melo wrote:
-> >Em Fri, Sep 12, 2014 at 10:37:39AM -0700, David Ahern escreveu:
-> >>On 9/12/14, 4:48 AM, Pawel Moll wrote:
-> >>>This patch adds a PERF_COUNT_SW_MARKER event type, which
-> >>>can be requested by user and a PERF_EVENT_IOC_MARKER
-> >>>ioctl command which will inject an event of said type into
-> >>>the perf buffer. The ioctl can take a zero-terminated
-> >>>string argument, similar to tracing_marker in ftrace,
-> >>>which will be kept in the "raw" field of the sample.
-> >>>
-> >>>The main use case for this is synchronisation of
-> >>>performance data generated in user space with the perf
-> >>>stream coming from the kernel. For example, the marker
-> >>>can be inserted by a JIT engine after it generated
-> >>>portion of the code, but before the code is executed
-> >>>for the first time, allowing the post-processor to
-> >>>pick the correct debugging information. Other example
-> >>>is a system profiling tool taking data from other
-> >>>sources than just perf, which generates a marker
-> >>>at the beginning at at the end of the session
-> >>>(also possibly periodically during the session) to
-> >>>synchronise kernel timestamps with clock values
-> >>>obtained in userspace (gtod or raw_monotonic).
-> >>
-> >>Seems really similar to what I proposed in the past:
-> >>
-> >>https://lkml.org/lkml/2011/2/27/159
-> >>
-> >>Which was rejected.
-> >
-> >I took a look at that thread, but just barely, emphasis on that.
-> >
-> >Injecting something from userspace, a la ftrace, seems to be something,
-> >as tglx mentioned, "buried" in that patchset.
-> 
-> Thomas object to an ioctl buried deep in a patch -- newbie 
-> mistake.
-> 
-> Peter objected to the ioctl https://lkml.org/lkml/2011/3/1/229
-> 
-> It was not userspace injecting random data into the stream but 
-> rather forcing the sample to be generated and added to the 
-> stream.
+Hi,
 
-I think adding an ioctl to inject user-provided data into the 
-event stream is sensible, as long as there's a separate 'user 
-generated data' event for it, etc.
+On Mon, Sep 15, 2014 at 11:52:20PM +0100, Lee Jones wrote:
+> On Fri, 12 Sep 2014, Krzysztof Kozlowski wrote:
+> > This is a sixth version of patches adding support for
+> > MAX77836 device to the max14577 drivers.
+> >=20
+> > This patchset has been on the lists for quite long time and was already
+> > reviewed by all necessary maintainers except power supply.
+> > I need acks from power supply subsystem (patches: 3, 5-8).
+>=20
+> Give this set a few more days for the Power guys to respond.  If they
+> don't, ping me and I will just apply the set.
 
-The main usecase I could see would be to introduce a 
-perf_printf() variant, supported by 'perf trace' by default, to 
-add various tracable printouts to apps.
+Acked-By: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
-Timestamps generated by apps would be another usecase. It would 
-probably be wise to add a 32-bit (or 64-bit) message type ID, 
-plus a length field, with a message type registry somewhere in 
-tools/perf/ (and reference implementation for each new subtype), 
-to keep things organized yet flexible going forward.
+-- Sebastian
 
-Thanks,
+--W/nzBZO5zC0uMSeA
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-	Ingo
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBCgAGBQJUGAMYAAoJENju1/PIO/qac50P/3csfMvdBoikhV+JQWXFVTN9
+6P5fFBSQb2OG4GhE44vjRt2vLWOkjyOb4ohHTTgPrYXexsm+l87k1OmTloIXNScr
+Mfeiv9RtUYRgpY2TgOXrYbKKtX4QmSYqRB3SNrlH6IeyStQaKeDPRl0MtkuBtMBu
+/D8Coq2F5GvmKe53Faiv0ulbcyvuFesajy6zBHhvvZet1RTPDz2ixBG1bm4B84Nj
+Xk5FJzhgfGYag6kFr8Zv7uIKTVMz2dAncdnRiS5jH2TanFaZt1p4WA4E8okqp0gN
+7xSkbj2T1WxQJt6r4RYPs6bjcQZ+cVj7VvrGFNJaB0IW2jOg+tOh+sm4FIAW106c
+U7NYR/mHXTahVlI3ZGpVWKKH0Kfv9ceEGHp54V4nPBfF5D5JPgpPZFpMBqZt/ARQ
+mInE6lxR5L99zu8d+NfYWjyRi3vip4ZrTJzuEu6WV4okPpJxI09PgjYT/PruQjX8
+llAPuBqpvUoPNOYedmsHYUzj2lRLRNMt8OBPNGhwfKnU+t/X/rb20A7chgatwC6m
+VGNJ2V7I4+injByz0ImLnHAyaroJ8+oHVw+ee59LZBcaTBbriom+QUDRf/XXCi4n
+33SPeR0FXmoC23GfAHgR2F0nR+GVPax5ZaPMz6dWlnq3joWufbofDpW0RqEeLDwS
+B43dc0Gw+jlplFJ8q0aM
+=Wz+R
+-----END PGP SIGNATURE-----
+
+--W/nzBZO5zC0uMSeA--
