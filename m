@@ -1,69 +1,83 @@
-From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Subject: Re: [PATCH 1/7] selftests: add header file for test exit code
- defines
-Date: Tue, 16 Sep 2014 18:04:01 +0200
-Message-ID: <1410883441.4630.9.camel@linux-t7sj.site>
-References: <1410820442-8774-1-git-send-email-shuahkh@osg.samsung.com>
-	 <1410820442-8774-2-git-send-email-shuahkh@osg.samsung.com>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC 2/2] perf: Marker software event and ioctl
+Date: Tue, 16 Sep 2014 09:44:21 +0200
+Message-ID: <20140916074421.GA21295@gmail.com>
+References: <1410522513-1045-1-git-send-email-pawel.moll@arm.com>
+ <1410522513-1045-3-git-send-email-pawel.moll@arm.com>
+ <54132F63.1010401@gmail.com>
+ <20140912204444.GA11199@kernel.org>
+ <5415B790.5010607@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1410820442-8774-2-git-send-email-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5415B790.5010607-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, colin.king-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, thierry-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, felipensp-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Arnaldo Carvalho de Melo <acme-f8uhVLnGfZaxAyOMLChx1axOck334EZe@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2014-09-15 at 16:33 -0600, Shuah Khan wrote:
-> Add a new header file that defines exit codes for individual
-> tests to use to communicate test results. These defines are
-> intended to provide a common and uniform way for selftests
-> to report results. pass/fail/xfail/xpass/skip/unsupported
-> are defined.
+
+* David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+
+> On 9/12/14, 2:44 PM, Arnaldo Carvalho de Melo wrote:
+> >Em Fri, Sep 12, 2014 at 10:37:39AM -0700, David Ahern escreveu:
+> >>On 9/12/14, 4:48 AM, Pawel Moll wrote:
+> >>>This patch adds a PERF_COUNT_SW_MARKER event type, which
+> >>>can be requested by user and a PERF_EVENT_IOC_MARKER
+> >>>ioctl command which will inject an event of said type into
+> >>>the perf buffer. The ioctl can take a zero-terminated
+> >>>string argument, similar to tracing_marker in ftrace,
+> >>>which will be kept in the "raw" field of the sample.
+> >>>
+> >>>The main use case for this is synchronisation of
+> >>>performance data generated in user space with the perf
+> >>>stream coming from the kernel. For example, the marker
+> >>>can be inserted by a JIT engine after it generated
+> >>>portion of the code, but before the code is executed
+> >>>for the first time, allowing the post-processor to
+> >>>pick the correct debugging information. Other example
+> >>>is a system profiling tool taking data from other
+> >>>sources than just perf, which generates a marker
+> >>>at the beginning at at the end of the session
+> >>>(also possibly periodically during the session) to
+> >>>synchronise kernel timestamps with clock values
+> >>>obtained in userspace (gtod or raw_monotonic).
+> >>
+> >>Seems really similar to what I proposed in the past:
+> >>
+> >>https://lkml.org/lkml/2011/2/27/159
+> >>
+> >>Which was rejected.
+> >
+> >I took a look at that thread, but just barely, emphasis on that.
+> >
+> >Injecting something from userspace, a la ftrace, seems to be something,
+> >as tglx mentioned, "buried" in that patchset.
 > 
-> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> ---
->  tools/testing/selftests/kselftest.h | 20 ++++++++++++++++++++
->  1 file changed, 20 insertions(+)
->  create mode 100644 tools/testing/selftests/kselftest.h
+> Thomas object to an ioctl buried deep in a patch -- newbie 
+> mistake.
 > 
-> diff --git a/tools/testing/selftests/kselftest.h b/tools/testing/selftests/kselftest.h
-> new file mode 100644
-> index 0000000..1b1c9cb
-> --- /dev/null
-> +++ b/tools/testing/selftests/kselftest.h
-> @@ -0,0 +1,20 @@
-> +/*
-> + * kselftest.h - kselftest framework return codes to include from
-> + *		 selftests.
-> + *
-> + * Copyright (c) 2014 Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> + * Copyright (c) 2014 Samsung Electronics Co., Ltd.
-> + *
-> + * This file is released under the GPLv2.
-> + */
-> +#ifndef __KSELFTEST_H
-> +#define __KSELFTEST_H
-> +
-> +#define	EXIT_PASS		0
-> +#define	EXIT_FAIL		1
-> +#define	EXIT_XFAIL		2
-> +#define	EXIT_XPASS		3
-> +#define	EXIT_SKIP		4
-> +#define	EXIT_UNSUPPORTED	EXIT_SKIP
+> Peter objected to the ioctl https://lkml.org/lkml/2011/3/1/229
+> 
+> It was not userspace injecting random data into the stream but 
+> rather forcing the sample to be generated and added to the 
+> stream.
 
-Looks to me like a potential name clashes here.
+I think adding an ioctl to inject user-provided data into the 
+event stream is sensible, as long as there's a separate 'user 
+generated data' event for it, etc.
 
-What's the difference between XFAIL/XPASS and regular FAIL/PASS (I don't
-see the former used in patchset either, only PASS/FAIL)? What's the
-purpose of EXIT_SKIP? I think overall these should be commented.
+The main usecase I could see would be to introduce a 
+perf_printf() variant, supported by 'perf trace' by default, to 
+add various tracable printouts to apps.
 
-Also, in the bigger picture, I'm guessing you have a reason for not
-recycling errno and inventing your own exit codes... How do you plan on
-using these? In addition I'm seeing things like:
+Timestamps generated by apps would be another usecase. It would 
+probably be wise to add a 32-bit (or 64-bit) message type ID, 
+plus a length field, with a message type registry somewhere in 
+tools/perf/ (and reference implementation for each new subtype), 
+to keep things organized yet flexible going forward.
 
--       exit(EXIT_FAILURE);
-+       exit(EXIT_FAIL);
+Thanks,
 
-which isn't a very good idea in general.
+	Ingo
