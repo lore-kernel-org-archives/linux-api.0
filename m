@@ -1,78 +1,45 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: [PATCH] selftests/memfd: Run test on all architectures
-Date: Wed, 17 Sep 2014 14:28:00 +0200
-Message-ID: <CANq1E4Q_KfDamkCMatGFYCQ0VPfc6tbd7sWT_z_qDeboiNzgNw@mail.gmail.com>
-References: <1410821984-11160-1-git-send-email-bobby.prani@gmail.com>
+From: Filipe Brandenburger <filbranden@google.com>
+Subject: Re: [PATCH] x86/vdso: Add prctl to set per-process VDSO load
+Date: Wed, 17 Sep 2014 06:48:32 -0700
+Message-ID: <CADU+-uDDxwTbKQbNqgDr2F5ZPw957as+mCRJkf-7zxjNBphkLQ@mail.gmail.com>
+References: <1410912351-31273-1-git-send-email-rlarocque@google.com>
+	<CALCETrXtYV5xKkTxothuqNb7ra80Be7ZXJ-hDnC6p-bfEPZ=Lw@mail.gmail.com>
+	<CABgu+=NC1ZMQkV0J2c9-MD1+TAmTjDm4ACZASPnfX2Fwiu5rMQ@mail.gmail.com>
+	<CALCETrWj8Pj8d8YjybvOKG-=xmy-XGFo9cGQ9qn0V4t9Oj+dOw@mail.gmail.com>
+	<CADU+-uCguxhkw259MefABuzOxvyK_F6bhwza0YhveCCJxEV8wQ@mail.gmail.com>
+	<54194A4A.7030104@zytor.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1410821984-11160-1-git-send-email-bobby.prani@gmail.com>
+In-Reply-To: <54194A4A.7030104@zytor.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pranith Kumar <bobby.prani@gmail.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Phong Tran <tranmanphong@gmail.com>, "open list:KERNEL SELFTEST F..." <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
+To: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Richard Larocque <rlarocque@google.com>, Ingo Molnar <mingo@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Davidson <md@google.com>, Greg Thelen <gthelen@google.com>, X86 ML <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi
+Hi,
 
-On Tue, Sep 16, 2014 at 12:59 AM, Pranith Kumar <bobby.prani@gmail.com> wrote:
-> Remove the dependence on x86 to run the memfd test. Verfied on 32-bit powerpc.
->
-> Signed-off-by: Pranith Kumar <bobby.prani@gmail.com>
+On Wed, Sep 17, 2014 at 1:46 AM, H. Peter Anvin <hpa@zytor.com> wrote:
+> Why would we need/want per process vvar contents?  It seems better to
+> have the code swapped out.
 
-Now that most archs have __NR_memfd_create, this is:
+We are looking at the migration use case (CRIU).
 
-Reviewed-by: David Herrmann <dh.herrmann@gmail.com>
+In specific, we want to make CLOCK_MONOTONIC keep the "monotonic"
+promise after migration. In order to accomplish that, we may need to
+add an offset to CLOCK_MONOTONIC calls after migration.
 
-Thanks
-David
+By keeping a per process vvar page we should be able to implement that
+without having to fallback to a real syscall for calls to
+clock_gettime(CLOCK_MONOTONIC).
 
-> ---
->  tools/testing/selftests/memfd/Makefile | 21 ---------------------
->  1 file changed, 21 deletions(-)
->
-> diff --git a/tools/testing/selftests/memfd/Makefile b/tools/testing/selftests/memfd/Makefile
-> index ad4ab01..b80cd10 100644
-> --- a/tools/testing/selftests/memfd/Makefile
-> +++ b/tools/testing/selftests/memfd/Makefile
-> @@ -1,38 +1,17 @@
-> -uname_M := $(shell uname -m 2>/dev/null || echo not)
-> -ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
-> -ifeq ($(ARCH),i386)
-> -       ARCH := x86
-> -endif
-> -ifeq ($(ARCH),x86_64)
-> -       ARCH := x86
-> -endif
-> -
->  CFLAGS += -D_FILE_OFFSET_BITS=64
-> -CFLAGS += -I../../../../arch/x86/include/generated/uapi/
-> -CFLAGS += -I../../../../arch/x86/include/uapi/
->  CFLAGS += -I../../../../include/uapi/
->  CFLAGS += -I../../../../include/
->
->  all:
-> -ifeq ($(ARCH),x86)
->         gcc $(CFLAGS) memfd_test.c -o memfd_test
-> -else
-> -       echo "Not an x86 target, can't build memfd selftest"
-> -endif
->
->  run_tests: all
-> -ifeq ($(ARCH),x86)
->         gcc $(CFLAGS) memfd_test.c -o memfd_test
-> -endif
->         @./memfd_test || echo "memfd_test: [FAIL]"
->
->  build_fuse:
-> -ifeq ($(ARCH),x86)
->         gcc $(CFLAGS) fuse_mnt.c `pkg-config fuse --cflags --libs` -o fuse_mnt
->         gcc $(CFLAGS) fuse_test.c -o fuse_test
-> -else
-> -       echo "Not an x86 target, can't build memfd selftest"
-> -endif
->
->  run_fuse: build_fuse
->         @./run_fuse_test.sh || echo "fuse_test: [FAIL]"
-> --
-> 2.1.0
->
+One other thought was that we could use this process vvar page to
+expose a migration counter that would get incremented after migration.
+That way we could allow (some) userspace tasks (and possibly some VDSO
+routines) to use RDTSC but check the contents of that counter
+before/after taking measurements to check whether the elapsed time is
+valid or not. That means we could still provide tasks with a fast time
+counter if they really need one.
+
+Cheers,
+Filipe
