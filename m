@@ -1,341 +1,92 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: [PATCH v13 net-next 01/11] bpf: introduce BPF syscall and maps
-Date: Tue, 16 Sep 2014 17:39:20 -0700
-Message-ID: <1410914370-29883-2-git-send-email-ast@plumgrid.com>
-References: <1410914370-29883-1-git-send-email-ast@plumgrid.com>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1410914370-29883-1-git-send-email-ast@plumgrid.com>
-Sender: netdev-owner@vger.kernel.org
-To: "David S. Miller" <davem@davemloft.net>
-Cc: Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <dborkman@redhat.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Pablo Neira Ayuso <pablo@netfilter.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Richard Larocque <rlarocque-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] x86/vdso: Add prctl to set per-process VDSO load
+Date: Tue, 16 Sep 2014 18:18:00 -0700
+Message-ID: <CABgu+=NC1ZMQkV0J2c9-MD1+TAmTjDm4ACZASPnfX2Fwiu5rMQ@mail.gmail.com>
+References: <1410912351-31273-1-git-send-email-rlarocque@google.com>
+	<CALCETrXtYV5xKkTxothuqNb7ra80Be7ZXJ-hDnC6p-bfEPZ=Lw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrXtYV5xKkTxothuqNb7ra80Be7ZXJ-hDnC6p-bfEPZ=Lw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Filipe Brandenburger <filbranden-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Davidson <md-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-BPF syscall is a multiplexor for a range of different operations on eBPF.
-This patch introduces syscall with single command to create a map.
-Next patch adds commands to access maps.
+On Tue, Sep 16, 2014 at 5:27 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Tue, Sep 16, 2014 at 5:05 PM, Richard Larocque <rlarocque-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>> Adds new prctl calls to enable or disable VDSO loading for a process
+>> and its children.
+>>
+>> The PR_SET_DISABLE_VDSO call takes one argument, which is interpreted as
+>> a boolean value.  If true, it disables the loading of the VDSO on exec()
+>> for this process and any children created after this call.  A false
+>> value unsets the flag.
+>>
+>> The PR_GET_DISABLE_VDSO option returns a non-negative true value if VDSO
+>> loading has been disabled for this process, zero if it has not been
+>> disabled, and a negative value in case of error.
+>>
+>> These prctl calls are hidden behind a new Kconfig,
+>> CONFIG_VDSO_DISABLE_PRCTL.  This feature is available only on x86.
+>>
+>> The command line option vdso=0 overrides the behavior of
+>> PR_SET_DISABLE_VDSO, however, PR_GET_DISABLE_VDSO will coninue to return
+>> whetever setting was last set with PR_SET_DISABLE_VDSO.
+>>
+>> Signed-off-by: Richard Larocque <rlarocque-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>> ---
+>> This patch is part of some work to better handle times and CRIU migration.
+>> I suspect that there are other use cases out there, so I'm offering this
+>> patch separately.
+>>
+>> When considering CRIU migration and times, we put some thought into how
+>> to handle the rdtsc instruction.  If we migrate between machines or across
+>> reboots, the migrated process will see values that could break its assumptions
+>> about how rdtsc is supposed to work.
+>
+> I don't get it.
+>
+> If __vdso_clock_gettime returns the wrong value in any scenario, we
+> should fix that.  Simiarly, CRIU *already works*, unless there's
+> something I don't know of.
 
-'maps' is a generic storage of different types for sharing data between kernel
-and userspace.
+Right.  As far as I know, there's nothing wrong with the use of RDTSC
+in the vDSO following a migration.  The problem is that some
+applications might use RDTSC outside of the vDSO.  If they save the
+returned values, then compare pre- and post- migration values, bad
+things could happen (in theory).
 
-Userspace example:
-/* this syscall wrapper creates a map with given type and attributes
- * and returns map_fd on success.
- * use close(map_fd) to delete the map
- */
-int bpf_create_map(enum bpf_map_type map_type, int key_size,
-                   int value_size, int max_entries)
-{
-    union bpf_attr attr = {
-        .map_type = map_type,
-        .key_size = key_size,
-        .value_size = value_size,
-        .max_entries = max_entries
-    };
+Anything we do to try to trap and handle the use of RDTSC in wider
+userspace will affect its use in the vDSO, too.  In some situations,
+it might be nice to run applications with no vDSO and PR_TSC_SIGSEGV,
+just to make sure they don't have any heavy reliance on the TSC.  It
+would be nice if those applications didn't crash when they called
+clock_gettime().
 
-    return bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
-}
+Another alternative is to trap and adjust the RDTSC.  That might be a
+viable option for applications that care about reliable RDTSC behavior
+and migration, but don't care about performance.  I think it makes
+sense to disable the vDSO in that case, rather than trap on every call
+that it makes.
 
-syscall is using 'union bpf_attr' to be backwards compatible with future
-extensions. Different syscall commands will use different attributes.
+> That being said, I would like an option to gate off RDTSC for a
+> process and its children in order to make PR_TSC_SIGSEGV more useful.
+> All the prerequisites are there now.
 
-More details in Documentation/networking/filter.txt and in manpage
+Agreed.  That's what this patch is attempting to do, and that's the
+main reason why I figured it was worth submitting independent of any
+other time-related work.
 
-Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
----
- Documentation/networking/filter.txt |   39 ++++++++++
- include/linux/bpf.h                 |   41 ++++++++++
- include/uapi/linux/bpf.h            |   23 ++++++
- kernel/bpf/Makefile                 |    2 +-
- kernel/bpf/syscall.c                |  144 +++++++++++++++++++++++++++++++++++
- 5 files changed, 248 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/bpf.h
- create mode 100644 kernel/bpf/syscall.c
+> What problem are you trying to solve exactly?
 
-diff --git a/Documentation/networking/filter.txt b/Documentation/networking/filter.txt
-index 81916ab5d96f..1900d29518f1 100644
---- a/Documentation/networking/filter.txt
-+++ b/Documentation/networking/filter.txt
-@@ -1001,6 +1001,45 @@ instruction that loads 64-bit immediate value into a dst_reg.
- Classic BPF has similar instruction: BPF_LD | BPF_W | BPF_IMM which loads
- 32-bit immediate value into a register.
- 
-+eBPF maps
-+---------
-+'maps' is a generic storage of different types for sharing data between kernel
-+and userspace.
-+
-+The maps are accessed from user space via BPF syscall, which has commands:
-+- create a map with given type and attributes
-+  map_fd = bpf(BPF_MAP_CREATE, union bpf_attr *attr, u32 size)
-+  using attr->map_type, attr->key_size, attr->value_size, attr->max_entries
-+  returns process-local file descriptor or negative error
-+
-+- lookup key in a given map
-+  err = bpf(BPF_MAP_LOOKUP_ELEM, union bpf_attr *attr, u32 size)
-+  using attr->map_fd, attr->key, attr->value
-+  returns zero and stores found elem into value or negative error
-+
-+- create or update key/value pair in a given map
-+  err = bpf(BPF_MAP_UPDATE_ELEM, union bpf_attr *attr, u32 size)
-+  using attr->map_fd, attr->key, attr->value
-+  returns zero or negative error
-+
-+- find and delete element by key in a given map
-+  err = bpf(BPF_MAP_DELETE_ELEM, union bpf_attr *attr, u32 size)
-+  using attr->map_fd, attr->key
-+
-+- to delete map: close(fd)
-+  Exiting process will delete maps automatically
-+
-+userspace programs use this syscall to create/access maps that eBPF programs
-+are concurrently updating.
-+
-+maps can have different types: hash, array, bloom filter, radix-tree, etc.
-+
-+The map is defined by:
-+  . type
-+  . max number of elements
-+  . key size in bytes
-+  . value size in bytes
-+
- Testing
- -------
- 
-diff --git a/include/linux/bpf.h b/include/linux/bpf.h
-new file mode 100644
-index 000000000000..48014a71f0fe
---- /dev/null
-+++ b/include/linux/bpf.h
-@@ -0,0 +1,41 @@
-+/* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of version 2 of the GNU General Public
-+ * License as published by the Free Software Foundation.
-+ */
-+#ifndef _LINUX_BPF_H
-+#define _LINUX_BPF_H 1
-+
-+#include <uapi/linux/bpf.h>
-+#include <linux/workqueue.h>
-+
-+struct bpf_map;
-+
-+/* map is generic key/value storage optionally accesible by eBPF programs */
-+struct bpf_map_ops {
-+	/* funcs callable from userspace (via syscall) */
-+	struct bpf_map *(*map_alloc)(union bpf_attr *attr);
-+	void (*map_free)(struct bpf_map *);
-+};
-+
-+struct bpf_map {
-+	atomic_t refcnt;
-+	enum bpf_map_type map_type;
-+	u32 key_size;
-+	u32 value_size;
-+	u32 max_entries;
-+	struct bpf_map_ops *ops;
-+	struct work_struct work;
-+};
-+
-+struct bpf_map_type_list {
-+	struct list_head list_node;
-+	struct bpf_map_ops *ops;
-+	enum bpf_map_type type;
-+};
-+
-+void bpf_register_map_type(struct bpf_map_type_list *tl);
-+void bpf_map_put(struct bpf_map *map);
-+
-+#endif /* _LINUX_BPF_H */
-diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-index 479ed0b6be16..f58a10f9670c 100644
---- a/include/uapi/linux/bpf.h
-+++ b/include/uapi/linux/bpf.h
-@@ -62,4 +62,27 @@ struct bpf_insn {
- 	__s32	imm;		/* signed immediate constant */
- };
- 
-+/* BPF syscall commands */
-+enum bpf_cmd {
-+	/* create a map with given type and attributes
-+	 * fd = bpf(BPF_MAP_CREATE, union bpf_attr *, u32 size)
-+	 * returns fd or negative error
-+	 * map is deleted when fd is closed
-+	 */
-+	BPF_MAP_CREATE,
-+};
-+
-+enum bpf_map_type {
-+	BPF_MAP_TYPE_UNSPEC,
-+};
-+
-+union bpf_attr {
-+	struct { /* anonymous struct used by BPF_MAP_CREATE command */
-+		__u32	map_type;	/* one of enum bpf_map_type */
-+		__u32	key_size;	/* size of key in bytes */
-+		__u32	value_size;	/* size of value in bytes */
-+		__u32	max_entries;	/* max number of entries in a map */
-+	};
-+} __attribute__((aligned(8)));
-+
- #endif /* _UAPI__LINUX_BPF_H__ */
-diff --git a/kernel/bpf/Makefile b/kernel/bpf/Makefile
-index 6a71145e2769..e9f7334ed07a 100644
---- a/kernel/bpf/Makefile
-+++ b/kernel/bpf/Makefile
-@@ -1 +1 @@
--obj-y := core.o
-+obj-y := core.o syscall.o
-diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-new file mode 100644
-index 000000000000..328a45a6d038
---- /dev/null
-+++ b/kernel/bpf/syscall.c
-@@ -0,0 +1,144 @@
-+/* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of version 2 of the GNU General Public
-+ * License as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * General Public License for more details.
-+ */
-+#include <linux/bpf.h>
-+#include <linux/syscalls.h>
-+#include <linux/slab.h>
-+#include <linux/anon_inodes.h>
-+
-+static LIST_HEAD(bpf_map_types);
-+
-+static struct bpf_map *find_and_alloc_map(union bpf_attr *attr)
-+{
-+	struct bpf_map_type_list *tl;
-+	struct bpf_map *map;
-+
-+	list_for_each_entry(tl, &bpf_map_types, list_node) {
-+		if (tl->type == attr->map_type) {
-+			map = tl->ops->map_alloc(attr);
-+			if (IS_ERR(map))
-+				return map;
-+			map->ops = tl->ops;
-+			map->map_type = attr->map_type;
-+			return map;
-+		}
-+	}
-+	return ERR_PTR(-EINVAL);
-+}
-+
-+/* boot time registration of different map implementations */
-+void bpf_register_map_type(struct bpf_map_type_list *tl)
-+{
-+	list_add(&tl->list_node, &bpf_map_types);
-+}
-+
-+/* called from workqueue */
-+static void bpf_map_free_deferred(struct work_struct *work)
-+{
-+	struct bpf_map *map = container_of(work, struct bpf_map, work);
-+
-+	/* implementation dependent freeing */
-+	map->ops->map_free(map);
-+}
-+
-+/* decrement map refcnt and schedule it for freeing via workqueue
-+ * (unrelying map implementation ops->map_free() might sleep)
-+ */
-+void bpf_map_put(struct bpf_map *map)
-+{
-+	if (atomic_dec_and_test(&map->refcnt)) {
-+		INIT_WORK(&map->work, bpf_map_free_deferred);
-+		schedule_work(&map->work);
-+	}
-+}
-+
-+static int bpf_map_release(struct inode *inode, struct file *filp)
-+{
-+	struct bpf_map *map = filp->private_data;
-+
-+	bpf_map_put(map);
-+	return 0;
-+}
-+
-+static const struct file_operations bpf_map_fops = {
-+	.release = bpf_map_release,
-+};
-+
-+/* helper macro to check that unused fields 'union bpf_attr' are zero */
-+#define CHECK_ATTR(CMD) \
-+	memchr_inv((void *) &attr->CMD##_LAST_FIELD + \
-+		   sizeof(attr->CMD##_LAST_FIELD), 0, \
-+		   sizeof(*attr) - \
-+		   offsetof(union bpf_attr, CMD##_LAST_FIELD) - \
-+		   sizeof(attr->CMD##_LAST_FIELD)) != NULL
-+
-+#define BPF_MAP_CREATE_LAST_FIELD max_entries
-+/* called via syscall */
-+static int map_create(union bpf_attr *attr)
-+{
-+	struct bpf_map *map;
-+	int err;
-+
-+	err = CHECK_ATTR(BPF_MAP_CREATE);
-+	if (err)
-+		return -EINVAL;
-+
-+	/* find map type and init map: hashtable vs rbtree vs bloom vs ... */
-+	map = find_and_alloc_map(attr);
-+	if (IS_ERR(map))
-+		return PTR_ERR(map);
-+
-+	atomic_set(&map->refcnt, 1);
-+
-+	err = anon_inode_getfd("bpf-map", &bpf_map_fops, map, O_RDWR | O_CLOEXEC);
-+
-+	if (err < 0)
-+		/* failed to allocate fd */
-+		goto free_map;
-+
-+	return err;
-+
-+free_map:
-+	map->ops->map_free(map);
-+	return err;
-+}
-+
-+SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size)
-+{
-+	union bpf_attr attr = {};
-+	int err;
-+
-+	/* the syscall is limited to root temporarily. This restriction will be
-+	 * lifted when security audit is clean. Note that eBPF+tracing must have
-+	 * this restriction, since it may pass kernel data to user space
-+	 */
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	/* newer userspace cannot run with older kernel */
-+	if (size > sizeof(attr))
-+		return -EINVAL;
-+
-+	/* copy attributes from user space, may be less than sizeof(bpf_attr) */
-+	if (copy_from_user(&attr, uattr, size) != 0)
-+		return -EFAULT;
-+
-+	switch (cmd) {
-+	case BPF_MAP_CREATE:
-+		err = map_create(&attr);
-+		break;
-+	default:
-+		err = -EINVAL;
-+		break;
-+	}
-+
-+	return err;
-+}
--- 
-1.7.9.5
+Eventually, we'd like to make it so that neither RDTSC nor
+CLOCK_MONOTONIC can go backwards following a migration.
+
+The fix for RDTSC starts here.  Building on this patch as a base, we
+can either ban it from being used entirely, or write some code to
+adjust its value as necessary.
+
+The CLOCK_MONOTONIC fix will be a different patch stack.  We're
+currently hoping to do that without disable the vDSO, but that's
+another discussion.
