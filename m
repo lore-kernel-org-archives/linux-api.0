@@ -1,37 +1,78 @@
-From: Kevin Easton <kevin@guarana.org>
-Subject: Re: [PATCH] x86/vdso: Add prctl to set per-process VDSO load
-Date: Wed, 17 Sep 2014 21:36:46 +1000
-Message-ID: <20140917113646.GA14001@chicago.guarana.org>
-References: <1410912351-31273-1-git-send-email-rlarocque@google.com>
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: Re: [PATCH] selftests/memfd: Run test on all architectures
+Date: Wed, 17 Sep 2014 14:28:00 +0200
+Message-ID: <CANq1E4Q_KfDamkCMatGFYCQ0VPfc6tbd7sWT_z_qDeboiNzgNw@mail.gmail.com>
+References: <1410821984-11160-1-git-send-email-bobby.prani@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1410912351-31273-1-git-send-email-rlarocque@google.com>
+In-Reply-To: <1410821984-11160-1-git-send-email-bobby.prani@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Larocque <rlarocque@google.com>
-Cc: mingo@redhat.com, tglx@linutronix.de, hpa@zytor.com, luto@amacapital.net, filbranden@google.com, md@google.com, gthelen@google.com, x86@kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Pranith Kumar <bobby.prani@gmail.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Phong Tran <tranmanphong@gmail.com>, "open list:KERNEL SELFTEST F..." <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 16, 2014 at 05:05:51PM -0700, Richard Larocque wrote:
-> +	case PR_SET_VDSO:
-> +		if (arg2 == PR_VDSO_ENABLE)
-> +			me->signal->disable_vdso = 0;
-> +		else if (arg2 == PR_VDSO_DISABLE)
-> +			me->signal->disable_vdso = 1;
-> +		else
-> +			return -EINVAL;
-> +		break;
-> +	case PR_GET_VDSO:
-> +		if (!me->signal->disable_vdso)
-> +			error = put_user(PR_VDSO_ENABLE, (int __user *)arg2);
-> +		else
-> +			error = put_user(PR_VDSO_DISABLE, (int __user *)arg2);
-> +		break;
+Hi
 
-Perhaps both of those should do
+On Tue, Sep 16, 2014 at 12:59 AM, Pranith Kumar <bobby.prani@gmail.com> wrote:
+> Remove the dependence on x86 to run the memfd test. Verfied on 32-bit powerpc.
+>
+> Signed-off-by: Pranith Kumar <bobby.prani@gmail.com>
 
-if (arg3 || arg4 || arg5)
-	return -EINVAL;
+Now that most archs have __NR_memfd_create, this is:
 
-    - Kevin
+Reviewed-by: David Herrmann <dh.herrmann@gmail.com>
+
+Thanks
+David
+
+> ---
+>  tools/testing/selftests/memfd/Makefile | 21 ---------------------
+>  1 file changed, 21 deletions(-)
+>
+> diff --git a/tools/testing/selftests/memfd/Makefile b/tools/testing/selftests/memfd/Makefile
+> index ad4ab01..b80cd10 100644
+> --- a/tools/testing/selftests/memfd/Makefile
+> +++ b/tools/testing/selftests/memfd/Makefile
+> @@ -1,38 +1,17 @@
+> -uname_M := $(shell uname -m 2>/dev/null || echo not)
+> -ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
+> -ifeq ($(ARCH),i386)
+> -       ARCH := x86
+> -endif
+> -ifeq ($(ARCH),x86_64)
+> -       ARCH := x86
+> -endif
+> -
+>  CFLAGS += -D_FILE_OFFSET_BITS=64
+> -CFLAGS += -I../../../../arch/x86/include/generated/uapi/
+> -CFLAGS += -I../../../../arch/x86/include/uapi/
+>  CFLAGS += -I../../../../include/uapi/
+>  CFLAGS += -I../../../../include/
+>
+>  all:
+> -ifeq ($(ARCH),x86)
+>         gcc $(CFLAGS) memfd_test.c -o memfd_test
+> -else
+> -       echo "Not an x86 target, can't build memfd selftest"
+> -endif
+>
+>  run_tests: all
+> -ifeq ($(ARCH),x86)
+>         gcc $(CFLAGS) memfd_test.c -o memfd_test
+> -endif
+>         @./memfd_test || echo "memfd_test: [FAIL]"
+>
+>  build_fuse:
+> -ifeq ($(ARCH),x86)
+>         gcc $(CFLAGS) fuse_mnt.c `pkg-config fuse --cflags --libs` -o fuse_mnt
+>         gcc $(CFLAGS) fuse_test.c -o fuse_test
+> -else
+> -       echo "Not an x86 target, can't build memfd selftest"
+> -endif
+>
+>  run_fuse: build_fuse
+>         @./run_fuse_test.sh || echo "fuse_test: [FAIL]"
+> --
+> 2.1.0
+>
