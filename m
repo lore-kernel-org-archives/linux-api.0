@@ -1,59 +1,64 @@
-From: Daniel Vetter <daniel@ffwll.ch>
-Subject: Re: [PATCH v2 1/5] drm/rockchip: Add basic drm driver
-Date: Thu, 18 Sep 2014 16:53:54 +0200
-Message-ID: <20140918145354.GB15734@phenom.ffwll.local>
-References: <1411032884-9233-1-git-send-email-mark.yao@rock-chips.com>
- <1411032991-9280-1-git-send-email-mark.yao@rock-chips.com>
- <20140918145214.GA15734@phenom.ffwll.local>
+From: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Subject: Re: [PATCH 0/2] perf: User/kernel time correlation and event generation
+Date: Thu, 18 Sep 2014 11:02:35 -0400
+Message-ID: <541AF40B.7070604@codeaurora.org>
+References: <1411050873-9310-1-git-send-email-pawel.moll@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140918145214.GA15734@phenom.ffwll.local>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mark yao <mark.yao@rock-chips.com>
-Cc: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, linux-doc@vger.kernel.org, kever.yang@rock-chips.com, dri-devel@lists.freedesktop.org, dianders@chromium.org, xjq@rock-chips.com, zyw@rock-chips.com, cym@rock-chips.com, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, wxt@rock-chips.com, huangtao@rock-chips.com, devicetree@vger.kernel.org, yxj@rock-chips.com, marcheu@chromium.org, xxm@rock-chi
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1411050873-9310-1-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 18, 2014 at 04:52:14PM +0200, Daniel Vetter wrote:
-> On Thu, Sep 18, 2014 at 05:36:31PM +0800, Mark yao wrote:
-> > This patch adds the basic structure of a DRM Driver for Rockchip Socs.
-> > 
-> > Signed-off-by: Mark yao <mark.yao@rock-chips.com>
-> > ---
-> > Changes in v2:
-> > - use the component framework to defer main drm driver probe
-> >   until all VOP devices have been probed.
-> > - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
-> >   master device and each vop device can shared the drm dma mapping.
-> > - use drm_crtc_init_with_planes and drm_universal_plane_init.
-> > - remove unnecessary middle layers.
-> > - add cursor set, move funcs to rockchip drm crtc.
-> > - use vop reset at first init
-> > - reference framebuffer when used and unreference when swap out vop
-> > 
-> 
-> > +static const struct drm_crtc_funcs rockchip_crtc_funcs = {
-> > +	.set_config = drm_crtc_helper_set_config,
-> > +	.page_flip = rockchip_drm_crtc_page_flip,
-> > +	.destroy = rockchip_drm_crtc_destroy,
-> > +	.cursor_set = vop_crtc_cursor_set,
-> > +	.cursor_move = vop_crtc_cursor_move,
-> 
-> If you expose your cursor plane as a universal you don't need to implement
-> these two cursor functions at all. Actually the core never calls them, see
-> drm_mode_cursor_universal. So if you want to expose cursors, please use
-> universal cursor plane support (like i915).
-> 
-> In general that's how new drivers should expose cursors since without
-> universal planes support cursors will not be supported with the atomic
-> ioctl. Since your cursor code just calls the relevant plane functions that
-> should even simplify your driver ;-)
+Hi Pawel,
 
-Actually you already initialize with cursor universal planes, so all this
-code can simply be removed.
--Daniel
+On 09/18/2014 10:34 AM, Pawel Moll wrote:
+> Greetings,
+> 
+> This is a second spin of the short series posted last week:
+> 
+> http://www.spinics.net/lists/kernel/msg1824419.html
+> 
+> The first patch adds an additional timestamp field in the perf
+> sample data, which can be requested for any perf event along
+> with normal PERF_SAMPLE_TIME. Events with both values appearing
+> periodically in the perf data allow user code to translate
+> raw monotonic time (obtained via POSIX clock API) to sched_clock
+> domain. Although any perf event can be used, the natural choice
+> would be a sched_switch trace event (for processes with root
+> permissions) or a hrtimer-based PERF_COUNT_SW_CPU_CLOCK.
+> 
+> It didn't attract any comments previously, so is just re-posted
+> without any changes.
+> 
+> The second patch, functionally orthogonal but complementing
+> the first one, builds on the ftrace "trace_maker" idea. It adds
+> a ioctl that can be used to inject a userspace-generated data
+> into the perf buffer. It provides base for printf-like
+> functionality in perf world. If used with the previous patch,
+> it can be also used to provide synchronisation points for sched
+> vs. raw monotonic time stamps correlation.
+> 
+> First version of the patch was taking a zero-terminated string
+> as an argument. Now it is taking a custom structure with "type"
+> and "size" integer fields followed by data. Type value "0"
+> is defined as a zero-terminated string (although size, including
+> the NULL character, must still be provided), but meaning of data
+> for other types is of no interest for the kernel. The intention
+> is to host a list of "well known" types (with reference parsers
+> for them) in the user perf tool code.
+
+Would it be possible for you to also update the corresponding man pages?
+
+https://www.kernel.org/doc/man-pages/
+
+Thanks,
+Christopher
+
 -- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-+41 (0) 79 365 57 48 - http://blog.ffwll.ch
+Employee of Qualcomm Innovation Center, Inc.
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+hosted by the Linux Foundation.
