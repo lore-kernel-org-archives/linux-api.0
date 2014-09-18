@@ -1,75 +1,36 @@
-From: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Subject: Re: [PATCH 0/2] perf: User/kernel time correlation and event generation
-Date: Thu, 18 Sep 2014 11:48:52 -0400
-Message-ID: <541AFEE4.1040700@codeaurora.org>
-References: <1411050873-9310-1-git-send-email-pawel.moll@arm.com>  <541AF40B.7070604@codeaurora.org> <1411052837.8965.6.camel@hornet>
+From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v13 net-next 07/11] bpf: verifier (add ability to receive
+ verification log)
+Date: Thu, 18 Sep 2014 19:28:04 +0200
+Message-ID: <541B1624.80302@redhat.com>
+References: <1410914370-29883-1-git-send-email-ast@plumgrid.com> <1410914370-29883-8-git-send-email-ast@plumgrid.com> <54192F66.8020200@redhat.com> <CAMEtUuxK68ZoJ-izjLoygv0f+rLtPmMLUUq1=BJ+_ZBGfynkdA@mail.gmail.com> <5419BED8.5020309@redhat.com> <5419DE51.1060904@redhat.com> <CAMEtUuzhcmZiYZL8TR008or8uaefDBrEKDjqA-tOrRLEZsm95A@mail.gmail.com> <CAMEtUuw0aDPpQhd13ssk2PDLffBJNeef9jicOnhQLH6KtJ8gsQ@mail.gmail.com> <541A7F35.2010804@redhat.com> <CAMEtUuyZCHh7SGeLF+g0ye3OrEFWnTZCn3SBeK0-8qz-y8U30w@mail.gmail.com> <541AF11C.9050405@redhat.com> <CAMEtUuykgG70sP0tAmovLvPxgjwaR8h=R-c6Tyo6m96+Lg3sXQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1411052837.8965.6.camel@hornet>
+In-Reply-To: <CAMEtUuykgG70sP0tAmovLvPxgjwaR8h=R-c6Tyo6m96+Lg3sXQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Vince Weaver <vincent.weaver-e7X0jjDqjFGHXe+LvDLADg@public.gmane.org>
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/18/2014 11:07 AM, Pawel Moll wrote:
-> On Thu, 2014-09-18 at 16:02 +0100, Christopher Covington wrote:
->> Hi Pawel,
->>
->> On 09/18/2014 10:34 AM, Pawel Moll wrote:
->>> Greetings,
->>>
->>> This is a second spin of the short series posted last week:
->>>
->>> http://www.spinics.net/lists/kernel/msg1824419.html
->>>
->>> The first patch adds an additional timestamp field in the perf
->>> sample data, which can be requested for any perf event along
->>> with normal PERF_SAMPLE_TIME. Events with both values appearing
->>> periodically in the perf data allow user code to translate
->>> raw monotonic time (obtained via POSIX clock API) to sched_clock
->>> domain. Although any perf event can be used, the natural choice
->>> would be a sched_switch trace event (for processes with root
->>> permissions) or a hrtimer-based PERF_COUNT_SW_CPU_CLOCK.
->>>
->>> It didn't attract any comments previously, so is just re-posted
->>> without any changes.
->>>
->>> The second patch, functionally orthogonal but complementing
->>> the first one, builds on the ftrace "trace_maker" idea. It adds
->>> a ioctl that can be used to inject a userspace-generated data
->>> into the perf buffer. It provides base for printf-like
->>> functionality in perf world. If used with the previous patch,
->>> it can be also used to provide synchronisation points for sched
->>> vs. raw monotonic time stamps correlation.
->>>
->>> First version of the patch was taking a zero-terminated string
->>> as an argument. Now it is taking a custom structure with "type"
->>> and "size" integer fields followed by data. Type value "0"
->>> is defined as a zero-terminated string (although size, including
->>> the NULL character, must still be provided), but meaning of data
->>> for other types is of no interest for the kernel. The intention
->>> is to host a list of "well known" types (with reference parsers
->>> for them) in the user perf tool code.
->>
->> Would it be possible for you to also update the corresponding man pages?
->>
->> https://www.kernel.org/doc/man-pages/
-> 
-> I must admit I haven't thought of that, but of course - if the changes
-> are accepted I'll send patches to the perf_event_open(2) man page. Any
-> others you had in mind?
+On 09/18/2014 05:24 PM, Alexei Starovoitov wrote:
+...
+> solve or not. If we decide to solve it, we need to have
+> a plan to solve it all the way. Partial fix for size of bpf_attr
+> is not a plan. It's something that is not addressing the problem
+> completely. Little bit of help is not useful for userspace. It
+> would need to deal with new types, verifier differences and
+> other things that I mentioned earlier.
 
-Nope--reading that page and trying out examples is pretty much how I learned
-to use perf events. Another great Vince Weaver perf events contribution is the
-test suite, if you're not already using it.
+Hm, I don't think it would be a strict requirement to solve it
+all the way, and I think that perf_event_open() with perf_copy_attr()
+is not trying to do so either. It, however, is trying on a ``best
+effort basis'' to still load something if new features are unused
+by the binary (I guess you saw the comment in perf_copy_attr()).
 
-https://github.com/deater/perf_event_tests
-
-Christopher
-
--- 
-Employee of Qualcomm Innovation Center, Inc.
-Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
-hosted by the Linux Foundation.
+Iff, e.g. due to new types we fail at the verifier stage, sure,
+that's life since we only have backwards-compatible guarantee,
+but in case we tried to use features we support, we're still able
+to load the eBPF program while right now, we're rejecting it right
+up-front. That's just my $0.02 ...
