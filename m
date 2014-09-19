@@ -1,63 +1,72 @@
-From: yaozq <yzq@rock-chips.com>
-Subject: Re: [PATCH v2 1/5] drm/rockchip: Add basic drm driver
-Date: Fri, 19 Sep 2014 10:03:09 +0800
-Message-ID: <541B8EDD.4090809@rock-chips.com>
-References: <1411032884-9233-1-git-send-email-mark.yao@rock-chips.com> <1411032991-9280-1-git-send-email-mark.yao@rock-chips.com> <20140918145214.GA15734@phenom.ffwll.local> <20140918145354.GB15734@phenom.ffwll.local>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20140918145354.GB15734@phenom.ffwll.local>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mark yao <mark.yao@rock-chips.com>, heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, linux-doc@vger.kernel.org, kever.yang@rock-chips.com, dri-devel@lists.freedesktop.org, dianders@chromium.org, xjq@rock-chips.com, zyw@rock-chips.com, cym@rock-chips.com, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, wxt@rock-chips.com, huangtao@rock-chips.com, devicetree@vger.kernel.org, yxj@rock-chips.com
+From: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Subject: [PATCH v3 0/5] Add drm driver for Rockchip Socs
+Date: Fri, 19 Sep 2014 13:47:43 +0800
+Message-ID: <1411105668-32722-1-git-send-email-mark.yao@rock-chips.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dbehr-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, xjq-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kfx-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cym-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cf-TNX95d0MmH7DzftRWevZcw@public.gmane.org, zyw-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xxm-TNX95d0MmH7DzftRWevZcw@public.gmane.org, huangtao-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kever.yang-TNX95d0MmH7DzftRWevZcw@public.gmane.org, yxj-TNX95d0MmH7DzftRWevZcw@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xw-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2014=E5=B9=B409=E6=9C=8818=E6=97=A5 22:53, Daniel Vetter wrote:
-> On Thu, Sep 18, 2014 at 04:52:14PM +0200, Daniel Vetter wrote:
->> On Thu, Sep 18, 2014 at 05:36:31PM +0800, Mark yao wrote:
->>> This patch adds the basic structure of a DRM Driver for Rockchip So=
-cs.
->>>
->>> Signed-off-by: Mark yao <mark.yao@rock-chips.com>
->>> ---
->>> Changes in v2:
->>> - use the component framework to defer main drm driver probe
->>>    until all VOP devices have been probed.
->>> - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
->>>    master device and each vop device can shared the drm dma mapping=
-=2E
->>> - use drm_crtc_init_with_planes and drm_universal_plane_init.
->>> - remove unnecessary middle layers.
->>> - add cursor set, move funcs to rockchip drm crtc.
->>> - use vop reset at first init
->>> - reference framebuffer when used and unreference when swap out vop
->>>
->>> +static const struct drm_crtc_funcs rockchip_crtc_funcs =3D {
->>> +	.set_config =3D drm_crtc_helper_set_config,
->>> +	.page_flip =3D rockchip_drm_crtc_page_flip,
->>> +	.destroy =3D rockchip_drm_crtc_destroy,
->>> +	.cursor_set =3D vop_crtc_cursor_set,
->>> +	.cursor_move =3D vop_crtc_cursor_move,
->> If you expose your cursor plane as a universal you don't need to imp=
-lement
->> these two cursor functions at all. Actually the core never calls the=
-m, see
->> drm_mode_cursor_universal. So if you want to expose cursors, please =
-use
->> universal cursor plane support (like i915).
->>
->> In general that's how new drivers should expose cursors since withou=
-t
->> universal planes support cursors will not be supported with the atom=
-ic
->> ioctl. Since your cursor code just calls the relevant plane function=
-s that
->> should even simplify your driver ;-)
-> Actually you already initialize with cursor universal planes, so all =
-this
-> code can simply be removed.
-> -Daniel
-I see, drm_mode_cursor_universal is nice, I would test and use it.
--Mark
+This a series of patches is a DRM Driver for Rockchip Socs, add support
+for vop devices, eDP. Future patches will add additional encoders/connectors,
+such as HDMI.
 
+The basic "crtc" for rockchip is a "VOP" - Video Output Processor.
+the vop devices found on Rockchip rk3288 Soc, rk3288 soc have two similar
+Vop devices. Vop devices support iommu mapping, we use dma-mapping API with
+ARM_DMA_USE_IOMMU.
+
+Changes in v2:
+- add DRM master device node to list all display nodes that comprise
+  the graphics subsystem.
+- use the component framework to defer main drm driver probe
+  until all VOP devices have been probed.
+- use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
+  master device and each vop device can shared the drm dma mapping.
+- use drm_crtc_init_with_planes and drm_universal_plane_init.
+- remove unnecessary middle layers.
+- add cursor set, move funcs to rockchip drm crtc.
+- use panel-simple driver for primary display.
+- add vop and edp reset.
+
+Changes in v3:
+- change "crtc->fb" to "crtc->primary-fb"
+Adviced by Daniel Vetter
+- init cursor plane with universal api, remove unnecessary cursor set,move 
+
+Tested on rk3288 pinky board, use eDP encoders/connector, boot and display OK
+
+Mark yao (5):
+  drm/rockchip: Add basic drm driver
+  dt-bindings: video: Add for rockchip display subsytem
+  dt-bindings: video: Add documentation for rockchip vop
+  dt-bindings: video: Add documentation for rockchip edp
+  drm/rockchip: Add support for Rockchip Soc EDP
+
+ .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
+ .../devicetree/bindings/video/rockchip-edp.txt     |   50 +
+ .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
+ drivers/gpu/drm/Kconfig                            |    2 +
+ drivers/gpu/drm/Makefile                           |    1 +
+ drivers/gpu/drm/rockchip/Kconfig                   |   28 +
+ drivers/gpu/drm/rockchip/Makefile                  |   12 +
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  502 +++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |  120 ++
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  201 +++
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  231 ++++
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   20 +
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  405 ++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   76 ++
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1387 ++++++++++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  187 +++
+ drivers/gpu/drm/rockchip/rockchip_edp_core.c       |  853 ++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_edp_core.h       |  309 +++++
+ drivers/gpu/drm/rockchip/rockchip_edp_reg.c        | 1202 +++++++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_edp_reg.h        |  345 +++++
+ include/uapi/drm/rockchip_drm.h                    |   97 ++
+ 22 files changed, 6133 insertions(+)
+
+-- 
+1.7.9.5
