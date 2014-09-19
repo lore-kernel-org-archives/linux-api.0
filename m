@@ -1,36 +1,63 @@
-From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v13 net-next 07/11] bpf: verifier (add ability to receive
- verification log)
-Date: Thu, 18 Sep 2014 19:28:04 +0200
-Message-ID: <541B1624.80302@redhat.com>
-References: <1410914370-29883-1-git-send-email-ast@plumgrid.com> <1410914370-29883-8-git-send-email-ast@plumgrid.com> <54192F66.8020200@redhat.com> <CAMEtUuxK68ZoJ-izjLoygv0f+rLtPmMLUUq1=BJ+_ZBGfynkdA@mail.gmail.com> <5419BED8.5020309@redhat.com> <5419DE51.1060904@redhat.com> <CAMEtUuzhcmZiYZL8TR008or8uaefDBrEKDjqA-tOrRLEZsm95A@mail.gmail.com> <CAMEtUuw0aDPpQhd13ssk2PDLffBJNeef9jicOnhQLH6KtJ8gsQ@mail.gmail.com> <541A7F35.2010804@redhat.com> <CAMEtUuyZCHh7SGeLF+g0ye3OrEFWnTZCn3SBeK0-8qz-y8U30w@mail.gmail.com> <541AF11C.9050405@redhat.com> <CAMEtUuykgG70sP0tAmovLvPxgjwaR8h=R-c6Tyo6m96+Lg3sXQ@mail.gmail.com>
+From: yaozq <yzq@rock-chips.com>
+Subject: Re: [PATCH v2 1/5] drm/rockchip: Add basic drm driver
+Date: Fri, 19 Sep 2014 10:03:09 +0800
+Message-ID: <541B8EDD.4090809@rock-chips.com>
+References: <1411032884-9233-1-git-send-email-mark.yao@rock-chips.com> <1411032991-9280-1-git-send-email-mark.yao@rock-chips.com> <20140918145214.GA15734@phenom.ffwll.local> <20140918145354.GB15734@phenom.ffwll.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMEtUuykgG70sP0tAmovLvPxgjwaR8h=R-c6Tyo6m96+Lg3sXQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20140918145354.GB15734@phenom.ffwll.local>
+Sender: linux-doc-owner@vger.kernel.org
+To: Mark yao <mark.yao@rock-chips.com>, heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, linux-doc@vger.kernel.org, kever.yang@rock-chips.com, dri-devel@lists.freedesktop.org, dianders@chromium.org, xjq@rock-chips.com, zyw@rock-chips.com, cym@rock-chips.com, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, wxt@rock-chips.com, huangtao@rock-chips.com, devicetree@vger.kernel.org, yxj@rock-chips.com
 List-Id: linux-api@vger.kernel.org
 
-On 09/18/2014 05:24 PM, Alexei Starovoitov wrote:
-...
-> solve or not. If we decide to solve it, we need to have
-> a plan to solve it all the way. Partial fix for size of bpf_attr
-> is not a plan. It's something that is not addressing the problem
-> completely. Little bit of help is not useful for userspace. It
-> would need to deal with new types, verifier differences and
-> other things that I mentioned earlier.
+On 2014=E5=B9=B409=E6=9C=8818=E6=97=A5 22:53, Daniel Vetter wrote:
+> On Thu, Sep 18, 2014 at 04:52:14PM +0200, Daniel Vetter wrote:
+>> On Thu, Sep 18, 2014 at 05:36:31PM +0800, Mark yao wrote:
+>>> This patch adds the basic structure of a DRM Driver for Rockchip So=
+cs.
+>>>
+>>> Signed-off-by: Mark yao <mark.yao@rock-chips.com>
+>>> ---
+>>> Changes in v2:
+>>> - use the component framework to defer main drm driver probe
+>>>    until all VOP devices have been probed.
+>>> - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
+>>>    master device and each vop device can shared the drm dma mapping=
+=2E
+>>> - use drm_crtc_init_with_planes and drm_universal_plane_init.
+>>> - remove unnecessary middle layers.
+>>> - add cursor set, move funcs to rockchip drm crtc.
+>>> - use vop reset at first init
+>>> - reference framebuffer when used and unreference when swap out vop
+>>>
+>>> +static const struct drm_crtc_funcs rockchip_crtc_funcs =3D {
+>>> +	.set_config =3D drm_crtc_helper_set_config,
+>>> +	.page_flip =3D rockchip_drm_crtc_page_flip,
+>>> +	.destroy =3D rockchip_drm_crtc_destroy,
+>>> +	.cursor_set =3D vop_crtc_cursor_set,
+>>> +	.cursor_move =3D vop_crtc_cursor_move,
+>> If you expose your cursor plane as a universal you don't need to imp=
+lement
+>> these two cursor functions at all. Actually the core never calls the=
+m, see
+>> drm_mode_cursor_universal. So if you want to expose cursors, please =
+use
+>> universal cursor plane support (like i915).
+>>
+>> In general that's how new drivers should expose cursors since withou=
+t
+>> universal planes support cursors will not be supported with the atom=
+ic
+>> ioctl. Since your cursor code just calls the relevant plane function=
+s that
+>> should even simplify your driver ;-)
+> Actually you already initialize with cursor universal planes, so all =
+this
+> code can simply be removed.
+> -Daniel
+I see, drm_mode_cursor_universal is nice, I would test and use it.
+-Mark
 
-Hm, I don't think it would be a strict requirement to solve it
-all the way, and I think that perf_event_open() with perf_copy_attr()
-is not trying to do so either. It, however, is trying on a ``best
-effort basis'' to still load something if new features are unused
-by the binary (I guess you saw the comment in perf_copy_attr()).
-
-Iff, e.g. due to new types we fail at the verifier stage, sure,
-that's life since we only have backwards-compatible guarantee,
-but in case we tried to use features we support, we're still able
-to load the eBPF program while right now, we're rejecting it right
-up-front. That's just my $0.02 ...
