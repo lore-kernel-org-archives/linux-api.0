@@ -1,60 +1,68 @@
-From: Stephen Boyd <sboyd@codeaurora.org>
-Subject: Re: [PATCH v4 04/11] drivers: base: support cpu cache information
- interface to userspace via sysfs
-Date: Fri, 19 Sep 2014 15:24:22 -0700
-Message-ID: <541CAD16.6030309@codeaurora.org>
-References: <1409763617-17074-1-git-send-email-sudeep.holla@arm.com> <1409763617-17074-5-git-send-email-sudeep.holla@arm.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH] x86/vdso: Add prctl to set per-process VDSO load
+Date: Fri, 19 Sep 2014 15:31:40 -0700
+Message-ID: <CALCETrV7thL-0mST4O6YZgDNm1LyLqB=_bQ3vwwrAPYZCB=W+A@mail.gmail.com>
+References: <1410912351-31273-1-git-send-email-rlarocque@google.com>
+ <CALCETrXtYV5xKkTxothuqNb7ra80Be7ZXJ-hDnC6p-bfEPZ=Lw@mail.gmail.com>
+ <CABgu+=NC1ZMQkV0J2c9-MD1+TAmTjDm4ACZASPnfX2Fwiu5rMQ@mail.gmail.com>
+ <CALCETrWj8Pj8d8YjybvOKG-=xmy-XGFo9cGQ9qn0V4t9Oj+dOw@mail.gmail.com>
+ <CADU+-uCguxhkw259MefABuzOxvyK_F6bhwza0YhveCCJxEV8wQ@mail.gmail.com>
+ <54194A4A.7030104@zytor.com> <CALCETrXsx2-1yf6q4OLzBdisr8P1086rNrsAt=WbyJaiT-cMpw@mail.gmail.com>
+ <CALCETrXpB4qOS+JUBqJnTY8JUfQ=A6DaebU6e=32sSv=0c0QCg@mail.gmail.com>
+ <CADU+-uBMc9THr0ADntsOqwh1--ULYMcssgPBvTesvFR+KQUfRg@mail.gmail.com>
+ <CALCETrXOeD=zBPvYV+-j0Ok6MXNZwdjRaz73rjuLGShx+o6Y0w@mail.gmail.com> <CADU+-uBmQdKSX==5NrYfSEWLg-X4cvJYXj=N8UdMdN_rHnWk4w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ia64-owner@vger.kernel.org>
-In-Reply-To: <1409763617-17074-5-git-send-email-sudeep.holla@arm.com>
-Sender: linux-ia64-owner@vger.kernel.org
-To: Sudeep Holla <sudeep.holla@arm.com>, LKML <linux-kernel@vger.kernel.org>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux390@de.ibm.com, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CADU+-uBmQdKSX==5NrYfSEWLg-X4cvJYXj=N8UdMdN_rHnWk4w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Filipe Brandenburger <filbranden-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Davidson <md-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Larocque <rlarocque-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/03/14 10:00, Sudeep Holla wrote:
-> From: Sudeep Holla <sudeep.holla@arm.com>
+On Fri, Sep 19, 2014 at 3:19 PM, Filipe Brandenburger
+<filbranden-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> Hi,
 >
-> This patch adds initial support for providing processor cache information
-> to userspace through sysfs interface. This is based on already existing
-> implementations(x86, ia64, s390 and powerpc) and hence the interface is
-> intended to be fully compatible.
+> On Fri, Sep 19, 2014 at 3:09 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>> On Fri, Sep 19, 2014 at 3:02 PM, Filipe Brandenburger <filbranden-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>>> In case that's useful, I was looking at swapping the vvar page by
+>>> changing the vm_special_mapping to change the pages array between the
+>>> actual vvar page and the zero page and using zap_page_range to force
+>>> the next access to go through a page fault that would remap it.
+>>
+>> That will do it globally, since the vm_special_mapping is global.  I
+>> was just thinking of using remap_pfn_range.
 >
-> The main purpose of this generic support is to avoid further code
-> duplication to support new architectures and also to unify all the existing
-> different implementations.
+> Sorry if I wasn't clear... That's the exact point of my patch, to make
+> vm_special_mapping local to the task.
 >
-> This implementation maintains the hierarchy of cache objects which reflects
-> the system's cache topology. Cache devices are instantiated as needed as
-> CPUs come online. The cache information is replicated per-cpu even if they are
-> shared. A per-cpu array of cache information maintained is used mainly for
-> sysfs-related book keeping.
+> I started with an approach of keeping a struct vm_special_mapping + a
+> struct page * array per mm_struct.
 >
-> It also implements the shared_cpu_map attribute, which is essential for
-> enabling both kernel and user-space to discover the system's overall cache
-> topology.
->
-> This patch also add the missing ABI documentation for the cacheinfo sysfs
-> interface already, which is well defined and widely used.
->
-> Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
-> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-> Cc: Stephen Boyd <sboyd@codeaurora.org>
-> Cc: linux-api@vger.kernel.org
-> Cc: linux390@de.ibm.com
-> Cc: linux-arm-kernel@lists.infradead.org
-> Cc: linux-ia64@vger.kernel.org
-> Cc: linuxppc-dev@lists.ozlabs.org
-> Cc: linux-s390@vger.kernel.org
-> Cc: x86@kernel.org
->
+> I was also looking at keeping two static vm_special_mapping structs,
+> one with the actual vvar page and the other with the zero page and
+> then swapping vma->vm_private_data to point to the appropriate one.
 
-Reviewed-by: Stephen Boyd <sboyd@codeaurora.org>
-Tested-by: Stephen Boyd <sboyd@codeaurora.org>
+This sounds like it may be more complicated than necessary.  Is there
+any reason that just doing remap_pfn_range on the vvar page isn't
+enough?
 
--- 
-Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
-hosted by The Linux Foundation
+Changing out the text is a whole can of worms involving self-modifying
+code, although it may be completely safe if done through the page
+tables.  But I don't think you can't use remap_pfn_range for that.
 
+>
+>> Give me another day or two to straighten out the vma stuff, although
+>> it shouldn't impact your patches too much.  The main effect will be
+>> that you'll be able to rely on mm->context.vdso (renamed to
+>> vvar_vma_start, most likey) being correct.  Currently, you should
+>> *not* rely on it, especially if CRIU is involved.
+>
+> Cool! As I said, let me know if you'd like to see some of my
+> incomplete patches or if you'd like me to keep working on them to show
+> you something more complete.
+
+Maybe better: what exactly are you trying to do?
+
+--Andy
