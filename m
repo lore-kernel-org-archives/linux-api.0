@@ -1,85 +1,49 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH] x86/vdso: Add prctl to set per-process VDSO load
-Date: Fri, 19 Sep 2014 12:27:44 -0700
-Message-ID: <CALCETrXpB4qOS+JUBqJnTY8JUfQ=A6DaebU6e=32sSv=0c0QCg@mail.gmail.com>
-References: <1410912351-31273-1-git-send-email-rlarocque@google.com>
- <CALCETrXtYV5xKkTxothuqNb7ra80Be7ZXJ-hDnC6p-bfEPZ=Lw@mail.gmail.com>
- <CABgu+=NC1ZMQkV0J2c9-MD1+TAmTjDm4ACZASPnfX2Fwiu5rMQ@mail.gmail.com>
- <CALCETrWj8Pj8d8YjybvOKG-=xmy-XGFo9cGQ9qn0V4t9Oj+dOw@mail.gmail.com>
- <CADU+-uCguxhkw259MefABuzOxvyK_F6bhwza0YhveCCJxEV8wQ@mail.gmail.com>
- <54194A4A.7030104@zytor.com> <CALCETrXsx2-1yf6q4OLzBdisr8P1086rNrsAt=WbyJaiT-cMpw@mail.gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH v13 net-next 07/11] bpf: verifier (add ability to receive
+ verification log)
+Date: Fri, 19 Sep 2014 14:04:50 -0700
+Message-ID: <CAMEtUux071cELLdoWs21WL0dqgdwj+O=P64aeXSfyUtFW9U69w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXsx2-1yf6q4OLzBdisr8P1086rNrsAt=WbyJaiT-cMpw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Greg Thelen <gthelen@google.com>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Davidson <md@google.com>, Ingo Molnar <mingo@redhat.com>, Richard Larocque <rlarocque@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Filipe Brandenburger <filbranden@google.com>, Linux API <linux-api@vger.kernel.org>
+To: "David S. Miller" <davem@davemloft.net>
+Cc: Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Pablo Neira Ayuso <pablo@netfilter.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Daniel Borkmann <dborkman@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 17, 2014 at 7:28 AM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Sep 17, 2014 1:46 AM, "H. Peter Anvin" <hpa@zytor.com> wrote:
+On Thu, Sep 18, 2014 at 10:28 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
+> On 09/18/2014 05:24 PM, Alexei Starovoitov wrote:
+> ...
 >>
->> On 09/16/2014 11:21 PM, Filipe Brandenburger wrote:
->> > Hi Andy,
->> >
->> > On Tue, Sep 16, 2014 at 10:00 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->> >> I think that the patch should instead tweak the vvar mapping to tell
->> >> the vdso not to use rdtsc.  It should be based on this:
->> >
->> > I've been working on this approach which extends the vvar from 2 to 3
->> > pages. The third page would initially be mapped to a zero page but
->> > then through a prctl a task could replace it with a real page that
->> > could then be inherited through fork and exec.
->> >
->> > That would make it possible to have per-task vvar contents.
->> >
->> > We could use some of those values as flags to indicate whether vdso
->> > routines may use RDTSC or not.
->> >
->> > In the future, we're planning to also use that to store clock offsets
->> > so that we can ensure CLOCK_MONOTONIC works after CRIU migration
->> > without having to turn off the VDSO or have to always fallback to full
->> > syscalls on every case.
->> >
->> > Do you think that would be a reasonable way to accomplish that?
->> >
->>
->> Why would we need/want per process vvar contents?  It seems better to
->> have the code swapped out.
+>> solve or not. If we decide to solve it, we need to have
+>> a plan to solve it all the way. Partial fix for size of bpf_attr
+>> is not a plan. It's something that is not addressing the problem
+>> completely. Little bit of help is not useful for userspace. It
+>> would need to deal with new types, verifier differences and
+>> other things that I mentioned earlier.
 >
-> That seems messier from a build perspective.  Also, if we ever want to
-> switch this dynamically, swapping out data is much easier than
-> swapping out code.  I think we should be able to replace the vvar page
-> with the zero page, though.
 >
-> One tricky bit: currently we can only easily do this on exec, but we
-> should be able to do it immediately if we start tracking mremap of the
-> vdso.  Should we make that a prerequisite?  I don't really want this
-> to end up being permanently weird.
-
-I have this (special mapping tracking) 3/4 implemented.  I'm planning
-on making it fully functional for 64-bit programs and almost correct
-for 32-bit.  (You'll still crash if you have multiple threads, you use
-sysenter, and you remap the vdso, but I think that this is essentially
-unavoidable until someone lets mremap work on multiple vmas at once.)
-
+> Hm, I don't think it would be a strict requirement to solve it
+> all the way, and I think that perf_event_open() with perf_copy_attr()
+> is not trying to do so either. It, however, is trying on a ``best
+> effort basis'' to still load something if new features are unused
+> by the binary (I guess you saw the comment in perf_copy_attr()).
 >
-> As for an actual post-migration offset, I'd rather add support for
-> per-mm forced syscall fallback and then get something into the code
-> timing code before even thinking about an x86 vdso fast path.  I don't
-> think that a feature like per-mm timing offsets should happen as an
-> arch-specific thing first.
->
-> --Andy
->
->>
->>         -hpa
->>
->>
+> Iff, e.g. due to new types we fail at the verifier stage, sure,
+> that's life since we only have backwards-compatible guarantee,
+> but in case we tried to use features we support, we're still able
+> to load the eBPF program while right now, we're rejecting it right
+> up-front. That's just my $0.02 ...
 
+David,
 
+the 'changes requested' status means that you want me to
+address this forward compatibility now instead of later?
+Or something else?
+I don't want to second guess, respin and spam people
+unnecessary. In this case I don't think Daniel is insisting
+on doing it in this patch set. The things discussed above
+are not urgent. Unless I'm missing something.
+Please clarify.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+Thanks
