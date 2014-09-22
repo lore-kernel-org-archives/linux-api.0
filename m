@@ -1,145 +1,65 @@
-From: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-Subject: Re: [PATCH v3 1/5] drm/rockchip: Add basic drm driver
-Date: Mon, 22 Sep 2014 09:32:19 +0800
-Message-ID: <541F7C23.8000103@rock-chips.com>
-References: <1411105668-32722-1-git-send-email-mark.yao@rock-chips.com>	<1411105668-32722-2-git-send-email-mark.yao@rock-chips.com> <CAF6AEGsPoj6+PdKCJk5BPPzHS51Tz1FGqS2SjpartaRw7i=Pxg@mail.gmail.com>
+From: Sudeep Holla <sudeep.holla@arm.com>
+Subject: Re: [PATCH v4 04/11] drivers: base: support cpu cache information
+ interface to userspace via sysfs
+Date: Mon, 22 Sep 2014 09:55:18 +0100
+Message-ID: <541FE3F6.4070806@arm.com>
+References: <1409763617-17074-1-git-send-email-sudeep.holla@arm.com> <1409763617-17074-5-git-send-email-sudeep.holla@arm.com> <541CAD16.6030309@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAF6AEGsPoj6+PdKCJk5BPPzHS51Tz1FGqS2SjpartaRw7i=Pxg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: =?UTF-8?B?SGVpa28gU3TDvGJuZXI=?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, =?UTF-8?B?U3TDqXBoYW5lIE1hcmNoZXNpbg==?= <marcheu@ch>
+Content-Type: text/plain; charset=WINDOWS-1252; format=flowed
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-ia64-owner@vger.kernel.org>
+In-Reply-To: <541CAD16.6030309@codeaurora.org>
+Sender: linux-ia64-owner@vger.kernel.org
+To: Stephen Boyd <sboyd@codeaurora.org>, LKML <linux-kernel@vger.kernel.org>
+Cc: Sudeep Holla <sudeep.holla@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux390@de.ibm.com" <linux390@de.ibm.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, "linuxppc-dev@lists.ozlabs.org" <linuxppc-dev@lists.ozlabs.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2014=E5=B9=B409=E6=9C=8820=E6=97=A5 08:03, Rob Clark wrote:
-> On Fri, Sep 19, 2014 at 1:47 AM, Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org> w=
-rote:
->> diff --git a/include/uapi/drm/rockchip_drm.h b/include/uapi/drm/rock=
-chip_drm.h
->> new file mode 100644
->> index 0000000..8f8e60e
->> --- /dev/null
->> +++ b/include/uapi/drm/rockchip_drm.h
->> @@ -0,0 +1,97 @@
->> +/*
->> + *
->> + * Copyright (c) Fuzhou Rockchip Electronics Co.Ltd
->> + * Authors:
->> + *       Mark Yao <yzq-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
->> + *
->> + * base on exynos_drm.h
->> + *
->> + * This program is free software; you can redistribute  it and/or m=
-odify it
->> + * under  the terms of  the GNU General  Public License as publishe=
-d by the
->> + * Free Software Foundation;  either version 2 of the  License, or =
-(at your
->> + * option) any later version.
->> + */
->> +
->> +#ifndef _UAPI_ROCKCHIP_DRM_H
->> +#define _UAPI_ROCKCHIP_DRM_H
->> +
->> +#include <drm/drm.h>
->> +
->> +/**
->> + * User-desired buffer creation information structure.
->> + *
->> + * @size: user-desired memory allocation size.
->> + * @flags: user request for setting memory type or cache attributes=
-=2E
->> + * @handle: returned a handle to created gem object.
->> + *     - this handle will be set by gem module of kernel side.
->> + */
->> +struct drm_rockchip_gem_create {
->> +       uint64_t size;
->> +       uint32_t flags;
->> +       uint32_t handle;
->> +};
->> +
->> +/**
->> + * A structure for getting buffer offset.
->> + *
->> + * @handle: a pointer to gem object created.
->> + * @pad: just padding to be 64-bit aligned.
->> + * @offset: relatived offset value of the memory region allocated.
->> + *     - this value should be set by user.
->> + */
->> +struct drm_rockchip_gem_map_off {
->> +       uint32_t handle;
->> +       uint32_t pad;
->> +       uint64_t offset;
->> +};
->> +
->> +/**
->> + * A structure for mapping buffer.
->> + *
->> + * @handle: a handle to gem object created.
->> + * @pad: just padding to be 64-bit aligned.
->> + * @size: memory size to be mapped.
->> + * @mapped: having user virtual address mmaped.
->> + *      - this variable would be filled by rockchip gem module
->> + *      of kernel side with user virtual address which is allocated
->> + *      by do_mmap().
->> + */
->> +struct drm_rockchip_gem_mmap {
->> +       uint32_t handle;
->> +       uint32_t pad;
->> +       uint64_t size;
->> +       uint64_t mapped;
->> +};
-> Could we do without the mmap ioctl?  It has been a source of problems
-> in other drivers, and the ioctl to get mmap offset, plus normal mmap(=
-)
-> on drm device file should be sufficient
+Hi Stephen,
+
+On 19/09/14 23:24, Stephen Boyd wrote:
+> On 09/03/14 10:00, Sudeep Holla wrote:
+>> From: Sudeep Holla <sudeep.holla@arm.com>
+>>
+>> This patch adds initial support for providing processor cache information
+>> to userspace through sysfs interface. This is based on already existing
+>> implementations(x86, ia64, s390 and powerpc) and hence the interface is
+>> intended to be fully compatible.
+>>
+>> The main purpose of this generic support is to avoid further code
+>> duplication to support new architectures and also to unify all the existing
+>> different implementations.
+>>
+>> This implementation maintains the hierarchy of cache objects which reflects
+>> the system's cache topology. Cache devices are instantiated as needed as
+>> CPUs come online. The cache information is replicated per-cpu even if they are
+>> shared. A per-cpu array of cache information maintained is used mainly for
+>> sysfs-related book keeping.
+>>
+>> It also implements the shared_cpu_map attribute, which is essential for
+>> enabling both kernel and user-space to discover the system's overall cache
+>> topology.
+>>
+>> This patch also add the missing ABI documentation for the cacheinfo sysfs
+>> interface already, which is well defined and widely used.
+>>
+>> Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+>> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+>> Cc: Stephen Boyd <sboyd@codeaurora.org>
+>> Cc: linux-api@vger.kernel.org
+>> Cc: linux390@de.ibm.com
+>> Cc: linux-arm-kernel@lists.infradead.org
+>> Cc: linux-ia64@vger.kernel.org
+>> Cc: linuxppc-dev@lists.ozlabs.org
+>> Cc: linux-s390@vger.kernel.org
+>> Cc: x86@kernel.org
+>>
 >
-> BR,
-> -R
-OK, I will try to move the special mmap ioctl and use drm generic mmap=20
-interface.
+> Reviewed-by: Stephen Boyd <sboyd@codeaurora.org>
+> Tested-by: Stephen Boyd <sboyd@codeaurora.org>
 >
->> +/**
->> + * A structure to gem information.
->> + *
->> + * @handle: a handle to gem object created.
->> + * @flags: flag value including memory type and cache attribute and
->> + *      this value would be set by driver.
->> + * @size: size to memory region allocated by gem and this size woul=
-d
->> + *      be set by driver.
->> + */
->> +struct drm_rockchip_gem_info {
->> +       uint32_t handle;
->> +       uint32_t flags;
->> +       uint64_t size;
->> +};
->> +
->> +#define DRM_ROCKCHIP_GEM_CREATE                0x00
->> +#define DRM_ROCKCHIP_GEM_MAP_OFFSET    0x01
->> +#define DRM_ROCKCHIP_GEM_MMAP          0x02
->> +#define DRM_ROCKCHIP_GEM_GET           0x04
->> +
->> +#define DRM_IOCTL_ROCKCHIP_GEM_CREATE  DRM_IOWR(DRM_COMMAND_BASE + =
-\
->> +               DRM_ROCKCHIP_GEM_CREATE, struct drm_rockchip_gem_cre=
-ate)
->> +
->> +#define DRM_IOCTL_ROCKCHIP_GEM_MAP_OFFSET      DRM_IOWR(DRM_COMMAND=
-_BASE + \
->> +               DRM_ROCKCHIP_GEM_MAP_OFFSET, struct drm_rockchip_gem=
-_map_off)
->> +
->> +#define DRM_IOCTL_ROCKCHIP_GEM_MMAP    DRM_IOWR(DRM_COMMAND_BASE + =
-\
->> +               DRM_ROCKCHIP_GEM_MMAP, struct drm_rockchip_gem_mmap)
->> +
->> +#define DRM_IOCTL_ROCKCHIP_GEM_GET     DRM_IOWR(DRM_COMMAND_BASE + =
-\
->> +               DRM_ROCKCHIP_GEM_GET, struct drm_rockchip_gem_info)
->> +#endif /* _UAPI_ROCKCHIP_DRM_H */
->
->
+
+Thanks for all the reviews and testings of the series.
+
+Regards,
+Sudeep
+
