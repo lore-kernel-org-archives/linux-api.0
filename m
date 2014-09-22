@@ -1,3478 +1,2820 @@
 From: Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 1/5] drm/rockchip: Add basic drm driver
-Date: Mon, 22 Sep 2014 15:10:19 -0400
-Message-ID: <CAF6AEGtBVSqzxO7M+Tew1vHb9-moVame=K=_gDGji13113TgFw@mail.gmail.com>
+Subject: Re: [PATCH v4 5/5] drm/rockchip: Add support for Rockchip Soc EDP
+Date: Mon, 22 Sep 2014 15:20:01 -0400
+Message-ID: <CAF6AEGtxUGr2i+mK7dtfTXaf2SxHkokxw2sNCviwRR6Hn7RE2w@mail.gmail.com>
 References: <1411382820-1615-1-git-send-email-mark.yao@rock-chips.com>
-	<1411382934-1763-1-git-send-email-mark.yao@rock-chips.com>
+	<1411383728-2075-1-git-send-email-mark.yao@rock-chips.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1411382934-1763-1-git-send-email-mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+In-Reply-To: <1411383728-2075-1-git-send-email-mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
 Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-Cc: =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, =?UTF-8?Q?St=C3=A9phane_Marchesin?= <marcheu@chromium.>
+Cc: =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Douglas Anderson <dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, =?UTF-8?Q?St=C3=A9phane_Marchesin?=
 List-Id: linux-api@vger.kernel.org
 
-Ok, couple more small comments.. this time I actually had time to go
-through the entire patch, not just the uapi
-
-
-On Mon, Sep 22, 2014 at 6:48 AM, Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org> wrote:
-> This patch adds the basic structure of a DRM Driver for Rockchip Socs.
+On Mon, Sep 22, 2014 at 7:02 AM, Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org> wrote:
+> This adds support for Rockchip soc edp found on rk3288
 >
-> Signed-off-by: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> Signed-off-by: Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> Signed-off-by: Jeff Chen <jeff.chen-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
 > ---
 > Changes in v2:
-> - use the component framework to defer main drm driver probe
->   until all VOP devices have been probed.
-> - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
->   master device and each vop device can shared the drm dma mapping.
-> - use drm_crtc_init_with_planes and drm_universal_plane_init.
-> - remove unnecessary middle layers.
-> - add cursor set, move funcs to rockchip drm crtc.
-> - use vop reset at first init
-> - reference framebuffer when used and unreference when swap out vop
+> - fix code sytle
+> - use some define from drm_dp_helper.h
+> - use panel-simple driver for primary display.
+> - remove unnecessary clock clk_24m_parent.
 >
-> Changes in v3:
-> - change "crtc->fb" to "crtc->primary-fb"
-> Adviced by Daniel Vetter
-> - init cursor plane with universal api, remove unnecessary cursor set,move
+> Changes in v3: None
 >
-> Changes in v4:
-> Adviced by David Herrmann
-> - remove drm_platform_*() usage, use register drm device directly.
-> Adviced by Rob Clark
-> - remove special mmap ioctl, do userspace mmap with normal mmap() or mmap offset
+> Changes in v4: None
 >
->  drivers/gpu/drm/Kconfig                       |    2 +
->  drivers/gpu/drm/Makefile                      |    1 +
->  drivers/gpu/drm/rockchip/Kconfig              |   19 +
->  drivers/gpu/drm/rockchip/Makefile             |   10 +
->  drivers/gpu/drm/rockchip/rockchip_drm_drv.c   |  524 ++++++++++
->  drivers/gpu/drm/rockchip/rockchip_drm_drv.h   |  120 +++
->  drivers/gpu/drm/rockchip/rockchip_drm_fb.c    |  201 ++++
->  drivers/gpu/drm/rockchip/rockchip_drm_fb.h    |   28 +
->  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c |  231 +++++
->  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h |   20 +
->  drivers/gpu/drm/rockchip/rockchip_drm_gem.c   |  404 ++++++++
->  drivers/gpu/drm/rockchip/rockchip_drm_gem.h   |   72 ++
->  drivers/gpu/drm/rockchip/rockchip_drm_vop.c   | 1372 +++++++++++++++++++++++++
->  drivers/gpu/drm/rockchip/rockchip_drm_vop.h   |  187 ++++
->  include/uapi/drm/rockchip_drm.h               |   75 ++
->  15 files changed, 3266 insertions(+)
->  create mode 100644 drivers/gpu/drm/rockchip/Kconfig
->  create mode 100644 drivers/gpu/drm/rockchip/Makefile
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.h
->  create mode 100644 include/uapi/drm/rockchip_drm.h
+>  drivers/gpu/drm/rockchip/Kconfig             |    9 +
+>  drivers/gpu/drm/rockchip/Makefile            |    2 +
+>  drivers/gpu/drm/rockchip/rockchip_edp_core.c |  853 ++++++++++++++++++
+>  drivers/gpu/drm/rockchip/rockchip_edp_core.h |  309 +++++++
+>  drivers/gpu/drm/rockchip/rockchip_edp_reg.c  | 1202 ++++++++++++++++++++++++++
+>  drivers/gpu/drm/rockchip/rockchip_edp_reg.h  |  345 ++++++++
+>  6 files changed, 2720 insertions(+)
+>  create mode 100644 drivers/gpu/drm/rockchip/rockchip_edp_core.c
+>  create mode 100644 drivers/gpu/drm/rockchip/rockchip_edp_core.h
+>  create mode 100644 drivers/gpu/drm/rockchip/rockchip_edp_reg.c
+>  create mode 100644 drivers/gpu/drm/rockchip/rockchip_edp_reg.h
 >
-> diff --git a/drivers/gpu/drm/Kconfig b/drivers/gpu/drm/Kconfig
-> index b066bb3..7c4c3c6 100644
-> --- a/drivers/gpu/drm/Kconfig
-> +++ b/drivers/gpu/drm/Kconfig
-> @@ -171,6 +171,8 @@ config DRM_SAVAGE
->
->  source "drivers/gpu/drm/exynos/Kconfig"
->
-> +source "drivers/gpu/drm/rockchip/Kconfig"
-> +
->  source "drivers/gpu/drm/vmwgfx/Kconfig"
->
->  source "drivers/gpu/drm/gma500/Kconfig"
-> diff --git a/drivers/gpu/drm/Makefile b/drivers/gpu/drm/Makefile
-> index 4a55d59..d03387a 100644
-> --- a/drivers/gpu/drm/Makefile
-> +++ b/drivers/gpu/drm/Makefile
-> @@ -52,6 +52,7 @@ obj-$(CONFIG_DRM_VMWGFX)+= vmwgfx/
->  obj-$(CONFIG_DRM_VIA)  +=via/
->  obj-$(CONFIG_DRM_NOUVEAU) +=nouveau/
->  obj-$(CONFIG_DRM_EXYNOS) +=exynos/
-> +obj-$(CONFIG_DRM_ROCKCHIP) +=rockchip/
->  obj-$(CONFIG_DRM_GMA500) += gma500/
->  obj-$(CONFIG_DRM_UDL) += udl/
->  obj-$(CONFIG_DRM_AST) += ast/
 > diff --git a/drivers/gpu/drm/rockchip/Kconfig b/drivers/gpu/drm/rockchip/Kconfig
-> new file mode 100644
-> index 0000000..7146c80
-> --- /dev/null
+> index 7146c80..04b1f8c 100644
+> --- a/drivers/gpu/drm/rockchip/Kconfig
 > +++ b/drivers/gpu/drm/rockchip/Kconfig
-> @@ -0,0 +1,19 @@
-> +config DRM_ROCKCHIP
-> +       tristate "DRM Support for Rockchip"
-> +       depends on DRM && ROCKCHIP_IOMMU
-> +       select ARM_DMA_USE_IOMMU
-> +       select IOMMU_API
-> +       select DRM_KMS_HELPER
-> +       select DRM_KMS_FB_HELPER
-> +       select DRM_PANEL
-> +       select FB_CFB_FILLRECT
-> +       select FB_CFB_COPYAREA
-> +       select FB_CFB_IMAGEBLIT
-> +       select VT_HW_CONSOLE_BINDING if FRAMEBUFFER_CONSOLE
-> +       select VIDEOMODE_HELPERS
+> @@ -17,3 +17,12 @@ config DRM_ROCKCHIP
+>           management to userspace. This driver does not provides
+>           2D or 3D acceleration; acceleration is performed by other
+>           IP found on the SoC.
+> +
+> +config ROCKCHIP_EDP
+> +       bool "Rockchip edp support"
+> +       depends on DRM_ROCKCHIP
 > +       help
-> +         Choose this option if you have a Rockchip soc chipset.
-> +         This driver provides kernel mode setting and buffer
-> +         management to userspace. This driver does not provides
-> +         2D or 3D acceleration; acceleration is performed by other
-> +         IP found on the SoC.
+> +         Choose this option if you have a Rockchip eDP.
+> +         Rockchip rk3288 SoC has eDP TX Controller can be used.
+> +         If you have an Embedded DisplayPort Panel, say Y to enable its
+> +         driver.
 > diff --git a/drivers/gpu/drm/rockchip/Makefile b/drivers/gpu/drm/rockchip/Makefile
-> new file mode 100644
-> index 0000000..6e6d468
-> --- /dev/null
+> index 6e6d468..a0fc3a1 100644
+> --- a/drivers/gpu/drm/rockchip/Makefile
 > +++ b/drivers/gpu/drm/rockchip/Makefile
-> @@ -0,0 +1,10 @@
-> +#
-> +# Makefile for the drm device driver.  This driver provides support for the
-> +# Direct Rendering Infrastructure (DRI) in XFree86 4.1.0 and higher.
+> @@ -7,4 +7,6 @@ ccflags-y := -Iinclude/drm -Idrivers/gpu/drm/rockchip
+>  rockchipdrm-y := rockchip_drm_drv.o rockchip_drm_fb.o rockchip_drm_fbdev.o \
+>                 rockchip_drm_gem.o rockchip_drm_vop.o
+>
+> +rockchipdrm-$(CONFIG_ROCKCHIP_EDP) += rockchip_edp_core.o rockchip_edp_reg.o
 > +
-> +ccflags-y := -Iinclude/drm -Idrivers/gpu/drm/rockchip
-> +
-> +rockchipdrm-y := rockchip_drm_drv.o rockchip_drm_fb.o rockchip_drm_fbdev.o \
-> +               rockchip_drm_gem.o rockchip_drm_vop.o
-> +
-> +obj-$(CONFIG_DRM_ROCKCHIP) += rockchipdrm.o
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_drv.c b/drivers/gpu/drm/rockchip/rockchip_drm_drv.c
+>  obj-$(CONFIG_DRM_ROCKCHIP) += rockchipdrm.o
+> diff --git a/drivers/gpu/drm/rockchip/rockchip_edp_core.c b/drivers/gpu/drm/rockchip/rockchip_edp_core.c
 > new file mode 100644
-> index 0000000..94926cb
+> index 0000000..5450d1fa
 > --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_drv.c
-> @@ -0,0 +1,524 @@
+> +++ b/drivers/gpu/drm/rockchip/rockchip_edp_core.c
+> @@ -0,0 +1,853 @@
 > +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * based on exynos_drm_drv.c
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <asm/dma-iommu.h>
-> +
-> +#include <drm/drmP.h>
-> +#include <drm/drm_crtc_helper.h>
-> +#include <drm/drm_fb_helper.h>
-> +#include <linux/dma-mapping.h>
-> +#include <linux/pm_runtime.h>
-> +#include <linux/of_graph.h>
-> +#include <linux/component.h>
-> +
-> +#include <drm/rockchip_drm.h>
-> +
-> +#include "rockchip_drm_drv.h"
-> +#include "rockchip_drm_fb.h"
-> +#include "rockchip_drm_fbdev.h"
-> +#include "rockchip_drm_gem.h"
-> +
-> +#define DRIVER_NAME    "rockchip"
-> +#define DRIVER_DESC    "RockChip Soc DRM"
-> +#define DRIVER_DATE    "20140818"
-> +#define DRIVER_MAJOR   1
-> +#define DRIVER_MINOR   0
-> +
-> +/*
-> + * Attach a (component) device to the shared drm dma mapping from master drm
-> + * device.  This is used by the VOPs to map GEM buffers to a common DMA
-> + * mapping.
-> + */
-> +int rockchip_drm_dma_attach_device(struct drm_device *drm_dev,
-> +                                  struct device *dev)
-> +{
-> +       struct dma_iommu_mapping *mapping = drm_dev->dev->archdata.mapping;
-> +       int ret;
-> +
-> +       ret = dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
-> +       if (ret)
-> +               return ret;
-> +
-> +       dma_set_max_seg_size(dev, 0xffffffffu);
-> +
-> +       return arm_iommu_attach_device(dev, mapping);
-> +}
-> +
-> +void rockchip_drm_dma_detach_device(struct drm_device *drm_dev,
-> +                                   struct device *dev)
-> +{
-> +       arm_iommu_detach_device(drm_dev->dev);
-> +}
-> +
-> +static int rockchip_drm_load(struct drm_device *drm_dev, unsigned long flags)
-> +{
-> +       struct rockchip_drm_private *private;
-> +       struct dma_iommu_mapping *mapping;
-> +       struct device *dev = drm_dev->dev;
-> +       int ret;
-> +
-> +       private = devm_kzalloc(drm_dev->dev, sizeof(*private), GFP_KERNEL);
-> +       if (!private)
-> +               return -ENOMEM;
-> +
-> +       dev_set_drvdata(drm_dev->dev, dev);
-> +       drm_dev->dev_private = private;
-> +
-> +       drm_mode_config_init(drm_dev);
-> +
-> +       rockchip_drm_mode_config_init(drm_dev);
-> +
-> +       dev->dma_parms = devm_kzalloc(dev, sizeof(*dev->dma_parms),
-> +                                     GFP_KERNEL);
-> +       if (!dev->dma_parms) {
-> +               ret = -ENOMEM;
-> +               goto err_config_cleanup;
-> +       }
-> +
-> +       /* TODO(djkurtz): fetch the mapping start/size from somewhere */
-> +       mapping = arm_iommu_create_mapping(&platform_bus_type, 0x10000000,
-> +                                          SZ_1G);
-> +       if (IS_ERR(mapping)) {
-> +               ret = PTR_ERR(mapping);
-> +               goto err_config_cleanup;
-> +       }
-> +
-> +       dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
-> +       dma_set_max_seg_size(dev, 0xffffffffu);
-> +
-> +       ret = arm_iommu_attach_device(dev, mapping);
-> +       if (ret)
-> +               goto err_release_mapping;
-> +
-> +       /* Try to bind all sub drivers. */
-> +       ret = component_bind_all(dev, drm_dev);
-> +       if (ret)
-> +               goto err_detach_device;
-> +
-> +       /* init kms poll for handling hpd */
-> +       drm_kms_helper_poll_init(drm_dev);
-> +
-> +       /*
-> +        * enable drm irq mode.
-> +        * - with irq_enabled = true, we can use the vblank feature.
-> +        */
-> +       drm_dev->irq_enabled = true;
-> +
-> +       /*
-> +        * with vblank_disable_allowed = true, vblank interrupt will be disabled
-> +        * by drm timer once a current process gives up ownership of
-> +        * vblank event.(after drm_vblank_put function is called)
-> +        */
-> +       drm_dev->vblank_disable_allowed = true;
-> +
-> +       ret = drm_vblank_init(drm_dev, ROCKCHIP_MAX_CRTC);
-> +       if (ret)
-> +               goto err_kms_helper_poll_fini;
-> +
-> +       rockchip_drm_fbdev_init(drm_dev);
-> +
-> +       /* force connectors detection */
-> +       drm_helper_hpd_irq_event(drm_dev);
-> +
-> +       return 0;
-> +
-> +err_kms_helper_poll_fini:
-> +       drm_kms_helper_poll_fini(drm_dev);
-> +       component_unbind_all(dev, drm_dev);
-> +err_detach_device:
-> +       arm_iommu_detach_device(dev);
-> +err_release_mapping:
-> +       arm_iommu_release_mapping(dev->archdata.mapping);
-> +err_config_cleanup:
-> +       drm_mode_config_cleanup(drm_dev);
-> +       drm_dev->dev_private = NULL;
-> +       dev_set_drvdata(dev, NULL);
-> +       return ret;
-> +}
-> +
-> +static int rockchip_drm_unload(struct drm_device *drm_dev)
-> +{
-> +       struct device *dev = drm_dev->dev;
-> +
-> +       drm_kms_helper_poll_fini(drm_dev);
-> +       component_unbind_all(dev, drm_dev);
-> +       arm_iommu_detach_device(dev);
-> +       arm_iommu_release_mapping(dev->archdata.mapping);
-> +       drm_mode_config_cleanup(drm_dev);
-> +       drm_dev->dev_private = NULL;
-> +       dev_set_drvdata(dev, NULL);
-> +
-> +       return 0;
-> +}
-> +
-> +static int rockchip_drm_suspend(struct drm_device *dev, pm_message_t state)
-> +{
-> +       struct drm_connector *connector;
-> +
-> +       drm_modeset_lock_all(dev);
-> +       list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
-> +               int old_dpms = connector->dpms;
-> +
-> +               if (connector->funcs->dpms)
-> +                       connector->funcs->dpms(connector, DRM_MODE_DPMS_OFF);
-> +
-> +               /* Set the old mode back to the connector for resume */
-> +               connector->dpms = old_dpms;
-> +       }
-> +       drm_modeset_unlock_all(dev);
-> +
-> +       return 0;
-> +}
-> +
-> +static int rockchip_drm_resume(struct drm_device *dev)
-> +{
-> +       struct drm_connector *connector;
-> +
-> +       drm_modeset_lock_all(dev);
-> +       list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
-> +               if (connector->funcs->dpms)
-> +                       connector->funcs->dpms(connector, connector->dpms);
-> +       }
-> +       drm_modeset_unlock_all(dev);
-> +
-> +       drm_helper_resume_force_mode(dev);
-> +
-> +       return 0;
-> +}
-> +
-> +void rockchip_drm_lastclose(struct drm_device *dev)
-> +{
-> +       struct rockchip_drm_private *priv = dev->dev_private;
-> +
-> +       drm_modeset_lock_all(dev);
-> +       if (priv->fb_helper)
-> +               drm_fb_helper_restore_fbdev_mode(priv->fb_helper);
-> +       drm_modeset_unlock_all(dev);
+> +* Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
+> +* Author:
+> +*      Andy yan <andy.yan-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*      Jeff chen <jeff.chen-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*
+> +* based on exynos_dp_core.c
+> +*
 
+hmm, did you look at all at drm_dp_helpers?  The exynos code probably
+pre-dates the helpers, so might not be the best example to work off
+of..
 
-here you can just use drm_fb_helper_restore_fbdev_mode_unlocked() now
-which takes care of the locking for you
-
-
-> +}
-> +
-> +static const struct drm_ioctl_desc rockchip_ioctls[] = {
-> +       DRM_IOCTL_DEF_DRV(ROCKCHIP_GEM_CREATE, rockchip_gem_create_ioctl,
-> +                         DRM_UNLOCKED | DRM_AUTH),
-> +       DRM_IOCTL_DEF_DRV(ROCKCHIP_GEM_GET, rockchip_gem_get_ioctl,
-> +                         DRM_UNLOCKED),
-
-one more minor comment on the uapi.. perhaps rename from "GET" to
-"INFO" or maybe "GET_INFO"?  To me at least, "GET" implies reference
-counting of some sort (ie. get and put), which is not the case here.
-
-> +       DRM_IOCTL_DEF_DRV(ROCKCHIP_GEM_MAP_OFFSET,
-> +                         rockchip_gem_map_offset_ioctl, DRM_UNLOCKED |
-> +                         DRM_AUTH),
-> +};
-> +
-> +static const struct file_operations rockchip_drm_driver_fops = {
-> +       .owner = THIS_MODULE,
-> +       .open = drm_open,
-> +       .mmap = rockchip_drm_gem_mmap,
-> +       .poll = drm_poll,
-> +       .read = drm_read,
-> +       .unlocked_ioctl = drm_ioctl,
-> +#ifdef CONFIG_COMPAT
-> +       .compat_ioctl = drm_compat_ioctl,
-> +#endif
-> +       .release = drm_release,
-> +};
-> +
-> +const struct vm_operations_struct rockchip_drm_vm_ops = {
-> +       .open = drm_gem_vm_open,
-> +       .close = drm_gem_vm_close,
-> +};
-> +
-> +static struct drm_driver rockchip_drm_driver = {
-> +       .driver_features        = DRIVER_MODESET | DRIVER_GEM | DRIVER_PRIME,
-> +       .load                   = rockchip_drm_load,
-> +       .unload                 = rockchip_drm_unload,
-> +       .lastclose              = rockchip_drm_lastclose,
-> +       .suspend                = rockchip_drm_suspend,
-> +       .resume                 = rockchip_drm_resume,
-> +       .get_vblank_counter     = drm_vblank_count,
-> +       .enable_vblank          = rockchip_drm_crtc_enable_vblank,
-> +       .disable_vblank         = rockchip_drm_crtc_disable_vblank,
-> +       .gem_vm_ops             = &rockchip_drm_vm_ops,
-> +       .gem_free_object        = rockchip_gem_free_object,
-> +       .dumb_create            = rockchip_gem_dumb_create,
-> +       .dumb_map_offset        = rockchip_gem_dumb_map_offset,
-> +       .dumb_destroy           = drm_gem_dumb_destroy,
-> +       .prime_handle_to_fd     = drm_gem_prime_handle_to_fd,
-> +       .prime_fd_to_handle     = drm_gem_prime_fd_to_handle,
-> +       .gem_prime_import       = drm_gem_prime_import,
-> +       .gem_prime_export       = drm_gem_prime_export,
-> +       .gem_prime_get_sg_table = rockchip_gem_prime_get_sg_table,
-> +       .gem_prime_import_sg_table      = rockchip_gem_prime_import_sg_table,
-> +       .gem_prime_vmap         = rockchip_gem_prime_vmap,
-> +       .gem_prime_vunmap       = rockchip_gem_prime_vunmap,
-> +       .gem_prime_mmap         = rockchip_gem_prime_mmap,
-> +       .ioctls                 = rockchip_ioctls,
-> +       .num_ioctls             = ARRAY_SIZE(rockchip_ioctls),
-> +       .fops                   = &rockchip_drm_driver_fops,
-> +       .name   = DRIVER_NAME,
-> +       .desc   = DRIVER_DESC,
-> +       .date   = DRIVER_DATE,
-> +       .major  = DRIVER_MAJOR,
-> +       .minor  = DRIVER_MINOR,
-> +};
-> +
-> +#ifdef CONFIG_PM_SLEEP
-> +static int rockchip_drm_sys_suspend(struct device *dev)
-> +{
-> +       struct drm_device *drm_dev = dev_get_drvdata(dev);
-> +       pm_message_t message;
-> +
-> +       if (pm_runtime_suspended(dev))
-> +               return 0;
-> +
-> +       message.event = PM_EVENT_SUSPEND;
-> +
-> +       return rockchip_drm_suspend(drm_dev, message);
-> +}
-> +
-> +static int rockchip_drm_sys_resume(struct device *dev)
-> +{
-> +       struct drm_device *drm_dev = dev_get_drvdata(dev);
-> +
-> +       if (pm_runtime_suspended(dev))
-> +               return 0;
-> +
-> +       return rockchip_drm_resume(drm_dev);
-> +}
-> +#endif
-> +
-> +static const struct dev_pm_ops rockchip_drm_pm_ops = {
-> +       SET_SYSTEM_SLEEP_PM_OPS(rockchip_drm_sys_suspend,
-> +                               rockchip_drm_sys_resume)
-> +};
-> +
-> +int rockchip_drm_add_crtc(struct drm_device *drm, struct drm_crtc *crtc,
-> +                         struct device_node *np)
-> +{
-> +       struct rockchip_drm_private *priv = drm->dev_private;
-> +       struct device_node *port;
-> +       int pipe;
-> +
-> +       if (priv->num_pipe >= ROCKCHIP_MAX_CRTC)
-> +               return -EINVAL;
-> +
-> +       port = of_get_child_by_name(np, "port");
-> +       of_node_put(np);
-> +       if (!port) {
-> +               dev_err(drm->dev, "no port node found in %s\n",
-> +                       np->full_name);
-> +               return -ENXIO;
-> +       }
-> +       pipe = priv->num_pipe++;
-> +       crtc->port = port;
-> +
-> +       priv->crtc[pipe] = crtc;
-> +
-> +       return pipe;
-> +}
-> +
-> +void rockchip_drm_remove_crtc(struct drm_device *drm, int pipe)
-> +{
-> +       struct rockchip_drm_private *priv = drm->dev_private;
-> +
-> +       priv->num_pipe--;
-> +       of_node_put(priv->crtc[pipe]->port);
-> +       priv->crtc[pipe] = NULL;
-> +}
-> +
-> +struct drm_crtc *rockchip_find_crtc(struct drm_device *drm, int pipe)
-> +{
-> +       struct rockchip_drm_private *priv = drm->dev_private;
-> +
-> +       if (pipe < ROCKCHIP_MAX_CRTC && priv->crtc[pipe])
-> +               return priv->crtc[pipe];
-> +
-> +       return NULL;
-> +}
-> +
-> +/*
-> + * @node: device tree node containing encoder input ports
-> + * @encoder: drm_encoder
-> + */
-> +int rockchip_drm_encoder_get_mux_id(struct device_node *node,
-> +                                   struct drm_encoder *encoder)
-> +{
-> +       struct device_node *ep = NULL;
-> +       struct drm_crtc *crtc = encoder->crtc;
-> +       struct of_endpoint endpoint;
-> +       struct device_node *port;
-> +       int ret;
-> +
-> +       if (!node || !crtc)
-> +               return -EINVAL;
-> +
-> +       do {
-> +               ep = of_graph_get_next_endpoint(node, ep);
-> +               if (!ep)
-> +                       break;
-> +
-> +               port = of_graph_get_remote_port(ep);
-> +               of_node_put(port);
-> +               if (port == crtc->port) {
-> +                       ret = of_graph_parse_endpoint(ep, &endpoint);
-> +                       return ret ? ret : endpoint.id;
-> +               }
-> +       } while (ep);
-> +
-> +       return -EINVAL;
-> +}
-> +
-> +static int compare_of(struct device *dev, void *data)
-> +{
-> +       struct device_node *np = data;
-> +
-> +       return dev->of_node == np;
-> +}
-> +
-> +static void rockchip_add_endpoints(struct device *dev,
-> +                                  struct component_match **match,
-> +                                  struct device_node *port)
-> +{
-> +       struct device_node *ep, *remote;
-> +
-> +       for_each_child_of_node(port, ep) {
-> +               remote = of_graph_get_remote_port_parent(ep);
-> +               if (!remote || !of_device_is_available(remote)) {
-> +                       of_node_put(remote);
-> +                       continue;
-> +               } else if (!of_device_is_available(remote->parent)) {
-> +                       dev_warn(dev, "parent device of %s is not available\n",
-> +                                remote->full_name);
-> +                       of_node_put(remote);
-> +                       continue;
-> +               }
-> +
-> +               component_match_add(dev, match, compare_of, remote);
-> +               of_node_put(remote);
-> +       }
-> +}
-> +
-> +static int rockchip_drm_bind(struct device *dev)
-> +{
-> +       struct drm_device *drm;
-> +       int ret;
-> +
-> +       drm = drm_dev_alloc(&rockchip_drm_driver, dev);
-> +       if (!drm)
-> +               return -ENOMEM;
-> +
-> +       ret = drm_dev_set_unique(drm, "%s", dev_name(dev));
-> +       if (ret)
-> +               goto err_free;
-> +
-> +       ret = drm_dev_register(drm, 0);
-> +       if (ret)
-> +               goto err_free;
-> +
-> +       dev_set_drvdata(dev, drm);
-> +
-> +       return 0;
-> +
-> +err_free:
-> +       drm_dev_unref(drm);
-> +       return ret;
-> +}
-> +
-> +static void rockchip_drm_unbind(struct device *dev)
-> +{
-> +       struct drm_device *drm = dev_get_drvdata(dev);
-> +
-> +       drm_dev_unregister(drm);
-> +       drm_dev_unref(drm);
-> +}
-> +
-> +static const struct component_master_ops rockchip_drm_ops = {
-> +       .bind = rockchip_drm_bind,
-> +       .unbind = rockchip_drm_unbind,
-> +};
-> +
-> +static int rockchip_drm_platform_probe(struct platform_device *pdev)
-> +{
-> +       struct device *dev = &pdev->dev;
-> +       struct component_match *match = NULL;
-> +       struct device_node *np = dev->of_node;
-> +       struct device_node *port;
-> +       int i;
-> +       int ret;
-> +
-> +       if (!np)
-> +               return -ENODEV;
-> +       /*
-> +        * Bind the crtc ports first, so that
-> +        * drm_of_find_possible_crtcs called from encoder .bind callbacks
-> +        * works as expected.
-> +        */
-> +       for (i = 0;; i++) {
-> +               port = of_parse_phandle(np, "ports", i);
-> +               if (!port)
-> +                       break;
-> +
-> +               component_match_add(dev, &match, compare_of, port->parent);
-> +               of_node_put(port);
-> +       }
-> +
-> +       if (i == 0) {
-> +               dev_err(dev, "missing 'ports' property\n");
-> +               return -ENODEV;
-> +       }
-> +       /*
-> +        * For each bound crtc, bind the encoders attached to its
-> +        * remote endpoint.
-> +        */
-> +       for (i = 0;; i++) {
-> +               port = of_parse_phandle(np, "ports", i);
-> +               if (!port)
-> +                       break;
-> +
-> +               rockchip_add_endpoints(dev, &match, port);
-> +               of_node_put(port);
-> +       }
-> +
-> +       ret = dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
-> +       if (ret)
-> +               return ret;
-> +
-> +       return component_master_add_with_match(dev, &rockchip_drm_ops, match);
-> +}
-> +
-> +static int rockchip_drm_platform_remove(struct platform_device *pdev)
-> +{
-> +       component_master_del(&pdev->dev, &rockchip_drm_ops);
-> +       return 0;
-> +}
-> +
-> +static const struct of_device_id rockchip_drm_dt_ids[] = {
-> +       { .compatible = "rockchip,display-subsystem", },
-> +       { /* sentinel */ },
-> +};
-> +MODULE_DEVICE_TABLE(of, rockchip_drm_dt_ids);
-> +
-> +static struct platform_driver rockchip_drm_platform_driver = {
-> +       .probe = rockchip_drm_platform_probe,
-> +       .remove = rockchip_drm_platform_remove,
-> +       .driver = {
-> +               .owner = THIS_MODULE,
-> +               .name = "rockchip-drm",
-> +               .of_match_table = rockchip_drm_dt_ids,
-> +       },
-> +};
-> +
-> +module_platform_driver(rockchip_drm_platform_driver);
-> +
-> +MODULE_AUTHOR("Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>");
-> +MODULE_DESCRIPTION("ROCKCHIP DRM Driver");
-> +MODULE_LICENSE("GPL v2");
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_drv.h b/drivers/gpu/drm/rockchip/rockchip_drm_drv.h
-> new file mode 100644
-> index 0000000..154b3ec
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_drv.h
-> @@ -0,0 +1,120 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * based on exynos_drm_drv.h
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#ifndef _ROCKCHIP_DRM_DRV_H
-> +#define _ROCKCHIP_DRM_DRV_H
-> +
-> +#include <linux/module.h>
-> +#include <linux/component.h>
-> +
-> +#define ROCKCHIP_MAX_FB_BUFFER 4
-> +#define ROCKCHIP_MAX_CONNECTOR 2
-> +
-> +struct drm_device;
-> +struct drm_connector;
-> +
-> +/*
-> + * display output interface supported by rockchip lcdc
-> + */
-> +#define ROCKCHIP_OUTFACE_P888  0
-> +#define ROCKCHIP_OUTFACE_P666  1
-> +#define ROCKCHIP_OUTFACE_P565  2
-> +/* for use special outface */
-> +#define ROCKCHIP_OUTFACE_AAAA  15
-> +
-> +#define ROCKCHIP_COLOR_SWAP_RG 0x1
-> +#define ROCKCHIP_COLOR_SWAP_RB 0x2
-> +#define ROCKCHIP_COLOR_SWAP_GB 0x4
-> +
-> +/*
-> + * Special mode info for rockchip
-> + *
-> + * @out_type: lcd controller need to know the sceen type.
-> + */
-> +struct rockchip_display_mode {
-> +       int out_type;
-> +};
-> +
-> +#define ROCKCHIP_EVENT_HOTPLUG 1
-> +
-> +enum rockchip_plane_type {
-> +       ROCKCHIP_WIN0,
-> +       ROCKCHIP_WIN1,
-> +       ROCKCHIP_WIN2,
-> +       ROCKCHIP_WIN3,
-> +       ROCKCHIP_CURSOR,
-> +       ROCKCHIP_MAX_PLANE,
-> +};
-> +
-> +/* This enumerates device type. */
-> +enum rockchip_drm_device_type {
-> +       ROCKCHIP_DEVICE_TYPE_NONE,
-> +       ROCKCHIP_DEVICE_TYPE_CRTC,
-> +       ROCKCHIP_DEVICE_TYPE_CONNECTOR,
-> +};
-> +
-> +/* this enumerates display type. */
-> +enum rockchip_drm_output_type {
-> +       ROCKCHIP_DISPLAY_TYPE_NONE = 0,
-> +       /* RGB Interface. */
-> +       ROCKCHIP_DISPLAY_TYPE_RGB,
-> +       /* LVDS Interface. */
-> +       ROCKCHIP_DISPLAY_TYPE_LVDS,
-> +       /* EDP Interface. */
-> +       ROCKCHIP_DISPLAY_TYPE_EDP,
-> +       /* MIPI Interface. */
-> +       ROCKCHIP_DISPLAY_TYPE_MIPI,
-> +       /* HDMI Interface. */
-> +       ROCKCHIP_DISPLAY_TYPE_HDMI,
-> +};
-> +
-> +enum rockchip_crtc_type {
-> +       ROCKCHIP_CRTC_VOPB,
-> +       ROCKCHIP_CRTC_VOPL,
-> +       ROCKCHIP_MAX_CRTC,
-> +};
-> +
-> +/*
-> + * Rockchip drm private structure.
-> + *
-> + * @num_pipe: number of pipes for this device.
-> + */
-> +struct rockchip_drm_private {
-> +       struct drm_fb_helper *fb_helper;
-> +       /*
-> +        * created crtc object would be contained at this array and
-> +        * this array is used to be aware of which crtc did it request vblank.
-> +        */
-> +       struct drm_crtc *crtc[ROCKCHIP_MAX_CRTC];
-> +
-> +       unsigned int num_pipe;
-> +};
-> +
-> +int rockchip_drm_add_crtc(struct drm_device *drm, struct drm_crtc *crtc,
-> +                         struct device_node *port);
-> +void rockchip_drm_remove_crtc(struct drm_device *drm, int pipe);
-> +struct drm_crtc *rockchip_find_crtc(struct drm_device *drm, int pipe);
-> +int rockchip_drm_encoder_get_mux_id(struct device_node *node,
-> +                                   struct drm_encoder *encoder);
-> +void rockchip_drm_crtc_finish_pageflip(struct drm_device *dev, int pipe);
-> +void rockchip_drm_crtc_cancel_pending_flip(struct drm_device *dev);
-> +int rockchip_drm_crtc_enable_vblank(struct drm_device *dev, int pipe);
-> +void rockchip_drm_crtc_disable_vblank(struct drm_device *dev, int pipe);
-> +int rockchip_drm_dma_attach_device(struct drm_device *drm_dev,
-> +                                  struct device *dev);
-> +void rockchip_drm_dma_detach_device(struct drm_device *drm_dev,
-> +                                   struct device *dev);
-> +#endif /* _ROCKCHIP_DRM_DRV_H_ */
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_fb.c b/drivers/gpu/drm/rockchip/rockchip_drm_fb.c
-> new file mode 100644
-> index 0000000..b319505
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_fb.c
-> @@ -0,0 +1,201 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <linux/kernel.h>
-> +#include <drm/drmP.h>
-> +#include <drm/drm_fb_helper.h>
-> +#include <drm/drm_crtc_helper.h>
-> +#include <uapi/drm/rockchip_drm.h>
-> +
-> +#include "rockchip_drm_drv.h"
-> +#include "rockchip_drm_gem.h"
-> +
-> +#define to_rockchip_fb(x) container_of(x, struct rockchip_drm_fb, fb)
-> +
-> +struct rockchip_drm_fb {
-> +       struct drm_framebuffer fb;
-> +       struct drm_gem_object *obj[ROCKCHIP_MAX_FB_BUFFER];
-> +};
-> +
-> +struct drm_gem_object *rockchip_fb_get_gem_obj(struct drm_framebuffer *fb,
-> +                                              unsigned int plane)
-> +{
-> +       struct rockchip_drm_fb *rk_fb = to_rockchip_fb(fb);
-> +
-> +       if (plane >= ROCKCHIP_MAX_FB_BUFFER)
-> +               return NULL;
-> +
-> +       return rk_fb->obj[plane];
-> +}
-> +
-> +static void rockchip_drm_fb_destroy(struct drm_framebuffer *fb)
-> +{
-> +       struct rockchip_drm_fb *rockchip_fb = to_rockchip_fb(fb);
-> +       struct drm_gem_object *obj;
-> +       int i;
-> +
-> +       for (i = 0; i < ROCKCHIP_MAX_FB_BUFFER; i++) {
-> +               obj = rockchip_fb->obj[i];
-> +               if (obj)
-> +                       drm_gem_object_unreference_unlocked(obj);
-> +       }
-> +
-> +       drm_framebuffer_cleanup(fb);
-> +       kfree(rockchip_fb);
-> +}
-> +
-> +static int rockchip_drm_fb_create_handle(struct drm_framebuffer *fb,
-> +                                        struct drm_file *file_priv,
-> +                                        unsigned int *handle)
-> +{
-> +       struct rockchip_drm_fb *rockchip_fb = to_rockchip_fb(fb);
-> +
-> +       return drm_gem_handle_create(file_priv,
-> +                                    rockchip_fb->obj[0], handle);
-> +}
-> +
-> +static struct drm_framebuffer_funcs rockchip_drm_fb_funcs = {
-> +       .destroy        = rockchip_drm_fb_destroy,
-> +       .create_handle  = rockchip_drm_fb_create_handle,
-> +};
-> +
-> +static struct rockchip_drm_fb *
-> +rockchip_fb_alloc(struct drm_device *dev, struct drm_mode_fb_cmd2 *mode_cmd,
-> +                 struct drm_gem_object **obj, unsigned int num_planes)
-> +{
-> +       struct rockchip_drm_fb *rockchip_fb;
-> +       int ret;
-> +       int i;
-> +
-> +       rockchip_fb = kzalloc(sizeof(*rockchip_fb), GFP_KERNEL);
-> +       if (!rockchip_fb)
-> +               return ERR_PTR(-ENOMEM);
-> +
-> +       drm_helper_mode_fill_fb_struct(&rockchip_fb->fb, mode_cmd);
-> +
-> +       for (i = 0; i < num_planes; i++)
-> +               rockchip_fb->obj[i] = obj[i];
-> +
-> +       ret = drm_framebuffer_init(dev, &rockchip_fb->fb,
-> +                                  &rockchip_drm_fb_funcs);
-> +       if (ret) {
-> +               dev_err(dev->dev, "Failed to initialize framebuffer: %d\n",
-> +                       ret);
-> +               kfree(rockchip_fb);
-> +               return ERR_PTR(ret);
-> +       }
-> +
-> +       return rockchip_fb;
-> +}
-> +
-> +static struct drm_framebuffer *
-> +rockchip_user_fb_create(struct drm_device *dev, struct drm_file *file_priv,
-> +                       struct drm_mode_fb_cmd2 *mode_cmd)
-> +{
-> +       struct rockchip_drm_fb *rockchip_fb;
-> +       struct drm_gem_object *objs[ROCKCHIP_MAX_FB_BUFFER];
-> +       struct drm_gem_object *obj;
-> +       unsigned int hsub;
-> +       unsigned int vsub;
-> +       int num_planes;
-> +       int ret;
-> +       int i;
-> +
-> +       hsub = drm_format_horz_chroma_subsampling(mode_cmd->pixel_format);
-> +       vsub = drm_format_vert_chroma_subsampling(mode_cmd->pixel_format);
-> +       num_planes = min(drm_format_num_planes(mode_cmd->pixel_format),
-> +                        ROCKCHIP_MAX_FB_BUFFER);
-> +
-> +       for (i = 0; i < num_planes; i++) {
-> +               unsigned int width = mode_cmd->width / (i ? hsub : 1);
-> +               unsigned int height = mode_cmd->height / (i ? vsub : 1);
-> +               unsigned int min_size;
-> +
-> +               obj = drm_gem_object_lookup(dev, file_priv,
-> +                                           mode_cmd->handles[i]);
-> +               if (!obj) {
-> +                       dev_err(dev->dev, "Failed to lookup GEM object\n");
-> +                       ret = -ENXIO;
-> +                       goto err_gem_object_unreference;
-> +               }
-> +
-> +               min_size = (height - 1) * mode_cmd->pitches[i] +
-> +                       mode_cmd->offsets[i] +
-> +                       width * drm_format_plane_cpp(mode_cmd->pixel_format, i);
-> +
-> +               if (obj->size < min_size) {
-> +                       drm_gem_object_unreference_unlocked(obj);
-> +                       ret = -EINVAL;
-> +                       goto err_gem_object_unreference;
-> +               }
-> +               objs[i] = obj;
-> +       }
-> +
-> +       rockchip_fb = rockchip_fb_alloc(dev, mode_cmd, objs, i);
-> +       if (IS_ERR(rockchip_fb)) {
-> +               ret = PTR_ERR(rockchip_fb);
-> +               goto err_gem_object_unreference;
-> +       }
-> +
-> +       return &rockchip_fb->fb;
-> +
-> +err_gem_object_unreference:
-> +       for (i--; i >= 0; i--)
-> +               drm_gem_object_unreference_unlocked(objs[i]);
-> +       return ERR_PTR(ret);
-> +}
-> +
-> +static void rockchip_drm_output_poll_changed(struct drm_device *dev)
-> +{
-> +       struct rockchip_drm_private *private = dev->dev_private;
-> +       struct drm_fb_helper *fb_helper = private->fb_helper;
-> +
-> +       if (fb_helper)
-> +               drm_fb_helper_hotplug_event(fb_helper);
-> +}
-> +
-> +static const struct drm_mode_config_funcs rockchip_drm_mode_config_funcs = {
-> +       .fb_create = rockchip_user_fb_create,
-> +       .output_poll_changed = rockchip_drm_output_poll_changed,
-> +};
-> +
-> +struct drm_framebuffer *
-> +rockchip_drm_framebuffer_init(struct drm_device *dev,
-> +                             struct drm_mode_fb_cmd2 *mode_cmd,
-> +                             struct drm_gem_object *obj)
-> +{
-> +       struct rockchip_drm_fb *rockchip_fb;
-> +
-> +       rockchip_fb = rockchip_fb_alloc(dev, mode_cmd, &obj, 1);
-> +       if (IS_ERR(rockchip_fb))
-> +               return NULL;
-> +
-> +       return &rockchip_fb->fb;
-> +}
-> +
-> +void rockchip_drm_mode_config_init(struct drm_device *dev)
-> +{
-> +       dev->mode_config.min_width = 0;
-> +       dev->mode_config.min_height = 0;
-> +
-> +       /*
-> +        * set max width and height as default value(4096x4096).
-> +        * this value would be used to check framebuffer size limitation
-> +        * at drm_mode_addfb().
-> +        */
-> +       dev->mode_config.max_width = 4096;
-> +       dev->mode_config.max_height = 4096;
-> +
-> +       dev->mode_config.funcs = &rockchip_drm_mode_config_funcs;
-> +}
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_fb.h b/drivers/gpu/drm/rockchip/rockchip_drm_fb.h
-> new file mode 100644
-> index 0000000..09574d4
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_fb.h
-> @@ -0,0 +1,28 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#ifndef _ROCKCHIP_DRM_FB_H
-> +#define _ROCKCHIP_DRM_FB_H
-> +
-> +struct drm_framebuffer *
-> +rockchip_drm_framebuffer_init(struct drm_device *dev,
-> +                             struct drm_mode_fb_cmd2 *mode_cmd,
-> +                             struct drm_gem_object *obj);
-> +void rockchip_drm_framebuffer_fini(struct drm_framebuffer *fb);
-> +
-> +void rockchip_drm_mode_config_init(struct drm_device *dev);
-> +
-> +struct drm_gem_object *rockchip_fb_get_gem_obj(struct drm_framebuffer *fb,
-> +                                              unsigned int plane);
-> +#endif /* _ROCKCHIP_DRM_FB_H */
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c b/drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
-> new file mode 100644
-> index 0000000..fe1bb22
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
-> @@ -0,0 +1,231 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <drm/drmP.h>
-> +#include <drm/drm_fb_helper.h>
-> +#include <drm/drm_crtc_helper.h>
-> +
-> +#include <drm/rockchip_drm.h>
-> +
-> +#include "rockchip_drm_drv.h"
-> +#include "rockchip_drm_gem.h"
-> +#include "rockchip_drm_fb.h"
-> +
-> +#define PREFERRED_BPP          32
-> +#define to_rockchip_fbdev(x) container_of(x, struct rockchip_fbdev, helper)
-> +
-> +struct rockchip_fbdev {
-> +       struct drm_fb_helper helper;
-> +       struct drm_gem_object *bo;
-> +};
-> +
-> +static int rockchip_fbdev_mmap(struct fb_info *info,
-> +                              struct vm_area_struct *vma)
-> +{
-> +       struct drm_fb_helper *helper = info->par;
-> +       struct rockchip_fbdev *fbdev = to_rockchip_fbdev(helper);
-> +
-> +       return rockchip_gem_mmap(fbdev->bo, vma);
-> +}
-> +
-> +static struct fb_ops rockchip_drm_fbdev_ops = {
-> +       .owner          = THIS_MODULE,
-> +       .fb_mmap        = rockchip_fbdev_mmap,
-> +       .fb_fillrect    = cfb_fillrect,
-> +       .fb_copyarea    = cfb_copyarea,
-> +       .fb_imageblit   = cfb_imageblit,
-> +       .fb_check_var   = drm_fb_helper_check_var,
-> +       .fb_set_par     = drm_fb_helper_set_par,
-> +       .fb_blank       = drm_fb_helper_blank,
-> +       .fb_pan_display = drm_fb_helper_pan_display,
-> +       .fb_setcmap     = drm_fb_helper_setcmap,
-> +};
-> +
-> +static int rockchip_drm_fbdev_create(struct drm_fb_helper *helper,
-> +                                    struct drm_fb_helper_surface_size *sizes)
-> +{
-> +       struct rockchip_fbdev *fbdev = to_rockchip_fbdev(helper);
-> +       struct drm_mode_fb_cmd2 mode_cmd = { 0 };
-> +       struct drm_device *dev = helper->dev;
-> +       struct rockchip_gem_object *rk_obj;
-> +       struct drm_framebuffer *fb;
-> +       unsigned int bytes_per_pixel;
-> +       unsigned long offset;
-> +       struct fb_info *fbi;
-> +       size_t size;
-> +       int ret;
-> +
-> +       bytes_per_pixel = DIV_ROUND_UP(sizes->surface_bpp, 8);
-> +
-> +       mode_cmd.width = sizes->surface_width;
-> +       mode_cmd.height = sizes->surface_height;
-> +       mode_cmd.pitches[0] = sizes->surface_width * bytes_per_pixel;
-> +       mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
-> +               sizes->surface_depth);
-> +
-> +       size = mode_cmd.pitches[0] * mode_cmd.height;
-> +
-> +       rk_obj = rockchip_gem_create_object(dev, size);
-> +       if (IS_ERR(rk_obj))
-> +               return -ENOMEM;
-> +
-> +       fbdev->bo = &rk_obj->base;
-> +
-> +       fbi = framebuffer_alloc(0, dev->dev);
-> +       if (!fbi) {
-> +               dev_err(dev->dev, "Failed to allocate framebuffer info.\n");
-> +               ret = -ENOMEM;
-> +               goto err_rockchip_gem_free_object;
-> +       }
-> +
-> +       helper->fb = rockchip_drm_framebuffer_init(dev, &mode_cmd, fbdev->bo);
-> +       if (IS_ERR(helper->fb)) {
-> +               dev_err(dev->dev, "Failed to allocate DRM framebuffer.\n");
-> +               ret = PTR_ERR(helper->fb);
-> +               goto err_framebuffer_release;
-> +       }
-> +
-> +       helper->fbdev = fbi;
-> +
-> +       fbi->par = helper;
-> +       fbi->flags = FBINFO_FLAG_DEFAULT;
-> +       fbi->fbops = &rockchip_drm_fbdev_ops;
-> +
-> +       ret = fb_alloc_cmap(&fbi->cmap, 256, 0);
-> +       if (ret) {
-> +               dev_err(dev->dev, "Failed to allocate color map.\n");
-> +               goto err_drm_framebuffer_unref;
-> +       }
-> +
-> +       fb = helper->fb;
-> +       drm_fb_helper_fill_fix(fbi, fb->pitches[0], fb->depth);
-> +       drm_fb_helper_fill_var(fbi, helper, fb->width, fb->height);
-> +
-> +       offset = fbi->var.xoffset * bytes_per_pixel;
-> +       offset += fbi->var.yoffset * fb->pitches[0];
-> +
-> +       dev->mode_config.fb_base = 0;
-> +       fbi->screen_base = rk_obj->kvaddr + offset;
-> +       fbi->screen_size = rk_obj->base.size;
-> +       fbi->fix.smem_len = rk_obj->base.size;
-> +
-> +       DRM_DEBUG_KMS("FB [%dx%d]-%d kvaddr=%p offset=%ld size=%d\n",
-> +                     fb->width, fb->height, fb->depth, rk_obj->kvaddr,
-> +                     offset, size);
-> +       return 0;
-> +
-> +err_drm_framebuffer_unref:
-> +       drm_framebuffer_unreference(helper->fb);
-> +err_framebuffer_release:
-> +       framebuffer_release(fbi);
-> +err_rockchip_gem_free_object:
-> +       rockchip_gem_free_object(&rk_obj->base);
-> +       return ret;
-> +}
-> +
-> +static struct drm_fb_helper_funcs rockchip_drm_fb_helper_funcs = {
-> +       .fb_probe = rockchip_drm_fbdev_create,
-> +};
-> +
-> +int rockchip_drm_fbdev_init(struct drm_device *dev)
-> +{
-> +       struct rockchip_drm_private *private = dev->dev_private;
-> +       struct rockchip_fbdev *fbdev;
-> +       struct drm_fb_helper *helper;
-> +       unsigned int num_crtc;
-> +       int ret;
-> +
-> +       if (!dev->mode_config.num_crtc || !dev->mode_config.num_connector)
-> +               return -EINVAL;
-> +
-> +       if (private->fb_helper) {
-> +               DRM_ERROR("no allow to reinit fbdev\n");
-> +               return -EINVAL;
-> +       }
-> +
-> +       num_crtc = dev->mode_config.num_crtc;
-> +
-> +       fbdev = kzalloc(sizeof(*fbdev), GFP_KERNEL);
-> +       if (!fbdev)
-> +               return -ENOMEM;
-> +
-> +       fbdev->helper.funcs = &rockchip_drm_fb_helper_funcs;
-> +       helper = &fbdev->helper;
-> +
-> +       ret = drm_fb_helper_init(dev, helper, num_crtc, ROCKCHIP_MAX_CONNECTOR);
-> +       if (ret < 0) {
-> +               dev_err(dev->dev, "Failed to initialize drm fb helper.\n");
-> +               goto err_free;
-> +       }
-> +
-> +       ret = drm_fb_helper_single_add_all_connectors(helper);
-> +       if (ret < 0) {
-> +               dev_err(dev->dev, "Failed to add connectors.\n");
-> +               goto err_drm_fb_helper_fini;
-> +       }
-> +
-> +       /* disable all the possible outputs/crtcs before entering KMS mode */
-> +       drm_helper_disable_unused_functions(dev);
-> +
-> +       ret = drm_fb_helper_initial_config(helper, PREFERRED_BPP);
-> +       if (ret < 0) {
-> +               dev_err(dev->dev, "Failed to set initial hw configuration.\n");
-> +               goto err_drm_fb_helper_fini;
-> +       }
-> +
-> +       private->fb_helper = helper;
-> +
-> +       return 0;
-> +
-> +err_drm_fb_helper_fini:
-> +       drm_fb_helper_fini(helper);
-> +err_free:
-> +       kfree(fbdev);
-> +       return ret;
-> +}
-> +
-> +void rockchip_drm_fbdev_fini(struct drm_device *dev)
-> +{
-> +       struct rockchip_drm_private *private = dev->dev_private;
-> +       struct drm_fb_helper *helper;
-> +       struct rockchip_fbdev *fbdev;
-> +
-> +       if (!private || !private->fb_helper)
-> +               return;
-> +
-> +       helper = private->fb_helper;
-> +       fbdev = to_rockchip_fbdev(helper);
-> +
-> +       if (helper->fbdev) {
-> +               struct fb_info *info;
-> +               int ret;
-> +
-> +               info = helper->fbdev;
-> +               ret = unregister_framebuffer(info);
-> +               if (ret < 0)
-> +                       DRM_DEBUG_KMS("failed unregister_framebuffer()\n");
-> +
-> +               if (info->cmap.len)
-> +                       fb_dealloc_cmap(&info->cmap);
-> +
-> +               framebuffer_release(info);
-> +       }
-> +
-> +       if (helper->fb)
-> +               drm_framebuffer_unreference(helper->fb);
-> +
-> +       drm_fb_helper_fini(helper);
-> +       kfree(fbdev);
-> +       private->fb_helper = NULL;
-> +}
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h b/drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
-> new file mode 100644
-> index 0000000..5edcf6a
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
-> @@ -0,0 +1,20 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#ifndef _ROCKCHIP_DRM_FBDEV_H
-> +#define _ROCKCHIP_DRM_FBDEV_H
-> +
-> +int rockchip_drm_fbdev_init(struct drm_device *dev);
-> +
-> +#endif /* _ROCKCHIP_DRM_FBDEV_H */
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_gem.c b/drivers/gpu/drm/rockchip/rockchip_drm_gem.c
-> new file mode 100644
-> index 0000000..2f34e92
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_gem.c
-> @@ -0,0 +1,404 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <drm/drmP.h>
-> +#include <drm/drm_vma_manager.h>
-> +#include <drm/rockchip_drm.h>
-> +
-> +#include <linux/anon_inodes.h>
-> +#include <linux/dma-attrs.h>
-> +
-> +#include "rockchip_drm_drv.h"
-> +#include "rockchip_drm_gem.h"
-> +
-> +static int rockchip_gem_alloc_buf(struct rockchip_gem_object *rk_obj)
-> +{
-> +       struct drm_gem_object *obj = &rk_obj->base;
-> +       struct drm_device *drm = obj->dev;
-> +
-> +       init_dma_attrs(&rk_obj->dma_attrs);
-> +       dma_set_attr(DMA_ATTR_WRITE_COMBINE, &rk_obj->dma_attrs);
-> +
-> +       /* TODO(djkurtz): Use DMA_ATTR_NO_KERNEL_MAPPING except for fbdev */
-> +       rk_obj->kvaddr = dma_alloc_attrs(drm->dev, obj->size,
-> +                                        &rk_obj->dma_addr, GFP_KERNEL,
-> +                                        &rk_obj->dma_attrs);
-> +       if (IS_ERR(rk_obj->kvaddr)) {
-> +               int ret = PTR_ERR(rk_obj->kvaddr);
-> +
-> +               DRM_ERROR("failed to allocate %#x byte dma buffer, %d",
-> +                         obj->size, ret);
-> +               return ret;
-> +       }
-> +
-> +       return 0;
-> +}
-> +
-> +static void rockchip_gem_free_buf(struct rockchip_gem_object *rk_obj)
-> +{
-> +       struct drm_gem_object *obj = &rk_obj->base;
-> +       struct drm_device *drm = obj->dev;
-> +
-> +       dma_free_attrs(drm->dev, obj->size, rk_obj->kvaddr, rk_obj->dma_addr,
-> +                      &rk_obj->dma_attrs);
-> +}
-> +
-> +/* drm driver mmap file operations */
-> +int rockchip_drm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
-> +{
-> +       struct drm_file *priv = filp->private_data;
-> +       struct drm_device *dev = priv->minor->dev;
-> +       struct drm_gem_object *obj;
-> +       struct drm_vma_offset_node *node;
-> +       int ret;
-> +
-> +       if (drm_device_is_unplugged(dev))
-> +               return -ENODEV;
-> +
-> +       mutex_lock(&dev->struct_mutex);
-> +
-> +       node = drm_vma_offset_exact_lookup(dev->vma_offset_manager,
-> +                                          vma->vm_pgoff,
-> +                                          vma_pages(vma));
-> +       if (!node) {
-> +               mutex_unlock(&dev->struct_mutex);
-> +               DRM_ERROR("failed to find vma node.\n");
-> +               return -EINVAL;
-> +       } else if (!drm_vma_node_is_allowed(node, filp)) {
-> +               mutex_unlock(&dev->struct_mutex);
-> +               return -EACCES;
-> +       }
-> +
-> +       obj = container_of(node, struct drm_gem_object, vma_node);
-> +       ret = rockchip_gem_mmap(obj, vma);
-> +
-> +       mutex_unlock(&dev->struct_mutex);
-> +
-> +       return ret;
-> +}
-> +
-> +int rockchip_drm_gem_mmap_buffer(struct file *filp,
-> +                                struct vm_area_struct *vma)
-> +{
-> +       struct drm_gem_object *obj = filp->private_data;
-> +
-> +       return rockchip_gem_mmap(obj, vma);
-> +}
-> +
-> +static const struct file_operations rockchip_drm_gem_fops = {
-> +       .mmap = rockchip_drm_gem_mmap_buffer,
-> +};
-> +
-> +struct rockchip_gem_object *
-> +       rockchip_gem_create_object(struct drm_device *drm, unsigned int size)
-> +{
-> +       struct rockchip_gem_object *rk_obj;
-> +       struct drm_gem_object *obj;
-> +       struct file *filp;
-> +       int ret;
-> +
-> +       size = round_up(size, PAGE_SIZE);
-> +
-> +       rk_obj = kzalloc(sizeof(*rk_obj), GFP_KERNEL);
-> +       if (!rk_obj)
-> +               return ERR_PTR(-ENOMEM);
-> +
-> +       obj = &rk_obj->base;
-> +
-> +       drm_gem_private_object_init(drm, obj, size);
-> +
-> +       filp = anon_inode_getfile("rockchip_gem", &rockchip_drm_gem_fops,
-> +                                 obj, 0);
-> +       if (IS_ERR(filp)) {
-> +               DRM_ERROR("failed to create anon file object.\n");
-> +               ret = PTR_ERR(filp);
-> +               goto err_free_rk_obj;
-> +       }
-> +       filp->f_mode = FMODE_READ | FMODE_WRITE;
-> +       obj->filp = filp;
-> +
-> +       ret = drm_gem_create_mmap_offset(obj);
-> +       if (ret)
-> +               goto err_free_obj;
-> +
-> +       ret = rockchip_gem_alloc_buf(rk_obj);
-> +       if (ret)
-> +               goto err_free_mmap_offset;
-> +
-> +       return rk_obj;
-> +
-> +err_free_mmap_offset:
-> +       drm_gem_free_mmap_offset(obj);
-> +err_free_obj:
-> +       drm_gem_object_release(obj);
-> +err_free_rk_obj:
-> +       kfree(rk_obj);
-> +       return ERR_PTR(ret);
-> +}
-> +
-> +/*
-> + * rockchip_gem_free_object - (struct drm_driver)->gem_free_object callback
-> + * function
-> + */
-> +void rockchip_gem_free_object(struct drm_gem_object *obj)
-> +{
-> +       struct rockchip_gem_object *rk_obj;
-> +
-> +       drm_gem_free_mmap_offset(obj);
-> +
-> +       rk_obj = to_rockchip_obj(obj);
-> +
-> +       rockchip_gem_free_buf(rk_obj);
-> +       drm_gem_free_mmap_offset(obj);
-> +
-> +       drm_gem_object_release(obj);
-> +
-> +       kfree(rk_obj);
-> +}
-> +
-> +int rockchip_gem_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
-> +{
-> +       struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
-> +       struct drm_device *drm = obj->dev;
-> +       unsigned long vm_size;
-> +
-> +       vma->vm_flags |= VM_IO | VM_DONTEXPAND | VM_DONTDUMP;
-> +       vm_size = vma->vm_end - vma->vm_start;
-> +
-> +       if (vm_size > obj->size)
-> +               return -EINVAL;
-> +
-> +       return dma_mmap_attrs(drm->dev, vma, rk_obj->kvaddr, rk_obj->dma_addr,
-> +                            obj->size, &rk_obj->dma_attrs);
-> +}
-> +
-> +/*
-> + * rockchip_gem_create_with_handle - allocate an object with the given
-> + * size and create a gem handle on it
-> + *
-> + * returns a struct rockchip_gem_object* on success or ERR_PTR values
-> + * on failure.
-> + */
-> +static struct rockchip_gem_object *
-> +rockchip_gem_create_with_handle(struct drm_file *file_priv,
-> +                               struct drm_device *drm, unsigned int size,
-> +                               unsigned int *handle)
-> +{
-> +       struct rockchip_gem_object *rk_obj;
-> +       struct drm_gem_object *obj;
-> +       int ret;
-> +
-> +       rk_obj = rockchip_gem_create_object(drm, size);
-> +       if (IS_ERR(rk_obj))
-> +               return NULL;
-> +
-> +       obj = &rk_obj->base;
-> +
-> +       /*
-> +        * allocate a id of idr table where the obj is registered
-> +        * and handle has the id what user can see.
-> +        */
-> +       ret = drm_gem_handle_create(file_priv, obj, handle);
-> +       if (ret)
-> +               goto err_handle_create;
-> +
-> +       /* drop reference from allocate - handle holds it now. */
-> +       drm_gem_object_unreference_unlocked(obj);
-> +
-> +       return rk_obj;
-> +
-> +err_handle_create:
-> +       rockchip_gem_free_object(obj);
-> +
-> +       return ERR_PTR(ret);
-> +}
-> +
-> +int rockchip_gem_dumb_map_offset(struct drm_file *file_priv,
-> +                                struct drm_device *dev, uint32_t handle,
-> +                                uint64_t *offset)
-> +{
-> +       struct drm_gem_object *obj;
-> +       int ret = 0;
-> +
-> +       mutex_lock(&dev->struct_mutex);
-> +
-> +       /*
-> +        * get offset of memory allocated for drm framebuffer.
-> +        * - this callback would be called by user application
-> +        * with DRM_IOCTL_MODE_MAP_DUMB command.
-> +        */
-> +
-> +       obj = drm_gem_object_lookup(dev, file_priv, handle);
-> +       if (!obj) {
-> +               DRM_ERROR("failed to lookup gem object.\n");
-> +               ret = -EINVAL;
-> +               goto unlock;
-> +       }
-> +
-> +       ret = drm_gem_create_mmap_offset(obj);
-> +       if (ret)
-> +               goto out;
-> +
-> +       *offset = drm_vma_node_offset_addr(&obj->vma_node);
-> +       DRM_DEBUG_KMS("offset = 0x%lx\n", (unsigned long)*offset);
-> +
-> +out:
-> +       drm_gem_object_unreference(obj);
-> +unlock:
-> +       mutex_unlock(&dev->struct_mutex);
-> +       return ret;
-> +}
-> +
-> +/*
-> + * rockchip_gem_dumb_create - (struct drm_driver)->dumb_create callback
-> + * function
-> + *
-> + * This aligns the pitch and size arguments to the minimum required. wrap
-> + * this into your own function if you need bigger alignment.
-> + */
-> +int rockchip_gem_dumb_create(struct drm_file *file_priv,
-> +                            struct drm_device *dev,
-> +                            struct drm_mode_create_dumb *args)
-> +{
-> +       struct rockchip_gem_object *rk_obj;
-> +       int min_pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
-> +
-> +       if (args->pitch < min_pitch)
-> +               args->pitch = min_pitch;
-> +
-> +       if (args->size < args->pitch * args->height)
-> +               args->size = args->pitch * args->height;
-> +
-> +       rk_obj = rockchip_gem_create_with_handle(file_priv, dev, args->size,
-> +                                                &args->handle);
-> +
-> +       return PTR_ERR_OR_ZERO(rk_obj);
-> +}
-> +
-> +int rockchip_gem_get_ioctl(struct drm_device *dev, void *data,
-> +                          struct drm_file *file_priv)
-> +{
-> +       struct drm_rockchip_gem_info *args = data;
-> +       struct rockchip_gem_object *rk_obj;
-> +       struct drm_gem_object *obj;
-> +
-> +       mutex_lock(&dev->struct_mutex);
-> +
-> +       obj = drm_gem_object_lookup(dev, file_priv, args->handle);
-> +       if (!obj) {
-> +               DRM_ERROR("failed to lookup gem object.\n");
-> +               mutex_unlock(&dev->struct_mutex);
-> +               return -EINVAL;
-> +       }
-> +
-> +       rk_obj = to_rockchip_obj(obj);
-> +
-> +       args->flags = rk_obj->flags;
-> +       args->size = obj->size;
-> +
-> +       drm_gem_object_unreference(obj);
-> +       mutex_unlock(&dev->struct_mutex);
-> +
-> +       return 0;
-> +}
-> +
-> +int rockchip_gem_map_offset_ioctl(struct drm_device *drm, void *data,
-> +                                 struct drm_file *file_priv)
-> +{
-> +       struct drm_rockchip_gem_map_off *args = data;
-> +
-> +       return rockchip_gem_dumb_map_offset(file_priv, drm, args->handle,
-> +                                           &args->offset);
-> +}
-> +
-> +int rockchip_gem_create_ioctl(struct drm_device *dev, void *data,
-> +                             struct drm_file *file_priv)
-> +{
-> +       struct drm_rockchip_gem_create *args = data;
-> +       struct rockchip_gem_object *rk_obj;
-> +
-> +       rk_obj = rockchip_gem_create_with_handle(file_priv, dev, args->size,
-> +                                                &args->handle);
-> +       return PTR_ERR_OR_ZERO(rk_obj);
-> +}
-> +
-> +/*
-> + * Allocate a sg_table for this GEM object.
-> + * Note: Both the table's contents, and the sg_table itself must be freed by
-> + *       the caller.
-> + * Returns a pointer to the newly allocated sg_table, or an ERR_PTR() error.
-> + */
-> +struct sg_table *rockchip_gem_prime_get_sg_table(struct drm_gem_object *obj)
-> +{
-> +       struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
-> +       struct drm_device *drm = obj->dev;
-> +       struct sg_table *sgt = NULL;
-> +       int ret;
-> +
-> +       sgt = kzalloc(sizeof(*sgt), GFP_KERNEL);
-> +       if (!sgt)
-> +               return ERR_PTR(-ENOMEM);
-> +
-> +       ret = dma_get_sgtable_attrs(drm->dev, sgt, rk_obj->kvaddr,
-> +                                   rk_obj->dma_addr, obj->size,
-> +                                   &rk_obj->dma_attrs);
-> +       if (ret) {
-> +               DRM_ERROR("failed to allocate sgt, %d\n", ret);
-> +               kfree(sgt);
-> +               return ERR_PTR(ret);
-> +       }
-> +
-> +       return sgt;
-> +}
-> +
-> +struct drm_gem_object *
-> +rockchip_gem_prime_import_sg_table(struct drm_device *dev, size_t size,
-> +                                  struct sg_table *sgt)
-> +{
-> +       struct rockchip_gem_object *rk_obj;
-> +
-> +       if (sgt->nents != 1)
-> +               return ERR_PTR(-EINVAL);
-> +
-> +       rk_obj = rockchip_gem_create_object(dev, size);
-
-
-umm.. this doesn't seem right?  for importing a dmabuf/prime buffer
-you should use the storage from the sgt..
-
-If needed, just remove this and don't claim to support importing yet
-
-
-> +       if (IS_ERR(rk_obj))
-> +               return ERR_PTR(-ENOMEM);
-> +
-> +       return &rk_obj->base;
-> +}
-> +
-> +void *rockchip_gem_prime_vmap(struct drm_gem_object *obj)
-> +{
-> +       struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
-> +
-> +       return rk_obj->kvaddr;
-> +}
-> +
-> +void rockchip_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr)
-> +{
-> +       /* Nothing to do */
-> +}
-> +
-> +int rockchip_gem_prime_mmap(struct drm_gem_object *obj,
-> +                           struct vm_area_struct *vma)
-> +{
-> +       struct drm_device *dev = obj->dev;
-> +       int ret;
-> +
-> +       mutex_lock(&dev->struct_mutex);
-> +       ret = drm_gem_mmap_obj(obj, obj->size, vma);
-> +       mutex_unlock(&dev->struct_mutex);
-> +
-> +       return ret;
-> +}
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_gem.h b/drivers/gpu/drm/rockchip/rockchip_drm_gem.h
-> new file mode 100644
-> index 0000000..6277dbd
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_gem.h
-> @@ -0,0 +1,72 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#ifndef _ROCKCHIP_DRM_GEM_H
-> +#define _ROCKCHIP_DRM_GEM_H
-> +
-> +#define to_rockchip_obj(x) container_of(x, struct rockchip_gem_object, base)
-> +
-> +struct rockchip_gem_object {
-> +       struct drm_gem_object base;
-> +       unsigned int flags;
-> +
-> +       void *kvaddr;
-> +       dma_addr_t dma_addr;
-> +       struct dma_attrs dma_attrs;
-> +};
-> +
-> +struct sg_table *rockchip_gem_prime_get_sg_table(struct drm_gem_object *obj);
-> +struct drm_gem_object *
-> +rockchip_gem_prime_import_sg_table(struct drm_device *dev, size_t size,
-> +                                  struct sg_table *sgt);
-> +void *rockchip_gem_prime_vmap(struct drm_gem_object *obj);
-> +void rockchip_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr);
-> +int rockchip_gem_prime_mmap(struct drm_gem_object *obj,
-> +                           struct vm_area_struct *vma);
-> +
-> +/* drm driver mmap file operations */
-> +int rockchip_drm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
-> +
-> +/* mmap a gem object to userspace. */
-> +int rockchip_gem_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma);
-> +
-> +struct rockchip_gem_object *
-> +       rockchip_gem_create_object(struct drm_device *drm, unsigned int size);
-> +
-> +void rockchip_gem_free_object(struct drm_gem_object *obj);
-> +
-> +int rockchip_gem_dumb_create(struct drm_file *file_priv,
-> +                            struct drm_device *dev,
-> +                            struct drm_mode_create_dumb *args);
-> +int rockchip_gem_dumb_map_offset(struct drm_file *file_priv,
-> +                                struct drm_device *dev, uint32_t handle,
-> +                                uint64_t *offset);
-> +int rockchip_gem_map_offset_ioctl(struct drm_device *drm, void *data,
-> +                                 struct drm_file *file_priv);
-> +/*
-> + * request gem object creation and buffer allocation as the size
-> + * that it is calculated with framebuffer information such as width,
-> + * height and bpp.
-> + */
-> +int rockchip_gem_create_ioctl(struct drm_device *dev, void *data,
-> +                             struct drm_file *file_priv);
-> +
-> +/* get buffer offset to map to user space. */
-> +int rockchip_gem_map_offset_ioctl(struct drm_device *dev, void *data,
-> +                                 struct drm_file *file_priv);
-> +
-> +/* get buffer information to memory region allocated by gem. */
-> +int rockchip_gem_get_ioctl(struct drm_device *dev, void *data,
-> +                          struct drm_file *file_priv);
-> +#endif /* _ROCKCHIP_DRM_GEM_H */
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop.c b/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
-> new file mode 100644
-> index 0000000..d2ec4d5
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
-> @@ -0,0 +1,1372 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +#include <drm/drmP.h>
-> +#include <drm/drm_crtc.h>
-> +#include <drm/drm_crtc_helper.h>
-> +
-> +#include <linux/kernel.h>
-> +#include <linux/platform_device.h>
-> +#include <linux/clk.h>
-> +#include <linux/of.h>
-> +#include <linux/of_device.h>
-> +#include <linux/pm_runtime.h>
-> +#include <linux/component.h>
-> +
-> +#include <linux/reset.h>
-> +#include <linux/iommu.h>
-> +#include <linux/delay.h>
-> +#include <drm/rockchip_drm.h>
-> +
-> +#include <video/of_display_timing.h>
-> +#include <video/of_videomode.h>
-> +
-> +#include "rockchip_drm_drv.h"
-> +#include "rockchip_drm_fbdev.h"
-> +#include "rockchip_drm_gem.h"
-> +#include "rockchip_drm_fb.h"
-> +#include "rockchip_drm_vop.h"
-> +
-> +#define VOP_DEFAULT_FRAMERATE  60
-> +#define VOP_MAX_WIN_SUPPORT    5
-> +#define VOP_DEFAULT_CURSOR     1
-> +#define VOP_REG(off, _mask, s) \
-> +               {.offset = off, \
-> +                .mask = _mask, \
-> +                .shift = s,}
-> +
-> +#define __REG_SET(x, off, mask, shift, v) \
-> +               vop_mask_write(x, off, (mask) << shift, (v) << shift)
-> +
-> +#define REG_SET(x, base, reg, v) \
-> +               __REG_SET(x, base + reg.offset, reg.mask, reg.shift, v)
-> +
-> +#define VOP_WIN_SET(x, win, name, v) \
-> +               REG_SET(x, win->base, win->phy->name, v)
-> +#define VOP_CTRL_SET(x, name, v) \
-> +               REG_SET(x, 0, (x)->data->ctrl->name, v)
-> +
-> +#define VOP_WIN_GET_YRGBADDR(ctx, win) \
-> +               vop_readl(ctx, win->base + win->phy->yrgb_mst.offset)
-> +
-> +#define to_vop_ctx(x) container_of(x, struct vop_context, crtc)
-> +#define to_rockchip_plane(x) container_of(x, struct rockchip_plane, base)
-> +
-> +struct rockchip_plane {
-> +       int id;
-> +       struct drm_plane base;
-> +       const struct vop_win *win;
-> +       struct vop_context *ctx;
-> +
-> +       uint32_t pending_yrgb_mst;
-> +       struct drm_framebuffer *front_fb;
-> +       struct drm_framebuffer *pending_fb;
-> +       bool enabled;
-> +};
-> +
-> +struct vop_context {
-> +       struct device *dev;
-> +       struct drm_device *drm_dev;
-> +       struct drm_crtc crtc;
-> +       struct drm_pending_vblank_event *event;
-> +       struct vop_driver *drv;
-> +       unsigned int dpms;
-> +       unsigned int win_mask;
-> +       wait_queue_head_t wait_vsync_queue;
-> +       atomic_t wait_vsync_event;
-> +
-> +       struct workqueue_struct *vsync_wq;
-> +       struct work_struct vsync_work;
-> +
-> +       /* mutex vsync_ work */
-> +       struct mutex vsync_mutex;
-> +       bool vsync_work_pending;
-> +
-> +       struct vop_driver_data *data;
-> +
-> +       uint32_t *regsbak;
-> +       void __iomem *regs;
-> +
-> +       /* physical map length of vop register */
-> +       uint32_t len;
-> +
-> +       /* one time only one process allowed to config the register */
-> +       spinlock_t reg_lock;
-> +       /* lock vop irq reg */
-> +       spinlock_t irq_lock;
-> +
-> +       unsigned int irq;
-> +
-> +       /* vop AHP clk */
-> +       struct clk *hclk;
-> +       /* vop dclk */
-> +       struct clk *dclk;
-> +       /* vop share memory frequency */
-> +       struct clk *aclk;
-> +       uint32_t pixclock;
-> +
-> +       int pipe;
-> +       bool clk_on;
-> +};
-> +
-> +enum vop_data_format {
-> +       VOP_FMT_ARGB8888 = 0,
-> +       VOP_FMT_RGB888,
-> +       VOP_FMT_RGB565,
-> +       VOP_FMT_YUV420SP = 4,
-> +       VOP_FMT_YUV422SP,
-> +       VOP_FMT_YUV444SP,
-> +};
-> +
-> +struct vop_reg_data {
-> +       uint32_t offset;
-> +       uint32_t value;
-> +};
-> +
-> +struct vop_reg {
-> +       uint32_t offset;
-> +       uint32_t shift;
-> +       uint32_t mask;
-> +};
-> +
-> +struct vop_ctrl {
-> +       struct vop_reg standby;
-> +       struct vop_reg gate_en;
-> +       struct vop_reg mmu_en;
-> +       struct vop_reg rgb_en;
-> +       struct vop_reg edp_en;
-> +       struct vop_reg hdmi_en;
-> +       struct vop_reg mipi_en;
-> +       struct vop_reg out_mode;
-> +       struct vop_reg dither_down;
-> +       struct vop_reg dither_up;
-> +       struct vop_reg pin_pol;
-> +
-> +       struct vop_reg htotal_pw;
-> +       struct vop_reg hact_st_end;
-> +       struct vop_reg vtotal_pw;
-> +       struct vop_reg vact_st_end;
-> +       struct vop_reg hpost_st_end;
-> +       struct vop_reg vpost_st_end;
-> +};
-> +
-> +struct vop_win_phy {
-> +       const uint32_t *data_formats;
-> +       uint32_t nformats;
-> +
-> +       struct vop_reg enable;
-> +       struct vop_reg format;
-> +       struct vop_reg act_info;
-> +       struct vop_reg dsp_info;
-> +       struct vop_reg dsp_st;
-> +       struct vop_reg yrgb_mst;
-> +       struct vop_reg uv_mst;
-> +       struct vop_reg yrgb_vir;
-> +       struct vop_reg uv_vir;
-> +
-> +       struct vop_reg dst_alpha_ctl;
-> +       struct vop_reg src_alpha_ctl;
-> +};
-> +
-> +struct vop_win {
-> +       uint32_t base;
-> +       const struct vop_win_phy *phy;
-> +};
-> +
-> +struct vop_driver_data {
-> +       const void *init_table;
-> +       int table_size;
-> +       const struct vop_ctrl *ctrl;
-> +       const struct vop_win *win[VOP_MAX_WIN_SUPPORT];
-> +};
-> +
-> +static const uint32_t formats_01[] = {
-> +       DRM_FORMAT_XRGB8888,
-> +       DRM_FORMAT_ARGB8888,
-> +       DRM_FORMAT_RGB888,
-> +       DRM_FORMAT_RGB565,
-> +       DRM_FORMAT_NV12,
-> +       DRM_FORMAT_NV16,
-> +       DRM_FORMAT_NV24,
-> +};
-> +
-> +static const uint32_t formats_234[] = {
-> +       DRM_FORMAT_XRGB8888,
-> +       DRM_FORMAT_ARGB8888,
-> +       DRM_FORMAT_RGB888,
-> +       DRM_FORMAT_RGB565,
-> +};
-> +
-> +static const struct vop_win_phy win01_data = {
-> +       .data_formats = formats_01,
-> +       .nformats = ARRAY_SIZE(formats_01),
-> +       .enable = VOP_REG(WIN0_CTRL0, 0x1, 0),
-> +       .format = VOP_REG(WIN0_CTRL0, 0x7, 1),
-> +       .act_info = VOP_REG(WIN0_ACT_INFO, 0x1fff1fff, 0),
-> +       .dsp_info = VOP_REG(WIN0_DSP_INFO, 0x1fff1fff, 0),
-> +       .dsp_st = VOP_REG(WIN0_DSP_ST, 0x1fff1fff, 0),
-> +       .yrgb_mst = VOP_REG(WIN0_YRGB_MST, 0xffffffff, 0),
-> +       .uv_mst = VOP_REG(WIN0_CBR_MST, 0xffffffff, 0),
-> +       .yrgb_vir = VOP_REG(WIN0_VIR, 0x3fff, 0),
-> +       .uv_vir = VOP_REG(WIN0_VIR, 0x3fff, 16),
-> +       .src_alpha_ctl = VOP_REG(WIN0_SRC_ALPHA_CTRL, 0xff, 0),
-> +       .dst_alpha_ctl = VOP_REG(WIN0_DST_ALPHA_CTRL, 0xff, 0),
-> +};
-> +
-> +static const struct vop_win_phy win23_data = {
-> +       .data_formats = formats_234,
-> +       .nformats = ARRAY_SIZE(formats_234),
-> +       .enable = VOP_REG(WIN2_CTRL0, 0x1, 0),
-> +       .format = VOP_REG(WIN2_CTRL0, 0x7, 1),
-> +       .dsp_info = VOP_REG(WIN2_DSP_INFO0, 0x0fff0fff, 0),
-> +       .dsp_st = VOP_REG(WIN2_DSP_ST0, 0x1fff1fff, 0),
-> +       .yrgb_mst = VOP_REG(WIN2_MST0, 0xffffffff, 0),
-> +       .yrgb_vir = VOP_REG(WIN2_VIR0_1, 0x1fff, 0),
-> +       .src_alpha_ctl = VOP_REG(WIN2_SRC_ALPHA_CTRL, 0xff, 0),
-> +       .dst_alpha_ctl = VOP_REG(WIN2_DST_ALPHA_CTRL, 0xff, 0),
-> +};
-> +
-> +static const struct vop_win_phy cursor_data = {
-> +       .data_formats = formats_234,
-> +       .nformats = ARRAY_SIZE(formats_234),
-> +       .enable = VOP_REG(HWC_CTRL0, 0x1, 0),
-> +       .format = VOP_REG(HWC_CTRL0, 0x7, 1),
-> +       .dsp_st = VOP_REG(HWC_DSP_ST, 0x1fff1fff, 0),
-> +       .yrgb_mst = VOP_REG(HWC_MST, 0xffffffff, 0),
-> +};
-> +
-> +static const struct vop_win win0 = {
-> +       .base = 0,
-> +       .phy = &win01_data,
-> +};
-> +
-> +static const struct vop_win win1 = {
-> +       .base = 0x40,
-> +       .phy = &win01_data,
-> +};
-> +
-> +static const struct vop_win win2 = {
-> +       .base = 0,
-> +       .phy = &win23_data,
-> +};
-> +
-> +static const struct vop_win win3 = {
-> +       .base = 0x50,
-> +       .phy = &win23_data,
-> +};
-> +
-> +static const struct vop_win win_cursor = {
-> +       .base = 0,
-> +       .phy = &cursor_data,
-> +};
-> +
-> +static const struct vop_ctrl ctrl_data = {
-> +       .standby = VOP_REG(SYS_CTRL, 0x1, 22),
-> +       .gate_en = VOP_REG(SYS_CTRL, 0x1, 23),
-> +       .mmu_en = VOP_REG(SYS_CTRL, 0x1, 20),
-> +       .rgb_en = VOP_REG(SYS_CTRL, 0x1, 12),
-> +       .hdmi_en = VOP_REG(SYS_CTRL, 0x1, 13),
-> +       .edp_en = VOP_REG(SYS_CTRL, 0x1, 14),
-> +       .mipi_en = VOP_REG(SYS_CTRL, 0x1, 15),
-> +       .dither_down = VOP_REG(DSP_CTRL1, 0xf, 1),
-> +       .dither_up = VOP_REG(DSP_CTRL1, 0x1, 6),
-> +       .out_mode = VOP_REG(DSP_CTRL0, 0xf, 0),
-> +       .pin_pol = VOP_REG(DSP_CTRL0, 0xf, 4),
-> +       .htotal_pw = VOP_REG(DSP_HTOTAL_HS_END, 0x1fff1fff, 0),
-> +       .hact_st_end = VOP_REG(DSP_HACT_ST_END, 0x1fff1fff, 0),
-> +       .vtotal_pw = VOP_REG(DSP_VTOTAL_VS_END, 0x1fff1fff, 0),
-> +       .vact_st_end = VOP_REG(DSP_VACT_ST_END, 0x1fff1fff, 0),
-> +       .hpost_st_end = VOP_REG(POST_DSP_HACT_INFO, 0x1fff1fff, 0),
-> +       .vpost_st_end = VOP_REG(POST_DSP_VACT_INFO, 0x1fff1fff, 0),
-> +};
-> +
-> +static const struct vop_reg_data vop_init_reg_table[] = {
-> +       {SYS_CTRL, 0x00801000},
-> +       {DSP_CTRL0, 0x00000000},
-> +       {WIN0_CTRL0, 0x00000080},
-> +       {WIN1_CTRL0, 0x00000080},
-> +};
-> +
-> +static const struct vop_driver_data rockchip_rk3288_vop = {
-> +       .init_table = vop_init_reg_table,
-> +       .table_size = ARRAY_SIZE(vop_init_reg_table),
-> +       .ctrl = &ctrl_data,
-> +       .win[0] = &win0,
-> +       .win[1] = &win1,
-> +       .win[2] = &win2,
-> +       .win[3] = &win3,
-> +       .win[4] = &win_cursor,
-> +};
-> +
-> +static const struct of_device_id vop_driver_dt_match[] = {
-> +       { .compatible = "rockchip,rk3288-vop",
-> +         .data = (void *)&rockchip_rk3288_vop },
-> +       {},
-> +};
-> +
-> +static inline void vop_writel(struct vop_context *ctx,
-> +                             uint32_t offset, uint32_t v)
-> +{
-> +       writel(v, ctx->regs + offset);
-> +       ctx->regsbak[offset >> 2] = v;
-> +}
-> +
-> +static inline uint32_t vop_readl(struct vop_context *ctx, uint32_t offset)
-> +{
-> +       return readl(ctx->regs + offset);
-> +}
-> +
-> +static inline void vop_cfg_done(struct vop_context *ctx)
-> +{
-> +       writel(0x01, ctx->regs + REG_CFG_DONE);
-> +}
-> +
-> +static inline void vop_mask_write(struct vop_context *ctx,
-> +                                 uint32_t offset, uint32_t mask, uint32_t v)
-> +{
-> +       if (mask) {
-> +               uint32_t cached_val = ctx->regsbak[offset >> 2];
-> +
-> +               cached_val = (cached_val & ~mask) | v;
-> +               writel(cached_val, ctx->regs + offset);
-> +               ctx->regsbak[offset >> 2] = cached_val;
-> +       }
-> +}
-> +
-> +static inline struct vop_driver_data *vop_get_driver_data(struct device *dev)
-> +{
-> +       const struct of_device_id *of_id =
-> +                       of_match_device(vop_driver_dt_match, dev);
-> +
-> +       return (struct vop_driver_data *)of_id->data;
-> +}
-> +
-> +static enum vop_data_format vop_convert_format(uint32_t format)
-> +{
-> +       switch (format) {
-> +       case DRM_FORMAT_XRGB8888:
-> +       case DRM_FORMAT_ARGB8888:
-> +               return VOP_FMT_ARGB8888;
-> +       case DRM_FORMAT_RGB888:
-> +               return VOP_FMT_RGB888;
-> +       case DRM_FORMAT_RGB565:
-> +               return VOP_FMT_RGB565;
-> +       case DRM_FORMAT_NV12:
-> +               return VOP_FMT_YUV420SP;
-> +       case DRM_FORMAT_NV16:
-> +               return VOP_FMT_YUV422SP;
-> +       case DRM_FORMAT_NV24:
-> +               return VOP_FMT_YUV444SP;
-> +       default:
-> +               DRM_ERROR("unsupport format[%08x]\n", format);
-> +               return -EINVAL;
-> +       }
-> +}
-> +
-> +static bool is_alpha_support(uint32_t format)
-> +{
-> +       switch (format) {
-> +       case DRM_FORMAT_ARGB8888:
-> +               return true;
-> +       default:
-> +               return false;
-> +       }
-> +}
-> +
-> +/* TODO(djkurtz): move generic 'setup slave rk_iommu' code somewhere common */
-> +int vop_iommu_init(struct vop_context *ctx)
-> +{
-> +       struct device *dev = ctx->dev;
-> +       struct device_node *np = dev->of_node;
-> +       struct platform_device *pd;
-> +       int count;
-> +       int ret;
-> +       struct of_phandle_args args;
-> +
-
-
-hmm.. is the iommu used here something specific to the display?  Or
-are there instances of the same IOMMU (at least from register
-standpoint) sprinkled throughout the chip?  In case of the latter,
-this kind of seems like it should be outside of the drm driver.
-
-Either way, probably a good idea to verify that the IOMMU DT bindings
-match the generic arm IOMMU bindings.
+If there is actually a valid reason not to use the dp-helpers, then
+you should mention the reasons, at least in the commit msg if not the
+code
 
 BR,
 -R
 
 
-> +       /* Each VOP must have exactly one iommu node, with no args */
-> +       count = of_count_phandle_with_args(np, "iommus", "#iommu-cells");
-> +       if (count != 1) {
-> +               dev_err(dev, "of_count_phandle_with_args(%s) => %d\n",
-> +                       np->full_name, count);
-> +               return -EINVAL;
+> +* This program is free software; you can redistribute it and/or modify it
+> +* under the terms of the GNU General Public License as published by the
+> +* Free Software Foundation; either version 2 of the License, or (at your
+> +* option) any later version.
+> +*/
+> +
+> +#include <drm/drmP.h>
+> +#include <drm/drm_crtc_helper.h>
+> +#include <drm/drm_panel.h>
+> +#include <drm/drm_of.h>
+> +
+> +#include <linux/component.h>
+> +#include <linux/clk.h>
+> +#include <linux/mfd/syscon.h>
+> +#include <linux/regmap.h>
+> +#include <linux/reset.h>
+> +
+> +#include <video/of_videomode.h>
+> +#include <video/videomode.h>
+> +
+> +#include "rockchip_edp_core.h"
+> +
+> +#define connector_to_edp(c) \
+> +               container_of(c, struct rockchip_edp_device, connector)
+> +
+> +#define encoder_to_edp(c) \
+> +               container_of(c, struct rockchip_edp_device, encoder)
+> +
+> +static struct rockchip_edp_soc_data soc_data[2] = {
+> +       /* rk3288 */
+> +       {.grf_soc_con6 = 0x025c,
+> +        .grf_soc_con12 = 0x0274},
+> +       /* no edp switching needed */
+> +       {.grf_soc_con6 = -1,
+> +        .grf_soc_con12 = -1},
+> +};
+> +
+> +static const struct of_device_id rockchip_edp_dt_ids[] = {
+> +       {.compatible = "rockchip,rk3288-edp",
+> +        .data = (void *)&soc_data[0] },
+> +       {}
+> +};
+> +
+> +MODULE_DEVICE_TABLE(of, rockchip_edp_dt_ids);
+> +
+> +static int rockchip_edp_clk_enable(struct rockchip_edp_device *edp)
+> +{
+> +       int ret = 0;
+> +
+> +       if (!edp->clk_on) {
+> +               ret = clk_prepare_enable(edp->pclk);
+> +               if (ret < 0) {
+> +                       dev_err(edp->dev, "cannot enable edp pclk %d\n", ret);
+> +                       goto err_pclk;
+> +               }
+> +
+> +               ret = clk_prepare_enable(edp->clk_edp);
+> +               if (ret < 0) {
+> +                       dev_err(edp->dev, "cannot enable clk_edp %d\n", ret);
+> +                       goto err_clk_edp;
+> +               }
+> +
+> +               ret = clk_set_rate(edp->clk_24m, 24000000);
+> +               if (ret < 0) {
+> +                       dev_err(edp->dev, "cannot set edp clk_24m %d\n",
+> +                               ret);
+> +                       goto err_clk_24m;
+> +               }
+> +
+> +               ret = clk_prepare_enable(edp->clk_24m);
+> +               if (ret < 0) {
+> +                       dev_err(edp->dev, "cannot enable edp clk_24m %d\n",
+> +                               ret);
+> +                       goto err_clk_24m;
+> +               }
+> +
+> +               edp->clk_on = true;
 > +       }
 > +
-> +       ret = of_parse_phandle_with_args(np, "iommus", "#iommu-cells", 0,
-> +                                        &args);
-> +       if (ret) {
-> +               dev_err(dev, "of_parse_phandle_with_args(%s) => %d\n",
-> +                       np->full_name, ret);
-> +               return ret;
-> +       }
-> +       if (args.args_count != 0) {
-> +               dev_err(dev, "incorrect number of iommu params found for %s (found %d, expected 0)\n",
-> +                       args.np->full_name, args.args_count);
-> +               return -EINVAL;
-> +       }
+> +       return 0;
 > +
-> +       pd = of_find_device_by_node(args.np);
-> +       of_node_put(args.np);
-> +       if (!pd) {
-> +               dev_err(dev, "iommu %s not found\n", args.np->full_name);
-> +               return -EPROBE_DEFER;
-> +       }
+> +err_clk_24m:
+> +       clk_disable_unprepare(edp->clk_edp);
+> +err_clk_edp:
+> +       clk_disable_unprepare(edp->pclk);
+> +err_pclk:
+> +       edp->clk_on = false;
 > +
-> +       /* TODO(djkurtz): handle multiple slave iommus for a single master */
-> +       dev->archdata.iommu = &pd->dev;
+> +       return ret;
+> +}
 > +
-> +       ret = rockchip_drm_dma_attach_device(ctx->drm_dev, dev);
-> +       if (ret) {
-> +               dev_err(dev, "failed to attach to drm dma mapping, %d\n", ret);
-> +               return ret;
+> +static int rockchip_edp_clk_disable(struct rockchip_edp_device *edp)
+> +{
+> +       if (edp->clk_on) {
+> +               clk_disable_unprepare(edp->pclk);
+> +               clk_disable_unprepare(edp->clk_edp);
+> +               clk_disable_unprepare(edp->clk_24m);
+> +               edp->clk_on = false;
 > +       }
 > +
 > +       return 0;
 > +}
 > +
-> +static void vop_iommu_fini(struct vop_context *ctx)
+> +static int rockchip_edp_pre_init(struct rockchip_edp_device *edp)
 > +{
-> +       rockchip_drm_dma_detach_device(ctx->drm_dev, ctx->dev);
-> +}
-> +
-> +static int rockchip_plane_get_size(int start, unsigned length, unsigned last)
-> +{
-> +       int end = start + length;
-> +       int size = 0;
-> +
-> +       if (start <= 0) {
-> +               if (end > 0)
-> +                       size = min_t(unsigned, end, last);
-> +       } else if (start <= last) {
-> +               size = min_t(unsigned, last - start, length);
-> +       }
-> +
-> +       return size;
-> +}
-> +
-> +static int vop_clk_enable(struct vop_context *ctx)
-> +{
+> +       u32 val;
 > +       int ret;
 > +
-> +       if (!ctx->clk_on) {
-> +               ret = clk_prepare_enable(ctx->hclk);
-> +               if (ret < 0) {
-> +                       dev_err(ctx->dev, "failed to enable hclk\n");
-> +                       return ret;
-> +               }
-> +
-> +               ret = clk_prepare_enable(ctx->dclk);
-> +               if (ret < 0) {
-> +                       dev_err(ctx->dev, "failed to enable dclk\n");
-> +                       goto err_dclk;
-> +               }
-> +
-> +               ret = clk_prepare_enable(ctx->aclk);
-> +               if (ret < 0) {
-> +                       dev_err(ctx->dev, "failed to enable aclk\n");
-> +                       goto err_aclk;
-> +               }
-> +               ctx->clk_on = true;
+> +       val = GRF_EDP_REF_CLK_SEL_INTER | (GRF_EDP_REF_CLK_SEL_INTER << 16);
+> +       ret = regmap_write(edp->grf, edp->soc_data->grf_soc_con12, val);
+> +       if (ret != 0) {
+> +               dev_err(edp->dev, "Could not write to GRF: %d\n", ret);
+> +               return ret;
 > +       }
 > +
-> +       return ret;
-> +err_aclk:
-> +       clk_disable_unprepare(ctx->aclk);
-> +err_dclk:
-> +       clk_disable_unprepare(ctx->hclk);
-> +       return ret;
+> +       reset_control_assert(edp->rst);
+> +       usleep_range(10, 20);
+> +       reset_control_deassert(edp->rst);
+> +
+> +       return 0;
 > +}
 > +
-> +static void vop_clk_disable(struct vop_context *ctx)
+> +static int rockchip_edp_init_edp(struct rockchip_edp_device *edp)
 > +{
-> +       if (ctx->clk_on) {
-> +               clk_disable_unprepare(ctx->dclk);
-> +               clk_disable_unprepare(ctx->hclk);
-> +               clk_disable_unprepare(ctx->aclk);
-> +               ctx->clk_on = false;
-> +       }
+> +       rockchip_edp_reset(edp);
+> +       rockchip_edp_init_refclk(edp);
+> +       rockchip_edp_init_interrupt(edp);
+> +       rockchip_edp_enable_sw_function(edp);
+> +       rockchip_edp_init_analog_func(edp);
+> +       rockchip_edp_init_hpd(edp);
+> +       rockchip_edp_init_aux(edp);
+> +
+> +       return 0;
 > +}
 > +
-> +static void vop_power_on(struct vop_context *ctx)
+> +static int rockchip_edp_get_max_rx_bandwidth(
+> +                                       struct rockchip_edp_device *edp,
+> +                                       u8 *bandwidth)
 > +{
-> +       if (vop_clk_enable(ctx) < 0) {
-> +               dev_err(ctx->dev, "failed to enable clks\n");
-> +               return;
-> +       }
-> +
-> +       spin_lock(&ctx->reg_lock);
-> +
-> +       VOP_CTRL_SET(ctx, standby, 0);
-> +
-> +       spin_unlock(&ctx->reg_lock);
-> +}
-> +
-> +static void vop_power_off(struct vop_context *ctx)
-> +{
-> +       spin_lock(&ctx->reg_lock);
-> +
-> +       VOP_CTRL_SET(ctx, standby, 1);
-> +
-> +       spin_unlock(&ctx->reg_lock);
-> +
-> +       vop_clk_disable(ctx);
-> +}
-> +
-> +static int rockchip_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
-> +                                struct drm_framebuffer *fb, int crtc_x,
-> +                                int crtc_y, unsigned int crtc_w,
-> +                                unsigned int crtc_h, uint32_t src_x,
-> +                                uint32_t src_y, uint32_t src_w, uint32_t src_h)
-> +{
-> +       struct rockchip_plane *rockchip_plane = to_rockchip_plane(plane);
-> +       const struct vop_win *win = rockchip_plane->win;
-> +       struct vop_context *ctx = to_vop_ctx(crtc);
-> +       struct drm_gem_object *obj;
-> +       struct rockchip_gem_object *rk_obj;
-> +       unsigned long offset;
-> +       unsigned int actual_w;
-> +       unsigned int actual_h;
-> +       unsigned int dsp_stx;
-> +       unsigned int dsp_sty;
-> +       unsigned int y_vir_stride;
-> +       dma_addr_t yrgb_mst;
-> +       enum vop_data_format format;
-> +       uint32_t val;
-> +       bool is_alpha;
-> +
-> +       if (!win) {
-> +               DRM_ERROR("can't find win data for vop, failed\n");
-> +               return -EINVAL;
-> +       }
-> +
-> +       obj = rockchip_fb_get_gem_obj(fb, 0);
-> +       if (!obj) {
-> +               DRM_ERROR("fail to get rockchip gem object from framebuffer\n");
-> +               return -EINVAL;
-> +       }
-> +
-> +       rk_obj = to_rockchip_obj(obj);
-> +
-> +       yrgb_mst = rk_obj->dma_addr;
-> +       if (yrgb_mst <= 0)
-> +               return -ENOMEM;
-> +
-> +       actual_w = rockchip_plane_get_size(crtc_x,
-> +                                          crtc_w, crtc->mode.hdisplay);
-> +       actual_h = rockchip_plane_get_size(crtc_y,
-> +                                          crtc_h, crtc->mode.vdisplay);
-> +       if (crtc_x < 0) {
-> +               if (actual_w)
-> +                       src_x -= crtc_x;
-> +               crtc_x = 0;
-> +       }
-> +
-> +       if (crtc_y < 0) {
-> +               if (actual_h)
-> +                       src_y -= crtc_y;
-> +               crtc_y = 0;
-> +       }
-> +
-> +       dsp_stx = crtc_x + crtc->mode.htotal - crtc->mode.hsync_start;
-> +       dsp_sty = crtc_y + crtc->mode.vtotal - crtc->mode.vsync_start;
-> +
-> +       offset = src_x * (fb->bits_per_pixel >> 3);
-> +       offset += src_y * fb->pitches[0];
-> +
-> +       y_vir_stride = fb->pitches[0] / (fb->bits_per_pixel >> 3);
-> +       is_alpha = is_alpha_support(fb->pixel_format);
-> +       format = vop_convert_format(fb->pixel_format);
-> +
-> +       spin_lock(&ctx->reg_lock);
-> +
-> +       VOP_WIN_SET(ctx, win, format, format);
-> +       VOP_WIN_SET(ctx, win, yrgb_vir, y_vir_stride);
-> +       yrgb_mst += offset;
-> +       VOP_WIN_SET(ctx, win, yrgb_mst, yrgb_mst);
-> +       VOP_WIN_SET(ctx, win, act_info,
-> +                   ((actual_h - 1) << 16) | (actual_w - 1));
-> +       VOP_WIN_SET(ctx, win, dsp_info,
-> +                   ((actual_h - 1) << 16) | (actual_w - 1));
-> +       VOP_WIN_SET(ctx, win, dsp_st, (dsp_sty << 16) | dsp_stx);
-> +       if (is_alpha) {
-> +               VOP_WIN_SET(ctx, win, dst_alpha_ctl,
-> +                           DST_FACTOR_M0(ALPHA_SRC_INVERSE));
-> +               val = SRC_ALPHA_EN(1) | SRC_COLOR_M0(ALPHA_SRC_PRE_MUL) |
-> +                       SRC_ALPHA_M0(ALPHA_STRAIGHT) |
-> +                       SRC_BLEND_M0(ALPHA_PER_PIX) |
-> +                       SRC_ALPHA_CAL_M0(ALPHA_NO_SATURATION) |
-> +                       SRC_FACTOR_M0(ALPHA_ONE);
-> +               VOP_WIN_SET(ctx, win, src_alpha_ctl, val);
-> +       } else {
-> +               VOP_WIN_SET(ctx, win, src_alpha_ctl, SRC_ALPHA_EN(0));
-> +       }
-> +
-> +       VOP_WIN_SET(ctx, win, enable, 1);
-> +
-> +       spin_unlock(&ctx->reg_lock);
-> +
-> +       mutex_lock(&ctx->vsync_mutex);
+> +       u8 data;
+> +       int retval;
 > +
 > +       /*
-> +        * Because the buffer set to vop take effect at frame start time,
-> +        * we need make sure old buffer is not in use before we release
-> +        * it.
-> +        * reference the framebuffer, and unference it when it swap out of vop.
+> +        * For DP rev.1.1, Maximum link rate of Main Link lanes
+> +        * 0x06 = 1.62 Gbps, 0x0a = 2.7 Gbps
 > +        */
-> +       if (fb != rockchip_plane->front_fb) {
-> +               drm_framebuffer_reference(fb);
-> +               rockchip_plane->pending_fb = fb;
-> +               rockchip_plane->pending_yrgb_mst = yrgb_mst;
-> +               ctx->vsync_work_pending = true;
-> +       }
-> +       rockchip_plane->enabled = true;
+> +       retval = rockchip_edp_read_byte_from_dpcd(
+> +                       edp, DP_MAX_LINK_RATE, &data);
+> +       if (retval < 0)
+> +               *bandwidth = 0;
+> +       else
+> +               *bandwidth = data;
 > +
-> +       mutex_unlock(&ctx->vsync_mutex);
-> +
-> +       spin_lock(&ctx->reg_lock);
-> +       vop_cfg_done(ctx);
-> +       spin_unlock(&ctx->reg_lock);
-> +
-> +       return 0;
+> +       return retval;
 > +}
 > +
-> +static int rockchip_disable_plane(struct drm_plane *plane)
+> +static int rockchip_edp_get_max_rx_lane_count(struct rockchip_edp_device *edp,
+> +                                             u8 *lane_count)
 > +{
-> +       struct rockchip_plane *rockchip_plane = to_rockchip_plane(plane);
-> +       struct vop_context *ctx = rockchip_plane->ctx;
-> +       const struct vop_win *win = rockchip_plane->win;
-> +
-> +       spin_lock(&ctx->reg_lock);
-> +
-> +       VOP_WIN_SET(ctx, win, enable, 0);
-> +       vop_cfg_done(ctx);
-> +
-> +       spin_unlock(&ctx->reg_lock);
-> +
-> +       mutex_lock(&ctx->vsync_mutex);
+> +       u8 data;
+> +       int retval;
 > +
 > +       /*
-> +       * clear the pending framebuffer and set vsync_work_pending true,
-> +       * so that the framebuffer will unref at the next vblank.
-> +       */
-> +       if (rockchip_plane->pending_fb) {
-> +               drm_framebuffer_unreference(rockchip_plane->pending_fb);
-> +               rockchip_plane->pending_fb = NULL;
+> +        * For DP rev.1.1, Maximum number of Main Link lanes
+> +        * 0x01 = 1 lane, 0x02 = 2 lanes, 0x04 = 4 lanes
+> +        */
+> +       retval = rockchip_edp_read_byte_from_dpcd(
+> +                       edp, DP_MAX_LANE_COUNT, &data);
+> +       if (retval < 0)
+> +               *lane_count = 0;
+> +       else
+> +               *lane_count = DPCD_MAX_LANE_COUNT(data);
+> +
+> +       return retval;
+> +}
+> +
+> +static int rockchip_edp_init_training(struct rockchip_edp_device *edp)
+> +{
+> +       int retval;
+> +
+> +       /*
+> +        * MACRO_RST must be applied after the PLL_LOCK to avoid
+> +        * the DP inter pair skew issue for at least 10 us
+> +        */
+> +       rockchip_edp_reset_macro(edp);
+> +
+> +       retval = rockchip_edp_get_max_rx_bandwidth(
+> +                               edp, &edp->link_train.link_rate);
+> +       retval = rockchip_edp_get_max_rx_lane_count(
+> +                               edp, &edp->link_train.lane_count);
+> +       dev_dbg(edp->dev, "max link rate:%d.%dGps max number of lanes:%d\n",
+> +               edp->link_train.link_rate * 27 / 100,
+> +               edp->link_train.link_rate * 27 % 100,
+> +               edp->link_train.lane_count);
+> +
+> +       if ((edp->link_train.link_rate != DP_LINK_BW_1_62) &&
+> +           (edp->link_train.link_rate != DP_LINK_BW_2_7)) {
+> +               dev_warn(edp->dev, "Rx Max Link Rate is abnormal :%x !\n"
+> +                        "use default link rate:%d.%dGps\n",
+> +                        edp->link_train.link_rate,
+> +                        edp->video_info.link_rate * 27 / 100,
+> +                        edp->video_info.link_rate * 27 % 100);
+> +                        edp->link_train.link_rate = edp->video_info.link_rate;
 > +       }
 > +
-> +       rockchip_plane->enabled = false;
-> +       ctx->vsync_work_pending = true;
+> +       if (edp->link_train.lane_count == 0) {
+> +               dev_err(edp->dev, "Rx Max Lane count is abnormal :%x !\n"
+> +                       "use default lanes:%d\n",
+> +                       edp->link_train.lane_count,
+> +                       edp->video_info.lane_count);
+> +               edp->link_train.lane_count = edp->video_info.lane_count;
+> +       }
 > +
-> +       mutex_unlock(&ctx->vsync_mutex);
+> +       rockchip_edp_analog_power_ctr(edp, 1);
 > +
 > +       return 0;
 > +}
 > +
-> +static void rockchip_plane_destroy(struct drm_plane *plane)
+> +static int rockchip_edp_hw_link_training(struct rockchip_edp_device *edp)
 > +{
-> +       struct rockchip_plane *rockchip_plane = to_rockchip_plane(plane);
-> +       struct vop_context *ctx = rockchip_plane->ctx;
+> +       u32 cnt = 50;
+> +       u32 val;
 > +
-> +       rockchip_disable_plane(plane);
-> +       drm_plane_cleanup(plane);
-> +       ctx->win_mask &= ~(1 << rockchip_plane->id);
-> +       kfree(rockchip_plane);
+> +       /* Set link rate and count as you want to establish*/
+> +       rockchip_edp_set_link_bandwidth(edp, edp->link_train.link_rate);
+> +       rockchip_edp_set_lane_count(edp, edp->link_train.lane_count);
+> +       rockchip_edp_hw_link_training_en(edp);
+> +       val = rockchip_edp_wait_hw_lt_done(edp);
+> +       while (val) {
+> +               if (cnt-- <= 0) {
+> +                       dev_err(edp->dev, "hw lt timeout");
+> +                       return -ETIMEDOUT;
+> +               }
+> +               mdelay(1);
+> +               val = rockchip_edp_wait_hw_lt_done(edp);
+> +       }
+> +
+> +       val = rockchip_edp_get_hw_lt_status(edp);
+> +       if (val)
+> +               dev_err(edp->dev, "hw lt err:%d\n", val);
+> +
+> +       return val;
 > +}
 > +
-> +static const struct drm_plane_funcs rockchip_plane_funcs = {
-> +       .update_plane = rockchip_update_plane,
-> +       .disable_plane = rockchip_disable_plane,
-> +       .destroy = rockchip_plane_destroy,
-> +};
-> +
-> +struct drm_plane *rockchip_plane_init(struct vop_context *ctx,
-> +                                     unsigned long possible_crtcs,
-> +                                     enum drm_plane_type type)
+> +static int rockchip_edp_set_link_train(struct rockchip_edp_device *edp)
 > +{
-> +       struct rockchip_plane *rockchip_plane;
-> +       struct vop_driver_data *vop_data = ctx->data;
-> +       const struct vop_win *win;
-> +       int i;
-> +       int err;
+> +       int retval;
 > +
-> +       rockchip_plane = kzalloc(sizeof(*rockchip_plane), GFP_KERNEL);
-> +       if (!rockchip_plane)
-> +               return NULL;
+> +       rockchip_edp_init_training(edp);
 > +
-> +       for (i = 0; i < VOP_MAX_WIN_SUPPORT; i++) {
-> +               if (!(ctx->win_mask & (1 << i))) {
-> +                       win = vop_data->win[i];
+> +       retval = rockchip_edp_hw_link_training(edp);
+> +       if (retval < 0)
+> +               dev_err(edp->dev, "DP hw LT failed!\n");
+> +
+> +       return retval;
+> +}
+> +
+> +static int rockchip_edp_config_video(struct rockchip_edp_device *edp,
+> +                                    struct video_info *video_info)
+> +{
+> +       int retval = 0;
+> +       int timeout_loop = 0;
+> +       int done_count = 0;
+> +
+> +       rockchip_edp_config_video_slave_mode(edp, video_info);
+> +
+> +       rockchip_edp_set_video_color_format(edp, video_info->color_depth,
+> +                                           video_info->color_space,
+> +                                           video_info->dynamic_range,
+> +                                           video_info->ycbcr_coeff);
+> +
+> +       if (rockchip_edp_get_pll_lock_status(edp) == DP_PLL_UNLOCKED) {
+> +               dev_err(edp->dev, "PLL is not locked yet.\n");
+> +               return -EINVAL;
+> +       }
+> +
+> +       for (;;) {
+> +               timeout_loop++;
+> +               if (rockchip_edp_is_slave_video_stream_clock_on(edp) == 0)
 > +                       break;
-> +               }
-> +       }
 > +
-> +       if (VOP_MAX_WIN_SUPPORT == i) {
-> +               DRM_ERROR("failed to find win\n");
-> +               kfree(rockchip_plane);
-> +               return NULL;
-> +       }
-> +
-> +       ctx->win_mask |= (1 << i);
-> +       rockchip_plane->id = i;
-> +       rockchip_plane->win = win;
-> +       rockchip_plane->ctx = ctx;
-> +
-> +       err = drm_universal_plane_init(ctx->drm_dev, &rockchip_plane->base,
-> +                                      possible_crtcs, &rockchip_plane_funcs,
-> +                                      win->phy->data_formats,
-> +                                      win->phy->nformats, type);
-> +       if (err) {
-> +               DRM_ERROR("failed to initialize plane\n");
-> +               kfree(rockchip_plane);
-> +               return NULL;
-> +       }
-> +
-> +       return &rockchip_plane->base;
-> +}
-> +
-> +int rockchip_drm_crtc_enable_vblank(struct drm_device *dev, int pipe)
-> +{
-> +       struct vop_context *ctx = to_vop_ctx(rockchip_find_crtc(dev, pipe));
-> +       unsigned long flags;
-> +
-> +       if (ctx->dpms != DRM_MODE_DPMS_ON)
-> +               return -EPERM;
-> +
-> +       spin_lock_irqsave(&ctx->irq_lock, flags);
-> +
-> +       vop_mask_write(ctx, INTR_CTRL0, LINE_FLAG_INTR_MASK,
-> +                      LINE_FLAG_INTR_EN(1));
-> +
-> +       spin_unlock_irqrestore(&ctx->irq_lock, flags);
-> +
-> +       return 0;
-> +}
-> +
-> +void rockchip_drm_crtc_disable_vblank(struct drm_device *dev, int pipe)
-> +{
-> +       struct vop_context *ctx = to_vop_ctx(rockchip_find_crtc(dev, pipe));
-> +       unsigned long flags;
-> +
-> +       if (ctx->dpms != DRM_MODE_DPMS_ON)
-> +               return;
-> +       spin_lock_irqsave(&ctx->irq_lock, flags);
-> +       vop_mask_write(ctx, INTR_CTRL0, LINE_FLAG_INTR_MASK,
-> +                      LINE_FLAG_INTR_EN(0));
-> +       spin_unlock_irqrestore(&ctx->irq_lock, flags);
-> +}
-> +
-> +static void rockchip_drm_crtc_dpms(struct drm_crtc *crtc, int mode)
-> +{
-> +       struct vop_context *ctx = to_vop_ctx(crtc);
-> +
-> +       DRM_DEBUG_KMS("crtc[%d] mode[%d]\n", crtc->base.id, mode);
-> +
-> +       if (ctx->dpms == mode) {
-> +               DRM_DEBUG_KMS("desired dpms mode is same as previous one.\n");
-> +               return;
-> +       }
-> +       if (mode > DRM_MODE_DPMS_ON) {
-> +               /* wait for the completion of page flip. */
-> +               if (!wait_event_timeout(ctx->wait_vsync_queue,
-> +                                       !atomic_read(&ctx->wait_vsync_event),
-> +                                       HZ/20))
-> +                       DRM_DEBUG_KMS("vblank wait timed out.\n");
-> +               drm_vblank_off(crtc->dev, ctx->pipe);
-> +       }
-> +
-> +       switch (mode) {
-> +       case DRM_MODE_DPMS_ON:
-> +               vop_power_on(ctx);
-> +               break;
-> +       case DRM_MODE_DPMS_STANDBY:
-> +       case DRM_MODE_DPMS_SUSPEND:
-> +       case DRM_MODE_DPMS_OFF:
-> +               vop_power_off(ctx);
-> +               break;
-> +       default:
-> +               DRM_DEBUG_KMS("unspecified mode %d\n", mode);
-> +               break;
-> +       }
-> +
-> +       ctx->dpms = mode;
-> +}
-> +
-> +static void rockchip_drm_crtc_prepare(struct drm_crtc *crtc)
-> +{
-> +       rockchip_drm_crtc_dpms(crtc, DRM_MODE_DPMS_ON);
-> +}
-> +
-> +static bool rockchip_drm_crtc_mode_fixup(struct drm_crtc *crtc,
-> +                                        const struct drm_display_mode *mode,
-> +                                        struct drm_display_mode *adjusted_mode)
-> +{
-> +       /* just do dummy now */
-> +
-> +       return true;
-> +}
-> +
-> +static int rockchip_drm_crtc_mode_set_base(struct drm_crtc *crtc, int x, int y,
-> +                                          struct drm_framebuffer *old_fb);
-> +
-> +static int rockchip_drm_crtc_mode_set(struct drm_crtc *crtc,
-> +                                     struct drm_display_mode *mode,
-> +                                     struct drm_display_mode *adjusted_mode,
-> +                                     int x, int y,
-> +                                     struct drm_framebuffer *fb)
-> +{
-> +       struct vop_context *ctx = to_vop_ctx(crtc);
-> +       u16 hsync_len = adjusted_mode->hsync_end - adjusted_mode->hsync_start;
-> +       u16 left_margin = adjusted_mode->htotal - adjusted_mode->hsync_end;
-> +       u16 vsync_len = adjusted_mode->vsync_end - adjusted_mode->vsync_start;
-> +       u16 upper_margin = adjusted_mode->vtotal - adjusted_mode->vsync_end;
-> +       u16 hdisplay = adjusted_mode->hdisplay;
-> +       u16 vdisplay = adjusted_mode->vdisplay;
-> +       u16 htotal = adjusted_mode->htotal;
-> +       u16 vtotal = adjusted_mode->vtotal;
-> +       struct rockchip_display_mode *priv_mode =
-> +                                       (void *)adjusted_mode->private;
-> +       unsigned long flags;
-> +       int ret;
-> +       uint32_t val;
-> +
-> +       /* nothing to do if we haven't set the mode yet */
-> +       if (adjusted_mode->htotal == 0 || adjusted_mode->vtotal == 0)
-> +               return -EINVAL;
-> +
-> +       if (!priv_mode) {
-> +               DRM_ERROR("fail to found display output type[%d]\n",
-> +                         priv_mode->out_type);
-> +               return -EINVAL;
-> +       }
-> +
-> +       ret = rockchip_drm_crtc_mode_set_base(crtc, x, y, fb);
-> +       if (ret)
-> +               return ret;
-> +
-> +       switch (priv_mode->out_type) {
-> +       case ROCKCHIP_DISPLAY_TYPE_RGB:
-> +       case ROCKCHIP_DISPLAY_TYPE_LVDS:
-> +               VOP_CTRL_SET(ctx, rgb_en, 1);
-> +               VOP_CTRL_SET(ctx, out_mode, ROCKCHIP_OUTFACE_P888);
-> +               break;
-> +       case ROCKCHIP_DISPLAY_TYPE_EDP:
-> +               VOP_CTRL_SET(ctx, edp_en, 1);
-> +               VOP_CTRL_SET(ctx, out_mode, ROCKCHIP_OUTFACE_AAAA);
-> +               break;
-> +       case ROCKCHIP_DISPLAY_TYPE_HDMI:
-> +               VOP_CTRL_SET(ctx, out_mode, ROCKCHIP_OUTFACE_AAAA);
-> +               VOP_CTRL_SET(ctx, hdmi_en, 1);
-> +               break;
-> +       default:
-> +               DRM_ERROR("unsupport out type[%d]\n", priv_mode->out_type);
-> +               return -EINVAL;
-> +       };
-> +
-> +       val = 0x8;
-> +       val |= (adjusted_mode->flags & DRM_MODE_FLAG_NHSYNC) ? 1 : 0;
-> +       val |= (adjusted_mode->flags & DRM_MODE_FLAG_NVSYNC) ? (1 << 1) : 0;
-> +       VOP_CTRL_SET(ctx, pin_pol, val);
-> +
-> +       VOP_CTRL_SET(ctx, htotal_pw, (htotal << 16) | hsync_len);
-> +       val = (hsync_len + left_margin) << 16;
-> +       val |= hsync_len + left_margin + hdisplay;
-> +       VOP_CTRL_SET(ctx, hact_st_end, val);
-> +       VOP_CTRL_SET(ctx, hpost_st_end, val);
-> +
-> +       VOP_CTRL_SET(ctx, vtotal_pw, (vtotal << 16) | vsync_len);
-> +       val = (vsync_len + upper_margin) << 16;
-> +       val |= vsync_len + upper_margin + vdisplay;
-> +       VOP_CTRL_SET(ctx, vact_st_end, val);
-> +       VOP_CTRL_SET(ctx, vpost_st_end, val);
-> +
-> +       spin_lock_irqsave(&ctx->irq_lock, flags);
-> +
-> +       vop_mask_write(ctx, INTR_CTRL0, DSP_LINE_NUM_MASK,
-> +                      DSP_LINE_NUM(vsync_len + upper_margin + vdisplay));
-> +
-> +       spin_unlock_irqrestore(&ctx->irq_lock, flags);
-> +
-> +       clk_set_rate(ctx->dclk, adjusted_mode->clock * 1000);
-> +
-> +       return 0;
-> +}
-> +
-> +static int rockchip_drm_crtc_mode_set_base(struct drm_crtc *crtc, int x, int y,
-> +                                          struct drm_framebuffer *old_fb)
-> +{
-> +       unsigned int crtc_w;
-> +       unsigned int crtc_h;
-> +       int ret;
-> +
-> +       crtc_w = crtc->primary->fb->width - crtc->x;
-> +       crtc_h = crtc->primary->fb->height - crtc->y;
-> +
-> +       ret = rockchip_update_plane(crtc->primary, crtc, crtc->primary->fb, 0,
-> +                                   0, crtc_w, crtc_h, crtc->x, crtc->y, crtc_w,
-> +                                   crtc_h);
-> +       if (ret < 0) {
-> +               DRM_ERROR("fail to update plane\n");
-> +               return -EINVAL;
-> +       }
-> +
-> +       return 0;
-> +}
-> +
-> +static void rockchip_drm_crtc_commit(struct drm_crtc *crtc)
-> +{
-> +       /* just do dummy now */
-> +}
-> +
-> +static const struct drm_crtc_helper_funcs rockchip_crtc_helper_funcs = {
-> +       .dpms = rockchip_drm_crtc_dpms,
-> +       .prepare = rockchip_drm_crtc_prepare,
-> +       .mode_fixup = rockchip_drm_crtc_mode_fixup,
-> +       .mode_set = rockchip_drm_crtc_mode_set,
-> +       .mode_set_base = rockchip_drm_crtc_mode_set_base,
-> +       .commit = rockchip_drm_crtc_commit,
-> +};
-> +
-> +static int rockchip_drm_crtc_page_flip(struct drm_crtc *crtc,
-> +                                      struct drm_framebuffer *fb,
-> +                                      struct drm_pending_vblank_event *event,
-> +                                      uint32_t page_flip_flags)
-> +{
-> +       struct drm_device *dev = crtc->dev;
-> +       struct vop_context *ctx = to_vop_ctx(crtc);
-> +       struct drm_framebuffer *old_fb = crtc->primary->fb;
-> +       unsigned int crtc_w;
-> +       unsigned int crtc_h;
-> +       int ret;
-> +
-> +       /* when the page flip is requested, crtc's dpms should be on */
-> +       if (ctx->dpms > DRM_MODE_DPMS_ON) {
-> +               DRM_DEBUG("failed page flip request at dpms[%d].\n", ctx->dpms);
-> +               return 0;
-> +       }
-> +
-> +       ret = drm_vblank_get(dev, ctx->pipe);
-> +       if (ret) {
-> +               DRM_DEBUG("failed to acquire vblank counter\n");
-> +               return ret;
-> +       }
-> +
-> +       spin_lock_irq(&dev->event_lock);
-> +       if (ctx->event) {
-> +               spin_unlock_irq(&dev->event_lock);
-> +               DRM_ERROR("already pending flip!\n");
-> +               return -EBUSY;
-> +       }
-> +       ctx->event = event;
-> +       atomic_set(&ctx->wait_vsync_event, 1);
-> +       spin_unlock_irq(&dev->event_lock);
-> +
-> +       crtc->primary->fb = fb;
-> +       crtc_w = crtc->primary->fb->width - crtc->x;
-> +       crtc_h = crtc->primary->fb->height - crtc->y;
-> +
-> +       ret = rockchip_update_plane(crtc->primary, crtc, fb, 0, 0, crtc_w,
-> +                                   crtc_h, crtc->x, crtc->y, crtc_w, crtc_h);
-> +       if (ret) {
-> +               crtc->primary->fb = old_fb;
-> +
-> +               spin_lock_irq(&dev->event_lock);
-> +               drm_vblank_put(dev, ctx->pipe);
-> +               atomic_set(&ctx->wait_vsync_event, 0);
-> +               ctx->event = NULL;
-> +               spin_unlock_irq(&dev->event_lock);
-> +       }
-> +
-> +       return ret;
-> +}
-> +
-> +void rockchip_drm_crtc_finish_pageflip(struct drm_device *dev, int pipe)
-> +{
-> +       struct rockchip_drm_private *dev_priv = dev->dev_private;
-> +       struct drm_crtc *drm_crtc = dev_priv->crtc[pipe];
-> +       struct vop_context *ctx;
-> +       unsigned long flags;
-> +
-> +       if (!drm_crtc)
-> +               return;
-> +
-> +       ctx = to_vop_ctx(drm_crtc);
-> +
-> +       spin_lock_irqsave(&dev->event_lock, flags);
-> +
-> +       if (ctx->event) {
-> +               drm_send_vblank_event(dev, -1, ctx->event);
-> +               drm_vblank_put(dev, pipe);
-> +               atomic_set(&ctx->wait_vsync_event, 0);
-> +               wake_up(&ctx->wait_vsync_queue);
-> +               ctx->event = NULL;
-> +       }
-> +
-> +       spin_unlock_irqrestore(&dev->event_lock, flags);
-> +}
-> +
-> +void rockchip_drm_crtc_cancel_pending_flip(struct drm_device *dev)
-> +{
-> +       int i;
-> +
-> +       for (i = 0; i < dev->num_crtcs; i++)
-> +               rockchip_drm_crtc_finish_pageflip(dev, i);
-> +}
-> +
-> +static void rockchip_drm_crtc_destroy(struct drm_crtc *crtc)
-> +{
-> +       struct vop_context *ctx = to_vop_ctx(crtc);
-> +       struct rockchip_drm_private *private = crtc->dev->dev_private;
-> +
-> +       private->crtc[ctx->pipe] = NULL;
-> +       drm_crtc_cleanup(crtc);
-> +}
-> +
-> +static const struct drm_crtc_funcs rockchip_crtc_funcs = {
-> +       .set_config = drm_crtc_helper_set_config,
-> +       .page_flip = rockchip_drm_crtc_page_flip,
-> +       .destroy = rockchip_drm_crtc_destroy,
-> +};
-> +
-> +static void rockchip_vsync_worker(struct work_struct *work)
-> +{
-> +       struct vop_context *ctx = container_of(work, struct vop_context,
-> +                                              vsync_work);
-> +       struct drm_device *drm = ctx->drm_dev;
-> +       struct rockchip_drm_private *dev_priv = drm->dev_private;
-> +       struct drm_crtc *crtc = dev_priv->crtc[ctx->pipe];
-> +       struct rockchip_plane *rockchip_plane;
-> +       struct drm_plane *plane;
-> +       uint32_t yrgb_mst;
-> +
-> +       mutex_lock(&ctx->vsync_mutex);
-> +
-> +       ctx->vsync_work_pending = false;
-> +
-> +       list_for_each_entry(plane, &drm->mode_config.plane_list, head) {
-> +               rockchip_plane = to_rockchip_plane(plane);
-> +
-> +               if (rockchip_plane->ctx != ctx)
-> +                       continue;
-> +               if (rockchip_plane->enabled && !rockchip_plane->pending_fb)
-> +                       continue;
-> +               if (!rockchip_plane->enabled && !rockchip_plane->front_fb)
-> +                       continue;
-> +               /*
-> +                * make sure the yrgb_mst take effect, so that
-> +                * we can unreference the old framebuffer.
-> +                */
-> +               yrgb_mst = VOP_WIN_GET_YRGBADDR(ctx, rockchip_plane->win);
-> +               if (rockchip_plane->pending_yrgb_mst != yrgb_mst) {
-> +                       /*
-> +                        * some plane no complete, unref at next vblank
-> +                        */
-> +                       ctx->vsync_work_pending = true;
-> +                       continue;
+> +               if (DP_TIMEOUT_LOOP_CNT < timeout_loop) {
+> +                       dev_err(edp->dev, "Timeout of video streamclk ok\n");
+> +                       return -ETIMEDOUT;
 > +               }
 > +
-> +               /*
-> +                * drm_framebuffer_unreference maybe call iommu unmap,
-> +                * and iommu not allow unmap buffer at irq context,
-> +                * so we do drm_framebuffer_unreference at queue_work.
-> +                */
-> +               if (rockchip_plane->front_fb)
-> +                       drm_framebuffer_unreference(rockchip_plane->front_fb);
-> +
-> +               rockchip_plane->front_fb = rockchip_plane->pending_fb;
-> +               rockchip_plane->pending_fb = NULL;
-> +
-> +               /*
-> +                * if primary plane flip complete, sending the event to
-> +                * userspace
-> +                */
-> +               if (&rockchip_plane->base == crtc->primary)
-> +                       rockchip_drm_crtc_finish_pageflip(ctx->drm_dev,
-> +                                                         ctx->pipe);
+> +               udelay(1);
 > +       }
 > +
-> +       mutex_unlock(&ctx->vsync_mutex);
+> +       /* Set to use the register calculated M/N video */
+> +       rockchip_edp_set_video_cr_mn(edp, CALCULATED_M, 0, 0);
+> +
+> +       /* Disable video mute */
+> +       rockchip_edp_enable_video_mute(edp, 0);
+> +
+> +       /* Configure video slave mode */
+> +       rockchip_edp_enable_video_master(edp, 0);
+> +
+> +       /* Enable video */
+> +       rockchip_edp_start_video(edp);
+> +
+> +       timeout_loop = 0;
+> +
+> +       for (;;) {
+> +               timeout_loop++;
+> +               if (rockchip_edp_is_video_stream_on(edp) == 0) {
+> +                       done_count++;
+> +                       if (done_count > 10)
+> +                               break;
+> +               } else if (done_count) {
+> +                       done_count = 0;
+> +               }
+> +               if (DP_TIMEOUT_LOOP_CNT < timeout_loop) {
+> +                       dev_err(edp->dev, "Timeout of video streamclk ok\n");
+> +                       return -ETIMEDOUT;
+> +               }
+> +
+> +               mdelay(1);
+> +       }
+> +
+> +       if (retval != 0)
+> +               dev_err(edp->dev, "Video stream is not detected!\n");
+> +
+> +       return retval;
 > +}
 > +
-> +static irqreturn_t rockchip_vop_isr(int irq, void *data)
+> +static irqreturn_t rockchip_edp_isr(int irq, void *arg)
 > +{
-> +       struct vop_context *ctx = data;
-> +       uint32_t intr0_reg;
-> +       unsigned long flags;
+> +       struct rockchip_edp_device *edp = arg;
+> +       enum dp_irq_type irq_type;
 > +
-> +       intr0_reg = vop_readl(ctx, INTR_CTRL0);
-> +       if (intr0_reg & LINE_FLAG_INTR) {
-> +               spin_lock_irqsave(&ctx->irq_lock, flags);
-> +               vop_writel(ctx, INTR_CTRL0, intr0_reg | LINE_FLAG_INTR_CLR);
-> +               spin_unlock_irqrestore(&ctx->irq_lock, flags);
-> +       } else {
-> +               return IRQ_NONE;
+> +       irq_type = rockchip_edp_get_irq_type(edp);
+> +       switch (irq_type) {
+> +       case DP_IRQ_TYPE_HP_CABLE_IN:
+> +               dev_dbg(edp->dev, "Received irq - cable in\n");
+> +               rockchip_edp_clear_hotplug_interrupts(edp);
+> +               break;
+> +       case DP_IRQ_TYPE_HP_CABLE_OUT:
+> +               dev_dbg(edp->dev, "Received irq - cable out\n");
+> +               rockchip_edp_clear_hotplug_interrupts(edp);
+> +               break;
+> +       case DP_IRQ_TYPE_HP_CHANGE:
+> +               /*
+> +                * We get these change notifications once in a while, but there
+> +                * is nothing we can do with them. Just ignore it for now and
+> +                * only handle cable changes.
+> +                */
+> +               dev_dbg(edp->dev, "Received irq - hotplug change; ignoring.\n");
+> +               rockchip_edp_clear_hotplug_interrupts(edp);
+> +               break;
+> +       default:
+> +               dev_err(edp->dev, "Received irq - unknown type[%x]!\n",
+> +                       irq_type);
+> +               rockchip_edp_clear_hotplug_interrupts(edp);
+> +               break;
 > +       }
-> +
-> +       drm_handle_vblank(ctx->drm_dev, ctx->pipe);
-> +       if (ctx->vsync_work_pending)
-> +               queue_work(ctx->vsync_wq, &ctx->vsync_work);
 > +
 > +       return IRQ_HANDLED;
 > +}
 > +
-> +static int vop_create_crtc(struct vop_context *ctx)
+> +static void rockchip_edp_commit(struct drm_encoder *encoder)
 > +{
-> +       struct device *dev = ctx->dev;
-> +       struct drm_device *drm_dev = ctx->drm_dev;
-> +       struct drm_plane *primary, *cursor;
-> +       unsigned long possible_crtcs;
-> +       struct drm_crtc *crtc;
+> +       struct rockchip_edp_device *edp = encoder_to_edp(encoder);
 > +       int ret;
-> +       int nr;
 > +
-> +       ctx->win_mask = 0;
-> +       crtc = &ctx->crtc;
+> +       ret = rockchip_edp_set_link_train(edp);
+> +       if (ret)
+> +               dev_err(edp->dev, "link train failed!\n");
+> +       else
+> +               dev_dbg(edp->dev, "link training success.\n");
 > +
-> +       ret = rockchip_drm_add_crtc(drm_dev, crtc, dev->of_node);
+> +       rockchip_edp_set_lane_count(edp, edp->link_train.lane_count);
+> +       rockchip_edp_set_link_bandwidth(edp, edp->link_train.link_rate);
+> +       rockchip_edp_init_video(edp);
+> +
+> +       ret = rockchip_edp_config_video(edp, &edp->video_info);
+> +       if (ret)
+> +               dev_err(edp->dev, "unable to config video\n");
+> +}
+> +
+> +static void rockchip_edp_poweron(struct drm_encoder *encoder)
+> +{
+> +       struct rockchip_edp_device *edp = encoder_to_edp(encoder);
+> +       int ret;
+> +
+> +       if (edp->dpms_mode == DRM_MODE_DPMS_ON)
+> +               return;
+> +
+> +       if (edp->panel)
+> +               edp->panel->funcs->enable(edp->panel);
+> +
+> +       ret = rockchip_edp_clk_enable(edp);
+> +       if (ret < 0) {
+> +               dev_err(edp->dev, "cannot enable edp clk %d\n", ret);
+> +               return;
+> +       }
+> +
+> +       ret = rockchip_edp_pre_init(edp);
+> +       if (ret < 0) {
+> +               dev_err(edp->dev, "edp pre init fail %d\n", ret);
+> +               return;
+> +       }
+> +
+> +       ret = rockchip_edp_init_edp(edp);
+> +       if (ret < 0) {
+> +               dev_err(edp->dev, "edp init fail %d\n", ret);
+> +               return;
+> +       }
+> +
+> +       enable_irq(edp->irq);
+> +       rockchip_edp_commit(encoder);
+> +}
+> +
+> +static void rockchip_edp_poweroff(struct drm_encoder *encoder)
+> +{
+> +       struct rockchip_edp_device *edp = encoder_to_edp(encoder);
+> +
+> +       if (edp->dpms_mode == DRM_MODE_DPMS_OFF)
+> +               return;
+> +
+> +       disable_irq(edp->irq);
+> +       rockchip_edp_reset(edp);
+> +       rockchip_edp_analog_power_ctr(edp, 0);
+> +       rockchip_edp_clk_disable(edp);
+> +       if (edp->panel)
+> +               edp->panel->funcs->disable(edp->panel);
+> +}
+> +
+> +static enum drm_connector_status
+> +rockchip_connector_detect(struct drm_connector *connector, bool force)
+> +{
+> +       return connector_status_connected;
+> +}
+> +
+> +static void rockchip_connector_destroy(struct drm_connector *connector)
+> +{
+> +       drm_sysfs_connector_remove(connector);
+> +       drm_connector_cleanup(connector);
+> +}
+> +
+> +static struct drm_connector_funcs rockchip_connector_funcs = {
+> +       .dpms = drm_helper_connector_dpms,
+> +       .detect = rockchip_connector_detect,
+> +       .fill_modes = drm_helper_probe_single_connector_modes,
+> +       .destroy = rockchip_connector_destroy,
+> +};
+> +
+> +static int rockchip_connector_get_modes(struct drm_connector *connector)
+> +{
+> +       struct rockchip_edp_device *edp = connector_to_edp(connector);
+> +       struct drm_panel *panel = edp->panel;
+> +
+> +       return panel->funcs->get_modes(panel);
+> +}
+> +
+> +static struct drm_encoder *
+> +       rockchip_connector_best_encoder(struct drm_connector *connector)
+> +{
+> +       struct rockchip_edp_device *edp = connector_to_edp(connector);
+> +
+> +       return &edp->encoder;
+> +}
+> +
+> +static enum drm_mode_status rockchip_connector_mode_valid(
+> +               struct drm_connector *connector,
+> +               struct drm_display_mode *mode)
+> +{
+> +       /* TODO(rk): verify that the mode is really valid */
+> +       return MODE_OK;
+> +}
+> +
+> +static struct drm_connector_helper_funcs rockchip_connector_helper_funcs = {
+> +       .get_modes = rockchip_connector_get_modes,
+> +       .mode_valid = rockchip_connector_mode_valid,
+> +       .best_encoder = rockchip_connector_best_encoder,
+> +};
+> +
+> +static void rockchip_drm_encoder_dpms(struct drm_encoder *encoder, int mode)
+> +{
+> +       struct rockchip_edp_device *edp = encoder_to_edp(encoder);
+> +
+> +       if (edp->dpms_mode == mode)
+> +               return;
+> +
+> +       switch (mode) {
+> +       case DRM_MODE_DPMS_ON:
+> +               rockchip_edp_poweron(encoder);
+> +               break;
+> +       case DRM_MODE_DPMS_STANDBY:
+> +       case DRM_MODE_DPMS_SUSPEND:
+> +       case DRM_MODE_DPMS_OFF:
+> +               rockchip_edp_poweroff(encoder);
+> +               break;
+> +       default:
+> +               break;
+> +       }
+> +
+> +       edp->dpms_mode = mode;
+> +}
+> +
+> +static bool
+> +rockchip_drm_encoder_mode_fixup(struct drm_encoder *encoder,
+> +                               const struct drm_display_mode *mode,
+> +                               struct drm_display_mode *adjusted_mode)
+> +{
+> +       if (!adjusted_mode->private) {
+> +               struct rockchip_display_mode *priv_mode;
+> +
+> +               priv_mode = kzalloc(sizeof(*priv_mode), GFP_KERNEL);
+> +               priv_mode->out_type = ROCKCHIP_DISPLAY_TYPE_EDP;
+> +               adjusted_mode->private = (int *)priv_mode;
+> +       }
+> +
+> +       return true;
+> +}
+> +
+> +static void rockchip_drm_encoder_mode_set(struct drm_encoder *encoder,
+> +                                         struct drm_display_mode *mode,
+> +                                         struct drm_display_mode *adjusted)
+> +{
+> +       struct rockchip_edp_device *edp = encoder_to_edp(encoder);
+> +       u32 val;
+> +       int ret;
+> +
+> +       ret = rockchip_drm_encoder_get_mux_id(edp->dev->of_node, encoder);
 > +       if (ret < 0)
-> +               return ret;
-> +       ctx->pipe = ret;
+> +               return;
 > +
-> +       possible_crtcs = (1 << ctx->pipe);
+> +       if (ret == ROCKCHIP_CRTC_VOPL)
+> +               val = EDP_SEL_VOP_LIT | (EDP_SEL_VOP_LIT << 16);
+> +       else
+> +               val = EDP_SEL_VOP_LIT << 16;
 > +
-> +       primary = rockchip_plane_init(ctx, possible_crtcs,
-> +                                     DRM_PLANE_TYPE_PRIMARY);
-> +       if (!primary) {
-> +               DRM_ERROR("fail to init primary plane\n");
+> +       dev_info(edp->dev, "vop %s output to edp\n",
+> +                (ret == ROCKCHIP_CRTC_VOPL) ? "LIT" : "BIG");
+> +       ret = regmap_write(edp->grf, edp->soc_data->grf_soc_con6, val);
+> +       if (ret != 0) {
+> +               dev_err(edp->dev, "Could not write to GRF: %d\n", ret);
+> +               return;
+> +       }
+> +
+> +       memcpy(&edp->mode, adjusted, sizeof(*mode));
+> +}
+> +
+> +static void rockchip_drm_encoder_prepare(struct drm_encoder *encoder)
+> +{
+> +}
+> +
+> +static void rockchip_drm_encoder_commit(struct drm_encoder *encoder)
+> +{
+> +       rockchip_drm_encoder_dpms(encoder, DRM_MODE_DPMS_ON);
+> +}
+> +
+> +static void rockchip_drm_encoder_disable(struct drm_encoder *encoder)
+> +{
+> +       struct drm_plane *plane;
+> +       struct drm_device *dev = encoder->dev;
+> +
+> +       rockchip_drm_encoder_dpms(encoder, DRM_MODE_DPMS_OFF);
+> +
+> +       /* all planes connected to this encoder should be also disabled. */
+> +       list_for_each_entry(plane, &dev->mode_config.plane_list, head) {
+> +               if (plane->crtc && (plane->crtc == encoder->crtc))
+> +                       plane->funcs->disable_plane(plane);
+> +       }
+> +}
+> +
+> +static struct drm_encoder_helper_funcs rockchip_encoder_helper_funcs = {
+> +       .dpms = rockchip_drm_encoder_dpms,
+> +       .mode_fixup = rockchip_drm_encoder_mode_fixup,
+> +       .mode_set = rockchip_drm_encoder_mode_set,
+> +       .prepare = rockchip_drm_encoder_prepare,
+> +       .commit = rockchip_drm_encoder_commit,
+> +       .disable = rockchip_drm_encoder_disable,
+> +};
+> +
+> +static void rockchip_drm_encoder_destroy(struct drm_encoder *encoder)
+> +{
+> +       drm_encoder_cleanup(encoder);
+> +}
+> +
+> +static struct drm_encoder_funcs rockchip_encoder_funcs = {
+> +       .destroy = rockchip_drm_encoder_destroy,
+> +};
+> +
+> +static int rockchip_edp_init(struct rockchip_edp_device *edp)
+> +{
+> +       struct device *dev = edp->dev;
+> +       struct device_node *np = dev->of_node;
+> +       struct platform_device *pdev = to_platform_device(dev);
+> +       struct resource *res;
+> +       const struct of_device_id *match;
+> +       int ret;
+> +
+> +       if (!np) {
+> +               dev_err(dev, "Missing device tree node.\n");
 > +               return -EINVAL;
 > +       }
 > +
-> +       for (nr = 1; nr < ROCKCHIP_MAX_PLANE; nr++) {
-> +               if (nr == VOP_DEFAULT_CURSOR) {
-> +                       cursor = rockchip_plane_init(ctx, possible_crtcs,
-> +                                                    DRM_PLANE_TYPE_CURSOR);
-> +                       if (!cursor) {
-> +                               DRM_ERROR("fail to init cursor plane\n");
-> +                               return -EINVAL;
-> +                       }
-> +               } else {
-> +                       struct drm_plane *plane;
-> +
-> +                       plane = rockchip_plane_init(ctx, possible_crtcs,
-> +                                                   DRM_PLANE_TYPE_OVERLAY);
-> +                       if (!plane) {
-> +                               DRM_ERROR("fail to init overlay plane\n");
-> +                               return -EINVAL;
-> +                       }
+> +       match = of_match_node(rockchip_edp_dt_ids, np);
+> +       edp->soc_data = (struct rockchip_edp_soc_data *)match->data;
+> +       /*
+> +        * The control bit is located in the GRF register space.
+> +        */
+> +       if (edp->soc_data->grf_soc_con6 >= 0) {
+> +               edp->grf = syscon_regmap_lookup_by_phandle(np, "rockchip,grf");
+> +               if (IS_ERR(edp->grf)) {
+> +                       dev_err(dev,
+> +                               "rk3288-edp needs rockchip,grf property\n");
+> +                       return PTR_ERR(edp->grf);
 > +               }
 > +       }
 > +
-> +       drm_crtc_init_with_planes(drm_dev, crtc, primary, cursor,
-> +                                 &rockchip_crtc_funcs);
-> +       drm_crtc_helper_add(crtc, &rockchip_crtc_helper_funcs);
+> +       edp->video_info.h_sync_polarity = 0;
+> +       edp->video_info.v_sync_polarity = 0;
+> +       edp->video_info.interlaced = 0;
+> +       edp->video_info.color_space = CS_RGB;
+> +       edp->video_info.dynamic_range = VESA;
+> +       edp->video_info.ycbcr_coeff = COLOR_YCBCR601;
+> +       edp->video_info.color_depth = COLOR_8;
+> +
+> +       edp->video_info.link_rate = DP_LINK_BW_1_62;
+> +       edp->video_info.lane_count = LANE_CNT4;
+> +
+> +       res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+> +       edp->regs = devm_ioremap_resource(dev, res);
+> +       if (IS_ERR(edp->regs)) {
+> +               dev_err(dev, "ioremap reg failed\n");
+> +               return PTR_ERR(edp->regs);
+> +       }
+> +
+> +       edp->clk_edp = devm_clk_get(dev, "clk_edp");
+> +       if (IS_ERR(edp->clk_edp)) {
+> +               dev_err(dev, "cannot get clk_edp\n");
+> +               return PTR_ERR(edp->clk_edp);
+> +       }
+> +
+> +       edp->clk_24m = devm_clk_get(dev, "clk_edp_24m");
+> +       if (IS_ERR(edp->clk_24m)) {
+> +               dev_err(dev, "cannot get clk_edp_24m\n");
+> +               return PTR_ERR(edp->clk_24m);
+> +       }
+> +
+> +       edp->pclk = devm_clk_get(dev, "pclk_edp");
+> +       if (IS_ERR(edp->pclk)) {
+> +               dev_err(dev, "cannot get pclk\n");
+> +               return PTR_ERR(edp->pclk);
+> +       }
+> +
+> +       edp->rst = devm_reset_control_get(dev, "edp");
+> +       if (IS_ERR(edp->rst)) {
+> +               dev_err(dev, "failed to get reset\n");
+> +               return PTR_ERR(edp->rst);
+> +       }
+> +
+> +       ret = rockchip_edp_clk_enable(edp);
+> +       if (ret < 0) {
+> +               dev_err(edp->dev, "cannot enable edp clk %d\n", ret);
+> +               return ret;
+> +       }
+> +
+> +       ret = rockchip_edp_pre_init(edp);
+> +       if (ret < 0) {
+> +               dev_err(edp->dev, "failed to pre init %d\n", ret);
+> +               return ret;
+> +       }
+> +
+> +       edp->irq = platform_get_irq(pdev, 0);
+> +       if (edp->irq < 0) {
+> +               dev_err(dev, "cannot find IRQ\n");
+> +               return edp->irq;
+> +       }
+> +
+> +       ret = devm_request_irq(dev, edp->irq, rockchip_edp_isr, 0,
+> +                              dev_name(dev), edp);
+> +       if (ret) {
+> +               dev_err(dev, "cannot claim IRQ %d\n", edp->irq);
+> +               return ret;
+> +       }
+> +
+> +       disable_irq_nosync(edp->irq);
+> +
+> +       edp->dpms_mode = DRM_MODE_DPMS_OFF;
+> +
+> +       dev_set_name(edp->dev, "rockchip-edp");
 > +
 > +       return 0;
 > +}
 > +
-> +static int rockchip_vop_initial(struct vop_context *ctx)
+> +static int rockchip_edp_bind(struct device *dev, struct device *master,
+> +                            void *data)
 > +{
-> +       struct vop_driver_data *vop_data = ctx->data;
-> +       const struct vop_reg_data *init_table = vop_data->init_table;
-> +       struct reset_control *rst;
-> +       int i, ret;
+> +       struct rockchip_edp_device *edp = dev_get_drvdata(dev);
+> +       struct drm_encoder *encoder;
+> +       struct drm_connector *connector;
+> +       struct drm_device *drm_dev = data;
+> +       int ret;
 > +
-> +       ctx->hclk = devm_clk_get(ctx->dev, "hclk_vop");
-> +       if (IS_ERR(ctx->hclk)) {
-> +               dev_err(ctx->dev, "failed to get hclk source\n");
-> +               return PTR_ERR(ctx->hclk);
-> +       }
-> +       ctx->aclk = devm_clk_get(ctx->dev, "aclk_vop");
-> +       if (IS_ERR(ctx->aclk)) {
-> +               dev_err(ctx->dev, "failed to get aclk source\n");
-> +               return PTR_ERR(ctx->aclk);
-> +       }
-> +       ctx->dclk = devm_clk_get(ctx->dev, "dclk_vop");
-> +       if (IS_ERR(ctx->dclk)) {
-> +               dev_err(ctx->dev, "failed to get dclk source\n");
-> +               return PTR_ERR(ctx->dclk);
-> +       }
-> +
-> +       ret = vop_clk_enable(ctx);
+> +       ret = rockchip_edp_init(edp);
 > +       if (ret < 0)
 > +               return ret;
 > +
-> +       /*
-> +        * do hclk_reset, reset all vop registers.
-> +        */
-> +       rst = devm_reset_control_get(ctx->dev, "ahb");
-> +       if (IS_ERR(rst)) {
-> +               dev_err(ctx->dev, "failed to get ahb reset\n");
-> +               return PTR_ERR(rst);
+> +       edp->drm_dev = drm_dev;
+> +
+> +       encoder = &edp->encoder;
+> +
+> +       encoder->possible_crtcs = drm_of_find_possible_crtcs(drm_dev,
+> +                                                            dev->of_node);
+> +       DRM_DEBUG_KMS("possible_crtcs = 0x%x\n", encoder->possible_crtcs);
+> +
+> +       ret = drm_encoder_init(drm_dev, encoder, &rockchip_encoder_funcs,
+> +                              DRM_MODE_ENCODER_LVDS);
+> +       if (ret) {
+> +               DRM_ERROR("failed to initialize encoder with drm\n");
+> +               return ret;
 > +       }
-> +       reset_control_assert(rst);
-> +       usleep_range(10, 20);
-> +       reset_control_deassert(rst);
 > +
-> +       memcpy(ctx->regsbak, ctx->regs, ctx->len);
+> +       drm_encoder_helper_add(encoder, &rockchip_encoder_helper_funcs);
 > +
-> +       for (i = 0; i < vop_data->table_size; i++)
-> +               vop_writel(ctx, init_table[i].offset, init_table[i].value);
+> +       connector = &edp->connector;
+> +       connector->polled = DRM_CONNECTOR_POLL_HPD;
+> +       connector->dpms = DRM_MODE_DPMS_OFF;
 > +
-> +       for (i = 0; i < VOP_MAX_WIN_SUPPORT; i++)
-> +               VOP_WIN_SET(ctx, vop_data->win[i], enable, 0);
-> +
-> +       vop_cfg_done(ctx);
-> +
-> +       /*
-> +        * do dclk_reset, let all win config take affect, and then we can enable
-> +        * iommu safe.
-> +        */
-> +       rst = devm_reset_control_get(ctx->dev, "dclk");
-> +       if (IS_ERR(rst)) {
-> +               dev_err(ctx->dev, "failed to get dclk reset\n");
-> +               return PTR_ERR(rst);
+> +       ret = drm_connector_init(drm_dev, connector,
+> +                                &rockchip_connector_funcs,
+> +                                DRM_MODE_CONNECTOR_eDP);
+> +       if (ret) {
+> +               DRM_ERROR("failed to initialize connector with drm\n");
+> +               goto err_free_encoder;
 > +       }
-> +       reset_control_assert(rst);
-> +       usleep_range(10, 20);
-> +       reset_control_deassert(rst);
 > +
-> +       ctx->dpms = DRM_MODE_DPMS_ON;
+> +       drm_connector_helper_add(connector,
+> +                                &rockchip_connector_helper_funcs);
+> +
+> +       ret = drm_sysfs_connector_add(connector);
+> +       if (ret) {
+> +               DRM_ERROR("failed to add drm_sysfs\n");
+> +               goto err_free_connector;
+> +       }
+> +
+> +       ret = drm_mode_connector_attach_encoder(connector, encoder);
+> +       if (ret) {
+> +               DRM_ERROR("failed to attach connector and encoder\n");
+> +               goto err_free_connector_sysfs;
+> +       }
+> +
+> +       ret = drm_panel_attach(edp->panel, connector);
+> +       if (ret) {
+> +               DRM_ERROR("failed to attach connector and encoder\n");
+> +               goto err_free_connector_sysfs;
+> +       }
 > +
 > +       return 0;
+> +
+> +err_free_connector_sysfs:
+> +       drm_sysfs_connector_remove(connector);
+> +err_free_connector:
+> +       drm_connector_cleanup(connector);
+> +err_free_encoder:
+> +       drm_encoder_cleanup(encoder);
+> +       return ret;
 > +}
 > +
-> +static int vop_bind(struct device *dev, struct device *master, void *data)
+> +static void rockchip_edp_unbind(struct device *dev, struct device *master,
+> +                               void *data)
 > +{
-> +       struct platform_device *pdev = to_platform_device(dev);
-> +       struct vop_driver_data *vop_data = vop_get_driver_data(dev);
-> +       struct drm_device *drm_dev = data;
-> +       struct vop_context *ctx;
-> +       struct resource *res;
-> +       int ret;
+> +       struct rockchip_edp_device *edp = dev_get_drvdata(dev);
+> +       struct drm_encoder *encoder;
 > +
-> +       if (!vop_data)
-> +               return -ENODEV;
+> +       encoder = &edp->encoder;
 > +
-> +       ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
-> +       if (!ctx)
-> +               return -ENOMEM;
+> +       if (edp->panel)
+> +               drm_panel_detach(edp->panel);
 > +
-> +       ctx->dev = dev;
-> +       ctx->data = vop_data;
-> +       ctx->drm_dev = drm_dev;
-> +       dev_set_drvdata(dev, ctx);
-> +
-> +       res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-> +       ctx->len = resource_size(res);
-> +       ctx->regs = devm_ioremap_resource(dev, res);
-> +       if (IS_ERR(ctx->regs))
-> +               return PTR_ERR(ctx->regs);
-> +
-> +       ctx->regsbak = devm_kzalloc(dev, ctx->len, GFP_KERNEL);
-> +       if (!ctx->regsbak)
-> +               return -ENOMEM;
-> +
-> +       ret = rockchip_vop_initial(ctx);
-> +       if (ret < 0) {
-> +               dev_err(&pdev->dev, "cannot initial vop dev - err %d\n", ret);
-> +               return ret;
-> +       }
-> +
-> +       ctx->irq = platform_get_irq(pdev, 0);
-> +       if (ctx->irq < 0) {
-> +               dev_err(dev, "cannot find irq for vop\n");
-> +               return ctx->irq;
-> +       }
-> +
-> +       spin_lock_init(&ctx->reg_lock);
-> +       spin_lock_init(&ctx->irq_lock);
-> +
-> +       init_waitqueue_head(&ctx->wait_vsync_queue);
-> +       atomic_set(&ctx->wait_vsync_event, 0);
-> +
-> +       ret = vop_iommu_init(ctx);
-> +       if (ret) {
-> +               DRM_ERROR("Failed to setup iommu, %d\n", ret);
-> +               return ret;
-> +       }
-> +
-> +       ctx->vsync_wq = create_singlethread_workqueue("vsync");
-> +       if (!ctx->vsync_wq) {
-> +               dev_err(dev, "failed to create workqueue\n");
-> +               return -EINVAL;
-> +       }
-> +       INIT_WORK(&ctx->vsync_work, rockchip_vsync_worker);
-> +
-> +       mutex_init(&ctx->vsync_mutex);
-> +       pm_runtime_enable(&pdev->dev);
-> +
-> +       ret = devm_request_irq(dev, ctx->irq, rockchip_vop_isr,
-> +                              IRQF_SHARED, dev_name(dev), ctx);
-> +       if (ret) {
-> +               dev_err(dev, "cannot requeset irq%d - err %d\n", ctx->irq, ret);
-> +               return ret;
-> +       }
-> +
-> +       return vop_create_crtc(ctx);
+> +       rockchip_drm_encoder_dpms(encoder, DRM_MODE_DPMS_OFF);
+> +       encoder->funcs->destroy(encoder);
+> +       drm_sysfs_connector_remove(&edp->connector);
+> +       drm_connector_cleanup(&edp->connector);
+> +       drm_encoder_cleanup(encoder);
 > +}
 > +
-> +static void vop_unbind(struct device *dev, struct device *master,
-> +                      void *data)
-> +{
-> +       struct drm_device *drm_dev = data;
-> +       struct vop_context *ctx = dev_get_drvdata(dev);
-> +       struct drm_crtc *crtc = &ctx->crtc;
-> +
-> +       drm_crtc_cleanup(crtc);
-> +       pm_runtime_disable(dev);
-> +       rockchip_drm_remove_crtc(drm_dev, ctx->pipe);
-> +
-> +       vop_iommu_fini(ctx);
-> +}
-> +
-> +static const struct component_ops vop_component_ops = {
-> +       .bind = vop_bind,
-> +       .unbind = vop_unbind,
+> +static const struct component_ops rockchip_edp_component_ops = {
+> +       .bind = rockchip_edp_bind,
+> +       .unbind = rockchip_edp_unbind,
 > +};
 > +
-> +static int vop_probe(struct platform_device *pdev)
+> +static int rockchip_edp_probe(struct platform_device *pdev)
 > +{
 > +       struct device *dev = &pdev->dev;
-> +       struct vop_context *ctx;
+> +       struct drm_panel *panel;
+> +       struct device_node *panel_node;
+> +       struct rockchip_edp_device *edp;
 > +
 > +       if (!dev->of_node) {
-> +               dev_err(dev, "can't find vop devices\n");
+> +               dev_err(dev, "can't find eDP devices\n");
 > +               return -ENODEV;
 > +       }
 > +
-> +       platform_set_drvdata(pdev, ctx);
+> +       panel_node = of_parse_phandle(dev->of_node, "rockchip,panel", 0);
+> +       if (!panel_node) {
+> +               DRM_ERROR("failed to find diaplay panel\n");
+> +               return -ENODEV;
+> +       }
 > +
-> +       return component_add(dev, &vop_component_ops);
+> +       panel = of_drm_find_panel(panel_node);
+> +       if (!panel) {
+> +               DRM_ERROR("failed to find diaplay panel\n");
+> +               of_node_put(panel_node);
+> +               return -EPROBE_DEFER;
+> +       }
+> +
+> +       of_node_put(panel_node);
+> +
+> +       edp = devm_kzalloc(dev, sizeof(*edp), GFP_KERNEL);
+> +       if (!edp)
+> +               return -ENOMEM;
+> +       edp->dev = dev;
+> +       edp->panel = panel;
+> +       platform_set_drvdata(pdev, edp);
+> +
+> +       return component_add(dev, &rockchip_edp_component_ops);
 > +}
 > +
-> +static int vop_remove(struct platform_device *pdev)
+> +static int rockchip_edp_remove(struct platform_device *pdev)
 > +{
-> +       component_del(&pdev->dev, &vop_component_ops);
+> +       component_del(&pdev->dev, &rockchip_edp_component_ops);
 > +
 > +       return 0;
 > +}
 > +
-> +struct platform_driver rockchip_vop_platform_driver = {
-> +       .probe = vop_probe,
-> +       .remove = vop_remove,
+> +static struct platform_driver rockchip_edp_driver = {
+> +       .probe = rockchip_edp_probe,
+> +       .remove = rockchip_edp_remove,
 > +       .driver = {
-> +               .name = "rockchip-vop",
-> +               .owner = THIS_MODULE,
-> +               .of_match_table = of_match_ptr(vop_driver_dt_match),
+> +                  .name = "rockchip-edp",
+> +                  .owner = THIS_MODULE,
+> +                  .of_match_table = of_match_ptr(rockchip_edp_dt_ids),
 > +       },
 > +};
 > +
-> +module_platform_driver(rockchip_vop_platform_driver);
+> +module_platform_driver(rockchip_edp_driver);
 > +
-> +MODULE_AUTHOR("Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>");
-> +MODULE_DESCRIPTION("ROCKCHIP VOP Driver");
+> +MODULE_AUTHOR("Jeff chen <jeff.chen-TNX95d0MmH7DzftRWevZcw@public.gmane.org>");
+> +MODULE_DESCRIPTION("ROCKCHIP EDP Driver");
 > +MODULE_LICENSE("GPL v2");
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop.h b/drivers/gpu/drm/rockchip/rockchip_drm_vop.h
+> diff --git a/drivers/gpu/drm/rockchip/rockchip_edp_core.h b/drivers/gpu/drm/rockchip/rockchip_edp_core.h
 > new file mode 100644
-> index 0000000..2343760
+> index 0000000..c13325f
 > --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop.h
-> @@ -0,0 +1,187 @@
+> +++ b/drivers/gpu/drm/rockchip/rockchip_edp_core.h
+> @@ -0,0 +1,309 @@
 > +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
+> +* Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
+> +* Author:
+> +*      Andy yan <andy.yan-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*      Jeff chen <jeff.chen-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*
+> +* based on exynos_dp_core.h
+> +*
+> +* This program is free software; you can redistribute it and/or modify it
+> +* under the terms of the GNU General Public License as published by the
+> +* Free Software Foundation; either version 2 of the License, or (at your
+> +* option) any later version.
+> +*/
+> +
+> +#ifndef _ROCKCHIP_EDP_CORE_H
+> +#define _ROCKCHIP_EDP_CORE_H
+> +
+> +#include <drm/drmP.h>
+> +#include <drm/drm_crtc_helper.h>
+> +#include <drm/drm_dp_helper.h>
+> +#include <drm/drm_panel.h>
+> +#include "rockchip_drm_drv.h"
+> +
+> +#define DP_TIMEOUT_LOOP_CNT 100
+> +#define MAX_CR_LOOP 5
+> +#define MAX_EQ_LOOP 5
+> +
+> +#define GRF_EDP_REF_CLK_SEL_INTER              (1 << 4)
+> +#define GRF_EDP_HDCP_EN                                (1 << 15)
+> +#define GRF_EDP_BIST_EN                                (1 << 14)
+> +#define GRF_EDP_MEM_CTL_BY_EDP                 (1 << 13)
+> +#define GRF_EDP_SECURE_EN                      (1 << 3)
+> +#define EDP_SEL_VOP_LIT                                (1 << 5)
+> +
+> +enum link_lane_count_type {
+> +       LANE_CNT1 = 1,
+> +       LANE_CNT2 = 2,
+> +       LANE_CNT4 = 4
+> +};
+> +
+> +enum link_training_state {
+> +       LT_START,
+> +       LT_CLK_RECOVERY,
+> +       LT_EQ_TRAINING,
+> +       FINISHED,
+> +       FAILED
+> +};
+> +
+> +enum voltage_swing_level {
+> +       VOLTAGE_LEVEL_0,
+> +       VOLTAGE_LEVEL_1,
+> +       VOLTAGE_LEVEL_2,
+> +       VOLTAGE_LEVEL_3,
+> +};
+> +
+> +enum pre_emphasis_level {
+> +       PRE_EMPHASIS_LEVEL_0,
+> +       PRE_EMPHASIS_LEVEL_1,
+> +       PRE_EMPHASIS_LEVEL_2,
+> +       PRE_EMPHASIS_LEVEL_3,
+> +};
+> +
+> +enum pattern_set {
+> +       PRBS7,
+> +       D10_2,
+> +       TRAINING_PTN1,
+> +       TRAINING_PTN2,
+> +       DP_NONE
+> +};
+> +
+> +enum color_space {
+> +       CS_RGB,
+> +       CS_YCBCR422,
+> +       CS_YCBCR444
+> +};
+> +
+> +enum color_depth {
+> +       COLOR_6,
+> +       COLOR_8,
+> +       COLOR_10,
+> +       COLOR_12
+> +};
+> +
+> +enum color_coefficient {
+> +       COLOR_YCBCR601,
+> +       COLOR_YCBCR709
+> +};
+> +
+> +enum dynamic_range {
+> +       VESA,
+> +       CEA
+> +};
+> +
+> +enum pll_status {
+> +       DP_PLL_UNLOCKED,
+> +       DP_PLL_LOCKED
+> +};
+> +
+> +enum clock_recovery_m_value_type {
+> +       CALCULATED_M,
+> +       REGISTER_M
+> +};
+> +
+> +enum video_timing_recognition_type {
+> +       VIDEO_TIMING_FROM_CAPTURE,
+> +       VIDEO_TIMING_FROM_REGISTER
+> +};
+> +
+> +enum analog_power_block {
+> +       AUX_BLOCK,
+> +       CH0_BLOCK,
+> +       CH1_BLOCK,
+> +       CH2_BLOCK,
+> +       CH3_BLOCK,
+> +       ANALOG_TOTAL,
+> +       POWER_ALL
+> +};
+> +
+> +enum dp_irq_type {
+> +       DP_IRQ_TYPE_HP_CABLE_IN,
+> +       DP_IRQ_TYPE_HP_CABLE_OUT,
+> +       DP_IRQ_TYPE_HP_CHANGE,
+> +       DP_IRQ_TYPE_UNKNOWN,
+> +};
+> +
+> +struct video_info {
+> +       char *name;
+> +
+> +       bool h_sync_polarity;
+> +       bool v_sync_polarity;
+> +       bool interlaced;
+> +
+> +       enum color_space color_space;
+> +       enum dynamic_range dynamic_range;
+> +       enum color_coefficient ycbcr_coeff;
+> +       enum color_depth color_depth;
+> +
+> +       u8 link_rate;
+> +       enum link_lane_count_type lane_count;
+> +};
+> +
+> +struct link_train {
+> +       int eq_loop;
+> +       int cr_loop[4];
+> +
+> +       u8 link_rate;
+> +       u8 lane_count;
+> +       u8 training_lane[4];
+> +
+> +       enum link_training_state lt_state;
+> +};
+> +
+> +/*
+> + * @grf_offset: offset inside the grf regmap for setting the rk3288 lvds
 > + */
-> +
-> +#ifndef _ROCKCHIP_DRM_VOP_H
-> +#define _ROCKCHIP_DRM_VOP_H
-> +
-> +/* register definition */
-> +#define REG_CFG_DONE                   0x0000
-> +#define VERSION_INFO                   0x0004
-> +#define SYS_CTRL                       0x0008
-> +#define SYS_CTRL1                      0x000c
-> +#define DSP_CTRL0                      0x0010
-> +#define DSP_CTRL1                      0x0014
-> +#define DSP_BG                         0x0018
-> +#define MCU_CTRL                       0x001c
-> +#define INTR_CTRL0                     0x0020
-> +#define INTR_CTRL1                     0x0024
-> +#define WIN0_CTRL0                     0x0030
-> +#define WIN0_CTRL1                     0x0034
-> +#define WIN0_COLOR_KEY                 0x0038
-> +#define WIN0_VIR                       0x003c
-> +#define WIN0_YRGB_MST                  0x0040
-> +#define WIN0_CBR_MST                   0x0044
-> +#define WIN0_ACT_INFO                  0x0048
-> +#define WIN0_DSP_INFO                  0x004c
-> +#define WIN0_DSP_ST                    0x0050
-> +#define WIN0_SCL_FACTOR_YRGB           0x0054
-> +#define WIN0_SCL_FACTOR_CBR            0x0058
-> +#define WIN0_SCL_OFFSET                        0x005c
-> +#define WIN0_SRC_ALPHA_CTRL            0x0060
-> +#define WIN0_DST_ALPHA_CTRL            0x0064
-> +#define WIN0_FADING_CTRL               0x0068
-> +/* win1 register */
-> +#define WIN1_CTRL0                     0x0070
-> +#define WIN1_CTRL1                     0x0074
-> +#define WIN1_COLOR_KEY                 0x0078
-> +#define WIN1_VIR                       0x007c
-> +#define WIN1_YRGB_MST                  0x0080
-> +#define WIN1_CBR_MST                   0x0084
-> +#define WIN1_ACT_INFO                  0x0088
-> +#define WIN1_DSP_INFO                  0x008c
-> +#define WIN1_DSP_ST                    0x0090
-> +#define WIN1_SCL_FACTOR_YRGB           0x0094
-> +#define WIN1_SCL_FACTOR_CBR            0x0098
-> +#define WIN1_SCL_OFFSET                        0x009c
-> +#define WIN1_SRC_ALPHA_CTRL            0x00a0
-> +#define WIN1_DST_ALPHA_CTRL            0x00a4
-> +#define WIN1_FADING_CTRL               0x00a8
-> +/* win2 register */
-> +#define WIN2_CTRL0                     0x00b0
-> +#define WIN2_CTRL1                     0x00b4
-> +#define WIN2_VIR0_1                    0x00b8
-> +#define WIN2_VIR2_3                    0x00bc
-> +#define WIN2_MST0                      0x00c0
-> +#define WIN2_DSP_INFO0                 0x00c4
-> +#define WIN2_DSP_ST0                   0x00c8
-> +#define WIN2_COLOR_KEY                 0x00cc
-> +#define WIN2_MST1                      0x00d0
-> +#define WIN2_DSP_INFO1                 0x00d4
-> +#define WIN2_DSP_ST1                   0x00d8
-> +#define WIN2_SRC_ALPHA_CTRL            0x00dc
-> +#define WIN2_MST2                      0x00e0
-> +#define WIN2_DSP_INFO2                 0x00e4
-> +#define WIN2_DSP_ST2                   0x00e8
-> +#define WIN2_DST_ALPHA_CTRL            0x00ec
-> +#define WIN2_MST3                      0x00f0
-> +#define WIN2_DSP_INFO3                 0x00f4
-> +#define WIN2_DSP_ST3                   0x00f8
-> +#define WIN2_FADING_CTRL               0x00fc
-> +/* win3 register */
-> +#define WIN3_CTRL0                     0x0100
-> +#define WIN3_CTRL1                     0x0104
-> +#define WIN3_VIR0_1                    0x0108
-> +#define WIN3_VIR2_3                    0x010c
-> +#define WIN3_MST0                      0x0110
-> +#define WIN3_DSP_INFO0                 0x0114
-> +#define WIN3_DSP_ST0                   0x0118
-> +#define WIN3_COLOR_KEY                 0x011c
-> +#define WIN3_MST1                      0x0120
-> +#define WIN3_DSP_INFO1                 0x0124
-> +#define WIN3_DSP_ST1                   0x0128
-> +#define WIN3_SRC_ALPHA_CTRL            0x012c
-> +#define WIN3_MST2                      0x0130
-> +#define WIN3_DSP_INFO2                 0x0134
-> +#define WIN3_DSP_ST2                   0x0138
-> +#define WIN3_DST_ALPHA_CTRL            0x013c
-> +#define WIN3_MST3                      0x0140
-> +#define WIN3_DSP_INFO3                 0x0144
-> +#define WIN3_DSP_ST3                   0x0148
-> +#define WIN3_FADING_CTRL               0x014c
-> +/* hwc register */
-> +#define HWC_CTRL0                      0x0150
-> +#define HWC_CTRL1                      0x0154
-> +#define HWC_MST                                0x0158
-> +#define HWC_DSP_ST                     0x015c
-> +#define HWC_SRC_ALPHA_CTRL             0x0160
-> +#define HWC_DST_ALPHA_CTRL             0x0164
-> +#define HWC_FADING_CTRL                        0x0168
-> +/* post process register */
-> +#define POST_DSP_HACT_INFO             0x0170
-> +#define POST_DSP_VACT_INFO             0x0174
-> +#define POST_SCL_FACTOR_YRGB           0x0178
-> +#define POST_SCL_CTRL                  0x0180
-> +#define POST_DSP_VACT_INFO_F1          0x0184
-> +#define DSP_HTOTAL_HS_END              0x0188
-> +#define DSP_HACT_ST_END                        0x018c
-> +#define DSP_VTOTAL_VS_END              0x0190
-> +#define DSP_VACT_ST_END                        0x0194
-> +#define DSP_VS_ST_END_F1               0x0198
-> +#define DSP_VACT_ST_END_F1             0x019c
-> +/* register definition end */
-> +
-> +/* interrupt define */
-> +#define DSP_HOLD_VALID_INTR            (1 << 0)
-> +#define FS_INTR                                (1 << 1)
-> +#define LINE_FLAG_INTR                 (1 << 2)
-> +#define BUS_ERROR_INTR                 (1 << 3)
-> +
-> +#define DSP_HOLD_VALID_INTR_EN(x)      ((x) << 4)
-> +#define FS_INTR_EN(x)                  ((x) << 5)
-> +#define LINE_FLAG_INTR_EN(x)           ((x) << 6)
-> +#define BUS_ERROR_INTR_EN(x)           ((x) << 7)
-> +#define DSP_HOLD_VALID_INTR_MASK       (1 << 4)
-> +#define FS_INTR_EN_MASK                        (1 << 5)
-> +#define LINE_FLAG_INTR_MASK            (1 << 6)
-> +#define BUS_ERROR_INTR_MASK            (1 << 7)
-> +
-> +#define DSP_HOLD_VALID_INTR_CLR                (1 << 8)
-> +#define FS_INTR_EN_CLR                 (1 << 9)
-> +#define LINE_FLAG_INTR_CLR             (1 << 10)
-> +#define BUS_ERROR_INTR_CLR             (1 << 11)
-> +#define DSP_LINE_NUM(x)                        (((x) & 0x1fff) << 12)
-> +#define DSP_LINE_NUM_MASK              (0x1fff << 12)
-> +
-> +/* src alpha ctrl define */
-> +#define SRC_FADING_VALUE(x)            (((x) & 0xff) << 24)
-> +#define SRC_GLOBAL_ALPHA(x)            (((x) & 0xff) << 16)
-> +#define SRC_FACTOR_M0(x)               (((x) & 0x7) << 6)
-> +#define SRC_ALPHA_CAL_M0(x)            (((x) & 0x1) << 5)
-> +#define SRC_BLEND_M0(x)                        (((x) & 0x3) << 3)
-> +#define SRC_ALPHA_M0(x)                        (((x) & 0x1) << 2)
-> +#define SRC_COLOR_M0(x)                        (((x) & 0x1) << 1)
-> +#define SRC_ALPHA_EN(x)                        (((x) & 0x1) << 0)
-> +/* dst alpha ctrl define */
-> +#define DST_FACTOR_M0(x)               (((x) & 0x7) << 6)
-> +
-> +enum alpha_mode {
-> +       ALPHA_STRAIGHT,
-> +       ALPHA_INVERSE,
+> +struct rockchip_edp_soc_data {
+> +       int grf_soc_con6;
+> +       int grf_soc_con12;
 > +};
 > +
-> +enum global_blend_mode {
-> +       ALPHA_GLOBAL,
-> +       ALPHA_PER_PIX,
-> +       ALPHA_PER_PIX_GLOBAL,
+> +struct rockchip_edp_device {
+> +       struct device *dev;
+> +       struct drm_device *drm_dev;
+> +       struct drm_panel *panel;
+> +       struct drm_connector connector;
+> +       struct drm_encoder encoder;
+> +       struct drm_display_mode mode;
+> +
+> +       struct rockchip_edp_soc_data *soc_data;
+> +
+> +       void __iomem *regs;
+> +       struct regmap *grf;
+> +       unsigned int irq;
+> +       struct clk *clk_edp;
+> +       struct clk *clk_24m_parent;
+> +       struct clk *clk_24m;
+> +       struct clk *pclk;
+> +       struct reset_control *rst;
+> +       struct link_train link_train;
+> +       struct video_info video_info;
+> +       bool clk_on;
+> +
+> +       int dpms_mode;
 > +};
 > +
-> +enum alpha_cal_mode {
-> +       ALPHA_SATURATION,
-> +       ALPHA_NO_SATURATION,
-> +};
+> +void rockchip_edp_enable_video_mute(struct rockchip_edp_device *edp,
+> +                                   bool enable);
+> +void rockchip_edp_stop_video(struct rockchip_edp_device *edp);
+> +void rockchip_edp_lane_swap(struct rockchip_edp_device *edp, bool enable);
+> +void rockchip_edp_init_refclk(struct rockchip_edp_device *edp);
+> +void rockchip_edp_init_interrupt(struct rockchip_edp_device *edp);
+> +void rockchip_edp_reset(struct rockchip_edp_device *edp);
+> +void rockchip_edp_config_interrupt(struct rockchip_edp_device *edp);
+> +u32 rockchip_edp_get_pll_lock_status(struct rockchip_edp_device *edp);
+> +void rockchip_edp_analog_power_ctr(struct rockchip_edp_device *edp,
+> +                                  bool enable);
+> +void rockchip_edp_init_analog_func(struct rockchip_edp_device *edp);
+> +void rockchip_edp_init_hpd(struct rockchip_edp_device *edp);
+> +void rockchip_edp_reset_aux(struct rockchip_edp_device *edp);
+> +void rockchip_edp_init_aux(struct rockchip_edp_device *edp);
+> +int rockchip_edp_get_plug_in_status(struct rockchip_edp_device *edp);
+> +void rockchip_edp_enable_sw_function(struct rockchip_edp_device *edp);
+> +int rockchip_edp_start_aux_transaction(struct rockchip_edp_device *edp);
+> +int rockchip_edp_write_byte_to_dpcd(struct rockchip_edp_device *edp,
+> +                                   unsigned int reg_addr,
+> +                                   unsigned char data);
+> +int rockchip_edp_read_byte_from_dpcd(struct rockchip_edp_device *edp,
+> +                                    unsigned int reg_addr,
+> +                                    unsigned char *data);
+> +int rockchip_edp_write_bytes_to_dpcd(struct rockchip_edp_device *edp,
+> +                                    unsigned int reg_addr,
+> +                                    unsigned int count,
+> +                                    unsigned char data[]);
+> +int rockchip_edp_read_bytes_from_dpcd(struct rockchip_edp_device *edp,
+> +                                     unsigned int reg_addr,
+> +                                     unsigned int count,
+> +                                     unsigned char data[]);
+> +int rockchip_edp_select_i2c_device(struct rockchip_edp_device *edp,
+> +                                  unsigned int device_addr,
+> +                                  unsigned int reg_addr);
+> +int rockchip_edp_read_byte_from_i2c(struct rockchip_edp_device *edp,
+> +                                   unsigned int device_addr,
+> +                                   unsigned int reg_addr,
+> +                                   unsigned int *data);
+> +int rockchip_edp_read_bytes_from_i2c(struct rockchip_edp_device *edp,
+> +                                    unsigned int device_addr,
+> +                                    unsigned int reg_addr,
+> +                                    unsigned int count,
+> +                                    unsigned char edid[]);
+> +void rockchip_edp_set_link_bandwidth(struct rockchip_edp_device *edp,
+> +                                    u32 bwtype);
+> +void rockchip_edp_get_link_bandwidth(struct rockchip_edp_device *edp,
+> +                                    u32 *bwtype);
+> +void rockchip_edp_set_lane_count(struct rockchip_edp_device *edp,
+> +                                u32 count);
+> +void rockchip_edp_get_lane_count(struct rockchip_edp_device *edp,
+> +                                u32 *count);
+> +void rockchip_edp_enable_enhanced_mode(struct rockchip_edp_device *edp,
+> +                                      bool enable);
+> +void rockchip_edp_set_training_pattern(struct rockchip_edp_device *edp,
+> +                                      enum pattern_set pattern);
+> +void rockchip_edp_set_lane0_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level);
+> +void rockchip_edp_set_lane1_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level);
+> +void rockchip_edp_set_lane2_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level);
+> +void rockchip_edp_set_lane3_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level);
+> +void rockchip_edp_set_lane0_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane);
+> +void rockchip_edp_set_lane1_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane);
+> +void rockchip_edp_set_lane2_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane);
+> +void rockchip_edp_set_lane3_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane);
+> +u32 rockchip_edp_get_lane0_link_training(struct rockchip_edp_device *edp);
+> +u32 rockchip_edp_get_lane1_link_training(struct rockchip_edp_device *edp);
+> +u32 rockchip_edp_get_lane2_link_training(struct rockchip_edp_device *edp);
+> +u32 rockchip_edp_get_lane3_link_training(struct rockchip_edp_device *edp);
+> +void rockchip_edp_reset_macro(struct rockchip_edp_device *edp);
+> +int rockchip_edp_init_video(struct rockchip_edp_device *edp);
 > +
-> +enum color_mode {
-> +       ALPHA_SRC_PRE_MUL,
-> +       ALPHA_SRC_NO_PRE_MUL,
-> +};
+> +void rockchip_edp_set_video_color_format(struct rockchip_edp_device *edp,
+> +                                        u32 color_depth,
+> +                                        u32 color_space,
+> +                                        u32 dynamic_range,
+> +                                        u32 coeff);
+> +int
+> +rockchip_edp_is_slave_video_stream_clock_on(struct rockchip_edp_device *edp);
+> +void rockchip_edp_set_video_cr_mn(struct rockchip_edp_device *edp,
+> +                                 enum clock_recovery_m_value_type type,
+> +                                 u32 m_value,
+> +                                 u32 n_value);
+> +void rockchip_edp_set_video_timing_mode(struct rockchip_edp_device *edp,
+> +                                       u32 type);
+> +void rockchip_edp_enable_video_master(struct rockchip_edp_device *edp,
+> +                                     bool enable);
+> +void rockchip_edp_start_video(struct rockchip_edp_device *edp);
+> +int rockchip_edp_is_video_stream_on(struct rockchip_edp_device *edp);
+> +void rockchip_edp_config_video_slave_mode(struct rockchip_edp_device *edp,
+> +                                         struct video_info *video_info);
+> +void rockchip_edp_enable_scrambling(struct rockchip_edp_device *edp);
+> +void rockchip_edp_disable_scrambling(struct rockchip_edp_device *edp);
+> +void rockchip_edp_hw_link_training_en(struct rockchip_edp_device *edp);
+> +int rockchip_edp_get_hw_lt_status(struct rockchip_edp_device *edp);
+> +int rockchip_edp_wait_hw_lt_done(struct rockchip_edp_device *edp);
+> +enum dp_irq_type rockchip_edp_get_irq_type(struct rockchip_edp_device *edp);
+> +void rockchip_edp_clear_hotplug_interrupts(struct rockchip_edp_device *edp);
 > +
-> +enum factor_mode {
-> +       ALPHA_ZERO,
-> +       ALPHA_ONE,
-> +       ALPHA_SRC,
-> +       ALPHA_SRC_INVERSE,
-> +       ALPHA_SRC_GLOBAL,
-> +};
+> +/* I2C EDID Chip ID, Slave Address */
+> +#define I2C_EDID_DEVICE_ADDR                   0x50
+> +#define I2C_E_EDID_DEVICE_ADDR                 0x30
 > +
-> +#endif /* _ROCKCHIP_DRM_VOP_H */
-> diff --git a/include/uapi/drm/rockchip_drm.h b/include/uapi/drm/rockchip_drm.h
+> +/* DPCD_ADDR_MAX_LANE_COUNT */
+> +#define DPCD_ENHANCED_FRAME_CAP(x)             (((x) >> 7) & 0x1)
+> +#define DPCD_MAX_LANE_COUNT(x)                 ((x) & 0x1f)
+> +
+> +/* DPCD_ADDR_LANE_COUNT_SET */
+> +#define DPCD_LANE_COUNT_SET(x)                 ((x) & 0x1f)
+> +
+> +/* DPCD_ADDR_TRAINING_LANE0_SET */
+> +#define DPCD_PRE_EMPHASIS_SET(x)               (((x) & 0x3) << 3)
+> +#define DPCD_PRE_EMPHASIS_GET(x)               (((x) >> 3) & 0x3)
+> +#define DPCD_VOLTAGE_SWING_SET(x)              (((x) & 0x3) << 0)
+> +#define DPCD_VOLTAGE_SWING_GET(x)              (((x) >> 0) & 0x3)
+> +
+> +#endif  /* _ROCKCHIP_EDP_CORE_H */
+> diff --git a/drivers/gpu/drm/rockchip/rockchip_edp_reg.c b/drivers/gpu/drm/rockchip/rockchip_edp_reg.c
 > new file mode 100644
-> index 0000000..3193360
+> index 0000000..f6d641c
 > --- /dev/null
-> +++ b/include/uapi/drm/rockchip_drm.h
-> @@ -0,0 +1,75 @@
+> +++ b/drivers/gpu/drm/rockchip/rockchip_edp_reg.c
+> @@ -0,0 +1,1202 @@
 > +/*
-> + *
-> + * Copyright (c) Fuzhou Rockchip Electronics Co.Ltd
-> + * Authors:
-> + *       Mark Yao <yzq-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-> + *
-> + * base on exynos_drm.h
-> + *
-> + * This program is free software; you can redistribute  it and/or modify it
-> + * under  the terms of  the GNU General  Public License as published by the
-> + * Free Software Foundation;  either version 2 of the  License, or (at your
-> + * option) any later version.
-> + */
+> +* Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
+> +* Author:
+> +*      Andy yan <andy.yan-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*      Jeff chen <jeff.chen-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*
+> +* based on exynos_dp_reg.c
+> +*
+> +* This program is free software; you can redistribute it and/or modify it
+> +* under the terms of the GNU General Public License as published by the
+> +* Free Software Foundation; either version 2 of the License, or (at your
+> +* option) any later version.
+> +*/
 > +
-> +#ifndef _UAPI_ROCKCHIP_DRM_H
-> +#define _UAPI_ROCKCHIP_DRM_H
+> +#include <linux/device.h>
+> +#include <linux/delay.h>
+> +#include <linux/io.h>
 > +
-> +#include <drm/drm.h>
+> +#include "rockchip_edp_core.h"
+> +#include "rockchip_edp_reg.h"
 > +
-> +/**
-> + * User-desired buffer creation information structure.
-> + *
-> + * @size: user-desired memory allocation size.
-> + * @flags: user request for setting memory type or cache attributes.
-> + * @handle: returned a handle to created gem object.
-> + *     - this handle will be set by gem module of kernel side.
-> + */
-> +struct drm_rockchip_gem_create {
-> +       uint64_t size;
-> +       uint32_t flags;
-> +       uint32_t handle;
-> +};
+> +void rockchip_edp_enable_video_mute(struct rockchip_edp_device *edp,
+> +                                   bool enable)
+> +{
+> +       u32 val;
 > +
-> +/**
-> + * A structure for getting buffer offset.
-> + *
-> + * @handle: a pointer to gem object created.
-> + * @pad: just padding to be 64-bit aligned.
-> + * @offset: relatived offset value of the memory region allocated.
-> + *     - this value should be set by user.
-> + */
-> +struct drm_rockchip_gem_map_off {
-> +       uint32_t handle;
-> +       uint32_t pad;
-> +       uint64_t offset;
-> +};
+> +       if (enable) {
+> +               val = readl(edp->regs + VIDEO_CTL_1);
+> +               val |= VIDEO_MUTE;
+> +               writel(val, edp->regs + VIDEO_CTL_1);
+> +       } else {
+> +               val = readl(edp->regs + VIDEO_CTL_1);
+> +               val &= ~VIDEO_MUTE;
+> +               writel(val, edp->regs + VIDEO_CTL_1);
+> +       }
+> +}
 > +
-> +/**
-> + * A structure to gem information.
-> + *
-> + * @handle: a handle to gem object created.
-> + * @flags: flag value including memory type and cache attribute and
-> + *      this value would be set by driver.
-> + * @size: size to memory region allocated by gem and this size would
-> + *      be set by driver.
-> + */
-> +struct drm_rockchip_gem_info {
-> +       uint32_t handle;
-> +       uint32_t flags;
-> +       uint64_t size;
-> +};
+> +void rockchip_edp_stop_video(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
 > +
-> +#define DRM_ROCKCHIP_GEM_CREATE                0x00
-> +#define DRM_ROCKCHIP_GEM_GET           0x01
-> +#define DRM_ROCKCHIP_GEM_MAP_OFFSET    0x02
+> +       val = readl(edp->regs + VIDEO_CTL_1);
+> +       val &= ~VIDEO_EN;
+> +       writel(val, edp->regs + VIDEO_CTL_1);
+> +}
 > +
-> +#define DRM_IOCTL_ROCKCHIP_GEM_CREATE  DRM_IOWR(DRM_COMMAND_BASE + \
-> +               DRM_ROCKCHIP_GEM_CREATE, struct drm_rockchip_gem_create)
+> +void rockchip_edp_lane_swap(struct rockchip_edp_device *edp, bool enable)
+> +{
+> +       u32 val;
 > +
-> +#define DRM_IOCTL_ROCKCHIP_GEM_MAP_OFFSET      DRM_IOWR(DRM_COMMAND_BASE + \
-> +               DRM_ROCKCHIP_GEM_MAP_OFFSET, struct drm_rockchip_gem_map_off)
+> +       if (enable)
+> +               val = LANE3_MAP_LOGIC_LANE_0 | LANE2_MAP_LOGIC_LANE_1 |
+> +                       LANE1_MAP_LOGIC_LANE_2 | LANE0_MAP_LOGIC_LANE_3;
+> +       else
+> +               val = LANE3_MAP_LOGIC_LANE_3 | LANE2_MAP_LOGIC_LANE_2 |
+> +                       LANE1_MAP_LOGIC_LANE_1 | LANE0_MAP_LOGIC_LANE_0;
 > +
-> +#define DRM_IOCTL_ROCKCHIP_GEM_GET     DRM_IOWR(DRM_COMMAND_BASE + \
-> +               DRM_ROCKCHIP_GEM_GET, struct drm_rockchip_gem_info)
-> +#endif /* _UAPI_ROCKCHIP_DRM_H */
+> +       writel(val, edp->regs + LANE_MAP);
+> +}
+> +
+> +void rockchip_edp_init_refclk(struct rockchip_edp_device *edp)
+> +{
+> +       writel(SEL_24M, edp->regs + ANALOG_CTL_2);
+> +       writel(REF_CLK_24M, edp->regs + PLL_REG_1);
+> +
+> +       writel(0x95, edp->regs + PLL_REG_2);
+> +       writel(0x40, edp->regs + PLL_REG_3);
+> +       writel(0x58, edp->regs + PLL_REG_4);
+> +       writel(0x22, edp->regs + PLL_REG_5);
+> +       writel(0x19, edp->regs + SSC_REG);
+> +       writel(0x87, edp->regs + TX_REG_COMMON);
+> +       writel(0x03, edp->regs + DP_AUX);
+> +       writel(0x46, edp->regs + DP_BIAS);
+> +       writel(0x55, edp->regs + DP_RESERVE2);
+> +}
+> +
+> +void rockchip_edp_init_interrupt(struct rockchip_edp_device *edp)
+> +{
+> +       /* Set interrupt pin assertion polarity as high */
+> +       writel(INT_POL, edp->regs + INT_CTL);
+> +
+> +       /* Clear pending valisers */
+> +       writel(0xff, edp->regs + COMMON_INT_STA_1);
+> +       writel(0x4f, edp->regs + COMMON_INT_STA_2);
+> +       writel(0xff, edp->regs + COMMON_INT_STA_3);
+> +       writel(0x27, edp->regs + COMMON_INT_STA_4);
+> +
+> +       writel(0x7f, edp->regs + DP_INT_STA);
+> +
+> +       /* 0:mask,1: unmask */
+> +       writel(0x00, edp->regs + COMMON_INT_MASK_1);
+> +       writel(0x00, edp->regs + COMMON_INT_MASK_2);
+> +       writel(0x00, edp->regs + COMMON_INT_MASK_3);
+> +       writel(0x00, edp->regs + COMMON_INT_MASK_4);
+> +       writel(0x00, edp->regs + DP_INT_STA_MASK);
+> +}
+> +
+> +void rockchip_edp_reset(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       rockchip_edp_stop_video(edp);
+> +       rockchip_edp_enable_video_mute(edp, 0);
+> +
+> +       val = VID_CAP_FUNC_EN_N | AUD_FIFO_FUNC_EN_N |
+> +               AUD_FUNC_EN_N | HDCP_FUNC_EN_N | SW_FUNC_EN_N;
+> +       writel(val, edp->regs + FUNC_EN_1);
+> +
+> +       val = SSC_FUNC_EN_N | AUX_FUNC_EN_N |
+> +               SERDES_FIFO_FUNC_EN_N |
+> +               LS_CLK_DOMAIN_FUNC_EN_N;
+> +       writel(val, edp->regs + FUNC_EN_2);
+> +
+> +       usleep_range(20, 30);
+> +
+> +       rockchip_edp_lane_swap(edp, 0);
+> +
+> +       writel(0x0, edp->regs + SYS_CTL_1);
+> +       writel(0x40, edp->regs + SYS_CTL_2);
+> +       writel(0x0, edp->regs + SYS_CTL_3);
+> +       writel(0x0, edp->regs + SYS_CTL_4);
+> +
+> +       writel(0x0, edp->regs + PKT_SEND_CTL);
+> +       writel(0x0, edp->regs + HDCP_CTL);
+> +
+> +       writel(0x5e, edp->regs + HPD_DEGLITCH_L);
+> +       writel(0x1a, edp->regs + HPD_DEGLITCH_H);
+> +
+> +       writel(0x10, edp->regs + LINK_DEBUG_CTL);
+> +
+> +       writel(0x0, edp->regs + VIDEO_FIFO_THRD);
+> +       writel(0x20, edp->regs + AUDIO_MARGIN);
+> +
+> +       writel(0x4, edp->regs + M_VID_GEN_FILTER_TH);
+> +       writel(0x2, edp->regs + M_AUD_GEN_FILTER_TH);
+> +
+> +       writel(0x0, edp->regs + SOC_GENERAL_CTL);
+> +}
+> +
+> +void rockchip_edp_config_interrupt(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       /* 0: mask, 1: unmask */
+> +       val = 0;
+> +       writel(val, edp->regs + COMMON_INT_MASK_1);
+> +
+> +       writel(val, edp->regs + COMMON_INT_MASK_2);
+> +
+> +       writel(val, edp->regs + COMMON_INT_MASK_3);
+> +
+> +       writel(val, edp->regs + COMMON_INT_MASK_4);
+> +
+> +       writel(val, edp->regs + DP_INT_STA_MASK);
+> +}
+> +
+> +u32 rockchip_edp_get_pll_lock_status(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + DEBUG_CTL);
+> +
+> +       return (val & PLL_LOCK) ? DP_PLL_LOCKED : DP_PLL_UNLOCKED;
+> +}
+> +
+> +void rockchip_edp_analog_power_ctr(struct rockchip_edp_device *edp,
+> +                                  bool enable)
+> +{
+> +       u32 val;
+> +
+> +       if (enable) {
+> +               val = PD_EXP_BG | PD_AUX | PD_PLL |
+> +                       PD_CH3 | PD_CH2 | PD_CH1 | PD_CH0;
+> +               writel(val, edp->regs + DP_PWRDN);
+> +               usleep_range(10, 20);
+> +               writel(0x0, edp->regs + DP_PWRDN);
+> +       } else {
+> +               val = PD_EXP_BG | PD_AUX | PD_PLL |
+> +                       PD_CH3 | PD_CH2 | PD_CH1 | PD_CH0;
+> +               writel(val, edp->regs + DP_PWRDN);
+> +       }
+> +}
+> +
+> +void rockchip_edp_init_analog_func(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +       int wt = 0;
+> +
+> +       rockchip_edp_analog_power_ctr(edp, 1);
+> +
+> +       val = PLL_LOCK_CHG;
+> +       writel(val, edp->regs + COMMON_INT_STA_1);
+> +
+> +       val = readl(edp->regs + DEBUG_CTL);
+> +       val &= ~(F_PLL_LOCK | PLL_LOCK_CTRL);
+> +       writel(val, edp->regs + DEBUG_CTL);
+> +
+> +       /* Power up PLL */
+> +       while (wt < 100) {
+> +               if (rockchip_edp_get_pll_lock_status(edp) == DP_PLL_LOCKED) {
+> +                       dev_dbg(edp->dev, "edp pll locked\n");
+> +                       break;
+> +               }
+> +               wt++;
+> +               udelay(5);
+> +       }
+> +
+> +       /* Enable Serdes FIFO function and Link symbol clock domain module */
+> +       val = readl(edp->regs + FUNC_EN_2);
+> +       val &= ~(SERDES_FIFO_FUNC_EN_N | LS_CLK_DOMAIN_FUNC_EN_N
+> +               | AUX_FUNC_EN_N | SSC_FUNC_EN_N);
+> +       writel(val, edp->regs + FUNC_EN_2);
+> +}
+> +
+> +void rockchip_edp_init_hpd(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = HOTPLUG_CHG | HPD_LOST | PLUG;
+> +       writel(val, edp->regs + COMMON_INT_STA_4);
+> +
+> +       val = INT_HPD;
+> +       writel(val, edp->regs + DP_INT_STA);
+> +
+> +       val = readl(edp->regs + SYS_CTL_3);
+> +       val |= (F_HPD | HPD_CTRL);
+> +       writel(val, edp->regs + SYS_CTL_3);
+> +}
+> +
+> +void rockchip_edp_reset_aux(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       /* Disable AUX channel module */
+> +       val = readl(edp->regs + FUNC_EN_2);
+> +       val |= AUX_FUNC_EN_N;
+> +       writel(val, edp->regs + FUNC_EN_2);
+> +}
+> +
+> +void rockchip_edp_init_aux(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       /* Clear inerrupts related to AUX channel */
+> +       val = RPLY_RECEIV | AUX_ERR;
+> +       writel(val, edp->regs + DP_INT_STA);
+> +
+> +       rockchip_edp_reset_aux(edp);
+> +
+> +       /* Receive AUX Channel DEFER commands equal to DEFFER_COUNT*64 */
+> +       val = DEFER_CTRL_EN | DEFER_COUNT(1);
+> +       writel(val, edp->regs + AUX_CH_DEFER_CTL);
+> +
+> +       /* Enable AUX channel module */
+> +       val = readl(edp->regs + FUNC_EN_2);
+> +       val &= ~AUX_FUNC_EN_N;
+> +       writel(val, edp->regs + FUNC_EN_2);
+> +}
+> +
+> +int rockchip_edp_get_plug_in_status(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + SYS_CTL_3);
+> +       if (val & HPD_STATUS)
+> +               return 0;
+> +
+> +       return -EINVAL;
+> +}
+> +
+> +void rockchip_edp_enable_sw_function(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + FUNC_EN_1);
+> +       val &= ~SW_FUNC_EN_N;
+> +       writel(val, edp->regs + FUNC_EN_1);
+> +}
+> +
+> +int rockchip_edp_start_aux_transaction(struct rockchip_edp_device *edp)
+> +{
+> +       int val;
+> +       int retval = 0;
+> +       int timeout_loop = 0;
+> +       int aux_timeout = 0;
+> +
+> +       /* Enable AUX CH operation */
+> +       val = readl(edp->regs + AUX_CH_CTL_2);
+> +       val |= AUX_EN;
+> +       writel(val, edp->regs + AUX_CH_CTL_2);
+> +
+> +       /* Is AUX CH operation enabled? */
+> +       val = readl(edp->regs + AUX_CH_CTL_2);
+> +       while (val & AUX_EN) {
+> +               aux_timeout++;
+> +               if ((DP_TIMEOUT_LOOP_CNT * 10) < aux_timeout) {
+> +                       dev_err(edp->dev, "AUX CH enable timeout!\n");
+> +                       return -ETIMEDOUT;
+> +               }
+> +               val = readl(edp->regs + AUX_CH_CTL_2);
+> +               usleep_range(1000, 2000);
+> +       }
+> +
+> +       /* Is AUX CH command redply received? */
+> +       val = readl(edp->regs + DP_INT_STA);
+> +       while (!(val & RPLY_RECEIV)) {
+> +               timeout_loop++;
+> +               if (DP_TIMEOUT_LOOP_CNT < timeout_loop) {
+> +                       dev_err(edp->dev, "AUX CH command redply failed!\n");
+> +                       return -ETIMEDOUT;
+> +               }
+> +               val = readl(edp->regs + DP_INT_STA);
+> +               usleep_range(10, 20);
+> +       }
+> +
+> +       /* Clear interrupt source for AUX CH command redply */
+> +       writel(RPLY_RECEIV, edp->regs + DP_INT_STA);
+> +
+> +       /* Clear interrupt source for AUX CH access error */
+> +       val = readl(edp->regs + DP_INT_STA);
+> +       if (val & AUX_ERR) {
+> +               writel(AUX_ERR, edp->regs + DP_INT_STA);
+> +               return -EREMOTEIO;
+> +       }
+> +
+> +       /* Check AUX CH error access status */
+> +       val = readl(edp->regs + AUX_CH_STA);
+> +       if ((val & AUX_STATUS_MASK) != 0) {
+> +               dev_err(edp->dev, "AUX CH error happens: %d\n\n",
+> +                       val & AUX_STATUS_MASK);
+> +               return -EREMOTEIO;
+> +       }
+> +
+> +       return retval;
+> +}
+> +
+> +int rockchip_edp_write_byte_to_dpcd(struct rockchip_edp_device *edp,
+> +                                   unsigned int val_addr,
+> +                                   unsigned char data)
+> +{
+> +       u32 val;
+> +       int i;
+> +       int retval;
+> +
+> +       for (i = 0; i < 3; i++) {
+> +               /* Clear AUX CH data buffer */
+> +               val = BUF_CLR;
+> +               writel(val, edp->regs + BUFFER_DATA_CTL);
+> +
+> +               /* Select DPCD device address */
+> +               val = AUX_ADDR_7_0(val_addr);
+> +               writel(val, edp->regs + DP_AUX_ADDR_7_0);
+> +               val = AUX_ADDR_15_8(val_addr);
+> +               writel(val, edp->regs + DP_AUX_ADDR_15_8);
+> +               val = AUX_ADDR_19_16(val_addr);
+> +               writel(val, edp->regs + DP_AUX_ADDR_19_16);
+> +
+> +               /* Write data buffer */
+> +               val = (unsigned int)data;
+> +               writel(val, edp->regs + BUF_DATA_0);
+> +
+> +               /*
+> +                * Set DisplayPort transaction and write 1 byte
+> +                * If bit 3 is 1, DisplayPort transaction.
+> +                * If Bit 3 is 0, I2C transaction.
+> +                */
+> +               val = AUX_TX_COMM_DP_TRANSACTION | AUX_TX_COMM_WRITE;
+> +               writel(val, edp->regs + AUX_CH_CTL_1);
+> +
+> +               /* Start AUX transaction */
+> +               retval = rockchip_edp_start_aux_transaction(edp);
+> +               if (retval == 0)
+> +                       break;
+> +
+> +               dev_dbg(edp->dev, "Aux Transaction fail!\n");
+> +       }
+> +
+> +       return retval;
+> +}
+> +
+> +int rockchip_edp_read_byte_from_dpcd(struct rockchip_edp_device *edp,
+> +                                    unsigned int val_addr,
+> +                                    unsigned char *data)
+> +{
+> +       u32 val;
+> +       int i;
+> +       int retval;
+> +
+> +       for (i = 0; i < 10; i++) {
+> +               /* Clear AUX CH data buffer */
+> +               val = BUF_CLR;
+> +               writel(val, edp->regs + BUFFER_DATA_CTL);
+> +
+> +               /* Select DPCD device address */
+> +               val = AUX_ADDR_7_0(val_addr);
+> +               writel(val, edp->regs + DP_AUX_ADDR_7_0);
+> +               val = AUX_ADDR_15_8(val_addr);
+> +               writel(val, edp->regs + DP_AUX_ADDR_15_8);
+> +               val = AUX_ADDR_19_16(val_addr);
+> +               writel(val, edp->regs + DP_AUX_ADDR_19_16);
+> +
+> +               /*
+> +                * Set DisplayPort transaction and read 1 byte
+> +                * If bit 3 is 1, DisplayPort transaction.
+> +                * If Bit 3 is 0, I2C transaction.
+> +                */
+> +               val = AUX_TX_COMM_DP_TRANSACTION | AUX_TX_COMM_READ;
+> +               writel(val, edp->regs + AUX_CH_CTL_1);
+> +
+> +               /* Start AUX transaction */
+> +               retval = rockchip_edp_start_aux_transaction(edp);
+> +               if (retval == 0)
+> +                       break;
+> +
+> +               dev_dbg(edp->dev, "Aux Transaction fail!\n");
+> +       }
+> +
+> +       /* Read data buffer */
+> +       val = readl(edp->regs + BUF_DATA_0);
+> +       *data = (unsigned char)(val & 0xff);
+> +
+> +       return retval;
+> +}
+> +
+> +int rockchip_edp_write_bytes_to_dpcd(struct rockchip_edp_device *edp,
+> +                                    unsigned int val_addr,
+> +                                    unsigned int count,
+> +                                    unsigned char data[])
+> +{
+> +       u32 val;
+> +       unsigned int start_offset;
+> +       unsigned int cur_data_count;
+> +       unsigned int cur_data_idx;
+> +       int i;
+> +       int retval = 0;
+> +
+> +       /* Clear AUX CH data buffer */
+> +       val = BUF_CLR;
+> +       writel(val, edp->regs + BUFFER_DATA_CTL);
+> +
+> +       start_offset = 0;
+> +       while (start_offset < count) {
+> +               /* Buffer size of AUX CH is 16 * 4bytes */
+> +               if ((count - start_offset) > 16)
+> +                       cur_data_count = 16;
+> +               else
+> +                       cur_data_count = count - start_offset;
+> +
+> +               for (i = 0; i < 10; i++) {
+> +                       /* Select DPCD device address */
+> +                       val = AUX_ADDR_7_0(val_addr + start_offset);
+> +                       writel(val, edp->regs + DP_AUX_ADDR_7_0);
+> +                       val = AUX_ADDR_15_8(val_addr + start_offset);
+> +                       writel(val, edp->regs + DP_AUX_ADDR_15_8);
+> +                       val = AUX_ADDR_19_16(val_addr + start_offset);
+> +                       writel(val, edp->regs + DP_AUX_ADDR_19_16);
+> +
+> +                       for (cur_data_idx = 0; cur_data_idx < cur_data_count;
+> +                            cur_data_idx++) {
+> +                               val = data[start_offset + cur_data_idx];
+> +                               writel(val, edp->regs + BUF_DATA_0
+> +                                                         + 4 * cur_data_idx);
+> +                       }
+> +
+> +                       /*
+> +                        * Set DisplayPort transaction and write
+> +                        * If bit 3 is 1, DisplayPort transaction.
+> +                        * If Bit 3 is 0, I2C transaction.
+> +                        */
+> +                       val = AUX_LENGTH(cur_data_count) |
+> +                               AUX_TX_COMM_DP_TRANSACTION | AUX_TX_COMM_WRITE;
+> +                       writel(val, edp->regs + AUX_CH_CTL_1);
+> +
+> +                       /* Start AUX transaction */
+> +                       retval = rockchip_edp_start_aux_transaction(edp);
+> +                       if (retval == 0)
+> +                               break;
+> +
+> +                       dev_dbg(edp->dev, "Aux Transaction fail!\n");
+> +               }
+> +
+> +               start_offset += cur_data_count;
+> +       }
+> +
+> +       return retval;
+> +}
+> +
+> +int rockchip_edp_read_bytes_from_dpcd(struct rockchip_edp_device *edp,
+> +                                     unsigned int val_addr,
+> +                                     unsigned int count,
+> +                                     unsigned char data[])
+> +{
+> +       u32 val;
+> +       unsigned int start_offset;
+> +       unsigned int cur_data_count;
+> +       unsigned int cur_data_idx;
+> +       int i;
+> +       int retval = 0;
+> +
+> +       /* Clear AUX CH data buffer */
+> +       val = BUF_CLR;
+> +       writel(val, edp->regs + BUFFER_DATA_CTL);
+> +
+> +       start_offset = 0;
+> +       while (start_offset < count) {
+> +               /* Buffer size of AUX CH is 16 * 4bytes */
+> +               if ((count - start_offset) > 16)
+> +                       cur_data_count = 16;
+> +               else
+> +                       cur_data_count = count - start_offset;
+> +
+> +               /* AUX CH Request Transaction process */
+> +               for (i = 0; i < 10; i++) {
+> +                       /* Select DPCD device address */
+> +                       val = AUX_ADDR_7_0(val_addr + start_offset);
+> +                       writel(val, edp->regs + DP_AUX_ADDR_7_0);
+> +                       val = AUX_ADDR_15_8(val_addr + start_offset);
+> +                       writel(val, edp->regs + DP_AUX_ADDR_15_8);
+> +                       val = AUX_ADDR_19_16(val_addr + start_offset);
+> +                       writel(val, edp->regs + DP_AUX_ADDR_19_16);
+> +
+> +                       /*
+> +                        * Set DisplayPort transaction and read
+> +                        * If bit 3 is 1, DisplayPort transaction.
+> +                        * If Bit 3 is 0, I2C transaction.
+> +                        */
+> +                       val = AUX_LENGTH(cur_data_count) |
+> +                               AUX_TX_COMM_DP_TRANSACTION | AUX_TX_COMM_READ;
+> +                       writel(val, edp->regs + AUX_CH_CTL_1);
+> +
+> +                       /* Start AUX transaction */
+> +                       retval = rockchip_edp_start_aux_transaction(edp);
+> +                       if (retval == 0)
+> +                               break;
+> +
+> +                       dev_dbg(edp->dev, "Aux Transaction fail!\n");
+> +               }
+> +
+> +               for (cur_data_idx = 0; cur_data_idx < cur_data_count;
+> +                   cur_data_idx++) {
+> +                       val = readl(edp->regs + BUF_DATA_0
+> +                                                + 4 * cur_data_idx);
+> +                       data[start_offset + cur_data_idx] =
+> +                               (unsigned char)val;
+> +               }
+> +
+> +               start_offset += cur_data_count;
+> +       }
+> +
+> +       return retval;
+> +}
+> +
+> +int rockchip_edp_select_i2c_device(struct rockchip_edp_device *edp,
+> +                                  unsigned int device_addr,
+> +                                  unsigned int val_addr)
+> +{
+> +       u32 val;
+> +       int retval;
+> +
+> +       /* Set EDID device address */
+> +       val = device_addr;
+> +       writel(val, edp->regs + DP_AUX_ADDR_7_0);
+> +       writel(0x0, edp->regs + DP_AUX_ADDR_15_8);
+> +       writel(0x0, edp->regs + DP_AUX_ADDR_19_16);
+> +
+> +       /* Set offset from base address of EDID device */
+> +       writel(val_addr, edp->regs + BUF_DATA_0);
+> +
+> +       /*
+> +        * Set I2C transaction and write address
+> +        * If bit 3 is 1, DisplayPort transaction.
+> +        * If Bit 3 is 0, I2C transaction.
+> +        */
+> +       val = AUX_TX_COMM_I2C_TRANSACTION | AUX_TX_COMM_MOT |
+> +               AUX_TX_COMM_WRITE;
+> +       writel(val, edp->regs + AUX_CH_CTL_1);
+> +
+> +       /* Start AUX transaction */
+> +       retval = rockchip_edp_start_aux_transaction(edp);
+> +       if (retval != 0)
+> +               dev_dbg(edp->dev, "Aux Transaction fail!\n");
+> +
+> +       return retval;
+> +}
+> +
+> +int rockchip_edp_read_byte_from_i2c(struct rockchip_edp_device *edp,
+> +                                   unsigned int device_addr,
+> +                                   unsigned int val_addr,
+> +                                   unsigned int *data)
+> +{
+> +       u32 val;
+> +       int i;
+> +       int retval;
+> +
+> +       for (i = 0; i < 10; i++) {
+> +               /* Clear AUX CH data buffer */
+> +               val = BUF_CLR;
+> +               writel(val, edp->regs + BUFFER_DATA_CTL);
+> +
+> +               /* Select EDID device */
+> +               retval = rockchip_edp_select_i2c_device(edp,
+> +                                                       device_addr,
+> +                                                       val_addr);
+> +               if (retval != 0) {
+> +                       dev_err(edp->dev, "Select EDID device fail!\n");
+> +                       continue;
+> +               }
+> +
+> +               /*
+> +                * Set I2C transaction and read data
+> +                * If bit 3 is 1, DisplayPort transaction.
+> +                * If Bit 3 is 0, I2C transaction.
+> +                */
+> +               val = AUX_TX_COMM_I2C_TRANSACTION | AUX_TX_COMM_READ;
+> +               writel(val, edp->regs + AUX_CH_CTL_1);
+> +
+> +               /* Start AUX transaction */
+> +               retval = rockchip_edp_start_aux_transaction(edp);
+> +               if (retval == 0)
+> +                       break;
+> +
+> +               dev_dbg(edp->dev, "Aux Transaction fail!\n");
+> +       }
+> +
+> +       /* Read data */
+> +       if (retval == 0)
+> +               *data = readl(edp->regs + BUF_DATA_0);
+> +
+> +       return retval;
+> +}
+> +
+> +int rockchip_edp_read_bytes_from_i2c(struct rockchip_edp_device *edp,
+> +                                    unsigned int device_addr,
+> +                                    unsigned int val_addr,
+> +                                    unsigned int count,
+> +                                    unsigned char edid[])
+> +{
+> +       u32 val;
+> +       unsigned int i, j;
+> +       unsigned int cur_data_idx;
+> +       unsigned int defer = 0;
+> +       int retval = 0;
+> +
+> +       for (i = 0; i < count; i += 16) {
+> +               for (j = 0; j < 100; j++) {
+> +                       /* Clear AUX CH data buffer */
+> +                       val = BUF_CLR;
+> +                       writel(val, edp->regs + BUFFER_DATA_CTL);
+> +
+> +                       /* Set normal AUX CH command */
+> +                       val = readl(edp->regs + AUX_CH_CTL_2);
+> +                       val &= ~ADDR_ONLY;
+> +                       writel(val, edp->regs + AUX_CH_CTL_2);
+> +
+> +                       /*
+> +                        * If Rx sends defer, Tx sends only reads
+> +                        * request without sending addres
+> +                        */
+> +                       if (!defer)
+> +                               retval = rockchip_edp_select_i2c_device(
+> +                                               edp, device_addr, val_addr + i);
+> +                       else
+> +                               defer = 0;
+> +
+> +                       /*
+> +                        * Set I2C transaction and write data
+> +                        * If bit 3 is 1, DisplayPort transaction.
+> +                        * If Bit 3 is 0, I2C transaction.
+> +                        */
+> +                       val = AUX_LENGTH(16) | AUX_TX_COMM_I2C_TRANSACTION |
+> +                               AUX_TX_COMM_READ;
+> +                       writel(val, edp->regs + AUX_CH_CTL_1);
+> +
+> +                       /* Start AUX transaction */
+> +                       retval = rockchip_edp_start_aux_transaction(edp);
+> +                       if (retval == 0)
+> +                               break;
+> +
+> +                       dev_dbg(edp->dev, "Aux Transaction fail!\n");
+> +
+> +                       /* Check if Rx sends defer */
+> +                       val = readl(edp->regs + AUX_RX_COMM);
+> +                       if (val == AUX_RX_COMM_AUX_DEFER ||
+> +                           val == AUX_RX_COMM_I2C_DEFER) {
+> +                               dev_err(edp->dev, "Defer: %d\n\n", val);
+> +                               defer = 1;
+> +                       }
+> +               }
+> +
+> +               for (cur_data_idx = 0; cur_data_idx < 16; cur_data_idx++) {
+> +                       val = readl(edp->regs + BUF_DATA_0 + 4 * cur_data_idx);
+> +                       edid[i + cur_data_idx] = (unsigned char)val;
+> +               }
+> +       }
+> +
+> +       return retval;
+> +}
+> +
+> +void rockchip_edp_set_link_bandwidth(struct rockchip_edp_device *edp,
+> +                                    u32 bwtype)
+> +{
+> +       u32 val;
+> +
+> +       val = bwtype;
+> +       if ((bwtype == DP_LINK_BW_2_7) || (bwtype == DP_LINK_BW_1_62))
+> +               writel(val, edp->regs + LINK_BW_SET);
+> +}
+> +
+> +void rockchip_edp_get_link_bandwidth(struct rockchip_edp_device *edp,
+> +                                    u32 *bwtype)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + LINK_BW_SET);
+> +       *bwtype = val;
+> +}
+> +
+> +void rockchip_edp_hw_link_training_en(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = HW_LT_EN;
+> +       writel(val, edp->regs + HW_LT_CTL);
+> +}
+> +
+> +int rockchip_edp_wait_hw_lt_done(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + DP_INT_STA);
+> +       if (val&HW_LT_DONE) {
+> +               writel(val, edp->regs + DP_INT_STA);
+> +               return 0;
+> +       }
+> +
+> +       return 1;
+> +}
+> +
+> +int rockchip_edp_get_hw_lt_status(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + HW_LT_CTL);
+> +
+> +       return (val & HW_LT_ERR_CODE_MASK) >> 4;
+> +}
+> +
+> +void rockchip_edp_set_lane_count(struct rockchip_edp_device *edp, u32 count)
+> +{
+> +       u32 val;
+> +
+> +       val = count;
+> +       writel(val, edp->regs + LANE_CNT_SET);
+> +}
+> +
+> +void rockchip_edp_get_lane_count(struct rockchip_edp_device *edp, u32 *count)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + LANE_CNT_SET);
+> +       *count = val;
+> +}
+> +
+> +void rockchip_edp_enable_enhanced_mode(struct rockchip_edp_device *edp,
+> +                                      bool enable)
+> +{
+> +       u32 val;
+> +
+> +       if (enable) {
+> +               val = readl(edp->regs + SYS_CTL_4);
+> +               val |= ENHANCED;
+> +               writel(val, edp->regs + SYS_CTL_4);
+> +       } else {
+> +               val = readl(edp->regs + SYS_CTL_4);
+> +               val &= ~ENHANCED;
+> +               writel(val, edp->regs + SYS_CTL_4);
+> +       }
+> +}
+> +
+> +void rockchip_edp_set_training_pattern(struct rockchip_edp_device *edp,
+> +                                      enum pattern_set pattern)
+> +{
+> +       u32 val;
+> +
+> +       switch (pattern) {
+> +       case PRBS7:
+> +               val = SCRAMBLING_ENABLE | LINK_QUAL_PATTERN_SET_PRBS7;
+> +               writel(val, edp->regs + TRAINING_PTN_SET);
+> +               break;
+> +       case D10_2:
+> +               val = SCRAMBLING_ENABLE | LINK_QUAL_PATTERN_SET_D10_2;
+> +               writel(val, edp->regs + TRAINING_PTN_SET);
+> +               break;
+> +       case TRAINING_PTN1:
+> +               val = SCRAMBLING_DISABLE | SW_TRAINING_PATTERN_SET_PTN1;
+> +               writel(val, edp->regs + TRAINING_PTN_SET);
+> +               break;
+> +       case TRAINING_PTN2:
+> +               val = SCRAMBLING_DISABLE | SW_TRAINING_PATTERN_SET_PTN2;
+> +               writel(val, edp->regs + TRAINING_PTN_SET);
+> +               break;
+> +       case DP_NONE:
+> +               val = SCRAMBLING_ENABLE |
+> +                       LINK_QUAL_PATTERN_SET_DISABLE |
+> +                       SW_TRAINING_PATTERN_SET_DISABLE;
+> +               writel(val, edp->regs + TRAINING_PTN_SET);
+> +               break;
+> +       default:
+> +               break;
+> +       }
+> +}
+> +
+> +void rockchip_edp_set_lane0_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level)
+> +{
+> +       u32 val;
+> +
+> +       val = level << PRE_EMPHASIS_SET_SHIFT;
+> +       writel(val, edp->regs + LN0_LINK_TRAINING_CTL);
+> +}
+> +
+> +void rockchip_edp_set_lane1_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level)
+> +{
+> +       u32 val;
+> +
+> +       val = level << PRE_EMPHASIS_SET_SHIFT;
+> +       writel(val, edp->regs + LN1_LINK_TRAINING_CTL);
+> +}
+> +
+> +void rockchip_edp_set_lane2_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level)
+> +{
+> +       u32 val;
+> +
+> +       val = level << PRE_EMPHASIS_SET_SHIFT;
+> +       writel(val, edp->regs + LN2_LINK_TRAINING_CTL);
+> +}
+> +
+> +void rockchip_edp_set_lane3_pre_emphasis(struct rockchip_edp_device *edp,
+> +                                        u32 level)
+> +{
+> +       u32 val;
+> +
+> +       val = level << PRE_EMPHASIS_SET_SHIFT;
+> +       writel(val, edp->regs + LN3_LINK_TRAINING_CTL);
+> +}
+> +
+> +void rockchip_edp_set_lane0_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane)
+> +{
+> +       u32 val;
+> +
+> +       val = training_lane;
+> +       writel(val, edp->regs + LN0_LINK_TRAINING_CTL);
+> +}
+> +
+> +void rockchip_edp_set_lane1_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane)
+> +{
+> +       u32 val;
+> +
+> +       val = training_lane;
+> +       writel(val, edp->regs + LN1_LINK_TRAINING_CTL);
+> +}
+> +
+> +void rockchip_edp_set_lane2_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane)
+> +{
+> +       u32 val;
+> +
+> +       val = training_lane;
+> +       writel(val, edp->regs + LN2_LINK_TRAINING_CTL);
+> +}
+> +
+> +void rockchip_edp_set_lane3_link_training(struct rockchip_edp_device *edp,
+> +                                         u32 training_lane)
+> +{
+> +       u32 val;
+> +
+> +       val = training_lane;
+> +       writel(val, edp->regs + LN3_LINK_TRAINING_CTL);
+> +}
+> +
+> +u32 rockchip_edp_get_lane0_link_training(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + LN0_LINK_TRAINING_CTL);
+> +       return val;
+> +}
+> +
+> +u32 rockchip_edp_get_lane1_link_training(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + LN1_LINK_TRAINING_CTL);
+> +       return val;
+> +}
+> +
+> +u32 rockchip_edp_get_lane2_link_training(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + LN2_LINK_TRAINING_CTL);
+> +       return val;
+> +}
+> +
+> +u32 rockchip_edp_get_lane3_link_training(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + LN3_LINK_TRAINING_CTL);
+> +       return val;
+> +}
+> +
+> +void rockchip_edp_reset_macro(struct rockchip_edp_device *edp)
+> +{
+> +}
+> +
+> +int rockchip_edp_init_video(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = VSYNC_DET | VID_FORMAT_CHG | VID_CLK_CHG;
+> +       writel(val, edp->regs + COMMON_INT_STA_1);
+> +
+> +       val = 0x0;
+> +       writel(val, edp->regs + SYS_CTL_1);
+> +
+> +       val = CHA_CRI(4) | CHA_CTRL;
+> +       writel(val, edp->regs + SYS_CTL_2);
+> +
+> +       val = VID_HRES_TH(2) | VID_VRES_TH(0);
+> +       writel(val, edp->regs + VIDEO_CTL_8);
+> +
+> +       return 0;
+> +}
+> +
+> +void rockchip_edp_set_video_color_format(struct rockchip_edp_device *edp,
+> +                                        u32 color_dedpth,
+> +                                        u32 color_space,
+> +                                        u32 dynamic_range,
+> +                                        u32 coeff)
+> +{
+> +       u32 val;
+> +
+> +       /* Configure the input color dedpth, color space, dynamic range */
+> +       val = (dynamic_range << IN_D_RANGE_SHIFT) |
+> +               (color_dedpth << IN_BPC_SHIFT) |
+> +               (color_space << IN_COLOR_F_SHIFT);
+> +       writel(val, edp->regs + VIDEO_CTL_2);
+> +
+> +       /* Set Input Color YCbCr Coefficients to ITU601 or ITU709 */
+> +       val = readl(edp->regs + VIDEO_CTL_3);
+> +       val &= ~IN_YC_COEFFI_MASK;
+> +       if (coeff)
+> +               val |= IN_YC_COEFFI_ITU709;
+> +       else
+> +               val |= IN_YC_COEFFI_ITU601;
+> +       writel(val, edp->regs + VIDEO_CTL_3);
+> +}
+> +
+> +int rockchip_edp_is_slave_video_stream_clock_on(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + SYS_CTL_1);
+> +       writel(val, edp->regs + SYS_CTL_1);
+> +
+> +       val = readl(edp->regs + SYS_CTL_1);
+> +
+> +       if (!(val & DET_STA)) {
+> +               dev_dbg(edp->dev, "Input stream clock not detected.\n");
+> +               return -EINVAL;
+> +       }
+> +
+> +       val = readl(edp->regs + SYS_CTL_2);
+> +       writel(val, edp->regs + SYS_CTL_2);
+> +
+> +       val = readl(edp->regs + SYS_CTL_2);
+> +       if (val & CHA_STA) {
+> +               dev_dbg(edp->dev, "Input stream clk is changing\n");
+> +               return -EINVAL;
+> +       }
+> +
+> +       return 0;
+> +}
+> +
+> +void rockchip_edp_set_video_cr_mn(struct rockchip_edp_device *edp,
+> +                                 enum clock_recovery_m_value_type type,
+> +                                 u32 m_value,
+> +                                 u32 n_value)
+> +{
+> +       u32 val;
+> +
+> +       if (type == REGISTER_M) {
+> +               val = readl(edp->regs + SYS_CTL_4);
+> +               val |= FIX_M_VID;
+> +               writel(val, edp->regs + SYS_CTL_4);
+> +               val = m_value & 0xff;
+> +               writel(val, edp->regs + M_VID_0);
+> +               val = (m_value >> 8) & 0xff;
+> +               writel(val, edp->regs + M_VID_1);
+> +               val = (m_value >> 16) & 0xff;
+> +               writel(val, edp->regs + M_VID_2);
+> +
+> +               val = n_value & 0xff;
+> +               writel(val, edp->regs + N_VID_0);
+> +               val = (n_value >> 8) & 0xff;
+> +               writel(val, edp->regs + N_VID_1);
+> +               val = (n_value >> 16) & 0xff;
+> +               writel(val, edp->regs + N_VID_2);
+> +       } else  {
+> +               val = readl(edp->regs + SYS_CTL_4);
+> +               val &= ~FIX_M_VID;
+> +               writel(val, edp->regs + SYS_CTL_4);
+> +
+> +               writel(0x00, edp->regs + N_VID_0);
+> +               writel(0x80, edp->regs + N_VID_1);
+> +               writel(0x00, edp->regs + N_VID_2);
+> +       }
+> +}
+> +
+> +void rockchip_edp_set_video_timing_mode(struct rockchip_edp_device *edp,
+> +                                       u32 type)
+> +{
+> +       u32 val;
+> +
+> +       if (type == VIDEO_TIMING_FROM_CAPTURE) {
+> +               val = readl(edp->regs + VIDEO_CTL_10);
+> +               val &= ~F_SEL;
+> +               writel(val, edp->regs + VIDEO_CTL_10);
+> +       } else {
+> +               val = readl(edp->regs + VIDEO_CTL_10);
+> +               val |= F_SEL;
+> +               writel(val, edp->regs + VIDEO_CTL_10);
+> +       }
+> +}
+> +
+> +int rockchip_edp_bist_cfg(struct rockchip_edp_device *edp)
+> +{
+> +       struct video_info *video_info = &edp->video_info;
+> +       struct drm_display_mode *mode = &edp->mode;
+> +       u16 x_total, y_total, x_act;
+> +       u32 val;
+> +
+> +       x_total = mode->htotal;
+> +       y_total = mode->vtotal;
+> +       x_act = mode->hdisplay;
+> +
+> +       rockchip_edp_set_video_cr_mn(edp, CALCULATED_M, 0, 0);
+> +       rockchip_edp_set_video_color_format(edp, video_info->color_depth,
+> +                                           video_info->color_space,
+> +                                           video_info->dynamic_range,
+> +                                           video_info->ycbcr_coeff);
+> +
+> +       val = y_total & 0xff;
+> +       writel(val, edp->regs + TOTAL_LINE_CFG_L);
+> +       val = (y_total >> 8);
+> +       writel(val, edp->regs + TOTAL_LINE_CFG_H);
+> +       val = (mode->vdisplay & 0xff);
+> +       writel(val, edp->regs + ATV_LINE_CFG_L);
+> +       val = (mode->vdisplay >> 8);
+> +       writel(val, edp->regs + ATV_LINE_CFG_H);
+> +       val = (mode->vsync_start - mode->vdisplay);
+> +       writel(val, edp->regs + VF_PORCH_REG);
+> +       val = (mode->vsync_end - mode->vsync_start);
+> +       writel(val, edp->regs + VSYNC_CFG_REG);
+> +       val = (mode->vtotal - mode->vsync_end);
+> +       writel(val, edp->regs + VB_PORCH_REG);
+> +       val = x_total & 0xff;
+> +       writel(val, edp->regs + TOTAL_PIXELL_REG);
+> +       val = x_total >> 8;
+> +       writel(val, edp->regs + TOTAL_PIXELH_REG);
+> +       val = (x_act & 0xff);
+> +       writel(val, edp->regs + ATV_PIXELL_REG);
+> +       val = (x_act >> 8);
+> +       writel(val, edp->regs + ATV_PIXELH_REG);
+> +       val = (mode->hsync_start - mode->hdisplay) & 0xff;
+> +       writel(val, edp->regs + HF_PORCHL_REG);
+> +       val = (mode->hsync_start - mode->hdisplay) >> 8;
+> +       writel(val, edp->regs + HF_PORCHH_REG);
+> +       val = (mode->hsync_end - mode->hsync_start) & 0xff;
+> +       writel(val, edp->regs + HSYNC_CFGL_REG);
+> +       val = (mode->hsync_end - mode->hsync_start) >> 8;
+> +       writel(val, edp->regs + HSYNC_CFGH_REG);
+> +       val = (mode->htotal - mode->hsync_end) & 0xff;
+> +       writel(val, edp->regs + HB_PORCHL_REG);
+> +       val = (mode->htotal - mode->hsync_end)  >> 8;
+> +       writel(val, edp->regs + HB_PORCHH_REG);
+> +
+> +       val = BIST_EN | BIST_WH_64 | BIST_TYPE_COLR_BAR;
+> +       writel(val, edp->regs + VIDEO_CTL_4);
+> +
+> +       val = readl(edp->regs + VIDEO_CTL_10);
+> +       val &= ~F_SEL;
+> +       writel(val, edp->regs + VIDEO_CTL_10);
+> +       return 0;
+> +}
+> +
+> +void rockchip_edp_enable_video_master(struct rockchip_edp_device *edp,
+> +                                     bool enable)
+> +{
+> +}
+> +
+> +void rockchip_edp_start_video(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + VIDEO_CTL_1);
+> +       val |= VIDEO_EN;
+> +       writel(val, edp->regs + VIDEO_CTL_1);
+> +}
+> +
+> +int rockchip_edp_is_video_stream_on(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + SYS_CTL_3);
+> +       writel(val, edp->regs + SYS_CTL_3);
+> +
+> +       val = readl(edp->regs + SYS_CTL_3);
+> +       if (!(val & STRM_VALID)) {
+> +               dev_dbg(edp->dev, "Input video stream is not detected.\n");
+> +               return -EINVAL;
+> +       }
+> +
+> +       return 0;
+> +}
+> +
+> +void rockchip_edp_config_video_slave_mode(struct rockchip_edp_device *edp,
+> +                                         struct video_info *video_info)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + FUNC_EN_1);
+> +       val &= ~(VID_FIFO_FUNC_EN_N | VID_CAP_FUNC_EN_N);
+> +       writel(val, edp->regs + FUNC_EN_1);
+> +
+> +       val = readl(edp->regs + VIDEO_CTL_10);
+> +       val &= ~INTERACE_SCAN_CFG;
+> +       val |= (video_info->interlaced << 2);
+> +       writel(val, edp->regs + VIDEO_CTL_10);
+> +
+> +       val = readl(edp->regs + VIDEO_CTL_10);
+> +       val &= ~VSYNC_POLARITY_CFG;
+> +       val |= (video_info->v_sync_polarity << 1);
+> +       writel(val, edp->regs + VIDEO_CTL_10);
+> +
+> +       val = readl(edp->regs + VIDEO_CTL_10);
+> +       val &= ~HSYNC_POLARITY_CFG;
+> +       val |= (video_info->h_sync_polarity << 0);
+> +       writel(val, edp->regs + VIDEO_CTL_10);
+> +}
+> +
+> +void rockchip_edp_enable_scrambling(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + TRAINING_PTN_SET);
+> +       val &= ~SCRAMBLING_DISABLE;
+> +       writel(val, edp->regs + TRAINING_PTN_SET);
+> +}
+> +
+> +void rockchip_edp_disable_scrambling(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = readl(edp->regs + TRAINING_PTN_SET);
+> +       val |= SCRAMBLING_DISABLE;
+> +       writel(val, edp->regs + TRAINING_PTN_SET);
+> +}
+> +
+> +enum dp_irq_type rockchip_edp_get_irq_type(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       /* Parse hotplug interrupt status register */
+> +       val = readl(edp->regs + COMMON_INT_STA_4);
+> +       if (val & PLUG)
+> +               return DP_IRQ_TYPE_HP_CABLE_IN;
+> +
+> +       if (val & HPD_LOST)
+> +               return DP_IRQ_TYPE_HP_CABLE_OUT;
+> +
+> +       if (val & HOTPLUG_CHG)
+> +               return DP_IRQ_TYPE_HP_CHANGE;
+> +
+> +       return DP_IRQ_TYPE_UNKNOWN;
+> +}
+> +
+> +void rockchip_edp_clear_hotplug_interrupts(struct rockchip_edp_device *edp)
+> +{
+> +       u32 val;
+> +
+> +       val = HOTPLUG_CHG | HPD_LOST | PLUG;
+> +       writel(val, edp->regs + COMMON_INT_STA_4);
+> +
+> +       val = INT_HPD;
+> +       writel(val, edp->regs + DP_INT_STA);
+> +}
+> diff --git a/drivers/gpu/drm/rockchip/rockchip_edp_reg.h b/drivers/gpu/drm/rockchip/rockchip_edp_reg.h
+> new file mode 100644
+> index 0000000..b50dd47
+> --- /dev/null
+> +++ b/drivers/gpu/drm/rockchip/rockchip_edp_reg.h
+> @@ -0,0 +1,345 @@
+> +/*
+> +* Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
+> +* Author:
+> +*      Andy yan <andy.yan-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*      Jeff chen <jeff.chen-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> +*
+> +* based on exynos_dp_reg.h
+> +*
+> +* This program is free software; you can redistribute it and/or modify it
+> +* under the terms of the GNU General Public License as published by the
+> +* Free Software Foundation; either version 2 of the License, or (at your
+> +* option) any later version.
+> +*/
+> +
+> +#ifndef _ROCKCHIP_EDP_REG_H
+> +#define _ROCKCHIP_EDP_REG_H
+> +
+> +#include <linux/bitops.h>
+> +
+> +#define TX_SW_RST                              0x14
+> +#define FUNC_EN_1                              0x18
+> +#define FUNC_EN_2                              0x1C
+> +#define VIDEO_CTL_1                            0x20
+> +#define VIDEO_CTL_2                            0x24
+> +#define VIDEO_CTL_3                            0x28
+> +#define VIDEO_CTL_4                            0x2c
+> +#define VIDEO_CTL_8                            0x3C
+> +#define VIDEO_CTL_10                           0x44
+> +#define TOTAL_LINE_CFG_L                       0x48
+> +#define TOTAL_LINE_CFG_H                       0x4c
+> +#define ATV_LINE_CFG_L                         0x50
+> +#define ATV_LINE_CFG_H                         0x54
+> +#define VF_PORCH_REG                           0x58
+> +#define VSYNC_CFG_REG                          0x5c
+> +#define VB_PORCH_REG                           0x60
+> +#define TOTAL_PIXELL_REG                       0x64
+> +#define TOTAL_PIXELH_REG                       0x68
+> +#define ATV_PIXELL_REG                         0x6c
+> +#define ATV_PIXELH_REG                         0x70
+> +#define HF_PORCHL_REG                          0x74
+> +#define HF_PORCHH_REG                          0x78
+> +#define HSYNC_CFGL_REG                         0x7c
+> +#define HSYNC_CFGH_REG                         0x80
+> +#define HB_PORCHL_REG                          0x84
+> +#define HB_PORCHH_REG                          0x88
+> +#define PLL_REG_1                              0xfc
+> +
+> +#define SSC_REG                                        0x104
+> +#define TX_REG_COMMON                          0x114
+> +#define DP_AUX                                 0x120
+> +#define DP_BIAS                                        0x124
+> +#define DP_PWRDN                               0x12c
+> +#define DP_RESERVE2                            0x134
+> +
+> +#define LANE_MAP                               0x35C
+> +#define ANALOG_CTL_2                           0x374
+> +#define AUX_HW_RETRY_CTL                       0x390
+> +#define COMMON_INT_STA_1                       0x3C4
+> +#define COMMON_INT_STA_2                       0x3C8
+> +#define COMMON_INT_STA_3                       0x3CC
+> +#define COMMON_INT_STA_4                       0x3D0
+> +#define DP_INT_STA                             0x3DC
+> +#define COMMON_INT_MASK_1                      0x3E0
+> +#define COMMON_INT_MASK_2                      0x3E4
+> +#define COMMON_INT_MASK_3                      0x3E8
+> +#define COMMON_INT_MASK_4                      0x3EC
+> +#define DP_INT_STA_MASK                                0x3F8
+> +
+> +#define SYS_CTL_1                              0x600
+> +#define SYS_CTL_2                              0x604
+> +#define SYS_CTL_3                              0x608
+> +#define SYS_CTL_4                              0x60C
+> +#define PKT_SEND_CTL                           0x640
+> +#define HDCP_CTL                               0x648
+> +#define LINK_BW_SET                            0x680
+> +#define LANE_CNT_SET                           0x684
+> +#define TRAINING_PTN_SET                       0x688
+> +#define LN0_LINK_TRAINING_CTL                  0x68C
+> +#define LN1_LINK_TRAINING_CTL                  0x690
+> +#define LN2_LINK_TRAINING_CTL                  0x694
+> +#define LN3_LINK_TRAINING_CTL                  0x698
+> +#define HW_LT_CTL                              0x6a0
+> +#define DEBUG_CTL                              0x6C0
+> +#define HPD_DEGLITCH_L                         0x6C4
+> +#define HPD_DEGLITCH_H                         0x6C8
+> +#define LINK_DEBUG_CTL                         0x6E0
+> +#define M_VID_0                                        0x700
+> +#define M_VID_1                                        0x704
+> +#define M_VID_2                                        0x708
+> +#define N_VID_0                                        0x70C
+> +#define N_VID_1                                        0x710
+> +#define N_VID_2                                        0x714
+> +#define VIDEO_FIFO_THRD                                0x730
+> +#define AUDIO_MARGIN                           0x73C
+> +#define M_VID_GEN_FILTER_TH                    0x764
+> +#define M_AUD_GEN_FILTER_TH                    0x778
+> +#define AUX_CH_STA                             0x780
+> +#define AUX_CH_DEFER_CTL                       0x788
+> +#define AUX_RX_COMM                            0x78C
+> +#define BUFFER_DATA_CTL                                0x790
+> +#define AUX_CH_CTL_1                           0x794
+> +#define DP_AUX_ADDR_7_0                                0x798
+> +#define DP_AUX_ADDR_15_8                       0x79C
+> +#define DP_AUX_ADDR_19_16                      0x7A0
+> +#define AUX_CH_CTL_2                           0x7A4
+> +#define BUF_DATA_0                             0x7C0
+> +#define SOC_GENERAL_CTL                                0x800
+> +#define PLL_REG_2                              0x9e4
+> +#define PLL_REG_3                              0x9e8
+> +#define PLL_REG_4                              0x9ec
+> +#define PLL_REG_5                              0xa00
+> +
+> +/* ROCKCHIP_EDP_FUNC_EN_1 */
+> +#define VID_CAP_FUNC_EN_N                      BIT(6)
+> +#define VID_FIFO_FUNC_EN_N                     BIT(5)
+> +#define AUD_FIFO_FUNC_EN_N                     BIT(4)
+> +#define AUD_FUNC_EN_N                          BIT(3)
+> +#define HDCP_FUNC_EN_N                         BIT(2)
+> +#define SW_FUNC_EN_N                           BIT(0)
+> +
+> +/* ROCKCHIP_EDP_FUNC_EN_2 */
+> +#define SSC_FUNC_EN_N                          BIT(7)
+> +#define AUX_FUNC_EN_N                          BIT(2)
+> +#define SERDES_FIFO_FUNC_EN_N                  BIT(1)
+> +#define LS_CLK_DOMAIN_FUNC_EN_N                        BIT(0)
+> +
+> +/* ROCKCHIP_EDP_VIDEO_CTL_1 */
+> +#define VIDEO_EN                               BIT(7)
+> +#define VIDEO_MUTE                             BIT(6)
+> +
+> +/* ROCKCHIP_EDP_VIDEO_CTL_1 */
+> +#define IN_D_RANGE_MASK                                (0x1 << 7)
+> +#define IN_D_RANGE_SHIFT                       (7)
+> +#define IN_D_RANGE_CEA                         (0x1 << 7)
+> +#define IN_D_RANGE_VESA                                (0x0 << 7)
+> +#define IN_BPC_MASK                            (0x7 << 4)
+> +#define IN_BPC_SHIFT                           (4)
+> +#define IN_BPC_12_BITS                         (0x3 << 4)
+> +#define IN_BPC_10_BITS                         (0x2 << 4)
+> +#define IN_BPC_8_BITS                          (0x1 << 4)
+> +#define IN_BPC_6_BITS                          (0x0 << 4)
+> +#define IN_COLOR_F_MASK                                (0x3 << 0)
+> +#define IN_COLOR_F_SHIFT                       (0)
+> +#define IN_COLOR_F_YCBCR444                    (0x2 << 0)
+> +#define IN_COLOR_F_YCBCR422                    (0x1 << 0)
+> +#define IN_COLOR_F_RGB                         (0x0 << 0)
+> +
+> +/* ROCKCHIP_EDP_VIDEO_CTL_3 */
+> +#define IN_YC_COEFFI_MASK                      (0x1 << 7)
+> +#define IN_YC_COEFFI_SHIFT                     (7)
+> +#define IN_YC_COEFFI_ITU709                    (0x1 << 7)
+> +#define IN_YC_COEFFI_ITU601                    (0x0 << 7)
+> +#define VID_CHK_UPDATE_TYPE_MASK               (0x1 << 4)
+> +#define VID_CHK_UPDATE_TYPE_SHIFT              (4)
+> +#define VID_CHK_UPDATE_TYPE_1                  (0x1 << 4)
+> +#define VID_CHK_UPDATE_TYPE_0                  (0x0 << 4)
+> +
+> +/* ROCKCHIP_EDP_VIDEO_CTL_4 */
+> +#define BIST_EN                                        (0x1 << 3)
+> +#define BIST_WH_64                             (0x1 << 2)
+> +#define BIST_WH_32                             (0x0 << 2)
+> +#define BIST_TYPE_COLR_BAR                     (0x0 << 0)
+> +#define BIST_TYPE_GRAY_BAR                     (0x1 << 0)
+> +#define BIST_TYPE_MOBILE_BAR                   (0x2 << 0)
+> +
+> +/* ROCKCHIP_EDP_VIDEO_CTL_8 */
+> +#define VID_HRES_TH(x)                         (((x) & 0xf) << 4)
+> +#define VID_VRES_TH(x)                         (((x) & 0xf) << 0)
+> +
+> +/* ROCKCHIP_EDP_VIDEO_CTL_10 */
+> +#define F_SEL                                  (0x1 << 4)
+> +#define INTERACE_SCAN_CFG                      (0x1 << 2)
+> +#define VSYNC_POLARITY_CFG                     (0x1 << 1)
+> +#define HSYNC_POLARITY_CFG                     (0x1 << 0)
+> +
+> +/* ROCKCHIP_EDP_PLL_REG_1 */
+> +#define REF_CLK_24M                            (0x1 << 1)
+> +#define REF_CLK_27M                            (0x0 << 1)
+> +
+> +/* ROCKCHIP_EDP_DP_PWRDN */
+> +#define PD_INC_BG                              BIT(7)
+> +#define PD_EXP_BG                              BIT(6)
+> +#define PD_AUX                                 BIT(5)
+> +#define PD_PLL                                 BIT(4)
+> +#define PD_CH3                                 BIT(3)
+> +#define PD_CH2                                 BIT(2)
+> +#define PD_CH1                                 BIT(1)
+> +#define PD_CH0                                 BIT(0)
+> +
+> +/* ROCKCHIP_EDP_LANE_MAP */
+> +#define LANE3_MAP_LOGIC_LANE_0                 (0x0 << 6)
+> +#define LANE3_MAP_LOGIC_LANE_1                 (0x1 << 6)
+> +#define LANE3_MAP_LOGIC_LANE_2                 (0x2 << 6)
+> +#define LANE3_MAP_LOGIC_LANE_3                 (0x3 << 6)
+> +#define LANE2_MAP_LOGIC_LANE_0                 (0x0 << 4)
+> +#define LANE2_MAP_LOGIC_LANE_1                 (0x1 << 4)
+> +#define LANE2_MAP_LOGIC_LANE_2                 (0x2 << 4)
+> +#define LANE2_MAP_LOGIC_LANE_3                 (0x3 << 4)
+> +#define LANE1_MAP_LOGIC_LANE_0                 (0x0 << 2)
+> +#define LANE1_MAP_LOGIC_LANE_1                 (0x1 << 2)
+> +#define LANE1_MAP_LOGIC_LANE_2                 (0x2 << 2)
+> +#define LANE1_MAP_LOGIC_LANE_3                 (0x3 << 2)
+> +#define LANE0_MAP_LOGIC_LANE_0                 (0x0 << 0)
+> +#define LANE0_MAP_LOGIC_LANE_1                 (0x1 << 0)
+> +#define LANE0_MAP_LOGIC_LANE_2                 (0x2 << 0)
+> +#define LANE0_MAP_LOGIC_LANE_3                 (0x3 << 0)
+> +
+> +/* ROCKCHIP_EDP_ANALOG_CTL_2 */
+> +#define SEL_24M                                        (0x1 << 3)
+> +
+> +/* ROCKCHIP_EDP_COMMON_INT_STA_1 */
+> +#define VSYNC_DET                              BIT(7)
+> +#define PLL_LOCK_CHG                           BIT(6)
+> +#define SPDIF_ERR                              BIT(5)
+> +#define SPDIF_UNSTBL                           BIT(4)
+> +#define VID_FORMAT_CHG                         BIT(3)
+> +#define AUD_CLK_CHG                            BIT(2)
+> +#define VID_CLK_CHG                            BIT(1)
+> +#define SW_INT                                 BIT(0)
+> +
+> +/* ROCKCHIP_EDP_COMMON_INT_STA_2 */
+> +#define ENC_EN_CHG                             BIT(6)
+> +#define HW_BKSV_RDY                            BIT(3)
+> +#define HW_SHA_DONE                            BIT(2)
+> +#define HW_AUTH_STATE_CHG                      BIT(1)
+> +#define HW_AUTH_DONE                           BIT(0)
+> +
+> +/* ROCKCHIP_EDP_COMMON_INT_STA_3 */
+> +#define AFIFO_UNDER                            BIT(7)
+> +#define AFIFO_OVER                             BIT(6)
+> +#define R0_CHK_FLAG                            BIT(5)
+> +
+> +/* ROCKCHIP_EDP_COMMON_INT_STA_4 */
+> +#define PSR_ACTIVE                             BIT(7)
+> +#define PSR_INACTIVE                           BIT(6)
+> +#define SPDIF_BI_PHASE_ERR                     BIT(5)
+> +#define HOTPLUG_CHG                            BIT(2)
+> +#define HPD_LOST                               BIT(1)
+> +#define PLUG                                   BIT(0)
+> +
+> +/* ROCKCHIP_EDP_INT_STA */
+> +#define INT_HPD                                        BIT(6)
+> +#define HW_LT_DONE                             BIT(5)
+> +#define SINK_LOST                              BIT(3)
+> +#define LINK_LOST                              BIT(2)
+> +#define RPLY_RECEIV                            BIT(1)
+> +#define AUX_ERR                                        BIT(0)
+> +
+> +/* ROCKCHIP_EDP_INT_CTL */
+> +#define INT_CTL                                        0x3FC
+> +#define SOFT_INT_CTRL                          BIT(2)
+> +#define INT_POL                                        BIT(0)
+> +
+> +/* ROCKCHIP_EDP_SYS_CTL_1 */
+> +#define DET_STA                                        BIT(2)
+> +#define FORCE_DET                              BIT(1)
+> +#define DET_CTRL                               BIT(0)
+> +
+> +/* ROCKCHIP_EDP_SYS_CTL_2 */
+> +#define CHA_CRI(x)                             (((x) & 0xf) << 4)
+> +#define CHA_STA                                        BIT(2)
+> +#define FORCE_CHA                              BIT(1)
+> +#define CHA_CTRL                               BIT(0)
+> +
+> +/* ROCKCHIP_EDP_SYS_CTL_3 */
+> +#define HPD_STATUS                             BIT(6)
+> +#define F_HPD                                  BIT(5)
+> +#define HPD_CTRL                               BIT(4)
+> +#define HDCP_RDY                               BIT(3)
+> +#define STRM_VALID                             BIT(2)
+> +#define F_VALID                                        BIT(1)
+> +#define VALID_CTRL                             BIT(0)
+> +
+> +/* ROCKCHIP_EDP_SYS_CTL_4 */
+> +#define FIX_M_AUD                              BIT(4)
+> +#define ENHANCED                               BIT(3)
+> +#define FIX_M_VID                              BIT(2)
+> +#define M_VID_UPDATE_CTRL                      BIT(0)
+> +
+> +/* ROCKCHIP_EDP_TRAINING_PTN_SET */
+> +#define SCRAMBLING_DISABLE                     (0x1 << 5)
+> +#define SCRAMBLING_ENABLE                      (0x0 << 5)
+> +#define LINK_QUAL_PATTERN_SET_MASK             (0x7 << 2)
+> +#define LINK_QUAL_PATTERN_SET_PRBS7            (0x3 << 2)
+> +#define LINK_QUAL_PATTERN_SET_D10_2            (0x1 << 2)
+> +#define LINK_QUAL_PATTERN_SET_DISABLE          (0x0 << 2)
+> +#define SW_TRAINING_PATTERN_SET_MASK           (0x3 << 0)
+> +#define SW_TRAINING_PATTERN_SET_PTN2           (0x2 << 0)
+> +#define SW_TRAINING_PATTERN_SET_PTN1           (0x1 << 0)
+> +#define SW_TRAINING_PATTERN_SET_DISABLE                (0x0 << 0)
+> +
+> +/* ROCKCHIP_EDP_HW_LT_CTL */
+> +#define HW_LT_ERR_CODE_MASK                    0x70
+> +#define HW_LT_EN                               BIT(0)
+> +
+> +/* ROCKCHIP_EDP_LN0_LINK_TRAINING_CTL */
+> +#define PRE_EMPHASIS_SET_MASK                  (0x3 << 3)
+> +#define PRE_EMPHASIS_SET_SHIFT                 (3)
+> +
+> +/* ROCKCHIP_EDP_DEBUG_CTL */
+> +#define PLL_LOCK                               BIT(4)
+> +#define F_PLL_LOCK                             BIT(3)
+> +#define PLL_LOCK_CTRL                          BIT(2)
+> +#define POLL_EN                                        BIT(1)
+> +#define PN_INV                                 BIT(0)
+> +
+> +/* ROCKCHIP_EDP_AUX_CH_STA */
+> +#define AUX_BUSY                               (0x1 << 4)
+> +#define AUX_STATUS_MASK                                (0xf << 0)
+> +
+> +/* ROCKCHIP_EDP_AUX_CH_DEFER_CTL */
+> +#define DEFER_CTRL_EN                          (0x1 << 7)
+> +#define DEFER_COUNT(x)                         (((x) & 0x7f) << 0)
+> +
+> +/* ROCKCHIP_EDP_AUX_RX_COMM */
+> +#define AUX_RX_COMM_I2C_DEFER                  (0x2 << 2)
+> +#define AUX_RX_COMM_AUX_DEFER                  (0x2 << 0)
+> +
+> +/* ROCKCHIP_EDP_BUFFER_DATA_CTL */
+> +#define BUF_CLR                                        (0x1 << 7)
+> +#define BUF_DATA_COUNT(x)                      (((x) & 0xf) << 0)
+> +
+> +/* ROCKCHIP_EDP_AUX_CH_CTL_1 */
+> +#define AUX_LENGTH(x)                          (((x - 1) & 0xf) << 4)
+> +#define AUX_TX_COMM_MASK                       (0xf << 0)
+> +#define AUX_TX_COMM_DP_TRANSACTION             (0x1 << 3)
+> +#define AUX_TX_COMM_I2C_TRANSACTION            (0x0 << 3)
+> +#define AUX_TX_COMM_MOT                                (0x1 << 2)
+> +#define AUX_TX_COMM_WRITE                      (0x0 << 0)
+> +#define AUX_TX_COMM_READ                       (0x1 << 0)
+> +
+> +/* OCKCHIP_EDP_AUX_ADDR_7_0 */
+> +#define AUX_ADDR_7_0(x)                        (((x) >> 0) & 0xff)
+> +
+> +/* ROCKCHIP_EDP_AUX_ADDR_15_8 */
+> +#define AUX_ADDR_15_8(x)               (((x) >> 8) & 0xff)
+> +
+> +/* ROCKCHIP_EDP_AUX_ADDR_19_16 */
+> +#define AUX_ADDR_19_16(x)              (((x) >> 16) & 0x0f)
+> +
+> +/* ROCKCHIP_EDP_AUX_CH_CTL_2 */
+> +#define ADDR_ONLY                              BIT(1)
+> +#define AUX_EN                                 BIT(0)
+> +
+> +#endif /* _ROCKCHIP_EDP_REG_H */
 > --
 > 1.7.9.5
 >
