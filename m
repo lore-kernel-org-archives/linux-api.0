@@ -1,22 +1,58 @@
-From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v14 net-next 00/11] eBPF syscall, verifier, testsuite
-Date: Mon, 22 Sep 2014 21:57:16 +0200
-Message-ID: <54207F1C.1090003@redhat.com>
-References: <1411344411-3824-1-git-send-email-ast@plumgrid.com>
+From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Getting ready for IO extensions, v3
+Date: Mon, 22 Sep 2014 14:19:24 -0700
+Message-ID: <20140922211924.GG920@lenny.home.zabbo.net>
+References: <20140920004634.GA18529@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1411344411-3824-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20140920004634.GA18529-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Martin Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/22/2014 02:06 AM, Alexei Starovoitov wrote:
-...
-> v13 -> v14:
-> - small change to 1st patch to ease 'new userspace with old kernel'
->    problem (done similar to perf_copy_attr()) (suggested by Daniel)
+On Fri, Sep 19, 2014 at 05:46:34PM -0700, Darrick J. Wong wrote:
+> Hi everyone,
+> 
+> I've been working (albeit slowly) on the userspace IO extension interface that
+> I talked about last April[1].  The mechanism of attaching various attributes
+> (which so far have been mandatory ones) to IO requests has been messy, since it
+> requires me to design an interface for both the extensions I have in mind as
+> well as a generic way to pass extensions into the kernel from userland.
+> 
+> Is this the appropriate forum to talk about API design in Linux?  It seems that
+> way to me based on the list archives, but then I'm new at this, and would like
+> to discuss the design before sending full patches (again).
+> 
+> So far I've defined this structure:
+> 
+> /* IO extension flags */
+> #define IO_EXT_PI	(1)	/* protection info (checksums, etc) */
+> #define IO_EXT_REPLICA	(0x2)	/* replica */
+> #define IO_EXT_ALL	(IO_EXT_PI | IO_EXT_REPLICA)
 
-Thanks for taking care of it.
+Do we have more examples?  It's hard to make a strong case for the need
+for variadic io syscalls with only a handful of optional arguments.
+
+Completion timestamps?  priorities?  cgroup annotation?  (Haha, how
+about a flag for a "trim" IO instead of having to do a stupid sync
+ioctl).  I suppose the leading question is: what can the bio interface
+do that userspace can't?
+
+> The glaring downsides of this approach of course is that we waste memory on
+> fields that might not be turned on, we have to find a sane way to handle the
+> ie_has flags, and fields cannot be removed from the structure.  I don't know of
+> a good way to design around those problems without greatly increasing the
+> complexity of the data structure (a generic dictionary would work but ye gods
+> that's horrifying), so I was wondering if any of you could suggest something
+> better?
+
+Maybe it'd just be easier to punt and re-use one of the N type/payload
+interfaces.  sendmsg() and netlink are the big ones, right?  I think the
+important thing is to translate them to internal kernel interfaces as
+high up as possible so that the optional arg parsing is not pushed down
+the stack.
+ 
+- z
