@@ -1,93 +1,67 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: [PATCH v14 net-next 02/11] bpf: enable bpf syscall on x64 and i386
-Date: Sun, 21 Sep 2014 17:06:42 -0700
-Message-ID: <1411344411-3824-3-git-send-email-ast@plumgrid.com>
-References: <1411344411-3824-1-git-send-email-ast@plumgrid.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1411344411-3824-1-git-send-email-ast@plumgrid.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "David S. Miller" <davem@davemloft.net>
-Cc: Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <dborkman@redhat.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Pablo Neira Ayuso <pablo@netfilter.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Subject: Re: [PATCH v3 1/5] drm/rockchip: Add basic drm driver
+Date: Mon, 22 Sep 2014 09:27:33 +0800
+Message-ID: <541F7B05.2000605@rock-chips.com>
+References: <1411105668-32722-1-git-send-email-mark.yao@rock-chips.com>	<1411105668-32722-2-git-send-email-mark.yao@rock-chips.com> <CANq1E4Ti0yOQ+jCiXy7=NtFQ9cbWLOSLf6q-HWVdDFtMB1n29Q@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANq1E4Ti0yOQ+jCiXy7=NtFQ9cbWLOSLf6q-HWVdDFtMB1n29Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, =?UTF-8?B?U3TDqXBoYW5lIE1hcmNoZXNpbg==?= <marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, dbehr-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-done as separate commit to ease conflict resolution
-
-Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
----
- arch/x86/syscalls/syscall_32.tbl  |    1 +
- arch/x86/syscalls/syscall_64.tbl  |    1 +
- include/linux/syscalls.h          |    3 ++-
- include/uapi/asm-generic/unistd.h |    4 +++-
- kernel/sys_ni.c                   |    3 +++
- 5 files changed, 10 insertions(+), 2 deletions(-)
-
-diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-index 028b78168d85..9fe1b5d002f0 100644
---- a/arch/x86/syscalls/syscall_32.tbl
-+++ b/arch/x86/syscalls/syscall_32.tbl
-@@ -363,3 +363,4 @@
- 354	i386	seccomp			sys_seccomp
- 355	i386	getrandom		sys_getrandom
- 356	i386	memfd_create		sys_memfd_create
-+357	i386	bpf			sys_bpf
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index 35dd922727b9..281150b539a2 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -327,6 +327,7 @@
- 318	common	getrandom		sys_getrandom
- 319	common	memfd_create		sys_memfd_create
- 320	common	kexec_file_load		sys_kexec_file_load
-+321	common	bpf			sys_bpf
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 0f86d85a9ce4..bda9b81357cc 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -65,6 +65,7 @@ struct old_linux_dirent;
- struct perf_event_attr;
- struct file_handle;
- struct sigaltstack;
-+union bpf_attr;
- 
- #include <linux/types.h>
- #include <linux/aio_abi.h>
-@@ -875,5 +876,5 @@ asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
- 			    const char __user *uargs);
- asmlinkage long sys_getrandom(char __user *buf, size_t count,
- 			      unsigned int flags);
--
-+asmlinkage long sys_bpf(int cmd, union bpf_attr *attr, unsigned int size);
- #endif
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 11d11bc5c78f..22749c134117 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -705,9 +705,11 @@ __SYSCALL(__NR_seccomp, sys_seccomp)
- __SYSCALL(__NR_getrandom, sys_getrandom)
- #define __NR_memfd_create 279
- __SYSCALL(__NR_memfd_create, sys_memfd_create)
-+#define __NR_bpf 280
-+__SYSCALL(__NR_bpf, sys_bpf)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 280
-+#define __NR_syscalls 281
- 
- /*
-  * All syscalls below here should go away really,
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 391d4ddb6f4b..b4b5083f5f5e 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -218,3 +218,6 @@ cond_syscall(sys_kcmp);
- 
- /* operate on Secure Computing state */
- cond_syscall(sys_seccomp);
-+
-+/* access BPF programs and maps */
-+cond_syscall(sys_bpf);
--- 
-1.7.9.5
+On 2014=E5=B9=B409=E6=9C=8819=E6=97=A5 21:04, David Herrmann wrote:
+> Hi
+>
+> On Fri, Sep 19, 2014 at 7:47 AM, Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org> w=
+rote:
+> [snip]
+>> +static int rockchip_drm_bind(struct device *dev)
+>> +{
+>> +       return drm_platform_init(&rockchip_drm_driver, to_platform_d=
+evice(dev));
+> Please avoid drm_platform_*() usage. We're about to drop all the
+> drm_bus midlayers. See the tegra driver how to do it, but basically
+> just this:
+OK, I will do it.
+> struct drm_device *ddev;
+>
+> ddev =3D drm_dev_alloc(&rockchip_drm_driver, &to_platform_device(dev)=
+->dev);
+> if (!ddev)
+>          return -ENOMEM;
+>
+> r =3D drm_dev_set_unique(ddev, dev_name(&ddev->dev));
+> if (r < 0) {
+>          drm_dev_unref(ddev);
+>          return r;
+> }
+>
+> r =3D drm_dev_register(ddev);
+> if (r < 0) {
+>          drm_dev_unref(ddev);
+>          return r;
+> }
+>
+>> +}
+>> +
+>> +static void rockchip_drm_unbind(struct device *dev)
+>> +{
+>> +       drm_put_dev(dev_get_drvdata(dev));
+> Please use:
+>
+> struct drm_device *ddev =3D dev_get_drvdata(dev);
+>
+> drm_dev_unregister(ddev);
+> drm_dev_unref(ddev);
+>
+>
+> Thanks
+> David
+>
+>
+>
