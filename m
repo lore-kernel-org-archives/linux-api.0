@@ -1,65 +1,78 @@
-From: Sudeep Holla <sudeep.holla@arm.com>
-Subject: Re: [PATCH v4 04/11] drivers: base: support cpu cache information
- interface to userspace via sysfs
-Date: Mon, 22 Sep 2014 09:55:18 +0100
-Message-ID: <541FE3F6.4070806@arm.com>
-References: <1409763617-17074-1-git-send-email-sudeep.holla@arm.com> <1409763617-17074-5-git-send-email-sudeep.holla@arm.com> <541CAD16.6030309@codeaurora.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252; format=flowed
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-ia64-owner@vger.kernel.org>
-In-Reply-To: <541CAD16.6030309@codeaurora.org>
-Sender: linux-ia64-owner@vger.kernel.org
-To: Stephen Boyd <sboyd@codeaurora.org>, LKML <linux-kernel@vger.kernel.org>
-Cc: Sudeep Holla <sudeep.holla@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux390@de.ibm.com" <linux390@de.ibm.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, "linuxppc-dev@lists.ozlabs.org" <linuxppc-dev@lists.ozlabs.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>
+From: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Subject: [PATCH v4 0/5] Add drm driver for Rockchip Socs
+Date: Mon, 22 Sep 2014 18:47:00 +0800
+Message-ID: <1411382820-1615-1-git-send-email-mark.yao@rock-chips.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dbehr-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, xjq-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kfx-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cym-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cf-TNX95d0MmH7DzftRWevZcw@public.gmane.org, zyw-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xxm-TNX95d0MmH7DzftRWevZcw@public.gmane.org, huangtao-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kever.yang-TNX95d0MmH7DzftRWevZcw@public.gmane.org, yxj-TNX95d0MmH7DzftRWevZcw@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xw-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Stephen,
+This a series of patches is a DRM Driver for Rockchip Socs, add support
+for vop devices, eDP. Future patches will add additional encoders/connectors,
+such as HDMI.
 
-On 19/09/14 23:24, Stephen Boyd wrote:
-> On 09/03/14 10:00, Sudeep Holla wrote:
->> From: Sudeep Holla <sudeep.holla@arm.com>
->>
->> This patch adds initial support for providing processor cache information
->> to userspace through sysfs interface. This is based on already existing
->> implementations(x86, ia64, s390 and powerpc) and hence the interface is
->> intended to be fully compatible.
->>
->> The main purpose of this generic support is to avoid further code
->> duplication to support new architectures and also to unify all the existing
->> different implementations.
->>
->> This implementation maintains the hierarchy of cache objects which reflects
->> the system's cache topology. Cache devices are instantiated as needed as
->> CPUs come online. The cache information is replicated per-cpu even if they are
->> shared. A per-cpu array of cache information maintained is used mainly for
->> sysfs-related book keeping.
->>
->> It also implements the shared_cpu_map attribute, which is essential for
->> enabling both kernel and user-space to discover the system's overall cache
->> topology.
->>
->> This patch also add the missing ABI documentation for the cacheinfo sysfs
->> interface already, which is well defined and widely used.
->>
->> Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
->> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
->> Cc: Stephen Boyd <sboyd@codeaurora.org>
->> Cc: linux-api@vger.kernel.org
->> Cc: linux390@de.ibm.com
->> Cc: linux-arm-kernel@lists.infradead.org
->> Cc: linux-ia64@vger.kernel.org
->> Cc: linuxppc-dev@lists.ozlabs.org
->> Cc: linux-s390@vger.kernel.org
->> Cc: x86@kernel.org
->>
->
-> Reviewed-by: Stephen Boyd <sboyd@codeaurora.org>
-> Tested-by: Stephen Boyd <sboyd@codeaurora.org>
->
+The basic "crtc" for rockchip is a "VOP" - Video Output Processor.
+the vop devices found on Rockchip rk3288 Soc, rk3288 soc have two similar
+Vop devices. Vop devices support iommu mapping, we use dma-mapping API with
+ARM_DMA_USE_IOMMU.
 
-Thanks for all the reviews and testings of the series.
+Changes in v2:
+- add DRM master device node to list all display nodes that comprise
+  the graphics subsystem.
+- use the component framework to defer main drm driver probe
+  until all VOP devices have been probed.
+- use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
+  master device and each vop device can shared the drm dma mapping.
+- use drm_crtc_init_with_planes and drm_universal_plane_init.
+- remove unnecessary middle layers.
+- add cursor set, move funcs to rockchip drm crtc.
+- use panel-simple driver for primary display.
+- add vop and edp reset.
 
-Regards,
-Sudeep
+Changes in v3:
+- change "crtc->fb" to "crtc->primary-fb"
+Adviced by Daniel Vetter
+- init cursor plane with universal api, remove unnecessary cursor set,move 
 
+Changes in v4:
+Adviced by David Herrmann
+- remove drm_platform_*() usage, use register drm device directly.
+Adviced by Rob Clark
+- remove special mmap ioctl, do userspace mmap with normal mmap() or mmap offset
+
+Tested on rk3288 pinky board, use eDP encoders/connector, boot and display OK
+
+Mark yao (5):
+  drm/rockchip: Add basic drm driver
+  dt-bindings: video: Add for rockchip display subsytem
+  dt-bindings: video: Add documentation for rockchip vop
+  dt-bindings: video: Add documentation for rockchip edp
+  drm/rockchip: Add support for Rockchip Soc EDP
+
+ .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
+ .../devicetree/bindings/video/rockchip-edp.txt     |   50 +
+ .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
+ drivers/gpu/drm/Kconfig                            |    2 +
+ drivers/gpu/drm/Makefile                           |    1 +
+ drivers/gpu/drm/rockchip/Kconfig                   |   28 +
+ drivers/gpu/drm/rockchip/Makefile                  |   12 +
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  524 ++++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |  120 ++
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  201 +++
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  231 ++++
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   20 +
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  404 ++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   72 +
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1372 ++++++++++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  187 +++
+ drivers/gpu/drm/rockchip/rockchip_edp_core.c       |  853 ++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_edp_core.h       |  309 +++++
+ drivers/gpu/drm/rockchip/rockchip_edp_reg.c        | 1202 +++++++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_edp_reg.h        |  345 +++++
+ include/uapi/drm/rockchip_drm.h                    |   75 ++
+ 22 files changed, 6113 insertions(+)
+
+-- 
+1.7.9.5
