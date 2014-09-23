@@ -1,110 +1,60 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v2 3/7] selftests/ipc: change test to use ksft framework
-Date: Tue, 23 Sep 2014 15:32:56 -0600
-Message-ID: <c86860a4ee3839dce0123c240400c7603be8a7f4.1411506121.git.shuahkh@osg.samsung.com>
-References: <cover.1411506121.git.shuahkh@osg.samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1411506121.git.shuahkh@osg.samsung.com>
-In-Reply-To: <cover.1411506121.git.shuahkh@osg.samsung.com>
-References: <cover.1411506121.git.shuahkh@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org, gregkh@linuxfoundation.org, colin.king@canonical.com, dbueso@suse.de, ebiederm@xmission.com, serge.hallyn@ubuntu.com, thierry@linux.vnet.ibm.com, luto@amacapital.net
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv7 05/26] vfio: introduce the VFIO_DMA_MAP_FLAG_NOEXEC flag
+Date: Tue, 23 Sep 2014 16:21:16 -0600
+Message-ID: <1411510876.24563.47.camel@ul30vt.home>
+References: <1411483586-29304-1-git-send-email-a.motakis@virtualopensystems.com>
+	<1411483586-29304-6-git-send-email-a.motakis@virtualopensystems.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1411483586-29304-6-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, will.deacon-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Change ipc test to use kselftest framework to report
-test results. With this change this test exits with
-EXIT_FAIL instead of -errno. Changed print errno in
-test fail messages to not loose that information.
+On Tue, 2014-09-23 at 16:46 +0200, Antonios Motakis wrote:
+> We introduce the VFIO_DMA_MAP_FLAG_NOEXEC flag to the VFIO dma map call,
+> and expose its availability via the capability VFIO_IOMMU_PROT_NOEXEC.
+> This way the user can control whether the XN flag will be set on the
+> requested mappings. The IOMMU_NOEXEC flag needs to be available for all
+> the IOMMUs of the container used.
+> 
+> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+> ---
+>  include/uapi/linux/vfio.h | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+> index 6612974..30f630c 100644
+> --- a/include/uapi/linux/vfio.h
+> +++ b/include/uapi/linux/vfio.h
+> @@ -29,6 +29,7 @@
+>   * capability is subject to change as groups are added or removed.
+>   */
+>  #define VFIO_DMA_CC_IOMMU		4
+> +#define VFIO_IOMMU_PROT_NOEXEC		5
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
----
- tools/testing/selftests/ipc/msgque.c | 26 ++++++++++++++------------
- 1 file changed, 14 insertions(+), 12 deletions(-)
+Can't we advertise this as a flag bit in vfio_iommu_type1_info instead?
+Also, EEH already took 5 as seen immediately below.
 
-diff --git a/tools/testing/selftests/ipc/msgque.c b/tools/testing/selftests/ipc/msgque.c
-index 552f081..1b2ce33 100644
---- a/tools/testing/selftests/ipc/msgque.c
-+++ b/tools/testing/selftests/ipc/msgque.c
-@@ -5,6 +5,8 @@
- #include <linux/msg.h>
- #include <fcntl.h>
- 
-+#include "../kselftest.h"
-+
- #define MAX_MSG_SIZE		32
- 
- struct msg1 {
-@@ -195,58 +197,58 @@ int main(int argc, char **argv)
- 
- 	if (getuid() != 0) {
- 		printf("Please run the test as root - Exiting.\n");
--		exit(1);
-+		return ksft_exit_fail();
- 	}
- 
- 	msgque.key = ftok(argv[0], 822155650);
- 	if (msgque.key == -1) {
--		printf("Can't make key\n");
--		return -errno;
-+		printf("Can't make key: %d\n", -errno);
-+		return ksft_exit_fail();
- 	}
- 
- 	msgque.msq_id = msgget(msgque.key, IPC_CREAT | IPC_EXCL | 0666);
- 	if (msgque.msq_id == -1) {
- 		err = -errno;
--		printf("Can't create queue\n");
-+		printf("Can't create queue: %d\n", err);
- 		goto err_out;
- 	}
- 
- 	err = fill_msgque(&msgque);
- 	if (err) {
--		printf("Failed to fill queue\n");
-+		printf("Failed to fill queue: %d\n", err);
- 		goto err_destroy;
- 	}
- 
- 	err = dump_queue(&msgque);
- 	if (err) {
--		printf("Failed to dump queue\n");
-+		printf("Failed to dump queue: %d\n", err);
- 		goto err_destroy;
- 	}
- 
- 	err = check_and_destroy_queue(&msgque);
- 	if (err) {
--		printf("Failed to check and destroy queue\n");
-+		printf("Failed to check and destroy queue: %d\n", err);
- 		goto err_out;
- 	}
- 
- 	err = restore_queue(&msgque);
- 	if (err) {
--		printf("Failed to restore queue\n");
-+		printf("Failed to restore queue: %d\n", err);
- 		goto err_destroy;
- 	}
- 
- 	err = check_and_destroy_queue(&msgque);
- 	if (err) {
--		printf("Failed to test queue\n");
-+		printf("Failed to test queue: %d\n", err);
- 		goto err_out;
- 	}
--	return 0;
-+	return ksft_exit_pass();
- 
- err_destroy:
- 	if (msgctl(msgque.msq_id, IPC_RMID, 0)) {
- 		printf("Failed to destroy queue: %d\n", -errno);
--		return -errno;
-+		return ksft_exit_fail();
- 	}
- err_out:
--	return err;
-+	return ksft_exit_fail();
- }
--- 
-1.9.1
+>  
+>  /* Check if EEH is supported */
+>  #define VFIO_EEH			5
+> @@ -401,6 +402,7 @@ struct vfio_iommu_type1_dma_map {
+>  	__u32	flags;
+>  #define VFIO_DMA_MAP_FLAG_READ (1 << 0)		/* readable from device */
+>  #define VFIO_DMA_MAP_FLAG_WRITE (1 << 1)	/* writable from device */
+> +#define VFIO_DMA_MAP_FLAG_NOEXEC (1 << 2)	/* not executable from device */
+>  	__u64	vaddr;				/* Process virtual address */
+>  	__u64	iova;				/* IO virtual address */
+>  	__u64	size;				/* Size of mapping (bytes) */
