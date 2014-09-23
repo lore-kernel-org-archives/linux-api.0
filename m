@@ -1,74 +1,80 @@
-From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv7 05/26] vfio: introduce the VFIO_DMA_MAP_FLAG_NOEXEC flag
-Date: Tue, 23 Sep 2014 16:30:26 -0600
-Message-ID: <1411511426.24563.52.camel@ul30vt.home>
-References: <1411483586-29304-1-git-send-email-a.motakis@virtualopensystems.com>
-	<1411483586-29304-6-git-send-email-a.motakis@virtualopensystems.com>
-	<1411510876.24563.47.camel@ul30vt.home>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH v2 5/7] selftests/mount: change test to use ksft framework
+Date: Tue, 23 Sep 2014 15:41:20 -0700
+Message-ID: <87d2am2c4v.fsf@x220.int.ebiederm.org>
+References: <cover.1411506121.git.shuahkh@osg.samsung.com>
+	<cover.1411506121.git.shuahkh@osg.samsung.com>
+	<969f0780734a04763f2b54063603b93380244d0c.1411506121.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1411510876.24563.47.camel-85EaTFmN5p//9pzu0YdTqQ@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, will.deacon-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <969f0780734a04763f2b54063603b93380244d0c.1411506121.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+	(Shuah Khan's message of "Tue, 23 Sep 2014 15:32:58 -0600")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, colin.king-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, dbueso-l3A5Bk7waGM@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, thierry-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2014-09-23 at 16:21 -0600, Alex Williamson wrote:
-> On Tue, 2014-09-23 at 16:46 +0200, Antonios Motakis wrote:
-> > We introduce the VFIO_DMA_MAP_FLAG_NOEXEC flag to the VFIO dma map call,
-> > and expose its availability via the capability VFIO_IOMMU_PROT_NOEXEC.
-> > This way the user can control whether the XN flag will be set on the
-> > requested mappings. The IOMMU_NOEXEC flag needs to be available for all
-> > the IOMMUs of the container used.
-> > 
-> > Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> > ---
-> >  include/uapi/linux/vfio.h | 2 ++
-> >  1 file changed, 2 insertions(+)
-> > 
-> > diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-> > index 6612974..30f630c 100644
-> > --- a/include/uapi/linux/vfio.h
-> > +++ b/include/uapi/linux/vfio.h
-> > @@ -29,6 +29,7 @@
-> >   * capability is subject to change as groups are added or removed.
-> >   */
-> >  #define VFIO_DMA_CC_IOMMU		4
-> > +#define VFIO_IOMMU_PROT_NOEXEC		5
-> 
-> Can't we advertise this as a flag bit in vfio_iommu_type1_info instead?
+Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> writes:
 
-Ok, I see in the next patch that it's pretty similar to
-VFIO_DMA_CC_IOMMU, so the check extension is probably correct for
-determining the current state.  Maybe we could name it more similarly,
-VFIO_DMA_NOEXEC_IOMMU.  I guess the intended usage is that once a user
-attaches a group to the container they can query whether the
-VFIO_DMA_MAP_FLAG_NOEXEC is valid.  Ok.  Thanks,
+> Change mount test to use kselftest framework to report
+> test results.
 
-Alex
+Nacked-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 
-> Also, EEH already took 5 as seen immediately below.
-> 
-> >  
-> >  /* Check if EEH is supported */
-> >  #define VFIO_EEH			5
-> > @@ -401,6 +402,7 @@ struct vfio_iommu_type1_dma_map {
-> >  	__u32	flags;
-> >  #define VFIO_DMA_MAP_FLAG_READ (1 << 0)		/* readable from device */
-> >  #define VFIO_DMA_MAP_FLAG_WRITE (1 << 1)	/* writable from device */
-> > +#define VFIO_DMA_MAP_FLAG_NOEXEC (1 << 2)	/* not executable from device */
-> >  	__u64	vaddr;				/* Process virtual address */
-> >  	__u64	iova;				/* IO virtual address */
-> >  	__u64	size;				/* Size of mapping (bytes) */
-> 
-> 
+I am curious did you even run these tests?   I can't possibly see how
+the tests would have passed with this change.  At the very least you
+have taken this test from linear to exponential time complexity.
+
+> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> ---
+>  tools/testing/selftests/mount/unprivileged-remount-test.c | 8 +++++---
+>  1 file changed, 5 insertions(+), 3 deletions(-)
+>
+> diff --git a/tools/testing/selftests/mount/unprivileged-remount-test.c b/tools/testing/selftests/mount/unprivileged-remount-test.c
+> index 1b3ff2f..c64d442 100644
+> --- a/tools/testing/selftests/mount/unprivileged-remount-test.c
+> +++ b/tools/testing/selftests/mount/unprivileged-remount-test.c
+> @@ -13,6 +13,8 @@
+>  #include <stdbool.h>
+>  #include <stdarg.h>
+>  
+> +#include "../kselftest.h"
+> +
+>  #ifndef CLONE_NEWNS
+>  # define CLONE_NEWNS 0x00020000
+>  #endif
+> @@ -45,7 +47,7 @@ static void die(char *fmt, ...)
+>  	va_start(ap, fmt);
+>  	vfprintf(stderr, fmt, ap);
+>  	va_end(ap);
+> -	exit(EXIT_FAILURE);
+> +	ksft_exit_fail();
+>  }
+>  
+>  static void write_file(char *filename, char *fmt, ...)
+> @@ -176,7 +178,7 @@ bool test_unpriv_remount(int mount_flags, int remount_flags, int invalid_flags)
+>  		die("remount of /tmp with invalid flags "
+>  		    "succeeded unexpectedly\n");
+>  	}
+> -	exit(EXIT_SUCCESS);
+> +	return ksft_exit_pass();
+
+This change is a deep bug. 
+
+This exit is a forked child process (not from the test itself). That a
+few lines earlier in the test I test the value of in waitpid.
+
+Also in your change commit comment if no where else you should have
+called out that you were making a semantic change to the test.
+
+>  }
+>  
+>  static bool test_unpriv_remount_simple(int mount_flags)
+> @@ -238,5 +240,5 @@ int main(int argc, char **argv)
+>  	{
+>  		die("Default atime malfunctions\n");
+>  	}
+> -	return EXIT_SUCCESS;
+> +	return ksft_exit_pass();
+>  }
