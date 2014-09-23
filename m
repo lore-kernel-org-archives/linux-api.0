@@ -1,135 +1,415 @@
-From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v7 1/8] mfd: max14577: Add defines for MAX77836 charger
-Date: Tue, 23 Sep 2014 13:43:16 +0200
-Message-ID: <1411472603-11821-2-git-send-email-k.kozlowski@samsung.com>
-References: <1411472603-11821-1-git-send-email-k.kozlowski@samsung.com>
+From: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
+Subject: Re: [PATCH 1/5] video: move mediabus format definition to a more
+ standard place
+Date: Tue, 23 Sep 2014 14:33:20 +0200 (CEST)
+Message-ID: <Pine.LNX.4.64.1409231426220.17074@axis700.grange>
+References: <1406031827-12432-1-git-send-email-boris.brezillon@free-electrons.com>
+ <1406031827-12432-2-git-send-email-boris.brezillon@free-electrons.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1411472603-11821-1-git-send-email-k.kozlowski@samsung.com>
+In-Reply-To: <1406031827-12432-2-git-send-email-boris.brezillon@free-electrons.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Samuel Ortiz <sameo@linux.intel.com>, Lee Jones <lee.jones@linaro.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-pm@vger.kernel.org
-Cc: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, devicetree@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+To: Boris BREZILLON <boris.brezillon@free-electrons.com>
+Cc: Thierry Reding <thierry.reding@gmail.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Mauro Carvalho Chehab <m.chehab@samsung.com>, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Prepare for adding support for MAX77836 charger to the max14577 charger
-driver by adding necessary new defines and prefixes to existing ones.
+Hi Boris,
 
-The MAX77836 uses slightly different values for ChgTyp field of STATUS2
-register. On the MAX14577 value of 0x6 is reserved and 0x7 dead battery.
-On the MAX77836 the opposite:
- - 0x6 means special charger,
- - 0x7 is reserved.
-Regardless of these differences use one common enum
-max14577_muic_charger_type.
+On Tue, 22 Jul 2014, Boris BREZILLON wrote:
 
-Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Kyungmin Park <kyungmin.park@samsung.com>
-Acked-by: Lee Jones <lee.jones@linaro.org>
-Acked-by: Andrew Morton <akpm@linux-foundation.org>
-Acked-by: Sebastian Reichel <sre@kernel.org>
----
- include/linux/mfd/max14577-private.h | 54 ++++++++++++++++++++++++++----------
- 1 file changed, 40 insertions(+), 14 deletions(-)
+> Rename mediabus formats and move the enum into a separate header file so
+> that it can be used by DRM/KMS subsystem without any reference to the V4L2
+> subsystem.
+> 
+> Old V4L2_MBUS_FMT_ definitions are now macros that points to VIDEO_BUS_FMT_
+> definitions.
+> 
+> Signed-off-by: Boris BREZILLON <boris.brezillon@free-electrons.com>
 
-diff --git a/include/linux/mfd/max14577-private.h b/include/linux/mfd/max14577-private.h
-index 499253604026..d6f321699b89 100644
---- a/include/linux/mfd/max14577-private.h
-+++ b/include/linux/mfd/max14577-private.h
-@@ -72,15 +72,33 @@ enum max14577_muic_reg {
- 	MAX14577_MUIC_REG_END,
- };
- 
-+/*
-+ * Combined charger types for max14577 and max77836.
-+ *
-+ * On max14577 three lower bits map to STATUS2/CHGTYP field.
-+ * However the max77836 has different two last values of STATUS2/CHGTYP.
-+ * To indicate the difference enum has two additional values for max77836.
-+ * These values are just a register value bitwise OR with 0x8.
-+ */
- enum max14577_muic_charger_type {
--	MAX14577_CHARGER_TYPE_NONE = 0,
--	MAX14577_CHARGER_TYPE_USB,
--	MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT,
--	MAX14577_CHARGER_TYPE_DEDICATED_CHG,
--	MAX14577_CHARGER_TYPE_SPECIAL_500MA,
--	MAX14577_CHARGER_TYPE_SPECIAL_1A,
--	MAX14577_CHARGER_TYPE_RESERVED,
--	MAX14577_CHARGER_TYPE_DEAD_BATTERY = 7,
-+	MAX14577_CHARGER_TYPE_NONE		= 0x0,
-+	MAX14577_CHARGER_TYPE_USB		= 0x1,
-+	MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT	= 0x2,
-+	MAX14577_CHARGER_TYPE_DEDICATED_CHG	= 0x3,
-+	MAX14577_CHARGER_TYPE_SPECIAL_500MA	= 0x4,
-+	/* Special 1A or 2A charger */
-+	MAX14577_CHARGER_TYPE_SPECIAL_1A	= 0x5,
-+	/* max14577: reserved, used on max77836 */
-+	MAX14577_CHARGER_TYPE_RESERVED		= 0x6,
-+	/* max14577: dead-battery charing with maximum current 100mA */
-+	MAX14577_CHARGER_TYPE_DEAD_BATTERY	= 0x7,
-+	/*
-+	 * max77836: special charger (bias on D+/D-),
-+	 * matches register value of 0x6
-+	 */
-+	MAX77836_CHARGER_TYPE_SPECIAL_BIAS	= 0xe,
-+	/* max77836: reserved, register value 0x7 */
-+	MAX77836_CHARGER_TYPE_RESERVED		= 0xf,
- };
- 
- /* MAX14577 interrupts */
-@@ -121,13 +139,15 @@ enum max14577_muic_charger_type {
- #define STATUS2_CHGTYP_SHIFT		0
- #define STATUS2_CHGDETRUN_SHIFT		3
- #define STATUS2_DCDTMR_SHIFT		4
--#define STATUS2_DBCHG_SHIFT		5
-+#define MAX14577_STATUS2_DBCHG_SHIFT	5
-+#define MAX77836_STATUS2_DXOVP_SHIFT	5
- #define STATUS2_VBVOLT_SHIFT		6
- #define MAX77836_STATUS2_VIDRM_SHIFT	7
- #define STATUS2_CHGTYP_MASK		(0x7 << STATUS2_CHGTYP_SHIFT)
- #define STATUS2_CHGDETRUN_MASK		BIT(STATUS2_CHGDETRUN_SHIFT)
- #define STATUS2_DCDTMR_MASK		BIT(STATUS2_DCDTMR_SHIFT)
--#define STATUS2_DBCHG_MASK		BIT(STATUS2_DBCHG_SHIFT)
-+#define MAX14577_STATUS2_DBCHG_MASK	BIT(MAX14577_STATUS2_DBCHG_SHIFT)
-+#define MAX77836_STATUS2_DXOVP_MASK	BIT(MAX77836_STATUS2_DXOVP_SHIFT)
- #define STATUS2_VBVOLT_MASK		BIT(STATUS2_VBVOLT_SHIFT)
- #define MAX77836_STATUS2_VIDRM_MASK	BIT(MAX77836_STATUS2_VIDRM_SHIFT)
- 
-@@ -177,9 +197,11 @@ enum max14577_muic_charger_type {
- #define CTRL3_JIGSET_SHIFT		0
- #define CTRL3_BOOTSET_SHIFT		2
- #define CTRL3_ADCDBSET_SHIFT		4
-+#define CTRL3_WBTH_SHIFT		6
- #define CTRL3_JIGSET_MASK		(0x3 << CTRL3_JIGSET_SHIFT)
- #define CTRL3_BOOTSET_MASK		(0x3 << CTRL3_BOOTSET_SHIFT)
- #define CTRL3_ADCDBSET_MASK		(0x3 << CTRL3_ADCDBSET_SHIFT)
-+#define CTRL3_WBTH_MASK			(0x3 << CTRL3_WBTH_SHIFT)
- 
- /* Slave addr = 0x4A: Charger */
- enum max14577_charger_reg {
-@@ -210,16 +232,20 @@ enum max14577_charger_reg {
- #define CDETCTRL1_CHGTYPMAN_SHIFT	1
- #define CDETCTRL1_DCDEN_SHIFT		2
- #define CDETCTRL1_DCD2SCT_SHIFT		3
--#define CDETCTRL1_DCHKTM_SHIFT		4
--#define CDETCTRL1_DBEXIT_SHIFT		5
-+#define MAX14577_CDETCTRL1_DCHKTM_SHIFT	4
-+#define MAX77836_CDETCTRL1_CDLY_SHIFT	4
-+#define MAX14577_CDETCTRL1_DBEXIT_SHIFT	5
-+#define MAX77836_CDETCTRL1_DCDCPL_SHIFT	5
- #define CDETCTRL1_DBIDLE_SHIFT		6
- #define CDETCTRL1_CDPDET_SHIFT		7
- #define CDETCTRL1_CHGDETEN_MASK		BIT(CDETCTRL1_CHGDETEN_SHIFT)
- #define CDETCTRL1_CHGTYPMAN_MASK	BIT(CDETCTRL1_CHGTYPMAN_SHIFT)
- #define CDETCTRL1_DCDEN_MASK		BIT(CDETCTRL1_DCDEN_SHIFT)
- #define CDETCTRL1_DCD2SCT_MASK		BIT(CDETCTRL1_DCD2SCT_SHIFT)
--#define CDETCTRL1_DCHKTM_MASK		BIT(CDETCTRL1_DCHKTM_SHIFT)
--#define CDETCTRL1_DBEXIT_MASK		BIT(CDETCTRL1_DBEXIT_SHIFT)
-+#define MAX14577_CDETCTRL1_DCHKTM_MASK	BIT(MAX14577_CDETCTRL1_DCHKTM_SHIFT)
-+#define MAX77836_CDETCTRL1_CDDLY_MASK	BIT(MAX77836_CDETCTRL1_CDDLY_SHIFT)
-+#define MAX14577_CDETCTRL1_DBEXIT_MASK	BIT(MAX14577_CDETCTRL1_DBEXIT_SHIFT)
-+#define MAX77836_CDETCTRL1_DCDCPL_MASK	BIT(MAX77836_CDETCTRL1_DCDCPL_SHIFT)
- #define CDETCTRL1_DBIDLE_MASK		BIT(CDETCTRL1_DBIDLE_SHIFT)
- #define CDETCTRL1_CDPDET_MASK		BIT(CDETCTRL1_CDPDET_SHIFT)
- 
--- 
-1.9.1
+In principle I find this a good idea, certainly it's good to reuse code. 
+Just wondering, wouldn't it be better instead of adding those defines to 
+define a macro like
+
+#define VIDEO_BUS_TO_MBUS(x)	V4L2_MBUS_ ## x = VIDEO_BUS_ ## x
+
+and then do
+
+enum v4l2_mbus_pixelcode {
+	VIDEO_BUS_TO_MBUS(FIXED),
+	VIDEO_BUS_TO_MBUS(RGB444_2X8_PADHI_BE),
+	...
+};
+
+? I'm not very strong on this, I just think an enum is nicer than a bunch 
+of defines and this way copy-paste errors are less likely, but if you or 
+others strongly disagree - I won't insist :)
+
+Whether or not you decide to accept this proposal you have my
+
+Acked-by: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
+
+Thanks
+Guennadi
+
+> ---
+>  include/uapi/linux/Kbuild             |   1 +
+>  include/uapi/linux/v4l2-mediabus.h    | 183 ++++++++++++++--------------------
+>  include/uapi/linux/video-bus-format.h | 127 +++++++++++++++++++++++
+>  3 files changed, 205 insertions(+), 106 deletions(-)
+>  create mode 100644 include/uapi/linux/video-bus-format.h
+> 
+> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+> index 24e9033..371874b 100644
+> --- a/include/uapi/linux/Kbuild
+> +++ b/include/uapi/linux/Kbuild
+> @@ -408,6 +408,7 @@ header-y += veth.h
+>  header-y += vfio.h
+>  header-y += vhost.h
+>  header-y += videodev2.h
+> +header-y += video-bus-format.h
+>  header-y += virtio_9p.h
+>  header-y += virtio_balloon.h
+>  header-y += virtio_blk.h
+> diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
+> index 1445e85..8c31f11 100644
+> --- a/include/uapi/linux/v4l2-mediabus.h
+> +++ b/include/uapi/linux/v4l2-mediabus.h
+> @@ -13,119 +13,90 @@
+>  
+>  #include <linux/types.h>
+>  #include <linux/videodev2.h>
+> +#include <linux/video-bus-format.h>
+>  
+> -/*
+> - * These pixel codes uniquely identify data formats on the media bus. Mostly
+> - * they correspond to similarly named V4L2_PIX_FMT_* formats, format 0 is
+> - * reserved, V4L2_MBUS_FMT_FIXED shall be used by host-client pairs, where the
+> - * data format is fixed. Additionally, "2X8" means that one pixel is transferred
+> - * in two 8-bit samples, "BE" or "LE" specify in which order those samples are
+> - * transferred over the bus: "LE" means that the least significant bits are
+> - * transferred first, "BE" means that the most significant bits are transferred
+> - * first, and "PADHI" and "PADLO" define which bits - low or high, in the
+> - * incomplete high byte, are filled with padding bits.
+> - *
+> - * The pixel codes are grouped by type, bus_width, bits per component, samples
+> - * per pixel and order of subsamples. Numerical values are sorted using generic
+> - * numerical sort order (8 thus comes before 10).
+> - *
+> - * As their value can't change when a new pixel code is inserted in the
+> - * enumeration, the pixel codes are explicitly given a numerical value. The next
+> - * free values for each category are listed below, update them when inserting
+> - * new pixel codes.
+> - */
+> -enum v4l2_mbus_pixelcode {
+> -	V4L2_MBUS_FMT_FIXED = 0x0001,
+> -
+> -	/* RGB - next is 0x100e */
+> -	V4L2_MBUS_FMT_RGB444_2X8_PADHI_BE = 0x1001,
+> -	V4L2_MBUS_FMT_RGB444_2X8_PADHI_LE = 0x1002,
+> -	V4L2_MBUS_FMT_RGB555_2X8_PADHI_BE = 0x1003,
+> -	V4L2_MBUS_FMT_RGB555_2X8_PADHI_LE = 0x1004,
+> -	V4L2_MBUS_FMT_BGR565_2X8_BE = 0x1005,
+> -	V4L2_MBUS_FMT_BGR565_2X8_LE = 0x1006,
+> -	V4L2_MBUS_FMT_RGB565_2X8_BE = 0x1007,
+> -	V4L2_MBUS_FMT_RGB565_2X8_LE = 0x1008,
+> -	V4L2_MBUS_FMT_RGB666_1X18 = 0x1009,
+> -	V4L2_MBUS_FMT_RGB888_1X24 = 0x100a,
+> -	V4L2_MBUS_FMT_RGB888_2X12_BE = 0x100b,
+> -	V4L2_MBUS_FMT_RGB888_2X12_LE = 0x100c,
+> -	V4L2_MBUS_FMT_ARGB8888_1X32 = 0x100d,
+> +#define V4L2_MBUS_FMT_FIXED			VIDEO_BUS_FMT_FIXED
+>  
+> -	/* YUV (including grey) - next is 0x2024 */
+> -	V4L2_MBUS_FMT_Y8_1X8 = 0x2001,
+> -	V4L2_MBUS_FMT_UV8_1X8 = 0x2015,
+> -	V4L2_MBUS_FMT_UYVY8_1_5X8 = 0x2002,
+> -	V4L2_MBUS_FMT_VYUY8_1_5X8 = 0x2003,
+> -	V4L2_MBUS_FMT_YUYV8_1_5X8 = 0x2004,
+> -	V4L2_MBUS_FMT_YVYU8_1_5X8 = 0x2005,
+> -	V4L2_MBUS_FMT_UYVY8_2X8 = 0x2006,
+> -	V4L2_MBUS_FMT_VYUY8_2X8 = 0x2007,
+> -	V4L2_MBUS_FMT_YUYV8_2X8 = 0x2008,
+> -	V4L2_MBUS_FMT_YVYU8_2X8 = 0x2009,
+> -	V4L2_MBUS_FMT_Y10_1X10 = 0x200a,
+> -	V4L2_MBUS_FMT_UYVY10_2X10 = 0x2018,
+> -	V4L2_MBUS_FMT_VYUY10_2X10 = 0x2019,
+> -	V4L2_MBUS_FMT_YUYV10_2X10 = 0x200b,
+> -	V4L2_MBUS_FMT_YVYU10_2X10 = 0x200c,
+> -	V4L2_MBUS_FMT_Y12_1X12 = 0x2013,
+> -	V4L2_MBUS_FMT_UYVY8_1X16 = 0x200f,
+> -	V4L2_MBUS_FMT_VYUY8_1X16 = 0x2010,
+> -	V4L2_MBUS_FMT_YUYV8_1X16 = 0x2011,
+> -	V4L2_MBUS_FMT_YVYU8_1X16 = 0x2012,
+> -	V4L2_MBUS_FMT_YDYUYDYV8_1X16 = 0x2014,
+> -	V4L2_MBUS_FMT_UYVY10_1X20 = 0x201a,
+> -	V4L2_MBUS_FMT_VYUY10_1X20 = 0x201b,
+> -	V4L2_MBUS_FMT_YUYV10_1X20 = 0x200d,
+> -	V4L2_MBUS_FMT_YVYU10_1X20 = 0x200e,
+> -	V4L2_MBUS_FMT_YUV10_1X30 = 0x2016,
+> -	V4L2_MBUS_FMT_AYUV8_1X32 = 0x2017,
+> -	V4L2_MBUS_FMT_UYVY12_2X12 = 0x201c,
+> -	V4L2_MBUS_FMT_VYUY12_2X12 = 0x201d,
+> -	V4L2_MBUS_FMT_YUYV12_2X12 = 0x201e,
+> -	V4L2_MBUS_FMT_YVYU12_2X12 = 0x201f,
+> -	V4L2_MBUS_FMT_UYVY12_1X24 = 0x2020,
+> -	V4L2_MBUS_FMT_VYUY12_1X24 = 0x2021,
+> -	V4L2_MBUS_FMT_YUYV12_1X24 = 0x2022,
+> -	V4L2_MBUS_FMT_YVYU12_1X24 = 0x2023,
+> +#define V4L2_MBUS_FMT_RGB444_2X8_PADHI_BE	VIDEO_BUS_FMT_RGB444_2X8_PADHI_BE
+> +#define V4L2_MBUS_FMT_RGB444_2X8_PADHI_LE	VIDEO_BUS_FMT_RGB444_2X8_PADHI_LE
+> +#define V4L2_MBUS_FMT_RGB555_2X8_PADHI_BE	VIDEO_BUS_FMT_RGB555_2X8_PADHI_BE
+> +#define V4L2_MBUS_FMT_RGB555_2X8_PADHI_LE	VIDEO_BUS_FMT_RGB555_2X8_PADHI_LE
+> +#define V4L2_MBUS_FMT_BGR565_2X8_BE		VIDEO_BUS_FMT_BGR565_2X8_BE
+> +#define V4L2_MBUS_FMT_BGR565_2X8_LE		VIDEO_BUS_FMT_BGR565_2X8_LE
+> +#define V4L2_MBUS_FMT_RGB565_2X8_BE		VIDEO_BUS_FMT_RGB565_2X8_BE
+> +#define V4L2_MBUS_FMT_RGB565_2X8_LE		VIDEO_BUS_FMT_RGB565_2X8_LE
+> +#define V4L2_MBUS_FMT_RGB666_1X18		VIDEO_BUS_FMT_RGB666_1X18
+> +#define V4L2_MBUS_FMT_RGB888_1X24		VIDEO_BUS_FMT_RGB888_1X24
+> +#define V4L2_MBUS_FMT_RGB888_2X12_BE		VIDEO_BUS_FMT_RGB888_2X12_BE
+> +#define V4L2_MBUS_FMT_RGB888_2X12_LE		VIDEO_BUS_FMT_RGB888_2X12_LE
+> +#define V4L2_MBUS_FMT_ARGB8888_1X32		VIDEO_BUS_FMT_ARGB8888_1X32
+>  
+> -	/* Bayer - next is 0x3019 */
+> -	V4L2_MBUS_FMT_SBGGR8_1X8 = 0x3001,
+> -	V4L2_MBUS_FMT_SGBRG8_1X8 = 0x3013,
+> -	V4L2_MBUS_FMT_SGRBG8_1X8 = 0x3002,
+> -	V4L2_MBUS_FMT_SRGGB8_1X8 = 0x3014,
+> -	V4L2_MBUS_FMT_SBGGR10_ALAW8_1X8 = 0x3015,
+> -	V4L2_MBUS_FMT_SGBRG10_ALAW8_1X8 = 0x3016,
+> -	V4L2_MBUS_FMT_SGRBG10_ALAW8_1X8 = 0x3017,
+> -	V4L2_MBUS_FMT_SRGGB10_ALAW8_1X8 = 0x3018,
+> -	V4L2_MBUS_FMT_SBGGR10_DPCM8_1X8 = 0x300b,
+> -	V4L2_MBUS_FMT_SGBRG10_DPCM8_1X8 = 0x300c,
+> -	V4L2_MBUS_FMT_SGRBG10_DPCM8_1X8 = 0x3009,
+> -	V4L2_MBUS_FMT_SRGGB10_DPCM8_1X8 = 0x300d,
+> -	V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_BE = 0x3003,
+> -	V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_LE = 0x3004,
+> -	V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_BE = 0x3005,
+> -	V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_LE = 0x3006,
+> -	V4L2_MBUS_FMT_SBGGR10_1X10 = 0x3007,
+> -	V4L2_MBUS_FMT_SGBRG10_1X10 = 0x300e,
+> -	V4L2_MBUS_FMT_SGRBG10_1X10 = 0x300a,
+> -	V4L2_MBUS_FMT_SRGGB10_1X10 = 0x300f,
+> -	V4L2_MBUS_FMT_SBGGR12_1X12 = 0x3008,
+> -	V4L2_MBUS_FMT_SGBRG12_1X12 = 0x3010,
+> -	V4L2_MBUS_FMT_SGRBG12_1X12 = 0x3011,
+> -	V4L2_MBUS_FMT_SRGGB12_1X12 = 0x3012,
+> +#define V4L2_MBUS_FMT_Y8_1X8			VIDEO_BUS_FMT_Y8_1X8
+> +#define V4L2_MBUS_FMT_UV8_1X8			VIDEO_BUS_FMT_UV8_1X8
+> +#define V4L2_MBUS_FMT_UYVY8_1_5X8		VIDEO_BUS_FMT_UYVY8_1_5X8
+> +#define V4L2_MBUS_FMT_VYUY8_1_5X8		VIDEO_BUS_FMT_VYUY8_1_5X8
+> +#define V4L2_MBUS_FMT_YUYV8_1_5X8		VIDEO_BUS_FMT_YUYV8_1_5X8
+> +#define V4L2_MBUS_FMT_YVYU8_1_5X8		VIDEO_BUS_FMT_YVYU8_1_5X8
+> +#define V4L2_MBUS_FMT_UYVY8_2X8			VIDEO_BUS_FMT_UYVY8_2X8
+> +#define V4L2_MBUS_FMT_VYUY8_2X8			VIDEO_BUS_FMT_VYUY8_2X8
+> +#define V4L2_MBUS_FMT_YUYV8_2X8			VIDEO_BUS_FMT_YUYV8_2X8
+> +#define V4L2_MBUS_FMT_YVYU8_2X8			VIDEO_BUS_FMT_YVYU8_2X8
+> +#define V4L2_MBUS_FMT_Y10_1X10			VIDEO_BUS_FMT_Y10_1X10
+> +#define V4L2_MBUS_FMT_UYVY10_2X10		VIDEO_BUS_FMT_UYVY10_2X10
+> +#define V4L2_MBUS_FMT_VYUY10_2X10		VIDEO_BUS_FMT_VYUY10_2X10
+> +#define V4L2_MBUS_FMT_YUYV10_2X10		VIDEO_BUS_FMT_YUYV10_2X10
+> +#define V4L2_MBUS_FMT_YVYU10_2X10		VIDEO_BUS_FMT_YVYU10_2X10
+> +#define V4L2_MBUS_FMT_Y12_1X12			VIDEO_BUS_FMT_Y12_1X12
+> +#define V4L2_MBUS_FMT_UYVY8_1X16		VIDEO_BUS_FMT_UYVY8_1X16
+> +#define V4L2_MBUS_FMT_VYUY8_1X16		VIDEO_BUS_FMT_VYUY8_1X16
+> +#define V4L2_MBUS_FMT_YUYV8_1X16		VIDEO_BUS_FMT_YUYV8_1X16
+> +#define V4L2_MBUS_FMT_YVYU8_1X16		VIDEO_BUS_FMT_YVYU8_1X16
+> +#define V4L2_MBUS_FMT_YDYUYDYV8_1X16		VIDEO_BUS_FMT_YDYUYDYV8_1X16
+> +#define V4L2_MBUS_FMT_UYVY10_1X20		VIDEO_BUS_FMT_UYVY10_1X20
+> +#define V4L2_MBUS_FMT_VYUY10_1X20		VIDEO_BUS_FMT_VYUY10_1X20
+> +#define V4L2_MBUS_FMT_YUYV10_1X20		VIDEO_BUS_FMT_YUYV10_1X20
+> +#define V4L2_MBUS_FMT_YVYU10_1X20		VIDEO_BUS_FMT_YVYU10_1X20
+> +#define V4L2_MBUS_FMT_YUV10_1X30		VIDEO_BUS_FMT_YUV10_1X30
+> +#define V4L2_MBUS_FMT_AYUV8_1X32		VIDEO_BUS_FMT_AYUV8_1X32
+> +#define V4L2_MBUS_FMT_UYVY12_2X12		VIDEO_BUS_FMT_UYVY12_2X12
+> +#define V4L2_MBUS_FMT_VYUY12_2X12		VIDEO_BUS_FMT_VYUY12_2X12
+> +#define V4L2_MBUS_FMT_YUYV12_2X12		VIDEO_BUS_FMT_YUYV12_2X12
+> +#define V4L2_MBUS_FMT_YVYU12_2X12		VIDEO_BUS_FMT_YVYU12_2X12
+> +#define V4L2_MBUS_FMT_UYVY12_1X24		VIDEO_BUS_FMT_UYVY12_1X24
+> +#define V4L2_MBUS_FMT_VYUY12_1X24		VIDEO_BUS_FMT_VYUY12_1X24
+> +#define V4L2_MBUS_FMT_YUYV12_1X24		VIDEO_BUS_FMT_YUYV12_1X24
+> +#define V4L2_MBUS_FMT_YVYU12_1X24		VIDEO_BUS_FMT_YVYU12_1X24
+>  
+> -	/* JPEG compressed formats - next is 0x4002 */
+> -	V4L2_MBUS_FMT_JPEG_1X8 = 0x4001,
+> +#define V4L2_MBUS_FMT_SBGGR8_1X8		VIDEO_BUS_FMT_SBGGR8_1X8
+> +#define V4L2_MBUS_FMT_SGBRG8_1X8		VIDEO_BUS_FMT_SGBRG8_1X8
+> +#define V4L2_MBUS_FMT_SGRBG8_1X8		VIDEO_BUS_FMT_SGRBG8_1X8
+> +#define V4L2_MBUS_FMT_SRGGB8_1X8		VIDEO_BUS_FMT_SRGGB8_1X8
+> +#define V4L2_MBUS_FMT_SBGGR10_ALAW8_1X8		VIDEO_BUS_FMT_SBGGR10_ALAW8_1X8
+> +#define V4L2_MBUS_FMT_SGBRG10_ALAW8_1X8		VIDEO_BUS_FMT_SGBRG10_ALAW8_1X8
+> +#define V4L2_MBUS_FMT_SGRBG10_ALAW8_1X8		VIDEO_BUS_FMT_SGRBG10_ALAW8_1X8
+> +#define V4L2_MBUS_FMT_SRGGB10_ALAW8_1X8		VIDEO_BUS_FMT_SRGGB10_ALAW8_1X8
+> +#define V4L2_MBUS_FMT_SBGGR10_DPCM8_1X8		VIDEO_BUS_FMT_SBGGR10_DPCM8_1X8
+> +#define V4L2_MBUS_FMT_SGBRG10_DPCM8_1X8		VIDEO_BUS_FMT_SGBRG10_DPCM8_1X8
+> +#define V4L2_MBUS_FMT_SGRBG10_DPCM8_1X8		VIDEO_BUS_FMT_SGRBG10_DPCM8_1X8
+> +#define V4L2_MBUS_FMT_SRGGB10_DPCM8_1X8		VIDEO_BUS_FMT_SRGGB10_DPCM8_1X8
+> +#define V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_BE	VIDEO_BUS_FMT_SBGGR10_2X8_PADHI_BE
+> +#define V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_LE	VIDEO_BUS_FMT_SBGGR10_2X8_PADHI_LE
+> +#define V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_BE	VIDEO_BUS_FMT_SBGGR10_2X8_PADLO_BE
+> +#define V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_LE	VIDEO_BUS_FMT_SBGGR10_2X8_PADLO_LE
+> +#define V4L2_MBUS_FMT_SBGGR10_1X10		VIDEO_BUS_FMT_SBGGR10_1X10
+> +#define V4L2_MBUS_FMT_SGBRG10_1X10		VIDEO_BUS_FMT_SGBRG10_1X10
+> +#define V4L2_MBUS_FMT_SGRBG10_1X10		VIDEO_BUS_FMT_SGRBG10_1X10
+> +#define V4L2_MBUS_FMT_SRGGB10_1X10		VIDEO_BUS_FMT_SRGGB10_1X10
+> +#define V4L2_MBUS_FMT_SBGGR12_1X12		VIDEO_BUS_FMT_SBGGR12_1X12
+> +#define V4L2_MBUS_FMT_SGBRG12_1X12		VIDEO_BUS_FMT_SGBRG12_1X12
+> +#define V4L2_MBUS_FMT_SGRBG12_1X12		VIDEO_BUS_FMT_SGRBG12_1X12
+> +#define V4L2_MBUS_FMT_SRGGB12_1X12		VIDEO_BUS_FMT_SRGGB12_1X12
+>  
+> -	/* Vendor specific formats - next is 0x5002 */
+> +#define V4L2_MBUS_FMT_JPEG_1X8			VIDEO_BUS_FMT_JPEG_1X8
+>  
+> -	/* S5C73M3 sensor specific interleaved UYVY and JPEG */
+> -	V4L2_MBUS_FMT_S5C_UYVY_JPEG_1X8 = 0x5001,
+> +#define V4L2_MBUS_FMT_S5C_UYVY_JPEG_1X8		VIDEO_BUS_FMT_S5C_UYVY_JPEG_1X8
+>  
+> -	/* HSV - next is 0x6002 */
+> -	V4L2_MBUS_FMT_AHSV8888_1X32 = 0x6001,
+> -};
+> +#define V4L2_MBUS_FMT_AHSV8888_1X32		VIDEO_BUS_FMT_AHSV8888_1X32
+>  
+>  /**
+>   * struct v4l2_mbus_framefmt - frame format on the media bus
+> diff --git a/include/uapi/linux/video-bus-format.h b/include/uapi/linux/video-bus-format.h
+> new file mode 100644
+> index 0000000..4abbd5d
+> --- /dev/null
+> +++ b/include/uapi/linux/video-bus-format.h
+> @@ -0,0 +1,127 @@
+> +/*
+> + * Video Bus API header
+> + *
+> + * Copyright (C) 2009, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
+> + *
+> + * This program is free software; you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License version 2 as
+> + * published by the Free Software Foundation.
+> + */
+> +
+> +#ifndef __LINUX_VIDEO_BUS_FORMAT_H
+> +#define __LINUX_VIDEO_BUS_FORMAT_H
+> +
+> +/*
+> + * These bus formats uniquely identify data formats on the data bus. Mostly
+> + * they correspond to similarly named VIDEO_PIX_FMT_* formats, format 0 is
+> + * reserved, VIDEO_BUS_FMT_FIXED shall be used by host-client pairs, where the
+> + * data format is fixed. Additionally, "2X8" means that one pixel is transferred
+> + * in two 8-bit samples, "BE" or "LE" specify in which order those samples are
+> + * transferred over the bus: "LE" means that the least significant bits are
+> + * transferred first, "BE" means that the most significant bits are transferred
+> + * first, and "PADHI" and "PADLO" define which bits - low or high, in the
+> + * incomplete high byte, are filled with padding bits.
+> + *
+> + * The bus formats are grouped by type, bus_width, bits per component, samples
+> + * per pixel and order of subsamples. Numerical values are sorted using generic
+> + * numerical sort order (8 thus comes before 10).
+> + *
+> + * As their value can't change when a new bus format is inserted in the
+> + * enumeration, the bus formats are explicitly given a numerical value. The next
+> + * free values for each category are listed below, update them when inserting
+> + * new pixel codes.
+> + */
+> +enum video_bus_format {
+> +	VIDEO_BUS_FMT_FIXED = 0x0001,
+> +
+> +	/* RGB - next is 0x100e */
+> +	VIDEO_BUS_FMT_RGB444_2X8_PADHI_BE = 0x1001,
+> +	VIDEO_BUS_FMT_RGB444_2X8_PADHI_LE = 0x1002,
+> +	VIDEO_BUS_FMT_RGB555_2X8_PADHI_BE = 0x1003,
+> +	VIDEO_BUS_FMT_RGB555_2X8_PADHI_LE = 0x1004,
+> +	VIDEO_BUS_FMT_BGR565_2X8_BE = 0x1005,
+> +	VIDEO_BUS_FMT_BGR565_2X8_LE = 0x1006,
+> +	VIDEO_BUS_FMT_RGB565_2X8_BE = 0x1007,
+> +	VIDEO_BUS_FMT_RGB565_2X8_LE = 0x1008,
+> +	VIDEO_BUS_FMT_RGB666_1X18 = 0x1009,
+> +	VIDEO_BUS_FMT_RGB888_1X24 = 0x100a,
+> +	VIDEO_BUS_FMT_RGB888_2X12_BE = 0x100b,
+> +	VIDEO_BUS_FMT_RGB888_2X12_LE = 0x100c,
+> +	VIDEO_BUS_FMT_ARGB8888_1X32 = 0x100d,
+> +
+> +	/* YUV (including grey) - next is 0x2024 */
+> +	VIDEO_BUS_FMT_Y8_1X8 = 0x2001,
+> +	VIDEO_BUS_FMT_UV8_1X8 = 0x2015,
+> +	VIDEO_BUS_FMT_UYVY8_1_5X8 = 0x2002,
+> +	VIDEO_BUS_FMT_VYUY8_1_5X8 = 0x2003,
+> +	VIDEO_BUS_FMT_YUYV8_1_5X8 = 0x2004,
+> +	VIDEO_BUS_FMT_YVYU8_1_5X8 = 0x2005,
+> +	VIDEO_BUS_FMT_UYVY8_2X8 = 0x2006,
+> +	VIDEO_BUS_FMT_VYUY8_2X8 = 0x2007,
+> +	VIDEO_BUS_FMT_YUYV8_2X8 = 0x2008,
+> +	VIDEO_BUS_FMT_YVYU8_2X8 = 0x2009,
+> +	VIDEO_BUS_FMT_Y10_1X10 = 0x200a,
+> +	VIDEO_BUS_FMT_UYVY10_2X10 = 0x2018,
+> +	VIDEO_BUS_FMT_VYUY10_2X10 = 0x2019,
+> +	VIDEO_BUS_FMT_YUYV10_2X10 = 0x200b,
+> +	VIDEO_BUS_FMT_YVYU10_2X10 = 0x200c,
+> +	VIDEO_BUS_FMT_Y12_1X12 = 0x2013,
+> +	VIDEO_BUS_FMT_UYVY8_1X16 = 0x200f,
+> +	VIDEO_BUS_FMT_VYUY8_1X16 = 0x2010,
+> +	VIDEO_BUS_FMT_YUYV8_1X16 = 0x2011,
+> +	VIDEO_BUS_FMT_YVYU8_1X16 = 0x2012,
+> +	VIDEO_BUS_FMT_YDYUYDYV8_1X16 = 0x2014,
+> +	VIDEO_BUS_FMT_UYVY10_1X20 = 0x201a,
+> +	VIDEO_BUS_FMT_VYUY10_1X20 = 0x201b,
+> +	VIDEO_BUS_FMT_YUYV10_1X20 = 0x200d,
+> +	VIDEO_BUS_FMT_YVYU10_1X20 = 0x200e,
+> +	VIDEO_BUS_FMT_YUV10_1X30 = 0x2016,
+> +	VIDEO_BUS_FMT_AYUV8_1X32 = 0x2017,
+> +	VIDEO_BUS_FMT_UYVY12_2X12 = 0x201c,
+> +	VIDEO_BUS_FMT_VYUY12_2X12 = 0x201d,
+> +	VIDEO_BUS_FMT_YUYV12_2X12 = 0x201e,
+> +	VIDEO_BUS_FMT_YVYU12_2X12 = 0x201f,
+> +	VIDEO_BUS_FMT_UYVY12_1X24 = 0x2020,
+> +	VIDEO_BUS_FMT_VYUY12_1X24 = 0x2021,
+> +	VIDEO_BUS_FMT_YUYV12_1X24 = 0x2022,
+> +	VIDEO_BUS_FMT_YVYU12_1X24 = 0x2023,
+> +
+> +	/* Bayer - next is 0x3019 */
+> +	VIDEO_BUS_FMT_SBGGR8_1X8 = 0x3001,
+> +	VIDEO_BUS_FMT_SGBRG8_1X8 = 0x3013,
+> +	VIDEO_BUS_FMT_SGRBG8_1X8 = 0x3002,
+> +	VIDEO_BUS_FMT_SRGGB8_1X8 = 0x3014,
+> +	VIDEO_BUS_FMT_SBGGR10_ALAW8_1X8 = 0x3015,
+> +	VIDEO_BUS_FMT_SGBRG10_ALAW8_1X8 = 0x3016,
+> +	VIDEO_BUS_FMT_SGRBG10_ALAW8_1X8 = 0x3017,
+> +	VIDEO_BUS_FMT_SRGGB10_ALAW8_1X8 = 0x3018,
+> +	VIDEO_BUS_FMT_SBGGR10_DPCM8_1X8 = 0x300b,
+> +	VIDEO_BUS_FMT_SGBRG10_DPCM8_1X8 = 0x300c,
+> +	VIDEO_BUS_FMT_SGRBG10_DPCM8_1X8 = 0x3009,
+> +	VIDEO_BUS_FMT_SRGGB10_DPCM8_1X8 = 0x300d,
+> +	VIDEO_BUS_FMT_SBGGR10_2X8_PADHI_BE = 0x3003,
+> +	VIDEO_BUS_FMT_SBGGR10_2X8_PADHI_LE = 0x3004,
+> +	VIDEO_BUS_FMT_SBGGR10_2X8_PADLO_BE = 0x3005,
+> +	VIDEO_BUS_FMT_SBGGR10_2X8_PADLO_LE = 0x3006,
+> +	VIDEO_BUS_FMT_SBGGR10_1X10 = 0x3007,
+> +	VIDEO_BUS_FMT_SGBRG10_1X10 = 0x300e,
+> +	VIDEO_BUS_FMT_SGRBG10_1X10 = 0x300a,
+> +	VIDEO_BUS_FMT_SRGGB10_1X10 = 0x300f,
+> +	VIDEO_BUS_FMT_SBGGR12_1X12 = 0x3008,
+> +	VIDEO_BUS_FMT_SGBRG12_1X12 = 0x3010,
+> +	VIDEO_BUS_FMT_SGRBG12_1X12 = 0x3011,
+> +	VIDEO_BUS_FMT_SRGGB12_1X12 = 0x3012,
+> +
+> +	/* JPEG compressed formats - next is 0x4002 */
+> +	VIDEO_BUS_FMT_JPEG_1X8 = 0x4001,
+> +
+> +	/* Vendor specific formats - next is 0x5002 */
+> +
+> +	/* S5C73M3 sensor specific interleaved UYVY and JPEG */
+> +	VIDEO_BUS_FMT_S5C_UYVY_JPEG_1X8 = 0x5001,
+> +
+> +	/* HSV - next is 0x6002 */
+> +	VIDEO_BUS_FMT_AHSV8888_1X32 = 0x6001,
+> +};
+> +
+> +#endif /* __LINUX_VIDEO_BUS_FORMAT_H */
+> -- 
+> 1.8.3.2
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-media" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
