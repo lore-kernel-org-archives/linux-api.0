@@ -1,85 +1,66 @@
-From: Mark yao <mark.yao@rock-chips.com>
-Subject: Re: [PATCH v3 1/5] drm/rockchip: Add basic drm driver
-Date: Tue, 23 Sep 2014 16:00:43 +0800
-Message-ID: <542128AB.5030905@rock-chips.com>
-References: <1411105668-32722-1-git-send-email-mark.yao@rock-chips.com>
- <1411105668-32722-2-git-send-email-mark.yao@rock-chips.com>
- <CAF6AEGsPoj6+PdKCJk5BPPzHS51Tz1FGqS2SjpartaRw7i=Pxg@mail.gmail.com>
- <541F7C23.8000103@rock-chips.com> <20140923074831.GR15734@phenom.ffwll.local>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH v4 1/5] drm/rockchip: Add basic drm driver
+Date: Tue, 23 Sep 2014 10:11:34 +0200
+Message-ID: <3217883.XVKPdbd6UA@wuerfel>
+References: <1411382820-1615-1-git-send-email-mark.yao@rock-chips.com> <3102396.6rAQmqkXXM@wuerfel> <54211CB1.6050002@rock-chips.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20140923074831.GR15734@phenom.ffwll.local>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Rob Clark <robdclark@gmail.com>, Mark Rutland <mark.rutland@arm.com>, =?UTF-8?B?SGVpa28gU3TDvGJuZXI=?= <heiko@sntech.de>, linux-doc@vger.kernel.org, Kever Yang <kever.yang@rock-chips.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jianqun Xu <xjq@rock-chips.com>, Chris Zhong <zyw@rock-chips.com>, linux-api@vger.kernel.org, jeff chen <cym@rock-chips.com>, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, Grant Likely <grant.likely@linaro.org>, wxt@rock-chips.com, Tao Huang <huangtao@rock-chips.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, yxj@rock-chips.com, Eddie Cai <cf@rock-chips.com>, Rob Herring <robh+dt@kernel.org>, =?UTF-8?B?U3TDqXBoYW5lIE1hcmNoZXNpbg==?= <marcheu@chr>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54211CB1.6050002-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Cc: Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dbehr-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, xjq-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kfx-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cym-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cf@rock-ch
 List-Id: linux-api@vger.kernel.org
 
-T24gMjAxNOW5tDA55pyIMjPml6UgMTU6NDgsIERhbmllbCBWZXR0ZXIgd3JvdGU6Cj4gT24gTW9u
-LCBTZXAgMjIsIDIwMTQgYXQgMDk6MzI6MTlBTSArMDgwMCwgTWFyayB5YW8gd3JvdGU6Cj4+IE9u
-IDIwMTTlubQwOeaciDIw5pelIDA4OjAzLCBSb2IgQ2xhcmsgd3JvdGU6Cj4+PiBPbiBGcmksIFNl
-cCAxOSwgMjAxNCBhdCAxOjQ3IEFNLCBNYXJrIHlhbyA8bWFyay55YW9Acm9jay1jaGlwcy5jb20+
-IHdyb3RlOgo+Pj4+IGRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvZHJtL3JvY2tjaGlwX2RybS5o
-IGIvaW5jbHVkZS91YXBpL2RybS9yb2NrY2hpcF9kcm0uaAo+Pj4+IG5ldyBmaWxlIG1vZGUgMTAw
-NjQ0Cj4+Pj4gaW5kZXggMDAwMDAwMC4uOGY4ZTYwZQo+Pj4+IC0tLSAvZGV2L251bGwKPj4+PiAr
-KysgYi9pbmNsdWRlL3VhcGkvZHJtL3JvY2tjaGlwX2RybS5oCj4+Pj4gQEAgLTAsMCArMSw5NyBA
-QAo+Pj4+ICsvKgo+Pj4+ICsgKgo+Pj4+ICsgKiBDb3B5cmlnaHQgKGMpIEZ1emhvdSBSb2NrY2hp
-cCBFbGVjdHJvbmljcyBDby5MdGQKPj4+PiArICogQXV0aG9yczoKPj4+PiArICogICAgICAgTWFy
-ayBZYW8gPHl6cUByb2NrLWNoaXBzLmNvbT4KPj4+PiArICoKPj4+PiArICogYmFzZSBvbiBleHlu
-b3NfZHJtLmgKPj4+PiArICoKPj4+PiArICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7
-IHlvdSBjYW4gcmVkaXN0cmlidXRlICBpdCBhbmQvb3IgbW9kaWZ5IGl0Cj4+Pj4gKyAqIHVuZGVy
-ICB0aGUgdGVybXMgb2YgIHRoZSBHTlUgR2VuZXJhbCAgUHVibGljIExpY2Vuc2UgYXMgcHVibGlz
-aGVkIGJ5IHRoZQo+Pj4+ICsgKiBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247ICBlaXRoZXIgdmVy
-c2lvbiAyIG9mIHRoZSAgTGljZW5zZSwgb3IgKGF0IHlvdXIKPj4+PiArICogb3B0aW9uKSBhbnkg
-bGF0ZXIgdmVyc2lvbi4KPj4+PiArICovCj4+Pj4gKwo+Pj4+ICsjaWZuZGVmIF9VQVBJX1JPQ0tD
-SElQX0RSTV9ICj4+Pj4gKyNkZWZpbmUgX1VBUElfUk9DS0NISVBfRFJNX0gKPj4+PiArCj4+Pj4g
-KyNpbmNsdWRlIDxkcm0vZHJtLmg+Cj4+Pj4gKwo+Pj4+ICsvKioKPj4+PiArICogVXNlci1kZXNp
-cmVkIGJ1ZmZlciBjcmVhdGlvbiBpbmZvcm1hdGlvbiBzdHJ1Y3R1cmUuCj4+Pj4gKyAqCj4+Pj4g
-KyAqIEBzaXplOiB1c2VyLWRlc2lyZWQgbWVtb3J5IGFsbG9jYXRpb24gc2l6ZS4KPj4+PiArICog
-QGZsYWdzOiB1c2VyIHJlcXVlc3QgZm9yIHNldHRpbmcgbWVtb3J5IHR5cGUgb3IgY2FjaGUgYXR0
-cmlidXRlcy4KPj4+PiArICogQGhhbmRsZTogcmV0dXJuZWQgYSBoYW5kbGUgdG8gY3JlYXRlZCBn
-ZW0gb2JqZWN0Lgo+Pj4+ICsgKiAgICAgLSB0aGlzIGhhbmRsZSB3aWxsIGJlIHNldCBieSBnZW0g
-bW9kdWxlIG9mIGtlcm5lbCBzaWRlLgo+Pj4+ICsgKi8KPj4+PiArc3RydWN0IGRybV9yb2NrY2hp
-cF9nZW1fY3JlYXRlIHsKPj4+PiArICAgICAgIHVpbnQ2NF90IHNpemU7Cj4+Pj4gKyAgICAgICB1
-aW50MzJfdCBmbGFnczsKPj4+PiArICAgICAgIHVpbnQzMl90IGhhbmRsZTsKPj4+PiArfTsKPj4+
-PiArCj4+Pj4gKy8qKgo+Pj4+ICsgKiBBIHN0cnVjdHVyZSBmb3IgZ2V0dGluZyBidWZmZXIgb2Zm
-c2V0Lgo+Pj4+ICsgKgo+Pj4+ICsgKiBAaGFuZGxlOiBhIHBvaW50ZXIgdG8gZ2VtIG9iamVjdCBj
-cmVhdGVkLgo+Pj4+ICsgKiBAcGFkOiBqdXN0IHBhZGRpbmcgdG8gYmUgNjQtYml0IGFsaWduZWQu
-Cj4+Pj4gKyAqIEBvZmZzZXQ6IHJlbGF0aXZlZCBvZmZzZXQgdmFsdWUgb2YgdGhlIG1lbW9yeSBy
-ZWdpb24gYWxsb2NhdGVkLgo+Pj4+ICsgKiAgICAgLSB0aGlzIHZhbHVlIHNob3VsZCBiZSBzZXQg
-YnkgdXNlci4KPj4+PiArICovCj4+Pj4gK3N0cnVjdCBkcm1fcm9ja2NoaXBfZ2VtX21hcF9vZmYg
-ewo+Pj4+ICsgICAgICAgdWludDMyX3QgaGFuZGxlOwo+Pj4+ICsgICAgICAgdWludDMyX3QgcGFk
-Owo+Pj4+ICsgICAgICAgdWludDY0X3Qgb2Zmc2V0Owo+Pj4+ICt9Owo+Pj4+ICsKPj4+PiArLyoq
-Cj4+Pj4gKyAqIEEgc3RydWN0dXJlIGZvciBtYXBwaW5nIGJ1ZmZlci4KPj4+PiArICoKPj4+PiAr
-ICogQGhhbmRsZTogYSBoYW5kbGUgdG8gZ2VtIG9iamVjdCBjcmVhdGVkLgo+Pj4+ICsgKiBAcGFk
-OiBqdXN0IHBhZGRpbmcgdG8gYmUgNjQtYml0IGFsaWduZWQuCj4+Pj4gKyAqIEBzaXplOiBtZW1v
-cnkgc2l6ZSB0byBiZSBtYXBwZWQuCj4+Pj4gKyAqIEBtYXBwZWQ6IGhhdmluZyB1c2VyIHZpcnR1
-YWwgYWRkcmVzcyBtbWFwZWQuCj4+Pj4gKyAqICAgICAgLSB0aGlzIHZhcmlhYmxlIHdvdWxkIGJl
-IGZpbGxlZCBieSByb2NrY2hpcCBnZW0gbW9kdWxlCj4+Pj4gKyAqICAgICAgb2Yga2VybmVsIHNp
-ZGUgd2l0aCB1c2VyIHZpcnR1YWwgYWRkcmVzcyB3aGljaCBpcyBhbGxvY2F0ZWQKPj4+PiArICog
-ICAgICBieSBkb19tbWFwKCkuCj4+Pj4gKyAqLwo+Pj4+ICtzdHJ1Y3QgZHJtX3JvY2tjaGlwX2dl
-bV9tbWFwIHsKPj4+PiArICAgICAgIHVpbnQzMl90IGhhbmRsZTsKPj4+PiArICAgICAgIHVpbnQz
-Ml90IHBhZDsKPj4+PiArICAgICAgIHVpbnQ2NF90IHNpemU7Cj4+Pj4gKyAgICAgICB1aW50NjRf
-dCBtYXBwZWQ7Cj4+Pj4gK307Cj4+PiBDb3VsZCB3ZSBkbyB3aXRob3V0IHRoZSBtbWFwIGlvY3Rs
-PyAgSXQgaGFzIGJlZW4gYSBzb3VyY2Ugb2YgcHJvYmxlbXMKPj4+IGluIG90aGVyIGRyaXZlcnMs
-IGFuZCB0aGUgaW9jdGwgdG8gZ2V0IG1tYXAgb2Zmc2V0LCBwbHVzIG5vcm1hbCBtbWFwKCkKPj4+
-IG9uIGRybSBkZXZpY2UgZmlsZSBzaG91bGQgYmUgc3VmZmljaWVudAo+Pj4KPj4+IEJSLAo+Pj4g
-LVIKPj4gT0ssIEkgd2lsbCB0cnkgdG8gbW92ZSB0aGUgc3BlY2lhbCBtbWFwIGlvY3RsIGFuZCB1
-c2UgZHJtIGdlbmVyaWMgbW1hcAo+PiBpbnRlcmZhY2UuCj4gQWN0dWFsbHkgeW91IHByb2JhYmx5
-IHNob3VsZCBkcm9wIGFsbCB0aGlzIGFuZCBqdXN0IGltcGxlbWVudCB0aGUgZHVtbXkKPiBvYmpl
-Y3Qgc3VwcG9ydCBmb3Igbm93LiBVbnRpbCB5b3UgaGF2ZSBwcm9wZXIgaHcgYWNjZWwgdGhlcmUn
-cyBubyByZWFzb24KPiB0byBleHBvc2UgYSBkcml2ZXItcHJpdmF0ZSBnZW0gY3JlYXRlL21tYXAg
-aW50ZXJmYWNlIGF0IGFsbC4KPgo+IEEgcHVyZSBrbXMgZHJpdmVyIHJlYWxseSBzaG91bGRuJ3Qg
-aGF2ZSBpdCdzIG9uIHVhcGkvZm9vX2RybS5oIGZpbGUuCj4gLURhbmllbApyaWdodCwgSSB3aWxs
-IHRyeSB0byBkbyBpdC4KCgoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0
-b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmkt
-ZGV2ZWwK
+On Tuesday 23 September 2014 15:09:37 Mark yao wrote:
+> On 2014=E5=B9=B409=E6=9C=8822=E6=97=A5 23:54, Arnd Bergmann wrote:
+> > On Monday 22 September 2014 17:15:06 Boris BREZILLON wrote:
+> >>>> +
+> >>>> +   /* TODO(djkurtz): fetch the mapping start/size from somewher=
+e */
+> >>>> +   mapping =3D arm_iommu_create_mapping(&platform_bus_type, 0x1=
+0000000,
+> >>>> +                                      SZ_1G);
+> >>>> +   if (IS_ERR(mapping)) {
+> >>>> +           ret =3D PTR_ERR(mapping);
+> >>>> +           goto err_config_cleanup;
+> >>>> +   }
+> >>>> +
+> >>>> +   dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
+> >>> This is the default coherent mask. If you call this function, you
+> >>> should normally check the return value, or call dma_set_mask firs=
+t,
+> >>> which you apparently don't do here, and in another place in this
+> >>> patch.
+> >> By "This is the default mask" do you mean it shouldn't be called a=
+t
+> >> all ? Cause I ran into some trouble when not calling this in my
+> >> atmel-hlcdc driver.
+> > We used to get this wrong in the of_platform code, but it should
+> > work now.
+> >
+> >> Actually, in my case the platform device is created by the MFD cor=
+e
+> >> which seems to let the coherent_dma_mask uninitialized.
+> > That may well be different, but it seems like a good idea to allow
+> > the MFD core to set this up as well.
+> >
+> > In general, we expect that devices that are capable of doing DMA
+> > start with a 32-bit mask for both dma_mask and dma_coherent_mask,
+> > and a driver that requires a smaller masks or wants a larger mask
+> > has to call the appropriate interface to set these, and check the
+> > return value.
+> so I think we can use dma_set_mask_and_coherent(...) to set dma_mask =
+and=20
+> dma_coherent_mark
+> at the same time, and check the return value.
+
+Yes, that would be good.
+
+	Arnd
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" i=
+n
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
