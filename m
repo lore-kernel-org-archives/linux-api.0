@@ -1,70 +1,53 @@
-From: Peter Feiner <pfeiner@google.com>
-Subject: [PATCH 1/3] tools: add .gitignore entries for selftests
-Date: Tue, 23 Sep 2014 12:05:21 -0700
-Message-ID: <1411499123-18050-1-git-send-email-pfeiner@google.com>
-References: <1411499027-17801-1-git-send-email-pfeiner@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1411499027-17801-1-git-send-email-pfeiner@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, David Herrmann <dh.herrmann@gmail.com>, Greg Thelen <gthelen@google.com>, Hugh Dickens <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Peter Feiner <pfeiner@google.com>
+From: Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>
+Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
+Date: Tue, 23 Sep 2014 12:22:01 -0700
+Message-ID: <CAHA+R7NnBJ=T3sukzzp-OD2am1nd318XbrXCX84LfSL=nu9ojw@mail.gmail.com>
+References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1411478430-4989-1-git-send-email-nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
+Cc: netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Peter Feiner <pfeiner@google.com>
----
- tools/testing/selftests/breakpoints/.gitignore | 1 +
- tools/testing/selftests/efivarfs/.gitignore    | 2 ++
- tools/testing/selftests/ptrace/.gitignore      | 1 +
- tools/testing/selftests/timers/.gitignore      | 1 +
- tools/testing/selftests/vm/.gitignore          | 9 +++++----
- 5 files changed, 10 insertions(+), 4 deletions(-)
- create mode 100644 tools/testing/selftests/breakpoints/.gitignore
- create mode 100644 tools/testing/selftests/efivarfs/.gitignore
- create mode 100644 tools/testing/selftests/ptrace/.gitignore
- create mode 100644 tools/testing/selftests/timers/.gitignore
+On Tue, Sep 23, 2014 at 6:20 AM, Nicolas Dichtel
+<nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> wrote:
+>
+> Here is a small screenshot to show how it can be used by userland:
+> $ ip netns add foo
+> $ ip netns del foo
+> $ ip netns
+> $ touch /var/run/netns/init_net
+> $ mount --bind /proc/1/ns/net /var/run/netns/init_net
+> $ ip netns add foo
+> $ ip netns
+> foo (id: 3)
+> init_net (id: 1)
+> $ ip netns exec foo ip netns
+> foo (id: 3)
+> init_net (id: 1)
+> $ ip netns exec foo ip link add ipip1 link-netnsid 1 type ipip remote 10.16.0.121 local 10.16.0.249
+> $ ip netns exec foo ip l ls ipip1
+> 6: ipip1@NONE: <POINTOPOINT,NOARP> mtu 1480 qdisc noop state DOWN mode DEFAULT group default
+>     link/ipip 10.16.0.249 peer 10.16.0.121 link-netnsid 1
+>
+> The parameter link-netnsid shows us where the interface sends and receives
+> packets (and thus we know where encapsulated addresses are set).
+>
 
-diff --git a/tools/testing/selftests/breakpoints/.gitignore b/tools/testing/selftests/breakpoints/.gitignore
-new file mode 100644
-index 0000000..ad66922
---- /dev/null
-+++ b/tools/testing/selftests/breakpoints/.gitignore
-@@ -0,0 +1 @@
-+/breakpoint_test
-diff --git a/tools/testing/selftests/efivarfs/.gitignore b/tools/testing/selftests/efivarfs/.gitignore
-new file mode 100644
-index 0000000..66c6e85
---- /dev/null
-+++ b/tools/testing/selftests/efivarfs/.gitignore
-@@ -0,0 +1,2 @@
-+/create-read
-+/open-unlink
-diff --git a/tools/testing/selftests/ptrace/.gitignore b/tools/testing/selftests/ptrace/.gitignore
-new file mode 100644
-index 0000000..d348b86
---- /dev/null
-+++ b/tools/testing/selftests/ptrace/.gitignore
-@@ -0,0 +1 @@
-+/peeksiginfo
-diff --git a/tools/testing/selftests/timers/.gitignore b/tools/testing/selftests/timers/.gitignore
-new file mode 100644
-index 0000000..ac85e5b
---- /dev/null
-+++ b/tools/testing/selftests/timers/.gitignore
-@@ -0,0 +1 @@
-+/posix_timers
-diff --git a/tools/testing/selftests/vm/.gitignore b/tools/testing/selftests/vm/.gitignore
-index ff1bb16..e57961f 100644
---- a/tools/testing/selftests/vm/.gitignore
-+++ b/tools/testing/selftests/vm/.gitignore
-@@ -1,4 +1,5 @@
--hugepage-mmap
--hugepage-shm
--map_hugetlb
--thuge-gen
-+/hugepage-mmap
-+/hugepage-shm
-+/map_hugetlb
-+/thuge-gen
-+/hugetlbfstest
--- 
-2.1.0.rc2.206.gedb03e5
+So ipip1 is shown in netns foo but functioning in netns init_net? Getting the
+id of init_net in foo depends on your mount namespace, /var/run/netns/ may
+not visible inside foo, in this case, link-netnsid is meaningless. It
+is not your
+fault, network namespace already heavily relies on mount namespace (sysfs
+needs to be remount otherwise you can not create device with the same name.)
+
+On the other hand, what's the problem you are trying to solve? AFAIK,
+the ifindex
+issue is purely in output, IOW, the device still functions correctly
+even through
+its link ifindex is not correct after moving to another namespace. If
+not, it is bug
+we need to fix.
