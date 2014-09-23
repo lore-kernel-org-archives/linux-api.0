@@ -1,8 +1,7 @@
 From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v7 8/8] Documentation: charger: max14577: Document exported
- sysfs entry
-Date: Tue, 23 Sep 2014 13:43:23 +0200
-Message-ID: <1411472603-11821-9-git-send-email-k.kozlowski@samsung.com>
+Subject: [PATCH v7 6/8] power: max17040: Add ID for MAX77836 Fuel Gauge block
+Date: Tue, 23 Sep 2014 13:43:21 +0200
+Message-ID: <1411472603-11821-7-git-send-email-k.kozlowski@samsung.com>
 References: <1411472603-11821-1-git-send-email-k.kozlowski@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1411472603-11821-1-git-send-email-k.kozlowski@samsung.com>
@@ -11,38 +10,32 @@ To: Samuel Ortiz <sameo@linux.intel.com>, Lee Jones <lee.jones@linaro.org>, linu
 Cc: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, devicetree@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Document the 'fast charge timer' setting exported by max14577 driver
-through sysfs entry.
+MAX77836 has the same Fuel Gauge as MAX17040/17048. The max17040 driver
+can be safely re-used. The patch adds MAX77836 device to the array of
+i2c_device_id. Additionally it removes the id associated with MAX17040
+device as the value is not used.
 
 Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
 Cc: Kyungmin Park <kyungmin.park@samsung.com>
 Acked-by: Andrew Morton <akpm@linux-foundation.org>
 Acked-by: Sebastian Reichel <sre@kernel.org>
 ---
- Documentation/ABI/testing/sysfs-class-power | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ drivers/power/max17040_battery.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
-index 78c7baca3587..ad4fb90ab23d 100644
---- a/Documentation/ABI/testing/sysfs-class-power
-+++ b/Documentation/ABI/testing/sysfs-class-power
-@@ -18,3 +18,17 @@ Description:
- 		This file is writeable and can be used to set the assumed
- 		battery 'full level'. As batteries age, this value has to be
- 		amended over time.
-+
-+What:		/sys/class/power_supply/max14577-charger/device/fast_charge_timer
-+Date:		July 2014
-+KernelVersion:	3.18.0
-+Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
-+Description:
-+		This entry shows and sets the maximum time the max14577
-+		charger operates in fast-charge mode. When the timer expires
-+		the device will terminate fast-charge mode (charging current
-+		will drop to 0 A) and will trigger interrupt.
-+
-+		Valid values:
-+		- 5, 6 or 7 (hours),
-+		- 0: disabled.
+diff --git a/drivers/power/max17040_battery.c b/drivers/power/max17040_battery.c
+index 0fbac861080d..14d44706327b 100644
+--- a/drivers/power/max17040_battery.c
++++ b/drivers/power/max17040_battery.c
+@@ -277,7 +277,8 @@ static SIMPLE_DEV_PM_OPS(max17040_pm_ops, max17040_suspend, max17040_resume);
+ #endif /* CONFIG_PM_SLEEP */
+ 
+ static const struct i2c_device_id max17040_id[] = {
+-	{ "max17040", 0 },
++	{ "max17040" },
++	{ "max77836-battery" },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(i2c, max17040_id);
 -- 
 1.9.1
