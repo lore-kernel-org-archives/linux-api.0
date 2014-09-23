@@ -1,101 +1,110 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH v2 4/7] selftests/kcmp: change test to use ksft framework
-Date: Tue, 23 Sep 2014 15:32:57 -0600
-Message-ID: <68095df8d89c1779c08aad899d142584b4cfe4c8.1411506121.git.shuahkh@osg.samsung.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [PATCH v2 3/7] selftests/ipc: change test to use ksft framework
+Date: Tue, 23 Sep 2014 15:32:56 -0600
+Message-ID: <c86860a4ee3839dce0123c240400c7603be8a7f4.1411506121.git.shuahkh@osg.samsung.com>
 References: <cover.1411506121.git.shuahkh@osg.samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1411506121.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-In-Reply-To: <cover.1411506121.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-References: <cover.1411506121.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, colin.king-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, dbueso-l3A5Bk7waGM@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, thierry-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1411506121.git.shuahkh@osg.samsung.com>
+In-Reply-To: <cover.1411506121.git.shuahkh@osg.samsung.com>
+References: <cover.1411506121.git.shuahkh@osg.samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org, gregkh@linuxfoundation.org, colin.king@canonical.com, dbueso@suse.de, ebiederm@xmission.com, serge.hallyn@ubuntu.com, thierry@linux.vnet.ibm.com, luto@amacapital.net
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Change kcmp test to use kselftest framework to report
-test results and test statistics.
+Change ipc test to use kselftest framework to report
+test results. With this change this test exits with
+EXIT_FAIL instead of -errno. Changed print errno in
+test fail messages to not loose that information.
 
-Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- tools/testing/selftests/kcmp/kcmp_test.c | 27 ++++++++++++++++++++-------
- 1 file changed, 20 insertions(+), 7 deletions(-)
+ tools/testing/selftests/ipc/msgque.c | 26 ++++++++++++++------------
+ 1 file changed, 14 insertions(+), 12 deletions(-)
 
-diff --git a/tools/testing/selftests/kcmp/kcmp_test.c b/tools/testing/selftests/kcmp/kcmp_test.c
-index dbba408..a5a4da8 100644
---- a/tools/testing/selftests/kcmp/kcmp_test.c
-+++ b/tools/testing/selftests/kcmp/kcmp_test.c
-@@ -17,6 +17,8 @@
- #include <sys/stat.h>
- #include <sys/wait.h>
+diff --git a/tools/testing/selftests/ipc/msgque.c b/tools/testing/selftests/ipc/msgque.c
+index 552f081..1b2ce33 100644
+--- a/tools/testing/selftests/ipc/msgque.c
++++ b/tools/testing/selftests/ipc/msgque.c
+@@ -5,6 +5,8 @@
+ #include <linux/msg.h>
+ #include <fcntl.h>
  
 +#include "../kselftest.h"
 +
- static long sys_kcmp(int pid1, int pid2, int type, int fd1, int fd2)
- {
- 	return syscall(__NR_kcmp, pid1, pid2, type, fd1, fd2);
-@@ -34,13 +36,13 @@ int main(int argc, char **argv)
+ #define MAX_MSG_SIZE		32
  
- 	if (fd1 < 0) {
- 		perror("Can't create file");
+ struct msg1 {
+@@ -195,58 +197,58 @@ int main(int argc, char **argv)
+ 
+ 	if (getuid() != 0) {
+ 		printf("Please run the test as root - Exiting.\n");
 -		exit(1);
-+		ksft_exit_fail();
++		return ksft_exit_fail();
  	}
  
- 	pid2 = fork();
- 	if (pid2 < 0) {
- 		perror("fork failed");
--		exit(1);
-+		ksft_exit_fail();
+ 	msgque.key = ftok(argv[0], 822155650);
+ 	if (msgque.key == -1) {
+-		printf("Can't make key\n");
+-		return -errno;
++		printf("Can't make key: %d\n", -errno);
++		return ksft_exit_fail();
  	}
  
- 	if (!pid2) {
-@@ -50,7 +52,7 @@ int main(int argc, char **argv)
- 		fd2 = open(kpath, O_RDWR, 0644);
- 		if (fd2 < 0) {
- 			perror("Can't open file");
--			exit(1);
-+			ksft_exit_fail();
- 		}
- 
- 		/* An example of output and arguments */
-@@ -74,23 +76,34 @@ int main(int argc, char **argv)
- 		if (ret) {
- 			printf("FAIL: 0 expected but %d returned (%s)\n",
- 				ret, strerror(errno));
-+			ksft_inc_fail_cnt();
- 			ret = -1;
--		} else
-+		} else {
- 			printf("PASS: 0 returned as expected\n");
-+			ksft_inc_pass_cnt();
-+		}
- 
- 		/* Compare with self */
- 		ret = sys_kcmp(pid1, pid1, KCMP_VM, 0, 0);
- 		if (ret) {
- 			printf("FAIL: 0 expected but %d returned (%s)\n",
- 				ret, strerror(errno));
-+			ksft_inc_fail_cnt();
- 			ret = -1;
--		} else
-+		} else {
- 			printf("PASS: 0 returned as expected\n");
-+			ksft_inc_pass_cnt();
-+		}
-+
-+		ksft_print_cnts();
- 
--		exit(ret);
-+		if (ret)
-+			ksft_exit_fail();
-+		else
-+			ksft_exit_pass();
+ 	msgque.msq_id = msgget(msgque.key, IPC_CREAT | IPC_EXCL | 0666);
+ 	if (msgque.msq_id == -1) {
+ 		err = -errno;
+-		printf("Can't create queue\n");
++		printf("Can't create queue: %d\n", err);
+ 		goto err_out;
  	}
  
- 	waitpid(pid2, &status, P_ALL);
+ 	err = fill_msgque(&msgque);
+ 	if (err) {
+-		printf("Failed to fill queue\n");
++		printf("Failed to fill queue: %d\n", err);
+ 		goto err_destroy;
+ 	}
  
+ 	err = dump_queue(&msgque);
+ 	if (err) {
+-		printf("Failed to dump queue\n");
++		printf("Failed to dump queue: %d\n", err);
+ 		goto err_destroy;
+ 	}
+ 
+ 	err = check_and_destroy_queue(&msgque);
+ 	if (err) {
+-		printf("Failed to check and destroy queue\n");
++		printf("Failed to check and destroy queue: %d\n", err);
+ 		goto err_out;
+ 	}
+ 
+ 	err = restore_queue(&msgque);
+ 	if (err) {
+-		printf("Failed to restore queue\n");
++		printf("Failed to restore queue: %d\n", err);
+ 		goto err_destroy;
+ 	}
+ 
+ 	err = check_and_destroy_queue(&msgque);
+ 	if (err) {
+-		printf("Failed to test queue\n");
++		printf("Failed to test queue: %d\n", err);
+ 		goto err_out;
+ 	}
 -	return 0;
 +	return ksft_exit_pass();
+ 
+ err_destroy:
+ 	if (msgctl(msgque.msq_id, IPC_RMID, 0)) {
+ 		printf("Failed to destroy queue: %d\n", -errno);
+-		return -errno;
++		return ksft_exit_fail();
+ 	}
+ err_out:
+-	return err;
++	return ksft_exit_fail();
  }
 -- 
 1.9.1
