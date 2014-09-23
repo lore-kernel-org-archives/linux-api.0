@@ -1,122 +1,85 @@
-From: Daniel Vetter <daniel@ffwll.ch>
+From: Mark yao <mark.yao@rock-chips.com>
 Subject: Re: [PATCH v3 1/5] drm/rockchip: Add basic drm driver
-Date: Tue, 23 Sep 2014 09:48:31 +0200
-Message-ID: <20140923074831.GR15734@phenom.ffwll.local>
+Date: Tue, 23 Sep 2014 16:00:43 +0800
+Message-ID: <542128AB.5030905@rock-chips.com>
 References: <1411105668-32722-1-git-send-email-mark.yao@rock-chips.com>
  <1411105668-32722-2-git-send-email-mark.yao@rock-chips.com>
  <CAF6AEGsPoj6+PdKCJk5BPPzHS51Tz1FGqS2SjpartaRw7i=Pxg@mail.gmail.com>
- <541F7C23.8000103@rock-chips.com>
+ <541F7C23.8000103@rock-chips.com> <20140923074831.GR15734@phenom.ffwll.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <541F7C23.8000103@rock-chips.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mark yao <mark.yao@rock-chips.com>
-Cc: Rob Clark <robdclark@gmail.com>, Mark Rutland <mark.rutland@arm.com>, Heiko =?iso-8859-1?Q?St=FCbner?= <heiko@sntech.de>, linux-doc@vger.kernel.org, Kever Yang <kever.yang@rock-chips.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jianqun Xu <xjq@rock-chips.com>, Chris Zhong <zyw@rock-chips.com>, linux-api@vger.kernel.org, jeff chen <cym@rock-chips.com>, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, Grant Likely <grant.likely@linaro.org>, wxt@rock-chips.com, Tao Huang <huangtao@rock-chips.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, yxj@rock-chips.com, Eddie Cai <cf@rock-chips.com>, Rob Herring <robh+dt@kernel.org>, =?iso-8859-1?Q?St=E9phane?= Marchesin <marcheu@chromium.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20140923074831.GR15734@phenom.ffwll.local>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Rob Clark <robdclark@gmail.com>, Mark Rutland <mark.rutland@arm.com>, =?UTF-8?B?SGVpa28gU3TDvGJuZXI=?= <heiko@sntech.de>, linux-doc@vger.kernel.org, Kever Yang <kever.yang@rock-chips.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jianqun Xu <xjq@rock-chips.com>, Chris Zhong <zyw@rock-chips.com>, linux-api@vger.kernel.org, jeff chen <cym@rock-chips.com>, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, Grant Likely <grant.likely@linaro.org>, wxt@rock-chips.com, Tao Huang <huangtao@rock-chips.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, yxj@rock-chips.com, Eddie Cai <cf@rock-chips.com>, Rob Herring <robh+dt@kernel.org>, =?UTF-8?B?U3TDqXBoYW5lIE1hcmNoZXNpbg==?= <marcheu@chr>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 22, 2014 at 09:32:19AM +0800, Mark yao wrote:
-> On 2014=E5=B9=B409=E6=9C=8820=E6=97=A5 08:03, Rob Clark wrote:
-> >On Fri, Sep 19, 2014 at 1:47 AM, Mark yao <mark.yao@rock-chips.com> =
-wrote:
-> >>diff --git a/include/uapi/drm/rockchip_drm.h b/include/uapi/drm/roc=
-kchip_drm.h
-> >>new file mode 100644
-> >>index 0000000..8f8e60e
-> >>--- /dev/null
-> >>+++ b/include/uapi/drm/rockchip_drm.h
-> >>@@ -0,0 +1,97 @@
-> >>+/*
-> >>+ *
-> >>+ * Copyright (c) Fuzhou Rockchip Electronics Co.Ltd
-> >>+ * Authors:
-> >>+ *       Mark Yao <yzq@rock-chips.com>
-> >>+ *
-> >>+ * base on exynos_drm.h
-> >>+ *
-> >>+ * This program is free software; you can redistribute  it and/or =
-modify it
-> >>+ * under  the terms of  the GNU General  Public License as publish=
-ed by the
-> >>+ * Free Software Foundation;  either version 2 of the  License, or=
- (at your
-> >>+ * option) any later version.
-> >>+ */
-> >>+
-> >>+#ifndef _UAPI_ROCKCHIP_DRM_H
-> >>+#define _UAPI_ROCKCHIP_DRM_H
-> >>+
-> >>+#include <drm/drm.h>
-> >>+
-> >>+/**
-> >>+ * User-desired buffer creation information structure.
-> >>+ *
-> >>+ * @size: user-desired memory allocation size.
-> >>+ * @flags: user request for setting memory type or cache attribute=
-s.
-> >>+ * @handle: returned a handle to created gem object.
-> >>+ *     - this handle will be set by gem module of kernel side.
-> >>+ */
-> >>+struct drm_rockchip_gem_create {
-> >>+       uint64_t size;
-> >>+       uint32_t flags;
-> >>+       uint32_t handle;
-> >>+};
-> >>+
-> >>+/**
-> >>+ * A structure for getting buffer offset.
-> >>+ *
-> >>+ * @handle: a pointer to gem object created.
-> >>+ * @pad: just padding to be 64-bit aligned.
-> >>+ * @offset: relatived offset value of the memory region allocated.
-> >>+ *     - this value should be set by user.
-> >>+ */
-> >>+struct drm_rockchip_gem_map_off {
-> >>+       uint32_t handle;
-> >>+       uint32_t pad;
-> >>+       uint64_t offset;
-> >>+};
-> >>+
-> >>+/**
-> >>+ * A structure for mapping buffer.
-> >>+ *
-> >>+ * @handle: a handle to gem object created.
-> >>+ * @pad: just padding to be 64-bit aligned.
-> >>+ * @size: memory size to be mapped.
-> >>+ * @mapped: having user virtual address mmaped.
-> >>+ *      - this variable would be filled by rockchip gem module
-> >>+ *      of kernel side with user virtual address which is allocate=
-d
-> >>+ *      by do_mmap().
-> >>+ */
-> >>+struct drm_rockchip_gem_mmap {
-> >>+       uint32_t handle;
-> >>+       uint32_t pad;
-> >>+       uint64_t size;
-> >>+       uint64_t mapped;
-> >>+};
-> >Could we do without the mmap ioctl?  It has been a source of problem=
-s
-> >in other drivers, and the ioctl to get mmap offset, plus normal mmap=
-()
-> >on drm device file should be sufficient
-> >
-> >BR,
-> >-R
-> OK, I will try to move the special mmap ioctl and use drm generic mma=
-p
-> interface.
-
-Actually you probably should drop all this and just implement the dummy
-object support for now. Until you have proper hw accel there's no reaso=
-n
-to expose a driver-private gem create/mmap interface at all.
-
-A pure kms driver really shouldn't have it's on uapi/foo_drm.h file.
--Daniel
---=20
-Daniel Vetter
-Software Engineer, Intel Corporation
-+41 (0) 79 365 57 48 - http://blog.ffwll.ch
+T24gMjAxNOW5tDA55pyIMjPml6UgMTU6NDgsIERhbmllbCBWZXR0ZXIgd3JvdGU6Cj4gT24gTW9u
+LCBTZXAgMjIsIDIwMTQgYXQgMDk6MzI6MTlBTSArMDgwMCwgTWFyayB5YW8gd3JvdGU6Cj4+IE9u
+IDIwMTTlubQwOeaciDIw5pelIDA4OjAzLCBSb2IgQ2xhcmsgd3JvdGU6Cj4+PiBPbiBGcmksIFNl
+cCAxOSwgMjAxNCBhdCAxOjQ3IEFNLCBNYXJrIHlhbyA8bWFyay55YW9Acm9jay1jaGlwcy5jb20+
+IHdyb3RlOgo+Pj4+IGRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvZHJtL3JvY2tjaGlwX2RybS5o
+IGIvaW5jbHVkZS91YXBpL2RybS9yb2NrY2hpcF9kcm0uaAo+Pj4+IG5ldyBmaWxlIG1vZGUgMTAw
+NjQ0Cj4+Pj4gaW5kZXggMDAwMDAwMC4uOGY4ZTYwZQo+Pj4+IC0tLSAvZGV2L251bGwKPj4+PiAr
+KysgYi9pbmNsdWRlL3VhcGkvZHJtL3JvY2tjaGlwX2RybS5oCj4+Pj4gQEAgLTAsMCArMSw5NyBA
+QAo+Pj4+ICsvKgo+Pj4+ICsgKgo+Pj4+ICsgKiBDb3B5cmlnaHQgKGMpIEZ1emhvdSBSb2NrY2hp
+cCBFbGVjdHJvbmljcyBDby5MdGQKPj4+PiArICogQXV0aG9yczoKPj4+PiArICogICAgICAgTWFy
+ayBZYW8gPHl6cUByb2NrLWNoaXBzLmNvbT4KPj4+PiArICoKPj4+PiArICogYmFzZSBvbiBleHlu
+b3NfZHJtLmgKPj4+PiArICoKPj4+PiArICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7
+IHlvdSBjYW4gcmVkaXN0cmlidXRlICBpdCBhbmQvb3IgbW9kaWZ5IGl0Cj4+Pj4gKyAqIHVuZGVy
+ICB0aGUgdGVybXMgb2YgIHRoZSBHTlUgR2VuZXJhbCAgUHVibGljIExpY2Vuc2UgYXMgcHVibGlz
+aGVkIGJ5IHRoZQo+Pj4+ICsgKiBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247ICBlaXRoZXIgdmVy
+c2lvbiAyIG9mIHRoZSAgTGljZW5zZSwgb3IgKGF0IHlvdXIKPj4+PiArICogb3B0aW9uKSBhbnkg
+bGF0ZXIgdmVyc2lvbi4KPj4+PiArICovCj4+Pj4gKwo+Pj4+ICsjaWZuZGVmIF9VQVBJX1JPQ0tD
+SElQX0RSTV9ICj4+Pj4gKyNkZWZpbmUgX1VBUElfUk9DS0NISVBfRFJNX0gKPj4+PiArCj4+Pj4g
+KyNpbmNsdWRlIDxkcm0vZHJtLmg+Cj4+Pj4gKwo+Pj4+ICsvKioKPj4+PiArICogVXNlci1kZXNp
+cmVkIGJ1ZmZlciBjcmVhdGlvbiBpbmZvcm1hdGlvbiBzdHJ1Y3R1cmUuCj4+Pj4gKyAqCj4+Pj4g
+KyAqIEBzaXplOiB1c2VyLWRlc2lyZWQgbWVtb3J5IGFsbG9jYXRpb24gc2l6ZS4KPj4+PiArICog
+QGZsYWdzOiB1c2VyIHJlcXVlc3QgZm9yIHNldHRpbmcgbWVtb3J5IHR5cGUgb3IgY2FjaGUgYXR0
+cmlidXRlcy4KPj4+PiArICogQGhhbmRsZTogcmV0dXJuZWQgYSBoYW5kbGUgdG8gY3JlYXRlZCBn
+ZW0gb2JqZWN0Lgo+Pj4+ICsgKiAgICAgLSB0aGlzIGhhbmRsZSB3aWxsIGJlIHNldCBieSBnZW0g
+bW9kdWxlIG9mIGtlcm5lbCBzaWRlLgo+Pj4+ICsgKi8KPj4+PiArc3RydWN0IGRybV9yb2NrY2hp
+cF9nZW1fY3JlYXRlIHsKPj4+PiArICAgICAgIHVpbnQ2NF90IHNpemU7Cj4+Pj4gKyAgICAgICB1
+aW50MzJfdCBmbGFnczsKPj4+PiArICAgICAgIHVpbnQzMl90IGhhbmRsZTsKPj4+PiArfTsKPj4+
+PiArCj4+Pj4gKy8qKgo+Pj4+ICsgKiBBIHN0cnVjdHVyZSBmb3IgZ2V0dGluZyBidWZmZXIgb2Zm
+c2V0Lgo+Pj4+ICsgKgo+Pj4+ICsgKiBAaGFuZGxlOiBhIHBvaW50ZXIgdG8gZ2VtIG9iamVjdCBj
+cmVhdGVkLgo+Pj4+ICsgKiBAcGFkOiBqdXN0IHBhZGRpbmcgdG8gYmUgNjQtYml0IGFsaWduZWQu
+Cj4+Pj4gKyAqIEBvZmZzZXQ6IHJlbGF0aXZlZCBvZmZzZXQgdmFsdWUgb2YgdGhlIG1lbW9yeSBy
+ZWdpb24gYWxsb2NhdGVkLgo+Pj4+ICsgKiAgICAgLSB0aGlzIHZhbHVlIHNob3VsZCBiZSBzZXQg
+YnkgdXNlci4KPj4+PiArICovCj4+Pj4gK3N0cnVjdCBkcm1fcm9ja2NoaXBfZ2VtX21hcF9vZmYg
+ewo+Pj4+ICsgICAgICAgdWludDMyX3QgaGFuZGxlOwo+Pj4+ICsgICAgICAgdWludDMyX3QgcGFk
+Owo+Pj4+ICsgICAgICAgdWludDY0X3Qgb2Zmc2V0Owo+Pj4+ICt9Owo+Pj4+ICsKPj4+PiArLyoq
+Cj4+Pj4gKyAqIEEgc3RydWN0dXJlIGZvciBtYXBwaW5nIGJ1ZmZlci4KPj4+PiArICoKPj4+PiAr
+ICogQGhhbmRsZTogYSBoYW5kbGUgdG8gZ2VtIG9iamVjdCBjcmVhdGVkLgo+Pj4+ICsgKiBAcGFk
+OiBqdXN0IHBhZGRpbmcgdG8gYmUgNjQtYml0IGFsaWduZWQuCj4+Pj4gKyAqIEBzaXplOiBtZW1v
+cnkgc2l6ZSB0byBiZSBtYXBwZWQuCj4+Pj4gKyAqIEBtYXBwZWQ6IGhhdmluZyB1c2VyIHZpcnR1
+YWwgYWRkcmVzcyBtbWFwZWQuCj4+Pj4gKyAqICAgICAgLSB0aGlzIHZhcmlhYmxlIHdvdWxkIGJl
+IGZpbGxlZCBieSByb2NrY2hpcCBnZW0gbW9kdWxlCj4+Pj4gKyAqICAgICAgb2Yga2VybmVsIHNp
+ZGUgd2l0aCB1c2VyIHZpcnR1YWwgYWRkcmVzcyB3aGljaCBpcyBhbGxvY2F0ZWQKPj4+PiArICog
+ICAgICBieSBkb19tbWFwKCkuCj4+Pj4gKyAqLwo+Pj4+ICtzdHJ1Y3QgZHJtX3JvY2tjaGlwX2dl
+bV9tbWFwIHsKPj4+PiArICAgICAgIHVpbnQzMl90IGhhbmRsZTsKPj4+PiArICAgICAgIHVpbnQz
+Ml90IHBhZDsKPj4+PiArICAgICAgIHVpbnQ2NF90IHNpemU7Cj4+Pj4gKyAgICAgICB1aW50NjRf
+dCBtYXBwZWQ7Cj4+Pj4gK307Cj4+PiBDb3VsZCB3ZSBkbyB3aXRob3V0IHRoZSBtbWFwIGlvY3Rs
+PyAgSXQgaGFzIGJlZW4gYSBzb3VyY2Ugb2YgcHJvYmxlbXMKPj4+IGluIG90aGVyIGRyaXZlcnMs
+IGFuZCB0aGUgaW9jdGwgdG8gZ2V0IG1tYXAgb2Zmc2V0LCBwbHVzIG5vcm1hbCBtbWFwKCkKPj4+
+IG9uIGRybSBkZXZpY2UgZmlsZSBzaG91bGQgYmUgc3VmZmljaWVudAo+Pj4KPj4+IEJSLAo+Pj4g
+LVIKPj4gT0ssIEkgd2lsbCB0cnkgdG8gbW92ZSB0aGUgc3BlY2lhbCBtbWFwIGlvY3RsIGFuZCB1
+c2UgZHJtIGdlbmVyaWMgbW1hcAo+PiBpbnRlcmZhY2UuCj4gQWN0dWFsbHkgeW91IHByb2JhYmx5
+IHNob3VsZCBkcm9wIGFsbCB0aGlzIGFuZCBqdXN0IGltcGxlbWVudCB0aGUgZHVtbXkKPiBvYmpl
+Y3Qgc3VwcG9ydCBmb3Igbm93LiBVbnRpbCB5b3UgaGF2ZSBwcm9wZXIgaHcgYWNjZWwgdGhlcmUn
+cyBubyByZWFzb24KPiB0byBleHBvc2UgYSBkcml2ZXItcHJpdmF0ZSBnZW0gY3JlYXRlL21tYXAg
+aW50ZXJmYWNlIGF0IGFsbC4KPgo+IEEgcHVyZSBrbXMgZHJpdmVyIHJlYWxseSBzaG91bGRuJ3Qg
+aGF2ZSBpdCdzIG9uIHVhcGkvZm9vX2RybS5oIGZpbGUuCj4gLURhbmllbApyaWdodCwgSSB3aWxs
+IHRyeSB0byBkbyBpdC4KCgoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0
+b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmkt
+ZGV2ZWwK
