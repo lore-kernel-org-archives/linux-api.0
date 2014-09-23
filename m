@@ -1,7 +1,7 @@
 From: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
-Subject: [PATCH 2/8] mfd: da9150: Add DT binding documentation for core
-Date: Tue, 23 Sep 2014 11:53:29 +0100
-Message-ID: <b71815ff49a1cabe2c7907a96cc1be34f924648e.1411396719.git.Adam.Thomson.Opensource@diasemi.com>
+Subject: [PATCH 4/8] iio: da9150: Add DT binding documentation for GPADC
+Date: Tue, 23 Sep 2014 11:53:35 +0100
+Message-ID: <6697dbc9711c9c3551aede1b5e4f986caa0d1a44.1411396719.git.Adam.Thomson.Opensource@diasemi.com>
 References: <cover.1411396718.git.Adam.Thomson.Opensource@diasemi.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,56 +14,31 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
 ---
- Documentation/devicetree/bindings/mfd/da9150.txt | 41 ++++++++++++++++++++++++
- 1 file changed, 41 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/mfd/da9150.txt
+ .../devicetree/bindings/iio/adc/da9150-gpadc.txt         | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/iio/adc/da9150-gpadc.txt
 
-diff --git a/Documentation/devicetree/bindings/mfd/da9150.txt b/Documentation/devicetree/bindings/mfd/da9150.txt
+diff --git a/Documentation/devicetree/bindings/iio/adc/da9150-gpadc.txt b/Documentation/devicetree/bindings/iio/adc/da9150-gpadc.txt
 new file mode 100644
-index 0000000..d7de150
+index 0000000..c07228d
 --- /dev/null
-+++ b/Documentation/devicetree/bindings/mfd/da9150.txt
-@@ -0,0 +1,41 @@
-+Dialog Semiconductor DA9150 Combined Charger/Fuel-Gauge MFD bindings
-+
-+DA9150 consists of a group of sub-devices (I2C Only):
-+
-+Device			 Description
-+------			 -----------
-+da9150-gpadc		: IIO - GPADC
-+da9150-charger		: Power Supply (Charger)
-+
-+======
++++ b/Documentation/devicetree/bindings/iio/adc/da9150-gpadc.txt
+@@ -0,0 +1,16 @@
++Dialog Semiconductor DA9150 IIO GPADC bindings
 +
 +Required properties:
-+- compatible : Should be "dlg,da9150"
-+- reg: Specifies the I2C slave address
-+- interrupt-parent: Specifies the phandle of the interrupt controller to which
-+  the IRQs from da9150 are delivered to.
-+- interrupts: IRQ line info for da9150 chip.
-+- interrupt-controller: da9150 has internal IRQs (own IRQ domain).
++- compatible: "dlg,da9150-gpadc" for DA9150 IIO GPADC
++- #io-channel-cells: Should be set to <1>
++  (See Documentation/devicetree/bindings/iio/iio-bindings.txt for further info)
 +
-+Sub-devices:
-+- da9150-gpadc: See Documentation/devicetree/bindings/iio/adc/da9150-gpadc.txt
-+- da9150-charger: See Documentation/devicetree/bindings/power/da9150-charger.txt
++For further information on GPADC channels, see device datasheet.
 +
 +
 +Example:
 +
-+	charger_fg: da9150@58 {
-+		compatible = "dlg,da9150";
-+		reg = <0x58>;
-+		interrupt-parent = <&gpio6>;
-+		interrupts = <11 IRQ_TYPE_LEVEL_LOW>;
-+		interrupt-controller;
-+
-+		gpadc: da9150-gpadc {
-+			...
-+		};
-+
-+		da9150-charger {
-+			...
-+		};
++	gpadc: da9150-gpadc {
++		compatible = "dlg,da9150-gpadc";
++		#io-channel-cells = <1>;
 +	};
 --
 1.9.3
