@@ -1,8 +1,7 @@
 From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Subject: [PATCHv7 08/26] driver core: amba: add documentation for binding path
-	'driver_override'
-Date: Tue, 23 Sep 2014 16:46:07 +0200
-Message-ID: <1411483586-29304-9-git-send-email-a.motakis@virtualopensystems.com>
+Subject: [PATCHv7 10/26] vfio: platform: probe to devices on the platform bus
+Date: Tue, 23 Sep 2014 16:46:09 +0200
+Message-ID: <1411483586-29304-11-git-send-email-a.motakis@virtualopensystems.com>
 References: <1411483586-29304-1-git-send-email-a.motakis@virtualopensystems.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +21,129 @@ To: alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kvmarm-FPEHb7Xf0XXU
 Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, will.deacon-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add documentation for alternative binding path 'driver_override' for
-AMBA devices.
+Driver to bind to Linux platform devices, and callbacks to discover their
+resources to be used by the main VFIO PLATFORM code.
 
 Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
 ---
- Documentation/ABI/testing/sysfs-bus-amba | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-bus-amba
+ drivers/vfio/platform/vfio_platform.c | 96 +++++++++++++++++++++++++++++++++++
+ include/uapi/linux/vfio.h             |  1 +
+ 2 files changed, 97 insertions(+)
+ create mode 100644 drivers/vfio/platform/vfio_platform.c
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-amba b/Documentation/ABI/testing/sysfs-bus-amba
+diff --git a/drivers/vfio/platform/vfio_platform.c b/drivers/vfio/platform/vfio_platform.c
 new file mode 100644
-index 0000000..e7b5467
+index 0000000..024c026
 --- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-bus-amba
-@@ -0,0 +1,20 @@
-+What:		/sys/bus/amba/devices/.../driver_override
-+Date:		September 2014
-+Contact:	Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-+Description:
-+		This file allows the driver for a device to be specified which
-+		will override standard OF, ACPI, ID table, and name matching.
-+		When specified, only a driver with a name matching the value
-+		written to driver_override will have an opportunity to bind to
-+		the device. The override is specified by writing a string to the
-+		driver_override file (echo vfio-amba > driver_override)	and may
-+		be cleared with an empty string (echo > driver_override).
-+		This returns the device to standard matching rules binding.
-+		Writing to driver_override does not automatically unbind the
-+		device from its current driver or make any attempt to
-+		automatically load the specified driver. If no driver with a
-+		matching name is currently loaded in the kernel, the device will
-+		not bind to any driver. This also allows devices to opt-out of
-+		driver binding using a driver_override name such as "none".
-+		Only a single driver may be specified in the override, there is
-+		no support for parsing delimiters.
++++ b/drivers/vfio/platform/vfio_platform.c
+@@ -0,0 +1,96 @@
++/*
++ * Copyright (C) 2013 - Virtual Open Systems
++ * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License, version 2, as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <linux/device.h>
++#include <linux/eventfd.h>
++#include <linux/interrupt.h>
++#include <linux/iommu.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/notifier.h>
++#include <linux/pm_runtime.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/uaccess.h>
++#include <linux/vfio.h>
++#include <linux/io.h>
++#include <linux/platform_device.h>
++#include <linux/irq.h>
++
++#include "vfio_platform_private.h"
++
++#define DRIVER_VERSION  "0.7"
++#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
++#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
++
++/* probing devices from the linux platform bus */
++
++static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
++						int i)
++{
++	struct platform_device *pdev = (struct platform_device *) vdev->opaque;
++
++	return platform_get_resource(pdev, IORESOURCE_MEM, i);
++}
++
++static int get_platform_irq(struct vfio_platform_device *vdev, int i)
++{
++	struct platform_device *pdev = (struct platform_device *) vdev->opaque;
++
++	return platform_get_irq(pdev, i);
++}
++
++
++static int vfio_platform_probe(struct platform_device *pdev)
++{
++	struct vfio_platform_device *vdev;
++	int ret;
++
++	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
++	if (!vdev)
++		return -ENOMEM;
++
++	vdev->opaque = (void *) pdev;
++	vdev->name = pdev->name;
++	vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
++	vdev->get_resource = get_platform_resource;
++	vdev->get_irq = get_platform_irq;
++
++	ret = vfio_platform_probe_common(vdev, &pdev->dev);
++	if (ret)
++		kfree(vdev);
++
++	return ret;
++}
++
++static int vfio_platform_remove(struct platform_device *pdev)
++{
++	return vfio_platform_remove_common(&pdev->dev);
++}
++
++static struct platform_driver vfio_platform_driver = {
++	.probe		= vfio_platform_probe,
++	.remove		= vfio_platform_remove,
++	.driver	= {
++		.name	= "vfio-platform",
++		.owner	= THIS_MODULE,
++	},
++};
++
++module_platform_driver(vfio_platform_driver);
++
++MODULE_VERSION(DRIVER_VERSION);
++MODULE_LICENSE("GPL v2");
++MODULE_AUTHOR(DRIVER_AUTHOR);
++MODULE_DESCRIPTION(DRIVER_DESC);
+diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+index 30f630c..b022a25 100644
+--- a/include/uapi/linux/vfio.h
++++ b/include/uapi/linux/vfio.h
+@@ -158,6 +158,7 @@ struct vfio_device_info {
+ 	__u32	flags;
+ #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
+ #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
++#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
+ 	__u32	num_regions;	/* Max region index + 1 */
+ 	__u32	num_irqs;	/* Max IRQ index + 1 */
+ };
 -- 
 1.8.3.2
