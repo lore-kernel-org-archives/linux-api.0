@@ -1,154 +1,66 @@
-From: Li Xi <pkuelelixi@gmail.com>
-Subject: [PATCH 4/4] Adds ioctl interface support for ext4 project
-Date: Wed, 24 Sep 2014 22:04:30 +0800
-Message-ID: <1411567470-31799-5-git-send-email-lixi@ddn.com>
-References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <1411567470-31799-1-git-send-email-lixi@ddn.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+From: Lars Melin <larsm17-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] usb: gadget: f_rndis: fix usb_interface_descriptor for
+ rndis
+Date: Wed, 24 Sep 2014 21:22:21 +0700
+Message-ID: <5422D39D.70006@gmail.com>
+References: <1411541339-32400-1-git-send-email-hs@denx.de> <5422B83A.8030406@gmail.com> <5422C33F.400@denx.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5422C33F.400-ynQEQJNshbs@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: hs-ynQEQJNshbs@public.gmane.org
+Cc: linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Felipe Balbi <balbi-l0cyMroinI0@public.gmane.org>, Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrzej Pietrasiewicz <andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Macpaul Lin <macpaul-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds ioctl interface for setting/getting project of ext4.
+On 2014-09-24 20:12, Heiko Schocher wrote:
+> Hello Lars,
+>
+> Am 24.09.2014 14:25, schrieb Lars Melin:
+>> On 2014-09-24 13:48, Heiko Schocher wrote:
+>>> use the values for RNDIS over Ethernet as defined in
+>>> http://www.usb.org/developers/defined_class
+>>> (search for RDNIS):
+>>>
+>>> - baseclass: 0xef (miscellaneous)
+>>> - subclass: 0x04
+>>> - protocol: 0x01
+>>>
+>> That is usb class, it is not the same thing as communication device 
+>> class.
+>>> --- a/include/uapi/linux/usb/cdc.h
+>>> +++ b/include/uapi/linux/usb/cdc.h
+>>> @@ -12,6 +12,7 @@
+>>> #include <linux/types.h>
+>>> #define USB_CDC_SUBCLASS_ACM 0x02
+>>> +#define USB_CDC_SUBCLASS_RNDIS 0x04
+>> No, no, no.
+>> There is no CDC_SUBCLASS_RNDIS and you can not define one over an 
+>> already used cdc subclass number, 0x04 is Multi-Channel Control Model
+>
+> Ah, ok, so I have to define this values in a new header file, as there
+> is no current file for the USB_CLASS_MISC defines? Or is there a proper
+> place for them?
+>
+> BTW: where do I find the "cdc subclass number, 0x04 is Multi-Channel
+> Control Model" define?
+>
+> bye,
+> Heiko
 
-Signed-off-by: Li Xi <lixi@ddn.com>
----
- Documentation/filesystems/ext4.txt |    4 ++
- fs/ext4/ext4.h                     |    2 +
- fs/ext4/ioctl.c                    |   85 ++++++++++++++++++++++++++++++++++++
- 3 files changed, 91 insertions(+), 0 deletions(-)
+You can still find the original specification usbcdc11.pdf on the net if 
+you google for it, it has been pulled from usb.org where you could 
+download it until a few years ago.
+It is old but covers a lot of what you need to know.
 
-diff --git a/Documentation/filesystems/ext4.txt b/Documentation/filesystems/ext4.txt
-index 919a329..9c98e62 100644
---- a/Documentation/filesystems/ext4.txt
-+++ b/Documentation/filesystems/ext4.txt
-@@ -609,6 +609,10 @@ EXT4_IOC_SWAP_BOOT	      Swap i_blocks and associated attributes
- 			      The data blocks of the previous boot loader
- 			      will be associated with the given inode.
- 
-+ EXT4_IOC_GETPROJECT	      Get project ID associated with inode.
-+
-+ EXT4_IOC_SETPROJECT	      Set Project ID associated with inode.
-+
- ..............................................................................
- 
- References
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index f8be9bf..51946fd 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -617,6 +617,8 @@ enum {
- #define EXT4_IOC_RESIZE_FS		_IOW('f', 16, __u64)
- #define EXT4_IOC_SWAP_BOOT		_IO('f', 17)
- #define EXT4_IOC_PRECACHE_EXTENTS	_IO('f', 18)
-+#define EXT4_IOC_GETPROJECT		_IOR('f', 19, long)
-+#define EXT4_IOC_SETPROJECT		_IOW('f', 20, long)
- 
- #if defined(__KERNEL__) && defined(CONFIG_COMPAT)
- /*
-diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
-index 0f2252e..93b7ff4 100644
---- a/fs/ext4/ioctl.c
-+++ b/fs/ext4/ioctl.c
-@@ -14,6 +14,8 @@
- #include <linux/compat.h>
- #include <linux/mount.h>
- #include <linux/file.h>
-+#include <linux/quotaops.h>
-+#include <linux/quota.h>
- #include <asm/uaccess.h>
- #include "ext4_jbd2.h"
- #include "ext4.h"
-@@ -611,6 +613,89 @@ resizefs_out:
- 	case EXT4_IOC_PRECACHE_EXTENTS:
- 		return ext4_ext_precache(inode);
- 
-+	case EXT4_IOC_GETPROJECT:
-+	{
-+		__u32 projid;
-+
-+		projid = (__u32)from_kprojid(&init_user_ns,
-+					     EXT4_I(inode)->i_projid);
-+		return put_user(projid, (__u32 __user *) arg);
-+	}
-+	case EXT4_IOC_SETPROJECT:
-+	{
-+		__u32 projid;
-+		int err;
-+		handle_t *handle;
-+		kprojid_t kprojid;
-+		struct ext4_iloc iloc;
-+		struct ext4_inode *raw_inode;
-+
-+		struct dquot *transfer_to[EXT4_MAXQUOTAS] = { };
-+
-+		/* Make sure caller can change project. */
-+		if (!capable(CAP_SYS_ADMIN))
-+			return -EACCES;
-+
-+		if (get_user(projid, (__u32 __user *) arg))
-+			return -EFAULT;
-+
-+		kprojid = make_kprojid(&init_user_ns, (projid_t)projid);
-+
-+		if (projid_eq(kprojid, EXT4_I(inode)->i_projid))
-+			return 0;
-+
-+		err = mnt_want_write_file(filp);
-+		if (err)
-+			return err;
-+
-+		err = -EPERM;
-+		mutex_lock(&inode->i_mutex);
-+		/* Is it quota file? Do not allow user to mess with it */
-+		if (IS_NOQUOTA(inode))
-+			goto project_out;
-+
-+		dquot_initialize(inode);
-+
-+		handle = ext4_journal_start(inode, EXT4_HT_QUOTA,
-+			EXT4_QUOTA_INIT_BLOCKS(sb) +
-+			EXT4_QUOTA_DEL_BLOCKS(sb) + 3);
-+		if (IS_ERR(handle)) {
-+			err = PTR_ERR(handle);
-+			goto project_out;
-+		}
-+
-+		err = ext4_reserve_inode_write(handle, inode, &iloc);
-+		if (err)
-+			goto project_stop;
-+
-+		raw_inode = ext4_raw_inode(&iloc);
-+		if ((EXT4_INODE_SIZE(inode->i_sb) <=
-+		     EXT4_GOOD_OLD_INODE_SIZE) ||
-+		    (!EXT4_FITS_IN_INODE(raw_inode, ei, i_projid))) {
-+		    	err = -EFBIG;
-+		    	goto project_stop;
-+		}
-+
-+		transfer_to[PRJQUOTA] = dqget(sb, make_kqid_projid(kprojid));
-+		if (!transfer_to[PRJQUOTA])
-+			goto project_set;
-+
-+		err = __dquot_transfer(inode, transfer_to);
-+		dqput(transfer_to[PRJQUOTA]);
-+		if (err)
-+			goto project_stop;
-+
-+project_set:
-+		EXT4_I(inode)->i_projid = kprojid;
-+		inode->i_ctime = ext4_current_time(inode);
-+		err = ext4_mark_iloc_dirty(handle, inode, &iloc);
-+project_stop:
-+		ext4_journal_stop(handle);
-+project_out:
-+		mutex_unlock(&inode->i_mutex);
-+		mnt_drop_write_file(filp);
-+		return err;
-+	}
- 	default:
- 		return -ENOTTY;
- 	}
--- 
-1.7.1
-
+Linux has afaik only the cdc.h definition file, everything else is coded 
+by class/subclass in respectively drivers when needed.
+02/02/ff  or  e0/01/03  are the most common interface attribute for 
+rndis,  both of them together with a data interface with attributes 
+0a/00/00.
+Please check the whitelisting in drivers/net/usb/rndis_host.c  and also 
+blacklistings in other net drivers under the same path, it should give 
+you an idea how to bind an interface to a specific driver by interface 
+attributes and/or usb vid:pid.
+You should be able to do the same for your particular device.
