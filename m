@@ -1,341 +1,154 @@
 From: Li Xi <pkuelelixi@gmail.com>
-Subject: [PATCH 3/4] Adds project quota support for ext4
-Date: Wed, 24 Sep 2014 22:04:29 +0800
-Message-ID: <1411567470-31799-4-git-send-email-lixi@ddn.com>
+Subject: [PATCH 4/4] Adds ioctl interface support for ext4 project
+Date: Wed, 24 Sep 2014 22:04:30 +0800
+Message-ID: <1411567470-31799-5-git-send-email-lixi@ddn.com>
 References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 In-Reply-To: <1411567470-31799-1-git-send-email-lixi@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-ext4-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds mount options for enabling/disabling project quota
-accounting and enforcement. A new specific inode is also used for
-project quota accounting.
+This patch adds ioctl interface for setting/getting project of ext4.
 
 Signed-off-by: Li Xi <lixi@ddn.com>
-Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
 ---
- fs/ext4/ext4.h  |    8 +++-
- fs/ext4/super.c |  123 ++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 118 insertions(+), 13 deletions(-)
+ Documentation/filesystems/ext4.txt |    4 ++
+ fs/ext4/ext4.h                     |    2 +
+ fs/ext4/ioctl.c                    |   85 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 91 insertions(+), 0 deletions(-)
 
+diff --git a/Documentation/filesystems/ext4.txt b/Documentation/filesystems/ext4.txt
+index 919a329..9c98e62 100644
+--- a/Documentation/filesystems/ext4.txt
++++ b/Documentation/filesystems/ext4.txt
+@@ -609,6 +609,10 @@ EXT4_IOC_SWAP_BOOT	      Swap i_blocks and associated attributes
+ 			      The data blocks of the previous boot loader
+ 			      will be associated with the given inode.
+ 
++ EXT4_IOC_GETPROJECT	      Get project ID associated with inode.
++
++ EXT4_IOC_SETPROJECT	      Set Project ID associated with inode.
++
+ ..............................................................................
+ 
+ References
 diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 092f60c..f8be9bf 100644
+index f8be9bf..51946fd 100644
 --- a/fs/ext4/ext4.h
 +++ b/fs/ext4/ext4.h
-@@ -217,6 +217,7 @@ struct ext4_io_submit {
- #define EXT4_UNDEL_DIR_INO	 6	/* Undelete directory inode */
- #define EXT4_RESIZE_INO		 7	/* Reserved group descriptors inode */
- #define EXT4_JOURNAL_INO	 8	/* Journal inode */
-+#define EXT4_PRJ_QUOTA_INO	 9	/* Project quota inode */
+@@ -617,6 +617,8 @@ enum {
+ #define EXT4_IOC_RESIZE_FS		_IOW('f', 16, __u64)
+ #define EXT4_IOC_SWAP_BOOT		_IO('f', 17)
+ #define EXT4_IOC_PRECACHE_EXTENTS	_IO('f', 18)
++#define EXT4_IOC_GETPROJECT		_IOR('f', 19, long)
++#define EXT4_IOC_SETPROJECT		_IOW('f', 20, long)
  
- /* First non-reserved inode for old ext4 filesystems */
- #define EXT4_GOOD_OLD_FIRST_INO	11
-@@ -991,6 +992,7 @@ struct ext4_inode_info {
- #define EXT4_MOUNT_DIOREAD_NOLOCK	0x400000 /* Enable support for dio read nolocking */
- #define EXT4_MOUNT_JOURNAL_CHECKSUM	0x800000 /* Journal checksums */
- #define EXT4_MOUNT_JOURNAL_ASYNC_COMMIT	0x1000000 /* Journal Async Commit */
-+#define EXT4_MOUNT_PRJQUOTA		0x2000000 /* Project quota support */
- #define EXT4_MOUNT_DELALLOC		0x8000000 /* Delalloc support */
- #define EXT4_MOUNT_DATA_ERR_ABORT	0x10000000 /* Abort on file data write */
- #define EXT4_MOUNT_BLOCK_VALIDITY	0x20000000 /* Block validity checking */
-@@ -1166,7 +1168,8 @@ struct ext4_super_block {
- 	__le32	s_grp_quota_inum;	/* inode for tracking group quota */
- 	__le32	s_overhead_clusters;	/* overhead blocks/clusters in fs */
- 	__le32	s_backup_bgs[2];	/* groups with sparse_super2 SBs */
--	__le32	s_reserved[106];	/* Padding to the end of the block */
-+	__le32	s_prj_quota_inum;	/* inode for tracking project quota */
-+	__le32	s_reserved[105];	/* Padding to the end of the block */
- 	__le32	s_checksum;		/* crc32c(superblock) */
- };
- 
-@@ -1181,7 +1184,7 @@ struct ext4_super_block {
- #define EXT4_MF_FS_ABORTED	0x0002	/* Fatal error detected */
- 
- /* Number of quota types we support */
--#define EXT4_MAXQUOTAS 2
-+#define EXT4_MAXQUOTAS 3
- 
+ #if defined(__KERNEL__) && defined(CONFIG_COMPAT)
  /*
-  * fourth extended-fs super-block data in memory
-@@ -1372,6 +1375,7 @@ static inline int ext4_valid_inum(struct super_block *sb, unsigned long ino)
- 		ino == EXT4_BOOT_LOADER_INO ||
- 		ino == EXT4_JOURNAL_INO ||
- 		ino == EXT4_RESIZE_INO ||
-+		ino == EXT4_PRJ_QUOTA_INO ||
- 		(ino >= EXT4_FIRST_INO(sb) &&
- 		 ino <= le32_to_cpu(EXT4_SB(sb)->s_es->s_inodes_count));
- }
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 8c3e87b..5cb5055 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1048,8 +1048,8 @@ static int bdev_try_to_free_page(struct super_block *sb, struct page *page,
- }
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index 0f2252e..93b7ff4 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -14,6 +14,8 @@
+ #include <linux/compat.h>
+ #include <linux/mount.h>
+ #include <linux/file.h>
++#include <linux/quotaops.h>
++#include <linux/quota.h>
+ #include <asm/uaccess.h>
+ #include "ext4_jbd2.h"
+ #include "ext4.h"
+@@ -611,6 +613,89 @@ resizefs_out:
+ 	case EXT4_IOC_PRECACHE_EXTENTS:
+ 		return ext4_ext_precache(inode);
  
- #ifdef CONFIG_QUOTA
--#define QTYPE2NAME(t) ((t) == USRQUOTA ? "user" : "group")
--#define QTYPE2MOPT(on, t) ((t) == USRQUOTA?((on)##USRJQUOTA):((on)##GRPJQUOTA))
-+static char *quotatypes[] = INITQFNAMES;
-+#define QTYPE2NAME(t) (quotatypes[t])
- 
- static int ext4_write_dquot(struct dquot *dquot);
- static int ext4_acquire_dquot(struct dquot *dquot);
-@@ -1160,10 +1160,11 @@ enum {
- 	Opt_journal_path, Opt_journal_checksum, Opt_journal_async_commit,
- 	Opt_abort, Opt_data_journal, Opt_data_ordered, Opt_data_writeback,
- 	Opt_data_err_abort, Opt_data_err_ignore,
--	Opt_usrjquota, Opt_grpjquota, Opt_offusrjquota, Opt_offgrpjquota,
-+	Opt_usrjquota, Opt_grpjquota, Opt_prjjquota,
-+	Opt_offusrjquota, Opt_offgrpjquota, Opt_offprjjquota,
- 	Opt_jqfmt_vfsold, Opt_jqfmt_vfsv0, Opt_jqfmt_vfsv1, Opt_quota,
- 	Opt_noquota, Opt_barrier, Opt_nobarrier, Opt_err,
--	Opt_usrquota, Opt_grpquota, Opt_i_version,
-+	Opt_usrquota, Opt_grpquota, Opt_prjquota, Opt_i_version,
- 	Opt_stripe, Opt_delalloc, Opt_nodelalloc, Opt_mblk_io_submit,
- 	Opt_nomblk_io_submit, Opt_block_validity, Opt_noblock_validity,
- 	Opt_inode_readahead_blks, Opt_journal_ioprio,
-@@ -1214,6 +1215,8 @@ static const match_table_t tokens = {
- 	{Opt_usrjquota, "usrjquota=%s"},
- 	{Opt_offgrpjquota, "grpjquota="},
- 	{Opt_grpjquota, "grpjquota=%s"},
-+	{Opt_offprjjquota, "prjjquota="},
-+	{Opt_prjjquota, "prjjquota=%s"},
- 	{Opt_jqfmt_vfsold, "jqfmt=vfsold"},
- 	{Opt_jqfmt_vfsv0, "jqfmt=vfsv0"},
- 	{Opt_jqfmt_vfsv1, "jqfmt=vfsv1"},
-@@ -1221,6 +1224,7 @@ static const match_table_t tokens = {
- 	{Opt_noquota, "noquota"},
- 	{Opt_quota, "quota"},
- 	{Opt_usrquota, "usrquota"},
-+	{Opt_prjquota, "prjquota"},
- 	{Opt_barrier, "barrier=%u"},
- 	{Opt_barrier, "barrier"},
- 	{Opt_nobarrier, "nobarrier"},
-@@ -1433,6 +1437,8 @@ static const struct mount_opts {
- 							MOPT_SET | MOPT_Q},
- 	{Opt_grpquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_GRPQUOTA,
- 							MOPT_SET | MOPT_Q},
-+	{Opt_prjquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_PRJQUOTA,
-+							MOPT_SET | MOPT_Q},
- 	{Opt_noquota, (EXT4_MOUNT_QUOTA | EXT4_MOUNT_USRQUOTA |
- 		       EXT4_MOUNT_GRPQUOTA), MOPT_CLEAR | MOPT_Q},
- 	{Opt_usrjquota, 0, MOPT_Q},
-@@ -1461,10 +1467,14 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
- 		return set_qf_name(sb, USRQUOTA, &args[0]);
- 	else if (token == Opt_grpjquota)
- 		return set_qf_name(sb, GRPQUOTA, &args[0]);
-+	else if (token == Opt_prjjquota)
-+		return set_qf_name(sb, PRJQUOTA, &args[0]);
- 	else if (token == Opt_offusrjquota)
- 		return clear_qf_name(sb, USRQUOTA);
- 	else if (token == Opt_offgrpjquota)
- 		return clear_qf_name(sb, GRPQUOTA);
-+	else if (token == Opt_offprjjquota)
-+		return clear_qf_name(sb, PRJQUOTA);
- #endif
- 	switch (token) {
- 	case Opt_noacl:
-@@ -1690,19 +1700,28 @@ static int parse_options(char *options, struct super_block *sb,
++	case EXT4_IOC_GETPROJECT:
++	{
++		__u32 projid;
++
++		projid = (__u32)from_kprojid(&init_user_ns,
++					     EXT4_I(inode)->i_projid);
++		return put_user(projid, (__u32 __user *) arg);
++	}
++	case EXT4_IOC_SETPROJECT:
++	{
++		__u32 projid;
++		int err;
++		handle_t *handle;
++		kprojid_t kprojid;
++		struct ext4_iloc iloc;
++		struct ext4_inode *raw_inode;
++
++		struct dquot *transfer_to[EXT4_MAXQUOTAS] = { };
++
++		/* Make sure caller can change project. */
++		if (!capable(CAP_SYS_ADMIN))
++			return -EACCES;
++
++		if (get_user(projid, (__u32 __user *) arg))
++			return -EFAULT;
++
++		kprojid = make_kprojid(&init_user_ns, (projid_t)projid);
++
++		if (projid_eq(kprojid, EXT4_I(inode)->i_projid))
++			return 0;
++
++		err = mnt_want_write_file(filp);
++		if (err)
++			return err;
++
++		err = -EPERM;
++		mutex_lock(&inode->i_mutex);
++		/* Is it quota file? Do not allow user to mess with it */
++		if (IS_NOQUOTA(inode))
++			goto project_out;
++
++		dquot_initialize(inode);
++
++		handle = ext4_journal_start(inode, EXT4_HT_QUOTA,
++			EXT4_QUOTA_INIT_BLOCKS(sb) +
++			EXT4_QUOTA_DEL_BLOCKS(sb) + 3);
++		if (IS_ERR(handle)) {
++			err = PTR_ERR(handle);
++			goto project_out;
++		}
++
++		err = ext4_reserve_inode_write(handle, inode, &iloc);
++		if (err)
++			goto project_stop;
++
++		raw_inode = ext4_raw_inode(&iloc);
++		if ((EXT4_INODE_SIZE(inode->i_sb) <=
++		     EXT4_GOOD_OLD_INODE_SIZE) ||
++		    (!EXT4_FITS_IN_INODE(raw_inode, ei, i_projid))) {
++		    	err = -EFBIG;
++		    	goto project_stop;
++		}
++
++		transfer_to[PRJQUOTA] = dqget(sb, make_kqid_projid(kprojid));
++		if (!transfer_to[PRJQUOTA])
++			goto project_set;
++
++		err = __dquot_transfer(inode, transfer_to);
++		dqput(transfer_to[PRJQUOTA]);
++		if (err)
++			goto project_stop;
++
++project_set:
++		EXT4_I(inode)->i_projid = kprojid;
++		inode->i_ctime = ext4_current_time(inode);
++		err = ext4_mark_iloc_dirty(handle, inode, &iloc);
++project_stop:
++		ext4_journal_stop(handle);
++project_out:
++		mutex_unlock(&inode->i_mutex);
++		mnt_drop_write_file(filp);
++		return err;
++	}
+ 	default:
+ 		return -ENOTTY;
  	}
- #ifdef CONFIG_QUOTA
- 	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA) &&
--	    (test_opt(sb, USRQUOTA) || test_opt(sb, GRPQUOTA))) {
-+	    (test_opt(sb, USRQUOTA) ||
-+	     test_opt(sb, GRPQUOTA) ||
-+	     test_opt(sb, PRJQUOTA))) {
- 		ext4_msg(sb, KERN_ERR, "Cannot set quota options when QUOTA "
- 			 "feature is enabled");
- 		return 0;
- 	}
--	if (sbi->s_qf_names[USRQUOTA] || sbi->s_qf_names[GRPQUOTA]) {
-+	if (sbi->s_qf_names[USRQUOTA] ||
-+	    sbi->s_qf_names[GRPQUOTA] ||
-+	    sbi->s_qf_names[PRJQUOTA]) {
- 		if (test_opt(sb, USRQUOTA) && sbi->s_qf_names[USRQUOTA])
- 			clear_opt(sb, USRQUOTA);
- 
- 		if (test_opt(sb, GRPQUOTA) && sbi->s_qf_names[GRPQUOTA])
- 			clear_opt(sb, GRPQUOTA);
- 
--		if (test_opt(sb, GRPQUOTA) || test_opt(sb, USRQUOTA)) {
-+		if (test_opt(sb, PRJQUOTA) && sbi->s_qf_names[PRJQUOTA])
-+			clear_opt(sb, PRJQUOTA);
-+
-+		if (test_opt(sb, GRPQUOTA) ||
-+		    test_opt(sb, USRQUOTA) ||
-+		    test_opt(sb, PRJQUOTA)) {
- 			ext4_msg(sb, KERN_ERR, "old and new quota "
- 					"format mixing");
- 			return 0;
-@@ -1763,6 +1782,9 @@ static inline void ext4_show_quota_options(struct seq_file *seq,
- 
- 	if (sbi->s_qf_names[GRPQUOTA])
- 		seq_printf(seq, ",grpjquota=%s", sbi->s_qf_names[GRPQUOTA]);
-+
-+	if (sbi->s_qf_names[PRJQUOTA])
-+		seq_printf(seq, ",prjjquota=%s", sbi->s_qf_names[PRJQUOTA]);
- #endif
- }
- 
-@@ -2833,6 +2855,13 @@ static int ext4_feature_set_ok(struct super_block *sb, int readonly)
- 			 "without CONFIG_QUOTA");
- 		return 0;
- 	}
-+	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-+	    !readonly) {
-+		ext4_msg(sb, KERN_ERR,
-+			 "Filesystem with project quota feature cannot be"
-+			 "mounted RDWR without CONFIG_QUOTA");
-+		return 0;
-+	}
- #endif  /* CONFIG_QUOTA */
- 	return 1;
- }
-@@ -5052,6 +5081,46 @@ restore_opts:
- 	return err;
- }
- 
-+static int ext4_statfs_project(struct super_block *sb,
-+			       kprojid_t projid, struct kstatfs *buf)
-+{
-+	struct kqid qid;
-+	struct dquot *dquot;
-+	u64 limit;
-+	u64 curblock;
-+
-+	qid = make_kqid_projid(projid);
-+	dquot = dqget(sb, qid);
-+	if (!dquot)
-+		return -ESRCH;
-+	spin_lock(&dq_data_lock);
-+
-+	limit = dquot->dq_dqb.dqb_bsoftlimit ?
-+		dquot->dq_dqb.dqb_bsoftlimit :
-+		dquot->dq_dqb.dqb_bhardlimit;
-+	if (limit && buf->f_blocks * buf->f_bsize > limit) {
-+		curblock = dquot->dq_dqb.dqb_curspace / buf->f_bsize;
-+		buf->f_blocks = limit / buf->f_bsize;
-+		buf->f_bfree = buf->f_bavail =
-+			(buf->f_blocks > curblock) ?
-+			 (buf->f_blocks - curblock) : 0;
-+	}
-+
-+	limit = dquot->dq_dqb.dqb_isoftlimit ?
-+		dquot->dq_dqb.dqb_isoftlimit :
-+		dquot->dq_dqb.dqb_ihardlimit;
-+	if (limit && buf->f_files > limit) {
-+		buf->f_files = limit;
-+		buf->f_ffree =
-+			(buf->f_files > dquot->dq_dqb.dqb_curinodes) ?
-+			 (buf->f_ffree - dquot->dq_dqb.dqb_curinodes) : 0;
-+	}
-+
-+	spin_unlock(&dq_data_lock);
-+	dqput(dquot);
-+	return 0;
-+}
-+
- static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- {
- 	struct super_block *sb = dentry->d_sb;
-@@ -5060,6 +5129,8 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- 	ext4_fsblk_t overhead = 0, resv_blocks;
- 	u64 fsid;
- 	s64 bfree;
-+	struct inode *inode = dentry->d_inode;
-+	int err = 0;
- 	resv_blocks = EXT4_C2B(sbi, atomic64_read(&sbi->s_resv_clusters));
- 
- 	if (!test_opt(sb, MINIX_DF))
-@@ -5084,7 +5155,18 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- 	buf->f_fsid.val[0] = fsid & 0xFFFFFFFFUL;
- 	buf->f_fsid.val[1] = (fsid >> 32) & 0xFFFFFFFFUL;
- 
--	return 0;
-+	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-+	    ext4_test_inode_flag(inode, EXT4_INODE_PROJINHERIT) &&
-+	    sb_has_quota_usage_enabled(sb, PRJQUOTA) &&
-+	    sb_has_quota_limits_enabled(sb, PRJQUOTA)) {
-+	    	err = ext4_statfs_project(sb, EXT4_I(inode)->i_projid, buf);
-+	    	if (err) {
-+			ext4_warning(sb, "Cannot get quota of project %u\n",
-+				     from_kprojid(&init_user_ns,
-+						  EXT4_I(inode)->i_projid));
-+	    	}
-+	}
-+	return err;
- }
- 
- /* Helper function for writing quotas on sync - we need to start transaction
-@@ -5164,7 +5246,9 @@ static int ext4_mark_dquot_dirty(struct dquot *dquot)
- 
- 	/* Are we journaling quotas? */
- 	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA) ||
--	    sbi->s_qf_names[USRQUOTA] || sbi->s_qf_names[GRPQUOTA]) {
-+	    sbi->s_qf_names[USRQUOTA] ||
-+	    sbi->s_qf_names[GRPQUOTA] ||
-+	    sbi->s_qf_names[PRJQUOTA]) {
- 		dquot_mark_dquot_dirty(dquot);
- 		return ext4_write_dquot(dquot);
- 	} else {
-@@ -5248,10 +5332,14 @@ static int ext4_quota_enable(struct super_block *sb, int type, int format_id,
- 	struct inode *qf_inode;
- 	unsigned long qf_inums[EXT4_MAXQUOTAS] = {
- 		le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
--		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
- 	};
- 
- 	BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA));
-+	BUG_ON(type == PRJQUOTA &&
-+	       (!EXT4_HAS_RO_COMPAT_FEATURE(sb,
-+				EXT4_FEATURE_RO_COMPAT_PROJECT)));
- 
- 	if (!qf_inums[type])
- 		return -EPERM;
-@@ -5276,11 +5364,16 @@ static int ext4_enable_quotas(struct super_block *sb)
- 	int type, err = 0;
- 	unsigned long qf_inums[EXT4_MAXQUOTAS] = {
- 		le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
--		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
- 	};
- 
- 	sb_dqopt(sb)->flags |= DQUOT_QUOTA_SYS_FILE;
- 	for (type = 0; type < EXT4_MAXQUOTAS; type++) {
-+		if (type == PRJQUOTA &&
-+		    (!EXT4_HAS_RO_COMPAT_FEATURE(sb,
-+				EXT4_FEATURE_RO_COMPAT_PROJECT)))
-+			continue;
- 		if (qf_inums[type]) {
- 			err = ext4_quota_enable(sb, type, QFMT_VFS_V1,
- 						DQUOT_USAGE_ENABLED);
-@@ -5305,6 +5398,10 @@ static int ext4_quota_on_sysfile(struct super_block *sb, int type,
- 	if (!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA))
- 		return -EINVAL;
- 
-+	if (type == PRJQUOTA &&
-+	    (!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT)))
-+		return -EINVAL;
-+
- 	/*
- 	 * USAGE was enabled at mount time. Only need to enable LIMITS now.
- 	 */
-@@ -5345,6 +5442,10 @@ static int ext4_quota_off_sysfile(struct super_block *sb, int type)
- 	if (!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA))
- 		return -EINVAL;
- 
-+	if (type == PRJQUOTA &&
-+	    (!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT)))
-+		return -EINVAL;
-+
- 	/* Disable only the limits. */
- 	return dquot_disable(sb, type, DQUOT_LIMITS_ENABLED);
- }
 -- 
 1.7.1
 
