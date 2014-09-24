@@ -1,68 +1,44 @@
-From: Lee Jones <lee.jones@linaro.org>
-Subject: [GIT PULL] MFD: Immutable branche between Charger, Power and
- Regulator
-Date: Wed, 24 Sep 2014 15:34:31 +0100
-Message-ID: <20140924143431.GI32069@lee--X1>
-References: <1411472603-11821-1-git-send-email-k.kozlowski@samsung.com>
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: Re: [PATCH v4 0/4] quota: add project quota support
+Date: Wed, 24 Sep 2014 11:42:39 -0400
+Message-ID: <20140924154239.GA11342@thunk.org>
+References: <CAPTn0cDFCj7AWjQpOF0brD82XJSSeem5_1aQCE=zQKiaLaeL1g@mail.gmail.com>
+ <20140924125206.GA26916@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1411472603-11821-1-git-send-email-k.kozlowski@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Samuel Ortiz <sameo@linux.intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-pm@vger.kernel.org, Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, devicetree@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
+In-Reply-To: <20140924125206.GA26916-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Mark, Sebastian,
+On Wed, Sep 24, 2014 at 02:52:06PM +0200, Jan Kara wrote:
+>   Whitespace got mangled in your patches so much they are hardly readable.
+> Please resend them so that it is properly preserved. I'm not sure how other
+> guys using gmail do this so you might need to ask them... Thanks!
 
-The following changes since commit 52addcf9d6669fa439387610bc65c92fa098=
-0cef:
+And it would be nice if they are chained together so that people with
+proper mail-threading readers can easily find all of your patches.
 
-  Linux 3.17-rc2 (2014-08-25 15:36:20 -0700)
+Probably the best way to do this is to configure your a local mail
+transfer agent on your Linux desktop/laptop, and configure it to use
+smart mail-router with authenticated SMTP to:
 
-are available in the git repository at:
+Host: smtp.gmail.com
+Port: 465
+Authentication: Yes
+Username: #YOU#@gmail.com
+Password: #YOUR_PASSWORD#
+Security: SSL
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/lee/mfd.git tags/mfd-po=
-wer-charger-regulator-v3.18
+Then use "git send-email" to post your patches, and it should all be
+good.
 
-for you to fetch changes up to d6cc1f5824cbca392d099f3bb0c441efd9e54de9=
-:
+(I'm guessing your cutting and pasting your patches into the mail send
+window, and that unfortunately tends not to work well.)
 
-  Documentation: charger: max14577: Document exported sysfs entry (2014=
--09-24 15:25:56 +0100)
+Cheers,
 
-----------------------------------------------------------------
-Immutable branch between MFD, Power, Charger and Regulator for v3.18
-
-----------------------------------------------------------------
-Krzysztof Kozlowski (8):
-      mfd: max14577: Add defines for MAX77836 charger
-      mfd: max14577: Map charger device to its own of_node
-      charger: max14577: Add support for MAX77836 charger
-      regulator/mfd: max14577: Export symbols for calculating charger c=
-urrent
-      charger: max14577: Configure battery-dependent settings from DTS =
-and sysfs
-      power: max17040: Add ID for MAX77836 Fuel Gauge block
-      devicetree: mfd: max14577: Add device tree bindings document
-      Documentation: charger: max14577: Document exported sysfs entry
-
- Documentation/ABI/testing/sysfs-class-power        |  14 +
- Documentation/devicetree/bindings/mfd/max14577.txt | 146 ++++++++
- drivers/mfd/max14577.c                             | 100 +++++-
- drivers/power/Kconfig                              |   5 +-
- drivers/power/max14577_charger.c                   | 370 +++++++++++++=
-++++++--
- drivers/power/max17040_battery.c                   |   3 +-
- drivers/regulator/max14577.c                       |  80 +----
- include/linux/mfd/max14577-private.h               |  95 ++++--
- include/linux/mfd/max14577.h                       |  30 ++
- 9 files changed, 704 insertions(+), 139 deletions(-)
-
---=20
-Lee Jones
-Linaro STMicroelectronics Landing Team Lead
-Linaro.org =E2=94=82 Open source software for ARM SoCs
-=46ollow Linaro: Facebook | Twitter | Blog
+						- Ted
