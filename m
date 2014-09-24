@@ -1,65 +1,37 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
-Date: Wed, 24 Sep 2014 10:05:59 -0700
-Message-ID: <CALCETrXMkV_1XR2mXOoO_2_vpB=6cPbWAAOhPFhPbDa_1P+zxw@mail.gmail.com>
-References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
- <CALCETrWnZtWstBviDxcHpLpjHF3R+sgS48RYf2pbKBYeExZVOQ@mail.gmail.com> <54228F8B.2030804@6wind.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 1/4] Adds general codes to enforces project quota limits
+Date: Wed, 24 Sep 2014 19:10:20 +0200
+Message-ID: <20140924171020.GF27000@quack.suse.cz>
+References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
+ <1411567470-31799-2-git-send-email-lixi@ddn.com>
+ <20140924161417.GA1978@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54228F8B.2030804-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20140924161417.GA1978-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Cc: Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 24, 2014 at 2:31 AM, Nicolas Dichtel
-<nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> wrote:
-> Le 23/09/2014 21:26, Andy Lutomirski a =C3=A9crit :
->
->> On Tue, Sep 23, 2014 at 6:20 AM, Nicolas Dichtel
->> <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> wrote:
->>>
->>> The goal of this serie is to be able to multicast netlink messages =
-with
->>> an
->>> attribute that identify a peer netns.
->>> This is needed by the userland to interpret some informations conta=
-ined
->>> in
->>> netlink messages (like IFLA_LINK value, but also some other attribu=
-tes in
->>> case
->>> of x-netns netdevice (see also
->>> http://thread.gmane.org/gmane.linux.network/315933/focus=3D316064 a=
-nd
->>> http://thread.gmane.org/gmane.linux.kernel.containers/28301/focus=3D=
-4239)).
->>>
->>> Ids are stored in the parent user namespace. These ids are valid on=
-ly
->>> inside
->>> this user namespace. The user can retrieve these ids via a new netl=
-ink
->>> messages,
->>> but only if peer netns are in the same user namespace.
->>
->>
->> What about the parent / ancestors of the owning userns?  Can process=
-es
->> in those usernses see any form of netns id?
->
-> With this serie no. I'm not sure if ancestors really needs to be able=
- to
-> get these ids. What is your opinion?
+On Wed 24-09-14 09:14:17, Christoph Hellwig wrote:
+> > -#define MAXQUOTAS 2
+> > +#define MAXQUOTAS 3
+> 
+> This bloats every single inode in the system.  I think this would be a
+> good opportunity to move i_dquot into the per-filesystem structures
+> and provide a little get_dquots methods to get at them from the
+> quota code.
+  Yeah, I'm aware of that but I decided I won't bother Li Xi with that
+since it's independent issue and 8 bytes aren't that terrible. Personally
+I somewhat prefer what I did in
+http://www.spinics.net/lists/linux-fsdevel/msg74927.html
+where we don't introduce additional method but rather a table with field
+offsets in superblock. If people agree with this, I can cook up a patch for
+quota relatively quickly.
 
-I might be missing some consideration here, but I would hope that ip
-link would work correctly if I have a veth interface shared with a
-netns that's in a child userns.
-
---Andy
-
---=20
-Andy Lutomirski
-AMA Capital Management, LLC
+								Honza
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
