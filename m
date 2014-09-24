@@ -1,100 +1,140 @@
-From: Mark yao <mark.yao@rock-chips.com>
-Subject: [PATCH v5 3/3] dt-bindings: video: Add documentation for rockchip vop
-Date: Wed, 24 Sep 2014 10:13:48 +0800
-Message-ID: <1411524828-14714-1-git-send-email-mark.yao@rock-chips.com>
-References: <1411524672-14524-1-git-send-email-mark.yao@rock-chips.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1411524672-14524-1-git-send-email-mark.yao@rock-chips.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
-Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, xw@rock-chips.com, Mark yao <mark.yao@rock-chips.com>
+From: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 1/2] perf: Add sampling of the raw monotonic clock
+Date: Wed, 24 Sep 2014 14:41:46 +0900
+Message-ID: <87sijhk21x.fsf@sejong.aot.lge.com>
+References: <1411491787-25938-1-git-send-email-pawel.moll@arm.com>
+	<1411491787-25938-2-git-send-email-pawel.moll@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1411491787-25938-2-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org> (Pawel
+	Moll's message of "Tue, 23 Sep 2014 18:03:06 +0100")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This adds binding documentation for Rockchip SoC VOP driver.
+Hi Pawel,
 
-Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
----
-Changes in v2:
-- rename "lcdc" to "vop"
-- add vop reset
-- add iommu node
-- add port for display-subsystem
+On Tue, 23 Sep 2014 18:03:06 +0100, Pawel Moll wrote:
+> This patch adds an option to sample raw monotonic clock
+> value with any perf event, with the the aim of allowing
+> time correlation between data coming from perf and
+> additional performance-related information generated in
+> userspace.
+>
+> In order to correlate timestamps in perf data stream
+> with events happening in userspace (be it JITed debug
+> symbols or hwmon-originating environment data), user
+> requests a more or less periodic event (sched_switch
+> trace event of a hrtimer-based cpu-clock being the
+> most obvious examples) with PERF_SAMPLE_TIME *and*
+> PERF_SAMPLE_CLOCK_RAW_MONOTONIC and stamps
+> user-originating data with values obtained from
+> clock_gettime(CLOCK_MONOTONIC_RAW). Then, during
+> analysis, one looks at the perf events immediately
+> preceding and following (in terms of the
+> clock_raw_monotonic sample) the userspace event and
+> does simple linear approximation to get the equivalent
+> perf time.
+>
+>         perf event     user event
+>        -----O--------------+-------------O------> t_mono
+>             :              |             :
+>             :              V             :
+>        -----O----------------------------O------> t_perf
 
-Changes in v3: None
+Probably a dumb question: why not make PERF_SAMPLE_TIME being monotonic
+clock instead of adding a new PERF_SAMPLE_CLOCK_XXX flag?  Maybe we can
+add a new ioctl command like PERF_EVENT_IOC_SET_CLOCK so that one can
+pass a clock id.
 
-Changes in v4: None
-
-Changes in v5: None
-
- .../devicetree/bindings/video/rockchip-vop.txt     |   58 ++++++++++++++++++++
- 1 file changed, 58 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/video/rockchip-vop.txt
-
-diff --git a/Documentation/devicetree/bindings/video/rockchip-vop.txt b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-new file mode 100644
-index 0000000..d15351f
---- /dev/null
-+++ b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-@@ -0,0 +1,58 @@
-+device-tree bindings for rockchip soc display controller (vop)
-+
-+VOP (Visual Output Processor) is the Display Controller for the Rockchip
-+series of SoCs which transfers the image data from a video memory
-+buffer to an external LCD interface.
-+
-+Required properties:
-+- compatible: value should be one of the following
-+		"rockchip,rk3288-vop";
-+
-+- interrupts: should contain a list of all VOP IP block interrupts in the
-+		 order: VSYNC, LCD_SYSTEM. The interrupt specifier
-+		 format depends on the interrupt controller used.
-+
-+- clocks: must include clock specifiers corresponding to entries in the
-+		clock-names property.
-+
-+- clock-names: Must contain
-+		aclk_vop: for ddr buffer transfer.
-+		hclk_vop: for ahb bus to R/W the phy regs.
-+		dclk_vop: pixel clock.
-+
-+- resets: Must contain an entry for each entry in reset-names.
-+  See ../reset/reset.txt for details.
-+- reset-names: Must include the following entries:
-+  - axi
-+  - ahb
-+  - dclk
-+
-+- iommus: required a iommu node
-+
-+- port: A port node with endpoint definitions as defined in
-+  Documentation/devicetree/bindings/media/video-interfaces.txt.
-+
-+Example:
-+SoC specific DT entry:
-+	vopb: vopb@ff930000 {
-+		compatible = "rockchip,rk3288-vop";
-+		reg = <0xff930000 0x19c>;
-+		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
-+		clocks = <&cru ACLK_VOP0>, <&cru DCLK_VOP0>, <&cru HCLK_VOP0>;
-+		clock-names = "aclk_vop", "dclk_vop", "hclk_vop";
-+		resets = <&cru SRST_LCDC1_AXI>, <&cru SRST_LCDC1_AHB>, <&cru SRST_LCDC1_DCLK>;
-+		reset-names = "axi", "ahb", "dclk";
-+		iommus = <&vopb_mmu>;
-+		vopb_out: port {
-+			#address-cells = <1>;
-+			#size-cells = <0>;
-+			vopb_out_edp: endpoint@0 {
-+				reg = <0>;
-+				remote-endpoint=<&edp_in_vopb>;
-+			};
-+			vopb_out_hdmi: endpoint@1 {
-+				reg = <1>;
-+				remote-endpoint=<&hdmi_in_vopb>;
-+			};
-+		};
-+	};
--- 
-1.7.9.5
+Thanks,
+Namhyung
 
 
+>
+> Signed-off-by: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+> ---
+> Changes since v1:
+>
+> - none
+>
+>  include/linux/perf_event.h      |  2 ++
+>  include/uapi/linux/perf_event.h |  4 +++-
+>  kernel/events/core.c            | 13 +++++++++++++
+>  3 files changed, 18 insertions(+), 1 deletion(-)
+>
+> diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
+> index 707617a..28b73b2 100644
+> --- a/include/linux/perf_event.h
+> +++ b/include/linux/perf_event.h
+> @@ -602,6 +602,8 @@ struct perf_sample_data {
+>  	 * Transaction flags for abort events:
+>  	 */
+>  	u64				txn;
+> +	/* Raw monotonic timestamp, for userspace time correlation */
+> +	u64				clock_raw_monotonic;
+>  };
+>  
+>  static inline void perf_sample_data_init(struct perf_sample_data *data,
+> diff --git a/include/uapi/linux/perf_event.h b/include/uapi/linux/perf_event.h
+> index 9269de2..e5a75c5 100644
+> --- a/include/uapi/linux/perf_event.h
+> +++ b/include/uapi/linux/perf_event.h
+> @@ -137,8 +137,9 @@ enum perf_event_sample_format {
+>  	PERF_SAMPLE_DATA_SRC			= 1U << 15,
+>  	PERF_SAMPLE_IDENTIFIER			= 1U << 16,
+>  	PERF_SAMPLE_TRANSACTION			= 1U << 17,
+> +	PERF_SAMPLE_CLOCK_RAW_MONOTONIC		= 1U << 18,
+>  
+> -	PERF_SAMPLE_MAX = 1U << 18,		/* non-ABI */
+> +	PERF_SAMPLE_MAX = 1U << 19,		/* non-ABI */
+>  };
+>  
+>  /*
+> @@ -686,6 +687,7 @@ enum perf_event_type {
+>  	 *	{ u64			weight;   } && PERF_SAMPLE_WEIGHT
+>  	 *	{ u64			data_src; } && PERF_SAMPLE_DATA_SRC
+>  	 *	{ u64			transaction; } && PERF_SAMPLE_TRANSACTION
+> +	 *	{ u64			clock_raw_monotonic; } && PERF_SAMPLE_CLOCK_RAW_MONOTONIC
+>  	 * };
+>  	 */
+>  	PERF_RECORD_SAMPLE			= 9,
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index f9c1ed0..f6df547 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -1216,6 +1216,9 @@ static void perf_event__header_size(struct perf_event *event)
+>  	if (sample_type & PERF_SAMPLE_TRANSACTION)
+>  		size += sizeof(data->txn);
+>  
+> +	if (sample_type & PERF_SAMPLE_CLOCK_RAW_MONOTONIC)
+> +		size += sizeof(data->clock_raw_monotonic);
+> +
+>  	event->header_size = size;
+>  }
+>  
+> @@ -4456,6 +4459,13 @@ static void __perf_event_header__init_id(struct perf_event_header *header,
+>  		data->cpu_entry.cpu	 = raw_smp_processor_id();
+>  		data->cpu_entry.reserved = 0;
+>  	}
+> +
+> +	if (sample_type & PERF_SAMPLE_CLOCK_RAW_MONOTONIC) {
+> +		struct timespec now;
+> +
+> +		getrawmonotonic(&now);
+> +		data->clock_raw_monotonic = timespec_to_ns(&now);
+> +	}
+>  }
+>  
+>  void perf_event_header__init_id(struct perf_event_header *header,
+> @@ -4714,6 +4724,9 @@ void perf_output_sample(struct perf_output_handle *handle,
+>  	if (sample_type & PERF_SAMPLE_TRANSACTION)
+>  		perf_output_put(handle, data->txn);
+>  
+> +	if (sample_type & PERF_SAMPLE_CLOCK_RAW_MONOTONIC)
+> +		perf_output_put(handle, data->clock_raw_monotonic);
+> +
+>  	if (!event->attr.watermark) {
+>  		int wakeup_events = event->attr.wakeup_events;
