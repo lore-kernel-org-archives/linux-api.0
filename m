@@ -1,99 +1,35 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 2/4] Adds project ID support for ext4
-Date: Wed, 24 Sep 2014 19:11:08 +0200
-Message-ID: <20140924171108.GG27000@quack.suse.cz>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 1/4] Adds general codes to enforces project quota limits
+Date: Wed, 24 Sep 2014 10:13:06 -0700
+Message-ID: <20140924171306.GA23874@infradead.org>
 References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
- <1411567470-31799-3-git-send-email-lixi@ddn.com>
+ <1411567470-31799-2-git-send-email-lixi@ddn.com>
+ <20140924161417.GA1978@infradead.org>
+ <20140924171020.GF27000@quack.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1411567470-31799-3-git-send-email-lixi@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Li Xi <pkuelelixi@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+In-Reply-To: <20140924171020.GF27000-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 24-09-14 22:04:28, Li Xi wrote:
-> This patch adds a new internal field of ext4 inode to save project
-> identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
-> inheriting project ID from parent directory.
-  Nice. Just a few smaller things below.
+On Wed, Sep 24, 2014 at 07:10:20PM +0200, Jan Kara wrote:
+>   Yeah, I'm aware of that but I decided I won't bother Li Xi with that
+> since it's independent issue and 8 bytes aren't that terrible.
 
-  Firstly, I think your patch forgets to add a check to EXT4_IOC_SETFLAGS
-ioctl so that EXT4_INODE_PROJINHERIT flag can be set only when
-EXT4_FEATURE_RO_COMPAT_PROJECT is enabled.
+For the inode of which we have so many instances it is.  Especially when
+only one filesystem can make use of this new field.
+ 
+> Personally
+> I somewhat prefer what I did in
+> http://www.spinics.net/lists/linux-fsdevel/msg74927.html
+> where we don't introduce additional method but rather a table with field
+> offsets in superblock. If people agree with this, I can cook up a patch for
+> quota relatively quickly.
 
-> Signed-off-by: Li Xi <lixi@ddn.com>
-> ---
->  fs/ext4/ext4.h   |   21 +++++++++++++++++----
->  fs/ext4/ialloc.c |    6 ++++++
->  fs/ext4/inode.c  |   29 ++++++++++++++++++++++++++++-
->  fs/ext4/namei.c  |   10 ++++++++++
->  fs/ext4/super.c  |    1 +
->  5 files changed, 62 insertions(+), 5 deletions(-)
-> 
-...
-> diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
-> index 5b87fc3..b6b7284 100644
-> --- a/fs/ext4/ialloc.c
-> +++ b/fs/ext4/ialloc.c
-> @@ -756,6 +756,12 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
->  		inode->i_gid = dir->i_gid;
->  	} else
->  		inode_init_owner(inode, dir, mode);
-> +	if (ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT)) {
-> +		ei->i_projid = EXT4_I(dir)->i_projid;
-> +	} else {
-> +		ei->i_projid =
-> +			make_kprojid(&init_user_ns, EXT4_DEF_PROJID);
-> +	}
->  	dquot_initialize(inode);
->  
->  	if (!goal)
-> diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-> index d5dd7d4..8c641eb 100644
-> --- a/fs/ext4/inode.c
-> +++ b/fs/ext4/inode.c
-> @@ -3874,6 +3874,24 @@ static inline void ext4_iget_extra_inode(struct inode *inode,
->  		EXT4_I(inode)->i_inline_off = 0;
->  }
->  
-> +static projid_t ext4_inode_projid_get(struct inode *inode, struct ext4_inode *raw,
-> +				 struct ext4_inode_info *ei)
-> +{
-> +	return (projid_t)le32_to_cpu(raw->i_projid);
-> +}
-> +
-> +static void ext4_inode_projid_set(struct inode *inode, struct ext4_inode *raw,
-> +				 struct ext4_inode_info *ei, projid_t projid)
-> +{
-> +	raw->i_projid = cpu_to_le32(projid);
-> +}
-  I don't see a need for these two wrappers. IMHO they just obfuscate the
-code. Please just write the code directly in appropriate place.
-
-> @@ -4204,7 +4228,8 @@ static int ext4_do_update_inode(handle_t *handle,
->  	EXT4_INODE_SET_XTIME(i_atime, inode, raw_inode);
->  	EXT4_EINODE_SET_XTIME(i_crtime, ei, raw_inode);
->  
-> -	if (ext4_inode_blocks_set(handle, raw_inode, ei)) {
-> +	err = ext4_inode_blocks_set(handle, raw_inode, ei);
-> +	if (err) {
->  		spin_unlock(&ei->i_raw_lock);
->  		goto out_brelse;
->  	}
-  This is an unrelated fix, right? Please send as a separate patch. Thanks!
-
-> @@ -4255,6 +4280,8 @@ static int ext4_do_update_inode(handle_t *handle,
->  
->  	ext4_inode_csum_set(inode, raw_inode, ei);
->  
-> +	ext4_inode_projid_set(inode, raw_inode, ei, i_projid);
-> +
-  This is wrong - you have to set project ID before a checksum is computed.
-
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+There's an even better way.  We stopped calling the dquot_* functions
+from generic code, so now the filesystem can simply pass in a pointer
+to the dquot array.
