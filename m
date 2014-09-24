@@ -1,39 +1,44 @@
-From: Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>
-Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
-Date: Wed, 24 Sep 2014 09:48:11 -0700
-Message-ID: <CAHA+R7MM04ew=J8sHfSQERwoCAgEDfrGgtgRORqs3ePgtjVYWg@mail.gmail.com>
-References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
-	<CAHA+R7NnBJ=T3sukzzp-OD2am1nd318XbrXCX84LfSL=nu9ojw@mail.gmail.com>
-	<54228D87.3070309@6wind.com>
-	<CAHA+R7NfJYzCsZx0E9YVXKVCQbCm_thPSi+80tix8Z9nVA82Ug@mail.gmail.com>
-	<CAHA+R7MVL=WpepRy8iz6iT6Kkq1RHG+b9TxJothP94ixyAj-3Q@mail.gmail.com>
-	<5422F1F7.8010308@6wind.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH 4/4] Adds ioctl interface support for ext4 project
+Date: Wed, 24 Sep 2014 19:01:05 +0200
+Message-ID: <20140924170105.GE27000@quack.suse.cz>
+References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
+ <1411567470-31799-5-git-send-email-lixi@ddn.com>
+ <20140924162507.GC27000@quack.suse.cz>
+ <20140924162634.GA16886@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <5422F1F7.8010308-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Cc: netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140924162634.GA16886@infradead.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jan Kara <jack@suse.cz>, Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, viro@zeniv.linux.org.uk, dmonakhov@openvz.org, xfs@oss.sgi.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 24, 2014 at 9:31 AM, Nicolas Dichtel
-<nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> wrote:
->> I think in this case your ID's are still available, but aren't you
->> providing a new way
->> for the inner netns device to escape which we are trying to avoid?
->
-> It's why the ids depend on user ns. Only if user ns are the same we allow to
-> get an id for a peer netns.
-
-Too late, userns is relatively new, relying on it breaks our existing
-assumption.
+On Wed 24-09-14 09:26:34, Christoph Hellwig wrote:
+> On Wed, Sep 24, 2014 at 06:25:07PM +0200, Jan Kara wrote:
+> > On Wed 24-09-14 22:04:30, Li Xi wrote:
+> > > This patch adds ioctl interface for setting/getting project of ext4.
+> >   The patch looks good to me. I was just wondering whether it won't be
+> > useful to add an ioctl() which isn't ext4 specific. We could just extend
+> > ->setattr() to allow setting of project ID (most filesystems would just
+> > return -EOPNOTSUPP but ext4 and xfs could do the right thing) and then call
+> > ->setattr from the generic ioctl. That way userspace won't have to care
+> > about filesystem type when setting project ID... What do others think?
+> 
+> Absolutely.  In general I also wonder why this patch doesn't implement
+> the full XFS API.  Maybe there is a reason it was considered and
+> rejected, but it would be helpful to document why.
+  Do you mean full get/setfsxattr API? That basically contains project ID,
+flags (those that are currently get/set with FS_IOC_GETFLAGS/SETFLAGS), and
+extent size hint right? That seems workable and it would also make setting
+of PROJINHERIT flag fs agnostic. Only we would have to create some generic
+flags namespace and merge into that ext4 flags and have a translation
+function for the old ext4 flags. Also I'm afraid we may quickly run out of
+32 available flags in xflags so we'd need to extend that. But all this
+seems to be doable.
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
