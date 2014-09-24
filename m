@@ -1,101 +1,63 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [PATCH v2 1/7] selftests: add kselftest framework for uniform
- test reporting
-Date: Wed, 24 Sep 2014 10:09:04 +0200
-Message-ID: <1411546144.30630.10.camel@linux-t7sj.site>
-References: <cover.1411506121.git.shuahkh@osg.samsung.com>
-	 <0b1961bd4d2104beafd2e8c1a17690f6efe14a61.1411506121.git.shuahkh@osg.samsung.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v4 04/11] drivers: base: support cpu cache information
+ interface to userspace via sysfs
+Date: Tue, 23 Sep 2014 23:35:11 -0700
+Message-ID: <20140924063511.GA12929@kroah.com>
+References: <1409763617-17074-1-git-send-email-sudeep.holla@arm.com>
+ <1409763617-17074-5-git-send-email-sudeep.holla@arm.com>
+ <5419C3F6.4050607@arm.com>
+ <20140917190048.GA4063@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0b1961bd4d2104beafd2e8c1a17690f6efe14a61.1411506121.git.shuahkh@osg.samsung.com>
+Content-Disposition: inline
+In-Reply-To: <20140917190048.GA4063@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: akpm@linux-foundation.org, gregkh@linuxfoundation.org, colin.king@canonical.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com, thierry@linux.vnet.ibm.com, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Sudeep Holla <sudeep.holla@arm.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Stephen Boyd <sboyd@codeaurora.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux390@de.ibm.com" <linux390@de.ibm.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, "linuxppc-dev@lists.ozlabs.org" <linuxppc-dev@lists.ozlabs.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2014-09-23 at 15:32 -0600, Shuah Khan wrote:
-> Add kselftest framework for tests to use. This is a light
-> weight framework provides a set of interfaces to report test
-> results. Tests can use these interfaces to report pass, and
-> fail cases as well as when failure is due to configuration
-> problems such as missing modules, or when a test that is should
-> fail, fails as expected, and a test that should fail, passes.
-> The framework uses POSIX standard return codes for reporting
-> results to address the needs of users that want to run the kernel
-> selftests from their user-space test suites and want to know why a
-> test failed. In addition, the framework includes interfaces to use
-> to report test statistics on number of tests passed and failed.
+On Wed, Sep 17, 2014 at 12:00:48PM -0700, Greg Kroah-Hartman wrote:
+> On Wed, Sep 17, 2014 at 06:25:10PM +0100, Sudeep Holla wrote:
+> > Hi Greg,
+> > 
+> > On 03/09/14 18:00, Sudeep Holla wrote:
+> > >From: Sudeep Holla <sudeep.holla@arm.com>
+> > >
+> > >This patch adds initial support for providing processor cache information
+> > >to userspace through sysfs interface. This is based on already existing
+> > >implementations(x86, ia64, s390 and powerpc) and hence the interface is
+> > >intended to be fully compatible.
+> > >
+> > >The main purpose of this generic support is to avoid further code
+> > >duplication to support new architectures and also to unify all the existing
+> > >different implementations.
+> > >
+> > >This implementation maintains the hierarchy of cache objects which reflects
+> > >the system's cache topology. Cache devices are instantiated as needed as
+> > >CPUs come online. The cache information is replicated per-cpu even if they are
+> > >shared. A per-cpu array of cache information maintained is used mainly for
+> > >sysfs-related book keeping.
+> > >
+> > >It also implements the shared_cpu_map attribute, which is essential for
+> > >enabling both kernel and user-space to discover the system's overall cache
+> > >topology.
+> > >
+> > >This patch also add the missing ABI documentation for the cacheinfo sysfs
+> > >interface already, which is well defined and widely used.
+> > >
+> > 
+> > Can you review the first 4 patches in this series please ?
 > 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
-> ---
->  tools/testing/selftests/kselftest.h | 41 +++++++++++++++++++++++++++++++++++++
->  1 file changed, 41 insertions(+)
->  create mode 100644 tools/testing/selftests/kselftest.h
-> 
-> diff --git a/tools/testing/selftests/kselftest.h b/tools/testing/selftests/kselftest.h
-> new file mode 100644
-> index 0000000..c73fc2c
-> --- /dev/null
-> +++ b/tools/testing/selftests/kselftest.h
-> @@ -0,0 +1,41 @@
-> +/*
-> + * kselftest.h: kselftest framework return codes to include from
-> + *		 selftests.
-> + *
-> + * Copyright (c) 2014 Shuah Khan <shuahkh@osg.samsung.com>
-> + * Copyright (c) 2014 Samsung Electronics Co., Ltd.
-> + *
-> + * This file is released under the GPLv2.
-> + */
-> +#ifndef __KSELFTEST_H
-> +#define __KSELFTEST_H
-> +
-> +#include <stdlib.h>
-> +#include <unistd.h>
-> +
-> +/* counters */
-> +static int ksft_pass;
-> +static int ksft_fail;
-> +static int ksft_xfail;
-> +static int ksft_xpass;
-> +static int ksft_xskip;
+> It's in my todo queue, which is really long at the moment due to me
+> going to conferences (at one right now...)  Will be working on this
+> soon, thanks for your patience.
 
-unsigned int?
+Based on the review comments, I think you are going to change at least
+the first patch, right?  Please resend the latest version of this
+series, with all of the accumulated tested-by and acked lines and
+resend.
 
-> +static inline void ksft_inc_pass_cnt(void) { ksft_pass++; }
-> +static inline void ksft_inc_fail_cnt(void) { ksft_fail++; }
-> +static inline void ksft_inc_xfail_cnt(void) { ksft_xfail++; }
-> +static inline void ksft_inc_xpass_cnt(void) { ksft_xpass++; }
-> +static inline void ksft_inc_xskip_cnt(void) { ksft_xskip++; }
+thanks,
 
-It would probably make sense to have the counters in a structures,
-something like: struct ksft_counter { ... } ksft_cnt;
-
-Then just pass it around the proposed functions as arguments. That also
-minimizes a bit the global variables and would allow you to easily
-change it in the future.
-
-> +static inline void ksft_print_cnts(void)
-> +{
-> +	printf("Pass: %d Fail: %d Xfail: %d Xpass: %d, Xskip: %d\n",
-> +		ksft_pass, ksft_fail, ksft_xfail, ksft_xpass, ksft_xskip);
-> +}
-
-Same here, just do:
-
-static inline void ksft_print_cnts(struct ksft_counter counters)
-{ 
-	... 
-}
-
-Otherwise looks good.
-
-> +static inline int ksft_exit_pass(void) { exit(0); }
-> +static inline int ksft_exit_fail(void) { exit(1); }
-> +static inline int ksft_exit_xfail(void) { exit(2); }
-> +static inline int ksft_exit_xpass(void) { exit(3); }
-> +static inline int ksft_exit_skip(void) { exit(4); }
-> +
-> +#endif /* __KSELFTEST_H */
+greg k-h
