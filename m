@@ -1,62 +1,94 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
-Date: Thu, 25 Sep 2014 09:54:59 +0200
-Message-ID: <5423CA53.5020207@6wind.com>
-References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com> <CALCETrWnZtWstBviDxcHpLpjHF3R+sgS48RYf2pbKBYeExZVOQ@mail.gmail.com> <54228F8B.2030804@6wind.com> <CALCETrXMkV_1XR2mXOoO_2_vpB=6cPbWAAOhPFhPbDa_1P+zxw@mail.gmail.com>
-Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH 4/4] Adds ioctl interface support for ext4 project
+Date: Thu, 25 Sep 2014 17:59:12 +1000
+Message-ID: <20140925075912.GG4758@dastard>
+References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
+	<1411567470-31799-5-git-send-email-lixi@ddn.com>
+	<20140924162507.GC27000@quack.suse.cz>
+	<20140924162634.GA16886@infradead.org>
+	<20140924170105.GE27000@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrXMkV_1XR2mXOoO_2_vpB=6cPbWAAOhPFhPbDa_1P+zxw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+Content-Disposition: inline
+In-Reply-To: <20140924170105.GE27000@quack.suse.cz>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Jan Kara <jack@suse.cz>
+Cc: adilger@dilger.ca, tytso@mit.edu, linux-api@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dmonakhov@openvz.org, viro@zeniv.linux.org.uk, Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Le 24/09/2014 19:05, Andy Lutomirski a =C3=A9crit :
-> On Wed, Sep 24, 2014 at 2:31 AM, Nicolas Dichtel
-> <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> wrote:
->> Le 23/09/2014 21:26, Andy Lutomirski a =C3=A9crit :
->>
->>> On Tue, Sep 23, 2014 at 6:20 AM, Nicolas Dichtel
->>> <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> wrote:
->>>>
->>>> The goal of this serie is to be able to multicast netlink messages=
- with
->>>> an
->>>> attribute that identify a peer netns.
->>>> This is needed by the userland to interpret some informations cont=
-ained
->>>> in
->>>> netlink messages (like IFLA_LINK value, but also some other attrib=
-utes in
->>>> case
->>>> of x-netns netdevice (see also
->>>> http://thread.gmane.org/gmane.linux.network/315933/focus=3D316064 =
-and
->>>> http://thread.gmane.org/gmane.linux.kernel.containers/28301/focus=3D=
-4239)).
->>>>
->>>> Ids are stored in the parent user namespace. These ids are valid o=
-nly
->>>> inside
->>>> this user namespace. The user can retrieve these ids via a new net=
-link
->>>> messages,
->>>> but only if peer netns are in the same user namespace.
->>>
->>>
->>> What about the parent / ancestors of the owning userns?  Can proces=
-ses
->>> in those usernses see any form of netns id?
->>
->> With this serie no. I'm not sure if ancestors really needs to be abl=
-e to
->> get these ids. What is your opinion?
->
-> I might be missing some consideration here, but I would hope that ip
-> link would work correctly if I have a veth interface shared with a
-> netns that's in a child userns.
-No, you're right. Will send a v3.
+On Wed, Sep 24, 2014 at 07:01:05PM +0200, Jan Kara wrote:
+> On Wed 24-09-14 09:26:34, Christoph Hellwig wrote:
+> > On Wed, Sep 24, 2014 at 06:25:07PM +0200, Jan Kara wrote:
+> > > On Wed 24-09-14 22:04:30, Li Xi wrote:
+> > > > This patch adds ioctl interface for setting/getting project of ext4.
+> > >   The patch looks good to me. I was just wondering whether it won't be
+> > > useful to add an ioctl() which isn't ext4 specific. We could just extend
+> > > ->setattr() to allow setting of project ID (most filesystems would just
+> > > return -EOPNOTSUPP but ext4 and xfs could do the right thing) and then call
+> > > ->setattr from the generic ioctl. That way userspace won't have to care
+> > > about filesystem type when setting project ID... What do others think?
+> > 
+> > Absolutely.  In general I also wonder why this patch doesn't implement
+> > the full XFS API.  Maybe there is a reason it was considered and
+> > rejected, but it would be helpful to document why.
+>   Do you mean full get/setfsxattr API?
+
+That's a good start.
+
+The bigger issue in my mind is that we already have a fully featured
+quota API that supports project quotas and userspace tools available
+that manipulate it. xfstests already uses those tools and API
+for testing project quotas.
+
+This whole patchset reinvents all the quota APIs, and will require
+adding support in userspace, and hence require re-inventing all the
+test infrastructure we already have because it won't be compatible
+with the existing project quota test code.
+
+>   That basically contains project ID,
+> flags (those that are currently get/set with FS_IOC_GETFLAGS/SETFLAGS), and
+> extent size hint right?
+
+It's a different set of flag definitions. We translate the interface
+XFS_XFLAG_* values to/from the inode on-disk XFS_DIFLAG_* inode values, just
+like we translate the VFS FS_*_FL flags that get passed through the
+FS_IOC_GETFLAGS/SETFLAGS ioctl.
+
+> That seems workable and it would also make setting
+> of PROJINHERIT flag fs agnostic. Only we would have to create some generic
+> flags namespace and merge into that ext4 flags and have a translation
+> function for the old ext4 flags.
+
+The XFS_XFLAGS_* are already filesystem agnostic - they are flags
+that are only used for interfacing with userspace and hence only
+exist at the ioctl copy in/out layer.....
+
+> Also I'm afraid we may quickly run out of
+> 32 available flags in xflags so we'd need to extend that. But all this
+> seems to be doable.
+
+The struct fsxattr was designed to be extensible - it has unused
+padding and enough space in the flags field to allow us to
+conditionally use that padding....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
