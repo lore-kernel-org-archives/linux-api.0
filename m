@@ -1,200 +1,239 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH 4/4] Adds ioctl interface support for ext4 project
-Date: Fri, 26 Sep 2014 10:10:49 +1000
-Message-ID: <20140926001049.GK4945@dastard>
-References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
- <1411567470-31799-5-git-send-email-lixi@ddn.com>
- <20140924162507.GC27000@quack.suse.cz>
- <20140924162634.GA16886@infradead.org>
- <20140924170105.GE27000@quack.suse.cz>
- <20140925075912.GG4758@dastard>
- <C31A739F-4502-4B40-9AE3-F2FE49291657@gmail.com>
+From: Mark yao <mark.yao@rock-chips.com>
+Subject: Re: [PATCH v5 1/3] drm/rockchip: Add basic drm driver
+Date: Thu, 25 Sep 2014 20:11:39 +0800
+Message-ID: <5424067B.7090908@rock-chips.com>
+References: <1411524672-14524-1-git-send-email-mark.yao@rock-chips.com>
+ <1411524746-14635-1-git-send-email-mark.yao@rock-chips.com>
+ <CAGS+omBKKktuqOfiek0VN5Nk6KGC64Yc7i_HbM=Wf3gyJZC8bw@mail.gmail.com>
+ <5423D951.4030703@rock-chips.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <C31A739F-4502-4B40-9AE3-F2FE49291657-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: lixi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============1630992258=="
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <5423D951.4030703@rock-chips.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Daniel Kurtz <djkurtz@chromium.org>
+Cc: Mark Rutland <mark.rutland@arm.com>, =?UTF-8?B?SGVpa28gU3TDvGJuZXI=?= <heiko@sntech.de>, linux-doc@vger.kernel.org, kever.yang@rock-chips.com, dri-devel <dri-devel@lists.freedesktop.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, xjq@rock-chips.com, zyw@rock-chips.com, linux-api@vger.kernel.org, jeff chen <cym@rock-chips.com>, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, Grant Likely <grant.likely@linaro.org>, wxt@rock-chips.com, huangtao@rock-chips.com, devicetree@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, yxj@rock-chips.com, Eddie Cai <cf@rock-chips.com>, Rob Herring <robh+dt@kernel.org>, =?UTF-8?B?U3TDqXBoYW5lIE1hcmNoZXNpbg==?= <marcheu@chromium.org>, simon xue <xxm@rock-chips.com>, xw@rock-chips.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.or>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 25, 2014 at 07:34:38PM +0800, lixi wrote:
-> Hi Dave,
->=20
-> I was mostly working on the semantics of inherit flag on these patche=
-s. And
-> I didn=E2=80=99t realized that the interface differences would bother=
- you so much. Sorry
-> for that.
+This is a multi-part message in MIME format.
+--===============1630992258==
+Content-Type: multipart/alternative;
+ boundary="------------020802010800050801080108"
 
-It's not the differences that bother me - it's the fact that I was
-repeatedly ignored until someone else raised the same issue....
+This is a multi-part message in MIME format.
+--------------020802010800050801080108
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-> I agree that we should choose a good interface. It would be good that=
- it is
-> general so that it works well for all file systems. I agree that addi=
-ng an
-> ext4 specific ioctl() is far from the best choice. I am willing to ch=
-ange it to
-> any general interface. A general ioctl() sounds good to me. Extend se=
-tattr()
-> and getattr() for project ID sounds even better, since project ID loo=
-ks like
-> UID/GID.
+On 2014=E5=B9=B409=E6=9C=8825=E6=97=A5 16:58, Mark yao wrote:
+> On 2014=E5=B9=B409=E6=9C=8825=E6=97=A5 00:20, Daniel Kurtz wrote:
+>> Hi Mark,
+>>
+>> Please review comments inline...
+>>
+>> On Wed, Sep 24, 2014 at 10:12 AM, Mark yao<mark.yao@rock-chips.com>  w=
+rote:
+>> To match the enum name, use ROCKCHIP_OUTPUT_TYPE_*.
+>> Also, no need to explicitly set the first one to 0.
+>> However, see below.  I don't think we to modify the drm_display_mode
+>> to include an output type.
+> but vop devices need know the connector type, connector enable=20
+> register is in vop.
+> can I do that like under to  get connector type for crtc?
+>
+>     static int rockchip_get_connector_type(struct drm_crtc *crtc)
+>     {
+>           struct drm_device *dev =3D crtc->dev;
+>           struct drm_connector * connector;
+>
+>           list_for_each_entry(connector,=20
+> &dev->mode_config.connector_list, head) {
+>           if (!connector->encoder)
+>                   continue;
+>           /*
+>            * one crtc only has one connector in my case, so just find=20
+> the first connector at list.
+>            */
+>           if (connector->encoder->crtc =3D=3D crtc)
+>                   break;
+>     }
+>
+>     if (!connector)
+>             return -EINVAL;
+>
+>     return connector->connector_type;
+> }=20
+Oh, sorry, forgot to drop this comment,
+for connector type problem, I try to new a help function for encoder to=20
+call as Daniel advices.
+>>>
+>>> +#define to_rockchip_plane(x) container_of(x, struct rockchip_plane, =
+base)
+>>> +
+>>> +struct rockchip_plane {
+>>> +       int id;
+>>> +       struct drm_plane base;
+>>> +       const struct vop_win *win;
+>>> +       struct vop_context *ctx;
+>> Isn't ctx just: to_vop_ctx(base->crtc)
+>>
+> OK. we can use to_vop_ctx(base->crtc) to get ctx.=20
+I have do a test to use "to_vop_ctx(base->crtc)", but found that=20
+"base->crtc" maybe not init.
+for cursor plane, base->crtc always is NULL. and disable_plane will fail.
+maybe we can add "base->crtc =3D crtc" at update_plane, but it seems not =
+good.
+so I think still use "rockchip_plane->ctx" would be better.
 
-Ah, no, project ID is not a uid/gid. It's a completely independent
-construct.
+-Mark
 
-[ Which brings me to, once again, the issue of being ignored during
-reviews: project IDs should not be mapped by user namespaces, nor be
-accessible from anything other than the init namespace.
+--------------020802010800050801080108
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-In XFS we've turned off access to project IDs within namespace
-containers because they are used for container space management
-(i.e. by the init namespace) to manage the amount of filesystem
-space a container or set of containers can use. We do not want
-project IDs to be manipulated from within such containers, and
-therefore have to prevent access to them from within user
-namespaces. ]
+<html>
+  <head>
+    <meta content=3D"text/html; charset=3DUTF-8" http-equiv=3D"Content-Ty=
+pe">
+  </head>
+  <body text=3D"#000000" bgcolor=3D"#FFFFFF">
+    <div class=3D"moz-cite-prefix">On 2014=E5=B9=B409=E6=9C=8825=E6=97=A5=
+ 16:58, Mark yao wrote:<br>
+    </div>
+    <blockquote cite=3D"mid:5423D951.4030703@rock-chips.com" type=3D"cite=
+">
+      <meta content=3D"text/html; charset=3DUTF-8" http-equiv=3D"Content-=
+Type">
+      <div class=3D"moz-cite-prefix">On 2014=E5=B9=B409=E6=9C=8825=E6=97=A5=
+ 00:20, Daniel Kurtz
+        wrote:<br>
+      </div>
+      <blockquote
+cite=3D"mid:CAGS+omBKKktuqOfiek0VN5Nk6KGC64Yc7i_HbM=3DWf3gyJZC8bw@mail.gm=
+ail.com"
+        type=3D"cite">
+        <pre wrap=3D"">Hi Mark,
 
-> And general xattr name is another choice. But it is might be a little
-> bit confusing if we use xattr actually, since we are not saving proje=
-ct ID as
-> extended attribute on Ext4. Any choice is fine with me, as long as th=
-e
-> implementation won't introduce nasty codes or inconsistent design.
+Please review comments inline...
 
-We can easily create another ioctl name if we have to. It just needs
-sto be defined to the same value as the XFS ioctl names currently
-are. We've done this before when making ioctls that originated in
-XFS generic (e.g. with freeze/thaw ioctls)....
+On Wed, Sep 24, 2014 at 10:12 AM, Mark yao <a moz-do-not-send=3D"true" cl=
+ass=3D"moz-txt-link-rfc2396E" href=3D"mailto:mark.yao@rock-chips.com">&lt=
+;mark.yao@rock-chips.com&gt;</a> wrote:
+</pre>
+      </blockquote>
+      <blockquote
+cite=3D"mid:CAGS+omBKKktuqOfiek0VN5Nk6KGC64Yc7i_HbM=3DWf3gyJZC8bw@mail.gm=
+ail.com"
+        type=3D"cite">
+        <blockquote type=3D"cite"> </blockquote>
+        <pre wrap=3D"">To match the enum name, use ROCKCHIP_OUTPUT_TYPE_*=
+.
+Also, no need to explicitly set the first one to 0.
+However, see below.  I don't think we to modify the drm_display_mode
+to include an output type.
+</pre>
+      </blockquote>
+      but vop devices need know the connector type, connector enable
+      register is in vop.<br>
+      can I do that like under to=C2=A0 get connector type for crtc?<br>
+      <br>
+      =C2=A0=C2=A0=C2=A0 static int rockchip_get_connector_type(struct dr=
+m_crtc *crtc)<br>
+      =C2=A0=C2=A0=C2=A0 {<br>
+      =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct drm_d=
+evice *dev =3D crtc-&gt;dev;<br>
+      =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct drm_c=
+onnector * connector;<br>
+      <br>
+      =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 list_for_eac=
+h_entry(connector,
+      &amp;dev-&gt;mode_config.connector_list, head) {<br>
+      =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!connector-&g=
+t;encoder)<br>
+      =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 continue;<br>
+      =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /*<br>
+      =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * one =
+crtc only has one connector in my case, so just
+      find the first connector at list.<br>
+      =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 */<br>
+      =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (connector-&gt=
+;encoder-&gt;crtc =3D=3D crtc)<br>
+      =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 break;<br>
+      =C2=A0=C2=A0=C2=A0 }<br>
+      <br>
+      =C2=A0=C2=A0=C2=A0 if (!connector)<br>
+      =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 retur=
+n -EINVAL;<br>
+      <br>
+      =C2=A0=C2=A0=C2=A0 return connector-&gt;connector_type;<br>
+      } </blockquote>
+    Oh, sorry, forgot to drop this comment, <br>
+    for connector type problem, I try to new a help function for encoder
+    to call as Daniel advices.<br>
+    <blockquote cite=3D"mid:5423D951.4030703@rock-chips.com" type=3D"cite=
+">
+      <blockquote
+cite=3D"mid:CAGS+omBKKktuqOfiek0VN5Nk6KGC64Yc7i_HbM=3DWf3gyJZC8bw@mail.gm=
+ail.com"
+        type=3D"cite">
+        <blockquote type=3D"cite">
+          <pre wrap=3D"">
 
-> However, the problem is, I do not quite understand why we should keep
-> the interface exactly the same with XFS. It would be good if we can. =
-But
-> as far as I can see, it seems hard. XFS uses a lot interfaces which a=
-re
-> not so standard and used by other file systems. For example, struct
-> fsxattr is not used by other file systems at all except XFS.
++#define to_rockchip_plane(x) container_of(x, struct rockchip_plane, base=
+)
++
++struct rockchip_plane {
++       int id;
++       struct drm_plane base;
++       const struct vop_win *win;
++       struct vop_context *ctx;
+</pre>
+        </blockquote>
+      </blockquote>
+      <blockquote
+cite=3D"mid:CAGS+omBKKktuqOfiek0VN5Nk6KGC64Yc7i_HbM=3DWf3gyJZC8bw@mail.gm=
+ail.com"
+        type=3D"cite">
+        <blockquote type=3D"cite"> </blockquote>
+        <pre wrap=3D"">Isn't ctx just: to_vop_ctx(base-&gt;crtc)
 
-Moving a existing structure definitions to a different header file
-is too hard?
+</pre>
+      </blockquote>
+      OK. we can use to_vop_ctx(base-&gt;crtc) to get ctx. </blockquote>
+    I have do a test to use "to_vop_ctx(base-&gt;crtc)", but found that
+    "base-&gt;crtc" maybe not init.<br>
+    for cursor plane, base-&gt;crtc always is NULL. and disable_plane
+    will fail.<br>
+    maybe we can add "base-&gt;crtc =3D crtc" at update_plane, but it
+    seems not good.<br>
+    so I think still use "rockchip_plane-&gt;ctx" would be better.<br>
+    <br>
+    -Mark<br>
+  </body>
+</html>
 
-> I am not sure why we should introduce this into Ext4 if there are
-> a lot of other better ways. I would be happy to change to XFS
-> interfaces, if it is general.  However, I don=E2=80=99t think it is
-> general enough.
+--------------020802010800050801080108--
 
-How is it not general enough? Examples, please, not handwaving:
-which bit of the quota interface can't ext4 use because it's XFS
-specific?
 
-We already have a perfectly functional interface and a large body of
-code that implements and tests it. You're saying "oh, it's too much
-work for me to implement an existing interface" and ignoring the
-fact that not implementing the existing interface forces a huge
-amount of downstream work. e.g.
+--===============1630992258==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-	- we need completely new test infrastructure to replicate
-	  existing tests.
-	- we need new tests to ensure the different APIs and
-	  utilities provide the same functionality, and that the
-	  work identically.
-	- administrators are going to have to learn how ext4 is
-	  different to what they already know and understand.
-	- administrators that has tools written to manage project
-	  quotas is going to have to rewrite them to support ext4.
+_______________________________________________
+dri-devel mailing list
+dri-devel@lists.freedesktop.org
+http://lists.freedesktop.org/mailman/listinfo/dri-devel
 
-It's an entirely selfish argument that ignores what already existing
-out in userspace. i.e. you're saying that existing downstream users of
-project quotas simple don't matter to you...
-
-> I know xfstest is using the existing project quota interfaces of XFS.=
- And
-> maybe there are some applications which are using them too. But
-> keeping the interfaces exactly the same with XFS would cost so much
-> effort that I=E2=80=99d like to get enough reasons before start worki=
-ng on it. Is it
-> really necessary? I am not so sure.
-
-You have to have a stronger argument than that to justify creating a
-new incompatible user interface. The XFS interfaces have been
-available for more than 10 years and support all the functionality
-ext4 requires. If it was any other userspace interface (e.g.
-syscalls) or any filesystem other than ext4 there would be people
-from all over telling you "use the existing interfaces!" and you'd
-need very strong reasons for creating a new one.
-
-i.e. you need to demonstrate that the existing interfaces are
-inadequate for the intended purpose of the new functionality. That's
-clearly not the case here so why should we allow you to create an
-incompatible userspace API rather than use the existing, fully
-functional API?
-
-> It is so easy to change user space applications comparing to
-> changing a weird interfaces.
-
-The existing generic quota tools (i.e quotactl, repquota, etc)
-already implement the XFS quota API to be able to query XFS
-filesystems.  There's no "changing to wierd interfaces" necessary
-for userspace; it's already all there. Hence any work you do to add
-project quota awareness to those generic userspace tools will need to
-add the support to the XFS queries anyway.
-
-IOWs, you're not making it any easier for yourself in userspace by
-creating a new API for ext4 - it just doubles the amount of work you
-have to in userspace to make existing tools project quota aware.
-
-> For
-> example, I think it won=E2=80=99t cost even more than a day to add xf=
-stest
-> support for new Ext4 project quota.
-
-A day of whose time?=20
-
-Ever thought about how much time it will take reviewers to look at
-your tests and iterate over them to get it all right? If you're
-introducing new userspace infrastructure that xfstests will need to
-depend on and test for, then it's a lot more than just writing new
-tests.
-
-Indeed, I'm likely to want new project quota tests to be generic
-(i.e. works and passes on any filesystem that supports project
-quotas) with the introduction of ext4 project quota support. It's
-the same functionality and so it should work the same just like user
-and group quotas do across all filesystems.
-
-> And since project quota is far from
-> a widely used feature,
-
-I don't think you realise quite how widespread it's use is on XFS.
-
-> I don=E2=80=99t think there is much compatibility problems
-> for existing applications.  And If the new project interface are gene=
-ral
-> enough, there won=E2=80=99t be any compatibility problems for new app=
-lications
-> at all.
-
-Again, you are ignoring the compatibility problems with existing
-applications that are project quota aware. For them you are
-*creating new compatibility problems* by implementing a new
-interface. i.e. Existing applications will not work on ext4, and
-new applications written to work on ext4 won't work on XFS.
-
-That's the crux of the issue - we have existing applications using
-the existing interface and so introducing a new interface introduces
-compatibility problems.  You can't just wave this problem away
-because you don't think the existing interface matters.
-
-"It's easier for me to create a new interface" is not a valid reason
-for creating a new interface....
-
-Cheers,
-
-Dave.
---=20
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+--===============1630992258==--
