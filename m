@@ -1,40 +1,73 @@
-From: Daniel Vetter <daniel@ffwll.ch>
-Subject: Re: [PATCH v4 1/5] drm/rockchip: Add basic drm driver
-Date: Thu, 25 Sep 2014 21:30:36 +0200
-Message-ID: <CAKMK7uFO5MLAjWVwDqEf49Y=kJcBy3JV6hhnB-DEJiH6Zc+Atg@mail.gmail.com>
-References: <1411382820-1615-1-git-send-email-mark.yao@rock-chips.com>
-	<1411382934-1763-1-git-send-email-mark.yao@rock-chips.com>
-	<20140924082037.GJ15734@phenom.ffwll.local>
-	<54228F7B.2050608@rock-chips.com>
-	<CAKMK7uHiQFDH-qyPBsyVa953F5SY2UgSv7Nbsu73AKvjqUm1jw@mail.gmail.com>
-	<542367AC.2010105@rock-chips.com>
+From: Heinrich Schuchardt <xypron.debian-Mmb7MZpHnFY@public.gmane.org>
+Subject: Re: [PATCHv8 1/6] fanotify: enable close-on-exec on events' fd when
+ requested in fanotify_init()
+Date: Thu, 25 Sep 2014 22:57:23 +0200
+Message-ID: <542481B3.8070300@gmx.de>
+References: <cover.1411562410.git.ydroneaud@opteya.com> <9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud@opteya.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <542367AC.2010105@rock-chips.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mark yao <mark.yao@rock-chips.com>
-Cc: =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, linux-doc@vger.kernel.org, Kever Yang <kever.yang@rock-chips.com>, dri-devel <dri-devel@lists.freedesktop.org>, Douglas Anderson <dianders@chromium.org>, Jianqun Xu <xjq@rock-chips.com>, Chris Zhong <zyw@rock-chips.com>, jeff chen <cym@rock-chips.com>, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, =?UTF-8?B
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 25, 2014 at 2:54 AM, Mark yao <mark.yao@rock-chips.com> wrote:
-> Hi, Daniel
-> this version is old, newest is v5. and I remove uapi at v5.
-> you can see v5 patch at:
-> https://lkml.org/lkml/2014/9/23/1061
-> thanks
+On 24.09.2014 15:11, Yann Droneaud wrote:
+> According to commit 80af258867648 ('fanotify: groups can specify
+> their f_flags for new fd'), file descriptors created as part of
+> file access notification events inherit flags from the
+> event_f_flags argument passed to syscall fanotify_init(2).
 >
-> This version doesn't seem to be cc'ed to dri-devel, at least it didn't
-> yet show up. Can you please double-check?
+> So while it is legal for userspace to call fanotify_init() with
+> O_CLOEXEC as part of its second argument, O_CLOEXEC is currently
+> silently ignored.
 >
-> actually I cc the v5 version to dri-devel@lists.freedesktop.org.
-> and we can found the patch at https://patchwork.kernel.org/patch/4967501/(
-> Project: dri-devel)
+> Indeed event_f_flags are only given to dentry_open(), which only
+> seems to care about O_ACCMODE and O_PATH in do_dentry_open(),
+> O_DIRECT in open_check_o_direct() and O_LARGEFILE in
+> generic_file_open().
 
-Yeah it eventually showed up here too. Looks sane from a really high
-level up I think, so Ack: me.
--Daniel
--- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-+41 (0) 79 365 57 48 - http://blog.ffwll.ch
+I tested on kernel 3.17.0-rc5. I passed O_CLOEXEC in event_f_flags.
+When I called fcnt(event_metadata->fd, F_GETFD) it did not return 
+FD_CLOEXEC. So I can confirm your observation that O_CLOEXEC is not 
+working as expected.
+
+I found this definition
+#define get_unused_fd() get_unused_fd_flags(0)
+
+So essentially when get_unused_fd() is called for a fanotify event 
+O_CLOEXEC is ignored.
+
+This is what your patch fixes.
+
+>
+> More, there's no effective check on event_f_flags value that
+> would catch unknown / unsupported values, unlike the one on
+> f_flags argument of the syscall (see FAN_ALL_INIT_FLAGS in
+> include/uapi/linux/fanotify.h).
+
+The fanotify_init(2) man page describes which flags are allowable in 
+event_f_flags.
+
+Could you, please, explain why the following code in fanotify_user.c is 
+not to be considered an effective check:
+
+     if (event_f_flags & ~FANOTIFY_INIT_ALL_EVENT_F_BITS)
+         return -EINVAL;
+
+     switch (event_f_flags & O_ACCMODE) {
+     case O_RDONLY:
+     case O_RDWR:
+     case O_WRONLY:
+         break;
+     default:
+         return -EINVAL;
+     }
+
+I CC Jan Kara as he reviewed the code.
+
+Best regards
+
+Heinrich Schuchardt
