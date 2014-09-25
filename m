@@ -1,100 +1,65 @@
-From: Mark yao <mark.yao@rock-chips.com>
-Subject: [PATCH v6 3/3] dt-bindings: video: Add documentation for rockchip vop
-Date: Thu, 25 Sep 2014 20:57:11 +0800
-Message-ID: <1411649831-10455-1-git-send-email-mark.yao@rock-chips.com>
-References: <1411649565-10309-1-git-send-email-mark.yao@rock-chips.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1411649565-10309-1-git-send-email-mark.yao@rock-chips.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
-Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, xw@rock-chips.com, Mark yao <mark.yao@rock-chips.com>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [PATCH 4/4] Adds ioctl interface support for ext4 project
+Date: Thu, 25 Sep 2014 09:41:37 -0400
+Message-ID: <20140925134136.GE4592@thunk.org>
+References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
+	<1411567470-31799-5-git-send-email-lixi@ddn.com>
+	<20140924162507.GC27000@quack.suse.cz>
+	<20140924162634.GA16886@infradead.org>
+	<20140924170105.GE27000@quack.suse.cz>
+	<20140925075912.GG4758@dastard>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+Content-Disposition: inline
+In-Reply-To: <20140925075912.GG4758@dastard>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Dave Chinner <david@fromorbit.com>
+Cc: adilger@dilger.ca, Jan Kara <jack@suse.cz>, linux-api@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dmonakhov@openvz.org, viro@zeniv.linux.org.uk, Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds binding documentation for Rockchip SoC VOP driver.
+On Thu, Sep 25, 2014 at 05:59:12PM +1000, Dave Chinner wrote:
+> > Also I'm afraid we may quickly run out of
+> > 32 available flags in xflags so we'd need to extend that. But all this
+> > seems to be doable.
+> 
+> The struct fsxattr was designed to be extensible - it has unused
+> padding and enough space in the flags field to allow us to
+> conditionally use that padding....
 
-Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
----
-Changes in v2:
-- rename "lcdc" to "vop"
-- add vop reset
-- add iommu node
-- add port for display-subsystem
+I agree that it would be useful for ext4 to support as much of the
+XFS_IOC_GETXATTR/XFS_IOC_SETATTR as would make sense for ext4, and to
+use that to set/get the project ID.  (And that we should probably do
+that as a separate set of patches that we could potentially go into
+ext4 ahead of the project quota while it is undergoing testing and
+review.)
 
-Changes in v3: None
+A few questions of Dave and other XFS folks:
 
-Changes in v4: None
+1) If we only implement a partial set of the flags or other
+functionality, are there going to be tools that get confused?  i.e.,
+are there any userspace programs that will test for whether the ioctl
+is supported, and then assume that some minimal set of functionality
+must be implemented?
 
-Changes in v5: None
+2) Unless I'm missing something, there is nothing that enforces that
+fsx_pad must be zero.  I assume that means that the only way you can
+expand use of fields into that space is via a flag bit being consumed?
 
-Changes in v6: None
+Cheers,
 
- .../devicetree/bindings/video/rockchip-vop.txt     |   58 ++++++++++++++++++++
- 1 file changed, 58 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/video/rockchip-vop.txt
+						- Ted
 
-diff --git a/Documentation/devicetree/bindings/video/rockchip-vop.txt b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-new file mode 100644
-index 0000000..d15351f
---- /dev/null
-+++ b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-@@ -0,0 +1,58 @@
-+device-tree bindings for rockchip soc display controller (vop)
-+
-+VOP (Visual Output Processor) is the Display Controller for the Rockchip
-+series of SoCs which transfers the image data from a video memory
-+buffer to an external LCD interface.
-+
-+Required properties:
-+- compatible: value should be one of the following
-+		"rockchip,rk3288-vop";
-+
-+- interrupts: should contain a list of all VOP IP block interrupts in the
-+		 order: VSYNC, LCD_SYSTEM. The interrupt specifier
-+		 format depends on the interrupt controller used.
-+
-+- clocks: must include clock specifiers corresponding to entries in the
-+		clock-names property.
-+
-+- clock-names: Must contain
-+		aclk_vop: for ddr buffer transfer.
-+		hclk_vop: for ahb bus to R/W the phy regs.
-+		dclk_vop: pixel clock.
-+
-+- resets: Must contain an entry for each entry in reset-names.
-+  See ../reset/reset.txt for details.
-+- reset-names: Must include the following entries:
-+  - axi
-+  - ahb
-+  - dclk
-+
-+- iommus: required a iommu node
-+
-+- port: A port node with endpoint definitions as defined in
-+  Documentation/devicetree/bindings/media/video-interfaces.txt.
-+
-+Example:
-+SoC specific DT entry:
-+	vopb: vopb@ff930000 {
-+		compatible = "rockchip,rk3288-vop";
-+		reg = <0xff930000 0x19c>;
-+		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
-+		clocks = <&cru ACLK_VOP0>, <&cru DCLK_VOP0>, <&cru HCLK_VOP0>;
-+		clock-names = "aclk_vop", "dclk_vop", "hclk_vop";
-+		resets = <&cru SRST_LCDC1_AXI>, <&cru SRST_LCDC1_AHB>, <&cru SRST_LCDC1_DCLK>;
-+		reset-names = "axi", "ahb", "dclk";
-+		iommus = <&vopb_mmu>;
-+		vopb_out: port {
-+			#address-cells = <1>;
-+			#size-cells = <0>;
-+			vopb_out_edp: endpoint@0 {
-+				reg = <0>;
-+				remote-endpoint=<&edp_in_vopb>;
-+			};
-+			vopb_out_hdmi: endpoint@1 {
-+				reg = <1>;
-+				remote-endpoint=<&hdmi_in_vopb>;
-+			};
-+		};
-+	};
--- 
-1.7.9.5
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
