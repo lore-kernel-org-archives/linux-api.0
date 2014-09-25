@@ -1,88 +1,52 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 3/4] Adds project quota support for ext4
-Date: Thu, 25 Sep 2014 13:55:31 +0200
-Message-ID: <20140925115531.GA15352@quack.suse.cz>
-References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
- <1411567470-31799-4-git-send-email-lixi@ddn.com>
- <20140924173123.GH27000@quack.suse.cz>
- <CAPTn0cB8X3DYprX-oKCu8aV5OLLfJJ2rh9YvMY7re69gi1s-LA@mail.gmail.com>
+From: Pawel Moll <pawel.moll@arm.com>
+Subject: Re: [PATCH v2 2/2] perf: Userspace event
+Date: Thu, 25 Sep 2014 13:45:05 +0100
+Message-ID: <1411649105.4768.48.camel@hornet>
+References: <1411491787-25938-1-git-send-email-pawel.moll@arm.com>
+	 <1411491787-25938-3-git-send-email-pawel.moll@arm.com>
+	 <87oau5k0u9.fsf@sejong.aot.lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAPTn0cB8X3DYprX-oKCu8aV5OLLfJJ2rh9YvMY7re69gi1s-LA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87oau5k0u9.fsf@sejong.aot.lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Namhyung Kim <namhyung@kernel.org>
+Cc: Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 25-09-14 09:28:24, Li Xi wrote:
-> On Thu, Sep 25, 2014 at 1:31 AM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > On Wed 24-09-14 22:04:29, Li Xi wrote:
-> >> This patch adds mount options for enabling/disabling project quota
-> >> accounting and enforcement. A new specific inode is also used for
-> >> project quota accounting.
-> >   The patch looks mostly fine. A few smaller things below.
-> >
-> > ...
-> >> @@ -1433,6 +1437,8 @@ static const struct mount_opts {
-> >>                                                       MOPT_SET | MOPT_Q},
-> >>       {Opt_grpquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_GRPQUOTA,
-> >>                                                       MOPT_SET | MOPT_Q},
-> >> +     {Opt_prjquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_PRJQUOTA,
-> >> +                                                     MOPT_SET | MOPT_Q},
-> >>       {Opt_noquota, (EXT4_MOUNT_QUOTA | EXT4_MOUNT_USRQUOTA |
-> >>                      EXT4_MOUNT_GRPQUOTA), MOPT_CLEAR | MOPT_Q},
-> >   I think you missed to add EXT4_MOUNT_PRJQUOTA to Opt_noquota...
-> >
-> > ...
-> >> @@ -2833,6 +2855,13 @@ static int ext4_feature_set_ok(struct super_block *sb, int readonly)
-> >>                        "without CONFIG_QUOTA");
-> >>               return 0;
-> >>       }
-> >> +     if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-> >> +         !readonly) {
-> >> +             ext4_msg(sb, KERN_ERR,
-> >> +                      "Filesystem with project quota feature cannot be"
-> >> +                      "mounted RDWR without CONFIG_QUOTA");
-> >> +             return 0;
-> >> +     }
-> >   Hum, I don't think this is right. EXT4_FEATURE_RO_COMPAT_PROJECT is about
-> > maintaining project IDs not about quota. So it seems perfectly OK to have
-> > EXT4_FEATURE_RO_COMPAT_PROJECT without CONFIG_QUOTA.
-> Ah, I see. This might be my main misunderstanding. I thought it is
-> about maintaining
-> both project IDs and quota. And I misunderstood so that I removed all
-> EXT4_FEATURE_RO_COMPAT_PROJECT checking when set/get project ID.
-> If we only use EXT4_FEATURE_RO_COMPAT_PROJECT to protect imcompatibility
-> of project ID, what about the change of struct ext4_super_block? I am
-> still confused.
-  So my vision is following:
-EXT4_FEATURE_RO_COMPAT_PROJECT feature controls whether project IDs can be
-stored in inode. So you don't allow project ID to be set for a superblock
-without this feature. This is absolutely necessary since otherwise old
-kernel could happily mount filesystem with project IDs set and would just
-overwrite them. The same applies to PROJINHERIT flag.
+On Wed, 2014-09-24 at 07:07 +0100, Namhyung Kim wrote:
+> On Tue, 23 Sep 2014 18:03:07 +0100, Pawel Moll wrote:
+> > This patch adds a new PERF_COUNT_SW_UEVENT software event
+> > and a related PERF_SAMPLE_UEVENT sample. User can now
+> > write to the the perf file descriptor, injecting such
+> > event in the perf buffer.
+> 
+> It seems the PERF_SAMPLE_UEVENT sample can be injected to any event.  So
+> why the PERF_COUNT_SW_UEVENT is needed?  At least one can use the
+> SW_DUMMY event for that purpose.
 
-Getting of project ID could be easily done without
-EXT4_FEATURE_RO_COMPAT_PROJECT feature (just return 0) but I think
-returning EOPNOTSUPP would be better for userspace programs - they
-can immediatedy distinguish filesystems without project IDs and filesystems
-where just the file doesn't have any project ID set.
+You're right. I needed a different SW type in one of my early
+prototypes, but it's not the case any more. Consider it gone.
 
-Whether project quota is accounted and enforced is a different matter.
-Without EXT4_FEATURE_RO_COMPAT_QUOTA feature it is userspace which is
-responsible for properly setting up quotas so you can just use
-sb_has_quota_loaded() and similar functions. With
-EXT4_FEATURE_RO_COMPAT_QUOTA, kernel is responsible for setting up quotas
-and we decide whether we should setup project quotas depending on whether
-s_prj_quota_inum is set (tools should then make sure s_prj_quota_inum is
-set only if EXT4_FEATURE_RO_COMPAT_QUOTA and EXT4_FEATURE_RO_COMPAT_PROJECT
-are set but we can assert that in the kernel just to make sure).
+> Also I think it'd be better to be a record type (PERF_RECORD_XXX)
+> instead of a sample flag (PERF_SAMPLE_XXX).  In perf tools, we already
+> use perf_user_event_type for synthesized userspace events.  This way it
+> can avoid unnecessary sample processing for userspace events.
 
-Hope this makes things clearer.
+Fine with me. If no one objects, I'm more than happy to use
+PERF_RECORD_UEVENT = 11 for it.
 
-								Honza
--- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+> For contents, I prefer to give complete control to users - kernel
+> doesn't need to care about it other than its size.  If one just wants to
+> use strings only, she can write them directly.  If others want to mix
+> different types of data, they might need to define a data format for
+> their use.
+
+Are you saying to drop even the "type 0 means zero-terminated string"
+definition, even if everything else is up to the user? I quite like that
+idea, especially combined with write()ing to the perf_fd (it is very
+much like trace_marker then, which is beautiful in its simplicity), but
+the feelings are not that strong to fight a war over it.
+
+Pawel
