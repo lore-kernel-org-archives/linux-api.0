@@ -1,258 +1,60 @@
-From: Mark yao <mark.yao@rock-chips.com>
-Subject: Re: [PATCH v4 1/5] drm/rockchip: Add basic drm driver
-Date: Thu, 25 Sep 2014 08:54:04 +0800
-Message-ID: <542367AC.2010105@rock-chips.com>
-References: <1411382820-1615-1-git-send-email-mark.yao@rock-chips.com>	<1411382934-1763-1-git-send-email-mark.yao@rock-chips.com>	<20140924082037.GJ15734@phenom.ffwll.local>	<54228F7B.2050608@rock-chips.com>
- <CAKMK7uHiQFDH-qyPBsyVa953F5SY2UgSv7Nbsu73AKvjqUm1jw@mail.gmail.com>
+From: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 3/4] Adds project quota support for ext4
+Date: Thu, 25 Sep 2014 09:28:24 +0800
+Message-ID: <CAPTn0cB8X3DYprX-oKCu8aV5OLLfJJ2rh9YvMY7re69gi1s-LA@mail.gmail.com>
+References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
+	<1411567470-31799-4-git-send-email-lixi@ddn.com>
+	<20140924173123.GH27000@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0036658266=="
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <CAKMK7uHiQFDH-qyPBsyVa953F5SY2UgSv7Nbsu73AKvjqUm1jw@mail.gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Daniel Vetter <daniel@ffwll.ch>
-Cc: Mark Rutland <mark.rutland@arm.com>, =?UTF-8?B?SGVpa28gU3TDvGJuZXI=?= <heiko@sntech.de>, linux-doc@vger.kernel.org, Kever Yang <kever.yang@rock-chips.com>, dri-devel <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jianqun Xu <xjq@rock-chips.com>, Chris Zhong <zyw@rock-chips.com>, linux-api@vger.kernel.org, jeff chen <cym@rock-chips.com>, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, Grant Likely <grant.likely@linaro.org>, =?UTF-8?B?546L5pmT?= =?UTF-8?B?6IW+?= <wxt@rock-chips.com>, Tao Huang <huangtao@rock-chips.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, yxj@rock-chips.com, Rob Herring <robh+dt@kernel.org>, =?UTF-8?B?U3TDqXBoYW5lIE1hcmNoZXNpbg==?= <marcheu@chromium.org>, simon xue <xxm@rock-chips.com>, xw@rock-chips.
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20140924173123.GH27000-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is a multi-part message in MIME format.
---===============0036658266==
-Content-Type: multipart/alternative;
- boundary="------------000709020103010906060402"
-
-This is a multi-part message in MIME format.
---------------000709020103010906060402
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-
-On 2014=E5=B9=B409=E6=9C=8824=E6=97=A5 19:20, Daniel Vetter wrote:
-> On Wed, Sep 24, 2014 at 11:31 AM, Mark yao <mark.yao@rock-chips.com> wr=
-ote:
->> On 2014=E5=B9=B409=E6=9C=8824=E6=97=A5 16:20, Daniel Vetter wrote:
->>> On Mon, Sep 22, 2014 at 06:48:54PM +0800, Mark yao wrote:
->>>> This patch adds the basic structure of a DRM Driver for Rockchip Soc=
-s.
->>>>
->>>> Signed-off-by: Mark yao <mark.yao@rock-chips.com>
->>>> ---
->>>> Changes in v2:
->>>> - use the component framework to defer main drm driver probe
->>>>     until all VOP devices have been probed.
->>>> - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
->>>>     master device and each vop device can shared the drm dma mapping=
-.
->>>> - use drm_crtc_init_with_planes and drm_universal_plane_init.
->>>> - remove unnecessary middle layers.
->>>> - add cursor set, move funcs to rockchip drm crtc.
->>>> - use vop reset at first init
->>>> - reference framebuffer when used and unreference when swap out vop
->>>>
->>>> Changes in v3:
->>>> - change "crtc->fb" to "crtc->primary-fb"
->>>> Adviced by Daniel Vetter
->>>> - init cursor plane with universal api, remove unnecessary cursor
->>>> set,move
->>>>
->>>> Changes in v4:
->>>> Adviced by David Herrmann
->>>> - remove drm_platform_*() usage, use register drm device directly.
->>>> Adviced by Rob Clark
->>>> - remove special mmap ioctl, do userspace mmap with normal mmap() or=
- mmap
->>>> offset
->>>>
->>>>    drivers/gpu/drm/Kconfig                       |    2 +
->>>>    drivers/gpu/drm/Makefile                      |    1 +
->>>>    drivers/gpu/drm/rockchip/Kconfig              |   19 +
->>>>    drivers/gpu/drm/rockchip/Makefile             |   10 +
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_drv.c   |  524 ++++++++++
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_drv.h   |  120 +++
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_fb.c    |  201 ++++
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_fb.h    |   28 +
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c |  231 +++++
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h |   20 +
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_gem.c   |  404 ++++++++
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_gem.h   |   72 ++
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_vop.c   | 1372
->>>> +++++++++++++++++++++++++
->>>>    drivers/gpu/drm/rockchip/rockchip_drm_vop.h   |  187 ++++
->>>>    include/uapi/drm/rockchip_drm.h               |   75 ++
->>> uapi is still here ... Was this an oversight?
->>> -Daniel
->>>
->> Hi, Daniel
->> this version is old, newest is v5. and I remove uapi at v5.
->> you can see v5 patch at:
->> https://lkml.org/lkml/2014/9/23/1061
->> thanks
-> This version doesn't seem to be cc'ed to dri-devel, at least it didn't
-> yet show up. Can you please double-check?
-actually I cc the v5 version to dri-devel@lists.freedesktop.org.
-and we can found the patch at=20
-https://patchwork.kernel.org/patch/4967501/( *Project*: dri-devel)
+On Thu, Sep 25, 2014 at 1:31 AM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+> On Wed 24-09-14 22:04:29, Li Xi wrote:
+>> This patch adds mount options for enabling/disabling project quota
+>> accounting and enforcement. A new specific inode is also used for
+>> project quota accounting.
+>   The patch looks mostly fine. A few smaller things below.
 >
-> Thanks, Daniel
+> ...
+>> @@ -1433,6 +1437,8 @@ static const struct mount_opts {
+>>                                                       MOPT_SET | MOPT_Q},
+>>       {Opt_grpquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_GRPQUOTA,
+>>                                                       MOPT_SET | MOPT_Q},
+>> +     {Opt_prjquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_PRJQUOTA,
+>> +                                                     MOPT_SET | MOPT_Q},
+>>       {Opt_noquota, (EXT4_MOUNT_QUOTA | EXT4_MOUNT_USRQUOTA |
+>>                      EXT4_MOUNT_GRPQUOTA), MOPT_CLEAR | MOPT_Q},
+>   I think you missed to add EXT4_MOUNT_PRJQUOTA to Opt_noquota...
 >
->
->
+> ...
+>> @@ -2833,6 +2855,13 @@ static int ext4_feature_set_ok(struct super_block *sb, int readonly)
+>>                        "without CONFIG_QUOTA");
+>>               return 0;
+>>       }
+>> +     if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
+>> +         !readonly) {
+>> +             ext4_msg(sb, KERN_ERR,
+>> +                      "Filesystem with project quota feature cannot be"
+>> +                      "mounted RDWR without CONFIG_QUOTA");
+>> +             return 0;
+>> +     }
+>   Hum, I don't think this is right. EXT4_FEATURE_RO_COMPAT_PROJECT is about
+> maintaining project IDs not about quota. So it seems perfectly OK to have
+> EXT4_FEATURE_RO_COMPAT_PROJECT without CONFIG_QUOTA.
+Ah, I see. This might be my main misunderstanding. I thought it is
+about maintaining
+both project IDs and quota. And I misunderstood so that I removed all
+EXT4_FEATURE_RO_COMPAT_PROJECT checking when set/get project ID.
+If we only use EXT4_FEATURE_RO_COMPAT_PROJECT to protect imcompatibility
+of project ID, what about the change of struct ext4_super_block? I am
+still confused.
+Please advise.
 
-
---------------000709020103010906060402
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-  <head>
-    <meta content=3D"text/html; charset=3DUTF-8" http-equiv=3D"Content-Ty=
-pe">
-  </head>
-  <body text=3D"#000000" bgcolor=3D"#FFFFFF">
-    <div class=3D"moz-cite-prefix">On 2014=E5=B9=B409=E6=9C=8824=E6=97=A5=
- 19:20, Daniel Vetter
-      wrote:<br>
-    </div>
-    <blockquote
-cite=3D"mid:CAKMK7uHiQFDH-qyPBsyVa953F5SY2UgSv7Nbsu73AKvjqUm1jw@mail.gmai=
-l.com"
-      type=3D"cite">
-      <pre wrap=3D"">On Wed, Sep 24, 2014 at 11:31 AM, Mark yao <a class=3D=
-"moz-txt-link-rfc2396E" href=3D"mailto:mark.yao@rock-chips.com">&lt;mark.=
-yao@rock-chips.com&gt;</a> wrote:
-</pre>
-      <blockquote type=3D"cite">
-        <pre wrap=3D"">On 2014=E5=B9=B409=E6=9C=8824=E6=97=A5 16:20, Dani=
-el Vetter wrote:
-</pre>
-        <blockquote type=3D"cite">
-          <pre wrap=3D"">
-On Mon, Sep 22, 2014 at 06:48:54PM +0800, Mark yao wrote:
-</pre>
-          <blockquote type=3D"cite">
-            <pre wrap=3D"">
-This patch adds the basic structure of a DRM Driver for Rockchip Socs.
-
-Signed-off-by: Mark yao <a class=3D"moz-txt-link-rfc2396E" href=3D"mailto=
-:mark.yao@rock-chips.com">&lt;mark.yao@rock-chips.com&gt;</a>
----
-Changes in v2:
-- use the component framework to defer main drm driver probe
-   until all VOP devices have been probed.
-- use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
-   master device and each vop device can shared the drm dma mapping.
-- use drm_crtc_init_with_planes and drm_universal_plane_init.
-- remove unnecessary middle layers.
-- add cursor set, move funcs to rockchip drm crtc.
-- use vop reset at first init
-- reference framebuffer when used and unreference when swap out vop
-
-Changes in v3:
-- change "crtc-&gt;fb" to "crtc-&gt;primary-fb"
-Adviced by Daniel Vetter
-- init cursor plane with universal api, remove unnecessary cursor
-set,move
-
-Changes in v4:
-Adviced by David Herrmann
-- remove drm_platform_*() usage, use register drm device directly.
-Adviced by Rob Clark
-- remove special mmap ioctl, do userspace mmap with normal mmap() or mmap
-offset
-
-  drivers/gpu/drm/Kconfig                       |    2 +
-  drivers/gpu/drm/Makefile                      |    1 +
-  drivers/gpu/drm/rockchip/Kconfig              |   19 +
-  drivers/gpu/drm/rockchip/Makefile             |   10 +
-  drivers/gpu/drm/rockchip/rockchip_drm_drv.c   |  524 ++++++++++
-  drivers/gpu/drm/rockchip/rockchip_drm_drv.h   |  120 +++
-  drivers/gpu/drm/rockchip/rockchip_drm_fb.c    |  201 ++++
-  drivers/gpu/drm/rockchip/rockchip_drm_fb.h    |   28 +
-  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c |  231 +++++
-  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h |   20 +
-  drivers/gpu/drm/rockchip/rockchip_drm_gem.c   |  404 ++++++++
-  drivers/gpu/drm/rockchip/rockchip_drm_gem.h   |   72 ++
-  drivers/gpu/drm/rockchip/rockchip_drm_vop.c   | 1372
-+++++++++++++++++++++++++
-  drivers/gpu/drm/rockchip/rockchip_drm_vop.h   |  187 ++++
-  include/uapi/drm/rockchip_drm.h               |   75 ++
-</pre>
-          </blockquote>
-          <pre wrap=3D"">
-uapi is still here ... Was this an oversight?
--Daniel
-
-</pre>
-        </blockquote>
-        <pre wrap=3D"">Hi, Daniel
-this version is old, newest is v5. and I remove uapi at v5.
-you can see v5 patch at:
-<a class=3D"moz-txt-link-freetext" href=3D"https://lkml.org/lkml/2014/9/2=
-3/1061">https://lkml.org/lkml/2014/9/23/1061</a>
-thanks
-</pre>
-      </blockquote>
-      <pre wrap=3D"">
-This version doesn't seem to be cc'ed to dri-devel, at least it didn't
-yet show up. Can you please double-check?</pre>
-    </blockquote>
-    actually I cc the v5 version to <a class=3D"moz-txt-link-abbreviated"=
- href=3D"mailto:dri-devel@lists.freedesktop.org">dri-devel@lists.freedesk=
-top.org</a>. <br>
-    and we can found the patch at
-    <a class=3D"moz-txt-link-freetext" href=3D"https://patchwork.kernel.o=
-rg/patch/4967501/(">https://patchwork.kernel.org/patch/4967501/(</a>
-    <meta http-equiv=3D"content-type" content=3D"text/html; charset=3DUTF=
--8">
-    <strong style=3D"color: rgb(0, 0, 0); font-family: 'DejaVu Sans',
-      'Bitstream Vera Sans', Verdana, sans-serif; font-size: 12px;
-      font-style: normal; font-variant: normal; letter-spacing: normal;
-      line-height: normal; orphans: auto; text-align: start;
-      text-indent: 0px; text-transform: none; white-space: normal;
-      widows: auto; word-spacing: 0px; -webkit-text-stroke-width: 0px;
-      background-color: rgb(232, 232, 232);">Project</strong><span
-      style=3D"color: rgb(0, 0, 0); font-family: 'DejaVu Sans', 'Bitstrea=
-m
-      Vera Sans', Verdana, sans-serif; font-size: 12px; font-style:
-      normal; font-variant: normal; font-weight: normal; letter-spacing:
-      normal; line-height: normal; orphans: auto; text-align: start;
-      text-indent: 0px; text-transform: none; white-space: normal;
-      widows: auto; word-spacing: 0px; -webkit-text-stroke-width: 0px;
-      background-color: rgb(232, 232, 232); display: inline !important;
-      float: none;">: dri-devel<span class=3D"Apple-converted-space"></sp=
-an></span>)<br>
-    <blockquote
-cite=3D"mid:CAKMK7uHiQFDH-qyPBsyVa953F5SY2UgSv7Nbsu73AKvjqUm1jw@mail.gmai=
-l.com"
-      type=3D"cite">
-      <pre wrap=3D"">
-
-Thanks, Daniel
-
-
-
-</pre>
-    </blockquote>
-    <br>
-  </body>
-</html>
-
---------------000709020103010906060402--
-
-
---===============0036658266==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-dri-devel mailing list
-dri-devel@lists.freedesktop.org
-http://lists.freedesktop.org/mailman/listinfo/dri-devel
-
---===============0036658266==--
+Regards,
+Li Xi
