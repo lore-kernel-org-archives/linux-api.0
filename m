@@ -1,365 +1,94 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: [PATCH v15 net-next 01/11] bpf: introduce BPF syscall and maps
-Date: Fri, 26 Sep 2014 00:16:57 -0700
-Message-ID: <1411715827-10430-2-git-send-email-ast@plumgrid.com>
-References: <1411715827-10430-1-git-send-email-ast@plumgrid.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1411715827-10430-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Mark yao <mark.yao@rock-chips.com>
+Subject: [PATCH v7 0/3] Add drm driver for Rockchip Socs
+Date: Fri, 26 Sep 2014 15:54:51 +0800
+Message-ID: <1411718091-15056-1-git-send-email-mark.yao@rock-chips.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
+Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, xw@rock-chips.com, Mark yao <mark.yao@rock-chips.com>
 List-Id: linux-api@vger.kernel.org
 
-BPF syscall is a multiplexor for a range of different operations on eBPF.
-This patch introduces syscall with single command to create a map.
-Next patch adds commands to access maps.
+This a series of patches is a DRM Driver for Rockchip Socs, add support
+for vop devices. Future patches will add additional encoders/connectors,
+such as eDP, HDMI.
 
-'maps' is a generic storage of different types for sharing data between kernel
-and userspace.
+The basic "crtc" for rockchip is a "VOP" - Video Output Processor.
+the vop devices found on Rockchip rk3288 Soc, rk3288 soc have two similar
+Vop devices. Vop devices support iommu mapping, we use dma-mapping API with
+ARM_DMA_USE_IOMMU.
 
-Userspace example:
-/* this syscall wrapper creates a map with given type and attributes
- * and returns map_fd on success.
- * use close(map_fd) to delete the map
- */
-int bpf_create_map(enum bpf_map_type map_type, int key_size,
-                   int value_size, int max_entries)
-{
-    union bpf_attr attr = {
-        .map_type = map_type,
-        .key_size = key_size,
-        .value_size = value_size,
-        .max_entries = max_entries
-    };
+Changes in v2:
+- add DRM master device node to list all display nodes that comprise
+  the graphics subsystem.
+- use the component framework to defer main drm driver probe
+  until all VOP devices have been probed.
+- use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
+  master device and each vop device can shared the drm dma mapping.
+- use drm_crtc_init_with_planes and drm_universal_plane_init.
+- remove unnecessary middle layers.
+- add cursor set, move funcs to rockchip drm crtc.
+- add vop reset.
 
-    return bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
-}
+Changes in v3:
+- change "crtc->fb" to "crtc->primary-fb"
+Adviced by Daniel Vetter
+- init cursor plane with universal api, remove unnecessary cursor set,move 
 
-'union bpf_attr' is backwards compatible with future extensions.
+Changes in v4:
+Adviced by David Herrmann
+- remove drm_platform_*() usage, use register drm device directly.
+Adviced by Rob Clark
+- remove special mmap ioctl, do userspace mmap with normal mmap() or mmap offset
 
-More details in Documentation/networking/filter.txt and in manpage
+Changes in v5:
+Adviced by Arnd Bergmann
+- doing DMA start with a 32-bit masks with dma_mask and dma_coherent_mark
+- fix some incorrect dependencies.
+Adviced by Boris BREZILLON
+- fix some mistake and bugs. 
+Adviced by Daniel Vetter
+- drop all special ioctl and use generic kms ioctl instead.
+Adviced by Rob Clark
+- use unlocked api for drm_fb_helper_restore_fbdev_mode.
+- remove unused rockchip_gem_prime_import_sg_table.
 
-Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
----
- Documentation/networking/filter.txt |   39 ++++++++
- include/linux/bpf.h                 |   41 +++++++++
- include/uapi/linux/bpf.h            |   23 +++++
- kernel/bpf/Makefile                 |    2 +-
- kernel/bpf/syscall.c                |  169 +++++++++++++++++++++++++++++++++++
- 5 files changed, 273 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/bpf.h
- create mode 100644 kernel/bpf/syscall.c
+Changes in v6:
+- set gem buffer pitch 64 bytes align, needed by mali gpu.
+Adviced by Daniel Kurtz
+- fix some mistake, bugs, remove unused define, more better code style etc. 
+- use clk_prepare()/unprepare() at probe()/remove() and clk_enable()/disable()
+  at runtime instead of clk_prepare_enable().
+- provide a help function from vop for encoder to do mode config, instead of
+  using drm_diaplay_mode private method.
+- change vop mode_set timing to make it more safely. 
 
-diff --git a/Documentation/networking/filter.txt b/Documentation/networking/filter.txt
-index 014e0319a5c4..4a01d71785e9 100644
---- a/Documentation/networking/filter.txt
-+++ b/Documentation/networking/filter.txt
-@@ -1001,6 +1001,45 @@ instruction that loads 64-bit immediate value into a dst_reg.
- Classic BPF has similar instruction: BPF_LD | BPF_W | BPF_IMM which loads
- 32-bit immediate value into a register.
- 
-+eBPF maps
-+---------
-+'maps' is a generic storage of different types for sharing data between kernel
-+and userspace.
-+
-+The maps are accessed from user space via BPF syscall, which has commands:
-+- create a map with given type and attributes
-+  map_fd = bpf(BPF_MAP_CREATE, union bpf_attr *attr, u32 size)
-+  using attr->map_type, attr->key_size, attr->value_size, attr->max_entries
-+  returns process-local file descriptor or negative error
-+
-+- lookup key in a given map
-+  err = bpf(BPF_MAP_LOOKUP_ELEM, union bpf_attr *attr, u32 size)
-+  using attr->map_fd, attr->key, attr->value
-+  returns zero and stores found elem into value or negative error
-+
-+- create or update key/value pair in a given map
-+  err = bpf(BPF_MAP_UPDATE_ELEM, union bpf_attr *attr, u32 size)
-+  using attr->map_fd, attr->key, attr->value
-+  returns zero or negative error
-+
-+- find and delete element by key in a given map
-+  err = bpf(BPF_MAP_DELETE_ELEM, union bpf_attr *attr, u32 size)
-+  using attr->map_fd, attr->key
-+
-+- to delete map: close(fd)
-+  Exiting process will delete maps automatically
-+
-+userspace programs use this syscall to create/access maps that eBPF programs
-+are concurrently updating.
-+
-+maps can have different types: hash, array, bloom filter, radix-tree, etc.
-+
-+The map is defined by:
-+  . type
-+  . max number of elements
-+  . key size in bytes
-+  . value size in bytes
-+
- Testing
- -------
- 
-diff --git a/include/linux/bpf.h b/include/linux/bpf.h
-new file mode 100644
-index 000000000000..48014a71f0fe
---- /dev/null
-+++ b/include/linux/bpf.h
-@@ -0,0 +1,41 @@
-+/* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of version 2 of the GNU General Public
-+ * License as published by the Free Software Foundation.
-+ */
-+#ifndef _LINUX_BPF_H
-+#define _LINUX_BPF_H 1
-+
-+#include <uapi/linux/bpf.h>
-+#include <linux/workqueue.h>
-+
-+struct bpf_map;
-+
-+/* map is generic key/value storage optionally accesible by eBPF programs */
-+struct bpf_map_ops {
-+	/* funcs callable from userspace (via syscall) */
-+	struct bpf_map *(*map_alloc)(union bpf_attr *attr);
-+	void (*map_free)(struct bpf_map *);
-+};
-+
-+struct bpf_map {
-+	atomic_t refcnt;
-+	enum bpf_map_type map_type;
-+	u32 key_size;
-+	u32 value_size;
-+	u32 max_entries;
-+	struct bpf_map_ops *ops;
-+	struct work_struct work;
-+};
-+
-+struct bpf_map_type_list {
-+	struct list_head list_node;
-+	struct bpf_map_ops *ops;
-+	enum bpf_map_type type;
-+};
-+
-+void bpf_register_map_type(struct bpf_map_type_list *tl);
-+void bpf_map_put(struct bpf_map *map);
-+
-+#endif /* _LINUX_BPF_H */
-diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-index 479ed0b6be16..f58a10f9670c 100644
---- a/include/uapi/linux/bpf.h
-+++ b/include/uapi/linux/bpf.h
-@@ -62,4 +62,27 @@ struct bpf_insn {
- 	__s32	imm;		/* signed immediate constant */
- };
- 
-+/* BPF syscall commands */
-+enum bpf_cmd {
-+	/* create a map with given type and attributes
-+	 * fd = bpf(BPF_MAP_CREATE, union bpf_attr *, u32 size)
-+	 * returns fd or negative error
-+	 * map is deleted when fd is closed
-+	 */
-+	BPF_MAP_CREATE,
-+};
-+
-+enum bpf_map_type {
-+	BPF_MAP_TYPE_UNSPEC,
-+};
-+
-+union bpf_attr {
-+	struct { /* anonymous struct used by BPF_MAP_CREATE command */
-+		__u32	map_type;	/* one of enum bpf_map_type */
-+		__u32	key_size;	/* size of key in bytes */
-+		__u32	value_size;	/* size of value in bytes */
-+		__u32	max_entries;	/* max number of entries in a map */
-+	};
-+} __attribute__((aligned(8)));
-+
- #endif /* _UAPI__LINUX_BPF_H__ */
-diff --git a/kernel/bpf/Makefile b/kernel/bpf/Makefile
-index 6a71145e2769..e9f7334ed07a 100644
---- a/kernel/bpf/Makefile
-+++ b/kernel/bpf/Makefile
-@@ -1 +1 @@
--obj-y := core.o
-+obj-y := core.o syscall.o
-diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-new file mode 100644
-index 000000000000..428a0e23adc0
---- /dev/null
-+++ b/kernel/bpf/syscall.c
-@@ -0,0 +1,169 @@
-+/* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of version 2 of the GNU General Public
-+ * License as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * General Public License for more details.
-+ */
-+#include <linux/bpf.h>
-+#include <linux/syscalls.h>
-+#include <linux/slab.h>
-+#include <linux/anon_inodes.h>
-+
-+static LIST_HEAD(bpf_map_types);
-+
-+static struct bpf_map *find_and_alloc_map(union bpf_attr *attr)
-+{
-+	struct bpf_map_type_list *tl;
-+	struct bpf_map *map;
-+
-+	list_for_each_entry(tl, &bpf_map_types, list_node) {
-+		if (tl->type == attr->map_type) {
-+			map = tl->ops->map_alloc(attr);
-+			if (IS_ERR(map))
-+				return map;
-+			map->ops = tl->ops;
-+			map->map_type = attr->map_type;
-+			return map;
-+		}
-+	}
-+	return ERR_PTR(-EINVAL);
-+}
-+
-+/* boot time registration of different map implementations */
-+void bpf_register_map_type(struct bpf_map_type_list *tl)
-+{
-+	list_add(&tl->list_node, &bpf_map_types);
-+}
-+
-+/* called from workqueue */
-+static void bpf_map_free_deferred(struct work_struct *work)
-+{
-+	struct bpf_map *map = container_of(work, struct bpf_map, work);
-+
-+	/* implementation dependent freeing */
-+	map->ops->map_free(map);
-+}
-+
-+/* decrement map refcnt and schedule it for freeing via workqueue
-+ * (unrelying map implementation ops->map_free() might sleep)
-+ */
-+void bpf_map_put(struct bpf_map *map)
-+{
-+	if (atomic_dec_and_test(&map->refcnt)) {
-+		INIT_WORK(&map->work, bpf_map_free_deferred);
-+		schedule_work(&map->work);
-+	}
-+}
-+
-+static int bpf_map_release(struct inode *inode, struct file *filp)
-+{
-+	struct bpf_map *map = filp->private_data;
-+
-+	bpf_map_put(map);
-+	return 0;
-+}
-+
-+static const struct file_operations bpf_map_fops = {
-+	.release = bpf_map_release,
-+};
-+
-+/* helper macro to check that unused fields 'union bpf_attr' are zero */
-+#define CHECK_ATTR(CMD) \
-+	memchr_inv((void *) &attr->CMD##_LAST_FIELD + \
-+		   sizeof(attr->CMD##_LAST_FIELD), 0, \
-+		   sizeof(*attr) - \
-+		   offsetof(union bpf_attr, CMD##_LAST_FIELD) - \
-+		   sizeof(attr->CMD##_LAST_FIELD)) != NULL
-+
-+#define BPF_MAP_CREATE_LAST_FIELD max_entries
-+/* called via syscall */
-+static int map_create(union bpf_attr *attr)
-+{
-+	struct bpf_map *map;
-+	int err;
-+
-+	err = CHECK_ATTR(BPF_MAP_CREATE);
-+	if (err)
-+		return -EINVAL;
-+
-+	/* find map type and init map: hashtable vs rbtree vs bloom vs ... */
-+	map = find_and_alloc_map(attr);
-+	if (IS_ERR(map))
-+		return PTR_ERR(map);
-+
-+	atomic_set(&map->refcnt, 1);
-+
-+	err = anon_inode_getfd("bpf-map", &bpf_map_fops, map, O_RDWR | O_CLOEXEC);
-+
-+	if (err < 0)
-+		/* failed to allocate fd */
-+		goto free_map;
-+
-+	return err;
-+
-+free_map:
-+	map->ops->map_free(map);
-+	return err;
-+}
-+
-+SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size)
-+{
-+	union bpf_attr attr = {};
-+	int err;
-+
-+	/* the syscall is limited to root temporarily. This restriction will be
-+	 * lifted when security audit is clean. Note that eBPF+tracing must have
-+	 * this restriction, since it may pass kernel data to user space
-+	 */
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	if (!access_ok(VERIFY_READ, uattr, 1))
-+		return -EFAULT;
-+
-+	if (size > PAGE_SIZE)	/* silly large */
-+		return -E2BIG;
-+
-+	/* If we're handed a bigger struct than we know of,
-+	 * ensure all the unknown bits are 0 - i.e. new
-+	 * user-space does not rely on any kernel feature
-+	 * extensions we dont know about yet.
-+	 */
-+	if (size > sizeof(attr)) {
-+		unsigned char __user *addr;
-+		unsigned char __user *end;
-+		unsigned char val;
-+
-+		addr = (void __user *)uattr + sizeof(attr);
-+		end  = (void __user *)uattr + size;
-+
-+		for (; addr < end; addr++) {
-+			err = get_user(val, addr);
-+			if (err)
-+				return err;
-+			if (val)
-+				return -E2BIG;
-+		}
-+		size = sizeof(attr);
-+	}
-+
-+	/* copy attributes from user space, may be less than sizeof(bpf_attr) */
-+	if (copy_from_user(&attr, uattr, size) != 0)
-+		return -EFAULT;
-+
-+	switch (cmd) {
-+	case BPF_MAP_CREATE:
-+		err = map_create(&attr);
-+		break;
-+	default:
-+		err = -EINVAL;
-+		break;
-+	}
-+
-+	return err;
-+}
+Changes in v7:
+- fix memory leakage problem.
+
+Mark yao (3):
+  drm/rockchip: Add basic drm driver
+  dt-bindings: video: Add for rockchip display subsytem
+  dt-bindings: video: Add documentation for rockchip vop
+
+ .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
+ .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
+ drivers/gpu/drm/Kconfig                            |    2 +
+ drivers/gpu/drm/Makefile                           |    1 +
+ drivers/gpu/drm/rockchip/Kconfig                   |   17 +
+ drivers/gpu/drm/rockchip/Makefile                  |    8 +
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  516 +++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |   61 +
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  201 +++
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  230 ++++
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   20 +
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  345 +++++
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   55 +
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1422 ++++++++++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  196 +++
+ 16 files changed, 3179 insertions(+)
+
 -- 
 1.7.9.5
+
+
