@@ -1,82 +1,66 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
-Date: Fri, 26 Sep 2014 15:40:27 +0200
-Message-ID: <54256CCB.4000709@6wind.com>
-References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>	<CAHA+R7NnBJ=T3sukzzp-OD2am1nd318XbrXCX84LfSL=nu9ojw@mail.gmail.com>	<54228D87.3070309@6wind.com>	<CAHA+R7NfJYzCsZx0E9YVXKVCQbCm_thPSi+80tix8Z9nVA82Ug@mail.gmail.com>	<5422F0F4.6000709@6wind.com>	<CAHA+R7Ot2kLHb+ne5AW3bFNc87qkFOiEHEyDh9sFrsHqXgrY3g@mail.gmail.com>	<5423D80B.9060500@6wind.com>
-	<CAHA+R7Ooyam2L-QfP-TjMEZEOqrQcQDxYiebmw760kgEji4G=g@mail.gmail.com>
-Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CAHA+R7Ooyam2L-QfP-TjMEZEOqrQcQDxYiebmw760kgEji4G=g@mail.gmail.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>
-Cc: netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+From: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Subject: [PATCH] next: openrisc: Fix build
+Date: Fri, 26 Sep 2014 06:54:15 -0700
+Message-ID: <1411739655-4715-1-git-send-email-linux@roeck-us.net>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonas Bonn <jonas-A9uVI2HLR7kOP4wsBPIw7w@public.gmane.org>
+Cc: linux-ZwoEplunGu2h2975yA52AaxOck334EZe@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stefan Kristiansson <stefan.kristiansson-MbMCFXIvDHJFcC0YU169RA@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-TGUgMjYvMDkvMjAxNCAwNDowOSwgQ29uZyBXYW5nIGEgw6ljcml0IDoKPiBPbiBUaHUsIFNlcCAy
-NSwgMjAxNCBhdCAxOjUzIEFNLCBOaWNvbGFzIERpY2h0ZWwKPiA8bmljb2xhcy5kaWNodGVsQDZ3
-aW5kLmNvbT4gd3JvdGU6Cj4+IExlIDI0LzA5LzIwMTQgMTg6NDUsIENvbmcgV2FuZyBhIMOpY3Jp
-dCA6Cj4+Pgo+Pj4gT24gV2VkLCBTZXAgMjQsIDIwMTQgYXQgOToyNyBBTSwgTmljb2xhcyBEaWNo
-dGVsCj4+PiA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JvdGU6Cj4+Pj4KPj4+PiBOb3cg
-aW5mb3JtYXRpb25zIGdvdCB3aXRoICdpcCBsaW5rJyBhcmUgd3JvbmcgYW5kIGluY29tcGxldGU6
-Cj4+Pj4gICAgIC0gdGhlIGxpbmsgZGV2IGlzIG5vdyB0dW5sMCBpbnN0ZWFkIG9mIGV0aDAsIGJl
-Y2F1c2Ugd2Ugb25seSBnb3QgYW4KPj4+PiBpZmluZGV4Cj4+Pj4gICAgICAgZnJvbSB0aGUga2Vy
-bmVsIHdpdGhvdXQgYW55IG5ldG5zIGluZm9ybWF0aW9ucy4KPj4+Cj4+Pgo+Pj4gVGhpcyBpcyBu
-b3QgbmV3LCBtYWN2bGFuIGhhcyB0aGUgc2FtZSBwcm9ibGVtLiBUaGlzIGlzIHdoeSBJIHNhaWQK
-Pj4+IGl0IGlzIG1vc3RseSBhIGRpc3BsYXkgcHJvYmxlbSwgbWF5YmUganVzdCBtYXJrIHRoZSBp
-ZmluZGV4IGFzIC0xIG9yCj4+PiBzb21ldGhpbmcgd2hlbiBpdCBpcyBub3QgaW4gdGhpcyBuZXRu
-cy4gQXQgbGVhc3QgSSBkb24ndCBleHBlY3QgdGhlIGlubmVyCj4+PiBuZXRucyBrbm93IGFueXRo
-aW5nIG91dHNpZGUsIGFuZCBJIGRvbid0IHRoaW5rIEkgYW0gdGhlIG9ubHkgb25lIHVzaW5nCj4+
-PiBuZXRucyBpbiB0aGlzIHdheS4KPj4KPj4gSSB1bmRlcnN0YW5kIHlvdXIgcG9pbnQgYnV0IHRo
-ZXJlIGlzIHNldmVyYWwgdXNlIG9mIG5ldG5zLiBOZXRucyBjYW4gYmUgdXNlZAo+PiBhbHNvIHRv
-IGluc3RhbnRpYXRlIHZpcnR1YWwgcm91dGVycy4gSW4gdGhpcyBjYXNlLCBhZG1pbmlzdHJhdG9y
-cyBvciBkYWVtb25zCj4+IG5lZWQgdG8gYmUgYWJsZSB0byBtb25pdG9yIGFuZCBkdW1wIHRoZSBj
-b25maWd1cmF0aW9uIG9uIGFsbCBuZXRucwo+PiAocGFydGljdWxhcmx5IGJlZWluZyBhYmxlIHRv
-IGlkZW50aWZ5IGZ1bGx5IHgtbmV0bnMgaW50ZXJmYWNlcykuIFdlIHN0YXJ0IHRvCj4+IGRpc2N1
-c3MgdGhpcyBpbiBvbmUgb2YgdGhlIHR3byB0aHJlYWQgcG9pbnRlZCBpbiBteSBjb3ZlciBsZXR0
-ZXIgYW5kIGdldCB0aGUKPj4gY29uY2x1c2lvbiB0aGF0IGNoZWNraW5nIHVzZXIgbnMgaXMgYSBn
-b29kIHdheSB0byBrbm93IGlmIGFuIGlkIHNob3VsZCBiZQo+PiBkaXNjbG9zZWQgb3Igbm90IGZv
-ciBhIHBlZXIgbmV0bnMuCj4KPiBUaGVuIHlvdSBhcmUgbGVha2luZyBpbmZvcm1hdGlvbiwgdGhp
-cyBicmVha3MgaXNvbGF0aW9uLgo+Cj4+IENhbiB5b3UgZGVzY3JpYmUgeW91ciB1c2UgY2FzZT8K
-Pgo+IFllcywgdG9vIHNpbXBsZTogaXNvbGF0aW9uIG5ldHdvcmtpbmcsIGRpZmZlcmVudCBuZXRu
-cydzIGRvbid0IHNlZSBlYWNoIG90aGVyCj4gKGluY2x1ZGluZyBhbnl0aGluZyBpbnNpZGUpIGFu
-ZCBvbmx5IGNvbW11bmljYXRlIHZpYSB2ZXRoLgpJZiB5b3UgYXJlIGEgcHJpdmlsZWdlZCB1c2Vy
-IGFuZCB5b3UgYXJlIGFibGUgdG8gYWNjZXNzIGEgcGVlciBuZXRucyAobW92ZSBhbgppbnRlcmZh
-Y2UgaW50byB0aGlzIHBlZXIgbmV0bnMsIG1vdmUgYW4gaW50ZXJmYWNlIGZyb20gdGhpcyBwZWVy
-IG5ldG5zIHRvIHlvdXIKb3duIG5ldG5zKSwgSSBkb24ndCBzZWUgYW55IHJlYXNvbiB0byBub3Qg
-YmVlaW5nIGFibGUgdG8gZ2V0IGluZm9ybWF0aW9uIGFib3V0CnRoaXMgcGVlciBuZXRucyAoeW91
-IGFyZSBhbHJlYWR5IGEgcHJpdmlsZWdlZCB1c2VyIGluIGJvdGggbmV0bnMpLgpJZiB5b3Ugd2Fu
-dCB0byBpc29sYXRlIHRoaXMgcGVlciBuZXRucyAoSSB0aGluayB5b3UgY2FsbCBpdCAiaW5uZXIg
-bmV0bnMiKSwgeW91CmhhdmUgdG8gY3JlYXRlIGEgbmV3IHVzZXIgbnMgZm9yIHRoaXMgbmV0bnMs
-IGhlbmNlIGEgcHJpdmlsZWdlZCB1c2VyIGludG8gdGhpcwpwZWVyIG5ldG5zIHdpbGwgbm90IGJl
-IGFibGUgdG8gYWN0IGluIHlvdXIgb3duIG5ldG5zLiBBbmQgd2l0aCB0aGlzIHNjZW5hcmlvIGFu
-ZApteSBwYXRjaGVzLCB0aGlzIHByaXZpbGVnZWQgdXNlciB3aWxsIG5vdCBiZSBhYmxlIHRvIGdl
-dCBhbiBpZC4gSXNvbGF0aW9uIGlzCnByZXNlcnZlZC4KSG93IGRvIHlvdSBwcmVzZXJ2ZWQgaXQg
-aW4geW91ciBzY2VuYXJpbz8KCj4KPgo+PiBJZiB5b3Ugb25seSBwbGF5IHdpdGggbmV0bnMsIHlv
-dSBtYXkgd2FudCB0byBtb25pdG9yIGFsbCBhY3RpdmllcyBpbiBhbGwKPj4gbmV0bnMKPj4gKHRo
-aXMgaXMgYWxyZWFkeSBwb3NzaWJsZSkgYW5kIGJlZWluZyBhYmxlIHRvIGxpbmsgaW5mb3JtYXRp
-b24gYmV0d2VlbiBuZXRucwo+PiAodGhpcyBpcyB3aGF0IEknbSB0cnlpbmcgdG8gc29sdmUpLgo+
-Cj4KPiBObywgSSBkb24ndCB3YW50IHRvIG1vbml0b3IgYW55dGhpbmcuIEV2ZW4gaWYgSSB3YW50
-ZWQsIEkgd291bGQganVzdCBzdGFydCBvbmUKPiBkYWVtb24gaW4gZWFjaCBuZXRucyBpbnN0ZWFk
-IG9mIG9uZSBmb3IgYWxsLgpPayB5b3UgZG9uJ3Qgd2FudCwgYnV0IHNvbWUgb3RoZXIgcGVvcGxl
-IChub3Qgb25seSBtZSkgd2FudCBpdCEgQW5kIGhhdmluZyBvbmUKZGFlbW9uIHBlciBuZXRucyBk
-b2VzIG5vdCBzY2FsZTogdGhlcmUgYXJlIHNjZW5hcmlpIHdpdGggdGhvdXNhbmQgbmV0bnMgd2hp
-Y2gKYXJlIGR5bmFtaWNhbGx5IGNyZWF0ZWQgYW5kIGRlbGV0ZWQuCgo+Cj4gT24gdGhlIG90aGVy
-IGhhbmQsIHdoeSBub3QgZXhjaGFuZ2UgdGhlIGNvbmZpZ3VyYXRpb24gdmlhIHZldGgKPiBiZXR3
-ZWVuIGRpZmZlcmVudCBuZXRucz8gVGhlcmUgYXJlIG1hbnkgd2F5cyB0byBkbyBzbyB3aXRoIFRD
-UCBIVFRQIGV0Yy4KPiBUaGlzIGRvZXNuJ3QgaGF2ZSB0byBiZSBzb2x2ZWQgaW4ga2VybmVsLgo+
-ClRoZSBzdGFuZGFyZCB3YXkgd2l0aCBsaW51eCB0byBtb25pdG9yIG5ldHdvcmsgY29uZmlndXJh
-dGlvbiBpcyBuZXRsaW5rLgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZv
-dW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xp
-c3RpbmZvL2NvbnRhaW5lcnM=
+openrisc:defconfig fails to build in next-20140926 with the following error.
+
+In file included from arch/openrisc/kernel/signal.c:31:0:
+./arch/openrisc/include/asm/syscall.h: In function 'syscall_get_arch':
+./arch/openrisc/include/asm/syscall.h:77:9: error: 'EM_OPENRISC' undeclared
+
+Fix by moving EM_OPENRISC and EM_OR32 to include/uapi/linux/elf-em.h.
+
+Fixes: ce5d112827e5 ("ARCH: AUDIT: implement syscall_get_arch for all arches")
+Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Stefan Kristiansson <stefan.kristiansson-MbMCFXIvDHJFcC0YU169RA@public.gmane.org>
+Cc: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Cc: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
+Signed-off-by: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+---
+Based Stefan's note. No idea if it is the correct fix.
+
+ arch/openrisc/include/uapi/asm/elf.h | 4 +---
+ include/uapi/linux/elf-em.h          | 2 ++
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/openrisc/include/uapi/asm/elf.h b/arch/openrisc/include/uapi/asm/elf.h
+index f02ea58..e75fdce 100644
+--- a/arch/openrisc/include/uapi/asm/elf.h
++++ b/arch/openrisc/include/uapi/asm/elf.h
+@@ -55,9 +55,7 @@ typedef elf_greg_t elf_gregset_t[ELF_NGREG];
+ /* A placeholder; OR32 does not have fp support yes, so no fp regs for now.  */
+ typedef unsigned long elf_fpregset_t;
+ 
+-/* This should be moved to include/linux/elf.h */
+-#define EM_OR32         0x8472
+-#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded processor */
++/* EM_OPENRISC and EM_OR32 defined in linux/elf-em.h	*/
+ 
+ /*
+  * These are used to set parameters in the core dumps.
+diff --git a/include/uapi/linux/elf-em.h b/include/uapi/linux/elf-em.h
+index 01529bd..c5d3948 100644
+--- a/include/uapi/linux/elf-em.h
++++ b/include/uapi/linux/elf-em.h
+@@ -32,11 +32,13 @@
+ #define EM_V850		87	/* NEC v850 */
+ #define EM_M32R		88	/* Renesas M32R */
+ #define EM_MN10300	89	/* Panasonic/MEI MN10300, AM33 */
++#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded processor */
+ #define EM_BLACKFIN     106     /* ADI Blackfin Processor */
+ #define EM_TI_C6000	140	/* TI C6X DSPs */
+ #define EM_AARCH64	183	/* ARM 64 bit */
+ #define EM_FRV		0x5441	/* Fujitsu FR-V */
+ #define EM_AVR32	0x18ad	/* Atmel AVR32 */
++#define EM_OR32         0x8472	/* OpenRISC, alternate */
+ 
+ /*
+  * This is an interim value that we will use until the committee comes
+-- 
+1.9.1
