@@ -1,37 +1,32 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 2/2] perf: Userspace event
-Date: Fri, 26 Sep 2014 13:24:24 +0200
-Message-ID: <20140926112424.GC9870@gmail.com>
-References: <1411491787-25938-1-git-send-email-pawel.moll@arm.com>
- <1411491787-25938-3-git-send-email-pawel.moll@arm.com>
- <87oau5k0u9.fsf@sejong.aot.lge.com>
- <20140924072017.GC990@gmail.com>
- <87y4t6j40p.fsf@sejong.aot.lge.com>
- <1411729190.3852.21.camel@hornet>
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH 2/2] perf: Userspace software event and ioctl
+Date: Fri, 26 Sep 2014 12:26:37 +0100
+Message-ID: <1411730797.3852.23.camel@hornet>
+References: <1411050873-9310-1-git-send-email-pawel.moll@arm.com>
+	 <1411050873-9310-3-git-send-email-pawel.moll@arm.com>
+	 <1411491764.3922.46.camel@hornet> <20140924074942.GB3797@gmail.com>
+	 <1411665649.4768.84.camel@hornet> <20140925183342.GB6854@gmail.com>
+	 <1411728487.3852.9.camel@hornet> <20140926112312.GB9870@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1411729190.3852.21.camel@hornet>
+In-Reply-To: <20140926112312.GB9870-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Cc: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, 2014-09-26 at 12:23 +0100, Ingo Molnar wrote:
+> > As in: allows *all* tasks to inject the data? Are you sure we=20
+> > don't want more fine-grained control, in particular per task?
+>=20
+> Yeah. If the profiler allows it, then any task that is being=20
+> traced can inject data.
 
-* Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org> wrote:
+The "that is being traced" fragment was the key here. I missed the fact
+that perf trace already takes a list of pids, so we're not talking abou=
+t
+all tasks in the system. That should work.
 
-> On Fri, 2014-09-26 at 07:21 +0100, Namhyung Kim wrote:
->
-> > It looks like what trace-marker in ftrace does..  We might 
-> > connect output of the trace marker into a perf event somehow.
-> 
-> I can probably trace_marker's write handler do the same as the 
-> new prctl() would do. [...]
-
-Please keep this new facility separate, so that !ftrace kernels 
-that have perf events enabled still have this facility, etc.
-
-Thanks,
-
-	Ingo
+Pawe=C5=82
