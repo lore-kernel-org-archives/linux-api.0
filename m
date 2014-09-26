@@ -1,44 +1,106 @@
-From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v2 1/2] perf: Add sampling of the raw monotonic clock
-Date: Fri, 26 Sep 2014 11:58:23 +0100
-Message-ID: <1411729103.3852.19.camel@hornet>
-References: <1411491787-25938-1-git-send-email-pawel.moll@arm.com>
-	 <1411491787-25938-2-git-send-email-pawel.moll@arm.com>
-	 <87sijhk21x.fsf@sejong.aot.lge.com> <1411642198.4768.30.camel@hornet>
-	 <8738bekith.fsf@sejong.aot.lge.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8738bekith.fsf-vfBCOVm4yAnB69T4xOojN9BPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Mark Yao <mark.yao@rock-chips.com>
+Subject: [RESENT PATCH v7 3/3] dt-bindings: video: Add documentation for rockchip vop
+Date: Fri, 26 Sep 2014 18:58:23 +0800
+Message-ID: <1411729103-25268-1-git-send-email-mark.yao@rock-chips.com>
+References: <1411728800-25112-1-git-send-email-mark.yao@rock-chips.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1411728800-25112-1-git-send-email-mark.yao@rock-chips.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
+Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, xw@rock-chips.com, Mark yao <mark.yao@rock-chips.com>
 List-Id: linux-api@vger.kernel.org
 
+From: Mark yao <mark.yao@rock-chips.com>
 
-On Fri, 2014-09-26 at 07:16 +0100, Namhyung Kim wrote:
-> > It would be doable, I guess, but what
-> > if someone *wants* to have sched clock as the timestamps source (because
-> > it's cheap) but still be able to correlate them with userspace? In this
-> > case two separate timestamps are required to do the approximation.
-> 
-> But by collecting two timestamps, you'll loose the win of the first
-> timestamp, no?
+This adds binding documentation for Rockchip SoC VOP driver.
 
-But I can ask for both timestamps only being collected on "low
-bandwidth" events, in particular context switches and/or periodic (eg.
-10ms hrtimer) software events.
+Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
+Acked-by: Daniel Vetter <daniel@ffwll.ch>
+Reviewed-by: Rob Clark <robdclark@gmail.com>
+---
+Changes in v2:
+- rename "lcdc" to "vop"
+- add vop reset
+- add iommu node
+- add port for display-subsystem
 
-Then I have loads of normal normal samples, timestamped with sched clock
-only, and every now and then one with both timestamps which then I can
-use for time correlation. The whole point is that the frequency of such
-"synchronisation" event can be much (much!) lower than of the normal
-samples, but it still allows pretty good approximation (I was getting
-accuracy of ~1 microsecond and better with sched_switch trace event
-marked with additional raw monotonic timestamp).
+Changes in v3: None
 
-Pawel
+Changes in v4: None
 
-PS. Have you sent a couple of the messages via some kind of gmane's
-proxy? All the mail addresses got rather messed up...
+Changes in v5: None
+
+Changes in v6: None
+
+Changes in v7: None
+
+ .../devicetree/bindings/video/rockchip-vop.txt     |   58 ++++++++++++++++++++
+ 1 file changed, 58 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/video/rockchip-vop.txt
+
+diff --git a/Documentation/devicetree/bindings/video/rockchip-vop.txt b/Documentation/devicetree/bindings/video/rockchip-vop.txt
+new file mode 100644
+index 0000000..d15351f
+--- /dev/null
++++ b/Documentation/devicetree/bindings/video/rockchip-vop.txt
+@@ -0,0 +1,58 @@
++device-tree bindings for rockchip soc display controller (vop)
++
++VOP (Visual Output Processor) is the Display Controller for the Rockchip
++series of SoCs which transfers the image data from a video memory
++buffer to an external LCD interface.
++
++Required properties:
++- compatible: value should be one of the following
++		"rockchip,rk3288-vop";
++
++- interrupts: should contain a list of all VOP IP block interrupts in the
++		 order: VSYNC, LCD_SYSTEM. The interrupt specifier
++		 format depends on the interrupt controller used.
++
++- clocks: must include clock specifiers corresponding to entries in the
++		clock-names property.
++
++- clock-names: Must contain
++		aclk_vop: for ddr buffer transfer.
++		hclk_vop: for ahb bus to R/W the phy regs.
++		dclk_vop: pixel clock.
++
++- resets: Must contain an entry for each entry in reset-names.
++  See ../reset/reset.txt for details.
++- reset-names: Must include the following entries:
++  - axi
++  - ahb
++  - dclk
++
++- iommus: required a iommu node
++
++- port: A port node with endpoint definitions as defined in
++  Documentation/devicetree/bindings/media/video-interfaces.txt.
++
++Example:
++SoC specific DT entry:
++	vopb: vopb@ff930000 {
++		compatible = "rockchip,rk3288-vop";
++		reg = <0xff930000 0x19c>;
++		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
++		clocks = <&cru ACLK_VOP0>, <&cru DCLK_VOP0>, <&cru HCLK_VOP0>;
++		clock-names = "aclk_vop", "dclk_vop", "hclk_vop";
++		resets = <&cru SRST_LCDC1_AXI>, <&cru SRST_LCDC1_AHB>, <&cru SRST_LCDC1_DCLK>;
++		reset-names = "axi", "ahb", "dclk";
++		iommus = <&vopb_mmu>;
++		vopb_out: port {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			vopb_out_edp: endpoint@0 {
++				reg = <0>;
++				remote-endpoint=<&edp_in_vopb>;
++			};
++			vopb_out_hdmi: endpoint@1 {
++				reg = <1>;
++				remote-endpoint=<&hdmi_in_vopb>;
++			};
++		};
++	};
+-- 
+1.7.9.5
