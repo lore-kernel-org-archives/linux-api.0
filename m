@@ -1,49 +1,61 @@
-From: Theodore Ts'o <tytso@mit.edu>
-Subject: Re: [PATCH 4/4] Adds ioctl interface support for ext4 project
-Date: Fri, 26 Sep 2014 08:01:28 -0400
-Message-ID: <20140926120128.GA21376@thunk.org>
-References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
- <1411567470-31799-5-git-send-email-lixi@ddn.com>
- <20140924162507.GC27000@quack.suse.cz>
- <20140924162634.GA16886@infradead.org>
- <20140924170105.GE27000@quack.suse.cz>
- <20140925075912.GG4758@dastard>
- <20140925135213.GB15352@quack.suse.cz>
- <20140925224225.GJ4945@dastard>
+From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
+Date: Fri, 26 Sep 2014 15:38:57 +0200
+Message-ID: <54256C71.20108@6wind.com>
+References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>	<CAHA+R7NnBJ=T3sukzzp-OD2am1nd318XbrXCX84LfSL=nu9ojw@mail.gmail.com>	<54228D87.3070309@6wind.com>	<CAHA+R7NfJYzCsZx0E9YVXKVCQbCm_thPSi+80tix8Z9nVA82Ug@mail.gmail.com>	<CAHA+R7MVL=WpepRy8iz6iT6Kkq1RHG+b9TxJothP94ixyAj-3Q@mail.gmail.com>	<5422F1F7.8010308@6wind.com>	<CAHA+R7MM04ew=J8sHfSQERwoCAgEDfrGgtgRORqs3ePgtjVYWg@mail.gmail.com>	<5423D808.7050800@6wind.com>
+	<CAHA+R7OdOUMShX6Nphdfh8+fGiXyO+sGNHy0ch_XYh5dpURcmQ@mail.gmail.com>
+Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140925224225.GJ4945@dastard>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@infradead.org>, adilger@dilger.ca, linux-api@vger.kernel.org, xfs@oss.sgi.com, dmonakhov@openvz.org, viro@zeniv.linux.org.uk, Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <CAHA+R7OdOUMShX6Nphdfh8+fGiXyO+sGNHy0ch_XYh5dpURcmQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>
+Cc: netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 26, 2014 at 08:42:25AM +1000, Dave Chinner wrote:
-> Look, I have no problems with extending the existing quota
-> interfaces to support project quotas, but that should be a
-> *secondary* improvement as userspace tools are updated. The
-> primary goal needs to be "works identically to XFS" and so it needs
-> to implement the interfaces that are currently used for management
-> so that we can actually test that it does work identically.
-
-I think we're getting a bit too hung up on which is the "primary" and
-which is the "secondary" interfaces.  The reality is that we should
-make both interfaces work.  An example of this is how we handle the
-xfs-specific ioctls that are also exposed via the fallocate(2) system
-call.
-
-It's not particularly important to me which is the "primary" interface
-just because it's been around for 10 years.  Which should implement
-*both* so that users are used to using xfs_io(8) or fallocate(1) can
-do what they want.
-
-Similarly, if some users are more used to the quotatools interface
-(which has been around for quite a long time, BTW, if we're trying to
-count primacy by years of availability to Linux users), and some users
-that are used to using xfs_quota, both should work.
-
-Cheers,
-
-						- Ted
+TGUgMjYvMDkvMjAxNCAwMzo1OCwgQ29uZyBXYW5nIGEgw6ljcml0IDoKPiBPbiBUaHUsIFNlcCAy
+NSwgMjAxNCBhdCAxOjUzIEFNLCBOaWNvbGFzIERpY2h0ZWwKPiA8bmljb2xhcy5kaWNodGVsQDZ3
+aW5kLmNvbT4gd3JvdGU6Cj4+IExlIDI0LzA5LzIwMTQgMTg6NDgsIENvbmcgV2FuZyBhIMOpY3Jp
+dCA6Cj4+Cj4+PiBPbiBXZWQsIFNlcCAyNCwgMjAxNCBhdCA5OjMxIEFNLCBOaWNvbGFzIERpY2h0
+ZWwKPj4+IDxuaWNvbGFzLmRpY2h0ZWxANndpbmQuY29tPiB3cm90ZToKPj4+Pj4KPj4+Pj4gSSB0
+aGluayBpbiB0aGlzIGNhc2UgeW91ciBJRCdzIGFyZSBzdGlsbCBhdmFpbGFibGUsIGJ1dCBhcmVu
+J3QgeW91Cj4+Pj4+IHByb3ZpZGluZyBhIG5ldyB3YXkKPj4+Pj4gZm9yIHRoZSBpbm5lciBuZXRu
+cyBkZXZpY2UgdG8gZXNjYXBlIHdoaWNoIHdlIGFyZSB0cnlpbmcgdG8gYXZvaWQ/Cj4+Pj4KPj4+
+Pgo+Pj4+IEl0J3Mgd2h5IHRoZSBpZHMgZGVwZW5kIG9uIHVzZXIgbnMuIE9ubHkgaWYgdXNlciBu
+cyBhcmUgdGhlIHNhbWUgd2UgYWxsb3cKPj4+PiB0bwo+Pj4+IGdldCBhbiBpZCBmb3IgYSBwZWVy
+IG5ldG5zLgo+Pj4KPj4+Cj4+PiBUb28gbGF0ZSwgdXNlcm5zIGlzIHJlbGF0aXZlbHkgbmV3LCBy
+ZWx5aW5nIG9uIGl0IGJyZWFrcyBvdXIgZXhpc3RpbmcKPj4+IGFzc3VtcHRpb24uCj4+Pgo+PiBJ
+IGRvbid0IGdldCB5b3VyIHBvaW50LiBuZXRucyBoYXMgYmVlbiBhZGRlZCBpbiBrZXJuZWwgYWZ0
+ZXIgdXNlciBuczoKPj4gYWNjZTI5MmM4MmQ0IHVzZXIgbmFtZXNwYWNlOiBhZGQgdGhlIGZyYW1l
+d29yayA9PiAyLjYuMjMKPj4gNWYyNTZiZWNkODY4IFtORVRdOiBCYXNpYyBuZXR3b3JrIG5hbWVz
+cGFjZSBpbmZyYXN0cnVjdHVyZS4gPT4gMi42LjI0Cj4KPiBXYXMgaXQgY29tcGxldGUgb24gMi42
+Lng/IEkgZG91YnQuLi4KPgo+IGh0dHBzOi8vbGttbC5vcmcvbGttbC8yMDE0LzgvMjAvODI2Cj4K
+PiAgICAgQXMgYXQgTGludXggMy44LCBtb3N0IHJlbGV2YW50IHN1YnN5c3RlbXMgc3VwcG9ydGVk
+ICB1c2VyICBuYW1lc+KAkAo+ICAgICAgICAgcGFjZXMsICBidXQgIGEgbnVtYmVyIG9mIGZpbGVz
+eXN0ZW1zIGRpZCBub3QgaGF2ZSB0aGUgaW5mcmFzdHJ1Y+KAkAo+ICAgICAgICAgdHVyZSBuZWVk
+ZWQgdG8gbWFwIHVzZXIgYW5kIGdyb3VwIElEcyAgYmV0d2VlbiAgdXNlciAgbmFtZXNwYWNlcy4K
+PiAgICAgICAgIExpbnV4ICAzLjkgIGFkZGVkIHRoZSByZXF1aXJlZCBpbmZyYXN0cnVjdHVyZSBz
+dXBwb3J0IGZvciBtYW55IG9mCj4gICAgICAgICB0aGUgcmVtYWluaW5nIHVuc3VwcG9ydGVkIGZp
+bGVzeXN0ZW1zIChQbGFuIDkgKDlQKSwgIEFuZHJldyAgRmlsZQo+ICAgICAgICAgU3lzdGVtICAo
+QUZTKSwgIENlcGgsICBDSUZTLCAgQ09EQSwgIE5GUywgYW5kIE9DRlMyKS4gIExpbnV4IDMuMTEK
+PiAgICAgICAgIGFkZGVkIHN1cHBvcnQgdGhlIGxhc3Qgb2YgdGhlIHVuc3VwcG9ydGVkIG1ham9y
+IGZpbGVzeXN0ZW1zLCBYRlMuCj4KPgo+Pgo+PiBJbiB0aGUga2VybmVsLCBlYWNoIG5ldG5zIGlz
+IGxpbmtlZCB3aXRoIGEgdXNlciBucy4KPgo+IEFyZSB5b3Ugc2F5aW5nIGV2ZXJ5IHRpbWUgd2Ug
+Y3JlYXRlIGEgbmV0bnMgd2UgaGF2ZSBhIG5ldyB1c2VybnM/Cj4gVGhpcyBkb2Vzbid0IG1ha2Ug
+c2Vuc2UgZm9yIG1lLgo+Ck5vLiBJIG1lYW4gdGhhdCBlYWNoIG5ldG5zIGRlcGVuZHMgb24gYSB1
+c2VybnMuClNlZSBpbmNsdWRlL25ldC9uZXRfbmFtZXNwYWNlLmg6CnN0cnVjdCBuZXQgewpbc25p
+cF0KICAgICAgICAgc3RydWN0IHVzZXJfbmFtZXNwYWNlICAgKnVzZXJfbnM7ICAgICAgIC8qIE93
+bmluZyB1c2VyIG5hbWVzcGFjZSAqLwpbc25pcF0KfQpfX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJz
+QGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9u
+Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
