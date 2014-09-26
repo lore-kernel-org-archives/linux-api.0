@@ -1,47 +1,49 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 2/2] perf: Userspace software event and ioctl
-Date: Fri, 26 Sep 2014 13:31:34 +0200
-Message-ID: <20140926113134.GA14072@gmail.com>
-References: <1411050873-9310-1-git-send-email-pawel.moll@arm.com>
- <1411050873-9310-3-git-send-email-pawel.moll@arm.com>
- <1411491764.3922.46.camel@hornet>
- <20140924074942.GB3797@gmail.com>
- <1411665649.4768.84.camel@hornet>
- <20140925183342.GB6854@gmail.com>
- <1411728487.3852.9.camel@hornet>
- <20140926112312.GB9870@gmail.com>
- <1411730797.3852.23.camel@hornet>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [PATCH 4/4] Adds ioctl interface support for ext4 project
+Date: Fri, 26 Sep 2014 08:01:28 -0400
+Message-ID: <20140926120128.GA21376@thunk.org>
+References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
+ <1411567470-31799-5-git-send-email-lixi@ddn.com>
+ <20140924162507.GC27000@quack.suse.cz>
+ <20140924162634.GA16886@infradead.org>
+ <20140924170105.GE27000@quack.suse.cz>
+ <20140925075912.GG4758@dastard>
+ <20140925135213.GB15352@quack.suse.cz>
+ <20140925224225.GJ4945@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1411730797.3852.23.camel@hornet>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20140925224225.GJ4945@dastard>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@infradead.org>, adilger@dilger.ca, linux-api@vger.kernel.org, xfs@oss.sgi.com, dmonakhov@openvz.org, viro@zeniv.linux.org.uk, Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Sep 26, 2014 at 08:42:25AM +1000, Dave Chinner wrote:
+> Look, I have no problems with extending the existing quota
+> interfaces to support project quotas, but that should be a
+> *secondary* improvement as userspace tools are updated. The
+> primary goal needs to be "works identically to XFS" and so it needs
+> to implement the interfaces that are currently used for management
+> so that we can actually test that it does work identically.
 
-* Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org> wrote:
+I think we're getting a bit too hung up on which is the "primary" and
+which is the "secondary" interfaces.  The reality is that we should
+make both interfaces work.  An example of this is how we handle the
+xfs-specific ioctls that are also exposed via the fallocate(2) system
+call.
 
-> On Fri, 2014-09-26 at 12:23 +0100, Ingo Molnar wrote:
-> > > As in: allows *all* tasks to inject the data? Are you sure we 
-> > > don't want more fine-grained control, in particular per task?
-> > 
-> > Yeah. If the profiler allows it, then any task that is being 
-> > traced can inject data.
-> 
-> The "that is being traced" fragment was the key here. I missed 
-> the fact that perf trace already takes a list of pids, so we're 
-> not talking about all tasks in the system. That should work.
+It's not particularly important to me which is the "primary" interface
+just because it's been around for 10 years.  Which should implement
+*both* so that users are used to using xfs_io(8) or fallocate(1) can
+do what they want.
 
-Yeah, when we generate a user trace event, we should look at the 
-currently active perf context's (percpu ones plus task ones), and 
-inject into those only.
+Similarly, if some users are more used to the quotatools interface
+(which has been around for quite a long time, BTW, if we're trying to
+count primacy by years of availability to Linux users), and some users
+that are used to using xfs_quota, both should work.
 
-This way we limit event generation to those buffers that are 
-actively interested in this task.
+Cheers,
 
-Thanks,
-
-	Ingo
+						- Ted
