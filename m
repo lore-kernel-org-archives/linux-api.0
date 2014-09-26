@@ -1,122 +1,89 @@
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH v2] next: openrisc: Fix build
-Date: Fri, 26 Sep 2014 20:18:42 +0200
-Message-ID: <d9945098-9057-4b7f-ac83-19cd248b7422@email.android.com>
-References: <1411747539-28308-1-git-send-email-linux@roeck-us.net>
-	<1411753981.2739.16.camel@redhat.com>
-	<20140926180813.GA19291@roeck-us.net>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
+Date: Fri, 26 Sep 2014 11:26:13 -0700
+Message-ID: <CALCETrX5e0cp4QFCv1eAqR1hjoROU9Rh=cRos9U35DaR-py3Eg@mail.gmail.com>
+References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
+	<87ppei45ig.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-bounces@lists.openrisc.net>
-In-Reply-To: <20140926180813.GA19291@roeck-us.net>
-List-Unsubscribe: <http://lists.openrisc.net/options/linux>,
-	<mailto:linux-request@lists.openrisc.net?subject=unsubscribe>
-List-Archive: <http://lists.openrisc.net/pipermail/linux>
-List-Post: <mailto:linux@lists.openrisc.net>
-List-Help: <mailto:linux-request@lists.openrisc.net?subject=help>
-List-Subscribe: <http://lists.openrisc.net/listinfo/linux>,
-	<mailto:linux-request@lists.openrisc.net?subject=subscribe>
-Sender: linux-bounces@lists.openrisc.net
-Errors-To: linux-bounces@lists.openrisc.net
-To: Guenter Roeck <linux@roeck-us.net>, Eric Paris <eparis@redhat.com>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, linux-api@vger.kernel.org, linux@openrisc.net, linux-kernel@vger.kernel.org, linux-next@vger.kernel.org
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87ppei45ig.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
--- 
-Sent from my Android phone with K-9 Mail. Please excuse my brevity.
-
-On September 26, 2014 8:08:13 PM CEST, Guenter Roeck <linux@roeck-us.net> wrote:
->On Fri, Sep 26, 2014 at 01:53:01PM -0400, Eric Paris wrote:
->> Would you like me to carry this in the audit tree, since I'm the one
->who
->> broke it?
->> 
->Hi Eric,
+On Fri, Sep 26, 2014 at 11:10 AM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> writes:
 >
->guess you are asking Jonas, but it would make sense to me.
-
-Hi Eric,
-Yes, please take this via the audit tree.
-/Jonas
-
+>> The goal of this serie is to be able to multicast netlink messages with an
+>> attribute that identify a peer netns.
+>> This is needed by the userland to interpret some informations contained in
+>> netlink messages (like IFLA_LINK value, but also some other attributes in case
+>> of x-netns netdevice (see also
+>> http://thread.gmane.org/gmane.linux.network/315933/focus=316064 and
+>> http://thread.gmane.org/gmane.linux.kernel.containers/28301/focus=4239)).
 >
->Guenter
+> I want say that the problem addressed by patch 3/5 of this series is a
+> fundamentally valid problem.  We have network objects spanning network
+> namespaces and it would be very nice to be able to talk about them in
+> netlink, and file descriptors are too local and argubably too heavy
+> weight for netlink quires and especially for netlink broadcast messages.
 >
->> -Eric
->> 
->> On Fri, 2014-09-26 at 09:05 -0700, Guenter Roeck wrote:
->> > openrisc:defconfig fails to build in next-20140926 with the
->following error.
->> > 
->> > In file included from arch/openrisc/kernel/signal.c:31:0:
->> > ./arch/openrisc/include/asm/syscall.h: In function
->'syscall_get_arch':
->> > ./arch/openrisc/include/asm/syscall.h:77:9: error: 'EM_OPENRISC'
->undeclared
->> > 
->> > Fix by moving EM_OPENRISC to include/uapi/linux/elf-em.h.
->> > 
->> > Fixes: ce5d112827e5 ("ARCH: AUDIT: implement syscall_get_arch for
->all arches")
->> > Cc: Eric Paris <eparis@redhat.com>
->> > Cc: Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
->> > Cc: Geert Uytterhoeven <geert@linux-m68k.org>
->> > Cc: Stephen Rothwell <sfr@canb.auug.org.au>
->> > Signed-off-by: Guenter Roeck <linux@roeck-us.net>
->> > ---
->> > v2: Only move EM_OPENRISC.
->> > 
->> > Another possible solution for the problem would be to include
->asm/elf.h
->> > in arch/openrisc/kernel/signal.c. I had actually submitted a patch
->with
->> > that fix back in August (maybe that is where I remembered the
->problem from).
->> > Wonder what happened with that patch.
->> > 
->> > Would it make sense to drop EM_OR32 and replace it with EM_OPENRISC
->where
->> > it is used ? binutils seems to suggest that EM_OPENRISC is the
->"official"
->> > definition.
->> > 
->> >  arch/openrisc/include/uapi/asm/elf.h | 3 +--
->> >  include/uapi/linux/elf-em.h          | 1 +
->> >  2 files changed, 2 insertions(+), 2 deletions(-)
->> > 
->> > diff --git a/arch/openrisc/include/uapi/asm/elf.h
->b/arch/openrisc/include/uapi/asm/elf.h
->> > index f02ea58..8884276 100644
->> > --- a/arch/openrisc/include/uapi/asm/elf.h
->> > +++ b/arch/openrisc/include/uapi/asm/elf.h
->> > @@ -55,9 +55,8 @@ typedef elf_greg_t elf_gregset_t[ELF_NGREG];
->> >  /* A placeholder; OR32 does not have fp support yes, so no fp regs
->for now.  */
->> >  typedef unsigned long elf_fpregset_t;
->> >  
->> > -/* This should be moved to include/linux/elf.h */
->> > +/* EM_OPENRISC is defined in linux/elf-em.h */
->> >  #define EM_OR32         0x8472
->> > -#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded
->processor */
->> >  
->> >  /*
->> >   * These are used to set parameters in the core dumps.
->> > diff --git a/include/uapi/linux/elf-em.h
->b/include/uapi/linux/elf-em.h
->> > index 01529bd..aa90bc9 100644
->> > --- a/include/uapi/linux/elf-em.h
->> > +++ b/include/uapi/linux/elf-em.h
->> > @@ -32,6 +32,7 @@
->> >  #define EM_V850		87	/* NEC v850 */
->> >  #define EM_M32R		88	/* Renesas M32R */
->> >  #define EM_MN10300	89	/* Panasonic/MEI MN10300, AM33 */
->> > +#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded
->processor */
->> >  #define EM_BLACKFIN     106     /* ADI Blackfin Processor */
->> >  #define EM_TI_C6000	140	/* TI C6X DSPs */
->> >  #define EM_AARCH64	183	/* ARM 64 bit */
->> 
->> 
+> Furthermore the concept of ineternal concept of peernet2id seems valid.
+>
+> However what you do not address is a way for CRIU (aka process
+> migration) to be able to restore these ids after process migration.
+> Going farther it looks like you are actively breaking process migration
+> at this time, making this set of patches a no-go.
+>
+> When adding a new form of namespace id CRIU patches are just about
+> as necessary as iproute patches.
+>
+>> Ids are stored in the parent user namespace. These ids are valid only inside
+>> this user namespace. The user can retrieve these ids via a new netlink messages,
+>> but only if peer netns are in the same user namespace.
+>
+> That does not describe what you have actually implemented in the
+> patches.
+>
+> I see two ways to go with this.
+>
+> - A per network namespace table to that you can store ids for ``peer''
+>   network namespaces.  The table would need to be populated manually by
+>   the likes of ip netns add.
+>
+>   That flips the order of assignment and makes this idea solid.
+>
+>   Unfortunately in the case of a fully referencing mesh of N network
+>   namespaces such a mesh winds up taking O(N^2) space, which seems
+>   undesirable.
+>
+> - Add a netlink attribute that says this network element is in a peer
+>   network namespace.
+>
+>   Add a unicast query message that let's you ask if the remote
+>   end of a tunnel is in a network namespace specified by file
+>   descriptor.
+>
+> I personally lean towards the second version as it is fundamentally
+> simpler, and generally scales better, and the visibility controls are
+> the existing visibility controls.  The only downside is it requires
+> a query after receiving a netlink broadcast message for the times that
+> we care.
+
+The downside of that approach, and all the similar kcmp stuff, is that
+it scales poorly for applications using it.  This is probably not the
+end of the world, but it's not ideal.
+
+--Andy
