@@ -1,169 +1,83 @@
 From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Subject: Re: eBPF verifier thoughts (Re: [PATCH v15 net-next 00/11] eBPF
  syscall, verifier, testsuite)
-Date: Fri, 26 Sep 2014 13:39:03 -0700
-Message-ID: <CALCETrXS5KBHm-3Fz031VFPpTHC_BDOLd_zNB6DjCidZa5-x2A@mail.gmail.com>
+Date: Fri, 26 Sep 2014 13:42:00 -0700
+Message-ID: <CALCETrVAQ7oRm8zDHDiUurjrMw=+ABucLWjed_P__4j8deNE7A@mail.gmail.com>
 References: <CALCETrVrHHxGo1RkPu+9LVnPo9XY9yYnJzg2ot0zOgoBspzbOQ@mail.gmail.com>
- <CAMEtUuyt9RASKZ4NeqK_OUYNN8QT6P20+kjcwywchur6QXSt0A@mail.gmail.com>
+ <CALCETrXFb=etdrabEjbKdxKg51ViPXptOC=6CkKwcGS7Jau8nA@mail.gmail.com> <CAMEtUuzAuX=PVDtfQiRKgO7h5wx3gsTJUajr8VKsF4FR-d=JDw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMEtUuyt9RASKZ4NeqK_OUYNN8QT6P20+kjcwywchur6QXSt0A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CAMEtUuzAuX=PVDtfQiRKgO7h5wx3gsTJUajr8VKsF4FR-d=JDw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 26, 2014 at 1:00 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
-> On Fri, Sep 26, 2014 at 12:34 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->> On Fri, Sep 26, 2014 at 12:06 PM, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org> wrote:
->>> From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
->>> Date: Fri, 26 Sep 2014 00:16:56 -0700
->>>
->>>> v14 -> v15:
->>>> - got rid of macros with hidden control flow (suggested by David)
->>>>   replaced macro with explicit goto or return and simplified
->>>>   where possible (affected patches #9 and #10)
->>>> - rebased, retested
->>>
->>> Series applied to net-next, thanks.
+On Fri, Sep 26, 2014 at 1:09 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+> On Fri, Sep 26, 2014 at 12:51 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>> On Fri, Sep 26, 2014 at 12:34 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
 >>
->> Hi all-
+>> To add one more point:
 >>
->> I read through the verifier.  Sorry this email is a little bit late.
->> Here are some thoughts, in no particular order.
->>
->> Programs should IMO have feature flags.  One such feature would be
->> "can use pointers as integers", for example.
+>> With the current verifier design, it's impossible to write a userspace
+>> tool that can take an eBPF program and check it.  The verification is
+>> far too context-dependent for that to be possible.  I won't go so far
+>> as to say that a userspace tool needs to *exist*, but I strongly
+>> object to exposing a verification algorithm that *precludes* writing
+>> such a tool.
 >
-> of course.
-> I believe we discussed it in the past.
-> programs will have flags. I'm not sure why you insist on this in
-> the first version.
->
->> UNKNOWN_VALUE is IMO a crappy type.  I think that it should renamed to
->> INTEGER and that a bunch of the things that generate it should be
->> errors.
->
-> it's an internal type.
-> Sure, I'm ok renaming it, but 'integer' name doesn't fit.
-> It's not integer type.
-> When I post a patch for "can use pointers as integers" flag
-> you'll see that this 'unknown_value' will be broken down
-> into more precise types.
->
->> ALU ops like adding two pointers should IMO be failures.  I don't
->> think that they should result in UNKNOWN_VALUE.
->
-> they will be failures for unprivileged programs.
-> In this patch the whole thing is for root only and root programs need
-> arithmetic on pointers to compute hashes and so on.
-> I wish we spent more time chatting, so I could explain this better.
->
->> I don't like PTR_TO_MAP_VALUE as a type.  I think that there should
->> instead be "pointer to (const?) buffer of N bytes".
->>
->> ARG_PTR_TO_MAP_KEY is odd.  Why do we care what a function does with a
->> key?  It just needs to be a big enough buffer, right?
->
-> not quite. there is a distinction between key and value.
-> They both come from map definition and correspond to key_size
-> and value_size, so they have to have two different corresponding
-> _internal_ types 'ptr_to_map_key' and 'ptr_to_map_value'
-> This distinction is needed to properly describe function
-> arguments constraints.
+> that's just not true.
+> why is it not possible?
 
-But they're still just pointers to buffers of some size known to the
-verifier, right?  By calling them "pointer to map key" and "pointer to
-map value" you're tying them to map objects in a way that makes little
-sense to me.
+Because the types of referenced objects aren't encoded in the blob
+that a user program loads, unless I'm missing something.
 
 >
->> All of the stack spill stuff seems overcomplicated.  Can you just
->> disallow unaligned stack access?  Right off the bat, that will delete
->> a bunch of code and cut down runtime memory use by nearly a factor of
->> eight.
+>> I think that the eBPF program format needs to encode all context
+>> needed for verification.  Then verification should check that the
+>> program is compliant with the context and that the context is correct.
+>> The former could, in principle, be done in userspace, too.
 >
-> not quite. stack spill/fill is not for unaligned access.
-> unaligned access is disallowed first.
-> See line 663 in check_mem_access().
-> Often enough gcc/llvm ran out of registers and have to spill
-> them into stack. This spill/fill tracking mechanism keeps
-> track of what is stored into stack. Otherwise type violation will be
-> possible. We cannot get rid of it. It essential for safety.
+> one can have maps and other future objects equally
+> represented in user space. Nothing stops doing exactly the same
+> logic there.
 
-So what's "spill part"?  Unless I misunderstood the stack tracking
-code, you're tracking each byte separately.
+But the eBPF binary doesn't encode this information. In fact, the
+caller of an ebpf syscall may not even have access to this
+information.
 
-You're also tracking the type for each stack slot separately for each
-instruction.  That looks like it'll account for the considerable
-majority of total memory usage.
+I really think that the information needed to check type safety should
+be encapsulated in the program.
 
 >
->> Also, there are no calls to functions written eBPF, right?  If so, why
->> not just give each stack slot a *fixed* type for the lifetime of the
->> program?  That would be a huge time complexity win, not to mention
->> being more comprehensible.  When function calls get added, they'll
->> need a whole pile of new infrastructure anyway.
+>> Here, "context" includes the program type (i.e. what type R1 hasis),
+>> the key and value sizes of all referenced maps, the fact that the maps
+>> are maps (damnit, "every object implements exactly the same interface
+>> and is called a 'map'" is a bad type system*), and possible also
+>> things like the intended stack size and any other relevant details
+>> about the entry calling convention.
 >
-> you cannot. stack cannot be fixed. It's very small and valuable
-> resources. Programs will be using differently.
->
->> check_call is a mess.  I predict that it will be unmaintainable.
->
-> why? care to provide details?
+> Andy, I'm not sure where you're going with this.
+> Sounds like you want to redesign the whole thing?
+> How long it will take?
+> Did you consider all the cases I did?
+> I think I understand your concerns. What I don't understand
+> why you think we cannot address them step by step.
+> imo what this does covers a ton of use cases.
+> Some futuristic stuff may be better and may be not.
+> But here I have it working, tested and proven over many
+> use cases, whereas some future unclear stuff will take
+> unknown amount of time to redesign...
 
-I may have misread my notes.
-
-I don't like the fact that the function proto comes from the
-environment instead of from the program.
-
->
->> check_ld_abs is messy, IMO.  Can't there be a real type "pointer to
->> object of type [type]", where skb would be a type?  Then you could use
->> the normal function call logic for skb pointers instead of hardcoded
->> crud.
->>
->> You're doing a depth-first search.  I don't like it.  You need complex
->> pruning logic to avoid exponential behavior, and it's not obvious to
->
-> there was in patch in previous series that did the prunning.
-> I dropped out of this set to simplify things.
->
->> me that pathological programs that cause exponential blowups in the
->> verifier don't exist.  Wouldn't it make more sense to do a
->> breadth-first search instead and to give each reg/stack slot a
->> definite type at each point in the control flow?  You'd need a
->> function to find the intersection of two types, but I think that would
->> be preferable to the current code that tests whether one type is a
->> subset of another.
->
-> nope. breadth-first just doesn't work at all.
-
-Sorry, I didn't actually mean BFS.  I meant to order the search such
-that all incoming control flow edges to an insn are visited before any
-of the outgoing edges are visited.
-
->
->> At some point someone will want loops, and that will open a huge can
->> of worms involving explicit typing or type inference.  It might pay to
->> add some kind of stack slot (and maybe even register slot) type
->> declarations now to get things ready for that.
->
-> sure. As discussed we may allow loops in the future.
->
->> NB: If this code is actually invoked in net-next when loading a
->> filter, please don't push to Linus until there's a convincing argument
->> that the verifier has acceptable asymptotic complexity.
->
-> complexity is actually described in the doc.
-> There are several limits. Verifier will be aborted if it walks
-> more then 32k instructions or more then 1k branches.
-> So the very worst case takes micro seconds to reject
-> the program. So I don't see your concern.
-
-That this will randomly fail, then.  For all I know, there are
-existing valid BPF programs with vastly more than 32k "instructions"
-as counted by the verifier.
+I think this is addressable as a smallish change on top of your code.
+Rather than looking up a map when you need to learn its key and value
+size, I think that all you need to do is to look in a program section
+for the key and value size (and the fact that it's a map) and confirm
+that the referenced map *matches* the stored values.
 
 --Andy
+
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
