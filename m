@@ -1,106 +1,121 @@
-From: Mark yao <mark.yao@rock-chips.com>
-Subject: [PATCH v7 3/3] dt-bindings: video: Add documentation for rockchip vop
-Date: Fri, 26 Sep 2014 15:58:38 +0800
-Message-ID: <1411718318-15218-1-git-send-email-mark.yao@rock-chips.com>
-References: <1411718091-15056-1-git-send-email-mark.yao@rock-chips.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1411718091-15056-1-git-send-email-mark.yao@rock-chips.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
-Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, xw@rock-chips.com, Mark yao <mark.yao@rock-chips.com>
+From: Yann Droneaud <ydroneaud@opteya.com>
+Subject: Re: [PATCHv8 1/6] fanotify: enable close-on-exec on events' fd when
+ requested in fanotify_init()
+Date: Fri, 26 Sep 2014 10:58:18 +0200
+Message-ID: <1411721898.7778.18.camel@localhost.localdomain>
+References: <cover.1411562410.git.ydroneaud@opteya.com>
+	 <9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud@opteya.com>
+	 <542481B3.8070300@gmx.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <542481B3.8070300@gmx.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Heinrich Schuchardt <xypron.debian@gmx.de>
+Cc: Eric Paris <eparis@redhat.com>, Richard Guy Briggs <rgb@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, stable@vger.kernel.org, linux-api@vger.kernel.org, Jan Kara <jack@suse.cz>, Lino Sanfilippo <LinoSanfilippo@gmx.de>
 List-Id: linux-api@vger.kernel.org
 
-This adds binding documentation for Rockchip SoC VOP driver.
+Hi,
 
-Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
-Acked-by: Daniel Vetter <daniel@ffwll.ch>
-Reviewed-by: Rob Clark <robdclark@gmail.com>
----
-Changes in v2:
-- rename "lcdc" to "vop"
-- add vop reset
-- add iommu node
-- add port for display-subsystem
+Le jeudi 25 septembre 2014 =C3=A0 22:57 +0200, Heinrich Schuchardt a =C3=
+=A9crit :
+> On 24.09.2014 15:11, Yann Droneaud wrote:
+> > According to commit 80af258867648 ('fanotify: groups can specify
+> > their f_flags for new fd'), file descriptors created as part of
+> > file access notification events inherit flags from the
+> > event_f_flags argument passed to syscall fanotify_init(2).
+> >
+> > So while it is legal for userspace to call fanotify_init() with
+> > O_CLOEXEC as part of its second argument, O_CLOEXEC is currently
+> > silently ignored.
+> >
+> > Indeed event_f_flags are only given to dentry_open(), which only
+> > seems to care about O_ACCMODE and O_PATH in do_dentry_open(),
+> > O_DIRECT in open_check_o_direct() and O_LARGEFILE in
+> > generic_file_open().
+>=20
+> I tested on kernel 3.17.0-rc5. I passed O_CLOEXEC in event_f_flags.
+> When I called fcnt(event_metadata->fd, F_GETFD) it did not return=20
+> FD_CLOEXEC. So I can confirm your observation that O_CLOEXEC is not=20
+> working as expected.
+>=20
+> I found this definition
+> #define get_unused_fd() get_unused_fd_flags(0)
+>=20
+> So essentially when get_unused_fd() is called for a fanotify event=20
+> O_CLOEXEC is ignored.
+>=20
+> This is what your patch fixes.
+>=20
+> >
+> > More, there's no effective check on event_f_flags value that
+> > would catch unknown / unsupported values, unlike the one on
+> > f_flags argument of the syscall (see FAN_ALL_INIT_FLAGS in
+> > include/uapi/linux/fanotify.h).
+>=20
+> The fanotify_init(2) man page describes which flags are allowable in=20
+> event_f_flags.
+>=20
+> Could you, please, explain why the following code in fanotify_user.c =
+is=20
+> not to be considered an effective check:
+>=20
+>      if (event_f_flags & ~FANOTIFY_INIT_ALL_EVENT_F_BITS)
+>          return -EINVAL;
+>=20
+>      switch (event_f_flags & O_ACCMODE) {
+>      case O_RDONLY:
+>      case O_RDWR:
+>      case O_WRONLY:
+>          break;
+>      default:
+>          return -EINVAL;
+>      }
+>=20
+> I CC Jan Kara as he reviewed the code.
+>=20
 
-Changes in v3: None
+I missed the opportunity to update my commit message.
 
-Changes in v4: None
+I've sent my initial version of the patch (with the same wording) on
+5th, January, 2014:
 
-Changes in v5: None
+http://mid.gmane.org/3d9591f81e62a78a726721c8052b3910870db35e.138895206=
+1.git.ydroneaud@opteya.com
+http://lkml.kernel.org/r/3d9591f81e62a78a726721c8052b3910870db35e.13889=
+52061.git.ydroneaud@opteya.com
 
-Changes in v6: None
+The patch was sent again on March, 11:
 
-Changes in v7: None
+http://lkml.kernel.org/r/baab31b572b216d13f2149bdf07e0f79a1bae660.13945=
+32336.git.ydroneaud@opteya.com
+http://mid.gmane.org/baab31b572b216d13f2149bdf07e0f79a1bae660.139453233=
+6.git.ydroneaud@opteya.com
 
- .../devicetree/bindings/video/rockchip-vop.txt     |   58 ++++++++++++++++++++
- 1 file changed, 58 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/video/rockchip-vop.txt
+And another time, on June, 1st:
 
-diff --git a/Documentation/devicetree/bindings/video/rockchip-vop.txt b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-new file mode 100644
-index 0000000..d15351f
---- /dev/null
-+++ b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-@@ -0,0 +1,58 @@
-+device-tree bindings for rockchip soc display controller (vop)
-+
-+VOP (Visual Output Processor) is the Display Controller for the Rockchip
-+series of SoCs which transfers the image data from a video memory
-+buffer to an external LCD interface.
-+
-+Required properties:
-+- compatible: value should be one of the following
-+		"rockchip,rk3288-vop";
-+
-+- interrupts: should contain a list of all VOP IP block interrupts in the
-+		 order: VSYNC, LCD_SYSTEM. The interrupt specifier
-+		 format depends on the interrupt controller used.
-+
-+- clocks: must include clock specifiers corresponding to entries in the
-+		clock-names property.
-+
-+- clock-names: Must contain
-+		aclk_vop: for ddr buffer transfer.
-+		hclk_vop: for ahb bus to R/W the phy regs.
-+		dclk_vop: pixel clock.
-+
-+- resets: Must contain an entry for each entry in reset-names.
-+  See ../reset/reset.txt for details.
-+- reset-names: Must include the following entries:
-+  - axi
-+  - ahb
-+  - dclk
-+
-+- iommus: required a iommu node
-+
-+- port: A port node with endpoint definitions as defined in
-+  Documentation/devicetree/bindings/media/video-interfaces.txt.
-+
-+Example:
-+SoC specific DT entry:
-+	vopb: vopb@ff930000 {
-+		compatible = "rockchip,rk3288-vop";
-+		reg = <0xff930000 0x19c>;
-+		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
-+		clocks = <&cru ACLK_VOP0>, <&cru DCLK_VOP0>, <&cru HCLK_VOP0>;
-+		clock-names = "aclk_vop", "dclk_vop", "hclk_vop";
-+		resets = <&cru SRST_LCDC1_AXI>, <&cru SRST_LCDC1_AHB>, <&cru SRST_LCDC1_DCLK>;
-+		reset-names = "axi", "ahb", "dclk";
-+		iommus = <&vopb_mmu>;
-+		vopb_out: port {
-+			#address-cells = <1>;
-+			#size-cells = <0>;
-+			vopb_out_edp: endpoint@0 {
-+				reg = <0>;
-+				remote-endpoint=<&edp_in_vopb>;
-+			};
-+			vopb_out_hdmi: endpoint@1 {
-+				reg = <1>;
-+				remote-endpoint=<&hdmi_in_vopb>;
-+			};
-+		};
-+	};
--- 
-1.7.9.5
+http://lkml.kernel.org/r/2c6ab28980f0007ea3b9afa7ecd7497806a6a451.14016=
+30396.git.ydroneaud@opteya.com
+http://mid.gmane.org/2c6ab28980f0007ea3b9afa7ecd7497806a6a451.140163039=
+6.git.ydroneaud@opteya.com
 
+So as you can see, my patch predate yours:
 
+http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?=
+id=3D48149e9d3a7e924010a0daab30a6197b7d7b6580
+
+But I have to apologize: I haven't noticed your patch was merged betwee=
+n
+my previous submission and the current one. My bad.
+
+I will update the commit message to remove my obsolete comment on the
+input parameter check.
+
+Thanks again for review and testing.
+
+Regards.
+
+--=20
+Yann Droneaud
+OPTEYA
