@@ -1,83 +1,76 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: eBPF verifier thoughts (Re: [PATCH v15 net-next 00/11] eBPF
- syscall, verifier, testsuite)
-Date: Fri, 26 Sep 2014 13:42:00 -0700
-Message-ID: <CALCETrVAQ7oRm8zDHDiUurjrMw=+ABucLWjed_P__4j8deNE7A@mail.gmail.com>
-References: <CALCETrVrHHxGo1RkPu+9LVnPo9XY9yYnJzg2ot0zOgoBspzbOQ@mail.gmail.com>
- <CALCETrXFb=etdrabEjbKdxKg51ViPXptOC=6CkKwcGS7Jau8nA@mail.gmail.com> <CAMEtUuzAuX=PVDtfQiRKgO7h5wx3gsTJUajr8VKsF4FR-d=JDw@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
+Date: Fri, 26 Sep 2014 13:45:25 -0700
+Message-ID: <87tx3uun4q.fsf@x220.int.ebiederm.org>
+References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
+	<CAHA+R7NnBJ=T3sukzzp-OD2am1nd318XbrXCX84LfSL=nu9ojw@mail.gmail.com>
+	<54228D87.3070309@6wind.com>
+	<CAHA+R7NfJYzCsZx0E9YVXKVCQbCm_thPSi+80tix8Z9nVA82Ug@mail.gmail.com>
+	<5422F0F4.6000709@6wind.com>
+	<CAHA+R7Ot2kLHb+ne5AW3bFNc87qkFOiEHEyDh9sFrsHqXgrY3g@mail.gmail.com>
+	<5423D80B.9060500@6wind.com>
+	<CAHA+R7Ooyam2L-QfP-TjMEZEOqrQcQDxYiebmw760kgEji4G=g@mail.gmail.com>
+	<54256CCB.4000709@6wind.com> <5425BB3E.10700@gmail.com>
+	<87mw9myy4n.fsf@x220.int.ebiederm.org> <5425C22F.7050301@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMEtUuzAuX=PVDtfQiRKgO7h5wx3gsTJUajr8VKsF4FR-d=JDw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <5425C22F.7050301-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> (David Ahern's message of "Fri, 26
+	Sep 2014 13:44:47 -0600")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: David Ahern <lxhacker68-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org, Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>, netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 26, 2014 at 1:09 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
-> On Fri, Sep 26, 2014 at 12:51 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->> On Fri, Sep 26, 2014 at 12:34 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>
->> To add one more point:
->>
->> With the current verifier design, it's impossible to write a userspace
->> tool that can take an eBPF program and check it.  The verification is
->> far too context-dependent for that to be possible.  I won't go so far
->> as to say that a userspace tool needs to *exist*, but I strongly
->> object to exposing a verification algorithm that *precludes* writing
->> such a tool.
+David Ahern <lxhacker68-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+
+> On 9/26/14, 1:34 PM, Eric W. Biederman wrote:
+>> When I wrote the "ip netns" support I never expected that all
+>> applications would want to run in a specific network namespace.  All
+>> that is needed is one socket per network namespace.
 >
-> that's just not true.
-> why is it not possible?
+> Sure that is another option. But for a process to create a socket or
+> thread in a second namespace it has to run as root -- CAP_SYS_ADMIN is
+> needed for setns (or perhaps there is another way to create the socket
+> or thread in the namespace).
 
-Because the types of referenced objects aren't encoded in the blob
-that a user program loads, unless I'm missing something.
+To do anything other than simply listen on a netlink socket you also
+have to be root.  So this is most cases that I am aware of this is a
+don't care.  Especially for routing daemons.
 
->
->> I think that the eBPF program format needs to encode all context
->> needed for verification.  Then verification should check that the
->> program is compliant with the context and that the context is correct.
->> The former could, in principle, be done in userspace, too.
->
-> one can have maps and other future objects equally
-> represented in user space. Nothing stops doing exactly the same
-> logic there.
+If it becomes a common pain in writing network namespace aware
+applications that the you have to be root just to open your listening
+socket then that probably would be sufficient justification for the
+socketat system call that I have I prototyped and then never did
+anything with because at the time it was insufficiently interesting.
 
-But the eBPF binary doesn't encode this information. In fact, the
-caller of an ebpf syscall may not even have access to this
-information.
+> Second, it still does not address the scalability problem. For example
+> a single daemon providing service across 2k namespaces means it needs
+> 2k listen sockets. From there a system could have 20, 30 or 50
+> services running. Certainly lighter than a process per namespace, but
+> not even close to ideal when talking about something like VRFs.
 
-I really think that the information needed to check type safety should
-be encapsulated in the program.
+Ah.  You are talking about a system with 2k namespaces and 20-50
+services providing services in all 2k namespaces. Something completely
+different than the case of quagga you mentioned earlier.
 
->
->> Here, "context" includes the program type (i.e. what type R1 hasis),
->> the key and value sizes of all referenced maps, the fact that the maps
->> are maps (damnit, "every object implements exactly the same interface
->> and is called a 'map'" is a bad type system*), and possible also
->> things like the intended stack size and any other relevant details
->> about the entry calling convention.
->
-> Andy, I'm not sure where you're going with this.
-> Sounds like you want to redesign the whole thing?
-> How long it will take?
-> Did you consider all the cases I did?
-> I think I understand your concerns. What I don't understand
-> why you think we cannot address them step by step.
-> imo what this does covers a ton of use cases.
-> Some futuristic stuff may be better and may be not.
-> But here I have it working, tested and proven over many
-> use cases, whereas some future unclear stuff will take
-> unknown amount of time to redesign...
+I expect quagga would need one netlink control socket and one socket
+listening to netlink events, and a tcp connection or two to remote bgp
+servers in each network namespace.  In that case I don't see anything
+except a small constant difference in ways it can be handled.
 
-I think this is addressable as a smallish change on top of your code.
-Rather than looking up a map when you need to learn its key and value
-size, I think that all you need to do is to look in a program section
-for the key and value size (and the fact that it's a map) and confirm
-that the referenced map *matches* the stored values.
+For your new example of a crazy number of servers running on a box each
+of which is had one listening socket in each network namespace maybe
+they will be idle most of the time in most network namespaces and the
+overhead will be significant.  Shrug those applications don't appear to
+exist so I can't say what would make a good design.
 
---Andy
+If someone writes them and describes what is going on we can see if the
+current set of interfaces is ideal or problematics.  If there are
+signifcantly better interfaces that can be provided in a maintainable
+way I imagine the patches would be easily accepted.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+But again this has nothing do with the peer netns work.  So if you have
+something practical to contribute please start a new thread.
+
+Eric
