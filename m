@@ -1,186 +1,169 @@
-From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv7 10/26] vfio: platform: probe to devices on the
-	platform bus
-Date: Fri, 26 Sep 2014 14:18:56 -0600
-Message-ID: <1411762736.7360.42.camel@ul30vt.home>
-References: <1411483586-29304-1-git-send-email-a.motakis@virtualopensystems.com>
-	<1411483586-29304-11-git-send-email-a.motakis@virtualopensystems.com>
-	<1411513277.24563.61.camel@ul30vt.home>
-	<CAG8rG2wECWL2w9Xyvs7tZx8bqdMqk2SP8gfYpq=ZY0_Jk0Q+-g@mail.gmail.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: eBPF verifier thoughts (Re: [PATCH v15 net-next 00/11] eBPF
+ syscall, verifier, testsuite)
+Date: Fri, 26 Sep 2014 13:39:03 -0700
+Message-ID: <CALCETrXS5KBHm-3Fz031VFPpTHC_BDOLd_zNB6DjCidZa5-x2A@mail.gmail.com>
+References: <CALCETrVrHHxGo1RkPu+9LVnPo9XY9yYnJzg2ot0zOgoBspzbOQ@mail.gmail.com>
+ <CAMEtUuyt9RASKZ4NeqK_OUYNN8QT6P20+kjcwywchur6QXSt0A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CAG8rG2wECWL2w9Xyvs7tZx8bqdMqk2SP8gfYpq=ZY0_Jk0Q+-g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Cc: KVM devel mailing list <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux IOMMU <iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, VirtualOpenSystems Technical Team <tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, kvm-arm <kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMEtUuyt9RASKZ4NeqK_OUYNN8QT6P20+kjcwywchur6QXSt0A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2014-09-26 at 17:30 +0200, Antonios Motakis wrote:
-> On Wed, Sep 24, 2014 at 1:01 AM, Alex Williamson
-> <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >
-> > On Tue, 2014-09-23 at 16:46 +0200, Antonios Motakis wrote:
-> > > Driver to bind to Linux platform devices, and callbacks to discover their
-> > > resources to be used by the main VFIO PLATFORM code.
-> > >
-> > > Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> > > ---
-> > >  drivers/vfio/platform/vfio_platform.c | 96 +++++++++++++++++++++++++++++++++++
-> > >  include/uapi/linux/vfio.h             |  1 +
-> > >  2 files changed, 97 insertions(+)
-> > >  create mode 100644 drivers/vfio/platform/vfio_platform.c
-> > >
-> > > diff --git a/drivers/vfio/platform/vfio_platform.c b/drivers/vfio/platform/vfio_platform.c
-> > > new file mode 100644
-> > > index 0000000..024c026
-> > > --- /dev/null
-> > > +++ b/drivers/vfio/platform/vfio_platform.c
-> > > @@ -0,0 +1,96 @@
-> > > +/*
-> > > + * Copyright (C) 2013 - Virtual Open Systems
-> > > + * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> > > + *
-> > > + * This program is free software; you can redistribute it and/or modify
-> > > + * it under the terms of the GNU General Public License, version 2, as
-> > > + * published by the Free Software Foundation.
-> > > + *
-> > > + * This program is distributed in the hope that it will be useful,
-> > > + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> > > + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> > > + * GNU General Public License for more details.
-> > > + */
-> > > +
-> > > +#include <linux/device.h>
-> > > +#include <linux/eventfd.h>
-> > > +#include <linux/interrupt.h>
-> > > +#include <linux/iommu.h>
-> > > +#include <linux/module.h>
-> > > +#include <linux/mutex.h>
-> > > +#include <linux/notifier.h>
-> > > +#include <linux/pm_runtime.h>
-> > > +#include <linux/slab.h>
-> > > +#include <linux/types.h>
-> > > +#include <linux/uaccess.h>
-> > > +#include <linux/vfio.h>
-> > > +#include <linux/io.h>
-> > > +#include <linux/platform_device.h>
-> > > +#include <linux/irq.h>
-> > > +
-> > > +#include "vfio_platform_private.h"
-> > > +
-> > > +#define DRIVER_VERSION  "0.7"
-> > > +#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
-> > > +#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
-> > > +
-> > > +/* probing devices from the linux platform bus */
-> > > +
-> > > +static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
-> > > +                                             int i)
-> > > +{
-> > > +     struct platform_device *pdev = (struct platform_device *) vdev->opaque;
-> > > +
-> > > +     return platform_get_resource(pdev, IORESOURCE_MEM, i);
-> >
-> > ARM may only support IORESOURCE_MEM, but I don't think platform devices
-> > are limited to MMIO, right?  vfio-platform shouldn't be either.
-> >
-> 
-> Indeed. Should we however implement this lacking a target to verify it
-> is working correctly?
-> 
-> Leaving it out would mean PIO resources for those devices would not be
-> exposed before an update to VFIO, but we wouldn't have to break
-> backward compatibility I think.
-> 
-> Would you prefer to have it implemented regardless?
+On Fri, Sep 26, 2014 at 1:00 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+> On Fri, Sep 26, 2014 at 12:34 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>> On Fri, Sep 26, 2014 at 12:06 PM, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org> wrote:
+>>> From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+>>> Date: Fri, 26 Sep 2014 00:16:56 -0700
+>>>
+>>>> v14 -> v15:
+>>>> - got rid of macros with hidden control flow (suggested by David)
+>>>>   replaced macro with explicit goto or return and simplified
+>>>>   where possible (affected patches #9 and #10)
+>>>> - rebased, retested
+>>>
+>>> Series applied to net-next, thanks.
+>>
+>> Hi all-
+>>
+>> I read through the verifier.  Sorry this email is a little bit late.
+>> Here are some thoughts, in no particular order.
+>>
+>> Programs should IMO have feature flags.  One such feature would be
+>> "can use pointers as integers", for example.
+>
+> of course.
+> I believe we discussed it in the past.
+> programs will have flags. I'm not sure why you insist on this in
+> the first version.
+>
+>> UNKNOWN_VALUE is IMO a crappy type.  I think that it should renamed to
+>> INTEGER and that a bunch of the things that generate it should be
+>> errors.
+>
+> it's an internal type.
+> Sure, I'm ok renaming it, but 'integer' name doesn't fit.
+> It's not integer type.
+> When I post a patch for "can use pointers as integers" flag
+> you'll see that this 'unknown_value' will be broken down
+> into more precise types.
+>
+>> ALU ops like adding two pointers should IMO be failures.  I don't
+>> think that they should result in UNKNOWN_VALUE.
+>
+> they will be failures for unprivileged programs.
+> In this patch the whole thing is for root only and root programs need
+> arithmetic on pointers to compute hashes and so on.
+> I wish we spent more time chatting, so I could explain this better.
+>
+>> I don't like PTR_TO_MAP_VALUE as a type.  I think that there should
+>> instead be "pointer to (const?) buffer of N bytes".
+>>
+>> ARG_PTR_TO_MAP_KEY is odd.  Why do we care what a function does with a
+>> key?  It just needs to be a big enough buffer, right?
+>
+> not quite. there is a distinction between key and value.
+> They both come from map definition and correspond to key_size
+> and value_size, so they have to have two different corresponding
+> _internal_ types 'ptr_to_map_key' and 'ptr_to_map_value'
+> This distinction is needed to properly describe function
+> arguments constraints.
 
-I think we need to have PIO figured out at least enough to have stubbed
-read/write handlers that could be filled in by someone with test
-hardware.  I'm not sure I fully understand how a user associates a
-region index to a device tree description, whether it's ordering or
-something more complicated, so I'm not sure if simply listing all the
-PIO resources after the MMIO resources is sufficient and compatible.
-Maybe you have some thoughts on that.  Thanks,
+But they're still just pointers to buffers of some size known to the
+verifier, right?  By calling them "pointer to map key" and "pointer to
+map value" you're tying them to map objects in a way that makes little
+sense to me.
 
-Alex
+>
+>> All of the stack spill stuff seems overcomplicated.  Can you just
+>> disallow unaligned stack access?  Right off the bat, that will delete
+>> a bunch of code and cut down runtime memory use by nearly a factor of
+>> eight.
+>
+> not quite. stack spill/fill is not for unaligned access.
+> unaligned access is disallowed first.
+> See line 663 in check_mem_access().
+> Often enough gcc/llvm ran out of registers and have to spill
+> them into stack. This spill/fill tracking mechanism keeps
+> track of what is stored into stack. Otherwise type violation will be
+> possible. We cannot get rid of it. It essential for safety.
 
-> > > +}
-> > > +
-> > > +static int get_platform_irq(struct vfio_platform_device *vdev, int i)
-> > > +{
-> > > +     struct platform_device *pdev = (struct platform_device *) vdev->opaque;
-> > > +
-> > > +     return platform_get_irq(pdev, i);
-> > > +}
-> > > +
-> > > +
-> > > +static int vfio_platform_probe(struct platform_device *pdev)
-> > > +{
-> > > +     struct vfio_platform_device *vdev;
-> > > +     int ret;
-> > > +
-> > > +     vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-> > > +     if (!vdev)
-> > > +             return -ENOMEM;
-> > > +
-> > > +     vdev->opaque = (void *) pdev;
-> > > +     vdev->name = pdev->name;
-> > > +     vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
-> > > +     vdev->get_resource = get_platform_resource;
-> > > +     vdev->get_irq = get_platform_irq;
-> > > +
-> > > +     ret = vfio_platform_probe_common(vdev, &pdev->dev);
-> > > +     if (ret)
-> > > +             kfree(vdev);
-> > > +
-> > > +     return ret;
-> > > +}
-> > > +
-> > > +static int vfio_platform_remove(struct platform_device *pdev)
-> > > +{
-> > > +     return vfio_platform_remove_common(&pdev->dev);
-> > > +}
-> > > +
-> > > +static struct platform_driver vfio_platform_driver = {
-> > > +     .probe          = vfio_platform_probe,
-> > > +     .remove         = vfio_platform_remove,
-> > > +     .driver = {
-> > > +             .name   = "vfio-platform",
-> > > +             .owner  = THIS_MODULE,
-> > > +     },
-> > > +};
-> > > +
-> > > +module_platform_driver(vfio_platform_driver);
-> > > +
-> > > +MODULE_VERSION(DRIVER_VERSION);
-> > > +MODULE_LICENSE("GPL v2");
-> > > +MODULE_AUTHOR(DRIVER_AUTHOR);
-> > > +MODULE_DESCRIPTION(DRIVER_DESC);
-> > > diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-> > > index 30f630c..b022a25 100644
-> > > --- a/include/uapi/linux/vfio.h
-> > > +++ b/include/uapi/linux/vfio.h
-> > > @@ -158,6 +158,7 @@ struct vfio_device_info {
-> > >       __u32   flags;
-> > >  #define VFIO_DEVICE_FLAGS_RESET      (1 << 0)        /* Device supports reset */
-> > >  #define VFIO_DEVICE_FLAGS_PCI        (1 << 1)        /* vfio-pci device */
-> > > +#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)  /* vfio-platform device */
-> > >       __u32   num_regions;    /* Max region index + 1 */
-> > >       __u32   num_irqs;       /* Max IRQ index + 1 */
-> > >  };
-> >
-> >
-> >
-> 
-> 
-> 
+So what's "spill part"?  Unless I misunderstood the stack tracking
+code, you're tracking each byte separately.
+
+You're also tracking the type for each stack slot separately for each
+instruction.  That looks like it'll account for the considerable
+majority of total memory usage.
+
+>
+>> Also, there are no calls to functions written eBPF, right?  If so, why
+>> not just give each stack slot a *fixed* type for the lifetime of the
+>> program?  That would be a huge time complexity win, not to mention
+>> being more comprehensible.  When function calls get added, they'll
+>> need a whole pile of new infrastructure anyway.
+>
+> you cannot. stack cannot be fixed. It's very small and valuable
+> resources. Programs will be using differently.
+>
+>> check_call is a mess.  I predict that it will be unmaintainable.
+>
+> why? care to provide details?
+
+I may have misread my notes.
+
+I don't like the fact that the function proto comes from the
+environment instead of from the program.
+
+>
+>> check_ld_abs is messy, IMO.  Can't there be a real type "pointer to
+>> object of type [type]", where skb would be a type?  Then you could use
+>> the normal function call logic for skb pointers instead of hardcoded
+>> crud.
+>>
+>> You're doing a depth-first search.  I don't like it.  You need complex
+>> pruning logic to avoid exponential behavior, and it's not obvious to
+>
+> there was in patch in previous series that did the prunning.
+> I dropped out of this set to simplify things.
+>
+>> me that pathological programs that cause exponential blowups in the
+>> verifier don't exist.  Wouldn't it make more sense to do a
+>> breadth-first search instead and to give each reg/stack slot a
+>> definite type at each point in the control flow?  You'd need a
+>> function to find the intersection of two types, but I think that would
+>> be preferable to the current code that tests whether one type is a
+>> subset of another.
+>
+> nope. breadth-first just doesn't work at all.
+
+Sorry, I didn't actually mean BFS.  I meant to order the search such
+that all incoming control flow edges to an insn are visited before any
+of the outgoing edges are visited.
+
+>
+>> At some point someone will want loops, and that will open a huge can
+>> of worms involving explicit typing or type inference.  It might pay to
+>> add some kind of stack slot (and maybe even register slot) type
+>> declarations now to get things ready for that.
+>
+> sure. As discussed we may allow loops in the future.
+>
+>> NB: If this code is actually invoked in net-next when loading a
+>> filter, please don't push to Linus until there's a convincing argument
+>> that the verifier has acceptable asymptotic complexity.
+>
+> complexity is actually described in the doc.
+> There are several limits. Verifier will be aborted if it walks
+> more then 32k instructions or more then 1k branches.
+> So the very worst case takes micro seconds to reject
+> the program. So I don't see your concern.
+
+That this will randomly fail, then.  For all I know, there are
+existing valid BPF programs with vastly more than 32k "instructions"
+as counted by the verifier.
+
+--Andy
