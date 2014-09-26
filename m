@@ -1,84 +1,66 @@
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH] next: openrisc: Fix build
-Date: Fri, 26 Sep 2014 16:10:39 +0200
-Message-ID: <542573DF.3040405@southpole.se>
-References: <1411739655-4715-1-git-send-email-linux@roeck-us.net>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH v2 1/2] perf: Add sampling of the raw monotonic clock
+Date: Fri, 26 Sep 2014 23:38:26 +0900
+Message-ID: <1411742306.1669.6.camel@leonhard>
+References: <1411491787-25938-1-git-send-email-pawel.moll@arm.com>
+	 <1411491787-25938-2-git-send-email-pawel.moll@arm.com>
+	 <87sijhk21x.fsf@sejong.aot.lge.com> <1411642198.4768.30.camel@hornet>
+	 <8738bekith.fsf@sejong.aot.lge.com>  <1411729103.3852.19.camel@hornet>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-bounces@lists.openrisc.net>
-In-Reply-To: <1411739655-4715-1-git-send-email-linux@roeck-us.net>
-List-Unsubscribe: <http://lists.openrisc.net/options/linux>,
-	<mailto:linux-request@lists.openrisc.net?subject=unsubscribe>
-List-Archive: <http://lists.openrisc.net/pipermail/linux>
-List-Post: <mailto:linux@lists.openrisc.net>
-List-Help: <mailto:linux-request@lists.openrisc.net?subject=help>
-List-Subscribe: <http://lists.openrisc.net/listinfo/linux>,
-	<mailto:linux-request@lists.openrisc.net?subject=subscribe>
-Sender: linux-bounces@lists.openrisc.net
-Errors-To: linux-bounces@lists.openrisc.net
-To: Guenter Roeck <linux@roeck-us.net>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Eric Paris <eparis@redhat.com>, linux@lists.openrisc.net
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1411729103.3852.19.camel@hornet>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pawel Moll <pawel.moll@arm.com>
+Cc: Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/26/2014 03:54 PM, Guenter Roeck wrote:
-> openrisc:defconfig fails to build in next-20140926 with the following error.
->
-> In file included from arch/openrisc/kernel/signal.c:31:0:
-> ./arch/openrisc/include/asm/syscall.h: In function 'syscall_get_arch':
-> ./arch/openrisc/include/asm/syscall.h:77:9: error: 'EM_OPENRISC' undeclared
->
-> Fix by moving EM_OPENRISC and EM_OR32 to include/uapi/linux/elf-em.h.
->
-> Fixes: ce5d112827e5 ("ARCH: AUDIT: implement syscall_get_arch for all arches")
-> Cc: Eric Paris <eparis@redhat.com>
-> Cc: Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
-> Cc: Geert Uytterhoeven <geert@linux-m68k.org>
-> Cc: Stephen Rothwell <sfr@canb.auug.org.au>
-> Signed-off-by: Guenter Roeck <linux@roeck-us.net>
-> ---
-> Based Stefan's note. No idea if it is the correct fix.
->
->  arch/openrisc/include/uapi/asm/elf.h | 4 +---
->  include/uapi/linux/elf-em.h          | 2 ++
->  2 files changed, 3 insertions(+), 3 deletions(-)
->
-> diff --git a/arch/openrisc/include/uapi/asm/elf.h b/arch/openrisc/include/uapi/asm/elf.h
-> index f02ea58..e75fdce 100644
-> --- a/arch/openrisc/include/uapi/asm/elf.h
-> +++ b/arch/openrisc/include/uapi/asm/elf.h
-> @@ -55,9 +55,7 @@ typedef elf_greg_t elf_gregset_t[ELF_NGREG];
->  /* A placeholder; OR32 does not have fp support yes, so no fp regs for now.  */
->  typedef unsigned long elf_fpregset_t;
->  
-> -/* This should be moved to include/linux/elf.h */
-> -#define EM_OR32         0x8472
-> -#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded processor */
-> +/* EM_OPENRISC and EM_OR32 defined in linux/elf-em.h	*/
->  
->  /*
->   * These are used to set parameters in the core dumps.
-> diff --git a/include/uapi/linux/elf-em.h b/include/uapi/linux/elf-em.h
-> index 01529bd..c5d3948 100644
-> --- a/include/uapi/linux/elf-em.h
-> +++ b/include/uapi/linux/elf-em.h
-> @@ -32,11 +32,13 @@
->  #define EM_V850		87	/* NEC v850 */
->  #define EM_M32R		88	/* Renesas M32R */
->  #define EM_MN10300	89	/* Panasonic/MEI MN10300, AM33 */
-> +#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded processor */
->  #define EM_BLACKFIN     106     /* ADI Blackfin Processor */
->  #define EM_TI_C6000	140	/* TI C6X DSPs */
->  #define EM_AARCH64	183	/* ARM 64 bit */
->  #define EM_FRV		0x5441	/* Fujitsu FR-V */
->  #define EM_AVR32	0x18ad	/* Atmel AVR32 */
-> +#define EM_OR32         0x8472	/* OpenRISC, alternate */
-Have these codes hit upstream binutils yet?  Did they both go upstream
-of only one of them?  Is there any chance they are going to change
-again?  I think that's the reason these have been lingering in
-arch/openrisc instead of the generic header.
+2014-09-26 (=EA=B8=88), 11:58 +0100, Pawel Moll:
+> On Fri, 2014-09-26 at 07:16 +0100, Namhyung Kim wrote:
+> > > It would be doable, I guess, but what
+> > > if someone *wants* to have sched clock as the timestamps source (=
+because
+> > > it's cheap) but still be able to correlate them with userspace? I=
+n this
+> > > case two separate timestamps are required to do the approximation=
+=2E
+> >=20
+> > But by collecting two timestamps, you'll loose the win of the first
+> > timestamp, no?
+>=20
+> But I can ask for both timestamps only being collected on "low
+> bandwidth" events, in particular context switches and/or periodic (eg=
+=2E
+> 10ms hrtimer) software events.
+>=20
+> Then I have loads of normal normal samples, timestamped with sched cl=
+ock
+> only, and every now and then one with both timestamps which then I ca=
+n
+> use for time correlation. The whole point is that the frequency of su=
+ch
+> "synchronisation" event can be much (much!) lower than of the normal
+> samples, but it still allows pretty good approximation (I was getting
+> accuracy of ~1 microsecond and better with sched_switch trace event
+> marked with additional raw monotonic timestamp).
 
-/Jonas
->  
->  /*
->   * This is an interim value that we will use until the committee comes
+Okay.  But in that case wouldn't it be enough to use just a single
+timestamp for each event - sched_clock for cpu-cycles and monotonic raw
+for sched_switch?
+
+
+>=20
+> Pawel
+>=20
+> PS. Have you sent a couple of the messages via some kind of gmane's
+> proxy? All the mail addresses got rather messed up...
+>=20
+
+Yes, I use gnus to communicate with lkml, but it seems it messed up mai=
+l
+addresses if it contains some list (like linux-api ?).  Sorry about
+that.
+
+Thanks,
+Namhyung
