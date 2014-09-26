@@ -1,29 +1,40 @@
 From: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
 Subject: Re: [PATCH v2] next: openrisc: Fix build
-Date: Fri, 26 Sep 2014 11:06:47 -0700
-Message-ID: <20140926180647.GA8498@roeck-us.net>
+Date: Fri, 26 Sep 2014 11:08:13 -0700
+Message-ID: <20140926180813.GA19291@roeck-us.net>
 References: <1411747539-28308-1-git-send-email-linux@roeck-us.net>
- <5425A7B5.10209@southpole.se>
+ <1411753981.2739.16.camel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5425A7B5.10209-A9uVI2HLR7kOP4wsBPIw7w@public.gmane.org>
+In-Reply-To: <1411753981.2739.16.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jonas Bonn <jonas-A9uVI2HLR7kOP4wsBPIw7w@public.gmane.org>
-Cc: linux-ZwoEplunGu2h2975yA52AaxOck334EZe@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-next-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stefan Kristiansson <stefan.kristiansson-MbMCFXIvDHJFcC0YU169RA@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
+To: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Jonas Bonn <jonas-A9uVI2HLR7kOP4wsBPIw7w@public.gmane.org>, linux-73nT9ZVIoz3k1uMJSBkQmQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-next-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Stefan Kristiansson <stefan.kristiansson-MbMCFXIvDHJFcC0YU169RA@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 26, 2014 at 07:51:49PM +0200, Jonas Bonn wrote:
-> On 09/26/2014 06:05 PM, Guenter Roeck wrote:
+On Fri, Sep 26, 2014 at 01:53:01PM -0400, Eric Paris wrote:
+> Would you like me to carry this in the audit tree, since I'm the one who
+> broke it?
+> 
+Hi Eric,
+
+guess you are asking Jonas, but it would make sense to me.
+
+Guenter
+
+> -Eric
+> 
+> On Fri, 2014-09-26 at 09:05 -0700, Guenter Roeck wrote:
 > > openrisc:defconfig fails to build in next-20140926 with the following error.
-> >
+> > 
 > > In file included from arch/openrisc/kernel/signal.c:31:0:
 > > ./arch/openrisc/include/asm/syscall.h: In function 'syscall_get_arch':
 > > ./arch/openrisc/include/asm/syscall.h:77:9: error: 'EM_OPENRISC' undeclared
-> >
+> > 
 > > Fix by moving EM_OPENRISC to include/uapi/linux/elf-em.h.
-> >
+> > 
 > > Fixes: ce5d112827e5 ("ARCH: AUDIT: implement syscall_get_arch for all arches")
 > > Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 > > Cc: Stefan Kristiansson <stefan.kristiansson-MbMCFXIvDHJFcC0YU169RA@public.gmane.org>
@@ -32,33 +43,46 @@ On Fri, Sep 26, 2014 at 07:51:49PM +0200, Jonas Bonn wrote:
 > > Signed-off-by: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
 > > ---
 > > v2: Only move EM_OPENRISC.
-> >
+> > 
 > > Another possible solution for the problem would be to include asm/elf.h
 > > in arch/openrisc/kernel/signal.c. I had actually submitted a patch with
 > > that fix back in August (maybe that is where I remembered the problem from).
 > > Wonder what happened with that patch.
-> >
+> > 
 > > Would it make sense to drop EM_OR32 and replace it with EM_OPENRISC where
 > > it is used ? binutils seems to suggest that EM_OPENRISC is the "official"
 > > definition.
+> > 
+> >  arch/openrisc/include/uapi/asm/elf.h | 3 +--
+> >  include/uapi/linux/elf-em.h          | 1 +
+> >  2 files changed, 2 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/arch/openrisc/include/uapi/asm/elf.h b/arch/openrisc/include/uapi/asm/elf.h
+> > index f02ea58..8884276 100644
+> > --- a/arch/openrisc/include/uapi/asm/elf.h
+> > +++ b/arch/openrisc/include/uapi/asm/elf.h
+> > @@ -55,9 +55,8 @@ typedef elf_greg_t elf_gregset_t[ELF_NGREG];
+> >  /* A placeholder; OR32 does not have fp support yes, so no fp regs for now.  */
+> >  typedef unsigned long elf_fpregset_t;
+> >  
+> > -/* This should be moved to include/linux/elf.h */
+> > +/* EM_OPENRISC is defined in linux/elf-em.h */
+> >  #define EM_OR32         0x8472
+> > -#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded processor */
+> >  
+> >  /*
+> >   * These are used to set parameters in the core dumps.
+> > diff --git a/include/uapi/linux/elf-em.h b/include/uapi/linux/elf-em.h
+> > index 01529bd..aa90bc9 100644
+> > --- a/include/uapi/linux/elf-em.h
+> > +++ b/include/uapi/linux/elf-em.h
+> > @@ -32,6 +32,7 @@
+> >  #define EM_V850		87	/* NEC v850 */
+> >  #define EM_M32R		88	/* Renesas M32R */
+> >  #define EM_MN10300	89	/* Panasonic/MEI MN10300, AM33 */
+> > +#define EM_OPENRISC     92     /* OpenRISC 32-bit embedded processor */
+> >  #define EM_BLACKFIN     106     /* ADI Blackfin Processor */
+> >  #define EM_TI_C6000	140	/* TI C6X DSPs */
+> >  #define EM_AARCH64	183	/* ARM 64 bit */
 > 
-> Do we even use EM_OR32?  Will the kernel build with the old toolchain if
-> we drop it?  If yes, drop it altogether... I don't recall the details as
-> to why we kept that define around at all.  And really, why bother
-> supporting the old toolchain at all... it's been at least two or three
-> years since EM_OPENRISC was added, hopefully people have moved on.  If
-> users want to upgrade their kernel, they can update the toolchain, too,
-> at this point.
 > 
-EM_OR32 is used to define ELF_ARCH, which per its comment is used in core
-dumps. No idea if that is important/relevant. You tell me ;-).
-
-The kernel builds with both the old (or32) and new (or1k) toolchain after
-removing EM_OR32 and defining ELF_ARCH as EM_OPENRISC. I can not test the
-kernel built with the or32 toolchain, but qemu is happy with the image built
-using the or1k toolchain.
-
-I'll be happy to submit a patch to remove EM_OR32 if it is not needed anymore.
-
-Thanks,
-Guenter
