@@ -1,73 +1,82 @@
-From: Heinrich Schuchardt <xypron.glpk@gmx.de>
-Subject: Re: [PATCHv8 1/6] fanotify: enable close-on-exec on events' fd when
- requested in fanotify_init()
-Date: Sat, 27 Sep 2014 09:26:42 +0200
-Message-ID: <542666B2.9080700@gmx.de>
-References: <cover.1411562410.git.ydroneaud@opteya.com>	 <9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud@opteya.com>	 <542481B3.8070300@gmx.de> <1411721898.7778.18.camel@localhost.localdomain>
+From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 8/8] iio: Add ABI documentation for input current readings
+Date: Sat, 27 Sep 2014 11:23:03 +0100
+Message-ID: <54269007.9000709@kernel.org>
+References: <cover.1411396718.git.Adam.Thomson.Opensource@diasemi.com> <b578cdd53527bb71c271eefadd1ce1bac175b5a7.1411396719.git.Adam.Thomson.Opensource@diasemi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1411721898.7778.18.camel@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Yann Droneaud <ydroneaud@opteya.com>, Eric Paris <eparis@redhat.com>, Richard Guy Briggs <rgb@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, stable@vger.kernel.org, linux-api@vger.kernel.org, Jan Kara <jack@suse.cz>, Lino Sanfilippo <LinoSanfilippo@gmx.de>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <b578cdd53527bb71c271eefadd1ce1bac175b5a7.1411396719.git.Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Adam Thomson <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, support.opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Andrew,
+On 23/09/14 11:53, Adam Thomson wrote:
+> Add information on in_current related readings.
+> 
+> Signed-off-by: Adam Thomson <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
+This crossed with a similar patch also adding some docs for current channels.
+That just missed this cycle anyway so I'll probably just merge this in as
+an extension of that patch when we are happy with the rest of the series.
+That patch covers the raw attribute but doesn't add the other entries..
+(in the togreg branch of iio.git)
 
-please, add the patch described in
-https://lkml.org/lkml/2014/9/24/967
-to the MM tree.
-
-I have tested kernel 3.17.0-rc6 with and without the patch and it fixes=
-=20
-the described error.
-As the patch is valid independent of the rest of the patch set, there i=
-s=20
-no reason to wait for the rest to be merged.
-
-You may add
-Reviewed by: Heinrich Schuchardt <xypron.glpk@gmx.de>
-
-Best regards
-
-Heinrich Schuchardt
-
-
-
-
-On 26.09.2014 10:58, Yann Droneaud wrote:
-> Hi,
->
-> Le jeudi 25 septembre 2014 =C3=A0 22:57 +0200, Heinrich Schuchardt a =
-=C3=A9crit :
->> On 24.09.2014 15:11, Yann Droneaud wrote:
->>> According to commit 80af258867648 ('fanotify: groups can specify
->>> their f_flags for new fd'), file descriptors created as part of
->>> file access notification events inherit flags from the
->>> event_f_flags argument passed to syscall fanotify_init(2).
->>>
->>> So while it is legal for userspace to call fanotify_init() with
->>> O_CLOEXEC as part of its second argument, O_CLOEXEC is currently
->>> silently ignored.
->>>
->>> Indeed event_f_flags are only given to dentry_open(), which only
->>> seems to care about O_ACCMODE and O_PATH in do_dentry_open(),
->>> O_DIRECT in open_check_o_direct() and O_LARGEFILE in
->>> generic_file_open().
->>
->> I tested on kernel 3.17.0-rc5. I passed O_CLOEXEC in event_f_flags.
->> When I called fcnt(event_metadata->fd, F_GETFD) it did not return
->> FD_CLOEXEC. So I can confirm your observation that O_CLOEXEC is not
->> working as expected.
->>
->> I found this definition
->> #define get_unused_fd() get_unused_fd_flags(0)
->>
->> So essentially when get_unused_fd() is called for a fanotify event
->> O_CLOEXEC is ignored.
->>
->> This is what your patch fixes.
->>
+Jonathan
+> ---
+>  Documentation/ABI/testing/sysfs-bus-iio | 17 +++++++++++++++++
+>  1 file changed, 17 insertions(+)
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
+> index d760b02..37cd4d4 100644
+> --- a/Documentation/ABI/testing/sysfs-bus-iio
+> +++ b/Documentation/ABI/testing/sysfs-bus-iio
+> @@ -92,6 +92,18 @@ Description:
+>  		is required is a consistent labeling.  Units after application
+>  		of scale and offset are millivolts.
+> 
+> +What:		/sys/bus/iio/devices/iio:deviceX/in_currentY_raw
+> +What:		/sys/bus/iio/devices/iio:deviceX/in_currentY_supply_raw
+> +KernelVersion:	3.17
+> +Contact:	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> +Description:
+> +		Raw (unscaled no bias removal etc.) current measurement from
+> +		channel Y. In special cases where the channel does not
+> +		correspond to externally available input one of the named
+> +		versions may be used. The number must always be specified and
+> +		unique to allow association with event codes. Units after
+> +		application of scale and offset are milliamps.
+> +
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_capacitanceY_raw
+>  KernelVersion:	3.2
+>  Contact:	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> @@ -227,6 +239,8 @@ What:		/sys/bus/iio/devices/iio:deviceX/in_accel_y_offset
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_accel_z_offset
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_voltageY_offset
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_voltage_offset
+> +What:		/sys/bus/iio/devices/iio:deviceX/in_currentY_offset
+> +What:		/sys/bus/iio/devices/iio:deviceX/in_current_offset
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_tempY_offset
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_temp_offset
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_pressureY_offset
+> @@ -249,8 +263,11 @@ Description:
+>  		to the _raw output.
+> 
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_voltageY_scale
+> +What:		/sys/bus/iio/devices/iio:deviceX/in_currentY_scale
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_voltageY_supply_scale
+> +What:		/sys/bus/iio/devices/iio:deviceX/in_currentY_supply_scale
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_voltage_scale
+> +What:		/sys/bus/iio/devices/iio:deviceX/in_current_scale
+>  What:		/sys/bus/iio/devices/iio:deviceX/out_voltageY_scale
+>  What:		/sys/bus/iio/devices/iio:deviceX/out_altvoltageY_scale
+>  What:		/sys/bus/iio/devices/iio:deviceX/in_accel_scale
+> --
+> 1.9.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-iio" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
