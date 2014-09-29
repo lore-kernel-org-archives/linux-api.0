@@ -1,134 +1,58 @@
-From: Heiko Schocher <hs@denx.de>
-Subject: Re: [PATCH] usb: gadget: f_rndis: fix usb_interface_descriptor for
- rndis
-Date: Mon, 29 Sep 2014 14:11:36 +0200
-Message-ID: <54294C78.6050006@denx.de>
-References: <1411541339-32400-1-git-send-email-hs@denx.de> <5422B83A.8030406@gmail.com> <5422C33F.400@denx.de> <5422D39D.70006@gmail.com>
-Reply-To: hs@denx.de
+From: Pawel Moll <pawel.moll@arm.com>
+Subject: Re: [PATCH v2 1/2] perf: Add sampling of the raw monotonic clock
+Date: Mon, 29 Sep 2014 15:47:36 +0100
+Message-ID: <1412002056.3817.10.camel@hornet>
+References: <1411491787-25938-1-git-send-email-pawel.moll@arm.com>
+	 <1411491787-25938-2-git-send-email-pawel.moll@arm.com>
+	 <87sijhk21x.fsf@sejong.aot.lge.com> <1411642198.4768.30.camel@hornet>
+	 <8738bekith.fsf@sejong.aot.lge.com>  <1411729103.3852.19.camel@hornet>
+	 <1411742306.1669.6.camel@leonhard> <1411743959.3852.45.camel@hornet>
+	 <5425BD94.4030006@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <5422D39D.70006@gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Lars Melin <larsm17@gmail.com>
-Cc: linux-usb@vger.kernel.org, Felipe Balbi <balbi@ti.com>, Greg Kroah-Hartman <gregkh@suse.de>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, Andrzej Pietrasiewicz <andrzej.p@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, Kyungmin Park <kyungmin.park@samsung.com>, Dan Carpenter <dan.carpenter@oracle.com>, Macpaul Lin <macpaul@gmail.com>, "Meier, Roger" <r.meier@siemens.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5425BD94.4030006@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Ahern <dsahern@gmail.com>
+Cc: Namhyung Kim <namhyung@kernel.org>, Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Lars,
+On Fri, 2014-09-26 at 20:25 +0100, David Ahern wrote:
+> On 9/26/14, 9:05 AM, Pawel Moll wrote:
+> > To do the correlation you need both timestamps to be "taken"
+> > simultaneously:
+> >
+> >          perf event     user event
+> >         -----O--------------+-------------O------> t_mono
+> >              :              |             :
+> >              :              V             :
+> >         -----O----------------------------O------> t_perf
+> >
+> > Of course it's not possible get both values literally at the same time,
+> > but placing them in a atomic context a couple of instructions from each
+> > other still gives pretty good results. The larger this distance is, the
+> 
+> An early patchset on this topic added the realtime clock as an event and 
+> an ioctl was used to push a sample into the event stream. 
 
-sorry for my late answer ...
+Yeah, I remember. If I remember correctly correctly the pushback was on
+a custom event type, right?
 
-Am 24.09.2014 16:22, schrieb Lars Melin:
-> On 2014-09-24 20:12, Heiko Schocher wrote:
->> Hello Lars,
->>
->> Am 24.09.2014 14:25, schrieb Lars Melin:
->>> On 2014-09-24 13:48, Heiko Schocher wrote:
->>>> use the values for RNDIS over Ethernet as defined in
->>>> http://www.usb.org/developers/defined_class
->>>> (search for RDNIS):
->>>>
->>>> - baseclass: 0xef (miscellaneous)
->>>> - subclass: 0x04
->>>> - protocol: 0x01
->>>>
->>> That is usb class, it is not the same thing as communication device class.
->>>> --- a/include/uapi/linux/usb/cdc.h
->>>> +++ b/include/uapi/linux/usb/cdc.h
->>>> @@ -12,6 +12,7 @@
->>>> #include <linux/types.h>
->>>> #define USB_CDC_SUBCLASS_ACM 0x02
->>>> +#define USB_CDC_SUBCLASS_RNDIS 0x04
->>> No, no, no.
->>> There is no CDC_SUBCLASS_RNDIS and you can not define one over an already used cdc subclass number, 0x04 is Multi-Channel Control Model
->>
->> Ah, ok, so I have to define this values in a new header file, as there
->> is no current file for the USB_CLASS_MISC defines? Or is there a proper
->> place for them?
->>
->> BTW: where do I find the "cdc subclass number, 0x04 is Multi-Channel
->> Control Model" define?
->>
->> bye,
->> Heiko
->
-> You can still find the original specification usbcdc11.pdf on the net if you google for it, it has been pulled from usb.org where you could download it until a few years ago.
-> It is old but covers a lot of what you need to know.
+Generally speaking I don't mind any solution that we'll get us to the
+place both you and I want to be (just being able to time stamp some
+performance data in userspace, how difficult can this be! ;-) but I like
+the flexibility of an extra sample - one can pick and mix events and
+samples at one's leisure.
 
-Hmm.. maybe I am to dummy for finding this docment...
+> In that case 
+> you have wall clock and perf-clock samples taken in the same kernel 
+> context and about as close together as you can get.
 
-http://www.usb.org/results?q=usbcdc11.pdf&submit=Search
-
-does not find this document ... could you send me a direct link?
-
-I found with the above search:
-
-http://www.usb.org/developers/defined_class
-
-and this site, exactly describes the values for RNDIS over ethernet,
-as my patch changes [1]
-
-> Linux has afaik only the cdc.h definition file, everything else is coded by class/subclass in respectively drivers when needed.
-
-why not in header files? I thought, magical values are not welcome
-in source code ...
-
-As for the is_rndis() function case, this function is defined in
-2 places:
-
-- drivers/net/usb/cdc_ether.c
-- drivers/usb/core/generic.c
-
-Has this a special reason? This seems suboptimal to me ...
-
-> 02/02/ff or e0/01/03 are the most common interface attribute for rndis, both of them together with a data interface with attributes 0a/00/00.
-
-I must admit, I am not a USB nor a RNDIS expert ...
-
-> Please check the whitelisting in drivers/net/usb/rndis_host.c and also blacklistings in other net drivers under the same path, it should give you an idea how to bind an interface to a specific driver by interface attributes and/or usb vid:pid.
-> You should be able to do the same for your particular device.
-
-Hmm.. I did not understand you here ... so, one step back:
-
-I got from a customer this patch (in a similiar version) and
-he did tests with [3] and saw, that a board which runs linux,
-is seen in [3] with the values [2] ... so he changed the
-values in drivers/usb/gadget/function/f_rndis.c to the
-values [1], which are documented in [4] and with them
-the test [3] is happy ... and the file
-"Documentation/usb/linux.inf" is not longer needed on the
-windows pc!
-
-So he (and at the end I too) thought, that this is the proper
-way to make [3] happy ... (maybe [3] is incorrect ? )
-
-Is current ML code correct? And if yes, why?
-
-If the values [2] in current ML linux are correct,
-could you say me, where they are documented?
-
-(and sorry for my stupid questions ...)
+Yep, that's what I was saying - we can't quite get two timestamps at the
+*same*, but getting them within a single atomic block of instructions
+gives reasonable accuracy.
 
 Thanks!
 
-bye,
-Heiko
-
-[1] values which my patch sets for RNDIS over ethernet
-- baseclass: 0xef (miscellaneous)
-- subclass: 0x04
-- protocol: 0x01
-
-[2] currently used values for RNDIS over ethernet
-- baseclass: 0x02 (USB_CLASS_COMM)
-- subclass: 0x02
-- protocol: 0xff
-
-[3] "USB Compliance test suite which runs Windows", see:
-http://www.usb.org/developers/tools/usb20_tools/#usb20cv
-
-[4] http://www.usb.org/developers/defined_class
--- 
-DENX Software Engineering GmbH,     MD: Wolfgang Denk & Detlev Zundel
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Pawel
