@@ -1,141 +1,146 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCHv8.1] fanotify: enable close-on-exec on events' fd when
- requested in fanotify_init()
-Date: Mon, 29 Sep 2014 13:50:23 +0200
-Message-ID: <20140929115023.GB6328@quack.suse.cz>
-References: <cover.1411562410.git.ydroneaud@opteya.com>
- <9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud@opteya.com>
- <542481B3.8070300@gmx.de>
- <1411721898.7778.18.camel@localhost.localdomain>
- <542666B2.9080700@gmx.de>
- <1411980555-10818-1-git-send-email-ydroneaud@opteya.com>
+From: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
+Date: Mon, 29 Sep 2014 14:06:38 +0200
+Message-ID: <54294B4E.70501@6wind.com>
+References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>	<87ppei45ig.fsf@x220.int.ebiederm.org>	<CALCETrX5e0cp4QFCv1eAqR1hjoROU9Rh=cRos9U35DaR-py3Eg@mail.gmail.com> <87y4t61a6v.fsf@x220.int.ebiederm.org>
+Reply-To: nicolas.dichtel@6wind.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1411980555-10818-1-git-send-email-ydroneaud@opteya.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Yann Droneaud <ydroneaud@opteya.com>
-Cc: Heinrich Schuchardt <xypron.glpk@gmx.de>, Andrew Morton <akpm@linux-foundation.org>, Eric Paris <eparis@redhat.com>, Richard Guy Briggs <rgb@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, stable@vger.kernel.org, linux-api@vger.kernel.org, Jan Kara <jack@suse.cz>, Lino Sanfilippo <LinoSanfilippo@gmx.de>, Valdis Kletnieks <Valdis.Kletnieks@vt.edu>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87y4t61a6v.fsf@x220.int.ebiederm.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: Network Development <netdev@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "David S. Miller" <davem@davemloft.net>, Stephen Hemminger <stephen@networkplumber.org>, Andrew Morton <akpm@linux-foundation.org>, Cong Wang <cwang@twopensource.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 29-09-14 10:49:15, Yann Droneaud wrote:
-> According to commit 80af258867648 ('fanotify: groups can specify
-> their f_flags for new fd'), file descriptors created as part of
-> file access notification events inherit flags from the
-> event_f_flags argument passed to syscall fanotify_init(2).
-> 
-> So while it is legal for userspace to call fanotify_init() with
-> O_CLOEXEC as part of its second argument, O_CLOEXEC is currently
-> silently ignored.
-> 
-> Indeed event_f_flags are only given to dentry_open(), which only
-> seems to care about O_ACCMODE and O_PATH in do_dentry_open(),
-> O_DIRECT in open_check_o_direct() and O_LARGEFILE in
-> generic_file_open().
-> 
-> But it seems logical to set close-on-exec flag on the file
-> descriptor if userspace is allowed to request it with O_CLOEXEC.
-> 
-> In fact, according to some lookup on http://codesearch.debian.net/
-> and various search engine, there's already some userspace code
-> requesting it:
-> 
-> - in systemd's readahead[2]:
-> 
->     fanotify_fd = fanotify_init(FAN_CLOEXEC|FAN_NONBLOCK, O_RDONLY|O_LARGEFILE|O_CLOEXEC|O_NOATIME);
-> 
-> - in clsync[3]:
-> 
->     #define FANOTIFY_EVFLAGS (O_LARGEFILE|O_RDONLY|O_CLOEXEC)
-> 
->     int fanotify_d = fanotify_init(FANOTIFY_FLAGS, FANOTIFY_EVFLAGS);
-> 
-> - in examples [4] from "Filesystem monitoring in the Linux
->   kernel" article[5] by Aleksander Morgado:
-> 
->     if ((fanotify_fd = fanotify_init (FAN_CLOEXEC,
->                                       O_RDONLY | O_CLOEXEC | O_LARGEFILE)) < 0)
-> 
-> Lookup also returned some wrong usage of the syscall:
-> 
-> - in Gonk HAL from Mozilla Firefox OS sources[6]:
-> 
->     mFd = fanotify_init(FAN_CLASS_NOTIF, FAN_CLOEXEC);
-> 
-> Adding support for O_CLOEXEC in fanotify_init() won't magically
-> enable it for Gonk since FAN_CLOEXEC is defined as 0x1, which
-> is likely equal to O_WRONLY when used in open flag context. In
-> the other hand, it won't hurt it either.
-> 
-> So this patch replaces call to macro get_unused_fd() by a call
-> to function get_unused_fd_flags() with event_f_flags value as
-> argument. This way O_CLOEXEC flag in the second argument of
-> fanotify_init(2) syscall is interpreted so that close-on-exec
-> get enabled when requested.
-> 
-> [1] http://blog.ffwll.ch/2013/11/botching-up-ioctls.html
-> [2] http://cgit.freedesktop.org/systemd/systemd/tree/src/readahead/readahead-collect.c?id=v208#n294
-> [3] https://github.com/xaionaro/clsync/blob/v0.2.1/sync.c#L1631
->     https://github.com/xaionaro/clsync/blob/v0.2.1/configuration.h#L38
-> [4] http://www.lanedo.com/~aleksander/fanotify/fanotify-example.c
-> [5] http://www.lanedo.com/2013/filesystem-monitoring-linux-kernel/
-> [6] http://hg.mozilla.org/mozilla-central/file/325c74addeba/hal/gonk/GonkDiskSpaceWatcher.cpp#l167
-> 
-> Link: http://lkml.kernel.org/r/cover.1394532336.git.ydroneaud@opteya.com
-> Cc: Heinrich Schuchardt <xypron.glpk@gmx.de>
-> Cc: Jan Kara <jack@suse.cz>
-> Cc: Valdis Kletnieks <Valdis.Kletnieks@vt.edu>
-> Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>
-> Cc: Lino Sanfilippo <LinoSanfilippo@gmx.de>
-> Cc: Richard Guy Briggs <rgb@redhat.com>
-> Cc: Eric Paris <eparis@redhat.com>
-> Cc: Al Viro <viro@zeniv.linux.org.uk>
-> Cc: Andrew Morton <akpm@linux-foundation.org>
-> Cc: stable@vger.kernel.org
-> Cc: linux-api@vger.kernel.org
-> Reviewed by: Heinrich Schuchardt <xypron.glpk@gmx.de>
-> Signed-off-by: Yann Droneaud <ydroneaud@opteya.com>
-  The patch looks good. You can add:
-Reviewed-by: Jan Kara <jack@suse.cz>
+Le 26/09/2014 20:57, Eric W. Biederman a =C3=A9crit :
+> Andy Lutomirski <luto@amacapital.net> writes:
+>
+>> On Fri, Sep 26, 2014 at 11:10 AM, Eric W. Biederman
+>> <ebiederm@xmission.com> wrote:
+>>> Nicolas Dichtel <nicolas.dichtel@6wind.com> writes:
+>>>
+>>>> The goal of this serie is to be able to multicast netlink messages=
+ with an
+>>>> attribute that identify a peer netns.
+>>>> This is needed by the userland to interpret some informations cont=
+ained in
+>>>> netlink messages (like IFLA_LINK value, but also some other attrib=
+utes in case
+>>>> of x-netns netdevice (see also
+>>>> http://thread.gmane.org/gmane.linux.network/315933/focus=3D316064 =
+and
+>>>> http://thread.gmane.org/gmane.linux.kernel.containers/28301/focus=3D=
+4239)).
+>>>
+>>> I want say that the problem addressed by patch 3/5 of this series i=
+s a
+>>> fundamentally valid problem.  We have network objects spanning netw=
+ork
+>>> namespaces and it would be very nice to be able to talk about them =
+in
+>>> netlink, and file descriptors are too local and argubably too heavy
+>>> weight for netlink quires and especially for netlink broadcast mess=
+ages.
+>>>
+>>> Furthermore the concept of ineternal concept of peernet2id seems va=
+lid.
+>>>
+>>> However what you do not address is a way for CRIU (aka process
+>>> migration) to be able to restore these ids after process migration.
+>>> Going farther it looks like you are actively breaking process migra=
+tion
+>>> at this time, making this set of patches a no-go.
+Ok, I will look more deeply into CRIU.
 
-								Honza
+>>>
+>>> When adding a new form of namespace id CRIU patches are just about
+>>> as necessary as iproute patches.
+Noted.
 
-> ---
-> Hi Andrew and Henrich,
-> 
-> Please find an updated patch with a commit message fixed regarding
-> the obsolote comments on code which is now updated, thanks to
-> Heinrich's patch.
-> 
-> Changes from v8:
-> - fixed commit message
-> - added Reviewed-by:
-> 
-> Regards.
-> 
-> Yann Droneaud,
-> OPTEYA
-> 
->  fs/notify/fanotify/fanotify_user.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
-> index b13992a41bd9..c991616acca9 100644
-> --- a/fs/notify/fanotify/fanotify_user.c
-> +++ b/fs/notify/fanotify/fanotify_user.c
-> @@ -78,7 +78,7 @@ static int create_fd(struct fsnotify_group *group,
->  
->  	pr_debug("%s: group=%p event=%p\n", __func__, group, event);
->  
-> -	client_fd = get_unused_fd();
-> +	client_fd = get_unused_fd_flags(group->fanotify_data.f_flags);
->  	if (client_fd < 0)
->  		return client_fd;
->  
-> -- 
-> 1.9.3
-> 
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+>>>
+>>>> Ids are stored in the parent user namespace. These ids are valid o=
+nly inside
+>>>> this user namespace. The user can retrieve these ids via a new net=
+link messages,
+>>>> but only if peer netns are in the same user namespace.
+>>>
+>>> That does not describe what you have actually implemented in the
+>>> patches.
+>>>
+>>> I see two ways to go with this.
+>>>
+>>> - A per network namespace table to that you can store ids for ``pee=
+r''
+>>>    network namespaces.  The table would need to be populated manual=
+ly by
+>>>    the likes of ip netns add.
+>>>
+>>>    That flips the order of assignment and makes this idea solid.
+I have a preference for this solution, because it allows to have a full
+broadcast messages. When you have a lot of network interfaces (> 10k),
+it saves a lot of time to avoid another request to get all informations=
+=2E
+
+>>>
+>>>    Unfortunately in the case of a fully referencing mesh of N netwo=
+rk
+>>>    namespaces such a mesh winds up taking O(N^2) space, which seems
+>>>    undesirable.
+Memory consumption vs performances ;-)
+In fact, when you have a lot of netns, you already should have some mem=
+ory
+available (at least N lo interfaces + N interfaces (veth or a x-netns
+interface)). I'm not convinced that this is really an obstacle.
+
+>>>
+>>> - Add a netlink attribute that says this network element is in a pe=
+er
+>>>    network namespace.
+>>>
+>>>    Add a unicast query message that let's you ask if the remote
+>>>    end of a tunnel is in a network namespace specified by file
+>>>    descriptor.
+>>>
+>>> I personally lean towards the second version as it is fundamentally
+>>> simpler, and generally scales better, and the visibility controls a=
+re
+>>> the existing visibility controls.  The only downside is it requires
+>>> a query after receiving a netlink broadcast message for the times t=
+hat
+>>> we care.
+>>
+>> The downside of that approach, and all the similar kcmp stuff, is th=
+at
+>> it scales poorly for applications using it.  This is probably not th=
+e
+>> end of the world, but it's not ideal.
+>
+> Agreed, the efficiency is not ideal and there is plenty of room for
+> optimization.  We could certainly adopt some of kcmps ordering
+> infrastructure to make it suck less, or even potentially work out how
+> to return a file descriptor to the network namespace in question.
+>
+> The key insight of my second proposal is that we can get out of the
+> broadcast message business, and only care about the remote namespace =
+for
+> unicast messages.  Putting the work in an infrequently used slow path
+> instead of a comparitively common path gives us much more freedom in
+> the implementation.
+I think it's better to have a full netlink messages, instead a partial =
+one.
+There is already a lot of attributes added for each rtnl interface mess=
+ages to
+be sure to describe all parameters of these interfaces.
+And if the user don't care about ids (user has not set any id with ipro=
+ute2),
+we can just add the same attribute with id 0 (let's say it's a reserved=
+ id) to
+indicate that the link part of this interface is in another netns.
+
+The great benefit of your first proposal is that the ids are set by the
+userspace and thus it allows a high flexibility.
+
+Would you accept a patch that implements this first solution?
