@@ -1,476 +1,789 @@
-From: Andrzej Hajda <a.hajda@samsung.com>
-Subject: Re: [PATCH v9 1/3] drm: rockchip: Add basic drm driver
-Date: Tue, 30 Sep 2014 15:31:30 +0200
-Message-ID: <542AB0B2.6000207@samsung.com>
-References: <1412081870-27535-1-git-send-email-mark.yao@rock-chips.com>
- <1412082181-27703-1-git-send-email-mark.yao@rock-chips.com>
+From: Sudeep Holla <sudeep.holla@arm.com>
+Subject: [PATCH v5 04/11] drivers: base: support cpu cache information
+ interface to userspace via sysfs
+Date: Tue, 30 Sep 2014 14:48:25 +0100
+Message-ID: <1412084912-2767-5-git-send-email-sudeep.holla@arm.com>
+References: <1412084912-2767-1-git-send-email-sudeep.holla@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-reply-to: <1412082181-27703-1-git-send-email-mark.yao@rock-chips.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mark Yao <mark.yao@rock-chips.com>, heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
-Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, xw@rock-chips.com
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <1412084912-2767-1-git-send-email-sudeep.holla@arm.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: linux-s390@vger.kernel.org, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, linux-ia64@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Sudeep Holla <sudeep.holla@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, x86@kernel.org, linux-api@vger.kernel.org, linux390@de.ibm.com, linuxppc-dev@lists.ozlabs.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Mark,
+This patch adds initial support for providing processor cache information
+to userspace through sysfs interface. This is based on already existing
+implementations(x86, ia64, s390 and powerpc) and hence the interface is
+intended to be fully compatible.
 
-On 09/30/2014 03:03 PM, Mark Yao wrote:
-> From: Mark yao <mark.yao@rock-chips.com>
-> 
-> This patch adds the basic structure of a DRM Driver for Rockchip Socs.
-> 
-> Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
-> Signed-off-by: Daniel Kurtz <djkurtz@chromium.org>
-> Acked-by: Daniel Vetter <daniel@ffwll.ch>
-> Reviewed-by: Rob Clark <robdclark@gmail.com>
-> ---
-> Changes in v2:
-> - use the component framework to defer main drm driver probe
->   until all VOP devices have been probed.
-> - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
->   master device and each vop device can shared the drm dma mapping.
-> - use drm_crtc_init_with_planes and drm_universal_plane_init.
-> - remove unnecessary middle layers.
-> - add cursor set, move funcs to rockchip drm crtc.
-> - use vop reset at first init
-> - reference framebuffer when used and unreference when swap out vop
-> 
-> Changes in v3:
-> - change "crtc->fb" to "crtc->primary-fb"
-> Adviced by Daniel Vetter
-> - init cursor plane with universal api, remove unnecessary cursor set,move 
-> 
-> Changes in v4:
-> Adviced by David Herrmann
-> - remove drm_platform_*() usage, use register drm device directly.
-> Adviced by Rob Clark
-> - remove special mmap ioctl, do userspace mmap with normal mmap() or mmap offset
-> 
-> Changes in v5:
-> Adviced by Arnd Bergmann
-> - doing DMA start with a 32-bit masks with dma_mask and dma_coherent_mark
-> - fix some incorrect dependencies.
-> Adviced by Boris BREZILLON
-> - fix some mistake and bugs. 
-> Adviced by Daniel Vetter
-> - drop all special ioctl and use generic kms ioctl instead.
-> Adviced by Rob Clark
-> - use unlocked api for drm_fb_helper_restore_fbdev_mode.
-> - remove unused rockchip_gem_prime_import_sg_table.
-> 
-> Changes in v6:
-> - set gem buffer pitch 64 bytes align, needed by mali gpu.
-> Adviced by Daniel Kurtz
-> - fix some mistake, bugs, remove unused define, more better code style etc. 
-> - use clk_prepare()/unprepare() at probe()/remove() and clk_enable()/disable()
->   at runtime instead of clk_prepare_enable().
-> - provide a help function from vop for encoder to do mode config, instead of
->   using drm_diaplay_mode private method.
-> - change vop mode_set timing to make it more safely. 
-> 
-> Changes in v7:
-> - fix memory leakage problem
-> 
-> Changes in v8:
-> - fix iommu crash when use dual crtc.
-> - use frame start interrupt for vsync instead of line flag interrupt,
-> because the win config take affect at frame start time, if we use ling flag
-> interrupt, the address check often failed.
-> Adviced by Daniel Kurtz
-> - fix some bugs, mistake, remove unused function
-> - keep clock and vop disabled when probe end
-> - use drm_plane_helper_check_update to check update_plane if vaild
-> 
-> Changes in v9:
-> - fix suspend and resume bug, make iommu attach and detach safely.
-> 
->  drivers/gpu/drm/Kconfig                       |    2 +
->  drivers/gpu/drm/Makefile                      |    1 +
->  drivers/gpu/drm/rockchip/Kconfig              |   17 +
->  drivers/gpu/drm/rockchip/Makefile             |    8 +
->  drivers/gpu/drm/rockchip/rockchip_drm_drv.c   |  509 +++++++++
->  drivers/gpu/drm/rockchip/rockchip_drm_drv.h   |   65 ++
->  drivers/gpu/drm/rockchip/rockchip_drm_fb.c    |  200 ++++
->  drivers/gpu/drm/rockchip/rockchip_drm_fb.h    |   28 +
->  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c |  209 ++++
->  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h |   20 +
->  drivers/gpu/drm/rockchip/rockchip_drm_gem.c   |  294 +++++
->  drivers/gpu/drm/rockchip/rockchip_drm_gem.h   |   54 +
->  drivers/gpu/drm/rockchip/rockchip_drm_vop.c   | 1423 +++++++++++++++++++++++++
->  drivers/gpu/drm/rockchip/rockchip_drm_vop.h   |  196 ++++
->  14 files changed, 3026 insertions(+)
->  create mode 100644 drivers/gpu/drm/rockchip/Kconfig
->  create mode 100644 drivers/gpu/drm/rockchip/Makefile
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.h
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.c
->  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.h
-> 
-> diff --git a/drivers/gpu/drm/Kconfig b/drivers/gpu/drm/Kconfig
-> index b066bb3..7c4c3c6 100644
-> --- a/drivers/gpu/drm/Kconfig
-> +++ b/drivers/gpu/drm/Kconfig
-> @@ -171,6 +171,8 @@ config DRM_SAVAGE
->  
->  source "drivers/gpu/drm/exynos/Kconfig"
->  
-> +source "drivers/gpu/drm/rockchip/Kconfig"
-> +
->  source "drivers/gpu/drm/vmwgfx/Kconfig"
->  
->  source "drivers/gpu/drm/gma500/Kconfig"
-> diff --git a/drivers/gpu/drm/Makefile b/drivers/gpu/drm/Makefile
-> index 4a55d59..d03387a 100644
-> --- a/drivers/gpu/drm/Makefile
-> +++ b/drivers/gpu/drm/Makefile
-> @@ -52,6 +52,7 @@ obj-$(CONFIG_DRM_VMWGFX)+= vmwgfx/
->  obj-$(CONFIG_DRM_VIA)	+=via/
->  obj-$(CONFIG_DRM_NOUVEAU) +=nouveau/
->  obj-$(CONFIG_DRM_EXYNOS) +=exynos/
-> +obj-$(CONFIG_DRM_ROCKCHIP) +=rockchip/
->  obj-$(CONFIG_DRM_GMA500) += gma500/
->  obj-$(CONFIG_DRM_UDL) += udl/
->  obj-$(CONFIG_DRM_AST) += ast/
-> diff --git a/drivers/gpu/drm/rockchip/Kconfig b/drivers/gpu/drm/rockchip/Kconfig
-> new file mode 100644
-> index 0000000..87255f7
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/Kconfig
-> @@ -0,0 +1,17 @@
-> +config DRM_ROCKCHIP
-> +	tristate "DRM Support for Rockchip"
-> +	depends on DRM && ROCKCHIP_IOMMU && ARM_DMA_USE_IOMMU && IOMMU_API
-> +	select DRM_KMS_HELPER
-> +	select DRM_KMS_FB_HELPER
-> +	select DRM_PANEL
-> +	select FB_CFB_FILLRECT
-> +	select FB_CFB_COPYAREA
-> +	select FB_CFB_IMAGEBLIT
-> +	select VT_HW_CONSOLE_BINDING if FRAMEBUFFER_CONSOLE
-> +	select VIDEOMODE_HELPERS
-> +	help
-> +	  Choose this option if you have a Rockchip soc chipset.
-> +	  This driver provides kernel mode setting and buffer
-> +	  management to userspace. This driver does not provides
-> +	  2D or 3D acceleration; acceleration is performed by other
-> +	  IP found on the SoC.
-> diff --git a/drivers/gpu/drm/rockchip/Makefile b/drivers/gpu/drm/rockchip/Makefile
-> new file mode 100644
-> index 0000000..b3a5193
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/Makefile
-> @@ -0,0 +1,8 @@
-> +#
-> +# Makefile for the drm device driver.  This driver provides support for the
-> +# Direct Rendering Infrastructure (DRI) in XFree86 4.1.0 and higher.
-> +
-> +rockchipdrm-y := rockchip_drm_drv.o rockchip_drm_fb.o rockchip_drm_fbdev.o \
-> +		rockchip_drm_gem.o rockchip_drm_vop.o
-> +
-> +obj-$(CONFIG_DRM_ROCKCHIP) += rockchipdrm.o
-> diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_drv.c b/drivers/gpu/drm/rockchip/rockchip_drm_drv.c
-> new file mode 100644
-> index 0000000..879b2e0
-> --- /dev/null
-> +++ b/drivers/gpu/drm/rockchip/rockchip_drm_drv.c
-> @@ -0,0 +1,509 @@
-> +/*
-> + * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
-> + * Author:Mark Yao <mark.yao@rock-chips.com>
-> + *
-> + * based on exynos_drm_drv.c
-> + *
-> + * This software is licensed under the terms of the GNU General Public
-> + * License version 2, as published by the Free Software Foundation, and
-> + * may be copied, distributed, and modified under those terms.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <asm/dma-iommu.h>
-> +
-> +#include <drm/drmP.h>
-> +#include <drm/drm_crtc_helper.h>
-> +#include <drm/drm_fb_helper.h>
-> +#include <linux/dma-mapping.h>
-> +#include <linux/pm_runtime.h>
-> +#include <linux/of_graph.h>
-> +#include <linux/component.h>
-> +
-> +#include "rockchip_drm_drv.h"
-> +#include "rockchip_drm_fb.h"
-> +#include "rockchip_drm_fbdev.h"
-> +#include "rockchip_drm_gem.h"
-> +
-> +#define DRIVER_NAME	"rockchip"
-> +#define DRIVER_DESC	"RockChip Soc DRM"
-> +#define DRIVER_DATE	"20140818"
-> +#define DRIVER_MAJOR	1
-> +#define DRIVER_MINOR	0
-> +
-> +/*
-> + * Attach a (component) device to the shared drm dma mapping from master drm
-> + * device.  This is used by the VOPs to map GEM buffers to a common DMA
-> + * mapping.
-> + */
-> +int rockchip_drm_dma_attach_device(struct drm_device *drm_dev,
-> +				   struct device *dev)
-> +{
-> +	struct dma_iommu_mapping *mapping = drm_dev->dev->archdata.mapping;
-> +	int ret;
-> +
-> +	ret = dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
-> +	if (ret)
-> +		return ret;
-> +
-> +	dma_set_max_seg_size(dev, DMA_BIT_MASK(32));
-> +
-> +	return arm_iommu_attach_device(dev, mapping);
-> +}
-> +
-> +void rockchip_drm_dma_detach_device(struct drm_device *drm_dev,
-> +				    struct device *dev)
-> +{
-> +	arm_iommu_detach_device(dev);
-> +}
-> +
-> +static int rockchip_drm_load(struct drm_device *drm_dev, unsigned long flags)
-> +{
-> +	struct rockchip_drm_private *private;
-> +	struct dma_iommu_mapping *mapping;
-> +	struct device *dev = drm_dev->dev;
-> +	int ret;
-> +
-> +	private = devm_kzalloc(drm_dev->dev, sizeof(*private), GFP_KERNEL);
-> +	if (!private)
-> +		return -ENOMEM;
-> +
-> +	drm_dev->dev_private = private;
-> +
-> +	drm_mode_config_init(drm_dev);
-> +
-> +	rockchip_drm_mode_config_init(drm_dev);
-> +
-> +	dev->dma_parms = devm_kzalloc(dev, sizeof(*dev->dma_parms),
-> +				      GFP_KERNEL);
-> +	if (!dev->dma_parms) {
-> +		ret = -ENOMEM;
-> +		goto err_config_cleanup;
-> +	}
-> +
-> +	/* TODO(djkurtz): fetch the mapping start/size from somewhere */
-> +	mapping = arm_iommu_create_mapping(&platform_bus_type, 0x00000000,
-> +					   SZ_2G);
-> +	if (IS_ERR(mapping)) {
-> +		ret = PTR_ERR(mapping);
-> +		goto err_config_cleanup;
-> +	}
-> +
-> +	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
-> +	if (ret)
-> +		goto err_release_mapping;
-> +
-> +	dma_set_max_seg_size(dev, DMA_BIT_MASK(32));
-> +
-> +	ret = arm_iommu_attach_device(dev, mapping);
-> +	if (ret)
-> +		goto err_release_mapping;
-> +
-> +	/* Try to bind all sub drivers. */
-> +	ret = component_bind_all(dev, drm_dev);
-> +	if (ret)
-> +		goto err_detach_device;
-> +
-> +	/* init kms poll for handling hpd */
-> +	drm_kms_helper_poll_init(drm_dev);
-> +
-> +	/*
-> +	 * enable drm irq mode.
-> +	 * - with irq_enabled = true, we can use the vblank feature.
-> +	 */
-> +	drm_dev->irq_enabled = true;
-> +
-> +	/*
-> +	 * with vblank_disable_allowed = true, vblank interrupt will be disabled
-> +	 * by drm timer once a current process gives up ownership of
-> +	 * vblank event.(after drm_vblank_put function is called)
-> +	 */
-> +	drm_dev->vblank_disable_allowed = true;
-> +
-> +	ret = drm_vblank_init(drm_dev, ROCKCHIP_MAX_CRTC);
-> +	if (ret)
-> +		goto err_kms_helper_poll_fini;
-> +
-> +	rockchip_drm_fbdev_init(drm_dev);
-> +
-> +	/* force connectors detection */
-> +	drm_helper_hpd_irq_event(drm_dev);
-> +
-> +	return 0;
-> +
-> +err_kms_helper_poll_fini:
-> +	drm_kms_helper_poll_fini(drm_dev);
-> +	component_unbind_all(dev, drm_dev);
-> +err_detach_device:
-> +	arm_iommu_detach_device(dev);
-> +err_release_mapping:
-> +	arm_iommu_release_mapping(dev->archdata.mapping);
-> +err_config_cleanup:
-> +	drm_mode_config_cleanup(drm_dev);
-> +	drm_dev->dev_private = NULL;
-> +	return ret;
-> +}
-> +
-> +static int rockchip_drm_unload(struct drm_device *drm_dev)
-> +{
-> +	struct device *dev = drm_dev->dev;
-> +
-> +	drm_kms_helper_poll_fini(drm_dev);
-> +	component_unbind_all(dev, drm_dev);
-> +	arm_iommu_detach_device(dev);
-> +	arm_iommu_release_mapping(dev->archdata.mapping);
-> +	drm_mode_config_cleanup(drm_dev);
-> +	drm_dev->dev_private = NULL;
-> +
-> +	return 0;
-> +}
-> +
-> +void rockchip_drm_lastclose(struct drm_device *dev)
-> +{
-> +	struct rockchip_drm_private *priv = dev->dev_private;
-> +
-> +	drm_fb_helper_restore_fbdev_mode_unlocked(&priv->fbdev_helper);
-> +}
-> +
-> +static const struct file_operations rockchip_drm_driver_fops = {
-> +	.owner = THIS_MODULE,
-> +	.open = drm_open,
-> +	.mmap = rockchip_gem_mmap,
-> +	.poll = drm_poll,
-> +	.read = drm_read,
-> +	.unlocked_ioctl = drm_ioctl,
-> +#ifdef CONFIG_COMPAT
-> +	.compat_ioctl = drm_compat_ioctl,
-> +#endif
-> +	.release = drm_release,
-> +};
-> +
-> +const struct vm_operations_struct rockchip_drm_vm_ops = {
-> +	.open = drm_gem_vm_open,
-> +	.close = drm_gem_vm_close,
-> +};
-> +
-> +static struct drm_driver rockchip_drm_driver = {
-> +	.driver_features	= DRIVER_MODESET | DRIVER_GEM | DRIVER_PRIME,
-> +	.load			= rockchip_drm_load,
-> +	.unload			= rockchip_drm_unload,
-> +	.lastclose		= rockchip_drm_lastclose,
-> +	.get_vblank_counter	= drm_vblank_count,
-> +	.enable_vblank		= rockchip_drm_crtc_enable_vblank,
-> +	.disable_vblank		= rockchip_drm_crtc_disable_vblank,
-> +	.gem_vm_ops		= &rockchip_drm_vm_ops,
-> +	.gem_free_object	= rockchip_gem_free_object,
-> +	.dumb_create		= rockchip_gem_dumb_create,
-> +	.dumb_map_offset	= rockchip_gem_dumb_map_offset,
-> +	.dumb_destroy		= drm_gem_dumb_destroy,
-> +	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd,
-> +	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle,
-> +	.gem_prime_import	= drm_gem_prime_import,
-> +	.gem_prime_export	= drm_gem_prime_export,
-> +	.gem_prime_get_sg_table	= rockchip_gem_prime_get_sg_table,
-> +	.gem_prime_vmap		= rockchip_gem_prime_vmap,
-> +	.gem_prime_vunmap	= rockchip_gem_prime_vunmap,
-> +	.fops			= &rockchip_drm_driver_fops,
-> +	.name	= DRIVER_NAME,
-> +	.desc	= DRIVER_DESC,
-> +	.date	= DRIVER_DATE,
-> +	.major	= DRIVER_MAJOR,
-> +	.minor	= DRIVER_MINOR,
-> +};
-> +
-> +#ifdef CONFIG_PM_SLEEP
-> +static int rockchip_drm_suspend(struct drm_device *dev, pm_message_t state)
-> +{
-> +	struct drm_connector *connector;
-> +
-> +	drm_modeset_lock_all(dev);
-> +	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
-> +		int old_dpms = connector->dpms;
-> +
-> +		if (connector->funcs->dpms)
-> +			connector->funcs->dpms(connector, DRM_MODE_DPMS_OFF);
-> +
-> +		/* Set the old mode back to the connector for resume */
-> +		connector->dpms = old_dpms;
-> +	}
-> +	drm_modeset_unlock_all(dev);
-> +
-> +	return 0;
-> +}
-> +
-> +static int rockchip_drm_resume(struct drm_device *dev)
-> +{
-> +	struct drm_connector *connector;
-> +
-> +	drm_modeset_lock_all(dev);
-> +	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
-> +		if (connector->funcs->dpms)
-> +			connector->funcs->dpms(connector, connector->dpms);
-> +	}
-> +	drm_modeset_unlock_all(dev);
-> +
-> +	drm_helper_resume_force_mode(dev);
-> +
-> +	return 0;
-> +}
-> +
-> +static int rockchip_drm_sys_suspend(struct device *dev)
-> +{
-> +	struct drm_device *drm_dev = dev_get_drvdata(dev);
-> +	pm_message_t message;
-> +
-> +	if (pm_runtime_suspended(dev))
-> +		return 0;
-> +
-> +	message.event = PM_EVENT_SUSPEND;
-> +
-> +	return rockchip_drm_suspend(drm_dev, message);
+The main purpose of this generic support is to avoid further code
+duplication to support new architectures and also to unify all the existing
+different implementations.
 
-drm_dev can be NULL here, it can happen when system is suspended
-before all components are bound. It can also contain invalid pointer
-if after successfull drm initialization de-initialization happens for
-some reason.
+This implementation maintains the hierarchy of cache objects which reflects
+the system's cache topology. Cache devices are instantiated as needed as
+CPUs come online. The cache information is replicated per-cpu even if they are
+shared. A per-cpu array of cache information maintained is used mainly for
+sysfs-related book keeping.
 
-Some workaround is to check for null here and set drvdata to null on
-master unbind. But I guess it should be protected somehow to avoid races
-in accessing drvdata.
+It also implements the shared_cpu_map attribute, which is essential for
+enabling both kernel and user-space to discover the system's overall cache
+topology.
 
+This patch also add the missing ABI documentation for the cacheinfo sysfs
+interface already, which is well defined and widely used.
 
-> +}
-> +
-> +static int rockchip_drm_sys_resume(struct device *dev)
-> +{
-> +	struct drm_device *drm_dev = dev_get_drvdata(dev);
-> +
-> +	if (!pm_runtime_suspended(dev))
-> +		return 0;
-> +
-> +	return rockchip_drm_resume(drm_dev);
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+Reviewed-by: Stephen Boyd <sboyd@codeaurora.org>
+Tested-by: Stephen Boyd <sboyd@codeaurora.org>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: linux-api@vger.kernel.org
+Cc: linux390@de.ibm.com
+Cc: linux-arm-kernel@lists.infradead.org
+Cc: linux-ia64@vger.kernel.org
+Cc: linuxppc-dev@lists.ozlabs.org
+Cc: linux-s390@vger.kernel.org
+Cc: x86@kernel.org
+---
+ Documentation/ABI/testing/sysfs-devices-system-cpu |  47 ++
+ drivers/base/Makefile                              |   2 +-
+ drivers/base/cacheinfo.c                           | 541 +++++++++++++++++++++
+ include/linux/cacheinfo.h                          | 100 ++++
+ 4 files changed, 689 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/base/cacheinfo.c
+ create mode 100644 include/linux/cacheinfo.h
 
-Ditto.
-
-Regards
-Andrzej
-
-
+diff --git a/Documentation/ABI/testing/sysfs-devices-system-cpu b/Documentation/ABI/testing/sysfs-devices-system-cpu
+index acb9bfc89b48..99983e67c13c 100644
+--- a/Documentation/ABI/testing/sysfs-devices-system-cpu
++++ b/Documentation/ABI/testing/sysfs-devices-system-cpu
+@@ -224,3 +224,50 @@ Description:	Parameters for the Intel P-state driver
+ 		frequency range.
+ 
+ 		More details can be found in Documentation/cpu-freq/intel-pstate.txt
++
++What:		/sys/devices/system/cpu/cpu*/cache/index*/<set_of_attributes_mentioned_below>
++Date:		July 2014(documented, existed before August 2008)
++Contact:	Sudeep Holla <sudeep.holla@arm.com>
++		Linux kernel mailing list <linux-kernel@vger.kernel.org>
++Description:	Parameters for the CPU cache attributes
++
++		allocation_policy:
++			- WriteAllocate: allocate a memory location to a cache line
++					 on a cache miss because of a write
++			- ReadAllocate: allocate a memory location to a cache line
++					on a cache miss because of a read
++			- ReadWriteAllocate: both writeallocate and readallocate
++
++		attributes: LEGACY used only on IA64 and is same as write_policy
++
++		coherency_line_size: the minimum amount of data in bytes that gets
++				     transferred from memory to cache
++
++		level: the cache hierarcy in the multi-level cache configuration
++
++		number_of_sets: total number of sets in the cache, a set is a
++				collection of cache lines with the same cache index
++
++		physical_line_partition: number of physical cache line per cache tag
++
++		shared_cpu_list: the list of logical cpus sharing the cache
++
++		shared_cpu_map: logical cpu mask containing the list of cpus sharing
++				the cache
++
++		size: the total cache size in kB
++
++		type:
++			- Instruction: cache that only holds instructions
++			- Data: cache that only caches data
++			- Unified: cache that holds both data and instructions
++
++		ways_of_associativity: degree of freedom in placing a particular block
++					of memory in the cache
++
++		write_policy:
++			- WriteThrough: data is written to both the cache line
++					and to the block in the lower-level memory
++			- WriteBack: data is written only to the cache line and
++				     the modified cache line is written to main
++				     memory only when it is replaced
+diff --git a/drivers/base/Makefile b/drivers/base/Makefile
+index 4aab26ec0292..f901bc1cffc8 100644
+--- a/drivers/base/Makefile
++++ b/drivers/base/Makefile
+@@ -4,7 +4,7 @@ obj-y			:= component.o core.o bus.o dd.o syscore.o \
+ 			   driver.o class.o platform.o \
+ 			   cpu.o firmware.o init.o map.o devres.o \
+ 			   attribute_container.o transport_class.o \
+-			   topology.o container.o
++			   topology.o container.o cacheinfo.o
+ obj-$(CONFIG_DEVTMPFS)	+= devtmpfs.o
+ obj-$(CONFIG_DMA_CMA) += dma-contiguous.o
+ obj-y			+= power/
+diff --git a/drivers/base/cacheinfo.c b/drivers/base/cacheinfo.c
+new file mode 100644
+index 000000000000..8ed4ea1f3716
+--- /dev/null
++++ b/drivers/base/cacheinfo.c
+@@ -0,0 +1,541 @@
++/*
++ * cacheinfo support - processor cache information via sysfs
++ *
++ * Based on arch/x86/kernel/cpu/intel_cacheinfo.c
++ * Author: Sudeep Holla <sudeep.holla@arm.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed "as is" WITHOUT ANY WARRANTY of any
++ * kind, whether express or implied; without even the implied warranty
++ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++#include <linux/bitops.h>
++#include <linux/cacheinfo.h>
++#include <linux/compiler.h>
++#include <linux/cpu.h>
++#include <linux/device.h>
++#include <linux/init.h>
++#include <linux/of.h>
++#include <linux/sched.h>
++#include <linux/slab.h>
++#include <linux/smp.h>
++#include <linux/sysfs.h>
++
++/* pointer to per cpu cacheinfo */
++static DEFINE_PER_CPU(struct cpu_cacheinfo, ci_cpu_cacheinfo);
++#define ci_cacheinfo(cpu)	(&per_cpu(ci_cpu_cacheinfo, cpu))
++#define cache_leaves(cpu)	(ci_cacheinfo(cpu)->num_leaves)
++#define per_cpu_cacheinfo(cpu)	(ci_cacheinfo(cpu)->info_list)
++
++struct cpu_cacheinfo *get_cpu_cacheinfo(unsigned int cpu)
++{
++	return ci_cacheinfo(cpu);
++}
++
++#ifdef CONFIG_OF
++static int cache_setup_of_node(unsigned int cpu)
++{
++	struct device_node *np;
++	struct cacheinfo *this_leaf;
++	struct device *cpu_dev = get_cpu_device(cpu);
++	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
++	unsigned int index = 0;
++
++	/* skip if of_node is already populated */
++	if (this_cpu_ci->info_list->of_node)
++		return 0;
++
++	if (!cpu_dev) {
++		pr_err("No cpu device for CPU %d\n", cpu);
++		return -ENODEV;
++	}
++	np = cpu_dev->of_node;
++	if (!np) {
++		pr_err("Failed to find cpu%d device node\n", cpu);
++		return -ENOENT;
++	}
++
++	while (np && index < cache_leaves(cpu)) {
++		this_leaf = this_cpu_ci->info_list + index;
++		if (this_leaf->level != 1)
++			np = of_find_next_cache_node(np);
++		else
++			np = of_node_get(np);/* cpu node itself */
++		this_leaf->of_node = np;
++		index++;
++	}
++	return 0;
++}
++
++static inline bool cache_leaves_are_shared(struct cacheinfo *this_leaf,
++					   struct cacheinfo *sib_leaf)
++{
++	return sib_leaf->of_node == this_leaf->of_node;
++}
++#else
++static inline int cache_setup_of_node(unsigned int cpu) { return 0; }
++static inline bool cache_leaves_are_shared(struct cacheinfo *this_leaf,
++					   struct cacheinfo *sib_leaf)
++{
++	/*
++	 * For non-DT systems, assume unique level 1 cache, system-wide
++	 * shared caches for all other levels. This will be used only if
++	 * arch specific code has not populated shared_cpu_map
++	 */
++	return !(this_leaf->level == 1);
++}
++#endif
++
++static int cache_shared_cpu_map_setup(unsigned int cpu)
++{
++	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
++	struct cacheinfo *this_leaf, *sib_leaf;
++	unsigned int index;
++	int ret;
++
++	ret = cache_setup_of_node(cpu);
++	if (ret)
++		return ret;
++
++	for (index = 0; index < cache_leaves(cpu); index++) {
++		unsigned int i;
++
++		this_leaf = this_cpu_ci->info_list + index;
++		/* skip if shared_cpu_map is already populated */
++		if (!cpumask_empty(&this_leaf->shared_cpu_map))
++			continue;
++
++		cpumask_set_cpu(cpu, &this_leaf->shared_cpu_map);
++		for_each_online_cpu(i) {
++			struct cpu_cacheinfo *sib_cpu_ci = get_cpu_cacheinfo(i);
++
++			if (i == cpu || !sib_cpu_ci->info_list)
++				continue;/* skip if itself or no cacheinfo */
++			sib_leaf = sib_cpu_ci->info_list + index;
++			if (cache_leaves_are_shared(this_leaf, sib_leaf)) {
++				cpumask_set_cpu(cpu, &sib_leaf->shared_cpu_map);
++				cpumask_set_cpu(i, &this_leaf->shared_cpu_map);
++			}
++		}
++	}
++
++	return 0;
++}
++
++static void cache_shared_cpu_map_remove(unsigned int cpu)
++{
++	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
++	struct cacheinfo *this_leaf, *sib_leaf;
++	unsigned int sibling, index;
++
++	for (index = 0; index < cache_leaves(cpu); index++) {
++		this_leaf = this_cpu_ci->info_list + index;
++		for_each_cpu(sibling, &this_leaf->shared_cpu_map) {
++			struct cpu_cacheinfo *sib_cpu_ci;
++
++			if (sibling == cpu) /* skip itself */
++				continue;
++			sib_cpu_ci = get_cpu_cacheinfo(sibling);
++			sib_leaf = sib_cpu_ci->info_list + index;
++			cpumask_clear_cpu(cpu, &sib_leaf->shared_cpu_map);
++			cpumask_clear_cpu(sibling, &this_leaf->shared_cpu_map);
++		}
++		of_node_put(this_leaf->of_node);
++	}
++}
++
++static void free_cache_attributes(unsigned int cpu)
++{
++	cache_shared_cpu_map_remove(cpu);
++
++	kfree(per_cpu_cacheinfo(cpu));
++	per_cpu_cacheinfo(cpu) = NULL;
++}
++
++int __weak init_cache_level(unsigned int cpu)
++{
++	return -ENOENT;
++}
++
++int __weak populate_cache_leaves(unsigned int cpu)
++{
++	return -ENOENT;
++}
++
++static int detect_cache_attributes(unsigned int cpu)
++{
++	int ret;
++
++	if (init_cache_level(cpu))
++		return -ENOENT;
++
++	per_cpu_cacheinfo(cpu) = kcalloc(cache_leaves(cpu),
++					 sizeof(struct cacheinfo), GFP_KERNEL);
++	if (per_cpu_cacheinfo(cpu) == NULL)
++		return -ENOMEM;
++
++	ret = populate_cache_leaves(cpu);
++	if (ret)
++		goto free_ci;
++	/*
++	 * For systems using DT for cache hierarcy, of_node and shared_cpu_map
++	 * will be set up here only if they are not populated already
++	 */
++	ret = cache_shared_cpu_map_setup(cpu);
++	if (ret)
++		goto free_ci;
++	return 0;
++
++free_ci:
++	free_cache_attributes(cpu);
++	return ret;
++}
++
++/* pointer to cpuX/cache device */
++static DEFINE_PER_CPU(struct device *, ci_cache_dev);
++#define per_cpu_cache_dev(cpu)	(per_cpu(ci_cache_dev, cpu))
++
++static cpumask_t cache_dev_map;
++
++/* pointer to array of devices for cpuX/cache/indexY */
++static DEFINE_PER_CPU(struct device **, ci_index_dev);
++#define per_cpu_index_dev(cpu)	(per_cpu(ci_index_dev, cpu))
++#define per_cache_index_dev(cpu, idx)	((per_cpu_index_dev(cpu))[idx])
++
++#define show_one(file_name, object)				\
++static ssize_t file_name##_show(struct device *dev,		\
++		struct device_attribute *attr, char *buf)	\
++{								\
++	struct cacheinfo *this_leaf = dev_get_drvdata(dev);	\
++	return sprintf(buf, "%u\n", this_leaf->object);		\
++}
++
++show_one(level, level);
++show_one(coherency_line_size, coherency_line_size);
++show_one(number_of_sets, number_of_sets);
++show_one(physical_line_partition, physical_line_partition);
++show_one(ways_of_associativity, ways_of_associativity);
++
++static ssize_t size_show(struct device *dev,
++			 struct device_attribute *attr, char *buf)
++{
++	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
++
++	return sprintf(buf, "%uK\n", this_leaf->size >> 10);
++}
++
++static ssize_t shared_cpumap_show_func(struct device *dev, bool list, char *buf)
++{
++	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
++	const struct cpumask *mask = &this_leaf->shared_cpu_map;
++
++	return cpumap_print_to_pagebuf(list, buf, mask);
++}
++
++static ssize_t shared_cpu_map_show(struct device *dev,
++				   struct device_attribute *attr, char *buf)
++{
++	return shared_cpumap_show_func(dev, false, buf);
++}
++
++static ssize_t shared_cpu_list_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
++{
++	return shared_cpumap_show_func(dev, true, buf);
++}
++
++static ssize_t type_show(struct device *dev,
++			 struct device_attribute *attr, char *buf)
++{
++	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
++
++	switch (this_leaf->type) {
++	case CACHE_TYPE_DATA:
++		return sprintf(buf, "Data\n");
++	case CACHE_TYPE_INST:
++		return sprintf(buf, "Instruction\n");
++	case CACHE_TYPE_UNIFIED:
++		return sprintf(buf, "Unified\n");
++	default:
++		return -EINVAL;
++	}
++}
++
++static ssize_t allocation_policy_show(struct device *dev,
++				      struct device_attribute *attr, char *buf)
++{
++	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
++	unsigned int ci_attr = this_leaf->attributes;
++	int n = 0;
++
++	if ((ci_attr & CACHE_READ_ALLOCATE) && (ci_attr & CACHE_WRITE_ALLOCATE))
++		n = sprintf(buf, "ReadWriteAllocate\n");
++	else if (ci_attr & CACHE_READ_ALLOCATE)
++		n = sprintf(buf, "ReadAllocate\n");
++	else if (ci_attr & CACHE_WRITE_ALLOCATE)
++		n = sprintf(buf, "WriteAllocate\n");
++	return n;
++}
++
++static ssize_t write_policy_show(struct device *dev,
++				 struct device_attribute *attr, char *buf)
++{
++	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
++	unsigned int ci_attr = this_leaf->attributes;
++	int n = 0;
++
++	if (ci_attr & CACHE_WRITE_THROUGH)
++		n = sprintf(buf, "WriteThrough\n");
++	else if (ci_attr & CACHE_WRITE_BACK)
++		n = sprintf(buf, "WriteBack\n");
++	return n;
++}
++
++static DEVICE_ATTR_RO(level);
++static DEVICE_ATTR_RO(type);
++static DEVICE_ATTR_RO(coherency_line_size);
++static DEVICE_ATTR_RO(ways_of_associativity);
++static DEVICE_ATTR_RO(number_of_sets);
++static DEVICE_ATTR_RO(size);
++static DEVICE_ATTR_RO(allocation_policy);
++static DEVICE_ATTR_RO(write_policy);
++static DEVICE_ATTR_RO(shared_cpu_map);
++static DEVICE_ATTR_RO(shared_cpu_list);
++static DEVICE_ATTR_RO(physical_line_partition);
++
++static struct attribute *cache_default_attrs[] = {
++	&dev_attr_type.attr,
++	&dev_attr_level.attr,
++	&dev_attr_shared_cpu_map.attr,
++	&dev_attr_shared_cpu_list.attr,
++	&dev_attr_coherency_line_size.attr,
++	&dev_attr_ways_of_associativity.attr,
++	&dev_attr_number_of_sets.attr,
++	&dev_attr_size.attr,
++	&dev_attr_allocation_policy.attr,
++	&dev_attr_write_policy.attr,
++	&dev_attr_physical_line_partition.attr,
++	NULL
++};
++
++static umode_t
++cache_default_attrs_is_visible(struct kobject *kobj,
++			       struct attribute *attr, int unused)
++{
++	struct device *dev = kobj_to_dev(kobj);
++	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
++	const struct cpumask *mask = &this_leaf->shared_cpu_map;
++	umode_t mode = attr->mode;
++
++	if ((attr == &dev_attr_type.attr) && this_leaf->type)
++		return mode;
++	if ((attr == &dev_attr_level.attr) && this_leaf->level)
++		return mode;
++	if ((attr == &dev_attr_shared_cpu_map.attr) && !cpumask_empty(mask))
++		return mode;
++	if ((attr == &dev_attr_shared_cpu_list.attr) && !cpumask_empty(mask))
++		return mode;
++	if ((attr == &dev_attr_coherency_line_size.attr) &&
++	    this_leaf->coherency_line_size)
++		return mode;
++	if ((attr == &dev_attr_ways_of_associativity.attr) &&
++	    this_leaf->size) /* allow 0 = full associativity */
++		return mode;
++	if ((attr == &dev_attr_number_of_sets.attr) &&
++	    this_leaf->number_of_sets)
++		return mode;
++	if ((attr == &dev_attr_size.attr) && this_leaf->size)
++		return mode;
++	if ((attr == &dev_attr_write_policy.attr) &&
++	    (this_leaf->attributes & CACHE_WRITE_POLICY_MASK))
++		return mode;
++	if ((attr == &dev_attr_allocation_policy.attr) &&
++	    (this_leaf->attributes & CACHE_ALLOCATE_POLICY_MASK))
++		return mode;
++	if ((attr == &dev_attr_physical_line_partition.attr) &&
++	    this_leaf->physical_line_partition)
++		return mode;
++
++	return 0;
++}
++
++static const struct attribute_group cache_default_group = {
++	.attrs = cache_default_attrs,
++	.is_visible = cache_default_attrs_is_visible,
++};
++
++static const struct attribute_group *cache_default_groups[] = {
++	&cache_default_group,
++	NULL,
++};
++
++static const struct attribute_group *cache_private_groups[] = {
++	&cache_default_group,
++	NULL, /* Place holder for private group */
++	NULL,
++};
++
++const struct attribute_group *
++__weak cache_get_priv_group(struct cacheinfo *this_leaf)
++{
++	return NULL;
++}
++
++static const struct attribute_group **
++cache_get_attribute_groups(struct cacheinfo *this_leaf)
++{
++	const struct attribute_group *priv_group =
++			cache_get_priv_group(this_leaf);
++
++	if (!priv_group)
++		return cache_default_groups;
++
++	if (!cache_private_groups[1])
++		cache_private_groups[1] = priv_group;
++
++	return cache_private_groups;
++}
++
++/* Add/Remove cache interface for CPU device */
++static void cpu_cache_sysfs_exit(unsigned int cpu)
++{
++	int i;
++	struct device *ci_dev;
++
++	if (per_cpu_index_dev(cpu)) {
++		for (i = 0; i < cache_leaves(cpu); i++) {
++			ci_dev = per_cache_index_dev(cpu, i);
++			if (!ci_dev)
++				continue;
++			device_unregister(ci_dev);
++		}
++		kfree(per_cpu_index_dev(cpu));
++		per_cpu_index_dev(cpu) = NULL;
++	}
++	device_unregister(per_cpu_cache_dev(cpu));
++	per_cpu_cache_dev(cpu) = NULL;
++}
++
++static int cpu_cache_sysfs_init(unsigned int cpu)
++{
++	struct device *dev = get_cpu_device(cpu);
++
++	if (per_cpu_cacheinfo(cpu) == NULL)
++		return -ENOENT;
++
++	per_cpu_cache_dev(cpu) = cpu_device_create(dev, NULL, NULL, "cache");
++	if (IS_ERR(per_cpu_cache_dev(cpu)))
++		return PTR_ERR(per_cpu_cache_dev(cpu));
++
++	/* Allocate all required memory */
++	per_cpu_index_dev(cpu) = kcalloc(cache_leaves(cpu),
++					 sizeof(struct device *), GFP_KERNEL);
++	if (unlikely(per_cpu_index_dev(cpu) == NULL))
++		goto err_out;
++
++	return 0;
++
++err_out:
++	cpu_cache_sysfs_exit(cpu);
++	return -ENOMEM;
++}
++
++static int cache_add_dev(unsigned int cpu)
++{
++	unsigned int i;
++	int rc;
++	struct device *ci_dev, *parent;
++	struct cacheinfo *this_leaf;
++	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
++	const struct attribute_group **cache_groups;
++
++	rc = cpu_cache_sysfs_init(cpu);
++	if (unlikely(rc < 0))
++		return rc;
++
++	parent = per_cpu_cache_dev(cpu);
++	for (i = 0; i < cache_leaves(cpu); i++) {
++		this_leaf = this_cpu_ci->info_list + i;
++		if (this_leaf->disable_sysfs)
++			continue;
++		cache_groups = cache_get_attribute_groups(this_leaf);
++		ci_dev = cpu_device_create(parent, this_leaf, cache_groups,
++					   "index%1u", i);
++		if (IS_ERR(ci_dev)) {
++			rc = PTR_ERR(ci_dev);
++			goto err;
++		}
++		per_cache_index_dev(cpu, i) = ci_dev;
++	}
++	cpumask_set_cpu(cpu, &cache_dev_map);
++
++	return 0;
++err:
++	cpu_cache_sysfs_exit(cpu);
++	return rc;
++}
++
++static void cache_remove_dev(unsigned int cpu)
++{
++	if (!cpumask_test_cpu(cpu, &cache_dev_map))
++		return;
++	cpumask_clear_cpu(cpu, &cache_dev_map);
++
++	cpu_cache_sysfs_exit(cpu);
++}
++
++static int cacheinfo_cpu_callback(struct notifier_block *nfb,
++				  unsigned long action, void *hcpu)
++{
++	unsigned int cpu = (unsigned long)hcpu;
++	int rc = 0;
++
++	switch (action & ~CPU_TASKS_FROZEN) {
++	case CPU_ONLINE:
++		rc = detect_cache_attributes(cpu);
++		if (!rc)
++			rc = cache_add_dev(cpu);
++		break;
++	case CPU_DEAD:
++		cache_remove_dev(cpu);
++		if (per_cpu_cacheinfo(cpu))
++			free_cache_attributes(cpu);
++		break;
++	}
++	return notifier_from_errno(rc);
++}
++
++static int __init cacheinfo_sysfs_init(void)
++{
++	int cpu, rc = 0;
++
++	cpu_notifier_register_begin();
++
++	for_each_online_cpu(cpu) {
++		rc = detect_cache_attributes(cpu);
++		if (rc) {
++			pr_err("error detecting cacheinfo..cpu%d\n", cpu);
++			goto out;
++		}
++		rc = cache_add_dev(cpu);
++		if (rc) {
++			free_cache_attributes(cpu);
++			pr_err("error populating cacheinfo..cpu%d\n", cpu);
++			goto out;
++		}
++	}
++	__hotcpu_notifier(cacheinfo_cpu_callback, 0);
++
++out:
++	cpu_notifier_register_done();
++	return rc;
++}
++
++device_initcall(cacheinfo_sysfs_init);
+diff --git a/include/linux/cacheinfo.h b/include/linux/cacheinfo.h
+new file mode 100644
+index 000000000000..3daf5ed392c9
+--- /dev/null
++++ b/include/linux/cacheinfo.h
+@@ -0,0 +1,100 @@
++#ifndef _LINUX_CACHEINFO_H
++#define _LINUX_CACHEINFO_H
++
++#include <linux/bitops.h>
++#include <linux/cpumask.h>
++#include <linux/smp.h>
++
++struct device_node;
++struct attribute;
++
++enum cache_type {
++	CACHE_TYPE_NOCACHE = 0,
++	CACHE_TYPE_INST = BIT(0),
++	CACHE_TYPE_DATA = BIT(1),
++	CACHE_TYPE_SEPARATE = CACHE_TYPE_INST | CACHE_TYPE_DATA,
++	CACHE_TYPE_UNIFIED = BIT(2),
++};
++
++/**
++ * struct cacheinfo - represent a cache leaf node
++ * @type: type of the cache - data, inst or unified
++ * @level: represents the hierarcy in the multi-level cache
++ * @coherency_line_size: size of each cache line usually representing
++ *	the minimum amount of data that gets transferred from memory
++ * @number_of_sets: total number of sets, a set is a collection of cache
++ *	lines sharing the same index
++ * @ways_of_associativity: number of ways in which a particular memory
++ *	block can be placed in the cache
++ * @physical_line_partition: number of physical cache lines sharing the
++ *	same cachetag
++ * @size: Total size of the cache
++ * @shared_cpu_map: logical cpumask representing all the cpus sharing
++ *	this cache node
++ * @attributes: bitfield representing various cache attributes
++ * @of_node: if devicetree is used, this represents either the cpu node in
++ *	case there's no explicit cache node or the cache node itself in the
++ *	device tree
++ * @disable_sysfs: indicates whether this node is visible to the user via
++ *	sysfs or not
++ * @priv: pointer to any private data structure specific to particular
++ *	cache design
++ *
++ * While @of_node, @disable_sysfs and @priv are used for internal book
++ * keeping, the remaining members form the core properties of the cache
++ */
++struct cacheinfo {
++	enum cache_type type;
++	unsigned int level;
++	unsigned int coherency_line_size;
++	unsigned int number_of_sets;
++	unsigned int ways_of_associativity;
++	unsigned int physical_line_partition;
++	unsigned int size;
++	cpumask_t shared_cpu_map;
++	unsigned int attributes;
++#define CACHE_WRITE_THROUGH	BIT(0)
++#define CACHE_WRITE_BACK	BIT(1)
++#define CACHE_WRITE_POLICY_MASK		\
++	(CACHE_WRITE_THROUGH | CACHE_WRITE_BACK)
++#define CACHE_READ_ALLOCATE	BIT(2)
++#define CACHE_WRITE_ALLOCATE	BIT(3)
++#define CACHE_ALLOCATE_POLICY_MASK	\
++	(CACHE_READ_ALLOCATE | CACHE_WRITE_ALLOCATE)
++
++	struct device_node *of_node;
++	bool disable_sysfs;
++	void *priv;
++};
++
++struct cpu_cacheinfo {
++	struct cacheinfo *info_list;
++	unsigned int num_levels;
++	unsigned int num_leaves;
++};
++
++/*
++ * Helpers to make sure "func" is executed on the cpu whose cache
++ * attributes are being detected
++ */
++#define DEFINE_SMP_CALL_CACHE_FUNCTION(func)			\
++static inline void _##func(void *ret)				\
++{								\
++	int cpu = smp_processor_id();				\
++	*(int *)ret = __##func(cpu);				\
++}								\
++								\
++int func(unsigned int cpu)					\
++{								\
++	int ret;						\
++	smp_call_function_single(cpu, _##func, &ret, true);	\
++	return ret;						\
++}
++
++struct cpu_cacheinfo *get_cpu_cacheinfo(unsigned int cpu);
++int init_cache_level(unsigned int cpu);
++int populate_cache_leaves(unsigned int cpu);
++
++const struct attribute_group *cache_get_priv_group(struct cacheinfo *this_leaf);
++
++#endif /* _LINUX_CACHEINFO_H */
+-- 
+1.9.1
