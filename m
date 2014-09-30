@@ -1,44 +1,132 @@
-From: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v4 04/11] drivers: base: support cpu cache information
- interface to userspace via sysfs
-Date: Tue, 30 Sep 2014 14:53:20 +0100
-Message-ID: <542AB5D0.3080007@arm.com>
-References: <1409763617-17074-1-git-send-email-sudeep.holla@arm.com> <1409763617-17074-5-git-send-email-sudeep.holla@arm.com> <5419C3F6.4050607@arm.com> <20140917190048.GA4063@kroah.com> <20140924063511.GA12929@kroah.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v3] mm: add mremap flag for preserving the old mapping
+Date: Tue, 30 Sep 2014 10:49:36 -0700
+Message-ID: <CALCETrVHgvhAN3neoOpJEk94uM7QKm2izZpp+=1UA6qieaQiTQ@mail.gmail.com>
+References: <1412052900-1722-1-git-send-email-danielmicay@gmail.com>
+ <CALCETrX6D7X7zm3qCn8kaBtYHCQvdR06LAAwzBA=1GteHAaLKA@mail.gmail.com> <542A79AF.8060602@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252; format=flowed
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140924063511.GA12929-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Lorenzo Pieralisi <Lorenzo.Pieralisi-5wv7dgnIgG8@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux390-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <linux390-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-ia64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ia64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org" <linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, "linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <542A79AF.8060602@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Daniel Micay <danielmicay@gmail.com>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Jason Evans <jasone@canonware.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg,
-
-On 24/09/14 07:35, Greg Kroah-Hartman wrote:
-> On Wed, Sep 17, 2014 at 12:00:48PM -0700, Greg Kroah-Hartman wrote:
->> On Wed, Sep 17, 2014 at 06:25:10PM +0100, Sudeep Holla wrote:
->>> Hi Greg,
->>>
->>> On 03/09/14 18:00, Sudeep Holla wrote:
-
-[...]
->>>
->>> Can you review the first 4 patches in this series please ?
->>
->> It's in my todo queue, which is really long at the moment due to me
->> going to conferences (at one right now...)  Will be working on this
->> soon, thanks for your patience.
+On Sep 30, 2014 2:36 AM, "Daniel Micay" <danielmicay@gmail.com> wrote:
 >
-> Based on the review comments, I think you are going to change at least
-> the first patch, right?  Please resend the latest version of this
-> series, with all of the accumulated tested-by and acked lines and
-> resend.
+> On 30/09/14 01:53 AM, Andy Lutomirski wrote:
+> > On Mon, Sep 29, 2014 at 9:55 PM, Daniel Micay <danielmicay@gmail.com> wrote:
+> >> This introduces the MREMAP_RETAIN flag for preserving the source mapping
+> >> when MREMAP_MAYMOVE moves the pages to a new destination. Accesses to
+> >> the source location will fault and cause fresh pages to be mapped in.
+> >>
+> >> For consistency, the old_len >= new_len case could decommit the pages
+> >> instead of unmapping. However, userspace can accomplish the same thing
+> >> via madvise and a coherent definition of the flag is possible without
+> >> the extra complexity.
+> >
+> > IMO this needs very clear documentation of exactly what it does.
 >
+> Agreed, and thanks for the review. I'll post a slightly modified version
+> of the patch soon (mostly more commit message changes).
+>
+> > Does it preserve the contents of the source pages?  (If so, why?
+> > Aren't you wasting a bunch of time on page faults and possibly
+> > unnecessary COWs?)
+>
+> The source will act as if it was just created. For an anonymous memory
+> mapping, it will fault on any accesses and bring in new zeroed pages.
+>
+> In jemalloc, it replaces an enormous memset(dst, src, size) followed by
+> madvise(src, size, MADV_DONTNEED) with mremap. Using mremap also ends up
+> eliding page faults from writes at the destination.
+>
+> TCMalloc has nearly the same page allocation design, although it tries
+> to throttle the purging so it won't always gain as much.
+>
+> > Does it work on file mappings?  Can it extend file mappings while it moves them?
+>
+> It works on file mappings. If a move occurs, there will be the usual
+> extended destination mapping but with the source mapping left intact.
+>
+> It wouldn't be useful with existing allocators, but in theory a general
+> purpose allocator could expose an MMIO API in order to reuse the same
+> address space via MAP_FIXED/MREMAP_FIXED to reduce VM fragmentation.
+>
+> > If you MREMAP_RETAIN a partially COWed private mapping, what happens?
+>
+> The original mapping is zeroed in the following test, as it would be
+> without fork:
+>
+> #define _GNU_SOURCE
+>
+> #include <string.h>
+> #include <stdlib.h>
+> #include <sys/mman.h>
+> #include <unistd.h>
+> #include <sys/wait.h>
+>
+> int main(void) {
+>   size_t size = 1024 * 1024;
+>   char *orig = mmap(NULL, size, PROT_READ|PROT_WRITE,
+>                     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+>   memset(orig, 5, size);
+>   int pid = fork();
+>   if (pid == -1)
+>     return 1;
+>   if (pid == 0) {
+>     memset(orig, 5, 1024);
+>     char *new = mremap(orig, size, size * 128, MREMAP_MAYMOVE|4);
+>     if (new == orig) return 1;
+>     for (size_t i = 0; i < size; i++)
+>       if (new[i] != 5)
+>         return 1;
+>     for (size_t i = 0; i < size; i++)
+>       if (orig[i] != 0)
+>         return 1;
+>     return 0;
+>   }
+>   int status;
+>   if (wait(&status) < -1) return 1;
+>   if (WIFEXITED(status))
+>     return WEXITSTATUS(status);
+>   return 1;
+> }
+>
+> Hopefully this is the case you're referring to. :)
 
-I have posted the new version as you suggested. I was holding off
-assuming the merge window would open this week and hence the delay.
+What about private file mappings?
 
-Regards,
-Sudeep
+>
+> > Does it work on special mappings?  If so, please prevent it from doing
+> > so.  mremapping x86's vdso is a thing, and duplicating x86's vdso
+> > should not become a thing, because x86_32 in particular will become
+> > extremely confused.
+>
+> I'll add a check for arch_vma_name(vma) == NULL.
+
+Careful!  That function is deprecated in favor of vm_ops->name.
+
+I think it might pay to add an explicit vm_op to authorize
+duplication, especially for non-cow mappings.  IOW this kind of
+extension seems quite magical for anything that doesn't have the
+normal COW semantics, including for plain old read-only mappings.
+
+>
+> There's an existing check for VM_DONTEXPAND | VM_PFNMAP when expanding
+> allocations (the only case this flag impacts). Are there other kinds of
+> special mappings that you're referring to?
+
+I was referring to special mappings in the install_special_mapping
+sense.  Those may or may not have VM_PFNMAP set.
+
+If VM_DONTEXPAND blocks this new feature entirely, that's probably good.
+
+--Andy
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
