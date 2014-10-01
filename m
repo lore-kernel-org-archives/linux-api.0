@@ -1,40 +1,34 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 1/4] Adds general codes to enforces project quota limits
-Date: Tue, 30 Sep 2014 22:07:21 +0200
-Message-ID: <20140930200721.GA6593@quack.suse.cz>
-References: <1411567470-31799-1-git-send-email-lixi@ddn.com>
- <1411567470-31799-2-git-send-email-lixi@ddn.com>
+From: Daniel Micay <danielmicay@gmail.com>
+Subject: Re: [PATCH v3] mm: add mremap flag for preserving the old mapping
+Date: Tue, 30 Sep 2014 22:32:33 -0400
+Message-ID: <542B67C1.9080303@gmail.com>
+References: <1412052900-1722-1-git-send-email-danielmicay@gmail.com> <CALCETrX6D7X7zm3qCn8kaBtYHCQvdR06LAAwzBA=1GteHAaLKA@mail.gmail.com> <542A79AF.8060602@gmail.com> <CALCETrVHgvhAN3neoOpJEk94uM7QKm2izZpp+=1UA6qieaQiTQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1411567470-31799-2-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALCETrVHgvhAN3neoOpJEk94uM7QKm2izZpp+=1UA6qieaQiTQ@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Jason Evans <jasone@canonware.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 24-09-14 22:04:27, Li Xi wrote:
-> @@ -1413,6 +1416,15 @@ static void __dquot_initialize(struct inode *inode, int type)
->  		case GRPQUOTA:
->  			qid = make_kqid_gid(inode->i_gid);
->  			break;
-> +		case PRJQUOTA:
-> +			/* Project ID is not supported */
-> +			if (!inode->i_sb->dq_op->get_projid)
-> +				continue;
-> +			rc = inode->i_sb->dq_op->get_projid(inode, &projid);
-> +			if (rc)
-> +				continue;
-> +			qid = make_kqid_projid(projid);
-> +			break;
-  I realized one more thing: We don't want to check ->get_projid() here.
-Rather we should check ->get_projid() when turning quota on in
-quota_quotaon() and return -EINVAL when ->get_projid() isn't set - that way
-user is early notified the fs doesn't support project quotas. Then here
-in __dquot_initialize() we can just check sb_has_quota_active(sb, PRJQUOTA).
+On 30/09/14 01:49 PM, Andy Lutomirski wrote:
+>=20
+> I think it might pay to add an explicit vm_op to authorize
+> duplication, especially for non-cow mappings.  IOW this kind of
+> extension seems quite magical for anything that doesn't have the
+> normal COW semantics, including for plain old read-only mappings.
 
-								Honza
--- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+This sounds like the best way forwards.
+
+Setting up the op for private, anonymous mappings and having it check
+vm_flags & VM_WRITE dynamically seems like it would be enough for the
+intended use case in general purpose allocators. It can be extended to
+other mapping types later if there's a compelling use case.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
