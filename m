@@ -1,92 +1,80 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
-Date: Thu, 02 Oct 2014 12:45:54 -0700
-Message-ID: <877g0il0gd.fsf@x220.int.ebiederm.org>
-References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
-	<87ppei45ig.fsf@x220.int.ebiederm.org>
-	<CALCETrX5e0cp4QFCv1eAqR1hjoROU9Rh=cRos9U35DaR-py3Eg@mail.gmail.com>
-	<87y4t61a6v.fsf@x220.int.ebiederm.org> <54294B4E.70501@6wind.com>
-	<87y4t2gtd0.fsf@x220.int.ebiederm.org> <542D5726.8070308@6wind.com>
-	<8761g2nurx.fsf@x220.int.ebiederm.org>
-	<CALCETrWxqzUF1x+TmW5G4kuHPP+sUtiRaT6dpZ0mQTJ217QB5w@mail.gmail.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCHv8.1] fanotify: enable close-on-exec on events' fd when
+ requested in fanotify_init()
+Date: Thu, 2 Oct 2014 12:46:52 -0700
+Message-ID: <20141002124652.c877efeb35d07064e520a702@linux-foundation.org>
+References: <cover.1411562410.git.ydroneaud@opteya.com>
+	<9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud@opteya.com>
+	<542481B3.8070300@gmx.de>
+	<1411721898.7778.18.camel@localhost.localdomain>
+	<542666B2.9080700@gmx.de>
+	<1411980555-10818-1-git-send-email-ydroneaud@opteya.com>
+	<20141001153621.65e9258e65a6167bf2e4cb50@linux-foundation.org>
+	<20141002104410.GB19748@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CALCETrWxqzUF1x+TmW5G4kuHPP+sUtiRaT6dpZ0mQTJ217QB5w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-	(Andy Lutomirski's message of "Thu, 2 Oct 2014 12:31:30 -0700")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141002104410.GB19748-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lino Sanfilippo <LinoSanfilippo-Mmb7MZpHnFY@public.gmane.org>, Valdis Kletnieks <Valdis.Kletnieks-PjAqaU27lzQ@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-QW5keSBMdXRvbWlyc2tpIDxsdXRvQGFtYWNhcGl0YWwubmV0PiB3cml0ZXM6Cgo+IE9uIFRodSwg
-T2N0IDIsIDIwMTQgYXQgMTI6MjAgUE0sIEVyaWMgVy4gQmllZGVybWFuCj4gPGViaWVkZXJtQHht
-aXNzaW9uLmNvbT4gd3JvdGU6Cj4+IE5pY29sYXMgRGljaHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3
-aW5kLmNvbT4gd3JpdGVzOgo+Pgo+Pj4gTGUgMjkvMDkvMjAxNCAyMDo0MywgRXJpYyBXLiBCaWVk
-ZXJtYW4gYSDDqWNyaXQgOgo+Pj4+IE5pY29sYXMgRGljaHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3
-aW5kLmNvbT4gd3JpdGVzOgo+Pj4+Cj4+Pj4+IExlIDI2LzA5LzIwMTQgMjA6NTcsIEVyaWMgVy4g
-QmllZGVybWFuIGEgw6ljcml0IDoKPj4+Pj4+IEFuZHkgTHV0b21pcnNraSA8bHV0b0BhbWFjYXBp
-dGFsLm5ldD4gd3JpdGVzOgo+Pj4+Pj4KPj4+Pj4+PiBPbiBGcmksIFNlcCAyNiwgMjAxNCBhdCAx
-MToxMCBBTSwgRXJpYyBXLiBCaWVkZXJtYW4KPj4+Pj4+PiA8ZWJpZWRlcm1AeG1pc3Npb24uY29t
-PiB3cm90ZToKPj4+Pj4+Pj4gSSBzZWUgdHdvIHdheXMgdG8gZ28gd2l0aCB0aGlzLgo+Pj4+Pj4+
-Pgo+Pj4+Pj4+PiAtIEEgcGVyIG5ldHdvcmsgbmFtZXNwYWNlIHRhYmxlIHRvIHRoYXQgeW91IGNh
-biBzdG9yZSBpZHMgZm9yIGBgcGVlcicnCj4+Pj4+Pj4+ICAgICBuZXR3b3JrIG5hbWVzcGFjZXMu
-ICBUaGUgdGFibGUgd291bGQgbmVlZCB0byBiZSBwb3B1bGF0ZWQgbWFudWFsbHkgYnkKPj4+Pj4+
-Pj4gICAgIHRoZSBsaWtlcyBvZiBpcCBuZXRucyBhZGQuCj4+Pj4+Pj4+Cj4+Pj4+Pj4+ICAgICBU
-aGF0IGZsaXBzIHRoZSBvcmRlciBvZiBhc3NpZ25tZW50IGFuZCBtYWtlcyB0aGlzIGlkZWEgc29s
-aWQuCj4+Pj4+IEkgaGF2ZSBhIHByZWZlcmVuY2UgZm9yIHRoaXMgc29sdXRpb24sIGJlY2F1c2Ug
-aXQgYWxsb3dzIHRvIGhhdmUgYSBmdWxsCj4+Pj4+IGJyb2FkY2FzdCBtZXNzYWdlcy4gV2hlbiB5
-b3UgaGF2ZSBhIGxvdCBvZiBuZXR3b3JrIGludGVyZmFjZXMgKD4gMTBrKSwKPj4+Pj4gaXQgc2F2
-ZXMgYSBsb3Qgb2YgdGltZSB0byBhdm9pZCBhbm90aGVyIHJlcXVlc3QgdG8gZ2V0IGFsbCBpbmZv
-cm1hdGlvbnMuCj4+Pj4KPj4+PiBNeSBwcmFjdGljYWwgcXVlc3Rpb24gaXMgaG93IG9mdGVuIGRv
-ZXMgaXQgaGFwcGVuIHRoYXQgd2UgY2FyZT8KPj4+IEluIGZhY3QsIEkgZG9uJ3QgdGhpbmsgdGhh
-dCBzY2VuYXJpaSB3aXRoIGEgbG90IG9mIG5ldG5zIGhhdmUgYSBmdWxsIG1lc2ggb2YKPj4+IHgt
-bmV0bnMgaW50ZXJmYWNlcy4gSXQgd2lsbCBiZSBtb3JlIG9uZSAibGluayIgbmV0bnMgd2l0aCB0
-aGUgcGh5c2ljYWwKPj4+IGludGVyZmFjZSBhbmQgYWxsIG90aGVyIHdpdGggb25lIGludGVyZmFj
-ZSB3aXRoIHRoZSBsaW5rIHBhcnQgaW4gdGhpcyAibGluayIKPj4+IG5ldG5zLiBIZW5jZSwgb25s
-eSBvbmUgbnNpZCBpcyBuZWVkaW5nIGluIGVhY2ggbmV0bnMuCj4+Cj4+IEkgd2lsbCBidXkgdGhh
-dCBhIGZ1bGwgbWVzaCBpcyB1bmxpa2VseS4KPj4KPj4gRm9yIHBlb3BsZSBkb2luZyBzaW11bGF0
-aW9ucyBhbnl0aGluZyBwaHlzaWNhbCBoYXMgYSBsaW1pdGVkIG51bWJlciBvZgo+PiBsaW5rcy4K
-Pj4KPj4gRm9yIHBlb3BsZSB3YW50aW5nIGFsbCB0byBhbGwgY29ubmVjdGl2aXR5IHNldHRpbmcg
-dXAgYW4gaW50ZXJuYWwKPj4gbWFjdmxhbiAob3IgdGhlIGVxdWl2YWxlbnQpIGlzIGxpa2VseSBt
-dWNoIHNpbXBsZXIgYW5kIG1vcmUgZWZmaWNpZW50Cj4+IHRoYXQgYSBmdWxsIG1lc2guCj4+Cj4+
-IFNvIHRoZSBxdWVzdGlvbiBpbiBteSBtaW5kIGlzIGhvdyBkbyB3ZSBjcmVhdGUgdGhlc2UgaWRl
-bnRpZmllcnMgYXQgbmVlZAo+PiAod2hlbiB3ZSBjcmVhdGUgdGhlIGNyb3NzIG5ldHdvcmsgbmFt
-ZXNwYWNlIGxpbmtzKSBpbnN0ZWFkIG9mIGF0IG5ldHdvcmsKPj4gbmFtZXNwYWNlIGNyZWF0aW9u
-IHRpbWUuICBJIGRvbid0IHNlZSBhbiBhbnN3ZXIgdG8gdGhhdCBpbiB5b3VyIHBhdGNoZXMsCj4+
-IGFuZCBwZXJoYXBzIGl0IG9idmlvdXMuCj4+Cj4KPiBJIHdvbmRlciB3aGV0aGVyIHBhcnQgb2Yg
-dGhlIHByb2JsZW0gaXMgdGhhdCB3ZSdyZSB0aGlua2luZyBhYm91dAo+IHNjb3Bpbmcgd3Jvbmcu
-ICBXaGF0IGlmIHdlIG1hZGUgdGhlIGhpZXJhcmNoeSBtb3JlIGV4cGxpY2l0Pwo+Cj4gRm9yIGV4
-YW1wbGUsIHdlIGNvdWxkIGdpdmUgZWFjaCBuZXRucyBhbiBhZG1pbi1hc3NpZ25lZCBpZGVudGlm
-aWVyCj4gKGUuZy4gYSA2NC1iaXQgbnVtYmVyLCBtYXliZSByZXF1aXJlZCB0byBiZSB1bmlxdWUs
-IG1heWJlIG5vdCkKPiByZWxhdGl2ZSB0byBpdHMgY29udGFpbmluZyB1c2VybnMuICBUaGVuIHdl
-IGNvdWxkIGNvbWUgdXAgd2l0aCBhIHdheQo+IHRvIGlkZW50aWZ5IHVzZXIgbmFtZXNwYWNlcyAo
-aS5lLiBpbm9kZSBudW1iZXIgcmVsYXRpdmUgdG8gY29udGFpbmluZwo+IHVzZXIgbnMsIGlmIHRo
-YXQncyB3ZWxsLWRlZmluZWQpLgoKSWYgYXMgc3VnZ2VzdGVkIHdlIG9ubHkgYXNzaWduIGlkcyB3
-aGVuIGEgdHVubmVsIChvciBlcXVpdmFsZW50KSBpcwpjcmVhdGVkIGJldHdlZW4gdHdvIG5ldHdv
-cmsgbmFtZXNwYWNlcyB0aGUgc3BhY2UgY29zdCBpcyBhIG5vbi1pc3N1ZS4KVGhlIGlkcyBiZWNv
-bWUgYXQgd29yc3QgYSBjb25zdGFudCBmYWN0b3IgYWRkaXRpb24gdG8gdGhlIGNvc3Qgb2YgdGhl
-CnR1bm5lbC4KClRvIGtlZXAgdGhpbmdzIHNpbXBsZSB3ZSBtYXkgd2FudCB0byBhc3NpZ24gYSBm
-cmVlIGlkIChpZiBvbmUgZG9lcyBub3QKZXhpc3QpIHdoZW4gd2UgY29ubmVjdCBhIHR1bm5lbCB0
-byBhIG5ldHdvcmsgbmFtZXNwYWNlLgoKPiBGcm9tIHVzZXIgY29kZSdzIHBlcnNwZWN0aXZlLCBu
-ZXRuc2VzIHRoYXQgYXJlIGluIHRoZSByZXF1ZXN0ZXIncwo+IHVzZXJucyBvciBpdHMgZGVzY2Vu
-ZGVudHMgYXJlIGlkZW50aWZpZWQgYnkgYSBwYXRoIHRocm91Z2ggYSAocG9zc2libHkKPiB6ZXJv
-LWxlbmd0aCkgc2VxdWVuY2Ugb2YgdXNlcm5zIGlkcyBmb2xsb3dlZCBieSBhIG5ldG5zIGlkLiAg
-TmV0bnNlcwo+IG91dHNpZGUgdGhlIHJlcXVlc3RlcidzIHVzZXJucyBoaWVyYXJjaHkgY2Fubm90
-IGJlIG5hbWVkIGF0IGFsbC4KPgo+IFdvdWxkIHRoaXMgbWFrZSBzZW5zZT8gCgpOb3BlLiAgV2hh
-dCBoYXBwZW5zIGlmIEkgbWlncmF0ZSAyIG9mIHRoZSA0IG5ldHdvcmsgbmFtZXNwYWNlcyBpbiBh
-IHVzZXIKbmFtZXNwYWNlPyAgVGhlIG1pZ3JhdGlvbiBwb3RlbnRpYWxseSBmYWlscy4gIEFwcGxp
-Y2F0aW9uIG1pZ3JhdGlvbiBkb2VzCm5vdCByZXF1aXJlIHVzZXIgbmFtZXNwYWNlIG1pZ3JhdGlv
-bi4KCkVyaWMKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
-Q29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9u
-Lm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9j
-b250YWluZXJz
+On Thu, 2 Oct 2014 12:44:10 +0200 Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+
+> On Wed 01-10-14 15:36:21, Andrew Morton wrote:
+> > On Mon, 29 Sep 2014 10:49:15 +0200 Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org> wrote:
+> > 
+> > > According to commit 80af258867648 ('fanotify: groups can specify
+> > > their f_flags for new fd'), file descriptors created as part of
+> > > file access notification events inherit flags from the
+> > > event_f_flags argument passed to syscall fanotify_init(2).
+> > > 
+> > > So while it is legal for userspace to call fanotify_init() with
+> > > O_CLOEXEC as part of its second argument, O_CLOEXEC is currently
+> > > silently ignored.
+> > > 
+> > > Indeed event_f_flags are only given to dentry_open(), which only
+> > > seems to care about O_ACCMODE and O_PATH in do_dentry_open(),
+> > > O_DIRECT in open_check_o_direct() and O_LARGEFILE in
+> > > generic_file_open().
+> > > 
+> > > But it seems logical to set close-on-exec flag on the file
+> > > descriptor if userspace is allowed to request it with O_CLOEXEC.
+> > > 
+> > > In fact, according to some lookup on http://codesearch.debian.net/
+> > > and various search engine, there's already some userspace code
+> > > requesting it:
+> > > 
+> > > - in systemd's readahead[2]:
+> > > 
+> > >     fanotify_fd = fanotify_init(FAN_CLOEXEC|FAN_NONBLOCK, O_RDONLY|O_LARGEFILE|O_CLOEXEC|O_NOATIME);
+> > > 
+> > > - in clsync[3]:
+> > > 
+> > >     #define FANOTIFY_EVFLAGS (O_LARGEFILE|O_RDONLY|O_CLOEXEC)
+> > > 
+> > >     int fanotify_d = fanotify_init(FANOTIFY_FLAGS, FANOTIFY_EVFLAGS);
+> > > 
+> > > - in examples [4] from "Filesystem monitoring in the Linux
+> > >   kernel" article[5] by Aleksander Morgado:
+> > > 
+> > >     if ((fanotify_fd = fanotify_init (FAN_CLOEXEC,
+> > >                                       O_RDONLY | O_CLOEXEC | O_LARGEFILE)) < 0)
+> > 
+> > So we have a number of apps which are setting O_CLOEXEC, but it doesn't
+> > actually work.  With this change it *will* work, so the behaviour of
+> > those apps might change, possibly breaking them?
+>   Possibly. OTOH I'd dare to say that most of the apps specifying O_CLOEXEC
+> want that behavior and their security may be weakened by the fact that
+> O_CLOEXEC is ignored. So we are weighting possible security issues for apps
+> doing things right (and Mihai mentioned in this thread that at least he has
+> an application which needs O_CLOEXEC working) against possible breakage for
+> apps which just randomly set O_CLOEXEC without wanting. So I'm really for
+> fixing O_CLOEXEC behavior.
+
+Fair enough, it sounds like the risk is acceptable.
+
+Can we get a new version sent out with all this new info appropriately
+changelogged?
