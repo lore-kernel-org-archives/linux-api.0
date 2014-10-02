@@ -1,17 +1,20 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [RFC PATCH net-next v3 1/4] netns: add genl cmd to add and get
-	peer netns ids
-Date: Thu, 02 Oct 2014 12:33:22 -0700
-Message-ID: <87tx3mmflp.fsf@x220.int.ebiederm.org>
-References: <542D5726.8070308@6wind.com>
-	<1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>
-	<1412257690-31253-2-git-send-email-nicolas.dichtel@6wind.com>
+Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
+Date: Thu, 02 Oct 2014 12:45:54 -0700
+Message-ID: <877g0il0gd.fsf@x220.int.ebiederm.org>
+References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
+	<87ppei45ig.fsf@x220.int.ebiederm.org>
+	<CALCETrX5e0cp4QFCv1eAqR1hjoROU9Rh=cRos9U35DaR-py3Eg@mail.gmail.com>
+	<87y4t61a6v.fsf@x220.int.ebiederm.org> <54294B4E.70501@6wind.com>
+	<87y4t2gtd0.fsf@x220.int.ebiederm.org> <542D5726.8070308@6wind.com>
+	<8761g2nurx.fsf@x220.int.ebiederm.org>
+	<CALCETrWxqzUF1x+TmW5G4kuHPP+sUtiRaT6dpZ0mQTJ217QB5w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1412257690-31253-2-git-send-email-nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-	(Nicolas Dichtel's message of "Thu, 2 Oct 2014 15:48:07 +0200")
+In-Reply-To: <CALCETrWxqzUF1x+TmW5G4kuHPP+sUtiRaT6dpZ0mQTJ217QB5w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Thu, 2 Oct 2014 12:31:30 -0700")
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -21,20 +24,69 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> writes:
-
-> With this patch, a user can define an id for a peer netns by providing a FD or a
-> PID. These ids are local to netns (ie valid only into one netns).
->
-> This will be useful for netlink messages when a x-netns interface is
-> dumped.
-
-You have a "id -> struct net *" table but you don't have a 
-"struct net * -> id" table which looks like it will impact the
-performance of peernet2id at scale.
-
-Eric
+QW5keSBMdXRvbWlyc2tpIDxsdXRvQGFtYWNhcGl0YWwubmV0PiB3cml0ZXM6Cgo+IE9uIFRodSwg
+T2N0IDIsIDIwMTQgYXQgMTI6MjAgUE0sIEVyaWMgVy4gQmllZGVybWFuCj4gPGViaWVkZXJtQHht
+aXNzaW9uLmNvbT4gd3JvdGU6Cj4+IE5pY29sYXMgRGljaHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3
+aW5kLmNvbT4gd3JpdGVzOgo+Pgo+Pj4gTGUgMjkvMDkvMjAxNCAyMDo0MywgRXJpYyBXLiBCaWVk
+ZXJtYW4gYSDDqWNyaXQgOgo+Pj4+IE5pY29sYXMgRGljaHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3
+aW5kLmNvbT4gd3JpdGVzOgo+Pj4+Cj4+Pj4+IExlIDI2LzA5LzIwMTQgMjA6NTcsIEVyaWMgVy4g
+QmllZGVybWFuIGEgw6ljcml0IDoKPj4+Pj4+IEFuZHkgTHV0b21pcnNraSA8bHV0b0BhbWFjYXBp
+dGFsLm5ldD4gd3JpdGVzOgo+Pj4+Pj4KPj4+Pj4+PiBPbiBGcmksIFNlcCAyNiwgMjAxNCBhdCAx
+MToxMCBBTSwgRXJpYyBXLiBCaWVkZXJtYW4KPj4+Pj4+PiA8ZWJpZWRlcm1AeG1pc3Npb24uY29t
+PiB3cm90ZToKPj4+Pj4+Pj4gSSBzZWUgdHdvIHdheXMgdG8gZ28gd2l0aCB0aGlzLgo+Pj4+Pj4+
+Pgo+Pj4+Pj4+PiAtIEEgcGVyIG5ldHdvcmsgbmFtZXNwYWNlIHRhYmxlIHRvIHRoYXQgeW91IGNh
+biBzdG9yZSBpZHMgZm9yIGBgcGVlcicnCj4+Pj4+Pj4+ICAgICBuZXR3b3JrIG5hbWVzcGFjZXMu
+ICBUaGUgdGFibGUgd291bGQgbmVlZCB0byBiZSBwb3B1bGF0ZWQgbWFudWFsbHkgYnkKPj4+Pj4+
+Pj4gICAgIHRoZSBsaWtlcyBvZiBpcCBuZXRucyBhZGQuCj4+Pj4+Pj4+Cj4+Pj4+Pj4+ICAgICBU
+aGF0IGZsaXBzIHRoZSBvcmRlciBvZiBhc3NpZ25tZW50IGFuZCBtYWtlcyB0aGlzIGlkZWEgc29s
+aWQuCj4+Pj4+IEkgaGF2ZSBhIHByZWZlcmVuY2UgZm9yIHRoaXMgc29sdXRpb24sIGJlY2F1c2Ug
+aXQgYWxsb3dzIHRvIGhhdmUgYSBmdWxsCj4+Pj4+IGJyb2FkY2FzdCBtZXNzYWdlcy4gV2hlbiB5
+b3UgaGF2ZSBhIGxvdCBvZiBuZXR3b3JrIGludGVyZmFjZXMgKD4gMTBrKSwKPj4+Pj4gaXQgc2F2
+ZXMgYSBsb3Qgb2YgdGltZSB0byBhdm9pZCBhbm90aGVyIHJlcXVlc3QgdG8gZ2V0IGFsbCBpbmZv
+cm1hdGlvbnMuCj4+Pj4KPj4+PiBNeSBwcmFjdGljYWwgcXVlc3Rpb24gaXMgaG93IG9mdGVuIGRv
+ZXMgaXQgaGFwcGVuIHRoYXQgd2UgY2FyZT8KPj4+IEluIGZhY3QsIEkgZG9uJ3QgdGhpbmsgdGhh
+dCBzY2VuYXJpaSB3aXRoIGEgbG90IG9mIG5ldG5zIGhhdmUgYSBmdWxsIG1lc2ggb2YKPj4+IHgt
+bmV0bnMgaW50ZXJmYWNlcy4gSXQgd2lsbCBiZSBtb3JlIG9uZSAibGluayIgbmV0bnMgd2l0aCB0
+aGUgcGh5c2ljYWwKPj4+IGludGVyZmFjZSBhbmQgYWxsIG90aGVyIHdpdGggb25lIGludGVyZmFj
+ZSB3aXRoIHRoZSBsaW5rIHBhcnQgaW4gdGhpcyAibGluayIKPj4+IG5ldG5zLiBIZW5jZSwgb25s
+eSBvbmUgbnNpZCBpcyBuZWVkaW5nIGluIGVhY2ggbmV0bnMuCj4+Cj4+IEkgd2lsbCBidXkgdGhh
+dCBhIGZ1bGwgbWVzaCBpcyB1bmxpa2VseS4KPj4KPj4gRm9yIHBlb3BsZSBkb2luZyBzaW11bGF0
+aW9ucyBhbnl0aGluZyBwaHlzaWNhbCBoYXMgYSBsaW1pdGVkIG51bWJlciBvZgo+PiBsaW5rcy4K
+Pj4KPj4gRm9yIHBlb3BsZSB3YW50aW5nIGFsbCB0byBhbGwgY29ubmVjdGl2aXR5IHNldHRpbmcg
+dXAgYW4gaW50ZXJuYWwKPj4gbWFjdmxhbiAob3IgdGhlIGVxdWl2YWxlbnQpIGlzIGxpa2VseSBt
+dWNoIHNpbXBsZXIgYW5kIG1vcmUgZWZmaWNpZW50Cj4+IHRoYXQgYSBmdWxsIG1lc2guCj4+Cj4+
+IFNvIHRoZSBxdWVzdGlvbiBpbiBteSBtaW5kIGlzIGhvdyBkbyB3ZSBjcmVhdGUgdGhlc2UgaWRl
+bnRpZmllcnMgYXQgbmVlZAo+PiAod2hlbiB3ZSBjcmVhdGUgdGhlIGNyb3NzIG5ldHdvcmsgbmFt
+ZXNwYWNlIGxpbmtzKSBpbnN0ZWFkIG9mIGF0IG5ldHdvcmsKPj4gbmFtZXNwYWNlIGNyZWF0aW9u
+IHRpbWUuICBJIGRvbid0IHNlZSBhbiBhbnN3ZXIgdG8gdGhhdCBpbiB5b3VyIHBhdGNoZXMsCj4+
+IGFuZCBwZXJoYXBzIGl0IG9idmlvdXMuCj4+Cj4KPiBJIHdvbmRlciB3aGV0aGVyIHBhcnQgb2Yg
+dGhlIHByb2JsZW0gaXMgdGhhdCB3ZSdyZSB0aGlua2luZyBhYm91dAo+IHNjb3Bpbmcgd3Jvbmcu
+ICBXaGF0IGlmIHdlIG1hZGUgdGhlIGhpZXJhcmNoeSBtb3JlIGV4cGxpY2l0Pwo+Cj4gRm9yIGV4
+YW1wbGUsIHdlIGNvdWxkIGdpdmUgZWFjaCBuZXRucyBhbiBhZG1pbi1hc3NpZ25lZCBpZGVudGlm
+aWVyCj4gKGUuZy4gYSA2NC1iaXQgbnVtYmVyLCBtYXliZSByZXF1aXJlZCB0byBiZSB1bmlxdWUs
+IG1heWJlIG5vdCkKPiByZWxhdGl2ZSB0byBpdHMgY29udGFpbmluZyB1c2VybnMuICBUaGVuIHdl
+IGNvdWxkIGNvbWUgdXAgd2l0aCBhIHdheQo+IHRvIGlkZW50aWZ5IHVzZXIgbmFtZXNwYWNlcyAo
+aS5lLiBpbm9kZSBudW1iZXIgcmVsYXRpdmUgdG8gY29udGFpbmluZwo+IHVzZXIgbnMsIGlmIHRo
+YXQncyB3ZWxsLWRlZmluZWQpLgoKSWYgYXMgc3VnZ2VzdGVkIHdlIG9ubHkgYXNzaWduIGlkcyB3
+aGVuIGEgdHVubmVsIChvciBlcXVpdmFsZW50KSBpcwpjcmVhdGVkIGJldHdlZW4gdHdvIG5ldHdv
+cmsgbmFtZXNwYWNlcyB0aGUgc3BhY2UgY29zdCBpcyBhIG5vbi1pc3N1ZS4KVGhlIGlkcyBiZWNv
+bWUgYXQgd29yc3QgYSBjb25zdGFudCBmYWN0b3IgYWRkaXRpb24gdG8gdGhlIGNvc3Qgb2YgdGhl
+CnR1bm5lbC4KClRvIGtlZXAgdGhpbmdzIHNpbXBsZSB3ZSBtYXkgd2FudCB0byBhc3NpZ24gYSBm
+cmVlIGlkIChpZiBvbmUgZG9lcyBub3QKZXhpc3QpIHdoZW4gd2UgY29ubmVjdCBhIHR1bm5lbCB0
+byBhIG5ldHdvcmsgbmFtZXNwYWNlLgoKPiBGcm9tIHVzZXIgY29kZSdzIHBlcnNwZWN0aXZlLCBu
+ZXRuc2VzIHRoYXQgYXJlIGluIHRoZSByZXF1ZXN0ZXIncwo+IHVzZXJucyBvciBpdHMgZGVzY2Vu
+ZGVudHMgYXJlIGlkZW50aWZpZWQgYnkgYSBwYXRoIHRocm91Z2ggYSAocG9zc2libHkKPiB6ZXJv
+LWxlbmd0aCkgc2VxdWVuY2Ugb2YgdXNlcm5zIGlkcyBmb2xsb3dlZCBieSBhIG5ldG5zIGlkLiAg
+TmV0bnNlcwo+IG91dHNpZGUgdGhlIHJlcXVlc3RlcidzIHVzZXJucyBoaWVyYXJjaHkgY2Fubm90
+IGJlIG5hbWVkIGF0IGFsbC4KPgo+IFdvdWxkIHRoaXMgbWFrZSBzZW5zZT8gCgpOb3BlLiAgV2hh
+dCBoYXBwZW5zIGlmIEkgbWlncmF0ZSAyIG9mIHRoZSA0IG5ldHdvcmsgbmFtZXNwYWNlcyBpbiBh
+IHVzZXIKbmFtZXNwYWNlPyAgVGhlIG1pZ3JhdGlvbiBwb3RlbnRpYWxseSBmYWlscy4gIEFwcGxp
+Y2F0aW9uIG1pZ3JhdGlvbiBkb2VzCm5vdCByZXF1aXJlIHVzZXIgbmFtZXNwYWNlIG1pZ3JhdGlv
+bi4KCkVyaWMKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
+Q29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9u
+Lm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9j
+b250YWluZXJz
