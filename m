@@ -1,80 +1,97 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCHv8.1] fanotify: enable close-on-exec on events' fd when
- requested in fanotify_init()
-Date: Thu, 2 Oct 2014 12:46:52 -0700
-Message-ID: <20141002124652.c877efeb35d07064e520a702@linux-foundation.org>
-References: <cover.1411562410.git.ydroneaud@opteya.com>
-	<9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud@opteya.com>
-	<542481B3.8070300@gmx.de>
-	<1411721898.7778.18.camel@localhost.localdomain>
-	<542666B2.9080700@gmx.de>
-	<1411980555-10818-1-git-send-email-ydroneaud@opteya.com>
-	<20141001153621.65e9258e65a6167bf2e4cb50@linux-foundation.org>
-	<20141002104410.GB19748@quack.suse.cz>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
+Date: Thu, 2 Oct 2014 12:48:14 -0700
+Message-ID: <CALCETrWLhfQpT+f=DPTsB4w5Oy+OeiygBrQosf25HDJQaOnPWg@mail.gmail.com>
+References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
+	<87ppei45ig.fsf@x220.int.ebiederm.org>
+	<CALCETrX5e0cp4QFCv1eAqR1hjoROU9Rh=cRos9U35DaR-py3Eg@mail.gmail.com>
+	<87y4t61a6v.fsf@x220.int.ebiederm.org> <54294B4E.70501@6wind.com>
+	<87y4t2gtd0.fsf@x220.int.ebiederm.org> <542D5726.8070308@6wind.com>
+	<8761g2nurx.fsf@x220.int.ebiederm.org>
+	<CALCETrWxqzUF1x+TmW5G4kuHPP+sUtiRaT6dpZ0mQTJ217QB5w@mail.gmail.com>
+	<877g0il0gd.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141002104410.GB19748-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lino Sanfilippo <LinoSanfilippo-Mmb7MZpHnFY@public.gmane.org>, Valdis Kletnieks <Valdis.Kletnieks-PjAqaU27lzQ@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <877g0il0gd.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2 Oct 2014 12:44:10 +0200 Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-
-> On Wed 01-10-14 15:36:21, Andrew Morton wrote:
-> > On Mon, 29 Sep 2014 10:49:15 +0200 Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org> wrote:
-> > 
-> > > According to commit 80af258867648 ('fanotify: groups can specify
-> > > their f_flags for new fd'), file descriptors created as part of
-> > > file access notification events inherit flags from the
-> > > event_f_flags argument passed to syscall fanotify_init(2).
-> > > 
-> > > So while it is legal for userspace to call fanotify_init() with
-> > > O_CLOEXEC as part of its second argument, O_CLOEXEC is currently
-> > > silently ignored.
-> > > 
-> > > Indeed event_f_flags are only given to dentry_open(), which only
-> > > seems to care about O_ACCMODE and O_PATH in do_dentry_open(),
-> > > O_DIRECT in open_check_o_direct() and O_LARGEFILE in
-> > > generic_file_open().
-> > > 
-> > > But it seems logical to set close-on-exec flag on the file
-> > > descriptor if userspace is allowed to request it with O_CLOEXEC.
-> > > 
-> > > In fact, according to some lookup on http://codesearch.debian.net/
-> > > and various search engine, there's already some userspace code
-> > > requesting it:
-> > > 
-> > > - in systemd's readahead[2]:
-> > > 
-> > >     fanotify_fd = fanotify_init(FAN_CLOEXEC|FAN_NONBLOCK, O_RDONLY|O_LARGEFILE|O_CLOEXEC|O_NOATIME);
-> > > 
-> > > - in clsync[3]:
-> > > 
-> > >     #define FANOTIFY_EVFLAGS (O_LARGEFILE|O_RDONLY|O_CLOEXEC)
-> > > 
-> > >     int fanotify_d = fanotify_init(FANOTIFY_FLAGS, FANOTIFY_EVFLAGS);
-> > > 
-> > > - in examples [4] from "Filesystem monitoring in the Linux
-> > >   kernel" article[5] by Aleksander Morgado:
-> > > 
-> > >     if ((fanotify_fd = fanotify_init (FAN_CLOEXEC,
-> > >                                       O_RDONLY | O_CLOEXEC | O_LARGEFILE)) < 0)
-> > 
-> > So we have a number of apps which are setting O_CLOEXEC, but it doesn't
-> > actually work.  With this change it *will* work, so the behaviour of
-> > those apps might change, possibly breaking them?
->   Possibly. OTOH I'd dare to say that most of the apps specifying O_CLOEXEC
-> want that behavior and their security may be weakened by the fact that
-> O_CLOEXEC is ignored. So we are weighting possible security issues for apps
-> doing things right (and Mihai mentioned in this thread that at least he has
-> an application which needs O_CLOEXEC working) against possible breakage for
-> apps which just randomly set O_CLOEXEC without wanting. So I'm really for
-> fixing O_CLOEXEC behavior.
-
-Fair enough, it sounds like the risk is acceptable.
-
-Can we get a new version sent out with all this new info appropriately
-changelogged?
+T24gVGh1LCBPY3QgMiwgMjAxNCBhdCAxMjo0NSBQTSwgRXJpYyBXLiBCaWVkZXJtYW4KPGViaWVk
+ZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4gQW5keSBMdXRvbWlyc2tpIDxsdXRvQGFtYWNhcGl0
+YWwubmV0PiB3cml0ZXM6Cj4KPj4gT24gVGh1LCBPY3QgMiwgMjAxNCBhdCAxMjoyMCBQTSwgRXJp
+YyBXLiBCaWVkZXJtYW4KPj4gPGViaWVkZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4+PiBOaWNv
+bGFzIERpY2h0ZWwgPG5pY29sYXMuZGljaHRlbEA2d2luZC5jb20+IHdyaXRlczoKPj4+Cj4+Pj4g
+TGUgMjkvMDkvMjAxNCAyMDo0MywgRXJpYyBXLiBCaWVkZXJtYW4gYSDDqWNyaXQgOgo+Pj4+PiBO
+aWNvbGFzIERpY2h0ZWwgPG5pY29sYXMuZGljaHRlbEA2d2luZC5jb20+IHdyaXRlczoKPj4+Pj4K
+Pj4+Pj4+IExlIDI2LzA5LzIwMTQgMjA6NTcsIEVyaWMgVy4gQmllZGVybWFuIGEgw6ljcml0IDoK
+Pj4+Pj4+PiBBbmR5IEx1dG9taXJza2kgPGx1dG9AYW1hY2FwaXRhbC5uZXQ+IHdyaXRlczoKPj4+
+Pj4+Pgo+Pj4+Pj4+PiBPbiBGcmksIFNlcCAyNiwgMjAxNCBhdCAxMToxMCBBTSwgRXJpYyBXLiBC
+aWVkZXJtYW4KPj4+Pj4+Pj4gPGViaWVkZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4+Pj4+Pj4+
+PiBJIHNlZSB0d28gd2F5cyB0byBnbyB3aXRoIHRoaXMuCj4+Pj4+Pj4+Pgo+Pj4+Pj4+Pj4gLSBB
+IHBlciBuZXR3b3JrIG5hbWVzcGFjZSB0YWJsZSB0byB0aGF0IHlvdSBjYW4gc3RvcmUgaWRzIGZv
+ciBgYHBlZXInJwo+Pj4+Pj4+Pj4gICAgIG5ldHdvcmsgbmFtZXNwYWNlcy4gIFRoZSB0YWJsZSB3
+b3VsZCBuZWVkIHRvIGJlIHBvcHVsYXRlZCBtYW51YWxseSBieQo+Pj4+Pj4+Pj4gICAgIHRoZSBs
+aWtlcyBvZiBpcCBuZXRucyBhZGQuCj4+Pj4+Pj4+Pgo+Pj4+Pj4+Pj4gICAgIFRoYXQgZmxpcHMg
+dGhlIG9yZGVyIG9mIGFzc2lnbm1lbnQgYW5kIG1ha2VzIHRoaXMgaWRlYSBzb2xpZC4KPj4+Pj4+
+IEkgaGF2ZSBhIHByZWZlcmVuY2UgZm9yIHRoaXMgc29sdXRpb24sIGJlY2F1c2UgaXQgYWxsb3dz
+IHRvIGhhdmUgYSBmdWxsCj4+Pj4+PiBicm9hZGNhc3QgbWVzc2FnZXMuIFdoZW4geW91IGhhdmUg
+YSBsb3Qgb2YgbmV0d29yayBpbnRlcmZhY2VzICg+IDEwayksCj4+Pj4+PiBpdCBzYXZlcyBhIGxv
+dCBvZiB0aW1lIHRvIGF2b2lkIGFub3RoZXIgcmVxdWVzdCB0byBnZXQgYWxsIGluZm9ybWF0aW9u
+cy4KPj4+Pj4KPj4+Pj4gTXkgcHJhY3RpY2FsIHF1ZXN0aW9uIGlzIGhvdyBvZnRlbiBkb2VzIGl0
+IGhhcHBlbiB0aGF0IHdlIGNhcmU/Cj4+Pj4gSW4gZmFjdCwgSSBkb24ndCB0aGluayB0aGF0IHNj
+ZW5hcmlpIHdpdGggYSBsb3Qgb2YgbmV0bnMgaGF2ZSBhIGZ1bGwgbWVzaCBvZgo+Pj4+IHgtbmV0
+bnMgaW50ZXJmYWNlcy4gSXQgd2lsbCBiZSBtb3JlIG9uZSAibGluayIgbmV0bnMgd2l0aCB0aGUg
+cGh5c2ljYWwKPj4+PiBpbnRlcmZhY2UgYW5kIGFsbCBvdGhlciB3aXRoIG9uZSBpbnRlcmZhY2Ug
+d2l0aCB0aGUgbGluayBwYXJ0IGluIHRoaXMgImxpbmsiCj4+Pj4gbmV0bnMuIEhlbmNlLCBvbmx5
+IG9uZSBuc2lkIGlzIG5lZWRpbmcgaW4gZWFjaCBuZXRucy4KPj4+Cj4+PiBJIHdpbGwgYnV5IHRo
+YXQgYSBmdWxsIG1lc2ggaXMgdW5saWtlbHkuCj4+Pgo+Pj4gRm9yIHBlb3BsZSBkb2luZyBzaW11
+bGF0aW9ucyBhbnl0aGluZyBwaHlzaWNhbCBoYXMgYSBsaW1pdGVkIG51bWJlciBvZgo+Pj4gbGlu
+a3MuCj4+Pgo+Pj4gRm9yIHBlb3BsZSB3YW50aW5nIGFsbCB0byBhbGwgY29ubmVjdGl2aXR5IHNl
+dHRpbmcgdXAgYW4gaW50ZXJuYWwKPj4+IG1hY3ZsYW4gKG9yIHRoZSBlcXVpdmFsZW50KSBpcyBs
+aWtlbHkgbXVjaCBzaW1wbGVyIGFuZCBtb3JlIGVmZmljaWVudAo+Pj4gdGhhdCBhIGZ1bGwgbWVz
+aC4KPj4+Cj4+PiBTbyB0aGUgcXVlc3Rpb24gaW4gbXkgbWluZCBpcyBob3cgZG8gd2UgY3JlYXRl
+IHRoZXNlIGlkZW50aWZpZXJzIGF0IG5lZWQKPj4+ICh3aGVuIHdlIGNyZWF0ZSB0aGUgY3Jvc3Mg
+bmV0d29yayBuYW1lc3BhY2UgbGlua3MpIGluc3RlYWQgb2YgYXQgbmV0d29yawo+Pj4gbmFtZXNw
+YWNlIGNyZWF0aW9uIHRpbWUuICBJIGRvbid0IHNlZSBhbiBhbnN3ZXIgdG8gdGhhdCBpbiB5b3Vy
+IHBhdGNoZXMsCj4+PiBhbmQgcGVyaGFwcyBpdCBvYnZpb3VzLgo+Pj4KPj4KPj4gSSB3b25kZXIg
+d2hldGhlciBwYXJ0IG9mIHRoZSBwcm9ibGVtIGlzIHRoYXQgd2UncmUgdGhpbmtpbmcgYWJvdXQK
+Pj4gc2NvcGluZyB3cm9uZy4gIFdoYXQgaWYgd2UgbWFkZSB0aGUgaGllcmFyY2h5IG1vcmUgZXhw
+bGljaXQ/Cj4+Cj4+IEZvciBleGFtcGxlLCB3ZSBjb3VsZCBnaXZlIGVhY2ggbmV0bnMgYW4gYWRt
+aW4tYXNzaWduZWQgaWRlbnRpZmllcgo+PiAoZS5nLiBhIDY0LWJpdCBudW1iZXIsIG1heWJlIHJl
+cXVpcmVkIHRvIGJlIHVuaXF1ZSwgbWF5YmUgbm90KQo+PiByZWxhdGl2ZSB0byBpdHMgY29udGFp
+bmluZyB1c2VybnMuICBUaGVuIHdlIGNvdWxkIGNvbWUgdXAgd2l0aCBhIHdheQo+PiB0byBpZGVu
+dGlmeSB1c2VyIG5hbWVzcGFjZXMgKGkuZS4gaW5vZGUgbnVtYmVyIHJlbGF0aXZlIHRvIGNvbnRh
+aW5pbmcKPj4gdXNlciBucywgaWYgdGhhdCdzIHdlbGwtZGVmaW5lZCkuCj4KPiBJZiBhcyBzdWdn
+ZXN0ZWQgd2Ugb25seSBhc3NpZ24gaWRzIHdoZW4gYSB0dW5uZWwgKG9yIGVxdWl2YWxlbnQpIGlz
+Cj4gY3JlYXRlZCBiZXR3ZWVuIHR3byBuZXR3b3JrIG5hbWVzcGFjZXMgdGhlIHNwYWNlIGNvc3Qg
+aXMgYSBub24taXNzdWUuCj4gVGhlIGlkcyBiZWNvbWUgYXQgd29yc3QgYSBjb25zdGFudCBmYWN0
+b3IgYWRkaXRpb24gdG8gdGhlIGNvc3Qgb2YgdGhlCj4gdHVubmVsLgo+Cj4gVG8ga2VlcCB0aGlu
+Z3Mgc2ltcGxlIHdlIG1heSB3YW50IHRvIGFzc2lnbiBhIGZyZWUgaWQgKGlmIG9uZSBkb2VzIG5v
+dAo+IGV4aXN0KSB3aGVuIHdlIGNvbm5lY3QgYSB0dW5uZWwgdG8gYSBuZXR3b3JrIG5hbWVzcGFj
+ZS4KPgo+PiBGcm9tIHVzZXIgY29kZSdzIHBlcnNwZWN0aXZlLCBuZXRuc2VzIHRoYXQgYXJlIGlu
+IHRoZSByZXF1ZXN0ZXIncwo+PiB1c2VybnMgb3IgaXRzIGRlc2NlbmRlbnRzIGFyZSBpZGVudGlm
+aWVkIGJ5IGEgcGF0aCB0aHJvdWdoIGEgKHBvc3NpYmx5Cj4+IHplcm8tbGVuZ3RoKSBzZXF1ZW5j
+ZSBvZiB1c2VybnMgaWRzIGZvbGxvd2VkIGJ5IGEgbmV0bnMgaWQuICBOZXRuc2VzCj4+IG91dHNp
+ZGUgdGhlIHJlcXVlc3RlcidzIHVzZXJucyBoaWVyYXJjaHkgY2Fubm90IGJlIG5hbWVkIGF0IGFs
+bC4KPj4KPj4gV291bGQgdGhpcyBtYWtlIHNlbnNlPwo+Cj4gTm9wZS4gIFdoYXQgaGFwcGVucyBp
+ZiBJIG1pZ3JhdGUgMiBvZiB0aGUgNCBuZXR3b3JrIG5hbWVzcGFjZXMgaW4gYSB1c2VyCj4gbmFt
+ZXNwYWNlPyAgVGhlIG1pZ3JhdGlvbiBwb3RlbnRpYWxseSBmYWlscy4gIEFwcGxpY2F0aW9uIG1p
+Z3JhdGlvbiBkb2VzCj4gbm90IHJlcXVpcmUgdXNlciBuYW1lc3BhY2UgbWlncmF0aW9uLgoKSG1t
+LiAgSSBndWVzcyB0aGF0LCBhcyBsb25nIGFzIHRob3NlIG5ldHdvcmsgbmFtZXNwYWNlcyBhcmVu
+J3QKY29ubmVjdGVkIHRvIGFueXRoaW5nIGVsc2UsIG1pZ3JhdGluZyBsaWtlIHRoYXQgbWFrZXMg
+c2Vuc2UgYW5kIG91Z2h0CnRvIHdvcmsuICBGYWlyIGVub3VnaC4KCi0tQW5keQpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcg
+bGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMu
+bGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
