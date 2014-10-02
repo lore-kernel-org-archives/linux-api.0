@@ -1,104 +1,89 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: [RFC PATCH net-next v3 2/4] rtnl: add link netns id to interface
-	messages
-Date: Thu,  2 Oct 2014 15:48:08 +0200
-Message-ID: <1412257690-31253-3-git-send-email-nicolas.dichtel@6wind.com>
-References: <542D5726.8070308@6wind.com>
-	<1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] fanotify: add a flag to allow setting O_CLOEXEC on
+ event fd
+Date: Thu, 02 Oct 2014 16:44:17 +0200
+Message-ID: <1412261057.5371.8.camel@localhost.localdomain>
+References: <cover.1411562410.git.ydroneaud@opteya.com>
+	 <9d050a2db4f9cf68cd6cb038f16cccb0f73c6e66.1411562410.git.ydroneaud@opteya.com>
+	 <542481B3.8070300@gmx.de> <1411721898.7778.18.camel@localhost.localdomain>
+	 <542666B2.9080700@gmx.de>
+	 <1411980555-10818-1-git-send-email-ydroneaud@opteya.com>
+	 <20141001153621.65e9258e65a6167bf2e4cb50@linux-foundation.org>
+	 <1412230855.28184.5.camel@localhost.localdomain>
+	 <1412236349-30035-1-git-send-email-ydroneaud@opteya.com>
+	 <542D1726.3040801@draigBrady.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1412257690-31253-1-git-send-email-nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <542D1726.3040801-V8g9lnOeT5ydJdNcDFJN0w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?ISO-8859-1?Q?P=E1draig?= Brady <P@draigBrady.com>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Lino Sanfilippo <LinoSanfilippo-Mmb7MZpHnFY@public.gmane.org>, Valdis Kletnieks <Valdis.Kletnieks-PjAqaU27lzQ@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds a new attribute (IFLA_LINK_NETNSID) which contains the 'link'
-netns id when this netns is different from the netns where the interface
-stands (for example for x-net interfaces like ip tunnels). When there is no id,
-we put NETNSA_NSINDEX_UNKNOWN into this attribute to indicate to userland that
-the link netns is different from the interface netns. Hence, userland knows that
-some information like IFLA_LINK are not interpretable.
+Hi,
 
-Signed-off-by: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
----
- include/net/rtnetlink.h      |  2 ++
- include/uapi/linux/if_link.h |  1 +
- net/core/rtnetlink.c         | 13 +++++++++++++
- 3 files changed, 16 insertions(+)
+Le jeudi 02 octobre 2014 =C3=A0 10:13 +0100, P=C3=A1draig Brady a =C3=A9=
+crit :
+> On 10/02/2014 08:52 AM, Yann Droneaud wrote:
+> > In order to not potentially break applications which were
+> > requesting O_CLOEXEC on event file descriptors but which
+> > actually need it to be not effective as the kernel currently
+> > ignore the flag, so the file descriptor is inherited accross
+> > exec regardless of O_CLOEXEC (please forgive me for the
+> > wording), this patch introduces FAN_FD_CLOEXEC flag to
+> > fanotify_init() so that application can request O_CLOEXEC
+> > to be effective.
+> > Newer application would use FAN_FD_CLOEXEC flag along
+> > O_CLOEXEC to enable close on exec on newly created
+> > file descriptor:
+> >=20
+> >   fd =3D fanotify_init(FAN_CLOEXEC|FAN_NONBLOCK|FAN_FD_CLOEXEC,
+> >                      O_RDONLY|O_LARGEFILE|O_CLOEXEC|O_NOATIME);
+>=20
+> Ugh really?
+> IMHO there should be widespread or at least known breakage with
+> O_CLOEXEC before adding messiness like this.
 
-diff --git a/include/net/rtnetlink.h b/include/net/rtnetlink.h
-index e21b9f9653c0..6c6d5393fc34 100644
---- a/include/net/rtnetlink.h
-+++ b/include/net/rtnetlink.h
-@@ -46,6 +46,7 @@ static inline int rtnl_msg_family(const struct nlmsghdr *nlh)
-  *			    to create when creating a new device.
-  *	@get_num_rx_queues: Function to determine number of receive queues
-  *			    to create when creating a new device.
-+ *	@get_link_net: Function to get the i/o netns of the device
-  */
- struct rtnl_link_ops {
- 	struct list_head	list;
-@@ -93,6 +94,7 @@ struct rtnl_link_ops {
- 	int			(*fill_slave_info)(struct sk_buff *skb,
- 						   const struct net_device *dev,
- 						   const struct net_device *slave_dev);
-+	struct net		*(*get_link_net)(const struct net_device *dev);
- };
- 
- int __rtnl_link_register(struct rtnl_link_ops *ops);
-diff --git a/include/uapi/linux/if_link.h b/include/uapi/linux/if_link.h
-index 0bdb77e16875..938c0c02ed2e 100644
---- a/include/uapi/linux/if_link.h
-+++ b/include/uapi/linux/if_link.h
-@@ -145,6 +145,7 @@ enum {
- 	IFLA_CARRIER,
- 	IFLA_PHYS_PORT_ID,
- 	IFLA_CARRIER_CHANGES,
-+	IFLA_LINK_NETNSID,
- 	__IFLA_MAX
- };
- 
-diff --git a/net/core/rtnetlink.c b/net/core/rtnetlink.c
-index a6882686ca3a..1b9329512496 100644
---- a/net/core/rtnetlink.c
-+++ b/net/core/rtnetlink.c
-@@ -862,6 +862,7 @@ static noinline size_t if_nlmsg_size(const struct net_device *dev,
- 	       + nla_total_size(1) /* IFLA_OPERSTATE */
- 	       + nla_total_size(1) /* IFLA_LINKMODE */
- 	       + nla_total_size(4) /* IFLA_CARRIER_CHANGES */
-+	       + nla_total_size(4) /* IFLA_LINK_NETNSID */
- 	       + nla_total_size(ext_filter_mask
- 			        & RTEXT_FILTER_VF ? 4 : 0) /* IFLA_NUM_VF */
- 	       + rtnl_vfinfo_size(dev, ext_filter_mask) /* IFLA_VFINFO_LIST */
-@@ -1134,6 +1135,18 @@ static int rtnl_fill_ifinfo(struct sk_buff *skb, struct net_device *dev,
- 			goto nla_put_failure;
- 	}
- 
-+	if (dev->rtnl_link_ops &&
-+	    dev->rtnl_link_ops->get_link_net) {
-+		struct net *link_net = dev->rtnl_link_ops->get_link_net(dev);
-+
-+		if (!net_eq(dev_net(dev), link_net)) {
-+			int id = peernet2id(dev_net(dev), link_net);
-+
-+			if (nla_put_s32(skb, IFLA_LINK_NETNSID, id))
-+				goto nla_put_failure;
-+		}
-+	}
-+
- 	if (!(af_spec = nla_nest_start(skb, IFLA_AF_SPEC)))
- 		goto nla_put_failure;
- 
--- 
-2.1.0
+You should have read the other part of my message:
+
+> > While I believe fanotify_init() must enable close-on-exec
+> > when requested by userspace to prevent unwelcomed security
+> > issue, I understand your concerns regarding the possible
+> > breakage on userspace application requesting O_CLOEXEC
+> > but relying on it not being enable on file descriptor
+> > created for the events.
+>=20
+> > So with a new flag to fanotify_init(), we could allow
+> > newer applications to really enable O_CLOEXEC.
+>=20
+> > But I feel bad to have to force application to specify
+> > twice they want close on exec:
+> >  - are you sure ?
+> >  - are you really sure ?
+> >  - is this your final answer ?
+> >  ...
+
+
+I'm not really fond of this option.
+
+> It seems surprising to me that apps that would depend on
+> O_CLOEXEC being ineffective.
+>=20
+
+We have seen userspace developers making mistakes, and those mistakes
+were mistakenly ignored by the kernel until someone try to fix the
+mistake on kernel side, which broke the existing userspace application.
+
+> please reconsider this one.
+>=20
+
+I'm not going to promote this patch as it's a quick and dirty hack to
+demonstrate what would be the other option.
+
+Regards.
+
+--=20
+Yann Droneaud
+OPTEYA
