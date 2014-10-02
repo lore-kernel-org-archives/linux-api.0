@@ -1,97 +1,87 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH net-next v2 0/5] netns: allow to identify peer netns
-Date: Thu, 2 Oct 2014 12:48:14 -0700
-Message-ID: <CALCETrWLhfQpT+f=DPTsB4w5Oy+OeiygBrQosf25HDJQaOnPWg@mail.gmail.com>
-References: <1411478430-4989-1-git-send-email-nicolas.dichtel@6wind.com>
-	<87ppei45ig.fsf@x220.int.ebiederm.org>
-	<CALCETrX5e0cp4QFCv1eAqR1hjoROU9Rh=cRos9U35DaR-py3Eg@mail.gmail.com>
-	<87y4t61a6v.fsf@x220.int.ebiederm.org> <54294B4E.70501@6wind.com>
-	<87y4t2gtd0.fsf@x220.int.ebiederm.org> <542D5726.8070308@6wind.com>
-	<8761g2nurx.fsf@x220.int.ebiederm.org>
-	<CALCETrWxqzUF1x+TmW5G4kuHPP+sUtiRaT6dpZ0mQTJ217QB5w@mail.gmail.com>
-	<877g0il0gd.fsf@x220.int.ebiederm.org>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH RFC] introduce ioctl to completely invalidate page cache
+Date: Thu, 02 Oct 2014 13:59:40 -0600
+Message-ID: <542DAEAC.8010203@kernel.dk>
+References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <877g0il0gd.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Cong Wang <cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Thanos Makatos <thanos.makatos@citrix.com>, linux-fsdevel@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, jlayton@poochiereds.net, bfields@fieldses.org, jack@suse.cz
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBPY3QgMiwgMjAxNCBhdCAxMjo0NSBQTSwgRXJpYyBXLiBCaWVkZXJtYW4KPGViaWVk
-ZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4gQW5keSBMdXRvbWlyc2tpIDxsdXRvQGFtYWNhcGl0
-YWwubmV0PiB3cml0ZXM6Cj4KPj4gT24gVGh1LCBPY3QgMiwgMjAxNCBhdCAxMjoyMCBQTSwgRXJp
-YyBXLiBCaWVkZXJtYW4KPj4gPGViaWVkZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4+PiBOaWNv
-bGFzIERpY2h0ZWwgPG5pY29sYXMuZGljaHRlbEA2d2luZC5jb20+IHdyaXRlczoKPj4+Cj4+Pj4g
-TGUgMjkvMDkvMjAxNCAyMDo0MywgRXJpYyBXLiBCaWVkZXJtYW4gYSDDqWNyaXQgOgo+Pj4+PiBO
-aWNvbGFzIERpY2h0ZWwgPG5pY29sYXMuZGljaHRlbEA2d2luZC5jb20+IHdyaXRlczoKPj4+Pj4K
-Pj4+Pj4+IExlIDI2LzA5LzIwMTQgMjA6NTcsIEVyaWMgVy4gQmllZGVybWFuIGEgw6ljcml0IDoK
-Pj4+Pj4+PiBBbmR5IEx1dG9taXJza2kgPGx1dG9AYW1hY2FwaXRhbC5uZXQ+IHdyaXRlczoKPj4+
-Pj4+Pgo+Pj4+Pj4+PiBPbiBGcmksIFNlcCAyNiwgMjAxNCBhdCAxMToxMCBBTSwgRXJpYyBXLiBC
-aWVkZXJtYW4KPj4+Pj4+Pj4gPGViaWVkZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4+Pj4+Pj4+
-PiBJIHNlZSB0d28gd2F5cyB0byBnbyB3aXRoIHRoaXMuCj4+Pj4+Pj4+Pgo+Pj4+Pj4+Pj4gLSBB
-IHBlciBuZXR3b3JrIG5hbWVzcGFjZSB0YWJsZSB0byB0aGF0IHlvdSBjYW4gc3RvcmUgaWRzIGZv
-ciBgYHBlZXInJwo+Pj4+Pj4+Pj4gICAgIG5ldHdvcmsgbmFtZXNwYWNlcy4gIFRoZSB0YWJsZSB3
-b3VsZCBuZWVkIHRvIGJlIHBvcHVsYXRlZCBtYW51YWxseSBieQo+Pj4+Pj4+Pj4gICAgIHRoZSBs
-aWtlcyBvZiBpcCBuZXRucyBhZGQuCj4+Pj4+Pj4+Pgo+Pj4+Pj4+Pj4gICAgIFRoYXQgZmxpcHMg
-dGhlIG9yZGVyIG9mIGFzc2lnbm1lbnQgYW5kIG1ha2VzIHRoaXMgaWRlYSBzb2xpZC4KPj4+Pj4+
-IEkgaGF2ZSBhIHByZWZlcmVuY2UgZm9yIHRoaXMgc29sdXRpb24sIGJlY2F1c2UgaXQgYWxsb3dz
-IHRvIGhhdmUgYSBmdWxsCj4+Pj4+PiBicm9hZGNhc3QgbWVzc2FnZXMuIFdoZW4geW91IGhhdmUg
-YSBsb3Qgb2YgbmV0d29yayBpbnRlcmZhY2VzICg+IDEwayksCj4+Pj4+PiBpdCBzYXZlcyBhIGxv
-dCBvZiB0aW1lIHRvIGF2b2lkIGFub3RoZXIgcmVxdWVzdCB0byBnZXQgYWxsIGluZm9ybWF0aW9u
-cy4KPj4+Pj4KPj4+Pj4gTXkgcHJhY3RpY2FsIHF1ZXN0aW9uIGlzIGhvdyBvZnRlbiBkb2VzIGl0
-IGhhcHBlbiB0aGF0IHdlIGNhcmU/Cj4+Pj4gSW4gZmFjdCwgSSBkb24ndCB0aGluayB0aGF0IHNj
-ZW5hcmlpIHdpdGggYSBsb3Qgb2YgbmV0bnMgaGF2ZSBhIGZ1bGwgbWVzaCBvZgo+Pj4+IHgtbmV0
-bnMgaW50ZXJmYWNlcy4gSXQgd2lsbCBiZSBtb3JlIG9uZSAibGluayIgbmV0bnMgd2l0aCB0aGUg
-cGh5c2ljYWwKPj4+PiBpbnRlcmZhY2UgYW5kIGFsbCBvdGhlciB3aXRoIG9uZSBpbnRlcmZhY2Ug
-d2l0aCB0aGUgbGluayBwYXJ0IGluIHRoaXMgImxpbmsiCj4+Pj4gbmV0bnMuIEhlbmNlLCBvbmx5
-IG9uZSBuc2lkIGlzIG5lZWRpbmcgaW4gZWFjaCBuZXRucy4KPj4+Cj4+PiBJIHdpbGwgYnV5IHRo
-YXQgYSBmdWxsIG1lc2ggaXMgdW5saWtlbHkuCj4+Pgo+Pj4gRm9yIHBlb3BsZSBkb2luZyBzaW11
-bGF0aW9ucyBhbnl0aGluZyBwaHlzaWNhbCBoYXMgYSBsaW1pdGVkIG51bWJlciBvZgo+Pj4gbGlu
-a3MuCj4+Pgo+Pj4gRm9yIHBlb3BsZSB3YW50aW5nIGFsbCB0byBhbGwgY29ubmVjdGl2aXR5IHNl
-dHRpbmcgdXAgYW4gaW50ZXJuYWwKPj4+IG1hY3ZsYW4gKG9yIHRoZSBlcXVpdmFsZW50KSBpcyBs
-aWtlbHkgbXVjaCBzaW1wbGVyIGFuZCBtb3JlIGVmZmljaWVudAo+Pj4gdGhhdCBhIGZ1bGwgbWVz
-aC4KPj4+Cj4+PiBTbyB0aGUgcXVlc3Rpb24gaW4gbXkgbWluZCBpcyBob3cgZG8gd2UgY3JlYXRl
-IHRoZXNlIGlkZW50aWZpZXJzIGF0IG5lZWQKPj4+ICh3aGVuIHdlIGNyZWF0ZSB0aGUgY3Jvc3Mg
-bmV0d29yayBuYW1lc3BhY2UgbGlua3MpIGluc3RlYWQgb2YgYXQgbmV0d29yawo+Pj4gbmFtZXNw
-YWNlIGNyZWF0aW9uIHRpbWUuICBJIGRvbid0IHNlZSBhbiBhbnN3ZXIgdG8gdGhhdCBpbiB5b3Vy
-IHBhdGNoZXMsCj4+PiBhbmQgcGVyaGFwcyBpdCBvYnZpb3VzLgo+Pj4KPj4KPj4gSSB3b25kZXIg
-d2hldGhlciBwYXJ0IG9mIHRoZSBwcm9ibGVtIGlzIHRoYXQgd2UncmUgdGhpbmtpbmcgYWJvdXQK
-Pj4gc2NvcGluZyB3cm9uZy4gIFdoYXQgaWYgd2UgbWFkZSB0aGUgaGllcmFyY2h5IG1vcmUgZXhw
-bGljaXQ/Cj4+Cj4+IEZvciBleGFtcGxlLCB3ZSBjb3VsZCBnaXZlIGVhY2ggbmV0bnMgYW4gYWRt
-aW4tYXNzaWduZWQgaWRlbnRpZmllcgo+PiAoZS5nLiBhIDY0LWJpdCBudW1iZXIsIG1heWJlIHJl
-cXVpcmVkIHRvIGJlIHVuaXF1ZSwgbWF5YmUgbm90KQo+PiByZWxhdGl2ZSB0byBpdHMgY29udGFp
-bmluZyB1c2VybnMuICBUaGVuIHdlIGNvdWxkIGNvbWUgdXAgd2l0aCBhIHdheQo+PiB0byBpZGVu
-dGlmeSB1c2VyIG5hbWVzcGFjZXMgKGkuZS4gaW5vZGUgbnVtYmVyIHJlbGF0aXZlIHRvIGNvbnRh
-aW5pbmcKPj4gdXNlciBucywgaWYgdGhhdCdzIHdlbGwtZGVmaW5lZCkuCj4KPiBJZiBhcyBzdWdn
-ZXN0ZWQgd2Ugb25seSBhc3NpZ24gaWRzIHdoZW4gYSB0dW5uZWwgKG9yIGVxdWl2YWxlbnQpIGlz
-Cj4gY3JlYXRlZCBiZXR3ZWVuIHR3byBuZXR3b3JrIG5hbWVzcGFjZXMgdGhlIHNwYWNlIGNvc3Qg
-aXMgYSBub24taXNzdWUuCj4gVGhlIGlkcyBiZWNvbWUgYXQgd29yc3QgYSBjb25zdGFudCBmYWN0
-b3IgYWRkaXRpb24gdG8gdGhlIGNvc3Qgb2YgdGhlCj4gdHVubmVsLgo+Cj4gVG8ga2VlcCB0aGlu
-Z3Mgc2ltcGxlIHdlIG1heSB3YW50IHRvIGFzc2lnbiBhIGZyZWUgaWQgKGlmIG9uZSBkb2VzIG5v
-dAo+IGV4aXN0KSB3aGVuIHdlIGNvbm5lY3QgYSB0dW5uZWwgdG8gYSBuZXR3b3JrIG5hbWVzcGFj
-ZS4KPgo+PiBGcm9tIHVzZXIgY29kZSdzIHBlcnNwZWN0aXZlLCBuZXRuc2VzIHRoYXQgYXJlIGlu
-IHRoZSByZXF1ZXN0ZXIncwo+PiB1c2VybnMgb3IgaXRzIGRlc2NlbmRlbnRzIGFyZSBpZGVudGlm
-aWVkIGJ5IGEgcGF0aCB0aHJvdWdoIGEgKHBvc3NpYmx5Cj4+IHplcm8tbGVuZ3RoKSBzZXF1ZW5j
-ZSBvZiB1c2VybnMgaWRzIGZvbGxvd2VkIGJ5IGEgbmV0bnMgaWQuICBOZXRuc2VzCj4+IG91dHNp
-ZGUgdGhlIHJlcXVlc3RlcidzIHVzZXJucyBoaWVyYXJjaHkgY2Fubm90IGJlIG5hbWVkIGF0IGFs
-bC4KPj4KPj4gV291bGQgdGhpcyBtYWtlIHNlbnNlPwo+Cj4gTm9wZS4gIFdoYXQgaGFwcGVucyBp
-ZiBJIG1pZ3JhdGUgMiBvZiB0aGUgNCBuZXR3b3JrIG5hbWVzcGFjZXMgaW4gYSB1c2VyCj4gbmFt
-ZXNwYWNlPyAgVGhlIG1pZ3JhdGlvbiBwb3RlbnRpYWxseSBmYWlscy4gIEFwcGxpY2F0aW9uIG1p
-Z3JhdGlvbiBkb2VzCj4gbm90IHJlcXVpcmUgdXNlciBuYW1lc3BhY2UgbWlncmF0aW9uLgoKSG1t
-LiAgSSBndWVzcyB0aGF0LCBhcyBsb25nIGFzIHRob3NlIG5ldHdvcmsgbmFtZXNwYWNlcyBhcmVu
-J3QKY29ubmVjdGVkIHRvIGFueXRoaW5nIGVsc2UsIG1pZ3JhdGluZyBsaWtlIHRoYXQgbWFrZXMg
-c2Vuc2UgYW5kIG91Z2h0CnRvIHdvcmsuICBGYWlyIGVub3VnaC4KCi0tQW5keQpfX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcg
-bGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMu
-bGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
+On 10/02/2014 10:09 AM, Thanos Makatos wrote:
+> This patch introduces a new ioctl called BLKFLUSHBUFS2, which is pretty
+> similar to BLKFLUSHBUFS except that is also invalidates the page cache.
+> This allows for a complete invalidation of the cached data of a
+> particular block device, which might be useful for cases like
+> synchronising the caches of an iSCSI block device used by multiple
+> hosts.
+> 
+> Signed-off-by: Thanos Makatos <thanos.makatos@citrix.com>
+> ---
+>  block/compat_ioctl.c    |    1 +
+>  block/ioctl.c           |   13 +++++++++++--
+>  include/uapi/linux/fs.h |    1 +
+>  3 files changed, 13 insertions(+), 2 deletions(-)
+> 
+> diff --git a/block/compat_ioctl.c b/block/compat_ioctl.c
+> index 18b282c..672388ab 100644
+> --- a/block/compat_ioctl.c
+> +++ b/block/compat_ioctl.c
+> @@ -688,6 +688,7 @@ long compat_blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg)
+>  	case BLKDISCARDZEROES:
+>  		return compat_put_uint(arg, bdev_discard_zeroes_data(bdev));
+>  	case BLKFLSBUF:
+> +	case BLKFLSBUF2:
+>  	case BLKROSET:
+>  	case BLKDISCARD:
+>  	case BLKSECDISCARD:
+> diff --git a/block/ioctl.c b/block/ioctl.c
+> index d6cda81..0c427a7 100644
+> --- a/block/ioctl.c
+> +++ b/block/ioctl.c
+> @@ -268,6 +268,12 @@ static inline int is_unrecognized_ioctl(int ret)
+>  		ret == -ENOIOCTLCMD;
+>  }
+>  
+> +static void flush_buffer_cache(struct block_device *bdev)
+> +{
+> +	fsync_bdev(bdev);
+> +	invalidate_bdev(bdev);
+> +}
+> +
+>  /*
+>   * always keep this in sync with compat_blkdev_ioctl()
+>   */
+> @@ -282,6 +288,7 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+>  
+>  	switch(cmd) {
+>  	case BLKFLSBUF:
+> +	case BLKFLSBUF2:
+>  		if (!capable(CAP_SYS_ADMIN))
+>  			return -EACCES;
+>  
+> @@ -289,8 +296,10 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+>  		if (!is_unrecognized_ioctl(ret))
+>  			return ret;
+>  
+> -		fsync_bdev(bdev);
+> -		invalidate_bdev(bdev);
+> +		flush_buffer_cache(bdev);
+> +		if (BLKFLSBUF2 == cmd)
+> +			return invalidate_inode_pages2(
+> +					bdev->bd_inode->i_mapping);
+>  		return 0;
+
+We're currently ignoring the buffer cache sync and invalidation (which
+is odd), but at least being consistent would be good.
+
+Might also need a filemap_write_and_wait() to sync before invalidation.
+
+-- 
+Jens Axboe
+
