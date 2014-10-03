@@ -1,37 +1,42 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH net-next v3 1/4] netns: add genl cmd to add and get
- peer netns ids
-Date: Fri, 03 Oct 2014 14:22:26 +0200
-Message-ID: <542E9502.1040104@6wind.com>
-References: <542D5726.8070308@6wind.com>	<1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>	<1412257690-31253-2-git-send-email-nicolas.dichtel@6wind.com> <87tx3mmflp.fsf@x220.int.ebiederm.org>
-Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH RFC] introduce ioctl to completely invalidate page cache
+Date: Fri, 03 Oct 2014 08:28:24 -0600
+Message-ID: <542EB288.5000209@kernel.dk>
+References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com> <542DAEAC.8010203@kernel.dk> <2368A3FCF9F7214298E53C823B0A48EC0423DFE3@AMSPEX01CL02.citrite.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87tx3mmflp.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <2368A3FCF9F7214298E53C823B0A48EC0423DFE3@AMSPEX01CL02.citrite.net>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Thanos Makatos <thanos.makatos@citrix.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "jlayton@poochiereds.net" <jlayton@poochiereds.net>, "bfields@fieldses.org" <bfields@fieldses.org>, "jack@suse.cz" <jack@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-Le 02/10/2014 21:33, Eric W. Biederman a =C3=A9crit :
-> Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> writes:
->
->> With this patch, a user can define an id for a peer netns by providi=
-ng a FD or a
->> PID. These ids are local to netns (ie valid only into one netns).
+On 2014-10-03 03:25, Thanos Makatos wrote:
+>>> -		fsync_bdev(bdev);
+>>> -		invalidate_bdev(bdev);
+>>> +		flush_buffer_cache(bdev);
+>>> +		if (BLKFLSBUF2 == cmd)
+>>> +			return invalidate_inode_pages2(
+>>> +					bdev->bd_inode->i_mapping);
+>>>   		return 0;
 >>
->> This will be useful for netlink messages when a x-netns interface is
->> dumped.
+>> We're currently ignoring the buffer cache sync and invalidation (which is odd),
+>> but at least being consistent would be good.
+>>
+>> Might also need a filemap_write_and_wait() to sync before invalidation.
 >
-> You have a "id -> struct net *" table but you don't have a
-> "struct net * -> id" table which looks like it will impact the
-> performance of peernet2id at scale.
-It is indirectly stores in 'struct idr'. It can be optimized later, wit=
-h a
-proper algorithm to find quickly this 'struct net *' (hash table? somet=
-hing
-else?). A basic algorithm will not be more scalable than the current
-idr_for_each().
+> (I've got zero knowledge in this area, so excuse my ignorance!)
+>
+> Does filemap_write_and_wait() writes back modified, memory-mapped pages? If so,
+> isn't there a race condition? Or have I got it completely wrong?
+
+There's no race to be concerned of for this ioctl. Any page dirtied 
+before you make the call will be synced, any page dirtied after may not. 
+This is no different than what would happen on the buffer cache side in 
+the current ioctl.
+
+-- 
+Jens Axboe
+
