@@ -1,61 +1,72 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: [PATCH 01/17] mm: gup: add FOLL_TRIED
-Date: Fri,  3 Oct 2014 19:07:51 +0200
-Message-ID: <1412356087-16115-2-git-send-email-aarcange@redhat.com>
+From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 11/17] mm: swp_entry_swapcount
+Date: Fri,  3 Oct 2014 19:08:01 +0200
+Message-ID: <1412356087-16115-12-git-send-email-aarcange@redhat.com>
 References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>, Neil Brown <neilb@suse.de>, Mike Hommey <mh@glandium.org>, Taras Glek <tglek@mozilla.com>, Jan Kara <jac>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1412356087-16115-1-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Robert Love <rlove-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dmitry Adamushko <dmitry.adamushko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mike Hommey <mh-YmoObPS1fuhg9hUCZPvPmw@public.gmane.org>, Taras Glek <tglek-4eJtQOnFJqFBDgjK7y7TUQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minc
 List-Id: linux-api@vger.kernel.org
 
-From: Andres Lagar-Cavilla <andreslc@google.com>
+Provide a new swapfile method for remap_anon_pages to verify the swap
+entry is mapped only in one vma before relocating the swap entry in a
+different virtual address. Otherwise if the swap entry is mapped
+in multiple vmas, when the page is swapped back in, it could get
+mapped in a non linear way in some anon_vma.
 
-Reviewed-by: Radim Kr=C4=8Dm=C3=A1=C5=99 <rkrcmar@redhat.com>
-Signed-off-by: Andres Lagar-Cavilla <andreslc@google.com>
-Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
+Signed-off-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- include/linux/mm.h | 1 +
- mm/gup.c           | 4 ++++
- 2 files changed, 5 insertions(+)
+ include/linux/swap.h |  6 ++++++
+ mm/swapfile.c        | 13 +++++++++++++
+ 2 files changed, 19 insertions(+)
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 8981cc8..0f4196a 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -1985,6 +1985,7 @@ static inline struct page *follow_page(struct vm_ar=
-ea_struct *vma,
- #define FOLL_HWPOISON	0x100	/* check page is hwpoisoned */
- #define FOLL_NUMA	0x200	/* force NUMA hinting page fault */
- #define FOLL_MIGRATION	0x400	/* wait for page to replace migration entry=
- */
-+#define FOLL_TRIED	0x800	/* a retry, previous pass started an IO */
-=20
- typedef int (*pte_fn_t)(pte_t *pte, pgtable_t token, unsigned long addr,
- 			void *data);
-diff --git a/mm/gup.c b/mm/gup.c
-index 91d044b..af7ea3e 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -281,6 +281,10 @@ static int faultin_page(struct task_struct *tsk, str=
-uct vm_area_struct *vma,
- 		fault_flags |=3D FAULT_FLAG_ALLOW_RETRY;
- 	if (*flags & FOLL_NOWAIT)
- 		fault_flags |=3D FAULT_FLAG_ALLOW_RETRY | FAULT_FLAG_RETRY_NOWAIT;
-+	if (*flags & FOLL_TRIED) {
-+		VM_WARN_ON_ONCE(fault_flags & FAULT_FLAG_ALLOW_RETRY);
-+		fault_flags |=3D FAULT_FLAG_TRIED;
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index 8197452..af9977c 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -458,6 +458,7 @@ extern unsigned int count_swap_pages(int, int);
+ extern sector_t map_swap_page(struct page *, struct block_device **);
+ extern sector_t swapdev_block(int, pgoff_t);
+ extern int page_swapcount(struct page *);
++extern int swp_entry_swapcount(swp_entry_t entry);
+ extern struct swap_info_struct *page_swap_info(struct page *);
+ extern int reuse_swap_page(struct page *);
+ extern int try_to_free_swap(struct page *);
+@@ -559,6 +560,11 @@ static inline int page_swapcount(struct page *page)
+ 	return 0;
+ }
+ 
++static inline int swp_entry_swapcount(swp_entry_t entry)
++{
++	return 0;
++}
++
+ #define reuse_swap_page(page)	(page_mapcount(page) == 1)
+ 
+ static inline int try_to_free_swap(struct page *page)
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 8798b2e..4cc9af6 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -874,6 +874,19 @@ int page_swapcount(struct page *page)
+ 	return count;
+ }
+ 
++int swp_entry_swapcount(swp_entry_t entry)
++{
++	int count = 0;
++	struct swap_info_struct *p;
++
++	p = swap_info_get(entry);
++	if (p) {
++		count = swap_count(p->swap_map[swp_offset(entry)]);
++		spin_unlock(&p->lock);
 +	}
-=20
- 	ret =3D handle_mm_fault(mm, vma, address, fault_flags);
- 	if (ret & VM_FAULT_ERROR) {
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
++	return count;
++}
++
+ /*
+  * We can write to an anon page without COW if there are no other references
+  * to it.  And as a side-effect, free up its swap: because the old content
