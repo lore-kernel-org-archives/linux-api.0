@@ -1,35 +1,42 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 10/17] mm: rmap preparation for remap_anon_pages
-Date: Fri, 3 Oct 2014 11:31:31 -0700
-Message-ID: <CA+55aFx++R42L75ooE=Fmaem73=V=q7f6pYTcALxgrA1y98G-A@mail.gmail.com>
-References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
-	<1412356087-16115-11-git-send-email-aarcange@redhat.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v3 3/5] selftests/ipc: change test to use ksft framework
+Date: Fri, 03 Oct 2014 13:42:46 -0600
+Message-ID: <542EFC36.1010306@osg.samsung.com>
+References: <cover.1412349412.git.shuahkh@osg.samsung.com> <fb7ed86d44adbc7f97f9e42b314e4fce5616959e.1412349412.git.shuahkh@osg.samsung.com> <1412357993.20838.4.camel@linux-t7sj.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1412356087-16115-11-git-send-email-aarcange@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\Dr. David Alan Gilbert\\" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>, Neil Brown <neilb@suse.de>, Mike Hommey <mh@glandium.org>, Taras Glek <tg>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1412357993.20838.4.camel-dxKd5G12XOI1EaDjlw0dpg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, colin.king-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 3, 2014 at 10:08 AM, Andrea Arcangeli <aarcange@redhat.com> wrote:
->
-> Overall this looks a fairly small change to the rmap code, notably
-> less intrusive than the nonlinear vmas created by remap_file_pages.
+On 10/03/2014 11:39 AM, Davidlohr Bueso wrote:
+> On Fri, 2014-10-03 at 09:36 -0600, Shuah Khan wrote:
+>>  	msgque.key = ftok(argv[0], 822155650);
+>>  	if (msgque.key == -1) {
+>> -		printf("Can't make key\n");
+>> -		return -errno;
+>> +		printf("Can't make key: %d\n", -errno);
+> 
+> So printing a numeric value is quite useless when users actually run
+> into these errors -- which is why I like err() so much. How about using
+> strerror() instead?
+> 
 
-Considering that remap_file_pages() was an unmitigated disaster, and
--mm has a patch to remove it entirely, I'm not at all convinced this
-is a good argument.
+Yes. using perror() does give better information. There are other
+places in this file that use errno. How about I make that a separate
+patch and catch all of them at once to use perror() as a follow-up
+change? That way I fix all at once without adding more changes to
+this patch.
 
-We thought remap_file_pages() was a good idea, and it really really
-really wasn't. Almost nobody used it, why would the anonymous page
-case be any different?
+thanks,
+-- Shuah
 
-            Linus
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
