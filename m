@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH v3 1/5] selftests: add kselftest framework for uniform test reporting
-Date: Fri,  3 Oct 2014 09:36:16 -0600
-Message-ID: <36720c03ad446262f3248be600a66035b9b8555b.1412349412.git.shuahkh@osg.samsung.com>
+Subject: [PATCH v3 2/5] selftests/breakpoints: change test to use ksft framework
+Date: Fri,  3 Oct 2014 09:36:17 -0600
+Message-ID: <6e6772fee69e0c71feaf1a48b3f1ebcfc89be966.1412349412.git.shuahkh@osg.samsung.com>
 References: <cover.1412349412.git.shuahkh@osg.samsung.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1412349412.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
@@ -12,91 +12,60 @@ To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ek
 Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add kselftest framework for tests to use. This is a light
-weight framework provides a set of interfaces to report test
-results. Tests can use these interfaces to report pass, and
-fail cases as well as when failure is due to configuration
-problems such as missing modules, or when a test that is should
-fail, fails as expected, and a test that should fail, passes.
-The framework uses POSIX standard return codes for reporting
-results to address the needs of users that want to run the kernel
-selftests from their user-space test suites and want to know why a
-test failed. In addition, the framework includes interfaces to use
-to report test statistics on number of tests passed and failed.
+Change breakpoints test to use kselftest framework to report
+test results.
 
 Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 ---
- tools/testing/selftests/kselftest.h | 62 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 62 insertions(+)
- create mode 100644 tools/testing/selftests/kselftest.h
+ tools/testing/selftests/breakpoints/breakpoint_test.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/tools/testing/selftests/kselftest.h b/tools/testing/selftests/kselftest.h
-new file mode 100644
-index 0000000..572c888
---- /dev/null
-+++ b/tools/testing/selftests/kselftest.h
-@@ -0,0 +1,62 @@
-+/*
-+ * kselftest.h:	kselftest framework return codes to include from
-+ *		selftests.
-+ *
-+ * Copyright (c) 2014 Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-+ * Copyright (c) 2014 Samsung Electronics Co., Ltd.
-+ *
-+ * This file is released under the GPLv2.
-+ */
-+#ifndef __KSELFTEST_H
-+#define __KSELFTEST_H
+diff --git a/tools/testing/selftests/breakpoints/breakpoint_test.c b/tools/testing/selftests/breakpoints/breakpoint_test.c
+index a0743f3..120895a 100644
+--- a/tools/testing/selftests/breakpoints/breakpoint_test.c
++++ b/tools/testing/selftests/breakpoints/breakpoint_test.c
+@@ -17,6 +17,8 @@
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ 
++#include "../kselftest.h"
 +
-+#include <stdlib.h>
-+#include <unistd.h>
-+
-+/* counters */
-+struct ksft_count {
-+	unsigned int ksft_pass;
-+	unsigned int ksft_fail;
-+	unsigned int ksft_xfail;
-+	unsigned int ksft_xpass;
-+	unsigned int ksft_xskip;
-+};
-+
-+static struct ksft_count ksft_cnt;
-+
-+static inline void ksft_inc_pass_cnt(void) { ksft_cnt.ksft_pass++; }
-+static inline void ksft_inc_fail_cnt(void) { ksft_cnt.ksft_fail++; }
-+static inline void ksft_inc_xfail_cnt(void) { ksft_cnt.ksft_xfail++; }
-+static inline void ksft_inc_xpass_cnt(void) { ksft_cnt.ksft_xpass++; }
-+static inline void ksft_inc_xskip_cnt(void) { ksft_cnt.ksft_xskip++; }
-+
-+static inline void ksft_print_cnts(void)
-+{
-+	printf("Pass: %d Fail: %d Xfail: %d Xpass: %d, Xskip: %d\n",
-+		ksft_cnt.ksft_pass, ksft_cnt.ksft_fail,
-+		ksft_cnt.ksft_xfail, ksft_cnt.ksft_xpass,
-+		ksft_cnt.ksft_xskip);
-+}
-+
-+static inline int ksft_exit_pass(void)
-+{
-+	exit(0);
-+}
-+static inline int ksft_exit_fail(void)
-+{
-+	exit(1);
-+}
-+static inline int ksft_exit_xfail(void)
-+{
-+	exit(2);
-+}
-+static inline int ksft_exit_xpass(void)
-+{
-+	exit(3);
-+}
-+static inline int ksft_exit_skip(void)
-+{
-+	exit(4);
-+}
-+
-+#endif /* __KSELFTEST_H */
+ 
+ /* Breakpoint access modes */
+ enum {
+@@ -42,7 +44,7 @@ static void set_breakpoint_addr(void *addr, int n)
+ 		     offsetof(struct user, u_debugreg[n]), addr);
+ 	if (ret) {
+ 		perror("Can't set breakpoint addr\n");
+-		exit(-1);
++		ksft_exit_fail();
+ 	}
+ }
+ 
+@@ -105,7 +107,7 @@ static void toggle_breakpoint(int n, int type, int len,
+ 		     offsetof(struct user, u_debugreg[7]), dr7);
+ 	if (ret) {
+ 		perror("Can't set dr7");
+-		exit(-1);
++		ksft_exit_fail();
+ 	}
+ }
+ 
+@@ -275,7 +277,7 @@ static void check_success(const char *msg)
+ 			msg2 = "Ok";
+ 		if (ptrace(PTRACE_POKEDATA, child_pid, &trapped, 1)) {
+ 			perror("Can't poke\n");
+-			exit(-1);
++			ksft_exit_fail();
+ 		}
+ 	}
+ 
+@@ -390,5 +392,5 @@ int main(int argc, char **argv)
+ 
+ 	wait(NULL);
+ 
+-	return 0;
++	return ksft_exit_pass();
+ }
 -- 
 1.9.1
