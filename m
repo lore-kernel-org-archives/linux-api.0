@@ -1,84 +1,134 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH] x86,seccomp,prctl: Remove PR_TSC_SIGSEGV and seccomp TSC filtering
-Date: Fri, 3 Oct 2014 10:59:15 -0700
-Message-ID: <CALCETrWP7QSb4dFh_phUK+7P-XookgL8UXgvHi-e4icukUF2Og@mail.gmail.com>
-References: <fc0c2447cbc39257941c6b118388c024b719353a.1412356529.git.luto@amacapital.net>
- <20141003174141.GR2342@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141003174141.GR2342-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Erik Bosman <ebn310-vHs5IaWfoDhmR6Xm/wNWPw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: [PATCH 10/17] mm: rmap preparation for remap_anon_pages
+Date: Fri,  3 Oct 2014 19:08:00 +0200
+Message-ID: <1412356087-16115-11-git-send-email-aarcange@redhat.com>
+References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>, Neil Brown <neilb@suse.de>, Mike Hommey <mh@glandium.org>, Taras Glek <tglek@mozilla.com>, Jan Kara <jac>
 List-Id: linux-api@vger.kernel.org
 
-[cc's re-added]
+remap_anon_pages (unlike remap_file_pages) tries to be non intrusive
+in the rmap code.
 
-On Fri, Oct 3, 2014 at 10:41 AM, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Hi,
->
-> On Fri, Oct 03, 2014 at 10:18:14AM -0700, Andy Lutomirski wrote:
->> Weakness 2: On most configurations, most or all userspace processes
->> have unrestricted access to RDPMC, which is even better than RDTSC
->> for exploiting timing attacks.
->
-> "User access of the RDPMC instruction is not guaranteed. Like RDTSC,
-> user access is controlled by a bit in CR4. CR4.PCE (bit-8) controls
-> whether or not a user program can execute the RDPMC instruction
-> without faulting"
->
-> I don't think there's was a seccomp leak of RDPMC because of this, the
-> rdtsc and rdpmc seems to be linked to the same cr4 tweak.
+As far as the rmap code is concerned, rmap_anon_pages only alters the
+page->mapping and page->index. It does it while holding the page
+lock. However there are a few places that in presence of anon pages
+are allowed to do rmap walks without the page lock (split_huge_page
+and page_referenced_anon). Those places that are doing rmap walks
+without taking the page lock first, must be updated to re-check that
+the page->mapping didn't change after they obtained the anon_vma
+lock. remap_anon_pages takes the anon_vma lock for writing before
+altering the page->mapping, so if the page->mapping is still the same
+after obtaining the anon_vma lock (without the page lock), the rmap
+walks can go ahead safely (and remap_anon_pages will wait them to
+complete before proceeding).
 
-RDPMC is controlled by CR4.PCE, whereas RDTSC is controlled by
-CR4.TSD, so, unless there's magic that I'm unaware of, seccomp never
-blocked RDPMC access.  I don't know whether circa-2008 kernels set PCE
-(or perhaps left it set if BIOS set it) at boot, but certainly almost
-everyone on any kernel for the last few years has RDPMC enabled in
-ring 3.
+remap_anon_pages serializes against itself with the page lock.
 
->
-> The vsyscall data was leaked right, but you can't compare the
-> two. Sure it's better to block that too but it's not comparable to
-> give tsc access to apps running under seccomp.
->
-> The time of the day isn't secret either (ok it could be an issue if
-> you intend to run the system on some secret time in the past or future
-> but this sounds not a practical issue).
->
-> What's not public info and should never be leaked to seccomp
-> sandboxes, is the tsc at that kind of cycle count granularity (and the
-> various gettimeofday variants with nanosecond granularity). I thought
-> RDPMC was blocked too with the same CR4 tweak... if that wasn't the
-> case and you could get tsc granular information into a seccomp
-> sandbox, that's not ok because it allows for covert channel attacks.
+All other places taking the anon_vma lock while holding the mmap_sem
+for writing, don't need to check if the page->mapping has changed
+after taking the anon_vma lock, regardless of the page lock, because
+remap_anon_pages holds the mmap_sem for reading.
 
-The HPET very fine granularity.  It's slow to access, but that isn't
-necessarily a problem for attackers.
+Overall this looks a fairly small change to the rmap code, notably
+less intrusive than the nonlinear vmas created by remap_file_pages.
 
-I agree that this is problematic, and I want to fix it.  The trouble
-is that I'm not sure it's fixable in a sane manner with the current
-semantics.  CR4.PCE, in particular, will need to be a function of both
-per-thread state (PR_TSC_SIGSEGV) and per-mm state (whether perf_event
-self-monitoring is on).  Getting the context switching logic correct
-without hurting the common case too much will be quite complicated.
+There's one constraint enforced to allow this simplification: the
+source pages passed to remap_anon_pages must be mapped only in one
+vma, but this is not a limitation when used to handle userland page
+faults with MADV_USERFAULT. The source addresses passed to
+remap_anon_pages should be set as VM_DONTCOPY with MADV_DONTFORK to
+avoid any risk of the mapcount of the pages increasing, if fork runs
+in parallel in another thread, before or while remap_anon_pages runs.
 
-On top of this, supporting something like PR_TSC_SIGSEGV per-thread
-using seccomp mode 2 should really be done by redirecting vdso-based
-timing to use syscalls, and that's fundamentally per mm.
+Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
+---
+ mm/huge_memory.c | 24 ++++++++++++++++++++----
+ mm/rmap.c        |  9 +++++++++
+ 2 files changed, 29 insertions(+), 4 deletions(-)
 
-Hence my proposal of removing the current insecure model so that
-adding a secure variant will be straightforward, rather than trying to
-shoehorn a fix on top of the current ABI.
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index b402d60..4277ed7 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1921,6 +1921,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
+ {
+ 	struct anon_vma *anon_vma;
+ 	int ret = 1;
++	struct address_space *mapping;
+ 
+ 	BUG_ON(is_huge_zero_page(page));
+ 	BUG_ON(!PageAnon(page));
+@@ -1932,10 +1933,24 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
+ 	 * page_lock_anon_vma_read except the write lock is taken to serialise
+ 	 * against parallel split or collapse operations.
+ 	 */
+-	anon_vma = page_get_anon_vma(page);
+-	if (!anon_vma)
+-		goto out;
+-	anon_vma_lock_write(anon_vma);
++	for (;;) {
++		mapping = ACCESS_ONCE(page->mapping);
++		anon_vma = page_get_anon_vma(page);
++		if (!anon_vma)
++			goto out;
++		anon_vma_lock_write(anon_vma);
++		/*
++		 * We don't hold the page lock here so
++		 * remap_anon_pages_huge_pmd can change the anon_vma
++		 * from under us until we obtain the anon_vma
++		 * lock. Verify that we obtained the anon_vma lock
++		 * before remap_anon_pages did.
++		 */
++		if (likely(mapping == ACCESS_ONCE(page->mapping)))
++			break;
++		anon_vma_unlock_write(anon_vma);
++		put_anon_vma(anon_vma);
++	}
+ 
+ 	ret = 0;
+ 	if (!PageCompound(page))
+@@ -2460,6 +2475,7 @@ static void collapse_huge_page(struct mm_struct *mm,
+ 	 * Prevent all access to pagetables with the exception of
+ 	 * gup_fast later hanlded by the ptep_clear_flush and the VM
+ 	 * handled by the anon_vma lock + PG_lock.
++	 * remap_anon_pages is prevented to race as well by the mmap_sem.
+ 	 */
+ 	down_write(&mm->mmap_sem);
+ 	if (unlikely(khugepaged_test_exit(mm)))
+diff --git a/mm/rmap.c b/mm/rmap.c
+index 3e8491c..6d875eb 100644
+--- a/mm/rmap.c
++++ b/mm/rmap.c
+@@ -450,6 +450,7 @@ struct anon_vma *page_lock_anon_vma_read(struct page *page)
+ 	struct anon_vma *root_anon_vma;
+ 	unsigned long anon_mapping;
+ 
++repeat:
+ 	rcu_read_lock();
+ 	anon_mapping = (unsigned long) ACCESS_ONCE(page->mapping);
+ 	if ((anon_mapping & PAGE_MAPPING_FLAGS) != PAGE_MAPPING_ANON)
+@@ -488,6 +489,14 @@ struct anon_vma *page_lock_anon_vma_read(struct page *page)
+ 	rcu_read_unlock();
+ 	anon_vma_lock_read(anon_vma);
+ 
++	/* check if remap_anon_pages changed the anon_vma */
++	if (unlikely((unsigned long) ACCESS_ONCE(page->mapping) != anon_mapping)) {
++		anon_vma_unlock_read(anon_vma);
++		put_anon_vma(anon_vma);
++		anon_vma = NULL;
++		goto repeat;
++	}
++
+ 	if (atomic_dec_and_test(&anon_vma->refcount)) {
+ 		/*
+ 		 * Oops, we held the last refcount, release the lock
 
-The eventual fix could still disable the TSC in a strict seccomp task
-by default if the task is single threaded.  Yes, that won't quite
-cover old Chromium-style sandboxes, but those are rapidly being
-replaced by new designs using seccomp mode 2 anyway.
-
-Also, keep in mind that multithreaded attackers can exploit timing
-attacks without hardware help at all: one thread can just run a timing
-loop.
-
---Andy
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
