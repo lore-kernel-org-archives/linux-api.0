@@ -1,8 +1,11 @@
 From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: [PATCH 16/17] powerpc: add remap_anon_pages and userfaultfd
-Date: Fri,  3 Oct 2014 19:08:06 +0200
-Message-ID: <1412356087-16115-17-git-send-email-aarcange@redhat.com>
+Subject: [PATCH 01/17] mm: gup: add FOLL_TRIED
+Date: Fri,  3 Oct 2014 19:07:51 +0200
+Message-ID: <1412356087-16115-2-git-send-email-aarcange@redhat.com>
 References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
 Sender: owner-linux-mm@kvack.org
@@ -10,53 +13,49 @@ To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, li
 Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>, Neil Brown <neilb@suse.de>, Mike Hommey <mh@glandium.org>, Taras Glek <tglek@mozilla.com>, Jan Kara <jac>
 List-Id: linux-api@vger.kernel.org
 
-Add the syscall numbers.
+From: Andres Lagar-Cavilla <andreslc@google.com>
 
+Reviewed-by: Radim Kr=C4=8Dm=C3=A1=C5=99 <rkrcmar@redhat.com>
+Signed-off-by: Andres Lagar-Cavilla <andreslc@google.com>
 Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
 ---
- arch/powerpc/include/asm/systbl.h      | 2 ++
- arch/powerpc/include/asm/unistd.h      | 2 +-
- arch/powerpc/include/uapi/asm/unistd.h | 2 ++
- 3 files changed, 5 insertions(+), 1 deletion(-)
+ include/linux/mm.h | 1 +
+ mm/gup.c           | 4 ++++
+ 2 files changed, 5 insertions(+)
 
-diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
-index 7d8a600..ef03a80 100644
---- a/arch/powerpc/include/asm/systbl.h
-+++ b/arch/powerpc/include/asm/systbl.h
-@@ -365,3 +365,5 @@ SYSCALL_SPU(renameat2)
- SYSCALL_SPU(seccomp)
- SYSCALL_SPU(getrandom)
- SYSCALL_SPU(memfd_create)
-+SYSCALL_SPU(remap_anon_pages)
-+SYSCALL_SPU(userfaultfd)
-diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
-index 4e9af3f..36b79c3 100644
---- a/arch/powerpc/include/asm/unistd.h
-+++ b/arch/powerpc/include/asm/unistd.h
-@@ -12,7 +12,7 @@
- #include <uapi/asm/unistd.h>
- 
- 
--#define __NR_syscalls		361
-+#define __NR_syscalls		363
- 
- #define __NR__exit __NR_exit
- #define NR_syscalls	__NR_syscalls
-diff --git a/arch/powerpc/include/uapi/asm/unistd.h b/arch/powerpc/include/uapi/asm/unistd.h
-index 0688fc0..5514c57 100644
---- a/arch/powerpc/include/uapi/asm/unistd.h
-+++ b/arch/powerpc/include/uapi/asm/unistd.h
-@@ -383,5 +383,7 @@
- #define __NR_seccomp		358
- #define __NR_getrandom		359
- #define __NR_memfd_create	360
-+#define __NR_remap_anon_pages	361
-+#define __NR_userfaultfd	362
- 
- #endif /* _UAPI_ASM_POWERPC_UNISTD_H_ */
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 8981cc8..0f4196a 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1985,6 +1985,7 @@ static inline struct page *follow_page(struct vm_ar=
+ea_struct *vma,
+ #define FOLL_HWPOISON	0x100	/* check page is hwpoisoned */
+ #define FOLL_NUMA	0x200	/* force NUMA hinting page fault */
+ #define FOLL_MIGRATION	0x400	/* wait for page to replace migration entry=
+ */
++#define FOLL_TRIED	0x800	/* a retry, previous pass started an IO */
+=20
+ typedef int (*pte_fn_t)(pte_t *pte, pgtable_t token, unsigned long addr,
+ 			void *data);
+diff --git a/mm/gup.c b/mm/gup.c
+index 91d044b..af7ea3e 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -281,6 +281,10 @@ static int faultin_page(struct task_struct *tsk, str=
+uct vm_area_struct *vma,
+ 		fault_flags |=3D FAULT_FLAG_ALLOW_RETRY;
+ 	if (*flags & FOLL_NOWAIT)
+ 		fault_flags |=3D FAULT_FLAG_ALLOW_RETRY | FAULT_FLAG_RETRY_NOWAIT;
++	if (*flags & FOLL_TRIED) {
++		VM_WARN_ON_ONCE(fault_flags & FAULT_FLAG_ALLOW_RETRY);
++		fault_flags |=3D FAULT_FLAG_TRIED;
++	}
+=20
+ 	ret =3D handle_mm_fault(mm, vma, address, fault_flags);
+ 	if (ret & VM_FAULT_ERROR) {
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
 the body to majordomo@kvack.org.  For more info on Linux MM,
 see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
