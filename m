@@ -1,127 +1,76 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 10/17] mm: rmap preparation for remap_anon_pages
-Date: Mon, 6 Oct 2014 18:41:56 +0200
-Message-ID: <20141006164156.GA31075@redhat.com>
-References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
- <1412356087-16115-11-git-send-email-aarcange@redhat.com>
- <CA+55aFx++R42L75ooE=Fmaem73=V=q7f6pYTcALxgrA1y98G-A@mail.gmail.com>
- <20141006085540.GD2336@work-vm>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH] x86,seccomp,prctl: Remove PR_TSC_SIGSEGV and seccomp TSC filtering
+Date: Mon, 6 Oct 2014 09:44:27 -0700
+Message-ID: <CALCETrWhwO1ZfCdYbt48eZ=VZ9gPM7qiODPnhkYCPRMYk47U3Q@mail.gmail.com>
+References: <fc0c2447cbc39257941c6b118388c024b719353a.1412356529.git.luto@amacapital.net>
+ <CALCETrUfCrvidOS6VvUpWFAcHUrPUs58zSQqGRC5UOTS=E37rw@mail.gmail.com>
+ <20141003201409.GM10583@worktop.programming.kicks-ass.net>
+ <CALCETrVvFP66s5XOmSKaC8Vq73=uh11819HOOLkVTu7jJZotew@mail.gmail.com>
+ <CALCETrWfrWpdMCAYySMAMGCHU3XRkNGmeMTECTE=PXQUfjGPZA@mail.gmail.com>
+ <20141003204443.GP10583@worktop.programming.kicks-ass.net>
+ <20141003210213.GG6324@worktop.programming.kicks-ass.net> <CALCETrW7OCuAiK31iRvXgXJfcf3FE4GKjpKQ0doWFyUpETzT9A@mail.gmail.com>
+ <20141003211204.GQ10583@worktop.programming.kicks-ass.net>
+ <CALCETrVtK6w4smnRCTED=csAyt3WNNOaZE_WRzvECuSx260X3w@mail.gmail.com> <20141004081324.GR10583@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20141006085540.GD2336@work-vm>
-Sender: owner-linux-mm@kvack.org
-To: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141004081324.GR10583@worktop.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Andrea Arcangeli <aarcange@redhat.com>, Erik Bosman <ebn310@few.vu.nl>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, X86 ML <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+On Sat, Oct 4, 2014 at 1:13 AM, Peter Zijlstra <peterz@infradead.org> wrote:
+> On Fri, Oct 03, 2014 at 02:15:24PM -0700, Andy Lutomirski wrote:
+>> On Fri, Oct 3, 2014 at 2:12 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+>> > On Fri, Oct 03, 2014 at 02:04:53PM -0700, Andy Lutomirski wrote:
+>> >> On Fri, Oct 3, 2014 at 2:02 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+>> >
+>> >> > Something like so.. slightly less ugly and possibly with more
+>> >> > complicated conditions setting the cr4 if you want to fix tsc vs seccomp
+>> >> > as well.
+>> >>
+>> >> This will crash anything that tries rdpmc in an allow-everything
+>> >> seccomp sandbox.  It's also not very compatible with my grand scheme
+>> >> of allowing rdtsc to be turned off without breaking clock_gettime. :)
+>> >
+>> > Well, we clear cap_user_rdpmc, so everybody who still tries it gets what
+>> > he deserves, no problem there.
+>>
+>> Oh, interesting.
+>>
+>> To continue playing devil's advocate, what if you do perf_event_open,
+>> then mmap it, then start the seccomp sandbox?
+>
+> We update that cap bit on every update to the self-monitor state, and in
+> a perfect world people would also check the cap bit every time they try
+> and read it, and fall back to the syscall. So we could just clear it..
+> but I can imagine reality ruining things here.
 
-On Mon, Oct 06, 2014 at 09:55:41AM +0100, Dr. David Alan Gilbert wrote:
-> * Linus Torvalds (torvalds@linux-foundation.org) wrote:
-> > On Fri, Oct 3, 2014 at 10:08 AM, Andrea Arcangeli <aarcange@redhat.com> wrote:
-> > >
-> > > Overall this looks a fairly small change to the rmap code, notably
-> > > less intrusive than the nonlinear vmas created by remap_file_pages.
-> > 
-> > Considering that remap_file_pages() was an unmitigated disaster, and
-> > -mm has a patch to remove it entirely, I'm not at all convinced this
-> > is a good argument.
-> > 
-> > We thought remap_file_pages() was a good idea, and it really really
-> > really wasn't. Almost nobody used it, why would the anonymous page
-> > case be any different?
-> 
-> I've posted code that uses this interface to qemu-devel and it works nicely;
-> so chalk up at least one user.
-> 
-> For the postcopy case I'm using it for, we need to place a page, atomically
->   some thread might try and access it, and must either
->      1) get caught by userfault etc or
->      2) must succeed in it's access
-> 
-> and we'll have that happening somewhere between thousands and millions of times
-> to pages in no particular order, so we need to avoid creating millions of mappings.
+If nothing else, the fact that rdpmc fails with SIGSEGV instead of
+with some nonsense value means that this will always be racy.
 
-Yes, that's our current use case.
+>
+>> My draft patches are currently tracking the number of perf_event mmaps
+>> per mm.  I'm not thrilled with it, but it's straightforward.  And I
+>> still need to benchmark cr4 writes, which is tedious, because I can't
+>> do it from user code.
+>
+> Should be fairly straight fwd from kernel space, get a tsc stamp,
+> read+write cr4 1000 times, get another tsc read, and maybe do that
+> several times. No?
 
-Of course if somebody has better ideas on how to resolve an anonymous
-userfault they're welcome.
+I tried it.  Rough numbers on my 2.7 GHz Sandy Bridge laptop
 
-How to resolve an userfault is orthogonal on how to detect it and to
-notify userland about it and to be notified when the userfault has
-been resolved. The latter is what the userfault and userfaultfd
-do. The former is what remap_anon_pages is used for but we could use
-something else too if there are better ways. mremap would clearly work
-too, but it would be less strict (it could lead to silent data
-corruption if there are bugs in the userland code), it would be slower
-and it would eventually a hit a -ENOMEM failure because there would be
-too many vmas.
+Writing to cr4 in VMX non-root (changing PCE) takes ~48ns.  RMW cr4
+takes rougly 51ns.  IMO neither of these is enough to be worth
+worrying *that* much about when switching into or out of a perf-using
+task.  But you might disagree with me.
 
-I could in theory drop remap_anon_pages from this patchset, but
-without an optimal way to resolve an userfault, the rest isn't so
-useful.
+Changing TSD takes 700ns, because KVM has the VMCS programmed wrong.
+I'll send a patch.
 
-We're currently discussing on what would be the best way to resolve a
-MAP_SHARED userfault on tmpfs in fact (that's not sorted yet), but so
-far, it seems remap_anon_pages fits the bill for anonymous memory.
+I suspect that the same experiment on bare metal would run faster.
 
-remap_anon_pages is not as problematic to maintain as remap_file_pages
-for the reason explained in the commit header, but there are other
-reasons: it doesn't require special pte_file and it changes nothing of
-how anonymous page faults works. All it requires is a loop to catch a
-changed page->index (previously page->index couldn't change, not it
-can, that's the only thing it changes).
 
-remap_file_pages complexity derives from not being allowed to change
-page->index during a move because the page_mapping may be bigger than
-1, while that is precisely what remap_anon_pages does.
-
-As long as this "rmap preparation" is the only constraints that
-remap_anon_pages introduces in terms of rmap, it looks a nice
-not-too-intrusive solution to resolve anonymous userfaults
-efficiently.
-
-Introducing remap_anon_pages in fact doesn't reduce the
-simplification derived from the removal of remap_file_pages.
-
-As opposed removing remap_anon_pages later would only have the benefit
-of removing this very patch 10/17 and no other benefit.
-
-In short remap_anon_pages does this (heavily simplified):
-
-   pte = *src_pte;
-   *src_pte = 0;
-   pte_page(pte)->index = adjusted according to src_vma/dst_vma->vm_pgoff
-   *dst_pte = pte;
-
-It guarantees not to modify the vmas and in turn it doesn't require to
-take the mmap_sem for writing.
-
-To use remap_anon_pages, each thread has to create its own temporary
-vma with MADV_DONTFORK set on it (not formally required by the syscall
-strict checks, but then the application must never fork if
-MADV_DONTFORK isn't set or remap_anon_pages could return -EBUSY:
-there's no risk of silent data corruption even if the thread forks
-without setting MADV_DONTFORK) as source region where receive data
-through the network. Then after the data is fully received
-rmap_anon_pages moves the page from the temporary vma to the address
-where the userfault triggered atomically (while other threads may be
-attempting to access the userfault address too, thanks to
-remap_anon_pages atomic behavior they won't risk to ever see partial
-data coming from the network).
-
-remap_anon_pages as side effect creates an hole in the temporary
-(source) vma, so the next recv() syscall receiving data from the
-network will fault-in a new anonymous page without requiring any
-further malloc/free or other kind of vma mangling.
-
-Thanks,
-Andrea
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--Andy
