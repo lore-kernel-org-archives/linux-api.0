@@ -1,51 +1,127 @@
-From: Thanos Makatos <thanos.makatos@citrix.com>
-Subject: RE: [PATCH RFC] introduce ioctl to completely invalidate page cache
-Date: Mon, 6 Oct 2014 15:21:10 +0000
-Message-ID: <2368A3FCF9F7214298E53C823B0A48EC04241BC4@AMSPEX01CL02.citrite.net>
-References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
- <542DAEAC.8010203@kernel.dk> <20141006080659.GA7526@quack.suse.cz>
- <2368A3FCF9F7214298E53C823B0A48EC042405BC@AMSPEX01CL02.citrite.net>
- <2368A3FCF9F7214298E53C823B0A48EC0424106C@AMSPEX01CL02.citrite.net>
- <20141006143019.GG7526@quack.suse.cz>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [PATCH 10/17] mm: rmap preparation for remap_anon_pages
+Date: Mon, 6 Oct 2014 18:41:56 +0200
+Message-ID: <20141006164156.GA31075@redhat.com>
+References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
+ <1412356087-16115-11-git-send-email-aarcange@redhat.com>
+ <CA+55aFx++R42L75ooE=Fmaem73=V=q7f6pYTcALxgrA1y98G-A@mail.gmail.com>
+ <20141006085540.GD2336@work-vm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20141006143019.GG7526@quack.suse.cz>
-Content-Language: en-US
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: 'Jan Kara' <jack@suse.cz>
-Cc: Jens Axboe <axboe@kernel.dk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "jlayton@poochiereds.net" <jlayton@poochiereds.net>, "bfields@fieldses.org" <bfields@fieldses.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20141006085540.GD2336@work-vm>
+Sender: owner-linux-mm@kvack.org
+To: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry>
 List-Id: linux-api@vger.kernel.org
 
-Thanks, Jan, it's much clearer now what I need to do.
+Hello,
 
->   So most notably they want the ioctl to work not only for block devices but also for any regular file. That's easily doable - you just call
-> filemap_write_and_wait() and invalidate_inode_pages2() in the ioctl handler for regular files.
+On Mon, Oct 06, 2014 at 09:55:41AM +0100, Dr. David Alan Gilbert wrote:
+> * Linus Torvalds (torvalds@linux-foundation.org) wrote:
+> > On Fri, Oct 3, 2014 at 10:08 AM, Andrea Arcangeli <aarcange@redhat.com> wrote:
+> > >
+> > > Overall this looks a fairly small change to the rmap code, notably
+> > > less intrusive than the nonlinear vmas created by remap_file_pages.
+> > 
+> > Considering that remap_file_pages() was an unmitigated disaster, and
+> > -mm has a patch to remove it entirely, I'm not at all convinced this
+> > is a good argument.
+> > 
+> > We thought remap_file_pages() was a good idea, and it really really
+> > really wasn't. Almost nobody used it, why would the anonymous page
+> > case be any different?
+> 
+> I've posted code that uses this interface to qemu-devel and it works nicely;
+> so chalk up at least one user.
+> 
+> For the postcopy case I'm using it for, we need to place a page, atomically
+>   some thread might try and access it, and must either
+>      1) get caught by userfault etc or
+>      2) must succeed in it's access
+> 
+> and we'll have that happening somewhere between thousands and millions of times
+> to pages in no particular order, so we need to avoid creating millions of mappings.
 
-All right, so I need to find out how I can direct the new ioctl to
-file-systems as well. I thought that I could get away with it by simply looking
-at which file-systems have the same block device as the one to which the ioctl
-is directed, but IIUC this doesn't make sense as NFS doesn't use a block device
-at all.
+Yes, that's our current use case.
 
-> Also they wanted to be able to specify a range of a mapping to invalidate -
-> that's easily doable as well. Finally they wanted a 'flags' argument so you can
-> additionally ask fs to invalidate also some metadata. How invalidation is done
-> will be a fs specific thing and for now I guess we don't need to go into
-> details. NFS guys can sort that out when they decide to implement it.
+Of course if somebody has better ideas on how to resolve an anonymous
+userfault they're welcome.
 
-So after I've figured out how to direct this new ioctl to a file-system, I need
-to understand out how to invalidate a specific range of data. I will gracefully
-fail metadata invalidation operations with EOPNOTSUPP or ENOSYS.
+How to resolve an userfault is orthogonal on how to detect it and to
+notify userland about it and to be notified when the userfault has
+been resolved. The latter is what the userfault and userfaultfd
+do. The former is what remap_anon_pages is used for but we could use
+something else too if there are better ways. mremap would clearly work
+too, but it would be less strict (it could lead to silent data
+corruption if there are bugs in the userland code), it would be slower
+and it would eventually a hit a -ENOMEM failure because there would be
+too many vmas.
 
-> So in the beginning we can just have u64 flags argument and in it a single
-> 'INVAL_DATA' flag meaning that invalidation of data in a given range is
-> requested. Later NFS guys can add further flags.
+I could in theory drop remap_anon_pages from this patchset, but
+without an optimal way to resolve an userfault, the rest isn't so
+useful.
 
-OK that I can do.
+We're currently discussing on what would be the best way to resolve a
+MAP_SHARED userfault on tmpfs in fact (that's not sorted yet), but so
+far, it seems remap_anon_pages fits the bill for anonymous memory.
 
-I suppose we'll always fail metadata invalidation operations when the target
-of the ioctl is a block device.
+remap_anon_pages is not as problematic to maintain as remap_file_pages
+for the reason explained in the commit header, but there are other
+reasons: it doesn't require special pte_file and it changes nothing of
+how anonymous page faults works. All it requires is a loop to catch a
+changed page->index (previously page->index couldn't change, not it
+can, that's the only thing it changes).
 
-Thanks
+remap_file_pages complexity derives from not being allowed to change
+page->index during a move because the page_mapping may be bigger than
+1, while that is precisely what remap_anon_pages does.
+
+As long as this "rmap preparation" is the only constraints that
+remap_anon_pages introduces in terms of rmap, it looks a nice
+not-too-intrusive solution to resolve anonymous userfaults
+efficiently.
+
+Introducing remap_anon_pages in fact doesn't reduce the
+simplification derived from the removal of remap_file_pages.
+
+As opposed removing remap_anon_pages later would only have the benefit
+of removing this very patch 10/17 and no other benefit.
+
+In short remap_anon_pages does this (heavily simplified):
+
+   pte = *src_pte;
+   *src_pte = 0;
+   pte_page(pte)->index = adjusted according to src_vma/dst_vma->vm_pgoff
+   *dst_pte = pte;
+
+It guarantees not to modify the vmas and in turn it doesn't require to
+take the mmap_sem for writing.
+
+To use remap_anon_pages, each thread has to create its own temporary
+vma with MADV_DONTFORK set on it (not formally required by the syscall
+strict checks, but then the application must never fork if
+MADV_DONTFORK isn't set or remap_anon_pages could return -EBUSY:
+there's no risk of silent data corruption even if the thread forks
+without setting MADV_DONTFORK) as source region where receive data
+through the network. Then after the data is fully received
+rmap_anon_pages moves the page from the temporary vma to the address
+where the userfault triggered atomically (while other threads may be
+attempting to access the userfault address too, thanks to
+remap_anon_pages atomic behavior they won't risk to ever see partial
+data coming from the network).
+
+remap_anon_pages as side effect creates an hole in the temporary
+(source) vma, so the next recv() syscall receiving data from the
+network will fault-in a new anonymous page without requiring any
+further malloc/free or other kind of vma mangling.
+
+Thanks,
+Andrea
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
