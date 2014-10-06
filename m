@@ -1,56 +1,46 @@
-From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
-Subject: Re: [PATCH 10/17] mm: rmap preparation for remap_anon_pages
-Date: Mon, 6 Oct 2014 09:55:41 +0100
-Message-ID: <20141006085540.GD2336@work-vm>
-References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
- <1412356087-16115-11-git-send-email-aarcange@redhat.com>
- <CA+55aFx++R42L75ooE=Fmaem73=V=q7f6pYTcALxgrA1y98G-A@mail.gmail.com>
+From: Thanos Makatos <thanos.makatos@citrix.com>
+Subject: RE: [PATCH RFC] introduce ioctl to completely invalidate page cache
+Date: Mon, 6 Oct 2014 09:21:17 +0000
+Message-ID: <2368A3FCF9F7214298E53C823B0A48EC042405BC@AMSPEX01CL02.citrite.net>
+References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
+ <542DAEAC.8010203@kernel.dk> <20141006080659.GA7526@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFx++R42L75ooE=Fmaem73=V=q7f6pYTcALxgrA1y98G-A@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andrea Arcangeli <aarcange@redhat.com>, qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\Dr. David Alan Gilbert\\" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20141006080659.GA7526@quack.suse.cz>
+Content-Language: en-US
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: 'Jan Kara' <jack@suse.cz>, Jens Axboe <axboe@kernel.dk>
+Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "jlayton@poochiereds.net" <jlayton@poochiereds.net>, "bfields@fieldses.org" <bfields@fieldses.org>
 List-Id: linux-api@vger.kernel.org
 
-* Linus Torvalds (torvalds@linux-foundation.org) wrote:
-> On Fri, Oct 3, 2014 at 10:08 AM, Andrea Arcangeli <aarcange@redhat.com> wrote:
-> >
-> > Overall this looks a fairly small change to the rmap code, notably
-> > less intrusive than the nonlinear vmas created by remap_file_pages.
+> > We're currently ignoring the buffer cache sync and invalidation (which
+> > is odd), but at least being consistent would be good.
+>   Well, invalidate_bdev() doesn't return anything. And
+> invalidate_mapping_pages() inside invalidate_bdev() returns only number of
+> invalidated pages. I don't think there's any value in returning that.
 > 
-> Considering that remap_file_pages() was an unmitigated disaster, and
-> -mm has a patch to remove it entirely, I'm not at all convinced this
-> is a good argument.
+> OTOH invalidate_inode_pages2() returns 0 / -EBUSY / other error when
+> invalidation of some page fails so returning that seems useful.
 > 
-> We thought remap_file_pages() was a good idea, and it really really
-> really wasn't. Almost nobody used it, why would the anonymous page
-> case be any different?
+> > Might also need a filemap_write_and_wait() to sync before invalidation.
+>   That's what fsync_bdev() is doing under the hoods. Sometimes I'm not sure
+> whether all these wrappers are useful...
 
-I've posted code that uses this interface to qemu-devel and it works nicely;
-so chalk up at least one user.
-
-For the postcopy case I'm using it for, we need to place a page, atomically
-  some thread might try and access it, and must either
-     1) get caught by userfault etc or
-     2) must succeed in it's access
-
-and we'll have that happening somewhere between thousands and millions of times
-to pages in no particular order, so we need to avoid creating millions of mappings.
-
-Dave
-
-
+Indeed, fsync_bdev() does call filemap_write_and_wait() so I don't need to explicitly do that.
 
 > 
->             Linus
---
-Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
+> Trond also had a comment that if we extended the ioctl to work for all inodes
+> (not just blkdev) and allowed some additional flags of what needs to be
+> invalidated, the new ioctl would be also useful to NFS userspace - see Trond's
+> email at
+> 
+> http://www.spinics.net/lists/linux-fsdevel/msg78917.html
+> 
+> and the following thread. I would prefer to cover that usecase when we are
+> introducing new invalidation ioctl. Have you considered that Thanos?
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Sure, though I don't really know how to do it. I'll start by looking at the code flow when someone does " echo 3 > /proc/sys/vm/drop_caches", unless you already have a rough idea how to do that.
+
+Thanks
