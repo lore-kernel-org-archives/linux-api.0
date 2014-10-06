@@ -1,78 +1,63 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 04/17] mm: gup: make get_user_pages_fast and
- __get_user_pages_fast latency conscious
-Date: Mon, 6 Oct 2014 16:14:28 +0200
-Message-ID: <20141006141428.GU2342@redhat.com>
-References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
- <1412356087-16115-5-git-send-email-aarcange@redhat.com>
- <CA+55aFyuYRuY9fiJQKL=XJ0-BKhGsZbo1HGkGUOJ6DbbxdA-dQ@mail.gmail.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH RFC] introduce ioctl to completely invalidate page cache
+Date: Mon, 6 Oct 2014 16:30:19 +0200
+Message-ID: <20141006143019.GG7526@quack.suse.cz>
+References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
+ <542DAEAC.8010203@kernel.dk>
+ <20141006080659.GA7526@quack.suse.cz>
+ <2368A3FCF9F7214298E53C823B0A48EC042405BC@AMSPEX01CL02.citrite.net>
+ <2368A3FCF9F7214298E53C823B0A48EC0424106C@AMSPEX01CL02.citrite.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFyuYRuY9fiJQKL=XJ0-BKhGsZbo1HGkGUOJ6DbbxdA-dQ@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\Dr. David Alan Gilbert\\" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dm>
+In-Reply-To: <2368A3FCF9F7214298E53C823B0A48EC0424106C@AMSPEX01CL02.citrite.net>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Thanos Makatos <thanos.makatos@citrix.com>
+Cc: 'Jan Kara' <jack@suse.cz>, Jens Axboe <axboe@kernel.dk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "jlayton@poochiereds.net" <jlayton@poochiereds.net>, "bfields@fieldses.org" <bfields@fieldses.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
-
-On Fri, Oct 03, 2014 at 11:23:53AM -0700, Linus Torvalds wrote:
-> On Fri, Oct 3, 2014 at 10:07 AM, Andrea Arcangeli <aarcange@redhat.com> wrote:
-> > This teaches gup_fast and __gup_fast to re-enable irqs and
-> > cond_resched() if possible every BATCH_PAGES.
+On Mon 06-10-14 11:33:23, Thanos Makatos wrote:
+> > > Trond also had a comment that if we extended the ioctl to work for all
+> > > inodes (not just blkdev) and allowed some additional flags of what
+> > > needs to be invalidated, the new ioctl would be also useful to NFS
+> > > userspace - see Trond's email at
+> > >
+> > > http://www.spinics.net/lists/linux-fsdevel/msg78917.html
+> > >
+> > > and the following thread. I would prefer to cover that usecase when we
+> > > are introducing new invalidation ioctl. Have you considered that Thanos?
+> > 
+> > Sure, though I don't really know how to do it. I'll start by looking at the code
+> > flow when someone does " echo 3 > /proc/sys/vm/drop_caches", unless you
+> > already have a rough idea how to do that.
 > 
-> This is disgusting.
+> I realise I haven't clearly understood what the semantics of this new ioctl
+> should be.
 > 
-> Many (most?) __gup_fast() users just want a single page, and the
-> stupid overhead of the multi-page version is already unnecessary.
-> This just makes things much worse.
-> 
-> Quite frankly, we should make a single-page version of __gup_fast(),
-> and convert existign users to use that. After that, the few multi-page
-> users could have this extra latency control stuff.
+> My initial goal was to implement an ioctl that would _completely_ invalidate
+> the buffer cache of a block device when there is no file-system involved.
+> Unless I'm mistaken the patch I posted achieves this goal.
+  Yes.
 
-Ok. I didn't think at a better way to add the latency control other
-than to reduce nr_pages in a outer loop instead of altering the inner
-calls, but this is what I got after implementing it... If somebody has
-a cleaner way to implement the latency control stuff that's welcome
-and I'd be glad to replace it.
+> We now want to extend this patch to take care of cached metadata, which seems
+> to be of particular importance for NFS, and I suspect that this piece of
+> functionality will still be applicable to any kind of file-system, correct?
+  So most notably they want the ioctl to work not only for block devices
+but also for any regular file. That's easily doable - you just call
+filemap_write_and_wait() and invalidate_inode_pages2() in the ioctl handler
+for regular files.
 
-> And yes, the single-page version of get_user_pages_fast() is actually
-> latency-critical. shared futexes hit it hard, and yes, I've seen this
-> in profiles.
+Also they wanted to be able to specify a range of a mapping to invalidate -
+that's easily doable as well. Finally they wanted a 'flags' argument so you
+can additionally ask fs to invalidate also some metadata. How invalidation
+is done will be a fs specific thing and for now I guess we don't need to go
+into details. NFS guys can sort that out when they decide to implement it.
+So in the beginning we can just have u64 flags argument and in
+it a single 'INVAL_DATA' flag meaning that invalidation of data in a given
+range is requested. Later NFS guys can add further flags.
 
-KVM would save a few cycles from a single-page version too. I just
-thought further optimizations could be added later and this was better
-than nothing.
-
-Considering I've no better idea how to implement the latency control
-stuff, for now I'll just drop this controversial patch, and I'll
-convert those get_user_pages to gup_unlocked instead of converting
-them to gup_fast, which is more than enough to obtain the mmap_sem
-holding scalability improvement (that also solves the mmap_sem trouble
-for the userfaultfd). gup_unlocked isn't as good as gup_fast but it's
-at least better than the current get_user_pages().
-
-I got into this gup_fast latency control stuff purely because there
-were a few get_user_pages that could have been converted to
-get_user_pages_fast as they were using "current" and "current->mm" as the
-first two parameters, except for the risk of disabling irq for
-long. So I tried to do the right thing and fix gup_fast but I'll leave
-this further optimization queued for later.
-
-About the missing commit header for the other patch Paolo already
-replied to it, to clarify this a bit further in short I expect that
-FOLL_TRIED flag to be merged through the KVM git tree which already
-contains it. I'll add a comment to the commit header to specify
-it. Sorry for the confusion about that patch.
-
-Thanks,
-Andrea
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
