@@ -1,111 +1,89 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 10/17] mm: rmap preparation for remap_anon_pages
-Date: Tue, 7 Oct 2014 16:19:13 +0200
-Message-ID: <20141007141913.GC2342@redhat.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH 08/17] mm: madvise MADV_USERFAULT
+Date: Tue, 7 Oct 2014 18:21:50 +0300
+Message-ID: <20141007152150.GA989@node.dhcp.inet.fi>
 References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
- <1412356087-16115-11-git-send-email-aarcange@redhat.com>
- <CA+55aFx++R42L75ooE=Fmaem73=V=q7f6pYTcALxgrA1y98G-A@mail.gmail.com>
- <20141006085540.GD2336@work-vm>
- <20141006164156.GA31075@redhat.com>
- <CA+55aFxAOYBny+QwXfkPy-P3rs-RPr5SLYLcPNBiFO3waBXtQA@mail.gmail.com>
+ <1412356087-16115-9-git-send-email-aarcange@redhat.com>
+ <20141007103645.GB30762@node.dhcp.inet.fi>
+ <20141007132458.GZ2342@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFxAOYBny+QwXfkPy-P3rs-RPr5SLYLcPNBiFO3waBXtQA@mail.gmail.com>
+In-Reply-To: <20141007132458.GZ2342@redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: "Dr. David Alan Gilbert" <dgilbert@redhat.com>, qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry>
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>, Neil Brown <neilb@suse.de>, Mike Hommey <mh@glandium.org>, Taras Glek <tglek@mozilla.>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
-
-On Tue, Oct 07, 2014 at 08:47:59AM -0400, Linus Torvalds wrote:
-> On Mon, Oct 6, 2014 at 12:41 PM, Andrea Arcangeli <aarcange@redhat.com> wrote:
-> >
-> > Of course if somebody has better ideas on how to resolve an anonymous
-> > userfault they're welcome.
+On Tue, Oct 07, 2014 at 03:24:58PM +0200, Andrea Arcangeli wrote:
+> Hi Kirill,
 > 
-> So I'd *much* rather have a "write()" style interface (ie _copying_
-> bytes from user space into a newly allocated page that gets mapped)
-> than a "remap page" style interface
+> On Tue, Oct 07, 2014 at 01:36:45PM +0300, Kirill A. Shutemov wrote:
+> > On Fri, Oct 03, 2014 at 07:07:58PM +0200, Andrea Arcangeli wrote:
+> > > MADV_USERFAULT is a new madvise flag that will set VM_USERFAULT in the
+> > > vma flags. Whenever VM_USERFAULT is set in an anonymous vma, if
+> > > userland touches a still unmapped virtual address, a sigbus signal is
+> > > sent instead of allocating a new page. The sigbus signal handler will
+> > > then resolve the page fault in userland by calling the
+> > > remap_anon_pages syscall.
+> > 
+> > Hm. I wounder if this functionality really fits madvise(2) interface: as
+> > far as I understand it, it provides a way to give a *hint* to kernel which
+> > may or may not trigger an action from kernel side. I don't think an
+> > application will behaive reasonably if kernel ignore the *advise* and will
+> > not send SIGBUS, but allocate memory.
+> > 
+> > I would suggest to consider to use some other interface for the
+> > functionality: a new syscall or, perhaps, mprotect().
 > 
-> remapping anonymous pages involves page table games that really aren't
-> necessarily a good idea, and tlb invalidates for the old page etc.
-> Just don't do it.
+> I didn't feel like adding PROT_USERFAULT to mprotect, which looks
+> hardwired to just these flags:
 
-I see what you mean. The only cons I see is that we couldn't use then
-recv(tmp_addr, PAGE_SIZE), remap_anon_pages(faultaddr, tmp_addr,
-PAGE_SIZE, ..)  and retain the zerocopy behavior. Or how could we?
-There's no recvfile(userfaultfd, socketfd, PAGE_SIZE).
+PROT_NOALLOC may be?
 
-Ideally if we could prevent the page data coming from the network to
-ever become visible in the kernel we could avoid the TLB flush and
-also be zerocopy but I can't see how we could achieve that.
+> 
+>        PROT_NONE  The memory cannot be accessed at all.
+> 
+>        PROT_READ  The memory can be read.
+> 
+>        PROT_WRITE The memory can be modified.
+> 
+>        PROT_EXEC  The memory can be executed.
 
-The page data could come through a ssh pipe or anything (qemu supports
-all kind of network transports for live migration), this is why
-leaving the network protocol into userland is preferable.
+To be complete: PROT_GROWSDOWN, PROT_GROWSUP and unused PROT_SEM.
 
-As things stands now, I'm afraid with a write() syscall we couldn't do
-it zerocopy. We'd still need to receive the memory in a temporary page
-and then copy it to a kernel page (invisible to userland while we
-write to it) to later map into the userfault address.
+> So here somebody should comment and choose between:
+> 
+> 1) set VM_USERFAULT with mprotect(PROT_USERFAULT) instead of
+>    the current madvise(MADV_USERFAULT)
+> 
+> 2) drop MADV_USERFAULT and VM_USERFAULT and force the usage of the
+>    userfaultfd protocol as the only way for userland to catch
+>    userfaults (each userfaultfd must already register itself into its
+>    own virtual memory ranges so it's a trivial change for userfaultfd
+>    users that deletes just 1 or 2 lines of userland code, but it would
+>    prevent to use the SIGBUS behavior with info->si_addr=faultaddr for
+>    other users)
+> 
+> 3) keep things as they are now: use MADV_USERFAULT for SIGBUS
+>    userfaults, with optional intersection between the
+>    vm_flags&VM_USERFAULT ranges and the userfaultfd registered ranges
+>    with vma->vm_userfaultfd_ctx!=NULL to know if to engage the
+>    userfaultfd protocol instead of the plain SIGBUS
 
-If it wasn't for the TLB flush of the old page, the remap_anon_pages
-variant would be more optimal than doing a copy through a write
-syscall. Is the copy cheaper than a TLB flush? I probably naively
-assumed the TLB flush was always cheaper.
+4) new syscall?
+ 
+> I will update the code accordingly to feedback, so please comment.
 
-Now another idea that comes to mind to be able to add the ability to
-switch between copy and TLB flush is using a RAP_FORCE_COPY flag, that
-would then do a copy inside remap_anon_pages and leave the original
-page mapped in place... (and such flag would also disable the -EBUSY
-error if page_mapcount is > 1).
+I don't have strong points on this. Just *feel* it doesn't fit advice
+semantics.
 
-So then if the RAP_FORCE_COPY flag is set remap_anon_pages would
-behave like you suggested (but with a mremap-like interface, instead
-of a write syscall) and we could benchmark the difference between copy
-and TLB flush too. We could even periodically benchmark it at runtime
-and switch over the faster method (the more CPUs there are in the host
-and the more threads the process has, the faster the copy will be
-compared to the TLB flush).
-
-Of course in terms of API I could implement the exact same mechanism
-as described above for remap_anon_pages inside a write() to the
-userfaultfd (it's a pseudo inode). It'd need two different commands to
-prepare for the coming write (with a len multiple of PAGE_SIZE) to
-know the address where the page should be mapped into and if to behave
-zerocopy or if to skip the TLB flush and copy.
-
-Because the copy vs TLB flush trade off is possible to achieve with
-both interfaces, I think it really boils down to choosing between a
-mremap like interface, or file+commands protocol interface. I tend to
-like mremap more, that's why I opted for a remap_anon_pages syscall
-kept orthogonal to the userfaultfd functionality (remap_anon_pages
-could be also used standalone as an accelerated mremap in some
-circumstances) but nothing prevents to just embed the same mechanism
-inside userfaultfd if a file+commands API is preferable. Or we could
-add a different syscall (separated from userfaultfd) that creates
-another pseudofd to write a command plus the page data into it. Just I
-wouldn't see the point of creating a pseudofd just to copy a page
-atomically, the write() syscall would look more ideal if the
-userfaultfd is already open for other reasons and the pseudofd
-overhead is required anyway.
-
-Last thing to keep in mind is that if using userfaults with SIGBUS and
-without userfaultfd, remap_anon_pages would have been still useful, so
-if we retain the SIGBUS behavior for volatile pages and we don't force
-the usage for userfaultfd, it may be cleaner not to use userfaultfd
-but a separate pseudofd to do the write() syscall though. Otherwise
-the app would need to open the userfaultfd to resolve the fault even
-though it's not using the userfaultfd protocol which doesn't look an
-intuitive interface to me.
-
-Comments welcome.
-
-Thanks,
-Andrea
+The only userspace interface I've designed was not proven good by time.
+I would listen what senior maintainers say. :)
+ 
+-- 
+ Kirill A. Shutemov
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
