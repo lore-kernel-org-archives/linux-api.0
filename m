@@ -1,44 +1,72 @@
-From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [PATCH] [RFC] mnt: add ability to clone mntns starting with the
- current root
-Date: Tue, 7 Oct 2014 14:33:39 +0100
-Message-ID: <20141007133339.GH7996@ZenIV.linux.org.uk>
-References: <1412683977-29543-1-git-send-email-avagin@openvz.org>
- <20141007133039.GG7996@ZenIV.linux.org.uk>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [Qemu-devel] [PATCH 10/17] mm: rmap preparation for
+ remap_anon_pages
+Date: Tue, 7 Oct 2014 15:37:10 +0200
+Message-ID: <20141007133710.GA2342@redhat.com>
+References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
+ <1412356087-16115-11-git-send-email-aarcange@redhat.com>
+ <20141007111026.GD30762@node.dhcp.inet.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20141007133039.GG7996-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Rob Landley <rob-VoJi6FS/r0vR7s880joybQ@public.gmane.org>
+In-Reply-To: <20141007111026.GD30762@node.dhcp.inet.fi>
+Sender: owner-linux-mm@kvack.org
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Robert Love <rlove@google.com>, Dave Hansen <dave@sr71.net>, Jan Kara <jack@suse.cz>, Neil Brown <neilb@suse.de>, Stefan Hajnoczi <stefanha@gmail.com>, Andrew Jones <drjones@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@gmail.com>, Michel Lespinasse <walken@google.com>, Taras Glek <tglek@mozilla.com>, Juan Quintela <quintela@redhat.com>, Hugh Dickins <hughd@google.com>, Isaku Yamahata <yamahata@valinux.co.jp>, Mel Gorman <mgorman@suse.de>, Sasha Levin <sasha.levin@oracle.com>, Android Kernel Team <kernel-team@android.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andres Lagar-Cavilla <andres>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 07, 2014 at 02:30:40PM +0100, Al Viro wrote:
-> On Tue, Oct 07, 2014 at 04:12:57PM +0400, Andrey Vagin wrote:
-> > Another problem is that rootfs can't be hidden from a container, because
-> > rootfs can't be moved or umounted.
+Hi Kirill,
+
+On Tue, Oct 07, 2014 at 02:10:26PM +0300, Kirill A. Shutemov wrote:
+> On Fri, Oct 03, 2014 at 07:08:00PM +0200, Andrea Arcangeli wrote:
+> > There's one constraint enforced to allow this simplification: the
+> > source pages passed to remap_anon_pages must be mapped only in one
+> > vma, but this is not a limitation when used to handle userland page
+> > faults with MADV_USERFAULT. The source addresses passed to
+> > remap_anon_pages should be set as VM_DONTCOPY with MADV_DONTFORK to
+> > avoid any risk of the mapcount of the pages increasing, if fork runs
+> > in parallel in another thread, before or while remap_anon_pages runs.
 > 
-> ... which is a bug in mntns_install(), AFAICS.
+> Have you considered triggering COW instead of adding limitation on
+> pages' mapcount? The limitation looks artificial from interface POV.
 
-Ability to get to exposed rootfs, that is.
+I haven't considered it, mostly because I see it as a feature that it
+returns -EBUSY. I prefer to avoid the risk of userland getting a
+successful retval but internally the kernel silently behaving
+non-zerocopy by mistake because some userland bug forgot to set
+MADV_DONTFORK on the src_vma.
 
-> > Here is an example how to get access to rootfs:
-> > fd = open("/proc/self/ns/mnt", O_RDONLY)
-> > umount2("/", MNT_DETACH);
-> > setns(fd, CLONE_NEWNS)
-> > 
-> > rootfs may contain data, which should not be avaliable in CT-s.
-> 
-> Indeed.
+COW would be not zerocopy so it's not ok. We get sub 1msec latency for
+userfaults through 10gbit and we don't want to risk wasting CPU
+caches.
 
-... and it looks like the above is what your mangled reproducer in previous
-patch had been made of -
-	fd = open("/proc/self/ns/mnt", O_RDONLY)
-	umount2("/", MNT_DETACH);
-	setns(fd, CLONE_NEWNS)
-	umount2("/", MNT_DETACH);
+I however considered allowing to extend the strict behavior (i.e. the
+feature) later in a backwards compatible way. We could provide a
+non-zerocopy beahvior with a RAP_ALLOW_COW flag that would then turn
+the -EBUSY error into a copy.
 
-IMO what it shows is setns() bug.  This "switch root/cwd, no matter what"
-is wrong.
+It's also more complex to implement the cow now, so it would make the
+code that really matters, harder to review. So it may be preferable to
+extend this later in a backwards compatible way with a new
+RAP_ALLOW_COW flag.
+
+The current handling the flags is already written in a way that should
+allow backwards compatible extension with RAP_ALLOW_*:
+
+#define RAP_ALLOW_SRC_HOLES (1UL<<0)
+
+SYSCALL_DEFINE4(remap_anon_pages,
+		unsigned long, dst_start, unsigned long, src_start,
+		unsigned long, len, unsigned long, flags)
+[..]
+	long err = -EINVAL;
+[..]
+	if (flags & ~RAP_ALLOW_SRC_HOLES)
+		return err;
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
