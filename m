@@ -1,7 +1,7 @@
 From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: [PATCH v2 1/7] tpm: merge duplicate transmit_cmd() functions
-Date: Tue,  7 Oct 2014 20:01:11 +0300
-Message-ID: <1412701277-27794-2-git-send-email-jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v2 3/7] tpm: clean up tpm_tis driver life-cycle
+Date: Tue,  7 Oct 2014 20:01:13 +0300
+Message-ID: <1412701277-27794-4-git-send-email-jarkko.sakkinen@linux.intel.com>
 References: <1412701277-27794-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1412701277-27794-1-git-send-email-jarkko.sakkinen@linux.intel.com>
@@ -10,258 +10,134 @@ To: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel S
 Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Merged transmit_cmd() functions in tpm-interface.c and tpm-sysfs.c.
-Added "tpm_" prefix for consistency sake. Changed cmd parameter as
-opaque. This enables to use separate command structures for TPM1
-and TPM2 commands instead of putting everything to struct tpm_cmd_t.
+Updated tpm_tis to properly use tpm-chip API instead of using ad hoc
+methods. tpm_chip_unregister() is called on remove event when PNP driver
+is used and on module removal when platform driver is used.
 
 Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 ---
- drivers/char/tpm/tpm-dev.c       |  4 +--
- drivers/char/tpm/tpm-interface.c | 53 +++++++++++++++++++++-------------------
- drivers/char/tpm/tpm-sysfs.c     | 23 ++---------------
- drivers/char/tpm/tpm.h           |  5 ++--
- 4 files changed, 34 insertions(+), 51 deletions(-)
+ drivers/char/tpm/tpm_tis.c | 64 ++++++++++++++++++++--------------------------
+ 1 file changed, 28 insertions(+), 36 deletions(-)
 
-diff --git a/drivers/char/tpm/tpm-dev.c b/drivers/char/tpm/tpm-dev.c
-index d9b774e..bd79d33 100644
---- a/drivers/char/tpm/tpm-dev.c
-+++ b/drivers/char/tpm/tpm-dev.c
-@@ -140,8 +140,8 @@ static ssize_t tpm_write(struct file *file, const char __user *buf,
- 	}
+diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+index a2780df..df04ce6 100644
+--- a/drivers/char/tpm/tpm_tis.c
++++ b/drivers/char/tpm/tpm_tis.c
+@@ -75,9 +75,6 @@ enum tis_defaults {
+ #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
+ #define	TPM_RID(l)			(0x0F04 | ((l) << 12))
  
- 	/* atomic tpm command send and result receive */
--	out_size = tpm_transmit(priv->chip, priv->data_buffer,
--				sizeof(priv->data_buffer));
-+	out_size = tpm_transmit_cmd(priv->chip, priv->data_buffer,
-+				    sizeof(priv->data_buffer), NULL);
- 	if (out_size < 0) {
- 		mutex_unlock(&priv->buffer_mutex);
- 		return out_size;
-diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
-index 6af1700..fedb4d5 100644
---- a/drivers/char/tpm/tpm-interface.c
-+++ b/drivers/char/tpm/tpm-interface.c
-@@ -331,8 +331,8 @@ EXPORT_SYMBOL_GPL(tpm_calc_ordinal_duration);
- /*
-  * Internal kernel interface to transmit TPM commands
-  */
--ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
--		     size_t bufsiz)
-+static ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
-+			    size_t bufsiz)
+-static LIST_HEAD(tis_chips);
+-static DEFINE_MUTEX(tis_lock);
+-
+ #if defined(CONFIG_PNP) && defined(CONFIG_ACPI)
+ static int is_itpm(struct pnp_dev *dev)
  {
- 	ssize_t rc;
- 	u32 count, ordinal;
-@@ -398,9 +398,10 @@ out:
- #define TPM_DIGEST_SIZE 20
- #define TPM_RET_CODE_IDX 6
+@@ -535,14 +532,17 @@ static int tpm_tis_init(struct device *dev, resource_size_t start,
+ 	int rc, i, irq_s, irq_e, probe;
+ 	struct tpm_chip *chip;
  
--static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
--			    int len, const char *desc)
-+ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd,
-+			 int len, const char *desc)
- {
-+	struct tpm_output_header *header;
- 	int err;
- 
- 	len = tpm_transmit(chip, (u8 *) cmd, len);
-@@ -409,7 +410,9 @@ static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
- 	else if (len < TPM_HEADER_SIZE)
- 		return -EFAULT;
- 
--	err = be32_to_cpu(cmd->header.out.return_code);
-+	header = (struct tpm_output_header *) cmd;
-+
-+	err = be32_to_cpu(header->return_code);
- 	if (err != 0 && desc)
- 		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
- 
-@@ -448,7 +451,7 @@ ssize_t tpm_getcap(struct device *dev, __be32 subcap_id, cap_t *cap,
- 		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 		tpm_cmd.params.getcap_in.subcap = subcap_id;
- 	}
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
- 	if (!rc)
- 		*cap = tpm_cmd.params.getcap_out.cap;
- 	return rc;
-@@ -464,8 +467,8 @@ void tpm_gen_interrupt(struct tpm_chip *chip)
- 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
- 
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
--			"attempting to determine the timeouts");
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
-+			      "attempting to determine the timeouts");
- }
- EXPORT_SYMBOL_GPL(tpm_gen_interrupt);
- 
-@@ -484,8 +487,8 @@ static int tpm_startup(struct tpm_chip *chip, __be16 startup_type)
- 	struct tpm_cmd_t start_cmd;
- 	start_cmd.header.in = tpm_startup_header;
- 	start_cmd.params.startup_in.startup_type = startup_type;
--	return transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
--			    "attempting to start the TPM");
-+	return tpm_transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
-+				"attempting to start the TPM");
- }
- 
- int tpm_get_timeouts(struct tpm_chip *chip)
-@@ -500,7 +503,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
- 	tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
- 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
- 
- 	if (rc == TPM_ERR_INVALID_POSTINIT) {
- 		/* The TPM is not started, we are the first to talk to it.
-@@ -513,7 +516,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
- 		tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
- 		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 		tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
--		rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
-+		rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
- 				  NULL);
- 	}
- 	if (rc) {
-@@ -575,8 +578,8 @@ duration:
- 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_DURATION;
- 
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
--			"attempting to determine the durations");
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
-+			      "attempting to determine the durations");
- 	if (rc)
- 		return rc;
- 
-@@ -631,8 +634,8 @@ static int tpm_continue_selftest(struct tpm_chip *chip)
- 	struct tpm_cmd_t cmd;
- 
- 	cmd.header.in = continue_selftest_header;
--	rc = transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
--			  "continue selftest");
-+	rc = tpm_transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
-+			      "continue selftest");
- 	return rc;
- }
- 
-@@ -672,8 +675,8 @@ int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
- 
- 	cmd.header.in = pcrread_header;
- 	cmd.params.pcrread_in.pcr_idx = cpu_to_be32(pcr_idx);
--	rc = transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
--			  "attempting to read a pcr value");
-+	rc = tpm_transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
-+			      "attempting to read a pcr value");
- 
- 	if (rc == 0)
- 		memcpy(res_buf, cmd.params.pcrread_out.pcr_result,
-@@ -737,8 +740,8 @@ int tpm_pcr_extend(u32 chip_num, int pcr_idx, const u8 *hash)
- 	cmd.header.in = pcrextend_header;
- 	cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(pcr_idx);
- 	memcpy(cmd.params.pcrextend_in.hash, hash, TPM_DIGEST_SIZE);
--	rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
--			  "attempting extend a PCR value");
-+	rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
-+			      "attempting extend a PCR value");
- 
- 	tpm_chip_put(chip);
- 	return rc;
-@@ -817,7 +820,7 @@ int tpm_send(u32 chip_num, void *cmd, size_t buflen)
- 	if (chip == NULL)
+-	if (!(chip = tpm_register_hardware(dev, &tpm_tis)))
++	chip = tpm_chip_alloc(dev, &tpm_tis);
++	if (!chip)
  		return -ENODEV;
  
--	rc = transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
-+	rc = tpm_transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
+-	chip->vendor.iobase = ioremap(start, len);
+-	if (!chip->vendor.iobase) {
+-		rc = -EIO;
+-		goto out_err;
+-	}
++	chip->vendor.iobase = devm_ioremap(dev, start, len);
++	if (!chip->vendor.iobase)
++		return -EIO;
++
++	rc = tpm_chip_register(chip);
++	if (rc)
++		return -ENODEV;
  
- 	tpm_chip_put(chip);
- 	return rc;
-@@ -938,14 +941,14 @@ int tpm_pm_suspend(struct device *dev)
- 		cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(tpm_suspend_pcr);
- 		memcpy(cmd.params.pcrextend_in.hash, dummy_hash,
- 		       TPM_DIGEST_SIZE);
--		rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
--				  "extending dummy pcr before suspend");
-+		rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
-+				      "extending dummy pcr before suspend");
+ 	/* Default timeouts */
+ 	chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+@@ -720,16 +720,10 @@ static int tpm_tis_init(struct device *dev, resource_size_t start,
  	}
  
- 	/* now do the actual savestate */
- 	for (try = 0; try < TPM_RETRY; try++) {
- 		cmd.header.in = savestate_header;
--		rc = transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
-+		rc = tpm_transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
- 
- 		/*
- 		 * If the TPM indicates that it is too busy to respond to
-@@ -1022,7 +1025,7 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
- 		tpm_cmd.header.in = tpm_getrandom_header;
- 		tpm_cmd.params.getrandom_in.num_bytes = cpu_to_be32(num_bytes);
- 
--		err = transmit_cmd(chip, &tpm_cmd,
-+		err = tpm_transmit_cmd(chip, &tpm_cmd,
- 				   TPM_GETRANDOM_RESULT_SIZE + num_bytes,
- 				   "attempting get random");
- 		if (err)
-diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
-index 01730a2..8ecb052 100644
---- a/drivers/char/tpm/tpm-sysfs.c
-+++ b/drivers/char/tpm/tpm-sysfs.c
-@@ -20,25 +20,6 @@
- #include <linux/device.h>
- #include "tpm.h"
- 
--/* XXX for now this helper is duplicated in tpm-interface.c */
--static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
--			    int len, const char *desc)
--{
--	int err;
+ 	INIT_LIST_HEAD(&chip->vendor.list);
+-	mutex_lock(&tis_lock);
+-	list_add(&chip->vendor.list, &tis_chips);
+-	mutex_unlock(&tis_lock);
 -
--	len = tpm_transmit(chip, (u8 *) cmd, len);
--	if (len <  0)
--		return len;
--	else if (len < TPM_HEADER_SIZE)
--		return -EFAULT;
--
--	err = be32_to_cpu(cmd->header.out.return_code);
--	if (err != 0 && desc)
--		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
--
--	return err;
--}
--
- #define READ_PUBEK_RESULT_SIZE 314
- #define TPM_ORD_READPUBEK cpu_to_be32(124)
- static struct tpm_input_header tpm_readpubek_header = {
-@@ -58,8 +39,8 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
- 	struct tpm_chip *chip = dev_get_drvdata(dev);
  
- 	tpm_cmd.header.in = tpm_readpubek_header;
--	err = transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
--			   "attempting to read the PUBEK");
-+	err = tpm_transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
-+			       "attempting to read the PUBEK");
- 	if (err)
- 		goto out;
+ 	return 0;
+ out_err:
+-	if (chip->vendor.iobase)
+-		iounmap(chip->vendor.iobase);
+-	tpm_remove_hardware(chip->dev);
++	tpm_chip_unregister(chip);
+ 	return rc;
+ }
  
-diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-index e4d0888..12326e1 100644
---- a/drivers/char/tpm/tpm.h
-+++ b/drivers/char/tpm/tpm.h
-@@ -314,9 +314,8 @@ struct tpm_cmd_t {
- } __packed;
+@@ -808,13 +802,27 @@ static struct pnp_device_id tpm_pnp_tbl[] = {
+ };
+ MODULE_DEVICE_TABLE(pnp, tpm_pnp_tbl);
  
- ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
++static void tpm_tis_chip_remove(struct tpm_chip *chip)
++{
++	iowrite32(~TPM_GLOBAL_INT_ENABLE &
++		  ioread32(chip->vendor.iobase +
++			   TPM_INT_ENABLE(chip->vendor.
++					  locality)),
++		  chip->vendor.iobase +
++		  TPM_INT_ENABLE(chip->vendor.locality));
++	release_locality(chip, chip->vendor.locality, 1);
++	if (chip->vendor.irq)
++		free_irq(chip->vendor.irq, chip);
++
++	tpm_chip_unregister(chip);
++}
++
+ static void tpm_tis_pnp_remove(struct pnp_dev *dev)
+ {
+ 	struct tpm_chip *chip = pnp_get_drvdata(dev);
+-	tpm_remove_hardware(chip->dev);
++	tpm_tis_chip_remove(chip);
+ }
+ 
 -
--ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
--		     size_t bufsiz);
-+ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd, int len,
-+			 const char *desc);
- extern int tpm_get_timeouts(struct tpm_chip *);
- extern void tpm_gen_interrupt(struct tpm_chip *);
- extern int tpm_do_selftest(struct tpm_chip *);
+ static struct pnp_driver tis_pnp_driver = {
+ 	.name = "tpm_tis",
+ 	.id_table = tpm_pnp_tbl,
+@@ -873,31 +881,15 @@ err_dev:
+ 
+ static void __exit cleanup_tis(void)
+ {
+-	struct tpm_vendor_specific *i, *j;
+ 	struct tpm_chip *chip;
+-	mutex_lock(&tis_lock);
+-	list_for_each_entry_safe(i, j, &tis_chips, list) {
+-		chip = to_tpm_chip(i);
+-		tpm_remove_hardware(chip->dev);
+-		iowrite32(~TPM_GLOBAL_INT_ENABLE &
+-			  ioread32(chip->vendor.iobase +
+-				   TPM_INT_ENABLE(chip->vendor.
+-						  locality)),
+-			  chip->vendor.iobase +
+-			  TPM_INT_ENABLE(chip->vendor.locality));
+-		release_locality(chip, chip->vendor.locality, 1);
+-		if (chip->vendor.irq)
+-			free_irq(chip->vendor.irq, chip);
+-		iounmap(i->iobase);
+-		list_del(&i->list);
+-	}
+-	mutex_unlock(&tis_lock);
+ #ifdef CONFIG_PNP
+ 	if (!force) {
+ 		pnp_unregister_driver(&tis_pnp_driver);
+ 		return;
+ 	}
+ #endif
++	chip = dev_get_drvdata(&pdev->dev);
++	tpm_tis_chip_remove(chip);
+ 	platform_device_unregister(pdev);
+ 	platform_driver_unregister(&tis_drv);
+ }
 -- 
 2.1.0
