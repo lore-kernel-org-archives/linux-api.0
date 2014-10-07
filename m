@@ -1,59 +1,98 @@
-From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
-Subject: Re: [PATCH 10/17] mm: rmap preparation for remap_anon_pages
-Date: Tue, 7 Oct 2014 18:07:32 +0100
-Message-ID: <20141007170731.GO2404@work-vm>
-References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
- <1412356087-16115-11-git-send-email-aarcange@redhat.com>
- <CA+55aFx++R42L75ooE=Fmaem73=V=q7f6pYTcALxgrA1y98G-A@mail.gmail.com>
- <20141006085540.GD2336@work-vm>
- <20141006164156.GA31075@redhat.com>
- <CA+55aFxAOYBny+QwXfkPy-P3rs-RPr5SLYLcPNBiFO3waBXtQA@mail.gmail.com>
+From: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
+Subject: Re: [tpmdd-devel] [PATCH v2 2/7] tpm: two-phase chip management
+ functions
+Date: Tue, 7 Oct 2014 11:50:17 -0600
+Message-ID: <20141007175017.GA10432@obsidianresearch.com>
+References: <1412701277-27794-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1412701277-27794-3-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFxAOYBny+QwXfkPy-P3rs-RPr5SLYLcPNBiFO3waBXtQA@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andrea Arcangeli <aarcange@redhat.com>, qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamush>
+In-Reply-To: <1412701277-27794-3-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Cc: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>, linux-api@vger.kernel.org, tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Linus Torvalds (torvalds@linux-foundation.org) wrote:
-> On Mon, Oct 6, 2014 at 12:41 PM, Andrea Arcangeli <aarcange@redhat.com> wrote:
-> >
-> > Of course if somebody has better ideas on how to resolve an anonymous
-> > userfault they're welcome.
-> 
-> So I'd *much* rather have a "write()" style interface (ie _copying_
-> bytes from user space into a newly allocated page that gets mapped)
-> than a "remap page" style interface
+On Tue, Oct 07, 2014 at 08:01:12PM +0300, Jarkko Sakkinen wrote:
+> Added tpm_chip_alloc() and tpm_chip_register() where tpm_chip_alloc()
+> reserves memory resources and tpm_chip_register() initializes the
+> device driver. This way it is possible to alter struct tpm_chip
+> attributes before passing it to tpm_chip_register().
 
-Something like that might work for the postcopy case; it doesn't work
-for some of the other uses that need to stop a page being changed by the
-guest, but then need to somehow get a copy of that page internally to QEMU,
-and perhaps provide it back later.  remap_anon_pages worked for those cases
-as well; I can't think of another current way of doing it in userspace.
+This looks broadly reasonable to me
 
-I'm thinking here of systems for making VMs with memory larger than a single
-host; that's something that's not as well thought out.  I've also seen people
-writing emulation that want to trap and emulate some page accesses while
-still having the original data available to the emulator itself.
+Please add a note to the commit that this is known to still have
+problems with resource reference counting, but they are less severe
+than what existed before, and this is only an interm step.
 
-So yes, OK for now, but the result is less general.
+> +/**
+> + * tpm_chip_alloc() - allocate a new struct tpm_chip instance
 
-Dave
+This is using devm so it should be called 'tpmm_chip_alloc()' for
+clarity
 
 
-> remapping anonymous pages involves page table games that really aren't
-> necessarily a good idea, and tlb invalidates for the old page etc.
-> Just don't do it.
-> 
->            Linus
---
-Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
+I know that was there before, but it sure is racy:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> +	chip->dev_num = find_first_zero_bit(dev_mask, TPM_NUM_DEVICES);
+[..]
+> +	set_bit(chip->dev_num, dev_mask);
+
+Someday it should use IDR.
+
+
+> @@ -896,18 +872,7 @@ void tpm_remove_hardware(struct device *dev)
+>  		return;
+>  	}
+>  
+> -	spin_lock(&driver_lock);
+> -	list_del_rcu(&chip->list);
+> -	spin_unlock(&driver_lock);
+> -	synchronize_rcu();
+> -
+> -	tpm_dev_del_device(chip);
+> -	tpm_sysfs_del_device(chip);
+> -	tpm_remove_ppi(&dev->kobj);
+> -	tpm_bios_log_teardown(chip->bios_dir);
+> -
+> -	/* write it this way to be explicit (chip->dev == dev) */
+> -	put_device(chip->dev);
+> +	tpm_chip_unregister(chip);
+>  }
+>  EXPORT_SYMBOL_GPL(tpm_remove_hardware);
+
+This can move to tpm-chip too, same with tpm_register_hardware
+
+> @@ -714,15 +709,10 @@ static int tpm_tis_i2c_remove(struct i2c_client *client)
+>  	struct tpm_chip *chip = tpm_dev.chip;
+>  	release_locality(chip, chip->vendor.locality, 1);
+>  
+> -	/* close file handles */
+> -	tpm_dev_vendor_release(chip);
+> -
+>  	/* remove hardware */
+>  	tpm_remove_hardware(chip->dev);
+
+Wrong ordering here, tpm_remove_hardware should always be first -
+drivers should not tear down internal state before calling it, so
+release_locality should be second.
+
+Noting that since we use devm the kfree will not happen until
+remove returns, so the chip pointer is still valid.
+
+>  	/* reset these pointers, otherwise we oops */
+> -	chip->dev->release = NULL;
+> -	chip->release = NULL;
+>  	tpm_dev.client = NULL;
+
+The comment can go too
+
+Note: tpm_dev should be driver private data, but that is not your
+problem..
+
+Did you test compile all the drivers? One of my git commits on github
+has some hackery to make that possible on x86.
+
+Jason
