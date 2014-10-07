@@ -1,54 +1,73 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH] [RFC] mnt: add ability to clone mntns starting with the current root
-Date: Tue, 07 Oct 2014 14:26:00 -0700
-Message-ID: <87siizshav.fsf@x220.int.ebiederm.org>
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] [RFC] mnt: add ability to clone mntns starting with the
+ current root
+Date: Tue, 7 Oct 2014 21:32:57 +0000
+Message-ID: <20141007213257.GJ28519@ubuntumail>
 References: <1412683977-29543-1-git-send-email-avagin@openvz.org>
-	<20141007133039.GG7996@ZenIV.linux.org.uk>
-	<20141007133339.GH7996@ZenIV.linux.org.uk>
-	<87r3yjy64e.fsf@x220.int.ebiederm.org>
-	<CALCETrXgssZfi3BirQ=K7-vrPyEh5AzFX2pF+yj76Ngi0sf7Yw@mail.gmail.com>
+ <20141007133039.GG7996@ZenIV.linux.org.uk>
+ <20141007133339.GH7996@ZenIV.linux.org.uk>
+ <87r3yjy64e.fsf@x220.int.ebiederm.org>
+ <20141007204627.GI28519@ubuntumail>
+ <87wq8bvbzg.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrXgssZfi3BirQ=K7-vrPyEh5AzFX2pF+yj76Ngi0sf7Yw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-	(Andy Lutomirski's message of "Tue, 7 Oct 2014 14:02:53 -0700")
+Content-Disposition: inline
+In-Reply-To: <87wq8bvbzg.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Rob Landley <rob-VoJi6FS/r0vR7s880joybQ@public.gmane.org>
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Rob Landley <rob-VoJi6FS/r0vR7s880joybQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+> 
+> > Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> >> Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org> writes:
+> >> 
+> >> 2> On Tue, Oct 07, 2014 at 02:30:40PM +0100, Al Viro wrote:
+> >> >> On Tue, Oct 07, 2014 at 04:12:57PM +0400, Andrey Vagin wrote:
+> >> >> > Another problem is that rootfs can't be hidden from a container, because
+> >> >> > rootfs can't be moved or umounted.
+> >> >> 
+> >> >> ... which is a bug in mntns_install(), AFAICS.
+> >> >
+> >> > Ability to get to exposed rootfs, that is.
+> >> 
+> >> The container side of this argument is pretty bogus.  It only applies
+> >> if user namespaces are not used for the container.
+> >
+> > User namespaces are still far too restricted for many container use
+> > cases.  We can't say "we have user namespaces so now privileged
+> > containers can be ignored".  Yes you never should have handed the
+> > keys to a privileged container to an untrusted person, but we do
+> > still try to protect the host from accidental damage due to a
+> > privileged container.
+> 
+> What I meant is that it isn't about containers.   It is about something
+> root can do.  So this is not a "container" problem.
 
-> Why should MNT_LOCKED on submounts be enforced?
->
-> Is it because, if you retain a reference to the detached tree, then
-> you can see under the submounts?  
+Oh, ok.  
 
-Yes. MNT_DETACH is a recursive operation that detaches all of the mount
-and all of it's submounts.  Which means you can see under the submounts
-if you have a reference to a detached mount.
+Sorry, I'm getting the two thread confused anyway.  I'm going to bow out
+here until I can pay proper attention.
 
-> If so, let's fix *that*.  Because
-> otherwise the whole model of pivot_root + detach will break.
+> >> So it is only root (and not root in a container) who can get to the
+> >> exposed rootfs.
+> >> 
+> >> I have a vague memory someone actually had a real use in miminal systems
+> >> for being able to get back to the rootfs and being able to use rootfs as
+> >> the rootfs.  There was even a patch at that time that Andrew Morton was
+> >> carrying for a time to allow unmounting root and get at rootfs, and to
+> >> prevent the oops on rootfs unmount in some way.
+> >> 
+> >> So not only do I not think it is a bug to get back too rootfs, I think
+> >> it is a feature that some people have expressed at least half-way sane
+> >> uses for.
+> >
+> > They can still do that if they want, using chroot :)
+> 
+> It would take fchdir or fchroot and a directory file descriptor open on
+> rootfs.  Frequently there is no appropriate directory file descriptor.
 
-I am not certain what you are referring to.  pivot_root doesn't
-manipulate the mount tree so you can see under anything.
-
-What I believe is the appropriate fix is to fail umount2(...,MNT_DETACH)
-if there are any referenced mount points being detached that have a
-locked submount.
-
-> Also, damn it, we need change_the_ns_root instead of pivot_root.  I
-> doubt that any container programs actually want to keep the old root
-> attached after pivot_root.
-
-Shrug.  Except for chroot_fs_refs() pivot_root is a cheap.
-
-I'm not particularly in favor of merging pivot_root and umount2.  The
-number of weird cases in the current api are high.  A merged piece of
-code would just make them higher.
-
-I am hoping that one more round of bug fixing will at least get the bugs
-for having unprivileged mounts fixed in the current API.
-
-Eric
+?  you can always escape if you're simply chrooted.  waterbuffalo :)
