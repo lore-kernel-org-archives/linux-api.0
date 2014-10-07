@@ -1,154 +1,37 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 08/17] mm: madvise MADV_USERFAULT
-Date: Tue, 7 Oct 2014 15:24:58 +0200
-Message-ID: <20141007132458.GZ2342@redhat.com>
-References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
- <1412356087-16115-9-git-send-email-aarcange@redhat.com>
- <20141007103645.GB30762@node.dhcp.inet.fi>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [PATCH] [RFC] mnt: add ability to clone mntns starting with the
+ current root
+Date: Tue, 7 Oct 2014 14:30:40 +0100
+Message-ID: <20141007133039.GG7996@ZenIV.linux.org.uk>
+References: <1412683977-29543-1-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20141007103645.GB30762@node.dhcp.inet.fi>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Android Kernel Team <kernel-team@android.com>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamu>
+In-Reply-To: <1412683977-29543-1-git-send-email-avagin@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrey Vagin <avagin@openvz.org>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrey Vagin <avagin@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Serge Hallyn <serge.hallyn@canonical.com>, Rob Landley <rob@landley.net>
 List-Id: linux-api@vger.kernel.org
 
-Hi Kirill,
+On Tue, Oct 07, 2014 at 04:12:57PM +0400, Andrey Vagin wrote:
+> Another problem is that rootfs can't be hidden from a container, because
+> rootfs can't be moved or umounted.
 
-On Tue, Oct 07, 2014 at 01:36:45PM +0300, Kirill A. Shutemov wrote:
-> On Fri, Oct 03, 2014 at 07:07:58PM +0200, Andrea Arcangeli wrote:
-> > MADV_USERFAULT is a new madvise flag that will set VM_USERFAULT in the
-> > vma flags. Whenever VM_USERFAULT is set in an anonymous vma, if
-> > userland touches a still unmapped virtual address, a sigbus signal is
-> > sent instead of allocating a new page. The sigbus signal handler will
-> > then resolve the page fault in userland by calling the
-> > remap_anon_pages syscall.
+... which is a bug in mntns_install(), AFAICS.
+
+> Here is an example how to get access to rootfs:
+> fd = open("/proc/self/ns/mnt", O_RDONLY)
+> umount2("/", MNT_DETACH);
+> setns(fd, CLONE_NEWNS)
 > 
-> Hm. I wounder if this functionality really fits madvise(2) interface: as
-> far as I understand it, it provides a way to give a *hint* to kernel which
-> may or may not trigger an action from kernel side. I don't think an
-> application will behaive reasonably if kernel ignore the *advise* and will
-> not send SIGBUS, but allocate memory.
-> 
-> I would suggest to consider to use some other interface for the
-> functionality: a new syscall or, perhaps, mprotect().
+> rootfs may contain data, which should not be avaliable in CT-s.
 
-I didn't feel like adding PROT_USERFAULT to mprotect, which looks
-hardwired to just these flags:
+Indeed.
 
-       PROT_NONE  The memory cannot be accessed at all.
+> I suggest to add ability to create a mount namespace with specified
+> mount points. A current task root can be used as a root for the new
+> mount namespace.
 
-       PROT_READ  The memory can be read.
-
-       PROT_WRITE The memory can be modified.
-
-       PROT_EXEC  The memory can be executed.
-
-Normally mprotect doesn't just alter the vmas but it also alters
-pte/hugepmds protection bits, that's something that is never needed
-with VM_USERFAULT so I didn't feel like VM_USERFAULT is a protection
-change to the VMA.
-
-mprotect is also hardwired to mangle only the VM_READ|WRITE|EXEC
-flags, while madvise is ideal to set arbitrary vma flags.
-
->From an implementation standpoint the perfect place to set a flag in a
-vma is madvise. This is what MADV_DONTFORK (it sets VM_DONTCOPY)
-already does too in an identical way to MADV_USERFAULT/VM_USERFAULT.
-
-MADV_DONTFORK is as critical as MADV_USERFAULT because people depends
-on it for example to prevent the O_DIRECT vs fork race condition that
-results in silent data corruption during I/O with threads that may
-fork. The other reason why MADV_DONTFORK is critical is that fork()
-would otherwise fail with OOM unless full overcommit is enabled
-(i.e. pci hotplug crashes the guest if you forget to set
-MADV_DONTFORK).
-
-Another madvise that would generate a failure if not obeyed by the
-kernel is MADV_DONTNEED that if it does nothing it could run lead to
-OOM killing. We don't inflate virt balloons using munmap just to make
-an example. Various other apps (maybe JVM garbage collection too)
-makes extensive use of MADV_DONTNEED and depend on it.
-
-Said that I can change it to mprotect, the only thing that I don't
-like is that it'll result in a less clean patch and I can't possibly
-see a practical risk in keeping it simpler with madvise, as long as we
-always return -EINVAL whenever we encounter a vma type that cannot
-raise userfaults yet (that is something I already enforced).
-
-Yet another option would be to drop MADV_USERFAULT and
-vm_flags&VM_USERFAULT entirely and in turn the ability to handle
-userfaults with SIGBUS, and retain only the userfaultfd. The new
-userfaultfd protocol requires registering each created userfaultfd
-into its own private virtual memory ranges (that is to allow an
-unlimited number of userfaultfd per process). Currently the
-userfaultfd engages iff the fault address intersects both the
-MADV_USERFAULT range and the userfaultfd registered ranges. So I could
-drop MADV_USERFAULT and VM_USERFAULT and just check for
-vma->vm_userfaultfd_ctx!=NULL to know if the userfaultfd protocol
-needs to be engaged during the first page fault for a still unmapped
-virtual address. I just thought it would be more flexibile to also
-allow SIGBUS without forcing people to use userfaultfd (that's in fact
-the only reason to still retain madvise(MADV_USERFAULT)!).
-
-Volatile pages earlier patches only supported SIGBUS behavior for
-example.. and I didn't intend to force them to use userfaultfd if
-they're guaranteed to access the memory with the CPU and never through
-a kernel syscall (that is something the app can enforce by
-design). userfaultfd becomes necessary the moment you want to handle
-userfaults through syscalls/gup etc... qemu obviously requires
-userfaultfd and it never uses the userfaultfd-less SIGBUS behavior as
-it touches the memory in all possible ways (first and foremost with
-the KVM page fault that uses almost all variants of gup..).
-
-So here somebody should comment and choose between:
-
-1) set VM_USERFAULT with mprotect(PROT_USERFAULT) instead of
-   the current madvise(MADV_USERFAULT)
-
-2) drop MADV_USERFAULT and VM_USERFAULT and force the usage of the
-   userfaultfd protocol as the only way for userland to catch
-   userfaults (each userfaultfd must already register itself into its
-   own virtual memory ranges so it's a trivial change for userfaultfd
-   users that deletes just 1 or 2 lines of userland code, but it would
-   prevent to use the SIGBUS behavior with info->si_addr=faultaddr for
-   other users)
-
-3) keep things as they are now: use MADV_USERFAULT for SIGBUS
-   userfaults, with optional intersection between the
-   vm_flags&VM_USERFAULT ranges and the userfaultfd registered ranges
-   with vma->vm_userfaultfd_ctx!=NULL to know if to engage the
-   userfaultfd protocol instead of the plain SIGBUS
-
-I will update the code accordingly to feedback, so please comment.
-
-I implemented 3) because I thought it provided the most flexibility
-for userland to choose if to engage in the userfaultfd protocol or to
-stay simple with the SIGBUS if the app doesn't require to access the
-userfault virtual memory from the kernel code. It also provides the
-cleanest and simplest implementation to set the VM_USERFAULT flags
-with madvise.
-
-My second choice would be 2). We could always add MADV_USERFAULT later
-except then we'd be forced to set and clear VM_USERFAULT within the
-userfaultfd registration to remain backwards compatible. The main cons
-and the reason I didn't pick 2) is that it wouldn't be a drop in
-replacement for volatile pages that would then be force to use the
-userfaultfd protocol too.
-
-I don't like 3) very much mostly because the changes to mprotect would
-just make things more complex on the implementation side with purely
-conceptual benefits, but then it's possible too and it's feature
-equivalent to 1) as far as volatile pages are concerned, so I'm
-overall fine with this change if that's the preferred way.
-
-Thanks,
-Andrea
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Yecchh...  Frankly, you are opening a big can of worms - having rootfs
+as absolute root of all namespaces simplifies a lot of things in there.
