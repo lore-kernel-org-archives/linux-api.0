@@ -1,50 +1,73 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v2 2/7] tpm: two-phase chip management
- functions
-Date: Tue, 7 Oct 2014 22:15:42 +0300
-Message-ID: <20141007191542.GA31645@intel.com>
-References: <1412701277-27794-1-git-send-email-jarkko.sakkinen@linux.intel.com>
- <1412701277-27794-3-git-send-email-jarkko.sakkinen@linux.intel.com>
- <20141007175017.GA10432@obsidianresearch.com>
- <20141007180417.GA29459@intel.com>
- <20141007182756.GA10774@obsidianresearch.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH RFC] introduce ioctl to completely invalidate page cache
+Date: Tue, 7 Oct 2014 21:16:24 +0200
+Message-ID: <20141007191624.GD30038@quack.suse.cz>
+References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
+ <542DAEAC.8010203@kernel.dk>
+ <20141006080659.GA7526@quack.suse.cz>
+ <2368A3FCF9F7214298E53C823B0A48EC042405BC@AMSPEX01CL02.citrite.net>
+ <2368A3FCF9F7214298E53C823B0A48EC0424106C@AMSPEX01CL02.citrite.net>
+ <20141006143019.GG7526@quack.suse.cz>
+ <20141007013059.GL2301@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20141007182756.GA10774-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+In-Reply-To: <20141007013059.GL2301@dastard>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Thanos Makatos <thanos.makatos-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org" <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 07, 2014 at 12:27:56PM -0600, Jason Gunthorpe wrote:
-> On Tue, Oct 07, 2014 at 09:04:17PM +0300, Jarkko Sakkinen wrote:
-> 
-> > > Did you test compile all the drivers? One of my git commits on github
-> > > has some hackery to make that possible on x86.
+On Tue 07-10-14 12:30:59, Dave Chinner wrote:
+> On Mon, Oct 06, 2014 at 04:30:19PM +0200, Jan Kara wrote:
+> > On Mon 06-10-14 11:33:23, Thanos Makatos wrote:
+> > > > > Trond also had a comment that if we extended the ioctl to work for all
+> > > > > inodes (not just blkdev) and allowed some additional flags of what
+> > > > > needs to be invalidated, the new ioctl would be also useful to NFS
+> > > > > userspace - see Trond's email at
+> > > > >
+> > > > > http://www.spinics.net/lists/linux-fsdevel/msg78917.html
+> > > > >
+> > > > > and the following thread. I would prefer to cover that usecase when we
+> > > > > are introducing new invalidation ioctl. Have you considered that Thanos?
+> > > > 
+> > > > Sure, though I don't really know how to do it. I'll start by looking at the code
+> > > > flow when someone does " echo 3 > /proc/sys/vm/drop_caches", unless you
+> > > > already have a rough idea how to do that.
+> > > 
+> > > I realise I haven't clearly understood what the semantics of this new ioctl
+> > > should be.
+> > > 
+> > > My initial goal was to implement an ioctl that would _completely_ invalidate
+> > > the buffer cache of a block device when there is no file-system involved.
+> > > Unless I'm mistaken the patch I posted achieves this goal.
+> >   Yes.
 > > 
-> > Yeah, I compiled all the drivers:
+> > > We now want to extend this patch to take care of cached metadata, which seems
+> > > to be of particular importance for NFS, and I suspect that this piece of
+> > > functionality will still be applicable to any kind of file-system, correct?
+> >   So most notably they want the ioctl to work not only for block devices
+> > but also for any regular file. That's easily doable - you just call
+> > filemap_write_and_wait() and invalidate_inode_pages2() in the ioctl handler
+> > for regular files.
 > > 
-> > $ grep CONFIG_TCG .config
-> > CONFIG_TCG_TPM=m
-> > CONFIG_TCG_TIS=m
-> > CONFIG_TCG_TIS_I2C_ATMEL=m
-> > CONFIG_TCG_TIS_I2C_INFINEON=m
-> > CONFIG_TCG_TIS_I2C_NUVOTON=m
-> > CONFIG_TCG_NSC=m
-> > CONFIG_TCG_ATMEL=m
-> > CONFIG_TCG_INFINEON=m
-> > CONFIG_TCG_ST33_I2C=m
-> > CONFIG_TCG_XEN=m
-> > CONFIG_TCG_CRB=m
+> > Also they wanted to be able to specify a range of a mapping to invalidate -
+> > that's easily doable as well. Finally they wanted a 'flags' argument so you
+> > can additionally ask fs to invalidate also some metadata. How invalidation
+> > is done will be a fs specific thing and for now I guess we don't need to go
+> > into details. NFS guys can sort that out when they decide to implement it.
+> > So in the beginning we can just have u64 flags argument and in
+> > it a single 'INVAL_DATA' flag meaning that invalidation of data in a given
+> > range is requested. Later NFS guys can add further flags.
 > 
-> CONFIG_TCG_IBMVTPM is missing, apply this:
-> 
-> https://github.com/jgunthorpe/linux/commit/74afd69de603783858283f9b337e1694988964f8
-
-Oops, how did that go unnoticed. Will do.
-
-> Jason
-
-/Jarkko
+> Why do we need a new ioctl to do this? fadvise64() seems like it's
+> the exact fit for "FADV_INVALIDATE_[META]DATA" flags...
+  Well, fadvise() is currently a hint to kernel. In this case we would
+really like the call to do the invalidation and return error if it fails
+for some reason. So I'm not sure fadvise() is a perfect fit. But I wouldn't
+be strongly opposed to it either.
+								Honza
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
