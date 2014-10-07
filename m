@@ -1,88 +1,86 @@
-From: Trond Myklebust <trond.myklebust@primarydata.com>
-Subject: Re: [PATCH RFC] introduce ioctl to completely invalidate page cache
-Date: Tue, 7 Oct 2014 15:35:47 -0400
-Message-ID: <CAHQdGtTgbrFOnpT9H-MNw=9DbuM=Dc3yUGBt2zjnVB5eaF76Mg@mail.gmail.com>
-References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
-	<542DAEAC.8010203@kernel.dk>
-	<20141006080659.GA7526@quack.suse.cz>
-	<2368A3FCF9F7214298E53C823B0A48EC042405BC@AMSPEX01CL02.citrite.net>
-	<2368A3FCF9F7214298E53C823B0A48EC0424106C@AMSPEX01CL02.citrite.net>
-	<20141006143019.GG7526@quack.suse.cz>
-	<20141007013059.GL2301@dastard>
-	<20141007191624.GD30038@quack.suse.cz>
+From: Jonathan Cameron <jic23@kernel.org>
+Subject: RE: [PATCH 3/8] iio: Add support for DA9150 GPADC
+Date: Tue, 07 Oct 2014 20:36:36 +0100
+Message-ID: <3B049606-083E-4220-ADBF-71D74C0A9D9F@kernel.org>
+References: <cover.1411396718.git.Adam.Thomson.Opensource@diasemi.com> <ee4c56931f326d8ee9c1313c44456bce2dec8b8c.1411396719.git.Adam.Thomson.Opensource@diasemi.com> <5426964A.3050407@kernel.org> <2E89032DDAA8B9408CB92943514A0337AB518D23@SW-EX-MBX01.diasemi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141007191624.GD30038@quack.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: Dave Chinner <david@fromorbit.com>, Thanos Makatos <thanos.makatos@citrix.com>, Jens Axboe <axboe@kernel.dk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "jlayton@poochiereds.net" <jlayton@poochiereds.net>, "bfields@fieldses.org" <bfields@fieldses.org>
+Content-Type: text/plain;
+ charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <2E89032DDAA8B9408CB92943514A0337AB518D23@SW-EX-MBX01.diasemi.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: "Opensource [Adam Thomson]" <Adam.Thomson.Opensource@diasemi.com>, Lee Jones <lee.jones@linaro.org>, Samuel Ortiz <sameo@linux.intel.com>, "linux-iio@vger.kernel.org" <linux-iio@vger.kernel.org>, Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, "linux-pm@vger.kernel.org" <linux-pm@vger.kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Grant Likely <grant.likely@linaro.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Support Opensource <Support.Opensource@diasemi.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 7, 2014 at 3:16 PM, Jan Kara <jack@suse.cz> wrote:
-> On Tue 07-10-14 12:30:59, Dave Chinner wrote:
->> On Mon, Oct 06, 2014 at 04:30:19PM +0200, Jan Kara wrote:
->> > On Mon 06-10-14 11:33:23, Thanos Makatos wrote:
->> > > > > Trond also had a comment that if we extended the ioctl to work for all
->> > > > > inodes (not just blkdev) and allowed some additional flags of what
->> > > > > needs to be invalidated, the new ioctl would be also useful to NFS
->> > > > > userspace - see Trond's email at
->> > > > >
->> > > > > http://www.spinics.net/lists/linux-fsdevel/msg78917.html
->> > > > >
->> > > > > and the following thread. I would prefer to cover that usecase when we
->> > > > > are introducing new invalidation ioctl. Have you considered that Thanos?
->> > > >
->> > > > Sure, though I don't really know how to do it. I'll start by looking at the code
->> > > > flow when someone does " echo 3 > /proc/sys/vm/drop_caches", unless you
->> > > > already have a rough idea how to do that.
->> > >
->> > > I realise I haven't clearly understood what the semantics of this new ioctl
->> > > should be.
->> > >
->> > > My initial goal was to implement an ioctl that would _completely_ invalidate
->> > > the buffer cache of a block device when there is no file-system involved.
->> > > Unless I'm mistaken the patch I posted achieves this goal.
->> >   Yes.
->> >
->> > > We now want to extend this patch to take care of cached metadata, which seems
->> > > to be of particular importance for NFS, and I suspect that this piece of
->> > > functionality will still be applicable to any kind of file-system, correct?
->> >   So most notably they want the ioctl to work not only for block devices
->> > but also for any regular file. That's easily doable - you just call
->> > filemap_write_and_wait() and invalidate_inode_pages2() in the ioctl handler
->> > for regular files.
->> >
->> > Also they wanted to be able to specify a range of a mapping to invalidate -
->> > that's easily doable as well. Finally they wanted a 'flags' argument so you
->> > can additionally ask fs to invalidate also some metadata. How invalidation
->> > is done will be a fs specific thing and for now I guess we don't need to go
->> > into details. NFS guys can sort that out when they decide to implement it.
->> > So in the beginning we can just have u64 flags argument and in
->> > it a single 'INVAL_DATA' flag meaning that invalidation of data in a given
->> > range is requested. Later NFS guys can add further flags.
->>
->> Why do we need a new ioctl to do this? fadvise64() seems like it's
->> the exact fit for "FADV_INVALIDATE_[META]DATA" flags...
->   Well, fadvise() is currently a hint to kernel. In this case we would
-> really like the call to do the invalidation and return error if it fails
-> for some reason. So I'm not sure fadvise() is a perfect fit. But I wouldn't
-> be strongly opposed to it either.
+
+
+On October 7, 2014 3:55:55 PM GMT+01:00, "Opensource [Adam Thomson]" <Adam.Thomson.Opensource@diasemi.com> wrote:
+>On September 27, 2014 11:50, Jonathan Cameron wrote:
 >
-
-fadvise is about giving programs the ability to "announce an intention
-to access file data in a specific pattern in the future, thus allowing
-the kernel to perform appropriate optimizations" according to the
-manpage.
-
-Cache invalidation and revalidation, OTOH, is about ensuring meta/data
-consistency between the disk and inode/page cache.
-
-I'm not seeing a perfect match. :-)
+>> On 23/09/14 11:53, Adam Thomson wrote:
+>> > This patch adds support for DA9150 Charger & Fuel-Gauge IC GPADC.
+>
+>> > +
+>> > +static inline int da9150_gpadc_gpio_6v_voltage_now(int raw_val)
+>> > +{
+>> > +	/* Convert to mV */
+>> > +	return (6 * ((raw_val * 1000) + 500)) / 1024;
+>> These could all be expressed as raw values with offsets
+>> and scales (and that would be preferred).
+>> E.g. This one has offset 500000 and scale 6000/1024 or even
+>> better use IIO_VAL_FRACTIONAL_LOG2 for scale with val1 = 6000
+>> and val2 = (log_2 1024) = 10.
+>> 
+>
+>What you've suggested isn't correct. The problem here is that the
+>offset is
+>added first to the raw ADC reading, without factoring the ADC value
+>accordingly
+>to match the factor of the offset. If we take the original equation
+>provided for
+>this channel of the ADC, the offset is actually 0.5 which should be
+>added to the
+>raw ADC value. This doesn't fit into the implementation in the kernel
+>as we
+>can't use floating point. If we multiply the offset but not the raw ADC
+>value,
+>then add them before applying the scale factor, then the result is
+>wrong at the
+>end. Basically you need a scale for the raw ADC value to match the
+>offset scale
+>so you can achieve the correct results, which is what my calculation
+>does.
+>But that seems impossible with the current raw|offset|scale method.
+Oops got that wrong.  The fixed point maths to fix the in kernel interface isn't exactly
+ difficult but indeed it does not handle this currently.
+>
+>> > +	ret = iio_map_array_register(indio_dev,
+>da9150_gpadc_default_maps);
+>> > +	if (ret) {
+>> > +		dev_err(dev, "Failed to register IIO maps: %d\n", ret);
+>> > +		return ret;
+>> > +	}
+>> I'd suggest doing the devm_request_thread_irq before the
+>iio_map_array
+>> stuff.  This is purely to avoid the order during remove not being
+>> obviously correct as it isn't the reverse of during probe.
+>
+>Ok, should still work ok that way so can update.
+>
+>> > +static int da9150_gpadc_remove(struct platform_device *pdev)
+>> > +{
+>> > +	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+>> > +
+>> > +	iio_map_array_unregister(indio_dev);
+>> Twice in one day.  I'm definitely thinking we should add a
+>> devm version of iio_map_array_register...
+>
+>I assume you mean here that iio_device_unregister() should come first?
+>Will
+>update.
+Nope just that such a new function might be useful.
 
 -- 
-Trond Myklebust
-
-Linux NFS client maintainer, PrimaryData
-
-trond.myklebust@primarydata.com
+Sent from my Android phone with K-9 Mail. Please excuse my brevity.
