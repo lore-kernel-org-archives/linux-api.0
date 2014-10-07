@@ -1,67 +1,68 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
 Subject: Re: [PATCH] [RFC] mnt: add ability to clone mntns starting with the current root
-Date: Tue, 07 Oct 2014 14:42:18 -0700
-Message-ID: <87zjd7r1z9.fsf@x220.int.ebiederm.org>
+Date: Tue, 07 Oct 2014 14:50:47 -0700
+Message-ID: <87zjd7pn0o.fsf@x220.int.ebiederm.org>
 References: <1412683977-29543-1-git-send-email-avagin@openvz.org>
 	<20141007133039.GG7996@ZenIV.linux.org.uk>
 	<20141007133339.GH7996@ZenIV.linux.org.uk>
 	<87r3yjy64e.fsf@x220.int.ebiederm.org>
-	<20141007204627.GI28519@ubuntumail>
-	<87wq8bvbzg.fsf@x220.int.ebiederm.org>
-	<20141007213257.GJ28519@ubuntumail>
+	<CALCETrXgssZfi3BirQ=K7-vrPyEh5AzFX2pF+yj76Ngi0sf7Yw@mail.gmail.com>
+	<87siizshav.fsf@x220.int.ebiederm.org>
+	<CALCETrWfZwbGCxnUAg0PnM=tN8MGRQkHrJVC42bVF7sdJKXLmw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20141007213257.GJ28519@ubuntumail> (Serge Hallyn's message of
-	"Tue, 7 Oct 2014 21:32:57 +0000")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Serge Hallyn <serge.hallyn@ubuntu.com>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, Andrey Vagin <avagin@openvz.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrey Vagin <avagin@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Serge Hallyn <serge.hallyn@canonical.com>, Rob Landley <rob@landley.net>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrWfZwbGCxnUAg0PnM=tN8MGRQkHrJVC42bVF7sdJKXLmw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Tue, 7 Oct 2014 14:38:06 -0700")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Rob Landley <rob-VoJi6FS/r0vR7s880joybQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Serge Hallyn <serge.hallyn@ubuntu.com> writes:
+Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 
-> Quoting Eric W. Biederman (ebiederm@xmission.com):
-
->> What I meant is that it isn't about containers.   It is about something
->> root can do.  So this is not a "container" problem.
+> On Tue, Oct 7, 2014 at 2:26 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+>>
+>>> Why should MNT_LOCKED on submounts be enforced?
+>>>
+>>> Is it because, if you retain a reference to the detached tree, then
+>>> you can see under the submounts?
+>>
+>> Yes. MNT_DETACH is a recursive operation that detaches all of the mount
+>> and all of it's submounts.  Which means you can see under the submounts
+>> if you have a reference to a detached mount.
+>>
+>>> If so, let's fix *that*.  Because
+>>> otherwise the whole model of pivot_root + detach will break.
+>>
+>> I am not certain what you are referring to.  pivot_root doesn't
+>> manipulate the mount tree so you can see under anything.
+>>
+>> What I believe is the appropriate fix is to fail umount2(...,MNT_DETACH)
+>> if there are any referenced mount points being detached that have a
+>> locked submount.
 >
-> Oh, ok.  
+> Most of the container-using things do, roughly:
 >
-> Sorry, I'm getting the two thread confused anyway.  I'm going to bow out
-> here until I can pay proper attention.
-
-I think there is half a point here that may be legit, when you are using
-mount namespaces to jail applications, there may be a problem
-with umounting / and making it to the underlying rootfs filesystem.
-
-I am squinting and looking this way and that but while I can imagine
-someone more clever than I can think up some unique property of rootfs
-that makes it a little more exploitable than just mounting a ramfs,
-but since you have to be root to exploit those properties I think the
-game is pretty much lost.
-
->> >> So it is only root (and not root in a container) who can get to the
->> >> exposed rootfs.
->> >> 
->> >> I have a vague memory someone actually had a real use in miminal systems
->> >> for being able to get back to the rootfs and being able to use rootfs as
->> >> the rootfs.  There was even a patch at that time that Andrew Morton was
->> >> carrying for a time to allow unmounting root and get at rootfs, and to
->> >> prevent the oops on rootfs unmount in some way.
->> >> 
->> >> So not only do I not think it is a bug to get back too rootfs, I think
->> >> it is a feature that some people have expressed at least half-way sane
->> >> uses for.
->> >
->> > They can still do that if they want, using chroot :)
->> 
->> It would take fchdir or fchroot and a directory file descriptor open on
->> rootfs.  Frequently there is no appropriate directory file descriptor.
+> Unshare userns and mountns
+> Mount some new stuff
+> pivot_root to the new stuff
+> MNT_DETACH the old.
 >
-> ?  you can always escape if you're simply chrooted.  waterbuffalo :)
+> That last step will almost always fail if you make this change.
 
-filesystem type rootfs.
+I don't think so.
+
+I expect I could add full busy detection of normal umounts and those
+applications would not fail.
+
+What I am proposing is a more targeted version of busy detection that
+looks at each mount in the set that detach will unmount.  For each mount
+if it is busy with non-submount references and it has at least one
+locked submount fail the detach with -EBUSY.
+
+Do you really think we have userspace references to the one or more of the
+mounts under old?
 
 Eric
-
