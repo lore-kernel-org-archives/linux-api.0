@@ -1,72 +1,66 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [Qemu-devel] [PATCH 10/17] mm: rmap preparation for
- remap_anon_pages
-Date: Tue, 7 Oct 2014 15:37:10 +0200
-Message-ID: <20141007133710.GA2342@redhat.com>
-References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
- <1412356087-16115-11-git-send-email-aarcange@redhat.com>
- <20141007111026.GD30762@node.dhcp.inet.fi>
+From: "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
+Subject: RE: [PATCH 2/8] mfd: da9150: Add DT binding documentation for core
+Date: Tue, 7 Oct 2014 13:47:01 +0000
+Message-ID: <2E89032DDAA8B9408CB92943514A0337AB518CFE@SW-EX-MBX01.diasemi.com>
+References: <cover.1411396718.git.Adam.Thomson.Opensource@diasemi.com>
+ <b71815ff49a1cabe2c7907a96cc1be34f924648e.1411396719.git.Adam.Thomson.Opensource@diasemi.com>
+ <5426932E.7060609@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20141007111026.GD30762@node.dhcp.inet.fi>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Robert Love <rlove@google.com>, Dave Hansen <dave@sr71.net>, Jan Kara <jack@suse.cz>, Neil Brown <neilb@suse.de>, Stefan Hajnoczi <stefanha@gmail.com>, Andrew Jones <drjones@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@gmail.com>, Michel Lespinasse <walken@google.com>, Taras Glek <tglek@mozilla.com>, Juan Quintela <quintela@redhat.com>, Hugh Dickins <hughd@google.com>, Isaku Yamahata <yamahata@valinux.co.jp>, Mel Gorman <mgorman@suse.de>, Sasha Levin <sasha.levin@oracle.com>, Android Kernel Team <kernel-team@android.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andres Lagar-Cavilla <andres>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5426932E.7060609-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Language: en-US
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Support Opensource <Support.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Kirill,
-
-On Tue, Oct 07, 2014 at 02:10:26PM +0300, Kirill A. Shutemov wrote:
-> On Fri, Oct 03, 2014 at 07:08:00PM +0200, Andrea Arcangeli wrote:
-> > There's one constraint enforced to allow this simplification: the
-> > source pages passed to remap_anon_pages must be mapped only in one
-> > vma, but this is not a limitation when used to handle userland page
-> > faults with MADV_USERFAULT. The source addresses passed to
-> > remap_anon_pages should be set as VM_DONTCOPY with MADV_DONTFORK to
-> > avoid any risk of the mapcount of the pages increasing, if fork runs
-> > in parallel in another thread, before or while remap_anon_pages runs.
-> 
-> Have you considered triggering COW instead of adding limitation on
-> pages' mapcount? The limitation looks artificial from interface POV.
-
-I haven't considered it, mostly because I see it as a feature that it
-returns -EBUSY. I prefer to avoid the risk of userland getting a
-successful retval but internally the kernel silently behaving
-non-zerocopy by mistake because some userland bug forgot to set
-MADV_DONTFORK on the src_vma.
-
-COW would be not zerocopy so it's not ok. We get sub 1msec latency for
-userfaults through 10gbit and we don't want to risk wasting CPU
-caches.
-
-I however considered allowing to extend the strict behavior (i.e. the
-feature) later in a backwards compatible way. We could provide a
-non-zerocopy beahvior with a RAP_ALLOW_COW flag that would then turn
-the -EBUSY error into a copy.
-
-It's also more complex to implement the cow now, so it would make the
-code that really matters, harder to review. So it may be preferable to
-extend this later in a backwards compatible way with a new
-RAP_ALLOW_COW flag.
-
-The current handling the flags is already written in a way that should
-allow backwards compatible extension with RAP_ALLOW_*:
-
-#define RAP_ALLOW_SRC_HOLES (1UL<<0)
-
-SYSCALL_DEFINE4(remap_anon_pages,
-		unsigned long, dst_start, unsigned long, src_start,
-		unsigned long, len, unsigned long, flags)
-[..]
-	long err = -EINVAL;
-[..]
-	if (flags & ~RAP_ALLOW_SRC_HOLES)
-		return err;
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+T24gU2VwdGVtYmVyIDI3LCAyMDE0IDExOjM3LCBKb25hdGhhbiBDYW1lcm9uIHdyb3RlOg0KDQo+
+IE9uIDIzLzA5LzE0IDExOjUzLCBBZGFtIFRob21zb24gd3JvdGU6DQo+ID4gU2lnbmVkLW9mZi1i
+eTogQWRhbSBUaG9tc29uIDxBZGFtLlRob21zb24uT3BlbnNvdXJjZUBkaWFzZW1pLmNvbT4NCj4g
+T2J2aW91c2x5IHRoaXMgcmVhbGx5IHdhbnRzIGEgcmV2aWV3IGZyb20gb25lIG9mIHRoZSBkZXZp
+Y2UgdHJlZSBndXlzLCBidXQgSQ0KPiBoYXZlIGEgZmV3DQo+IGJpdHMgYmFzZWQgb24gd2hhdCBN
+YXJrIGhhcyByZWNlbnRseSBzYWlkIGluIG90aGVyIHJldmlld3MgOykNCj4gPiAtLS0NCj4gPiAg
+RG9jdW1lbnRhdGlvbi9kZXZpY2V0cmVlL2JpbmRpbmdzL21mZC9kYTkxNTAudHh0IHwgNDENCj4g
+KysrKysrKysrKysrKysrKysrKysrKysrDQo+ID4gIDEgZmlsZSBjaGFuZ2VkLCA0MSBpbnNlcnRp
+b25zKCspDQo+ID4gIGNyZWF0ZSBtb2RlIDEwMDY0NCBEb2N1bWVudGF0aW9uL2RldmljZXRyZWUv
+YmluZGluZ3MvbWZkL2RhOTE1MC50eHQNCj4gPg0KPiA+IGRpZmYgLS1naXQgYS9Eb2N1bWVudGF0
+aW9uL2RldmljZXRyZWUvYmluZGluZ3MvbWZkL2RhOTE1MC50eHQNCj4gYi9Eb2N1bWVudGF0aW9u
+L2RldmljZXRyZWUvYmluZGluZ3MvbWZkL2RhOTE1MC50eHQNCj4gPiBuZXcgZmlsZSBtb2RlIDEw
+MDY0NA0KPiA+IGluZGV4IDAwMDAwMDAuLmQ3ZGUxNTANCj4gPiAtLS0gL2Rldi9udWxsDQo+ID4g
+KysrIGIvRG9jdW1lbnRhdGlvbi9kZXZpY2V0cmVlL2JpbmRpbmdzL21mZC9kYTkxNTAudHh0DQo+
+ID4gQEAgLTAsMCArMSw0MSBAQA0KPiA+ICtEaWFsb2cgU2VtaWNvbmR1Y3RvciBEQTkxNTAgQ29t
+YmluZWQgQ2hhcmdlci9GdWVsLUdhdWdlIE1GRCBiaW5kaW5ncw0KPiA+ICsNCj4gPiArREE5MTUw
+IGNvbnNpc3RzIG9mIGEgZ3JvdXAgb2Ygc3ViLWRldmljZXMgKEkyQyBPbmx5KToNCj4gV2hhdCBk
+b2VzIEkyQyBvbmx5IGFkZCB0byB0aGUgZGVzY3JpcHRpb24/DQoNCk5vdGhpbmcgcmVhbGx5LiBX
+aWxsIHJlbW92ZS4NCg0KPiA+ICsNCj4gPiArRGV2aWNlCQkJIERlc2NyaXB0aW9uDQo+ID4gKy0t
+LS0tLQkJCSAtLS0tLS0tLS0tLQ0KPiA+ICtkYTkxNTAtZ3BhZGMJCTogSUlPIC0gR1BBREMNCj4g
+R2l2ZW4gdXN1YWwgYXZlcnNpb24gdG8gYW55dGhpbmcgZHJpdmVyIHNwZWNpZmljIGluIHRoZSBk
+ZXZpY2UgdHJlZSBkZXNjcmlwdGlvbg0KPiB5b3UgcHJvYmFibHkNCj4ganVzdCB3YW50IHRvIGRl
+c2NyaWJlIHdoYXQgdGhleSBkbyByYXRoZXIgdGhhbiB3aGF0IHN1YnN5c3RlbSBwcm92aWRlcyB0
+aGUgZHJpdmVyLg0KDQpPaywgY2FuIHVwZGF0ZSBhY2NvcmRpbmdseS4NCg0KPiANCj4gPiArZGE5
+MTUwLWNoYXJnZXIJCTogUG93ZXIgU3VwcGx5IChDaGFyZ2VyKQ0KPiA+ICsNCj4gPiArPT09PT09
+DQo+ID4gKw0KPiA+ICtSZXF1aXJlZCBwcm9wZXJ0aWVzOg0KPiA+ICstIGNvbXBhdGlibGUgOiBT
+aG91bGQgYmUgImRsZyxkYTkxNTAiDQo+ID4gKy0gcmVnOiBTcGVjaWZpZXMgdGhlIEkyQyBzbGF2
+ZSBhZGRyZXNzDQo+ID4gKy0gaW50ZXJydXB0LXBhcmVudDogU3BlY2lmaWVzIHRoZSBwaGFuZGxl
+IG9mIHRoZSBpbnRlcnJ1cHQgY29udHJvbGxlciB0byB3aGljaA0KPiA+ICsgIHRoZSBJUlFzIGZy
+b20gZGE5MTUwIGFyZSBkZWxpdmVyZWQgdG8uDQo+ID4gKy0gaW50ZXJydXB0czogSVJRIGxpbmUg
+aW5mbyBmb3IgZGE5MTUwIGNoaXAuDQo+IENyb3NzIHJlZmVyIHRvIHRoZSBzdGFuZGFyZCBpbnRl
+cnJ1cHRzIGRvYyBmb3IgdGhlc2UuLi4NCj4gDQoNCk9rLCBjYW4gZG8gdGhhdC4NCg0KPiA+ICst
+IGludGVycnVwdC1jb250cm9sbGVyOiBkYTkxNTAgaGFzIGludGVybmFsIElSUXMgKG93biBJUlEg
+ZG9tYWluKS4NCj4gPiArDQo+ID4gK1N1Yi1kZXZpY2VzOg0KPiA+ICstIGRhOTE1MC1ncGFkYzog
+U2VlIERvY3VtZW50YXRpb24vZGV2aWNldHJlZS9iaW5kaW5ncy9paW8vYWRjL2RhOTE1MC0NCj4g
+Z3BhZGMudHh0DQo+ID4gKy0gZGE5MTUwLWNoYXJnZXI6IFNlZSBEb2N1bWVudGF0aW9uL2Rldmlj
+ZXRyZWUvYmluZGluZ3MvcG93ZXIvZGE5MTUwLQ0KPiBjaGFyZ2VyLnR4dA0KPiA+ICsNCj4gPiAr
+DQo+ID4gK0V4YW1wbGU6DQo+ID4gKw0KPiA+ICsJY2hhcmdlcl9mZzogZGE5MTUwQDU4IHsNCj4g
+PiArCQljb21wYXRpYmxlID0gImRsZyxkYTkxNTAiOw0KPiA+ICsJCXJlZyA9IDwweDU4PjsNCj4g
+PiArCQlpbnRlcnJ1cHQtcGFyZW50ID0gPCZncGlvNj47DQo+ID4gKwkJaW50ZXJydXB0cyA9IDwx
+MSBJUlFfVFlQRV9MRVZFTF9MT1c+Ow0KPiA+ICsJCWludGVycnVwdC1jb250cm9sbGVyOw0KPiA+
+ICsNCj4gPiArCQlncGFkYzogZGE5MTUwLWdwYWRjIHsNCj4gPiArCQkJLi4uDQo+ID4gKwkJfTsN
+Cj4gPiArDQo+ID4gKwkJZGE5MTUwLWNoYXJnZXIgew0KPiA+ICsJCQkuLi4NCj4gPiArCQl9Ow0K
+PiA+ICsJfTsNCj4gPiAtLQ0KPiA+IDEuOS4zDQo+ID4NCj4gPiAtLQ0KPiA+IFRvIHVuc3Vic2Ny
+aWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51eC1paW8i
+IGluDQo+ID4gdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5v
+cmcNCj4gPiBNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21h
+am9yZG9tby1pbmZvLmh0bWwNCj4gPg0K
