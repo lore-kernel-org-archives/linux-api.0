@@ -1,74 +1,124 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH RFC] introduce ioctl to completely invalidate page cache
-Date: Tue, 7 Oct 2014 12:30:59 +1100
-Message-ID: <20141007013059.GL2301@dastard>
-References: <1412266184-23776-1-git-send-email-thanos.makatos@citrix.com>
- <542DAEAC.8010203@kernel.dk>
- <20141006080659.GA7526@quack.suse.cz>
- <2368A3FCF9F7214298E53C823B0A48EC042405BC@AMSPEX01CL02.citrite.net>
- <2368A3FCF9F7214298E53C823B0A48EC0424106C@AMSPEX01CL02.citrite.net>
- <20141006143019.GG7526@quack.suse.cz>
+From: Andrzej Hajda <a.hajda@samsung.com>
+Subject: Re: [PATCH v9 1/3] drm: rockchip: Add basic drm driver
+Date: Tue, 07 Oct 2014 08:13:24 +0200
+Message-ID: <54338484.5070809@samsung.com>
+References: <1412081870-27535-1-git-send-email-mark.yao@rock-chips.com>
+ <1412082181-27703-1-git-send-email-mark.yao@rock-chips.com>
+ <542AB0B2.6000207@samsung.com> <54336474.1010503@rock-chips.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141006143019.GG7526@quack.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: Thanos Makatos <thanos.makatos@citrix.com>, Jens Axboe <axboe@kernel.dk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "jlayton@poochiereds.net" <jlayton@poochiereds.net>, "bfields@fieldses.org" <bfields@fieldses.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-reply-to: <54336474.1010503@rock-chips.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Mark yao <mark.yao@rock-chips.com>, heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
+Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, xjq@rock-chips.com, kfx@rock-chips.com, cym@rock-chips.com, cf@rock-chips.com, zyw@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, wxt@rock-chips.com, xw@rock-chips.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 06, 2014 at 04:30:19PM +0200, Jan Kara wrote:
-> On Mon 06-10-14 11:33:23, Thanos Makatos wrote:
-> > > > Trond also had a comment that if we extended the ioctl to work for all
-> > > > inodes (not just blkdev) and allowed some additional flags of what
-> > > > needs to be invalidated, the new ioctl would be also useful to NFS
-> > > > userspace - see Trond's email at
-> > > >
-> > > > http://www.spinics.net/lists/linux-fsdevel/msg78917.html
-> > > >
-> > > > and the following thread. I would prefer to cover that usecase when we
-> > > > are introducing new invalidation ioctl. Have you considered that Thanos?
-> > > 
-> > > Sure, though I don't really know how to do it. I'll start by looking at the code
-> > > flow when someone does " echo 3 > /proc/sys/vm/drop_caches", unless you
-> > > already have a rough idea how to do that.
-> > 
-> > I realise I haven't clearly understood what the semantics of this new ioctl
-> > should be.
-> > 
-> > My initial goal was to implement an ioctl that would _completely_ invalidate
-> > the buffer cache of a block device when there is no file-system involved.
-> > Unless I'm mistaken the patch I posted achieves this goal.
->   Yes.
-> 
-> > We now want to extend this patch to take care of cached metadata, which seems
-> > to be of particular importance for NFS, and I suspect that this piece of
-> > functionality will still be applicable to any kind of file-system, correct?
->   So most notably they want the ioctl to work not only for block devices
-> but also for any regular file. That's easily doable - you just call
-> filemap_write_and_wait() and invalidate_inode_pages2() in the ioctl handler
-> for regular files.
-> 
-> Also they wanted to be able to specify a range of a mapping to invalidate -
-> that's easily doable as well. Finally they wanted a 'flags' argument so you
-> can additionally ask fs to invalidate also some metadata. How invalidation
-> is done will be a fs specific thing and for now I guess we don't need to go
-> into details. NFS guys can sort that out when they decide to implement it.
-> So in the beginning we can just have u64 flags argument and in
-> it a single 'INVAL_DATA' flag meaning that invalidation of data in a given
-> range is requested. Later NFS guys can add further flags.
+On 10/07/2014 05:56 AM, Mark yao wrote:
+> On 2014=E5=B9=B409=E6=9C=8830=E6=97=A5 21:31, Andrzej Hajda wrote:
+>> Hi Mark,
+> Hi Andrzej,
+>     Sorry for replying late, I have a vacation before.
+>     Thanks for your review.
+>> On 09/30/2014 03:03 PM, Mark Yao wrote:
+>>> From: Mark yao <mark.yao@rock-chips.com>
+>>>
+(...)
+>>> +#ifdef CONFIG_PM_SLEEP
+>>> +static int rockchip_drm_suspend(struct drm_device *dev, pm_message=
+_t state)
+>>> +{
+>>> +	struct drm_connector *connector;
+>>> +
+>>> +	drm_modeset_lock_all(dev);
+>>> +	list_for_each_entry(connector, &dev->mode_config.connector_list, =
+head) {
+>>> +		int old_dpms =3D connector->dpms;
+>>> +
+>>> +		if (connector->funcs->dpms)
+>>> +			connector->funcs->dpms(connector, DRM_MODE_DPMS_OFF);
+>>> +
+>>> +		/* Set the old mode back to the connector for resume */
+>>> +		connector->dpms =3D old_dpms;
+>>> +	}
+>>> +	drm_modeset_unlock_all(dev);
+>>> +
+>>> +	return 0;
+>>> +}
+>>> +
+>>> +static int rockchip_drm_resume(struct drm_device *dev)
+>>> +{
+>>> +	struct drm_connector *connector;
+>>> +
+>>> +	drm_modeset_lock_all(dev);
+>>> +	list_for_each_entry(connector, &dev->mode_config.connector_list, =
+head) {
+>>> +		if (connector->funcs->dpms)
+>>> +			connector->funcs->dpms(connector, connector->dpms);
+>>> +	}
+>>> +	drm_modeset_unlock_all(dev);
+>>> +
+>>> +	drm_helper_resume_force_mode(dev);
+>>> +
+>>> +	return 0;
+>>> +}
+>>> +
+>>> +static int rockchip_drm_sys_suspend(struct device *dev)
+>>> +{
+>>> +	struct drm_device *drm_dev =3D dev_get_drvdata(dev);
+>>> +	pm_message_t message;
+>>> +
+>>> +	if (pm_runtime_suspended(dev))
+>>> +		return 0;
+>>> +
+>>> +	message.event =3D PM_EVENT_SUSPEND;
+>>> +
+>>> +	return rockchip_drm_suspend(drm_dev, message);
+>> drm_dev can be NULL here, it can happen when system is suspended
+>> before all components are bound. It can also contain invalid pointer
+>> if after successfull drm initialization de-initialization happens fo=
+r
+>> some reason.
+>>
+>> Some workaround is to check for null here and set drvdata to null on
+>> master unbind. But I guess it should be protected somehow to avoid r=
+aces
+>> in accessing drvdata.
+> So, can I use the way that check for null here and set drvdata to nul=
+l
+> on master unbind?
+> I don't know which way is better to protect somehow.
 
-Why do we need a new ioctl to do this? fadvise64() seems like it's
-the exact fit for "FADV_INVALIDATE_[META]DATA" flags...
+It seems to be a core problem, I have proposed some solution using drm
+driver PM callbacks [1]
+but it appears these callbacks are obsolete, so different solution
+should be found. According to
+Russel probably some extension of component framework.
+As a temporary solution I guess null checks should work in most cases.
 
-And before anyone shouts "posix_fadvise sucks!" note that I'm
-talking about adding flags to the syscall that the kernel defines,
-not the glibc posix wrapper....
+Regards
+Andrzej
 
-Cheers,
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+[1]: https://lkml.org/lkml/2014/10/3/60
+
+>
+> -Mark.
+>>> +}
+>>> +
+>>> +static int rockchip_drm_sys_resume(struct device *dev)
+>>> +{
+>>> +	struct drm_device *drm_dev =3D dev_get_drvdata(dev);
+>>> +
+>>> +	if (!pm_runtime_suspended(dev))
+>>> +		return 0;
+>>> +
+>>> +	return rockchip_drm_resume(drm_dev);
+>> Ditto.
+>>
+>> Regards
+>> Andrzej
+>>
+>>
+
