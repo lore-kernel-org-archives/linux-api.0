@@ -1,115 +1,128 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH] [RFC] mnt: add ability to clone mntns starting with the
- current root
-Date: Tue, 7 Oct 2014 17:25:34 -0700
-Message-ID: <CALCETrVuJbjWwTfZrH4U3hZDSxwMi9b3XxL5-KAi4bTSJgq0jw@mail.gmail.com>
-References: <1412683977-29543-1-git-send-email-avagin@openvz.org>
- <20141007133039.GG7996@ZenIV.linux.org.uk> <20141007133339.GH7996@ZenIV.linux.org.uk>
- <87r3yjy64e.fsf@x220.int.ebiederm.org> <20141007204627.GI28519@ubuntumail>
- <87wq8bvbzg.fsf@x220.int.ebiederm.org> <20141007213257.GJ28519@ubuntumail>
- <87zjd7r1z9.fsf@x220.int.ebiederm.org> <CALCETrVZNDTa3jc2HJ+_9sab+MhdXQ-rgNPHqT8qbDmJGXByBg@mail.gmail.com>
- <87h9zfpkm3.fsf@x220.int.ebiederm.org> <CALCETrWqD7j8d+0GYZeUMhf5PnZKmV0DGoHu49qo3tGx0TUnhg@mail.gmail.com>
- <87siizla5p.fsf@x220.int.ebiederm.org> <CALCETrV-B=ahQ9mDdZkSQTGD1zmHcFQA0OyQxxwFC9Ei8Vsp4Q@mail.gmail.com>
- <87vbnvif9e.fsf@x220.int.ebiederm.org>
+From: Mark yao <mark.yao@rock-chips.com>
+Subject: Re: [PATCH v9 1/3] drm: rockchip: Add basic drm driver
+Date: Wed, 08 Oct 2014 09:17:28 +0800
+Message-ID: <543490A8.7030807@rock-chips.com>
+References: <1412081870-27535-1-git-send-email-mark.yao@rock-chips.com>	
+ <1412082181-27703-1-git-send-email-mark.yao@rock-chips.com>	
+ <542AB0B2.6000207@samsung.com> <54336474.1010503@rock-chips.com>	
+ <54338484.5070809@samsung.com> <1412720776.2797.8.camel@snewbury.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87vbnvif9e.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Rob Landley <rob-VoJi6FS/r0vR7s880joybQ@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============0643982502=="
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <1412720776.2797.8.camel@snewbury.org.uk>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Steven Newbury <steve@snewbury.org.uk>, Andrzej Hajda <a.hajda@samsung.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, heiko@sntech.de, linux-doc@vger.kernel.org, kever.yang@rock-chips.com, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, xjq@rock-chips.com, zyw@rock-chips.com, linux-api@vger.kernel.org, cym@rock-chips.com, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, Grant Likely <grant.likely@linaro.org>, wxt@rock-chips.com, huangtao@rock-chips.com, devicetree@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, yxj@rock-chips.com, cf@rock-chips.com, Rob Herring <robh+dt@kernel.org>, marcheu@chromium.org, xxm@rock-chips.com, xw@rock-chips.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, dianders@chromium.org, Kumar Gala <galak@codeaurora.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 7, 2014 at 5:20 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->
->> On Tue, Oct 7, 2014 at 4:42 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->>>
->>>> On Tue, Oct 7, 2014 at 3:42 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>>>> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->>>>>
->>>>>> On Tue, Oct 7, 2014 at 2:42 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>>>>>>
->>>>>>> I am squinting and looking this way and that but while I can imagine
->>>>>>> someone more clever than I can think up some unique property of rootfs
->>>>>>> that makes it a little more exploitable than just mounting a ramfs,
->>>>>>> but since you have to be root to exploit those properties I think the
->>>>>>> game is pretty much lost.
->>>>>>
->>>>>> Yes.  rootfs might not be empty, it might have totally insane
->>>>>> permissions, and it's globally shared, which makes it into a wonderful
->>>>>> channel to pass things around that shouldn't be passed around.
->>>>>
->>>>> But if only root with proc mounted can reach it...  I don't know.
->>>>
->>>> It doesn't have to be global root.  It could be userns root.
->>>>
->>>>> There might be a case for setting MNT_LOCKED when we overmount "/"
->>>>> as root but I don't yet see it.
->>>>>
->>>>>> Can non-root do this?  You'd need to be in a userns with a "/" that
->>>>>> isn't MNT_LOCKED.  Can this happen on any normal setup?
->>>>>>
->>>>>> FWIW, I think we should unconditionally MNT_LOCKED the root on userns
->>>>>> unshare, even if it's the only mount.
->>>>>
->>>>> To the best of my knowledge MNT_LOCKED is set uncondintially on userns
->>>>> unshare.
->>>>
->>>> Only if list_empty(&old->mnt_expire), whatever that means, I think.
->>>
->>> An autofs or nfs automounted mount.  Can those ever become root?
->>
->> Dunno.
->>
->> I thought that this code was what set MNT_LOCKED for things that
->> should be locked:
->
-> It does.
->
->>     /* Don't allow unprivileged users to reveal what is under a mount */
->>     if ((flag & CL_UNPRIVILEGED) && list_empty(&old->mnt_expire))
->>         mnt->mnt.mnt_flags |= MNT_LOCKED;
->>
->> Now I'm confused.  Shouldn't that be checking for submounts?  Is that
->> what it's doing?
->
-> As it copies each mount (mostly submounts) it sets MNT_LOCKED.
+This is a multi-part message in MIME format.
+--===============0643982502==
+Content-Type: multipart/alternative;
+ boundary="------------050904020308080707000201"
 
-Oh.  They're *all* MNT_LOCKED.  Duh.
+This is a multi-part message in MIME format.
+--------------050904020308080707000201
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
->
->> Anyway, I think that this should unconditionally set MNT_LOCKED on the
->> thing that mounted on rootfs.
->
-> As I read the code mnt_set_expiry is only for nfs, cifs, and afs
-> submounts (and perhaps proc should use them). So as they are generated
-> mnt_expiry should never start on the root of filesystem of the mount tree.
->
-> Furthermore mnt_expiry is cleared when a mount is moved, and when
-> it is bind mounted, or propagated.
->
-> pivot_root does look as though it may be missing the proper mnt_expiry
-> handling list_del_init(&old->mnt_expire), but pivot_root does have
-> proper MNT_LOCKED handling.
+Hi Steven
+     I'm glad to see you to discuss about rk29xx.
 
-pivot_root is quite broken, as noted in my other email.  It's just not
-broken like this, I think. :)
+On 2014=E5=B9=B410=E6=9C=8808=E6=97=A5 06:26, Steven Newbury wrote:
+> I've just been discussing how this relates to rk29xx on #etnaviv.  I
+> looked through the patch and it's good to see it's not limited to
+> supporting Mali GPUs.  I see no reason this wouldn't be compatible
+> with etna_viv for rk29xx (or future Rockchip designs with alternative
+> GPUs) as long as the rest of the infrastructure to support rk29 is in
+> place iommu (ARM SMMU?) driver, for example.
+Now the drm driver only test on rk3288, and future when we add=20
+compatible for rk29xx, we
+would consider to add a non-iommu path for it.
+> IMHO it's vital to keep a logical separation between the video display
+> hardware and the graphics processor on SoCs.
+Sure, the graphics processor maybe change in different solutions,=20
+logical separation is that we
+try to keep.
+Regards
+-=EF=BC=ADark
 
->
-> Looking that test was slightly off and it should be:
->         if ((flag & CL_UNPRIVILEGED) &&
->             (!(flag & CL_EXPIRE) || list_empty(&old->mnt_expire))
->                 mnt->mnt.mnt_flags |= MNT_LOCKED;
->
-> So on that note we might clear CL_EXPIRE when CL_UNPRIVILEGED is set
-> in copy_tree but I don't see that as being really needed.
->
-> Eric
+--------------050904020308080707000201
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+  <head>
+    <meta content=3D"text/html; charset=3DUTF-8" http-equiv=3D"Content-Ty=
+pe">
+  </head>
+  <body text=3D"#000000" bgcolor=3D"#FFFFFF">
+    <div class=3D"moz-cite-prefix">Hi Steven<br>
+      =C2=A0=C2=A0=C2=A0 I'm glad to see you to discuss about rk29xx.<br>
+      <br>
+      On 2014=E5=B9=B410=E6=9C=8808=E6=97=A5 06:26, Steven Newbury wrote:=
+<br>
+    </div>
+    <blockquote cite=3D"mid:1412720776.2797.8.camel@snewbury.org.uk"
+      type=3D"cite">
+      <pre wrap=3D"">I've just been discussing how this relates to rk29xx=
+ on #etnaviv.  I=20
+looked through the patch and it's good to see it's not limited to=20
+supporting Mali GPUs.  I see no reason this wouldn't be compatible=20
+with etna_viv for rk29xx (or future Rockchip designs with alternative=20
+GPUs) as long as the rest of the infrastructure to support rk29 is in=20
+place iommu (ARM SMMU?) driver, for example.
+</pre>
+    </blockquote>
+    Now the drm driver only test on rk3288, and future when we add
+    compatible for rk29xx, we<br>
+    would consider to add a non-iommu path for it.<span style=3D"color:
+      rgb(51, 51, 51); font-family: arial; font-size: 18px; font-style:
+      normal; font-variant: normal; font-weight: normal; letter-spacing:
+      normal; line-height: 22px; orphans: auto; text-align: start;
+      text-indent: 0px; text-transform: none; white-space: normal;
+      widows: auto; word-spacing: 0px; -webkit-text-stroke-width: 0px;
+      background-color: rgb(255, 255, 255); display: inline !important;
+      float: none;"></span>
+    <blockquote cite=3D"mid:1412720776.2797.8.camel@snewbury.org.uk"
+      type=3D"cite">
+      <pre wrap=3D"">
+IMHO it's vital to keep a logical separation between the video display=20
+hardware and the graphics processor on SoCs.
+</pre>
+    </blockquote>
+    Sure, the graphics processor maybe change in different solutions,=C2=A0
+    logical separation is that we<br>
+    try to keep.<br>
+    <blockquote cite=3D"mid:1412720776.2797.8.camel@snewbury.org.uk"
+      type=3D"cite">
+      <pre wrap=3D"">
+</pre>
+    </blockquote>
+    Regards<br>
+    -=EF=BC=ADark<br>
+  </body>
+</html>
+
+--------------050904020308080707000201--
 
 
+--===============0643982502==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+_______________________________________________
+dri-devel mailing list
+dri-devel@lists.freedesktop.org
+http://lists.freedesktop.org/mailman/listinfo/dri-devel
+
+--===============0643982502==--
