@@ -1,128 +1,113 @@
-From: Mark yao <mark.yao@rock-chips.com>
-Subject: Re: [PATCH v9 1/3] drm: rockchip: Add basic drm driver
-Date: Wed, 08 Oct 2014 09:17:28 +0800
-Message-ID: <543490A8.7030807@rock-chips.com>
-References: <1412081870-27535-1-git-send-email-mark.yao@rock-chips.com>	
- <1412082181-27703-1-git-send-email-mark.yao@rock-chips.com>	
- <542AB0B2.6000207@samsung.com> <54336474.1010503@rock-chips.com>	
- <54338484.5070809@samsung.com> <1412720776.2797.8.camel@snewbury.org.uk>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0643982502=="
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1412720776.2797.8.camel@snewbury.org.uk>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Steven Newbury <steve@snewbury.org.uk>, Andrzej Hajda <a.hajda@samsung.com>
-Cc: Mark Rutland <mark.rutland@arm.com>, heiko@sntech.de, linux-doc@vger.kernel.org, kever.yang@rock-chips.com, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, xjq@rock-chips.com, zyw@rock-chips.com, linux-api@vger.kernel.org, cym@rock-chips.com, linux-rockchip@lists.infradead.org, kfx@rock-chips.com, Grant Likely <grant.likely@linaro.org>, wxt@rock-chips.com, huangtao@rock-chips.com, devicetree@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, yxj@rock-chips.com, cf@rock-chips.com, Rob Herring <robh+dt@kernel.org>, marcheu@chromium.org, xxm@rock-chips.com, xw@rock-chips.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, dianders@chromium.org, Kumar Gala <galak@codeaurora.org>
+From: Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Subject: [PATCH v10 0/3] Add drm driver for Rockchip Socs
+Date: Wed,  8 Oct 2014 12:22:59 +0800
+Message-ID: <1412742179-32761-1-git-send-email-mark.yao@rock-chips.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dbehr-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, xjq-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kfx-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cym-TNX95d0MmH7DzftRWevZcw@public.gmane.org, cf-TNX95d0MmH7DzftRWevZcw@public.gmane.org, zyw-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xxm-TNX95d0MmH7DzftRWevZcw@public.gmane.org, huangtao-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kever.yang-TNX95d0MmH7DzftRWevZcw@public.gmane.org, yxj-TNX95d0MmH7DzftRWevZcw@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xw-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is a multi-part message in MIME format.
---===============0643982502==
-Content-Type: multipart/alternative;
- boundary="------------050904020308080707000201"
+This a series of patches is a DRM Driver for Rockchip Socs, add support
+for vop devices. Future patches will add additional encoders/connectors,
+such as eDP, HDMI.
 
-This is a multi-part message in MIME format.
---------------050904020308080707000201
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
+The basic "crtc" for rockchip is a "VOP" - Video Output Processor.
+the vop devices found on Rockchip rk3288 Soc, rk3288 soc have two similar
+Vop devices. Vop devices support iommu mapping, we use dma-mapping API with
+ARM_DMA_USE_IOMMU.
 
-Hi Steven
-     I'm glad to see you to discuss about rk29xx.
+Changes in v2:
+- add DRM master device node to list all display nodes that comprise
+  the graphics subsystem.
+- use the component framework to defer main drm driver probe
+  until all VOP devices have been probed.
+- use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
+  master device and each vop device can shared the drm dma mapping.
+- use drm_crtc_init_with_planes and drm_universal_plane_init.
+- remove unnecessary middle layers.
+- add cursor set, move funcs to rockchip drm crtc.
+- add vop reset.
 
-On 2014=E5=B9=B410=E6=9C=8808=E6=97=A5 06:26, Steven Newbury wrote:
-> I've just been discussing how this relates to rk29xx on #etnaviv.  I
-> looked through the patch and it's good to see it's not limited to
-> supporting Mali GPUs.  I see no reason this wouldn't be compatible
-> with etna_viv for rk29xx (or future Rockchip designs with alternative
-> GPUs) as long as the rest of the infrastructure to support rk29 is in
-> place iommu (ARM SMMU?) driver, for example.
-Now the drm driver only test on rk3288, and future when we add=20
-compatible for rk29xx, we
-would consider to add a non-iommu path for it.
-> IMHO it's vital to keep a logical separation between the video display
-> hardware and the graphics processor on SoCs.
-Sure, the graphics processor maybe change in different solutions,=20
-logical separation is that we
-try to keep.
-Regards
--=EF=BC=ADark
+Changes in v3:
+- change "crtc->fb" to "crtc->primary-fb"
+Adviced by Daniel Vetter
+- init cursor plane with universal api, remove unnecessary cursor set,move 
 
---------------050904020308080707000201
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Changes in v4:
+Adviced by David Herrmann
+- remove drm_platform_*() usage, use register drm device directly.
+Adviced by Rob Clark
+- remove special mmap ioctl, do userspace mmap with normal mmap() or mmap offset
 
-<html>
-  <head>
-    <meta content=3D"text/html; charset=3DUTF-8" http-equiv=3D"Content-Ty=
-pe">
-  </head>
-  <body text=3D"#000000" bgcolor=3D"#FFFFFF">
-    <div class=3D"moz-cite-prefix">Hi Steven<br>
-      =C2=A0=C2=A0=C2=A0 I'm glad to see you to discuss about rk29xx.<br>
-      <br>
-      On 2014=E5=B9=B410=E6=9C=8808=E6=97=A5 06:26, Steven Newbury wrote:=
-<br>
-    </div>
-    <blockquote cite=3D"mid:1412720776.2797.8.camel@snewbury.org.uk"
-      type=3D"cite">
-      <pre wrap=3D"">I've just been discussing how this relates to rk29xx=
- on #etnaviv.  I=20
-looked through the patch and it's good to see it's not limited to=20
-supporting Mali GPUs.  I see no reason this wouldn't be compatible=20
-with etna_viv for rk29xx (or future Rockchip designs with alternative=20
-GPUs) as long as the rest of the infrastructure to support rk29 is in=20
-place iommu (ARM SMMU?) driver, for example.
-</pre>
-    </blockquote>
-    Now the drm driver only test on rk3288, and future when we add
-    compatible for rk29xx, we<br>
-    would consider to add a non-iommu path for it.<span style=3D"color:
-      rgb(51, 51, 51); font-family: arial; font-size: 18px; font-style:
-      normal; font-variant: normal; font-weight: normal; letter-spacing:
-      normal; line-height: 22px; orphans: auto; text-align: start;
-      text-indent: 0px; text-transform: none; white-space: normal;
-      widows: auto; word-spacing: 0px; -webkit-text-stroke-width: 0px;
-      background-color: rgb(255, 255, 255); display: inline !important;
-      float: none;"></span>
-    <blockquote cite=3D"mid:1412720776.2797.8.camel@snewbury.org.uk"
-      type=3D"cite">
-      <pre wrap=3D"">
-IMHO it's vital to keep a logical separation between the video display=20
-hardware and the graphics processor on SoCs.
-</pre>
-    </blockquote>
-    Sure, the graphics processor maybe change in different solutions,=C2=A0
-    logical separation is that we<br>
-    try to keep.<br>
-    <blockquote cite=3D"mid:1412720776.2797.8.camel@snewbury.org.uk"
-      type=3D"cite">
-      <pre wrap=3D"">
-</pre>
-    </blockquote>
-    Regards<br>
-    -=EF=BC=ADark<br>
-  </body>
-</html>
+Changes in v5:
+Adviced by Arnd Bergmann
+- doing DMA start with a 32-bit masks with dma_mask and dma_coherent_mark
+- fix some incorrect dependencies.
+Adviced by Boris BREZILLON
+- fix some mistake and bugs. 
+Adviced by Daniel Vetter
+- drop all special ioctl and use generic kms ioctl instead.
+Adviced by Rob Clark
+- use unlocked api for drm_fb_helper_restore_fbdev_mode.
+- remove unused rockchip_gem_prime_import_sg_table.
 
---------------050904020308080707000201--
+Changes in v6:
+- set gem buffer pitch 64 bytes align, needed by mali gpu.
+Adviced by Daniel Kurtz
+- fix some mistake, bugs, remove unused define, more better code style etc. 
+- use clk_prepare()/unprepare() at probe()/remove() and clk_enable()/disable()
+  at runtime instead of clk_prepare_enable().
+- provide a help function from vop for encoder to do mode config, instead of
+  using drm_diaplay_mode private method.
+- change vop mode_set timing to make it more safely. 
 
+Changes in v7:
+- fix memory leakage problem.
 
---===============0643982502==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Changes in v8:
+- fix iommu crash when use dual crtc.
+- use frame start interrupt for vsync instead of line flag interrupt,
+because the win config take affect at frame start time, if we use ling flag
+interrupt, the address check often failed.
+Adviced by Daniel Kurtz
+- fix some bugs, mistake, remove unused function
+- keep clock and vop disabled when probe end
+- use drm_plane_helper_check_update to check update_plane if vaild
 
-_______________________________________________
-dri-devel mailing list
-dri-devel@lists.freedesktop.org
-http://lists.freedesktop.org/mailman/listinfo/dri-devel
+Changes in v9:
+- fix suspend and resume bug, make iommu attach and detach safely.
+- fix mail info style.
 
---===============0643982502==--
+Changes in v10:
+Adviced by Andrzej Hajda
+- check drm_dev if it's NULL at PM suspend/resume
+Adviced by Sean Paul
+- use drm_fb_helper_prepare to init fb_helper funcs
+- Optimized code structure and remove some unnecessary Variables.
+
+Mark yao (3):
+  drm: rockchip: Add basic drm driver
+  dt-bindings: video: Add for rockchip display subsytem
+  dt-bindings: video: Add documentation for rockchip vop
+
+ .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
+ .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
+ drivers/gpu/drm/Kconfig                            |    2 +
+ drivers/gpu/drm/Makefile                           |    1 +
+ drivers/gpu/drm/rockchip/Kconfig                   |   17 +
+ drivers/gpu/drm/rockchip/Makefile                  |    8 +
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  465 +++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |   55 +
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  200 +++
+ drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  210 +++
+ drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   20 +
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  294 ++++
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   54 +
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1415 ++++++++++++++++++++
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  196 +++
+ 16 files changed, 3042 insertions(+)
+
+-- 
+1.7.9.5
