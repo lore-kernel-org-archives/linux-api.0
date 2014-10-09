@@ -1,110 +1,77 @@
-From: Andrew Vagin <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH] [RFC] mnt: add ability to clone mntns starting with the
- current root
-Date: Thu, 9 Oct 2014 14:29:19 +0400
-Message-ID: <20141009102917.GA3257@paralelels.com>
-References: <1412683977-29543-1-git-send-email-avagin@openvz.org>
- <87mw97wqvx.fsf@x220.int.ebiederm.org>
- <20141008110829.GC24908@paralelels.com>
- <CALCETrX4XrgbQNZZa7=1009KqhJ2gT+VBUkC15+59K9yEiTSbQ@mail.gmail.com>
- <87vbnue56f.fsf@x220.int.ebiederm.org>
+From: "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
+Subject: RE: [PATCH 3/8] iio: Add support for DA9150 GPADC
+Date: Thu, 9 Oct 2014 14:29:17 +0000
+Message-ID: <2E89032DDAA8B9408CB92943514A0337AB5194A4@SW-EX-MBX01.diasemi.com>
+References: <cover.1411396718.git.Adam.Thomson.Opensource@diasemi.com>
+ <ee4c56931f326d8ee9c1313c44456bce2dec8b8c.1411396719.git.Adam.Thomson.Opensource@diasemi.com>
+ <5426964A.3050407@kernel.org>
+ <2E89032DDAA8B9408CB92943514A0337AB518D23@SW-EX-MBX01.diasemi.com>
+ <3B049606-083E-4220-ADBF-71D74C0A9D9F@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87vbnue56f.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+In-Reply-To: <3B049606-083E-4220-ADBF-71D74C0A9D9F-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Rob Landley <rob-VoJi6FS/r0vR7s880joybQ@public.gmane.org>
+To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Support Opensource <Support.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 08, 2014 at 12:23:52PM -0700, Eric W. Biederman wrote:
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
-> 
-> > On Wed, Oct 8, 2014 at 4:08 AM, Andrew Vagin <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
-> >> On Tue, Oct 07, 2014 at 01:45:22PM -0700, Eric W. Biederman wrote:
-> >>> Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> writes:
-> >>>
-> >>> > From: Andrey Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >>> >
-> >>> > Currently when we create a new container with a separate root,
-> >>> > we need to clone the current mount namespace with all mounts and then
-> >>> > clean up it by using pivot_root(). A big part of mountpoints are cloned
-> >>> > only to be umounted.
-> >>>
-> >>> Is the motivation performance?  Because if that is the motivation we
-> >>> need numbers.
-> >>
-> >> The major motivation to create a clean mount namespace which contains
-> >> only required mounts.
-> >>
-> >> Now you want to convince us that there is nothing wrong if we use
-> >> userns, because all inherited mounts are locked. My point is that all
-> >> useless mounts should be umounted.  If the current root isn't on rootfs,
-> >> pivot_root() allows us to umount all useless points. But pivot_root()
-> >> doesn't work, if the current root is on rootfs. How can we umount
-> >> useless points in this case?
-> 
-> One of your justifications for a new system call was so you could do
-> less.  Doing less to get to where you want to go is only justified when
-> your doing less to get better performance.
-> 
-> >> Maybe we want to say that rootfs should not be used if we are going to
-> >> create containers...
-> 
-> Today it is an assumption of the vfs that rootfs is mounted.  With
-> rootfs mounted and pivot_root at the base of the mount stack you can
-> make as minimal of a set of mounts as the vfs allows.
-
-You have misunderstood me.
-For most system /proc/self/mountinfo looks like this:
-[root@dhcp-10-30-23-214 ~]# cat /proc/self/mountinfo 
-17 22 0:3 / /proc rw,relatime - proc proc rw
-18 22 0:0 / /sys rw,relatime - sysfs sysfs rw
-19 22 0:5 / /dev rw,relatime - devtmpfs devtmpfs rw,size=502324k,nr_inodes=125581,mode=755
-20 19 0:11 / /dev/pts rw,relatime - devpts devpts rw,gid=5,mode=620,ptmxmode=000
-21 19 0:17 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw
-22 1 253:2 / / rw,relatime - ext4 /dev/vda2 rw,barrier=1,data=ordered
-24 22 253:1 / /boot rw,relatime - ext3 /dev/vda1 rw,errors=continue,user_xattr,acl,barrier=1,data=ordered
-
-/ isn't a rootfs mount here and pivot_root() works fine in this case. Here is
-no problem for such system.
-
-Now look at the second case:
-hell@android:/ $ cat /proc/self/mountinfo
-1 1 0:1 / / ro,relatime - rootfs rootfs ro
-11 1 0:11 / /dev rw,nosuid,relatime - tmpfs tmpfs rw,mode=755
-12 11 0:9 / /dev/pts rw,relatime - devpts devpts rw,mode=600
-13 1 0:3 / /proc rw,relatime - proc proc rw
-14 1 0:12 / /sys rw,relatime - sysfs sysfs rw
-
-Now / is an rootfs mount. pivot_root() doesn't work in this case and we
-need to do some tricks to get a minimal set of mounts.
-
-Thanks,
-Andrew
-
-> 
-> Removing rootfs from the vfs requires an audit of everything that
-> manipulates mounts.  It is not remotely a local excercise.
-> 
-> One of the things that needs to be considered is that if you really want
-> to audit mounts is the code that needs manipulates them needs to be
-> audited every bit as much as the mounts themselves.
-> 
-> > Could we have an extra rootfs-like fs that is always completely empty,
-> > doesn't allow any writes, and can sit at the bottom of container
-> > namespace hierarchies?  If so, and if we add a new syscall that's like
-> > pivot_root (or unshare) but prunes the hierarchy, then we could switch
-> > to that rootfs then.
-> 
-> Or equally have something that guarantees that rootfs is empty and
-> read-only at the time the normal root filesystem is mounted.  That is
-> certainly a much more localized change if we want to go there.
-> 
-> I am half tempted to suggest that mount --move /some/path / be updated
-> to make the old / just go away (perhaps to be replaced with a read-only
-> empty rootfs).  That gets us into figuring out if we break userspace
-> which is a big challenge.
-> 
-> Eric
+T24gT2N0b2JlciA3LCAyMDE0IDIwOjM3LCBKb25hdGhhbiBDYW1lcm9uIHdyb3RlOg0KDQo+IE9u
+IE9jdG9iZXIgNywgMjAxNCAzOjU1OjU1IFBNIEdNVCswMTowMCwgIk9wZW5zb3VyY2UgW0FkYW0g
+VGhvbXNvbl0iDQo+IDxBZGFtLlRob21zb24uT3BlbnNvdXJjZUBkaWFzZW1pLmNvbT4gd3JvdGU6
+DQo+ID5PbiBTZXB0ZW1iZXIgMjcsIDIwMTQgMTE6NTAsIEpvbmF0aGFuIENhbWVyb24gd3JvdGU6
+DQo+ID4NCj4gPj4gT24gMjMvMDkvMTQgMTE6NTMsIEFkYW0gVGhvbXNvbiB3cm90ZToNCj4gPj4g
+PiBUaGlzIHBhdGNoIGFkZHMgc3VwcG9ydCBmb3IgREE5MTUwIENoYXJnZXIgJiBGdWVsLUdhdWdl
+IElDIEdQQURDLg0KPiA+DQo+ID4+ID4gKw0KPiA+PiA+ICtzdGF0aWMgaW5saW5lIGludCBkYTkx
+NTBfZ3BhZGNfZ3Bpb182dl92b2x0YWdlX25vdyhpbnQgcmF3X3ZhbCkNCj4gPj4gPiArew0KPiA+
+PiA+ICsJLyogQ29udmVydCB0byBtViAqLw0KPiA+PiA+ICsJcmV0dXJuICg2ICogKChyYXdfdmFs
+ICogMTAwMCkgKyA1MDApKSAvIDEwMjQ7DQo+ID4+IFRoZXNlIGNvdWxkIGFsbCBiZSBleHByZXNz
+ZWQgYXMgcmF3IHZhbHVlcyB3aXRoIG9mZnNldHMNCj4gPj4gYW5kIHNjYWxlcyAoYW5kIHRoYXQg
+d291bGQgYmUgcHJlZmVycmVkKS4NCj4gPj4gRS5nLiBUaGlzIG9uZSBoYXMgb2Zmc2V0IDUwMDAw
+MCBhbmQgc2NhbGUgNjAwMC8xMDI0IG9yIGV2ZW4NCj4gPj4gYmV0dGVyIHVzZSBJSU9fVkFMX0ZS
+QUNUSU9OQUxfTE9HMiBmb3Igc2NhbGUgd2l0aCB2YWwxID0gNjAwMA0KPiA+PiBhbmQgdmFsMiA9
+IChsb2dfMiAxMDI0KSA9IDEwLg0KPiA+Pg0KPiA+DQo+ID5XaGF0IHlvdSd2ZSBzdWdnZXN0ZWQg
+aXNuJ3QgY29ycmVjdC4gVGhlIHByb2JsZW0gaGVyZSBpcyB0aGF0IHRoZQ0KPiA+b2Zmc2V0IGlz
+DQo+ID5hZGRlZCBmaXJzdCB0byB0aGUgcmF3IEFEQyByZWFkaW5nLCB3aXRob3V0IGZhY3Rvcmlu
+ZyB0aGUgQURDIHZhbHVlDQo+ID5hY2NvcmRpbmdseQ0KPiA+dG8gbWF0Y2ggdGhlIGZhY3RvciBv
+ZiB0aGUgb2Zmc2V0LiBJZiB3ZSB0YWtlIHRoZSBvcmlnaW5hbCBlcXVhdGlvbg0KPiA+cHJvdmlk
+ZWQgZm9yDQo+ID50aGlzIGNoYW5uZWwgb2YgdGhlIEFEQywgdGhlIG9mZnNldCBpcyBhY3R1YWxs
+eSAwLjUgd2hpY2ggc2hvdWxkIGJlDQo+ID5hZGRlZCB0byB0aGUNCj4gPnJhdyBBREMgdmFsdWUu
+IFRoaXMgZG9lc24ndCBmaXQgaW50byB0aGUgaW1wbGVtZW50YXRpb24gaW4gdGhlIGtlcm5lbA0K
+PiA+YXMgd2UNCj4gPmNhbid0IHVzZSBmbG9hdGluZyBwb2ludC4gSWYgd2UgbXVsdGlwbHkgdGhl
+IG9mZnNldCBidXQgbm90IHRoZSByYXcgQURDDQo+ID52YWx1ZSwNCj4gPnRoZW4gYWRkIHRoZW0g
+YmVmb3JlIGFwcGx5aW5nIHRoZSBzY2FsZSBmYWN0b3IsIHRoZW4gdGhlIHJlc3VsdCBpcw0KPiA+
+d3JvbmcgYXQgdGhlDQo+ID5lbmQuIEJhc2ljYWxseSB5b3UgbmVlZCBhIHNjYWxlIGZvciB0aGUg
+cmF3IEFEQyB2YWx1ZSB0byBtYXRjaCB0aGUNCj4gPm9mZnNldCBzY2FsZQ0KPiA+c28geW91IGNh
+biBhY2hpZXZlIHRoZSBjb3JyZWN0IHJlc3VsdHMsIHdoaWNoIGlzIHdoYXQgbXkgY2FsY3VsYXRp
+b24NCj4gPmRvZXMuDQo+ID5CdXQgdGhhdCBzZWVtcyBpbXBvc3NpYmxlIHdpdGggdGhlIGN1cnJl
+bnQgcmF3fG9mZnNldHxzY2FsZSBtZXRob2QuDQo+IE9vcHMgZ290IHRoYXQgd3JvbmcuICBUaGUg
+Zml4ZWQgcG9pbnQgbWF0aHMgdG8gZml4IHRoZSBpbiBrZXJuZWwgaW50ZXJmYWNlIGlzbid0IGV4
+YWN0bHkNCj4gIGRpZmZpY3VsdCBidXQgaW5kZWVkIGl0IGRvZXMgbm90IGhhbmRsZSB0aGlzIGN1
+cnJlbnRseS4NCg0KSSBkaWQgaGF2ZSBhIHF1aWNrIGxvb2sgd2hlbiBJIGhhZCBhIHNwYXJlIG1v
+bWVudCwgYW5kIEkgZ3Vlc3MgeW91IGNvdWxkIGRvDQpzb21ldGhpbmcgbGlrZSBoYXZpbmcgYW4g
+b2Zmc2V0IHNjYWxlL2ZhY3RvciB3aGljaCBjYW4gYmUgYXBwbGllZCB0byB0aGUgcmF3DQpyZWFk
+aW5nLCBwcmlvciB0byBhZGRpbmcgdGhlIG9mZnNldC4gTWF5IGJlIGFuIG9wdGlvbiBidXQgSSB0
+aGluayB0aGlzIHdvdWxkDQphbHNvIGhhdmUgdG8gYmUgZXhwb3NlZCB0byB1c2VyLXNwYWNlIGFz
+IEkgYmVsaWV2ZSB0aGUgc2FtZSBwcm9ibGVtIHdvdWxkIHJlc2lkZQ0KdGhlcmUgYXMgd2VsbC4N
+Cg0KPiA+DQo+ID4+ID4gKwlyZXQgPSBpaW9fbWFwX2FycmF5X3JlZ2lzdGVyKGluZGlvX2RldiwN
+Cj4gPmRhOTE1MF9ncGFkY19kZWZhdWx0X21hcHMpOw0KPiA+PiA+ICsJaWYgKHJldCkgew0KPiA+
+PiA+ICsJCWRldl9lcnIoZGV2LCAiRmFpbGVkIHRvIHJlZ2lzdGVyIElJTyBtYXBzOiAlZFxuIiwg
+cmV0KTsNCj4gPj4gPiArCQlyZXR1cm4gcmV0Ow0KPiA+PiA+ICsJfQ0KPiA+PiBJJ2Qgc3VnZ2Vz
+dCBkb2luZyB0aGUgZGV2bV9yZXF1ZXN0X3RocmVhZF9pcnEgYmVmb3JlIHRoZQ0KPiA+aWlvX21h
+cF9hcnJheQ0KPiA+PiBzdHVmZi4gIFRoaXMgaXMgcHVyZWx5IHRvIGF2b2lkIHRoZSBvcmRlciBk
+dXJpbmcgcmVtb3ZlIG5vdCBiZWluZw0KPiA+PiBvYnZpb3VzbHkgY29ycmVjdCBhcyBpdCBpc24n
+dCB0aGUgcmV2ZXJzZSBvZiBkdXJpbmcgcHJvYmUuDQo+ID4NCj4gPk9rLCBzaG91bGQgc3RpbGwg
+d29yayBvayB0aGF0IHdheSBzbyBjYW4gdXBkYXRlLg0KPiA+DQo+ID4+ID4gK3N0YXRpYyBpbnQg
+ZGE5MTUwX2dwYWRjX3JlbW92ZShzdHJ1Y3QgcGxhdGZvcm1fZGV2aWNlICpwZGV2KQ0KPiA+PiA+
+ICt7DQo+ID4+ID4gKwlzdHJ1Y3QgaWlvX2RldiAqaW5kaW9fZGV2ID0gcGxhdGZvcm1fZ2V0X2Ry
+dmRhdGEocGRldik7DQo+ID4+ID4gKw0KPiA+PiA+ICsJaWlvX21hcF9hcnJheV91bnJlZ2lzdGVy
+KGluZGlvX2Rldik7DQo+ID4+IFR3aWNlIGluIG9uZSBkYXkuICBJJ20gZGVmaW5pdGVseSB0aGlu
+a2luZyB3ZSBzaG91bGQgYWRkIGENCj4gPj4gZGV2bSB2ZXJzaW9uIG9mIGlpb19tYXBfYXJyYXlf
+cmVnaXN0ZXIuLi4NCj4gPg0KPiA+SSBhc3N1bWUgeW91IG1lYW4gaGVyZSB0aGF0IGlpb19kZXZp
+Y2VfdW5yZWdpc3RlcigpIHNob3VsZCBjb21lIGZpcnN0Pw0KPiA+V2lsbA0KPiA+dXBkYXRlLg0K
+PiBOb3BlIGp1c3QgdGhhdCBzdWNoIGEgbmV3IGZ1bmN0aW9uIG1pZ2h0IGJlIHVzZWZ1bC4NCg0K
+OikgT2sgZmFpciBlbm91Z2guDQoNCj4gDQo+IC0tDQo+IFNlbnQgZnJvbSBteSBBbmRyb2lkIHBo
+b25lIHdpdGggSy05IE1haWwuIFBsZWFzZSBleGN1c2UgbXkgYnJldml0eS4NCg==
