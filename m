@@ -1,166 +1,303 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] kvm: drop unsupported capabilities, fix documentation
-Date: Sun, 12 Oct 2014 11:34:00 +0300
-Message-ID: <1413102816-9289-1-git-send-email-mst@redhat.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH net-next RFC 1/3] virtio: support for urgent descriptors
+Date: Sun, 12 Oct 2014 12:27:44 +0300
+Message-ID: <20141012092744.GA9567@redhat.com>
+References: <1413011806-3813-1-git-send-email-jasowang@redhat.com>
+	<1413011806-3813-2-git-send-email-jasowang@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1413011806-3813-2-git-send-email-jasowang@redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Jason Wang <jasowang@redhat.com>
+Cc: kvm@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-No kernel ever reported KVM_CAP_DEVICE_MSIX, KVM_CAP_DEVICE_MSI,
-KVM_CAP_DEVICE_ASSIGNMENT, KVM_CAP_DEVICE_DEASSIGNMENT.
+On Sat, Oct 11, 2014 at 03:16:44PM +0800, Jason Wang wrote:
+> Below should be useful for some experiments Jason is doing.
+> I thought I'd send it out for early review/feedback.
+> 
+> event idx feature allows us to defer interrupts until
+> a specific # of descriptors were used.
+> Sometimes it might be useful to get an interrupt after
+> a specific descriptor, regardless.
+> This adds a descriptor flag for this, and an API
+> to create an urgent output descriptor.
+> This is still an RFC:
+> we'll need a feature bit for drivers to detect this,
+> but we've run out of feature bits for virtio 0.X.
+> For experimentation purposes, drivers can assume
+> this is set, or add a driver-specific feature bit.
+> 
+> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> Signed-off-by: Jason Wang <jasowang@redhat.com>
 
-This makes the documentation wrong, and no application ever
-written to use these capabilities has a chance to work correctly.
-The only way to detect support is to try, and test errno for ENOTTY.
-That's unfortunate, but we can't fix the past.
+I see that as compared to my original patch, you have
+added a new flag: VRING_AVAIL_F_NO_URGENT_INTERRUPT
+I don't think it's necessary, see below.
 
-Document the actual semantics, and drop the definitions from
-the exported header to make it easier for application
-developers to note and fix the bug.
+As such, I think this patch should be split:
+- original patch adding support for urgent descriptors
+- a patch adding virtqueue_enable/disable_cb_urgent(_prepare)?
 
-Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- include/uapi/linux/kvm.h          |  8 --------
- Documentation/virtual/kvm/api.txt | 40 ++++++++++++++++++++++++++++++++-------
- 2 files changed, 33 insertions(+), 15 deletions(-)
 
-diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
-index cf3a2ff..98d72f7 100644
---- a/include/uapi/linux/kvm.h
-+++ b/include/uapi/linux/kvm.h
-@@ -647,11 +647,7 @@ struct kvm_ppc_smmu_info {
- #define KVM_CAP_MP_STATE 14
- #define KVM_CAP_COALESCED_MMIO 15
- #define KVM_CAP_SYNC_MMU 16  /* Changes to host mmap are reflected in guest */
--#define KVM_CAP_DEVICE_ASSIGNMENT 17
- #define KVM_CAP_IOMMU 18
--#ifdef __KVM_HAVE_MSI
--#define KVM_CAP_DEVICE_MSI 20
--#endif
- /* Bug in KVM_SET_USER_MEMORY_REGION fixed: */
- #define KVM_CAP_DESTROY_MEMORY_REGION_WORKS 21
- #ifdef __KVM_HAVE_USER_NMI
-@@ -665,10 +661,6 @@ struct kvm_ppc_smmu_info {
- #endif
- #define KVM_CAP_IRQ_ROUTING 25
- #define KVM_CAP_IRQ_INJECT_STATUS 26
--#define KVM_CAP_DEVICE_DEASSIGNMENT 27
--#ifdef __KVM_HAVE_MSIX
--#define KVM_CAP_DEVICE_MSIX 28
--#endif
- #define KVM_CAP_ASSIGN_DEV_IRQ 29
- /* Another bug in KVM_SET_USER_MEMORY_REGION fixed: */
- #define KVM_CAP_JOIN_MEMORY_REGIONS_WORKS 30
-diff --git a/Documentation/virtual/kvm/api.txt b/Documentation/virtual/kvm/api.txt
-index beae3fd..0fe195c 100644
---- a/Documentation/virtual/kvm/api.txt
-+++ b/Documentation/virtual/kvm/api.txt
-@@ -68,9 +68,12 @@ description:
- 
-   Capability: which KVM extension provides this ioctl.  Can be 'basic',
-       which means that is will be provided by any kernel that supports
--      API version 12 (see section 4.1), or a KVM_CAP_xyz constant, which
-+      API version 12 (see section 4.1), a KVM_CAP_xyz constant, which
-       means availability needs to be checked with KVM_CHECK_EXTENSION
--      (see section 4.4).
-+      (see section 4.4), or 'none' which means that while not all kernels
-+      support this ioctl, there's no capability bit to check its
-+      availability: for kernels that don't support the ioctl,
-+      the ioctl returns -ENOTTY.
- 
-   Architectures: which instruction set architectures provide this ioctl.
-       x86 includes both i386 and x86_64.
-@@ -1257,7 +1260,7 @@ The flags bitmap is defined as:
- 
- 4.48 KVM_ASSIGN_PCI_DEVICE
- 
--Capability: KVM_CAP_DEVICE_ASSIGNMENT
-+Capability: none
- Architectures: x86 ia64
- Type: vm ioctl
- Parameters: struct kvm_assigned_pci_dev (in)
-@@ -1298,10 +1301,16 @@ Only PCI header type 0 devices with PCI BAR resources are supported by
- device assignment.  The user requesting this ioctl must have read/write
- access to the PCI sysfs resource files associated with the device.
- 
-+Errors:
-+  ENOTTY: kernel does not support this ioctl
-+
-+  Other error conditions may be defined by individual device types or
-+  have their standard meanings.
-+
- 
- 4.49 KVM_DEASSIGN_PCI_DEVICE
- 
--Capability: KVM_CAP_DEVICE_DEASSIGNMENT
-+Capability: none
- Architectures: x86 ia64
- Type: vm ioctl
- Parameters: struct kvm_assigned_pci_dev (in)
-@@ -1309,9 +1318,14 @@ Returns: 0 on success, -1 on error
- 
- Ends PCI device assignment, releasing all associated resources.
- 
--See KVM_CAP_DEVICE_ASSIGNMENT for the data structure. Only assigned_dev_id is
-+See KVM_ASSIGN_PCI_DEVICE for the data structure. Only assigned_dev_id is
- used in kvm_assigned_pci_dev to identify the device.
- 
-+Errors:
-+  ENOTTY: kernel does not support this ioctl
-+
-+  Other error conditions may be defined by individual device types or
-+  have their standard meanings.
- 
- 4.50 KVM_ASSIGN_DEV_IRQ
- 
-@@ -1346,6 +1360,12 @@ The following flags are defined:
- It is not valid to specify multiple types per host or guest IRQ. However, the
- IRQ type of host and guest can differ or can even be null.
- 
-+Errors:
-+  ENOTTY: kernel does not support this ioctl
-+
-+  Other error conditions may be defined by individual device types or
-+  have their standard meanings.
-+
- 
- 4.51 KVM_DEASSIGN_DEV_IRQ
- 
-@@ -1423,7 +1443,7 @@ struct kvm_irq_routing_s390_adapter {
- 
- 4.53 KVM_ASSIGN_SET_MSIX_NR
- 
--Capability: KVM_CAP_DEVICE_MSIX
-+Capability: none
- Architectures: x86 ia64
- Type: vm ioctl
- Parameters: struct kvm_assigned_msix_nr (in)
-@@ -1445,7 +1465,7 @@ struct kvm_assigned_msix_nr {
- 
- 4.54 KVM_ASSIGN_SET_MSIX_ENTRY
- 
--Capability: KVM_CAP_DEVICE_MSIX
-+Capability: none
- Architectures: x86 ia64
- Type: vm ioctl
- Parameters: struct kvm_assigned_msix_entry (in)
-@@ -1461,6 +1481,12 @@ struct kvm_assigned_msix_entry {
- 	__u16 padding[3];
- };
- 
-+Errors:
-+  ENOTTY: kernel does not support this ioctl
-+
-+  Other error conditions may be defined by individual device types or
-+  have their standard meanings.
-+
- 
- 4.55 KVM_SET_TSC_KHZ
- 
--- 
-MST
+
+
+> ---
+>  drivers/virtio/virtio_ring.c     | 75 +++++++++++++++++++++++++++++++++++++---
+>  include/linux/virtio.h           | 14 ++++++++
+>  include/uapi/linux/virtio_ring.h |  5 ++-
+>  3 files changed, 89 insertions(+), 5 deletions(-)
+> 
+> diff --git a/drivers/virtio/virtio_ring.c b/drivers/virtio/virtio_ring.c
+> index 4d08f45a..a5188c6 100644
+> --- a/drivers/virtio/virtio_ring.c
+> +++ b/drivers/virtio/virtio_ring.c
+> @@ -115,6 +115,7 @@ static inline struct scatterlist *sg_next_arr(struct scatterlist *sg,
+>  
+>  /* Set up an indirect table of descriptors and add it to the queue. */
+>  static inline int vring_add_indirect(struct vring_virtqueue *vq,
+> +				     bool urgent,
+>  				     struct scatterlist *sgs[],
+>  				     struct scatterlist *(*next)
+>  				       (struct scatterlist *, unsigned int *),
+> @@ -173,6 +174,8 @@ static inline int vring_add_indirect(struct vring_virtqueue *vq,
+>  	/* Use a single buffer which doesn't continue */
+>  	head = vq->free_head;
+>  	vq->vring.desc[head].flags = VRING_DESC_F_INDIRECT;
+> +	if (urgent)
+> +		vq->vring.desc[head].flags |= VRING_DESC_F_URGENT;
+>  	vq->vring.desc[head].addr = virt_to_phys(desc);
+>  	/* kmemleak gives a false positive, as it's hidden by virt_to_phys */
+>  	kmemleak_ignore(desc);
+> @@ -185,6 +188,7 @@ static inline int vring_add_indirect(struct vring_virtqueue *vq,
+>  }
+>  
+>  static inline int virtqueue_add(struct virtqueue *_vq,
+> +			        bool urgent,
+>  				struct scatterlist *sgs[],
+>  				struct scatterlist *(*next)
+>  				  (struct scatterlist *, unsigned int *),
+> @@ -227,7 +231,7 @@ static inline int virtqueue_add(struct virtqueue *_vq,
+>  	/* If the host supports indirect descriptor tables, and we have multiple
+>  	 * buffers, then go indirect. FIXME: tune this threshold */
+>  	if (vq->indirect && total_sg > 1 && vq->vq.num_free) {
+> -		head = vring_add_indirect(vq, sgs, next, total_sg, total_out,
+> +		head = vring_add_indirect(vq, urgent, sgs, next, total_sg, total_out,
+>  					  total_in,
+>  					  out_sgs, in_sgs, gfp);
+>  		if (likely(head >= 0))
+> @@ -256,6 +260,10 @@ static inline int virtqueue_add(struct virtqueue *_vq,
+>  	for (n = 0; n < out_sgs; n++) {
+>  		for (sg = sgs[n]; sg; sg = next(sg, &total_out)) {
+>  			vq->vring.desc[i].flags = VRING_DESC_F_NEXT;
+> +			if (urgent) {
+> +				vq->vring.desc[head].flags |= VRING_DESC_F_URGENT;
+> +				urgent = false;
+> +			}
+>  			vq->vring.desc[i].addr = sg_phys(sg);
+>  			vq->vring.desc[i].len = sg->length;
+>  			prev = i;
+> @@ -265,6 +273,10 @@ static inline int virtqueue_add(struct virtqueue *_vq,
+>  	for (; n < (out_sgs + in_sgs); n++) {
+>  		for (sg = sgs[n]; sg; sg = next(sg, &total_in)) {
+>  			vq->vring.desc[i].flags = VRING_DESC_F_NEXT|VRING_DESC_F_WRITE;
+> +			if (urgent) {
+> +				vq->vring.desc[head].flags |= VRING_DESC_F_URGENT;
+> +				urgent = false;
+> +			}
+>  			vq->vring.desc[i].addr = sg_phys(sg);
+>  			vq->vring.desc[i].len = sg->length;
+>  			prev = i;
+> @@ -305,6 +317,8 @@ add_head:
+>  
+>  /**
+>   * virtqueue_add_sgs - expose buffers to other end
+> + * @urgent: in case virtqueue_enable_cb_delayed was called, cause an interrupt
+> + *          after this descriptor was completed
+>   * @vq: the struct virtqueue we're talking about.
+>   * @sgs: array of terminated scatterlists.
+>   * @out_num: the number of scatterlists readable by other side
+> @@ -337,7 +351,7 @@ int virtqueue_add_sgs(struct virtqueue *_vq,
+>  		for (sg = sgs[i]; sg; sg = sg_next(sg))
+>  			total_in++;
+>  	}
+> -	return virtqueue_add(_vq, sgs, sg_next_chained,
+> +	return virtqueue_add(_vq, false, sgs, sg_next_chained,
+>  			     total_out, total_in, out_sgs, in_sgs, data, gfp);
+>  }
+>  EXPORT_SYMBOL_GPL(virtqueue_add_sgs);
+> @@ -360,11 +374,35 @@ int virtqueue_add_outbuf(struct virtqueue *vq,
+>  			 void *data,
+>  			 gfp_t gfp)
+>  {
+> -	return virtqueue_add(vq, &sg, sg_next_arr, num, 0, 1, 0, data, gfp);
+> +	return virtqueue_add(vq, false, &sg, sg_next_arr, num, 0, 1, 0, data, gfp);
+>  }
+>  EXPORT_SYMBOL_GPL(virtqueue_add_outbuf);
+>  
+>  /**
+> + * virtqueue_add_outbuf - expose output buffers to other end
+> + *          in case virtqueue_enable_cb_delayed was called, cause an interrupt
+> + *          after this descriptor was completed
+> + * @vq: the struct virtqueue we're talking about.
+> + * @sgs: array of scatterlists (need not be terminated!)
+> + * @num: the number of scatterlists readable by other side
+> + * @data: the token identifying the buffer.
+> + * @gfp: how to do memory allocations (if necessary).
+> + *
+> + * Caller must ensure we don't call this with other virtqueue operations
+> + * at the same time (except where noted).
+> + *
+> + * Returns zero or a negative error (ie. ENOSPC, ENOMEM, EIO).
+> + */
+> +int virtqueue_add_outbuf_urgent(struct virtqueue *vq,
+> +			 struct scatterlist sg[], unsigned int num,
+> +			 void *data,
+> +			 gfp_t gfp)
+> +{
+> +	return virtqueue_add(vq, true, &sg, sg_next_arr, num, 0, 1, 0, data, gfp);
+> +}
+> +EXPORT_SYMBOL_GPL(virtqueue_add_outbuf_urgent);
+> +
+> +/**
+>   * virtqueue_add_inbuf - expose input buffers to other end
+>   * @vq: the struct virtqueue we're talking about.
+>   * @sgs: array of scatterlists (need not be terminated!)
+> @@ -382,7 +420,7 @@ int virtqueue_add_inbuf(struct virtqueue *vq,
+>  			void *data,
+>  			gfp_t gfp)
+>  {
+> -	return virtqueue_add(vq, &sg, sg_next_arr, 0, num, 0, 1, data, gfp);
+> +	return virtqueue_add(vq, false, &sg, sg_next_arr, 0, num, 0, 1, data, gfp);
+>  }
+>  EXPORT_SYMBOL_GPL(virtqueue_add_inbuf);
+>  
+> @@ -595,6 +633,14 @@ void virtqueue_disable_cb(struct virtqueue *_vq)
+>  }
+>  EXPORT_SYMBOL_GPL(virtqueue_disable_cb);
+>  
+> +void virtqueue_disable_cb_urgent(struct virtqueue *_vq)
+> +{
+> +	struct vring_virtqueue *vq = to_vvq(_vq);
+> +
+> +	vq->vring.avail->flags |= VRING_AVAIL_F_NO_URGENT_INTERRUPT;
+> +}
+> +EXPORT_SYMBOL_GPL(virtqueue_disable_cb_urgent);
+> +
+>  /**
+>   * virtqueue_enable_cb_prepare - restart callbacks after disable_cb
+>   * @vq: the struct virtqueue we're talking about.
+> @@ -626,6 +672,19 @@ unsigned virtqueue_enable_cb_prepare(struct virtqueue *_vq)
+>  }
+>  EXPORT_SYMBOL_GPL(virtqueue_enable_cb_prepare);
+>  
+> +unsigned virtqueue_enable_cb_prepare_urgent(struct virtqueue *_vq)
+> +{
+> +	struct vring_virtqueue *vq = to_vvq(_vq);
+> +	u16 last_used_idx;
+> +
+> +	START_USE(vq);
+> +	vq->vring.avail->flags &= ~VRING_AVAIL_F_NO_URGENT_INTERRUPT;
+> +	last_used_idx = vq->last_used_idx;
+> +	END_USE(vq);
+> +	return last_used_idx;
+> +}
+> +EXPORT_SYMBOL_GPL(virtqueue_enable_cb_prepare_urgent);
+> +
+
+You can implement virtqueue_enable_cb_prepare_urgent
+simply by clearing ~VRING_AVAIL_F_NO_INTERRUPT.
+
+The effect is same: host sends interrupts only if there
+is an urgent descriptor.
+
+>  /**
+>   * virtqueue_poll - query pending used buffers
+>   * @vq: the struct virtqueue we're talking about.
+> @@ -662,6 +721,14 @@ bool virtqueue_enable_cb(struct virtqueue *_vq)
+>  }
+>  EXPORT_SYMBOL_GPL(virtqueue_enable_cb);
+>  
+> +bool virtqueue_enable_cb_urgent(struct virtqueue *_vq)
+> +{
+> +	unsigned last_used_idx = virtqueue_enable_cb_prepare_urgent(_vq);
+> +
+> +	return !virtqueue_poll(_vq, last_used_idx);
+> +}
+> +EXPORT_SYMBOL_GPL(virtqueue_enable_cb_urgent);
+> +
+>  /**
+>   * virtqueue_enable_cb_delayed - restart callbacks after disable_cb.
+>   * @vq: the struct virtqueue we're talking about.
+> diff --git a/include/linux/virtio.h b/include/linux/virtio.h
+> index b46671e..68be5f2 100644
+> --- a/include/linux/virtio.h
+> +++ b/include/linux/virtio.h
+> @@ -39,6 +39,12 @@ int virtqueue_add_outbuf(struct virtqueue *vq,
+>  			 void *data,
+>  			 gfp_t gfp);
+>  
+> +int virtqueue_add_outbuf_urgent(struct virtqueue *vq,
+> +				struct scatterlist sg[], unsigned int num,
+> +				void *data,
+> +				gfp_t gfp);
+> +
+> +
+>  int virtqueue_add_inbuf(struct virtqueue *vq,
+>  			struct scatterlist sg[], unsigned int num,
+>  			void *data,
+> @@ -61,10 +67,18 @@ void *virtqueue_get_buf(struct virtqueue *vq, unsigned int *len);
+>  
+>  void virtqueue_disable_cb(struct virtqueue *vq);
+>  
+> +void virtqueue_disable_cb_urgent(struct virtqueue *vq);
+> +
+>  bool virtqueue_enable_cb(struct virtqueue *vq);
+>  
+> +bool virtqueue_enable_cb_urgent(struct virtqueue *vq);
+> +
+> +bool virtqueue_enable_cb_urgent(struct virtqueue *vq);
+> +
+>  unsigned virtqueue_enable_cb_prepare(struct virtqueue *vq);
+>  
+> +unsigned virtqueue_enable_cb_prepare_urgent(struct virtqueue *vq);
+> +
+>  bool virtqueue_poll(struct virtqueue *vq, unsigned);
+>  
+>  bool virtqueue_enable_cb_delayed(struct virtqueue *vq);
+> diff --git a/include/uapi/linux/virtio_ring.h b/include/uapi/linux/virtio_ring.h
+> index a99f9b7..daf5bb0 100644
+> --- a/include/uapi/linux/virtio_ring.h
+> +++ b/include/uapi/linux/virtio_ring.h
+> @@ -39,6 +39,9 @@
+>  #define VRING_DESC_F_WRITE	2
+>  /* This means the buffer contains a list of buffer descriptors. */
+>  #define VRING_DESC_F_INDIRECT	4
+> +/* This means the descriptor should cause an interrupt
+> + * ignoring avail event idx. */
+> +#define VRING_DESC_F_URGENT	8
+>  
+>  /* The Host uses this in used->flags to advise the Guest: don't kick me when
+>   * you add a buffer.  It's unreliable, so it's simply an optimization.  Guest
+> @@ -48,7 +51,7 @@
+>   * when you consume a buffer.  It's unreliable, so it's simply an
+>   * optimization.  */
+>  #define VRING_AVAIL_F_NO_INTERRUPT	1
+> -
+> +#define VRING_AVAIL_F_NO_URGENT_INTERRUPT	2
+>  /* We support indirect buffer descriptors */
+>  #define VIRTIO_RING_F_INDIRECT_DESC	28
+>  
+> -- 
+> 1.8.3.1
