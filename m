@@ -1,92 +1,59 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH net-next RFC 1/3] virtio: support for urgent descriptors
-Date: Mon, 13 Oct 2014 10:16:19 +0300
-Message-ID: <20141013071619.GA10178@redhat.com>
-References: <1413011806-3813-1-git-send-email-jasowang@redhat.com>
-	<1413011806-3813-2-git-send-email-jasowang@redhat.com>
-	<20141012092744.GA9567@redhat.com> <543B6F94.2090107@redhat.com>
+From: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 3/3] i2c: show and change bus frequency via sysfs
+Date: Mon, 13 Oct 2014 13:32:28 +0300
+Message-ID: <CAE1zotLf15Prv=uYwL1wnsANj8k8RFhtBZCNJLkqOO+vxqW5CA@mail.gmail.com>
+References: <1412885235-14026-1-git-send-email-octavian.purdila@intel.com>
+	<1412885235-14026-4-git-send-email-octavian.purdila@intel.com>
+	<CAJjB1qKQ0ND2CeF=Npahn0r19WjdTwc7D3Th7PLnn0FJxHa_KQ@mail.gmail.com>
+	<CAE1zotL4Pb5etHzakCxeDLvZR112XGGaHomZ_dbh=AQVc0wvPg@mail.gmail.com>
+	<20141012170637.GA12591@roeck-us.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <543B6F94.2090107@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Jason Wang <jasowang@redhat.com>
-Cc: kvm@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141012170637.GA12591-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Cc: Mark Roszko <mark.roszko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-i2c <linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Johan Hovold <johan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Wolfram Sang <wsa-z923LK4zBo2bacvFa/9K2g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 13, 2014 at 02:22:12PM +0800, Jason Wang wrote:
-> On 10/12/2014 05:27 PM, Michael S. Tsirkin wrote:
-> > On Sat, Oct 11, 2014 at 03:16:44PM +0800, Jason Wang wrote:
-> >> Below should be useful for some experiments Jason is doing.
-> >> I thought I'd send it out for early review/feedback.
-> >>
-> >> event idx feature allows us to defer interrupts until
-> >> a specific # of descriptors were used.
-> >> Sometimes it might be useful to get an interrupt after
-> >> a specific descriptor, regardless.
-> >> This adds a descriptor flag for this, and an API
-> >> to create an urgent output descriptor.
-> >> This is still an RFC:
-> >> we'll need a feature bit for drivers to detect this,
-> >> but we've run out of feature bits for virtio 0.X.
-> >> For experimentation purposes, drivers can assume
-> >> this is set, or add a driver-specific feature bit.
-> >>
-> >> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-> >> Signed-off-by: Jason Wang <jasowang@redhat.com>
-> > I see that as compared to my original patch, you have
-> > added a new flag: VRING_AVAIL_F_NO_URGENT_INTERRUPT
-> > I don't think it's necessary, see below.
-> >
-> > As such, I think this patch should be split:
-> > - original patch adding support for urgent descriptors
-> > - a patch adding virtqueue_enable/disable_cb_urgent(_prepare)?
-> 
-> Not sure this is a good idea, since the api of first patch is in-completed.
-> >
-> >> ---
-> >>  drivers/virtio/virtio_ring.c     | 75 +++++++++++++++++++++++++++++++++++++---
-> >>  include/linux/virtio.h           | 14 ++++++++
-> >>  include/uapi/linux/virtio_ring.h |  5 ++-
-> >>  3 files changed, 89 insertions(+), 5 deletions(-)
-> >>
-> [...]
-> >>  
-> >> +unsigned virtqueue_enable_cb_prepare_urgent(struct virtqueue *_vq)
-> >> +{
-> >> +	struct vring_virtqueue *vq = to_vvq(_vq);
-> >> +	u16 last_used_idx;
-> >> +
-> >> +	START_USE(vq);
-> >> +	vq->vring.avail->flags &= ~VRING_AVAIL_F_NO_URGENT_INTERRUPT;
-> >> +	last_used_idx = vq->last_used_idx;
-> >> +	END_USE(vq);
-> >> +	return last_used_idx;
-> >> +}
-> >> +EXPORT_SYMBOL_GPL(virtqueue_enable_cb_prepare_urgent);
-> >> +
-> > You can implement virtqueue_enable_cb_prepare_urgent
-> > simply by clearing ~VRING_AVAIL_F_NO_INTERRUPT.
-> >
-> > The effect is same: host sends interrupts only if there
-> > is an urgent descriptor.
-> 
-> Seems not, consider the case when event index was disabled. This will
-> turn on all interrupts.
+On Sun, Oct 12, 2014 at 8:06 PM, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org> wrote:
+> On Sun, Oct 12, 2014 at 12:32:56PM +0300, Octavian Purdila wrote:
+>> On Sat, Oct 11, 2014 at 11:14 PM, Mark Roszko <mark.roszko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>
+>> > This seems limiting to arches with peripherals that can support a range of
+>> > frequencies rather than fixed numbers.
+>> > Also it creates some portability quirkiness between platforms when all the
+>> > i2c bus drivers have different supported freq lists and you have to match
+>> > exactly the right frequency. I.e. one guy does 60khz but another only has
+>> > 80khz.
+>>
+>> Sorry, I don't understand your points here. If this limitations exists
+>> they are not introduced by this patch. This patch just exposes the
+>> frequency so that it can be read or changed in userspace.
+>>
+>> > Another issue is in systems where you have i2c devices on the same bus as
+>> > the sysfs user space driver. User space could set a bus frequency that
+>> > prevents operation with a system i2c device.
+>>
+>> Changing the frequency is limited to root. Also, bus drivers do not
+>> have to implement set_freq if it is thought not to be safe.
+>>
+>> On a different not, I have noticed that a fixed set of frequencies
+>> might not be the best API, since multiple drivers rather support a
+>> rather large set of frequencies in a range. A better API might be to
+>> expose a min-max range and let the bus driver adjust the requested
+>> frequency. I will follow up with a second version that does that.
+>
+> As two separate sysfs attributes, maybe ? sysfs is supposed to provide
+> one value per attribute.
+>
 
-This means that a legacy device without event index support
-will get more interrupts.
-Sounds reasonable.
+Yes, I was thinking of using three attributes: bus_frequency,
+bus_min_frequency and bus_max_frequency.
 
--- 
-MST
+> For the patch itself, I would find it better if you used is_visible to
+> determine if the new attributes should be visible (and/or writable) instead
+> of returning -EOPNOTSUPP.
+>
+
+OK, that sounds better. I will switch to that model in v2.
