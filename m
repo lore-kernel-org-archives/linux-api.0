@@ -1,48 +1,85 @@
 From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCHv1 2/8] sched: new clone flag CLONE_NEWCGROUP for cgroup
-	namespace
-Date: Mon, 13 Oct 2014 14:23:44 -0700
-Message-ID: <1413235430-22944-3-git-send-email-adityakali@google.com>
+Subject: [PATCHv1 7/8] cgroup: cgroup namespace setns support
+Date: Mon, 13 Oct 2014 14:23:49 -0700
+Message-ID: <1413235430-22944-8-git-send-email-adityakali@google.com>
 References: <adityakali-cgroupns>
-	<1413235430-22944-1-git-send-email-adityakali@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+ <1413235430-22944-1-git-send-email-adityakali@google.com>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1413235430-22944-1-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-CLONE_NEWCGROUP will be used to create new cgroup namespace.
+setns on a cgroup namespace is allowed only if
+* task has CAP_SYS_ADMIN in its current user-namespace and
+  over the user-namespace associated with target cgroupns.
+* task's current cgroup is descendent of the target cgroupns-root
+  cgroup.
+* target cgroupns-root is same as or deeper than task's current
+  cgroupns-root. This is so that the task cannot escape out of its
+  cgroupns-root. This also ensures that setns() only makes the task
+  get restricted to a deeper cgroup hierarchy.
 
 Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- include/uapi/linux/sched.h | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ kernel/cgroup_namespace.c | 44 ++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 42 insertions(+), 2 deletions(-)
 
-diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
-index 34f9d73..2f90d00 100644
---- a/include/uapi/linux/sched.h
-+++ b/include/uapi/linux/sched.h
-@@ -21,8 +21,7 @@
- #define CLONE_DETACHED		0x00400000	/* Unused, ignored */
- #define CLONE_UNTRACED		0x00800000	/* set if the tracing process can't force CLONE_PTRACE on this clone */
- #define CLONE_CHILD_SETTID	0x01000000	/* set the TID in the child */
--/* 0x02000000 was previously the unused CLONE_STOPPED (Start in stopped state)
--   and is now available for re-use. */
-+#define CLONE_NEWCGROUP		0x02000000	/* New cgroup namespace */
- #define CLONE_NEWUTS		0x04000000	/* New utsname group? */
- #define CLONE_NEWIPC		0x08000000	/* New ipcs */
- #define CLONE_NEWUSER		0x10000000	/* New user namespace */
+diff --git a/kernel/cgroup_namespace.c b/kernel/cgroup_namespace.c
+index c16604f..c612946 100644
+--- a/kernel/cgroup_namespace.c
++++ b/kernel/cgroup_namespace.c
+@@ -80,8 +80,48 @@ err_out:
+ 
+ static int cgroupns_install(struct nsproxy *nsproxy, void *ns)
+ {
+-	pr_info("setns not supported for cgroup namespace");
+-	return -EINVAL;
++	struct cgroup_namespace *cgroup_ns = ns;
++	struct task_struct *task = current;
++	struct cgroup *cgrp = NULL;
++	int err = 0;
++
++	if (!ns_capable(current_user_ns(), CAP_SYS_ADMIN) ||
++	    !ns_capable(cgroup_ns->user_ns, CAP_SYS_ADMIN))
++		return -EPERM;
++
++	/* Prevent cgroup changes for this task. */
++	threadgroup_lock(task);
++
++	cgrp = get_task_cgroup(task);
++
++	err = -EINVAL;
++	if (!cgroup_on_dfl(cgrp))
++		goto out_unlock;
++
++	/* Allow switch only if the task's current cgroup is descendant of the
++	 * target cgroup_ns->root_cgrp.
++	 */
++	if (!cgroup_is_descendant(cgrp, cgroup_ns->root_cgrp))
++		goto out_unlock;
++
++	/* Only allow setns to a cgroupns root-ed deeper than task's current
++	 * cgroupns-root. This will make sure that tasks cannot escape their
++	 * cgroupns by attaching to parent cgroupns.
++	 */
++	if (!cgroup_is_descendant(cgroup_ns->root_cgrp,
++				  task_cgroupns_root(task)))
++		goto out_unlock;
++
++	err = 0;
++	get_cgroup_ns(cgroup_ns);
++	put_cgroup_ns(nsproxy->cgroup_ns);
++	nsproxy->cgroup_ns = cgroup_ns;
++
++out_unlock:
++	threadgroup_unlock(current);
++	if (cgrp)
++		cgroup_put(cgrp);
++	return err;
+ }
+ 
+ static void *cgroupns_get(struct task_struct *task)
 -- 
 2.1.0.rc2.206.gedb03e5
