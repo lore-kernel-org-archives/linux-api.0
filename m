@@ -1,144 +1,72 @@
-From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCHv1 1/8] kernfs: Add API to generate relative kernfs path
-Date: Mon, 13 Oct 2014 14:23:43 -0700
-Message-ID: <1413235430-22944-2-git-send-email-adityakali@google.com>
+From: Aditya Kali <adityakali@google.com>
+Subject: [PATCHv1 3/8] cgroup: add function to get task's cgroup on default hierarchy
+Date: Mon, 13 Oct 2014 14:23:45 -0700
+Message-ID: <1413235430-22944-4-git-send-email-adityakali@google.com>
 References: <adityakali-cgroupns>
  <1413235430-22944-1-git-send-email-adityakali@google.com>
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1413235430-22944-1-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1413235430-22944-1-git-send-email-adityakali@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: tj@kernel.org, lizefan@huawei.com, serge.hallyn@ubuntu.com, luto@amacapital.net, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, mingo@redhat.com
+Cc: containers@lists.linux-foundation.org, jnagal@google.com, Aditya Kali <adityakali@google.com>
 List-Id: linux-api@vger.kernel.org
 
-The new function kernfs_path_from_node() generates and returns
-kernfs path of a given kernfs_node relative to a given parent
-kernfs_node.
+get_task_cgroup() returns the (reference counted) cgroup of the
+given task on the default hierarchy.
 
-Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Aditya Kali <adityakali@google.com>
 ---
- fs/kernfs/dir.c        | 53 ++++++++++++++++++++++++++++++++++++++++----------
- include/linux/kernfs.h |  3 +++
- 2 files changed, 46 insertions(+), 10 deletions(-)
+ include/linux/cgroup.h |  1 +
+ kernel/cgroup.c        | 25 +++++++++++++++++++++++++
+ 2 files changed, 26 insertions(+)
 
-diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
-index a693f5b..8655485 100644
---- a/fs/kernfs/dir.c
-+++ b/fs/kernfs/dir.c
-@@ -44,14 +44,24 @@ static int kernfs_name_locked(struct kernfs_node *kn, char *buf, size_t buflen)
- 	return strlcpy(buf, kn->parent ? kn->name : "/", buflen);
+diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+index 1d51968..80ed6e0 100644
+--- a/include/linux/cgroup.h
++++ b/include/linux/cgroup.h
+@@ -579,6 +579,7 @@ static inline void pr_cont_cgroup_path(struct cgroup *cgrp)
  }
  
--static char * __must_check kernfs_path_locked(struct kernfs_node *kn, char *buf,
--					      size_t buflen)
-+static char * __must_check kernfs_path_from_node_locked(
-+	struct kernfs_node *kn_root,
-+	struct kernfs_node *kn,
-+	char *buf,
-+	size_t buflen)
- {
- 	char *p = buf + buflen;
- 	int len;
+ char *task_cgroup_path(struct task_struct *task, char *buf, size_t buflen);
++struct cgroup *get_task_cgroup(struct task_struct *task);
  
-+	BUG_ON(!buflen);
-+
- 	*--p = '\0';
- 
-+	if (kn == kn_root) {
-+		*--p = '/';
-+		return p;
-+	}
-+
- 	do {
- 		len = strlen(kn->name);
- 		if (p - buf < len + 1) {
-@@ -63,6 +73,8 @@ static char * __must_check kernfs_path_locked(struct kernfs_node *kn, char *buf,
- 		memcpy(p, kn->name, len);
- 		*--p = '/';
- 		kn = kn->parent;
-+		if (kn == kn_root)
-+			break;
- 	} while (kn && kn->parent);
- 
- 	return p;
-@@ -92,26 +104,47 @@ int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen)
+ int cgroup_add_dfl_cftypes(struct cgroup_subsys *ss, struct cftype *cfts);
+ int cgroup_add_legacy_cftypes(struct cgroup_subsys *ss, struct cftype *cfts);
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index cab7dc4..56d507b 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -1916,6 +1916,31 @@ char *task_cgroup_path(struct task_struct *task, char *buf, size_t buflen)
  }
+ EXPORT_SYMBOL_GPL(task_cgroup_path);
  
- /**
-- * kernfs_path - build full path of a given node
-+ * kernfs_path_from_node - build path of node @kn relative to @kn_root.
-+ * @kn_root: parent kernfs_node relative to which we need to build the path
-  * @kn: kernfs_node of interest
-- * @buf: buffer to copy @kn's name into
-+ * @buf: buffer to copy @kn's path into
-  * @buflen: size of @buf
-  *
-- * Builds and returns the full path of @kn in @buf of @buflen bytes.  The
-- * path is built from the end of @buf so the returned pointer usually
-+ * Builds and returns @kn's path relative to @kn_root. @kn_root is expected to
-+ * be parent of @kn at some level. If this is not true or if @kn_root is NULL,
-+ * then full path of @kn is returned.
-+ * The path is built from the end of @buf so the returned pointer usually
-  * doesn't match @buf.  If @buf isn't long enough, @buf is nul terminated
-  * and %NULL is returned.
-  */
--char *kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen)
-+char *kernfs_path_from_node(struct kernfs_node *kn_root, struct kernfs_node *kn,
-+			    char *buf, size_t buflen)
- {
- 	unsigned long flags;
- 	char *p;
- 
- 	spin_lock_irqsave(&kernfs_rename_lock, flags);
--	p = kernfs_path_locked(kn, buf, buflen);
-+	p = kernfs_path_from_node_locked(kn_root, kn, buf, buflen);
- 	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
- 	return p;
- }
-+EXPORT_SYMBOL_GPL(kernfs_path_from_node);
-+
-+/**
-+ * kernfs_path - build full path of a given node
-+ * @kn: kernfs_node of interest
-+ * @buf: buffer to copy @kn's name into
-+ * @buflen: size of @buf
++/*
++ * get_task_cgroup - returns the cgroup of the task in the default cgroup
++ * hierarchy.
 + *
-+ * Builds and returns the full path of @kn in @buf of @buflen bytes.  The
-+ * path is built from the end of @buf so the returned pointer usually
-+ * doesn't match @buf.  If @buf isn't long enough, @buf is nul terminated
-+ * and %NULL is returned.
++ * @task: target task
++ * This function returns the @task's cgroup on the default cgroup hierarchy. The
++ * returned cgroup has its reference incremented (by calling cgroup_get()). So
++ * the caller must cgroup_put() the obtained reference once it is done with it.
 + */
-+char *kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen)
++struct cgroup *get_task_cgroup(struct task_struct *task)
 +{
-+	return kernfs_path_from_node(NULL, kn, buf, buflen);
++	struct cgroup *cgrp;
++
++	mutex_lock(&cgroup_mutex);
++	down_read(&css_set_rwsem);
++
++	cgrp = task_cgroup_from_root(task, &cgrp_dfl_root);
++	cgroup_get(cgrp);
++
++	up_read(&css_set_rwsem);
++	mutex_unlock(&cgroup_mutex);
++	return cgrp;
 +}
- EXPORT_SYMBOL_GPL(kernfs_path);
- 
- /**
-@@ -145,8 +178,8 @@ void pr_cont_kernfs_path(struct kernfs_node *kn)
- 
- 	spin_lock_irqsave(&kernfs_rename_lock, flags);
- 
--	p = kernfs_path_locked(kn, kernfs_pr_cont_buf,
--			       sizeof(kernfs_pr_cont_buf));
-+	p = kernfs_path_from_node_locked(NULL, kn, kernfs_pr_cont_buf,
-+					 sizeof(kernfs_pr_cont_buf));
- 	if (p)
- 		pr_cont("%s", p);
- 	else
-diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-index 30faf79..3c2be75 100644
---- a/include/linux/kernfs.h
-+++ b/include/linux/kernfs.h
-@@ -258,6 +258,9 @@ static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
- }
- 
- int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen);
-+char * __must_check kernfs_path_from_node(struct kernfs_node *root_kn,
-+					  struct kernfs_node *kn, char *buf,
-+					  size_t buflen);
- char * __must_check kernfs_path(struct kernfs_node *kn, char *buf,
- 				size_t buflen);
- void pr_cont_kernfs_name(struct kernfs_node *kn);
++EXPORT_SYMBOL_GPL(get_task_cgroup);
++
+ /* used to track tasks and other necessary states during migration */
+ struct cgroup_taskset {
+ 	/* the src and dst cset list running through cset->mg_node */
 -- 
 2.1.0.rc2.206.gedb03e5
