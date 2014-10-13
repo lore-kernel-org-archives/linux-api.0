@@ -1,33 +1,28 @@
-From: Kim Phillips <kim.phillips@freescale.com>
-Subject: Re: [PATCH] driver core: amba: add device binding path
- 'driver_override'
-Date: Mon, 13 Oct 2014 08:23:24 -0500
-Message-ID: <20141013082324.362423be23ad44dc391ccd65@freescale.com>
-References: <1413205672-6236-1-git-send-email-a.motakis@virtualopensystems.com>
+From: Daniel Borkmann <dborkman@redhat.com>
+Subject: Re: [PATCH v9 net-next 2/4] net: filter: split filter.h and expose
+ eBPF to user space
+Date: Mon, 13 Oct 2014 19:21:49 +0200
+Message-ID: <543C0A2D.5040908@redhat.com>
+References: <1409714246-31054-1-git-send-email-ast@plumgrid.com> <1409714246-31054-3-git-send-email-ast@plumgrid.com> <540737DF.1010801@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1413205672-6236-1-git-send-email-a.motakis@virtualopensystems.com>
+In-Reply-To: <540737DF.1010801@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Antonios Motakis <a.motakis@virtualopensystems.com>
-Cc: Russell King <linux@arm.linux.org.uk>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, kvmarm@lists.cs.columbia.edu, iommu@lists.linux-foundation.org, alex.williamson@redhat.com, tech@virtualopensystems.com, christoffer.dall@linaro.org, eric.auger@linaro.org, marc.zyngier@arm.com
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 13 Oct 2014 15:07:34 +0200
-Antonios Motakis <a.motakis@virtualopensystems.com> wrote:
+On 09/03/2014 05:46 PM, Daniel Borkmann wrote:
+...
+> Ok, given you post the remaining two RFCs later on this window as
+> you indicate, I have no objections:
+>
+> Acked-by: Daniel Borkmann <dborkman@redhat.com>
 
-> As already demonstrated with PCI [1] and the platform bus [2], a
-> driver_override property in sysfs can be used to bypass the id matching
-> of a device to a AMBA driver. This can be used by VFIO to bind to any AMBA
-> device requested by the user.
-> 
-> [1] http://lists-archives.com/linux-kernel/28030441-pci-introduce-new-device-binding-path-using-pci_dev-driver_override.html
-> [2] https://www.redhat.com/archives/libvir-list/2014-April/msg00382.html
-> 
-> Signed-off-by: Antonios Motakis <a.motakis@virtualopensystems.com>
-> ---
+Ping, Alexei, are you still sending the patch for bpf_common.h or
+do you want me to take care of this?
 
-Reviewed-by: Kim Phillips <kim.phillips@freescale.com>
-
-Kim
+Cheers,
+Daniel
