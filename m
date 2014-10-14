@@ -1,197 +1,57 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: [PATCH net] net: filter: move common defines into bpf_common.h
-Date: Tue, 14 Oct 2014 02:08:54 -0700
-Message-ID: <1413277734-13053-1-git-send-email-ast@plumgrid.com>
+From: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 3/3] i2c: show and change bus frequency via sysfs
+Date: Tue, 14 Oct 2014 12:24:51 +0300
+Message-ID: <CAE1zotLVrSN-Dfw-GnCuu6jjBh6_bKC_S0goJj7ZYu4hFC_zqA@mail.gmail.com>
+References: <1412885235-14026-1-git-send-email-octavian.purdila@intel.com>
+	<1412885235-14026-4-git-send-email-octavian.purdila@intel.com>
+	<CAJjB1qKQ0ND2CeF=Npahn0r19WjdTwc7D3Th7PLnn0FJxHa_KQ@mail.gmail.com>
+	<CAE1zotL4Pb5etHzakCxeDLvZR112XGGaHomZ_dbh=AQVc0wvPg@mail.gmail.com>
+	<CAJjB1qJsmFebE2u_wMe2gdrQYcEwY1-yDLpufK97EXjEoR6omQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAJjB1qJsmFebE2u_wMe2gdrQYcEwY1-yDLpufK97EXjEoR6omQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Chema Gonzalez <chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Roszko <mark.roszko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-i2c <linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Johan Hovold <johan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Wolfram Sang <wsa-z923LK4zBo2bacvFa/9K2g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-userspace programs that use eBPF instruction macros need to include two files:
-uapi/linux/filter.h and uapi/linux/bpf.h
-Move common macro definitions that are shared between classic BPF and eBPF
-into uapi/linux/bpf_common.h, so that user app can include only one bpf.h file
+On Tue, Oct 14, 2014 at 4:53 AM, Mark Roszko <mark.roszko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>
+> > If this limitations exists
+> >they are not introduced by this patch. This patch just exposes the
+> >frequency so that it can be read or changed in userspace.
+>
+> Ah, well right now you can have an i2c bus with driver 1 and 2. Say
+> the i2c bus is configured for 60khz in kernel space which normally
+> can't be changed. Driver 1 talks to a slave that cannot go above
+> 100khz. Now the userspace interface is added to the i2c bus. Some
+> userspace application decides to reconfigure the bus for 400khz and do
+> its communication to some slave device. Now the kernel tries to do
+> some background talking to the drive 1 slave and suddenly finds it can
+> no longer communicate with it. Right now with the kernel space only
+> configuration, the system is safe from being messed up easily. It's
+> more of a sanity of configuration issue.
 
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
----
+You need privileges to change the bus frequency, so this is a
+configuration issue. Which you still have today, since can still set
+the i2c frequency on some busses via a module parameter.
 
-Daniel believes that this patch has to be done for this merge window.
-I think it can wait till next, but it won't hurt now either.
+>
+>
+> >On a different not, I have noticed that a fixed set of frequencies
+> >might not be the best API, since multiple drivers rather support a
+> >rather large set of frequencies in a range. A better API might be to
+> >expose a min-max range and let the bus driver adjust the requested
+> >frequency. I will follow up with a second version that does that.
+>
+> I was actually thinking you could eliminate the table of supported
+> frequencies and just have the bus driver handle the set frequency
+> decision itself and just return an error code if it's invalid. There
+> are legitiamate drivers that cannot do more than a list of frequencies
+> already as well. One example is here:
+> http://lxr.free-electrons.com/source/drivers/i2c/busses/i2c-bcm-kona.c#L717
 
- include/uapi/linux/Kbuild       |    1 +
- include/uapi/linux/bpf.h        |    1 +
- include/uapi/linux/bpf_common.h |   55 ++++++++++++++++++++++++++++++++++++++
- include/uapi/linux/filter.h     |   56 +--------------------------------------
- 4 files changed, 58 insertions(+), 55 deletions(-)
- create mode 100644 include/uapi/linux/bpf_common.h
-
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 70e150e..1115d68 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -68,6 +68,7 @@ header-y += binfmts.h
- header-y += blkpg.h
- header-y += blktrace_api.h
- header-y += bpf.h
-+header-y += bpf_common.h
- header-y += bpqether.h
- header-y += bsg.h
- header-y += btrfs.h
-diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-index 31b0ac2..d18316f 100644
---- a/include/uapi/linux/bpf.h
-+++ b/include/uapi/linux/bpf.h
-@@ -8,6 +8,7 @@
- #define _UAPI__LINUX_BPF_H__
- 
- #include <linux/types.h>
-+#include <linux/bpf_common.h>
- 
- /* Extended instruction set based on top of classic BPF */
- 
-diff --git a/include/uapi/linux/bpf_common.h b/include/uapi/linux/bpf_common.h
-new file mode 100644
-index 0000000..a5c220e
---- /dev/null
-+++ b/include/uapi/linux/bpf_common.h
-@@ -0,0 +1,55 @@
-+#ifndef _UAPI__LINUX_BPF_COMMON_H__
-+#define _UAPI__LINUX_BPF_COMMON_H__
-+
-+/* Instruction classes */
-+#define BPF_CLASS(code) ((code) & 0x07)
-+#define		BPF_LD		0x00
-+#define		BPF_LDX		0x01
-+#define		BPF_ST		0x02
-+#define		BPF_STX		0x03
-+#define		BPF_ALU		0x04
-+#define		BPF_JMP		0x05
-+#define		BPF_RET		0x06
-+#define		BPF_MISC        0x07
-+
-+/* ld/ldx fields */
-+#define BPF_SIZE(code)  ((code) & 0x18)
-+#define		BPF_W		0x00
-+#define		BPF_H		0x08
-+#define		BPF_B		0x10
-+#define BPF_MODE(code)  ((code) & 0xe0)
-+#define		BPF_IMM		0x00
-+#define		BPF_ABS		0x20
-+#define		BPF_IND		0x40
-+#define		BPF_MEM		0x60
-+#define		BPF_LEN		0x80
-+#define		BPF_MSH		0xa0
-+
-+/* alu/jmp fields */
-+#define BPF_OP(code)    ((code) & 0xf0)
-+#define		BPF_ADD		0x00
-+#define		BPF_SUB		0x10
-+#define		BPF_MUL		0x20
-+#define		BPF_DIV		0x30
-+#define		BPF_OR		0x40
-+#define		BPF_AND		0x50
-+#define		BPF_LSH		0x60
-+#define		BPF_RSH		0x70
-+#define		BPF_NEG		0x80
-+#define		BPF_MOD		0x90
-+#define		BPF_XOR		0xa0
-+
-+#define		BPF_JA		0x00
-+#define		BPF_JEQ		0x10
-+#define		BPF_JGT		0x20
-+#define		BPF_JGE		0x30
-+#define		BPF_JSET        0x40
-+#define BPF_SRC(code)   ((code) & 0x08)
-+#define		BPF_K		0x00
-+#define		BPF_X		0x08
-+
-+#ifndef BPF_MAXINSNS
-+#define BPF_MAXINSNS 4096
-+#endif
-+
-+#endif /* _UAPI__LINUX_BPF_COMMON_H__ */
-diff --git a/include/uapi/linux/filter.h b/include/uapi/linux/filter.h
-index 253b4d4..47785d5 100644
---- a/include/uapi/linux/filter.h
-+++ b/include/uapi/linux/filter.h
-@@ -7,7 +7,7 @@
- 
- #include <linux/compiler.h>
- #include <linux/types.h>
--
-+#include <linux/bpf_common.h>
- 
- /*
-  * Current version of the filter code architecture.
-@@ -32,56 +32,6 @@ struct sock_fprog {	/* Required for SO_ATTACH_FILTER. */
- 	struct sock_filter __user *filter;
- };
- 
--/*
-- * Instruction classes
-- */
--
--#define BPF_CLASS(code) ((code) & 0x07)
--#define         BPF_LD          0x00
--#define         BPF_LDX         0x01
--#define         BPF_ST          0x02
--#define         BPF_STX         0x03
--#define         BPF_ALU         0x04
--#define         BPF_JMP         0x05
--#define         BPF_RET         0x06
--#define         BPF_MISC        0x07
--
--/* ld/ldx fields */
--#define BPF_SIZE(code)  ((code) & 0x18)
--#define         BPF_W           0x00
--#define         BPF_H           0x08
--#define         BPF_B           0x10
--#define BPF_MODE(code)  ((code) & 0xe0)
--#define         BPF_IMM         0x00
--#define         BPF_ABS         0x20
--#define         BPF_IND         0x40
--#define         BPF_MEM         0x60
--#define         BPF_LEN         0x80
--#define         BPF_MSH         0xa0
--
--/* alu/jmp fields */
--#define BPF_OP(code)    ((code) & 0xf0)
--#define         BPF_ADD         0x00
--#define         BPF_SUB         0x10
--#define         BPF_MUL         0x20
--#define         BPF_DIV         0x30
--#define         BPF_OR          0x40
--#define         BPF_AND         0x50
--#define         BPF_LSH         0x60
--#define         BPF_RSH         0x70
--#define         BPF_NEG         0x80
--#define		BPF_MOD		0x90
--#define		BPF_XOR		0xa0
--
--#define         BPF_JA          0x00
--#define         BPF_JEQ         0x10
--#define         BPF_JGT         0x20
--#define         BPF_JGE         0x30
--#define         BPF_JSET        0x40
--#define BPF_SRC(code)   ((code) & 0x08)
--#define         BPF_K           0x00
--#define         BPF_X           0x08
--
- /* ret - BPF_K and BPF_X also apply */
- #define BPF_RVAL(code)  ((code) & 0x18)
- #define         BPF_A           0x10
-@@ -91,10 +41,6 @@ struct sock_fprog {	/* Required for SO_ATTACH_FILTER. */
- #define         BPF_TAX         0x00
- #define         BPF_TXA         0x80
- 
--#ifndef BPF_MAXINSNS
--#define BPF_MAXINSNS 4096
--#endif
--
- /*
-  * Macros for filter block array initializers.
-  */
--- 
-1.7.9.5
+Yes, I will do that for v2 and in addition I will also add min and max
+attributes to make it easier to determine if a bus supports fast mode,
+fast plus, high, etc.
