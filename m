@@ -1,176 +1,182 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH net-next RFC 0/3] virtio-net: Conditionally enable tx
-	interrupt
-Date: Wed, 15 Oct 2014 02:06:27 +0300
-Message-ID: <20141014230627.GA23715@redhat.com>
-References: <1413011806-3813-1-git-send-email-jasowang@redhat.com>
-	<20141014.145327.365091739350390288.davem@davemloft.net>
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv1 0/8] CGroup Namespaces
+Date: Tue, 14 Oct 2014 16:33:11 -0700
+Message-ID: <CAGr1F2HOhX-GQgi_Aep8kvyrLpKb60foDx7wkkfT5cG=hOKdig@mail.gmail.com>
+References: <1413235430-22944-1-git-send-email-adityakali@google.com>
+	<CALCETrVnjrBt3odufhAirf45_REq-S9T=HpoEWqmFef2M6PucA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <20141014.145327.365091739350390288.davem@davemloft.net>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: David Miller <davem@davemloft.net>
-Cc: kvm@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <CALCETrVnjrBt3odufhAirf45_REq-S9T=HpoEWqmFef2M6PucA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 14, 2014 at 02:53:27PM -0400, David Miller wrote:
-> From: Jason Wang <jasowang@redhat.com>
-> Date: Sat, 11 Oct 2014 15:16:43 +0800
-> 
-> > We free old transmitted packets in ndo_start_xmit() currently, so any
-> > packet must be orphaned also there. This was used to reduce the overhead of
-> > tx interrupt to achieve better performance. But this may not work for some
-> > protocols such as TCP stream. TCP depends on the value of sk_wmem_alloc to
-> > implement various optimization for small packets stream such as TCP small
-> > queue and auto corking. But orphaning packets early in ndo_start_xmit()
-> > disable such things more or less since sk_wmem_alloc was not accurate. This
-> > lead extra low throughput for TCP stream of small writes.
-> > 
-> > This series tries to solve this issue by enable tx interrupts for all TCP
-> > packets other than the ones with push bit or pure ACK. This is done through
-> > the support of urgent descriptor which can force an interrupt for a
-> > specified packet. If tx interrupt was enabled for a packet, there's no need
-> > to orphan it in ndo_start_xmit(), we can free it tx napi which is scheduled
-> > by tx interrupt. Then sk_wmem_alloc was more accurate than before and TCP
-> > can batch more for small write. More larger skb was produced by TCP in this
-> > case to improve both throughput and cpu utilization.
-> > 
-> > Test shows great improvements on small write tcp streams. For most of the
-> > other cases, the throughput and cpu utilization are the same in the
-> > past. Only few cases, more cpu utilization was noticed which needs more
-> > investigation.
-> > 
-> > Review and comments are welcomed.
-> 
-> I think proper accounting and queueing (at all levels, not just TCP
-> sockets) is more important than trying to skim a bunch of cycles by
-> avoiding TX interrupts.
-> 
-> Having an event to free the SKB is absolutely essential for the stack
-> to operate correctly.
-> 
-> And with virtio-net you don't even have the excuse of "the HW
-> unfortunately doesn't have an appropriate TX event."
-> 
-> So please don't play games, and instead use TX interrupts all the
-> time.  You can mitigate them in various ways, but don't turn them on
-> selectively based upon traffic type, that's terrible.
-> 
-> You can even use ->xmit_more to defer the TX interrupt indication to
-> the final TX packet in the chain.
-
-I guess we can just defer the kick, interrupt will naturally be
-deferred as well.
-This should solve the problem for old hosts as well.
-
-We'll also need to implement bql for this.
-Something like the below?
-Completely untested - posting here to see if I figured the
-API out correctly. Has to be applied on top of the previous patch.
-
----
-
-virtio_net: bql + xmit_more
-
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-
----
-
-diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
-index 62c059d..c245047 100644
---- a/drivers/net/virtio_net.c
-+++ b/drivers/net/virtio_net.c
-@@ -213,13 +213,15 @@ static struct page *get_a_page(struct receive_queue *rq, gfp_t gfp_mask)
- 	return p;
- }
- 
--static int free_old_xmit_skbs(struct send_queue *sq, int budget)
-+static int free_old_xmit_skbs(struct netdev_queue *txq,
-+			      struct send_queue *sq, int budget)
- {
- 	struct sk_buff *skb;
- 	unsigned int len;
- 	struct virtnet_info *vi = sq->vq->vdev->priv;
- 	struct virtnet_stats *stats = this_cpu_ptr(vi->stats);
- 	int sent = 0;
-+	unsigned int bytes = 0;
- 
- 	while (sent < budget &&
- 	       (skb = virtqueue_get_buf(sq->vq, &len)) != NULL) {
-@@ -227,6 +229,7 @@ static int free_old_xmit_skbs(struct send_queue *sq, int budget)
- 
- 		u64_stats_update_begin(&stats->tx_syncp);
- 		stats->tx_bytes += skb->len;
-+		bytes += skb->len;
- 		stats->tx_packets++;
- 		u64_stats_update_end(&stats->tx_syncp);
- 
-@@ -234,6 +237,8 @@ static int free_old_xmit_skbs(struct send_queue *sq, int budget)
- 		sent++;
- 	}
- 
-+	netdev_tx_completed_queue(txq, sent, bytes);
-+
- 	return sent;
- }
- 
-@@ -802,7 +807,7 @@ static int virtnet_poll_tx(struct napi_struct *napi, int budget)
- again:
- 	__netif_tx_lock(txq, smp_processor_id());
- 	virtqueue_disable_cb(sq->vq);
--	sent += free_old_xmit_skbs(sq, budget - sent);
-+	sent += free_old_xmit_skbs(txq, sq, budget - sent);
- 
- 	if (sent < budget) {
- 		r = virtqueue_enable_cb_prepare(sq->vq);
-@@ -951,6 +956,9 @@ static netdev_tx_t start_xmit(struct sk_buff *skb, struct net_device *dev)
- 	int qnum = skb_get_queue_mapping(skb);
- 	struct send_queue *sq = &vi->sq[qnum];
- 	int err, qsize = virtqueue_get_vring_size(sq->vq);
-+	struct netdev_queue *txq = netdev_get_tx_queue(dev, qnum);
-+	bool kick = !skb->xmit_more || netif_xmit_stopped(txq);
-+	unsigned int bytes = skb->len;
- 
- 	virtqueue_disable_cb(sq->vq);
- 
-@@ -967,7 +975,11 @@ static netdev_tx_t start_xmit(struct sk_buff *skb, struct net_device *dev)
- 		dev_kfree_skb_any(skb);
- 		return NETDEV_TX_OK;
- 	}
--	virtqueue_kick(sq->vq);
-+
-+	netdev_tx_sent_queue(txq, bytes);
-+
-+	if (kick)
-+		virtqueue_kick(sq->vq);
- 
- 	/* Apparently nice girls don't return TX_BUSY; stop the queue
- 	 * before it gets out of hand.  Naturally, this wastes entries. */
-@@ -975,14 +987,14 @@ static netdev_tx_t start_xmit(struct sk_buff *skb, struct net_device *dev)
- 		netif_stop_subqueue(dev, qnum);
- 		if (unlikely(!virtqueue_enable_cb_delayed(sq->vq))) {
- 			/* More just got used, free them then recheck. */
--			free_old_xmit_skbs(sq, qsize);
-+			free_old_xmit_skbs(txq, sq, qsize);
- 			if (sq->vq->num_free >= 2+MAX_SKB_FRAGS) {
- 				netif_start_subqueue(dev, qnum);
- 				virtqueue_disable_cb(sq->vq);
- 			}
- 		}
- 	} else if (virtqueue_enable_cb_delayed(sq->vq)) {
--		free_old_xmit_skbs(sq, qsize);
-+		free_old_xmit_skbs(txq, sq, qsize);
- 	}
- 
- 	return NETDEV_TX_OK;
+T24gVHVlLCBPY3QgMTQsIDIwMTQgYXQgMzo0MiBQTSwgQW5keSBMdXRvbWlyc2tpIDxsdXRvQGFt
+YWNhcGl0YWwubmV0PiB3cm90ZToKPiBPbiBNb24sIE9jdCAxMywgMjAxNCBhdCAyOjIzIFBNLCBB
+ZGl0eWEgS2FsaSA8YWRpdHlha2FsaUBnb29nbGUuY29tPiB3cm90ZToKPj4gU2Vjb25kIHRha2Ug
+YXQgdGhlIENncm91cCBOYW1lc3BhY2UgcGF0Y2gtc2V0Lgo+Pgo+PiBNYWpvciBjaGFuZ2VzIGZv
+cm0gUkZDIChWMCk6Cj4+IDEuIHNldG5zIHN1cHBvcnQgZm9yIGNncm91cG5zCj4+IDIuICdtb3Vu
+dCAtdCBjZ3JvdXAgY2dyb3VwIDxtbnRwdD4nIGZyb20gaW5zaWRlIGEgY2dyb3VwbnMgbm93Cj4+
+ICAgIG1vdW50cyB0aGUgY2dyb3VwIGhpZXJhcmN5IHdpdGggY2dyb3VwbnMtcm9vdCBhcyB0aGUg
+ZmlsZXN5c3RlbSByb290Lgo+PiAzLiB3cml0ZXMgdG8gY2dyb3VwIGZpbGVzIG91dHNpZGUgb2Yg
+Y2dyb3VwbnMtcm9vdCBhcmUgbm90IGFsbG93ZWQKPj4gNC4gdmlzaWJpbGl0eSBvZiAvcHJvYy88
+cGlkPi9jZ3JvdXAgaXMgZnVydGhlciByZXN0cmljdGVkIGJ5IG5vdCBzaG93aW5nCj4+ICAgIGFu
+eXRoaW5nIGlmIHRoZSA8cGlkPiBpcyBpbiBhIHNpYmxpbmcgY2dyb3VwbnMgYW5kIGl0cyBjZ3Jv
+dXAgZmFsbHMgb3V0c2lkZQo+PiAgICB5b3VyIGNncm91cG5zLXJvb3QuCj4+Cj4+IE1vcmUgZGV0
+YWlscyBpbiB0aGUgd3JpdGV1cCBiZWxvdy4KPj4KPj4gQmFja2dyb3VuZAo+PiAgIENncm91cHMg
+YW5kIE5hbWVzcGFjZXMgYXJlIHVzZWQgdG9nZXRoZXIgdG8gY3JlYXRlIOKAnHZpcnR1YWzigJ0K
+Pj4gICBjb250YWluZXJzIHRoYXQgaXNvbGF0ZXMgdGhlIGhvc3QgZW52aXJvbm1lbnQgZnJvbSB0
+aGUgcHJvY2Vzc2VzCj4+ICAgcnVubmluZyBpbiBjb250YWluZXIuIEJ1dCBzaW5jZSBjZ3JvdXBz
+IHRoZW1zZWx2ZXMgYXJlIG5vdAo+PiAgIOKAnHZpcnR1YWxpemVk4oCdLCB0aGUgdGFzayBpcyBh
+bHdheXMgYWJsZSB0byBzZWUgZ2xvYmFsIGNncm91cHMgdmlldwo+PiAgIHRocm91Z2ggY2dyb3Vw
+ZnMgbW91bnQgYW5kIHZpYSAvcHJvYy9zZWxmL2Nncm91cCBmaWxlLgo+Pgo+PiAgICQgY2F0IC9w
+cm9jL3NlbGYvY2dyb3VwCj4+ICAgMDpjcHVzZXQsY3B1LGNwdWFjY3QsbWVtb3J5LGRldmljZXMs
+ZnJlZXplcixodWdldGxiOi9iYXRjaGpvYnMvY19qb2JfaWQxCj4+Cj4+ICAgVGhpcyBleHBvc3Vy
+ZSBvZiBjZ3JvdXAgbmFtZXMgdG8gdGhlIHByb2Nlc3NlcyBydW5uaW5nIGluc2lkZSBhCj4+ICAg
+Y29udGFpbmVyIHJlc3VsdHMgaW4gc29tZSBwcm9ibGVtczoKPj4gICAoMSkgVGhlIGNvbnRhaW5l
+ciBuYW1lcyBhcmUgdHlwaWNhbGx5IGhvc3QtY29udGFpbmVyLW1hbmFnZW1lbnQtYWdlbnQKPj4g
+ICAgICAgKHN5c3RlbWQsIGRvY2tlci9saWJjb250YWluZXIsIGV0Yy4pIGRhdGEgYW5kIGxlYWtp
+bmcgaXRzIG5hbWUgKG9yCj4+ICAgICAgIGxlYWtpbmcgdGhlIGhpZXJhcmNoeSkgcmV2ZWFscyB0
+b28gbXVjaCBpbmZvcm1hdGlvbiBhYm91dCB0aGUgaG9zdAo+PiAgICAgICBzeXN0ZW0uCj4+ICAg
+KDIpIEl0IG1ha2VzIHRoZSBjb250YWluZXIgbWlncmF0aW9uIGFjcm9zcyBtYWNoaW5lcyAoQ1JJ
+VSkgbW9yZQo+PiAgICAgICBkaWZmaWN1bHQgYXMgdGhlIGNvbnRhaW5lciBuYW1lcyBuZWVkIHRv
+IGJlIHVuaXF1ZSBhY3Jvc3MgdGhlCj4+ICAgICAgIG1hY2hpbmVzIGluIHRoZSBtaWdyYXRpb24g
+ZG9tYWluLgo+PiAgICgzKSBJdCBtYWtlcyBpdCBkaWZmaWN1bHQgdG8gcnVuIGNvbnRhaW5lciBt
+YW5hZ2VtZW50IHRvb2xzIChsaWtlCj4+ICAgICAgIGRvY2tlci9saWJjb250YWluZXIsIGxtY3Rm
+eSwgZXRjLikgd2l0aGluIHZpcnR1YWwgY29udGFpbmVycwo+PiAgICAgICB3aXRob3V0IGFkZGlu
+ZyBkZXBlbmRlbmN5IG9uIHNvbWUgc3RhdGUvYWdlbnQgcHJlc2VudCBvdXRzaWRlIHRoZQo+PiAg
+ICAgICBjb250YWluZXIuCj4+Cj4+ICAgTm90ZSB0aGF0IHRoZSBmZWF0dXJlIHByb3Bvc2VkIGhl
+cmUgaXMgY29tcGxldGVseSBkaWZmZXJlbnQgdGhhbiB0aGUKPj4gICDigJxucyBjZ3JvdXDigJ0g
+ZmVhdHVyZSB3aGljaCBleGlzdGVkIGluIHRoZSBsaW51eCBrZXJuZWwgdW50aWwgcmVjZW50bHku
+Cj4+ICAgVGhlIG5zIGNncm91cCBhbHNvIGF0dGVtcHRlZCB0byBjb25uZWN0IGNncm91cHMgYW5k
+IG5hbWVzcGFjZXMgYnkKPj4gICBjcmVhdGluZyBhIG5ldyBjZ3JvdXAgZXZlcnkgdGltZSBhIG5l
+dyBuYW1lc3BhY2Ugd2FzIGNyZWF0ZWQuIEl0IGRpZAo+PiAgIG5vdCBzb2x2ZSBhbnkgb2YgdGhl
+IGFib3ZlIG1lbnRpb25lZCBwcm9ibGVtcyBhbmQgd2FzIGxhdGVyIGRyb3BwZWQKPj4gICBmcm9t
+IHRoZSBrZXJuZWwuIEluY2lkZW50YWxseSB0aG91Z2gsIGl0IHVzZWQgdGhlIHNhbWUgY29uZmln
+IG9wdGlvbgo+PiAgIG5hbWUgQ09ORklHX0NHUk9VUF9OUyBhcyB1c2VkIGluIG15IHByb3RvdHlw
+ZSEKPj4KPj4gSW50cm9kdWNpbmcgQ0dyb3VwIE5hbWVzcGFjZXMKPj4gICBXaXRoIHVuaWZpZWQg
+Y2dyb3VwIGhpZXJhcmNoeQo+PiAgIChEb2N1bWVudGF0aW9uL2Nncm91cHMvdW5pZmllZC1oaWVy
+YXJjaHkudHh0KSwgdGhlIGNvbnRhaW5lcnMgY2FuIG5vdwo+PiAgIGhhdmUgYSBtdWNoIG1vcmUg
+Y29oZXJlbnQgY2dyb3VwIHZpZXcgYW5kIGl0cyBlYXN5IHRvIGFzc29jaWF0ZSBhCj4+ICAgY29u
+dGFpbmVyIHdpdGggYSBzaW5nbGUgY2dyb3VwLiBUaGlzIGFsc28gYWxsb3dzIHVzIHRvIHZpcnR1
+YWxpemUgdGhlCj4+ICAgY2dyb3VwIHZpZXcgZm9yIHRhc2tzIGluc2lkZSB0aGUgY29udGFpbmVy
+Lgo+Pgo+PiAgIFRoZSBuZXcgQ0dyb3VwIE5hbWVzcGFjZSBhbGxvd3MgYSBwcm9jZXNzIHRvIOKA
+nHVuc2hhcmXigJ0gaXRzIGNncm91cAo+PiAgIGhpZXJhcmNoeSBzdGFydGluZyBmcm9tIHRoZSBj
+Z3JvdXAgaXRzIGN1cnJlbnRseSBpbi4KPj4gICBGb3IgRXg6Cj4+ICAgJCBjYXQgL3Byb2Mvc2Vs
+Zi9jZ3JvdXAKPj4gICAwOmNwdXNldCxjcHUsY3B1YWNjdCxtZW1vcnksZGV2aWNlcyxmcmVlemVy
+LGh1Z2V0bGI6L2JhdGNoam9icy9jX2pvYl9pZDEKPj4gICAkIGxzIC1sIC9wcm9jL3NlbGYvbnMv
+Y2dyb3VwCj4+ICAgbHJ3eHJ3eHJ3eCAxIHJvb3Qgcm9vdCAwIDIwMTQtMDctMTUgMTA6MzcgL3By
+b2Mvc2VsZi9ucy9jZ3JvdXAgLT4gY2dyb3VwOls0MDI2NTMxODM1XQo+PiAgICQgfi91bnNoYXJl
+IC1jICAjIGNhbGxzIHVuc2hhcmUoQ0xPTkVfTkVXQ0dST1VQKSBhbmQgZXhlY+KAmXMgL2Jpbi9i
+YXNoCj4+ICAgW25zXSQgbHMgLWwgL3Byb2Mvc2VsZi9ucy9jZ3JvdXAKPj4gICBscnd4cnd4cnd4
+IDEgcm9vdCByb290IDAgMjAxNC0wNy0xNSAxMDozNSAvcHJvYy9zZWxmL25zL2Nncm91cCAtPgo+
+PiAgIGNncm91cDpbNDAyNjUzMjE4M10KPj4gICAjIEZyb20gd2l0aGluIG5ldyBjZ3JvdXBucywg
+cHJvY2VzcyBzZWVzIHRoYXQgaXRzIGluIHRoZSByb290IGNncm91cAo+PiAgIFtuc10kIGNhdCAv
+cHJvYy9zZWxmL2Nncm91cAo+PiAgIDA6Y3B1c2V0LGNwdSxjcHVhY2N0LG1lbW9yeSxkZXZpY2Vz
+LGZyZWV6ZXIsaHVnZXRsYjovCj4+Cj4+ICAgIyBGcm9tIGdsb2JhbCBjZ3JvdXBuczoKPj4gICAk
+IGNhdCAvcHJvYy88cGlkPi9jZ3JvdXAKPj4gICAwOmNwdXNldCxjcHUsY3B1YWNjdCxtZW1vcnks
+ZGV2aWNlcyxmcmVlemVyLGh1Z2V0bGI6L2JhdGNoam9icy9jX2pvYl9pZDEKPj4KPj4gICAjIFVu
+c2hhcmUgY2dyb3VwbnMgYWxvbmcgd2l0aCB1c2VybnMgYW5kIG1vdW50bnMKPj4gICAjIEZvbGxv
+d2luZyBjYWxscyB1bnNoYXJlKENMT05FX05FV0NHUk9VUHxDTE9ORV9ORVdVU0VSfENMT05FX05F
+V05TKSwgdGhlbgo+PiAgICMgc2V0cyB1cCB1aWQvZ2lkIG1hcCBhbmQgZXhlY+KAmXMgL2Jpbi9i
+YXNoCj4+ICAgJCB+L3Vuc2hhcmUgLWMgLXUgLW0KPj4KPj4gICAjIE9yaWdpbmFsbHksIHdlIHdl
+cmUgaW4gL2JhdGNoam9icy9jX2pvYl9pZDEgY2dyb3VwLiBNb3VudCBvdXIgb3duIGNncm91cAo+
+PiAgICMgaGllcmFyY2h5Lgo+PiAgIFtuc10kIG1vdW50IC10IGNncm91cCBjZ3JvdXAgL3RtcC9j
+Z3JvdXAKPj4gICBbbnNdJCBscyAtbCAvdG1wL2Nncm91cAo+PiAgIHRvdGFsIDAKPj4gICAtci0t
+ci0tci0tIDEgcm9vdCByb290IDAgMjAxNC0xMC0xMyAwOTozMiBjZ3JvdXAuY29udHJvbGxlcnMK
+Pj4gICAtci0tci0tci0tIDEgcm9vdCByb290IDAgMjAxNC0xMC0xMyAwOTozMiBjZ3JvdXAucG9w
+dWxhdGVkCj4+ICAgLXJ3LXItLXItLSAxIHJvb3Qgcm9vdCAwIDIwMTQtMTAtMTMgMDk6MjUgY2dy
+b3VwLnByb2NzCj4+ICAgLXJ3LXItLXItLSAxIHJvb3Qgcm9vdCAwIDIwMTQtMTAtMTMgMDk6MzIg
+Y2dyb3VwLnN1YnRyZWVfY29udHJvbAo+Pgo+PiAgIFRoZSBjZ3JvdXBucy1yb290ICgvYmF0Y2hq
+b2JzL2Nfam9iX2lkMSBpbiBhYm92ZSBleGFtcGxlKSBiZWNvbWVzIHRoZQo+PiAgIGZpbGVzeXN0
+ZW0gcm9vdCBmb3IgdGhlIG5hbWVzcGFjZSBzcGVjaWZpYyBjZ3JvdXBmcyBtb3VudC4KPj4KPj4g
+ICBUaGUgdmlydHVhbGl6YXRpb24gb2YgL3Byb2Mvc2VsZi9jZ3JvdXAgZmlsZSBjb21iaW5lZCB3
+aXRoIHJlc3RyaWN0aW5nCj4+ICAgdGhlIHZpZXcgb2YgY2dyb3VwIGhpZXJhcmNoeSBieSBuYW1l
+c3BhY2UtcHJpdmF0ZSBjZ3JvdXBmcyBtb3VudAo+PiAgIHNob3VsZCBwcm92aWRlIGEgY29tcGxl
+dGVseSBpc29sYXRlZCBjZ3JvdXAgdmlldyBpbnNpZGUgdGhlIGNvbnRhaW5lci4KPj4KPj4gICBJ
+biBpdHMgY3VycmVudCBmb3JtLCB0aGUgY2dyb3VwIG5hbWVzcGFjZXMgcGF0Y2hlc2V0IHByb3Zp
+ZGVzIGZvbGxvd2luZwo+PiAgIGJlaGF2aW9yOgo+Pgo+PiAgICgxKSBUaGUg4oCccm9vdOKAnSBj
+Z3JvdXAgZm9yIGEgY2dyb3VwIG5hbWVzcGFjZSBpcyB0aGUgY2dyb3VwIGluIHdoaWNoCj4+ICAg
+ICAgIHRoZSBwcm9jZXNzIGNhbGxpbmcgdW5zaGFyZSBpcyBydW5uaW5nLgo+PiAgICAgICBGb3Ig
+ZXguIGlmIGEgcHJvY2VzcyBpbiAvYmF0Y2hqb2JzL2Nfam9iX2lkMSBjZ3JvdXAgY2FsbHMgdW5z
+aGFyZSwKPj4gICAgICAgY2dyb3VwIC9iYXRjaGpvYnMvY19qb2JfaWQxIGJlY29tZXMgdGhlIGNn
+cm91cG5zLXJvb3QuCj4+ICAgICAgIEZvciB0aGUgaW5pdF9jZ3JvdXBfbnMsIHRoaXMgaXMgdGhl
+IHJlYWwgcm9vdCAo4oCcL+KAnSkgY2dyb3VwCj4+ICAgICAgIChpZGVudGlmaWVkIGluIGNvZGUg
+YXMgY2dycF9kZmxfcm9vdC5jZ3JwKS4KPj4KPj4gICAoMikgVGhlIGNncm91cG5zLXJvb3QgY2dy
+b3VwIGRvZXMgbm90IGNoYW5nZSBldmVuIGlmIHRoZSBuYW1lc3BhY2UKPj4gICAgICAgY3JlYXRv
+ciBwcm9jZXNzIGxhdGVyIG1vdmVzIHRvIGEgZGlmZmVyZW50IGNncm91cC4KPj4gICAgICAgJCB+
+L3Vuc2hhcmUgLWMgIyB1bnNoYXJlIGNncm91cG5zIGluIHNvbWUgY2dyb3VwCj4+ICAgICAgIFtu
+c10kIGNhdCAvcHJvYy9zZWxmL2Nncm91cAo+PiAgICAgICAwOmNwdXNldCxjcHUsY3B1YWNjdCxt
+ZW1vcnksZGV2aWNlcyxmcmVlemVyLGh1Z2V0bGI6Lwo+PiAgICAgICBbbnNdJCBta2RpciBzdWJf
+Y2dycF8xCj4+ICAgICAgIFtuc10kIGVjaG8gMCA+IHN1Yl9jZ3JwXzEvY2dyb3VwLnByb2NzCj4+
+ICAgICAgIFtuc10kIGNhdCAvcHJvYy9zZWxmL2Nncm91cAo+PiAgICAgICAwOmNwdXNldCxjcHUs
+Y3B1YWNjdCxtZW1vcnksZGV2aWNlcyxmcmVlemVyLGh1Z2V0bGI6L3N1Yl9jZ3JwXzEKPj4KPj4g
+ICAoMykgRWFjaCBwcm9jZXNzIGdldHMgaXRzIENHUk9VUE5TIHNwZWNpZmljIHZpZXcgb2YKPj4g
+ICAgICAgL3Byb2MvPHBpZD4vY2dyb3VwLgo+PiAgIChhKSBQcm9jZXNzZXMgcnVubmluZyBpbnNp
+ZGUgdGhlIGNncm91cCBuYW1lc3BhY2Ugd2lsbCBiZSBhYmxlIHRvIHNlZQo+PiAgICAgICBjZ3Jv
+dXAgcGF0aHMgKGluIC9wcm9jL3NlbGYvY2dyb3VwKSBvbmx5IGluc2lkZSB0aGVpciByb290IGNn
+cm91cAo+PiAgICAgICBbbnNdJCBzbGVlcCAxMDAwMDAgJiAgIyBGcm9tIHdpdGhpbiB1bnNoYXJl
+ZCBjZ3JvdXBucwo+PiAgICAgICBbMV0gNzM1Mwo+PiAgICAgICBbbnNdJCBlY2hvIDczNTMgPiBz
+dWJfY2dycF8xL2Nncm91cC5wcm9jcwo+PiAgICAgICBbbnNdJCBjYXQgL3Byb2MvNzM1My9jZ3Jv
+dXAKPj4gICAgICAgMDpjcHVzZXQsY3B1LGNwdWFjY3QsbWVtb3J5LGRldmljZXMsZnJlZXplcixo
+dWdldGxiOi9zdWJfY2dycF8xCj4+Cj4+ICAgKGIpIEZyb20gZ2xvYmFsIGNncm91cG5zLCB0aGUg
+cmVhbCBjZ3JvdXAgcGF0aCB3aWxsIGJlIHZpc2libGU6Cj4+ICAgICAgICQgY2F0IC9wcm9jLzcz
+NTMvY2dyb3VwCj4+ICAgICAgIDA6Y3B1c2V0LGNwdSxjcHVhY2N0LG1lbW9yeSxkZXZpY2VzLGZy
+ZWV6ZXIsaHVnZXRsYjovYmF0Y2hqb2JzL2Nfam9iX2lkMS9zdWJfY2dycF8xCj4KPiBUaGlzIGlz
+IGEgbGl0dGxlIHdlaXJkLiAgTm90IHN1cmUgaXQncyBhIHByb2JsZW0uCj4KPj4KPj4gICAoYykg
+RnJvbSBhIHNpYmxpbmcgY2dyb3VwbnMgKGNncm91cG5zIHJvb3QtZWQgYXQgYSBzaWJsaW5nIGNn
+cm91cCksIG5vIGNncm91cAo+PiAgICAgICBwYXRoIHdpbGwgYmUgdmlzaWJsZToKPj4gICAgICAg
+IyBuczIncyBjZ3JvdXBucy1yb290IGlzIGF0ICcvYmF0Y2hqb2JzL2Nfam9iX2lkMicKPj4gICAg
+ICAgW25zMl0kIGNhdCAvcHJvYy83MzUzL2Nncm91cAo+PiAgICAgICBbbnMyXSQKPj4gICAgICAg
+VGhpcyBpcyBzYW1lIGFzIHdoZW4gY2dyb3VwIGhpZXJhcmNoeSBpcyBub3QgbW91bnRlZCBhdCBh
+bGwuCj4+ICAgICAgIChJbiBjb3JyZWN0IGNvbnRhaW5lciBzZXR1cCB0aG91Z2gsIGl0IHNob3Vs
+ZCBub3QgYmUgcG9zc2libGUgdG8KPj4gICAgICAgIGFjY2VzcyBQSURzIGluIGFub3RoZXIgY29u
+dGFpbmVyIGluIHRoZSBmaXJzdCBwbGFjZS4pCj4+Cj4+ICAgKDQpIFByb2Nlc3NlcyBpbnNpZGUg
+YSBjZ3JvdXBucyBhcmUgbm90IGFsbG93ZWQgdG8gbW92ZSBvdXQgb2YgdGhlCj4+ICAgICAgIGNn
+cm91cG5zLXJvb3QuIFRoaXMgaXMgdHJ1ZSBldmVuIGlmIGEgcHJpdmlsZWdlZCBwcm9jZXNzIGlu
+IGdsb2JhbAo+PiAgICAgICBjZ3JvdXBucyB0cmllcyB0byBtb3ZlIHRoZSBwcm9jZXNzIG91dCBv
+ZiBpdHMgY2dyb3VwbnMtcm9vdC4KPj4KPj4gICAgICAgIyBGcm9tIGdsb2JhbCBjZ3JvdXBucwo+
+PiAgICAgICAkIGNhdCAvcHJvYy83MzUzL2Nncm91cAo+PiAgICAgICAwOmNwdXNldCxjcHUsY3B1
+YWNjdCxtZW1vcnksZGV2aWNlcyxmcmVlemVyLGh1Z2V0bGI6L2JhdGNoam9icy9jX2pvYl9pZDEv
+c3ViX2NncnBfMQo+PiAgICAgICAjIGNncm91cG5zLXJvb3QgZm9yIDczNTMgaXMgL2JhdGNoam9i
+cy9jX2pvYl9pZDEKPj4gICAgICAgJCBlY2hvIDczNTMgPiBiYXRjaGpvYnMvY19qb2JfaWQyL2Nn
+cm91cC5wcm9jcwo+PiAgICAgICAtYmFzaDogZWNobzogd3JpdGUgZXJyb3I6IE9wZXJhdGlvbiBu
+b3QgcGVybWl0dGVkCj4+Cj4KPj4KPj4gICAoNikgV2hlbiBzb21lIHRocmVhZCBmcm9tIGEgbXVs
+dGktdGhyZWFkZWQgcHJvY2VzcyB1bnNoYXJlcyBpdHMKPj4gICAgICAgY2dyb3VwLW5hbWVzcGFj
+ZSwgdGhlIG5ldyBjZ3JvdXBucyBnZXRzIGFwcGxpZWQgdG8gdGhlIGVudGlyZQo+PiAgICAgICBw
+cm9jZXNzIChhbGwgdGhlIHRocmVhZHMpLiBUaGlzIHNob3VsZCBiZSBPSyBzaW5jZQo+PiAgICAg
+ICB1bmlmaWVkLWhpZXJhcmNoeSBvbmx5IGFsbG93cyBwcm9jZXNzLWxldmVsIGNvbnRhaW5lcml6
+YXRpb24uIFNvCj4+ICAgICAgIGFsbCB0aGUgdGhyZWFkcyBpbiB0aGUgcHJvY2VzcyB3aWxsIGhh
+dmUgdGhlIHNhbWUgY2dyb3VwLiBBbmQgYm90aAo+PiAgICAgICAtIGNoYW5naW5nIGNncm91cHMg
+YW5kIHVuc2hhcmluZyBuYW1lc3BhY2VzIC0gYXJlIHByb3RlY3RlZCB1bmRlcgo+PiAgICAgICB0
+aHJlYWRncm91cF9sb2NrKHRhc2spLgo+Cj4gVGhpcyBzZWVtcyBvZGQgdG8gbWUuICBEb2VzIHVu
+c2hhcmluZyB0aGUgY2dyb3VwbnMgdW5zaGFyZSBmb3IgYWxsCj4gdGFza3MgaW4gdGhlIHByb2Nl
+c3M/ICBJZiBub3QsIHRoZW4gSSB0aGluayB0aGF0IGl0IHNob3VsZG4ndCBjaGFuZ2UKPiB0aGUg
+Y2dyb3VwIGVpdGhlci4KPgoKVW5zaGFyaW5nIGNnb3J1cG5zIHVuc2hhcmVzIGZvciBhbGwgdGFz
+a3MgaW4gdGhlIHByb2Nlc3MsIHllcy4KClRoZSBjZ3JvdXAgY2hhbmdlcyBhcmUgcHJvdGVjdGVk
+IGJ5IHRocmVhZGdyb3VwX2xvY2suIFNvIGl0IG1hZGUgc2Vuc2UKdG8gcHJvdGVjdCBjZ3JvdXBu
+cyBjaGFuZ2VzICh1bnNoYXJlIG9yIHNldG5zKSBieSB0aGUgc2FtZSBsb2NrIGFzIHdlCmRvbid0
+IHdhbnQgdGFzaydzIGNncm91cCB0byBjaGFuZ2UgdW5kZXJuZWF0aCB3aGlsZSB3ZSBhcmUgY2hh
+bmdpbmcKaXRzIGNncm91cC1uYW1lc3BhY2UuIE5vIGNncm91cCBjaGFuZ2UgaGFwcGVucyBkdXJp
+bmcgdGhlCnVuc2hhcmUvc2V0bnMgY2FsbC4KCj4gV2hhdCBkaWQgeW91IGVuZCB1cCBkb2luZyB0
+byBncmFudCBwZXJtaXNzaW9uIHRvIHVuc2hhcmUgdGhlIGNncm91cCBucz8KPgoKQ3VycmVudGx5
+IHRoZSBvbmx5IHJlcXVpcmVtZW50IGlzIG5zX2NhcGFibGUoY2dyb3VwbnMtPnVzZXJfbnMsCkNB
+UF9TWVNfQURNSU4pLiBJdHMgcG9zc2libGUgdG8gcmVmaW5lIHRoaXMgZnVydGhlciwgYnV0IGZv
+ciBub3cgSQpqdXN0IGtlcHQgaXQgc2ltcGxlci4gSSBhbSBsb29raW5nIGludG8gdGhlIGV4cGxp
+Y2l0IHBlcm1pc3Npb24gY2hlY2sKZGlzY3Vzc2VkIHByZXZpb3VzbHkgKGh0dHBzOi8vbGttbC5v
+cmcvbGttbC8yMDE0LzcvMjkvNDAyKSwgYnV0IHdhbnRlZAp0byBnZXQgdGhpcyBvdXQgc29vbmVy
+LgoKPiAtLUFuZHkKClRoYW5rcywKLS0gCkFkaXR5YQpfX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJz
+QGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9u
+Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
