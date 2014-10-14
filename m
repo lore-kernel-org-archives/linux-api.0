@@ -1,55 +1,74 @@
-From: Daniel Borkmann <dborkman@redhat.com>
-Subject: Re: [PATCH v9 net-next 2/4] net: filter: split filter.h and expose
- eBPF to user space
-Date: Tue, 14 Oct 2014 22:27:45 +0200
-Message-ID: <543D8741.5040107@redhat.com>
-References: <1409714246-31054-1-git-send-email-ast@plumgrid.com> <1409714246-31054-3-git-send-email-ast@plumgrid.com> <540737DF.1010801@redhat.com> <543C0A2D.5040908@redhat.com> <CAMEtUuw-iAGiYqmcN0AOkku0+Wto7810JJo9HEQvQN-2F=baTA@mail.gmail.com> <543CD206.709@redhat.com> <CAMEtUuws+AtOdwud8_YjXhs=yomt8nY+49f_UuhofcmhV58c1Q@mail.gmail.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH net-next RFC 0/3] virtio-net: Conditionally enable tx
+	interrupt
+Date: Wed, 15 Oct 2014 00:51:33 +0300
+Message-ID: <20141014215133.GA23344@redhat.com>
+References: <1413011806-3813-1-git-send-email-jasowang@redhat.com>
+	<20141014.145327.365091739350390288.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMEtUuws+AtOdwud8_YjXhs=yomt8nY+49f_UuhofcmhV58c1Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Disposition: inline
+In-Reply-To: <20141014.145327.365091739350390288.davem@davemloft.net>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: David Miller <davem@davemloft.net>
+Cc: kvm@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/14/2014 10:43 AM, Alexei Starovoitov wrote:
-> On Tue, Oct 14, 2014 at 12:34 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
->> On 10/13/2014 11:49 PM, Alexei Starovoitov wrote:
->>>
->>> On Mon, Oct 13, 2014 at 10:21 AM, Daniel Borkmann <dborkman@redhat.com>
->>> wrote:
->>>>
->>>> On 09/03/2014 05:46 PM, Daniel Borkmann wrote:
->>>> ...
->>>>>
->>>>> Ok, given you post the remaining two RFCs later on this window as
->>>>> you indicate, I have no objections:
->>>>>
->>>>> Acked-by: Daniel Borkmann <dborkman@redhat.com>
->>>>
->>>> Ping, Alexei, are you still sending the patch for bpf_common.h or
->>>> do you want me to take care of this?
->>>
->>> It's not forgotten.
->>> I'm not sending it only because net-next is closed
->>> and it seems to be -next material.
->>
->> Well, the point was since it's UAPI you're modifying, that it needs
->> to be shipped before it first gets exposed to user land ...
->>
->> I think that should be reason enough ... there's no point in doing
->> this at a later point in time.
->
-> Moving common #defines from filter.h into bpf_common.h can
-> be done at any point in time. For the sake of argument if
-> there is an app that includes both filter.h and bpf.h, it will
-> continue to work just fine.
+On Tue, Oct 14, 2014 at 02:53:27PM -0400, David Miller wrote:
+> From: Jason Wang <jasowang@redhat.com>
+> Date: Sat, 11 Oct 2014 15:16:43 +0800
+> 
+> > We free old transmitted packets in ndo_start_xmit() currently, so any
+> > packet must be orphaned also there. This was used to reduce the overhead of
+> > tx interrupt to achieve better performance. But this may not work for some
+> > protocols such as TCP stream. TCP depends on the value of sk_wmem_alloc to
+> > implement various optimization for small packets stream such as TCP small
+> > queue and auto corking. But orphaning packets early in ndo_start_xmit()
+> > disable such things more or less since sk_wmem_alloc was not accurate. This
+> > lead extra low throughput for TCP stream of small writes.
+> > 
+> > This series tries to solve this issue by enable tx interrupts for all TCP
+> > packets other than the ones with push bit or pure ACK. This is done through
+> > the support of urgent descriptor which can force an interrupt for a
+> > specified packet. If tx interrupt was enabled for a packet, there's no need
+> > to orphan it in ndo_start_xmit(), we can free it tx napi which is scheduled
+> > by tx interrupt. Then sk_wmem_alloc was more accurate than before and TCP
+> > can batch more for small write. More larger skb was produced by TCP in this
+> > case to improve both throughput and cpu utilization.
+> > 
+> > Test shows great improvements on small write tcp streams. For most of the
+> > other cases, the throughput and cpu utilization are the same in the
+> > past. Only few cases, more cpu utilization was noticed which needs more
+> > investigation.
+> > 
+> > Review and comments are welcomed.
+> 
+> I think proper accounting and queueing (at all levels, not just TCP
+> sockets) is more important than trying to skim a bunch of cycles by
+> avoiding TX interrupts.
+> 
+> Having an event to free the SKB is absolutely essential for the stack
+> to operate correctly.
+> 
+> And with virtio-net you don't even have the excuse of "the HW
+> unfortunately doesn't have an appropriate TX event."
+> 
+> So please don't play games, and instead use TX interrupts all the
+> time.  You can mitigate them in various ways, but don't turn them on
+> selectively based upon traffic type, that's terrible.
 
-Correct, but the argument was that we can _avoid_ this from the
-very beginning. Thus, user space applications making use of eBPF
-only need to include <linux/bpf.h>, nothing more.
+This got me thinking: how about using virtqueue_enable_cb_delayed
+for this mitigation?
 
-Doing this at any later point in time will just lead to the need
-to include both headers.
+It's pretty easy to implement - I'll send a proof of concept patch
+separately.
