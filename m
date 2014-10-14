@@ -1,34 +1,43 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH v9 net-next 2/4] net: filter: split filter.h and expose
- eBPF to user space
-Date: Mon, 13 Oct 2014 14:49:53 -0700
-Message-ID: <CAMEtUuw-iAGiYqmcN0AOkku0+Wto7810JJo9HEQvQN-2F=baTA@mail.gmail.com>
-References: <1409714246-31054-1-git-send-email-ast@plumgrid.com>
-	<1409714246-31054-3-git-send-email-ast@plumgrid.com>
-	<540737DF.1010801@redhat.com>
-	<543C0A2D.5040908@redhat.com>
+From: Mark Roszko <mark.roszko@gmail.com>
+Subject: Re: [RFC PATCH 3/3] i2c: show and change bus frequency via sysfs
+Date: Mon, 13 Oct 2014 21:53:20 -0400
+Message-ID: <CAJjB1qJsmFebE2u_wMe2gdrQYcEwY1-yDLpufK97EXjEoR6omQ@mail.gmail.com>
+References: <1412885235-14026-1-git-send-email-octavian.purdila@intel.com>
+ <1412885235-14026-4-git-send-email-octavian.purdila@intel.com>
+ <CAJjB1qKQ0ND2CeF=Npahn0r19WjdTwc7D3Th7PLnn0FJxHa_KQ@mail.gmail.com> <CAE1zotL4Pb5etHzakCxeDLvZR112XGGaHomZ_dbh=AQVc0wvPg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <543C0A2D.5040908@redhat.com>
+In-Reply-To: <CAE1zotL4Pb5etHzakCxeDLvZR112XGGaHomZ_dbh=AQVc0wvPg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <dborkman@redhat.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Octavian Purdila <octavian.purdila@intel.com>
+Cc: linux-i2c <linux-i2c@vger.kernel.org>, linux-api@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, Johan Hovold <johan@kernel.org>, Wolfram Sang <wsa@the-dreams.de>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 13, 2014 at 10:21 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
-> On 09/03/2014 05:46 PM, Daniel Borkmann wrote:
-> ...
->>
->> Ok, given you post the remaining two RFCs later on this window as
->> you indicate, I have no objections:
->>
->> Acked-by: Daniel Borkmann <dborkman@redhat.com>
->
->
-> Ping, Alexei, are you still sending the patch for bpf_common.h or
-> do you want me to take care of this?
+> If this limitations exists
+>they are not introduced by this patch. This patch just exposes the
+>frequency so that it can be read or changed in userspace.
 
-It's not forgotten.
-I'm not sending it only because net-next is closed
-and it seems to be -next material.
+Ah, well right now you can have an i2c bus with driver 1 and 2. Say
+the i2c bus is configured for 60khz in kernel space which normally
+can't be changed. Driver 1 talks to a slave that cannot go above
+100khz. Now the userspace interface is added to the i2c bus. Some
+userspace application decides to reconfigure the bus for 400khz and do
+its communication to some slave device. Now the kernel tries to do
+some background talking to the drive 1 slave and suddenly finds it can
+no longer communicate with it. Right now with the kernel space only
+configuration, the system is safe from being messed up easily. It's
+more of a sanity of configuration issue.
+
+>On a different not, I have noticed that a fixed set of frequencies
+>might not be the best API, since multiple drivers rather support a
+>rather large set of frequencies in a range. A better API might be to
+>expose a min-max range and let the bus driver adjust the requested
+>frequency. I will follow up with a second version that does that.
+
+I was actually thinking you could eliminate the table of supported
+frequencies and just have the bus driver handle the set frequency
+decision itself and just return an error code if it's invalid. There
+are legitiamate drivers that cannot do more than a list of frequencies
+already as well. One example is here:
+http://lxr.free-electrons.com/source/drivers/i2c/busses/i2c-bcm-kona.c#L717
