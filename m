@@ -1,31 +1,55 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [PATCH net] net: filter: move common defines into bpf_common.h
-Date: Tue, 14 Oct 2014 16:07:07 -0400 (EDT)
-Message-ID: <20141014.160707.30937593503083649.davem@davemloft.net>
-References: <1413277734-13053-1-git-send-email-ast@plumgrid.com>
+From: Daniel Borkmann <dborkman@redhat.com>
+Subject: Re: [PATCH v9 net-next 2/4] net: filter: split filter.h and expose
+ eBPF to user space
+Date: Tue, 14 Oct 2014 22:27:45 +0200
+Message-ID: <543D8741.5040107@redhat.com>
+References: <1409714246-31054-1-git-send-email-ast@plumgrid.com> <1409714246-31054-3-git-send-email-ast@plumgrid.com> <540737DF.1010801@redhat.com> <543C0A2D.5040908@redhat.com> <CAMEtUuw-iAGiYqmcN0AOkku0+Wto7810JJo9HEQvQN-2F=baTA@mail.gmail.com> <543CD206.709@redhat.com> <CAMEtUuws+AtOdwud8_YjXhs=yomt8nY+49f_UuhofcmhV58c1Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1413277734-13053-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org
-Cc: mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, chema-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAMEtUuws+AtOdwud8_YjXhs=yomt8nY+49f_UuhofcmhV58c1Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Chema Gonzalez <chema@google.com>, Eric Dumazet <edumazet@google.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Date: Tue, 14 Oct 2014 02:08:54 -0700
+On 10/14/2014 10:43 AM, Alexei Starovoitov wrote:
+> On Tue, Oct 14, 2014 at 12:34 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
+>> On 10/13/2014 11:49 PM, Alexei Starovoitov wrote:
+>>>
+>>> On Mon, Oct 13, 2014 at 10:21 AM, Daniel Borkmann <dborkman@redhat.com>
+>>> wrote:
+>>>>
+>>>> On 09/03/2014 05:46 PM, Daniel Borkmann wrote:
+>>>> ...
+>>>>>
+>>>>> Ok, given you post the remaining two RFCs later on this window as
+>>>>> you indicate, I have no objections:
+>>>>>
+>>>>> Acked-by: Daniel Borkmann <dborkman@redhat.com>
+>>>>
+>>>> Ping, Alexei, are you still sending the patch for bpf_common.h or
+>>>> do you want me to take care of this?
+>>>
+>>> It's not forgotten.
+>>> I'm not sending it only because net-next is closed
+>>> and it seems to be -next material.
+>>
+>> Well, the point was since it's UAPI you're modifying, that it needs
+>> to be shipped before it first gets exposed to user land ...
+>>
+>> I think that should be reason enough ... there's no point in doing
+>> this at a later point in time.
+>
+> Moving common #defines from filter.h into bpf_common.h can
+> be done at any point in time. For the sake of argument if
+> there is an app that includes both filter.h and bpf.h, it will
+> continue to work just fine.
 
-> userspace programs that use eBPF instruction macros need to include two files:
-> uapi/linux/filter.h and uapi/linux/bpf.h
-> Move common macro definitions that are shared between classic BPF and eBPF
-> into uapi/linux/bpf_common.h, so that user app can include only one bpf.h file
-> 
-> Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-> ---
-> 
-> Daniel believes that this patch has to be done for this merge window.
-> I think it can wait till next, but it won't hurt now either.
+Correct, but the argument was that we can _avoid_ this from the
+very beginning. Thus, user space applications making use of eBPF
+only need to include <linux/bpf.h>, nothing more.
 
-Applied, thanks everyone.
+Doing this at any later point in time will just lead to the need
+to include both headers.
