@@ -1,123 +1,49 @@
-From: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATH v3 4/4] i2c: i2c-diolan-u2c: sysfs bus frequency support
-Date: Wed, 15 Oct 2014 23:03:31 +0300
-Message-ID: <1413403411-8895-5-git-send-email-octavian.purdila@intel.com>
+From: Octavian Purdila <octavian.purdila@intel.com>
+Subject: [PATH v3 2/4] i2c: document struct i2c_adapter
+Date: Wed, 15 Oct 2014 23:03:29 +0300
+Message-ID: <1413403411-8895-3-git-send-email-octavian.purdila@intel.com>
 References: <1413403411-8895-1-git-send-email-octavian.purdila@intel.com>
-Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1413403411-8895-1-git-send-email-octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: wsa-z923LK4zBo2bacvFa/9K2g@public.gmane.org
-Cc: linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org, johan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1413403411-8895-1-git-send-email-octavian.purdila@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: wsa@the-dreams.de
+Cc: linux@roeck-us.net, johan@kernel.org, linux-i2c@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Octavian Purdila <octavian.purdila@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add support for showing and changing the bus frequency via
-sysfs.
+Document the i2c_adapter fields that must be initialized before
+calling i2c_add_adapter().
 
-Tested on a DLN2 adapter run in U2C-12 compatibility mode.
-
-Cc: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
-Signed-off-by: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Octavian Purdila <octavian.purdila@intel.com>
 ---
- drivers/i2c/busses/i2c-diolan-u2c.c | 49 +++++++++++++++++++++++++------------
- 1 file changed, 34 insertions(+), 15 deletions(-)
+ include/linux/i2c.h | 16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/i2c/busses/i2c-diolan-u2c.c b/drivers/i2c/busses/i2c-diolan-u2c.c
-index b19a310..ff4e120 100644
---- a/drivers/i2c/busses/i2c-diolan-u2c.c
-+++ b/drivers/i2c/busses/i2c-diolan-u2c.c
-@@ -71,6 +71,9 @@
- #define U2C_I2C_FREQ_STD	100000
- #define U2C_I2C_FREQ(s)		(1000000 / (2 * (s - 1) + 10))
+diff --git a/include/linux/i2c.h b/include/linux/i2c.h
+index a95efeb..36041e2 100644
+--- a/include/linux/i2c.h
++++ b/include/linux/i2c.h
+@@ -418,9 +418,19 @@ int i2c_recover_bus(struct i2c_adapter *adap);
+ int i2c_generic_gpio_recovery(struct i2c_adapter *adap);
+ int i2c_generic_scl_recovery(struct i2c_adapter *adap);
  
-+#define U2C_I2C_MIN_FREQ	U2C_I2C_FREQ(U2C_I2C_SPEED_2KHZ)
-+#define U2C_I2C_MAX_FREQ	U2C_I2C_FREQ_FAST
-+
- #define DIOLAN_USB_TIMEOUT	100	/* in ms */
- #define DIOLAN_SYNC_TIMEOUT	20	/* in ms */
- 
-@@ -298,31 +301,24 @@ static void diolan_get_serial(struct i2c_diolan_u2c *dev)
- 	}
- }
- 
--static int diolan_init(struct i2c_diolan_u2c *dev)
-+static int diolan_set_freq(struct i2c_adapter *adapter, unsigned int *frequency)
- {
-+	struct i2c_diolan_u2c *dev = i2c_get_adapdata(adapter);
- 	int speed, ret;
- 
--	if (frequency >= 200000) {
-+	if (*frequency >= 200000) {
- 		speed = U2C_I2C_SPEED_FAST;
--		frequency = U2C_I2C_FREQ_FAST;
--	} else if (frequency >= 100000 || frequency == 0) {
-+		*frequency = U2C_I2C_FREQ_FAST;
-+	} else if (*frequency >= 100000 || *frequency == 0) {
- 		speed = U2C_I2C_SPEED_STD;
--		frequency = U2C_I2C_FREQ_STD;
-+		*frequency = U2C_I2C_FREQ_STD;
- 	} else {
--		speed = U2C_I2C_SPEED(frequency);
-+		speed = U2C_I2C_SPEED(*frequency);
- 		if (speed > U2C_I2C_SPEED_2KHZ)
- 			speed = U2C_I2C_SPEED_2KHZ;
--		frequency = U2C_I2C_FREQ(speed);
-+		*frequency = U2C_I2C_FREQ(speed);
- 	}
- 
--	dev_info(&dev->interface->dev,
--		 "Diolan U2C at USB bus %03d address %03d speed %d Hz\n",
--		 dev->usb_dev->bus->busnum, dev->usb_dev->devnum, frequency);
--
--	diolan_flush_input(dev);
--	diolan_fw_version(dev);
--	diolan_get_serial(dev);
--
- 	/* Set I2C speed */
- 	ret = diolan_set_speed(dev, speed);
- 	if (ret < 0)
-@@ -336,6 +332,23 @@ static int diolan_init(struct i2c_diolan_u2c *dev)
- 	if (speed != U2C_I2C_SPEED_FAST)
- 		ret = diolan_set_clock_synch_timeout(dev, DIOLAN_SYNC_TIMEOUT);
- 
-+	return 0;
-+}
-+
-+static int diolan_init(struct i2c_diolan_u2c *dev)
-+{
-+	int ret;
-+
-+	diolan_flush_input(dev);
-+	diolan_fw_version(dev);
-+	diolan_get_serial(dev);
-+
-+	ret = diolan_set_freq(&dev->adapter, &frequency);
-+
-+	dev_info(&dev->interface->dev,
-+		 "Diolan U2C at USB bus %03d address %03d speed %d Hz\n",
-+		 dev->usb_dev->bus->busnum, dev->usb_dev->devnum, frequency);
-+
- 	return ret;
- }
- 
-@@ -471,6 +484,9 @@ static int diolan_u2c_probe(struct usb_interface *interface,
- 	dev->adapter.owner = THIS_MODULE;
- 	dev->adapter.class = I2C_CLASS_HWMON;
- 	dev->adapter.algo = &diolan_usb_algorithm;
-+	dev->adapter.min_freq = U2C_I2C_MIN_FREQ;
-+	dev->adapter.max_freq = U2C_I2C_MAX_FREQ;
-+	dev->adapter.set_freq = diolan_set_freq;
- 	i2c_set_adapdata(&dev->adapter, dev);
- 	snprintf(dev->adapter.name, sizeof(dev->adapter.name),
- 		 DRIVER_NAME " at bus %03d device %03d",
-@@ -485,6 +501,9 @@ static int diolan_u2c_probe(struct usb_interface *interface,
- 		goto error_free;
- 	}
- 
-+	/* set the current bus frequency */
-+	dev->adapter.freq = frequency;
-+
- 	/* and finally attach to i2c layer */
- 	ret = i2c_add_adapter(&dev->adapter);
- 	if (ret < 0) {
+-/*
+- * i2c_adapter is the structure used to identify a physical i2c bus along
+- * with the access algorithms necessary to access it.
++/**
++ * struct i2c_adapter - represents an I2C physical bus
++ *
++ * The following members must be set by the adapter driver before
++ * calling i2c_add_adapter():
++ *
++ * @owner: the module owner, usually THIS_MODULE
++ * @class: bitmask of I2C_CLASS_*
++ * @algo: see struct i2c_algorithm
++ * @dev.parent: set this to the struct device of the driver (e.g. pci_dev->dev,
++ *	usb->interface->dev, platform_device->dev etc.)
++ * @name: name of this i2c bus
++ * @bus_recovery_info: see struct i2c_bus_recovery_info. Optional.
+  */
+ struct i2c_adapter {
+ 	struct module *owner;
 -- 
 1.9.1
