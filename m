@@ -1,7 +1,7 @@
 From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: [PATCH v3 1/6] tpm: merge duplicate transmit_cmd() functions
-Date: Wed, 15 Oct 2014 13:35:11 +0200
-Message-ID: <1413372916-12091-2-git-send-email-jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v3 5/6] tpm: TPM 2.0 CRB Interface
+Date: Wed, 15 Oct 2014 13:35:15 +0200
+Message-ID: <1413372916-12091-6-git-send-email-jarkko.sakkinen@linux.intel.com>
 References: <1413372916-12091-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1413372916-12091-1-git-send-email-jarkko.sakkinen@linux.intel.com>
@@ -10,258 +10,386 @@ To: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel S
 Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, josh.triplett@intel.com, christophe.ricard@gmail.com, will.c.arthur@intel.com, monty.wiseman@intel.com, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Merged transmit_cmd() functions in tpm-interface.c and tpm-sysfs.c.
-Added "tpm_" prefix for consistency sake. Changed cmd parameter as
-opaque. This enables to use separate command structures for TPM1
-and TPM2 commands instead of putting everything to struct tpm_cmd_t.
+tpm_crb is a driver for TPM 2.0 Command Response Buffer (CRB) Interface
+as defined in PC Client Platform TPM Profile (PTP) Specification.
+
+Only polling and single locality is supported as these are the limitations
+of the available hardware, Platform Trust Techonlogy (PTT) in Haswell
+CPUs.
+
+The driver always applies CRB with ACPI start because PTT reports using
+only ACPI start as start method but as a result of my testing it requires
+also CRB start.
 
 Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 ---
- drivers/char/tpm/tpm-dev.c       |  4 +--
- drivers/char/tpm/tpm-interface.c | 53 +++++++++++++++++++++-------------------
- drivers/char/tpm/tpm-sysfs.c     | 23 ++---------------
- drivers/char/tpm/tpm.h           |  5 ++--
- 4 files changed, 34 insertions(+), 51 deletions(-)
+ drivers/char/tpm/Kconfig   |   9 ++
+ drivers/char/tpm/Makefile  |   1 +
+ drivers/char/tpm/tpm_crb.c | 329 +++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 339 insertions(+)
+ create mode 100644 drivers/char/tpm/tpm_crb.c
 
-diff --git a/drivers/char/tpm/tpm-dev.c b/drivers/char/tpm/tpm-dev.c
-index d9b774e..bd79d33 100644
---- a/drivers/char/tpm/tpm-dev.c
-+++ b/drivers/char/tpm/tpm-dev.c
-@@ -140,8 +140,8 @@ static ssize_t tpm_write(struct file *file, const char __user *buf,
- 	}
+diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
+index c54cac3..10c9419 100644
+--- a/drivers/char/tpm/Kconfig
++++ b/drivers/char/tpm/Kconfig
+@@ -122,4 +122,13 @@ config TCG_XEN
+ 	  To compile this driver as a module, choose M here; the module
+ 	  will be called xen-tpmfront.
  
- 	/* atomic tpm command send and result receive */
--	out_size = tpm_transmit(priv->chip, priv->data_buffer,
--				sizeof(priv->data_buffer));
-+	out_size = tpm_transmit_cmd(priv->chip, priv->data_buffer,
-+				    sizeof(priv->data_buffer), NULL);
- 	if (out_size < 0) {
- 		mutex_unlock(&priv->buffer_mutex);
- 		return out_size;
-diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
-index 6af1700..fedb4d5 100644
---- a/drivers/char/tpm/tpm-interface.c
-+++ b/drivers/char/tpm/tpm-interface.c
-@@ -331,8 +331,8 @@ EXPORT_SYMBOL_GPL(tpm_calc_ordinal_duration);
- /*
-  * Internal kernel interface to transmit TPM commands
-  */
--ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
--		     size_t bufsiz)
-+static ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
-+			    size_t bufsiz)
- {
- 	ssize_t rc;
- 	u32 count, ordinal;
-@@ -398,9 +398,10 @@ out:
- #define TPM_DIGEST_SIZE 20
- #define TPM_RET_CODE_IDX 6
- 
--static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
--			    int len, const char *desc)
-+ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd,
-+			 int len, const char *desc)
- {
-+	struct tpm_output_header *header;
- 	int err;
- 
- 	len = tpm_transmit(chip, (u8 *) cmd, len);
-@@ -409,7 +410,9 @@ static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
- 	else if (len < TPM_HEADER_SIZE)
- 		return -EFAULT;
- 
--	err = be32_to_cpu(cmd->header.out.return_code);
-+	header = (struct tpm_output_header *) cmd;
++config TCG_CRB
++	tristate "TPM 2.0 CRB Interface"
++	depends on X86 && ACPI
++	---help---
++	  If you have a TPM security chip that is compliant with the
++	  TCG CRB 2.0 TPM specification say Yes and it will be accessible
++	  from within Linux.  To compile this driver as a module, choose
++	  M here; the module will be called tpm_crb.
 +
-+	err = be32_to_cpu(header->return_code);
- 	if (err != 0 && desc)
- 		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
- 
-@@ -448,7 +451,7 @@ ssize_t tpm_getcap(struct device *dev, __be32 subcap_id, cap_t *cap,
- 		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 		tpm_cmd.params.getcap_in.subcap = subcap_id;
- 	}
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
- 	if (!rc)
- 		*cap = tpm_cmd.params.getcap_out.cap;
- 	return rc;
-@@ -464,8 +467,8 @@ void tpm_gen_interrupt(struct tpm_chip *chip)
- 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
- 
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
--			"attempting to determine the timeouts");
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
-+			      "attempting to determine the timeouts");
- }
- EXPORT_SYMBOL_GPL(tpm_gen_interrupt);
- 
-@@ -484,8 +487,8 @@ static int tpm_startup(struct tpm_chip *chip, __be16 startup_type)
- 	struct tpm_cmd_t start_cmd;
- 	start_cmd.header.in = tpm_startup_header;
- 	start_cmd.params.startup_in.startup_type = startup_type;
--	return transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
--			    "attempting to start the TPM");
-+	return tpm_transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
-+				"attempting to start the TPM");
- }
- 
- int tpm_get_timeouts(struct tpm_chip *chip)
-@@ -500,7 +503,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
- 	tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
- 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
- 
- 	if (rc == TPM_ERR_INVALID_POSTINIT) {
- 		/* The TPM is not started, we are the first to talk to it.
-@@ -513,7 +516,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
- 		tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
- 		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 		tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
--		rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
-+		rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
- 				  NULL);
- 	}
- 	if (rc) {
-@@ -575,8 +578,8 @@ duration:
- 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
- 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_DURATION;
- 
--	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
--			"attempting to determine the durations");
-+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
-+			      "attempting to determine the durations");
- 	if (rc)
- 		return rc;
- 
-@@ -631,8 +634,8 @@ static int tpm_continue_selftest(struct tpm_chip *chip)
- 	struct tpm_cmd_t cmd;
- 
- 	cmd.header.in = continue_selftest_header;
--	rc = transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
--			  "continue selftest");
-+	rc = tpm_transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
-+			      "continue selftest");
- 	return rc;
- }
- 
-@@ -672,8 +675,8 @@ int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
- 
- 	cmd.header.in = pcrread_header;
- 	cmd.params.pcrread_in.pcr_idx = cpu_to_be32(pcr_idx);
--	rc = transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
--			  "attempting to read a pcr value");
-+	rc = tpm_transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
-+			      "attempting to read a pcr value");
- 
- 	if (rc == 0)
- 		memcpy(res_buf, cmd.params.pcrread_out.pcr_result,
-@@ -737,8 +740,8 @@ int tpm_pcr_extend(u32 chip_num, int pcr_idx, const u8 *hash)
- 	cmd.header.in = pcrextend_header;
- 	cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(pcr_idx);
- 	memcpy(cmd.params.pcrextend_in.hash, hash, TPM_DIGEST_SIZE);
--	rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
--			  "attempting extend a PCR value");
-+	rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
-+			      "attempting extend a PCR value");
- 
- 	tpm_chip_put(chip);
- 	return rc;
-@@ -817,7 +820,7 @@ int tpm_send(u32 chip_num, void *cmd, size_t buflen)
- 	if (chip == NULL)
- 		return -ENODEV;
- 
--	rc = transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
-+	rc = tpm_transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
- 
- 	tpm_chip_put(chip);
- 	return rc;
-@@ -938,14 +941,14 @@ int tpm_pm_suspend(struct device *dev)
- 		cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(tpm_suspend_pcr);
- 		memcpy(cmd.params.pcrextend_in.hash, dummy_hash,
- 		       TPM_DIGEST_SIZE);
--		rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
--				  "extending dummy pcr before suspend");
-+		rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
-+				      "extending dummy pcr before suspend");
- 	}
- 
- 	/* now do the actual savestate */
- 	for (try = 0; try < TPM_RETRY; try++) {
- 		cmd.header.in = savestate_header;
--		rc = transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
-+		rc = tpm_transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
- 
- 		/*
- 		 * If the TPM indicates that it is too busy to respond to
-@@ -1022,7 +1025,7 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
- 		tpm_cmd.header.in = tpm_getrandom_header;
- 		tpm_cmd.params.getrandom_in.num_bytes = cpu_to_be32(num_bytes);
- 
--		err = transmit_cmd(chip, &tpm_cmd,
-+		err = tpm_transmit_cmd(chip, &tpm_cmd,
- 				   TPM_GETRANDOM_RESULT_SIZE + num_bytes,
- 				   "attempting get random");
- 		if (err)
-diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
-index 01730a2..8ecb052 100644
---- a/drivers/char/tpm/tpm-sysfs.c
-+++ b/drivers/char/tpm/tpm-sysfs.c
-@@ -20,25 +20,6 @@
- #include <linux/device.h>
- #include "tpm.h"
- 
--/* XXX for now this helper is duplicated in tpm-interface.c */
--static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
--			    int len, const char *desc)
--{
--	int err;
--
--	len = tpm_transmit(chip, (u8 *) cmd, len);
--	if (len <  0)
--		return len;
--	else if (len < TPM_HEADER_SIZE)
--		return -EFAULT;
--
--	err = be32_to_cpu(cmd->header.out.return_code);
--	if (err != 0 && desc)
--		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
--
--	return err;
--}
--
- #define READ_PUBEK_RESULT_SIZE 314
- #define TPM_ORD_READPUBEK cpu_to_be32(124)
- static struct tpm_input_header tpm_readpubek_header = {
-@@ -58,8 +39,8 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
- 	struct tpm_chip *chip = dev_get_drvdata(dev);
- 
- 	tpm_cmd.header.in = tpm_readpubek_header;
--	err = transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
--			   "attempting to read the PUBEK");
-+	err = tpm_transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
-+			       "attempting to read the PUBEK");
- 	if (err)
- 		goto out;
- 
-diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-index e4d0888..12326e1 100644
---- a/drivers/char/tpm/tpm.h
-+++ b/drivers/char/tpm/tpm.h
-@@ -314,9 +314,8 @@ struct tpm_cmd_t {
- } __packed;
- 
- ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
--
--ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
--		     size_t bufsiz);
-+ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd, int len,
-+			 const char *desc);
- extern int tpm_get_timeouts(struct tpm_chip *);
- extern void tpm_gen_interrupt(struct tpm_chip *);
- extern int tpm_do_selftest(struct tpm_chip *);
+ endif # TCG_TPM
+diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+index d3cf905..15e3b4c 100644
+--- a/drivers/char/tpm/Makefile
++++ b/drivers/char/tpm/Makefile
+@@ -22,3 +22,4 @@ obj-$(CONFIG_TCG_INFINEON) += tpm_infineon.o
+ obj-$(CONFIG_TCG_IBMVTPM) += tpm_ibmvtpm.o
+ obj-$(CONFIG_TCG_ST33_I2C) += tpm_i2c_stm_st33.o
+ obj-$(CONFIG_TCG_XEN) += xen-tpmfront.o
++obj-$(CONFIG_TCG_CRB) += tpm_crb.o
+diff --git a/drivers/char/tpm/tpm_crb.c b/drivers/char/tpm/tpm_crb.c
+new file mode 100644
+index 0000000..0509228
+--- /dev/null
++++ b/drivers/char/tpm/tpm_crb.c
+@@ -0,0 +1,329 @@
++/*
++ * Copyright (C) 2014 Intel Corporation
++ *
++ * Authors:
++ * Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
++ *
++ * Maintained by: <tpmdd-devel@lists.sourceforge.net>
++ *
++ * This device driver implements the TPM interface as defined in
++ * the TCG CRB 2.0 TPM specification.
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; version 2
++ * of the License.
++ */
++
++#include <linux/acpi.h>
++#include <linux/highmem.h>
++#include <linux/rculist.h>
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include "tpm.h"
++
++#define ACPI_SIG_TPM2 "TPM2"
++
++static const u8 CRB_ACPI_START_UUID[] = {
++	/* 0000 */ 0xAB, 0x6C, 0xBF, 0x6B, 0x63, 0x54, 0x14, 0x47,
++	/* 0008 */ 0xB7, 0xCD, 0xF0, 0x20, 0x3C, 0x03, 0x68, 0xD4
++};
++
++enum crb_defaults {
++	CRB_ACPI_START_REVISION_ID = 1,
++	CRB_ACPI_START_INDEX = 1,
++};
++
++enum crb_start_method {
++	CRB_SM_ACPI_START = 2,
++	CRB_SM_CRB = 7,
++	CRB_SM_CRB_WITH_ACPI_START = 8,
++};
++
++struct acpi_tpm2 {
++	struct acpi_table_header hdr;
++	u16 platform_class;
++	u16 reserved;
++	u64 control_area_pa;
++	u32 start_method;
++};
++
++enum crb_ca_request {
++	CRB_CA_REQ_GO_IDLE	= BIT(0),
++	CRB_CA_REQ_CMD_READY	= BIT(1),
++};
++
++enum crb_ca_status {
++	CRB_CA_STS_ERROR	= BIT(0),
++	CRB_CA_STS_TPM_IDLE	= BIT(1),
++};
++
++struct crb_control_area {
++	u32 req;
++	u32 sts;
++	u32 cancel;
++	u32 start;
++	u32 int_enable;
++	u32 int_sts;
++	u32 cmd_size;
++	u64 cmd_pa;
++	u32 rsp_size;
++	u64 rsp_pa;
++} __packed;
++
++enum crb_status {
++	CRB_STS_COMPLETE	= BIT(0),
++};
++
++enum crb_flags {
++	CRB_FL_ACPI_START	= BIT(0),
++	CRB_FL_CRB_START	= BIT(1),
++};
++
++struct crb_priv {
++	unsigned int flags;
++	struct crb_control_area *cca;
++	unsigned long cca_pa;
++	acpi_handle dev_handle;
++};
++
++#ifdef CONFIG_PM_SLEEP
++int crb_suspend(struct device *dev)
++{
++	return 0;
++}
++
++static int crb_resume(struct device *dev)
++{
++	struct tpm_chip *chip = dev_get_drvdata(dev);
++
++	(void) tpm2_do_selftest(chip);
++
++	return 0;
++}
++#endif
++
++static SIMPLE_DEV_PM_OPS(crb_pm, crb_suspend, crb_resume);
++
++static u8 crb_status(struct tpm_chip *chip)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	u8 sts = 0;
++
++	if ((le32_to_cpu(priv->cca->start) & 1) != 1)
++		sts |= CRB_STS_COMPLETE;
++
++	return sts;
++}
++
++static int crb_recv(struct tpm_chip *chip, u8 *buf, size_t count)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	struct crb_control_area *cca;
++	unsigned int expected;
++	unsigned long offset;
++	u8 *resp;
++
++	cca = priv->cca;
++	if (le32_to_cpu(cca->sts) & CRB_CA_STS_ERROR)
++		return -EIO;
++
++	offset = le64_to_cpu(cca->rsp_pa) - priv->cca_pa;
++	resp = (u8 *) ((unsigned long) cca + offset);
++	memcpy(buf, resp, 6);
++	expected = be32_to_cpup((__be32 *) &buf[2]);
++
++	if (expected > count)
++		return -EIO;
++
++	memcpy(&buf[6], &resp[6], expected - 6);
++
++	return expected;
++}
++
++static int crb_do_acpi_start(struct tpm_chip *chip)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	union acpi_object *obj;
++	int rc;
++
++	obj = acpi_evaluate_dsm(priv->dev_handle,
++				CRB_ACPI_START_UUID,
++				CRB_ACPI_START_REVISION_ID,
++				CRB_ACPI_START_INDEX,
++				NULL);
++	if (!obj)
++		return -ENXIO;
++	rc = obj->integer.value == 0 ? 0 : -ENXIO;
++	ACPI_FREE(obj);
++	return rc;
++}
++
++static int crb_send(struct tpm_chip *chip, u8 *buf, size_t len)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	struct crb_control_area *cca;
++	u8 *cmd;
++	int rc = 0;
++
++	cca = priv->cca;
++
++	if (len > le32_to_cpu(cca->cmd_size)) {
++		dev_err(chip->dev,
++			"invalid command count value %x %zx\n",
++			(unsigned int) len,
++			(size_t) le32_to_cpu(cca->cmd_size));
++		return -E2BIG;
++	}
++
++	cmd = (u8 *) ((unsigned long) cca + le64_to_cpu(cca->cmd_pa) - priv->cca_pa);
++	memcpy(cmd, buf, len);
++	wmb();
++
++	cca->start = cpu_to_le32(1);
++	rc = crb_do_acpi_start(chip);
++	return rc;
++}
++
++static void crb_cancel(struct tpm_chip *chip)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	struct crb_control_area *cca;
++
++	cca = priv->cca;
++	cca->cancel = cpu_to_le32(1);
++	wmb();
++
++	if (crb_do_acpi_start(chip))
++		dev_err(chip->dev, "ACPI Start failed\n");
++
++	cca->cancel = 0;
++}
++
++static bool crb_req_canceled(struct tpm_chip *chip, u8 status)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++
++	return (le32_to_cpu(priv->cca->cancel) & 1) == 1;
++}
++
++static const struct tpm_class_ops tpm_crb = {
++	.status = crb_status,
++	.recv = crb_recv,
++	.send = crb_send,
++	.cancel = crb_cancel,
++	.req_canceled = crb_req_canceled,
++	.req_complete_mask = CRB_STS_COMPLETE,
++	.req_complete_val = CRB_STS_COMPLETE,
++};
++
++static int crb_acpi_add(struct acpi_device *device)
++{
++	struct tpm_chip *chip;
++	struct acpi_tpm2 *buf;
++	struct crb_priv *priv;
++	struct device *dev = &device->dev;
++	acpi_status status;
++	u32 sm;
++	int rc;
++
++	chip = tpmm_chip_alloc(dev, &tpm_crb);
++	if (IS_ERR(chip)) {
++		dev_err(dev, "allocating chip failed\n");
++		return PTR_ERR(chip);
++	}
++
++	chip->flags = TPM_CHIP_FLAG_TPM2;
++
++	status = acpi_get_table(ACPI_SIG_TPM2, 1,
++				(struct acpi_table_header **) &buf);
++	if (ACPI_FAILURE(status)) {
++		dev_err(dev, "could not get TPM2 ACPI table\n");
++		return -ENODEV;
++	}
++
++	priv = (struct crb_priv *) devm_kzalloc(dev, sizeof(struct crb_priv),
++						GFP_KERNEL);
++	if (!priv) {
++		dev_err(dev, "allocating memory failed\n");
++		return -ENOMEM;
++	}
++
++	sm = le32_to_cpu(buf->start_method);
++
++	if (sm == CRB_SM_CRB || sm == CRB_SM_CRB_WITH_ACPI_START)
++		priv->flags |= CRB_FL_CRB_START;
++
++	if (sm == CRB_SM_ACPI_START || sm == CRB_SM_CRB_WITH_ACPI_START)
++		priv->flags |= CRB_FL_ACPI_START;
++
++	priv->dev_handle = device->handle;
++	priv->cca_pa = le32_to_cpu(buf->control_area_pa);
++	priv->cca = (struct crb_control_area *)
++		devm_ioremap_nocache(dev, buf->control_area_pa, 0x1000);
++	if (!priv->cca) {
++		dev_err(dev, "allocating memory failed\n");
++		return -ENOMEM;
++	}
++
++	chip->vendor.priv = priv;
++
++	/* Default timeouts and durations */
++	chip->vendor.timeout_a = usecs_to_jiffies(TPM2_TIMEOUT_A);
++	chip->vendor.timeout_b = usecs_to_jiffies(TPM2_TIMEOUT_B);
++	chip->vendor.timeout_c = usecs_to_jiffies(TPM2_TIMEOUT_C);
++	chip->vendor.timeout_d = usecs_to_jiffies(TPM2_TIMEOUT_D);
++	chip->vendor.duration[TPM_SHORT] =
++		usecs_to_jiffies(TPM2_DURATION_SHORT);
++	chip->vendor.duration[TPM_MEDIUM] =
++		usecs_to_jiffies(TPM2_DURATION_MEDIUM);
++	chip->vendor.duration[TPM_LONG] =
++		usecs_to_jiffies(TPM2_DURATION_LONG);
++
++	rc = tpm2_do_selftest(chip);
++	if (rc) {
++		dev_err(dev, "self-test failed\n");
++		return rc;
++	}
++
++	rc = tpm_chip_register(chip);
++	if (rc) {
++		dev_err(dev, "registering the chip failed\n");
++		return rc;
++	}
++
++	return 0;
++}
++
++int crb_acpi_remove(struct acpi_device *device)
++{
++	struct device *dev = &device->dev;
++	struct tpm_chip *chip = dev_get_drvdata(dev);
++
++	tpm_chip_unregister(chip);
++	return 0;
++}
++
++static struct acpi_device_id crb_device_ids[] = {
++	{"MSFT0101", 0},
++	{"", 0},
++};
++MODULE_DEVICE_TABLE(acpi, crb_device_ids);
++
++static struct acpi_driver crb_acpi_driver = {
++	.name = "tpm_crb",
++	.ids = crb_device_ids,
++	.ops = {
++		.add = crb_acpi_add,
++		.remove = crb_acpi_remove,
++	},
++	.drv = {
++		.pm = &crb_pm,
++	},
++};
++
++module_acpi_driver(crb_acpi_driver);
++MODULE_AUTHOR("Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>");
++MODULE_DESCRIPTION("TPM2 Driver");
++MODULE_VERSION("0.1");
++MODULE_LICENSE("GPL");
 -- 
 2.1.0
