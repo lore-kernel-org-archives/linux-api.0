@@ -1,74 +1,59 @@
-From: Octavian Purdila <octavian.purdila@intel.com>
-Subject: [PATH v3 1/4] i2c: document the existing i2c sysfs ABI
-Date: Wed, 15 Oct 2014 23:03:28 +0300
-Message-ID: <1413403411-8895-2-git-send-email-octavian.purdila@intel.com>
+From: Wolfram Sang <wsa-z923LK4zBo2bacvFa/9K2g@public.gmane.org>
+Subject: Re: [PATH v3 0/4] i2c: show and change bus frequency via sysfs
+Date: Thu, 16 Oct 2014 08:53:18 +0200
+Message-ID: <20141016065317.GA1949@katana>
 References: <1413403411-8895-1-git-send-email-octavian.purdila@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1413403411-8895-1-git-send-email-octavian.purdila@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: wsa@the-dreams.de
-Cc: linux@roeck-us.net, johan@kernel.org, linux-i2c@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Octavian Purdila <octavian.purdila@intel.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="opJtzjQTFsWo+cga"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1413403411-8895-1-git-send-email-octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org, johan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds Documentation/ABI/testing/sysfs-bus-i2c which
-documents the existing i2c sysfs ABI.
 
-Signed-off-by: Octavian Purdila <octavian.purdila@intel.com>
----
- Documentation/ABI/testing/sysfs-bus-i2c | 45 +++++++++++++++++++++++++++++++++
- 1 file changed, 45 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-bus-i2c
+--opJtzjQTFsWo+cga
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-i2c b/Documentation/ABI/testing/sysfs-bus-i2c
-new file mode 100644
-index 0000000..8075585
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-bus-i2c
-@@ -0,0 +1,45 @@
-+What:		/sys/bus/i2c/devices/i2c-X
-+KernelVersion:	since at least 2.6.12
-+Contact:	linux-i2c@vger.kernel.org
-+Description:
-+		This entry represents a registered i2c bus. X is the
-+		bus number and its format is "%d".
-+
-+What:		/sys/bus/i2c/devices/i2c-X/Y
-+What:		/sys/bus/i2c/devices/Y
-+KernelVersion:	since at least 2.6.12
-+Contact:	linux-i2c@vger.kernel.org
-+Description:
-+		An i2c device attached to bus X. Format of Y is
-+		"%d-%04x" where the first number is the bus number (X)
-+		and the second number is the device i2c address.
-+
-+What:		/sys/bus/i2c/devices/i2c-X/new_device
-+KernelVersion:	2.6.31
-+Contact:	linux-i2c@vger.kernel.org
-+Description:
-+		Write only entry that allows instantiating a
-+		new i2c device on bus X. This is to be used when
-+		enumeration mechanism such as ACPI or DT are not
-+		present or not used for this device.
-+		Format: "%s %hi\n" where the first argument is the
-+		device name (no spaces allowed) and the second is the
-+		i2c address of the device.
-+
-+What:		/sys/bus/i2c/devices/i2c-X/delete_device
-+KernelVersion:	2.6.31
-+Contact:	linux-i2c@vger.kernel.org
-+Description:
-+		Write only entry that allows the removal of an i2c
-+		device from bus X.
-+		Format: "%s %hi\n" where the first argument is the
-+		device name (no spaces allowed) and the second is the
-+		i2c address of the device.
-+
-+What:		/sys/bus/i2c/devices/i2c-X/i2c-Y
-+What:		/sys/bus/i2c/devices/i2c-Y
-+KernelVersion:	3.13
-+Contact:	linux-i2c@vger.kernel.org
-+Description:
-+		An i2c device attached to bus X that is enumerated via
-+		ACPI. Y is the ACPI device name and its format is "%s".
--- 
-1.9.1
+On Wed, Oct 15, 2014 at 11:03:27PM +0300, Octavian Purdila wrote:
+> This patch series adds support to show and change the bus frequency
+> via sysfs, by exposing files to show the minimum, maximum and current
+> frequency as well as allowing the frequency to be changed. This allows
+> the user to view or change the bus frequency on a per bus level.
+
+To give you some early feedback.
+
+Patches 1-2 are nice, will review them somewhen, no general issues here.
+For patch 3, I am not convinced that sysfs is the right mechanism. Maybe
+configfs, yet I have never dealt with it, so far. So, looking into this
+might take more time since I have other core changes pending before
+that.
+
+
+--opJtzjQTFsWo+cga
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJUP2tdAAoJEBQN5MwUoCm2rIsP/2+Lmko1cCNtNSHFKV2Da35j
+qiCveF0MzEaNgeAaDT9Q1uNHpWy/y6jWEoyxd/zcMj0nY12kKTpeNOfFaDv3u42r
+zToWdA4Z6UEkQrzpniguHsjYTEv1SxW+KtkwlSkY+mHTzw+FBJSr2zIULaayvrNm
+tBaxRmp1g8iKOxddIlajW6lRRn7nlUExdROmCMgmFjgHvFm/mgJc4yy5jVNz05tA
+GTK1XfJOLRm6Xyoub8+aI2MAMffmmbnLvf9y4e/VQMjlY+OybNDAX8S3Kv+G9ovD
+wh2KOVKXzOWREz4VOfK+TSA97+xCM60ocOSdNTbWDtHsdUJMaeBCYsTWuj9lmdp5
+Bceb1zOPkPCHpyTqE8Z1jvCeQ+PxRL2iAWtQ3PbYiMUbeP35KmWrhC5uu3MXT70j
+EGde/cS7jEVlywTP06aR3kFNW0m+KD0FXtLtQJ38HYV63QTYRdVB2FKQ4IpfCWKL
+GUKAoAbqUfdC4LPLe93S7nFIdFfXbqlSH2HgRoGdBNy/zyOa2elFs15ojY9soQZs
+bUJ03G0SIaEwetrzL95Ba6KrAhahL8r2WBouqFcAjw+28ndBdng1m8E3ks59HDO8
+VRdz0CuhFMVyzeGCOdHok9kbMLCkVAuUxKB0rq1wy6RXAcv43dWM1RHVoaTrDJML
+FR7mcTAfLhJTfGT8k4BN
+=Zy+F
+-----END PGP SIGNATURE-----
+
+--opJtzjQTFsWo+cga--
