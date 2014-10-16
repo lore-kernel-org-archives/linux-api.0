@@ -1,133 +1,246 @@
-From: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
-Subject: Re: [PATH v3 4/4] i2c: i2c-diolan-u2c: sysfs bus frequency support
-Date: Thu, 16 Oct 2014 06:24:45 -0700
-Message-ID: <543FC71D.10509@roeck-us.net>
-References: <1413403411-8895-1-git-send-email-octavian.purdila@intel.com> <1413403411-8895-5-git-send-email-octavian.purdila@intel.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the kernel
+Date: Thu, 16 Oct 2014 16:18:02 +0200
+Message-ID: <CAKgNAkiPg8G13XZXG6CiaBFZ1yqY2J7_OAppDOGweuNpRaojuA@mail.gmail.com>
+References: <20141016124741.GA3832@kroah.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1413403411-8895-5-git-send-email-octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, wsa-z923LK4zBo2bacvFa/9K2g@public.gmane.org
-Cc: johan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141016124741.GA3832-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Santosh Shilimkar <santosh.shilimkar-l0cyMroinI0@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rebecca Schultz Zavin <rebecca-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Anup Patel <anup.patel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/15/2014 01:03 PM, Octavian Purdila wrote:
-> Add support for showing and changing the bus frequency via
-> sysfs.
+On Thu, Oct 16, 2014 at 2:47 PM, Greg Kroah-Hartman
+<gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
+> From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 >
-> Tested on a DLN2 adapter run in U2C-12 compatibility mode.
->
-> Cc: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
-> Signed-off-by: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> The Android binder code has been "stable" for many years now.  No matter
+> what comes in the future, we are going to have to support this API, so
+> might as well move it to the "real" part of the kernel as there's no
+> real work that needs to be done to the existing code.
+
+Where does one find the canonical documentation of the user-space API?
+
+Thanks,
+
+Michael
+
+
+> Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 > ---
->   drivers/i2c/busses/i2c-diolan-u2c.c | 49 +++++++++++++++++++++++++------------
->   1 file changed, 34 insertions(+), 15 deletions(-)
 >
-> diff --git a/drivers/i2c/busses/i2c-diolan-u2c.c b/drivers/i2c/busses/i2c-diolan-u2c.c
-> index b19a310..ff4e120 100644
-> --- a/drivers/i2c/busses/i2c-diolan-u2c.c
-> +++ b/drivers/i2c/busses/i2c-diolan-u2c.c
-> @@ -71,6 +71,9 @@
->   #define U2C_I2C_FREQ_STD	100000
->   #define U2C_I2C_FREQ(s)		(1000000 / (2 * (s - 1) + 10))
+> This was discussed in the Android miniconf at the Plumbers conference.
+> If anyone has any objections to this, please let me know, otherwise I'm
+> queueing this up for 3.19-rc1
 >
-> +#define U2C_I2C_MIN_FREQ	U2C_I2C_FREQ(U2C_I2C_SPEED_2KHZ)
-> +#define U2C_I2C_MAX_FREQ	U2C_I2C_FREQ_FAST
+>
+>  drivers/Kconfig                                    |  2 ++
+>  drivers/Makefile                                   |  1 +
+>  drivers/android/Kconfig                            | 37 ++++++++++++++++++++++
+>  drivers/android/Makefile                           |  3 ++
+>  drivers/{staging => }/android/binder.c             |  0
+>  drivers/{staging => }/android/binder.h             |  2 +-
+>  drivers/{staging => }/android/binder_trace.h       |  0
+>  drivers/staging/android/Kconfig                    | 30 ------------------
+>  drivers/staging/android/Makefile                   |  1 -
+>  include/uapi/linux/Kbuild                          |  1 +
+>  include/uapi/linux/android/Kbuild                  |  2 ++
+>  .../uapi => include/uapi/linux/android}/binder.h   |  0
+>  12 files changed, 47 insertions(+), 32 deletions(-)
+>  create mode 100644 drivers/android/Kconfig
+>  create mode 100644 drivers/android/Makefile
+>  rename drivers/{staging => }/android/binder.c (100%)
+>  rename drivers/{staging => }/android/binder.h (95%)
+>  rename drivers/{staging => }/android/binder_trace.h (100%)
+>  create mode 100644 include/uapi/linux/android/Kbuild
+>  rename {drivers/staging/android/uapi => include/uapi/linux/android}/binder.h (100%)
+>
+> diff --git a/drivers/Kconfig b/drivers/Kconfig
+> index 1a693d3f9d51..569ff7886dc3 100644
+> --- a/drivers/Kconfig
+> +++ b/drivers/Kconfig
+> @@ -182,4 +182,6 @@ source "drivers/ras/Kconfig"
+>
+>  source "drivers/thunderbolt/Kconfig"
+>
+> +source "drivers/android/Kconfig"
 > +
->   #define DIOLAN_USB_TIMEOUT	100	/* in ms */
->   #define DIOLAN_SYNC_TIMEOUT	20	/* in ms */
+>  endmenu
+> diff --git a/drivers/Makefile b/drivers/Makefile
+> index ebee55537a05..60d19820a4d4 100644
+> --- a/drivers/Makefile
+> +++ b/drivers/Makefile
+> @@ -161,3 +161,4 @@ obj-$(CONFIG_POWERCAP)              += powercap/
+>  obj-$(CONFIG_MCB)              += mcb/
+>  obj-$(CONFIG_RAS)              += ras/
+>  obj-$(CONFIG_THUNDERBOLT)      += thunderbolt/
+> +obj-$(CONFIG_ANDROID)          += android/
+> diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
+> new file mode 100644
+> index 000000000000..bdfc6c6f4f5a
+> --- /dev/null
+> +++ b/drivers/android/Kconfig
+> @@ -0,0 +1,37 @@
+> +menu "Android"
+> +
+> +config ANDROID
+> +       bool "Android Drivers"
+> +       ---help---
+> +         Enable support for various drivers needed on the Android platform
+> +
+> +if ANDROID
+> +
+> +config ANDROID_BINDER_IPC
+> +       bool "Android Binder IPC Driver"
+> +       depends on MMU
+> +       default n
+> +       ---help---
+> +         Binder is used in Android for both communication between processes,
+> +         and remote method invocation.
+> +
+> +         This means one Android process can call a method/routine in another
+> +         Android process, using Binder to identify, invoke and pass arguments
+> +         between said processes.
+> +
+> +config ANDROID_BINDER_IPC_32BIT
+> +       bool
+> +       depends on !64BIT && ANDROID_BINDER_IPC
+> +       default y
+> +       ---help---
+> +         The Binder API has been changed to support both 32 and 64bit
+> +         applications in a mixed environment.
+> +
+> +         Enable this to support an old 32-bit Android user-space (v4.4 and
+> +         earlier).
+> +
+> +         Note that enabling this will break newer Android user-space.
+> +
+> +endif # if ANDROID
+> +
+> +endmenu
+> diff --git a/drivers/android/Makefile b/drivers/android/Makefile
+> new file mode 100644
+> index 000000000000..3b7e4b072c58
+> --- /dev/null
+> +++ b/drivers/android/Makefile
+> @@ -0,0 +1,3 @@
+> +ccflags-y += -I$(src)                  # needed for trace events
+> +
+> +obj-$(CONFIG_ANDROID_BINDER_IPC)       += binder.o
+> diff --git a/drivers/staging/android/binder.c b/drivers/android/binder.c
+> similarity index 100%
+> rename from drivers/staging/android/binder.c
+> rename to drivers/android/binder.c
+> diff --git a/drivers/staging/android/binder.h b/drivers/android/binder.h
+> similarity index 95%
+> rename from drivers/staging/android/binder.h
+> rename to drivers/android/binder.h
+> index eb0834656dfe..5dc6a66b0665 100644
+> --- a/drivers/staging/android/binder.h
+> +++ b/drivers/android/binder.h
+> @@ -24,7 +24,7 @@
+>  #define BINDER_IPC_32BIT 1
+>  #endif
 >
-> @@ -298,31 +301,24 @@ static void diolan_get_serial(struct i2c_diolan_u2c *dev)
->   	}
->   }
+> -#include "uapi/binder.h"
+> +#include <uapi/linux/android/binder.h>
 >
-> -static int diolan_init(struct i2c_diolan_u2c *dev)
-> +static int diolan_set_freq(struct i2c_adapter *adapter, unsigned int *frequency)
-
-I really dislike this kind of side-effect programming, where a function
-named as _set changes one of its parameters. Not my call to make here,
-though, so if the i2c maintainers are fine with it
-
-Acked-by: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
-
->   {
-> +	struct i2c_diolan_u2c *dev = i2c_get_adapdata(adapter);
->   	int speed, ret;
+>  #endif /* _LINUX_BINDER_H */
 >
-> -	if (frequency >= 200000) {
-> +	if (*frequency >= 200000) {
->   		speed = U2C_I2C_SPEED_FAST;
-> -		frequency = U2C_I2C_FREQ_FAST;
-> -	} else if (frequency >= 100000 || frequency == 0) {
-> +		*frequency = U2C_I2C_FREQ_FAST;
-> +	} else if (*frequency >= 100000 || *frequency == 0) {
->   		speed = U2C_I2C_SPEED_STD;
-> -		frequency = U2C_I2C_FREQ_STD;
-> +		*frequency = U2C_I2C_FREQ_STD;
->   	} else {
-> -		speed = U2C_I2C_SPEED(frequency);
-> +		speed = U2C_I2C_SPEED(*frequency);
->   		if (speed > U2C_I2C_SPEED_2KHZ)
->   			speed = U2C_I2C_SPEED_2KHZ;
-> -		frequency = U2C_I2C_FREQ(speed);
-> +		*frequency = U2C_I2C_FREQ(speed);
->   	}
+> diff --git a/drivers/staging/android/binder_trace.h b/drivers/android/binder_trace.h
+> similarity index 100%
+> rename from drivers/staging/android/binder_trace.h
+> rename to drivers/android/binder_trace.h
+> diff --git a/drivers/staging/android/Kconfig b/drivers/staging/android/Kconfig
+> index 7a0e28852965..7e012f37792b 100644
+> --- a/drivers/staging/android/Kconfig
+> +++ b/drivers/staging/android/Kconfig
+> @@ -1,37 +1,7 @@
+>  menu "Android"
 >
-> -	dev_info(&dev->interface->dev,
-> -		 "Diolan U2C at USB bus %03d address %03d speed %d Hz\n",
-> -		 dev->usb_dev->bus->busnum, dev->usb_dev->devnum, frequency);
+> -config ANDROID
+> -       bool "Android Drivers"
+> -       ---help---
+> -         Enable support for various drivers needed on the Android platform
 > -
-> -	diolan_flush_input(dev);
-> -	diolan_fw_version(dev);
-> -	diolan_get_serial(dev);
+>  if ANDROID
+>
+> -config ANDROID_BINDER_IPC
+> -       bool "Android Binder IPC Driver"
+> -       depends on MMU
+> -       default n
+> -       ---help---
+> -         Binder is used in Android for both communication between processes,
+> -         and remote method invocation.
 > -
->   	/* Set I2C speed */
->   	ret = diolan_set_speed(dev, speed);
->   	if (ret < 0)
-> @@ -336,6 +332,23 @@ static int diolan_init(struct i2c_diolan_u2c *dev)
->   	if (speed != U2C_I2C_SPEED_FAST)
->   		ret = diolan_set_clock_synch_timeout(dev, DIOLAN_SYNC_TIMEOUT);
+> -         This means one Android process can call a method/routine in another
+> -         Android process, using Binder to identify, invoke and pass arguments
+> -         between said processes.
+> -
+> -config ANDROID_BINDER_IPC_32BIT
+> -       bool
+> -       depends on !64BIT && ANDROID_BINDER_IPC
+> -       default y
+> -       ---help---
+> -         The Binder API has been changed to support both 32 and 64bit
+> -         applications in a mixed environment.
+> -
+> -         Enable this to support an old 32-bit Android user-space (v4.4 and
+> -         earlier).
+> -
+> -         Note that enabling this will break newer Android user-space.
+> -
+>  config ASHMEM
+>         bool "Enable the Anonymous Shared Memory Subsystem"
+>         default n
+> diff --git a/drivers/staging/android/Makefile b/drivers/staging/android/Makefile
+> index 517ad5ffa429..479b2b86f8c8 100644
+> --- a/drivers/staging/android/Makefile
+> +++ b/drivers/staging/android/Makefile
+> @@ -2,7 +2,6 @@ ccflags-y += -I$(src)                   # needed for trace events
 >
-> +	return 0;
-> +}
-> +
-> +static int diolan_init(struct i2c_diolan_u2c *dev)
-> +{
-> +	int ret;
-> +
-> +	diolan_flush_input(dev);
-> +	diolan_fw_version(dev);
-> +	diolan_get_serial(dev);
-> +
-> +	ret = diolan_set_freq(&dev->adapter, &frequency);
-> +
-> +	dev_info(&dev->interface->dev,
-> +		 "Diolan U2C at USB bus %03d address %03d speed %d Hz\n",
-> +		 dev->usb_dev->bus->busnum, dev->usb_dev->devnum, frequency);
-> +
->   	return ret;
->   }
+>  obj-y                                  += ion/
 >
-> @@ -471,6 +484,9 @@ static int diolan_u2c_probe(struct usb_interface *interface,
->   	dev->adapter.owner = THIS_MODULE;
->   	dev->adapter.class = I2C_CLASS_HWMON;
->   	dev->adapter.algo = &diolan_usb_algorithm;
-> +	dev->adapter.min_freq = U2C_I2C_MIN_FREQ;
-> +	dev->adapter.max_freq = U2C_I2C_MAX_FREQ;
-> +	dev->adapter.set_freq = diolan_set_freq;
->   	i2c_set_adapdata(&dev->adapter, dev);
->   	snprintf(dev->adapter.name, sizeof(dev->adapter.name),
->   		 DRIVER_NAME " at bus %03d device %03d",
-> @@ -485,6 +501,9 @@ static int diolan_u2c_probe(struct usb_interface *interface,
->   		goto error_free;
->   	}
+> -obj-$(CONFIG_ANDROID_BINDER_IPC)       += binder.o
+>  obj-$(CONFIG_ASHMEM)                   += ashmem.o
+>  obj-$(CONFIG_ANDROID_LOGGER)           += logger.o
+>  obj-$(CONFIG_ANDROID_TIMED_OUTPUT)     += timed_output.o
+> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+> index 70e150ebc6c9..1bbaf6457861 100644
+> --- a/include/uapi/linux/Kbuild
+> +++ b/include/uapi/linux/Kbuild
+> @@ -1,4 +1,5 @@
+>  # UAPI Header export list
+> +header-y += android/
+>  header-y += byteorder/
+>  header-y += can/
+>  header-y += caif/
+> diff --git a/include/uapi/linux/android/Kbuild b/include/uapi/linux/android/Kbuild
+> new file mode 100644
+> index 000000000000..ca011eec252a
+> --- /dev/null
+> +++ b/include/uapi/linux/android/Kbuild
+> @@ -0,0 +1,2 @@
+> +# UAPI Header export list
+> +header-y += binder.h
+> diff --git a/drivers/staging/android/uapi/binder.h b/include/uapi/linux/android/binder.h
+> similarity index 100%
+> rename from drivers/staging/android/uapi/binder.h
+> rename to include/uapi/linux/android/binder.h
+> --
+> 2.1.2
 >
-> +	/* set the current bus frequency */
-> +	dev->adapter.freq = frequency;
-> +
->   	/* and finally attach to i2c layer */
->   	ret = i2c_add_adapter(&dev->adapter);
->   	if (ret < 0) {
->
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
