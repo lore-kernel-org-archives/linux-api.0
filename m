@@ -1,246 +1,260 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the kernel
-Date: Thu, 16 Oct 2014 16:18:02 +0200
-Message-ID: <CAKgNAkiPg8G13XZXG6CiaBFZ1yqY2J7_OAppDOGweuNpRaojuA@mail.gmail.com>
-References: <20141016124741.GA3832@kroah.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141016124741.GA3832-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Santosh Shilimkar <santosh.shilimkar-l0cyMroinI0@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rebecca Schultz Zavin <rebecca-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Anup Patel <anup.patel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+From: Antonios Motakis <a.motakis@virtualopensystems.com>
+Subject: [RFC PATCH v2 1/4] vfio: platform: add device tree info API and skeleton
+Date: Thu, 16 Oct 2014 17:54:33 +0200
+Message-ID: <1413474876-28544-2-git-send-email-a.motakis@virtualopensystems.com>
+References: <1413474876-28544-1-git-send-email-a.motakis@virtualopensystems.com>
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <1413474876-28544-1-git-send-email-a.motakis@virtualopensystems.com>
+Sender: kvm-owner@vger.kernel.org
+To: kvmarm@lists.cs.columbia.edu, iommu@lists.linux-foundation.org, alex.williamson@redhat.com
+Cc: tech@virtualopensystems.com, christoffer.dall@linaro.org, eric.auger@linaro.org, kim.phillips@freescale.com, Antonios Motakis <a.motakis@virtualopensystems.com>, open list <linux-kernel@vger.kernel.org>, "open list:VFIO DRIVER" <kvm@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 16, 2014 at 2:47 PM, Greg Kroah-Hartman
-<gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
-> From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
->
-> The Android binder code has been "stable" for many years now.  No matter
-> what comes in the future, we are going to have to support this API, so
-> might as well move it to the "real" part of the kernel as there's no
-> real work that needs to be done to the existing code.
+This patch introduced the API to return device tree info about
+a PLATFORM device (if described by a device tree) and the skeleton
+of the implementation for VFIO_PLATFORM. Information about any device
+node bound by VFIO_PLATFORM should be queried via the introduced ioctl
+VFIO_DEVICE_GET_DEVTREE_INFO.
 
-Where does one find the canonical documentation of the user-space API?
+The proposed API allows to get a list of strings with available property
+names, and then allows to query each property. Note that the properties
+are not indexed numerically, so they are always accessed by property name.
+The user needs to know the data type of the property he is accessing.
 
-Thanks,
+Signed-off-by: Antonios Motakis <a.motakis@virtualopensystems.com>
+---
+ drivers/vfio/platform/Makefile                |  3 +-
+ drivers/vfio/platform/devtree.c               | 70 +++++++++++++++++++++++++++
+ drivers/vfio/platform/vfio_platform_common.c  | 39 +++++++++++++++
+ drivers/vfio/platform/vfio_platform_private.h |  6 +++
+ include/uapi/linux/vfio.h                     | 26 ++++++++++
+ 5 files changed, 143 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/vfio/platform/devtree.c
 
-Michael
-
-
-> Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-> ---
->
-> This was discussed in the Android miniconf at the Plumbers conference.
-> If anyone has any objections to this, please let me know, otherwise I'm
-> queueing this up for 3.19-rc1
->
->
->  drivers/Kconfig                                    |  2 ++
->  drivers/Makefile                                   |  1 +
->  drivers/android/Kconfig                            | 37 ++++++++++++++++++++++
->  drivers/android/Makefile                           |  3 ++
->  drivers/{staging => }/android/binder.c             |  0
->  drivers/{staging => }/android/binder.h             |  2 +-
->  drivers/{staging => }/android/binder_trace.h       |  0
->  drivers/staging/android/Kconfig                    | 30 ------------------
->  drivers/staging/android/Makefile                   |  1 -
->  include/uapi/linux/Kbuild                          |  1 +
->  include/uapi/linux/android/Kbuild                  |  2 ++
->  .../uapi => include/uapi/linux/android}/binder.h   |  0
->  12 files changed, 47 insertions(+), 32 deletions(-)
->  create mode 100644 drivers/android/Kconfig
->  create mode 100644 drivers/android/Makefile
->  rename drivers/{staging => }/android/binder.c (100%)
->  rename drivers/{staging => }/android/binder.h (95%)
->  rename drivers/{staging => }/android/binder_trace.h (100%)
->  create mode 100644 include/uapi/linux/android/Kbuild
->  rename {drivers/staging/android/uapi => include/uapi/linux/android}/binder.h (100%)
->
-> diff --git a/drivers/Kconfig b/drivers/Kconfig
-> index 1a693d3f9d51..569ff7886dc3 100644
-> --- a/drivers/Kconfig
-> +++ b/drivers/Kconfig
-> @@ -182,4 +182,6 @@ source "drivers/ras/Kconfig"
->
->  source "drivers/thunderbolt/Kconfig"
->
-> +source "drivers/android/Kconfig"
-> +
->  endmenu
-> diff --git a/drivers/Makefile b/drivers/Makefile
-> index ebee55537a05..60d19820a4d4 100644
-> --- a/drivers/Makefile
-> +++ b/drivers/Makefile
-> @@ -161,3 +161,4 @@ obj-$(CONFIG_POWERCAP)              += powercap/
->  obj-$(CONFIG_MCB)              += mcb/
->  obj-$(CONFIG_RAS)              += ras/
->  obj-$(CONFIG_THUNDERBOLT)      += thunderbolt/
-> +obj-$(CONFIG_ANDROID)          += android/
-> diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
-> new file mode 100644
-> index 000000000000..bdfc6c6f4f5a
-> --- /dev/null
-> +++ b/drivers/android/Kconfig
-> @@ -0,0 +1,37 @@
-> +menu "Android"
-> +
-> +config ANDROID
-> +       bool "Android Drivers"
-> +       ---help---
-> +         Enable support for various drivers needed on the Android platform
-> +
-> +if ANDROID
-> +
-> +config ANDROID_BINDER_IPC
-> +       bool "Android Binder IPC Driver"
-> +       depends on MMU
-> +       default n
-> +       ---help---
-> +         Binder is used in Android for both communication between processes,
-> +         and remote method invocation.
-> +
-> +         This means one Android process can call a method/routine in another
-> +         Android process, using Binder to identify, invoke and pass arguments
-> +         between said processes.
-> +
-> +config ANDROID_BINDER_IPC_32BIT
-> +       bool
-> +       depends on !64BIT && ANDROID_BINDER_IPC
-> +       default y
-> +       ---help---
-> +         The Binder API has been changed to support both 32 and 64bit
-> +         applications in a mixed environment.
-> +
-> +         Enable this to support an old 32-bit Android user-space (v4.4 and
-> +         earlier).
-> +
-> +         Note that enabling this will break newer Android user-space.
-> +
-> +endif # if ANDROID
-> +
-> +endmenu
-> diff --git a/drivers/android/Makefile b/drivers/android/Makefile
-> new file mode 100644
-> index 000000000000..3b7e4b072c58
-> --- /dev/null
-> +++ b/drivers/android/Makefile
-> @@ -0,0 +1,3 @@
-> +ccflags-y += -I$(src)                  # needed for trace events
-> +
-> +obj-$(CONFIG_ANDROID_BINDER_IPC)       += binder.o
-> diff --git a/drivers/staging/android/binder.c b/drivers/android/binder.c
-> similarity index 100%
-> rename from drivers/staging/android/binder.c
-> rename to drivers/android/binder.c
-> diff --git a/drivers/staging/android/binder.h b/drivers/android/binder.h
-> similarity index 95%
-> rename from drivers/staging/android/binder.h
-> rename to drivers/android/binder.h
-> index eb0834656dfe..5dc6a66b0665 100644
-> --- a/drivers/staging/android/binder.h
-> +++ b/drivers/android/binder.h
-> @@ -24,7 +24,7 @@
->  #define BINDER_IPC_32BIT 1
->  #endif
->
-> -#include "uapi/binder.h"
-> +#include <uapi/linux/android/binder.h>
->
->  #endif /* _LINUX_BINDER_H */
->
-> diff --git a/drivers/staging/android/binder_trace.h b/drivers/android/binder_trace.h
-> similarity index 100%
-> rename from drivers/staging/android/binder_trace.h
-> rename to drivers/android/binder_trace.h
-> diff --git a/drivers/staging/android/Kconfig b/drivers/staging/android/Kconfig
-> index 7a0e28852965..7e012f37792b 100644
-> --- a/drivers/staging/android/Kconfig
-> +++ b/drivers/staging/android/Kconfig
-> @@ -1,37 +1,7 @@
->  menu "Android"
->
-> -config ANDROID
-> -       bool "Android Drivers"
-> -       ---help---
-> -         Enable support for various drivers needed on the Android platform
-> -
->  if ANDROID
->
-> -config ANDROID_BINDER_IPC
-> -       bool "Android Binder IPC Driver"
-> -       depends on MMU
-> -       default n
-> -       ---help---
-> -         Binder is used in Android for both communication between processes,
-> -         and remote method invocation.
-> -
-> -         This means one Android process can call a method/routine in another
-> -         Android process, using Binder to identify, invoke and pass arguments
-> -         between said processes.
-> -
-> -config ANDROID_BINDER_IPC_32BIT
-> -       bool
-> -       depends on !64BIT && ANDROID_BINDER_IPC
-> -       default y
-> -       ---help---
-> -         The Binder API has been changed to support both 32 and 64bit
-> -         applications in a mixed environment.
-> -
-> -         Enable this to support an old 32-bit Android user-space (v4.4 and
-> -         earlier).
-> -
-> -         Note that enabling this will break newer Android user-space.
-> -
->  config ASHMEM
->         bool "Enable the Anonymous Shared Memory Subsystem"
->         default n
-> diff --git a/drivers/staging/android/Makefile b/drivers/staging/android/Makefile
-> index 517ad5ffa429..479b2b86f8c8 100644
-> --- a/drivers/staging/android/Makefile
-> +++ b/drivers/staging/android/Makefile
-> @@ -2,7 +2,6 @@ ccflags-y += -I$(src)                   # needed for trace events
->
->  obj-y                                  += ion/
->
-> -obj-$(CONFIG_ANDROID_BINDER_IPC)       += binder.o
->  obj-$(CONFIG_ASHMEM)                   += ashmem.o
->  obj-$(CONFIG_ANDROID_LOGGER)           += logger.o
->  obj-$(CONFIG_ANDROID_TIMED_OUTPUT)     += timed_output.o
-> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-> index 70e150ebc6c9..1bbaf6457861 100644
-> --- a/include/uapi/linux/Kbuild
-> +++ b/include/uapi/linux/Kbuild
-> @@ -1,4 +1,5 @@
->  # UAPI Header export list
-> +header-y += android/
->  header-y += byteorder/
->  header-y += can/
->  header-y += caif/
-> diff --git a/include/uapi/linux/android/Kbuild b/include/uapi/linux/android/Kbuild
-> new file mode 100644
-> index 000000000000..ca011eec252a
-> --- /dev/null
-> +++ b/include/uapi/linux/android/Kbuild
-> @@ -0,0 +1,2 @@
-> +# UAPI Header export list
-> +header-y += binder.h
-> diff --git a/drivers/staging/android/uapi/binder.h b/include/uapi/linux/android/binder.h
-> similarity index 100%
-> rename from drivers/staging/android/uapi/binder.h
-> rename to include/uapi/linux/android/binder.h
-> --
-> 2.1.2
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
-
+diff --git a/drivers/vfio/platform/Makefile b/drivers/vfio/platform/Makefile
+index 81de144..99f3ba1 100644
+--- a/drivers/vfio/platform/Makefile
++++ b/drivers/vfio/platform/Makefile
+@@ -1,5 +1,6 @@
+ 
+-vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o
++vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o \
++		   devtree.o
+ 
+ obj-$(CONFIG_VFIO_PLATFORM) += vfio-platform.o
+ 
+diff --git a/drivers/vfio/platform/devtree.c b/drivers/vfio/platform/devtree.c
+new file mode 100644
+index 0000000..c057be3
+--- /dev/null
++++ b/drivers/vfio/platform/devtree.c
+@@ -0,0 +1,70 @@
++#include <linux/slab.h>
++#include <linux/vfio.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include "vfio_platform_private.h"
++
++static int devtree_get_prop_list(struct device_node *np, unsigned *lenp,
++				 void __user *datap, unsigned long datasz)
++{
++	return -EINVAL;
++}
++
++static int devtree_get_strings(struct device_node *np,
++			       char *name, unsigned *lenp,
++			       void __user *datap, unsigned long datasz)
++{
++	return -EINVAL;
++}
++
++static int devtree_get_uint(struct device_node *np, char *name,
++			    uint32_t type, unsigned *lenp,
++			    void __user *datap, unsigned long datasz)
++{
++	return -EINVAL;
++}
++
++int vfio_platform_devtree_info(struct device_node *np,
++			       uint32_t type, unsigned *lenp,
++			       void __user *datap, unsigned long datasz)
++{
++	char *name;
++	long namesz;
++	int ret;
++
++	if (type == VFIO_DEVTREE_PROP_LIST) {
++		return devtree_get_prop_list(np, lenp, datap, datasz);
++	}
++
++	namesz = strnlen_user(datap, datasz);
++	if (!namesz)
++		return -EFAULT;
++	if (namesz > datasz)
++		return -EINVAL;
++
++	name = kzalloc(namesz, GFP_KERNEL);
++	if (!name)
++		return -ENOMEM;
++	if (strncpy_from_user(name, datap, namesz) <= 0) {
++		kfree(name);
++		return -EFAULT;
++	}
++
++	switch (type) {
++	case VFIO_DEVTREE_TYPE_STRINGS:
++		ret = devtree_get_strings(np, name, lenp, datap, datasz);
++		break;
++
++	case VFIO_DEVTREE_TYPE_U32:
++	case VFIO_DEVTREE_TYPE_U16:
++	case VFIO_DEVTREE_TYPE_U8:
++		ret = devtree_get_uint(np, name, type, lenp, datap, datasz);
++		break;
++
++	default:
++		ret = -EINVAL;
++	}
++
++	kfree(name);
++	return ret;
++}
+diff --git a/drivers/vfio/platform/vfio_platform_common.c b/drivers/vfio/platform/vfio_platform_common.c
+index 2a6c665..bfbee2f 100644
+--- a/drivers/vfio/platform/vfio_platform_common.c
++++ b/drivers/vfio/platform/vfio_platform_common.c
+@@ -24,6 +24,7 @@
+ #include <linux/uaccess.h>
+ #include <linux/vfio.h>
+ #include <linux/io.h>
++#include <linux/of.h>
+ 
+ #include "vfio_platform_private.h"
+ 
+@@ -244,6 +245,34 @@ static long vfio_platform_ioctl(void *device_data,
+ 
+ 		return ret;
+ 
++	} else if (cmd == VFIO_DEVICE_GET_DEVTREE_INFO) {
++		struct vfio_devtree_info info;
++		void __user *datap;
++		unsigned long datasz;
++		int ret;
++
++		if (!vdev->of_node)
++			return -EINVAL;
++
++		minsz = offsetofend(struct vfio_devtree_info, length);
++
++		if (copy_from_user(&info, (void __user *)arg, minsz))
++			return -EFAULT;
++
++		if (info.argsz < minsz)
++			return -EINVAL;
++
++		datap = (void __user *) arg + minsz;
++		datasz = info.argsz - minsz;
++
++		ret = vfio_platform_devtree_info(vdev->of_node, info.type,
++						 &info.length, datap, datasz);
++
++		if (copy_to_user((void __user *)arg, &info, minsz))
++			ret = -EFAULT;
++
++		return ret;
++
+ 	} else if (cmd == VFIO_DEVICE_RESET)
+ 		return -EINVAL;
+ 
+@@ -486,6 +515,11 @@ int vfio_platform_probe_common(struct vfio_platform_device *vdev,
+ 		return ret;
+ 	}
+ 
++	/* get device tree node for info if available */
++	vdev->of_node = of_node_get(dev->of_node);
++	if (vdev->of_node)
++		vdev->flags |= VFIO_DEVICE_FLAGS_DEVTREE;
++
+ 	mutex_init(&vdev->igate);
+ 
+ 	return 0;
+@@ -500,6 +534,11 @@ int vfio_platform_remove_common(struct device *dev)
+ 	if (!vdev)
+ 		return -EINVAL;
+ 
++	if (vdev->of_node) {
++		of_node_put(vdev->of_node);
++		vdev->of_node = NULL;
++	}
++
+ 	iommu_group_put(dev->iommu_group);
+ 	kfree(vdev);
+ 
+diff --git a/drivers/vfio/platform/vfio_platform_private.h b/drivers/vfio/platform/vfio_platform_private.h
+index 23ef038..fd40a26 100644
+--- a/drivers/vfio/platform/vfio_platform_private.h
++++ b/drivers/vfio/platform/vfio_platform_private.h
+@@ -60,6 +60,7 @@ struct vfio_platform_device {
+ 	void		*opaque;
+ 	const char	*name;
+ 	uint32_t	flags;
++	struct device_node *of_node;
+ 	/* callbacks to discover device resources */
+ 	struct resource*
+ 		(*get_resource)(struct vfio_platform_device *vdev, int i);
+@@ -77,4 +78,9 @@ extern int vfio_platform_set_irqs_ioctl(struct vfio_platform_device *vdev,
+ 			uint32_t flags, unsigned index, unsigned start,
+ 			unsigned count, void *data);
+ 
++/* device tree info support in devtree.c */
++extern int vfio_platform_devtree_info(struct device_node *np,
++				      uint32_t type, unsigned *lenp,
++				      void __user *datap, unsigned long datasz);
++
+ #endif /* VFIO_PLATFORM_PRIVATE_H */
+diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+index 1a5986c..18e6763 100644
+--- a/include/uapi/linux/vfio.h
++++ b/include/uapi/linux/vfio.h
+@@ -160,12 +160,38 @@ struct vfio_device_info {
+ #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
+ #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
+ #define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
++#define VFIO_DEVICE_FLAGS_DEVTREE (1 << 4)	/* device tree metadata */
+ 	__u32	num_regions;	/* Max region index + 1 */
+ 	__u32	num_irqs;	/* Max IRQ index + 1 */
+ };
+ #define VFIO_DEVICE_GET_INFO		_IO(VFIO_TYPE, VFIO_BASE + 7)
+ 
+ /**
++ * VFIO_DEVICE_GET_DEVTREE_INFO - _IOR(VFIO_TYPE, VFIO_BASE + 16,
++ *						struct vfio_devtree_info)
++ *
++ * Retrieve information from the device's device tree, if available.
++ * Caller will initialize data[] with a single string with the requested
++ * devicetree property name, and type depending on whether a array of strings
++ * or an array of u32 values is expected. On success, data[] will be extended
++ * with the requested information, either as an array of u32, or with a list
++ * of strings sepparated by the NULL terminating character.
++ * Return: 0 on success, -errno on failure.
++ */
++struct vfio_devtree_info {
++	__u32	argsz;
++	__u32	type;
++#define VFIO_DEVTREE_PROP_LIST		0
++#define VFIO_DEVTREE_TYPE_STRINGS	1
++#define VFIO_DEVTREE_TYPE_U8		2
++#define VFIO_DEVTREE_TYPE_U16		3
++#define VFIO_DEVTREE_TYPE_U32		4
++	__u32	length;
++	__u8	data[];
++};
++#define VFIO_DEVICE_GET_DEVTREE_INFO	_IO(VFIO_TYPE, VFIO_BASE + 17)
++
++/**
+  * VFIO_DEVICE_GET_REGION_INFO - _IOWR(VFIO_TYPE, VFIO_BASE + 8,
+  *				       struct vfio_region_info)
+  *
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+2.1.1
+
