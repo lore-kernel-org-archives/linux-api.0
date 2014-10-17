@@ -1,119 +1,89 @@
-From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the kernel
-Date: Thu, 16 Oct 2014 20:25:33 -0700
-Message-ID: <CALAqxLXDZ4Q_C456o_A-V_LkcY=wpoC30kvNavyVaZRu7uK9fQ@mail.gmail.com>
-References: <20141016124741.GA3832@kroah.com>
-	<CALAqxLU05D8qQA47E77PiuuN7eVt66WEq1qn+PqdE-tpEUzFpw@mail.gmail.com>
-	<20141016231221.GA13592@kroah.com>
+From: Mark yao <mark.yao@rock-chips.com>
+Subject: Re: [PATCH v11 0/3] Add drm driver for Rockchip Socs
+Date: Fri, 17 Oct 2014 12:22:53 +0800
+Message-ID: <5440999D.5010601@rock-chips.com>
+References: <1412763781-31533-1-git-send-email-mark.yao@rock-chips.com>	<5440658D.6020504@rock-chips.com> <CAPM=9twVrmni_BRV_9-QLk+JUbcgXEjAM0g-tYH6su8=sDQ35g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141016231221.GA13592-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Santosh Shilimkar <santosh.shilimkar-l0cyMroinI0@public.gmane.org>, =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rebecca Schultz Zavin <rebecca-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Anup Patel <anup.patel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CAPM=9twVrmni_BRV_9-QLk+JUbcgXEjAM0g-tYH6su8=sDQ35g@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Dave Airlie <airlied@gmail.com>
+Cc: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dri-devel <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, =?UTF-8?B?U3TDqXBoYW5lIE1hcmNoZXNpbg==?= <marcheu@chromium.org>, dbehr@chromium.org, Olof
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 16, 2014 at 4:12 PM, Greg Kroah-Hartman
-<gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
-> On Thu, Oct 16, 2014 at 10:09:04AM -0700, John Stultz wrote:
->> On Thu, Oct 16, 2014 at 5:47 AM, Greg Kroah-Hartman
->> <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
->> > From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
->> >
->> > The Android binder code has been "stable" for many years now.  No matter
->>
->> Well, ignoring the ABI break that landed in the last year. :)
+On 2014=E5=B9=B410=E6=9C=8817=E6=97=A5 08:46, Dave Airlie wrote:
+> On 17 October 2014 10:40, Mark yao <mark.yao@rock-chips.com> wrote:
+>> Hi
+>> I think Rockchip drm driver is ready now, can it land?
+> I probably want to wait until -rc1 though I suppose since its a new
+> driver and self contained we might be able to see if Linus is
+> interested in squeezing it in.
 >
-> As no one noticed, it wasn't a "break" :)
+> Can you send me a git pull request for it against drm-next or even 3.=
+17.
 >
->> > This was discussed in the Android miniconf at the Plumbers conference.
->> > If anyone has any objections to this, please let me know, otherwise I'm
->> > queueing this up for 3.19-rc1
->>
->> So my main concerns/thoughts here are:
->>
->> Who is going to maintain this? Has Arve agreed?
->
-> Do we really need someone to do more work that has been done on it in
-> the past as an official "maintainer"?  I'll be glad to do it, as I doubt
-> it will require any time at all.
+> Dave.
+Hi, Dave
+     the git pull request:
 
-Ok. The only caution I have if Arve isn't involved is that we have in
-the past merged cleanup changes that introduced bugs, and it wasn't
-until Arve took at look at the new kernel that these were sorted out
-(see e194fd8a5d8e0a7eeed239a8534460724b62fe2d). So I think if at all
-possible getting his ack on things would be good.
+The following changes since commit 4db36870b92cdf5a79615aeabc68efc97df1=
+3918:
 
->> Are the Android guys comfortable with the ABI stability rules they'll
->> now face?
->
-> Just because something is in staging, doesn't mean you don't have to
-> follow the same ABI stability rules as the rest of the kernel.  If a
-> change had happened to this code that broke userspace in the past, I
-> would have reverted it.  So this should not be anything different from
-> what has been happening inthe past.
->
-> And the Android developers said they were happy to see this code move
-> into the "real" part of the kernel.
+   FROMLIST: iommu/rockchip: rk3288 iommu driver (2014-10-17 10:26:18 +=
+0800)
 
-Alright then.
+are available in the git repository at:
+
+   https://github.com/markyzq/kernel-drm-rockchip.git mydrm
+
+for you to fetch changes up to 0db2be88bea08ab8afe5e3d13f8a2c9e637a9514=
+:
+
+   dt-bindings: video: Add documentation for rockchip vop (2014-10-17=20
+10:27:15 +0800)
+
+----------------------------------------------------------------
+Mark yao (3):
+       drm: rockchip: Add basic drm driver
+       dt-bindings: video: Add for rockchip display subsytem
+       dt-bindings: video: Add documentation for rockchip vop
+
+  .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
+  .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
+  drivers/gpu/drm/Kconfig                            |    2 +
+  drivers/gpu/drm/Makefile                           |    1 +
+  drivers/gpu/drm/rockchip/Kconfig                   |   17 +
+  drivers/gpu/drm/rockchip/Makefile                  |    8 +
+  drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  449 ++++++
+  drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |   54 +
+  drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  200 +++
+  drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
+  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  210 +++
+  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   20 +
+  drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  293 ++++
+  drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   54 +
+  drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1427=20
+++++++++++++++++++++
+  drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  196 +++
+  16 files changed, 3036 insertions(+)
+  create mode 100644=20
+Documentation/devicetree/bindings/video/rockchip-drm.txt
+  create mode 100644=20
+Documentation/devicetree/bindings/video/rockchip-vop.txt
+  create mode 100644 drivers/gpu/drm/rockchip/Kconfig
+  create mode 100644 drivers/gpu/drm/rockchip/Makefile
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.h
 
 
->> Currently in the android space no one but libbinder should use the
->> kernel interface.
->
-> That is correct.  If you do that, you deserve all of the pain and
-> suffering and rooted machines you will get.
-
-You reference this issue quite a bit, and I have a handwavy sense of
-the problem, but do you have a more detailed link to the specific
-issue here?
-
-
->> Can we enforce that no one use this interface out-side of android (To
->> ensure its one of those "if the abi breaks and no one notices..." edge
->> cases)?
->
-> This is the kernel, we can not dictate "use", that's the good part of
-> the GPLv2 :)
->
-> Again, as no one has done this before, I strongly doubt it will happen
-> in the future.
-
-Well, the longer something is in the kernel, the more likely someone
-will depend on it.
-
-
->> I'm still hopeful that a libbinder over kdbus will eventually pan out.
->> I still see having two core IPC mechanisms (even if the use cases are
->> different in style) as a negative, and I worry this might reduce
->> motivation to unify things at the lower level. Granted, such work can
->> still continue, but the incentives do change.
->
-> Yes, things are going to change in the future, there is work happening
-> here, and there was a presentation at Plumbers about what is going to be
-> coming.
->
-> But all of the changes will be in new code.  Be it kdbus, or something
-> else if that doesn't work out.  This existing binder.c file will not be
-> changing at all.  This existing ABI, and codebase, is something that we
-> have to maintain forever for those millions of devices out there in the
-> real world today.  So as there really is nothing left to do on it, it
-> deserves to be in the main part of the kernel source tree.
-
-Well, realistically, those millions of devices out there will almost
-*never* get a kernel version bump
-
-But yes, I'm fine with it going in. I'm just a bit surprised at how
-quickly thoughts change here.
-
-This does raise the question if the same standard could be held to
-ashmem then? That's a *much* simpler and easier to maintain chunk of
-code, and is just as isolated, logic wise.  And while I think it would
-be ideal if the unpinning feature could be done more generically, if
-volatile ranges really doesn't have a future, then its maybe silly to
-hold ashmem out as well?
-
-thanks
--john
