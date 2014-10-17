@@ -1,231 +1,136 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv1 8/8] cgroup: mount cgroupns-root when inside non-init
-	cgroupns
-Date: Fri, 17 Oct 2014 14:19:57 +0200
-Message-ID: <20141017121957.GA10235@mail.hallyn.com>
-References: <adityakali-cgroupns>
-	<1413235430-22944-1-git-send-email-adityakali@google.com>
-	<1413235430-22944-9-git-send-email-adityakali@google.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
+Date: Fri, 17 Oct 2014 14:45:03 -0700
+Message-ID: <CALCETrVraoD+r4zxBoGd+BV5P275AXcRV_R00SSr8fjQzRHnUg@mail.gmail.com>
+References: <1401975635-6162-1-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1413235430-22944-9-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1401975635-6162-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
-> This patch enables cgroup mounting inside userns when a process
-> as appropriate privileges. The cgroup filesystem mounted is
-> rooted at the cgroupns-root. Thus, in a container-setup, only
-> the hierarchy under the cgroupns-root is exposed inside the container.
-> This allows container management tools to run inside the containers
-> without depending on any global state.
-> In order to support this, a new kernfs api is added to lookup the
-> dentry for the cgroupns-root.
-> 
-> Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+[Added Eric Biederman, since I think your tree might be a reasonable
+route forward for these patches.]
 
-Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+On Thu, Jun 5, 2014 at 6:40 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> Resending, adding cc:linux-api.
+>
+> Also, it may help to add a little more background -- this patch is
+> needed as a (small) part of implementing Capsicum in the Linux kernel.
+>
+> Capsicum is a security framework that has been present in FreeBSD since
+> version 9.0 (Jan 2012), and is based on concepts from object-capability
+> security [1].
+>
+> One of the features of Capsicum is capability mode, which locks down
+> access to global namespaces such as the filesystem hierarchy.  In
+> capability mode, /proc is thus inaccessible and so fexecve(3) doesn't
+> work -- hence the need for a kernel-space
 
-> ---
->  fs/kernfs/mount.c      | 48 ++++++++++++++++++++++++++++++++++++++++++++++++
->  include/linux/kernfs.h |  2 ++
->  kernel/cgroup.c        | 47 +++++++++++++++++++++++++++++++++++++++++++++--
->  3 files changed, 95 insertions(+), 2 deletions(-)
-> 
-> diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-> index f973ae9..e334f45 100644
-> --- a/fs/kernfs/mount.c
-> +++ b/fs/kernfs/mount.c
-> @@ -62,6 +62,54 @@ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
->  	return NULL;
->  }
->  
-> +/**
-> + * kernfs_make_root - create new root dentry for the given kernfs_node.
-> + * @sb: the kernfs super_block
-> + * @kn: kernfs_node for which a dentry is needed
-> + *
-> + * This can used used by callers which want to mount only a part of the kernfs
-> + * as root of the filesystem.
-> + */
-> +struct dentry *kernfs_obtain_root(struct super_block *sb,
-> +				  struct kernfs_node *kn)
-> +{
-> +	struct dentry *dentry;
-> +	struct inode *inode;
-> +
-> +	BUG_ON(sb->s_op != &kernfs_sops);
-> +
-> +	/* inode for the given kernfs_node should already exist. */
-> +	inode = ilookup(sb, kn->ino);
-> +	if (!inode) {
-> +		pr_debug("kernfs: could not get inode for '");
-> +		pr_cont_kernfs_path(kn);
-> +		pr_cont("'.\n");
-> +		return ERR_PTR(-EINVAL);
-> +	}
-> +
-> +	/* instantiate and link root dentry */
-> +	dentry = d_obtain_root(inode);
-> +	if (!dentry) {
-> +		pr_debug("kernfs: could not get dentry for '");
-> +		pr_cont_kernfs_path(kn);
-> +		pr_cont("'.\n");
-> +		return ERR_PTR(-ENOMEM);
-> +	}
-> +
-> +	/* If this is a new dentry, set it up. We need kernfs_mutex because this
-> +	 * may be called by callers other than kernfs_fill_super. */
-> +	mutex_lock(&kernfs_mutex);
-> +	if (!dentry->d_fsdata) {
-> +		kernfs_get(kn);
-> +		dentry->d_fsdata = kn;
-> +	} else {
-> +		WARN_ON(dentry->d_fsdata != kn);
-> +	}
-> +	mutex_unlock(&kernfs_mutex);
-> +
-> +	return dentry;
-> +}
-> +
->  static int kernfs_fill_super(struct super_block *sb, unsigned long magic)
->  {
->  	struct kernfs_super_info *info = kernfs_info(sb);
-> diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-> index 3c2be75..b9538e0 100644
-> --- a/include/linux/kernfs.h
-> +++ b/include/linux/kernfs.h
-> @@ -274,6 +274,8 @@ void kernfs_put(struct kernfs_node *kn);
->  struct kernfs_node *kernfs_node_from_dentry(struct dentry *dentry);
->  struct kernfs_root *kernfs_root_from_sb(struct super_block *sb);
->  
-> +struct dentry *kernfs_obtain_root(struct super_block *sb,
-> +				  struct kernfs_node *kn);
->  struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
->  				       unsigned int flags, void *priv);
->  void kernfs_destroy_root(struct kernfs_root *root);
-> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-> index 2fc0dfa..ef27dc4 100644
-> --- a/kernel/cgroup.c
-> +++ b/kernel/cgroup.c
-> @@ -1302,6 +1302,13 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
->  
->  	memset(opts, 0, sizeof(*opts));
->  
-> +	/* Implicitly add CGRP_ROOT_SANE_BEHAVIOR if inside a non-init cgroup
-> +	 * namespace.
-> +	 */
-> +	if (current->nsproxy->cgroup_ns != &init_cgroup_ns) {
-> +		opts->flags |= CGRP_ROOT_SANE_BEHAVIOR;
-> +	}
-> +
->  	while ((token = strsep(&o, ",")) != NULL) {
->  		nr_opts++;
->  
-> @@ -1391,7 +1398,7 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
->  
->  	if (opts->flags & CGRP_ROOT_SANE_BEHAVIOR) {
->  		pr_warn("sane_behavior: this is still under development and its behaviors will change, proceed at your own risk\n");
-> -		if (nr_opts != 1) {
-> +		if (nr_opts > 1) {
->  			pr_err("sane_behavior: no other mount options allowed\n");
->  			return -EINVAL;
->  		}
-> @@ -1581,6 +1588,15 @@ static void init_cgroup_root(struct cgroup_root *root,
->  		set_bit(CGRP_CPUSET_CLONE_CHILDREN, &root->cgrp.flags);
->  }
->  
-> +struct dentry *cgroupns_get_root(struct super_block *sb,
-> +				 struct cgroup_namespace *ns)
-> +{
-> +	struct dentry *nsdentry;
-> +
-> +	nsdentry = kernfs_obtain_root(sb, ns->root_cgrp->kn);
-> +	return nsdentry;
-> +}
-> +
->  static int cgroup_setup_root(struct cgroup_root *root, unsigned int ss_mask)
->  {
->  	LIST_HEAD(tmp_links);
-> @@ -1684,6 +1700,14 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
->  	int ret;
->  	int i;
->  	bool new_sb;
-> +	struct cgroup_namespace *ns =
-> +		get_cgroup_ns(current->nsproxy->cgroup_ns);
-> +
-> +	/* Check if the caller has permission to mount. */
-> +	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
-> +		put_cgroup_ns(ns);
-> +		return ERR_PTR(-EPERM);
-> +	}
->  
->  	/*
->  	 * The first time anyone tries to mount a cgroup, enable the list
-> @@ -1816,11 +1840,28 @@ out_free:
->  	kfree(opts.release_agent);
->  	kfree(opts.name);
->  
-> -	if (ret)
-> +	if (ret) {
-> +		put_cgroup_ns(ns);
->  		return ERR_PTR(ret);
-> +	}
->  
->  	dentry = kernfs_mount(fs_type, flags, root->kf_root,
->  				CGROUP_SUPER_MAGIC, &new_sb);
-> +
-> +	if (!IS_ERR(dentry)) {
-> +		/* If this mount is for a non-init cgroup namespace, then
-> +		 * Instead of root's dentry, we return the dentry specific to
-> +		 * the cgroupns->root_cgrp.
-> +		 */
-> +		if (ns != &init_cgroup_ns) {
-> +			struct dentry *nsdentry;
-> +
-> +			nsdentry = cgroupns_get_root(dentry->d_sb, ns);
-> +			dput(dentry);
-> +			dentry = nsdentry;
-> +		}
-> +	}
-> +
->  	if (IS_ERR(dentry) || !new_sb)
->  		cgroup_put(&root->cgrp);
->  
-> @@ -1833,6 +1874,7 @@ out_free:
->  		deactivate_super(pinned_sb);
->  	}
->  
-> +	put_cgroup_ns(ns);
->  	return dentry;
->  }
->  
-> @@ -1861,6 +1903,7 @@ static struct file_system_type cgroup_fs_type = {
->  	.name = "cgroup",
->  	.mount = cgroup_mount,
->  	.kill_sb = cgroup_kill_sb,
-> +	.fs_flags = FS_USERNS_MOUNT,
->  };
->  
->  static struct kobject *cgroup_kobj;
-> -- 
-> 2.1.0.rc2.206.gedb03e5
-> 
+I just found myself wanting this syscall for another reason: injecting
+programs into sandboxes or otherwise heavily locked-down namespaces.
+
+For example, I want to be able to reliably do something like nsenter
+--namespace-flags-here toybox sh.  Toybox's shell is unusual in that
+it is more or less fully functional, so this should Just Work (tm),
+except that the toybox binary might not exist in the namespace being
+entered.  If execveat were available, I could rig nsenter or a similar
+tool to open it with O_CLOEXEC, enter the namespace, and then call
+execveat.
+
+Is there any reason that these patches can't be merged more or less as
+is for 3.19?
+
+--Andy
+
+>
+> [1] http://www.cl.cam.ac.uk/research/security/capsicum/papers/2010usenix-security-capsicum-website.pdf
+>
+> ------
+>
+> This patch set adds execveat(2) for x86, and is derived from Meredydd
+> Luff's patch from Sept 2012 (https://lkml.org/lkml/2012/9/11/528).
+>
+> The primary aim of adding an execveat syscall is to allow an
+> implementation of fexecve(3) that does not rely on the /proc
+> filesystem.  The current glibc version of fexecve(3) is implemented
+> via /proc, which causes problems in sandboxed or otherwise restricted
+> environments.
+>
+> Given the desire for a /proc-free fexecve() implementation, HPA
+> suggested (https://lkml.org/lkml/2006/7/11/556) that an execveat(2)
+> syscall would be an appropriate generalization.
+>
+> Also, having a new syscall means that it can take a flags argument
+> without back-compatibility concerns.  The current implementation just
+> defines the AT_SYMLINK_NOFOLLOW flag, but other flags could be added
+> in future -- for example, flags for new namespaces (as suggested at
+> https://lkml.org/lkml/2006/7/11/474).
+>
+> Related history:
+>  - https://lkml.org/lkml/2006/12/27/123 is an example of someone
+>    realizing that fexecve() is likely to fail in a chroot environment.
+>  - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=514043 covered
+>    documenting the /proc requirement of fexecve(3) in its manpage, to
+>    "prevent other people from wasting their time".
+>  - https://bugzilla.kernel.org/show_bug.cgi?id=74481 documented that
+>    it's not possible to fexecve() a file descriptor for a script with
+>    close-on-exec set (which is possible with the implementation here).
+>  - https://bugzilla.redhat.com/show_bug.cgi?id=241609 described a
+>    problem where a process that did setuid() could not fexecve()
+>    because it no longer had access to /proc/self/fd; this has since
+>    been fixed.
+>
+>
+> Changes since Meredydd's v3 patch:
+>  - Added a selftest.
+>  - Added a man page.
+>  - Left open_exec() signature untouched to reduce patch impact
+>    elsewhere (as suggested by Al Viro).
+>  - Filled in bprm->filename with d_path() into a buffer, to avoid use
+>    of potentially-ephemeral dentry->d_name.
+>  - Patch against v3.14 (455c6fdbd21916).
+>
+>
+> David Drysdale (2):
+>   syscalls,x86: implement execveat() system call
+>   syscalls,x86: add selftest for execveat(2)
+>
+>  arch/x86/ia32/audit.c                   |   1 +
+>  arch/x86/ia32/ia32entry.S               |   1 +
+>  arch/x86/kernel/audit_64.c              |   1 +
+>  arch/x86/kernel/entry_64.S              |  28 ++++
+>  arch/x86/syscalls/syscall_32.tbl        |   1 +
+>  arch/x86/syscalls/syscall_64.tbl        |   2 +
+>  arch/x86/um/sys_call_table_64.c         |   1 +
+>  fs/exec.c                               | 153 ++++++++++++++++---
+>  include/linux/compat.h                  |   3 +
+>  include/linux/sched.h                   |   4 +
+>  include/linux/syscalls.h                |   4 +
+>  include/uapi/asm-generic/unistd.h       |   4 +-
+>  kernel/sys_ni.c                         |   3 +
+>  lib/audit.c                             |   3 +
+>  tools/testing/selftests/Makefile        |   1 +
+>  tools/testing/selftests/exec/.gitignore |   6 +
+>  tools/testing/selftests/exec/Makefile   |  32 ++++
+>  tools/testing/selftests/exec/execveat.c | 251 ++++++++++++++++++++++++++++++++
+>  18 files changed, 476 insertions(+), 23 deletions(-)
+>  create mode 100644 tools/testing/selftests/exec/.gitignore
+>  create mode 100644 tools/testing/selftests/exec/Makefile
+>  create mode 100644 tools/testing/selftests/exec/execveat.c
+>
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> 1.9.1.423.g4596e3a
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
 > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+
+
+
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
