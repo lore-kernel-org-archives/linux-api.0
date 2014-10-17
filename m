@@ -1,29 +1,33 @@
-From: WANG Chao <chaowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] Documentation/ABI/testing/sysfs-ibft: fix a typo
-Date: Fri, 17 Oct 2014 16:47:26 +0800
-Message-ID: <1413535647-17801-1-git-send-email-chaowang@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
+ kernel
+Date: Fri, 17 Oct 2014 12:26:01 +0300
+Message-ID: <20141017092601.GH23154@mwanda>
+References: <20141016124741.GA3832@kroah.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Disposition: inline
+In-Reply-To: <20141016124741.GA3832@kroah.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: devel@driverdev.osuosl.org, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, John Stultz <john.stultz@linaro.org>, Rebecca Schultz Zavin <rebecca@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-Correct a sentence in Documentation/ABI/testing/sysfs-ibft.
+The code isn't very beautiful and there are lots of details wrong like
+the error codes.
 
-Signed-off-by: WANG Chao <chaowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- Documentation/ABI/testing/sysfs-ibft | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Al had some critical things to say about it but it looks like most of
+those issues have been fixed.
 
-diff --git a/Documentation/ABI/testing/sysfs-ibft b/Documentation/ABI/testing/sysfs-ibft
-index c2b7d11..cac3930 100644
---- a/Documentation/ABI/testing/sysfs-ibft
-+++ b/Documentation/ABI/testing/sysfs-ibft
-@@ -20,4 +20,4 @@ Date:		November 2007
- Contact:	Konrad Rzeszutek <ketuzsezr-Gq0aWv8utHQdnm+yROfE0A@public.gmane.org>
- Description:	The /sys/firmware/ibft/ethernetX directory will contain
- 		files that expose the iSCSI Boot Firmware Table NIC data.
--		This can this can the IP address, MAC, and gateway of the NIC.
-+		Usually this contains the IP address, MAC, and gateway of the NIC.
--- 
-1.9.3
+regards,
+dan carpenter
