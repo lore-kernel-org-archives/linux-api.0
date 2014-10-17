@@ -1,117 +1,94 @@
-From: Heiko =?ISO-8859-1?Q?St=FCbner?= <heiko@sntech.de>
-Subject: Re: [PATCH v11 0/3] Add drm driver for Rockchip Socs
-Date: Fri, 17 Oct 2014 08:24:42 +0200
-Message-ID: <282711393.zuCWIeu2Oz@phil>
-References: <1412763781-31533-1-git-send-email-mark.yao@rock-chips.com> <CAPM=9twVrmni_BRV_9-QLk+JUbcgXEjAM0g-tYH6su8=sDQ35g@mail.gmail.com> <5440999D.5010601@rock-chips.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
+ kernel
+Date: Fri, 17 Oct 2014 10:01:01 +0200
+Message-ID: <20141017080101.GA20268@kroah.com>
+References: <20141016124741.GA3832@kroah.com>
+ <CALAqxLU05D8qQA47E77PiuuN7eVt66WEq1qn+PqdE-tpEUzFpw@mail.gmail.com>
+ <20141016231221.GA13592@kroah.com>
+ <CALAqxLXDZ4Q_C456o_A-V_LkcY=wpoC30kvNavyVaZRu7uK9fQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <5440999D.5010601@rock-chips.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mark yao <mark.yao@rock-chips.com>
-Cc: Dave Airlie <airlied@gmail.com>, Boris BREZILLON <boris.brezillon@free-electrons.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dri-devel <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, =?ISO-8859-1?Q?St=E9phane?= Marchesin <marcheu@chromium.org>, dbehr@chromium.orgO
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Disposition: inline
+In-Reply-To: <CALAqxLXDZ4Q_C456o_A-V_LkcY=wpoC30kvNavyVaZRu7uK9fQ@mail.gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: John Stultz <john.stultz@linaro.org>
+Cc: devel@driverdev.osuosl.org, Anup Patel <anup.patel@linaro.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Rebecca Schultz Zavin <rebecca@android.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Mark,
+On Thu, Oct 16, 2014 at 08:25:33PM -0700, John Stultz wrote:
+> On Thu, Oct 16, 2014 at 4:12 PM, Greg Kroah-Hartman
+> <gregkh@linuxfoundation.org> wrote:
+> > On Thu, Oct 16, 2014 at 10:09:04AM -0700, John Stultz wrote:
+> >> On Thu, Oct 16, 2014 at 5:47 AM, Greg Kroah-Hartman
+> >> <gregkh@linuxfoundation.org> wrote:
+> >> > From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> >> >
+> >> > The Android binder code has been "stable" for many years now.  No matter
+> >>
+> >> Well, ignoring the ABI break that landed in the last year. :)
+> >
+> > As no one noticed, it wasn't a "break" :)
+> >
+> >> > This was discussed in the Android miniconf at the Plumbers conference.
+> >> > If anyone has any objections to this, please let me know, otherwise I'm
+> >> > queueing this up for 3.19-rc1
+> >>
+> >> So my main concerns/thoughts here are:
+> >>
+> >> Who is going to maintain this? Has Arve agreed?
+> >
+> > Do we really need someone to do more work that has been done on it in
+> > the past as an official "maintainer"?  I'll be glad to do it, as I doubt
+> > it will require any time at all.
+> 
+> Ok. The only caution I have if Arve isn't involved is that we have in
+> the past merged cleanup changes that introduced bugs, and it wasn't
+> until Arve took at look at the new kernel that these were sorted out
+> (see e194fd8a5d8e0a7eeed239a8534460724b62fe2d). So I think if at all
+> possible getting his ack on things would be good.
 
-Am Freitag, 17. Oktober 2014, 12:22:53 schrieb Mark yao:
-> On 2014=E5=B9=B410=E6=9C=8817=E6=97=A5 08:46, Dave Airlie wrote:
-> > On 17 October 2014 10:40, Mark yao <mark.yao@rock-chips.com> wrote:
-> >> Hi
-> >> I think Rockchip drm driver is ready now, can it land?
-> >=20
-> > I probably want to wait until -rc1 though I suppose since its a new
-> > driver and self contained we might be able to see if Linus is
-> > interested in squeezing it in.
-> >=20
-> > Can you send me a git pull request for it against drm-next or even =
-3.17.
-> >=20
-> > Dave.
->=20
-> Hi, Dave
->      the git pull request:
->=20
-> The following changes since commit 4db36870b92cdf5a79615aeabc68efc97d=
-f13918:
+I'll make sure to get his Ack on anything that could possibly cause a
+problem.
 
-I think this needs a fix. Your commit 4db36870b is the pending iommu dr=
-iver.=20
-Which isn't part of neither the mainline kernel nor the drm tree Dave m=
-eant.
+> But yes, I'm fine with it going in. I'm just a bit surprised at how
+> quickly thoughts change here.
 
-What Dave meant was to base your patches on top of his "drm-next" branc=
-h or=20
-the raw 3.17 release.
+Over the past year I've realized that code in staging needs to progress
+either out of the kernel due to no need/use, or into the main part of
+the kernel as people rely on it.  The android code is something that
+people rely on, and this code is "stable", so it should be merged into
+the main kernel tree.
 
-So either base the branch on drm-next from
-	http://cgit.freedesktop.org/~airlied/linux/log/?h=3Ddrm-next
+So yes, this does seem to be a change in the public stance, but it's
+something that I have been talking about with people at the zillion
+conferences I go to around the world.
 
-or the 3.17 release tag from Linus Torvalds. Apply your patches on top =
-and=20
-create pull from there.
+> This does raise the question if the same standard could be held to
+> ashmem then?
 
-I've just checked ... your drm patches apply cleanly against 3.17, so y=
-our=20
-branch to be pulled should probably look something like
-	https://github.com/mmind/linux-rockchip/commits/tmp/drmtest
+Ah, you beat me to it, I was going to wait to talk to you in person
+about this :)
 
+> That's a *much* simpler and easier to maintain chunk of
+> code, and is just as isolated, logic wise.  And while I think it would
+> be ideal if the unpinning feature could be done more generically, if
+> volatile ranges really doesn't have a future, then its maybe silly to
+> hold ashmem out as well?
 
-Heiko
+Yes, that was the second thing I was going to move, I'll send a patch
+for that later today.
 
->=20
->    FROMLIST: iommu/rockchip: rk3288 iommu driver (2014-10-17 10:26:18=
- +0800)
->=20
-> are available in the git repository at:
->=20
->    https://github.com/markyzq/kernel-drm-rockchip.git mydrm
->=20
-> for you to fetch changes up to 0db2be88bea08ab8afe5e3d13f8a2c9e637a95=
-14:
->=20
->    dt-bindings: video: Add documentation for rockchip vop (2014-10-17
-> 10:27:15 +0800)
->=20
-> ----------------------------------------------------------------
-> Mark yao (3):
->        drm: rockchip: Add basic drm driver
->        dt-bindings: video: Add for rockchip display subsytem
->        dt-bindings: video: Add documentation for rockchip vop
->=20
->   .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
->   .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
->   drivers/gpu/drm/Kconfig                            |    2 +
->   drivers/gpu/drm/Makefile                           |    1 +
->   drivers/gpu/drm/rockchip/Kconfig                   |   17 +
->   drivers/gpu/drm/rockchip/Makefile                  |    8 +
->   drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  449 ++++++
->   drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |   54 +
->   drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  200 +++
->   drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
->   drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  210 +++
->   drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   20 +
->   drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  293 ++++
->   drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   54 +
->   drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1427
-> ++++++++++++++++++++
->   drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  196 +++
->   16 files changed, 3036 insertions(+)
->   create mode 100644
-> Documentation/devicetree/bindings/video/rockchip-drm.txt
->   create mode 100644
-> Documentation/devicetree/bindings/video/rockchip-vop.txt
->   create mode 100644 drivers/gpu/drm/rockchip/Kconfig
->   create mode 100644 drivers/gpu/drm/rockchip/Makefile
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.c
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.h
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.c
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.h
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.c
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.h
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.c
->   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.h
+thanks,
 
+greg k-h
