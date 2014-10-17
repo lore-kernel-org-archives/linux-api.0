@@ -1,41 +1,112 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
- kernel
-Date: Fri, 17 Oct 2014 02:43:29 -0700
-Message-ID: <20141017094329.GB18015@infradead.org>
-References: <20141016124741.GA3832@kroah.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv1 7/8] cgroup: cgroup namespace setns support
+Date: Fri, 17 Oct 2014 11:52:20 +0200
+Message-ID: <20141017095220.GB8848@mail.hallyn.com>
+References: <adityakali-cgroupns>
+	<1413235430-22944-1-git-send-email-adityakali@google.com>
+	<1413235430-22944-8-git-send-email-adityakali@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20141016124741.GA3832@kroah.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: devel@driverdev.osuosl.org, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Arve Hj?nnev?g <arve@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Rebecca Schultz Zavin <rebecca@android.com>, John Stultz <john.stultz@linaro.org>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
+In-Reply-To: <1413235430-22944-8-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 16, 2014 at 02:47:41PM +0200, Greg Kroah-Hartman wrote:
-> From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
+> setns on a cgroup namespace is allowed only if
+> * task has CAP_SYS_ADMIN in its current user-namespace and
+>   over the user-namespace associated with target cgroupns.
+> * task's current cgroup is descendent of the target cgroupns-root
+>   cgroup.
+> * target cgroupns-root is same as or deeper than task's current
+>   cgroupns-root. This is so that the task cannot escape out of its
+>   cgroupns-root. This also ensures that setns() only makes the task
+>   get restricted to a deeper cgroup hierarchy.
 > 
-> The Android binder code has been "stable" for many years now.  No matter
-> what comes in the future, we are going to have to support this API, so
-> might as well move it to the "real" part of the kernel as there's no
-> real work that needs to be done to the existing code.
+> Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-NAK.  It's complete rubbish and does things to the FD code that it
-really shouldn't.  Android needs to completely redo the interface, and
-there's been absolutely no work towards that.
+Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 
-This is exactly the sort of attitude I feared about when you started the
-whole staging concepts, and it sounds like a good reason to disband
-staging entirely, given that it's been mostly useless except for
-boasting peoples commit statistics.
+Below you allow setns to your own cgroupns.  I think that's fine,
+but since you're not doing an explicit cgroup change anyway should
+you just return 0 at top in that case to save some cpu time?
+
+> ---
+>  kernel/cgroup_namespace.c | 44 ++++++++++++++++++++++++++++++++++++++++++--
+>  1 file changed, 42 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/cgroup_namespace.c b/kernel/cgroup_namespace.c
+> index c16604f..c612946 100644
+> --- a/kernel/cgroup_namespace.c
+> +++ b/kernel/cgroup_namespace.c
+> @@ -80,8 +80,48 @@ err_out:
+>  
+>  static int cgroupns_install(struct nsproxy *nsproxy, void *ns)
+>  {
+> -	pr_info("setns not supported for cgroup namespace");
+> -	return -EINVAL;
+> +	struct cgroup_namespace *cgroup_ns = ns;
+> +	struct task_struct *task = current;
+> +	struct cgroup *cgrp = NULL;
+> +	int err = 0;
+> +
+> +	if (!ns_capable(current_user_ns(), CAP_SYS_ADMIN) ||
+> +	    !ns_capable(cgroup_ns->user_ns, CAP_SYS_ADMIN))
+> +		return -EPERM;
+> +
+> +	/* Prevent cgroup changes for this task. */
+> +	threadgroup_lock(task);
+> +
+> +	cgrp = get_task_cgroup(task);
+> +
+> +	err = -EINVAL;
+> +	if (!cgroup_on_dfl(cgrp))
+> +		goto out_unlock;
+> +
+> +	/* Allow switch only if the task's current cgroup is descendant of the
+> +	 * target cgroup_ns->root_cgrp.
+> +	 */
+> +	if (!cgroup_is_descendant(cgrp, cgroup_ns->root_cgrp))
+> +		goto out_unlock;
+> +
+> +	/* Only allow setns to a cgroupns root-ed deeper than task's current
+> +	 * cgroupns-root. This will make sure that tasks cannot escape their
+> +	 * cgroupns by attaching to parent cgroupns.
+> +	 */
+> +	if (!cgroup_is_descendant(cgroup_ns->root_cgrp,
+> +				  task_cgroupns_root(task)))
+> +		goto out_unlock;
+> +
+> +	err = 0;
+> +	get_cgroup_ns(cgroup_ns);
+> +	put_cgroup_ns(nsproxy->cgroup_ns);
+> +	nsproxy->cgroup_ns = cgroup_ns;
+> +
+> +out_unlock:
+> +	threadgroup_unlock(current);
+> +	if (cgrp)
+> +		cgroup_put(cgrp);
+> +	return err;
+>  }
+>  
+>  static void *cgroupns_get(struct task_struct *task)
+> -- 
+> 2.1.0.rc2.206.gedb03e5
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
