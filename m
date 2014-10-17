@@ -1,52 +1,117 @@
-From: Jason Wang <jasowang@redhat.com>
-Subject: Re: [PATCH net-next RFC 1/3] virtio: support for urgent descriptors
-Date: Fri, 17 Oct 2014 13:23:42 +0800
-Message-ID: <5440A7DE.5030806@redhat.com>
-References: <1413011806-3813-1-git-send-email-jasowang@redhat.com>
-	<1413011806-3813-2-git-send-email-jasowang@redhat.com>
-	<877g01c2ml.fsf@rustcorp.com.au>
+From: Heiko =?ISO-8859-1?Q?St=FCbner?= <heiko@sntech.de>
+Subject: Re: [PATCH v11 0/3] Add drm driver for Rockchip Socs
+Date: Fri, 17 Oct 2014 08:24:42 +0200
+Message-ID: <282711393.zuCWIeu2Oz@phil>
+References: <1412763781-31533-1-git-send-email-mark.yao@rock-chips.com> <CAPM=9twVrmni_BRV_9-QLk+JUbcgXEjAM0g-tYH6su8=sDQ35g@mail.gmail.com> <5440999D.5010601@rock-chips.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <877g01c2ml.fsf@rustcorp.com.au>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Rusty Russell <rusty@rustcorp.com.au>, mst@redhat.com, virtualization@lists.linux-foundation.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, kvm@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <5440999D.5010601@rock-chips.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Mark yao <mark.yao@rock-chips.com>
+Cc: Dave Airlie <airlied@gmail.com>, Boris BREZILLON <boris.brezillon@free-electrons.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dri-devel <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, =?ISO-8859-1?Q?St=E9phane?= Marchesin <marcheu@chromium.org>, dbehr@chromium.orgO
 List-Id: linux-api@vger.kernel.org
 
-On 10/15/2014 01:40 PM, Rusty Russell wrote:
-> Jason Wang <jasowang@redhat.com> writes:
->> Below should be useful for some experiments Jason is doing.
->> I thought I'd send it out for early review/feedback.
->>
->> event idx feature allows us to defer interrupts until
->> a specific # of descriptors were used.
->> Sometimes it might be useful to get an interrupt after
->> a specific descriptor, regardless.
->> This adds a descriptor flag for this, and an API
->> to create an urgent output descriptor.
->> This is still an RFC:
->> we'll need a feature bit for drivers to detect this,
->> but we've run out of feature bits for virtio 0.X.
->> For experimentation purposes, drivers can assume
->> this is set, or add a driver-specific feature bit.
->>
->> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
->> Signed-off-by: Jason Wang <jasowang@redhat.com>
-> The new VRING_DESC_F_URGENT bit is theoretically nicer, but for
-> networking (which tends to take packets in order) couldn't we just set
-> the event counter to give us a tx interrupt at the packet we want?
->
-> Cheers,
-> Rusty.
+Hi Mark,
 
-Yes, we could. Recent RFC of enabling tx interrupt use this.
+Am Freitag, 17. Oktober 2014, 12:22:53 schrieb Mark yao:
+> On 2014=E5=B9=B410=E6=9C=8817=E6=97=A5 08:46, Dave Airlie wrote:
+> > On 17 October 2014 10:40, Mark yao <mark.yao@rock-chips.com> wrote:
+> >> Hi
+> >> I think Rockchip drm driver is ready now, can it land?
+> >=20
+> > I probably want to wait until -rc1 though I suppose since its a new
+> > driver and self contained we might be able to see if Linus is
+> > interested in squeezing it in.
+> >=20
+> > Can you send me a git pull request for it against drm-next or even =
+3.17.
+> >=20
+> > Dave.
+>=20
+> Hi, Dave
+>      the git pull request:
+>=20
+> The following changes since commit 4db36870b92cdf5a79615aeabc68efc97d=
+f13918:
+
+I think this needs a fix. Your commit 4db36870b is the pending iommu dr=
+iver.=20
+Which isn't part of neither the mainline kernel nor the drm tree Dave m=
+eant.
+
+What Dave meant was to base your patches on top of his "drm-next" branc=
+h or=20
+the raw 3.17 release.
+
+So either base the branch on drm-next from
+	http://cgit.freedesktop.org/~airlied/linux/log/?h=3Ddrm-next
+
+or the 3.17 release tag from Linus Torvalds. Apply your patches on top =
+and=20
+create pull from there.
+
+I've just checked ... your drm patches apply cleanly against 3.17, so y=
+our=20
+branch to be pulled should probably look something like
+	https://github.com/mmind/linux-rockchip/commits/tmp/drmtest
+
+
+Heiko
+
+>=20
+>    FROMLIST: iommu/rockchip: rk3288 iommu driver (2014-10-17 10:26:18=
+ +0800)
+>=20
+> are available in the git repository at:
+>=20
+>    https://github.com/markyzq/kernel-drm-rockchip.git mydrm
+>=20
+> for you to fetch changes up to 0db2be88bea08ab8afe5e3d13f8a2c9e637a95=
+14:
+>=20
+>    dt-bindings: video: Add documentation for rockchip vop (2014-10-17
+> 10:27:15 +0800)
+>=20
+> ----------------------------------------------------------------
+> Mark yao (3):
+>        drm: rockchip: Add basic drm driver
+>        dt-bindings: video: Add for rockchip display subsytem
+>        dt-bindings: video: Add documentation for rockchip vop
+>=20
+>   .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
+>   .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
+>   drivers/gpu/drm/Kconfig                            |    2 +
+>   drivers/gpu/drm/Makefile                           |    1 +
+>   drivers/gpu/drm/rockchip/Kconfig                   |   17 +
+>   drivers/gpu/drm/rockchip/Makefile                  |    8 +
+>   drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  449 ++++++
+>   drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |   54 +
+>   drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  200 +++
+>   drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
+>   drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  210 +++
+>   drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   20 +
+>   drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  293 ++++
+>   drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   54 +
+>   drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1427
+> ++++++++++++++++++++
+>   drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  196 +++
+>   16 files changed, 3036 insertions(+)
+>   create mode 100644
+> Documentation/devicetree/bindings/video/rockchip-drm.txt
+>   create mode 100644
+> Documentation/devicetree/bindings/video/rockchip-vop.txt
+>   create mode 100644 drivers/gpu/drm/rockchip/Kconfig
+>   create mode 100644 drivers/gpu/drm/rockchip/Makefile
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.c
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.h
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.c
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.h
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.c
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.h
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.c
+>   create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.h
+
