@@ -1,42 +1,41 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
- kernel
-Date: Mon, 20 Oct 2014 06:05:47 +0800
-Message-ID: <20141019220547.GC3780@kroah.com>
-References: <20141016124741.GA3832@kroah.com> <20141017092601.GH23154@mwanda>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v3 4/6] tpm: TPM 2.0 sysfs attributes
+Date: Sun, 19 Oct 2014 15:07:49 -0700
+Message-ID: <CALCETrUt8wK+wPULZpPQks3xEB0JkQkUD=peLSnBrMo70LT13w@mail.gmail.com>
+References: <1413372916-12091-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1413372916-12091-5-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <20141017092601.GH23154@mwanda>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Dan Carpenter <dan.carpenter@oracle.com>
-Cc: devel@driverdev.osuosl.org, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, John Stultz <john.stultz@linaro.org>, Rebecca Schultz Zavin <rebecca@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1413372916-12091-5-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, monty.wiseman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 17, 2014 at 12:26:01PM +0300, Dan Carpenter wrote:
-> The code isn't very beautiful and there are lots of details wrong like
-> the error codes.
+On Wed, Oct 15, 2014 at 4:35 AM, Jarkko Sakkinen
+<jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> Implemented sysfs attributes for TPM2 devices. TPM2 sysfs attributes
+> are mounted in the actual device associated with the chip instead of
+> platform device like with TPM1 devices.
+>
+> Documentation/ABI/stable/sysfs-class/tpm2 contains descriptions
+> of these attributes.
+>
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
-Really, what is wrong with the existing error code usages?
 
-> Al had some critical things to say about it but it looks like most of
-> those issues have been fixed.
+> +What:          /sys/class/misc/tpmX/device/cancel
+> +Date:          October 2014
+> +KernelVersion: 3.19
+> +Contact:       tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:   The "cancel" property allows you to cancel the currently
+> +               pending TPM command. Writing any value to cancel will call the
+> +               TPM chip specific cancel operation.
 
-All of the ones that can be fixed, have, as far as I know.
+This is weird.  From the POV of a sysfs user, what operation gets
+canceled?  What if it's a kernel-internal operation?
 
-We are stuck with some that we can't fix, which is ok as it is safe in
-the Android user model.
+Shouldn't this be an ioctl?
 
-thanks,
-
-greg k-h
+--Andy
