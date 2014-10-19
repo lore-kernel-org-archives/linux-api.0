@@ -1,103 +1,100 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCHv1 7/8] cgroup: cgroup namespace setns support
-Date: Sun, 19 Oct 2014 11:26:29 -0700
-Message-ID: <CALCETrUC=yW72d2hDzjESmZAt85x1WcGz4L-DrtY5YXAQxbpMA@mail.gmail.com>
-References: <1413235430-22944-1-git-send-email-adityakali@google.com>
- <1413235430-22944-8-git-send-email-adityakali@google.com> <20141016211236.GA4308@mail.hallyn.com>
- <CAGr1F2EH0ynfFihTh1dv=n1faxUh0zS3ggk303bwGnDnW2PUCw@mail.gmail.com>
- <20141016214710.GA4759@mail.hallyn.com> <87iojgmy3o.fsf@x220.int.ebiederm.org>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
+Date: Sun, 19 Oct 2014 12:11:52 -0700
+Message-ID: <CALCETrVR-dCT2Xzs9JrO_WieeM7=jxjmBJH21u=jgt8JO2p-pw@mail.gmail.com>
+References: <1401975635-6162-1-git-send-email-drysdale@google.com>
+ <CALCETrVraoD+r4zxBoGd+BV5P275AXcRV_R00SSr8fjQzRHnUg@mail.gmail.com> <87zjcszz8y.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87iojgmy3o.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <87zjcszz8y.fsf@x220.int.ebiederm.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, X86 ML <x86@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, David Drysdale <drysdale@google.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Meredydd Luff <meredydd@senatehouse.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 18, 2014 at 10:23 PM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+On Oct 18, 2014 5:21 PM, "Eric W. Biederman" <ebiederm@xmission.com> wrote:
 >
->> Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
->>> On Thu, Oct 16, 2014 at 2:12 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
->>> > Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
->>> >> setns on a cgroup namespace is allowed only if
->>> >> * task has CAP_SYS_ADMIN in its current user-namespace and
->>> >>   over the user-namespace associated with target cgroupns.
->>> >> * task's current cgroup is descendent of the target cgroupns-root
->>> >>   cgroup.
->>> >
->>> > What is the point of this?
->>> >
->>> > If I'm a user logged into
->>> > /lxc/c1/user.slice/user-1000.slice/session-c12.scope and I start
->>> > a container which is in
->>> > /lxc/c1/user.slice/user-1000.slice/session-c12.scope/x1
->>> > then I will want to be able to enter the container's cgroup.
->>> > The container's cgroup root is under my own (satisfying the
->>> > below condition0 but my cgroup is not a descendent of the
->>> > container's cgroup.
->>> >
->>> This condition is there because we don't want to do implicit cgroup
->>> changes when a process attaches to another cgroupns. cgroupns tries to
->>> preserve the invariant that at any point, your current cgroup is
->>> always under the cgroupns-root of your cgroup namespace. But in your
->>> example, if we allow a process in "session-c12.scope" container to
->>> attach to cgroupns root'ed at "session-c12.scope/x1" container
->>> (without implicitly moving its cgroup), then this invariant won't
->>> hold.
->>
->> Oh, I see.  Guess that should be workable.  Thanks.
+> Andy Lutomirski <luto@amacapital.net> writes:
 >
-> Which has me looking at what the rules are for moving through
-> the cgroup hierarchy.
+> > [Added Eric Biederman, since I think your tree might be a reasonable
+> > route forward for these patches.]
+> >
+> > On Thu, Jun 5, 2014 at 6:40 AM, David Drysdale <drysdale@google.com> wrote:
+> >> Resending, adding cc:linux-api.
+> >>
+> >> Also, it may help to add a little more background -- this patch is
+> >> needed as a (small) part of implementing Capsicum in the Linux kernel.
+> >>
+> >> Capsicum is a security framework that has been present in FreeBSD since
+> >> version 9.0 (Jan 2012), and is based on concepts from object-capability
+> >> security [1].
+> >>
+> >> One of the features of Capsicum is capability mode, which locks down
+> >> access to global namespaces such as the filesystem hierarchy.  In
+> >> capability mode, /proc is thus inaccessible and so fexecve(3) doesn't
+> >> work -- hence the need for a kernel-space
+> >
+> > I just found myself wanting this syscall for another reason: injecting
+> > programs into sandboxes or otherwise heavily locked-down namespaces.
+> >
+> > For example, I want to be able to reliably do something like nsenter
+> > --namespace-flags-here toybox sh.  Toybox's shell is unusual in that
+> > it is more or less fully functional, so this should Just Work (tm),
+> > except that the toybox binary might not exist in the namespace being
+> > entered.  If execveat were available, I could rig nsenter or a similar
+> > tool to open it with O_CLOEXEC, enter the namespace, and then call
+> > execveat.
+> >
+> > Is there any reason that these patches can't be merged more or less as
+> > is for 3.19?
 >
-> As long as we have write access to cgroup.procs and are allowed
-> to open the file for write, we can move any of our own tasks
-> into the cgroup.  So the cgroup namespace rules don't seem
-> to be a problem.
+> Yes.  There is a silliness in how it implements fexecve.  The fexecve
+> case should be use the empty string "" not a NULL pointer to indication
+> that.  That change will then harmonize execveat with the other ...at
+> system calls and simplify the code and remove a special case.  I believe
+> using the empty string "" requires implementing the AT_EMPTY_PATH flag.
 >
-> Andy can you please take a look at the permission checks in
-> __cgroup_procs_write.
 
-The actual requirements for calling that function haven't changed,
-right?  IOW, what does this have to do with cgroupns?  Is the idea
-that you want a privileged user wrt a cgroupns's userns to be able to
-use this?  If so:
+Sounds reasonable.
 
-Yes, that current_cred() thing is bogus.  (Actually, this is probably
-exploitable right now if any cgroup.procs inode anywhere on the system
-lets non-root write.)  (Can we have some kernel debugging option that
-makes any use of current_cred() in write(2) warn?)
+> For sandboxes execveat seems to make a great deal of sense.  I can
+> get the same functionality by passing in a directory file descriptor
+> calling fchdir and execve so this should not introduce any new security
+> holes.  And using the final file descriptor removes a race.
 
-We really need a weaker version of may_ptrace for this kind of stuff.
-Maybe the existing may_ptrace stuff is okay, actually.  But this is
-completely missing group checks, cap checks, capabilities wrt the
-userns, etc.
-
-Also, I think that, if this version of the patchset allows non-init
-userns to unshare cgroupns, then the issue of what permission is
-needed to lock the cgroup hierarchy like that needs to be addressed,
-because unshare(CLONE_NEWUSER|CLONE_NEWCGROUP) will effectively pin
-the calling task with no permission required.  Bolting on a fix later
-will be a mess.
-
---Andy
+The problem with that approach is that the execed program now has its
+current directory outside the sandbox, which could be problematic if
+you don't trust that program.
 
 >
-> As I read the code I see 3 security gaffaws in the permssion check.
-> - Using current->cred instead of file->f_cred.
-> - Not checking tcred->euid.
-> - Checking GLOBAL_ROOT_UID instead of having a capable call.
+> AT_SYMLINK_NOFOLLOW seems to have some limited utility as well, although
+> for exec I don't know what problems it can solve.
+
+It can always be added later
+
 >
-> The file permission on cgroup.procs seem just sufficient to keep
-> to keep those bugs from being easily exploitable.
+> Until I am done moving I won't have time to pick this up, and the code
+> clearly needs another revision but I will be happy to work to see that
+> we get a sane execveat implemented.
+
+Do you have an ETA?  If it's likely to miss 3.19, but if you'll have
+time to review before then, I can try to do it.
+
 >
 > Eric
+>
+> p.s.  I don't believe there are any namespaces issues where doing
+> something with execveat flags make sense.
+>
 
+OK, I'll bite.  How feasible would it be to have a flag that activated
+pid_ns_for_children?  That would reduce a lot of the ugliness in tools
+like nsenter that need to fork to enter a pid ns.
 
+I always assume that the reason for the active vs. for_children
+distinction was because a lot of userspace libraries, including glibc,
+would malfunction if getpid(2) started returning a different value.
+But, for exec, this doesn't matter.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+--Andy
