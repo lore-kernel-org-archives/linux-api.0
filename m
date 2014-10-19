@@ -1,77 +1,62 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+From: Al Viro <viro@ZenIV.linux.org.uk>
 Subject: Re: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
-Date: Sun, 19 Oct 2014 15:16:03 -0700
-Message-ID: <CALCETrVTiO6YKRYAAe-eBgQvpUqrtE0=KrKJj2T_XJ9iSRDtmA@mail.gmail.com>
+Date: Sun, 19 Oct 2014 23:42:51 +0100
+Message-ID: <20141019224251.GJ7996@ZenIV.linux.org.uk>
 References: <1401975635-6162-1-git-send-email-drysdale@google.com>
  <CALCETrVraoD+r4zxBoGd+BV5P275AXcRV_R00SSr8fjQzRHnUg@mail.gmail.com>
- <20141019202034.GH7996@ZenIV.linux.org.uk> <CALCETrVZUW2iPtfFJtGnWd2RsYLwjGRGYuujrVqcOsO5oBB8Cg@mail.gmail.com>
+ <20141019202034.GH7996@ZenIV.linux.org.uk>
+ <CALCETrVZUW2iPtfFJtGnWd2RsYLwjGRGYuujrVqcOsO5oBB8Cg@mail.gmail.com>
  <20141019212921.GI7996@ZenIV.linux.org.uk>
+ <CALCETrVTiO6YKRYAAe-eBgQvpUqrtE0=KrKJj2T_XJ9iSRDtmA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141019212921.GI7996-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrVTiO6YKRYAAe-eBgQvpUqrtE0=KrKJj2T_XJ9iSRDtmA@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: David Drysdale <drysdale@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Oct 19, 2014 at 2:29 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
-> On Sun, Oct 19, 2014 at 01:37:54PM -0700, Andy Lutomirski wrote:
->> > The question I hadn't seen really answered through all of that was how to
->> > deal with #!...  "Just use d_path()" isn't particulary appealing - if that
->> > file has a pathname reachable for you, you could bloody well use _that_
->> > from the very beginning.
->>
->> Does this matter for absolute paths after #! (or for absolute paths to
->> ELF interpreters)?  Does anyone use relative paths there?
->
-> It's not about what's after #!; it's what we *append* to what's after #!
-> that is interesting.  Recall how #! works - we turn execve() of something
-> that starts with e.g. "#!/usr/bin/make -f\n" into execve of /usr/bin/make,
-> with (/usr/bin/make, -f, name of that file, argv[1]..argv[argc]) as
-> arguments list.  With make(1) doing opening and reading the file, as it
-> would for any makefile.  Or /bin/sh opening and reading the script, etc.
->
-> Pathname of interpreter is a non-issue (and ELF ones don't go anywhere
-> near that path anyway).
->
+On Sun, Oct 19, 2014 at 03:16:03PM -0700, Andy Lutomirski wrote:
 
-Oh, you mean that #!/usr/bin/make -f would turn into /usr/bin/make
-/dev/fd/3?  That could be interesting, although I can imagine it
-breaking things, especially if /dev/fd/3 isn't set up like that, e.g.
-early in boot.
+> Oh, you mean that #!/usr/bin/make -f would turn into /usr/bin/make
+> /dev/fd/3?  That could be interesting, although I can imagine it
+> breaking things, especially if /dev/fd/3 isn't set up like that, e.g.
+> early in boot.
 
-Why does this use case need the dup-style semantics?  Merely opening
-the same file should work, right?
+Sigh...  What I mean is that fexecve(fd, ...) would have to put _something_
+into argv when it execs the interpreter of #! file.  Simply because the
+interpreter (which can be anything whatsoever) has no fscking idea what
+to do with some descriptor it has before execve().  Hell, it doesn't have
+any idea *which* descriptor had it been.
 
-[deleted my questions based on my misunderstanding of what you were
-talking about]
+You need to put some pathname that would yield your script upon open(2).
+If you bothered to read those patches, you'd see that they do supply
+one, generating it with d_path().  Which isn't particulary reliable.
 
->> I'm not convinced that these semantics are better than /proc/self/fd's
->> in many contexts.  I don't really like the idea that catting some file
->> can *change* the position of one of my open file descriptors.
->
-> Er...  You do realize that if descriptor refers to the same file,
-> cat <&<that descriptor> will change position of your other descriptor,
-> right?  BTW, on *BSD /dev/stdin *does* have a dup()-style semantics.
-> They do it at the price of very convoluted code in their VFS, but that's
-> how it works there.  And in Plan 9, and (AFAIK) in Solaris...
+I'm not sure there's any point putting any of that in the kernel - if
+you *do* have that pathname, you can just pass it.
 
-But cat <&3 is shell magic; it isn't actually an invocation of
-/bin/cat with some special argument that causes it to poke at some fd.
-And bash already supports this kind of use case.
+> Aside from the general scariness of allowing one process to actually
+> dup another process's fds, I feel like this is asking for trouble wrt
+> the various types of file locks.
 
-I still don't userstand why the BSD behavior is better here.  Also,
-this isn't just file *position* -- anything that opens dupfs/N and
-uses fcntl with F_SETFL seems likely to cause failures, crashes, or
-outright corruption.  And there are file locks, which suddenly have
-rather odd semantics.  (Even with the new OFD locks or with BSD locks,
-I wonder how many little programs open argv[1], lock the file, do
-something, and then exit.  Anything that does that is now leaking a
-lock.)
+Who said anything about another process's fds?  That, indeed, would be
+a recipe for serious trouble.  It's a filesystem with one directory,
+not with one directory for each process...
 
-Aside from the general scariness of allowing one process to actually
-dup another process's fds, I feel like this is asking for trouble wrt
-the various types of file locks.
+FWIW, they (Plan 9) do have procfs and there they have /proc/<pid>/fd.
+Which is a regular file, with contents consisting of \n-terminated
+lines (one per descriptor in <pid>'s descriptor table>) in the same
+format as in *ctl (they put descriptor number as the first field in
+those).
 
---Andy
+Unlike our solution, they do not allow to get to any process' files via
+procfs.  They do allow /dev/stdin-style access to your own files via
+dupfs.  And yes, for /dev/stdin and friends dup-style semantics is better -
+you get consistent behaviours for pipes and redirects from file that way.
+See the example I've posted upthread.  Besides, for things like sockets
+our semantics simply fails - they really depend on having only one
+struct file for given socket; it's dup or nothing there.  The same goes
+for a lot of things like eventfd, etc.
