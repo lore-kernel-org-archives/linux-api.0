@@ -1,50 +1,72 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of
- the kernel
-Date: Sat, 18 Oct 2014 22:36:30 +0100
-Message-ID: <20141018223630.497988fa@alan.etchedpixels.co.uk>
-References: <20141016124741.GA3832@kroah.com>
-	<CALAqxLU05D8qQA47E77PiuuN7eVt66WEq1qn+PqdE-tpEUzFpw@mail.gmail.com>
-	<20141016231221.GA13592@kroah.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
+Date: Sat, 18 Oct 2014 17:20:29 -0700
+Message-ID: <87zjcszz8y.fsf@x220.int.ebiederm.org>
+References: <1401975635-6162-1-git-send-email-drysdale@google.com>
+	<CALCETrVraoD+r4zxBoGd+BV5P275AXcRV_R00SSr8fjQzRHnUg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141016231221.GA13592@kroah.com>
+In-Reply-To: <CALCETrVraoD+r4zxBoGd+BV5P275AXcRV_R00SSr8fjQzRHnUg@mail.gmail.com>
+	(Andy Lutomirski's message of "Fri, 17 Oct 2014 14:45:03 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: John Stultz <john.stultz@linaro.org>, lkml <linux-kernel@vger.kernel.org>, devel@driverdev.osuosl.org, Linux API <linux-api@vger.kernel.org>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Arve =?UTF-8?B?SGrDuG5uZXbDpWc=?= <arve@android.com>, Sumit Semwal <sumit.semwal@linaro.org>, Rebecca Schultz Zavin <rebecca@android.com>, Christoffer Dall <christoffer.dall@linaro.org>, Anup Patel <anup.patel@linaro.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: David Drysdale <drysdale@google.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-> Do we really need someone to do more work that has been done on it in
-> the past as an official "maintainer"?  I'll be glad to do it, as I doubt
-> it will require any time at all.
+Andy Lutomirski <luto@amacapital.net> writes:
 
-Well every time in the past that Al Viro looked in its direction he broke
-it so probably. Someone is going to have to clean up or fix the fact it
-pokes around in the depths of the low level fd I/O code and calls stuff
-like __fd_install and __alloc_fd directly, or mend it if it breaks.
+> [Added Eric Biederman, since I think your tree might be a reasonable
+> route forward for these patches.]
+>
+> On Thu, Jun 5, 2014 at 6:40 AM, David Drysdale <drysdale@google.com> wrote:
+>> Resending, adding cc:linux-api.
+>>
+>> Also, it may help to add a little more background -- this patch is
+>> needed as a (small) part of implementing Capsicum in the Linux kernel.
+>>
+>> Capsicum is a security framework that has been present in FreeBSD since
+>> version 9.0 (Jan 2012), and is based on concepts from object-capability
+>> security [1].
+>>
+>> One of the features of Capsicum is capability mode, which locks down
+>> access to global namespaces such as the filesystem hierarchy.  In
+>> capability mode, /proc is thus inaccessible and so fexecve(3) doesn't
+>> work -- hence the need for a kernel-space
+>
+> I just found myself wanting this syscall for another reason: injecting
+> programs into sandboxes or otherwise heavily locked-down namespaces.
+>
+> For example, I want to be able to reliably do something like nsenter
+> --namespace-flags-here toybox sh.  Toybox's shell is unusual in that
+> it is more or less fully functional, so this should Just Work (tm),
+> except that the toybox binary might not exist in the namespace being
+> entered.  If execveat were available, I could rig nsenter or a similar
+> tool to open it with O_CLOEXEC, enter the namespace, and then call
+> execveat.
+>
+> Is there any reason that these patches can't be merged more or less as
+> is for 3.19?
 
-I'm curious what Al Viro thinks of it
+Yes.  There is a silliness in how it implements fexecve.  The fexecve
+case should be use the empty string "" not a NULL pointer to indication
+that.  That change will then harmonize execveat with the other ...at
+system calls and simplify the code and remove a special case.  I believe
+using the empty string "" requires implementing the AT_EMPTY_PATH flag.
 
-> > Currently in the android space no one but libbinder should use the
-> > kernel interface.
-> 
-> That is correct.  If you do that, you deserve all of the pain and
-> suffering and rooted machines you will get.
+For sandboxes execveat seems to make a great deal of sense.  I can
+get the same functionality by passing in a directory file descriptor
+calling fchdir and execve so this should not introduce any new security
+holes.  And using the final file descriptor removes a race.
 
-So what is the Android side model for its security. That probably also
-should be described so nobody goes off and uses it for something like
-systemd because "it looked neat".
+AT_SYMLINK_NOFOLLOW seems to have some limited utility as well, although
+for exec I don't know what problems it can solve.
 
-> But all of the changes will be in new code.  Be it kdbus, or something
-> else if that doesn't work out.  This existing binder.c file will not be
-> changing at all.  This existing ABI, and codebase, is something that we
-> have to maintain forever for those millions of devices out there in the
-> real world today. 
+Until I am done moving I won't have time to pick this up, and the code
+clearly needs another revision but I will be happy to work to see that
+we get a sane execveat implemented.
 
-95% of those devices are locked down, most of them have non replaceable
-batteries that will dead and irreplacable (sanely anyway) in 3-5 years.
-"Forever" in the phone world is mercifully rather short.
+Eric
 
-Alan
+p.s.  I don't believe there are any namespaces issues where doing
+something with execveat flags make sense.
