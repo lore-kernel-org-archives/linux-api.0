@@ -1,46 +1,54 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v17 4/7] powerpc: add pmd_[dirty|mkclean] for THP
-Date: Mon, 20 Oct 2014 19:12:01 +0900
-Message-ID: <1413799924-17946-5-git-send-email-minchan@kernel.org>
-References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1413799924-17946-1-git-send-email-minchan@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, linuxppc-dev@lists.ozlabs.org, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v3 4/6] tpm: TPM 2.0 sysfs attributes
+Date: Mon, 20 Oct 2014 13:35:55 +0300
+Message-ID: <20141020103555.GA5647@intel.com>
+References: <1413372916-12091-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1413372916-12091-5-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <CALCETrUt8wK+wPULZpPQks3xEB0JkQkUD=peLSnBrMo70LT13w@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrUt8wK+wPULZpPQks3xEB0JkQkUD=peLSnBrMo70LT13w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, monty.wiseman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
-overwrite of the contents since MADV_FREE syscall is called for
-THP page.
+On Sun, Oct 19, 2014 at 03:07:49PM -0700, Andy Lutomirski wrote:
+> On Wed, Oct 15, 2014 at 4:35 AM, Jarkko Sakkinen
+> <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> > Implemented sysfs attributes for TPM2 devices. TPM2 sysfs attributes
+> > are mounted in the actual device associated with the chip instead of
+> > platform device like with TPM1 devices.
+> >
+> > Documentation/ABI/stable/sysfs-class/tpm2 contains descriptions
+> > of these attributes.
+> >
+> > Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> 
+> 
+> > +What:          /sys/class/misc/tpmX/device/cancel
+> > +Date:          October 2014
+> > +KernelVersion: 3.19
+> > +Contact:       tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> > +Description:   The "cancel" property allows you to cancel the currently
+> > +               pending TPM command. Writing any value to cancel will call the
+> > +               TPM chip specific cancel operation.
+> 
+> This is weird.  From the POV of a sysfs user, what operation gets
+> canceled?  What if it's a kernel-internal operation?
+> 
+> Shouldn't this be an ioctl?
 
-This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
-support.
+This was a really good insight, thank you. I just followed along the
+lines what was defined for TPM1 but didn't think too much. This is
+racy attribute and should not be added for TPM2.
 
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linuxppc-dev@lists.ozlabs.org
-Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- arch/powerpc/include/asm/pgtable-ppc64.h | 2 ++
- 1 file changed, 2 insertions(+)
+I'll drop this. Adding ioctl() later would much better idea as it is
+not racy but I think it should be postponed after this patch set so
+that it stays digestable size.
 
-diff --git a/arch/powerpc/include/asm/pgtable-ppc64.h b/arch/powerpc/include/asm/pgtable-ppc64.h
-index 889c6fa9ee01..7c07e5975871 100644
---- a/arch/powerpc/include/asm/pgtable-ppc64.h
-+++ b/arch/powerpc/include/asm/pgtable-ppc64.h
-@@ -468,9 +468,11 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
- 
- #define pmd_pfn(pmd)		pte_pfn(pmd_pte(pmd))
- #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
-+#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
- #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
- #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
- #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
-+#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
- #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
- #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
- 
--- 
-2.0.0
+> --Andy
+
+/Jarkko
