@@ -1,79 +1,56 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
-Date: Mon, 20 Oct 2014 14:48:45 +0100
-Message-ID: <CAHse=S-Xyk7CFn=tAGzo+tuUFt+04aBw+mGQmi=kWAaBJGALBw@mail.gmail.com>
-References: <1401975635-6162-1-git-send-email-drysdale@google.com>
- <CALCETrVraoD+r4zxBoGd+BV5P275AXcRV_R00SSr8fjQzRHnUg@mail.gmail.com> <87zjcszz8y.fsf@x220.int.ebiederm.org>
+From: Lee Jones <lee.jones@linaro.org>
+Subject: Re: [PATCH v2 2/5] mfd: max77693: Map charger device to its own
+ of_node
+Date: Mon, 20 Oct 2014 16:06:30 +0100
+Message-ID: <20141020150630.GB26784@x1>
+References: <1413808489-3524-1-git-send-email-k.kozlowski@samsung.com>
+ <1413808489-3524-3-git-send-email-k.kozlowski@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87zjcszz8y.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1413808489-3524-3-git-send-email-k.kozlowski@samsung.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Cc: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, Samuel Ortiz <sameo@linux.intel.com>, linux-api@vger.kernel.org, devicetree@vger.kernel.org, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Oct 19, 2014 at 1:20 AM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->
->> [Added Eric Biederman, since I think your tree might be a reasonable
->> route forward for these patches.]
->>
->> On Thu, Jun 5, 2014 at 6:40 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->>> Resending, adding cc:linux-api.
->>>
->>> Also, it may help to add a little more background -- this patch is
->>> needed as a (small) part of implementing Capsicum in the Linux kernel.
->>>
->>> Capsicum is a security framework that has been present in FreeBSD since
->>> version 9.0 (Jan 2012), and is based on concepts from object-capability
->>> security [1].
->>>
->>> One of the features of Capsicum is capability mode, which locks down
->>> access to global namespaces such as the filesystem hierarchy.  In
->>> capability mode, /proc is thus inaccessible and so fexecve(3) doesn't
->>> work -- hence the need for a kernel-space
->>
->> I just found myself wanting this syscall for another reason: injecting
->> programs into sandboxes or otherwise heavily locked-down namespaces.
->>
->> For example, I want to be able to reliably do something like nsenter
->> --namespace-flags-here toybox sh.  Toybox's shell is unusual in that
->> it is more or less fully functional, so this should Just Work (tm),
->> except that the toybox binary might not exist in the namespace being
->> entered.  If execveat were available, I could rig nsenter or a similar
->> tool to open it with O_CLOEXEC, enter the namespace, and then call
->> execveat.
->>
->> Is there any reason that these patches can't be merged more or less as
->> is for 3.19?
->
-> Yes.  There is a silliness in how it implements fexecve.  The fexecve
-> case should be use the empty string "" not a NULL pointer to indication
-> that.  That change will then harmonize execveat with the other ...at
-> system calls and simplify the code and remove a special case.  I believe
-> using the empty string "" requires implementing the AT_EMPTY_PATH flag.
+On Mon, 20 Oct 2014, Krzysztof Kozlowski wrote:
 
-Good point -- I'll shift to "" + AT_EMPTY_PATH.
+> Add a "maxim,max77693-charger" of_compatible to the mfd_cell so the M=
+=46D
+> child device (the charger) will have its own of_node set. This will b=
+e
+> used by the max77693 charger driver in next patches to obtain battery
+> configuration from DTS.
+>=20
+> Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+> ---
+>  drivers/mfd/max77693.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+>=20
+> diff --git a/drivers/mfd/max77693.c b/drivers/mfd/max77693.c
+> index cf008f45968c..2277a11b6629 100644
+> --- a/drivers/mfd/max77693.c
+> +++ b/drivers/mfd/max77693.c
+> @@ -43,7 +43,10 @@
+> =20
+>  static const struct mfd_cell max77693_devs[] =3D {
+>  	{ .name =3D "max77693-pmic", },
+> -	{ .name =3D "max77693-charger", },
+> +	{
+> +		.name =3D "max77693-charger",
+> +		.of_compatible =3D "maxim,max77693-charger",
+> +	},
+>  	{ .name =3D "max77693-muic", },
+>  	{ .name =3D "max77693-haptic", },
+>  	{
 
-> For sandboxes execveat seems to make a great deal of sense.  I can
-> get the same functionality by passing in a directory file descriptor
-> calling fchdir and execve so this should not introduce any new security
-> holes.  And using the final file descriptor removes a race.
->
-> AT_SYMLINK_NOFOLLOW seems to have some limited utility as well, although
-> for exec I don't know what problems it can solve.
->
-> Until I am done moving I won't have time to pick this up, and the code
-> clearly needs another revision but I will be happy to work to see that
-> we get a sane execveat implemented.
+I'm guessing this can be applied separately?
 
-If it helps, I can push out another revision in the next couple of days.
-
-> Eric
->
-> p.s.  I don't believe there are any namespaces issues where doing
-> something with execveat flags make sense.
->
->
+--=20
+Lee Jones
+Linaro STMicroelectronics Landing Team Lead
+Linaro.org =E2=94=82 Open source software for ARM SoCs
+=46ollow Linaro: Facebook | Twitter | Blog
