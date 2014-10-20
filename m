@@ -1,13 +1,13 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v17 3/7] sparc: add pmd_[dirty|mkclean] for THP
-Date: Mon, 20 Oct 2014 19:12:00 +0900
-Message-ID: <1413799924-17946-4-git-send-email-minchan@kernel.org>
+From: Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v17 2/7] x86: add pmd_[dirty|mkclean] for THP
+Date: Mon, 20 Oct 2014 19:11:59 +0900
+Message-ID: <1413799924-17946-3-git-send-email-minchan@kernel.org>
 References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1413799924-17946-1-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1413799924-17946-1-git-send-email-minchan@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
 MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent
@@ -17,46 +17,52 @@ THP page.
 This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
 support.
 
-Acked-by: David S. Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
----
- arch/sparc/include/asm/pgtable_64.h | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: x86@kernel.org
 
-diff --git a/arch/sparc/include/asm/pgtable_64.h b/arch/sparc/include/asm/pgtable_64.h
-index 3770bf5c6e1b..b80a309d7e00 100644
---- a/arch/sparc/include/asm/pgtable_64.h
-+++ b/arch/sparc/include/asm/pgtable_64.h
-@@ -666,6 +666,13 @@ static inline unsigned long pmd_young(pmd_t pmd)
- 	return pte_young(pte);
+Acked-by: Rik van Riel <riel@redhat.com>
+Acked-by: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Signed-off-by: Minchan Kim <minchan@kernel.org>
+---
+ arch/x86/include/asm/pgtable.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index aa97a070f09f..2259de0ccd79 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -104,6 +104,11 @@ static inline int pmd_young(pmd_t pmd)
+ 	return pmd_flags(pmd) & _PAGE_ACCESSED;
  }
  
 +static inline int pmd_dirty(pmd_t pmd)
 +{
-+	pte_t pte = __pte(pmd_val(pmd));
-+
-+	return pte_dirty(pte);
++	return pmd_flags(pmd) & _PAGE_DIRTY;
 +}
 +
- static inline unsigned long pmd_write(pmd_t pmd)
+ static inline int pte_write(pte_t pte)
  {
- 	pte_t pte = __pte(pmd_val(pmd));
-@@ -723,6 +730,15 @@ static inline pmd_t pmd_mkdirty(pmd_t pmd)
- 	return __pmd(pte_val(pte));
+ 	return pte_flags(pte) & _PAGE_RW;
+@@ -272,6 +277,11 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
+ 	return pmd_clear_flags(pmd, _PAGE_ACCESSED);
  }
  
 +static inline pmd_t pmd_mkclean(pmd_t pmd)
 +{
-+	pte_t pte = __pte(pmd_val(pmd));
-+
-+	pte = pte_mkclean(pte);
-+
-+	return __pmd(pte_val(pte));
++	return pmd_clear_flags(pmd, _PAGE_DIRTY);
 +}
 +
- static inline pmd_t pmd_mkyoung(pmd_t pmd)
+ static inline pmd_t pmd_wrprotect(pmd_t pmd)
  {
- 	pte_t pte = __pte(pmd_val(pmd));
+ 	return pmd_clear_flags(pmd, _PAGE_RW);
 -- 
 2.0.0
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
