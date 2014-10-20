@@ -1,127 +1,131 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
- kernel
-Date: Mon, 20 Oct 2014 12:20:49 +0300
-Message-ID: <20141020092049.GJ23154@mwanda>
-References: <20141016124741.GA3832@kroah.com> <20141017092601.GH23154@mwanda>
- <20141019220547.GC3780@kroah.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <20141019220547.GC3780@kroah.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: devel@driverdev.osuosl.org, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, John Stultz <john.stultz@linaro.org>, Rebecca Schultz Zavin <rebecca@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
+From: Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v17 0/7] MADV_FREE support
+Date: Mon, 20 Oct 2014 19:11:57 +0900
+Message-ID: <1413799924-17946-1-git-send-email-minchan@kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 20, 2014 at 06:05:47AM +0800, Greg Kroah-Hartman wrote:
-> On Fri, Oct 17, 2014 at 12:26:01PM +0300, Dan Carpenter wrote:
-> > The code isn't very beautiful and there are lots of details wrong like
-> > the error codes.
-> 
-> Really, what is wrong with the existing error code usages?
-> 
+This patch enable MADV_FREE hint for madvise syscall, which have
+been supported by other OSes. [PATCH 1] includes the details.
 
-I guess I was mostly looking at binder_ioctl(), the rest of the code
-seems better.
+[1] support MADVISE_FREE for !THP page so if VM encounter
+THP page in syscall context, it splits THP page.
+[2-6] is to preparing to call madvise syscall without THP plitting
+[7] enable THP page support for MADV_FREE.
 
-I feel like we went directly from "This code is never going in so there
-is no need to look at it." to "This code is going in in one week so
-there is no time to look at it."
+* from v16
+ * Rebased on mmotm-2014-10-15-16-57
 
-How often do people rely on proc_no_lock=1 to make this work?  People
-are saying on the internet that you don't need acurate information so
-you should disable locking as a speed up.
-http://www.programdevelop.com/1821706/.  It seems like a bad idea to
-provide provide the "run fast and crash" option.
+* from v15
+ * Add more Acked-by - Rik van Riel
+ * Rebased on mmotom-08-29-15-15
 
-Why is binder_set_nice needed?  Some comments would help here.
+* from v14
+ * Add more Ackedy-by from arch people(sparc, arm64 and arm)
+ * Drop s390 since pmd_dirty/clean was merged
 
-   434  static void binder_set_nice(long nice)
-   435  {
-   436          long min_nice;
-   437  
-   438          if (can_nice(current, nice)) {
-   439                  set_user_nice(current, nice);
-   440                  return;
-   441          }
-   442          min_nice = rlimit_to_nice(current->signal->rlim[RLIMIT_NICE].rlim_cur);
-   443          binder_debug(BINDER_DEBUG_PRIORITY_CAP,
-   444                       "%d: nice value %ld not allowed use %ld instead\n",
-   445                        current->pid, nice, min_nice);
-   446          set_user_nice(current, min_nice);
-   447          if (min_nice <= MAX_NICE)
-   448                  return;
+* from v13
+ * Add more Ackedy-by from arch people(arm, arm64 and ppc)
+ * Rebased on mmotm 2014-08-13-14-29
 
-It's harmless but wierd to check if min_nice is valid after we already
-called set_user_nice().
+* from v12
+ * Fix - skip to mark free pte on try_to_free_swap failed page - Kirill
+ * Add more Acked-by from arch maintainers and Kirill
 
-   449          binder_user_error("%d RLIMIT_NICE not set\n", current->pid);
-   450  }
+* From v11
+ * Fix arm build - Steve
+ * Separate patch for arm and arm64 - Steve
+ * Remove unnecessary check - Kirill
+ * Skip non-vm_normal page - Kirill
+ * Add Acked-by - Zhang
+ * Sparc64 build fix
+ * Pagetable walker THP handling fix
 
-Random comment:
+* From v10
+ * Add Acked-by from arch stuff(x86, s390)
+ * Pagewalker based pagetable working - Kirill
+ * Fix try_to_unmap_one broken with hwpoison - Kirill
+ * Use VM_BUG_ON_PAGE in madvise_free_pmd - Kirill
+ * Fix pgtable-3level.h for arm - Steve
 
-   709          has_page_addr =
-   710                  (void *)(((uintptr_t)buffer->data + buffer_size) & PAGE_MASK);
+* From v9
+ * Add Acked-by - Rik
+ * Add THP page support - Kirill
 
-The casting on "buffer->data" ugly and inconsistent.  There should be
-a function:
-void *buffer_data(struct binder_buffer *buffer)
-{
-	return buffer.data;
-}
+* From v8
+ * Rebased-on v3.16-rc2-mmotm-2014-06-25-16-44
 
-That way this becomes:
-		has_page_addr = (buffer_data(buffer) + buffer_size) & PAGE_MASK);
+* From v7
+ * Rebased-on next-20140613
 
-The "has_page_addr" variable name is misleading, because we're not
-storing true/false.  We're storing the last page address.
+* From v6
+ * Remove page from swapcache in syscal time
+ * Move utility functions from memory.c to madvise.c - Johannes
+ * Rename untilify functtions - Johannes
+ * Remove unnecessary checks from vmscan.c - Johannes
+ * Rebased-on v3.15-rc5-mmotm-2014-05-16-16-56
+ * Drop Reviewe-by because there was some changes since then.
 
-   711          if (n == NULL) {
-   712                  if (size + sizeof(struct binder_buffer) + 4 >= buffer_size)
-   713                          buffer_size = size; /* no room for other buffers */
-   714                  else
-   715                          buffer_size = size + sizeof(struct binder_buffer);
-   716          }
-   717          end_page_addr =
-   718                  (void *)PAGE_ALIGN((uintptr_t)buffer->data + buffer_size);
-   719          if (end_page_addr > has_page_addr)
-   720                  end_page_addr = has_page_addr;
-   721          if (binder_update_page_range(proc, 1,
-   722              (void *)PAGE_ALIGN((uintptr_t)buffer->data), end_page_addr, NULL))
-   723                  return NULL;
+* From v5
+ * Fix PPC problem which don't flush TLB - Rik
+ * Remove unnecessary lazyfree_range stub function - Rik
+ * Rebased on v3.15-rc5
 
-The alignment here is confusing because we don't align buffer->data
-below.
+* From v4
+ * Add Reviewed-by: Zhang Yanfei
+ * Rebase on v3.15-rc1-mmotm-2014-04-15-16-14
 
-   724  
-   725          rb_erase(best_fit, &proc->free_buffers);
-   726          buffer->free = 0;
-   727          binder_insert_allocated_buffer(proc, buffer);
-   728          if (buffer_size != size) {
-   729                  struct binder_buffer *new_buffer = (void *)buffer->data + size;
-                                                           ^^^^^^^^^^^^^^^^^^^^
-I don't really understand when buffer->data has to be page aligned and
-when not.  This code has very few comments.
+* From v3
+ * Add "how to work part" in description - Zhang
+ * Add page_discardable utility function - Zhang
+ * Clean up
 
-   730  
-   731                  list_add(&new_buffer->entry, &buffer->entry);
-   732                  new_buffer->free = 1;
-   733                  binder_insert_free_buffer(proc, new_buffer);
-   734          }
+* From v2
+ * Remove forceful dirty marking of swap-readed page - Johannes
+ * Remove deactivation logic of lazyfreed page
+ * Rebased on 3.14
+ * Remove RFC tag
 
-Does the stop_on_user_error option work?  There should be some
-documentation for this stuff.
+* From v1
+ * Use custom page table walker for madvise_free - Johannes
+ * Remove PG_lazypage flag - Johannes
+ * Do madvise_dontneed instead of madvise_freein swapless system
 
-regards,
-dan carpenter
+
+
+Minchan Kim (7):
+  mm: support madvise(MADV_FREE)
+  x86: add pmd_[dirty|mkclean] for THP
+  sparc: add pmd_[dirty|mkclean] for THP
+  powerpc: add pmd_[dirty|mkclean] for THP
+  arm: add pmd_mkclean for THP
+  arm64: add pmd_[dirty|mkclean] for THP
+  mm: Don't split THP page when syscall is called
+
+ arch/arm/include/asm/pgtable-3level.h    |   1 +
+ arch/arm64/include/asm/pgtable.h         |   2 +
+ arch/powerpc/include/asm/pgtable-ppc64.h |   2 +
+ arch/sparc/include/asm/pgtable_64.h      |  16 ++++
+ arch/x86/include/asm/pgtable.h           |  10 ++
+ include/linux/huge_mm.h                  |   4 +
+ include/linux/rmap.h                     |   9 +-
+ include/linux/vm_event_item.h            |   1 +
+ include/uapi/asm-generic/mman-common.h   |   1 +
+ mm/huge_memory.c                         |  35 +++++++
+ mm/madvise.c                             | 159 +++++++++++++++++++++++++++++++
+ mm/rmap.c                                |  46 ++++++++-
+ mm/vmscan.c                              |  64 +++++++++----
+ mm/vmstat.c                              |   1 +
+ 14 files changed, 331 insertions(+), 20 deletions(-)
+
+-- 
+2.0.0
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
