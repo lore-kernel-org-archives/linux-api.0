@@ -1,7 +1,8 @@
 From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v2 2/5] mfd: max77693: Map charger device to its own of_node
-Date: Mon, 20 Oct 2014 14:34:46 +0200
-Message-ID: <1413808489-3524-3-git-send-email-k.kozlowski@samsung.com>
+Subject: [PATCH v2 5/5] Documentation: charger: max77693: Document exported
+ sysfs entry
+Date: Mon, 20 Oct 2014 14:34:49 +0200
+Message-ID: <1413808489-3524-6-git-send-email-k.kozlowski@samsung.com>
 References: <1413808489-3524-1-git-send-email-k.kozlowski@samsung.com>
 Return-path: <linux-pm-owner@vger.kernel.org>
 In-reply-to: <1413808489-3524-1-git-send-email-k.kozlowski@samsung.com>
@@ -10,32 +11,67 @@ To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmai
 Cc: Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Add a "maxim,max77693-charger" of_compatible to the mfd_cell so the MFD
-child device (the charger) will have its own of_node set. This will be
-used by the max77693 charger driver in next patches to obtain battery
-configuration from DTS.
+Document the settings exported by max77693 charger driver through sysfs
+entries:
+ - fast_charge_timer
+ - top_off_threshold_current
+ - top_off_timer
 
 Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
 ---
- drivers/mfd/max77693.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ Documentation/ABI/testing/sysfs-class-power | 42 +++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-diff --git a/drivers/mfd/max77693.c b/drivers/mfd/max77693.c
-index cf008f45968c..2277a11b6629 100644
---- a/drivers/mfd/max77693.c
-+++ b/drivers/mfd/max77693.c
-@@ -43,7 +43,10 @@
- 
- static const struct mfd_cell max77693_devs[] = {
- 	{ .name = "max77693-pmic", },
--	{ .name = "max77693-charger", },
-+	{
-+		.name = "max77693-charger",
-+		.of_compatible = "maxim,max77693-charger",
-+	},
- 	{ .name = "max77693-muic", },
- 	{ .name = "max77693-haptic", },
- 	{
+diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
+index 909e7602c717..369d2a2d7d3e 100644
+--- a/Documentation/ABI/testing/sysfs-class-power
++++ b/Documentation/ABI/testing/sysfs-class-power
+@@ -32,3 +32,45 @@ Description:
+ 		Valid values:
+ 		- 5, 6 or 7 (hours),
+ 		- 0: disabled.
++
++What:		/sys/class/power_supply/max77693-charger/device/fast_charge_timer
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the maximum time the max77693
++		charger operates in fast-charge mode. When the timer expires
++		the device will terminate fast-charge mode (charging current
++		will drop to 0 A) and will trigger interrupt.
++
++		Valid values:
++		- 4 - 16 (hours), step by 2 (rounded down)
++		- 0: disabled.
++
++What:		/sys/class/power_supply/max77693-charger/device/top_off_threshold_current
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the charging current threshold for
++		entering top-off charging mode. When charging current in fast
++		charge mode drops below this value, the charger will trigger
++		interrupt and start top-off charging mode.
++
++		Valid values:
++		- 100000 - 200000 (microamps), step by 25000 (rounded down)
++		- 200000 - 350000 (microamps), step by 50000 (rounded down)
++		- 0: disabled.
++
++What:		/sys/class/power_supply/max77693-charger/device/top_off_timer
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the maximum time the max77693
++		charger operates in top-off charge mode. When the timer expires
++		the device will terminate top-off charge mode (charging current
++		will drop to 0 A) and will trigger interrupt.
++
++		Valid values:
++		- 0 - 70 (minutes), step by 10 (rounded down)
 -- 
 1.9.1
 
