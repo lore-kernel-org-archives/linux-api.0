@@ -1,102 +1,44 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCHv1 7/8] cgroup: cgroup namespace setns support
-Date: Mon, 20 Oct 2014 22:49:02 -0700
-Message-ID: <CALCETrVFKvtHpTfY3kuE5ZTrwQAzuDmk6dm-mbQffDHAZmq-KQ@mail.gmail.com>
-References: <1413235430-22944-1-git-send-email-adityakali@google.com>
-	<1413235430-22944-8-git-send-email-adityakali@google.com>
-	<20141016211236.GA4308@mail.hallyn.com>
-	<CAGr1F2EH0ynfFihTh1dv=n1faxUh0zS3ggk303bwGnDnW2PUCw@mail.gmail.com>
-	<20141016214710.GA4759@mail.hallyn.com>
-	<87iojgmy3o.fsf@x220.int.ebiederm.org>
-	<CALCETrUC=yW72d2hDzjESmZAt85x1WcGz4L-DrtY5YXAQxbpMA@mail.gmail.com>
-	<44072106-c0f3-46b8-b2b5-9b1cbd1b7d88@email.android.com>
-	<CALCETrXhGnBM_xx=Auz3WRQXkqhGGTWuZN=PU+A9HZ7Ek27FLA@mail.gmail.com>
-	<87zjcq10ya.fsf@x220.int.ebiederm.org>
-	<CALCETrVkMtsnEh57jFZrdx5vHbz97BdO7OuupT+xVNnWpJjxng@mail.gmail.com>
-	<87lhoayo59.fsf@x220.int.ebiederm.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: preadv2/pwritev2 rename
+Date: Tue, 21 Oct 2014 08:42:41 +0200
+Message-ID: <CAKgNAkjwJ6SH_j_Op+u+p4-0mN-cBVE24Wrt4SyhAiG1MMF9tA@mail.gmail.com>
+References: <CANP1eJFfGE53PTGR4XYGmr=HBLLdOByJj+GbkQB6+JSdrgtvFw@mail.gmail.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87lhoayo59.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANP1eJFfGE53PTGR4XYGmr=HBLLdOByJj+GbkQB6+JSdrgtvFw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 20, 2014 at 10:42 PM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->
->> On Mon, Oct 20, 2014 at 9:49 PM, Eric W. Biederman
->> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->>>> Possible solution:
->>>>
->>>> Ditch the pinning.  That is, if you're outside a cgroupns (or you have
->>>> a non-ns-confined cgroupfs mounted), then you can move a task in a
->>>> cgroupns outside of its root cgroup.  If you do this, then the task
->>>> thinks its cgroup is something like "../foo" or "../../foo".
->>>
->>> Of the possible solutions that seems attractive to me, simply because
->>> we sometimes want to allow clever things to occur.
->>>
->>> Does anyone know of a reason (beyond pretty printing) why we need
->>> cgroupns to restrict the subset of cgroups processes can be in?
->>>
->>> I would expect permissions on the cgroup directories themselves, and
->>> limited visiblilty would be (in general) to achieve the desired
->>> visiblity.
->>
->> This makes the security impact of cgroupns very easy to understand,
->> right?  Because there really won't be any -- cgroupns only affects
->> reads from /proc and what cgroupfs shows, but it doesn't change any
->> actual cgroups, nor does it affect any cgroup *changes*.
->
-> It seems like what we have described is chcgrouproot aka chroot for
-> cgroups.  At which point I think there are potentially similar security
-> issues as for chroot.  Can we confuse a setuid root process if we make
-> it's cgroup names look different.
->
-> Of course the confusing root concern is handled by the usual namespace
-> security checks that are already present.
+Hello Milosz,
 
-I think that the chroot issues are mostly in two categories: setuid
-confusion (not an issue here as you described) and chroot escapes.
-cgroupns escapes aren't a big deal, I think -- admins should deny the
-confined task the right to write to cgroupfs outside its hierarchy, by
-setting cgroupfs permissions appropriately and/or avoiding mounting
-cgroupfs outside the hierarchy.
-
+On Mon, Oct 20, 2014 at 11:52 PM, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org> wrote:
+> Christoph and/or Jeff,
 >
-> I do wonder if we think of this as chcgrouproot if there is a simpler
-> implementation.
-
-Could be.  I'll defer to Aditya for that one.
-
+> I updated the patch for 3.18-rc1 and I'm going to resend it as non-RFC
+> as I didn't get comments last time.
 >
->>>> While we're at it, consider making setns for a cgroupns *not* change
->>>> the caller's cgroup.  Is there any reason it really needs to?
->>>
->>> setns doesn't but nsenter is going to need to change the cgroup
->>> if the pinning requirement is kept.  nsenenter is going to want to
->>> change the cgroup if the pinning requirement is dropped.
->>>
->>
->> It seems easy enough for nsenter to change the cgroup all by itself.
->
-> Again.  I don't think anyone has suggested or implemented anything
-> different.
+> I only have one stupid question... I'm going to rename the calls to
+> preadv6 and pwritev6 (so it's more like the other syscalls: dup3,
+> accept4, eventfd2) but I'm not sure if i should call it preadv5 or
+> pwritev6 since the offset argument is split into two different
+> arguments (upper and lower part).
 
-The current patchset seems to punt on this decision by just failing
-the setns call if the caller is outside the cgroup in question.
+It's points like this that show exactly why naming system calls after
+the number of their arguments is a very bad idea[1]. Please don't do
+it. pwritev2() and preadv2() are not pretty either, but are marginally
+better. pwritev_fl() and preadv_fl() (or simialr) might also be okay,
+I guess.
 
---Andy
+> Also, In our application we were able to get about 20%-30% reduction
+> in response time when using this before queuing in a IO thread pool on
+> the read path. It's a pretty nice win in the real world.
+
+Cheers,
+
+Michael
+
+http://blog.man7.org/2014/02/system-call-naming-and-numbering.html
