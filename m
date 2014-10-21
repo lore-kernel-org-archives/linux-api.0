@@ -1,56 +1,68 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
- kernel
-Date: Tue, 21 Oct 2014 12:01:21 +0200
-Message-ID: <20141021100121.GA23161@amd>
-References: <20141016124741.GA3832@kroah.com>
- <CAKgNAkiPg8G13XZXG6CiaBFZ1yqY2J7_OAppDOGweuNpRaojuA@mail.gmail.com>
- <20141016231457.GB13592@kroah.com>
+From: Lee Jones <lee.jones@linaro.org>
+Subject: Re: [PATCH v2 2/5] mfd: max77693: Map charger device to its own
+ of_node
+Date: Tue, 21 Oct 2014 11:17:05 +0100
+Message-ID: <20141021101705.GF26842@x1>
+References: <1413808489-3524-1-git-send-email-k.kozlowski@samsung.com>
+ <1413808489-3524-3-git-send-email-k.kozlowski@samsung.com>
+ <20141020150630.GB26784@x1>
+ <1413817781.11298.0.camel@AMDC1943>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-pm-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20141016231457.GB13592@kroah.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: devel@driverdev.osuosl.org, Anup Patel <anup.patel@linaro.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, John Stultz <john.stultz@linaro.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Rebecca Schultz Zavin <rebecca@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
+In-Reply-To: <1413817781.11298.0.camel@AMDC1943>
+Sender: linux-pm-owner@vger.kernel.org
+To: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Cc: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, Samuel Ortiz <sameo@linux.intel.com>, linux-api@vger.kernel.org, devicetree@vger.kernel.org, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 2014-10-17 01:14:57, Greg Kroah-Hartman wrote:
-> On Thu, Oct 16, 2014 at 04:18:02PM +0200, Michael Kerrisk (man-pages) wrote:
-> > On Thu, Oct 16, 2014 at 2:47 PM, Greg Kroah-Hartman
-> > <gregkh@linuxfoundation.org> wrote:
-> > > From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-> > >
-> > > The Android binder code has been "stable" for many years now.  No matter
-> > > what comes in the future, we are going to have to support this API, so
-> > > might as well move it to the "real" part of the kernel as there's no
-> > > real work that needs to be done to the existing code.
-> > 
-> > Where does one find the canonical documentation of the user-space API?
-> 
-> There really is only one "canonical" thing, and that is in the libbinder
-> code in the Android userspace repository.  And it's not really
-> "documentation" so much as, "a C file that interacts with the ioctls in
-> the binder kernel code" :(
-> 
-> Think of this as just a random character driver with some funny ioctls
-> that will never get really documented as there is only one user of it.
+On Mon, 20 Oct 2014, Krzysztof Kozlowski wrote:
 
-This is not random character driver, it is communication mechanism. It
-should _not_ be a character driver.
+> On pon, 2014-10-20 at 16:06 +0100, Lee Jones wrote:
+> > On Mon, 20 Oct 2014, Krzysztof Kozlowski wrote:
+> >=20
+> > > Add a "maxim,max77693-charger" of_compatible to the mfd_cell so t=
+he MFD
+> > > child device (the charger) will have its own of_node set. This wi=
+ll be
+> > > used by the max77693 charger driver in next patches to obtain bat=
+tery
+> > > configuration from DTS.
+> > >=20
+> > > Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+> > > ---
+> > >  drivers/mfd/max77693.c | 5 ++++-
+> > >  1 file changed, 4 insertions(+), 1 deletion(-)
+> > >=20
+> > > diff --git a/drivers/mfd/max77693.c b/drivers/mfd/max77693.c
+> > > index cf008f45968c..2277a11b6629 100644
+> > > --- a/drivers/mfd/max77693.c
+> > > +++ b/drivers/mfd/max77693.c
+> > > @@ -43,7 +43,10 @@
+> > > =20
+> > >  static const struct mfd_cell max77693_devs[] =3D {
+> > >  	{ .name =3D "max77693-pmic", },
+> > > -	{ .name =3D "max77693-charger", },
+> > > +	{
+> > > +		.name =3D "max77693-charger",
+> > > +		.of_compatible =3D "maxim,max77693-charger",
+> > > +	},
+> > >  	{ .name =3D "max77693-muic", },
+> > >  	{ .name =3D "max77693-haptic", },
+> > >  	{
+> >=20
+> > I'm guessing this can be applied separately?
+>=20
+> Yes. Patch 3/5 also (it adds necessary defines and symbols for
+> chargers).
 
-And it should really be documented.
-									Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+I'll take this patch, but I think 3/5 is required by some of the other
+patches in the set, no?
+
+--=20
+Lee Jones
+Linaro STMicroelectronics Landing Team Lead
+Linaro.org =E2=94=82 Open source software for ARM SoCs
+=46ollow Linaro: Facebook | Twitter | Blog
