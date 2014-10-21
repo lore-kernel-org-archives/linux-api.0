@@ -1,125 +1,81 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCHv1 7/8] cgroup: cgroup namespace setns support
-Date: Tue, 21 Oct 2014 12:02:37 -0700
-Message-ID: <CALCETrWXDMRsexfvmh2CiMW4WX0ZLJ4pJvzHU55PEBk=NmnyZg@mail.gmail.com>
-References: <1413235430-22944-1-git-send-email-adityakali@google.com>
-	<1413235430-22944-8-git-send-email-adityakali@google.com>
-	<20141016211236.GA4308@mail.hallyn.com>
-	<CAGr1F2EH0ynfFihTh1dv=n1faxUh0zS3ggk303bwGnDnW2PUCw@mail.gmail.com>
-	<20141016214710.GA4759@mail.hallyn.com>
-	<87iojgmy3o.fsf@x220.int.ebiederm.org>
-	<CALCETrUC=yW72d2hDzjESmZAt85x1WcGz4L-DrtY5YXAQxbpMA@mail.gmail.com>
-	<44072106-c0f3-46b8-b2b5-9b1cbd1b7d88@email.android.com>
-	<CALCETrXhGnBM_xx=Auz3WRQXkqhGGTWuZN=PU+A9HZ7Ek27FLA@mail.gmail.com>
-	<87zjcq10ya.fsf@x220.int.ebiederm.org>
-	<CALCETrVkMtsnEh57jFZrdx5vHbz97BdO7OuupT+xVNnWpJjxng@mail.gmail.com>
-	<87lhoayo59.fsf@x220.int.ebiederm.org>
-	<CALCETrVFKvtHpTfY3kuE5ZTrwQAzuDmk6dm-mbQffDHAZmq-KQ@mail.gmail.com>
-	<CAGr1F2Ee2MCKOwALR2YV7ppDmyHxO6+EsHqSc1+WcwKFPPQB0w@mail.gmail.com>
+From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
+ kernel
+Date: Tue, 21 Oct 2014 22:05:22 +0200
+Message-ID: <20141021200522.GB2969@amd>
+References: <20141016124741.GA3832@kroah.com>
+ <20141016231221.GA13592@kroah.com>
+ <20141021103622.GB23161@amd>
+ <4227199.e5u61J7jtX@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CAGr1F2Ee2MCKOwALR2YV7ppDmyHxO6+EsHqSc1+WcwKFPPQB0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <4227199.e5u61J7jtX@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Santosh Shilimkar <santosh.shilimkar-l0cyMroinI0@public.gmane.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rebecca Schultz Zavin <rebecca-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Anup Patel <anup.patel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 21, 2014 at 11:49 AM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> On Mon, Oct 20, 2014 at 10:49 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->> On Mon, Oct 20, 2014 at 10:42 PM, Eric W. Biederman
->> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>>
->>> I do wonder if we think of this as chcgrouproot if there is a simpler
->>> implementation.
->>
->> Could be.  I'll defer to Aditya for that one.
->>
->
-> More than chcgrouproot, its probably closer to pivot_cgroup_root. In
-> addition to restricting the process to a cgroup-root, new processes
-> entering the container should also be implicitly contained within the
-> cgroup-root of that container.
+On Tue 2014-10-21 16:12:24, Arnd Bergmann wrote:
+> On Tuesday 21 October 2014 12:36:22 Pavel Machek wrote:
+> > On Fri 2014-10-17 01:12:21, Greg Kroah-Hartman wrote:
+> > > On Thu, Oct 16, 2014 at 10:09:04AM -0700, John Stultz wrote:
+> > > > On Thu, Oct 16, 2014 at 5:47 AM, Greg Kroah-Hartman
+> > > > <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
+> > > > > From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+> > 
+> > > > Are the Android guys comfortable with the ABI stability rules they'll
+> > > > now face?
+> > > 
+> > > Just because something is in staging, doesn't mean you don't have to
+> > > follow the same ABI stability rules as the rest of the kernel.  If a
+> > > change had happened to this code that broke userspace in the past, I
+> > > would have reverted it.  So this should not be anything different from
+> > > what has been happening inthe past.
+> > 
+> > Actually, there's big difference.
+> > 
+> > If Al Viro changes core filesystem in a way that breaks
+> > staging/binder, binder is broken, and if it can't be fixed... well it
+> > can't be fixed.
+> > 
+> > If Al Viro changes core filesystem in a way that breaks
+> > drivers/binder, Al's change is going to be reverted.
+> 
+> One might have argued that we'd have to do that already, but the reasons
+> for doing that with binder in the main kernel are certainly stronger.
+> 
+> > It is really hard to review without API documentation. Normally, API
+> > documentation is required for stuff like this.
+> > 
+> > For example: does it add new files in /proc?
+> > 
+> > Given that it is stable, can we get rid of binder_debug() and
+> > especially BINDER_DEBUG_ENTRY stuff?
+> 
+> Good point. We require documentation for every single sysfs attribute
+> that gets added to a driver (some escape the review, but that doesn't
+> change the rule), so we should not make an exception for a new procfs
+> file here.
 
-Why?  Concretely, why should this be in the kernel namespace code
-instead of in userspace?
+Actually, it looked like it is debugfs file. Code was messy enough
+that I was not sure.
 
-> Implementing pivot_cgroup_root would
-> probably involve overloading mount-namespace to now understand cgroup
-> filesystem too. I did attempt combining cgroupns-root with mntns
-> earlier (not via a new syscall though), but came to the conclusion
-> that its just simpler to have a separate cgroup namespace and get
-> clear semantics. One of the issues was that implicitly changing cgroup
-> on setns to mntns seemed like a huge undesirable side-effect.
->
-> About pinning: I really feel that it should be OK to pin processes
-> within cgroupns-root. I think thats one of the most important feature
-> of cgroup-namespace since its most common usecase is to containerize
-> un-trusted processes - processes that, for their entire lifetime, need
-> to remain inside their container.
+> > Could binder_transcation() be split to smaller functions according to
+> > CodingStyle? 17 goto targets at the end of function are not exactly
+> > easy to read.
+> > 
+> > ginder_thread_read/write also needs splitting.
+> 
+> Yes, in principle, but this is still a detail that would mainly serve
+> to simplify review. The problem is more the lack of review and
+> documentation of the API.
 
-So don't let them out.  None of the other namespaces have this kind of
-constraint:
+Yes, the problem is that code is impossible to review without API
+documentation.
 
- - If you're in a mntns, you can still use fds from outside.
- - If you're in a netns, you can still use sockets from outside the namespace.
- - If you're in an ipcns, you can still use ipc handles from outside.
-
-etc.
-
-> And with explicit permission from
-> cgroup subsystem (something like cgroup.may_unshare as you had
-> suggested previously), we can make sure that unprivileged processes
-> cannot pin themselves. Also, maintaining this invariant (your current
-> cgroup is always under your cgroupns-root) keeps the code and the
-> semantics simple.
-
-I actually think it makes the semantics more complex.  The less policy
-you stick in the kernel, the easier it is to understand the impact of
-that policy.
-
->
-> If we ditch the pinning requirement and allow the containarized
-> process to move outside of its cgroupns-root, we will have to address
-> atleast the following:
-> * what does its /proc/self/cgroup  (and /proc/<pid>/cgroup in general)
-> look like? We might need to just not show anything in
-> /proc/<pid>/cgroup in such case (for default hierarchy).
-
-The process should see the cgroup path relative to its cgroup ns.
-Whether this requires a new /proc mount or happens automatically is an
-open question.  (I *hate* procfs for reasons like this.)
-
-> * how should future setns() and unshare() by such process behave?
-
-Open question.
-
-> * 'mount -t cgroup cgroup <mnt>' by such a process will yield unexpected result
-
-You could disallow that and instead require 'mount -t cgroup -o
-cgrouproot=. cgroup mnt' where '.' will be resolved at mount time
-relative to the caller's cgroupns.
-
-> * container will not remain migratable
-
-Why not?
-
-> * added code complexity to handle above scenarios
->
-> I understand that having process pinned to a cgroup hierarchy might
-> seem inconvenient. But even today (without cgroup namespaces), moving
-> a task from one cgroup to another can fail for reasons outside of
-> control of the task attempting the move (even if its privileged). So
-> the userspace should already handle this scenario. I feel its not
-> worth to add complexity in the kernel for this.
-
---Andy
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
