@@ -1,259 +1,156 @@
 From: Milosz Tanski <milosz@adfin.com>
-Subject: [PATCH 1/4] vfs: Prepare for adding a new preadv/pwritev with user flags.
-Date: Tue, 21 Oct 2014 16:46:56 -0400
-Message-ID: <9306856a3ea74bcc41523430d74ef4be93d8f436.1413923420.git.milosz@adfin.com>
+Subject: [PATCH] Add preadv2/pwritev2 documentation.
+Date: Tue, 21 Oct 2014 16:59:02 -0400
+Message-ID: <1413925142-68031-1-git-send-email-milosz@adfin.com>
 References: <cover.1413923420.git.milosz@adfin.com>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <cover.1413923420.git.milosz@adfin.com>
-In-Reply-To: <cover.1413923420.git.milosz@adfin.com>
-References: <cover.1413923420.git.milosz@adfin.com>
 Sender: owner-linux-aio@kvack.org
 To: linux-kernel@vger.kernel.org
-Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-man@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Plumbing the flags argument through the vfs code so they can be passed down to
-__generic_file_(read/write)_iter function that do the acctual work.
+New syscalls that are a variation on the preadv/pwritev but support an extra
+flag argument.
 
 Signed-off-by: Milosz Tanski <milosz@adfin.com>
+Suggested-by: Jeff Moyer <jmoyer@redhat.com>
+Fixes: Jeff Moyer <jmoyer@redhat.com>
 ---
- drivers/target/target_core_file.c |  6 +++---
- fs/nfsd/vfs.c                     |  4 ++--
- fs/read_write.c                   | 28 ++++++++++++++++------------
- fs/splice.c                       |  2 +-
- include/linux/aio.h               |  2 ++
- include/linux/fs.h                |  4 ++--
- mm/filemap.c                      |  2 +-
- 7 files changed, 27 insertions(+), 21 deletions(-)
+ man2/readv.2 | 71 +++++++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 61 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/target/target_core_file.c b/drivers/target/target_core_file.c
-index 7d6cdda..58d9a6d 100644
---- a/drivers/target/target_core_file.c
-+++ b/drivers/target/target_core_file.c
-@@ -350,9 +350,9 @@ static int fd_do_rw(struct se_cmd *cmd, struct scatterlist *sgl,
- 	set_fs(get_ds());
- 
- 	if (is_write)
--		ret = vfs_writev(fd, &iov[0], sgl_nents, &pos);
-+		ret = vfs_writev(fd, &iov[0], sgl_nents, &pos, 0);
- 	else
--		ret = vfs_readv(fd, &iov[0], sgl_nents, &pos);
-+		ret = vfs_readv(fd, &iov[0], sgl_nents, &pos, 0);
- 
- 	set_fs(old_fs);
- 
-@@ -528,7 +528,7 @@ fd_execute_write_same(struct se_cmd *cmd)
- 
- 	old_fs = get_fs();
- 	set_fs(get_ds());
--	rc = vfs_writev(f, &iov[0], iov_num, &pos);
-+	rc = vfs_writev(f, &iov[0], iov_num, &pos, 0);
- 	set_fs(old_fs);
- 
- 	vfree(iov);
-diff --git a/fs/nfsd/vfs.c b/fs/nfsd/vfs.c
-index 989129e..ef01c78 100644
---- a/fs/nfsd/vfs.c
-+++ b/fs/nfsd/vfs.c
-@@ -872,7 +872,7 @@ __be32 nfsd_readv(struct file *file, loff_t offset, struct kvec *vec, int vlen,
- 
- 	oldfs = get_fs();
- 	set_fs(KERNEL_DS);
--	host_err = vfs_readv(file, (struct iovec __user *)vec, vlen, &offset);
-+	host_err = vfs_readv(file, (struct iovec __user *)vec, vlen, &offset, 0);
- 	set_fs(oldfs);
- 	return nfsd_finish_read(file, count, host_err);
- }
-@@ -960,7 +960,7 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
- 
- 	/* Write the data. */
- 	oldfs = get_fs(); set_fs(KERNEL_DS);
--	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos);
-+	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos, 0);
- 	set_fs(oldfs);
- 	if (host_err < 0)
- 		goto out_nfserr;
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 7d9318c..9858c06 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -653,7 +653,8 @@ unsigned long iov_shorten(struct iovec *iov, unsigned long nr_segs, size_t to)
- EXPORT_SYMBOL(iov_shorten);
- 
- static ssize_t do_iter_readv_writev(struct file *filp, int rw, const struct iovec *iov,
--		unsigned long nr_segs, size_t len, loff_t *ppos, iter_fn_t fn)
-+		unsigned long nr_segs, size_t len, loff_t *ppos, iter_fn_t fn,
-+		int flags)
- {
- 	struct kiocb kiocb;
- 	struct iov_iter iter;
-@@ -662,6 +663,7 @@ static ssize_t do_iter_readv_writev(struct file *filp, int rw, const struct iove
- 	init_sync_kiocb(&kiocb, filp);
- 	kiocb.ki_pos = *ppos;
- 	kiocb.ki_nbytes = len;
-+	kiocb.ki_rwflags = flags;
- 
- 	iov_iter_init(&iter, rw, iov, nr_segs, len);
- 	ret = fn(&kiocb, &iter);
-@@ -800,7 +802,8 @@ out:
- 
- static ssize_t do_readv_writev(int type, struct file *file,
- 			       const struct iovec __user * uvector,
--			       unsigned long nr_segs, loff_t *pos)
-+			       unsigned long nr_segs, loff_t *pos,
-+			       int flags)
- {
- 	size_t tot_len;
- 	struct iovec iovstack[UIO_FASTIOV];
-@@ -834,7 +837,7 @@ static ssize_t do_readv_writev(int type, struct file *file,
- 
- 	if (iter_fn)
- 		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
--						pos, iter_fn);
-+						pos, iter_fn, flags);
- 	else if (fnv)
- 		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
- 						pos, fnv);
-@@ -857,27 +860,27 @@ out:
- }
- 
- ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
--		  unsigned long vlen, loff_t *pos)
-+		  unsigned long vlen, loff_t *pos, int flags)
- {
- 	if (!(file->f_mode & FMODE_READ))
- 		return -EBADF;
- 	if (!(file->f_mode & FMODE_CAN_READ))
- 		return -EINVAL;
- 
--	return do_readv_writev(READ, file, vec, vlen, pos);
-+	return do_readv_writev(READ, file, vec, vlen, pos, flags);
- }
- 
- EXPORT_SYMBOL(vfs_readv);
- 
- ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
--		   unsigned long vlen, loff_t *pos)
-+		   unsigned long vlen, loff_t *pos, int flags)
- {
- 	if (!(file->f_mode & FMODE_WRITE))
- 		return -EBADF;
- 	if (!(file->f_mode & FMODE_CAN_WRITE))
- 		return -EINVAL;
- 
--	return do_readv_writev(WRITE, file, vec, vlen, pos);
-+	return do_readv_writev(WRITE, file, vec, vlen, pos, flags);
- }
- 
- EXPORT_SYMBOL(vfs_writev);
-@@ -890,7 +893,7 @@ SYSCALL_DEFINE3(readv, unsigned long, fd, const struct iovec __user *, vec,
- 
- 	if (f.file) {
- 		loff_t pos = file_pos_read(f.file);
--		ret = vfs_readv(f.file, vec, vlen, &pos);
-+		ret = vfs_readv(f.file, vec, vlen, &pos, 0);
- 		if (ret >= 0)
- 			file_pos_write(f.file, pos);
- 		fdput_pos(f);
-@@ -910,7 +913,7 @@ SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
- 
- 	if (f.file) {
- 		loff_t pos = file_pos_read(f.file);
--		ret = vfs_writev(f.file, vec, vlen, &pos);
-+		ret = vfs_writev(f.file, vec, vlen, &pos, 0);
- 		if (ret >= 0)
- 			file_pos_write(f.file, pos);
- 		fdput_pos(f);
-@@ -942,7 +945,7 @@ SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
- 	if (f.file) {
- 		ret = -ESPIPE;
- 		if (f.file->f_mode & FMODE_PREAD)
--			ret = vfs_readv(f.file, vec, vlen, &pos);
-+			ret = vfs_readv(f.file, vec, vlen, &pos, 0);
- 		fdput(f);
- 	}
- 
-@@ -966,7 +969,7 @@ SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
- 	if (f.file) {
- 		ret = -ESPIPE;
- 		if (f.file->f_mode & FMODE_PWRITE)
--			ret = vfs_writev(f.file, vec, vlen, &pos);
-+			ret = vfs_writev(f.file, vec, vlen, &pos, 0);
- 		fdput(f);
- 	}
- 
-@@ -1014,7 +1017,7 @@ static ssize_t compat_do_readv_writev(int type, struct file *file,
- 
- 	if (iter_fn)
- 		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
--						pos, iter_fn);
-+						pos, iter_fn, 0);
- 	else if (fnv)
- 		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
- 						pos, fnv);
-@@ -1113,6 +1116,7 @@ COMPAT_SYSCALL_DEFINE5(preadv, compat_ulong_t, fd,
- 	return __compat_sys_preadv64(fd, vec, vlen, pos);
- }
- 
+diff --git a/man2/readv.2 b/man2/readv.2
+index 8748efa..31b3870 100644
+--- a/man2/readv.2
++++ b/man2/readv.2
+@@ -45,6 +45,12 @@ readv, writev, preadv, pwritev \- read or write data into multiple buffers
+ .sp
+ .BI "ssize_t pwritev(int " fd ", const struct iovec *" iov ", int " iovcnt ,
+ .BI "                off_t " offset );
++.sp
++.BI "ssize_t preadv2(int " fd ", const struct iovec *" iov ", int " iovcnt ,
++.BI "                off_t " offset ", int " flags );
++.sp
++.BI "ssize_t pwritev2(int " fd ", const struct iovec *" iov ", int " iovcnt ,
++.BI "                 off_t " offset ", int " flags );
+ .fi
+ .sp
+ .in -4n
+@@ -162,9 +168,9 @@ The
+ system call combines the functionality of
+ .BR writev ()
+ and
+-.BR pwrite (2).
++.BR pwrite (2) "."
+ It performs the same task as
+-.BR writev (),
++.BR writev () ","
+ but adds a fourth argument,
+ .IR offset ,
+ which specifies the file offset at which the output operation
+@@ -174,15 +180,41 @@ The file offset is not changed by these system calls.
+ The file referred to by
+ .I fd
+ must be capable of seeking.
++.SS preadv2() and pwritev2()
 +
- static size_t compat_writev(struct file *file,
- 			    const struct compat_iovec __user *vec,
- 			    unsigned long vlen, loff_t *pos)
-diff --git a/fs/splice.c b/fs/splice.c
-index f5cb9ba..9591b9f 100644
---- a/fs/splice.c
-+++ b/fs/splice.c
-@@ -576,7 +576,7 @@ static ssize_t kernel_readv(struct file *file, const struct iovec *vec,
- 	old_fs = get_fs();
- 	set_fs(get_ds());
- 	/* The cast to a user pointer is valid due to the set_fs() */
--	res = vfs_readv(file, (const struct iovec __user *)vec, vlen, &pos);
-+	res = vfs_readv(file, (const struct iovec __user *)vec, vlen, &pos, 0);
- 	set_fs(old_fs);
- 
- 	return res;
-diff --git a/include/linux/aio.h b/include/linux/aio.h
-index d9c92da..9c1d499 100644
---- a/include/linux/aio.h
-+++ b/include/linux/aio.h
-@@ -52,6 +52,8 @@ struct kiocb {
- 	 * this is the underlying eventfd context to deliver events to.
- 	 */
- 	struct eventfd_ctx	*ki_eventfd;
++This pair of system calls has similar functionality to the
++.BR preadv ()
++and
++.BR pwritev ()
++calls, but adds a fifth argument, \fIflags\fP, which modifies the behavior on a per call basis.
 +
-+	int			ki_rwflags;
- };
- 
- static inline bool is_sync_kiocb(struct kiocb *kiocb)
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index a957d43..9ed5711 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1538,9 +1538,9 @@ ssize_t rw_copy_check_uvector(int type, const struct iovec __user * uvector,
- extern ssize_t vfs_read(struct file *, char __user *, size_t, loff_t *);
- extern ssize_t vfs_write(struct file *, const char __user *, size_t, loff_t *);
- extern ssize_t vfs_readv(struct file *, const struct iovec __user *,
--		unsigned long, loff_t *);
-+		unsigned long, loff_t *, int);
- extern ssize_t vfs_writev(struct file *, const struct iovec __user *,
--		unsigned long, loff_t *);
-+		unsigned long, loff_t *, int);
- 
- struct super_operations {
-    	struct inode *(*alloc_inode)(struct super_block *sb);
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 14b4642..cb7f530 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -1465,7 +1465,7 @@ static void shrink_readahead_size_eio(struct file *filp,
-  * of the logic when it comes to error handling etc.
-  */
- static ssize_t do_generic_file_read(struct file *filp, loff_t *ppos,
--		struct iov_iter *iter, ssize_t written)
-+		struct iov_iter *iter, ssize_t written, int flags)
- {
- 	struct address_space *mapping = filp->f_mapping;
- 	struct inode *inode = mapping->host;
++Like the
++.BR preadv ()
++and
++.BR pwritev ()
++calls, they accept an \fIoffset\fP argument. Unlike those calls, if the \fIoffset\fP argument is set to -1 then the current file offset is used and updated.
++
++The \fIflags\fP arguments to
++.BR preadv2 ()
++and
++.BR pwritev2 ()
++contains a bitwise OR of one or more of the following flags:
++.TP
++.BR RWF_NONBLOCK " (only " preadv2() " since Linux 3.19)"
++Performs a non-blocking operation for regular files (not sockets) opened in buffered mode (not
++.BR O_DIRECT ")."
++
+ .SH RETURN VALUE
+ On success,
+-.BR readv ()
+-and
++.BR readv () ","
+ .BR preadv ()
+-return the number of bytes read;
+-.BR writev ()
+ and
++.BR preadv2 ()
++return the number of bytes read;
++.BR writev () ","
+ .BR pwritev ()
++and
++.BR pwritev2 ()
+ return the number of bytes written.
+ On error, \-1 is returned, and \fIerrno\fP is set appropriately.
+ .SH ERRORS
+@@ -191,12 +223,22 @@ The errors are as given for
+ and
+ .BR write (2).
+ Furthermore,
+-.BR preadv ()
+-and
++.BR preadv () ","
++.BR preadv2 () ","
+ .BR pwritev ()
++and
++.BR pwritev2 ()
+ can also fail for the same reasons as
+ .BR lseek (2).
+-Additionally, the following error is defined:
++Additionally, the following errors are defined:
++.TP
++.B EAGAIN
++The operation would block. This is possible if the file descriptor \fIfd\fP refers to a socket and has been marked nonblocking
++.RB ( O_NONBLOCK ),
++or the operation is a
++.BR preadv2
++and the \fIflags\fP argument is set to
++.BR RWF_NONBLOCK.
+ .TP
+ .B EINVAL
+ The sum of the
+@@ -205,12 +247,17 @@ values overflows an
+ .I ssize_t
+ value.
+ Or, the vector count \fIiovcnt\fP is less than zero or greater than the
+-permitted maximum.
++permitted maximum. Or, an unknown flag is specified in \fIflags\fP.
+ .SH VERSIONS
+ .BR preadv ()
+ and
+ .BR pwritev ()
+ first appeared in Linux 2.6.30; library support was added in glibc 2.10.
++.sp
++.BR preadv2 ()
++and
++.BR pwritev2 ()
++first appeared in Linux 3.19 (if we're lucky);
+ .SH CONFORMING TO
+ .BR readv (),
+ .BR writev ():
+@@ -223,6 +270,10 @@ first appeared in Linux 2.6.30; library support was added in glibc 2.10.
+ .BR preadv (),
+ .BR pwritev ():
+ nonstandard, but present also on the modern BSDs.
++.sp
++.BR preadv2 (),
++.BR pwritev2 ():
++nonstandard, Linux extension.
+ .SH NOTES
+ .SS C library/kernel ABI differences
+ POSIX.1-2001 allows an implementation to place a limit on
 -- 
 1.9.1
 
