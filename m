@@ -1,57 +1,110 @@
-From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Subject: Re: [PATCH 2/5] vfio: introduce the VFIO_DMA_MAP_FLAG_NOEXEC flag
-Date: Tue, 21 Oct 2014 14:23:00 +0200
-Message-ID: <CAG8rG2wfwR0gYRk-8abe7Z7Z7WZ8FdH6qURVw9up==Z0DsrUkg@mail.gmail.com>
-References: <1413205748-6300-1-git-send-email-a.motakis@virtualopensystems.com>
-	<1413205748-6300-3-git-send-email-a.motakis@virtualopensystems.com>
-	<CALCETrWzxjpKrou6J63_T75x=ZEGWCGbc4KEWT_AMvzSQNn1eg@mail.gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
+ kernel
+Date: Tue, 21 Oct 2014 16:12:24 +0200
+Message-ID: <4227199.e5u61J7jtX@wuerfel>
+References: <20141016124741.GA3832@kroah.com>
+ <20141016231221.GA13592@kroah.com> <20141021103622.GB23161@amd>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CALCETrWzxjpKrou6J63_T75x=ZEGWCGbc4KEWT_AMvzSQNn1eg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux IOMMU <iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, VirtualOpenSystems Technical Team <tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, kvm-arm <kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <20141021103622.GB23161@amd>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Pavel Machek <pavel@ucw.cz>
+Cc: devel@driverdev.osuosl.org, Anup Patel <anup.patel@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, lkml <linux-kernel@vger.kernel.org>, Arve =?ISO-8859-1?Q?Hj=F8nnev=E5g?= <arve@android.com>, John Stultz <john.stultz@linaro.org>, viro@zeniv.linux.org.uk, Linux API <linux-api@vger.kernel.org>, Rebecca Schultz Zavin <rebecca@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 20, 2014 at 11:37 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Mon, Oct 13, 2014 at 6:09 AM, Antonios Motakis
-> <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org> wrote:
->> We introduce the VFIO_DMA_MAP_FLAG_NOEXEC flag to the VFIO dma map call,
->> and expose its availability via the capability VFIO_DMA_NOEXEC_IOMMU.
->> This way the user can control whether the XN flag will be set on the
->> requested mappings. The IOMMU_NOEXEC flag needs to be available for all
->> the IOMMUs of the container used.
->
-> Since you sent this to the linux-api list, I'll bite: what's the XN
-> flag?  I know what PROT_EXEC does when you mmap something, and I
-> presume that vfio is mmappable, but I don't actually have any clue
-> what this patch does.
->
-> I assume that this does not have anything to do with a non-CPU DMA
-> master executing code in main memory, because that makes rather little
-> sense.  (Or maybe it really does, in which case: weird.)
+On Tuesday 21 October 2014 12:36:22 Pavel Machek wrote:
+> On Fri 2014-10-17 01:12:21, Greg Kroah-Hartman wrote:
+> > On Thu, Oct 16, 2014 at 10:09:04AM -0700, John Stultz wrote:
+> > > On Thu, Oct 16, 2014 at 5:47 AM, Greg Kroah-Hartman
+> > > <gregkh@linuxfoundation.org> wrote:
+> > > > From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> 
+> > > Are the Android guys comfortable with the ABI stability rules they'll
+> > > now face?
+> > 
+> > Just because something is in staging, doesn't mean you don't have to
+> > follow the same ABI stability rules as the rest of the kernel.  If a
+> > change had happened to this code that broke userspace in the past, I
+> > would have reverted it.  So this should not be anything different from
+> > what has been happening inthe past.
+> 
+> Actually, there's big difference.
+> 
+> If Al Viro changes core filesystem in a way that breaks
+> staging/binder, binder is broken, and if it can't be fixed... well it
+> can't be fixed.
+> 
+> If Al Viro changes core filesystem in a way that breaks
+> drivers/binder, Al's change is going to be reverted.
 
-It does actually. For example, the ARM PL330 DMA controller will fetch
-from memory code with DMA instructions, and it will respect this flag.
-It is not code that can be executed on the CPU of course, but it is
-executable on the DMAC.
+One might have argued that we'd have to do that already, but the reasons
+for doing that with binder in the main kernel are certainly stronger.
 
+> It is really hard to review without API documentation. Normally, API
+> documentation is required for stuff like this.
+> 
+> For example: does it add new files in /proc?
+> 
+> Given that it is stable, can we get rid of binder_debug() and
+> especially BINDER_DEBUG_ENTRY stuff?
 
->
-> --Andy
+Good point. We require documentation for every single sysfs attribute
+that gets added to a driver (some escape the review, but that doesn't
+change the rule), so we should not make an exception for a new procfs
+file here.
 
+> Checkpatch warns about 98 too long lines. Some of them could be fixed
+> easily.
 
+I don't think this should be an argument.
 
--- 
-Antonios Motakis
-Virtual Open Systems
+> This looks scary:
+> 
+>                         trace_binder_transaction_fd(t, fp->handle,
+>                         target_fd);
+> 			                binder_debug(BINDER_DEBUG_TRANSACTION,
+>                                      "        fd %d -> %d\n",
+>                         fp->handle, target_fd);
+>                         /* TODO: fput? */
+>                         fp->handle = target_fd;
+> 			        } break;
+> 
+> Could binder_transcation() be split to smaller functions according to
+> CodingStyle? 17 goto targets at the end of function are not exactly
+> easy to read.
+> 
+> ginder_thread_read/write also needs splitting.
+
+Yes, in principle, but this is still a detail that would mainly serve
+to simplify review. The problem is more the lack of review and
+documentation of the API.
+
+> binder_ioctl_write_read: just use direct return, no need to goto out
+> if it just returns.
+
+details, and a lot of people actually like the style used there.
+
+>    proc->user_buffer_offset = vma->vm_start - (uintptr_t)proc->buffer;
+>         mutex_unlock(&binder_mmap_lock);
+> 
+> #ifdef CONFIG_CPU_CACHE_VIPT
+>         if (cache_is_vipt_aliasing()) {
+>                 while (CACHE_COLOUR((vma->vm_start ^
+>         (uint32_t)proc->buffer))) {
+> 
+> Should this be (uintptr_t)?
+
+It should probably call an architecture specific helper.
+
+	Arnd
