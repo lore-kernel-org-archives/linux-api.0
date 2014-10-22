@@ -1,14 +1,14 @@
 From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCHv5 man-pages 3/3] execveat.2: initial man page for execveat(2)
-Date: Wed, 22 Oct 2014 12:55:34 -0500
-Message-ID: <87wq7sgfah.fsf@x220.int.ebiederm.org>
+Subject: Re: [PATCHv5 1/3] syscalls,x86: implement execveat() system call
+Date: Wed, 22 Oct 2014 13:07:42 -0500
+Message-ID: <87k33sgeq9.fsf@x220.int.ebiederm.org>
 References: <1413978269-17274-1-git-send-email-drysdale@google.com>
-	<1413978269-17274-4-git-send-email-drysdale@google.com>
+	<1413978269-17274-2-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1413978269-17274-4-git-send-email-drysdale@google.com> (David
-	Drysdale's message of "Wed, 22 Oct 2014 12:44:29 +0100")
+In-Reply-To: <1413978269-17274-2-git-send-email-drysdale@google.com> (David
+	Drysdale's message of "Wed, 22 Oct 2014 12:44:27 +0100")
 Sender: linux-arch-owner@vger.kernel.org
 To: David Drysdale <drysdale@google.com>
 Cc: Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
@@ -16,160 +16,499 @@ List-Id: linux-api@vger.kernel.org
 
 David Drysdale <drysdale@google.com> writes:
 
+> Add a new system execveat(2) syscall. execveat() is to execve() as
+> openat() is to open(): it takes a file descriptor that refers to a
+> directory, and resolves the filename relative to that.
+>
+> In addition, if the filename is empty and AT_EMPTY_PATH is specified,
+> execveat() executes the file to which the file descriptor refers. This
+> replicates the functionality of fexecve(), which is a system call in
+> other UNIXen, but in Linux glibc it depends on opening
+> "/proc/self/fd/<fd>" (and so relies on /proc being mounted).
+>
+> The filename fed to the executed program as argv[0] (or the name of the
+> script fed to a script interpreter) will be of the form "/dev/fd/<fd>"
+> (for an empty filename) or "/dev/fd/<fd>/<filename>", effectively
+> reflecting how the executable was found.  This does however mean that
+> execution of a script in a /proc-less environment won't work.
+>
+> Only x86-64, i386 and x32 ABIs are supported in this patch.
+>
+> Based on patches by Meredydd Luff <meredydd@senatehouse.org>
+>
 > Signed-off-by: David Drysdale <drysdale@google.com>
 > ---
->  man2/execveat.2 | 144 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 144 insertions(+)
->  create mode 100644 man2/execveat.2
+>  arch/x86/ia32/audit.c             |   1 +
+>  arch/x86/ia32/ia32entry.S         |   1 +
+>  arch/x86/kernel/audit_64.c        |   1 +
+>  arch/x86/kernel/entry_64.S        |  28 ++++++++
+>  arch/x86/syscalls/syscall_32.tbl  |   1 +
+>  arch/x86/syscalls/syscall_64.tbl  |   2 +
+>  arch/x86/um/sys_call_table_64.c   |   1 +
+>  fs/exec.c                         | 130 ++++++++++++++++++++++++++++++++++----
+>  fs/namei.c                        |   2 +-
+>  include/linux/compat.h            |   3 +
+>  include/linux/fs.h                |   1 +
+>  include/linux/sched.h             |   4 ++
+>  include/linux/syscalls.h          |   4 ++
+>  include/uapi/asm-generic/unistd.h |   4 +-
+>  kernel/sys_ni.c                   |   3 +
+>  lib/audit.c                       |   3 +
+>  16 files changed, 173 insertions(+), 16 deletions(-)
 >
-> diff --git a/man2/execveat.2 b/man2/execveat.2
-> new file mode 100644
-> index 000000000000..d19571a3eb9d
-> --- /dev/null
-> +++ b/man2/execveat.2
-> @@ -0,0 +1,144 @@
-> +.\" Copyright (c) 2014 Google, Inc.
-> +.\"
-> +.\" %%%LICENSE_START(VERBATIM)
-> +.\" Permission is granted to make and distribute verbatim copies of this
-> +.\" manual provided the copyright notice and this permission notice are
-> +.\" preserved on all copies.
-> +.\"
-> +.\" Permission is granted to copy and distribute modified versions of this
-> +.\" manual under the conditions for verbatim copying, provided that the
-> +.\" entire resulting derived work is distributed under the terms of a
-> +.\" permission notice identical to this one.
-> +.\"
-> +.\" Since the Linux kernel and libraries are constantly changing, this
-> +.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-> +.\" responsibility for errors or omissions, or for damages resulting from
-> +.\" the use of the information contained herein.  The author(s) may not
-> +.\" have taken the same level of care in the production of this manual,
-> +.\" which is licensed free of charge, as they might when working
-> +.\" professionally.
-> +.\"
-> +.\" Formatted or processed versions of this manual, if unaccompanied by
-> +.\" the source, must acknowledge the copyright and authors of this work.
-> +.\" %%%LICENSE_END
-> +.\"
-> +.TH EXECVEAT 2 2014-04-02 "Linux" "Linux Programmer's Manual"
-> +.SH NAME
-> +execveat \- execute program relative to a directory file descriptor
-> +.SH SYNOPSIS
-> +.B #include <unistd.h>
-> +.sp
-> +.BI "int execve(int " fd ", const char *" pathname ","
-            ^^^^^^ That needs to be execveat
-> +.br
-> +.BI "           char *const " argv "[],  char *const " envp "[],"
-> +.br
-> +.BI "           int " flags);
-> +.SH DESCRIPTION
-> +The
-> +.BR execveat ()
-> +system call executes the program pointed to by the combination of \fIfd\fP and \fIpathname\fP.
-> +The
-> +.BR execveat ()
-> +system call operates in exactly the same way as
-> +.BR execve (2),
-> +except for the differences described in this manual page.
+> diff --git a/arch/x86/ia32/audit.c b/arch/x86/ia32/audit.c
+> index 5d7b381da692..2eccc8932ae6 100644
+> --- a/arch/x86/ia32/audit.c
+> +++ b/arch/x86/ia32/audit.c
+> @@ -35,6 +35,7 @@ int ia32_classify_syscall(unsigned syscall)
+>  	case __NR_socketcall:
+>  		return 4;
+>  	case __NR_execve:
+> +	case __NR_execveat:
+>  		return 5;
+>  	default:
+>  		return 1;
+> diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
+> index 4299eb05023c..2516c09743e0 100644
+> --- a/arch/x86/ia32/ia32entry.S
+> +++ b/arch/x86/ia32/ia32entry.S
+> @@ -464,6 +464,7 @@ GLOBAL(\label)
+>  	PTREGSCALL stub32_rt_sigreturn, sys32_rt_sigreturn
+>  	PTREGSCALL stub32_sigreturn, sys32_sigreturn
+>  	PTREGSCALL stub32_execve, compat_sys_execve
+> +	PTREGSCALL stub32_execveat, compat_sys_execveat
+>  	PTREGSCALL stub32_fork, sys_fork
+>  	PTREGSCALL stub32_vfork, sys_vfork
+>  
+> diff --git a/arch/x86/kernel/audit_64.c b/arch/x86/kernel/audit_64.c
+> index 06d3e5a14d9d..f3672508b249 100644
+> --- a/arch/x86/kernel/audit_64.c
+> +++ b/arch/x86/kernel/audit_64.c
+> @@ -50,6 +50,7 @@ int audit_classify_syscall(int abi, unsigned syscall)
+>  	case __NR_openat:
+>  		return 3;
+>  	case __NR_execve:
+> +	case __NR_execveat:
+>  		return 5;
+>  	default:
+>  		return 0;
+> diff --git a/arch/x86/kernel/entry_64.S b/arch/x86/kernel/entry_64.S
+> index 2fac1343a90b..00c4526e6ffe 100644
+> --- a/arch/x86/kernel/entry_64.S
+> +++ b/arch/x86/kernel/entry_64.S
+> @@ -665,6 +665,20 @@ ENTRY(stub_execve)
+>  	CFI_ENDPROC
+>  END(stub_execve)
+>  
+> +ENTRY(stub_execveat)
+> +	CFI_STARTPROC
+> +	addq $8, %rsp
+> +	PARTIAL_FRAME 0
+> +	SAVE_REST
+> +	FIXUP_TOP_OF_STACK %r11
+> +	call sys_execveat
+> +	RESTORE_TOP_OF_STACK %r11
+> +	movq %rax,RAX(%rsp)
+> +	RESTORE_REST
+> +	jmp int_ret_from_sys_call
+> +	CFI_ENDPROC
+> +END(stub_execveat)
 > +
-> +If the pathname given in
-> +.I pathname
-> +is relative, then it is interpreted relative to the directory
-> +referred to by the file descriptor
-> +.I fd
-> +(rather than relative to the current working directory of
-> +the calling process, as is done by
-> +.BR execve (2)
-> +for a relative pathname).
+>  /*
+>   * sigreturn is special because it needs to restore all registers on return.
+>   * This cannot be done with SYSRET, so use the IRET return path instead.
+> @@ -710,6 +724,20 @@ ENTRY(stub_x32_execve)
+>  	CFI_ENDPROC
+>  END(stub_x32_execve)
+>  
+> +ENTRY(stub_x32_execveat)
+> +	CFI_STARTPROC
+> +	addq $8, %rsp
+> +	PARTIAL_FRAME 0
+> +	SAVE_REST
+> +	FIXUP_TOP_OF_STACK %r11
+> +	call compat_sys_execveat
+> +	RESTORE_TOP_OF_STACK %r11
+> +	movq %rax,RAX(%rsp)
+> +	RESTORE_REST
+> +	jmp int_ret_from_sys_call
+> +	CFI_ENDPROC
+> +END(stub_x32_execveat)
 > +
-> +If
-> +.I pathname
-> +is relative and
-> +.I fd
-> +is the special value
-> +.BR AT_FDCWD ,
-> +then
-> +.I pathname
-> +is interpreted relative to the current working
-> +directory of the calling process (like
-> +.BR execve (2)).
+>  #endif
+>  
+>  /*
+> diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
+> index 028b78168d85..2633e3195455 100644
+> --- a/arch/x86/syscalls/syscall_32.tbl
+> +++ b/arch/x86/syscalls/syscall_32.tbl
+> @@ -363,3 +363,4 @@
+>  354	i386	seccomp			sys_seccomp
+>  355	i386	getrandom		sys_getrandom
+>  356	i386	memfd_create		sys_memfd_create
+> +357	i386	execveat		sys_execveat			stub32_execveat
+> diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
+> index 35dd922727b9..1af5badd159c 100644
+> --- a/arch/x86/syscalls/syscall_64.tbl
+> +++ b/arch/x86/syscalls/syscall_64.tbl
+> @@ -327,6 +327,7 @@
+>  318	common	getrandom		sys_getrandom
+>  319	common	memfd_create		sys_memfd_create
+>  320	common	kexec_file_load		sys_kexec_file_load
+> +321	64	execveat		stub_execveat
+>  
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> @@ -365,3 +366,4 @@
+>  542	x32	getsockopt		compat_sys_getsockopt
+>  543	x32	io_setup		compat_sys_io_setup
+>  544	x32	io_submit		compat_sys_io_submit
+> +545	x32	execveat		stub_x32_execveat
+> diff --git a/arch/x86/um/sys_call_table_64.c b/arch/x86/um/sys_call_table_64.c
+> index f2f0723070ca..20c3649d0691 100644
+> --- a/arch/x86/um/sys_call_table_64.c
+> +++ b/arch/x86/um/sys_call_table_64.c
+> @@ -31,6 +31,7 @@
+>  #define stub_fork sys_fork
+>  #define stub_vfork sys_vfork
+>  #define stub_execve sys_execve
+> +#define stub_execveat sys_execveat
+>  #define stub_rt_sigreturn sys_rt_sigreturn
+>  
+>  #define __SYSCALL_COMMON(nr, sym, compat) __SYSCALL_64(nr, sym, compat)
+> diff --git a/fs/exec.c b/fs/exec.c
+> index a2b42a98c743..92a6e14f096a 100644
+> --- a/fs/exec.c
+> +++ b/fs/exec.c
+> @@ -747,7 +747,7 @@ EXPORT_SYMBOL(setup_arg_pages);
+>  
+>  #endif /* CONFIG_MMU */
+>  
+> -static struct file *do_open_exec(struct filename *name)
+> +static struct file *do_open_execat(int fd, struct filename *name, int flags)
+>  {
+>  	struct file *file;
+>  	int err;
+> @@ -757,10 +757,34 @@ static struct file *do_open_exec(struct filename *name)
+>  		.intent = LOOKUP_OPEN,
+>  		.lookup_flags = LOOKUP_FOLLOW,
+>  	};
+> +	static const struct open_flags open_exec_nofollow_flags = {
+> +		.open_flag = O_LARGEFILE | O_RDONLY | __FMODE_EXEC,
+> +		.acc_mode = MAY_EXEC | MAY_OPEN,
+> +		.intent = LOOKUP_OPEN,
+> +		.lookup_flags = 0,
+> +	};
+>  
+> -	file = do_filp_open(AT_FDCWD, name, &open_exec_flags);
+> -	if (IS_ERR(file))
+> -		goto out;
+> +	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
+> +		return ERR_PTR(-EINVAL);
 > +
-> +If
-> +.I pathname
-> +is absolute, then
-> +.I fd
-> +is ignored.
+> +	if (name->name[0] != '\0') {
+
+Is it really necessary to special case AT_EMPTY_PATH here.  I would
+have thought the existing logic in namei.c would have been fine
+assuning we passed LOOKUP_EMPTY.
+
+> +		const struct open_flags *oflags = ((flags & AT_SYMLINK_NOFOLLOW)
+> +						   ? &open_exec_nofollow_flags
+> +						   : &open_exec_flags);
 > +
-> +If
-> +.I pathname
-> +is an empty string and the
-> +.BR AT_EMPTY_PATH
-> +flag is specified, then the file descriptor
-> +.I fd
-> +specifies the file to be executed.
+> +		file = do_filp_open(fd, name, oflags);
+> +		if (IS_ERR(file))
+> +			goto out;
+> +	} else {
+> +		file = fget(fd);
+> +		if (!file)
+> +			return ERR_PTR(-EBADF);
 > +
-> +.I flags
-> +can either be 0, or include the following flags:
-> +.TP
-> +.BR AT_EMPTY_PATH
-> +If
-> +.I pathname
-> +is an empty string, operate on the file referred to by
-> +.IR fd
-> +(which may have been obtained using the
-> +.BR open (2)
-> +.B O_PATH
-> +flag).
-> +.TP
-> +.B AT_SYMLINK_NOFOLLOW
-> +If the file identified by
-> +.I fd
-> +and a non-NULL
-> +.I pathname
-> +is a symbolic link, then the call fails with the error
-> +.BR EINVAL .
-> +.SH "RETURN VALUE"
-> +On success,
-> +.BR execveat ()
-> +does not return. On error \-1 is returned, and
-> +.I errno
-> +is set appropriately.
-> +.SH ERRORS
-> +The same errors that occur for
-> +.BR execve (2)
-> +can also occur for
-> +.BR execveat ().
-> +The following additional errors can occur for
-> +.BR execveat ():
-> +.TP
-> +.B EBADF
-> +.I fd
-> +is not a valid file descriptor.
-> +.TP
-> +.B EINVAL
-> +Invalid flag specified in
-> +.IR flags .
-> +.TP
-> +.B ENOTDIR
-> +.I pathname
-> +is relative and
-> +.I fd
-> +is a file descriptor referring to a file other than a directory.
-> +.SH VERSIONS
-> +.BR execveat ()
-> +was added to Linux in kernel 3.???.
-> +.SH NOTES
-> +In addition to the reasons explained in
-> +.BR openat (2),
-> +the
-> +.BR execveat ()
-> +system call is also needed to allow
-> +.BR fexecve (3)
-> +to be implemented on systems that do not have the
-> +.I /proc
-> +filesystem mounted.
-> +.SH SEE ALSO
-> +.BR execve (2),
-> +.BR fexecve (3)
+> +		err = inode_permission(file->f_path.dentry->d_inode,
+> +				open_exec_flags.acc_mode);
+> +		if (err)
+> +			goto exit;
+> +	}
+>
+>  	err = -EACCES;
+>  	if (!S_ISREG(file_inode(file)->i_mode))
+> @@ -769,12 +793,13 @@ static struct file *do_open_exec(struct filename *name)
+>  	if (file->f_path.mnt->mnt_flags & MNT_NOEXEC)
+>  		goto exit;
+>  
+> -	fsnotify_open(file);
+> -
+>  	err = deny_write_access(file);
+>  	if (err)
+>  		goto exit;
+>  
+> +	if (name->name[0] != '\0')
+> +		fsnotify_open(file);
+> +
+>  out:
+>  	return file;
+>  
+> @@ -786,7 +811,7 @@ exit:
+>  struct file *open_exec(const char *name)
+>  {
+>  	struct filename tmp = { .name = name };
+> -	return do_open_exec(&tmp);
+> +	return do_open_execat(AT_FDCWD, &tmp, 0);
+>  }
+>  EXPORT_SYMBOL(open_exec);
+>  
+> @@ -1422,10 +1447,12 @@ static int exec_binprm(struct linux_binprm *bprm)
+>  /*
+>   * sys_execve() executes a new program.
+>   */
+> -static int do_execve_common(struct filename *filename,
+> -				struct user_arg_ptr argv,
+> -				struct user_arg_ptr envp)
+> +static int do_execveat_common(int fd, struct filename *filename,
+> +			      struct user_arg_ptr argv,
+> +			      struct user_arg_ptr envp,
+> +			      int flags)
+>  {
+> +	char *pathbuf = NULL;
+>  	struct linux_binprm *bprm;
+>  	struct file *file;
+>  	struct files_struct *displaced;
+> @@ -1466,7 +1493,7 @@ static int do_execve_common(struct filename *filename,
+>  	check_unsafe_exec(bprm);
+>  	current->in_execve = 1;
+>  
+> -	file = do_open_exec(filename);
+> +	file = do_open_execat(fd, filename, flags);
+>  	retval = PTR_ERR(file);
+>  	if (IS_ERR(file))
+>  		goto out_unmark;
+> @@ -1474,7 +1501,27 @@ static int do_execve_common(struct filename *filename,
+>  	sched_exec();
+>  
+>  	bprm->file = file;
+> -	bprm->filename = bprm->interp = filename->name;
+> +	if (fd == AT_FDCWD || filename->name[0] == '/') {
+> +		bprm->filename = filename->name;
+> +	} else {
+> +		/*
+> +		 * Build a pathname that reflects how we got to the file,
+> +		 * either "/dev/fd/<fd>" (for an empty filename) or
+> +		 * "/dev/fd/<fd>/<filename>".
+> +		 */
+> +		pathbuf = kmalloc(PATH_MAX, GFP_TEMPORARY);
+> +		if (!pathbuf) {
+> +			retval = -ENOMEM;
+> +			goto out_unmark;
+> +		}
+> +		bprm->filename = pathbuf;
+> +		if (filename->name[0] == '\0')
+> +			sprintf(pathbuf, "/dev/fd/%d", fd);
+> +		else
+> +			snprintf(pathbuf, PATH_MAX,
+> +				 "/dev/fd/%d/%s", fd, filename->name);
+> +	}
+> +	bprm->interp = bprm->filename;
+>  
+>  	retval = bprm_mm_init(bprm);
+>  	if (retval)
+> @@ -1532,6 +1579,7 @@ out_unmark:
+>  
+>  out_free:
+>  	free_bprm(bprm);
+> +	kfree(pathbuf);
+>  
+>  out_files:
+>  	if (displaced)
+> @@ -1547,7 +1595,18 @@ int do_execve(struct filename *filename,
+>  {
+>  	struct user_arg_ptr argv = { .ptr.native = __argv };
+>  	struct user_arg_ptr envp = { .ptr.native = __envp };
+> -	return do_execve_common(filename, argv, envp);
+> +	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
+> +}
+> +
+> +int do_execveat(int fd, struct filename *filename,
+> +		const char __user *const __user *__argv,
+> +		const char __user *const __user *__envp,
+> +		int flags)
+> +{
+> +	struct user_arg_ptr argv = { .ptr.native = __argv };
+> +	struct user_arg_ptr envp = { .ptr.native = __envp };
+> +
+> +	return do_execveat_common(fd, filename, argv, envp, flags);
+>  }
+>  
+>  #ifdef CONFIG_COMPAT
+> @@ -1563,7 +1622,23 @@ static int compat_do_execve(struct filename *filename,
+>  		.is_compat = true,
+>  		.ptr.compat = __envp,
+>  	};
+> -	return do_execve_common(filename, argv, envp);
+> +	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
+> +}
+> +
+> +static int compat_do_execveat(int fd, struct filename *filename,
+> +			      const compat_uptr_t __user *__argv,
+> +			      const compat_uptr_t __user *__envp,
+> +			      int flags)
+> +{
+> +	struct user_arg_ptr argv = {
+> +		.is_compat = true,
+> +		.ptr.compat = __argv,
+> +	};
+> +	struct user_arg_ptr envp = {
+> +		.is_compat = true,
+> +		.ptr.compat = __envp,
+> +	};
+> +	return do_execveat_common(fd, filename, argv, envp, flags);
+>  }
+>  #endif
+>  
+> @@ -1603,6 +1678,20 @@ SYSCALL_DEFINE3(execve,
+>  {
+>  	return do_execve(getname(filename), argv, envp);
+>  }
+> +
+> +SYSCALL_DEFINE5(execveat,
+> +		int, fd, const char __user *, filename,
+> +		const char __user *const __user *, argv,
+> +		const char __user *const __user *, envp,
+> +		int, flags)
+> +{
+> +	int lookup_flags = (flags & AT_EMPTY_PATH) ? LOOKUP_EMPTY : 0;
+> +
+> +	return do_execveat(fd,
+> +			   getname_flags(filename, lookup_flags, NULL),
+> +			   argv, envp, flags);
+> +}
+> +
+>  #ifdef CONFIG_COMPAT
+>  COMPAT_SYSCALL_DEFINE3(execve, const char __user *, filename,
+>  	const compat_uptr_t __user *, argv,
+> @@ -1610,4 +1699,17 @@ COMPAT_SYSCALL_DEFINE3(execve, const char __user *, filename,
+>  {
+>  	return compat_do_execve(getname(filename), argv, envp);
+>  }
+> +
+> +COMPAT_SYSCALL_DEFINE5(execveat, int, fd,
+> +		       const char __user *, filename,
+> +		       const compat_uptr_t __user *, argv,
+> +		       const compat_uptr_t __user *, envp,
+> +		       int,  flags)
+> +{
+> +	int lookup_flags = (flags & AT_EMPTY_PATH) ? LOOKUP_EMPTY : 0;
+> +
+> +	return compat_do_execveat(fd,
+> +				  getname_flags(filename, lookup_flags, NULL),
+> +				  argv, envp, flags);
+> +}
+>  #endif
+> diff --git a/fs/namei.c b/fs/namei.c
+> index a7b05bf82d31..553c84d3e0cc 100644
+> --- a/fs/namei.c
+> +++ b/fs/namei.c
+> @@ -130,7 +130,7 @@ void final_putname(struct filename *name)
+>  
+>  #define EMBEDDED_NAME_MAX	(PATH_MAX - sizeof(struct filename))
+>  
+> -static struct filename *
+> +struct filename *
+>  getname_flags(const char __user *filename, int flags, int *empty)
+>  {
+>  	struct filename *result, *err;
+> diff --git a/include/linux/compat.h b/include/linux/compat.h
+> index e6494261eaff..7450ca2ac1fc 100644
+> --- a/include/linux/compat.h
+> +++ b/include/linux/compat.h
+> @@ -357,6 +357,9 @@ asmlinkage long compat_sys_lseek(unsigned int, compat_off_t, unsigned int);
+>  
+>  asmlinkage long compat_sys_execve(const char __user *filename, const compat_uptr_t __user *argv,
+>  		     const compat_uptr_t __user *envp);
+> +asmlinkage long compat_sys_execveat(int dfd, const char __user *filename,
+> +		     const compat_uptr_t __user *argv,
+> +		     const compat_uptr_t __user *envp, int flags);
+>  
+>  asmlinkage long compat_sys_select(int n, compat_ulong_t __user *inp,
+>  		compat_ulong_t __user *outp, compat_ulong_t __user *exp,
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 94187721ad41..e9818574d738 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -2060,6 +2060,7 @@ extern struct file *file_open_root(struct dentry *, struct vfsmount *,
+>  extern struct file * dentry_open(const struct path *, int, const struct cred *);
+>  extern int filp_close(struct file *, fl_owner_t id);
+>  
+> +extern struct filename *getname_flags(const char __user *, int, int *);
+>  extern struct filename *getname(const char __user *);
+>  extern struct filename *getname_kernel(const char *);
+>  
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index b867a4dab38a..33e056da7d33 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -2430,6 +2430,10 @@ extern void do_group_exit(int);
+>  extern int do_execve(struct filename *,
+>  		     const char __user * const __user *,
+>  		     const char __user * const __user *);
+> +extern int do_execveat(int, struct filename *,
+> +		       const char __user * const __user *,
+> +		       const char __user * const __user *,
+> +		       int);
+>  extern long do_fork(unsigned long, unsigned long, unsigned long, int __user *, int __user *);
+>  struct task_struct *fork_idle(int);
+>  extern pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 0f86d85a9ce4..df5422294deb 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -876,4 +876,8 @@ asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
+>  asmlinkage long sys_getrandom(char __user *buf, size_t count,
+>  			      unsigned int flags);
+>  
+> +asmlinkage long sys_execveat(int dfd, const char __user *filename,
+> +			const char __user *const __user *argv,
+> +			const char __user *const __user *envp, int flags);
+> +
+>  #endif
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 11d11bc5c78f..feef07d29663 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -705,9 +705,11 @@ __SYSCALL(__NR_seccomp, sys_seccomp)
+>  __SYSCALL(__NR_getrandom, sys_getrandom)
+>  #define __NR_memfd_create 279
+>  __SYSCALL(__NR_memfd_create, sys_memfd_create)
+> +#define __NR_execveat 280
+> +__SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
+>  
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 280
+> +#define __NR_syscalls 281
+>  
+>  /*
+>   * All syscalls below here should go away really,
+> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> index 391d4ddb6f4b..efb06058ad3e 100644
+> --- a/kernel/sys_ni.c
+> +++ b/kernel/sys_ni.c
+> @@ -218,3 +218,6 @@ cond_syscall(sys_kcmp);
+>  
+>  /* operate on Secure Computing state */
+>  cond_syscall(sys_seccomp);
+> +
+> +/* execveat */
+> +cond_syscall(sys_execveat);
+> diff --git a/lib/audit.c b/lib/audit.c
+> index 1d726a22565b..b8fb5ee81e26 100644
+> --- a/lib/audit.c
+> +++ b/lib/audit.c
+> @@ -54,6 +54,9 @@ int audit_classify_syscall(int abi, unsigned syscall)
+>  	case __NR_socketcall:
+>  		return 4;
+>  #endif
+> +#ifdef __NR_execveat
+> +	case __NR_execveat:
+> +#endif
+>  	case __NR_execve:
+>  		return 5;
+>  	default:
