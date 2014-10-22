@@ -1,156 +1,151 @@
-From: Prarit Bhargava <prarit@redhat.com>
-Subject: Re: [PATCH V2] kernel, add bug_on_warn
-Date: Wed, 22 Oct 2014 06:13:59 -0400
-Message-ID: <54478367.7030505@redhat.com>
-References: <1413910077-9464-1-git-send-email-prarit@redhat.com> <87bnp491b3.fsf@rustcorp.com.au>
+From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv4 RESEND 0/3] syscalls,x86: Add execveat() system call
+Date: Wed, 22 Oct 2014 12:08:17 +0100
+Message-ID: <CAHse=S_dpm8Do-H01Bo49a9TdYw+pSDzYomLOrBsYEcdO=Pytw@mail.gmail.com>
+References: <1401975635-6162-1-git-send-email-drysdale@google.com>
+ <CALCETrVraoD+r4zxBoGd+BV5P275AXcRV_R00SSr8fjQzRHnUg@mail.gmail.com>
+ <87zjcszz8y.fsf@x220.int.ebiederm.org> <CAHse=S-Xyk7CFn=tAGzo+tuUFt+04aBw+mGQmi=kWAaBJGALBw@mail.gmail.com>
+ <CALCETrXBjLZTWVJfcsE4NA-JP9zSSgn=6ND0=cZ9BTy=CoN7pA@mail.gmail.com> <87ioje2ggq.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <87bnp491b3.fsf@rustcorp.com.au>
-Sender: linux-doc-owner@vger.kernel.org
-To: Rusty Russell <rusty@rustcorp.com.au>
-Cc: linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Fabian Frederick <fabf@skynet.be>, vgoyal@redhat.com, isimatu.yasuaki@jp.fujitsu.com, linux-doc@vger.kernel.org, kexec@lists.infradead.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87ioje2ggq.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Oct 21, 2014 at 5:29 AM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+>
+>> On Mon, Oct 20, 2014 at 6:48 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>>> On Sun, Oct 19, 2014 at 1:20 AM, Eric W. Biederman
+>>> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>>> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+>>>>
+>>>>> [Added Eric Biederman, since I think your tree might be a reasonable
+>>>>> route forward for these patches.]
+>>>>>
+>>>>> On Thu, Jun 5, 2014 at 6:40 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>>>>>> Resending, adding cc:linux-api.
+>>>>>>
+>>>>>> Also, it may help to add a little more background -- this patch is
+>>>>>> needed as a (small) part of implementing Capsicum in the Linux kernel.
+>>>>>>
+>>>>>> Capsicum is a security framework that has been present in FreeBSD since
+>>>>>> version 9.0 (Jan 2012), and is based on concepts from object-capability
+>>>>>> security [1].
+>>>>>>
+>>>>>> One of the features of Capsicum is capability mode, which locks down
+>>>>>> access to global namespaces such as the filesystem hierarchy.  In
+>>>>>> capability mode, /proc is thus inaccessible and so fexecve(3) doesn't
+>>>>>> work -- hence the need for a kernel-space
+>>>>>
+>>>>> I just found myself wanting this syscall for another reason: injecting
+>>>>> programs into sandboxes or otherwise heavily locked-down namespaces.
+>>>>>
+>>>>> For example, I want to be able to reliably do something like nsenter
+>>>>> --namespace-flags-here toybox sh.  Toybox's shell is unusual in that
+>>>>> it is more or less fully functional, so this should Just Work (tm),
+>>>>> except that the toybox binary might not exist in the namespace being
+>>>>> entered.  If execveat were available, I could rig nsenter or a similar
+>>>>> tool to open it with O_CLOEXEC, enter the namespace, and then call
+>>>>> execveat.
+>>>>>
+>>>>> Is there any reason that these patches can't be merged more or less as
+>>>>> is for 3.19?
+>>>>
+>>>> Yes.  There is a silliness in how it implements fexecve.  The fexecve
+>>>> case should be use the empty string "" not a NULL pointer to indication
+>>>> that.  That change will then harmonize execveat with the other ...at
+>>>> system calls and simplify the code and remove a special case.  I believe
+>>>> using the empty string "" requires implementing the AT_EMPTY_PATH flag.
+>>>
+>>> Good point -- I'll shift to "" + AT_EMPTY_PATH.
+>>
+>> Pending a better idea, I would also see if the patches can be changed
+>> to return an error if d_path ends up with an "(unreachable)" thing
+>> rather than failing inexplicably later on.
+>
+> For my reference we are talking about
+>
+>> @@ -1489,7 +1524,21 @@ static int do_execve_common(struct filename *filename,
+>>       sched_exec();
+>>
+>>       bprm->file = file;
+>> -     bprm->filename = bprm->interp = filename->name;
+>> +     if (filename && fd == AT_FDCWD) {
+>> +             bprm->filename = filename->name;
+>> +     } else {
+>> +             pathbuf = kmalloc(PATH_MAX, GFP_TEMPORARY);
+>> +             if (!pathbuf) {
+>> +                     retval = -ENOMEM;
+>> +                     goto out_unmark;
+>> +             }
+>> +             bprm->filename = d_path(&file->f_path, pathbuf, PATH_MAX);
+>> +             if (IS_ERR(bprm->filename)) {
+>> +                     retval = PTR_ERR(bprm->filename);
+>> +                     goto out_unmark;
+>> +             }
+>> +     }
+>> +     bprm->interp = bprm->filename;
+>>
+>>       retval = bprm_mm_init(bprm);
+>>       if (retval)
+>
+> The interesting case for fexecve is when we either don't know what files
+> are present or we don't want to depend on which files are present.
+>
+> As Al pointed out d_path really isn't the right solution.  It fails when
+> printing /proc/self/fd/${fd}/${filename->name} would work, and the
+> "(deleted)" or "(unreachable)" strings are wrong.
+>
+> The test for today's cases should be:
+> if ((filename->name[0] == '/') || fd == AT_FDCWD) {
+>         bprm->filename = filename->name;
+> }
+>
+> To handle the case where the file descriptor is relevant.
+(s/relevant/irrelevant)
 
+Yep, good spot.
 
-On 10/22/2014 12:27 AM, Rusty Russell wrote:
-> Prarit Bhargava <prarit@redhat.com> writes:
->> There have been several times where I have had to rebuild a kernel to
->> cause a panic when hitting a WARN() in the code in order to get a crash
->> dump from a system.  Sometimes this is easy to do, other times (such as
->> in the case of a remote admin) it is not trivial to send new images to the
->> user.
->>
->> A much easier method would be a switch to change the WARN() over to a
->> BUG().  This makes debugging easier in that I can now test the actual
->> image the WARN() was seen on and I do not have to engage in remote
->> debugging.
->>
->> This patch adds a bug_on_warn kernel parameter, which calls BUG() in the
->> warn_slowpath_common() path.  The function will still print out the
->> location of the warning.
->>
->> An example of the bug_on_warn output:
->>
->> The first line below is from the WARN_ON() to output the WARN_ON()'s location.
->> After that the new BUG() call is displayed.
->>
->>  WARNING: CPU: 27 PID: 3204 at
->> /home/rhel7/redhat/debug/dummy-module/dummy-module.c:25 init_dummy+0x28/0x30
->> [dummy_module]()
->>  bug_on_warn set, calling BUG()...
->>  ------------[ cut here ]------------
->>  kernel BUG at kernel/panic.c:434!
->>  invalid opcode: 0000 [#1] SMP
->>  Modules linked in: dummy_module(OE+) sg nfsv3 rpcsec_gss_krb5 nfsv4
->> dns_resolver nfs fscache cfg80211 rfkill x86_pkg_temp_thermal intel_powerclamp
->> coretemp kvm_intel kvm crct10dif_pclmul crc32_pclmul crc32c_intel
->> ghash_clmulni_intel igb iTCO_wdt aesni_intel iTCO_vendor_support lrw gf128mul
->> sb_edac ptp edac_core glue_helper lpc_ich ioatdma pcspkr ablk_helper pps_core
->> i2c_i801 mfd_core cryptd dca shpchp ipmi_si wmi ipmi_msghandler acpi_cpufreq
->> nfsd auth_rpcgss nfs_acl lockd grace sunrpc xfs libcrc32c sr_mod cdrom sd_mod
->> mgag200 syscopyarea sysfillrect sysimgblt i2c_algo_bit drm_kms_helper isci ttm
->> drm libsas ahci libahci scsi_transport_sas libata i2c_core dm_mirror
->> dm_region_hash dm_log dm_mod
->>  CPU: 27 PID: 3204 Comm: insmod Tainted: G           OE  3.17.0+ #19
->>  Hardware name: Intel Corporation S2600CP/S2600CP, BIOS
->> RMLSDP.86I.00.29.D696.1311111329 11/11/2013
->>  task: ffff880034e75160 ti: ffff8807fc5ac000 task.ti: ffff8807fc5ac000
->>  RIP: 0010:[<ffffffff81076b81>]  [<ffffffff81076b81>] warn_slowpath_common+0xc1/0xd0
->>  RSP: 0018:ffff8807fc5afc68  EFLAGS: 00010246
->>  RAX: 0000000000000021 RBX: ffff8807fc5afcb0 RCX: 0000000000000000
->>  RDX: 0000000000000000 RSI: ffff88081efee5f8 RDI: ffff88081efee5f8
->>  RBP: ffff8807fc5afc98 R08: 0000000000000096 R09: 0000000000000000
->>  R10: 0000000000000711 R11: ffff8807fc5af93e R12: ffffffffa0424070
->>  R13: 0000000000000019 R14: ffffffffa0423068 R15: 0000000000000009
->>  FS:  00007f2d4b034740(0000) GS:ffff88081efe0000(0000) knlGS:0000000000000000
->>  CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
->>  CR2: 00007f2d4a99f3c0 CR3: 00000007fd88b000 CR4: 00000000001407e0
->>  Stack:
->>   ffff8807fc5afcb8 ffffffff8199f020 ffff88080e396160 0000000000000000
->>   ffffffffa0423040 ffffffffa0425000 ffff8807fc5afd08 ffffffff81076be5
->>   0000000000000008 ffffffffa0424053 ffff880700000018 ffff8807fc5afd18
->>  Call Trace:
->>   [<ffffffffa0423040>] ? dummy_greetings+0x40/0x40 [dummy_module]
->>   [<ffffffff81076be5>] warn_slowpath_fmt+0x55/0x70
->>   [<ffffffffa0423068>] init_dummy+0x28/0x30 [dummy_module]
->>   [<ffffffff81002144>] do_one_initcall+0xd4/0x210
->>   [<ffffffff811b52c2>] ? __vunmap+0xc2/0x110
->>   [<ffffffff810f8889>] load_module+0x16a9/0x1b30
->>   [<ffffffff810f3d30>] ? store_uevent+0x70/0x70
->>   [<ffffffff810f49b9>] ? copy_module_from_fd.isra.44+0x129/0x180
->>   [<ffffffff810f8ec6>] SyS_finit_module+0xa6/0xd0
->>   [<ffffffff8166ce29>] system_call_fastpath+0x12/0x17
->>  Code: c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 48 c7 c7 20 42 8a 81 31 c0 e8 fc
->> 80 5e 00 eb 80 48 c7 c7 78 42 8a 81 31 c0 e8 ec 80 5e 00 <0f> 0b 66 66 66 66 2e
->> 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 55
->>  RIP  [<ffffffff81076b81>] warn_slowpath_common+0xc1/0xd0
->>   RSP <ffff8807fc5afc68>
->>  ---[ end trace 428218934a12088b ]---
->>
->> Successfully tested by me.
->>
->> Cc: Jonathan Corbet <corbet@lwn.net>
->> Cc: Andrew Morton <akpm@linux-foundation.org>
->> Cc: Rusty Russell <rusty@rustcorp.com.au>
->> Cc: "H. Peter Anvin" <hpa@zytor.com>
->> Cc: Andi Kleen <ak@linux.intel.com>
->> Cc: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
->> Cc: Fabian Frederick <fabf@skynet.be>
->> Cc: vgoyal@redhat.com
->> Cc: isimatu.yasuaki@jp.fujitsu.com
->> Cc: linux-doc@vger.kernel.org
->> Cc: kexec@lists.infradead.org
->> Cc: linux-api@vger.kernel.org
->> Signed-off-by: Prarit Bhargava <prarit@redhat.com>
->>
->> [v2]: add /proc/sys/kernel/bug_on_warn, additional documentation, modify
->>       !slowpath cases
->> ---
->>  Documentation/kdump/kdump.txt       |    7 +++++++
->>  Documentation/kernel-parameters.txt |    3 +++
->>  Documentation/sysctl/kernel.txt     |   12 ++++++++++++
->>  include/asm-generic/bug.h           |   12 ++++++++++--
->>  include/linux/kernel.h              |    1 +
->>  include/uapi/linux/sysctl.h         |    1 +
->>  kernel/panic.c                      |   21 ++++++++++++++++++++-
->>  kernel/sysctl.c                     |    7 +++++++
->>  kernel/sysctl_binary.c              |    1 +
->>  9 files changed, 62 insertions(+), 3 deletions(-)
->>
->> diff --git a/Documentation/kdump/kdump.txt b/Documentation/kdump/kdump.txt
->> index 6c0b9f2..a04ed72 100644
->> --- a/Documentation/kdump/kdump.txt
->> +++ b/Documentation/kdump/kdump.txt
->> @@ -471,6 +471,13 @@ format. Crash is available on Dave Anderson's site at the following URL:
->>  
->>     http://people.redhat.com/~anderson/
->>  
->> +Trigger Kdump on WARN()
->> +=======================
->> +
->> +The kernel parameter, bug_on_warn, calls BUG() in all WARN() paths.  This
->> +will cause a kdump to occur at the BUG() call.  In cases where a user
->> +wants to specify this during runtime, /proc/sys/kernel/bug_on_warn can be
->> +set to 1 to achieve the same behaviour.
-> 
-> What about during early boot?
+> For the case where the file descriptor is relevant let me suggest
+> setting bprm->filename and bprm->interp to:
+>
+> /dev/fd/${fd}/${filename->name}
 
-Hi Rusty,
+I'll send out an updated patchset with this approach, but I have a slight
+reservation. Given that /dev/fd is a symlink to /proc/self/fd, this approach
+means that script invocations will always fail on a /proc-less system,
+where the previous iteration might have worked.
 
-I really don't have a use case for this in early boot.  The kernel boots, the
-initramfs, and then we run whatever init (systemd in my case).  A systemd script
-configures kexec for kdump and that point kdump is "armed".  Doing a bug_on_warn
-before this will simply result in a panicked system.  I don't get any "new"
-information FWIW as I get a stack trace, etc., in both the WARN() and BUG() cases.
+(As it happens, this isn't a restriction that affects the things I'm
+working on, as Capsicum wouldn't allow script invocation anyway.
+However, scenarios without /proc were nominally one of the motivating
+factors for execveat in the first place...)
 
-> 
-> I'd recommend you use core_param().  Less code, and can be set on
-> commandline.
+> It is more a description of what we have done but as a magic string it
+> is descriptive.  Documetation/devices.txt documents that /dev/fd/ should
+> exist, making it an unambiguous path.  Further these days the kernel
+> sets the device naming policy in dev, so I think we are strongly safe in
+> using that path in any event.
+>
+> I think execveat is interesting in the kernel because the motivating
+> cases are the cases where anything except a static executable is
+> uninteresting.
 
-Is that a general request, or is it dependent on the answer above?  Of course I
-have no problem doing it either way.
+FYI, there is potential in the future for something other than static
+executables -- the FreeBSD Capsicum implementation includes changes
+to the dynamic linker to get its search path as a list of pre-opened dfds
+(in LD_LIBRARY_PATH_FDS) rather than paths.
 
-P.
+> Now it has been suggested creating a dupfs or a mini-proc.  I think that
+> sounds like a nice companion, to the concept of a locked down root.
+> But I don't think it removes the need for execveat (because we still
+> have the case where we don't want to care what is mounted, and are happy
+> to use static executables).
+>
+> Eric
+>
