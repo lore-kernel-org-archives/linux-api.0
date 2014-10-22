@@ -1,124 +1,175 @@
-From: Christopher Covington <cov@codeaurora.org>
-Subject: Re: [PATCH RFC v2 01/16] virtio: memory access APIs
-Date: Wed, 22 Oct 2014 13:45:55 -0400
-Message-ID: <5447ED53.2030502@codeaurora.org>
-References: <1413992894-22976-1-git-send-email-mst@redhat.com>
-	<1413992894-22976-2-git-send-email-mst@redhat.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCHv5 man-pages 3/3] execveat.2: initial man page for execveat(2)
+Date: Wed, 22 Oct 2014 12:55:34 -0500
+Message-ID: <87wq7sgfah.fsf@x220.int.ebiederm.org>
+References: <1413978269-17274-1-git-send-email-drysdale@google.com>
+	<1413978269-17274-4-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <1413992894-22976-2-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: Bjarke Istrup Pedersen <gurligebis@gentoo.org>, Anup Patel <anup.patel@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, David Drysdale <drysdale@google.com>, "Lad,
-	Prabhakar" <prabhakar.csengg@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, linux-api@vger.kernel.org, Alexei Starovoitov <ast@plumgrid.com>, virtualization@lists.linux-foundation.org, "David S. Miller" <davem@davemloft.net>, =?ISO-8859-1?Q?Piotr_Kr=F3l?= <piotr.krol@3mdeb.com>, Mauro Carvalho Chehab <m.chehab@samsung.com>
+Content-Type: text/plain
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1413978269-17274-4-git-send-email-drysdale@google.com> (David
+	Drysdale's message of "Wed, 22 Oct 2014 12:44:29 +0100")
+Sender: linux-arch-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
+David Drysdale <drysdale@google.com> writes:
 
-On 10/22/2014 11:50 AM, Michael S. Tsirkin wrote:
-> virtio 1.0 makes all memory structures LE, so
-> we need APIs to conditionally do a byteswap on BE
-> architectures.
-> 
-> To make it easier to check code statically,
-> add virtio specific types for multi-byte integers
-> in memory.
-> 
-> Add low level wrappers that do a byteswap conditionally, these will be
-> useful e.g. for vhost.  Add high level wrappers that will (in the
-> future) query device endian-ness and act accordingly.
-> 
-> At the moment, stub them out and assume native endian-ness everywhere.
-> 
-> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> Signed-off-by: David Drysdale <drysdale@google.com>
 > ---
->  include/linux/virtio_config.h    | 16 +++++++++++++
->  include/uapi/linux/virtio_ring.h | 49 ++++++++++++++++++++--------------------
->  include/uapi/linux/Kbuild        |  1 +
->  3 files changed, 42 insertions(+), 24 deletions(-)
-> 
-> diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
-> index 7f4ef66..d38d3c2 100644
-> --- a/include/linux/virtio_config.h
-> +++ b/include/linux/virtio_config.h
-> @@ -4,6 +4,7 @@
->  #include <linux/err.h>
->  #include <linux/bug.h>
->  #include <linux/virtio.h>
-> +#include <linux/virtio_byteorder.h>
-
-What patch creates this file?
-
->  #include <uapi/linux/virtio_config.h>
->  
->  /**
-> @@ -152,6 +153,21 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
->  	return 0;
->  }
->  
-> +/* Memory accessors */
-> +#define DEFINE_VIRTIO_XX_TO_CPU(bits) \
-> +static inline u##bits virtio##bits##_to_cpu(struct virtio_device *vdev, __virtio##bits val) \
-> +{ \
-> +	return __virtio##bits##_to_cpu(false, val); \
-> +} \
-> +static inline __virtio##bits cpu_to_virtio##bits(struct virtio_device *vdev, u##bits val) \
-> +{ \
-> +	return __cpu_to_virtio##bits(false, val); \
-> +}
+>  man2/execveat.2 | 144 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 144 insertions(+)
+>  create mode 100644 man2/execveat.2
+>
+> diff --git a/man2/execveat.2 b/man2/execveat.2
+> new file mode 100644
+> index 000000000000..d19571a3eb9d
+> --- /dev/null
+> +++ b/man2/execveat.2
+> @@ -0,0 +1,144 @@
+> +.\" Copyright (c) 2014 Google, Inc.
+> +.\"
+> +.\" %%%LICENSE_START(VERBATIM)
+> +.\" Permission is granted to make and distribute verbatim copies of this
+> +.\" manual provided the copyright notice and this permission notice are
+> +.\" preserved on all copies.
+> +.\"
+> +.\" Permission is granted to copy and distribute modified versions of this
+> +.\" manual under the conditions for verbatim copying, provided that the
+> +.\" entire resulting derived work is distributed under the terms of a
+> +.\" permission notice identical to this one.
+> +.\"
+> +.\" Since the Linux kernel and libraries are constantly changing, this
+> +.\" manual page may be incorrect or out-of-date.  The author(s) assume no
+> +.\" responsibility for errors or omissions, or for damages resulting from
+> +.\" the use of the information contained herein.  The author(s) may not
+> +.\" have taken the same level of care in the production of this manual,
+> +.\" which is licensed free of charge, as they might when working
+> +.\" professionally.
+> +.\"
+> +.\" Formatted or processed versions of this manual, if unaccompanied by
+> +.\" the source, must acknowledge the copyright and authors of this work.
+> +.\" %%%LICENSE_END
+> +.\"
+> +.TH EXECVEAT 2 2014-04-02 "Linux" "Linux Programmer's Manual"
+> +.SH NAME
+> +execveat \- execute program relative to a directory file descriptor
+> +.SH SYNOPSIS
+> +.B #include <unistd.h>
+> +.sp
+> +.BI "int execve(int " fd ", const char *" pathname ","
+            ^^^^^^ That needs to be execveat
+> +.br
+> +.BI "           char *const " argv "[],  char *const " envp "[],"
+> +.br
+> +.BI "           int " flags);
+> +.SH DESCRIPTION
+> +The
+> +.BR execveat ()
+> +system call executes the program pointed to by the combination of \fIfd\fP and \fIpathname\fP.
+> +The
+> +.BR execveat ()
+> +system call operates in exactly the same way as
+> +.BR execve (2),
+> +except for the differences described in this manual page.
 > +
-> +DEFINE_VIRTIO_XX_TO_CPU(16)
-> +DEFINE_VIRTIO_XX_TO_CPU(32)
-> +DEFINE_VIRTIO_XX_TO_CPU(64)
+> +If the pathname given in
+> +.I pathname
+> +is relative, then it is interpreted relative to the directory
+> +referred to by the file descriptor
+> +.I fd
+> +(rather than relative to the current working directory of
+> +the calling process, as is done by
+> +.BR execve (2)
+> +for a relative pathname).
 > +
->  /* Config space accessors. */
->  #define virtio_cread(vdev, structname, member, ptr)			\
->  	do {								\
-> diff --git a/include/uapi/linux/virtio_ring.h b/include/uapi/linux/virtio_ring.h
-> index a99f9b7..6c00632 100644
-> --- a/include/uapi/linux/virtio_ring.h
-> +++ b/include/uapi/linux/virtio_ring.h
-> @@ -32,6 +32,7 @@
->   *
->   * Copyright Rusty Russell IBM Corporation 2007. */
->  #include <linux/types.h>
-> +#include <linux/virtio_types.h>
->  
->  /* This marks a buffer as continuing via the next field. */
->  #define VRING_DESC_F_NEXT	1
-> @@ -61,32 +62,32 @@
->  /* Virtio ring descriptors: 16 bytes.  These can chain together via "next". */
->  struct vring_desc {
->  	/* Address (guest-physical). */
-> -	__u64 addr;
-> +	__virtio64 addr;
->  	/* Length. */
-> -	__u32 len;
-> +	__virtio32 len;
->  	/* The flags as indicated above. */
-> -	__u16 flags;
-> +	__virtio16 flags;
->  	/* We chain unused descriptors via this, too */
-> -	__u16 next;
-> +	__virtio16 next;
->  };
-
-How does __virtio64 differ from __le64?
-
-Thanks,
-Chris
-
--- 
-Qualcomm Innovation Center, Inc.
-The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
-a Linux Foundation Collaborative Project
+> +If
+> +.I pathname
+> +is relative and
+> +.I fd
+> +is the special value
+> +.BR AT_FDCWD ,
+> +then
+> +.I pathname
+> +is interpreted relative to the current working
+> +directory of the calling process (like
+> +.BR execve (2)).
+> +
+> +If
+> +.I pathname
+> +is absolute, then
+> +.I fd
+> +is ignored.
+> +
+> +If
+> +.I pathname
+> +is an empty string and the
+> +.BR AT_EMPTY_PATH
+> +flag is specified, then the file descriptor
+> +.I fd
+> +specifies the file to be executed.
+> +
+> +.I flags
+> +can either be 0, or include the following flags:
+> +.TP
+> +.BR AT_EMPTY_PATH
+> +If
+> +.I pathname
+> +is an empty string, operate on the file referred to by
+> +.IR fd
+> +(which may have been obtained using the
+> +.BR open (2)
+> +.B O_PATH
+> +flag).
+> +.TP
+> +.B AT_SYMLINK_NOFOLLOW
+> +If the file identified by
+> +.I fd
+> +and a non-NULL
+> +.I pathname
+> +is a symbolic link, then the call fails with the error
+> +.BR EINVAL .
+> +.SH "RETURN VALUE"
+> +On success,
+> +.BR execveat ()
+> +does not return. On error \-1 is returned, and
+> +.I errno
+> +is set appropriately.
+> +.SH ERRORS
+> +The same errors that occur for
+> +.BR execve (2)
+> +can also occur for
+> +.BR execveat ().
+> +The following additional errors can occur for
+> +.BR execveat ():
+> +.TP
+> +.B EBADF
+> +.I fd
+> +is not a valid file descriptor.
+> +.TP
+> +.B EINVAL
+> +Invalid flag specified in
+> +.IR flags .
+> +.TP
+> +.B ENOTDIR
+> +.I pathname
+> +is relative and
+> +.I fd
+> +is a file descriptor referring to a file other than a directory.
+> +.SH VERSIONS
+> +.BR execveat ()
+> +was added to Linux in kernel 3.???.
+> +.SH NOTES
+> +In addition to the reasons explained in
+> +.BR openat (2),
+> +the
+> +.BR execveat ()
+> +system call is also needed to allow
+> +.BR fexecve (3)
+> +to be implemented on systems that do not have the
+> +.I /proc
+> +filesystem mounted.
+> +.SH SEE ALSO
+> +.BR execve (2),
+> +.BR fexecve (3)
