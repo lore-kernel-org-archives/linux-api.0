@@ -1,187 +1,176 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH] [media] Fix smatch warning: unknown field name in initializer
-Date: Wed, 22 Oct 2014 14:39:28 +0200
-Message-ID: <5447A580.7060208@xs4all.nl>
-References: <a51536f693c64c92151b4a7f530e97fa9b0d867d.1411563071.git.mchehab@osg.samsung.com>
+From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Subject: Re: [PATCH v8 02/18] vfio: platform: probe to devices on the platform bus
+Date: Wed, 22 Oct 2014 15:53:55 +0200
+Message-ID: <CAG8rG2yjWDPuorXAdhQvVAcJb7eiPFYwTivHV2qo0rBdfn3sSA@mail.gmail.com>
+References: <1413205825-6370-1-git-send-email-a.motakis@virtualopensystems.com>
+ <1413205825-6370-3-git-send-email-a.motakis@virtualopensystems.com>
+ <1413908269.4202.135.camel@ul30vt.home> <54468BDA.6050606@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <a51536f693c64c92151b4a7f530e97fa9b0d867d.1411563071.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <54468BDA.6050606-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, kvm-arm <kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org>, Linux IOMMU <iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, VirtualOpenSystems Technical Team <tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Kim Phillips <kim.phillips-KZfg59tc24xl57MIdRCFDg@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:VFIO DRIVER <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-I sadly missed this patch and it is merged now.
+On Tue, Oct 21, 2014 at 6:37 PM, Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+> On 10/21/2014 06:17 PM, Alex Williamson wrote:
+>> On Mon, 2014-10-13 at 15:10 +0200, Antonios Motakis wrote:
+>>> Driver to bind to Linux platform devices, and callbacks to discover their
+>>> resources to be used by the main VFIO PLATFORM code.
+>>>
+>>> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+>>> ---
+>>>  drivers/vfio/platform/vfio_platform.c | 107 ++++++++++++++++++++++++++++++++++
+>>>  include/uapi/linux/vfio.h             |   1 +
+>>>  2 files changed, 108 insertions(+)
+>>>  create mode 100644 drivers/vfio/platform/vfio_platform.c
+>>>
+>>> diff --git a/drivers/vfio/platform/vfio_platform.c b/drivers/vfio/platform/vfio_platform.c
+>>> new file mode 100644
+>>> index 0000000..baeb7da
+>>> --- /dev/null
+>>> +++ b/drivers/vfio/platform/vfio_platform.c
+>>> @@ -0,0 +1,107 @@
+>>> +/*
+>>> + * Copyright (C) 2013 - Virtual Open Systems
+>>> + * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+>>> + *
+>>> + * This program is free software; you can redistribute it and/or modify
+>>> + * it under the terms of the GNU General Public License, version 2, as
+>>> + * published by the Free Software Foundation.
+>>> + *
+>>> + * This program is distributed in the hope that it will be useful,
+>>> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>>> + * GNU General Public License for more details.
+>>> + */
+>>> +
+>>> +#include <linux/device.h>
+>>> +#include <linux/eventfd.h>
+>>> +#include <linux/interrupt.h>
+>>> +#include <linux/iommu.h>
+>>> +#include <linux/module.h>
+>>> +#include <linux/mutex.h>
+>>> +#include <linux/notifier.h>
+>>> +#include <linux/pm_runtime.h>
+>>> +#include <linux/slab.h>
+>>> +#include <linux/types.h>
+>>> +#include <linux/uaccess.h>
+>>> +#include <linux/vfio.h>
+>>> +#include <linux/io.h>
+>>> +#include <linux/platform_device.h>
+>>> +#include <linux/irq.h>
+>>> +
+>>> +#include "vfio_platform_private.h"
+>>> +
+>>> +#define DRIVER_VERSION  "0.8"
+>>> +#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
+>>> +#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
+>>> +
+>>> +/* probing devices from the linux platform bus */
+>>> +
+>>> +static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
+>>> +                                            int num)
+>>> +{
+>>> +    struct platform_device *dev = (struct platform_device *) vdev->opaque;
+>>> +    int i;
+>>> +
+>>> +    for (i = 0; i < dev->num_resources; i++) {
+>>> +            struct resource *r = &dev->resource[i];
+>>> +
+>>> +            if (resource_type(r) & (IORESOURCE_MEM|IORESOURCE_IO)) {
+>>> +                    num--;
+>>> +
+>>> +                    if (!num)
+>>> +                            return r;
+>>
+>> Has this been tested?  What happens when we call this with num = 0?
+> Yep. I confirm I enter that case with my xgmac where the IORESOURCE_MEM
+> is the 1st resource. I Just ended to the same cause ;-)
 
-But:
+Right, num-- should be after the check, or we miss one region.
 
-Nacked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+>
+> Best Regards
+>
+> Eric
+>>
+>>> +            }
+>>> +    }
+>>> +    return NULL;
+>>> +}
+>>> +
+>>> +static int get_platform_irq(struct vfio_platform_device *vdev, int i)
+>>> +{
+>>> +    struct platform_device *pdev = (struct platform_device *) vdev->opaque;
+>>> +
+>>> +    return platform_get_irq(pdev, i);
+>>> +}
+>>> +
+>>> +
+>>> +static int vfio_platform_probe(struct platform_device *pdev)
+>>> +{
+>>> +    struct vfio_platform_device *vdev;
+>>> +    int ret;
+>>> +
+>>> +    vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
+>>> +    if (!vdev)
+>>> +            return -ENOMEM;
+>>> +
+>>> +    vdev->opaque = (void *) pdev;
+>>> +    vdev->name = pdev->name;
+>>> +    vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
+>>> +    vdev->get_resource = get_platform_resource;
+>>> +    vdev->get_irq = get_platform_irq;
+>>> +
+>>> +    ret = vfio_platform_probe_common(vdev, &pdev->dev);
+>>> +    if (ret)
+>>> +            kfree(vdev);
+>>> +
+>>> +    return ret;
+>>> +}
+>>> +
+>>> +static int vfio_platform_remove(struct platform_device *pdev)
+>>> +{
+>>> +    return vfio_platform_remove_common(&pdev->dev);
+>>> +}
+>>> +
+>>> +static struct platform_driver vfio_platform_driver = {
+>>> +    .probe          = vfio_platform_probe,
+>>> +    .remove         = vfio_platform_remove,
+>>> +    .driver = {
+>>> +            .name   = "vfio-platform",
+>>> +            .owner  = THIS_MODULE,
+>>> +    },
+>>> +};
+>>> +
+>>> +module_platform_driver(vfio_platform_driver);
+>>> +
+>>> +MODULE_VERSION(DRIVER_VERSION);
+>>> +MODULE_LICENSE("GPL v2");
+>>> +MODULE_AUTHOR(DRIVER_AUTHOR);
+>>> +MODULE_DESCRIPTION(DRIVER_DESC);
+>>> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+>>> index 111b5e8..aca6d3e 100644
+>>> --- a/include/uapi/linux/vfio.h
+>>> +++ b/include/uapi/linux/vfio.h
+>>> @@ -158,6 +158,7 @@ struct vfio_device_info {
+>>>      __u32   flags;
+>>>  #define VFIO_DEVICE_FLAGS_RESET     (1 << 0)        /* Device supports reset */
+>>>  #define VFIO_DEVICE_FLAGS_PCI       (1 << 1)        /* vfio-pci device */
+>>> +#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2) /* vfio-platform device */
+>>>      __u32   num_regions;    /* Max region index + 1 */
+>>>      __u32   num_irqs;       /* Max IRQ index + 1 */
+>>>  };
+>>
+>>
+>>
+>
 
-This sparse warnings are due to a sparse bug that has been fixed in the sparse
-git repo. It's not included in sparse-0.5.0, the fix came in later.
 
-The #define that you kept it the version that does not comply with the C11 spec, so
-this is likely to fail with non-gcc compilers (gcc apparently kept support for the
-old pre-4.6 syntax).
 
-Regards,
-
-	Hans
-
-On 09/24/2014 02:51 PM, Mauro Carvalho Chehab wrote:
-> This is detected with:
-> 	gcc-4.8.3-7.fc20.x86_64
->
-> Smatch, up to this patch:
-> 	commit de462ba2c79d9347368c887ed93113e7818a7b07
-> 	Author: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> 	Date:   Wed Sep 17 13:31:16 2014 +0300
->
-> drivers/media/v4l2-core/v4l2-dv-timings.c:34:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:35:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:36:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:37:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:38:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:39:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:40:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:41:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:42:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:43:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:44:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:45:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:46:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:47:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:48:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:49:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:50:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:51:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:52:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:53:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:54:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:55:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:56:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:57:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:58:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:59:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:60:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:61:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:62:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:63:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:64:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:65:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:66:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:67:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:68:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:69:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:70:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:71:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:72:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:73:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:74:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:75:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:76:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:77:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:78:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:79:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:80:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:81:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:82:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:83:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:84:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:85:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:86:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:87:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:88:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:89:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:90:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:91:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:92:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:93:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:94:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:95:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:96:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:97:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:98:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:99:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:100:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:101:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:102:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:103:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:104:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:105:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:106:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:107:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:108:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:109:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:110:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:111:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:112:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:113:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:114:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:115:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:116:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:117:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:118:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:119:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:120:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:121:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:122:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:123:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:124:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:125:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:126:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:127:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:128:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:129:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:130:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:131:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:132:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:133:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:134:9: error: unknown field name in initializer
-> drivers/media/v4l2-core/v4l2-dv-timings.c:135:9: error: too many errors
-> drivers/media/usb/hdpvr/hdpvr-video.c:42:9: error: unknown field name in initializer
-> drivers/media/usb/hdpvr/hdpvr-video.c:43:9: error: unknown field name in initializer
-> drivers/media/usb/hdpvr/hdpvr-video.c:44:9: error: unknown field name in initializer
-> drivers/media/usb/hdpvr/hdpvr-video.c:45:9: error: unknown field name in initializer
-> drivers/media/usb/hdpvr/hdpvr-video.c:46:9: error: unknown field name in initializer
-> drivers/media/usb/hdpvr/hdpvr-video.c:47:9: error: unknown field name in initializer
-> drivers/media/usb/hdpvr/hdpvr-video.c:48:9: error: unknown field name in initializer
-> drivers/media/usb/hdpvr/hdpvr-video.c:49:9: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:484:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:485:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:486:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:487:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:488:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:489:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:490:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:491:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:492:18: error: unknown field name in initializer
-> drivers/media/platform/s5p-tv/hdmi_drv.c:493:18: error: unknown field name in initializer
->
-> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->
-> diff --git a/include/uapi/linux/v4l2-dv-timings.h b/include/uapi/linux/v4l2-dv-timings.h
-> index 6c8f159e416e..6a0764c89fcb 100644
-> --- a/include/uapi/linux/v4l2-dv-timings.h
-> +++ b/include/uapi/linux/v4l2-dv-timings.h
-> @@ -21,17 +21,8 @@
->   #ifndef _V4L2_DV_TIMINGS_H
->   #define _V4L2_DV_TIMINGS_H
->
-> -#if __GNUC__ < 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ < 6))
-> -/* Sadly gcc versions older than 4.6 have a bug in how they initialize
-> -   anonymous unions where they require additional curly brackets.
-> -   This violates the C1x standard. This workaround adds the curly brackets
-> -   if needed. */
->   #define V4L2_INIT_BT_TIMINGS(_width, args...) \
->   	{ .bt = { _width , ## args } }
-> -#else
-> -#define V4L2_INIT_BT_TIMINGS(_width, args...) \
-> -	.bt = { _width , ## args }
-> -#endif
->
->   /* CEA-861-E timings (i.e. standard HDTV timings) */
->
->
+-- 
+Antonios Motakis
+Virtual Open Systems
