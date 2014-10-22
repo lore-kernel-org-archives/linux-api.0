@@ -1,25 +1,30 @@
-From: Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the kernel
-Date: Tue, 21 Oct 2014 20:10:32 -0700
-Message-ID: <CAABpnA8Oe9_8r9hyAQADPwNh4Zn63tUQAUD7f0WSYh1xcdtz6g@mail.gmail.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH] staging: android: binder: move to the "real" part of
+ the kernel
+Date: Tue, 21 Oct 2014 20:16:50 -0700
+Message-ID: <1413947810.18654.0.camel@perches.com>
 References: <20141016124741.GA3832@kroah.com>
-	<20141017092601.GH23154@mwanda>
-	<20141019220547.GC3780@kroah.com>
-	<20141020092049.GJ23154@mwanda>
-	<CAMP5Xgcm-sxd3rf3VA1ZO44bUT1+u_QG1AAdjzK39q0ynfsZGQ@mail.gmail.com>
+	 <20141017092601.GH23154@mwanda> <20141019220547.GC3780@kroah.com>
+	 <20141020092049.GJ23154@mwanda>
+	 <CAMP5Xgcm-sxd3rf3VA1ZO44bUT1+u_QG1AAdjzK39q0ynfsZGQ@mail.gmail.com>
+	 <CAABpnA8Oe9_8r9hyAQADPwNh4Zn63tUQAUD7f0WSYh1xcdtz6g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMP5Xgcm-sxd3rf3VA1ZO44bUT1+u_QG1AAdjzK39q0ynfsZGQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-Cc: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org" <devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org>, Anup Patel <anup.patel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rebecca Schultz Zavin <rebecca-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Santosh Shilimkar <santosh.shilimkar-l0cyMroinI0@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAABpnA8Oe9_8r9hyAQADPwNh4Zn63tUQAUD7f0WSYh1xcdtz6g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rom Lemarchand <romlem@android.com>
+Cc: Arve =?ISO-8859-1?Q?Hj=F8nnev=E5g?= <arve@android.com>, Dan Carpenter <dan.carpenter@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "devel@driverdev.osuosl.org" <devel@driverdev.osuosl.org>, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, John Stultz <john.stultz@linaro.org>, Rebecca Schultz Zavin <rebecca@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On the topic of maintainers for binder: both Arve Hj=C3=B8nnev=C3=A5g
-(arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org) and Riley Andrews (riandrews-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org) have
-volunteered to be co-maintainers with Greg.
+On Tue, 2014-10-21 at 20:10 -0700, Rom Lemarchand wrote:
+> On the topic of maintainers for binder: both Arve Hj=F8nnev=E5g
+> (arve@android.com) and Riley Andrews (riandrews@android.com) have
+> volunteered to be co-maintainers with Greg.
+>=20
+> We would also like to make kernel-team@android.com the maintainer of
+> the whole android directory.
 
-We would also like to make kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org the maintainer of
-the whole android directory.
+It's generally better to have people as maintainers than
+using nameless email addresses.
