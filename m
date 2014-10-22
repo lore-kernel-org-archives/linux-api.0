@@ -1,170 +1,187 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCHv5 man-pages 3/3] execveat.2: initial man page for execveat(2)
-Date: Wed, 22 Oct 2014 12:44:29 +0100
-Message-ID: <1413978269-17274-4-git-send-email-drysdale@google.com>
-References: <1413978269-17274-1-git-send-email-drysdale@google.com>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH] [media] Fix smatch warning: unknown field name in initializer
+Date: Wed, 22 Oct 2014 14:39:28 +0200
+Message-ID: <5447A580.7060208@xs4all.nl>
+References: <a51536f693c64c92151b4a7f530e97fa9b0d867d.1411563071.git.mchehab@osg.samsung.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1413978269-17274-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <a51536f693c64c92151b4a7f530e97fa9b0d867d.1411563071.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- man2/execveat.2 | 144 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 144 insertions(+)
- create mode 100644 man2/execveat.2
+I sadly missed this patch and it is merged now.
 
-diff --git a/man2/execveat.2 b/man2/execveat.2
-new file mode 100644
-index 000000000000..d19571a3eb9d
---- /dev/null
-+++ b/man2/execveat.2
-@@ -0,0 +1,144 @@
-+.\" Copyright (c) 2014 Google, Inc.
-+.\"
-+.\" %%%LICENSE_START(VERBATIM)
-+.\" Permission is granted to make and distribute verbatim copies of this
-+.\" manual provided the copyright notice and this permission notice are
-+.\" preserved on all copies.
-+.\"
-+.\" Permission is granted to copy and distribute modified versions of this
-+.\" manual under the conditions for verbatim copying, provided that the
-+.\" entire resulting derived work is distributed under the terms of a
-+.\" permission notice identical to this one.
-+.\"
-+.\" Since the Linux kernel and libraries are constantly changing, this
-+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-+.\" responsibility for errors or omissions, or for damages resulting from
-+.\" the use of the information contained herein.  The author(s) may not
-+.\" have taken the same level of care in the production of this manual,
-+.\" which is licensed free of charge, as they might when working
-+.\" professionally.
-+.\"
-+.\" Formatted or processed versions of this manual, if unaccompanied by
-+.\" the source, must acknowledge the copyright and authors of this work.
-+.\" %%%LICENSE_END
-+.\"
-+.TH EXECVEAT 2 2014-04-02 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+execveat \- execute program relative to a directory file descriptor
-+.SH SYNOPSIS
-+.B #include <unistd.h>
-+.sp
-+.BI "int execve(int " fd ", const char *" pathname ","
-+.br
-+.BI "           char *const " argv "[],  char *const " envp "[],"
-+.br
-+.BI "           int " flags);
-+.SH DESCRIPTION
-+The
-+.BR execveat ()
-+system call executes the program pointed to by the combination of \fIfd\fP and \fIpathname\fP.
-+The
-+.BR execveat ()
-+system call operates in exactly the same way as
-+.BR execve (2),
-+except for the differences described in this manual page.
-+
-+If the pathname given in
-+.I pathname
-+is relative, then it is interpreted relative to the directory
-+referred to by the file descriptor
-+.I fd
-+(rather than relative to the current working directory of
-+the calling process, as is done by
-+.BR execve (2)
-+for a relative pathname).
-+
-+If
-+.I pathname
-+is relative and
-+.I fd
-+is the special value
-+.BR AT_FDCWD ,
-+then
-+.I pathname
-+is interpreted relative to the current working
-+directory of the calling process (like
-+.BR execve (2)).
-+
-+If
-+.I pathname
-+is absolute, then
-+.I fd
-+is ignored.
-+
-+If
-+.I pathname
-+is an empty string and the
-+.BR AT_EMPTY_PATH
-+flag is specified, then the file descriptor
-+.I fd
-+specifies the file to be executed.
-+
-+.I flags
-+can either be 0, or include the following flags:
-+.TP
-+.BR AT_EMPTY_PATH
-+If
-+.I pathname
-+is an empty string, operate on the file referred to by
-+.IR fd
-+(which may have been obtained using the
-+.BR open (2)
-+.B O_PATH
-+flag).
-+.TP
-+.B AT_SYMLINK_NOFOLLOW
-+If the file identified by
-+.I fd
-+and a non-NULL
-+.I pathname
-+is a symbolic link, then the call fails with the error
-+.BR EINVAL .
-+.SH "RETURN VALUE"
-+On success,
-+.BR execveat ()
-+does not return. On error \-1 is returned, and
-+.I errno
-+is set appropriately.
-+.SH ERRORS
-+The same errors that occur for
-+.BR execve (2)
-+can also occur for
-+.BR execveat ().
-+The following additional errors can occur for
-+.BR execveat ():
-+.TP
-+.B EBADF
-+.I fd
-+is not a valid file descriptor.
-+.TP
-+.B EINVAL
-+Invalid flag specified in
-+.IR flags .
-+.TP
-+.B ENOTDIR
-+.I pathname
-+is relative and
-+.I fd
-+is a file descriptor referring to a file other than a directory.
-+.SH VERSIONS
-+.BR execveat ()
-+was added to Linux in kernel 3.???.
-+.SH NOTES
-+In addition to the reasons explained in
-+.BR openat (2),
-+the
-+.BR execveat ()
-+system call is also needed to allow
-+.BR fexecve (3)
-+to be implemented on systems that do not have the
-+.I /proc
-+filesystem mounted.
-+.SH SEE ALSO
-+.BR execve (2),
-+.BR fexecve (3)
--- 
-2.1.0.rc2.206.gedb03e5
+But:
+
+Nacked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+
+This sparse warnings are due to a sparse bug that has been fixed in the sparse
+git repo. It's not included in sparse-0.5.0, the fix came in later.
+
+The #define that you kept it the version that does not comply with the C11 spec, so
+this is likely to fail with non-gcc compilers (gcc apparently kept support for the
+old pre-4.6 syntax).
+
+Regards,
+
+	Hans
+
+On 09/24/2014 02:51 PM, Mauro Carvalho Chehab wrote:
+> This is detected with:
+> 	gcc-4.8.3-7.fc20.x86_64
+>
+> Smatch, up to this patch:
+> 	commit de462ba2c79d9347368c887ed93113e7818a7b07
+> 	Author: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> 	Date:   Wed Sep 17 13:31:16 2014 +0300
+>
+> drivers/media/v4l2-core/v4l2-dv-timings.c:34:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:35:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:36:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:37:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:38:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:39:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:40:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:41:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:42:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:43:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:44:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:45:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:46:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:47:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:48:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:49:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:50:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:51:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:52:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:53:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:54:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:55:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:56:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:57:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:58:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:59:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:60:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:61:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:62:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:63:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:64:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:65:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:66:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:67:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:68:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:69:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:70:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:71:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:72:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:73:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:74:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:75:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:76:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:77:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:78:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:79:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:80:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:81:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:82:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:83:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:84:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:85:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:86:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:87:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:88:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:89:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:90:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:91:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:92:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:93:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:94:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:95:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:96:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:97:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:98:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:99:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:100:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:101:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:102:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:103:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:104:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:105:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:106:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:107:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:108:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:109:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:110:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:111:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:112:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:113:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:114:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:115:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:116:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:117:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:118:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:119:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:120:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:121:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:122:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:123:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:124:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:125:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:126:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:127:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:128:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:129:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:130:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:131:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:132:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:133:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:134:9: error: unknown field name in initializer
+> drivers/media/v4l2-core/v4l2-dv-timings.c:135:9: error: too many errors
+> drivers/media/usb/hdpvr/hdpvr-video.c:42:9: error: unknown field name in initializer
+> drivers/media/usb/hdpvr/hdpvr-video.c:43:9: error: unknown field name in initializer
+> drivers/media/usb/hdpvr/hdpvr-video.c:44:9: error: unknown field name in initializer
+> drivers/media/usb/hdpvr/hdpvr-video.c:45:9: error: unknown field name in initializer
+> drivers/media/usb/hdpvr/hdpvr-video.c:46:9: error: unknown field name in initializer
+> drivers/media/usb/hdpvr/hdpvr-video.c:47:9: error: unknown field name in initializer
+> drivers/media/usb/hdpvr/hdpvr-video.c:48:9: error: unknown field name in initializer
+> drivers/media/usb/hdpvr/hdpvr-video.c:49:9: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:484:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:485:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:486:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:487:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:488:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:489:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:490:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:491:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:492:18: error: unknown field name in initializer
+> drivers/media/platform/s5p-tv/hdmi_drv.c:493:18: error: unknown field name in initializer
+>
+> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>
+> diff --git a/include/uapi/linux/v4l2-dv-timings.h b/include/uapi/linux/v4l2-dv-timings.h
+> index 6c8f159e416e..6a0764c89fcb 100644
+> --- a/include/uapi/linux/v4l2-dv-timings.h
+> +++ b/include/uapi/linux/v4l2-dv-timings.h
+> @@ -21,17 +21,8 @@
+>   #ifndef _V4L2_DV_TIMINGS_H
+>   #define _V4L2_DV_TIMINGS_H
+>
+> -#if __GNUC__ < 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ < 6))
+> -/* Sadly gcc versions older than 4.6 have a bug in how they initialize
+> -   anonymous unions where they require additional curly brackets.
+> -   This violates the C1x standard. This workaround adds the curly brackets
+> -   if needed. */
+>   #define V4L2_INIT_BT_TIMINGS(_width, args...) \
+>   	{ .bt = { _width , ## args } }
+> -#else
+> -#define V4L2_INIT_BT_TIMINGS(_width, args...) \
+> -	.bt = { _width , ## args }
+> -#endif
+>
+>   /* CEA-861-E timings (i.e. standard HDTV timings) */
+>
+>
