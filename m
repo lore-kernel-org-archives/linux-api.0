@@ -1,7 +1,7 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH RFC v3 09/16] virtio: set FEATURES_OK
-Date: Wed, 22 Oct 2014 21:44:44 +0300
-Message-ID: <1414003404-505-10-git-send-email-mst@redhat.com>
+Subject: [PATCH RFC v3 15/16] virtio_net: fix types for in memory structures
+Date: Wed, 22 Oct 2014 21:45:06 +0300
+Message-ID: <1414003404-505-16-git-send-email-mst@redhat.com>
 References: <1414003404-505-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -13,78 +13,63 @@ To: linux-kernel@vger.kernel.org
 Cc: Rusty Russell <rusty@rustcorp.com.au>, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-set FEATURES_OK as per virtio 1.0 spec
-
 Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
 ---
- include/uapi/linux/virtio_config.h |  2 ++
- drivers/virtio/virtio.c            | 29 ++++++++++++++++++++++-------
- 2 files changed, 24 insertions(+), 7 deletions(-)
+ include/uapi/linux/virtio_net.h | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/include/uapi/linux/virtio_config.h b/include/uapi/linux/virtio_config.h
-index f3fe33a..a6d0cde 100644
---- a/include/uapi/linux/virtio_config.h
-+++ b/include/uapi/linux/virtio_config.h
-@@ -38,6 +38,8 @@
- #define VIRTIO_CONFIG_S_DRIVER		2
- /* Driver has used its parts of the config, and is happy */
- #define VIRTIO_CONFIG_S_DRIVER_OK	4
-+/* Driver has finished configuring features */
-+#define VIRTIO_CONFIG_S_FEATURES_OK	8
- /* We've given up on this device. */
- #define VIRTIO_CONFIG_S_FAILED		0x80
+diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
+index 172a7f0..b5f1677 100644
+--- a/include/uapi/linux/virtio_net.h
++++ b/include/uapi/linux/virtio_net.h
+@@ -28,6 +28,7 @@
+ #include <linux/types.h>
+ #include <linux/virtio_ids.h>
+ #include <linux/virtio_config.h>
++#include <linux/virtio_types.h>
+ #include <linux/if_ether.h>
  
-diff --git a/drivers/virtio/virtio.c b/drivers/virtio/virtio.c
-index d213567..a3df817 100644
---- a/drivers/virtio/virtio.c
-+++ b/drivers/virtio/virtio.c
-@@ -160,6 +160,7 @@ static int virtio_dev_probe(struct device *_d)
- 	struct virtio_device *dev = dev_to_virtio(_d);
- 	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
- 	u64 device_features;
-+	unsigned status;
+ /* The feature bitmap for virtio net */
+@@ -84,17 +85,17 @@ struct virtio_net_hdr {
+ #define VIRTIO_NET_HDR_GSO_TCPV6	4	// GSO frame, IPv6 TCP
+ #define VIRTIO_NET_HDR_GSO_ECN		0x80	// TCP has ECN set
+ 	__u8 gso_type;
+-	__u16 hdr_len;		/* Ethernet + IP + tcp/udp hdrs */
+-	__u16 gso_size;		/* Bytes to append to hdr_len per frame */
+-	__u16 csum_start;	/* Position to start checksumming from */
+-	__u16 csum_offset;	/* Offset after that to place checksum */
++	__virtio16 hdr_len;		/* Ethernet + IP + tcp/udp hdrs */
++	__virtio16 gso_size;		/* Bytes to append to hdr_len per frame */
++	__virtio16 csum_start;	/* Position to start checksumming from */
++	__virtio16 csum_offset;	/* Offset after that to place checksum */
+ };
  
- 	/* We have a driver! */
- 	add_status(dev, VIRTIO_CONFIG_S_DRIVER);
-@@ -183,18 +184,32 @@ static int virtio_dev_probe(struct device *_d)
+ /* This is the version of the header to use when the MRG_RXBUF
+  * feature has been negotiated. */
+ struct virtio_net_hdr_mrg_rxbuf {
+ 	struct virtio_net_hdr hdr;
+-	__u16 num_buffers;	/* Number of merged rx buffers */
++	__virtio16 num_buffers;	/* Number of merged rx buffers */
+ };
  
- 	dev->config->finalize_features(dev);
+ /*
+@@ -149,7 +150,7 @@ typedef __u8 virtio_net_ctrl_ack;
+  * VIRTIO_NET_F_CTRL_MAC_ADDR feature is available.
+  */
+ struct virtio_net_ctrl_mac {
+-	__u32 entries;
++	__virtio32 entries;
+ 	__u8 macs[][ETH_ALEN];
+ } __attribute__((packed));
  
-+	if (virtio_has_feature(dev, VIRTIO_F_VERSION_1)) {
-+		add_status(dev, VIRTIO_CONFIG_S_FEATURES_OK);
-+		status = dev->config->get_status(dev);
-+		if (!(status & VIRTIO_CONFIG_S_FEATURES_OK)) {
-+			printk(KERN_ERR "virtio: device refuses features: %x\n",
-+			       status);
-+			err = -ENODEV;
-+			goto err;
-+		}
-+	}
-+
- 	err = drv->probe(dev);
- 	if (err)
--		add_status(dev, VIRTIO_CONFIG_S_FAILED);
--	else {
--		add_status(dev, VIRTIO_CONFIG_S_DRIVER_OK);
--		if (drv->scan)
--			drv->scan(dev);
-+		goto err;
+@@ -193,7 +194,7 @@ struct virtio_net_ctrl_mac {
+  * specified.
+  */
+ struct virtio_net_ctrl_mq {
+-	__u16 virtqueue_pairs;
++	__virtio16 virtqueue_pairs;
+ };
  
--		virtio_config_enable(dev);
--	}
-+	add_status(dev, VIRTIO_CONFIG_S_DRIVER_OK);
-+	if (drv->scan)
-+		drv->scan(dev);
-+
-+	virtio_config_enable(dev);
- 
-+	return 0;
-+err:
-+	add_status(dev, VIRTIO_CONFIG_S_FAILED);
- 	return err;
-+
- }
- 
- static int virtio_dev_remove(struct device *_d)
+ #define VIRTIO_NET_CTRL_MQ   4
 -- 
 MST
