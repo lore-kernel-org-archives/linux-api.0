@@ -1,84 +1,55 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH RFC v2 15/16] virtio_net: fix types for in memory structures
-Date: Wed, 22 Oct 2014 18:51:12 +0300
-Message-ID: <1413992894-22976-16-git-send-email-mst@redhat.com>
-References: <1413992894-22976-1-git-send-email-mst@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <1413992894-22976-1-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v1 0/3] tpm: prepare for TPM2
+Date: Wed, 22 Oct 2014 19:23:53 +0300
+Message-ID: <1413995036-22497-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, josh.triplett@intel.com, christophe.ricard@gmail.com, jason.gunthorpe@obsidianresearch.com, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
----
- include/uapi/linux/virtio_net.h | 15 ++++++++-------
- 1 file changed, 8 insertions(+), 7 deletions(-)
+This patch set fixes two race conditions in the TPM subsystem:
 
-diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
-index 172a7f0..b5f1677 100644
---- a/include/uapi/linux/virtio_net.h
-+++ b/include/uapi/linux/virtio_net.h
-@@ -28,6 +28,7 @@
- #include <linux/types.h>
- #include <linux/virtio_ids.h>
- #include <linux/virtio_config.h>
-+#include <linux/virtio_types.h>
- #include <linux/if_ether.h>
- 
- /* The feature bitmap for virtio net */
-@@ -84,17 +85,17 @@ struct virtio_net_hdr {
- #define VIRTIO_NET_HDR_GSO_TCPV6	4	// GSO frame, IPv6 TCP
- #define VIRTIO_NET_HDR_GSO_ECN		0x80	// TCP has ECN set
- 	__u8 gso_type;
--	__u16 hdr_len;		/* Ethernet + IP + tcp/udp hdrs */
--	__u16 gso_size;		/* Bytes to append to hdr_len per frame */
--	__u16 csum_start;	/* Position to start checksumming from */
--	__u16 csum_offset;	/* Offset after that to place checksum */
-+	__virtio16 hdr_len;		/* Ethernet + IP + tcp/udp hdrs */
-+	__virtio16 gso_size;		/* Bytes to append to hdr_len per frame */
-+	__virtio16 csum_start;	/* Position to start checksumming from */
-+	__virtio16 csum_offset;	/* Offset after that to place checksum */
- };
- 
- /* This is the version of the header to use when the MRG_RXBUF
-  * feature has been negotiated. */
- struct virtio_net_hdr_mrg_rxbuf {
- 	struct virtio_net_hdr hdr;
--	__u16 num_buffers;	/* Number of merged rx buffers */
-+	__virtio16 num_buffers;	/* Number of merged rx buffers */
- };
- 
- /*
-@@ -149,7 +150,7 @@ typedef __u8 virtio_net_ctrl_ack;
-  * VIRTIO_NET_F_CTRL_MAC_ADDR feature is available.
-  */
- struct virtio_net_ctrl_mac {
--	__u32 entries;
-+	__virtio32 entries;
- 	__u8 macs[][ETH_ALEN];
- } __attribute__((packed));
- 
-@@ -193,7 +194,7 @@ struct virtio_net_ctrl_mac {
-  * specified.
-  */
- struct virtio_net_ctrl_mq {
--	__u16 virtqueue_pairs;
-+	__virtio16 virtqueue_pairs;
- };
- 
- #define VIRTIO_NET_CTRL_MQ   4
+* Two-phase initialization for struct tpm_chip so that device can
+  initialize fully initialize before exposing itself to the user
+  space. Also, in future TPM2 devices must be flagged before they
+  can be registered.
+* Machines where there are two TPM devices exposed by ACPI have
+  a racy lookup for the PPI interface. This patch set fixes this
+  issues
+
+In addition, transmit_cmd() is renamed as tpm_transmit_cmd() and
+made opaque so that separate command structure can be introduced
+for TPM2.
+
+Comments about v1:
+* I think this could be pulled to 3.18 because this clearly fixes
+  bugs in the current implementation.
+
+Jarkko Sakkinen (3):
+  tpm: merge duplicate transmit_cmd() functions
+  tpm: two-phase chip management functions
+  tpm: fix multiple race conditions in tpm_ppi.c
+
+ drivers/char/tpm/Makefile           |   2 +-
+ drivers/char/tpm/tpm-chip.c         | 190 ++++++++++++++++++++++++++++++++++
+ drivers/char/tpm/tpm-dev.c          |   4 +-
+ drivers/char/tpm/tpm-interface.c    | 201 ++++++------------------------------
+ drivers/char/tpm/tpm-sysfs.c        |  23 +----
+ drivers/char/tpm/tpm.h              |  32 +++---
+ drivers/char/tpm/tpm_atmel.c        |  11 +-
+ drivers/char/tpm/tpm_i2c_atmel.c    |  33 ++----
+ drivers/char/tpm/tpm_i2c_infineon.c |  37 ++-----
+ drivers/char/tpm/tpm_i2c_nuvoton.c  |  44 +++-----
+ drivers/char/tpm/tpm_i2c_stm_st33.c |  22 ++--
+ drivers/char/tpm/tpm_ibmvtpm.c      |  17 ++-
+ drivers/char/tpm/tpm_infineon.c     |  13 ++-
+ drivers/char/tpm/tpm_nsc.c          |  11 +-
+ drivers/char/tpm/tpm_ppi.c          | 137 ++++++++++++++----------
+ drivers/char/tpm/tpm_tis.c          |  94 ++++++++---------
+ drivers/char/tpm/xen-tpmfront.c     |  14 +--
+ 17 files changed, 458 insertions(+), 427 deletions(-)
+ create mode 100644 drivers/char/tpm/tpm-chip.c
+
 -- 
-MST
+2.1.0
