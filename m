@@ -1,216 +1,108 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH RFC v4 13/17] virtio_blk: v1.0 support
-Date: Thu, 23 Oct 2014 19:24:49 +0300
-Message-ID: <1414081380-14623-14-git-send-email-mst@redhat.com>
-References: <1414081380-14623-1-git-send-email-mst@redhat.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH V3] kernel, add bug_on_warn
+Date: Thu, 23 Oct 2014 12:40:34 -0700
+Message-ID: <20141023124034.f835060a667cde2bf6e9190c@linux-foundation.org>
+References: <1414068794-22788-1-git-send-email-prarit@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1414081380-14623-1-git-send-email-mst@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Thomas Huth <thuth@linux.vnet.ibm.com>, David Hildenbrand <dahi@linux.vnet.ibm.com>, Cornelia Huck <cornelia.huck@de.ibm.com>, Rusty Russell <rusty@rustcorp.com.au>, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1414068794-22788-1-git-send-email-prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Based on patch by Cornelia Huck.
+On Thu, 23 Oct 2014 08:53:14 -0400 Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-Note: for consistency, and to avoid sparse errors,
-      convert all fields, even those no longer in use
-      for virtio v1.0.
+> There have been several times where I have had to rebuild a kernel to
+> cause a panic when hitting a WARN() in the code in order to get a crash
+> dump from a system.  Sometimes this is easy to do, other times (such as
+> in the case of a remote admin) it is not trivial to send new images to the
+> user.
+> 
+> A much easier method would be a switch to change the WARN() over to a
+> BUG().  This makes debugging easier in that I can now test the actual
+> image the WARN() was seen on and I do not have to engage in remote
+> debugging.
+> 
+> This patch adds a bug_on_warn kernel parameter, which calls BUG() in the
+> warn_slowpath_common() path.  The function will still print out the
+> location of the warning.
 
-Reviewed-by: Thomas Huth <thuth@linux.vnet.ibm.com>
-Reviewed-by: David Hildenbrand <dahi@linux.vnet.ibm.com>
-Signed-off-by: Cornelia Huck <cornelia.huck@de.ibm.com>
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
----
- include/uapi/linux/virtio_blk.h | 15 ++++-----
- drivers/block/virtio_blk.c      | 67 ++++++++++++++++++++++++-----------------
- 2 files changed, 47 insertions(+), 35 deletions(-)
+The changelog doesn't mention /proc/sys/kernel/bug_on_warn?
 
-diff --git a/include/uapi/linux/virtio_blk.h b/include/uapi/linux/virtio_blk.h
-index 9ad67b2..247c8ba 100644
---- a/include/uapi/linux/virtio_blk.h
-+++ b/include/uapi/linux/virtio_blk.h
-@@ -28,6 +28,7 @@
- #include <linux/types.h>
- #include <linux/virtio_ids.h>
- #include <linux/virtio_config.h>
-+#include <linux/virtio_types.h>
- 
- /* Feature bits */
- #define VIRTIO_BLK_F_BARRIER	0	/* Does host support barriers? */
-@@ -114,18 +115,18 @@ struct virtio_blk_config {
- /* This is the first element of the read scatter-gather list. */
- struct virtio_blk_outhdr {
- 	/* VIRTIO_BLK_T* */
--	__u32 type;
-+	__virtio32 type;
- 	/* io priority. */
--	__u32 ioprio;
-+	__virtio32 ioprio;
- 	/* Sector (ie. 512 byte offset) */
--	__u64 sector;
-+	__virtio64 sector;
- };
- 
- struct virtio_scsi_inhdr {
--	__u32 errors;
--	__u32 data_len;
--	__u32 sense_len;
--	__u32 residual;
-+	__virtio32 errors;
-+	__virtio32 data_len;
-+	__virtio32 sense_len;
-+	__virtio32 residual;
- };
- 
- /* And this is the final byte of the write scatter-gather list. */
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index c6a27d5..17d3d91 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -80,7 +80,7 @@ static int __virtblk_add_req(struct virtqueue *vq,
- {
- 	struct scatterlist hdr, status, cmd, sense, inhdr, *sgs[6];
- 	unsigned int num_out = 0, num_in = 0;
--	int type = vbr->out_hdr.type & ~VIRTIO_BLK_T_OUT;
-+	__virtio32 type = vbr->out_hdr.type & ~cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_OUT);
- 
- 	sg_init_one(&hdr, &vbr->out_hdr, sizeof(vbr->out_hdr));
- 	sgs[num_out++] = &hdr;
-@@ -91,19 +91,19 @@ static int __virtblk_add_req(struct virtqueue *vq,
- 	 * block, and before the normal inhdr we put the sense data and the
- 	 * inhdr with additional status information.
- 	 */
--	if (type == VIRTIO_BLK_T_SCSI_CMD) {
-+	if (type == cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_SCSI_CMD)) {
- 		sg_init_one(&cmd, vbr->req->cmd, vbr->req->cmd_len);
- 		sgs[num_out++] = &cmd;
- 	}
- 
- 	if (have_data) {
--		if (vbr->out_hdr.type & VIRTIO_BLK_T_OUT)
-+		if (vbr->out_hdr.type & cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_OUT))
- 			sgs[num_out++] = data_sg;
- 		else
- 			sgs[num_out + num_in++] = data_sg;
- 	}
- 
--	if (type == VIRTIO_BLK_T_SCSI_CMD) {
-+	if (type == cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_SCSI_CMD)) {
- 		sg_init_one(&sense, vbr->req->sense, SCSI_SENSE_BUFFERSIZE);
- 		sgs[num_out + num_in++] = &sense;
- 		sg_init_one(&inhdr, &vbr->in_hdr, sizeof(vbr->in_hdr));
-@@ -119,12 +119,13 @@ static int __virtblk_add_req(struct virtqueue *vq,
- static inline void virtblk_request_done(struct request *req)
- {
- 	struct virtblk_req *vbr = blk_mq_rq_to_pdu(req);
-+	struct virtio_blk *vblk = req->q->queuedata;
- 	int error = virtblk_result(vbr);
- 
- 	if (req->cmd_type == REQ_TYPE_BLOCK_PC) {
--		req->resid_len = vbr->in_hdr.residual;
--		req->sense_len = vbr->in_hdr.sense_len;
--		req->errors = vbr->in_hdr.errors;
-+		req->resid_len = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.residual);
-+		req->sense_len = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.sense_len);
-+		req->errors = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.errors);
- 	} else if (req->cmd_type == REQ_TYPE_SPECIAL) {
- 		req->errors = (error != 0);
- 	}
-@@ -173,25 +174,25 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
- 
- 	vbr->req = req;
- 	if (req->cmd_flags & REQ_FLUSH) {
--		vbr->out_hdr.type = VIRTIO_BLK_T_FLUSH;
-+		vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_FLUSH);
- 		vbr->out_hdr.sector = 0;
--		vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+		vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 	} else {
- 		switch (req->cmd_type) {
- 		case REQ_TYPE_FS:
- 			vbr->out_hdr.type = 0;
--			vbr->out_hdr.sector = blk_rq_pos(vbr->req);
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.sector = cpu_to_virtio64(vblk->vdev, blk_rq_pos(vbr->req));
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		case REQ_TYPE_BLOCK_PC:
--			vbr->out_hdr.type = VIRTIO_BLK_T_SCSI_CMD;
-+			vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_SCSI_CMD);
- 			vbr->out_hdr.sector = 0;
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		case REQ_TYPE_SPECIAL:
--			vbr->out_hdr.type = VIRTIO_BLK_T_GET_ID;
-+			vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_GET_ID);
- 			vbr->out_hdr.sector = 0;
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		default:
- 			/* We don't put anything else in the queue. */
-@@ -204,9 +205,9 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
- 	num = blk_rq_map_sg(hctx->queue, vbr->req, vbr->sg);
- 	if (num) {
- 		if (rq_data_dir(vbr->req) == WRITE)
--			vbr->out_hdr.type |= VIRTIO_BLK_T_OUT;
-+			vbr->out_hdr.type |= cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_OUT);
- 		else
--			vbr->out_hdr.type |= VIRTIO_BLK_T_IN;
-+			vbr->out_hdr.type |= cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_IN);
- 	}
- 
- 	spin_lock_irqsave(&vblk->vqs[qid].lock, flags);
-@@ -821,25 +822,35 @@ static const struct virtio_device_id id_table[] = {
- 	{ 0 },
- };
- 
--static unsigned int features[] = {
-+static unsigned int features_legacy[] = {
- 	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
- 	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE, VIRTIO_BLK_F_SCSI,
- 	VIRTIO_BLK_F_WCE, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE,
- 	VIRTIO_BLK_F_MQ,
-+}
-+;
-+static unsigned int features[] = {
-+	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
-+	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
-+	VIRTIO_BLK_F_TOPOLOGY,
-+	VIRTIO_BLK_F_MQ,
-+	VIRTIO_F_VERSION_1,
- };
- 
- static struct virtio_driver virtio_blk = {
--	.feature_table		= features,
--	.feature_table_size	= ARRAY_SIZE(features),
--	.driver.name		= KBUILD_MODNAME,
--	.driver.owner		= THIS_MODULE,
--	.id_table		= id_table,
--	.probe			= virtblk_probe,
--	.remove			= virtblk_remove,
--	.config_changed		= virtblk_config_changed,
-+	.feature_table			= features,
-+	.feature_table_size		= ARRAY_SIZE(features),
-+	.feature_table_legacy		= features_legacy,
-+	.feature_table_size_legacy	= ARRAY_SIZE(features_legacy),
-+	.driver.name			= KBUILD_MODNAME,
-+	.driver.owner			= THIS_MODULE,
-+	.id_table			= id_table,
-+	.probe				= virtblk_probe,
-+	.remove				= virtblk_remove,
-+	.config_changed			= virtblk_config_changed,
- #ifdef CONFIG_PM_SLEEP
--	.freeze			= virtblk_freeze,
--	.restore		= virtblk_restore,
-+	.freeze				= virtblk_freeze,
-+	.restore			= virtblk_restore,
- #endif
- };
- 
--- 
-MST
+Why do we need both the sysctl and the kernel parameter?  Only to
+trigger BUG for warnings which occur prior to initscripts.  Is there a
+legitimate case for this?  Is kdump even usable at this time?
+
+> --- a/include/asm-generic/bug.h
+> +++ b/include/asm-generic/bug.h
+> @@ -75,10 +75,18 @@ extern void warn_slowpath_null(const char *file, const int line);
+>  #define __WARN_printf_taint(taint, arg...)				\
+>  	warn_slowpath_fmt_taint(__FILE__, __LINE__, taint, arg)
+>  #else
+> -#define __WARN()		__WARN_TAINT(TAINT_WARN)
+> +#define check_bug_on_warn()						\
+> +	do {								\
+> +		if (bug_on_warn)					\
+> +			BUG();						\
+> +	} while (0)
+
+#define check_bug_on_warn() BUG_ON(bug_on_warn)
+
+would suffice?
+
+> +#define __WARN()							\
+> +	do { __WARN_TAINT(TAINT_WARN); check_bug_on_warn(); } while (0)
+> +
+>  #define __WARN_printf(arg...)	do { printk(arg); __WARN(); } while (0)
+>  #define __WARN_printf_taint(taint, arg...)				\
+> -	do { printk(arg); __WARN_TAINT(taint); } while (0)
+> +	do { printk(arg); __WARN_TAINT(taint); check_bug_on_warn(); } while (0)
+>  #endif
+
+What's this code here for anyway?  The changes to
+warn_slowpath_common() aren't sufficient?
+
+>  #ifndef WARN_ON
+> diff --git a/include/linux/kernel.h b/include/linux/kernel.h
+> index 40728cf..4094a60 100644
+> --- a/include/linux/kernel.h
+> +++ b/include/linux/kernel.h
+> @@ -422,6 +422,7 @@ extern int panic_on_oops;
+>  extern int panic_on_unrecovered_nmi;
+>  extern int panic_on_io_nmi;
+>  extern int sysctl_panic_on_stackoverflow;
+> +extern int bug_on_warn;
+>  /*
+>   * Only to be used by arch init code. If the user over-wrote the default
+>   * CONFIG_PANIC_TIMEOUT, honor it.
+> diff --git a/include/uapi/linux/sysctl.h b/include/uapi/linux/sysctl.h
+> index 43aaba1..2ba0a58 100644
+> --- a/include/uapi/linux/sysctl.h
+> +++ b/include/uapi/linux/sysctl.h
+> @@ -153,6 +153,7 @@ enum
+>  	KERN_MAX_LOCK_DEPTH=74, /* int: rtmutex's maximum lock depth */
+>  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
+>  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
+> +	KERN_BUG_ON_WARN=77, /* int: call BUG() in WARN() functions */
+>  };
+>  
+>  
+> diff --git a/kernel/panic.c b/kernel/panic.c
+> index d09dc5c..a6d2e2f 100644
+> --- a/kernel/panic.c
+> +++ b/kernel/panic.c
+> @@ -33,6 +33,7 @@ static int pause_on_oops;
+>  static int pause_on_oops_flag;
+>  static DEFINE_SPINLOCK(pause_on_oops_lock);
+>  static bool crash_kexec_post_notifiers;
+> +int bug_on_warn;
+
+I suppose this should be __read_mostly.  Assuming __read_mostly is
+useful :(
+
+>
+> ...
+>
