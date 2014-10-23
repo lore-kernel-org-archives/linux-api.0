@@ -1,117 +1,63 @@
-From: Cornelia Huck <cornelia.huck@de.ibm.com>
-Subject: Re: [PATCH RFC v3 09/16] virtio: set FEATURES_OK
-Date: Thu, 23 Oct 2014 15:30:06 +0200
-Message-ID: <20141023153006.0cb1e7c3.cornelia.huck@de.ibm.com>
-References: <1414003404-505-1-git-send-email-mst@redhat.com>
-	<1414003404-505-10-git-send-email-mst@redhat.com>
-	<20141023142808.377551d8.cornelia.huck@de.ibm.com>
-	<20141023125139.GA10033@redhat.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 3/3] selftests/kcmp: Always try to build the test
+Date: Thu, 23 Oct 2014 07:52:50 -0600
+Message-ID: <54490832.7040906@osg.samsung.com>
+References: <1414040834-30209-1-git-send-email-mpe@ellerman.id.au> <1414040834-30209-3-git-send-email-mpe@ellerman.id.au> <5448FD72.9040301@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <20141023125139.GA10033@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5448FD72.9040301-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-3NddpPZAyC0@public.gmane.org>, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 23 Oct 2014 15:51:39 +0300
-"Michael S. Tsirkin" <mst@redhat.com> wrote:
-
-> On Thu, Oct 23, 2014 at 02:28:08PM +0200, Cornelia Huck wrote:
-> > On Wed, 22 Oct 2014 21:44:44 +0300
-> > "Michael S. Tsirkin" <mst@redhat.com> wrote:
-> > 
-> > > set FEATURES_OK as per virtio 1.0 spec
-> > > 
-> > > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-> > > ---
-> > >  include/uapi/linux/virtio_config.h |  2 ++
-> > >  drivers/virtio/virtio.c            | 29 ++++++++++++++++++++++-------
-> > >  2 files changed, 24 insertions(+), 7 deletions(-)
-> > > 
-> > 
-> > >  	dev->config->finalize_features(dev);
-> > > 
-> > > +	if (virtio_has_feature(dev, VIRTIO_F_VERSION_1)) {
-> > > +		add_status(dev, VIRTIO_CONFIG_S_FEATURES_OK);
-> > > +		status = dev->config->get_status(dev);
-> > > +		if (!(status & VIRTIO_CONFIG_S_FEATURES_OK)) {
-> > > +			printk(KERN_ERR "virtio: device refuses features: %x\n",
-> > > +			       status);
-> > > +			err = -ENODEV;
-> > > +			goto err;
-> > > +		}
-> > > +	}
-> > > +
-> > 
-> > Ugh, I just realize that virtio-ccw has a problem with that mechanism :(
-> > 
-> > Up to now, the driver only propagated status to the device: For
-> > virtio-ccw, this was easily implemented via a ccw that transmitted
-> > "status" to the device. However, the "read back status" part now
-> > actually requires that the driver can get "status" from the device, or
-> > has a comparable way to find out that the device won't accept the
-> > status it tried to write.
+On 10/23/2014 07:06 AM, Christopher Covington wrote:
+> Hi Michael,
 > 
-> Ugh, it actually caches the status in the transport :(
-
-Well, it worked as long as this was unidirectional...
-
+> On 10/23/2014 01:07 AM, Michael Ellerman wrote:
+>> Don't prevent the test building on non-x86. Just try and build it and
+>> let the chips fall where they may.
 > 
+> As a user of kcmp via CRIU on arm and arm64, thanks!
 > 
-> > I can think of two solutions:
-> > 
-> > (1) Introduce a new ccw that actually reads the device status.
-> > (2) Make the WRITE_STATUS ccw fail (with a unit check) if the driver
-> >     sets FEATURES_OK after it tried to set features the device won't
-> >     accept.
-> > 
-> > (1) is probably more generic, while (2) is more straightforward to
-> > implement.
-> > 
-> > Good thing we actually try to finally implement this,
+>> diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+>> index 4f00c0524501..cda9cc4004c9 100644
+>> --- a/tools/testing/selftests/kcmp/Makefile
+>> +++ b/tools/testing/selftests/kcmp/Makefile
+>> @@ -1,21 +1,7 @@
+>> -uname_M := $(shell uname -m 2>/dev/null || echo not)
+>> -ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
+>> -ifeq ($(ARCH),i386)
+>> -        ARCH := x86
+>> -	CFLAGS := -DCONFIG_X86_32 -D__i386__
+>> -endif
+>> -ifeq ($(ARCH),x86_64)
+>> -	ARCH := x86
+>> -	CFLAGS := -DCONFIG_X86_64 -D__x86_64__
+>> -endif
+>>  CFLAGS += -I../../../../usr/include/
+>>  
+>>  all:
+>> -ifeq ($(ARCH),x86)
+>>  	gcc $(CFLAGS) kcmp_test.c -o kcmp_test
 > 
-> > I did not notice
-> > this problem during the review :(
+> Not that this needs to be addressed in this patch, but this looks broken for
+> cross compilation. It looks like some of the other selftests use:
 > 
-> Well, it's a nuisance, but the spec is out.
-> It seems to me a new command would be a substantive change so we can't
-> do this in errata.
+> CC = $(CROSS_COMPILE)gcc
 > 
-> Option (2) would require two statements for drivers and devices,
-> but since it's clearly the case for correct drivers/devices
-> that command does not fail, it follows that this
-> is not a substantive change so it can be fixed
-> in an errata.
 
-It only adds a new failure case, so it's not really magic, agreed.
+It makes sense to fix the cross-compile problem now, since
+this patch is extending the support to other archs.
 
-> 
-> So the new command would have to be optional, 
+thanks,
+-- Shuah
 
-I think a new command should be tied to a new virtio-ccw revision.
 
-> please open
-> two issues in the TC: one documenting that driver must check
-> WRITE_STATUS and device can fail WRITE_STATUS, and another
-> for adding READ_STATUS (which will have to wait until
-> the next CS).
-
-I think I need to contemplate that a bit more. The problem with a new
-READ_STATUS is that it is, by nature, an asynchronous command (as all
-ccw commands are - the Linux guest driver uses a simple wrapper that
-makes it appear synchronous). This means, for example, that every
-status update now involves two channel programs instead of one, and
-that reading e.g. the status sysfs attribute in Linux now triggers
-channel I/O, which means several exits (at least ssch, interrupt
-injection, tsch; probably more depending on what the guest does)...
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
