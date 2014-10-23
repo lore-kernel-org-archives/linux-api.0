@@ -1,82 +1,48 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: [PATCH 1/3] kcmp: Move kcmp.h into uapi
-Date: Thu, 23 Oct 2014 16:07:12 +1100
-Message-ID: <1414040834-30209-1-git-send-email-mpe@ellerman.id.au>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-3NddpPZAyC0@public.gmane.org>, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: [PATCH 3/3] selftests/kcmp: Always try to build the test
+Date: Thu, 23 Oct 2014 16:07:14 +1100
+Message-ID: <1414040834-30209-3-git-send-email-mpe@ellerman.id.au>
+References: <1414040834-30209-1-git-send-email-mpe@ellerman.id.au>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1414040834-30209-1-git-send-email-mpe@ellerman.id.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: shuahkh@osg.samsung.com, linux-api@vger.kernel.org, Andrew Morton <akpm@osdl.org>, gorcunov@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-kcmp.h appears to be part of the API, it's documented in kcmp(2), and
-the selftests/kcmp code uses it. So move it to uapi so it's actually
-exported.
+Don't prevent the test building on non-x86. Just try and build it and
+let the chips fall where they may.
 
-Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
 ---
- include/linux/kcmp.h      | 13 +------------
- include/uapi/linux/Kbuild |  1 +
- include/uapi/linux/kcmp.h | 17 +++++++++++++++++
- 3 files changed, 19 insertions(+), 12 deletions(-)
- create mode 100644 include/uapi/linux/kcmp.h
+ tools/testing/selftests/kcmp/Makefile | 14 --------------
+ 1 file changed, 14 deletions(-)
 
-diff --git a/include/linux/kcmp.h b/include/linux/kcmp.h
-index 2dcd1b3aafc8..9dfb23e1771b 100644
---- a/include/linux/kcmp.h
-+++ b/include/linux/kcmp.h
-@@ -1,17 +1,6 @@
- #ifndef _LINUX_KCMP_H
- #define _LINUX_KCMP_H
+diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+index 4f00c0524501..cda9cc4004c9 100644
+--- a/tools/testing/selftests/kcmp/Makefile
++++ b/tools/testing/selftests/kcmp/Makefile
+@@ -1,21 +1,7 @@
+-uname_M := $(shell uname -m 2>/dev/null || echo not)
+-ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
+-ifeq ($(ARCH),i386)
+-        ARCH := x86
+-	CFLAGS := -DCONFIG_X86_32 -D__i386__
+-endif
+-ifeq ($(ARCH),x86_64)
+-	ARCH := x86
+-	CFLAGS := -DCONFIG_X86_64 -D__x86_64__
+-endif
+ CFLAGS += -I../../../../usr/include/
  
--/* Comparison type */
--enum kcmp_type {
--	KCMP_FILE,
--	KCMP_VM,
--	KCMP_FILES,
--	KCMP_FS,
--	KCMP_SIGHAND,
--	KCMP_IO,
--	KCMP_SYSVSEM,
--
--	KCMP_TYPES,
--};
-+#include <uapi/linux/kcmp.h>
+ all:
+-ifeq ($(ARCH),x86)
+ 	gcc $(CFLAGS) kcmp_test.c -o kcmp_test
+-else
+-	echo "Not an x86 target, can't build kcmp selftest"
+-endif
  
- #endif /* _LINUX_KCMP_H */
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index b70237e8bc37..1cf50d682dbf 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -209,6 +209,7 @@ header-y += ivtvfb.h
- header-y += ixjuser.h
- header-y += jffs2.h
- header-y += joystick.h
-+header-y += kcmp.h
- header-y += kd.h
- header-y += kdev_t.h
- header-y += kernel-page-flags.h
-diff --git a/include/uapi/linux/kcmp.h b/include/uapi/linux/kcmp.h
-new file mode 100644
-index 000000000000..84df14b37360
---- /dev/null
-+++ b/include/uapi/linux/kcmp.h
-@@ -0,0 +1,17 @@
-+#ifndef _UAPI_LINUX_KCMP_H
-+#define _UAPI_LINUX_KCMP_H
-+
-+/* Comparison type */
-+enum kcmp_type {
-+	KCMP_FILE,
-+	KCMP_VM,
-+	KCMP_FILES,
-+	KCMP_FS,
-+	KCMP_SIGHAND,
-+	KCMP_IO,
-+	KCMP_SYSVSEM,
-+
-+	KCMP_TYPES,
-+};
-+
-+#endif /* _UAPI_LINUX_KCMP_H */
+ run_tests: all
+ 	@./kcmp_test || echo "kcmp_test: [FAIL]"
 -- 
 1.9.1
