@@ -1,37 +1,37 @@
 From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH 2/4] vfs: Define new syscalls preadv2,pwritev2
-Date: Fri, 24 Oct 2014 11:46:56 -0400
-Message-ID: <x49oat1o4gf.fsf@segfault.boston.devel.redhat.com>
+Subject: Re: [PATCH 4/4] vfs: RWF_NONBLOCK flag for preadv2
+Date: Fri, 24 Oct 2014 11:55:23 -0400
+Message-ID: <x49k33po42c.fsf@segfault.boston.devel.redhat.com>
 References: <cover.1413923420.git.milosz@adfin.com>
 	<cover.1413923420.git.milosz@adfin.com>
-	<1613303dfaa91e6ff09cdd7860e0316765663ba6.1413923420.git.milosz@adfin.com>
+	<ba8d704a12c7ceffce610fc438a0af11a3422002.1413923420.git.milosz@adfin.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1613303dfaa91e6ff09cdd7860e0316765663ba6.1413923420.git.milosz@adfin.com>
-	(Milosz Tanski's message of "Tue, 21 Oct 2014 16:46:57 -0400")
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <ba8d704a12c7ceffce610fc438a0af11a3422002.1413923420.git.milosz@adfin.com>
+	(Milosz Tanski's message of "Tue, 21 Oct 2014 16:46:59 -0400")
+Sender: owner-linux-aio@kvack.org
 To: Milosz Tanski <milosz@adfin.com>
 Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
 Milosz Tanski <milosz@adfin.com> writes:
 
-> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-> index 22749c1..10f8883 100644
-> --- a/include/uapi/asm-generic/unistd.h
-> +++ b/include/uapi/asm-generic/unistd.h
-> @@ -213,6 +213,10 @@ __SC_COMP(__NR_pwrite64, sys_pwrite64, compat_sys_pwrite64)
->  __SC_COMP(__NR_preadv, sys_preadv, compat_sys_preadv)
->  #define __NR_pwritev 70
->  __SC_COMP(__NR_pwritev, sys_pwritev, compat_sys_pwritev)
-> +#define __NR_preadv2 281
-> +__SC_COMP(__NR_preadv2, sys_preadv2)
-> +#define __NR_pwritev2 282
-> +__SC_COMP(__NR_pwritev2, sys_pwritev2)
+> Filesystems that generic_file_read_iter will not be allowed to perform
+> non-blocking reads. This only will read data if it's in the page cache and if
+> there is no page error (causing a re-read).
+>
+> Christoph Hellwig wrote the filesystem specify code (cifs, ofs, shm, xfs).
+>
+> Signed-off-by: Milosz Tanski <milosz@adfin.com>
 
-This looks odd.  First, __SC_COMP takes 3 arguments.  Second, you are
-going to need to implement compat wrappers for the new system calls.
+Add in the 2 hunks from the other patches, as suggested by Christoph,
+and you can add my:
 
-Cheers,
-Jeff
+Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
