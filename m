@@ -1,39 +1,30 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 2/4] vfs: Define new syscalls preadv2,pwritev2
-Date: Fri, 24 Oct 2014 02:36:59 -0700
-Message-ID: <20141024093659.GB29178@infradead.org>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 3/4] vfs: Export new vector IO syscalls (with flags) to
+ userland
+Date: Fri, 24 Oct 2014 02:38:02 -0700
+Message-ID: <20141024093802.GC29178@infradead.org>
 References: <cover.1413923420.git.milosz@adfin.com>
- <1613303dfaa91e6ff09cdd7860e0316765663ba6.1413923420.git.milosz@adfin.com>
+ <e43b43c1e7b14b454b6425a650cd45cbb75fd325.1413923420.git.milosz@adfin.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1613303dfaa91e6ff09cdd7860e0316765663ba6.1413923420.git.milosz@adfin.com>
-Sender: owner-linux-aio@kvack.org
-To: Milosz Tanski <milosz@adfin.com>
-Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
+In-Reply-To: <e43b43c1e7b14b454b6425a650cd45cbb75fd325.1413923420.git.milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Volker Lendecke <Volker.Lendecke-3ekOc4rQMZmzQB+pC5nmwQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-> diff --git a/mm/filemap.c b/mm/filemap.c
-> index cb7f530..45964c8 100644
-> --- a/mm/filemap.c
-> +++ b/mm/filemap.c
-> @@ -1735,7 +1735,7 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
->  		}
->  	}
->  
-> -	retval = do_generic_file_read(file, ppos, iter, retval);
-> +	retval = do_generic_file_read(file, ppos, iter, retval, iocb->ki_rwflags);
+On Tue, Oct 21, 2014 at 04:46:58PM -0400, Milosz Tanski wrote:
+> This is only for x86_64 and x86. Will add other arch later.
 
-I think this belongs into the last patch, together with the last hunk
-from the first patch.
+Looks good, but I think the patch subject should read something like:
 
-Otherwise looks good to me:
+x86: wite up preadv2 and pwritev2
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+in which case you might also get away with an empty description.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Please also Cc linux-arch to get the attention of other architecture
+maintainers for the next repost.
+
+Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
