@@ -1,68 +1,68 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH 1/4] vfs: Prepare for adding a new preadv/pwritev with user flags.
-Date: Fri, 24 Oct 2014 11:12:29 -0400
-Message-ID: <x49a94lpkma.fsf@segfault.boston.devel.redhat.com>
-References: <cover.1413923420.git.milosz@adfin.com>
-	<cover.1413923420.git.milosz@adfin.com>
-	<9306856a3ea74bcc41523430d74ef4be93d8f436.1413923420.git.milosz@adfin.com>
+From: KY Srinivasan <kys@microsoft.com>
+Subject: RE: [PATCH] Drivers: hv: util: make struct hv_do_fcopy match Hyper-V
+ host messages
+Date: Fri, 24 Oct 2014 15:14:25 +0000
+Message-ID: <c05e07e89fff4419b8c6a545507067ec@BY2PR0301MB0711.namprd03.prod.outlook.com>
+References: <1414146027-1915-1-git-send-email-vkuznets@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <9306856a3ea74bcc41523430d74ef4be93d8f436.1413923420.git.milosz@adfin.com>
-	(Milosz Tanski's message of "Tue, 21 Oct 2014 16:46:56 -0400")
-Sender: owner-linux-aio@kvack.org
-To: Milosz Tanski <milosz@adfin.com>
-Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1414146027-1915-1-git-send-email-vkuznets@redhat.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vitaly Kuznetsov <vkuznets@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jason Wang <jasowang@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Milosz Tanski <milosz@adfin.com> writes:
-
-> Plumbing the flags argument through the vfs code so they can be passed down to
-> __generic_file_(read/write)_iter function that do the acctual work.
-                                                        ^^^^^^^
-actual
-
-> Signed-off-by: Milosz Tanski <milosz@adfin.com>
-
-> diff --git a/fs/read_write.c b/fs/read_write.c
-> index 7d9318c..9858c06 100644
-> --- a/fs/read_write.c
-> +++ b/fs/read_write.c
-[...]
-> @@ -1113,6 +1116,7 @@ COMPAT_SYSCALL_DEFINE5(preadv, compat_ulong_t, fd,
->  	return __compat_sys_preadv64(fd, vec, vlen, pos);
->  }
->  
-> +
->  static size_t compat_writev(struct file *file,
->  			    const struct compat_iovec __user *vec,
->  			    unsigned long vlen, loff_t *pos)
-
-Lose this hunk.
 
 
-> diff --git a/mm/filemap.c b/mm/filemap.c
-> index 14b4642..cb7f530 100644
-> --- a/mm/filemap.c
-> +++ b/mm/filemap.c
-> @@ -1465,7 +1465,7 @@ static void shrink_readahead_size_eio(struct file *filp,
->   * of the logic when it comes to error handling etc.
->   */
->  static ssize_t do_generic_file_read(struct file *filp, loff_t *ppos,
-> -		struct iov_iter *iter, ssize_t written)
-> +		struct iov_iter *iter, ssize_t written, int flags)
->  {
->  	struct address_space *mapping = filp->f_mapping;
->  	struct inode *inode = mapping->host;
+> -----Original Message-----
+> From: Vitaly Kuznetsov [mailto:vkuznets@redhat.com]
+> Sent: Friday, October 24, 2014 3:20 AM
+> To: linux-api@vger.kernel.org; KY Srinivasan
+> Cc: Greg Kroah-Hartman; Jason Wang; linux-kernel@vger.kernel.org
+> Subject: [PATCH] Drivers: hv: util: make struct hv_do_fcopy match Hyper-V
+> host messages
+> 
+> An attempt to fix fcopy on i586 (bc5a5b0 Drivers: hv: util: Properly pack the
+> data for file copy functionality) led to a regression on x86_64 (and actually
+> didn't fix
+> i586 breakage). Fcopy messages from Hyper-V host come in the following
+> format:
+> 
+> struct do_fcopy_hdr   |   36 bytes
+> 0000                  |    4 bytes
+> offset                |    8 bytes
+> size                  |    4 bytes
+> data                  | 6144 bytes
+> 
+> On x86_64 struct hv_do_fcopy matched this format without '
+> __attribute__((packed))'
+> and on i586 adding ' __attribute__((packed))' to it doesn't change anything.
+> Keep the structure packed and add padding to match re reality. Tested both
+> i586 and x86_64 on Hyper-V Server 2012 R2.
 
-As Christoph mentioned, this belongs elsewhere.
-
-Fix that up and you an add my:
-
-Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Thanks Vitaly.
+> 
+> Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+Signed-off-by: K. Y. Srinivasan <kys@microsoft.com>
+Cc: <stable@vger.kernel.org>
+> ---
+>  include/uapi/linux/hyperv.h | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/include/uapi/linux/hyperv.h b/include/uapi/linux/hyperv.h index
+> 0a8e6ba..bb1cb73 100644
+> --- a/include/uapi/linux/hyperv.h
+> +++ b/include/uapi/linux/hyperv.h
+> @@ -134,6 +134,7 @@ struct hv_start_fcopy {
+> 
+>  struct hv_do_fcopy {
+>  	struct hv_fcopy_hdr hdr;
+> +	__u32   pad;
+>  	__u64	offset;
+>  	__u32	size;
+>  	__u8	data[DATA_FRAGMENT];
+> --
+> 1.9.3
