@@ -1,37 +1,53 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: Re: [PATCH] staging: android: binder: move to the "real" part of the
- kernel
-Date: Fri, 24 Oct 2014 08:00:57 +0300
-Message-ID: <20141024050056.GT23154@mwanda>
-References: <20141016124741.GA3832@kroah.com> <20141017092601.GH23154@mwanda>
- <20141019220547.GC3780@kroah.com> <20141020092049.GJ23154@mwanda>
- <CAMP5Xgcm-sxd3rf3VA1ZO44bUT1+u_QG1AAdjzK39q0ynfsZGQ@mail.gmail.com>
- <CAABpnA8Oe9_8r9hyAQADPwNh4Zn63tUQAUD7f0WSYh1xcdtz6g@mail.gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 1/4] vfs: Prepare for adding a new preadv/pwritev with
+ user flags.
+Date: Fri, 24 Oct 2014 02:35:18 -0700
+Message-ID: <20141024093518.GA29178@infradead.org>
+References: <cover.1413923420.git.milosz@adfin.com>
+ <9306856a3ea74bcc41523430d74ef4be93d8f436.1413923420.git.milosz@adfin.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CAABpnA8Oe9_8r9hyAQADPwNh4Zn63tUQAUD7f0WSYh1xcdtz6g@mail.gmail.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Rom Lemarchand <romlem@android.com>
-Cc: "devel@driverdev.osuosl.org" <devel@driverdev.osuosl.org>, Anup Patel <anup.patel@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, LKML <linux-kernel@vger.kernel.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, John Stultz <john.stultz@linaro.org>, linux-api@vger.kernel.org, Rebecca Schultz Zavin <rebecca@android.com>, Santosh Shilimkar <santosh.shilimkar@ti.com>, Sumit Semwal <sumit.semwal@linaro.org>, Christoffer Dall <christoffer.dall@linaro.org>
+In-Reply-To: <9306856a3ea74bcc41523430d74ef4be93d8f436.1413923420.git.milosz@adfin.com>
+Sender: owner-linux-aio@kvack.org
+To: Milosz Tanski <milosz@adfin.com>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 21, 2014 at 08:10:32PM -0700, Rom Lemarchand wrote:
-> We would also like to make kernel-team@android.com the maintainer of
-> the whole android directory.
+On Tue, Oct 21, 2014 at 04:46:56PM -0400, Milosz Tanski wrote:
+> Plumbing the flags argument through the vfs code so they can be passed down to
+> __generic_file_(read/write)_iter function that do the acctual work.
+> 
+> Signed-off-by: Milosz Tanski <milosz@adfin.com>
 
-Mailing lists can't be a maintainer, but you could add it as a private
-list in the MAINTAINERS file.
 
-regards,
-dan carpenter
+The last hunk doesn't belong into this patch, both logically and because
+the code won't actually compile after applying just this patch.
+
+Otherwise looks good,
+
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+
+
+This is the culprit:
+
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index 14b4642..cb7f530 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -1465,7 +1465,7 @@ static void shrink_readahead_size_eio(struct file *filp,
+>   * of the logic when it comes to error handling etc.
+>   */
+>  static ssize_t do_generic_file_read(struct file *filp, loff_t *ppos,
+> -		struct iov_iter *iter, ssize_t written)
+> +		struct iov_iter *iter, ssize_t written, int flags)
+>  {
+>  	struct address_space *mapping = filp->f_mapping;
+>  	struct inode *inode = mapping->host;
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
