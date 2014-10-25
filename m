@@ -1,56 +1,44 @@
-From: Milosz Tanski <milosz@adfin.com>
-Subject: Re: [PATCH 4/4] vfs: RWF_NONBLOCK flag for preadv2
-Date: Fri, 24 Oct 2014 13:16:04 -0400
-Message-ID: <CANP1eJE-gRPNc9xDpAYKHVzcwS+v3AwDb=Dm1CBa=sevSczqjg@mail.gmail.com>
-References: <cover.1413923420.git.milosz@adfin.com>
-	<ba8d704a12c7ceffce610fc438a0af11a3422002.1413923420.git.milosz@adfin.com>
-	<x49k33po42c.fsf@segfault.boston.devel.redhat.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv1 5/8] cgroup: introduce cgroup namespaces
+Date: Sat, 25 Oct 2014 05:16:08 +0200
+Message-ID: <20141025031608.GA13250@mail.hallyn.com>
+References: <1413235430-22944-1-git-send-email-adityakali@google.com>
+	<1413235430-22944-6-git-send-email-adityakali@google.com>
+	<20141016163703.GE1392@mail.hallyn.com>
+	<CAGr1F2E0VdBafZg6P2yeP6bgxsMEm53fEuT29HTLygTKobgi-w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <x49k33po42c.fsf@segfault.boston.devel.redhat.com>
-Sender: owner-linux-aio@kvack.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAGr1F2E0VdBafZg6P2yeP6bgxsMEm53fEuT29HTLygTKobgi-w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 24, 2014 at 11:55 AM, Jeff Moyer <jmoyer@redhat.com> wrote:
-> Milosz Tanski <milosz@adfin.com> writes:
->
->> Filesystems that generic_file_read_iter will not be allowed to perform
->> non-blocking reads. This only will read data if it's in the page cache and if
->> there is no page error (causing a re-read).
->>
->> Christoph Hellwig wrote the filesystem specify code (cifs, ofs, shm, xfs).
->>
->> Signed-off-by: Milosz Tanski <milosz@adfin.com>
->
-> Add in the 2 hunks from the other patches, as suggested by Christoph,
-> and you can add my:
->
-> Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
+Quoting Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
+> >> +void free_cgroup_ns(struct cgroup_namespace *ns)
+> >> +{
+> >> +     cgroup_put(ns->root_cgrp);
+> >> +     put_user_ns(ns->user_ns);
+> >
+> > This is a problem on error patch in copy_cgroup_ns.  The
+> > alloc_cgroup_ns() doesn't initialize these values, so if
+> > you should fail in proc_alloc_inum() you'll show up here
+> > with fandom values in ns->*.
+> >
+> 
+> I don't see the codepath that leads to calling free_cgroup_ns() with
+> uninitialized members. We don't call free_cgroup_ns() on the error
+> path in copy_cgroup_ns().
 
-I'm aware of the 3 patch series that Christoph sent out shortly after
-the previous version of the patchset. Wasn't sure what to do about it.
-
-Christoph, should I apply your last 3 patches to the end of this tree
-and send it along with the next submission? Or should I take the first
-two combine them with this change and then apply RWF_DSYNC ontop of
-it?
-
-- M
-
--- 
-Milosz Tanski
-CTO
-16 East 34th Street, 15th floor
-New York, NY 10016
-
-p: 646-253-9055
-e: milosz@adfin.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Hm, yeah, I'm not seeing it now, sorry.
