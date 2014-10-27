@@ -1,55 +1,67 @@
-From: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V4] kernel, add bug_on_warn
-Date: Mon, 27 Oct 2014 14:05:57 -0400
-Message-ID: <544E8985.50203@akamai.com>
-References: <1414155207-29839-1-git-send-email-prarit@redhat.com>
+From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Subject: [PATCH v2 1/6] vfio: implement iommu driver capabilities with an enum
+Date: Mon, 27 Oct 2014 19:05:50 +0100
+Message-ID: <1414433155-31600-2-git-send-email-a.motakis@virtualopensystems.com>
+References: <1414433155-31600-1-git-send-email-a.motakis@virtualopensystems.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1414155207-29839-1-git-send-email-prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1414433155-31600-1-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, will.deacon-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Prarit,
+Currently a VFIO driver's IOMMU capabilities are encoded as a series of
+numerical defines. Replace this with an enum for future maintainability.
 
-On 10/24/2014 08:53 AM, Prarit Bhargava wrote:
-> There have been several times where I have had to rebuild a kernel to
-> cause a panic when hitting a WARN() in the code in order to get a crash
-> dump from a system.  Sometimes this is easy to do, other times (such as
-> in the case of a remote admin) it is not trivial to send new images to the
-> user.panic_on_stackoverflow
->
-> A much easier method would be a switch to change the WARN() over to a
-> BUG().  This makes debugging easier in that I can now test the actual
-> image the WARN() was seen on and I do not have to engage in remote
-> debugging.
->
-> This patch adds a bug_on_warn kernel parameter and
-> /proc/sys/kernel/bug_on_warn calls BUG() in the warn_slowpath_common()
-> path.  The function will still print out the location of the warning.
->
-> An example of the bug_on_warn output:
->
-> The first line below is from the WARN_ON() to output the WARN_ON()'s location.
-> After that the new BUG() call is displayed.
->
->  WARNING: CPU: 27 PID: 3204 at
-> /home/rhel7/redhat/debug/dummy-module/dummy-module.c:25 init_dummy+0x28/0x30
-> [dummy_module]()
->  bug_on_warn set, calling BUG()...
->  ------------[ cut here ]------------
->  kernel BUG at kernel/panic.c:434!
+Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+---
+ include/uapi/linux/vfio.h | 21 ++++++++++-----------
+ 1 file changed, 10 insertions(+), 11 deletions(-)
 
-Seems reasonable-I'm wondering why you just don't call panic() in this
-case. The BUG() call at line '434' doesn't at anything since its just being
-called from panic.c.
-
-So something like 'panic_on_warn' would seem to be more appropriate
-in keeping with things like 'panic_on_oops' or 'panic_on_stackoverflow'.
-
-Thanks,
-
--Jason
+diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+index 6612974..1e39842 100644
+--- a/include/uapi/linux/vfio.h
++++ b/include/uapi/linux/vfio.h
+@@ -19,19 +19,18 @@
+ 
+ /* Kernel & User level defines for VFIO IOCTLs. */
+ 
+-/* Extensions */
+-
+-#define VFIO_TYPE1_IOMMU		1
+-#define VFIO_SPAPR_TCE_IOMMU		2
+-#define VFIO_TYPE1v2_IOMMU		3
+ /*
+- * IOMMU enforces DMA cache coherence (ex. PCIe NoSnoop stripping).  This
+- * capability is subject to change as groups are added or removed.
++ * Capabilities exposed by the VFIO IOMMU driver. Some capabilities are subject
++ * to change as groups are added or removed.
+  */
+-#define VFIO_DMA_CC_IOMMU		4
+-
+-/* Check if EEH is supported */
+-#define VFIO_EEH			5
++enum vfio_iommu_cap {
++	VFIO_TYPE1_IOMMU	= 1,
++	VFIO_SPAPR_TCE_IOMMU	= 2,
++	VFIO_TYPE1v2_IOMMU	= 3,
++	VFIO_DMA_CC_IOMMU	= 4, /* IOMMU enforces DMA cache coherence
++					(ex. PCIe NoSnoop stripping) */
++	VFIO_EEH		= 5, /* Check if EEH is supported */
++};
+ 
+ /*
+  * The IOCTL interface is designed for extensibility by embedding the
+-- 
+2.1.1
