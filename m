@@ -1,172 +1,82 @@
-From: Soren Brinkmann <soren.brinkmann@xilinx.com>
-Subject: [PATCH v3] gpio: lib-sysfs: Add 'wakeup' attribute
-Date: Mon, 27 Oct 2014 11:30:02 -0700
-Message-ID: <1414434602-14263-1-git-send-email-soren.brinkmann@xilinx.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Walleij <linus.walleij@linaro.org>, Alexandre Courbot <gnurou@gmail.com>
-Cc: Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-gpio@vger.kernel.org, linux-doc@vger.kernel.org, Soren Brinkmann <soren.brinkmann@xilinx.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCHv5 1/3] syscalls,x86: implement execveat() system call
+Date: Mon, 27 Oct 2014 11:47:27 -0700
+Message-ID: <CALCETrWN+bKj_PPRJy2pNDVCRd3xyd-=w7P+9khhd-XuJRXCyA@mail.gmail.com>
+References: <1413978269-17274-1-git-send-email-drysdale@google.com>
+ <1413978269-17274-2-git-send-email-drysdale@google.com> <CALCETrWbj=BTDyKqtbSKteANj3J3UFZnrvWv9DMosCoEZaSoeA@mail.gmail.com>
+ <CAHse=S-x6NKEn9EGFos6bS=asK-1mWCr0r9aji2a97_fgxU+Sg@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <CAHse=S-x6NKEn9EGFos6bS=asK-1mWCr0r9aji2a97_fgxU+Sg@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Add an attribute 'wakeup' to the GPIO sysfs interface which allows
-marking/unmarking a GPIO as wake IRQ.
-The file 'wakeup' is created in each exported GPIOs directory, if an IRQ
-is associated with that GPIO and the irqchip implements set_wake().
-Writing 'enabled' to that file will enable wake for that GPIO, while
-writing 'disabled' will disable wake.
-Reading that file will return either 'disabled' or 'enabled' depening on
-the currently set flag for the GPIO's IRQ.
+On Mon, Oct 27, 2014 at 11:03 AM, David Drysdale <drysdale@google.com> wrote:
+> On Wed, Oct 22, 2014 at 7:44 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>> On Wed, Oct 22, 2014 at 4:44 AM, David Drysdale <drysdale@google.com> wrote:
+>>> Add a new system execveat(2) syscall. execveat() is to execve() as
+>>> openat() is to open(): it takes a file descriptor that refers to a
+>>> directory, and resolves the filename relative to that.
+>>>
+>>
+>>>         bprm->file = file;
+>>> -       bprm->filename = bprm->interp = filename->name;
+>>> +       if (fd == AT_FDCWD || filename->name[0] == '/') {
+>>> +               bprm->filename = filename->name;
+>>> +       } else {
+>>> +               /*
+>>> +                * Build a pathname that reflects how we got to the file,
+>>> +                * either "/dev/fd/<fd>" (for an empty filename) or
+>>> +                * "/dev/fd/<fd>/<filename>".
+>>> +                */
+>>> +               pathbuf = kmalloc(PATH_MAX, GFP_TEMPORARY);
+>>> +               if (!pathbuf) {
+>>> +                       retval = -ENOMEM;
+>>> +                       goto out_unmark;
+>>> +               }
+>>> +               bprm->filename = pathbuf;
+>>> +               if (filename->name[0] == '\0')
+>>> +                       sprintf(pathbuf, "/dev/fd/%d", fd);
+>>
+>> If the fd is O_CLOEXEC, then this will result in a confused child
+>> process.  Should we fail exec attempts like that for non-static
+>> programs?  (E.g. set filename to "" or something and fix up the binfmt
+>> drivers to handle that?)
+>
+> Isn't it just scripts that get confused here (as normal executables don't
+> get to see brpm->filename)?
+>
+> Given that we don't know which we have at this point, I'd suggest
+> carrying on regardless.  Or we could fall back to use the previous
+> best-effort d_path() code for O_CLOEXEC fds.  Thoughts?
 
-Signed-off-by: Soren Brinkmann <soren.brinkmann@xilinx.com>
-Reviewed-by: Alexandre Courbot <acourbot@nvidia.com>
----
-v3:
- - add documentation
-v2:
- - fix error path to unlock mutex before return
+How hard would it be to mark the bprm as not having a path for the
+binary?  Then we could fail later on if and when we actually need the
+path.
 
-As additional reference, these are the email threads of the v2 and v1
-submission:
-https://lkml.org/lkml/2014/10/13/481
-https://lkml.org/lkml/2014/9/4/496
----
- Documentation/ABI/testing/sysfs-gpio |  1 +
- Documentation/gpio/sysfs.txt         |  8 ++++
- drivers/gpio/gpiolib-sysfs.c         | 77 +++++++++++++++++++++++++++++++++---
- 3 files changed, 80 insertions(+), 6 deletions(-)
+I don't really have a strong opinion here, though.  I do prefer
+actually failing the execveat call over succeeding but invoking a
+script interpreter than can't possibly work.
 
-diff --git a/Documentation/ABI/testing/sysfs-gpio b/Documentation/ABI/testing/sysfs-gpio
-index 80f4c94c7bef..4cc7f4b3f724 100644
---- a/Documentation/ABI/testing/sysfs-gpio
-+++ b/Documentation/ABI/testing/sysfs-gpio
-@@ -20,6 +20,7 @@ Description:
- 	    /value ... always readable, writes fail for input GPIOs
- 	    /direction ... r/w as: in, out (default low); write: high, low
- 	    /edge ... r/w as: none, falling, rising, both
-+	    /wakeup ... r/w as: enabled, disabled
- 	/gpiochipN ... for each gpiochip; #N is its first GPIO
- 	    /base ... (r/o) same as N
- 	    /label ... (r/o) descriptive, not necessarily unique
-diff --git a/Documentation/gpio/sysfs.txt b/Documentation/gpio/sysfs.txt
-index c2c3a97f8ff7..f703377d528f 100644
---- a/Documentation/gpio/sysfs.txt
-+++ b/Documentation/gpio/sysfs.txt
-@@ -97,6 +97,14 @@ and have the following read/write attributes:
- 		for "rising" and "falling" edges will follow this
- 		setting.
- 
-+	"wakeup" ... reads as either "enabled" or "disabled". Write these
-+		strings to set/clear the 'wakeup' flag of the IRQ associated
-+		with this GPIO. If the IRQ has the 'wakeup' flag set, it can
-+		wake the system from sleep states.
-+
-+		This file exists only if the pin can generate interrupts and
-+		the driver implements the required infrastructure.
-+
- GPIO controllers have paths like /sys/class/gpio/gpiochip42/ (for the
- controller implementing GPIOs starting at #42) and have the following
- read-only attributes:
-diff --git a/drivers/gpio/gpiolib-sysfs.c b/drivers/gpio/gpiolib-sysfs.c
-index 5f2150b619a7..7588b6d5ba94 100644
---- a/drivers/gpio/gpiolib-sysfs.c
-+++ b/drivers/gpio/gpiolib-sysfs.c
-@@ -286,6 +286,58 @@ found:
- 
- static DEVICE_ATTR(edge, 0644, gpio_edge_show, gpio_edge_store);
- 
-+static ssize_t gpio_wakeup_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	ssize_t			status;
-+	const struct gpio_desc	*desc = dev_get_drvdata(dev);
-+	int			irq = gpiod_to_irq(desc);
-+	struct irq_desc		*irq_desc = irq_to_desc(irq);
-+
-+	mutex_lock(&sysfs_lock);
-+
-+	if (irqd_is_wakeup_set(&irq_desc->irq_data))
-+		status = sprintf(buf, "enabled\n");
-+	else
-+		status = sprintf(buf, "disabled\n");
-+
-+	mutex_unlock(&sysfs_lock);
-+
-+	return status;
-+}
-+
-+static ssize_t gpio_wakeup_store(struct device *dev,
-+		struct device_attribute *attr, const char *buf, size_t size)
-+{
-+	int			ret;
-+	unsigned int		on;
-+	struct gpio_desc	*desc = dev_get_drvdata(dev);
-+	int			irq = gpiod_to_irq(desc);
-+
-+	mutex_lock(&sysfs_lock);
-+
-+	if (sysfs_streq("enabled", buf)) {
-+		on = true;
-+	} else if (sysfs_streq("disabled", buf)) {
-+		on = false;
-+	} else {
-+		mutex_unlock(&sysfs_lock);
-+		return -EINVAL;
-+	}
-+
-+	ret = irq_set_irq_wake(irq, on);
-+
-+	mutex_unlock(&sysfs_lock);
-+
-+	if (ret)
-+		pr_warn("%s: failed to %s wake\n", __func__,
-+				on ? "enable" : "disable");
-+
-+	return size;
-+}
-+
-+static DEVICE_ATTR(wakeup, 0644, gpio_wakeup_show, gpio_wakeup_store);
-+
- static int sysfs_set_active_low(struct gpio_desc *desc, struct device *dev,
- 				int value)
- {
-@@ -526,7 +578,7 @@ static struct class gpio_class = {
- int gpiod_export(struct gpio_desc *desc, bool direction_may_change)
- {
- 	unsigned long		flags;
--	int			status;
-+	int			status, irq;
- 	const char		*ioname = NULL;
- 	struct device		*dev;
- 	int			offset;
-@@ -582,11 +634,24 @@ int gpiod_export(struct gpio_desc *desc, bool direction_may_change)
- 			goto fail_unregister_device;
- 	}
- 
--	if (gpiod_to_irq(desc) >= 0 && (direction_may_change ||
--				       !test_bit(FLAG_IS_OUT, &desc->flags))) {
--		status = device_create_file(dev, &dev_attr_edge);
--		if (status)
--			goto fail_unregister_device;
-+	irq = gpiod_to_irq(desc);
-+	if (irq >= 0) {
-+		struct irq_desc *irq_desc = irq_to_desc(irq);
-+		struct irq_chip	*irqchip = irq_desc_get_chip(irq_desc);
-+
-+		if (direction_may_change ||
-+				!test_bit(FLAG_IS_OUT, &desc->flags)) {
-+			status = device_create_file(dev, &dev_attr_edge);
-+			if (status)
-+				goto fail_unregister_device;
-+		}
-+
-+		if (irqchip->flags & IRQCHIP_SKIP_SET_WAKE ||
-+				irqchip->irq_set_wake) {
-+			status = device_create_file(dev, &dev_attr_wakeup);
-+			if (status)
-+				goto fail_unregister_device;
-+		}
- 	}
- 
- 	set_bit(FLAG_EXPORT, &desc->flags);
+>
+>>> +               else
+>>> +                       snprintf(pathbuf, PATH_MAX,
+>>> +                                "/dev/fd/%d/%s", fd, filename->name);
+>>
+>> Does this need to handle the case where the result exceeds PATH_MAX?
+>
+> I guess we could kmalloc(strlen(filename->name) + 19) to avoid the
+> possibility of failure, but that just defers the inevitable -- the interpreter
+> won't be able to open the script file anyway.  But it would at least then
+> generate the appropriate error (ENAMETOOLONG rather than ENOENT).
+
+Depends whether anyone cares about bprm->filename.  But I think the
+code should either return an error or allocate enough space.
+
+
 -- 
-2.1.2.1.g5e69ed6
+Andy Lutomirski
+AMA Capital Management, LLC
