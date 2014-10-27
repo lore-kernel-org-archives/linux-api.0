@@ -1,68 +1,257 @@
-From: Sebastian Reichel <sre@kernel.org>
-Subject: Re: [PATCH v2 4/5] power: max77693: Add charger driver for Maxim
- 77693
-Date: Mon, 27 Oct 2014 19:56:57 +0100
-Message-ID: <20141027185656.GB18965@earth.universe>
-References: <1413808489-3524-1-git-send-email-k.kozlowski@samsung.com>
- <1413808489-3524-5-git-send-email-k.kozlowski@samsung.com>
+From: Steve French <smfrench@gmail.com>
+Subject: Re: [PATCH 4/4] vfs: RWF_NONBLOCK flag for preadv2
+Date: Mon, 27 Oct 2014 14:03:14 -0500
+Message-ID: <CAH2r5msUXQn+J3hoU-66Oz5EQpB7f_ObOaw9vnqY8=tgCB4J7g@mail.gmail.com>
+References: <cover.1413923420.git.milosz@adfin.com> <ba8d704a12c7ceffce610fc438a0af11a3422002.1413923420.git.milosz@adfin.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="A6N2fC+uXW/VQSAv"
-Return-path: <linux-pm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1413808489-3524-5-git-send-email-k.kozlowski@samsung.com>
-Sender: linux-pm-owner@vger.kernel.org
-To: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, Samuel Ortiz <sameo@linux.intel.com>, Lee Jones <lee.jones@linaro.org>, linux-api@vger.kernel.org, devicetree@vger.kernel.org, Kyungmin Park <kyungmin.park@samsung.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <ba8d704a12c7ceffce610fc438a0af11a3422002.1413923420.git.milosz@adfin.com>
+Sender: owner-linux-aio@kvack.org
+To: Milosz Tanski <milosz@adfin.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
+What would be required for a network file system to support the
+RWF_NONBLOCK flag?
 
---A6N2fC+uXW/VQSAv
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+SMB3 operations are all async (on the wire) by default but they do
+block on the network send and interim response.
 
-Hi,
+On Tue, Oct 21, 2014 at 3:46 PM, Milosz Tanski <milosz@adfin.com> wrote:
+> Filesystems that generic_file_read_iter will not be allowed to perform
+> non-blocking reads. This only will read data if it's in the page cache and if
+> there is no page error (causing a re-read).
+>
+> Christoph Hellwig wrote the filesystem specify code (cifs, ofs, shm, xfs).
+>
+> Signed-off-by: Milosz Tanski <milosz@adfin.com>
+> ---
+>  fs/cifs/file.c     |  6 ++++++
+>  fs/ocfs2/file.c    |  6 ++++++
+>  fs/pipe.c          |  3 ++-
+>  fs/read_write.c    | 21 ++++++++++++++-------
+>  fs/xfs/xfs_file.c  |  4 ++++
+>  include/linux/fs.h |  3 +++
+>  mm/filemap.c       | 18 ++++++++++++++++++
+>  mm/shmem.c         |  4 ++++
+>  8 files changed, 57 insertions(+), 8 deletions(-)
+>
+> diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+> index 3e4d00a..c485afa 100644
+> --- a/fs/cifs/file.c
+> +++ b/fs/cifs/file.c
+> @@ -3005,6 +3005,9 @@ ssize_t cifs_user_readv(struct kiocb *iocb, struct iov_iter *to)
+>         struct cifs_readdata *rdata, *tmp;
+>         struct list_head rdata_list;
+>
+> +       if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +               return -EAGAIN;
+> +
+>         len = iov_iter_count(to);
+>         if (!len)
+>                 return 0;
+> @@ -3123,6 +3126,9 @@ cifs_strict_readv(struct kiocb *iocb, struct iov_iter *to)
+>             ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
+>                 return generic_file_read_iter(iocb, to);
+>
+> +       if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +               return -EAGAIN;
+> +
+>         /*
+>          * We need to hold the sem to be sure nobody modifies lock list
+>          * with a brlock that prevents reading.
+> diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
+> index 324dc93..bb66ca4 100644
+> --- a/fs/ocfs2/file.c
+> +++ b/fs/ocfs2/file.c
+> @@ -2472,6 +2472,12 @@ static ssize_t ocfs2_file_read_iter(struct kiocb *iocb,
+>                         filp->f_path.dentry->d_name.name,
+>                         to->nr_segs);   /* GRRRRR */
+>
+> +       /*
+> +        * No non-blocking reads for ocfs2 for now.  Might be doable with
+> +        * non-blocking cluster lock helpers.
+> +        */
+> +       if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +               return -EAGAIN;
+>
+>         if (!inode) {
+>                 ret = -EINVAL;
+> diff --git a/fs/pipe.c b/fs/pipe.c
+> index 21981e5..212bf68 100644
+> --- a/fs/pipe.c
+> +++ b/fs/pipe.c
+> @@ -302,7 +302,8 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
+>                          */
+>                         if (ret)
+>                                 break;
+> -                       if (filp->f_flags & O_NONBLOCK) {
+> +                       if ((filp->f_flags & O_NONBLOCK) ||
+> +                           (iocb->ki_rwflags & RWF_NONBLOCK)) {
+>                                 ret = -EAGAIN;
+>                                 break;
+>                         }
+> diff --git a/fs/read_write.c b/fs/read_write.c
+> index e3d8451..955d829 100644
+> --- a/fs/read_write.c
+> +++ b/fs/read_write.c
+> @@ -835,14 +835,19 @@ static ssize_t do_readv_writev(int type, struct file *file,
+>                 file_start_write(file);
+>         }
+>
+> -       if (iter_fn)
+> +       if (iter_fn) {
+>                 ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
+>                                                 pos, iter_fn, flags);
+> -       else if (fnv)
+> -               ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+> -                                               pos, fnv);
+> -       else
+> -               ret = do_loop_readv_writev(file, iov, nr_segs, pos, fn);
+> +       } else {
+> +               if (type == READ && (flags & RWF_NONBLOCK))
+> +                       return -EAGAIN;
+> +
+> +               if (fnv)
+> +                       ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+> +                                                       pos, fnv);
+> +               else
+> +                       ret = do_loop_readv_writev(file, iov, nr_segs, pos, fn);
+> +       }
+>
+>         if (type != READ)
+>                 file_end_write(file);
+> @@ -866,8 +871,10 @@ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
+>                 return -EBADF;
+>         if (!(file->f_mode & FMODE_CAN_READ))
+>                 return -EINVAL;
+> -       if (flags & ~0)
+> +       if (flags & ~RWF_NONBLOCK)
+>                 return -EINVAL;
+> +       if ((file->f_flags & O_DIRECT) && (flags & RWF_NONBLOCK))
+> +               return -EAGAIN;
+>
+>         return do_readv_writev(READ, file, vec, vlen, pos, flags);
+>  }
+> diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+> index eb596b4..b1f6334 100644
+> --- a/fs/xfs/xfs_file.c
+> +++ b/fs/xfs/xfs_file.c
+> @@ -246,6 +246,10 @@ xfs_file_read_iter(
+>
+>         XFS_STATS_INC(xs_read_calls);
+>
+> +       /* XXX: need a non-blocking iolock helper, shouldn't be too hard */
+> +       if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +               return -EAGAIN;
+> +
+>         if (unlikely(file->f_flags & O_DIRECT))
+>                 ioflags |= XFS_IO_ISDIRECT;
+>         if (file->f_mode & FMODE_NOCMTIME)
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 9ed5711..eaebd99 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1459,6 +1459,9 @@ struct block_device_operations;
+>  #define HAVE_COMPAT_IOCTL 1
+>  #define HAVE_UNLOCKED_IOCTL 1
+>
+> +/* These flags are used for the readv/writev syscalls with flags. */
+> +#define RWF_NONBLOCK 0x00000001
+> +
+>  struct iov_iter;
+>
+>  struct file_operations {
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index 45964c8..e73ba7e 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -1493,6 +1493,8 @@ static ssize_t do_generic_file_read(struct file *filp, loff_t *ppos,
+>  find_page:
+>                 page = find_get_page(mapping, index);
+>                 if (!page) {
+> +                       if (flags & RWF_NONBLOCK)
+> +                               goto would_block;
+>                         page_cache_sync_readahead(mapping,
+>                                         ra, filp,
+>                                         index, last_index - index);
+> @@ -1584,6 +1586,11 @@ page_ok:
+>                 continue;
+>
+>  page_not_up_to_date:
+> +               if (flags & RWF_NONBLOCK) {
+> +                       page_cache_release(page);
+> +                       goto would_block;
+> +               }
+> +
+>                 /* Get exclusive access to the page ... */
+>                 error = lock_page_killable(page);
+>                 if (unlikely(error))
+> @@ -1603,6 +1610,12 @@ page_not_up_to_date_locked:
+>                         goto page_ok;
+>                 }
+>
+> +               if (flags & RWF_NONBLOCK) {
+> +                       unlock_page(page);
+> +                       page_cache_release(page);
+> +                       goto would_block;
+> +               }
+> +
+>  readpage:
+>                 /*
+>                  * A previous I/O error may have been due to temporary
+> @@ -1673,6 +1686,8 @@ no_cached_page:
+>                 goto readpage;
+>         }
+>
+> +would_block:
+> +       error = -EAGAIN;
+>  out:
+>         ra->prev_pos = prev_index;
+>         ra->prev_pos <<= PAGE_CACHE_SHIFT;
+> @@ -1706,6 +1721,9 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+>                 size_t count = iov_iter_count(iter);
+>                 loff_t size;
+>
+> +               if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +                       return -EAGAIN;
+> +
+>                 if (!count)
+>                         goto out; /* skip atime */
+>                 size = i_size_read(inode);
+> diff --git a/mm/shmem.c b/mm/shmem.c
+> index cd6fc75..5c30f04 100644
+> --- a/mm/shmem.c
+> +++ b/mm/shmem.c
+> @@ -1531,6 +1531,10 @@ static ssize_t shmem_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
+>         ssize_t retval = 0;
+>         loff_t *ppos = &iocb->ki_pos;
+>
+> +       /* XXX: should be easily supportable */
+> +       if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +               return -EAGAIN;
+> +
+>         /*
+>          * Might this read be for a stacking filesystem?  Then when reading
+>          * holes of a sparse file, we actually need to allocate those pages,
+> --
+> 1.9.1
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-On Mon, Oct 20, 2014 at 02:34:48PM +0200, Krzysztof Kozlowski wrote:
-> Add new driver for Maxim 77693 switch-mode charger (part of max77693
-> MFD driver) providing power supply class information to userspace.
->=20
-> The charger has +20V tolerant input. Current input can be set from 0 to
-> 2.58 A. The charger can deliver up to 2.1 A to the battery or 3.5 A to
-> the system (when supplying additional current from battery to system).
->=20
-> The driver is configured through DTS (battery and system related
-> settings) and sysfs entries (timers and top-off charging threshold).
->=20
-> Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
 
-I guess it makes sense to queue this together with the mfd parts.
 
-Acked-By: Sebastian Reichel <sre@kernel.org>
+-- 
+Thanks,
 
--- Sebastian
+Steve
 
---A6N2fC+uXW/VQSAv
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBCgAGBQJUTpV4AAoJENju1/PIO/qary4P/iWSe9y80CmfQzeVxEYgipwf
-GFdNMLnSaWeL7lLeDFS823GL+3HWVzoweXmXmmXwgTKS/yTlOYnOllj3gmloyVoL
-pMs7x9tT9lfUg58VyEjBbtuSmvoJevzpCMp7opdEaFdt8WicItcFJU3kvqEOliAs
-ZjLBqzhpnDkWeUfDlVG8pSNFqJY39VSH6ctBoGoGFaaYXP/m6c/DvrlHPv8+bgXP
-Jv5sChSjfOfEtMyA1lOVFLl6ihUgApLicwWyXWx/bRwnFPRK/rO7pVObOLZRFHj0
-y8KrcB8QWWVmkI/a/IayRWN1jaRAXrkcbFcqKQhNWnB36cMeq7DEyGpOqeUnO5z/
-rU8oPVKXfhHKlN3/HfTRx1+xPCq8eNGPzbMG/v5jOOeUYp3DF27Cxpl64Nx85MHz
-sNpTWDpyp3kNk3Mymkm0Rnu5i1eQFnBaeD0ZLlgNBA7/LAlrzgUmMwf3XCilHRv1
-KtVVUR9llOHjjN8MHgKdHApG+DSzEWpYjyPL2K1hBHSLAjjD+XDDeV7XDGAM90m0
-Yqx2DGba505jw0aqv6ueOz/HktPTgn3rH+HRrKpeg5G7gJGq4o7YlQ5ON0+yX+Jq
-3pL3qh+BGbVb7cAgexEM+iDfNv6vgAwv6E1fJWFULNohOMYXHXS+jRfZKMcRdAq/
-mqJSGoYw4q8w4ibO/2wp
-=t70r
------END PGP SIGNATURE-----
-
---A6N2fC+uXW/VQSAv--
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
