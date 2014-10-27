@@ -1,63 +1,55 @@
-From: David Drysdale <drysdale@google.com>
-Subject: Re: [PATCHv5 1/3] syscalls,x86: implement execveat() system call
-Date: Mon, 27 Oct 2014 18:03:43 +0000
-Message-ID: <CAHse=S-x6NKEn9EGFos6bS=asK-1mWCr0r9aji2a97_fgxU+Sg@mail.gmail.com>
-References: <1413978269-17274-1-git-send-email-drysdale@google.com>
- <1413978269-17274-2-git-send-email-drysdale@google.com> <CALCETrWbj=BTDyKqtbSKteANj3J3UFZnrvWv9DMosCoEZaSoeA@mail.gmail.com>
+From: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH V4] kernel, add bug_on_warn
+Date: Mon, 27 Oct 2014 14:05:57 -0400
+Message-ID: <544E8985.50203@akamai.com>
+References: <1414155207-29839-1-git-send-email-prarit@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWbj=BTDyKqtbSKteANj3J3UFZnrvWv9DMosCoEZaSoeA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1414155207-29839-1-git-send-email-prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 22, 2014 at 7:44 PM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Wed, Oct 22, 2014 at 4:44 AM, David Drysdale <drysdale@google.com> wrote:
->> Add a new system execveat(2) syscall. execveat() is to execve() as
->> openat() is to open(): it takes a file descriptor that refers to a
->> directory, and resolves the filename relative to that.
->>
+Hi Prarit,
+
+On 10/24/2014 08:53 AM, Prarit Bhargava wrote:
+> There have been several times where I have had to rebuild a kernel to
+> cause a panic when hitting a WARN() in the code in order to get a crash
+> dump from a system.  Sometimes this is easy to do, other times (such as
+> in the case of a remote admin) it is not trivial to send new images to the
+> user.panic_on_stackoverflow
 >
->>         bprm->file = file;
->> -       bprm->filename = bprm->interp = filename->name;
->> +       if (fd == AT_FDCWD || filename->name[0] == '/') {
->> +               bprm->filename = filename->name;
->> +       } else {
->> +               /*
->> +                * Build a pathname that reflects how we got to the file,
->> +                * either "/dev/fd/<fd>" (for an empty filename) or
->> +                * "/dev/fd/<fd>/<filename>".
->> +                */
->> +               pathbuf = kmalloc(PATH_MAX, GFP_TEMPORARY);
->> +               if (!pathbuf) {
->> +                       retval = -ENOMEM;
->> +                       goto out_unmark;
->> +               }
->> +               bprm->filename = pathbuf;
->> +               if (filename->name[0] == '\0')
->> +                       sprintf(pathbuf, "/dev/fd/%d", fd);
+> A much easier method would be a switch to change the WARN() over to a
+> BUG().  This makes debugging easier in that I can now test the actual
+> image the WARN() was seen on and I do not have to engage in remote
+> debugging.
 >
-> If the fd is O_CLOEXEC, then this will result in a confused child
-> process.  Should we fail exec attempts like that for non-static
-> programs?  (E.g. set filename to "" or something and fix up the binfmt
-> drivers to handle that?)
-
-Isn't it just scripts that get confused here (as normal executables don't
-get to see brpm->filename)?
-
-Given that we don't know which we have at this point, I'd suggest
-carrying on regardless.  Or we could fall back to use the previous
-best-effort d_path() code for O_CLOEXEC fds.  Thoughts?
-
->> +               else
->> +                       snprintf(pathbuf, PATH_MAX,
->> +                                "/dev/fd/%d/%s", fd, filename->name);
+> This patch adds a bug_on_warn kernel parameter and
+> /proc/sys/kernel/bug_on_warn calls BUG() in the warn_slowpath_common()
+> path.  The function will still print out the location of the warning.
 >
-> Does this need to handle the case where the result exceeds PATH_MAX?
+> An example of the bug_on_warn output:
+>
+> The first line below is from the WARN_ON() to output the WARN_ON()'s location.
+> After that the new BUG() call is displayed.
+>
+>  WARNING: CPU: 27 PID: 3204 at
+> /home/rhel7/redhat/debug/dummy-module/dummy-module.c:25 init_dummy+0x28/0x30
+> [dummy_module]()
+>  bug_on_warn set, calling BUG()...
+>  ------------[ cut here ]------------
+>  kernel BUG at kernel/panic.c:434!
 
-I guess we could kmalloc(strlen(filename->name) + 19) to avoid the
-possibility of failure, but that just defers the inevitable -- the interpreter
-won't be able to open the script file anyway.  But it would at least then
-generate the appropriate error (ENAMETOOLONG rather than ENOENT).
+Seems reasonable-I'm wondering why you just don't call panic() in this
+case. The BUG() call at line '434' doesn't at anything since its just being
+called from panic.c.
+
+So something like 'panic_on_warn' would seem to be more appropriate
+in keeping with things like 'panic_on_oops' or 'panic_on_stackoverflow'.
+
+Thanks,
+
+-Jason
