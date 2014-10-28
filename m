@@ -1,47 +1,38 @@
-From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2 4/5] power: max77693: Add charger driver for Maxim 77693
-Date: Tue, 28 Oct 2014 10:16:22 +0100
-Message-ID: <1414487782.24949.23.camel@AMDC1943>
-References: <1413808489-3524-1-git-send-email-k.kozlowski@samsung.com>
- <1413808489-3524-5-git-send-email-k.kozlowski@samsung.com>
- <20141027185656.GB18965@earth.universe>
+From: Andi Kleen <ak@linux.intel.com>
+Subject: Re: [PATCH V4] kernel, add bug_on_warn
+Date: Tue, 28 Oct 2014 05:16:36 -0700
+Message-ID: <20141028121636.GC3274@tassilo.jf.intel.com>
+References: <1414155207-29839-1-git-send-email-prarit@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <20141027185656.GB18965-SfvFxonMDyemK9LvCR3Hrw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1414155207-29839-1-git-send-email-prarit@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Prarit Bhargava <prarit@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "H. Peter Anvin" <hpa@zytor.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Fabian Frederick <fabf@skynet.be>, vgoyal@redhat.com, isimatu.yasuaki@jp.fujitsu.com, linux-doc@vger.kernel.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, jason.wessel@windriver.com
 List-Id: linux-api@vger.kernel.org
 
-
-On pon, 2014-10-27 at 19:56 +0100, Sebastian Reichel wrote:
-> Hi,
+On Fri, Oct 24, 2014 at 08:53:27AM -0400, Prarit Bhargava wrote:
+> There have been several times where I have had to rebuild a kernel to
+> cause a panic when hitting a WARN() in the code in order to get a crash
+> dump from a system.  Sometimes this is easy to do, other times (such as
+> in the case of a remote admin) it is not trivial to send new images to the
+> user.
 > 
-> On Mon, Oct 20, 2014 at 02:34:48PM +0200, Krzysztof Kozlowski wrote:
-> > Add new driver for Maxim 77693 switch-mode charger (part of max77693
-> > MFD driver) providing power supply class information to userspace.
-> > 
-> > The charger has +20V tolerant input. Current input can be set from 0 to
-> > 2.58 A. The charger can deliver up to 2.1 A to the battery or 3.5 A to
-> > the system (when supplying additional current from battery to system).
-> > 
-> > The driver is configured through DTS (battery and system related
-> > settings) and sysfs entries (timers and top-off charging threshold).
-> > 
-> > Signed-off-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-> 
-> I guess it makes sense to queue this together with the mfd parts.
-> 
-> Acked-By: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> A much easier method would be a switch to change the WARN() over to a
+> BUG().  This makes debugging easier in that I can now test the actual
+> image the WARN() was seen on and I do not have to engage in remote
+> debugging.
 
-Thank you. Could you also look at documentation change, patch 5/5:
-Documentation: charger: max77693: Document exported sysfs entry
-https://lkml.org/lkml/2014/10/20/232
+IMHO this would be better and far more generically done with kdb. 
+You would need two things:
 
-I think that one also needs your ack as this is power supply related
-ABI.
+- Extend the break point command to run another command on a break point.
+- Add a command line (or possibly /proc) option to execute some kdb commands at
+kernel boot.
 
-Best regards,
-Krzysztof
+Then just set a break point on the warn function and execute magic sysrq c
+from kdb.
+
+-Andi
