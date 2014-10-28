@@ -1,85 +1,298 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [v5 5/5] Adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface
- support for ext4
-Date: Tue, 28 Oct 2014 09:40:58 +1100
-Message-ID: <20141027224058.GB16186@dastard>
-References: <1414300973-1118-1-git-send-email-lixi@ddn.com>
- <1414300973-1118-6-git-send-email-lixi@ddn.com>
- <20141026215626.GC4317@dastard>
- <CAPTn0cAAbfnqYgnCEESZeY8XaK=DSGB673Srn_TVYxETG89_OQ@mail.gmail.com>
+From: Yasuaki Ishimatsu <isimatu.yasuaki@jp.fujitsu.com>
+Subject: Re: [PATCH V4] kernel, add bug_on_warn
+Date: Tue, 28 Oct 2014 09:00:00 +0900
+Message-ID: <544EDC80.9060402@jp.fujitsu.com>
+References: <1414155207-29839-1-git-send-email-prarit@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAPTn0cAAbfnqYgnCEESZeY8XaK=DSGB673Srn_TVYxETG89_OQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset="ISO-2022-JP"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1414155207-29839-1-git-send-email-prarit@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Prarit Bhargava <prarit@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Fabian Frederick <fabf@skynet.be>, vgoyal@redhat.com, linux-doc@vger.kernel.org, kexec@lists.infradead.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 27, 2014 at 09:09:19AM +0800, Li Xi wrote:
-> On Mon, Oct 27, 2014 at 5:56 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> > On Sun, Oct 26, 2014 at 01:22:53PM +0800, Li Xi wrote:
-> >> This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
-> >> support for ext4. The interface is kept consistent with
-> >> XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
-> >
-> > What you haven't mentioned is that you also changed the fsxattr
-> > interface structure to add functionality and new behaviours that
-> > isn't supported by XFS or existing applications that use the
-> > interface.
-> >
-> > There is no need to modify the interface *at all* for ext4 to use
-> > it. Fields that ext4 does not use can be zeroed on getxattr, and
-> > ignored on setxattr - you do not need to add new fields to say what
-> > fields are valid.
-> Sorry, I don't want to change the interfaces either. But, the problem
-> is that zero might be valid value for some fields. How can we
-> distinguish an unsupported attribute and an attribute whose value
-> is zero?
+(2014/10/24 21:53), Prarit Bhargava wrote:
+> There have been several times where I have had to rebuild a kernel to
+> cause a panic when hitting a WARN() in the code in order to get a crash
+> dump from a system.  Sometimes this is easy to do, other times (such as
+> in the case of a remote admin) it is not trivial to send new images to the
+> user.
+> 
+> A much easier method would be a switch to change the WARN() over to a
+> BUG().  This makes debugging easier in that I can now test the actual
+> image the WARN() was seen on and I do not have to engage in remote
+> debugging.
+> 
+> This patch adds a bug_on_warn kernel parameter and
+> /proc/sys/kernel/bug_on_warn calls BUG() in the warn_slowpath_common()
+> path.  The function will still print out the location of the warning.
+> 
+> An example of the bug_on_warn output:
+> 
+> The first line below is from the WARN_ON() to output the WARN_ON()'s location.
+> After that the new BUG() call is displayed.
+> 
+>   WARNING: CPU: 27 PID: 3204 at
+> /home/rhel7/redhat/debug/dummy-module/dummy-module.c:25 init_dummy+0x28/0x30
+> [dummy_module]()
+>   bug_on_warn set, calling BUG()...
+>   ------------[ cut here ]------------
+>   kernel BUG at kernel/panic.c:434!
+>   invalid opcode: 0000 [#1] SMP
+>   Modules linked in: dummy_module(OE+) sg nfsv3 rpcsec_gss_krb5 nfsv4
+> dns_resolver nfs fscache cfg80211 rfkill x86_pkg_temp_thermal intel_powerclamp
+> coretemp kvm_intel kvm crct10dif_pclmul crc32_pclmul crc32c_intel
+> ghash_clmulni_intel igb iTCO_wdt aesni_intel iTCO_vendor_support lrw gf128mul
+> sb_edac ptp edac_core glue_helper lpc_ich ioatdma pcspkr ablk_helper pps_core
+> i2c_i801 mfd_core cryptd dca shpchp ipmi_si wmi ipmi_msghandler acpi_cpufreq
+> nfsd auth_rpcgss nfs_acl lockd grace sunrpc xfs libcrc32c sr_mod cdrom sd_mod
+> mgag200 syscopyarea sysfillrect sysimgblt i2c_algo_bit drm_kms_helper isci ttm
+> drm libsas ahci libahci scsi_transport_sas libata i2c_core dm_mirror
+> dm_region_hash dm_log dm_mod
+>   CPU: 27 PID: 3204 Comm: insmod Tainted: G           OE  3.17.0+ #19
+>   Hardware name: Intel Corporation S2600CP/S2600CP, BIOS
+> RMLSDP.86I.00.29.D696.1311111329 11/11/2013
+>   task: ffff880034e75160 ti: ffff8807fc5ac000 task.ti: ffff8807fc5ac000
+>   RIP: 0010:[<ffffffff81076b81>]  [<ffffffff81076b81>] warn_slowpath_common+0xc1/0xd0
+>   RSP: 0018:ffff8807fc5afc68  EFLAGS: 00010246
+>   RAX: 0000000000000021 RBX: ffff8807fc5afcb0 RCX: 0000000000000000
+>   RDX: 0000000000000000 RSI: ffff88081efee5f8 RDI: ffff88081efee5f8
+>   RBP: ffff8807fc5afc98 R08: 0000000000000096 R09: 0000000000000000
+>   R10: 0000000000000711 R11: ffff8807fc5af93e R12: ffffffffa0424070
+>   R13: 0000000000000019 R14: ffffffffa0423068 R15: 0000000000000009
+>   FS:  00007f2d4b034740(0000) GS:ffff88081efe0000(0000) knlGS:0000000000000000
+>   CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+>   CR2: 00007f2d4a99f3c0 CR3: 00000007fd88b000 CR4: 00000000001407e0
+>   Stack:
+>    ffff8807fc5afcb8 ffffffff8199f020 ffff88080e396160 0000000000000000
+>    ffffffffa0423040 ffffffffa0425000 ffff8807fc5afd08 ffffffff81076be5
+>    0000000000000008 ffffffffa0424053 ffff880700000018 ffff8807fc5afd18
+>   Call Trace:
+>    [<ffffffffa0423040>] ? dummy_greetings+0x40/0x40 [dummy_module]
+>    [<ffffffff81076be5>] warn_slowpath_fmt+0x55/0x70
+>    [<ffffffffa0423068>] init_dummy+0x28/0x30 [dummy_module]
+>    [<ffffffff81002144>] do_one_initcall+0xd4/0x210
+>    [<ffffffff811b52c2>] ? __vunmap+0xc2/0x110
+>    [<ffffffff810f8889>] load_module+0x16a9/0x1b30
+>    [<ffffffff810f3d30>] ? store_uevent+0x70/0x70
+>    [<ffffffff810f49b9>] ? copy_module_from_fd.isra.44+0x129/0x180
+>    [<ffffffff810f8ec6>] SyS_finit_module+0xa6/0xd0
+>    [<ffffffff8166ce29>] system_call_fastpath+0x12/0x17
+>   Code: c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 48 c7 c7 20 42 8a 81 31 c0 e8 fc
+> 80 5e 00 eb 80 48 c7 c7 78 42 8a 81 31 c0 e8 ec 80 5e 00 <0f> 0b 66 66 66 66 2e
+> 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 55
+>   RIP  [<ffffffff81076b81>] warn_slowpath_common+0xc1/0xd0
+>    RSP <ffff8807fc5afc68>
+>   ---[ end trace 428218934a12088b ]---
+> 
+> Successfully tested by me.
+> 
+> Cc: Jonathan Corbet <corbet@lwn.net>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Rusty Russell <rusty@rustcorp.com.au>
+> Cc: "H. Peter Anvin" <hpa@zytor.com>
+> Cc: Andi Kleen <ak@linux.intel.com>
+> Cc: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+> Cc: Fabian Frederick <fabf@skynet.be>
+> Cc: vgoyal@redhat.com
+> Cc: isimatu.yasuaki@jp.fujitsu.com
+> Cc: linux-doc@vger.kernel.org
+> Cc: kexec@lists.infradead.org
+> Cc: linux-api@vger.kernel.org
+> Signed-off-by: Prarit Bhargava <prarit@redhat.com>
+> 
+> [v2]: add /proc/sys/kernel/bug_on_warn, additional documentation, modify
+>        !slowpath cases
+> [v3]: use proc_dointvec_minmax() in sysctl handler
+> [v4]: remove !slowpath cases, and add __read_mostly
+> ---
 
-You don't. Userspace has no concept of what parts of the struct
-fsxattr are valid or not, nor what are valid values the filesystem
-will accept or reject.
+Looks good to me.
+Reviewed-by: Yasuaki Ishimatsu <isimatu.yasuaki@jp.fujitsu.com>
 
-> It is common case the only part of the fields are supported.
-> So, for example, if we don't have valid flags, how can use space
-> application tell kernel which attributes should be skipped when it
-> tries to set only a part of atrributes?
+Thanks,
+Yasuaki Ishimatsu
 
-It *doesn't*. Userspace requires the kernel to initialise the struct
-fsxattr before it tries to modify anything, just like
-fcntl(F_[GS]ETFL) and other similar "file flag change" syscall APIs.
 
-IOWs, you have to initialise the struct fsxattr by calling
-FS_IOC_FSGETXATTR before you call FS_IOC_FSSETXATTR. The
-intialisation sets all the fields to the current (correct) values,
-and hence when the set call is made all the fields then have the
-same/correct values in them except for what the application changed.
+>   Documentation/kdump/kdump.txt       |    7 +++++++
+>   Documentation/kernel-parameters.txt |    3 +++
+>   Documentation/sysctl/kernel.txt     |   12 ++++++++++++
+>   include/linux/kernel.h              |    1 +
+>   include/uapi/linux/sysctl.h         |    1 +
+>   kernel/panic.c                      |   21 ++++++++++++++++++++-
+>   kernel/sysctl.c                     |    9 +++++++++
+>   kernel/sysctl_binary.c              |    1 +
+>   8 files changed, 54 insertions(+), 1 deletion(-)
+> 
+> diff --git a/Documentation/kdump/kdump.txt b/Documentation/kdump/kdump.txt
+> index 6c0b9f2..a04ed72 100644
+> --- a/Documentation/kdump/kdump.txt
+> +++ b/Documentation/kdump/kdump.txt
+> @@ -471,6 +471,13 @@ format. Crash is available on Dave Anderson's site at the following URL:
+>   
+>      http://people.redhat.com/~anderson/
+>   
+> +Trigger Kdump on WARN()
+> +=======================
+> +
+> +The kernel parameter, bug_on_warn, calls BUG() in all WARN() paths.  This
+> +will cause a kdump to occur at the BUG() call.  In cases where a user
+> +wants to specify this during runtime, /proc/sys/kernel/bug_on_warn can be
+> +set to 1 to achieve the same behaviour.
+>   
+>   Contact
+>   =======
+> diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
+> index 74339c5..aa1d319 100644
+> --- a/Documentation/kernel-parameters.txt
+> +++ b/Documentation/kernel-parameters.txt
+> @@ -553,6 +553,9 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
+>   	bttv.pll=	See Documentation/video4linux/bttv/Insmod-options
+>   	bttv.tuner=
+>   
+> +	bug_on_warn	BUG() instead of WARN().  Useful to cause kdump
+> +			on a WARN().
+> +
+>   	bulk_remove=off	[PPC]  This parameter disables the use of the pSeries
+>   			firmware feature for flushing multiple hpte entries
+>   			at a time.
+> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
+> index 57baff5..dcadcdc 100644
+> --- a/Documentation/sysctl/kernel.txt
+> +++ b/Documentation/sysctl/kernel.txt
+> @@ -23,6 +23,7 @@ show up in /proc/sys/kernel:
+>   - auto_msgmni
+>   - bootloader_type	     [ X86 only ]
+>   - bootloader_version	     [ X86 only ]
+> +- bug_on_warn
+>   - callhome		     [ S390 only ]
+>   - cap_last_cap
+>   - core_pattern
+> @@ -152,6 +153,17 @@ Documentation/x86/boot.txt for additional information.
+>   
+>   ==============================================================
+>   
+> +bug_on_warn:
+> +
+> +Calls BUG() in the WARN() path when set to 1.  This is useful to avoid
+> +a kernel rebuild when attempting to kdump at the location of a WARN().
+> +
+> +0: only WARN(), default behaviour.
+> +
+> +1: call BUG() after printing out WARN() location.
+> +
+> +==============================================================
+> +
+>   callhome:
+>   
+>   Controls the kernel's callhome behavior in case of a kernel panic.
+> diff --git a/include/linux/kernel.h b/include/linux/kernel.h
+> index 3d770f55..fc28bff 100644
+> --- a/include/linux/kernel.h
+> +++ b/include/linux/kernel.h
+> @@ -423,6 +423,7 @@ extern int panic_on_oops;
+>   extern int panic_on_unrecovered_nmi;
+>   extern int panic_on_io_nmi;
+>   extern int sysctl_panic_on_stackoverflow;
+> +extern int bug_on_warn;
+>   /*
+>    * Only to be used by arch init code. If the user over-wrote the default
+>    * CONFIG_PANIC_TIMEOUT, honor it.
+> diff --git a/include/uapi/linux/sysctl.h b/include/uapi/linux/sysctl.h
+> index 43aaba1..2ba0a58 100644
+> --- a/include/uapi/linux/sysctl.h
+> +++ b/include/uapi/linux/sysctl.h
+> @@ -153,6 +153,7 @@ enum
+>   	KERN_MAX_LOCK_DEPTH=74, /* int: rtmutex's maximum lock depth */
+>   	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
+>   	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
+> +	KERN_BUG_ON_WARN=77, /* int: call BUG() in WARN() functions */
+>   };
+>   
+>   
+> diff --git a/kernel/panic.c b/kernel/panic.c
+> index d09dc5c..740d9ff 100644
+> --- a/kernel/panic.c
+> +++ b/kernel/panic.c
+> @@ -33,6 +33,7 @@ static int pause_on_oops;
+>   static int pause_on_oops_flag;
+>   static DEFINE_SPINLOCK(pause_on_oops_lock);
+>   static bool crash_kexec_post_notifiers;
+> +int bug_on_warn __read_mostly;
+>   
+>   int panic_timeout = CONFIG_PANIC_TIMEOUT;
+>   EXPORT_SYMBOL_GPL(panic_timeout);
+> @@ -420,13 +421,24 @@ static void warn_slowpath_common(const char *file, int line, void *caller,
+>   {
+>   	disable_trace_on_warning();
+>   
+> -	pr_warn("------------[ cut here ]------------\n");
+> +	if (!bug_on_warn)
+> +		pr_warn("------------[ cut here ]------------\n");
+>   	pr_warn("WARNING: CPU: %d PID: %d at %s:%d %pS()\n",
+>   		raw_smp_processor_id(), current->pid, file, line, caller);
+>   
+>   	if (args)
+>   		vprintk(args->fmt, args->args);
+>   
+> +	if (bug_on_warn) {
+> +		pr_warn("bug_on_warn set, calling BUG()...\n");
+> +		/*
+> +		 * A flood of WARN()s may occur.  Prevent further WARN()s
+> +		 * from panicking the system.
+> +		 */
+> +		bug_on_warn = 0;
+> +		BUG();
+> +	}
+> +
+>   	print_modules();
+>   	dump_stack();
+>   	print_oops_end_marker();
+> @@ -501,3 +513,10 @@ static int __init oops_setup(char *s)
+>   	return 0;
+>   }
+>   early_param("oops", oops_setup);
+> +
+> +static int __init bug_on_warn_setup(char *s)
+> +{
+> +	bug_on_warn = 1;
+> +	return 0;
+> +}
+> +early_param("bug_on_warn", bug_on_warn_setup);
+> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+> index 4aada6d..818cd31 100644
+> --- a/kernel/sysctl.c
+> +++ b/kernel/sysctl.c
+> @@ -1103,6 +1103,15 @@ static struct ctl_table kern_table[] = {
+>   		.proc_handler	= proc_dointvec,
+>   	},
+>   #endif
+> +	{
+> +		.procname	= "bug_on_warn",
+> +		.data		= &bug_on_warn,
+> +		.maxlen		= sizeof(int),
+> +		.mode		= 0644,
+> +		.proc_handler	= proc_dointvec_minmax,
+> +		.extra1		= &zero,
+> +		.extra2		= &one,
+> +	},
+>   	{ }
+>   };
+>   
+> diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
+> index 9a4f750..28376bf 100644
+> --- a/kernel/sysctl_binary.c
+> +++ b/kernel/sysctl_binary.c
+> @@ -137,6 +137,7 @@ static const struct bin_table bin_kern_table[] = {
+>   	{ CTL_INT,	KERN_COMPAT_LOG,		"compat-log" },
+>   	{ CTL_INT,	KERN_MAX_LOCK_DEPTH,		"max_lock_depth" },
+>   	{ CTL_INT,	KERN_PANIC_ON_NMI,		"panic_on_unrecovered_nmi" },
+> +	{ CTL_INT,	KERN_BUG_ON_WARN,		"bug_on_warn" },
+>   	{}
+>   };
+>   
+> 
 
-E.g. this code from xfs_quota to clear the project ID on a given
-file or directory:
 
-	if ((fd = open(path, O_RDONLY|O_NOCTTY)) == -1) {
-		// error handling ....
-        } else if (xfsctl(path, fd, XFS_IOC_FSGETXATTR, &fsx) < 0) {
-		// error handling ....
-        }
-
-        fsx.fsx_projid = 0;
-        fsx.fsx_xflags &= ~XFS_XFLAG_PROJINHERIT;
-        if (xfsctl(path, fd, XFS_IOC_FSSETXATTR, &fsx) < 0) {
-		// error handling ....
-        }
-        close(fd);
-
-This ensures that *only* the project ID and the specific project ID
-inheritance flag is cleared, and none of the other inode flags or
-state are modified....
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
