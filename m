@@ -1,43 +1,32 @@
-From: Vivek Goyal <vgoyal@redhat.com>
+From: Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Subject: Re: [PATCH V4] kernel, add bug_on_warn
-Date: Tue, 28 Oct 2014 08:55:34 -0400
-Message-ID: <20141028125534.GC10632@redhat.com>
+Date: Tue, 28 Oct 2014 05:56:30 -0700
+Message-ID: <20141028125630.GF3274@tassilo.jf.intel.com>
 References: <1414155207-29839-1-git-send-email-prarit@redhat.com>
  <20141028121636.GC3274@tassilo.jf.intel.com>
  <544F8A78.9070008@redhat.com>
  <20141028122900.GA10632@redhat.com>
  <20141028124425.GD3274@tassilo.jf.intel.com>
+ <544F90B1.1070102@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20141028124425.GD3274@tassilo.jf.intel.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Andi Kleen <ak@linux.intel.com>
-Cc: Prarit Bhargava <prarit@redhat.com>, linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "H. Peter Anvin" <hpa@zytor.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Fabian Frederick <fabf@skynet.be>, isimatu.yasuaki@jp.fujitsu.com, linux-doc@vger.kernel.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, jason.wessel@windriver.com
+In-Reply-To: <544F90B1.1070102-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jason.wessel-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 28, 2014 at 05:44:25AM -0700, Andi Kleen wrote:
-> > > I suppose ... but that would mean I would have to explain to an end user the
-> > > elaborate process of enabling kdb, inserting a break point, etc.  The whole
-> > > purpose of this is to let an end user panic on WARN() easily.
-> > > 
-> > > Asking an end user to enable kdb is magnitudes worse than asking them to
-> > > recompile a kernel.
+> > If you have a command line option to execute kdb commands you still
+> > would only have a command line option, just a slightly longer one.
 > > 
-> > Agreed. Asking a customer to setup and run kdb and put breakpoints is much
-> > more pain than simply asking to reboot kernel with a command line option.
+> > kdb="on, bp warn_slowpath_common sr c, go" 
 > 
-> If you have a command line option to execute kdb commands you still
-> would only have a command line option, just a slightly longer one.
-> 
-> kdb="on, bp warn_slowpath_common sr c, go" 
+> KDB is not on all kernels.  This would require me to go to great lengths to
 
-So does it already work or proposal is to make something like this work
-with kdb?
+Repeating incorrect statements doesn't suddenly make them correct.
 
-What about the case of enabling it post boot and using a /sys file for 
-that.
+Assuming KDB is compiled in the only setup needed would be the line above.
 
-Thanks
-Vivek
+-Andi
