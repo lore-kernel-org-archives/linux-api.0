@@ -1,55 +1,46 @@
-From: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V4] kernel, add bug_on_warn
-Date: Tue, 28 Oct 2014 09:19:00 -0400
-Message-ID: <544F97C4.8000203@redhat.com>
-References: <1414155207-29839-1-git-send-email-prarit@redhat.com>
- <20141028121636.GC3274@tassilo.jf.intel.com> <544F8A78.9070008@redhat.com>
- <20141028122900.GA10632@redhat.com>
- <20141028124425.GD3274@tassilo.jf.intel.com> <544F90B1.1070102@redhat.com>
- <20141028125630.GF3274@tassilo.jf.intel.com>
+From: Jason Baron <jbaron@akamai.com>
+Subject: Re: [PATCH V5] kernel, add panic_on_warn
+Date: Tue, 28 Oct 2014 10:56:24 -0400
+Message-ID: <544FAE98.6080901@akamai.com>
+References: <1414499499-21952-1-git-send-email-prarit@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-In-Reply-To: <20141028125630.GF3274-KWJ+5VKanrL29G5dvP0v1laTQe2KTcn/@public.gmane.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/kexec>,
- <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/kexec/>
-List-Post: <mailto:kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-List-Help: <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/kexec>,
- <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
-Sender: "kexec" <kexec-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-Errors-To: kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-To: Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, jason.wessel-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1414499499-21952-1-git-send-email-prarit@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Prarit Bhargava <prarit@redhat.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Fabian Frederick <fabf@skynet.be>, "vgoyal@redhat.com" <vgoyal@redhat.com>, "isimatu.yasuaki@jp.fujitsu.com" <isimatu.yasuaki@jp.fujitsu.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "kexec@lists.infradead.org" <kexec@lists.infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 10/28/2014 08:56 AM, Andi Kleen wrote:
->>> If you have a command line option to execute kdb commands you still
->>> would only have a command line option, just a slightly longer one.
->>>
->>> kdb="on, bp warn_slowpath_common sr c, go" 
->>
->> KDB is not on all kernels.  This would require me to go to great lengths to
+On 10/28/2014 08:31 AM, Prarit Bhargava wrote:
+> There have been several times where I have had to rebuild a kernel to
+> cause a panic when hitting a WARN() in the code in order to get a crash
+> dump from a system.  Sometimes this is easy to do, other times (such as
+> in the case of a remote admin) it is not trivial to send new images to the
+> user.
 > 
-> Repeating incorrect statements doesn't suddenly make them correct.
 
-It does when you're introducing unnecessary complexity here Andi.  You're not
-listening to the original statement: I do not want to provide a modified kernel
-to an end user for this simple situation anymore.
+....
 
+> diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
+> index 9a4f750..c62d421 100644
+> --- a/kernel/sysctl_binary.c
+> +++ b/kernel/sysctl_binary.c
+> @@ -137,6 +137,7 @@ static const struct bin_table bin_kern_table[] = {
+>         { CTL_INT,      KERN_COMPAT_LOG,                "compat-log" },
+>         { CTL_INT,      KERN_MAX_LOCK_DEPTH,            "max_lock_depth" },
+>         { CTL_INT,      KERN_PANIC_ON_NMI,              "panic_on_unrecovered_nmi" },
+> +       { CTL_INT,      KERN_BUG_ON_WARN,               "panic_on_warn" },
+>         {}
+>  };
 > 
-> Assuming KDB is compiled in the only setup needed would be the line above.
 
-That's a HUGE assumption.  It isn't and I'm still stuck in the same mess of
-explaining how to recompile a kernel and/or providing a modified kernel to an
-end user.  That isn't a good solution.
 
-P.
+I think you meant KERN_PANIC_ON_WARN here.
 
-> 
-> -Andi
-> 
+Thanks,
+
+-Jason
+
+
