@@ -1,78 +1,34 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
 Subject: Re: [PATCH 00/12] Add kdbus implementation
-Date: Wed, 29 Oct 2014 15:36:44 -0700
-Message-ID: <CALCETrUXPyaz5czA6dPLV7K2rDeVQoJ46oKavK-bb6LCtWE_iQ@mail.gmail.com>
+Date: Thu, 30 Oct 2014 00:00:16 +0100 (CET)
+Message-ID: <alpine.LRH.2.00.1410292354480.11562@twin.jikos.cz>
 References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
- <CALCETrUBegZ4F1sKq3LxUgANX3=syYOrqOp9=F--g9pkVHHgUA@mail.gmail.com>
- <20141029222531.GA8129@kroah.com> <CALCETrX6vf7cKy=XDhDtn9hn1W930MRxBa=pk93RnyuZ-EaNyw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrX6vf7cKy=XDhDtn9hn1W930MRxBa=pk93RnyuZ-EaNyw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, John Stultz <john.stultz@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Tejun Heo <tj@kernel.org>, Marcel Holtmann <marcel@holtmann.org>, Ryan Lortie <desrt@desrt.ca>, Bastien Nocera <hadess@hadess.net>, David Herrmann <dh.herrmann@gmail.com>, Djalal Harouni <tixxdz@opendz.org>, simon.mcvittie@collabora.co.uk, daniel@zonque.org, alban.crequy@collabora.co.uk, javier.martinez@collabora.co.uk, Tom Gundersen <teg@jklm.no>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1414620056-6675-1-git-send-email-gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 29, 2014 at 3:28 PM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Wed, Oct 29, 2014 at 3:25 PM, Greg Kroah-Hartman
-> <gregkh@linuxfoundation.org> wrote:
->> On Wed, Oct 29, 2014 at 03:19:21PM -0700, Andy Lutomirski wrote:
->>> On Wed, Oct 29, 2014 at 3:00 PM, Greg Kroah-Hartman
->>> <gregkh@linuxfoundation.org> wrote:
->>> >  * Attachment of trustable metadata to each message on demand, such as
->>> >    the sending peer's timestamp, creds, auxgroups, comm, exe, cmdline,
->>> >    cgroup path, capabilities, security label, audit information, etc,
->>> >    each taken at the time the sender issued the ioctl to send the
->>> >    message. Which of those are actually recorded and attached is
->>> >    controlled by the receiving peer.
->>>
->>> I think that each piece of trustable metadata needs to be explicitly
->>> opted-in to by the sender at the time of capture.  Otherwise you're
->>> asking for lots of information leaks and privilege escalations.  This
->>> is especially important given that some of the items in the current
->>> list could be rather sensitive.
->>
->> You do have to opt-in for this information at time of capture, so I
->> don't understand the issue here.  This is the same type of thing that
->> dbus does today, and I don't see the information leaks happening there,
->> do you?
->>
->
-> The docs suggest that the *receiver* opts in.
->
+On Wed, 29 Oct 2014, Greg Kroah-Hartman wrote:
 
-So does the code:
+> kdbus is a kernel-level IPC implementation that aims for resemblance to
+> the the protocol layer with the existing userspace D-Bus daemon while
+> enabling some features that couldn't be implemented before in userspace.
 
-+ /*
-+ * The first receiver which requests additional
-+ * metadata causes the message to carry it; all
-+ * receivers after that will see all of the added
-+ * data, even when they did not ask for it.
-+ */
-+ if (conn_src) {
-+ /* Check if conn_src is allowed to signal */
-+ ret = kdbus_ep_policy_check_broadcast(conn_dst->ep,
-+ conn_src,
-+ conn_dst);
-+ if (ret < 0)
-+ continue;
-+
-+ ret = kdbus_ep_policy_check_src_names(conn_dst->ep,
-+ conn_src,
-+ conn_dst);
-+ if (ret < 0)
-+ continue;
-+
-+ ret = kdbus_kmsg_attach_metadata(kmsg, conn_src,
-+ conn_dst);
-+ if (ret < 0)
-+ goto exit_unlock;
-+ }
-+
+I'd be interested in the features that can't be implemented in userspace 
+(and therefore would justify existence of kdbus in the kernel). Could you 
+please point me to such list / documentation?
 
-I'd like this if the sender chose the metadata flags.  In fact, I'd
-want to make that feature available on regular UNIX sockets, too
-(search the archives for SCM_IDENTITY).
+It seems to me that most of the highlight features from the cover letter 
+can be "easily" (for certain definition of that word, of course) 
+implemented in userspace (vmsplice(), sending fd through unix socket, user 
+namespaces, UUID management, etc).
 
---Andy
+Thanks,
+
+-- 
+Jiri Kosina
+SUSE Labs
