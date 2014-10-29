@@ -1,7 +1,7 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: kdbus: add policy database implementation
-Date: Wed, 29 Oct 2014 15:00:54 -0700
-Message-ID: <1414620056-6675-11-git-send-email-gregkh@linuxfoundation.org>
+Subject: kdbus: add name registry implementation
+Date: Wed, 29 Oct 2014 15:00:53 -0700
+Message-ID: <1414620056-6675-10-git-send-email-gregkh@linuxfoundation.org>
 References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
@@ -12,39 +12,31 @@ List-Id: linux-api@vger.kernel.org
 
 From: Daniel Mack <daniel@zonque.org>
 
-This patch adds the policy database implementation.
+This patch adds the name registry implementation.
 
-A policy databases restrict the possibilities of connections to own,
-see and talk to well-known names. It can be associated with a bus
-(through a policy holder connection) or a custom endpoint.
+Each bus instantiates a name registry to resolve well-known names
+into unique connection IDs for message delivery. The registry will
+be queried when a message is sent with kdbus_msg.dst_id set to
+KDBUS_DST_ID_NAME, or when a registry dump is requested.
 
-By default, buses have an empty policy database that is augmented on
-demand when a policy holder connection is instantiated.
-
-Policies are set through KDBUS_CMD_HELLO (when creating a policy
-holder connection), KDBUS_CMD_CONN_UPDATE (when updating a policy
-holder connection), KDBUS_CMD_EP_MAKE (creating a custom endpoint)
-or KDBUS_CMD_EP_UPDATE (updating a custom endpoint). In all cases,
-the name and policy access information is stored in items of type
-KDBUS_ITEM_NAME and KDBUS_ITEM_POLICY_ACCESS.
-
-See Documentation/kdbus.txt for more details.
+It's important to have this registry implemented in the kernel to
+implement lookups and take-overs in a race-free way.
 
 Signed-off-by: Daniel Mack <daniel@zonque.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- drivers/misc/kdbus/policy.c | 617 ++++++++++++++++++++++++++++++++++++++++++++
- drivers/misc/kdbus/policy.h |  60 +++++
- 2 files changed, 677 insertions(+)
- create mode 100644 drivers/misc/kdbus/policy.c
- create mode 100644 drivers/misc/kdbus/policy.h
+ drivers/misc/kdbus/names.c | 920 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/misc/kdbus/names.h |  81 ++++
+ 2 files changed, 1001 insertions(+)
+ create mode 100644 drivers/misc/kdbus/names.c
+ create mode 100644 drivers/misc/kdbus/names.h
 
-diff --git a/drivers/misc/kdbus/policy.c b/drivers/misc/kdbus/policy.c
+diff --git a/drivers/misc/kdbus/names.c b/drivers/misc/kdbus/names.c
 new file mode 100644
-index 000000000000..66bce57eb5e6
+index 000000000000..5f8853cbc919
 --- /dev/null
-+++ b/drivers/misc/kdbus/policy.c
-@@ -0,0 +1,617 @@
++++ b/drivers/misc/kdbus/names.c
+@@ -0,0 +1,920 @@
 +/*
 + * Copyright (C) 2013-2014 Kay Sievers
 + * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
@@ -59,615 +51,918 @@ index 000000000000..66bce57eb5e6
 + * your option) any later version.
 + */
 +
++#include <linux/ctype.h>
++#include <linux/device.h>
 +#include <linux/fs.h>
++#include <linux/hash.h>
++#include <linux/idr.h>
 +#include <linux/init.h>
++#include <linux/module.h>
 +#include <linux/mutex.h>
++#include <linux/rwsem.h>
 +#include <linux/sched.h>
-+#include <linux/sizes.h>
 +#include <linux/slab.h>
 +#include <linux/uaccess.h>
 +
 +#include "bus.h"
 +#include "connection.h"
-+#include "domain.h"
++#include "endpoint.h"
 +#include "item.h"
 +#include "names.h"
++#include "notify.h"
 +#include "policy.h"
 +
-+#define KDBUS_POLICY_HASH_SIZE	64
-+
 +/**
-+ * struct kdbus_policy_db_cache_entry - a cached entry
-+ * @conn_a:		Connection A
-+ * @conn_b:		Connection B
-+ * @owner:		Owner of policy-entry that produced this cache-entry
-+ * @hentry:		The hash table entry for the database's entries_hash
++ * struct kdbus_name_queue_item - a queue item for a name
++ * @conn:		The associated connection
++ * @entry:		Name entry queuing up for
++ * @entry_entry:	List element for the list in @entry
++ * @conn_entry:		List element for the list in @conn
++ * @flags:		The queuing flags
 + */
-+struct kdbus_policy_db_cache_entry {
-+	struct kdbus_conn *conn_a;
-+	struct kdbus_conn *conn_b;
-+	const void *owner;
-+	struct hlist_node hentry;
++struct kdbus_name_queue_item {
++	struct kdbus_conn *conn;
++	struct kdbus_name_entry *entry;
++	struct list_head entry_entry;
++	struct list_head conn_entry;
++	u64 flags;
 +};
 +
-+/**
-+ * struct kdbus_policy_db_entry_access - a database entry access item
-+ * @type:		One of KDBUS_POLICY_ACCESS_* types
-+ * @access:		Access to grant. One of KDBUS_POLICY_*
-+ * @uid:		For KDBUS_POLICY_ACCESS_USER, the global uid
-+ * @gid:		For KDBUS_POLICY_ACCESS_GROUP, the global gid
-+ * @list:		List entry item for the entry's list
-+ *
-+ * This is the internal version of struct kdbus_policy_db_access.
-+ */
-+struct kdbus_policy_db_entry_access {
-+	u8 type;		/* USER, GROUP, WORLD */
-+	u8 access;		/* OWN, TALK, SEE */
-+	union {
-+		kuid_t uid;	/* global uid */
-+		kgid_t gid;	/* global gid */
-+	};
-+	struct list_head list;
-+};
-+
-+/**
-+ * struct kdbus_policy_db_entry - a policy database entry
-+ * @name:		The name to match the policy entry against
-+ * @hentry:		The hash entry for the database's entries_hash
-+ * @access_list:	List head for keeping tracks of the entry's
-+ *			access items.
-+ * @owner:		The owner of this entry. Can be a kdbus_conn or
-+ *			a kdbus_ep object.
-+ * @wildcard:		The name is a wildcard, such as ending on '.*'
-+ */
-+struct kdbus_policy_db_entry {
-+	char *name;
-+	struct hlist_node hentry;
-+	struct list_head access_list;
-+	const void *owner;
-+	bool wildcard:1;
-+};
-+
-+static void kdbus_policy_entry_free(struct kdbus_policy_db_entry *e)
++static void kdbus_name_entry_free(struct kdbus_name_entry *e)
 +{
-+	struct kdbus_policy_db_entry_access *a, *tmp;
-+
-+	list_for_each_entry_safe(a, tmp, &e->access_list, list) {
-+		list_del(&a->list);
-+		kfree(a);
-+	}
-+
++	hash_del(&e->hentry);
 +	kfree(e->name);
 +	kfree(e);
 +}
 +
-+static const struct kdbus_policy_db_entry *
-+kdbus_policy_lookup(struct kdbus_policy_db *db,
-+		    const char *name, u32 hash, bool wildcard)
-+{
-+	struct kdbus_policy_db_entry *e, *found = NULL;
-+
-+	hash_for_each_possible(db->entries_hash, e, hentry, hash)
-+		if (strcmp(e->name, name) == 0 && !e->wildcard)
-+			return e;
-+
-+	if (wildcard) {
-+		const char *tmp;
-+		char *dot;
-+
-+		tmp = kstrdup(name, GFP_KERNEL);
-+		if (!tmp)
-+			return NULL;
-+
-+		dot = strrchr(tmp, '.');
-+		if (!dot)
-+			goto exit_free;
-+
-+		*dot = '\0';
-+		hash = kdbus_str_hash(tmp);
-+
-+		hash_for_each_possible(db->entries_hash, e, hentry, hash)
-+			if (strcmp(e->name, tmp) == 0 && e->wildcard) {
-+				found = e;
-+				/* never "break;" in hash_for_each() */
-+				goto exit_free;
-+			}
-+
-+exit_free:
-+		kfree(tmp);
-+	}
-+
-+	return found;
-+}
-+
 +/**
-+ * kdbus_policy_db_clear - release all memory from a policy db
-+ * @db:		The policy database
++ * kdbus_name_registry_free() - drop a name reg's reference
++ * @reg:		The name registry
++ *
++ * Cleanup the name registry's internal structures.
 + */
-+void kdbus_policy_db_clear(struct kdbus_policy_db *db)
++void kdbus_name_registry_free(struct kdbus_name_registry *reg)
 +{
-+	struct kdbus_policy_db_cache_entry *ce;
-+	struct kdbus_policy_db_entry *e;
++	struct kdbus_name_entry *e;
 +	struct hlist_node *tmp;
 +	unsigned int i;
 +
-+	BUG_ON(!db);
++	hash_for_each_safe(reg->entries_hash, i, tmp, e, hentry)
++		kdbus_name_entry_free(e);
 +
-+	/* purge entries */
-+	down_write(&db->entries_rwlock);
-+	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry) {
-+		hash_del(&e->hentry);
-+		kdbus_policy_entry_free(e);
-+	}
-+	up_write(&db->entries_rwlock);
-+
-+	/* purge cache */
-+	mutex_lock(&db->cache_lock);
-+	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry) {
-+		hash_del(&ce->hentry);
-+		kfree(ce);
-+	}
-+	mutex_unlock(&db->cache_lock);
++	kfree(reg);
 +}
 +
 +/**
-+ * kdbus_policy_db_init() - initialize a new policy database
-+ * @db:		The location of the database
-+ *
-+ * This initializes a new policy-db. The underlying memory must have been
-+ * cleared to zero by the caller.
-+ */
-+void kdbus_policy_db_init(struct kdbus_policy_db *db)
-+{
-+	hash_init(db->entries_hash);
-+	hash_init(db->talk_access_hash);
-+	init_rwsem(&db->entries_rwlock);
-+	mutex_init(&db->cache_lock);
-+}
-+
-+static int kdbus_policy_check_access(const struct kdbus_policy_db_entry *e,
-+				     const struct cred *cred,
-+				     unsigned int access)
-+{
-+	struct kdbus_policy_db_entry_access *a;
-+	struct group_info *group_info;
-+	int i;
-+
-+	if (!e)
-+		return -EPERM;
-+
-+	group_info = cred->group_info;
-+
-+	list_for_each_entry(a, &e->access_list, list) {
-+		if (a->access >= access) {
-+			switch (a->type) {
-+			case KDBUS_POLICY_ACCESS_USER:
-+				if (uid_eq(cred->uid, a->uid))
-+					return 0;
-+				break;
-+			case KDBUS_POLICY_ACCESS_GROUP:
-+				if (gid_eq(cred->gid, a->gid))
-+					return 0;
-+
-+				for (i = 0; i < group_info->ngroups; i++) {
-+					kgid_t gid = GROUP_AT(group_info, i);
-+
-+					if (gid_eq(gid, a->gid))
-+						return 0;
-+				}
-+
-+				break;
-+			case KDBUS_POLICY_ACCESS_WORLD:
-+				return 0;
-+			}
-+		}
-+	}
-+
-+	return -EPERM;
-+}
-+
-+/**
-+ * kdbus_policy_check_own_access() - check whether a connection is allowed
-+ *				     to own a name
-+ * @db:		The policy database
-+ * @conn:	The connection to check
-+ * @name:	The name to check
-+ *
-+ * Return: 0 if the connection is allowed to own the name, -EPERM otherwise
-+ */
-+int kdbus_policy_check_own_access(struct kdbus_policy_db *db,
-+				  const struct kdbus_conn *conn,
-+				  const char *name)
-+{
-+	const struct kdbus_policy_db_entry *e;
-+	int ret;
-+
-+	down_read(&db->entries_rwlock);
-+	e = kdbus_policy_lookup(db, name, kdbus_str_hash(name), true);
-+	ret = kdbus_policy_check_access(e, conn->cred, KDBUS_POLICY_OWN);
-+	up_read(&db->entries_rwlock);
-+
-+	return ret;
-+}
-+
-+/**
-+ * kdbus_policy_check_talk_access() - check if one connection is allowed
-+ *				       to send a message to another connection
-+ * @db:			The policy database
-+ * @conn_src:		The source connection
-+ * @conn_dst:		The destination connection
-+ *
-+ * Return: 0 if access is granted, -EPERM if not, negative errno on failure
-+ */
-+int kdbus_policy_check_talk_access(struct kdbus_policy_db *db,
-+				   struct kdbus_conn *conn_src,
-+				   struct kdbus_conn *conn_dst)
-+{
-+	struct kdbus_policy_db_cache_entry *ce;
-+	struct kdbus_name_entry *name_entry;
-+	unsigned int hash = 0;
-+	const void *owner;
-+	int ret;
-+
-+	/*
-+	 * If there was a positive match for these two connections before,
-+	 * there's an entry in the hash table for them.
-+	 */
-+	hash ^= hash_ptr(conn_src, KDBUS_POLICY_HASH_SIZE);
-+	hash ^= hash_ptr(conn_dst, KDBUS_POLICY_HASH_SIZE);
-+
-+	mutex_lock(&db->cache_lock);
-+	hash_for_each_possible(db->talk_access_hash, ce, hentry, hash)
-+		if (ce->conn_a == conn_src && ce->conn_b == conn_dst) {
-+			mutex_unlock(&db->cache_lock);
-+			return 0;
-+		}
-+	mutex_unlock(&db->cache_lock);
-+
-+	/*
-+	 * Otherwise, walk the connection list and store a hash-table entry if
-+	 * send access is granted.
-+	 */
-+
-+	down_read(&db->entries_rwlock);
-+
-+	ret = -EPERM;
-+	mutex_lock(&conn_dst->lock);
-+	list_for_each_entry(name_entry, &conn_dst->names_list, conn_entry) {
-+		u32 hash = kdbus_str_hash(name_entry->name);
-+		const struct kdbus_policy_db_entry *e;
-+
-+		e = kdbus_policy_lookup(db, name_entry->name, hash, true);
-+		if (kdbus_policy_check_access(e, conn_src->cred,
-+					      KDBUS_POLICY_TALK) == 0) {
-+			owner = e->owner;
-+			ret = 0;
-+			break;
-+		}
-+	}
-+	mutex_unlock(&conn_dst->lock);
-+
-+	if (ret >= 0) {
-+		ret = -ENOMEM;
-+		ce = kmalloc(sizeof(*ce), GFP_KERNEL);
-+		if (ce) {
-+			ce->conn_a = conn_src;
-+			ce->conn_b = conn_dst;
-+			ce->owner = owner;
-+			INIT_HLIST_NODE(&ce->hentry);
-+
-+			mutex_lock(&db->cache_lock);
-+			hash_add(db->talk_access_hash, &ce->hentry, hash);
-+			mutex_unlock(&db->cache_lock);
-+
-+			ret = 0;
-+		}
-+	}
-+
-+	up_read(&db->entries_rwlock);
-+
-+	return ret;
-+}
-+
-+/**
-+ * kdbus_policy_check_see_access_unlocked() - Check whether a connection is
-+ *					      allowed to see a given name
-+ * @db:		The policy database
-+ * @conn:	The connection performing the lookup
-+ * @name:	The name
-+ *
-+ * Return: 0 if permission to see the name is granted, -EPERM otherwise
-+ */
-+int kdbus_policy_check_see_access_unlocked(struct kdbus_policy_db *db,
-+					   struct kdbus_conn *conn,
-+					   const char *name)
-+{
-+	const struct kdbus_policy_db_entry *e;
-+
-+	e = kdbus_policy_lookup(db, name, kdbus_str_hash(name), true);
-+	return kdbus_policy_check_access(e, conn->cred, KDBUS_POLICY_SEE);
-+}
-+
-+static void __kdbus_policy_remove_owner_cache(struct kdbus_policy_db *db,
-+					      const void *owner)
-+{
-+	struct kdbus_policy_db_cache_entry *ce;
-+	struct hlist_node *tmp;
-+	int i;
-+
-+	mutex_lock(&db->cache_lock);
-+	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry)
-+		if (ce->owner == owner) {
-+			hash_del(&ce->hentry);
-+			kfree(ce);
-+		}
-+	mutex_unlock(&db->cache_lock);
-+}
-+
-+static void __kdbus_policy_remove_owner(struct kdbus_policy_db *db,
-+					const void *owner)
-+{
-+	struct kdbus_policy_db_entry *e;
-+	struct hlist_node *tmp;
-+	int i;
-+
-+	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry)
-+		if (e->owner == owner) {
-+			hash_del(&e->hentry);
-+			kdbus_policy_entry_free(e);
-+		}
-+}
-+
-+/**
-+ * kdbus_policy_remove_owner() - remove all entries related to a connection
-+ * @db:		The policy database
-+ * @owner:	The connection which items to remove
-+ */
-+void kdbus_policy_remove_owner(struct kdbus_policy_db *db,
-+			       const void *owner)
-+{
-+	down_write(&db->entries_rwlock);
-+	__kdbus_policy_remove_owner(db, owner);
-+	__kdbus_policy_remove_owner_cache(db, owner);
-+	up_write(&db->entries_rwlock);
-+}
-+
-+/**
-+ * kdbus_policy_purge_cache_for_conn() - remove all cached entries related to
-+ *				a connection
-+ * @db:		The policy database
-+ * @conn:	The connection which items to remove
-+ */
-+void kdbus_policy_purge_cache(struct kdbus_policy_db *db,
-+			      const struct kdbus_conn *conn)
-+{
-+	struct kdbus_policy_db_cache_entry *ce;
-+	struct hlist_node *tmp;
-+	int i;
-+
-+	mutex_lock(&db->cache_lock);
-+	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry)
-+		if (ce->conn_a == conn || ce->conn_b == conn) {
-+			hash_del(&ce->hentry);
-+			kfree(ce);
-+		}
-+	mutex_unlock(&db->cache_lock);
-+}
-+
-+/*
-+ * Convert user provided policy access to internal kdbus policy
-+ * access
-+ */
-+static int
-+kdbus_policy_make_access(const struct kdbus_policy_access *uaccess,
-+			 struct kdbus_policy_db_entry_access **entry)
-+{
-+	int ret;
-+	struct kdbus_policy_db_entry_access *a;
-+
-+	a = kzalloc(sizeof(*a), GFP_KERNEL);
-+	if (!a)
-+		return -ENOMEM;
-+
-+	ret = -EINVAL;
-+	switch (uaccess->type) {
-+	case KDBUS_POLICY_ACCESS_USER:
-+		a->uid = make_kuid(current_user_ns(), uaccess->id);
-+		if (!uid_valid(a->uid))
-+			goto err;
-+
-+		break;
-+	case KDBUS_POLICY_ACCESS_GROUP:
-+		a->gid = make_kgid(current_user_ns(), uaccess->id);
-+		if (!gid_valid(a->gid))
-+			goto err;
-+
-+		break;
-+	}
-+
-+	a->type = uaccess->type;
-+	a->access = uaccess->access;
-+
-+	*entry = a;
-+
-+	return 0;
-+
-+err:
-+	kfree(a);
-+	return ret;
-+}
-+
-+/**
-+ * kdbus_policy_set() - set a connection's policy rules
-+ * @db:				The policy database
-+ * @items:			A list of kdbus_item elements that contain both
-+ *				names and access rules to set.
-+ * @items_size:			The total size of the items.
-+ * @max_policies:		The maximum number of policy entries to allow.
-+ *				Pass 0 for no limit.
-+ * @allow_wildcards:		Boolean value whether wildcard entries (such
-+ *				ending on '.*') should be allowed.
-+ * @owner:			The owner of the new policy items.
-+ *
-+ * This function sets a new set of policies for a given owner. The names and
-+ * access rules are gathered by walking the list of items passed in as
-+ * argument. An item of type KDBUS_ITEM_NAME is expected before any number of
-+ * KDBUS_ITEM_POLICY_ACCESS items. If there are more repetitions of this
-+ * pattern than denoted in @max_policies, -EINVAL is returned.
-+ *
-+ * In order to allow atomic replacement of rules, the function first removes
-+ * all entries that have been created for the given owner previously.
++ * kdbus_name_registry_new() - create a new name registry
++ * @reg:		The returned name registry
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int kdbus_policy_set(struct kdbus_policy_db *db,
-+		     const struct kdbus_item *items,
-+		     size_t items_size,
-+		     size_t max_policies,
-+		     bool allow_wildcards,
-+		     const void *owner)
++int kdbus_name_registry_new(struct kdbus_name_registry **reg)
 +{
-+	struct kdbus_policy_db_entry_access *a;
-+	struct kdbus_policy_db_entry *e, *p;
-+	const struct kdbus_item *item;
-+	struct hlist_node *tmp;
-+	HLIST_HEAD(entries);
-+	HLIST_HEAD(restore);
-+	size_t count = 0;
-+	int i, ret = 0;
-+	u32 hash;
++	struct kdbus_name_registry *r;
 +
-+	if (items_size > KDBUS_POLICY_MAX_SIZE)
-+		return -E2BIG;
++	r = kzalloc(sizeof(*r), GFP_KERNEL);
++	if (!r)
++		return -ENOMEM;
 +
-+	/* Walk the list of items and look for new policies */
-+	e = NULL;
-+	KDBUS_ITEMS_FOREACH(item, items, items_size) {
-+		switch (item->type) {
-+		case KDBUS_ITEM_NAME: {
-+			size_t len;
++	hash_init(r->entries_hash);
++	init_rwsem(&r->rwlock);
 +
-+			if (max_policies && ++count > max_policies) {
-+				ret = -E2BIG;
-+				goto exit;
-+			}
++	*reg = r;
++	return 0;
++}
 +
-+			if (!kdbus_name_is_valid(item->str, true)) {
-+				ret = -EINVAL;
-+				goto exit;
-+			}
++static struct kdbus_name_entry *
++kdbus_name_lookup(struct kdbus_name_registry *reg, u32 hash, const char *name)
++{
++	struct kdbus_name_entry *e;
 +
-+			e = kzalloc(sizeof(*e), GFP_KERNEL);
-+			if (!e) {
-+				ret = -ENOMEM;
-+				goto exit;
-+			}
++	hash_for_each_possible(reg->entries_hash, e, hentry, hash)
++		if (strcmp(e->name, name) == 0)
++			return e;
 +
-+			INIT_LIST_HEAD(&e->access_list);
-+			e->owner = owner;
-+			hlist_add_head(&e->hentry, &entries);
++	return NULL;
++}
 +
-+			e->name = kstrdup(item->str, GFP_KERNEL);
-+			if (!e->name) {
-+				ret = -ENOMEM;
-+				goto exit;
-+			}
++static void kdbus_name_queue_item_free(struct kdbus_name_queue_item *q)
++{
++	list_del(&q->entry_entry);
++	list_del(&q->conn_entry);
++	kfree(q);
++}
 +
-+			/*
-+			 * If a supplied name ends with an '.*', cut off that
-+			 * part, only store anything before it, and mark the
-+			 * entry as wildcard.
-+			 */
-+			len = strlen(e->name);
-+			if (len > 2 &&
-+			    e->name[len - 3] == '.' &&
-+			    e->name[len - 2] == '*') {
-+				if (!allow_wildcards) {
-+					ret = -EINVAL;
-+					goto exit;
-+				}
++/*
++ * The caller needs to hold its own reference, so the connection does not go
++ * away while the entry's reference is dropped under lock.
++ */
++static void kdbus_name_entry_remove_owner(struct kdbus_name_entry *e)
++{
++	BUG_ON(!e->conn);
++	BUG_ON(!mutex_is_locked(&e->conn->lock));
 +
-+				e->name[len - 3] = '\0';
-+				e->wildcard = true;
-+			}
++	atomic_dec(&e->conn->name_count);
++	list_del(&e->conn_entry);
++	e->conn = kdbus_conn_unref(e->conn);
++}
 +
-+			break;
-+		}
++static void kdbus_name_entry_set_owner(struct kdbus_name_entry *e,
++				       struct kdbus_conn *conn)
++{
++	BUG_ON(e->conn);
++	BUG_ON(!mutex_is_locked(&conn->lock));
 +
-+		case KDBUS_ITEM_POLICY_ACCESS:
-+			if (!e) {
-+				ret = -EINVAL;
-+				goto exit;
-+			}
++	e->conn = kdbus_conn_ref(conn);
++	list_add_tail(&e->conn_entry, &e->conn->names_list);
++	atomic_inc(&conn->name_count);
++}
 +
-+			ret = kdbus_policy_make_access(&item->policy_access,
-+						       &a);
-+			if (ret < 0)
-+				goto exit;
++static int kdbus_name_replace_owner(struct kdbus_name_entry *e,
++				    struct kdbus_conn *conn, u64 flags)
++{
++	struct kdbus_conn *conn_old = kdbus_conn_ref(e->conn);
++	int ret;
 +
-+			list_add_tail(&a->list, &e->access_list);
-+			break;
-+		}
++	BUG_ON(conn == conn_old);
++	BUG_ON(!conn_old);
++
++	/* take lock of both connections in a defined order */
++	if (conn < conn_old) {
++		mutex_lock(&conn->lock);
++		mutex_lock_nested(&conn_old->lock, 1);
++	} else {
++		mutex_lock(&conn_old->lock);
++		mutex_lock_nested(&conn->lock, 1);
 +	}
 +
-+	down_write(&db->entries_rwlock);
-+
-+	/* remember previous entries to restore in case of failure */
-+	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry)
-+		if (e->owner == owner) {
-+			hash_del(&e->hentry);
-+			hlist_add_head(&e->hentry, &restore);
-+		}
-+
-+	hlist_for_each_entry_safe(e, tmp, &entries, hentry) {
-+		/* prevent duplicates */
-+		hash = kdbus_str_hash(e->name);
-+		hash_for_each_possible(db->entries_hash, p, hentry, hash)
-+			if (strcmp(e->name, p->name) == 0 &&
-+			    e->wildcard == p->wildcard) {
-+				ret = -EEXIST;
-+				goto restore;
-+			}
-+
-+		hlist_del(&e->hentry);
-+		hash_add(db->entries_hash, &e->hentry, hash);
++	if (!kdbus_conn_active(conn)) {
++		ret = -ECONNRESET;
++		goto exit_unlock;
 +	}
 +
-+	/* purge all cache-entries produced by previous rules */
-+	__kdbus_policy_remove_owner_cache(db, owner);
-+
-+restore:
-+	/* if we failed, flush all entries we added so far, but keep cache */
++	ret = kdbus_notify_name_change(conn->bus, KDBUS_ITEM_NAME_CHANGE,
++				       e->conn->id, conn->id,
++				       e->flags, flags, e->name);
 +	if (ret < 0)
-+		__kdbus_policy_remove_owner(db, owner);
++		goto exit_unlock;
 +
-+	/* if we failed, restore entries, otherwise release them */
-+	hlist_for_each_entry_safe(e, tmp, &restore, hentry) {
-+		hlist_del(&e->hentry);
-+		if (ret < 0) {
-+			hash = kdbus_str_hash(e->name);
-+			hash_add(db->entries_hash, &e->hentry, hash);
-+		} else {
-+			kdbus_policy_entry_free(e);
++	/* hand over name ownership */
++	kdbus_name_entry_remove_owner(e);
++	kdbus_name_entry_set_owner(e, conn);
++	e->flags = flags;
++
++exit_unlock:
++	mutex_unlock(&conn_old->lock);
++	mutex_unlock(&conn->lock);
++
++	kdbus_conn_unref(conn_old);
++	return ret;
++}
++
++static int kdbus_name_entry_release(struct kdbus_name_entry *e,
++				    struct kdbus_bus *bus)
++{
++	struct kdbus_conn *conn;
++
++	/* give it to first active waiter in the queue */
++	while (!list_empty(&e->queue_list)) {
++		struct kdbus_name_queue_item *q;
++		int ret;
++
++		q = list_first_entry(&e->queue_list,
++				     struct kdbus_name_queue_item,
++				     entry_entry);
++
++		ret = kdbus_name_replace_owner(e, q->conn, q->flags);
++		if (ret < 0)
++			continue;
++
++		kdbus_name_queue_item_free(q);
++		return 0;
++	}
++
++	/* hand it back to an active activator connection */
++	if (e->activator && e->activator != e->conn) {
++		u64 flags = KDBUS_NAME_ACTIVATOR;
++		int ret;
++
++		/*
++		 * Move messages still queued in the old connection
++		 * and addressed to that name to the new connection.
++		 * This allows a race and loss-free name and message
++		 * takeover and exit-on-idle services.
++		 */
++		ret = kdbus_conn_move_messages(e->activator, e->conn,
++					       e->name_id);
++		if (ret < 0)
++			goto exit_release;
++
++		return kdbus_name_replace_owner(e, e->activator, flags);
++	}
++
++exit_release:
++	/* release the name */
++	kdbus_notify_name_change(e->conn->bus, KDBUS_ITEM_NAME_REMOVE,
++				 e->conn->id, 0,
++				 e->flags, 0, e->name);
++
++	conn = kdbus_conn_ref(e->conn);
++	mutex_lock(&conn->lock);
++	kdbus_name_entry_remove_owner(e);
++	mutex_unlock(&conn->lock);
++	kdbus_conn_unref(conn);
++
++	kdbus_conn_unref(e->activator);
++	kdbus_name_entry_free(e);
++
++	return 0;
++}
++
++static int kdbus_name_release(struct kdbus_name_registry *reg,
++			      struct kdbus_conn *conn,
++			      const char *name)
++{
++	struct kdbus_name_queue_item *q_tmp, *q;
++	struct kdbus_name_entry *e = NULL;
++	u32 hash;
++	int ret = 0;
++
++	hash = kdbus_str_hash(name);
++
++	/* lock order: domain -> bus -> ep -> names -> connection */
++	mutex_lock(&conn->bus->lock);
++	down_write(&reg->rwlock);
++
++	e = kdbus_name_lookup(reg, hash, name);
++	if (!e) {
++		ret = -ESRCH;
++		goto exit_unlock;
++	}
++
++	/* Is the connection already the real owner of the name? */
++	if (e->conn == conn) {
++		ret = kdbus_name_entry_release(e, conn->bus);
++	} else {
++		/*
++		 * Otherwise, walk the list of queued entries and search
++		 * for items for connection.
++		 */
++
++		/* In case the name belongs to somebody else */
++		ret = -EADDRINUSE;
++
++		list_for_each_entry_safe(q, q_tmp,
++					 &e->queue_list,
++					 entry_entry) {
++			if (q->conn != conn)
++				continue;
++
++			kdbus_name_queue_item_free(q);
++			ret = 0;
++			break;
 +		}
 +	}
 +
-+	up_write(&db->entries_rwlock);
++	/*
++	 * Now that the connection has lost a name, purge all cached policy
++	 * entries, so upon the next message, TALK access will be checked
++	 * against the names the connection actually owns.
++	 */
++	if (ret == 0)
++		kdbus_conn_purge_policy_cache(conn);
 +
-+exit:
-+	hlist_for_each_entry_safe(e, tmp, &entries, hentry) {
-+		hlist_del(&e->hentry);
-+		kdbus_policy_entry_free(e);
-+	}
++exit_unlock:
++	up_write(&reg->rwlock);
++	mutex_unlock(&conn->bus->lock);
 +
 +	return ret;
 +}
-diff --git a/drivers/misc/kdbus/policy.h b/drivers/misc/kdbus/policy.h
++
++/**
++ * kdbus_name_remove_by_conn() - remove all name entries of a given connection
++ * @reg:		The name registry
++ * @conn:		The connection which entries to remove
++ *
++ * This function removes all name entry held by a given connection.
++ */
++void kdbus_name_remove_by_conn(struct kdbus_name_registry *reg,
++			       struct kdbus_conn *conn)
++{
++	struct kdbus_name_queue_item *q_tmp, *q;
++	struct kdbus_conn *activator = NULL;
++	struct kdbus_name_entry *e_tmp, *e;
++	LIST_HEAD(names_queue_list);
++	LIST_HEAD(names_list);
++
++	/* lock order: domain -> bus -> ep -> names -> conn */
++	mutex_lock(&conn->bus->lock);
++	down_write(&reg->rwlock);
++
++	mutex_lock(&conn->lock);
++	list_splice_init(&conn->names_list, &names_list);
++	list_splice_init(&conn->names_queue_list, &names_queue_list);
++	mutex_unlock(&conn->lock);
++
++	if (kdbus_conn_is_activator(conn)) {
++		activator = conn->activator_of->activator;
++		conn->activator_of->activator = NULL;
++	}
++	list_for_each_entry_safe(q, q_tmp, &names_queue_list, conn_entry)
++		kdbus_name_queue_item_free(q);
++	list_for_each_entry_safe(e, e_tmp, &names_list, conn_entry)
++		kdbus_name_entry_release(e, conn->bus);
++
++	up_write(&reg->rwlock);
++	mutex_unlock(&conn->bus->lock);
++
++	kdbus_conn_unref(activator);
++	kdbus_notify_flush(conn->bus);
++}
++
++/**
++ * kdbus_name_lock() - look up a name in a name registry and lock it
++ * @reg:		The name registry
++ * @name:		The name to look up
++ *
++ * Search for a name in a given name registry and return it with the
++ * registry-lock held. If the object is not found, the lock is not acquired and
++ * NULL is returned. The caller is responsible of unlocking the name via
++ * kdbus_name_unlock() again. Note that kdbus_name_unlock() can be safely called
++ * with NULL as name. In this case, it's a no-op as nothing was locked.
++ *
++ * The *_lock() + *_unlock() logic is only required for callers that need to
++ * protect their code against concurrent activator/implementor name changes.
++ * Multiple readers can lock names concurrently. However, you may not change
++ * name-ownership while holding a name-lock.
++ *
++ * Return: NULL if name is unknown, otherwise return a pointer to the name
++ *         entry with the name-lock held (reader lock only).
++ */
++struct kdbus_name_entry *kdbus_name_lock(struct kdbus_name_registry *reg,
++					 const char *name)
++{
++	struct kdbus_name_entry *e = NULL;
++	u32 hash = kdbus_str_hash(name);
++
++	down_read(&reg->rwlock);
++	e = kdbus_name_lookup(reg, hash, name);
++	if (e)
++		return e;
++	up_read(&reg->rwlock);
++
++	return NULL;
++}
++
++/**
++ * kdbus_name_unlock() - unlock one name in a name registry
++ * @reg:		The name registry
++ * @entry:		The locked name entry or NULL
++ *
++ * This is the unlock-counterpart of kdbus_name_lock(). It unlocks a name that
++ * was previously successfully locked. You can safely pass NULL as entry and
++ * this will become a no-op. Therefore, it's safe to always call this on the
++ * return-value of kdbus_name_lock().
++ *
++ * Return: This always returns NULL.
++ */
++struct kdbus_name_entry *kdbus_name_unlock(struct kdbus_name_registry *reg,
++					   struct kdbus_name_entry *entry)
++{
++	if (entry) {
++		BUG_ON(!rwsem_is_locked(&reg->rwlock));
++		up_read(&reg->rwlock);
++	}
++
++	return NULL;
++}
++
++static int kdbus_name_queue_conn(struct kdbus_conn *conn, u64 flags,
++				 struct kdbus_name_entry *e)
++{
++	struct kdbus_name_queue_item *q;
++
++	q = kzalloc(sizeof(*q), GFP_KERNEL);
++	if (!q)
++		return -ENOMEM;
++
++	q->conn = conn;
++	q->flags = flags;
++	q->entry = e;
++
++	list_add_tail(&q->entry_entry, &e->queue_list);
++	list_add_tail(&q->conn_entry, &conn->names_queue_list);
++
++	return 0;
++}
++
++/**
++ * kdbus_name_is_valid() - check if a name is valid
++ * @p:			The name to check
++ * @allow_wildcard:	Whether or not to allow a wildcard name
++ *
++ * A name is valid if all of the following criterias are met:
++ *
++ *  - The name has two or more elements separated by a period ('.') character.
++ *  - All elements must contain at least one character.
++ *  - Each element must only contain the ASCII characters "[A-Z][a-z][0-9]_-"
++ *    and must not begin with a digit.
++ *  - The name must not exceed KDBUS_NAME_MAX_LEN.
++ *  - If @allow_wildcard is true, the name may end on '.*'
++ */
++bool kdbus_name_is_valid(const char *p, bool allow_wildcard)
++{
++	bool dot, found_dot = false;
++	const char *q;
++
++	for (dot = true, q = p; *q; q++) {
++		if (*q == '.') {
++			if (dot)
++				return false;
++
++			found_dot = true;
++			dot = true;
++		} else {
++			bool good;
++
++			good = isalpha(*q) || (!dot && isdigit(*q)) ||
++				*q == '_' || *q == '-' ||
++				(allow_wildcard && dot &&
++					*q == '*' && *(q + 1) == '\0');
++
++			if (!good)
++				return false;
++
++			dot = false;
++		}
++	}
++
++	if (q - p > KDBUS_NAME_MAX_LEN)
++		return false;
++
++	if (dot)
++		return false;
++
++	if (!found_dot)
++		return false;
++
++	return true;
++}
++
++/**
++ * kdbus_name_acquire() - acquire a name
++ * @reg:		The name registry
++ * @conn:		The connection to pin this entry to
++ * @name:		The name to acquire
++ * @flags:		Acquisition flags (KDBUS_NAME_*)
++ * @entry:		Return pointer for the entry (may be NULL)
++ *
++ * Callers must ensure that @conn is either a privileged bus user or has
++ * sufficient privileges in the policy-db to own the well-known name @name.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_name_acquire(struct kdbus_name_registry *reg,
++		       struct kdbus_conn *conn,
++		       const char *name, u64 *flags,
++		       struct kdbus_name_entry **entry)
++{
++	struct kdbus_name_entry *e = NULL;
++	u32 hash;
++	int ret = 0;
++
++	/* lock order: domain -> bus -> ep -> names -> conn */
++	mutex_lock(&conn->bus->lock);
++	down_write(&reg->rwlock);
++
++	hash = kdbus_str_hash(name);
++	e = kdbus_name_lookup(reg, hash, name);
++	if (e) {
++		/* connection already owns that name */
++		if (e->conn == conn) {
++			ret = -EALREADY;
++			goto exit_unlock;
++		}
++
++		if (kdbus_conn_is_activator(conn)) {
++			/* An activator can only own a single name */
++			if (conn->activator_of) {
++				if (conn->activator_of == e)
++					ret = -EALREADY;
++				else
++					ret = -EINVAL;
++			} else if (!e->activator && !conn->activator_of) {
++				/*
++				 * Activator registers for name that is
++				 * already owned
++				 */
++				e->activator = kdbus_conn_ref(conn);
++				conn->activator_of = e;
++			}
++
++			goto exit_unlock;
++		}
++
++		/* take over the name of an activator connection */
++		if (e->flags & KDBUS_NAME_ACTIVATOR) {
++			/*
++			 * Take over the messages queued in the activator
++			 * connection, the activator itself never reads them.
++			 */
++			ret = kdbus_conn_move_messages(conn, e->activator, 0);
++			if (ret < 0)
++				goto exit_unlock;
++
++			ret = kdbus_name_replace_owner(e, conn, *flags);
++			goto exit_unlock;
++		}
++
++		/* take over the name if both parties agree */
++		if ((*flags & KDBUS_NAME_REPLACE_EXISTING) &&
++		    (e->flags & KDBUS_NAME_ALLOW_REPLACEMENT)) {
++			/*
++			 * Move name back to the queue, in case we take it away
++			 * from a connection which asked for queuing.
++			 */
++			if (e->flags & KDBUS_NAME_QUEUE) {
++				ret = kdbus_name_queue_conn(e->conn,
++							    e->flags, e);
++				if (ret < 0)
++					goto exit_unlock;
++			}
++
++			ret = kdbus_name_replace_owner(e, conn, *flags);
++			goto exit_unlock;
++		}
++
++		/* add it to the queue waiting for the name */
++		if (*flags & KDBUS_NAME_QUEUE) {
++			ret = kdbus_name_queue_conn(conn, *flags, e);
++
++			/* tell the caller that we queued it */
++			*flags |= KDBUS_NAME_IN_QUEUE;
++
++			goto exit_unlock;
++		}
++
++		/* the name is busy, return a failure */
++		ret = -EEXIST;
++		goto exit_unlock;
++	} else {
++		/* An activator can only own a single name */
++		if (kdbus_conn_is_activator(conn) &&
++		    conn->activator_of) {
++			ret = -EINVAL;
++			goto exit_unlock;
++		}
++	}
++
++	/* new name entry */
++	e = kzalloc(sizeof(*e), GFP_KERNEL);
++	if (!e) {
++		ret = -ENOMEM;
++		goto exit_unlock;
++	}
++
++	e->name = kstrdup(name, GFP_KERNEL);
++	if (!e->name) {
++		kfree(e);
++		ret = -ENOMEM;
++		goto exit_unlock;
++	}
++
++	if (kdbus_conn_is_activator(conn)) {
++		e->activator = kdbus_conn_ref(conn);
++		conn->activator_of = e;
++	}
++
++	e->flags = *flags;
++	INIT_LIST_HEAD(&e->queue_list);
++	e->name_id = ++reg->name_seq_last;
++
++	mutex_lock(&conn->lock);
++	if (!kdbus_conn_active(conn)) {
++		mutex_unlock(&conn->lock);
++		kfree(e);
++		ret = -ECONNRESET;
++		goto exit_unlock;
++	}
++	hash_add(reg->entries_hash, &e->hentry, hash);
++	kdbus_name_entry_set_owner(e, conn);
++	mutex_unlock(&conn->lock);
++
++	kdbus_notify_name_change(e->conn->bus, KDBUS_ITEM_NAME_ADD,
++				 0, e->conn->id,
++				 0, e->flags, e->name);
++
++	if (entry)
++		*entry = e;
++
++exit_unlock:
++	up_write(&reg->rwlock);
++	mutex_unlock(&conn->bus->lock);
++	kdbus_notify_flush(conn->bus);
++
++	return ret;
++}
++
++/**
++ * kdbus_cmd_name_acquire() - acquire a name from a ioctl command buffer
++ * @reg:		The name registry
++ * @conn:		The connection to pin this entry to
++ * @cmd:		The command as passed in by the ioctl
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_cmd_name_acquire(struct kdbus_name_registry *reg,
++			   struct kdbus_conn *conn,
++			   struct kdbus_cmd_name *cmd)
++{
++	struct kdbus_name_entry *e = NULL;
++	const char *name;
++	int ret;
++
++	ret = kdbus_items_get_str(cmd->items, KDBUS_ITEMS_SIZE(cmd, items),
++				  KDBUS_ITEM_NAME, &name);
++	if (ret < 0)
++		return -EINVAL;
++
++	if (!kdbus_name_is_valid(name, false))
++		return -EINVAL;
++
++	/*
++	 * Do atomic_inc_return here to reserve our slot, then decrement
++	 * it before returning.
++	 */
++	ret = -E2BIG;
++	if (atomic_inc_return(&conn->name_count) > KDBUS_CONN_MAX_NAMES)
++		goto out_dec;
++
++	ret = kdbus_ep_policy_check_own_access(conn->ep, conn, name);
++	if (ret < 0)
++		goto out_dec;
++
++	ret = kdbus_name_acquire(reg, conn, name, &cmd->flags, &e);
++	kdbus_notify_flush(conn->bus);
++
++out_dec:
++	/* Decrement the previous allocated slot */
++	atomic_dec(&conn->name_count);
++	return ret;
++}
++
++/**
++ * kdbus_cmd_name_release() - release a name entry from a ioctl command buffer
++ * @reg:		The name registry
++ * @conn:		The connection that holds the name
++ * @cmd:		The command as passed in by the ioctl
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_cmd_name_release(struct kdbus_name_registry *reg,
++			   struct kdbus_conn *conn,
++			   const struct kdbus_cmd_name *cmd)
++{
++	int ret;
++	const char *name;
++
++	ret = kdbus_items_get_str(cmd->items, KDBUS_ITEMS_SIZE(cmd, items),
++				  KDBUS_ITEM_NAME, &name);
++	if (ret < 0)
++		return -EINVAL;
++
++	if (!kdbus_name_is_valid(name, false))
++		return -EINVAL;
++
++	ret = kdbus_ep_policy_check_see_access(conn->ep, conn, name);
++	if (ret < 0)
++		return ret;
++
++	ret = kdbus_name_release(reg, conn, name);
++
++	kdbus_notify_flush(conn->bus);
++	return ret;
++}
++
++static int kdbus_name_list_write(struct kdbus_conn *conn,
++				 struct kdbus_conn *c,
++				 struct kdbus_pool_slice *slice,
++				 size_t *pos,
++				 struct kdbus_name_entry *e,
++				 bool write)
++{
++	const size_t len = sizeof(struct kdbus_name_info);
++	size_t p = *pos;
++	size_t nlen = 0;
++
++	if (e) {
++		nlen = strlen(e->name) + 1;
++
++		if (kdbus_ep_policy_check_see_access_unlocked(conn->ep, conn,
++							      e->name) < 0)
++			return 0;
++	}
++
++	if (write) {
++		int ret;
++		struct kdbus_name_info info = {
++			.size = len,
++			.owner_id = c->id,
++			.flags = e ? e->flags : 0,
++			.conn_flags = c->flags,
++		};
++
++		if (nlen)
++			info.size += KDBUS_ITEM_SIZE(nlen);
++
++		/* write record */
++		ret = kdbus_pool_slice_copy(slice, p, &info, len);
++		if (ret < 0)
++			return ret;
++		p += len;
++
++		/* append name */
++		if (e) {
++			struct kdbus_item_header {
++				__u64 size;
++				__u64 type;
++			} h;
++
++			h.size = KDBUS_ITEM_HEADER_SIZE + nlen;
++			h.type = KDBUS_ITEM_NAME;
++
++			ret = kdbus_pool_slice_copy(slice, p, &h, sizeof(h));
++			if (ret < 0)
++				return ret;
++
++			p += sizeof(h);
++
++			ret = kdbus_pool_slice_copy(slice, p, e->name, nlen);
++			if (ret < 0)
++				return ret;
++
++			p += KDBUS_ALIGN8(nlen);
++		}
++	} else {
++		p += len;
++		if (nlen)
++			p += KDBUS_ITEM_SIZE(nlen);
++	}
++
++	*pos = p;
++	return 0;
++}
++
++static int kdbus_name_list_all(struct kdbus_conn *conn, u64 flags,
++			       struct kdbus_pool_slice *slice,
++			       size_t *pos, bool write)
++{
++	struct kdbus_conn *c;
++	size_t p = *pos;
++	int ret, i;
++
++	hash_for_each(conn->bus->conn_hash, i, c, hentry) {
++		bool added = false;
++
++		/* skip activators */
++		if (!(flags & KDBUS_NAME_LIST_ACTIVATORS) &&
++		    kdbus_conn_is_activator(c))
++			continue;
++
++		/* all names the connection owns */
++		if (flags & (KDBUS_NAME_LIST_NAMES |
++			     KDBUS_NAME_LIST_ACTIVATORS)) {
++			struct kdbus_name_entry *e;
++
++			mutex_lock(&c->lock);
++			list_for_each_entry(e, &c->names_list, conn_entry) {
++				struct kdbus_conn *a = e->activator;
++
++				if ((flags & KDBUS_NAME_LIST_ACTIVATORS) &&
++				    a && a != c) {
++					ret = kdbus_name_list_write(conn, a,
++							slice, &p, e, write);
++					if (ret < 0) {
++						mutex_unlock(&c->lock);
++						return ret;
++					}
++
++					added = true;
++				}
++
++				if (flags & KDBUS_NAME_LIST_NAMES ||
++				    kdbus_conn_is_activator(c)) {
++					ret = kdbus_name_list_write(conn, c,
++							slice, &p, e, write);
++					if (ret < 0) {
++						mutex_unlock(&c->lock);
++						return ret;
++					}
++
++					added = true;
++				}
++			}
++			mutex_unlock(&c->lock);
++		}
++
++		/* queue of names the connection is currently waiting for */
++		if (flags & KDBUS_NAME_LIST_QUEUED) {
++			struct kdbus_name_queue_item *q;
++
++			mutex_lock(&c->lock);
++			list_for_each_entry(q, &c->names_queue_list,
++					    conn_entry) {
++				ret = kdbus_name_list_write(conn, c,
++						slice, &p, q->entry, write);
++				if (ret < 0) {
++					mutex_unlock(&c->lock);
++					return ret;
++				}
++
++				added = true;
++			}
++			mutex_unlock(&c->lock);
++		}
++
++		/* nothing added so far, just add the unique ID */
++		if (!added && flags & KDBUS_NAME_LIST_UNIQUE) {
++			ret = kdbus_name_list_write(conn, c,
++					slice, &p, NULL, write);
++			if (ret < 0)
++				return ret;
++		}
++	}
++
++	*pos = p;
++	return 0;
++}
++
++/**
++ * kdbus_cmd_name_list() - list names of a connection
++ * @reg:		The name registry
++ * @conn:		The connection holding the name entries
++ * @cmd:		The command as passed in by the ioctl
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_cmd_name_list(struct kdbus_name_registry *reg,
++			struct kdbus_conn *conn,
++			struct kdbus_cmd_name_list *cmd)
++{
++	struct kdbus_policy_db *policy_db;
++	struct kdbus_name_list list = {};
++	struct kdbus_pool_slice *slice;
++	size_t pos;
++	int ret;
++
++	policy_db = &conn->ep->policy_db;
++
++	/* lock order: domain -> bus -> ep -> names -> conn */
++	down_read(&reg->rwlock);
++	down_read(&conn->bus->conn_rwlock);
++	down_read(&policy_db->entries_rwlock);
++
++	/* size of header + records */
++	pos = sizeof(struct kdbus_name_list);
++	ret = kdbus_name_list_all(conn, cmd->flags, NULL, &pos, false);
++	if (ret < 0)
++		goto exit_unlock;
++
++	ret = kdbus_pool_slice_alloc(conn->pool, &slice, pos);
++	if (ret < 0)
++		goto exit_unlock;
++
++	/* copy the header, specifying the overall size */
++	list.size = pos;
++	ret = kdbus_pool_slice_copy(slice, 0, &list, sizeof(list));
++	if (ret < 0)
++		goto exit_pool_free;
++
++	/* copy the records */
++	pos = sizeof(struct kdbus_name_list);
++	ret = kdbus_name_list_all(conn, cmd->flags, slice, &pos, true);
++	if (ret < 0)
++		goto exit_pool_free;
++
++	cmd->offset = kdbus_pool_slice_offset(slice);
++	kdbus_pool_slice_flush(slice);
++	kdbus_pool_slice_make_public(slice);
++
++exit_pool_free:
++	if (ret < 0)
++		kdbus_pool_slice_free(slice);
++exit_unlock:
++	up_read(&policy_db->entries_rwlock);
++	up_read(&conn->bus->conn_rwlock);
++	up_read(&reg->rwlock);
++	return ret;
++}
+diff --git a/drivers/misc/kdbus/names.h b/drivers/misc/kdbus/names.h
 new file mode 100644
-index 000000000000..f4f6f044b4c1
+index 000000000000..594d1bd54b2e
 --- /dev/null
-+++ b/drivers/misc/kdbus/policy.h
-@@ -0,0 +1,60 @@
++++ b/drivers/misc/kdbus/names.h
+@@ -0,0 +1,81 @@
 +/*
 + * Copyright (C) 2013-2014 Kay Sievers
 + * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
@@ -681,52 +976,73 @@ index 000000000000..f4f6f044b4c1
 + * your option) any later version.
 + */
 +
-+#ifndef __KDBUS_POLICY_H
-+#define __KDBUS_POLICY_H
++#ifndef __KDBUS_NAMES_H
++#define __KDBUS_NAMES_H
 +
 +#include <linux/hashtable.h>
-+#include <linux/mutex.h>
 +#include <linux/rwsem.h>
 +
-+struct kdbus_conn;
-+struct kdbus_item;
-+
 +/**
-+ * struct kdbus_policy_db - policy database
-+ * @entries_hash:	Hashtable of entries
-+ * @talk_access_hash:	Hashtable of send access elements
-+ * @entries_lock:	Mutex to protect the database's access entries
-+ * @cache_lock:		Mutex to protect the database's cache
++ * struct kdbus_name_registry - names registered for a bus
++ * @entries_hash:	Map of entries
++ * @lock:		Registry data lock
++ * @name_seq_last:	Last used sequence number to assign to a name entry
 + */
-+struct kdbus_policy_db {
-+	DECLARE_HASHTABLE(entries_hash, 6);
-+	DECLARE_HASHTABLE(talk_access_hash, 6);
-+	struct rw_semaphore entries_rwlock;
-+	struct mutex cache_lock;
++struct kdbus_name_registry {
++	DECLARE_HASHTABLE(entries_hash, 8);
++	struct rw_semaphore rwlock;
++	u64 name_seq_last;
 +};
 +
-+void kdbus_policy_db_init(struct kdbus_policy_db *db);
-+void kdbus_policy_db_clear(struct kdbus_policy_db *db);
++/**
++ * struct kdbus_name_entry - well-know name entry
++ * @name:		The well-known name
++ * @name_id:		Sequence number of name entry to be able to uniquely
++ *			identify a name over its registration lifetime
++ * @flags:		KDBUS_NAME_* flags
++ * @queue_list:		List of queued waiters for the well-known name
++ * @conn_entry:		Entry in connection
++ * @hentry:		Entry in registry map
++ * @conn:		Connection owning the name
++ * @activator:		Connection of the activator queuing incoming messages
++ */
++struct kdbus_name_entry {
++	char *name;
++	u64 name_id;
++	u64 flags;
++	struct list_head queue_list;
++	struct list_head conn_entry;
++	struct hlist_node hentry;
++	struct kdbus_conn *conn;
++	struct kdbus_conn *activator;
++};
 +
-+int kdbus_policy_check_see_access_unlocked(struct kdbus_policy_db *db,
-+					   struct kdbus_conn *conn,
-+					   const char *name);
-+int kdbus_policy_check_talk_access(struct kdbus_policy_db *db,
-+				   struct kdbus_conn *conn_src,
-+				   struct kdbus_conn *conn_dst);
-+int kdbus_policy_check_own_access(struct kdbus_policy_db *db,
-+				  const struct kdbus_conn *conn,
-+				  const char *name);
-+void kdbus_policy_purge_cache(struct kdbus_policy_db *db,
-+			      const struct kdbus_conn *conn);
-+void kdbus_policy_remove_owner(struct kdbus_policy_db *db,
-+			       const void *owner);
-+int kdbus_policy_set(struct kdbus_policy_db *db,
-+		     const struct kdbus_item *items,
-+		     size_t items_size,
-+		     size_t max_policies,
-+		     bool allow_wildcards,
-+		     const void *owner);
++int kdbus_name_registry_new(struct kdbus_name_registry **reg);
++void kdbus_name_registry_free(struct kdbus_name_registry *reg);
++
++int kdbus_name_acquire(struct kdbus_name_registry *reg,
++		       struct kdbus_conn *conn,
++		       const char *name, u64 *flags,
++		       struct kdbus_name_entry **entry);
++int kdbus_cmd_name_acquire(struct kdbus_name_registry *reg,
++			   struct kdbus_conn *conn,
++			   struct kdbus_cmd_name *cmd);
++int kdbus_cmd_name_release(struct kdbus_name_registry *reg,
++			   struct kdbus_conn *conn,
++			   const struct kdbus_cmd_name *cmd);
++int kdbus_cmd_name_list(struct kdbus_name_registry *reg,
++			struct kdbus_conn *conn,
++			struct kdbus_cmd_name_list *cmd);
++
++struct kdbus_name_entry *kdbus_name_lock(struct kdbus_name_registry *reg,
++					 const char *name);
++struct kdbus_name_entry *kdbus_name_unlock(struct kdbus_name_registry *reg,
++					   struct kdbus_name_entry *entry);
++
++void kdbus_name_remove_by_conn(struct kdbus_name_registry *reg,
++			       struct kdbus_conn *conn);
++
++bool kdbus_name_is_valid(const char *p, bool allow_wildcard);
 +#endif
 -- 
 2.1.2
