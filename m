@@ -1,36 +1,30 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 Subject: Re: [PATCH 00/12] Add kdbus implementation
-Date: Wed, 29 Oct 2014 15:15:51 -0700
-Message-ID: <CALCETrWrxc8foPYbRPtxwNX0sHK_=vLFLDXXyXu+2U2=B+=qCQ@mail.gmail.com>
+Date: Wed, 29 Oct 2014 15:15:05 -0700
+Message-ID: <20141029221505.GA7812@kroah.com>
 References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, John Stultz <john.stultz@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Tejun Heo <tj@kernel.org>, Marcel Holtmann <marcel@holtmann.org>, Ryan Lortie <desrt@desrt.ca>, Bastien Nocera <hadess@hadess.net>, David Herrmann <dh.herrmann@gmail.com>, Djalal Harouni <tixxdz@opendz.org>, simon.mcvittie@collabora.co.uk, daniel@zonque.org, alban.crequy@collabora.co.uk, javier.martinez@collabora.co.uk, Tom Gundersen <teg@jklm.no>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1414620056-6675-1-git-send-email-gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-(reply 1/2 -- I'm replying twice to keep the threading sane)
-
-On Wed, Oct 29, 2014 at 3:00 PM, Greg Kroah-Hartman
-<gregkh@linuxfoundation.org> wrote:
+On Wed, Oct 29, 2014 at 03:00:44PM -0700, Greg Kroah-Hartman wrote:
 > kdbus is a kernel-level IPC implementation that aims for resemblance to
 > the the protocol layer with the existing userspace D-Bus daemon while
 > enabling some features that couldn't be implemented before in userspace.
->
 
->  * Support for multiple domains, completely separated from each other,
->    allowing multiple virtualized instances to be used at the same time.
+{sigh}
 
-Given that there is no such thing as a device namespace, how does this work?
+I'll blame it on the jet-lag for the lack of [XX/12] markings on the
+patches.  I'll give it a day for review before resending if people
+really want to know the ordering.  It doesn't matter except for the
+final patch that adds the code to the build file.
 
-The docs seem a bit confusing to me as to whether there's a hierarchy
-of domains.  Do domains have a concept of a parent?
+sorry about that,
 
-What's "container-name"?
-
-Given that domains have random IDs, how can they be checkpointed and restored?
-
---Andy
+greg k-h
