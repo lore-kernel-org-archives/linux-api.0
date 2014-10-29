@@ -1,284 +1,725 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: [PATCH 00/12] Add kdbus implementation
-Date: Wed, 29 Oct 2014 15:00:44 -0700
-Message-ID: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: kdbus: add code to gather metadata
+Date: Wed, 29 Oct 2014 15:00:50 -0700
+Message-ID: <1414620056-6675-7-git-send-email-gregkh@linuxfoundation.org>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: john.stultz@linaro.org, arnd@arndb.de, tj@kernel.org, marcel@holtmann.org, desrt@desrt.ca, hadess@hadess.net, dh.herrmann@gmail.com, tixxdz@opendz.org, gregkh@linuxfoundation.org, simon.mcvittie@collabora.co.uk, daniel@zonque.org, alban.crequy@collabora.co.uk, javier.martinez@collabora.co.uk, teg@jklm.no
 List-Id: linux-api@vger.kernel.org
 
-kdbus is a kernel-level IPC implementation that aims for resemblance to
-the the protocol layer with the existing userspace D-Bus daemon while
-enabling some features that couldn't be implemented before in userspace=
-=2E
+From: Daniel Mack <daniel@zonque.org>
 
-The documentation added by the first patch in this series is meant to
-explain all protocol and API details comprehensively, but here's a ters=
-e
-list of the kdbus key features:
+A connection chooses which metadata it wants to have attached to each
+message it receives with kdbus_cmd_hello.attach_flags. The metadata
+will be attached as items to the messages. All metadata refers to
+information about the sending task at sending time, unless otherwise
+stated. Also, the metadata is copied, not referenced, so even if the
+sending task doesn't exist anymore at the time the message is received,
+the information is still preserved.
 
- * Implemented as a char driver, which creates devices on demand when
-   they are created.
+See kdbus.txt for more details on which metadata can currently be
+attached to messages.
 
- * Message transfer over shared memory areas in each of the peer's
-   task to avoid unnecessary extra data copies during message exchanges=
-=2E
-
- * Optional passing of file descriptors and sealed memfds along with
-   messages.
-
- * No demarshalling of any message content from inside the kernel;
-   the driver stays entirely agnostic to the transported payload.
-
- * Support for multiple domains, completely separated from each other,
-   allowing multiple virtualized instances to be used at the same time.
-
- * Support for peer-to-peer unicast and multicast messages.
-
- * Attachment of trustable metadata to each message on demand, such as
-   the sending peer's timestamp, creds, auxgroups, comm, exe, cmdline,
-   cgroup path, capabilities, security label, audit information, etc,
-   each taken at the time the sender issued the ioctl to send the
-   message. Which of those are actually recorded and attached is
-   controlled by the receiving peer.
-
- * Bloom filters as measure to pre-filter broadcast messages and to
-   mitigate unnecessary task wakeups. On the side kernel, however, this
-   is just a cheap &-operation, hash functions are left to be
-   implemented by userspace.
-
- * Optional message dequeuing by priority, allowing multiple types of
-   payloads of different priorities to be transported over the same
-   connection.
-
- * Global, domain-wide guaranteed message ordering.
-
- * Eavesdropping for buses for debugging
-
- * Adressing of remote peers by their numerical unique ID, or by a
-   well-known name.
-
- * Built-in name registry for atomic name ownership lookups, claims,
-   releases and take-overs from one peer to another.
-
- * Simple policy database to restrict peers from seeing or talking to
-   each other, and to control name ownership.
-
- * Custom bus endpoints in addition to the default ones. Those allow
-   to upload extra policy rules, and can act as a protocol-filtering
-   bus firewall.
-
- * Kernel-generated notifications on connected and disconnected peers,
-   claimed and released well-known-names, and exceeded reply timeouts.
-
-This is the first submission of kdbus by the kernel community.  It was
-developed in its own repository for well more than a year, and has been
-tested on x64-64, i686 and ARM architectures in various use cases. The
-driver is totally non-intrusive and doesn't touch a single line of
-existing kernel code.
-
-kdbus has been worked on collaboratively by many people contributing
-code and suggestions during its development. Below is a list of all
-involved individuals, in alphabetical order.
-
-  Alban Crequy, Arnd Bergmann, Christian S., Daniel Kowalski,
-  Daniel Mack, David Herrmann, Djalal Harouni, Govindarajulu
-  Varadarajan, Greg Kroah-Hartman, Harald Hoyer, Hristo Venev,
-  Ingo van Lil, Jacek Janczyk, Jason A. Donenfeld, John de
-  la Garza, Kay Sievers, Lennart Poettering, Lukasz Skalski,
-  Maciej Wereski, Marc-Antoine Perennou, Marcel Holtmann,
-  Michal Eljasiewicz, Michele Curti, Przemyslaw Kedzierski,
-  Radoslaw Pajak, Ryan Lortie, Simon McVittie, Simon Peeters,
-  Stefan Beller, Ted Feng, Tejun Heo, Tero Roponen, Thomas
-  Andersen, Torstein Huseb=C3=B8, Vasiliy Balyasnyy.
-
-Some statistics: the driver itself has a little more than 11k lines,
-with ~25% of the lines being comments. Our test suite weights in for
-another 6k lines, and the API documentation file currently has >1800
-lines. The loaded kernel module has ~70kB of text size.
-
-Patches #3 to #10 carry the driver implementation in digestable bites,
-but only #11 adds the Makefile to actually compile them. That division
-can of course be changed, and the patches be squashed and reordered
-later.
-
-The rest should be pretty much self-explanatory - the individual commit
-logs and Documentation/kdbus.txt contain detailed information on the
-driver's inner life.
-
-While we consider the kernel API/ABI mostly stable at this point, we're
-still in the process of fixing up some ends in userspace, such as
-compatibility layers and the D-Bus spec, but that shouldn't affect the
-kernel side much anymore.
-
-As for maintainership, Daniel Mack, David Herrmann, Djalal Harouni and
-myself would be taking care for it in the future.
-
-I'll also be keeping this in a git tree, the kdbus branch of
-char-misc.git at:
-	https://git.kernel.org/cgit/linux/kernel/git/gregkh/char-misc.git/
-
-thanks,
-
-greg k-h
-
-Daniel Mack (12):
-  kdbus: add documentation
-  kdbus: add header file
-  kdbus: add driver skeleton, ioctl entry points and utility functions
-  kdbus: add connection pool implementation
-  kdbus: add connection, queue handling and message validation code
-  kdbus: add code to gather metadata
-  kdbus: add code for notifications and matches
-  kdbus: add code for buses, domains and endpoints
-  kdbus: add name registry implementation
-  kdbus: add policy database implementation
-  kdbus: add Makefile, Kconfig and MAINTAINERS entry
-  kdbus: add selftests
-
- Documentation/ioctl/ioctl-number.txt             |    1 +
- Documentation/kdbus.txt                          | 1815 ++++++++++++++=
-++++++++
- MAINTAINERS                                      |   12 +
- drivers/misc/Kconfig                             |    1 +
- drivers/misc/Makefile                            |    1 +
- drivers/misc/kdbus/Kconfig                       |   11 +
- drivers/misc/kdbus/Makefile                      |   19 +
- drivers/misc/kdbus/bus.c                         |  450 ++++++
- drivers/misc/kdbus/bus.h                         |  107 ++
- drivers/misc/kdbus/connection.c                  | 1751 ++++++++++++++=
-+++++++
- drivers/misc/kdbus/connection.h                  |  177 +++
- drivers/misc/kdbus/domain.c                      |  477 ++++++
- drivers/misc/kdbus/domain.h                      |  105 ++
- drivers/misc/kdbus/endpoint.c                    |  567 +++++++
- drivers/misc/kdbus/endpoint.h                    |   94 ++
- drivers/misc/kdbus/handle.c                      | 1221 ++++++++++++++=
-+
- drivers/misc/kdbus/handle.h                      |   46 +
- drivers/misc/kdbus/item.c                        |  256 +++
- drivers/misc/kdbus/item.h                        |   40 +
- drivers/misc/kdbus/limits.h                      |   77 +
- drivers/misc/kdbus/main.c                        |   70 +
- drivers/misc/kdbus/match.c                       |  521 +++++++
- drivers/misc/kdbus/match.h                       |   30 +
- drivers/misc/kdbus/message.c                     |  420 +++++
- drivers/misc/kdbus/message.h                     |   72 +
- drivers/misc/kdbus/metadata.c                    |  626 ++++++++
- drivers/misc/kdbus/metadata.h                    |   51 +
- drivers/misc/kdbus/names.c                       |  920 +++++++++++
- drivers/misc/kdbus/names.h                       |   81 +
- drivers/misc/kdbus/notify.c                      |  235 +++
- drivers/misc/kdbus/notify.h                      |   28 +
- drivers/misc/kdbus/policy.c                      |  617 ++++++++
- drivers/misc/kdbus/policy.h                      |   60 +
- drivers/misc/kdbus/pool.c                        |  728 +++++++++
- drivers/misc/kdbus/pool.h                        |   43 +
- drivers/misc/kdbus/queue.c                       |  602 +++++++
- drivers/misc/kdbus/queue.h                       |   82 +
- drivers/misc/kdbus/util.c                        |  108 ++
- drivers/misc/kdbus/util.h                        |   94 ++
- include/uapi/linux/kdbus.h                       |  918 +++++++++++
- tools/testing/selftests/Makefile                 |    1 +
- tools/testing/selftests/kdbus/.gitignore         |   11 +
- tools/testing/selftests/kdbus/Makefile           |   46 +
- tools/testing/selftests/kdbus/kdbus-enum.c       |   90 ++
- tools/testing/selftests/kdbus/kdbus-enum.h       |   14 +
- tools/testing/selftests/kdbus/kdbus-test.c       |  474 ++++++
- tools/testing/selftests/kdbus/kdbus-test.h       |   79 +
- tools/testing/selftests/kdbus/kdbus-util.c       | 1173 ++++++++++++++
- tools/testing/selftests/kdbus/kdbus-util.h       |  139 ++
- tools/testing/selftests/kdbus/test-activator.c   |  317 ++++
- tools/testing/selftests/kdbus/test-benchmark.c   |  417 +++++
- tools/testing/selftests/kdbus/test-bus.c         |  117 ++
- tools/testing/selftests/kdbus/test-chat.c        |  123 ++
- tools/testing/selftests/kdbus/test-connection.c  |  258 +++
- tools/testing/selftests/kdbus/test-daemon.c      |   66 +
- tools/testing/selftests/kdbus/test-domain.c      |   65 +
- tools/testing/selftests/kdbus/test-endpoint.c    |  221 +++
- tools/testing/selftests/kdbus/test-fd.c          |  473 ++++++
- tools/testing/selftests/kdbus/test-free.c        |   34 +
- tools/testing/selftests/kdbus/test-match.c       |  385 +++++
- tools/testing/selftests/kdbus/test-message.c     |  126 ++
- tools/testing/selftests/kdbus/test-metadata-ns.c |  236 +++
- tools/testing/selftests/kdbus/test-monitor.c     |  156 ++
- tools/testing/selftests/kdbus/test-names.c       |  184 +++
- tools/testing/selftests/kdbus/test-policy-ns.c   |  578 +++++++
- tools/testing/selftests/kdbus/test-policy-priv.c | 1168 ++++++++++++++
- tools/testing/selftests/kdbus/test-policy.c      |   81 +
- tools/testing/selftests/kdbus/test-race.c        |  313 ++++
- tools/testing/selftests/kdbus/test-sync.c        |  241 +++
- tools/testing/selftests/kdbus/test-timeout.c     |   97 ++
- 70 files changed, 21217 insertions(+)
- create mode 100644 Documentation/kdbus.txt
- create mode 100644 drivers/misc/kdbus/Kconfig
- create mode 100644 drivers/misc/kdbus/Makefile
- create mode 100644 drivers/misc/kdbus/bus.c
- create mode 100644 drivers/misc/kdbus/bus.h
- create mode 100644 drivers/misc/kdbus/connection.c
- create mode 100644 drivers/misc/kdbus/connection.h
- create mode 100644 drivers/misc/kdbus/domain.c
- create mode 100644 drivers/misc/kdbus/domain.h
- create mode 100644 drivers/misc/kdbus/endpoint.c
- create mode 100644 drivers/misc/kdbus/endpoint.h
- create mode 100644 drivers/misc/kdbus/handle.c
- create mode 100644 drivers/misc/kdbus/handle.h
- create mode 100644 drivers/misc/kdbus/item.c
- create mode 100644 drivers/misc/kdbus/item.h
- create mode 100644 drivers/misc/kdbus/limits.h
- create mode 100644 drivers/misc/kdbus/main.c
- create mode 100644 drivers/misc/kdbus/match.c
- create mode 100644 drivers/misc/kdbus/match.h
- create mode 100644 drivers/misc/kdbus/message.c
- create mode 100644 drivers/misc/kdbus/message.h
+Signed-off-by: Daniel Mack <daniel@zonque.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/misc/kdbus/metadata.c | 626 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/misc/kdbus/metadata.h |  51 ++++
+ 2 files changed, 677 insertions(+)
  create mode 100644 drivers/misc/kdbus/metadata.c
  create mode 100644 drivers/misc/kdbus/metadata.h
- create mode 100644 drivers/misc/kdbus/names.c
- create mode 100644 drivers/misc/kdbus/names.h
- create mode 100644 drivers/misc/kdbus/notify.c
- create mode 100644 drivers/misc/kdbus/notify.h
- create mode 100644 drivers/misc/kdbus/policy.c
- create mode 100644 drivers/misc/kdbus/policy.h
- create mode 100644 drivers/misc/kdbus/pool.c
- create mode 100644 drivers/misc/kdbus/pool.h
- create mode 100644 drivers/misc/kdbus/queue.c
- create mode 100644 drivers/misc/kdbus/queue.h
- create mode 100644 drivers/misc/kdbus/util.c
- create mode 100644 drivers/misc/kdbus/util.h
- create mode 100644 include/uapi/linux/kdbus.h
- create mode 100644 tools/testing/selftests/kdbus/.gitignore
- create mode 100644 tools/testing/selftests/kdbus/Makefile
- create mode 100644 tools/testing/selftests/kdbus/kdbus-enum.c
- create mode 100644 tools/testing/selftests/kdbus/kdbus-enum.h
- create mode 100644 tools/testing/selftests/kdbus/kdbus-test.c
- create mode 100644 tools/testing/selftests/kdbus/kdbus-test.h
- create mode 100644 tools/testing/selftests/kdbus/kdbus-util.c
- create mode 100644 tools/testing/selftests/kdbus/kdbus-util.h
- create mode 100644 tools/testing/selftests/kdbus/test-activator.c
- create mode 100644 tools/testing/selftests/kdbus/test-benchmark.c
- create mode 100644 tools/testing/selftests/kdbus/test-bus.c
- create mode 100644 tools/testing/selftests/kdbus/test-chat.c
- create mode 100644 tools/testing/selftests/kdbus/test-connection.c
- create mode 100644 tools/testing/selftests/kdbus/test-daemon.c
- create mode 100644 tools/testing/selftests/kdbus/test-domain.c
- create mode 100644 tools/testing/selftests/kdbus/test-endpoint.c
- create mode 100644 tools/testing/selftests/kdbus/test-fd.c
- create mode 100644 tools/testing/selftests/kdbus/test-free.c
- create mode 100644 tools/testing/selftests/kdbus/test-match.c
- create mode 100644 tools/testing/selftests/kdbus/test-message.c
- create mode 100644 tools/testing/selftests/kdbus/test-metadata-ns.c
- create mode 100644 tools/testing/selftests/kdbus/test-monitor.c
- create mode 100644 tools/testing/selftests/kdbus/test-names.c
- create mode 100644 tools/testing/selftests/kdbus/test-policy-ns.c
- create mode 100644 tools/testing/selftests/kdbus/test-policy-priv.c
- create mode 100644 tools/testing/selftests/kdbus/test-policy.c
- create mode 100644 tools/testing/selftests/kdbus/test-race.c
- create mode 100644 tools/testing/selftests/kdbus/test-sync.c
- create mode 100644 tools/testing/selftests/kdbus/test-timeout.c
 
---=20
-2.1.0
+diff --git a/drivers/misc/kdbus/metadata.c b/drivers/misc/kdbus/metadata.c
+new file mode 100644
+index 000000000000..8323e6d7a071
+--- /dev/null
++++ b/drivers/misc/kdbus/metadata.c
+@@ -0,0 +1,626 @@
++/*
++ * Copyright (C) 2013-2014 Kay Sievers
++ * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
++ * Copyright (C) 2013-2014 Daniel Mack <daniel@zonque.org>
++ * Copyright (C) 2013-2014 David Herrmann <dh.herrmann@gmail.com>
++ * Copyright (C) 2013-2014 Linux Foundation
++ *
++ * kdbus is free software; you can redistribute it and/or modify it under
++ * the terms of the GNU Lesser General Public License as published by the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#include <linux/audit.h>
++#include <linux/capability.h>
++#include <linux/cgroup.h>
++#include <linux/cred.h>
++#include <linux/file.h>
++#include <linux/init.h>
++#include <linux/mutex.h>
++#include <linux/pid_namespace.h>
++#include <linux/sched.h>
++#include <linux/security.h>
++#include <linux/sizes.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/user_namespace.h>
++#include <linux/version.h>
++
++#include "connection.h"
++#include "item.h"
++#include "message.h"
++#include "metadata.h"
++#include "names.h"
++
++/**
++ * kdbus_meta_new() - create new metadata object
++ * @meta:		New metadata object
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_meta_new(struct kdbus_meta **meta)
++{
++	struct kdbus_meta *m;
++
++	BUG_ON(*meta);
++
++	m = kzalloc(sizeof(*m), GFP_KERNEL);
++	if (!m)
++		return -ENOMEM;
++
++	/*
++	 * Remember the PID and user namespaces our credentials belong to;
++	 * we need to prevent leaking authorization and security-relevant
++	 * data across different namespaces.
++	 */
++	m->pid_namespace = get_pid_ns(task_active_pid_ns(current));
++	m->user_namespace = get_user_ns(current_user_ns());
++
++	*meta = m;
++	return 0;
++}
++
++/**
++ * kdbus_meta_dup() - Duplicate a meta object
++ *
++ * @orig:	The meta object to duplicate
++ * @copy:	Return pointer for the duplicated object
++ *
++ * Return: 0 on success, -ENOMEM on memory allocation failures.
++ */
++int kdbus_meta_dup(const struct kdbus_meta *orig,
++		   struct kdbus_meta **copy)
++{
++	struct kdbus_meta *m;
++
++	BUG_ON(!orig || !copy);
++
++	m = kmalloc(sizeof(*m), GFP_KERNEL);
++	if (!m)
++		return -ENOMEM;
++
++	m->data = kmemdup(orig->data, orig->allocated_size, GFP_KERNEL);
++	if (!m->data) {
++		kfree(m);
++		return -ENOMEM;
++	}
++
++	m->pid_namespace = get_pid_ns(orig->pid_namespace);
++	m->user_namespace = get_user_ns(orig->user_namespace);
++
++	m->attached = orig->attached;
++	m->allocated_size = orig->allocated_size;
++	m->size = orig->size;
++
++	*copy = m;
++	return 0;
++}
++
++/**
++ * kdbus_meta_ns_eq() - check whether the namespaces of two metadata objects
++ *			are equal.
++ * @meta_a:	Metadata A
++ * @meta_b:	Metadata B
++ *
++ * Return: true if the two objects have the same namespaces, false otherwise.
++ */
++bool kdbus_meta_ns_eq(const struct kdbus_meta *meta_a,
++		      const struct kdbus_meta *meta_b)
++{
++	return (meta_a->pid_namespace == meta_b->pid_namespace &&
++		meta_a->user_namespace == meta_b->user_namespace);
++}
++
++/**
++ * kdbus_meta_free() - release metadata
++ * @meta:		Metadata object
++ */
++void kdbus_meta_free(struct kdbus_meta *meta)
++{
++	if (!meta)
++		return;
++
++	put_pid_ns(meta->pid_namespace);
++	put_user_ns(meta->user_namespace);
++
++	kfree(meta->data);
++	kfree(meta);
++}
++
++static struct kdbus_item *
++kdbus_meta_append_item(struct kdbus_meta *meta, u64 type, size_t payload_size)
++{
++	size_t extra_size = KDBUS_ITEM_SIZE(payload_size);
++	struct kdbus_item *item;
++	size_t size;
++
++	/* get new metadata buffer, pre-allocate at least 512 bytes */
++	if (!meta->data) {
++		size = roundup_pow_of_two(256 + extra_size);
++		meta->data = kzalloc(size, GFP_KERNEL);
++		if (!meta->data)
++			return ERR_PTR(-ENOMEM);
++
++		meta->allocated_size = size;
++	}
++
++	/* double the pre-allocated buffer size if needed */
++	size = meta->size + extra_size;
++	if (size > meta->allocated_size) {
++		size_t size_diff;
++		struct kdbus_item *data;
++
++		size = roundup_pow_of_two(size);
++		size_diff = size - meta->allocated_size;
++		data = kmalloc(size, GFP_KERNEL);
++		if (!data)
++			return ERR_PTR(-ENOMEM);
++
++		memcpy(data, meta->data, meta->size);
++		memset((u8 *)data + meta->allocated_size, 0, size_diff);
++
++		kfree(meta->data);
++		meta->data = data;
++		meta->allocated_size = size;
++	}
++
++	/* insert new record */
++	item = (struct kdbus_item *)((u8 *)meta->data + meta->size);
++	item->type = type;
++	item->size = KDBUS_ITEM_HEADER_SIZE + payload_size;
++
++	meta->size += extra_size;
++
++	return item;
++}
++
++/**
++ * kdbus_meta_append_data() - append given raw data to metadata object
++ * @meta:		Metadata object
++ * @type:		KDBUS_ITEM_* type
++ * @data:		pointer to data to copy from. If it is NULL
++ *			then just make space in the metadata buffer.
++ * @len:		number of bytes to copy
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_meta_append_data(struct kdbus_meta *meta, u64 type,
++			   const void *data, size_t len)
++{
++	struct kdbus_item *item;
++
++	if (len == 0)
++		return 0;
++
++	item = kdbus_meta_append_item(meta, type, len);
++	if (IS_ERR(item))
++		return PTR_ERR(item);
++
++	if (data)
++		memcpy(item->data, data, len);
++
++	return 0;
++}
++
++static int kdbus_meta_append_str(struct kdbus_meta *meta, u64 type,
++				 const char *str)
++{
++	return kdbus_meta_append_data(meta, type, str, strlen(str) + 1);
++}
++
++static int kdbus_meta_append_timestamp(struct kdbus_meta *meta,
++				       u64 seq)
++{
++	struct kdbus_item *item;
++	struct timespec ts;
++
++	item = kdbus_meta_append_item(meta, KDBUS_ITEM_TIMESTAMP,
++				      sizeof(struct kdbus_timestamp));
++	if (IS_ERR(item))
++		return PTR_ERR(item);
++
++	if (seq > 0)
++		item->timestamp.seqnum = seq;
++
++	ktime_get_ts(&ts);
++	item->timestamp.monotonic_ns = timespec_to_ns(&ts);
++
++	ktime_get_real_ts(&ts);
++	item->timestamp.realtime_ns = timespec_to_ns(&ts);
++
++	return 0;
++}
++
++static int kdbus_meta_append_cred(struct kdbus_meta *meta)
++{
++	struct kdbus_creds creds = {
++		.uid = from_kuid_munged(current_user_ns(), current_uid()),
++		.gid = from_kgid_munged(current_user_ns(), current_gid()),
++		.pid = task_pid_vnr(current),
++		.tid = task_tgid_vnr(current),
++		.starttime = current->start_time,
++	};
++
++	return kdbus_meta_append_data(meta, KDBUS_ITEM_CREDS,
++				      &creds, sizeof(creds));
++}
++
++static int kdbus_meta_append_auxgroups(struct kdbus_meta *meta)
++{
++	struct group_info *info;
++	struct kdbus_item *item;
++	int i, ret = 0;
++	u64 *gid;
++
++	info = get_current_groups();
++	item = kdbus_meta_append_item(meta, KDBUS_ITEM_AUXGROUPS,
++				      info->ngroups * sizeof(*gid));
++	if (IS_ERR(item)) {
++		ret = PTR_ERR(item);
++		goto exit_put_groups;
++	}
++
++	gid = (u64 *) item->data;
++
++	for (i = 0; i < info->ngroups; i++)
++		gid[i] = from_kgid_munged(current_user_ns(), GROUP_AT(info, i));
++
++exit_put_groups:
++	put_group_info(info);
++
++	return ret;
++}
++
++static int kdbus_meta_append_src_names(struct kdbus_meta *meta,
++				       struct kdbus_conn *conn)
++{
++	struct kdbus_name_entry *e;
++	int ret = 0;
++
++	if (!conn)
++		return 0;
++
++	mutex_lock(&conn->lock);
++	list_for_each_entry(e, &conn->names_list, conn_entry) {
++		struct kdbus_item *item;
++		size_t len;
++
++		len = strlen(e->name) + 1;
++		item = kdbus_meta_append_item(meta, KDBUS_ITEM_NAME,
++					      sizeof(struct kdbus_name) + len);
++		if (IS_ERR(item)) {
++			ret = PTR_ERR(item);
++			break;
++		}
++
++		item->name.flags = e->flags;
++		memcpy(item->name.name, e->name, len);
++	}
++	mutex_unlock(&conn->lock);
++
++	return ret;
++}
++
++static int kdbus_meta_append_exe(struct kdbus_meta *meta)
++{
++	struct mm_struct *mm = get_task_mm(current);
++	struct path *exe_path = NULL;
++	char *pathname;
++	int ret = 0;
++	size_t len;
++	char *tmp;
++
++	if (!mm)
++		return -EFAULT;
++
++	down_read(&mm->mmap_sem);
++	if (mm->exe_file) {
++		path_get(&mm->exe_file->f_path);
++		exe_path = &mm->exe_file->f_path;
++	}
++	up_read(&mm->mmap_sem);
++
++	if (!exe_path)
++		goto exit_mmput;
++
++	tmp = (char *)__get_free_page(GFP_TEMPORARY | __GFP_ZERO);
++	if (!tmp) {
++		ret = -ENOMEM;
++		goto exit_path_put;
++	}
++
++	pathname = d_path(exe_path, tmp, PAGE_SIZE);
++	if (IS_ERR(pathname)) {
++		ret = PTR_ERR(pathname);
++		goto exit_free_page;
++	}
++
++	len = tmp + PAGE_SIZE - pathname;
++	ret = kdbus_meta_append_data(meta, KDBUS_ITEM_EXE, pathname, len);
++
++exit_free_page:
++	free_page((unsigned long) tmp);
++
++exit_path_put:
++	path_put(exe_path);
++
++exit_mmput:
++	mmput(mm);
++
++	return ret;
++}
++
++static int kdbus_meta_append_cmdline(struct kdbus_meta *meta)
++{
++	struct mm_struct *mm;
++	int ret = 0;
++	size_t len;
++	char *tmp;
++
++	tmp = (char *)__get_free_page(GFP_TEMPORARY | __GFP_ZERO);
++	if (!tmp)
++		return -ENOMEM;
++
++	mm = get_task_mm(current);
++	if (!mm) {
++		ret = -EFAULT;
++		goto exit_free_page;
++	}
++
++	if (!mm->arg_end)
++		goto exit_mmput;
++
++	len = mm->arg_end - mm->arg_start;
++	if (len > PAGE_SIZE)
++		len = PAGE_SIZE;
++
++	ret = copy_from_user(tmp, (const char __user *)mm->arg_start, len);
++	if (ret < 0)
++		goto exit_mmput;
++
++	ret = kdbus_meta_append_data(meta, KDBUS_ITEM_CMDLINE, tmp, len);
++
++exit_mmput:
++	mmput(mm);
++
++exit_free_page:
++	free_page((unsigned long) tmp);
++
++	return ret;
++}
++
++static int kdbus_meta_append_caps(struct kdbus_meta *meta)
++{
++	struct caps {
++		u32 last_cap;
++		struct {
++			u32 caps[_KERNEL_CAPABILITY_U32S];
++		} set[4];
++	} caps;
++	unsigned int i;
++	const struct cred *cred = current_cred();
++
++	caps.last_cap = CAP_LAST_CAP;
++
++	for (i = 0; i < _KERNEL_CAPABILITY_U32S; i++) {
++		caps.set[0].caps[i] = cred->cap_inheritable.cap[i];
++		caps.set[1].caps[i] = cred->cap_permitted.cap[i];
++		caps.set[2].caps[i] = cred->cap_effective.cap[i];
++		caps.set[3].caps[i] = cred->cap_bset.cap[i];
++	}
++
++	/* clear unused bits */
++	for (i = 0; i < 4; i++)
++		caps.set[i].caps[CAP_TO_INDEX(CAP_LAST_CAP)] &=
++			CAP_TO_MASK(CAP_LAST_CAP + 1) - 1;
++
++	return kdbus_meta_append_data(meta, KDBUS_ITEM_CAPS,
++				      &caps, sizeof(caps));
++}
++
++#ifdef CONFIG_CGROUPS
++static int kdbus_meta_append_cgroup(struct kdbus_meta *meta)
++{
++	char *buf, *path;
++	int ret;
++
++	buf = (char *)__get_free_page(GFP_TEMPORARY | __GFP_ZERO);
++	if (!buf)
++		return -ENOMEM;
++
++	path = task_cgroup_path(current, buf, PAGE_SIZE);
++
++	if (path)
++		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_CGROUP, path);
++	else
++		ret = -ENAMETOOLONG;
++
++	free_page((unsigned long) buf);
++
++	return ret;
++}
++#endif
++
++#ifdef CONFIG_AUDITSYSCALL
++static int kdbus_meta_append_audit(struct kdbus_meta *meta)
++{
++	struct kdbus_audit audit;
++
++	audit.loginuid = from_kuid(current_user_ns(),
++				   audit_get_loginuid(current));
++	audit.sessionid = audit_get_sessionid(current);
++
++	return kdbus_meta_append_data(meta, KDBUS_ITEM_AUDIT,
++				      &audit, sizeof(audit));
++}
++#endif
++
++#ifdef CONFIG_SECURITY
++static int kdbus_meta_append_seclabel(struct kdbus_meta *meta)
++{
++	u32 len, sid;
++	char *label;
++	int ret;
++
++	security_task_getsecid(current, &sid);
++	ret = security_secid_to_secctx(sid, &label, &len);
++	if (ret == -EOPNOTSUPP)
++		return 0;
++	if (ret < 0)
++		return ret;
++
++	if (label && len > 0)
++		ret = kdbus_meta_append_data(meta, KDBUS_ITEM_SECLABEL,
++					     label, len);
++	security_release_secctx(label, len);
++
++	return ret;
++}
++#endif
++
++/**
++ * kdbus_meta_append() - collect metadata from current process
++ * @meta:		Metadata object
++ * @conn:		Current connection to read names from
++ * @seq:		Message sequence number
++ * @which:		KDBUS_ATTACH_* flags which typ of data to attach
++ *
++ * Collect the data specified in flags and allocate or extend
++ * the buffer in the metadata object.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_meta_append(struct kdbus_meta *meta,
++		      struct kdbus_conn *conn,
++		      u64 seq, u64 which)
++{
++	int ret;
++	u64 mask;
++
++	/* which metadata is wanted but not yet attached? */
++	mask = which & ~meta->attached;
++	if (mask == 0)
++		return 0;
++
++	if (mask & KDBUS_ATTACH_TIMESTAMP) {
++		ret = kdbus_meta_append_timestamp(meta, seq);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_TIMESTAMP;
++	}
++
++	if (mask & KDBUS_ATTACH_CREDS) {
++		ret = kdbus_meta_append_cred(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_CREDS;
++	}
++
++	if (mask & KDBUS_ATTACH_AUXGROUPS) {
++		ret = kdbus_meta_append_auxgroups(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_AUXGROUPS;
++	}
++
++	if (mask & KDBUS_ATTACH_NAMES && conn) {
++		ret = kdbus_meta_append_src_names(meta, conn);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_NAMES;
++	}
++
++	if (mask & KDBUS_ATTACH_TID_COMM) {
++		char comm[TASK_COMM_LEN];
++
++		get_task_comm(comm, current->group_leader);
++		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_TID_COMM, comm);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_TID_COMM;
++	}
++
++	if (mask & KDBUS_ATTACH_PID_COMM) {
++		char comm[TASK_COMM_LEN];
++
++		get_task_comm(comm, current);
++		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_PID_COMM, comm);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_PID_COMM;
++	}
++
++	if (mask & KDBUS_ATTACH_EXE) {
++		ret = kdbus_meta_append_exe(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_EXE;
++	}
++
++	if (mask & KDBUS_ATTACH_CMDLINE) {
++		ret = kdbus_meta_append_cmdline(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_CMDLINE;
++	}
++
++	/* we always return a 4 elements, the element size is 1/4  */
++	if (mask & KDBUS_ATTACH_CAPS) {
++		ret = kdbus_meta_append_caps(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_CAPS;
++	}
++
++#ifdef CONFIG_CGROUPS
++	/* attach the path of the one group hierarchy specified for the bus */
++	if (mask & KDBUS_ATTACH_CGROUP) {
++		ret = kdbus_meta_append_cgroup(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_CGROUP;
++	}
++#endif
++
++#ifdef CONFIG_AUDITSYSCALL
++	if (mask & KDBUS_ATTACH_AUDIT) {
++		ret = kdbus_meta_append_audit(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_AUDIT;
++	}
++#endif
++
++#ifdef CONFIG_SECURITY
++	if (mask & KDBUS_ATTACH_SECLABEL) {
++		ret = kdbus_meta_append_seclabel(meta);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_SECLABEL;
++	}
++#endif
++
++	if ((mask & KDBUS_ATTACH_CONN_NAME) && conn && conn->name) {
++		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_CONN_NAME,
++					    conn->name);
++		if (ret < 0)
++			return ret;
++
++		meta->attached |= KDBUS_ATTACH_CONN_NAME;
++	}
++
++	return 0;
++}
+diff --git a/drivers/misc/kdbus/metadata.h b/drivers/misc/kdbus/metadata.h
+new file mode 100644
+index 000000000000..a2728f57a06f
+--- /dev/null
++++ b/drivers/misc/kdbus/metadata.h
+@@ -0,0 +1,51 @@
++/*
++ * Copyright (C) 2013-2014 Kay Sievers
++ * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
++ * Copyright (C) 2013-2014 Daniel Mack <daniel@zonque.org>
++ * Copyright (C) 2013-2014 David Herrmann <dh.herrmann@gmail.com>
++ * Copyright (C) 2013-2014 Linux Foundation
++ *
++ * kdbus is free software; you can redistribute it and/or modify it under
++ * the terms of the GNU Lesser General Public License as published by the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#ifndef __KDBUS_METADATA_H
++#define __KDBUS_METADATA_H
++
++/**
++ * struct kdbus_meta - metadata buffer
++ * @attached:		Flags for already attached data
++ * @domain:		Domain the metadata belongs to
++ * @data:		Allocated buffer
++ * @size:		Number of bytes used
++ * @allocated_size:	Size of buffer
++ *
++ * Used to collect and store connection metadata in a pre-compiled
++ * buffer containing struct kdbus_item.
++ */
++struct kdbus_meta {
++	u64 attached;
++	struct pid_namespace *pid_namespace;
++	struct user_namespace *user_namespace;
++	struct kdbus_item *data;
++	size_t size;
++	size_t allocated_size;
++};
++
++struct kdbus_conn;
++
++int kdbus_meta_new(struct kdbus_meta **meta);
++int kdbus_meta_dup(const struct kdbus_meta *orig,
++		   struct kdbus_meta **copy);
++int kdbus_meta_append_data(struct kdbus_meta *meta, u64 type,
++			   const void *buf, size_t len);
++int kdbus_meta_append(struct kdbus_meta *meta,
++		      struct kdbus_conn *conn,
++		      u64 seq,
++		      u64 which);
++void kdbus_meta_free(struct kdbus_meta *meta);
++bool kdbus_meta_ns_eq(const struct kdbus_meta *meta_a,
++		      const struct kdbus_meta *meta_b);
++#endif
+-- 
+2.1.2
