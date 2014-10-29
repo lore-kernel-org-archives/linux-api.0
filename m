@@ -1,7 +1,7 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: kdbus: add code to gather metadata
-Date: Wed, 29 Oct 2014 15:00:50 -0700
-Message-ID: <1414620056-6675-7-git-send-email-gregkh@linuxfoundation.org>
+Subject: kdbus: add policy database implementation
+Date: Wed, 29 Oct 2014 15:00:54 -0700
+Message-ID: <1414620056-6675-11-git-send-email-gregkh@linuxfoundation.org>
 References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
@@ -12,38 +12,46 @@ List-Id: linux-api@vger.kernel.org
 
 From: Daniel Mack <daniel@zonque.org>
 
-A connection chooses which metadata it wants to have attached to each
-message it receives with kdbus_cmd_hello.attach_flags. The metadata
-will be attached as items to the messages. All metadata refers to
-information about the sending task at sending time, unless otherwise
-stated. Also, the metadata is copied, not referenced, so even if the
-sending task doesn't exist anymore at the time the message is received,
-the information is still preserved.
+This patch adds the policy database implementation.
 
-See kdbus.txt for more details on which metadata can currently be
-attached to messages.
+A policy databases restrict the possibilities of connections to own,
+see and talk to well-known names. It can be associated with a bus
+(through a policy holder connection) or a custom endpoint.
+
+By default, buses have an empty policy database that is augmented on
+demand when a policy holder connection is instantiated.
+
+Policies are set through KDBUS_CMD_HELLO (when creating a policy
+holder connection), KDBUS_CMD_CONN_UPDATE (when updating a policy
+holder connection), KDBUS_CMD_EP_MAKE (creating a custom endpoint)
+or KDBUS_CMD_EP_UPDATE (updating a custom endpoint). In all cases,
+the name and policy access information is stored in items of type
+KDBUS_ITEM_NAME and KDBUS_ITEM_POLICY_ACCESS.
+
+See Documentation/kdbus.txt for more details.
 
 Signed-off-by: Daniel Mack <daniel@zonque.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- drivers/misc/kdbus/metadata.c | 626 ++++++++++++++++++++++++++++++++++++++++++
- drivers/misc/kdbus/metadata.h |  51 ++++
+ drivers/misc/kdbus/policy.c | 617 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/misc/kdbus/policy.h |  60 +++++
  2 files changed, 677 insertions(+)
- create mode 100644 drivers/misc/kdbus/metadata.c
- create mode 100644 drivers/misc/kdbus/metadata.h
+ create mode 100644 drivers/misc/kdbus/policy.c
+ create mode 100644 drivers/misc/kdbus/policy.h
 
-diff --git a/drivers/misc/kdbus/metadata.c b/drivers/misc/kdbus/metadata.c
+diff --git a/drivers/misc/kdbus/policy.c b/drivers/misc/kdbus/policy.c
 new file mode 100644
-index 000000000000..8323e6d7a071
+index 000000000000..66bce57eb5e6
 --- /dev/null
-+++ b/drivers/misc/kdbus/metadata.c
-@@ -0,0 +1,626 @@
++++ b/drivers/misc/kdbus/policy.c
+@@ -0,0 +1,617 @@
 +/*
 + * Copyright (C) 2013-2014 Kay Sievers
 + * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 + * Copyright (C) 2013-2014 Daniel Mack <daniel@zonque.org>
 + * Copyright (C) 2013-2014 David Herrmann <dh.herrmann@gmail.com>
 + * Copyright (C) 2013-2014 Linux Foundation
++ * Copyright (C) 2014 Djalal Harouni
 + *
 + * kdbus is free software; you can redistribute it and/or modify it under
 + * the terms of the GNU Lesser General Public License as published by the
@@ -51,625 +59,615 @@ index 000000000000..8323e6d7a071
 + * your option) any later version.
 + */
 +
-+#include <linux/audit.h>
-+#include <linux/capability.h>
-+#include <linux/cgroup.h>
-+#include <linux/cred.h>
-+#include <linux/file.h>
++#include <linux/fs.h>
 +#include <linux/init.h>
 +#include <linux/mutex.h>
-+#include <linux/pid_namespace.h>
 +#include <linux/sched.h>
-+#include <linux/security.h>
 +#include <linux/sizes.h>
 +#include <linux/slab.h>
 +#include <linux/uaccess.h>
-+#include <linux/user_namespace.h>
-+#include <linux/version.h>
 +
++#include "bus.h"
 +#include "connection.h"
++#include "domain.h"
 +#include "item.h"
-+#include "message.h"
-+#include "metadata.h"
 +#include "names.h"
++#include "policy.h"
++
++#define KDBUS_POLICY_HASH_SIZE	64
 +
 +/**
-+ * kdbus_meta_new() - create new metadata object
-+ * @meta:		New metadata object
-+ *
-+ * Return: 0 on success, negative errno on failure.
++ * struct kdbus_policy_db_cache_entry - a cached entry
++ * @conn_a:		Connection A
++ * @conn_b:		Connection B
++ * @owner:		Owner of policy-entry that produced this cache-entry
++ * @hentry:		The hash table entry for the database's entries_hash
 + */
-+int kdbus_meta_new(struct kdbus_meta **meta)
-+{
-+	struct kdbus_meta *m;
-+
-+	BUG_ON(*meta);
-+
-+	m = kzalloc(sizeof(*m), GFP_KERNEL);
-+	if (!m)
-+		return -ENOMEM;
-+
-+	/*
-+	 * Remember the PID and user namespaces our credentials belong to;
-+	 * we need to prevent leaking authorization and security-relevant
-+	 * data across different namespaces.
-+	 */
-+	m->pid_namespace = get_pid_ns(task_active_pid_ns(current));
-+	m->user_namespace = get_user_ns(current_user_ns());
-+
-+	*meta = m;
-+	return 0;
-+}
++struct kdbus_policy_db_cache_entry {
++	struct kdbus_conn *conn_a;
++	struct kdbus_conn *conn_b;
++	const void *owner;
++	struct hlist_node hentry;
++};
 +
 +/**
-+ * kdbus_meta_dup() - Duplicate a meta object
++ * struct kdbus_policy_db_entry_access - a database entry access item
++ * @type:		One of KDBUS_POLICY_ACCESS_* types
++ * @access:		Access to grant. One of KDBUS_POLICY_*
++ * @uid:		For KDBUS_POLICY_ACCESS_USER, the global uid
++ * @gid:		For KDBUS_POLICY_ACCESS_GROUP, the global gid
++ * @list:		List entry item for the entry's list
 + *
-+ * @orig:	The meta object to duplicate
-+ * @copy:	Return pointer for the duplicated object
-+ *
-+ * Return: 0 on success, -ENOMEM on memory allocation failures.
++ * This is the internal version of struct kdbus_policy_db_access.
 + */
-+int kdbus_meta_dup(const struct kdbus_meta *orig,
-+		   struct kdbus_meta **copy)
-+{
-+	struct kdbus_meta *m;
-+
-+	BUG_ON(!orig || !copy);
-+
-+	m = kmalloc(sizeof(*m), GFP_KERNEL);
-+	if (!m)
-+		return -ENOMEM;
-+
-+	m->data = kmemdup(orig->data, orig->allocated_size, GFP_KERNEL);
-+	if (!m->data) {
-+		kfree(m);
-+		return -ENOMEM;
-+	}
-+
-+	m->pid_namespace = get_pid_ns(orig->pid_namespace);
-+	m->user_namespace = get_user_ns(orig->user_namespace);
-+
-+	m->attached = orig->attached;
-+	m->allocated_size = orig->allocated_size;
-+	m->size = orig->size;
-+
-+	*copy = m;
-+	return 0;
-+}
-+
-+/**
-+ * kdbus_meta_ns_eq() - check whether the namespaces of two metadata objects
-+ *			are equal.
-+ * @meta_a:	Metadata A
-+ * @meta_b:	Metadata B
-+ *
-+ * Return: true if the two objects have the same namespaces, false otherwise.
-+ */
-+bool kdbus_meta_ns_eq(const struct kdbus_meta *meta_a,
-+		      const struct kdbus_meta *meta_b)
-+{
-+	return (meta_a->pid_namespace == meta_b->pid_namespace &&
-+		meta_a->user_namespace == meta_b->user_namespace);
-+}
-+
-+/**
-+ * kdbus_meta_free() - release metadata
-+ * @meta:		Metadata object
-+ */
-+void kdbus_meta_free(struct kdbus_meta *meta)
-+{
-+	if (!meta)
-+		return;
-+
-+	put_pid_ns(meta->pid_namespace);
-+	put_user_ns(meta->user_namespace);
-+
-+	kfree(meta->data);
-+	kfree(meta);
-+}
-+
-+static struct kdbus_item *
-+kdbus_meta_append_item(struct kdbus_meta *meta, u64 type, size_t payload_size)
-+{
-+	size_t extra_size = KDBUS_ITEM_SIZE(payload_size);
-+	struct kdbus_item *item;
-+	size_t size;
-+
-+	/* get new metadata buffer, pre-allocate at least 512 bytes */
-+	if (!meta->data) {
-+		size = roundup_pow_of_two(256 + extra_size);
-+		meta->data = kzalloc(size, GFP_KERNEL);
-+		if (!meta->data)
-+			return ERR_PTR(-ENOMEM);
-+
-+		meta->allocated_size = size;
-+	}
-+
-+	/* double the pre-allocated buffer size if needed */
-+	size = meta->size + extra_size;
-+	if (size > meta->allocated_size) {
-+		size_t size_diff;
-+		struct kdbus_item *data;
-+
-+		size = roundup_pow_of_two(size);
-+		size_diff = size - meta->allocated_size;
-+		data = kmalloc(size, GFP_KERNEL);
-+		if (!data)
-+			return ERR_PTR(-ENOMEM);
-+
-+		memcpy(data, meta->data, meta->size);
-+		memset((u8 *)data + meta->allocated_size, 0, size_diff);
-+
-+		kfree(meta->data);
-+		meta->data = data;
-+		meta->allocated_size = size;
-+	}
-+
-+	/* insert new record */
-+	item = (struct kdbus_item *)((u8 *)meta->data + meta->size);
-+	item->type = type;
-+	item->size = KDBUS_ITEM_HEADER_SIZE + payload_size;
-+
-+	meta->size += extra_size;
-+
-+	return item;
-+}
-+
-+/**
-+ * kdbus_meta_append_data() - append given raw data to metadata object
-+ * @meta:		Metadata object
-+ * @type:		KDBUS_ITEM_* type
-+ * @data:		pointer to data to copy from. If it is NULL
-+ *			then just make space in the metadata buffer.
-+ * @len:		number of bytes to copy
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int kdbus_meta_append_data(struct kdbus_meta *meta, u64 type,
-+			   const void *data, size_t len)
-+{
-+	struct kdbus_item *item;
-+
-+	if (len == 0)
-+		return 0;
-+
-+	item = kdbus_meta_append_item(meta, type, len);
-+	if (IS_ERR(item))
-+		return PTR_ERR(item);
-+
-+	if (data)
-+		memcpy(item->data, data, len);
-+
-+	return 0;
-+}
-+
-+static int kdbus_meta_append_str(struct kdbus_meta *meta, u64 type,
-+				 const char *str)
-+{
-+	return kdbus_meta_append_data(meta, type, str, strlen(str) + 1);
-+}
-+
-+static int kdbus_meta_append_timestamp(struct kdbus_meta *meta,
-+				       u64 seq)
-+{
-+	struct kdbus_item *item;
-+	struct timespec ts;
-+
-+	item = kdbus_meta_append_item(meta, KDBUS_ITEM_TIMESTAMP,
-+				      sizeof(struct kdbus_timestamp));
-+	if (IS_ERR(item))
-+		return PTR_ERR(item);
-+
-+	if (seq > 0)
-+		item->timestamp.seqnum = seq;
-+
-+	ktime_get_ts(&ts);
-+	item->timestamp.monotonic_ns = timespec_to_ns(&ts);
-+
-+	ktime_get_real_ts(&ts);
-+	item->timestamp.realtime_ns = timespec_to_ns(&ts);
-+
-+	return 0;
-+}
-+
-+static int kdbus_meta_append_cred(struct kdbus_meta *meta)
-+{
-+	struct kdbus_creds creds = {
-+		.uid = from_kuid_munged(current_user_ns(), current_uid()),
-+		.gid = from_kgid_munged(current_user_ns(), current_gid()),
-+		.pid = task_pid_vnr(current),
-+		.tid = task_tgid_vnr(current),
-+		.starttime = current->start_time,
++struct kdbus_policy_db_entry_access {
++	u8 type;		/* USER, GROUP, WORLD */
++	u8 access;		/* OWN, TALK, SEE */
++	union {
++		kuid_t uid;	/* global uid */
++		kgid_t gid;	/* global gid */
 +	};
++	struct list_head list;
++};
 +
-+	return kdbus_meta_append_data(meta, KDBUS_ITEM_CREDS,
-+				      &creds, sizeof(creds));
-+}
++/**
++ * struct kdbus_policy_db_entry - a policy database entry
++ * @name:		The name to match the policy entry against
++ * @hentry:		The hash entry for the database's entries_hash
++ * @access_list:	List head for keeping tracks of the entry's
++ *			access items.
++ * @owner:		The owner of this entry. Can be a kdbus_conn or
++ *			a kdbus_ep object.
++ * @wildcard:		The name is a wildcard, such as ending on '.*'
++ */
++struct kdbus_policy_db_entry {
++	char *name;
++	struct hlist_node hentry;
++	struct list_head access_list;
++	const void *owner;
++	bool wildcard:1;
++};
 +
-+static int kdbus_meta_append_auxgroups(struct kdbus_meta *meta)
++static void kdbus_policy_entry_free(struct kdbus_policy_db_entry *e)
 +{
-+	struct group_info *info;
-+	struct kdbus_item *item;
-+	int i, ret = 0;
-+	u64 *gid;
++	struct kdbus_policy_db_entry_access *a, *tmp;
 +
-+	info = get_current_groups();
-+	item = kdbus_meta_append_item(meta, KDBUS_ITEM_AUXGROUPS,
-+				      info->ngroups * sizeof(*gid));
-+	if (IS_ERR(item)) {
-+		ret = PTR_ERR(item);
-+		goto exit_put_groups;
++	list_for_each_entry_safe(a, tmp, &e->access_list, list) {
++		list_del(&a->list);
++		kfree(a);
 +	}
 +
-+	gid = (u64 *) item->data;
++	kfree(e->name);
++	kfree(e);
++}
 +
-+	for (i = 0; i < info->ngroups; i++)
-+		gid[i] = from_kgid_munged(current_user_ns(), GROUP_AT(info, i));
++static const struct kdbus_policy_db_entry *
++kdbus_policy_lookup(struct kdbus_policy_db *db,
++		    const char *name, u32 hash, bool wildcard)
++{
++	struct kdbus_policy_db_entry *e, *found = NULL;
 +
-+exit_put_groups:
-+	put_group_info(info);
++	hash_for_each_possible(db->entries_hash, e, hentry, hash)
++		if (strcmp(e->name, name) == 0 && !e->wildcard)
++			return e;
++
++	if (wildcard) {
++		const char *tmp;
++		char *dot;
++
++		tmp = kstrdup(name, GFP_KERNEL);
++		if (!tmp)
++			return NULL;
++
++		dot = strrchr(tmp, '.');
++		if (!dot)
++			goto exit_free;
++
++		*dot = '\0';
++		hash = kdbus_str_hash(tmp);
++
++		hash_for_each_possible(db->entries_hash, e, hentry, hash)
++			if (strcmp(e->name, tmp) == 0 && e->wildcard) {
++				found = e;
++				/* never "break;" in hash_for_each() */
++				goto exit_free;
++			}
++
++exit_free:
++		kfree(tmp);
++	}
++
++	return found;
++}
++
++/**
++ * kdbus_policy_db_clear - release all memory from a policy db
++ * @db:		The policy database
++ */
++void kdbus_policy_db_clear(struct kdbus_policy_db *db)
++{
++	struct kdbus_policy_db_cache_entry *ce;
++	struct kdbus_policy_db_entry *e;
++	struct hlist_node *tmp;
++	unsigned int i;
++
++	BUG_ON(!db);
++
++	/* purge entries */
++	down_write(&db->entries_rwlock);
++	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry) {
++		hash_del(&e->hentry);
++		kdbus_policy_entry_free(e);
++	}
++	up_write(&db->entries_rwlock);
++
++	/* purge cache */
++	mutex_lock(&db->cache_lock);
++	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry) {
++		hash_del(&ce->hentry);
++		kfree(ce);
++	}
++	mutex_unlock(&db->cache_lock);
++}
++
++/**
++ * kdbus_policy_db_init() - initialize a new policy database
++ * @db:		The location of the database
++ *
++ * This initializes a new policy-db. The underlying memory must have been
++ * cleared to zero by the caller.
++ */
++void kdbus_policy_db_init(struct kdbus_policy_db *db)
++{
++	hash_init(db->entries_hash);
++	hash_init(db->talk_access_hash);
++	init_rwsem(&db->entries_rwlock);
++	mutex_init(&db->cache_lock);
++}
++
++static int kdbus_policy_check_access(const struct kdbus_policy_db_entry *e,
++				     const struct cred *cred,
++				     unsigned int access)
++{
++	struct kdbus_policy_db_entry_access *a;
++	struct group_info *group_info;
++	int i;
++
++	if (!e)
++		return -EPERM;
++
++	group_info = cred->group_info;
++
++	list_for_each_entry(a, &e->access_list, list) {
++		if (a->access >= access) {
++			switch (a->type) {
++			case KDBUS_POLICY_ACCESS_USER:
++				if (uid_eq(cred->uid, a->uid))
++					return 0;
++				break;
++			case KDBUS_POLICY_ACCESS_GROUP:
++				if (gid_eq(cred->gid, a->gid))
++					return 0;
++
++				for (i = 0; i < group_info->ngroups; i++) {
++					kgid_t gid = GROUP_AT(group_info, i);
++
++					if (gid_eq(gid, a->gid))
++						return 0;
++				}
++
++				break;
++			case KDBUS_POLICY_ACCESS_WORLD:
++				return 0;
++			}
++		}
++	}
++
++	return -EPERM;
++}
++
++/**
++ * kdbus_policy_check_own_access() - check whether a connection is allowed
++ *				     to own a name
++ * @db:		The policy database
++ * @conn:	The connection to check
++ * @name:	The name to check
++ *
++ * Return: 0 if the connection is allowed to own the name, -EPERM otherwise
++ */
++int kdbus_policy_check_own_access(struct kdbus_policy_db *db,
++				  const struct kdbus_conn *conn,
++				  const char *name)
++{
++	const struct kdbus_policy_db_entry *e;
++	int ret;
++
++	down_read(&db->entries_rwlock);
++	e = kdbus_policy_lookup(db, name, kdbus_str_hash(name), true);
++	ret = kdbus_policy_check_access(e, conn->cred, KDBUS_POLICY_OWN);
++	up_read(&db->entries_rwlock);
 +
 +	return ret;
 +}
 +
-+static int kdbus_meta_append_src_names(struct kdbus_meta *meta,
-+				       struct kdbus_conn *conn)
++/**
++ * kdbus_policy_check_talk_access() - check if one connection is allowed
++ *				       to send a message to another connection
++ * @db:			The policy database
++ * @conn_src:		The source connection
++ * @conn_dst:		The destination connection
++ *
++ * Return: 0 if access is granted, -EPERM if not, negative errno on failure
++ */
++int kdbus_policy_check_talk_access(struct kdbus_policy_db *db,
++				   struct kdbus_conn *conn_src,
++				   struct kdbus_conn *conn_dst)
 +{
-+	struct kdbus_name_entry *e;
-+	int ret = 0;
++	struct kdbus_policy_db_cache_entry *ce;
++	struct kdbus_name_entry *name_entry;
++	unsigned int hash = 0;
++	const void *owner;
++	int ret;
 +
-+	if (!conn)
-+		return 0;
++	/*
++	 * If there was a positive match for these two connections before,
++	 * there's an entry in the hash table for them.
++	 */
++	hash ^= hash_ptr(conn_src, KDBUS_POLICY_HASH_SIZE);
++	hash ^= hash_ptr(conn_dst, KDBUS_POLICY_HASH_SIZE);
 +
-+	mutex_lock(&conn->lock);
-+	list_for_each_entry(e, &conn->names_list, conn_entry) {
-+		struct kdbus_item *item;
-+		size_t len;
++	mutex_lock(&db->cache_lock);
++	hash_for_each_possible(db->talk_access_hash, ce, hentry, hash)
++		if (ce->conn_a == conn_src && ce->conn_b == conn_dst) {
++			mutex_unlock(&db->cache_lock);
++			return 0;
++		}
++	mutex_unlock(&db->cache_lock);
 +
-+		len = strlen(e->name) + 1;
-+		item = kdbus_meta_append_item(meta, KDBUS_ITEM_NAME,
-+					      sizeof(struct kdbus_name) + len);
-+		if (IS_ERR(item)) {
-+			ret = PTR_ERR(item);
++	/*
++	 * Otherwise, walk the connection list and store a hash-table entry if
++	 * send access is granted.
++	 */
++
++	down_read(&db->entries_rwlock);
++
++	ret = -EPERM;
++	mutex_lock(&conn_dst->lock);
++	list_for_each_entry(name_entry, &conn_dst->names_list, conn_entry) {
++		u32 hash = kdbus_str_hash(name_entry->name);
++		const struct kdbus_policy_db_entry *e;
++
++		e = kdbus_policy_lookup(db, name_entry->name, hash, true);
++		if (kdbus_policy_check_access(e, conn_src->cred,
++					      KDBUS_POLICY_TALK) == 0) {
++			owner = e->owner;
++			ret = 0;
++			break;
++		}
++	}
++	mutex_unlock(&conn_dst->lock);
++
++	if (ret >= 0) {
++		ret = -ENOMEM;
++		ce = kmalloc(sizeof(*ce), GFP_KERNEL);
++		if (ce) {
++			ce->conn_a = conn_src;
++			ce->conn_b = conn_dst;
++			ce->owner = owner;
++			INIT_HLIST_NODE(&ce->hentry);
++
++			mutex_lock(&db->cache_lock);
++			hash_add(db->talk_access_hash, &ce->hentry, hash);
++			mutex_unlock(&db->cache_lock);
++
++			ret = 0;
++		}
++	}
++
++	up_read(&db->entries_rwlock);
++
++	return ret;
++}
++
++/**
++ * kdbus_policy_check_see_access_unlocked() - Check whether a connection is
++ *					      allowed to see a given name
++ * @db:		The policy database
++ * @conn:	The connection performing the lookup
++ * @name:	The name
++ *
++ * Return: 0 if permission to see the name is granted, -EPERM otherwise
++ */
++int kdbus_policy_check_see_access_unlocked(struct kdbus_policy_db *db,
++					   struct kdbus_conn *conn,
++					   const char *name)
++{
++	const struct kdbus_policy_db_entry *e;
++
++	e = kdbus_policy_lookup(db, name, kdbus_str_hash(name), true);
++	return kdbus_policy_check_access(e, conn->cred, KDBUS_POLICY_SEE);
++}
++
++static void __kdbus_policy_remove_owner_cache(struct kdbus_policy_db *db,
++					      const void *owner)
++{
++	struct kdbus_policy_db_cache_entry *ce;
++	struct hlist_node *tmp;
++	int i;
++
++	mutex_lock(&db->cache_lock);
++	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry)
++		if (ce->owner == owner) {
++			hash_del(&ce->hentry);
++			kfree(ce);
++		}
++	mutex_unlock(&db->cache_lock);
++}
++
++static void __kdbus_policy_remove_owner(struct kdbus_policy_db *db,
++					const void *owner)
++{
++	struct kdbus_policy_db_entry *e;
++	struct hlist_node *tmp;
++	int i;
++
++	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry)
++		if (e->owner == owner) {
++			hash_del(&e->hentry);
++			kdbus_policy_entry_free(e);
++		}
++}
++
++/**
++ * kdbus_policy_remove_owner() - remove all entries related to a connection
++ * @db:		The policy database
++ * @owner:	The connection which items to remove
++ */
++void kdbus_policy_remove_owner(struct kdbus_policy_db *db,
++			       const void *owner)
++{
++	down_write(&db->entries_rwlock);
++	__kdbus_policy_remove_owner(db, owner);
++	__kdbus_policy_remove_owner_cache(db, owner);
++	up_write(&db->entries_rwlock);
++}
++
++/**
++ * kdbus_policy_purge_cache_for_conn() - remove all cached entries related to
++ *				a connection
++ * @db:		The policy database
++ * @conn:	The connection which items to remove
++ */
++void kdbus_policy_purge_cache(struct kdbus_policy_db *db,
++			      const struct kdbus_conn *conn)
++{
++	struct kdbus_policy_db_cache_entry *ce;
++	struct hlist_node *tmp;
++	int i;
++
++	mutex_lock(&db->cache_lock);
++	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry)
++		if (ce->conn_a == conn || ce->conn_b == conn) {
++			hash_del(&ce->hentry);
++			kfree(ce);
++		}
++	mutex_unlock(&db->cache_lock);
++}
++
++/*
++ * Convert user provided policy access to internal kdbus policy
++ * access
++ */
++static int
++kdbus_policy_make_access(const struct kdbus_policy_access *uaccess,
++			 struct kdbus_policy_db_entry_access **entry)
++{
++	int ret;
++	struct kdbus_policy_db_entry_access *a;
++
++	a = kzalloc(sizeof(*a), GFP_KERNEL);
++	if (!a)
++		return -ENOMEM;
++
++	ret = -EINVAL;
++	switch (uaccess->type) {
++	case KDBUS_POLICY_ACCESS_USER:
++		a->uid = make_kuid(current_user_ns(), uaccess->id);
++		if (!uid_valid(a->uid))
++			goto err;
++
++		break;
++	case KDBUS_POLICY_ACCESS_GROUP:
++		a->gid = make_kgid(current_user_ns(), uaccess->id);
++		if (!gid_valid(a->gid))
++			goto err;
++
++		break;
++	}
++
++	a->type = uaccess->type;
++	a->access = uaccess->access;
++
++	*entry = a;
++
++	return 0;
++
++err:
++	kfree(a);
++	return ret;
++}
++
++/**
++ * kdbus_policy_set() - set a connection's policy rules
++ * @db:				The policy database
++ * @items:			A list of kdbus_item elements that contain both
++ *				names and access rules to set.
++ * @items_size:			The total size of the items.
++ * @max_policies:		The maximum number of policy entries to allow.
++ *				Pass 0 for no limit.
++ * @allow_wildcards:		Boolean value whether wildcard entries (such
++ *				ending on '.*') should be allowed.
++ * @owner:			The owner of the new policy items.
++ *
++ * This function sets a new set of policies for a given owner. The names and
++ * access rules are gathered by walking the list of items passed in as
++ * argument. An item of type KDBUS_ITEM_NAME is expected before any number of
++ * KDBUS_ITEM_POLICY_ACCESS items. If there are more repetitions of this
++ * pattern than denoted in @max_policies, -EINVAL is returned.
++ *
++ * In order to allow atomic replacement of rules, the function first removes
++ * all entries that have been created for the given owner previously.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_policy_set(struct kdbus_policy_db *db,
++		     const struct kdbus_item *items,
++		     size_t items_size,
++		     size_t max_policies,
++		     bool allow_wildcards,
++		     const void *owner)
++{
++	struct kdbus_policy_db_entry_access *a;
++	struct kdbus_policy_db_entry *e, *p;
++	const struct kdbus_item *item;
++	struct hlist_node *tmp;
++	HLIST_HEAD(entries);
++	HLIST_HEAD(restore);
++	size_t count = 0;
++	int i, ret = 0;
++	u32 hash;
++
++	if (items_size > KDBUS_POLICY_MAX_SIZE)
++		return -E2BIG;
++
++	/* Walk the list of items and look for new policies */
++	e = NULL;
++	KDBUS_ITEMS_FOREACH(item, items, items_size) {
++		switch (item->type) {
++		case KDBUS_ITEM_NAME: {
++			size_t len;
++
++			if (max_policies && ++count > max_policies) {
++				ret = -E2BIG;
++				goto exit;
++			}
++
++			if (!kdbus_name_is_valid(item->str, true)) {
++				ret = -EINVAL;
++				goto exit;
++			}
++
++			e = kzalloc(sizeof(*e), GFP_KERNEL);
++			if (!e) {
++				ret = -ENOMEM;
++				goto exit;
++			}
++
++			INIT_LIST_HEAD(&e->access_list);
++			e->owner = owner;
++			hlist_add_head(&e->hentry, &entries);
++
++			e->name = kstrdup(item->str, GFP_KERNEL);
++			if (!e->name) {
++				ret = -ENOMEM;
++				goto exit;
++			}
++
++			/*
++			 * If a supplied name ends with an '.*', cut off that
++			 * part, only store anything before it, and mark the
++			 * entry as wildcard.
++			 */
++			len = strlen(e->name);
++			if (len > 2 &&
++			    e->name[len - 3] == '.' &&
++			    e->name[len - 2] == '*') {
++				if (!allow_wildcards) {
++					ret = -EINVAL;
++					goto exit;
++				}
++
++				e->name[len - 3] = '\0';
++				e->wildcard = true;
++			}
++
 +			break;
 +		}
 +
-+		item->name.flags = e->flags;
-+		memcpy(item->name.name, e->name, len);
-+	}
-+	mutex_unlock(&conn->lock);
++		case KDBUS_ITEM_POLICY_ACCESS:
++			if (!e) {
++				ret = -EINVAL;
++				goto exit;
++			}
 +
-+	return ret;
-+}
++			ret = kdbus_policy_make_access(&item->policy_access,
++						       &a);
++			if (ret < 0)
++				goto exit;
 +
-+static int kdbus_meta_append_exe(struct kdbus_meta *meta)
-+{
-+	struct mm_struct *mm = get_task_mm(current);
-+	struct path *exe_path = NULL;
-+	char *pathname;
-+	int ret = 0;
-+	size_t len;
-+	char *tmp;
-+
-+	if (!mm)
-+		return -EFAULT;
-+
-+	down_read(&mm->mmap_sem);
-+	if (mm->exe_file) {
-+		path_get(&mm->exe_file->f_path);
-+		exe_path = &mm->exe_file->f_path;
-+	}
-+	up_read(&mm->mmap_sem);
-+
-+	if (!exe_path)
-+		goto exit_mmput;
-+
-+	tmp = (char *)__get_free_page(GFP_TEMPORARY | __GFP_ZERO);
-+	if (!tmp) {
-+		ret = -ENOMEM;
-+		goto exit_path_put;
++			list_add_tail(&a->list, &e->access_list);
++			break;
++		}
 +	}
 +
-+	pathname = d_path(exe_path, tmp, PAGE_SIZE);
-+	if (IS_ERR(pathname)) {
-+		ret = PTR_ERR(pathname);
-+		goto exit_free_page;
++	down_write(&db->entries_rwlock);
++
++	/* remember previous entries to restore in case of failure */
++	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry)
++		if (e->owner == owner) {
++			hash_del(&e->hentry);
++			hlist_add_head(&e->hentry, &restore);
++		}
++
++	hlist_for_each_entry_safe(e, tmp, &entries, hentry) {
++		/* prevent duplicates */
++		hash = kdbus_str_hash(e->name);
++		hash_for_each_possible(db->entries_hash, p, hentry, hash)
++			if (strcmp(e->name, p->name) == 0 &&
++			    e->wildcard == p->wildcard) {
++				ret = -EEXIST;
++				goto restore;
++			}
++
++		hlist_del(&e->hentry);
++		hash_add(db->entries_hash, &e->hentry, hash);
 +	}
 +
-+	len = tmp + PAGE_SIZE - pathname;
-+	ret = kdbus_meta_append_data(meta, KDBUS_ITEM_EXE, pathname, len);
++	/* purge all cache-entries produced by previous rules */
++	__kdbus_policy_remove_owner_cache(db, owner);
 +
-+exit_free_page:
-+	free_page((unsigned long) tmp);
-+
-+exit_path_put:
-+	path_put(exe_path);
-+
-+exit_mmput:
-+	mmput(mm);
-+
-+	return ret;
-+}
-+
-+static int kdbus_meta_append_cmdline(struct kdbus_meta *meta)
-+{
-+	struct mm_struct *mm;
-+	int ret = 0;
-+	size_t len;
-+	char *tmp;
-+
-+	tmp = (char *)__get_free_page(GFP_TEMPORARY | __GFP_ZERO);
-+	if (!tmp)
-+		return -ENOMEM;
-+
-+	mm = get_task_mm(current);
-+	if (!mm) {
-+		ret = -EFAULT;
-+		goto exit_free_page;
-+	}
-+
-+	if (!mm->arg_end)
-+		goto exit_mmput;
-+
-+	len = mm->arg_end - mm->arg_start;
-+	if (len > PAGE_SIZE)
-+		len = PAGE_SIZE;
-+
-+	ret = copy_from_user(tmp, (const char __user *)mm->arg_start, len);
++restore:
++	/* if we failed, flush all entries we added so far, but keep cache */
 +	if (ret < 0)
-+		goto exit_mmput;
++		__kdbus_policy_remove_owner(db, owner);
 +
-+	ret = kdbus_meta_append_data(meta, KDBUS_ITEM_CMDLINE, tmp, len);
++	/* if we failed, restore entries, otherwise release them */
++	hlist_for_each_entry_safe(e, tmp, &restore, hentry) {
++		hlist_del(&e->hentry);
++		if (ret < 0) {
++			hash = kdbus_str_hash(e->name);
++			hash_add(db->entries_hash, &e->hentry, hash);
++		} else {
++			kdbus_policy_entry_free(e);
++		}
++	}
 +
-+exit_mmput:
-+	mmput(mm);
++	up_write(&db->entries_rwlock);
 +
-+exit_free_page:
-+	free_page((unsigned long) tmp);
++exit:
++	hlist_for_each_entry_safe(e, tmp, &entries, hentry) {
++		hlist_del(&e->hentry);
++		kdbus_policy_entry_free(e);
++	}
 +
 +	return ret;
 +}
-+
-+static int kdbus_meta_append_caps(struct kdbus_meta *meta)
-+{
-+	struct caps {
-+		u32 last_cap;
-+		struct {
-+			u32 caps[_KERNEL_CAPABILITY_U32S];
-+		} set[4];
-+	} caps;
-+	unsigned int i;
-+	const struct cred *cred = current_cred();
-+
-+	caps.last_cap = CAP_LAST_CAP;
-+
-+	for (i = 0; i < _KERNEL_CAPABILITY_U32S; i++) {
-+		caps.set[0].caps[i] = cred->cap_inheritable.cap[i];
-+		caps.set[1].caps[i] = cred->cap_permitted.cap[i];
-+		caps.set[2].caps[i] = cred->cap_effective.cap[i];
-+		caps.set[3].caps[i] = cred->cap_bset.cap[i];
-+	}
-+
-+	/* clear unused bits */
-+	for (i = 0; i < 4; i++)
-+		caps.set[i].caps[CAP_TO_INDEX(CAP_LAST_CAP)] &=
-+			CAP_TO_MASK(CAP_LAST_CAP + 1) - 1;
-+
-+	return kdbus_meta_append_data(meta, KDBUS_ITEM_CAPS,
-+				      &caps, sizeof(caps));
-+}
-+
-+#ifdef CONFIG_CGROUPS
-+static int kdbus_meta_append_cgroup(struct kdbus_meta *meta)
-+{
-+	char *buf, *path;
-+	int ret;
-+
-+	buf = (char *)__get_free_page(GFP_TEMPORARY | __GFP_ZERO);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	path = task_cgroup_path(current, buf, PAGE_SIZE);
-+
-+	if (path)
-+		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_CGROUP, path);
-+	else
-+		ret = -ENAMETOOLONG;
-+
-+	free_page((unsigned long) buf);
-+
-+	return ret;
-+}
-+#endif
-+
-+#ifdef CONFIG_AUDITSYSCALL
-+static int kdbus_meta_append_audit(struct kdbus_meta *meta)
-+{
-+	struct kdbus_audit audit;
-+
-+	audit.loginuid = from_kuid(current_user_ns(),
-+				   audit_get_loginuid(current));
-+	audit.sessionid = audit_get_sessionid(current);
-+
-+	return kdbus_meta_append_data(meta, KDBUS_ITEM_AUDIT,
-+				      &audit, sizeof(audit));
-+}
-+#endif
-+
-+#ifdef CONFIG_SECURITY
-+static int kdbus_meta_append_seclabel(struct kdbus_meta *meta)
-+{
-+	u32 len, sid;
-+	char *label;
-+	int ret;
-+
-+	security_task_getsecid(current, &sid);
-+	ret = security_secid_to_secctx(sid, &label, &len);
-+	if (ret == -EOPNOTSUPP)
-+		return 0;
-+	if (ret < 0)
-+		return ret;
-+
-+	if (label && len > 0)
-+		ret = kdbus_meta_append_data(meta, KDBUS_ITEM_SECLABEL,
-+					     label, len);
-+	security_release_secctx(label, len);
-+
-+	return ret;
-+}
-+#endif
-+
-+/**
-+ * kdbus_meta_append() - collect metadata from current process
-+ * @meta:		Metadata object
-+ * @conn:		Current connection to read names from
-+ * @seq:		Message sequence number
-+ * @which:		KDBUS_ATTACH_* flags which typ of data to attach
-+ *
-+ * Collect the data specified in flags and allocate or extend
-+ * the buffer in the metadata object.
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int kdbus_meta_append(struct kdbus_meta *meta,
-+		      struct kdbus_conn *conn,
-+		      u64 seq, u64 which)
-+{
-+	int ret;
-+	u64 mask;
-+
-+	/* which metadata is wanted but not yet attached? */
-+	mask = which & ~meta->attached;
-+	if (mask == 0)
-+		return 0;
-+
-+	if (mask & KDBUS_ATTACH_TIMESTAMP) {
-+		ret = kdbus_meta_append_timestamp(meta, seq);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_TIMESTAMP;
-+	}
-+
-+	if (mask & KDBUS_ATTACH_CREDS) {
-+		ret = kdbus_meta_append_cred(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_CREDS;
-+	}
-+
-+	if (mask & KDBUS_ATTACH_AUXGROUPS) {
-+		ret = kdbus_meta_append_auxgroups(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_AUXGROUPS;
-+	}
-+
-+	if (mask & KDBUS_ATTACH_NAMES && conn) {
-+		ret = kdbus_meta_append_src_names(meta, conn);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_NAMES;
-+	}
-+
-+	if (mask & KDBUS_ATTACH_TID_COMM) {
-+		char comm[TASK_COMM_LEN];
-+
-+		get_task_comm(comm, current->group_leader);
-+		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_TID_COMM, comm);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_TID_COMM;
-+	}
-+
-+	if (mask & KDBUS_ATTACH_PID_COMM) {
-+		char comm[TASK_COMM_LEN];
-+
-+		get_task_comm(comm, current);
-+		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_PID_COMM, comm);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_PID_COMM;
-+	}
-+
-+	if (mask & KDBUS_ATTACH_EXE) {
-+		ret = kdbus_meta_append_exe(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_EXE;
-+	}
-+
-+	if (mask & KDBUS_ATTACH_CMDLINE) {
-+		ret = kdbus_meta_append_cmdline(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_CMDLINE;
-+	}
-+
-+	/* we always return a 4 elements, the element size is 1/4  */
-+	if (mask & KDBUS_ATTACH_CAPS) {
-+		ret = kdbus_meta_append_caps(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_CAPS;
-+	}
-+
-+#ifdef CONFIG_CGROUPS
-+	/* attach the path of the one group hierarchy specified for the bus */
-+	if (mask & KDBUS_ATTACH_CGROUP) {
-+		ret = kdbus_meta_append_cgroup(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_CGROUP;
-+	}
-+#endif
-+
-+#ifdef CONFIG_AUDITSYSCALL
-+	if (mask & KDBUS_ATTACH_AUDIT) {
-+		ret = kdbus_meta_append_audit(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_AUDIT;
-+	}
-+#endif
-+
-+#ifdef CONFIG_SECURITY
-+	if (mask & KDBUS_ATTACH_SECLABEL) {
-+		ret = kdbus_meta_append_seclabel(meta);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_SECLABEL;
-+	}
-+#endif
-+
-+	if ((mask & KDBUS_ATTACH_CONN_NAME) && conn && conn->name) {
-+		ret = kdbus_meta_append_str(meta, KDBUS_ITEM_CONN_NAME,
-+					    conn->name);
-+		if (ret < 0)
-+			return ret;
-+
-+		meta->attached |= KDBUS_ATTACH_CONN_NAME;
-+	}
-+
-+	return 0;
-+}
-diff --git a/drivers/misc/kdbus/metadata.h b/drivers/misc/kdbus/metadata.h
+diff --git a/drivers/misc/kdbus/policy.h b/drivers/misc/kdbus/policy.h
 new file mode 100644
-index 000000000000..a2728f57a06f
+index 000000000000..f4f6f044b4c1
 --- /dev/null
-+++ b/drivers/misc/kdbus/metadata.h
-@@ -0,0 +1,51 @@
++++ b/drivers/misc/kdbus/policy.h
+@@ -0,0 +1,60 @@
 +/*
 + * Copyright (C) 2013-2014 Kay Sievers
 + * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
@@ -683,43 +681,52 @@ index 000000000000..a2728f57a06f
 + * your option) any later version.
 + */
 +
-+#ifndef __KDBUS_METADATA_H
-+#define __KDBUS_METADATA_H
++#ifndef __KDBUS_POLICY_H
++#define __KDBUS_POLICY_H
 +
-+/**
-+ * struct kdbus_meta - metadata buffer
-+ * @attached:		Flags for already attached data
-+ * @domain:		Domain the metadata belongs to
-+ * @data:		Allocated buffer
-+ * @size:		Number of bytes used
-+ * @allocated_size:	Size of buffer
-+ *
-+ * Used to collect and store connection metadata in a pre-compiled
-+ * buffer containing struct kdbus_item.
-+ */
-+struct kdbus_meta {
-+	u64 attached;
-+	struct pid_namespace *pid_namespace;
-+	struct user_namespace *user_namespace;
-+	struct kdbus_item *data;
-+	size_t size;
-+	size_t allocated_size;
-+};
++#include <linux/hashtable.h>
++#include <linux/mutex.h>
++#include <linux/rwsem.h>
 +
 +struct kdbus_conn;
++struct kdbus_item;
 +
-+int kdbus_meta_new(struct kdbus_meta **meta);
-+int kdbus_meta_dup(const struct kdbus_meta *orig,
-+		   struct kdbus_meta **copy);
-+int kdbus_meta_append_data(struct kdbus_meta *meta, u64 type,
-+			   const void *buf, size_t len);
-+int kdbus_meta_append(struct kdbus_meta *meta,
-+		      struct kdbus_conn *conn,
-+		      u64 seq,
-+		      u64 which);
-+void kdbus_meta_free(struct kdbus_meta *meta);
-+bool kdbus_meta_ns_eq(const struct kdbus_meta *meta_a,
-+		      const struct kdbus_meta *meta_b);
++/**
++ * struct kdbus_policy_db - policy database
++ * @entries_hash:	Hashtable of entries
++ * @talk_access_hash:	Hashtable of send access elements
++ * @entries_lock:	Mutex to protect the database's access entries
++ * @cache_lock:		Mutex to protect the database's cache
++ */
++struct kdbus_policy_db {
++	DECLARE_HASHTABLE(entries_hash, 6);
++	DECLARE_HASHTABLE(talk_access_hash, 6);
++	struct rw_semaphore entries_rwlock;
++	struct mutex cache_lock;
++};
++
++void kdbus_policy_db_init(struct kdbus_policy_db *db);
++void kdbus_policy_db_clear(struct kdbus_policy_db *db);
++
++int kdbus_policy_check_see_access_unlocked(struct kdbus_policy_db *db,
++					   struct kdbus_conn *conn,
++					   const char *name);
++int kdbus_policy_check_talk_access(struct kdbus_policy_db *db,
++				   struct kdbus_conn *conn_src,
++				   struct kdbus_conn *conn_dst);
++int kdbus_policy_check_own_access(struct kdbus_policy_db *db,
++				  const struct kdbus_conn *conn,
++				  const char *name);
++void kdbus_policy_purge_cache(struct kdbus_policy_db *db,
++			      const struct kdbus_conn *conn);
++void kdbus_policy_remove_owner(struct kdbus_policy_db *db,
++			       const void *owner);
++int kdbus_policy_set(struct kdbus_policy_db *db,
++		     const struct kdbus_item *items,
++		     size_t items_size,
++		     size_t max_policies,
++		     bool allow_wildcards,
++		     const void *owner);
 +#endif
 -- 
 2.1.2
