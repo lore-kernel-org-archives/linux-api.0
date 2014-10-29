@@ -1,119 +1,284 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCHv5 1/3] syscalls,x86: implement execveat() system call
-Date: Tue, 28 Oct 2014 10:48:02 -0700
-Message-ID: <CALCETrU61NCvE7N2TX9gy5R7T4VOwaau1q2Hspfb3Py2kW_jYw@mail.gmail.com>
-References: <1413978269-17274-1-git-send-email-drysdale@google.com>
- <1413978269-17274-2-git-send-email-drysdale@google.com> <CALCETrWbj=BTDyKqtbSKteANj3J3UFZnrvWv9DMosCoEZaSoeA@mail.gmail.com>
- <CAHse=S-x6NKEn9EGFos6bS=asK-1mWCr0r9aji2a97_fgxU+Sg@mail.gmail.com>
- <CALCETrWN+bKj_PPRJy2pNDVCRd3xyd-=w7P+9khhd-XuJRXCyA@mail.gmail.com> <CAHse=S8KpmA6X9S11JG=_y7sqgit_S26uC6=NCk742nKRRP=0w@mail.gmail.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: [PATCH 00/12] Add kdbus implementation
+Date: Wed, 29 Oct 2014 15:00:44 -0700
+Message-ID: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CAHse=S8KpmA6X9S11JG=_y7sqgit_S26uC6=NCk742nKRRP=0w@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 28, 2014 at 10:30 AM, David Drysdale <drysdale@google.com> wrote:
-> [Oops, re-send remembering to turn on plaintext mode -- sorry]
->
-> On Mon, Oct 27, 2014 at 6:47 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Mon, Oct 27, 2014 at 11:03 AM, David Drysdale <drysdale@google.com> wrote:
->>> On Wed, Oct 22, 2014 at 7:44 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>> On Wed, Oct 22, 2014 at 4:44 AM, David Drysdale <drysdale@google.com> wrote:
->>>>> Add a new system execveat(2) syscall. execveat() is to execve() as
->>>>> openat() is to open(): it takes a file descriptor that refers to a
->>>>> directory, and resolves the filename relative to that.
->>>>>
->>>>
->>>>>         bprm->file = file;
->>>>> -       bprm->filename = bprm->interp = filename->name;
->>>>> +       if (fd == AT_FDCWD || filename->name[0] == '/') {
->>>>> +               bprm->filename = filename->name;
->>>>> +       } else {
->>>>> +               /*
->>>>> +                * Build a pathname that reflects how we got to the file,
->>>>> +                * either "/dev/fd/<fd>" (for an empty filename) or
->>>>> +                * "/dev/fd/<fd>/<filename>".
->>>>> +                */
->>>>> +               pathbuf = kmalloc(PATH_MAX, GFP_TEMPORARY);
->>>>> +               if (!pathbuf) {
->>>>> +                       retval = -ENOMEM;
->>>>> +                       goto out_unmark;
->>>>> +               }
->>>>> +               bprm->filename = pathbuf;
->>>>> +               if (filename->name[0] == '\0')
->>>>> +                       sprintf(pathbuf, "/dev/fd/%d", fd);
->>>>
->>>> If the fd is O_CLOEXEC, then this will result in a confused child
->>>> process.  Should we fail exec attempts like that for non-static
->>>> programs?  (E.g. set filename to "" or something and fix up the binfmt
->>>> drivers to handle that?)
->>>
->>> Isn't it just scripts that get confused here (as normal executables don't
->>> get to see brpm->filename)?
->>>
->>> Given that we don't know which we have at this point, I'd suggest
->>> carrying on regardless.  Or we could fall back to use the previous
->>> best-effort d_path() code for O_CLOEXEC fds.  Thoughts?
->>
->> How hard would it be to mark the bprm as not having a path for the
->> binary?  Then we could fail later on if and when we actually need the
->> path.
->
-> Adding a flag to bprm->interp_flags to indicate that the bprm->filename
-> will be inaccessible after exec is straightforward.  But I'm not sure who
-> should/could make use of the flag...
->
->> I don't really have a strong opinion here, though.  I do prefer
->> actually failing the execveat call over succeeding but invoking a
->> script interpreter than can't possibly work.
->
-> Yeah, but that involves the kernel code (e.g. fs/binfmt_script.c) making
-> an assumption about what the interpreter is going to do -- specifically
-> that it's going to try to open its argv[1].  Admittedly, that's a very likely
-> assumption, but I'm not sure it's one the kernel should make -- a script
-> like "#!/bin/echo" wouldn't be very useful, but fexecve()ing it would still
-> work OK on a name like "/dev/fd/7" after fd 7 is closed.
+kdbus is a kernel-level IPC implementation that aims for resemblance to
+the the protocol layer with the existing userspace D-Bus daemon while
+enabling some features that couldn't be implemented before in userspace=
+=2E
 
-Hmm.  I'm unconvinced.  If an important part of executing the script
-is passing it an argv[0] that can be opened, then I think we shouldn't
-allow a known-bad argv[0].
+The documentation added by the first patch in this series is meant to
+explain all protocol and API details comprehensively, but here's a ters=
+e
+list of the kdbus key features:
 
->
-> (Also, we need some kind of non-empty name in bprm->filename,
-> even if it's going to be inaccessible later, so that any LSM processing
-> off of the bprm_set_creds()/bprm_check_security() hooks has something
-> to work with; those hooks are pre-exec so the "/dev/fd/<fd>" part should
-> still be OK at that point.)
->
-> So I guess I lean towards keeping "/dev/fd/<fd>/<path>" regardless.
->
->>>
->>>>> +               else
->>>>> +                       snprintf(pathbuf, PATH_MAX,
->>>>> +                                "/dev/fd/%d/%s", fd, filename->name);
->>>>
->>>> Does this need to handle the case where the result exceeds PATH_MAX?
->>>
->>> I guess we could kmalloc(strlen(filename->name) + 19) to avoid the
->>> possibility of failure, but that just defers the inevitable -- the interpreter
->>> won't be able to open the script file anyway.  But it would at least then
->>> generate the appropriate error (ENAMETOOLONG rather than ENOENT).
->>
->> Depends whether anyone cares about bprm->filename.  But I think the
->> code should either return an error or allocate enough space.
->
-> I'll allocate enough space.
->
->>
->> --
->> Andy Lutomirski
->> AMA Capital Management, LLC
+ * Implemented as a char driver, which creates devices on demand when
+   they are created.
 
+ * Message transfer over shared memory areas in each of the peer's
+   task to avoid unnecessary extra data copies during message exchanges=
+=2E
 
+ * Optional passing of file descriptors and sealed memfds along with
+   messages.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+ * No demarshalling of any message content from inside the kernel;
+   the driver stays entirely agnostic to the transported payload.
+
+ * Support for multiple domains, completely separated from each other,
+   allowing multiple virtualized instances to be used at the same time.
+
+ * Support for peer-to-peer unicast and multicast messages.
+
+ * Attachment of trustable metadata to each message on demand, such as
+   the sending peer's timestamp, creds, auxgroups, comm, exe, cmdline,
+   cgroup path, capabilities, security label, audit information, etc,
+   each taken at the time the sender issued the ioctl to send the
+   message. Which of those are actually recorded and attached is
+   controlled by the receiving peer.
+
+ * Bloom filters as measure to pre-filter broadcast messages and to
+   mitigate unnecessary task wakeups. On the side kernel, however, this
+   is just a cheap &-operation, hash functions are left to be
+   implemented by userspace.
+
+ * Optional message dequeuing by priority, allowing multiple types of
+   payloads of different priorities to be transported over the same
+   connection.
+
+ * Global, domain-wide guaranteed message ordering.
+
+ * Eavesdropping for buses for debugging
+
+ * Adressing of remote peers by their numerical unique ID, or by a
+   well-known name.
+
+ * Built-in name registry for atomic name ownership lookups, claims,
+   releases and take-overs from one peer to another.
+
+ * Simple policy database to restrict peers from seeing or talking to
+   each other, and to control name ownership.
+
+ * Custom bus endpoints in addition to the default ones. Those allow
+   to upload extra policy rules, and can act as a protocol-filtering
+   bus firewall.
+
+ * Kernel-generated notifications on connected and disconnected peers,
+   claimed and released well-known-names, and exceeded reply timeouts.
+
+This is the first submission of kdbus by the kernel community.  It was
+developed in its own repository for well more than a year, and has been
+tested on x64-64, i686 and ARM architectures in various use cases. The
+driver is totally non-intrusive and doesn't touch a single line of
+existing kernel code.
+
+kdbus has been worked on collaboratively by many people contributing
+code and suggestions during its development. Below is a list of all
+involved individuals, in alphabetical order.
+
+  Alban Crequy, Arnd Bergmann, Christian S., Daniel Kowalski,
+  Daniel Mack, David Herrmann, Djalal Harouni, Govindarajulu
+  Varadarajan, Greg Kroah-Hartman, Harald Hoyer, Hristo Venev,
+  Ingo van Lil, Jacek Janczyk, Jason A. Donenfeld, John de
+  la Garza, Kay Sievers, Lennart Poettering, Lukasz Skalski,
+  Maciej Wereski, Marc-Antoine Perennou, Marcel Holtmann,
+  Michal Eljasiewicz, Michele Curti, Przemyslaw Kedzierski,
+  Radoslaw Pajak, Ryan Lortie, Simon McVittie, Simon Peeters,
+  Stefan Beller, Ted Feng, Tejun Heo, Tero Roponen, Thomas
+  Andersen, Torstein Huseb=C3=B8, Vasiliy Balyasnyy.
+
+Some statistics: the driver itself has a little more than 11k lines,
+with ~25% of the lines being comments. Our test suite weights in for
+another 6k lines, and the API documentation file currently has >1800
+lines. The loaded kernel module has ~70kB of text size.
+
+Patches #3 to #10 carry the driver implementation in digestable bites,
+but only #11 adds the Makefile to actually compile them. That division
+can of course be changed, and the patches be squashed and reordered
+later.
+
+The rest should be pretty much self-explanatory - the individual commit
+logs and Documentation/kdbus.txt contain detailed information on the
+driver's inner life.
+
+While we consider the kernel API/ABI mostly stable at this point, we're
+still in the process of fixing up some ends in userspace, such as
+compatibility layers and the D-Bus spec, but that shouldn't affect the
+kernel side much anymore.
+
+As for maintainership, Daniel Mack, David Herrmann, Djalal Harouni and
+myself would be taking care for it in the future.
+
+I'll also be keeping this in a git tree, the kdbus branch of
+char-misc.git at:
+	https://git.kernel.org/cgit/linux/kernel/git/gregkh/char-misc.git/
+
+thanks,
+
+greg k-h
+
+Daniel Mack (12):
+  kdbus: add documentation
+  kdbus: add header file
+  kdbus: add driver skeleton, ioctl entry points and utility functions
+  kdbus: add connection pool implementation
+  kdbus: add connection, queue handling and message validation code
+  kdbus: add code to gather metadata
+  kdbus: add code for notifications and matches
+  kdbus: add code for buses, domains and endpoints
+  kdbus: add name registry implementation
+  kdbus: add policy database implementation
+  kdbus: add Makefile, Kconfig and MAINTAINERS entry
+  kdbus: add selftests
+
+ Documentation/ioctl/ioctl-number.txt             |    1 +
+ Documentation/kdbus.txt                          | 1815 ++++++++++++++=
+++++++++
+ MAINTAINERS                                      |   12 +
+ drivers/misc/Kconfig                             |    1 +
+ drivers/misc/Makefile                            |    1 +
+ drivers/misc/kdbus/Kconfig                       |   11 +
+ drivers/misc/kdbus/Makefile                      |   19 +
+ drivers/misc/kdbus/bus.c                         |  450 ++++++
+ drivers/misc/kdbus/bus.h                         |  107 ++
+ drivers/misc/kdbus/connection.c                  | 1751 ++++++++++++++=
++++++++
+ drivers/misc/kdbus/connection.h                  |  177 +++
+ drivers/misc/kdbus/domain.c                      |  477 ++++++
+ drivers/misc/kdbus/domain.h                      |  105 ++
+ drivers/misc/kdbus/endpoint.c                    |  567 +++++++
+ drivers/misc/kdbus/endpoint.h                    |   94 ++
+ drivers/misc/kdbus/handle.c                      | 1221 ++++++++++++++=
++
+ drivers/misc/kdbus/handle.h                      |   46 +
+ drivers/misc/kdbus/item.c                        |  256 +++
+ drivers/misc/kdbus/item.h                        |   40 +
+ drivers/misc/kdbus/limits.h                      |   77 +
+ drivers/misc/kdbus/main.c                        |   70 +
+ drivers/misc/kdbus/match.c                       |  521 +++++++
+ drivers/misc/kdbus/match.h                       |   30 +
+ drivers/misc/kdbus/message.c                     |  420 +++++
+ drivers/misc/kdbus/message.h                     |   72 +
+ drivers/misc/kdbus/metadata.c                    |  626 ++++++++
+ drivers/misc/kdbus/metadata.h                    |   51 +
+ drivers/misc/kdbus/names.c                       |  920 +++++++++++
+ drivers/misc/kdbus/names.h                       |   81 +
+ drivers/misc/kdbus/notify.c                      |  235 +++
+ drivers/misc/kdbus/notify.h                      |   28 +
+ drivers/misc/kdbus/policy.c                      |  617 ++++++++
+ drivers/misc/kdbus/policy.h                      |   60 +
+ drivers/misc/kdbus/pool.c                        |  728 +++++++++
+ drivers/misc/kdbus/pool.h                        |   43 +
+ drivers/misc/kdbus/queue.c                       |  602 +++++++
+ drivers/misc/kdbus/queue.h                       |   82 +
+ drivers/misc/kdbus/util.c                        |  108 ++
+ drivers/misc/kdbus/util.h                        |   94 ++
+ include/uapi/linux/kdbus.h                       |  918 +++++++++++
+ tools/testing/selftests/Makefile                 |    1 +
+ tools/testing/selftests/kdbus/.gitignore         |   11 +
+ tools/testing/selftests/kdbus/Makefile           |   46 +
+ tools/testing/selftests/kdbus/kdbus-enum.c       |   90 ++
+ tools/testing/selftests/kdbus/kdbus-enum.h       |   14 +
+ tools/testing/selftests/kdbus/kdbus-test.c       |  474 ++++++
+ tools/testing/selftests/kdbus/kdbus-test.h       |   79 +
+ tools/testing/selftests/kdbus/kdbus-util.c       | 1173 ++++++++++++++
+ tools/testing/selftests/kdbus/kdbus-util.h       |  139 ++
+ tools/testing/selftests/kdbus/test-activator.c   |  317 ++++
+ tools/testing/selftests/kdbus/test-benchmark.c   |  417 +++++
+ tools/testing/selftests/kdbus/test-bus.c         |  117 ++
+ tools/testing/selftests/kdbus/test-chat.c        |  123 ++
+ tools/testing/selftests/kdbus/test-connection.c  |  258 +++
+ tools/testing/selftests/kdbus/test-daemon.c      |   66 +
+ tools/testing/selftests/kdbus/test-domain.c      |   65 +
+ tools/testing/selftests/kdbus/test-endpoint.c    |  221 +++
+ tools/testing/selftests/kdbus/test-fd.c          |  473 ++++++
+ tools/testing/selftests/kdbus/test-free.c        |   34 +
+ tools/testing/selftests/kdbus/test-match.c       |  385 +++++
+ tools/testing/selftests/kdbus/test-message.c     |  126 ++
+ tools/testing/selftests/kdbus/test-metadata-ns.c |  236 +++
+ tools/testing/selftests/kdbus/test-monitor.c     |  156 ++
+ tools/testing/selftests/kdbus/test-names.c       |  184 +++
+ tools/testing/selftests/kdbus/test-policy-ns.c   |  578 +++++++
+ tools/testing/selftests/kdbus/test-policy-priv.c | 1168 ++++++++++++++
+ tools/testing/selftests/kdbus/test-policy.c      |   81 +
+ tools/testing/selftests/kdbus/test-race.c        |  313 ++++
+ tools/testing/selftests/kdbus/test-sync.c        |  241 +++
+ tools/testing/selftests/kdbus/test-timeout.c     |   97 ++
+ 70 files changed, 21217 insertions(+)
+ create mode 100644 Documentation/kdbus.txt
+ create mode 100644 drivers/misc/kdbus/Kconfig
+ create mode 100644 drivers/misc/kdbus/Makefile
+ create mode 100644 drivers/misc/kdbus/bus.c
+ create mode 100644 drivers/misc/kdbus/bus.h
+ create mode 100644 drivers/misc/kdbus/connection.c
+ create mode 100644 drivers/misc/kdbus/connection.h
+ create mode 100644 drivers/misc/kdbus/domain.c
+ create mode 100644 drivers/misc/kdbus/domain.h
+ create mode 100644 drivers/misc/kdbus/endpoint.c
+ create mode 100644 drivers/misc/kdbus/endpoint.h
+ create mode 100644 drivers/misc/kdbus/handle.c
+ create mode 100644 drivers/misc/kdbus/handle.h
+ create mode 100644 drivers/misc/kdbus/item.c
+ create mode 100644 drivers/misc/kdbus/item.h
+ create mode 100644 drivers/misc/kdbus/limits.h
+ create mode 100644 drivers/misc/kdbus/main.c
+ create mode 100644 drivers/misc/kdbus/match.c
+ create mode 100644 drivers/misc/kdbus/match.h
+ create mode 100644 drivers/misc/kdbus/message.c
+ create mode 100644 drivers/misc/kdbus/message.h
+ create mode 100644 drivers/misc/kdbus/metadata.c
+ create mode 100644 drivers/misc/kdbus/metadata.h
+ create mode 100644 drivers/misc/kdbus/names.c
+ create mode 100644 drivers/misc/kdbus/names.h
+ create mode 100644 drivers/misc/kdbus/notify.c
+ create mode 100644 drivers/misc/kdbus/notify.h
+ create mode 100644 drivers/misc/kdbus/policy.c
+ create mode 100644 drivers/misc/kdbus/policy.h
+ create mode 100644 drivers/misc/kdbus/pool.c
+ create mode 100644 drivers/misc/kdbus/pool.h
+ create mode 100644 drivers/misc/kdbus/queue.c
+ create mode 100644 drivers/misc/kdbus/queue.h
+ create mode 100644 drivers/misc/kdbus/util.c
+ create mode 100644 drivers/misc/kdbus/util.h
+ create mode 100644 include/uapi/linux/kdbus.h
+ create mode 100644 tools/testing/selftests/kdbus/.gitignore
+ create mode 100644 tools/testing/selftests/kdbus/Makefile
+ create mode 100644 tools/testing/selftests/kdbus/kdbus-enum.c
+ create mode 100644 tools/testing/selftests/kdbus/kdbus-enum.h
+ create mode 100644 tools/testing/selftests/kdbus/kdbus-test.c
+ create mode 100644 tools/testing/selftests/kdbus/kdbus-test.h
+ create mode 100644 tools/testing/selftests/kdbus/kdbus-util.c
+ create mode 100644 tools/testing/selftests/kdbus/kdbus-util.h
+ create mode 100644 tools/testing/selftests/kdbus/test-activator.c
+ create mode 100644 tools/testing/selftests/kdbus/test-benchmark.c
+ create mode 100644 tools/testing/selftests/kdbus/test-bus.c
+ create mode 100644 tools/testing/selftests/kdbus/test-chat.c
+ create mode 100644 tools/testing/selftests/kdbus/test-connection.c
+ create mode 100644 tools/testing/selftests/kdbus/test-daemon.c
+ create mode 100644 tools/testing/selftests/kdbus/test-domain.c
+ create mode 100644 tools/testing/selftests/kdbus/test-endpoint.c
+ create mode 100644 tools/testing/selftests/kdbus/test-fd.c
+ create mode 100644 tools/testing/selftests/kdbus/test-free.c
+ create mode 100644 tools/testing/selftests/kdbus/test-match.c
+ create mode 100644 tools/testing/selftests/kdbus/test-message.c
+ create mode 100644 tools/testing/selftests/kdbus/test-metadata-ns.c
+ create mode 100644 tools/testing/selftests/kdbus/test-monitor.c
+ create mode 100644 tools/testing/selftests/kdbus/test-names.c
+ create mode 100644 tools/testing/selftests/kdbus/test-policy-ns.c
+ create mode 100644 tools/testing/selftests/kdbus/test-policy-priv.c
+ create mode 100644 tools/testing/selftests/kdbus/test-policy.c
+ create mode 100644 tools/testing/selftests/kdbus/test-race.c
+ create mode 100644 tools/testing/selftests/kdbus/test-sync.c
+ create mode 100644 tools/testing/selftests/kdbus/test-timeout.c
+
+--=20
+2.1.0
