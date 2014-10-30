@@ -1,102 +1,68 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 00/12] Add kdbus implementation
-Date: Thu, 30 Oct 2014 06:59:57 -0700
-Message-ID: <CALCETrXv_CevG7166++ZHBok0ae7mNhF83VjrRVQ2AKF22Vf_g@mail.gmail.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: kdbus: add code to gather metadata
+Date: Thu, 30 Oct 2014 07:07:57 -0700
+Message-ID: <CALCETrWjOS0AHF33zN0Vy1NC1441To7AgNPge3sKCz8bn2d8gg@mail.gmail.com>
 References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
- <alpine.LRH.2.00.1410292354480.11562@twin.jikos.cz> <20141029231106.GB16548@kroah.com>
- <alpine.LRH.2.00.1410300019570.11562@twin.jikos.cz> <20141029234001.GB16520@kroah.com>
- <CALCETrXY90YAXA9-GLc0EowmRCtWZzh8br8seiqrzOkmNn8_Hw@mail.gmail.com> <CAG-2HqX9RUQHiF1U_CXiDVVLS-7aUOQdYn7EVNSMZNdbe38cTA@mail.gmail.com>
+ <1414620056-6675-7-git-send-email-gregkh@linuxfoundation.org>
+ <CALCETrWqbpxk83L0k0_78JZCO+ntZhx_hHMcRu=vxs6VE2f5JQ@mail.gmail.com>
+ <CALCETrVkuKxMMEw3HBEOZoFUuw8PndXtB13+bLWmcp_E34SaFw@mail.gmail.com> <5451FA9B.8070501@zonque.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG-2HqX9RUQHiF1U_CXiDVVLS-7aUOQdYn7EVNSMZNdbe38cTA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tom Gundersen <teg@jklm.no>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Kosina <jkosina@suse.cz>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, John Stultz <john.stultz@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Tejun Heo <tj@kernel.org>, Marcel Holtmann <marcel@holtmann.org>, Ryan Lortie <desrt@desrt.ca>, Bastien Nocera <hadess@hadess.net>, David Herrmann <dh.herrmann@gmail.com>, Djalal Harouni <tixxdz@opendz.org>, Simon McVittie <simon.mcvittie@collabora.co.uk>, Daniel Mack <daniel@zonque.org>, "alban.crequy" <alban.crequy@collabora.co.uk>, Javier Martinez Canillas <javier.martinez@collabora.co.uk>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5451FA9B.8070501-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 30, 2014 at 4:52 AM, Tom Gundersen <teg@jklm.no> wrote:
-> On 10/30/2014 12:55 AM, Andy Lutomirski wrote:> It's worth noting that:
->>
->>  - Proper credential passing could be added to UNIX sockets, and we
->> may want to do that anyway.  Also, the current kdbus semantics seem to
->> be "spew lots of credentials and other miscellaneous
->> potentially-sensitive and sometime spoofable information all over the
->> place", which isn't obviously an improvement.  (This is fixable, but
->> it will almost certainly not be compatible with current systemd kdbus
->> code if fixed.)
+On Thu, Oct 30, 2014 at 1:45 AM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
 >
-> Care to elaborate on what you think is spoofable, and what needs to be fixed?
+> 1. At open() time, So we can tell peers (through KDBUS_CMD_CONN_INFO)
+> about the credentials a connection had when it was created with
+> KDBUS_CMD_HELLO.
 
-cmd and comm are trivially replaceable by any sender.
+Then the API that tells peers about this information needs to make
+this very clear.
 
 >
-> Anyway, the idea is that by simply connecting to the bus and sending a
-> message to some service, you implicitly agree to passing some metadata
-> along to the service (and to a lesser extent to the bus). It's not
-> that this information is leaked, or that the peer could actively
-> access any of the sender's private memory.
-
-To me, this smells like bad design.  By using kdbus, I implicitly
-agree to send everyone my command line?!?  If I'm in a cgroup that
-policy decrees should be privileged, then I should invoke that
-privilege by specifically asking, *at the time of capture*, to send
-that cgroup.  Otherwise it becomes unclear what things convey
-privilege when, and that will lead immediately to incomprehensible
-security models, and that will lead to exploits.
-
-<snark>Sorry, but "implicitly agree" sounds a lot like using my
-esteemed cellphone carrier.  When I use it, some argue that I
-implicitly agree to have my identity prepended to all outgoing HTTP
-requests.  This is *not* a good thing.</snark>
-
-> Also note that this kind of
-> metadata information is also available via /proc/$PID, and via
-> SCM_CREDENTIALS/SO_PEERCRED and the socket seclabel APIs.
-
-Not if you have a sensible LSM policy or if you use hidepid.  And,
-once you've fixed the namespacing issues, not if the sender and
-receiver are in different PID namespaces or if they don't have /proc
-mounted at all.
-
+> 2. When a new bus is created through KDBUS_CMD_BUS_MAKE, so peers can
+> later query the credentials of the owner of the bus they're connected to.
 >
-> When credential information is passed between processes of different
-> (PID) namespaces most of the attached metadata is suppressed.
 
-This is a bug.  It prevents users from usefully sandboxing themselves
-in a kdbus world.  If you create and enter a user namespace, then your
-outside identity (which should be unchanged) is suppressed.  (Note
-that anything that captures credentials other than at open time is
-also an issue for sandboxes in the other direction: it may interfere
-with selective privilege dropping.)
+Ditto.  Although, why on earth should a bus have credentials?  This
+sounds like a misdesign.  It seems to me that this type of policy
+belongs all the way in userspace.  If you want a bus, you ask the
+owner of the entire domain to make you a bus.  Or you make it yourself
+and hand off references in some authenticated way.
 
-> This
-> isn't too different from how SCM_CREDENTIALS works, which will zero
-> out the bits it cannot translate as well.
-
-SCM_CREDENTIALS translates the translatable parts.
-
-> There are some major benefits regarding performance:
+> 3. When we dispatch a KDBUS_CMD_MSG_SEND ioctl(), because we want to
+> attach the metadata that was authoritative when the message was sent.
+> IOW: We want metadata that actually matches the message payload.
 >
-> * fewer userspace context switches. For a full-duplex method call it's
-> down from five to two: instead of sender -> dbus daemon -> service ->
-> dbus daemon -> sender it's just sender -> service -> sender.
-> * fewer message copies in userspace. For a full-duplex method call
-> it's down from eight to two: instead of copying the method call data
-> into a socket, out of a socket, into a socket, out of a socket, and
-> the same for the method reply, we just copy one message directly to
-> the receiver, and the reply back.
-> * generally fewer syscalls involved. A synchronous method call is now
-> doable in a single ioctl on the sender side.
-> * memfds can be used for transport purposes of larger payload. This
-> way, we can cover substantial payload sizes instead of just small
-> control messages, with no extra copies. kdbus, in its transport layer,
-> makes sure only sealed memfds are passed in as payload, so the sender
-> cannot modify the contents while the receiver is already parsing it.
 
-There should be a number measured in, say, nanoseconds in here
-somewhere.  The actual extent of the speedup is unmeasurable here.
-Also, it's worth reading at least one of Linus' many rants about
-zero-copy.  It's not an automatic win.
+What does that "metadata that actually matches the message payload"
+mean?  If I create an endpoint and delegate some processing to a less
+privileged child, other things on the bus MUST NOT be able to detect
+that delegation in any sensible design.  Otherwise everything will
+appear to work in testing because other processes never checked the
+problematic credential, but then it will randomly fail because someone
+decided to do something daft and validate my unprivileged child's
+argv[0], which is, of course, not what they expected.
+
+I suspect that, if you make credential sending opt-in, you will
+quickly discover that the current model for which credentials matter
+makes no sense.
+
+>> And the ns_eq stuff is too far buried (and not even contained in this
+>> patch!) to be easily verified as being correct, whatever correct means
+>> in that context.
+>
+> I see that. As I explained earlier in my reply to Eric, we've chosen to
+> submit the patch set this way to keep the reply threading clean, so it
+> was some sort of a trade-off. Still, I think the best way to review it
+> is to pull in Greg's patches and look at the actual files.
+
+This wasn't a comment about the threading.  The call, in the patches
+in the git tree, is buried and very difficult to follow.
 
 --Andy
