@@ -1,193 +1,91 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH net-next v4 3/4] iptunnels: advertise link netns via netlink
-Date: Thu, 30 Oct 2014 16:25:27 +0100
-Message-ID: <1414682728-4532-4-git-send-email-nicolas.dichtel@6wind.com>
-References: <1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>
-	<1414682728-4532-1-git-send-email-nicolas.dichtel@6wind.com>
+From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Subject: Re: kdbus: add code to gather metadata
+Date: Thu, 30 Oct 2014 16:54:26 +0100
+Message-ID: <54525F32.3040502@zonque.org>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org> <1414620056-6675-7-git-send-email-gregkh@linuxfoundation.org> <CALCETrWqbpxk83L0k0_78JZCO+ntZhx_hHMcRu=vxs6VE2f5JQ@mail.gmail.com> <CALCETrVkuKxMMEw3HBEOZoFUuw8PndXtB13+bLWmcp_E34SaFw@mail.gmail.com> <5451FA9B.8070501@zonque.org> <CALCETrWjOS0AHF33zN0Vy1NC1441To7AgNPge3sKCz8bn2d8gg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1414682728-4532-1-git-send-email-nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrWjOS0AHF33zN0Vy1NC1441To7AgNPge3sKCz8bn2d8gg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Implement rtnl_link_ops->get_link_net() callback so that IFLA_LINK_NETNSID is
-added to rtnetlink messages.
+On 10/30/2014 03:07 PM, Andy Lutomirski wrote:
+> On Thu, Oct 30, 2014 at 1:45 AM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+>>
+>> 1. At open() time, So we can tell peers (through KDBUS_CMD_CONN_INFO)
+>> about the credentials a connection had when it was created with
+>> KDBUS_CMD_HELLO.
+> 
+> Then the API that tells peers about this information needs to make
+> this very clear.
 
-Signed-off-by: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
----
- include/net/ip6_tunnel.h | 1 +
- include/net/ip_tunnels.h | 1 +
- net/ipv4/ip_gre.c        | 2 ++
- net/ipv4/ip_tunnel.c     | 8 ++++++++
- net/ipv4/ip_vti.c        | 1 +
- net/ipv4/ipip.c          | 1 +
- net/ipv6/ip6_gre.c       | 1 +
- net/ipv6/ip6_tunnel.c    | 9 +++++++++
- net/ipv6/ip6_vti.c       | 1 +
- net/ipv6/sit.c           | 1 +
- 10 files changed, 26 insertions(+)
+Yes, that's an API that tells you something about a connection, and with
+that KDBUS_CMD_CONN_INFO call, you'll always get the information about
+the creator of the connection. IOW: by calling that particular ioctl,
+you'll always get the same kind of information. I guess it's valid to
+just define the API that way?
 
-diff --git a/include/net/ip6_tunnel.h b/include/net/ip6_tunnel.h
-index a5593dab6af7..8648519f4555 100644
---- a/include/net/ip6_tunnel.h
-+++ b/include/net/ip6_tunnel.h
-@@ -69,6 +69,7 @@ int ip6_tnl_xmit_ctl(struct ip6_tnl *t);
- __u16 ip6_tnl_parse_tlv_enc_lim(struct sk_buff *skb, __u8 *raw);
- __u32 ip6_tnl_get_cap(struct ip6_tnl *t, const struct in6_addr *laddr,
- 			     const struct in6_addr *raddr);
-+struct net *ip6_tnl_get_link_net(const struct net_device *dev);
- 
- static inline void ip6tunnel_xmit(struct sk_buff *skb, struct net_device *dev)
- {
-diff --git a/include/net/ip_tunnels.h b/include/net/ip_tunnels.h
-index 5bc6edeb7143..ce4ff6161fab 100644
---- a/include/net/ip_tunnels.h
-+++ b/include/net/ip_tunnels.h
-@@ -122,6 +122,7 @@ struct ip_tunnel_net {
- int ip_tunnel_init(struct net_device *dev);
- void ip_tunnel_uninit(struct net_device *dev);
- void  ip_tunnel_dellink(struct net_device *dev, struct list_head *head);
-+struct net *ip_tunnel_get_link_net(const struct net_device *dev);
- int ip_tunnel_init_net(struct net *net, int ip_tnl_net_id,
- 		       struct rtnl_link_ops *ops, char *devname);
- 
-diff --git a/net/ipv4/ip_gre.c b/net/ipv4/ip_gre.c
-index 12055fdbe716..9e2e29a8c989 100644
---- a/net/ipv4/ip_gre.c
-+++ b/net/ipv4/ip_gre.c
-@@ -827,6 +827,7 @@ static struct rtnl_link_ops ipgre_link_ops __read_mostly = {
- 	.dellink	= ip_tunnel_dellink,
- 	.get_size	= ipgre_get_size,
- 	.fill_info	= ipgre_fill_info,
-+	.get_link_net	= ip_tunnel_get_link_net,
- };
- 
- static struct rtnl_link_ops ipgre_tap_ops __read_mostly = {
-@@ -841,6 +842,7 @@ static struct rtnl_link_ops ipgre_tap_ops __read_mostly = {
- 	.dellink	= ip_tunnel_dellink,
- 	.get_size	= ipgre_get_size,
- 	.fill_info	= ipgre_fill_info,
-+	.get_link_net	= ip_tunnel_get_link_net,
- };
- 
- static int __net_init ipgre_tap_init_net(struct net *net)
-diff --git a/net/ipv4/ip_tunnel.c b/net/ipv4/ip_tunnel.c
-index 0bb8e141eacc..3e1edd544b27 100644
---- a/net/ipv4/ip_tunnel.c
-+++ b/net/ipv4/ip_tunnel.c
-@@ -972,6 +972,14 @@ void ip_tunnel_dellink(struct net_device *dev, struct list_head *head)
- }
- EXPORT_SYMBOL_GPL(ip_tunnel_dellink);
- 
-+struct net *ip_tunnel_get_link_net(const struct net_device *dev)
-+{
-+	struct ip_tunnel *tunnel = netdev_priv(dev);
-+
-+	return tunnel->net;
-+}
-+EXPORT_SYMBOL(ip_tunnel_get_link_net);
-+
- int ip_tunnel_init_net(struct net *net, int ip_tnl_net_id,
- 				  struct rtnl_link_ops *ops, char *devname)
- {
-diff --git a/net/ipv4/ip_vti.c b/net/ipv4/ip_vti.c
-index 3e861011e4a3..f0fab26e4ddc 100644
---- a/net/ipv4/ip_vti.c
-+++ b/net/ipv4/ip_vti.c
-@@ -530,6 +530,7 @@ static struct rtnl_link_ops vti_link_ops __read_mostly = {
- 	.changelink	= vti_changelink,
- 	.get_size	= vti_get_size,
- 	.fill_info	= vti_fill_info,
-+	.get_link_net	= ip_tunnel_get_link_net,
- };
- 
- static int __init vti_init(void)
-diff --git a/net/ipv4/ipip.c b/net/ipv4/ipip.c
-index 37096d64730e..e7a183baba0a 100644
---- a/net/ipv4/ipip.c
-+++ b/net/ipv4/ipip.c
-@@ -498,6 +498,7 @@ static struct rtnl_link_ops ipip_link_ops __read_mostly = {
- 	.dellink	= ip_tunnel_dellink,
- 	.get_size	= ipip_get_size,
- 	.fill_info	= ipip_fill_info,
-+	.get_link_net	= ip_tunnel_get_link_net,
- };
- 
- static struct xfrm_tunnel ipip_handler __read_mostly = {
-diff --git a/net/ipv6/ip6_gre.c b/net/ipv6/ip6_gre.c
-index 12c3c8ef3849..5165ac7fde22 100644
---- a/net/ipv6/ip6_gre.c
-+++ b/net/ipv6/ip6_gre.c
-@@ -1661,6 +1661,7 @@ static struct rtnl_link_ops ip6gre_link_ops __read_mostly = {
- 	.dellink	= ip6gre_dellink,
- 	.get_size	= ip6gre_get_size,
- 	.fill_info	= ip6gre_fill_info,
-+	.get_link_net	= ip6_tnl_get_link_net,
- };
- 
- static struct rtnl_link_ops ip6gre_tap_ops __read_mostly = {
-diff --git a/net/ipv6/ip6_tunnel.c b/net/ipv6/ip6_tunnel.c
-index 9409887fb664..6b2534ea9c54 100644
---- a/net/ipv6/ip6_tunnel.c
-+++ b/net/ipv6/ip6_tunnel.c
-@@ -1703,6 +1703,14 @@ nla_put_failure:
- 	return -EMSGSIZE;
- }
- 
-+struct net *ip6_tnl_get_link_net(const struct net_device *dev)
-+{
-+	struct ip6_tnl *tunnel = netdev_priv(dev);
-+
-+	return tunnel->net;
-+}
-+EXPORT_SYMBOL(ip6_tnl_get_link_net);
-+
- static const struct nla_policy ip6_tnl_policy[IFLA_IPTUN_MAX + 1] = {
- 	[IFLA_IPTUN_LINK]		= { .type = NLA_U32 },
- 	[IFLA_IPTUN_LOCAL]		= { .len = sizeof(struct in6_addr) },
-@@ -1726,6 +1734,7 @@ static struct rtnl_link_ops ip6_link_ops __read_mostly = {
- 	.dellink	= ip6_tnl_dellink,
- 	.get_size	= ip6_tnl_get_size,
- 	.fill_info	= ip6_tnl_fill_info,
-+	.get_link_net	= ip6_tnl_get_link_net,
- };
- 
- static struct xfrm6_tunnel ip4ip6_handler __read_mostly = {
-diff --git a/net/ipv6/ip6_vti.c b/net/ipv6/ip6_vti.c
-index d440bb585524..43966dcc9603 100644
---- a/net/ipv6/ip6_vti.c
-+++ b/net/ipv6/ip6_vti.c
-@@ -992,6 +992,7 @@ static struct rtnl_link_ops vti6_link_ops __read_mostly = {
- 	.changelink	= vti6_changelink,
- 	.get_size	= vti6_get_size,
- 	.fill_info	= vti6_fill_info,
-+	.get_link_net	= ip6_tnl_get_link_net,
- };
- 
- static void __net_exit vti6_destroy_tunnels(struct vti6_net *ip6n)
-diff --git a/net/ipv6/sit.c b/net/ipv6/sit.c
-index 58e5b4710127..c858d0eb267a 100644
---- a/net/ipv6/sit.c
-+++ b/net/ipv6/sit.c
-@@ -1765,6 +1765,7 @@ static struct rtnl_link_ops sit_link_ops __read_mostly = {
- 	.get_size	= ipip6_get_size,
- 	.fill_info	= ipip6_fill_info,
- 	.dellink	= ipip6_dellink,
-+	.get_link_net	= ip_tunnel_get_link_net,
- };
- 
- static struct xfrm_tunnel sit_handler __read_mostly = {
--- 
-2.1.0
+>> 2. When a new bus is created through KDBUS_CMD_BUS_MAKE, so peers can
+>> later query the credentials of the owner of the bus they're connected to.
+> 
+> Ditto.  Although, why on earth should a bus have credentials?  This
+> sounds like a misdesign.  It seems to me that this type of policy
+> belongs all the way in userspace.  If you want a bus, you ask the
+> owner of the entire domain to make you a bus.  Or you make it yourself
+> and hand off references in some authenticated way.
+
+Yes, that's the way it works. However, the idea is that a bus stays
+alive as long as the file descriptor that was used to the create that
+bus remains open, and it is immediately shut down when the fd is closed.
+We merely allow user that are connected to a bus to query the
+credentials of the creator of the bus they're connected to. So it's not
+the bus which has credentials, but its original creator, at the time of
+creation.
+
+>> 3. When we dispatch a KDBUS_CMD_MSG_SEND ioctl(), because we want to
+>> attach the metadata that was authoritative when the message was sent.
+>> IOW: We want metadata that actually matches the message payload.
+> 
+> What does that "metadata that actually matches the message payload"
+> mean? 
+
+A bus client posted something in some point in time. We want metadata of
+the time the message was posted.
+
+> If I create an endpoint and delegate some processing to a less
+> privileged child, other things on the bus MUST NOT be able to detect
+> that delegation in any sensible design.  Otherwise everything will
+> appear to work in testing because other processes never checked the
+> problematic credential, but then it will randomly fail because someone
+> decided to do something daft and validate my unprivileged child's
+> argv[0], which is, of course, not what they expected.
+
+Not sure whether I got your point, but if a privileged service that
+takes action on behalf of unprivileged clients, it may well depend on
+certain credential information to be present along with the message, and
+refuse to take action otherwise.
+
+For example, if a privileged service can reboot the system, it checks
+whether the asking peer has CAP_SYS_BOOT set. If it checks for uid==0
+instead, and it works in your tests because you happen to test as root,
+that just a bug in the service, right? But I might have missed your point.
+
+> I suspect that, if you make credential sending opt-in, you will
+> quickly discover that the current model for which credentials matter
+> makes no sense.
+
+While for the example above, opting-in for creds items on the sender
+side might actually work (the asking service would be refused in his
+request to reboot the machine). However, for any sort of logging or
+system services, for example, allowing the sender to select which creds
+it wants to reveal is supporting a hide-and-seek game, and that's
+something that won't work.
+
+Thanks for sharing your thoughts on this - I appreciate this discussion
+stays on such technical grounds :)
+
+Daniel
