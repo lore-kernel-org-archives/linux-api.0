@@ -1,40 +1,48 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH 00/12] Add kdbus implementation
-Date: Thu, 30 Oct 2014 09:17:52 -0700
-Message-ID: <20141030161752.GB21989@kroah.com>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
- <4382138.U2ODUIQ55c@wuerfel>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [v5 3/5] Adds project quota support for ext4
+Date: Thu, 30 Oct 2014 17:50:24 +0100
+Message-ID: <20141030165024.GI28444@quack.suse.cz>
+References: <1414300973-1118-1-git-send-email-lixi@ddn.com>
+ <1414300973-1118-4-git-send-email-lixi@ddn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <4382138.U2ODUIQ55c@wuerfel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, john.stultz@linaro.org, tj@kernel.org, marcel@holtmann.org, desrt@desrt.ca, hadess@hadess.net, dh.herrmann@gmail.com, tixxdz@opendz.org, simon.mcvittie@collabora.co.uk, daniel@zonque.org, alban.crequy@collabora.co.uk, javier.martinez@collabora.co.uk, teg@jklm.no
+In-Reply-To: <1414300973-1118-4-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 30, 2014 at 09:33:56AM +0100, Arnd Bergmann wrote:
-> On Wednesday 29 October 2014 15:00:44 Greg Kroah-Hartman wrote:
-> >  drivers/misc/Kconfig                             |    1 +
-> >  drivers/misc/Makefile                            |    1 +
-> >  drivers/misc/kdbus/Kconfig                       |   11 +
-> >  drivers/misc/kdbus/Makefile                      |   19 +
-> >  drivers/misc/kdbus/bus.c                         |  450 ++++++
-> >  drivers/misc/kdbus/bus.h                         |  107 ++
-> >  drivers/misc/kdbus/connection.c                  | 1751 +++++++++++++++++++++
-> >  drivers/misc/kdbus/connection.h                  |  177 +++
-> >  drivers/misc/kdbus/domain.c                      |  477 ++++++
-> > 
-> 
-> One very high-level common:
-> 
-> Since this is going to be a very commonly used IPC mechanism, I don't
-> like the idea of stuffing it into drivers/misc.
-> 
-> How about putting it into drivers/kdbus or ipc/kdbus instead?
+On Sun 26-10-14 13:22:51, Li Xi wrote:
+> This patch adds mount options for enabling/disabling project quota
+> accounting and enforcement. A new specific inode is also used for
+> project quota accounting.
+  The patch looks good except for one small issue:
 
-ipc/kdbus seems good to me.  I didn't want to "pollute" drivers/ with
-any new subdirectories, it seems to grow fast enough as it is...
+...
+> +	limit = dquot->dq_dqb.dqb_isoftlimit ?
+> +		dquot->dq_dqb.dqb_isoftlimit :
+> +		dquot->dq_dqb.dqb_ihardlimit;
+> +	if (limit && buf->f_files > limit) {
+> +		buf->f_files = limit;
+> +		buf->f_ffree =
+> +			(buf->f_files > dquot->dq_dqb.dqb_curinodes) ?
+> +			 (buf->f_ffree - dquot->dq_dqb.dqb_curinodes) : 0;
+                              ^^^^^ here should be f_files, shouldn't it?
 
-greg k-h
+> +	}
+> +
+> +	spin_unlock(&dq_data_lock);
+> +	dqput(dquot);
+> +	return 0;
+> +}
+> +
+>  static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
+>  {
+>  	struct super_block *sb = dentry->d_sb;
+
+								Honza
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
