@@ -1,38 +1,33 @@
-From: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH 00/12] Add kdbus implementation
-Date: Thu, 30 Oct 2014 11:44:39 +0100
-Message-ID: <54521697.1030900@samsung.com>
-References: <54520A21.20404@samsung.com>
+From: Tom Gundersen <teg@jklm.no>
+Subject: Re: kdbus: add header file
+Date: Thu, 30 Oct 2014 12:02:39 +0100
+Message-ID: <CAG-2HqV_mXyARMs=9GOpbCBHPU+2XMkDcm=sGekYnnujNPAYqQ@mail.gmail.com>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
+ <1414620056-6675-3-git-send-email-gregkh@linuxfoundation.org> <3546486.lOZcZMmXYe@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <54520A21.20404-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <3546486.lOZcZMmXYe@wuerfel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, John Stultz <john.stultz@linaro.org>, Tejun Heo <tj@kernel.org>, Marcel Holtmann <marcel@holtmann.org>, Ryan Lortie <desrt@desrt.ca>, Bastien Nocera <hadess@hadess.net>, David Herrmann <dh.herrmann@gmail.com>, Djalal Harouni <tixxdz@opendz.org>, Simon McVittie <simon.mcvittie@collabora.co.uk>, Daniel Mack <daniel@zonque.org>, "alban.crequy" <alban.crequy@collabora.co.uk>, "javier.martinez" <javier.martinez@collabora.co.uk>
 List-Id: linux-api@vger.kernel.org
 
-[ Sorry for breaking thread and resend - gmane rejected my original message
-  due to too long list of recipients... ]
+On Thu, Oct 30, 2014 at 9:20 AM, Arnd Bergmann <arnd@arndb.de> wrote:
+> I think in general, using enum is great, but for ioctl command numbers,
+> we probably want to have defines so the user space implementation can
+> use #ifdef to see if the kernel version that it is being built for
+> knows a particular command.
 
-On 2014-10-30 00:40, Greg Kroah-Hartman wrote:
+Does that make sense for the first version? I agree that we should use
+ #define to allow #ifdef for when we add more ioctls in the future,
+but these ioctls will always exist...
 
-> There is a 1815 line documentation file in this series, so we aren't
-> trying to not provide this type of information here at all.  But yes,
-> more background, about why this can't be done in userspace (zero copy,
-> less context switches, proper credential passing, timestamping, availble
-> at early-boot, LSM hooks for security models to tie into
-
-While you're at it... I did some work on proof-of-concept LSM patches for
-kdbus some time ago, see [1][2].  Currently, these are completely of date.
-
- [1] https://github.com/lmctl/linux/commits/kdbus-lsm-v4.for-systemd-v212
- [2] https://github.com/lmctl/kdbus/commit/aa0885489d19be92fa41c6f0a71df28763228a40
-
-May I ask if you guys have your own plan for LSM or maybe it would be
-worth to resurrect [1]?
+The nice thing about enums is of course that it helps with debugging
+as gdb can show the string representation rather than the number,
+because in contrast to #defines, an enum is something the compliler
+knows about.
 
 Cheers,
--- 
-Karol Lewandowski, Samsung R&D Institute Poland
+
+Tom
