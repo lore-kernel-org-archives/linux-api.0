@@ -1,127 +1,51 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH net-next v4 0/4] netns: allow to identify peer netns
-Date: Thu, 30 Oct 2014 11:41:03 -0700
-Message-ID: <871tpph03k.fsf@x220.int.ebiederm.org>
-References: <1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>
-	<1414682728-4532-1-git-send-email-nicolas.dichtel@6wind.com>
+From: Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Subject: Re: kdbus: add code for buses, domains and endpoints
+Date: Thu, 30 Oct 2014 18:46:48 +0000
+Message-ID: <54528798.40107@collabora.co.uk>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org> <1414620056-6675-9-git-send-email-gregkh@linuxfoundation.org> <8738a6w6kv.fsf@x220.int.ebiederm.org> <20141030095854.GA4716@dztty> <87wq7hiwjb.fsf@x220.int.ebiederm.org> <20141030144855.GA9705@dztty> <CALCETrXeNQUuwiyaJrbbbZUrSW3NTucRgpg0kKEuS3yszP-09w@mail.gmail.com> <20141030180813.GA11850@dztty>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1414682728-4532-1-git-send-email-nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-	(Nicolas Dichtel's message of "Thu, 30 Oct 2014 16:25:24 +0100")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141030180813.GA11850@dztty>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, "alban.crequy" <alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> writes:
+On 30/10/14 18:08, Djalal Harouni wrote:
+> So, this is similar to AF_UNIX sockets. For them there's SCM_CREDENTIALS
+> and SO_PEERCRED. The former uses credentials at the time of when
+> messages are being sent, the latter uses the credentials at the time
+> when when the connection was initially established.
 
-> The goal of this serie is to be able to multicast netlink messages with an
-> attribute that identify a peer netns.
-> This is needed by the userland to interpret some informations contained in
-> netlink messages (like IFLA_LINK value, but also some other attributes in case
-> of x-netns netdevice (see also
-> http://thread.gmane.org/gmane.linux.network/315933/focus=316064 and
-> http://thread.gmane.org/gmane.linux.kernel.containers/28301/focus=4239)).
->
-> Ids of peer netns are set by userland via a new genl messages. These ids are
-> stored per netns and are local (ie only valid in the netns where they are set).
-> To avoid allocating an int for each peer netns, I use idr_for_each() to retrieve
-> the id of a peer netns. Note that it will be possible to add a table (struct net
-> -> id) later to optimize this lookup if needed.
->
-> Patch 1/4 introduces the netlink API mechanism to set and get these ids.
-> Patch 2/4 and 3/4 implements an example of how to use these ids in rtnetlink
-> messages. And patch 4/4 shows that the netlink messages can be symetric between
-> a GET and a SET.
->
-> iproute2 patches are available, I can send them on demand.
+Please note that dbus-daemon, the reference implementation of D-Bus,
+does not actually ever use SCM_CREDENTIALS on its AF_UNIX sockets. We
+prefer to use Linux's SO_PEERCRED, or the platform's closest available
+equivalent if there is one. dbus-daemon has methods (RPC calls) to get a
+specified peer's uid, pid or LSM data (e.g. SELinux context), but those
+methods return the value that was true when the connection was opened or
+shortly afterwards, not the value that is true right now. I believe the
+plan is that kdbus has ioctls that are equivalent to those RPC calls,
+but without needing to wait for asynchronous socket events to get an answer.
 
-A quick reply.  I think this patchset is in the right general direction.
-There are some oddball details that seem odd/awkward to me such as using
-genetlink instead of rtnetlink to get and set the ids, and not having
-ids if they are not set (that feels like a maintenance/usability challenge).
+The reason I say "or shortly afterwards" is that for the benefit of
+platforms where the "best" credentials transfer mechanism behaves like
+Linux SCM_CREDENTIALS, such as FreeBSD's SCM_CREDS, the beginning of a
+D-Bus protocol stream is that the client sends '\0' to dbus-daemon,
+accompanied by SCM_CREDS or whatever if the platform needs it. On Linux
+we just send a plain '\0' with no out-of-band data at that point.
 
-I would like to give your patches a deep review, but I won't be able to
-do that for a couple of weeks.  I am deep in the process of moving,
-and will be mostly offline until about the Nov 11th.
+The only out-of-band data we send with individual D-Bus RPC messages
+later in the connection's lifetime is for fd-passing (SCM_RIGHTS).
 
-Eric
+It would be a perfectly reasonable feature request to have individual
+D-Bus messages that contain proof that, *at the time of sending*, the
+sender possessed a given uid/pid/gid/capability/whatever, but we do not
+currently have that feature. It would be reasonable for kdbus to have
+that feature even though traditional D-Bus doesn't, and it's entirely
+possible that it is a feature that would be of benefit for e.g. systemd,
+but it is not required for feature parity with traditional D-Bus over
+AF_UNIX; it should be included in kdbus, or not, on its own merits.
 
-
-> Here is a small screenshot to show how it can be used by userland.
->
-> First, setup netns and required ids:
-> $ ip netns add foo
-> $ ip netns del foo
-> $ ip netns
-> $ touch /var/run/netns/init_net
-> $ mount --bind /proc/1/ns/net /var/run/netns/init_net
-> $ ip netns add foo
-> $ ip netns exec foo ip netns set init_net 0
-> $ ip netns
-> foo
-> init_net
-> $ ip netns exec foo ip netns
-> foo
-> init_net (id: 0)
->
-> Now, add and display an ipip tunnel, with its link part in init_net (id 0 in
-> netns foo) and the netdevice in foo:
-> $ ip netns exec foo ip link add ipip1 link-netnsid 0 type ipip remote 10.16.0.121 local 10.16.0.249
-> $ ip netns exec foo ip l ls ipip1
-> 6: ipip1@NONE: <POINTOPOINT,NOARP> mtu 1480 qdisc noop state DOWN mode DEFAULT group default 
->     link/ipip 10.16.0.249 peer 10.16.0.121 link-netnsid 0
->
-> The parameter link-netnsid shows us where the interface sends and receives
-> packets (and thus we know where encapsulated addresses are set).
->
-> RFCv3 -> v4:
->   rebase on net-next
->   add copyright text in the new netns.h file
->
-> RFCv2 -> RFCv3:
->   ids are now defined by userland (via netlink). Ids are stored in each netns
->   (and they are local to this netns).
->   add get_link_net support for ip6 tunnels
->   netnsid is now a s32 instead of a u32
->
-> RFCv1 -> RFCv2:
->   remove useless ()
->   ids are now stored in the user ns. It's possible to get an id for a peer netns
->   only if the current netns and the peer netns have the same user ns parent.
->
->  MAINTAINERS                  |   1 +
->  include/net/ip6_tunnel.h     |   1 +
->  include/net/ip_tunnels.h     |   1 +
->  include/net/net_namespace.h  |   5 ++
->  include/net/rtnetlink.h      |   2 +
->  include/uapi/linux/Kbuild    |   1 +
->  include/uapi/linux/if_link.h |   1 +
->  include/uapi/linux/netns.h   |  38 +++++++++
->  net/core/net_namespace.c     | 195 +++++++++++++++++++++++++++++++++++++++++++
->  net/core/rtnetlink.c         |  38 ++++++++-
->  net/ipv4/ip_gre.c            |   2 +
->  net/ipv4/ip_tunnel.c         |   8 ++
->  net/ipv4/ip_vti.c            |   1 +
->  net/ipv4/ipip.c              |   1 +
->  net/ipv6/ip6_gre.c           |   1 +
->  net/ipv6/ip6_tunnel.c        |   9 ++
->  net/ipv6/ip6_vti.c           |   1 +
->  net/ipv6/sit.c               |   1 +
->  net/netlink/genetlink.c      |   4 +
->  19 files changed, 308 insertions(+), 3 deletions(-)
->
-> Comments are welcome.
->
-> Regards,
-> Nicolas
+    S
