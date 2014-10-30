@@ -1,54 +1,67 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: kdbus: add driver skeleton, ioctl entry points and utility functions
-Date: Wed, 29 Oct 2014 20:50:33 -0700
-Message-ID: <87egtqw706.fsf@x220.int.ebiederm.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: kdbus: add connection, queue handling and message validation code
+Date: Wed, 29 Oct 2014 20:55:58 -0700
+Message-ID: <CALCETrXm116+eRvYY7QNbHcrOpZYOCqvC_WPguPZm-G+UEHeGw@mail.gmail.com>
 References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
-	<1414620056-6675-4-git-send-email-gregkh@linuxfoundation.org>
+ <1414620056-6675-6-git-send-email-gregkh@linuxfoundation.org> <87k33iw759.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1414620056-6675-4-git-send-email-gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-	(Greg Kroah-Hartman's message of "Wed, 29 Oct 2014 15:00:47 -0700")
+In-Reply-To: <87k33iw759.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> writes:
-
-> From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+On Wed, Oct 29, 2014 at 8:47 PM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> writes:
 >
-> Add the basic driver structure.
+>> From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+>>
+>> This patch adds code to create and destroy connections, to validate
+>> incoming messages and to maintain the queue of messages that are
+>> associated with a connection.
+>>
+>> Note that connection and queue have a 1:1 relation, the code is only
+>> split in two parts for cleaner separation and better readability.
 >
-> handle.c is the main ioctl command dispatcher that calls into other parts
-> of the driver.
+> You are not performing capability checks at open time.
 >
-> main.c contains the code that creates the initial domain at startup, and
-> util.c has utility functions such as item iterators that are shared with
-> other files.
+> As such this API is suceptible to a host of file descriptor passing attacks.
+
+To be fair, write(2) doesn't work on these fds, so the usual attacks
+don't work.  But who knows what absurd things kdbus clients will do
+with fd passing?
+
+--Andy
+
 >
-> limits.h describes limits on things like maximum data structure sizes,
-> number of messages per users and suchlike. Some of the numbers currently
-> picked are rough ideas of what what might be sufficient and are probably
-> rather conservative.
+>> Signed-off-by: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+>> Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+>> ---
 >
-> Signed-off-by: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
-> Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+>> +/*
+>> + * Check for maximum number of messages per individual user. This
+>> + * should prevent a single user from being able to fill the receiver's
+>> + * queue.
+>> + */
+>> +static int kdbus_conn_queue_user_quota(struct kdbus_conn *conn,
+>> +                                    const struct kdbus_conn *conn_src,
+>> +                                    struct kdbus_queue_entry *entry)
+>> +{
+>> +     unsigned int user;
+>> +
+>> +     if (!conn_src)
+>> +             return 0;
+>> +
+>> +     if (ns_capable(&init_user_ns, CAP_IPC_OWNER))
+>> +             return 0;
+>
+>
 
 
-> +/* kdbus control device commands */
-> +static long kdbus_handle_ioctl_control(struct file *file, unsigned int cmd,
-> +				       void __user *buf)
-> +{
-> +	case KDBUS_CMD_DOMAIN_MAKE: {
-> +		const char *name;
-> +
-> +		if (!capable(CAP_IPC_OWNER)) {
-> +			ret = -EPERM;
-> +			break;
-> +		}
 
-I don't know if this is exploitable (given that this happens in an
-ioctl) but capable checks outside of open usually are.
-
-Eric
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
