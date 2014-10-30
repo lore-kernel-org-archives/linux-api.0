@@ -1,68 +1,47 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: kdbus: add code to gather metadata
-Date: Thu, 30 Oct 2014 07:07:57 -0700
-Message-ID: <CALCETrWjOS0AHF33zN0Vy1NC1441To7AgNPge3sKCz8bn2d8gg@mail.gmail.com>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
- <1414620056-6675-7-git-send-email-gregkh@linuxfoundation.org>
- <CALCETrWqbpxk83L0k0_78JZCO+ntZhx_hHMcRu=vxs6VE2f5JQ@mail.gmail.com>
- <CALCETrVkuKxMMEw3HBEOZoFUuw8PndXtB13+bLWmcp_E34SaFw@mail.gmail.com> <5451FA9B.8070501@zonque.org>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH 00/12] Add kdbus implementation
+Date: Thu, 30 Oct 2014 07:47:09 -0700
+Message-ID: <20141030144709.GA19721@kroah.com>
+References: <54520A21.20404@samsung.com>
+ <54521697.1030900@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5451FA9B.8070501-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54521697.1030900-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
+To: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 30, 2014 at 1:45 AM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
->
-> 1. At open() time, So we can tell peers (through KDBUS_CMD_CONN_INFO)
-> about the credentials a connection had when it was created with
-> KDBUS_CMD_HELLO.
+On Thu, Oct 30, 2014 at 11:44:39AM +0100, Karol Lewandowski wrote:
+> [ Sorry for breaking thread and resend - gmane rejected my original message
+>   due to too long list of recipients... ]
+> 
+> On 2014-10-30 00:40, Greg Kroah-Hartman wrote:
+> 
+> > There is a 1815 line documentation file in this series, so we aren't
+> > trying to not provide this type of information here at all.  But yes,
+> > more background, about why this can't be done in userspace (zero copy,
+> > less context switches, proper credential passing, timestamping, availble
+> > at early-boot, LSM hooks for security models to tie into
+> 
+> While you're at it... I did some work on proof-of-concept LSM patches for
+> kdbus some time ago, see [1][2].  Currently, these are completely of date.
+> 
+>  [1] https://github.com/lmctl/linux/commits/kdbus-lsm-v4.for-systemd-v212
+>  [2] https://github.com/lmctl/kdbus/commit/aa0885489d19be92fa41c6f0a71df28763228a40
+> 
+> May I ask if you guys have your own plan for LSM or maybe it would be
+> worth to resurrect [1]?
 
-Then the API that tells peers about this information needs to make
-this very clear.
+The core calls are already mediated by LSM today, right?  We don't want
+anyone to be parsing the data stream through an LSM, that idea got
+rejected a long time ago as something that is really not a good idea.
 
->
-> 2. When a new bus is created through KDBUS_CMD_BUS_MAKE, so peers can
-> later query the credentials of the owner of the bus they're connected to.
->
+Other than that, I don't know exactly what your patches do, or why they
+are needed, care to go into details?
 
-Ditto.  Although, why on earth should a bus have credentials?  This
-sounds like a misdesign.  It seems to me that this type of policy
-belongs all the way in userspace.  If you want a bus, you ask the
-owner of the entire domain to make you a bus.  Or you make it yourself
-and hand off references in some authenticated way.
+thanks,
 
-> 3. When we dispatch a KDBUS_CMD_MSG_SEND ioctl(), because we want to
-> attach the metadata that was authoritative when the message was sent.
-> IOW: We want metadata that actually matches the message payload.
->
-
-What does that "metadata that actually matches the message payload"
-mean?  If I create an endpoint and delegate some processing to a less
-privileged child, other things on the bus MUST NOT be able to detect
-that delegation in any sensible design.  Otherwise everything will
-appear to work in testing because other processes never checked the
-problematic credential, but then it will randomly fail because someone
-decided to do something daft and validate my unprivileged child's
-argv[0], which is, of course, not what they expected.
-
-I suspect that, if you make credential sending opt-in, you will
-quickly discover that the current model for which credentials matter
-makes no sense.
-
->> And the ns_eq stuff is too far buried (and not even contained in this
->> patch!) to be easily verified as being correct, whatever correct means
->> in that context.
->
-> I see that. As I explained earlier in my reply to Eric, we've chosen to
-> submit the patch set this way to keep the reply threading clean, so it
-> was some sort of a trade-off. Still, I think the best way to review it
-> is to pull in Greg's patches and look at the actual files.
-
-This wasn't a comment about the threading.  The call, in the patches
-in the git tree, is buried and very difficult to follow.
-
---Andy
+greg k-h
