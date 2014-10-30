@@ -1,51 +1,75 @@
-From: Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Subject: Re: kdbus: add code for buses, domains and endpoints
-Date: Thu, 30 Oct 2014 18:46:48 +0000
-Message-ID: <54528798.40107@collabora.co.uk>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org> <1414620056-6675-9-git-send-email-gregkh@linuxfoundation.org> <8738a6w6kv.fsf@x220.int.ebiederm.org> <20141030095854.GA4716@dztty> <87wq7hiwjb.fsf@x220.int.ebiederm.org> <20141030144855.GA9705@dztty> <CALCETrXeNQUuwiyaJrbbbZUrSW3NTucRgpg0kKEuS3yszP-09w@mail.gmail.com> <20141030180813.GA11850@dztty>
+From: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH 00/12] Add kdbus implementation
+Date: Thu, 30 Oct 2014 20:55:56 +0100
+Message-ID: <545297CC.6020306@samsung.com>
+References: <54520A21.20404@samsung.com> <54521697.1030900@samsung.com>
+ <20141030144709.GA19721@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141030180813.GA11850@dztty>
+In-reply-to: <20141030144709.GA19721-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, "alban.crequy" <alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 30/10/14 18:08, Djalal Harouni wrote:
-> So, this is similar to AF_UNIX sockets. For them there's SCM_CREDENTIALS
-> and SO_PEERCRED. The former uses credentials at the time of when
-> messages are being sent, the latter uses the credentials at the time
-> when when the connection was initially established.
+On 2014-10-30 15:47, Greg Kroah-Hartman wrote:
+> On Thu, Oct 30, 2014 at 11:44:39AM +0100, Karol Lewandowski wrote:
+>> [ Sorry for breaking thread and resend - gmane rejected my original message
+>>   due to too long list of recipients... ]
+>>
+>> On 2014-10-30 00:40, Greg Kroah-Hartman wrote:
+>>
+>>> There is a 1815 line documentation file in this series, so we aren't
+>>> trying to not provide this type of information here at all.  But yes,
+>>> more background, about why this can't be done in userspace (zero copy,
+>>> less context switches, proper credential passing, timestamping, availble
+>>> at early-boot, LSM hooks for security models to tie into
+>>
+>> While you're at it... I did some work on proof-of-concept LSM patches for
+>> kdbus some time ago, see [1][2].  Currently, these are completely of date.
+>>
+>>  [1] https://github.com/lmctl/linux/commits/kdbus-lsm-v4.for-systemd-v212
+>>  [2] https://github.com/lmctl/kdbus/commit/aa0885489d19be92fa41c6f0a71df28763228a40
+>>
+>> May I ask if you guys have your own plan for LSM or maybe it would be
+>> worth to resurrect [1]?
+> 
+> The core calls are already mediated by LSM today, right?  We don't want
+> anyone to be parsing the data stream through an LSM, that idea got
+> rejected a long time ago as something that is really not a good idea.
 
-Please note that dbus-daemon, the reference implementation of D-Bus,
-does not actually ever use SCM_CREDENTIALS on its AF_UNIX sockets. We
-prefer to use Linux's SO_PEERCRED, or the platform's closest available
-equivalent if there is one. dbus-daemon has methods (RPC calls) to get a
-specified peer's uid, pid or LSM data (e.g. SELinux context), but those
-methods return the value that was true when the connection was opened or
-shortly afterwards, not the value that is true right now. I believe the
-plan is that kdbus has ioctls that are equivalent to those RPC calls,
-but without needing to wait for asynchronous socket events to get an answer.
+Parsing data is out of question, of course, but this is not what we were
+proposing.
 
-The reason I say "or shortly afterwards" is that for the benefit of
-platforms where the "best" credentials transfer mechanism behaves like
-Linux SCM_CREDENTIALS, such as FreeBSD's SCM_CREDS, the beginning of a
-D-Bus protocol stream is that the client sends '\0' to dbus-daemon,
-accompanied by SCM_CREDS or whatever if the platform needs it. On Linux
-we just send a plain '\0' with no out-of-band data at that point.
+> Other than that, I don't know exactly what your patches do, or why they
+> are needed, care to go into details?
 
-The only out-of-band data we send with individual D-Bus RPC messages
-later in the connection's lifetime is for fd-passing (SCM_RIGHTS).
+Patches in question were supposed to add few hooks for kdbus-specific
+operations that doesn't seem to have compatible semantics with hooks
+currently available in LSM.
 
-It would be a perfectly reasonable feature request to have individual
-D-Bus messages that contain proof that, *at the time of sending*, the
-sender possessed a given uid/pid/gid/capability/whatever, but we do not
-currently have that feature. It would be reasonable for kdbus to have
-that feature even though traditional D-Bus doesn't, and it's entirely
-possible that it is a feature that would be of benefit for e.g. systemd,
-but it is not required for feature parity with traditional D-Bus over
-AF_UNIX; it should be included in kdbus, or not, on its own merits.
+kdbus' bus introduces quite a few new concepts that we wanted to be able
+to limit based on MAC label/context, eg.
 
-    S
+ - check flags at HELO stage (say disallow fd passing),
+
+ - restrict ability to acquire name to certain subjects (for system bus),
+
+ - disallow creation of new buses,
+
+ - limit scope of broadcasts,
+
+ - etc.
+
+Please take a look at hook list - I think most of names are self-explanatory:
+
+  https://github.com/lmctl/linux/blob/a9fe4c33b6e5ab25a243e0590df406aabb6add12/include/linux/security.h#L1874
+
+kdbus modifications were pretty light - with most visible change being
+addition of opaque security pointer to kdbus_bus and similar structs.
+
+Thanks!
+-- 
+Karol Lewandowski, Samsung R&D Institute Poland
