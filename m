@@ -1,165 +1,76 @@
-From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v9 04/19] vfio: amba: VFIO support for AMBA devices
-Date: Fri, 31 Oct 2014 12:40:19 -0600
-Message-ID: <1414780819.27420.314.camel@ul30vt.home>
-References: <1414433284-31719-1-git-send-email-a.motakis@virtualopensystems.com>
-	 <1414433284-31719-5-git-send-email-a.motakis@virtualopensystems.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH net-next v4 0/4] netns: allow to identify peer netns
+Date: Fri, 31 Oct 2014 12:14:40 -0700
+Message-ID: <87wq7g831b.fsf@x220.int.ebiederm.org>
+References: <1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>
+	<1414682728-4532-1-git-send-email-nicolas.dichtel@6wind.com>
+	<871tpph03k.fsf@x220.int.ebiederm.org> <54535B00.5090708@6wind.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1414433284-31719-5-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Cc: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, kim.phillips-KZfg59tc24xl57MIdRCFDg@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <54535B00.5090708-pdR9zngts4EAvxtiuMwx3w@public.gmane.org> (Nicolas Dichtel's message of "Fri,
+	31 Oct 2014 10:48:48 +0100")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2014-10-27 at 19:07 +0100, Antonios Motakis wrote:
-> Add support for discovering AMBA devices with VFIO and handle them
-> similarly to Linux platform devices.
-> 
-> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> ---
->  drivers/vfio/platform/vfio_amba.c | 116 ++++++++++++++++++++++++++++++++++++++
->  include/uapi/linux/vfio.h         |   1 +
->  2 files changed, 117 insertions(+)
->  create mode 100644 drivers/vfio/platform/vfio_amba.c
-> 
-> diff --git a/drivers/vfio/platform/vfio_amba.c b/drivers/vfio/platform/vfio_amba.c
-> new file mode 100644
-> index 0000000..cf61324
-> --- /dev/null
-> +++ b/drivers/vfio/platform/vfio_amba.c
-> @@ -0,0 +1,116 @@
-> +/*
-> + * Copyright (C) 2013 - Virtual Open Systems
-> + * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License, version 2, as
-> + * published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <linux/device.h>
-> +#include <linux/interrupt.h>
-> +#include <linux/iommu.h>
-> +#include <linux/module.h>
-> +#include <linux/mutex.h>
-> +#include <linux/notifier.h>
-> +#include <linux/pm_runtime.h>
-> +#include <linux/slab.h>
-> +#include <linux/types.h>
-> +#include <linux/uaccess.h>
-> +#include <linux/vfio.h>
-> +#include <linux/io.h>
-> +#include <linux/irq.h>
-> +#include <linux/amba/bus.h>
-> +
-> +#include "vfio_platform_private.h"
-> +
-> +#define DRIVER_VERSION  "0.9"
-> +#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
-> +#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
-> +
-> +/* probing devices from the AMBA bus */
-> +
-> +static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
-> +						int i)
-> +{
-> +	struct amba_device *adev = (struct amba_device *) vdev->opaque;
-> +
-> +	if (i == 0)
-> +		return &adev->res;
-> +
-> +	return NULL;
-> +}
-> +
-> +static int get_amba_irq(struct vfio_platform_device *vdev, int i)
-> +{
-> +	struct amba_device *adev = (struct amba_device *) vdev->opaque;
-> +
-> +	if (i < AMBA_NR_IRQS)
-> +		return adev->irq[i];
-> +
-> +	return 0;
-> +}
-> +
-> +static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
-> +{
-> +
-> +	struct vfio_platform_device *vdev;
-> +	int ret;
-> +
-> +	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-> +	if (!vdev)
-> +		return -ENOMEM;
-> +
-> +	vdev->opaque = (void *) adev;
-> +	vdev->name = "vfio-amba-dev";
-
-You need to actually allocate some memory here with something like
-kasprintf.  Don't forget to free it on the error and remove path.
-
-> +	vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
-> +	vdev->get_resource = get_amba_resource;
-> +	vdev->get_irq = get_amba_irq;
-> +
-> +	ret = vfio_platform_probe_common(vdev, &adev->dev);
-> +	if (ret)
-> +		kfree(vdev);
-> +
-> +	return ret;
-> +}
-> +
-> +static int vfio_amba_remove(struct amba_device *adev)
-> +{
-> +	struct vfio_platform_device *vdev;
-> +
-> +	vdev = vfio_platform_remove_common(&adev->dev);
-> +	if(vdev) {
-> +		kfree(vdev);
-> +		return 0;
-> +	}
-> +
-> +	return -EINVAL;
-> +}
-> +
-> +static struct amba_id pl330_ids[] = {
-> +	{ 0, 0 },
-> +};
-> +
-> +MODULE_DEVICE_TABLE(amba, pl330_ids);
-> +
-> +static struct amba_driver vfio_amba_driver = {
-> +	.probe = vfio_amba_probe,
-> +	.remove = vfio_amba_remove,
-> +	.id_table = pl330_ids,
-> +	.drv = {
-> +		.name = "vfio-amba",
-> +		.owner = THIS_MODULE,
-> +	},
-> +};
-> +
-> +module_amba_driver(vfio_amba_driver);
-> +
-> +MODULE_VERSION(DRIVER_VERSION);
-> +MODULE_LICENSE("GPL v2");
-> +MODULE_AUTHOR(DRIVER_AUTHOR);
-> +MODULE_DESCRIPTION(DRIVER_DESC);
-> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-> index 9db1056..92469e0 100644
-> --- a/include/uapi/linux/vfio.h
-> +++ b/include/uapi/linux/vfio.h
-> @@ -158,6 +158,7 @@ struct vfio_device_info {
->  #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
->  #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
->  #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
-> +#define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
->  	__u32	num_regions;	/* Max region index + 1 */
->  	__u32	num_irqs;	/* Max IRQ index + 1 */
->  };
+Tmljb2xhcyBEaWNodGVsIDxuaWNvbGFzLmRpY2h0ZWxANndpbmQuY29tPiB3cml0ZXM6Cgo+IExl
+IDMwLzEwLzIwMTQgMTk6NDEsIEVyaWMgVy4gQmllZGVybWFuIGEgw6ljcml0IDoKPj4gTmljb2xh
+cyBEaWNodGVsIDxuaWNvbGFzLmRpY2h0ZWxANndpbmQuY29tPiB3cml0ZXM6Cj4+Cj4+PiBUaGUg
+Z29hbCBvZiB0aGlzIHNlcmllIGlzIHRvIGJlIGFibGUgdG8gbXVsdGljYXN0IG5ldGxpbmsgbWVz
+c2FnZXMgd2l0aCBhbgo+Pj4gYXR0cmlidXRlIHRoYXQgaWRlbnRpZnkgYSBwZWVyIG5ldG5zLgo+
+Pj4gVGhpcyBpcyBuZWVkZWQgYnkgdGhlIHVzZXJsYW5kIHRvIGludGVycHJldCBzb21lIGluZm9y
+bWF0aW9ucyBjb250YWluZWQgaW4KPj4+IG5ldGxpbmsgbWVzc2FnZXMgKGxpa2UgSUZMQV9MSU5L
+IHZhbHVlLCBidXQgYWxzbyBzb21lIG90aGVyIGF0dHJpYnV0ZXMgaW4gY2FzZQo+Pj4gb2YgeC1u
+ZXRucyBuZXRkZXZpY2UgKHNlZSBhbHNvCj4+PiBodHRwOi8vdGhyZWFkLmdtYW5lLm9yZy9nbWFu
+ZS5saW51eC5uZXR3b3JrLzMxNTkzMy9mb2N1cz0zMTYwNjQgYW5kCj4+PiBodHRwOi8vdGhyZWFk
+LmdtYW5lLm9yZy9nbWFuZS5saW51eC5rZXJuZWwuY29udGFpbmVycy8yODMwMS9mb2N1cz00MjM5
+KSkuCj4+Pgo+Pj4gSWRzIG9mIHBlZXIgbmV0bnMgYXJlIHNldCBieSB1c2VybGFuZCB2aWEgYSBu
+ZXcgZ2VubCBtZXNzYWdlcy4gVGhlc2UgaWRzIGFyZQo+Pj4gc3RvcmVkIHBlciBuZXRucyBhbmQg
+YXJlIGxvY2FsIChpZSBvbmx5IHZhbGlkIGluIHRoZSBuZXRucyB3aGVyZSB0aGV5IGFyZSBzZXQp
+Lgo+Pj4gVG8gYXZvaWQgYWxsb2NhdGluZyBhbiBpbnQgZm9yIGVhY2ggcGVlciBuZXRucywgSSB1
+c2UgaWRyX2Zvcl9lYWNoKCkgdG8gcmV0cmlldmUKPj4+IHRoZSBpZCBvZiBhIHBlZXIgbmV0bnMu
+IE5vdGUgdGhhdCBpdCB3aWxsIGJlIHBvc3NpYmxlIHRvIGFkZCBhIHRhYmxlIChzdHJ1Y3QgbmV0
+Cj4+PiAtPiBpZCkgbGF0ZXIgdG8gb3B0aW1pemUgdGhpcyBsb29rdXAgaWYgbmVlZGVkLgo+Pj4K
+Pj4+IFBhdGNoIDEvNCBpbnRyb2R1Y2VzIHRoZSBuZXRsaW5rIEFQSSBtZWNoYW5pc20gdG8gc2V0
+IGFuZCBnZXQgdGhlc2UgaWRzLgo+Pj4gUGF0Y2ggMi80IGFuZCAzLzQgaW1wbGVtZW50cyBhbiBl
+eGFtcGxlIG9mIGhvdyB0byB1c2UgdGhlc2UgaWRzIGluIHJ0bmV0bGluawo+Pj4gbWVzc2FnZXMu
+IEFuZCBwYXRjaCA0LzQgc2hvd3MgdGhhdCB0aGUgbmV0bGluayBtZXNzYWdlcyBjYW4gYmUgc3lt
+ZXRyaWMgYmV0d2Vlbgo+Pj4gYSBHRVQgYW5kIGEgU0VULgo+Pj4KPj4+IGlwcm91dGUyIHBhdGNo
+ZXMgYXJlIGF2YWlsYWJsZSwgSSBjYW4gc2VuZCB0aGVtIG9uIGRlbWFuZC4KPj4KPj4gQSBxdWlj
+ayByZXBseS4gIEkgdGhpbmsgdGhpcyBwYXRjaHNldCBpcyBpbiB0aGUgcmlnaHQgZ2VuZXJhbCBk
+aXJlY3Rpb24uCj4+IFRoZXJlIGFyZSBzb21lIG9kZGJhbGwgZGV0YWlscyB0aGF0IHNlZW0gb2Rk
+L2F3a3dhcmQgdG8gbWUgc3VjaCBhcyB1c2luZwo+PiBnZW5ldGxpbmsgaW5zdGVhZCBvZiBydG5l
+dGxpbmsgdG8gZ2V0IGFuZCBzZXQgdGhlIGlkcywgYW5kIG5vdCBoYXZpbmcKPj4gaWRzIGlmIHRo
+ZXkgYXJlIG5vdCBzZXQgKHRoYXQgZmVlbHMgbGlrZSBhIG1haW50ZW5hbmNlL3VzYWJpbGl0eSBj
+aGFsbGVuZ2UpLgo+IE5vIHByb2JsZW0gdG8gdXNlIHJ0bmV0bGluaywgaW4gZmFjdCwgSSBoZXNp
+dGF0ZWQuCj4KPiBGb3IgdGhlIHNlY29uZCBwb2ludCwgSSdtIG5vdCBzdXJlIHRvIGZvbGxvdyB5
+b3U6IGhvdyB0byBoYXZlIGFuIGlkLCB3aGljaCB3aWxsCj4gbm90IGJyZWFrIG1pZ3JhdGlvbiwg
+d2l0aG91dCBhc2tpbmcgdGhlIHVzZXIgdG8gc2V0IGl0PwoKV2UgaGF2ZSB0aGF0IHNpdHV0YXRp
+b24gd2l0aCBpZmluZGV4IGFscmVhZHkuICBCYXNpY2FsbHkgdGhlIHRob3VnaHQgaXMKdG8gYWxs
+b3cgYW4gaWQgdG8gYmUgc2V0LCBidXQgYWxzbyBhbGxvdyBhbiBpZCB0byBiZSBhdXRvLWdlbmVy
+YXRlZCBpZgp3ZSB1c2UgYW4gbmFtZXNwYWNlIHdpdGhvdXQgYW4gaWQgYmVpbmcgc2V0LgoKTXkg
+Z3V0IHNheXMgaWYgd2UgY2FuIGZpZ3VyZSB0aGF0IG91dCB3ZSB3aWxsIGhhdmUgYW4gaW50ZXJm
+YWNlIHdpdGgKbXVjaCBtb3JlIHV0aWxpdHkuCgo+IE5vdGUgdGhhdCBpZiB0aGUgdXNlciBkb2Vz
+IG5vdCBwcm92aWRlIGFuIGlkLCB5b3Ugc3RpbGwgaGF2ZSBhIG1hZ2ljIHZhbHVlIHRvCj4gc2F5
+ICJpdCdzIGEgcGVlciBuZXRucyBidXQgd2UgZG9uJ3Qga25vdyB3aGljaCBvbmUiLgoKVGhhdCBp
+cyBjZXJ0YWlubHkgYW4gaW1wcm92ZW1lbnQgaW4gY2xhcml0eSBvdmVyIHdoZXJlIHdlIGFyZSB0
+b2RheS4KCj4+IEkgd291bGQgbGlrZSB0byBnaXZlIHlvdXIgcGF0Y2hlcyBhIGRlZXAgcmV2aWV3
+LCBidXQgSSB3b24ndCBiZSBhYmxlIHRvCj4+IGRvIHRoYXQgZm9yIGEgY291cGxlIG9mIHdlZWtz
+LiAgSSBhbSBkZWVwIGluIHRoZSBwcm9jZXNzIG9mIG1vdmluZywKPj4gYW5kIHdpbGwgYmUgbW9z
+dGx5IG9mZmxpbmUgdW50aWwgYWJvdXQgdGhlIE5vdiAxMXRoLgo+Cj4gTm8gcHJvYmxlbSwgSSB3
+aWxsIHdhaXQuCj4gSSB3b3VsZCBiZSBncmVhdCB0byBnZXQgYSBmaW5hbCB2ZXJzaW9uIGZvciB0
+aGUgMy4xOSA7LSkKCkVyaWMKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX18KQ29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1m
+b3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9s
+aXN0aW5mby9jb250YWluZXJz
