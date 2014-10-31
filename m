@@ -1,39 +1,165 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: How Not To Use kref (was Re: kdbus: add code for buses, domains
- and endpoints)
-Date: Fri, 31 Oct 2014 11:00:01 -0700
-Message-ID: <CA+55aFxB=jWGvPH3TMhB=ungOg9TBai5Ak-ma5vChBB-H2AgnQ@mail.gmail.com>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
-	<1414620056-6675-9-git-send-email-gregkh@linuxfoundation.org>
-	<20141030233801.GF7996@ZenIV.linux.org.uk>
+From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v9 04/19] vfio: amba: VFIO support for AMBA devices
+Date: Fri, 31 Oct 2014 12:40:19 -0600
+Message-ID: <1414780819.27420.314.camel@ul30vt.home>
+References: <1414433284-31719-1-git-send-email-a.motakis@virtualopensystems.com>
+	 <1414433284-31719-5-git-send-email-a.motakis@virtualopensystems.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141030233801.GF7996-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+In-Reply-To: <1414433284-31719-5-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Alban Crequy <alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
+To: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Cc: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, kim.phillips-KZfg59tc24xl57MIdRCFDg@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 30, 2014 at 4:38 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
->
-> If you remove an object from some search structures, taking the lock in
-> destructor is Too Fucking Late(tm).  Somebody might have already found
-> that puppy and decided to pick it (all under that lock) just as we'd
-> got to that point in destructor and blocked there.  Oops...
+On Mon, 2014-10-27 at 19:07 +0100, Antonios Motakis wrote:
+> Add support for discovering AMBA devices with VFIO and handle them
+> similarly to Linux platform devices.
+> 
+> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+> ---
+>  drivers/vfio/platform/vfio_amba.c | 116 ++++++++++++++++++++++++++++++++++++++
+>  include/uapi/linux/vfio.h         |   1 +
+>  2 files changed, 117 insertions(+)
+>  create mode 100644 drivers/vfio/platform/vfio_amba.c
+> 
+> diff --git a/drivers/vfio/platform/vfio_amba.c b/drivers/vfio/platform/vfio_amba.c
+> new file mode 100644
+> index 0000000..cf61324
+> --- /dev/null
+> +++ b/drivers/vfio/platform/vfio_amba.c
+> @@ -0,0 +1,116 @@
+> +/*
+> + * Copyright (C) 2013 - Virtual Open Systems
+> + * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License, version 2, as
+> + * published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + */
+> +
+> +#include <linux/device.h>
+> +#include <linux/interrupt.h>
+> +#include <linux/iommu.h>
+> +#include <linux/module.h>
+> +#include <linux/mutex.h>
+> +#include <linux/notifier.h>
+> +#include <linux/pm_runtime.h>
+> +#include <linux/slab.h>
+> +#include <linux/types.h>
+> +#include <linux/uaccess.h>
+> +#include <linux/vfio.h>
+> +#include <linux/io.h>
+> +#include <linux/irq.h>
+> +#include <linux/amba/bus.h>
+> +
+> +#include "vfio_platform_private.h"
+> +
+> +#define DRIVER_VERSION  "0.9"
+> +#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
+> +#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
+> +
+> +/* probing devices from the AMBA bus */
+> +
+> +static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
+> +						int i)
+> +{
+> +	struct amba_device *adev = (struct amba_device *) vdev->opaque;
+> +
+> +	if (i == 0)
+> +		return &adev->res;
+> +
+> +	return NULL;
+> +}
+> +
+> +static int get_amba_irq(struct vfio_platform_device *vdev, int i)
+> +{
+> +	struct amba_device *adev = (struct amba_device *) vdev->opaque;
+> +
+> +	if (i < AMBA_NR_IRQS)
+> +		return adev->irq[i];
+> +
+> +	return 0;
+> +}
+> +
+> +static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
+> +{
+> +
+> +	struct vfio_platform_device *vdev;
+> +	int ret;
+> +
+> +	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
+> +	if (!vdev)
+> +		return -ENOMEM;
+> +
+> +	vdev->opaque = (void *) adev;
+> +	vdev->name = "vfio-amba-dev";
 
-Ugh, yes. This is a much too common anti-pattern.
+You need to actually allocate some memory here with something like
+kasprintf.  Don't forget to free it on the error and remove path.
 
-> Normally I'd say "just use kref_put_mutex()", but this case is even worse.
-> Look:
-
-Yeah the whole "release the structure the lock is in" is another one.
-
-Both of these patterns have happened so many times that I'd love to
-have some kind of automated tool to see them, but I suspect it is
-*much* too complex to be easily checked for. The lock object debugging
-we have only triggers for the case where the freeing actually happens
-with the lock still held, which is too late and too hard-to-hit to be
-a very useful check.
-
-                     Linus
+> +	vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
+> +	vdev->get_resource = get_amba_resource;
+> +	vdev->get_irq = get_amba_irq;
+> +
+> +	ret = vfio_platform_probe_common(vdev, &adev->dev);
+> +	if (ret)
+> +		kfree(vdev);
+> +
+> +	return ret;
+> +}
+> +
+> +static int vfio_amba_remove(struct amba_device *adev)
+> +{
+> +	struct vfio_platform_device *vdev;
+> +
+> +	vdev = vfio_platform_remove_common(&adev->dev);
+> +	if(vdev) {
+> +		kfree(vdev);
+> +		return 0;
+> +	}
+> +
+> +	return -EINVAL;
+> +}
+> +
+> +static struct amba_id pl330_ids[] = {
+> +	{ 0, 0 },
+> +};
+> +
+> +MODULE_DEVICE_TABLE(amba, pl330_ids);
+> +
+> +static struct amba_driver vfio_amba_driver = {
+> +	.probe = vfio_amba_probe,
+> +	.remove = vfio_amba_remove,
+> +	.id_table = pl330_ids,
+> +	.drv = {
+> +		.name = "vfio-amba",
+> +		.owner = THIS_MODULE,
+> +	},
+> +};
+> +
+> +module_amba_driver(vfio_amba_driver);
+> +
+> +MODULE_VERSION(DRIVER_VERSION);
+> +MODULE_LICENSE("GPL v2");
+> +MODULE_AUTHOR(DRIVER_AUTHOR);
+> +MODULE_DESCRIPTION(DRIVER_DESC);
+> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+> index 9db1056..92469e0 100644
+> --- a/include/uapi/linux/vfio.h
+> +++ b/include/uapi/linux/vfio.h
+> @@ -158,6 +158,7 @@ struct vfio_device_info {
+>  #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
+>  #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
+>  #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
+> +#define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
+>  	__u32	num_regions;	/* Max region index + 1 */
+>  	__u32	num_irqs;	/* Max IRQ index + 1 */
+>  };
