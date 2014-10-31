@@ -1,67 +1,28 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: kdbus: add driver skeleton, ioctl entry points and utility
- functions
-Date: Fri, 31 Oct 2014 01:42:00 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1410310129530.5308@nanos>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org> <1414620056-6675-4-git-send-email-gregkh@linuxfoundation.org> <alpine.DEB.2.11.1410302224230.5308@nanos> <alpine.LRH.2.00.1410310114290.11562@twin.jikos.cz>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Subject: Re: kdbus: add code for buses, domains and endpoints
+Date: Fri, 31 Oct 2014 01:39:22 +0000
+Message-ID: <20141031013922.GG7996@ZenIV.linux.org.uk>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
+ <1414620056-6675-9-git-send-email-gregkh@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.00.1410310114290.11562-1ReQVI26iDCaZKY3DrU6dA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1414620056-6675-9-git-send-email-gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 31 Oct 2014, Jiri Kosina wrote:
-> On Fri, 31 Oct 2014, Thomas Gleixner wrote:
-> > > +static long kdbus_handle_ioctl(struct file *file, unsigned int cmd,
-> > > +			       unsigned long arg)
-> > > +{
-> > > +	struct kdbus_handle *handle = file->private_data;
-> > > +	void __user *argp = (void __user *)arg;
-> > > +	enum kdbus_handle_type type = handle->type;
-> > > +
-> > > +	/* make sure all handle fields are set if handle->type is */
-> > > +	smp_rmb();
-> > 
-> > Sure. You really need this kind of serialization because your design
-> > choice of allowing opaque handles in the first place.
-> > 
-> > I'm really interested why you need this rmb() at all. Just because you
-> > have several threads in user space which might race with the type
-> > assignment when they call the ioctl?
-> > 
-> > We have a strict requirement to document memory barriers. The
-> > following comment definitely does not fulfil this requirement as it
-> > just documents that someone observed a race of unknown provenance and
-> > got it 'fixed' with a 'smp_rmb()'
-> > 
-> > > +     /* make sure all handle fields are set if handle->type is */
-> > 
-> > That's really hillarious, The user space side knows excatly upfront
-> > which type of 'handle' it wants to open. Making it an opaque handle in
-> > the first place and let the kernel deal with the actual type
-> > assignment is beyond silly. Especially if that involves undocumented
-> > memory barriers.
-> 
-> I have been staring at exactly this for rather a long time today. 
-> 
-> Apparently this barrier pairs with smp_wmb() in kdbus_handle_transform() 
-> and tries to make sure that whenever handle->type is seen as updated, 
-> handle->ptr is as well.
+On Wed, Oct 29, 2014 at 03:00:52PM -0700, Greg Kroah-Hartman wrote:
+> See Documentation/kdbus.txt for more details.
 
-Right. But it does not make any sense at all. 
+... which has nothing whatsoever on object lifetime rules.  Could you
+folks please document that somewhere?  What pins what, what state
+transitions are possible, etc.
 
-The underlying problem is the design of the whole character device
-interface as an opaque type. Just look at the absurd workarounds in
-the userspace implementation of this,
-
-Now we copy it to kernel space 1:1 and find other absurd workarounds
-for it instead of designing it new.
-
-Welcome to the world of bug compability...
-
-Thanks,
-
-	tglx
+BTW, the calling conventions for your foo_new() are annoying - instead of
+"return -E... or 0, storing the reference to new object in var parameter
+passed as the last argument", could you please just return ERR_PTR(-E...)
+on error, a pointer to new object on success and to hell with those
+struct foo **foo in the argument lists?
