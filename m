@@ -1,44 +1,53 @@
-From: Hedi Berriche <hedi-sJ/iWh9BUns@public.gmane.org>
-Subject: Re: [PATCH] kernel, add panic_on_warn
-Date: Fri, 31 Oct 2014 01:58:43 +0000
-Message-ID: <20141031015843.GW9743@dangermouse.emea.sgi.com>
-References: <1414688627-5298-1-git-send-email-prarit@redhat.com>
+From: Linus Walleij <linus.walleij@linaro.org>
+Subject: Re: [PATCH v3] gpio: lib-sysfs: Add 'wakeup' attribute
+Date: Fri, 31 Oct 2014 08:03:56 +0100
+Message-ID: <CACRpkdaduj3MaEN=hmL54ANJiP0B5MdH9qSqWRukX4H7pFt_Hw@mail.gmail.com>
+References: <1414434602-14263-1-git-send-email-soren.brinkmann@xilinx.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1414688627-5298-1-git-send-email-prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1414434602-14263-1-git-send-email-soren.brinkmann@xilinx.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Soren Brinkmann <soren.brinkmann@xilinx.com>, linux-api@vger.kernel.org
+Cc: Alexandre Courbot <gnurou@gmail.com>, Jonathan Corbet <corbet@lwn.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 30, 2014 at 17:06 Prarit Bhargava wrote:
-| There have been several times where I have had to rebuild a kernel to
-| cause a panic when hitting a WARN() in the code in order to get a crash
-| dump from a system.  Sometimes this is easy to do, other times (such as
-| in the case of a remote admin) it is not trivial to send new images to the
-| user.
-| 
-| A much easier method would be a switch to change the WARN() over to a
-| panic.  This makes debugging easier in that I can now test the actual
-| image the WARN() was seen on and I do not have to engage in remote
-| debugging.
+On Mon, Oct 27, 2014 at 7:30 PM, Soren Brinkmann
+<soren.brinkmann@xilinx.com> wrote:
 
-Do we want to leave it to usersspace[1] to ensure panic_on_warn is out
-of the way in when the kdump kernel boots? or would a self-contained
-approach be more preferable i.e. test whether we're a kdump kernel
-before bothering with panic_on_warn?
+> Add an attribute 'wakeup' to the GPIO sysfs interface which allows
+> marking/unmarking a GPIO as wake IRQ.
+> The file 'wakeup' is created in each exported GPIOs directory, if an IRQ
+> is associated with that GPIO and the irqchip implements set_wake().
+> Writing 'enabled' to that file will enable wake for that GPIO, while
+> writing 'disabled' will disable wake.
+> Reading that file will return either 'disabled' or 'enabled' depening on
+> the currently set flag for the GPIO's IRQ.
+>
+> Signed-off-by: Soren Brinkmann <soren.brinkmann@xilinx.com>
+> Reviewed-by: Alexandre Courbot <acourbot@nvidia.com>
+> ---
+> v3:
+>  - add documentation
+> v2:
+>  - fix error path to unlock mutex before return
+(...)
 
-Cheers,
-Hedi.
+Looking better!
 
-[1] kexec-tools in the case of the boot param by filtering it out of the
-    kdump kernel cmdline. In the case of sysctl.conf, it would depend on
-    whether there are distros out there that  include it in the kdump
-    initrd.
+> +       "wakeup" ... reads as either "enabled" or "disabled". Write these
+> +               strings to set/clear the 'wakeup' flag of the IRQ associated
+> +               with this GPIO. If the IRQ has the 'wakeup' flag set, it can
+> +               wake the system from sleep states.
+> +
+> +               This file exists only if the pin can generate interrupts and
+> +               the driver implements the required infrastructure.
 
--- 
-Hedi Berriche
-Linux Kernel Engineer
-http://www.sgi.com
+Should this not be 0/1 rather than the string "enabled"/"disabled"?
+
+I think that is the common pattern in sysfs?
+
+Not sure, but want an indication from the ABI people.
+
+Yours,
+Linus Walleij
