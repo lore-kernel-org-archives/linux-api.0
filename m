@@ -1,72 +1,64 @@
-From: =?utf-8?B?U8O2cmVu?= Brinkmann <soren.brinkmann@xilinx.com>
-Subject: Re: [PATCH v3] gpio: lib-sysfs: Add 'wakeup' attribute
-Date: Fri, 31 Oct 2014 09:16:58 -0700
-Message-ID: <f16258a84ebf4797abd4496842c379f2@BN1BFFO11FD009.protection.gbl>
-References: <1414434602-14263-1-git-send-email-soren.brinkmann@xilinx.com>
- <CACRpkdaduj3MaEN=hmL54ANJiP0B5MdH9qSqWRukX4H7pFt_Hw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACRpkdaduj3MaEN=hmL54ANJiP0B5MdH9qSqWRukX4H7pFt_Hw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Walleij <linus.walleij@linaro.org>
-Cc: linux-api@vger.kernel.org, Alexandre Courbot <gnurou@gmail.com>, Jonathan Corbet <corbet@lwn.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
+From: Karol Lewandowski <k.lewandowsk@samsung.com>
+Subject: [RFC PATCH 0/5] kdbus: add support for lsm
+Date: Fri, 31 Oct 2014 17:36:32 +0100
+Message-ID: <1414773397-26490-1-git-send-email-k.lewandowsk@samsung.com>
+References: <54539AF3.6060302@samsung.com>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-reply-to: <54539AF3.6060302@samsung.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org
+Cc: pmoore@redhat.com, jkosina@suse.cz, linux-api@vger.kernel.org, inux-kernel@vger.kernel.org, john.stultz@linaro.org, arnd@arndb.de, tj@kernel.org, desrt@desrt.ca, simon.mcvittie@collabora.co.uk, daniel@zonque.org, dh.herrmann@gmail.com, casey.schaufler@intel.com, marcel@holtmann.org, tixxdz@opendz.org, javier.martinez@collabora.co.uk, alban.crequy@collabora.co.uk, linux-security-module@vger.kernel.org, lmctlx@gmail.com, r.krypa@samsung.com, Karol Lewandowski <k.lewandowsk@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2014-10-31 at 08:03AM +0100, Linus Walleij wrote:
-> On Mon, Oct 27, 2014 at 7:30 PM, Soren Brinkmann
-> <soren.brinkmann@xilinx.com> wrote:
->=20
-> > Add an attribute 'wakeup' to the GPIO sysfs interface which allows
-> > marking/unmarking a GPIO as wake IRQ.
-> > The file 'wakeup' is created in each exported GPIOs directory, if a=
-n IRQ
-> > is associated with that GPIO and the irqchip implements set_wake().
-> > Writing 'enabled' to that file will enable wake for that GPIO, whil=
-e
-> > writing 'disabled' will disable wake.
-> > Reading that file will return either 'disabled' or 'enabled' depeni=
-ng on
-> > the currently set flag for the GPIO's IRQ.
-> >
-> > Signed-off-by: Soren Brinkmann <soren.brinkmann@xilinx.com>
-> > Reviewed-by: Alexandre Courbot <acourbot@nvidia.com>
-> > ---
-> > v3:
-> >  - add documentation
-> > v2:
-> >  - fix error path to unlock mutex before return
-> (...)
->=20
-> Looking better!
->=20
-> > +       "wakeup" ... reads as either "enabled" or "disabled". Write=
- these
-> > +               strings to set/clear the 'wakeup' flag of the IRQ a=
-ssociated
-> > +               with this GPIO. If the IRQ has the 'wakeup' flag se=
-t, it can
-> > +               wake the system from sleep states.
-> > +
-> > +               This file exists only if the pin can generate inter=
-rupts and
-> > +               the driver implements the required infrastructure.
->=20
-> Should this not be 0/1 rather than the string "enabled"/"disabled"?
->=20
-> I think that is the common pattern in sysfs?
->=20
-> Not sure, but want an indication from the ABI people.
+This is set of EXPERIMENTAL patches adding lsm support to kdbus.
+(Rebased on top of v3.17.)
 
-So, as I told Alexandre, 'wakeup' including the values 'enabled' &
-'disabled' is how devices that support wake expose this functionality. =
-I
-think this is more in line with what already exists. As reference, have
-a look at https://www.kernel.org/doc/Documentation/power/devices.txt. I=
-t
-has a section '/sys/devices/.../power/wakeup files'.
+>From least to most invasive:
 
-	Thanks,
-	S=C3=B6ren
+ - (1) kdbus: extend structures with security pointer for lsm
+
+   Trivial.  Applicable as-is.
+
+ - (2) security: export security_file_receive for modules
+   (3) kdbus: check if lsm permits installing received fds
+
+   fd_install doesn't seem to consult LSM, these patches
+   ensure that receiving process has the right to sent fds. 
+
+   Compile-tested only.
+
+ - (4) security: introduce lsm hooks for kdbus
+   (5) kdbus: make use of new lsm hooks
+
+   Set of proof-of-concept hooks discussed previously with Paul Moore.
+
+   kdbus integration patch (5) for review, but unlikely for integration
+   at this stage.
+
+   Likewise, compile-tested only.
+
+
+Karol Lewandowski (5):
+  kdbus: extend structures with security pointer for lsm
+  security: export security_file_receive for modules
+  kdbus: check if lsm permits installing received fds
+  security: introduce lsm hooks for kdbus
+  kdbus: make use of new lsm hooks
+
+ drivers/misc/kdbus/bus.c        |  10 +++-
+ drivers/misc/kdbus/bus.h        |   2 +
+ drivers/misc/kdbus/connection.c |  34 +++++++++++-
+ drivers/misc/kdbus/connection.h |   2 +
+ drivers/misc/kdbus/domain.c     |   7 +++
+ drivers/misc/kdbus/domain.h     |   2 +
+ drivers/misc/kdbus/endpoint.c   |  11 ++++
+ drivers/misc/kdbus/names.c      |   9 ++++
+ drivers/misc/kdbus/queue.c      |  13 +++++
+ include/linux/security.h        | 114 ++++++++++++++++++++++++++++++++++++++++
+ security/capability.c           |  84 +++++++++++++++++++++++++++++
+ security/security.c             |  85 ++++++++++++++++++++++++++++++
+ 12 files changed, 371 insertions(+), 2 deletions(-)
+
+-- 
+2.1.1
+
