@@ -1,7 +1,7 @@
 From: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 4/5] security: introduce lsm hooks for kdbus
-Date: Fri, 31 Oct 2014 17:36:36 +0100
-Message-ID: <1414773397-26490-5-git-send-email-k.lewandowsk@samsung.com>
+Subject: [PATCH 5/5] kdbus: make use of new lsm hooks
+Date: Fri, 31 Oct 2014 17:36:37 +0100
+Message-ID: <1414773397-26490-6-git-send-email-k.lewandowsk@samsung.com>
 References: <54539AF3.6060302@samsung.com>
  <1414773397-26490-1-git-send-email-k.lewandowsk@samsung.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,365 +11,272 @@ To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
 Cc: pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, inux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lmctlx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, r.krypa-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is proof-of-concept set of hooks for kdbus by Karol Lewandowski
-and Paul Moore.
+DANGEROUS:  This version has been compile-tested only!
 
 Signed-off-by: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- include/linux/security.h | 114 +++++++++++++++++++++++++++++++++++++++++++++++
- security/capability.c    |  84 ++++++++++++++++++++++++++++++++++
- security/security.c      |  84 ++++++++++++++++++++++++++++++++++
- 3 files changed, 282 insertions(+)
+ drivers/misc/kdbus/bus.c        | 10 +++++++++-
+ drivers/misc/kdbus/connection.c | 34 +++++++++++++++++++++++++++++++++-
+ drivers/misc/kdbus/domain.c     |  7 +++++++
+ drivers/misc/kdbus/endpoint.c   | 11 +++++++++++
+ drivers/misc/kdbus/names.c      |  9 +++++++++
+ 5 files changed, 69 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 623f90e..ac845e9 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -53,6 +53,10 @@ struct msg_queue;
- struct xattr;
- struct xfrm_sec_ctx;
- struct mm_struct;
-+struct kdbus_ep;
-+struct kdbus_bus;
-+struct kdbus_conn;
-+struct kdbus_domain;
+diff --git a/drivers/misc/kdbus/bus.c b/drivers/misc/kdbus/bus.c
+index 6dcaf22..f9bb177 100644
+--- a/drivers/misc/kdbus/bus.c
++++ b/drivers/misc/kdbus/bus.c
+@@ -18,6 +18,7 @@
+ #include <linux/module.h>
+ #include <linux/random.h>
+ #include <linux/sched.h>
++#include <linux/security.h>
+ #include <linux/sizes.h>
+ #include <linux/slab.h>
+ #include <linux/uaccess.h>
+@@ -97,6 +98,7 @@ static void __kdbus_bus_free(struct kref *kref)
+ 	kdbus_domain_unref(bus->domain);
+ 	kdbus_policy_db_clear(&bus->policy_db);
+ 	kdbus_meta_free(bus->meta);
++	security_kdbus_bus_free(bus);
+ 	kfree(bus->name);
+ 	kfree(bus);
+ }
+@@ -351,9 +353,13 @@ int kdbus_bus_new(struct kdbus_domain *domain,
+ 	if (ret < 0)
+ 		goto exit_free_name;
  
- /* Maximum number of letters for an LSM name string */
- #define SECURITY_NAME_MAX	10
-@@ -1438,6 +1442,7 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
-  *	@ctxlen points to the place to put the length of @ctx.
-  * This is the main security structure.
-  */
-+/* XXX - need to include descriptions for the kdbus hooks in the block above */
- struct security_operations {
- 	char name[SECURITY_NAME_MAX + 1];
++	ret = security_kdbus_bus_alloc(b);
++	if (ret)
++		goto exit_free_reg;
++
+ 	ret = kdbus_ep_new(b, "bus", mode, uid, gid, false, &b->ep);
+ 	if (ret < 0)
+-		goto exit_free_reg;
++		goto exit_free_security;
  
-@@ -1645,6 +1650,24 @@ struct security_operations {
- 	int (*inode_setsecctx)(struct dentry *dentry, void *ctx, u32 ctxlen);
- 	int (*inode_getsecctx)(struct inode *inode, void **ctx, u32 *ctxlen);
+ 	/* link into domain */
+ 	mutex_lock(&domain->lock);
+@@ -386,6 +392,8 @@ exit_unref_user_unlock:
+ 	kdbus_domain_user_unref(b->user);
+ 	kdbus_ep_disconnect(b->ep);
+ 	kdbus_ep_unref(b->ep);
++exit_free_security:
++	security_kdbus_bus_free(b);
+ exit_free_reg:
+ 	kdbus_name_registry_free(b->name_registry);
+ exit_free_name:
+diff --git a/drivers/misc/kdbus/connection.c b/drivers/misc/kdbus/connection.c
+index 5b1f3ed..96c5c52 100644
+--- a/drivers/misc/kdbus/connection.c
++++ b/drivers/misc/kdbus/connection.c
+@@ -27,6 +27,7 @@
+ #include <linux/sched.h>
+ #include <linux/shmem_fs.h>
+ #include <linux/sizes.h>
++#include <linux/security.h>
+ #include <linux/slab.h>
+ #include <linux/syscalls.h>
  
-+	int (*kdbus_domain_alloc)(struct kdbus_domain *domain);
-+	void (*kdbus_domain_free)(struct kdbus_domain *domain);
+@@ -282,6 +283,10 @@ int kdbus_cmd_msg_recv(struct kdbus_conn *conn,
+ 	if (recv->offset > 0)
+ 		return -EINVAL;
+ 
++	ret = security_kdbus_recv(conn, conn->ep->bus);
++	if (ret)
++		return ret;
 +
-+	int (*kdbus_bus_alloc)(struct kdbus_bus *bus);
-+	void (*kdbus_bus_free)(struct kdbus_bus *bus);
-+	int (*kdbus_send)(const struct kdbus_conn *conn, const struct kdbus_bus *bus);
-+	int (*kdbus_recv)(const struct kdbus_conn *conn, const struct kdbus_bus *bus);
-+	int (*kdbus_name_acquire)(const struct kdbus_conn *conn, const char *name);
-+	int (*kdbus_name_list)(const struct kdbus_bus *bus);
+ 	mutex_lock(&conn->lock);
+ 	ret = kdbus_queue_entry_peek(&conn->queue, recv->priority,
+ 				     recv->flags & KDBUS_RECV_USE_PRIORITY,
+@@ -460,7 +465,12 @@ static int kdbus_conn_check_access(struct kdbus_ep *ep,
+ 	if (allowed)
+ 		return 0;
+ 
+-	/* ... otherwise, ask the policy DBs for permission */
++	/* ... consult LSM */
++	ret = security_kdbus_talk(conn_src, conn_dst);
++	if (ret)
++		return ret;
 +
-+	int (*kdbus_ep_create)(const struct kdbus_bus *bus);
-+	int (*kdbus_ep_setpolicy)(const struct kdbus_bus *bus);
++	/* ... finally, ask the policy DBs for permission */
+ 	ret = kdbus_ep_policy_check_talk_access(ep, conn_src, conn_dst);
+ 	if (ret < 0)
+ 		return ret;
+@@ -596,6 +606,10 @@ static void kdbus_conn_broadcast(struct kdbus_ep *ep,
+ 		 * data, even when they did not ask for it.
+ 		 */
+ 		if (conn_src) {
++			ret = security_kdbus_talk(conn_src, conn_dst);
++			if (ret)
++				continue;
 +
-+	int (*kdbus_connect)(struct kdbus_conn *conn, const char *secctx, u32 seclen);
-+	void (*kdbus_conn_free)(struct kdbus_conn *conn);
-+	int (*kdbus_conn_info)(const struct kdbus_conn *conn);
-+	int (*kdbus_talk)(const struct kdbus_conn *src, const struct kdbus_conn *dst);
+ 			/* Check if conn_src is allowed to signal */
+ 			ret = kdbus_ep_policy_check_broadcast(conn_dst->ep,
+ 							      conn_src,
+@@ -736,6 +750,10 @@ int kdbus_conn_kmsg_send(struct kdbus_ep *ep,
+ 	bool sync = msg->flags & KDBUS_MSG_FLAGS_SYNC_REPLY;
+ 	int ret = 0;
+ 
++	ret = security_kdbus_send(conn_src, bus);
++	if (ret)
++		return ret;
 +
- #ifdef CONFIG_SECURITY_NETWORK
- 	int (*unix_stream_connect) (struct sock *sock, struct sock *other, struct sock *newsk);
- 	int (*unix_may_send) (struct socket *sock, struct socket *other);
-@@ -1905,6 +1928,25 @@ void security_release_secctx(char *secdata, u32 seclen);
- int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
- int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
- int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
+ 	/* assign domain-global message sequence number */
+ 	BUG_ON(kmsg->seq > 0);
+ 	kmsg->seq = atomic64_inc_return(&bus->domain->msg_seq_last);
+@@ -1086,6 +1104,7 @@ static void __kdbus_conn_free(struct kref *kref)
+ 	kdbus_ep_unref(conn->ep);
+ 	kdbus_bus_unref(conn->bus);
+ 	put_cred(conn->cred);
++	security_kdbus_conn_free(conn);
+ 	kfree(conn->name);
+ 	kfree(conn);
+ }
+@@ -1467,8 +1486,12 @@ int kdbus_conn_new(struct kdbus_ep *ep,
+ 	bool is_policy_holder;
+ 	bool is_activator;
+ 	bool is_monitor;
++	u32 len;
++	u32 sid;
++	char *label;
+ 	int ret;
+ 
 +
-+int security_kdbus_domain_alloc(struct kdbus_domain *domain);
-+void security_kdbus_domain_free(struct kdbus_domain *domain);
+ 	BUG_ON(*c);
+ 
+ 	is_monitor = hello->flags & KDBUS_HELLO_MONITOR;
+@@ -1542,6 +1565,9 @@ int kdbus_conn_new(struct kdbus_ep *ep,
+ 		return -ENOMEM;
+ 
+ 	if (is_activator || is_policy_holder) {
++		ret = security_kdbus_ep_setpolicy(bus);
++		if (ret)
++			goto exit_free_conn;
+ 		/*
+ 		 * Policy holders may install one name, and are
+ 		 * allowed to use wildcards.
+@@ -1680,6 +1706,12 @@ int kdbus_conn_new(struct kdbus_ep *ep,
+ 		goto exit_unref_user_unlock;
+ 	}
+ 
++	security_task_getsecid(current, &sid);
++	security_secid_to_secctx(sid, &label, &len);
++	ret = security_kdbus_connect(conn, label, len);
++	if (ret < 0)
++		goto exit_unref_user_unlock;
 +
-+int security_kdbus_bus_alloc(struct kdbus_bus *bus);
-+void security_kdbus_bus_free(struct kdbus_bus *bus);
-+int security_kdbus_send(const struct kdbus_conn *conn, const struct kdbus_bus *bus);
-+int security_kdbus_recv(const struct kdbus_conn *conn, const struct kdbus_bus *bus);
-+int security_kdbus_name_acquire(const struct kdbus_conn *conn, const char *name);
-+int security_kdbus_name_list(const struct kdbus_bus *bus);
+ 	/* link into bus and endpoint */
+ 	list_add_tail(&conn->ep_entry, &ep->conn_list);
+ 	hash_add(bus->conn_hash, &conn->hentry, conn->id);
+diff --git a/drivers/misc/kdbus/domain.c b/drivers/misc/kdbus/domain.c
+index eb2ce72..43b77ed 100644
+--- a/drivers/misc/kdbus/domain.c
++++ b/drivers/misc/kdbus/domain.c
+@@ -18,6 +18,7 @@
+ #include <linux/module.h>
+ #include <linux/sched.h>
+ #include <linux/sizes.h>
++#include <linux/security.h>
+ #include <linux/slab.h>
+ #include <linux/uaccess.h>
+ 
+@@ -156,6 +157,7 @@ static void __kdbus_domain_free(struct device *dev)
+ 	idr_destroy(&domain->user_idr);
+ 	kfree(domain->name);
+ 	kfree(domain->devpath);
++	security_kdbus_domain_free(domain);
+ 	kfree(domain);
+ }
+ 
+@@ -255,6 +257,10 @@ int kdbus_domain_new(struct kdbus_domain *parent, const char *name,
+ 	if (ret < 0)
+ 		goto exit_put;
+ 
++	ret = security_kdbus_domain_alloc(d);
++	if (ret)
++		goto exit_put;
 +
-+int security_kdbus_ep_create(struct kdbus_bus *bus);
-+int security_kdbus_ep_setpolicy(struct kdbus_bus *bus);
+ 	if (parent) {
+ 		/* lock order: parent domain -> domain */
+ 		mutex_lock(&parent->lock);
+@@ -444,6 +450,7 @@ static void __kdbus_domain_user_free(struct kref *kref)
+ 	hash_del(&user->hentry);
+ 	mutex_unlock(&user->domain->lock);
+ 
++	security_kdbus_domain_free(user->domain);
+ 	kdbus_domain_unref(user->domain);
+ 	kfree(user);
+ }
+diff --git a/drivers/misc/kdbus/endpoint.c b/drivers/misc/kdbus/endpoint.c
+index 8304360..74444c3 100644
+--- a/drivers/misc/kdbus/endpoint.c
++++ b/drivers/misc/kdbus/endpoint.c
+@@ -17,6 +17,7 @@
+ #include <linux/init.h>
+ #include <linux/module.h>
+ #include <linux/sched.h>
++#include <linux/security.h>
+ #include <linux/sizes.h>
+ #include <linux/slab.h>
+ #include <linux/uaccess.h>
+@@ -197,6 +198,10 @@ int kdbus_ep_new(struct kdbus_bus *bus, const char *name,
+ 	if (ret < 0)
+ 		goto exit_put;
+ 
++	ret = security_kdbus_ep_create(bus);
++	if (ret)
++		goto exit_put;
 +
-+int security_kdbus_connect(struct kdbus_conn *conn, const char *secctx, u32 seclen);
-+void security_kdbus_conn_free(struct kdbus_conn *conn);
-+int security_kdbus_conn_info(const struct kdbus_conn *conn);
-+int security_kdbus_talk(const struct kdbus_conn *src, const struct kdbus_conn *dst);
-+
- #else /* CONFIG_SECURITY */
- struct security_mnt_opts {
- };
-@@ -2630,6 +2672,78 @@ static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32
+ 	mutex_lock(&bus->lock);
+ 
+ 	if (bus->disconnected) {
+@@ -255,6 +260,12 @@ int kdbus_ep_policy_set(struct kdbus_ep *ep,
+ 			const struct kdbus_item *items,
+ 			size_t items_size)
  {
- 	return -EOPNOTSUPP;
- }
++	int ret;
 +
-+static inline int security_kdbus_domain_alloc(struct kdbus_domain *domain)
-+{
-+	return 0;
-+}
-+static inline void security_kdbus_domain_free(struct kdbus_domain *domain)
-+{
-+}
++	ret = security_kdbus_ep_setpolicy(ep->bus);
++	if (ret)
++		return ret;
 +
-+static inline int security_kdbus_bus_alloc(struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static inline void security_kdbus_bus_free(struct kdbus_bus *bus)
-+{
-+}
-+
-+static inline int security_kdbus_send(const struct kdbus_conn *conn,
-+				      const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static inline int security_kdbus_recv(const struct kdbus_conn *conn,
-+				      const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static inline int security_kdbus_name_acquire(const struct kdbus_conn *conn,
-+					      const char *name)
-+{
-+	return 0;
-+}
-+
-+static inline int security_kdbus_name_list(const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static inline int security_kdbus_ep_create(const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static inline int security_kdbus_ep_setpolicy(const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static inline int security_kdbus_connect(struct kdbus_conn *conn,
-+					 const char *secctx, u32 seclen)
-+{
-+	return 0;
-+}
-+
-+static inline void security_kdbus_conn_free(struct kdbus_conn *conn)
-+{
-+}
-+
-+static inline int security_kdbus_conn_info(const struct kdbus_conn *conn)
-+{
-+	return 0;
-+}
-+
-+static inline int security_kdbus_talk(const struct kdbus_conn *src,
-+				      const struct kdbus_conn *dst)
-+{
-+	return 0;
-+}
-+
- #endif	/* CONFIG_SECURITY */
- 
- #ifdef CONFIG_SECURITY_NETWORK
-diff --git a/security/capability.c b/security/capability.c
-index a74fde6..b4322c8 100644
---- a/security/capability.c
-+++ b/security/capability.c
-@@ -572,6 +572,76 @@ static int cap_sem_semop(struct sem_array *sma, struct sembuf *sops,
- 	return 0;
+ 	return kdbus_policy_set(&ep->policy_db, items, items_size, 0, true, ep);
  }
  
-+static int cap_kdbus_domain_alloc(struct kdbus_domain *domain)
-+{
-+	return 0;
-+}
-+
-+static void cap_kdbus_domain_free(struct kdbus_domain *domain)
-+{
-+}
-+
-+static int cap_kdbus_bus_alloc(struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static void cap_kdbus_bus_free(struct kdbus_bus *bus)
-+{
-+}
-+
-+static int cap_kdbus_send(const struct kdbus_conn *conn,
-+			  const struct kdbus_bus *bus)
-+
-+{
-+	return 0;
-+}
-+
-+static int cap_kdbus_recv(const struct kdbus_conn *conn,
-+			  const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static int cap_kdbus_name_acquire(const struct kdbus_conn *conn, const char *name)
-+{
-+	return 0;
-+}
-+
-+static int cap_kdbus_name_list(const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static int cap_kdbus_ep_create(const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static int cap_kdbus_ep_setpolicy(const struct kdbus_bus *bus)
-+{
-+	return 0;
-+}
-+
-+static int cap_kdbus_connect(struct kdbus_conn *conn, const char *secctx, u32 seclen)
-+{
-+	return 0;
-+}
-+
-+static int cap_kdbus_conn_info(const struct kdbus_conn *conn)
-+{
-+	return 0;
-+}
-+
-+static void cap_kdbus_conn_free(struct kdbus_conn *conn)
-+{
-+}
-+
-+static int cap_kdbus_talk(const struct kdbus_conn *src, const struct kdbus_conn *dst)
-+{
-+	return 0;
-+}
-+
- #ifdef CONFIG_SECURITY_NETWORK
- static int cap_unix_stream_connect(struct sock *sock, struct sock *other,
- 				   struct sock *newsk)
-@@ -1070,6 +1140,20 @@ void __init security_fixup_ops(struct security_operations *ops)
- 	set_to_cap_if_null(ops, inode_notifysecctx);
- 	set_to_cap_if_null(ops, inode_setsecctx);
- 	set_to_cap_if_null(ops, inode_getsecctx);
-+	set_to_cap_if_null(ops, kdbus_domain_alloc);
-+	set_to_cap_if_null(ops, kdbus_domain_free);
-+	set_to_cap_if_null(ops, kdbus_bus_alloc);
-+	set_to_cap_if_null(ops, kdbus_bus_free);
-+	set_to_cap_if_null(ops, kdbus_send);
-+	set_to_cap_if_null(ops, kdbus_recv);
-+	set_to_cap_if_null(ops, kdbus_name_acquire);
-+	set_to_cap_if_null(ops, kdbus_name_list);
-+	set_to_cap_if_null(ops, kdbus_ep_create);
-+	set_to_cap_if_null(ops, kdbus_ep_setpolicy);
-+	set_to_cap_if_null(ops, kdbus_connect);
-+	set_to_cap_if_null(ops, kdbus_conn_free);
-+	set_to_cap_if_null(ops, kdbus_conn_info);
-+	set_to_cap_if_null(ops, kdbus_talk);
- #ifdef CONFIG_SECURITY_NETWORK
- 	set_to_cap_if_null(ops, unix_stream_connect);
- 	set_to_cap_if_null(ops, unix_may_send);
-diff --git a/security/security.c b/security/security.c
-index d29b28b..25a3154 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -1131,6 +1131,90 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
- }
- EXPORT_SYMBOL(security_inode_getsecctx);
+diff --git a/drivers/misc/kdbus/names.c b/drivers/misc/kdbus/names.c
+index 5f8853c..c13b0fb 100644
+--- a/drivers/misc/kdbus/names.c
++++ b/drivers/misc/kdbus/names.c
+@@ -22,6 +22,7 @@
+ #include <linux/mutex.h>
+ #include <linux/rwsem.h>
+ #include <linux/sched.h>
++#include <linux/security.h>
+ #include <linux/slab.h>
+ #include <linux/uaccess.h>
  
-+int security_kdbus_domain_alloc(struct kdbus_domain *domain)
-+{
-+	return security_ops->kdbus_domain_alloc(domain);
-+}
-+EXPORT_SYMBOL(security_kdbus_domain_alloc);
-+
-+void security_kdbus_domain_free(struct kdbus_domain *domain)
-+{
-+	security_ops->kdbus_domain_free(domain);
-+}
-+EXPORT_SYMBOL(security_kdbus_domain_free);
-+
-+int security_kdbus_bus_alloc(struct kdbus_bus *bus)
-+{
-+	return security_ops->kdbus_bus_alloc(bus);
-+}
-+EXPORT_SYMBOL(security_kdbus_bus_alloc);
-+
-+void security_kdbus_bus_free(struct kdbus_bus *bus)
-+{
-+	security_ops->kdbus_bus_free(bus);
-+}
-+EXPORT_SYMBOL(security_kdbus_bus_free);
-+
-+int security_kdbus_send(const struct kdbus_conn *conn, const struct kdbus_bus *bus)
-+{
-+	return security_ops->kdbus_send(conn, bus);
-+}
-+EXPORT_SYMBOL(security_kdbus_send);
-+
-+int security_kdbus_recv(const struct kdbus_conn *conn, const struct kdbus_bus *bus)
-+{
-+	return security_ops->kdbus_recv(conn, bus);
-+}
-+EXPORT_SYMBOL(security_kdbus_recv);
-+
-+int security_kdbus_name_acquire(const struct kdbus_conn *conn, const char *name)
-+{
-+	return security_ops->kdbus_name_acquire(conn, name);
-+}
-+EXPORT_SYMBOL(security_kdbus_name_acquire);
-+
-+int security_kdbus_name_list(const struct kdbus_bus *bus)
-+{
-+	return security_ops->kdbus_name_list(bus);
-+}
-+EXPORT_SYMBOL(security_kdbus_name_list);
-+
-+int security_kdbus_ep_create(struct kdbus_bus *bus)
-+{
-+	return security_ops->kdbus_ep_create(bus);
-+}
-+EXPORT_SYMBOL(security_kdbus_ep_create);
-+
-+int security_kdbus_ep_setpolicy(struct kdbus_bus *bus)
-+{
-+	return security_ops->kdbus_ep_setpolicy(bus);
-+}
-+EXPORT_SYMBOL(security_kdbus_ep_setpolicy);
-+
-+int security_kdbus_connect(struct kdbus_conn *conn, const char *secctx, u32 seclen)
-+{
-+	return security_ops->kdbus_connect(conn, secctx, seclen);
-+}
-+EXPORT_SYMBOL(security_kdbus_connect);
-+
-+void security_kdbus_conn_free(struct kdbus_conn *conn)
-+{
-+	security_ops->kdbus_conn_free(conn);
-+}
-+EXPORT_SYMBOL(security_kdbus_conn_free);
-+
-+int security_kdbus_conn_info(const struct kdbus_conn *conn)
-+{
-+	return security_ops->kdbus_conn_info(conn);
-+}
-+EXPORT_SYMBOL(security_kdbus_conn_info);
-+
-+int security_kdbus_talk(const struct kdbus_conn *src, const struct kdbus_conn *dst)
-+{
-+	return security_ops->kdbus_talk(src, dst);
-+}
-+EXPORT_SYMBOL(security_kdbus_talk);
-+
- #ifdef CONFIG_SECURITY_NETWORK
+@@ -492,6 +493,10 @@ int kdbus_name_acquire(struct kdbus_name_registry *reg,
+ 	u32 hash;
+ 	int ret = 0;
  
- int security_unix_stream_connect(struct sock *sock, struct sock *other, struct sock *newsk)
++	ret = security_kdbus_name_acquire(conn, name);
++	if (ret)
++		return ret;
++
+ 	/* lock order: domain -> bus -> ep -> names -> conn */
+ 	mutex_lock(&conn->bus->lock);
+ 	down_write(&reg->rwlock);
+@@ -876,6 +881,10 @@ int kdbus_cmd_name_list(struct kdbus_name_registry *reg,
+ 	size_t pos;
+ 	int ret;
+ 
++	ret = security_kdbus_name_list(conn->bus);
++	if (ret)
++		return ret;
++
+ 	policy_db = &conn->ep->policy_db;
+ 
+ 	/* lock order: domain -> bus -> ep -> names -> conn */
 -- 
 2.1.1
