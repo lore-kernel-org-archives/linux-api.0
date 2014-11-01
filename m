@@ -1,97 +1,114 @@
 From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCHv2 5/7] cgroup: introduce cgroup namespaces
-Date: Fri, 31 Oct 2014 17:02:41 -0700
-Message-ID: <CALCETrWzYPngmWPMWnSFyiTPDwNJYPpXUj1C-294uQgjvp9wcA@mail.gmail.com>
-References: <1414783141-6947-1-git-send-email-adityakali@google.com>
-	<1414783141-6947-6-git-send-email-adityakali@google.com>
+Subject: Re: [PATCHv2 7/7] cgroup: mount cgroupns-root when inside non-init cgroupns
+Date: Fri, 31 Oct 2014 17:07:51 -0700
+Message-ID: <CALCETrXTaZ3SJ_t-gnbc93BVZXg-912NqO78kFd0Tpi-5-dZoQ@mail.gmail.com>
+References: <1414783141-6947-1-git-send-email-adityakali@google.com> <1414783141-6947-8-git-send-email-adityakali@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1414783141-6947-6-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1414783141-6947-8-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Rohit Jnagal <jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 31, 2014 at 12:18 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> Introduce the ability to create new cgroup namespace. The newly created
-> cgroup namespace remembers the cgroup of the process at the point
-> of creation of the cgroup namespace (referred as cgroupns-root).
-> The main purpose of cgroup namespace is to virtualize the contents
-> of /proc/self/cgroup file. Processes inside a cgroup namespace
-> are only able to see paths relative to their namespace root
-> (unless they are moved outside of their cgroupns-root, at which point
->  they will see a relative path from their cgroupns-root).
-> For a correctly setup container this enables container-tools
-> (like libcontainer, lxc, lmctfy, etc.) to create completely virtualized
-> containers without leaking system level cgroup hierarchy to the task.
-> This patch only implements the 'unshare' part of the cgroupns.
+On Fri, Oct 31, 2014 at 12:19 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> This patch enables cgroup mounting inside userns when a process
+> as appropriate privileges. The cgroup filesystem mounted is
+> rooted at the cgroupns-root. Thus, in a container-setup, only
+> the hierarchy under the cgroupns-root is exposed inside the container.
+> This allows container management tools to run inside the containers
+> without depending on any global state.
+> In order to support this, a new kernfs api is added to lookup the
+> dentry for the cgroupns-root.
 >
+> Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/kernfs/mount.c      | 48 ++++++++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/kernfs.h |  2 ++
+>  kernel/cgroup.c        | 47 +++++++++++++++++++++++++++++++++++++++++++++--
+>  3 files changed, 95 insertions(+), 2 deletions(-)
+>
+> diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
+> index f973ae9..e334f45 100644
+> --- a/fs/kernfs/mount.c
+> +++ b/fs/kernfs/mount.c
+> @@ -62,6 +62,54 @@ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
+>         return NULL;
+>  }
+>
+> +/**
+> + * kernfs_make_root - create new root dentry for the given kernfs_node.
+> + * @sb: the kernfs super_block
+> + * @kn: kernfs_node for which a dentry is needed
+> + *
+> + * This can used used by callers which want to mount only a part of the kernfs
+> + * as root of the filesystem.
+> + */
+> +struct dentry *kernfs_obtain_root(struct super_block *sb,
+> +                                 struct kernfs_node *kn)
+> +{
 
-> +       /* Prevent cgroup changes for this task. */
-> +       threadgroup_lock(current);
+I can't usefully review this, but kernfs_make_root and
+kernfs_obtain_root aren't the same string...
 
-This could just be me being dense, but what is the lock for?
-
-> +
-> +       /* CGROUPNS only virtualizes the cgroup path on the unified hierarchy.
+> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> index 7e5d597..250aaec 100644
+> --- a/kernel/cgroup.c
+> +++ b/kernel/cgroup.c
+> @@ -1302,6 +1302,13 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
+>
+>         memset(opts, 0, sizeof(*opts));
+>
+> +       /* Implicitly add CGRP_ROOT_SANE_BEHAVIOR if inside a non-init cgroup
+> +        * namespace.
 > +        */
-> +       cgrp = get_task_cgroup(current);
-> +
-> +       err = -ENOMEM;
-> +       new_ns = alloc_cgroup_ns();
-> +       if (!new_ns)
-> +               goto err_out_unlock;
-> +
-> +       err = proc_alloc_inum(&new_ns->proc_inum);
-> +       if (err)
-> +               goto err_out_unlock;
-> +
-> +       new_ns->user_ns = get_user_ns(user_ns);
-> +       new_ns->root_cgrp = cgrp;
-> +
-> +       threadgroup_unlock(current);
-> +
-> +       return new_ns;
-> +
-> +err_out_unlock:
-> +       threadgroup_unlock(current);
-> +err_out:
-> +       if (cgrp)
-> +               cgroup_put(cgrp);
-> +       kfree(new_ns);
-> +       return ERR_PTR(err);
-> +}
-> +
-> +static int cgroupns_install(struct nsproxy *nsproxy, void *ns)
-> +{
-> +       pr_info("setns not supported for cgroup namespace");
-> +       return -EINVAL;
-> +}
-> +
-> +static void *cgroupns_get(struct task_struct *task)
-> +{
-> +       struct cgroup_namespace *ns = NULL;
-> +       struct nsproxy *nsproxy;
-> +
-> +       rcu_read_lock();
-> +       nsproxy = task->nsproxy;
-> +       if (nsproxy) {
-> +               ns = nsproxy->cgroup_ns;
-> +               get_cgroup_ns(ns);
+> +       if (current->nsproxy->cgroup_ns != &init_cgroup_ns) {
+> +               opts->flags |= CGRP_ROOT_SANE_BEHAVIOR;
 > +       }
-> +       rcu_read_unlock();
+> +
 
-How is this correct?  Other namespaces do it too, so it Must Be
-Correct (tm), but I don't understand.  What is RCU protecting?
+I don't like this implicit stuff.  Can you just return -EINVAL if sane
+behavior isn't requested?
+
+>         while ((token = strsep(&o, ",")) != NULL) {
+>                 nr_opts++;
+>
+> @@ -1391,7 +1398,7 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
+>
+>         if (opts->flags & CGRP_ROOT_SANE_BEHAVIOR) {
+>                 pr_warn("sane_behavior: this is still under development and its behaviors will change, proceed at your own risk\n");
+> -               if (nr_opts != 1) {
+> +               if (nr_opts > 1) {
+>                         pr_err("sane_behavior: no other mount options allowed\n");
+>                         return -EINVAL;
+
+This looks wrong.  But, if you make the change above, then it'll be right.
+
+> @@ -1685,6 +1701,14 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+>         int ret;
+>         int i;
+>         bool new_sb;
+> +       struct cgroup_namespace *ns =
+> +               get_cgroup_ns(current->nsproxy->cgroup_ns);
+> +
+> +       /* Check if the caller has permission to mount. */
+> +       if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
+> +               put_cgroup_ns(ns);
+> +               return ERR_PTR(-EPERM);
+> +       }
+
+Why is this necessary?
+
+> @@ -1862,6 +1904,7 @@ static struct file_system_type cgroup_fs_type = {
+>         .name = "cgroup",
+>         .mount = cgroup_mount,
+>         .kill_sb = cgroup_kill_sb,
+> +       .fs_flags = FS_USERNS_MOUNT,
+
+Aargh, another one!  Eric, can you either ack or nack my patch?
+Because if my patch goes in, then this line may need to change.  Or
+not, but if a stable release with cgroupfs and without my patch
+happens, then we'll have an ABI break.
 
 --Andy
