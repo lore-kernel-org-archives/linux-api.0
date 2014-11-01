@@ -1,95 +1,146 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCHv2 7/7] cgroup: mount cgroupns-root when inside non-init
-	cgroupns
-Date: Fri, 31 Oct 2014 20:29:15 -0700
-Message-ID: <CALCETrWTtGH=q0kD=hFv=LryA+h=K3yCV4_CmgD=TMbuaW3LrA@mail.gmail.com>
-References: <1414783141-6947-1-git-send-email-adityakali@google.com>
-	<1414783141-6947-8-git-send-email-adityakali@google.com>
-	<CALCETrXTaZ3SJ_t-gnbc93BVZXg-912NqO78kFd0Tpi-5-dZoQ@mail.gmail.com>
-	<87a94blj6m.fsf@x220.int.ebiederm.org>
+From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Subject: Re: kdbus: add code to gather metadata
+Date: Sat, 01 Nov 2014 12:05:18 +0100
+Message-ID: <5454BE6E.5040507@zonque.org>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org> <1414620056-6675-7-git-send-email-gregkh@linuxfoundation.org> <CALCETrWqbpxk83L0k0_78JZCO+ntZhx_hHMcRu=vxs6VE2f5JQ@mail.gmail.com> <CALCETrVkuKxMMEw3HBEOZoFUuw8PndXtB13+bLWmcp_E34SaFw@mail.gmail.com> <5451FA9B.8070501@zonque.org> <CALCETrWjOS0AHF33zN0Vy1NC1441To7AgNPge3sKCz8bn2d8gg@mail.gmail.com> <54525F32.3040502@zonque.org> <CALCETrV6MLYUQN6mqZbH=FrLyrETVoemtdC05po8+X=6SKQ70A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87a94blj6m.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrV6MLYUQN6mqZbH=FrLyrETVoemtdC05po8+X=6SKQ70A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, "alban.crequy" <alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 31, 2014 at 7:59 PM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->>> @@ -1862,6 +1904,7 @@ static struct file_system_type cgroup_fs_type = {
->>>         .name = "cgroup",
->>>         .mount = cgroup_mount,
->>>         .kill_sb = cgroup_kill_sb,
->>> +       .fs_flags = FS_USERNS_MOUNT,
->>
->> Aargh, another one!  Eric, can you either ack or nack my patch?
->> Because if my patch goes in, then this line may need to change.  Or
->> not, but if a stable release with cgroupfs and without my patch
->> happens, then we'll have an ABI break.
->
-> cgroupfs has no device nodes.  So as long as we are consistent in any
-> given release what happens here is orthogonal.
->
-> I don't remember if we have managed to get the original problem fixed
-> with the trivial backportable solution.  I think so.
+Hi Andy,
 
-I don't remember.  I think the problem is still there, since I think
-my patch still applies, and my patch conflicts with your fix.  It's
-been long enough that I'm not sure it's worth applying your patch as
-an interim fix.
+On 10/30/2014 10:01 PM, Andy Lutomirski wrote:
+> On Thu, Oct 30, 2014 at 8:54 AM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
 
->
-> My apologies for not getting to that I haven't even had time to shepherd
-> through the regression associated regression fix.  I probably just lock
-> track of them but I haven't found the Tested-By's for it yet.
+>> We merely allow user that are connected to a bus to query the
+>> credentials of the creator of the bus they're connected to.
+> 
+> Why do you allow this?  What purpose does it serve?  Is that idea that
+> each application will own one bus?  If so, what goes wrong if you only
+> capture the specific credentials that the creator of a given bus asks
+> to have captured?
 
-No worries.  I've tested it, but it's my patch, so there's a big grain
-of salt there.  I think Serge tested it, too.
+There are different kinds of buses. There is the system bus and a number
+of user buses. It's really useful to be able to identify the user who
+owns one of these user buses, for the sake of access control. More
+specifically, we have a compatibility service called "bus-proxy" that
+speaks the old D-Bus socket protocol on one side and translates all
+messages to kdbus messages onto the other. For that, it needs to enforce
+the old D-Bus access control semantics, which is described in XML, and
+has quite elaborate checks. In order to enforce it, it's relevant to be
+able to compare peer credentials with bus owner credentials, because
+there's usually a rule that the bus owner UID is allowed more than other
+peers.
 
->
-> Nor have I had time to dig through and figure out how to safely deal
-> with umount -l aka MOUNT_DETACH.
+Sure, there are other ways to figure out the identity of the bus, but
+it's really nice to have similar semantics for identifying the bus
+owner. kdbus internally has that piece of information anyway, so we
+decided to export it, optionally. However, that's really a minor detail
+after all.
 
-If you're talking about the do_remount_sb thing, that's already in Linus' tree.
+>> For example, if a privileged service can reboot the system, it checks
+>> whether the asking peer has CAP_SYS_BOOT set. If it checks for uid==0
+>> instead, and it works in your tests because you happen to test as root,
+>> that just a bug in the service, right? But I might have missed your point.
+> 
+> The issue is the following: if have the privilege needed to talk to
+> journald, I may want to enhance security by opening a connection to
+> journald (and capture that privilege) and then drop privilege.  I
+> should still be able to talk to journald.
 
->
-> Along with the question about what to do with nodev, there is also
-> your patch about nosuid.
+Hmm, this is not how D-Bus works, and kdbus stays close the design
+principles of D-Bus. There's no concept of 'opening connections to
+services'. You just connect to a bus, and then on that bus, you send
+individual messages and method calls to other services.
 
-The nosuid patch has a couple versions, and I'm not sure which version
-I prefer.  It's certainly debatable.
+The design of Binder and D-Bus are fundamentally different in that
+regard. On D-Bus, the focus is really about method call transaction (a
+method call message and a corresponding reply message), and there's no
+way to continuously reference a peer via the concept of a 'connection'.
 
->
-> Starting in about 5 minutes I am going to be mostly offline until
-> sometime in the 3rd week in November as I haul all of my stuff accross
-> the country to someplace that actually has winter and my allergies don't
-> kill me.
+This is why we have this functionality of passing over the caller creds
+every time a method call is made. The focus is really on the individual
+method call transaction, each one is individually routed, dispatched and
+checked for permission. Hence, it should carry individual credential
+information from the time the call is issued.
 
-Have fun!
+So, back to your example: you cannot 'open a connection to journald'.
+You can only connect to a bus and send messages to journald.
 
---Andy
+> Alternatively, if the privilege needed to reboot is CAP_SYS_BOOT, then
+> clients should send that capability bit.  Capturing extra information
+> to try to give daemons the flexibility to change their authorization
+> conditions later on just moves the problem if you need to change
+> policy down the line.
 
->
-> I am going to have to review and merge a lot of code as soon as I am
-> back to being a programmer full time again.  There is a lot of
-> interesting stuff coming in right now.
->
-> Eric
+This would be similar to changing the Linux kernel so that each system
+call gets a set of capabilities passed in explicitly. RPC calls are very
+much comparable to syscalls, though they don't transition into kernel
+space, but simply into another process.
+
+We've been augmenting what syscalls check on for access control ever
+since. Initially, it check was UID based, then became capability based,
+and nowadays we have a concept of MACs, that are actually different on
+every system, because some systems use SElinux, some SMACK or some other
+MAC. This is why this metadata should be implicit and controlled by the
+receiver, not by the sender, because the implementation of the policy
+might change eventually, be extended with more sophisticated access
+control etc.
+
+But it's not only about access control, there's also auditing. In order
+to generate useful audit logs, a system service that is offering
+privileged operation to certain clients needs to know the audit
+credentials (sessionid and loginuid). Hence, this information needs to
+be implicitly appended, controlled by that service. Because if it is not
+implicitly appended, than it will more often be missing than expected
+(simply because in real-life very few people actually use auditing), and
+the system service would not be able to log about it.
+
+So, this is not a metadata leak by accident but metadata that system
+services need to know about in order to work properly. Individual
+services will require slightly different components of these
+credentials, but if you combine things, they need to know pretty much
+all of the details we currently offer as implied metadata.
+
+The system bus is about unprivileged apps asking system services for
+system operations, in which case the system services must have a way to
+know who wants them to do what. The purpose of a system bus is _not_ to
+allow unprivileged peers to talk to each other, that's actually even
+forbidden in the default policy. That's what user buses are for, and on
+those, pretty much every client will have the same privileges anyway,
+hence there's no information leak there either.
+
+> What's the actual problem for logging?  I very much understand why a
+> logging service never wants to log an incorrect credential (and legacy
+> syslog has serious problems here because it doesn't even try to
+> capture credential), but what's wrong with having a log that shows the
+> uid for legit log messages and that reliably says "declined to state"
+> for messages that decline to state.
+
+A system's administrator should be able to gather all sorts of
+information about things that happened on a system. Trying to hide
+associated metadata is not how things are done anyway - we show it in
+numerous places, in /proc, in SCM_CREDENTIALS, by listing /tmp or /home etc.
+
+The separation to limit what is passed around is, in our concept, rather
+on the level of connecting to separate buses, PID namespaces, kdbus
+domains etc, than to suppress information.
+
+> (Also, I presume that cmdline is for logging.  Keep in mind that the
+> cmdline is yanked from user memory and can be freely spoofed.)
+
+Sure. But If a task did that, we want to know about it, and log it
+accordingly. Journald provides such features already today, and it's a
+great deal in detecting runtime inconsistencies between a task's real
+nature and what is displayed in 'ps'.
 
 
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+Thanks,
+Daniel
