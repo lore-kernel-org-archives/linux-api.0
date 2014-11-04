@@ -1,89 +1,92 @@
 From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Subject: [PATCH v3 0/3] perf: User/kernel time correlation and event generation
-Date: Tue,  4 Nov 2014 00:28:35 +0000
-Message-ID: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
+Subject: [PATCH v3 1/3] perf: Use monotonic clock as a source for timestamps
+Date: Tue,  4 Nov 2014 00:28:36 +0000
+Message-ID: <1415060918-19954-2-git-send-email-pawel.moll@arm.com>
+References: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415060918-19954-1-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel Moll <mail-g3xvULXeDMYS+FvcfC7Uqw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Pawel Moll <mail-g3xvULXeDMYS+FvcfC7Uqw@public.gmane.org>
+Until now, perf framework never defined the meaning of the timestampt
+captured as PERF_SAMPLE_TIME sample type. The values were obtaining
+from local (sched) clock, which is unavailable in userspace. This made
+it impossible to correlate perf data with any other events. Other
+tracing solutions have the source configurable (ftrace) or just share
+a common time domain between kernel and userspace (LTTng).
 
-Hello again,
+Follow the trend by using monotonic clock, which is readily available
+as POSIX CLOCK_MONOTONIC.
 
-Back to the subject, this time with a slightly different angle...
+Also add a sysctl "perf_sample_time_clk_id" attribute which can be used
+by the user to obtain the clk_id to be used with POSIX clock API (eg.
+clock_gettime()) to obtain a time value comparable with perf samples.
 
-I've organised a session on the subject during the tracing
-minisummit at LPC 2014 in Dusseldorf. Notes taken from the discussion
-taken by Steven Rostedt (thanks Steve!)
+Signed-off-by: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+---
 
-http://www.linuxplumbersconf.org/2014/wp-content/uploads/2014/10/LPC2014_Tracing.txt
+Ingo, I remember your comments about this approach in the past, but
+during discussions at LPC Thomas was convinced that it's the right
+thing to do - see cover letter for the series...
 
-The following three patches address three main topics. They are pretty
-much orthogonal and (subject to small and obvious modifications) could
-be applied independently from each other.
+ include/linux/perf_event.h | 1 +
+ kernel/events/core.c       | 4 +++-
+ kernel/sysctl.c            | 7 +++++++
+ 3 files changed, 11 insertions(+), 1 deletion(-)
 
-An executive summary of both discussion and the patches:
-
-1. User/kernel perf timestamps correlation
-
-Thomas suggested that, instead of jumping through loops of correlation,
-perf should simply generate monotonic clock timestamps, instead of
-using sched clock. Peter and I pointed out that Ingo didn't like this
-idea as monotonic can be slow, but apparently the cases when it is are
-irrelevant. Thomas offered to fly to Budapest to physically convince
-Ingo - I hope it won't be necessary and he will be able to achieve
-this here, on mailing lists :-)
-
-Setting aside potential performance problems, it would be a really
-great solution, unifying all trace systems (perf, ftrace and LTTng)
-in this respect. I'm more than happy to work on potential improvements
-in the are of monotonic clock if it was to help the cause.
-
-If it is a definite no-go, we still have the third patch, allowing post-
-capture correlation based on synchronisation events.
-
-2. User event generation
-
-Everyone present agreed that it would be a very-nice-to-have feature.
-There was some discussion about implementation details, so I welcome
-feedback and comments regarding my take on the matter.
-
-3. Correlation with external timestamps
-
-This is a new issue, which surfaced recently while I was working on
-hardware trace infrastructure. It can timestamp trace packets, but is
-using yet another, completely different time source to do this.
-
-Thomas suggested solution which gets down to my original proposal for
-sched/monotonic clock correlation - an additional sample type so events
-can be "double stamped" using different clock sources providing
-synchronisation points for later time approximation. I've just extended
-the implementation with configuration value to select the clock source.
-If the first patch (making perf timestamps monotonic) gets accepted,
-there will be no immediate need for this one, but I'd like to gain some
-feedback anyway.
-
-
-That's all for this series. Previous versions:
-
-- RFC: http://www.spinics.net/lists/kernel/msg1824419.html
-- v1: http://thread.gmane.org/gmane.linux.kernel/1790231
-- v2: http://thread.gmane.org/gmane.linux.kernel/1793272
-
-Pawel Moll (3):
-  perf: Use monotonic clock as a source for timestamps
-  perf: Userspace event
-  perf: Sample additional clock value
-
- include/linux/perf_event.h      |   7 +++
- include/uapi/linux/perf_event.h |  37 +++++++++++++-
- include/uapi/linux/prctl.h      |  10 ++++
- kernel/events/core.c            | 105 +++++++++++++++++++++++++++++++++++++++-
- kernel/sys.c                    |   5 ++
- kernel/sysctl.c                 |   7 +++
- 6 files changed, 168 insertions(+), 3 deletions(-)
-
+diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
+index 893a0d0..ba490d5 100644
+--- a/include/linux/perf_event.h
++++ b/include/linux/perf_event.h
+@@ -738,6 +738,7 @@ extern int sysctl_perf_event_paranoid;
+ extern int sysctl_perf_event_mlock;
+ extern int sysctl_perf_event_sample_rate;
+ extern int sysctl_perf_cpu_time_max_percent;
++extern int sysctl_perf_sample_time_clk_id;
+ 
+ extern void perf_sample_event_took(u64 sample_len_ns);
+ 
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index 2b02c9f..ea3d6d3 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -234,6 +234,8 @@ int perf_cpu_time_max_percent_handler(struct ctl_table *table, int write,
+ 	return 0;
+ }
+ 
++int sysctl_perf_sample_time_clk_id = CLOCK_MONOTONIC;
++
+ /*
+  * perf samples are done in some very critical code paths (NMIs).
+  * If they take too much CPU time, the system can lock up and not
+@@ -324,7 +326,7 @@ extern __weak const char *perf_pmu_name(void)
+ 
+ static inline u64 perf_clock(void)
+ {
+-	return local_clock();
++	return ktime_get_mono_fast_ns();
+ }
+ 
+ static inline struct perf_cpu_context *
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 15f2511..cb75f5b 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -1094,6 +1094,13 @@ static struct ctl_table kern_table[] = {
+ 		.extra1		= &zero,
+ 		.extra2		= &one_hundred,
+ 	},
++	{
++		.procname	= "perf_sample_time_clk_id",
++		.data		= &sysctl_perf_sample_time_clk_id,
++		.maxlen		= sizeof(unsigned int),
++		.mode		= 0444,
++		.proc_handler	= proc_dointvec,
++	},
+ #endif
+ #ifdef CONFIG_KMEMCHECK
+ 	{
 -- 
 1.8.3.2
