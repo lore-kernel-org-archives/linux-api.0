@@ -1,36 +1,289 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v3 2/3] perf: Userspace event
-Date: Tue, 4 Nov 2014 19:40:31 +0100
-Message-ID: <20141104184031.GM10501@worktop.programming.kicks-ass.net>
-References: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
- <1415060918-19954-3-git-send-email-pawel.moll@arm.com>
- <87ppd35vbk.fsf@sejong.aot.lge.com>
- <1415119331.24819.19.camel@arm.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCHv2 2/3] selftests: Add test of O_BENEATH & openat(2)
+Date: Tue, 4 Nov 2014 10:47:52 -0800
+Message-ID: <CAGXu5j+RLXgO=N=h1qGfsZnzFdD6h7DcH7oTdXdib_Tn7bv4rA@mail.gmail.com>
+References: <1415094884-18349-1-git-send-email-drysdale@google.com>
+	<1415094884-18349-3-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1415119331.24819.19.camel-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Cc: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <1415094884-18349-3-git-send-email-drysdale@google.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Meredydd Luff <meredydd@senatehouse.org>, Will Drewry <wad@chromium.org>, Jorge Lucangeli Obes <jorgelo@google.com>, Ricky Zhou <rickyz@google.com>, Lee Campbell <leecam@google.com>, Julien Tinnes <jln@google.com>, Mike Depinet <mdepinet@google.com>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 04, 2014 at 04:42:11PM +0000, Pawel Moll wrote:
-> 
-> 1. I'm wrong and the record doesn't have to be padded to make it 8 bytes
-> aligned. Then I can drop the additional size field.
+On Tue, Nov 4, 2014 at 1:54 AM, David Drysdale <drysdale@google.com> wrote:
+> Add simple tests of openat(2) variations, including examples that
+> check the new O_BENEATH flag.
+>
+> Signed-off-by: David Drysdale <drysdale@google.com>
 
-No, you're right, we're supposed to stay 8 byte aligned.
+Excellent! Thank you for including self tests. :)
 
-> 2. I could impose a limitation on the prctl API that the data size must
-> be 8 bytes aligned. Bad idea in my opinion, I'd rather not.
+Acked-by: Kees Cook <keescook@chromium.org>
 
-Agreed.
+-Kees
 
-> 3. The additional size (for the data part) field stays. Notice that
-> PERF_SAMPLE_RAW has it as well :-)
+> ---
+>  tools/testing/selftests/Makefile          |   1 +
+>  tools/testing/selftests/openat/.gitignore |   4 +
+>  tools/testing/selftests/openat/Makefile   |  28 +++++
+>  tools/testing/selftests/openat/openat.c   | 180 ++++++++++++++++++++++++++++++
+>  4 files changed, 213 insertions(+)
+>  create mode 100644 tools/testing/selftests/openat/.gitignore
+>  create mode 100644 tools/testing/selftests/openat/Makefile
+>  create mode 100644 tools/testing/selftests/openat/openat.c
+>
+> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+> index 36ff2e4c7b6f..812e973233d2 100644
+> --- a/tools/testing/selftests/Makefile
+> +++ b/tools/testing/selftests/Makefile
+> @@ -14,6 +14,7 @@ TARGETS += powerpc
+>  TARGETS += user
+>  TARGETS += sysctl
+>  TARGETS += firmware
+> +TARGETS += openat
+>
+>  TARGETS_HOTPLUG = cpu-hotplug
+>  TARGETS_HOTPLUG += memory-hotplug
+> diff --git a/tools/testing/selftests/openat/.gitignore b/tools/testing/selftests/openat/.gitignore
+> new file mode 100644
+> index 000000000000..835b2dcd8678
+> --- /dev/null
+> +++ b/tools/testing/selftests/openat/.gitignore
+> @@ -0,0 +1,4 @@
+> +openat
+> +subdir
+> +topfile
+> +symlinkdown
+> \ No newline at end of file
+> diff --git a/tools/testing/selftests/openat/Makefile b/tools/testing/selftests/openat/Makefile
+> new file mode 100644
+> index 000000000000..84cd06e7ee82
+> --- /dev/null
+> +++ b/tools/testing/selftests/openat/Makefile
+> @@ -0,0 +1,28 @@
+> +CC = $(CROSS_COMPILE)gcc
+> +CFLAGS = -Wall
+> +BINARIES = openat
+> +DEPS = subdir topfile symlinkdown subdir/bottomfile subdir/symlinkup subdir/symlinkout subdir/symlinkin
+> +all: $(BINARIES) $(DEPS)
+> +
+> +subdir:
+> +       mkdir -p subdir
+> +topfile:
+> +       echo 0123456789 > $@
+> +subdir/bottomfile: | subdir
+> +       echo 0123456789 > $@
+> +subdir/symlinkup: | subdir
+> +       ln -s ../topfile $@
+> +subdir/symlinkout: | subdir
+> +       ln -s /etc/passwd $@
+> +subdir/symlinkin: | subdir
+> +       ln -s bottomfile $@
+> +symlinkdown:
+> +       ln -s subdir/bottomfile $@
+> +%: %.c
+> +       $(CC) $(CFLAGS) -o $@ $^
+> +
+> +run_tests: all
+> +       ./openat
+> +
+> +clean:
+> +       rm -rf $(BINARIES) $(DEPS)
+> diff --git a/tools/testing/selftests/openat/openat.c b/tools/testing/selftests/openat/openat.c
+> new file mode 100644
+> index 000000000000..0c030cbd10dc
+> --- /dev/null
+> +++ b/tools/testing/selftests/openat/openat.c
+> @@ -0,0 +1,180 @@
+> +#include <sys/types.h>
+> +#include <sys/stat.h>
+> +#include <sys/syscall.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <unistd.h>
+> +#include <string.h>
+> +#include <errno.h>
+> +
+> +#include <linux/fcntl.h>
+> +
+> +/* Bypass glibc */
+> +static int openat_(int dirfd, const char *pathname, int flags)
+> +{
+> +       return syscall(__NR_openat, dirfd, pathname, flags);
+> +}
+> +
+> +static int openat_or_die(int dfd, const char *path, int flags)
+> +{
+> +       int fd = openat_(dfd, path, flags);
+> +
+> +       if (fd < 0) {
+> +               printf("Failed to openat(%d, '%s'); "
+> +                       "check prerequisites are available\n", dfd, path);
+> +               exit(1);
+> +       }
+> +       return fd;
+> +}
+> +
+> +static int check_openat(int dfd, const char *path, int flags)
+> +{
+> +       int rc;
+> +       int fd;
+> +       char buffer[4];
+> +
+> +       errno = 0;
+> +       printf("Check success of openat(%d, '%s', %x)... ",
+> +              dfd, path?:"(null)", flags);
+> +       fd = openat_(dfd, path, flags);
+> +       if (fd < 0) {
+> +               printf("[FAIL]: openat() failed, rc=%d errno=%d (%s)\n",
+> +                       fd, errno, strerror(errno));
+> +               return 1;
+> +       }
+> +       errno = 0;
+> +       rc = read(fd, buffer, sizeof(buffer));
+> +       if (rc < 0) {
+> +               printf("[FAIL]: read() failed, rc=%d errno=%d (%s)\n",
+> +                       rc, errno, strerror(errno));
+> +               return 1;
+> +       }
+> +       close(fd);
+> +       printf("[OK]\n");
+> +       return 0;
+> +}
+> +
+> +#define check_openat_fail(dfd, path, flags, errno)     \
+> +       _check_openat_fail(dfd, path, flags, errno, #errno)
+> +static int _check_openat_fail(int dfd, const char *path, int flags,
+> +                             int expected_errno, const char *errno_str)
+> +{
+> +       int rc;
+> +
+> +       errno = 0;
+> +       printf("Check failure of openat(%d, '%s', %x) with %s... ",
+> +               dfd, path?:"(null)", flags, errno_str);
+> +       rc = openat_(dfd, path, flags);
+> +       if (rc > 0) {
+> +               printf("[FAIL] (unexpected success from openat(2))\n");
+> +               close(rc);
+> +               return 1;
+> +       }
+> +       if (errno != expected_errno) {
+> +               printf("[FAIL] (expected errno %d (%s) not %d (%s)\n",
+> +                       expected_errno, strerror(expected_errno),
+> +                       errno, strerror(errno));
+> +               return 1;
+> +       }
+> +       printf("[OK]\n");
+> +       return 0;
+> +}
+> +
+> +int check_proc(void)
+> +{
+> +       int proc_dfd = openat_(AT_FDCWD, "/proc/self", O_RDONLY);
+> +       int fail = 0;
+> +
+> +       if (proc_dfd < 0) {
+> +               printf("'/proc/self' unavailable (errno=%d '%s'), skipping\n",
+> +                       errno, strerror(errno));
+> +               return 1;
+> +       }
+> +       fail |= check_openat(proc_dfd, "root/etc/passwd", O_RDONLY);
+> +#ifdef O_BENEATH
+> +       fail |= check_openat_fail(proc_dfd, "root/etc/passwd",
+> +                                 O_RDONLY|O_BENEATH, EPERM);
+> +#endif
+> +       return fail;
+> +}
+> +
+> +int main(int argc, char *argv[])
+> +{
+> +       int fail = 0;
+> +       int dot_dfd = openat_or_die(AT_FDCWD, ".", O_RDONLY);
+> +       int subdir_dfd = openat_or_die(AT_FDCWD, "subdir", O_RDONLY);
+> +       int file_fd = openat_or_die(AT_FDCWD, "topfile", O_RDONLY);
+> +
+> +       /* Sanity check normal behavior */
+> +       fail |= check_openat(AT_FDCWD, "topfile", O_RDONLY);
+> +       fail |= check_openat(AT_FDCWD, "subdir/bottomfile", O_RDONLY);
+> +
+> +       fail |= check_openat(dot_dfd, "topfile", O_RDONLY);
+> +       fail |= check_openat(dot_dfd, "subdir/bottomfile", O_RDONLY);
+> +       fail |= check_openat(dot_dfd, "subdir/../topfile", O_RDONLY);
+> +
+> +       fail |= check_openat(subdir_dfd, "../topfile", O_RDONLY);
+> +       fail |= check_openat(subdir_dfd, "bottomfile", O_RDONLY);
+> +       fail |= check_openat(subdir_dfd, "../subdir/bottomfile", O_RDONLY);
+> +       fail |= check_openat(subdir_dfd, "symlinkup", O_RDONLY);
+> +       fail |= check_openat(subdir_dfd, "symlinkout", O_RDONLY);
+> +
+> +       fail |= check_openat(AT_FDCWD, "/etc/passwd", O_RDONLY);
+> +       fail |= check_openat(dot_dfd, "/etc/passwd", O_RDONLY);
+> +       fail |= check_openat(subdir_dfd, "/etc/passwd", O_RDONLY);
+> +
+> +       fail |= check_openat_fail(AT_FDCWD, "bogus", O_RDONLY, ENOENT);
+> +       fail |= check_openat_fail(dot_dfd, "bogus", O_RDONLY, ENOENT);
+> +       fail |= check_openat_fail(999, "bogus", O_RDONLY, EBADF);
+> +       fail |= check_openat_fail(file_fd, "bogus", O_RDONLY, ENOTDIR);
+> +
+> +#ifdef O_BENEATH
+> +       /* Test out O_BENEATH */
+> +       fail |= check_openat(AT_FDCWD, "topfile", O_RDONLY|O_BENEATH);
+> +       fail |= check_openat(AT_FDCWD, "subdir/bottomfile",
+> +                            O_RDONLY|O_BENEATH);
+> +
+> +       fail |= check_openat(dot_dfd, "topfile", O_RDONLY|O_BENEATH);
+> +       fail |= check_openat(dot_dfd, "subdir/bottomfile",
+> +                            O_RDONLY|O_BENEATH);
+> +       fail |= check_openat(subdir_dfd, "bottomfile", O_RDONLY|O_BENEATH);
+> +
+> +       /* Symlinks without .. or leading / are OK */
+> +       fail |= check_openat(dot_dfd, "symlinkdown", O_RDONLY|O_BENEATH);
+> +       fail |= check_openat(dot_dfd, "subdir/symlinkin", O_RDONLY|O_BENEATH);
+> +       fail |= check_openat(subdir_dfd, "symlinkin", O_RDONLY|O_BENEATH);
+> +       /* ... unless of course we specify O_NOFOLLOW */
+> +       fail |= check_openat_fail(dot_dfd, "symlinkdown",
+> +                                 O_RDONLY|O_BENEATH|O_NOFOLLOW, ELOOP);
+> +       fail |= check_openat_fail(dot_dfd, "subdir/symlinkin",
+> +                                 O_RDONLY|O_BENEATH|O_NOFOLLOW, ELOOP);
+> +       fail |= check_openat_fail(subdir_dfd, "symlinkin",
+> +                                 O_RDONLY|O_BENEATH|O_NOFOLLOW, ELOOP);
+> +
+> +       /* Can't open paths with ".." in them */
+> +       fail |= check_openat_fail(dot_dfd, "subdir/../topfile",
+> +                               O_RDONLY|O_BENEATH, EPERM);
+> +       fail |= check_openat_fail(subdir_dfd, "../topfile",
+> +                                 O_RDONLY|O_BENEATH, EPERM);
+> +       fail |= check_openat_fail(subdir_dfd, "../subdir/bottomfile",
+> +                               O_RDONLY|O_BENEATH, EPERM);
+> +
+> +       /* Can't open paths starting with "/" */
+> +       fail |= check_openat_fail(AT_FDCWD, "/etc/passwd",
+> +                                 O_RDONLY|O_BENEATH, EPERM);
+> +       fail |= check_openat_fail(dot_dfd, "/etc/passwd",
+> +                                 O_RDONLY|O_BENEATH, EPERM);
+> +       fail |= check_openat_fail(subdir_dfd, "/etc/passwd",
+> +                                 O_RDONLY|O_BENEATH, EPERM);
+> +       /* Can't sneak around constraints with symlinks */
+> +       fail |= check_openat_fail(subdir_dfd, "symlinkup",
+> +                                 O_RDONLY|O_BENEATH, EPERM);
+> +       fail |= check_openat_fail(subdir_dfd, "symlinkout",
+> +                                 O_RDONLY|O_BENEATH, EPERM);
+> +#else
+> +       printf("Skipping O_BENEATH tests due to missing #define\n");
+> +#endif
+> +       fail |= check_proc();
+> +
+> +       return fail ? -1 : 0;
+> +}
+> --
+> 2.1.0.rc2.206.gedb03e5
+>
 
-Right, with binary data there is no other day. With \0 terminated
-strings there won't be a problem, but I think we decided we wanted to
-allow any binary blow.
+
+
+-- 
+Kees Cook
+Chrome OS Security
