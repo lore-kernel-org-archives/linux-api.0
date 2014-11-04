@@ -1,260 +1,172 @@
 From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH 12/15] [media] i2c: Replace v4l2-mediabus.h inclusion with v4l2-mbus.h
-Date: Tue,  4 Nov 2014 10:55:07 +0100
-Message-ID: <1415094910-15899-13-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH 11/15] [media] Deprecate v4l2_mbus_pixelcode
+Date: Tue,  4 Nov 2014 10:55:06 +0100
+Message-ID: <1415094910-15899-12-git-send-email-boris.brezillon@free-electrons.com>
 References: <1415094910-15899-1-git-send-email-boris.brezillon@free-electrons.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-media-owner@vger.kernel.org>
 In-Reply-To: <1415094910-15899-1-git-send-email-boris.brezillon@free-electrons.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-media-owner@vger.kernel.org
 To: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org
 Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, devel@driverdev.osuosl.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, Boris Brezillon <boris.brezillon@free-electrons.com>
 List-Id: linux-api@vger.kernel.org
 
-The v4l2-mediabus.h header is now deprecated and should be replaced with
-v4l2-mbus.h.
+The v4l2_mbus_pixelcode enum (or its values) should be replaced by the
+media_bus_format enum.
+Keep this enum in v4l2-mediabus.h and create a new header containing
+the v4l2_mbus_framefmt struct definition (which is not deprecated) so
+that we can add a #warning statement in v4l2-mediabus.h and hopefully
+encourage users to move to the new definitions.
+
+Replace inclusion of v4l2-mediabus.h with v4l2-mbus.h in all common headers
+and update the documentation Makefile to parse v4l2-mbus.h instead of
+v4l2-mediabus.h.
 
 Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
 ---
- drivers/media/i2c/mt9m032.c               | 2 +-
- drivers/media/i2c/mt9t001.c               | 2 +-
- drivers/media/i2c/mt9v032.c               | 2 +-
- drivers/media/i2c/smiapp/smiapp-core.c    | 2 +-
- drivers/media/i2c/soc_camera/imx074.c     | 2 +-
- drivers/media/i2c/soc_camera/mt9m111.c    | 2 +-
- drivers/media/i2c/soc_camera/mt9t031.c    | 2 +-
- drivers/media/i2c/soc_camera/mt9t112.c    | 2 +-
- drivers/media/i2c/soc_camera/ov2640.c     | 2 +-
- drivers/media/i2c/soc_camera/ov5642.c     | 2 +-
- drivers/media/i2c/soc_camera/ov6650.c     | 2 +-
- drivers/media/i2c/soc_camera/ov772x.c     | 2 +-
- drivers/media/i2c/soc_camera/ov9640.c     | 2 +-
- drivers/media/i2c/soc_camera/ov9740.c     | 2 +-
- drivers/media/i2c/soc_camera/rj54n1cb0c.c | 2 +-
- drivers/media/i2c/soc_camera/tw9910.c     | 2 +-
- drivers/media/i2c/tvp514x.c               | 2 +-
- 17 files changed, 17 insertions(+), 17 deletions(-)
+ Documentation/DocBook/media/Makefile |  2 +-
+ include/media/v4l2-mediabus.h        |  2 +-
+ include/uapi/linux/Kbuild            |  1 +
+ include/uapi/linux/v4l2-mbus.h       | 35 +++++++++++++++++++++++++++++++++++
+ include/uapi/linux/v4l2-mediabus.h   | 26 ++++----------------------
+ include/uapi/linux/v4l2-subdev.h     |  2 +-
+ 6 files changed, 43 insertions(+), 25 deletions(-)
+ create mode 100644 include/uapi/linux/v4l2-mbus.h
 
-diff --git a/drivers/media/i2c/mt9m032.c b/drivers/media/i2c/mt9m032.c
-index 45b3fca..502b23f 100644
---- a/drivers/media/i2c/mt9m032.c
-+++ b/drivers/media/i2c/mt9m032.c
-@@ -28,7 +28,7 @@
- #include <linux/module.h>
- #include <linux/mutex.h>
- #include <linux/slab.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
+diff --git a/Documentation/DocBook/media/Makefile b/Documentation/DocBook/media/Makefile
+index 181b7f4..30a22fa 100644
+--- a/Documentation/DocBook/media/Makefile
++++ b/Documentation/DocBook/media/Makefile
+@@ -99,7 +99,7 @@ STRUCTS = \
+ 	$(shell perl -ne 'print "$$1 " if (/^struct\s+([^\s]+)\s+/)' $(srctree)/include/uapi/linux/dvb/video.h) \
+ 	$(shell perl -ne 'print "$$1 " if /^struct\s+([^\s]+)\s+/' $(srctree)/include/uapi/linux/media.h) \
+ 	$(shell perl -ne 'print "$$1 " if /^struct\s+([^\s]+)\s+/' $(srctree)/include/uapi/linux/v4l2-subdev.h) \
+-	$(shell perl -ne 'print "$$1 " if /^struct\s+([^\s]+)\s+/' $(srctree)/include/uapi/linux/v4l2-mediabus.h)
++	$(shell perl -ne 'print "$$1 " if /^struct\s+([^\s]+)\s+/' $(srctree)/include/uapi/linux/v4l2-mbus.h)
  
- #include <media/media-entity.h>
- #include <media/mt9m032.h>
-diff --git a/drivers/media/i2c/mt9t001.c b/drivers/media/i2c/mt9t001.c
-index d9e9889..f1053f9 100644
---- a/drivers/media/i2c/mt9t001.c
-+++ b/drivers/media/i2c/mt9t001.c
-@@ -19,7 +19,7 @@
- #include <linux/regulator/consumer.h>
- #include <linux/slab.h>
- #include <linux/videodev2.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- 
- #include <media/mt9t001.h>
- #include <media/v4l2-ctrls.h>
-diff --git a/drivers/media/i2c/mt9v032.c b/drivers/media/i2c/mt9v032.c
-index 93687c1..e0c944a 100644
---- a/drivers/media/i2c/mt9v032.c
-+++ b/drivers/media/i2c/mt9v032.c
-@@ -20,7 +20,7 @@
- #include <linux/regmap.h>
- #include <linux/slab.h>
- #include <linux/videodev2.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/module.h>
- 
- #include <media/mt9v032.h>
-diff --git a/drivers/media/i2c/smiapp/smiapp-core.c b/drivers/media/i2c/smiapp/smiapp-core.c
-index 82d2e0a..8ccb7fa 100644
---- a/drivers/media/i2c/smiapp/smiapp-core.c
-+++ b/drivers/media/i2c/smiapp/smiapp-core.c
-@@ -34,7 +34,7 @@
- #include <linux/regulator/consumer.h>
- #include <linux/slab.h>
- #include <linux/smiapp.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <media/v4l2-device.h>
- 
- #include "smiapp.h"
-diff --git a/drivers/media/i2c/soc_camera/imx074.c b/drivers/media/i2c/soc_camera/imx074.c
-index f9c0474..48892a1 100644
---- a/drivers/media/i2c/soc_camera/imx074.c
-+++ b/drivers/media/i2c/soc_camera/imx074.c
-@@ -12,7 +12,7 @@
- 
- #include <linux/delay.h>
- #include <linux/i2c.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/slab.h>
- #include <linux/videodev2.h>
- #include <linux/module.h>
-diff --git a/drivers/media/i2c/soc_camera/mt9m111.c b/drivers/media/i2c/soc_camera/mt9m111.c
-index d140c7a..2b1179f 100644
---- a/drivers/media/i2c/soc_camera/mt9m111.c
-+++ b/drivers/media/i2c/soc_camera/mt9m111.c
-@@ -13,7 +13,7 @@
- #include <linux/log2.h>
- #include <linux/gpio.h>
- #include <linux/delay.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/module.h>
- 
- #include <media/soc_camera.h>
-diff --git a/drivers/media/i2c/soc_camera/mt9t031.c b/drivers/media/i2c/soc_camera/mt9t031.c
-index 13177ca..d6b1503 100644
---- a/drivers/media/i2c/soc_camera/mt9t031.c
-+++ b/drivers/media/i2c/soc_camera/mt9t031.c
-@@ -13,7 +13,7 @@
- #include <linux/log2.h>
- #include <linux/pm.h>
- #include <linux/slab.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/videodev2.h>
- #include <linux/module.h>
- 
-diff --git a/drivers/media/i2c/soc_camera/mt9t112.c b/drivers/media/i2c/soc_camera/mt9t112.c
-index 6ef9665..59396de 100644
---- a/drivers/media/i2c/soc_camera/mt9t112.c
-+++ b/drivers/media/i2c/soc_camera/mt9t112.c
-@@ -22,7 +22,7 @@
- #include <linux/init.h>
- #include <linux/module.h>
- #include <linux/slab.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/videodev2.h>
- 
- #include <media/mt9t112.h>
-diff --git a/drivers/media/i2c/soc_camera/ov2640.c b/drivers/media/i2c/soc_camera/ov2640.c
-index bc3ca24..dcc6fa8 100644
---- a/drivers/media/i2c/soc_camera/ov2640.c
-+++ b/drivers/media/i2c/soc_camera/ov2640.c
-@@ -18,7 +18,7 @@
- #include <linux/i2c.h>
- #include <linux/slab.h>
- #include <linux/delay.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/videodev2.h>
- 
- #include <media/soc_camera.h>
-diff --git a/drivers/media/i2c/soc_camera/ov5642.c b/drivers/media/i2c/soc_camera/ov5642.c
-index 5f43e03..73111bd 100644
---- a/drivers/media/i2c/soc_camera/ov5642.c
-+++ b/drivers/media/i2c/soc_camera/ov5642.c
-@@ -21,7 +21,7 @@
- #include <linux/slab.h>
- #include <linux/videodev2.h>
- #include <linux/module.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- 
- #include <media/soc_camera.h>
- #include <media/v4l2-clk.h>
-diff --git a/drivers/media/i2c/soc_camera/ov6650.c b/drivers/media/i2c/soc_camera/ov6650.c
-index 9779b96..0a39b43 100644
---- a/drivers/media/i2c/soc_camera/ov6650.c
-+++ b/drivers/media/i2c/soc_camera/ov6650.c
-@@ -28,7 +28,7 @@
- #include <linux/delay.h>
- #include <linux/i2c.h>
- #include <linux/slab.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/module.h>
- 
- #include <media/soc_camera.h>
-diff --git a/drivers/media/i2c/soc_camera/ov772x.c b/drivers/media/i2c/soc_camera/ov772x.c
-index ccbf3bc..09877b4 100644
---- a/drivers/media/i2c/soc_camera/ov772x.c
-+++ b/drivers/media/i2c/soc_camera/ov772x.c
-@@ -21,7 +21,7 @@
- #include <linux/i2c.h>
- #include <linux/slab.h>
- #include <linux/delay.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/videodev2.h>
- 
- #include <media/ov772x.h>
-diff --git a/drivers/media/i2c/soc_camera/ov9640.c b/drivers/media/i2c/soc_camera/ov9640.c
-index ffbf28f..5c28366 100644
---- a/drivers/media/i2c/soc_camera/ov9640.c
-+++ b/drivers/media/i2c/soc_camera/ov9640.c
-@@ -24,7 +24,7 @@
- #include <linux/i2c.h>
- #include <linux/slab.h>
- #include <linux/delay.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/videodev2.h>
- 
- #include <media/soc_camera.h>
-diff --git a/drivers/media/i2c/soc_camera/ov9740.c b/drivers/media/i2c/soc_camera/ov9740.c
-index fb0de38..52b33bf 100644
---- a/drivers/media/i2c/soc_camera/ov9740.c
-+++ b/drivers/media/i2c/soc_camera/ov9740.c
-@@ -14,7 +14,7 @@
- #include <linux/module.h>
- #include <linux/i2c.h>
- #include <linux/slab.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- 
- #include <media/soc_camera.h>
- #include <media/v4l2-clk.h>
-diff --git a/drivers/media/i2c/soc_camera/rj54n1cb0c.c b/drivers/media/i2c/soc_camera/rj54n1cb0c.c
-index a0d6f68..be5ec59 100644
---- a/drivers/media/i2c/soc_camera/rj54n1cb0c.c
-+++ b/drivers/media/i2c/soc_camera/rj54n1cb0c.c
+ ERRORS = \
+ 	E2BIG \
+diff --git a/include/media/v4l2-mediabus.h b/include/media/v4l2-mediabus.h
+index 4915621..fc6bdd3 100644
+--- a/include/media/v4l2-mediabus.h
++++ b/include/media/v4l2-mediabus.h
 @@ -11,7 +11,7 @@
- #include <linux/delay.h>
- #include <linux/i2c.h>
- #include <linux/slab.h>
+ #ifndef V4L2_MEDIABUS_H
+ #define V4L2_MEDIABUS_H
+ 
 -#include <linux/v4l2-mediabus.h>
 +#include <linux/v4l2-mbus.h>
- #include <linux/videodev2.h>
- #include <linux/module.h>
  
-diff --git a/drivers/media/i2c/soc_camera/tw9910.c b/drivers/media/i2c/soc_camera/tw9910.c
-index 9f94495..0011687 100644
---- a/drivers/media/i2c/soc_camera/tw9910.c
-+++ b/drivers/media/i2c/soc_camera/tw9910.c
-@@ -22,7 +22,7 @@
- #include <linux/slab.h>
- #include <linux/kernel.h>
- #include <linux/delay.h>
+ /* Parallel flags */
+ /*
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index b2c23f8..7b72720 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -408,6 +408,7 @@ header-y += uvcvideo.h
+ header-y += v4l2-common.h
+ header-y += v4l2-controls.h
+ header-y += v4l2-dv-timings.h
++header-y += v4l2-mbus.h
+ header-y += v4l2-mediabus.h
+ header-y += v4l2-subdev.h
+ header-y += veth.h
+diff --git a/include/uapi/linux/v4l2-mbus.h b/include/uapi/linux/v4l2-mbus.h
+new file mode 100644
+index 0000000..2778c6e
+--- /dev/null
++++ b/include/uapi/linux/v4l2-mbus.h
+@@ -0,0 +1,35 @@
++/*
++ * Media Bus API header
++ *
++ * Copyright (C) 2009, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#ifndef __LINUX_V4L2_MBUS_H
++#define __LINUX_V4L2_MBUS_H
++
++#include <linux/types.h>
++#include <linux/videodev2.h>
++#include <linux/media-bus-format.h>
++
++/**
++ * struct v4l2_mbus_framefmt - frame format on the media bus
++ * @width:	frame width
++ * @height:	frame height
++ * @code:	data format code (from enum media_bus_format)
++ * @field:	used interlacing type (from enum v4l2_field)
++ * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
++ */
++struct v4l2_mbus_framefmt {
++	__u32			width;
++	__u32			height;
++	__u32			code;
++	__u32			field;
++	__u32			colorspace;
++	__u32			reserved[7];
++};
++
++#endif
+diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
+index 5a3e797..a587eac 100644
+--- a/include/uapi/linux/v4l2-mediabus.h
++++ b/include/uapi/linux/v4l2-mediabus.h
+@@ -10,12 +10,12 @@
+ 
+ #ifndef __LINUX_V4L2_MEDIABUS_H
+ #define __LINUX_V4L2_MEDIABUS_H
++#ifndef __KERNEL__
+ 
+-#include <linux/types.h>
+-#include <linux/videodev2.h>
+-#include <linux/media-bus-format.h>
++#warning "Use v4l2-mbus.h instead of v4l2-mediabus.h"
++
++#include <linux/v4l2-mbus.h>
+ 
+-#ifndef __KERNEL__
+ #define MEDIA_BUS_TO_V4L2_MBUS(x)	V4L2_MBUS_FMT_ ## x = MEDIA_BUS_FMT_ ## x
+ 
+ enum v4l2_mbus_pixelcode {
+@@ -104,22 +104,4 @@ enum v4l2_mbus_pixelcode {
+ 	MEDIA_BUS_TO_V4L2_MBUS(AHSV8888_1X32),
+ };
+ #endif /* __KERNEL__ */
+-
+-/**
+- * struct v4l2_mbus_framefmt - frame format on the media bus
+- * @width:	frame width
+- * @height:	frame height
+- * @code:	data format code (from enum v4l2_mbus_pixelcode)
+- * @field:	used interlacing type (from enum v4l2_field)
+- * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
+- */
+-struct v4l2_mbus_framefmt {
+-	__u32			width;
+-	__u32			height;
+-	__u32			code;
+-	__u32			field;
+-	__u32			colorspace;
+-	__u32			reserved[7];
+-};
+-
+ #endif
+diff --git a/include/uapi/linux/v4l2-subdev.h b/include/uapi/linux/v4l2-subdev.h
+index 7f44f04..1a46d3b 100644
+--- a/include/uapi/linux/v4l2-subdev.h
++++ b/include/uapi/linux/v4l2-subdev.h
+@@ -26,7 +26,7 @@
+ #include <linux/ioctl.h>
+ #include <linux/types.h>
+ #include <linux/v4l2-common.h>
 -#include <linux/v4l2-mediabus.h>
 +#include <linux/v4l2-mbus.h>
- #include <linux/videodev2.h>
  
- #include <media/soc_camera.h>
-diff --git a/drivers/media/i2c/tvp514x.c b/drivers/media/i2c/tvp514x.c
-index 097b0d8..c6dd8fd 100644
---- a/drivers/media/i2c/tvp514x.c
-+++ b/drivers/media/i2c/tvp514x.c
-@@ -34,7 +34,7 @@
- #include <linux/delay.h>
- #include <linux/videodev2.h>
- #include <linux/module.h>
--#include <linux/v4l2-mediabus.h>
-+#include <linux/v4l2-mbus.h>
- #include <linux/of.h>
- #include <linux/of_graph.h>
- 
+ /**
+  * enum v4l2_subdev_format_whence - Media bus format type
 -- 
 1.9.1
-
