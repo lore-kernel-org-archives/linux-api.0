@@ -1,272 +1,198 @@
-From: David Drysdale <drysdale@google.com>
-Subject: [PATCHv2 2/3] selftests: Add test of O_BENEATH & openat(2)
-Date: Tue,  4 Nov 2014 09:54:43 +0000
-Message-ID: <1415094884-18349-3-git-send-email-drysdale@google.com>
-References: <1415094884-18349-1-git-send-email-drysdale@google.com>
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <1415094884-18349-1-git-send-email-drysdale@google.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Kees Cook <keescook@chromium.org>, "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Meredydd Luff <meredydd@senatehouse.org>, Will Drewry <wad@chromium.org>, Jorge Lucangeli Obes <jorgelo@google.com>, Ricky Zhou <rickyz@google.com>, Lee Campbell <leecam@google.com>, Julien Tinnes <jln@google.com>, Mike Depinet <mdepinet@google.com>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, David Drysdale <drysdale@google.com>
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH 00/15] [media] Make mediabus format subsystem neutral
+Date: Tue,  4 Nov 2014 10:54:55 +0100
+Message-ID: <1415094910-15899-1-git-send-email-boris.brezillon@free-electrons.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add simple tests of openat(2) variations, including examples that
-check the new O_BENEATH flag.
+Hello,
 
-Signed-off-by: David Drysdale <drysdale@google.com>
----
- tools/testing/selftests/Makefile          |   1 +
- tools/testing/selftests/openat/.gitignore |   4 +
- tools/testing/selftests/openat/Makefile   |  28 +++++
- tools/testing/selftests/openat/openat.c   | 180 ++++++++++++++++++++++++++++++
- 4 files changed, 213 insertions(+)
- create mode 100644 tools/testing/selftests/openat/.gitignore
- create mode 100644 tools/testing/selftests/openat/Makefile
- create mode 100644 tools/testing/selftests/openat/openat.c
+This patch series prepares the use of media bus formats outside of
+the V4L2 subsytem (my final goal is to use it in the Atmel HLCDC DRM
+driver where I have to configure my DPI/RGB bus according to the
+connected display).
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 36ff2e4c7b6f..812e973233d2 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -14,6 +14,7 @@ TARGETS += powerpc
- TARGETS += user
- TARGETS += sysctl
- TARGETS += firmware
-+TARGETS += openat
+The series first defines a new enum with a neutral name (media_bus_format),
+and then replace all references to the old enum and its values within the
+kernel.
 
- TARGETS_HOTPLUG = cpu-hotplug
- TARGETS_HOTPLUG += memory-hotplug
-diff --git a/tools/testing/selftests/openat/.gitignore b/tools/testing/selftests/openat/.gitignore
-new file mode 100644
-index 000000000000..835b2dcd8678
---- /dev/null
-+++ b/tools/testing/selftests/openat/.gitignore
-@@ -0,0 +1,4 @@
-+openat
-+subdir
-+topfile
-+symlinkdown
-\ No newline at end of file
-diff --git a/tools/testing/selftests/openat/Makefile b/tools/testing/selftests/openat/Makefile
-new file mode 100644
-index 000000000000..84cd06e7ee82
---- /dev/null
-+++ b/tools/testing/selftests/openat/Makefile
-@@ -0,0 +1,28 @@
-+CC = $(CROSS_COMPILE)gcc
-+CFLAGS = -Wall
-+BINARIES = openat
-+DEPS = subdir topfile symlinkdown subdir/bottomfile subdir/symlinkup subdir/symlinkout subdir/symlinkin
-+all: $(BINARIES) $(DEPS)
-+
-+subdir:
-+	mkdir -p subdir
-+topfile:
-+	echo 0123456789 > $@
-+subdir/bottomfile: | subdir
-+	echo 0123456789 > $@
-+subdir/symlinkup: | subdir
-+	ln -s ../topfile $@
-+subdir/symlinkout: | subdir
-+	ln -s /etc/passwd $@
-+subdir/symlinkin: | subdir
-+	ln -s bottomfile $@
-+symlinkdown:
-+	ln -s subdir/bottomfile $@
-+%: %.c
-+	$(CC) $(CFLAGS) -o $@ $^
-+
-+run_tests: all
-+	./openat
-+
-+clean:
-+	rm -rf $(BINARIES) $(DEPS)
-diff --git a/tools/testing/selftests/openat/openat.c b/tools/testing/selftests/openat/openat.c
-new file mode 100644
-index 000000000000..0c030cbd10dc
---- /dev/null
-+++ b/tools/testing/selftests/openat/openat.c
-@@ -0,0 +1,180 @@
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <unistd.h>
-+#include <string.h>
-+#include <errno.h>
-+
-+#include <linux/fcntl.h>
-+
-+/* Bypass glibc */
-+static int openat_(int dirfd, const char *pathname, int flags)
-+{
-+	return syscall(__NR_openat, dirfd, pathname, flags);
-+}
-+
-+static int openat_or_die(int dfd, const char *path, int flags)
-+{
-+	int fd = openat_(dfd, path, flags);
-+
-+	if (fd < 0) {
-+		printf("Failed to openat(%d, '%s'); "
-+			"check prerequisites are available\n", dfd, path);
-+		exit(1);
-+	}
-+	return fd;
-+}
-+
-+static int check_openat(int dfd, const char *path, int flags)
-+{
-+	int rc;
-+	int fd;
-+	char buffer[4];
-+
-+	errno = 0;
-+	printf("Check success of openat(%d, '%s', %x)... ",
-+	       dfd, path?:"(null)", flags);
-+	fd = openat_(dfd, path, flags);
-+	if (fd < 0) {
-+		printf("[FAIL]: openat() failed, rc=%d errno=%d (%s)\n",
-+			fd, errno, strerror(errno));
-+		return 1;
-+	}
-+	errno = 0;
-+	rc = read(fd, buffer, sizeof(buffer));
-+	if (rc < 0) {
-+		printf("[FAIL]: read() failed, rc=%d errno=%d (%s)\n",
-+			rc, errno, strerror(errno));
-+		return 1;
-+	}
-+	close(fd);
-+	printf("[OK]\n");
-+	return 0;
-+}
-+
-+#define check_openat_fail(dfd, path, flags, errno)	\
-+	_check_openat_fail(dfd, path, flags, errno, #errno)
-+static int _check_openat_fail(int dfd, const char *path, int flags,
-+			      int expected_errno, const char *errno_str)
-+{
-+	int rc;
-+
-+	errno = 0;
-+	printf("Check failure of openat(%d, '%s', %x) with %s... ",
-+		dfd, path?:"(null)", flags, errno_str);
-+	rc = openat_(dfd, path, flags);
-+	if (rc > 0) {
-+		printf("[FAIL] (unexpected success from openat(2))\n");
-+		close(rc);
-+		return 1;
-+	}
-+	if (errno != expected_errno) {
-+		printf("[FAIL] (expected errno %d (%s) not %d (%s)\n",
-+			expected_errno, strerror(expected_errno),
-+			errno, strerror(errno));
-+		return 1;
-+	}
-+	printf("[OK]\n");
-+	return 0;
-+}
-+
-+int check_proc(void)
-+{
-+	int proc_dfd = openat_(AT_FDCWD, "/proc/self", O_RDONLY);
-+	int fail = 0;
-+
-+	if (proc_dfd < 0) {
-+		printf("'/proc/self' unavailable (errno=%d '%s'), skipping\n",
-+			errno, strerror(errno));
-+		return 1;
-+	}
-+	fail |= check_openat(proc_dfd, "root/etc/passwd", O_RDONLY);
-+#ifdef O_BENEATH
-+	fail |= check_openat_fail(proc_dfd, "root/etc/passwd",
-+				  O_RDONLY|O_BENEATH, EPERM);
-+#endif
-+	return fail;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	int fail = 0;
-+	int dot_dfd = openat_or_die(AT_FDCWD, ".", O_RDONLY);
-+	int subdir_dfd = openat_or_die(AT_FDCWD, "subdir", O_RDONLY);
-+	int file_fd = openat_or_die(AT_FDCWD, "topfile", O_RDONLY);
-+
-+	/* Sanity check normal behavior */
-+	fail |= check_openat(AT_FDCWD, "topfile", O_RDONLY);
-+	fail |= check_openat(AT_FDCWD, "subdir/bottomfile", O_RDONLY);
-+
-+	fail |= check_openat(dot_dfd, "topfile", O_RDONLY);
-+	fail |= check_openat(dot_dfd, "subdir/bottomfile", O_RDONLY);
-+	fail |= check_openat(dot_dfd, "subdir/../topfile", O_RDONLY);
-+
-+	fail |= check_openat(subdir_dfd, "../topfile", O_RDONLY);
-+	fail |= check_openat(subdir_dfd, "bottomfile", O_RDONLY);
-+	fail |= check_openat(subdir_dfd, "../subdir/bottomfile", O_RDONLY);
-+	fail |= check_openat(subdir_dfd, "symlinkup", O_RDONLY);
-+	fail |= check_openat(subdir_dfd, "symlinkout", O_RDONLY);
-+
-+	fail |= check_openat(AT_FDCWD, "/etc/passwd", O_RDONLY);
-+	fail |= check_openat(dot_dfd, "/etc/passwd", O_RDONLY);
-+	fail |= check_openat(subdir_dfd, "/etc/passwd", O_RDONLY);
-+
-+	fail |= check_openat_fail(AT_FDCWD, "bogus", O_RDONLY, ENOENT);
-+	fail |= check_openat_fail(dot_dfd, "bogus", O_RDONLY, ENOENT);
-+	fail |= check_openat_fail(999, "bogus", O_RDONLY, EBADF);
-+	fail |= check_openat_fail(file_fd, "bogus", O_RDONLY, ENOTDIR);
-+
-+#ifdef O_BENEATH
-+	/* Test out O_BENEATH */
-+	fail |= check_openat(AT_FDCWD, "topfile", O_RDONLY|O_BENEATH);
-+	fail |= check_openat(AT_FDCWD, "subdir/bottomfile",
-+			     O_RDONLY|O_BENEATH);
-+
-+	fail |= check_openat(dot_dfd, "topfile", O_RDONLY|O_BENEATH);
-+	fail |= check_openat(dot_dfd, "subdir/bottomfile",
-+			     O_RDONLY|O_BENEATH);
-+	fail |= check_openat(subdir_dfd, "bottomfile", O_RDONLY|O_BENEATH);
-+
-+	/* Symlinks without .. or leading / are OK */
-+	fail |= check_openat(dot_dfd, "symlinkdown", O_RDONLY|O_BENEATH);
-+	fail |= check_openat(dot_dfd, "subdir/symlinkin", O_RDONLY|O_BENEATH);
-+	fail |= check_openat(subdir_dfd, "symlinkin", O_RDONLY|O_BENEATH);
-+	/* ... unless of course we specify O_NOFOLLOW */
-+	fail |= check_openat_fail(dot_dfd, "symlinkdown",
-+				  O_RDONLY|O_BENEATH|O_NOFOLLOW, ELOOP);
-+	fail |= check_openat_fail(dot_dfd, "subdir/symlinkin",
-+				  O_RDONLY|O_BENEATH|O_NOFOLLOW, ELOOP);
-+	fail |= check_openat_fail(subdir_dfd, "symlinkin",
-+				  O_RDONLY|O_BENEATH|O_NOFOLLOW, ELOOP);
-+
-+	/* Can't open paths with ".." in them */
-+	fail |= check_openat_fail(dot_dfd, "subdir/../topfile",
-+				O_RDONLY|O_BENEATH, EPERM);
-+	fail |= check_openat_fail(subdir_dfd, "../topfile",
-+				  O_RDONLY|O_BENEATH, EPERM);
-+	fail |= check_openat_fail(subdir_dfd, "../subdir/bottomfile",
-+				O_RDONLY|O_BENEATH, EPERM);
-+
-+	/* Can't open paths starting with "/" */
-+	fail |= check_openat_fail(AT_FDCWD, "/etc/passwd",
-+				  O_RDONLY|O_BENEATH, EPERM);
-+	fail |= check_openat_fail(dot_dfd, "/etc/passwd",
-+				  O_RDONLY|O_BENEATH, EPERM);
-+	fail |= check_openat_fail(subdir_dfd, "/etc/passwd",
-+				  O_RDONLY|O_BENEATH, EPERM);
-+	/* Can't sneak around constraints with symlinks */
-+	fail |= check_openat_fail(subdir_dfd, "symlinkup",
-+				  O_RDONLY|O_BENEATH, EPERM);
-+	fail |= check_openat_fail(subdir_dfd, "symlinkout",
-+				  O_RDONLY|O_BENEATH, EPERM);
-+#else
-+	printf("Skipping O_BENEATH tests due to missing #define\n");
-+#endif
-+	fail |= check_proc();
-+
-+	return fail ? -1 : 0;
-+}
---
-2.1.0.rc2.206.gedb03e5
+It also deprecates the v4l2_mbus_pixelcode enum and the v4l2-mediabus.h
+header. Kernel users can't use the v4l2_mbus_pixelcode enum anymore and new
+user-space users are encouraged to move to the media_bus_format enum
+and include v4l2-mbus.h.
 
+Hans, I'm not sure this is exactly what you had in mind for
+v4l2_mbus_pixelcode deprecation. If you agree with this approach, and think
+it is worth it, I can reorder the series and squash the last 4 patches into
+previous ones (patches 4, 9, 6 and 8)
+
+Best Regards,
+
+Boris
+
+Boris Brezillon (15):
+  [media] Move mediabus format definition to a more standard place
+  [media] v4l: Update subdev-formats doc with new MEDIA_BUS_FMT values
+  [media] Make use of the new media_bus_format definitions
+  [media] i2c: Make use of media_bus_format enum
+  [media] pci: Make use of media_bus_format enum
+  [media] platform: Make use of media_bus_format enum
+  [media] usb: Make use of media_bus_format enum
+  staging: media: Make use of media_bus_format enum
+  gpu: ipu-v3: Make use of media_bus_format enum
+  [media] v4l: Forbid usage of V4L2_MBUS_FMT definitions inside the
+    kernel
+  [media] Deprecate v4l2_mbus_pixelcode
+  [media] i2c: Replace v4l2-mediabus.h inclusion with v4l2-mbus.h
+  gpu: ipu-v3: Replace v4l2-mediabus.h inclusion with v4l2-mbus.h
+  [media] platform: Replace v4l2-mediabus.h inclusion with v4l2-mbus.h
+  staging: media: Replace v4l2-mediabus.h inclusion with v4l2-mbus.h
+
+ Documentation/DocBook/media/Makefile               |   4 +-
+ Documentation/DocBook/media/v4l/subdev-formats.xml | 308 ++++++++++-----------
+ Documentation/video4linux/soc-camera.txt           |   2 +-
+ arch/arm/mach-davinci/board-dm355-evm.c            |   2 +-
+ arch/arm/mach-davinci/board-dm365-evm.c            |   4 +-
+ arch/arm/mach-davinci/dm355.c                      |   6 +-
+ arch/arm/mach-davinci/dm365.c                      |   6 +-
+ arch/arm/mach-shmobile/board-mackerel.c            |   2 +-
+ arch/sh/boards/mach-ap325rxa/setup.c               |   2 +-
+ drivers/gpu/ipu-v3/ipu-csi.c                       |  68 ++---
+ drivers/media/i2c/adv7170.c                        |  16 +-
+ drivers/media/i2c/adv7175.c                        |  16 +-
+ drivers/media/i2c/adv7180.c                        |   6 +-
+ drivers/media/i2c/adv7183.c                        |   6 +-
+ drivers/media/i2c/adv7604.c                        |  72 ++---
+ drivers/media/i2c/adv7842.c                        |   6 +-
+ drivers/media/i2c/ak881x.c                         |   8 +-
+ drivers/media/i2c/cx25840/cx25840-core.c           |   2 +-
+ drivers/media/i2c/m5mols/m5mols_core.c             |   6 +-
+ drivers/media/i2c/ml86v7667.c                      |   6 +-
+ drivers/media/i2c/mt9m032.c                        |   8 +-
+ drivers/media/i2c/mt9p031.c                        |   8 +-
+ drivers/media/i2c/mt9t001.c                        |  10 +-
+ drivers/media/i2c/mt9v011.c                        |   6 +-
+ drivers/media/i2c/mt9v032.c                        |  14 +-
+ drivers/media/i2c/noon010pc30.c                    |  12 +-
+ drivers/media/i2c/ov7670.c                         |  16 +-
+ drivers/media/i2c/ov9650.c                         |  10 +-
+ drivers/media/i2c/s5c73m3/s5c73m3.h                |   6 +-
+ drivers/media/i2c/s5k4ecgx.c                       |   4 +-
+ drivers/media/i2c/s5k5baf.c                        |  14 +-
+ drivers/media/i2c/s5k6a3.c                         |   2 +-
+ drivers/media/i2c/s5k6aa.c                         |   8 +-
+ drivers/media/i2c/saa6752hs.c                      |   6 +-
+ drivers/media/i2c/saa7115.c                        |   2 +-
+ drivers/media/i2c/saa717x.c                        |   2 +-
+ drivers/media/i2c/smiapp/smiapp-core.c             |  34 +--
+ drivers/media/i2c/soc_camera/imx074.c              |  10 +-
+ drivers/media/i2c/soc_camera/mt9m001.c             |  14 +-
+ drivers/media/i2c/soc_camera/mt9m111.c             |  72 ++---
+ drivers/media/i2c/soc_camera/mt9t031.c             |  12 +-
+ drivers/media/i2c/soc_camera/mt9t112.c             |  24 +-
+ drivers/media/i2c/soc_camera/mt9v022.c             |  26 +-
+ drivers/media/i2c/soc_camera/ov2640.c              |  56 ++--
+ drivers/media/i2c/soc_camera/ov5642.c              |  10 +-
+ drivers/media/i2c/soc_camera/ov6650.c              |  60 ++--
+ drivers/media/i2c/soc_camera/ov772x.c              |  22 +-
+ drivers/media/i2c/soc_camera/ov9640.c              |  42 +--
+ drivers/media/i2c/soc_camera/ov9740.c              |  14 +-
+ drivers/media/i2c/soc_camera/rj54n1cb0c.c          |  56 ++--
+ drivers/media/i2c/soc_camera/tw9910.c              |  12 +-
+ drivers/media/i2c/sr030pc30.c                      |  14 +-
+ drivers/media/i2c/tvp514x.c                        |  14 +-
+ drivers/media/i2c/tvp5150.c                        |   6 +-
+ drivers/media/i2c/tvp7002.c                        |  10 +-
+ drivers/media/i2c/vs6624.c                         |  18 +-
+ drivers/media/pci/cx18/cx18-av-core.c              |   2 +-
+ drivers/media/pci/cx18/cx18-controls.c             |   2 +-
+ drivers/media/pci/cx18/cx18-ioctl.c                |   2 +-
+ drivers/media/pci/cx23885/cx23885-video.c          |   2 +-
+ drivers/media/pci/ivtv/ivtv-controls.c             |   2 +-
+ drivers/media/pci/ivtv/ivtv-ioctl.c                |   2 +-
+ drivers/media/pci/saa7134/saa7134-empress.c        |   4 +-
+ drivers/media/platform/blackfin/bfin_capture.c     |  14 +-
+ drivers/media/platform/davinci/vpbe.c              |   2 +-
+ drivers/media/platform/davinci/vpfe_capture.c      |   4 +-
+ drivers/media/platform/exynos-gsc/gsc-core.c       |   8 +-
+ drivers/media/platform/exynos-gsc/gsc-core.h       |   2 +-
+ drivers/media/platform/exynos4-is/fimc-capture.c   |   2 +-
+ drivers/media/platform/exynos4-is/fimc-core.c      |  14 +-
+ drivers/media/platform/exynos4-is/fimc-core.h      |   4 +-
+ drivers/media/platform/exynos4-is/fimc-isp.c       |  16 +-
+ drivers/media/platform/exynos4-is/fimc-lite-reg.c  |  26 +-
+ drivers/media/platform/exynos4-is/fimc-lite.c      |  14 +-
+ drivers/media/platform/exynos4-is/fimc-reg.c       |  14 +-
+ drivers/media/platform/exynos4-is/mipi-csis.c      |  14 +-
+ drivers/media/platform/marvell-ccic/mcam-core.c    |  22 +-
+ drivers/media/platform/marvell-ccic/mcam-core.h    |   2 +-
+ drivers/media/platform/omap3isp/ispccdc.c          | 112 ++++----
+ drivers/media/platform/omap3isp/ispccp2.c          |  18 +-
+ drivers/media/platform/omap3isp/ispcsi2.c          |  44 +--
+ drivers/media/platform/omap3isp/isppreview.c       |  58 ++--
+ drivers/media/platform/omap3isp/ispresizer.c       |  18 +-
+ drivers/media/platform/omap3isp/ispvideo.c         |  94 +++----
+ drivers/media/platform/omap3isp/ispvideo.h         |  12 +-
+ drivers/media/platform/s3c-camif/camif-capture.c   |  10 +-
+ drivers/media/platform/s3c-camif/camif-regs.c      |   8 +-
+ drivers/media/platform/s5p-tv/hdmi_drv.c           |   2 +-
+ drivers/media/platform/s5p-tv/sdo_drv.c            |   2 +-
+ drivers/media/platform/sh_vou.c                    |   8 +-
+ drivers/media/platform/soc_camera/atmel-isi.c      |  22 +-
+ drivers/media/platform/soc_camera/mx2_camera.c     |  24 +-
+ drivers/media/platform/soc_camera/mx3_camera.c     |   6 +-
+ drivers/media/platform/soc_camera/omap1_camera.c   |  36 +--
+ drivers/media/platform/soc_camera/pxa_camera.c     |  16 +-
+ drivers/media/platform/soc_camera/rcar_vin.c       |  14 +-
+ .../platform/soc_camera/sh_mobile_ceu_camera.c     |  20 +-
+ drivers/media/platform/soc_camera/sh_mobile_csi2.c |  38 +--
+ drivers/media/platform/soc_camera/soc_camera.c     |   2 +-
+ .../platform/soc_camera/soc_camera_platform.c      |   2 +-
+ drivers/media/platform/soc_camera/soc_mediabus.c   |  78 +++---
+ drivers/media/platform/via-camera.c                |   8 +-
+ drivers/media/platform/vsp1/vsp1_bru.c             |  14 +-
+ drivers/media/platform/vsp1/vsp1_hsit.c            |  12 +-
+ drivers/media/platform/vsp1/vsp1_lif.c             |  10 +-
+ drivers/media/platform/vsp1/vsp1_lut.c             |  14 +-
+ drivers/media/platform/vsp1/vsp1_rwpf.c            |  10 +-
+ drivers/media/platform/vsp1/vsp1_sru.c             |  12 +-
+ drivers/media/platform/vsp1/vsp1_uds.c             |  10 +-
+ drivers/media/platform/vsp1/vsp1_video.c           |  44 +--
+ drivers/media/usb/cx231xx/cx231xx-417.c            |   2 +-
+ drivers/media/usb/cx231xx/cx231xx-video.c          |   4 +-
+ drivers/media/usb/em28xx/em28xx-camera.c           |   2 +-
+ drivers/media/usb/go7007/go7007-v4l2.c             |   2 +-
+ drivers/media/usb/pvrusb2/pvrusb2-hdw.c            |   2 +-
+ drivers/staging/media/davinci_vpfe/dm365_ipipe.c   |  18 +-
+ .../staging/media/davinci_vpfe/dm365_ipipe_hw.c    |  26 +-
+ drivers/staging/media/davinci_vpfe/dm365_ipipeif.c | 100 +++----
+ drivers/staging/media/davinci_vpfe/dm365_isif.c    |  90 +++---
+ drivers/staging/media/davinci_vpfe/dm365_resizer.c |  96 +++----
+ .../staging/media/davinci_vpfe/vpfe_mc_capture.c   |  18 +-
+ drivers/staging/media/omap4iss/iss_csi2.c          |  64 ++---
+ drivers/staging/media/omap4iss/iss_ipipe.c         |  16 +-
+ drivers/staging/media/omap4iss/iss_ipipeif.c       |  28 +-
+ drivers/staging/media/omap4iss/iss_resizer.c       |  26 +-
+ drivers/staging/media/omap4iss/iss_video.c         |  78 +++---
+ drivers/staging/media/omap4iss/iss_video.h         |  12 +-
+ include/media/davinci/vpbe.h                       |   2 +-
+ include/media/davinci/vpbe_venc.h                  |   4 +-
+ include/media/exynos-fimc.h                        |   2 +-
+ include/media/soc_camera.h                         |   2 +-
+ include/media/soc_mediabus.h                       |   8 +-
+ include/media/v4l2-mediabus.h                      |   4 +-
+ include/media/v4l2-subdev.h                        |   2 +-
+ include/uapi/linux/Kbuild                          |   2 +
+ include/uapi/linux/media-bus-format.h              | 126 +++++++++
+ include/uapi/linux/v4l2-mbus.h                     |  35 +++
+ include/uapi/linux/v4l2-mediabus.h                 | 208 ++++++--------
+ include/uapi/linux/v4l2-subdev.h                   |   8 +-
+ 139 files changed, 1632 insertions(+), 1509 deletions(-)
+ create mode 100644 include/uapi/linux/media-bus-format.h
+ create mode 100644 include/uapi/linux/v4l2-mbus.h
+
+-- 
+1.9.1
