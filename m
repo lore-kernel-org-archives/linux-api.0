@@ -1,57 +1,91 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH v3 0/3] perf: User/kernel time correlation and event
- generation
-Date: Tue, 4 Nov 2014 11:49:04 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1411041111010.5308@nanos>
-References: <1415060918-19954-1-git-send-email-pawel.moll@arm.com> <CALCETrXGoevmD_avz5sQfbbD624vpLW5=-8ovzTPT_5wzNFnVA@mail.gmail.com> <CALAqxLXfy5P0kg-W7hL+Jf1iYv758+-2cTdZwsY8kAns1nvEmg@mail.gmail.com> <3430954.VNaFmamXmP@wuerfel>
- <20141104082728.GB4253@localhost.localdomain>
+From: Hans Verkuil <hansverk@cisco.com>
+Subject: Re: [PATCH 01/15] [media] Move mediabus format definition to a more
+ standard place
+Date: Tue, 04 Nov 2014 12:09:59 +0100
+Message-ID: <5458B407.6050701@cisco.com>
+References: <1415094910-15899-1-git-send-email-boris.brezillon@free-electrons.com>	<1415094910-15899-2-git-send-email-boris.brezillon@free-electrons.com>	<5458A878.3010809@cisco.com>
+ <20141104114503.309cb54f@bbrezillon>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141104082728.GB4253-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pawel Moll <mail-g3xvULXeDMYS+FvcfC7Uqw@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <20141104114503.309cb54f@bbrezillon>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: devel@driverdev.osuosl.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Mauro Carvalho Chehab <m.chehab@samsung.com>, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 4 Nov 2014, Richard Cochran wrote:
+Well, I gave two alternatives :-)
 
-> On Tue, Nov 04, 2014 at 09:01:31AM +0100, Arnd Bergmann wrote:
-> > On Monday 03 November 2014 17:11:53 John Stultz wrote:
-> > > I've got some thoughts on what a possible interface that wouldn't be
-> > > awful could look like, but I'm still hesitant because I don't really
-> > > know if exposing this sort of data is actually a good idea long term.
-> >  
-> > I was also thinking (while working on an unrelated patch) we could use
-> > a system call like
-> > 
-> > int clock_getoffset(clockid_t clkid, struct timespec *offs);
+Both are fine as far as I am concerned, but it would be nice to hear
+what others think.
 
-We might make *offs a timespec64 or u64 :)
+Regards,
 
-> > that returns the current offset between CLOCK_REALTIME and the
-> > requested timebase. It is of course racy, but so is every use
-> > of CLOCK_REALTIME. We could also use a reference other than
-> > CLOCK_REALTIME that might be more stable, but passing two arbitrary
-> > clocks as input would make this much more complex to implement.
+	Hans
+
+On 11/04/14 11:45, Boris Brezillon wrote:
+> Hi Hans,
 > 
-> No, it is really easy to implement. Just drop the idea of "atomic". It
-> really is not necessary or even possible.
-
-If the two clocks have the same underlying hardware then you get an
-'atomic' snapshot of their relationship. That's true for any
-combination of CLOCK_REALTIME, CLOCK_MONOTONIC, CLOCK_BOOTTIME and
-CLOCK_TAI. So we can and should expose these 'atomic' snapshots.
-
-There is another reason why we want to support the notion of 'atomic'
-snapshots: There exists hardware which gives you 'atomic' samples of
-two different hardware clocks and there is more of that coming soon.
-
-If that's not the case then you need two seperate readouts which of
-course cannot provide any guarantee, but I agree that we could do
-something like what you do in the PTP_SYS_OFFSET ioctl and let user
-space analyze the samples. But that should be optional.
-
-Thanks,
-
-	tglx
+> On Tue, 04 Nov 2014 11:20:40 +0100
+> Hans Verkuil <hansverk@cisco.com> wrote:
+> 
+>> Hi Boris,
+>>
+>> On 11/04/14 10:54, Boris Brezillon wrote:
+>>> Rename mediabus formats and move the enum into a separate header file so
+>>> that it can be used by DRM/KMS subsystem without any reference to the V4L2
+>>> subsystem.
+>>>
+>>> Old V4L2_MBUS_FMT_ definitions are now referencing MEDIA_BUS_FMT_ value.
+>>
+>> I missed earlier that v4l2-mediabus.h contained a struct as well, so it can't be
+>> deprecated and neither can a #warning be added.
+>>
+>> The best approach, I think, is to use a macro in media-bus-format.h
+>> that will either define just the MEDIA_BUS value when compiled in the kernel, or
+>> define both MEDIA_BUS and V4L2_MBUS values when compiled for userspace.
+>>
+>> E.g. something like this:
+>>
+>> #ifdef __KERNEL__
+>> #define MEDIA_BUS_FMT_ENTRY(name, val) MEDIA_BUS_FMT_ # name = val
+>> #else
+>> /* Keep V4L2_MBUS_FMT for backwards compatibility */
+>> #define MEDIA_BUS_FMT_ENTRY(name, val) \
+>> 	MEDIA_BUS_FMT_ # name = val, \
+>> 	V4L2_MBUS_FMT_ # name = val
+>> #endif
+> 
+> Okay, but this means we keep adding V4L2_MBUS_FMT_ definitions even for
+> new formats (which definitely doesn't encourage people to move on).
+> Moreover, we add a V4L2 prefix in what was supposed to be a subsystem
+> neutral header.
+> 
+> Anyway, these are just nitpicks, and if you prefer this approach
+> I'll rework my series :-).
+> 
+>>
+>> An alternative approach is to have v4l2-mediabus.h include media-bus-format.h,
+>> put #ifndef __KERNEL__ around the enum v4l2_mbus_pixelcode and add a big comment
+>> there that applications should use the defines from media-bus-format.h and that
+>> this enum is frozen (i.e. new values are only added to media-bus-format.h).
+>>
+>> But I think I like the macro idea best.
+> 
+> As you wish, my only intent is to use those bus format definitions in a
+> DRM driver :-).
+> 
+> Thanks,
+> 
+> Boris
+> 
+> 
