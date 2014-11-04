@@ -1,46 +1,83 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH net-next 3/7] bpf: add array type of eBPF maps
-Date: Tue, 4 Nov 2014 15:14:55 -0800
-Message-ID: <CAMEtUuzZT8nTwA7mK3zDgmU=VSVe7UdTtj1h7nNdxc8wbWKruA@mail.gmail.com>
-References: <1415069656-14138-1-git-send-email-ast@plumgrid.com>
-	<1415069656-14138-4-git-send-email-ast@plumgrid.com>
-	<5458A349.5020401@redhat.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH 00/20] kselftest install target feature
+Date: Tue, 04 Nov 2014 16:45:18 -0700
+Message-ID: <5459650E.6070201@osg.samsung.com>
+References: <cover.1415117102.git.shuahkh@osg.samsung.com> <CAGXu5jK9-TpOF4SFX2bkU2UJMXk-3W+-_we0BTxu4Ga+7bYXSQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5458A349.5020401@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <dborkman@redhat.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5jK9-TpOF4SFX2bkU2UJMXk-3W+-_we0BTxu4Ga+7bYXSQ@mail.gmail.com>
+Sender: linux-kbuild-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Greg KH <gregkh@linuxfoundation.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Marek <mmarek@suse.cz>, "David S. Miller" <davem@davemloft.net>, tranmanphong@gmail.com, David Herrmann <dh.herrmann@gmail.com>, Hugh Dickins <hughd@google.com>, bobby.prani@gmail.com, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, linux-kbuild <linux-kbuild@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 4, 2014 at 1:58 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
->> +
->> +       memcpy(array->value + array->elem_size * index, value,
->> array->elem_size);
->
-> What would protect this from concurrent updates?
+On 11/04/2014 12:22 PM, Kees Cook wrote:
+> On Tue, Nov 4, 2014 at 9:10 AM, Shuah Khan <shuahkh@osg.samsung.com> wrote:
+>> This patch series adds a new kselftest_install make target
+>> to enable selftest install. When make kselftest_install is
+>> run, selftests are installed on the system. A new install
+>> target is added to selftests Makefile which will install
+>> targets for the tests that are specified in INSTALL_TARGETS.
+>> During install, a script is generated to run tests that are
+>> installed. This script will be installed in the selftest install
+>> directory. Individual test Makefiles are changed to add to the
+>> script. This will allow new tests to add install and run test
+>> commands to the generated kselftest script.
+> 
+> I'm all for making the self tests more available, but I don't think
+> this is the right approach. My primary objection is that it creates a
+> second way to run tests, and that means any changes and additions need
+> to be updated in two places. I'd much rather just maintain the single
+> "make" targets instead. Having "make" available on the target device
+> doesn't seem too bad to me. Is there a reason that doesn't work for
+> your situation?
 
-nothing.
-that's what I meant in commit log:
- - map_update_elem() replaces elements in an non-atomic way
-   (for atomic updates hashtable type should be used instead)
+Kees,
 
-The array map is like C array of structures.
-Nothing protects concurrent access.
-It's used in the cases where accuracy is not needed
-or when there is no concurrent access.
-To compute a histogram of events in tracing the array
-of integers is used. Every integer is a counter. Program
-increments it (may be without using xadd) and
-user space periodically reads it back.
-map_update_elem() is called by userspace once
-to initialize it if zero-init is not enough.
-Programs do lookup() and modify the values.
-For array type update() method is used rarely,
-delete() is never used and get_next() is needed
-for completeness to browse maps through
-common map API.
-I'm guessing you're asking, because it may feel
-that adding a lock() will help to make it more useful? ;)
-It's not, since programs cannot take a lock().
+My primary objective is to provide a way to install selftests for a
+specific kernel release. This will allow developers to run tests for
+a specific release and look for regressions. Adding an install target
+will also help support local execution of tests in a virtualized
+environments. In some cases such as qemu, it is not practical to
+expect the target to have support for "make". Once tests are installed
+to be run outside the git environment, we need a master script that
+can run the tests. Hence the need for a master script that can run
+tests.
+
+We have the ability to run all tests via make kselftest target or
+run a specific test using the individual test's run_tests target.
+Both of above are necessary to support running tests from the tree.
+Embedding run_tests logic in the makefiles doesn't work very well
+in the long run.
+
+We also need a way to run them outside tree. I agree with you that
+the way I added the script generation, duplicates the code in individual
+run_tests targets and that changes/updates need to be made in both
+places.
+
+Would you be ok with the approach if I fixed the duplicating
+problem? I can address the duplication concern easily.
+
+> 
+> I would, however, like to see some better standardization of the test
+> "framework" that we've got in there already. (For example, some
+> failures fail the "make", some don't, there are various reporting
+> methods for success/failure depending on the test, etc.)
+
+This is being addressed and I have the framework in linux-kselftest
+git next branch at the moment. I do think the above work is part of
+addressing the larger framework issues such as being able to run tests
+on a target system that might not have "make" support and makes it
+easier to use.
+
+thanks,
+-- Shuah
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
