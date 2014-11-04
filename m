@@ -1,78 +1,89 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCHv2 7/7] cgroup: mount cgroupns-root when inside non-init
-	cgroupns
-Date: Mon, 3 Nov 2014 16:17:11 -0800
-Message-ID: <CALCETrXeG2t=fW9HbkirDZudw9pbDwoqDq5ygJBkBMbqqoDAvw@mail.gmail.com>
-References: <1414783141-6947-1-git-send-email-adityakali@google.com>
-	<1414783141-6947-8-git-send-email-adityakali@google.com>
-	<CALCETrXTaZ3SJ_t-gnbc93BVZXg-912NqO78kFd0Tpi-5-dZoQ@mail.gmail.com>
-	<CAGr1F2FuPQxLraYv7PstJ9c8H-XQsgawaAtj4AS77B+_0k2o+A@mail.gmail.com>
-	<CALCETrW64-6xC6psP-8k0H-1GfVnWBTeEBNSrE_sH+-DFtuZQQ@mail.gmail.com>
-	<CAGr1F2GX45gC-V7kEzVjp-EiYfdPDVBRs+99nASpgFVAdYX+1w@mail.gmail.com>
-	<CALCETrUB_xx5zno26k5UjAFt77nZTpgyndD4AuBSZxiZBNjXSw@mail.gmail.com>
-	<CAGr1F2EV4p_nJP_oMe3N8pBPedAZHbdB=XCMPjSEZTC9jmZoAg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CAGr1F2EV4p_nJP_oMe3N8pBPedAZHbdB=XCMPjSEZTC9jmZoAg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Subject: [PATCH v3 0/3] perf: User/kernel time correlation and event generation
+Date: Tue,  4 Nov 2014 00:28:35 +0000
+Message-ID: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel Moll <mail-g3xvULXeDMYS+FvcfC7Uqw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 3, 2014 at 4:12 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> On Mon, Nov 3, 2014 at 3:48 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->> On Mon, Nov 3, 2014 at 3:23 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->>> On Mon, Nov 3, 2014 at 3:15 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>>> On Mon, Nov 3, 2014 at 3:12 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->>>>> On Fri, Oct 31, 2014 at 5:07 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>>>>> On Fri, Oct 31, 2014 at 12:19 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->>>>>>>         if (opts->flags & CGRP_ROOT_SANE_BEHAVIOR) {
->>>>>>>                 pr_warn("sane_behavior: this is still under development and its behaviors will change, proceed at your own risk\n");
->>>>>>> -               if (nr_opts != 1) {
->>>>>>> +               if (nr_opts > 1) {
->>>>>>>                         pr_err("sane_behavior: no other mount options allowed\n");
->>>>>>>                         return -EINVAL;
->>>>>>
->>>>>> This looks wrong.  But, if you make the change above, then it'll be right.
->>>>>>
->>>>>
->>>>> It would have been nice if simple 'mount -t cgroup cgroup <mnt>' from
->>>>> cgroupns does the right thing automatically.
->>>>>
->>>>
->>>> This is a debatable point, but it's not what I meant.  Won't your code
->>>> let 'mount -t cgroup -o one_evil_flag cgroup mountpoint' through?
->>>>
->>>
->>> I don't think so. This check "if (nr_opts > 1)" is nested under "if
->>> (opts->flags & CGRP_ROOT_SANE_BEHAVIOR)". So we know that there is
->>> atleast 1 option ('__DEVEL__sane_behavior') present (implicit or not).
->>> Addition of 'one_evil_flag' will make nr_opts = 2 and result in EINVAL
->>> here.
->>
->> But the implicit __DEVEL__sane_behavior doesn't increment nr_opts, right?
->>
->
-> Yes. Hence this change makes sure that we don't return EINVAL when
-> nr_opts == 0 or nr_opts == 1 :)
-> That way, both of the following are equivalent when inside non-init cgroupns:
->
-> (1) $ mount -t cgroup -o __DEVEL__sane_behavior cgroup mountpoint
-> (2) $ mount -t cgroup cgroup mountpoint
->
-> Any other mount option will trigger the error here.
+From: Pawel Moll <mail-g3xvULXeDMYS+FvcfC7Uqw@public.gmane.org>
 
-I still don't get it.  Can you walk me through why mount -o
-some_other_option -t cgroup cgroup mountpoint causes -EINVAL?
+Hello again,
 
---Andy
+Back to the subject, this time with a slightly different angle...
+
+I've organised a session on the subject during the tracing
+minisummit at LPC 2014 in Dusseldorf. Notes taken from the discussion
+taken by Steven Rostedt (thanks Steve!)
+
+http://www.linuxplumbersconf.org/2014/wp-content/uploads/2014/10/LPC2014_Tracing.txt
+
+The following three patches address three main topics. They are pretty
+much orthogonal and (subject to small and obvious modifications) could
+be applied independently from each other.
+
+An executive summary of both discussion and the patches:
+
+1. User/kernel perf timestamps correlation
+
+Thomas suggested that, instead of jumping through loops of correlation,
+perf should simply generate monotonic clock timestamps, instead of
+using sched clock. Peter and I pointed out that Ingo didn't like this
+idea as monotonic can be slow, but apparently the cases when it is are
+irrelevant. Thomas offered to fly to Budapest to physically convince
+Ingo - I hope it won't be necessary and he will be able to achieve
+this here, on mailing lists :-)
+
+Setting aside potential performance problems, it would be a really
+great solution, unifying all trace systems (perf, ftrace and LTTng)
+in this respect. I'm more than happy to work on potential improvements
+in the are of monotonic clock if it was to help the cause.
+
+If it is a definite no-go, we still have the third patch, allowing post-
+capture correlation based on synchronisation events.
+
+2. User event generation
+
+Everyone present agreed that it would be a very-nice-to-have feature.
+There was some discussion about implementation details, so I welcome
+feedback and comments regarding my take on the matter.
+
+3. Correlation with external timestamps
+
+This is a new issue, which surfaced recently while I was working on
+hardware trace infrastructure. It can timestamp trace packets, but is
+using yet another, completely different time source to do this.
+
+Thomas suggested solution which gets down to my original proposal for
+sched/monotonic clock correlation - an additional sample type so events
+can be "double stamped" using different clock sources providing
+synchronisation points for later time approximation. I've just extended
+the implementation with configuration value to select the clock source.
+If the first patch (making perf timestamps monotonic) gets accepted,
+there will be no immediate need for this one, but I'd like to gain some
+feedback anyway.
+
+
+That's all for this series. Previous versions:
+
+- RFC: http://www.spinics.net/lists/kernel/msg1824419.html
+- v1: http://thread.gmane.org/gmane.linux.kernel/1790231
+- v2: http://thread.gmane.org/gmane.linux.kernel/1793272
+
+Pawel Moll (3):
+  perf: Use monotonic clock as a source for timestamps
+  perf: Userspace event
+  perf: Sample additional clock value
+
+ include/linux/perf_event.h      |   7 +++
+ include/uapi/linux/perf_event.h |  37 +++++++++++++-
+ include/uapi/linux/prctl.h      |  10 ++++
+ kernel/events/core.c            | 105 +++++++++++++++++++++++++++++++++++++++-
+ kernel/sys.c                    |   5 ++
+ kernel/sysctl.c                 |   7 +++
+ 6 files changed, 168 insertions(+), 3 deletions(-)
+
+-- 
+1.8.3.2
