@@ -1,91 +1,52 @@
-From: Hans Verkuil <hansverk@cisco.com>
-Subject: Re: [PATCH 01/15] [media] Move mediabus format definition to a more
- standard place
-Date: Tue, 04 Nov 2014 12:09:59 +0100
-Message-ID: <5458B407.6050701@cisco.com>
-References: <1415094910-15899-1-git-send-email-boris.brezillon@free-electrons.com>	<1415094910-15899-2-git-send-email-boris.brezillon@free-electrons.com>	<5458A878.3010809@cisco.com>
- <20141104114503.309cb54f@bbrezillon>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv2 0/7] CGroup Namespaces
+Date: Tue, 4 Nov 2014 08:10:30 -0500
+Message-ID: <20141104131030.GA2937@redhat.com>
+References: <adityakali-cgroupns>
+	<1414783141-6947-1-git-send-email-adityakali@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <20141104114503.309cb54f@bbrezillon>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Boris Brezillon <boris.brezillon@free-electrons.com>
-Cc: devel@driverdev.osuosl.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Mauro Carvalho Chehab <m.chehab@samsung.com>, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org, linux-media@vger.kernel.org
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1414783141-6947-1-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Well, I gave two alternatives :-)
+On Fri, Oct 31, 2014 at 12:18:54PM -0700, Aditya Kali wrote:
+[..]
+>  fs/kernfs/dir.c                  | 194 ++++++++++++++++++++++++++++++++++-----
+>  fs/kernfs/mount.c                |  48 ++++++++++
+>  fs/proc/namespaces.c             |   1 +
+>  include/linux/cgroup.h           |  41 ++++++++-
+>  include/linux/cgroup_namespace.h |  36 ++++++++
+>  include/linux/kernfs.h           |   5 +
+>  include/linux/nsproxy.h          |   2 +
+>  include/linux/proc_ns.h          |   4 +
+>  include/uapi/linux/sched.h       |   3 +-
+>  kernel/Makefile                  |   2 +-
+>  kernel/cgroup.c                  | 108 +++++++++++++++++-----
+>  kernel/cgroup_namespace.c        | 148 +++++++++++++++++++++++++++++
+>  kernel/fork.c                    |   2 +-
+>  kernel/nsproxy.c                 |  19 +++-
 
-Both are fine as far as I am concerned, but it would be nice to hear
-what others think.
+Hi Aditya,
 
-Regards,
+Can we provide a documentation file for cgroup namespace behavior. Say,
+Documentation/namespaces/cgroup-namespace.txt.
 
-	Hans
+Namespaces are complicated and it might be a good idea to keep one .txt
+file for each namespace.
 
-On 11/04/14 11:45, Boris Brezillon wrote:
-> Hi Hans,
-> 
-> On Tue, 04 Nov 2014 11:20:40 +0100
-> Hans Verkuil <hansverk@cisco.com> wrote:
-> 
->> Hi Boris,
->>
->> On 11/04/14 10:54, Boris Brezillon wrote:
->>> Rename mediabus formats and move the enum into a separate header file so
->>> that it can be used by DRM/KMS subsystem without any reference to the V4L2
->>> subsystem.
->>>
->>> Old V4L2_MBUS_FMT_ definitions are now referencing MEDIA_BUS_FMT_ value.
->>
->> I missed earlier that v4l2-mediabus.h contained a struct as well, so it can't be
->> deprecated and neither can a #warning be added.
->>
->> The best approach, I think, is to use a macro in media-bus-format.h
->> that will either define just the MEDIA_BUS value when compiled in the kernel, or
->> define both MEDIA_BUS and V4L2_MBUS values when compiled for userspace.
->>
->> E.g. something like this:
->>
->> #ifdef __KERNEL__
->> #define MEDIA_BUS_FMT_ENTRY(name, val) MEDIA_BUS_FMT_ # name = val
->> #else
->> /* Keep V4L2_MBUS_FMT for backwards compatibility */
->> #define MEDIA_BUS_FMT_ENTRY(name, val) \
->> 	MEDIA_BUS_FMT_ # name = val, \
->> 	V4L2_MBUS_FMT_ # name = val
->> #endif
-> 
-> Okay, but this means we keep adding V4L2_MBUS_FMT_ definitions even for
-> new formats (which definitely doesn't encourage people to move on).
-> Moreover, we add a V4L2 prefix in what was supposed to be a subsystem
-> neutral header.
-> 
-> Anyway, these are just nitpicks, and if you prefer this approach
-> I'll rework my series :-).
-> 
->>
->> An alternative approach is to have v4l2-mediabus.h include media-bus-format.h,
->> put #ifndef __KERNEL__ around the enum v4l2_mbus_pixelcode and add a big comment
->> there that applications should use the defines from media-bus-format.h and that
->> this enum is frozen (i.e. new values are only added to media-bus-format.h).
->>
->> But I think I like the macro idea best.
-> 
-> As you wish, my only intent is to use those bus format definitions in a
-> DRM driver :-).
-> 
-> Thanks,
-> 
-> Boris
-> 
-> 
+Thanks
+Vivek
