@@ -1,184 +1,92 @@
-From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Subject: [PATCH v3 3/3] perf: Sample additional clock value
-Date: Tue,  4 Nov 2014 00:28:38 +0000
-Message-ID: <1415060918-19954-4-git-send-email-pawel.moll@arm.com>
-References: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1415060918-19954-1-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel Moll <mail-g3xvULXeDMYS+FvcfC7Uqw@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv2 7/7] cgroup: mount cgroupns-root when inside non-init
+	cgroupns
+Date: Mon, 3 Nov 2014 16:49:41 -0800
+Message-ID: <CAGr1F2Ecd3vCkDHVpFevZDLt+J49MimYh0va9u7JEJVTLHq8uQ@mail.gmail.com>
+References: <1414783141-6947-1-git-send-email-adityakali@google.com>
+	<1414783141-6947-8-git-send-email-adityakali@google.com>
+	<CALCETrXTaZ3SJ_t-gnbc93BVZXg-912NqO78kFd0Tpi-5-dZoQ@mail.gmail.com>
+	<CAGr1F2FuPQxLraYv7PstJ9c8H-XQsgawaAtj4AS77B+_0k2o+A@mail.gmail.com>
+	<CALCETrW64-6xC6psP-8k0H-1GfVnWBTeEBNSrE_sH+-DFtuZQQ@mail.gmail.com>
+	<CAGr1F2GX45gC-V7kEzVjp-EiYfdPDVBRs+99nASpgFVAdYX+1w@mail.gmail.com>
+	<CALCETrUB_xx5zno26k5UjAFt77nZTpgyndD4AuBSZxiZBNjXSw@mail.gmail.com>
+	<CAGr1F2EV4p_nJP_oMe3N8pBPedAZHbdB=XCMPjSEZTC9jmZoAg@mail.gmail.com>
+	<CALCETrXeG2t=fW9HbkirDZudw9pbDwoqDq5ygJBkBMbqqoDAvw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <CALCETrXeG2t=fW9HbkirDZudw9pbDwoqDq5ygJBkBMbqqoDAvw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Pawel Moll <mail-g3xvULXeDMYS+FvcfC7Uqw@public.gmane.org>
+On Mon, Nov 3, 2014 at 4:17 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Mon, Nov 3, 2014 at 4:12 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>> On Mon, Nov 3, 2014 at 3:48 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>> On Mon, Nov 3, 2014 at 3:23 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>>>> On Mon, Nov 3, 2014 at 3:15 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>>> On Mon, Nov 3, 2014 at 3:12 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>>>>>> On Fri, Oct 31, 2014 at 5:07 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>>>>> On Fri, Oct 31, 2014 at 12:19 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>>>>>>>>         if (opts->flags & CGRP_ROOT_SANE_BEHAVIOR) {
+>>>>>>>>                 pr_warn("sane_behavior: this is still under development and its behaviors will change, proceed at your own risk\n");
+>>>>>>>> -               if (nr_opts != 1) {
+>>>>>>>> +               if (nr_opts > 1) {
+>>>>>>>>                         pr_err("sane_behavior: no other mount options allowed\n");
+>>>>>>>>                         return -EINVAL;
+>>>>>>>
+>>>>>>> This looks wrong.  But, if you make the change above, then it'll be right.
+>>>>>>>
+>>>>>>
+>>>>>> It would have been nice if simple 'mount -t cgroup cgroup <mnt>' from
+>>>>>> cgroupns does the right thing automatically.
+>>>>>>
+>>>>>
+>>>>> This is a debatable point, but it's not what I meant.  Won't your code
+>>>>> let 'mount -t cgroup -o one_evil_flag cgroup mountpoint' through?
+>>>>>
+>>>>
+>>>> I don't think so. This check "if (nr_opts > 1)" is nested under "if
+>>>> (opts->flags & CGRP_ROOT_SANE_BEHAVIOR)". So we know that there is
+>>>> atleast 1 option ('__DEVEL__sane_behavior') present (implicit or not).
+>>>> Addition of 'one_evil_flag' will make nr_opts = 2 and result in EINVAL
+>>>> here.
+>>>
+>>> But the implicit __DEVEL__sane_behavior doesn't increment nr_opts, right?
+>>>
+>>
+>> Yes. Hence this change makes sure that we don't return EINVAL when
+>> nr_opts == 0 or nr_opts == 1 :)
+>> That way, both of the following are equivalent when inside non-init cgroupns:
+>>
+>> (1) $ mount -t cgroup -o __DEVEL__sane_behavior cgroup mountpoint
+>> (2) $ mount -t cgroup cgroup mountpoint
+>>
+>> Any other mount option will trigger the error here.
+>
+> I still don't get it.  Can you walk me through why mount -o
+> some_other_option -t cgroup cgroup mountpoint causes -EINVAL?
+>
 
-This patch adds an option to sample value of an additional clock with
-any perf event, with the the aim of allowing time correlation between
-data coming from perf and other sources like hardware trace which is
-timestamped with an external clock.
+Argh! You are right. I was totally convinced that this works. But it
+clearly doesn't if you specify 1 legit mount option. I wanted to make
+it work for both cases (1) and (2) above. But then this check will
+have to be changed :(
+Sorry about the back and forth. I am just going to make it return
+EINVAL if __DEVEL_sane_behavior is not specified as suggested in the
+beginning.
 
-The idea is to generate periodic perf record containing timestamps from
-two different sources, sampled as close to each other as possible. This
-allows performing simple linear approximation:
+> --Andy
 
-        perf event    other event
-       -----O--------------+-------------O------> t_other
-            :              |             :
-            :              V             :
-       -----O----------------------------O------> t_perf
-
-User can request such samples for any standard perf event, with the most
-obvious examples of cpu-clock (hrtimer) at selected frequency or other
-periodic events like sched:sched_switch.
-
-In order to do this, PERF_SAMPLE_CLOCK has to be set in struct
-perf_event_attr.sample_type and a type of the clock to be sampled
-selected by setting perf_event_attr.clock to a value corresponding to
-a POSIX clock clk_id (see "man 2 clock_gettime")
-
-Currently three clocks are implemented: CLOCK_REALITME = 0,
-CLOCK_MONOTONIC = 1 and CLOCK_MONOTONIC_RAW = 2. The clock field is
-5 bits wide to allow for future extension to custom, non-POSIX clock
-sources(MAX_CLOCK for those is 16, see include/uapi/linux/time.h) like
-ARM CoreSight (hardware trace) timestamp generator.
-
-Signed-off-by: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
----
- include/linux/perf_event.h      |  2 ++
- include/uapi/linux/perf_event.h | 16 ++++++++++++++--
- kernel/events/core.c            | 30 ++++++++++++++++++++++++++++++
- 3 files changed, 46 insertions(+), 2 deletions(-)
-
-diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 867415d..395d6ed 100644
---- a/include/linux/perf_event.h
-+++ b/include/linux/perf_event.h
-@@ -607,6 +607,8 @@ struct perf_sample_data {
- 	 * Transaction flags for abort events:
- 	 */
- 	u64				txn;
-+	/* Clock value (additional timestamp for time correlation) */
-+	u64				clock;
- };
- 
- /* default value for data source */
-diff --git a/include/uapi/linux/perf_event.h b/include/uapi/linux/perf_event.h
-index 9a64eb1..53a7a72 100644
---- a/include/uapi/linux/perf_event.h
-+++ b/include/uapi/linux/perf_event.h
-@@ -137,8 +137,9 @@ enum perf_event_sample_format {
- 	PERF_SAMPLE_DATA_SRC			= 1U << 15,
- 	PERF_SAMPLE_IDENTIFIER			= 1U << 16,
- 	PERF_SAMPLE_TRANSACTION			= 1U << 17,
-+	PERF_SAMPLE_CLOCK			= 1U << 18,
- 
--	PERF_SAMPLE_MAX = 1U << 18,		/* non-ABI */
-+	PERF_SAMPLE_MAX = 1U << 19,		/* non-ABI */
- };
- 
- /*
-@@ -304,7 +305,16 @@ struct perf_event_attr {
- 				mmap2          :  1, /* include mmap with inode data     */
- 				comm_exec      :  1, /* flag comm events that are due to an exec */
- 				uevents        :  1, /* allow uevents into the buffer */
--				__reserved_1   : 38;
-+
-+				/*
-+				 * clock: one of the POSIX clock IDs:
-+				 *
-+				 * 0 - CLOCK_REALTIME
-+				 * 1 - CLOCK_MONOTONIC
-+				 * 4 - CLOCK_MONOTONIC_RAW
-+				 */
-+				clock          :  5, /* clock type */
-+				__reserved_1   : 33;
- 
- 	union {
- 		__u32		wakeup_events;	  /* wakeup every n events */
-@@ -544,6 +554,7 @@ enum perf_event_type {
- 	 * 	{ u64			id;       } && PERF_SAMPLE_ID
- 	 * 	{ u64			stream_id;} && PERF_SAMPLE_STREAM_ID
- 	 * 	{ u32			cpu, res; } && PERF_SAMPLE_CPU
-+	 *	{ u64			clock;    } && PERF_SAMPLE_CLOCK
- 	 *	{ u64			id;	  } && PERF_SAMPLE_IDENTIFIER
- 	 * } && perf_event_attr::sample_id_all
- 	 *
-@@ -687,6 +698,7 @@ enum perf_event_type {
- 	 *	{ u64			weight;   } && PERF_SAMPLE_WEIGHT
- 	 *	{ u64			data_src; } && PERF_SAMPLE_DATA_SRC
- 	 *	{ u64			transaction; } && PERF_SAMPLE_TRANSACTION
-+	 *	{ u64			clock;    } && PERF_SAMPLE_CLOCK
- 	 * };
- 	 */
- 	PERF_RECORD_SAMPLE			= 9,
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 3738e9c..611e2f7 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -1232,6 +1232,9 @@ static void perf_event__header_size(struct perf_event *event)
- 	if (sample_type & PERF_SAMPLE_TRANSACTION)
- 		size += sizeof(data->txn);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		size += sizeof(data->clock);
-+
- 	event->header_size = size;
- }
- 
-@@ -1259,6 +1262,9 @@ static void perf_event__id_header_size(struct perf_event *event)
- 	if (sample_type & PERF_SAMPLE_CPU)
- 		size += sizeof(data->cpu_entry);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		size += sizeof(data->clock);
-+
- 	event->id_header_size = size;
- }
- 
-@@ -4599,6 +4605,24 @@ static void __perf_event_header__init_id(struct perf_event_header *header,
- 		data->cpu_entry.cpu	 = raw_smp_processor_id();
- 		data->cpu_entry.reserved = 0;
- 	}
-+
-+	if (sample_type & PERF_SAMPLE_CLOCK) {
-+		switch (event->attr.clock) {
-+		case CLOCK_REALTIME:
-+			data->clock = ktime_get_real_ns();
-+			break;
-+		case CLOCK_MONOTONIC:
-+			data->clock = ktime_get_mono_fast_ns();
-+			break;
-+		case CLOCK_MONOTONIC_RAW:
-+			data->clock = ktime_get_raw_ns();
-+			break;
-+		default:
-+			data->clock = 0;
-+			break;
-+		}
-+	}
-+
- }
- 
- void perf_event_header__init_id(struct perf_event_header *header,
-@@ -4629,6 +4653,9 @@ static void __perf_event__output_id_sample(struct perf_output_handle *handle,
- 	if (sample_type & PERF_SAMPLE_CPU)
- 		perf_output_put(handle, data->cpu_entry);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		perf_output_put(handle, data->clock);
-+
- 	if (sample_type & PERF_SAMPLE_IDENTIFIER)
- 		perf_output_put(handle, data->id);
- }
-@@ -4857,6 +4884,9 @@ void perf_output_sample(struct perf_output_handle *handle,
- 	if (sample_type & PERF_SAMPLE_TRANSACTION)
- 		perf_output_put(handle, data->txn);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		perf_output_put(handle, data->clock);
-+
- 	if (!event->attr.watermark) {
- 		int wakeup_events = event->attr.wakeup_events;
- 
 -- 
-1.8.3.2
+Aditya
