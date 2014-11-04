@@ -1,49 +1,36 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH 10/20] selftests/kcmp: add install target to enable installing test
-Date: Tue,  4 Nov 2014 10:11:06 -0700
-Message-ID: <1dc6f2a853bd645cdb64b904b5a3b90ff7be9ad2.1415117102.git.shuahkh@osg.samsung.com>
-References: <cover.1415117102.git.shuahkh@osg.samsung.com>
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <cover.1415117102.git.shuahkh@osg.samsung.com>
-In-Reply-To: <cover.1415117102.git.shuahkh@osg.samsung.com>
-References: <cover.1415117102.git.shuahkh@osg.samsung.com>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org, akpm@linux-foundation.org, mmarek@suse.cz, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v3 2/3] perf: Userspace event
+Date: Tue, 4 Nov 2014 19:40:31 +0100
+Message-ID: <20141104184031.GM10501@worktop.programming.kicks-ass.net>
+References: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
+ <1415060918-19954-3-git-send-email-pawel.moll@arm.com>
+ <87ppd35vbk.fsf@sejong.aot.lge.com>
+ <1415119331.24819.19.camel@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1415119331.24819.19.camel-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Cc: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a new make target to enable installing test. This target
-installs test in the kselftest install location and add to the
-kselftest script to run the test.
+On Tue, Nov 04, 2014 at 04:42:11PM +0000, Pawel Moll wrote:
+> 
+> 1. I'm wrong and the record doesn't have to be padded to make it 8 bytes
+> aligned. Then I can drop the additional size field.
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
----
- tools/testing/selftests/kcmp/Makefile | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+No, you're right, we're supposed to stay 8 byte aligned.
 
-diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
-index 8aabd82..e105619 100644
---- a/tools/testing/selftests/kcmp/Makefile
-+++ b/tools/testing/selftests/kcmp/Makefile
-@@ -21,6 +21,18 @@ else
- 	echo "Not an x86 target, can't build kcmp selftest"
- endif
- 
-+install: all
-+ifeq ($(ARCH),x86)
-+	install ./kcmp_test $(INSTALL_KSFT_PATH)
-+	echo "\necho \"Start kcmp test ....\"" >> $(KSELFTEST)
-+	echo "./kcmp_test || echo \"kcmp_test: [FAIL]\"" >> $(KSELFTEST)
-+	echo "rm -f kcmp-test-file" >> $(KSELFTEST)
-+	echo "echo \"End kcmp test ....\"" >> $(KSELFTEST)
-+	echo "echo \"==============================\"" >> $(KSELFTEST)
-+else
-+	echo "Not an x86 target, can't install kcmp selftests"
-+endif
-+
- run_tests: all
- 	@./kcmp_test || echo "kcmp_test: [FAIL]"
- 
--- 
-1.9.1
+> 2. I could impose a limitation on the prctl API that the data size must
+> be 8 bytes aligned. Bad idea in my opinion, I'd rather not.
 
+Agreed.
+
+> 3. The additional size (for the data part) field stays. Notice that
+> PERF_SAMPLE_RAW has it as well :-)
+
+Right, with binary data there is no other day. With \0 terminated
+strings there won't be a problem, but I think we decided we wanted to
+allow any binary blow.
