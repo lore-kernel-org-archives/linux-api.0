@@ -1,61 +1,69 @@
-From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: How Not To Use kref (was Re: kdbus: add code for buses, domains
- and endpoints)
-Date: Tue, 4 Nov 2014 10:11:09 +0100
-Message-ID: <CANq1E4RGrqZxxBi+_Ub_jnwZwQABh92tu-6sPf3Ar8TgzPcP1A@mail.gmail.com>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
-	<1414620056-6675-9-git-send-email-gregkh@linuxfoundation.org>
-	<20141030233801.GF7996@ZenIV.linux.org.uk>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: [PATCH v3 0/3] perf: User/kernel time correlation and event
+ generation
+Date: Tue, 04 Nov 2014 18:24:40 +0900
+Message-ID: <54589B58.7080102@hitachi.com>
+References: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141030233801.GF7996-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Alban Crequy <alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1415060918-19954-1-git-send-email-pawel.moll@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pawel Moll <pawel.moll@arm.com>
+Cc: Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, Christopher Covington <cov@codeaurora.org>, Namhyung Kim <namhyung@kernel.org>, David Ahern <dsahern@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Tomeu Vizoso <tomeu@tomeuvizoso.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pawel Moll <mail@pawelmoll.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Al
+Hello,
 
-On Fri, Oct 31, 2014 at 12:38 AM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
-> On Wed, Oct 29, 2014 at 03:00:52PM -0700, Greg Kroah-Hartman wrote:
->
->> +static void __kdbus_domain_user_free(struct kref *kref)
->> +{
->> +     struct kdbus_domain_user *user =
->> +             container_of(kref, struct kdbus_domain_user, kref);
->> +
->> +     BUG_ON(atomic_read(&user->buses) > 0);
->> +     BUG_ON(atomic_read(&user->connections) > 0);
->> +
->> +     mutex_lock(&user->domain->lock);
->         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
->> +     idr_remove(&user->domain->user_idr, user->idr);
->> +     hash_del(&user->hentry);
->         ^^^^^^^^^^^^^^^^^^^^^^^^
->> +     mutex_unlock(&user->domain->lock);
->> +
->> +     kdbus_domain_unref(user->domain);
->> +     kfree(user);
->> +}
->
->> +struct kdbus_domain_user *kdbus_domain_user_unref(struct kdbus_domain_user *u)
->> +{
->> +     if (u)
->> +             kref_put(&u->kref, __kdbus_domain_user_free);
->> +     return NULL;
->> +}
->
-> If you remove an object from some search structures, taking the lock in
-> destructor is Too Fucking Late(tm).  Somebody might have already found
-> that puppy and decided to pick it (all under that lock) just as we'd
-> got to that point in destructor and blocked there.  Oops...
+(2014/11/04 9:28), Pawel Moll wrote:
+> 2. User event generation
+> 
+> Everyone present agreed that it would be a very-nice-to-have feature.
+> There was some discussion about implementation details, so I welcome
+> feedback and comments regarding my take on the matter.
 
-Nice catch! I fixed it up via kref_get_unless_zero(). This has the
-side-effect that there might be multiple domain_user objects for the
-same user, but all but one will have ref==0. They don't carry and
-valuable data in those cases, so we're fine. We will just end up using
-the next one, or creating a new one.
+Hmm, I'm trying to make a similar thing, dynamic event definition via
+ftrace, which is already done by kprobes/uprobes. And this will be shown
+as dynamic events from perf too.
 
-Thanks a lot!
-David
+What I'd like to do is the binary version of ftrace-marker, the text
+version is already supported by qemu (see below).
+https://lists.gnu.org/archive/html/qemu-devel/2013-04/msg00505.html
+
+But since that is just a string data (not structured data), it is hard to
+analyze via perf-script or some other useful filters/triggers in ftrace.
+
+In my idea, the new event will be defined via a special file in debugfs like
+kprobe-events, like below.
+
+  # cd $debugfs/tracing
+  # echo "newgrp/newevent signarg:s32 flag:u64" >> marker_events
+  # cat events/newgrp/newevent/format
+  name: newevent
+  ID: 2048
+  format:
+        field:unsigned short common_type;       offset:0;       size:2; signed:0;
+        field:unsigned char common_flags;       offset:2;       size:1; signed:0;
+        field:unsigned char common_preempt_count;       offset:3;       size:1;signed:0;
+        field:int common_pid;   offset:4;       size:4; signed:1;
+
+        field:s32 signarg;      offset:8;      size:4; signed:1;
+        field:u64 flag; offset:12;      size:8; signed:0;
+
+  print fmt: "signarg=%d flag=0x%Lx", REC->signarg, REC->flag
+
+Then, users will write the data (excluded common fields) when the event happens
+via trace_marker which start with '\0'ID(in u32). Kernel just checks the ID and
+its data size, but doesn't parse, filter/trigger it and log it into the kernel buffer.
+
+Of course, this has a downside that the user must have a privilege to access to debugfs.
+Thus maybe we need both of prctl() IF for perf and this IF for ftrace.
+
+Thank you,
+
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
