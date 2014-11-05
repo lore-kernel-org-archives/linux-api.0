@@ -1,48 +1,58 @@
-From: Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
-Subject: Re: kdbus: add code for buses, domains and endpoints
-Date: Wed, 5 Nov 2014 20:59:30 +0100
-Message-ID: <20141105195929.GA3624@dztty>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>
- <1414620056-6675-9-git-send-email-gregkh@linuxfoundation.org>
- <8738a6w6kv.fsf@x220.int.ebiederm.org>
- <20141030095854.GA4716@dztty>
- <87wq7hiwjb.fsf@x220.int.ebiederm.org>
- <20141030144855.GA9705@dztty>
- <CALCETrXeNQUuwiyaJrbbbZUrSW3NTucRgpg0kKEuS3yszP-09w@mail.gmail.com>
- <20141030180813.GA11850@dztty>
- <54528798.40107@collabora.co.uk>
+From: Milosz Tanski <milosz@adfin.com>
+Subject: Re: [PATCH 2/4] vfs: Define new syscalls preadv2,pwritev2
+Date: Wed, 5 Nov 2014 15:32:54 -0500
+Message-ID: <CANP1eJE1GbTQ3=AjL=xQ773rQEGsWnQy=GnY=_VzsFnTRVJKeQ@mail.gmail.com>
+References: <cover.1413923420.git.milosz@adfin.com>
+	<1613303dfaa91e6ff09cdd7860e0316765663ba6.1413923420.git.milosz@adfin.com>
+	<x49oat1o4gf.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54528798.40107-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, "alban.crequy" <alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <x49oat1o4gf.fsf@segfault.boston.devel.redhat.com>
+Sender: owner-linux-aio@kvack.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 30, 2014 at 06:46:48PM +0000, Simon McVittie wrote:
-> On 30/10/14 18:08, Djalal Harouni wrote:
-> > So, this is similar to AF_UNIX sockets. For them there's SCM_CREDENTIALS
-> > and SO_PEERCRED. The former uses credentials at the time of when
-> > messages are being sent, the latter uses the credentials at the time
-> > when when the connection was initially established.
-> 
-> Please note that dbus-daemon, the reference implementation of D-Bus,
-> does not actually ever use SCM_CREDENTIALS on its AF_UNIX sockets. We
-> prefer to use Linux's SO_PEERCRED, or the platform's closest available
-> equivalent if there is one. dbus-daemon has methods (RPC calls) to get a
-> specified peer's uid, pid or LSM data (e.g. SELinux context), but those
-> methods return the value that was true when the connection was opened or
-> shortly afterwards, not the value that is true right now. I believe the
-> plan is that kdbus has ioctls that are equivalent to those RPC calls,
-> but without needing to wait for asynchronous socket events to get an answer.
-Correct, we are compatible to SO_PEERCRED and every peer can request
-that using KDBUS_CMD_CONN_INFO ioctl(), no need for asynchronous
-operations.
+I have fixed this in the version I'm going to be resubmitting today.
 
-Thank you Simon for your feedback!
+- Milosz
+
+On Fri, Oct 24, 2014 at 11:46 AM, Jeff Moyer <jmoyer@redhat.com> wrote:
+> Milosz Tanski <milosz@adfin.com> writes:
+>
+>> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+>> index 22749c1..10f8883 100644
+>> --- a/include/uapi/asm-generic/unistd.h
+>> +++ b/include/uapi/asm-generic/unistd.h
+>> @@ -213,6 +213,10 @@ __SC_COMP(__NR_pwrite64, sys_pwrite64, compat_sys_pwrite64)
+>>  __SC_COMP(__NR_preadv, sys_preadv, compat_sys_preadv)
+>>  #define __NR_pwritev 70
+>>  __SC_COMP(__NR_pwritev, sys_pwritev, compat_sys_pwritev)
+>> +#define __NR_preadv2 281
+>> +__SC_COMP(__NR_preadv2, sys_preadv2)
+>> +#define __NR_pwritev2 282
+>> +__SC_COMP(__NR_pwritev2, sys_pwritev2)
+>
+> This looks odd.  First, __SC_COMP takes 3 arguments.  Second, you are
+> going to need to implement compat wrappers for the new system calls.
+>
+> Cheers,
+> Jeff
+
+
 
 -- 
-Djalal Harouni
-http://opendz.org
+Milosz Tanski
+CTO
+16 East 34th Street, 15th floor
+New York, NY 10016
+
+p: 646-253-9055
+e: milosz@adfin.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
