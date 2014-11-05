@@ -1,16 +1,15 @@
 From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Subject: Re: [PATCH v2 1/6] vfio: implement iommu driver capabilities with an
-	enum
-Date: Wed, 5 Nov 2014 10:49:58 +0100
-Message-ID: <CAG8rG2wtZeXiGzG7+QJDe7xF2EdCfDDd_b8e4Ge_pGhDvLHu9Q@mail.gmail.com>
-References: <1414433155-31600-1-git-send-email-a.motakis@virtualopensystems.com>
-	<1414433155-31600-2-git-send-email-a.motakis@virtualopensystems.com>
-	<1414785851.27420.334.camel@ul30vt.home>
+Subject: Re: [PATCH v9 04/19] vfio: amba: VFIO support for AMBA devices
+Date: Wed, 5 Nov 2014 10:50:37 +0100
+Message-ID: <CAG8rG2z-PMEN-9iZnv2jpcTrfugeA3+OUt=WUd75FLy7ZSDG1Q@mail.gmail.com>
+References: <1414433284-31719-1-git-send-email-a.motakis@virtualopensystems.com>
+	<1414433284-31719-5-git-send-email-a.motakis@virtualopensystems.com>
+	<1414780819.27420.314.camel@ul30vt.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1414785851.27420.334.camel-85EaTFmN5p//9pzu0YdTqQ@public.gmane.org>
+In-Reply-To: <1414780819.27420.314.camel-85EaTFmN5p//9pzu0YdTqQ@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
 	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
@@ -24,69 +23,160 @@ To: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux IOMMU <iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, VirtualOpenSystems Technical Team <tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, kvm-arm <kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 31, 2014 at 9:04 PM, Alex Williamson
+On Fri, Oct 31, 2014 at 7:40 PM, Alex Williamson
 <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Mon, 2014-10-27 at 19:07 +0100, Antonios Motakis wrote:
+>> Add support for discovering AMBA devices with VFIO and handle them
+>> similarly to Linux platform devices.
+>>
+>> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+>> ---
+>>  drivers/vfio/platform/vfio_amba.c | 116 ++++++++++++++++++++++++++++++++++++++
+>>  include/uapi/linux/vfio.h         |   1 +
+>>  2 files changed, 117 insertions(+)
+>>  create mode 100644 drivers/vfio/platform/vfio_amba.c
+>>
+>> diff --git a/drivers/vfio/platform/vfio_amba.c b/drivers/vfio/platform/vfio_amba.c
+>> new file mode 100644
+>> index 0000000..cf61324
+>> --- /dev/null
+>> +++ b/drivers/vfio/platform/vfio_amba.c
+>> @@ -0,0 +1,116 @@
+>> +/*
+>> + * Copyright (C) 2013 - Virtual Open Systems
+>> + * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License, version 2, as
+>> + * published by the Free Software Foundation.
+>> + *
+>> + * This program is distributed in the hope that it will be useful,
+>> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> + * GNU General Public License for more details.
+>> + */
+>> +
+>> +#include <linux/device.h>
+>> +#include <linux/interrupt.h>
+>> +#include <linux/iommu.h>
+>> +#include <linux/module.h>
+>> +#include <linux/mutex.h>
+>> +#include <linux/notifier.h>
+>> +#include <linux/pm_runtime.h>
+>> +#include <linux/slab.h>
+>> +#include <linux/types.h>
+>> +#include <linux/uaccess.h>
+>> +#include <linux/vfio.h>
+>> +#include <linux/io.h>
+>> +#include <linux/irq.h>
+>> +#include <linux/amba/bus.h>
+>> +
+>> +#include "vfio_platform_private.h"
+>> +
+>> +#define DRIVER_VERSION  "0.9"
+>> +#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
+>> +#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
+>> +
+>> +/* probing devices from the AMBA bus */
+>> +
+>> +static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
+>> +                                             int i)
+>> +{
+>> +     struct amba_device *adev = (struct amba_device *) vdev->opaque;
+>> +
+>> +     if (i == 0)
+>> +             return &adev->res;
+>> +
+>> +     return NULL;
+>> +}
+>> +
+>> +static int get_amba_irq(struct vfio_platform_device *vdev, int i)
+>> +{
+>> +     struct amba_device *adev = (struct amba_device *) vdev->opaque;
+>> +
+>> +     if (i < AMBA_NR_IRQS)
+>> +             return adev->irq[i];
+>> +
+>> +     return 0;
+>> +}
+>> +
+>> +static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
+>> +{
+>> +
+>> +     struct vfio_platform_device *vdev;
+>> +     int ret;
+>> +
+>> +     vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
+>> +     if (!vdev)
+>> +             return -ENOMEM;
+>> +
+>> +     vdev->opaque = (void *) adev;
+>> +     vdev->name = "vfio-amba-dev";
 >
-> On Mon, 2014-10-27 at 19:05 +0100, Antonios Motakis wrote:
-> > Currently a VFIO driver's IOMMU capabilities are encoded as a series of
-> > numerical defines. Replace this with an enum for future maintainability.
-> >
-> > Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> > ---
-> >  include/uapi/linux/vfio.h | 21 ++++++++++-----------
-> >  1 file changed, 10 insertions(+), 11 deletions(-)
-> >
-> > diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-> > index 6612974..1e39842 100644
-> > --- a/include/uapi/linux/vfio.h
-> > +++ b/include/uapi/linux/vfio.h
-> > @@ -19,19 +19,18 @@
-> >
-> >  /* Kernel & User level defines for VFIO IOCTLs. */
-> >
-> > -/* Extensions */
-> > -
-> > -#define VFIO_TYPE1_IOMMU             1
-> > -#define VFIO_SPAPR_TCE_IOMMU         2
-> > -#define VFIO_TYPE1v2_IOMMU           3
-> >  /*
-> > - * IOMMU enforces DMA cache coherence (ex. PCIe NoSnoop stripping).  This
-> > - * capability is subject to change as groups are added or removed.
-> > + * Capabilities exposed by the VFIO IOMMU driver. Some capabilities are subject
-> > + * to change as groups are added or removed.
-> >   */
-> > -#define VFIO_DMA_CC_IOMMU            4
-> > -
-> > -/* Check if EEH is supported */
-> > -#define VFIO_EEH                     5
-> > +enum vfio_iommu_cap {
-> > +     VFIO_TYPE1_IOMMU        = 1,
-> > +     VFIO_SPAPR_TCE_IOMMU    = 2,
-> > +     VFIO_TYPE1v2_IOMMU      = 3,
-> > +     VFIO_DMA_CC_IOMMU       = 4, /* IOMMU enforces DMA cache coherence
-> > +                                     (ex. PCIe NoSnoop stripping) */
-> > +     VFIO_EEH                = 5, /* Check if EEH is supported */
-> > +};
->
-> Your code base is a little out of date, you're missing:
->
-> http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/include/uapi/linux/vfio.h?id=f5c9ecebaf2a2c9381973798e389cc019dd983e0
->
-> I think the logic looks ok in the rest, but you'll need to use index 7
-> and the above commit touched the type1 c file as well so you may need to
-> adjustment there too.  Thanks,
+> You need to actually allocate some memory here with something like
+> kasprintf.  Don't forget to free it on the error and remove path.
 
-Hello,
-
-I will reapply on the latest version then.
-
-Thanks
+Ack.
 
 >
-> Alex
-> >
-> >  /*
-> >   * The IOCTL interface is designed for extensibility by embedding the
+>> +     vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
+>> +     vdev->get_resource = get_amba_resource;
+>> +     vdev->get_irq = get_amba_irq;
+>> +
+>> +     ret = vfio_platform_probe_common(vdev, &adev->dev);
+>> +     if (ret)
+>> +             kfree(vdev);
+>> +
+>> +     return ret;
+>> +}
+>> +
+>> +static int vfio_amba_remove(struct amba_device *adev)
+>> +{
+>> +     struct vfio_platform_device *vdev;
+>> +
+>> +     vdev = vfio_platform_remove_common(&adev->dev);
+>> +     if(vdev) {
+>> +             kfree(vdev);
+>> +             return 0;
+>> +     }
+>> +
+>> +     return -EINVAL;
+>> +}
+>> +
+>> +static struct amba_id pl330_ids[] = {
+>> +     { 0, 0 },
+>> +};
+>> +
+>> +MODULE_DEVICE_TABLE(amba, pl330_ids);
+>> +
+>> +static struct amba_driver vfio_amba_driver = {
+>> +     .probe = vfio_amba_probe,
+>> +     .remove = vfio_amba_remove,
+>> +     .id_table = pl330_ids,
+>> +     .drv = {
+>> +             .name = "vfio-amba",
+>> +             .owner = THIS_MODULE,
+>> +     },
+>> +};
+>> +
+>> +module_amba_driver(vfio_amba_driver);
+>> +
+>> +MODULE_VERSION(DRIVER_VERSION);
+>> +MODULE_LICENSE("GPL v2");
+>> +MODULE_AUTHOR(DRIVER_AUTHOR);
+>> +MODULE_DESCRIPTION(DRIVER_DESC);
+>> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+>> index 9db1056..92469e0 100644
+>> --- a/include/uapi/linux/vfio.h
+>> +++ b/include/uapi/linux/vfio.h
+>> @@ -158,6 +158,7 @@ struct vfio_device_info {
+>>  #define VFIO_DEVICE_FLAGS_RESET      (1 << 0)        /* Device supports reset */
+>>  #define VFIO_DEVICE_FLAGS_PCI        (1 << 1)        /* vfio-pci device */
+>>  #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)  /* vfio-platform device */
+>> +#define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)     /* vfio-amba device */
+>>       __u32   num_regions;    /* Max region index + 1 */
+>>       __u32   num_irqs;       /* Max IRQ index + 1 */
+>>  };
 >
 >
 >
