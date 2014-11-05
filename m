@@ -1,244 +1,182 @@
-From: Milosz Tanski <milosz@adfin.com>
-Subject: [PATCH v5 7/7] fs: add a flag for per-operation O_DSYNC semantics
-Date: Wed,  5 Nov 2014 16:14:53 -0500
-Message-ID: <c188b04ede700ce5f986b19de12fa617d158540f.1415220890.git.milosz@adfin.com>
-References: <cover.1415220890.git.milosz@adfin.com>
+From: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v8] kernel, add panic_on_warn
+Date: Wed, 5 Nov 2014 13:59:18 -0800 (PST)
+Message-ID: <alpine.DEB.2.10.1411051357050.31575@chino.kir.corp.google.com>
+References: <1415187736-16242-1-git-send-email-prarit@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <cover.1415220890.git.milosz@adfin.com>
-In-Reply-To: <cover.1415220890.git.milosz@adfin.com>
-References: <cover.1415220890.git.milosz@adfin.com>
-Sender: owner-linux-aio@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: Christoph Hellwig <hch@lst.de>, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, ceph-devel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-nfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-mm@kvack.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415187736-16242-1-git-send-email-prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Christoph Hellwig <hch@lst.de>
+On Wed, 5 Nov 2014, Prarit Bhargava wrote:
 
-With the new read/write with flags syscalls we can support a flag
-to enable O_DSYNC semantics on a per-operation basis.  This =D1=96s
-useful to implement protocols like SMB, NFS or SCSI that have such
-per-operation flags.
+> diff --git a/Documentation/kdump/kdump.txt b/Documentation/kdump/kdump.txt
+> index 6c0b9f2..bc4bd5a 100644
+> --- a/Documentation/kdump/kdump.txt
+> +++ b/Documentation/kdump/kdump.txt
+> @@ -471,6 +471,13 @@ format. Crash is available on Dave Anderson's site at the following URL:
+>  
+>     http://people.redhat.com/~anderson/
+>  
+> +Trigger Kdump on WARN()
+> +=======================
+> +
+> +The kernel parameter, panic_on_warn, calls panic() in all WARN() paths.  This
+> +will cause a kdump to occur at the panic() call.  In cases where a user wants
+> +to specify this during runtime, /proc/sys/kernel/panic_on_warn can be set to 1
+> +to achieve the same behaviour.
+>  
+>  Contact
+>  =======
+> diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
+> index 4c81a86..ea5d57c 100644
+> --- a/Documentation/kernel-parameters.txt
+> +++ b/Documentation/kernel-parameters.txt
+> @@ -2509,6 +2509,9 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
+>  			timeout < 0: reboot immediately
+>  			Format: <timeout>
+>  
+> +	panic_on_warn	panic() instead of WARN().  Useful to cause kdump
+> +			on a WARN().
+> +
+>  	crash_kexec_post_notifiers
+>  			Run kdump after running panic-notifiers and dumping
+>  			kmsg. This only for the users who doubt kdump always
+> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
+> index 57baff5..b5d0c85 100644
+> --- a/Documentation/sysctl/kernel.txt
+> +++ b/Documentation/sysctl/kernel.txt
+> @@ -54,8 +54,9 @@ show up in /proc/sys/kernel:
+>  - overflowuid
+>  - panic
+>  - panic_on_oops
+> -- panic_on_unrecovered_nmi
+>  - panic_on_stackoverflow
+> +- panic_on_unrecovered_nmi
+> +- panic_on_warn
+>  - pid_max
+>  - powersave-nap               [ PPC only ]
+>  - printk
+> @@ -527,19 +528,6 @@ the recommended setting is 60.
+>  
+>  ==============================================================
+>  
+> -panic_on_unrecovered_nmi:
+> -
+> -The default Linux behaviour on an NMI of either memory or unknown is
+> -to continue operation. For many environments such as scientific
+> -computing it is preferable that the box is taken out and the error
+> -dealt with than an uncorrected parity/ECC error get propagated.
+> -
+> -A small number of systems do generate NMI's for bizarre random reasons
+> -such as power management so the default is off. That sysctl works like
+> -the existing panic controls already in that directory.
+> -
+> -==============================================================
+> -
+>  panic_on_oops:
+>  
+>  Controls the kernel's behaviour when an oops or BUG is encountered.
+> @@ -563,6 +551,30 @@ This file shows up if CONFIG_DEBUG_STACKOVERFLOW is enabled.
+>  
+>  ==============================================================
+>  
+> +panic_on_unrecovered_nmi:
+> +
+> +The default Linux behaviour on an NMI of either memory or unknown is
+> +to continue operation. For many environments such as scientific
+> +computing it is preferable that the box is taken out and the error
+> +dealt with than an uncorrected parity/ECC error get propagated.
+> +
+> +A small number of systems do generate NMI's for bizarre random reasons
+> +such as power management so the default is off. That sysctl works like
+> +the existing panic controls already in that directory.
+> +
+> +==============================================================
+> +
+> +panic_on_warn:
+> +
+> +Calls panic() in the WARN() path when set to 1.  This is useful to avoid
+> +a kernel rebuild when attempting to kdump at the location of a WARN().
+> +
+> +0: only WARN(), default behaviour.
+> +
+> +1: call panic() after printing out WARN() location.
+> +
+> +==============================================================
+> +
+>  perf_cpu_time_max_percent:
+>  
+>  Hints to the kernel how much CPU time it should be allowed to
+> diff --git a/include/linux/kernel.h b/include/linux/kernel.h
+> index 3d770f55..d60d31d 100644
+> --- a/include/linux/kernel.h
+> +++ b/include/linux/kernel.h
+> @@ -422,6 +422,7 @@ extern int panic_timeout;
+>  extern int panic_on_oops;
+>  extern int panic_on_unrecovered_nmi;
+>  extern int panic_on_io_nmi;
+> +extern int panic_on_warn;
+>  extern int sysctl_panic_on_stackoverflow;
+>  /*
+>   * Only to be used by arch init code. If the user over-wrote the default
+> diff --git a/include/uapi/linux/sysctl.h b/include/uapi/linux/sysctl.h
+> index 43aaba1..0956373 100644
+> --- a/include/uapi/linux/sysctl.h
+> +++ b/include/uapi/linux/sysctl.h
+> @@ -153,6 +153,7 @@ enum
+>  	KERN_MAX_LOCK_DEPTH=74, /* int: rtmutex's maximum lock depth */
+>  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
+>  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
+> +	KERN_PANIC_ON_WARN=77, /* int: call panic() in WARN() functions */
+>  };
+>  
+>  
+> diff --git a/kernel/panic.c b/kernel/panic.c
+> index d09dc5c..c6a7723 100644
+> --- a/kernel/panic.c
+> +++ b/kernel/panic.c
+> @@ -33,6 +33,7 @@ static int pause_on_oops;
+>  static int pause_on_oops_flag;
+>  static DEFINE_SPINLOCK(pause_on_oops_lock);
+>  static bool crash_kexec_post_notifiers;
+> +int panic_on_warn __read_mostly;
+>  
+>  int panic_timeout = CONFIG_PANIC_TIMEOUT;
+>  EXPORT_SYMBOL_GPL(panic_timeout);
+> @@ -420,13 +421,23 @@ static void warn_slowpath_common(const char *file, int line, void *caller,
+>  {
+>  	disable_trace_on_warning();
+>  
+> -	pr_warn("------------[ cut here ]------------\n");
+> +	if (!panic_on_warn)
+> +		pr_warn("------------[ cut here ]------------\n");
 
-Example program below:
+Is this really necessary?
 
-cat > pwritev2.c << EOF
+>  	pr_warn("WARNING: CPU: %d PID: %d at %s:%d %pS()\n",
+>  		raw_smp_processor_id(), current->pid, file, line, caller);
+>  
+>  	if (args)
+>  		vprintk(args->fmt, args->args);
+>  
+> +	if (panic_on_warn) {
+> +		/*
+> +		 * A flood of WARN()s may occur.  Prevent further WARN()s
+> +		 * from panicking the system.
+> +		 */
 
-        (off_t) val,                              \
-        (off_t) ((((uint64_t) (val)) >> (sizeof (long) * 4)) >> (sizeof (=
-long) * 4))
+What synchronization is preventing this race and further WARN()s panicking 
+the system?
 
-static ssize_t
-pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int f=
-lags)
-{
-        return syscall(__NR_pwritev2, fd, iov, iovcnt, LO_HI_LONG(offset)=
-,
-			 flags);
-}
-
-int main(int argc, char **argv)
-{
-	int fd =3D open(argv[1], O_WRONLY|O_CREAT|O_TRUNC, 0666);
-	char buf[1024];
-	struct iovec iov =3D { .iov_base =3D buf, .iov_len =3D 1024 };
-	int ret;
-
-        if (fd < 0) {
-                perror("open");
-                return 0;
-        }
-
-	memset(buf, 0xfe, sizeof(buf));
-
-	ret =3D pwritev2(fd, &iov, 1, 0, RWF_DSYNC);
-	if (ret < 0)
-		perror("pwritev2");
-	else
-		printf("ret =3D %d\n", ret);
-
-	return 0;
-}
-EOF
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-[milosz@adfin.com: added flag check to compat_do_readv_writev()]
-Signed-off-by: Milosz Tanski <milosz@adfin.com>
----
- fs/ceph/file.c     |  4 +++-
- fs/fuse/file.c     |  2 ++
- fs/nfs/file.c      | 10 ++++++----
- fs/ocfs2/file.c    |  6 ++++--
- fs/read_write.c    | 20 +++++++++++++++-----
- include/linux/fs.h |  3 ++-
- mm/filemap.c       |  4 +++-
- 7 files changed, 35 insertions(+), 14 deletions(-)
-
-diff --git a/fs/ceph/file.c b/fs/ceph/file.c
-index b798b5c..2d4e15a 100644
---- a/fs/ceph/file.c
-+++ b/fs/ceph/file.c
-@@ -983,7 +983,9 @@ retry_snap:
- 	ceph_put_cap_refs(ci, got);
-=20
- 	if (written >=3D 0 &&
--	    ((file->f_flags & O_SYNC) || IS_SYNC(file->f_mapping->host) ||
-+	    ((file->f_flags & O_SYNC) ||
-+	     IS_SYNC(file->f_mapping->host) ||
-+	     (iocb->ki_rwflags & RWF_DSYNC) ||
- 	     ceph_osdmap_flag(osdc->osdmap, CEPH_OSDMAP_NEARFULL))) {
- 		err =3D vfs_fsync_range(file, pos, pos + written - 1, 1);
- 		if (err < 0)
-diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index caa8d95..bb4fb23 100644
---- a/fs/fuse/file.c
-+++ b/fs/fuse/file.c
-@@ -1248,6 +1248,8 @@ static ssize_t fuse_file_write_iter(struct kiocb *i=
-ocb, struct iov_iter *from)
- 		written +=3D written_buffered;
- 		iocb->ki_pos =3D pos + written_buffered;
- 	} else {
-+		if (iocb->ki_rwflags & RWF_DSYNC)
-+			return -EINVAL;
- 		written =3D fuse_perform_write(file, mapping, from, pos);
- 		if (written >=3D 0)
- 			iocb->ki_pos =3D pos + written;
-diff --git a/fs/nfs/file.c b/fs/nfs/file.c
-index aa9046f..c59b0b7 100644
---- a/fs/nfs/file.c
-+++ b/fs/nfs/file.c
-@@ -652,13 +652,15 @@ static const struct vm_operations_struct nfs_file_v=
-m_ops =3D {
- 	.remap_pages =3D generic_file_remap_pages,
- };
-=20
--static int nfs_need_sync_write(struct file *filp, struct inode *inode)
-+static int nfs_need_sync_write(struct kiocb *iocb, struct inode *inode)
- {
- 	struct nfs_open_context *ctx;
-=20
--	if (IS_SYNC(inode) || (filp->f_flags & O_DSYNC))
-+	if (IS_SYNC(inode) ||
-+	    (iocb->ki_filp->f_flags & O_DSYNC) ||
-+	    (iocb->ki_rwflags & RWF_DSYNC))
- 		return 1;
--	ctx =3D nfs_file_open_context(filp);
-+	ctx =3D nfs_file_open_context(iocb->ki_filp);
- 	if (test_bit(NFS_CONTEXT_ERROR_WRITE, &ctx->flags) ||
- 	    nfs_ctx_key_to_expire(ctx))
- 		return 1;
-@@ -705,7 +707,7 @@ ssize_t nfs_file_write(struct kiocb *iocb, struct iov=
-_iter *from)
- 		written =3D result;
-=20
- 	/* Return error values for O_DSYNC and IS_SYNC() */
--	if (result >=3D 0 && nfs_need_sync_write(file, inode)) {
-+	if (result >=3D 0 && nfs_need_sync_write(iocb, inode)) {
- 		int err =3D vfs_fsync(file, 0);
- 		if (err < 0)
- 			result =3D err;
-diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
-index bb66ca4..8f9a86b 100644
---- a/fs/ocfs2/file.c
-+++ b/fs/ocfs2/file.c
-@@ -2374,8 +2374,10 @@ out_dio:
- 	/* buffered aio wouldn't have proper lock coverage today */
- 	BUG_ON(ret =3D=3D -EIOCBQUEUED && !(file->f_flags & O_DIRECT));
-=20
--	if (((file->f_flags & O_DSYNC) && !direct_io) || IS_SYNC(inode) ||
--	    ((file->f_flags & O_DIRECT) && !direct_io)) {
-+	if (((file->f_flags & O_DSYNC) && !direct_io) ||
-+	    IS_SYNC(inode) ||
-+	    ((file->f_flags & O_DIRECT) && !direct_io) ||
-+	    (iocb->ki_rwflags & RWF_DSYNC)) {
- 		ret =3D filemap_fdatawrite_range(file->f_mapping, *ppos,
- 					       *ppos + count - 1);
- 		if (ret < 0)
-diff --git a/fs/read_write.c b/fs/read_write.c
-index cba7d4c..3443265 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -839,8 +839,13 @@ static ssize_t do_readv_writev(int type, struct file=
- *file,
- 		ret =3D do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
- 						pos, iter_fn, flags);
- 	} else {
--		if (type =3D=3D READ && (flags & RWF_NONBLOCK))
--			return -EAGAIN;
-+		if (type =3D=3D READ) {
-+			if (flags & RWF_NONBLOCK)
-+				return -EAGAIN;
-+		} else {
-+			if (flags & RWF_DSYNC)
-+				return -EINVAL;
-+		}
-=20
- 		if (fnv)
- 			ret =3D do_sync_readv_writev(file, iov, nr_segs, tot_len,
-@@ -888,7 +893,7 @@ ssize_t vfs_writev(struct file *file, const struct io=
-vec __user *vec,
- 		return -EBADF;
- 	if (!(file->f_mode & FMODE_CAN_WRITE))
- 		return -EINVAL;
--	if (flags & ~0)
-+	if (flags & ~RWF_DSYNC)
- 		return -EINVAL;
-=20
- 	return do_readv_writev(WRITE, file, vec, vlen, pos, flags);
-@@ -1080,8 +1085,13 @@ static ssize_t compat_do_readv_writev(int type, st=
-ruct file *file,
- 		ret =3D do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
- 						pos, iter_fn, flags);
- 	} else {
--		if (type =3D=3D READ && (flags & RWF_NONBLOCK))
--			return -EAGAIN;
-+		if (type =3D=3D READ) {
-+			if (flags & RWF_NONBLOCK)
-+				return -EAGAIN;
-+		} else {
-+			if (flags & RWF_DSYNC)
-+				return -EINVAL;
-+		}
-=20
- 		if (fnv)
- 			ret =3D do_sync_readv_writev(file, iov, nr_segs, tot_len,
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 7d0e116..7786b88 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1460,7 +1460,8 @@ struct block_device_operations;
- #define HAVE_UNLOCKED_IOCTL 1
-=20
- /* These flags are used for the readv/writev syscalls with flags. */
--#define RWF_NONBLOCK 0x00000001
-+#define RWF_NONBLOCK	0x00000001
-+#define RWF_DSYNC	0x00000002
-=20
- struct iov_iter;
-=20
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 6107058..4fbef99 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2669,7 +2669,9 @@ int generic_write_sync(struct kiocb *iocb, loff_t c=
-ount)
- 	struct file *file =3D iocb->ki_filp;
-=20
- 	if (count > 0 &&
--	    ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host))) {
-+	    ((file->f_flags & O_DSYNC) ||
-+	     (iocb->ki_rwflags & RWF_DSYNC) ||
-+	     IS_SYNC(file->f_mapping->host))) {
- 		bool fdatasync =3D !(file->f_flags & __O_SYNC);
- 		ssize_t ret =3D 0;
-=20
---=20
-1.9.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=3Dmailto:"aart@kvack.org">aart@kvack.org</a>
+> +		panic_on_warn = 0;
+> +		panic("panic_on_warn set ...\n");
+> +	}
+> +
+>  	print_modules();
+>  	dump_stack();
+>  	print_oops_end_marker();
