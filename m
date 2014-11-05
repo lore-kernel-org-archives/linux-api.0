@@ -1,69 +1,93 @@
-From: David Drysdale <drysdale@google.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Subject: Re: [PATCH 1/3] fs: add O_BENEATH flag to openat(2)
-Date: Wed, 5 Nov 2014 17:21:48 +0000
-Message-ID: <CAHse=S8ZmYLkOb9hmOMPkvHabqXH1sCUBTJWVO-++PMJXES=sg@mail.gmail.com>
+Date: Wed, 5 Nov 2014 09:28:10 -0800
+Message-ID: <CALCETrUA-Ps+0aGrsJXFc7=WV2gkcRMGuH1bNYaYWra64uvqyA@mail.gmail.com>
 References: <1415015305-15494-1-git-send-email-drysdale@google.com>
  <1415015305-15494-2-git-send-email-drysdale@google.com> <20141103152036.GA7996@ZenIV.linux.org.uk>
  <CALCETrWmivJCvAAZPQo9Jf5gDiSbpWKesjZWfqEQRXPOBSPY9g@mail.gmail.com>
  <d0973f4d-e8a4-4c5c-8bd1-1b1cb1f080b5@email.android.com> <CAHse=S-d3beytm2AKyBjZORdJPffmjfa2Ua1VCU8VjoRE9RiYQ@mail.gmail.com>
+ <CAHse=S8ZmYLkOb9hmOMPkvHabqXH1sCUBTJWVO-++PMJXES=sg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHse=S-d3beytm2AKyBjZORdJPffmjfa2Ua1VCU8VjoRE9RiYQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W.Biederman" <ebiederm@xmission.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Meredydd Luff <meredydd@senatehouse.org>, Will Drewry <wad@chromium.org>, Jorge Lucangeli Obes <jorgelo@google.com>, Ricky Zhou <rickyz@google.com>, Lee Campbell <leecam@google.com>, Julien Tinnes <jln@google.com>, Mike Depinet <mdepinet@google.com>, James Morris <james.l.morris@oracle.com>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHse=S8ZmYLkOb9hmOMPkvHabqXH1sCUBTJWVO-++PMJXES=sg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: "Eric W.Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jorge Lucangeli Obes <jorgelo-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ricky Zhou <rickyz-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lee Campbell <leecam-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Depinet <mdepinet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 4, 2014 at 9:40 AM, David Drysdale <drysdale@google.com> wrote:
-> On Mon, Nov 3, 2014 at 5:22 PM, Eric W.Biederman <ebiederm@xmission.com> wrote:
->> On November 3, 2014 7:42:58 AM PST, Andy Lutomirski <luto@amacapital.net> wrote:
->>>On Mon, Nov 3, 2014 at 7:20 AM, Al Viro <viro@zeniv.linux.org.uk>
->>>wrote:
->>>> On Mon, Nov 03, 2014 at 11:48:23AM +0000, David Drysdale wrote:
->>>>> Add a new O_BENEATH flag for openat(2) which restricts the
->>>>> provided path, rejecting (with -EACCES) paths that are not beneath
->>>>> the provided dfd.  In particular, reject:
->>>>>  - paths that contain .. components
->>>>>  - paths that begin with /
->>>>>  - symlinks that have paths as above.
+On Wed, Nov 5, 2014 at 9:21 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> On Tue, Nov 4, 2014 at 9:40 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>> On Mon, Nov 3, 2014 at 5:22 PM, Eric W.Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>> On November 3, 2014 7:42:58 AM PST, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>>On Mon, Nov 3, 2014 at 7:20 AM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+>>>>wrote:
+>>>>> On Mon, Nov 03, 2014 at 11:48:23AM +0000, David Drysdale wrote:
+>>>>>> Add a new O_BENEATH flag for openat(2) which restricts the
+>>>>>> provided path, rejecting (with -EACCES) paths that are not beneath
+>>>>>> the provided dfd.  In particular, reject:
+>>>>>>  - paths that contain .. components
+>>>>>>  - paths that begin with /
+>>>>>>  - symlinks that have paths as above.
+>>>>>
+>>>>> Yecch...  The degree of usefulness aside (and I'm not convinced that
+>>>>it
+>>>>> is non-zero),
 >>>>
->>>> Yecch...  The degree of usefulness aside (and I'm not convinced that
->>>it
->>>> is non-zero),
+>>>>This is extremely useful in conjunction with seccomp.
+>>>>
+>>>>> WTF pass one bit out of nameidata->flags in a separate argument?
+>>>>> Through the mutual recursion, no less...  And then you are not even
+>>>>attempting
+>>>>> to detect symlinks that are not followed by interpretation of _any_
+>>>>pathname.
+>>>>
+>>>>How many symlinks like that are there?  Is there anything except
+>>>>nd_jump_link users?  All of those are in /proc.  Arguably O_BENEATH
+>>>>should prevent traversal of all of those links.
 >>>
->>>This is extremely useful in conjunction with seccomp.
+>>> Not commenting on the sanity of this one way or another, and I haven't read the patch.  There is an absolutely trivial implementation of this.
 >>>
->>>> WTF pass one bit out of nameidata->flags in a separate argument?
->>>> Through the mutual recursion, no less...  And then you are not even
->>>attempting
->>>> to detect symlinks that are not followed by interpretation of _any_
->>>pathname.
+>>> After the path is resolved, walk backwards along d_parent and the mount tree, and see if you come to the file or directory dfd refers to.
 >>>
->>>How many symlinks like that are there?  Is there anything except
->>>nd_jump_link users?  All of those are in /proc.  Arguably O_BENEATH
->>>should prevent traversal of all of those links.
+>>> That can handle magic proc symlinks, and does not need to disallow .. or / explicitly so it should be much simpler code.
+>>>
+>>> My gut says that if Al says blech when looking at your code it is too complex to give you a security guarantee.
+>>>
+>>> Eric
 >>
->> Not commenting on the sanity of this one way or another, and I haven't read the patch.  There is an absolutely trivial implementation of this.
->>
->> After the path is resolved, walk backwards along d_parent and the mount tree, and see if you come to the file or directory dfd refers to.
->>
->> That can handle magic proc symlinks, and does not need to disallow .. or / explicitly so it should be much simpler code.
->>
->> My gut says that if Al says blech when looking at your code it is too complex to give you a security guarantee.
->>
->> Eric
+>> Well, the 'yecch' was deserved for the unnecessary duplication of the
+>> flags.  Without that, the patch looks much simpler -- I'll send out a v2
+>> with those changes for discussion, and think about your alternative
+>> implementation suggestion (thanks!) separately.
 >
-> Well, the 'yecch' was deserved for the unnecessary duplication of the
-> flags.  Without that, the patch looks much simpler -- I'll send out a v2
-> with those changes for discussion, and think about your alternative
-> implementation suggestion (thanks!) separately.
+> One concern with the "walk upwards and see if you get back where you
+> started" approach -- it will allow use of a symlink that lives outside the
+> original directory, but which points back inside it.  That's going to be
+> slightly surprising behaviour for users, and I worry that there's the
+> potential for unexpected information leakage from it.
+>
+> (BTW, size-wise my initial naive implementation of the walk-upward
+> approach is only marginally smaller than the v2 patch.)
 
-One concern with the "walk upwards and see if you get back where you
-started" approach -- it will allow use of a symlink that lives outside the
-original directory, but which points back inside it.  That's going to be
-slightly surprising behaviour for users, and I worry that there's the
-potential for unexpected information leakage from it.
+It has another problem.  Since we still haven't fixed the eternal
+/proc/PID/fd-doesn't-respect-file-mode issue, you can have a read-only
+fd somewhere and reopen it read-write using O_BENEATH on a different
+fd.
 
-(BTW, size-wise my initial naive implementation of the walk-upward
-approach is only marginally smaller than the v2 patch.)
+For example:
+
+fd 3 points to /sandbox
+/sandbox/blocked has mode 0700 and isn't owned by us
+/sandbox/blocked/foo has mode 0666
+fd 4 points to /sandbox/blocked/foo, O_RDONLY
+
+openat(3, "/proc/self/fd/4", O_RDWR | O_BENEATH) will get a read-write
+descriptor pointing at /sandbox/blocked/foo, which should have been
+impossible.
+
+Also, I really don't like the information leak.  The result of asking
+a server for "/home/victim/compromising-directory/../../www/index.html"
+should not reveal whether compromising-directory exists.
+
+--Andy
