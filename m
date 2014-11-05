@@ -1,83 +1,41 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 00/20] kselftest install target feature
-Date: Tue, 04 Nov 2014 16:45:18 -0700
-Message-ID: <5459650E.6070201@osg.samsung.com>
-References: <cover.1415117102.git.shuahkh@osg.samsung.com> <CAGXu5jK9-TpOF4SFX2bkU2UJMXk-3W+-_we0BTxu4Ga+7bYXSQ@mail.gmail.com>
+From: Cong Wang <xiyou.wangcong@gmail.com>
+Subject: Re: [PATCH] bridge: include in6.h in if_bridge.h for struct in6_addr
+Date: Tue, 4 Nov 2014 16:39:59 -0800
+Message-ID: <CAM_iQpX-V60iTHBz3nFnJkNbEy1JvGkxu_8T1mwYYwd67WxBYA@mail.gmail.com>
+References: <1415128881-30183-1-git-send-email-gregory.0xf0@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jK9-TpOF4SFX2bkU2UJMXk-3W+-_we0BTxu4Ga+7bYXSQ@mail.gmail.com>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Greg KH <gregkh@linuxfoundation.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Marek <mmarek@suse.cz>, "David S. Miller" <davem@davemloft.net>, tranmanphong@gmail.com, David Herrmann <dh.herrmann@gmail.com>, Hugh Dickins <hughd@google.com>, bobby.prani@gmail.com, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, linux-kbuild <linux-kbuild@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1415128881-30183-1-git-send-email-gregory.0xf0@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gregory Fong <gregory.0xf0@gmail.com>
+Cc: Linux Kernel Network Developers <netdev@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, carlos@redhat.com, eblake@redhat.com, Kumar Gala <galak@codeaurora.org>, Florian Fainelli <f.fainelli@gmail.com>, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-On 11/04/2014 12:22 PM, Kees Cook wrote:
-> On Tue, Nov 4, 2014 at 9:10 AM, Shuah Khan <shuahkh@osg.samsung.com> wrote:
->> This patch series adds a new kselftest_install make target
->> to enable selftest install. When make kselftest_install is
->> run, selftests are installed on the system. A new install
->> target is added to selftests Makefile which will install
->> targets for the tests that are specified in INSTALL_TARGETS.
->> During install, a script is generated to run tests that are
->> installed. This script will be installed in the selftest install
->> directory. Individual test Makefiles are changed to add to the
->> script. This will allow new tests to add install and run test
->> commands to the generated kselftest script.
-> 
-> I'm all for making the self tests more available, but I don't think
-> this is the right approach. My primary objection is that it creates a
-> second way to run tests, and that means any changes and additions need
-> to be updated in two places. I'd much rather just maintain the single
-> "make" targets instead. Having "make" available on the target device
-> doesn't seem too bad to me. Is there a reason that doesn't work for
-> your situation?
-
-Kees,
-
-My primary objective is to provide a way to install selftests for a
-specific kernel release. This will allow developers to run tests for
-a specific release and look for regressions. Adding an install target
-will also help support local execution of tests in a virtualized
-environments. In some cases such as qemu, it is not practical to
-expect the target to have support for "make". Once tests are installed
-to be run outside the git environment, we need a master script that
-can run the tests. Hence the need for a master script that can run
-tests.
-
-We have the ability to run all tests via make kselftest target or
-run a specific test using the individual test's run_tests target.
-Both of above are necessary to support running tests from the tree.
-Embedding run_tests logic in the makefiles doesn't work very well
-in the long run.
-
-We also need a way to run them outside tree. I agree with you that
-the way I added the script generation, duplicates the code in individual
-run_tests targets and that changes/updates need to be made in both
-places.
-
-Would you be ok with the approach if I fixed the duplicating
-problem? I can address the duplication concern easily.
-
-> 
-> I would, however, like to see some better standardization of the test
-> "framework" that we've got in there already. (For example, some
-> failures fail the "make", some don't, there are various reporting
-> methods for success/failure depending on the test, etc.)
-
-This is being addressed and I have the framework in linux-kselftest
-git next branch at the moment. I do think the above work is part of
-addressing the larger framework issues such as being able to run tests
-on a target system that might not have "make" support and makes it
-easier to use.
-
-thanks,
--- Shuah
+On Tue, Nov 4, 2014 at 11:21 AM, Gregory Fong <gregory.0xf0@gmail.com> wrote:
+> if_bridge.h uses struct in6_addr ip6, but wasn't including the in6.h
+> header.  Thomas Backlund originally sent a patch to do this, but this
+> revealed a redefinition issue: https://lkml.org/lkml/2013/1/13/116
+>
+> The redefinition issue should have been fixed by the following Linux
+> commits:
+> ee262ad827f89e2dc7851ec2986953b5b125c6bc inet: defines IPPROTO_* needed for module alias generation
+> cfd280c91253cc28e4919e349fa7a813b63e71e8 net: sync some IP headers with glibc
+>
+> and the following glibc commit:
+> 6c82a2f8d7c8e21e39237225c819f182ae438db3 Coordinate IPv6 definitions for Linux and glibc
+>
+> so actually include the header now.
+>
+> Reported-by: Colin Guthrie <colin@mageia.org>
+> Reported-by: Christiaan Welvaart <cjw@daneel.dyndns.org>
+> Reported-by: Thomas Backlund <tmb@mageia.org>
+> Cc: Florian Fainelli <f.fainelli@gmail.com>
+> Cc: Cong Wang <xiyou.wangcong@gmail.com>
+> Cc: David Miller <davem@davemloft.net>
+> Signed-off-by: Gregory Fong <gregory.0xf0@gmail.com>
 
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Acked-by: Cong Wang <xiyou.wangcong@gmail.com>
+
+Thanks for working on it!
