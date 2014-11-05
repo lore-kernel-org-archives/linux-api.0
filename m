@@ -1,71 +1,51 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next v4 0/4] netns: allow to identify peer netns
-Date: Wed, 05 Nov 2014 15:23:00 +0100
-Message-ID: <545A32C4.7070108@6wind.com>
-References: <1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>	<1414682728-4532-1-git-send-email-nicolas.dichtel@6wind.com>	<871tpph03k.fsf@x220.int.ebiederm.org>
-	<54535B00.5090708@6wind.com> <87wq7g831b.fsf@x220.int.ebiederm.org>
-Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
+From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 00/12] Add kdbus implementation
+Date: Wed, 05 Nov 2014 15:34:48 +0100
+Message-ID: <545A3588.2010903@zonque.org>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org> <CALCETrUBegZ4F1sKq3LxUgANX3=syYOrqOp9=F--g9pkVHHgUA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87wq7g831b.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrUBegZ4F1sKq3LxUgANX3=syYOrqOp9=F--g9pkVHHgUA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-TGUgMzEvMTAvMjAxNCAyMDoxNCwgRXJpYyBXLiBCaWVkZXJtYW4gYSDDqWNyaXQgOgo+IE5pY29s
-YXMgRGljaHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JpdGVzOgo+Cj4+IExlIDMw
-LzEwLzIwMTQgMTk6NDEsIEVyaWMgVy4gQmllZGVybWFuIGEgw6ljcml0IDoKPj4+IE5pY29sYXMg
-RGljaHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JpdGVzOgo+Pj4KPj4+PiBUaGUg
-Z29hbCBvZiB0aGlzIHNlcmllIGlzIHRvIGJlIGFibGUgdG8gbXVsdGljYXN0IG5ldGxpbmsgbWVz
-c2FnZXMgd2l0aCBhbgo+Pj4+IGF0dHJpYnV0ZSB0aGF0IGlkZW50aWZ5IGEgcGVlciBuZXRucy4K
-Pj4+PiBUaGlzIGlzIG5lZWRlZCBieSB0aGUgdXNlcmxhbmQgdG8gaW50ZXJwcmV0IHNvbWUgaW5m
-b3JtYXRpb25zIGNvbnRhaW5lZCBpbgo+Pj4+IG5ldGxpbmsgbWVzc2FnZXMgKGxpa2UgSUZMQV9M
-SU5LIHZhbHVlLCBidXQgYWxzbyBzb21lIG90aGVyIGF0dHJpYnV0ZXMgaW4gY2FzZQo+Pj4+IG9m
-IHgtbmV0bnMgbmV0ZGV2aWNlIChzZWUgYWxzbwo+Pj4+IGh0dHA6Ly90aHJlYWQuZ21hbmUub3Jn
-L2dtYW5lLmxpbnV4Lm5ldHdvcmsvMzE1OTMzL2ZvY3VzPTMxNjA2NCBhbmQKPj4+PiBodHRwOi8v
-dGhyZWFkLmdtYW5lLm9yZy9nbWFuZS5saW51eC5rZXJuZWwuY29udGFpbmVycy8yODMwMS9mb2N1
-cz00MjM5KSkuCj4+Pj4KPj4+PiBJZHMgb2YgcGVlciBuZXRucyBhcmUgc2V0IGJ5IHVzZXJsYW5k
-IHZpYSBhIG5ldyBnZW5sIG1lc3NhZ2VzLiBUaGVzZSBpZHMgYXJlCj4+Pj4gc3RvcmVkIHBlciBu
-ZXRucyBhbmQgYXJlIGxvY2FsIChpZSBvbmx5IHZhbGlkIGluIHRoZSBuZXRucyB3aGVyZSB0aGV5
-IGFyZSBzZXQpLgo+Pj4+IFRvIGF2b2lkIGFsbG9jYXRpbmcgYW4gaW50IGZvciBlYWNoIHBlZXIg
-bmV0bnMsIEkgdXNlIGlkcl9mb3JfZWFjaCgpIHRvIHJldHJpZXZlCj4+Pj4gdGhlIGlkIG9mIGEg
-cGVlciBuZXRucy4gTm90ZSB0aGF0IGl0IHdpbGwgYmUgcG9zc2libGUgdG8gYWRkIGEgdGFibGUg
-KHN0cnVjdCBuZXQKPj4+PiAtPiBpZCkgbGF0ZXIgdG8gb3B0aW1pemUgdGhpcyBsb29rdXAgaWYg
-bmVlZGVkLgo+Pj4+Cj4+Pj4gUGF0Y2ggMS80IGludHJvZHVjZXMgdGhlIG5ldGxpbmsgQVBJIG1l
-Y2hhbmlzbSB0byBzZXQgYW5kIGdldCB0aGVzZSBpZHMuCj4+Pj4gUGF0Y2ggMi80IGFuZCAzLzQg
-aW1wbGVtZW50cyBhbiBleGFtcGxlIG9mIGhvdyB0byB1c2UgdGhlc2UgaWRzIGluIHJ0bmV0bGlu
-awo+Pj4+IG1lc3NhZ2VzLiBBbmQgcGF0Y2ggNC80IHNob3dzIHRoYXQgdGhlIG5ldGxpbmsgbWVz
-c2FnZXMgY2FuIGJlIHN5bWV0cmljIGJldHdlZW4KPj4+PiBhIEdFVCBhbmQgYSBTRVQuCj4+Pj4K
-Pj4+PiBpcHJvdXRlMiBwYXRjaGVzIGFyZSBhdmFpbGFibGUsIEkgY2FuIHNlbmQgdGhlbSBvbiBk
-ZW1hbmQuCj4+Pgo+Pj4gQSBxdWljayByZXBseS4gIEkgdGhpbmsgdGhpcyBwYXRjaHNldCBpcyBp
-biB0aGUgcmlnaHQgZ2VuZXJhbCBkaXJlY3Rpb24uCj4+PiBUaGVyZSBhcmUgc29tZSBvZGRiYWxs
-IGRldGFpbHMgdGhhdCBzZWVtIG9kZC9hd2t3YXJkIHRvIG1lIHN1Y2ggYXMgdXNpbmcKPj4+IGdl
-bmV0bGluayBpbnN0ZWFkIG9mIHJ0bmV0bGluayB0byBnZXQgYW5kIHNldCB0aGUgaWRzLCBhbmQg
-bm90IGhhdmluZwo+Pj4gaWRzIGlmIHRoZXkgYXJlIG5vdCBzZXQgKHRoYXQgZmVlbHMgbGlrZSBh
-IG1haW50ZW5hbmNlL3VzYWJpbGl0eSBjaGFsbGVuZ2UpLgo+PiBObyBwcm9ibGVtIHRvIHVzZSBy
-dG5ldGxpbmssIGluIGZhY3QsIEkgaGVzaXRhdGVkLgo+Pgo+PiBGb3IgdGhlIHNlY29uZCBwb2lu
-dCwgSSdtIG5vdCBzdXJlIHRvIGZvbGxvdyB5b3U6IGhvdyB0byBoYXZlIGFuIGlkLCB3aGljaCB3
-aWxsCj4+IG5vdCBicmVhayBtaWdyYXRpb24sIHdpdGhvdXQgYXNraW5nIHRoZSB1c2VyIHRvIHNl
-dCBpdD8KPgo+IFdlIGhhdmUgdGhhdCBzaXR1dGF0aW9uIHdpdGggaWZpbmRleCBhbHJlYWR5LiAg
-QmFzaWNhbGx5IHRoZSB0aG91Z2h0IGlzCj4gdG8gYWxsb3cgYW4gaWQgdG8gYmUgc2V0LCBidXQg
-YWxzbyBhbGxvdyBhbiBpZCB0byBiZSBhdXRvLWdlbmVyYXRlZCBpZgo+IHdlIHVzZSBhbiBuYW1l
-c3BhY2Ugd2l0aG91dCBhbiBpZCBiZWluZyBzZXQuCklmIG15IHVuZGVyc3RhbmRpbmcgaXMgY29y
-cmVjdCwgdGhlIGRpZmZlcmVuY2UgaXMgdGhhdCB3ZSB3YW50IHRvIGhpZGUgc29tZQpuZXRucy4K
-RG8geW91IHRoaW5rIHdlIGNhbiBnZW5lcmF0ZSBhbiBpZCBmb3IgZWFjaCBuZXRucyB0aGF0IGRv
-ZXMgbm90IGhhdmUgb25lIGFuZApyZWx5aW5nIG9uIHRoZSBmYWN0IHRoYXQgdGhpcyBpZCBoYXMg
-bm8gbWVhbmluZyB1bmxlc3MgeW91IGhhdmUgYSBuZXRucyBmaWxlCmRlc2NyaXB0b3IgdGhhdCBh
-bGxvdyB5b3UgdG8gZ2V0IHRoZSBpZCBvZiB0aGlzIG5ldG5zPwoKClJlZ2FyZHMsCk5pY29sYXMK
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KQ29udGFpbmVy
-cyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZwpodHRw
-czovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWluZXJz
+On 10/29/2014 11:19 PM, Andy Lutomirski wrote:
+> I think that each piece of trustable metadata needs to be explicitly
+> opted-in to by the sender at the time of capture.  Otherwise you're
+> asking for lots of information leaks and privilege escalations.  This
+> is especially important given that some of the items in the current
+> list could be rather sensitive.
+
+Alright, the above seems to pretty much sum up that end of our
+discussion. To address this, We've now added the following functionality
+for v2:
+
+ * The attach_flags in kdbus_cmd_hello was split into two parts,
+   attach_flags_send and attach_flags_recv, so each peer may chose what
+   exactly it want to transmit or receive.
+
+ * Metadata will only be attached to the final message in the
+   receiver's pool if both the sender's attach_flags_send and the
+   receiver's attach_flags_recv bit are set.
+
+ * Consequently, the existing KDBUS_ITEM_ATTACH_FLAGS item type is
+   split into KDBUS_ITEM_ATTACH_FLAGS_SEND and
+   KDBUS_ITEM_ATTACH_FLAGS_RECV, so that both connection details can be
+   separately updated through KDBUS_CMD_CONN_UPDATE.
+
+ * To allow for use cases that require certain metadata to be attached
+   on each message, we've added a negotiation mechanism to the HELLO
+   ioctl: An optional metadata mask can be passed during the creation
+   of buses, so bus owners may require certain bits in
+   attach_flags_send to be set. That way, the creator of the bus will
+   specify which metadata is required to fulfill the requirements of
+   the specification of the role of the bus.
+
+
+Thanks again for your input!
+
+Daniel
