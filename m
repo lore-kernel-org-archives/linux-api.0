@@ -1,105 +1,69 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: Early comments on kdbus v2 (Re: [PATCH 00/12] Add kdbus implementation)
-Date: Wed, 5 Nov 2014 09:13:43 -0800
-Message-ID: <CALCETrW8b0LrBOYGgpMD4rRHAoamgAHfn4hymTZazpWpi7XZUQ@mail.gmail.com>
-References: <CALCETrVJHFzyjOjUhAjzsknm1VVnUcDU2i=Ymhpmy8q1Pef8PQ@mail.gmail.com>
- <545A581D.9040706@collabora.co.uk>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCH 1/3] fs: add O_BENEATH flag to openat(2)
+Date: Wed, 5 Nov 2014 17:21:48 +0000
+Message-ID: <CAHse=S8ZmYLkOb9hmOMPkvHabqXH1sCUBTJWVO-++PMJXES=sg@mail.gmail.com>
+References: <1415015305-15494-1-git-send-email-drysdale@google.com>
+ <1415015305-15494-2-git-send-email-drysdale@google.com> <20141103152036.GA7996@ZenIV.linux.org.uk>
+ <CALCETrWmivJCvAAZPQo9Jf5gDiSbpWKesjZWfqEQRXPOBSPY9g@mail.gmail.com>
+ <d0973f4d-e8a4-4c5c-8bd1-1b1cb1f080b5@email.android.com> <CAHse=S-d3beytm2AKyBjZORdJPffmjfa2Ua1VCU8VjoRE9RiYQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <545A581D.9040706-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Simon McVittie <simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, "alban.crequy" <alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Javier Martinez Canillas <javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAHse=S-d3beytm2AKyBjZORdJPffmjfa2Ua1VCU8VjoRE9RiYQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W.Biederman" <ebiederm@xmission.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Meredydd Luff <meredydd@senatehouse.org>, Will Drewry <wad@chromium.org>, Jorge Lucangeli Obes <jorgelo@google.com>, Ricky Zhou <rickyz@google.com>, Lee Campbell <leecam@google.com>, Julien Tinnes <jln@google.com>, Mike Depinet <mdepinet@google.com>, James Morris <james.l.morris@oracle.com>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 5, 2014 at 9:02 AM, Simon McVittie
-<simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org> wrote:
-> On 05/11/14 15:56, Andy Lutomirski wrote:
->>  - I tend to think that pid and tid should be separate.  They're
->> really their own thing, and, as noted in all the perfectly valid
->> dislike directed at SO_PEERCRED, they have extremely limited value.
+On Tue, Nov 4, 2014 at 9:40 AM, David Drysdale <drysdale@google.com> wrote:
+> On Mon, Nov 3, 2014 at 5:22 PM, Eric W.Biederman <ebiederm@xmission.com> wrote:
+>> On November 3, 2014 7:42:58 AM PST, Andy Lutomirski <luto@amacapital.net> wrote:
+>>>On Mon, Nov 3, 2014 at 7:20 AM, Al Viro <viro@zeniv.linux.org.uk>
+>>>wrote:
+>>>> On Mon, Nov 03, 2014 at 11:48:23AM +0000, David Drysdale wrote:
+>>>>> Add a new O_BENEATH flag for openat(2) which restricts the
+>>>>> provided path, rejecting (with -EACCES) paths that are not beneath
+>>>>> the provided dfd.  In particular, reject:
+>>>>>  - paths that contain .. components
+>>>>>  - paths that begin with /
+>>>>>  - symlinks that have paths as above.
+>>>>
+>>>> Yecch...  The degree of usefulness aside (and I'm not convinced that
+>>>it
+>>>> is non-zero),
+>>>
+>>>This is extremely useful in conjunction with seccomp.
+>>>
+>>>> WTF pass one bit out of nameidata->flags in a separate argument?
+>>>> Through the mutual recursion, no less...  And then you are not even
+>>>attempting
+>>>> to detect symlinks that are not followed by interpretation of _any_
+>>>pathname.
+>>>
+>>>How many symlinks like that are there?  Is there anything except
+>>>nd_jump_link users?  All of those are in /proc.  Arguably O_BENEATH
+>>>should prevent traversal of all of those links.
+>>
+>> Not commenting on the sanity of this one way or another, and I haven't read the patch.  There is an absolutely trivial implementation of this.
+>>
+>> After the path is resolved, walk backwards along d_parent and the mount tree, and see if you come to the file or directory dfd refers to.
+>>
+>> That can handle magic proc symlinks, and does not need to disallow .. or / explicitly so it should be much simpler code.
+>>
+>> My gut says that if Al says blech when looking at your code it is too complex to give you a security guarantee.
+>>
+>> Eric
 >
-> Traditional D-Bus has GetConnectionUnixProcessID(), which is used by
-> several applications:
-> <http://codesearch.debian.net/search?q=GetConnectionUnixProcessID>,
-> <http://codesearch.debian.net/search?q=servicePid> (the latter is the Qt
-> binding).
->
-> I don't know what those applications use it for, or whether they're
-> doing it safely. CVE-2013-4288, CVE-2014-5033 seem potentially relevant.
->
-> In the same way that kernel people don't want to break userland, I don't
-> want to break existing D-Bus users; it would be a shame if kdbus omits
-> things that would let it replace traditional D-Bus.
+> Well, the 'yecch' was deserved for the unnecessary duplication of the
+> flags.  Without that, the patch looks much simpler -- I'll send out a v2
+> with those changes for discussion, and think about your alternative
+> implementation suggestion (thanks!) separately.
 
-That's why I suggested separating it, not removing it.  If it were
-separate, then short-lived processes (like dbus-send, perhaps, in a
-mode where it doesn't wait for a reply) would just skip sending it,
-because the recipient can't use it in a reliable manner.
+One concern with the "walk upwards and see if you get back where you
+started" approach -- it will allow use of a symlink that lives outside the
+original directory, but which points back inside it.  That's going to be
+slightly surprising behaviour for users, and I worry that there's the
+potential for unexpected information leakage from it.
 
-Although, TBH, it might be better to just return -1 from
-GetConnectionUnixProcessID when kdbus is being used, since anything
-that breaks might be breaking because it's vulnerable...
-
->
->>  - starttime should have a justification or be removed.
->
-> I think its justification is "detect pid reuse", although AIUI it
-> doesn't detect pid "reuse" via exec().
-
-Ugh.  I really don't think the kernel should add a new feature to make
-a broken, racy concept slightly less racy.  I'm fully in favor of
-making it completely non-racy, but this isn't the way to do it.
-(Also, anything that actually relies on this is unlikely to survive
-checkpoint/restore.)
-
->
->>  - KDBUS_ATTACH_AUXGROUPS: I'm not sure what to think about this.  I
->> feel like it's only useful for implementing strange types of policies.
->
-> I think the intention is that it enables things like "processes with
-> group netdev may tell NetworkManager to reconfigure networking".
-> Traditional D-Bus half-supports this, but interacts poorly with things
-> like pam_groups that assign groups to processes, not uids.
-
-That's what I guessed, too.  I'm not sure whether I like it.
-
->
->>  - KDBUS_ATTACH_SECLABEL: The docs talk about selinux.  What does this
->> even mean on a non-selinux system?
->
-> As far as I understand it, sockets have a generic mechanism for storing
-> one arbitrary security label alongside the uid, and the active LSM gets
-> to define its syntax and what it means. This is the equivalent of that.
-
-The UNIX socket credential mechanism is not a good role model, and
-"something else does this too" is not a sufficient justification for
-new code.  I want to make sure that someone actually understands what
-this thing does and whether it's a good idea.
-
-Unfortunately, I suspect that most or all kdbus developers either
-don't use LSMs at all or use selinux, which means that may not be
-anyone who has considered the big picture here.
-
-[...]
-
->
->> Otherwise we'll end up with two
->> separate selinux policy databases -- the normal one and whatever dbus
->> tries to do
->
-> Traditional D-Bus already has this problem: dbus-daemon has to work out
-> "what would SELinux do?" in userland, including the decision whether to
-> enforce or just complain, and do the same. My understanding is that one
-> of the more minor upsides of doing (this part of) D-Bus in the kernel is
-> that it would remove that intermediary, moving the security decisions to
-> a location where LSMs can allow/deny things directly.
-
-I absolutely agree.  It seems that the logical conclusion is that the
-security label should *not* be passed to userspace, then -- once LSMs
-can make decisions directly, userspace should let them make those
-decisions and consider only the result of the decision, not the labels
-that influenced the decision.
-
---Andy
+(BTW, size-wise my initial naive implementation of the walk-upward
+approach is only marginally smaller than the v2 patch.)
