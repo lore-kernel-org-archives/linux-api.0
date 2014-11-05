@@ -1,51 +1,74 @@
-From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 00/12] Add kdbus implementation
-Date: Wed, 05 Nov 2014 15:34:48 +0100
-Message-ID: <545A3588.2010903@zonque.org>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org> <CALCETrUBegZ4F1sKq3LxUgANX3=syYOrqOp9=F--g9pkVHHgUA@mail.gmail.com>
+From: Daniel Borkmann <dborkman@redhat.com>
+Subject: Re: [PATCH net-next 1/7] bpf: add 'flags' attribute to BPF_MAP_UPDATE_ELEM
+ command
+Date: Wed, 05 Nov 2014 15:57:16 +0100
+Message-ID: <545A3ACC.3080101@redhat.com>
+References: <1415069656-14138-1-git-send-email-ast@plumgrid.com> <1415069656-14138-2-git-send-email-ast@plumgrid.com> <54589B89.5000309@redhat.com> <CAMEtUuy5gJbeLqiSr1=SiNQ7WyqocUVV-siwhEnpBVqmzYzzCQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUBegZ4F1sKq3LxUgANX3=syYOrqOp9=F--g9pkVHHgUA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Ryan Lortie <desrt-0xnayjDhYQY@public.gmane.org>, Bastien Nocera <hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAMEtUuy5gJbeLqiSr1=SiNQ7WyqocUVV-siwhEnpBVqmzYzzCQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/29/2014 11:19 PM, Andy Lutomirski wrote:
-> I think that each piece of trustable metadata needs to be explicitly
-> opted-in to by the sender at the time of capture.  Otherwise you're
-> asking for lots of information leaks and privilege escalations.  This
-> is especially important given that some of the items in the current
-> list could be rather sensitive.
+On 11/05/2014 12:04 AM, Alexei Starovoitov wrote:
+> On Tue, Nov 4, 2014 at 1:25 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
+>> On 11/04/2014 03:54 AM, Alexei Starovoitov wrote:
+>>>
+>>> the current meaning of BPF_MAP_UPDATE_ELEM syscall command is:
+>>> either update existing map element or create a new one.
+>>> Initially the plan was to add a new command to handle the case of
+>>> 'create new element if it didn't exist', but 'flags' style looks
+>>> cleaner and overall diff is much smaller (more code reused), so add 'flags'
+>>> attribute to BPF_MAP_UPDATE_ELEM command with the following meaning:
+>>> enum {
+>>>     BPF_MAP_UPDATE_OR_CREATE = 0, /* add new element or update existing */
+>>>     BPF_MAP_CREATE_ONLY,          /* add new element if it didn't exist */
+>>>     BPF_MAP_UPDATE_ONLY           /* update existing element */
+>>> };
+>>
+>>  From you commit message/code I currently don't see an explanation why
+>> it cannot be done in typical ``flags style'' as various syscalls do,
+>> i.e. BPF_MAP_UPDATE_OR_CREATE rather represented as ...
+>>
+>>    BPF_MAP_CREATE | BPF_MAP_UPDATE
+>>
+>> Do you expect more than 64 different flags to be passed from user space
+>> for BPF_MAP?
+>
+> several reasons:
+> - preserve flags==0 as default behavior
+> - avoid holes and extra checks for invalid combinations, so
+>    if (flags > BPF_MAP_UPDATE_ONLY) goto err, is enough.
+> - it looks much neater when user space uses
+>    BPF_MAP_UPDATE_OR_CREATE instead of ORing bits.
+>
+> Note this choice doesn't prevent adding bit-like flags
+> in the future. Today I cannot think of any new flags
+> for the update() command, but if somebody comes up with
+> a new selector that can apply to all three combinations,
+> we can add it as 3rd bit that can be ORed.
 
-Alright, the above seems to pretty much sum up that end of our
-discussion. To address this, We've now added the following functionality
-for v2:
+Hm, mixing enums together with bitfield-like flags seems
+kind of hacky ... :/ Or, do you mean to say you're adding
+a 2nd flag field, i.e. splitting the 64bits into a 32bit
+``cmd enum'' and 32bit ``flag section''?
 
- * The attach_flags in kdbus_cmd_hello was split into two parts,
-   attach_flags_send and attach_flags_recv, so each peer may chose what
-   exactly it want to transmit or receive.
+I see the point with flags == 0 as default behavior though,
+but at this point in time we won't get burnt by it since
+the API is not yet in a usable state and defaults to be
+compiled-out.
 
- * Metadata will only be attached to the final message in the
-   receiver's pool if both the sender's attach_flags_send and the
-   receiver's attach_flags_recv bit are set.
+> Default will stay zero and 'if >' check in older
+> kernels will seamlessly work with new userspace.
+> I don't like holes in flags and combinatorial
+> explosion of bits and checks for them unless
+> absolutely necessary.
 
- * Consequently, the existing KDBUS_ITEM_ATTACH_FLAGS item type is
-   split into KDBUS_ITEM_ATTACH_FLAGS_SEND and
-   KDBUS_ITEM_ATTACH_FLAGS_RECV, so that both connection details can be
-   separately updated through KDBUS_CMD_CONN_UPDATE.
-
- * To allow for use cases that require certain metadata to be attached
-   on each message, we've added a negotiation mechanism to the HELLO
-   ioctl: An optional metadata mask can be passed during the creation
-   of buses, so bus owners may require certain bits in
-   attach_flags_send to be set. That way, the creator of the bus will
-   specify which metadata is required to fulfill the requirements of
-   the specification of the role of the bus.
-
-
-Thanks again for your input!
-
-Daniel
+Hm, my concern is that we start to add many *_OR_* enum
+elements once we find that a flag might be a useful in
+combination with many other flags ... even though if we
+only can think of 3 flags /right now/.
