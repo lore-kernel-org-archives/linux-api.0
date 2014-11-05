@@ -1,74 +1,58 @@
-From: Daniel Borkmann <dborkman@redhat.com>
-Subject: Re: [PATCH net-next 1/7] bpf: add 'flags' attribute to BPF_MAP_UPDATE_ELEM
- command
-Date: Wed, 05 Nov 2014 15:57:16 +0100
-Message-ID: <545A3ACC.3080101@redhat.com>
-References: <1415069656-14138-1-git-send-email-ast@plumgrid.com> <1415069656-14138-2-git-send-email-ast@plumgrid.com> <54589B89.5000309@redhat.com> <CAMEtUuy5gJbeLqiSr1=SiNQ7WyqocUVV-siwhEnpBVqmzYzzCQ@mail.gmail.com>
+From: Sakari Ailus <sakari.ailus@iki.fi>
+Subject: Re: [PATCH 02/15] [media] v4l: Update subdev-formats doc with new
+ MEDIA_BUS_FMT values
+Date: Wed, 5 Nov 2014 16:57:27 +0200
+Message-ID: <20141105145726.GR3136@valkosipuli.retiisi.org.uk>
+References: <1415094910-15899-1-git-send-email-boris.brezillon@free-electrons.com>
+ <1415094910-15899-3-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMEtUuy5gJbeLqiSr1=SiNQ7WyqocUVV-siwhEnpBVqmzYzzCQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1415094910-15899-3-git-send-email-boris.brezillon@free-electrons.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, devel@driverdev.osuosl.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
 List-Id: linux-api@vger.kernel.org
 
-On 11/05/2014 12:04 AM, Alexei Starovoitov wrote:
-> On Tue, Nov 4, 2014 at 1:25 AM, Daniel Borkmann <dborkman@redhat.com> wrote:
->> On 11/04/2014 03:54 AM, Alexei Starovoitov wrote:
->>>
->>> the current meaning of BPF_MAP_UPDATE_ELEM syscall command is:
->>> either update existing map element or create a new one.
->>> Initially the plan was to add a new command to handle the case of
->>> 'create new element if it didn't exist', but 'flags' style looks
->>> cleaner and overall diff is much smaller (more code reused), so add 'flags'
->>> attribute to BPF_MAP_UPDATE_ELEM command with the following meaning:
->>> enum {
->>>     BPF_MAP_UPDATE_OR_CREATE = 0, /* add new element or update existing */
->>>     BPF_MAP_CREATE_ONLY,          /* add new element if it didn't exist */
->>>     BPF_MAP_UPDATE_ONLY           /* update existing element */
->>> };
->>
->>  From you commit message/code I currently don't see an explanation why
->> it cannot be done in typical ``flags style'' as various syscalls do,
->> i.e. BPF_MAP_UPDATE_OR_CREATE rather represented as ...
->>
->>    BPF_MAP_CREATE | BPF_MAP_UPDATE
->>
->> Do you expect more than 64 different flags to be passed from user space
->> for BPF_MAP?
->
-> several reasons:
-> - preserve flags==0 as default behavior
-> - avoid holes and extra checks for invalid combinations, so
->    if (flags > BPF_MAP_UPDATE_ONLY) goto err, is enough.
-> - it looks much neater when user space uses
->    BPF_MAP_UPDATE_OR_CREATE instead of ORing bits.
->
-> Note this choice doesn't prevent adding bit-like flags
-> in the future. Today I cannot think of any new flags
-> for the update() command, but if somebody comes up with
-> a new selector that can apply to all three combinations,
-> we can add it as 3rd bit that can be ORed.
+Hi Boris,
 
-Hm, mixing enums together with bitfield-like flags seems
-kind of hacky ... :/ Or, do you mean to say you're adding
-a 2nd flag field, i.e. splitting the 64bits into a 32bit
-``cmd enum'' and 32bit ``flag section''?
+On Tue, Nov 04, 2014 at 10:54:57AM +0100, Boris Brezillon wrote:
+> In order to have subsytem agnostic media bus format definitions we've
+> moved media bus definition to include/uapi/linux/media-bus-format.h and
+> prefixed enum values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
+> 
+> Update the v4l documentation accordingly.
+> 
+> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+> ---
+>  Documentation/DocBook/media/Makefile               |   2 +-
+>  Documentation/DocBook/media/v4l/subdev-formats.xml | 308 ++++++++++-----------
+>  include/uapi/linux/v4l2-mediabus.h                 |   2 +
+>  3 files changed, 157 insertions(+), 155 deletions(-)
+> 
 
-I see the point with flags == 0 as default behavior though,
-but at this point in time we won't get burnt by it since
-the API is not yet in a usable state and defaults to be
-compiled-out.
+...
 
-> Default will stay zero and 'if >' check in older
-> kernels will seamlessly work with new userspace.
-> I don't like holes in flags and combinatorial
-> explosion of bits and checks for them unless
-> absolutely necessary.
+> diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
+> index f471064..9fbe891 100644
+> --- a/include/uapi/linux/v4l2-mediabus.h
+> +++ b/include/uapi/linux/v4l2-mediabus.h
+> @@ -32,6 +32,8 @@ enum v4l2_mbus_pixelcode {
+>  	MEDIA_BUS_TO_V4L2_MBUS(RGB888_2X12_BE),
+>  	MEDIA_BUS_TO_V4L2_MBUS(RGB888_2X12_LE),
+>  	MEDIA_BUS_TO_V4L2_MBUS(ARGB8888_1X32),
+> +	MEDIA_BUS_TO_V4L2_MBUS(RGB444_1X12),
+> +	MEDIA_BUS_TO_V4L2_MBUS(RGB565_1X16),
 
-Hm, my concern is that we start to add many *_OR_* enum
-elements once we find that a flag might be a useful in
-combination with many other flags ... even though if we
-only can think of 3 flags /right now/.
+Shouldn't this to go to a separate patch?
+
+>  
+>  	MEDIA_BUS_TO_V4L2_MBUS(Y8_1X8),
+>  	MEDIA_BUS_TO_V4L2_MBUS(UV8_1X8),
+
+-- 
+Kind regards,
+
+Sakari Ailus
+e-mail: sakari.ailus@iki.fi	XMPP: sailus@retiisi.org.uk
