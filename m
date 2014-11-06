@@ -1,110 +1,90 @@
-From: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [RFC PATCH 0/1] arm64: Fix /proc/cpuinfo
-Date: Thu, 6 Nov 2014 16:43:12 +0000
-Message-ID: <20141106164311.GD19702@e104818-lin.cambridge.arm.com>
-References: <1414159000-27059-1-git-send-email-mark.rutland@arm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <cross-distro-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1414159000-27059-1-git-send-email-mark.rutland-5wv7dgnIgG8@public.gmane.org>
-List-Unsubscribe: <http://lists.linaro.org/mailman/options/cross-distro>,
- <mailto:cross-distro-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/cross-distro>
-List-Post: <mailto:cross-distro-cunTk1MwBs8s++Sfvej+rw@public.gmane.org>
-List-Help: <mailto:cross-distro-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linaro.org/mailman/listinfo/cross-distro>,
- <mailto:cross-distro-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=subscribe>
-Errors-To: cross-distro-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
-Sender: cross-distro-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
-To: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>
-Cc: "cross-distro-cunTk1MwBs8s++Sfvej+rw@public.gmane.org" <cross-distro-cunTk1MwBs8s++Sfvej+rw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Serban Constantinescu <Serban.Constantinescu-5wv7dgnIgG8@public.gmane.org>, Will Deacon <Will.Deacon-5wv7dgnIgG8@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org" <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+From: Pawel Moll <pawel.moll@arm.com>
+Subject: [PATCH v4 0/3] perf: User/kernel time correlation and event generation
+Date: Thu,  6 Nov 2014 16:51:55 +0000
+Message-ID: <1415292718-19785-1-git-send-email-pawel.moll@arm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Christopher Covington <cov@codeaurora.org>, Namhyung Kim <namhyung@kernel.org>, David Ahern <dsahern@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Tomeu Vizoso <tomeu@tomeuvizoso.net>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 24, 2014 at 02:56:39PM +0100, Mark Rutland wrote:
-> Currently, the arm64 /proc/cpuinfo format differs from that of arm, in a
-> manner which prevents some otherwise portable applications from
-> functioning as expected. Specifically, the "Features" line describes the
-> 64-bit hwcaps exclusive of the 32-bit hwcaps, which causes issues for
-> certain applications which attempt to parse /proc/cpuinfo to detect
-> features rather than directly using the hwcaps exposed via auxval.
-> 
-> Additionally, the arm64 /proc/cpuinfo format only provides identifying
-> information for a single CPU (unlike 32-bit), which is problematic for
-> systems with heterogeneous CPUs (i.e. big.LITTLE).
-> 
-> This patch attempts to solve both issues.
+This is a second version of the post-LPC series. The changes are limited
+to the first patch, adding a backward-compatibility kernel parameter.
 
-I'm perfectly fine with the heterogeneous CPUs part.
+The v3 cover letter:
 
-> I believe the contentious part
-> is what to do with the Features line, and for that there are a number of
-> possibilities:
-> 
-> [a] Only print the 64-bit hwcaps
-> 
->     This would match our current behaviour. However certain 32-bit
->     applications will not detect CPU features correctly, and could fail
->     to launch. The appropriate hwcaps are available in auxval, but this
->     will not be of help to existing binaries.
-> 
-> [b] Append the 64-bit and 32-bit hwcaps
-> 
->     This would allow for a consistent format. However, some
->     human-readable hwcap names have been reused for analogous
->     instruction set features (e.g. "aes") despite 32-bit and 64-bit
->     instruction set support being largely unrelated per the
->     architecture. This could lead to applications mis-detecting
->     instruction set support on some CPUs in future, and may be
->     misleading to a casual reader.
+I've organised a session on the subject during the tracing minisummit
+at LPC 2014 in Dusseldorf. Notes taken from the discussion taken by
+Steven Rostedt (thanks Steve!)
 
-The only overlap between 32 and 64-bit is aes, pmull, sha1, sha2, crc32.
-An ARMv8 CPU implementing both AArch32 and AArch64 will likely support
-these extensions in both modes. However, "likely" is not enough and we
-need to get some confirmation from the architecture people. If that's
-the case, point [b] is not too bad.
+http://www.linuxplumbersconf.org/2014/wp-content/uploads/2014/10/LPC2014_Tracing.txt
 
-> [c] Print different hwcaps for compat tasks
-> 
->     This would allow for 32-bit and 64-bit applications to function
->     correctly. Having the format differ depending on the instruction set
->     of the application reading /proc/cpuinfo may be misleading in some
->     cases (e.g. a human using a 32-bit cat to read /proc/cpuinfo on a
->     64-bit system).
+The following three patches address three main topics. They are pretty
+much orthogonal and (subject to small and obvious modifications) could
+be applied independently from each other.
 
-Long time ago we decided that "uname -m" would report "aarch64"
-independent of whether it is compat or not. That's the case for x86 as
-well, you need PER_LINUX32 to report the actual compat UTS name.
+An executive summary of both discussion and the patches:
 
-> [d] Print different hwcaps dependent on the personality.
-> 
->     This would allow for 32-bit and 64-bit applications to function
->     correctly, but for some 32-bit applications the personality would
->     need to be set explicitly by the user.
+1. User/kernel perf timestamps correlation
 
-Which makes this option actually in line with the uname -m behaviour. My
-vote goes for [d] with option [b] as a close alternative.
+Thomas suggested that, instead of jumping through loops of correlation,
+perf should simply generate monotonic clock timestamps, instead of
+using sched clock. Peter and I pointed out that Ingo didn't like this
+idea as monotonic can be slow, but apparently the cases when it is are
+irrelevant. Thomas offered to fly to Budapest to physically convince
+Ingo - I hope it won't be necessary and he will be able to achieve
+this here, on mailing lists :-)
 
-> [1] arm, v3.17, Versatile Express A15x2 A7x3 coretile
-> Features        : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm 
-[...]
-> [2] arm64, v3.17, Juno platform
-> Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 
+Setting aside potential performance problems, it would be a really
+great solution, unifying all trace systems (perf, ftrace and LTTng)
+in this respect. I'm more than happy to work on potential improvements
+in the are of monotonic clock if it was to help the cause.
 
-As an exercise, I'm trying to see what option [b] would look like when
-CONFIG_COMPAT is enabled:
+If it is a definite no-go, we still have the third patch, allowing post-
+capture correlation based on synchronisation events.
 
-Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+2. User event generation
 
-The duplicate strings would only be listed once (evtstrm, aes, pmull,
-sha1, sha2, crc32). New AArch64 features that we may expect to be
-optional on AArch32 could be prefixed with "a64". If they are missing
-entirely from AArch32, (like asimd), no need for the prefix.
+Everyone present agreed that it would be a very-nice-to-have feature.
+There was some discussion about implementation details, so I welcome
+feedback and comments regarding my take on the matter.
 
-The advantage is that we don't need to check the personality but we have
-to assume that scripts would not search for substrings (sane people
-shouldn't do this anyway as the Features string can always be extended).
+3. Correlation with external timestamps
+
+This is a new issue, which surfaced recently while I was working on
+hardware trace infrastructure. It can timestamp trace packets, but is
+using yet another, completely different time source to do this.
+
+Thomas suggested solution which gets down to my original proposal for
+sched/monotonic clock correlation - an additional sample type so events
+can be "double stamped" using different clock sources providing
+synchronisation points for later time approximation. I've just extended
+the implementation with configuration value to select the clock source.
+If the first patch (making perf timestamps monotonic) gets accepted,
+there will be no immediate need for this one, but I'd like to gain some
+feedback anyway.
+
+
+That's all for this series. Previous versions:
+
+- RFC: http://www.spinics.net/lists/kernel/msg1824419.html
+- v1: http://thread.gmane.org/gmane.linux.kernel/1790231
+- v2: http://thread.gmane.org/gmane.linux.kernel/1793272
+- v3: http://thread.gmane.org/gmane.linux.kernel.api/5681
+
+
+Pawel Moll (3):
+  perf: Use monotonic clock as a source for timestamps
+  perf: Userspace event
+  perf: Sample additional clock value
+
+ Documentation/kernel-parameters.txt |   9 +++
+ include/linux/perf_event.h          |   6 ++
+ include/uapi/linux/perf_event.h     |  37 +++++++++-
+ include/uapi/linux/prctl.h          |  10 +++
+ kernel/events/core.c                | 138 ++++++++++++++++++++++++++++++++++++
+ kernel/sys.c                        |   5 ++
+ 6 files changed, 203 insertions(+), 2 deletions(-)
 
 -- 
-Catalin
+2.1.0
