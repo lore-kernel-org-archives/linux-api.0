@@ -1,7 +1,7 @@
 From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH v2 07/10] [media] usb: Make use of media_bus_format enum
-Date: Thu,  6 Nov 2014 10:57:05 +0100
-Message-ID: <1415267829-4177-8-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v2 09/10] gpu: ipu-v3: Make use of media_bus_format enum
+Date: Thu,  6 Nov 2014 10:57:07 +0100
+Message-ID: <1415267829-4177-10-git-send-email-boris.brezillon@free-electrons.com>
 References: <1415267829-4177-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,90 +25,133 @@ In order to have subsytem agnostic media bus format definitions we've
 moved media bus definition to include/uapi/linux/media-bus-format.h and
 prefixed enum values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
 
-Reference new definitions in all usb drivers.
+Reference new definitions in the ipu-v3 driver.
 
 Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
 ---
- drivers/media/usb/cx231xx/cx231xx-417.c   | 2 +-
- drivers/media/usb/cx231xx/cx231xx-video.c | 4 ++--
- drivers/media/usb/em28xx/em28xx-camera.c  | 2 +-
- drivers/media/usb/go7007/go7007-v4l2.c    | 2 +-
- drivers/media/usb/pvrusb2/pvrusb2-hdw.c   | 2 +-
- 5 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/gpu/ipu-v3/ipu-csi.c | 66 ++++++++++++++++++++++----------------------
+ 1 file changed, 33 insertions(+), 33 deletions(-)
 
-diff --git a/drivers/media/usb/cx231xx/cx231xx-417.c b/drivers/media/usb/cx231xx/cx231xx-417.c
-index 459bb0e..95653ba 100644
---- a/drivers/media/usb/cx231xx/cx231xx-417.c
-+++ b/drivers/media/usb/cx231xx/cx231xx-417.c
-@@ -1878,7 +1878,7 @@ static int cx231xx_s_video_encoding(struct cx2341x_handler *cxhdl, u32 val)
- 	/* fix videodecoder resolution */
- 	fmt.width = cxhdl->width / (is_mpeg1 ? 2 : 1);
- 	fmt.height = cxhdl->height;
--	fmt.code = V4L2_MBUS_FMT_FIXED;
-+	fmt.code = MEDIA_BUS_FMT_FIXED;
- 	v4l2_subdev_call(dev->sd_cx25840, video, s_mbus_fmt, &fmt);
- 	return 0;
- }
-diff --git a/drivers/media/usb/cx231xx/cx231xx-video.c b/drivers/media/usb/cx231xx/cx231xx-video.c
-index 3b3ada6..989d527 100644
---- a/drivers/media/usb/cx231xx/cx231xx-video.c
-+++ b/drivers/media/usb/cx231xx/cx231xx-video.c
-@@ -967,7 +967,7 @@ static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
- 	dev->height = f->fmt.pix.height;
- 	dev->format = fmt;
- 
--	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
-+	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
- 	call_all(dev, video, s_mbus_fmt, &mbus_fmt);
- 	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
- 
-@@ -1012,7 +1012,7 @@ static int vidioc_s_std(struct file *file, void *priv, v4l2_std_id norm)
- 	   resolution (since a standard change effects things like the number
- 	   of lines in VACT, etc) */
- 	memset(&mbus_fmt, 0, sizeof(mbus_fmt));
--	mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
-+	mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
- 	mbus_fmt.width = dev->width;
- 	mbus_fmt.height = dev->height;
- 	call_all(dev, video, s_mbus_fmt, &mbus_fmt);
-diff --git a/drivers/media/usb/em28xx/em28xx-camera.c b/drivers/media/usb/em28xx/em28xx-camera.c
-index 6d2ea9a..38cf6c8 100644
---- a/drivers/media/usb/em28xx/em28xx-camera.c
-+++ b/drivers/media/usb/em28xx/em28xx-camera.c
-@@ -430,7 +430,7 @@ int em28xx_init_camera(struct em28xx *dev)
- 			break;
- 		}
- 
--		fmt.code = V4L2_MBUS_FMT_YUYV8_2X8;
-+		fmt.code = MEDIA_BUS_FMT_YUYV8_2X8;
- 		fmt.width = 640;
- 		fmt.height = 480;
- 		v4l2_subdev_call(subdev, video, s_mbus_fmt, &fmt);
-diff --git a/drivers/media/usb/go7007/go7007-v4l2.c b/drivers/media/usb/go7007/go7007-v4l2.c
-index ec799b4..d6bf982 100644
---- a/drivers/media/usb/go7007/go7007-v4l2.c
-+++ b/drivers/media/usb/go7007/go7007-v4l2.c
-@@ -252,7 +252,7 @@ static int set_capture_size(struct go7007 *go, struct v4l2_format *fmt, int try)
- 	if (go->board_info->sensor_flags & GO7007_SENSOR_SCALING) {
- 		struct v4l2_mbus_framefmt mbus_fmt;
- 
--		mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
-+		mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
- 		mbus_fmt.width = fmt ? fmt->fmt.pix.width : width;
- 		mbus_fmt.height = height;
- 		go->encoder_h_halve = 0;
-diff --git a/drivers/media/usb/pvrusb2/pvrusb2-hdw.c b/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
-index 9623b62..2fd9b5e 100644
---- a/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
-+++ b/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
-@@ -2966,7 +2966,7 @@ static void pvr2_subdev_update(struct pvr2_hdw *hdw)
- 		memset(&fmt, 0, sizeof(fmt));
- 		fmt.width = hdw->res_hor_val;
- 		fmt.height = hdw->res_ver_val;
--		fmt.code = V4L2_MBUS_FMT_FIXED;
-+		fmt.code = MEDIA_BUS_FMT_FIXED;
- 		pvr2_trace(PVR2_TRACE_CHIPS, "subdev v4l2 set_size(%dx%d)",
- 			   fmt.width, fmt.height);
- 		v4l2_device_call_all(&hdw->v4l2_dev, 0, video, s_mbus_fmt, &fmt);
+diff --git a/drivers/gpu/ipu-v3/ipu-csi.c b/drivers/gpu/ipu-v3/ipu-csi.c
+index d6f56471..752cdd2 100644
+--- a/drivers/gpu/ipu-v3/ipu-csi.c
++++ b/drivers/gpu/ipu-v3/ipu-csi.c
+@@ -227,83 +227,83 @@ static int ipu_csi_set_testgen_mclk(struct ipu_csi *csi, u32 pixel_clk,
+ static int mbus_code_to_bus_cfg(struct ipu_csi_bus_config *cfg, u32 mbus_code)
+ {
+ 	switch (mbus_code) {
+-	case V4L2_MBUS_FMT_BGR565_2X8_BE:
+-	case V4L2_MBUS_FMT_BGR565_2X8_LE:
+-	case V4L2_MBUS_FMT_RGB565_2X8_BE:
+-	case V4L2_MBUS_FMT_RGB565_2X8_LE:
++	case MEDIA_BUS_FMT_BGR565_2X8_BE:
++	case MEDIA_BUS_FMT_BGR565_2X8_LE:
++	case MEDIA_BUS_FMT_RGB565_2X8_BE:
++	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_RGB565;
+ 		cfg->mipi_dt = MIPI_DT_RGB565;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_RGB444_2X8_PADHI_BE:
+-	case V4L2_MBUS_FMT_RGB444_2X8_PADHI_LE:
++	case MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE:
++	case MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_RGB444;
+ 		cfg->mipi_dt = MIPI_DT_RGB444;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_RGB555_2X8_PADHI_BE:
+-	case V4L2_MBUS_FMT_RGB555_2X8_PADHI_LE:
++	case MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE:
++	case MEDIA_BUS_FMT_RGB555_2X8_PADHI_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_RGB555;
+ 		cfg->mipi_dt = MIPI_DT_RGB555;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_UYVY8_2X8:
++	case MEDIA_BUS_FMT_UYVY8_2X8:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_UYVY;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_YUYV8_2X8:
++	case MEDIA_BUS_FMT_YUYV8_2X8:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_YUYV;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_UYVY8_1X16:
++	case MEDIA_BUS_FMT_UYVY8_1X16:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_UYVY;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_16;
+ 		break;
+-	case V4L2_MBUS_FMT_YUYV8_1X16:
++	case MEDIA_BUS_FMT_YUYV8_1X16:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_YUYV;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_16;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR8_1X8:
+-	case V4L2_MBUS_FMT_SGBRG8_1X8:
+-	case V4L2_MBUS_FMT_SGRBG8_1X8:
+-	case V4L2_MBUS_FMT_SRGGB8_1X8:
++	case MEDIA_BUS_FMT_SBGGR8_1X8:
++	case MEDIA_BUS_FMT_SGBRG8_1X8:
++	case MEDIA_BUS_FMT_SGRBG8_1X8:
++	case MEDIA_BUS_FMT_SRGGB8_1X8:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW8;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SGBRG10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SGRBG10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SRGGB10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_BE:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_LE:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_BE:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_LE:
++	case MEDIA_BUS_FMT_SBGGR10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SGBRG10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SRGGB10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_BE:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_LE:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADLO_BE:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADLO_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW10;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR10_1X10:
+-	case V4L2_MBUS_FMT_SGBRG10_1X10:
+-	case V4L2_MBUS_FMT_SGRBG10_1X10:
+-	case V4L2_MBUS_FMT_SRGGB10_1X10:
++	case MEDIA_BUS_FMT_SBGGR10_1X10:
++	case MEDIA_BUS_FMT_SGBRG10_1X10:
++	case MEDIA_BUS_FMT_SGRBG10_1X10:
++	case MEDIA_BUS_FMT_SRGGB10_1X10:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW10;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_10;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR12_1X12:
+-	case V4L2_MBUS_FMT_SGBRG12_1X12:
+-	case V4L2_MBUS_FMT_SGRBG12_1X12:
+-	case V4L2_MBUS_FMT_SRGGB12_1X12:
++	case MEDIA_BUS_FMT_SBGGR12_1X12:
++	case MEDIA_BUS_FMT_SGBRG12_1X12:
++	case MEDIA_BUS_FMT_SGRBG12_1X12:
++	case MEDIA_BUS_FMT_SRGGB12_1X12:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW12;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_12;
+ 		break;
+-	case V4L2_MBUS_FMT_JPEG_1X8:
++	case MEDIA_BUS_FMT_JPEG_1X8:
+ 		/* TODO */
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_JPEG;
+ 		cfg->mipi_dt = MIPI_DT_RAW8;
 -- 
 1.9.1
