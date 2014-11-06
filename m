@@ -1,11 +1,14 @@
 From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH RESEND v3 0/4] power/mfd: Add max77693 charger driver
-Date: Thu, 06 Nov 2014 16:11:56 +0100
-Message-ID: <1415286720-6358-1-git-send-email-k.kozlowski@samsung.com>
+Subject: [PATCH RESEND v3 4/4] Documentation: power: max77693-charger: Document
+ exported sysfs entry
+Date: Thu, 06 Nov 2014 16:12:00 +0100
+Message-ID: <1415286720-6358-5-git-send-email-k.kozlowski@samsung.com>
+References: <1415286720-6358-1-git-send-email-k.kozlowski@samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-reply-to: <1415286720-6358-1-git-send-email-k.kozlowski@samsung.com>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
  <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
 List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
@@ -19,60 +22,66 @@ To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmai
 Cc: Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Tomasz Figa <tomasz.figa@gmail.com>, Kyungmin Park <kyungmin.park@samsung.com>, linux-arm-kernel@lists.infradead.org, Marek Szyprowski <m.szyprowski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
+Document the settings exported by max77693 charger driver through sysfs
+entries:
+ - fast_charge_timer
+ - top_off_threshold_current
+ - top_off_timer
 
-Hi,
+Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+---
+ Documentation/ABI/testing/sysfs-class-power | 42 +++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-
-I got ack from Sebastian [1] but only for charger driver patch. This
-means that I still need an ack for documentation (bindings, sysfs)...
-
-
-Changes since v2
-================
-1. Add ack from Sebastian Reichel (charger driver).
-2. Drop patch "mfd: max77693: Map charger device to its own of_node"
-   (applied by Lee Jones).
-
-
-Changes since v1
-================
-1. Add patch 2/5: mfd: max77693: Map charger device to its own of_node
-   (forgot to send it in v1)
-2. Remove patches for DTS and configs. I'll send them later.
-3. Add ack from Lee Jones (patch 3/5).
-
-
-Description
-===========
-The patchset adds max77693 charger driver present on Trats2 board
-(and Galaxy S III). The driver configures battery charger and exposes
-power supply interface.
-
-Driver is necessary to provide full charging stack on Trats2 device
-(extcon, charger-manager etc.).
-
-[1] https://lkml.org/lkml/2014/10/27/774
-
-
-Best regards,
-Krzysztof
-
-
-Krzysztof Kozlowski (4):
-  devicetree: power/mfd: max77693: Document new bindings for charger
-  mfd: max77693: Add defines for MAX77693 charger driver
-  power: max77693: Add charger driver for Maxim 77693
-  Documentation: power: max77693-charger: Document exported sysfs entry
-
- Documentation/ABI/testing/sysfs-class-power        |  42 ++
- Documentation/devicetree/bindings/mfd/max77693.txt |  45 ++
- drivers/power/Kconfig                              |   6 +
- drivers/power/Makefile                             |   1 +
- drivers/power/max77693_charger.c                   | 763 +++++++++++++++++++++
- include/linux/mfd/max77693-private.h               | 108 +++
- include/linux/mfd/max77693.h                       |   8 +
- 7 files changed, 973 insertions(+)
- create mode 100644 drivers/power/max77693_charger.c
-
+diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
+index 909e7602c717..369d2a2d7d3e 100644
+--- a/Documentation/ABI/testing/sysfs-class-power
++++ b/Documentation/ABI/testing/sysfs-class-power
+@@ -32,3 +32,45 @@ Description:
+ 		Valid values:
+ 		- 5, 6 or 7 (hours),
+ 		- 0: disabled.
++
++What:		/sys/class/power_supply/max77693-charger/device/fast_charge_timer
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the maximum time the max77693
++		charger operates in fast-charge mode. When the timer expires
++		the device will terminate fast-charge mode (charging current
++		will drop to 0 A) and will trigger interrupt.
++
++		Valid values:
++		- 4 - 16 (hours), step by 2 (rounded down)
++		- 0: disabled.
++
++What:		/sys/class/power_supply/max77693-charger/device/top_off_threshold_current
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the charging current threshold for
++		entering top-off charging mode. When charging current in fast
++		charge mode drops below this value, the charger will trigger
++		interrupt and start top-off charging mode.
++
++		Valid values:
++		- 100000 - 200000 (microamps), step by 25000 (rounded down)
++		- 200000 - 350000 (microamps), step by 50000 (rounded down)
++		- 0: disabled.
++
++What:		/sys/class/power_supply/max77693-charger/device/top_off_timer
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the maximum time the max77693
++		charger operates in top-off charge mode. When the timer expires
++		the device will terminate top-off charge mode (charging current
++		will drop to 0 A) and will trigger interrupt.
++
++		Valid values:
++		- 0 - 70 (minutes), step by 10 (rounded down)
 -- 
 1.9.1
