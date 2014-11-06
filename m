@@ -1,589 +1,343 @@
-From: David Drysdale <drysdale@google.com>
-Subject: [PATCHv6 1/3] syscalls,x86: implement execveat() system call
-Date: Thu,  6 Nov 2014 16:07:11 +0000
-Message-ID: <1415290033-15771-2-git-send-email-drysdale@google.com>
-References: <1415290033-15771-1-git-send-email-drysdale@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1415290033-15771-1-git-send-email-drysdale@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
+From: Milosz Tanski <milosz@adfin.com>
+Subject: Re: [Linux-NTFS-Dev] [PATCH v5 6/7] fs: pass iocb to generic_write_sync
+Date: Thu, 6 Nov 2014 11:14:30 -0500
+Message-ID: <CANP1eJGeEOvLjy_pBKjjobYY1xja9Z4KfvmYfLK3KnswVZdaTA@mail.gmail.com>
+References: <cover.1415220890.git.milosz@adfin.com>
+	<5d53ede333de7cade713190e2b93e2dbadefa260.1415220890.git.milosz@adfin.com>
+	<C2D0BFF1-14C7-47C0-A24D-0F54809EF5D0@cam.ac.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <C2D0BFF1-14C7-47C0-A24D-0F54809EF5D0@cam.ac.uk>
+Sender: owner-linux-aio@kvack.org
+To: Anton Altaparmakov <aia21@cam.ac.uk>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, "linux-aio@kvack.org" <linux-aio@kvack.org>, Volker Lendecke <Volker.Lendecke@sernet.de>, Theodore Ts'o <tytso@mit.edu>, linux-xfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, Linux API <linux-api@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, cluster-devel@redhat.com, Mel Gorman <mgorman@suse.de>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-ext4@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-btrfs@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-Add a new execveat(2) system call. execveat() is to execve() as
-openat() is to open(): it takes a file descriptor that refers to a
-directory, and resolves the filename relative to that.
+On Thu, Nov 6, 2014 at 5:52 AM, Anton Altaparmakov <aia21@cam.ac.uk> wrote:
+> Hi,
+>
+>> On 5 Nov 2014, at 23:14, Milosz Tanski <milosz@adfin.com> wrote:
+>>
+>> From: Christoph Hellwig <hch@lst.de>
+>>
+>> Clean up the generic_write_sync by just passing an iocb and a bytes
+>> written / negative errno argument.  In addition to simplifying the
+>> callers this also prepares for passing a per-operation O_DSYNC
+>> flag.  Two callers didn't quite fit that scheme:
+>>
+>> - dio_complete didn't both to update ki_pos as we don't need it
+>>   on a iocb that is about to be freed, so we had to add it. Additionally
+>>   it also synced out written data in the error case, which has been
+>>   changed to operate like the other callers.
+>> - gfs2 also used generic_write_sync to implement a crude version
+>>   of fallocate.  It has been switched to use an open coded variant
+>>   instead.
+>>
+>> Signed-off-by: Christoph Hellwig <hch@lst.de>
+>> ---
+>> fs/block_dev.c     |  8 +-------
+>> fs/btrfs/file.c    |  7 ++-----
+>> fs/cifs/file.c     |  8 +-------
+>> fs/direct-io.c     |  8 ++------
+>> fs/ext4/file.c     |  8 +-------
+>> fs/gfs2/file.c     |  9 +++++++--
+>> fs/ntfs/file.c     |  8 ++------
+>> fs/udf/file.c      | 11 ++---------
+>> fs/xfs/xfs_file.c  |  8 +-------
+>> include/linux/fs.h |  8 +-------
+>> mm/filemap.c       | 30 ++++++++++++++++++++----------
+>> 11 files changed, 40 insertions(+), 73 deletions(-)
+>>
+>> diff --git a/fs/block_dev.c b/fs/block_dev.c
+>> index cc9d411..c529b1c 100644
+>> --- a/fs/block_dev.c
+>> +++ b/fs/block_dev.c
+>> @@ -1568,18 +1568,12 @@ static long block_ioctl(struct file *file, unsigned cmd, unsigned long arg)
+>>  */
+>> ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>> {
+>> -     struct file *file = iocb->ki_filp;
+>>       struct blk_plug plug;
+>>       ssize_t ret;
+>>
+>>       blk_start_plug(&plug);
+>>       ret = __generic_file_write_iter(iocb, from);
+>> -     if (ret > 0) {
+>> -             ssize_t err;
+>> -             err = generic_write_sync(file, iocb->ki_pos - ret, ret);
+>> -             if (err < 0)
+>> -                     ret = err;
+>> -     }
+>> +     ret = generic_write_sync(iocb, ret);
+>>       blk_finish_plug(&plug);
+>>       return ret;
+>> }
+>> diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+>> index a18ceab..4f4a6f7 100644
+>> --- a/fs/btrfs/file.c
+>> +++ b/fs/btrfs/file.c
+>> @@ -1820,11 +1820,8 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
+>>        */
+>>       BTRFS_I(inode)->last_trans = root->fs_info->generation + 1;
+>>       BTRFS_I(inode)->last_sub_trans = root->log_transid;
+>> -     if (num_written > 0) {
+>> -             err = generic_write_sync(file, pos, num_written);
+>> -             if (err < 0)
+>> -                     num_written = err;
+>> -     }
+>> +
+>> +     num_written = generic_write_sync(iocb, num_written);
+>>
+>>       if (sync)
+>>               atomic_dec(&BTRFS_I(inode)->sync_writers);
+>> diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+>> index c485afa..32359de 100644
+>> --- a/fs/cifs/file.c
+>> +++ b/fs/cifs/file.c
+>> @@ -2706,13 +2706,7 @@ cifs_writev(struct kiocb *iocb, struct iov_iter *from)
+>>               rc = __generic_file_write_iter(iocb, from);
+>>               mutex_unlock(&inode->i_mutex);
+>>
+>> -             if (rc > 0) {
+>> -                     ssize_t err;
+>> -
+>> -                     err = generic_write_sync(file, iocb->ki_pos - rc, rc);
+>> -                     if (err < 0)
+>> -                             rc = err;
+>> -             }
+>> +             rc = generic_write_sync(iocb, rc);
+>>       } else {
+>>               mutex_unlock(&inode->i_mutex);
+>>       }
+>> diff --git a/fs/direct-io.c b/fs/direct-io.c
+>> index e181b6b..b72ac83 100644
+>> --- a/fs/direct-io.c
+>> +++ b/fs/direct-io.c
+>> @@ -257,12 +257,8 @@ static ssize_t dio_complete(struct dio *dio, loff_t offset, ssize_t ret,
+>>       inode_dio_done(dio->inode);
+>>       if (is_async) {
+>>               if (dio->rw & WRITE) {
+>> -                     int err;
+>> -
+>> -                     err = generic_write_sync(dio->iocb->ki_filp, offset,
+>> -                                              transferred);
+>> -                     if (err < 0 && ret > 0)
+>> -                             ret = err;
+>> +                     dio->iocb->ki_pos = offset + transferred;
+>> +                     ret = generic_write_sync(dio->iocb, ret);
+>>               }
+>>
+>>               aio_complete(dio->iocb, ret, 0);
+>> diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+>> index aca7b24..79b000c 100644
+>> --- a/fs/ext4/file.c
+>> +++ b/fs/ext4/file.c
+>> @@ -175,13 +175,7 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>>       ret = __generic_file_write_iter(iocb, from);
+>>       mutex_unlock(&inode->i_mutex);
+>>
+>> -     if (ret > 0) {
+>> -             ssize_t err;
+>> -
+>> -             err = generic_write_sync(file, iocb->ki_pos - ret, ret);
+>> -             if (err < 0)
+>> -                     ret = err;
+>> -     }
+>> +     ret = generic_write_sync(iocb, ret);
+>>       if (o_direct)
+>>               blk_finish_plug(&plug);
+>>
+>> diff --git a/fs/gfs2/file.c b/fs/gfs2/file.c
+>> index 80dd44d..3fafeca 100644
+>> --- a/fs/gfs2/file.c
+>> +++ b/fs/gfs2/file.c
+>> @@ -895,8 +895,13 @@ retry:
+>>               gfs2_quota_unlock(ip);
+>>       }
+>>
+>> -     if (error == 0)
+>> -             error = generic_write_sync(file, pos, count);
+>> +     if (error)
+>> +             goto out_unlock;
+>> +
+>> +     if ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host)) {
+>> +             error = vfs_fsync_range(file, pos, pos + count - 1,
+>> +                            (file->f_flags & __O_SYNC) ? 0 : 1);
+>> +     }
+>>       goto out_unlock;
+>>
+>> out_trans_fail:
+>> diff --git a/fs/ntfs/file.c b/fs/ntfs/file.c
+>> index 643faa4..4f3d664 100644
+>> --- a/fs/ntfs/file.c
+>> +++ b/fs/ntfs/file.c
+>> @@ -2127,12 +2127,8 @@ static ssize_t ntfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
+>>       mutex_lock(&inode->i_mutex);
+>>       ret = ntfs_file_aio_write_nolock(iocb, iov, nr_segs, &iocb->ki_pos);
+>>       mutex_unlock(&inode->i_mutex);
+>> -     if (ret > 0) {
+>> -             int err = generic_write_sync(file, iocb->ki_pos - ret, ret);
+>> -             if (err < 0)
+>> -                     ret = err;
+>> -     }
+>> -     return ret;
+>> +
+>> +     return generic_write_sync(iocb, ret);
+>> }
+>>
+>> /**
+>> diff --git a/fs/udf/file.c b/fs/udf/file.c
+>> index bb15771..1cdabd0 100644
+>> --- a/fs/udf/file.c
+>> +++ b/fs/udf/file.c
+>> @@ -155,16 +155,9 @@ static ssize_t udf_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>>       retval = __generic_file_write_iter(iocb, from);
+>>       mutex_unlock(&inode->i_mutex);
+>>
+>> -     if (retval > 0) {
+>> -             ssize_t err;
+>> -
+>> +     if (retval > 0)
+>>               mark_inode_dirty(inode);
+>> -             err = generic_write_sync(file, iocb->ki_pos - retval, retval);
+>> -             if (err < 0)
+>> -                     retval = err;
+>> -     }
+>> -
+>> -     return retval;
+>> +     return generic_write_sync(iocb, retval);
+>> }
+>>
+>> long udf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>> diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+>> index 0655915..a8cab66 100644
+>> --- a/fs/xfs/xfs_file.c
+>> +++ b/fs/xfs/xfs_file.c
+>> @@ -792,14 +792,8 @@ xfs_file_write_iter(
+>>               ret = xfs_file_buffered_aio_write(iocb, from);
+>>
+>>       if (ret > 0) {
+>> -             ssize_t err;
+>> -
+>>               XFS_STATS_ADD(xs_write_bytes, ret);
+>> -
+>> -             /* Handle various SYNC-type writes */
+>> -             err = generic_write_sync(file, iocb->ki_pos - ret, ret);
+>> -             if (err < 0)
+>> -                     ret = err;
+>> +             ret = generic_write_sync(iocb, ret);
+>>       }
+>>       return ret;
+>> }
+>> diff --git a/include/linux/fs.h b/include/linux/fs.h
+>> index eaebd99..7d0e116 100644
+>> --- a/include/linux/fs.h
+>> +++ b/include/linux/fs.h
+>> @@ -2242,13 +2242,7 @@ extern int filemap_fdatawrite_range(struct address_space *mapping,
+>> extern int vfs_fsync_range(struct file *file, loff_t start, loff_t end,
+>>                          int datasync);
+>> extern int vfs_fsync(struct file *file, int datasync);
+>> -static inline int generic_write_sync(struct file *file, loff_t pos, loff_t count)
+>> -{
+>> -     if (!(file->f_flags & O_DSYNC) && !IS_SYNC(file->f_mapping->host))
+>> -             return 0;
+>> -     return vfs_fsync_range(file, pos, pos + count - 1,
+>> -                            (file->f_flags & __O_SYNC) ? 0 : 1);
+>> -}
+>> +extern int generic_write_sync(struct kiocb *iocb, loff_t count);
+>> extern void emergency_sync(void);
+>> extern void emergency_remount(void);
+>> #ifdef CONFIG_BLOCK
+>> diff --git a/mm/filemap.c b/mm/filemap.c
+>> index 09d3af3..6107058 100644
+>> --- a/mm/filemap.c
+>> +++ b/mm/filemap.c
+>> @@ -2664,6 +2664,24 @@ out:
+>> }
+>> EXPORT_SYMBOL(__generic_file_write_iter);
+>>
+>> +int generic_write_sync(struct kiocb *iocb, loff_t count)
+>> +{
+>> +     struct file *file = iocb->ki_filp;
+>> +
+>> +     if (count > 0 &&
+>> +         ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host))) {
+>> +             bool fdatasync = !(file->f_flags & __O_SYNC);
+>> +             ssize_t ret = 0;
+>
+> That "= 0" is pointless.  "ret" is overwritten unconditionally on the following line...
 
-In addition, if the filename is empty and AT_EMPTY_PATH is specified,
-execveat() executes the file to which the file descriptor refers. This
-replicates the functionality of fexecve(), which is a system call in
-other UNIXen, but in Linux glibc it depends on opening
-"/proc/self/fd/<fd>" (and so relies on /proc being mounted).
+I have fixed this change; it will be in the next patch series / pull
+request. The branch for the pull is at:
+https://bitbucket.org/adfin/linux-fs.git  read_call_6
 
-The filename fed to the executed program as argv[0] (or the name of the
-script fed to a script interpreter) will be of the form "/dev/fd/<fd>"
-(for an empty filename) or "/dev/fd/<fd>/<filename>", effectively
-reflecting how the executable was found.  This does however mean that
-execution of a script in a /proc-less environment won't work; also,
-script execution via an O_CLOEXEC file descriptor fails (as the file
-will not be accessible after exec).
+>
+> Other than that the NTFS bits are:
+>
+> Acked-by: Anton Altaparmakov <anton@tuxera.com>
+>
+> Best regards,
+>
+>         Anton
+>
+>> +
+>> +             ret = vfs_fsync_range(file, iocb->ki_pos - count,
+>> +                             iocb->ki_pos - 1, fdatasync);
+>> +             if (ret < 0)
+>> +                     return ret;
+>> +     }
+>> +     return count;
+>> +}
+>> +EXPORT_SYMBOL(generic_write_sync);
+>> +
+>> /**
+>>  * generic_file_write_iter - write data to a file
+>>  * @iocb:     IO state structure
+>> @@ -2675,22 +2693,14 @@ EXPORT_SYMBOL(__generic_file_write_iter);
+>>  */
+>> ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>> {
+>> -     struct file *file = iocb->ki_filp;
+>> -     struct inode *inode = file->f_mapping->host;
+>> +     struct inode *inode = iocb->ki_filp->f_mapping->host;
+>>       ssize_t ret;
+>>
+>>       mutex_lock(&inode->i_mutex);
+>>       ret = __generic_file_write_iter(iocb, from);
+>>       mutex_unlock(&inode->i_mutex);
+>>
+>> -     if (ret > 0) {
+>> -             ssize_t err;
+>> -
+>> -             err = generic_write_sync(file, iocb->ki_pos - ret, ret);
+>> -             if (err < 0)
+>> -                     ret = err;
+>> -     }
+>> -     return ret;
+>> +     return generic_write_sync(iocb, ret);
+>> }
+>> EXPORT_SYMBOL(generic_file_write_iter);
+>
+> --
+> Anton Altaparmakov <aia21 at cam.ac.uk> (replace at with @)
+> University of Cambridge Information Services, Roger Needham Building
+> 7 JJ Thomson Avenue, Cambridge, CB3 0RB, UK
+>
 
-Only x86-64, i386 and x32 ABIs are supported in this patch.
 
-Based on patches by Meredydd Luff <meredydd@senatehouse.org>
 
-Signed-off-by: David Drysdale <drysdale@google.com>
----
- arch/x86/ia32/audit.c             |   1 +
- arch/x86/ia32/ia32entry.S         |   1 +
- arch/x86/kernel/audit_64.c        |   1 +
- arch/x86/kernel/entry_64.S        |  28 ++++++++++
- arch/x86/syscalls/syscall_32.tbl  |   1 +
- arch/x86/syscalls/syscall_64.tbl  |   2 +
- arch/x86/um/sys_call_table_64.c   |   1 +
- fs/binfmt_em86.c                  |   4 ++
- fs/binfmt_misc.c                  |   4 ++
- fs/binfmt_script.c                |  10 ++++
- fs/exec.c                         | 115 +++++++++++++++++++++++++++++++++-----
- fs/namei.c                        |   8 ++-
- include/linux/binfmts.h           |   4 ++
- include/linux/compat.h            |   3 +
- include/linux/fs.h                |   1 +
- include/linux/namei.h             |   1 +
- include/linux/sched.h             |   4 ++
- include/linux/syscalls.h          |   4 ++
- include/uapi/asm-generic/unistd.h |   4 +-
- kernel/sys_ni.c                   |   3 +
- lib/audit.c                       |   3 +
- 21 files changed, 188 insertions(+), 15 deletions(-)
-
-diff --git a/arch/x86/ia32/audit.c b/arch/x86/ia32/audit.c
-index 5d7b381da692..2eccc8932ae6 100644
---- a/arch/x86/ia32/audit.c
-+++ b/arch/x86/ia32/audit.c
-@@ -35,6 +35,7 @@ int ia32_classify_syscall(unsigned syscall)
- 	case __NR_socketcall:
- 		return 4;
- 	case __NR_execve:
-+	case __NR_execveat:
- 		return 5;
- 	default:
- 		return 1;
-diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
-index 4299eb05023c..2516c09743e0 100644
---- a/arch/x86/ia32/ia32entry.S
-+++ b/arch/x86/ia32/ia32entry.S
-@@ -464,6 +464,7 @@ GLOBAL(\label)
- 	PTREGSCALL stub32_rt_sigreturn, sys32_rt_sigreturn
- 	PTREGSCALL stub32_sigreturn, sys32_sigreturn
- 	PTREGSCALL stub32_execve, compat_sys_execve
-+	PTREGSCALL stub32_execveat, compat_sys_execveat
- 	PTREGSCALL stub32_fork, sys_fork
- 	PTREGSCALL stub32_vfork, sys_vfork
- 
-diff --git a/arch/x86/kernel/audit_64.c b/arch/x86/kernel/audit_64.c
-index 06d3e5a14d9d..f3672508b249 100644
---- a/arch/x86/kernel/audit_64.c
-+++ b/arch/x86/kernel/audit_64.c
-@@ -50,6 +50,7 @@ int audit_classify_syscall(int abi, unsigned syscall)
- 	case __NR_openat:
- 		return 3;
- 	case __NR_execve:
-+	case __NR_execveat:
- 		return 5;
- 	default:
- 		return 0;
-diff --git a/arch/x86/kernel/entry_64.S b/arch/x86/kernel/entry_64.S
-index 2fac1343a90b..00c4526e6ffe 100644
---- a/arch/x86/kernel/entry_64.S
-+++ b/arch/x86/kernel/entry_64.S
-@@ -665,6 +665,20 @@ ENTRY(stub_execve)
- 	CFI_ENDPROC
- END(stub_execve)
- 
-+ENTRY(stub_execveat)
-+	CFI_STARTPROC
-+	addq $8, %rsp
-+	PARTIAL_FRAME 0
-+	SAVE_REST
-+	FIXUP_TOP_OF_STACK %r11
-+	call sys_execveat
-+	RESTORE_TOP_OF_STACK %r11
-+	movq %rax,RAX(%rsp)
-+	RESTORE_REST
-+	jmp int_ret_from_sys_call
-+	CFI_ENDPROC
-+END(stub_execveat)
-+
- /*
-  * sigreturn is special because it needs to restore all registers on return.
-  * This cannot be done with SYSRET, so use the IRET return path instead.
-@@ -710,6 +724,20 @@ ENTRY(stub_x32_execve)
- 	CFI_ENDPROC
- END(stub_x32_execve)
- 
-+ENTRY(stub_x32_execveat)
-+	CFI_STARTPROC
-+	addq $8, %rsp
-+	PARTIAL_FRAME 0
-+	SAVE_REST
-+	FIXUP_TOP_OF_STACK %r11
-+	call compat_sys_execveat
-+	RESTORE_TOP_OF_STACK %r11
-+	movq %rax,RAX(%rsp)
-+	RESTORE_REST
-+	jmp int_ret_from_sys_call
-+	CFI_ENDPROC
-+END(stub_x32_execveat)
-+
- #endif
- 
- /*
-diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-index 028b78168d85..2633e3195455 100644
---- a/arch/x86/syscalls/syscall_32.tbl
-+++ b/arch/x86/syscalls/syscall_32.tbl
-@@ -363,3 +363,4 @@
- 354	i386	seccomp			sys_seccomp
- 355	i386	getrandom		sys_getrandom
- 356	i386	memfd_create		sys_memfd_create
-+357	i386	execveat		sys_execveat			stub32_execveat
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index 35dd922727b9..1af5badd159c 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -327,6 +327,7 @@
- 318	common	getrandom		sys_getrandom
- 319	common	memfd_create		sys_memfd_create
- 320	common	kexec_file_load		sys_kexec_file_load
-+321	64	execveat		stub_execveat
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-@@ -365,3 +366,4 @@
- 542	x32	getsockopt		compat_sys_getsockopt
- 543	x32	io_setup		compat_sys_io_setup
- 544	x32	io_submit		compat_sys_io_submit
-+545	x32	execveat		stub_x32_execveat
-diff --git a/arch/x86/um/sys_call_table_64.c b/arch/x86/um/sys_call_table_64.c
-index f2f0723070ca..20c3649d0691 100644
---- a/arch/x86/um/sys_call_table_64.c
-+++ b/arch/x86/um/sys_call_table_64.c
-@@ -31,6 +31,7 @@
- #define stub_fork sys_fork
- #define stub_vfork sys_vfork
- #define stub_execve sys_execve
-+#define stub_execveat sys_execveat
- #define stub_rt_sigreturn sys_rt_sigreturn
- 
- #define __SYSCALL_COMMON(nr, sym, compat) __SYSCALL_64(nr, sym, compat)
-diff --git a/fs/binfmt_em86.c b/fs/binfmt_em86.c
-index f37b08cea1f7..490538536cb4 100644
---- a/fs/binfmt_em86.c
-+++ b/fs/binfmt_em86.c
-@@ -42,6 +42,10 @@ static int load_em86(struct linux_binprm *bprm)
- 			return -ENOEXEC;
- 	}
- 
-+	/* Need to be able to load the file after exec */
-+	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
-+		return -ENOENT;
-+
- 	allow_write_access(bprm->file);
- 	fput(bprm->file);
- 	bprm->file = NULL;
-diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
-index b60500300dd7..e659f5562356 100644
---- a/fs/binfmt_misc.c
-+++ b/fs/binfmt_misc.c
-@@ -127,6 +127,10 @@ static int load_misc_binary(struct linux_binprm *bprm)
- 	if (!fmt)
- 		goto _ret;
- 
-+	/* Need to be able to load the file after exec */
-+	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
-+		return -ENOENT;
-+
- 	if (!(fmt->flags & MISC_FMT_PRESERVE_ARGV0)) {
- 		retval = remove_arg_zero(bprm);
- 		if (retval)
-diff --git a/fs/binfmt_script.c b/fs/binfmt_script.c
-index 5027a3e14922..afdf4e3cafc2 100644
---- a/fs/binfmt_script.c
-+++ b/fs/binfmt_script.c
-@@ -24,6 +24,16 @@ static int load_script(struct linux_binprm *bprm)
- 
- 	if ((bprm->buf[0] != '#') || (bprm->buf[1] != '!'))
- 		return -ENOEXEC;
-+
-+	/*
-+	 * If the script filename will be inaccessible after exec, typically
-+	 * because it is a "/dev/fd/<fd>/.." path against an O_CLOEXEC fd, give
-+	 * up now (on the assumption that the interpreter will want to load
-+	 * this file).
-+	 */
-+	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
-+		return -ENOENT;
-+
- 	/*
- 	 * This section does the #! interpretation.
- 	 * Sorta complicated, but hopefully it will work.  -TYT
-diff --git a/fs/exec.c b/fs/exec.c
-index a2b42a98c743..800d232c17bb 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -747,18 +747,26 @@ EXPORT_SYMBOL(setup_arg_pages);
- 
- #endif /* CONFIG_MMU */
- 
--static struct file *do_open_exec(struct filename *name)
-+static struct file *do_open_execat(int fd, struct filename *name, int flags)
- {
- 	struct file *file;
- 	int err;
--	static const struct open_flags open_exec_flags = {
-+	struct open_flags open_exec_flags = {
- 		.open_flag = O_LARGEFILE | O_RDONLY | __FMODE_EXEC,
- 		.acc_mode = MAY_EXEC | MAY_OPEN,
- 		.intent = LOOKUP_OPEN,
- 		.lookup_flags = LOOKUP_FOLLOW,
- 	};
- 
--	file = do_filp_open(AT_FDCWD, name, &open_exec_flags);
-+	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
-+		return ERR_PTR(-EINVAL);
-+	if (flags & AT_SYMLINK_NOFOLLOW)
-+		open_exec_flags.lookup_flags &= ~LOOKUP_FOLLOW;
-+	if (flags & AT_EMPTY_PATH)
-+		open_exec_flags.lookup_flags |= (LOOKUP_EMPTY |
-+						 LOOKUP_EMPTY_NOPATH);
-+
-+	file = do_filp_open(fd, name, &open_exec_flags);
- 	if (IS_ERR(file))
- 		goto out;
- 
-@@ -769,12 +777,13 @@ static struct file *do_open_exec(struct filename *name)
- 	if (file->f_path.mnt->mnt_flags & MNT_NOEXEC)
- 		goto exit;
- 
--	fsnotify_open(file);
--
- 	err = deny_write_access(file);
- 	if (err)
- 		goto exit;
- 
-+	if (name->name[0] != '\0')
-+		fsnotify_open(file);
-+
- out:
- 	return file;
- 
-@@ -786,7 +795,7 @@ exit:
- struct file *open_exec(const char *name)
- {
- 	struct filename tmp = { .name = name };
--	return do_open_exec(&tmp);
-+	return do_open_execat(AT_FDCWD, &tmp, 0);
- }
- EXPORT_SYMBOL(open_exec);
- 
-@@ -1422,10 +1431,12 @@ static int exec_binprm(struct linux_binprm *bprm)
- /*
-  * sys_execve() executes a new program.
-  */
--static int do_execve_common(struct filename *filename,
--				struct user_arg_ptr argv,
--				struct user_arg_ptr envp)
-+static int do_execveat_common(int fd, struct filename *filename,
-+			      struct user_arg_ptr argv,
-+			      struct user_arg_ptr envp,
-+			      int flags)
- {
-+	char *pathbuf = NULL;
- 	struct linux_binprm *bprm;
- 	struct file *file;
- 	struct files_struct *displaced;
-@@ -1466,7 +1477,7 @@ static int do_execve_common(struct filename *filename,
- 	check_unsafe_exec(bprm);
- 	current->in_execve = 1;
- 
--	file = do_open_exec(filename);
-+	file = do_open_execat(fd, filename, flags);
- 	retval = PTR_ERR(file);
- 	if (IS_ERR(file))
- 		goto out_unmark;
-@@ -1474,7 +1485,30 @@ static int do_execve_common(struct filename *filename,
- 	sched_exec();
- 
- 	bprm->file = file;
--	bprm->filename = bprm->interp = filename->name;
-+	if (fd == AT_FDCWD || filename->name[0] == '/') {
-+		bprm->filename = filename->name;
-+	} else {
-+		/* "/dev/fd/2147483647/" + filename->name */
-+		int maxlen = 19 + strlen(filename->name);
-+
-+		pathbuf = kmalloc(maxlen, GFP_TEMPORARY);
-+		if (!pathbuf) {
-+			retval = -ENOMEM;
-+			goto out_unmark;
-+		}
-+		if (filename->name[0] == '\0')
-+			sprintf(pathbuf, "/dev/fd/%d", fd);
-+		else
-+			snprintf(pathbuf, maxlen,
-+				 "/dev/fd/%d/%s", fd, filename->name);
-+		/* Record that a name derived from an O_CLOEXEC fd will be
-+		 * inaccessible after exec. Relies on having exclusive access to
-+		 * current->files (due to unshare_files above). */
-+		if (close_on_exec(fd, current->files->fdt))
-+			bprm->interp_flags |= BINPRM_FLAGS_PATH_INACCESSIBLE;
-+		bprm->filename = pathbuf;
-+	}
-+	bprm->interp = bprm->filename;
- 
- 	retval = bprm_mm_init(bprm);
- 	if (retval)
-@@ -1532,6 +1566,7 @@ out_unmark:
- 
- out_free:
- 	free_bprm(bprm);
-+	kfree(pathbuf);
- 
- out_files:
- 	if (displaced)
-@@ -1547,7 +1582,18 @@ int do_execve(struct filename *filename,
- {
- 	struct user_arg_ptr argv = { .ptr.native = __argv };
- 	struct user_arg_ptr envp = { .ptr.native = __envp };
--	return do_execve_common(filename, argv, envp);
-+	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
-+}
-+
-+int do_execveat(int fd, struct filename *filename,
-+		const char __user *const __user *__argv,
-+		const char __user *const __user *__envp,
-+		int flags)
-+{
-+	struct user_arg_ptr argv = { .ptr.native = __argv };
-+	struct user_arg_ptr envp = { .ptr.native = __envp };
-+
-+	return do_execveat_common(fd, filename, argv, envp, flags);
- }
- 
- #ifdef CONFIG_COMPAT
-@@ -1563,7 +1609,23 @@ static int compat_do_execve(struct filename *filename,
- 		.is_compat = true,
- 		.ptr.compat = __envp,
- 	};
--	return do_execve_common(filename, argv, envp);
-+	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
-+}
-+
-+static int compat_do_execveat(int fd, struct filename *filename,
-+			      const compat_uptr_t __user *__argv,
-+			      const compat_uptr_t __user *__envp,
-+			      int flags)
-+{
-+	struct user_arg_ptr argv = {
-+		.is_compat = true,
-+		.ptr.compat = __argv,
-+	};
-+	struct user_arg_ptr envp = {
-+		.is_compat = true,
-+		.ptr.compat = __envp,
-+	};
-+	return do_execveat_common(fd, filename, argv, envp, flags);
- }
- #endif
- 
-@@ -1603,6 +1665,20 @@ SYSCALL_DEFINE3(execve,
- {
- 	return do_execve(getname(filename), argv, envp);
- }
-+
-+SYSCALL_DEFINE5(execveat,
-+		int, fd, const char __user *, filename,
-+		const char __user *const __user *, argv,
-+		const char __user *const __user *, envp,
-+		int, flags)
-+{
-+	int lookup_flags = (flags & AT_EMPTY_PATH) ? LOOKUP_EMPTY : 0;
-+
-+	return do_execveat(fd,
-+			   getname_flags(filename, lookup_flags, NULL),
-+			   argv, envp, flags);
-+}
-+
- #ifdef CONFIG_COMPAT
- COMPAT_SYSCALL_DEFINE3(execve, const char __user *, filename,
- 	const compat_uptr_t __user *, argv,
-@@ -1610,4 +1686,17 @@ COMPAT_SYSCALL_DEFINE3(execve, const char __user *, filename,
- {
- 	return compat_do_execve(getname(filename), argv, envp);
- }
-+
-+COMPAT_SYSCALL_DEFINE5(execveat, int, fd,
-+		       const char __user *, filename,
-+		       const compat_uptr_t __user *, argv,
-+		       const compat_uptr_t __user *, envp,
-+		       int,  flags)
-+{
-+	int lookup_flags = (flags & AT_EMPTY_PATH) ? LOOKUP_EMPTY : 0;
-+
-+	return compat_do_execveat(fd,
-+				  getname_flags(filename, lookup_flags, NULL),
-+				  argv, envp, flags);
-+}
- #endif
-diff --git a/fs/namei.c b/fs/namei.c
-index a7b05bf82d31..757df6777ae5 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -130,7 +130,7 @@ void final_putname(struct filename *name)
- 
- #define EMBEDDED_NAME_MAX	(PATH_MAX - sizeof(struct filename))
- 
--static struct filename *
-+struct filename *
- getname_flags(const char __user *filename, int flags, int *empty)
- {
- 	struct filename *result, *err;
-@@ -1891,6 +1891,12 @@ static int path_init(int dfd, const char *name, unsigned int flags,
- 				fdput(f);
- 				return -ENOTDIR;
- 			}
-+		} else if (flags & LOOKUP_EMPTY_NOPATH) {
-+			/* When using the fd alone, disallow O_PATH files */
-+			if (f.file->f_mode & FMODE_PATH) {
-+				fdput(f);
-+				return -EBADF;
-+			}
- 		}
- 
- 		nd->path = f.file->f_path;
-diff --git a/include/linux/binfmts.h b/include/linux/binfmts.h
-index 61f29e5ea840..576e4639ca60 100644
---- a/include/linux/binfmts.h
-+++ b/include/linux/binfmts.h
-@@ -53,6 +53,10 @@ struct linux_binprm {
- #define BINPRM_FLAGS_EXECFD_BIT 1
- #define BINPRM_FLAGS_EXECFD (1 << BINPRM_FLAGS_EXECFD_BIT)
- 
-+/* filename of the binary will be inaccessible after exec */
-+#define BINPRM_FLAGS_PATH_INACCESSIBLE_BIT 2
-+#define BINPRM_FLAGS_PATH_INACCESSIBLE (1 << BINPRM_FLAGS_PATH_INACCESSIBLE_BIT)
-+
- /* Function parameter for binfmt->coredump */
- struct coredump_params {
- 	const siginfo_t *siginfo;
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index e6494261eaff..7450ca2ac1fc 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -357,6 +357,9 @@ asmlinkage long compat_sys_lseek(unsigned int, compat_off_t, unsigned int);
- 
- asmlinkage long compat_sys_execve(const char __user *filename, const compat_uptr_t __user *argv,
- 		     const compat_uptr_t __user *envp);
-+asmlinkage long compat_sys_execveat(int dfd, const char __user *filename,
-+		     const compat_uptr_t __user *argv,
-+		     const compat_uptr_t __user *envp, int flags);
- 
- asmlinkage long compat_sys_select(int n, compat_ulong_t __user *inp,
- 		compat_ulong_t __user *outp, compat_ulong_t __user *exp,
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 94187721ad41..e9818574d738 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -2060,6 +2060,7 @@ extern struct file *file_open_root(struct dentry *, struct vfsmount *,
- extern struct file * dentry_open(const struct path *, int, const struct cred *);
- extern int filp_close(struct file *, fl_owner_t id);
- 
-+extern struct filename *getname_flags(const char __user *, int, int *);
- extern struct filename *getname(const char __user *);
- extern struct filename *getname_kernel(const char *);
- 
-diff --git a/include/linux/namei.h b/include/linux/namei.h
-index 492de72560fa..eaa25cc72213 100644
---- a/include/linux/namei.h
-+++ b/include/linux/namei.h
-@@ -55,6 +55,7 @@ enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
- #define LOOKUP_JUMPED		0x1000
- #define LOOKUP_ROOT		0x2000
- #define LOOKUP_EMPTY		0x4000
-+#define LOOKUP_EMPTY_NOPATH	0x8000
- 
- extern int user_path_at(int, const char __user *, unsigned, struct path *);
- extern int user_path_at_empty(int, const char __user *, unsigned, struct path *, int *empty);
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index b867a4dab38a..33e056da7d33 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2430,6 +2430,10 @@ extern void do_group_exit(int);
- extern int do_execve(struct filename *,
- 		     const char __user * const __user *,
- 		     const char __user * const __user *);
-+extern int do_execveat(int, struct filename *,
-+		       const char __user * const __user *,
-+		       const char __user * const __user *,
-+		       int);
- extern long do_fork(unsigned long, unsigned long, unsigned long, int __user *, int __user *);
- struct task_struct *fork_idle(int);
- extern pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 0f86d85a9ce4..df5422294deb 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -876,4 +876,8 @@ asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
- asmlinkage long sys_getrandom(char __user *buf, size_t count,
- 			      unsigned int flags);
- 
-+asmlinkage long sys_execveat(int dfd, const char __user *filename,
-+			const char __user *const __user *argv,
-+			const char __user *const __user *envp, int flags);
-+
- #endif
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 11d11bc5c78f..feef07d29663 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -705,9 +705,11 @@ __SYSCALL(__NR_seccomp, sys_seccomp)
- __SYSCALL(__NR_getrandom, sys_getrandom)
- #define __NR_memfd_create 279
- __SYSCALL(__NR_memfd_create, sys_memfd_create)
-+#define __NR_execveat 280
-+__SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 280
-+#define __NR_syscalls 281
- 
- /*
-  * All syscalls below here should go away really,
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 391d4ddb6f4b..efb06058ad3e 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -218,3 +218,6 @@ cond_syscall(sys_kcmp);
- 
- /* operate on Secure Computing state */
- cond_syscall(sys_seccomp);
-+
-+/* execveat */
-+cond_syscall(sys_execveat);
-diff --git a/lib/audit.c b/lib/audit.c
-index 1d726a22565b..b8fb5ee81e26 100644
---- a/lib/audit.c
-+++ b/lib/audit.c
-@@ -54,6 +54,9 @@ int audit_classify_syscall(int abi, unsigned syscall)
- 	case __NR_socketcall:
- 		return 4;
- #endif
-+#ifdef __NR_execveat
-+	case __NR_execveat:
-+#endif
- 	case __NR_execve:
- 		return 5;
- 	default:
 -- 
-2.1.0.rc2.206.gedb03e5
+Milosz Tanski
+CTO
+16 East 34th Street, 15th floor
+New York, NY 10016
+
+p: 646-253-9055
+e: milosz@adfin.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
