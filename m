@@ -1,426 +1,170 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCHv6 2/3] syscalls,x86: add selftest for execveat(2)
-Date: Thu, 6 Nov 2014 10:07:47 -0800
-Message-ID: <CAGXu5jLTKo1t5feUcPJgBy3UaMZUpgJRNuUaV8aQ0H4ze7gU6A@mail.gmail.com>
-References: <1415290033-15771-1-git-send-email-drysdale@google.com>
-	<1415290033-15771-3-git-send-email-drysdale@google.com>
+From: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 07/17] mm: madvise MADV_USERFAULT: prepare vm_flags to
+ allow more than 32bits
+Date: Fri, 7 Nov 2014 00:08:13 +0400
+Message-ID: <CALYGNiNWbAadvVzScWsgsdG5bGWir4q8oOWqbDg47C2+kk3=Mw@mail.gmail.com>
+References: <1412356087-16115-1-git-send-email-aarcange@redhat.com>
+	<1412356087-16115-8-git-send-email-aarcange@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1415290033-15771-3-git-send-email-drysdale@google.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, LKML <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, "x86@kernel.org" <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1412356087-16115-8-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "\\Dr. David Alan Gilbert\\" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Robert Love <rlove-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dmitry Adamushko <dmitry.adamushko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mike
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 6, 2014 at 8:07 AM, David Drysdale <drysdale@google.com> wrote:
-> Signed-off-by: David Drysdale <drysdale@google.com>
+On Fri, Oct 3, 2014 at 9:07 PM, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> We run out of 32bits in vm_flags, noop change for 64bit archs.
+
+What? Again?
+As I see there are some free bits: 0x200, 0x1000, 0x80000
+
+I prefer to reserve 0x02000000 for VM_ARCH_2
+
+>
+> Signed-off-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 > ---
->  tools/testing/selftests/Makefile        |   1 +
->  tools/testing/selftests/exec/.gitignore |   7 +
->  tools/testing/selftests/exec/Makefile   |  25 +++
->  tools/testing/selftests/exec/execveat.c | 321 ++++++++++++++++++++++++++++++++
->  4 files changed, 354 insertions(+)
->  create mode 100644 tools/testing/selftests/exec/.gitignore
->  create mode 100644 tools/testing/selftests/exec/Makefile
->  create mode 100644 tools/testing/selftests/exec/execveat.c
+>  fs/proc/task_mmu.c       | 4 ++--
+>  include/linux/huge_mm.h  | 4 ++--
+>  include/linux/ksm.h      | 4 ++--
+>  include/linux/mm_types.h | 2 +-
+>  mm/huge_memory.c         | 2 +-
+>  mm/ksm.c                 | 2 +-
+>  mm/madvise.c             | 2 +-
+>  mm/mremap.c              | 2 +-
+>  8 files changed, 11 insertions(+), 11 deletions(-)
 >
-> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-> index 36ff2e4c7b6f..210cf68b3511 100644
-> --- a/tools/testing/selftests/Makefile
-> +++ b/tools/testing/selftests/Makefile
-> @@ -14,6 +14,7 @@ TARGETS += powerpc
->  TARGETS += user
->  TARGETS += sysctl
->  TARGETS += firmware
-> +TARGETS += exec
+> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+> index c341568..ee1c3a2 100644
+> --- a/fs/proc/task_mmu.c
+> +++ b/fs/proc/task_mmu.c
+> @@ -532,11 +532,11 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
+>         /*
+>          * Don't forget to update Documentation/ on changes.
+>          */
+> -       static const char mnemonics[BITS_PER_LONG][2] = {
+> +       static const char mnemonics[BITS_PER_LONG+1][2] = {
+>                 /*
+>                  * In case if we meet a flag we don't know about.
+>                  */
+> -               [0 ... (BITS_PER_LONG-1)] = "??",
+> +               [0 ... (BITS_PER_LONG)] = "??",
 >
->  TARGETS_HOTPLUG = cpu-hotplug
->  TARGETS_HOTPLUG += memory-hotplug
-> diff --git a/tools/testing/selftests/exec/.gitignore b/tools/testing/selftests/exec/.gitignore
-> new file mode 100644
-> index 000000000000..778147d01af9
-> --- /dev/null
-> +++ b/tools/testing/selftests/exec/.gitignore
-> @@ -0,0 +1,7 @@
-> +subdir*
-> +script*
-> +execveat
-> +execveat.symlink
-> +execveat.moved
-> +execveat.ephemeral
-> +execveat.denatured
-> \ No newline at end of file
-> diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
-> new file mode 100644
-> index 000000000000..c97e0aaea02d
-> --- /dev/null
-> +++ b/tools/testing/selftests/exec/Makefile
-> @@ -0,0 +1,25 @@
-> +CC = $(CROSS_COMPILE)gcc
-> +CFLAGS = -Wall
-> +BINARIES = execveat
-> +DEPS = execveat.symlink execveat.denatured script subdir
-> +all: $(BINARIES) $(DEPS)
-> +
-> +subdir:
-> +       mkdir -p $@
-> +script:
-> +       echo '#!/bin/sh' > $@
-> +       echo 'exit $$*' >> $@
-> +       chmod +x $@
-> +execveat.symlink: execveat
-> +       ln -s -f $< $@
-> +execveat.denatured: execveat
-> +       cp $< $@
-> +       chmod -x $@
-> +%: %.c
-> +       $(CC) $(CFLAGS) -o $@ $^
-> +
-> +run_tests: all
-> +       ./execveat
-> +
-> +clean:
-> +       rm -rf $(BINARIES) $(DEPS) subdir.moved execveat.moved
-> diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
-> new file mode 100644
-> index 000000000000..f6ea48176393
-> --- /dev/null
-> +++ b/tools/testing/selftests/exec/execveat.c
-> @@ -0,0 +1,321 @@
-> +/*
-> + * Copyright (c) 2014 Google, Inc.
-> + *
-> + * Licensed under the terms of the GNU GPL License version 2
-> + *
-> + * Selftests for execveat(2).
-> + */
-> +
-> +#define _GNU_SOURCE  /* to get O_PATH, AT_EMPTY_PATH */
-> +#include <sys/sendfile.h>
-> +#include <sys/stat.h>
-> +#include <sys/syscall.h>
-> +#include <sys/types.h>
-> +#include <sys/wait.h>
-> +#include <errno.h>
-> +#include <fcntl.h>
-> +#include <limits.h>
-> +#include <stdio.h>
-> +#include <stdlib.h>
-> +#include <string.h>
-> +#include <unistd.h>
-> +
-> +static char *envp[] = { "IN_TEST=yes", NULL, NULL };
-> +static char *argv[] = { "execveat", "99", NULL };
-> +
-> +static int execveat_(int fd, const char *path, char **argv, char **envp,
-> +                    int flags)
-> +{
-> +#ifdef __NR_execveat
-> +       return syscall(__NR_execveat, fd, path, argv, envp, flags);
-> +#else
-> +       errno = -ENOSYS;
-> +       return -1;
-> +#endif
-> +}
-> +
-> +#define check_execveat_fail(fd, path, flags, errno)    \
-> +       _check_execveat_fail(fd, path, flags, errno, #errno)
-> +static int _check_execveat_fail(int fd, const char *path, int flags,
-> +                               int expected_errno, const char *errno_str)
-> +{
-> +       int rc;
-> +
-> +       errno = 0;
-> +       printf("Check failure of execveat(%d, '%s', %d) with %s... ",
-> +               fd, path?:"(null)", flags, errno_str);
-> +       rc = execveat_(fd, path, argv, envp, flags);
-> +
-> +       if (rc > 0) {
-> +               printf("[FAIL] (unexpected success from execveat(2))\n");
-> +               return 1;
-> +       }
-> +       if (errno != expected_errno) {
-> +               printf("[FAIL] (expected errno %d (%s) not %d (%s)\n",
-> +                       expected_errno, strerror(expected_errno),
-> +                       errno, strerror(errno));
-> +               return 1;
-> +       }
-> +       printf("[OK]\n");
-> +       return 0;
-> +}
-> +
-> +static int check_execveat_invoked_rc(int fd, const char *path, int flags,
-> +                                    int expected_rc)
-> +{
-> +       int status;
-> +       int rc;
-> +       pid_t child;
-> +
-> +       printf("Check success of execveat(%d, '%s', %d)... ",
-> +               fd, path?:"(null)", flags);
-> +       child = fork();
-> +       if (child < 0) {
-> +               printf("[FAIL] (fork() failed)\n");
-> +               return 1;
-> +       }
-> +       if (child == 0) {
-> +               /* Child: do execveat(). */
-> +               rc = execveat_(fd, path, argv, envp, flags);
-> +               printf("[FAIL]: execveat() failed, rc=%d errno=%d (%s)\n",
-> +                       rc, errno, strerror(errno));
-> +               exit(1);  /* should not reach here */
-> +       }
-> +       /* Parent: wait for & check child's exit status. */
-> +       rc = waitpid(child, &status, 0);
-> +       if (rc != child) {
-> +               printf("[FAIL] (waitpid(%d,...) returned %d)\n", child, rc);
-> +               return 1;
-> +       }
-> +       if (!WIFEXITED(status)) {
-> +               printf("[FAIL] (child %d did not exit cleanly, status=%08x)\n",
-> +                       child, status);
-> +               return 1;
-> +       }
-> +       if (WEXITSTATUS(status) != expected_rc) {
-> +               printf("[FAIL] (child %d exited with %d not %d)\n",
-> +                       child, WEXITSTATUS(status), expected_rc);
-> +               return 1;
-> +       }
-> +       printf("[OK]\n");
-> +       return 0;
-> +}
-> +
-> +static int check_execveat(int fd, const char *path, int flags)
-> +{
-> +       return check_execveat_invoked_rc(fd, path, flags, 99);
-> +}
-> +
-> +static char *concat(const char *left, const char *right)
-> +{
-> +       char *result = malloc(strlen(left) + strlen(right) + 1);
-> +
-> +       strcpy(result, left);
-> +       strcat(result, right);
-> +       return result;
-> +}
-> +
-> +static int open_or_die(const char *filename, int flags)
-> +{
-> +       int fd = open(filename, flags);
-> +
-> +       if (fd < 0) {
-> +               printf("Failed to open '%s'; "
-> +                       "check prerequisites are available\n", filename);
-> +               exit(1);
-> +       }
-> +       return fd;
-> +}
-> +
-> +static int run_tests(void)
-> +{
-> +       int fail = 0;
-> +       char *fullname = realpath("execveat", NULL);
-> +       char *fullname_script = realpath("script", NULL);
-> +       char *fullname_symlink = concat(fullname, ".symlink");
-> +       int subdir_dfd = open_or_die("subdir", O_DIRECTORY|O_RDONLY);
-> +       int subdir_dfd_ephemeral = open_or_die("subdir.ephemeral",
-> +                                              O_DIRECTORY|O_RDONLY);
-> +       int dot_dfd = open_or_die(".", O_DIRECTORY|O_RDONLY);
-> +       int dot_dfd_path = open_or_die(".", O_DIRECTORY|O_RDONLY|O_PATH);
-> +       int dot_dfd_cloexec = open_or_die(".", O_DIRECTORY|O_RDONLY|O_CLOEXEC);
-> +       int fd = open_or_die("execveat", O_RDONLY);
-> +       int fd_path = open_or_die("execveat", O_RDONLY|O_PATH);
-> +       int fd_symlink = open_or_die("execveat.symlink", O_RDONLY);
-> +       int fd_denatured = open_or_die("execveat.denatured", O_RDONLY);
-> +       int fd_script = open_or_die("script", O_RDONLY);
-> +       int fd_ephemeral = open_or_die("execveat.ephemeral", O_RDONLY);
-> +       int fd_script_ephemeral = open_or_die("script.ephemeral", O_RDONLY);
-> +       int fd_cloexec = open_or_die("execveat", O_RDONLY|O_CLOEXEC);
-> +       int fd_script_cloexec = open_or_die("script", O_RDONLY|O_CLOEXEC);
-> +
-> +       /* Change file position to confirm it doesn't affect anything */
-> +       lseek(fd, 10, SEEK_SET);
-> +
-> +       /* Normal executable file: */
-> +       /*   dfd + path */
-> +       fail += check_execveat(subdir_dfd, "../execveat", 0);
-> +       fail += check_execveat(dot_dfd, "execveat", 0);
-> +       fail += check_execveat(dot_dfd_path, "execveat", 0);
-> +       /*   absolute path */
-> +       fail += check_execveat(AT_FDCWD, fullname, 0);
-> +       /*   absolute path with nonsense dfd */
-> +       fail += check_execveat(99, fullname, 0);
-> +       /*   fd + no path */
-> +       fail += check_execveat(fd, "", AT_EMPTY_PATH);
-> +       /*   O_CLOEXEC fd + no path */
-> +       fail += check_execveat(fd_cloexec, "", AT_EMPTY_PATH);
-> +
-> +       /* Mess with executable file that's already open: */
-> +       /*   fd + no path to a file that's been renamed */
-> +       rename("execveat.ephemeral", "execveat.moved");
-> +       fail += check_execveat(fd_ephemeral, "", AT_EMPTY_PATH);
-> +       /*   fd + no path to a file that's been deleted */
-> +       unlink("execveat.moved"); /* remove the file now fd open */
-> +       fail += check_execveat(fd_ephemeral, "", AT_EMPTY_PATH);
-> +
-> +       /* Invalid argument failures */
-> +       fail += check_execveat_fail(fd, "", 0, ENOENT);
-> +       fail += check_execveat_fail(fd, NULL, AT_EMPTY_PATH, EFAULT);
-> +
-> +       /* Symlink to executable file: */
-> +       /*   dfd + path */
-> +       fail += check_execveat(dot_dfd, "execveat.symlink", 0);
-> +       fail += check_execveat(dot_dfd_path, "execveat.symlink", 0);
-> +       /*   absolute path */
-> +       fail += check_execveat(AT_FDCWD, fullname_symlink, 0);
-> +       /*   fd + no path, even with AT_SYMLINK_NOFOLLOW (already followed) */
-> +       fail += check_execveat(fd_symlink, "", AT_EMPTY_PATH);
-> +       fail += check_execveat(fd_symlink, "",
-> +                              AT_EMPTY_PATH|AT_SYMLINK_NOFOLLOW);
-> +
-> +       /* Symlink fails when AT_SYMLINK_NOFOLLOW set: */
-> +       /*   dfd + path */
-> +       fail += check_execveat_fail(dot_dfd, "execveat.symlink",
-> +                                   AT_SYMLINK_NOFOLLOW, ELOOP);
-> +       fail += check_execveat_fail(dot_dfd_path, "execveat.symlink",
-> +                                   AT_SYMLINK_NOFOLLOW, ELOOP);
-> +       /*   absolute path */
-> +       fail += check_execveat_fail(AT_FDCWD, fullname_symlink,
-> +                                   AT_SYMLINK_NOFOLLOW, ELOOP);
-> +
-> +       /* Shell script wrapping executable file: */
-> +       /*   dfd + path */
-> +       fail += check_execveat(subdir_dfd, "../script", 0);
-> +       fail += check_execveat(dot_dfd, "script", 0);
-> +       fail += check_execveat(dot_dfd_path, "script", 0);
-> +       /*   absolute path */
-> +       fail += check_execveat(AT_FDCWD, fullname_script, 0);
-> +       /*   fd + no path */
-> +       fail += check_execveat(fd_script, "", AT_EMPTY_PATH);
-> +       fail += check_execveat(fd_script, "",
-> +                              AT_EMPTY_PATH|AT_SYMLINK_NOFOLLOW);
-> +       /*   O_CLOEXEC fd fails for a script (as script file inaccessible) */
-> +       fail += check_execveat_fail(fd_script_cloexec, "", AT_EMPTY_PATH,
-> +                                   ENOENT);
-> +       fail += check_execveat_fail(dot_dfd_cloexec, "script", 0, ENOENT);
-> +
-> +       /* Mess with script file that's already open: */
-> +       /*   fd + no path to a file that's been renamed */
-> +       rename("script.ephemeral", "script.moved");
-> +       fail += check_execveat(fd_script_ephemeral, "", AT_EMPTY_PATH);
-> +       /*   fd + no path to a file that's been deleted */
-> +       unlink("script.moved"); /* remove the file while fd open */
-> +       fail += check_execveat(fd_script_ephemeral, "", AT_EMPTY_PATH);
-> +
-> +       /* Rename a subdirectory in the path: */
-> +       rename("subdir.ephemeral", "subdir.moved");
-> +       fail += check_execveat(subdir_dfd_ephemeral, "../script", 0);
-> +       fail += check_execveat(subdir_dfd_ephemeral, "script", 0);
-> +       /* Remove the subdir and its contents */
-> +       unlink("subdir.moved/script");
-> +       unlink("subdir.moved");
-> +       /* Shell loads via deleted subdir OK because name starts with .. */
-> +       fail += check_execveat(subdir_dfd_ephemeral, "../script", 0);
-> +       fail += check_execveat_fail(subdir_dfd_ephemeral, "script", 0, ENOENT);
-> +
-> +       /* Flag values other than AT_SYMLINK_NOFOLLOW => EINVAL */
-> +       fail += check_execveat_fail(dot_dfd, "execveat", 0xFFFF, EINVAL);
-> +       /* Invalid path => ENOENT */
-> +       fail += check_execveat_fail(dot_dfd, "no-such-file", 0, ENOENT);
-> +       fail += check_execveat_fail(dot_dfd_path, "no-such-file", 0, ENOENT);
-> +       fail += check_execveat_fail(AT_FDCWD, "no-such-file", 0, ENOENT);
-> +       /* Attempt to execute directory => EACCES */
-> +       fail += check_execveat_fail(dot_dfd, "", AT_EMPTY_PATH, EACCES);
-> +       /* Attempt to execute non-executable => EACCES */
-> +       fail += check_execveat_fail(dot_dfd, "Makefile", 0, EACCES);
-> +       fail += check_execveat_fail(fd_denatured, "", AT_EMPTY_PATH, EACCES);
-> +       /* Attempt to execute file opened with O_PATH => EBADF */
-> +       fail += check_execveat_fail(fd_path, "", AT_EMPTY_PATH, EBADF);
-> +       /* Attempt to execute nonsense FD => EBADF */
-> +       fail += check_execveat_fail(99, "", AT_EMPTY_PATH, EBADF);
-> +       fail += check_execveat_fail(99, "execveat", 0, EBADF);
-> +       /* Attempt to execute relative to non-directory => ENOTDIR */
-> +       fail += check_execveat_fail(fd, "execveat", 0, ENOTDIR);
-> +
-
-I'd add some tests that check PATH_MAX with the /dev/fd/n/filename
-off-by-one I noticed. That could catch any regressions there.
-
--Kees
-
-> +       return fail;
-> +}
-> +
-> +static void exe_cp(const char *src, const char *dest)
-> +{
-> +       int in_fd = open_or_die(src, O_RDONLY);
-> +       int out_fd = open(dest, O_RDWR|O_CREAT|O_TRUNC, 0755);
-> +       struct stat info;
-> +
-> +       fstat(in_fd, &info);
-> +       sendfile(out_fd, in_fd, NULL, info.st_size);
-> +       close(in_fd);
-> +       close(out_fd);
-> +}
-> +
-> +static void prerequisites(void)
-> +{
-> +       int fd;
-> +       const char *script = "#!/bin/sh\nexit $*\n";
-> +
-> +       /* Create ephemeral copies of files */
-> +       exe_cp("execveat", "execveat.ephemeral");
-> +       exe_cp("script", "script.ephemeral");
-> +       mkdir("subdir.ephemeral", 0755);
-> +
-> +       fd = open("subdir.ephemeral/script", O_RDWR|O_CREAT|O_TRUNC, 0755);
-> +       write(fd, script, strlen(script));
-> +       close(fd);
-> +}
-> +
-> +int main(int argc, char **argv)
-> +{
-> +       int ii;
-> +       int rc;
-> +       const char *verbose = getenv("VERBOSE");
-> +
-> +       if (argc >= 2) {
-> +               /* If we are invoked with an argument, don't run tests. */
-> +               const char *in_test = getenv("IN_TEST");
-> +
-> +               if (verbose) {
-> +                       printf("  invoked with:");
-> +                       for (ii = 0; ii < argc; ii++)
-> +                               printf(" [%d]='%s'", ii, argv[ii]);
-> +                       printf("\n");
-> +               }
-> +
-> +               /* Check expected environment transferred. */
-> +               if (!in_test || strcmp(in_test, "yes") != 0) {
-> +                       printf("[FAIL] (no IN_TEST=yes in env)\n");
-> +                       return 1;
-> +               }
-> +
-> +               /* Use the final argument as an exit code. */
-> +               rc = atoi(argv[argc - 1]);
-> +               fflush(stdout);
-> +       } else {
-> +               prerequisites();
-> +               if (verbose)
-> +                       envp[1] = "VERBOSE=1";
-> +               rc = run_tests();
-> +               if (rc > 0)
-> +                       printf("%d tests failed\n", rc);
-> +       }
-> +       return rc;
-> +}
+>                 [ilog2(VM_READ)]        = "rd",
+>                 [ilog2(VM_WRITE)]       = "wr",
+> diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
+> index 63579cb..3aa10e0 100644
+> --- a/include/linux/huge_mm.h
+> +++ b/include/linux/huge_mm.h
+> @@ -121,7 +121,7 @@ extern void split_huge_page_pmd_mm(struct mm_struct *mm, unsigned long address,
+>  #error "hugepages can't be allocated by the buddy allocator"
+>  #endif
+>  extern int hugepage_madvise(struct vm_area_struct *vma,
+> -                           unsigned long *vm_flags, int advice);
+> +                           vm_flags_t *vm_flags, int advice);
+>  extern void __vma_adjust_trans_huge(struct vm_area_struct *vma,
+>                                     unsigned long start,
+>                                     unsigned long end,
+> @@ -183,7 +183,7 @@ static inline int split_huge_page(struct page *page)
+>  #define split_huge_page_pmd_mm(__mm, __address, __pmd) \
+>         do { } while (0)
+>  static inline int hugepage_madvise(struct vm_area_struct *vma,
+> -                                  unsigned long *vm_flags, int advice)
+> +                                  vm_flags_t *vm_flags, int advice)
+>  {
+>         BUG();
+>         return 0;
+> diff --git a/include/linux/ksm.h b/include/linux/ksm.h
+> index 3be6bb1..8b35253 100644
+> --- a/include/linux/ksm.h
+> +++ b/include/linux/ksm.h
+> @@ -18,7 +18,7 @@ struct mem_cgroup;
+>
+>  #ifdef CONFIG_KSM
+>  int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+> -               unsigned long end, int advice, unsigned long *vm_flags);
+> +               unsigned long end, int advice, vm_flags_t *vm_flags);
+>  int __ksm_enter(struct mm_struct *mm);
+>  void __ksm_exit(struct mm_struct *mm);
+>
+> @@ -94,7 +94,7 @@ static inline int PageKsm(struct page *page)
+>
+>  #ifdef CONFIG_MMU
+>  static inline int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+> -               unsigned long end, int advice, unsigned long *vm_flags)
+> +               unsigned long end, int advice, vm_flags_t *vm_flags)
+>  {
+>         return 0;
+>  }
+> diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+> index 6e0b286..2c876d1 100644
+> --- a/include/linux/mm_types.h
+> +++ b/include/linux/mm_types.h
+> @@ -217,7 +217,7 @@ struct page_frag {
+>  #endif
+>  };
+>
+> -typedef unsigned long __nocast vm_flags_t;
+> +typedef unsigned long long __nocast vm_flags_t;
+>
+>  /*
+>   * A region containing a mapping of a non-memory backed file under NOMMU
+> diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+> index d9a21d06..e913a19 100644
+> --- a/mm/huge_memory.c
+> +++ b/mm/huge_memory.c
+> @@ -1942,7 +1942,7 @@ out:
+>  #define VM_NO_THP (VM_SPECIAL | VM_HUGETLB | VM_SHARED | VM_MAYSHARE)
+>
+>  int hugepage_madvise(struct vm_area_struct *vma,
+> -                    unsigned long *vm_flags, int advice)
+> +                    vm_flags_t *vm_flags, int advice)
+>  {
+>         switch (advice) {
+>         case MADV_HUGEPAGE:
+> diff --git a/mm/ksm.c b/mm/ksm.c
+> index fb75902..faf319e 100644
+> --- a/mm/ksm.c
+> +++ b/mm/ksm.c
+> @@ -1736,7 +1736,7 @@ static int ksm_scan_thread(void *nothing)
+>  }
+>
+>  int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+> -               unsigned long end, int advice, unsigned long *vm_flags)
+> +               unsigned long end, int advice, vm_flags_t *vm_flags)
+>  {
+>         struct mm_struct *mm = vma->vm_mm;
+>         int err;
+> diff --git a/mm/madvise.c b/mm/madvise.c
+> index 0938b30..d5aee71 100644
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -49,7 +49,7 @@ static long madvise_behavior(struct vm_area_struct *vma,
+>         struct mm_struct *mm = vma->vm_mm;
+>         int error = 0;
+>         pgoff_t pgoff;
+> -       unsigned long new_flags = vma->vm_flags;
+> +       vm_flags_t new_flags = vma->vm_flags;
+>
+>         switch (behavior) {
+>         case MADV_NORMAL:
+> diff --git a/mm/mremap.c b/mm/mremap.c
+> index 05f1180..fa7db87 100644
+> --- a/mm/mremap.c
+> +++ b/mm/mremap.c
+> @@ -239,7 +239,7 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+>  {
+>         struct mm_struct *mm = vma->vm_mm;
+>         struct vm_area_struct *new_vma;
+> -       unsigned long vm_flags = vma->vm_flags;
+> +       vm_flags_t vm_flags = vma->vm_flags;
+>         unsigned long new_pgoff;
+>         unsigned long moved_len;
+>         unsigned long excess = 0;
+>
 > --
-> 2.1.0.rc2.206.gedb03e5
->
-
-
-
--- 
-Kees Cook
-Chrome OS Security
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
