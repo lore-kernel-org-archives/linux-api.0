@@ -1,94 +1,131 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH v2 03/10] [media] Make use of the new media_bus_format
- definitions
-Date: Thu,  6 Nov 2014 10:57:01 +0100
-Message-ID: <1415267829-4177-4-git-send-email-boris.brezillon@free-electrons.com>
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH v2 05/10] [media] pci: Make use of media_bus_format enum
+Date: Thu,  6 Nov 2014 10:57:03 +0100
+Message-ID: <1415267829-4177-6-git-send-email-boris.brezillon@free-electrons.com>
 References: <1415267829-4177-1-git-send-email-boris.brezillon@free-electrons.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <1415267829-4177-1-git-send-email-boris.brezillon@free-electrons.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org
-Cc: devel@driverdev.osuosl.org, Boris Brezillon <boris.brezillon@free-electrons.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415267829-4177-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Replace references to the v4l2_mbus_pixelcode enum with the new
-media_bus_format enum in all common headers.
+In order to have subsytem agnostic media bus format definitions we've
+moved media bus definition to include/uapi/linux/media-bus-format.h and
+prefixed enum values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
 
-Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
-Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Replace all references to the old definition in pci drivers.
+
+Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- include/media/v4l2-mediabus.h    | 2 +-
- include/media/v4l2-subdev.h      | 2 +-
- include/uapi/linux/v4l2-subdev.h | 6 +++---
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ drivers/media/pci/cx18/cx18-av-core.c       | 2 +-
+ drivers/media/pci/cx18/cx18-controls.c      | 2 +-
+ drivers/media/pci/cx18/cx18-ioctl.c         | 2 +-
+ drivers/media/pci/cx23885/cx23885-video.c   | 2 +-
+ drivers/media/pci/ivtv/ivtv-controls.c      | 2 +-
+ drivers/media/pci/ivtv/ivtv-ioctl.c         | 2 +-
+ drivers/media/pci/saa7134/saa7134-empress.c | 4 ++--
+ 7 files changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/include/media/v4l2-mediabus.h b/include/media/v4l2-mediabus.h
-index 395c4a9..4915621 100644
---- a/include/media/v4l2-mediabus.h
-+++ b/include/media/v4l2-mediabus.h
-@@ -98,7 +98,7 @@ static inline void v4l2_fill_pix_format(struct v4l2_pix_format *pix_fmt,
+diff --git a/drivers/media/pci/cx18/cx18-av-core.c b/drivers/media/pci/cx18/cx18-av-core.c
+index 2d3afe0..4c6ce21 100644
+--- a/drivers/media/pci/cx18/cx18-av-core.c
++++ b/drivers/media/pci/cx18/cx18-av-core.c
+@@ -952,7 +952,7 @@ static int cx18_av_s_mbus_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt
+ 	int HSC, VSC, Vsrc, Hsrc, filter, Vlines;
+ 	int is_50Hz = !(state->std & V4L2_STD_525_60);
  
- static inline void v4l2_fill_mbus_format(struct v4l2_mbus_framefmt *mbus_fmt,
- 			   const struct v4l2_pix_format *pix_fmt,
--			   enum v4l2_mbus_pixelcode code)
-+			   enum media_bus_format code)
- {
- 	mbus_fmt->width = pix_fmt->width;
- 	mbus_fmt->height = pix_fmt->height;
-diff --git a/include/media/v4l2-subdev.h b/include/media/v4l2-subdev.h
-index d746572..9af5932 100644
---- a/include/media/v4l2-subdev.h
-+++ b/include/media/v4l2-subdev.h
-@@ -341,7 +341,7 @@ struct v4l2_subdev_video_ops {
- 	int (*query_dv_timings)(struct v4l2_subdev *sd,
- 			struct v4l2_dv_timings *timings);
- 	int (*enum_mbus_fmt)(struct v4l2_subdev *sd, unsigned int index,
--			     enum v4l2_mbus_pixelcode *code);
-+			     enum media_bus_format *code);
- 	int (*enum_mbus_fsizes)(struct v4l2_subdev *sd,
- 			     struct v4l2_frmsizeenum *fsize);
- 	int (*g_mbus_fmt)(struct v4l2_subdev *sd,
-diff --git a/include/uapi/linux/v4l2-subdev.h b/include/uapi/linux/v4l2-subdev.h
-index a619cdd..7f44f04 100644
---- a/include/uapi/linux/v4l2-subdev.h
-+++ b/include/uapi/linux/v4l2-subdev.h
-@@ -68,7 +68,7 @@ struct v4l2_subdev_crop {
-  * struct v4l2_subdev_mbus_code_enum - Media bus format enumeration
-  * @pad: pad number, as reported by the media API
-  * @index: format index during enumeration
-- * @code: format code (from enum v4l2_mbus_pixelcode)
-+ * @code: format code (from enum media_bus_format)
-  */
- struct v4l2_subdev_mbus_code_enum {
- 	__u32 pad;
-@@ -81,7 +81,7 @@ struct v4l2_subdev_mbus_code_enum {
-  * struct v4l2_subdev_frame_size_enum - Media bus format enumeration
-  * @pad: pad number, as reported by the media API
-  * @index: format index during enumeration
-- * @code: format code (from enum v4l2_mbus_pixelcode)
-+ * @code: format code (from enum media_bus_format)
-  */
- struct v4l2_subdev_frame_size_enum {
- 	__u32 index;
-@@ -109,7 +109,7 @@ struct v4l2_subdev_frame_interval {
-  * struct v4l2_subdev_frame_interval_enum - Frame interval enumeration
-  * @pad: pad number, as reported by the media API
-  * @index: frame interval index during enumeration
-- * @code: format code (from enum v4l2_mbus_pixelcode)
-+ * @code: format code (from enum media_bus_format)
-  * @width: frame width in pixels
-  * @height: frame height in pixels
-  * @interval: frame interval in seconds
+-	if (fmt->code != V4L2_MBUS_FMT_FIXED)
++	if (fmt->code != MEDIA_BUS_FMT_FIXED)
+ 		return -EINVAL;
+ 
+ 	fmt->field = V4L2_FIELD_INTERLACED;
+diff --git a/drivers/media/pci/cx18/cx18-controls.c b/drivers/media/pci/cx18/cx18-controls.c
+index 282a3d2..4aeb7c6 100644
+--- a/drivers/media/pci/cx18/cx18-controls.c
++++ b/drivers/media/pci/cx18/cx18-controls.c
+@@ -98,7 +98,7 @@ static int cx18_s_video_encoding(struct cx2341x_handler *cxhdl, u32 val)
+ 	/* fix videodecoder resolution */
+ 	fmt.width = cxhdl->width / (is_mpeg1 ? 2 : 1);
+ 	fmt.height = cxhdl->height;
+-	fmt.code = V4L2_MBUS_FMT_FIXED;
++	fmt.code = MEDIA_BUS_FMT_FIXED;
+ 	v4l2_subdev_call(cx->sd_av, video, s_mbus_fmt, &fmt);
+ 	return 0;
+ }
+diff --git a/drivers/media/pci/cx18/cx18-ioctl.c b/drivers/media/pci/cx18/cx18-ioctl.c
+index 6f2b590..71963db 100644
+--- a/drivers/media/pci/cx18/cx18-ioctl.c
++++ b/drivers/media/pci/cx18/cx18-ioctl.c
+@@ -294,7 +294,7 @@ static int cx18_s_fmt_vid_cap(struct file *file, void *fh,
+ 
+ 	mbus_fmt.width = cx->cxhdl.width = w;
+ 	mbus_fmt.height = cx->cxhdl.height = h;
+-	mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
++	mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
+ 	v4l2_subdev_call(cx->sd_av, video, s_mbus_fmt, &mbus_fmt);
+ 	return cx18_g_fmt_vid_cap(file, fh, fmt);
+ }
+diff --git a/drivers/media/pci/cx23885/cx23885-video.c b/drivers/media/pci/cx23885/cx23885-video.c
+index 682a4f9..091f5db 100644
+--- a/drivers/media/pci/cx23885/cx23885-video.c
++++ b/drivers/media/pci/cx23885/cx23885-video.c
+@@ -608,7 +608,7 @@ static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
+ 	dev->field	= f->fmt.pix.field;
+ 	dprintk(2, "%s() width=%d height=%d field=%d\n", __func__,
+ 		dev->width, dev->height, dev->field);
+-	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
++	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
+ 	call_all(dev, video, s_mbus_fmt, &mbus_fmt);
+ 	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
+ 	/* s_mbus_fmt overwrites f->fmt.pix.field, restore it */
+diff --git a/drivers/media/pci/ivtv/ivtv-controls.c b/drivers/media/pci/ivtv/ivtv-controls.c
+index 2b0ab26..ccf548c 100644
+--- a/drivers/media/pci/ivtv/ivtv-controls.c
++++ b/drivers/media/pci/ivtv/ivtv-controls.c
+@@ -69,7 +69,7 @@ static int ivtv_s_video_encoding(struct cx2341x_handler *cxhdl, u32 val)
+ 	/* fix videodecoder resolution */
+ 	fmt.width = cxhdl->width / (is_mpeg1 ? 2 : 1);
+ 	fmt.height = cxhdl->height;
+-	fmt.code = V4L2_MBUS_FMT_FIXED;
++	fmt.code = MEDIA_BUS_FMT_FIXED;
+ 	v4l2_subdev_call(itv->sd_video, video, s_mbus_fmt, &fmt);
+ 	return 0;
+ }
+diff --git a/drivers/media/pci/ivtv/ivtv-ioctl.c b/drivers/media/pci/ivtv/ivtv-ioctl.c
+index 3e0cb77..4d8ee18 100644
+--- a/drivers/media/pci/ivtv/ivtv-ioctl.c
++++ b/drivers/media/pci/ivtv/ivtv-ioctl.c
+@@ -595,7 +595,7 @@ static int ivtv_s_fmt_vid_cap(struct file *file, void *fh, struct v4l2_format *f
+ 		fmt->fmt.pix.width /= 2;
+ 	mbus_fmt.width = fmt->fmt.pix.width;
+ 	mbus_fmt.height = h;
+-	mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
++	mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
+ 	v4l2_subdev_call(itv->sd_video, video, s_mbus_fmt, &mbus_fmt);
+ 	return ivtv_g_fmt_vid_cap(file, fh, fmt);
+ }
+diff --git a/drivers/media/pci/saa7134/saa7134-empress.c b/drivers/media/pci/saa7134/saa7134-empress.c
+index e4ea85f..8b3bb78 100644
+--- a/drivers/media/pci/saa7134/saa7134-empress.c
++++ b/drivers/media/pci/saa7134/saa7134-empress.c
+@@ -140,7 +140,7 @@ static int empress_s_fmt_vid_cap(struct file *file, void *priv,
+ 	struct saa7134_dev *dev = video_drvdata(file);
+ 	struct v4l2_mbus_framefmt mbus_fmt;
+ 
+-	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
++	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
+ 	saa_call_all(dev, video, s_mbus_fmt, &mbus_fmt);
+ 	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
+ 
+@@ -157,7 +157,7 @@ static int empress_try_fmt_vid_cap(struct file *file, void *priv,
+ 	struct saa7134_dev *dev = video_drvdata(file);
+ 	struct v4l2_mbus_framefmt mbus_fmt;
+ 
+-	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
++	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
+ 	saa_call_all(dev, video, try_mbus_fmt, &mbus_fmt);
+ 	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
+ 
 -- 
 1.9.1
