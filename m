@@ -1,59 +1,68 @@
-From: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v8] kernel, add panic_on_warn
-Date: Thu, 06 Nov 2014 17:52:05 -0500
-Message-ID: <545BFB95.5030706@redhat.com>
-References: <1415187736-16242-1-git-send-email-prarit@redhat.com>
- <alpine.DEB.2.10.1411051357050.31575@chino.kir.corp.google.com>
- <545B733C.6080903@redhat.com>
- <alpine.DEB.2.10.1411061352440.1526@chino.kir.corp.google.com>
- <20141106220731.GA13590@redhat.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH v5 2/7] vfs: Define new syscalls preadv2,pwritev2
+Date: Thu, 06 Nov 2014 18:25:50 -0500
+Message-ID: <x49y4rn29oh.fsf@segfault.boston.devel.redhat.com>
+References: <cover.1415220890.git.milosz@adfin.com>
+	<cover.1415220890.git.milosz@adfin.com>
+	<dcc7d998033bbd999bbd92ef9c2041bce0255a3e.1415220890.git.milosz@adfin.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-In-Reply-To: <20141106220731.GA13590-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/kexec>,
- <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/kexec/>
-List-Post: <mailto:kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-List-Help: <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/kexec>,
- <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
-Sender: "kexec" <kexec-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-Errors-To: kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, isimatu.yasuaki-+CUm20s59erQFUHtdCDX3A@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <dcc7d998033bbd999bbd92ef9c2041bce0255a3e.1415220890.git.milosz@adfin.com>
+	(Milosz Tanski's message of "Wed, 5 Nov 2014 16:14:48 -0500")
+Sender: owner-linux-mm@kvack.org
+To: Milosz Tanski <milosz@adfin.com>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
+Milosz Tanski <milosz@adfin.com> writes:
 
+> New syscalls that take an flag argument. This change does not add any specific
+> flags.
+>
+> Signed-off-by: Milosz Tanski <milosz@adfin.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  fs/read_write.c                   | 176 ++++++++++++++++++++++++++++++--------
+>  include/linux/compat.h            |   6 ++
+>  include/linux/syscalls.h          |   6 ++
+>  include/uapi/asm-generic/unistd.h |   6 +-
+>  mm/filemap.c                      |   5 +-
+>  5 files changed, 158 insertions(+), 41 deletions(-)
+>
+> diff --git a/fs/read_write.c b/fs/read_write.c
+> index 94b2d34..907735c 100644
+> --- a/fs/read_write.c
+> +++ b/fs/read_write.c
+> @@ -866,6 +866,8 @@ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
+>  		return -EBADF;
+>  	if (!(file->f_mode & FMODE_CAN_READ))
+>  		return -EINVAL;
+> +	if (flags & ~0)
+> +		return -EINVAL;
+>  
+>  	return do_readv_writev(READ, file, vec, vlen, pos, flags);
+>  }
+> @@ -879,21 +881,23 @@ ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
+>  		return -EBADF;
+>  	if (!(file->f_mode & FMODE_CAN_WRITE))
+>  		return -EINVAL;
+> +	if (flags & ~0)
+> +		return -EINVAL;
+>  
+>  	return do_readv_writev(WRITE, file, vec, vlen, pos, flags);
+>  }
 
-On 11/06/2014 05:07 PM, Vivek Goyal wrote:
-> On Thu, Nov 06, 2014 at 01:57:36PM -0800, David Rientjes wrote:
-> 
-> [..]
->> You see that doing
->>
->> 	if (panic_on_warn) {
->> 		panic_on_warn = 0;
->> 		panic(...);
->> 	}
->>
->> is racy, I hope.  If two threads WARN() at the same time, then there's 
->> nothing preventing a double panic() because WARN() itself is not 
->> serialized against anything.  So both the current comment and your 
->> suggested revision comment are bogus.
-> 
-> panic() is serialized on panic_lock. So I guess it is fine to hit WARN()
-> on multiple cpus. Do you see an issue there?
+Hi, Milosz,
 
-Oops -- didn't see this until just now.
+You've checked for invalid flags for the normal system calls, but not
+for the compat variants.  Can you add that in, please?
 
-Once again, Vivek beat me to the punch :) and much more succinctly than I will
-ever be able to do. :)
+Thanks!
+Jeff
 
-P.
-
-> 
-> Thanks
-> Vivek
-> 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
