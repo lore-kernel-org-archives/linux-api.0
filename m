@@ -1,63 +1,50 @@
-From: Catalin Marinas <catalin.marinas@arm.com>
-Subject: Re: [RFC PATCH 0/1] arm64: Fix /proc/cpuinfo
-Date: Thu, 6 Nov 2014 17:05:48 +0000
-Message-ID: <20141106170548.GF19702@e104818-lin.cambridge.arm.com>
-References: <1414159000-27059-1-git-send-email-mark.rutland@arm.com>
- <20141106164311.GD19702@e104818-lin.cambridge.arm.com>
- <20141106165430.GH31605@arm.com>
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv2 7/7] cgroup: mount cgroupns-root when inside non-init cgroupns
+Date: Thu, 6 Nov 2014 09:28:25 -0800
+Message-ID: <CAGr1F2Es3nkWePqRpKoAFoRB5SZp=BvQh7espyxjaRy_fYAbCw@mail.gmail.com>
+References: <1414783141-6947-1-git-send-email-adityakali@google.com>
+ <1414783141-6947-8-git-send-email-adityakali@google.com> <CALCETrXTaZ3SJ_t-gnbc93BVZXg-912NqO78kFd0Tpi-5-dZoQ@mail.gmail.com>
+ <CAGr1F2FuPQxLraYv7PstJ9c8H-XQsgawaAtj4AS77B+_0k2o+A@mail.gmail.com> <20141104135726.GB14014@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141106165430.GH31605@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Deacon <will.deacon@arm.com>
-Cc: Mark Rutland <Mark.Rutland@arm.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "ghackmann@google.com" <ghackmann@google.com>, "ijc@hellion.org.uk" <ijc@hellion.org.uk>, Serban Constantinescu <Serban.Constantinescu@arm.com>, "cross-distro@lists.linaro.org" <cross-distro@lists.linaro.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141104135726.GB14014-Gd/HAXX7CRxy/B6EtB590w@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Rohit Jnagal <jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 06, 2014 at 04:54:31PM +0000, Will Deacon wrote:
-> On Thu, Nov 06, 2014 at 04:43:12PM +0000, Catalin Marinas wrote:
-> > On Fri, Oct 24, 2014 at 02:56:39PM +0100, Mark Rutland wrote:
-> > > [d] Print different hwcaps dependent on the personality.
-> > > 
-> > >     This would allow for 32-bit and 64-bit applications to function
-> > >     correctly, but for some 32-bit applications the personality would
-> > >     need to be set explicitly by the user.
-> > 
-> > Which makes this option actually in line with the uname -m behaviour. My
-> > vote goes for [d] with option [b] as a close alternative.
-> > 
-> > > [1] arm, v3.17, Versatile Express A15x2 A7x3 coretile
-> > > Features        : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm 
-> > [...]
-> > > [2] arm64, v3.17, Juno platform
-> > > Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 
-> > 
-> > As an exercise, I'm trying to see what option [b] would look like when
-> > CONFIG_COMPAT is enabled:
-> > 
-> > Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
-> > 
-> > The duplicate strings would only be listed once (evtstrm, aes, pmull,
-> > sha1, sha2, crc32). New AArch64 features that we may expect to be
-> > optional on AArch32 could be prefixed with "a64". If they are missing
-> > entirely from AArch32, (like asimd), no need for the prefix.
-> > 
-> > The advantage is that we don't need to check the personality but we have
-> > to assume that scripts would not search for substrings (sane people
-> > shouldn't do this anyway as the Features string can always be extended).
-> 
-> And a big disadvantage is that I can imagine AArch64 applications checking
-> for "neon" instead of "asimd", which will break if they're run under kernels
-> without COMPAT support enabled.
+On Tue, Nov 4, 2014 at 5:57 AM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> Hello, Aditya.
+>
+> On Mon, Nov 03, 2014 at 03:12:28PM -0800, Aditya Kali wrote:
+>> I think the sane-behavior flag is only temporary and will be removed
+>> anyways, right? So I didn't bother asking user to supply it. But I can
+>> make the change as you suggested. We just have to make sure that tasks
+>> inside cgroupns cannot mount non-default hierarchies as it would be a
+>> regression.
+>
+> I'm not sure whether supporting mounting from inside a ns is even
+> necessary but, if it is, can't you just test against cgrp_dfl_root?
+> There's no reason to do anything differnetly for ns mounting.
+>
 
-That's because they do stupid things and I they probably deserve to
-break ;). But I agree, there is a risk.
+I am not sure I fully understand what you mean. But we don't have a
+way to test against cgrp_dfl_root while parsing mount-options. They
+only way we know that user is trying to mount a default hierarchy is
+via the sane_behavior flag. So I need to test against this flag it if
+we want to restrict processes inside cgroupns to mounting the default
+hierarchy only.
+Or are you suggesting that its OK for nsown_capable(CAP_SYS_ADMIN)
+processes to mount any cgroup hierarchy (irrespective of their
+cgroupns)? I assumed that this will be a undesirable.
 
-> So I'm inclined to stick with Mark's patch as it is.
+> Thanks.
+>
+> --
+> tejun
 
-If we don't hear otherwise, I propose sometime next week we queue Mark's
-patch for -next.
 
+Thanks,
 -- 
-Catalin
+Aditya
