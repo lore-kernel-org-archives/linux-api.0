@@ -1,188 +1,247 @@
-From: Pawel Moll <pawel.moll@arm.com>
-Subject: [PATCH v4 3/3] perf: Sample additional clock value
-Date: Thu,  6 Nov 2014 16:51:58 +0000
-Message-ID: <1415292718-19785-4-git-send-email-pawel.moll@arm.com>
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Subject: [PATCH v4 2/3] perf: Userspace event
+Date: Thu,  6 Nov 2014 16:51:57 +0000
+Message-ID: <1415292718-19785-3-git-send-email-pawel.moll@arm.com>
 References: <1415292718-19785-1-git-send-email-pawel.moll@arm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1415292718-19785-1-git-send-email-pawel.moll@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Christopher Covington <cov@codeaurora.org>, Namhyung Kim <namhyung@kernel.org>, David Ahern <dsahern@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Tomeu Vizoso <tomeu@tomeuvizoso.net>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415292718-19785-1-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds an option to sample value of an additional clock with
-any perf event, with the the aim of allowing time correlation between
-data coming from perf and other sources like hardware trace which is
-timestamped with an external clock.
+This patch adds a PR_TASK_PERF_UEVENT prctl call which can be used by
+any process to inject custom data into perf data stream as a new
+PERF_RECORD_UEVENT record, if such process is being observed or if it
+is running on a CPU being observed by the perf framework.
 
-The idea is to generate periodic perf record containing timestamps from
-two different sources, sampled as close to each other as possible. This
-allows performing simple linear approximation:
+The prctl call takes the following arguments:
 
-                      other event
-       -----O--------------+-------------O------> t_other
-            :              |             :
-            :              V             :
-       -----O----------------------------O------> t_perf
-        perf event
+        prctl(PR_TASK_PERF_UEVENT, type, size, data, flags);
 
-User can request such samples for any standard perf event, with the most
-obvious examples of cpu-clock (hrtimer) at selected frequency or other
-periodic events like sched:sched_switch.
+- type: a number meaning to describe content of the following data.
+  Kernel does not pay attention to it and merely passes it further in
+  the perf data, therefore its use must be agreed between the events
+  producer (the process being observed) and the consumer (performance
+  analysis tool). The perf userspace tool will contain a repository of
+  "well known" types and reference implementation of their decoders.
+- size: Length in bytes of the data.
+- data: Pointer to the data.
+- flags: Reserved for future use. Always pass zero.
 
-In order to do this, PERF_SAMPLE_CLOCK has to be set in struct
-perf_event_attr.sample_type and a type of the clock to be sampled
-selected by setting perf_event_attr.clock to a value corresponding to
-a POSIX clock clk_id (see "man 2 clock_gettime")
+Perf context that are supposed to receive events generated with the
+prctl above must be opened with perf_event_attr.uevent set to 1. The
+PERF_RECORD_UEVENT records consist of a standard perf event header,
+32-bit type value, 32-bit data size and the data itself, followed by
+padding to align the overall record size to 8 bytes and optional,
+standard sample_id field.
 
-Currently three clocks are implemented: CLOCK_REALITME = 0,
-CLOCK_MONOTONIC = 1 and CLOCK_MONOTONIC_RAW = 2. The clock field is
-5 bits wide to allow for future extension to custom, non-POSIX clock
-sources(MAX_CLOCK for those is 16, see include/uapi/linux/time.h) like
-ARM CoreSight (hardware trace) timestamp generator.
+Example use cases:
 
-Signed-off-by: Pawel Moll <pawel.moll@arm.com>
+- "perf_printf" like mechanism to add logging messages to perf data;
+  in the simplest case it can be just
+
+        prctl(PR_TASK_PERF_UEVENT, 0, 8, "Message", 0);
+
+- synchronisation of performance data generated in user space with the
+  perf stream coming from the kernel. For example, the marker can be
+  inserted by a JIT engine after it generated portion of the code, but
+  before the code is executed for the first time, allowing the
+  post-processor to pick the correct debugging information.
+
+Signed-off-by: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
 ---
 
 Changes since v3:
 
 - none
 
- include/linux/perf_event.h      |  2 ++
- include/uapi/linux/perf_event.h | 16 ++++++++++++++--
- kernel/events/core.c            | 30 ++++++++++++++++++++++++++++++
- 3 files changed, 46 insertions(+), 2 deletions(-)
+ include/linux/perf_event.h      |  4 +++
+ include/uapi/linux/perf_event.h | 23 ++++++++++++-
+ include/uapi/linux/prctl.h      | 10 ++++++
+ kernel/events/core.c            | 71 +++++++++++++++++++++++++++++++++++++++++
+ kernel/sys.c                    |  5 +++
+ 5 files changed, 112 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 680767d..b690a0d 100644
+index 893a0d0..680767d 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
-@@ -607,6 +607,8 @@ struct perf_sample_data {
- 	 * Transaction flags for abort events:
- 	 */
- 	u64				txn;
-+	/* Clock value (additional timestamp for time correlation) */
-+	u64				clock;
- };
+@@ -721,6 +721,8 @@ extern int perf_unregister_guest_info_callbacks(struct perf_guest_info_callbacks
+ extern void perf_event_exec(void);
+ extern void perf_event_comm(struct task_struct *tsk, bool exec);
+ extern void perf_event_fork(struct task_struct *tsk);
++extern int perf_uevent(struct task_struct *tsk, u32 type, u32 size,
++		       const char __user *data);
  
- /* default value for data source */
+ /* Callchains */
+ DECLARE_PER_CPU(struct perf_callchain_entry, perf_callchain_entry);
+@@ -829,6 +831,8 @@ static inline void perf_event_mmap(struct vm_area_struct *vma)		{ }
+ static inline void perf_event_exec(void)				{ }
+ static inline void perf_event_comm(struct task_struct *tsk, bool exec)	{ }
+ static inline void perf_event_fork(struct task_struct *tsk)		{ }
++static inline int perf_uevent(struct task_struct *tsk, u32 type, u32 size,
++		              const char __user *data)			{ return -1; };
+ static inline void perf_event_init(void)				{ }
+ static inline int  perf_swevent_get_recursion_context(void)		{ return -1; }
+ static inline void perf_swevent_put_recursion_context(int rctx)		{ }
 diff --git a/include/uapi/linux/perf_event.h b/include/uapi/linux/perf_event.h
-index 9a64eb1..53a7a72 100644
+index 9d84540..9a64eb1 100644
 --- a/include/uapi/linux/perf_event.h
 +++ b/include/uapi/linux/perf_event.h
-@@ -137,8 +137,9 @@ enum perf_event_sample_format {
- 	PERF_SAMPLE_DATA_SRC			= 1U << 15,
- 	PERF_SAMPLE_IDENTIFIER			= 1U << 16,
- 	PERF_SAMPLE_TRANSACTION			= 1U << 17,
-+	PERF_SAMPLE_CLOCK			= 1U << 18,
- 
--	PERF_SAMPLE_MAX = 1U << 18,		/* non-ABI */
-+	PERF_SAMPLE_MAX = 1U << 19,		/* non-ABI */
- };
- 
- /*
-@@ -304,7 +305,16 @@ struct perf_event_attr {
+@@ -303,7 +303,8 @@ struct perf_event_attr {
+ 				exclude_callchain_user   : 1, /* exclude user callchains */
  				mmap2          :  1, /* include mmap with inode data     */
  				comm_exec      :  1, /* flag comm events that are due to an exec */
- 				uevents        :  1, /* allow uevents into the buffer */
--				__reserved_1   : 38;
-+
-+				/*
-+				 * clock: one of the POSIX clock IDs:
-+				 *
-+				 * 0 - CLOCK_REALTIME
-+				 * 1 - CLOCK_MONOTONIC
-+				 * 4 - CLOCK_MONOTONIC_RAW
-+				 */
-+				clock          :  5, /* clock type */
-+				__reserved_1   : 33;
+-				__reserved_1   : 39;
++				uevents        :  1, /* allow uevents into the buffer */
++				__reserved_1   : 38;
  
  	union {
  		__u32		wakeup_events;	  /* wakeup every n events */
-@@ -544,6 +554,7 @@ enum perf_event_type {
- 	 * 	{ u64			id;       } && PERF_SAMPLE_ID
- 	 * 	{ u64			stream_id;} && PERF_SAMPLE_STREAM_ID
- 	 * 	{ u32			cpu, res; } && PERF_SAMPLE_CPU
-+	 *	{ u64			clock;    } && PERF_SAMPLE_CLOCK
- 	 *	{ u64			id;	  } && PERF_SAMPLE_IDENTIFIER
- 	 * } && perf_event_attr::sample_id_all
- 	 *
-@@ -687,6 +698,7 @@ enum perf_event_type {
- 	 *	{ u64			weight;   } && PERF_SAMPLE_WEIGHT
- 	 *	{ u64			data_src; } && PERF_SAMPLE_DATA_SRC
- 	 *	{ u64			transaction; } && PERF_SAMPLE_TRANSACTION
-+	 *	{ u64			clock;    } && PERF_SAMPLE_CLOCK
- 	 * };
+@@ -712,6 +713,26 @@ enum perf_event_type {
  	 */
- 	PERF_RECORD_SAMPLE			= 9,
+ 	PERF_RECORD_MMAP2			= 10,
+ 
++	/*
++	 * Data in userspace event record is transparent for the kernel
++	 *
++	 * Userspace perf tool code maintains a list of known types with
++	 * reference implementations of parsers for the data field.
++	 *
++	 * Overall size of the record (including type and size fields)
++	 * is always aligned to 8 bytes by adding padding after the data.
++	 *
++	 * struct {
++	 *	struct perf_event_header	header;
++	 *	u32				type;
++	 *	u32				size;
++	 *	char				data[size];
++	 *	char				__padding[-size & 7];
++	 * 	struct sample_id		sample_id;
++	 * };
++	 */
++	PERF_RECORD_UEVENT			= 11,
++
+ 	PERF_RECORD_MAX,			/* non-ABI */
+ };
+ 
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 513df75..2a6852f 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -179,4 +179,14 @@ struct prctl_mm_map {
+ #define PR_SET_THP_DISABLE	41
+ #define PR_GET_THP_DISABLE	42
+ 
++/*
++ * Perf userspace event generation
++ *
++ * second argument: event type
++ * third argument:  data size
++ * fourth argument: pointer to data
++ * fifth argument:  flags (currently unused, pass 0)
++ */
++#define PR_TASK_PERF_UEVENT	43
++
+ #endif /* _LINUX_PRCTL_H */
 diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 9a2d082..816baa6 100644
+index 5d0aa03..9a2d082 100644
 --- a/kernel/events/core.c
 +++ b/kernel/events/core.c
-@@ -1264,6 +1264,9 @@ static void perf_event__header_size(struct perf_event *event)
- 	if (sample_type & PERF_SAMPLE_TRANSACTION)
- 		size += sizeof(data->txn);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		size += sizeof(data->clock);
-+
- 	event->header_size = size;
+@@ -5597,6 +5597,77 @@ static void perf_log_throttle(struct perf_event *event, int enable)
  }
  
-@@ -1291,6 +1294,9 @@ static void perf_event__id_header_size(struct perf_event *event)
- 	if (sample_type & PERF_SAMPLE_CPU)
- 		size += sizeof(data->cpu_entry);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		size += sizeof(data->clock);
+ /*
++ * Userspace-generated event
++ */
 +
- 	event->id_header_size = size;
- }
- 
-@@ -4631,6 +4637,24 @@ static void __perf_event_header__init_id(struct perf_event_header *header,
- 		data->cpu_entry.cpu	 = raw_smp_processor_id();
- 		data->cpu_entry.reserved = 0;
- 	}
++struct perf_uevent {
++	struct perf_event_header	header;
++	u32				type;
++	u32				size;
++	u8				data[0];
++};
 +
-+	if (sample_type & PERF_SAMPLE_CLOCK) {
-+		switch (event->attr.clock) {
-+		case CLOCK_REALTIME:
-+			data->clock = ktime_get_real_ns();
-+			break;
-+		case CLOCK_MONOTONIC:
-+			data->clock = ktime_get_mono_fast_ns();
-+			break;
-+		case CLOCK_MONOTONIC_RAW:
-+			data->clock = ktime_get_raw_ns();
-+			break;
-+		default:
-+			data->clock = 0;
-+			break;
-+		}
++static void perf_uevent_output(struct perf_event *event, void *data)
++{
++	struct perf_uevent *uevent = data;
++	struct perf_output_handle handle;
++	struct perf_sample_data sample;
++	int size = uevent->header.size;
++
++	if (!event->attr.uevents)
++		return;
++
++	perf_event_header__init_id(&uevent->header, &sample, event);
++
++	if (perf_output_begin(&handle, event, uevent->header.size) != 0)
++		goto out;
++	perf_output_put(&handle, uevent->header);
++	perf_output_put(&handle, uevent->type);
++	perf_output_put(&handle, uevent->size);
++	__output_copy(&handle, uevent->data, uevent->size);
++
++	/* Padding to align overall data size to 8 bytes */
++	perf_output_skip(&handle, -uevent->size & (sizeof(u64) - 1));
++
++	perf_event__output_id_sample(event, &handle, &sample);
++
++	perf_output_end(&handle);
++out:
++	uevent->header.size = size;
++}
++
++int perf_uevent(struct task_struct *tsk, u32 type, u32 size,
++		const char __user *data)
++{
++	struct perf_uevent *uevent;
++
++	/* Need some reasonable limit */
++	if (size > PAGE_SIZE)
++		return -E2BIG;
++
++	uevent = kmalloc(sizeof(*uevent) + size, GFP_KERNEL);
++	if (!uevent)
++		return -ENOMEM;
++
++	uevent->header.type = PERF_RECORD_UEVENT;
++	uevent->header.size = sizeof(*uevent) + ALIGN(size, sizeof(u64));
++
++	uevent->type = type;
++	uevent->size = size;
++	if (copy_from_user(uevent->data, data, size)) {
++		kfree(uevent);
++		return -EFAULT;
 +	}
 +
- }
- 
- void perf_event_header__init_id(struct perf_event_header *header,
-@@ -4661,6 +4685,9 @@ static void __perf_event__output_id_sample(struct perf_output_handle *handle,
- 	if (sample_type & PERF_SAMPLE_CPU)
- 		perf_output_put(handle, data->cpu_entry);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		perf_output_put(handle, data->clock);
++	perf_event_aux(perf_uevent_output, uevent, NULL);
 +
- 	if (sample_type & PERF_SAMPLE_IDENTIFIER)
- 		perf_output_put(handle, data->id);
- }
-@@ -4889,6 +4916,9 @@ void perf_output_sample(struct perf_output_handle *handle,
- 	if (sample_type & PERF_SAMPLE_TRANSACTION)
- 		perf_output_put(handle, data->txn);
- 
-+	if (sample_type & PERF_SAMPLE_CLOCK)
-+		perf_output_put(handle, data->clock);
++	kfree(uevent);
 +
- 	if (!event->attr.watermark) {
- 		int wakeup_events = event->attr.wakeup_events;
++	return 0;
++}
++
++
++/*
+  * Generic event overflow handling, sampling.
+  */
  
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 1eaa2f0..1c83677 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2121,6 +2121,11 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 	case PR_TASK_PERF_EVENTS_ENABLE:
+ 		error = perf_event_task_enable();
+ 		break;
++	case PR_TASK_PERF_UEVENT:
++		if (arg5 != 0)
++			return -EINVAL;
++		error = perf_uevent(me, arg2, arg3, (char __user *)arg4);
++		break;
+ 	case PR_GET_TIMERSLACK:
+ 		error = current->timer_slack_ns;
+ 		break;
 -- 
 2.1.0
