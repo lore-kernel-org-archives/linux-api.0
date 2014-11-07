@@ -1,28 +1,40 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [PATCH v8] kernel, add panic_on_warn
-Date: Fri, 7 Nov 2014 13:09:40 -0800 (PST)
-Message-ID: <alpine.DEB.2.10.1411071306370.12192@chino.kir.corp.google.com>
-References: <1415187736-16242-1-git-send-email-prarit@redhat.com> <alpine.DEB.2.10.1411051357050.31575@chino.kir.corp.google.com> <545B733C.6080903@redhat.com> <alpine.DEB.2.10.1411061352440.1526@chino.kir.corp.google.com> <20141106220731.GA13590@redhat.com>
- <alpine.DEB.2.10.1411070214220.32405@chino.kir.corp.google.com> <545CA765.8010403@redhat.com>
+From: Sakari Ailus <sakari.ailus@iki.fi>
+Subject: Re: [PATCH v4 10/10] [media] v4l: Forbid usage of
+ V4L2_MBUS_FMT definitions inside the kernel
+Date: Sat, 08 Nov 2014 00:47:25 +0200
+Message-ID: <545D4BFD.6000206@iki.fi>
+References: <545CDB8D.4080406@xs4all.nl> <1415377630-16564-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <545CA765.8010403@redhat.com>
+In-Reply-To: <1415377630-16564-1-git-send-email-boris.brezillon@free-electrons.com>
 Sender: linux-doc-owner@vger.kernel.org
-To: Prarit Bhargava <prarit@redhat.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Fabian Frederick <fabf@skynet.be>, isimatu.yasuaki@jp.fujitsu.com, jbaron@akamai.com, linux-doc@vger.kernel.org, kexec@lists.infradead.org, linux-api@vger.kernel.org
+To: Boris Brezillon <boris.brezillon@free-electrons.com>, Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org
+Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, devel@driverdev.osuosl.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 7 Nov 2014, Prarit Bhargava wrote:
+Hi Boris,
 
-> There very much is.  Consider a thread that hits a WARN() and then panics.  Then
-> somewhere in the panic code the thread hits another WARN() ... and then panics
-> again.  Previously this would have caused the system to "finish" panick'ing.
-> Now it makes the system hang.
-> 
+Boris Brezillon wrote:
+> @@ -102,6 +113,7 @@ enum v4l2_mbus_pixelcode {
+>  
+>  	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
+>  };
+> +#endif /* __KERNEL__ */
+>  
+>  /**
+>   * struct v4l2_mbus_framefmt - frame format on the media bus
 
-Then we're back to square one which is what is obviously the intent of 
-your patch and the comment that goes along with it: we want to clear 
-panic_on_warn once and not allow multiple panic().  So why not just add 
-the necessary synchronization to make sure that happens when WARN() 
-happens on two cpus simultaneously?
+Was it intended to be this way, or did I miss something? I'd put this to
+beginning of the file, as Hans suggested.
+
+With this matter sorted out, for the set:
+
+Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+
+-- 
+Kind regards,
+
+Sakari Ailus
+sakari.ailus@iki.fi
