@@ -1,188 +1,378 @@
-From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 00/10] [media] Make mediabus format subsystem neutral
-Date: Fri,  7 Nov 2014 15:07:39 +0100
-Message-ID: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+From: Boris Brezillon <boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 01/10] [media] Move mediabus format definition to a more standard place
+Date: Fri,  7 Nov 2014 15:07:40 +0100
+Message-ID: <1415369269-5064-2-git-send-email-boris.brezillon@free-electrons.com>
+References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Sakari Ailus <sakari.ailus@iki.fi>
+Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, devel@driverdev.osuosl.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, Boris Brezillon <boris.brezillon@free-electrons.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+Define MEDIA_BUS_FMT macros (re-using the values defined in the
+v4l2_mbus_pixelcode enum) into a separate header file so that they can be
+used from the DRM/KMS subsystem without any reference to the V4L2
+subsystem.
 
-This patch series prepares the use of media bus formats outside of
-the V4L2 subsytem (my final goal is to use it in the Atmel HLCDC DRM
-driver where I have to configure my DPI/RGB bus according to the
-connected display).
+Then set V4L2_MBUS_FMT definitions to the MEDIA_BUS_FMT values using the
+V4L2_MBUS_FROM_MEDIA_BUS_FMT macro.
 
-The series first defines MEDIA_BUS_FMT_ macros, and then replace all
-references to the v4l2_mbus_pixelcode enum and its values within the
-kernel.
-
-Best Regards,
-
-Boris
-
-Changes since v2:
-- drop media_bus_format enum and replace its values with pre-processor
-  macros
-
-Changes since v1:
-- drop patches deprecating v4l2_mbus_pixelcode for user-space users
-- put V4L2 legacy format definitions into media-bus-format.h
-
-Boris Brezillon (10):
-  [media] Move mediabus format definition to a more standard place
-  [media] v4l: Update subdev-formats doc with new MEDIA_BUS_FMT values
-  [media] Make use of the new media_bus_format definitions
-  [media] i2c: Make use of media_bus_format enum
-  [media] pci: Make use of MEDIA_BUS_FMT definitions
-  [media] platform: Make use of media_bus_format enum
-  [media] usb: Make use of media_bus_format enum
-  staging: media: Make use of MEDIA_BUS_FMT_ definitions
-  gpu: ipu-v3: Make use of media_bus_format enum
-  [media] v4l: Forbid usage of V4L2_MBUS_FMT definitions inside the
-    kernel
-
- Documentation/DocBook/media/v4l/subdev-formats.xml | 308 ++++++++++-----------
- Documentation/video4linux/soc-camera.txt           |   2 +-
- arch/arm/mach-davinci/board-dm355-evm.c            |   2 +-
- arch/arm/mach-davinci/board-dm365-evm.c            |   4 +-
- arch/arm/mach-davinci/dm355.c                      |   7 +-
- arch/arm/mach-davinci/dm365.c                      |   7 +-
- arch/arm/mach-shmobile/board-mackerel.c            |   2 +-
- arch/sh/boards/mach-ap325rxa/setup.c               |   2 +-
- drivers/gpu/ipu-v3/ipu-csi.c                       |  66 ++---
- drivers/media/i2c/adv7170.c                        |  16 +-
- drivers/media/i2c/adv7175.c                        |  16 +-
- drivers/media/i2c/adv7180.c                        |   6 +-
- drivers/media/i2c/adv7183.c                        |   6 +-
- drivers/media/i2c/adv7604.c                        |  72 ++---
- drivers/media/i2c/adv7842.c                        |   6 +-
- drivers/media/i2c/ak881x.c                         |   8 +-
- drivers/media/i2c/cx25840/cx25840-core.c           |   2 +-
- drivers/media/i2c/m5mols/m5mols_core.c             |   6 +-
- drivers/media/i2c/ml86v7667.c                      |   6 +-
- drivers/media/i2c/mt9m032.c                        |   6 +-
- drivers/media/i2c/mt9p031.c                        |   8 +-
- drivers/media/i2c/mt9t001.c                        |   8 +-
- drivers/media/i2c/mt9v011.c                        |   6 +-
- drivers/media/i2c/mt9v032.c                        |  12 +-
- drivers/media/i2c/noon010pc30.c                    |  12 +-
- drivers/media/i2c/ov7670.c                         |  16 +-
- drivers/media/i2c/ov9650.c                         |  10 +-
- drivers/media/i2c/s5c73m3/s5c73m3.h                |   6 +-
- drivers/media/i2c/s5k4ecgx.c                       |   4 +-
- drivers/media/i2c/s5k5baf.c                        |  14 +-
- drivers/media/i2c/s5k6a3.c                         |   2 +-
- drivers/media/i2c/s5k6aa.c                         |   8 +-
- drivers/media/i2c/saa6752hs.c                      |   6 +-
- drivers/media/i2c/saa7115.c                        |   2 +-
- drivers/media/i2c/saa717x.c                        |   2 +-
- drivers/media/i2c/smiapp/smiapp-core.c             |  32 +--
- drivers/media/i2c/soc_camera/imx074.c              |   8 +-
- drivers/media/i2c/soc_camera/mt9m001.c             |  14 +-
- drivers/media/i2c/soc_camera/mt9m111.c             |  70 ++---
- drivers/media/i2c/soc_camera/mt9t031.c             |  10 +-
- drivers/media/i2c/soc_camera/mt9t112.c             |  22 +-
- drivers/media/i2c/soc_camera/mt9v022.c             |  26 +-
- drivers/media/i2c/soc_camera/ov2640.c              |  54 ++--
- drivers/media/i2c/soc_camera/ov5642.c              |   8 +-
- drivers/media/i2c/soc_camera/ov6650.c              |  58 ++--
- drivers/media/i2c/soc_camera/ov772x.c              |  20 +-
- drivers/media/i2c/soc_camera/ov9640.c              |  40 +--
- drivers/media/i2c/soc_camera/ov9740.c              |  12 +-
- drivers/media/i2c/soc_camera/rj54n1cb0c.c          |  54 ++--
- drivers/media/i2c/soc_camera/tw9910.c              |  10 +-
- drivers/media/i2c/sr030pc30.c                      |  14 +-
- drivers/media/i2c/tvp514x.c                        |  12 +-
- drivers/media/i2c/tvp5150.c                        |   6 +-
- drivers/media/i2c/tvp7002.c                        |  10 +-
- drivers/media/i2c/vs6624.c                         |  18 +-
- drivers/media/pci/cx18/cx18-av-core.c              |   2 +-
- drivers/media/pci/cx18/cx18-controls.c             |   2 +-
- drivers/media/pci/cx18/cx18-ioctl.c                |   2 +-
- drivers/media/pci/cx23885/cx23885-video.c          |   2 +-
- drivers/media/pci/ivtv/ivtv-controls.c             |   2 +-
- drivers/media/pci/ivtv/ivtv-ioctl.c                |   2 +-
- drivers/media/pci/saa7134/saa7134-empress.c        |   4 +-
- drivers/media/platform/blackfin/bfin_capture.c     |  14 +-
- drivers/media/platform/davinci/vpbe.c              |   2 +-
- drivers/media/platform/davinci/vpfe_capture.c      |   4 +-
- drivers/media/platform/exynos-gsc/gsc-core.c       |   8 +-
- drivers/media/platform/exynos-gsc/gsc-core.h       |   2 +-
- drivers/media/platform/exynos4-is/fimc-capture.c   |   2 +-
- drivers/media/platform/exynos4-is/fimc-core.c      |  14 +-
- drivers/media/platform/exynos4-is/fimc-core.h      |   4 +-
- drivers/media/platform/exynos4-is/fimc-isp.c       |  16 +-
- drivers/media/platform/exynos4-is/fimc-lite-reg.c  |  26 +-
- drivers/media/platform/exynos4-is/fimc-lite.c      |  14 +-
- drivers/media/platform/exynos4-is/fimc-reg.c       |  14 +-
- drivers/media/platform/exynos4-is/mipi-csis.c      |  14 +-
- drivers/media/platform/marvell-ccic/mcam-core.c    |  21 +-
- drivers/media/platform/marvell-ccic/mcam-core.h    |   2 +-
- drivers/media/platform/omap3isp/ispccdc.c          | 112 ++++----
- drivers/media/platform/omap3isp/ispccp2.c          |  18 +-
- drivers/media/platform/omap3isp/ispcsi2.c          |  42 +--
- drivers/media/platform/omap3isp/isppreview.c       |  60 ++--
- drivers/media/platform/omap3isp/ispresizer.c       |  19 +-
- drivers/media/platform/omap3isp/ispvideo.c         |  95 ++++---
- drivers/media/platform/omap3isp/ispvideo.h         |  10 +-
- drivers/media/platform/s3c-camif/camif-capture.c   |  10 +-
- drivers/media/platform/s3c-camif/camif-regs.c      |   8 +-
- drivers/media/platform/s5p-tv/hdmi_drv.c           |   2 +-
- drivers/media/platform/s5p-tv/sdo_drv.c            |   2 +-
- drivers/media/platform/sh_vou.c                    |   8 +-
- drivers/media/platform/soc_camera/atmel-isi.c      |  22 +-
- drivers/media/platform/soc_camera/mx2_camera.c     |  26 +-
- drivers/media/platform/soc_camera/mx3_camera.c     |   6 +-
- drivers/media/platform/soc_camera/omap1_camera.c   |  36 +--
- drivers/media/platform/soc_camera/pxa_camera.c     |  16 +-
- drivers/media/platform/soc_camera/rcar_vin.c       |  14 +-
- .../platform/soc_camera/sh_mobile_ceu_camera.c     |  20 +-
- drivers/media/platform/soc_camera/sh_mobile_csi2.c |  38 +--
- drivers/media/platform/soc_camera/soc_camera.c     |   2 +-
- .../platform/soc_camera/soc_camera_platform.c      |   2 +-
- drivers/media/platform/soc_camera/soc_mediabus.c   |  78 +++---
- drivers/media/platform/via-camera.c                |   8 +-
- drivers/media/platform/vsp1/vsp1_bru.c             |  14 +-
- drivers/media/platform/vsp1/vsp1_hsit.c            |  12 +-
- drivers/media/platform/vsp1/vsp1_lif.c             |  10 +-
- drivers/media/platform/vsp1/vsp1_lut.c             |  14 +-
- drivers/media/platform/vsp1/vsp1_rwpf.c            |  10 +-
- drivers/media/platform/vsp1/vsp1_sru.c             |  12 +-
- drivers/media/platform/vsp1/vsp1_uds.c             |  10 +-
- drivers/media/platform/vsp1/vsp1_video.c           |  42 +--
- drivers/media/usb/cx231xx/cx231xx-417.c            |   2 +-
- drivers/media/usb/cx231xx/cx231xx-video.c          |   4 +-
- drivers/media/usb/em28xx/em28xx-camera.c           |   2 +-
- drivers/media/usb/go7007/go7007-v4l2.c             |   2 +-
- drivers/media/usb/pvrusb2/pvrusb2-hdw.c            |   2 +-
- drivers/staging/media/davinci_vpfe/dm365_ipipe.c   |  18 +-
- .../staging/media/davinci_vpfe/dm365_ipipe_hw.c    |  26 +-
- drivers/staging/media/davinci_vpfe/dm365_ipipeif.c | 100 +++----
- drivers/staging/media/davinci_vpfe/dm365_isif.c    |  90 +++---
- drivers/staging/media/davinci_vpfe/dm365_resizer.c |  98 +++----
- .../staging/media/davinci_vpfe/vpfe_mc_capture.c   |  18 +-
- drivers/staging/media/omap4iss/iss_csi2.c          |  62 ++---
- drivers/staging/media/omap4iss/iss_ipipe.c         |  16 +-
- drivers/staging/media/omap4iss/iss_ipipeif.c       |  28 +-
- drivers/staging/media/omap4iss/iss_resizer.c       |  26 +-
- drivers/staging/media/omap4iss/iss_video.c         |  78 +++---
- drivers/staging/media/omap4iss/iss_video.h         |  10 +-
- include/media/davinci/vpbe.h                       |   2 +-
- include/media/davinci/vpbe_venc.h                  |   5 +-
- include/media/exynos-fimc.h                        |   2 +-
- include/media/soc_camera.h                         |   2 +-
- include/media/soc_mediabus.h                       |   6 +-
- include/media/v4l2-mediabus.h                      |   2 +-
- include/media/v4l2-subdev.h                        |   2 +-
- include/uapi/linux/Kbuild                          |   1 +
- include/uapi/linux/media-bus-format.h              | 125 +++++++++
- include/uapi/linux/v4l2-mediabus.h                 | 189 ++++++-------
- include/uapi/linux/v4l2-subdev.h                   |   6 +-
- 137 files changed, 1569 insertions(+), 1470 deletions(-)
+Acked-by: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
+Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+---
+ include/uapi/linux/Kbuild             |   1 +
+ include/uapi/linux/media-bus-format.h | 125 +++++++++++++++++++++++
+ include/uapi/linux/v4l2-mediabus.h    | 184 +++++++++++++++-------------------
+ 3 files changed, 206 insertions(+), 104 deletions(-)
  create mode 100644 include/uapi/linux/media-bus-format.h
 
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index b70237e..ed39ac8 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -241,6 +241,7 @@ header-y += map_to_7segment.h
+ header-y += matroxfb.h
+ header-y += mdio.h
+ header-y += media.h
++header-y += media-bus-format.h
+ header-y += mei.h
+ header-y += memfd.h
+ header-y += mempolicy.h
+diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
+new file mode 100644
+index 0000000..23b4090
+--- /dev/null
++++ b/include/uapi/linux/media-bus-format.h
+@@ -0,0 +1,125 @@
++/*
++ * Media Bus API header
++ *
++ * Copyright (C) 2009, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#ifndef __LINUX_MEDIA_BUS_FORMAT_H
++#define __LINUX_MEDIA_BUS_FORMAT_H
++
++/*
++ * These bus formats uniquely identify data formats on the data bus. Format 0
++ * is reserved, MEDIA_BUS_FMT_FIXED shall be used by host-client pairs, where
++ * the data format is fixed. Additionally, "2X8" means that one pixel is
++ * transferred in two 8-bit samples, "BE" or "LE" specify in which order those
++ * samples are transferred over the bus: "LE" means that the least significant
++ * bits are transferred first, "BE" means that the most significant bits are
++ * transferred first, and "PADHI" and "PADLO" define which bits - low or high,
++ * in the incomplete high byte, are filled with padding bits.
++ *
++ * The bus formats are grouped by type, bus_width, bits per component, samples
++ * per pixel and order of subsamples. Numerical values are sorted using generic
++ * numerical sort order (8 thus comes before 10).
++ *
++ * As their value can't change when a new bus format is inserted in the
++ * enumeration, the bus formats are explicitly given a numerical value. The next
++ * free values for each category are listed below, update them when inserting
++ * new pixel codes.
++ */
++
++#define MEDIA_BUS_FMT_FIXED			0x0001
++
++/* RGB - next is	0x100e */
++#define MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE	0x1001
++#define MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE	0x1002
++#define MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE	0x1003
++#define MEDIA_BUS_FMT_RGB555_2X8_PADHI_LE	0x1004
++#define MEDIA_BUS_FMT_BGR565_2X8_BE		0x1005
++#define MEDIA_BUS_FMT_BGR565_2X8_LE		0x1006
++#define MEDIA_BUS_FMT_RGB565_2X8_BE		0x1007
++#define MEDIA_BUS_FMT_RGB565_2X8_LE		0x1008
++#define MEDIA_BUS_FMT_RGB666_1X18		0x1009
++#define MEDIA_BUS_FMT_RGB888_1X24		0x100a
++#define MEDIA_BUS_FMT_RGB888_2X12_BE		0x100b
++#define MEDIA_BUS_FMT_RGB888_2X12_LE		0x100c
++#define MEDIA_BUS_FMT_ARGB8888_1X32		0x100d
++
++/* YUV (including grey) - next is	0x2024 */
++#define MEDIA_BUS_FMT_Y8_1X8			0x2001
++#define MEDIA_BUS_FMT_UV8_1X8			0x2015
++#define MEDIA_BUS_FMT_UYVY8_1_5X8		0x2002
++#define MEDIA_BUS_FMT_VYUY8_1_5X8		0x2003
++#define MEDIA_BUS_FMT_YUYV8_1_5X8		0x2004
++#define MEDIA_BUS_FMT_YVYU8_1_5X8		0x2005
++#define MEDIA_BUS_FMT_UYVY8_2X8			0x2006
++#define MEDIA_BUS_FMT_VYUY8_2X8			0x2007
++#define MEDIA_BUS_FMT_YUYV8_2X8			0x2008
++#define MEDIA_BUS_FMT_YVYU8_2X8			0x2009
++#define MEDIA_BUS_FMT_Y10_1X10			0x200a
++#define MEDIA_BUS_FMT_UYVY10_2X10		0x2018
++#define MEDIA_BUS_FMT_VYUY10_2X10		0x2019
++#define MEDIA_BUS_FMT_YUYV10_2X10		0x200b
++#define MEDIA_BUS_FMT_YVYU10_2X10		0x200c
++#define MEDIA_BUS_FMT_Y12_1X12			0x2013
++#define MEDIA_BUS_FMT_UYVY8_1X16		0x200f
++#define MEDIA_BUS_FMT_VYUY8_1X16		0x2010
++#define MEDIA_BUS_FMT_YUYV8_1X16		0x2011
++#define MEDIA_BUS_FMT_YVYU8_1X16		0x2012
++#define MEDIA_BUS_FMT_YDYUYDYV8_1X16		0x2014
++#define MEDIA_BUS_FMT_UYVY10_1X20		0x201a
++#define MEDIA_BUS_FMT_VYUY10_1X20		0x201b
++#define MEDIA_BUS_FMT_YUYV10_1X20		0x200d
++#define MEDIA_BUS_FMT_YVYU10_1X20		0x200e
++#define MEDIA_BUS_FMT_YUV10_1X30		0x2016
++#define MEDIA_BUS_FMT_AYUV8_1X32		0x2017
++#define MEDIA_BUS_FMT_UYVY12_2X12		0x201c
++#define MEDIA_BUS_FMT_VYUY12_2X12		0x201d
++#define MEDIA_BUS_FMT_YUYV12_2X12		0x201e
++#define MEDIA_BUS_FMT_YVYU12_2X12		0x201f
++#define MEDIA_BUS_FMT_UYVY12_1X24		0x2020
++#define MEDIA_BUS_FMT_VYUY12_1X24		0x2021
++#define MEDIA_BUS_FMT_YUYV12_1X24		0x2022
++#define MEDIA_BUS_FMT_YVYU12_1X24		0x2023
++
++/* Bayer - next is	0x3019 */
++#define MEDIA_BUS_FMT_SBGGR8_1X8		0x3001
++#define MEDIA_BUS_FMT_SGBRG8_1X8		0x3013
++#define MEDIA_BUS_FMT_SGRBG8_1X8		0x3002
++#define MEDIA_BUS_FMT_SRGGB8_1X8		0x3014
++#define MEDIA_BUS_FMT_SBGGR10_ALAW8_1X8		0x3015
++#define MEDIA_BUS_FMT_SGBRG10_ALAW8_1X8		0x3016
++#define MEDIA_BUS_FMT_SGRBG10_ALAW8_1X8		0x3017
++#define MEDIA_BUS_FMT_SRGGB10_ALAW8_1X8		0x3018
++#define MEDIA_BUS_FMT_SBGGR10_DPCM8_1X8		0x300b
++#define MEDIA_BUS_FMT_SGBRG10_DPCM8_1X8		0x300c
++#define MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8		0x3009
++#define MEDIA_BUS_FMT_SRGGB10_DPCM8_1X8		0x300d
++#define MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_BE	0x3003
++#define MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_LE	0x3004
++#define MEDIA_BUS_FMT_SBGGR10_2X8_PADLO_BE	0x3005
++#define MEDIA_BUS_FMT_SBGGR10_2X8_PADLO_LE	0x3006
++#define MEDIA_BUS_FMT_SBGGR10_1X10		0x3007
++#define MEDIA_BUS_FMT_SGBRG10_1X10		0x300e
++#define MEDIA_BUS_FMT_SGRBG10_1X10		0x300a
++#define MEDIA_BUS_FMT_SRGGB10_1X10		0x300f
++#define MEDIA_BUS_FMT_SBGGR12_1X12		0x3008
++#define MEDIA_BUS_FMT_SGBRG12_1X12		0x3010
++#define MEDIA_BUS_FMT_SGRBG12_1X12		0x3011
++#define MEDIA_BUS_FMT_SRGGB12_1X12		0x3012
++
++/* JPEG compressed formats - next is	0x4002 */
++#define MEDIA_BUS_FMT_JPEG_1X8			0x4001
++
++/* Vendor specific formats - next is	0x5002 */
++
++/* S5C73M3 sensor specific interleaved UYVY and JPEG */
++#define MEDIA_BUS_FMT_S5C_UYVY_JPEG_1X8		0x5001
++
++/* HSV - next is	0x6002 */
++#define MEDIA_BUS_FMT_AHSV8888_1X32		0x6001
++
++#endif /* __LINUX_MEDIA_BUS_FORMAT_H */
+diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
+index 1445e85..3d87db7 100644
+--- a/include/uapi/linux/v4l2-mediabus.h
++++ b/include/uapi/linux/v4l2-mediabus.h
+@@ -13,118 +13,94 @@
+ 
+ #include <linux/types.h>
+ #include <linux/videodev2.h>
++#include <linux/media-bus-format.h>
+ 
+-/*
+- * These pixel codes uniquely identify data formats on the media bus. Mostly
+- * they correspond to similarly named V4L2_PIX_FMT_* formats, format 0 is
+- * reserved, V4L2_MBUS_FMT_FIXED shall be used by host-client pairs, where the
+- * data format is fixed. Additionally, "2X8" means that one pixel is transferred
+- * in two 8-bit samples, "BE" or "LE" specify in which order those samples are
+- * transferred over the bus: "LE" means that the least significant bits are
+- * transferred first, "BE" means that the most significant bits are transferred
+- * first, and "PADHI" and "PADLO" define which bits - low or high, in the
+- * incomplete high byte, are filled with padding bits.
+- *
+- * The pixel codes are grouped by type, bus_width, bits per component, samples
+- * per pixel and order of subsamples. Numerical values are sorted using generic
+- * numerical sort order (8 thus comes before 10).
+- *
+- * As their value can't change when a new pixel code is inserted in the
+- * enumeration, the pixel codes are explicitly given a numerical value. The next
+- * free values for each category are listed below, update them when inserting
+- * new pixel codes.
+- */
+-enum v4l2_mbus_pixelcode {
+-	V4L2_MBUS_FMT_FIXED = 0x0001,
++#define V4L2_MBUS_FROM_MEDIA_BUS_FMT(name)	\
++	MEDIA_BUS_FMT_ ## name = V4L2_MBUS_FMT_ ## name
+ 
+-	/* RGB - next is 0x100e */
+-	V4L2_MBUS_FMT_RGB444_2X8_PADHI_BE = 0x1001,
+-	V4L2_MBUS_FMT_RGB444_2X8_PADHI_LE = 0x1002,
+-	V4L2_MBUS_FMT_RGB555_2X8_PADHI_BE = 0x1003,
+-	V4L2_MBUS_FMT_RGB555_2X8_PADHI_LE = 0x1004,
+-	V4L2_MBUS_FMT_BGR565_2X8_BE = 0x1005,
+-	V4L2_MBUS_FMT_BGR565_2X8_LE = 0x1006,
+-	V4L2_MBUS_FMT_RGB565_2X8_BE = 0x1007,
+-	V4L2_MBUS_FMT_RGB565_2X8_LE = 0x1008,
+-	V4L2_MBUS_FMT_RGB666_1X18 = 0x1009,
+-	V4L2_MBUS_FMT_RGB888_1X24 = 0x100a,
+-	V4L2_MBUS_FMT_RGB888_2X12_BE = 0x100b,
+-	V4L2_MBUS_FMT_RGB888_2X12_LE = 0x100c,
+-	V4L2_MBUS_FMT_ARGB8888_1X32 = 0x100d,
++enum v4l2_mbus_pixelcode {
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(FIXED),
+ 
+-	/* YUV (including grey) - next is 0x2024 */
+-	V4L2_MBUS_FMT_Y8_1X8 = 0x2001,
+-	V4L2_MBUS_FMT_UV8_1X8 = 0x2015,
+-	V4L2_MBUS_FMT_UYVY8_1_5X8 = 0x2002,
+-	V4L2_MBUS_FMT_VYUY8_1_5X8 = 0x2003,
+-	V4L2_MBUS_FMT_YUYV8_1_5X8 = 0x2004,
+-	V4L2_MBUS_FMT_YVYU8_1_5X8 = 0x2005,
+-	V4L2_MBUS_FMT_UYVY8_2X8 = 0x2006,
+-	V4L2_MBUS_FMT_VYUY8_2X8 = 0x2007,
+-	V4L2_MBUS_FMT_YUYV8_2X8 = 0x2008,
+-	V4L2_MBUS_FMT_YVYU8_2X8 = 0x2009,
+-	V4L2_MBUS_FMT_Y10_1X10 = 0x200a,
+-	V4L2_MBUS_FMT_UYVY10_2X10 = 0x2018,
+-	V4L2_MBUS_FMT_VYUY10_2X10 = 0x2019,
+-	V4L2_MBUS_FMT_YUYV10_2X10 = 0x200b,
+-	V4L2_MBUS_FMT_YVYU10_2X10 = 0x200c,
+-	V4L2_MBUS_FMT_Y12_1X12 = 0x2013,
+-	V4L2_MBUS_FMT_UYVY8_1X16 = 0x200f,
+-	V4L2_MBUS_FMT_VYUY8_1X16 = 0x2010,
+-	V4L2_MBUS_FMT_YUYV8_1X16 = 0x2011,
+-	V4L2_MBUS_FMT_YVYU8_1X16 = 0x2012,
+-	V4L2_MBUS_FMT_YDYUYDYV8_1X16 = 0x2014,
+-	V4L2_MBUS_FMT_UYVY10_1X20 = 0x201a,
+-	V4L2_MBUS_FMT_VYUY10_1X20 = 0x201b,
+-	V4L2_MBUS_FMT_YUYV10_1X20 = 0x200d,
+-	V4L2_MBUS_FMT_YVYU10_1X20 = 0x200e,
+-	V4L2_MBUS_FMT_YUV10_1X30 = 0x2016,
+-	V4L2_MBUS_FMT_AYUV8_1X32 = 0x2017,
+-	V4L2_MBUS_FMT_UYVY12_2X12 = 0x201c,
+-	V4L2_MBUS_FMT_VYUY12_2X12 = 0x201d,
+-	V4L2_MBUS_FMT_YUYV12_2X12 = 0x201e,
+-	V4L2_MBUS_FMT_YVYU12_2X12 = 0x201f,
+-	V4L2_MBUS_FMT_UYVY12_1X24 = 0x2020,
+-	V4L2_MBUS_FMT_VYUY12_1X24 = 0x2021,
+-	V4L2_MBUS_FMT_YUYV12_1X24 = 0x2022,
+-	V4L2_MBUS_FMT_YVYU12_1X24 = 0x2023,
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB444_2X8_PADHI_BE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB444_2X8_PADHI_LE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB555_2X8_PADHI_BE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB555_2X8_PADHI_LE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(BGR565_2X8_BE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(BGR565_2X8_LE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB565_2X8_BE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB565_2X8_LE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB666_1X18),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB888_1X24),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB888_2X12_BE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(RGB888_2X12_LE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(ARGB8888_1X32),
+ 
+-	/* Bayer - next is 0x3019 */
+-	V4L2_MBUS_FMT_SBGGR8_1X8 = 0x3001,
+-	V4L2_MBUS_FMT_SGBRG8_1X8 = 0x3013,
+-	V4L2_MBUS_FMT_SGRBG8_1X8 = 0x3002,
+-	V4L2_MBUS_FMT_SRGGB8_1X8 = 0x3014,
+-	V4L2_MBUS_FMT_SBGGR10_ALAW8_1X8 = 0x3015,
+-	V4L2_MBUS_FMT_SGBRG10_ALAW8_1X8 = 0x3016,
+-	V4L2_MBUS_FMT_SGRBG10_ALAW8_1X8 = 0x3017,
+-	V4L2_MBUS_FMT_SRGGB10_ALAW8_1X8 = 0x3018,
+-	V4L2_MBUS_FMT_SBGGR10_DPCM8_1X8 = 0x300b,
+-	V4L2_MBUS_FMT_SGBRG10_DPCM8_1X8 = 0x300c,
+-	V4L2_MBUS_FMT_SGRBG10_DPCM8_1X8 = 0x3009,
+-	V4L2_MBUS_FMT_SRGGB10_DPCM8_1X8 = 0x300d,
+-	V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_BE = 0x3003,
+-	V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_LE = 0x3004,
+-	V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_BE = 0x3005,
+-	V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_LE = 0x3006,
+-	V4L2_MBUS_FMT_SBGGR10_1X10 = 0x3007,
+-	V4L2_MBUS_FMT_SGBRG10_1X10 = 0x300e,
+-	V4L2_MBUS_FMT_SGRBG10_1X10 = 0x300a,
+-	V4L2_MBUS_FMT_SRGGB10_1X10 = 0x300f,
+-	V4L2_MBUS_FMT_SBGGR12_1X12 = 0x3008,
+-	V4L2_MBUS_FMT_SGBRG12_1X12 = 0x3010,
+-	V4L2_MBUS_FMT_SGRBG12_1X12 = 0x3011,
+-	V4L2_MBUS_FMT_SRGGB12_1X12 = 0x3012,
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(Y8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UV8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UYVY8_1_5X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(VYUY8_1_5X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUYV8_1_5X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YVYU8_1_5X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UYVY8_2X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(VYUY8_2X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUYV8_2X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YVYU8_2X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(Y10_1X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UYVY10_2X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(VYUY10_2X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUYV10_2X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YVYU10_2X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(Y12_1X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UYVY8_1X16),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(VYUY8_1X16),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUYV8_1X16),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YVYU8_1X16),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YDYUYDYV8_1X16),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UYVY10_1X20),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(VYUY10_1X20),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUYV10_1X20),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YVYU10_1X20),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUV10_1X30),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AYUV8_1X32),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UYVY12_2X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(VYUY12_2X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUYV12_2X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YVYU12_2X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(UYVY12_1X24),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(VYUY12_1X24),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YUYV12_1X24),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(YVYU12_1X24),
+ 
+-	/* JPEG compressed formats - next is 0x4002 */
+-	V4L2_MBUS_FMT_JPEG_1X8 = 0x4001,
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGBRG8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGRBG8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SRGGB8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR10_ALAW8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGBRG10_ALAW8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGRBG10_ALAW8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SRGGB10_ALAW8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR10_DPCM8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGBRG10_DPCM8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGRBG10_DPCM8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SRGGB10_DPCM8_1X8),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR10_2X8_PADHI_BE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR10_2X8_PADHI_LE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR10_2X8_PADLO_BE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR10_2X8_PADLO_LE),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR10_1X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGBRG10_1X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGRBG10_1X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SRGGB10_1X10),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SBGGR12_1X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGBRG12_1X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SGRBG12_1X12),
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(SRGGB12_1X12),
+ 
+-	/* Vendor specific formats - next is 0x5002 */
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(JPEG_1X8),
+ 
+-	/* S5C73M3 sensor specific interleaved UYVY and JPEG */
+-	V4L2_MBUS_FMT_S5C_UYVY_JPEG_1X8 = 0x5001,
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(S5C_UYVY_JPEG_1X8),
+ 
+-	/* HSV - next is 0x6002 */
+-	V4L2_MBUS_FMT_AHSV8888_1X32 = 0x6001,
++	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
+ };
+ 
+ /**
 -- 
 1.9.1
+
