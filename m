@@ -1,165 +1,188 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv6 RFC 0/3] syscalls,x86: Add execveat() system call
-Date: Fri, 7 Nov 2014 13:20:58 +0000
-Message-ID: <CAHse=S-ECjFoZprku+Qb2iDp9auQgWLvYoxxC7-dquOqPWbeTg@mail.gmail.com>
-References: <1415290033-15771-1-git-send-email-drysdale@google.com> <CALCETrXPVpiPp27Q08K2D=Vt66ZhUZn3GBNEcTvejVUZjy0kyQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH v3 00/10] [media] Make mediabus format subsystem neutral
+Date: Fri,  7 Nov 2014 15:07:39 +0100
+Message-ID: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrXPVpiPp27Q08K2D=Vt66ZhUZn3GBNEcTvejVUZjy0kyQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 6, 2014 at 4:55 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Thu, Nov 6, 2014 at 8:07 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->> Here's another pass at this. Some things to discuss in particular:
->>
->> 1) The current approach for interpreted execs (i.e. mostly "#!" scripts)
->>    gives them an argv[1] filename like "/dev/fd/<fd>/<path>".  This
->>    means that script execution in a /proc-less system isn't going to
->>    work, at least until interpreters get smart enough to spot and
->>    special-case the leading "/dev/fd/<fd>", or until there's something
->>    to use in place of /dev/fd -> /proc/self/fd (e.g. Al's dupfs
->>    suggestion, https://lkml.org/lkml/2014/10/19/141).
->>
->>    So is an execveat(2) that (currently) only works for non-interpreted
->>    programs still useful?
->
-> I think it is.  I would make sure to return a distinguishable error
-> code in the event that the failure happens because of one of the
-> unsupported cases.
->
->>
->> 2) I don't like having to add a new LOOKUP_EMPTY_NOPATH flag
->>    just to prevent O_PATH fds from being fexecve()ed -- alternative
->>    suggestions welcomed.  (More generally, I don't have a great
->>    feel for what O_PATH is for; how bad would it be to just allow
->>    them to be fexecve()ed?)
->
-> If you fexecve an O_PATH fd, does it at least check that you have
-> execute permission on the inode?  If so, it seems okay to allow it.
+Hello,
 
-Yes, the same checks will happen for an O_PATH fd as for a normal fd.
-I'll add an explicit test case for that too.
+This patch series prepares the use of media bus formats outside of
+the V4L2 subsytem (my final goal is to use it in the Atmel HLCDC DRM
+driver where I have to configure my DPI/RGB bus according to the
+connected display).
 
-> --Andy
->
->>
->> .........
->>
->> This patch set adds execveat(2) for x86, and is derived from Meredydd
->> Luff's patch from Sept 2012 (https://lkml.org/lkml/2012/9/11/528).
->>
->> The primary aim of adding an execveat syscall is to allow an
->> implementation of fexecve(3) that does not rely on the /proc
->> filesystem, at least for executables (rather than scripts).  The
->> current glibc version of fexecve(3) is implemented via /proc, which
->> causes problems in sandboxed or otherwise restricted environments.
->>
->> Given the desire for a /proc-free fexecve() implementation, HPA
->> suggested (https://lkml.org/lkml/2006/7/11/556) that an execveat(2)
->> syscall would be an appropriate generalization.
->>
->> Also, having a new syscall means that it can take a flags argument
->> without back-compatibility concerns.  The current implementation just
->> defines the AT_EMPTY_PATH and AT_SYMLINK_NOFOLLOW flags, but other
->> flags could be added in future -- for example, flags for new namespaces
->> (as suggested at https://lkml.org/lkml/2006/7/11/474).
->>
->> Related history:
->>  - https://lkml.org/lkml/2006/12/27/123 is an example of someone
->>    realizing that fexecve() is likely to fail in a chroot environment.
->>  - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=514043 covered
->>    documenting the /proc requirement of fexecve(3) in its manpage, to
->>    "prevent other people from wasting their time".
->>  - https://bugzilla.kernel.org/show_bug.cgi?id=74481 documented that
->>    it's not possible to fexecve() a file descriptor for a script with
->>    close-on-exec set (which is possible with the implementation here).
->
-> Confused.  How does it work for a close-on-exec script?  I understand
-> how it works for a close-on-exec ELF binary.
+The series first defines MEDIA_BUS_FMT_ macros, and then replace all
+references to the v4l2_mbus_pixelcode enum and its values within the
+kernel.
 
-My bad, it doesn't -- I forgot to update that part of the commit
-description, it's left over from the version that used d_path().
+Best Regards,
 
-> --Andy
->
->>  - https://bugzilla.redhat.com/show_bug.cgi?id=241609 described a
->>    problem where a process that did setuid() could not fexecve()
->>    because it no longer had access to /proc/self/fd; this has since
->>    been fixed.
->>
->>
->> Changes since v5:
->>  - Set new flag in bprm->interp_flags for O_CLOEXEC fds, so that binfmts
->>    that invoke an interpreter fail the exec (as they will not be able
->>    to access the invoked file). [Andy Lutomirski]
->>  - Don't truncate long paths. [Andy Lutomirski]
->>  - Commonize code to open the executed file. [Eric W. Biederman]
->>  - Mark O_PATH file descriptors so they cannot be fexecve()ed.
->>  - Make self-test more helpful, and add additional cases:
->>      - file offset non-zero
->>      - binary file without execute bit
->>      - O_CLOEXEC fds
->>
->> Changes since v4, suggested by Eric W. Biederman:
->>  - Use empty filename with AT_EMPTY_PATH flag rather than NULL
->>    pathname to request fexecve-like behaviour.
->>  - Build pathname as "/dev/fd/<fd>/<filename>" (or "/dev/fd/<fd>")
->>    rather than using d_path().
->>  - Patch against v3.17 (bfe01a5ba249)
->>
->> Changes since Meredydd's v3 patch:
->>  - Added a selftest.
->>  - Added a man page.
->>  - Left open_exec() signature untouched to reduce patch impact
->>    elsewhere (as suggested by Al Viro).
->>  - Filled in bprm->filename with d_path() into a buffer, to avoid use
->>    of potentially-ephemeral dentry->d_name.
->>  - Patch against v3.14 (455c6fdbd21916).
->>
->>
->> David Drysdale (2):
->>   syscalls,x86: implement execveat() system call
->>   syscalls,x86: add selftest for execveat(2)
->>
->>  arch/x86/ia32/audit.c                   |   1 +
->>  arch/x86/ia32/ia32entry.S               |   1 +
->>  arch/x86/kernel/audit_64.c              |   1 +
->>  arch/x86/kernel/entry_64.S              |  28 +++
->>  arch/x86/syscalls/syscall_32.tbl        |   1 +
->>  arch/x86/syscalls/syscall_64.tbl        |   2 +
->>  arch/x86/um/sys_call_table_64.c         |   1 +
->>  fs/binfmt_em86.c                        |   4 +
->>  fs/binfmt_misc.c                        |   4 +
->>  fs/binfmt_script.c                      |  10 +
->>  fs/exec.c                               | 115 ++++++++++--
->>  fs/namei.c                              |   8 +-
->>  include/linux/binfmts.h                 |   4 +
->>  include/linux/compat.h                  |   3 +
->>  include/linux/fs.h                      |   1 +
->>  include/linux/namei.h                   |   1 +
->>  include/linux/sched.h                   |   4 +
->>  include/linux/syscalls.h                |   4 +
->>  include/uapi/asm-generic/unistd.h       |   4 +-
->>  kernel/sys_ni.c                         |   3 +
->>  lib/audit.c                             |   3 +
->>  tools/testing/selftests/Makefile        |   1 +
->>  tools/testing/selftests/exec/.gitignore |   7 +
->>  tools/testing/selftests/exec/Makefile   |  25 +++
->>  tools/testing/selftests/exec/execveat.c | 321 ++++++++++++++++++++++++++++++++
->>  25 files changed, 542 insertions(+), 15 deletions(-)
->>  create mode 100644 tools/testing/selftests/exec/.gitignore
->>  create mode 100644 tools/testing/selftests/exec/Makefile
->>  create mode 100644 tools/testing/selftests/exec/execveat.c
->>
->> --
->> 2.1.0.rc2.206.gedb03e5
->
->
->
-> --
-> Andy Lutomirski
-> AMA Capital Management, LLC
+Boris
+
+Changes since v2:
+- drop media_bus_format enum and replace its values with pre-processor
+  macros
+
+Changes since v1:
+- drop patches deprecating v4l2_mbus_pixelcode for user-space users
+- put V4L2 legacy format definitions into media-bus-format.h
+
+Boris Brezillon (10):
+  [media] Move mediabus format definition to a more standard place
+  [media] v4l: Update subdev-formats doc with new MEDIA_BUS_FMT values
+  [media] Make use of the new media_bus_format definitions
+  [media] i2c: Make use of media_bus_format enum
+  [media] pci: Make use of MEDIA_BUS_FMT definitions
+  [media] platform: Make use of media_bus_format enum
+  [media] usb: Make use of media_bus_format enum
+  staging: media: Make use of MEDIA_BUS_FMT_ definitions
+  gpu: ipu-v3: Make use of media_bus_format enum
+  [media] v4l: Forbid usage of V4L2_MBUS_FMT definitions inside the
+    kernel
+
+ Documentation/DocBook/media/v4l/subdev-formats.xml | 308 ++++++++++-----------
+ Documentation/video4linux/soc-camera.txt           |   2 +-
+ arch/arm/mach-davinci/board-dm355-evm.c            |   2 +-
+ arch/arm/mach-davinci/board-dm365-evm.c            |   4 +-
+ arch/arm/mach-davinci/dm355.c                      |   7 +-
+ arch/arm/mach-davinci/dm365.c                      |   7 +-
+ arch/arm/mach-shmobile/board-mackerel.c            |   2 +-
+ arch/sh/boards/mach-ap325rxa/setup.c               |   2 +-
+ drivers/gpu/ipu-v3/ipu-csi.c                       |  66 ++---
+ drivers/media/i2c/adv7170.c                        |  16 +-
+ drivers/media/i2c/adv7175.c                        |  16 +-
+ drivers/media/i2c/adv7180.c                        |   6 +-
+ drivers/media/i2c/adv7183.c                        |   6 +-
+ drivers/media/i2c/adv7604.c                        |  72 ++---
+ drivers/media/i2c/adv7842.c                        |   6 +-
+ drivers/media/i2c/ak881x.c                         |   8 +-
+ drivers/media/i2c/cx25840/cx25840-core.c           |   2 +-
+ drivers/media/i2c/m5mols/m5mols_core.c             |   6 +-
+ drivers/media/i2c/ml86v7667.c                      |   6 +-
+ drivers/media/i2c/mt9m032.c                        |   6 +-
+ drivers/media/i2c/mt9p031.c                        |   8 +-
+ drivers/media/i2c/mt9t001.c                        |   8 +-
+ drivers/media/i2c/mt9v011.c                        |   6 +-
+ drivers/media/i2c/mt9v032.c                        |  12 +-
+ drivers/media/i2c/noon010pc30.c                    |  12 +-
+ drivers/media/i2c/ov7670.c                         |  16 +-
+ drivers/media/i2c/ov9650.c                         |  10 +-
+ drivers/media/i2c/s5c73m3/s5c73m3.h                |   6 +-
+ drivers/media/i2c/s5k4ecgx.c                       |   4 +-
+ drivers/media/i2c/s5k5baf.c                        |  14 +-
+ drivers/media/i2c/s5k6a3.c                         |   2 +-
+ drivers/media/i2c/s5k6aa.c                         |   8 +-
+ drivers/media/i2c/saa6752hs.c                      |   6 +-
+ drivers/media/i2c/saa7115.c                        |   2 +-
+ drivers/media/i2c/saa717x.c                        |   2 +-
+ drivers/media/i2c/smiapp/smiapp-core.c             |  32 +--
+ drivers/media/i2c/soc_camera/imx074.c              |   8 +-
+ drivers/media/i2c/soc_camera/mt9m001.c             |  14 +-
+ drivers/media/i2c/soc_camera/mt9m111.c             |  70 ++---
+ drivers/media/i2c/soc_camera/mt9t031.c             |  10 +-
+ drivers/media/i2c/soc_camera/mt9t112.c             |  22 +-
+ drivers/media/i2c/soc_camera/mt9v022.c             |  26 +-
+ drivers/media/i2c/soc_camera/ov2640.c              |  54 ++--
+ drivers/media/i2c/soc_camera/ov5642.c              |   8 +-
+ drivers/media/i2c/soc_camera/ov6650.c              |  58 ++--
+ drivers/media/i2c/soc_camera/ov772x.c              |  20 +-
+ drivers/media/i2c/soc_camera/ov9640.c              |  40 +--
+ drivers/media/i2c/soc_camera/ov9740.c              |  12 +-
+ drivers/media/i2c/soc_camera/rj54n1cb0c.c          |  54 ++--
+ drivers/media/i2c/soc_camera/tw9910.c              |  10 +-
+ drivers/media/i2c/sr030pc30.c                      |  14 +-
+ drivers/media/i2c/tvp514x.c                        |  12 +-
+ drivers/media/i2c/tvp5150.c                        |   6 +-
+ drivers/media/i2c/tvp7002.c                        |  10 +-
+ drivers/media/i2c/vs6624.c                         |  18 +-
+ drivers/media/pci/cx18/cx18-av-core.c              |   2 +-
+ drivers/media/pci/cx18/cx18-controls.c             |   2 +-
+ drivers/media/pci/cx18/cx18-ioctl.c                |   2 +-
+ drivers/media/pci/cx23885/cx23885-video.c          |   2 +-
+ drivers/media/pci/ivtv/ivtv-controls.c             |   2 +-
+ drivers/media/pci/ivtv/ivtv-ioctl.c                |   2 +-
+ drivers/media/pci/saa7134/saa7134-empress.c        |   4 +-
+ drivers/media/platform/blackfin/bfin_capture.c     |  14 +-
+ drivers/media/platform/davinci/vpbe.c              |   2 +-
+ drivers/media/platform/davinci/vpfe_capture.c      |   4 +-
+ drivers/media/platform/exynos-gsc/gsc-core.c       |   8 +-
+ drivers/media/platform/exynos-gsc/gsc-core.h       |   2 +-
+ drivers/media/platform/exynos4-is/fimc-capture.c   |   2 +-
+ drivers/media/platform/exynos4-is/fimc-core.c      |  14 +-
+ drivers/media/platform/exynos4-is/fimc-core.h      |   4 +-
+ drivers/media/platform/exynos4-is/fimc-isp.c       |  16 +-
+ drivers/media/platform/exynos4-is/fimc-lite-reg.c  |  26 +-
+ drivers/media/platform/exynos4-is/fimc-lite.c      |  14 +-
+ drivers/media/platform/exynos4-is/fimc-reg.c       |  14 +-
+ drivers/media/platform/exynos4-is/mipi-csis.c      |  14 +-
+ drivers/media/platform/marvell-ccic/mcam-core.c    |  21 +-
+ drivers/media/platform/marvell-ccic/mcam-core.h    |   2 +-
+ drivers/media/platform/omap3isp/ispccdc.c          | 112 ++++----
+ drivers/media/platform/omap3isp/ispccp2.c          |  18 +-
+ drivers/media/platform/omap3isp/ispcsi2.c          |  42 +--
+ drivers/media/platform/omap3isp/isppreview.c       |  60 ++--
+ drivers/media/platform/omap3isp/ispresizer.c       |  19 +-
+ drivers/media/platform/omap3isp/ispvideo.c         |  95 ++++---
+ drivers/media/platform/omap3isp/ispvideo.h         |  10 +-
+ drivers/media/platform/s3c-camif/camif-capture.c   |  10 +-
+ drivers/media/platform/s3c-camif/camif-regs.c      |   8 +-
+ drivers/media/platform/s5p-tv/hdmi_drv.c           |   2 +-
+ drivers/media/platform/s5p-tv/sdo_drv.c            |   2 +-
+ drivers/media/platform/sh_vou.c                    |   8 +-
+ drivers/media/platform/soc_camera/atmel-isi.c      |  22 +-
+ drivers/media/platform/soc_camera/mx2_camera.c     |  26 +-
+ drivers/media/platform/soc_camera/mx3_camera.c     |   6 +-
+ drivers/media/platform/soc_camera/omap1_camera.c   |  36 +--
+ drivers/media/platform/soc_camera/pxa_camera.c     |  16 +-
+ drivers/media/platform/soc_camera/rcar_vin.c       |  14 +-
+ .../platform/soc_camera/sh_mobile_ceu_camera.c     |  20 +-
+ drivers/media/platform/soc_camera/sh_mobile_csi2.c |  38 +--
+ drivers/media/platform/soc_camera/soc_camera.c     |   2 +-
+ .../platform/soc_camera/soc_camera_platform.c      |   2 +-
+ drivers/media/platform/soc_camera/soc_mediabus.c   |  78 +++---
+ drivers/media/platform/via-camera.c                |   8 +-
+ drivers/media/platform/vsp1/vsp1_bru.c             |  14 +-
+ drivers/media/platform/vsp1/vsp1_hsit.c            |  12 +-
+ drivers/media/platform/vsp1/vsp1_lif.c             |  10 +-
+ drivers/media/platform/vsp1/vsp1_lut.c             |  14 +-
+ drivers/media/platform/vsp1/vsp1_rwpf.c            |  10 +-
+ drivers/media/platform/vsp1/vsp1_sru.c             |  12 +-
+ drivers/media/platform/vsp1/vsp1_uds.c             |  10 +-
+ drivers/media/platform/vsp1/vsp1_video.c           |  42 +--
+ drivers/media/usb/cx231xx/cx231xx-417.c            |   2 +-
+ drivers/media/usb/cx231xx/cx231xx-video.c          |   4 +-
+ drivers/media/usb/em28xx/em28xx-camera.c           |   2 +-
+ drivers/media/usb/go7007/go7007-v4l2.c             |   2 +-
+ drivers/media/usb/pvrusb2/pvrusb2-hdw.c            |   2 +-
+ drivers/staging/media/davinci_vpfe/dm365_ipipe.c   |  18 +-
+ .../staging/media/davinci_vpfe/dm365_ipipe_hw.c    |  26 +-
+ drivers/staging/media/davinci_vpfe/dm365_ipipeif.c | 100 +++----
+ drivers/staging/media/davinci_vpfe/dm365_isif.c    |  90 +++---
+ drivers/staging/media/davinci_vpfe/dm365_resizer.c |  98 +++----
+ .../staging/media/davinci_vpfe/vpfe_mc_capture.c   |  18 +-
+ drivers/staging/media/omap4iss/iss_csi2.c          |  62 ++---
+ drivers/staging/media/omap4iss/iss_ipipe.c         |  16 +-
+ drivers/staging/media/omap4iss/iss_ipipeif.c       |  28 +-
+ drivers/staging/media/omap4iss/iss_resizer.c       |  26 +-
+ drivers/staging/media/omap4iss/iss_video.c         |  78 +++---
+ drivers/staging/media/omap4iss/iss_video.h         |  10 +-
+ include/media/davinci/vpbe.h                       |   2 +-
+ include/media/davinci/vpbe_venc.h                  |   5 +-
+ include/media/exynos-fimc.h                        |   2 +-
+ include/media/soc_camera.h                         |   2 +-
+ include/media/soc_mediabus.h                       |   6 +-
+ include/media/v4l2-mediabus.h                      |   2 +-
+ include/media/v4l2-subdev.h                        |   2 +-
+ include/uapi/linux/Kbuild                          |   1 +
+ include/uapi/linux/media-bus-format.h              | 125 +++++++++
+ include/uapi/linux/v4l2-mediabus.h                 | 189 ++++++-------
+ include/uapi/linux/v4l2-subdev.h                   |   6 +-
+ 137 files changed, 1569 insertions(+), 1470 deletions(-)
+ create mode 100644 include/uapi/linux/media-bus-format.h
+
+-- 
+1.9.1
