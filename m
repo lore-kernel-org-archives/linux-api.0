@@ -1,52 +1,82 @@
-From: Anton Altaparmakov <aia21-KWPb1pKIrIJaa/9Udqfwiw@public.gmane.org>
-Subject: Re: [PATCH v5 7/7] add a flag for per-operation O_DSYNC semantics
-Date: Fri, 7 Nov 2014 06:22:48 +0200
-Message-ID: <BF30FAEC-D4D3-4079-9ECD-2743747279BD@cam.ac.uk>
-References: <cover.1415220890.git.milosz@adfin.com> <cover.1415220890.git.milosz@adfin.com> <c188b04ede700ce5f986b19de12fa617d158540f.1415220890.git.milosz@adfin.com> <x49r3xf28qn.fsf@segfault.boston.devel.redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.0 \(1990.1\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <x49r3xf28qn.fsf-RRHT56Q3PSP4kTEheFKJxxDDeQx5vsVwAInAS/Ez/D0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Volker Lendecke <Volker.Lendecke-3ekOc4rQMZmzQB+pC5nmwQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+From: Anand Avati <avati@gluster.org>
+Subject: Re: [fuse-devel] [PATCH v5 7/7] add a flag for per-operation O_DSYNC semantics
+Date: Thu, 6 Nov 2014 21:52:07 -0800
+Message-ID: <CAFboF2y2skt=H4crv54shfnXOmz23W-shYWtHWekK8ZUDkfP=A@mail.gmail.com>
+References: <cover.1415220890.git.milosz@adfin.com>
+	<c188b04ede700ce5f986b19de12fa617d158540f.1415220890.git.milosz@adfin.com>
+	<x49r3xf28qn.fsf@segfault.boston.devel.redhat.com>
+	<BF30FAEC-D4D3-4079-9ECD-2743747279BD@cam.ac.uk>
+Mime-Version: 1.0
+Content-Type: multipart/alternative; boundary=001a113df27ec1df0505073e690c
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <BF30FAEC-D4D3-4079-9ECD-2743747279BD@cam.ac.uk>
+Sender: owner-linux-aio@kvack.org
+To: Anton Altaparmakov <aia21@cam.ac.uk>
+Cc: Jeff Moyer <jmoyer@redhat.com>, linux-arch@vger.kernel.org, linux-aio@kvack.org, linux-nfs@vger.kernel.org, Volker Lendecke <Volker.Lendecke@sernet.de>, Theodore Ts'o <tytso@mit.edu>, linux-mm@kvack.org, "fuse-devel@lists.sourceforge.net" <fuse-devel@lists.sourceforge.net>, linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>, Milosz Tanski <milosz@adfin.com>, linux-fsdevel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, ceph-devel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, ocfs2-devel@oss.oracle.com, Mel Gorman <mgorman@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-Hi Jeff,
+--001a113df27ec1df0505073e690c
+Content-Type: text/plain; charset=UTF-8
 
-> On 7 Nov 2014, at 01:46, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> 
-> Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org> writes:
-> 
->> -		if (type == READ && (flags & RWF_NONBLOCK))
->> -			return -EAGAIN;
->> +		if (type == READ) {
->> +			if (flags & RWF_NONBLOCK)
->> +				return -EAGAIN;
->> +		} else {
->> +			if (flags & RWF_DSYNC)
->> +				return -EINVAL;
->> +		}
-> 
-> Minor nit, but I'd rather read something that looks like this:
-> 
-> 	if (type == READ && (flags & RWF_NONBLOCK))
-> 		return -EAGAIN;
-> 	else if (type == WRITE && (flags & RWF_DSYNC))
-> 		return -EINVAL;
+On Thu, Nov 6, 2014 at 8:22 PM, Anton Altaparmakov <aia21@cam.ac.uk> wrote:
 
-But your version is less logically efficient for the case where "type == READ" is true and "flags & RWF_NONBLOCK" is false because your version then has to do the "if (type == WRITE" check before discovering it does not need to take that branch either, whilst the original version does not have to do such a test at all.
+> > On 7 Nov 2014, at 01:46, Jeff Moyer <jmoyer@redhat.com> wrote:
+> > Minor nit, but I'd rather read something that looks like this:
+> >
+> >       if (type == READ && (flags & RWF_NONBLOCK))
+> >               return -EAGAIN;
+> >       else if (type == WRITE && (flags & RWF_DSYNC))
+> >               return -EINVAL;
+>
+> But your version is less logically efficient for the case where "type ==
+> READ" is true and "flags & RWF_NONBLOCK" is false because your version then
+> has to do the "if (type == WRITE" check before discovering it does not need
+> to take that branch either, whilst the original version does not have to do
+> such a test at all.
+>
 
-Best regards,
+Seriously? Just focus on the code readability/maintainability which makes
+the code most easily understood/obvious to a new pair of eyes, and leave
+such micro-optimizations to the compiler..
 
-	Anton
+Thanks
 
-> I won't lose sleep over it, though.
-> 
-> Reviewed-by: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+--001a113df27ec1df0505073e690c
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
--- 
-Anton Altaparmakov <aia21 at cam.ac.uk> (replace at with @)
-University of Cambridge Information Services, Roger Needham Building
-7 JJ Thomson Avenue, Cambridge, CB3 0RB, UK
+<div dir=3D"ltr"><br><div class=3D"gmail_extra"><br><div class=3D"gmail_quo=
+te">On Thu, Nov 6, 2014 at 8:22 PM, Anton Altaparmakov <span dir=3D"ltr">&l=
+t;<a href=3D"mailto:aia21@cam.ac.uk" target=3D"_blank">aia21@cam.ac.uk</a>&=
+gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 =
+0 .8ex;border-left:1px #ccc solid;padding-left:1ex">&gt; On 7 Nov 2014, at =
+01:46, Jeff Moyer &lt;<a href=3D"mailto:jmoyer@redhat.com">jmoyer@redhat.co=
+m</a>&gt; wrote:<br>
+&gt; Minor nit, but I&#39;d rather read something that looks like this:<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0if (type =3D=3D READ &amp;&amp; (flags &amp;=
+ RWF_NONBLOCK))<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return -EAGAIN;<=
+br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0else if (type =3D=3D WRITE &amp;&amp; (flags=
+ &amp; RWF_DSYNC))<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return -EINVAL;<=
+br>
+<br>
+But your version is less logically efficient for the case where &quot;type =
+=3D=3D READ&quot; is true and &quot;flags &amp; RWF_NONBLOCK&quot; is false=
+ because your version then has to do the &quot;if (type =3D=3D WRITE&quot; =
+check before discovering it does not need to take that branch either, whils=
+t the original version does not have to do such a test at all.<br></blockqu=
+ote><div><br></div><div>Seriously? Just focus on the code readability/maint=
+ainability which makes the code most easily understood/obvious to a new pai=
+r of eyes, and leave such micro-optimizations to the compiler..</div><div><=
+br></div></div>Thanks</div></div>
+
+--001a113df27ec1df0505073e690c--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
