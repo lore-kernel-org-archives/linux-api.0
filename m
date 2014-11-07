@@ -1,94 +1,103 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH v3 03/10] [media] Make use of the new media_bus_format
- definitions
-Date: Fri,  7 Nov 2014 15:07:42 +0100
-Message-ID: <1415369269-5064-4-git-send-email-boris.brezillon@free-electrons.com>
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH v3 07/10] [media] usb: Make use of media_bus_format enum
+Date: Fri,  7 Nov 2014 15:07:46 +0100
+Message-ID: <1415369269-5064-8-git-send-email-boris.brezillon@free-electrons.com>
 References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Sakari Ailus <sakari.ailus@iki.fi>
-Cc: devel@driverdev.osuosl.org, Boris Brezillon <boris.brezillon@free-electrons.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415369269-5064-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Replace references to the v4l2_mbus_pixelcode enum with the new
-media_bus_format enum in all common headers.
+In order to have subsytem agnostic media bus format definitions we've
+moved media bus definition to include/uapi/linux/media-bus-format.h and
+prefixed enum values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
 
-Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
-Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Reference new definitions in all usb drivers.
+
+Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- include/media/v4l2-mediabus.h    | 2 +-
- include/media/v4l2-subdev.h      | 2 +-
- include/uapi/linux/v4l2-subdev.h | 6 +++---
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ drivers/media/usb/cx231xx/cx231xx-417.c   | 2 +-
+ drivers/media/usb/cx231xx/cx231xx-video.c | 4 ++--
+ drivers/media/usb/em28xx/em28xx-camera.c  | 2 +-
+ drivers/media/usb/go7007/go7007-v4l2.c    | 2 +-
+ drivers/media/usb/pvrusb2/pvrusb2-hdw.c   | 2 +-
+ 5 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/include/media/v4l2-mediabus.h b/include/media/v4l2-mediabus.h
-index 395c4a9..59d7397 100644
---- a/include/media/v4l2-mediabus.h
-+++ b/include/media/v4l2-mediabus.h
-@@ -98,7 +98,7 @@ static inline void v4l2_fill_pix_format(struct v4l2_pix_format *pix_fmt,
+diff --git a/drivers/media/usb/cx231xx/cx231xx-417.c b/drivers/media/usb/cx231xx/cx231xx-417.c
+index 459bb0e..95653ba 100644
+--- a/drivers/media/usb/cx231xx/cx231xx-417.c
++++ b/drivers/media/usb/cx231xx/cx231xx-417.c
+@@ -1878,7 +1878,7 @@ static int cx231xx_s_video_encoding(struct cx2341x_handler *cxhdl, u32 val)
+ 	/* fix videodecoder resolution */
+ 	fmt.width = cxhdl->width / (is_mpeg1 ? 2 : 1);
+ 	fmt.height = cxhdl->height;
+-	fmt.code = V4L2_MBUS_FMT_FIXED;
++	fmt.code = MEDIA_BUS_FMT_FIXED;
+ 	v4l2_subdev_call(dev->sd_cx25840, video, s_mbus_fmt, &fmt);
+ 	return 0;
+ }
+diff --git a/drivers/media/usb/cx231xx/cx231xx-video.c b/drivers/media/usb/cx231xx/cx231xx-video.c
+index 3b3ada6..989d527 100644
+--- a/drivers/media/usb/cx231xx/cx231xx-video.c
++++ b/drivers/media/usb/cx231xx/cx231xx-video.c
+@@ -967,7 +967,7 @@ static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
+ 	dev->height = f->fmt.pix.height;
+ 	dev->format = fmt;
  
- static inline void v4l2_fill_mbus_format(struct v4l2_mbus_framefmt *mbus_fmt,
- 			   const struct v4l2_pix_format *pix_fmt,
--			   enum v4l2_mbus_pixelcode code)
-+			   u32 code)
- {
- 	mbus_fmt->width = pix_fmt->width;
- 	mbus_fmt->height = pix_fmt->height;
-diff --git a/include/media/v4l2-subdev.h b/include/media/v4l2-subdev.h
-index d746572..5860292 100644
---- a/include/media/v4l2-subdev.h
-+++ b/include/media/v4l2-subdev.h
-@@ -341,7 +341,7 @@ struct v4l2_subdev_video_ops {
- 	int (*query_dv_timings)(struct v4l2_subdev *sd,
- 			struct v4l2_dv_timings *timings);
- 	int (*enum_mbus_fmt)(struct v4l2_subdev *sd, unsigned int index,
--			     enum v4l2_mbus_pixelcode *code);
-+			     u32 *code);
- 	int (*enum_mbus_fsizes)(struct v4l2_subdev *sd,
- 			     struct v4l2_frmsizeenum *fsize);
- 	int (*g_mbus_fmt)(struct v4l2_subdev *sd,
-diff --git a/include/uapi/linux/v4l2-subdev.h b/include/uapi/linux/v4l2-subdev.h
-index a619cdd..e0a7e3d 100644
---- a/include/uapi/linux/v4l2-subdev.h
-+++ b/include/uapi/linux/v4l2-subdev.h
-@@ -68,7 +68,7 @@ struct v4l2_subdev_crop {
-  * struct v4l2_subdev_mbus_code_enum - Media bus format enumeration
-  * @pad: pad number, as reported by the media API
-  * @index: format index during enumeration
-- * @code: format code (from enum v4l2_mbus_pixelcode)
-+ * @code: format code (MEDIA_BUS_FMT_ definitions)
-  */
- struct v4l2_subdev_mbus_code_enum {
- 	__u32 pad;
-@@ -81,7 +81,7 @@ struct v4l2_subdev_mbus_code_enum {
-  * struct v4l2_subdev_frame_size_enum - Media bus format enumeration
-  * @pad: pad number, as reported by the media API
-  * @index: format index during enumeration
-- * @code: format code (from enum v4l2_mbus_pixelcode)
-+ * @code: format code (MEDIA_BUS_FMT_ definitions)
-  */
- struct v4l2_subdev_frame_size_enum {
- 	__u32 index;
-@@ -109,7 +109,7 @@ struct v4l2_subdev_frame_interval {
-  * struct v4l2_subdev_frame_interval_enum - Frame interval enumeration
-  * @pad: pad number, as reported by the media API
-  * @index: frame interval index during enumeration
-- * @code: format code (from enum v4l2_mbus_pixelcode)
-+ * @code: format code (MEDIA_BUS_FMT_ definitions)
-  * @width: frame width in pixels
-  * @height: frame height in pixels
-  * @interval: frame interval in seconds
+-	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
++	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
+ 	call_all(dev, video, s_mbus_fmt, &mbus_fmt);
+ 	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
+ 
+@@ -1012,7 +1012,7 @@ static int vidioc_s_std(struct file *file, void *priv, v4l2_std_id norm)
+ 	   resolution (since a standard change effects things like the number
+ 	   of lines in VACT, etc) */
+ 	memset(&mbus_fmt, 0, sizeof(mbus_fmt));
+-	mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
++	mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
+ 	mbus_fmt.width = dev->width;
+ 	mbus_fmt.height = dev->height;
+ 	call_all(dev, video, s_mbus_fmt, &mbus_fmt);
+diff --git a/drivers/media/usb/em28xx/em28xx-camera.c b/drivers/media/usb/em28xx/em28xx-camera.c
+index 6d2ea9a..38cf6c8 100644
+--- a/drivers/media/usb/em28xx/em28xx-camera.c
++++ b/drivers/media/usb/em28xx/em28xx-camera.c
+@@ -430,7 +430,7 @@ int em28xx_init_camera(struct em28xx *dev)
+ 			break;
+ 		}
+ 
+-		fmt.code = V4L2_MBUS_FMT_YUYV8_2X8;
++		fmt.code = MEDIA_BUS_FMT_YUYV8_2X8;
+ 		fmt.width = 640;
+ 		fmt.height = 480;
+ 		v4l2_subdev_call(subdev, video, s_mbus_fmt, &fmt);
+diff --git a/drivers/media/usb/go7007/go7007-v4l2.c b/drivers/media/usb/go7007/go7007-v4l2.c
+index ec799b4..d6bf982 100644
+--- a/drivers/media/usb/go7007/go7007-v4l2.c
++++ b/drivers/media/usb/go7007/go7007-v4l2.c
+@@ -252,7 +252,7 @@ static int set_capture_size(struct go7007 *go, struct v4l2_format *fmt, int try)
+ 	if (go->board_info->sensor_flags & GO7007_SENSOR_SCALING) {
+ 		struct v4l2_mbus_framefmt mbus_fmt;
+ 
+-		mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
++		mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
+ 		mbus_fmt.width = fmt ? fmt->fmt.pix.width : width;
+ 		mbus_fmt.height = height;
+ 		go->encoder_h_halve = 0;
+diff --git a/drivers/media/usb/pvrusb2/pvrusb2-hdw.c b/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
+index 9623b62..2fd9b5e 100644
+--- a/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
++++ b/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
+@@ -2966,7 +2966,7 @@ static void pvr2_subdev_update(struct pvr2_hdw *hdw)
+ 		memset(&fmt, 0, sizeof(fmt));
+ 		fmt.width = hdw->res_hor_val;
+ 		fmt.height = hdw->res_ver_val;
+-		fmt.code = V4L2_MBUS_FMT_FIXED;
++		fmt.code = MEDIA_BUS_FMT_FIXED;
+ 		pvr2_trace(PVR2_TRACE_CHIPS, "subdev v4l2 set_size(%dx%d)",
+ 			   fmt.width, fmt.height);
+ 		v4l2_device_call_all(&hdw->v4l2_dev, 0, video, s_mbus_fmt, &fmt);
 -- 
 1.9.1
