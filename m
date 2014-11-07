@@ -1,85 +1,87 @@
-From: Roger Willcocks <roger@filmlight.ltd.uk>
-Subject: Re: [fuse-devel] [PATCH v5 7/7] add a flag for per-operation
-	O_DSYNC semantics
-Date: Fri, 07 Nov 2014 14:21:18 +0000
-Message-ID: <1415370078.11083.511.camel@montana.filmlight.ltd.uk>
-References: <cover.1415220890.git.milosz@adfin.com>
-	 <c188b04ede700ce5f986b19de12fa617d158540f.1415220890.git.milosz@adfin.com>
-	 <x49r3xf28qn.fsf@segfault.boston.devel.redhat.com>
-	 <BF30FAEC-D4D3-4079-9ECD-2743747279BD@cam.ac.uk>
-	 <CAFboF2y2skt=H4crv54shfnXOmz23W-shYWtHWekK8ZUDkfP=A@mail.gmail.com>
-	 <B92AEADD-B22C-4A4A-B64D-96E8869D3282@cam.ac.uk>
+From: Hans Verkuil <hverkuil@xs4all.nl>
+Subject: Re: [PATCH v3 10/10] [media] v4l: Forbid usage of V4L2_MBUS_FMT
+ definitions inside the kernel
+Date: Fri, 07 Nov 2014 15:47:41 +0100
+Message-ID: <545CDB8D.4080406@xs4all.nl>
+References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
+ <1415369269-5064-11-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <B92AEADD-B22C-4A4A-B64D-96E8869D3282@cam.ac.uk>
-Sender: owner-linux-aio@kvack.org
-To: Anton Altaparmakov <aia21@cam.ac.uk>
-Cc: Anand Avati <avati@gluster.org>, linux-arch@vger.kernel.org, linux-aio@kvack.org, linux-nfs@vger.kernel.org, Volker Lendecke <Volker.Lendecke@sernet.de>, Theodore Ts'o <tytso@mit.edu>, Mel Gorman <mgorman@suse.de>, "fuse-devel@lists.sourceforge.net" <fuse-devel@lists.sourceforge.net>, linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Christoph Hellwig <hch@infradead.org>, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Tejun Heo <tj@kernel.org>, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, ocfs2-devel@oss.oracle.com, Milosz Tanski <milosz@adfin.com>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <1415369269-5064-11-git-send-email-boris.brezillon@free-electrons.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Boris Brezillon <boris.brezillon@free-electrons.com>, Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Sakari Ailus <sakari.ailus@iki.fi>
+Cc: devel@driverdev.osuosl.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
+Nitpicks:
 
-On Fri, 2014-11-07 at 08:43 +0200, Anton Altaparmakov wrote:
-> Hi,
+On 11/07/14 15:07, Boris Brezillon wrote:
+> Place v4l2_mbus_pixelcode in a #ifndef __KERNEL__ section so that kernel
+> users don't have access to these definitions.
 > 
-> > On 7 Nov 2014, at 07:52, Anand Avati <avati@gluster.org> wrote:
-> > On Thu, Nov 6, 2014 at 8:22 PM, Anton Altaparmakov <aia21@cam.ac.uk> wrote:
-> > > On 7 Nov 2014, at 01:46, Jeff Moyer <jmoyer@redhat.com> wrote:
-> > > Minor nit, but I'd rather read something that looks like this:
-> > >
-> > >       if (type == READ && (flags & RWF_NONBLOCK))
-> > >               return -EAGAIN;
-> > >       else if (type == WRITE && (flags & RWF_DSYNC))
-> > >               return -EINVAL;
-> > 
-> > But your version is less logically efficient for the case where "type == READ" is true and "flags & RWF_NONBLOCK" is false because your version then has to do the "if (type == WRITE" check before discovering it does not need to take that branch either, whilst the original version does not have to do such a test at all.
-> > 
-> > Seriously?
+> We have to keep this definition for user-space users even though they're
+> encouraged to move to the new media_bus_format enum.
 > 
-> Of course seriously.
+> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+> ---
+>  include/uapi/linux/v4l2-mediabus.h | 9 +++++++++
+>  1 file changed, 9 insertions(+)
 > 
-> > Just focus on the code readability/maintainability which makes the code most easily understood/obvious to a new pair of eyes, and leave such micro-optimizations to the compiler..
+> diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
+> index 3d87db7..4f31d0e 100644
+> --- a/include/uapi/linux/v4l2-mediabus.h
+> +++ b/include/uapi/linux/v4l2-mediabus.h
+> @@ -15,6 +15,14 @@
+>  #include <linux/videodev2.h>
+>  #include <linux/media-bus-format.h>
+>  
+> +#ifndef __KERNEL__
+> +
+> +/*
+> + * enum v4l2_mbus_pixelcode and its defintions are now deprecated, and
+
+defintions -> definitions
+
+> + * MEDIA_BUS_FMT_ defintions (defined in media-bus-format.h) should be
+
+and again...
+
+> + * used instead.
+
+I would also add something like this:
+
+"New defines should only be added to media-bus-format.h. The v4l2_mbus_pixelcode
+enum is frozen."
+
+> + */
+> +
+>  #define V4L2_MBUS_FROM_MEDIA_BUS_FMT(name)	\
+>  	MEDIA_BUS_FMT_ ## name = V4L2_MBUS_FMT_ ## name
+>  
+> @@ -102,6 +110,7 @@ enum v4l2_mbus_pixelcode {
+>  
+>  	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
+>  };
+> +#endif /* __KERNEL__ */
+>  
+>  /**
+>   * struct v4l2_mbus_framefmt - frame format on the media bus
 > 
-> The original version is more readable (IMO) and this is not a micro-optimization.  It is people like you who are responsible for the fact that we need faster and faster computers to cope with the inefficient/poor code being written more and more...
-> 
 
-Your original version needs me to know that type can only be either READ
-or WRITE (and not, for instance, READONLY or READWRITE or some other
-random special case) and it rings alarm bells when I first see it. If
-you want to keep the micro optimization, you need an assertion to
-acknowledge the potential bug and a comment to make the code obvious:
+Can you move this struct forward to before the v4l2_mbus_pixelcode enum? That way
+the obsolete code is at the end of the header. People might miss this struct
+otherwise.
 
- +            assert(type == READ || type == WRITE);
- +            if (type == READ) {
- +                    if (flags & RWF_NONBLOCK)
- +                            return -EAGAIN;
- +            } else { /* WRITE */
- +                    if (flags & RWF_DSYNC)
- +                            return -EINVAL;
- +            }
+Regards,
 
-but since what's really happening here is two separate and independent
-error checks, Jeff's version is still better, even if it does take an
-extra couple of nanoseconds.
-
-Actually I'd probably write:
-
-       if (type == READ && (flags & RWF_NONBLOCK))
-              return -EAGAIN;
-
-       if (type == WRITE && (flags & RWF_DSYNC))
-              return -EINVAL;
-
-(no 'else' since the code will never be reached if the first test is
-true).
-
-
--- 
-Roger Willcocks <roger@filmlight.ltd.uk>
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+	Hans
