@@ -1,124 +1,88 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH v2 01/10] [media] Move mediabus format definition to a
- more standard place
-Date: Fri, 07 Nov 2014 14:10:28 +0100
-Message-ID: <545CC4C4.6080600@xs4all.nl>
-References: <1415267829-4177-1-git-send-email-boris.brezillon@free-electrons.com> <1415267829-4177-2-git-send-email-boris.brezillon@free-electrons.com> <20141107114358.GB3136@valkosipuli.retiisi.org.uk>
+From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv6 1/3] syscalls,x86: implement execveat() system call
+Date: Fri, 7 Nov 2014 13:19:54 +0000
+Message-ID: <CAHse=S9sudiJnLTwd1yXK9jFCPfVq4uPLBjhUDqMFeh2UQ7xqQ@mail.gmail.com>
+References: <1415290033-15771-1-git-send-email-drysdale@google.com>
+ <1415290033-15771-2-git-send-email-drysdale@google.com> <CAGXu5jKp7wEKnoeOVGUGCeJ3Mv-kkOm+QpXiu4HdWuvQx99auw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141107114358.GB3136-S+BSfZ9RZZmRSg0ZkenSGLdO1Tsj/99ntUK59QYPAWc@public.gmane.org>
+In-Reply-To: <CAGXu5jKp7wEKnoeOVGUGCeJ3Mv-kkOm+QpXiu4HdWuvQx99auw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Cc: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/07/14 12:43, Sakari Ailus wrote:
-> Hi Boris,
-> 
-> Thank you for the update.
-> 
-> On Thu, Nov 06, 2014 at 10:56:59AM +0100, Boris Brezillon wrote:
->> Rename mediabus formats and move the enum into a separate header file so
->> that it can be used by DRM/KMS subsystem without any reference to the V4L2
->> subsystem.
+On Thu, Nov 6, 2014 at 6:06 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+> On Thu, Nov 6, 2014 at 8:07 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>> diff --git a/fs/exec.c b/fs/exec.c
+>> index a2b42a98c743..800d232c17bb 100644
+>> --- a/fs/exec.c
+>> +++ b/fs/exec.c
+>> @@ -1422,10 +1431,12 @@ static int exec_binprm(struct linux_binprm *bprm)
+>>  /*
+>>   * sys_execve() executes a new program.
+>>   */
+>> -static int do_execve_common(struct filename *filename,
+>> -                               struct user_arg_ptr argv,
+>> -                               struct user_arg_ptr envp)
+>> +static int do_execveat_common(int fd, struct filename *filename,
+>> +                             struct user_arg_ptr argv,
+>> +                             struct user_arg_ptr envp,
+>> +                             int flags)
+>>  {
+>> +       char *pathbuf = NULL;
+>>         struct linux_binprm *bprm;
+>>         struct file *file;
+>>         struct files_struct *displaced;
+>> @@ -1466,7 +1477,7 @@ static int do_execve_common(struct filename *filename,
+>>         check_unsafe_exec(bprm);
+>>         current->in_execve = 1;
 >>
->> Old v4l2_mbus_pixelcode now points to media_bus_format.
+>> -       file = do_open_exec(filename);
+>> +       file = do_open_execat(fd, filename, flags);
+>>         retval = PTR_ERR(file);
+>>         if (IS_ERR(file))
+>>                 goto out_unmark;
+>> @@ -1474,7 +1485,30 @@ static int do_execve_common(struct filename *filename,
+>>         sched_exec();
 >>
->> Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
->> Acked-by: Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>
->> ---
->>  include/uapi/linux/Kbuild             |   1 +
->>  include/uapi/linux/media-bus-format.h | 131 ++++++++++++++++++++++++++++++++++
->>  include/uapi/linux/v4l2-mediabus.h    | 114 +----------------------------
->>  3 files changed, 134 insertions(+), 112 deletions(-)
->>  create mode 100644 include/uapi/linux/media-bus-format.h
->>
->> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
->> index b70237e..b2c23f8 100644
->> --- a/include/uapi/linux/Kbuild
->> +++ b/include/uapi/linux/Kbuild
->> @@ -414,6 +414,7 @@ header-y += veth.h
->>  header-y += vfio.h
->>  header-y += vhost.h
->>  header-y += videodev2.h
->> +header-y += media-bus-format.h
-> 
-> Could you arrange this to the list alphabetically, please?
-> 
->>  header-y += virtio_9p.h
->>  header-y += virtio_balloon.h
->>  header-y += virtio_blk.h
->> diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
->> new file mode 100644
->> index 0000000..251a902
->> --- /dev/null
->> +++ b/include/uapi/linux/media-bus-format.h
->> @@ -0,0 +1,131 @@
->> +/*
->> + * Media Bus API header
->> + *
->> + * Copyright (C) 2009, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>
->> + *
->> + * This program is free software; you can redistribute it and/or modify
->> + * it under the terms of the GNU General Public License version 2 as
->> + * published by the Free Software Foundation.
->> + */
+>>         bprm->file = file;
+>> -       bprm->filename = bprm->interp = filename->name;
+>> +       if (fd == AT_FDCWD || filename->name[0] == '/') {
+>> +               bprm->filename = filename->name;
+>> +       } else {
+>> +               /* "/dev/fd/2147483647/" + filename->name */
+>> +               int maxlen = 19 + strlen(filename->name);
+>
+> This should be 20 + strlen (to include the trailing NULL). However, I
+> think this whole bit of code could be replaced with kasprintf...
+>
 >> +
->> +#ifndef __LINUX_MEDIA_BUS_FORMAT_H
->> +#define __LINUX_MEDIA_BUS_FORMAT_H
->> +
->> +/*
->> + * These bus formats uniquely identify data formats on the data bus. Format 0
->> + * is reserved, MEDIA_BUS_FMT_FIXED shall be used by host-client pairs, where
->> + * the data format is fixed. Additionally, "2X8" means that one pixel is
->> + * transferred in two 8-bit samples, "BE" or "LE" specify in which order those
->> + * samples are transferred over the bus: "LE" means that the least significant
->> + * bits are transferred first, "BE" means that the most significant bits are
->> + * transferred first, and "PADHI" and "PADLO" define which bits - low or high,
->> + * in the incomplete high byte, are filled with padding bits.
->> + *
->> + * The bus formats are grouped by type, bus_width, bits per component, samples
->> + * per pixel and order of subsamples. Numerical values are sorted using generic
->> + * numerical sort order (8 thus comes before 10).
->> + *
->> + * As their value can't change when a new bus format is inserted in the
->> + * enumeration, the bus formats are explicitly given a numerical value. The next
->> + * free values for each category are listed below, update them when inserting
->> + * new pixel codes.
->> + */
->> +
->> +#define MEDIA_BUS_FMT_ENTRY(name, val)	\
->> +	MEDIA_BUS_FMT_ ## name = val,	\
->> +	V4L2_MBUS_FMT_ ## name = val
->> +
->> +enum media_bus_format {
-> 
-> There's no really a need to keep the definitions inside the enum. It looks a
-> little bit confusing to me. That made me realise something I missed
-> yesterday.
-> 
-> There's a difference: the enum in C++ is a different thing than in C, and
-> the enum type isn't able to contain any other values than those defined in
-> the enumeration.
-> 
-> So what I propose is the following. Keep enum v4l2_mbus_pixelcode around,
-> including the enum values. Define new values for MEDIA_BUS_* equivalents
-> using preprocessor macros, as you've done below. Drop the definition of enum
-> media_bus_format, and use u32 (or uint32_t) type for the variables.
-> 
-> This way the enum stays intact for existing C++ applications, and new
-> applications will have to use a 32-bit type.
-> 
-> I'd like to get an ok from Hans to this as well.
+>> +               pathbuf = kmalloc(maxlen, GFP_TEMPORARY);
+>> +               if (!pathbuf) {
+>> +                       retval = -ENOMEM;
+>> +                       goto out_unmark;
+>> +               }
+>> +               if (filename->name[0] == '\0')
+>> +                       sprintf(pathbuf, "/dev/fd/%d", fd);
+>> +               else
+>> +                       snprintf(pathbuf, maxlen,
+>> +                                "/dev/fd/%d/%s", fd, filename->name);
+>
+> Maybe something like this? A bit messy, so maybe your original if/else
+> would be more readable.
+>
+>     } else {
+>         pathbuf = kasprintf("/dev/fd/%d%s%s", fd,
+>                                        filename->name[0] == '\0' ? "" : "/",
+>                                        filename->name[0] == '\0' ? ""
+> : filename->name);
+>         if (!pathbuf) {
+>             retval = -ENOMEM;
+>             goto out_unmark;
+>         }
+>     }
 
-OK, let's do this. Let's keep enum v4l2_mbus_pixelcode but only under #ifndef
-__KERNEL and with a comment that this enum is deprecated and frozen and that
-the values from the new header should be used.
-
-And make the new MEDIA_BUS_FMT_ values defines instead of an enum.
-
-Regards,
-
-	Hans
+Ah, I didn't know about kasprintf(), that will make things much
+easier -- thanks!
