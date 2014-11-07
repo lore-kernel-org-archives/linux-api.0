@@ -1,67 +1,84 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH v4 10/10] [media] v4l: Forbid usage of V4L2_MBUS_FMT
- definitions inside the kernel
-Date: Fri,  7 Nov 2014 17:27:10 +0100
-Message-ID: <1415377630-16564-1-git-send-email-boris.brezillon@free-electrons.com>
-References: <545CDB8D.4080406@xs4all.nl>
+From: Milosz Tanski <milosz@adfin.com>
+Subject: Re: [PATCH v5 2/7] vfs: Define new syscalls preadv2,pwritev2
+Date: Fri, 7 Nov 2014 11:28:17 -0500
+Message-ID: <CANP1eJG=nTB_jbOUY9nQfmsxbyAfO6KhmHm0jRVTyp09dseCxg@mail.gmail.com>
+References: <cover.1415220890.git.milosz@adfin.com>
+	<dcc7d998033bbd999bbd92ef9c2041bce0255a3e.1415220890.git.milosz@adfin.com>
+	<x49y4rn29oh.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <545CDB8D.4080406@xs4all.nl>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Sakari Ailus <sakari.ailus@iki.fi>
-Cc: devel@driverdev.osuosl.org, Boris Brezillon <boris.brezillon@free-electrons.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <x49y4rn29oh.fsf@segfault.boston.devel.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-Place v4l2_mbus_pixelcode in a #ifndef __KERNEL__ section so that kernel
-users don't have access to these definitions.
+On Thu, Nov 6, 2014 at 6:25 PM, Jeff Moyer <jmoyer@redhat.com> wrote:
+> Milosz Tanski <milosz@adfin.com> writes:
+>
+>> New syscalls that take an flag argument. This change does not add any specific
+>> flags.
+>>
+>> Signed-off-by: Milosz Tanski <milosz@adfin.com>
+>> Reviewed-by: Christoph Hellwig <hch@lst.de>
+>> ---
+>>  fs/read_write.c                   | 176 ++++++++++++++++++++++++++++++--------
+>>  include/linux/compat.h            |   6 ++
+>>  include/linux/syscalls.h          |   6 ++
+>>  include/uapi/asm-generic/unistd.h |   6 +-
+>>  mm/filemap.c                      |   5 +-
+>>  5 files changed, 158 insertions(+), 41 deletions(-)
+>>
+>> diff --git a/fs/read_write.c b/fs/read_write.c
+>> index 94b2d34..907735c 100644
+>> --- a/fs/read_write.c
+>> +++ b/fs/read_write.c
+>> @@ -866,6 +866,8 @@ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
+>>               return -EBADF;
+>>       if (!(file->f_mode & FMODE_CAN_READ))
+>>               return -EINVAL;
+>> +     if (flags & ~0)
+>> +             return -EINVAL;
+>>
+>>       return do_readv_writev(READ, file, vec, vlen, pos, flags);
+>>  }
+>> @@ -879,21 +881,23 @@ ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
+>>               return -EBADF;
+>>       if (!(file->f_mode & FMODE_CAN_WRITE))
+>>               return -EINVAL;
+>> +     if (flags & ~0)
+>> +             return -EINVAL;
+>>
+>>       return do_readv_writev(WRITE, file, vec, vlen, pos, flags);
+>>  }
+>
+> Hi, Milosz,
+>
+> You've checked for invalid flags for the normal system calls, but not
+> for the compat variants.  Can you add that in, please?
+>
+> Thanks!
+> Jeff
 
-We have to keep this definition for user-space users even though they're
-encouraged to move to the new media_bus_format enum.
+That's a good catch Jeff I'll fix this and it'll be in the next
+version of the patch series.
 
-Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
----
- include/uapi/linux/v4l2-mediabus.h | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+- M
 
-diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
-index d712df8..3358e86 100644
---- a/include/uapi/linux/v4l2-mediabus.h
-+++ b/include/uapi/linux/v4l2-mediabus.h
-@@ -15,6 +15,17 @@
- #include <linux/types.h>
- #include <linux/videodev2.h>
- 
-+#ifndef __KERNEL__
-+
-+/*
-+ * enum v4l2_mbus_pixelcode and its definitions are now deprecated, and
-+ * MEDIA_BUS_FMT_ definitions (defined in media-bus-format.h) should be
-+ * used instead.
-+ *
-+ * New defines should only be added to media-bus-format.h. The
-+ * v4l2_mbus_pixelcode enum is frozen.
-+ */
-+
- #define V4L2_MBUS_FROM_MEDIA_BUS_FMT(name)	\
- 	MEDIA_BUS_FMT_ ## name = V4L2_MBUS_FMT_ ## name
- 
-@@ -102,6 +113,7 @@ enum v4l2_mbus_pixelcode {
- 
- 	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
- };
-+#endif /* __KERNEL__ */
- 
- /**
-  * struct v4l2_mbus_framefmt - frame format on the media bus
+
+
 -- 
-1.9.1
+Milosz Tanski
+CTO
+16 East 34th Street, 15th floor
+New York, NY 10016
+
+p: 646-253-9055
+e: milosz@adfin.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
