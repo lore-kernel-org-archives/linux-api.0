@@ -1,214 +1,71 @@
-From: Oded Gabbay <oded.gabbay@amd.com>
-Subject: [PATCH v5 07/24] amdkfd: Add IOCTL set definitions of amdkfd
-Date: Sat, 8 Nov 2014 20:37:28 +0200
-Message-ID: <1415471865-1893-8-git-send-email-oded.gabbay@amd.com>
-References: <1415471865-1893-1-git-send-email-oded.gabbay@amd.com>
+From: Karol Lewandowski <lmctlx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 0/5] kdbus: add support for lsm
+Date: Sun, 9 Nov 2014 01:07:57 +0100
+Message-ID: <20141109000757.GA23762@pix>
+References: <54539AF3.6060302@samsung.com>
+ <1414773397-26490-1-git-send-email-k.lewandowsk@samsung.com>
+ <20141107180120.GA15387@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1415471865-1893-1-git-send-email-oded.gabbay@amd.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Airlie <airlied@linux.ie>, Alex Deucher <alexander.deucher@amd.com>, Jerome Glisse <j.glisse@gmail.com>
-Cc: linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, John Bridgman <John.Bridgman@amd.com>, Oded Gabbay <oded.gabbay@amd.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20141107180120.GA15387-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, r.krypa-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-- KFD_IOC_GET_VERSION:
-	Retrieves the interface version of amdkfd
+On Fri, Nov 07, 2014 at 10:01:20AM -0800, Greg KH wrote:
+> On Fri, Oct 31, 2014 at 05:36:32PM +0100, Karol Lewandowski wrote:
+> > This is set of EXPERIMENTAL patches adding lsm support to kdbus.
+> > (Rebased on top of v3.17.)
+> > 
+> > >From least to most invasive:
+> > 
+> >  - (1) kdbus: extend structures with security pointer for lsm
+> > 
+> >    Trivial.  Applicable as-is.
+> > 
+> >  - (2) security: export security_file_receive for modules
+> >    (3) kdbus: check if lsm permits installing received fds
+> > 
+> >    fd_install doesn't seem to consult LSM, these patches
+> >    ensure that receiving process has the right to sent fds. 
+> > 
+> >    Compile-tested only.
+> > 
+> >  - (4) security: introduce lsm hooks for kdbus
+> >    (5) kdbus: make use of new lsm hooks
+> > 
+> >    Set of proof-of-concept hooks discussed previously with Paul Moore.
+> > 
+> >    kdbus integration patch (5) for review, but unlikely for integration
+> >    at this stage.
+> > 
+> >    Likewise, compile-tested only.
+> > 
+> > 
+> > Karol Lewandowski (5):
+> >   kdbus: extend structures with security pointer for lsm
+> >   security: export security_file_receive for modules
+> >   kdbus: check if lsm permits installing received fds
+> >   security: introduce lsm hooks for kdbus
+> >   kdbus: make use of new lsm hooks
+> 
+> These looks reasonable to me, thanks for sending them.  They will need
+> to be refreshed again after this next round of changes, but it shouldn't
+> be that hard to do so.
 
-- KFD_IOC_CREATE_QUEUE:
-	Creates a usermode queue that runs on a specific GPU device
+Sure thing.
 
-- KFD_IOC_DESTROY_QUEUE:
-	Destroys an existing usermode queue
+For completness - there are accompanying Smack and SELinux patches that
+could go together with above patches, ie.
 
-- KFD_IOC_SET_MEMORY_POLICY:
-	Sets the memory policy of the default and alternate aperture of the
-        calling process
+  https://github.com/lmctl/linux/commit/103c26fd27d1ec8c32d85dd3d85681f936ac66fb
 
-- KFD_IOC_GET_CLOCK_COUNTERS:
-	Retrieves counters (timestamps) of CPU and GPU
+  http://git.infradead.org/users/pcmoore/selinux/commitdiff/eef4844f91fef6092b6bfac941ebe7f18375be9d
 
-- KFD_IOC_GET_PROCESS_APERTURES:
-	Retrieves information about process apertures that were initialized
-        during the open() call of the amdkfd device
+I've got some free time on my hands now, so I'll try to revisit these too.
 
-- KFD_IOC_UPDATE_QUEUE:
-	Updates configuration of an existing usermode queue
-
-v3: Remove pragma pack and pmc ioctls. Added parameter for doorbell offset and
-a comment on counters
-
-v5:
-
-Add define for AQL queues.
-Fix arguments of Get Version IOCTL
-Make IOCTL's structures to be the same size on 32/64 bit
-
-Signed-off-by: Oded Gabbay <oded.gabbay@amd.com>
----
- include/uapi/linux/kfd_ioctl.h | 154 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 154 insertions(+)
- create mode 100644 include/uapi/linux/kfd_ioctl.h
-
-diff --git a/include/uapi/linux/kfd_ioctl.h b/include/uapi/linux/kfd_ioctl.h
-new file mode 100644
-index 0000000..fa1bc6d
---- /dev/null
-+++ b/include/uapi/linux/kfd_ioctl.h
-@@ -0,0 +1,154 @@
-+/*
-+ * Copyright 2014 Advanced Micro Devices, Inc.
-+ *
-+ * Permission is hereby granted, free of charge, to any person obtaining a
-+ * copy of this software and associated documentation files (the "Software"),
-+ * to deal in the Software without restriction, including without limitation
-+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-+ * and/or sell copies of the Software, and to permit persons to whom the
-+ * Software is furnished to do so, subject to the following conditions:
-+ *
-+ * The above copyright notice and this permission notice shall be included in
-+ * all copies or substantial portions of the Software.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
-+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ * OTHER DEALINGS IN THE SOFTWARE.
-+ */
-+
-+#ifndef KFD_IOCTL_H_INCLUDED
-+#define KFD_IOCTL_H_INCLUDED
-+
-+#include <linux/types.h>
-+#include <linux/ioctl.h>
-+
-+#define KFD_IOCTL_MAJOR_VERSION 1
-+#define KFD_IOCTL_MINOR_VERSION 2
-+
-+struct kfd_ioctl_get_version_args {
-+	uint32_t major_version;	/* from KFD */
-+	uint32_t minor_version;	/* from KFD */
-+};
-+
-+/* For kfd_ioctl_create_queue_args.queue_type. */
-+#define KFD_IOC_QUEUE_TYPE_COMPUTE	0
-+#define KFD_IOC_QUEUE_TYPE_SDMA		1
-+#define KFD_IOC_QUEUE_TYPE_COMPUTE_AQL	2
-+
-+#define KFD_MAX_QUEUE_PERCENTAGE	100
-+#define KFD_MAX_QUEUE_PRIORITY		15
-+
-+struct kfd_ioctl_create_queue_args {
-+	uint64_t ring_base_address;	/* to KFD */
-+	uint64_t write_pointer_address;	/* from KFD */
-+	uint64_t read_pointer_address;	/* from KFD */
-+	uint64_t doorbell_offset;	/* from KFD */
-+
-+	uint32_t ring_size;		/* to KFD */
-+	uint32_t gpu_id;		/* to KFD */
-+	uint32_t queue_type;		/* to KFD */
-+	uint32_t queue_percentage;	/* to KFD */
-+	uint32_t queue_priority;	/* to KFD */
-+	uint32_t queue_id;		/* from KFD */
-+
-+	uint64_t eop_buffer_address;	/* to KFD */
-+	uint64_t eop_buffer_size;	/* to KFD */
-+	uint64_t ctx_save_restore_address; /* to KFD */
-+	uint64_t ctx_save_restore_size;	/* to KFD */
-+};
-+
-+struct kfd_ioctl_destroy_queue_args {
-+	uint32_t queue_id;		/* to KFD */
-+	uint32_t pad;
-+};
-+
-+struct kfd_ioctl_update_queue_args {
-+	uint64_t ring_base_address;	/* to KFD */
-+
-+	uint32_t queue_id;		/* to KFD */
-+	uint32_t ring_size;		/* to KFD */
-+	uint32_t queue_percentage;	/* to KFD */
-+	uint32_t queue_priority;	/* to KFD */
-+};
-+
-+/* For kfd_ioctl_set_memory_policy_args.default_policy and alternate_policy */
-+#define KFD_IOC_CACHE_POLICY_COHERENT 0
-+#define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
-+
-+struct kfd_ioctl_set_memory_policy_args {
-+	uint64_t alternate_aperture_base;	/* to KFD */
-+	uint64_t alternate_aperture_size;	/* to KFD */
-+
-+	uint32_t gpu_id;			/* to KFD */
-+	uint32_t default_policy;		/* to KFD */
-+	uint32_t alternate_policy;		/* to KFD */
-+	uint32_t pad;
-+};
-+
-+/*
-+ * All counters are monotonic. They are used for profiling of compute jobs.
-+ * The profiling is done by userspace.
-+ *
-+ * In case of GPU reset, the counter should not be affected.
-+ */
-+
-+struct kfd_ioctl_get_clock_counters_args {
-+	uint64_t gpu_clock_counter;	/* from KFD */
-+	uint64_t cpu_clock_counter;	/* from KFD */
-+	uint64_t system_clock_counter;	/* from KFD */
-+	uint64_t system_clock_freq;	/* from KFD */
-+
-+	uint32_t gpu_id;		/* to KFD */
-+	uint32_t pad;
-+};
-+
-+#define NUM_OF_SUPPORTED_GPUS 7
-+
-+struct kfd_process_device_apertures {
-+	uint64_t lds_base;		/* from KFD */
-+	uint64_t lds_limit;		/* from KFD */
-+	uint64_t scratch_base;		/* from KFD */
-+	uint64_t scratch_limit;		/* from KFD */
-+	uint64_t gpuvm_base;		/* from KFD */
-+	uint64_t gpuvm_limit;		/* from KFD */
-+	uint32_t gpu_id;		/* from KFD */
-+	uint32_t pad;
-+};
-+
-+struct kfd_ioctl_get_process_apertures_args {
-+	struct kfd_process_device_apertures
-+			process_apertures[NUM_OF_SUPPORTED_GPUS];/* from KFD */
-+
-+	/* from KFD, should be in the range [1 - NUM_OF_SUPPORTED_GPUS] */
-+	uint32_t num_of_nodes;
-+	uint32_t pad;
-+};
-+
-+#define KFD_IOC_MAGIC 'K'
-+
-+#define KFD_IOC_GET_VERSION \
-+		_IOR(KFD_IOC_MAGIC, 1, struct kfd_ioctl_get_version_args)
-+
-+#define KFD_IOC_CREATE_QUEUE \
-+		_IOWR(KFD_IOC_MAGIC, 2, struct kfd_ioctl_create_queue_args)
-+
-+#define KFD_IOC_DESTROY_QUEUE \
-+	_IOWR(KFD_IOC_MAGIC, 3, struct kfd_ioctl_destroy_queue_args)
-+
-+#define KFD_IOC_SET_MEMORY_POLICY \
-+	_IOW(KFD_IOC_MAGIC, 4, struct kfd_ioctl_set_memory_policy_args)
-+
-+#define KFD_IOC_GET_CLOCK_COUNTERS \
-+	_IOWR(KFD_IOC_MAGIC, 5, struct kfd_ioctl_get_clock_counters_args)
-+
-+#define KFD_IOC_GET_PROCESS_APERTURES \
-+	_IOR(KFD_IOC_MAGIC, 6, struct kfd_ioctl_get_process_apertures_args)
-+
-+#define KFD_IOC_UPDATE_QUEUE \
-+	_IOW(KFD_IOC_MAGIC, 7, struct kfd_ioctl_update_queue_args)
-+
-+#endif
--- 
-2.1.0
+Cheers,
+Karol Lewandowski
