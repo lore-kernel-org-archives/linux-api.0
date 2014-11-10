@@ -1,135 +1,110 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [v6 4/4] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
- interface support
-Date: Mon, 10 Nov 2014 11:05:07 +1100
-Message-ID: <20141110000507.GL23575@dastard>
-References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
- <1415468619-31851-5-git-send-email-lixi@ddn.com>
+From: Hans Verkuil <hverkuil@xs4all.nl>
+Subject: Re: [PATCH v5 10/10] [media] v4l: Forbid usage of V4L2_MBUS_FMT
+ definitions inside the kernel
+Date: Mon, 10 Nov 2014 12:09:19 +0100
+Message-ID: <54609CDF.8030303@xs4all.nl>
+References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
+ <1415461632-31236-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1415468619-31851-5-git-send-email-lixi@ddn.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Li Xi <pkuelelixi@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <1415461632-31236-1-git-send-email-boris.brezillon@free-electrons.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Boris Brezillon <boris.brezillon@free-electrons.com>, Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Sakari Ailus <sakari.ailus@iki.fi>
+Cc: devel@driverdev.osuosl.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 09, 2014 at 01:43:39AM +0800, Li Xi wrote:
-> This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
-> support for ext4. The interface is kept consistent with
-> XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
-
-OK, can you split the ext4 implementation from the change of
-interface? i.e. the ioctl rename really needs to stand alone in it's
-own patch, because I've got to dig through reams of ext4 code that I
-don't care about to review the API change.
-
-> --- a/fs/ext4/ext4.h
-> +++ b/fs/ext4/ext4.h
-> @@ -617,6 +617,8 @@ enum {
->  #define EXT4_IOC_RESIZE_FS		_IOW('f', 16, __u64)
->  #define EXT4_IOC_SWAP_BOOT		_IO('f', 17)
->  #define EXT4_IOC_PRECACHE_EXTENTS	_IO('f', 18)
-> +#define EXT4_IOC_FSGETXATTR		FS_IOC_FSGETXATTR
-> +#define EXT4_IOC_FSSETXATTR		FS_IOC_FSSETXATTR
-
-Don't obfuscate the new ext4 code like this - just use
-FS_IOC_FSSETXATTR directly.
-
-> +++ b/fs/xfs/xfs_fs.h
-> @@ -36,19 +36,6 @@ struct dioattr {
->  #endif
+On 11/08/2014 04:47 PM, Boris Brezillon wrote:
+> Place v4l2_mbus_pixelcode in a #ifndef __KERNEL__ section so that kernel
+> users don't have access to these definitions.
+> 
+> We have to keep this definition for user-space users even though they're
+> encouraged to move to the new media_bus_format enum.
+> 
+> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+> Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+> ---
+>  include/uapi/linux/v4l2-mediabus.h | 45 ++++++++++++++++++++++++--------------
+>  1 file changed, 28 insertions(+), 17 deletions(-)
+> 
+> diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
+> index d712df8..5c9410d 100644
+> --- a/include/uapi/linux/v4l2-mediabus.h
+> +++ b/include/uapi/linux/v4l2-mediabus.h
+> @@ -15,6 +15,33 @@
+>  #include <linux/types.h>
+>  #include <linux/videodev2.h>
 >  
->  /*
-> - * Structure for XFS_IOC_FSGETXATTR[A] and XFS_IOC_FSSETXATTR.
-> - */
-> -#ifndef HAVE_FSXATTR
-> -struct fsxattr {
-> -	__u32		fsx_xflags;	/* xflags field value (get/set) */
-> -	__u32		fsx_extsize;	/* extsize field value (get/set)*/
-> -	__u32		fsx_nextents;	/* nextents field value (get)	*/
-> -	__u32		fsx_projid;	/* project identifier (get/set) */
-> -	unsigned char	fsx_pad[12];
-> -};
-> -#endif
-> -
-> -/*
->   * Flags for the bs_xflags/fsx_xflags field
->   * There should be a one-to-one correspondence between these flags and the
->   * XFS_DIFLAG_s.
-> @@ -503,8 +490,8 @@ typedef struct xfs_swapext
->  #define XFS_IOC_ALLOCSP		_IOW ('X', 10, struct xfs_flock64)
->  #define XFS_IOC_FREESP		_IOW ('X', 11, struct xfs_flock64)
->  #define XFS_IOC_DIOINFO		_IOR ('X', 30, struct dioattr)
-> -#define XFS_IOC_FSGETXATTR	_IOR ('X', 31, struct fsxattr)
-> -#define XFS_IOC_FSSETXATTR	_IOW ('X', 32, struct fsxattr)
-> +#define XFS_IOC_FSGETXATTR	FS_IOC_FSGETXATTR
-> +#define XFS_IOC_FSSETXATTR	FS_IOC_FSSETXATTR
-
-Please pull these defines up into the section above this that is
-commented:
-
-/*
- * ioctl commands that are used by Linux filesystems
- */
-#define XFS_IOC_GETXFLAGS       FS_IOC_GETFLAGS
-#define XFS_IOC_SETXFLAGS       FS_IOC_SETFLAGS
-#define XFS_IOC_GETVERSION      FS_IOC_GETVERSION
-
-
->  #define XFS_IOC_ALLOCSP64	_IOW ('X', 36, struct xfs_flock64)
->  #define XFS_IOC_FREESP64	_IOW ('X', 37, struct xfs_flock64)
->  #define XFS_IOC_GETBMAP		_IOWR('X', 38, struct getbmap)
-> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> index 3735fa0..78bcb2b 100644
-> --- a/include/uapi/linux/fs.h
-> +++ b/include/uapi/linux/fs.h
-> @@ -58,6 +58,25 @@ struct inodes_stat_t {
->  	long dummy[5];		/* padding for sysctl ABI compatibility */
->  };
->  
-> +/*
-> + * Extend attribute flags. These should be or-ed together to figure out what
-> + * is valid.
+> +/**
+> + * struct v4l2_mbus_framefmt - frame format on the media bus
+> + * @width:	frame width
+> + * @height:	frame height
+> + * @code:	data format code (from enum v4l2_mbus_pixelcode)
+> + * @field:	used interlacing type (from enum v4l2_field)
+> + * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
 > + */
-> +#define FSX_XFLAGS	(1 << 0)
-> +#define FSX_EXTSIZE	(1 << 1)
-> +#define FSX_NEXTENTS	(1 << 2)
-> +#define FSX_PROJID	(1 << 3)
+> +struct v4l2_mbus_framefmt {
+> +	__u32			width;
+> +	__u32			height;
+> +	__u32			code;
+> +	__u32			field;
+> +	__u32			colorspace;
+> +	__u32			reserved[7];
+> +};
+> +
+> +#ifndef __KERNEL__
+> +/*
+> + * enum v4l2_mbus_pixelcode and its definitions are now deprecated, and
+> + * MEDIA_BUS_FMT_ definitions (defined in media-bus-format.h) should be
+> + * used instead.
+> + *
+> + * New defines should only be added to media-bus-format.h. The
+> + * v4l2_mbus_pixelcode enum is frozen.
+> + */
+> +
+>  #define V4L2_MBUS_FROM_MEDIA_BUS_FMT(name)	\
+>  	MEDIA_BUS_FMT_ ## name = V4L2_MBUS_FMT_ ## name
 
-No, these do not belong in  this header file - they are internal to
-the XFS implementation. The *do not not define the contents of
-fsx_xflags*. The flags defined in fsx_xflags are these:
+Shouldn't this be the other way around?
 
-/*
- * Flags for the bs_xflags/fsx_xflags field
- * There should be a one-to-one correspondence between these flags and the
- * XFS_DIFLAG_s.
- */
-#define XFS_XFLAG_REALTIME      0x00000001      /* data in realtime volume */
-#define XFS_XFLAG_PREALLOC      0x00000002      /* preallocated file extents */
-#define XFS_XFLAG_IMMUTABLE     0x00000008      /* file cannot be modified */
-#define XFS_XFLAG_APPEND        0x00000010      /* all writes append */
-#define XFS_XFLAG_SYNC          0x00000020      /* all writes synchronous */
-#define XFS_XFLAG_NOATIME       0x00000040      /* do not update access time */
-#define XFS_XFLAG_NODUMP        0x00000080      /* do not include in backups */
-#define XFS_XFLAG_RTINHERIT     0x00000100      /* create with rt bit set */
-#define XFS_XFLAG_PROJINHERIT   0x00000200      /* create with parents projid */
-#define XFS_XFLAG_NOSYMLINKS    0x00000400      /* disallow symlink creation */
-#define XFS_XFLAG_EXTSIZE       0x00000800      /* extent size allocator hint */
-#define XFS_XFLAG_EXTSZINHERIT  0x00001000      /* inherit inode extent size */
-#define XFS_XFLAG_NODEFRAG      0x00002000      /* do not defragment */
-#define XFS_XFLAG_FILESTREAM    0x00004000      /* use filestream allocator */
-#define XFS_XFLAG_HASATTR       0x80000000      /* no DIFLAG for this   */
+  	V4L2_MBUS_FMT_ ## name = MEDIA_BUS_FMT_ ## name
 
-i.e. these are the flags that need to be promoted to
-include/uapi/linux/fs.h, prefixed by s/XFS_XFLAG/FS_XFLAG/ and then
-the definitions in fs/xfs/xfs_fs.h defined to the FS_XFLAG value.
+Regards,
 
-Cheers,
+	Hans
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+>  
+> @@ -102,22 +129,6 @@ enum v4l2_mbus_pixelcode {
+>  
+>  	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
+>  };
+> -
+> -/**
+> - * struct v4l2_mbus_framefmt - frame format on the media bus
+> - * @width:	frame width
+> - * @height:	frame height
+> - * @code:	data format code (from enum v4l2_mbus_pixelcode)
+> - * @field:	used interlacing type (from enum v4l2_field)
+> - * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
+> - */
+> -struct v4l2_mbus_framefmt {
+> -	__u32			width;
+> -	__u32			height;
+> -	__u32			code;
+> -	__u32			field;
+> -	__u32			colorspace;
+> -	__u32			reserved[7];
+> -};
+> +#endif /* __KERNEL__ */
+>  
+>  #endif
+> 
