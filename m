@@ -1,110 +1,313 @@
-From: Hans Verkuil <hverkuil@xs4all.nl>
-Subject: Re: [PATCH v5 10/10] [media] v4l: Forbid usage of V4L2_MBUS_FMT
- definitions inside the kernel
-Date: Mon, 10 Nov 2014 12:09:19 +0100
-Message-ID: <54609CDF.8030303@xs4all.nl>
-References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
- <1415461632-31236-1-git-send-email-boris.brezillon@free-electrons.com>
+From: Sage Weil <sage@newdream.net>
+Subject: Re: [PATCH v5 4/7] vfs: RWF_NONBLOCK flag for preadv2
+Date: Mon, 10 Nov 2014 08:07:12 -0800 (PST)
+Message-ID: <alpine.DEB.2.00.1411100805590.11379@cobra.newdream.net>
+References: <cover.1415220890.git.milosz@adfin.com> <379c680ae1e6309e679ff83bc6cb55e1cf97d7f9.1415220890.git.milosz@adfin.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <1415461632-31236-1-git-send-email-boris.brezillon@free-electrons.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Boris Brezillon <boris.brezillon@free-electrons.com>, Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Sakari Ailus <sakari.ailus@iki.fi>
-Cc: devel@driverdev.osuosl.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <379c680ae1e6309e679ff83bc6cb55e1cf97d7f9.1415220890.git.milosz@adfin.com>
+Sender: owner-linux-aio@kvack.org
+To: Milosz Tanski <milosz@adfin.com>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-nfs@vger.kernel.org, linux-xfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/08/2014 04:47 PM, Boris Brezillon wrote:
-> Place v4l2_mbus_pixelcode in a #ifndef __KERNEL__ section so that kernel
-> users don't have access to these definitions.
+On Wed, 5 Nov 2014, Milosz Tanski wrote:
+> generic_file_read_iter() supports a new flag RWF_NONBLOCK which says that we
+> only want to read the data if it's already in the page cache.
 > 
-> We have to keep this definition for user-space users even though they're
-> encouraged to move to the new media_bus_format enum.
+> Additionally, there are a few filesystems that we have to specifically
+> bail early if RWF_NONBLOCK because the op would block. Christoph Hellwig
+> contributed this code.
 > 
-> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
-> Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+> Signed-off-by: Milosz Tanski <milosz@adfin.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
+
+Ceph bits
+
+Acked-by: Sage Weil <sage@redhat.com>
+
+
 > ---
->  include/uapi/linux/v4l2-mediabus.h | 45 ++++++++++++++++++++++++--------------
->  1 file changed, 28 insertions(+), 17 deletions(-)
+>  fs/ceph/file.c     |  2 ++
+>  fs/cifs/file.c     |  6 ++++++
+>  fs/nfs/file.c      |  5 ++++-
+>  fs/ocfs2/file.c    |  6 ++++++
+>  fs/pipe.c          |  3 ++-
+>  fs/read_write.c    | 38 +++++++++++++++++++++++++-------------
+>  fs/xfs/xfs_file.c  |  4 ++++
+>  include/linux/fs.h |  3 +++
+>  mm/filemap.c       | 18 ++++++++++++++++++
+>  mm/shmem.c         |  4 ++++
+>  10 files changed, 74 insertions(+), 15 deletions(-)
 > 
-> diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
-> index d712df8..5c9410d 100644
-> --- a/include/uapi/linux/v4l2-mediabus.h
-> +++ b/include/uapi/linux/v4l2-mediabus.h
-> @@ -15,6 +15,33 @@
->  #include <linux/types.h>
->  #include <linux/videodev2.h>
+> diff --git a/fs/ceph/file.c b/fs/ceph/file.c
+> index d7e0da8..b798b5c 100644
+> --- a/fs/ceph/file.c
+> +++ b/fs/ceph/file.c
+> @@ -822,6 +822,8 @@ again:
+>  	if ((got & (CEPH_CAP_FILE_CACHE|CEPH_CAP_FILE_LAZYIO)) == 0 ||
+>  	    (iocb->ki_filp->f_flags & O_DIRECT) ||
+>  	    (fi->flags & CEPH_F_SYNC)) {
+> +		if (iocb->ki_rwflags & O_NONBLOCK)
+> +			return -EAGAIN;
 >  
-> +/**
-> + * struct v4l2_mbus_framefmt - frame format on the media bus
-> + * @width:	frame width
-> + * @height:	frame height
-> + * @code:	data format code (from enum v4l2_mbus_pixelcode)
-> + * @field:	used interlacing type (from enum v4l2_field)
-> + * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
-> + */
-> +struct v4l2_mbus_framefmt {
-> +	__u32			width;
-> +	__u32			height;
-> +	__u32			code;
-> +	__u32			field;
-> +	__u32			colorspace;
-> +	__u32			reserved[7];
-> +};
+>  		dout("aio_sync_read %p %llx.%llx %llu~%u got cap refs on %s\n",
+>  		     inode, ceph_vinop(inode), iocb->ki_pos, (unsigned)len,
+> diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+> index 3e4d00a..c485afa 100644
+> --- a/fs/cifs/file.c
+> +++ b/fs/cifs/file.c
+> @@ -3005,6 +3005,9 @@ ssize_t cifs_user_readv(struct kiocb *iocb, struct iov_iter *to)
+>  	struct cifs_readdata *rdata, *tmp;
+>  	struct list_head rdata_list;
+>  
+> +	if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +		return -EAGAIN;
 > +
-> +#ifndef __KERNEL__
-> +/*
-> + * enum v4l2_mbus_pixelcode and its definitions are now deprecated, and
-> + * MEDIA_BUS_FMT_ definitions (defined in media-bus-format.h) should be
-> + * used instead.
-> + *
-> + * New defines should only be added to media-bus-format.h. The
-> + * v4l2_mbus_pixelcode enum is frozen.
-> + */
+>  	len = iov_iter_count(to);
+>  	if (!len)
+>  		return 0;
+> @@ -3123,6 +3126,9 @@ cifs_strict_readv(struct kiocb *iocb, struct iov_iter *to)
+>  	    ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
+>  		return generic_file_read_iter(iocb, to);
+>  
+> +	if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +		return -EAGAIN;
 > +
->  #define V4L2_MBUS_FROM_MEDIA_BUS_FMT(name)	\
->  	MEDIA_BUS_FMT_ ## name = V4L2_MBUS_FMT_ ## name
-
-Shouldn't this be the other way around?
-
-  	V4L2_MBUS_FMT_ ## name = MEDIA_BUS_FMT_ ## name
-
-Regards,
-
-	Hans
-
+>  	/*
+>  	 * We need to hold the sem to be sure nobody modifies lock list
+>  	 * with a brlock that prevents reading.
+> diff --git a/fs/nfs/file.c b/fs/nfs/file.c
+> index 2ab6f00..aa9046f 100644
+> --- a/fs/nfs/file.c
+> +++ b/fs/nfs/file.c
+> @@ -171,8 +171,11 @@ nfs_file_read(struct kiocb *iocb, struct iov_iter *to)
+>  	struct inode *inode = file_inode(iocb->ki_filp);
+>  	ssize_t result;
 >  
-> @@ -102,22 +129,6 @@ enum v4l2_mbus_pixelcode {
+> -	if (iocb->ki_filp->f_flags & O_DIRECT)
+> +	if (iocb->ki_filp->f_flags & O_DIRECT) {
+> +		if (iocb->ki_rwflags & O_NONBLOCK)
+> +			return -EAGAIN;
+>  		return nfs_file_direct_read(iocb, to, iocb->ki_pos);
+> +	}
 >  
->  	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
->  };
-> -
-> -/**
-> - * struct v4l2_mbus_framefmt - frame format on the media bus
-> - * @width:	frame width
-> - * @height:	frame height
-> - * @code:	data format code (from enum v4l2_mbus_pixelcode)
-> - * @field:	used interlacing type (from enum v4l2_field)
-> - * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
-> - */
-> -struct v4l2_mbus_framefmt {
-> -	__u32			width;
-> -	__u32			height;
-> -	__u32			code;
-> -	__u32			field;
-> -	__u32			colorspace;
-> -	__u32			reserved[7];
-> -};
-> +#endif /* __KERNEL__ */
+>  	dprintk("NFS: read(%pD2, %zu@%lu)\n",
+>  		iocb->ki_filp,
+> diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
+> index 324dc93..bb66ca4 100644
+> --- a/fs/ocfs2/file.c
+> +++ b/fs/ocfs2/file.c
+> @@ -2472,6 +2472,12 @@ static ssize_t ocfs2_file_read_iter(struct kiocb *iocb,
+>  			filp->f_path.dentry->d_name.name,
+>  			to->nr_segs);	/* GRRRRR */
 >  
->  #endif
+> +	/*
+> +	 * No non-blocking reads for ocfs2 for now.  Might be doable with
+> +	 * non-blocking cluster lock helpers.
+> +	 */
+> +	if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +		return -EAGAIN;
+>  
+>  	if (!inode) {
+>  		ret = -EINVAL;
+> diff --git a/fs/pipe.c b/fs/pipe.c
+> index 21981e5..212bf68 100644
+> --- a/fs/pipe.c
+> +++ b/fs/pipe.c
+> @@ -302,7 +302,8 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
+>  			 */
+>  			if (ret)
+>  				break;
+> -			if (filp->f_flags & O_NONBLOCK) {
+> +			if ((filp->f_flags & O_NONBLOCK) ||
+> +			    (iocb->ki_rwflags & RWF_NONBLOCK)) {
+>  				ret = -EAGAIN;
+>  				break;
+>  			}
+> diff --git a/fs/read_write.c b/fs/read_write.c
+> index 907735c..cba7d4c 100644
+> --- a/fs/read_write.c
+> +++ b/fs/read_write.c
+> @@ -835,14 +835,19 @@ static ssize_t do_readv_writev(int type, struct file *file,
+>  		file_start_write(file);
+>  	}
+>  
+> -	if (iter_fn)
+> +	if (iter_fn) {
+>  		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
+>  						pos, iter_fn, flags);
+> -	else if (fnv)
+> -		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+> -						pos, fnv);
+> -	else
+> -		ret = do_loop_readv_writev(file, iov, nr_segs, pos, fn);
+> +	} else {
+> +		if (type == READ && (flags & RWF_NONBLOCK))
+> +			return -EAGAIN;
+> +
+> +		if (fnv)
+> +			ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+> +							pos, fnv);
+> +		else
+> +			ret = do_loop_readv_writev(file, iov, nr_segs, pos, fn);
+> +	}
+>  
+>  	if (type != READ)
+>  		file_end_write(file);
+> @@ -866,8 +871,10 @@ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
+>  		return -EBADF;
+>  	if (!(file->f_mode & FMODE_CAN_READ))
+>  		return -EINVAL;
+> -	if (flags & ~0)
+> +	if (flags & ~RWF_NONBLOCK)
+>  		return -EINVAL;
+> +	if ((file->f_flags & O_DIRECT) && (flags & RWF_NONBLOCK))
+> +		return -EAGAIN;
+>  
+>  	return do_readv_writev(READ, file, vec, vlen, pos, flags);
+>  }
+> @@ -1069,14 +1076,19 @@ static ssize_t compat_do_readv_writev(int type, struct file *file,
+>  		file_start_write(file);
+>  	}
+>  
+> -	if (iter_fn)
+> +	if (iter_fn) {
+>  		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
+>  						pos, iter_fn, flags);
+> -	else if (fnv)
+> -		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+> -						pos, fnv);
+> -	else
+> -		ret = do_loop_readv_writev(file, iov, nr_segs, pos, fn);
+> +	} else {
+> +		if (type == READ && (flags & RWF_NONBLOCK))
+> +			return -EAGAIN;
+> +
+> +		if (fnv)
+> +			ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+> +							pos, fnv);
+> +		else
+> +			ret = do_loop_readv_writev(file, iov, nr_segs, pos, fn);
+> +	}
+>  
+>  	if (type != READ)
+>  		file_end_write(file);
+> diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+> index eb596b4..b1f6334 100644
+> --- a/fs/xfs/xfs_file.c
+> +++ b/fs/xfs/xfs_file.c
+> @@ -246,6 +246,10 @@ xfs_file_read_iter(
+>  
+>  	XFS_STATS_INC(xs_read_calls);
+>  
+> +	/* XXX: need a non-blocking iolock helper, shouldn't be too hard */
+> +	if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +		return -EAGAIN;
+> +
+>  	if (unlikely(file->f_flags & O_DIRECT))
+>  		ioflags |= XFS_IO_ISDIRECT;
+>  	if (file->f_mode & FMODE_NOCMTIME)
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 9ed5711..eaebd99 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1459,6 +1459,9 @@ struct block_device_operations;
+>  #define HAVE_COMPAT_IOCTL 1
+>  #define HAVE_UNLOCKED_IOCTL 1
+>  
+> +/* These flags are used for the readv/writev syscalls with flags. */
+> +#define RWF_NONBLOCK 0x00000001
+> +
+>  struct iov_iter;
+>  
+>  struct file_operations {
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index 530c263..09d3af3 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -1494,6 +1494,8 @@ static ssize_t do_generic_file_read(struct file *filp, loff_t *ppos,
+>  find_page:
+>  		page = find_get_page(mapping, index);
+>  		if (!page) {
+> +			if (flags & RWF_NONBLOCK)
+> +				goto would_block;
+>  			page_cache_sync_readahead(mapping,
+>  					ra, filp,
+>  					index, last_index - index);
+> @@ -1585,6 +1587,11 @@ page_ok:
+>  		continue;
+>  
+>  page_not_up_to_date:
+> +		if (flags & RWF_NONBLOCK) {
+> +			page_cache_release(page);
+> +			goto would_block;
+> +		}
+> +
+>  		/* Get exclusive access to the page ... */
+>  		error = lock_page_killable(page);
+>  		if (unlikely(error))
+> @@ -1604,6 +1611,12 @@ page_not_up_to_date_locked:
+>  			goto page_ok;
+>  		}
+>  
+> +		if (flags & RWF_NONBLOCK) {
+> +			unlock_page(page);
+> +			page_cache_release(page);
+> +			goto would_block;
+> +		}
+> +
+>  readpage:
+>  		/*
+>  		 * A previous I/O error may have been due to temporary
+> @@ -1674,6 +1687,8 @@ no_cached_page:
+>  		goto readpage;
+>  	}
+>  
+> +would_block:
+> +	error = -EAGAIN;
+>  out:
+>  	ra->prev_pos = prev_index;
+>  	ra->prev_pos <<= PAGE_CACHE_SHIFT;
+> @@ -1707,6 +1722,9 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+>  		size_t count = iov_iter_count(iter);
+>  		loff_t size;
+>  
+> +		if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +			return -EAGAIN;
+> +
+>  		if (!count)
+>  			goto out; /* skip atime */
+>  		size = i_size_read(inode);
+> diff --git a/mm/shmem.c b/mm/shmem.c
+> index cd6fc75..5c30f04 100644
+> --- a/mm/shmem.c
+> +++ b/mm/shmem.c
+> @@ -1531,6 +1531,10 @@ static ssize_t shmem_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
+>  	ssize_t retval = 0;
+>  	loff_t *ppos = &iocb->ki_pos;
+>  
+> +	/* XXX: should be easily supportable */
+> +	if (iocb->ki_rwflags & RWF_NONBLOCK)
+> +		return -EAGAIN;
+> +
+>  	/*
+>  	 * Might this read be for a stacking filesystem?  Then when reading
+>  	 * holes of a sparse file, we actually need to allocate those pages,
+> -- 
+> 1.9.1
 > 
+> --
+> To unsubscribe from this list: send the line "unsubscribe ceph-devel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> 
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
