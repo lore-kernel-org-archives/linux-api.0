@@ -1,8 +1,7 @@
 From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH v6 RESEND 05/10] [media] pci: Make use of MEDIA_BUS_FMT
- definitions
-Date: Mon, 10 Nov 2014 18:28:30 +0100
-Message-ID: <1415640515-15069-6-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v6 RESEND 07/10] [media] usb: Make use of media_bus_format enum
+Date: Mon, 10 Nov 2014 18:28:32 +0100
+Message-ID: <1415640515-15069-8-git-send-email-boris.brezillon@free-electrons.com>
 References: <1415640515-15069-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,122 +23,94 @@ List-Id: linux-api@vger.kernel.org
 
 In order to have subsytem agnostic media bus format definitions we've
 moved media bus definition to include/uapi/linux/media-bus-format.h and
-prefixed values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
+prefixed enum values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
 
-Replace all references to the old definitions in pci drivers.
+Reference new definitions in all usb drivers.
 
 Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
 Acked-by: Hans Verkuil <hans.verkuil@cisco.com>
 Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
 ---
- drivers/media/pci/cx18/cx18-av-core.c       | 2 +-
- drivers/media/pci/cx18/cx18-controls.c      | 2 +-
- drivers/media/pci/cx18/cx18-ioctl.c         | 2 +-
- drivers/media/pci/cx23885/cx23885-video.c   | 2 +-
- drivers/media/pci/ivtv/ivtv-controls.c      | 2 +-
- drivers/media/pci/ivtv/ivtv-ioctl.c         | 2 +-
- drivers/media/pci/saa7134/saa7134-empress.c | 4 ++--
- 7 files changed, 8 insertions(+), 8 deletions(-)
+ drivers/media/usb/cx231xx/cx231xx-417.c   | 2 +-
+ drivers/media/usb/cx231xx/cx231xx-video.c | 4 ++--
+ drivers/media/usb/em28xx/em28xx-camera.c  | 2 +-
+ drivers/media/usb/go7007/go7007-v4l2.c    | 2 +-
+ drivers/media/usb/pvrusb2/pvrusb2-hdw.c   | 2 +-
+ 5 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/media/pci/cx18/cx18-av-core.c b/drivers/media/pci/cx18/cx18-av-core.c
-index 2d3afe0..4c6ce21 100644
---- a/drivers/media/pci/cx18/cx18-av-core.c
-+++ b/drivers/media/pci/cx18/cx18-av-core.c
-@@ -952,7 +952,7 @@ static int cx18_av_s_mbus_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt
- 	int HSC, VSC, Vsrc, Hsrc, filter, Vlines;
- 	int is_50Hz = !(state->std & V4L2_STD_525_60);
- 
--	if (fmt->code != V4L2_MBUS_FMT_FIXED)
-+	if (fmt->code != MEDIA_BUS_FMT_FIXED)
- 		return -EINVAL;
- 
- 	fmt->field = V4L2_FIELD_INTERLACED;
-diff --git a/drivers/media/pci/cx18/cx18-controls.c b/drivers/media/pci/cx18/cx18-controls.c
-index 282a3d2..4aeb7c6 100644
---- a/drivers/media/pci/cx18/cx18-controls.c
-+++ b/drivers/media/pci/cx18/cx18-controls.c
-@@ -98,7 +98,7 @@ static int cx18_s_video_encoding(struct cx2341x_handler *cxhdl, u32 val)
+diff --git a/drivers/media/usb/cx231xx/cx231xx-417.c b/drivers/media/usb/cx231xx/cx231xx-417.c
+index 459bb0e..95653ba 100644
+--- a/drivers/media/usb/cx231xx/cx231xx-417.c
++++ b/drivers/media/usb/cx231xx/cx231xx-417.c
+@@ -1878,7 +1878,7 @@ static int cx231xx_s_video_encoding(struct cx2341x_handler *cxhdl, u32 val)
  	/* fix videodecoder resolution */
  	fmt.width = cxhdl->width / (is_mpeg1 ? 2 : 1);
  	fmt.height = cxhdl->height;
 -	fmt.code = V4L2_MBUS_FMT_FIXED;
 +	fmt.code = MEDIA_BUS_FMT_FIXED;
- 	v4l2_subdev_call(cx->sd_av, video, s_mbus_fmt, &fmt);
+ 	v4l2_subdev_call(dev->sd_cx25840, video, s_mbus_fmt, &fmt);
  	return 0;
  }
-diff --git a/drivers/media/pci/cx18/cx18-ioctl.c b/drivers/media/pci/cx18/cx18-ioctl.c
-index 6f2b590..71963db 100644
---- a/drivers/media/pci/cx18/cx18-ioctl.c
-+++ b/drivers/media/pci/cx18/cx18-ioctl.c
-@@ -294,7 +294,7 @@ static int cx18_s_fmt_vid_cap(struct file *file, void *fh,
+diff --git a/drivers/media/usb/cx231xx/cx231xx-video.c b/drivers/media/usb/cx231xx/cx231xx-video.c
+index 3b3ada6..989d527 100644
+--- a/drivers/media/usb/cx231xx/cx231xx-video.c
++++ b/drivers/media/usb/cx231xx/cx231xx-video.c
+@@ -967,7 +967,7 @@ static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
+ 	dev->height = f->fmt.pix.height;
+ 	dev->format = fmt;
  
- 	mbus_fmt.width = cx->cxhdl.width = w;
- 	mbus_fmt.height = cx->cxhdl.height = h;
--	mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
-+	mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
- 	v4l2_subdev_call(cx->sd_av, video, s_mbus_fmt, &mbus_fmt);
- 	return cx18_g_fmt_vid_cap(file, fh, fmt);
- }
-diff --git a/drivers/media/pci/cx23885/cx23885-video.c b/drivers/media/pci/cx23885/cx23885-video.c
-index 682a4f9..091f5db 100644
---- a/drivers/media/pci/cx23885/cx23885-video.c
-+++ b/drivers/media/pci/cx23885/cx23885-video.c
-@@ -608,7 +608,7 @@ static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
- 	dev->field	= f->fmt.pix.field;
- 	dprintk(2, "%s() width=%d height=%d field=%d\n", __func__,
- 		dev->width, dev->height, dev->field);
 -	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
 +	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
  	call_all(dev, video, s_mbus_fmt, &mbus_fmt);
  	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
- 	/* s_mbus_fmt overwrites f->fmt.pix.field, restore it */
-diff --git a/drivers/media/pci/ivtv/ivtv-controls.c b/drivers/media/pci/ivtv/ivtv-controls.c
-index 2b0ab26..ccf548c 100644
---- a/drivers/media/pci/ivtv/ivtv-controls.c
-+++ b/drivers/media/pci/ivtv/ivtv-controls.c
-@@ -69,7 +69,7 @@ static int ivtv_s_video_encoding(struct cx2341x_handler *cxhdl, u32 val)
- 	/* fix videodecoder resolution */
- 	fmt.width = cxhdl->width / (is_mpeg1 ? 2 : 1);
- 	fmt.height = cxhdl->height;
--	fmt.code = V4L2_MBUS_FMT_FIXED;
-+	fmt.code = MEDIA_BUS_FMT_FIXED;
- 	v4l2_subdev_call(itv->sd_video, video, s_mbus_fmt, &fmt);
- 	return 0;
- }
-diff --git a/drivers/media/pci/ivtv/ivtv-ioctl.c b/drivers/media/pci/ivtv/ivtv-ioctl.c
-index 3e0cb77..4d8ee18 100644
---- a/drivers/media/pci/ivtv/ivtv-ioctl.c
-+++ b/drivers/media/pci/ivtv/ivtv-ioctl.c
-@@ -595,7 +595,7 @@ static int ivtv_s_fmt_vid_cap(struct file *file, void *fh, struct v4l2_format *f
- 		fmt->fmt.pix.width /= 2;
- 	mbus_fmt.width = fmt->fmt.pix.width;
- 	mbus_fmt.height = h;
+ 
+@@ -1012,7 +1012,7 @@ static int vidioc_s_std(struct file *file, void *priv, v4l2_std_id norm)
+ 	   resolution (since a standard change effects things like the number
+ 	   of lines in VACT, etc) */
+ 	memset(&mbus_fmt, 0, sizeof(mbus_fmt));
 -	mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
 +	mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
- 	v4l2_subdev_call(itv->sd_video, video, s_mbus_fmt, &mbus_fmt);
- 	return ivtv_g_fmt_vid_cap(file, fh, fmt);
- }
-diff --git a/drivers/media/pci/saa7134/saa7134-empress.c b/drivers/media/pci/saa7134/saa7134-empress.c
-index e4ea85f..8b3bb78 100644
---- a/drivers/media/pci/saa7134/saa7134-empress.c
-+++ b/drivers/media/pci/saa7134/saa7134-empress.c
-@@ -140,7 +140,7 @@ static int empress_s_fmt_vid_cap(struct file *file, void *priv,
- 	struct saa7134_dev *dev = video_drvdata(file);
- 	struct v4l2_mbus_framefmt mbus_fmt;
+ 	mbus_fmt.width = dev->width;
+ 	mbus_fmt.height = dev->height;
+ 	call_all(dev, video, s_mbus_fmt, &mbus_fmt);
+diff --git a/drivers/media/usb/em28xx/em28xx-camera.c b/drivers/media/usb/em28xx/em28xx-camera.c
+index 6d2ea9a..38cf6c8 100644
+--- a/drivers/media/usb/em28xx/em28xx-camera.c
++++ b/drivers/media/usb/em28xx/em28xx-camera.c
+@@ -430,7 +430,7 @@ int em28xx_init_camera(struct em28xx *dev)
+ 			break;
+ 		}
  
--	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
-+	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
- 	saa_call_all(dev, video, s_mbus_fmt, &mbus_fmt);
- 	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
+-		fmt.code = V4L2_MBUS_FMT_YUYV8_2X8;
++		fmt.code = MEDIA_BUS_FMT_YUYV8_2X8;
+ 		fmt.width = 640;
+ 		fmt.height = 480;
+ 		v4l2_subdev_call(subdev, video, s_mbus_fmt, &fmt);
+diff --git a/drivers/media/usb/go7007/go7007-v4l2.c b/drivers/media/usb/go7007/go7007-v4l2.c
+index ec799b4..d6bf982 100644
+--- a/drivers/media/usb/go7007/go7007-v4l2.c
++++ b/drivers/media/usb/go7007/go7007-v4l2.c
+@@ -252,7 +252,7 @@ static int set_capture_size(struct go7007 *go, struct v4l2_format *fmt, int try)
+ 	if (go->board_info->sensor_flags & GO7007_SENSOR_SCALING) {
+ 		struct v4l2_mbus_framefmt mbus_fmt;
  
-@@ -157,7 +157,7 @@ static int empress_try_fmt_vid_cap(struct file *file, void *priv,
- 	struct saa7134_dev *dev = video_drvdata(file);
- 	struct v4l2_mbus_framefmt mbus_fmt;
- 
--	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, V4L2_MBUS_FMT_FIXED);
-+	v4l2_fill_mbus_format(&mbus_fmt, &f->fmt.pix, MEDIA_BUS_FMT_FIXED);
- 	saa_call_all(dev, video, try_mbus_fmt, &mbus_fmt);
- 	v4l2_fill_pix_format(&f->fmt.pix, &mbus_fmt);
- 
+-		mbus_fmt.code = V4L2_MBUS_FMT_FIXED;
++		mbus_fmt.code = MEDIA_BUS_FMT_FIXED;
+ 		mbus_fmt.width = fmt ? fmt->fmt.pix.width : width;
+ 		mbus_fmt.height = height;
+ 		go->encoder_h_halve = 0;
+diff --git a/drivers/media/usb/pvrusb2/pvrusb2-hdw.c b/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
+index 9623b62..2fd9b5e 100644
+--- a/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
++++ b/drivers/media/usb/pvrusb2/pvrusb2-hdw.c
+@@ -2966,7 +2966,7 @@ static void pvr2_subdev_update(struct pvr2_hdw *hdw)
+ 		memset(&fmt, 0, sizeof(fmt));
+ 		fmt.width = hdw->res_hor_val;
+ 		fmt.height = hdw->res_ver_val;
+-		fmt.code = V4L2_MBUS_FMT_FIXED;
++		fmt.code = MEDIA_BUS_FMT_FIXED;
+ 		pvr2_trace(PVR2_TRACE_CHIPS, "subdev v4l2 set_size(%dx%d)",
+ 			   fmt.width, fmt.height);
+ 		v4l2_device_call_all(&hdw->v4l2_dev, 0, video, s_mbus_fmt, &fmt);
 -- 
 1.9.1
