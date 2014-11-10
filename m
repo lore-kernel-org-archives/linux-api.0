@@ -1,8 +1,7 @@
 From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH v6 10/10] [media] v4l: Forbid usage of V4L2_MBUS_FMT
- definitions inside the kernel
-Date: Mon, 10 Nov 2014 18:21:54 +0100
-Message-ID: <1415640114-14930-11-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v6 09/10] gpu: ipu-v3: Make use of media_bus_format enum
+Date: Mon, 10 Nov 2014 18:21:53 +0100
+Message-ID: <1415640114-14930-10-git-send-email-boris.brezillon@free-electrons.com>
 References: <1415640114-14930-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,79 +21,140 @@ To: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cis
 Cc: devel@driverdev.osuosl.org, Boris Brezillon <boris.brezillon@free-electrons.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Place v4l2_mbus_pixelcode in a #ifndef __KERNEL__ section so that kernel
-users don't have access to these definitions.
+In order to have subsytem agnostic media bus format definitions we've
+moved media bus definition to include/uapi/linux/media-bus-format.h and
+prefixed enum values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
 
-We have to keep this definition for user-space users even though they're
-encouraged to move to the new media_bus_format enum.
+Reference new definitions in the ipu-v3 driver.
 
 Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+Acked-by: Hans Verkuil <hans.verkuil@cisco.com>
+Acked-by: Philipp Zabel <p.zabel@pengutronix.de>
 Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
 ---
- include/uapi/linux/v4l2-mediabus.h | 45 ++++++++++++++++++++++++--------------
- 1 file changed, 28 insertions(+), 17 deletions(-)
+ drivers/gpu/ipu-v3/ipu-csi.c | 66 ++++++++++++++++++++++----------------------
+ 1 file changed, 33 insertions(+), 33 deletions(-)
 
-diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
-index d712df8..5c9410d 100644
---- a/include/uapi/linux/v4l2-mediabus.h
-+++ b/include/uapi/linux/v4l2-mediabus.h
-@@ -15,6 +15,33 @@
- #include <linux/types.h>
- #include <linux/videodev2.h>
- 
-+/**
-+ * struct v4l2_mbus_framefmt - frame format on the media bus
-+ * @width:	frame width
-+ * @height:	frame height
-+ * @code:	data format code (from enum v4l2_mbus_pixelcode)
-+ * @field:	used interlacing type (from enum v4l2_field)
-+ * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
-+ */
-+struct v4l2_mbus_framefmt {
-+	__u32			width;
-+	__u32			height;
-+	__u32			code;
-+	__u32			field;
-+	__u32			colorspace;
-+	__u32			reserved[7];
-+};
-+
-+#ifndef __KERNEL__
-+/*
-+ * enum v4l2_mbus_pixelcode and its definitions are now deprecated, and
-+ * MEDIA_BUS_FMT_ definitions (defined in media-bus-format.h) should be
-+ * used instead.
-+ *
-+ * New defines should only be added to media-bus-format.h. The
-+ * v4l2_mbus_pixelcode enum is frozen.
-+ */
-+
- #define V4L2_MBUS_FROM_MEDIA_BUS_FMT(name)	\
- 	MEDIA_BUS_FMT_ ## name = V4L2_MBUS_FMT_ ## name
- 
-@@ -102,22 +129,6 @@ enum v4l2_mbus_pixelcode {
- 
- 	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
- };
--
--/**
-- * struct v4l2_mbus_framefmt - frame format on the media bus
-- * @width:	frame width
-- * @height:	frame height
-- * @code:	data format code (from enum v4l2_mbus_pixelcode)
-- * @field:	used interlacing type (from enum v4l2_field)
-- * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
-- */
--struct v4l2_mbus_framefmt {
--	__u32			width;
--	__u32			height;
--	__u32			code;
--	__u32			field;
--	__u32			colorspace;
--	__u32			reserved[7];
--};
-+#endif /* __KERNEL__ */
- 
- #endif
+diff --git a/drivers/gpu/ipu-v3/ipu-csi.c b/drivers/gpu/ipu-v3/ipu-csi.c
+index d6f56471..752cdd2 100644
+--- a/drivers/gpu/ipu-v3/ipu-csi.c
++++ b/drivers/gpu/ipu-v3/ipu-csi.c
+@@ -227,83 +227,83 @@ static int ipu_csi_set_testgen_mclk(struct ipu_csi *csi, u32 pixel_clk,
+ static int mbus_code_to_bus_cfg(struct ipu_csi_bus_config *cfg, u32 mbus_code)
+ {
+ 	switch (mbus_code) {
+-	case V4L2_MBUS_FMT_BGR565_2X8_BE:
+-	case V4L2_MBUS_FMT_BGR565_2X8_LE:
+-	case V4L2_MBUS_FMT_RGB565_2X8_BE:
+-	case V4L2_MBUS_FMT_RGB565_2X8_LE:
++	case MEDIA_BUS_FMT_BGR565_2X8_BE:
++	case MEDIA_BUS_FMT_BGR565_2X8_LE:
++	case MEDIA_BUS_FMT_RGB565_2X8_BE:
++	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_RGB565;
+ 		cfg->mipi_dt = MIPI_DT_RGB565;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_RGB444_2X8_PADHI_BE:
+-	case V4L2_MBUS_FMT_RGB444_2X8_PADHI_LE:
++	case MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE:
++	case MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_RGB444;
+ 		cfg->mipi_dt = MIPI_DT_RGB444;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_RGB555_2X8_PADHI_BE:
+-	case V4L2_MBUS_FMT_RGB555_2X8_PADHI_LE:
++	case MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE:
++	case MEDIA_BUS_FMT_RGB555_2X8_PADHI_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_RGB555;
+ 		cfg->mipi_dt = MIPI_DT_RGB555;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_UYVY8_2X8:
++	case MEDIA_BUS_FMT_UYVY8_2X8:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_UYVY;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_YUYV8_2X8:
++	case MEDIA_BUS_FMT_YUYV8_2X8:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_YUYV;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_UYVY8_1X16:
++	case MEDIA_BUS_FMT_UYVY8_1X16:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_UYVY;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_16;
+ 		break;
+-	case V4L2_MBUS_FMT_YUYV8_1X16:
++	case MEDIA_BUS_FMT_YUYV8_1X16:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_YUV422_YUYV;
+ 		cfg->mipi_dt = MIPI_DT_YUV422;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_16;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR8_1X8:
+-	case V4L2_MBUS_FMT_SGBRG8_1X8:
+-	case V4L2_MBUS_FMT_SGRBG8_1X8:
+-	case V4L2_MBUS_FMT_SRGGB8_1X8:
++	case MEDIA_BUS_FMT_SBGGR8_1X8:
++	case MEDIA_BUS_FMT_SGBRG8_1X8:
++	case MEDIA_BUS_FMT_SGRBG8_1X8:
++	case MEDIA_BUS_FMT_SRGGB8_1X8:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW8;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SGBRG10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SGRBG10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SRGGB10_DPCM8_1X8:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_BE:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADHI_LE:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_BE:
+-	case V4L2_MBUS_FMT_SBGGR10_2X8_PADLO_LE:
++	case MEDIA_BUS_FMT_SBGGR10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SGBRG10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SRGGB10_DPCM8_1X8:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_BE:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_LE:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADLO_BE:
++	case MEDIA_BUS_FMT_SBGGR10_2X8_PADLO_LE:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW10;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_8;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR10_1X10:
+-	case V4L2_MBUS_FMT_SGBRG10_1X10:
+-	case V4L2_MBUS_FMT_SGRBG10_1X10:
+-	case V4L2_MBUS_FMT_SRGGB10_1X10:
++	case MEDIA_BUS_FMT_SBGGR10_1X10:
++	case MEDIA_BUS_FMT_SGBRG10_1X10:
++	case MEDIA_BUS_FMT_SGRBG10_1X10:
++	case MEDIA_BUS_FMT_SRGGB10_1X10:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW10;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_10;
+ 		break;
+-	case V4L2_MBUS_FMT_SBGGR12_1X12:
+-	case V4L2_MBUS_FMT_SGBRG12_1X12:
+-	case V4L2_MBUS_FMT_SGRBG12_1X12:
+-	case V4L2_MBUS_FMT_SRGGB12_1X12:
++	case MEDIA_BUS_FMT_SBGGR12_1X12:
++	case MEDIA_BUS_FMT_SGBRG12_1X12:
++	case MEDIA_BUS_FMT_SGRBG12_1X12:
++	case MEDIA_BUS_FMT_SRGGB12_1X12:
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
+ 		cfg->mipi_dt = MIPI_DT_RAW12;
+ 		cfg->data_width = IPU_CSI_DATA_WIDTH_12;
+ 		break;
+-	case V4L2_MBUS_FMT_JPEG_1X8:
++	case MEDIA_BUS_FMT_JPEG_1X8:
+ 		/* TODO */
+ 		cfg->data_fmt = CSI_SENS_CONF_DATA_FMT_JPEG;
+ 		cfg->mipi_dt = MIPI_DT_RAW8;
 -- 
 1.9.1
