@@ -1,117 +1,95 @@
-From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v5 10/10] [media] v4l: Forbid usage of V4L2_MBUS_FMT
- definitions inside the kernel
-Date: Mon, 10 Nov 2014 18:02:22 +0100
-Message-ID: <20141110180222.39508a63@bbrezillon>
-References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com>
-	<1415461632-31236-1-git-send-email-boris.brezillon@free-electrons.com>
-	<54609CDF.8030303@xs4all.nl>
+From: Boris Brezillon <boris.brezillon@free-electrons.com>
+Subject: [PATCH v6 03/10] [media] Make use of the new media_bus_format
+ definitions
+Date: Mon, 10 Nov 2014 18:21:47 +0100
+Message-ID: <1415640114-14930-4-git-send-email-boris.brezillon@free-electrons.com>
+References: <1415640114-14930-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54609CDF.8030303-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guennadi Liakhovetski <g.liakhovetski-Mmb7MZpHnFY@public.gmane.org>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <1415640114-14930-1-git-send-email-boris.brezillon@free-electrons.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Sakari Ailus <sakari.ailus@iki.fi>
+Cc: devel@driverdev.osuosl.org, Boris Brezillon <boris.brezillon@free-electrons.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 10 Nov 2014 12:09:19 +0100
-Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> wrote:
+Replace references to the v4l2_mbus_pixelcode enum with the new
+media_bus_format enum in all common headers.
 
-> On 11/08/2014 04:47 PM, Boris Brezillon wrote:
-> > Place v4l2_mbus_pixelcode in a #ifndef __KERNEL__ section so that kernel
-> > users don't have access to these definitions.
-> > 
-> > We have to keep this definition for user-space users even though they're
-> > encouraged to move to the new media_bus_format enum.
-> > 
-> > Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-> > Acked-by: Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > ---
-> >  include/uapi/linux/v4l2-mediabus.h | 45 ++++++++++++++++++++++++--------------
-> >  1 file changed, 28 insertions(+), 17 deletions(-)
-> > 
-> > diff --git a/include/uapi/linux/v4l2-mediabus.h b/include/uapi/linux/v4l2-mediabus.h
-> > index d712df8..5c9410d 100644
-> > --- a/include/uapi/linux/v4l2-mediabus.h
-> > +++ b/include/uapi/linux/v4l2-mediabus.h
-> > @@ -15,6 +15,33 @@
-> >  #include <linux/types.h>
-> >  #include <linux/videodev2.h>
-> >  
-> > +/**
-> > + * struct v4l2_mbus_framefmt - frame format on the media bus
-> > + * @width:	frame width
-> > + * @height:	frame height
-> > + * @code:	data format code (from enum v4l2_mbus_pixelcode)
-> > + * @field:	used interlacing type (from enum v4l2_field)
-> > + * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
-> > + */
-> > +struct v4l2_mbus_framefmt {
-> > +	__u32			width;
-> > +	__u32			height;
-> > +	__u32			code;
-> > +	__u32			field;
-> > +	__u32			colorspace;
-> > +	__u32			reserved[7];
-> > +};
-> > +
-> > +#ifndef __KERNEL__
-> > +/*
-> > + * enum v4l2_mbus_pixelcode and its definitions are now deprecated, and
-> > + * MEDIA_BUS_FMT_ definitions (defined in media-bus-format.h) should be
-> > + * used instead.
-> > + *
-> > + * New defines should only be added to media-bus-format.h. The
-> > + * v4l2_mbus_pixelcode enum is frozen.
-> > + */
-> > +
-> >  #define V4L2_MBUS_FROM_MEDIA_BUS_FMT(name)	\
-> >  	MEDIA_BUS_FMT_ ## name = V4L2_MBUS_FMT_ ## name
-> 
-> Shouldn't this be the other way around?
-> 
->   	V4L2_MBUS_FMT_ ## name = MEDIA_BUS_FMT_ ## name
+Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Acked-by: Hans Verkuil <hans.verkuil@cisco.com>
+---
+ include/media/v4l2-mediabus.h    | 2 +-
+ include/media/v4l2-subdev.h      | 2 +-
+ include/uapi/linux/v4l2-subdev.h | 6 +++---
+ 3 files changed, 5 insertions(+), 5 deletions(-)
 
-Argh! Absolutely, I'll fix that.
-
-> 
-> Regards,
-> 
-> 	Hans
-> 
-> >  
-> > @@ -102,22 +129,6 @@ enum v4l2_mbus_pixelcode {
-> >  
-> >  	V4L2_MBUS_FROM_MEDIA_BUS_FMT(AHSV8888_1X32),
-> >  };
-> > -
-> > -/**
-> > - * struct v4l2_mbus_framefmt - frame format on the media bus
-> > - * @width:	frame width
-> > - * @height:	frame height
-> > - * @code:	data format code (from enum v4l2_mbus_pixelcode)
-> > - * @field:	used interlacing type (from enum v4l2_field)
-> > - * @colorspace:	colorspace of the data (from enum v4l2_colorspace)
-> > - */
-> > -struct v4l2_mbus_framefmt {
-> > -	__u32			width;
-> > -	__u32			height;
-> > -	__u32			code;
-> > -	__u32			field;
-> > -	__u32			colorspace;
-> > -	__u32			reserved[7];
-> > -};
-> > +#endif /* __KERNEL__ */
-> >  
-> >  #endif
-> > 
-> 
-
-
-
+diff --git a/include/media/v4l2-mediabus.h b/include/media/v4l2-mediabus.h
+index 395c4a9..59d7397 100644
+--- a/include/media/v4l2-mediabus.h
++++ b/include/media/v4l2-mediabus.h
+@@ -98,7 +98,7 @@ static inline void v4l2_fill_pix_format(struct v4l2_pix_format *pix_fmt,
+ 
+ static inline void v4l2_fill_mbus_format(struct v4l2_mbus_framefmt *mbus_fmt,
+ 			   const struct v4l2_pix_format *pix_fmt,
+-			   enum v4l2_mbus_pixelcode code)
++			   u32 code)
+ {
+ 	mbus_fmt->width = pix_fmt->width;
+ 	mbus_fmt->height = pix_fmt->height;
+diff --git a/include/media/v4l2-subdev.h b/include/media/v4l2-subdev.h
+index d746572..5860292 100644
+--- a/include/media/v4l2-subdev.h
++++ b/include/media/v4l2-subdev.h
+@@ -341,7 +341,7 @@ struct v4l2_subdev_video_ops {
+ 	int (*query_dv_timings)(struct v4l2_subdev *sd,
+ 			struct v4l2_dv_timings *timings);
+ 	int (*enum_mbus_fmt)(struct v4l2_subdev *sd, unsigned int index,
+-			     enum v4l2_mbus_pixelcode *code);
++			     u32 *code);
+ 	int (*enum_mbus_fsizes)(struct v4l2_subdev *sd,
+ 			     struct v4l2_frmsizeenum *fsize);
+ 	int (*g_mbus_fmt)(struct v4l2_subdev *sd,
+diff --git a/include/uapi/linux/v4l2-subdev.h b/include/uapi/linux/v4l2-subdev.h
+index a619cdd..e0a7e3d 100644
+--- a/include/uapi/linux/v4l2-subdev.h
++++ b/include/uapi/linux/v4l2-subdev.h
+@@ -68,7 +68,7 @@ struct v4l2_subdev_crop {
+  * struct v4l2_subdev_mbus_code_enum - Media bus format enumeration
+  * @pad: pad number, as reported by the media API
+  * @index: format index during enumeration
+- * @code: format code (from enum v4l2_mbus_pixelcode)
++ * @code: format code (MEDIA_BUS_FMT_ definitions)
+  */
+ struct v4l2_subdev_mbus_code_enum {
+ 	__u32 pad;
+@@ -81,7 +81,7 @@ struct v4l2_subdev_mbus_code_enum {
+  * struct v4l2_subdev_frame_size_enum - Media bus format enumeration
+  * @pad: pad number, as reported by the media API
+  * @index: format index during enumeration
+- * @code: format code (from enum v4l2_mbus_pixelcode)
++ * @code: format code (MEDIA_BUS_FMT_ definitions)
+  */
+ struct v4l2_subdev_frame_size_enum {
+ 	__u32 index;
+@@ -109,7 +109,7 @@ struct v4l2_subdev_frame_interval {
+  * struct v4l2_subdev_frame_interval_enum - Frame interval enumeration
+  * @pad: pad number, as reported by the media API
+  * @index: frame interval index during enumeration
+- * @code: format code (from enum v4l2_mbus_pixelcode)
++ * @code: format code (MEDIA_BUS_FMT_ definitions)
+  * @width: frame width in pixels
+  * @height: frame height in pixels
+  * @interval: frame interval in seconds
 -- 
-Boris Brezillon, Free Electrons
-Embedded Linux and Kernel engineering
-http://free-electrons.com
+1.9.1
