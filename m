@@ -1,217 +1,360 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: Edited seccomp.2 man page for review
-Date: Mon, 10 Nov 2014 11:37:53 -0800
-Message-ID: <CALCETrWSz5hZJb5vavKX_kbfjm42w-e4aQjdRNsvS4m5uw4Q2w@mail.gmail.com>
-References: <545E0B06.6030706@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <545E0B06.6030706-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: mathieu.poirier@linaro.org
+Subject: [PATCH] coresight:  Adding ABI documentation
+Date: Mon, 10 Nov 2014 14:06:42 -0700
+Message-ID: <1415653602-25347-1-git-send-email-mathieu.poirier@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org
+Cc: akpm@linux-foundation.org, davem@davemloft.net, joe@perches.com, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, mathieu.poirier@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 8, 2014 at 4:22 AM, Michael Kerrisk (man-pages)
-<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hi Kees, (and all),
->
-> Thanks for the seccomp.2 draft man page that you provided a few
-> weeks ago (https://lkml.org/lkml/2014/9/25/685), and my apologies
-> for the slow follow-up.
->
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
 
-Answers to some of your questions below.
+Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+---
+ .../ABI/testing/sysfs-bus-coresight-devices-etb10  |  24 ++
+ .../ABI/testing/sysfs-bus-coresight-devices-etm3x  | 253 +++++++++++++++++++++
+ .../ABI/testing/sysfs-bus-coresight-devices-funnel |  12 +
+ .../ABI/testing/sysfs-bus-coresight-devices-tmc    |   8 +
+ MAINTAINERS                                        |   1 +
+ 5 files changed, 298 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-etb10
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-funnel
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-tmc
 
-> .BR execve (2)
-> is allowed by the filter,
-> the filters and constraints on permitted system calls are preserved across an
-> .BR execve (2).
->
-> .\" FIXME I (mtk) reworded the following paragraph substantially.
-> .\" Please check it.
-> In order to use the
-> .BR SECCOMP_SET_MODE_FILTER
-> operation, either the caller must have the
-> .BR CAP_SYS_ADMIN
-> capability or the call must be preceded by the call:
->
->     prctl(PR_SET_NO_NEW_PRIVS, 1);
->
-> Otherwise, the
-> .BR SECCOMP_SET_MODE_FILTER
-> operation will fail and return
-> .BR EACCES
-> in
-> .IR errno .
-> This requirement ensures that filter programs cannot be applied to child
-> .\" FIXME What does "installed" in the following line mean?
-> processes with greater privileges than the process that installed them.
->
-
-This requirement ensures that an unprivileged process cannot apply a
-malicious filter and then invoke a setuid or other privileged program
-using execve, thus potentially compromising that program.
-
-> If
-> .BR prctl (2)
-> or
-> .BR seccomp (2)
-> is allowed by the attached filter, further filters may be added.
-> This will increase evaluation time, but allows for further reduction of
-> the attack surface during execution of a process.
->
-> The
-> .BR SECCOMP_SET_MODE_FILTER
-> operation is available only if the kernel is configured with
-> .BR CONFIG_SECCOMP_FILTER
-> enabled.
->
-> When
-> .IR flags
-> is 0, this operation is functionally identical to the call:
->
->     prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, args);
->
-> The recognized
-> .IR flags
-> are:
-> .RS
-> .TP
-> .BR SECCOMP_FILTER_FLAG_TSYNC
-> When adding a new filter, synchronize all other threads of the calling
-> process to the same seccomp filter tree.
-> .\" FIXME Nowhere in this page is the term "filter tree" defined.
-> .\" There should be a definition somewhere.
-> .\" Is it: "the set of filters attached to a thread"?
-
-It's the ordered list of filters attached to a thread, where attaching
-identical filters in separate syscalls results in different filters
-from this perspective.
-
-> If any thread cannot do this,
-> the call will not attach the new seccomp filter,
-> and will fail, returning the first thread ID found that cannot synchronize.
-> Synchronization will fail if another thread is in
-> .BR SECCOMP_MODE_STRICT
-> or if it has attached new seccomp filters to itself,
-> diverging from the calling thread's filter tree.
-> .RE
-> .SH FILTERS
-> When adding filters via
-> .BR SECCOMP_SET_MODE_FILTER ,
-> .IR args
-> points to a filter program:
->
-> .in +4n
-> .nf
-> struct sock_fprog {
->     unsigned short      len;    /* Number of BPF instructions */
->     struct sock_filter *filter;
-> };
-> .fi
-> .in
->
-> Each program must contain one or more BPF instructions:
->
-> .in +4n
-> .nf
-> struct sock_filter {    /* Filter block */
->     __u16   code;       /* Actual filter code */
->     __u8    jt;         /* Jump true */
->     __u8    jf;         /* Jump false */
->     __u32   k;          /* Generic multiuse field */
-> };
-> .fi
-> .in
->
-> When executing the instructions, the BPF program executes over the
-> system call information made available via:
->
-> .in +4n
-> .nf
-> struct seccomp_data {
->     int nr;                     /* system call number */
->     __u32 arch;                 /* AUDIT_ARCH_* value */
->     __u64 instruction_pointer;  /* CPU instruction pointer */
->     __u64 args[6];              /* up to 6 system call arguments */
-> };
-> .fi
-> .in
->
-> .\" FIXME I find the next piece a little hard to understand, so,
-> .\"       some questions:
-> .\"       * If there are multiple filters, in what order are they executed?
-> .\"         (The man page should probably detail the answer to this question.)
-
-All of them are executed.  The precedence rules determine what happens
-if the filters return different values.
-
-> .\"       * If there are multiple filters, are they all always executed?
-> .\"         I assume not, but the notion that
-> .\"             "the return value for the evaluation of a given system call
-> .\"              will always use the value with the highest precedence"
-> .\"         implies that even that if one filter generates (say)
-> .\"         SECCOMP_RET_ERRNO, then further filters may still be executed,
-> .\"         including one that generates (say) the "higher priority"
-> .\"         SECCOMP_RET_KILL condition.
-> .\"       Can you clarify the above?
-> A seccomp filter returns one of the values listed below.
-> If multiple filters exist,
-> the return value for the evaluation of a given system call
-> will always use the value with the highest precedence.
-> (For example,
-> .BR SECCOMP_RET_KILL
-> will always take precedence.)
->
-> In decreasing order order of precedence,
-> the values that may be returned by a seccomp filter are:
-> .TP
-> .BR SECCOMP_RET_KILL
-> Results in the task exiting immediately without executing the system call.
-> The task terminates as though killed by a
-> .B SIGSYS
-> signal
-> .RI ( not
-> .BR SIGKILL ).
-> .TP
-> .BR SECCOMP_RET_TRAP
-> Results in the kernel sending a
-> .BR SIGSYS
-> signal to the triggering task without executing the system call.
-> .IR siginfo\->si_call_addr
-> will show the address of the system call instruction, and
-> .IR siginfo\->si_syscall
-> and
-> .IR siginfo\->si_arch
-> will indicate which system call was attempted.
-> The program counter will be as though the system call happened
-> (i.e., it will not point to the system call instruction).
-> The return value register will contain an architecture\-dependent value;
-> if resuming execution, set it to something sensible.
-> (The architecture dependency is because replacing it with
-> .BR ENOSYS
-> could overwrite some useful information.)
->
-> .\" FIXME The following sentence is the first time that SECCOMP_RET_DATA
-> .\"       is mentioned. SECCOMP_RET_DATA needs to be described in this
-> .\"       man page.
-> The
-> .BR SECCOMP_RET_DATA
-> portion of the return value will be passed as
-> .IR si_errno .
->
-> .BR SIGSYS
-> triggered by seccomp will have the value
-> .BR SYS_SECCOMP
-> in the
-> .IR si_code
-> field.
-> .TP
-> .BR SECCOMP_RET_ERRNO
-> .\" FIXME What does "the return value" refer to in the next sentence?
-> .\"       It is not obvious to me.
-
-The return value is the value returned by the BPF program.
-
---Andy
+diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etb10 b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etb10
+new file mode 100644
+index 0000000..4b8d6ec
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etb10
+@@ -0,0 +1,24 @@
++What:		/sys/bus/coresight/devices/<memory_map>.etb/enable_sink
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Add/remove a sink from a trace path.  There can be multiple
++		source for a single sink.
++		ex: echo 1 > /sys/bus/coresight/devices/20010000.etb/enable_sink
++
++What:		/sys/bus/coresight/devices/<memory_map>.etb/status
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(R) List various control and status registers.  The specific
++		layout and content is driver specific.
++
++What:		/sys/bus/coresight/devices/<memory_map>.etb/trigger_cntr
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Disables write access to the Trace RAM by stopping the
++		formatter after a defined number of words have been stored
++		following the trigger event. The number of 32-bit words written
++		into the Trace RAM following the trigger event is equal to the
++		value stored in this register+1 (from ARM ETB-TRM).
+diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
+new file mode 100644
+index 0000000..b4d0b99
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
+@@ -0,0 +1,253 @@
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/enable_source
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Enable/disable tracing on this specific trace entiry.
++		Enabling a source implies the source has been configured
++		properly and a sink has been identidifed for it.  The path
++		of coresight components linking the source to the sink is
++		configured and managed automatically by the coresight framework.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/status
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(R) List various control and status registers.  The specific
++		layout and content is driver specific.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/addr_idx
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	Select which address comparator or pair (of comparators) to
++		work with.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/addr_acctype
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Used in conjunction with @addr_idx.  Specifies
++		characteristics about the address comparator being configure,
++		for example the access type, the kind of instruction to trace,
++		processor contect ID to trigger on, etc.  Individual fields in
++		the access type register may vary on the version of the trace
++		entity.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/addr_range
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Used in conjunction with @addr_idx.  Specifies the range of
++		addresses to trigger on.  Inclusion or exclusion is specificed
++		in the corresponding access type register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/addr_single
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Used in conjunction with @addr_idx.  Specifies the single
++		address to trigger on, highly influenced by the configuration
++		options of the corresponding access type register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/addr_start
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Used in conjunction with @addr_idx.  Specifies the single
++		address to start tracing on, highly influenced by the
++		configuration options of the corresponding access type register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/addr_stop
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Used in conjunction with @addr_idx.  Specifies the single
++		address to stop tracing on, highly influenced by the
++		configuration options of the corresponding access type register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/cntr_idx
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Specifies the counter to work on.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/cntr_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Used in conjunction with cntr_idx, give access to the
++		counter event register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/cntr_val
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Used in conjunction with cntr_idx, give access to the
++		counter value register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/cntr_rld_val
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Used in conjunction with cntr_idx, give access to the
++		counter reload value register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/cntr_rld_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Used in conjunction with cntr_idx, give access to the
++		counter reload event register.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/ctxid_idx
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Specifies the index of the context ID register to be
++		selected.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/ctxid_mask
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Mask to apply to all the context ID comparator.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/ctxid_val
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Used with the ctxid_idx, specify with context ID to trigger
++		on.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/enable_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines which event triggers a trace.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/etmsr
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Gives access to the ETM status register, which holds
++		programming information and status on certains events.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/fifofull_level
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Number of byte left in the fifo before considering it full.
++		Depending on the tracer's version, can also hold threshold for
++		data suppression.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mode
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Interface with the driver's 'mode' field, controlling
++		various aspect of the trace entity such as time stamping,
++		context ID size and cycle accurate tracing.  Driver specific
++		and bound to change depending on the driver.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/nr_addr_cmp
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(R) Provides the number of address comparators pairs accessible
++		on a trace unit, as specified by bit 3:0 of register ETMCCR.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/nr_cntr
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(R) Provides the number of counters accessible on a trace unit,
++		as specified by bit 15:13 of register ETMCCR.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/nr_ctxid_cmp
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(R) Provides the number of context ID comparator available on a
++		trace unit, as specified by bit 25:24 of register ETMCCR.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/reset
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(W) Cancels all configuration on a trace unit and set it back
++		to its boot configuration.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/seq_12_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines the event that causes the sequencer to transition
++		from state 1 to state 2.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/seq_13_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines the event that causes the sequencer to transition
++		from state 1 to state 3.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/seq_21_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines the event that causes the sequencer to transition
++		from state 2 to state 1.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/seq_23_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines the event that causes the sequencer to transition
++		from state 2 to state 3.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/seq_31_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines the event that causes the sequencer to transition
++		from state 3 to state 1.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/seq_32_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines the event that causes the sequencer to transition
++		from state 3 to state 2.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/curr_seq_state
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(R) Holds the current state of the sequencer.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/sync_freq
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Holds the trace synchronization frequency value - must be
++		programmed with the various implementation behavior in mind.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/timestamp_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Defines an event that requests the insertion of a timestamp
++		into the trace stream.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/traceid
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Holds the trace ID that will appear in the trace stream
++		coming from this trace entity.
++
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/trigger_event
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Define the event that controls the trigger.
+diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-funnel b/Documentation/ABI/testing/sysfs-bus-coresight-devices-funnel
+new file mode 100644
+index 0000000..d75acda
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-funnel
+@@ -0,0 +1,12 @@
++What:		/sys/bus/coresight/devices/<memory_map>.funnel/funnel_ctrl
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Enables the slave ports and defines the hold time of the
++		slave ports.
++
++What:		/sys/bus/coresight/devices/<memory_map>.funnel/priority
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Defines input port priority order.
+diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-tmc b/Documentation/ABI/testing/sysfs-bus-coresight-devices-tmc
+new file mode 100644
+index 0000000..f38cded5
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-tmc
+@@ -0,0 +1,8 @@
++What:		/sys/bus/coresight/devices/<memory_map>.tmc/trigger_cntr
++Date:		November 2014
++KernelVersion:	3.19
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description:	(RW) Disables write access to the Trace RAM by stopping the
++		formatter after a defined number of words have been stored
++		following the trigger event. Additional interface for this
++		driver are expected to be added as it matures.
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 3995263..7d18080 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -925,6 +925,7 @@ S:	Maintained
+ F:	drivers/coresight/*
+ F:	Documentation/trace/coresight.txt
+ F:	Documentation/devicetree/bindings/arm/coresight.txt
++F:	Documentation/ABI/testing/sysfs-bus-coresight-devices-*
+ 
+ ARM/CORGI MACHINE SUPPORT
+ M:	Richard Purdie <rpurdie@rpsys.net>
+-- 
+1.9.1
