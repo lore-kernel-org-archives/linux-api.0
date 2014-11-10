@@ -1,245 +1,244 @@
-From: Sage Weil <sage@newdream.net>
-Subject: Re: [PATCH v5 7/7] fs: add a flag for per-operation O_DSYNC
- semantics
-Date: Mon, 10 Nov 2014 08:07:58 -0800 (PST)
-Message-ID: <alpine.DEB.2.00.1411100807350.11379@cobra.newdream.net>
-References: <cover.1415220890.git.milosz@adfin.com> <c188b04ede700ce5f986b19de12fa617d158540f.1415220890.git.milosz@adfin.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <c188b04ede700ce5f986b19de12fa617d158540f.1415220890.git.milosz@adfin.com>
-Sender: owner-linux-mm@kvack.org
-To: Milosz Tanski <milosz@adfin.com>
-Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, ceph-devel@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-nfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-mm@kvack.org
+From: Milosz Tanski <milosz@adfin.com>
+Subject: [PATCH v6 1/7] vfs: Prepare for adding a new preadv/pwritev with user flags.
+Date: Mon, 10 Nov 2014 11:40:24 -0500
+Message-ID: <e9ce907fbe6ef2d4c6bd48a8fbf5b1c73280bd5b.1415636409.git.milosz@adfin.com>
+References: <cover.1415636409.git.milosz@adfin.com>
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <cover.1415636409.git.milosz@adfin.com>
+In-Reply-To: <cover.1415636409.git.milosz@adfin.com>
+References: <cover.1415636409.git.milosz@adfin.com>
+Sender: owner-linux-aio@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, linux-scsi@vger.kernel.org, linux-nfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 5 Nov 2014, Milosz Tanski wrote:
-> From: Christoph Hellwig <hch@lst.de>
-> 
-> With the new read/write with flags syscalls we can support a flag
-> to enable O_DSYNC semantics on a per-operation basis.  This ?s
-> useful to implement protocols like SMB, NFS or SCSI that have such
-> per-operation flags.
-> 
-> Example program below:
-> 
-> cat > pwritev2.c << EOF
-> 
->         (off_t) val,                              \
->         (off_t) ((((uint64_t) (val)) >> (sizeof (long) * 4)) >> (sizeof (long) * 4))
-> 
-> static ssize_t
-> pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags)
-> {
->         return syscall(__NR_pwritev2, fd, iov, iovcnt, LO_HI_LONG(offset),
-> 			 flags);
-> }
-> 
-> int main(int argc, char **argv)
-> {
-> 	int fd = open(argv[1], O_WRONLY|O_CREAT|O_TRUNC, 0666);
-> 	char buf[1024];
-> 	struct iovec iov = { .iov_base = buf, .iov_len = 1024 };
-> 	int ret;
-> 
->         if (fd < 0) {
->                 perror("open");
->                 return 0;
->         }
-> 
-> 	memset(buf, 0xfe, sizeof(buf));
-> 
-> 	ret = pwritev2(fd, &iov, 1, 0, RWF_DSYNC);
-> 	if (ret < 0)
-> 		perror("pwritev2");
-> 	else
-> 		printf("ret = %d\n", ret);
-> 
-> 	return 0;
-> }
-> EOF
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> [milosz@adfin.com: added flag check to compat_do_readv_writev()]
-> Signed-off-by: Milosz Tanski <milosz@adfin.com>
+Plumbing the flags argument through the vfs code so they can be passed down to
+__generic_file_(read/write)_iter function that do the acctual work.
 
-Ceph bits
+Signed-off-by: Milosz Tanski <milosz@adfin.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
+---
+ drivers/target/target_core_file.c |  6 +++---
+ fs/nfsd/vfs.c                     |  4 ++--
+ fs/read_write.c                   | 27 +++++++++++++++------------
+ fs/splice.c                       |  2 +-
+ include/linux/aio.h               |  2 ++
+ include/linux/fs.h                |  4 ++--
+ 6 files changed, 25 insertions(+), 20 deletions(-)
 
-Acked-by: Sage Weil <sage@redhat.com>
-
-> ---
->  fs/ceph/file.c     |  4 +++-
->  fs/fuse/file.c     |  2 ++
->  fs/nfs/file.c      | 10 ++++++----
->  fs/ocfs2/file.c    |  6 ++++--
->  fs/read_write.c    | 20 +++++++++++++++-----
->  include/linux/fs.h |  3 ++-
->  mm/filemap.c       |  4 +++-
->  7 files changed, 35 insertions(+), 14 deletions(-)
-> 
-> diff --git a/fs/ceph/file.c b/fs/ceph/file.c
-> index b798b5c..2d4e15a 100644
-> --- a/fs/ceph/file.c
-> +++ b/fs/ceph/file.c
-> @@ -983,7 +983,9 @@ retry_snap:
->  	ceph_put_cap_refs(ci, got);
->  
->  	if (written >= 0 &&
-> -	    ((file->f_flags & O_SYNC) || IS_SYNC(file->f_mapping->host) ||
-> +	    ((file->f_flags & O_SYNC) ||
-> +	     IS_SYNC(file->f_mapping->host) ||
-> +	     (iocb->ki_rwflags & RWF_DSYNC) ||
->  	     ceph_osdmap_flag(osdc->osdmap, CEPH_OSDMAP_NEARFULL))) {
->  		err = vfs_fsync_range(file, pos, pos + written - 1, 1);
->  		if (err < 0)
-> diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-> index caa8d95..bb4fb23 100644
-> --- a/fs/fuse/file.c
-> +++ b/fs/fuse/file.c
-> @@ -1248,6 +1248,8 @@ static ssize_t fuse_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
->  		written += written_buffered;
->  		iocb->ki_pos = pos + written_buffered;
->  	} else {
-> +		if (iocb->ki_rwflags & RWF_DSYNC)
-> +			return -EINVAL;
->  		written = fuse_perform_write(file, mapping, from, pos);
->  		if (written >= 0)
->  			iocb->ki_pos = pos + written;
-> diff --git a/fs/nfs/file.c b/fs/nfs/file.c
-> index aa9046f..c59b0b7 100644
-> --- a/fs/nfs/file.c
-> +++ b/fs/nfs/file.c
-> @@ -652,13 +652,15 @@ static const struct vm_operations_struct nfs_file_vm_ops = {
->  	.remap_pages = generic_file_remap_pages,
->  };
->  
-> -static int nfs_need_sync_write(struct file *filp, struct inode *inode)
-> +static int nfs_need_sync_write(struct kiocb *iocb, struct inode *inode)
->  {
->  	struct nfs_open_context *ctx;
->  
-> -	if (IS_SYNC(inode) || (filp->f_flags & O_DSYNC))
-> +	if (IS_SYNC(inode) ||
-> +	    (iocb->ki_filp->f_flags & O_DSYNC) ||
-> +	    (iocb->ki_rwflags & RWF_DSYNC))
->  		return 1;
-> -	ctx = nfs_file_open_context(filp);
-> +	ctx = nfs_file_open_context(iocb->ki_filp);
->  	if (test_bit(NFS_CONTEXT_ERROR_WRITE, &ctx->flags) ||
->  	    nfs_ctx_key_to_expire(ctx))
->  		return 1;
-> @@ -705,7 +707,7 @@ ssize_t nfs_file_write(struct kiocb *iocb, struct iov_iter *from)
->  		written = result;
->  
->  	/* Return error values for O_DSYNC and IS_SYNC() */
-> -	if (result >= 0 && nfs_need_sync_write(file, inode)) {
-> +	if (result >= 0 && nfs_need_sync_write(iocb, inode)) {
->  		int err = vfs_fsync(file, 0);
->  		if (err < 0)
->  			result = err;
-> diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
-> index bb66ca4..8f9a86b 100644
-> --- a/fs/ocfs2/file.c
-> +++ b/fs/ocfs2/file.c
-> @@ -2374,8 +2374,10 @@ out_dio:
->  	/* buffered aio wouldn't have proper lock coverage today */
->  	BUG_ON(ret == -EIOCBQUEUED && !(file->f_flags & O_DIRECT));
->  
-> -	if (((file->f_flags & O_DSYNC) && !direct_io) || IS_SYNC(inode) ||
-> -	    ((file->f_flags & O_DIRECT) && !direct_io)) {
-> +	if (((file->f_flags & O_DSYNC) && !direct_io) ||
-> +	    IS_SYNC(inode) ||
-> +	    ((file->f_flags & O_DIRECT) && !direct_io) ||
-> +	    (iocb->ki_rwflags & RWF_DSYNC)) {
->  		ret = filemap_fdatawrite_range(file->f_mapping, *ppos,
->  					       *ppos + count - 1);
->  		if (ret < 0)
-> diff --git a/fs/read_write.c b/fs/read_write.c
-> index cba7d4c..3443265 100644
-> --- a/fs/read_write.c
-> +++ b/fs/read_write.c
-> @@ -839,8 +839,13 @@ static ssize_t do_readv_writev(int type, struct file *file,
->  		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
->  						pos, iter_fn, flags);
->  	} else {
-> -		if (type == READ && (flags & RWF_NONBLOCK))
-> -			return -EAGAIN;
-> +		if (type == READ) {
-> +			if (flags & RWF_NONBLOCK)
-> +				return -EAGAIN;
-> +		} else {
-> +			if (flags & RWF_DSYNC)
-> +				return -EINVAL;
-> +		}
->  
->  		if (fnv)
->  			ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
-> @@ -888,7 +893,7 @@ ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
->  		return -EBADF;
->  	if (!(file->f_mode & FMODE_CAN_WRITE))
->  		return -EINVAL;
-> -	if (flags & ~0)
-> +	if (flags & ~RWF_DSYNC)
->  		return -EINVAL;
->  
->  	return do_readv_writev(WRITE, file, vec, vlen, pos, flags);
-> @@ -1080,8 +1085,13 @@ static ssize_t compat_do_readv_writev(int type, struct file *file,
->  		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
->  						pos, iter_fn, flags);
->  	} else {
-> -		if (type == READ && (flags & RWF_NONBLOCK))
-> -			return -EAGAIN;
-> +		if (type == READ) {
-> +			if (flags & RWF_NONBLOCK)
-> +				return -EAGAIN;
-> +		} else {
-> +			if (flags & RWF_DSYNC)
-> +				return -EINVAL;
-> +		}
->  
->  		if (fnv)
->  			ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 7d0e116..7786b88 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -1460,7 +1460,8 @@ struct block_device_operations;
->  #define HAVE_UNLOCKED_IOCTL 1
->  
->  /* These flags are used for the readv/writev syscalls with flags. */
-> -#define RWF_NONBLOCK 0x00000001
-> +#define RWF_NONBLOCK	0x00000001
-> +#define RWF_DSYNC	0x00000002
->  
->  struct iov_iter;
->  
-> diff --git a/mm/filemap.c b/mm/filemap.c
-> index 6107058..4fbef99 100644
-> --- a/mm/filemap.c
-> +++ b/mm/filemap.c
-> @@ -2669,7 +2669,9 @@ int generic_write_sync(struct kiocb *iocb, loff_t count)
->  	struct file *file = iocb->ki_filp;
->  
->  	if (count > 0 &&
-> -	    ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host))) {
-> +	    ((file->f_flags & O_DSYNC) ||
-> +	     (iocb->ki_rwflags & RWF_DSYNC) ||
-> +	     IS_SYNC(file->f_mapping->host))) {
->  		bool fdatasync = !(file->f_flags & __O_SYNC);
->  		ssize_t ret = 0;
->  
-> -- 
-> 1.9.1
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe ceph-devel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-> 
+diff --git a/drivers/target/target_core_file.c b/drivers/target/target_core_file.c
+index 7d6cdda..58d9a6d 100644
+--- a/drivers/target/target_core_file.c
++++ b/drivers/target/target_core_file.c
+@@ -350,9 +350,9 @@ static int fd_do_rw(struct se_cmd *cmd, struct scatterlist *sgl,
+ 	set_fs(get_ds());
+ 
+ 	if (is_write)
+-		ret = vfs_writev(fd, &iov[0], sgl_nents, &pos);
++		ret = vfs_writev(fd, &iov[0], sgl_nents, &pos, 0);
+ 	else
+-		ret = vfs_readv(fd, &iov[0], sgl_nents, &pos);
++		ret = vfs_readv(fd, &iov[0], sgl_nents, &pos, 0);
+ 
+ 	set_fs(old_fs);
+ 
+@@ -528,7 +528,7 @@ fd_execute_write_same(struct se_cmd *cmd)
+ 
+ 	old_fs = get_fs();
+ 	set_fs(get_ds());
+-	rc = vfs_writev(f, &iov[0], iov_num, &pos);
++	rc = vfs_writev(f, &iov[0], iov_num, &pos, 0);
+ 	set_fs(old_fs);
+ 
+ 	vfree(iov);
+diff --git a/fs/nfsd/vfs.c b/fs/nfsd/vfs.c
+index 989129e..ef01c78 100644
+--- a/fs/nfsd/vfs.c
++++ b/fs/nfsd/vfs.c
+@@ -872,7 +872,7 @@ __be32 nfsd_readv(struct file *file, loff_t offset, struct kvec *vec, int vlen,
+ 
+ 	oldfs = get_fs();
+ 	set_fs(KERNEL_DS);
+-	host_err = vfs_readv(file, (struct iovec __user *)vec, vlen, &offset);
++	host_err = vfs_readv(file, (struct iovec __user *)vec, vlen, &offset, 0);
+ 	set_fs(oldfs);
+ 	return nfsd_finish_read(file, count, host_err);
+ }
+@@ -960,7 +960,7 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
+ 
+ 	/* Write the data. */
+ 	oldfs = get_fs(); set_fs(KERNEL_DS);
+-	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos);
++	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos, 0);
+ 	set_fs(oldfs);
+ 	if (host_err < 0)
+ 		goto out_nfserr;
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 7d9318c..94b2d34 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -653,7 +653,8 @@ unsigned long iov_shorten(struct iovec *iov, unsigned long nr_segs, size_t to)
+ EXPORT_SYMBOL(iov_shorten);
+ 
+ static ssize_t do_iter_readv_writev(struct file *filp, int rw, const struct iovec *iov,
+-		unsigned long nr_segs, size_t len, loff_t *ppos, iter_fn_t fn)
++		unsigned long nr_segs, size_t len, loff_t *ppos, iter_fn_t fn,
++		int flags)
+ {
+ 	struct kiocb kiocb;
+ 	struct iov_iter iter;
+@@ -662,6 +663,7 @@ static ssize_t do_iter_readv_writev(struct file *filp, int rw, const struct iove
+ 	init_sync_kiocb(&kiocb, filp);
+ 	kiocb.ki_pos = *ppos;
+ 	kiocb.ki_nbytes = len;
++	kiocb.ki_rwflags = flags;
+ 
+ 	iov_iter_init(&iter, rw, iov, nr_segs, len);
+ 	ret = fn(&kiocb, &iter);
+@@ -800,7 +802,8 @@ out:
+ 
+ static ssize_t do_readv_writev(int type, struct file *file,
+ 			       const struct iovec __user * uvector,
+-			       unsigned long nr_segs, loff_t *pos)
++			       unsigned long nr_segs, loff_t *pos,
++			       int flags)
+ {
+ 	size_t tot_len;
+ 	struct iovec iovstack[UIO_FASTIOV];
+@@ -834,7 +837,7 @@ static ssize_t do_readv_writev(int type, struct file *file,
+ 
+ 	if (iter_fn)
+ 		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
+-						pos, iter_fn);
++						pos, iter_fn, flags);
+ 	else if (fnv)
+ 		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+ 						pos, fnv);
+@@ -857,27 +860,27 @@ out:
+ }
+ 
+ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
+-		  unsigned long vlen, loff_t *pos)
++		  unsigned long vlen, loff_t *pos, int flags)
+ {
+ 	if (!(file->f_mode & FMODE_READ))
+ 		return -EBADF;
+ 	if (!(file->f_mode & FMODE_CAN_READ))
+ 		return -EINVAL;
+ 
+-	return do_readv_writev(READ, file, vec, vlen, pos);
++	return do_readv_writev(READ, file, vec, vlen, pos, flags);
+ }
+ 
+ EXPORT_SYMBOL(vfs_readv);
+ 
+ ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
+-		   unsigned long vlen, loff_t *pos)
++		   unsigned long vlen, loff_t *pos, int flags)
+ {
+ 	if (!(file->f_mode & FMODE_WRITE))
+ 		return -EBADF;
+ 	if (!(file->f_mode & FMODE_CAN_WRITE))
+ 		return -EINVAL;
+ 
+-	return do_readv_writev(WRITE, file, vec, vlen, pos);
++	return do_readv_writev(WRITE, file, vec, vlen, pos, flags);
+ }
+ 
+ EXPORT_SYMBOL(vfs_writev);
+@@ -890,7 +893,7 @@ SYSCALL_DEFINE3(readv, unsigned long, fd, const struct iovec __user *, vec,
+ 
+ 	if (f.file) {
+ 		loff_t pos = file_pos_read(f.file);
+-		ret = vfs_readv(f.file, vec, vlen, &pos);
++		ret = vfs_readv(f.file, vec, vlen, &pos, 0);
+ 		if (ret >= 0)
+ 			file_pos_write(f.file, pos);
+ 		fdput_pos(f);
+@@ -910,7 +913,7 @@ SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
+ 
+ 	if (f.file) {
+ 		loff_t pos = file_pos_read(f.file);
+-		ret = vfs_writev(f.file, vec, vlen, &pos);
++		ret = vfs_writev(f.file, vec, vlen, &pos, 0);
+ 		if (ret >= 0)
+ 			file_pos_write(f.file, pos);
+ 		fdput_pos(f);
+@@ -942,7 +945,7 @@ SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
+ 	if (f.file) {
+ 		ret = -ESPIPE;
+ 		if (f.file->f_mode & FMODE_PREAD)
+-			ret = vfs_readv(f.file, vec, vlen, &pos);
++			ret = vfs_readv(f.file, vec, vlen, &pos, 0);
+ 		fdput(f);
+ 	}
+ 
+@@ -966,7 +969,7 @@ SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
+ 	if (f.file) {
+ 		ret = -ESPIPE;
+ 		if (f.file->f_mode & FMODE_PWRITE)
+-			ret = vfs_writev(f.file, vec, vlen, &pos);
++			ret = vfs_writev(f.file, vec, vlen, &pos, 0);
+ 		fdput(f);
+ 	}
+ 
+@@ -1014,7 +1017,7 @@ static ssize_t compat_do_readv_writev(int type, struct file *file,
+ 
+ 	if (iter_fn)
+ 		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
+-						pos, iter_fn);
++						pos, iter_fn, 0);
+ 	else if (fnv)
+ 		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
+ 						pos, fnv);
+diff --git a/fs/splice.c b/fs/splice.c
+index f5cb9ba..9591b9f 100644
+--- a/fs/splice.c
++++ b/fs/splice.c
+@@ -576,7 +576,7 @@ static ssize_t kernel_readv(struct file *file, const struct iovec *vec,
+ 	old_fs = get_fs();
+ 	set_fs(get_ds());
+ 	/* The cast to a user pointer is valid due to the set_fs() */
+-	res = vfs_readv(file, (const struct iovec __user *)vec, vlen, &pos);
++	res = vfs_readv(file, (const struct iovec __user *)vec, vlen, &pos, 0);
+ 	set_fs(old_fs);
+ 
+ 	return res;
+diff --git a/include/linux/aio.h b/include/linux/aio.h
+index d9c92da..9c1d499 100644
+--- a/include/linux/aio.h
++++ b/include/linux/aio.h
+@@ -52,6 +52,8 @@ struct kiocb {
+ 	 * this is the underlying eventfd context to deliver events to.
+ 	 */
+ 	struct eventfd_ctx	*ki_eventfd;
++
++	int			ki_rwflags;
+ };
+ 
+ static inline bool is_sync_kiocb(struct kiocb *kiocb)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index a957d43..9ed5711 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1538,9 +1538,9 @@ ssize_t rw_copy_check_uvector(int type, const struct iovec __user * uvector,
+ extern ssize_t vfs_read(struct file *, char __user *, size_t, loff_t *);
+ extern ssize_t vfs_write(struct file *, const char __user *, size_t, loff_t *);
+ extern ssize_t vfs_readv(struct file *, const struct iovec __user *,
+-		unsigned long, loff_t *);
++		unsigned long, loff_t *, int);
+ extern ssize_t vfs_writev(struct file *, const struct iovec __user *,
+-		unsigned long, loff_t *);
++		unsigned long, loff_t *, int);
+ 
+ struct super_operations {
+    	struct inode *(*alloc_inode)(struct super_block *sb);
+-- 
+1.9.1
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
