@@ -1,100 +1,54 @@
-From: "Gautam (Gautam Kumar) Shukla" <gautams@broadcom.com>
-Subject: [PATCH 2/2] linux-wireless:Added wiphy capability flag for
- offloading 4way handshake to driver
-Date: Tue, 11 Nov 2014 06:27:03 +0000
-Message-ID: <DF163EE1A432BF4BBE6B2088220663A6743890@SJEXCHMB06.corp.ad.broadcom.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
+ only)
+Date: Tue, 11 Nov 2014 17:44:17 +1100
+Message-ID: <20141111064417.GT23575@dastard>
+References: <cover.1415636409.git.milosz@adfin.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: "linville@tuxdriver.com" <linville@tuxdriver.com>
-Cc: "linux-wireless@vger.kernel.org" <linux-wireless@vger.kernel.org>, "johannes@sipsolutions.net" <johannes@sipsolutions.net>, "davem@davemloft.net" <davem@davemloft.net>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, Jithu Jance <jithu@broadcom.com>, Sreenath S <sreenats@broadcom.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <cover.1415636409.git.milosz@adfin.com>
+Sender: owner-linux-aio@kvack.org
+To: Milosz Tanski <milosz@adfin.com>
+Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Nov 10, 2014 at 11:40:23AM -0500, Milosz Tanski wrote:
+> This patcheset introduces an ability to perform a non-blocking read from
+> regular files in buffered IO mode. This works by only for those filesystems
+> that have data in the page cache.
+> 
+> It does this by introducing new syscalls new syscalls preadv2/pwritev2. These
+> new syscalls behave like the network sendmsg, recvmsg syscalls that accept an
+> extra flag argument (RWF_NONBLOCK).
+> 
+> It's a very common patern today (samba, libuv, etc..) use a large threadpool to
+> perform buffered IO operations. They submit the work form another thread
+> that performs network IO and epoll or other threads that perform CPU work. This
+> leads to increased latency for processing, esp. in the case of data that's
+> already cached in the page cache.
+> 
+> With the new interface the applications will now be able to fetch the data in
+> their network / cpu bound thread(s) and only defer to a threadpool if it's not
+> there. In our own application (VLDB) we've observed a decrease in latency for
+> "fast" request by avoiding unnecessary queuing and having to swap out current
+> tasks in IO bound work threads.
 
-For offloading 4 way handshake to driver , currently we don't have WIPHY capability flag to communicate same to supplicant.
-I have added the flag NL80211_ATTR_4WAY_KEY_HANDSHAKE  and rest of the code for the same.
+Can you write a test (or set of) for fstests that exercises this new
+functionality? I'm not worried about performance, just
+correctness....
 
-Tested on x86 linux machine
+Cheers,
 
-Signed-off-by: Gautam kumar shukla <gautams@broadcom.com>
----
- include/net/cfg80211.h       | 4 ++++
- include/uapi/linux/nl80211.h | 5 ++++-
- net/wireless/nl80211.c       | 4 ++++
- 3 files changed, 12 insertions(+), 1 deletion(-)
+Dave.
 
-diff --git a/include/net/cfg80211.h b/include/net/cfg80211.h
-index 6f744e0..b37de0a 100644
---- a/include/net/cfg80211.h
-+++ b/include/net/cfg80211.h
-@@ -2629,7 +2629,10 @@ struct cfg80211_ops {
-  *	TSPEC sessions (TID aka TSID 0-7) with the NL80211_CMD_ADD_TX_TS
-  *	command. Standard IEEE 802.11 TSPEC setup is not yet supported, it
-  *	needs to be able to handle Block-Ack agreements and other things.
-+ *	@WIPHY_FLAG_SUPPORTS_4WAY_HANDHSHAKE:the device supports 4way handshake
-+ *	in the driver/firmware.
-  */
-+
- enum wiphy_flags {
- 	WIPHY_FLAG_SUPPORTS_WMM_ADMISSION	= BIT(0),
- 	/* use hole at 1 */
-@@ -2654,6 +2657,7 @@ enum wiphy_flags {
- 	WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL	= BIT(21),
- 	WIPHY_FLAG_SUPPORTS_5_10_MHZ		= BIT(22),
- 	WIPHY_FLAG_HAS_CHANNEL_SWITCH		= BIT(23),
-+	WIPHY_FLAG_SUPPORTS_4WAY_HANDSHAKE	= BIT(24),
- };
- 
- /**
-diff --git a/include/uapi/linux/nl80211.h b/include/uapi/linux/nl80211.h
-index b01d5dd..2c474a3 100644
---- a/include/uapi/linux/nl80211.h
-+++ b/include/uapi/linux/nl80211.h
-@@ -1640,9 +1640,11 @@ enum nl80211_commands {
-  *
-  *	@NL80211_ATTR_PSK: a PSK value (u8 attribute).This is 32-octet (256-bit)
-  *	PSK.
-+ * @NL80211_ATTR_4WAY_KEY_HANDSHAKE: Indicates whether the driver is capable
-+ * of 4way key handshake
-  *
-  *
-- * @NL80211_ATTR_MAX: highest attribute number currently defined
-+ * * @NL80211_ATTR_MAX: highest attribute number currently defined
-  * @__NL80211_ATTR_AFTER_LAST: internal use
-  */
- enum nl80211_attrs {
-@@ -1995,6 +1997,7 @@ enum nl80211_attrs {
- 	NL80211_ATTR_SMPS_MODE,
- 
- 	NL80211_ATTR_PSK,
-+	NL80211_ATTR_4WAY_KEY_HANDSHAKE,
- 
- 	/* add attributes here, update the policy in nl80211.c */
- 
-diff --git a/net/wireless/nl80211.c b/net/wireless/nl80211.c
-index 91c24b1..5f85c41 100644
---- a/net/wireless/nl80211.c
-+++ b/net/wireless/nl80211.c
-@@ -396,6 +396,7 @@ static const struct nla_policy nl80211_policy[NL80211_ATTR_MAX+1] = {
- 	[NL80211_ATTR_ADMITTED_TIME] = { .type = NLA_U16 },
- 	[NL80211_ATTR_SMPS_MODE] = { .type = NLA_U8 },
- 	[NL80211_ATTR_PSK] = { .type = NLA_BINARY, .len = 32 },
-+	[NL80211_ATTR_4WAY_KEY_HANDSHAKE] = { .type = NLA_FLAG },
- };
- 
- /* policy for the key attributes */
-@@ -1303,6 +1304,9 @@ static int nl80211_send_wiphy(struct cfg80211_registered_device *rdev,
- 		if ((rdev->wiphy.flags & WIPHY_FLAG_SUPPORTS_FW_ROAM) &&
- 		    nla_put_flag(msg, NL80211_ATTR_ROAM_SUPPORT))
- 			goto nla_put_failure;
-+		if ((rdev->wiphy.flags & WIPHY_FLAG_SUPPORTS_4WAY_HANDSHAKE) &&
-+			nla_put_flag(msg,NL80211_ATTR_4WAY_KEY_HANDSHAKE))
-+			goto nla_put_failure;
- 		if ((rdev->wiphy.flags & WIPHY_FLAG_SUPPORTS_TDLS) &&
- 		    nla_put_flag(msg, NL80211_ATTR_TDLS_SUPPORT))
- 			goto nla_put_failure;
 -- 
-1.9.1
+Dave Chinner
+david@fromorbit.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
