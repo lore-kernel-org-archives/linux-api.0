@@ -1,15 +1,16 @@
 From: Stefan Richter <stefanr@s5r6.in-berlin.de>
-Subject: Re: [PATCH] drivers/firewire: fix use/leak of uninitialized stack
-	memory in dispatch_ioctl()
-Date: Tue, 11 Nov 2014 17:13:56 +0100
-Message-ID: <20141111171356.2fc62440@kant>
+Subject: [PATCH RFC v1a] firewire: cdev: prevent kernel stack leaking into
+	ioctl arguments
+Date: Tue, 11 Nov 2014 17:15:26 +0100
+Message-ID: <20141111171526.6e2a2b18@kant>
 References: <55D28623-C1C7-47D2-9638-0B8FD0733C48@stanford.edu>
 	<20141111010340.3329bbd7@kant> <20141111130143.2ff3d42e@kant>
+	<20141111171356.2fc62440@kant>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux1394-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20141111130143.2ff3d42e@kant>
+In-Reply-To: <20141111171356.2fc62440@kant>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux1394-devel>,
 	<mailto:linux1394-devel-request@lists.sourceforge.net?subject=unsubscribe>
 List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux1394-devel>
@@ -22,70 +23,123 @@ To: linux1394-devel@lists.sourceforge.net
 Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, David Ramos <daramos@stanford.edu>
 List-Id: linux-api@vger.kernel.org
 
-Adding Cc: linux-api and lkml, quoting parent message in full
+Found by the UC-KLEE tool:  A user could supply less input to
+firewire-cdev ioctls than write- or write/read-type ioctl handlers
+expect.  The handlers used data from uninitialized kernel stack then.
 
-On Nov 11 Stefan Richter wrote:
-> On Nov 11 Stefan Richter wrote:
-> > On Nov 10 David Ramos wrote:
-> > > This patch fixes an uninitialized memory use/leak bug discovered
-> > > by our UC-KLEE tool in the 3.16.3 kernel.
-> > 
-> > There is uninitialized memory use, but no leak.
-> 
-> Actually there could be leaks too.  If later fw_cdev_event_ are
-> generated, they will contain the __u64 closure field that many of the
-> ioctl argument structures contain.
-> 
-> > [...]
-> > > If a user carefully crafts an ioctl command such that _IOC_DIR(cmd)
-> > > == 0, 'buffer' is left uninitialized. Each of the ioctl_handlers then
-> > > accesses the pre-existing stack values, which will cause unpredictable
-> > > behavior.
-> > 
-> > Not all (but indeed almost all) ioctl handlers will use uninitialized
-> > memory in that case.  The damage should be marginal though, because all of
-> > these handlers must implement sufficient arguments checking anyway.
-> > 
-> > > This patch checks for an invalid cmd and rejects it with -ENOTTY.
-> > 
-> > This is not exactly what your patch does.  Rather...
-> > 
-> > > --- a/drivers/firewire/core-cdev.c
-> > > +++ b/drivers/firewire/core-cdev.c
-> > > @@ -1632,7 +1632,8 @@ static int dispatch_ioctl(struct client *client,
-> > >  	if (fw_device_is_shutdown(client->device))
-> > >  		return -ENODEV;
-> > >  
-> > > -	if (_IOC_TYPE(cmd) != '#' ||
-> > > +	if (_IOC_DIR(cmd) == _IOC_NONE ||
-> > > +	    _IOC_TYPE(cmd) != '#' ||
-> > >  	    _IOC_NR(cmd) >= ARRAY_SIZE(ioctl_handlers) ||
-> > >  	    _IOC_SIZE(cmd) > sizeof(buffer))
-> > >  		return -ENOTTY;
-> > 
-> > ...it quits *all* _IOC_NONE ioctls with -ENOTTY, not just invalid ones.
-> > If you have a look at the ABI definition in
-> > include/uapi/linux/firewire-cdev.h, you will notice that this approach is
-> > insufficient.
-> 
-> I suppose we should add checks
->   1. for _IOC_DIR matching the expected direction depending on _IOC_NR
->      (or at least for presence of _IOC_WRITE when expected), and
->   2. for _IOC_SIZE being at least as big as the minimum unaligned argument
->      size depending on _IOC_NR (at least in case of
->      _IOC_DIR(cmd) & _IOC_WRITE).
-> 
-> BTW, I don't think it is worthwhile to check for upper bounds of _IOC_SIZE
-> besides the present check against sizeof(buffer), since the precise size of
-> arguments depends on structure alignment of the user code and on ABI
-> version.
+This could partially leak back to the user if the kernel subsequently
+generated fw_cdev_event_'s (to be read from the firewire-cdev fd)
+which notably would contain the _u64 closure field which many of the
+ioctl argument structures contain.
 
-I will follow up with two alternative patches for discussion; either one
-should fix the issue but they differ in complexity and runtime cost:
-    [PATCH RFC v1a] firewire: cdev: prevent kernel stack leaking into ioctl arguments
-    [PATCH RFC v1b] firewire: cdev: prevent kernel stack leaking into ioctl arguments
-If I receive no feedback to the contrary, I will probably submit patch v1b
-to upstream, which is the simpler one of the two.
+The fact that the handlers would act on random garbage input is a
+lesser issue since all handlers must check their input anyway.
+
+Remarks:
+  - There was never any leak from kernel stack to the ioctl output
+    buffer itself.  IOW, it was not possible to read kernel stack by a
+    read-type or write/read-type ioctl alone; the leak could at most
+    happen in combination with read()ing subsequent event data.
+  - The affected character device file interface is specified in
+    include/uapi/linux/firewire-cdev.h.  An overview is given in
+    Documentation/ABI/stable/firewire-cdev.
+
+This fix uses a lookup table to verify that all ioctl input fields are
+indeed written by the user.  Else the ioctl fails with -EINVAL.
+
+Reported-by: David Ramos <daramos@stanford.edu>
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Stefan Richter <stefanr@s5r6.in-berlin.de>
+---
+ drivers/firewire/core-cdev.c |   33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+--- a/drivers/firewire/core-cdev.c
++++ b/drivers/firewire/core-cdev.c
+@@ -1609,48 +1609,81 @@ static int (* const ioctl_handlers[])(st
+ 	[0x0a] = ioctl_start_iso,
+ 	[0x0b] = ioctl_stop_iso,
+ 	[0x0c] = ioctl_get_cycle_timer,
+ 	[0x0d] = ioctl_allocate_iso_resource,
+ 	[0x0e] = ioctl_deallocate_iso_resource,
+ 	[0x0f] = ioctl_allocate_iso_resource_once,
+ 	[0x10] = ioctl_deallocate_iso_resource_once,
+ 	[0x11] = ioctl_get_speed,
+ 	[0x12] = ioctl_send_broadcast_request,
+ 	[0x13] = ioctl_send_stream_packet,
+ 	[0x14] = ioctl_get_cycle_timer2,
+ 	[0x15] = ioctl_send_phy_packet,
+ 	[0x16] = ioctl_receive_phy_packets,
+ 	[0x17] = ioctl_set_iso_channels,
+ 	[0x18] = ioctl_flush_iso,
+ };
+ 
++static const char minimum_user_input[] = {
++	[0x00] = 32,	/* _IOWR fw_cdev_get_info			*/
++	[0x01] = 36,	/*  _IOW fw_cdev_send_request			*/
++	[0x02] = 20,	/* _IOWR fw_cdev_allocate			*/
++	[0x03] =  4,	/*  _IOW fw_cdev_deallocate			*/
++	[0x04] = 20,	/*  _IOW fw_cdev_send_response			*/
++	[0x05] =  4,	/*  _IOW fw_cdev_initiate_bus_reset		*/
++	[0x06] = 20,	/* _IOWR fw_cdev_add_descriptor			*/
++	[0x07] =  4,	/*  _IOW fw_cdev_remove_descriptor		*/
++	[0x08] = 24,	/* _IOWR fw_cdev_create_iso_context		*/
++	[0x09] = 24,	/* _IOWR fw_cdev_queue_iso			*/
++	[0x0a] = 16,	/*  _IOW fw_cdev_start_iso			*/
++	[0x0b] =  4,	/*  _IOW fw_cdev_stop_iso			*/
++	[0x0c] =  0,	/*  _IOR fw_cdev_get_cycle_timer		*/
++	[0x0d] = 20,	/* _IOWR fw_cdev_allocate_iso_resource		*/
++	[0x0e] =  4,	/*  _IOW fw_cdev_deallocate			*/
++	[0x0f] = 20,	/*  _IOW fw_cdev_allocate_iso_resource		*/
++	[0x10] = 20,	/*  _IOW fw_cdev_allocate_iso_resource		*/
++	[0x11] =  0,	/*   _IO					*/
++	[0x12] = 36,	/*  _IOW struct fw_cdev_send_request		*/
++	[0x13] = 40,	/*  _IOW struct fw_cdev_send_stream_packet	*/
++	[0x14] = 16,	/* _IOWR fw_cdev_get_cycle_timer2		*/
++	[0x15] = 20,	/* _IOWR fw_cdev_send_phy_packet		*/
++	[0x16] =  8,	/*  _IOW fw_cdev_receive_phy_packets		*/
++	[0x17] = 12,	/*  _IOW fw_cdev_set_iso_channels		*/
++	[0x18] =  4,	/*  _IOW struct fw_cdev_flush_iso		*/
++};
++
+ static int dispatch_ioctl(struct client *client,
+ 			  unsigned int cmd, void __user *arg)
+ {
+ 	union ioctl_arg buffer;
+ 	int ret;
+ 
+ 	if (fw_device_is_shutdown(client->device))
+ 		return -ENODEV;
+ 
+ 	if (_IOC_TYPE(cmd) != '#' ||
+ 	    _IOC_NR(cmd) >= ARRAY_SIZE(ioctl_handlers) ||
+ 	    _IOC_SIZE(cmd) > sizeof(buffer))
+ 		return -ENOTTY;
+ 
++	if (minimum_user_input[_IOC_NR(cmd)])
++		if (!(_IOC_DIR(cmd) & _IOC_WRITE) ||
++		    _IOC_SIZE(cmd) < minimum_user_input[_IOC_NR(cmd)])
++			return -EINVAL;
++
+ 	if (_IOC_DIR(cmd) == _IOC_READ)
+ 		memset(&buffer, 0, _IOC_SIZE(cmd));
+ 
+ 	if (_IOC_DIR(cmd) & _IOC_WRITE)
+ 		if (copy_from_user(&buffer, arg, _IOC_SIZE(cmd)))
+ 			return -EFAULT;
+ 
+ 	ret = ioctl_handlers[_IOC_NR(cmd)](client, &buffer);
+ 	if (ret < 0)
+ 		return ret;
+ 
+ 	if (_IOC_DIR(cmd) & _IOC_READ)
+ 		if (copy_to_user(arg, &buffer, _IOC_SIZE(cmd)))
+ 			return -EFAULT;
+ 
+ 	return ret;
+ }
+
+
 -- 
 Stefan Richter
 -=====-====- =-== -=-==
