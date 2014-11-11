@@ -1,15 +1,15 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v2 18/19] selftests/vm: add install target to enable installing test
-Date: Tue, 11 Nov 2014 13:27:58 -0700
-Message-ID: <86ae024c4591a8775f82975b69182fdc29f234d2.1415735831.git.shuahkh@osg.samsung.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH v2 15/19] selftests/ptrace: add install target to enable installing test
+Date: Tue, 11 Nov 2014 13:27:55 -0700
+Message-ID: <5e075603a9e0ec1fe21ce07a9a94dbf15d46c557.1415735831.git.shuahkh@osg.samsung.com>
 References: <cover.1415735831.git.shuahkh@osg.samsung.com>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <cover.1415735831.git.shuahkh@osg.samsung.com>
-In-Reply-To: <cover.1415735831.git.shuahkh@osg.samsung.com>
-References: <cover.1415735831.git.shuahkh@osg.samsung.com>
-Sender: netdev-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org, akpm@linux-foundation.org, mmarek@suse.cz, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1415735831.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1415735831.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1415735831.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 Add a new make target to enable installing test. This target
@@ -17,41 +17,41 @@ installs test in the kselftest install location and add to the
 kselftest script to run the test. Install target can be run
 only from top level source dir.
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 ---
- tools/testing/selftests/vm/Makefile | 14 +++++++++++++-
- 1 file changed, 13 insertions(+), 1 deletion(-)
+ tools/testing/selftests/ptrace/Makefile | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
 
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index 4c4b1f6..7fbe551 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -4,13 +4,25 @@ CC = $(CROSS_COMPILE)gcc
- CFLAGS = -Wall
- BINARIES = hugepage-mmap hugepage-shm map_hugetlb thuge-gen hugetlbfstest
- BINARIES += transhuge-stress
-+TEST_STR = /bin/sh ./run_vmtests || echo vmtests: [FAIL]
+diff --git a/tools/testing/selftests/ptrace/Makefile b/tools/testing/selftests/ptrace/Makefile
+index 47ae2d3..9ef3c4b 100644
+--- a/tools/testing/selftests/ptrace/Makefile
++++ b/tools/testing/selftests/ptrace/Makefile
+@@ -1,10 +1,23 @@
+ CFLAGS += -iquote../../../../include/uapi -Wall
+-peeksiginfo: peeksiginfo.c
  
- all: $(BINARIES)
- %: %.c
- 	$(CC) $(CFLAGS) -o $@ $^
- 
+-all: peeksiginfo
++TEST_STR = ./peeksiginfo || echo peeksiginfo selftests: [FAIL]
++
++all:
++	gcc peeksiginfo.c -o peeksiginfo
++
 +install:
 +ifdef INSTALL_KSFT_PATH
-+	install run_vmtests $(BINARIES) $(INSTALL_KSFT_PATH)
-+	@echo echo Start vm test .... >> $(KSELFTEST)
++	install ./peeksiginfo $(INSTALL_KSFT_PATH)
++	@echo echo Start ptrace test .... >> $(KSELFTEST)
 +	@echo "$(TEST_STR)" >> $(KSELFTEST)
-+	@echo echo End vm test .... >> $(KSELFTEST)
++	@echo echo End ptrace test .... >> $(KSELFTEST)
 +	@echo echo ============================== >> $(KSELFTEST)
 +else
 +	@echo Run make kselftest_install in top level source directory
 +endif
-+
- run_tests: all
--	@/bin/sh ./run_vmtests || (echo "vmtests: [FAIL]"; exit 1)
-+	@$(TEST_STR)
  
  clean:
- 	$(RM) $(BINARIES)
+ 	rm -f peeksiginfo
+ 
+ run_tests: all
+-	@./peeksiginfo || echo "peeksiginfo selftests: [FAIL]"
++	@$(TEST_STR)
 -- 
 1.9.1
