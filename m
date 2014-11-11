@@ -1,212 +1,125 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [v6 1/4] vfs: adds general codes to enforces project quota limits
-Date: Tue, 11 Nov 2014 21:27:54 +0100
-Message-ID: <20141111202754.GB32298@quack.suse.cz>
-References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
- <1415468619-31851-2-git-send-email-lixi@ddn.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1415468619-31851-2-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [PATCH v2 00/19] kselftest install target feature
+Date: Tue, 11 Nov 2014 13:27:40 -0700
+Message-ID: <cover.1415735831.git.shuahkh@osg.samsung.com>
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+Sender: linux-kbuild-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org, akpm@linux-foundation.org, mmarek@suse.cz, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun 09-11-14 01:43:36, Li Xi wrote:
-> This patch adds support for a new quota type PRJQUOTA for project quota
-> enforcement. Also a new method get_projid() is added into dquot_operations
-> structure.
-  The patch looks good. You can add:
-Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+This patch series adds a new kselftest_install make target
+to enable selftest install. When make kselftest_install is
+run, selftests are installed on the system. A new install
+target is added to selftests Makefile which will install
+targets for the tests that are specified in INSTALL_TARGETS.
+During install, a script is generated to run tests that are
+installed. This script will be installed in the selftest install
+directory. Individual test Makefiles are changed to add to the
+script. This will allow new tests to add install and run test
+commands to the generated kselftest script. kselftest target
+now depends on kselftest_install and runs the generated kselftest
+script to reduce duplicate work and for common look and feel when
+running tests.
 
-								Honza
+This v2 series addresses the duplicate code in install and
+run_tests targets in individual test Makefiles.
+Reference: https://lkml.org/lkml/2014/11/4/707
 
-> Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
-> Signed-off-by: Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> ---
->  fs/quota/dquot.c           |   35 ++++++++++++++++++++++++++++++-----
->  fs/quota/quota.c           |    8 ++++++--
->  fs/quota/quotaio_v2.h      |    6 ++++--
->  include/linux/quota.h      |    2 ++
->  include/uapi/linux/quota.h |    6 ++++--
->  5 files changed, 46 insertions(+), 11 deletions(-)
-> 
-> diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
-> index 8b663b2..84f9bb1 100644
-> --- a/fs/quota/dquot.c
-> +++ b/fs/quota/dquot.c
-> @@ -1154,8 +1154,8 @@ static int need_print_warning(struct dquot_warn *warn)
->  			return uid_eq(current_fsuid(), warn->w_dq_id.uid);
->  		case GRPQUOTA:
->  			return in_group_p(warn->w_dq_id.gid);
-> -		case PRJQUOTA:	/* Never taken... Just make gcc happy */
-> -			return 0;
-> +		case PRJQUOTA:
-> +			return 1;
->  	}
->  	return 0;
->  }
-> @@ -1394,6 +1394,9 @@ static void __dquot_initialize(struct inode *inode, int type)
->  	/* First get references to structures we might need. */
->  	for (cnt = 0; cnt < MAXQUOTAS; cnt++) {
->  		struct kqid qid;
-> +		kprojid_t projid;
-> +		int rc;
-> +
->  		got[cnt] = NULL;
->  		if (type != -1 && cnt != type)
->  			continue;
-> @@ -1404,6 +1407,10 @@ static void __dquot_initialize(struct inode *inode, int type)
->  		 */
->  		if (inode->i_dquot[cnt])
->  			continue;
-> +
-> +		if (!sb_has_quota_active(sb, cnt))
-> +			continue;
-> +
->  		init_needed = 1;
->  
->  		switch (cnt) {
-> @@ -1413,6 +1420,12 @@ static void __dquot_initialize(struct inode *inode, int type)
->  		case GRPQUOTA:
->  			qid = make_kqid_gid(inode->i_gid);
->  			break;
-> +		case PRJQUOTA:
-> +			rc = inode->i_sb->dq_op->get_projid(inode, &projid);
-> +			if (rc)
-> +				continue;
-> +			qid = make_kqid_projid(projid);
-> +			break;
->  		}
->  		got[cnt] = dqget(sb, qid);
->  	}
-> @@ -2156,7 +2169,8 @@ static int vfs_load_quota_inode(struct inode *inode, int type, int format_id,
->  		error = -EROFS;
->  		goto out_fmt;
->  	}
-> -	if (!sb->s_op->quota_write || !sb->s_op->quota_read) {
-> +	if (!sb->s_op->quota_write || !sb->s_op->quota_read ||
-> +	    (type == PRJQUOTA && sb->dq_op->get_projid == NULL)) {
->  		error = -EINVAL;
->  		goto out_fmt;
->  	}
-> @@ -2397,8 +2411,19 @@ static void do_get_dqblk(struct dquot *dquot, struct fs_disk_quota *di)
->  
->  	memset(di, 0, sizeof(*di));
->  	di->d_version = FS_DQUOT_VERSION;
-> -	di->d_flags = dquot->dq_id.type == USRQUOTA ?
-> -			FS_USER_QUOTA : FS_GROUP_QUOTA;
-> +	switch (dquot->dq_id.type) {
-> +	case USRQUOTA:
-> +		di->d_flags = FS_USER_QUOTA;
-> +		break;
-> +	case GRPQUOTA:
-> +		di->d_flags = FS_GROUP_QUOTA;
-> +		break;
-> +	case PRJQUOTA:
-> +		di->d_flags = FS_PROJ_QUOTA;
-> +		break;
-> +	default:
-> +		BUG();
-> +	}
->  	di->d_id = from_kqid_munged(current_user_ns(), dquot->dq_id);
->  
->  	spin_lock(&dq_data_lock);
-> diff --git a/fs/quota/quota.c b/fs/quota/quota.c
-> index 7562164..795d694 100644
-> --- a/fs/quota/quota.c
-> +++ b/fs/quota/quota.c
-> @@ -30,11 +30,15 @@ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
->  	case Q_XGETQSTATV:
->  	case Q_XQUOTASYNC:
->  		break;
-> -	/* allow to query information for dquots we "own" */
-> +	/*
-> +	 * allow to query information for dquots we "own"
-> +	 * always allow querying project quota
-> +	 */
->  	case Q_GETQUOTA:
->  	case Q_XGETQUOTA:
->  		if ((type == USRQUOTA && uid_eq(current_euid(), make_kuid(current_user_ns(), id))) ||
-> -		    (type == GRPQUOTA && in_egroup_p(make_kgid(current_user_ns(), id))))
-> +		    (type == GRPQUOTA && in_egroup_p(make_kgid(current_user_ns(), id))) ||
-> +		    (type == PRJQUOTA))
->  			break;
->  		/*FALLTHROUGH*/
->  	default:
-> diff --git a/fs/quota/quotaio_v2.h b/fs/quota/quotaio_v2.h
-> index f1966b4..4e95430 100644
-> --- a/fs/quota/quotaio_v2.h
-> +++ b/fs/quota/quotaio_v2.h
-> @@ -13,12 +13,14 @@
->   */
->  #define V2_INITQMAGICS {\
->  	0xd9c01f11,	/* USRQUOTA */\
-> -	0xd9c01927	/* GRPQUOTA */\
-> +	0xd9c01927,	/* GRPQUOTA */\
-> +	0xd9c03f14,	/* PRJQUOTA */\
->  }
->  
->  #define V2_INITQVERSIONS {\
->  	1,		/* USRQUOTA */\
-> -	1		/* GRPQUOTA */\
-> +	1,		/* GRPQUOTA */\
-> +	1,		/* PRJQUOTA */\
->  }
->  
->  /* First generic header */
-> diff --git a/include/linux/quota.h b/include/linux/quota.h
-> index 80d345a..f1b25f8 100644
-> --- a/include/linux/quota.h
-> +++ b/include/linux/quota.h
-> @@ -50,6 +50,7 @@
->  
->  #undef USRQUOTA
->  #undef GRPQUOTA
-> +#undef PRJQUOTA
->  enum quota_type {
->  	USRQUOTA = 0,		/* element used for user quotas */
->  	GRPQUOTA = 1,		/* element used for group quotas */
-> @@ -312,6 +313,7 @@ struct dquot_operations {
->  	/* get reserved quota for delayed alloc, value returned is managed by
->  	 * quota code only */
->  	qsize_t *(*get_reserved_space) (struct inode *);
-> +	int (*get_projid) (struct inode *, kprojid_t *);/* Get project ID */
->  };
->  
->  struct path;
-> diff --git a/include/uapi/linux/quota.h b/include/uapi/linux/quota.h
-> index 3b6cfbe..b2d9486 100644
-> --- a/include/uapi/linux/quota.h
-> +++ b/include/uapi/linux/quota.h
-> @@ -36,11 +36,12 @@
->  #include <linux/errno.h>
->  #include <linux/types.h>
->  
-> -#define __DQUOT_VERSION__	"dquot_6.5.2"
-> +#define __DQUOT_VERSION__	"dquot_6.6.0"
->  
-> -#define MAXQUOTAS 2
-> +#define MAXQUOTAS 3
->  #define USRQUOTA  0		/* element used for user quotas */
->  #define GRPQUOTA  1		/* element used for group quotas */
-> +#define PRJQUOTA  2		/* element used for project quotas */
->  
->  /*
->   * Definitions for the default names of the quotas files.
-> @@ -48,6 +49,7 @@
->  #define INITQFNAMES { \
->  	"user",    /* USRQUOTA */ \
->  	"group",   /* GRPQUOTA */ \
-> +	"project", /* PRJQUOTA */ \
->  	"undefined", \
->  };
->  
-> -- 
-> 1.7.1
-> 
+Dropped the following patch from the series since it has been
+Acked and I queued it up for 3.19-rc1.
+
+selftests/net: move test out of Makefile into a shell script
+Reference: https://lkml.org/lkml/2014/11/4/794
+
+Approach:
+
+make kselftest_target:
+-- exports kselftest INSTALL_KSFT_PATH
+   default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
+-- exports path for ksefltest.sh
+-- runs selftests make install target:
+
+selftests make install target
+-- creates kselftest.sh script in install install dir
+-- runs install targets for all INSTALL_TARGETS
+   (Note: ftrace and powerpc aren't included in INSTALL_TARGETS,
+          to not add more content to patch v1 series. This work
+          will happen soon. In this series these two targets are
+          run after running the generated kselftest script, without
+          any regression in the way these tests are run with
+          "make kselftest" prior to this work.)
+-- install target can be run only from top level source dir.
+
+Individual test make install targets:
+-- install test programs and/or scripts in install dir
+-- append to the ksefltest.sh file to add commands to run test
+-- install target can be run only from top level source dir.
+
+Adds the following new ways to initiate selftests:
+-- Installing and running kselftest from install directory
+   by running  "make kselftest"
+-- Running kselftest script from install directory
+
+Maintains the following ways to run tests:
+-- make -C tools/testing/selftests run_tests
+-- make -C tools/testing/selftests TARGETS=target run_tests
+   Ability specify targets: e.g TARGETS=net
+-- make run_tests from tools/testing/selftests
+-- make run_tests from individual test directories:
+   e.g: make run_tests in tools/testing/selftests/breakpoints
+
+Shuah Khan (19):
+  selftests/user: move test out of Makefile into a shell script
+  kbuild: kselftest_install - add a new make target to install selftests
+  selftests: add install target to enable installing selftests
+  selftests/breakpoints: add install target to enable installing test
+  selftests/cpu-hotplug: add install target to enable installing test
+  selftests/efivarfs: add install target to enable installing test
+  selftests/firmware: add install target to enable installing test
+  selftests/ipc: add install target to enable installing test
+  selftests/kcmp: add install target to enable installing test
+  selftests/memfd: add install target to enable installing test
+  selftests/memory-hotplug: add install target to enable installing test
+  selftests/mount: add install target to enable installing test
+  selftests/mqueue: add install target to enable installing test
+  selftests/net: add install target to enable installing test
+  selftests/ptrace: add install target to enable installing test
+  selftests/sysctl: add install target to enable installing test
+  selftests/timers: add install target to enable installing test
+  selftests/vm: add install target to enable installing test
+  selftests/user: add install target to enable installing test
+
+ Makefile                                           |  21 +-
+ tools/testing/selftests/Makefile                   |  31 ++-
+ tools/testing/selftests/breakpoints/Makefile       |  22 +-
+ tools/testing/selftests/cpu-hotplug/Makefile       |  17 +-
+ .../selftests/cpu-hotplug/cpu-on-off-test.sh       | 269 +++++++++++++++++++++
+ tools/testing/selftests/cpu-hotplug/on-off-test.sh | 269 ---------------------
+ tools/testing/selftests/efivarfs/Makefile          |  19 +-
+ tools/testing/selftests/firmware/Makefile          |  49 ++--
+ tools/testing/selftests/ipc/Makefile               |  22 +-
+ tools/testing/selftests/kcmp/Makefile              |  22 +-
+ tools/testing/selftests/memfd/Makefile             |  20 +-
+ tools/testing/selftests/memory-hotplug/Makefile    |  17 +-
+ .../selftests/memory-hotplug/mem-on-off-test.sh    | 238 ++++++++++++++++++
+ .../selftests/memory-hotplug/on-off-test.sh        | 238 ------------------
+ tools/testing/selftests/mount/Makefile             |  15 +-
+ tools/testing/selftests/mqueue/Makefile            |  20 +-
+ tools/testing/selftests/net/Makefile               |  23 +-
+ tools/testing/selftests/ptrace/Makefile            |  19 +-
+ tools/testing/selftests/sysctl/Makefile            |  23 +-
+ tools/testing/selftests/timers/Makefile            |  15 +-
+ tools/testing/selftests/user/Makefile              |  21 +-
+ tools/testing/selftests/user/test_user_copy.sh     |  10 +
+ tools/testing/selftests/vm/Makefile                |  14 +-
+ 23 files changed, 853 insertions(+), 561 deletions(-)
+ create mode 100644 tools/testing/selftests/cpu-hotplug/cpu-on-off-test.sh
+ delete mode 100644 tools/testing/selftests/cpu-hotplug/on-off-test.sh
+ create mode 100644 tools/testing/selftests/memory-hotplug/mem-on-off-test.sh
+ delete mode 100644 tools/testing/selftests/memory-hotplug/on-off-test.sh
+ create mode 100755 tools/testing/selftests/user/test_user_copy.sh
+
 -- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+1.9.1
+
