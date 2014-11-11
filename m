@@ -1,36 +1,44 @@
-From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Subject: Re: [v6 2/4] ext4: adds project ID support
-Date: Mon, 10 Nov 2014 23:26:06 -0500
-Message-ID: <20141111042606.GA17027@thunk.org>
-References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
- <1415468619-31851-3-git-send-email-lixi@ddn.com>
+From: Sekhar Nori <nsekhar@ti.com>
+Subject: Re: [PATCH v3 06/10] [media] platform: Make use of media_bus_format
+ enum
+Date: Tue, 11 Nov 2014 10:12:55 +0530
+Message-ID: <546193CF.8090107@ti.com>
+References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com> <1415369269-5064-7-git-send-email-boris.brezillon@free-electrons.com> <CA+V-a8t79gYYGcgg5wvM-eqW8H2D6WD7xM9t2Px=WHb2rf34ow@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1415468619-31851-3-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CA+V-a8t79gYYGcgg5wvM-eqW8H2D6WD7xM9t2Px=WHb2rf34ow@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Prabhakar Lad <prabhakar.csengg@gmail.com>, Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media <linux-media@vger.kernel.org>, Sakari Ailus <sakari.ailus@iki.fi>, LAK <linux-arm-kernel@lists.infradead.org>, linux-api <linux-api@vger.kernel.org>, OSUOSL Drivers <devel@driverdev.osuosl.org>, LKML <linux-kernel@vger.kernel.org>, LDOC <linux-doc@vger.kernel.org>, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 09, 2014 at 01:43:37AM +0800, Li Xi wrote:
-> This patch adds a new internal field of ext4 inode to save project
-> identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
-> inheriting project ID from parent directory.
+On Saturday 08 November 2014 02:48 PM, Prabhakar Lad wrote:
+> Hi,
+> 
+> Thanks for the patch,
+> 
+> On Fri, Nov 7, 2014 at 2:07 PM, Boris Brezillon
+> <boris.brezillon@free-electrons.com> wrote:
+>> In order to have subsytem agnostic media bus format definitions we've
+>> moved media bus definition to include/uapi/linux/media-bus-format.h and
+>> prefixed values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
+>>
+>> Reference new definitions in all platform drivers.
+>>
+>> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+>> ---
+>>  arch/arm/mach-davinci/board-dm355-evm.c            |   2 +-
+>>  arch/arm/mach-davinci/board-dm365-evm.c            |   4 +-
+>>  arch/arm/mach-davinci/dm355.c                      |   7 +-
+>>  arch/arm/mach-davinci/dm365.c                      |   7 +-
+> 
+> @Sekhar can you ack for the machine changes for davinci ?
 
-What would be the downside of simply always inhereiting the project ID
-from the parent directory?  I see that if the flag is not set, the
-project id will be 0 instead.  I'm not sure when that would actually
-be desirable.
-
-To the extent that the project ID is designed to implement a quota
-over a directory extent, the fact that the owner can clear the
-EXT4_PROJINHERET_FL and then arrange to have the quota charged to
-project 0 seems to me to be a bug, not a feature.
-
-Can you explain what your intended use case for this flag might be?
+Heh, I don't have 6/10 in my inbox but have rest of the series. Can you
+forward 6/10 to me?
 
 Thanks,
+Sekhar
 
-						- Ted
