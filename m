@@ -1,55 +1,49 @@
-From: Li Xi <pkuelelixi@gmail.com>
-Subject: Re: [v6 2/4] ext4: adds project ID support
-Date: Tue, 11 Nov 2014 15:34:40 +0800
-Message-ID: <CAPTn0cBYOcsgVmYuhWCZnsf8=t8Hbo+d35PPbn_sUspQAurDmQ@mail.gmail.com>
-References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
-	<1415468619-31851-3-git-send-email-lixi@ddn.com>
-	<20141111042606.GA17027@thunk.org>
+From: Sekhar Nori <nsekhar@ti.com>
+Subject: Re: [PATCH v3 06/10] [media] platform: Make use of media_bus_format
+ enum
+Date: Tue, 11 Nov 2014 13:19:09 +0530
+Message-ID: <5461BF75.8000808@ti.com>
+References: <1415369269-5064-1-git-send-email-boris.brezillon@free-electrons.com> <1415369269-5064-7-git-send-email-boris.brezillon@free-electrons.com> <CA+V-a8t79gYYGcgg5wvM-eqW8H2D6WD7xM9t2Px=WHb2rf34ow@mail.gmail.com> <546193CF.8090107@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20141111042606.GA17027@thunk.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Andreas Dilger <adilger@dilger.ca>, Jan Kara <jack@suse.cz>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "hch@infradead.org" <hch@infradead.org>, Dmitry Monakhov <dmonakhov@openvz.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <546193CF.8090107@ti.com>
+Sender: linux-media-owner@vger.kernel.org
+To: Prabhakar Lad <prabhakar.csengg@gmail.com>, Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media <linux-media@vger.kernel.org>, Sakari Ailus <sakari.ailus@iki.fi>, LAK <linux-arm-kernel@lists.infradead.org>, linux-api <linux-api@vger.kernel.org>, OSUOSL Drivers <devel@driverdev.osuosl.org>, LKML <linux-kernel@vger.kernel.org>, LDOC <linux-doc@vger.kernel.org>, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 11, 2014 at 12:26 PM, Theodore Ts'o <tytso@mit.edu> wrote:
-> On Sun, Nov 09, 2014 at 01:43:37AM +0800, Li Xi wrote:
->> This patch adds a new internal field of ext4 inode to save project
->> identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
->> inheriting project ID from parent directory.
->
-> What would be the downside of simply always inhereiting the project ID
-> from the parent directory?  I see that if the flag is not set, the
-> project id will be 0 instead.  I'm not sure when that would actually
-> be desirable.
->
-> To the extent that the project ID is designed to implement a quota
-> over a directory extent, the fact that the owner can clear the
-> EXT4_PROJINHERET_FL and then arrange to have the quota charged to
-> project 0 seems to me to be a bug, not a feature.
->
-Yeah, if we only intend to implement quota over directories, always inheriting
-project ID from parent directory is fine. But we want this to be more flexible,
-thus more powerful to enable other use cases. Always inheriting project ID
-from parent means inodes uner the same subtree has the same project ID,
-which might limit some use cases.
+On Tuesday 11 November 2014 10:12 AM, Sekhar Nori wrote:
+> On Saturday 08 November 2014 02:48 PM, Prabhakar Lad wrote:
+>> Hi,
+>>
+>> Thanks for the patch,
+>>
+>> On Fri, Nov 7, 2014 at 2:07 PM, Boris Brezillon
+>> <boris.brezillon@free-electrons.com> wrote:
+>>> In order to have subsytem agnostic media bus format definitions we've
+>>> moved media bus definition to include/uapi/linux/media-bus-format.h and
+>>> prefixed values with MEDIA_BUS_FMT instead of V4L2_MBUS_FMT.
+>>>
+>>> Reference new definitions in all platform drivers.
+>>>
+>>> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+>>> ---
+>>>  arch/arm/mach-davinci/board-dm355-evm.c            |   2 +-
+>>>  arch/arm/mach-davinci/board-dm365-evm.c            |   4 +-
+>>>  arch/arm/mach-davinci/dm355.c                      |   7 +-
+>>>  arch/arm/mach-davinci/dm365.c                      |   7 +-
+>>
+>> @Sekhar can you ack for the machine changes for davinci ?
+> 
+> Heh, I don't have 6/10 in my inbox but have rest of the series. Can you
+> forward 6/10 to me?
 
-For example, if the administrator wants to track the disk usages of files
-which scatter under different directories yet has similar attributes (e.g.
-the sizes of them are really big), they can use project quota to archive
-this goal. Combining 'find' command with setting project ID is really
-convenient for this use case. And obviously, it wounldn't be possible,
-if we don't have a mutable EXT4_INODE_PROJINHERIT flag.
+Based on the patch Prabhakar forwarded, for the mach-davinci changes,
+you can add:
 
-Please note that project ID can only be change by administrator,
-which means even the owners of the files can't change the project IDs.
-The idea behinds it is that project quota is a tool for administrators, not
-for common users.
+Acked-by: Sekhar Nori <nsekhar@ti.com>
 
-And EXT4_INODE_PROJINHERIT is introduced into Ext4 in oder to keep
-compatibile with XFS too. Otherwise, they would have different semantics. ;)
-
-Regards,
-                                                - Li Xi
+Thanks,
+Sekhar
