@@ -1,54 +1,55 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Tue, 11 Nov 2014 17:44:17 +1100
-Message-ID: <20141111064417.GT23575@dastard>
-References: <cover.1415636409.git.milosz@adfin.com>
+From: Li Xi <pkuelelixi@gmail.com>
+Subject: Re: [v6 2/4] ext4: adds project ID support
+Date: Tue, 11 Nov 2014 15:34:40 +0800
+Message-ID: <CAPTn0cBYOcsgVmYuhWCZnsf8=t8Hbo+d35PPbn_sUspQAurDmQ@mail.gmail.com>
+References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
+	<1415468619-31851-3-git-send-email-lixi@ddn.com>
+	<20141111042606.GA17027@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1415636409.git.milosz@adfin.com>
-Sender: owner-linux-aio@kvack.org
-To: Milosz Tanski <milosz@adfin.com>
-Cc: linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20141111042606.GA17027@thunk.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Andreas Dilger <adilger@dilger.ca>, Jan Kara <jack@suse.cz>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "hch@infradead.org" <hch@infradead.org>, Dmitry Monakhov <dmonakhov@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 10, 2014 at 11:40:23AM -0500, Milosz Tanski wrote:
-> This patcheset introduces an ability to perform a non-blocking read from
-> regular files in buffered IO mode. This works by only for those filesystems
-> that have data in the page cache.
-> 
-> It does this by introducing new syscalls new syscalls preadv2/pwritev2. These
-> new syscalls behave like the network sendmsg, recvmsg syscalls that accept an
-> extra flag argument (RWF_NONBLOCK).
-> 
-> It's a very common patern today (samba, libuv, etc..) use a large threadpool to
-> perform buffered IO operations. They submit the work form another thread
-> that performs network IO and epoll or other threads that perform CPU work. This
-> leads to increased latency for processing, esp. in the case of data that's
-> already cached in the page cache.
-> 
-> With the new interface the applications will now be able to fetch the data in
-> their network / cpu bound thread(s) and only defer to a threadpool if it's not
-> there. In our own application (VLDB) we've observed a decrease in latency for
-> "fast" request by avoiding unnecessary queuing and having to swap out current
-> tasks in IO bound work threads.
+On Tue, Nov 11, 2014 at 12:26 PM, Theodore Ts'o <tytso@mit.edu> wrote:
+> On Sun, Nov 09, 2014 at 01:43:37AM +0800, Li Xi wrote:
+>> This patch adds a new internal field of ext4 inode to save project
+>> identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
+>> inheriting project ID from parent directory.
+>
+> What would be the downside of simply always inhereiting the project ID
+> from the parent directory?  I see that if the flag is not set, the
+> project id will be 0 instead.  I'm not sure when that would actually
+> be desirable.
+>
+> To the extent that the project ID is designed to implement a quota
+> over a directory extent, the fact that the owner can clear the
+> EXT4_PROJINHERET_FL and then arrange to have the quota charged to
+> project 0 seems to me to be a bug, not a feature.
+>
+Yeah, if we only intend to implement quota over directories, always inheriting
+project ID from parent directory is fine. But we want this to be more flexible,
+thus more powerful to enable other use cases. Always inheriting project ID
+from parent means inodes uner the same subtree has the same project ID,
+which might limit some use cases.
 
-Can you write a test (or set of) for fstests that exercises this new
-functionality? I'm not worried about performance, just
-correctness....
+For example, if the administrator wants to track the disk usages of files
+which scatter under different directories yet has similar attributes (e.g.
+the sizes of them are really big), they can use project quota to archive
+this goal. Combining 'find' command with setting project ID is really
+convenient for this use case. And obviously, it wounldn't be possible,
+if we don't have a mutable EXT4_INODE_PROJINHERIT flag.
 
-Cheers,
+Please note that project ID can only be change by administrator,
+which means even the owners of the files can't change the project IDs.
+The idea behinds it is that project quota is a tool for administrators, not
+for common users.
 
-Dave.
+And EXT4_INODE_PROJINHERIT is introduced into Ext4 in oder to keep
+compatibile with XFS too. Otherwise, they would have different semantics. ;)
 
--- 
-Dave Chinner
-david@fromorbit.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Regards,
+                                                - Li Xi
