@@ -1,30 +1,36 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH 3/3] block: Introduce blkdev_issue_zeroout_discard() function
-Date: Mon, 10 Nov 2014 21:33:48 -0500
-Message-ID: <yq1tx264gab.fsf@sermon.lab.mkp.net>
-References: <1415336894-15327-1-git-send-email-martin.petersen@oracle.com>
-	<1415336894-15327-4-git-send-email-martin.petersen@oracle.com>
-	<20141111000433.GA10047@birch.djwong.org>
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: Re: [v6 2/4] ext4: adds project ID support
+Date: Mon, 10 Nov 2014 23:26:06 -0500
+Message-ID: <20141111042606.GA17027@thunk.org>
+References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
+ <1415468619-31851-3-git-send-email-lixi@ddn.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20141111000433.GA10047@birch.djwong.org> (Darrick J. Wong's
-	message of "Mon, 10 Nov 2014 16:04:33 -0800")
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-fsdevel@vger.kernel.org, neilb@suse.de, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1415468619-31851-3-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
->>>>> "Darrick" == Darrick J Wong <darrick.wong@oracle.com> writes:
+On Sun, Nov 09, 2014 at 01:43:37AM +0800, Li Xi wrote:
+> This patch adds a new internal field of ext4 inode to save project
+> identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
+> inheriting project ID from parent directory.
 
-Darrick> Can this be plumbed into a BLK* ioctl too?  I'll write a patch,
-Darrick> if this is ok with everyone:
+What would be the downside of simply always inhereiting the project ID
+from the parent directory?  I see that if the flag is not set, the
+project id will be 0 instead.  I'm not sure when that would actually
+be desirable.
 
-Darrick> ...and make it zap the page cache per earlier discussion.  This
-Darrick> seems to be a good fit with what we've been discussing for
-Darrick> mke2fs.
+To the extent that the project ID is designed to implement a quota
+over a directory extent, the fact that the owner can clear the
+EXT4_PROJINHERET_FL and then arrange to have the quota charged to
+project 0 seems to me to be a bug, not a feature.
 
-That sounds good to me. I'll get the updated patch out tomorrow.
+Can you explain what your intended use case for this flag might be?
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Thanks,
+
+						- Ted
