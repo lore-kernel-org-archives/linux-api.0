@@ -1,29 +1,45 @@
-From: Clemens Ladisch <clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH RFC v1b] firewire: cdev: prevent kernel stack leaking
-	into ioctl arguments
-Date: Tue, 11 Nov 2014 19:22:10 +0100
-Message-ID: <546253D2.9050400@ladisch.de>
-References: <55D28623-C1C7-47D2-9638-0B8FD0733C48@stanford.edu>	<20141111010340.3329bbd7@kant>
-	<20141111130143.2ff3d42e@kant>	<20141111171356.2fc62440@kant>
-	<20141111171644.7f6b17c7@kant>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [v6 2/4] ext4: adds project ID support
+Date: Tue, 11 Nov 2014 21:23:02 +0100
+Message-ID: <20141111202302.GA32298@quack.suse.cz>
+References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
+ <1415468619-31851-3-git-send-email-lixi@ddn.com>
+ <20141111042606.GA17027@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141111171644.7f6b17c7@kant>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stefan Richter <stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org>, linux1394-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Ramos <daramos-FGKo4X94FMn2fBVCVOL8/A@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20141111042606.GA17027@thunk.org>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-Stefan Richter wrote:
-> This fix simply always null-initializes the entire ioctl argument buffer
-> regardless of the actual length of expected user input.  That is, a
-> runtime overhead of memset(..., 40) is added to each firewirew-cdev
-> ioctl() call.
+On Mon 10-11-14 23:26:06, Ted Tso wrote:
+> On Sun, Nov 09, 2014 at 01:43:37AM +0800, Li Xi wrote:
+> > This patch adds a new internal field of ext4 inode to save project
+> > identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
+> > inheriting project ID from parent directory.
+> 
+> What would be the downside of simply always inhereiting the project ID
+> from the parent directory?  I see that if the flag is not set, the
+> project id will be 0 instead.  I'm not sure when that would actually
+> be desirable.
+  Well, 0 is a fallback project ID effectively meaning "not accounted in
+project quota".
 
-This part of the stack is most likely to be already in the cache.
+> To the extent that the project ID is designed to implement a quota
+> over a directory extent, the fact that the owner can clear the
+> EXT4_PROJINHERET_FL and then arrange to have the quota charged to
+> project 0 seems to me to be a bug, not a feature.
+> 
+> Can you explain what your intended use case for this flag might be?
+  So I agree that for directory quotas there's no reason not to inherit the
+project ID. But there might be other use cases and I strongly prefer to
+stay compatible with XFS as far as reasonably possible to make life for
+userspace simpler.
 
-
-Regards,
-Clemens
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
