@@ -1,41 +1,29 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH] selftests/net: psock_fanout seg faults in sock_fanout_read_ring()
-Date: Tue, 11 Nov 2014 10:04:13 -0700
-Message-ID: <1415725453-6549-1-git-send-email-shuahkh@osg.samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: davem@davemloft.net
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Clemens Ladisch <clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org>
+Subject: Re: [PATCH RFC v1b] firewire: cdev: prevent kernel stack leaking
+	into ioctl arguments
+Date: Tue, 11 Nov 2014 19:22:10 +0100
+Message-ID: <546253D2.9050400@ladisch.de>
+References: <55D28623-C1C7-47D2-9638-0B8FD0733C48@stanford.edu>	<20141111010340.3329bbd7@kant>
+	<20141111130143.2ff3d42e@kant>	<20141111171356.2fc62440@kant>
+	<20141111171644.7f6b17c7@kant>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141111171644.7f6b17c7@kant>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Richter <stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org>, linux1394-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Ramos <daramos-FGKo4X94FMn2fBVCVOL8/A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The while loop in sock_fanout_read_ring() checks mmap region
-bounds after access, causing it to segfault. Fix it to check
-count before accessing header->tp_status. This problem can be
-reproduced consistently when the test in run as follows:
+Stefan Richter wrote:
+> This fix simply always null-initializes the entire ioctl argument buffer
+> regardless of the actual length of expected user input.  That is, a
+> runtime overhead of memset(..., 40) is added to each firewirew-cdev
+> ioctl() call.
 
-    make -C tools/testing/selftests TARGETS=net run_tests
-    or
-    make run_tests from tools/testing/selftests
-    or
-    make run_test from tools/testing/selftests/net
+This part of the stack is most likely to be already in the cache.
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
----
- tools/testing/selftests/net/psock_fanout.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/net/psock_fanout.c b/tools/testing/selftests/net/psock_fanout.c
-index 57b9c2b..6f67333 100644
---- a/tools/testing/selftests/net/psock_fanout.c
-+++ b/tools/testing/selftests/net/psock_fanout.c
-@@ -128,7 +128,7 @@ static int sock_fanout_read_ring(int fd, void *ring)
- 	struct tpacket2_hdr *header = ring;
- 	int count = 0;
- 
--	while (header->tp_status & TP_STATUS_USER && count < RING_NUM_FRAMES) {
-+	while (count < RING_NUM_FRAMES && header->tp_status & TP_STATUS_USER) {
- 		count++;
- 		header = ring + (count * getpagesize());
- 	}
--- 
-1.9.1
+Regards,
+Clemens
