@@ -1,107 +1,37 @@
-From: Stefan Richter <stefanr@s5r6.in-berlin.de>
-Subject: [PATCH RFC v1b] firewire: cdev: prevent kernel stack leaking into
-	ioctl arguments
-Date: Tue, 11 Nov 2014 17:16:44 +0100
-Message-ID: <20141111171644.7f6b17c7@kant>
-References: <55D28623-C1C7-47D2-9638-0B8FD0733C48@stanford.edu>
-	<20141111010340.3329bbd7@kant> <20141111130143.2ff3d42e@kant>
-	<20141111171356.2fc62440@kant>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache only)
+Date: Tue, 11 Nov 2014 12:03:14 -0500
+Message-ID: <x49ioilbrfx.fsf@segfault.boston.devel.redhat.com>
+References: <cover.1415636409.git.milosz@adfin.com>
+	<20141111064417.GT23575@dastard>
+	<CANP1eJHfWT0Foe+weB1SJkJ10JnOge_g=E8CXBsQNPW7i2+4NA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux1394-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20141111171356.2fc62440@kant>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux1394-devel>,
-	<mailto:linux1394-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux1394-devel>
-List-Post: <mailto:linux1394-devel@lists.sourceforge.net>
-List-Help: <mailto:linux1394-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux1394-devel>,
-	<mailto:linux1394-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux1394-devel-bounces@lists.sourceforge.net
-To: linux1394-devel@lists.sourceforge.net
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, David Ramos <daramos@stanford.edu>
+Content-Type: text/plain
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <CANP1eJHfWT0Foe+weB1SJkJ10JnOge_g=E8CXBsQNPW7i2+4NA@mail.gmail.com>
+	(Milosz Tanski's message of "Tue, 11 Nov 2014 11:02:00 -0500")
+Sender: owner-linux-aio@kvack.org
+To: Milosz Tanski <milosz@adfin.com>
+Cc: Dave Chinner <david@fromorbit.com>, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Found by the UC-KLEE tool:  A user could supply less input to
-firewire-cdev ioctls than write- or write/read-type ioctl handlers
-expect.  The handlers used data from uninitialized kernel stack then.
+Milosz Tanski <milosz@adfin.com> writes:
 
-This could partially leak back to the user if the kernel subsequently
-generated fw_cdev_event_'s (to be read from the firewire-cdev fd)
-which notably would contain the _u64 closure field which many of the
-ioctl argument structures contain.
+>> Can you write a test (or set of) for fstests that exercises this new
+>> functionality? I'm not worried about performance, just
+>> correctness....
+>
+> Sure thing. Can you point me at the fstests repo? A quick google
+> search reveals lots of projects named fstests, most of them abandoned.
 
-The fact that the handlers would act on random garbage input is a
-lesser issue since all handlers must check their input anyway.
+I think he's referring to xfstests.  Still, I think that's the wrong
+place for functional testing.  ltp would be better, imo.
 
-Remarks:
-  - There was never any leak from kernel stack to the ioctl output
-    buffer itself.  IOW, it was not possible to read kernel stack by a
-    read-type or write/read-type ioctl alone; the leak could at most
-    happen in combination with read()ing subsequent event data.
-  - The affected character device file interface is specified in
-    include/uapi/linux/firewire-cdev.h.  An overview is given in
-    Documentation/ABI/stable/firewire-cdev.
+Cheers,
+Jeff
 
-This fix simply always null-initializes the entire ioctl argument buffer
-regardless of the actual length of expected user input.  That is, a
-runtime overhead of memset(..., 40) is added to each firewirew-cdev
-ioctl() call.
-
-Reported-by: David Ramos <daramos@stanford.edu>
-Cc: <stable@vger.kernel.org>
-Signed-off-by: Stefan Richter <stefanr@s5r6.in-berlin.de>
----
- drivers/firewire/core-cdev.c |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
---- a/drivers/firewire/core-cdev.c
-+++ b/drivers/firewire/core-cdev.c
-@@ -1625,32 +1625,31 @@ static int (* const ioctl_handlers[])(st
- 
- static int dispatch_ioctl(struct client *client,
- 			  unsigned int cmd, void __user *arg)
- {
- 	union ioctl_arg buffer;
- 	int ret;
- 
- 	if (fw_device_is_shutdown(client->device))
- 		return -ENODEV;
- 
- 	if (_IOC_TYPE(cmd) != '#' ||
- 	    _IOC_NR(cmd) >= ARRAY_SIZE(ioctl_handlers) ||
- 	    _IOC_SIZE(cmd) > sizeof(buffer))
- 		return -ENOTTY;
- 
--	if (_IOC_DIR(cmd) == _IOC_READ)
--		memset(&buffer, 0, _IOC_SIZE(cmd));
-+	memset(&buffer, 0, sizeof(buffer));
- 
- 	if (_IOC_DIR(cmd) & _IOC_WRITE)
- 		if (copy_from_user(&buffer, arg, _IOC_SIZE(cmd)))
- 			return -EFAULT;
- 
- 	ret = ioctl_handlers[_IOC_NR(cmd)](client, &buffer);
- 	if (ret < 0)
- 		return ret;
- 
- 	if (_IOC_DIR(cmd) & _IOC_READ)
- 		if (copy_to_user(arg, &buffer, _IOC_SIZE(cmd)))
- 			return -EFAULT;
- 
- 	return ret;
- }
-
-
--- 
-Stefan Richter
--=====-====- =-== -=-==
-http://arcgraph.de/sr/
-
-------------------------------------------------------------------------------
-Comprehensive Server Monitoring with Site24x7.
-Monitor 10 servers for $9/Month.
-Get alerted through email, SMS, voice calls or mobile push notifications.
-Take corrective actions from your mobile device.
-http://pubads.g.doubleclick.net/gampad/clk?id=154624111&iu=/4140/ostg.clktrk
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
