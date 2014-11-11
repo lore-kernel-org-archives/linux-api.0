@@ -1,37 +1,41 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache only)
-Date: Tue, 11 Nov 2014 12:03:14 -0500
-Message-ID: <x49ioilbrfx.fsf@segfault.boston.devel.redhat.com>
-References: <cover.1415636409.git.milosz@adfin.com>
-	<20141111064417.GT23575@dastard>
-	<CANP1eJHfWT0Foe+weB1SJkJ10JnOge_g=E8CXBsQNPW7i2+4NA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CANP1eJHfWT0Foe+weB1SJkJ10JnOge_g=E8CXBsQNPW7i2+4NA@mail.gmail.com>
-	(Milosz Tanski's message of "Tue, 11 Nov 2014 11:02:00 -0500")
-Sender: owner-linux-aio@kvack.org
-To: Milosz Tanski <milosz@adfin.com>
-Cc: Dave Chinner <david@fromorbit.com>, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [PATCH] selftests/net: psock_fanout seg faults in sock_fanout_read_ring()
+Date: Tue, 11 Nov 2014 10:04:13 -0700
+Message-ID: <1415725453-6549-1-git-send-email-shuahkh@osg.samsung.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: davem@davemloft.net
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Milosz Tanski <milosz@adfin.com> writes:
+The while loop in sock_fanout_read_ring() checks mmap region
+bounds after access, causing it to segfault. Fix it to check
+count before accessing header->tp_status. This problem can be
+reproduced consistently when the test in run as follows:
 
->> Can you write a test (or set of) for fstests that exercises this new
->> functionality? I'm not worried about performance, just
->> correctness....
->
-> Sure thing. Can you point me at the fstests repo? A quick google
-> search reveals lots of projects named fstests, most of them abandoned.
+    make -C tools/testing/selftests TARGETS=net run_tests
+    or
+    make run_tests from tools/testing/selftests
+    or
+    make run_test from tools/testing/selftests/net
 
-I think he's referring to xfstests.  Still, I think that's the wrong
-place for functional testing.  ltp would be better, imo.
+Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+---
+ tools/testing/selftests/net/psock_fanout.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Cheers,
-Jeff
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+diff --git a/tools/testing/selftests/net/psock_fanout.c b/tools/testing/selftests/net/psock_fanout.c
+index 57b9c2b..6f67333 100644
+--- a/tools/testing/selftests/net/psock_fanout.c
++++ b/tools/testing/selftests/net/psock_fanout.c
+@@ -128,7 +128,7 @@ static int sock_fanout_read_ring(int fd, void *ring)
+ 	struct tpacket2_hdr *header = ring;
+ 	int count = 0;
+ 
+-	while (header->tp_status & TP_STATUS_USER && count < RING_NUM_FRAMES) {
++	while (count < RING_NUM_FRAMES && header->tp_status & TP_STATUS_USER) {
+ 		count++;
+ 		header = ring + (count * getpagesize());
+ 	}
+-- 
+1.9.1
