@@ -1,1194 +1,810 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v7 02/10] tpm: two-phase chip management functions
-Date: Tue, 11 Nov 2014 15:45:05 +0200
-Message-ID: <1415713513-16524-3-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v7 04/10] tpm: rename chip->dev to chip->pdev
+Date: Tue, 11 Nov 2014 15:45:07 +0200
+Message-ID: <1415713513-16524-5-git-send-email-jarkko.sakkinen@linux.intel.com>
 References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1415713513-16524-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
-Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, josh.triplett@intel.com, christophe.ricard@gmail.com, jason.gunthorpe@obsidianresearch.com, linux-api@vger.kernel.org, trousers-tech@lists.sourceforge.net, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-tpm_register_hardware() and tpm_remove_hardware() are called often
-before initializing the device. This is wrong order since it could
-be that main TPM driver needs a fully initialized chip to be able to
-do its job. For example, now it is impossible to move common startup
-functions such as tpm_do_selftest() to tpm_register_hardware().
+Rename chip->dev to chip->pdev to make it explicit that this not the
+character device but actually represents the platform device.
 
-Added tpmm_chip_alloc() and tpm_chip_register() where tpm_chip_alloc()
-reserves memory resources and tpm_chip_register() initializes the
-device driver. This way it is possible to alter struct tpm_chip
-attributes and initialize the device driver before passing it to
-tpm_chip_register().
-
-The framework takes care of freeing struct tpm_chip by using devres
-API. The broken release callback has been wiped. For example, ACPI
-drivers do not ever get this callback.
-
-This is a interm step to get proper life-cycle for TPM device drivers.
-The next steps are adding proper ref counting and locking to tpm_chip
-that is used in every place in the TPM driver.
-
-Big thank you to Jason Gunthorpe for carefully reviewing this part
-of the code. Without his contribution reaching the best quality would
-not have been possible.
-
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 ---
- drivers/char/tpm/Makefile           |   2 +-
- drivers/char/tpm/tpm-chip.c         | 196 ++++++++++++++++++++++++++++++++++++
- drivers/char/tpm/tpm-interface.c    | 148 +--------------------------
- drivers/char/tpm/tpm.h              |  11 +-
- drivers/char/tpm/tpm_atmel.c        |  11 +-
- drivers/char/tpm/tpm_i2c_atmel.c    |  33 ++----
- drivers/char/tpm/tpm_i2c_infineon.c |  37 ++-----
- drivers/char/tpm/tpm_i2c_nuvoton.c  |  44 +++-----
- drivers/char/tpm/tpm_i2c_stm_st33.c |  38 +++----
- drivers/char/tpm/tpm_ibmvtpm.c      |  17 ++--
- drivers/char/tpm/tpm_infineon.c     |  29 +++---
- drivers/char/tpm/tpm_nsc.c          |  14 ++-
- drivers/char/tpm/tpm_tis.c          |  78 ++++++--------
- drivers/char/tpm/xen-tpmfront.c     |  14 +--
- 14 files changed, 329 insertions(+), 343 deletions(-)
- create mode 100644 drivers/char/tpm/tpm-chip.c
+ drivers/char/tpm/tpm-chip.c         |  4 ++--
+ drivers/char/tpm/tpm-dev.c          | 10 +++++-----
+ drivers/char/tpm/tpm-interface.c    | 29 +++++++++++++++--------------
+ drivers/char/tpm/tpm-sysfs.c        |  6 +++---
+ drivers/char/tpm/tpm.h              |  4 ++--
+ drivers/char/tpm/tpm_atmel.c        | 14 +++++++-------
+ drivers/char/tpm/tpm_i2c_atmel.c    | 16 ++++++++--------
+ drivers/char/tpm/tpm_i2c_infineon.c |  6 +++---
+ drivers/char/tpm/tpm_i2c_nuvoton.c  | 22 +++++++++++-----------
+ drivers/char/tpm/tpm_i2c_stm_st33.c |  6 +++---
+ drivers/char/tpm/tpm_infineon.c     | 22 +++++++++++-----------
+ drivers/char/tpm/tpm_nsc.c          | 20 ++++++++++----------
+ drivers/char/tpm/tpm_ppi.c          |  4 ++--
+ drivers/char/tpm/tpm_tis.c          | 12 ++++++------
+ 14 files changed, 88 insertions(+), 87 deletions(-)
 
-diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
-index 4d85dd6..837da04 100644
---- a/drivers/char/tpm/Makefile
-+++ b/drivers/char/tpm/Makefile
-@@ -2,7 +2,7 @@
- # Makefile for the kernel tpm device drivers.
- #
- obj-$(CONFIG_TCG_TPM) += tpm.o
--tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o
-+tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o tpm-chip.o
- tpm-$(CONFIG_ACPI) += tpm_ppi.o
- 
- ifdef CONFIG_ACPI
 diff --git a/drivers/char/tpm/tpm-chip.c b/drivers/char/tpm/tpm-chip.c
-new file mode 100644
-index 0000000..cf3ad24
---- /dev/null
+index 647867c..96ea8eb 100644
+--- a/drivers/char/tpm/tpm-chip.c
 +++ b/drivers/char/tpm/tpm-chip.c
-@@ -0,0 +1,196 @@
-+/*
-+ * Copyright (C) 2004 IBM Corporation
-+ * Copyright (C) 2014 Intel Corporation
-+ *
-+ * Authors:
-+ * Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-+ * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
-+ * Dave Safford <safford-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
-+ * Reiner Sailer <sailer-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
-+ * Kylene Hall <kjhall-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-+ *
-+ * Maintained by: <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-+ *
-+ * TPM chip management routines.
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License as
-+ * published by the Free Software Foundation, version 2 of the
-+ * License.
-+ *
-+ */
-+
-+#include <linux/poll.h>
-+#include <linux/slab.h>
-+#include <linux/mutex.h>
-+#include <linux/spinlock.h>
-+#include <linux/freezer.h>
-+#include "tpm.h"
-+#include "tpm_eventlog.h"
-+
-+static DECLARE_BITMAP(dev_mask, TPM_NUM_DEVICES);
-+static LIST_HEAD(tpm_chip_list);
-+static DEFINE_SPINLOCK(driver_lock);
-+
-+/*
-+ * tpm_chip_find_get - return tpm_chip for a given chip number
-+ * @chip_num the device number for the chip
-+ */
-+struct tpm_chip *tpm_chip_find_get(int chip_num)
-+{
-+	struct tpm_chip *pos, *chip = NULL;
-+
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(pos, &tpm_chip_list, list) {
-+		if (chip_num != TPM_ANY_NUM && chip_num != pos->dev_num)
-+			continue;
-+
-+		if (try_module_get(pos->dev->driver->owner)) {
-+			chip = pos;
-+			break;
-+		}
-+	}
-+	rcu_read_unlock();
-+	return chip;
-+}
-+
-+/**
-+ * tpmm_chip_remove() - free chip memory and device number
-+ * @data: points to struct tpm_chip instance
-+ *
-+ * This is used internally by tpmm_chip_alloc() and called by devres
-+ * when the device is released. This function does the opposite of
-+ * tpmm_chip_alloc() freeing memory and the device number.
-+ */
-+static void tpmm_chip_remove(void *data)
-+{
-+	struct tpm_chip *chip = (struct tpm_chip *) data;
-+
-+	spin_lock(&driver_lock);
-+	clear_bit(chip->dev_num, dev_mask);
-+	spin_unlock(&driver_lock);
-+	kfree(chip);
-+}
-+
-+/**
-+ * tpmm_chip_alloc() - allocate a new struct tpm_chip instance
-+ * @dev: device to which the chip is associated
-+ * @ops: struct tpm_class_ops instance
-+ *
-+ * Allocates a new struct tpm_chip instance and assigns a free
-+ * device number for it. Caller does not have to worry about
-+ * freeing the allocated resources. When the devices is removed
-+ * devres calls tpmm_chip_remove() to do the job.
-+ */
-+struct tpm_chip *tpmm_chip_alloc(struct device *dev,
-+				 const struct tpm_class_ops *ops)
-+{
-+	struct tpm_chip *chip;
-+
-+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
-+	if (chip == NULL)
-+		return ERR_PTR(-ENOMEM);
-+
-+	mutex_init(&chip->tpm_mutex);
-+	INIT_LIST_HEAD(&chip->list);
-+
-+	chip->ops = ops;
-+
-+	spin_lock(&driver_lock);
-+	chip->dev_num = find_first_zero_bit(dev_mask, TPM_NUM_DEVICES);
-+	spin_unlock(&driver_lock);
-+
-+	if (chip->dev_num >= TPM_NUM_DEVICES) {
-+		dev_err(dev, "No available tpm device numbers\n");
-+		kfree(chip);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	set_bit(chip->dev_num, dev_mask);
-+
-+	scnprintf(chip->devname, sizeof(chip->devname), "%s%d", "tpm",
-+		  chip->dev_num);
-+
-+	chip->dev = dev;
-+	devm_add_action(dev, tpmm_chip_remove, chip);
-+	dev_set_drvdata(dev, chip);
-+
-+	return chip;
-+}
-+EXPORT_SYMBOL_GPL(tpmm_chip_alloc);
-+
-+/*
-+ * tpm_chip_register() - create a misc driver for the TPM chip
-+ * @chip: TPM chip to use.
-+ *
-+ * Creates a misc driver for the TPM chip and adds sysfs interfaces for
-+ * the device, PPI and TCPA. As the last step this function adds the
-+ * chip to the list of TPM chips available for use.
-+ *
-+ * NOTE: This function should be only called after the chip initialization
-+ * is complete.
-+ *
-+ * Called from tpm_<specific>.c probe function only for devices
-+ * the driver has determined it should claim.  Prior to calling
-+ * this function the specific probe function has called pci_enable_device
-+ * upon errant exit from this function specific probe function should call
-+ * pci_disable_device
-+ */
-+int tpm_chip_register(struct tpm_chip *chip)
-+{
-+	int rc;
-+
-+	rc = tpm_dev_add_device(chip);
-+	if (rc)
-+		return rc;
-+
-+	rc = tpm_sysfs_add_device(chip);
-+	if (rc)
-+		goto del_misc;
-+
-+	rc = tpm_add_ppi(&chip->dev->kobj);
-+	if (rc)
-+		goto del_sysfs;
-+
-+	chip->bios_dir = tpm_bios_log_setup(chip->devname);
-+
-+	/* Make the chip available. */
-+	spin_lock(&driver_lock);
-+	list_add_rcu(&chip->list, &tpm_chip_list);
-+	spin_unlock(&driver_lock);
-+
-+	return 0;
-+del_sysfs:
-+	tpm_sysfs_del_device(chip);
-+del_misc:
-+	tpm_dev_del_device(chip);
-+	return rc;
-+}
-+EXPORT_SYMBOL_GPL(tpm_chip_register);
-+
-+/*
-+ * tpm_chip_unregister() - release the TPM driver
-+ * @chip: TPM chip to use.
-+ *
-+ * Takes the chip first away from the list of available TPM chips and then
-+ * cleans up all the resources reserved by tpm_chip_register().
-+ *
-+ * NOTE: This function should be only called before deinitializing chip
-+ * resources.
-+ */
-+void tpm_chip_unregister(struct tpm_chip *chip)
-+{
-+	spin_lock(&driver_lock);
-+	list_del_rcu(&chip->list);
-+	spin_unlock(&driver_lock);
-+	synchronize_rcu();
-+
-+	tpm_sysfs_del_device(chip);
-+	tpm_remove_ppi(&chip->dev->kobj);
-+
-+	if (chip->bios_dir)
-+		tpm_bios_log_teardown(chip->bios_dir);
-+
-+	tpm_dev_del_device(chip);
-+}
-+EXPORT_SYMBOL_GPL(tpm_chip_unregister);
+@@ -45,7 +45,7 @@ struct tpm_chip *tpm_chip_find_get(int chip_num)
+ 		if (chip_num != TPM_ANY_NUM && chip_num != pos->dev_num)
+ 			continue;
+ 
+-		if (try_module_get(pos->dev->driver->owner)) {
++		if (try_module_get(pos->pdev->driver->owner)) {
+ 			chip = pos;
+ 			break;
+ 		}
+@@ -111,7 +111,7 @@ struct tpm_chip *tpmm_chip_alloc(struct device *dev,
+ 	scnprintf(chip->devname, sizeof(chip->devname), "%s%d", "tpm",
+ 		  chip->dev_num);
+ 
+-	chip->dev = dev;
++	chip->pdev = dev;
+ 	devm_add_action(dev, tpmm_chip_remove, chip);
+ 	dev_set_drvdata(dev, chip);
+ 
+diff --git a/drivers/char/tpm/tpm-dev.c b/drivers/char/tpm/tpm-dev.c
+index d9b774e..3568321 100644
+--- a/drivers/char/tpm/tpm-dev.c
++++ b/drivers/char/tpm/tpm-dev.c
+@@ -63,7 +63,7 @@ static int tpm_open(struct inode *inode, struct file *file)
+ 	 * by the check of is_open variable, which is protected
+ 	 * by driver_lock. */
+ 	if (test_and_set_bit(0, &chip->is_open)) {
+-		dev_dbg(chip->dev, "Another process owns this TPM\n");
++		dev_dbg(chip->pdev, "Another process owns this TPM\n");
+ 		return -EBUSY;
+ 	}
+ 
+@@ -81,7 +81,7 @@ static int tpm_open(struct inode *inode, struct file *file)
+ 	INIT_WORK(&priv->work, timeout_work);
+ 
+ 	file->private_data = priv;
+-	get_device(chip->dev);
++	get_device(chip->pdev);
+ 	return 0;
+ }
+ 
+@@ -168,7 +168,7 @@ static int tpm_release(struct inode *inode, struct file *file)
+ 	file->private_data = NULL;
+ 	atomic_set(&priv->data_pending, 0);
+ 	clear_bit(0, &priv->chip->is_open);
+-	put_device(priv->chip->dev);
++	put_device(priv->chip->pdev);
+ 	kfree(priv);
+ 	return 0;
+ }
+@@ -193,12 +193,12 @@ int tpm_dev_add_device(struct tpm_chip *chip)
+ 		chip->vendor.miscdev.minor = MISC_DYNAMIC_MINOR;
+ 
+ 	chip->vendor.miscdev.name = chip->devname;
+-	chip->vendor.miscdev.parent = chip->dev;
++	chip->vendor.miscdev.parent = chip->pdev;
+ 
+ 	rc = misc_register(&chip->vendor.miscdev);
+ 	if (rc) {
+ 		chip->vendor.miscdev.name = NULL;
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"unable to misc_register %s, minor %d err=%d\n",
+ 			chip->vendor.miscdev.name,
+ 			chip->vendor.miscdev.minor, rc);
 diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
-index 0150b7c..915c610 100644
+index 915c610..e6b08bd 100644
 --- a/drivers/char/tpm/tpm-interface.c
 +++ b/drivers/char/tpm/tpm-interface.c
-@@ -1,5 +1,6 @@
- /*
-  * Copyright (C) 2004 IBM Corporation
-+ * Copyright (C) 2014 Intel Corporation
-  *
-  * Authors:
-  * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
-@@ -47,10 +48,6 @@ module_param_named(suspend_pcr, tpm_suspend_pcr, uint, 0644);
- MODULE_PARM_DESC(suspend_pcr,
- 		 "PCR to use for dummy writes to faciltate flush on suspend.");
- 
--static LIST_HEAD(tpm_chip_list);
--static DEFINE_SPINLOCK(driver_lock);
--static DECLARE_BITMAP(dev_mask, TPM_NUM_DEVICES);
--
- /*
-  * Array with one entry per ordinal defining the maximum amount
-  * of time the chip could take to return the result.  The ordinal
-@@ -639,27 +636,6 @@ static int tpm_continue_selftest(struct tpm_chip *chip)
- 	return rc;
- }
- 
--/*
-- * tpm_chip_find_get - return tpm_chip for given chip number
-- */
--static struct tpm_chip *tpm_chip_find_get(int chip_num)
--{
--	struct tpm_chip *pos, *chip = NULL;
--
--	rcu_read_lock();
--	list_for_each_entry_rcu(pos, &tpm_chip_list, list) {
--		if (chip_num != TPM_ANY_NUM && chip_num != pos->dev_num)
--			continue;
--
--		if (try_module_get(pos->dev->driver->owner)) {
--			chip = pos;
--			break;
--		}
--	}
--	rcu_read_unlock();
--	return chip;
--}
--
- #define TPM_ORDINAL_PCRREAD cpu_to_be32(21)
- #define READ_PCR_RESULT_SIZE 30
- static struct tpm_input_header pcrread_header = {
-@@ -887,30 +863,6 @@ again:
- }
- EXPORT_SYMBOL_GPL(wait_for_tpm_stat);
- 
--void tpm_remove_hardware(struct device *dev)
--{
--	struct tpm_chip *chip = dev_get_drvdata(dev);
--
--	if (chip == NULL) {
--		dev_err(dev, "No device data found\n");
--		return;
--	}
--
--	spin_lock(&driver_lock);
--	list_del_rcu(&chip->list);
--	spin_unlock(&driver_lock);
--	synchronize_rcu();
--
--	tpm_dev_del_device(chip);
--	tpm_sysfs_del_device(chip);
--	tpm_remove_ppi(&dev->kobj);
--	tpm_bios_log_teardown(chip->bios_dir);
--
--	/* write it this way to be explicit (chip->dev == dev) */
--	put_device(chip->dev);
--}
--EXPORT_SYMBOL_GPL(tpm_remove_hardware);
--
- #define TPM_ORD_SAVESTATE cpu_to_be32(152)
- #define SAVESTATE_RESULT_SIZE 10
- 
-@@ -1044,104 +996,6 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
- }
- EXPORT_SYMBOL_GPL(tpm_get_random);
- 
--/* In case vendor provided release function, call it too.*/
--
--void tpm_dev_vendor_release(struct tpm_chip *chip)
--{
--	if (!chip)
--		return;
--
--	clear_bit(chip->dev_num, dev_mask);
--}
--EXPORT_SYMBOL_GPL(tpm_dev_vendor_release);
--
--
--/*
-- * Once all references to platform device are down to 0,
-- * release all allocated structures.
-- */
--static void tpm_dev_release(struct device *dev)
--{
--	struct tpm_chip *chip = dev_get_drvdata(dev);
--
--	if (!chip)
--		return;
--
--	tpm_dev_vendor_release(chip);
--
--	chip->release(dev);
--	kfree(chip);
--}
--
--/*
-- * Called from tpm_<specific>.c probe function only for devices
-- * the driver has determined it should claim.  Prior to calling
-- * this function the specific probe function has called pci_enable_device
-- * upon errant exit from this function specific probe function should call
-- * pci_disable_device
-- */
--struct tpm_chip *tpm_register_hardware(struct device *dev,
--				       const struct tpm_class_ops *ops)
--{
--	struct tpm_chip *chip;
--
--	/* Driver specific per-device data */
--	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
--
--	if (chip == NULL)
--		return NULL;
--
--	mutex_init(&chip->tpm_mutex);
--	INIT_LIST_HEAD(&chip->list);
--
--	chip->ops = ops;
--	chip->dev_num = find_first_zero_bit(dev_mask, TPM_NUM_DEVICES);
--
--	if (chip->dev_num >= TPM_NUM_DEVICES) {
--		dev_err(dev, "No available tpm device numbers\n");
--		goto out_free;
--	}
--
--	set_bit(chip->dev_num, dev_mask);
--
--	scnprintf(chip->devname, sizeof(chip->devname), "%s%d", "tpm",
--		  chip->dev_num);
--
--	chip->dev = get_device(dev);
--	chip->release = dev->release;
--	dev->release = tpm_dev_release;
--	dev_set_drvdata(dev, chip);
--
--	if (tpm_dev_add_device(chip))
--		goto put_device;
--
--	if (tpm_sysfs_add_device(chip))
--		goto del_misc;
--
--	if (tpm_add_ppi(&dev->kobj))
--		goto del_sysfs;
--
--	chip->bios_dir = tpm_bios_log_setup(chip->devname);
--
--	/* Make chip available */
--	spin_lock(&driver_lock);
--	list_add_rcu(&chip->list, &tpm_chip_list);
--	spin_unlock(&driver_lock);
--
--	return chip;
--
--del_sysfs:
--	tpm_sysfs_del_device(chip);
--del_misc:
--	tpm_dev_del_device(chip);
--put_device:
--	put_device(chip->dev);
--out_free:
--	kfree(chip);
--	return NULL;
--}
--EXPORT_SYMBOL_GPL(tpm_register_hardware);
--
- MODULE_AUTHOR("Leendert van Doorn (leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org)");
- MODULE_DESCRIPTION("TPM Driver");
- MODULE_VERSION("2.0");
-diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-index e638eb0..9880681 100644
---- a/drivers/char/tpm/tpm.h
-+++ b/drivers/char/tpm/tpm.h
-@@ -110,7 +110,6 @@ struct tpm_chip {
- 	struct dentry **bios_dir;
- 
- 	struct list_head list;
--	void (*release) (struct device *);
- };
- 
- #define to_tpm_chip(n) container_of(n, struct tpm_chip, vendor)
-@@ -322,15 +321,17 @@ extern int tpm_get_timeouts(struct tpm_chip *);
- extern void tpm_gen_interrupt(struct tpm_chip *);
- extern int tpm_do_selftest(struct tpm_chip *);
- extern unsigned long tpm_calc_ordinal_duration(struct tpm_chip *, u32);
--extern struct tpm_chip* tpm_register_hardware(struct device *,
--					      const struct tpm_class_ops *ops);
--extern void tpm_dev_vendor_release(struct tpm_chip *);
--extern void tpm_remove_hardware(struct device *);
- extern int tpm_pm_suspend(struct device *);
- extern int tpm_pm_resume(struct device *);
- extern int wait_for_tpm_stat(struct tpm_chip *, u8, unsigned long,
- 			     wait_queue_head_t *, bool);
- 
-+struct tpm_chip *tpm_chip_find_get(int chip_num);
-+extern struct tpm_chip *tpmm_chip_alloc(struct device *dev,
-+				       const struct tpm_class_ops *ops);
-+extern int tpm_chip_register(struct tpm_chip *chip);
-+extern void tpm_chip_unregister(struct tpm_chip *chip);
-+
- int tpm_dev_add_device(struct tpm_chip *chip);
- void tpm_dev_del_device(struct tpm_chip *chip);
- int tpm_sysfs_add_device(struct tpm_chip *chip);
-diff --git a/drivers/char/tpm/tpm_atmel.c b/drivers/char/tpm/tpm_atmel.c
-index 6069d13..8e2576a 100644
---- a/drivers/char/tpm/tpm_atmel.c
-+++ b/drivers/char/tpm/tpm_atmel.c
-@@ -138,11 +138,11 @@ static void atml_plat_remove(void)
- 	struct tpm_chip *chip = dev_get_drvdata(&pdev->dev);
- 
- 	if (chip) {
-+		tpm_chip_unregister(chip);
- 		if (chip->vendor.have_region)
- 			atmel_release_region(chip->vendor.base,
- 					     chip->vendor.region_size);
- 		atmel_put_base_addr(chip->vendor.iobase);
--		tpm_remove_hardware(chip->dev);
- 		platform_device_unregister(pdev);
+@@ -343,7 +343,7 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+ 	if (count == 0)
+ 		return -ENODATA;
+ 	if (count > bufsiz) {
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"invalid count value %x %zx\n", count, bufsiz);
+ 		return -E2BIG;
  	}
- }
-@@ -184,8 +184,9 @@ static int __init init_atmel(void)
- 		goto err_rel_reg;
+@@ -352,7 +352,7 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+ 
+ 	rc = chip->ops->send(chip, (u8 *) buf, count);
+ 	if (rc < 0) {
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"tpm_transmit: tpm_send: error %zd\n", rc);
+ 		goto out;
  	}
+@@ -368,7 +368,7 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+ 			goto out_recv;
  
--	if (!(chip = tpm_register_hardware(&pdev->dev, &tpm_atmel))) {
--		rc = -ENODEV;
-+	chip = tpmm_chip_alloc(&pdev->dev, &tpm_atmel);
-+	if (IS_ERR(chip)) {
-+		rc = PTR_ERR(chip);
- 		goto err_unreg_dev;
- 	}
- 
-@@ -194,6 +195,10 @@ static int __init init_atmel(void)
- 	chip->vendor.have_region = have_region;
- 	chip->vendor.region_size = region_size;
- 
-+	rc = tpm_chip_register(chip);
-+	if (rc)
-+		goto err_unreg_dev;
-+
- 	return 0;
- 
- err_unreg_dev:
-diff --git a/drivers/char/tpm/tpm_i2c_atmel.c b/drivers/char/tpm/tpm_i2c_atmel.c
-index 7727292..8af3b4a 100644
---- a/drivers/char/tpm/tpm_i2c_atmel.c
-+++ b/drivers/char/tpm/tpm_i2c_atmel.c
-@@ -160,11 +160,9 @@ static int i2c_atmel_probe(struct i2c_client *client,
- 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
- 		return -ENODEV;
- 
--	chip = tpm_register_hardware(dev, &i2c_atmel);
--	if (!chip) {
--		dev_err(dev, "%s() error in tpm_register_hardware\n", __func__);
--		return -ENODEV;
--	}
-+	chip = tpmm_chip_alloc(dev, &i2c_atmel);
-+	if (IS_ERR(chip))
-+		return PTR_ERR(chip);
- 
- 	chip->vendor.priv = devm_kzalloc(dev, sizeof(struct priv_data),
- 					 GFP_KERNEL);
-@@ -179,21 +177,16 @@ static int i2c_atmel_probe(struct i2c_client *client,
- 	/* There is no known way to probe for this device, and all version
- 	 * information seems to be read via TPM commands. Thus we rely on the
- 	 * TPM startup process in the common code to detect the device. */
--	if (tpm_get_timeouts(chip)) {
--		rc = -ENODEV;
--		goto out_err;
--	}
-+	if (tpm_get_timeouts(chip))
-+		return -ENODEV;
- 
--	if (tpm_do_selftest(chip)) {
--		rc = -ENODEV;
--		goto out_err;
--	}
-+	if (tpm_do_selftest(chip))
-+		return -ENODEV;
- 
--	return 0;
-+	rc = tpm_chip_register(chip);
-+	if (rc)
-+		return rc;
- 
--out_err:
--	tpm_dev_vendor_release(chip);
--	tpm_remove_hardware(chip->dev);
- 	return rc;
- }
- 
-@@ -201,11 +194,7 @@ static int i2c_atmel_remove(struct i2c_client *client)
- {
- 	struct device *dev = &(client->dev);
- 	struct tpm_chip *chip = dev_get_drvdata(dev);
--
--	if (chip)
--		tpm_dev_vendor_release(chip);
--	tpm_remove_hardware(dev);
--	kfree(chip);
-+	tpm_chip_unregister(chip);
- 	return 0;
- }
- 
-diff --git a/drivers/char/tpm/tpm_i2c_infineon.c b/drivers/char/tpm/tpm_i2c_infineon.c
-index 472af4b..03708e6 100644
---- a/drivers/char/tpm/tpm_i2c_infineon.c
-+++ b/drivers/char/tpm/tpm_i2c_infineon.c
-@@ -581,12 +581,9 @@ static int tpm_tis_i2c_init(struct device *dev)
- 	int rc = 0;
- 	struct tpm_chip *chip;
- 
--	chip = tpm_register_hardware(dev, &tpm_tis_i2c);
--	if (!chip) {
--		dev_err(dev, "could not register hardware\n");
--		rc = -ENODEV;
--		goto out_err;
--	}
-+	chip = tpmm_chip_alloc(dev, &tpm_tis_i2c);
-+	if (IS_ERR(chip))
-+		return PTR_ERR(chip);
- 
- 	/* Disable interrupts */
- 	chip->vendor.irq = 0;
-@@ -600,7 +597,7 @@ static int tpm_tis_i2c_init(struct device *dev)
- 	if (request_locality(chip, 0) != 0) {
- 		dev_err(dev, "could not request locality\n");
- 		rc = -ENODEV;
--		goto out_vendor;
-+		goto out_err;
- 	}
- 
- 	/* read four bytes from DID_VID register */
-@@ -628,21 +625,9 @@ static int tpm_tis_i2c_init(struct device *dev)
- 	tpm_get_timeouts(chip);
- 	tpm_do_selftest(chip);
- 
--	return 0;
--
-+	return tpm_chip_register(chip);
- out_release:
- 	release_locality(chip, chip->vendor.locality, 1);
--
--out_vendor:
--	/* close file handles */
--	tpm_dev_vendor_release(chip);
--
--	/* remove hardware */
--	tpm_remove_hardware(chip->dev);
--
--	/* reset these pointers, otherwise we oops */
--	chip->dev->release = NULL;
--	chip->release = NULL;
- 	tpm_dev.client = NULL;
- out_err:
- 	return rc;
-@@ -712,17 +697,9 @@ static int tpm_tis_i2c_probe(struct i2c_client *client,
- static int tpm_tis_i2c_remove(struct i2c_client *client)
- {
- 	struct tpm_chip *chip = tpm_dev.chip;
--	release_locality(chip, chip->vendor.locality, 1);
- 
--	/* close file handles */
--	tpm_dev_vendor_release(chip);
--
--	/* remove hardware */
--	tpm_remove_hardware(chip->dev);
--
--	/* reset these pointers, otherwise we oops */
--	chip->dev->release = NULL;
--	chip->release = NULL;
-+	tpm_chip_unregister(chip);
-+	release_locality(chip, chip->vendor.locality, 1);
- 	tpm_dev.client = NULL;
- 
- 	return 0;
-diff --git a/drivers/char/tpm/tpm_i2c_nuvoton.c b/drivers/char/tpm/tpm_i2c_nuvoton.c
-index 7b158ef..09f0c46 100644
---- a/drivers/char/tpm/tpm_i2c_nuvoton.c
-+++ b/drivers/char/tpm/tpm_i2c_nuvoton.c
-@@ -530,11 +530,9 @@ static int i2c_nuvoton_probe(struct i2c_client *client,
- 	dev_info(dev, "VID: %04X DID: %02X RID: %02X\n", (u16) vid,
- 		 (u8) (vid >> 16), (u8) (vid >> 24));
- 
--	chip = tpm_register_hardware(dev, &tpm_i2c);
--	if (!chip) {
--		dev_err(dev, "%s() error in tpm_register_hardware\n", __func__);
--		return -ENODEV;
--	}
-+	chip = tpmm_chip_alloc(dev, &tpm_i2c);
-+	if (IS_ERR(chip))
-+		return PTR_ERR(chip);
- 
- 	chip->vendor.priv = devm_kzalloc(dev, sizeof(struct priv_data),
- 					 GFP_KERNEL);
-@@ -584,7 +582,7 @@ static int i2c_nuvoton_probe(struct i2c_client *client,
- 							   TPM_DATA_FIFO_W,
- 							   1, (u8 *) (&rc));
- 				if (rc < 0)
--					goto out_err;
-+					return rc;
- 				/* TPM_STS <- 0x40 (commandReady) */
- 				i2c_nuvoton_ready(chip);
- 			} else {
-@@ -594,45 +592,33 @@ static int i2c_nuvoton_probe(struct i2c_client *client,
- 				 * only TPM_STS_VALID should be set
- 				 */
- 				if (i2c_nuvoton_read_status(chip) !=
--				    TPM_STS_VALID) {
--					rc = -EIO;
--					goto out_err;
--				}
-+				    TPM_STS_VALID)
-+					return -EIO;
- 			}
+ 		if (chip->ops->req_canceled(chip, status)) {
+-			dev_err(chip->dev, "Operation Canceled\n");
++			dev_err(chip->pdev, "Operation Canceled\n");
+ 			rc = -ECANCELED;
+ 			goto out;
  		}
- 	}
+@@ -378,14 +378,14 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+ 	} while (time_before(jiffies, stop));
  
--	if (tpm_get_timeouts(chip)) {
--		rc = -ENODEV;
--		goto out_err;
--	}
-+	if (tpm_get_timeouts(chip))
-+		return -ENODEV;
+ 	chip->ops->cancel(chip);
+-	dev_err(chip->dev, "Operation Timed out\n");
++	dev_err(chip->pdev, "Operation Timed out\n");
+ 	rc = -ETIME;
+ 	goto out;
  
--	if (tpm_do_selftest(chip)) {
--		rc = -ENODEV;
--		goto out_err;
--	}
-+	if (tpm_do_selftest(chip))
-+		return -ENODEV;
+ out_recv:
+ 	rc = chip->ops->recv(chip, (u8 *) buf, bufsiz);
+ 	if (rc < 0)
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"tpm_transmit: tpm_recv: error %zd\n", rc);
+ out:
+ 	mutex_unlock(&chip->tpm_mutex);
+@@ -411,7 +411,8 @@ ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd,
  
--	return 0;
-+	rc = tpm_chip_register(chip);
-+	if (rc)
-+		return rc;
+ 	err = be32_to_cpu(header->return_code);
+ 	if (err != 0 && desc)
+-		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
++		dev_err(chip->pdev, "A TPM error (%d) occurred %s\n", err,
++			desc);
  
--out_err:
--	tpm_dev_vendor_release(chip);
--	tpm_remove_hardware(chip->dev);
--	return rc;
-+	return 0;
+ 	return err;
  }
+@@ -505,7 +506,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+ 	if (rc == TPM_ERR_INVALID_POSTINIT) {
+ 		/* The TPM is not started, we are the first to talk to it.
+ 		   Execute a startup command. */
+-		dev_info(chip->dev, "Issuing TPM_STARTUP");
++		dev_info(chip->pdev, "Issuing TPM_STARTUP");
+ 		if (tpm_startup(chip, TPM_ST_CLEAR))
+ 			return rc;
  
- static int i2c_nuvoton_remove(struct i2c_client *client)
- {
- 	struct device *dev = &(client->dev);
- 	struct tpm_chip *chip = dev_get_drvdata(dev);
--
--	if (chip)
--		tpm_dev_vendor_release(chip);
--	tpm_remove_hardware(dev);
--	kfree(chip);
-+	tpm_chip_unregister(chip);
+@@ -517,7 +518,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+ 				  NULL);
+ 	}
+ 	if (rc) {
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"A TPM error (%zd) occurred attempting to determine the timeouts\n",
+ 			rc);
+ 		goto duration;
+@@ -556,7 +557,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+ 
+ 	/* Report adjusted timeouts */
+ 	if (chip->vendor.timeout_adjusted) {
+-		dev_info(chip->dev,
++		dev_info(chip->pdev,
+ 			 HW_ERR "Adjusting reported timeouts: A %lu->%luus B %lu->%luus C %lu->%luus D %lu->%luus\n",
+ 			 old_timeout[0], new_timeout[0],
+ 			 old_timeout[1], new_timeout[1],
+@@ -603,7 +604,7 @@ duration:
+ 		chip->vendor.duration[TPM_MEDIUM] *= 1000;
+ 		chip->vendor.duration[TPM_LONG] *= 1000;
+ 		chip->vendor.duration_adjusted = true;
+-		dev_info(chip->dev, "Adjusting TPM timeout parameters.");
++		dev_info(chip->pdev, "Adjusting TPM timeout parameters.");
+ 	}
  	return 0;
  }
+@@ -760,7 +761,7 @@ int tpm_do_selftest(struct tpm_chip *chip)
+ 		 * around 300ms while the self test is ongoing, keep trying
+ 		 * until the self test duration expires. */
+ 		if (rc == -ETIME) {
+-			dev_info(chip->dev, HW_ERR "TPM command timed out during continue self test");
++			dev_info(chip->pdev, HW_ERR "TPM command timed out during continue self test");
+ 			msleep(delay_msec);
+ 			continue;
+ 		}
+@@ -770,7 +771,7 @@ int tpm_do_selftest(struct tpm_chip *chip)
  
--
- static const struct i2c_device_id i2c_nuvoton_id[] = {
- 	{I2C_DRIVER_NAME, 0},
- 	{}
-diff --git a/drivers/char/tpm/tpm_i2c_stm_st33.c b/drivers/char/tpm/tpm_i2c_stm_st33.c
-index 4669e37..b9d1a38 100644
---- a/drivers/char/tpm/tpm_i2c_stm_st33.c
-+++ b/drivers/char/tpm/tpm_i2c_stm_st33.c
-@@ -609,37 +609,29 @@ tpm_st33_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
- 	if (client == NULL) {
- 		pr_info("%s: i2c client is NULL. Device not accessible.\n",
- 			__func__);
--		err = -ENODEV;
--		goto end;
-+		return -ENODEV;
+ 		rc = be32_to_cpu(cmd.header.out.return_code);
+ 		if (rc == TPM_ERR_DISABLED || rc == TPM_ERR_DEACTIVATED) {
+-			dev_info(chip->dev,
++			dev_info(chip->pdev,
+ 				 "TPM is disabled/deactivated (0x%X)\n", rc);
+ 			/* TPM is disabled and/or deactivated; driver can
+ 			 * proceed and TPM does handle commands for
+@@ -918,10 +919,10 @@ int tpm_pm_suspend(struct device *dev)
  	}
  
- 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
- 		dev_info(&client->dev, "client not i2c capable\n");
--		err = -ENODEV;
--		goto end;
-+		return -ENODEV;
- 	}
+ 	if (rc)
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"Error (%d) sending savestate before suspend\n", rc);
+ 	else if (try > 0)
+-		dev_warn(chip->dev, "TPM savestate took %dms\n",
++		dev_warn(chip->pdev, "TPM savestate took %dms\n",
+ 			 try * TPM_TIMEOUT_RETRY);
  
--	chip = tpm_register_hardware(&client->dev, &st_i2c_tpm);
--	if (!chip) {
--		dev_info(&client->dev, "fail chip\n");
--		err = -ENODEV;
--		goto end;
--	}
-+	chip = tpmm_chip_alloc(&client->dev, &st_i2c_tpm);
-+	if (IS_ERR(chip))
-+		return PTR_ERR(chip);
+ 	return rc;
+diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
+index 8ecb052..ee66fd4 100644
+--- a/drivers/char/tpm/tpm-sysfs.c
++++ b/drivers/char/tpm/tpm-sysfs.c
+@@ -284,16 +284,16 @@ static const struct attribute_group tpm_dev_group = {
+ int tpm_sysfs_add_device(struct tpm_chip *chip)
+ {
+ 	int err;
+-	err = sysfs_create_group(&chip->dev->kobj,
++	err = sysfs_create_group(&chip->pdev->kobj,
+ 				 &tpm_dev_group);
  
- 	platform_data = client->dev.platform_data;
- 
- 	if (!platform_data) {
- 		dev_info(&client->dev, "chip not available\n");
--		err = -ENODEV;
--		goto _tpm_clean_answer;
-+		return -ENODEV;
- 	}
- 
- 	platform_data->tpm_i2c_buffer[0] =
- 	    kmalloc(TPM_BUFSIZE * sizeof(u8), GFP_KERNEL);
--	if (platform_data->tpm_i2c_buffer[0] == NULL) {
--		err = -ENOMEM;
--		goto _tpm_clean_answer;
--	}
-+	if (platform_data->tpm_i2c_buffer[0] == NULL)
-+		return -ENOMEM;
- 	platform_data->tpm_i2c_buffer[1] =
- 	    kmalloc(TPM_BUFSIZE * sizeof(u8), GFP_KERNEL);
- 	if (platform_data->tpm_i2c_buffer[1] == NULL) {
-@@ -716,8 +708,10 @@ tpm_st33_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
- 	tpm_get_timeouts(chip);
- 	tpm_do_selftest(chip);
- 
--	dev_info(chip->dev, "TPM I2C Initialized\n");
--	return 0;
-+	err = tpm_chip_register(chip);
-+	if (!err)
-+		return 0;
-+
- _irq_set:
- 	free_irq(gpio_to_irq(platform_data->io_serirq), (void *)chip);
- _gpio_init2:
-@@ -732,10 +726,6 @@ _tpm_clean_response2:
- _tpm_clean_response1:
- 	kzfree(platform_data->tpm_i2c_buffer[0]);
- 	platform_data->tpm_i2c_buffer[0] = NULL;
--_tpm_clean_answer:
--	tpm_remove_hardware(chip->dev);
--end:
--	pr_info("TPM I2C initialisation fail\n");
+ 	if (err)
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"failed to create sysfs attributes, %d\n", err);
  	return err;
  }
  
-@@ -752,13 +742,13 @@ static int tpm_st33_i2c_remove(struct i2c_client *client)
- 		((struct i2c_client *)TPM_VPRIV(chip))->dev.platform_data;
- 
- 	if (pin_infos != NULL) {
-+		tpm_chip_unregister(chip);
-+
- 		free_irq(pin_infos->io_serirq, chip);
- 
- 		gpio_free(pin_infos->io_serirq);
- 		gpio_free(pin_infos->io_lpcpd);
- 
--		tpm_remove_hardware(chip->dev);
--
- 		if (pin_infos->tpm_i2c_buffer[1] != NULL) {
- 			kzfree(pin_infos->tpm_i2c_buffer[1]);
- 			pin_infos->tpm_i2c_buffer[1] = NULL;
-diff --git a/drivers/char/tpm/tpm_ibmvtpm.c b/drivers/char/tpm/tpm_ibmvtpm.c
-index af74c57..eb95796 100644
---- a/drivers/char/tpm/tpm_ibmvtpm.c
-+++ b/drivers/char/tpm/tpm_ibmvtpm.c
-@@ -270,8 +270,11 @@ static int ibmvtpm_crq_send_init(struct ibmvtpm_dev *ibmvtpm)
- static int tpm_ibmvtpm_remove(struct vio_dev *vdev)
+ void tpm_sysfs_del_device(struct tpm_chip *chip)
  {
- 	struct ibmvtpm_dev *ibmvtpm = ibmvtpm_get_data(&vdev->dev);
-+	struct tpm_chip *chip = dev_get_drvdata(ibmvtpm->dev);
- 	int rc = 0;
+-	sysfs_remove_group(&chip->dev->kobj, &tpm_dev_group);
++	sysfs_remove_group(&chip->pdev->kobj, &tpm_dev_group);
+ }
+diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+index 69f4003..b3a7c76 100644
+--- a/drivers/char/tpm/tpm.h
++++ b/drivers/char/tpm/tpm.h
+@@ -98,7 +98,7 @@ struct tpm_vendor_specific {
+ #define TPM_PPI_VERSION_LEN		3
  
-+	tpm_chip_unregister(chip);
-+
- 	free_irq(vdev->irq, ibmvtpm);
+ struct tpm_chip {
+-	struct device *dev;	/* Device stuff */
++	struct device *pdev;	/* Device stuff */
+ 	const struct tpm_class_ops *ops;
  
- 	do {
-@@ -290,8 +293,6 @@ static int tpm_ibmvtpm_remove(struct vio_dev *vdev)
- 		kfree(ibmvtpm->rtce_buf);
- 	}
+ 	int dev_num;		/* /dev/tpm# */
+@@ -124,7 +124,7 @@ struct tpm_chip {
  
--	tpm_remove_hardware(ibmvtpm->dev);
--
- 	kfree(ibmvtpm);
- 
- 	return 0;
-@@ -555,11 +556,9 @@ static int tpm_ibmvtpm_probe(struct vio_dev *vio_dev,
- 	struct tpm_chip *chip;
- 	int rc = -ENOMEM, rc1;
- 
--	chip = tpm_register_hardware(dev, &tpm_ibmvtpm);
--	if (!chip) {
--		dev_err(dev, "tpm_register_hardware failed\n");
--		return -ENODEV;
--	}
-+	chip = tpmm_chip_alloc(dev, &tpm_ibmvtpm);
-+	if (IS_ERR(chip))
-+		return PTR_ERR(chip);
- 
- 	ibmvtpm = kzalloc(sizeof(struct ibmvtpm_dev), GFP_KERNEL);
- 	if (!ibmvtpm) {
-@@ -629,7 +628,7 @@ static int tpm_ibmvtpm_probe(struct vio_dev *vio_dev,
- 	if (rc)
- 		goto init_irq_cleanup;
- 
--	return rc;
-+	return tpm_chip_register(chip);
- init_irq_cleanup:
- 	do {
- 		rc1 = plpar_hcall_norets(H_FREE_CRQ, vio_dev->unit_address);
-@@ -644,8 +643,6 @@ cleanup:
- 		kfree(ibmvtpm);
- 	}
- 
--	tpm_remove_hardware(dev);
--
- 	return rc;
+ static inline void tpm_chip_put(struct tpm_chip *chip)
+ {
+-	module_put(chip->dev->driver->owner);
++	module_put(chip->pdev->driver->owner);
  }
  
+ static inline int tpm_read_index(int base, int index)
+diff --git a/drivers/char/tpm/tpm_atmel.c b/drivers/char/tpm/tpm_atmel.c
+index 8e2576a..8a52ebe 100644
+--- a/drivers/char/tpm/tpm_atmel.c
++++ b/drivers/char/tpm/tpm_atmel.c
+@@ -49,7 +49,7 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	for (i = 0; i < 6; i++) {
+ 		status = ioread8(chip->vendor.iobase + 1);
+ 		if ((status & ATML_STATUS_DATA_AVAIL) == 0) {
+-			dev_err(chip->dev, "error reading header\n");
++			dev_err(chip->pdev, "error reading header\n");
+ 			return -EIO;
+ 		}
+ 		*buf++ = ioread8(chip->vendor.iobase);
+@@ -60,12 +60,12 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	size = be32_to_cpu(*native_size);
+ 
+ 	if (count < size) {
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"Recv size(%d) less than available space\n", size);
+ 		for (; i < size; i++) {	/* clear the waiting data anyway */
+ 			status = ioread8(chip->vendor.iobase + 1);
+ 			if ((status & ATML_STATUS_DATA_AVAIL) == 0) {
+-				dev_err(chip->dev, "error reading data\n");
++				dev_err(chip->pdev, "error reading data\n");
+ 				return -EIO;
+ 			}
+ 		}
+@@ -76,7 +76,7 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	for (; i < size; i++) {
+ 		status = ioread8(chip->vendor.iobase + 1);
+ 		if ((status & ATML_STATUS_DATA_AVAIL) == 0) {
+-			dev_err(chip->dev, "error reading data\n");
++			dev_err(chip->pdev, "error reading data\n");
+ 			return -EIO;
+ 		}
+ 		*buf++ = ioread8(chip->vendor.iobase);
+@@ -86,7 +86,7 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	status = ioread8(chip->vendor.iobase + 1);
+ 
+ 	if (status & ATML_STATUS_DATA_AVAIL) {
+-		dev_err(chip->dev, "data available is stuck\n");
++		dev_err(chip->pdev, "data available is stuck\n");
+ 		return -EIO;
+ 	}
+ 
+@@ -97,9 +97,9 @@ static int tpm_atml_send(struct tpm_chip *chip, u8 *buf, size_t count)
+ {
+ 	int i;
+ 
+-	dev_dbg(chip->dev, "tpm_atml_send:\n");
++	dev_dbg(chip->pdev, "tpm_atml_send:\n");
+ 	for (i = 0; i < count; i++) {
+-		dev_dbg(chip->dev, "%d 0x%x(%d)\n",  i, buf[i], buf[i]);
++		dev_dbg(chip->pdev, "%d 0x%x(%d)\n",  i, buf[i], buf[i]);
+  		iowrite8(buf[i], chip->vendor.iobase);
+ 	}
+ 
+diff --git a/drivers/char/tpm/tpm_i2c_atmel.c b/drivers/char/tpm/tpm_i2c_atmel.c
+index 8af3b4a..dfef1ae 100644
+--- a/drivers/char/tpm/tpm_i2c_atmel.c
++++ b/drivers/char/tpm/tpm_i2c_atmel.c
+@@ -52,7 +52,7 @@ struct priv_data {
+ static int i2c_atmel_send(struct tpm_chip *chip, u8 *buf, size_t len)
+ {
+ 	struct priv_data *priv = chip->vendor.priv;
+-	struct i2c_client *client = to_i2c_client(chip->dev);
++	struct i2c_client *client = to_i2c_client(chip->pdev);
+ 	s32 status;
+ 
+ 	priv->len = 0;
+@@ -62,7 +62,7 @@ static int i2c_atmel_send(struct tpm_chip *chip, u8 *buf, size_t len)
+ 
+ 	status = i2c_master_send(client, buf, len);
+ 
+-	dev_dbg(chip->dev,
++	dev_dbg(chip->pdev,
+ 		"%s(buf=%*ph len=%0zx) -> sts=%d\n", __func__,
+ 		(int)min_t(size_t, 64, len), buf, len, status);
+ 	return status;
+@@ -71,7 +71,7 @@ static int i2c_atmel_send(struct tpm_chip *chip, u8 *buf, size_t len)
+ static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ {
+ 	struct priv_data *priv = chip->vendor.priv;
+-	struct i2c_client *client = to_i2c_client(chip->dev);
++	struct i2c_client *client = to_i2c_client(chip->pdev);
+ 	struct tpm_output_header *hdr =
+ 		(struct tpm_output_header *)priv->buffer;
+ 	u32 expected_len;
+@@ -88,7 +88,7 @@ static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 		return -ENOMEM;
+ 
+ 	if (priv->len >= expected_len) {
+-		dev_dbg(chip->dev,
++		dev_dbg(chip->pdev,
+ 			"%s early(buf=%*ph count=%0zx) -> ret=%d\n", __func__,
+ 			(int)min_t(size_t, 64, expected_len), buf, count,
+ 			expected_len);
+@@ -97,7 +97,7 @@ static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	}
+ 
+ 	rc = i2c_master_recv(client, buf, expected_len);
+-	dev_dbg(chip->dev,
++	dev_dbg(chip->pdev,
+ 		"%s reread(buf=%*ph count=%0zx) -> ret=%d\n", __func__,
+ 		(int)min_t(size_t, 64, expected_len), buf, count,
+ 		expected_len);
+@@ -106,13 +106,13 @@ static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 
+ static void i2c_atmel_cancel(struct tpm_chip *chip)
+ {
+-	dev_err(chip->dev, "TPM operation cancellation was requested, but is not supported");
++	dev_err(chip->pdev, "TPM operation cancellation was requested, but is not supported");
+ }
+ 
+ static u8 i2c_atmel_read_status(struct tpm_chip *chip)
+ {
+ 	struct priv_data *priv = chip->vendor.priv;
+-	struct i2c_client *client = to_i2c_client(chip->dev);
++	struct i2c_client *client = to_i2c_client(chip->pdev);
+ 	int rc;
+ 
+ 	/* The TPM fails the I2C read until it is ready, so we do the entire
+@@ -125,7 +125,7 @@ static u8 i2c_atmel_read_status(struct tpm_chip *chip)
+ 	/* Once the TPM has completed the command the command remains readable
+ 	 * until another command is issued. */
+ 	rc = i2c_master_recv(client, priv->buffer, sizeof(priv->buffer));
+-	dev_dbg(chip->dev,
++	dev_dbg(chip->pdev,
+ 		"%s: sts=%d", __func__, rc);
+ 	if (rc <= 0)
+ 		return 0;
+diff --git a/drivers/char/tpm/tpm_i2c_infineon.c b/drivers/char/tpm/tpm_i2c_infineon.c
+index 03708e6..33c5f36 100644
+--- a/drivers/char/tpm/tpm_i2c_infineon.c
++++ b/drivers/char/tpm/tpm_i2c_infineon.c
+@@ -446,7 +446,7 @@ static int tpm_tis_i2c_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	/* read first 10 bytes, including tag, paramsize, and result */
+ 	size = recv_data(chip, buf, TPM_HEADER_SIZE);
+ 	if (size < TPM_HEADER_SIZE) {
+-		dev_err(chip->dev, "Unable to read header\n");
++		dev_err(chip->pdev, "Unable to read header\n");
+ 		goto out;
+ 	}
+ 
+@@ -459,14 +459,14 @@ static int tpm_tis_i2c_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	size += recv_data(chip, &buf[TPM_HEADER_SIZE],
+ 			  expected - TPM_HEADER_SIZE);
+ 	if (size < expected) {
+-		dev_err(chip->dev, "Unable to read remainder of result\n");
++		dev_err(chip->pdev, "Unable to read remainder of result\n");
+ 		size = -ETIME;
+ 		goto out;
+ 	}
+ 
+ 	wait_for_stat(chip, TPM_STS_VALID, chip->vendor.timeout_c, &status);
+ 	if (status & TPM_STS_DATA_AVAIL) {	/* retry? */
+-		dev_err(chip->dev, "Error left over data\n");
++		dev_err(chip->pdev, "Error left over data\n");
+ 		size = -EIO;
+ 		goto out;
+ 	}
+diff --git a/drivers/char/tpm/tpm_i2c_nuvoton.c b/drivers/char/tpm/tpm_i2c_nuvoton.c
+index 09f0c46..92ee9fa 100644
+--- a/drivers/char/tpm/tpm_i2c_nuvoton.c
++++ b/drivers/char/tpm/tpm_i2c_nuvoton.c
+@@ -96,13 +96,13 @@ static s32 i2c_nuvoton_write_buf(struct i2c_client *client, u8 offset, u8 size,
+ /* read TPM_STS register */
+ static u8 i2c_nuvoton_read_status(struct tpm_chip *chip)
+ {
+-	struct i2c_client *client = to_i2c_client(chip->dev);
++	struct i2c_client *client = to_i2c_client(chip->pdev);
+ 	s32 status;
+ 	u8 data;
+ 
+ 	status = i2c_nuvoton_read_buf(client, TPM_STS, 1, &data);
+ 	if (status <= 0) {
+-		dev_err(chip->dev, "%s() error return %d\n", __func__,
++		dev_err(chip->pdev, "%s() error return %d\n", __func__,
+ 			status);
+ 		data = TPM_STS_ERR_VAL;
+ 	}
+@@ -127,13 +127,13 @@ static s32 i2c_nuvoton_write_status(struct i2c_client *client, u8 data)
+ /* write commandReady to TPM_STS register */
+ static void i2c_nuvoton_ready(struct tpm_chip *chip)
+ {
+-	struct i2c_client *client = to_i2c_client(chip->dev);
++	struct i2c_client *client = to_i2c_client(chip->pdev);
+ 	s32 status;
+ 
+ 	/* this causes the current command to be aborted */
+ 	status = i2c_nuvoton_write_status(client, TPM_STS_COMMAND_READY);
+ 	if (status < 0)
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"%s() fail to write TPM_STS.commandReady\n", __func__);
+ }
+ 
+@@ -212,7 +212,7 @@ static int i2c_nuvoton_wait_for_stat(struct tpm_chip *chip, u8 mask, u8 value,
+ 				return 0;
+ 		} while (time_before(jiffies, stop));
+ 	}
+-	dev_err(chip->dev, "%s(%02x, %02x) -> timeout\n", __func__, mask,
++	dev_err(chip->pdev, "%s(%02x, %02x) -> timeout\n", __func__, mask,
+ 		value);
+ 	return -ETIMEDOUT;
+ }
+@@ -240,7 +240,7 @@ static int i2c_nuvoton_recv_data(struct i2c_client *client,
+ 					       &chip->vendor.read_queue) == 0) {
+ 		burst_count = i2c_nuvoton_get_burstcount(client, chip);
+ 		if (burst_count < 0) {
+-			dev_err(chip->dev,
++			dev_err(chip->pdev,
+ 				"%s() fail to read burstCount=%d\n", __func__,
+ 				burst_count);
+ 			return -EIO;
+@@ -249,12 +249,12 @@ static int i2c_nuvoton_recv_data(struct i2c_client *client,
+ 		rc = i2c_nuvoton_read_buf(client, TPM_DATA_FIFO_R,
+ 					  bytes2read, &buf[size]);
+ 		if (rc < 0) {
+-			dev_err(chip->dev,
++			dev_err(chip->pdev,
+ 				"%s() fail on i2c_nuvoton_read_buf()=%d\n",
+ 				__func__, rc);
+ 			return -EIO;
+ 		}
+-		dev_dbg(chip->dev, "%s(%d):", __func__, bytes2read);
++		dev_dbg(chip->pdev, "%s(%d):", __func__, bytes2read);
+ 		size += bytes2read;
+ 	}
+ 
+@@ -264,7 +264,7 @@ static int i2c_nuvoton_recv_data(struct i2c_client *client,
+ /* Read TPM command results */
+ static int i2c_nuvoton_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ {
+-	struct device *dev = chip->dev;
++	struct device *dev = chip->pdev;
+ 	struct i2c_client *client = to_i2c_client(dev);
+ 	s32 rc;
+ 	int expected, status, burst_count, retries, size = 0;
+@@ -334,7 +334,7 @@ static int i2c_nuvoton_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 		break;
+ 	}
+ 	i2c_nuvoton_ready(chip);
+-	dev_dbg(chip->dev, "%s() -> %d\n", __func__, size);
++	dev_dbg(chip->pdev, "%s() -> %d\n", __func__, size);
+ 	return size;
+ }
+ 
+@@ -347,7 +347,7 @@ static int i2c_nuvoton_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+  */
+ static int i2c_nuvoton_send(struct tpm_chip *chip, u8 *buf, size_t len)
+ {
+-	struct device *dev = chip->dev;
++	struct device *dev = chip->pdev;
+ 	struct i2c_client *client = to_i2c_client(dev);
+ 	u32 ordinal;
+ 	size_t count = 0;
+diff --git a/drivers/char/tpm/tpm_i2c_stm_st33.c b/drivers/char/tpm/tpm_i2c_stm_st33.c
+index b9d1a38..64ef510 100644
+--- a/drivers/char/tpm/tpm_i2c_stm_st33.c
++++ b/drivers/char/tpm/tpm_i2c_stm_st33.c
+@@ -544,7 +544,7 @@ static int tpm_stm_i2c_recv(struct tpm_chip *chip, unsigned char *buf,
+ 
+ 	size = recv_data(chip, buf, TPM_HEADER_SIZE);
+ 	if (size < TPM_HEADER_SIZE) {
+-		dev_err(chip->dev, "Unable to read header\n");
++		dev_err(chip->pdev, "Unable to read header\n");
+ 		goto out;
+ 	}
+ 
+@@ -557,7 +557,7 @@ static int tpm_stm_i2c_recv(struct tpm_chip *chip, unsigned char *buf,
+ 	size += recv_data(chip, &buf[TPM_HEADER_SIZE],
+ 					expected - TPM_HEADER_SIZE);
+ 	if (size < expected) {
+-		dev_err(chip->dev, "Unable to read remainder of result\n");
++		dev_err(chip->pdev, "Unable to read remainder of result\n");
+ 		size = -ETIME;
+ 		goto out;
+ 	}
+@@ -671,7 +671,7 @@ tpm_st33_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
+ 				IRQF_TRIGGER_HIGH,
+ 				"TPM SERIRQ management", chip);
+ 		if (err < 0) {
+-			dev_err(chip->dev , "TPM SERIRQ signals %d not available\n",
++			dev_err(chip->pdev , "TPM SERIRQ signals %d not available\n",
+ 				gpio_to_irq(platform_data->io_serirq));
+ 			goto _irq_set;
+ 		}
 diff --git a/drivers/char/tpm/tpm_infineon.c b/drivers/char/tpm/tpm_infineon.c
-index dc0a255..dcdb671 100644
+index dcdb671..6d49213 100644
 --- a/drivers/char/tpm/tpm_infineon.c
 +++ b/drivers/char/tpm/tpm_infineon.c
-@@ -546,7 +546,14 @@ static int tpm_inf_pnp_probe(struct pnp_dev *dev,
- 			 vendorid[0], vendorid[1],
- 			 productid[0], productid[1], chipname);
- 
--		if (!(chip = tpm_register_hardware(&dev->dev, &tpm_inf)))
-+		chip = tpmm_chip_alloc(&dev->dev, &tpm_inf);
-+		if (IS_ERR(chip)) {
-+			rc = PTR_ERR(chip);
-+			goto err_release_region;
-+		}
-+
-+		rc = tpm_chip_register(chip);
-+		if (rc)
- 			goto err_release_region;
- 
- 		return 0;
-@@ -572,17 +579,15 @@ static void tpm_inf_pnp_remove(struct pnp_dev *dev)
- {
- 	struct tpm_chip *chip = pnp_get_drvdata(dev);
- 
--	if (chip) {
--		if (tpm_dev.iotype == TPM_INF_IO_PORT) {
--			release_region(tpm_dev.data_regs, tpm_dev.data_size);
--			release_region(tpm_dev.config_port,
--				       tpm_dev.config_size);
--		} else {
--			iounmap(tpm_dev.mem_base);
--			release_mem_region(tpm_dev.map_base, tpm_dev.map_size);
--		}
--		tpm_dev_vendor_release(chip);
--		tpm_remove_hardware(chip->dev);
-+	tpm_chip_unregister(chip);
-+
-+	if (tpm_dev.iotype == TPM_INF_IO_PORT) {
-+		release_region(tpm_dev.data_regs, tpm_dev.data_size);
-+		release_region(tpm_dev.config_port,
-+			       tpm_dev.config_size);
-+	} else {
-+		iounmap(tpm_dev.mem_base);
-+		release_mem_region(tpm_dev.map_base, tpm_dev.map_size);
+@@ -195,9 +195,9 @@ static int wait(struct tpm_chip *chip, int wait_for_bit)
  	}
- }
+ 	if (i == TPM_MAX_TRIES) {	/* timeout occurs */
+ 		if (wait_for_bit == STAT_XFE)
+-			dev_err(chip->dev, "Timeout in wait(STAT_XFE)\n");
++			dev_err(chip->pdev, "Timeout in wait(STAT_XFE)\n");
+ 		if (wait_for_bit == STAT_RDA)
+-			dev_err(chip->dev, "Timeout in wait(STAT_RDA)\n");
++			dev_err(chip->pdev, "Timeout in wait(STAT_RDA)\n");
+ 		return -EIO;
+ 	}
+ 	return 0;
+@@ -220,7 +220,7 @@ static void wait_and_send(struct tpm_chip *chip, u8 sendbyte)
+ static void tpm_wtx(struct tpm_chip *chip)
+ {
+ 	number_of_wtx++;
+-	dev_info(chip->dev, "Granting WTX (%02d / %02d)\n",
++	dev_info(chip->pdev, "Granting WTX (%02d / %02d)\n",
+ 		 number_of_wtx, TPM_MAX_WTX_PACKAGES);
+ 	wait_and_send(chip, TPM_VL_VER);
+ 	wait_and_send(chip, TPM_CTRL_WTX);
+@@ -231,7 +231,7 @@ static void tpm_wtx(struct tpm_chip *chip)
+ 
+ static void tpm_wtx_abort(struct tpm_chip *chip)
+ {
+-	dev_info(chip->dev, "Aborting WTX\n");
++	dev_info(chip->pdev, "Aborting WTX\n");
+ 	wait_and_send(chip, TPM_VL_VER);
+ 	wait_and_send(chip, TPM_CTRL_WTX_ABORT);
+ 	wait_and_send(chip, 0x00);
+@@ -257,7 +257,7 @@ recv_begin:
+ 	}
+ 
+ 	if (buf[0] != TPM_VL_VER) {
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"Wrong transport protocol implementation!\n");
+ 		return -EIO;
+ 	}
+@@ -272,7 +272,7 @@ recv_begin:
+ 		}
+ 
+ 		if ((size == 0x6D00) && (buf[1] == 0x80)) {
+-			dev_err(chip->dev, "Error handling on vendor layer!\n");
++			dev_err(chip->pdev, "Error handling on vendor layer!\n");
+ 			return -EIO;
+ 		}
+ 
+@@ -284,7 +284,7 @@ recv_begin:
+ 	}
+ 
+ 	if (buf[1] == TPM_CTRL_WTX) {
+-		dev_info(chip->dev, "WTX-package received\n");
++		dev_info(chip->pdev, "WTX-package received\n");
+ 		if (number_of_wtx < TPM_MAX_WTX_PACKAGES) {
+ 			tpm_wtx(chip);
+ 			goto recv_begin;
+@@ -295,14 +295,14 @@ recv_begin:
+ 	}
+ 
+ 	if (buf[1] == TPM_CTRL_WTX_ABORT_ACK) {
+-		dev_info(chip->dev, "WTX-abort acknowledged\n");
++		dev_info(chip->pdev, "WTX-abort acknowledged\n");
+ 		return size;
+ 	}
+ 
+ 	if (buf[1] == TPM_CTRL_ERROR) {
+-		dev_err(chip->dev, "ERROR-package received:\n");
++		dev_err(chip->pdev, "ERROR-package received:\n");
+ 		if (buf[4] == TPM_INF_NAK)
+-			dev_err(chip->dev,
++			dev_err(chip->pdev,
+ 				"-> Negative acknowledgement"
+ 				" - retransmit command!\n");
+ 		return -EIO;
+@@ -321,7 +321,7 @@ static int tpm_inf_send(struct tpm_chip *chip, u8 * buf, size_t count)
+ 
+ 	ret = empty_fifo(chip, 1);
+ 	if (ret) {
+-		dev_err(chip->dev, "Timeout while clearing FIFO\n");
++		dev_err(chip->pdev, "Timeout while clearing FIFO\n");
+ 		return -EIO;
+ 	}
  
 diff --git a/drivers/char/tpm/tpm_nsc.c b/drivers/char/tpm/tpm_nsc.c
-index 3179ec9..00c5470 100644
+index 00c5470..072c298 100644
 --- a/drivers/char/tpm/tpm_nsc.c
 +++ b/drivers/char/tpm/tpm_nsc.c
-@@ -247,10 +247,9 @@ static struct platform_device *pdev = NULL;
- static void tpm_nsc_remove(struct device *dev)
- {
- 	struct tpm_chip *chip = dev_get_drvdata(dev);
--	if ( chip ) {
--		release_region(chip->vendor.base, 2);
--		tpm_remove_hardware(chip->dev);
--	}
-+
-+	tpm_chip_unregister(chip);
-+	release_region(chip->vendor.base, 2);
+@@ -113,7 +113,7 @@ static int nsc_wait_for_ready(struct tpm_chip *chip)
+ 	}
+ 	while (time_before(jiffies, stop));
+ 
+-	dev_info(chip->dev, "wait for ready failed\n");
++	dev_info(chip->pdev, "wait for ready failed\n");
+ 	return -EBUSY;
  }
  
- static SIMPLE_DEV_PM_OPS(tpm_nsc_pm, tpm_pm_suspend, tpm_pm_resume);
-@@ -308,11 +307,16 @@ static int __init init_nsc(void)
- 		goto err_del_dev;
+@@ -129,12 +129,12 @@ static int tpm_nsc_recv(struct tpm_chip *chip, u8 * buf, size_t count)
+ 		return -EIO;
+ 
+ 	if (wait_for_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0) {
+-		dev_err(chip->dev, "F0 timeout\n");
++		dev_err(chip->pdev, "F0 timeout\n");
+ 		return -EIO;
+ 	}
+ 	if ((data =
+ 	     inb(chip->vendor.base + NSC_DATA)) != NSC_COMMAND_NORMAL) {
+-		dev_err(chip->dev, "not in normal mode (0x%x)\n",
++		dev_err(chip->pdev, "not in normal mode (0x%x)\n",
+ 			data);
+ 		return -EIO;
+ 	}
+@@ -143,7 +143,7 @@ static int tpm_nsc_recv(struct tpm_chip *chip, u8 * buf, size_t count)
+ 	for (p = buffer; p < &buffer[count]; p++) {
+ 		if (wait_for_stat
+ 		    (chip, NSC_STATUS_OBF, NSC_STATUS_OBF, &data) < 0) {
+-			dev_err(chip->dev,
++			dev_err(chip->pdev,
+ 				"OBF timeout (while reading data)\n");
+ 			return -EIO;
+ 		}
+@@ -154,11 +154,11 @@ static int tpm_nsc_recv(struct tpm_chip *chip, u8 * buf, size_t count)
+ 
+ 	if ((data & NSC_STATUS_F0) == 0 &&
+ 	(wait_for_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0)) {
+-		dev_err(chip->dev, "F0 not set\n");
++		dev_err(chip->pdev, "F0 not set\n");
+ 		return -EIO;
+ 	}
+ 	if ((data = inb(chip->vendor.base + NSC_DATA)) != NSC_COMMAND_EOC) {
+-		dev_err(chip->dev,
++		dev_err(chip->pdev,
+ 			"expected end of command(0x%x)\n", data);
+ 		return -EIO;
+ 	}
+@@ -189,19 +189,19 @@ static int tpm_nsc_send(struct tpm_chip *chip, u8 * buf, size_t count)
+ 		return -EIO;
+ 
+ 	if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
+-		dev_err(chip->dev, "IBF timeout\n");
++		dev_err(chip->pdev, "IBF timeout\n");
+ 		return -EIO;
  	}
  
--	if (!(chip = tpm_register_hardware(&pdev->dev, &tpm_nsc))) {
-+	chip = tpmm_chip_alloc(&pdev->dev, &tpm_nsc);
-+	if (IS_ERR(chip)) {
- 		rc = -ENODEV;
- 		goto err_rel_reg;
+ 	outb(NSC_COMMAND_NORMAL, chip->vendor.base + NSC_COMMAND);
+ 	if (wait_for_stat(chip, NSC_STATUS_IBR, NSC_STATUS_IBR, &data) < 0) {
+-		dev_err(chip->dev, "IBR timeout\n");
++		dev_err(chip->pdev, "IBR timeout\n");
+ 		return -EIO;
  	}
  
-+	rc = tpm_chip_register(chip);
-+	if (rc)
-+		goto err_rel_reg;
-+
- 	dev_dbg(&pdev->dev, "NSC TPM detected\n");
- 	dev_dbg(&pdev->dev,
- 		"NSC LDN 0x%x, SID 0x%x, SRID 0x%x\n",
+ 	for (i = 0; i < count; i++) {
+ 		if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
+-			dev_err(chip->dev,
++			dev_err(chip->pdev,
+ 				"IBF timeout (while writing data)\n");
+ 			return -EIO;
+ 		}
+@@ -209,7 +209,7 @@ static int tpm_nsc_send(struct tpm_chip *chip, u8 * buf, size_t count)
+ 	}
+ 
+ 	if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
+-		dev_err(chip->dev, "IBF timeout\n");
++		dev_err(chip->pdev, "IBF timeout\n");
+ 		return -EIO;
+ 	}
+ 	outb(NSC_COMMAND_EOC, chip->vendor.base + NSC_COMMAND);
+diff --git a/drivers/char/tpm/tpm_ppi.c b/drivers/char/tpm/tpm_ppi.c
+index 6acdb17..659de61 100644
+--- a/drivers/char/tpm/tpm_ppi.c
++++ b/drivers/char/tpm/tpm_ppi.c
+@@ -358,11 +358,11 @@ int tpm_add_ppi(struct tpm_chip *chip)
+ 
+ 	ACPI_FREE(obj);
+ 
+-	return sysfs_create_group(&chip->dev->kobj, &ppi_attr_grp);
++	return sysfs_create_group(&chip->pdev->kobj, &ppi_attr_grp);
+ }
+ 
+ void tpm_remove_ppi(struct tpm_chip *chip)
+ {
+ 	if (chip->ppi_version[0] != '\0')
+-		sysfs_remove_group(&chip->dev->kobj, &ppi_attr_grp);
++		sysfs_remove_group(&chip->pdev->kobj, &ppi_attr_grp);
+ }
 diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
-index 2c46734..0066b68 100644
+index 00ed222..660d9af 100644
 --- a/drivers/char/tpm/tpm_tis.c
 +++ b/drivers/char/tpm/tpm_tis.c
-@@ -75,9 +75,6 @@ enum tis_defaults {
- #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
- #define	TPM_RID(l)			(0x0F04 | ((l) << 12))
+@@ -238,7 +238,7 @@ static int tpm_tis_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	/* read first 10 bytes, including tag, paramsize, and result */
+ 	if ((size =
+ 	     recv_data(chip, buf, TPM_HEADER_SIZE)) < TPM_HEADER_SIZE) {
+-		dev_err(chip->dev, "Unable to read header\n");
++		dev_err(chip->pdev, "Unable to read header\n");
+ 		goto out;
+ 	}
  
--static LIST_HEAD(tis_chips);
--static DEFINE_MUTEX(tis_lock);
--
- #if defined(CONFIG_PNP) && defined(CONFIG_ACPI)
- static int is_itpm(struct pnp_dev *dev)
- {
-@@ -528,6 +525,17 @@ static bool interrupts = true;
- module_param(interrupts, bool, 0444);
- MODULE_PARM_DESC(interrupts, "Enable interrupts");
+@@ -251,7 +251,7 @@ static int tpm_tis_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 	if ((size +=
+ 	     recv_data(chip, &buf[TPM_HEADER_SIZE],
+ 		       expected - TPM_HEADER_SIZE)) < expected) {
+-		dev_err(chip->dev, "Unable to read remainder of result\n");
++		dev_err(chip->pdev, "Unable to read remainder of result\n");
+ 		size = -ETIME;
+ 		goto out;
+ 	}
+@@ -260,7 +260,7 @@ static int tpm_tis_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+ 			  &chip->vendor.int_queue, false);
+ 	status = tpm_tis_status(chip);
+ 	if (status & TPM_STS_DATA_AVAIL) {	/* retry? */
+-		dev_err(chip->dev, "Error left over data\n");
++		dev_err(chip->pdev, "Error left over data\n");
+ 		size = -EIO;
+ 		goto out;
+ 	}
+@@ -433,7 +433,7 @@ static int probe_itpm(struct tpm_chip *chip)
  
-+static void tpm_tis_remove(struct tpm_chip *chip)
-+{
-+	iowrite32(~TPM_GLOBAL_INT_ENABLE &
-+		  ioread32(chip->vendor.iobase +
-+			   TPM_INT_ENABLE(chip->vendor.
-+					  locality)),
-+		  chip->vendor.iobase +
-+		  TPM_INT_ENABLE(chip->vendor.locality));
-+	release_locality(chip, chip->vendor.locality, 1);
-+}
-+
- static int tpm_tis_init(struct device *dev, resource_size_t start,
- 			resource_size_t len, unsigned int irq)
- {
-@@ -535,14 +543,13 @@ static int tpm_tis_init(struct device *dev, resource_size_t start,
- 	int rc, i, irq_s, irq_e, probe;
- 	struct tpm_chip *chip;
- 
--	if (!(chip = tpm_register_hardware(dev, &tpm_tis)))
--		return -ENODEV;
-+	chip = tpmm_chip_alloc(dev, &tpm_tis);
-+	if (IS_ERR(chip))
-+		return PTR_ERR(chip);
- 
--	chip->vendor.iobase = ioremap(start, len);
--	if (!chip->vendor.iobase) {
--		rc = -EIO;
--		goto out_err;
--	}
-+	chip->vendor.iobase = devm_ioremap(dev, start, len);
-+	if (!chip->vendor.iobase)
-+		return -EIO;
- 
- 	/* Default timeouts */
- 	chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-@@ -649,8 +656,8 @@ static int tpm_tis_init(struct device *dev, resource_size_t start,
- 		for (i = irq_s; i <= irq_e && chip->vendor.irq == 0; i++) {
- 			iowrite8(i, chip->vendor.iobase +
- 				 TPM_INT_VECTOR(chip->vendor.locality));
--			if (request_irq
--			    (i, tis_int_probe, IRQF_SHARED,
-+			if (devm_request_irq
-+			    (dev, i, tis_int_probe, IRQF_SHARED,
+ 	rc = tpm_tis_send_data(chip, cmd_getticks, len);
+ 	if (rc == 0) {
+-		dev_info(chip->dev, "Detected an iTPM.\n");
++		dev_info(chip->pdev, "Detected an iTPM.\n");
+ 		rc = 1;
+ 	} else
+ 		rc = -EFAULT;
+@@ -662,7 +662,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+ 			if (devm_request_irq
+ 			    (dev, i, tis_int_probe, IRQF_SHARED,
  			     chip->vendor.miscdev.name, chip) != 0) {
- 				dev_info(chip->dev,
+-				dev_info(chip->dev,
++				dev_info(chip->pdev,
  					 "Unable to request irq: %d for probe\n",
-@@ -690,15 +697,14 @@ static int tpm_tis_init(struct device *dev, resource_size_t start,
- 			iowrite32(intmask,
- 				  chip->vendor.iobase +
- 				  TPM_INT_ENABLE(chip->vendor.locality));
--			free_irq(i, chip);
- 		}
- 	}
- 	if (chip->vendor.irq) {
- 		iowrite8(chip->vendor.irq,
- 			 chip->vendor.iobase +
- 			 TPM_INT_VECTOR(chip->vendor.locality));
--		if (request_irq
--		    (chip->vendor.irq, tis_int_handler, IRQF_SHARED,
-+		if (devm_request_irq
-+		    (dev, chip->vendor.irq, tis_int_handler, IRQF_SHARED,
+ 					 i);
+ 				continue;
+@@ -709,7 +709,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+ 		if (devm_request_irq
+ 		    (dev, chip->vendor.irq, tis_int_handler, IRQF_SHARED,
  		     chip->vendor.miscdev.name, chip) != 0) {
- 			dev_info(chip->dev,
+-			dev_info(chip->dev,
++			dev_info(chip->pdev,
  				 "Unable to request irq: %d for use\n",
-@@ -719,17 +725,9 @@ static int tpm_tis_init(struct device *dev, resource_size_t start,
- 		}
- 	}
- 
--	INIT_LIST_HEAD(&chip->vendor.list);
--	mutex_lock(&tis_lock);
--	list_add(&chip->vendor.list, &tis_chips);
--	mutex_unlock(&tis_lock);
--
--
--	return 0;
-+	return tpm_chip_register(chip);
- out_err:
--	if (chip->vendor.iobase)
--		iounmap(chip->vendor.iobase);
--	tpm_remove_hardware(chip->dev);
-+	tpm_tis_remove(chip);
- 	return rc;
- }
- 
-@@ -811,13 +809,10 @@ MODULE_DEVICE_TABLE(pnp, tpm_pnp_tbl);
- static void tpm_tis_pnp_remove(struct pnp_dev *dev)
- {
- 	struct tpm_chip *chip = pnp_get_drvdata(dev);
--
--	tpm_dev_vendor_release(chip);
--
--	kfree(chip);
-+	tpm_chip_unregister(chip);
-+	tpm_tis_remove(chip);
- }
- 
--
- static struct pnp_driver tis_pnp_driver = {
- 	.name = "tpm_tis",
- 	.id_table = tpm_pnp_tbl,
-@@ -836,7 +831,7 @@ MODULE_PARM_DESC(hid, "Set additional specific HID for this driver to probe");
- 
- static struct platform_driver tis_drv = {
- 	.driver = {
--		.name = "tpm_tis",
-+		.name		= "tpm_tis",
- 		.owner		= THIS_MODULE,
- 		.pm		= &tpm_tis_pm,
- 	},
-@@ -876,31 +871,16 @@ err_dev:
- 
- static void __exit cleanup_tis(void)
- {
--	struct tpm_vendor_specific *i, *j;
- 	struct tpm_chip *chip;
--	mutex_lock(&tis_lock);
--	list_for_each_entry_safe(i, j, &tis_chips, list) {
--		chip = to_tpm_chip(i);
--		tpm_remove_hardware(chip->dev);
--		iowrite32(~TPM_GLOBAL_INT_ENABLE &
--			  ioread32(chip->vendor.iobase +
--				   TPM_INT_ENABLE(chip->vendor.
--						  locality)),
--			  chip->vendor.iobase +
--			  TPM_INT_ENABLE(chip->vendor.locality));
--		release_locality(chip, chip->vendor.locality, 1);
--		if (chip->vendor.irq)
--			free_irq(chip->vendor.irq, chip);
--		iounmap(i->iobase);
--		list_del(&i->list);
--	}
--	mutex_unlock(&tis_lock);
- #ifdef CONFIG_PNP
- 	if (!force) {
- 		pnp_unregister_driver(&tis_pnp_driver);
- 		return;
- 	}
- #endif
-+	chip = dev_get_drvdata(&pdev->dev);
-+	tpm_chip_unregister(chip);
-+	tpm_tis_remove(chip);
- 	platform_device_unregister(pdev);
- 	platform_driver_unregister(&tis_drv);
- }
-diff --git a/drivers/char/tpm/xen-tpmfront.c b/drivers/char/tpm/xen-tpmfront.c
-index 441b44e..c3b4f5a 100644
---- a/drivers/char/tpm/xen-tpmfront.c
-+++ b/drivers/char/tpm/xen-tpmfront.c
-@@ -175,9 +175,9 @@ static int setup_chip(struct device *dev, struct tpm_private *priv)
- {
- 	struct tpm_chip *chip;
- 
--	chip = tpm_register_hardware(dev, &tpm_vtpm);
--	if (!chip)
--		return -ENODEV;
-+	chip = tpmm_chip_alloc(dev, &tpm_vtpm);
-+	if (IS_ERR(chip))
-+		return PTR_ERR(chip);
- 
- 	init_waitqueue_head(&chip->vendor.read_queue);
- 
-@@ -286,6 +286,7 @@ static int tpmfront_probe(struct xenbus_device *dev,
- 		const struct xenbus_device_id *id)
- {
- 	struct tpm_private *priv;
-+	struct tpm_chip *chip;
- 	int rv;
- 
- 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-@@ -302,21 +303,22 @@ static int tpmfront_probe(struct xenbus_device *dev,
- 
- 	rv = setup_ring(dev, priv);
- 	if (rv) {
--		tpm_remove_hardware(&dev->dev);
-+		chip = dev_get_drvdata(&dev->dev);
-+		tpm_chip_unregister(chip);
- 		ring_free(priv);
- 		return rv;
- 	}
- 
- 	tpm_get_timeouts(priv->chip);
- 
--	return rv;
-+	return tpm_chip_register(priv->chip);
- }
- 
- static int tpmfront_remove(struct xenbus_device *dev)
- {
- 	struct tpm_chip *chip = dev_get_drvdata(&dev->dev);
- 	struct tpm_private *priv = TPM_VPRIV(chip);
--	tpm_remove_hardware(&dev->dev);
-+	tpm_chip_unregister(chip);
- 	ring_free(priv);
- 	TPM_VPRIV(chip) = NULL;
- 	return 0;
+ 				 chip->vendor.irq);
+ 			chip->vendor.irq = 0;
 -- 
 2.1.0
