@@ -1,69 +1,99 @@
-From: Milosz Tanski <milosz@adfin.com>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache only)
-Date: Tue, 11 Nov 2014 11:02:00 -0500
-Message-ID: <CANP1eJHfWT0Foe+weB1SJkJ10JnOge_g=E8CXBsQNPW7i2+4NA@mail.gmail.com>
-References: <cover.1415636409.git.milosz@adfin.com>
-	<20141111064417.GT23575@dastard>
+From: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Subject: Re: [PATCH] drivers/firewire: fix use/leak of uninitialized stack
+	memory in dispatch_ioctl()
+Date: Tue, 11 Nov 2014 17:13:56 +0100
+Message-ID: <20141111171356.2fc62440@kant>
+References: <55D28623-C1C7-47D2-9638-0B8FD0733C48@stanford.edu>
+	<20141111010340.3329bbd7@kant> <20141111130143.2ff3d42e@kant>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20141111064417.GT23575@dastard>
-Sender: owner-linux-aio@kvack.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux1394-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20141111130143.2ff3d42e@kant>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux1394-devel>,
+	<mailto:linux1394-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux1394-devel>
+List-Post: <mailto:linux1394-devel@lists.sourceforge.net>
+List-Help: <mailto:linux1394-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux1394-devel>,
+	<mailto:linux1394-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux1394-devel-bounces@lists.sourceforge.net
+To: linux1394-devel@lists.sourceforge.net
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, David Ramos <daramos@stanford.edu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 11, 2014 at 1:44 AM, Dave Chinner <david@fromorbit.com> wrote:
-> On Mon, Nov 10, 2014 at 11:40:23AM -0500, Milosz Tanski wrote:
->> This patcheset introduces an ability to perform a non-blocking read from
->> regular files in buffered IO mode. This works by only for those filesystems
->> that have data in the page cache.
->>
->> It does this by introducing new syscalls new syscalls preadv2/pwritev2. These
->> new syscalls behave like the network sendmsg, recvmsg syscalls that accept an
->> extra flag argument (RWF_NONBLOCK).
->>
->> It's a very common patern today (samba, libuv, etc..) use a large threadpool to
->> perform buffered IO operations. They submit the work form another thread
->> that performs network IO and epoll or other threads that perform CPU work. This
->> leads to increased latency for processing, esp. in the case of data that's
->> already cached in the page cache.
->>
->> With the new interface the applications will now be able to fetch the data in
->> their network / cpu bound thread(s) and only defer to a threadpool if it's not
->> there. In our own application (VLDB) we've observed a decrease in latency for
->> "fast" request by avoiding unnecessary queuing and having to swap out current
->> tasks in IO bound work threads.
->
-> Can you write a test (or set of) for fstests that exercises this new
-> functionality? I'm not worried about performance, just
-> correctness....
+Adding Cc: linux-api and lkml, quoting parent message in full
 
-Sure thing. Can you point me at the fstests repo? A quick google
-search reveals lots of projects named fstests, most of them abandoned.
+On Nov 11 Stefan Richter wrote:
+> On Nov 11 Stefan Richter wrote:
+> > On Nov 10 David Ramos wrote:
+> > > This patch fixes an uninitialized memory use/leak bug discovered
+> > > by our UC-KLEE tool in the 3.16.3 kernel.
+> > 
+> > There is uninitialized memory use, but no leak.
+> 
+> Actually there could be leaks too.  If later fw_cdev_event_ are
+> generated, they will contain the __u64 closure field that many of the
+> ioctl argument structures contain.
+> 
+> > [...]
+> > > If a user carefully crafts an ioctl command such that _IOC_DIR(cmd)
+> > > == 0, 'buffer' is left uninitialized. Each of the ioctl_handlers then
+> > > accesses the pre-existing stack values, which will cause unpredictable
+> > > behavior.
+> > 
+> > Not all (but indeed almost all) ioctl handlers will use uninitialized
+> > memory in that case.  The damage should be marginal though, because all of
+> > these handlers must implement sufficient arguments checking anyway.
+> > 
+> > > This patch checks for an invalid cmd and rejects it with -ENOTTY.
+> > 
+> > This is not exactly what your patch does.  Rather...
+> > 
+> > > --- a/drivers/firewire/core-cdev.c
+> > > +++ b/drivers/firewire/core-cdev.c
+> > > @@ -1632,7 +1632,8 @@ static int dispatch_ioctl(struct client *client,
+> > >  	if (fw_device_is_shutdown(client->device))
+> > >  		return -ENODEV;
+> > >  
+> > > -	if (_IOC_TYPE(cmd) != '#' ||
+> > > +	if (_IOC_DIR(cmd) == _IOC_NONE ||
+> > > +	    _IOC_TYPE(cmd) != '#' ||
+> > >  	    _IOC_NR(cmd) >= ARRAY_SIZE(ioctl_handlers) ||
+> > >  	    _IOC_SIZE(cmd) > sizeof(buffer))
+> > >  		return -ENOTTY;
+> > 
+> > ...it quits *all* _IOC_NONE ioctls with -ENOTTY, not just invalid ones.
+> > If you have a look at the ABI definition in
+> > include/uapi/linux/firewire-cdev.h, you will notice that this approach is
+> > insufficient.
+> 
+> I suppose we should add checks
+>   1. for _IOC_DIR matching the expected direction depending on _IOC_NR
+>      (or at least for presence of _IOC_WRITE when expected), and
+>   2. for _IOC_SIZE being at least as big as the minimum unaligned argument
+>      size depending on _IOC_NR (at least in case of
+>      _IOC_DIR(cmd) & _IOC_WRITE).
+> 
+> BTW, I don't think it is worthwhile to check for upper bounds of _IOC_SIZE
+> besides the present check against sizeof(buffer), since the precise size of
+> arguments depends on structure alignment of the user code and on ABI
+> version.
 
->
-> Cheers,
->
-> Dave.
->
-> --
-> Dave Chinner
-> david@fromorbit.com
-
-
-
+I will follow up with two alternative patches for discussion; either one
+should fix the issue but they differ in complexity and runtime cost:
+    [PATCH RFC v1a] firewire: cdev: prevent kernel stack leaking into ioctl arguments
+    [PATCH RFC v1b] firewire: cdev: prevent kernel stack leaking into ioctl arguments
+If I receive no feedback to the contrary, I will probably submit patch v1b
+to upstream, which is the simpler one of the two.
 -- 
-Milosz Tanski
-CTO
-16 East 34th Street, 15th floor
-New York, NY 10016
+Stefan Richter
+-=====-====- =-== -=-==
+http://arcgraph.de/sr/
 
-p: 646-253-9055
-e: milosz@adfin.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+------------------------------------------------------------------------------
+Comprehensive Server Monitoring with Site24x7.
+Monitor 10 servers for $9/Month.
+Get alerted through email, SMS, voice calls or mobile push notifications.
+Take corrective actions from your mobile device.
+http://pubads.g.doubleclick.net/gampad/clk?id=154624111&iu=/4140/ostg.clktrk
