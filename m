@@ -1,37 +1,52 @@
 From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Wed, 12 Nov 2014 08:42:40 +1100
-Message-ID: <20141111214240.GV23575@dastard>
-References: <cover.1415636409.git.milosz@adfin.com>
- <20141111064417.GT23575@dastard>
- <CANP1eJHfWT0Foe+weB1SJkJ10JnOge_g=E8CXBsQNPW7i2+4NA@mail.gmail.com>
- <x49ioilbrfx.fsf@segfault.boston.devel.redhat.com>
+Subject: Re: [v6 4/4] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
+ interface support
+Date: Wed, 12 Nov 2014 08:58:23 +1100
+Message-ID: <20141111215823.GX23575@dastard>
+References: <1415468619-31851-1-git-send-email-lixi@ddn.com>
+ <1415468619-31851-5-git-send-email-lixi@ddn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <x49ioilbrfx.fsf@segfault.boston.devel.redhat.com>
-Sender: owner-linux-aio@kvack.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Milosz Tanski <milosz@adfin.com>, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+In-Reply-To: <1415468619-31851-5-git-send-email-lixi@ddn.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Li Xi <pkuelelixi@gmail.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 11, 2014 at 12:03:14PM -0500, Jeff Moyer wrote:
-> Milosz Tanski <milosz@adfin.com> writes:
-> 
-> >> Can you write a test (or set of) for fstests that exercises this new
-> >> functionality? I'm not worried about performance, just
-> >> correctness....
-> >
-> > Sure thing. Can you point me at the fstests repo? A quick google
-> > search reveals lots of projects named fstests, most of them abandoned.
-> 
-> I think he's referring to xfstests.  Still, I think that's the wrong
-> place for functional testing.  ltp would be better, imo.
+On Sun, Nov 09, 2014 at 01:43:39AM +0800, Li Xi wrote:
+> This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
+> support for ext4. The interface is kept consistent with
+> XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
 
-I don't follow. Can you explain why is xfstests be the wrong place
-to exercise this functionality and what makes ltp a better choice?
+I missed somethignthe first time around, and it's to do with
+fsx_flags field and what ext4 is putting in it....
+
+> @@ -617,7 +713,45 @@ resizefs_out:
+>  	}
+>  	case EXT4_IOC_PRECACHE_EXTENTS:
+>  		return ext4_ext_precache(inode);
+> +	case EXT4_IOC_FSGETXATTR:
+> +	{
+> +		struct fsxattr fa;
+> +
+> +		memset(&fa, 0, sizeof(struct fsxattr));
+> +
+> +		ext4_get_inode_flags(ei);
+> +		fa.fsx_xflags = ei->i_flags & EXT4_FL_USER_VISIBLE;
+
+You're putting ext4 inode flags in this field. That's not right -
+the flags that are defined for this field are the XFS_XFLAGS_*
+fields, and you need to translate between the ext4 flags and the
+existing falg definitions. Any falg definitions that don't already
+exist that ext4 needs to support need to be added to the XFS_XFLAGS
+definitions.
+
+i.e. this is not a field that has flags defined by ext4 - the
+flags must be the same across all filesystems that implement it, and
+that means ext4 must use the existing definitions where they already
+exist.
 
 Cheers,
 
@@ -39,9 +54,3 @@ Dave.
 -- 
 Dave Chinner
 david@fromorbit.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
