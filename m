@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v2 16/19] selftests/sysctl: add install target to enable installing test
-Date: Tue, 11 Nov 2014 13:27:56 -0700
-Message-ID: <d9d5e5733e0720efbf77552fa2caf1880a3e3cf5.1415735831.git.shuahkh@osg.samsung.com>
+Subject: [PATCH v2 14/19] selftests/net: add install target to enable installing test
+Date: Tue, 11 Nov 2014 13:27:54 -0700
+Message-ID: <1170d5a224521d8d4840b3f54db60da4c50aa5cc.1415735831.git.shuahkh@osg.samsung.com>
 References: <cover.1415735831.git.shuahkh@osg.samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1415735831.git.shuahkh@osg.samsung.com>
@@ -19,46 +19,47 @@ only from top level source dir.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- tools/testing/selftests/sysctl/Makefile | 23 +++++++++++++++++++++--
- 1 file changed, 21 insertions(+), 2 deletions(-)
+ tools/testing/selftests/net/Makefile | 23 ++++++++++++++++++++---
+ 1 file changed, 20 insertions(+), 3 deletions(-)
 
-diff --git a/tools/testing/selftests/sysctl/Makefile b/tools/testing/selftests/sysctl/Makefile
-index 0a92ada..34cca1b 100644
---- a/tools/testing/selftests/sysctl/Makefile
-+++ b/tools/testing/selftests/sysctl/Makefile
-@@ -4,12 +4,31 @@
- # No binaries, but make sure arg-less "make" doesn't trigger "run_tests".
- all:
+diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
+index 62f22cc..16550eb 100644
+--- a/tools/testing/selftests/net/Makefile
++++ b/tools/testing/selftests/net/Makefile
+@@ -6,14 +6,31 @@ CFLAGS = -Wall -O2 -g
+ CFLAGS += -I../../../../usr/include/
  
-+INSTALL_PROGS = common_tests run_numerictests run_stringtests
-+NUMERIC_TEST_STR = /bin/sh ./run_numerictests
-+STRING_TEST_STR = /bin/sh ./run_stringtests
-+
- # Allow specific tests to be selected.
- test_num:
--	@/bin/sh ./run_numerictests
-+	@$(NUMERIC_TEST_STR)
+ NET_PROGS = socket psock_fanout psock_tpacket
++INSTALL_PROGS = run_netsocktests run_afpackettests test_bpf.sh $(NET_PROGS)
++NETSOCK_TEST_STR = /bin/sh ./run_netsocktests || echo sockettests: [FAIL]
++AFPKT_TEST_STR = /bin/sh ./run_afpackettests || echo afpackettests: [FAIL]
++BFP_TEST_STR = ./test_bpf.sh
  
- test_string:
--	@/bin/sh ./run_stringtests
-+	@$(STRING_TEST_STR)
-+
-+install: all
+ all: $(NET_PROGS)
+ %: %.c
+ 	$(CC) $(CFLAGS) -o $@ $^
+ 
++install:
 +ifdef INSTALL_KSFT_PATH
 +	install $(INSTALL_PROGS) $(INSTALL_KSFT_PATH)
-+	@echo echo Start sysctl numeric tests .... >> $(KSELFTEST)
-+	@echo "$(NUMERIC_TEST_STR)" >> $(KSELFTEST)
-+	@echo echo End sysctl numeric tests .... >> $(KSELFTEST)
-+	@echo echo -------------------- >> $(KSELFTEST)
-+	@echo echo Start sysctl string tests .... >> $(KSELFTEST)
-+	@echo "$(STRING_TEST_STR)" >> $(KSELFTEST)
-+	@echo echo End sysctl string test .... >> $(KSELFTEST)
++	@echo echo Start net test .... >> $(KSELFTEST)
++	@echo "$(NETSOCK_TEST_STR)" >> $(KSELFTEST)
++	@echo "$(AFPKT_TEST_STR)" >> $(KSELFTEST)
++	@echo "$(BFP_TEST_STR)" >> $(KSELFTEST)
++	@echo echo End net test .... >> $(KSELFTEST)
 +	@echo echo ============================== >> $(KSELFTEST)
 +else
 +	@echo Run make kselftest_install in top level source directory
 +endif
- 
- run_tests: all test_num test_string
- 
++
+ run_tests: all
+-	@/bin/sh ./run_netsocktests || echo "sockettests: [FAIL]"
+-	@/bin/sh ./run_afpackettests || echo "afpackettests: [FAIL]"
+-	./test_bpf.sh
++	@$(NETSOCK_TEST_STR)
++	@$(AFPKT_TEST_STR)
++	@$(BFP_TEST_STR)
+ clean:
+ 	$(RM) $(NET_PROGS)
 -- 
 1.9.1
