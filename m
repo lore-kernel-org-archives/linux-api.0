@@ -1,73 +1,126 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH 0/8] crypto: AF_ALG: add AEAD and RNG support
-Date: Wed, 12 Nov 2014 07:59:30 +0100
-Message-ID: <4738444.A2vZX1nNCo@tachyon.chronox.de>
+Subject: [PATCH 2/8] crypto: AF_ALG: user space interface for cipher info
+Date: Wed, 12 Nov 2014 08:01:04 +0100
+Message-ID: <3969167.9oqJUVzqHv@tachyon.chronox.de>
+References: <4738444.A2vZX1nNCo@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4738444.A2vZX1nNCo@tachyon.chronox.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: ABI/API <linux-api@vger.kernel.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+The AF_ALG interface allows normal cipher (hash, encrypt, decrypt).
+However, it does not allow user space to obtain the following generic
+information about the currently active cipher:
 
-This patch set adds AEAD and RNG support to the AF_ALG interface
-exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
-support, all cipher types the kernel crypto API allows access to are
-now accessible from userspace.
+	* block size of the cipher
 
-The RNG support is stand-alone.
+	* IV size of the cipher
 
-The AEAD implementation is added to algif_skcipher.c to prevent
-re-implementation of the memory moving logic.
+	* for AEAD, the maximum authentication tag size
 
-The extension for the AEAD support can be summarized with the following
-types of changes:
+The patch adds a getsockopt interface for the symmetric ciphers to
+answer such information requests from user space.
 
-        * select the correct crypto API functions (either the ablkcipher
-          or the aead functions)
+The kernel crypto API function calls are used to obtain the real data.
+As all data are simple integer values, the getsockopt handler function
+uses put_user() to return the integer value to user space in the
+*optval parameter of getsockopt.
 
-        * apply the additional data needed for AEAD at the right time
-          (associated data, authentication tag) -- this includes the addition
-          of user space interfaces to allow setting this data.
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+---
+ crypto/algif_skcipher.c     | 46 ++++++++++++++++++++++++++++++++++++++++++++-
+ include/uapi/linux/if_alg.h |  3 +++
+ 2 files changed, 48 insertions(+), 1 deletion(-)
 
-        * add the calculation for the memory size needed for encryption and
-          decryption.
-
-In addition, the patch set adds a getsockopt implementation to skcipher to
-allow user space to inquire about properties of the ciphers (IV size,
-block size, authentication data size). This extension would be needed for a
-generic user space usage of these ciphers.
-
-The new AEAD and RNG interfaces are fully tested with the test application
-provided at [1]. That test application exercises all newly added user space
-interfaces.
-
-The patch set was tested on x86_64 and i386.
-
-[1] http://www.chronox.de/libkcapi.html
-
-Stephan Mueller (8):
-  crypto: AF_ALG: add user space interface for AEAD
-  crypto: AF_ALG: user space interface for cipher info
-  crypto: AF_ALG: extend data structuers for AEAD
-  crypto: AF_ALG: crypto API calls to inline functions
-  crypto: AF_ALG: add AEAD support
-  crypto: AF_ALG: make setkey optional
-  crypto: AF_ALG: add random number generator support
-  crypto: AF_ALG: enable RNG interface compilation
-
- crypto/Kconfig              |   9 ++
- crypto/Makefile             |   1 +
- crypto/af_alg.c             |  20 +++
- crypto/algif_rng.c          | 186 +++++++++++++++++++++++
- crypto/algif_skcipher.c     | 350 ++++++++++++++++++++++++++++++++++++++++----
- include/crypto/if_alg.h     |   2 +
- include/uapi/linux/if_alg.h |  10 ++
- 7 files changed, 550 insertions(+), 28 deletions(-)
- create mode 100644 crypto/algif_rng.c
-
+diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
+index 83187f4..7a1656b 100644
+--- a/crypto/algif_skcipher.c
++++ b/crypto/algif_skcipher.c
+@@ -522,6 +522,50 @@ static unsigned int skcipher_poll(struct file *file, struct socket *sock,
+ 	return mask;
+ }
+ 
++static int skcipher_getsockopt(struct socket *sock, int level, int optname,
++			       char __user *optval, int __user *optlen)
++{
++	struct sock *sk = sock->sk;
++	struct alg_sock *ask = alg_sk(sk);
++	struct skcipher_ctx *ctx = ask->private;
++	const struct af_alg_type *type;
++	int len = 0;
++	int err = -EOPNOTSUPP;
++
++	lock_sock(sk);
++	type = ask->type;
++
++	if (level != SOL_ALG || !type)
++		goto unlock;
++
++	switch (optname) {
++	case ALG_GET_BLOCKSIZE:
++		len = skcipher_crypto_blocksize(ctx);
++		err = 0;
++		break;
++	case ALG_GET_IVSIZE:
++		len = skcipher_crypto_ivsize_ctx(ctx);
++		err = 0;
++		break;
++	case ALG_GET_AEAD_AUTHSIZE:
++		if (ctx->aead) {
++			len = crypto_aead_authsize(crypto_aead_reqtfm(
++						   &ctx->u.aead_req));
++			err = 0;
++		}
++		break;
++	default:
++		break;
++	}
++
++unlock:
++	release_sock(sk);
++	if (err >= 0)
++		err = put_user(len, optlen);
++
++	return err;
++}
++
+ static struct proto_ops algif_skcipher_ops = {
+ 	.family		=	PF_ALG,
+ 
+@@ -531,7 +575,6 @@ static struct proto_ops algif_skcipher_ops = {
+ 	.ioctl		=	sock_no_ioctl,
+ 	.listen		=	sock_no_listen,
+ 	.shutdown	=	sock_no_shutdown,
+-	.getsockopt	=	sock_no_getsockopt,
+ 	.mmap		=	sock_no_mmap,
+ 	.bind		=	sock_no_bind,
+ 	.accept		=	sock_no_accept,
+@@ -542,6 +585,7 @@ static struct proto_ops algif_skcipher_ops = {
+ 	.sendpage	=	skcipher_sendpage,
+ 	.recvmsg	=	skcipher_recvmsg,
+ 	.poll		=	skcipher_poll,
++	.getsockopt	=	skcipher_getsockopt,
+ };
+ 
+ static void *skcipher_bind(const char *name, u32 type, u32 mask)
+diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
+index 64e7008..267fd73 100644
+--- a/include/uapi/linux/if_alg.h
++++ b/include/uapi/linux/if_alg.h
+@@ -39,6 +39,9 @@ struct af_alg_aead_assoc {
+ #define ALG_SET_OP			3
+ #define ALG_SET_AEAD_ASSOC		4
+ #define ALG_SET_AEAD_AUTHSIZE		5
++#define ALG_GET_BLOCKSIZE		6
++#define ALG_GET_IVSIZE			7
++#define ALG_GET_AEAD_AUTHSIZE		8
+ 
+ /* Operations */
+ #define ALG_OP_DECRYPT			0
 -- 
 2.1.0
