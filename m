@@ -1,33 +1,58 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH] selftests/net: psock_fanout seg faults in
- sock_fanout_read_ring()
-Date: Tue, 11 Nov 2014 21:44:02 -0500 (EST)
-Message-ID: <20141111.214402.693686900755542775.davem@davemloft.net>
-References: <1415725453-6549-1-git-send-email-shuahkh@osg.samsung.com>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: [PATCH 8/8] crypto: AF_ALG: enable RNG interface compilation
+Date: Wed, 12 Nov 2014 08:06:41 +0100
+Message-ID: <1533977.uDd7pUf1qA@tachyon.chronox.de>
+References: <4738444.A2vZX1nNCo@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1415725453-6549-1-git-send-email-shuahkh@osg.samsung.com>
+In-Reply-To: <4738444.A2vZX1nNCo@tachyon.chronox.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: shuahkh@osg.samsung.com
-Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: ABI/API <linux-api@vger.kernel.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Date: Tue, 11 Nov 2014 10:04:13 -0700
+Enable compilation of the RNG AF_ALG support and provide a Kconfig
+option to compile the RNG AF_ALG support.
 
-> The while loop in sock_fanout_read_ring() checks mmap region
-> bounds after access, causing it to segfault. Fix it to check
-> count before accessing header->tp_status. This problem can be
-> reproduced consistently when the test in run as follows:
-> 
->     make -C tools/testing/selftests TARGETS=net run_tests
->     or
->     make run_tests from tools/testing/selftests
->     or
->     make run_test from tools/testing/selftests/net
-> 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+---
+ crypto/Kconfig  | 9 +++++++++
+ crypto/Makefile | 1 +
+ 2 files changed, 10 insertions(+)
 
-Definitely looks correct to me, applied, thanks.
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 87bbc9c..e127323 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1505,6 +1505,15 @@ config CRYPTO_USER_API_SKCIPHER
+ 	  This option enables the user-spaces interface for symmetric
+ 	  key cipher algorithms.
+ 
++config CRYPTO_USER_API_RNG
++	tristate "User-space interface for random number generator algorithms"
++	depends on NET
++	select CRYPTO_RNG
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for random
++	  number generator algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
+ 
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 1445b91..ba19465 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -99,6 +99,7 @@ obj-$(CONFIG_CRYPTO_GHASH) += ghash-generic.o
+ obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
+ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
++obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
+ 
+ #
+ # generic algorithms and the async_tx api
+-- 
+2.1.0
