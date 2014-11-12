@@ -1,27 +1,27 @@
-From: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 7/8] crypto: AF_ALG: add random number generator support
-Date: Wed, 12 Nov 2014 18:51:59 +0100
-Message-ID: <54639E3F.2010504@redhat.com>
-References: <4738444.A2vZX1nNCo@tachyon.chronox.de> <9137675.ZTbqvCU5Bi@tachyon.chronox.de> <5463978F.7020508@redhat.com> <26219337.yCCTlAE9Ns@tauon>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCHv7 0/3] syscalls,x86: Add execveat() system call
+Date: Wed, 12 Nov 2014 13:50:09 -0800
+Message-ID: <20141112135009.5a887d200be262d94ba50495@linux-foundation.org>
+References: <1415379664-31555-1-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <26219337.yCCTlAE9Ns@tauon>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1415379664-31555-1-git-send-email-drysdale@google.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/12/2014 06:46 PM, Stephan Mueller wrote:
-...
-> * I unconditionally use the memset after memcpy as you indicated. Once
-> the cryptodev tree contains the memzero_explicit call, I will start
-> picking up that function.
+On Fri,  7 Nov 2014 17:01:01 +0000 David Drysdale <drysdale@google.com> wrote:
 
-Herbert merged it actually in this morning, so it's already part of
-the cryptodev tree by now.
+> This patch set adds execveat(2) for x86, and is derived from Meredydd
+> Luff's patch from Sept 2012 (https://lkml.org/lkml/2012/9/11/528).
+> 
+> The primary aim of adding an execveat syscall is to allow an
+> implementation of fexecve(3) that does not rely on the /proc
+> filesystem, at least for executables (rather than scripts).  The
+> current glibc version of fexecve(3) is implemented via /proc, which
+> causes problems in sandboxed or otherwise restricted environments.
 
-> Essentially, I throught of the line you suggested.
-
-Ok, thanks.
+Have the relevant glibc people seen/reviewed/liked this?  
