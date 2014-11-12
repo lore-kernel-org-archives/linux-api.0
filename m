@@ -1,7 +1,7 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH 5/8] crypto: AF_ALG: add AEAD support
-Date: Wed, 12 Nov 2014 08:04:34 +0100
-Message-ID: <3699951.5P4sfakh88@tachyon.chronox.de>
+Subject: [PATCH 4/8] crypto: AF_ALG: crypto API calls to inline functions
+Date: Wed, 12 Nov 2014 08:03:56 +0100
+Message-ID: <3074506.vKFsHnq6R2@tachyon.chronox.de>
 References: <4738444.A2vZX1nNCo@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,282 +13,234 @@ To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: ABI/API <linux-api@vger.kernel.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the AEAD support for AF_ALG.
-
-The AEAD implementation uses the entire memory handling and
-infrastructure of the existing skcipher implementation.
-
-To use AEAD, the user space consumer has to use the salg_type named
-"aead". The AEAD extension only uses the bind callback as the key
-differentiator. The previously added functions that select whether to
-use AEAD or ablkcipher crypto API functions depend on the TFM type
-allocated during the bind() call.
-
-The addition of AEAD brings a bit of overhead to calculate the size of
-the ciphertext, because the AEAD implementation of the kernel crypto API
-makes implied assumption on the location of the authentication tag. When
-performing an encryption, the tag will be added to the created
-ciphertext (note, the tag is placed adjacent to the ciphertext). For
-decryption, the caller must hand in the ciphertext with the tag appended
-to the ciphertext. Therefore, the selection of the used memory
-needs to add/subtract the tag size from the source/destination buffers
-depending on the encryption type. The code is provided with comments
-explainint when and how that operation is performed.
-
-Note: The AF_ALG interface does not support zero length plaintext or
-zero length ciphertext. Such zero length input data may be used if one
-wants to access the hash implementation of an AEAD directly (e.g. the
-GHASH of GCM or CMAC for CCM). However, this is a use case that is not
-of interest. GHASH or CMAC is directly available via the hash AF_ALG
-interface and we therefore do not need to take precautions for this
-use case.
-
-A fully working example using all aspects of AEAD is provided at
-http://www.chronox.de/libkcapi.html
+To avoid excessive branches and cluttering the code, all kernel crypto
+API calls are extracted into separate inline functions. These functions
+invoke either the ablkcipher or the aead crypto API function calls, as
+necessary.
 
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- crypto/algif_skcipher.c | 153 +++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 144 insertions(+), 9 deletions(-)
+ crypto/algif_skcipher.c | 141 ++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 124 insertions(+), 17 deletions(-)
 
 diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
-index fb8efc8..1e2763d 100644
+index 9286cfc..fb8efc8 100644
 --- a/crypto/algif_skcipher.c
 +++ b/crypto/algif_skcipher.c
-@@ -387,6 +387,17 @@ static int skcipher_sendmsg(struct kiocb *unused, struct socket *sock,
+@@ -247,14 +247,121 @@ static void skcipher_data_wakeup(struct sock *sk)
+ 	rcu_read_unlock();
+ }
  
- 		if (con.iv && con.iv->ivlen != ivsize)
- 			return -EINVAL;
++static inline bool skcipher_is_aead(struct crypto_tfm *tfm)
++{
++	return ((crypto_tfm_alg_type(tfm) & CRYPTO_ALG_TYPE_MASK) ==
++		CRYPTO_ALG_TYPE_AEAD);
++}
 +
-+		/*
-+		 * AEAD associated data is limited to a sensible size
-+		 * Size limit is set to some arbitrary length to avoid
-+		 * user space eating up memory
-+		 */
-+		if (ctx->aead &&
-+		    (con.aead_assoc->aead_assoclen > MAX_AEAD_ASSOCLEN ||
-+		     !con.aead_assoc->aead_assoclen ||
-+		     !con.aead_assoc || !con.aead_authsize))
-+			return -EINVAL;
- 	}
- 
- 	err = -EINVAL;
-@@ -399,6 +410,25 @@ static int skcipher_sendmsg(struct kiocb *unused, struct socket *sock,
- 		ctx->enc = enc;
- 		if (con.iv)
- 			memcpy(ctx->iv, con.iv->iv, ivsize);
-+		/* AEAD authentication data handling */
-+		if (ctx->aead) {
-+			if (con.aead_authsize)
-+				err = crypto_aead_setauthsize(
-+					crypto_aead_reqtfm(&ctx->u.aead_req),
-+							   con.aead_authsize);
-+			if (err)
-+				goto unlock;
-+			/* set associated data */
-+			memcpy(ctx->aead_assoc,
-+			       con.aead_assoc->aead_assoc,
-+			       con.aead_assoc->aead_assoclen);
-+			sg_init_one(&ctx->sg_aead_assoc,
-+				    ctx->aead_assoc,
-+				    con.aead_assoc->aead_assoclen);
-+			aead_request_set_assoc(&ctx->u.aead_req,
-+					       &ctx->sg_aead_assoc,
-+					       con.aead_assoc->aead_assoclen);
-+		}
- 	}
- 
- 	while (size) {
-@@ -547,10 +577,41 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
- 	int err = -EAGAIN;
- 	int used;
++static inline unsigned int skcipher_crypto_ivsize(void *private)
++{
++	if (skcipher_is_aead(private))
++		return crypto_aead_ivsize(private);
++	else
++		return crypto_ablkcipher_ivsize(private);
++}
++
++static inline unsigned int skcipher_crypto_ivsize_ctx(struct skcipher_ctx *ctx)
++{
++	if (ctx->aead)
++		return crypto_aead_ivsize(crypto_aead_reqtfm(&ctx->u.aead_req));
++	else
++		return crypto_ablkcipher_ivsize(
++			crypto_ablkcipher_reqtfm(&ctx->u.ablkcipher_req));
++}
++
++static inline unsigned int skcipher_crypto_blocksize(struct skcipher_ctx *ctx)
++{
++	if (ctx->aead)
++		return crypto_aead_blocksize(
++			crypto_aead_reqtfm(&ctx->u.aead_req));
++	else
++		return crypto_ablkcipher_blocksize(
++			crypto_ablkcipher_reqtfm(&ctx->u.ablkcipher_req));
++}
++
++static inline unsigned int skcipher_crypto_reqsize(void *private)
++{
++	if (skcipher_is_aead(private))
++		return crypto_aead_reqsize(private);
++	else
++		return crypto_ablkcipher_reqsize(private);
++}
++
++static inline unsigned int skcipher_crypto_setkey(void *private, const u8 *key,
++						  unsigned int keylen)
++{
++	if (skcipher_is_aead(private))
++		return crypto_aead_setkey(private, key, keylen);
++	else
++		return crypto_ablkcipher_setkey(private, key, keylen);
++}
++
++static inline void skcipher_crypto_free(void *private)
++{
++	if (skcipher_is_aead(private))
++		crypto_free_aead(private);
++	else
++		crypto_free_ablkcipher(private);
++}
++
++static inline void skcipher_request_set_tfm(struct skcipher_ctx *ctx, void *tfm)
++{
++	if (ctx->aead)
++		aead_request_set_tfm(&ctx->u.aead_req, tfm);
++	else
++		ablkcipher_request_set_tfm(&ctx->u.ablkcipher_req, tfm);
++}
++
++static inline int skcipher_crypto_encrypt(struct skcipher_ctx *ctx)
++{
++	if (ctx->aead)
++		return crypto_aead_encrypt(&ctx->u.aead_req);
++	else
++		return crypto_ablkcipher_encrypt(&ctx->u.ablkcipher_req);
++}
++
++static inline int skcipher_crypto_decrypt(struct skcipher_ctx *ctx)
++{
++	if (ctx->aead)
++		return crypto_aead_decrypt(&ctx->u.aead_req);
++	else
++		return crypto_ablkcipher_decrypt(&ctx->u.ablkcipher_req);
++}
++
++static inline void skcipher_crypto_set_crypt(struct skcipher_ctx *ctx,
++					     struct scatterlist *src,
++					     struct scatterlist *dst,
++					     unsigned int cryptlen, u8 *iv)
++{
++	if (ctx->aead)
++		return aead_request_set_crypt(&ctx->u.aead_req, src, dst,
++					      cryptlen, iv);
++	else
++		return ablkcipher_request_set_crypt(&ctx->u.ablkcipher_req, src,
++						    dst, cryptlen, iv);
++}
++
++static inline void skcipher_request_set_callback(struct skcipher_ctx *ctx,
++						 u32 flags,
++						 crypto_completion_t complete,
++						 void *data)
++{
++	if (ctx->aead)
++		aead_request_set_callback(&ctx->u.aead_req, flags, complete,
++					  data);
++	else
++		ablkcipher_request_set_callback(&ctx->u.ablkcipher_req, flags,
++						complete, data);
++}
++
+ static int skcipher_sendmsg(struct kiocb *unused, struct socket *sock,
+ 			    struct msghdr *msg, size_t size)
+ {
+ 	struct sock *sk = sock->sk;
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	struct skcipher_ctx *ctx = ask->private;
+-	struct crypto_ablkcipher *tfm = crypto_ablkcipher_reqtfm(&ctx->req);
+-	unsigned ivsize = crypto_ablkcipher_ivsize(tfm);
++	unsigned ivsize = skcipher_crypto_ivsize_ctx(ctx);
+ 	struct skcipher_sg_list *sgl;
+ 	struct af_alg_control con = {};
  	long copied = 0;
-+	unsigned int aead_authsize_enc = 0;
-+	unsigned int aead_authsize_dec = 0;
- 
- 	lock_sock(sk);
-+	/*
-+	* AEAD memory structure: For encryption, the tag is appended to the
-+	* ciphertext which implies that the memory allocated for the ciphertext
-+	* must be increased by the tag length. For decryption, the tag
-+	* is expected to be concatenated to the ciphertext. The plaintext
-+	* therefore has a memory size of the ciphertext minus the tag length.
-+	*
-+	* Note: this memory calculation only works because we require the
-+	* user space caller to:
-+	*	* perform encryption by invoking the recv function with a buffer
-+	*	  length of ciphertext + tag size -- the send function can be
-+	*	  invoked normally with just the plaintext.
-+	*	* perform a decryption by invoking the the write function with
-+	*	  a buffer holding the ciphertext + tag (and setting the
-+	*	  buffer size accordingly) -- the recv function can be invoked
-+	*	  normally with just the space needed for the ciphertext.
-+	*	  Though, the caller should check for EBADMSG to catch integiry
-+	*	  violations.
-+	*/
-+	if (ctx->aead) {
-+		if (ctx->enc)
-+			aead_authsize_enc = crypto_aead_authsize(
-+					crypto_aead_reqtfm(&ctx->u.aead_req));
-+		else
-+			aead_authsize_dec = crypto_aead_authsize(
-+					crypto_aead_reqtfm(&ctx->u.aead_req));
-+	}
-+
- 	for (iov = msg->msg_iov, iovlen = msg->msg_iovlen; iovlen > 0;
- 	     iovlen--, iov++) {
-+		/* size of the output data memory */
- 		unsigned long seglen = iov->iov_len;
- 		char __user *from = iov->iov_base;
- 
-@@ -562,6 +623,7 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
- 			while (!sg->length)
- 				sg++;
- 
-+			/* size of the input data memory */
- 			used = ctx->used;
- 			if (!used) {
- 				err = skcipher_wait_for_data(sk, flags);
-@@ -569,7 +631,28 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
- 					goto unlock;
- 			}
- 
--			used = min_t(unsigned long, used, seglen);
-+			used = min_t(unsigned long,
-+					     /*
-+					      * In case of encryption, add
-+					      * the memory needed for the tag
-+					      * to the input data length to
-+					      * give the cipher the necessary
-+					      * space to add the tag.
-+					      */
-+					     used + aead_authsize_enc,
-+					     /*
-+					      * In case of decryption, add the
-+					      * memory needed for the tag
-+					      * calculations to the output
-+					      * buffer.
-+					      */
-+					     seglen + aead_authsize_dec);
-+
-+			if (used < aead_authsize_enc ||
-+			    seglen < aead_authsize_dec) {
-+				err = -ENOMEM;
-+				goto unlock;
-+			}
- 
- 			used = af_alg_make_sg(&ctx->rsgl, from, used, 1);
- 			err = used;
-@@ -583,9 +666,16 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
- 			if (!used)
- 				goto free;
- 
--			ablkcipher_request_set_crypt(&ctx->req, sg,
--						     ctx->rsgl.sg, used,
--						     ctx->iv);
-+			/*
-+			 * See API specification of the AEAD API: for
-+			 * encryption, we need to tell the encrypt function
-+			 * what the size of the plaintext is. But we have
-+			 * ensured that we have sufficient memory allocated for
-+			 * the operation.
-+			 */
-+			skcipher_crypto_set_crypt(ctx, sg, ctx->rsgl.sg,
-+						  used - aead_authsize_enc,
-+						  ctx->iv);
+@@ -432,8 +539,7 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
+ 	struct sock *sk = sock->sk;
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	struct skcipher_ctx *ctx = ask->private;
+-	unsigned bs = crypto_ablkcipher_blocksize(crypto_ablkcipher_reqtfm(
+-		&ctx->req));
++	unsigned bs = skcipher_crypto_blocksize(ctx);
+ 	struct skcipher_sg_list *sgl;
+ 	struct scatterlist *sg;
+ 	unsigned long iovlen;
+@@ -483,8 +589,8 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
  
  			err = af_alg_wait_for_completion(
  				ctx->enc ?
-@@ -599,10 +689,19 @@ free:
- 			if (err)
- 				goto unlock;
+-					crypto_ablkcipher_encrypt(&ctx->req) :
+-					crypto_ablkcipher_decrypt(&ctx->req),
++					skcipher_crypto_encrypt(ctx) :
++					skcipher_crypto_decrypt(ctx),
+ 				&ctx->completion);
  
--			copied += used;
--			from += used;
--			seglen -= used;
--			skcipher_pull_sgl(sk, used);
-+			/*
-+			 * Adjust the output buffer counters by only the size
-+			 * needed for the plaintext in case of a decryption
-+			 */
-+			copied += (used - aead_authsize_dec);
-+			from += (used - aead_authsize_dec);
-+			seglen -= (used - aead_authsize_dec);
-+			/*
-+			 * Adjust the input buffer by how much we have encrypted
-+			 * or decrypted. In case of encryption, we only credit
-+			 * the memory of the plaintext.
-+			 */
-+			skcipher_pull_sgl(sk, used - aead_authsize_enc);
- 		}
- 	}
+ free:
+@@ -603,22 +709,22 @@ static void *skcipher_bind(const char *name, u32 type, u32 mask)
  
-@@ -724,6 +823,10 @@ static void skcipher_sock_destruct(struct sock *sk)
- 	unsigned int ivlen = skcipher_crypto_ivsize_ctx(ctx);
+ static void skcipher_release(void *private)
+ {
+-	crypto_free_ablkcipher(private);
++	skcipher_crypto_free(private);
+ }
+ 
+ static int skcipher_setkey(void *private, const u8 *key, unsigned int keylen)
+ {
+-	return crypto_ablkcipher_setkey(private, key, keylen);
++	return skcipher_crypto_setkey(private, key, keylen);
+ }
+ 
+ static void skcipher_sock_destruct(struct sock *sk)
+ {
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	struct skcipher_ctx *ctx = ask->private;
+-	struct crypto_ablkcipher *tfm = crypto_ablkcipher_reqtfm(&ctx->req);
++	unsigned int ivlen = skcipher_crypto_ivsize_ctx(ctx);
  
  	skcipher_free_sgl(sk);
-+	if (ctx->aead) {
-+		memset(ctx->aead_assoc, 0, MAX_AEAD_ASSOCLEN);
-+		sock_kfree_s(sk, ctx->aead_assoc, MAX_AEAD_ASSOCLEN);
-+	}
- 	sock_kfree_s(sk, ctx->iv, ivlen);
+-	sock_kfree_s(sk, ctx->iv, crypto_ablkcipher_ivsize(tfm));
++	sock_kfree_s(sk, ctx->iv, ivlen);
  	sock_kfree_s(sk, ctx, ctx->len);
  	af_alg_release_parent(sk);
-@@ -748,6 +851,17 @@ static int skcipher_accept_parent(void *private, struct sock *sk)
+ }
+@@ -627,20 +733,20 @@ static int skcipher_accept_parent(void *private, struct sock *sk)
+ {
+ 	struct skcipher_ctx *ctx;
+ 	struct alg_sock *ask = alg_sk(sk);
+-	unsigned int len = sizeof(*ctx) + crypto_ablkcipher_reqsize(private);
++	unsigned int len = sizeof(*ctx) + skcipher_crypto_reqsize(private);
++	unsigned int ivlen = skcipher_crypto_ivsize(private);
  
- 	memset(ctx->iv, 0, ivlen);
+ 	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
+ 	if (!ctx)
+ 		return -ENOMEM;
  
-+	if (skcipher_is_aead(private)) {
-+		ctx->aead_assoc = sock_kmalloc(sk, MAX_AEAD_ASSOCLEN,
-+					       GFP_KERNEL);
-+		if (!ctx->aead_assoc) {
-+			sock_kfree_s(sk, ctx->iv, ivlen);
-+			sock_kfree_s(sk, ctx, len);
-+			return -ENOMEM;
-+		}
-+		memset(ctx->aead_assoc, 0, MAX_AEAD_ASSOCLEN);
-+	}
-+
+-	ctx->iv = sock_kmalloc(sk, crypto_ablkcipher_ivsize(private),
+-			       GFP_KERNEL);
++	ctx->iv = sock_kmalloc(sk, ivlen, GFP_KERNEL);
+ 	if (!ctx->iv) {
+ 		sock_kfree_s(sk, ctx, len);
+ 		return -ENOMEM;
+ 	}
+ 
+-	memset(ctx->iv, 0, crypto_ablkcipher_ivsize(private));
++	memset(ctx->iv, 0, ivlen);
+ 
  	INIT_LIST_HEAD(&ctx->tsgl);
  	ctx->len = len;
- 	ctx->used = 0;
-@@ -778,15 +892,36 @@ static const struct af_alg_type algif_type_skcipher = {
- 	.owner		=	THIS_MODULE
- };
+@@ -648,13 +754,14 @@ static int skcipher_accept_parent(void *private, struct sock *sk)
+ 	ctx->more = 0;
+ 	ctx->merge = 0;
+ 	ctx->enc = 0;
++	ctx->aead = skcipher_is_aead(private);
+ 	af_alg_init_completion(&ctx->completion);
  
-+static void *aead_bind(const char *name, u32 type, u32 mask)
-+{
-+	return crypto_alloc_aead(name, type, mask);
-+}
-+
-+static const struct af_alg_type algif_type_aead = {
-+	.bind		=	aead_bind,
-+	.release	=	skcipher_release,
-+	.setkey		=	skcipher_setkey,
-+	.accept		=	skcipher_accept_parent,
-+	.ops		=	&algif_skcipher_ops,
-+	.name		=	"aead",
-+	.owner		=	THIS_MODULE
-+};
-+
- static int __init algif_skcipher_init(void)
- {
--	return af_alg_register_type(&algif_type_skcipher);
-+	int ret = af_alg_register_type(&algif_type_skcipher);
-+
-+	if (ret)
-+		return ret;
-+	return af_alg_register_type(&algif_type_aead);
- }
+ 	ask->private = ctx;
  
- static void __exit algif_skcipher_exit(void)
- {
- 	int err = af_alg_unregister_type(&algif_type_skcipher);
- 	BUG_ON(err);
-+	err = af_alg_unregister_type(&algif_type_aead);
-+	BUG_ON(err);
- }
+-	ablkcipher_request_set_tfm(&ctx->req, private);
+-	ablkcipher_request_set_callback(&ctx->req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+-					af_alg_complete, &ctx->completion);
++	skcipher_request_set_tfm(ctx, private);
++	skcipher_request_set_callback(ctx, CRYPTO_TFM_REQ_MAY_BACKLOG,
++				      af_alg_complete, &ctx->completion);
  
- module_init(algif_skcipher_init);
+ 	sk->sk_destruct = skcipher_sock_destruct;
+ 
 -- 
 2.1.0
