@@ -1,48 +1,92 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Wed, 12 Nov 2014 00:27:28 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1411120017260.3935@nanos>
-References: <cover.1415636409.git.milosz@adfin.com> <20141111064417.GT23575@dastard> <CANP1eJHfWT0Foe+weB1SJkJ10JnOge_g=E8CXBsQNPW7i2+4NA@mail.gmail.com> <x49ioilbrfx.fsf@segfault.boston.devel.redhat.com> <20141111224938.GA4112@thunk.org>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH v2 07/19] selftests/firmware: add install target to enable
+ installing test
+Date: Tue, 11 Nov 2014 18:06:43 -0700
+Message-ID: <5462B2A3.9000007@osg.samsung.com>
+References: <cover.1415735831.git.shuahkh@osg.samsung.com> <1d2d13556ddbbbbb13989cdcb08447909bc4afaf.1415735831.git.shuahkh@osg.samsung.com> <CAGXu5j+yLqH0xj=5N90LRmK9F1xPLVWBy+cyUCzjvKJH7gE7AA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20141111224938.GA4112@thunk.org>
-Sender: owner-linux-aio@kvack.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: Jeff Moyer <jmoyer@redhat.com>, Milosz Tanski <milosz@adfin.com>, Dave Chinner <david@fromorbit.com>, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5j+yLqH0xj=5N90LRmK9F1xPLVWBy+cyUCzjvKJH7gE7AA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Greg KH <gregkh@linuxfoundation.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Marek <mmarek@suse.cz>, "David S. Miller" <davem@davemloft.net>, Phong Tran <tranmanphong@gmail.com>, David Herrmann <dh.herrmann@gmail.com>, Hugh Dickins <hughd@google.com>, pranith kumar <bobby.prani@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, linux-kbuild <linux-kbuild@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 11 Nov 2014, Theodore Ts'o wrote:
-> On Tue, Nov 11, 2014 at 12:03:14PM -0500, Jeff Moyer wrote:
-> > 
-> > I think he's referring to xfstests.  Still, I think that's the wrong
-> > place for functional testing.  ltp would be better, imo.
+On 11/11/2014 02:29 PM, Kees Cook wrote:
+> Hi,
 > 
-> I disagree; xfstests is the right place for adding these tests, because
-> these patches seem to require fs-specific support, and file system
-> developers are already using xfstests when checking for regressions.
-> Using xfstests is already part of most of the file system developers'
-> workflow; ltp is not. 
+> Sorry, I still really don't like this approach. While it is all in one
+> place (thank you for that), I think it isn't a form that is very
+> workable for the people maintaining the self tests. How about this,
+> instead of per-Makefile customization, why not define an execution
+> framework for these tests instead.
+
+If I understand correctly, sounds like you don't like the way
+install target is implemented in the individual test Makefiles
+and the changes I made to run_tests targets to address the code
+duplication concern.
+
+At the moment there is no duplicate code in this patch series
+between install and run_tests targets. This is a  first step
+towards standardizing the framework and a definite improvement
+over what we have currently. As I mentioned earlier, my goal
+is to make it easier for developers to install and run the
+existing tests and evolve the framework as we go.
+
+Assuming my understanding is correct that:
+
+-- install and run_tests targets in individual tests can be
+   refined and automated with a common Makefile approach you
+   proposed.
+-- the rest of the user-interface kselftest_install and kselftest
+   are good.
+
+I would like to propose that we get started with the current
+implementation and refine it based on the following ideas you
+suggested. The refinements you are recommending are confined
+to selftests and can be made after the kselftest_install
+gets added. Adding kselftest_install makes it easier to make
+the refinements as it defines overall UI.
+
 > 
-> So if you want to make sure we notice regressions, it really needs to
-> go into xfstests.  If you insist on putting it in ltp, then one of us
-> will then have to make a copy of the tests and put it in xfstests.
+> For example, how about every test directory must have a Makefile with
+> the needed binary targets. A common makefile could be included that
+> defines the "run_tests" target that calls the script "run_tests.sh"
+> that is a shell script in the current directory. (For inspiration, see
+> how kernel modules can be built out of tree.)
+> 
+> The "run_tests.sh" scripts could all include a common shell script,
+> say "../common.sh" that provides any common variables, functions, etc
+> (e.g. things like "Start $name test ..." should be in common.sh
+> instead of repeated in every script, the installation logic can be in
+> once place instead of repeated).
+> 
+> Then along side common.sh could be "run_installed_tests.sh" or
+> something, used on the installed target, that would traverse each
+> directory, etc. From this, we can have a much more data-driven
+> framework, and a common approach to running tests.
+> 
+> As such, we should declare up front how tests should behave on
+> failure. And the top-level test runner can do things like count the
+> number of tests, failures, etc.
+> 
+> Then, instead of splitting up the patches by test directory, you can
+> split them up by logical changes (e.g. defining the common "run_tests"
+> target, and then removing the target from all the tests by including
+> the common makefile stub that defines it).
+> 
 
-No. LTP needs to pull in the latest changes from xfstests simply
-because LTP is a conglomerate of domain specific tests. And it never
-can become more than a conglomerate for obvious reasons.
+These are good ideas and I am with on evolving the framework to make
+it easier to maintain individual tests. Patches are welcome.
 
-xfstests is what the FS developers use and update. If LTP has some
-extra magic tests developed then is should send patches against
-xfstests and reintegrate the result.
+thanks,
+-- Shuah
 
-Thanks,
 
-	tglx
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
