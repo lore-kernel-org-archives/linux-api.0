@@ -1,118 +1,77 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: Re: [PATCH 7/8] crypto: AF_ALG: add random number generator support
-Date: Wed, 12 Nov 2014 18:46:44 +0100
-Message-ID: <26219337.yCCTlAE9Ns@tauon>
-References: <4738444.A2vZX1nNCo@tachyon.chronox.de> <9137675.ZTbqvCU5Bi@tachyon.chronox.de> <5463978F.7020508@redhat.com>
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv2 7/7] cgroup: mount cgroupns-root when inside non-init cgroupns
+Date: Wed, 12 Nov 2014 09:48:18 -0800
+Message-ID: <CAGr1F2Ho1kGVbVHxX1wY2PMhiAYgp6Tdnshj1pkV9pAeQLO=Qw@mail.gmail.com>
+References: <1414783141-6947-1-git-send-email-adityakali@google.com>
+ <1414783141-6947-8-git-send-email-adityakali@google.com> <87y4rvrakn.fsf@x220.int.ebiederm.org>
+ <CAGr1F2Hd_PS_AscBGMXdZC9qkHGRUp-MeQvJksDOQkRBB3RGoA@mail.gmail.com>
+ <20141104134633.GA14014@htj.dyndns.org> <CALCETrUggQCJyxsTWRNrjt3GM=R0VMU6RjMkU1aw3YUNMx1xEw@mail.gmail.com>
+ <20141104155052.GA7027@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <5463978F.7020508@redhat.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Daniel Borkmann <dborkman@redhat.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, ABI/API <linux-api@vger.kernel.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141104155052.GA7027-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Am Mittwoch, 12. November 2014, 18:23:27 schrieb Daniel Borkmann:
+I agree with what Andy and Serge has to say. The ability to mount
+cgroupfs inside userns also seems consistent with other kernel
+interfaces like sysfs, procfs, etc.
 
-Hi Daniel,
+Though it would be great if we can atleast merge the rest of the
+patches first while we address the mounting part.
 
->On 11/12/2014 05:54 PM, Stephan Mueller wrote:
->> Am Mittwoch, 12. November 2014, 17:15:52 schrieb Daniel Borkmann:
->>> On 11/12/2014 08:05 AM, Stephan Mueller wrote:
->>>> This patch adds the random number generator support for AF_ALG.
->>>> 
->>>> A random number generator's purpose is to generate data without
->>>> requiring the caller to provide any data. Therefore, the AF_ALG
->>>> interface handler for RNGs only implements a callback handler for
->>>> recvmsg.
->>> 
->>> ...
->>> 
->>>> +static int rng_recvmsg(struct kiocb *unused, struct socket *sock,
->>>> +		       struct msghdr *msg, size_t len, int flags)
->>>> +{
->>>> +	struct sock *sk = sock->sk;
->>>> +	struct alg_sock *ask = alg_sk(sk);
->>>> +	struct rng_ctx *ctx = ask->private;
->>>> +	int err = -EFAULT;
->>>> +
->>>> +	if (0 == len)
->>> 
->>> if (len == 0)
->>> 
->>> 	...
->>> 
->>> [And also other places.]
->>> 
->>> We don't use Yoda condition style in the kernel.
->> 
->> Well, there is a very good reason for using the approach I have: we
->> all have done the error of forgetting the second = sign.
->> 
->> In my case, the compiler will complain and we fix the error right
->> away.
->> 
->> In your case, nobody is complaining but we introduced a nasty,
->> potentially hard to debug error. Thus, I very much like to keep my
->> version just to be on the safe side.
->> 
->> Note, there was even a backdoor I have seen where the missing 2nd
->> equal sign introduced a privilege escalation.
->> 
->> Therefore, my standard coding practice is to have a fixed value on
->> the left side and the variable on the right side of any comparison.
+Thanks for your feedback.
+
+On Tue, Nov 4, 2014 at 7:50 AM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
 >
->I understand, but then please add this proposal first into ...
+> Quoting Andy Lutomirski (luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org):
+> > On Tue, Nov 4, 2014 at 5:46 AM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> > > Hello, Aditya.
+> > >
+> > > On Mon, Nov 03, 2014 at 02:43:47PM -0800, Aditya Kali wrote:
+> > >> I agree that this is effectively bind-mounting, but doing this in kernel
+> > >> makes it really convenient for the userspace. The process that sets up the
+> > >> container doesn't need to care whether it should bind-mount cgroupfs inside
+> > >> the container or not. The tasks inside the container can mount cgroupfs on
+> > >> as-needed basis. The root container manager can simply unshare cgroupns and
+> > >> forget about the internal setup. I think this is useful just for the reason
+> > >> that it makes life much simpler for userspace.
+> > >
+> > > If it's okay to require userland to just do bind mounting, I'd be far
+> > > happier with that.  cgroup mount code is already overcomplicated
+> > > because of the dynamic matching of supers to mounts when it could just
+> > > have told userland to use bind mounting.  Doesn't the host side have
+> > > to set up some of the filesystem layouts anyway?  Does it really
+> > > matter that we require the host to set up cgroup hierarchy too?
+> > >
+> >
+> > Sort of, but only sort of.
+> >
+> > You can create a container by unsharing namespaces, mounting
+> > everything, and then calling pivot_root.  But this is unpleasant
+> > because of the strange way that pid namespaces work -- you generally
+> > have to fork first, so this gets tedious.  And it doesn't integrate
+> > well with things like fstab or other container-side configuration
+> > mechanisms.
+> >
+> > It's nicer if you can unshare namespaces, mount the bare minimum,
+> > pivot_root, and let the contained software do as much setup as
+> > possible.
 >
->   Documentation/CodingStyle
+> Also, the bind-mount requires the container manager to know where
+> the guest distro will want the cgroups mounted.
 >
->The problem is that while the rest of the kernel does not follow
->this coding style, it's also much harder to read and/or program
->this way for people not being used to. So the danger of bugs
->slipping in this way is at least equally high. Besides that, this
->argument would also only account for '==' checks.
+> -serge
+> _______________________________________________
+> Containers mailing list
+> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> https://lists.linuxfoundation.org/mailman/listinfo/containers
 
-Ok, I can change that throughout the code.
->
->>>> +		return 0;
->>>> +	if (MAXSIZE < len)
->>>> +		len = MAXSIZE;
->>>> +
->>>> +	lock_sock(sk);
->>>> +	len = crypto_rng_get_bytes(ctx->drng, ctx->result, len);
->>>> +	if (0 > len)
->>>> +		goto unlock;
->>>> +
->>>> +	err = memcpy_toiovec(msg->msg_iov, ctx->result, len);
->>>> +	memset(ctx->result, 0, err);
->>>> +
->>> 
->>> This looks buggy.
->>> 
->>> If copy_to_user() fails from within memcpy_toiovec(), we call
->>> memset()
->>> with a negative return value which is interpreted as size_t and thus
->>> causes a buffer overflow writing beyond ctx->result, no?
->>> 
->>> If it succeeds, we call memset(ctx->result, 0, 0) .....
->> 
->> Right, good catch, I have to add a catch for negative error here.
->
->Hm? Don't you rather mean to say to unconditionally do something like
->...
->
->   memzero_explicit(ctx->result, len);
 
-Sorry, I was not clear:
 
-* I need to catch a failing memcpy, but not return an error.
 
-* I unconditionally use the memset after memcpy as you indicated. Once 
-the cryptodev tree contains the memzero_explicit call, I will start 
-picking up that function.
-
-Essentially, I throught of the line you suggested.
-
-Ciao
-Stephan
+-- 
+Aditya
