@@ -1,106 +1,55 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH 1/8] crypto: AF_ALG: add user space interface for AEAD
-Date: Wed, 12 Nov 2014 08:00:20 +0100
-Message-ID: <1755606.SHLU4zvtQv@tachyon.chronox.de>
+Subject: [PATCH 3/8] crypto: AF_ALG: extend data structuers for AEAD
+Date: Wed, 12 Nov 2014 08:01:55 +0100
+Message-ID: <2335823.jDvecWWIYp@tachyon.chronox.de>
 References: <4738444.A2vZX1nNCo@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <4738444.A2vZX1nNCo@tachyon.chronox.de>
-Sender: linux-crypto-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: ABI/API <linux-api@vger.kernel.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-AEAD requires the following data in addition to normal symmetric
-ciphers:
+The data structure holding the state of an ongoing symmetric cipher
+operation is extended by the data variables needed for AEAD.
 
-	* Associated authentication data of arbitrary length
+The request data structures are encapsulated by a union as the symmetric
+cipher implementation is either exclusively used for "normal" symmetric
+ciphers or for AEAD ciphers.
 
-	* Authentication tag for decryption
-
-	* Length of authentication tag for encryption
-
-The authentication tag data is communicated as part of the actual
-ciphertext as mandated by the kernel crypto API. Therefore we only need
-to provide a user space interface for the associated authentication data
-as well as for the authentication tag length.
-
-This patch adds both as a setsockopt interface that is identical to the
-AF_ALG interface for setting an IV and for selecting the cipher
-operation type (encrypt or decrypt).
+The define MAX_AEAD_ASSOCLEN restricts the size of the associated
+authentication data. The kernel must allocate memory for this data to be
+stored for the cipher operation. To prevent an excessive use of memory,
+it is limited to 128 bytes, which is considered to be a sensible size.
 
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- crypto/af_alg.c             | 17 +++++++++++++++++
- include/crypto/if_alg.h     |  2 ++
- include/uapi/linux/if_alg.h |  7 +++++++
- 3 files changed, 26 insertions(+)
+ crypto/algif_skcipher.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/crypto/af_alg.c b/crypto/af_alg.c
-index 6a3ad80..635140b 100644
---- a/crypto/af_alg.c
-+++ b/crypto/af_alg.c
-@@ -421,6 +421,23 @@ int af_alg_cmsg_send(struct msghdr *msg, struct af_alg_control *con)
- 			con->op = *(u32 *)CMSG_DATA(cmsg);
- 			break;
+diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
+index 7a1656b..9286cfc 100644
+--- a/crypto/algif_skcipher.c
++++ b/crypto/algif_skcipher.c
+@@ -46,7 +46,15 @@ struct skcipher_ctx {
+ 	bool merge;
+ 	bool enc;
  
-+
-+		case ALG_SET_AEAD_AUTHSIZE:
-+			if (cmsg->cmsg_len < CMSG_LEN(sizeof(u32)))
-+				return -EINVAL;
-+			con->aead_authsize = *(u32 *)CMSG_DATA(cmsg);
-+			break;
-+
-+		case ALG_SET_AEAD_ASSOC:
-+			if (cmsg->cmsg_len < CMSG_LEN(sizeof(*con->aead_assoc)))
-+				return -EINVAL;
-+			con->aead_assoc = (void *)CMSG_DATA(cmsg);
-+			if (cmsg->cmsg_len <
-+				CMSG_LEN(con->aead_assoc->aead_assoclen +
-+					 sizeof(*con->aead_assoc)))
-+				return -EINVAL;
-+			break;
-+
- 		default:
- 			return -EINVAL;
- 		}
-diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
-index d61c111..c741483 100644
---- a/include/crypto/if_alg.h
-+++ b/include/crypto/if_alg.h
-@@ -41,7 +41,9 @@ struct af_alg_completion {
- 
- struct af_alg_control {
- 	struct af_alg_iv *iv;
-+	struct af_alg_aead_assoc *aead_assoc;
- 	int op;
-+	unsigned int aead_authsize;
+-	struct ablkcipher_request req;
++	bool aead;
++	void *aead_assoc;
++	/* define arbitrary maximum length of associated data */
++	#define MAX_AEAD_ASSOCLEN 128
++	struct scatterlist sg_aead_assoc;
++	union {
++		struct ablkcipher_request ablkcipher_req;
++		struct aead_request aead_req;
++	} u;
  };
  
- struct af_alg_type {
-diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
-index 0f9acce..64e7008 100644
---- a/include/uapi/linux/if_alg.h
-+++ b/include/uapi/linux/if_alg.h
-@@ -28,10 +28,17 @@ struct af_alg_iv {
- 	__u8	iv[0];
- };
- 
-+struct af_alg_aead_assoc {
-+	__u32	aead_assoclen;
-+	__u8	aead_assoc[0];
-+};
-+
- /* Socket options */
- #define ALG_SET_KEY			1
- #define ALG_SET_IV			2
- #define ALG_SET_OP			3
-+#define ALG_SET_AEAD_ASSOC		4
-+#define ALG_SET_AEAD_AUTHSIZE		5
- 
- /* Operations */
- #define ALG_OP_DECRYPT			0
+ #define MAX_SGL_ENTS ((4096 - sizeof(struct skcipher_sg_list)) / \
 -- 
 2.1.0
