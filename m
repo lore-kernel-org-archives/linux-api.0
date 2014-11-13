@@ -1,49 +1,60 @@
-From: David Drysdale <drysdale@google.com>
-Subject: Re: [PATCHv7 0/3] syscalls,x86: Add execveat() system call
-Date: Thu, 13 Nov 2014 15:51:47 +0000
-Message-ID: <CAHse=S-=43+vAK=jm-ONd4RasDpLfOr1JO-ZUMhh+peuS4FjxQ@mail.gmail.com>
-References: <1415379664-31555-1-git-send-email-drysdale@google.com> <20141112140801.ae8029c7c769d1b606a76f7c@linux-foundation.org>
+From: Peter Maydell <peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH] ARM: cacheflush: disallow pending signals during cacheflush
+Date: Thu, 13 Nov 2014 17:39:00 +0000
+Message-ID: <CAFEAcA_dSxRgkvuJW6aHdSv88NkXXHBMAzjyJMTRbW3mXAV3Sg@mail.gmail.com>
+References: <1415863793-6219-1-git-send-email-chanho.min@lge.com> <20141113112633.GE13350@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20141112140801.ae8029c7c769d1b606a76f7c@linux-foundation.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141113112633.GE13350-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+Cc: Chanho Min <chanho.min-Hm3cg6mZ9cc@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Jon Medhurst <tixy-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Taras Kondratiuk <taras.kondratiuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Olof Johansson <olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Gunho Lee <gunho.lee-Hm3cg6mZ9cc@public.gmane.org>, HyoJun Im <hyojun.im-Hm3cg6mZ9cc@public.gmane.org>, Jongsung Kim <neidhard.kim-Hm3cg6mZ9cc@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 12, 2014 at 10:08 PM, Andrew Morton
-<akpm@linux-foundation.org> wrote:
-> On Fri,  7 Nov 2014 17:01:01 +0000 David Drysdale <drysdale@google.com> wrote:
+On 13 November 2014 11:26, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org> wrote:
+> Whilst I don't think this is the correct solution, I agree that there's
+> a potential issue here. We could change the restart return value to
+> -ERESTARTNOINTR instead, but I can imagine something like a periodic
+> SIGALRM which could prevent a large cacheflush from ever completing.
+> Do we actually care about making forward progress in such a scenario?
 >
->> This patch set adds execveat(2) for x86
+> It is interesting to note that this change has been in mainline since
+> May last year without any reported issues. That could be down to a number
+> of reasons:
 >
-> I grabbed these.  If someone else was planning to do so, feel free to
-> shout at me.
+>   (1) People are using old kernels on ARM
 >
-> I haven't been following the discussion closely so some reviewed-by's
-> and tested-by's would be nice.
+>   (2) Code doesn't check the return value from the cacheflush system call,
+>       because it historically always returned 0
 
-Yes please -- Andy, Eric, Al?
+...and the documentation comment in the source code didn't say
+anything about the syscall having a return value; it only
+described the input parameters. I would actually be surprised
+if any userspace caller of this syscall checked its return value
+(the libgcc cacheflush function used by gcc's clear_cache builtin
+doesn't, to pick one popularly used example).
 
-> Thanks for writing a manpage.  mtk.manpages@gmail.com should have been
-> cc'ed.  He is now ;)
+>   (3) People are getting lucky with timing, as this is likely difficult
+>       to hit
 
-Thanks (for some reason I though cc'ing linux-api took care of Michael
-seeing it).
+    (4) The resulting misbehaviour ("my JIT crashes occasionally and
+        non-reproducibly at some point possibly some while after the
+        cacheflush call") will be extremely hard to track back
+        to this kernel change
 
-> Your syscall number was taken by sys_bpf.  I renumbered it
-> appropriately.
+> This leaves me with the following questions:
+>
+>   - Has this change been shown to break anything in practice?
+>   - Can we change the internal return value to -ERESTARTNOINTR?
+>   - What do we do about kernels that *do* return -EINTR? (>=3.12?)
 
-Looks like the robots have also found a few things that need fixing:
- 1) Sparse warning on "close_on_exec(fd, current->files->fdt)": I guess
-    that needs a rcu_dereference_raw() or some such around arg2.
- 2) Syscall not implemented warning on sparc build: I could attempt to wire
-    up the sparc syscall (although I can only cross-compile it, not run it),
-    or is it best to leave it and ask sparclinux / David Miller nicely to take
-    care of it?  Or have I just missed some bit of syscall machinery?
- 3) Non-canonical comment format just before the close_on_exec() call.
-(Well, that last wasn't found by a robot -- thanks Andrew!)
+My suggestion would be "treat this as a bugfix, put it into
+stable kernels in the usual way (and assume distros will pick
+it up if appropriate)".
 
-When I generate a new version, would it be easier for you if I also merged up
-against v3.18-rc4?  That would at least take care of the syscall renumbering.
+>   - Can we get a manpage put together to describe this mess?
+
+That would be nice :-)
+
+-- PMM
