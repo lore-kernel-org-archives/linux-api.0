@@ -1,46 +1,115 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCHv7 0/3] syscalls,x86: Add execveat() system call
-Date: Thu, 13 Nov 2014 12:13:34 -0800
-Message-ID: <20141113121334.a0b73e9635f7f2f60a9e6566@linux-foundation.org>
-References: <1415379664-31555-1-git-send-email-drysdale@google.com>
-	<20141112135009.5a887d200be262d94ba50495@linux-foundation.org>
-	<CAHse=S_uQGmzz+umKDfJPOaT2+TAdzbtjZeVZaj1i4NBVWy35g@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CAHse=S_uQGmzz+umKDfJPOaT2+TAdzbtjZeVZaj1i4NBVWy35g@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Rich Felker <dalias@aerifal.cx>, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+From: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
+Subject: [PATCH 03/56] fs: Support compiling out splice-family syscalls
+Date: Thu, 13 Nov 2014 22:22:40 +0100
+Message-ID: <1415913813-362-4-git-send-email-pieter@boesman.nl>
+References: <pieter@boesman.nl>
+ <1415913813-362-1-git-send-email-pieter@boesman.nl>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415913813-362-1-git-send-email-pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org
+Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Turner <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, Paul Gortmaker <paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>, Peter Foley <pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 13 Nov 2014 14:42:58 +0000 David Drysdale <drysdale@google.com> wrote:
+Many embedded systems will not need the splice-family syscalls (splice,
+vmsplice, tee and sendfile). Omitting them saves space.  This adds a new EXPERT
+config option CONFIG_SYSCALL_SPLICE (default y) to support compiling them out.
 
-> On Wed, Nov 12, 2014 at 9:50 PM, Andrew Morton
-> <akpm@linux-foundation.org> wrote:
-> > On Fri,  7 Nov 2014 17:01:01 +0000 David Drysdale <drysdale@google.com> wrote:
-> >
-> >> This patch set adds execveat(2) for x86, and is derived from Meredydd
-> >> Luff's patch from Sept 2012 (https://lkml.org/lkml/2012/9/11/528).
-> >>
-> >> The primary aim of adding an execveat syscall is to allow an
-> >> implementation of fexecve(3) that does not rely on the /proc
-> >> filesystem, at least for executables (rather than scripts).  The
-> >> current glibc version of fexecve(3) is implemented via /proc, which
-> >> causes problems in sandboxed or otherwise restricted environments.
-> >
-> > Have the relevant glibc people seen/reviewed/liked this?
-> 
-> I think it's been mentioned in passing but not explicitly discussed over there
-> (https://sourceware.org/ml/libc-alpha/2014-10/msg00497.html,
-> https://sourceware.org/ml/libc-alpha/2014-10/msg00509.html)
-> and a couple of the participants in that thread (Christoph Hellwig, Rich Felker)
-> were also cc:ed here.
-> 
-> It sounded like execveat might be useful for another feature (O_EXEC) but
-> I'm not sure whether that amounts to the relevant glibc folk liking this...
+This patch removes almost all callers of .splice_read() and .splice_write()
+in the file_operations struct. This paves the way to eventually compile out the
+.splice_read and .splice_write members of the file_operations struct as well as
+the remaining splice-related infrastructure.
 
-OK.  Could you please try to hunt down the appropriate people and give
-them a poke?  We'd be in a mess if we merged this then glibc didn't use
-it, or glibc developers required/suggested any interface modifications.
+add/remove: 0/16 grow/shrink: 2/5 up/down: 114/-3693 (-3579)
+function                                     old     new   delta
+splice_direct_to_actor                       348     416     +68
+splice_to_pipe                               371     417     +46
+splice_from_pipe_next                        107     106      -1
+fdput                                         11       -     -11
+signal_pending                                39      26     -13
+fdget                                         56      42     -14
+user_page_pipe_buf_ops                        20       -     -20
+user_page_pipe_buf_steal                      25       -     -25
+file_end_write                                58      29     -29
+file_start_write                              68      34     -34
+pipe_to_user                                  43       -     -43
+wakeup_pipe_readers                           54       -     -54
+do_splice_to                                  87       -     -87
+ipipe_prep.part                               92       -     -92
+opipe_prep.part                              119       -    -119
+sys_sendfile                                 122       -    -122
+sys_sendfile64                               126       -    -126
+sys_vmsplice                                 137       -    -137
+vmsplice_to_user                             205       -    -205
+sys_tee                                      491       -    -491
+do_sendfile                                  492       -    -492
+vmsplice_to_pipe                             558       -    -558
+sys_splice                                  1020       -   -1020
+
+Signed-off-by: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
+---
+ fs/splice.c     |  2 ++
+ init/Kconfig    | 10 ++++++++++
+ kernel/sys_ni.c |  8 ++++++++
+ 3 files changed, 20 insertions(+)
+
+diff --git a/fs/splice.c b/fs/splice.c
+index 44b201b..7c4c695 100644
+--- a/fs/splice.c
++++ b/fs/splice.c
+@@ -1316,6 +1316,7 @@ long do_splice_direct(struct file *in, loff_t *ppos, struct file *out,
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_SYSCALL_SPLICE
+ static int splice_pipe_to_pipe(struct pipe_inode_info *ipipe,
+ 			       struct pipe_inode_info *opipe,
+ 			       size_t len, unsigned int flags);
+@@ -2200,4 +2201,5 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+ 	return do_sendfile(out_fd, in_fd, NULL, count, 0);
+ }
+ #endif
++#endif
+ 
+diff --git a/init/Kconfig b/init/Kconfig
+index 782a65b..25ee289 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1547,6 +1547,16 @@ config ADVISE_SYSCALLS
+ 	  applications use these syscalls, you can disable this option to save
+ 	  space.
+ 
++config SYSCALL_SPLICE
++	bool "Enable splice/vmsplice/tee/sendfile syscalls" if EXPERT
++	default y
++	help
++	  This option enables the splice, vmsplice, tee and sendfile syscalls. These
++	  are used by applications to: move data between buffers and arbitrary file
++	  descriptors; "copy" data between buffers; or copy data from userspace into
++	  buffers. If building an embedded system where no applications use these
++	  syscalls, you can disable this option to save space.
++
+ config PCI_QUIRKS
+ 	default y
+ 	bool "Enable PCI quirk workarounds" if EXPERT
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index d4709d4..2913337 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -159,6 +159,14 @@ cond_syscall(sys_uselib);
+ cond_syscall(sys_fadvise64);
+ cond_syscall(sys_fadvise64_64);
+ cond_syscall(sys_madvise);
++cond_syscall(sys_vmsplice);
++cond_syscall(sys_splice);
++cond_syscall(sys_tee);
++cond_syscall(sys_sendfile);
++cond_syscall(sys_sendfile64);
++cond_syscall(compat_sys_vmsplice);
++cond_syscall(compat_sys_sendfile);
++cond_syscall(compat_sys_sendfile64);
+ 
+ /* arch-specific weak syscall entries */
+ cond_syscall(sys_pciconfig_read);
+-- 
+1.9.1
