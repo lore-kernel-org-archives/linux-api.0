@@ -1,60 +1,63 @@
-From: Peter Maydell <peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] ARM: cacheflush: disallow pending signals during cacheflush
-Date: Thu, 13 Nov 2014 17:39:00 +0000
-Message-ID: <CAFEAcA_dSxRgkvuJW6aHdSv88NkXXHBMAzjyJMTRbW3mXAV3Sg@mail.gmail.com>
-References: <1415863793-6219-1-git-send-email-chanho.min@lge.com> <20141113112633.GE13350@arm.com>
+From: Catalin Marinas <catalin.marinas@arm.com>
+Subject: Re: [RFC PATCH 0/1] arm64: Fix /proc/cpuinfo
+Date: Thu, 13 Nov 2014 17:48:00 +0000
+Message-ID: <20141113174800.GD22361@e104818-lin.cambridge.arm.com>
+References: <1414159000-27059-1-git-send-email-mark.rutland@arm.com>
+ <20141106164311.GD19702@e104818-lin.cambridge.arm.com>
+ <20141106165430.GH31605@arm.com>
+ <20141106170548.GF19702@e104818-lin.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141113112633.GE13350-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-Cc: Chanho Min <chanho.min-Hm3cg6mZ9cc@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Jon Medhurst <tixy-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Taras Kondratiuk <taras.kondratiuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Olof Johansson <olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Gunho Lee <gunho.lee-Hm3cg6mZ9cc@public.gmane.org>, HyoJun Im <hyojun.im-Hm3cg6mZ9cc@public.gmane.org>, Jongsung Kim <neidhard.kim-Hm3cg6mZ9cc@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20141106170548.GF19702@e104818-lin.cambridge.arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Will Deacon <Will.Deacon@arm.com>
+Cc: Mark Rutland <Mark.Rutland@arm.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "ghackmann@google.com" <ghackmann@google.com>, "ijc@hellion.org.uk" <ijc@hellion.org.uk>, Serban Constantinescu <Serban.Constantinescu@arm.com>, "cross-distro@lists.linaro.org" <cross-distro@lists.linaro.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 13 November 2014 11:26, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org> wrote:
-> Whilst I don't think this is the correct solution, I agree that there's
-> a potential issue here. We could change the restart return value to
-> -ERESTARTNOINTR instead, but I can imagine something like a periodic
-> SIGALRM which could prevent a large cacheflush from ever completing.
-> Do we actually care about making forward progress in such a scenario?
->
-> It is interesting to note that this change has been in mainline since
-> May last year without any reported issues. That could be down to a number
-> of reasons:
->
->   (1) People are using old kernels on ARM
->
->   (2) Code doesn't check the return value from the cacheflush system call,
->       because it historically always returned 0
+On Thu, Nov 06, 2014 at 05:05:48PM +0000, Catalin Marinas wrote:
+> On Thu, Nov 06, 2014 at 04:54:31PM +0000, Will Deacon wrote:
+> > On Thu, Nov 06, 2014 at 04:43:12PM +0000, Catalin Marinas wrote:
+> > > On Fri, Oct 24, 2014 at 02:56:39PM +0100, Mark Rutland wrote:
+> > > > [d] Print different hwcaps dependent on the personality.
+> > > > 
+> > > >     This would allow for 32-bit and 64-bit applications to function
+> > > >     correctly, but for some 32-bit applications the personality would
+> > > >     need to be set explicitly by the user.
+> > > 
+> > > Which makes this option actually in line with the uname -m behaviour. My
+> > > vote goes for [d] with option [b] as a close alternative.
+> > > 
+> > > > [1] arm, v3.17, Versatile Express A15x2 A7x3 coretile
+> > > > Features        : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm 
+> > > [...]
+> > > > [2] arm64, v3.17, Juno platform
+> > > > Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 
+> > > 
+> > > As an exercise, I'm trying to see what option [b] would look like when
+> > > CONFIG_COMPAT is enabled:
+> > > 
+> > > Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+> > > 
+> > > The duplicate strings would only be listed once (evtstrm, aes, pmull,
+> > > sha1, sha2, crc32). New AArch64 features that we may expect to be
+> > > optional on AArch32 could be prefixed with "a64". If they are missing
+> > > entirely from AArch32, (like asimd), no need for the prefix.
+> > > 
+> > > The advantage is that we don't need to check the personality but we have
+> > > to assume that scripts would not search for substrings (sane people
+> > > shouldn't do this anyway as the Features string can always be extended).
+> > 
+> > And a big disadvantage is that I can imagine AArch64 applications checking
+> > for "neon" instead of "asimd", which will break if they're run under kernels
+> > without COMPAT support enabled.
+[...]
+> > So I'm inclined to stick with Mark's patch as it is.
+> 
+> If we don't hear otherwise, I propose sometime next week we queue Mark's
+> patch for -next.
 
-...and the documentation comment in the source code didn't say
-anything about the syscall having a return value; it only
-described the input parameters. I would actually be surprised
-if any userspace caller of this syscall checked its return value
-(the libgcc cacheflush function used by gcc's clear_cache builtin
-doesn't, to pick one popularly used example).
+As we haven't heard otherwise:
 
->   (3) People are getting lucky with timing, as this is likely difficult
->       to hit
-
-    (4) The resulting misbehaviour ("my JIT crashes occasionally and
-        non-reproducibly at some point possibly some while after the
-        cacheflush call") will be extremely hard to track back
-        to this kernel change
-
-> This leaves me with the following questions:
->
->   - Has this change been shown to break anything in practice?
->   - Can we change the internal return value to -ERESTARTNOINTR?
->   - What do we do about kernels that *do* return -EINTR? (>=3.12?)
-
-My suggestion would be "treat this as a bugfix, put it into
-stable kernels in the usual way (and assume distros will pick
-it up if appropriate)".
-
->   - Can we get a manpage put together to describe this mess?
-
-That would be nice :-)
-
--- PMM
+Acked-by: Catalin Marinas <catalin.marinas@arm.com>
