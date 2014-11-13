@@ -1,63 +1,46 @@
-From: Catalin Marinas <catalin.marinas@arm.com>
-Subject: Re: [RFC PATCH 0/1] arm64: Fix /proc/cpuinfo
-Date: Thu, 13 Nov 2014 17:48:00 +0000
-Message-ID: <20141113174800.GD22361@e104818-lin.cambridge.arm.com>
-References: <1414159000-27059-1-git-send-email-mark.rutland@arm.com>
- <20141106164311.GD19702@e104818-lin.cambridge.arm.com>
- <20141106165430.GH31605@arm.com>
- <20141106170548.GF19702@e104818-lin.cambridge.arm.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCHv7 0/3] syscalls,x86: Add execveat() system call
+Date: Thu, 13 Nov 2014 12:13:34 -0800
+Message-ID: <20141113121334.a0b73e9635f7f2f60a9e6566@linux-foundation.org>
+References: <1415379664-31555-1-git-send-email-drysdale@google.com>
+	<20141112135009.5a887d200be262d94ba50495@linux-foundation.org>
+	<CAHse=S_uQGmzz+umKDfJPOaT2+TAdzbtjZeVZaj1i4NBVWy35g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141106170548.GF19702@e104818-lin.cambridge.arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Deacon <Will.Deacon@arm.com>
-Cc: Mark Rutland <Mark.Rutland@arm.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "ghackmann@google.com" <ghackmann@google.com>, "ijc@hellion.org.uk" <ijc@hellion.org.uk>, Serban Constantinescu <Serban.Constantinescu@arm.com>, "cross-distro@lists.linaro.org" <cross-distro@lists.linaro.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <CAHse=S_uQGmzz+umKDfJPOaT2+TAdzbtjZeVZaj1i4NBVWy35g@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Rich Felker <dalias@aerifal.cx>, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 06, 2014 at 05:05:48PM +0000, Catalin Marinas wrote:
-> On Thu, Nov 06, 2014 at 04:54:31PM +0000, Will Deacon wrote:
-> > On Thu, Nov 06, 2014 at 04:43:12PM +0000, Catalin Marinas wrote:
-> > > On Fri, Oct 24, 2014 at 02:56:39PM +0100, Mark Rutland wrote:
-> > > > [d] Print different hwcaps dependent on the personality.
-> > > > 
-> > > >     This would allow for 32-bit and 64-bit applications to function
-> > > >     correctly, but for some 32-bit applications the personality would
-> > > >     need to be set explicitly by the user.
-> > > 
-> > > Which makes this option actually in line with the uname -m behaviour. My
-> > > vote goes for [d] with option [b] as a close alternative.
-> > > 
-> > > > [1] arm, v3.17, Versatile Express A15x2 A7x3 coretile
-> > > > Features        : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm 
-> > > [...]
-> > > > [2] arm64, v3.17, Juno platform
-> > > > Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 
-> > > 
-> > > As an exercise, I'm trying to see what option [b] would look like when
-> > > CONFIG_COMPAT is enabled:
-> > > 
-> > > Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
-> > > 
-> > > The duplicate strings would only be listed once (evtstrm, aes, pmull,
-> > > sha1, sha2, crc32). New AArch64 features that we may expect to be
-> > > optional on AArch32 could be prefixed with "a64". If they are missing
-> > > entirely from AArch32, (like asimd), no need for the prefix.
-> > > 
-> > > The advantage is that we don't need to check the personality but we have
-> > > to assume that scripts would not search for substrings (sane people
-> > > shouldn't do this anyway as the Features string can always be extended).
-> > 
-> > And a big disadvantage is that I can imagine AArch64 applications checking
-> > for "neon" instead of "asimd", which will break if they're run under kernels
-> > without COMPAT support enabled.
-[...]
-> > So I'm inclined to stick with Mark's patch as it is.
+On Thu, 13 Nov 2014 14:42:58 +0000 David Drysdale <drysdale@google.com> wrote:
+
+> On Wed, Nov 12, 2014 at 9:50 PM, Andrew Morton
+> <akpm@linux-foundation.org> wrote:
+> > On Fri,  7 Nov 2014 17:01:01 +0000 David Drysdale <drysdale@google.com> wrote:
+> >
+> >> This patch set adds execveat(2) for x86, and is derived from Meredydd
+> >> Luff's patch from Sept 2012 (https://lkml.org/lkml/2012/9/11/528).
+> >>
+> >> The primary aim of adding an execveat syscall is to allow an
+> >> implementation of fexecve(3) that does not rely on the /proc
+> >> filesystem, at least for executables (rather than scripts).  The
+> >> current glibc version of fexecve(3) is implemented via /proc, which
+> >> causes problems in sandboxed or otherwise restricted environments.
+> >
+> > Have the relevant glibc people seen/reviewed/liked this?
 > 
-> If we don't hear otherwise, I propose sometime next week we queue Mark's
-> patch for -next.
+> I think it's been mentioned in passing but not explicitly discussed over there
+> (https://sourceware.org/ml/libc-alpha/2014-10/msg00497.html,
+> https://sourceware.org/ml/libc-alpha/2014-10/msg00509.html)
+> and a couple of the participants in that thread (Christoph Hellwig, Rich Felker)
+> were also cc:ed here.
+> 
+> It sounded like execveat might be useful for another feature (O_EXEC) but
+> I'm not sure whether that amounts to the relevant glibc folk liking this...
 
-As we haven't heard otherwise:
-
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+OK.  Could you please try to hunt down the appropriate people and give
+them a poke?  We'd be in a mess if we merged this then glibc didn't use
+it, or glibc developers required/suggested any interface modifications.
