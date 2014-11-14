@@ -1,133 +1,34 @@
-From: "Chanho Min" <chanho.min@lge.com>
-Subject: RE: [PATCH] ARM: cacheflush: disallow pending signals during
- cacheflush
-Date: Fri, 14 Nov 2014 17:40:49 +0900
-Message-ID: <42023.6625163399$1415954530@news.gmane.org>
-References: <1415863793-6219-1-git-send-email-chanho.min@lge.com>
- <20141113112633.GE13350@arm.com>
+From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Subject: Re: kdbus: add selftests
+Date: Fri, 14 Nov 2014 09:56:37 +0100
+Message-ID: <5465C3C5.2040606@zonque.org>
+References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>	 <1414620056-6675-13-git-send-email-gregkh@linuxfoundation.org> <1415936530.26378.2.camel@concordia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20141113112633.GE13350@arm.com>
-Content-Language: ko
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: 'Will Deacon' <will.deacon@arm.com>
-Cc: 'Jon Medhurst' <tixy@linaro.org>, 'HyoJun Im' <hyojun.im@lge.com>, 'Russell King' <linux@arm.linux.org.uk>, 'Jongsung Kim' <neidhard.kim@lge.com>, peter.maydell@linaro.org, 'Taras Kondratiuk' <taras.kondratiuk@linaro.org>, linux-kernel@vger.kernel.org, mtk.manpages@gmail.com, 'Gunho Lee' <gunho.lee@lge.com>, 'Olof Johansson' <olof@lixom.net>, linux-api@vger.kernel.org, linux-man@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415936530.26378.2.camel@concordia>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-> -----Original Message-----
-> From: Will Deacon [mailto:will.deacon@arm.com]
+On 11/14/2014 04:42 AM, Michael Ellerman wrote:
+> On Wed, 2014-10-29 at 15:00 -0700, Greg Kroah-Hartman wrote:
+>> From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+>>
+>> This patch adds a quite extensive test suite for kdbus that checks
+>> the most important code pathes in the driver. The idea is to extend
+>> the test suite over time.
+>>
+>> Also, this code can serve as an example implementation to show how to
+>> use the kernel API from userspace.
+> 
+> Great to see selftests included.
+> 
+> I needed this to get them building:
 
-> Whilst I don't think this is the correct solution, I agree that there's
-> a potential issue here. We could change the restart return value to
-> -ERESTARTNOINTR instead, but I can imagine something like a periodic
-> SIGALRM which could prevent a large cacheflush from ever completing.
-> Do we actually care about making forward progress in such a scenario?
-It's not complete solution. But, I don't think this is incorrect solution
-as well. Potential issue could be more serious than improvement of signal
-responsiveness.
+Thanks a lot for testing! I've added your hunks to the patch set now.
 
-> 
-> It is interesting to note that this change has been in mainline since
-> May last year without any reported issues. That could be down to a number
-> of reasons:
-> 
->   (1) People are using old kernels on ARM
-> 
->   (2) Code doesn't check the return value from the cacheflush system call,
->       because it historically always returned 0
-> 
->   (3) People are getting lucky with timing, as this is likely difficult
->       to hit
-> 
-> Related to (2) is that a `man cacheflush' invocation returns something
-> about the MIPs system call, that doesn't match what we do for ARM. The
-> (relatively recent) history of the system call on ARM is:
-> 
->   < v3.5 [*]
-> 
->     - Always returns 0
->     - Restricts virtual address range to a single VMA
->     - Page-aligns the region limits (over flushing for smaller ranges)
->     - Terminates on the first fault
->     - Flags are ignored but must "ALWAYS be passed as ZERO"
-> 
->   v3.5 - v3.12
->     - Returns -EINVAL if flags is set or if end < start
->     - Returns -EINVAL if we couldn't find a vma
->     - Terminates on the first fault and returns -EFAULT
-> 
->   v3.12 - HEAD
-> 
->     - No longer page-aligns region
->     - Removes VMA checking as this had a deadlock bug with mmap_sem
->       and we could handle faults by this point anyway
->     - Returns -EINVAL if !access_ok for the range
->     - Splits the range into PAGE_SIZE chunks, checking for reschedule
->       and pending signals to avoid DoSing the system (the hardware can
->       only clean by cacheline). This is where the -ERESTART_RESTARTBLOCK
->       behaviour came in, potentially returning -EINTR to userspace.
-> 
-> This leaves me with the following questions:
-> 
->   - Has this change been shown to break anything in practice?
-In practice, node.js (Currently, It doesn't check -EINTR of cacheflush)
-crashes occasionally and non-reproducibly at some point some while after
-the cacheflush call. At that time, strace tells cacheflush returns -EINTR.
 
->   - Can we change the internal return value to -ERESTARTNOINTR?
-In worst case, I can imagine that periodic signal interrupts cacheflush
-and it repeats restart of syscall from start of address with unlucky timing.
-
->   - What do we do about kernels that *do* return -EINTR? (>=3.12?)
->   - Can we get a manpage put together to describe this mess?
-> 
-> Cheers,
-> 
-> Will
-> 
-> [*] rmk may have some more ancient history kicking around, if you like!
-> 
-> > diff --git a/arch/arm/kernel/traps.c b/arch/arm/kernel/traps.c
-> > index abd2fc0..275e086 100644
-> > --- a/arch/arm/kernel/traps.c
-> > +++ b/arch/arm/kernel/traps.c
-> > @@ -521,25 +521,6 @@ __do_cache_op(unsigned long start, unsigned long end)
-> >  	do {
-> >  		unsigned long chunk = min(PAGE_SIZE, end - start);
-> >
-> > -		if (signal_pending(current)) {
-> > -			struct thread_info *ti = current_thread_info();
-> > -
-> > -			ti->restart_block = (struct restart_block) {
-> > -				.fn	= do_cache_op_restart,
-> > -			};
-> > -
-> > -			ti->arm_restart_block = (struct arm_restart_block) {
-> > -				{
-> > -					.cache = {
-> > -						.start	= start,
-> > -						.end	= end,
-> > -					},
-> > -				},
-> > -			};
-> > -
-> > -			return -ERESTART_RESTARTBLOCK;
-> > -		}
-> > -
-> >  		ret = flush_cache_user_range(start, start + chunk);
-> >  		if (ret)
-> >  			return ret;
-> > --
-> > 1.7.9.5
-> >
-> >
+Daniel
