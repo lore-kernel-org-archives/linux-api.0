@@ -1,34 +1,61 @@
-From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
-Subject: Re: kdbus: add selftests
-Date: Fri, 14 Nov 2014 09:56:37 +0100
-Message-ID: <5465C3C5.2040606@zonque.org>
-References: <1414620056-6675-1-git-send-email-gregkh@linuxfoundation.org>	 <1414620056-6675-13-git-send-email-gregkh@linuxfoundation.org> <1415936530.26378.2.camel@concordia>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2 1/1] truncate: generate fanotify and inotify events
+Date: Fri, 14 Nov 2014 10:01:44 +0100
+Message-ID: <20141114090144.GA17262@quack.suse.cz>
+References: <1412619208-8087-1-git-send-email-xypron.glpk@gmx.de>
+ <54650D23.9040701@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1415936530.26378.2.camel@concordia>
+Content-Disposition: inline
+In-Reply-To: <54650D23.9040701-Mmb7MZpHnFY@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org
+To: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/14/2014 04:42 AM, Michael Ellerman wrote:
-> On Wed, 2014-10-29 at 15:00 -0700, Greg Kroah-Hartman wrote:
->> From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
->>
->> This patch adds a quite extensive test suite for kdbus that checks
->> the most important code pathes in the driver. The idea is to extend
->> the test suite over time.
->>
->> Also, this code can serve as an example implementation to show how to
->> use the kernel API from userspace.
+  Hello Heinrich,
+
+On Thu 13-11-14 20:57:23, Heinrich Schuchardt wrote:
+> could you, please, give me some feedback for
+> https://lkml.org/lkml/2014/10/6/380
+  Oh, I completely forgot about that one...
+
+> Currently truncate() only generates an IN_MODIFY event.
 > 
-> Great to see selftests included.
+> Do you agree that it also should additionally create
+> FAN_OPEN_PERM, FAN_OPEN, IN_OPEN, FAN_MODIFY, FAN_CLOSE_WRITE,
+> IN_CLOSE_WRITE as well?
+>
+> IN_CLOSE_WRITE is used by editors to warn the user about updated files.
 > 
-> I needed this to get them building:
+> FAN_OPEN_PERM, FAN_MODIFY, and FAN_CLOSE_WRITE would be relevant for
+> a malware scanner.
+> 
+> FAN_OPEN_PERM would be needed if the fanotify interface were used to
+> build a hierarchical storage managers.
+  I agree about FAN_MODIFY, that is a clear bug. OPEN / CLOSE events are
+generated on open / close. Noone really guarantees you that to modify a
+file you have to open it. So I agree they would make life simpler for
+userspace but at this point I don't think we can change the user interface
+in such way :(.
+ 
+I can imagine that especially for content checkers the fact that file can
+be truncated without FAN_OPEN_PERM is rather unpleasant (OTOH file can be
+unlinked & replaced in a directory also without FAN_OPEN_PERM so it doesn't
+seem like a completely new problem area either).
 
-Thanks a lot for testing! I've added your hunks to the patch set now.
+The cleanest way I see how we could deal with the situation is to add a new
+type of event. Maybe something like IN_TRUNCATE, FAN_TRUNCATE,
+FAN_TRUNCATE_PERM - and userspace application aware of the problem could
+use these events instead of watching for IN_MODIFY / FAN_MODIFY which is
+generated rather frequently. But this definitely needs more thought -
+we have to carefully define when the events get generated so that they are
+useful - is e.g. punching holes and similar fallocate tricks elligible as
+well? What about ftruncate() where you have open file descriptor?
 
+								Honza
 
-Daniel
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
