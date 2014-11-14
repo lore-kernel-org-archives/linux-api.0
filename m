@@ -1,51 +1,25 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache only)
-Date: Fri, 14 Nov 2014 11:51:31 -0500
-Message-ID: <x491tp5ybcc.fsf@segfault.boston.devel.redhat.com>
-References: <cover.1415636409.git.milosz@adfin.com>
-	<20141111064417.GT23575@dastard>
-	<x49mw7tyc7e.fsf@segfault.boston.devel.redhat.com>
-	<20141114163912.GA23769@redhat.com>
+From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH net-next] net: introduce SO_INCOMING_CPU
+Date: Fri, 14 Nov 2014 09:00:03 -0800
+Message-ID: <1415984403.17262.48.camel@edumazet-glaptop2.roam.corp.google.com>
+References: <1415393472.13896.119.camel@edumazet-glaptop2.roam.corp.google.com>
+	 <CAHO5Pa0OGtgbUp4R287jbK2SFSpVUoXWCJybvHTFsGyCLynqLg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20141114163912.GA23769@redhat.com> (Dave Jones's message of
-	"Fri, 14 Nov 2014 11:39:12 -0500")
-Sender: owner-linux-aio@kvack.org
-To: Dave Jones <davej@redhat.com>
-Cc: Dave Chinner <david@fromorbit.com>, Milosz Tanski <milosz@adfin.com>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHO5Pa0OGtgbUp4R287jbK2SFSpVUoXWCJybvHTFsGyCLynqLg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ying Cai <ycai-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Willem de Bruijn <willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Neal Cardwell <ncardwell-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Dave Jones <davej@redhat.com> writes:
+On Fri, 2014-11-14 at 09:05 +0100, Michael Kerrisk wrote:
+> Hi Eric,
+> 
+> Since this is an API change ( Documentation/SubmitChecklist),
+> linux-api@ should be CCed.
 
-> On Fri, Nov 14, 2014 at 11:32:53AM -0500, Jeff Moyer wrote:
->
->  > > Can you write a test (or set of) for fstests that exercises this new
->  > > functionality? I'm not worried about performance, just
->  > > correctness....
->  > 
->  > On the subject of testing, I added support to trinity (attached,
->  > untested).  That did raise one question.  Do we expect applications to
->  > #include <linux/fs.h> to get the RWF_NONBLOCK definition?
->  
-> Trinity will at least need an addition to include/compat.h for
-> older headers that won't have the definition.  Looks ok otherwise.
+Right, I am sorry !
 
-OK, I'll add that.
-
-> Also, I usually sit on stuff like this until the syscall numbers are
-> in Linus tree. This is 3.19 stuff I presume ?
-> istr akpm picked up execveat recently, so if that goes in first, we'll
-> need to respin this anyway..
-
-Sure.  I just wanted to test with trinity *before* it makes it into the
-kernel.  Crazy, I know.  ;-)
-
-Cheers,
-Jeff
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Thanks.
