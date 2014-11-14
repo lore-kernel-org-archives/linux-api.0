@@ -1,164 +1,117 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC] Possible new execveat(2) Linux syscall
-Date: Fri, 14 Nov 2014 14:54:19 +0000
-Message-ID: <CAHse=S8ccC2No5EYS0Pex=Ng3oXjfDB9woOBmMY_k+EgxtODZA@mail.gmail.com>
+From: Boris Brezillon <boris.brezillon@free-electrons.com>
+Subject: Re: [PATCH] [media] Add RGB444_1X12 and RGB565_1X16 media bus
+ formats
+Date: Fri, 14 Nov 2014 16:04:46 +0100
+Message-ID: <20141114160446.70c1b8b9@bbrezillon>
+References: <1415961360-14898-1-git-send-email-boris.brezillon@free-electrons.com>
+	<20141114135831.GC8907@valkosipuli.retiisi.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20141114135831.GC8907@valkosipuli.retiisi.org.uk>
+Sender: linux-doc-owner@vger.kernel.org
+To: Sakari Ailus <sakari.ailus@iki.fi>
+Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Hi Sakari,
 
-Over at the LKML[1] we've been discussing a possible new syscall, execv=
-eat(2),
-and it would be good to hear a glibc perspective about it (and whether =
-there
-are any interface changes that would make it easier to use from userspa=
-ce).
+On Fri, 14 Nov 2014 15:58:31 +0200
+Sakari Ailus <sakari.ailus@iki.fi> wrote:
 
-The syscall prototype is:
-  int execveat(int fd, const char *pathname,
-                      char *const argv[],  char *const envp[],
-                      int flags); /* AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW=
- */
-and it works similarly to execve(2) except:
- - the executable to run is identified by the combination of fd+pathnam=
-e, like
-   other *at(2) syscalls
- - there's an extra flags field to control behaviour.
-(I've attached a text version of the suggested man page below)
+> Hi Boris,
+> 
+> On Fri, Nov 14, 2014 at 11:36:00AM +0100, Boris Brezillon wrote:
+> > Add RGB444_1X12 and RGB565_1X16 format definitions and update the
+> > documentation.
+> > 
+> > Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+> > Acked-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+> > ---
+> >  Documentation/DocBook/media/v4l/subdev-formats.xml | 40 ++++++++++++++++++++++
+> >  include/uapi/linux/media-bus-format.h              |  4 ++-
+> >  2 files changed, 43 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/Documentation/DocBook/media/v4l/subdev-formats.xml b/Documentation/DocBook/media/v4l/subdev-formats.xml
+> > index 18730b9..8c396db 100644
+> > --- a/Documentation/DocBook/media/v4l/subdev-formats.xml
+> > +++ b/Documentation/DocBook/media/v4l/subdev-formats.xml
+> > @@ -563,6 +563,46 @@
+> >  	      <entry>b<subscript>1</subscript></entry>
+> >  	      <entry>b<subscript>0</subscript></entry>
+> >  	    </row>
+> > +	    <row id="MEDIA-BUS-FMT-RGB444-1X12">
+> > +	      <entry>MEDIA_BUS_FMT_RGB444_1X12</entry>
+> > +	      <entry>0x100d</entry>
+> > +	      <entry></entry>
+> > +	      &dash-ent-20;
+> > +	      <entry>r<subscript>3</subscript></entry>
+> > +	      <entry>r<subscript>2</subscript></entry>
+> > +	      <entry>r<subscript>1</subscript></entry>
+> > +	      <entry>r<subscript>0</subscript></entry>
+> > +	      <entry>g<subscript>3</subscript></entry>
+> > +	      <entry>g<subscript>2</subscript></entry>
+> > +	      <entry>g<subscript>1</subscript></entry>
+> > +	      <entry>g<subscript>0</subscript></entry>
+> > +	      <entry>b<subscript>3</subscript></entry>
+> > +	      <entry>b<subscript>2</subscript></entry>
+> > +	      <entry>b<subscript>1</subscript></entry>
+> > +	      <entry>b<subscript>0</subscript></entry>
+> > +	    </row>
+> > +	    <row id="MEDIA-BUS-FMT-RGB565-1X16">
+> > +	      <entry>MEDIA_BUS_FMT_RGB565_1X16</entry>
+> > +	      <entry>0x100d</entry>
+> > +	      <entry></entry>
+> > +	      &dash-ent-16;
+> > +	      <entry>r<subscript>4</subscript></entry>
+> > +	      <entry>r<subscript>3</subscript></entry>
+> > +	      <entry>r<subscript>2</subscript></entry>
+> > +	      <entry>r<subscript>1</subscript></entry>
+> > +	      <entry>r<subscript>0</subscript></entry>
+> > +	      <entry>g<subscript>5</subscript></entry>
+> > +	      <entry>g<subscript>4</subscript></entry>
+> > +	      <entry>g<subscript>3</subscript></entry>
+> > +	      <entry>g<subscript>2</subscript></entry>
+> > +	      <entry>g<subscript>1</subscript></entry>
+> > +	      <entry>g<subscript>0</subscript></entry>
+> > +	      <entry>b<subscript>4</subscript></entry>
+> > +	      <entry>b<subscript>3</subscript></entry>
+> > +	      <entry>b<subscript>2</subscript></entry>
+> > +	      <entry>b<subscript>1</subscript></entry>
+> > +	      <entry>b<subscript>0</subscript></entry>
+> > +	    </row>
+> >  	  </tbody>
+> >  	</tgroup>
+> >        </table>
+> > diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
+> > index 23b4090..cc7b79e 100644
+> > --- a/include/uapi/linux/media-bus-format.h
+> > +++ b/include/uapi/linux/media-bus-format.h
+> > @@ -33,7 +33,7 @@
+> >  
+> >  #define MEDIA_BUS_FMT_FIXED			0x0001
+> >  
+> > -/* RGB - next is	0x100e */
+> > +/* RGB - next is	0x1010 */
+> >  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE	0x1001
+> >  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE	0x1002
+> >  #define MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE	0x1003
+> > @@ -47,6 +47,8 @@
+> >  #define MEDIA_BUS_FMT_RGB888_2X12_BE		0x100b
+> >  #define MEDIA_BUS_FMT_RGB888_2X12_LE		0x100c
+> >  #define MEDIA_BUS_FMT_ARGB8888_1X32		0x100d
+> > +#define MEDIA_BUS_FMT_RGB444_1X12		0x100e
+> > +#define MEDIA_BUS_FMT_RGB565_1X16		0x100f
+> 
+> I'd arrange these according to BPP and bits per sample, both in the header
+> and documentation.
 
-One particular benefit of this is that it allows an fexecve(3) implemen=
-tation
-that doesn't rely on /proc being accessible, which is useful for sandbo=
-xed
-applications.  (However, that does only work for non-interpreted progra=
-ms:
-the name passed to a script interpreter is of the form "/dev/fd/<fd>/<p=
-ath>"
-or "/dev/fd/<fd>", so the executed interpreter will normally still need=
- /proc
-access to load the script file).
+I cannot keep both macro values and BPP/bits per sample in incrementing
+order. Are you sure you prefer to order macros in BPP/bits per sample
+order ?
 
-How does this sound from a glibc perspective?
-
-Thanks,
-David
-
-[1] https://lkml.org/lkml/2014/11/7/512, with earlier discussions at
-https://lkml.org/lkml/2014/11/6/469, https://lkml.org/lkml/2014/10/22/2=
-75
-and https://lkml.org/lkml/2014/10/17/428
-
-----
-
-EXECVEAT(2)              Linux Programmer's Manual             EXECVEAT=
-(2)
-
-NAME
-       execveat - execute program relative to a directory file descript=
-or
-
-SYNOPSIS
-       #include <unistd.h>
-
-       int execveat(int fd, const char *pathname,
-                    char *const argv[],  char *const envp[],
-                    int flags);
-
-DESCRIPTION
-       The  execveat()  system call executes the program pointed to by =
-the
-       combination of fd and pathname.  The execveat() system  call  op=
-er=E2=80=90
-       ates  in  exactly the same way as execve(2), except for the diff=
-er=E2=80=90
-       ences described in this manual page.
-
-       If the pathname given in pathname is relative, then  it  is  int=
-er=E2=80=90
-       preted relative to the directory referred to by the file descrip=
-tor
-       fd (rather than relative to the current working  directory  of  =
-the
-       calling process, as is done by execve(2) for a relative pathname=
-).
-
-       If  pathname is relative and fd is the special value AT_FDCWD, t=
-hen
-       pathname is interpreted relative to the current  working  direct=
-ory
-       of the calling process (like execve(2)).
-
-       If pathname is absolute, then fd is ignored.
-
-       If pathname is an empty string and the AT_EMPTY_PATH flag is spe=
-ci=E2=80=90
-       fied, then the file descriptor fd specifies the  file  to  be  e=
-xe=E2=80=90
-       cuted.
-
-       flags can either be 0, or include the following flags:
-
-       AT_EMPTY_PATH
-              If pathname is an empty string, operate on the file refer=
-red
-              to by fd (which may have been  obtained  using  the  open=
-(2)
-              O_PATH flag).
-
-       AT_SYMLINK_NOFOLLOW
-              If  the  file  identified by fd and a non-NULL pathname i=
-s a
-              symbolic link, then the call fails with the error EINVAL.
-
-RETURN VALUE
-       On success, execveat() does not return. On error  -1  is  return=
-ed,
-       and errno is set appropriately.
-
-ERRORS
-       The  same  errors  that  occur  for  execve(2)  can  also occur =
-for
-       execveat().   The  following  additional  errors  can   occur   =
-for
-       execveat():
-
-       EBADF  fd is not a valid file descriptor.
-
-       ENOENT The  program  identified by fd and pathname requires the =
-use
-              of an interpreter program (such as a  script  starting  w=
-ith
-              "#!")  but  the  file  descriptor  fd  was  opened  with =
-the
-              O_CLOEXEC flag and so the program file  is  inaccessible =
- to
-              the launched interpreter.
-
-       EINVAL Invalid flag specified in flags.
-
-       ENOTDIR
-              pathname  is  relative and fd is a file descriptor referr=
-ing
-              to a file other than a directory.
-
-VERSIONS
-       execveat() was added to Linux in kernel 3.???.
-
-NOTES
-       In addition to the reasons explained in openat(2),  the  execvea=
-t()
-       system call is also needed to allow fexecve(3) to be implemented=
- on
-       systems that do not have the /proc filesystem mounted.
-
-SEE ALSO
-       execve(2), fexecve(3)
-
-Linux                           2014-04-02                     EXECVEAT=
-(2)
+-- 
+Boris Brezillon, Free Electrons
+Embedded Linux and Kernel engineering
+http://free-electrons.com
