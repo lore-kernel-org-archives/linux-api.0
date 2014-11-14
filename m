@@ -1,117 +1,37 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: Re: [PATCH] [media] Add RGB444_1X12 and RGB565_1X16 media bus
- formats
-Date: Fri, 14 Nov 2014 16:04:46 +0100
-Message-ID: <20141114160446.70c1b8b9@bbrezillon>
-References: <1415961360-14898-1-git-send-email-boris.brezillon@free-electrons.com>
-	<20141114135831.GC8907@valkosipuli.retiisi.org.uk>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v2 net-next 1/7] bpf: add 'flags' attribute to
+ BPF_MAP_UPDATE_ELEM command
+Date: Fri, 14 Nov 2014 07:33:00 -0800
+Message-ID: <CAMEtUux2vuN3iNaAsxybyFwzfMRVe1+BOW-JvnvYYh+=-vpELw@mail.gmail.com>
+References: <1415929010-9361-1-git-send-email-ast@plumgrid.com>
+	<1415929010-9361-2-git-send-email-ast@plumgrid.com>
+	<1415967071.15154.9.camel@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20141114135831.GC8907@valkosipuli.retiisi.org.uk>
-Sender: linux-doc-owner@vger.kernel.org
-To: Sakari Ailus <sakari.ailus@iki.fi>
-Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415967071.15154.9.camel@localhost>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Sakari,
+On Fri, Nov 14, 2014 at 4:11 AM, Hannes Frederic Sowa
+<hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org> wrote:
+> On Do, 2014-11-13 at 17:36 -0800, Alexei Starovoitov wrote:
+>> the current meaning of BPF_MAP_UPDATE_ELEM syscall command is:
+>> either update existing map element or create a new one.
+>> Initially the plan was to add a new command to handle the case of
+>> 'create new element if it didn't exist', but 'flags' style looks
+>> cleaner and overall diff is much smaller (more code reused), so add 'flags'
+>> attribute to BPF_MAP_UPDATE_ELEM command with the following meaning:
+>>  #define BPF_ANY      0 /* create new element or update existing */
+>>  #define BPF_NOEXIST  1 /* create new element if it didn't exist */
+>>  #define BPF_EXIST    2 /* update existing element */
+>
+> Would a cmpxchg-alike function be handy here?
 
-On Fri, 14 Nov 2014 15:58:31 +0200
-Sakari Ailus <sakari.ailus@iki.fi> wrote:
-
-> Hi Boris,
-> 
-> On Fri, Nov 14, 2014 at 11:36:00AM +0100, Boris Brezillon wrote:
-> > Add RGB444_1X12 and RGB565_1X16 format definitions and update the
-> > documentation.
-> > 
-> > Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
-> > Acked-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-> > ---
-> >  Documentation/DocBook/media/v4l/subdev-formats.xml | 40 ++++++++++++++++++++++
-> >  include/uapi/linux/media-bus-format.h              |  4 ++-
-> >  2 files changed, 43 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/Documentation/DocBook/media/v4l/subdev-formats.xml b/Documentation/DocBook/media/v4l/subdev-formats.xml
-> > index 18730b9..8c396db 100644
-> > --- a/Documentation/DocBook/media/v4l/subdev-formats.xml
-> > +++ b/Documentation/DocBook/media/v4l/subdev-formats.xml
-> > @@ -563,6 +563,46 @@
-> >  	      <entry>b<subscript>1</subscript></entry>
-> >  	      <entry>b<subscript>0</subscript></entry>
-> >  	    </row>
-> > +	    <row id="MEDIA-BUS-FMT-RGB444-1X12">
-> > +	      <entry>MEDIA_BUS_FMT_RGB444_1X12</entry>
-> > +	      <entry>0x100d</entry>
-> > +	      <entry></entry>
-> > +	      &dash-ent-20;
-> > +	      <entry>r<subscript>3</subscript></entry>
-> > +	      <entry>r<subscript>2</subscript></entry>
-> > +	      <entry>r<subscript>1</subscript></entry>
-> > +	      <entry>r<subscript>0</subscript></entry>
-> > +	      <entry>g<subscript>3</subscript></entry>
-> > +	      <entry>g<subscript>2</subscript></entry>
-> > +	      <entry>g<subscript>1</subscript></entry>
-> > +	      <entry>g<subscript>0</subscript></entry>
-> > +	      <entry>b<subscript>3</subscript></entry>
-> > +	      <entry>b<subscript>2</subscript></entry>
-> > +	      <entry>b<subscript>1</subscript></entry>
-> > +	      <entry>b<subscript>0</subscript></entry>
-> > +	    </row>
-> > +	    <row id="MEDIA-BUS-FMT-RGB565-1X16">
-> > +	      <entry>MEDIA_BUS_FMT_RGB565_1X16</entry>
-> > +	      <entry>0x100d</entry>
-> > +	      <entry></entry>
-> > +	      &dash-ent-16;
-> > +	      <entry>r<subscript>4</subscript></entry>
-> > +	      <entry>r<subscript>3</subscript></entry>
-> > +	      <entry>r<subscript>2</subscript></entry>
-> > +	      <entry>r<subscript>1</subscript></entry>
-> > +	      <entry>r<subscript>0</subscript></entry>
-> > +	      <entry>g<subscript>5</subscript></entry>
-> > +	      <entry>g<subscript>4</subscript></entry>
-> > +	      <entry>g<subscript>3</subscript></entry>
-> > +	      <entry>g<subscript>2</subscript></entry>
-> > +	      <entry>g<subscript>1</subscript></entry>
-> > +	      <entry>g<subscript>0</subscript></entry>
-> > +	      <entry>b<subscript>4</subscript></entry>
-> > +	      <entry>b<subscript>3</subscript></entry>
-> > +	      <entry>b<subscript>2</subscript></entry>
-> > +	      <entry>b<subscript>1</subscript></entry>
-> > +	      <entry>b<subscript>0</subscript></entry>
-> > +	    </row>
-> >  	  </tbody>
-> >  	</tgroup>
-> >        </table>
-> > diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
-> > index 23b4090..cc7b79e 100644
-> > --- a/include/uapi/linux/media-bus-format.h
-> > +++ b/include/uapi/linux/media-bus-format.h
-> > @@ -33,7 +33,7 @@
-> >  
-> >  #define MEDIA_BUS_FMT_FIXED			0x0001
-> >  
-> > -/* RGB - next is	0x100e */
-> > +/* RGB - next is	0x1010 */
-> >  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE	0x1001
-> >  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE	0x1002
-> >  #define MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE	0x1003
-> > @@ -47,6 +47,8 @@
-> >  #define MEDIA_BUS_FMT_RGB888_2X12_BE		0x100b
-> >  #define MEDIA_BUS_FMT_RGB888_2X12_LE		0x100c
-> >  #define MEDIA_BUS_FMT_ARGB8888_1X32		0x100d
-> > +#define MEDIA_BUS_FMT_RGB444_1X12		0x100e
-> > +#define MEDIA_BUS_FMT_RGB565_1X16		0x100f
-> 
-> I'd arrange these according to BPP and bits per sample, both in the header
-> and documentation.
-
-I cannot keep both macro values and BPP/bits per sample in incrementing
-order. Are you sure you prefer to order macros in BPP/bits per sample
-order ?
-
--- 
-Boris Brezillon, Free Electrons
-Embedded Linux and Kernel engineering
-http://free-electrons.com
+you mean cmpxchg command in addition to
+update() command ?
+May be... it will have an extra 'value' argument
+(key, old_value, new_value)
+I don't have a use case for it yet though.
