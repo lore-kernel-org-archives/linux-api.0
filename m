@@ -1,61 +1,95 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v2 1/1] truncate: generate fanotify and inotify events
-Date: Fri, 14 Nov 2014 10:01:44 +0100
-Message-ID: <20141114090144.GA17262@quack.suse.cz>
-References: <1412619208-8087-1-git-send-email-xypron.glpk@gmx.de>
- <54650D23.9040701@gmx.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH] [media] Add RGB444_1X12 and RGB565_1X16 media bus formats
+Date: Fri, 14 Nov 2014 11:36:00 +0100
+Message-ID: <1415961360-14898-1-git-send-email-boris.brezillon@free-electrons.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54650D23.9040701-Mmb7MZpHnFY@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <m.chehab-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-  Hello Heinrich,
+Add RGB444_1X12 and RGB565_1X16 format definitions and update the
+documentation.
 
-On Thu 13-11-14 20:57:23, Heinrich Schuchardt wrote:
-> could you, please, give me some feedback for
-> https://lkml.org/lkml/2014/10/6/380
-  Oh, I completely forgot about that one...
+Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Acked-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+---
+ Documentation/DocBook/media/v4l/subdev-formats.xml | 40 ++++++++++++++++++++++
+ include/uapi/linux/media-bus-format.h              |  4 ++-
+ 2 files changed, 43 insertions(+), 1 deletion(-)
 
-> Currently truncate() only generates an IN_MODIFY event.
-> 
-> Do you agree that it also should additionally create
-> FAN_OPEN_PERM, FAN_OPEN, IN_OPEN, FAN_MODIFY, FAN_CLOSE_WRITE,
-> IN_CLOSE_WRITE as well?
->
-> IN_CLOSE_WRITE is used by editors to warn the user about updated files.
-> 
-> FAN_OPEN_PERM, FAN_MODIFY, and FAN_CLOSE_WRITE would be relevant for
-> a malware scanner.
-> 
-> FAN_OPEN_PERM would be needed if the fanotify interface were used to
-> build a hierarchical storage managers.
-  I agree about FAN_MODIFY, that is a clear bug. OPEN / CLOSE events are
-generated on open / close. Noone really guarantees you that to modify a
-file you have to open it. So I agree they would make life simpler for
-userspace but at this point I don't think we can change the user interface
-in such way :(.
+diff --git a/Documentation/DocBook/media/v4l/subdev-formats.xml b/Documentation/DocBook/media/v4l/subdev-formats.xml
+index 18730b9..8c396db 100644
+--- a/Documentation/DocBook/media/v4l/subdev-formats.xml
++++ b/Documentation/DocBook/media/v4l/subdev-formats.xml
+@@ -563,6 +563,46 @@
+ 	      <entry>b<subscript>1</subscript></entry>
+ 	      <entry>b<subscript>0</subscript></entry>
+ 	    </row>
++	    <row id="MEDIA-BUS-FMT-RGB444-1X12">
++	      <entry>MEDIA_BUS_FMT_RGB444_1X12</entry>
++	      <entry>0x100d</entry>
++	      <entry></entry>
++	      &dash-ent-20;
++	      <entry>r<subscript>3</subscript></entry>
++	      <entry>r<subscript>2</subscript></entry>
++	      <entry>r<subscript>1</subscript></entry>
++	      <entry>r<subscript>0</subscript></entry>
++	      <entry>g<subscript>3</subscript></entry>
++	      <entry>g<subscript>2</subscript></entry>
++	      <entry>g<subscript>1</subscript></entry>
++	      <entry>g<subscript>0</subscript></entry>
++	      <entry>b<subscript>3</subscript></entry>
++	      <entry>b<subscript>2</subscript></entry>
++	      <entry>b<subscript>1</subscript></entry>
++	      <entry>b<subscript>0</subscript></entry>
++	    </row>
++	    <row id="MEDIA-BUS-FMT-RGB565-1X16">
++	      <entry>MEDIA_BUS_FMT_RGB565_1X16</entry>
++	      <entry>0x100d</entry>
++	      <entry></entry>
++	      &dash-ent-16;
++	      <entry>r<subscript>4</subscript></entry>
++	      <entry>r<subscript>3</subscript></entry>
++	      <entry>r<subscript>2</subscript></entry>
++	      <entry>r<subscript>1</subscript></entry>
++	      <entry>r<subscript>0</subscript></entry>
++	      <entry>g<subscript>5</subscript></entry>
++	      <entry>g<subscript>4</subscript></entry>
++	      <entry>g<subscript>3</subscript></entry>
++	      <entry>g<subscript>2</subscript></entry>
++	      <entry>g<subscript>1</subscript></entry>
++	      <entry>g<subscript>0</subscript></entry>
++	      <entry>b<subscript>4</subscript></entry>
++	      <entry>b<subscript>3</subscript></entry>
++	      <entry>b<subscript>2</subscript></entry>
++	      <entry>b<subscript>1</subscript></entry>
++	      <entry>b<subscript>0</subscript></entry>
++	    </row>
+ 	  </tbody>
+ 	</tgroup>
+       </table>
+diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
+index 23b4090..cc7b79e 100644
+--- a/include/uapi/linux/media-bus-format.h
++++ b/include/uapi/linux/media-bus-format.h
+@@ -33,7 +33,7 @@
  
-I can imagine that especially for content checkers the fact that file can
-be truncated without FAN_OPEN_PERM is rather unpleasant (OTOH file can be
-unlinked & replaced in a directory also without FAN_OPEN_PERM so it doesn't
-seem like a completely new problem area either).
-
-The cleanest way I see how we could deal with the situation is to add a new
-type of event. Maybe something like IN_TRUNCATE, FAN_TRUNCATE,
-FAN_TRUNCATE_PERM - and userspace application aware of the problem could
-use these events instead of watching for IN_MODIFY / FAN_MODIFY which is
-generated rather frequently. But this definitely needs more thought -
-we have to carefully define when the events get generated so that they are
-useful - is e.g. punching holes and similar fallocate tricks elligible as
-well? What about ftruncate() where you have open file descriptor?
-
-								Honza
-
+ #define MEDIA_BUS_FMT_FIXED			0x0001
+ 
+-/* RGB - next is	0x100e */
++/* RGB - next is	0x1010 */
+ #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE	0x1001
+ #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE	0x1002
+ #define MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE	0x1003
+@@ -47,6 +47,8 @@
+ #define MEDIA_BUS_FMT_RGB888_2X12_BE		0x100b
+ #define MEDIA_BUS_FMT_RGB888_2X12_LE		0x100c
+ #define MEDIA_BUS_FMT_ARGB8888_1X32		0x100d
++#define MEDIA_BUS_FMT_RGB444_1X12		0x100e
++#define MEDIA_BUS_FMT_RGB565_1X16		0x100f
+ 
+ /* YUV (including grey) - next is	0x2024 */
+ #define MEDIA_BUS_FMT_Y8_1X8			0x2001
 -- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+1.9.1
