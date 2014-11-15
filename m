@@ -1,64 +1,171 @@
-From: Sakari Ailus <sakari.ailus@iki.fi>
-Subject: Re: [PATCH] [media] Add RGB444_1X12 and RGB565_1X16 media bus formats
-Date: Sat, 15 Nov 2014 16:49:33 +0200
-Message-ID: <546767FD.2080706@iki.fi>
-References: <1415961360-14898-1-git-send-email-boris.brezillon@free-electrons.com>	<20141114135831.GC8907@valkosipuli.retiisi.org.uk> <20141114160446.70c1b8b9@bbrezillon>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups to drop groups
+Date: Sat, 15 Nov 2014 09:37:27 -0600
+Message-ID: <87d28osceg.fsf@x220.int.ebiederm.org>
+References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
+	<0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141114160446.70c1b8b9@bbrezillon>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Boris Brezillon <boris.brezillon@free-electrons.com>
-Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+	(Josh Triplett's message of "Sat, 15 Nov 2014 01:01:02 -0800")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Boris,
+Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> writes:
 
-Boris Brezillon wrote:
-> Hi Sakari,
-> 
-> On Fri, 14 Nov 2014 15:58:31 +0200
-> Sakari Ailus <sakari.ailus@iki.fi> wrote:
-> 
->> Hi Boris,
->>
->> On Fri, Nov 14, 2014 at 11:36:00AM +0100, Boris Brezillon wrote:
-...
->>> diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
->>> index 23b4090..cc7b79e 100644
->>> --- a/include/uapi/linux/media-bus-format.h
->>> +++ b/include/uapi/linux/media-bus-format.h
->>> @@ -33,7 +33,7 @@
->>>  
->>>  #define MEDIA_BUS_FMT_FIXED			0x0001
->>>  
->>> -/* RGB - next is	0x100e */
->>> +/* RGB - next is	0x1010 */
->>>  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE	0x1001
->>>  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE	0x1002
->>>  #define MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE	0x1003
->>> @@ -47,6 +47,8 @@
->>>  #define MEDIA_BUS_FMT_RGB888_2X12_BE		0x100b
->>>  #define MEDIA_BUS_FMT_RGB888_2X12_LE		0x100c
->>>  #define MEDIA_BUS_FMT_ARGB8888_1X32		0x100d
->>> +#define MEDIA_BUS_FMT_RGB444_1X12		0x100e
->>> +#define MEDIA_BUS_FMT_RGB565_1X16		0x100f
->>
->> I'd arrange these according to BPP and bits per sample, both in the header
->> and documentation.
-> 
-> I cannot keep both macro values and BPP/bits per sample in incrementing
-> order. Are you sure you prefer to order macros in BPP/bits per sample
-> order ?
+> Currently, unprivileged processes (without CAP_SETGID) cannot call
+> setgroups at all.  In particular, processes with a set of supplementary
+> groups cannot further drop permissions without obtaining elevated
+> permissions first.
+>
+> Allow unprivileged processes to call setgroups with a subset of their
+> current groups; only require CAP_SETGID to add a group the process does
+> not currently have.
 
-If you take a look elsewhere in the header, you'll notice that the
-ordering has preferred the BPP value (and other values with semantic
-significance) over the numeric value of the definition. I'd just prefer
-to keep it that way. This is also why the "next is" comments are there.
+A couple of questions.
+- Is there precedence in other unix flavors for this?
+- What motiviates this change?
+- Have you looked to see if anything might for bug compatibilty
+  require applications not to be able to drop supplementary groups?
 
--- 
-Kind regards,
-
-Sakari Ailus
-sakari.ailus@iki.fi
+> The kernel already maintains the list of supplementary group IDs in
+> sorted order, and setgroups already needs to sort the new list, so this
+> just requires a linear comparison of the two sorted lists.
+>
+> This moves the CAP_SETGID test from setgroups into set_current_groups.
+>
+> Tested via the following test program:
+>
+> #include <err.h>
+> #include <grp.h>
+> #include <stdio.h>
+> #include <sys/types.h>
+> #include <unistd.h>
+>
+> void run_id(void)
+> {
+>     pid_t p = fork();
+>     switch (p) {
+>         case -1:
+>             err(1, "fork");
+>         case 0:
+>             execl("/usr/bin/id", "id", NULL);
+>             err(1, "exec");
+>         default:
+>             if (waitpid(p, NULL, 0) < 0)
+>                 err(1, "waitpid");
+>     }
+> }
+>
+> int main(void)
+> {
+>     gid_t list1[] = { 1, 2, 3, 4, 5 };
+>     gid_t list2[] = { 2, 3, 4 };
+>     run_id();
+>     if (setgroups(5, list1) < 0)
+>         err(1, "setgroups 1");
+>     run_id();
+>     if (setresgid(1, 1, 1) < 0)
+>         err(1, "setresgid");
+>     if (setresuid(1, 1, 1) < 0)
+>         err(1, "setresuid");
+>     run_id();
+>     if (setgroups(3, list2) < 0)
+>         err(1, "setgroups 2");
+>     run_id();
+>     if (setgroups(5, list1) < 0)
+>         err(1, "setgroups 3");
+>     run_id();
+>
+>     return 0;
+> }
+>
+> Without this patch, the test program gets EPERM from the second
+> setgroups call, after dropping root privileges.  With this patch, the
+> test program successfully drops groups 1 and 5, but then gets EPERM from
+> the third setgroups call, since that call attempts to add groups the
+> process does not currently have.
+>
+> Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+> ---
+>  kernel/groups.c | 33 ++++++++++++++++++++++++++++++---
+>  kernel/uid16.c  |  2 --
+>  2 files changed, 30 insertions(+), 5 deletions(-)
+>
+> diff --git a/kernel/groups.c b/kernel/groups.c
+> index f0667e7..fe7367d 100644
+> --- a/kernel/groups.c
+> +++ b/kernel/groups.c
+> @@ -153,6 +153,29 @@ int groups_search(const struct group_info *group_info, kgid_t grp)
+>  	return 0;
+>  }
+>  
+> +/* Compare two sorted group lists; return true if the first is a subset of the
+> + * second.
+> + */
+> +static bool is_subset(const struct group_info *g1, const struct group_info *g2)
+> +{
+> +	unsigned int i, j;
+> +
+> +	for (i = 0, j = 0; i < g1->ngroups; i++) {
+> +		kgid_t gid1 = GROUP_AT(g1, i);
+> +		kgid_t gid2;
+> +		for (; j < g2->ngroups; j++) {
+> +			gid2 = GROUP_AT(g2, j);
+> +			if (gid_lte(gid1, gid2))
+> +				break;
+> +		}
+> +		if (j >= g2->ngroups || !gid_eq(gid1, gid2))
+> +			return false;
+> +		j++;
+> +	}
+> +
+> +	return true;
+> +}
+> +
+>  /**
+>   * set_groups_sorted - Change a group subscription in a set of credentials
+>   * @new: The newly prepared set of credentials to alter
+> @@ -189,11 +212,17 @@ int set_current_groups(struct group_info *group_info)
+>  {
+>  	struct cred *new;
+>  
+> +	groups_sort(group_info);
+>  	new = prepare_creds();
+>  	if (!new)
+>  		return -ENOMEM;
+> +	if (!ns_capable(current_user_ns(), CAP_SETGID)
+> +	    && !is_subset(group_info, new->group_info)) {
+> +		abort_creds(new);
+> +		return -EPERM;
+> +	}
+>  
+> -	set_groups(new, group_info);
+> +	set_groups_sorted(new, group_info);
+>  	return commit_creds(new);
+>  }
+>  
+> @@ -233,8 +262,6 @@ SYSCALL_DEFINE2(setgroups, int, gidsetsize, gid_t __user *, grouplist)
+>  	struct group_info *group_info;
+>  	int retval;
+>  
+> -	if (!ns_capable(current_user_ns(), CAP_SETGID))
+> -		return -EPERM;
+>  	if ((unsigned)gidsetsize > NGROUPS_MAX)
+>  		return -EINVAL;
+>  
+> diff --git a/kernel/uid16.c b/kernel/uid16.c
+> index 602e5bb..b27e167 100644
+> --- a/kernel/uid16.c
+> +++ b/kernel/uid16.c
+> @@ -176,8 +176,6 @@ SYSCALL_DEFINE2(setgroups16, int, gidsetsize, old_gid_t __user *, grouplist)
+>  	struct group_info *group_info;
+>  	int retval;
+>  
+> -	if (!ns_capable(current_user_ns(), CAP_SETGID))
+> -		return -EPERM;
+>  	if ((unsigned)gidsetsize > NGROUPS_MAX)
+>  		return -EINVAL;
