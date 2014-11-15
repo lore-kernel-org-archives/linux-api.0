@@ -1,129 +1,68 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH net-next] net: introduce SO_INCOMING_CPU
-Date: Sat, 15 Nov 2014 10:47:02 -0800
-Message-ID: <CALCETrWXMG+9Yap5Yt2YQg6C8k_qcXJmgdU4jB44Z+EAEB5xrw@mail.gmail.com>
-References: <1415393472.13896.119.camel@edumazet-glaptop2.roam.corp.google.com>
- <CAHO5Pa0OGtgbUp4R287jbK2SFSpVUoXWCJybvHTFsGyCLynqLg@mail.gmail.com>
- <CALCETrXmCWSoeQLC3WCqMf_sehGVE9KTbTGmsA77ZN84B-V24Q@mail.gmail.com>
- <1415993614.17262.55.camel@edumazet-glaptop2.roam.corp.google.com>
- <CA+mtBx_DyUCxE6BqL_xXcqKPUDu7b3jLShV+AL6L+gCzJLriPg@mail.gmail.com>
- <CALCETrUuChgxXcNrKjYzpe1ry0hx3kf19EfAbY1N1YnG7NFZUw@mail.gmail.com>
- <CA+mtBx_tNW_Bz0hovZ90XxcLK6pL8d6RX=v5Rg8utfKkaFoJ+Q@mail.gmail.com>
- <CALCETrWYrR2X9u7CAr5xkSg8kLH_O=sdk=JF+ZW+FxCTNTFBZg@mail.gmail.com>
- <CA+mtBx9dSNOD5Z8GinU8F1mj_PgU0sTC5g8S9vRuSnSUzAoD=g@mail.gmail.com>
- <CALCETrXf8j52nmpw-A2+bQt0yoz-fiD-4GP4Qf-afwH6UjCVnw@mail.gmail.com>
- <CA+mtBx9Z33O0x4-MG=66Fb4qvBJfxV54xOyiYvWydr=4Bka2xw@mail.gmail.com>
- <CALCETrXnM5zCt651QWF0Z3c197gqzbLA29bQzwi64DnCvS48NQ@mail.gmail.com>
- <CA+mtBx8uneXRoc5HcXED58zi44UyMZGJS6_sU3av8ST1ft7Diw@mail.gmail.com>
- <CALCETrU5Og8tfkFuA-rPY5evV5CkPsx=22f6mePHJPvfcRrBdA@mail.gmail.com> <CA+mtBx-=fbA+pW35K8cjXTJpw30jhawy1mhs-MDEYv9SCyD2MQ@mail.gmail.com>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use
+ setgroups to drop groups
+Date: Sat, 15 Nov 2014 11:29:25 -0800
+Message-ID: <20141115192924.GB19060@thin>
+References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
+ <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
+ <87d28osceg.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CA+mtBx-=fbA+pW35K8cjXTJpw30jhawy1mhs-MDEYv9SCyD2MQ@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Tom Herbert <therbert@google.com>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, David Miller <davem@davemloft.net>, netdev <netdev@vger.kernel.org>, Ying Cai <ycai@google.com>, Willem de Bruijn <willemb@google.com>, Neal Cardwell <ncardwell@google.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87d28osceg.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 15, 2014 at 10:41 AM, Tom Herbert <therbert@google.com> wrote:
-> On Fri, Nov 14, 2014 at 4:50 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Fri, Nov 14, 2014 at 4:40 PM, Tom Herbert <therbert@google.com> wrote:
->>> On Fri, Nov 14, 2014 at 4:24 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>> On Fri, Nov 14, 2014 at 4:06 PM, Tom Herbert <therbert@google.com> wrote:
->>>>> On Fri, Nov 14, 2014 at 2:10 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>>>> On Fri, Nov 14, 2014 at 1:36 PM, Tom Herbert <therbert@google.com> wrote:
->>>>>>> On Fri, Nov 14, 2014 at 12:34 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>>>>>> On Fri, Nov 14, 2014 at 12:25 PM, Tom Herbert <therbert@google.com> wrote:
->>>>>>>>> On Fri, Nov 14, 2014 at 12:16 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>>>>>>>> On Fri, Nov 14, 2014 at 11:52 AM, Tom Herbert <therbert@google.com> wrote:
->>>>>>>>>>> On Fri, Nov 14, 2014 at 11:33 AM, Eric Dumazet <eric.dumazet@gmail.com> wrote:
->>>>>>>>>>>> On Fri, 2014-11-14 at 09:17 -0800, Andy Lutomirski wrote:
->>>>>>>>>>>>
->>>>>>>>>>>>> As a heavy user of RFS (and finder of bugs in it, too), here's my
->>>>>>>>>>>>> question about this API:
->>>>>>>>>>>>>
->>>>>>>>>>>>> How does an application tell whether the socket represents a
->>>>>>>>>>>>> non-actively-steered flow?  If the flow is subject to RFS, then moving
->>>>>>>>>>>>> the application handling to the socket's CPU seems problematic, as the
->>>>>>>>>>>>> socket's CPU might move as well.  The current implementation in this
->>>>>>>>>>>>> patch seems to tell me which CPU the most recent packet came in on,
->>>>>>>>>>>>> which is not necessarily very useful.
->>>>>>>>>>>>
->>>>>>>>>>>> Its the cpu that hit the TCP stack, bringing dozens of cache lines in
->>>>>>>>>>>> its cache. This is all that matters,
->>>>>>>>>>>>
->>>>>>>>>>>>>
->>>>>>>>>>>>> Some possibilities:
->>>>>>>>>>>>>
->>>>>>>>>>>>> 1. Let SO_INCOMING_CPU fail if RFS or RPS are in play.
->>>>>>>>>>>>
->>>>>>>>>>>> Well, idea is to not use RFS at all. Otherwise, it is useless.
->>>>>>>>>>
->>>>>>>>>> Sure, but how do I know that it'll be the same CPU next time?
->>>>>>>>>>
->>>>>>>>>>>>
->>>>>>>>>>> Bear in mind this is only an interface to report RX CPU and in itself
->>>>>>>>>>> doesn't provide any functionality for changing scheduling, there is
->>>>>>>>>>> obviously logic needed in user space that would need to do something.
->>>>>>>>>>>
->>>>>>>>>>> If we track the interrupting CPU in skb, the interface could be easily
->>>>>>>>>>> extended to provide the interrupting CPU, the RPS CPU (calculated at
->>>>>>>>>>> reported time), and the CPU processing transport (post steering which
->>>>>>>>>>> is what is currently returned). That would provide the complete
->>>>>>>>>>> picture to control scheduling a flow from userspace, and an interface
->>>>>>>>>>> to selectively turn off RFS for a socket would make sense then.
->>>>>>>>>>
->>>>>>>>>> I think that a turn-off-RFS interface would also want a way to figure
->>>>>>>>>> out where the flow would go without RFS.  Can the network stack do
->>>>>>>>>> that (e.g. evaluate the rx indirection hash or whatever happens these
->>>>>>>>>> days)?
->>>>>>>>>>
->>>>>>>>> Yes,. We need the rxhash and the CPU that packets are received on from
->>>>>>>>> the device for the socket. The former we already have, the latter
->>>>>>>>> might be done by adding a field to skbuff to set received CPU. Given
->>>>>>>>> the L4 hash and interrupting CPU we can calculated the RPS CPU which
->>>>>>>>> is where packet would have landed with RFS off.
->>>>>>>>
->>>>>>>> Hmm.  I think this would be useful for me.  It would *definitely* be
->>>>>>>> useful for me if I could pin an RFS flow to a cpu of my choice.
->>>>>>>>
->>>>>>> Andy, can you elaborate a little more on your use case. I've thought
->>>>>>> several times about an interface to program the flow table from
->>>>>>> userspace, but never quite came up with a compelling use case and
->>>>>>> there is the security concern that a user could "steal" cycles from
->>>>>>> arbitrary CPUs.
->>>>>>
->>>>>> I have a bunch of threads that are pinned to various CPUs or groups of
->>>>>> CPUs.  Each thread is responsible for a fixed set of flows.  I'd like
->>>>>> those flows to go to those CPUs.
->>>>>>
->>>>>> RFS will eventually do it, but it would be nice if I could
->>>>>> deterministically ask for a flow to be routed to the right CPU.  Also,
->>>>>> if my thread bounces temporarily to another CPU, I don't really need
->>>>>> the flow to follow it -- I'd like it to stay put.
->>>>>>
->>>>> Okay, how about it we have a SO_RFS_LOCK_FLOW sockopt. When this is
->>>>> called on a socket we can lock the socket to CPU binding to the
->>>>> current CPU it is called from. It could be unlocked at a later point.
->>>>> Would this satisfy your requirements?
->>>>
->>>> Yes, I think.  Especially if it bypassed the hash table.
->>>
->>> Unfortunately we can't easily bypass the hash table. The only way I
->>> know of to to do that is to perform the socket lookup to do steering
->>> (I tried that early on, but it was pretty costly).
->>
->> What happens if you just call ndo_rx_flow_steer and do something to
->> keep the result from expiring?
->>
-> Okay, I will look at that. Do you know how many flows we are talking
-> about, both in the number you need and the number that can be put in
-> the HW without collision?
+On Sat, Nov 15, 2014 at 09:37:27AM -0600, Eric W. Biederman wrote:
+> Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> writes:
+> 
+> > Currently, unprivileged processes (without CAP_SETGID) cannot call
+> > setgroups at all.  In particular, processes with a set of supplementary
+> > groups cannot further drop permissions without obtaining elevated
+> > permissions first.
+> >
+> > Allow unprivileged processes to call setgroups with a subset of their
+> > current groups; only require CAP_SETGID to add a group the process does
+> > not currently have.
+> 
+> A couple of questions.
+> - Is there precedence in other unix flavors for this?
 
-I think I have on the order of 100 flows.  Maybe 400.  It's been a few
-months since I checked, and this particular metric is much easier to
-measure on a weekday.
+I found a few references to now-nonexistent pages at MIT about a system
+with this property, but other than that no.
 
-I think the HW has several thousand slots.
+I've also found more than a few references to people wanting this
+functionality.
 
---Andy
+> - What motiviates this change?
+
+I have a series of patches planned to add more ways to drop elevated
+privileges without requiring a transition through root to do so.  That
+would improve the ability for unprivileged users to run programs
+sandboxed with even *less* privileges.  (Among other things, that would
+also allow programs running with no_new_privs to further *reduce* their
+privileges, which they can't currently do in this case.)
+
+> - Have you looked to see if anything might for bug compatibilty
+>   require applications not to be able to drop supplementary groups?
+
+I haven't found any such case; that doesn't mean such a case does not
+exist.  Feedback welcome.
+
+The only case I can think of (and I don't know of any examples of such a
+system): some kind of quota system that limits the members of a group to
+a certain amount of storage, but places no such limit on non-members.
+
+However, the idea of *holding* a credential (a supplementary group ID)
+giving *less* privileges, and *dropping* a credential giving *more*
+privileges, would completely invert normal security models.  (The sane
+way to design such a system would be to have a privileged group for
+"users who can exceed the quota".)
+
+If it turns out that a real case exists that people care about, I could
+easily make this configurable, either at compile time or via a sysctl.
+
+- Josh Triplett
