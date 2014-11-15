@@ -1,46 +1,64 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: [PATCH manpages] getgroups.2: Document unprivileged setgroups calls
-Date: Sat, 15 Nov 2014 01:01:52 -0800
-Message-ID: <20141115090151.GA15470@thin>
-References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
+From: Sakari Ailus <sakari.ailus@iki.fi>
+Subject: Re: [PATCH] [media] Add RGB444_1X12 and RGB565_1X16 media bus formats
+Date: Sat, 15 Nov 2014 16:49:33 +0200
+Message-ID: <546767FD.2080706@iki.fi>
+References: <1415961360-14898-1-git-send-email-boris.brezillon@free-electrons.com>	<20141114135831.GC8907@valkosipuli.retiisi.org.uk> <20141114160446.70c1b8b9@bbrezillon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141114160446.70c1b8b9@bbrezillon>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
----
-This should probably also include appropriate documentation for what
-kernel introduces this behavior.
+Hi Boris,
 
- man2/getgroups.2 | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+Boris Brezillon wrote:
+> Hi Sakari,
+> 
+> On Fri, 14 Nov 2014 15:58:31 +0200
+> Sakari Ailus <sakari.ailus@iki.fi> wrote:
+> 
+>> Hi Boris,
+>>
+>> On Fri, Nov 14, 2014 at 11:36:00AM +0100, Boris Brezillon wrote:
+...
+>>> diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
+>>> index 23b4090..cc7b79e 100644
+>>> --- a/include/uapi/linux/media-bus-format.h
+>>> +++ b/include/uapi/linux/media-bus-format.h
+>>> @@ -33,7 +33,7 @@
+>>>  
+>>>  #define MEDIA_BUS_FMT_FIXED			0x0001
+>>>  
+>>> -/* RGB - next is	0x100e */
+>>> +/* RGB - next is	0x1010 */
+>>>  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE	0x1001
+>>>  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE	0x1002
+>>>  #define MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE	0x1003
+>>> @@ -47,6 +47,8 @@
+>>>  #define MEDIA_BUS_FMT_RGB888_2X12_BE		0x100b
+>>>  #define MEDIA_BUS_FMT_RGB888_2X12_LE		0x100c
+>>>  #define MEDIA_BUS_FMT_ARGB8888_1X32		0x100d
+>>> +#define MEDIA_BUS_FMT_RGB444_1X12		0x100e
+>>> +#define MEDIA_BUS_FMT_RGB565_1X16		0x100f
+>>
+>> I'd arrange these according to BPP and bits per sample, both in the header
+>> and documentation.
+> 
+> I cannot keep both macro values and BPP/bits per sample in incrementing
+> order. Are you sure you prefer to order macros in BPP/bits per sample
+> order ?
 
-diff --git a/man2/getgroups.2 b/man2/getgroups.2
-index 373c204..edca37c 100644
---- a/man2/getgroups.2
-+++ b/man2/getgroups.2
-@@ -81,9 +81,10 @@ to be used in a further call to
- .PP
- .BR setgroups ()
- sets the supplementary group IDs for the calling process.
--Appropriate privileges (Linux: the
-+Any process may drop groups from its list, but adding groups requires
-+appropriate privileges (Linux: the
- .B CAP_SETGID
--capability) are required.
-+capability).
- The
- .I size
- argument specifies the number of supplementary group IDs
+If you take a look elsewhere in the header, you'll notice that the
+ordering has preferred the BPP value (and other values with semantic
+significance) over the numeric value of the definition. I'd just prefer
+to keep it that way. This is also why the "next is" comments are there.
+
 -- 
-2.1.3
+Kind regards,
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Sakari Ailus
+sakari.ailus@iki.fi
