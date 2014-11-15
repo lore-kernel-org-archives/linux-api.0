@@ -1,171 +1,151 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups to drop groups
-Date: Sat, 15 Nov 2014 09:37:27 -0600
-Message-ID: <87d28osceg.fsf@x220.int.ebiederm.org>
-References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
-	<0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
+From: Tom Herbert <therbert@google.com>
+Subject: Re: [PATCH net-next] net: introduce SO_INCOMING_CPU
+Date: Sat, 15 Nov 2014 10:41:41 -0800
+Message-ID: <CA+mtBx-=fbA+pW35K8cjXTJpw30jhawy1mhs-MDEYv9SCyD2MQ@mail.gmail.com>
+References: <1415393472.13896.119.camel@edumazet-glaptop2.roam.corp.google.com>
+	<CAHO5Pa0OGtgbUp4R287jbK2SFSpVUoXWCJybvHTFsGyCLynqLg@mail.gmail.com>
+	<CALCETrXmCWSoeQLC3WCqMf_sehGVE9KTbTGmsA77ZN84B-V24Q@mail.gmail.com>
+	<1415993614.17262.55.camel@edumazet-glaptop2.roam.corp.google.com>
+	<CA+mtBx_DyUCxE6BqL_xXcqKPUDu7b3jLShV+AL6L+gCzJLriPg@mail.gmail.com>
+	<CALCETrUuChgxXcNrKjYzpe1ry0hx3kf19EfAbY1N1YnG7NFZUw@mail.gmail.com>
+	<CA+mtBx_tNW_Bz0hovZ90XxcLK6pL8d6RX=v5Rg8utfKkaFoJ+Q@mail.gmail.com>
+	<CALCETrWYrR2X9u7CAr5xkSg8kLH_O=sdk=JF+ZW+FxCTNTFBZg@mail.gmail.com>
+	<CA+mtBx9dSNOD5Z8GinU8F1mj_PgU0sTC5g8S9vRuSnSUzAoD=g@mail.gmail.com>
+	<CALCETrXf8j52nmpw-A2+bQt0yoz-fiD-4GP4Qf-afwH6UjCVnw@mail.gmail.com>
+	<CA+mtBx9Z33O0x4-MG=66Fb4qvBJfxV54xOyiYvWydr=4Bka2xw@mail.gmail.com>
+	<CALCETrXnM5zCt651QWF0Z3c197gqzbLA29bQzwi64DnCvS48NQ@mail.gmail.com>
+	<CA+mtBx8uneXRoc5HcXED58zi44UyMZGJS6_sU3av8ST1ft7Diw@mail.gmail.com>
+	<CALCETrU5Og8tfkFuA-rPY5evV5CkPsx=22f6mePHJPvfcRrBdA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-	(Josh Triplett's message of "Sat, 15 Nov 2014 01:01:02 -0800")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CALCETrU5Og8tfkFuA-rPY5evV5CkPsx=22f6mePHJPvfcRrBdA@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Eric Dumazet <eric.dumazet@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, David Miller <davem@davemloft.net>, netdev <netdev@vger.kernel.org>, Ying Cai <ycai@google.com>, Willem de Bruijn <willemb@google.com>, Neal Cardwell <ncardwell@google.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> writes:
+On Fri, Nov 14, 2014 at 4:50 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+> On Fri, Nov 14, 2014 at 4:40 PM, Tom Herbert <therbert@google.com> wrote:
+>> On Fri, Nov 14, 2014 at 4:24 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>>> On Fri, Nov 14, 2014 at 4:06 PM, Tom Herbert <therbert@google.com> wrote:
+>>>> On Fri, Nov 14, 2014 at 2:10 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>>>>> On Fri, Nov 14, 2014 at 1:36 PM, Tom Herbert <therbert@google.com> wrote:
+>>>>>> On Fri, Nov 14, 2014 at 12:34 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>>>>>>> On Fri, Nov 14, 2014 at 12:25 PM, Tom Herbert <therbert@google.com> wrote:
+>>>>>>>> On Fri, Nov 14, 2014 at 12:16 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>>>>>>>>> On Fri, Nov 14, 2014 at 11:52 AM, Tom Herbert <therbert@google.com> wrote:
+>>>>>>>>>> On Fri, Nov 14, 2014 at 11:33 AM, Eric Dumazet <eric.dumazet@gmail.com> wrote:
+>>>>>>>>>>> On Fri, 2014-11-14 at 09:17 -0800, Andy Lutomirski wrote:
+>>>>>>>>>>>
+>>>>>>>>>>>> As a heavy user of RFS (and finder of bugs in it, too), here's my
+>>>>>>>>>>>> question about this API:
+>>>>>>>>>>>>
+>>>>>>>>>>>> How does an application tell whether the socket represents a
+>>>>>>>>>>>> non-actively-steered flow?  If the flow is subject to RFS, then moving
+>>>>>>>>>>>> the application handling to the socket's CPU seems problematic, as the
+>>>>>>>>>>>> socket's CPU might move as well.  The current implementation in this
+>>>>>>>>>>>> patch seems to tell me which CPU the most recent packet came in on,
+>>>>>>>>>>>> which is not necessarily very useful.
+>>>>>>>>>>>
+>>>>>>>>>>> Its the cpu that hit the TCP stack, bringing dozens of cache lines in
+>>>>>>>>>>> its cache. This is all that matters,
+>>>>>>>>>>>
+>>>>>>>>>>>>
+>>>>>>>>>>>> Some possibilities:
+>>>>>>>>>>>>
+>>>>>>>>>>>> 1. Let SO_INCOMING_CPU fail if RFS or RPS are in play.
+>>>>>>>>>>>
+>>>>>>>>>>> Well, idea is to not use RFS at all. Otherwise, it is useless.
+>>>>>>>>>
+>>>>>>>>> Sure, but how do I know that it'll be the same CPU next time?
+>>>>>>>>>
+>>>>>>>>>>>
+>>>>>>>>>> Bear in mind this is only an interface to report RX CPU and in itself
+>>>>>>>>>> doesn't provide any functionality for changing scheduling, there is
+>>>>>>>>>> obviously logic needed in user space that would need to do something.
+>>>>>>>>>>
+>>>>>>>>>> If we track the interrupting CPU in skb, the interface could be easily
+>>>>>>>>>> extended to provide the interrupting CPU, the RPS CPU (calculated at
+>>>>>>>>>> reported time), and the CPU processing transport (post steering which
+>>>>>>>>>> is what is currently returned). That would provide the complete
+>>>>>>>>>> picture to control scheduling a flow from userspace, and an interface
+>>>>>>>>>> to selectively turn off RFS for a socket would make sense then.
+>>>>>>>>>
+>>>>>>>>> I think that a turn-off-RFS interface would also want a way to figure
+>>>>>>>>> out where the flow would go without RFS.  Can the network stack do
+>>>>>>>>> that (e.g. evaluate the rx indirection hash or whatever happens these
+>>>>>>>>> days)?
+>>>>>>>>>
+>>>>>>>> Yes,. We need the rxhash and the CPU that packets are received on from
+>>>>>>>> the device for the socket. The former we already have, the latter
+>>>>>>>> might be done by adding a field to skbuff to set received CPU. Given
+>>>>>>>> the L4 hash and interrupting CPU we can calculated the RPS CPU which
+>>>>>>>> is where packet would have landed with RFS off.
+>>>>>>>
+>>>>>>> Hmm.  I think this would be useful for me.  It would *definitely* be
+>>>>>>> useful for me if I could pin an RFS flow to a cpu of my choice.
+>>>>>>>
+>>>>>> Andy, can you elaborate a little more on your use case. I've thought
+>>>>>> several times about an interface to program the flow table from
+>>>>>> userspace, but never quite came up with a compelling use case and
+>>>>>> there is the security concern that a user could "steal" cycles from
+>>>>>> arbitrary CPUs.
+>>>>>
+>>>>> I have a bunch of threads that are pinned to various CPUs or groups of
+>>>>> CPUs.  Each thread is responsible for a fixed set of flows.  I'd like
+>>>>> those flows to go to those CPUs.
+>>>>>
+>>>>> RFS will eventually do it, but it would be nice if I could
+>>>>> deterministically ask for a flow to be routed to the right CPU.  Also,
+>>>>> if my thread bounces temporarily to another CPU, I don't really need
+>>>>> the flow to follow it -- I'd like it to stay put.
+>>>>>
+>>>> Okay, how about it we have a SO_RFS_LOCK_FLOW sockopt. When this is
+>>>> called on a socket we can lock the socket to CPU binding to the
+>>>> current CPU it is called from. It could be unlocked at a later point.
+>>>> Would this satisfy your requirements?
+>>>
+>>> Yes, I think.  Especially if it bypassed the hash table.
+>>
+>> Unfortunately we can't easily bypass the hash table. The only way I
+>> know of to to do that is to perform the socket lookup to do steering
+>> (I tried that early on, but it was pretty costly).
+>
+> What happens if you just call ndo_rx_flow_steer and do something to
+> keep the result from expiring?
+>
+Okay, I will look at that. Do you know how many flows we are talking
+about, both in the number you need and the number that can be put in
+the HW without collision?
 
-> Currently, unprivileged processes (without CAP_SETGID) cannot call
-> setgroups at all.  In particular, processes with a set of supplementary
-> groups cannot further drop permissions without obtaining elevated
-> permissions first.
->
-> Allow unprivileged processes to call setgroups with a subset of their
-> current groups; only require CAP_SETGID to add a group the process does
-> not currently have.
+Thanks,
+Tom
 
-A couple of questions.
-- Is there precedence in other unix flavors for this?
-- What motiviates this change?
-- Have you looked to see if anything might for bug compatibilty
-  require applications not to be able to drop supplementary groups?
-
-> The kernel already maintains the list of supplementary group IDs in
-> sorted order, and setgroups already needs to sort the new list, so this
-> just requires a linear comparison of the two sorted lists.
+>>>
+>>>> As I mentioned, there is no material functionality in this patch and
+>>>> it should be independent of RFS. It simply returns the CPU where the
+>>>> stack processed the packet. Whether or not this is meaningful
+>>>> information to the algorithm being implemented in userspace is
+>>>> completely up to the caller to decide.
+>>>
+>>> Agreed.
+>>>
+>>> My only concern is that writing that userspace algorithm might result
+>>> in surprises if RFS is on.  Having the user program notice the problem
+>>> early and alert the admin might help keep Murphy's Law at bay here.
+>>>
+>> By Murphy's law we'd also have to consider that the flow hash could
+>> change after reading the results so that the scheduling done in
+>> userspace is completely wrong until the CPU is read again.
+>> Synchronizing kernel and device state with userspace state is not
+>> always so easy. One way to mitigate is to use ancillary data which
+>> would provide real time information and obviate the need for another
+>> system call.
 >
-> This moves the CAP_SETGID test from setgroups into set_current_groups.
+> Hmm.  That would work, too.  I don't know how annoyed user code would
+> be at having to read ancillary data, though.
 >
-> Tested via the following test program:
+> The flow hash really shouldn't change much, though, right?
 >
-> #include <err.h>
-> #include <grp.h>
-> #include <stdio.h>
-> #include <sys/types.h>
-> #include <unistd.h>
->
-> void run_id(void)
-> {
->     pid_t p = fork();
->     switch (p) {
->         case -1:
->             err(1, "fork");
->         case 0:
->             execl("/usr/bin/id", "id", NULL);
->             err(1, "exec");
->         default:
->             if (waitpid(p, NULL, 0) < 0)
->                 err(1, "waitpid");
->     }
-> }
->
-> int main(void)
-> {
->     gid_t list1[] = { 1, 2, 3, 4, 5 };
->     gid_t list2[] = { 2, 3, 4 };
->     run_id();
->     if (setgroups(5, list1) < 0)
->         err(1, "setgroups 1");
->     run_id();
->     if (setresgid(1, 1, 1) < 0)
->         err(1, "setresgid");
->     if (setresuid(1, 1, 1) < 0)
->         err(1, "setresuid");
->     run_id();
->     if (setgroups(3, list2) < 0)
->         err(1, "setgroups 2");
->     run_id();
->     if (setgroups(5, list1) < 0)
->         err(1, "setgroups 3");
->     run_id();
->
->     return 0;
-> }
->
-> Without this patch, the test program gets EPERM from the second
-> setgroups call, after dropping root privileges.  With this patch, the
-> test program successfully drops groups 1 and 5, but then gets EPERM from
-> the third setgroups call, since that call attempts to add groups the
-> process does not currently have.
->
-> Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-> ---
->  kernel/groups.c | 33 ++++++++++++++++++++++++++++++---
->  kernel/uid16.c  |  2 --
->  2 files changed, 30 insertions(+), 5 deletions(-)
->
-> diff --git a/kernel/groups.c b/kernel/groups.c
-> index f0667e7..fe7367d 100644
-> --- a/kernel/groups.c
-> +++ b/kernel/groups.c
-> @@ -153,6 +153,29 @@ int groups_search(const struct group_info *group_info, kgid_t grp)
->  	return 0;
->  }
->  
-> +/* Compare two sorted group lists; return true if the first is a subset of the
-> + * second.
-> + */
-> +static bool is_subset(const struct group_info *g1, const struct group_info *g2)
-> +{
-> +	unsigned int i, j;
-> +
-> +	for (i = 0, j = 0; i < g1->ngroups; i++) {
-> +		kgid_t gid1 = GROUP_AT(g1, i);
-> +		kgid_t gid2;
-> +		for (; j < g2->ngroups; j++) {
-> +			gid2 = GROUP_AT(g2, j);
-> +			if (gid_lte(gid1, gid2))
-> +				break;
-> +		}
-> +		if (j >= g2->ngroups || !gid_eq(gid1, gid2))
-> +			return false;
-> +		j++;
-> +	}
-> +
-> +	return true;
-> +}
-> +
->  /**
->   * set_groups_sorted - Change a group subscription in a set of credentials
->   * @new: The newly prepared set of credentials to alter
-> @@ -189,11 +212,17 @@ int set_current_groups(struct group_info *group_info)
->  {
->  	struct cred *new;
->  
-> +	groups_sort(group_info);
->  	new = prepare_creds();
->  	if (!new)
->  		return -ENOMEM;
-> +	if (!ns_capable(current_user_ns(), CAP_SETGID)
-> +	    && !is_subset(group_info, new->group_info)) {
-> +		abort_creds(new);
-> +		return -EPERM;
-> +	}
->  
-> -	set_groups(new, group_info);
-> +	set_groups_sorted(new, group_info);
->  	return commit_creds(new);
->  }
->  
-> @@ -233,8 +262,6 @@ SYSCALL_DEFINE2(setgroups, int, gidsetsize, gid_t __user *, grouplist)
->  	struct group_info *group_info;
->  	int retval;
->  
-> -	if (!ns_capable(current_user_ns(), CAP_SETGID))
-> -		return -EPERM;
->  	if ((unsigned)gidsetsize > NGROUPS_MAX)
->  		return -EINVAL;
->  
-> diff --git a/kernel/uid16.c b/kernel/uid16.c
-> index 602e5bb..b27e167 100644
-> --- a/kernel/uid16.c
-> +++ b/kernel/uid16.c
-> @@ -176,8 +176,6 @@ SYSCALL_DEFINE2(setgroups16, int, gidsetsize, old_gid_t __user *, grouplist)
->  	struct group_info *group_info;
->  	int retval;
->  
-> -	if (!ns_capable(current_user_ns(), CAP_SETGID))
-> -		return -EPERM;
->  	if ((unsigned)gidsetsize > NGROUPS_MAX)
->  		return -EINVAL;
+> --Andy
