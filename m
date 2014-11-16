@@ -1,158 +1,75 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v2 10/10] crypto: AF_ALG: document the user space interface
-Date: Sun, 16 Nov 2014 03:29:31 +0100
-Message-ID: <1857073.eyqAXtMAM7@tachyon.chronox.de>
-References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups to drop groups
+Date: Sat, 15 Nov 2014 21:08:07 -0600
+Message-ID: <87vbmfq1uw.fsf@x220.int.ebiederm.org>
+References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
+	<0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
+	<87d28osceg.fsf@x220.int.ebiederm.org> <20141115192924.GB19060@thin>
+	<CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com>
+	<20141115202042.GA20900@thin> <20141116020511.GB5507@thunk.org>
+	<6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5365136.g8vbXlhRyC@tachyon.chronox.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <6C690A2C-8EB1-421A-94C3-9803AFB95760-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> (Josh
+	Triplett's message of "Sat, 15 Nov 2014 18:35:05 -0800")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The extension of the user space interface documentation covers all
-aspects of the patchset, including:
+Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> writes:
 
-	* AEAD cipher interface
+> On November 15, 2014 6:05:11 PM PST, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
+>>On Sat, Nov 15, 2014 at 12:20:42PM -0800, Josh Triplett wrote:
+>>> > However, sudoers seems to allow negative group matches.  So maybe
+>>> > allowing this only with no_new_privs already set would make sense.
+>>> 
+>>> Sigh, bad sudo.  Sure, restricting this to no_new_privs only seems
+>>fine.
+>>> I'll do that in v2, and document that in the manpage.
+>>
+>>I've also seen use cases (generally back in the bad old days of big
+>>timesharing VAX 750's :-) where the system admin might assign someone
+>>to the "games-abusers" group, and then set /usr/games to mode 705
+>>root:games-abusers --- presumably because it's easier to add a few
+>>people to the deny list rather than having to add all of the EECS
+>>department to the games group minus the abusers.
+>>
+>>So arbitrarily anyone to drop groups from their supplemental group
+>>list will result in a change from both existing practice and legacy
+>>Unix systems, and it could potentially lead to a security exposure.
+>
+> As Andy pointed out, you can already do that with a user namespace,
 
-	* RNG cipher interface
+That may be a bug with the user namespace permission check.  Perhaps we
+shouldn't allow dropping groups that aren't mapped in the user
+namespace.
 
-	* getsockopt interface
+To add to the discussion there are also sg and newgroup, though I don't
+think they touch supplementary groups.
 
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
----
- Documentation/crypto/crypto-API-userspace.txt | 95 ++++++++++++++++++++++++++-
- 1 file changed, 93 insertions(+), 2 deletions(-)
+> for any case not involving a setuid or setgid (or otherwise
+> privilege-gaining) program.  And requiring no_new_privs handles that.
 
-diff --git a/Documentation/crypto/crypto-API-userspace.txt b/Documentation/crypto/crypto-API-userspace.txt
-index ac619cd..5090b05 100644
---- a/Documentation/crypto/crypto-API-userspace.txt
-+++ b/Documentation/crypto/crypto-API-userspace.txt
-@@ -30,8 +30,9 @@ ciphers are accessible:
- 
- 	* Symmetric ciphers
- 
--Note, AEAD ciphers are currently not supported via the symmetric cipher
--interface.
-+	* AEAD ciphers
-+
-+	* Random number generators
- 
- The interface is provided via Netlink using the type AF_ALG. In addition, the
- setsockopt option type is SOL_ALG. In case the user space header files do not
-@@ -85,6 +86,7 @@ If a consumer on the other hand wants to maintain the plaintext and the
- ciphertext in different memory locations, all a consumer needs to do is to
- provide different memory pointers for the encryption and decryption operation.
- 
-+
- Message digest API
- ==================
- 
-@@ -169,6 +171,69 @@ as large as to hold all blocks of the encrypted or decrypted data. If the output
- data size is smaller, only as many blocks are returned that fit into that
- output buffer size.
- 
-+
-+AEAD cipher API
-+===============
-+
-+The operation is identical to the symmetric cipher API. However, an AEAD
-+cipher requires additional information, such as the authentication tag and
-+the associated data. This data is to be supplied in addition to the normal
-+symmetric cipher data like key and IV discussed for the symmetric ciphers.
-+
-+During initialization, the struct sockaddr data structure must be filled as
-+follows:
-+
-+struct sockaddr_alg sa = {
-+	.salg_family = AF_ALG,
-+	.salg_type = "aead", /* this selects the AEAD cipher */
-+	.salg_name = "gcm(aes)" /* this is the cipher name */
-+};
-+
-+The discussion about the sendmsg given for the symmetric cipher applies for
-+the AEAD interface as well. In addition to the plaintext / ciphertext data and
-+the IV, the following data must be supplied with the cmsghdr data structure:
-+
-+	* The AEAD authentication tag size is set with the flag
-+	  ALG_SET_AEAD_AUTHSIZE. The integer value of the authentication tag
-+	  size must be provided in the data field of the cmsghdr structure.
-+
-+	* The AEAD associated data is set with the flag ALG_SET_AEAD_ASSOC.
-+	  The data is set the same way as for the IV by supplying the associated
-+	  data in the data field of the cmsghdr structure.
-+
-+The authentication tag itself, however, is handled in a different way to comply
-+with the specifics of the kernel crypto API and to avoid copying the
-+authentication tag around in memory. The authentication tag is added to the
-+memory that immediately follows the ciphertext.
-+
-+	* When performing an encryption operation, the resulting ciphertext
-+	  buffer will hold the tag as follows: ciphertext || tag.  The consumer
-+	  must ensure that the ciphertext buffer is large enough to hold the
-+	  ciphertext together with the tag of the size set by the consumer using
-+	  the ALG_SET_AEAD_AUTHSIZE cmsghdr flag as discussed above.
-+
-+	* When performing a decryption operation, the initial ciphertext buffer
-+	  must hold the tag as follows: ciphertext || tag. The resulting
-+	  plaintext has the same size as the ciphertext.
-+
-+Note: Authentication errors during decryption are marked with a failing
-+read/recv system call whose errno is set to EBADMSG.
-+
-+
-+Random number generator API
-+===========================
-+
-+Compared to the symmetric ciphers, the random number generator API is simple:
-+it only supports the system calls of read/recv.
-+
-+The consumer must observe the returned size of the read/recv system calls and
-+potentially make subsequent calls if the returned length of random numbers is
-+smaller than the expected length.
-+
-+When initializing a random number generator instance, the AF_ALG interface
-+handler ensures that it is appropriately seeded.
-+
-+
- Setsockopt interface
- ====================
- 
-@@ -190,6 +255,32 @@ optname:
- 
- 		- the hash cipher type (keyed message digests)
- 
-+
-+Getsockopt interface
-+====================
-+
-+To allow consumers to obtain information about the allocated cipher, the
-+following getsockopt calls with the optval set to the listed flags are provided.
-+
-+The getsockopt system call must be invoked with the file descriptor of the open
-+cipher (i.e. the file descriptor returned by the accept system call).
-+
-+	* ALG_GET_BLOCKSIZE -- Return the block size of the cipher in the
-+	  optlen field of getsockopt. This call is only applicable to
-+	  symmetric and AEAD ciphers.
-+
-+	* ALG_GET_IVSIZE -- Return the IV size of the cipher in the optlen field
-+	  of getsockopt. This call is only applicable to symmetric and AEAD
-+	  ciphers.
-+
-+	* ALG_GET_AEAD_AUTHSIZE -- Return the maximum supported authentication
-+	  tag size in the optlen field of getsockopt. This call is only
-+	  applicable to AEAD ciphers.
-+
-+	* ALG_GET_DIGESTSIZE -- Return the digest size in the optlen field of
-+	  getsockopt. This call is only applicable to message digests.
-+
-+
- User space API example
- ======================
- 
--- 
-2.1.0
+Frankly adding a no_new_privs check to allow something/anything scares
+me.  That converts no_new_privs from something simple and easy to
+understand to something much more complicated.
+
+> Given the combination of those two things, do you still see any
+> problematic cases?
+
+Josh I think it is time to stop and make certain you understand how
+unix groups work in the large.
+
+It seems to me that either supplementary groups can be dropped or
+supplementary groups can not be dropped.  If they can be dropped we
+shouldn't need complicated checks to allow them to be dropped in some
+circumstances but not others.
+
+Unix groups are an old interface and they have been used in a lot of
+ways over the years.  We need to be careful any change we make is good
+and truly backwards compatible and that we do our darndest not to
+introduce security holes.
+
+Eric
