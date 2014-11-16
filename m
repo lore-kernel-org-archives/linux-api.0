@@ -1,7 +1,7 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v2 07/10] crypto: AF_ALG: add random number generator support
-Date: Sun, 16 Nov 2014 03:27:36 +0100
-Message-ID: <1717594.VPDtFmIU5Y@tachyon.chronox.de>
+Subject: [PATCH v2 04/10] crypto: AF_ALG: crypto API calls to inline functions
+Date: Sun, 16 Nov 2014 03:25:49 +0100
+Message-ID: <8139637.nYqaFSIk4I@tachyon.chronox.de>
 References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,243 +13,236 @@ To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the random number generator support for AF_ALG.
-
-A random number generator's purpose is to generate data without
-requiring the caller to provide any data. Therefore, the AF_ALG
-interface handler for RNGs only implements a callback handler for
-recvmsg.
-
-The following parameters provided with a recvmsg are processed by the
-RNG callback handler:
-
-	* sock - to resolve the RNG context data structure accessing the
-	  RNG instance private to the socket
-
-	* len - this parameter allows userspace callers to specify how
-	  many random bytes the RNG shall produce and return. As the
-	  kernel context for the RNG allocates a buffer of 128 bytes to
-	  store random numbers before copying them to userspace, the len
-	  parameter is checked that it is not larger than 128. If a
-	  caller wants more random numbers, a new request for recvmsg
-	  shall be made.
-
-The size of 128 bytes is chose because of the following considerations:
-
-	* to increase the memory footprint of the kernel too much (note,
-	  that would be 128 bytes per open socket)
-
-	* 128 is divisible by any typical cryptographic block size an
-	  RNG may have
-
-	* A request for random numbers typically only shall supply small
-	  amount of data like for keys or IVs that should only require
-	  one invocation of the recvmsg function.
-
-Note, during instantiation of the RNG, the code checks whether the RNG
-implementation requires seeding. If so, the RNG is seeded with output
-from get_random_bytes.
-
-A fully working example using all aspects of the RNG interface is
-provided at http://www.chronox.de/libkcapi.html
+To avoid excessive branches and cluttering the code, all kernel crypto
+API calls are extracted into separate inline functions. These functions
+invoke either the ablkcipher or the aead crypto API function calls, as
+necessary.
 
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- crypto/algif_rng.c | 186 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 186 insertions(+)
- create mode 100644 crypto/algif_rng.c
+ crypto/algif_skcipher.c | 143 ++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 125 insertions(+), 18 deletions(-)
 
-diff --git a/crypto/algif_rng.c b/crypto/algif_rng.c
-new file mode 100644
-index 0000000..fc25869
---- /dev/null
-+++ b/crypto/algif_rng.c
-@@ -0,0 +1,186 @@
-+/*
-+ * algif_rng: User-space interface for random number generators
-+ *
-+ * This file provides the user-space API for random number generators.
-+ *
-+ * Copyright (C) 2014, Stephan Mueller <smueller@chronox.de>
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, and the entire permission notice in its entirety,
-+ *    including the disclaimer of warranties.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ * 3. The name of the author may not be used to endorse or promote
-+ *    products derived from this software without specific prior
-+ *    written permission.
-+ *
-+ * ALTERNATIVELY, this product may be distributed under the terms of
-+ * the GNU General Public License, in which case the provisions of the GPL2
-+ * are required INSTEAD OF the above restrictions.  (This clause is
-+ * necessary due to a potential bad interaction between the GPL and
-+ * the restrictions contained in a BSD-style copyright.)
-+ *
-+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
-+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ALL OF
-+ * WHICH ARE HEREBY DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE
-+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
-+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-+ * USE OF THIS SOFTWARE, EVEN IF NOT ADVISED OF THE POSSIBILITY OF SUCH
-+ * DAMAGE.
-+ */
-+
-+#include <linux/module.h>
-+#include <crypto/rng.h>
-+#include <linux/random.h>
-+#include <crypto/if_alg.h>
-+#include <linux/net.h>
-+#include <net/sock.h>
-+
-+MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
-+MODULE_DESCRIPTION("User-space interface for random number generators");
-+
-+struct rng_ctx {
-+#define MAXSIZE 128
-+	u8 result[MAXSIZE];
-+	unsigned int len;
-+	struct crypto_rng *drng;
-+};
-+
-+static int rng_recvmsg(struct kiocb *unused, struct socket *sock,
-+		       struct msghdr *msg, size_t len, int flags)
+diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
+index 483ff97..d0e31ab 100644
+--- a/crypto/algif_skcipher.c
++++ b/crypto/algif_skcipher.c
+@@ -247,14 +247,121 @@ static void skcipher_data_wakeup(struct sock *sk)
+ 	rcu_read_unlock();
+ }
+ 
++static inline bool skcipher_is_aead(struct crypto_tfm *tfm)
 +{
-+	struct sock *sk = sock->sk;
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct rng_ctx *ctx = ask->private;
-+	int err = -EFAULT;
-+
-+	if (len == 0)
-+		return 0;
-+	if (len > MAXSIZE)
-+		len = MAXSIZE;
-+
-+	lock_sock(sk);
-+	len = crypto_rng_get_bytes(ctx->drng, ctx->result, len);
-+	if (len < 0)
-+		goto unlock;
-+
-+	err = memcpy_toiovec(msg->msg_iov, ctx->result, len);
-+	memzero_explicit(ctx->result, len);
-+
-+unlock:
-+	release_sock(sk);
-+
-+	return err ? err : len;
++	return ((crypto_tfm_alg_type(tfm) & CRYPTO_ALG_TYPE_MASK) ==
++		CRYPTO_ALG_TYPE_AEAD);
 +}
 +
-+static struct proto_ops algif_rng_ops = {
-+	.family		=	PF_ALG,
-+
-+	.connect	=	sock_no_connect,
-+	.socketpair	=	sock_no_socketpair,
-+	.getname	=	sock_no_getname,
-+	.ioctl		=	sock_no_ioctl,
-+	.listen		=	sock_no_listen,
-+	.shutdown	=	sock_no_shutdown,
-+	.getsockopt	=	sock_no_getsockopt,
-+	.mmap		=	sock_no_mmap,
-+	.bind		=	sock_no_bind,
-+	.accept		=	sock_no_accept,
-+	.setsockopt	=	sock_no_setsockopt,
-+	.poll		=	sock_no_poll,
-+	.sendmsg	=	sock_no_sendmsg,
-+	.sendpage	=	sock_no_sendpage,
-+
-+	.release	=	af_alg_release,
-+	.recvmsg	=	rng_recvmsg,
-+};
-+
-+static void *rng_bind(const char *name, u32 type, u32 mask)
++static inline unsigned int skcipher_crypto_ivsize(void *private)
 +{
-+	return crypto_alloc_rng(name, type, mask);
++	if (skcipher_is_aead(private))
++		return crypto_aead_ivsize(private);
++	else
++		return crypto_ablkcipher_ivsize(private);
 +}
 +
-+static void rng_release(void *private)
++static inline unsigned int skcipher_crypto_ivsize_ctx(struct skcipher_ctx *ctx)
 +{
-+	crypto_free_rng(private);
++	if (ctx->aead)
++		return crypto_aead_ivsize(crypto_aead_reqtfm(&ctx->u.aead_req));
++	else
++		return crypto_ablkcipher_ivsize(
++			crypto_ablkcipher_reqtfm(&ctx->u.ablkcipher_req));
 +}
 +
-+static void rng_sock_destruct(struct sock *sk)
++static inline unsigned int skcipher_crypto_blocksize(struct skcipher_ctx *ctx)
 +{
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct rng_ctx *ctx = ask->private;
-+
-+	memzero_explicit(ctx->result, sizeof(ctx->result));
-+	sock_kfree_s(sk, ctx, ctx->len);
-+	af_alg_release_parent(sk);
++	if (ctx->aead)
++		return crypto_aead_blocksize(
++			crypto_aead_reqtfm(&ctx->u.aead_req));
++	else
++		return crypto_ablkcipher_blocksize(
++			crypto_ablkcipher_reqtfm(&ctx->u.ablkcipher_req));
 +}
 +
-+static int rng_accept_parent(void *private, struct sock *sk)
++static inline unsigned int skcipher_crypto_reqsize(void *private)
 +{
-+	struct rng_ctx *ctx;
-+	struct alg_sock *ask = alg_sk(sk);
-+	unsigned int len = sizeof(*ctx);
-+	int seedsize = crypto_rng_seedsize(private);
-+	int ret = -ENOMEM;
-+
-+	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
-+	if (!ctx)
-+		return -ENOMEM;
-+	memset(ctx->result, 0, sizeof(ctx->result));
-+
-+	ctx->len = len;
-+
-+	if (seedsize) {
-+		u8 *buf = kmalloc(seedsize, GFP_KERNEL);
-+		if (!buf)
-+			goto err;
-+		get_random_bytes(buf, seedsize);
-+		ret = crypto_rng_reset(private, buf, len);
-+		kzfree(buf);
-+		if (ret)
-+			goto err;
-+	}
-+
-+	ctx->drng = private;
-+	ask->private = ctx;
-+	sk->sk_destruct = rng_sock_destruct;
-+
-+	return 0;
-+
-+err:
-+	sock_kfree_s(sk, ctx, len);
-+	return ret;
++	if (skcipher_is_aead(private))
++		return crypto_aead_reqsize(private);
++	else
++		return crypto_ablkcipher_reqsize(private);
 +}
 +
-+static const struct af_alg_type algif_type_rng = {
-+	.bind		=	rng_bind,
-+	.release	=	rng_release,
-+	.accept		=	rng_accept_parent,
-+	.ops		=	&algif_rng_ops,
-+	.name		=	"rng",
-+	.owner		=	THIS_MODULE
-+};
-+
-+static int __init rng_init(void)
++static inline unsigned int skcipher_crypto_setkey(void *private, const u8 *key,
++						  unsigned int keylen)
 +{
-+	return af_alg_register_type(&algif_type_rng);
++	if (skcipher_is_aead(private))
++		return crypto_aead_setkey(private, key, keylen);
++	else
++		return crypto_ablkcipher_setkey(private, key, keylen);
 +}
 +
-+void __exit rng_exit(void)
++static inline void skcipher_crypto_free(void *private)
 +{
-+	int err = af_alg_unregister_type(&algif_type_rng);
-+	BUG_ON(err);
++	if (skcipher_is_aead(private))
++		crypto_free_aead(private);
++	else
++		crypto_free_ablkcipher(private);
 +}
 +
-+module_init(rng_init);
-+module_exit(rng_exit);
++static inline void skcipher_request_set_tfm(struct skcipher_ctx *ctx, void *tfm)
++{
++	if (ctx->aead)
++		aead_request_set_tfm(&ctx->u.aead_req, tfm);
++	else
++		ablkcipher_request_set_tfm(&ctx->u.ablkcipher_req, tfm);
++}
++
++static inline int skcipher_crypto_encrypt(struct skcipher_ctx *ctx)
++{
++	if (ctx->aead)
++		return crypto_aead_encrypt(&ctx->u.aead_req);
++	else
++		return crypto_ablkcipher_encrypt(&ctx->u.ablkcipher_req);
++}
++
++static inline int skcipher_crypto_decrypt(struct skcipher_ctx *ctx)
++{
++	if (ctx->aead)
++		return crypto_aead_decrypt(&ctx->u.aead_req);
++	else
++		return crypto_ablkcipher_decrypt(&ctx->u.ablkcipher_req);
++}
++
++static inline void skcipher_crypto_set_crypt(struct skcipher_ctx *ctx,
++					     struct scatterlist *src,
++					     struct scatterlist *dst,
++					     unsigned int cryptlen, u8 *iv)
++{
++	if (ctx->aead)
++		return aead_request_set_crypt(&ctx->u.aead_req, src, dst,
++					      cryptlen, iv);
++	else
++		return ablkcipher_request_set_crypt(&ctx->u.ablkcipher_req, src,
++						    dst, cryptlen, iv);
++}
++
++static inline void skcipher_request_set_callback(struct skcipher_ctx *ctx,
++						 u32 flags,
++						 crypto_completion_t complete,
++						 void *data)
++{
++	if (ctx->aead)
++		aead_request_set_callback(&ctx->u.aead_req, flags, complete,
++					  data);
++	else
++		ablkcipher_request_set_callback(&ctx->u.ablkcipher_req, flags,
++						complete, data);
++}
++
+ static int skcipher_sendmsg(struct kiocb *unused, struct socket *sock,
+ 			    struct msghdr *msg, size_t size)
+ {
+ 	struct sock *sk = sock->sk;
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	struct skcipher_ctx *ctx = ask->private;
+-	struct crypto_ablkcipher *tfm = crypto_ablkcipher_reqtfm(&ctx->req);
+-	unsigned ivsize = crypto_ablkcipher_ivsize(tfm);
++	unsigned ivsize = skcipher_crypto_ivsize_ctx(ctx);
+ 	struct skcipher_sg_list *sgl;
+ 	struct af_alg_control con = {};
+ 	long copied = 0;
+@@ -432,8 +539,7 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
+ 	struct sock *sk = sock->sk;
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	struct skcipher_ctx *ctx = ask->private;
+-	unsigned bs = crypto_ablkcipher_blocksize(crypto_ablkcipher_reqtfm(
+-		&ctx->req));
++	unsigned bs = skcipher_crypto_blocksize(ctx);
+ 	struct skcipher_sg_list *sgl;
+ 	struct scatterlist *sg;
+ 	unsigned long iovlen;
+@@ -483,8 +589,8 @@ static int skcipher_recvmsg(struct kiocb *unused, struct socket *sock,
+ 
+ 			err = af_alg_wait_for_completion(
+ 				ctx->enc ?
+-					crypto_ablkcipher_encrypt(&ctx->req) :
+-					crypto_ablkcipher_decrypt(&ctx->req),
++					skcipher_crypto_encrypt(ctx) :
++					skcipher_crypto_decrypt(ctx),
+ 				&ctx->completion);
+ 
+ free:
+@@ -603,23 +709,23 @@ static void *skcipher_bind(const char *name, u32 type, u32 mask)
+ 
+ static void skcipher_release(void *private)
+ {
+-	crypto_free_ablkcipher(private);
++	skcipher_crypto_free(private);
+ }
+ 
+ static int skcipher_setkey(void *private, const u8 *key, unsigned int keylen)
+ {
+-	return crypto_ablkcipher_setkey(private, key, keylen);
++	return skcipher_crypto_setkey(private, key, keylen);
+ }
+ 
+ static void skcipher_sock_destruct(struct sock *sk)
+ {
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	struct skcipher_ctx *ctx = ask->private;
+-	struct crypto_ablkcipher *tfm = crypto_ablkcipher_reqtfm(&ctx->req);
++	unsigned int ivlen = skcipher_crypto_ivsize_ctx(ctx);
+ 
+ 	skcipher_free_sgl(sk);
+-	memzero_explicit(ctx->iv, crypto_ablkcipher_ivsize(tfm));
+-	sock_kfree_s(sk, ctx->iv, crypto_ablkcipher_ivsize(tfm));
++	memzero_explicit(ctx->iv, ivlen);
++	sock_kfree_s(sk, ctx->iv, ivlen);
+ 	sock_kfree_s(sk, ctx, ctx->len);
+ 	af_alg_release_parent(sk);
+ }
+@@ -628,20 +734,20 @@ static int skcipher_accept_parent(void *private, struct sock *sk)
+ {
+ 	struct skcipher_ctx *ctx;
+ 	struct alg_sock *ask = alg_sk(sk);
+-	unsigned int len = sizeof(*ctx) + crypto_ablkcipher_reqsize(private);
++	unsigned int len = sizeof(*ctx) + skcipher_crypto_reqsize(private);
++	unsigned int ivlen = skcipher_crypto_ivsize(private);
+ 
+ 	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
+ 	if (!ctx)
+ 		return -ENOMEM;
+ 
+-	ctx->iv = sock_kmalloc(sk, crypto_ablkcipher_ivsize(private),
+-			       GFP_KERNEL);
++	ctx->iv = sock_kmalloc(sk, ivlen, GFP_KERNEL);
+ 	if (!ctx->iv) {
+ 		sock_kfree_s(sk, ctx, len);
+ 		return -ENOMEM;
+ 	}
+ 
+-	memset(ctx->iv, 0, crypto_ablkcipher_ivsize(private));
++	memset(ctx->iv, 0, ivlen);
+ 
+ 	INIT_LIST_HEAD(&ctx->tsgl);
+ 	ctx->len = len;
+@@ -649,13 +755,14 @@ static int skcipher_accept_parent(void *private, struct sock *sk)
+ 	ctx->more = 0;
+ 	ctx->merge = 0;
+ 	ctx->enc = 0;
++	ctx->aead = skcipher_is_aead(private);
+ 	af_alg_init_completion(&ctx->completion);
+ 
+ 	ask->private = ctx;
+ 
+-	ablkcipher_request_set_tfm(&ctx->req, private);
+-	ablkcipher_request_set_callback(&ctx->req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+-					af_alg_complete, &ctx->completion);
++	skcipher_request_set_tfm(ctx, private);
++	skcipher_request_set_callback(ctx, CRYPTO_TFM_REQ_MAY_BACKLOG,
++				      af_alg_complete, &ctx->completion);
+ 
+ 	sk->sk_destruct = skcipher_sock_destruct;
+ 
 -- 
 2.1.0
