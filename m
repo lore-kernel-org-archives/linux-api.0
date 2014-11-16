@@ -1,88 +1,58 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v2 00/10] crypto: AF_ALG: add AEAD and RNG support
-Date: Sun, 16 Nov 2014 03:23:11 +0100
-Message-ID: <5365136.g8vbXlhRyC@tachyon.chronox.de>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: [PATCH v2 08/10] crypto: AF_ALG: enable RNG interface compilation
+Date: Sun, 16 Nov 2014 03:28:11 +0100
+Message-ID: <5304867.P6VcOPhNdn@tachyon.chronox.de>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5365136.g8vbXlhRyC-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Enable compilation of the RNG AF_ALG support and provide a Kconfig
+option to compile the RNG AF_ALG support.
 
-This patch set adds AEAD and RNG support to the AF_ALG interface
-exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
-support, all cipher types the kernel crypto API allows access to are
-now accessible from userspace.
+Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+---
+ crypto/Kconfig  | 9 +++++++++
+ crypto/Makefile | 1 +
+ 2 files changed, 10 insertions(+)
 
-The RNG support is stand-alone.
-
-The AEAD implementation is added to algif_skcipher.c to prevent
-re-implementation of the memory moving logic.
-
-The extension for the AEAD support can be summarized with the following
-types of changes:
-
-        * select the correct crypto API functions (either the ablkcipher
-          or the aead functions)
-
-        * apply the additional data needed for AEAD at the right time
-          (associated data, authentication tag) -- this includes the addition
-          of user space interfaces to allow setting this data.
-
-        * add the calculation for the memory size needed for encryption and
-          decryption.
-
-In addition, the patch set adds a getsockopt implementation to skcipher to
-allow user space to inquire about properties of the ciphers (IV size,
-block size, authentication data size). This extension would be needed for a
-generic user space usage of these ciphers.
-
-The new AEAD and RNG interfaces are fully tested with the test application
-provided at [1]. That test application exercises all newly added user space
-interfaces.
-
-The patch set was tested on x86_64 and i386.
-
-[1] http://www.chronox.de/libkcapi.html
-
-Changes v2:
-* rebase to current cryptodev-2.6 tree
-* use memzero_explicit to zeroize AEAD associated data
-* use sizeof for determining length of AEAD associated data
-* update algif_rng.c covering all suggestions from Daniel Borkmann
-  <dborkman@redhat.com>
-* addition of patch 9: add digestsize interface for hashes
-* addition of patch to update documentation covering the userspace interface
-* change numbers of getsockopt options: separate them from sendmsg interface
-  definitions
-
-Stephan Mueller (10):
-  crypto: AF_ALG: add user space interface for AEAD
-  crypto: AF_ALG: user space interface for cipher info
-  crypto: AF_ALG: extend data structuers for AEAD
-  crypto: AF_ALG: crypto API calls to inline functions
-  crypto: AF_ALG: add AEAD support
-  crypto: AF_ALG: make setkey optional
-  crypto: AF_ALG: add random number generator support
-  crypto: AF_ALG: enable RNG interface compilation
-  crypto: AF_ALG: user space interface for hash info
-  crypto: AF_ALG: document the user space interface
-
- Documentation/crypto/crypto-API-userspace.txt |  95 ++++++-
- crypto/Kconfig                                |   9 +
- crypto/Makefile                               |   1 +
- crypto/af_alg.c                               |  20 ++
- crypto/algif_hash.c                           |  35 ++-
- crypto/algif_rng.c                            | 186 ++++++++++++++
- crypto/algif_skcipher.c                       | 352 +++++++++++++++++++++++---
- include/crypto/if_alg.h                       |   2 +
- include/uapi/linux/if_alg.h                   |  15 ++
- 9 files changed, 683 insertions(+), 32 deletions(-)
- create mode 100644 crypto/algif_rng.c
-
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 87bbc9c..e127323 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1505,6 +1505,15 @@ config CRYPTO_USER_API_SKCIPHER
+ 	  This option enables the user-spaces interface for symmetric
+ 	  key cipher algorithms.
+ 
++config CRYPTO_USER_API_RNG
++	tristate "User-space interface for random number generator algorithms"
++	depends on NET
++	select CRYPTO_RNG
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for random
++	  number generator algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
+ 
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 1445b91..ba19465 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -99,6 +99,7 @@ obj-$(CONFIG_CRYPTO_GHASH) += ghash-generic.o
+ obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
+ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
++obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
+ 
+ #
+ # generic algorithms and the async_tx api
 -- 
 2.1.0
