@@ -1,23 +1,78 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [PATCH] Add supplementary UIDs, and getusers/setusers system
- calls
-Date: Sat, 15 Nov 2014 23:41:57 -0800
-Message-ID: <20141116074157.GA2714@thin>
-References: <6b6bef0eb7328d466e8deef3d2c186a79633e0a7.1416121601.git.josh@joshtriplett.org>
+From: Boris Brezillon <boris.brezillon@free-electrons.com>
+Subject: Re: [PATCH] [media] Add RGB444_1X12 and RGB565_1X16 media bus
+ formats
+Date: Sun, 16 Nov 2014 09:19:18 +0100
+Message-ID: <20141116091918.56b859e8@bbrezillon>
+References: <1415961360-14898-1-git-send-email-boris.brezillon@free-electrons.com>
+	<20141114135831.GC8907@valkosipuli.retiisi.org.uk>
+	<20141114160446.70c1b8b9@bbrezillon>
+	<546767FD.2080706@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <6b6bef0eb7328d466e8deef3d2c186a79633e0a7.1416121601.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <546767FD.2080706@iki.fi>
+Sender: linux-doc-owner@vger.kernel.org
+To: Sakari Ailus <sakari.ailus@iki.fi>
+Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 15, 2014 at 11:08:31PM -0800, Josh Triplett wrote:
->  asmlinkage long sys_setgroups(int gidsetsize, gid_t __user *grouplist);
-> +asmlinkage long sys_setusers(int uidsetsize, uid_t __user *grouplist);
+On Sat, 15 Nov 2014 16:49:33 +0200
+Sakari Ailus <sakari.ailus@iki.fi> wrote:
 
-Obvious typo here: s/grouplist/userlist/.  Will fix in a v2, but I'll
-wait for other feedback on v1 first.
+> Hi Boris,
+> 
+> Boris Brezillon wrote:
+> > Hi Sakari,
+> > 
+> > On Fri, 14 Nov 2014 15:58:31 +0200
+> > Sakari Ailus <sakari.ailus@iki.fi> wrote:
+> > 
+> >> Hi Boris,
+> >>
+> >> On Fri, Nov 14, 2014 at 11:36:00AM +0100, Boris Brezillon wrote:
+> ...
+> >>> diff --git a/include/uapi/linux/media-bus-format.h b/include/uapi/linux/media-bus-format.h
+> >>> index 23b4090..cc7b79e 100644
+> >>> --- a/include/uapi/linux/media-bus-format.h
+> >>> +++ b/include/uapi/linux/media-bus-format.h
+> >>> @@ -33,7 +33,7 @@
+> >>>  
+> >>>  #define MEDIA_BUS_FMT_FIXED			0x0001
+> >>>  
+> >>> -/* RGB - next is	0x100e */
+> >>> +/* RGB - next is	0x1010 */
+> >>>  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE	0x1001
+> >>>  #define MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE	0x1002
+> >>>  #define MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE	0x1003
+> >>> @@ -47,6 +47,8 @@
+> >>>  #define MEDIA_BUS_FMT_RGB888_2X12_BE		0x100b
+> >>>  #define MEDIA_BUS_FMT_RGB888_2X12_LE		0x100c
+> >>>  #define MEDIA_BUS_FMT_ARGB8888_1X32		0x100d
+> >>> +#define MEDIA_BUS_FMT_RGB444_1X12		0x100e
+> >>> +#define MEDIA_BUS_FMT_RGB565_1X16		0x100f
+> >>
+> >> I'd arrange these according to BPP and bits per sample, both in the header
+> >> and documentation.
+> > 
+> > I cannot keep both macro values and BPP/bits per sample in incrementing
+> > order. Are you sure you prefer to order macros in BPP/bits per sample
+> > order ?
+> 
+> If you take a look elsewhere in the header, you'll notice that the
+> ordering has preferred the BPP value (and other values with semantic
+> significance) over the numeric value of the definition. I'd just prefer
+> to keep it that way. This is also why the "next is" comments are there.
+> 
 
-- Josh Triplett
+My bad, I only had a look at RGB formats.
+I'll fix that.
+
+Regards,
+
+Boris
+
+-- 
+Boris Brezillon, Free Electrons
+Embedded Linux and Kernel engineering
+http://free-electrons.com
