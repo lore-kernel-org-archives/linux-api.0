@@ -1,46 +1,112 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups to drop groups
-Date: Sat, 15 Nov 2014 18:35:05 -0800
-Message-ID: <6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org>
-References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org> <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org> <87d28osceg.fsf@x220.int.ebiederm.org> <20141115192924.GB19060@thin> <CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com> <20141115202042.GA20900@thin> <20141116020511.GB5507@thunk.org>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: [PATCH v2 09/10] crypto: AF_ALG: user space interface for hash info
+Date: Sun, 16 Nov 2014 03:28:52 +0100
+Message-ID: <1907032.lnybFlp3cC@tachyon.chronox.de>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141116020511.GB5507-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5365136.g8vbXlhRyC@tachyon.chronox.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On November 15, 2014 6:05:11 PM PST, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
->On Sat, Nov 15, 2014 at 12:20:42PM -0800, Josh Triplett wrote:
->> > However, sudoers seems to allow negative group matches.  So maybe
->> > allowing this only with no_new_privs already set would make sense.
->> 
->> Sigh, bad sudo.  Sure, restricting this to no_new_privs only seems
->fine.
->> I'll do that in v2, and document that in the manpage.
->
->I've also seen use cases (generally back in the bad old days of big
->timesharing VAX 750's :-) where the system admin might assign someone
->to the "games-abusers" group, and then set /usr/games to mode 705
->root:games-abusers --- presumably because it's easier to add a few
->people to the deny list rather than having to add all of the EECS
->department to the games group minus the abusers.
->
->So arbitrarily anyone to drop groups from their supplemental group
->list will result in a change from both existing practice and legacy
->Unix systems, and it could potentially lead to a security exposure.
+The AF_ALG interface allows normal cipher (hash, encrypt, decrypt).
+However, it does not allow user space to obtain the following generic
+information about the currently active hash:
 
-As Andy pointed out, you can already do that with a user namespace, for any case not involving a setuid or setgid (or otherwise privilege-gaining) program.  And requiring no_new_privs handles that.
+	* digestsize
 
-Given the combination of those two things, do you still see any problematic cases?
+The patch adds a getsockopt interface for the hash ciphers to
+answer such information requests from user space.
 
-- Josh Triplett
+The kernel crypto API function calls are used to obtain the real data.
+As all data are simple integer values, the getsockopt handler function
+uses put_user() to return the integer value to user space in the
+*optval parameter of getsockopt.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+A fully working example using the digestsize interface is provided at
+http://www.chronox.de/libkcapi.html
+
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+---
+ crypto/algif_hash.c         | 35 ++++++++++++++++++++++++++++++++++-
+ include/uapi/linux/if_alg.h |  1 +
+ 2 files changed, 35 insertions(+), 1 deletion(-)
+
+diff --git a/crypto/algif_hash.c b/crypto/algif_hash.c
+index f75db4c..68ae34c 100644
+--- a/crypto/algif_hash.c
++++ b/crypto/algif_hash.c
+@@ -216,6 +216,39 @@ static int hash_accept(struct socket *sock, struct socket *newsock, int flags)
+ 	return err;
+ }
+ 
++static int hash_getsockopt(struct socket *sock, int level, int optname,
++			   char __user *optval, int __user *optlen)
++{
++	struct sock *sk = sock->sk;
++	struct alg_sock *ask = alg_sk(sk);
++	struct hash_ctx *ctx = ask->private;
++	const struct af_alg_type *type;
++	int len = 0;
++	int err = -EOPNOTSUPP;
++
++	lock_sock(sk);
++	type = ask->type;
++
++	if (level != SOL_ALG || !type)
++		goto unlock;
++
++	switch (optname) {
++	case ALG_GET_DIGESTSIZE:
++		len = crypto_ahash_digestsize(crypto_ahash_reqtfm(&ctx->req));
++		err = 0;
++		break;
++	default:
++		break;
++	}
++
++unlock:
++	release_sock(sk);
++	if (err >= 0)
++		err = put_user(len, optlen);
++
++	return err;
++}
++
+ static struct proto_ops algif_hash_ops = {
+ 	.family		=	PF_ALG,
+ 
+@@ -225,7 +258,6 @@ static struct proto_ops algif_hash_ops = {
+ 	.ioctl		=	sock_no_ioctl,
+ 	.listen		=	sock_no_listen,
+ 	.shutdown	=	sock_no_shutdown,
+-	.getsockopt	=	sock_no_getsockopt,
+ 	.mmap		=	sock_no_mmap,
+ 	.bind		=	sock_no_bind,
+ 	.setsockopt	=	sock_no_setsockopt,
+@@ -236,6 +268,7 @@ static struct proto_ops algif_hash_ops = {
+ 	.sendpage	=	hash_sendpage,
+ 	.recvmsg	=	hash_recvmsg,
+ 	.accept		=	hash_accept,
++	.getsockopt	=	hash_getsockopt,
+ };
+ 
+ static void *hash_bind(const char *name, u32 type, u32 mask)
+diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
+index b8fb714..3759d3c 100644
+--- a/include/uapi/linux/if_alg.h
++++ b/include/uapi/linux/if_alg.h
+@@ -44,6 +44,7 @@ struct af_alg_aead_assoc {
+ #define ALG_GET_BLOCKSIZE		1
+ #define ALG_GET_IVSIZE			2
+ #define ALG_GET_AEAD_AUTHSIZE		3
++#define ALG_GET_DIGESTSIZE		4
+ 
+ /* Operations */
+ #define ALG_OP_DECRYPT			0
+-- 
+2.1.0
