@@ -1,58 +1,158 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: [PATCH v2 08/10] crypto: AF_ALG: enable RNG interface compilation
-Date: Sun, 16 Nov 2014 03:28:11 +0100
-Message-ID: <5304867.P6VcOPhNdn@tachyon.chronox.de>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: [PATCH v2 10/10] crypto: AF_ALG: document the user space interface
+Date: Sun, 16 Nov 2014 03:29:31 +0100
+Message-ID: <1857073.eyqAXtMAM7@tachyon.chronox.de>
 References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5365136.g8vbXlhRyC-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5365136.g8vbXlhRyC@tachyon.chronox.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Enable compilation of the RNG AF_ALG support and provide a Kconfig
-option to compile the RNG AF_ALG support.
+The extension of the user space interface documentation covers all
+aspects of the patchset, including:
 
-Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+	* AEAD cipher interface
+
+	* RNG cipher interface
+
+	* getsockopt interface
+
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- crypto/Kconfig  | 9 +++++++++
- crypto/Makefile | 1 +
- 2 files changed, 10 insertions(+)
+ Documentation/crypto/crypto-API-userspace.txt | 95 ++++++++++++++++++++++++++-
+ 1 file changed, 93 insertions(+), 2 deletions(-)
 
-diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 87bbc9c..e127323 100644
---- a/crypto/Kconfig
-+++ b/crypto/Kconfig
-@@ -1505,6 +1505,15 @@ config CRYPTO_USER_API_SKCIPHER
- 	  This option enables the user-spaces interface for symmetric
- 	  key cipher algorithms.
+diff --git a/Documentation/crypto/crypto-API-userspace.txt b/Documentation/crypto/crypto-API-userspace.txt
+index ac619cd..5090b05 100644
+--- a/Documentation/crypto/crypto-API-userspace.txt
++++ b/Documentation/crypto/crypto-API-userspace.txt
+@@ -30,8 +30,9 @@ ciphers are accessible:
  
-+config CRYPTO_USER_API_RNG
-+	tristate "User-space interface for random number generator algorithms"
-+	depends on NET
-+	select CRYPTO_RNG
-+	select CRYPTO_USER_API
-+	help
-+	  This option enables the user-spaces interface for random
-+	  number generator algorithms.
+ 	* Symmetric ciphers
+ 
+-Note, AEAD ciphers are currently not supported via the symmetric cipher
+-interface.
++	* AEAD ciphers
 +
- config CRYPTO_HASH_INFO
- 	bool
++	* Random number generators
  
-diff --git a/crypto/Makefile b/crypto/Makefile
-index 1445b91..ba19465 100644
---- a/crypto/Makefile
-+++ b/crypto/Makefile
-@@ -99,6 +99,7 @@ obj-$(CONFIG_CRYPTO_GHASH) += ghash-generic.o
- obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
- obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
- obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
-+obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
+ The interface is provided via Netlink using the type AF_ALG. In addition, the
+ setsockopt option type is SOL_ALG. In case the user space header files do not
+@@ -85,6 +86,7 @@ If a consumer on the other hand wants to maintain the plaintext and the
+ ciphertext in different memory locations, all a consumer needs to do is to
+ provide different memory pointers for the encryption and decryption operation.
  
- #
- # generic algorithms and the async_tx api
++
+ Message digest API
+ ==================
+ 
+@@ -169,6 +171,69 @@ as large as to hold all blocks of the encrypted or decrypted data. If the output
+ data size is smaller, only as many blocks are returned that fit into that
+ output buffer size.
+ 
++
++AEAD cipher API
++===============
++
++The operation is identical to the symmetric cipher API. However, an AEAD
++cipher requires additional information, such as the authentication tag and
++the associated data. This data is to be supplied in addition to the normal
++symmetric cipher data like key and IV discussed for the symmetric ciphers.
++
++During initialization, the struct sockaddr data structure must be filled as
++follows:
++
++struct sockaddr_alg sa = {
++	.salg_family = AF_ALG,
++	.salg_type = "aead", /* this selects the AEAD cipher */
++	.salg_name = "gcm(aes)" /* this is the cipher name */
++};
++
++The discussion about the sendmsg given for the symmetric cipher applies for
++the AEAD interface as well. In addition to the plaintext / ciphertext data and
++the IV, the following data must be supplied with the cmsghdr data structure:
++
++	* The AEAD authentication tag size is set with the flag
++	  ALG_SET_AEAD_AUTHSIZE. The integer value of the authentication tag
++	  size must be provided in the data field of the cmsghdr structure.
++
++	* The AEAD associated data is set with the flag ALG_SET_AEAD_ASSOC.
++	  The data is set the same way as for the IV by supplying the associated
++	  data in the data field of the cmsghdr structure.
++
++The authentication tag itself, however, is handled in a different way to comply
++with the specifics of the kernel crypto API and to avoid copying the
++authentication tag around in memory. The authentication tag is added to the
++memory that immediately follows the ciphertext.
++
++	* When performing an encryption operation, the resulting ciphertext
++	  buffer will hold the tag as follows: ciphertext || tag.  The consumer
++	  must ensure that the ciphertext buffer is large enough to hold the
++	  ciphertext together with the tag of the size set by the consumer using
++	  the ALG_SET_AEAD_AUTHSIZE cmsghdr flag as discussed above.
++
++	* When performing a decryption operation, the initial ciphertext buffer
++	  must hold the tag as follows: ciphertext || tag. The resulting
++	  plaintext has the same size as the ciphertext.
++
++Note: Authentication errors during decryption are marked with a failing
++read/recv system call whose errno is set to EBADMSG.
++
++
++Random number generator API
++===========================
++
++Compared to the symmetric ciphers, the random number generator API is simple:
++it only supports the system calls of read/recv.
++
++The consumer must observe the returned size of the read/recv system calls and
++potentially make subsequent calls if the returned length of random numbers is
++smaller than the expected length.
++
++When initializing a random number generator instance, the AF_ALG interface
++handler ensures that it is appropriately seeded.
++
++
+ Setsockopt interface
+ ====================
+ 
+@@ -190,6 +255,32 @@ optname:
+ 
+ 		- the hash cipher type (keyed message digests)
+ 
++
++Getsockopt interface
++====================
++
++To allow consumers to obtain information about the allocated cipher, the
++following getsockopt calls with the optval set to the listed flags are provided.
++
++The getsockopt system call must be invoked with the file descriptor of the open
++cipher (i.e. the file descriptor returned by the accept system call).
++
++	* ALG_GET_BLOCKSIZE -- Return the block size of the cipher in the
++	  optlen field of getsockopt. This call is only applicable to
++	  symmetric and AEAD ciphers.
++
++	* ALG_GET_IVSIZE -- Return the IV size of the cipher in the optlen field
++	  of getsockopt. This call is only applicable to symmetric and AEAD
++	  ciphers.
++
++	* ALG_GET_AEAD_AUTHSIZE -- Return the maximum supported authentication
++	  tag size in the optlen field of getsockopt. This call is only
++	  applicable to AEAD ciphers.
++
++	* ALG_GET_DIGESTSIZE -- Return the digest size in the optlen field of
++	  getsockopt. This call is only applicable to message digests.
++
++
+ User space API example
+ ======================
+ 
 -- 
 2.1.0
