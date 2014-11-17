@@ -1,127 +1,58 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH] block: create ioctl to discard-or-zeroout a range of blocks
-Date: Mon, 17 Nov 2014 11:28:15 -0800
-Message-ID: <20141117192815.GC10047@birch.djwong.org>
-References: <1415336894-15327-1-git-send-email-martin.petersen@oracle.com>
- <1415336894-15327-4-git-send-email-martin.petersen@oracle.com>
- <20141111000433.GA10047@birch.djwong.org>
+From: "Eric W.Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups to drop groups
+Date: Mon, 17 Nov 2014 17:11:57 -0500
+Message-ID: <0b65fd07-48ea-483b-8fd5-fd84d0bff881@email.android.com>
+References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org> <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org> <87d28osceg.fsf@x220.int.ebiederm.org> <20141115192924.GB19060@thin> <CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com> <20141115202042.GA20900@thin> <20141116020511.GB5507@thunk.org> <6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org> <20141116034005.GC5507@thunk.org> <20141116045232.GB18880@thin> <20141117113734.396798e6@lxorguk.ukuu.org.uk> <CALCETrXi1qHyu4_U7cbROB74n461nBZ9R7=0kfhR8-VFAwOF1w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141111000433.GA10047@birch.djwong.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-fsdevel@vger.kernel.org, neilb@suse.de, linux-api@vger.kernel.org
+Content-Type: text/plain;
+ charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrXi1qHyu4_U7cbROB74n461nBZ9R7=0kfhR8-VFAwOF1w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Create a new ioctl to expose the block layer's newfound ability to
-issue either a zeroing discard, a WRITE SAME with a zero page, or a
-regular write with the zero page.  This BLKZEROOUT2 ioctl takes
-{start, length, flags} as parameters.  So far, the only flag available
-is to enable the zeroing discard part -- without it, the call invokes
-the old BLKZEROOUT behavior.  start and length have the same meaning
-as in BLKZEROOUT.
 
-Furthermore, because BLKZEROOUT2 issues commands directly to the
-storage device, we must invalidate the page cache (as a regular
-O_DIRECT write would do) to avoid returning stale cache contents at a
-later time.
 
-This patch depends on mkp's earlier patch "block: Introduce
-blkdev_issue_zeroout_discard() function".
+On November 17, 2014 1:07:30 PM EST, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>On Nov 17, 2014 3:37 AM, "One Thousand Gnomes"
+><gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org> wrote:
+>>
+>> > optional), I can do that too.  The security model of "having a
+>group
+>> > gives you less privilege than not having it" seems crazy, but
+>> > nonetheless I can see a couple of easy ways that we can avoid
+>breaking
+>>
+>> It's an old pattern of use that makes complete sense in a traditional
+>> Unix permission world because it's the only way to do "exclude
+>{list}"
+>> nicely. Our default IMHO shouldn't break this.
+>>
+>> > that pattern, no_new_privs being one of them.  I'd like to make
+>sure
+>> > that nobody sees any other real-world corner case that unprivileged
+>> > setgroups would break.
+>>
+>> Barring the usual risk of people doing improper error checking I
+>don't
+>> see one immediately.
+>>
+>> For containers I think it actually makes sense that the sysctl can be
+>> applied per container anyway.
+>
+>We'll probably need per container sysctls some day.
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- block/ioctl.c           |   45 ++++++++++++++++++++++++++++++++++++++-------
- include/uapi/linux/fs.h |    7 +++++++
- 2 files changed, 45 insertions(+), 7 deletions(-)
+We already have a mess of per network namespace sysctls,
+as well as few for other namespaces.
 
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 7d8befd..ff623d5 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -186,19 +186,39 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
- }
- 
- static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
--			     uint64_t len)
-+			     uint64_t len, uint32_t flags)
- {
-+	int ret;
-+	struct address_space *mapping;
-+	uint64_t end = start + len - 1;
-+
-+	if (flags & ~BLKZEROOUT2_DISCARD_OK)
-+		return -EINVAL;
- 	if (start & 511)
- 		return -EINVAL;
- 	if (len & 511)
- 		return -EINVAL;
--	start >>= 9;
--	len >>= 9;
--
--	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
-+	if (end >= i_size_read(bdev->bd_inode))
- 		return -EINVAL;
- 
--	return blkdev_issue_zeroout(bdev, start, len, GFP_KERNEL, false);
-+	/* Invalidate the page cache, including dirty pages */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	ret = blkdev_issue_zeroout(bdev, start >> 9, len >> 9, GFP_KERNEL,
-+				   flags & BLKZEROOUT2_DISCARD_OK);
-+	if (ret)
-+		goto out;
-+
-+	/*
-+	 * Invalidate again; if someone wandered in and dirtied a page,
-+	 * the caller will be given -EBUSY.
-+	 */
-+	ret = invalidate_inode_pages2_range(mapping,
-+					    start >> PAGE_CACHE_SHIFT,
-+					    end >> PAGE_CACHE_SHIFT);
-+out:
-+	return ret;
- }
- 
- static int put_ushort(unsigned long arg, unsigned short val)
-@@ -326,7 +346,18 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
- 			return -EFAULT;
- 
--		return blk_ioctl_zeroout(bdev, range[0], range[1]);
-+		return blk_ioctl_zeroout(bdev, range[0], range[1], 0);
-+	}
-+	case BLKZEROOUT2: {
-+		struct blkzeroout2 p;
-+
-+		if (!(mode & FMODE_WRITE))
-+			return -EBADF;
-+
-+		if (copy_from_user(&p, (void __user *)arg, sizeof(p)))
-+			return -EFAULT;
-+
-+		return blk_ioctl_zeroout(bdev, p.start, p.length, p.flags);
- 	}
- 
- 	case HDIO_GETGEO: {
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 3735fa0..54d24ea 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -150,6 +150,13 @@ struct inodes_stat_t {
- #define BLKSECDISCARD _IO(0x12,125)
- #define BLKROTATIONAL _IO(0x12,126)
- #define BLKZEROOUT _IO(0x12,127)
-+struct blkzeroout2 {
-+	__u64 start;
-+	__u64 length;
-+	__u32 flags;
-+};
-+#define BLKZEROOUT2_DISCARD_OK	1
-+#define BLKZEROOUT2 _IOR(0x12, 127, struct blkzeroout2)
- 
- #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
- #define FIBMAP	   _IO(0x00,1)	/* bmap access */
+We have the infrastructure it is just a matter of using it for whatever purpose we need.
+
+Eric
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
