@@ -1,50 +1,49 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups
- to drop groups
-Date: Mon, 17 Nov 2014 10:07:30 -0800
-Message-ID: <CALCETrXi1qHyu4_U7cbROB74n461nBZ9R7=0kfhR8-VFAwOF1w@mail.gmail.com>
-References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
- <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
- <87d28osceg.fsf@x220.int.ebiederm.org> <20141115192924.GB19060@thin>
- <CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com>
- <20141115202042.GA20900@thin> <20141116020511.GB5507@thunk.org>
- <6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org> <20141116034005.GC5507@thunk.org>
- <20141116045232.GB18880@thin> <20141117113734.396798e6@lxorguk.ukuu.org.uk>
+From: Rich Felker <dalias@aerifal.cx>
+Subject: Re: [musl] Re: [RFC] Possible new execveat(2) Linux syscall
+Date: Mon, 17 Nov 2014 13:30:10 -0500
+Message-ID: <20141117183010.GE22465@brightrain.aerifal.cx>
+References: <CAHse=S8ccC2No5EYS0Pex=Ng3oXjfDB9woOBmMY_k+EgxtODZA@mail.gmail.com>
+ <20141116195246.GX22465@brightrain.aerifal.cx>
+ <CALCETrWWUyizL8HxZKaYE+xuV5eGi8mQcequT9HPvvac=X-dLg@mail.gmail.com>
+ <20141116220859.GY22465@brightrain.aerifal.cx>
+ <CALCETrVtN73rTxGXV9Xt+sPOitAWCcyrfUWY_3_tAmd+n6V1gA@mail.gmail.com>
+ <20141116233202.GA22465@brightrain.aerifal.cx>
+ <CAHse=S8uceX-buoeFoA_Qthsr0TZ-nX7_x_098qqwr5pa_2r-w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141117113734.396798e6-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-54435-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+Content-Disposition: inline
+In-Reply-To: <CAHse=S8uceX-buoeFoA_Qthsr0TZ-nX7_x_098qqwr5pa_2r-w@mail.gmail.com>
+To: David Drysdale <drysdale@google.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, libc-alpha <libc-alpha@sourceware.org>, musl@lists.openwall.com, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On Nov 17, 2014 3:37 AM, "One Thousand Gnomes"
-<gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org> wrote:
->
-> > optional), I can do that too.  The security model of "having a group
-> > gives you less privilege than not having it" seems crazy, but
-> > nonetheless I can see a couple of easy ways that we can avoid breaking
->
-> It's an old pattern of use that makes complete sense in a traditional
-> Unix permission world because it's the only way to do "exclude {list}"
-> nicely. Our default IMHO shouldn't break this.
->
-> > that pattern, no_new_privs being one of them.  I'd like to make sure
-> > that nobody sees any other real-world corner case that unprivileged
-> > setgroups would break.
->
-> Barring the usual risk of people doing improper error checking I don't
-> see one immediately.
->
-> For containers I think it actually makes sense that the sysctl can be
-> applied per container anyway.
+On Mon, Nov 17, 2014 at 03:42:15PM +0000, David Drysdale wrote:
+> I'm not familiar with O_EXEC either, I'm afraid, so to be clear -- does
+> O_EXEC mean the permission check is explicitly skipped later, at execute
+> time?  In other words, if you open(O_EXEC) an executable then remove the
+> execute bit from the file, does a subsequent fexecve() still work?
 
-We'll probably need per container sysctls some day.
+Yes. It's just like how read and write permissions work. If you open a
+file for read then remove read permissions, or open it for write then
+remove write permissions, the existing permissions to the open file
+are not lost. Of course open with O_EXEC/O_SEARCH needs to fail if the
+caller does not have +x access to the file/directory at the time of
+open.
 
->
-> Alan
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> If it does, then from an implementation perspective that presumably implies
+> the need for a record of the permission check in the struct file (and that
+> this property would be inherited by any dup()ed file descriptors).  From a
+> security perspective, having a gap between time-of-check and time-of-use
+> always sounds worrying...
+
+This record already exists for read and write. All that's needed is
+for an extra bit to be added to record exec/search permission.
+
+Rich
