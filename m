@@ -1,49 +1,48 @@
-From: Karol Lewandowski <lmctlx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/5] kdbus: extend structures with security pointer for
- lsm
-Date: Mon, 17 Nov 2014 02:47:32 +0100
-Message-ID: <20141117014732.GA21745@pix>
-References: <54539AF3.6060302@samsung.com>
- <1414773397-26490-1-git-send-email-k.lewandowsk@samsung.com>
- <1414773397-26490-2-git-send-email-k.lewandowsk@samsung.com>
+From: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use
+ setgroups to drop groups
+Date: Mon, 17 Nov 2014 11:37:34 +0000
+Message-ID: <20141117113734.396798e6@lxorguk.ukuu.org.uk>
+References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
+	<0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
+	<87d28osceg.fsf@x220.int.ebiederm.org>
+	<20141115192924.GB19060@thin>
+	<CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com>
+	<20141115202042.GA20900@thin>
+	<20141116020511.GB5507@thunk.org>
+	<6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org>
+	<20141116034005.GC5507@thunk.org>
+	<20141116045232.GB18880@thin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1414773397-26490-2-git-send-email-k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
-Cc: pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, r.krypa-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141116045232.GB18880@thin>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 31, 2014 at 05:36:33PM +0100, Karol Lewandowski wrote:
-> Signed-off-by: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-> ---
->  drivers/misc/kdbus/bus.h        | 2 ++
->  drivers/misc/kdbus/connection.h | 2 ++
->  drivers/misc/kdbus/domain.h     | 2 ++
->  3 files changed, 6 insertions(+)
-> 
-> diff --git a/drivers/misc/kdbus/bus.h b/drivers/misc/kdbus/bus.h
-> index fd9d843..5c403ef 100644
-> --- a/drivers/misc/kdbus/bus.h
-> +++ b/drivers/misc/kdbus/bus.h
-> @@ -49,6 +49,7 @@
->   * @conn_hash:		Map of connection IDs
->   * @monitors_list:	Connections that monitor this bus
->   * @meta:		Meta information about the bus creator
-> + * @security:		LSM security blob
->   *
->   * A bus provides a "bus" endpoint / device node.
->   *
-> @@ -84,6 +85,7 @@ struct kdbus_bus {
->  	struct list_head monitors_list;
->  
->  	struct kdbus_meta *meta;
-> +	void *security;
+> optional), I can do that too.  The security model of "having a group
+> gives you less privilege than not having it" seems crazy, but
+> nonetheless I can see a couple of easy ways that we can avoid breaking
 
-One minor note - with possibility of LSM modules trying to access
-these structures it would be worth to have kdbus headers in, say
-include/linux/kdbus or similar globally accessible location.
+It's an old pattern of use that makes complete sense in a traditional
+Unix permission world because it's the only way to do "exclude {list}"
+nicely. Our default IMHO shouldn't break this.
 
-Thanks
+> that pattern, no_new_privs being one of them.  I'd like to make sure
+> that nobody sees any other real-world corner case that unprivileged
+> setgroups would break.
+
+Barring the usual risk of people doing improper error checking I don't
+see one immediately.
+
+For containers I think it actually makes sense that the sysctl can be
+applied per container anyway.
+
+Alan
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
