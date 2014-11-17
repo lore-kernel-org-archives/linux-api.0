@@ -1,94 +1,184 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [musl] Re: [RFC] Possible new execveat(2) Linux syscall
-Date: Mon, 17 Nov 2014 15:42:15 +0000
-Message-ID: <CAHse=S8uceX-buoeFoA_Qthsr0TZ-nX7_x_098qqwr5pa_2r-w@mail.gmail.com>
-References: <CAHse=S8ccC2No5EYS0Pex=Ng3oXjfDB9woOBmMY_k+EgxtODZA@mail.gmail.com>
- <20141116195246.GX22465@brightrain.aerifal.cx> <CALCETrWWUyizL8HxZKaYE+xuV5eGi8mQcequT9HPvvac=X-dLg@mail.gmail.com>
- <20141116220859.GY22465@brightrain.aerifal.cx> <CALCETrVtN73rTxGXV9Xt+sPOitAWCcyrfUWY_3_tAmd+n6V1gA@mail.gmail.com>
- <20141116233202.GA22465@brightrain.aerifal.cx>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups
+ to drop groups
+Date: Mon, 17 Nov 2014 10:06:58 -0800
+Message-ID: <546A3942.5040906@schaufler-ca.com>
+References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org> <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141116233202.GA22465-C3MtFaGISjmo6RMmaWD+6Sb1p8zYI1N1@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, Casey Schaufler <casey@schaufler-ca.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 16, 2014 at 11:32 PM, Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org> wrote:
-> On Sun, Nov 16, 2014 at 02:34:32PM -0800, Andy Lutomirski wrote:
->> On Sun, Nov 16, 2014 at 2:08 PM, Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org> wrote:
->> > On Sun, Nov 16, 2014 at 01:20:39PM -0800, Andy Lutomirski wrote:
->> >> On Nov 16, 2014 11:53 AM, "Rich Felker" <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org> wrote:
->> >> >
->> >> > On Fri, Nov 14, 2014 at 02:54:19PM +0000, David Drysdale wrote:
->> >> > > Hi,
->> >> > >
->> >> > > Over at the LKML[1] we've been discussing a possible new syscall, execveat(2),
->> >> > > and it would be good to hear a glibc perspective about it (and whether there
->> >> > > are any interface changes that would make it easier to use from userspace).
->> >> > >
->> >> > > The syscall prototype is:
->> >> > >   int execveat(int fd, const char *pathname,
->> >> > >                       char *const argv[],  char *const envp[],
->> >> > >                       int flags); /* AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW */
->> >> > > and it works similarly to execve(2) except:
->> >> > >  - the executable to run is identified by the combination of fd+pathname, like
->> >> > >    other *at(2) syscalls
->> >> > >  - there's an extra flags field to control behaviour.
->> >> > > (I've attached a text version of the suggested man page below)
->> >> > >
->> >> > > One particular benefit of this is that it allows an fexecve(3) implementation
->> >> > > that doesn't rely on /proc being accessible, which is useful for sandboxed
->> >> > > applications.  (However, that does only work for non-interpreted programs:
->> >> > > the name passed to a script interpreter is of the form "/dev/fd/<fd>/<path>"
->> >> > > or "/dev/fd/<fd>", so the executed interpreter will normally still need /proc
->> >> > > access to load the script file).
->> >> > >
->> >> > > How does this sound from a glibc perspective?
->> >> >
->> >> > I've been following the discussions so far and everything looks mostly
->> >> > okay. There are still issues to be resolved with the different
->> >> > semantics between Linux O_PATH and what POSIX requires for O_EXEC (and
->> >> > O_SEARCH) but as long as the intent is that, once O_EXEC is defined to
->> >> > save the permissions at the time of open and cause them to be used in
->> >> > place of the current file permissions at the time of execveat
->> >>
->> >> Is something missing here?
->> >>
->> >> FWIW, I don't understand O_PATH or O_EXEC very well, so from my POV,
->> >> help would be appreciated.
->> >
->> > Yes. POSIX requires that permission checks for execution (fexecve with
->> > O_EXEC file descriptors) and directory-search (*at functions with
->> > O_SEARCH file descriptors) succeed if the open operation succeeded --
->> > the permissions check is required to take place at open time rather
->> > than at exec/search time. There's a separate discussion about how to
->> > make this work on the kernel side.
+On 11/15/2014 1:01 AM, Josh Triplett wrote:
+> Currently, unprivileged processes (without CAP_SETGID) cannot call
+> setgroups at all.  In particular, processes with a set of supplementary
+> groups cannot further drop permissions without obtaining elevated
+> permissions first.
 
-I'm not familiar with O_EXEC either, I'm afraid, so to be clear -- does
-O_EXEC mean the permission check is explicitly skipped later, at execute
-time?  In other words, if you open(O_EXEC) an executable then remove the
-execute bit from the file, does a subsequent fexecve() still work?
+Has anyone put any thought into how this will interact with
+POSIX ACLs? I don't see that anywhere in the discussion.
 
-If it does, then from an implementation perspective that presumably implies
-the need for a record of the permission check in the struct file (and that
-this property would be inherited by any dup()ed file descriptors).  From a
-security perspective, having a gap between time-of-check and time-of-use
-always sounds worrying...
+Tizen takes advantage of the fact you can't drop groups. If
+a process can drop itself out of groups without privilege
+it can circumvent the system security policy.
 
->>
->> It may be worth making this work as part of adding execveat to the
->> kernel.  Does the kernel even have O_EXEC right now?
+Back when the LSM was introduced a choice was made between
+authoritative hooks (which would have allowed this sort of thing)
+and restrictive hooks (which would not). Authoritative hooks were
+rejected because they would have "broken Linux". I hope that the
+people who spoke up then will speak up now.
+
+This is going to introduce a whole class of vulnerabilities.
+Don't even think of arguing that the reduction in use of privilege
+will make up for that. Developers have enough trouble with the
+difference between setuid() and seteuid() to expect them to use
+group dropping properly.
+
 >
-> No. The proposal is that O_EXEC and O_SEARCH would both be equal to
-> O_PATH|3 (3 being the rarely-used O_ACCMODE for "neither read or
-> write, but some weird ioctls are accepted") which gracefully falls
-> back for both current kernels with O_PATH (in which case the 3 is
-> ignored and the discrepency from POSIX is just the time at which
-> permissions are checked) and for pre-O_PATH kernels (in which case the
-> access mode used is 3, and read/write ops fail on the fd, but it's
-> still usable for fexecve and *at functions with /proc-based fallback
-> implementations).
+> Allow unprivileged processes to call setgroups with a subset of their
+> current groups; only require CAP_SETGID to add a group the process does
+> not currently have.
 >
-> I would be happy to see this work get done at the same time.
+> The kernel already maintains the list of supplementary group IDs in
+> sorted order, and setgroups already needs to sort the new list, so this
+> just requires a linear comparison of the two sorted lists.
+>
+> This moves the CAP_SETGID test from setgroups into set_current_groups.
+>
+> Tested via the following test program:
+>
+> #include <err.h>
+> #include <grp.h>
+> #include <stdio.h>
+> #include <sys/types.h>
+> #include <unistd.h>
+>
+> void run_id(void)
+> {
+>     pid_t p = fork();
+>     switch (p) {
+>         case -1:
+>             err(1, "fork");
+>         case 0:
+>             execl("/usr/bin/id", "id", NULL);
+>             err(1, "exec");
+>         default:
+>             if (waitpid(p, NULL, 0) < 0)
+>                 err(1, "waitpid");
+>     }
+> }
+>
+> int main(void)
+> {
+>     gid_t list1[] = { 1, 2, 3, 4, 5 };
+>     gid_t list2[] = { 2, 3, 4 };
+>     run_id();
+>     if (setgroups(5, list1) < 0)
+>         err(1, "setgroups 1");
+>     run_id();
+>     if (setresgid(1, 1, 1) < 0)
+>         err(1, "setresgid");
+>     if (setresuid(1, 1, 1) < 0)
+>         err(1, "setresuid");
+>     run_id();
+>     if (setgroups(3, list2) < 0)
+>         err(1, "setgroups 2");
+>     run_id();
+>     if (setgroups(5, list1) < 0)
+>         err(1, "setgroups 3");
+>     run_id();
+>
+>     return 0;
+> }
+>
+> Without this patch, the test program gets EPERM from the second
+> setgroups call, after dropping root privileges.  With this patch, the
+> test program successfully drops groups 1 and 5, but then gets EPERM from
+> the third setgroups call, since that call attempts to add groups the
+> process does not currently have.
+>
+> Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+> ---
+>  kernel/groups.c | 33 ++++++++++++++++++++++++++++++---
+>  kernel/uid16.c  |  2 --
+>  2 files changed, 30 insertions(+), 5 deletions(-)
+>
+> diff --git a/kernel/groups.c b/kernel/groups.c
+> index f0667e7..fe7367d 100644
+> --- a/kernel/groups.c
+> +++ b/kernel/groups.c
+> @@ -153,6 +153,29 @@ int groups_search(const struct group_info *group_info, kgid_t grp)
+>  	return 0;
+>  }
+>  
+> +/* Compare two sorted group lists; return true if the first is a subset of the
+> + * second.
+> + */
+> +static bool is_subset(const struct group_info *g1, const struct group_info *g2)
+> +{
+> +	unsigned int i, j;
+> +
+> +	for (i = 0, j = 0; i < g1->ngroups; i++) {
+> +		kgid_t gid1 = GROUP_AT(g1, i);
+> +		kgid_t gid2;
+> +		for (; j < g2->ngroups; j++) {
+> +			gid2 = GROUP_AT(g2, j);
+> +			if (gid_lte(gid1, gid2))
+> +				break;
+> +		}
+> +		if (j >= g2->ngroups || !gid_eq(gid1, gid2))
+> +			return false;
+> +		j++;
+> +	}
+> +
+> +	return true;
+> +}
+> +
+>  /**
+>   * set_groups_sorted - Change a group subscription in a set of credentials
+>   * @new: The newly prepared set of credentials to alter
+> @@ -189,11 +212,17 @@ int set_current_groups(struct group_info *group_info)
+>  {
+>  	struct cred *new;
+>  
+> +	groups_sort(group_info);
+>  	new = prepare_creds();
+>  	if (!new)
+>  		return -ENOMEM;
+> +	if (!ns_capable(current_user_ns(), CAP_SETGID)
+> +	    && !is_subset(group_info, new->group_info)) {
+> +		abort_creds(new);
+> +		return -EPERM;
+> +	}
+>  
+> -	set_groups(new, group_info);
+> +	set_groups_sorted(new, group_info);
+>  	return commit_creds(new);
+>  }
+>  
+> @@ -233,8 +262,6 @@ SYSCALL_DEFINE2(setgroups, int, gidsetsize, gid_t __user *, grouplist)
+>  	struct group_info *group_info;
+>  	int retval;
+>  
+> -	if (!ns_capable(current_user_ns(), CAP_SETGID))
+> -		return -EPERM;
+>  	if ((unsigned)gidsetsize > NGROUPS_MAX)
+>  		return -EINVAL;
+>  
+> diff --git a/kernel/uid16.c b/kernel/uid16.c
+> index 602e5bb..b27e167 100644
+> --- a/kernel/uid16.c
+> +++ b/kernel/uid16.c
+> @@ -176,8 +176,6 @@ SYSCALL_DEFINE2(setgroups16, int, gidsetsize, old_gid_t __user *, grouplist)
+>  	struct group_info *group_info;
+>  	int retval;
+>  
+> -	if (!ns_capable(current_user_ns(), CAP_SETGID))
+> -		return -EPERM;
+>  	if ((unsigned)gidsetsize > NGROUPS_MAX)
+>  		return -EINVAL;
+>  
