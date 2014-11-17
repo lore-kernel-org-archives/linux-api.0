@@ -1,48 +1,39 @@
-From: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
-Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use
- setgroups to drop groups
-Date: Mon, 17 Nov 2014 11:37:34 +0000
-Message-ID: <20141117113734.396798e6@lxorguk.ukuu.org.uk>
-References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
-	<0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
-	<87d28osceg.fsf@x220.int.ebiederm.org>
-	<20141115192924.GB19060@thin>
-	<CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com>
-	<20141115202042.GA20900@thin>
-	<20141116020511.GB5507@thunk.org>
-	<6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org>
-	<20141116034005.GC5507@thunk.org>
-	<20141116045232.GB18880@thin>
+From: Sakari Ailus <sakari.ailus@iki.fi>
+Subject: Re: [PATCH v2] [media] Add RGB444_1X12 and RGB565_1X16 media bus
+ formats
+Date: Mon, 17 Nov 2014 17:24:42 +0200
+Message-ID: <20141117152442.GR8907@valkosipuli.retiisi.org.uk>
+References: <1416126278-17708-1-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141116045232.GB18880@thin>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-media-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1416126278-17708-1-git-send-email-boris.brezillon@free-electrons.com>
+Sender: linux-media-owner@vger.kernel.org
+To: Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: Mauro Carvalho Chehab <m.chehab@samsung.com>, Hans Verkuil <hans.verkuil@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-> optional), I can do that too.  The security model of "having a group
-> gives you less privilege than not having it" seems crazy, but
-> nonetheless I can see a couple of easy ways that we can avoid breaking
+Hi Boris,
 
-It's an old pattern of use that makes complete sense in a traditional
-Unix permission world because it's the only way to do "exclude {list}"
-nicely. Our default IMHO shouldn't break this.
+On Sun, Nov 16, 2014 at 09:24:38AM +0100, Boris Brezillon wrote:
+> Add RGB444_1X12 and RGB565_1X16 format definitions and update the
+> documentation.
+> 
+> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+> Acked-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+> ---
+> Changes since v1:
+> - keep BPP and bits per sample ordering
+> 
+>  Documentation/DocBook/media/v4l/subdev-formats.xml | 40 ++++++++++++++++++++++
+>  include/uapi/linux/media-bus-format.h              |  4 ++-
+>  2 files changed, 43 insertions(+), 1 deletion(-)
 
-> that pattern, no_new_privs being one of them.  I'd like to make sure
-> that nobody sees any other real-world corner case that unprivileged
-> setgroups would break.
+Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
 
-Barring the usual risk of people doing improper error checking I don't
-see one immediately.
+-- 
+Kind regards,
 
-For containers I think it actually makes sense that the sysctl can be
-applied per container anyway.
-
-Alan
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Sakari Ailus
+e-mail: sakari.ailus@iki.fi	XMPP: sailus@retiisi.org.uk
