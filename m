@@ -1,141 +1,49 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [musl] Re: [RFC] Possible new execveat(2) Linux syscall
-Date: Sun, 16 Nov 2014 16:06:10 -0800
-Message-ID: <CALCETrVpm9-Osa+MRs8oxmmDNAJDCC1p4Z8dXiEnAb_WBsNP-Q@mail.gmail.com>
-References: <CAHse=S8ccC2No5EYS0Pex=Ng3oXjfDB9woOBmMY_k+EgxtODZA@mail.gmail.com>
- <20141116195246.GX22465@brightrain.aerifal.cx> <CALCETrWWUyizL8HxZKaYE+xuV5eGi8mQcequT9HPvvac=X-dLg@mail.gmail.com>
- <20141116220859.GY22465@brightrain.aerifal.cx> <CALCETrVtN73rTxGXV9Xt+sPOitAWCcyrfUWY_3_tAmd+n6V1gA@mail.gmail.com>
- <20141116233202.GA22465@brightrain.aerifal.cx>
+From: Karol Lewandowski <lmctlx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/5] kdbus: extend structures with security pointer for
+ lsm
+Date: Mon, 17 Nov 2014 02:47:32 +0100
+Message-ID: <20141117014732.GA21745@pix>
+References: <54539AF3.6060302@samsung.com>
+ <1414773397-26490-1-git-send-email-k.lewandowsk@samsung.com>
+ <1414773397-26490-2-git-send-email-k.lewandowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141116233202.GA22465-C3MtFaGISjmo6RMmaWD+6Sb1p8zYI1N1@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1414773397-26490-2-git-send-email-k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>
-Cc: libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
+Cc: pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, desrt-0xnayjDhYQY@public.gmane.org, simon.mcvittie-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, casey.schaufler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, javier.martinez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, alban.crequy-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, r.krypa-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 16, 2014 at 3:32 PM, Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org> wrote:
-> On Sun, Nov 16, 2014 at 02:34:32PM -0800, Andy Lutomirski wrote:
->> On Sun, Nov 16, 2014 at 2:08 PM, Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org> wrote:
->> > On Sun, Nov 16, 2014 at 01:20:39PM -0800, Andy Lutomirski wrote:
->> >> On Nov 16, 2014 11:53 AM, "Rich Felker" <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org> wrote:
->> >> >
->> >> > On Fri, Nov 14, 2014 at 02:54:19PM +0000, David Drysdale wrote:
->> >> > > Hi,
->> >> > >
->> >> > > Over at the LKML[1] we've been discussing a possible new syscall, execveat(2),
->> >> > > and it would be good to hear a glibc perspective about it (and whether there
->> >> > > are any interface changes that would make it easier to use from userspace).
->> >> > >
->> >> > > The syscall prototype is:
->> >> > >   int execveat(int fd, const char *pathname,
->> >> > >                       char *const argv[],  char *const envp[],
->> >> > >                       int flags); /* AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW */
->> >> > > and it works similarly to execve(2) except:
->> >> > >  - the executable to run is identified by the combination of fd+pathname, like
->> >> > >    other *at(2) syscalls
->> >> > >  - there's an extra flags field to control behaviour.
->> >> > > (I've attached a text version of the suggested man page below)
->> >> > >
->> >> > > One particular benefit of this is that it allows an fexecve(3) implementation
->> >> > > that doesn't rely on /proc being accessible, which is useful for sandboxed
->> >> > > applications.  (However, that does only work for non-interpreted programs:
->> >> > > the name passed to a script interpreter is of the form "/dev/fd/<fd>/<path>"
->> >> > > or "/dev/fd/<fd>", so the executed interpreter will normally still need /proc
->> >> > > access to load the script file).
->> >> > >
->> >> > > How does this sound from a glibc perspective?
->> >> >
->> >> > I've been following the discussions so far and everything looks mostly
->> >> > okay. There are still issues to be resolved with the different
->> >> > semantics between Linux O_PATH and what POSIX requires for O_EXEC (and
->> >> > O_SEARCH) but as long as the intent is that, once O_EXEC is defined to
->> >> > save the permissions at the time of open and cause them to be used in
->> >> > place of the current file permissions at the time of execveat
->> >>
->> >> Is something missing here?
->> >>
->> >> FWIW, I don't understand O_PATH or O_EXEC very well, so from my POV,
->> >> help would be appreciated.
->> >
->> > Yes. POSIX requires that permission checks for execution (fexecve with
->> > O_EXEC file descriptors) and directory-search (*at functions with
->> > O_SEARCH file descriptors) succeed if the open operation succeeded --
->> > the permissions check is required to take place at open time rather
->> > than at exec/search time. There's a separate discussion about how to
->> > make this work on the kernel side.
->>
->> It may be worth making this work as part of adding execveat to the
->> kernel.  Does the kernel even have O_EXEC right now?
->
-> No. The proposal is that O_EXEC and O_SEARCH would both be equal to
-> O_PATH|3 (3 being the rarely-used O_ACCMODE for "neither read or
-> write, but some weird ioctls are accepted") which gracefully falls
-> back for both current kernels with O_PATH (in which case the 3 is
-> ignored and the discrepency from POSIX is just the time at which
-> permissions are checked) and for pre-O_PATH kernels (in which case the
-> access mode used is 3, and read/write ops fail on the fd, but it's
-> still usable for fexecve and *at functions with /proc-based fallback
-> implementations).
->
-> I would be happy to see this work get done at the same time.
->
->> >> > One major issue however is FD_CLOEXEC with scripts. Last I checked,
->> >> > this didn't work because the file is already closed by the time the
->> >> > interpreted runs. The intended usage of fexecve is almost certainly to
->> >> > call it with the file descriptor set close-on-exec; otherwise, there
->> >> > would be no clean way to close it, since the program being executed
->> >> > doesn't know that it's being executed via fexecve. So this is a
->> >> > serious problem that needs to be solved if it hasn't already. I have
->> >> > some ideas I could offer, but I'm not an expert on the kernel side
->> >> > things so I'm not sure they'd be correct.
->> >>
->> >> Bring on the ideas.
->> >
->> > My thought is that when the kernel opens the binary and sees that it's
->> > a script that needs an interpreter, the kernel should not pass
->> > /proc/self/fd/%d to the interpreter, but instead should pass the name
->> > of a new magic symlink in /proc/self that's connected to the inode for
->> > the script to be executed but that ceases to exist as soon as it's
->> > opened. In theory this could also be used for suid scripts to make
->> > them secure.
->>
->> This doesn't help if /proc is not mounted, which is an important use case.
->
-> I don't know what can be done in this case short of some really ugly
-> hacks, like giving open() special behavior when the pathname points to
-> a magic address in the argv region, or having the kernel create temp
-> files in some magic path.
->
->> >> FWIW, I've often thought that interpreter binaries should mark
->> >> themselves as such to enable better interactions with the kernel.
->> >
->> > That's hard since users expect to be able to use arbitrary
->> > interpreters (and sometimes even pass through multiple ones, e.g.
->> > #!/usr/bin/env perl).
->>
->> Hmm.  I'd be okay with old interpreters having a somewhat degraded experience.
->>
->> I guess that #!/some/interpreted/script isn't allowed, but maybe
->> #!/usr/bin/env some-interpreted-script should work.
->>
->> It could be that all that's really needed is some convention to tell
->> an interpreter that it should use fd N as a script *and close it*.
->> Something like /dev/fd_and_close/N could work, but that has all kinds
->> of problems.
->>
->> Alternatively, if we could have a way to mark an fd so that it's
->> close-on-exec after exec, that would solve the nesting problem, as
->> long as every interpreter in the chain does it.  And the kernel could
->> certainly implement execve on a close-on-exec fd by passing /dev/fd/N
->> where N is a close-on-exec fd, at least in the non-nested case.
->
-> This doesn't solve the problem of needing /proc though (/dev/fd is
-> just a link to /proc/self/fd).
->
+On Fri, Oct 31, 2014 at 05:36:33PM +0100, Karol Lewandowski wrote:
+> Signed-off-by: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> ---
+>  drivers/misc/kdbus/bus.h        | 2 ++
+>  drivers/misc/kdbus/connection.h | 2 ++
+>  drivers/misc/kdbus/domain.h     | 2 ++
+>  3 files changed, 6 insertions(+)
+> 
+> diff --git a/drivers/misc/kdbus/bus.h b/drivers/misc/kdbus/bus.h
+> index fd9d843..5c403ef 100644
+> --- a/drivers/misc/kdbus/bus.h
+> +++ b/drivers/misc/kdbus/bus.h
+> @@ -49,6 +49,7 @@
+>   * @conn_hash:		Map of connection IDs
+>   * @monitors_list:	Connections that monitor this bus
+>   * @meta:		Meta information about the bus creator
+> + * @security:		LSM security blob
+>   *
+>   * A bus provides a "bus" endpoint / device node.
+>   *
+> @@ -84,6 +85,7 @@ struct kdbus_bus {
+>  	struct list_head monitors_list;
+>  
+>  	struct kdbus_meta *meta;
+> +	void *security;
 
-Al Viro was talking about having a special fs just for /dev/fd.  And
-interpreters could special-case path names of a certain form.
+One minor note - with possibility of LSM modules trying to access
+these structures it would be worth to have kdbus headers in, say
+include/linux/kdbus or similar globally accessible location.
 
---Andy
+Thanks
