@@ -1,81 +1,110 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups
- to drop groups
-Date: Mon, 17 Nov 2014 16:56:34 -0800
-Message-ID: <546A9942.7030102@schaufler-ca.com>
-References: <CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com> <20141115202042.GA20900@thin> <20141116020511.GB5507@thunk.org> <6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org> <20141116034005.GC5507@thunk.org> <20141116045232.GB18880@thin> <20141117113734.396798e6@lxorguk.ukuu.org.uk> <CALCETrXi1qHyu4_U7cbROB74n461nBZ9R7=0kfhR8-VFAwOF1w@mail.gmail.com> <0b65fd07-48ea-483b-8fd5-fd84d0bff881@email.android.com> <CALCETrWXC5dMOXTTBOiq4Cv+yjqbA_UdmAN-TDmNAJUo+ABxtg@mail.gmail.com> <20141117223730.GA961@cloud>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [PATCH v7 00/10] TPM 2.0 support
+Date: Tue, 18 Nov 2014 08:33:15 +0200
+Message-ID: <20141118063314.GA5847@intel.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <20141117223730.GA961@cloud>
-Sender: linux-security-module-owner@vger.kernel.org
-To: josh@joshtriplett.org, Andy Lutomirski <luto@amacapital.net>
-Cc: "Eric W.Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, linux-man <linux-man@vger.kernel.org>, Ted Ts'o <tytso@mit.edu>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, LSM <linux-security-module@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, josh.triplett@intel.com, christophe.ricard@gmail.com, jason.gunthorpe@obsidianresearch.com, linux-api@vger.kernel.org, trousers-tech@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-On 11/17/2014 2:37 PM, josh@joshtriplett.org wrote:
-> On Mon, Nov 17, 2014 at 02:22:59PM -0800, Andy Lutomirski wrote:
->> On Mon, Nov 17, 2014 at 2:11 PM, Eric W.Biederman <ebiederm@xmission.com> wrote:
->>>
->>> On November 17, 2014 1:07:30 PM EST, Andy Lutomirski <luto@amacapital.net> wrote:
->>>> On Nov 17, 2014 3:37 AM, "One Thousand Gnomes"
->>>> <gnomes@lxorguk.ukuu.org.uk> wrote:
->>>>>> optional), I can do that too.  The security model of "having a
->>>> group
->>>>>> gives you less privilege than not having it" seems crazy, but
->>>>>> nonetheless I can see a couple of easy ways that we can avoid
->>>> breaking
->>>>> It's an old pattern of use that makes complete sense in a traditional
->>>>> Unix permission world because it's the only way to do "exclude
->>>> {list}"
->>>>> nicely. Our default IMHO shouldn't break this.
->>>>>
->>>>>> that pattern, no_new_privs being one of them.  I'd like to make
->>>> sure
->>>>>> that nobody sees any other real-world corner case that unprivileged
->>>>>> setgroups would break.
->>>>> Barring the usual risk of people doing improper error checking I
->>>> don't
->>>>> see one immediately.
->>>>>
->>>>> For containers I think it actually makes sense that the sysctl can be
->>>>> applied per container anyway.
->>>> We'll probably need per container sysctls some day.
->>> We already have a mess of per network namespace sysctls,
->>> as well as few for other namespaces.
->>>
->>> We have the infrastructure it is just a matter of using it for whatever purpose we need.
->>>
->> A list of group id ranges that it's permissible to drop would do the
->> trick, both for setgroups and for unshare.  The downside would be that
->> users in those groups (i.e. everyone by default) would not be able to
->> unshare their user ns.
->>
->> Better ideas welcome.
-> Personally, I think that seems like more flexibility than necessary to
-> achieve the goal.  I think a sysctl turning group-dropping on and off
-> would suffice; systems that know they don't use groups to exclude
-> specific users can enable that sysctl.
+Any feedback?
 
-Right. Until someone comes along and installs a package that
-uses groups in this particular way. You can't count on the fact
-that someone isn't using it in that particular way today as an
-indicator that they won't tomorrow. Are you thinking about providing
-a tool that will tell sysadmins whether or not their system is safe
-to use this option? Certainly you are going to suggest that most
-sysadmins would know how to figure out if it is safe to use this
-option.
+/Jarkko
 
-The developers of user namespaces didn't notice it might be a problem.
-You can't count on sysadmins or distro developers to do better.
-
->
-> - Josh Triplett
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
->
-
+On Tue, Nov 11, 2014 at 03:45:03PM +0200, Jarkko Sakkinen wrote:
+> This patch set enables TPM2 protocol and provides drivers for FIFO and
+> CRB interfaces.
+> 
+> v2:
+> - Improved struct tpm_chip life-cycle by taking advantage of devres
+>   API.
+> - Refined sysfs attributes as simple key-values thereby not repeating
+>   mistakes in TPM1 sysfs attributes.
+> - Documented functions in tpm-chip.c and tpm2-cmd.c.
+> - Documented sysfs attributes.
+> 
+> v3:
+> - Lots of fixes in calling order in device drivers (thanks to Jason
+>   Gunthorpe for pointing these out!).
+> - Attach sysfs attributes to the misc device because it represents
+>   TPM device to the user space.
+> 
+> v4:
+> - Disable sysfs attibutes for TPM 2.0 for until we can sort out the 
+>   best approach for them.
+> - Fixed all the style issues found with checkpatch.pl.
+> 
+> v5:
+> - missing EXPORT_SYMBOL_GPL()
+> - own class for TPM devices used for TPM 2.0 devices and onwards.
+> 
+> v6:
+> - Non-racy initialization for sysfs attributes using struct device's
+>   groups field.
+> - The class 'tpm' is used now for all TPM devices. For the first device
+>   node major MISC_MAJOR and minor TPM_MINOR is used in order to retain
+>   backwards compatability.
+> 
+> v7:
+> - Release device number and free struct tpm_chip memory inside
+>   tpm_dev_release callback.
+> - Moved code from tpm-interface.c and tpm_dev.c to tpm-chip.c.
+> 
+> Opens:
+> - What we should do with PPI and BIOS log sysfs attributes?
+>   Can we associate them with the character device without
+>   breaking anything? Can we postpone this issue after
+>   this patch set has been pulled?
+> 
+> Jarkko Sakkinen (9):
+>   tpm: merge duplicate transmit_cmd() functions
+>   tpm: two-phase chip management functions
+>   tpm: fix multiple race conditions in tpm_ppi.c
+>   tpm: rename chip->dev to chip->pdev
+>   tpm: device class for tpm
+>   tpm: fix: move sysfs attributes to the correct place.
+>   tpm: TPM 2.0 baseline support
+>   tpm: TPM 2.0 CRB Interface
+>   tpm: TPM 2.0 sysfs attributes
+> 
+> Will Arthur (1):
+>   tpm: TPM 2.0 FIFO Interface
+> 
+>  Documentation/ABI/stable/sysfs-class-tpm2 |  57 +++
+>  drivers/char/tpm/Kconfig                  |   9 +
+>  drivers/char/tpm/Makefile                 |   3 +-
+>  drivers/char/tpm/tpm-chip.c               | 266 ++++++++++++++
+>  drivers/char/tpm/tpm-dev.c                |  44 +--
+>  drivers/char/tpm/tpm-interface.c          | 261 +++++---------
+>  drivers/char/tpm/tpm-sysfs.c              |  46 +--
+>  drivers/char/tpm/tpm.h                    | 134 ++++++-
+>  drivers/char/tpm/tpm2-cmd.c               | 566 ++++++++++++++++++++++++++++++
+>  drivers/char/tpm/tpm2-sysfs.c             | 152 ++++++++
+>  drivers/char/tpm/tpm_atmel.c              |  25 +-
+>  drivers/char/tpm/tpm_crb.c                | 323 +++++++++++++++++
+>  drivers/char/tpm/tpm_i2c_atmel.c          |  49 +--
+>  drivers/char/tpm/tpm_i2c_infineon.c       |  43 +--
+>  drivers/char/tpm/tpm_i2c_nuvoton.c        |  68 ++--
+>  drivers/char/tpm/tpm_i2c_stm_st33.c       |  44 +--
+>  drivers/char/tpm/tpm_ibmvtpm.c            |  17 +-
+>  drivers/char/tpm/tpm_infineon.c           |  51 +--
+>  drivers/char/tpm/tpm_nsc.c                |  34 +-
+>  drivers/char/tpm/tpm_ppi.c                | 136 ++++---
+>  drivers/char/tpm/tpm_tis.c                | 180 ++++++----
+>  drivers/char/tpm/xen-tpmfront.c           |  14 +-
+>  22 files changed, 1920 insertions(+), 602 deletions(-)
+>  create mode 100644 Documentation/ABI/stable/sysfs-class-tpm2
+>  create mode 100644 drivers/char/tpm/tpm-chip.c
+>  create mode 100644 drivers/char/tpm/tpm2-cmd.c
+>  create mode 100644 drivers/char/tpm/tpm2-sysfs.c
+>  create mode 100644 drivers/char/tpm/tpm_crb.c
+> 
+> -- 
+> 2.1.0
+> 
