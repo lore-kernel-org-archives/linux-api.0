@@ -1,93 +1,50 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: Re: [PATCH v12 1/3] drm: rockchip: Add basic drm driver
-Date: Tue, 18 Nov 2014 14:21:30 +0100
-Message-ID: <20141118142130.6c12ab50@bbrezillon>
-References: <1416297587-18959-1-git-send-email-mark.yao@rock-chips.com>
-	<1416297629-19024-1-git-send-email-mark.yao@rock-chips.com>
-	<20141118083234.GZ25711@phenom.ffwll.local>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v2 01/10] crypto: AF_ALG: add user space interface for
+ AEAD
+Date: Tue, 18 Nov 2014 22:06:31 +0800
+Message-ID: <20141118140631.GA12100@gondor.apana.org.au>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
+ <11608519.pS4L9VjM2n@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20141118083234.GZ25711@phenom.ffwll.local>
-Sender: linux-doc-owner@vger.kernel.org
-To: Daniel Vetter <daniel@ffwll.ch>
-Cc: Mark Yao <mark.yao@rock-chips.com>, heiko@sntech.de, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, cf@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.co
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <11608519.pS4L9VjM2n@tachyon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>
+Cc: Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Daniel,
-
-On Tue, 18 Nov 2014 09:32:34 +0100
-Daniel Vetter <daniel@ffwll.ch> wrote:
-
-> On Tue, Nov 18, 2014 at 04:00:29PM +0800, Mark Yao wrote:
-> > From: Mark yao <mark.yao@rock-chips.com>
-> > 
-> > This patch adds the basic structure of a DRM Driver for Rockchip Socs.
-> > 
-> > Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
-> > Signed-off-by: Daniel Kurtz <djkurtz@chromium.org>
-> > Acked-by: Daniel Vetter <daniel@ffwll.ch>
-> > Reviewed-by: Rob Clark <robdclark@gmail.com>
-> > ---
-> > Changes in v2:
-> > - use the component framework to defer main drm driver probe
-> >   until all VOP devices have been probed.
-> > - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
-> >   master device and each vop device can shared the drm dma mapping.
-> > - use drm_crtc_init_with_planes and drm_universal_plane_init.
-> > - remove unnecessary middle layers.
-> > - add cursor set, move funcs to rockchip drm crtc.
-> > - use vop reset at first init
-> > - reference framebuffer when used and unreference when swap out vop
-> > 
-> > Changes in v3:
-> > - change "crtc->fb" to "crtc->primary-fb"
-> > Adviced by Daniel Vetter
-> > - init cursor plane with universal api, remove unnecessary cursor set,move 
-> > 
-> > Changes in v4:
-> > Adviced by David Herrmann
-> > - remove drm_platform_*() usage, use register drm device directly.
+On Sun, Nov 16, 2014 at 03:23:50AM +0100, Stephan Mueller wrote:
+> AEAD requires the following data in addition to normal symmetric
+> ciphers:
 > 
-> Minor fixup for that part below.
+> 	* Associated authentication data of arbitrary length
 > 
-> [snip]
+> 	* Authentication tag for decryption
 > 
-> > +static int rockchip_drm_bind(struct device *dev)
-> > +{
-> > +	struct drm_device *drm;
-> > +	int ret;
-> > +
-> > +	drm = drm_dev_alloc(&rockchip_drm_driver, dev);
-> > +	if (!drm)
-> > +		return -ENOMEM;
-> > +
-> > +	ret = drm_dev_set_unique(drm, "%s", dev_name(dev));
-> > +	if (ret)
-> > +		goto err_free;
+> 	* Length of authentication tag for encryption
 > 
-> Please call rockchip_drm_load here directly and don't put it as the ->load
-> function into the driver vtable. The point of the alloc/register split is
-> that the driver can be completely set up _before_ we register anything.
-> But for backwards compat and historical reasons ->load is called somewhere
-> in the middle (so that you could access the minor nodes if needed, since
-> some drivers do that).
+> The authentication tag data is communicated as part of the actual
+> ciphertext as mandated by the kernel crypto API. Therefore we only need
+> to provide a user space interface for the associated authentication data
+> as well as for the authentication tag length.
+> 
+> This patch adds both as a setsockopt interface that is identical to the
+> AF_ALG interface for setting an IV and for selecting the cipher
+> operation type (encrypt or decrypt).
+> 
+> Signed-off-by: Stephan Mueller <smueller@chronox.de>
 
-I tried to do the same in the atmel-hlcdc DRM driver, but I need the
-primary drm_minor to register the connectors (see this kernel
-backtrace [1]), which means I either initialize the connector in the
-wrong place (currently part of the drm load process), or I just can't
-call atmel_hlcdc_dc_load before registering the drm device...
+I don't like the fact that we're putting arbitrary limits on
+the AD, as well as the fact that the way you're doing it the
+AD has to be copied.
 
-Regards,
+How about simply saying that the first X bytes of the input
+shall be the AD?
 
-Boris
-
-[1]http://code.bulix.org/fi7trt-87436
-
-
+Cheers,
 -- 
-Boris Brezillon, Free Electrons
-Embedded Linux and Kernel engineering
-http://free-electrons.com
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
