@@ -1,83 +1,81 @@
-From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
-Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use
- setgroups to drop groups
-Date: Mon, 17 Nov 2014 15:13:36 -0800
-Message-ID: <20141117231336.GA1113@cloud>
-References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
- <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
- <546A3942.5040906@schaufler-ca.com>
- <CALCETrWy-3C1on3+2wE9aqcChBUCUY0i_4AL_Om8CSZ5QB18sQ@mail.gmail.com>
- <CALCETrVn4gVXp7F=5h-bkN5VWuRMG9BoxgeQfKhX4+ZXxGE=wQ@mail.gmail.com>
- <9f43a787-165e-4256-a097-f7691204d9d6@email.android.com>
- <CALCETrU2tXM5sKx=L-K6=ARkvqefkcZHW3_RGhsgfc31FuWxJg@mail.gmail.com>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [PATCH 2/2] groups: Allow unprivileged processes to use setgroups
+ to drop groups
+Date: Mon, 17 Nov 2014 16:56:34 -0800
+Message-ID: <546A9942.7030102@schaufler-ca.com>
+References: <CALCETrUM=GqsOumTmDMF4B5GS1w=x56t41eE-2xW1bBOfUz02w@mail.gmail.com> <20141115202042.GA20900@thin> <20141116020511.GB5507@thunk.org> <6C690A2C-8EB1-421A-94C3-9803AFB95760@joshtriplett.org> <20141116034005.GC5507@thunk.org> <20141116045232.GB18880@thin> <20141117113734.396798e6@lxorguk.ukuu.org.uk> <CALCETrXi1qHyu4_U7cbROB74n461nBZ9R7=0kfhR8-VFAwOF1w@mail.gmail.com> <0b65fd07-48ea-483b-8fd5-fd84d0bff881@email.android.com> <CALCETrWXC5dMOXTTBOiq4Cv+yjqbA_UdmAN-TDmNAJUo+ABxtg@mail.gmail.com> <20141117223730.GA961@cloud>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrU2tXM5sKx=L-K6=ARkvqefkcZHW3_RGhsgfc31FuWxJg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Eric W.Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <20141117223730.GA961@cloud>
+Sender: linux-security-module-owner@vger.kernel.org
+To: josh@joshtriplett.org, Andy Lutomirski <luto@amacapital.net>
+Cc: "Eric W.Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, linux-man <linux-man@vger.kernel.org>, Ted Ts'o <tytso@mit.edu>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, LSM <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 17, 2014 at 02:50:10PM -0800, Andy Lutomirski wrote:
-> On Mon, Nov 17, 2014 at 2:41 PM, Eric W.Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> >
-> >
-> > On November 17, 2014 1:46:59 PM EST, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> >>On Mon, Nov 17, 2014 at 10:31 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> >>wrote:
-> >>> On Mon, Nov 17, 2014 at 10:06 AM, Casey Schaufler
-> >>> <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
-> >>>> On 11/15/2014 1:01 AM, Josh Triplett wrote:
-> >>>>> Currently, unprivileged processes (without CAP_SETGID) cannot call
-> >>>>> setgroups at all.  In particular, processes with a set of
-> >>supplementary
-> >>>>> groups cannot further drop permissions without obtaining elevated
-> >>>>> permissions first.
-> >>>>
-> >>>> Has anyone put any thought into how this will interact with
-> >>>> POSIX ACLs? I don't see that anywhere in the discussion.
-> >>>
-> >>> That means that user namespaces are a problem, too, and we need to
-> >>fix
-> >>> it.  Or we should add some control to turn unprivileged user
-> >>namespace
-> >>> creation on and off and document that turning it on defeats POSIX
-> >>ACLs
-> >>> with a group entry that is more restrictive than the other entry.
-> >>>
-> >>
-> >>This is a significant enough issue that I posted it to oss-security:
-> >>
-> >>http://www.openwall.com/lists/oss-security/2014/11/17/19
-> >>
-> >>It's not at all obvious to me how to fix it.  We could disallow userns
-> >>creation of any supplementary groups don't match fsuid, or we could
-> >>keep negative-only groups around in the userns.
-> >>
-> >>It may be worth adding a sysctl to change the behavior, too.  IMO it's
-> >>absurd to use groups to deny permissions that are otherwise available.
-> >
-> > There is an obvious user namespace fix.  Don't allow dropping supplemental groups that are not mapped.
-> 
-> Why exactly does this fix it?  I guess that, if a supplementary group
-> is in your subgid list, then we can assume that dropping it is safe?
+On 11/17/2014 2:37 PM, josh@joshtriplett.org wrote:
+> On Mon, Nov 17, 2014 at 02:22:59PM -0800, Andy Lutomirski wrote:
+>> On Mon, Nov 17, 2014 at 2:11 PM, Eric W.Biederman <ebiederm@xmission.com> wrote:
+>>>
+>>> On November 17, 2014 1:07:30 PM EST, Andy Lutomirski <luto@amacapital.net> wrote:
+>>>> On Nov 17, 2014 3:37 AM, "One Thousand Gnomes"
+>>>> <gnomes@lxorguk.ukuu.org.uk> wrote:
+>>>>>> optional), I can do that too.  The security model of "having a
+>>>> group
+>>>>>> gives you less privilege than not having it" seems crazy, but
+>>>>>> nonetheless I can see a couple of easy ways that we can avoid
+>>>> breaking
+>>>>> It's an old pattern of use that makes complete sense in a traditional
+>>>>> Unix permission world because it's the only way to do "exclude
+>>>> {list}"
+>>>>> nicely. Our default IMHO shouldn't break this.
+>>>>>
+>>>>>> that pattern, no_new_privs being one of them.  I'd like to make
+>>>> sure
+>>>>>> that nobody sees any other real-world corner case that unprivileged
+>>>>>> setgroups would break.
+>>>>> Barring the usual risk of people doing improper error checking I
+>>>> don't
+>>>>> see one immediately.
+>>>>>
+>>>>> For containers I think it actually makes sense that the sysctl can be
+>>>>> applied per container anyway.
+>>>> We'll probably need per container sysctls some day.
+>>> We already have a mess of per network namespace sysctls,
+>>> as well as few for other namespaces.
+>>>
+>>> We have the infrastructure it is just a matter of using it for whatever purpose we need.
+>>>
+>> A list of group id ranges that it's permissible to drop would do the
+>> trick, both for setgroups and for unshare.  The downside would be that
+>> users in those groups (i.e. everyone by default) would not be able to
+>> unshare their user ns.
+>>
+>> Better ideas welcome.
+> Personally, I think that seems like more flexibility than necessary to
+> achieve the goal.  I think a sysctl turning group-dropping on and off
+> would suffice; systems that know they don't use groups to exclude
+> specific users can enable that sysctl.
 
-Considering that one of the fixes I'd like to add is "allow mapping
-groups that you have in your supplemental group list", no, that fix
-doesn't suffice. :)
+Right. Until someone comes along and installs a package that
+uses groups in this particular way. You can't count on the fact
+that someone isn't using it in that particular way today as an
+indicator that they won't tomorrow. Are you thinking about providing
+a tool that will tell sysadmins whether or not their system is safe
+to use this option? Certainly you are going to suggest that most
+sysadmins would know how to figure out if it is safe to use this
+option.
 
-> > That will require a little bit of fancy footwork if you want to play with supplemental groups in your unprivileged user namespace.   I would like to get a grip on what hoops would be required before we add the additional restriction.  Possibly something as simple as calling sg.
-> 
-> The main hoop I can think of is that setgroups would be impossible to
-> call if you have an unmapped supplementary group.  This could break
-> all kinds of things.
+The developers of user namespaces didn't notice it might be a problem.
+You can't count on sysadmins or distro developers to do better.
 
-Agreed.
+>
+> - Josh Triplett
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+>
 
-- Josh Triplett
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
