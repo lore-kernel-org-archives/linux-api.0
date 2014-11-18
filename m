@@ -1,114 +1,75 @@
-From: Mark Yao <mark.yao@rock-chips.com>
-Subject: [PATCH v12 3/3] dt-bindings: video: Add documentation for rockchip vop
-Date: Tue, 18 Nov 2014 16:01:09 +0800
-Message-ID: <1416297669-19102-1-git-send-email-mark.yao@rock-chips.com>
+From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
+Subject: Re: [PATCH v12 1/3] drm: rockchip: Add basic drm driver
+Date: Tue, 18 Nov 2014 09:32:34 +0100
+Message-ID: <20141118083234.GZ25711@phenom.ffwll.local>
 References: <1416297587-18959-1-git-send-email-mark.yao@rock-chips.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1416297587-18959-1-git-send-email-mark.yao@rock-chips.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
-Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, cf@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, xw@rock-chips.com, Mark yao <mark.yao@rock-chips.com>
+ <1416297629-19024-1-git-send-email-mark.yao@rock-chips.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1416297629-19024-1-git-send-email-mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Cc: heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dbehr-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, cf-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xxm-TNX95d0MmH5qZ5pVbMyqKg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Mark yao <mark.yao@rock-chips.com>
+On Tue, Nov 18, 2014 at 04:00:29PM +0800, Mark Yao wrote:
+> From: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> 
+> This patch adds the basic structure of a DRM Driver for Rockchip Socs.
+> 
+> Signed-off-by: Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+> Signed-off-by: Daniel Kurtz <djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> Acked-by: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
+> Reviewed-by: Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+> Changes in v2:
+> - use the component framework to defer main drm driver probe
+>   until all VOP devices have been probed.
+> - use dma-mapping API with ARM_DMA_USE_IOMMU, create dma mapping by
+>   master device and each vop device can shared the drm dma mapping.
+> - use drm_crtc_init_with_planes and drm_universal_plane_init.
+> - remove unnecessary middle layers.
+> - add cursor set, move funcs to rockchip drm crtc.
+> - use vop reset at first init
+> - reference framebuffer when used and unreference when swap out vop
+> 
+> Changes in v3:
+> - change "crtc->fb" to "crtc->primary-fb"
+> Adviced by Daniel Vetter
+> - init cursor plane with universal api, remove unnecessary cursor set,move 
+> 
+> Changes in v4:
+> Adviced by David Herrmann
+> - remove drm_platform_*() usage, use register drm device directly.
 
-This adds binding documentation for Rockchip SoC VOP driver.
+Minor fixup for that part below.
 
-Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
----
-Changes in v2:
-- rename "lcdc" to "vop"
-- add vop reset
-- add iommu node
-- add port for display-subsystem
+[snip]
 
-Changes in v3: None
+> +static int rockchip_drm_bind(struct device *dev)
+> +{
+> +	struct drm_device *drm;
+> +	int ret;
+> +
+> +	drm = drm_dev_alloc(&rockchip_drm_driver, dev);
+> +	if (!drm)
+> +		return -ENOMEM;
+> +
+> +	ret = drm_dev_set_unique(drm, "%s", dev_name(dev));
+> +	if (ret)
+> +		goto err_free;
 
-Changes in v4: None
+Please call rockchip_drm_load here directly and don't put it as the ->load
+function into the driver vtable. The point of the alloc/register split is
+that the driver can be completely set up _before_ we register anything.
+But for backwards compat and historical reasons ->load is called somewhere
+in the middle (so that you could access the minor nodes if needed, since
+some drivers do that).
 
-Changes in v5: None
-
-Changes in v6: None
-
-Changes in v7: None
-
-Changes in v8: None
-
-Changes in v9: None
-
-Changes in v10: None
-
-Changes in v11: None
-
-Changes in v12: None
-
- .../devicetree/bindings/video/rockchip-vop.txt     |   58 ++++++++++++++++++++
- 1 file changed, 58 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/video/rockchip-vop.txt
-
-diff --git a/Documentation/devicetree/bindings/video/rockchip-vop.txt b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-new file mode 100644
-index 0000000..d15351f
---- /dev/null
-+++ b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-@@ -0,0 +1,58 @@
-+device-tree bindings for rockchip soc display controller (vop)
-+
-+VOP (Visual Output Processor) is the Display Controller for the Rockchip
-+series of SoCs which transfers the image data from a video memory
-+buffer to an external LCD interface.
-+
-+Required properties:
-+- compatible: value should be one of the following
-+		"rockchip,rk3288-vop";
-+
-+- interrupts: should contain a list of all VOP IP block interrupts in the
-+		 order: VSYNC, LCD_SYSTEM. The interrupt specifier
-+		 format depends on the interrupt controller used.
-+
-+- clocks: must include clock specifiers corresponding to entries in the
-+		clock-names property.
-+
-+- clock-names: Must contain
-+		aclk_vop: for ddr buffer transfer.
-+		hclk_vop: for ahb bus to R/W the phy regs.
-+		dclk_vop: pixel clock.
-+
-+- resets: Must contain an entry for each entry in reset-names.
-+  See ../reset/reset.txt for details.
-+- reset-names: Must include the following entries:
-+  - axi
-+  - ahb
-+  - dclk
-+
-+- iommus: required a iommu node
-+
-+- port: A port node with endpoint definitions as defined in
-+  Documentation/devicetree/bindings/media/video-interfaces.txt.
-+
-+Example:
-+SoC specific DT entry:
-+	vopb: vopb@ff930000 {
-+		compatible = "rockchip,rk3288-vop";
-+		reg = <0xff930000 0x19c>;
-+		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
-+		clocks = <&cru ACLK_VOP0>, <&cru DCLK_VOP0>, <&cru HCLK_VOP0>;
-+		clock-names = "aclk_vop", "dclk_vop", "hclk_vop";
-+		resets = <&cru SRST_LCDC1_AXI>, <&cru SRST_LCDC1_AHB>, <&cru SRST_LCDC1_DCLK>;
-+		reset-names = "axi", "ahb", "dclk";
-+		iommus = <&vopb_mmu>;
-+		vopb_out: port {
-+			#address-cells = <1>;
-+			#size-cells = <0>;
-+			vopb_out_edp: endpoint@0 {
-+				reg = <0>;
-+				remote-endpoint=<&edp_in_vopb>;
-+			};
-+			vopb_out_hdmi: endpoint@1 {
-+				reg = <1>;
-+				remote-endpoint=<&hdmi_in_vopb>;
-+			};
-+		};
-+	};
+Cheers, Daniel
 -- 
-1.7.9.5
+Daniel Vetter
+Software Engineer, Intel Corporation
++41 (0) 79 365 57 48 - http://blog.ffwll.ch
