@@ -1,63 +1,62 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v2 01/10] crypto: AF_ALG: add user space interface for AEAD
-Date: Wed, 19 Nov 2014 01:34:20 +0100
-Message-ID: <2161216.flt1JCFqfn@tachyon.chronox.de>
-References: <5365136.g8vbXlhRyC@tachyon.chronox.de> <11608519.pS4L9VjM2n@tachyon.chronox.de> <20141118140631.GA12100@gondor.apana.org.au>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: [PATCH v2 02/10] crypto: AF_ALG: user space interface for cipher info
+Date: Wed, 19 Nov 2014 02:02:33 +0100
+Message-ID: <34547475.R7WC8JFgoJ@tachyon.chronox.de>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de> <2688209.3bGZus2TD9@tachyon.chronox.de> <20141118140822.GB12100@gondor.apana.org.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141118140631.GA12100-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141118140822.GB12100@gondor.apana.org.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>, Steffen Klassert <steffen.klassert@secunet.com>
+Cc: Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Dienstag, 18. November 2014, 22:06:31 schrieb Herbert Xu:
+Am Dienstag, 18. November 2014, 22:08:23 schrieb Herbert Xu:
 
 Hi Herbert,
 
-> On Sun, Nov 16, 2014 at 03:23:50AM +0100, Stephan Mueller wrote:
-> > AEAD requires the following data in addition to normal symmetric
+> On Sun, Nov 16, 2014 at 03:24:25AM +0100, Stephan Mueller wrote:
+> > The AF_ALG interface allows normal cipher (hash, encrypt, decrypt).
+> > However, it does not allow user space to obtain the following generic
 > > 
-> > ciphers:
-> > 	* Associated authentication data of arbitrary length
+> > information about the currently active cipher:
+> > 	* block size of the cipher
 > > 	
-> > 	* Authentication tag for decryption
+> > 	* IV size of the cipher
 > > 	
-> > 	* Length of authentication tag for encryption
+> > 	* for AEAD, the maximum authentication tag size
 > > 
-> > The authentication tag data is communicated as part of the actual
-> > ciphertext as mandated by the kernel crypto API. Therefore we only need
-> > to provide a user space interface for the associated authentication data
-> > as well as for the authentication tag length.
+> > The patch adds a getsockopt interface for the symmetric ciphers to
+> > answer such information requests from user space.
 > > 
-> > This patch adds both as a setsockopt interface that is identical to the
-> > AF_ALG interface for setting an IV and for selecting the cipher
-> > operation type (encrypt or decrypt).
+> > The kernel crypto API function calls are used to obtain the real data.
+> > As all data are simple integer values, the getsockopt handler function
+> > uses put_user() to return the integer value to user space in the
+> > *optval parameter of getsockopt.
 > > 
-> > Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+> > Signed-off-by: Stephan Mueller <smueller@chronox.de>
 > 
-> I don't like the fact that we're putting arbitrary limits on
-> the AD, as well as the fact that the way you're doing it the
-> AD has to be copied.
+> We already have crypto_user so you should be extending that to
+> cover what's missing.
+
+Looking into that, I think nothing is missing -- thanks for the pointer. Thus 
+I think I can withdraw that patch and just simply update libkcapi to use that 
+user space netlink interface.
+
+Though, I yet have to try using that interface ;-)
+
+I am wondering why cryptouser.h is in include/linux -- shouldn't it be in 
+include/uapi/linux? Aren't the definitions in that header file needed for 
+userspace to talk to the netlink socket? I guess that is also the reason why I 
+do not see the interface API details in /usr/linux on my F21 system.
 > 
-> How about simply saying that the first X bytes of the input
-> shall be the AD?
+> PS These paramters should not vary depending on the implementation,
+> if they do then one of the implementations must be buggy.
+> 
+> Cheers,
 
-That is a very good idea.
-
-To cover that approach, the kernel needs to be informed about the length of 
-the authentication data size to separate the ciphertext/plaintext from the 
-authentication data.
-
-To cover that, I would recommend to simply send a u32 value to the kernel for 
-the AD size instead of the AD. The kernel then can adjust the pointers as 
-necessary.
-
-I will update the patch in the next days to cover that scenario.
-
-Thanks
 
 -- 
 Ciao
