@@ -1,23 +1,76 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCHv8 1/4] syscalls,x86: implement execveat() system call
-Date: Wed, 19 Nov 2014 13:40:58 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1411191249560.3909@nanos>
-References: <1415982183-20525-1-git-send-email-drysdale@google.com> <1415982183-20525-2-git-send-email-drysdale@google.com>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [PATCH v12 1/3] drm: rockchip: Add basic drm driver
+Date: Wed, 19 Nov 2014 14:17:58 +0100
+Message-ID: <20141119131758.GN25711@phenom.ffwll.local>
+References: <1416297587-18959-1-git-send-email-mark.yao@rock-chips.com>
+ <1416297629-19024-1-git-send-email-mark.yao@rock-chips.com>
+ <20141118083234.GZ25711@phenom.ffwll.local>
+ <20141118142130.6c12ab50@bbrezillon>
+ <20141118142447.GC25711@phenom.ffwll.local>
+ <546BEDD9.1000205@rock-chips.com> <546BFA4D.3090700@rock-chips.com>
+ <20141119100413.7ab613e9@bbrezillon>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <sparclinux-owner@vger.kernel.org>
-In-Reply-To: <1415982183-20525-2-git-send-email-drysdale@google.com>
-Sender: sparclinux-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Oleg Nesterov <oleg@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, sparclinux@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Content-Disposition: inline
+In-Reply-To: <20141119100413.7ab613e9@bbrezillon>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, heiko@sntech.de, linux-doc@vger.kernel.org, kever.yang@rock-chips.com, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, xxm@rock-chips.com, linux-rockchip@lists.infradead.org, Grant Likely <grant.likely@linaro.org>, huangtao@rock-chips.com, devicetree@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, yxj@rock-chips.com, Rob Herring <robh+dt@kernel.org>, marcheu@chromium.org, Mark yao <mark.yao@rock-chips.com>, xw@rock-chips.com, linux-api@vger.kernel.org, Randy Dunlap <rdunlap@infradead.org>, dianders@chromium.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, cf@rock-chips.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 14 Nov 2014, David Drysdale wrote:
-> Only x86-64, i386 and x32 ABIs are supported in this patch.
-
-Can you please split this into the core/fs changes and the actual x86
-hookup?
- 
-Thanks,
-
-	tglx
+T24gV2VkLCBOb3YgMTksIDIwMTQgYXQgMTA6MDQ6MTNBTSArMDEwMCwgQm9yaXMgQnJlemlsbG9u
+IHdyb3RlOgo+IEFGQUlVLCB0aGUgc3VnZ2VzdGlvbiB3YXMgdG8gc3BsaXQgZHJtX2Nvbm5lY3Rv
+cl9pbml0IGFuZAo+IGRybV9jb25uZWN0b3JfcmVnaXN0ZXIgY2FsbHM6Cj4gIC0gZHJtX2Nvbm5l
+Y3Rvcl9pbml0IGNhbGwgc2hvdWxkIHN0aWxsIGJlIHBhcnQgb2YgdGhlIGxvYWQgcHJvY2VkdXJl
+Cj4gICAgKHRoaXMgZnVuY3Rpb24gYWRkcyB0aGUgY29ubmVjdG9yIHRvIHRoZSBjb25uZWN0b3Ig
+bGlzdCB3aGljaCBpcyB1c2VkCj4gICAgYnkgZHJtX21vZGVfZ3JvdXBfaW5pdF9sZWdhY3lfZ3Jv
+dXApCj4gIC0gZHJtX2Nvbm5lY3Rvcl9yZWdpc3RlciBzaG91bGQgYmUgY2FsbGVkIGFmdGVyIHRo
+ZSBkZXZpY2UgaGFzIGJlZW4KPiAgICByZWdpc3RlcmVkCj4gCj4gSGVyZSB3aGF0IEkndmUgZG9u
+ZSBhbmQgaXQgc2VlbXMgdG8gd29yazoKPiAKPiBzdGF0aWMgaW50IGF0bWVsX2hsY2RjX2RjX2Nv
+bm5lY3Rvcl9wbHVnX2FsbChzdHJ1Y3QgZHJtX2RldmljZSAqZGV2KQo+IHsKPiAJc3RydWN0IGRy
+bV9jb25uZWN0b3IgKmNvbm5lY3RvciwgKmZhaWxlZDsKPiAJaW50IHJldDsKPiAKPiAJbXV0ZXhf
+bG9jaygmZGV2LT5tb2RlX2NvbmZpZy5tdXRleCk7Cj4gCWxpc3RfZm9yX2VhY2hfZW50cnkoY29u
+bmVjdG9yLAo+IAkmZGV2LT5tb2RlX2NvbmZpZy5jb25uZWN0b3JfbGlzdCwgaGVhZCkgeyByZXQg
+PQo+IAlkcm1fY29ubmVjdG9yX3JlZ2lzdGVyKGNvbm5lY3Rvcik7IGlmIChyZXQpIHsKPiAJCQlm
+YWlsZWQgPSBjb25uZWN0b3I7Cj4gCQkJZ290byBlcnI7Cj4gCQl9Cj4gCX0KPiAJbXV0ZXhfdW5s
+b2NrKCZkZXYtPm1vZGVfY29uZmlnLm11dGV4KTsKPiAJcmV0dXJuIDA7Cj4gCj4gZXJyOgo+IAls
+aXN0X2Zvcl9lYWNoX2VudHJ5KGNvbm5lY3RvciwgJmRldi0+bW9kZV9jb25maWcuY29ubmVjdG9y
+X2xpc3QsIGhlYWQpIHsKPiAJCWlmIChmYWlsZWQgPT0gY29ubmVjdG9yKQo+IAkJCWJyZWFrOwo+
+IAo+IAkJZHJtX2Nvbm5lY3Rvcl91bnJlZ2lzdGVyKGNvbm5lY3Rvcik7Cj4gCX0KPiAJbXV0ZXhf
+dW5sb2NrKCZkZXYtPm1vZGVfY29uZmlnLm11dGV4KTsKPiAKPiAJcmV0dXJuIHJldDsKPiB9Cj4g
+Cj4gWy4uLl0KPiAKPiBzdGF0aWMgaW50IGF0bWVsX2hsY2RjX2RjX2RybV9wcm9iZShzdHJ1Y3Qg
+cGxhdGZvcm1fZGV2aWNlICpwZGV2KQo+IHsKPiAJc3RydWN0IGRybV9kZXZpY2UgKmRkZXY7Cj4g
+CWludCByZXQ7Cj4gCj4gCWRkZXYgPSBkcm1fZGV2X2FsbG9jKCZhdG1lbF9obGNkY19kY19kcml2
+ZXIsICZwZGV2LT5kZXYpOwo+IAlpZiAoIWRkZXYpCj4gCQlyZXR1cm4gLUVOT01FTTsKPiAKPiAJ
+cmV0ID0gZHJtX2Rldl9zZXRfdW5pcXVlKGRkZXYsIGRldl9uYW1lKGRkZXYtPmRldikpOwo+IAlp
+ZiAocmV0KQo+IAkJZ290byBlcnJfdW5yZWY7Cj4gCj4gCXJldCA9IGF0bWVsX2hsY2RjX2RjX2xv
+YWQoZGRldik7Cj4gCWlmIChyZXQpCj4gCQlnb3RvIGVycl91bnJlZjsKPiAKPiAJcmV0ID0gZHJt
+X2Rldl9yZWdpc3RlcihkZGV2LCAwKTsKPiAJaWYgKHJldCkKPiAJCWdvdG8gZXJyX3VubG9hZDsK
+PiAKPiAJcmV0ID0gYXRtZWxfaGxjZGNfZGNfY29ubmVjdG9yX3BsdWdfYWxsKGRkZXYpOwo+IAlp
+ZiAocmV0KQo+IAkJZ290byBlcnJfdW5yZWdpc3RlcjsKPiAKPiAJcmV0dXJuIDA7Cj4gCj4gZXJy
+X3VucmVnaXN0ZXI6Cj4gCWRybV9kZXZfdW5yZWdpc3RlcihkZGV2KTsKPiAKPiBlcnJfdW5sb2Fk
+Ogo+IAlhdG1lbF9obGNkY19kY191bmxvYWQoZGRldik7Cj4gCj4gZXJyX3VucmVmOgo+IAlkcm1f
+ZGV2X3VucmVmKGRkZXYpOwo+IAo+IAlyZXR1cm4gcmV0Owo+IH0KPiAKPiBEYW5pZWwsIGNhbiB5
+b3UgY29uZmlybSB0aGF0J3Mgd2hhdCB5b3UgaGFkIGluIG1pbmQgPwoKWXVwLiBUbyBiZSBhYmxl
+IHRvIGhhdmUgcmFjZS1mcmVlIGRyaXZlciBsb2FkIHdlIG5lZWQgdG8gc3BsaXQgb2JqZWN0Cmlu
+dG8gYW4gX2luaXQgc3RlcCAoYWxsb2NhdGVzIHN0cnVjdHMgYW5kIGxpbmtzIHRvIGtlcm5lbC1p
+bnRlcm5hbCBsaXN0cykKYW5kIF9yZWdpc3RlciAobWFrZXMgdGhlIG9iamVjdCB1c2Vyc3BhY2Ut
+dmlzaWJsZSB0aHJvdWdoIHN5c2ZzIGFuZApkZXYtbm9kZSBrbXMgb2JqZWN0IGxvb2t1cCBpZHIp
+LgoKVGhpcyBlbnRpcmUgbWVzcyBpcyBhbGwgc3RpbGwgZmFsbG91dCBmcm9tIHRoZSBkYXJrIGFn
+ZXMgb2YgdGhlIGRybQptaWRsYXllciBhbmQgd2UnbGwgcHJvYmFibHkgaGF2ZSBmdW4gd2l0aCB0
+aGlzIGZvciBhbm90aGVyIGZldyB5ZWFycyA7LSkKLURhbmllbAotLSAKRGFuaWVsIFZldHRlcgpT
+b2Z0d2FyZSBFbmdpbmVlciwgSW50ZWwgQ29ycG9yYXRpb24KKzQxICgwKSA3OSAzNjUgNTcgNDgg
+LSBodHRwOi8vYmxvZy5mZndsbC5jaApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVl
+ZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZv
+L2RyaS1kZXZlbAo=
