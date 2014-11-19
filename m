@@ -1,109 +1,126 @@
-From: Dan Williams <dcbw@redhat.com>
-Subject: Re: [PATCH 1/3] tun: move internal flag defines out of uapi
-Date: Wed, 19 Nov 2014 11:11:51 -0600
-Message-ID: <1416417111.4763.10.camel@dcbw.local>
-References: <1416413891-29562-1-git-send-email-mst@redhat.com>
-	 <1416413891-29562-2-git-send-email-mst@redhat.com>
-	 <1416415634.4763.9.camel@dcbw.local> <20141119165017.GA29759@redhat.com>
-	 <20141119170835.GA29928@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141119170835.GA29928@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: linux-kernel@vger.kernel.org, rusty@rustcorp.com.au, davem@davemloft.net, Jason Wang <jasowang@redhat.com>, Zhi Yong Wu <wuzhy@linux.vnet.ibm.com>, Tom Herbert <therbert@google.com>, Ben Hutchings <ben@decadent.org.uk>, Masatake YAMATO <yamato@redhat.com>, Xi Wang <xii@google.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org
+From: David Drysdale <drysdale@google.com>
+Subject: [PATCHv9 0/5] syscalls,x86,sparc: Add execveat() system call
+Date: Wed, 19 Nov 2014 17:27:47 +0000
+Message-ID: <1416418072-18639-1-git-send-email-drysdale@google.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>
+Cc: Oleg Nesterov <oleg@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, sparclinux@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2014-11-19 at 19:08 +0200, Michael S. Tsirkin wrote:
-> On Wed, Nov 19, 2014 at 06:50:17PM +0200, Michael S. Tsirkin wrote:
-> > On Wed, Nov 19, 2014 at 10:47:14AM -0600, Dan Williams wrote:
-> > > On Wed, 2014-11-19 at 18:18 +0200, Michael S. Tsirkin wrote:
-> > > > TUN_ flags are internal and never exposed
-> > > > to userspace. Any application using it is almost
-> > > > certainly buggy.
-> > > 
-> > > Except for TUN_TUN_DEV and TUN_TAP_DEV and TUN_TYPE_MASK...  which we're
-> > > using (for some reason) in NetworkManager, though I'll happily convert
-> > > those to IFF_* instead.  It might be worth #defining those to their
-> > > IFF_* equivalents since their usage is not technically broken.
-> > > 
-> > > Dan
-> > 
-> > Hmm you are right, they happen to have the same value.
-> > I'll send v2 leaving these in place.
-> > 
-> 
-> Though I do think userspace shouldn't depend on them generally,
-> so it might be a good idea to stop using them, even though
-> I'll fix up my patches to avoid breaking this usecase.
+This patch set adds execveat(2) for x86, and is derived from Meredydd
+Luff's patch from Sept 2012 (https://lkml.org/lkml/2012/9/11/528).
 
-Yeah, I'm doing an NM patch right now to use IFF_*.
+The primary aim of adding an execveat syscall is to allow an
+implementation of fexecve(3) that does not rely on the /proc
+filesystem, at least for executables (rather than scripts).  The
+current glibc version of fexecve(3) is implemented via /proc, which
+causes problems in sandboxed or otherwise restricted environments.
 
-Dan
+Given the desire for a /proc-free fexecve() implementation, HPA
+suggested (https://lkml.org/lkml/2006/7/11/556) that an execveat(2)
+syscall would be an appropriate generalization.
 
-> 
-> 
-> > > > Move them out to tun.c, we'll remove them in follow-up patches.
-> > > > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-> > > > ---
-> > > >  include/uapi/linux/if_tun.h | 14 --------------
-> > > >  drivers/net/tun.c           | 14 ++++++++++++++
-> > > >  2 files changed, 14 insertions(+), 14 deletions(-)
-> > > > 
-> > > > diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
-> > > > index e9502dd..b82c276 100644
-> > > > --- a/include/uapi/linux/if_tun.h
-> > > > +++ b/include/uapi/linux/if_tun.h
-> > > > @@ -23,20 +23,6 @@
-> > > >  /* Read queue size */
-> > > >  #define TUN_READQ_SIZE	500
-> > > >  
-> > > > -/* TUN device flags */
-> > > > -#define TUN_TUN_DEV 	0x0001	
-> > > > -#define TUN_TAP_DEV	0x0002
-> > > > -#define TUN_TYPE_MASK   0x000f
-> > > > -
-> > > > -#define TUN_FASYNC	0x0010
-> > > > -#define TUN_NOCHECKSUM	0x0020
-> > > > -#define TUN_NO_PI	0x0040
-> > > > -/* This flag has no real effect */
-> > > > -#define TUN_ONE_QUEUE	0x0080
-> > > > -#define TUN_PERSIST 	0x0100	
-> > > > -#define TUN_VNET_HDR 	0x0200
-> > > > -#define TUN_TAP_MQ      0x0400
-> > > > -
-> > > >  /* Ioctl defines */
-> > > >  #define TUNSETNOCSUM  _IOW('T', 200, int) 
-> > > >  #define TUNSETDEBUG   _IOW('T', 201, int) 
-> > > > diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-> > > > index 2e18ddd..81735f5 100644
-> > > > --- a/drivers/net/tun.c
-> > > > +++ b/drivers/net/tun.c
-> > > > @@ -103,6 +103,20 @@ do {								\
-> > > >  } while (0)
-> > > >  #endif
-> > > >  
-> > > > +/* TUN device flags */
-> > > > +#define TUN_TUN_DEV 	0x0001
-> > > > +#define TUN_TAP_DEV	0x0002
-> > > > +#define TUN_TYPE_MASK   0x000f
-> > > > +
-> > > > +#define TUN_FASYNC	0x0010
-> > > > +#define TUN_NOCHECKSUM	0x0020
-> > > > +#define TUN_NO_PI	0x0040
-> > > > +/* This flag has no real effect */
-> > > > +#define TUN_ONE_QUEUE	0x0080
-> > > > +#define TUN_PERSIST 	0x0100
-> > > > +#define TUN_VNET_HDR 	0x0200
-> > > > +#define TUN_TAP_MQ      0x0400
-> > > > +
-> > > >  #define GOODCOPY_LEN 128
-> > > >  
-> > > >  #define FLT_EXACT_COUNT 8
-> > > 
-> --
-> To unsubscribe from this list: send the line "unsubscribe netdev" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Also, having a new syscall means that it can take a flags argument
+without back-compatibility concerns.  The current implementation just
+defines the AT_EMPTY_PATH and AT_SYMLINK_NOFOLLOW flags, but other
+flags could be added in future -- for example, flags for new namespaces
+(as suggested at https://lkml.org/lkml/2006/7/11/474).
+
+Related history:
+ - https://lkml.org/lkml/2006/12/27/123 is an example of someone
+   realizing that fexecve() is likely to fail in a chroot environment.
+ - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=514043 covered
+   documenting the /proc requirement of fexecve(3) in its manpage, to
+   "prevent other people from wasting their time".
+ - https://bugzilla.redhat.com/show_bug.cgi?id=241609 described a
+   problem where a process that did setuid() could not fexecve()
+   because it no longer had access to /proc/self/fd; this has since
+   been fixed.
+
+
+Changes since v8:
+ - Split core/fs changes from x86 changes [Thomas Gleixner]
+
+Changes since v7:
+ - Speculatively wire up sparc version of syscall (untested)
+ - Fix leak of pathbuf in mainline arm [Oleg Nesterov]
+ - Add rcu_dereference_raw() on fdt access [sparse kbuild robot]
+ - Realigned comment [Andrew Morton]
+ - Merged up to v3.18-rc4
+
+Changes since v6:
+ - Remove special case for O_PATH file descriptors [Andy Lutomirski]
+ - Use kasprintf rather than error-prone arithmetic [Kees Cook]
+ - Add test for long name [Kees Cook]
+ - Add test for non-executable O_PATH fd [Andy Lutomirski]
+
+Changes since v5:
+ - Set new flag in bprm->interp_flags for O_CLOEXEC fds, so that binfmts
+   that invoke an interpreter fail the exec (as they will not be able
+   to access the invoked file). [Andy Lutomirski]
+ - Don't truncate long paths. [Andy Lutomirski]
+ - Commonize code to open the executed file. [Eric W. Biederman]
+ - Mark O_PATH file descriptors so they cannot be fexecve()ed.
+ - Make self-test more helpful, and add additional cases:
+     - file offset non-zero
+     - binary file without execute bit
+     - O_CLOEXEC fds
+
+Changes since v4, suggested by Eric W. Biederman:
+ - Use empty filename with AT_EMPTY_PATH flag rather than NULL
+   pathname to request fexecve-like behaviour.
+ - Build pathname as "/dev/fd/<fd>/<filename>" (or "/dev/fd/<fd>")
+   rather than using d_path().
+ - Patch against v3.17 (bfe01a5ba249)
+
+Changes since Meredydd's v3 patch:
+ - Added a selftest.
+ - Added a man page.
+ - Left open_exec() signature untouched to reduce patch impact
+   elsewhere (as suggested by Al Viro).
+ - Filled in bprm->filename with d_path() into a buffer, to avoid use
+   of potentially-ephemeral dentry->d_name.
+ - Patch against v3.14 (455c6fdbd21916).
+
+
+David Drysdale (4):
+  syscalls: implement execveat() system call
+  x86: Hook up execveat system call.
+  syscalls: add selftest for execveat(2)
+  sparc: Hook up execveat system call.
+
+ arch/sparc/include/uapi/asm/unistd.h    |   3 +-
+ arch/sparc/kernel/systbls_32.S          |   1 +
+ arch/sparc/kernel/systbls_64.S          |   2 +
+ arch/x86/ia32/audit.c                   |   1 +
+ arch/x86/ia32/ia32entry.S               |   1 +
+ arch/x86/kernel/audit_64.c              |   1 +
+ arch/x86/kernel/entry_64.S              |  28 +++
+ arch/x86/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/syscalls/syscall_64.tbl        |   2 +
+ arch/x86/um/sys_call_table_64.c         |   1 +
+ fs/binfmt_em86.c                        |   4 +
+ fs/binfmt_misc.c                        |   4 +
+ fs/binfmt_script.c                      |  10 +
+ fs/exec.c                               | 113 +++++++--
+ fs/namei.c                              |   2 +-
+ include/linux/binfmts.h                 |   4 +
+ include/linux/compat.h                  |   3 +
+ include/linux/fs.h                      |   1 +
+ include/linux/sched.h                   |   4 +
+ include/linux/syscalls.h                |   5 +
+ include/uapi/asm-generic/unistd.h       |   4 +-
+ kernel/sys_ni.c                         |   3 +
+ lib/audit.c                             |   3 +
+ tools/testing/selftests/Makefile        |   1 +
+ tools/testing/selftests/exec/.gitignore |   9 +
+ tools/testing/selftests/exec/Makefile   |  25 ++
+ tools/testing/selftests/exec/execveat.c | 397 ++++++++++++++++++++++++++++++++
+ 27 files changed, 617 insertions(+), 16 deletions(-)
+ create mode 100644 tools/testing/selftests/exec/.gitignore
+ create mode 100644 tools/testing/selftests/exec/Makefile
+ create mode 100644 tools/testing/selftests/exec/execveat.c
+
+-- 
+2.1.0.rc2.206.gedb03e5
