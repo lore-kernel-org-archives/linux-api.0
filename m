@@ -1,40 +1,50 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH] Add supplementary UIDs, and getusers/setusers system calls
-Date: Thu, 20 Nov 2014 09:14:50 -0600
-Message-ID: <87egsxnbth.fsf@x220.int.ebiederm.org>
-References: <6b6bef0eb7328d466e8deef3d2c186a79633e0a7.1416121601.git.josh@joshtriplett.org>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: crypto: user - Allow get request with empty driver name
+Date: Thu, 20 Nov 2014 17:08:42 +0100
+Message-ID: <6655976.jRkjMUZ19x@tachyon.chronox.de>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de> <2283056.kKnMJs7Bfg@tachyon.chronox.de> <20141120134029.GA31411@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <6b6bef0eb7328d466e8deef3d2c186a79633e0a7.1416121601.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-	(Josh Triplett's message of "Sat, 15 Nov 2014 23:08:32 -0800")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20141120134029.GA31411@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Steffen Klassert <steffen.klassert@secunet.com>, Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> writes:
+Am Donnerstag, 20. November 2014, 21:40:29 schrieb Herbert Xu:
 
-> Analogous to the supplementary GID list, the supplementary UID list
-> provides a set of additional user credentials that a process can act as.
-> A process with CAP_SETUID can set its UID list arbitrarily; a process
-> without CAP_SETUID can only reduce its UID list.
->
-> This allows each user to have a set of UIDs that they can then use to
-> further sandbox individual child processes without first escalating to
-> root to change UIDs.  For instance, a PAM module could give each user a
-> block of UIDs to work with.
+Hi Herbert,
 
-A couple of quick comments on this patch.
+> On Thu, Nov 20, 2014 at 02:10:00PM +0100, Stephan Mueller wrote:
+> > What about the following
+> > 
+> > if (p->cru_driver_name[0]
 
-1) user namespaces already allow you to do this.
+If the driver name is not empty
+> > 
+> > 	alg = crypto_alg_match(p, 1);
 
-2) After having looked at the group case I am afraid this intersects in
-   an unfortunate way with user namespaces.
+Do an exact match using the driver name
+> > 
+> > else
+> > 
+> > 	alg = crypto_alg_match(p, 0);
 
-3) This intersects in a very unfortunate way with setresuid.
-   Applications that today know they are dropping all privileges
-   won't be dropping all privielges with this change.  Which sounds like
-   a recipe for a security exploit to me.
+Otherise use the generic name for a fuzzy match.
+> 
+> If cru_driver_name is not empty then exact will never be used, no?
 
-Eric
+If the code suggestion does not follow my words outlined above, I want my 
+words to be considered ;-)
+
+Yet, I am unsure where the code deviates from my words.
+
+> 
+> Cheers,
+
+
+-- 
+Ciao
+Stephan
