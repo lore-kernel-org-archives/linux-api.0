@@ -1,51 +1,84 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+From: Stephan Mueller <smueller@chronox.de>
 Subject: Re: crypto: user - Allow get request with empty driver name
-Date: Thu, 20 Nov 2014 14:07:33 +0100
-Message-ID: <6473728.hPvPq1YETa@tachyon.chronox.de>
-References: <5365136.g8vbXlhRyC@tachyon.chronox.de> <20141120074526.GB29544@gondor.apana.org.au> <20141120080406.GV6390@secunet.com>
+Date: Thu, 20 Nov 2014 14:10 +0100
+Message-ID: <2283056.kKnMJs7Bfg@tachyon.chronox.de>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de> <20141120044650.GA28691@gondor.apana.org.au> <1706209.Hbu17X87TM@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141120080406.GV6390-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steffen Klassert <steffen.klassert-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org>
-Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <1706209.Hbu17X87TM@tachyon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Steffen Klassert <steffen.klassert@secunet.com>, Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Donnerstag, 20. November 2014, 09:04:06 schrieb Steffen Klassert:
+Am Donnerstag, 20. November 2014, 14:02:21 schrieb Stephan Mueller:
 
-Hi Steffen,
+Hi Stephan,
 
-> On Thu, Nov 20, 2014 at 03:45:26PM +0800, Herbert Xu wrote:
-> > On Thu, Nov 20, 2014 at 08:11:42AM +0100, Steffen Klassert wrote:
-> > > I think this is not sufficient, crypto_alg_match() will now return the
-> > > first algorithm in crypto_alg_list that matches cra_name. We would need
-> > > to extend crypto_alg_match() to return the algorithm with the highest
-> > > priority in that case.
+> Am Donnerstag, 20. November 2014, 12:46:50 schrieb Herbert Xu:
+> 
+> Hi Herbert,
+> 
+> > On Thu, Nov 20, 2014 at 05:23:23AM +0100, Stephan Mueller wrote:
+> > > Here is the code:
+> > > 
+> > > static int crypto_report(struct sk_buff *in_skb, struct nlmsghdr
+> > > *in_nlh,
+> > > 
+> > > 			 struct nlattr **attrs)
+> > > 
+> > > {
+> > > ...
+> > > 
+> > > 	if (!p->cru_driver_name[0])
+> > > 	
+> > > 		return -EINVAL;
 > > 
-> > It doesn't really matter because all implementations must provide
-> > exactly the same set of parameters for a given algorithm so it's
-> > good enough for what Stephan wants to do.
+> > OK let's fix this.
+> > 
+> > crypto: user - Allow get request with empty driver name
+> > 
+> > Currently all get requests with an empty driver name fail with
+> > EINVAL.  Since most users actually want to supply an empty driver
+> > name this patch removes this check.
+> > 
+> > Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
 > 
-> Ok, I see.
-> 
-> > But yes an interface to grab the highest priority algorithm would
-> > be useful too so patches are welcome :)
-> 
-> Should be not too hard to return the highest priority algorithm
-> instead of the first match with the existing interface, I'll see
-> what I can do.
+> Acked-by: Stephan Mueller <smueller@chronox.de>
 
-I think that for the purpose of using crypto-user in an AF_ALG scenario, even 
-searching for the highest priporty will not necessarily give you the reference 
-to the cipher used in AF_ALG. In the time between AF_ALG initialized a cipher 
-and the time crypto-user is called, a new driver could register that may have 
-even a higher priority than the one driver currently active for AF_ALG.
+Although I acked the patch, it just occurred that your change modifies the 
+user space interface such that you now cannot use a driver name any more.
+> 
+> > diff --git a/crypto/crypto_user.c b/crypto/crypto_user.c
+> > index e2a34fe..0bb30ac 100644
+> > --- a/crypto/crypto_user.c
+> > +++ b/crypto/crypto_user.c
+> > @@ -201,10 +201,7 @@ static int crypto_report(struct sk_buff *in_skb,
+> > struct nlmsghdr *in_nlh, if (!null_terminated(p->cru_name) ||
+> > !null_terminated(p->cru_driver_name)) return -EINVAL;
+> > 
+> > -	if (!p->cru_driver_name[0])
+> > -		return -EINVAL;
+> > -
+> > -	alg = crypto_alg_match(p, 1);
+> > +	alg = crypto_alg_match(p, 0);
 
-Therefore, from my perspective of AF_ALG and considering that all drivers of 
-the same name should be identical, I would not suggest add more code to 
-resolve the highest priority as I do not see the value of it.
+What about the following
+
+if (p->cru_driver_name[0]
+	alg = crypto_alg_match(p, 1);
+else
+	alg = crypto_alg_match(p, 0);
+
+> > 
+> >  	if (!alg)
+> >  	
+> >  		return -ENOENT;
+> > 
+> > Cheers,
+
 
 -- 
 Ciao
