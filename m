@@ -1,71 +1,190 @@
-From: Stephen Rothwell <sfr@canb.auug.org.au>
-Subject: Re: [PATCHv9 4/5] sparc: Hook up execveat system call.
-Date: Thu, 20 Nov 2014 10:42:23 +1100
-Message-ID: <20141120104223.2cea8043@canb.auug.org.au>
-References: <1416418072-18639-1-git-send-email-drysdale@google.com>
-	<1416418072-18639-5-git-send-email-drysdale@google.com>
+From: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+Subject: [PATCH v2] selftest: size: Add size test for Linux kernel
+Date: Wed, 19 Nov 2014 16:13:19 -0800
+Message-ID: <546D321F.2080405@sonymobile.com>
+References: <546D084D.20002@sonymobile.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- boundary="Sig_/RAw1y7OKVANSa1LBZY6zEbt"; protocol="application/pgp-signature"
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1416418072-18639-5-git-send-email-drysdale@google.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, sparclinux@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <546D084D.20002-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---Sig_/RAw1y7OKVANSa1LBZY6zEbt
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
 
-Hi David,
+This test shows the amount of memory used by the system.
+Note that this is dependent on the user-space that is loaded
+when this program runs.  Optimally, this program would be
+run as the init program itself.
 
-On Wed, 19 Nov 2014 17:27:51 +0000 David Drysdale <drysdale@google.com> wro=
-te:
->
-> diff --git a/arch/sparc/kernel/systbls_64.S b/arch/sparc/kernel/systbls_6=
-4.S
-> index 580cde9370c9..15069cb35dac 100644
-> --- a/arch/sparc/kernel/systbls_64.S
-> +++ b/arch/sparc/kernel/systbls_64.S
-> @@ -88,6 +88,7 @@ sys_call_table32:
->  	.word sys_syncfs, compat_sys_sendmmsg, sys_setns, compat_sys_process_vm=
-_readv, compat_sys_process_vm_writev
->  /*340*/	.word sys_kern_features, sys_kcmp, sys_finit_module, sys_sched_s=
-etattr, sys_sched_getattr
->  	.word sys32_renameat2, sys_seccomp, sys_getrandom, sys_memfd_create, sy=
-s_bpf
-> +/*350*/	.word sys_execveat
+The program is optimized for size itself, to avoid conflating
+its own execution with that of the system software.
+The code is compiled statically, with no stdlibs. On my x86_64 system,
+this results in a statically linked binary of less than 5K.
 
-Shouldn't this be compat_sys_execveat?
+Changes from v1:
+  - use more correct Copyright string in get_size.c
 
-> =20
->  #endif /* CONFIG_COMPAT */
+Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+---
+ tools/testing/selftests/Makefile        |   1 +
+ tools/testing/selftests/size/Makefile   |  21 +++++++
+ tools/testing/selftests/size/get_size.c | 105 ++++++++++++++++++++++++++++++++
+ 3 files changed, 127 insertions(+)
+ create mode 100644 tools/testing/selftests/size/Makefile
+ create mode 100644 tools/testing/selftests/size/get_size.c
 
---=20
-Cheers,
-Stephen Rothwell                    sfr@canb.auug.org.au
-
---Sig_/RAw1y7OKVANSa1LBZY6zEbt
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJUbSrkAAoJEMDTa8Ir7ZwVoVoP/AlHLVTxaKtx1n9YHKSFO8T8
-/G7WwXkXbsm3fb5qBHJeHtjq+rc9tOA1DM/78qeeDbr9rt4eog0N6scoLXdPeSLK
-vZSKe+Z0i8z9hGUph0CXmuQI37XmG+V+HtIQCcdtC6PxijjNWzzCmADN+NToyDKr
-pmn/jQKHDTGOQHjhfEDhq6G55M3bKzBna5V7YDAd8+Utd/PmT+5lmKNEtuLT8Y/0
-MdnuXZUaX1dsh3SKI8y/l2sCmgc91L10OW0OV+k0Jlj78/lZDmg4mPQZs9h9uZQ2
-m9+Gw86XKKunUDKoynl0u9obZGWa2J4XMKX0cBWwvgZkXd+SBwZEyeKpwiHb66OF
-b6+YxrJdf5ciu+zMkRTpFPyLfwGxGDHnp8HQBvjZtrtHmFwTdLZpQavFwLQpurNv
-9Xh3GCg/wb8wTxlvRuMqSZjCH+Wniea0RnBfdVwfGAwFBA2Yzi+gZMVhi7EvAd0i
-yDBm5WnaNcDJ9AyvMiyierIweTVJBjCGhdvVSbFtjoFcGBrql+/4Zw9Ng+u360U3
-0PGLDNB7Tc18CKP0u3JDYlL23/mFeJhe2OA9OV9899i62QOF9YnJvkDNz+PwqAXC
-PuuU/YDA8L8y8E2QOrP8ry1VnC1bWhDzHTYmfBUWwbRPGZNVFfLyy23uSj+T1GHC
-03oLWeCX9F9iyjrlQ8Ko
-=41EX
------END PGP SIGNATURE-----
-
---Sig_/RAw1y7OKVANSa1LBZY6zEbt--
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 45f145c..fa91aef 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -15,6 +15,7 @@ TARGETS += user
+ TARGETS += sysctl
+ TARGETS += firmware
+ TARGETS += ftrace
++TARGETS += size
+ 
+ TARGETS_HOTPLUG = cpu-hotplug
+ TARGETS_HOTPLUG += memory-hotplug
+diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+new file mode 100644
+index 0000000..51e5fbd
+--- /dev/null
++++ b/tools/testing/selftests/size/Makefile
+@@ -0,0 +1,21 @@
++#ifndef CC
++	CC = $(CROSS_COMPILE)gcc
++#endif
++
++#ifndef STRIP
++	STRIP = $(CROSS_COMPILE)strip
++#endif
++
++all: get_size
++
++get_size: get_size.c
++	$(CC) --static -ffreestanding -nostartfiles \
++		-Wl,--entry=main get_size.c -o get_size \
++		`cc -print-libgcc-file-name`
++	$(STRIP) -s get_size
++
++run_tests: all
++	./get_size
++
++clean:
++	$(RM) get_size
+diff --git a/tools/testing/selftests/size/get_size.c b/tools/testing/selftests/size/get_size.c
+new file mode 100644
+index 0000000..f8ffc80
+--- /dev/null
++++ b/tools/testing/selftests/size/get_size.c
+@@ -0,0 +1,105 @@
++/*
++ * Copyright 2014 Sony Mobile Communications Inc.
++ *
++ * Licensed under the terms of the GNU GPL License version 2
++ *
++ * Selftest for runtime system size
++ *
++ * Prints the amount of RAM that the currently running system is using.
++ *
++ * This program tries to be as small as possible itself, to
++ * avoid perturbing the system memory utilization with its
++ * own execution.  It also attempts to have as few dependencies
++ * on kernel features as possible.
++ *
++ * It should be statically linked, with startup libs avoided.
++ * It uses no library calls, and only the following 3 syscalls:
++ *   sysinfo(), write(), and _exit()
++ *
++ * For output, it avoids printf (which in some C libraries
++ * has large external dependencies) by implementing its own
++ * strlen(), number output and print() routines.
++ */
++
++#include <sys/sysinfo.h>
++#include <unistd.h>
++
++#define STDOUT_FILENO 1
++
++my_strlen(const char *s)
++{
++	int len = 0;
++
++	while (*s++)
++		len++;
++	return len;
++}
++
++/*
++ * num_to_str - put digits from num into *s, left to right
++ *   do this by dividing the number by powers of 10
++ *   the tricky part is to omit leading zeros
++ *   don't print zeros until we've started printing any numbers at all
++ */
++static void num_to_str(unsigned long num, char *s)
++{
++	unsigned long long temp, div;
++	int started;
++
++	temp = num;
++	div = 1000000000000000000LL;
++	started = 0;
++	while (div) {
++		if (temp/div || started) {
++			*s++ = (unsigned char)(temp/div + '0');
++			started = 1;
++		}
++		temp -= (temp/div)*div;
++		div /= 10;
++	}
++	*s = 0;
++}
++
++print_num(unsigned long num)
++{
++	char num_buf[30];
++
++	num_to_str(num, num_buf);
++	write(STDOUT_FILENO, num_buf, my_strlen(num_buf));
++}
++
++print(char *s)
++{
++	write(STDOUT_FILENO, s, my_strlen(s));
++}
++
++void main(int argc, char **argv)
++{
++	int ccode;
++	unsigned long used;
++	struct sysinfo info;
++	unsigned long long temp;
++
++	print("Testing system size.\n");
++	print("1..1\n");
++
++	ccode = sysinfo(&info);
++	if (ccode < 0) {
++		print("not ok 1 get size runtime size\n");
++		print("# could not get sysinfo\n");
++		_exit(ccode);
++	}
++
++	/* ignore cache complexities for now */
++	temp = info.totalram - info.freeram - info.bufferram;
++	temp = temp * info.mem_unit;
++	temp = temp / 1024;
++
++	used = temp;
++
++	print("ok 1 get runtime size # size = ");
++	print_num(used);
++	print(" K\n");
++
++	_exit(0);
++}
+-- 
+1.8.2.2
