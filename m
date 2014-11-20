@@ -1,51 +1,40 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH] kselftest: Move the docs to the Documentation dir
-Date: Thu, 20 Nov 2014 06:56:53 -0700
-Message-ID: <546DF325.6060507@osg.samsung.com>
-References: <546D32D0.9090206@sonymobile.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH] Add supplementary UIDs, and getusers/setusers system calls
+Date: Thu, 20 Nov 2014 09:14:50 -0600
+Message-ID: <87egsxnbth.fsf@x220.int.ebiederm.org>
+References: <6b6bef0eb7328d466e8deef3d2c186a79633e0a7.1416121601.git.josh@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <546D32D0.9090206@sonymobile.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Tim Bird <tim.bird@sonymobile.com>, linux-api@vger.kernel.org, corbet@lwn.net
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-embedded@vger.kernel.org" <linux-embedded@vger.kernel.org>, Shuah Khan <shuahkh@osg.samsung.com>, linux-doc@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <6b6bef0eb7328d466e8deef3d2c186a79633e0a7.1416121601.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+	(Josh Triplett's message of "Sat, 15 Nov 2014 23:08:32 -0800")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/19/2014 05:16 PM, Tim Bird wrote:
-> 
-> Also, adjust the formatting a bit, and expand the section about using
-> TARGETS= on the make command line.
-> 
-> Signed-off-by: Tim Bird <tim.bird@sonymobile.com>
-> ---
->  Documentation/kselftest.txt        | 69 ++++++++++++++++++++++++++++++++++++++
->  tools/testing/selftests/README.txt | 61 ---------------------------------
->  2 files changed, 69 insertions(+), 61 deletions(-)
->  create mode 100644 Documentation/kselftest.txt
->  delete mode 100644 tools/testing/selftests/README.txt
-> 
-> diff --git a/Documentation/kselftest.txt b/Documentation/kselftest.txt
-> new file mode 100644
-> index 0000000..a87d840
-> --- /dev/null
-> +++ b/Documentation/kselftest.txt
+Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> writes:
+
+> Analogous to the supplementary GID list, the supplementary UID list
+> provides a set of additional user credentials that a process can act as.
+> A process with CAP_SETUID can set its UID list arbitrarily; a process
+> without CAP_SETUID can only reduce its UID list.
 >
+> This allows each user to have a set of UIDs that they can then use to
+> further sandbox individual child processes without first escalating to
+> root to change UIDs.  For instance, a PAM module could give each user a
+> block of UIDs to work with.
 
-Tim,
+A couple of quick comments on this patch.
 
-Thanks for doing this. Looks good to me. I think you missed
-Documentation maintainer. Adding linux-doc and Jon Corbet to
-the thread with my ack to take this through Documentation tree.
+1) user namespaces already allow you to do this.
 
-Acked-by: shuahkh@osg.samsung.com
+2) After having looked at the group case I am afraid this intersects in
+   an unfortunate way with user namespaces.
 
-thanks,
--- Shuah
+3) This intersects in a very unfortunate way with setresuid.
+   Applications that today know they are dropping all privileges
+   won't be dropping all privielges with this change.  Which sounds like
+   a recipe for a security exploit to me.
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Eric
