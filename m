@@ -1,34 +1,51 @@
-From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Subject: Re: crypto: user - Allow get request with empty driver name
-Date: Thu, 20 Nov 2014 21:40:29 +0800
-Message-ID: <20141120134029.GA31411@gondor.apana.org.au>
-References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
- <20141120044650.GA28691@gondor.apana.org.au>
- <1706209.Hbu17X87TM@tachyon.chronox.de>
- <2283056.kKnMJs7Bfg@tachyon.chronox.de>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH] kselftest: Move the docs to the Documentation dir
+Date: Thu, 20 Nov 2014 06:56:53 -0700
+Message-ID: <546DF325.6060507@osg.samsung.com>
+References: <546D32D0.9090206@sonymobile.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <2283056.kKnMJs7Bfg-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Cc: Steffen Klassert <steffen.klassert-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <546D32D0.9090206@sonymobile.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Tim Bird <tim.bird@sonymobile.com>, linux-api@vger.kernel.org, corbet@lwn.net
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-embedded@vger.kernel.org" <linux-embedded@vger.kernel.org>, Shuah Khan <shuahkh@osg.samsung.com>, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 20, 2014 at 02:10:00PM +0100, Stephan Mueller wrote:
->
-> What about the following
+On 11/19/2014 05:16 PM, Tim Bird wrote:
 > 
-> if (p->cru_driver_name[0]
-> 	alg = crypto_alg_match(p, 1);
-> else
-> 	alg = crypto_alg_match(p, 0);
+> Also, adjust the formatting a bit, and expand the section about using
+> TARGETS= on the make command line.
+> 
+> Signed-off-by: Tim Bird <tim.bird@sonymobile.com>
+> ---
+>  Documentation/kselftest.txt        | 69 ++++++++++++++++++++++++++++++++++++++
+>  tools/testing/selftests/README.txt | 61 ---------------------------------
+>  2 files changed, 69 insertions(+), 61 deletions(-)
+>  create mode 100644 Documentation/kselftest.txt
+>  delete mode 100644 tools/testing/selftests/README.txt
+> 
+> diff --git a/Documentation/kselftest.txt b/Documentation/kselftest.txt
+> new file mode 100644
+> index 0000000..a87d840
+> --- /dev/null
+> +++ b/Documentation/kselftest.txt
+>
 
-If cru_driver_name is not empty then exact will never be used, no?
+Tim,
 
-Cheers,
+Thanks for doing this. Looks good to me. I think you missed
+Documentation maintainer. Adding linux-doc and Jon Corbet to
+the thread with my ack to take this through Documentation tree.
+
+Acked-by: shuahkh@osg.samsung.com
+
+thanks,
+-- Shuah
+
 -- 
-Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
