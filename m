@@ -1,60 +1,28 @@
-From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Subject: crypto: user - Allow get request with empty driver name
-Date: Thu, 20 Nov 2014 12:46:50 +0800
-Message-ID: <20141120044650.GA28691@gondor.apana.org.au>
+From: Steffen Klassert <steffen.klassert@secunet.com>
+Subject: Re: [PATCH v2 02/10] crypto: AF_ALG: user space interface for cipher
+ info
+Date: Thu, 20 Nov 2014 07:32:06 +0100
+Message-ID: <20141120063206.GQ6390@secunet.com>
 References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
- <1886827.KUDIsNtfuk@tachyon.chronox.de>
- <20141120041824.GA28612@gondor.apana.org.au>
- <3538055.XH2t7HNEVj@tachyon.chronox.de>
+ <2688209.3bGZus2TD9@tachyon.chronox.de>
+ <20141118140822.GB12100@gondor.apana.org.au>
+ <16101836.sTaxopCThb@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <3538055.XH2t7HNEVj-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Cc: Steffen Klassert <steffen.klassert-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <16101836.sTaxopCThb@tachyon.chronox.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Daniel Borkmann <dborkman@redhat.com>, quentin.gouchet@gmail.com, LKML <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 20, 2014 at 05:23:23AM +0100, Stephan Mueller wrote:
+On Thu, Nov 20, 2014 at 05:03:24AM +0100, Stephan Mueller wrote:
 > 
-> Here is the code:
-> 
-> static int crypto_report(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
-> 			 struct nlattr **attrs)
-> {
-> ...
-> 	if (!p->cru_driver_name[0])
-> 		return -EINVAL;
+> Btw: is there an example that uses that interface? The ordering of data 
+> structures in the netlink message is not really clear from looking at the 
+> code.
 
-OK let's fix this.
-
-crypto: user - Allow get request with empty driver name
-    
-Currently all get requests with an empty driver name fail with
-EINVAL.  Since most users actually want to supply an empty driver
-name this patch removes this check.
-
-Signed-off-by: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-
-diff --git a/crypto/crypto_user.c b/crypto/crypto_user.c
-index e2a34fe..0bb30ac 100644
---- a/crypto/crypto_user.c
-+++ b/crypto/crypto_user.c
-@@ -201,10 +201,7 @@ static int crypto_report(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
- 	if (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
- 		return -EINVAL;
- 
--	if (!p->cru_driver_name[0])
--		return -EINVAL;
--
--	alg = crypto_alg_match(p, 1);
-+	alg = crypto_alg_match(p, 0);
- 	if (!alg)
- 		return -ENOENT;
- 
-Cheers,
--- 
-Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+I wrote to tool that uses this API some time ago, it is still
+a bit rudimentary but should work. You can find it at:
+https://sourceforge.net/projects/crconf/
