@@ -1,118 +1,78 @@
-From: Mark Yao <mark.yao@rock-chips.com>
-Subject: [PATCH v14 3/3] dt-bindings: video: Add documentation for rockchip vop
-Date: Thu, 20 Nov 2014 09:47:55 +0800
-Message-ID: <1416448075-10058-1-git-send-email-mark.yao@rock-chips.com>
-References: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
-Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, cf@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, xw@rock-chips.com, Mark Yao <mark.yao@rock-chips.com>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: Re: [PATCH v2 02/10] crypto: AF_ALG: user space interface for cipher info
+Date: Thu, 20 Nov 2014 05:03:24 +0100
+Message-ID: <16101836.sTaxopCThb@tachyon.chronox.de>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de> <2688209.3bGZus2TD9@tachyon.chronox.de> <20141118140822.GB12100@gondor.apana.org.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141118140822.GB12100-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Steffen Klassert <steffen.klassert-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This adds binding documentation for Rockchip SoC VOP driver.
+Am Dienstag, 18. November 2014, 22:08:23 schrieb Herbert Xu:
 
-Signed-off-by: Mark Yao <mark.yao@rock-chips.com>
----
-Changes in v2:
-- rename "lcdc" to "vop"
-- add vop reset
-- add iommu node
-- add port for display-subsystem
+Hi Herbert, Steffen,
 
-Changes in v3: None
+> On Sun, Nov 16, 2014 at 03:24:25AM +0100, Stephan Mueller wrote:
+> > The AF_ALG interface allows normal cipher (hash, encrypt, decrypt).
+> > However, it does not allow user space to obtain the following generic
+> > 
+> > information about the currently active cipher:
+> > 	* block size of the cipher
+> > 	
+> > 	* IV size of the cipher
+> > 	
+> > 	* for AEAD, the maximum authentication tag size
+> > 
+> > The patch adds a getsockopt interface for the symmetric ciphers to
+> > answer such information requests from user space.
+> > 
+> > The kernel crypto API function calls are used to obtain the real data.
+> > As all data are simple integer values, the getsockopt handler function
+> > uses put_user() to return the integer value to user space in the
+> > *optval parameter of getsockopt.
+> > 
+> > Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+> 
+> We already have crypto_user so you should be extending that to
+> cover what's missing.
 
-Changes in v4: None
+After playing a bit with the interface, I think it falls short supporting 
+AF_ALG in the following way:
 
-Changes in v5: None
+crypto_user cannot be applied to the currently active cipher that one has open 
+with AF_ALG. For getting information, one has to call crypto_user with the 
+cra_driver_name of a cipher. (Why is that limitation, btw (see crypto_report 
+and the use of cru_driver_name?)
 
-Changes in v6: None
+When we open AF_ALG with the typical approach of simply a cra_name, you have 
+no idea which cipher is selected. User space has no way to obtain the 
+information on which particular cipher implementation is used with 
+crypto_user.
 
-Changes in v7: None
+That means, to use crypto_user, we would first have to translate a cra_name 
+into a cra_driver_name. Granted, any cra_driver_name for the given cra_name 
+would work. But how would such a resolution be implemented? The only way would 
+be via /proc/crypto. But that file does not contain all cipher / block 
+chaining permutations. For example, ccm(aes) is not listed in /proc/crypto at 
+all (even after using it via the kernel crypto API -- i.e. there is an 
+accessible ccm(aes) implementation). Therefore, there is no way to resolve 
+ccm(aes) to a cra_driver_name. 
 
-Changes in v8: None
+Btw: is there an example that uses that interface? The ordering of data 
+structures in the netlink message is not really clear from looking at the 
+code.
+> 
+> PS These paramters should not vary depending on the implementation,
+> if they do then one of the implementations must be buggy.
+> 
+> Cheers,
 
-Changes in v9: None
 
-Changes in v10: None
-
-Changes in v11: None
-
-Changes in v12: None
-
-Changes in v13: None
-
-Changes in v14: None
-
- .../devicetree/bindings/video/rockchip-vop.txt     |   58 ++++++++++++++++++++
- 1 file changed, 58 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/video/rockchip-vop.txt
-
-diff --git a/Documentation/devicetree/bindings/video/rockchip-vop.txt b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-new file mode 100644
-index 0000000..d15351f
---- /dev/null
-+++ b/Documentation/devicetree/bindings/video/rockchip-vop.txt
-@@ -0,0 +1,58 @@
-+device-tree bindings for rockchip soc display controller (vop)
-+
-+VOP (Visual Output Processor) is the Display Controller for the Rockchip
-+series of SoCs which transfers the image data from a video memory
-+buffer to an external LCD interface.
-+
-+Required properties:
-+- compatible: value should be one of the following
-+		"rockchip,rk3288-vop";
-+
-+- interrupts: should contain a list of all VOP IP block interrupts in the
-+		 order: VSYNC, LCD_SYSTEM. The interrupt specifier
-+		 format depends on the interrupt controller used.
-+
-+- clocks: must include clock specifiers corresponding to entries in the
-+		clock-names property.
-+
-+- clock-names: Must contain
-+		aclk_vop: for ddr buffer transfer.
-+		hclk_vop: for ahb bus to R/W the phy regs.
-+		dclk_vop: pixel clock.
-+
-+- resets: Must contain an entry for each entry in reset-names.
-+  See ../reset/reset.txt for details.
-+- reset-names: Must include the following entries:
-+  - axi
-+  - ahb
-+  - dclk
-+
-+- iommus: required a iommu node
-+
-+- port: A port node with endpoint definitions as defined in
-+  Documentation/devicetree/bindings/media/video-interfaces.txt.
-+
-+Example:
-+SoC specific DT entry:
-+	vopb: vopb@ff930000 {
-+		compatible = "rockchip,rk3288-vop";
-+		reg = <0xff930000 0x19c>;
-+		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
-+		clocks = <&cru ACLK_VOP0>, <&cru DCLK_VOP0>, <&cru HCLK_VOP0>;
-+		clock-names = "aclk_vop", "dclk_vop", "hclk_vop";
-+		resets = <&cru SRST_LCDC1_AXI>, <&cru SRST_LCDC1_AHB>, <&cru SRST_LCDC1_DCLK>;
-+		reset-names = "axi", "ahb", "dclk";
-+		iommus = <&vopb_mmu>;
-+		vopb_out: port {
-+			#address-cells = <1>;
-+			#size-cells = <0>;
-+			vopb_out_edp: endpoint@0 {
-+				reg = <0>;
-+				remote-endpoint=<&edp_in_vopb>;
-+			};
-+			vopb_out_hdmi: endpoint@1 {
-+				reg = <1>;
-+				remote-endpoint=<&hdmi_in_vopb>;
-+			};
-+		};
-+	};
 -- 
-1.7.9.5
-
-
+Ciao
+Stephan
