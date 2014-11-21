@@ -1,50 +1,91 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v3 2/7] crypto: AF_ALG: extend data structuers for AEAD
-Date: Fri, 21 Nov 2014 06:31:32 +0100
-Message-ID: <2275851.LVsZhuYsZj@tachyon.chronox.de>
-References: <4088013.2O8zCP0xXa@tachyon.chronox.de>
+Subject: [PATCH v3 0/7] crypto: AF_ALG: add AEAD and RNG support
+Date: Fri, 21 Nov 2014 06:29:36 +0100
+Message-ID: <4088013.2O8zCP0xXa@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <4088013.2O8zCP0xXa@tachyon.chronox.de>
-Sender: linux-crypto-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The data structure holding the state of an ongoing symmetric cipher
-operation is extended by the data variables needed for AEAD.
+Hi,
 
-The request data structures are encapsulated by a union as the symmetric
-cipher implementation is either exclusively used for "normal" symmetric
-ciphers or for AEAD ciphers.
+This patch set adds AEAD and RNG support to the AF_ALG interface
+exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
+support, all cipher types the kernel crypto API allows access to are
+now accessible from userspace.
 
-In addition, the size of the associated data expected to be present in
-the input data must be retained.
+The RNG support is stand-alone.
 
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
----
- crypto/algif_skcipher.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+The AEAD implementation is added to algif_skcipher.c to prevent
+re-implementation of the memory moving logic.
 
-diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
-index 85e3bdb..49d5b08 100644
---- a/crypto/algif_skcipher.c
-+++ b/crypto/algif_skcipher.c
-@@ -46,7 +46,12 @@ struct skcipher_ctx {
- 	bool merge;
- 	bool enc;
- 
--	struct ablkcipher_request req;
-+	bool aead;
-+	size_t aead_assoclen;
-+	union {
-+		struct ablkcipher_request ablkcipher_req;
-+		struct aead_request aead_req;
-+	} u;
- };
- 
- #define MAX_SGL_ENTS ((4096 - sizeof(struct skcipher_sg_list)) / \
+The extension for the AEAD support can be summarized with the following
+types of changes:
+
+        * select the correct crypto API functions (either the ablkcipher
+          or the aead functions)
+
+        * apply the additional data needed for AEAD at the right time
+          (associated data, authentication tag) -- this includes the addition
+          of user space interfaces to allow setting this data.
+
+        * add the calculation for the memory size needed for encryption and
+          decryption.
+
+In addition, the patch set adds a getsockopt implementation to skcipher to
+allow user space to inquire about properties of the ciphers (IV size,
+block size, authentication data size). This extension would be needed for a
+generic user space usage of these ciphers.
+
+The new AEAD and RNG interfaces are fully tested with the test application
+provided at [1]. That test application exercises all newly added user space
+interfaces.
+
+
+Stephan Mueller (7):
+*tch set was tested on x86_64 and i386.
+
+[1] http://www.chronox.de/libkcapi.html
+
+Changes v2:
+* rebase to current cryptodev-2.6 tree
+* use memzero_explicit to zeroize AEAD associated data
+* use sizeof for determining length of AEAD associated data
+* update algif_rng.c covering all suggestions from Daniel Borkmann
+  <dborkman@redhat.com>
+* addition of patch 9: add digestsize interface for hashes
+* addition of patch to update documentation covering the userspace interface
+* change numbers of getsockopt options: separate them from sendmsg interface
+  definitions
+
+Changes v3:
+* remove getsockopt interface
+* AEAD: associated data is set prepended to the plain/ciphertext
+* AEAD: allowing arbitrary associated data lengths
+* remove setkey patch as protection was already in the existing code
+
+  crypto: AF_ALG: add user space interface for AEAD
+  crypto: AF_ALG: extend data structuers for AEAD
+  crypto: AF_ALG: crypto API calls to inline functions
+  crypto: AF_ALG: add AEAD support
+  crypto: AF_ALG: add random number generator support
+  crypto: AF_ALG: enable RNG interface compilation
+  crypto: AF_ALG: document the user space interface
+
+ Documentation/crypto/crypto-API-userspace.txt |  70 +++++-
+ crypto/Kconfig                                |   9 +
+ crypto/Makefile                               |   1 +
+ crypto/af_alg.c                               |  12 +
+ crypto/algif_rng.c                            | 186 ++++++++++++++++
+ crypto/algif_skcipher.c                       | 308 +++++++++++++++++++++++---
+ include/crypto/if_alg.h                       |   2 +
+ include/uapi/linux/if_alg.h                   |   2 +
+ 8 files changed, 559 insertions(+), 31 deletions(-)
+ create mode 100644 crypto/algif_rng.c
+
 -- 
 2.1.0
