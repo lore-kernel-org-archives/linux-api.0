@@ -1,11 +1,8 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: kdbus: add header file
-Date: Thu, 20 Nov 2014 21:02:18 -0800
-Message-ID: <1416546149-24799-3-git-send-email-gregkh@linuxfoundation.org>
+Subject: kdbus: add policy database implementation
+Date: Thu, 20 Nov 2014 21:02:27 -0800
+Message-ID: <1416546149-24799-12-git-send-email-gregkh@linuxfoundation.org>
 References: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -13,1016 +10,738 @@ To: arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.n
 Cc: daniel@zonque.org, dh.herrmann@gmail.com, tixxdz@opendz.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Daniel Mack <daniel@zonque.org>
+From: Daniel Mack <daniel@zonque.org>
 
-This patch adds the header file which describes the low-level transport
-protocol used by various ioctls. The header file is located in
-include/uapi/linux/ as it is shared between kernel and userspace, and i=
-t
-only contains data structure definitionsi, enums and #defines for
-constants.
+This patch adds the policy database implementation.
+
+A policy databases restrict the possibilities of connections to own,
+see and talk to well-known names. It can be associated with a bus
+(through a policy holder connection) or a custom endpoint.
+
+By default, buses have an empty policy database that is augmented on
+demand when a policy holder connection is instantiated.
+
+Policies are set through KDBUS_CMD_HELLO (when creating a policy
+holder connection), KDBUS_CMD_CONN_UPDATE (when updating a policy
+holder connection), KDBUS_CMD_EP_MAKE (creating a custom endpoint)
+or KDBUS_CMD_EP_UPDATE (updating a custom endpoint). In all cases,
+the name and policy access information is stored in items of type
+KDBUS_ITEM_NAME and KDBUS_ITEM_POLICY_ACCESS.
+
+See Documentation/kdbus.txt for more details.
 
 Signed-off-by: Daniel Mack <daniel@zonque.org>
 Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
 Signed-off-by: Djalal Harouni <tixxdz@opendz.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- include/uapi/linux/Kbuild  |   1 +
- include/uapi/linux/kdbus.h | 933 +++++++++++++++++++++++++++++++++++++=
-++++++++
- 2 files changed, 934 insertions(+)
- create mode 100644 include/uapi/linux/kdbus.h
+ ipc/kdbus/policy.c | 629 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ipc/kdbus/policy.h |  61 ++++++
+ 2 files changed, 690 insertions(+)
+ create mode 100644 ipc/kdbus/policy.c
+ create mode 100644 ipc/kdbus/policy.h
 
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 4c94f31a8c99..84239f6a3210 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -212,6 +212,7 @@ header-y +=3D ixjuser.h
- header-y +=3D jffs2.h
- header-y +=3D joystick.h
- header-y +=3D kd.h
-+header-y +=3D kdbus.h
- header-y +=3D kdev_t.h
- header-y +=3D kernel-page-flags.h
- header-y +=3D kernel.h
-diff --git a/include/uapi/linux/kdbus.h b/include/uapi/linux/kdbus.h
+diff --git a/ipc/kdbus/policy.c b/ipc/kdbus/policy.c
 new file mode 100644
-index 000000000000..91de6211fe2a
+index 000000000000..53652dfa2973
 --- /dev/null
-+++ b/include/uapi/linux/kdbus.h
-@@ -0,0 +1,933 @@
++++ b/ipc/kdbus/policy.c
+@@ -0,0 +1,629 @@
 +/*
-+ * kdbus is free software; you can redistribute it and/or modify it un=
-der
-+ * the terms of the GNU Lesser General Public License as published by =
-the
++ * Copyright (C) 2013-2014 Kay Sievers
++ * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
++ * Copyright (C) 2013-2014 Daniel Mack <daniel@zonque.org>
++ * Copyright (C) 2013-2014 David Herrmann <dh.herrmann@gmail.com>
++ * Copyright (C) 2013-2014 Linux Foundation
++ * Copyright (C) 2014 Djalal Harouni
++ *
++ * kdbus is free software; you can redistribute it and/or modify it under
++ * the terms of the GNU Lesser General Public License as published by the
 + * Free Software Foundation; either version 2.1 of the License, or (at
 + * your option) any later version.
 + */
 +
-+#ifndef _KDBUS_UAPI_H_
-+#define _KDBUS_UAPI_H_
++#include <linux/fs.h>
++#include <linux/init.h>
++#include <linux/mutex.h>
++#include <linux/sched.h>
++#include <linux/sizes.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
 +
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
++#include "bus.h"
++#include "connection.h"
++#include "domain.h"
++#include "item.h"
++#include "names.h"
++#include "policy.h"
 +
-+#define KDBUS_IOCTL_MAGIC		0x95
-+#define KDBUS_SRC_ID_KERNEL		(0)
-+#define KDBUS_DST_ID_NAME		(0)
-+#define KDBUS_MATCH_ID_ANY		(~0ULL)
-+#define KDBUS_DST_ID_BROADCAST		(~0ULL)
-+#define KDBUS_FLAG_KERNEL		(1ULL << 63)
++#define KDBUS_POLICY_HASH_SIZE	64
 +
 +/**
-+ * struct kdbus_notify_id_change - name registry change message
-+ * @id:			New or former owner of the name
-+ * @flags:		flags field from KDBUS_HELLO_*
-+ *
-+ * Sent from kernel to userspace when the owner or activator of
-+ * a well-known name changes.
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_ID_ADD
-+ *   KDBUS_ITEM_ID_REMOVE
++ * struct kdbus_policy_db_cache_entry - a cached entry
++ * @conn_a:		Connection A
++ * @conn_b:		Connection B
++ * @owner:		Owner of policy-entry that produced this cache-entry
++ * @hentry:		The hash table entry for the database's entries_hash
 + */
-+struct kdbus_notify_id_change {
-+	__u64 id;
-+	__u64 flags;
++struct kdbus_policy_db_cache_entry {
++	struct kdbus_conn *conn_a;
++	struct kdbus_conn *conn_b;
++	const void *owner;
++	struct hlist_node hentry;
 +};
 +
 +/**
-+ * struct kdbus_notify_name_change - name registry change message
-+ * @old_id:		ID and flags of former owner of a name
-+ * @new_id:		ID and flags of new owner of a name
-+ * @name:		Well-known name
-+ *
-+ * Sent from kernel to userspace when the owner or activator of
-+ * a well-known name changes.
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_NAME_ADD
-+ *   KDBUS_ITEM_NAME_REMOVE
-+ *   KDBUS_ITEM_NAME_CHANGE
-+ */
-+struct kdbus_notify_name_change {
-+	struct kdbus_notify_id_change old_id;
-+	struct kdbus_notify_id_change new_id;
-+	char name[0];
-+};
-+
-+/**
-+ * struct kdbus_creds - process credentials
-+ * @uid:		User ID
-+ * @gid:		Group ID
-+ * @pid:		Process ID
-+ * @tid:		Thread ID
-+ * @starttime:		Starttime of the process
-+ *
-+ * The starttime of the process PID. This is useful to detect PID over=
-runs
-+ * from the client side. i.e. if you use the PID to look something up =
-in
-+ * /proc/$PID/ you can afterwards check the starttime field of it, to =
-ensure
-+ * you didn't run into a PID overrun.
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_CREDS
-+ */
-+struct kdbus_creds {
-+	__u64 uid;
-+	__u64 gid;
-+	__u64 pid;
-+	__u64 tid;
-+	__u64 starttime;
-+};
-+
-+/**
-+ * struct kdbus_caps - process capabilities
-+ * @last_cap:	Highest currently known capability bit
-+ * @caps:	Variable number of 32-bit capabilities flags
-+ *
-+ * Contains a variable number of 32-bit capabilities flags.
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_CAPS
-+ */
-+struct kdbus_caps {
-+	__u32 last_cap;
-+	__u32 caps[0];
-+};
-+
-+/**
-+ * struct kdbus_audit - audit information
-+ * @sessionid:		The audit session ID
-+ * @loginuid:		The audit login uid
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_AUDIT
-+ */
-+struct kdbus_audit {
-+	__u64 sessionid;
-+	__u64 loginuid;
-+};
-+
-+/**
-+ * struct kdbus_timestamp
-+ * @seqnum:		Global per-domain message sequence number
-+ * @monotonic_ns:	Monotonic timestamp, in nanoseconds
-+ * @realtime_ns:	Realtime timestamp, in nanoseconds
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_TIMESTAMP
-+ */
-+struct kdbus_timestamp {
-+	__u64 seqnum;
-+	__u64 monotonic_ns;
-+	__u64 realtime_ns;
-+};
-+
-+/**
-+ * struct kdbus_vec - I/O vector for kdbus payload items
-+ * @size:		The size of the vector
-+ * @address:		Memory address of data buffer
-+ * @offset:		Offset in the in-message payload memory,
-+ *			relative to the message head
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_PAYLOAD_VEC, KDBUS_ITEM_PAYLOAD_OFF
-+ */
-+struct kdbus_vec {
-+	__u64 size;
-+	union {
-+		__u64 address;
-+		__u64 offset;
-+	};
-+};
-+
-+/**
-+ * struct kdbus_bloom_parameter - bus-wide bloom parameters
-+ * @size:		Size of the bit field in bytes (m / 8)
-+ * @n_hash:		Number of hash functions used (k)
-+ */
-+struct kdbus_bloom_parameter {
-+	__u64 size;
-+	__u64 n_hash;
-+};
-+
-+/**
-+ * struct kdbus_bloom_filter - bloom filter containing n elements
-+ * @generation:		Generation of the element set in the filter
-+ * @data:		Bit field, multiple of 8 bytes
-+ */
-+struct kdbus_bloom_filter {
-+	__u64 generation;
-+	__u64 data[0];
-+};
-+
-+/**
-+ * struct kdbus_memfd - a kdbus memfd
-+ * @size:		The memfd's size
-+ * @fd:			The file descriptor number
-+ * @__pad:		Padding to ensure proper alignment and size
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_PAYLOAD_MEMFD
-+ */
-+struct kdbus_memfd {
-+	__u64 size;
-+	int fd;
-+	__u32 __pad;
-+};
-+
-+/**
-+ * struct kdbus_name - a registered well-known name with its flags
-+ * @flags:		Flags from KDBUS_NAME_*
-+ * @name:		Well-known name
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_OWNED_NAME
-+ */
-+struct kdbus_name {
-+	__u64 flags;
-+	char name[0];
-+};
-+
-+/**
-+ * struct kdbus_policy_access - policy access item
++ * struct kdbus_policy_db_entry_access - a database entry access item
 + * @type:		One of KDBUS_POLICY_ACCESS_* types
-+ * @access:		Access to grant
-+ * @id:			For KDBUS_POLICY_ACCESS_USER, the uid
-+ *			For KDBUS_POLICY_ACCESS_GROUP, the gid
++ * @access:		Access to grant. One of KDBUS_POLICY_*
++ * @uid:		For KDBUS_POLICY_ACCESS_USER, the global uid
++ * @gid:		For KDBUS_POLICY_ACCESS_GROUP, the global gid
++ * @list:		List entry item for the entry's list
++ *
++ * This is the internal version of struct kdbus_policy_db_access.
 + */
-+struct kdbus_policy_access {
-+	__u64 type;	/* USER, GROUP, WORLD */
-+	__u64 access;	/* OWN, TALK, SEE */
-+	__u64 id;	/* uid, gid, 0 */
-+};
-+
-+/**
-+ * enum kdbus_item_type - item types to chain data in a list
-+ * @_KDBUS_ITEM_NULL:			Uninitialized/invalid
-+ * @_KDBUS_ITEM_USER_BASE:		Start of user items
-+ * @KDBUS_ITEM_PAYLOAD_VEC:		Vector to data
-+ * @KDBUS_ITEM_PAYLOAD_OFF:		Data at returned offset to message head
-+ * @KDBUS_ITEM_PAYLOAD_MEMFD:		Data as sealed memfd
-+ * @KDBUS_ITEM_FDS:			Attached file descriptors
-+ * @KDBUS_ITEM_BLOOM_PARAMETER:		Bus-wide bloom parameters, used with
-+ *					KDBUS_CMD_BUS_MAKE, carries a
-+ *					struct kdbus_bloom_parameter
-+ * @KDBUS_ITEM_BLOOM_FILTER:		Bloom filter carried with a message,
-+ *					used to match against a bloom mask of a
-+ *					connection, carries a struct
-+ *					kdbus_bloom_filter
-+ * @KDBUS_ITEM_BLOOM_MASK:		Bloom mask used to match against a
-+ *					message'sbloom filter
-+ * @KDBUS_ITEM_DST_NAME:		Destination's well-known name
-+ * @KDBUS_ITEM_MAKE_NAME:		Name of domain, bus, endpoint
-+ * @KDBUS_ITEM_ATTACH_FLAGS_SEND:	Attach-flags, used for updating whic=
-h
-+ *					metadata a connection opts in to send
-+ * @KDBUS_ITEM_ATTACH_FLAGS_RECV:	Attach-flags, used for updating whic=
-h
-+ *					metadata a connection requests to
-+ *					receive for each reeceived message
-+ * @KDBUS_ITEM_ID:			Connection ID
-+ * @KDBUS_ITEM_NAME:			Well-know name with flags
-+ * @_KDBUS_ITEM_ATTACH_BASE:		Start of metadata attach items
-+ * @KDBUS_ITEM_TIMESTAMP:		Timestamp
-+ * @KDBUS_ITEM_CREDS:			Process credential
-+ * @KDBUS_ITEM_AUXGROUPS:		Auxiliary process groups
-+ * @KDBUS_ITEM_OWNED_NAME:		A name owned by the associated
-+ *					connection
-+ * @KDBUS_ITEM_TID_COMM:		Thread ID "comm" identifier
-+ * @KDBUS_ITEM_PID_COMM:		Process ID "comm" identifier
-+ * @KDBUS_ITEM_EXE:			The path of the executable
-+ * @KDBUS_ITEM_CMDLINE:			The process command line
-+ * @KDBUS_ITEM_CGROUP:			The croup membership
-+ * @KDBUS_ITEM_CAPS:			The process capabilities
-+ * @KDBUS_ITEM_SECLABEL:		The security label
-+ * @KDBUS_ITEM_AUDIT:			The audit IDs
-+ * @KDBUS_ITEM_CONN_DESCRIPTION:	The connection's human-readable name
-+ *					(debugging)
-+ * @_KDBUS_ITEM_POLICY_BASE:		Start of policy items
-+ * @KDBUS_ITEM_POLICY_ACCESS:		Policy access block
-+ * @_KDBUS_ITEM_KERNEL_BASE:		Start of kernel-generated message items
-+ * @KDBUS_ITEM_NAME_ADD:		Notification in kdbus_notify_name_change
-+ * @KDBUS_ITEM_NAME_REMOVE:		Notification in kdbus_notify_name_change
-+ * @KDBUS_ITEM_NAME_CHANGE:		Notification in kdbus_notify_name_change
-+ * @KDBUS_ITEM_ID_ADD:			Notification in kdbus_notify_id_change
-+ * @KDBUS_ITEM_ID_REMOVE:		Notification in kdbus_notify_id_change
-+ * @KDBUS_ITEM_REPLY_TIMEOUT:		Timeout has been reached
-+ * @KDBUS_ITEM_REPLY_DEAD:		Destination died
-+ */
-+enum kdbus_item_type {
-+	_KDBUS_ITEM_NULL,
-+	_KDBUS_ITEM_USER_BASE,
-+	KDBUS_ITEM_PAYLOAD_VEC	=3D _KDBUS_ITEM_USER_BASE,
-+	KDBUS_ITEM_PAYLOAD_OFF,
-+	KDBUS_ITEM_PAYLOAD_MEMFD,
-+	KDBUS_ITEM_FDS,
-+	KDBUS_ITEM_BLOOM_PARAMETER,
-+	KDBUS_ITEM_BLOOM_FILTER,
-+	KDBUS_ITEM_BLOOM_MASK,
-+	KDBUS_ITEM_DST_NAME,
-+	KDBUS_ITEM_MAKE_NAME,
-+	KDBUS_ITEM_ATTACH_FLAGS_SEND,
-+	KDBUS_ITEM_ATTACH_FLAGS_RECV,
-+	KDBUS_ITEM_ID,
-+	KDBUS_ITEM_NAME,
-+
-+	/* keep these item types in sync with KDBUS_ATTACH_* flags */
-+	_KDBUS_ITEM_ATTACH_BASE	=3D 0x1000,
-+	KDBUS_ITEM_TIMESTAMP	=3D _KDBUS_ITEM_ATTACH_BASE,
-+	KDBUS_ITEM_CREDS,
-+	KDBUS_ITEM_AUXGROUPS,
-+	KDBUS_ITEM_OWNED_NAME,
-+	KDBUS_ITEM_TID_COMM,
-+	KDBUS_ITEM_PID_COMM,
-+	KDBUS_ITEM_EXE,
-+	KDBUS_ITEM_CMDLINE,
-+	KDBUS_ITEM_CGROUP,
-+	KDBUS_ITEM_CAPS,
-+	KDBUS_ITEM_SECLABEL,
-+	KDBUS_ITEM_AUDIT,
-+	KDBUS_ITEM_CONN_DESCRIPTION,
-+
-+	_KDBUS_ITEM_POLICY_BASE	=3D 0x2000,
-+	KDBUS_ITEM_POLICY_ACCESS =3D _KDBUS_ITEM_POLICY_BASE,
-+
-+	_KDBUS_ITEM_KERNEL_BASE	=3D 0x8000,
-+	KDBUS_ITEM_NAME_ADD	=3D _KDBUS_ITEM_KERNEL_BASE,
-+	KDBUS_ITEM_NAME_REMOVE,
-+	KDBUS_ITEM_NAME_CHANGE,
-+	KDBUS_ITEM_ID_ADD,
-+	KDBUS_ITEM_ID_REMOVE,
-+	KDBUS_ITEM_REPLY_TIMEOUT,
-+	KDBUS_ITEM_REPLY_DEAD,
-+};
-+
-+/**
-+ * struct kdbus_item - chain of data blocks
-+ * @size:		Overall data record size
-+ * @type:		Kdbus_item type of data
-+ * @data:		Generic bytes
-+ * @data32:		Generic 32 bit array
-+ * @data64:		Generic 64 bit array
-+ * @str:		Generic string
-+ * @id:			Connection ID
-+ * @vec:		KDBUS_ITEM_PAYLOAD_VEC
-+ * @creds:		KDBUS_ITEM_CREDS
-+ * @audit:		KDBUS_ITEM_AUDIT
-+ * @timestamp:		KDBUS_ITEM_TIMESTAMP
-+ * @name:		KDBUS_ITEM_NAME
-+ * @bloom_parameter:	KDBUS_ITEM_BLOOM_PARAMETER
-+ * @bloom_filter:	KDBUS_ITEM_BLOOM_FILTER
-+ * @memfd:		KDBUS_ITEM_PAYLOAD_MEMFD
-+ * @name_change:	KDBUS_ITEM_NAME_ADD
-+ *			KDBUS_ITEM_NAME_REMOVE
-+ *			KDBUS_ITEM_NAME_CHANGE
-+ * @id_change:		KDBUS_ITEM_ID_ADD
-+ *			KDBUS_ITEM_ID_REMOVE
-+ * @policy:		KDBUS_ITEM_POLICY_ACCESS
-+ */
-+struct kdbus_item {
-+	__u64 size;
-+	__u64 type;
++struct kdbus_policy_db_entry_access {
++	u8 type;		/* USER, GROUP, WORLD */
++	u8 access;		/* OWN, TALK, SEE */
 +	union {
-+		__u8 data[0];
-+		__u32 data32[0];
-+		__u64 data64[0];
-+		char str[0];
-+
-+		__u64 id;
-+		struct kdbus_vec vec;
-+		struct kdbus_creds creds;
-+		struct kdbus_audit audit;
-+		struct kdbus_caps caps;
-+		struct kdbus_timestamp timestamp;
-+		struct kdbus_name name;
-+		struct kdbus_bloom_parameter bloom_parameter;
-+		struct kdbus_bloom_filter bloom_filter;
-+		struct kdbus_memfd memfd;
-+		int fds[0];
-+		struct kdbus_notify_name_change name_change;
-+		struct kdbus_notify_id_change id_change;
-+		struct kdbus_policy_access policy_access;
++		kuid_t uid;	/* global uid */
++		kgid_t gid;	/* global gid */
 +	};
++	struct list_head list;
 +};
 +
 +/**
-+ * enum kdbus_msg_flags - type of message
-+ * @KDBUS_MSG_FLAGS_EXPECT_REPLY:	Expect a reply message, used for
-+ *					method calls. The userspace-supplied
-+ *					cookie identifies the message and the
-+ *					respective reply carries the cookie
-+ *					in cookie_reply
-+ * @KDBUS_MSG_FLAGS_SYNC_REPLY:		Wait for destination connection to
-+ *					reply to this message. The
-+ *					KDBUS_CMD_MSG_SEND ioctl() will block
-+ *					until the reply is received, and
-+ *					offset_reply in struct kdbus_msg will
-+ *					yield the offset in the sender's pool
-+ *					where the reply can be found.
-+ *					This flag is only valid if
-+ *					@KDBUS_MSG_FLAGS_EXPECT_REPLY is set as
-+ *					well.
-+ * @KDBUS_MSG_FLAGS_NO_AUTO_START:	Do not start a service, if the addr=
-essed
-+ *					name is not currently active
++ * struct kdbus_policy_db_entry - a policy database entry
++ * @name:		The name to match the policy entry against
++ * @hentry:		The hash entry for the database's entries_hash
++ * @access_list:	List head for keeping tracks of the entry's
++ *			access items.
++ * @owner:		The owner of this entry. Can be a kdbus_conn or
++ *			a kdbus_ep object.
++ * @wildcard:		The name is a wildcard, such as ending on '.*'
 + */
-+enum kdbus_msg_flags {
-+	KDBUS_MSG_FLAGS_EXPECT_REPLY	=3D 1ULL << 0,
-+	KDBUS_MSG_FLAGS_SYNC_REPLY	=3D 1ULL << 1,
-+	KDBUS_MSG_FLAGS_NO_AUTO_START	=3D 1ULL << 2,
++struct kdbus_policy_db_entry {
++	char *name;
++	struct hlist_node hentry;
++	struct list_head access_list;
++	const void *owner;
++	bool wildcard:1;
 +};
 +
-+/**
-+ * enum kdbus_payload_type - type of payload carried by message
-+ * @KDBUS_PAYLOAD_KERNEL:	Kernel-generated simple message
-+ * @KDBUS_PAYLOAD_DBUS:		D-Bus marshalling "DBusDBus"
-+ */
-+enum kdbus_payload_type {
-+	KDBUS_PAYLOAD_KERNEL,
-+	KDBUS_PAYLOAD_DBUS	=3D 0x4442757344427573ULL,
-+};
++static void kdbus_policy_entry_free(struct kdbus_policy_db_entry *e)
++{
++	struct kdbus_policy_db_entry_access *a, *tmp;
++
++	list_for_each_entry_safe(a, tmp, &e->access_list, list) {
++		list_del(&a->list);
++		kfree(a);
++	}
++
++	kfree(e->name);
++	kfree(e);
++}
++
++static const struct kdbus_policy_db_entry *
++kdbus_policy_lookup(struct kdbus_policy_db *db,
++		    const char *name, u32 hash, bool wildcard)
++{
++	struct kdbus_policy_db_entry *e, *found = NULL;
++
++	hash_for_each_possible(db->entries_hash, e, hentry, hash)
++		if (strcmp(e->name, name) == 0 && !e->wildcard)
++			return e;
++
++	if (wildcard) {
++		const char *tmp;
++		char *dot;
++
++		tmp = kstrdup(name, GFP_KERNEL);
++		if (!tmp)
++			return NULL;
++
++		dot = strrchr(tmp, '.');
++		if (!dot)
++			goto exit_free;
++
++		*dot = '\0';
++		hash = kdbus_str_hash(tmp);
++
++		hash_for_each_possible(db->entries_hash, e, hentry, hash)
++			if (strcmp(e->name, tmp) == 0 && e->wildcard) {
++				found = e;
++				/* never "break;" in hash_for_each() */
++				goto exit_free;
++			}
++
++exit_free:
++		kfree(tmp);
++	}
++
++	return found;
++}
 +
 +/**
-+ * struct kdbus_msg - the representation of a kdbus message
-+ * @size:		Total size of the message
-+ * @flags:		Message flags (KDBUS_MSG_FLAGS_*), userspace =E2=86=92 ker=
-nel
-+ * @kernel_flags:	Supported message flags, kernel =E2=86=92 userspace
-+ * @priority:		Message queue priority value
-+ * @dst_id:		64-bit ID of the destination connection
-+ * @src_id:		64-bit ID of the source connection
-+ * @payload_type:	Payload type (KDBUS_PAYLOAD_*)
-+ * @cookie:		Userspace-supplied cookie, for the connection
-+ *			to identify its messages
-+ * @timeout_ns:		The time to wait for a message reply from the peer.
-+ *			If there is no reply, a kernel-generated message
-+ *			with an attached KDBUS_ITEM_REPLY_TIMEOUT item
-+ *			is sent to @src_id. The timeout is expected in
-+ *			nanoseconds and as absolute CLOCK_MONOTONIC value.
-+ * @cookie_reply:	A reply to the requesting message with the same
-+ *			cookie. The requesting connection can match its
-+ *			request and the reply with this value
-+ * @offset_reply:	If KDBUS_MSG_FLAGS_EXPECT_REPLY, this field will
-+ *			contain the offset in the sender's pool where the
-+ *			reply is stored.
-+ * @items:		A list of kdbus_items containing the message payload
++ * kdbus_policy_db_clear - release all memory from a policy db
++ * @db:		The policy database
 + */
-+struct kdbus_msg {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	__s64 priority;
-+	__u64 dst_id;
-+	__u64 src_id;
-+	__u64 payload_type;
-+	__u64 cookie;
-+	union {
-+		__u64 timeout_ns;
-+		__u64 cookie_reply;
-+		__u64 offset_reply;
-+	};
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
++void kdbus_policy_db_clear(struct kdbus_policy_db *db)
++{
++	struct kdbus_policy_db_cache_entry *ce;
++	struct kdbus_policy_db_entry *e;
++	struct hlist_node *tmp;
++	unsigned int i;
++
++	BUG_ON(!db);
++
++	/* purge entries */
++	down_write(&db->entries_rwlock);
++	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry) {
++		hash_del(&e->hentry);
++		kdbus_policy_entry_free(e);
++	}
++	up_write(&db->entries_rwlock);
++
++	/* purge cache */
++	mutex_lock(&db->cache_lock);
++	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry) {
++		hash_del(&ce->hentry);
++		kfree(ce);
++	}
++	mutex_unlock(&db->cache_lock);
++}
 +
 +/**
-+ * enum kdbus_recv_flags - flags for de-queuing messages
-+ * @KDBUS_RECV_PEEK:		Return the next queued message without
-+ *				actually de-queuing it, and without installing
-+ *				any file descriptors or other resources. It is
-+ *				usually used to determine the activating
-+ *				connection of a bus name.
-+ * @KDBUS_RECV_DROP:		Drop and free the next queued message and all
-+ *				its resources without actually receiving it.
-+ * @KDBUS_RECV_USE_PRIORITY:	Only de-queue messages with the specified=
- or
-+ *				higher priority (lowest values); if not set,
-+ *				the priority value is ignored.
-+ */
-+enum kdbus_recv_flags {
-+	KDBUS_RECV_PEEK		=3D 1ULL <<  0,
-+	KDBUS_RECV_DROP		=3D 1ULL <<  1,
-+	KDBUS_RECV_USE_PRIORITY	=3D 1ULL <<  2,
-+};
-+
-+/**
-+ * struct kdbus_cmd_recv - struct to de-queue a buffered message
-+ * @flags:		KDBUS_RECV_* flags, userspace =E2=86=92 kernel
-+ * @kernel_flags:	Supported KDBUS_RECV_* flags, kernel =E2=86=92 users=
-pace
-+ * @priority:		Minimum priority of the messages to de-queue. Lowest
-+ *			values have the highest priority.
-+ * @offset:		Returned offset in the pool where the message is
-+ *			stored. The user must use KDBUS_CMD_FREE to free
-+ *			the allocated memory.
-+ * @dropped_msgs:	In case the KDBUS_CMD_MSG_RECV ioctl returns
-+ *			-EOVERFLOW, this field will contain the number of
-+ *			broadcast messages that have been lost since the
-+ *			last call.
++ * kdbus_policy_db_init() - initialize a new policy database
++ * @db:		The location of the database
 + *
-+ * This struct is used with the KDBUS_CMD_MSG_RECV ioctl.
++ * This initializes a new policy-db. The underlying memory must have been
++ * cleared to zero by the caller.
 + */
-+struct kdbus_cmd_recv {
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	__s64 priority;
-+	union {
-+		__u64 offset;
-+		__u64 dropped_msgs;
-+	};
-+} __attribute__((aligned(8)));
++void kdbus_policy_db_init(struct kdbus_policy_db *db)
++{
++	hash_init(db->entries_hash);
++	hash_init(db->talk_access_hash);
++	init_rwsem(&db->entries_rwlock);
++	mutex_init(&db->cache_lock);
++}
++
++static int kdbus_policy_check_access(const struct kdbus_policy_db_entry *e,
++				     const struct cred *cred,
++				     unsigned int access)
++{
++	struct kdbus_policy_db_entry_access *a;
++	struct group_info *group_info;
++	int i;
++
++	if (!e)
++		return -EPERM;
++
++	group_info = cred->group_info;
++
++	list_for_each_entry(a, &e->access_list, list) {
++		if (a->access >= access) {
++			switch (a->type) {
++			case KDBUS_POLICY_ACCESS_USER:
++				if (uid_eq(cred->uid, a->uid))
++					return 0;
++				break;
++			case KDBUS_POLICY_ACCESS_GROUP:
++				if (gid_eq(cred->gid, a->gid))
++					return 0;
++
++				for (i = 0; i < group_info->ngroups; i++) {
++					kgid_t gid = GROUP_AT(group_info, i);
++
++					if (gid_eq(gid, a->gid))
++						return 0;
++				}
++
++				break;
++			case KDBUS_POLICY_ACCESS_WORLD:
++				return 0;
++			}
++		}
++	}
++
++	return -EPERM;
++}
 +
 +/**
-+ * struct kdbus_cmd_cancel - struct to cancel a synchronously pending =
-message
-+ * @cookie:		The cookie of the pending message
-+ * @flags:		Flags for the free command. Currently unused.
++ * kdbus_policy_check_own_access() - check whether a connection is allowed
++ *				     to own a name
++ * @db:		The policy database
++ * @cred:	The creds to check against
++ * @name:	The name to check
 + *
-+ * This struct is used with the KDBUS_CMD_CANCEL ioctl.
++ * Return: 0 if the connection is allowed to own the name, -EPERM otherwise
 + */
-+struct kdbus_cmd_cancel {
-+	__u64 cookie;
-+	__u64 flags;
-+} __attribute__((aligned(8)));
++int kdbus_policy_check_own_access(struct kdbus_policy_db *db,
++				  const struct cred *cred,
++				  const char *name)
++{
++	const struct kdbus_policy_db_entry *e;
++	int ret;
++
++	down_read(&db->entries_rwlock);
++	e = kdbus_policy_lookup(db, name, kdbus_str_hash(name), true);
++	ret = kdbus_policy_check_access(e, cred, KDBUS_POLICY_OWN);
++	up_read(&db->entries_rwlock);
++
++	return ret;
++}
 +
 +/**
-+ * struct kdbus_cmd_free - struct to free a slice of memory in the poo=
-l
-+ * @offset:		The offset of the memory slice, as returned by other
-+ *			ioctls
-+ * @flags:		Flags for the free command, userspace =E2=86=92 kernel
-+ * @kernel_flags:	Supported flags of the free command, userspace =E2=86=
-=92 kernel
++ * kdbus_policy_check_talk_access() - check if one connection is allowed
++ *				       to send a message to another connection
++ * @db:			The policy database
++ * @conn_src:		The source connection
++ * @conn_dst:		The destination connection
 + *
-+ * This struct is used with the KDBUS_CMD_FREE ioctl.
++ * Return: 0 if access is granted, -EPERM if not, negative errno on failure
 + */
-+struct kdbus_cmd_free {
-+	__u64 offset;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+} __attribute__((aligned(8)));
++int kdbus_policy_check_talk_access(struct kdbus_policy_db *db,
++				   struct kdbus_conn *conn_src,
++				   struct kdbus_conn *conn_dst)
++{
++	struct kdbus_policy_db_cache_entry *ce;
++	struct kdbus_name_entry *name_entry;
++	unsigned int hash = 0;
++	const void *owner;
++	int ret;
++
++	/*
++	 * If there was a positive match for these two connections before,
++	 * there's an entry in the hash table for them.
++	 */
++	hash ^= hash_ptr(conn_src, KDBUS_POLICY_HASH_SIZE);
++	hash ^= hash_ptr(conn_dst, KDBUS_POLICY_HASH_SIZE);
++
++	mutex_lock(&db->cache_lock);
++	hash_for_each_possible(db->talk_access_hash, ce, hentry, hash)
++		if (ce->conn_a == conn_src && ce->conn_b == conn_dst) {
++			mutex_unlock(&db->cache_lock);
++			return 0;
++		}
++	mutex_unlock(&db->cache_lock);
++
++	/*
++	 * Otherwise, walk the connection list and store a hash-table entry if
++	 * send access is granted.
++	 */
++
++	down_read(&db->entries_rwlock);
++
++	ret = -EPERM;
++	mutex_lock(&conn_dst->lock);
++	list_for_each_entry(name_entry, &conn_dst->names_list, conn_entry) {
++		u32 hash = kdbus_str_hash(name_entry->name);
++		const struct kdbus_policy_db_entry *e;
++
++		e = kdbus_policy_lookup(db, name_entry->name, hash, true);
++		if (kdbus_policy_check_access(e, conn_src->cred,
++					      KDBUS_POLICY_TALK) == 0) {
++			owner = e->owner;
++			ret = 0;
++			break;
++		}
++	}
++	mutex_unlock(&conn_dst->lock);
++
++	if (ret >= 0) {
++		ret = -ENOMEM;
++		ce = kmalloc(sizeof(*ce), GFP_KERNEL);
++		if (ce) {
++			ce->conn_a = conn_src;
++			ce->conn_b = conn_dst;
++			ce->owner = owner;
++			INIT_HLIST_NODE(&ce->hentry);
++
++			mutex_lock(&db->cache_lock);
++			hash_add(db->talk_access_hash, &ce->hentry, hash);
++			mutex_unlock(&db->cache_lock);
++
++			ret = 0;
++		}
++	}
++
++	up_read(&db->entries_rwlock);
++
++	return ret;
++}
 +
 +/**
-+ * enum kdbus_policy_access_type - permissions of a policy record
-+ * @_KDBUS_POLICY_ACCESS_NULL:	Uninitialized/invalid
-+ * @KDBUS_POLICY_ACCESS_USER:	Grant access to a uid
-+ * @KDBUS_POLICY_ACCESS_GROUP:	Grant access to gid
-+ * @KDBUS_POLICY_ACCESS_WORLD:	World-accessible
++ * kdbus_policy_check_see_access_unlocked() - Check whether a connection is
++ *					      allowed to see a given name
++ * @db:		The policy database
++ * @cred:	The cred to check against
++ * @name:	The name
++ *
++ * Return: 0 if permission to see the name is granted, -EPERM otherwise
 + */
-+enum kdbus_policy_access_type {
-+	_KDBUS_POLICY_ACCESS_NULL,
-+	KDBUS_POLICY_ACCESS_USER,
-+	KDBUS_POLICY_ACCESS_GROUP,
-+	KDBUS_POLICY_ACCESS_WORLD,
++int kdbus_policy_check_see_access_unlocked(struct kdbus_policy_db *db,
++					   const struct cred *cred,
++					   const char *name)
++{
++	const struct kdbus_policy_db_entry *e;
++
++	e = kdbus_policy_lookup(db, name, kdbus_str_hash(name), true);
++	return kdbus_policy_check_access(e, cred, KDBUS_POLICY_SEE);
++}
++
++static void __kdbus_policy_remove_owner_cache(struct kdbus_policy_db *db,
++					      const void *owner)
++{
++	struct kdbus_policy_db_cache_entry *ce;
++	struct hlist_node *tmp;
++	int i;
++
++	mutex_lock(&db->cache_lock);
++	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry)
++		if (ce->owner == owner) {
++			hash_del(&ce->hentry);
++			kfree(ce);
++		}
++	mutex_unlock(&db->cache_lock);
++}
++
++static void __kdbus_policy_remove_owner(struct kdbus_policy_db *db,
++					const void *owner)
++{
++	struct kdbus_policy_db_entry *e;
++	struct hlist_node *tmp;
++	int i;
++
++	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry)
++		if (e->owner == owner) {
++			hash_del(&e->hentry);
++			kdbus_policy_entry_free(e);
++		}
++}
++
++/**
++ * kdbus_policy_remove_owner() - remove all entries related to a connection
++ * @db:		The policy database
++ * @owner:	The connection which items to remove
++ */
++void kdbus_policy_remove_owner(struct kdbus_policy_db *db,
++			       const void *owner)
++{
++	down_write(&db->entries_rwlock);
++	__kdbus_policy_remove_owner(db, owner);
++	__kdbus_policy_remove_owner_cache(db, owner);
++	up_write(&db->entries_rwlock);
++}
++
++/**
++ * kdbus_policy_purge_cache_for_conn() - remove all cached entries related to
++ *				a connection
++ * @db:		The policy database
++ * @conn:	The connection which items to remove
++ */
++void kdbus_policy_purge_cache(struct kdbus_policy_db *db,
++			      const struct kdbus_conn *conn)
++{
++	struct kdbus_policy_db_cache_entry *ce;
++	struct hlist_node *tmp;
++	int i;
++
++	mutex_lock(&db->cache_lock);
++	hash_for_each_safe(db->talk_access_hash, i, tmp, ce, hentry)
++		if (ce->conn_a == conn || ce->conn_b == conn) {
++			hash_del(&ce->hentry);
++			kfree(ce);
++		}
++	mutex_unlock(&db->cache_lock);
++}
++
++/*
++ * Convert user provided policy access to internal kdbus policy
++ * access
++ */
++static struct kdbus_policy_db_entry_access *
++kdbus_policy_make_access(const struct kdbus_policy_access *uaccess)
++{
++	int ret;
++	struct kdbus_policy_db_entry_access *a;
++
++	a = kzalloc(sizeof(*a), GFP_KERNEL);
++	if (!a)
++		return ERR_PTR(-ENOMEM);
++
++	ret = -EINVAL;
++	switch (uaccess->access) {
++	case KDBUS_POLICY_SEE:
++	case KDBUS_POLICY_TALK:
++	case KDBUS_POLICY_OWN:
++		a->access = uaccess->access;
++		break;
++	default:
++		goto err;
++	}
++
++	switch (uaccess->type) {
++	case KDBUS_POLICY_ACCESS_USER:
++		a->uid = make_kuid(current_user_ns(), uaccess->id);
++		if (!uid_valid(a->uid))
++			goto err;
++
++		break;
++	case KDBUS_POLICY_ACCESS_GROUP:
++		a->gid = make_kgid(current_user_ns(), uaccess->id);
++		if (!gid_valid(a->gid))
++			goto err;
++
++		break;
++	case KDBUS_POLICY_ACCESS_WORLD:
++		a->uid = current_uid();
++		break;
++	default:
++		goto err;
++	}
++
++	a->type = uaccess->type;
++
++	return a;
++
++err:
++	kfree(a);
++	return ERR_PTR(ret);
++}
++
++/**
++ * kdbus_policy_set() - set a connection's policy rules
++ * @db:				The policy database
++ * @items:			A list of kdbus_item elements that contain both
++ *				names and access rules to set.
++ * @items_size:			The total size of the items.
++ * @max_policies:		The maximum number of policy entries to allow.
++ *				Pass 0 for no limit.
++ * @allow_wildcards:		Boolean value whether wildcard entries (such
++ *				ending on '.*') should be allowed.
++ * @owner:			The owner of the new policy items.
++ *
++ * This function sets a new set of policies for a given owner. The names and
++ * access rules are gathered by walking the list of items passed in as
++ * argument. An item of type KDBUS_ITEM_NAME is expected before any number of
++ * KDBUS_ITEM_POLICY_ACCESS items. If there are more repetitions of this
++ * pattern than denoted in @max_policies, -EINVAL is returned.
++ *
++ * In order to allow atomic replacement of rules, the function first removes
++ * all entries that have been created for the given owner previously.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int kdbus_policy_set(struct kdbus_policy_db *db,
++		     const struct kdbus_item *items,
++		     size_t items_size,
++		     size_t max_policies,
++		     bool allow_wildcards,
++		     const void *owner)
++{
++	struct kdbus_policy_db_entry_access *a;
++	struct kdbus_policy_db_entry *e, *p;
++	const struct kdbus_item *item;
++	struct hlist_node *tmp;
++	HLIST_HEAD(entries);
++	HLIST_HEAD(restore);
++	size_t count = 0;
++	int i, ret = 0;
++	u32 hash;
++
++	if (items_size > KDBUS_POLICY_MAX_SIZE)
++		return -E2BIG;
++
++	/* Walk the list of items and look for new policies */
++	e = NULL;
++	KDBUS_ITEMS_FOREACH(item, items, items_size) {
++		switch (item->type) {
++		case KDBUS_ITEM_NAME: {
++			size_t len;
++
++			if (max_policies && ++count > max_policies) {
++				ret = -E2BIG;
++				goto exit;
++			}
++
++			if (!kdbus_name_is_valid(item->str, true)) {
++				ret = -EINVAL;
++				goto exit;
++			}
++
++			e = kzalloc(sizeof(*e), GFP_KERNEL);
++			if (!e) {
++				ret = -ENOMEM;
++				goto exit;
++			}
++
++			INIT_LIST_HEAD(&e->access_list);
++			e->owner = owner;
++			hlist_add_head(&e->hentry, &entries);
++
++			e->name = kstrdup(item->str, GFP_KERNEL);
++			if (!e->name) {
++				ret = -ENOMEM;
++				goto exit;
++			}
++
++			/*
++			 * If a supplied name ends with an '.*', cut off that
++			 * part, only store anything before it, and mark the
++			 * entry as wildcard.
++			 */
++			len = strlen(e->name);
++			if (len > 2 &&
++			    e->name[len - 3] == '.' &&
++			    e->name[len - 2] == '*') {
++				if (!allow_wildcards) {
++					ret = -EINVAL;
++					goto exit;
++				}
++
++				e->name[len - 3] = '\0';
++				e->wildcard = true;
++			}
++
++			break;
++		}
++
++		case KDBUS_ITEM_POLICY_ACCESS:
++			if (!e) {
++				ret = -EINVAL;
++				goto exit;
++			}
++
++			a = kdbus_policy_make_access(&item->policy_access);
++			if (IS_ERR(a)) {
++				ret = PTR_ERR(a);
++				goto exit;
++			}
++
++			list_add_tail(&a->list, &e->access_list);
++			break;
++		}
++	}
++
++	down_write(&db->entries_rwlock);
++
++	/* remember previous entries to restore in case of failure */
++	hash_for_each_safe(db->entries_hash, i, tmp, e, hentry)
++		if (e->owner == owner) {
++			hash_del(&e->hentry);
++			hlist_add_head(&e->hentry, &restore);
++		}
++
++	hlist_for_each_entry_safe(e, tmp, &entries, hentry) {
++		/* prevent duplicates */
++		hash = kdbus_str_hash(e->name);
++		hash_for_each_possible(db->entries_hash, p, hentry, hash)
++			if (strcmp(e->name, p->name) == 0 &&
++			    e->wildcard == p->wildcard) {
++				ret = -EEXIST;
++				goto restore;
++			}
++
++		hlist_del(&e->hentry);
++		hash_add(db->entries_hash, &e->hentry, hash);
++	}
++
++	/* purge all cache-entries produced by previous rules */
++	__kdbus_policy_remove_owner_cache(db, owner);
++
++restore:
++	/* if we failed, flush all entries we added so far, but keep cache */
++	if (ret < 0)
++		__kdbus_policy_remove_owner(db, owner);
++
++	/* if we failed, restore entries, otherwise release them */
++	hlist_for_each_entry_safe(e, tmp, &restore, hentry) {
++		hlist_del(&e->hentry);
++		if (ret < 0) {
++			hash = kdbus_str_hash(e->name);
++			hash_add(db->entries_hash, &e->hentry, hash);
++		} else {
++			kdbus_policy_entry_free(e);
++		}
++	}
++
++	up_write(&db->entries_rwlock);
++
++exit:
++	hlist_for_each_entry_safe(e, tmp, &entries, hentry) {
++		hlist_del(&e->hentry);
++		kdbus_policy_entry_free(e);
++	}
++
++	return ret;
++}
+diff --git a/ipc/kdbus/policy.h b/ipc/kdbus/policy.h
+new file mode 100644
+index 000000000000..6eb7d77b54b0
+--- /dev/null
++++ b/ipc/kdbus/policy.h
+@@ -0,0 +1,61 @@
++/*
++ * Copyright (C) 2013-2014 Kay Sievers
++ * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
++ * Copyright (C) 2013-2014 Daniel Mack <daniel@zonque.org>
++ * Copyright (C) 2013-2014 David Herrmann <dh.herrmann@gmail.com>
++ * Copyright (C) 2013-2014 Linux Foundation
++ *
++ * kdbus is free software; you can redistribute it and/or modify it under
++ * the terms of the GNU Lesser General Public License as published by the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#ifndef __KDBUS_POLICY_H
++#define __KDBUS_POLICY_H
++
++#include <linux/hashtable.h>
++#include <linux/mutex.h>
++#include <linux/rwsem.h>
++
++struct kdbus_conn;
++struct kdbus_item;
++
++/**
++ * struct kdbus_policy_db - policy database
++ * @entries_hash:	Hashtable of entries
++ * @talk_access_hash:	Hashtable of send access elements
++ * @entries_lock:	Mutex to protect the database's access entries
++ * @cache_lock:		Mutex to protect the database's cache
++ */
++struct kdbus_policy_db {
++	DECLARE_HASHTABLE(entries_hash, 6);
++	DECLARE_HASHTABLE(talk_access_hash, 6);
++	struct rw_semaphore entries_rwlock;
++	struct mutex cache_lock;
 +};
 +
-+/**
-+ * enum kdbus_policy_access_flags - mode flags
-+ * @KDBUS_POLICY_OWN:		Allow to own a well-known name
-+ *				Implies KDBUS_POLICY_TALK and KDBUS_POLICY_SEE
-+ * @KDBUS_POLICY_TALK:		Allow communication to a well-known name
-+ *				Implies KDBUS_POLICY_SEE
-+ * @KDBUS_POLICY_SEE:		Allow to see a well-known name
-+ */
-+enum kdbus_policy_type {
-+	KDBUS_POLICY_SEE	=3D 0,
-+	KDBUS_POLICY_TALK,
-+	KDBUS_POLICY_OWN,
-+};
++void kdbus_policy_db_init(struct kdbus_policy_db *db);
++void kdbus_policy_db_clear(struct kdbus_policy_db *db);
 +
-+/**
-+ * enum kdbus_hello_flags - flags for struct kdbus_cmd_hello
-+ * @KDBUS_HELLO_ACCEPT_FD:	The connection allows the reception of
-+ *				any passed file descriptors
-+ * @KDBUS_HELLO_ACTIVATOR:	Special-purpose connection which registers
-+ *				a well-know name for a process to be started
-+ *				when traffic arrives
-+ * @KDBUS_HELLO_POLICY_HOLDER:	Special-purpose connection which regist=
-ers
-+ *				policy entries for a name. The provided name
-+ *				is not activated and not registered with the
-+ *				name database, it only allows unprivileged
-+ *				connections to aquire a name, talk or discover
-+ *				a service
-+ * @KDBUS_HELLO_MONITOR:	Special-purpose connection to monitor
-+ *				bus traffic
-+ */
-+enum kdbus_hello_flags {
-+	KDBUS_HELLO_ACCEPT_FD		=3D  1ULL <<  0,
-+	KDBUS_HELLO_ACTIVATOR		=3D  1ULL <<  1,
-+	KDBUS_HELLO_POLICY_HOLDER	=3D  1ULL <<  2,
-+	KDBUS_HELLO_MONITOR		=3D  1ULL <<  3,
-+};
++int kdbus_policy_check_see_access_unlocked(struct kdbus_policy_db *db,
++					   const struct cred *cred,
++					   const char *name);
++int kdbus_policy_check_talk_access(struct kdbus_policy_db *db,
++				   struct kdbus_conn *conn_src,
++				   struct kdbus_conn *conn_dst);
++int kdbus_policy_check_own_access(struct kdbus_policy_db *db,
++				  const struct cred *cred,
++				  const char *name);
++void kdbus_policy_purge_cache(struct kdbus_policy_db *db,
++			      const struct kdbus_conn *conn);
++void kdbus_policy_remove_owner(struct kdbus_policy_db *db,
++			       const void *owner);
++int kdbus_policy_set(struct kdbus_policy_db *db,
++		     const struct kdbus_item *items,
++		     size_t items_size,
++		     size_t max_policies,
++		     bool allow_wildcards,
++		     const void *owner);
 +
-+/**
-+ * enum kdbus_attach_flags - flags for metadata attachments
-+ * @KDBUS_ATTACH_TIMESTAMP:		Timestamp
-+ * @KDBUS_ATTACH_CREDS:			Credentials
-+ * @KDBUS_ATTACH_AUXGROUPS:		Auxiliary groups
-+ * @KDBUS_ATTACH_NAMES:			Well-known names
-+ * @KDBUS_ATTACH_TID_COMM:		The "comm" process identifier of the TID
-+ * @KDBUS_ATTACH_PID_COMM:		The "comm" process identifier of the PID
-+ * @KDBUS_ATTACH_EXE:			The path of the executable
-+ * @KDBUS_ATTACH_CMDLINE:		The process command line
-+ * @KDBUS_ATTACH_CGROUP:		The croup membership
-+ * @KDBUS_ATTACH_CAPS:			The process capabilities
-+ * @KDBUS_ATTACH_SECLABEL:		The security label
-+ * @KDBUS_ATTACH_AUDIT:			The audit IDs
-+ * @KDBUS_ATTACH_CONN_DESCRIPTION:	The human-readable connection name
-+ * @_KDBUS_ATTACH_ALL:			All of the above
-+ * @_KDBUS_ATTACH_ANY:			Wildcard match to enable any kind of
-+ *					metatdata.
-+ */
-+enum kdbus_attach_flags {
-+	KDBUS_ATTACH_TIMESTAMP		=3D  1ULL <<  0,
-+	KDBUS_ATTACH_CREDS		=3D  1ULL <<  1,
-+	KDBUS_ATTACH_AUXGROUPS		=3D  1ULL <<  2,
-+	KDBUS_ATTACH_NAMES		=3D  1ULL <<  3,
-+	KDBUS_ATTACH_TID_COMM		=3D  1ULL <<  4,
-+	KDBUS_ATTACH_PID_COMM		=3D  1ULL <<  5,
-+	KDBUS_ATTACH_EXE		=3D  1ULL <<  6,
-+	KDBUS_ATTACH_CMDLINE		=3D  1ULL <<  7,
-+	KDBUS_ATTACH_CGROUP		=3D  1ULL <<  8,
-+	KDBUS_ATTACH_CAPS		=3D  1ULL <<  9,
-+	KDBUS_ATTACH_SECLABEL		=3D  1ULL << 10,
-+	KDBUS_ATTACH_AUDIT		=3D  1ULL << 11,
-+	KDBUS_ATTACH_CONN_DESCRIPTION	=3D  1ULL << 12,
-+	_KDBUS_ATTACH_ALL		=3D  (1ULL << 13) - 1,
-+	_KDBUS_ATTACH_ANY		=3D  ~0ULL
-+};
-+
-+/**
-+ * struct kdbus_cmd_hello - struct to say hello to kdbus
-+ * @size:		The total size of the structure
-+ * @flags:		Connection flags (KDBUS_HELLO_*), userspace =E2=86=92 kern=
-el
-+ * @kernel_flags:	Supported connection flags, kernel =E2=86=92 userspa=
-ce
-+ * @attach_flags_send:	Mask of metadata to attach to each message sent
-+ *			off by this connection (KDBUS_ATTACH_*)
-+ * @attach_flags_recv:	Mask of metadata to attach to each message rece=
-ieved
-+ *			by the new connection (KDBUS_ATTACH_*)
-+ * @bus_flags:		The flags field copied verbatim from the original
-+ *			KDBUS_CMD_BUS_MAKE ioctl. It's intended to be useful
-+ *			to do negotiation of features of the payload that is
-+ *			transferred (kernel =E2=86=92 userspace)
-+ * @id:			The ID of this connection (kernel =E2=86=92 userspace)
-+ * @pool_size:		Size of the connection's buffer where the received
-+ *			messages are placed
-+ * @bloom:		The bloom properties of the bus, specified
-+ *			by the bus creator (kernel =E2=86=92 userspace)
-+ * @id128:		Unique 128-bit ID of the bus (kernel =E2=86=92 userspace)
-+ * @items:		A list of items
-+ *
-+ * This struct is used with the KDBUS_CMD_HELLO ioctl.
-+ */
-+struct kdbus_cmd_hello {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	__u64 attach_flags_send;
-+	__u64 attach_flags_recv;
-+	__u64 bus_flags;
-+	__u64 id;
-+	__u64 pool_size;
-+	struct kdbus_bloom_parameter bloom;
-+	__u8 id128[16];
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * enum kdbus_make_flags - Flags for KDBUS_CMD_{BUS,EP,NS}_MAKE
-+ * @KDBUS_MAKE_ACCESS_GROUP:	Make the device node group-accessible
-+ * @KDBUS_MAKE_ACCESS_WORLD:	Make the device node world-accessible
-+ */
-+enum kdbus_make_flags {
-+	KDBUS_MAKE_ACCESS_GROUP		=3D 1ULL <<  0,
-+	KDBUS_MAKE_ACCESS_WORLD		=3D 1ULL <<  1,
-+};
-+
-+/**
-+ * struct kdbus_cmd_make - struct to make a bus, an endpoint or a doma=
-in
-+ * @size:		The total size of the struct
-+ * @flags:		Properties for the bus/ep/domain to create,
-+ *			userspace =E2=86=92 kernel
-+ * @kernel_flags:	Supported flags for the used command, kernel =E2=86=92=
- userspace
-+ * @items:		Items describing details
-+ *
-+ * This structure is used with the KDBUS_CMD_BUS_MAKE and
-+ * KDBUS_CMD_ENDPOINT_MAKE ioctls.
-+ */
-+struct kdbus_cmd_make {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * enum kdbus_name_flags - properties of a well-known name
-+ * @KDBUS_NAME_REPLACE_EXISTING:	Try to replace name of other connecti=
-ons
-+ * @KDBUS_NAME_ALLOW_REPLACEMENT:	Allow the replacement of the name
-+ * @KDBUS_NAME_QUEUE:			Name should be queued if busy
-+ * @KDBUS_NAME_IN_QUEUE:		Name is queued
-+ * @KDBUS_NAME_ACTIVATOR:		Name is owned by a activator connection
-+ */
-+enum kdbus_name_flags {
-+	KDBUS_NAME_REPLACE_EXISTING	=3D 1ULL <<  0,
-+	KDBUS_NAME_ALLOW_REPLACEMENT	=3D 1ULL <<  1,
-+	KDBUS_NAME_QUEUE		=3D 1ULL <<  2,
-+	KDBUS_NAME_IN_QUEUE		=3D 1ULL <<  3,
-+	KDBUS_NAME_ACTIVATOR		=3D 1ULL <<  4,
-+};
-+
-+/**
-+ * struct kdbus_cmd_name - struct to describe a well-known name
-+ * @size:		The total size of the struct
-+ * @flags:		Flags for a name entry (KDBUS_NAME_*),
-+ *			userspace =E2=86=92 kernel, kernel =E2=86=92 userspace
-+ * @kernel_flags:	Supported flags for a name entry, kernel =E2=86=92 u=
-serspace
-+ * @items:		Item list, containing the well-known name as
-+ *			KDBUS_ITEM_NAME
-+ *
-+ * This structure is used with the KDBUS_CMD_NAME_ACQUIRE ioctl.
-+ */
-+struct kdbus_cmd_name {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * struct kdbus_name_info - struct to describe a well-known name
-+ * @size:		The total size of the struct
-+ * @conn_flags:		The flags of the owning connection (KDBUS_HELLO_*)
-+ * @owner_id:		The current owner of the name
-+ * @items:		Item list, containing the well-known name as
-+ *			KDBUS_ITEM_OWNED_NAME
-+ *
-+ * This structure is used as return struct for the KDBUS_CMD_NAME_LIST=
- ioctl.
-+ */
-+struct kdbus_name_info {
-+	__u64 size;
-+	__u64 conn_flags;
-+	__u64 owner_id;
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * enum kdbus_name_list_flags - what to include into the returned list
-+ * @KDBUS_NAME_LIST_UNIQUE:	All active connections
-+ * @KDBUS_NAME_LIST_NAMES:	All known well-known names
-+ * @KDBUS_NAME_LIST_ACTIVATORS:	All activator connections
-+ * @KDBUS_NAME_LIST_QUEUED:	All queued-up names
-+ */
-+enum kdbus_name_list_flags {
-+	KDBUS_NAME_LIST_UNIQUE		=3D 1ULL <<  0,
-+	KDBUS_NAME_LIST_NAMES		=3D 1ULL <<  1,
-+	KDBUS_NAME_LIST_ACTIVATORS	=3D 1ULL <<  2,
-+	KDBUS_NAME_LIST_QUEUED		=3D 1ULL <<  3,
-+};
-+
-+/**
-+ * struct kdbus_cmd_name_list - request a list of name entries
-+ * @flags:		Flags for the query (KDBUS_NAME_LIST_*),
-+ *			userspace =E2=86=92 kernel
-+ * @kernel_flags:	Supported flags for queries, kernel =E2=86=92 usersp=
-ace
-+ * @offset:		The returned offset in the caller's pool buffer.
-+ *			The user must use KDBUS_CMD_FREE to free the
-+ *			allocated memory.
-+ *
-+ * This structure is used with the KDBUS_CMD_NAME_LIST ioctl.
-+ */
-+struct kdbus_cmd_name_list {
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	__u64 offset;
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * struct kdbus_name_list - information returned by KDBUS_CMD_NAME_LIS=
-T
-+ * @size:		The total size of the structure
-+ * @names:		A list of names
-+ *
-+ * Note that the user is responsible for freeing the allocated memory =
-with
-+ * the KDBUS_CMD_FREE ioctl.
-+ */
-+struct kdbus_name_list {
-+	__u64 size;
-+	struct kdbus_name_info names[0];
-+};
-+
-+/**
-+ * struct kdbus_cmd_info - struct used for KDBUS_CMD_CONN_INFO ioctl
-+ * @size:		The total size of the struct
-+ * @flags:		KDBUS_ATTACH_* flags, userspace =E2=86=92 kernel
-+ * @kernel_flags:	Supported KDBUS_ATTACH_* flags, kernel =E2=86=92 use=
-rspace
-+ * @id:			The 64-bit ID of the connection. If set to zero, passing
-+ *			@name is required. kdbus will look up the name to
-+ *			determine the ID in this case.
-+ * @offset:		Returned offset in the caller's pool buffer where the
-+ *			kdbus_info struct result is stored. The user must
-+ *			use KDBUS_CMD_FREE to free the allocated memory.
-+ * @items:		The optional item list, containing the
-+ *			well-known name to look up as a KDBUS_ITEM_NAME.
-+ *			Only needed in case @id is zero.
-+ *
-+ * On success, the KDBUS_CMD_CONN_INFO ioctl will return 0 and @offset=
- will
-+ * tell the user the offset in the connection pool buffer at which to =
-find the
-+ * result in a struct kdbus_info.
-+ */
-+struct kdbus_cmd_info {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	__u64 id;
-+	__u64 offset;
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * struct kdbus_info - information returned by KDBUS_CMD_*_INFO
-+ * @size:		The total size of the struct
-+ * @id:			The connection's or bus' 64-bit ID
-+ * @flags:		The connection's or bus' flags
-+ * @items:		A list of struct kdbus_item
-+ *
-+ * Note that the user is responsible for freeing the allocated memory =
-with
-+ * the KDBUS_CMD_FREE ioctl.
-+ */
-+struct kdbus_info {
-+	__u64 size;
-+	__u64 id;
-+	__u64 flags;
-+	struct kdbus_item items[0];
-+};
-+
-+/**
-+ * struct kdbus_cmd_update - update flags of a connection
-+ * @size:		The total size of the struct
-+ * @flags:		Flags for the update command, userspace =E2=86=92 kernel
-+ * @kernel_flags:	Supported flags for this command, kernel =E2=86=92 u=
-serspace
-+ * @items:		A list of struct kdbus_item
-+ *
-+ * This struct is used with the KDBUS_CMD_CONN_UPDATE ioctl.
-+ */
-+struct kdbus_cmd_update {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * enum kdbus_cmd_match_flags - flags to control the KDBUS_CMD_MATCH_A=
-DD ioctl
-+ * @KDBUS_MATCH_REPLACE:	If entries with the supplied cookie already
-+ *				exists, remove them before installing the new
-+ *				matches.
-+ */
-+enum kdbus_cmd_match_flags {
-+	KDBUS_MATCH_REPLACE	=3D 1ULL <<  0,
-+};
-+
-+/**
-+ * struct kdbus_cmd_match - struct to add or remove matches
-+ * @size:		The total size of the struct
-+ * @cookie:		Userspace supplied cookie. When removing, the cookie
-+ *			identifies the match to remove
-+ * @flags:		Flags for match command (KDBUS_MATCH_*),
-+ *			userspace =E2=86=92 kernel
-+ * @kernel_flags:	Supported flags of the used command, kernel =E2=86=92=
- userspace
-+ * @items:		A list of items for additional information
-+ *
-+ * This structure is used with the KDBUS_CMD_MATCH_ADD and
-+ * KDBUS_CMD_MATCH_REMOVE ioctl.
-+ */
-+struct kdbus_cmd_match {
-+	__u64 size;
-+	__u64 cookie;
-+	__u64 flags;
-+	__u64 kernel_flags;
-+	struct kdbus_item items[0];
-+} __attribute__((aligned(8)));
-+
-+/**
-+ * Ioctl API
-+ * KDBUS_CMD_BUS_MAKE:		After opening the "control" device node, this
-+ *				command creates a new bus with the specified
-+ *				name. The bus is immediately shut down and
-+ *				cleaned up when the opened "control" device node
-+ *				is closed.
-+ * KDBUS_CMD_ENDPOINT_MAKE:	Creates a new named special endpoint to ta=
-lk to
-+ *				the bus. Such endpoints usually carry a more
-+ *				restrictive policy and grant restricted access
-+ *				to specific applications.
-+ * KDBUS_CMD_HELLO:		By opening the bus device node a connection is
-+ *				created. After a HELLO the opened connection
-+ *				becomes an active peer on the bus.
-+ * KDBUS_CMD_BYEBYE:		Disconnect a connection. If there are no
-+ *				messages queued up in the connection's pool,
-+ *				the call succeeds, and the handle is rendered
-+ *				unusable. Otherwise, -EBUSY is returned without
-+ *				any further side-effects.
-+ * KDBUS_CMD_MSG_SEND:		Send a message and pass data from userspace to
-+ *				the kernel.
-+ * KDBUS_CMD_MSG_RECV:		Receive a message from the kernel which is
-+ *				placed in the receiver's pool.
-+ * KDBUS_CMD_MSG_CANCEL:	Cancel a pending request of a message that
-+ *				blocks while waiting for a reply. The parameter
-+ *				denotes the cookie of the message in flight.
-+ * KDBUS_CMD_FREE:		Release the allocated memory in the receiver's
-+ *				pool.
-+ * KDBUS_CMD_NAME_ACQUIRE:	Request a well-known bus name to associate =
-with
-+ *				the connection. Well-known names are used to
-+ *				address a peer on the bus.
-+ * KDBUS_CMD_NAME_RELEASE:	Release a well-known name the connection
-+ *				currently owns.
-+ * KDBUS_CMD_NAME_LIST:		Retrieve the list of all currently registered
-+ *				well-known and unique names.
-+ * KDBUS_CMD_CONN_INFO:		Retrieve credentials and properties of the
-+ *				initial creator of the connection. The data was
-+ *				stored at registration time and does not
-+ *				necessarily represent the connected process or
-+ *				the actual state of the process.
-+ * KDBUS_CMD_CONN_UPDATE:	Update the properties of a connection. Used =
-to
-+ *				update the metadata subscription mask and
-+ *				policy.
-+ * KDBUS_CMD_BUS_CREATOR_INFO:	Retrieve information of the creator of =
-the bus
-+ *				a connection is attached to.
-+ * KDBUS_CMD_ENDPOINT_UPDATE:	Update the properties of a custom enpoin=
-t. Used
-+ *				to update the policy.
-+ * KDBUS_CMD_MATCH_ADD:	Install a match which broadcast messages shoul=
-d
-+ *				be delivered to the connection.
-+ * KDBUS_CMD_MATCH_REMOVE:	Remove a current match for broadcast messag=
-es.
-+ */
-+#define KDBUS_CMD_BUS_MAKE		_IOW(KDBUS_IOCTL_MAGIC, 0x00,	\
-+					     struct kdbus_cmd_make)
-+#define KDBUS_CMD_ENDPOINT_MAKE		_IOW(KDBUS_IOCTL_MAGIC, 0x10,	\
-+					     struct kdbus_cmd_make)
-+
-+#define KDBUS_CMD_HELLO			_IOWR(KDBUS_IOCTL_MAGIC, 0x20,	\
-+					      struct kdbus_cmd_hello)
-+#define KDBUS_CMD_BYEBYE		_IO(KDBUS_IOCTL_MAGIC, 0x21)	\
-+
-+#define KDBUS_CMD_MSG_SEND		_IOWR(KDBUS_IOCTL_MAGIC, 0x30,	\
-+					      struct kdbus_msg)
-+#define KDBUS_CMD_MSG_RECV		_IOWR(KDBUS_IOCTL_MAGIC, 0x31,	\
-+					      struct kdbus_cmd_recv)
-+#define KDBUS_CMD_MSG_CANCEL		_IOW(KDBUS_IOCTL_MAGIC, 0x32,	\
-+					     struct kdbus_cmd_cancel)
-+#define KDBUS_CMD_FREE			_IOW(KDBUS_IOCTL_MAGIC, 0x33,	\
-+					     struct kdbus_cmd_free)
-+
-+#define KDBUS_CMD_NAME_ACQUIRE		_IOWR(KDBUS_IOCTL_MAGIC, 0x40,	\
-+					      struct kdbus_cmd_name)
-+#define KDBUS_CMD_NAME_RELEASE		_IOW(KDBUS_IOCTL_MAGIC, 0x41,	\
-+					     struct kdbus_cmd_name)
-+#define KDBUS_CMD_NAME_LIST		_IOWR(KDBUS_IOCTL_MAGIC, 0x42,	\
-+					      struct kdbus_cmd_name_list)
-+
-+#define KDBUS_CMD_CONN_INFO		_IOWR(KDBUS_IOCTL_MAGIC, 0x50,	\
-+					      struct kdbus_cmd_info)
-+#define KDBUS_CMD_CONN_UPDATE		_IOW(KDBUS_IOCTL_MAGIC, 0x51,	\
-+					     struct kdbus_cmd_update)
-+#define KDBUS_CMD_BUS_CREATOR_INFO	_IOWR(KDBUS_IOCTL_MAGIC, 0x52,	\
-+					      struct kdbus_cmd_info)
-+
-+#define KDBUS_CMD_ENDPOINT_UPDATE	_IOW(KDBUS_IOCTL_MAGIC, 0x61,	\
-+					     struct kdbus_cmd_update)
-+
-+#define KDBUS_CMD_MATCH_ADD		_IOW(KDBUS_IOCTL_MAGIC, 0x70,	\
-+					     struct kdbus_cmd_match)
-+#define KDBUS_CMD_MATCH_REMOVE		_IOW(KDBUS_IOCTL_MAGIC, 0x71,	\
-+					     struct kdbus_cmd_match)
-+
-+#endif /* _KDBUS_UAPI_H_ */
---=20
++#endif
+-- 
 2.1.3
