@@ -1,34 +1,43 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: kdbus: add node and filesystem implementation
-Date: Fri, 21 Nov 2014 09:55:38 -0800
-Message-ID: <20141121175538.GA27698@kroah.com>
-References: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
- <1416546149-24799-7-git-send-email-gregkh@linuxfoundation.org>
- <546F606D.40407@oracle.com>
- <CANq1E4QkXv9Ak6eT+NZPsy+5nTGKE8oypLvdr97cFcvmtigS_A@mail.gmail.com>
- <20141121165638.GA24866@kroah.com>
- <546F7077.4010200@oracle.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: RFC: renameat(): Add a RENAME_REMOVE flag to unlink hardlinks
+Date: Fri, 21 Nov 2014 10:09:21 -0800
+Message-ID: <CALCETrXvVxvG+s39v+NMdvfkeb8YjbYjb6UXgDFg5ifYOjeKsA@mail.gmail.com>
+References: <546F4981.8080907@draigBrady.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <546F7077.4010200-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <546F4981.8080907-V8g9lnOeT5ydJdNcDFJN0w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
+To: =?UTF-8?Q?P=C3=A1draig_Brady?= <P@draigbrady.com>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 21, 2014 at 12:03:51PM -0500, Sasha Levin wrote:
-> On 11/21/2014 11:56 AM, Greg Kroah-Hartman wrote:
-> >>> Maybe it's worth basing your git tree on top of Al's rather than a random
-> >>> > > -rc, since it's now a filesystem?
-> >> > 
-> >> > Sure, sounds good.
-> > No, I'll keep it as is, we can handle the merge issues later when it
-> > hits Linus's tree, this makes it easier for me and others to test it
-> > out properly.
-> 
-> It should be hitting -next, not Linus's tree. This is why we have an
-> integration tree, no?
+On Fri, Nov 21, 2014 at 6:17 AM, P=C3=A1draig Brady <P@draigbrady.com> =
+wrote:
+> If 'a' and 'b' are hardlinks, then the command `mv a b & mv b a`
+> can result in both being removed as mv needs to emulate the
+> move with an unlink of the source file.  This can only be done
+> without races in the kernel and so mv was recently changed
+> to not allow this operation at all.  mv could safely reintroduce
+> this feature by leveraging a new flag for renameat() for which
+> an illustrative/untested patch is attached.
 
-Yes, it will hit -next, and the merge issue can be resolved there.
+ISTM the issue is that rename(2) does nothing if the source and dest
+are hardlinks to each other.  Is that intentional?  I don't see that
+behavior as required in the POSIX rename docs.
+
+If we indeed need to keep that behavior around for legacy reasons,
+then can we at least give RENAME_REMOVE a better name?
+
+--Andy
+
+>
+> thanks,
+> P=C3=A1draig.
+
+
+
+--=20
+Andy Lutomirski
+AMA Capital Management, LLC
