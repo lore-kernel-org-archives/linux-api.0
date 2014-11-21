@@ -1,131 +1,58 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v3 7/7] crypto: AF_ALG: document the user space interface
-Date: Fri, 21 Nov 2014 06:34:12 +0100
-Message-ID: <1981402.FQkbiEN1F6@tachyon.chronox.de>
+Subject: [PATCH v3 6/7] crypto: AF_ALG: enable RNG interface compilation
+Date: Fri, 21 Nov 2014 06:33:38 +0100
+Message-ID: <1754567.v4XMCvsjCI@tachyon.chronox.de>
 References: <4088013.2O8zCP0xXa@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <4088013.2O8zCP0xXa@tachyon.chronox.de>
-Sender: linux-crypto-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The extension of the user space interface documentation covers all
-aspects of the patchset, including:
-
-        * AEAD cipher interface
-
-        * RNG cipher interface
+Enable compilation of the RNG AF_ALG support and provide a Kconfig
+option to compile the RNG AF_ALG support.
 
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- Documentation/crypto/crypto-API-userspace.txt | 70 ++++++++++++++++++++++++++-
- 1 file changed, 68 insertions(+), 2 deletions(-)
+ crypto/Kconfig  | 9 +++++++++
+ crypto/Makefile | 1 +
+ 2 files changed, 10 insertions(+)
 
-diff --git a/Documentation/crypto/crypto-API-userspace.txt b/Documentation/crypto/crypto-API-userspace.txt
-index ac619cd..0646034 100644
---- a/Documentation/crypto/crypto-API-userspace.txt
-+++ b/Documentation/crypto/crypto-API-userspace.txt
-@@ -30,8 +30,9 @@ ciphers are accessible:
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 87bbc9c..e127323 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1505,6 +1505,15 @@ config CRYPTO_USER_API_SKCIPHER
+ 	  This option enables the user-spaces interface for symmetric
+ 	  key cipher algorithms.
  
- 	* Symmetric ciphers
++config CRYPTO_USER_API_RNG
++	tristate "User-space interface for random number generator algorithms"
++	depends on NET
++	select CRYPTO_RNG
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for random
++	  number generator algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
  
--Note, AEAD ciphers are currently not supported via the symmetric cipher
--interface.
-+	* AEAD ciphers
-+
-+	* Random number generators
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 1445b91..ba19465 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -99,6 +99,7 @@ obj-$(CONFIG_CRYPTO_GHASH) += ghash-generic.o
+ obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
+ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
++obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
  
- The interface is provided via Netlink using the type AF_ALG. In addition, the
- setsockopt option type is SOL_ALG. In case the user space header files do not
-@@ -85,6 +86,7 @@ If a consumer on the other hand wants to maintain the plaintext and the
- ciphertext in different memory locations, all a consumer needs to do is to
- provide different memory pointers for the encryption and decryption operation.
- 
-+
- Message digest API
- ==================
- 
-@@ -169,6 +171,69 @@ as large as to hold all blocks of the encrypted or decrypted data. If the output
- data size is smaller, only as many blocks are returned that fit into that
- output buffer size.
- 
-+
-+AEAD cipher API
-+===============
-+
-+The operation is identical to the symmetric cipher API. However, an AEAD
-+cipher requires additional information, such as the authentication tag and
-+the associated data. This data is to be supplied in addition to the normal
-+symmetric cipher data like key and IV discussed for the symmetric ciphers.
-+
-+During initialization, the struct sockaddr data structure must be filled as
-+follows:
-+
-+struct sockaddr_alg sa = {
-+	.salg_family = AF_ALG,
-+	.salg_type = "aead", /* this selects the AEAD cipher */
-+	.salg_name = "gcm(aes)" /* this is the cipher name */
-+};
-+
-+The discussion about the sendmsg given for the symmetric cipher applies for
-+the AEAD interface as well. In addition to the plaintext / ciphertext data and
-+the IV, the following data must be supplied with the cmsghdr data structure:
-+
-+	* The AEAD authentication tag size is set with the flag
-+	  ALG_SET_AEAD_AUTHSIZE. The integer value of the authentication tag
-+	  size must be provided in the data field of the cmsghdr structure.
-+
-+	* The AEAD associated data is set with the flag ALG_SET_AEAD_ASSOC.
-+	  The data is set the same way as for the IV by supplying the associated
-+	  data in the data field of the cmsghdr structure.
-+
-+The authentication tag itself, however, is handled in a different way to comply
-+with the specifics of the kernel crypto API and to avoid copying the
-+authentication tag around in memory. The authentication tag is added to the
-+memory that immediately follows the ciphertext.
-+
-+	* When performing an encryption operation, the resulting ciphertext
-+	  buffer will hold the tag as follows: ciphertext || tag.  The consumer
-+	  must ensure that the ciphertext buffer is large enough to hold the
-+	  ciphertext together with the tag of the size set by the consumer using
-+	  the ALG_SET_AEAD_AUTHSIZE cmsghdr flag as discussed above.
-+
-+	* When performing a decryption operation, the initial ciphertext buffer
-+	  must hold the tag as follows: ciphertext || tag. The resulting
-+	  plaintext has the same size as the ciphertext.
-+
-+Note: Authentication errors during decryption are marked with a failing
-+read/recv system call whose errno is set to EBADMSG.
-+
-+
-+Random number generator API
-+===========================
-+
-+Compared to the symmetric ciphers, the random number generator API is simple:
-+it only supports the system calls of read/recv.
-+
-+The consumer must observe the returned size of the read/recv system calls and
-+potentially make subsequent calls if the returned length of random numbers is
-+smaller than the expected length.
-+
-+When initializing a random number generator instance, the AF_ALG interface
-+handler ensures that it is appropriately seeded.
-+
-+
- Setsockopt interface
- ====================
- 
-@@ -190,6 +255,7 @@ optname:
- 
- 		- the hash cipher type (keyed message digests)
- 
-+
- User space API example
- ======================
- 
+ #
+ # generic algorithms and the async_tx api
 -- 
 2.1.0
