@@ -1,91 +1,101 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v3 0/7] crypto: AF_ALG: add AEAD and RNG support
-Date: Fri, 21 Nov 2014 06:29:36 +0100
-Message-ID: <4088013.2O8zCP0xXa@tachyon.chronox.de>
+Subject: [PATCH v3 1/7] crypto: AF_ALG: add user space interface for AEAD
+Date: Fri, 21 Nov 2014 06:30:18 +0100
+Message-ID: <5694690.RURGUoE58b@tachyon.chronox.de>
+References: <4088013.2O8zCP0xXa@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4088013.2O8zCP0xXa@tachyon.chronox.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+AEAD requires the following data in addition to normal symmetric
+ciphers:
 
-This patch set adds AEAD and RNG support to the AF_ALG interface
-exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
-support, all cipher types the kernel crypto API allows access to are
-now accessible from userspace.
+        * Associated authentication data of arbitrary length and
+	  length
 
-The RNG support is stand-alone.
+        * Authentication tag for decryption and length
 
-The AEAD implementation is added to algif_skcipher.c to prevent
-re-implementation of the memory moving logic.
+        * Length of authentication tag for encryption
 
-The extension for the AEAD support can be summarized with the following
-types of changes:
+The memory structure for the data received by the kernel via sendmsg
+must follow this structure:
 
-        * select the correct crypto API functions (either the ablkcipher
-          or the aead functions)
+	* Symmetric encryption input:  plaintext
+	* Symmetric encryption output: ciphertext
+	* AEAD encryption input:  assoc data || plaintext
+	* AEAD encryption output: cipherntext || auth tag
+	* Symmetric decryption input:  ciphertext
+	* Symmetric decryption output: plaintext
+	* AEAD decryption input:  assoc data || ciphertext || authtag
+	* AEAD decryption output: plaintext
 
-        * apply the additional data needed for AEAD at the right time
-          (associated data, authentication tag) -- this includes the addition
-          of user space interfaces to allow setting this data.
+Therefore, in addition to submitting the data, AEAD requires that
+the associated data length and the tag length must be communicated.
+The plaintext/ciphertext length can be derived from the other two size
+fields. Therefore,  This patch adds setting the associated data length
+and tag length as part of the sendmsg communication.
 
-        * add the calculation for the memory size needed for encryption and
-          decryption.
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+---
+ crypto/af_alg.c             | 12 ++++++++++++
+ include/crypto/if_alg.h     |  2 ++
+ include/uapi/linux/if_alg.h |  2 ++
+ 3 files changed, 16 insertions(+)
 
-In addition, the patch set adds a getsockopt implementation to skcipher to
-allow user space to inquire about properties of the ciphers (IV size,
-block size, authentication data size). This extension would be needed for a
-generic user space usage of these ciphers.
-
-The new AEAD and RNG interfaces are fully tested with the test application
-provided at [1]. That test application exercises all newly added user space
-interfaces.
-
-
-Stephan Mueller (7):
-*tch set was tested on x86_64 and i386.
-
-[1] http://www.chronox.de/libkcapi.html
-
-Changes v2:
-* rebase to current cryptodev-2.6 tree
-* use memzero_explicit to zeroize AEAD associated data
-* use sizeof for determining length of AEAD associated data
-* update algif_rng.c covering all suggestions from Daniel Borkmann
-  <dborkman@redhat.com>
-* addition of patch 9: add digestsize interface for hashes
-* addition of patch to update documentation covering the userspace interface
-* change numbers of getsockopt options: separate them from sendmsg interface
-  definitions
-
-Changes v3:
-* remove getsockopt interface
-* AEAD: associated data is set prepended to the plain/ciphertext
-* AEAD: allowing arbitrary associated data lengths
-* remove setkey patch as protection was already in the existing code
-
-  crypto: AF_ALG: add user space interface for AEAD
-  crypto: AF_ALG: extend data structuers for AEAD
-  crypto: AF_ALG: crypto API calls to inline functions
-  crypto: AF_ALG: add AEAD support
-  crypto: AF_ALG: add random number generator support
-  crypto: AF_ALG: enable RNG interface compilation
-  crypto: AF_ALG: document the user space interface
-
- Documentation/crypto/crypto-API-userspace.txt |  70 +++++-
- crypto/Kconfig                                |   9 +
- crypto/Makefile                               |   1 +
- crypto/af_alg.c                               |  12 +
- crypto/algif_rng.c                            | 186 ++++++++++++++++
- crypto/algif_skcipher.c                       | 308 +++++++++++++++++++++++---
- include/crypto/if_alg.h                       |   2 +
- include/uapi/linux/if_alg.h                   |   2 +
- 8 files changed, 559 insertions(+), 31 deletions(-)
- create mode 100644 crypto/algif_rng.c
-
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index 6a3ad80..75eb88c 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -421,6 +421,18 @@ int af_alg_cmsg_send(struct msghdr *msg, struct af_alg_control *con)
+ 			con->op = *(u32 *)CMSG_DATA(cmsg);
+ 			break;
+ 
++		case ALG_SET_AEAD_AUTHSIZE:
++			if (cmsg->cmsg_len < CMSG_LEN(sizeof(u32)))
++				return -EINVAL;
++			con->aead_authsize = *(u32 *)CMSG_DATA(cmsg);
++			break;
++
++		case ALG_SET_AEAD_ASSOCLEN:
++			if (cmsg->cmsg_len < CMSG_LEN(sizeof(u32)))
++				return -EINVAL;
++			con->aead_assoclen = *(u32 *)CMSG_DATA(cmsg);
++			break;
++
+ 		default:
+ 			return -EINVAL;
+ 		}
+diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
+index d61c111..60ed1b7 100644
+--- a/include/crypto/if_alg.h
++++ b/include/crypto/if_alg.h
+@@ -42,6 +42,8 @@ struct af_alg_completion {
+ struct af_alg_control {
+ 	struct af_alg_iv *iv;
+ 	int op;
++	unsigned int aead_authsize;
++	unsigned int aead_assoclen;
+ };
+ 
+ struct af_alg_type {
+diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
+index 0f9acce..f2acd2f 100644
+--- a/include/uapi/linux/if_alg.h
++++ b/include/uapi/linux/if_alg.h
+@@ -32,6 +32,8 @@ struct af_alg_iv {
+ #define ALG_SET_KEY			1
+ #define ALG_SET_IV			2
+ #define ALG_SET_OP			3
++#define ALG_SET_AEAD_ASSOCLEN		4
++#define ALG_SET_AEAD_AUTHSIZE		5
+ 
+ /* Operations */
+ #define ALG_OP_DECRYPT			0
 -- 
 2.1.0
