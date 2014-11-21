@@ -1,65 +1,60 @@
-From: Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>
-Subject: Re: [musl] Re: [RFC] Possible new execveat(2) Linux syscall
-Date: Fri, 21 Nov 2014 09:15:25 -0500
-Message-ID: <20141121141525.GY22465@brightrain.aerifal.cx>
-References: <CAHse=S8ccC2No5EYS0Pex=Ng3oXjfDB9woOBmMY_k+EgxtODZA@mail.gmail.com>
- <20141116195246.GX22465@brightrain.aerifal.cx>
- <20141121101318.GG8866@infradead.org>
- <CAHse=S9RATqvXSrFXxDOcWx7Ub94Yhyr_-=USib-PPMx+_CC-w@mail.gmail.com>
+From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv2 2/3] selftests: Add test of O_BENEATH & openat(2)
+Date: Fri, 21 Nov 2014 14:19:41 +0000
+Message-ID: <CAHse=S9OwP8tSErW59Hd3VPbKVrE9VJM=5gMgZQwsv3kB9Ax0w@mail.gmail.com>
+References: <1415094884-18349-1-git-send-email-drysdale@google.com>
+ <1415094884-18349-3-git-send-email-drysdale@google.com> <20141111053641.GR23575@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHse=S9RATqvXSrFXxDOcWx7Ub94Yhyr_-=USib-PPMx+_CC-w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20141111053641.GR23575@dastard>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jorge Lucangeli Obes <jorgelo-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ricky Zhou <rickyz-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lee Campbell <leecam-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Depinet <mdepinet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 21, 2014 at 01:49:35PM +0000, David Drysdale wrote:
-> On Fri, Nov 21, 2014 at 10:13 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> > On Sun, Nov 16, 2014 at 02:52:46PM -0500, Rich Felker wrote:
-> >> I've been following the discussions so far and everything looks mostly
-> >> okay. There are still issues to be resolved with the different
-> >> semantics between Linux O_PATH and what POSIX requires for O_EXEC (and
-> >> O_SEARCH) but as long as the intent is that, once O_EXEC is defined to
-> >> save the permissions at the time of open and cause them to be used in
-> >> place of the current file permissions at the time of execveat
-> >
-> > As far as I can tell we only need the little patch below to make Linux
-> > O_PATH a valid O_SEARCH implementation.  Rich, you said you wanted to
-> > look over it?
-> >
-> > For O_EXEC my interpretation is that we basically just need this new
-> > execveat syscall + a patch to add FMODE_EXEC and enforce it.  So we
-> > wouldn't even need the O_PATH|3 hack.  But unless someone more familar
-> > with the arcane details of the Posix language verifies it I'm tempted to
-> > give up trying to help to implent these flags :(
-> 
-> I'm not particularly familiar with POSIX details either, but I thought the
-> O_PATH|3 hack would be needed for the interaction with O_ACCMODE -- just
-> using FMODE_EXEC as O_EXEC would confuse existing code that examines
-> (flags & O_ACCMODE).
+On Tue, Nov 11, 2014 at 5:36 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> [cc fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org]
+>
+> On Tue, Nov 04, 2014 at 09:54:43AM +0000, David Drysdale wrote:
+>> Add simple tests of openat(2) variations, including examples that
+>> check the new O_BENEATH flag.
+>>
+>> Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>
+> Wouldn't this be better added to fstests? That's the regression
+> test suite used by filesystem developers and most distro QA
+> organisations and where the fs developers aggregate all their new
+> regression tests.
+>
+> IMO, the fewer places we aggregate VFS/filesystem tests the better.
+> I really don't think the kernel tree is the best place for adding
+> VFS behavioural tests because it has none of the infrastructure
+> around it to test arbitrary filesystems and configurations and hence
+> is not particularly useful to the people whoa re likely to notice
+> and care about fs regression tests suddenly breaking.
+>
+> As an example, the recent renameat() syscall additions (e.g.
+> RENAME_EXCHANGE, RENAME_NOREPLACE) have unit tests in fstests, so
+> these new O_BENEATH tests should really follow the same model...
+>
+> Cheers,
+>
+> Dave.
 
-To conform to POSIX, O_ACCMODE needs to contain all the bits of
-O_RDONLY|O_WRONLY|O_RDWR|O_SEARCH|O_EXEC. Certainly it's possible that
-code compiled with an old definition of O_ACCMODE as 3 could inherit
-(or otherwise obtain) a file descriptor in O_SEARCH/O_EXEC mode, so
-it's preferable to have the low 2 bits be distinct from the existing
-access modes, but O_ACCMODE's definition (at least in userspace)
-really does need to be updated to equal O_PATH|3.
+Fair enough, that makes sense -- I've now got a version of the selftest
+running within xfstests (git://oss.sgi.com/xfs/cmds/xfstests.git is the
+master repo, right?).
 
-> >From [1]:
->   "Applications shall specify exactly one of the ...five ... file access
->   modes ... O_EXEC / O_RDONLY / O_RDWR / O_SEARCH / O_WRONLY"
-> (and O_EXEC and O_SEARCH are allowed to be the same value,
-> as one only applies to files and the other only applies to directories).
-> 
-> As O_ACCMODE is 3, there are only 4 possible access modes that work
-> with any existing code that checks (flags & O_ACCMODE), and 3 of the
-> values are taken (0=O_RDONLY, 1=O_WRONLY, 2=O_RDWR).  So I
-> guess that's where the idea for the |3 hack comes from.
+Given that xfstests is independent of the kernel, what's the expected
+way to deal with flags (or syscalls) that are only in specific kernel
+versions?   At the moment I've just got a primitive override at
+compile time (#ifndef O_BENEATH #define O_BENEATH ...), and
+then the test will fail at run-time against an older kernel -- is there a
+need for anything more sophisticated?  (And if so, are there any
+examples I can crib from?)
 
-3 is also "taken" too, but it's a mostly-undocumented hack.
+Also, is there an archive of the fstests@ mailing list somewhere?
 
-Rich
+Thanks,
+David
