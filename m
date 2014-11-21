@@ -1,54 +1,54 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v2] selftest: size: Add size test for Linux kernel
-Date: Thu, 20 Nov 2014 14:58:39 -0700
-Message-ID: <546E640F.1090006@osg.samsung.com>
-References: <546D084D.20002@sonymobile.com> <546D321F.2080405@sonymobile.com>
+From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Subject: Re: crypto: user - Allow get request with empty driver name
+Date: Fri, 21 Nov 2014 10:31:31 +0800
+Message-ID: <20141121023131.GA3873@gondor.apana.org.au>
+References: <5365136.g8vbXlhRyC@tachyon.chronox.de>
+ <2283056.kKnMJs7Bfg@tachyon.chronox.de>
+ <20141120134029.GA31411@gondor.apana.org.au>
+ <6655976.jRkjMUZ19x@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <546D321F.2080405-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <6655976.jRkjMUZ19x-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Cc: Steffen Klassert <steffen.klassert-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/19/2014 05:13 PM, Tim Bird wrote:
+On Thu, Nov 20, 2014 at 05:08:42PM +0100, Stephan Mueller wrote:
+> Am Donnerstag, 20. November 2014, 21:40:29 schrieb Herbert Xu:
 > 
-> This test shows the amount of memory used by the system.
-> Note that this is dependent on the user-space that is loaded
-> when this program runs.  Optimally, this program would be
-> run as the init program itself.
+> Hi Herbert,
 > 
-> The program is optimized for size itself, to avoid conflating
-> its own execution with that of the system software.
-> The code is compiled statically, with no stdlibs. On my x86_64 system,
-> this results in a statically linked binary of less than 5K.
+> > On Thu, Nov 20, 2014 at 02:10:00PM +0100, Stephan Mueller wrote:
+> > > What about the following
+> > > 
+> > > if (p->cru_driver_name[0]
 > 
-> Changes from v1:
->   - use more correct Copyright string in get_size.c
+> If the driver name is not empty
+> > > 
+> > > 	alg = crypto_alg_match(p, 1);
 > 
-> Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-> ---
->  tools/testing/selftests/Makefile        |   1 +
->  tools/testing/selftests/size/Makefile   |  21 +++++++
->  tools/testing/selftests/size/get_size.c | 105 ++++++++++++++++++++++++++++++++
->  3 files changed, 127 insertions(+)
->  create mode 100644 tools/testing/selftests/size/Makefile
->  create mode 100644 tools/testing/selftests/size/get_size.c
+> Do an exact match using the driver name
+> > > 
+> > > else
+> > > 
+> > > 	alg = crypto_alg_match(p, 0);
+> 
+> Otherise use the generic name for a fuzzy match.
+> > 
+> > If cru_driver_name is not empty then exact will never be used, no?
+> 
+> If the code suggestion does not follow my words outlined above, I want my 
+> words to be considered ;-)
+> 
+> Yet, I am unsure where the code deviates from my words.
 
-Tim,
+No I am asking how is this different from my patch?
 
-The test looks good, but you are missing .gitignore file.
-Please add a .gitignore for the binary that gets generated to
-avoid git status including the binary it in its output.
-
-thanks,
--- Shuah
-
-
+Cheers,
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
