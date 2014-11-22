@@ -1,85 +1,114 @@
-From: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [v7 5/5] ext4: cleanup inode flag definitions
-Date: Sat, 22 Nov 2014 13:24:55 +0800
-Message-ID: <1416633895-4004-6-git-send-email-lixi@ddn.com>
-References: <1416633895-4004-1-git-send-email-lixi@ddn.com>
+From: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
+Subject: [PATCH 3/6] fs/splice: support compiling out splice-family syscalls
+Date: Sat, 22 Nov 2014 21:59:58 +0100
+Message-ID: <1416690001-20817-4-git-send-email-pieter@boesman.nl>
+References: <1416690001-20817-1-git-send-email-pieter@boesman.nl>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1416633895-4004-1-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+In-Reply-To: <1416690001-20817-1-git-send-email-pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+To: pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org
+Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Matt Turner <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, =?UTF-8?q?=E8=94=A1=E6=AD=A3=E9=BE=99?= <zhenglong.cai-TJRtMXcVgQTM1kAEIRd3EQ@public.gmane.org>, Paul Gortmaker <paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, Bertrand Jacquin <beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, Peter Foley <pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Iulia Manda <iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Catalina Mocanu <catalina.mocanu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ope <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The inode flags defined in uapi/linux/fs.h were migrated from
-ext4.h. This patch changes the inode flag definitions in ext4.h
-to VFS definitions to make the gaps between them clearer.
+Many embedded systems will not need the splice-family syscalls (splice,
+vmsplice, tee and sendfile). Omitting them saves space.  This adds a new EXPERT
+config option CONFIG_SYSCALL_SPLICE (default y) to support compiling them out.
 
-Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
+This patch removes almost all callers of .splice_read() and .splice_write()
+in the file_operations struct. This paves the way to eventually compile out the
+.splice_read and .splice_write members of the file_operations struct as well as
+the remaining splice-related infrastructure.
+
+add/remove: 0/16 grow/shrink: 2/5 up/down: 114/-3693 (-3579)
+function                                     old     new   delta
+splice_direct_to_actor                       348     416     +68
+splice_to_pipe                               371     417     +46
+splice_from_pipe_next                        107     106      -1
+fdput                                         11       -     -11
+signal_pending                                39      26     -13
+fdget                                         56      42     -14
+user_page_pipe_buf_ops                        20       -     -20
+user_page_pipe_buf_steal                      25       -     -25
+file_end_write                                58      29     -29
+file_start_write                              68      34     -34
+pipe_to_user                                  43       -     -43
+wakeup_pipe_readers                           54       -     -54
+do_splice_to                                  87       -     -87
+ipipe_prep.part                               92       -     -92
+opipe_prep.part                              119       -    -119
+sys_sendfile                                 122       -    -122
+sys_sendfile64                               126       -    -126
+sys_vmsplice                                 137       -    -137
+vmsplice_to_user                             205       -    -205
+sys_tee                                      491       -    -491
+do_sendfile                                  492       -    -492
+vmsplice_to_pipe                             558       -    -558
+sys_splice                                  1020       -   -1020
+
+Signed-off-by: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
 ---
- fs/ext4/ext4.h |   50 +++++++++++++++++++++++++-------------------------
- 1 files changed, 25 insertions(+), 25 deletions(-)
+ fs/splice.c     |  2 ++
+ init/Kconfig    | 10 ++++++++++
+ kernel/sys_ni.c |  8 ++++++++
+ 3 files changed, 20 insertions(+)
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 542b388..a3083d5 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -362,33 +362,33 @@ struct flex_groups {
- /*
-  * Inode flags
-  */
--#define	EXT4_SECRM_FL			0x00000001 /* Secure deletion */
--#define	EXT4_UNRM_FL			0x00000002 /* Undelete */
--#define	EXT4_COMPR_FL			0x00000004 /* Compress file */
--#define EXT4_SYNC_FL			0x00000008 /* Synchronous updates */
--#define EXT4_IMMUTABLE_FL		0x00000010 /* Immutable file */
--#define EXT4_APPEND_FL			0x00000020 /* writes to file may only append */
--#define EXT4_NODUMP_FL			0x00000040 /* do not dump file */
--#define EXT4_NOATIME_FL			0x00000080 /* do not update atime */
-+#define	EXT4_SECRM_FL			FS_SECRM_FL        /* Secure deletion */
-+#define	EXT4_UNRM_FL			FS_UNRM_FL         /* Undelete */
-+#define	EXT4_COMPR_FL			FS_COMPR_FL        /* Compress file */
-+#define EXT4_SYNC_FL			FS_SYNC_FL         /* Synchronous updates */
-+#define EXT4_IMMUTABLE_FL		FS_IMMUTABLE_FL    /* Immutable file */
-+#define EXT4_APPEND_FL			FS_APPEND_FL       /* writes to file may only append */
-+#define EXT4_NODUMP_FL			FS_NODUMP_FL       /* do not dump file */
-+#define EXT4_NOATIME_FL			FS_NOATIME_FL      /* do not update atime */
- /* Reserved for compression usage... */
--#define EXT4_DIRTY_FL			0x00000100
--#define EXT4_COMPRBLK_FL		0x00000200 /* One or more compressed clusters */
--#define EXT4_NOCOMPR_FL			0x00000400 /* Don't compress */
--#define EXT4_ECOMPR_FL			0x00000800 /* Compression error */
-+#define EXT4_DIRTY_FL			FS_DIRTY_FL
-+#define EXT4_COMPRBLK_FL		FS_COMPRBLK_FL     /* One or more compressed clusters */
-+#define EXT4_NOCOMPR_FL			FS_NOCOMP_FL       /* Don't compress */
-+#define EXT4_ECOMPR_FL			FS_ECOMPR_FL       /* Compression error */
- /* End compression flags --- maybe not all used */
--#define EXT4_INDEX_FL			0x00001000 /* hash-indexed directory */
--#define EXT4_IMAGIC_FL			0x00002000 /* AFS directory */
--#define EXT4_JOURNAL_DATA_FL		0x00004000 /* file data should be journaled */
--#define EXT4_NOTAIL_FL			0x00008000 /* file tail should not be merged */
--#define EXT4_DIRSYNC_FL			0x00010000 /* dirsync behaviour (directories only) */
--#define EXT4_TOPDIR_FL			0x00020000 /* Top of directory hierarchies*/
--#define EXT4_HUGE_FILE_FL               0x00040000 /* Set to each huge file */
--#define EXT4_EXTENTS_FL			0x00080000 /* Inode uses extents */
--#define EXT4_EA_INODE_FL	        0x00200000 /* Inode used for large EA */
--#define EXT4_EOFBLOCKS_FL		0x00400000 /* Blocks allocated beyond EOF */
--#define EXT4_INLINE_DATA_FL		0x10000000 /* Inode has inline data. */
--#define EXT4_PROJINHERIT_FL		FS_PROJINHERIT_FL /* Create with parents projid */
--#define EXT4_RESERVED_FL		0x80000000 /* reserved for ext4 lib */
-+#define EXT4_INDEX_FL			FS_INDEX_FL        /* hash-indexed directory */
-+#define EXT4_IMAGIC_FL			FS_IMAGIC_FL       /* AFS directory */
-+#define EXT4_JOURNAL_DATA_FL		FS_JOURNAL_DATA_FL /* file data should be journaled */
-+#define EXT4_NOTAIL_FL			FS_NOTAIL_FL       /* file tail should not be merged */
-+#define EXT4_DIRSYNC_FL			FS_DIRSYNC_FL      /* dirsync behaviour (directories only) */
-+#define EXT4_TOPDIR_FL			FS_TOPDIR_FL       /* Top of directory hierarchies*/
-+#define EXT4_HUGE_FILE_FL               0x00040000         /* Set to each huge file */
-+#define EXT4_EXTENTS_FL			FS_EXTENT_FL       /* Inode uses extents */
-+#define EXT4_EA_INODE_FL	        0x00200000         /* Inode used for large EA */
-+#define EXT4_EOFBLOCKS_FL		0x00400000         /* Blocks allocated beyond EOF */
-+#define EXT4_INLINE_DATA_FL		0x10000000         /* Inode has inline data. */
-+#define EXT4_PROJINHERIT_FL		FS_PROJINHERIT_FL  /* Create with parents projid */
-+#define EXT4_RESERVED_FL		FS_RESERVED_FL     /* reserved for ext4 lib */
+diff --git a/fs/splice.c b/fs/splice.c
+index 44b201b..7c4c695 100644
+--- a/fs/splice.c
++++ b/fs/splice.c
+@@ -1316,6 +1316,7 @@ long do_splice_direct(struct file *in, loff_t *ppos, struct file *out,
+ 	return ret;
+ }
  
- #define EXT4_FL_USER_VISIBLE		0x204BDFFF /* User visible flags */
- #define EXT4_FL_USER_MODIFIABLE		0x204380FF /* User modifiable flags */
++#ifdef CONFIG_SYSCALL_SPLICE
+ static int splice_pipe_to_pipe(struct pipe_inode_info *ipipe,
+ 			       struct pipe_inode_info *opipe,
+ 			       size_t len, unsigned int flags);
+@@ -2200,4 +2201,5 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+ 	return do_sendfile(out_fd, in_fd, NULL, count, 0);
+ }
+ #endif
++#endif
+ 
+diff --git a/init/Kconfig b/init/Kconfig
+index d811d5f..dec9819 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1571,6 +1571,16 @@ config NTP
+ 	  system clock to an NTP server, you can disable this option to save
+ 	  space.
+ 
++config SYSCALL_SPLICE
++	bool "Enable splice/vmsplice/tee/sendfile syscalls" if EXPERT
++	default y
++	help
++	  This option enables the splice, vmsplice, tee and sendfile syscalls. These
++	  are used by applications to: move data between buffers and arbitrary file
++	  descriptors; "copy" data between buffers; or copy data from userspace into
++	  buffers. If building an embedded system where no applications use these
++	  syscalls, you can disable this option to save space.
++
+ config PCI_QUIRKS
+ 	default y
+ 	bool "Enable PCI quirk workarounds" if EXPERT
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index d2f5b00..25d5551 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -170,6 +170,14 @@ cond_syscall(sys_fstat);
+ cond_syscall(sys_stat);
+ cond_syscall(sys_uname);
+ cond_syscall(sys_olduname);
++cond_syscall(sys_vmsplice);
++cond_syscall(sys_splice);
++cond_syscall(sys_tee);
++cond_syscall(sys_sendfile);
++cond_syscall(sys_sendfile64);
++cond_syscall(compat_sys_vmsplice);
++cond_syscall(compat_sys_sendfile);
++cond_syscall(compat_sys_sendfile64);
+ 
+ /* arch-specific weak syscall entries */
+ cond_syscall(sys_pciconfig_read);
 -- 
-1.7.1
+1.9.1
