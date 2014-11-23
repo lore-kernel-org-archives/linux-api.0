@@ -1,77 +1,51 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: Re: [fuse-devel] [PATCH 4/6] fs/fuse: support compiling out splice
-Date: Sun, 23 Nov 2014 15:23:02 -0800
-Message-ID: <20141123232302.GA12456@thin>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: Re: [PATCH 0/6] kernel tinification: optionally compile out splice
+ family of syscalls (splice, vmsplice, tee and sendfile)
+Date: Sun, 23 Nov 2014 15:36:37 -0800
+Message-ID: <20141123233637.GC12456@thin>
 References: <1416752468-1626-1-git-send-email-pieter@boesman.nl>
- <1416752468-1626-5-git-send-email-pieter@boesman.nl>
- <CAFLxGvxq3Mr9n8xMO_fPZDhrGmBh=WKyU0+RF13JBdjssX6qfw@mail.gmail.com>
+ <20141123.134623.2061031332250984539.davem@davemloft.net>
+ <20141123194326.GB8517@thin>
+ <20141123203040.GB26749@smipidev>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAFLxGvxq3Mr9n8xMO_fPZDhrGmBh=WKyU0+RF13JBdjssX6qfw@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Richard Weinberger <richard.weinberger@gmail.com>
-Cc: Pieter Smith <pieter@boesman.nl>, "Michael S. Tsirkin" <mst@redhat.com>, Bertrand Jacquin <beber@meleeweb.net>, Oleg Nesterov <oleg@redhat.com>, "J. Bruce Fields" <bfields@fieldses.org>, Eric Dumazet <edumazet@google.com>, =?utf-8?B?6JSh5q2j6b6Z?= <zhenglong.cai@cs2c.com.cn>, Jeff Layton <jlayton@poochiereds.net>, Tom Herbert <therbert@google.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <miklos@szeredi.hu>, Peter Foley <pefoley2@pefoley.com>, Hugh Dickins <hughd@google.com>, Xiao Guangrong <xiaoguangrong@linux.vnet.ibm.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Mel Gorman <mgorman@suse.de>, Matt Turner <mattst88@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Alexander Duyck <alexander.h.duyck@intel.com>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, "Luis R. Rodriguez" <mcgrof@suse.com>, Catalina Mocanu <cat>
+In-Reply-To: <20141123203040.GB26749@smipidev>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
+Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, alexander.h.duyck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org, catalina.mocanu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, JBeulich-IBi9RG/b67k@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mcgrof-IBi9RG/b67k@public.gmane.org, mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul.Durrant-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org, tgraf-G/eBtMaohhA@public.gmane.org, therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, xiaoguangrong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zhenglong.cai-TJRtMXcVgQTM1kAEIRd3EQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 23, 2014 at 11:29:08PM +0100, Richard Weinberger wrote:
-> On Sun, Nov 23, 2014 at 3:20 PM, Pieter Smith <pieter@boesman.nl> wrote:
-> > To implement splice support, fs/fuse makes use of nosteal_pipe_buf_ops. This
-> > struct is exported by fs/splice. The goal of the larger patch set is to
-> > completely compile out fs/splice, so uses of the exported struct need to be
-> > compiled out along with fs/splice.
-> >
-> > This patch therefore compiles out splice support in fs/fuse when
-> > CONFIG_SYSCALL_SPLICE is undefined.
-> >
-> > Signed-off-by: Pieter Smith <pieter@boesman.nl>
-> > ---
-> >  fs/fuse/dev.c      | 4 ++--
-> >  include/linux/fs.h | 6 ++++++
-> >  2 files changed, 8 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
-> > index ca88731..f8f92a4 100644
-> > --- a/fs/fuse/dev.c
-> > +++ b/fs/fuse/dev.c
-> > @@ -1291,7 +1291,7 @@ static ssize_t fuse_dev_read(struct kiocb *iocb, const struct iovec *iov,
-> >         return fuse_dev_do_read(fc, file, &cs, iov_length(iov, nr_segs));
-> >  }
-> >
-> > -static ssize_t fuse_dev_splice_read(struct file *in, loff_t *ppos,
-> > +static ssize_t __maybe_unused fuse_dev_splice_read(struct file *in, loff_t *ppos,
-> >                                     struct pipe_inode_info *pipe,
-> >                                     size_t len, unsigned int flags)
-> >  {
-> > @@ -2144,7 +2144,7 @@ const struct file_operations fuse_dev_operations = {
-> >         .llseek         = no_llseek,
-> >         .read           = do_sync_read,
-> >         .aio_read       = fuse_dev_read,
-> > -       .splice_read    = fuse_dev_splice_read,
-> > +       .splice_read    = __splice_p(fuse_dev_splice_read),
-> >         .write          = do_sync_write,
-> >         .aio_write      = fuse_dev_write,
-> >         .splice_write   = fuse_dev_splice_write,
-> > diff --git a/include/linux/fs.h b/include/linux/fs.h
-> > index a957d43..04c0975 100644
-> > --- a/include/linux/fs.h
-> > +++ b/include/linux/fs.h
-> > @@ -2443,6 +2443,12 @@ extern int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
-> >                         int datasync);
-> >  extern void block_sync_page(struct page *page);
-> >
-> > +#ifdef CONFIG_SYSCALL_SPLICE
-> > +#define __splice_p(x) x
-> > +#else
-> > +#define __splice_p(x) NULL
-> > +#endif
-> > +
+On Sun, Nov 23, 2014 at 09:30:40PM +0100, Pieter Smith wrote:
+> On Sun, Nov 23, 2014 at 11:43:26AM -0800, Josh Triplett wrote:
+> > On Sun, Nov 23, 2014 at 01:46:23PM -0500, David Miller wrote:
+> > > Truly removing sendfile/sendpage means that you can't even compile NFS
+> > > into the tree.
+> > 
+> > If you mean the in-kernel nfsd (CONFIG_NFSD), that already has a large
+> > stack of "select" and "depends on", both directly and indirectly; adding
+> > a "select SPLICE_SYSCALL" to it seems fine.  (That select does need
+> > adding, though.  Pieter, you need to test-compile more than just
+> > tinyconfig and defconfig.  Try an allyesconfig with *just* splice turned
+> > off, and make sure that compiles.)
 > 
-> This needs to go into a different patch.
-> One logical change per patch please. :-)
+> Did exacly that. Took forever on my hardware, but no problems.
 
-Easy enough to merge this one into the patch introducing
-CONFIG_SYSCALL_SPLICE, then.
+Ah, I see.  Looking more closely at nfsd, it looks like it already has a
+code path for filesystems that don't do splice.  I think, rather than
+making nfsd select SPLICE_SYSCALL, that it would suffice to change the
+"rqstp->rq_splice_ok = true;" in svc_process_common (net/sunrpc/svc.c)
+to:
+
+rqstp->rq_splice_ok = IS_ENABLED(CONFIG_SPLICE_SYSCALL);
+
+Then nfsd should simply *always* fall back to its non-splice support.
+
+That said, given that it seems exceedingly unlikely that anyone would
+use the in-kernel nfsd on a system trying to minimize kernel size, it
+still seems cleaner to just "select SPLICE_SYSCALL" from NFSD in
+Kconfig.  That avoids making any changes at all to the nfsd source in
+this patch series.
 
 - Josh Triplett
