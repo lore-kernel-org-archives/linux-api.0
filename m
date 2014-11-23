@@ -1,128 +1,127 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [PATCH 3/6] fs/splice: support compiling out splice-family
- syscalls
-Date: Sat, 22 Nov 2014 13:50:50 -0800
-Message-ID: <20141122215050.GC23711@thin>
-References: <1416690001-20817-1-git-send-email-pieter@boesman.nl>
- <1416690001-20817-4-git-send-email-pieter@boesman.nl>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1416690001-20817-4-git-send-email-pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Matt Turner <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, =?utf-8?B?6JSh5q2j6b6Z?= <zhenglong.cai-TJRtMXcVgQTM1kAEIRd3EQ@public.gmane.org>, Paul Gortmaker <paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, Bertrand Jacquin <beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, Peter Foley <pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Iulia Manda <iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Catalina Mocanu <catalina.mocanu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TaqPxH82wqD4g@public.gmane.org>
+From: Pieter Smith <pieter@boesman.nl>
+Subject: [PATCH 0/6] kernel tinification: optionally compile out splice family of syscalls (splice, vmsplice, tee and sendfile)
+Date: Sun, 23 Nov 2014 15:20:44 +0100
+Message-ID: <1416752468-1626-1-git-send-email-pieter@boesman.nl>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: pieter@boesman.nl
+Cc: Josh Triplett <josh@joshtriplett.org>, Alexander Duyck <alexander.h.duyck@intel.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Bertrand Jacquin <beber@meleeweb.net>, Catalina Mocanu <catalina.mocanu@gmail.com>, Daniel Borkmann <dborkman@redhat.com>, "David S. Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Fabian Frederick <fabf@skynet.be>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, Geert Uytterhoeven <geert@linux-m68k.org>, Hugh Dickins <hughd@google.com>, Iulia Manda <iulia.manda21@gmail.com>, Jan Beulich <JBeulich@suse.com>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-kernel
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 22, 2014 at 09:59:58PM +0100, Pieter Smith wrote:
-> Many embedded systems will not need the splice-family syscalls (splice,
-> vmsplice, tee and sendfile). Omitting them saves space.  This adds a new EXPERT
-> config option CONFIG_SYSCALL_SPLICE (default y) to support compiling them out.
-> 
-> This patch removes almost all callers of .splice_read() and .splice_write()
-> in the file_operations struct. This paves the way to eventually compile out the
-> .splice_read and .splice_write members of the file_operations struct as well as
-> the remaining splice-related infrastructure.
+REPO: https://github.com/smipi1/linux-tinification.git
 
-This commit message doesn't reflect the new approach of leaving those
-members in the structure.
+BRANCH: tiny/config-syscall-splice
 
-The patch looks good otherwise.
+BACKGROUND: This patch-set forms part of the Linux Kernel Tinification effort (
+  https://tiny.wiki.kernel.org/).
 
-- Josh Triplett
+GOAL: Support compiling out the splice family of syscalls (splice, vmsplice,
+  tee and sendfile) along with all supporting infrastructure if not needed.
+  Many embedded systems will not need the splice-family syscalls. Omitting them
+  saves space.
 
-> add/remove: 0/16 grow/shrink: 2/5 up/down: 114/-3693 (-3579)
-> function                                     old     new   delta
-> splice_direct_to_actor                       348     416     +68
-> splice_to_pipe                               371     417     +46
-> splice_from_pipe_next                        107     106      -1
-> fdput                                         11       -     -11
-> signal_pending                                39      26     -13
-> fdget                                         56      42     -14
-> user_page_pipe_buf_ops                        20       -     -20
-> user_page_pipe_buf_steal                      25       -     -25
-> file_end_write                                58      29     -29
-> file_start_write                              68      34     -34
-> pipe_to_user                                  43       -     -43
-> wakeup_pipe_readers                           54       -     -54
-> do_splice_to                                  87       -     -87
-> ipipe_prep.part                               92       -     -92
-> opipe_prep.part                              119       -    -119
-> sys_sendfile                                 122       -    -122
-> sys_sendfile64                               126       -    -126
-> sys_vmsplice                                 137       -    -137
-> vmsplice_to_user                             205       -    -205
-> sys_tee                                      491       -    -491
-> do_sendfile                                  492       -    -492
-> vmsplice_to_pipe                             558       -    -558
-> sys_splice                                  1020       -   -1020
-> 
-> Signed-off-by: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
-> ---
->  fs/splice.c     |  2 ++
->  init/Kconfig    | 10 ++++++++++
->  kernel/sys_ni.c |  8 ++++++++
->  3 files changed, 20 insertions(+)
-> 
-> diff --git a/fs/splice.c b/fs/splice.c
-> index 44b201b..7c4c695 100644
-> --- a/fs/splice.c
-> +++ b/fs/splice.c
-> @@ -1316,6 +1316,7 @@ long do_splice_direct(struct file *in, loff_t *ppos, struct file *out,
->  	return ret;
->  }
->  
-> +#ifdef CONFIG_SYSCALL_SPLICE
->  static int splice_pipe_to_pipe(struct pipe_inode_info *ipipe,
->  			       struct pipe_inode_info *opipe,
->  			       size_t len, unsigned int flags);
-> @@ -2200,4 +2201,5 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
->  	return do_sendfile(out_fd, in_fd, NULL, count, 0);
->  }
->  #endif
-> +#endif
->  
-> diff --git a/init/Kconfig b/init/Kconfig
-> index d811d5f..dec9819 100644
-> --- a/init/Kconfig
-> +++ b/init/Kconfig
-> @@ -1571,6 +1571,16 @@ config NTP
->  	  system clock to an NTP server, you can disable this option to save
->  	  space.
->  
-> +config SYSCALL_SPLICE
-> +	bool "Enable splice/vmsplice/tee/sendfile syscalls" if EXPERT
-> +	default y
-> +	help
-> +	  This option enables the splice, vmsplice, tee and sendfile syscalls. These
-> +	  are used by applications to: move data between buffers and arbitrary file
-> +	  descriptors; "copy" data between buffers; or copy data from userspace into
-> +	  buffers. If building an embedded system where no applications use these
-> +	  syscalls, you can disable this option to save space.
-> +
->  config PCI_QUIRKS
->  	default y
->  	bool "Enable PCI quirk workarounds" if EXPERT
-> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-> index d2f5b00..25d5551 100644
-> --- a/kernel/sys_ni.c
-> +++ b/kernel/sys_ni.c
-> @@ -170,6 +170,14 @@ cond_syscall(sys_fstat);
->  cond_syscall(sys_stat);
->  cond_syscall(sys_uname);
->  cond_syscall(sys_olduname);
-> +cond_syscall(sys_vmsplice);
-> +cond_syscall(sys_splice);
-> +cond_syscall(sys_tee);
-> +cond_syscall(sys_sendfile);
-> +cond_syscall(sys_sendfile64);
-> +cond_syscall(compat_sys_vmsplice);
-> +cond_syscall(compat_sys_sendfile);
-> +cond_syscall(compat_sys_sendfile64);
->  
->  /* arch-specific weak syscall entries */
->  cond_syscall(sys_pciconfig_read);
-> -- 
-> 1.9.1
-> 
+STRATEGY:
+a. With the goal of eventually compiling out fs/splice.c, several functions
+   that are only used in support of the the splice family of syscalls are moved
+   into fs/splice.c from fs/read_write.c. The kernel_write function that is not
+   used to support the splice syscalls is moved to fs/read_write.c:
+     0001-fs-move-sendfile-syscall-into-fs-splice.patch
+     0002-fs-moved-kernel_write-to-fs-read_write.patch
+
+b. Introduce an EXPERT kernel configuration option; CONFIG_SYSCALL_SPLICE; to
+   compile out the splice family of syscalls. This removes all userspace uses
+   of the splice infrastructure.
+     0003-fs-splice-support-compiling-out-splice-family-syscal.patch
+
+c. Splice exports an operations struct, nosteal_pipe_buf_ops. Eliminate the 
+   use of this struct when CONFIG_SYSCALL_SPLICE is undefined, so that splice
+   can later be compiled out:
+     0004-fs-fuse-support-compiling-out-splice.patch
+     0005-net-core-support-compiling-out-splice.patch
+
+e. Compile out fs/splice.c. Functions exported by fs/splice are mocked out with
+   failing static inlines. This is done so as to all but eliminate the
+   maintenance burden on file-system drivers.
+     0006-fs-splice-full-support-for-compiling-out-splice.patch
+
+RESULTS: A tinyconfig bloat-o-meter score for the entire patch-set:
+
+add/remove: 0/41 grow/shrink: 5/7 up/down: 23/-8422 (-8399)
+function                                     old     new   delta
+sys_pwritev                                  115     122      +7
+sys_preadv                                   115     122      +7
+fdput_pos                                     29      36      +7
+sys_pwrite64                                 115     116      +1
+sys_pread64                                  115     116      +1
+pipe_to_null                                   4       -      -4
+generic_pipe_buf_nosteal                       6       -      -6
+spd_release_page                              10       -     -10
+fdput                                         11       -     -11
+PageUptodate                                  22      11     -11
+lock_page                                     36      24     -12
+signal_pending                                39      26     -13
+fdget                                         56      42     -14
+page_cache_pipe_buf_release                   16       -     -16
+user_page_pipe_buf_ops                        20       -     -20
+splice_write_null                             24       4     -20
+page_cache_pipe_buf_ops                       20       -     -20
+nosteal_pipe_buf_ops                          20       -     -20
+default_pipe_buf_ops                          20       -     -20
+generic_splice_sendpage                       24       -     -24
+user_page_pipe_buf_steal                      25       -     -25
+splice_shrink_spd                             27       -     -27
+pipe_to_user                                  43       -     -43
+direct_splice_actor                           47       -     -47
+default_file_splice_write                     49       -     -49
+wakeup_pipe_writers                           54       -     -54
+wakeup_pipe_readers                           54       -     -54
+write_pipe_buf                                71       -     -71
+page_cache_pipe_buf_confirm                   80       -     -80
+splice_grow_spd                               87       -     -87
+do_splice_to                                  87       -     -87
+ipipe_prep.part                               92       -     -92
+splice_from_pipe                              93       -     -93
+splice_from_pipe_next                        107       -    -107
+pipe_to_sendpage                             109       -    -109
+page_cache_pipe_buf_steal                    114       -    -114
+opipe_prep.part                              119       -    -119
+sys_sendfile                                 122       -    -122
+generic_file_splice_read                     131       8    -123
+sys_sendfile64                               126       -    -126
+sys_vmsplice                                 137       -    -137
+do_splice_direct                             148       -    -148
+vmsplice_to_user                             205       -    -205
+__splice_from_pipe                           246       -    -246
+splice_direct_to_actor                       348       -    -348
+splice_to_pipe                               371       -    -371
+do_sendfile                                  492       -    -492
+sys_tee                                      497       -    -497
+vmsplice_to_pipe                             558       -    -558
+default_file_splice_read                     688       -    -688
+iter_file_splice_write                       702       4    -698
+sys_splice                                  1075       -   -1075
+__generic_file_splice_read                  1109       -   -1109
+
+Pieter Smith (6):
+  fs: move sendfile syscall into fs/splice
+  fs: moved kernel_write to fs/read_write
+  fs/splice: support compiling out splice-family syscalls
+  fs/fuse: support compiling out splice
+  net/core: support compiling out splice
+  fs/splice: full support for compiling out splice
+
+ fs/Makefile            |   3 +-
+ fs/fuse/dev.c          |   4 +-
+ fs/read_write.c        | 181 +++------------------------------------------
+ fs/splice.c            | 194 +++++++++++++++++++++++++++++++++++++++++++++----
+ include/linux/fs.h     |  32 ++++++++
+ include/linux/skbuff.h |   9 +++
+ include/linux/splice.h |  42 +++++++++++
+ init/Kconfig           |  10 +++
+ kernel/sys_ni.c        |   8 ++
+ net/core/skbuff.c      |   9 ++-
+ 10 files changed, 300 insertions(+), 192 deletions(-)
+
+-- 
+2.1.0
+
