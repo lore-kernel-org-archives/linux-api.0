@@ -1,76 +1,179 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH v3 04/41] virtio: memory access APIs
-Date: Mon, 24 Nov 2014 13:03:24 +0100
-Message-ID: <CAMuHMdWiCqbaOs-oBW3QU+_d3GsH19A2Ynv9EB_eF2sTvcWy4w@mail.gmail.com>
-References: <1416829787-14252-1-git-send-email-mst@redhat.com>
-	<1416829787-14252-5-git-send-email-mst@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <1416829787-14252-5-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: Bjarke Istrup Pedersen <gurligebis@gentoo.org>, Anup Patel <anup.patel@linaro.org>, rusty@au1.ibm.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, virtualization@lists.linux-foundation.org, Sakari Ailus <sakari.ailus@linux.intel.com>, linux-api@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>, Pranavkumar Sawargaonkar <pranavkumar@linaro.org>, David Miller <davem@davemloft.net>, Alexei Starovoitov <ast@plumgrid.com>
+From: David Drysdale <drysdale@google.com>
+Subject: [PATCHv10 man-pages 5/5] execveat.2: initial man page for execveat(2)
+Date: Mon, 24 Nov 2014 11:53:59 +0000
+Message-ID: <1416830039-21952-6-git-send-email-drysdale@google.com>
+References: <1416830039-21952-1-git-send-email-drysdale@google.com>
+Return-path: <sparclinux-owner@vger.kernel.org>
+In-Reply-To: <1416830039-21952-1-git-send-email-drysdale@google.com>
+Sender: sparclinux-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>
+Cc: Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, sparclinux@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 24, 2014 at 12:52 PM, Michael S. Tsirkin <mst@redhat.com> wrote:
-> virtio 1.0 makes all memory structures LE, so
-> we need APIs to conditionally do a byteswap on BE
-> architectures.
->
-> To make it easier to check code statically,
-> add virtio specific types for multi-byte integers
-> in memory.
->
-> Add low level wrappers that do a byteswap conditionally, these will be
-> useful e.g. for vhost.  Add high level wrappers that
-> query device endian-ness and act accordingly.
+Signed-off-by: David Drysdale <drysdale@google.com>
+---
+ man2/execveat.2 | 153 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 153 insertions(+)
+ create mode 100644 man2/execveat.2
 
-> diff --git a/include/linux/virtio_byteorder.h b/include/linux/virtio_byteorder.h
-> new file mode 100644
-> index 0000000..824ed0b
-> --- /dev/null
-> +++ b/include/linux/virtio_byteorder.h
-
-> +static inline u16 __virtio16_to_cpu(bool little_endian, __virtio16 val)
-> +{
-> +       if (little_endian)
-> +               return le16_to_cpu((__force __le16)val);
-> +       else
-> +               return (__force u16)val;
-> +}
-
-What's wrong with just using le16-to_cpu() ...
-
-> --- a/include/uapi/linux/virtio_ring.h
-> +++ b/include/uapi/linux/virtio_ring.h
-
->  /* Virtio ring descriptors: 16 bytes.  These can chain together via "next". */
->  struct vring_desc {
->         /* Address (guest-physical). */
-> -       __u64 addr;
-> +       __virtio64 addr;
-
-... and __le64?
-
-There's already lots of precedence or this, even in include/uapi/.
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
+diff --git a/man2/execveat.2 b/man2/execveat.2
+new file mode 100644
+index 000000000000..937d79e4c4f0
+--- /dev/null
++++ b/man2/execveat.2
+@@ -0,0 +1,153 @@
++.\" Copyright (c) 2014 Google, Inc.
++.\"
++.\" %%%LICENSE_START(VERBATIM)
++.\" Permission is granted to make and distribute verbatim copies of this
++.\" manual provided the copyright notice and this permission notice are
++.\" preserved on all copies.
++.\"
++.\" Permission is granted to copy and distribute modified versions of this
++.\" manual under the conditions for verbatim copying, provided that the
++.\" entire resulting derived work is distributed under the terms of a
++.\" permission notice identical to this one.
++.\"
++.\" Since the Linux kernel and libraries are constantly changing, this
++.\" manual page may be incorrect or out-of-date.  The author(s) assume no
++.\" responsibility for errors or omissions, or for damages resulting from
++.\" the use of the information contained herein.  The author(s) may not
++.\" have taken the same level of care in the production of this manual,
++.\" which is licensed free of charge, as they might when working
++.\" professionally.
++.\"
++.\" Formatted or processed versions of this manual, if unaccompanied by
++.\" the source, must acknowledge the copyright and authors of this work.
++.\" %%%LICENSE_END
++.\"
++.TH EXECVEAT 2 2014-04-02 "Linux" "Linux Programmer's Manual"
++.SH NAME
++execveat \- execute program relative to a directory file descriptor
++.SH SYNOPSIS
++.B #include <unistd.h>
++.sp
++.BI "int execveat(int " fd ", const char *" pathname ","
++.br
++.BI "             char *const " argv "[],  char *const " envp "[],"
++.br
++.BI "             int " flags);
++.SH DESCRIPTION
++The
++.BR execveat ()
++system call executes the program pointed to by the combination of \fIfd\fP and \fIpathname\fP.
++The
++.BR execveat ()
++system call operates in exactly the same way as
++.BR execve (2),
++except for the differences described in this manual page.
++
++If the pathname given in
++.I pathname
++is relative, then it is interpreted relative to the directory
++referred to by the file descriptor
++.I fd
++(rather than relative to the current working directory of
++the calling process, as is done by
++.BR execve (2)
++for a relative pathname).
++
++If
++.I pathname
++is relative and
++.I fd
++is the special value
++.BR AT_FDCWD ,
++then
++.I pathname
++is interpreted relative to the current working
++directory of the calling process (like
++.BR execve (2)).
++
++If
++.I pathname
++is absolute, then
++.I fd
++is ignored.
++
++If
++.I pathname
++is an empty string and the
++.BR AT_EMPTY_PATH
++flag is specified, then the file descriptor
++.I fd
++specifies the file to be executed.
++
++.I flags
++can either be 0, or include the following flags:
++.TP
++.BR AT_EMPTY_PATH
++If
++.I pathname
++is an empty string, operate on the file referred to by
++.IR fd
++(which may have been obtained using the
++.BR open (2)
++.B O_PATH
++flag).
++.TP
++.B AT_SYMLINK_NOFOLLOW
++If the file identified by
++.I fd
++and a non-NULL
++.I pathname
++is a symbolic link, then the call fails with the error
++.BR EINVAL .
++.SH "RETURN VALUE"
++On success,
++.BR execveat ()
++does not return. On error \-1 is returned, and
++.I errno
++is set appropriately.
++.SH ERRORS
++The same errors that occur for
++.BR execve (2)
++can also occur for
++.BR execveat ().
++The following additional errors can occur for
++.BR execveat ():
++.TP
++.B EBADF
++.I fd
++is not a valid file descriptor.
++.TP
++.B ENOENT
++The program identified by \fIfd\fP and \fIpathname\fP requires the
++use of an interpreter program (such as a script starting with
++"#!") but the file descriptor
++.I fd
++was opened with the
++.B O_CLOEXEC
++flag and so the program file is inaccessible to the launched interpreter.
++.TP
++.B EINVAL
++Invalid flag specified in
++.IR flags .
++.TP
++.B ENOTDIR
++.I pathname
++is relative and
++.I fd
++is a file descriptor referring to a file other than a directory.
++.SH VERSIONS
++.BR execveat ()
++was added to Linux in kernel 3.???.
++.SH NOTES
++In addition to the reasons explained in
++.BR openat (2),
++the
++.BR execveat ()
++system call is also needed to allow
++.BR fexecve (3)
++to be implemented on systems that do not have the
++.I /proc
++filesystem mounted.
++.SH SEE ALSO
++.BR execve (2),
++.BR fexecve (3)
 --
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+2.1.0.rc2.206.gedb03e5
