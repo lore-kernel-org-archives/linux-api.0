@@ -1,135 +1,310 @@
-From: Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a
- timeslice (was: Pre-emption control for userspace)
-Date: Mon, 24 Nov 2014 16:20:44 -0700
-Message-ID: <1416871244.17110.11.camel@concerto>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a timeslice
+ (was: Pre-emption control for userspace)
+Date: Tue, 25 Nov 2014 00:35:44 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1411242317380.6439@nanos>
 References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
-	 <20141124224302.GL10824@tassilo.jf.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141124224302.GL10824-KWJ+5VKanrL29G5dvP0v1laTQe2KTcn/@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, liwanp-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, raistlin-k2GhghHVRtY@public.gmane.org, kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, atomlin-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, athorlton-sJ/iWh9BUns@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, daeseok.youn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, yangds.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, sbauer-F61uvSdQLzf2fBVCVOL8/A@public.gmane.org, vishnu.ps-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Khalid Aziz <khalid.aziz@oracle.com>
+Cc: corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, riel@redhat.com, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2014-11-24 at 14:43 -0800, Andi Kleen wrote:
-> > +1. Location of shared flag can be set using prctl() only once. To
-> > +   write a new memory address, the previous memory address must be
-> > +   cleared first by writing NULL. Each new memory address requires
-> > +   validation in the kernel and update of pointers. Changing this
-> > +   address too many times creates too much overhead.
+On Mon, 24 Nov 2014, Khalid Aziz wrote:
+> sched/fair: Add advisory flag for borrowing a timeslice
 > 
-> Can you explain this more? Doesn't make any sense to me.
-> The validation is just access_ok() which is only a few instructions?
-
->From userspace app point of view, each call to prctl() incurs the
-overhead of a system call.
-
+> This patch adds a way for a task to request to borrow one timeslice
+> from future if it is about to be preempted, so it could delay
+> preemption and complete any critical task it is in the middle of.
 > 
-> Also I would drop the config symbol. Linux normally doesn't
-> do CONFIG for things like that.
+> This feature helps with performance on databases and has been
+> used for many years on other OSs by the databases. This feature
+> helps in situation where a task acquires a lock before performing a
+> critical operation on the database and happens to get preempted before
+> it completes its task.  This lock being held causes all other tasks
+> that also acquire the same lock to perform their critical operation
+> on the database, to start queueing up and causing large number of
+> context switches.  This queueing problem can be avoided if the task
+> that acquires lock first could request scheduler to let it borrow one
+> timeslice once it enters its critical section and hence allow it to
+> complete its critical section without causing queueing problem. If
 
-CONFIG_SCHED_PREEMPT_DELAY allows one to keep this code out of compiled
-kernel for custom kernels if this feature is definitely not needed.
-Concerns were raised last time about this feature impacting other tasks.
-Nevertheless, I am ok with removing the config option if that is the
-consensus.
+While you are niftily avoiding to talk about the nature of the lock, I
+can take it for granted that you are talking about user space
+spinlocks, right?
 
-> 
-> > diff --git a/kernel/fork.c b/kernel/fork.c
-> > index 9b7d746..7f0d843 100644
-> > --- a/kernel/fork.c
-> > +++ b/kernel/fork.c
-> > @@ -1671,6 +1671,11 @@ long do_fork(unsigned long clone_flags,
-> >  			init_completion(&vfork);
-> >  			get_task_struct(p);
-> >  		}
-> > +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> > +		p->sched_preempt_delay.delay_req = NULL;
-> > +		p->sched_preempt_delay.delay_granted = 0;
-> > +		p->sched_preempt_delay.yield_penalty = 0;
-> > +#endif
-> 
-> FWIW this would lead to every new thread having to reexecute
-> this. No good way around it, but it may eventually make
-> thread spawns more expensive if it was widely used.
+Simply if you would talk about futexes and pthread_mutexes then it
+would have occured to you while implementing that feature, that the
+kernel already has a mechanism to record a reference to a user space
+data structure (robust_list_head) which is updated when a futex is
+acquired in user space, i.e. when a critical section is entered. It's
+not the same as you need, but it would be relatively simple to convey
+that information there.
 
-Yes, that is true. Newly allocated task_struct is not zero'd out, so
-this becomes necessary.
+So what are the actual lock types and use cases and why can't you
+combine that with the existing robust list mechanism?
 
-> 
-> >  
-> > +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> > +	/*
-> > +	 * Clear the penalty flag for current task to reward it for
-> > +	 * palying by the rules
-> > +	 */
-> > +	current->sched_preempt_delay.yield_penalty = 0;
-> > +#endif
-> 
-> Doesn't that need to be quantified? After all they may yield
-> only near the end of their time slice.
+> critical section completes before the task is due for preemption,
+> the task can simply desassert its request. A task sends the
 
-and that should be ok because the task was allowed to borrow a full
-timeslice and it can use it up almost completely. Is there a reason to
-differentiate between tasks yielding well before their borrowed
-timeslice is up and tasks not yielding until almost the end of borrowed
-timeslice?
+And that deassertion has which consequences before the next preempt
+check happens?
 
-> 
-> > +	}
-> > +
-> > +	/*
-> > +	 * Get the value of preemption delay request flag from userspace.
-> > +	 * Task had already passed us the address where the flag is stored
-> > +	 * in userspace earlier. This flag is just like the PROCESS_PRIVATE
-> > +	 * futex, leverage the futex code here to read the flag. If there
-> 
-> I don't think any of the calls below are futex code.
+> +config SCHED_PREEMPT_DELAY
+> +	def_bool n
+> +	prompt "Scheduler preemption delay support"
+> +	depends on PROC_FS
 
-Following code was borrowed from get_futex_value_locked() but this
-comment is not really necessary here and can be removed if it causes
-confusion.
+Why so?
 
-> 
-> > +	case PR_GET_PREEMPT_DELAY:
-> > +		error = put_user(
-> > +			(unsigned long)current->sched_preempt_delay.delay_req,
-> > +					(unsigned long __user *)arg2);
-> > +		break;
-> > +#endif
-> 
-> Unnecessary cast.
+> @@ -1324,6 +1325,13 @@ struct task_struct {
+>  	/* Revert to default priority/policy when forking */
+>  	unsigned sched_reset_on_fork:1;
+>  	unsigned sched_contributes_to_load:1;
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+> +	struct preempt_delay {
+> +		u32 __user *delay_req;		/* delay request flag pointer */
+> +		unsigned char delay_granted;	/* currently in delay */
+> +		unsigned char yield_penalty;	/* failure to yield penalty */
+> +	} sched_preempt_delay;
 
-I get bunch of warnings and errors if I remove either of the casts.
+No. First of all this wants to be a proper struct declaration outside
+of task_struct.
 
-> 
-> > --- a/kernel/sysctl.c
-> > +++ b/kernel/sysctl.c
-> > @@ -1104,6 +1104,15 @@ static struct ctl_table kern_table[] = {
-> >  		.proc_handler	= proc_dointvec,
-> >  	},
-> >  #endif
-> > +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> > +	{
-> > +		.procname	= "preempt_delay_available",
-> > +		.data		= &sysctl_preempt_delay_available,
-> > +		.maxlen		= sizeof(int),
-> > +		.mode		= 0600,
-> 
-> Better 0644, so users can know if they can use it.
+Aside of that your user space side is actually a structure and not a
+opaque u32 pointer, so this should be an explicit data type and not
+something randomly defined in the guts of task_struct.
 
-OK, I can change that.
+> +#if defined(CONFIG_SCHED_PREEMPT_DELAY) && defined(CONFIG_PROC_FS)
+> +extern void sched_preempt_delay_show(struct seq_file *m,
+> +					struct task_struct *task);
+> +extern void sched_preempt_delay_set(struct task_struct *task,
+> +					unsigned char *val);
+> +#endif
 
-> 
-> Rest looks reasonable to me.
-> 
-> -Andi
+Can you please get rid of the leftovers of your previous patches
+yourself and before posting? It's annoying as hell to review patches
+which contain stale code.
 
-Thanks, Andi! I appreciate your feedback.
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index 9b7d746..7f0d843 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1671,6 +1671,11 @@ long do_fork(unsigned long clone_flags,
+>  			init_completion(&vfork);
+>  			get_task_struct(p);
+>  		}
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+> +		p->sched_preempt_delay.delay_req = NULL;
+> +		p->sched_preempt_delay.delay_granted = 0;
+> +		p->sched_preempt_delay.yield_penalty = 0;
+> +#endif
 
---
-Khalid
+Sigh. We do not sprinkle that kind of #ifdef crap all over the
+place. That's what inline functions in header files are for.
+
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 240157c..38cb515 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -4230,6 +4230,14 @@ SYSCALL_DEFINE0(sched_yield)
+>  {
+>  	struct rq *rq = this_rq_lock();
+>  
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+> +	/*
+> +	 * Clear the penalty flag for current task to reward it for
+> +	 * palying by the rules
+
+Looking at that mess makes me palying^Wpale.
+
+> +	 */
+> +	current->sched_preempt_delay.yield_penalty = 0;
+> +#endif
+> +
+>  	schedstat_inc(rq, yld_count);
+>  	current->sched_class->yield_task(rq);
+  
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+> +/*
+> + * delay_resched_rq(): Check if the task about to be preempted has
+> + *	requested an additional time slice. If it has, grant it additional
+> + *	timeslice once.
+> + */
+> +static void
+> +delay_resched_rq(struct rq *rq)
+> +{
+> +	struct task_struct *curr = rq->curr;
+> +	struct sched_entity *se;
+> +	int cpu = task_cpu(curr);
+> +	u32 __user *delay_req;
+> +	unsigned int delay_req_flag;
+> +	unsigned char *delay_flag;
+> +
+> +	/*
+> +	 * Check if task is using pre-emption delay feature. If address
+> +	 * for preemption delay request flag is not set, this task is
+> +	 * not using preemption delay feature, we can reschedule without
+> +	 * any delay
+
+So what happens if:
+
+   kernel.preempt_delay_available = 1;
+   
+   prctl(PR_SET_PREEMPT_DELAY, ...);
+
+   kernel.preempt_delay_available = 0;
+
+Nothing happens at all because you fail to give the sysop control over
+the feature once you unleashed it.
+
+The proper solution for this is to use a static key to control the
+feature itself. That also reduces the overhead for those who are not
+interested in that.
+
+> +	 */
+> +	delay_req = curr->sched_preempt_delay.delay_req;
+> +
+> +	if ((delay_req == NULL) || (cpu != smp_processor_id()))
+
+check_preempt_tick() clearly does not care about that, but you inflict
+a smp_processor_id() on every caller. I can see that you really care
+about performance.
+
+> +		goto resched_now;
+> +
+> +	/*
+> +	 * Pre-emption delay will  be granted only once. If this task
+> +	 * has already been granted delay, rechedule now
+> +	 */
+> +	if (curr->sched_preempt_delay.delay_granted) {
+> +		curr->sched_preempt_delay.delay_granted = 0;
+> +		goto resched_now;
+> +	}
+> +	/*
+> +	 * Get the value of preemption delay request flag from userspace.
+> +	 * Task had already passed us the address where the flag is stored
+> +	 * in userspace earlier. This flag is just like the PROCESS_PRIVATE
+> +	 * futex, leverage the futex code here to read the flag. If there
+> +	 * is a page fault accessing this flag in userspace, that means
+> +	 * userspace has not touched this flag recently and we can
+> +	 * assume no preemption delay is needed.
+> +	 *
+> +	 * If task is not requesting additional timeslice, resched now
+> +	 */
+> +	if (delay_req) {
+
+Surely we need to recheck delay_req here.
+
+> +		int ret;
+> +
+> +		pagefault_disable();
+> +		ret = __copy_from_user_inatomic(&delay_req_flag, delay_req,
+> +				sizeof(u32));
+> +		pagefault_enable();
+> +		delay_flag = &delay_req_flag;
+> +		if (ret || !delay_flag[0])
+
+This is really a well designed kernel/user space interface. NOT.
+
+> +			goto resched_now;
+> +	} else {
+> +		goto resched_now;
+> +	}
+> +
+> +	/*
+> +	 * Current thread has requested preemption delay and has not
+> +	 * been granted an extension yet. If this thread failed to yield
+> +	 * processor after being granted amnesty last time, penalize it
+> +	 * by not granting this delay request, otherwise give it an extra
+> +	 * timeslice.
+> +	 */
+> +	if (curr->sched_preempt_delay.yield_penalty) {
+> +		curr->sched_preempt_delay.yield_penalty = 0;
+> +		goto resched_now;
+> +	}
+> +
+> +	se = &curr->se;
+> +	curr->sched_preempt_delay.delay_granted = 1;
+> +	/*
+> +	 * Set the penalty flag for failing to yield the processor after
+> +	 * being granted immunity. This flag will be cleared in
+> +	 * sched_yield() if the thread indeed calls sched_yield
+> +	 */
+> +	curr->sched_preempt_delay.yield_penalty = 1;
+
+Why on earth do we need two flags here? Just because we can create
+more code in the guts of the scheduler hot pathes that way?
+
+And surely we want to put them into two adjacent u8 to make life
+easier for all architectures.
+
+> +	/*
+> +	 * Let the thread know it got amnesty and it should call
+> +	 * sched_yield() when it is done to avoid penalty next time
+> +	 * it wants amnesty. We need to write to userspace location.
+> +	 * Since we just read from this location, chances are extremley
+> +	 * low we might page fault. If we do page fault, we will ignore
+> +	 * it and accept the cost of failed write in form of unnecessary
+> +	 * penalty for userspace task for not yielding processor.
+
+This is the completely wrong argument. We know that the task was
+asking for an extra time slice because the copy from user above
+succeeded. So we are better of to let the task actually handle its
+pagefault than scheduling it out.
+
+> +	 * This is a highly unlikely scenario.
+> +	 */
+> +	delay_flag[0] = 0;
+> +	delay_flag[1] = 1;
+
+Sigh.
+
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+
+And all of this needs to be in kernel/sys.c just because...
+
+> +int sysctl_preempt_delay_available;
+> +
+> +static int
+> +preempt_delay_write(struct task_struct *task, unsigned long preempt_delay_addr)
+> +{
+> +	/*
+> +	 * Do not allow write if pointer is currently set
+> +	 */
+> +	if (task->sched_preempt_delay.delay_req &&
+> +			((void *)preempt_delay_addr != NULL))
+> +		return -EINVAL;
+> +	/*
+> +	 * Validate the pointer. It should be aligned to 4-byte boundary.
+
+So 4 bytes is a perfect boundary for everyone, right? Pulled that
+number out of thin air or what?
+
+> +	 */
+> +	if (unlikely(!IS_ALIGNED(preempt_delay_addr, 4)))
+> +		return -EFAULT;
+> +	if (unlikely(!access_ok(rw, preempt_delay_addr, sizeof(u32))))
+> +		return -EFAULT;
+> +
+> +	task->sched_preempt_delay.delay_req = (u32 __user *) preempt_delay_addr;
+> +
+> +	/* zero out flags */
+
+Brilliant comment. I can see what the code is doing. What's way more
+interesting and of course undocumented is why you are ignoring the
+return value of put_user() ..
+
+> +	put_user(0, (uint32_t *)preempt_delay_addr);
+
+Aside of the general issues I have with this (see the inline replies
+to your changelog) the overall impression of this patch is that it is
+a half baken and carelessly cobbled together extract of some data base
+specific kernel hackery, which I prefer not to see at all.
+
+Thanks,
+
+	tglx
