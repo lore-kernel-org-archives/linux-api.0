@@ -1,93 +1,70 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: Re: [fuse-devel] [PATCH 4/6] fs/fuse: support compiling out splice
-Date: Mon, 24 Nov 2014 08:05:10 -0800
-Message-ID: <20141124160510.GA2446@jtriplet-mobl1>
-References: <1416752468-1626-1-git-send-email-pieter@boesman.nl>
- <1416752468-1626-5-git-send-email-pieter@boesman.nl>
- <CAFLxGvxq3Mr9n8xMO_fPZDhrGmBh=WKyU0+RF13JBdjssX6qfw@mail.gmail.com>
- <20141123232302.GA12456@thin>
- <20141124094931.GA1055@smipidev>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: Re: [PATCHv10 2/5] x86: Hook up execveat system call.
+Date: Mon, 24 Nov 2014 20:06:26 +0300
+Message-ID: <20141124170626.GA5316@mwanda>
+References: <1416830039-21952-1-git-send-email-drysdale@google.com>
+ <1416830039-21952-3-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <sparclinux-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20141124094931.GA1055@smipidev>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pieter Smith <pieter@boesman.nl>
-Cc: Richard Weinberger <richard.weinberger@gmail.com>, "Michael S. Tsirkin" <mst@redhat.com>, Bertrand Jacquin <beber@meleeweb.net>, Oleg Nesterov <oleg@redhat.com>, "J. Bruce Fields" <bfields@fieldses.org>, Eric Dumazet <edumazet@google.com>, =?utf-8?B?6JSh5q2j6b6Z?= <zhenglong.cai@cs2c.com.cn>, Jeff Layton <jlayton@poochiereds.net>, Tom Herbert <therbert@google.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <miklos@szeredi.hu>, Peter Foley <pefoley2@pefoley.com>, Hugh Dickins <hughd@google.com>, Xiao Guangrong <xiaoguangrong@linux.vnet.ibm.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Mel Gorman <mgorman@suse.de>, Matt Turner <mattst88@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Alexander Duyck <alexander.h.duyck@intel.com>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, "Luis R. Rodriguez" <mcgrof@suse.com>, Cat
+In-Reply-To: <1416830039-21952-3-git-send-email-drysdale@google.com>
+Sender: sparclinux-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 24, 2014 at 10:49:31AM +0100, Pieter Smith wrote:
-> On Sun, Nov 23, 2014 at 03:23:02PM -0800, Josh Triplett wrote:
-> > On Sun, Nov 23, 2014 at 11:29:08PM +0100, Richard Weinberger wrote:
-> > > On Sun, Nov 23, 2014 at 3:20 PM, Pieter Smith <pieter@boesman.nl> wrote:
-> > > > To implement splice support, fs/fuse makes use of nosteal_pipe_buf_ops. This
-> > > > struct is exported by fs/splice. The goal of the larger patch set is to
-> > > > completely compile out fs/splice, so uses of the exported struct need to be
-> > > > compiled out along with fs/splice.
-> > > >
-> > > > This patch therefore compiles out splice support in fs/fuse when
-> > > > CONFIG_SYSCALL_SPLICE is undefined.
-> > > >
-> > > > Signed-off-by: Pieter Smith <pieter@boesman.nl>
-> > > > ---
-> > > >  fs/fuse/dev.c      | 4 ++--
-> > > >  include/linux/fs.h | 6 ++++++
-> > > >  2 files changed, 8 insertions(+), 2 deletions(-)
-> > > >
-> > > > diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
-> > > > index ca88731..f8f92a4 100644
-> > > > --- a/fs/fuse/dev.c
-> > > > +++ b/fs/fuse/dev.c
-> > > > @@ -1291,7 +1291,7 @@ static ssize_t fuse_dev_read(struct kiocb *iocb, const struct iovec *iov,
-> > > >         return fuse_dev_do_read(fc, file, &cs, iov_length(iov, nr_segs));
-> > > >  }
-> > > >
-> > > > -static ssize_t fuse_dev_splice_read(struct file *in, loff_t *ppos,
-> > > > +static ssize_t __maybe_unused fuse_dev_splice_read(struct file *in, loff_t *ppos,
-> > > >                                     struct pipe_inode_info *pipe,
-> > > >                                     size_t len, unsigned int flags)
-> > > >  {
-> > > > @@ -2144,7 +2144,7 @@ const struct file_operations fuse_dev_operations = {
-> > > >         .llseek         = no_llseek,
-> > > >         .read           = do_sync_read,
-> > > >         .aio_read       = fuse_dev_read,
-> > > > -       .splice_read    = fuse_dev_splice_read,
-> > > > +       .splice_read    = __splice_p(fuse_dev_splice_read),
-> > > >         .write          = do_sync_write,
-> > > >         .aio_write      = fuse_dev_write,
-> > > >         .splice_write   = fuse_dev_splice_write,
-> > > > diff --git a/include/linux/fs.h b/include/linux/fs.h
-> > > > index a957d43..04c0975 100644
-> > > > --- a/include/linux/fs.h
-> > > > +++ b/include/linux/fs.h
-> > > > @@ -2443,6 +2443,12 @@ extern int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
-> > > >                         int datasync);
-> > > >  extern void block_sync_page(struct page *page);
-> > > >
-> > > > +#ifdef CONFIG_SYSCALL_SPLICE
-> > > > +#define __splice_p(x) x
-> > > > +#else
-> > > > +#define __splice_p(x) NULL
-> > > > +#endif
-> > > > +
-> > > 
-> > > This needs to go into a different patch.
-> > > One logical change per patch please. :-)
-> > 
-> > Easy enough to merge this one into the patch introducing
-> > CONFIG_SYSCALL_SPLICE, then.
-> > 
-> > - Josh Triplett
-> 
-> The patch introducing CONFIG_SYSCALL_SPLICE (PATCH 3) only compiles out the
-> syscalls. PATCH 6 on the other hand, compiles out fs/splice.c. This patch
-> allows fs/fuse to be compiled when fs/splice.c is compiled out. If I am to
-> squash it, it would be logical to include it in PATCH 6, not 3.
+On Mon, Nov 24, 2014 at 11:53:56AM +0000, David Drysdale wrote:
+> Hook up x86-64, i386 and x32 ABIs.
+>=20
+> Signed-off-by: David Drysdale <drysdale@google.com>
 
-The suggestion wasn't to move the fs/fuse/dev.c bits; those should
-definitely stay in this patch.  The suggestion was just to move the bit
-of the patch defining __splice_p from this patch to patch 3.  (Note that
-you need to define it before you use it, so it can't go in patch 6.)
+This one has been breaking my linux-next build for the past week.  I'm
+not sure what's going on.  I build with a script:
 
-- Josh Triplett
+make allmodconfig
+
+cat << EOF >> .config
+CONFIG_DYNAMIC_DEBUG=3Dn
+CONFIG_DEBUG_STRICT_USER_COPY_CHECKS=3Dn
+CONFIG_DYNAMIC_DEBUG=3Dy
+EOF
+
+make oldconfig
+
+Here are the errors:
+
+  CHK     include/generated/compile.h
+  CHECK   arch/x86/ia32/audit.c
+  CC      arch/x86/ia32/audit.o
+arch/x86/ia32/audit.c: In function =E2=80=98ia32_classify_syscall=E2=80=
+=99:
+arch/x86/ia32/audit.c:38:7: error: =E2=80=98__NR_execveat=E2=80=99 unde=
+clared (first use in this function)
+arch/x86/ia32/audit.c:38:7: note: each undeclared identifier is reporte=
+d only once for each function it appears in
+make[2]: *** [arch/x86/ia32/audit.o] Error 1
+make[2]: Target `__build' not remade because of errors.
+make[1]: *** [arch/x86/ia32] Error 2
+  CHECK   arch/x86/kernel/audit_64.c
+  CHK     kernel/config_data.h
+  CC      arch/x86/kernel/audit_64.o
+arch/x86/kernel/audit_64.c: In function =E2=80=98audit_classify_syscall=
+=E2=80=99:
+arch/x86/kernel/audit_64.c:53:7: error: =E2=80=98__NR_execveat=E2=80=99=
+ undeclared (first use in this function)
+arch/x86/kernel/audit_64.c:53:7: note: each undeclared identifier is re=
+ported only once for each function it appears in
+make[2]: *** [arch/x86/kernel/audit_64.o] Error 1
+make[2]: Target `__build' not remade because of errors.
+make[1]: *** [arch/x86/kernel] Error 2
+make[1]: Target `__build' not remade because of errors.
+
+regards,
+dan carpenter
+--
+To unsubscribe from this list: send the line "unsubscribe sparclinux" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
