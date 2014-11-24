@@ -1,203 +1,124 @@
-From: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Subject: Re: [PATCH v3] selftest: size: Add size test for Linux kernel
-Date: Mon, 24 Nov 2014 10:20:03 -0800
-Message-ID: <547376D3.7070709@sonymobile.com>
-References: <546D084D.20002@sonymobile.com> <546D321F.2080405@sonymobile.com>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCHv10 2/5] x86: Hook up execveat system call.
+Date: Mon, 24 Nov 2014 18:26:24 +0000
+Message-ID: <CAHse=S-DS=NGC619Uhzkbd-EKa0D+HgBq3rE1czmLdoxAFswPg@mail.gmail.com>
+References: <1416830039-21952-1-git-send-email-drysdale@google.com>
+ <1416830039-21952-3-git-send-email-drysdale@google.com> <20141124170626.GA5316@mwanda>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <546D321F.2080405-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <sparclinux-owner@vger.kernel.org>
+In-Reply-To: <20141124170626.GA5316@mwanda>
+Sender: sparclinux-owner@vger.kernel.org
+To: Dan Carpenter <dan.carpenter@oracle.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Rich Felker <dalias@aerifal.cx>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Nov 24, 2014 at 5:06 PM, Dan Carpenter <dan.carpenter@oracle.co=
+m> wrote:
+> On Mon, Nov 24, 2014 at 11:53:56AM +0000, David Drysdale wrote:
+>> Hook up x86-64, i386 and x32 ABIs.
+>>
+>> Signed-off-by: David Drysdale <drysdale@google.com>
+>
+> This one has been breaking my linux-next build for the past week.  I'=
+m
+> not sure what's going on.
 
-This test shows the amount of memory used by the system.
-Note that this is dependent on the user-space that is loaded
-when this program runs.  Optimally, this program would be
-run as the init program itself.
+Hi Dan,
 
-The program is optimized for size itself, to avoid conflating
-its own execution with that of the system software.
-The code is compiled statically, with no stdlibs. On my x86_64 system,
-this results in a statically linked binary of less than 5K.
+Sorry if this has been causing you problems -- I've not had any
+errors from the kbuild robots or my local builds.
 
-Changes from v2:
-  - add return values to print routines
-  - add .gitignore file
+> I build with a script:
+>
+> make allmodconfig
+>
+> cat << EOF >> .config
+> CONFIG_DYNAMIC_DEBUG=3Dn
+> CONFIG_DEBUG_STRICT_USER_COPY_CHECKS=3Dn
+> CONFIG_DYNAMIC_DEBUG=3Dy
+> EOF
+>
+> make oldconfig
+>
+> Here are the errors:
+>
+>   CHK     include/generated/compile.h
+>   CHECK   arch/x86/ia32/audit.c
+>   CC      arch/x86/ia32/audit.o
+> arch/x86/ia32/audit.c: In function =E2=80=98ia32_classify_syscall=E2=80=
+=99:
+> arch/x86/ia32/audit.c:38:7: error: =E2=80=98__NR_execveat=E2=80=99 un=
+declared (first use in this function)
+> arch/x86/ia32/audit.c:38:7: note: each undeclared identifier is repor=
+ted only once for each function it appears in
+> make[2]: *** [arch/x86/ia32/audit.o] Error 1
+> make[2]: Target `__build' not remade because of errors.
+> make[1]: *** [arch/x86/ia32] Error 2
+>   CHECK   arch/x86/kernel/audit_64.c
+>   CHK     kernel/config_data.h
+>   CC      arch/x86/kernel/audit_64.o
+> arch/x86/kernel/audit_64.c: In function =E2=80=98audit_classify_sysca=
+ll=E2=80=99:
+> arch/x86/kernel/audit_64.c:53:7: error: =E2=80=98__NR_execveat=E2=80=99=
+ undeclared (first use in this function)
+> arch/x86/kernel/audit_64.c:53:7: note: each undeclared identifier is =
+reported only once for each function it appears in
+> make[2]: *** [arch/x86/kernel/audit_64.o] Error 1
+> make[2]: Target `__build' not remade because of errors.
+> make[1]: *** [arch/x86/kernel] Error 2
+> make[1]: Target `__build' not remade because of errors.
 
-Changes from v1:
-  - use more correct Copyright string in get_size.c
+That seems odd -- the generic definition of __NR_execveat is in the fir=
+st
+patch in the series, and the various x86-specific definitions should ge=
+t
+generated from the table entries in the second patch in the series (at
+least since the v9 set I sent on 19 Nov, which split out the x86 wiring
+from the general implementation).
 
-Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
----
- tools/testing/selftests/Makefile        |   1 +
- tools/testing/selftests/size/.gitignore |   1 +
- tools/testing/selftests/size/Makefile   |  21 +++++++
- tools/testing/selftests/size/get_size.c | 105 ++++++++++++++++++++++++++++++++
- 4 files changed, 128 insertions(+)
- create mode 100644 tools/testing/selftests/size/.gitignore
- create mode 100644 tools/testing/selftests/size/Makefile
- create mode 100644 tools/testing/selftests/size/get_size.c
+Are the syscall table generation steps happening in your build?  And do=
+es
+__NR_execveat appear in the various generated x86 unistd*.h headers?
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 45f145c..fa91aef 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -15,6 +15,7 @@ TARGETS += user
- TARGETS += sysctl
- TARGETS += firmware
- TARGETS += ftrace
-+TARGETS += size
- 
- TARGETS_HOTPLUG = cpu-hotplug
- TARGETS_HOTPLUG += memory-hotplug
-diff --git a/tools/testing/selftests/size/.gitignore b/tools/testing/selftests/size/.gitignore
-new file mode 100644
-index 0000000..189b781
---- /dev/null
-+++ b/tools/testing/selftests/size/.gitignore
-@@ -0,0 +1 @@
-+get_size
-diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
-new file mode 100644
-index 0000000..51e5fbd
---- /dev/null
-+++ b/tools/testing/selftests/size/Makefile
-@@ -0,0 +1,21 @@
-+#ifndef CC
-+	CC = $(CROSS_COMPILE)gcc
-+#endif
-+
-+#ifndef STRIP
-+	STRIP = $(CROSS_COMPILE)strip
-+#endif
-+
-+all: get_size
-+
-+get_size: get_size.c
-+	$(CC) --static -ffreestanding -nostartfiles \
-+		-Wl,--entry=main get_size.c -o get_size \
-+		`cc -print-libgcc-file-name`
-+	$(STRIP) -s get_size
-+
-+run_tests: all
-+	./get_size
-+
-+clean:
-+	$(RM) get_size
-diff --git a/tools/testing/selftests/size/get_size.c b/tools/testing/selftests/size/get_size.c
-new file mode 100644
-index 0000000..9c8d3cd
---- /dev/null
-+++ b/tools/testing/selftests/size/get_size.c
-@@ -0,0 +1,105 @@
-+/*
-+ * Copyright 2014 Sony
-+ *
-+ * Licensed under the terms of the GNU GPL License version 2
-+ *
-+ * Selftest for runtime system size
-+ *
-+ * Prints the amount of RAM that the currently running system is using.
-+ *
-+ * This program tries to be as small as possible itself, to
-+ * avoid perturbing the system memory utilization with its
-+ * own execution.  It also attempts to have as few dependencies
-+ * on kernel features as possible.
-+ *
-+ * It should be statically linked, with startup libs avoided.
-+ * It uses no library calls, and only the following 3 syscalls:
-+ *   sysinfo(), write(), and _exit()
-+ *
-+ * For output, it avoids printf (which in some C libraries
-+ * has large external dependencies) by implementing its own
-+ * strlen(), number output and print() routines.
-+ */
-+
-+#include <sys/sysinfo.h>
-+#include <unistd.h>
-+
-+#define STDOUT_FILENO 1
-+
-+int my_strlen(const char *s)
-+{
-+	int len = 0;
-+
-+	while (*s++)
-+		len++;
-+	return len;
-+}
-+
-+/*
-+ * num_to_str - put digits from num into *s, left to right
-+ *   do this by dividing the number by powers of 10
-+ *   the tricky part is to omit leading zeros
-+ *   don't print zeros until we've started printing any numbers at all
-+ */
-+void num_to_str(unsigned long num, char *s)
-+{
-+	unsigned long long temp, div;
-+	int started;
-+
-+	temp = num;
-+	div = 1000000000000000000LL;
-+	started = 0;
-+	while (div) {
-+		if (temp/div || started) {
-+			*s++ = (unsigned char)(temp/div + '0');
-+			started = 1;
-+		}
-+		temp -= (temp/div)*div;
-+		div /= 10;
-+	}
-+	*s = 0;
-+}
-+
-+int print_num(unsigned long num)
-+{
-+	char num_buf[30];
-+
-+	num_to_str(num, num_buf);
-+	return write(STDOUT_FILENO, num_buf, my_strlen(num_buf));
-+}
-+
-+int print(char *s)
-+{
-+	return write(STDOUT_FILENO, s, my_strlen(s));
-+}
-+
-+void main(int argc, char **argv)
-+{
-+	int ccode;
-+	unsigned long used;
-+	struct sysinfo info;
-+	unsigned long long temp;
-+
-+	print("Testing system size.\n");
-+	print("1..1\n");
-+
-+	ccode = sysinfo(&info);
-+	if (ccode < 0) {
-+		print("not ok 1 get size runtime size\n");
-+		print("# could not get sysinfo\n");
-+		_exit(ccode);
-+	}
-+
-+	/* ignore cache complexities for now */
-+	temp = info.totalram - info.freeram - info.bufferram;
-+	temp = temp * info.mem_unit;
-+	temp = temp / 1024;
-+
-+	used = temp;
-+
-+	print("ok 1 get runtime size # size = ");
-+	print_num(used);
-+	print(" K\n");
-+
-+	_exit(0);
-+}
--- 
-1.8.2.2
+As an aside, I've just built next-20141124 (a4cfa44aa26a) fine from
+scratch with your config steps.   The build output included the header
+generation steps:
+
+  SYSTBL  arch/x86/syscalls/../include/generated/asm/syscalls_32.h
+  SYSHDR  arch/x86/syscalls/../include/generated/asm/unistd_32_ia32.h
+  SYSHDR  arch/x86/syscalls/../include/generated/asm/unistd_64_x32.h
+  SYSTBL  arch/x86/syscalls/../include/generated/asm/syscalls_64.h
+  SYSHDR  arch/x86/syscalls/../include/generated/uapi/asm/unistd_32.h
+  HOSTCC  scripts/basic/bin2c
+  SYSHDR  arch/x86/syscalls/../include/generated/uapi/asm/unistd_64.h
+  SYSHDR  arch/x86/syscalls/../include/generated/uapi/asm/unistd_x32.h
+
+and the resulting files did include the __NR_execveat constant:
+
+  % grep execveat usr/include/asm*/*.h arch/x86/include/generated/uapi/=
+asm/*.h
+  usr/include/asm-generic/unistd.h:#define __NR_execveat 281
+  usr/include/asm-generic/unistd.h:__SC_COMP(__NR_execveat,
+sys_execveat, compat_sys_execveat)
+  usr/include/asm/unistd_32.h:#define __NR_execveat 358
+  usr/include/asm/unistd_64.h:#define __NR_execveat 322
+  usr/include/asm/unistd_x32.h:#define __NR_execveat (__X32_SYSCALL_BIT=
+ + 545)
+  arch/x86/include/generated/uapi/asm/unistd_32.h:#define __NR_execveat=
+ 358
+  arch/x86/include/generated/uapi/asm/unistd_64.h:#define __NR_execveat=
+ 322
+  arch/x86/include/generated/uapi/asm/unistd_x32.h:#define
+__NR_execveat (__X32_SYSCALL_BIT + 545)
+
+So I can't (yet) reproduce your problem I'm afraid...
+
+> regards,
+> dan carpenter
+--
+To unsubscribe from this list: send the line "unsubscribe sparclinux" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
