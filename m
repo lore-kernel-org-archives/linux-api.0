@@ -1,96 +1,93 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: Re: [PATCH v3 5/7] crypto: AF_ALG: add random number generator support
-Date: Mon, 24 Nov 2014 16:08:51 +0100
-Message-ID: <1924093.6oedGBDXii@tauon>
-References: <4088013.2O8zCP0xXa@tachyon.chronox.de> <2490914.nzfN9gyyGH@tachyon.chronox.de> <20141124143150.GC31469@gondor.apana.org.au>
+From: Josh Triplett <josh@joshtriplett.org>
+Subject: Re: [fuse-devel] [PATCH 4/6] fs/fuse: support compiling out splice
+Date: Mon, 24 Nov 2014 08:05:10 -0800
+Message-ID: <20141124160510.GA2446@jtriplet-mobl1>
+References: <1416752468-1626-1-git-send-email-pieter@boesman.nl>
+ <1416752468-1626-5-git-send-email-pieter@boesman.nl>
+ <CAFLxGvxq3Mr9n8xMO_fPZDhrGmBh=WKyU0+RF13JBdjssX6qfw@mail.gmail.com>
+ <20141123232302.GA12456@thin>
+ <20141124094931.GA1055@smipidev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20141124143150.GC31469@gondor.apana.org.au>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20141124094931.GA1055@smipidev>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pieter Smith <pieter@boesman.nl>
+Cc: Richard Weinberger <richard.weinberger@gmail.com>, "Michael S. Tsirkin" <mst@redhat.com>, Bertrand Jacquin <beber@meleeweb.net>, Oleg Nesterov <oleg@redhat.com>, "J. Bruce Fields" <bfields@fieldses.org>, Eric Dumazet <edumazet@google.com>, =?utf-8?B?6JSh5q2j6b6Z?= <zhenglong.cai@cs2c.com.cn>, Jeff Layton <jlayton@poochiereds.net>, Tom Herbert <therbert@google.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <miklos@szeredi.hu>, Peter Foley <pefoley2@pefoley.com>, Hugh Dickins <hughd@google.com>, Xiao Guangrong <xiaoguangrong@linux.vnet.ibm.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Mel Gorman <mgorman@suse.de>, Matt Turner <mattst88@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Alexander Duyck <alexander.h.duyck@intel.com>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, "Luis R. Rodriguez" <mcgrof@suse.com>, Cat
 List-Id: linux-api@vger.kernel.org
 
-Am Montag, 24. November 2014, 22:31:50 schrieb Herbert Xu:
+On Mon, Nov 24, 2014 at 10:49:31AM +0100, Pieter Smith wrote:
+> On Sun, Nov 23, 2014 at 03:23:02PM -0800, Josh Triplett wrote:
+> > On Sun, Nov 23, 2014 at 11:29:08PM +0100, Richard Weinberger wrote:
+> > > On Sun, Nov 23, 2014 at 3:20 PM, Pieter Smith <pieter@boesman.nl> wrote:
+> > > > To implement splice support, fs/fuse makes use of nosteal_pipe_buf_ops. This
+> > > > struct is exported by fs/splice. The goal of the larger patch set is to
+> > > > completely compile out fs/splice, so uses of the exported struct need to be
+> > > > compiled out along with fs/splice.
+> > > >
+> > > > This patch therefore compiles out splice support in fs/fuse when
+> > > > CONFIG_SYSCALL_SPLICE is undefined.
+> > > >
+> > > > Signed-off-by: Pieter Smith <pieter@boesman.nl>
+> > > > ---
+> > > >  fs/fuse/dev.c      | 4 ++--
+> > > >  include/linux/fs.h | 6 ++++++
+> > > >  2 files changed, 8 insertions(+), 2 deletions(-)
+> > > >
+> > > > diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
+> > > > index ca88731..f8f92a4 100644
+> > > > --- a/fs/fuse/dev.c
+> > > > +++ b/fs/fuse/dev.c
+> > > > @@ -1291,7 +1291,7 @@ static ssize_t fuse_dev_read(struct kiocb *iocb, const struct iovec *iov,
+> > > >         return fuse_dev_do_read(fc, file, &cs, iov_length(iov, nr_segs));
+> > > >  }
+> > > >
+> > > > -static ssize_t fuse_dev_splice_read(struct file *in, loff_t *ppos,
+> > > > +static ssize_t __maybe_unused fuse_dev_splice_read(struct file *in, loff_t *ppos,
+> > > >                                     struct pipe_inode_info *pipe,
+> > > >                                     size_t len, unsigned int flags)
+> > > >  {
+> > > > @@ -2144,7 +2144,7 @@ const struct file_operations fuse_dev_operations = {
+> > > >         .llseek         = no_llseek,
+> > > >         .read           = do_sync_read,
+> > > >         .aio_read       = fuse_dev_read,
+> > > > -       .splice_read    = fuse_dev_splice_read,
+> > > > +       .splice_read    = __splice_p(fuse_dev_splice_read),
+> > > >         .write          = do_sync_write,
+> > > >         .aio_write      = fuse_dev_write,
+> > > >         .splice_write   = fuse_dev_splice_write,
+> > > > diff --git a/include/linux/fs.h b/include/linux/fs.h
+> > > > index a957d43..04c0975 100644
+> > > > --- a/include/linux/fs.h
+> > > > +++ b/include/linux/fs.h
+> > > > @@ -2443,6 +2443,12 @@ extern int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
+> > > >                         int datasync);
+> > > >  extern void block_sync_page(struct page *page);
+> > > >
+> > > > +#ifdef CONFIG_SYSCALL_SPLICE
+> > > > +#define __splice_p(x) x
+> > > > +#else
+> > > > +#define __splice_p(x) NULL
+> > > > +#endif
+> > > > +
+> > > 
+> > > This needs to go into a different patch.
+> > > One logical change per patch please. :-)
+> > 
+> > Easy enough to merge this one into the patch introducing
+> > CONFIG_SYSCALL_SPLICE, then.
+> > 
+> > - Josh Triplett
+> 
+> The patch introducing CONFIG_SYSCALL_SPLICE (PATCH 3) only compiles out the
+> syscalls. PATCH 6 on the other hand, compiles out fs/splice.c. This patch
+> allows fs/fuse to be compiled when fs/splice.c is compiled out. If I am to
+> squash it, it would be logical to include it in PATCH 6, not 3.
 
-Hi Herbert,
+The suggestion wasn't to move the fs/fuse/dev.c bits; those should
+definitely stay in this patch.  The suggestion was just to move the bit
+of the patch defining __splice_p from this patch to patch 3.  (Note that
+you need to define it before you use it, so it can't go in patch 6.)
 
->On Fri, Nov 21, 2014 at 06:32:52AM +0100, Stephan Mueller wrote:
->> This patch adds the random number generator support for AF_ALG.
->> 
->> A random number generator's purpose is to generate data without
->> requiring the caller to provide any data. Therefore, the AF_ALG
->> interface handler for RNGs only implements a callback handler for
->> recvmsg.
->> 
->> The following parameters provided with a recvmsg are processed by the
->> 
->> RNG callback handler:
->>         * sock - to resolve the RNG context data structure accessing
->>         the
->>         
->>           RNG instance private to the socket
->>         
->>         * len - this parameter allows userspace callers to specify
->>         how
->>         
->>           many random bytes the RNG shall produce and return. As the
->>           kernel context for the RNG allocates a buffer of 128 bytes
->>           to
->>           store random numbers before copying them to userspace, the
->>           len
->>           parameter is checked that it is not larger than 128. If a
->>           caller wants more random numbers, a new request for recvmsg
->>           shall be made.
->> 
->> The size of 128 bytes is chose because of the following 
-considerations:
->>         * to increase the memory footprint of the kernel too much
->>         (note,
->>         
->>           that would be 128 bytes per open socket)
->>         
->>         * 128 is divisible by any typical cryptographic block size an
->>         
->>           RNG may have
->>         
->>         * A request for random numbers typically only shall supply
->>         small
->>         
->>           amount of data like for keys or IVs that should only
->>           require
->>           one invocation of the recvmsg function.
->> 
->> Note, during instantiation of the RNG, the code checks whether the
->> RNG
->> implementation requires seeding. If so, the RNG is seeded with output
->> from get_random_bytes.
->> 
->> A fully working example using all aspects of the RNG interface is
->> provided at http://www.chronox.de/libkcapi.html
->> 
->> Signed-off-by: Stephan Mueller <smueller@chronox.de>
->
->Sorry but who is going to use this and for what purpose?
->
->Every other algif interface exports real hardware features that
->cannot otherwise be accessed from user-space.  All crypto RNGs
->are by definition software-only, so what is the point of this?
-
-
-My idea is twofold: The software-RNGs currently available (X9.31 and 
-DRBG) use other ciphers as backends. Therefore, they can be considered 
-as transforms on top of these backend ciphers. Now, if these backend 
-ciphers are available in kernel mode only, currently only these in-
-kernel RNGs can use the hardware.
-
-With the consideration of AEAD, all ciphers supported by the kernel 
-crypto API are available to user space. That means, there is no need for 
-an additional crypto library in user space in addition to provide 
-hardware access. The RNG part is there to complement the case for not 
-needing an additional crypto lib in user space.
-
-Ciao
-Stephan
+- Josh Triplett
