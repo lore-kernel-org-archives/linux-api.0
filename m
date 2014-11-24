@@ -1,61 +1,35 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next v4 0/4] netns: allow to identify peer netns
-Date: Mon, 24 Nov 2014 14:45:48 +0100
-Message-ID: <5473368C.5040409@6wind.com>
-References: <1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>	<1414682728-4532-1-git-send-email-nicolas.dichtel@6wind.com>
-	<871tpph03k.fsf@x220.int.ebiederm.org>
-Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
+From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Subject: Re: [PATCH v3 1/7] crypto: AF_ALG: add user space interface for AEAD
+Date: Mon, 24 Nov 2014 22:26:39 +0800
+Message-ID: <20141124142639.GA31469@gondor.apana.org.au>
+References: <4088013.2O8zCP0xXa@tachyon.chronox.de>
+ <5694690.RURGUoE58b@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <871tpph03k.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5694690.RURGUoE58b-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, lkml - Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-TGUgMzAvMTAvMjAxNCAxOTo0MSwgRXJpYyBXLiBCaWVkZXJtYW4gYSDDqWNyaXQgOgo+IE5pY29s
-YXMgRGljaHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JpdGVzOgo+Cj4+IFRoZSBn
-b2FsIG9mIHRoaXMgc2VyaWUgaXMgdG8gYmUgYWJsZSB0byBtdWx0aWNhc3QgbmV0bGluayBtZXNz
-YWdlcyB3aXRoIGFuCj4+IGF0dHJpYnV0ZSB0aGF0IGlkZW50aWZ5IGEgcGVlciBuZXRucy4KPj4g
-VGhpcyBpcyBuZWVkZWQgYnkgdGhlIHVzZXJsYW5kIHRvIGludGVycHJldCBzb21lIGluZm9ybWF0
-aW9ucyBjb250YWluZWQgaW4KPj4gbmV0bGluayBtZXNzYWdlcyAobGlrZSBJRkxBX0xJTksgdmFs
-dWUsIGJ1dCBhbHNvIHNvbWUgb3RoZXIgYXR0cmlidXRlcyBpbiBjYXNlCj4+IG9mIHgtbmV0bnMg
-bmV0ZGV2aWNlIChzZWUgYWxzbwo+PiBodHRwOi8vdGhyZWFkLmdtYW5lLm9yZy9nbWFuZS5saW51
-eC5uZXR3b3JrLzMxNTkzMy9mb2N1cz0zMTYwNjQgYW5kCj4+IGh0dHA6Ly90aHJlYWQuZ21hbmUu
-b3JnL2dtYW5lLmxpbnV4Lmtlcm5lbC5jb250YWluZXJzLzI4MzAxL2ZvY3VzPTQyMzkpKS4KPj4K
-Pj4gSWRzIG9mIHBlZXIgbmV0bnMgYXJlIHNldCBieSB1c2VybGFuZCB2aWEgYSBuZXcgZ2VubCBt
-ZXNzYWdlcy4gVGhlc2UgaWRzIGFyZQo+PiBzdG9yZWQgcGVyIG5ldG5zIGFuZCBhcmUgbG9jYWwg
-KGllIG9ubHkgdmFsaWQgaW4gdGhlIG5ldG5zIHdoZXJlIHRoZXkgYXJlIHNldCkuCj4+IFRvIGF2
-b2lkIGFsbG9jYXRpbmcgYW4gaW50IGZvciBlYWNoIHBlZXIgbmV0bnMsIEkgdXNlIGlkcl9mb3Jf
-ZWFjaCgpIHRvIHJldHJpZXZlCj4+IHRoZSBpZCBvZiBhIHBlZXIgbmV0bnMuIE5vdGUgdGhhdCBp
-dCB3aWxsIGJlIHBvc3NpYmxlIHRvIGFkZCBhIHRhYmxlIChzdHJ1Y3QgbmV0Cj4+IC0+IGlkKSBs
-YXRlciB0byBvcHRpbWl6ZSB0aGlzIGxvb2t1cCBpZiBuZWVkZWQuCj4+Cj4+IFBhdGNoIDEvNCBp
-bnRyb2R1Y2VzIHRoZSBuZXRsaW5rIEFQSSBtZWNoYW5pc20gdG8gc2V0IGFuZCBnZXQgdGhlc2Ug
-aWRzLgo+PiBQYXRjaCAyLzQgYW5kIDMvNCBpbXBsZW1lbnRzIGFuIGV4YW1wbGUgb2YgaG93IHRv
-IHVzZSB0aGVzZSBpZHMgaW4gcnRuZXRsaW5rCj4+IG1lc3NhZ2VzLiBBbmQgcGF0Y2ggNC80IHNo
-b3dzIHRoYXQgdGhlIG5ldGxpbmsgbWVzc2FnZXMgY2FuIGJlIHN5bWV0cmljIGJldHdlZW4KPj4g
-YSBHRVQgYW5kIGEgU0VULgo+Pgo+PiBpcHJvdXRlMiBwYXRjaGVzIGFyZSBhdmFpbGFibGUsIEkg
-Y2FuIHNlbmQgdGhlbSBvbiBkZW1hbmQuCj4KPiBBIHF1aWNrIHJlcGx5LiAgSSB0aGluayB0aGlz
-IHBhdGNoc2V0IGlzIGluIHRoZSByaWdodCBnZW5lcmFsIGRpcmVjdGlvbi4KPiBUaGVyZSBhcmUg
-c29tZSBvZGRiYWxsIGRldGFpbHMgdGhhdCBzZWVtIG9kZC9hd2t3YXJkIHRvIG1lIHN1Y2ggYXMg
-dXNpbmcKPiBnZW5ldGxpbmsgaW5zdGVhZCBvZiBydG5ldGxpbmsgdG8gZ2V0IGFuZCBzZXQgdGhl
-IGlkcywgYW5kIG5vdCBoYXZpbmcKPiBpZHMgaWYgdGhleSBhcmUgbm90IHNldCAodGhhdCBmZWVs
-cyBsaWtlIGEgbWFpbnRlbmFuY2UvdXNhYmlsaXR5IGNoYWxsZW5nZSkuCj4KPiBJIHdvdWxkIGxp
-a2UgdG8gZ2l2ZSB5b3VyIHBhdGNoZXMgYSBkZWVwIHJldmlldywgYnV0IEkgd29uJ3QgYmUgYWJs
-ZSB0bwo+IGRvIHRoYXQgZm9yIGEgY291cGxlIG9mIHdlZWtzLiAgSSBhbSBkZWVwIGluIHRoZSBw
-cm9jZXNzIG9mIG1vdmluZywKPiBhbmQgd2lsbCBiZSBtb3N0bHkgb2ZmbGluZSB1bnRpbCBhYm91
-dCB0aGUgTm92IDExdGguCkVyaWMsIGRpZCB5b3UgaGF2ZSBhIGNoYW5jZSB0byBsb29rIGF0IHRo
-aXM/CgoKUmVnYXJkcywKTmljb2xhcwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxp
-bnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWls
-bWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
+On Fri, Nov 21, 2014 at 06:30:18AM +0100, Stephan Mueller wrote:
+>
+> @@ -421,6 +421,18 @@ int af_alg_cmsg_send(struct msghdr *msg, struct af_alg_control *con)
+>  			con->op = *(u32 *)CMSG_DATA(cmsg);
+>  			break;
+>  
+> +		case ALG_SET_AEAD_AUTHSIZE:
+> +			if (cmsg->cmsg_len < CMSG_LEN(sizeof(u32)))
+> +				return -EINVAL;
+> +			con->aead_authsize = *(u32 *)CMSG_DATA(cmsg);
+> +			break;
+
+This is a tfm attribute so it should go into setsockopt.
+
+Cheers,
+-- 
+Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
