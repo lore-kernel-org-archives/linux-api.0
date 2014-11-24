@@ -1,62 +1,71 @@
-From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Subject: Re: [PATCH v3 4/7] crypto: AF_ALG: add AEAD support
-Date: Mon, 24 Nov 2014 22:29:46 +0800
-Message-ID: <20141124142945.GB31469@gondor.apana.org.au>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v3 5/7] crypto: AF_ALG: add random number generator
+ support
+Date: Mon, 24 Nov 2014 22:31:50 +0800
+Message-ID: <20141124143150.GC31469@gondor.apana.org.au>
 References: <4088013.2O8zCP0xXa@tachyon.chronox.de>
- <2175035.5IWBGpA0Ko@tachyon.chronox.de>
+ <2490914.nzfN9gyyGH@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <2175035.5IWBGpA0Ko-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, lkml - Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <2490914.nzfN9gyyGH@tachyon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>
+Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 21, 2014 at 06:32:16AM +0100, Stephan Mueller wrote:
-> This patch adds the AEAD support for AF_ALG.
+On Fri, Nov 21, 2014 at 06:32:52AM +0100, Stephan Mueller wrote:
+> This patch adds the random number generator support for AF_ALG.
 > 
-> The AEAD implementation uses the entire memory handling and
-> infrastructure of the existing skcipher implementation.
+> A random number generator's purpose is to generate data without
+> requiring the caller to provide any data. Therefore, the AF_ALG
+> interface handler for RNGs only implements a callback handler for
+> recvmsg.
 > 
-> To use AEAD, the user space consumer has to use the salg_type named
-> "aead". The AEAD extension only uses the bind callback as the key
-> differentiator. The previously added functions that select whether to
-> use AEAD or ablkcipher crypto API functions depend on the TFM type
-> allocated during the bind() call.
+> The following parameters provided with a recvmsg are processed by the
+> RNG callback handler:
 > 
-> The addition of AEAD brings a bit of overhead to calculate the size of
-> the ciphertext, because the AEAD implementation of the kernel crypto API
-> makes implied assumption on the location of the authentication tag. When
-> performing an encryption, the tag will be added to the created
-> ciphertext (note, the tag is placed adjacent to the ciphertext). For
-> decryption, the caller must hand in the ciphertext with the tag appended
-> to the ciphertext. Therefore, the selection of the used memory
-> needs to add/subtract the tag size from the source/destination buffers
-> depending on the encryption type. The code is provided with comments
-> explainint when and how that operation is performed.
+>         * sock - to resolve the RNG context data structure accessing the
+>           RNG instance private to the socket
 > 
-> Note: The AF_ALG interface does not support zero length input data.
-> Such zero length input data may be used if one wants to access the hash
-> implementation of an AEAD directly (e.g. the GHASH of GCM or CMAC for
-> CCM). However, this is a use case that is not of interest. GHASH or
-> CMAC is directly available via the hash AF_ALG interface and we
-> therefore do not need to take precautions for this use case.
+>         * len - this parameter allows userspace callers to specify how
+>           many random bytes the RNG shall produce and return. As the
+>           kernel context for the RNG allocates a buffer of 128 bytes to
+>           store random numbers before copying them to userspace, the len
+>           parameter is checked that it is not larger than 128. If a
+>           caller wants more random numbers, a new request for recvmsg
+>           shall be made.
 > 
-> A fully working example using all aspects of AEAD is provided at
-> http://www.chronox.de/libkcapi.html
+> The size of 128 bytes is chose because of the following considerations:
 > 
-> Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+>         * to increase the memory footprint of the kernel too much (note,
+>           that would be 128 bytes per open socket)
+> 
+>         * 128 is divisible by any typical cryptographic block size an
+>           RNG may have
+> 
+>         * A request for random numbers typically only shall supply small
+>           amount of data like for keys or IVs that should only require
+>           one invocation of the recvmsg function.
+> 
+> Note, during instantiation of the RNG, the code checks whether the RNG
+> implementation requires seeding. If so, the RNG is seeded with output
+> from get_random_bytes.
+> 
+> A fully working example using all aspects of the RNG interface is
+> provided at http://www.chronox.de/libkcapi.html
+> 
+> Signed-off-by: Stephan Mueller <smueller@chronox.de>
 
-I appreciate the effort to share code, but shoe-horning AEAD into
-algif_skcipher is just too ugly.
+Sorry but who is going to use this and for what purpose?
 
-How about let's just start with a separate algif_aead and then
-add helpers to merge common code as applicable?
+Every other algif interface exports real hardware features that
+cannot otherwise be accessed from user-space.  All crypto RNGs
+are by definition software-only, so what is the point of this?
 
-Thanks,
+Cheers,
 -- 
-Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Email: Herbert Xu <herbert@gondor.apana.org.au>
 Home Page: http://gondor.apana.org.au/~herbert/
 PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
