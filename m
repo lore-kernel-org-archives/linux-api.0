@@ -1,57 +1,97 @@
-From: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
-Subject: Re: [fuse-devel] [PATCH 4/6] fs/fuse: support compiling out splice
-Date: Mon, 24 Nov 2014 22:49:26 +0100
-Message-ID: <20141124214926.GA9371@smipidev>
-References: <1416752468-1626-1-git-send-email-pieter@boesman.nl>
- <1416752468-1626-5-git-send-email-pieter@boesman.nl>
- <CAFLxGvxq3Mr9n8xMO_fPZDhrGmBh=WKyU0+RF13JBdjssX6qfw@mail.gmail.com>
- <20141123232302.GA12456@thin>
- <20141124094931.GA1055@smipidev>
- <20141124160510.GA2446@jtriplet-mobl1>
- <20141124193412.GB31618@kroah.com>
- <20141124201450.GA18776@cloud>
- <20141124202214.GA11362@kroah.com>
+From: Andi Kleen <ak@linux.intel.com>
+Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a
+ timeslice (was: Pre-emption control for userspace)
+Date: Mon, 24 Nov 2014 14:43:02 -0800
+Message-ID: <20141124224302.GL10824@tassilo.jf.intel.com>
+References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20141124202214.GA11362-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bertrand Jacquin <beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?6JSh5q2j6b6Z?= <zhenglong.cai-TJRtMXcVgQTM1kAEIRd3EQ@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Tom Herbert <therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Peter Foley <pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Xiao Guangrong <xiaoguangrong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Matt Turner <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Alexander Duyck <alexander.h.duyck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "open list:FUSE: FILESYSTEM..." <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Luis R. Rodriguez
+In-Reply-To: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Khalid Aziz <khalid.aziz@oracle.com>
+Cc: tglx@linutronix.de, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, riel@redhat.com, akpm@linux-foundation.org, rientjes@google.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 24, 2014 at 12:22:14PM -0800, Greg KH wrote:
-> On Mon, Nov 24, 2014 at 12:14:50PM -0800, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
-> > > I would, again, argue that stuff like __splice_p() not be implemented at
-> > > all please.  It will only cause a huge proliferation of stuff like this
-> > > that will not make any sense, and only cause a trivial, if any, amount
-> > > of code savings.
-> > > 
-> > > I thought you were going to not do this type of thing until you got the
-> > > gcc optimizer working for function callbacks.
-> > 
-> > Compared to the previous patchset, there are now only two instances of
-> > ifdefs outside of the splice code for this, and this is one of them.  In
-> > this case, the issue is no longer about making the code for this
-> > splice_read function disappear, but rather to eliminate a reference to a
-> > bit of splice functionality (used *inside* the FUSE splice code) that
-> > will not work without SPLICE_SYSCALL.
-> > 
-> > Would you prefer to see this specific case handled via an #ifdef in
-> > fs/fuse/dev.c rather than introducing a __splice_p that people might be
-> > inclined to propagate?  That'd be fine; the code could simply wrap
-> > fuse_dev_splice_read in an #ifdef and have the #else define a NULL
-> > fuse_dev_splice_read.
-> 
-> Yes, I would prefer that, but I'm not the fuse maintainer.
-> 
-> thanks,
-> 
-> greg k-h
+> +1. Location of shared flag can be set using prctl() only once. To
+> +   write a new memory address, the previous memory address must be
+> +   cleared first by writing NULL. Each new memory address requires
+> +   validation in the kernel and update of pointers. Changing this
+> +   address too many times creates too much overhead.
 
-Okay. I'll do my part to prevent the type of proliferation guaranteed to rate
-high on the respected K-H icky-scale. __splice_p() goes the way of the dodo
-in favor of the solution presented by Josh.
+Can you explain this more? Doesn't make any sense to me.
+The validation is just access_ok() which is only a few instructions?
 
-I pray that the Gods of fuse maintenance will look favorable upon the result.
+Also I would drop the config symbol. Linux normally doesn't
+do CONFIG for things like that.
+
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index 9b7d746..7f0d843 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1671,6 +1671,11 @@ long do_fork(unsigned long clone_flags,
+>  			init_completion(&vfork);
+>  			get_task_struct(p);
+>  		}
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+> +		p->sched_preempt_delay.delay_req = NULL;
+> +		p->sched_preempt_delay.delay_granted = 0;
+> +		p->sched_preempt_delay.yield_penalty = 0;
+> +#endif
+
+FWIW this would lead to every new thread having to reexecute
+this. No good way around it, but it may eventually make
+thread spawns more expensive if it was widely used.
+
+>  
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+> +	/*
+> +	 * Clear the penalty flag for current task to reward it for
+> +	 * palying by the rules
+> +	 */
+> +	current->sched_preempt_delay.yield_penalty = 0;
+> +#endif
+
+Doesn't that need to be quantified? After all they may yield
+only near the end of their time slice.
+
+> +	}
+> +
+> +	/*
+> +	 * Get the value of preemption delay request flag from userspace.
+> +	 * Task had already passed us the address where the flag is stored
+> +	 * in userspace earlier. This flag is just like the PROCESS_PRIVATE
+> +	 * futex, leverage the futex code here to read the flag. If there
+
+I don't think any of the calls below are futex code.
+
+> +	case PR_GET_PREEMPT_DELAY:
+> +		error = put_user(
+> +			(unsigned long)current->sched_preempt_delay.delay_req,
+> +					(unsigned long __user *)arg2);
+> +		break;
+> +#endif
+
+Unnecessary cast.
+
+> --- a/kernel/sysctl.c
+> +++ b/kernel/sysctl.c
+> @@ -1104,6 +1104,15 @@ static struct ctl_table kern_table[] = {
+>  		.proc_handler	= proc_dointvec,
+>  	},
+>  #endif
+> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
+> +	{
+> +		.procname	= "preempt_delay_available",
+> +		.data		= &sysctl_preempt_delay_available,
+> +		.maxlen		= sizeof(int),
+> +		.mode		= 0600,
+
+Better 0644, so users can know if they can use it.
+
+Rest looks reasonable to me.
+
+-Andi
+-- 
+ak@linux.intel.com -- Speaking for myself only
