@@ -1,97 +1,138 @@
-From: Andi Kleen <ak@linux.intel.com>
-Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a
- timeslice (was: Pre-emption control for userspace)
-Date: Mon, 24 Nov 2014 14:43:02 -0800
-Message-ID: <20141124224302.GL10824@tassilo.jf.intel.com>
-References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Khalid Aziz <khalid.aziz@oracle.com>
-Cc: tglx@linutronix.de, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, riel@redhat.com, akpm@linux-foundation.org, rientjes@google.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+From: Pieter Smith <pieter@boesman.nl>
+Subject: [PATCH v4 0/7] kernel tinification: optionally compile out splice family of syscalls (splice, vmsplice, tee and sendfile)
+Date: Tue, 25 Nov 2014 00:00:59 +0100
+Message-ID: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: pieter@boesman.nl
+Cc: Josh Triplett <josh@joshtriplett.org>, Alexander Duyck <alexander.h.duyck@intel.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Bertrand Jacquin <beber@meleeweb.net>, Catalina Mocanu <catalina.mocanu@gmail.com>, Daniel Borkmann <dborkman@redhat.com>, "David S. Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Fabian Frederick <fabf@skynet.be>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, Geert Uytterhoeven <geert@linux-m68k.org>, Hugh Dickins <hughd@google.com>, Iulia Manda <iulia.manda21@gmail.com>, Jan Beulich <JBeulich@suse.com>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-kernel
 List-Id: linux-api@vger.kernel.org
 
-> +1. Location of shared flag can be set using prctl() only once. To
-> +   write a new memory address, the previous memory address must be
-> +   cleared first by writing NULL. Each new memory address requires
-> +   validation in the kernel and update of pointers. Changing this
-> +   address too many times creates too much overhead.
+REPO: https://github.com/smipi1/linux-tinification.git
 
-Can you explain this more? Doesn't make any sense to me.
-The validation is just access_ok() which is only a few instructions?
+BRANCH: tiny/config-syscall-splice
 
-Also I would drop the config symbol. Linux normally doesn't
-do CONFIG for things like that.
+BACKGROUND: This patch-set forms part of the Linux Kernel Tinification effort (
+  https://tiny.wiki.kernel.org/).
 
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 9b7d746..7f0d843 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1671,6 +1671,11 @@ long do_fork(unsigned long clone_flags,
->  			init_completion(&vfork);
->  			get_task_struct(p);
->  		}
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> +		p->sched_preempt_delay.delay_req = NULL;
-> +		p->sched_preempt_delay.delay_granted = 0;
-> +		p->sched_preempt_delay.yield_penalty = 0;
-> +#endif
+GOAL: Support compiling out the splice family of syscalls (splice, vmsplice,
+  tee and sendfile) along with all supporting infrastructure if not needed.
+  Many embedded systems will not need the splice-family syscalls. Omitting them
+  saves space.
 
-FWIW this would lead to every new thread having to reexecute
-this. No good way around it, but it may eventually make
-thread spawns more expensive if it was widely used.
+HISTORY:
+  PATCH v4:
+    - Drops __splice_p()
+    - Let nfsd fall back to non-splice support when splice is compiled out
+    - Style fixes
+  
+  PATCH v3:
+    - Fixup commit logs so that they are consistent with patch strategy
+    - Style fixes
+  
+  PATCH v2:
+    - Avoid the ifdef mess introduced in PATCH v1 by mocking out exported splice
+      functions.
 
->  
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> +	/*
-> +	 * Clear the penalty flag for current task to reward it for
-> +	 * palying by the rules
-> +	 */
-> +	current->sched_preempt_delay.yield_penalty = 0;
-> +#endif
+STRATEGY:
+a. With the goal of eventually compiling out fs/splice.c, several functions
+   that are only used in support of the the splice family of syscalls are moved
+   into fs/splice.c from fs/read_write.c. The kernel_write function that is not
+   used to support the splice syscalls is moved to fs/read_write.c.
 
-Doesn't that need to be quantified? After all they may yield
-only near the end of their time slice.
+b. Introduce an EXPERT kernel configuration option; CONFIG_SYSCALL_SPLICE; to
+   compile out the splice family of syscalls. This removes all userspace uses
+   of the splice infrastructure.
 
-> +	}
-> +
-> +	/*
-> +	 * Get the value of preemption delay request flag from userspace.
-> +	 * Task had already passed us the address where the flag is stored
-> +	 * in userspace earlier. This flag is just like the PROCESS_PRIVATE
-> +	 * futex, leverage the futex code here to read the flag. If there
+c. Splice exports an operations struct, nosteal_pipe_buf_ops. Eliminate the 
+   use of this struct when CONFIG_SYSCALL_SPLICE is undefined, so that splice
+   can later be compiled out.
 
-I don't think any of the calls below are futex code.
+d. Let nfsd fall back to non-splice support when splice is compiled out.
 
-> +	case PR_GET_PREEMPT_DELAY:
-> +		error = put_user(
-> +			(unsigned long)current->sched_preempt_delay.delay_req,
-> +					(unsigned long __user *)arg2);
-> +		break;
-> +#endif
+e. Compile out fs/splice.c. Functions exported by fs/splice are mocked out with
+   failing static inlines. This is done so as to all but eliminate the
+   maintenance burden on file-system drivers.
 
-Unnecessary cast.
+RESULTS: A tinyconfig bloat-o-meter score for the entire patch-set:
 
-> --- a/kernel/sysctl.c
-> +++ b/kernel/sysctl.c
-> @@ -1104,6 +1104,15 @@ static struct ctl_table kern_table[] = {
->  		.proc_handler	= proc_dointvec,
->  	},
->  #endif
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> +	{
-> +		.procname	= "preempt_delay_available",
-> +		.data		= &sysctl_preempt_delay_available,
-> +		.maxlen		= sizeof(int),
-> +		.mode		= 0600,
+add/remove: 0/41 grow/shrink: 5/7 up/down: 23/-8422 (-8399)
+function                                     old     new   delta
+sys_pwritev                                  115     122      +7
+sys_preadv                                   115     122      +7
+fdput_pos                                     29      36      +7
+sys_pwrite64                                 115     116      +1
+sys_pread64                                  115     116      +1
+pipe_to_null                                   4       -      -4
+generic_pipe_buf_nosteal                       6       -      -6
+spd_release_page                              10       -     -10
+fdput                                         11       -     -11
+PageUptodate                                  22      11     -11
+lock_page                                     36      24     -12
+signal_pending                                39      26     -13
+fdget                                         56      42     -14
+page_cache_pipe_buf_release                   16       -     -16
+user_page_pipe_buf_ops                        20       -     -20
+splice_write_null                             24       4     -20
+page_cache_pipe_buf_ops                       20       -     -20
+nosteal_pipe_buf_ops                          20       -     -20
+default_pipe_buf_ops                          20       -     -20
+generic_splice_sendpage                       24       -     -24
+user_page_pipe_buf_steal                      25       -     -25
+splice_shrink_spd                             27       -     -27
+pipe_to_user                                  43       -     -43
+direct_splice_actor                           47       -     -47
+default_file_splice_write                     49       -     -49
+wakeup_pipe_writers                           54       -     -54
+wakeup_pipe_readers                           54       -     -54
+write_pipe_buf                                71       -     -71
+page_cache_pipe_buf_confirm                   80       -     -80
+splice_grow_spd                               87       -     -87
+do_splice_to                                  87       -     -87
+ipipe_prep.part                               92       -     -92
+splice_from_pipe                              93       -     -93
+splice_from_pipe_next                        107       -    -107
+pipe_to_sendpage                             109       -    -109
+page_cache_pipe_buf_steal                    114       -    -114
+opipe_prep.part                              119       -    -119
+sys_sendfile                                 122       -    -122
+generic_file_splice_read                     131       8    -123
+sys_sendfile64                               126       -    -126
+sys_vmsplice                                 137       -    -137
+do_splice_direct                             148       -    -148
+vmsplice_to_user                             205       -    -205
+__splice_from_pipe                           246       -    -246
+splice_direct_to_actor                       348       -    -348
+splice_to_pipe                               371       -    -371
+do_sendfile                                  492       -    -492
+sys_tee                                      497       -    -497
+vmsplice_to_pipe                             558       -    -558
+default_file_splice_read                     688       -    -688
+iter_file_splice_write                       702       4    -698
+sys_splice                                  1075       -   -1075
+__generic_file_splice_read                  1109       -   -1109
 
-Better 0644, so users can know if they can use it.
+Pieter Smith (7):
+  fs: move sendfile syscall into fs/splice
+  fs: moved kernel_write to fs/read_write
+  fs/splice: support compiling out splice-family syscalls
+  fs/fuse: support compiling out splice
+  fs/nfsd: support compiling out splice
+  net/core: support compiling out splice
+  fs/splice: full support for compiling out splice
 
-Rest looks reasonable to me.
+ fs/Makefile            |   3 +-
+ fs/fuse/dev.c          |   9 ++-
+ fs/read_write.c        | 181 +++------------------------------------------
+ fs/splice.c            | 194 +++++++++++++++++++++++++++++++++++++++++++++----
+ include/linux/fs.h     |  26 +++++++
+ include/linux/skbuff.h |  10 +++
+ include/linux/splice.h |  42 +++++++++++
+ init/Kconfig           |  10 +++
+ kernel/sys_ni.c        |   8 ++
+ net/core/skbuff.c      |  11 ++-
+ net/sunrpc/svc.c       |   2 +-
+ 11 files changed, 302 insertions(+), 194 deletions(-)
 
--Andi
 -- 
-ak@linux.intel.com -- Speaking for myself only
+2.1.0
