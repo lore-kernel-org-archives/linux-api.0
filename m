@@ -1,36 +1,44 @@
-From: Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 13/42] virtio_blk: v1.0 support
-Date: Tue, 25 Nov 2014 18:55:16 +0100
-Message-ID: <20141125185516.7570c6e7.cornelia.huck@de.ibm.com>
-References: <1416933600-21398-1-git-send-email-mst@redhat.com>
-	<1416933600-21398-14-git-send-email-mst@redhat.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH v4 0/7] kernel tinification: optionally compile out
+ splice family of syscalls (splice, vmsplice, tee and sendfile)
+Date: Tue, 25 Nov 2014 10:10:32 -0800
+Message-ID: <20141125181032.GJ5050@linux.vnet.ibm.com>
+References: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
+ <5474ABB6.3030400@infradead.org>
+ <20141125.121305.2094097848188324942.davem@davemloft.net>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1416933600-21398-14-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Thomas Huth <thuth-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Hildenbrand <dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20141125.121305.2094097848188324942.davem@davemloft.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: rdunlap@infradead.org, pieter@boesman.nl, josh@joshtriplett.org, alexander.h.duyck@intel.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, akpm@linux-foundation.org, beber@meleeweb.net, catalina.mocanu@gmail.com, dborkman@redhat.com, edumazet@google.com, ebiederm@xmission.com, fabf@skynet.be, fuse-devel@lists.sourceforge.net, geert@linux-m68k.org, hughd@google.com, iulia.manda21@gmail.com, JBeulich@suse.com, bfields@fieldses.org, jlayton@poochiereds.net, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nfs@vger.kernel.org, mcgrof@suse.com, mattst88@gmail.com, mgorman@suse.de, mst@redhat.com, miklos@szeredi.hu, netdev@vger.kernel.org, oleg@redhat.com, Paul.Durrant@citrix.com, pefoley2@pefoley.com, tgraf@suug.ch, therbert@google.com, trond.myklebust@primarydata.com, willemb@google.com, xiaoguangrong@linux.vnet.ibm.com, zhenglong
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 25 Nov 2014 18:42:18 +0200
-"Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Tue, Nov 25, 2014 at 12:13:05PM -0500, David Miller wrote:
+> From: Randy Dunlap <rdunlap@infradead.org>
+> Date: Tue, 25 Nov 2014 08:17:58 -0800
+> 
+> > Is the splice family of syscalls the only one that tiny has identified
+> > for optional building or can we expect similar treatment for other
+> > syscalls?
+> > 
+> > Why will many embedded systems not need these syscalls?  You know
+> > exactly what apps they run and you are positive that those apps do
+> > not use splice?
+> 
+> I think starting to compile out system calls is a very slippery
+> slope we should not begin the journey down.
+> 
+> This changes the forward facing interface to userspace.
 
-> Based on patch by Cornelia Huck.
-> 
-> Note: for consistency, and to avoid sparse errors,
->       convert all fields, even those no longer in use
->       for virtio v1.0.
-> 
-> Reviewed-by: Thomas Huth <thuth-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> Reviewed-by: David Hildenbrand <dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> Signed-off-by: Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  include/uapi/linux/virtio_blk.h | 15 ++++-----
->  drivers/block/virtio_blk.c      | 70 ++++++++++++++++++++++++-----------------
->  2 files changed, 49 insertions(+), 36 deletions(-)
-> 
+I certainly sympathize with this concern, given the importance of software
+portability.  However, the tiny-hardware alternative appears ot some sort
+of special-purpose embedded OS, which most definitely will suffer from
+software compatibility issues.  I guess that the good news is that much
+of the tiny hardware that used to be 8 or 16 bits is now 32 bits, which
+means that it has at least some chance of running some form of Linux.  ;-)
 
-Is this sufficiently unchanged so that the original r-bs still hold?
+							Thanx, Paul
