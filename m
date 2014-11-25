@@ -1,7 +1,7 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v4 13/42] virtio_blk: v1.0 support
-Date: Tue, 25 Nov 2014 18:42:18 +0200
-Message-ID: <1416933600-21398-14-git-send-email-mst@redhat.com>
+Subject: [PATCH v4 40/42] virtio_scsi: export to userspace
+Date: Tue, 25 Nov 2014 18:44:16 +0200
+Message-ID: <1416933600-21398-41-git-send-email-mst@redhat.com>
 References: <1416933600-21398-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -10,217 +10,149 @@ Content-Disposition: inline
 In-Reply-To: <1416933600-21398-1-git-send-email-mst@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, Thomas Huth <thuth@linux.vnet.ibm.com>, David Hildenbrand <dahi@linux.vnet.ibm.com>, Rusty Russell <rusty@rustcorp.com.au>, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
+Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, Rusty Russell <rusty@rustcorp.com.au>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexei Starovoitov <ast@plumgrid.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, =?us-ascii?B?PT9VVEYtOD9xP1Bpb3RyPTIwS3I9QzM9QjNsPz0=?= <piotr.krol@3mdeb.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Andy Grover <agrover@redhat.com>, stephen hemminger <stephen@networkplumber.org>, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-Based on patch by Cornelia Huck.
+Replace uXX by __uXX and _packed by __attribute((packed))
+as seems to be the norm for userspace headers.
 
-Note: for consistency, and to avoid sparse errors,
-      convert all fields, even those no longer in use
-      for virtio v1.0.
-
-Reviewed-by: Thomas Huth <thuth@linux.vnet.ibm.com>
-Reviewed-by: David Hildenbrand <dahi@linux.vnet.ibm.com>
-Signed-off-by: Cornelia Huck <cornelia.huck@de.ibm.com>
 Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
 ---
- include/uapi/linux/virtio_blk.h | 15 ++++-----
- drivers/block/virtio_blk.c      | 70 ++++++++++++++++++++++++-----------------
- 2 files changed, 49 insertions(+), 36 deletions(-)
+ include/uapi/linux/virtio_scsi.h | 74 ++++++++++++++++++++--------------------
+ include/uapi/linux/Kbuild        |  1 +
+ 2 files changed, 38 insertions(+), 37 deletions(-)
 
-diff --git a/include/uapi/linux/virtio_blk.h b/include/uapi/linux/virtio_blk.h
-index 9ad67b2..247c8ba 100644
---- a/include/uapi/linux/virtio_blk.h
-+++ b/include/uapi/linux/virtio_blk.h
-@@ -28,6 +28,7 @@
- #include <linux/types.h>
- #include <linux/virtio_ids.h>
- #include <linux/virtio_config.h>
-+#include <linux/virtio_types.h>
+diff --git a/include/uapi/linux/virtio_scsi.h b/include/uapi/linux/virtio_scsi.h
+index af44864..42b9370 100644
+--- a/include/uapi/linux/virtio_scsi.h
++++ b/include/uapi/linux/virtio_scsi.h
+@@ -34,78 +34,78 @@
  
- /* Feature bits */
- #define VIRTIO_BLK_F_BARRIER	0	/* Does host support barriers? */
-@@ -114,18 +115,18 @@ struct virtio_blk_config {
- /* This is the first element of the read scatter-gather list. */
- struct virtio_blk_outhdr {
- 	/* VIRTIO_BLK_T* */
--	__u32 type;
-+	__virtio32 type;
- 	/* io priority. */
--	__u32 ioprio;
-+	__virtio32 ioprio;
- 	/* Sector (ie. 512 byte offset) */
--	__u64 sector;
-+	__virtio64 sector;
- };
+ /* SCSI command request, followed by data-out */
+ struct virtio_scsi_cmd_req {
+-	u8 lun[8];		/* Logical Unit Number */
++	__u8 lun[8];		/* Logical Unit Number */
+ 	__virtio64 tag;		/* Command identifier */
+-	u8 task_attr;		/* Task attribute */
+-	u8 prio;		/* SAM command priority field */
+-	u8 crn;
+-	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
+-} __packed;
++	__u8 task_attr;		/* Task attribute */
++	__u8 prio;		/* SAM command priority field */
++	__u8 crn;
++	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
++} __attribute__((packed));
  
- struct virtio_scsi_inhdr {
--	__u32 errors;
--	__u32 data_len;
--	__u32 sense_len;
--	__u32 residual;
-+	__virtio32 errors;
-+	__virtio32 data_len;
-+	__virtio32 sense_len;
-+	__virtio32 residual;
- };
+ /* SCSI command request, followed by protection information */
+ struct virtio_scsi_cmd_req_pi {
+-	u8 lun[8];		/* Logical Unit Number */
++	__u8 lun[8];		/* Logical Unit Number */
+ 	__virtio64 tag;		/* Command identifier */
+-	u8 task_attr;		/* Task attribute */
+-	u8 prio;		/* SAM command priority field */
+-	u8 crn;
++	__u8 task_attr;		/* Task attribute */
++	__u8 prio;		/* SAM command priority field */
++	__u8 crn;
+ 	__virtio32 pi_bytesout;	/* DataOUT PI Number of bytes */
+ 	__virtio32 pi_bytesin;		/* DataIN PI Number of bytes */
+-	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
+-} __packed;
++	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
++} __attribute__((packed));
  
- /* And this is the final byte of the write scatter-gather list. */
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index c6a27d5..f601f16 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -80,7 +80,7 @@ static int __virtblk_add_req(struct virtqueue *vq,
- {
- 	struct scatterlist hdr, status, cmd, sense, inhdr, *sgs[6];
- 	unsigned int num_out = 0, num_in = 0;
--	int type = vbr->out_hdr.type & ~VIRTIO_BLK_T_OUT;
-+	__virtio32 type = vbr->out_hdr.type & ~cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_OUT);
+ /* Response, followed by sense data and data-in */
+ struct virtio_scsi_cmd_resp {
+ 	__virtio32 sense_len;		/* Sense data length */
+ 	__virtio32 resid;		/* Residual bytes in data buffer */
+ 	__virtio16 status_qualifier;	/* Status qualifier */
+-	u8 status;		/* Command completion status */
+-	u8 response;		/* Response values */
+-	u8 sense[VIRTIO_SCSI_SENSE_SIZE];
+-} __packed;
++	__u8 status;		/* Command completion status */
++	__u8 response;		/* Response values */
++	__u8 sense[VIRTIO_SCSI_SENSE_SIZE];
++} __attribute__((packed));
  
- 	sg_init_one(&hdr, &vbr->out_hdr, sizeof(vbr->out_hdr));
- 	sgs[num_out++] = &hdr;
-@@ -91,19 +91,19 @@ static int __virtblk_add_req(struct virtqueue *vq,
- 	 * block, and before the normal inhdr we put the sense data and the
- 	 * inhdr with additional status information.
- 	 */
--	if (type == VIRTIO_BLK_T_SCSI_CMD) {
-+	if (type == cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_SCSI_CMD)) {
- 		sg_init_one(&cmd, vbr->req->cmd, vbr->req->cmd_len);
- 		sgs[num_out++] = &cmd;
- 	}
+ /* Task Management Request */
+ struct virtio_scsi_ctrl_tmf_req {
+ 	__virtio32 type;
+ 	__virtio32 subtype;
+-	u8 lun[8];
++	__u8 lun[8];
+ 	__virtio64 tag;
+-} __packed;
++} __attribute__((packed));
  
- 	if (have_data) {
--		if (vbr->out_hdr.type & VIRTIO_BLK_T_OUT)
-+		if (vbr->out_hdr.type & cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_OUT))
- 			sgs[num_out++] = data_sg;
- 		else
- 			sgs[num_out + num_in++] = data_sg;
- 	}
+ struct virtio_scsi_ctrl_tmf_resp {
+-	u8 response;
+-} __packed;
++	__u8 response;
++} __attribute__((packed));
  
--	if (type == VIRTIO_BLK_T_SCSI_CMD) {
-+	if (type == cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_SCSI_CMD)) {
- 		sg_init_one(&sense, vbr->req->sense, SCSI_SENSE_BUFFERSIZE);
- 		sgs[num_out + num_in++] = &sense;
- 		sg_init_one(&inhdr, &vbr->in_hdr, sizeof(vbr->in_hdr));
-@@ -119,12 +119,13 @@ static int __virtblk_add_req(struct virtqueue *vq,
- static inline void virtblk_request_done(struct request *req)
- {
- 	struct virtblk_req *vbr = blk_mq_rq_to_pdu(req);
-+	struct virtio_blk *vblk = req->q->queuedata;
- 	int error = virtblk_result(vbr);
+ /* Asynchronous notification query/subscription */
+ struct virtio_scsi_ctrl_an_req {
+ 	__virtio32 type;
+-	u8 lun[8];
++	__u8 lun[8];
+ 	__virtio32 event_requested;
+-} __packed;
++} __attribute__((packed));
  
- 	if (req->cmd_type == REQ_TYPE_BLOCK_PC) {
--		req->resid_len = vbr->in_hdr.residual;
--		req->sense_len = vbr->in_hdr.sense_len;
--		req->errors = vbr->in_hdr.errors;
-+		req->resid_len = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.residual);
-+		req->sense_len = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.sense_len);
-+		req->errors = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.errors);
- 	} else if (req->cmd_type == REQ_TYPE_SPECIAL) {
- 		req->errors = (error != 0);
- 	}
-@@ -173,25 +174,25 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
+ struct virtio_scsi_ctrl_an_resp {
+ 	__virtio32 event_actual;
+-	u8 response;
+-} __packed;
++	__u8 response;
++} __attribute__((packed));
  
- 	vbr->req = req;
- 	if (req->cmd_flags & REQ_FLUSH) {
--		vbr->out_hdr.type = VIRTIO_BLK_T_FLUSH;
-+		vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_FLUSH);
- 		vbr->out_hdr.sector = 0;
--		vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+		vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 	} else {
- 		switch (req->cmd_type) {
- 		case REQ_TYPE_FS:
- 			vbr->out_hdr.type = 0;
--			vbr->out_hdr.sector = blk_rq_pos(vbr->req);
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.sector = cpu_to_virtio64(vblk->vdev, blk_rq_pos(vbr->req));
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		case REQ_TYPE_BLOCK_PC:
--			vbr->out_hdr.type = VIRTIO_BLK_T_SCSI_CMD;
-+			vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_SCSI_CMD);
- 			vbr->out_hdr.sector = 0;
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		case REQ_TYPE_SPECIAL:
--			vbr->out_hdr.type = VIRTIO_BLK_T_GET_ID;
-+			vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_GET_ID);
- 			vbr->out_hdr.sector = 0;
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		default:
- 			/* We don't put anything else in the queue. */
-@@ -204,9 +205,9 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
- 	num = blk_rq_map_sg(hctx->queue, vbr->req, vbr->sg);
- 	if (num) {
- 		if (rq_data_dir(vbr->req) == WRITE)
--			vbr->out_hdr.type |= VIRTIO_BLK_T_OUT;
-+			vbr->out_hdr.type |= cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_OUT);
- 		else
--			vbr->out_hdr.type |= VIRTIO_BLK_T_IN;
-+			vbr->out_hdr.type |= cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_IN);
- 	}
+ struct virtio_scsi_event {
+ 	__virtio32 event;
+-	u8 lun[8];
++	__u8 lun[8];
+ 	__virtio32 reason;
+-} __packed;
++} __attribute__((packed));
  
- 	spin_lock_irqsave(&vblk->vqs[qid].lock, flags);
-@@ -476,7 +477,8 @@ static int virtblk_get_cache_mode(struct virtio_device *vdev)
- 				   struct virtio_blk_config, wce,
- 				   &writeback);
- 	if (err)
--		writeback = virtio_has_feature(vdev, VIRTIO_BLK_F_WCE);
-+		writeback = virtio_has_feature(vdev, VIRTIO_BLK_F_WCE) ||
-+		            virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
+ struct virtio_scsi_config {
+-	u32 num_queues;
+-	u32 seg_max;
+-	u32 max_sectors;
+-	u32 cmd_per_lun;
+-	u32 event_info_size;
+-	u32 sense_size;
+-	u32 cdb_size;
+-	u16 max_channel;
+-	u16 max_target;
+-	u32 max_lun;
+-} __packed;
++	__u32 num_queues;
++	__u32 seg_max;
++	__u32 max_sectors;
++	__u32 cmd_per_lun;
++	__u32 event_info_size;
++	__u32 sense_size;
++	__u32 cdb_size;
++	__u16 max_channel;
++	__u16 max_target;
++	__u32 max_lun;
++} __attribute__((packed));
  
- 	return writeback;
- }
-@@ -821,25 +823,35 @@ static const struct virtio_device_id id_table[] = {
- 	{ 0 },
- };
- 
--static unsigned int features[] = {
-+static unsigned int features_legacy[] = {
- 	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
- 	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE, VIRTIO_BLK_F_SCSI,
- 	VIRTIO_BLK_F_WCE, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE,
- 	VIRTIO_BLK_F_MQ,
-+}
-+;
-+static unsigned int features[] = {
-+	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
-+	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
-+	VIRTIO_BLK_F_TOPOLOGY,
-+	VIRTIO_BLK_F_MQ,
-+	VIRTIO_F_VERSION_1,
- };
- 
- static struct virtio_driver virtio_blk = {
--	.feature_table		= features,
--	.feature_table_size	= ARRAY_SIZE(features),
--	.driver.name		= KBUILD_MODNAME,
--	.driver.owner		= THIS_MODULE,
--	.id_table		= id_table,
--	.probe			= virtblk_probe,
--	.remove			= virtblk_remove,
--	.config_changed		= virtblk_config_changed,
-+	.feature_table			= features,
-+	.feature_table_size		= ARRAY_SIZE(features),
-+	.feature_table_legacy		= features_legacy,
-+	.feature_table_size_legacy	= ARRAY_SIZE(features_legacy),
-+	.driver.name			= KBUILD_MODNAME,
-+	.driver.owner			= THIS_MODULE,
-+	.id_table			= id_table,
-+	.probe				= virtblk_probe,
-+	.remove				= virtblk_remove,
-+	.config_changed			= virtblk_config_changed,
- #ifdef CONFIG_PM_SLEEP
--	.freeze			= virtblk_freeze,
--	.restore		= virtblk_restore,
-+	.freeze				= virtblk_freeze,
-+	.restore			= virtblk_restore,
- #endif
- };
- 
+ /* Feature Bits */
+ #define VIRTIO_SCSI_F_INOUT                    0
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index 44a5581..e61947c 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -428,6 +428,7 @@ header-y += virtio_net.h
+ header-y += virtio_pci.h
+ header-y += virtio_ring.h
+ header-y += virtio_rng.h
++header-y += virtio_scsi.h
+ header=y += vm_sockets.h
+ header-y += vt.h
+ header-y += wait.h
 -- 
 MST
