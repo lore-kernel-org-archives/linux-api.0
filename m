@@ -1,41 +1,198 @@
 From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v7 04/10] tpm: rename chip->dev to chip->pdev
-Date: Tue, 25 Nov 2014 16:44:53 -0500
-Message-ID: <5474F855.7080207@linux.vnet.ibm.com>
-References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-5-git-send-email-jarkko.sakkinen@linux.intel.com>
+Subject: Re: [tpmdd-devel] [PATCH v7 09/10] tpm: TPM 2.0 FIFO Interface
+Date: Tue, 25 Nov 2014 16:52:07 -0500
+Message-ID: <5474FA07.6060204@linux.vnet.ibm.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-10-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1415713513-16524-5-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <1415713513-16524-10-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
-Cc: christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Cc: christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
-> Rename chip->dev to chip->pdev to make it explicit that this not the
-> character device but actually represents the platform device.
+> From: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 >
+> Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2.0,
+> instead of calling tpm_get_timeouts(), assign duration and timeout
+> values defined in the TPM 2.0 PTP specification.
+>
+> Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> ---
+>   drivers/char/tpm/tpm_tis.c | 71 ++++++++++++++++++++++++++++++++++++----------
+>   1 file changed, 56 insertions(+), 15 deletions(-)
 >
-
-
-> diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-> index 69f4003..b3a7c76 100644
-> --- a/drivers/char/tpm/tpm.h
-> +++ b/drivers/char/tpm/tpm.h
-> @@ -98,7 +98,7 @@ struct tpm_vendor_specific {
->   #define TPM_PPI_VERSION_LEN		3
+> diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+> index 7a2c59b..0b3c089 100644
+> --- a/drivers/char/tpm/tpm_tis.c
+> +++ b/drivers/char/tpm/tpm_tis.c
+> @@ -1,5 +1,6 @@
+>   /*
+>    * Copyright (C) 2005, 2006 IBM Corporation
+> + * Copyright (C) 2014 Intel Corporation
+>    *
+>    * Authors:
+>    * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
+> @@ -44,6 +45,10 @@ enum tis_status {
+>   	TPM_STS_DATA_EXPECT = 0x08,
+>   };
 >
->   struct tpm_chip {
-> -	struct device *dev;	/* Device stuff */
-> +	struct device *pdev;	/* Device stuff */
->   	const struct tpm_class_ops *ops;
+> +enum tis_status3 {
+> +	TPM_STS3_TPM2_FAM = 0x04,
+> +};
+> +
+>   enum tis_int_flags {
+>   	TPM_GLOBAL_INT_ENABLE = 0x80000000,
+>   	TPM_INTF_BURST_COUNT_STATIC = 0x100,
+> @@ -70,6 +75,7 @@ enum tis_defaults {
+>   #define	TPM_INT_STATUS(l)		(0x0010 | ((l) << 12))
+>   #define	TPM_INTF_CAPS(l)		(0x0014 | ((l) << 12))
+>   #define	TPM_STS(l)			(0x0018 | ((l) << 12))
+> +#define	TPM_STS3(l)			(0x001b | ((l) << 12))
+>   #define	TPM_DATA_FIFO(l)		(0x0024 | ((l) << 12))
 >
->   	int dev_num;		/* /dev/tpm# */
+>   #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
+> @@ -344,6 +350,7 @@ static int tpm_tis_send(struct tpm_chip *chip, u8 *buf, size_t len)
+>   {
+>   	int rc;
+>   	u32 ordinal;
+> +	unsigned long dur;
+>
+>   	rc = tpm_tis_send_data(chip, buf, len);
+>   	if (rc < 0)
+> @@ -355,9 +362,14 @@ static int tpm_tis_send(struct tpm_chip *chip, u8 *buf, size_t len)
+>
+>   	if (chip->vendor.irq) {
+>   		ordinal = be32_to_cpu(*((__be32 *) (buf + 6)));
+> +
+> +		if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> +			dur = tpm_calc_ordinal_duration(chip, ordinal);
+> +		else
+> +			dur = tpm_calc_ordinal_duration(chip, ordinal);
+> +
 
-So this is the core requiring the renamings.  I assume you got them all 
-and none were hidden in #if's or so.
+Is this right? Shouldn't you call tpm2_calc_ordinal_duration for TPM2? 
+If not don't check the flag but leave comment for why the same function 
+can be called for both TPM versions.
 
-Reviewed-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+
+>   		if (wait_for_tpm_stat
+> -		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
+> -		     tpm_calc_ordinal_duration(chip, ordinal),
+> +		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID, dur,
+>   		     &chip->vendor.read_queue, false) < 0) {
+>   			rc = -ETIME;
+>   			goto out_err;
+> @@ -543,6 +555,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   	u32 vendor, intfcaps, intmask;
+>   	int rc, i, irq_s, irq_e, probe;
+>   	struct tpm_chip *chip;
+> +	u8 sts3;
+>
+>   	chip = tpmm_chip_alloc(dev, &tpm_tis);
+>   	if (IS_ERR(chip))
+> @@ -554,11 +567,28 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   	if (!chip->vendor.iobase)
+>   		return -EIO;
+>
+> +	sts3 = ioread8(chip->vendor.iobase + TPM_STS3(1));
+> +	if (sts3 & TPM_STS3_TPM2_FAM)
+> +		chip->flags = TPM_CHIP_FLAG_TPM2;
+> +
+>   	/* Default timeouts */
+> -	chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> -	chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
+> -	chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> -	chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> +	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
+> +		chip->vendor.timeout_a = usecs_to_jiffies(TPM2_TIMEOUT_A);
+> +		chip->vendor.timeout_b = usecs_to_jiffies(TPM2_TIMEOUT_B);
+> +		chip->vendor.timeout_c = usecs_to_jiffies(TPM2_TIMEOUT_C);
+> +		chip->vendor.timeout_d = usecs_to_jiffies(TPM2_TIMEOUT_D);
+> +		chip->vendor.duration[TPM_SHORT] =
+> +			usecs_to_jiffies(TPM2_DURATION_SHORT);
+> +		chip->vendor.duration[TPM_MEDIUM] =
+> +			usecs_to_jiffies(TPM2_DURATION_MEDIUM);
+> +		chip->vendor.duration[TPM_LONG] =
+> +			usecs_to_jiffies(TPM2_DURATION_LONG);
+> +	} else {
+> +		chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> +		chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
+> +		chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> +		chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> +	}
+>
+>   	if (wait_startup(chip, 0) != 0) {
+>   		rc = -ENODEV;
+> @@ -573,8 +603,8 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   	vendor = ioread32(chip->vendor.iobase + TPM_DID_VID(0));
+>   	chip->vendor.manufacturer_id = vendor;
+>
+> -	dev_info(dev,
+> -		 "1.2 TPM (device-id 0x%X, rev-id %d)\n",
+> +	dev_info(dev, "%s TPM (device-id 0x%X, rev-id %d)\n",
+> +		 (chip->flags & TPM_CHIP_FLAG_TPM2) ? "2.0" : "1.2",
+>   		 vendor >> 16, ioread8(chip->vendor.iobase + TPM_RID(0)));
+>
+>   	if (!itpm) {
+> @@ -616,13 +646,17 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   		dev_dbg(dev, "\tData Avail Int Support\n");
+>
+>   	/* get the timeouts before testing for irqs */
+> -	if (tpm_get_timeouts(chip)) {
+> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2) && tpm_get_timeouts(chip)) {
+>   		dev_err(dev, "Could not get TPM timeouts and durations\n");
+>   		rc = -ENODEV;
+>   		goto out_err;
+>   	}
+>
+> -	if (tpm_do_selftest(chip)) {
+> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> +		rc = tpm2_do_selftest(chip);
+> +	else
+> +		rc = tpm_do_selftest(chip);
+> +	if (rc) {
+>   		dev_err(dev, "TPM self test failed\n");
+>   		rc = -ENODEV;
+>   		goto out_err;
+> @@ -683,7 +717,10 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   			chip->vendor.probed_irq = 0;
+>
+>   			/* Generate Interrupts */
+> -			tpm_gen_interrupt(chip);
+> +			if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> +				tpm2_gen_interrupt(chip);
+> +			else
+> +				tpm_gen_interrupt(chip);
+>
+>   			chip->vendor.irq = chip->vendor.probed_irq;
+>
+> @@ -759,14 +796,18 @@ static void tpm_tis_reenable_interrupts(struct tpm_chip *chip)
+>   static int tpm_tis_resume(struct device *dev)
+>   {
+>   	struct tpm_chip *chip = dev_get_drvdata(dev);
+> -	int ret;
+> +	int ret = 0;
+>
+>   	if (chip->vendor.irq)
+>   		tpm_tis_reenable_interrupts(chip);
+>
+> -	ret = tpm_pm_resume(dev);
+> -	if (!ret)
+> -		tpm_do_selftest(chip);
+> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> +		tpm2_do_selftest(chip);
+> +	else {
+> +		ret = tpm_pm_resume(dev);
+> +		if (!ret)
+> +			tpm_do_selftest(chip);
+> +	}
+
+Only a self test necessary for TPM2 if resuming from ACPI sleep?
+
+Other parts look good to me.
+    Stefan
