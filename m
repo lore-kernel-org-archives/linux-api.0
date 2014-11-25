@@ -1,43 +1,53 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: Re: [PATCH v4 0/7] kernel tinification: optionally compile out
- splice family of syscalls (splice, vmsplice, tee and sendfile)
-Date: Mon, 24 Nov 2014 16:52:21 -0800
-Message-ID: <20141125005221.GB21653@thin>
-References: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a timeslice
+ (was: Pre-emption control for userspace)
+Date: Mon, 24 Nov 2014 21:03:52 -0500
+Message-ID: <5473E388.6000605@redhat.com>
+References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Pieter Smith <pieter@boesman.nl>
-Cc: Alexander Duyck <alexander.h.duyck@intel.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Bertrand Jacquin <beber@meleeweb.net>, Catalina Mocanu <catalina.mocanu@gmail.com>, Daniel Borkmann <dborkman@redhat.com>, "David S. Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Fabian Frederick <fabf@skynet.be>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, Geert Uytterhoeven <geert@linux-m68k.org>, Hugh Dickins <hughd@google.com>, Iulia Manda <iulia.manda21@gmail.com>, Jan Beulich <JBeulich@suse.com>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, open list <linux-kernel@vger.kernel.org>open
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Khalid Aziz <khalid.aziz@oracle.com>, tglx@linutronix.de, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com
+Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 25, 2014 at 12:00:59AM +0100, Pieter Smith wrote:
-> REPO: https://github.com/smipi1/linux-tinification.git
-> 
-> BRANCH: tiny/config-syscall-splice
-> 
-> BACKGROUND: This patch-set forms part of the Linux Kernel Tinification effort (
->   https://tiny.wiki.kernel.org/).
-> 
-> GOAL: Support compiling out the splice family of syscalls (splice, vmsplice,
->   tee and sendfile) along with all supporting infrastructure if not needed.
->   Many embedded systems will not need the splice-family syscalls. Omitting them
->   saves space.
-> 
-> HISTORY:
->   PATCH v4:
->     - Drops __splice_p()
->     - Let nfsd fall back to non-splice support when splice is compiled out
->     - Style fixes
-[...]
-> RESULTS: A tinyconfig bloat-o-meter score for the entire patch-set:
-> 
-> add/remove: 0/41 grow/shrink: 5/7 up/down: 23/-8422 (-8399)
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-I replied to one patch with a minor nit in the commit message.  Other
-than that, I don't see any obvious issues with this.
+On 11/24/2014 03:56 PM, Khalid Aziz wrote:
+> sched/fair: Add advisory flag for borrowing a timeslice
+> 
+> This patch adds a way for a task to request to borrow one
+> timeslice from future if it is about to be preempted, so it could
+> delay preemption and complete any critical task it is in the middle
+> of.
+> 
+> This feature helps with performance on databases and has been used
+> for many years on other OSs by the databases. This feature helps in
+> situation where a task acquires a lock before performing a critical
+> operation on the database and happens to get preempted
 
-- Josh Triplett
+Why don't the other tasks that want the lock sleep on the
+lock?
+
+I can see this "solution" help mostly with userspace spinlocks,
+which are relics of a past era that need to die. There is no
+way userspace spinlocks will not fail miserably on virtual
+machines, and it is time to get rid of them.
+
+- -- 
+All rights reversed
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQEcBAEBAgAGBQJUc+OIAAoJEM553pKExN6DF/oIAJ+ldPQZBMIxJLK4dmAwCuwu
+OLK8sEyOMbg7/0u7EcfJaeWMhxIN+etnK9535TsIpm7ojBeBcuMvXv/K7u5gD6V4
++yU4mV/rUCccolXruaHJqaFZqOg06qmJ0FdzJNyBrsMclgGnfTL8m8p5dlCOMMLZ
+11N3imtrrJekigAmn/r9DCr75cGgfpIjPqE1yHc5NhiZ2uPmAS2qvefIZsg+88PH
+8M0dOjgIWQKi9SkB6K2OSy7A/fKwyf9DJ3/OKRovA6AHfszvqCU1WVOoYRoO0CPG
+v/zOYxIi8FIwi9LT50pM62zcpXVMYddN5etGa9qh4nI7oxXYKniH4JzwZdWDYwo=
+=EymR
+-----END PGP SIGNATURE-----
