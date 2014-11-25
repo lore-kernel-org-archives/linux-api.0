@@ -1,37 +1,236 @@
-From: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>
-Subject: Re: [PATCH v4 0/7] kernel tinification: optionally compile out
- splice family of syscalls (splice, vmsplice, tee and sendfile)
-Date: Tue, 25 Nov 2014 21:11:29 +0100
-Message-ID: <20141125201129.GA27167@smipidev>
-References: <5474ABB6.3030400@infradead.org>
- <20141125.121305.2094097848188324942.davem@davemloft.net>
- <20141125185310.GA24891@cloud>
- <20141125.140441.401150380839514113.davem@davemloft.net>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v3] selftest: size: Add size test for Linux kernel
+Date: Tue, 25 Nov 2014 13:39:18 -0700
+Message-ID: <5474E8F6.8010307@osg.samsung.com>
+References: <546D084D.20002@sonymobile.com> <546D321F.2080405@sonymobile.com> <547376D3.7070709@sonymobile.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20141125.140441.401150380839514113.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+In-Reply-To: <547376D3.7070709-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, alexander.h.duyck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org, catalina.mocanu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, JBeulich-IBi9RG/b67k@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mcgrof-IBi9RG/b67k@public.gmane.org, mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul.Durrant-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org, tgraf-G/eBtMaohhA@public.gmane.org, therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, xiaoguangrong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+To: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 25, 2014 at 02:04:41PM -0500, David Miller wrote:
-> From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
-> Date: Tue, 25 Nov 2014 10:53:10 -0800
+On 11/24/2014 11:20 AM, Tim Bird wrote:
 > 
-> > It's not a "slippery slope"; it's been our standard practice for ages.
+> This test shows the amount of memory used by the system.
+> Note that this is dependent on the user-space that is loaded
+> when this program runs.  Optimally, this program would be
+> run as the init program itself.
 > 
-> We've never put an entire class of generic system calls behind
-> a config option.
+> The program is optimized for size itself, to avoid conflating
+> its own execution with that of the system software.
+> The code is compiled statically, with no stdlibs. On my x86_64 system,
+> this results in a statically linked binary of less than 5K.
+> 
 
-I would have loved to make them optional individually, but they all are
-semantic variations of the same thing: Moving data between fd's without that
-data passing through userspace. It therefore isn't surprising that these
-syscalls share an underlying entanglement of code (which is where the bulk of
-the space saving is to be had).
+This following version information shouldn't be part of changelog.
 
-What a tiny product developer should be asking himself, is: "Do I really need
-to efficiently move data between file descriptors?". If the answer no, he can
-disable CONFIG_SYSCALL_SPLICE to squeeze an extra 8KB out of his kernel.
+> Changes from v2:
+>   - add return values to print routines
+>   - add .gitignore file
+> 
+> Changes from v1:
+>   - use more correct Copyright string in get_size.c
+> 
+> Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+> ---
+
+Goes here.
+
+>  tools/testing/selftests/Makefile        |   1 +
+>  tools/testing/selftests/size/.gitignore |   1 +
+>  tools/testing/selftests/size/Makefile   |  21 +++++++
+>  tools/testing/selftests/size/get_size.c | 105 ++++++++++++++++++++++++++++++++
+>  4 files changed, 128 insertions(+)
+>  create mode 100644 tools/testing/selftests/size/.gitignore
+>  create mode 100644 tools/testing/selftests/size/Makefile
+>  create mode 100644 tools/testing/selftests/size/get_size.c
+> 
+> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+> index 45f145c..fa91aef 100644
+> --- a/tools/testing/selftests/Makefile
+> +++ b/tools/testing/selftests/Makefile
+> @@ -15,6 +15,7 @@ TARGETS += user
+>  TARGETS += sysctl
+>  TARGETS += firmware
+>  TARGETS += ftrace
+> +TARGETS += size
+>  
+>  TARGETS_HOTPLUG = cpu-hotplug
+>  TARGETS_HOTPLUG += memory-hotplug
+> diff --git a/tools/testing/selftests/size/.gitignore b/tools/testing/selftests/size/.gitignore
+> new file mode 100644
+> index 0000000..189b781
+> --- /dev/null
+> +++ b/tools/testing/selftests/size/.gitignore
+> @@ -0,0 +1 @@
+> +get_size
+> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+> new file mode 100644
+> index 0000000..51e5fbd
+> --- /dev/null
+> +++ b/tools/testing/selftests/size/Makefile
+> @@ -0,0 +1,21 @@
+> +#ifndef CC
+> +	CC = $(CROSS_COMPILE)gcc
+> +#endif
+> +
+> +#ifndef STRIP
+> +	STRIP = $(CROSS_COMPILE)strip
+> +#endif
+> +
+> +all: get_size
+> +
+> +get_size: get_size.c
+> +	$(CC) --static -ffreestanding -nostartfiles \
+> +		-Wl,--entry=main get_size.c -o get_size \
+> +		`cc -print-libgcc-file-name`
+> +	$(STRIP) -s get_size
+> +
+> +run_tests: all
+> +	./get_size
+> +
+> +clean:
+> +	$(RM) get_size
+> diff --git a/tools/testing/selftests/size/get_size.c b/tools/testing/selftests/size/get_size.c
+> new file mode 100644
+> index 0000000..9c8d3cd
+> --- /dev/null
+> +++ b/tools/testing/selftests/size/get_size.c
+> @@ -0,0 +1,105 @@
+> +/*
+> + * Copyright 2014 Sony
+> + *
+> + * Licensed under the terms of the GNU GPL License version 2
+> + *
+> + * Selftest for runtime system size
+> + *
+> + * Prints the amount of RAM that the currently running system is using.
+> + *
+> + * This program tries to be as small as possible itself, to
+> + * avoid perturbing the system memory utilization with its
+> + * own execution.  It also attempts to have as few dependencies
+> + * on kernel features as possible.
+> + *
+> + * It should be statically linked, with startup libs avoided.
+> + * It uses no library calls, and only the following 3 syscalls:
+> + *   sysinfo(), write(), and _exit()
+> + *
+> + * For output, it avoids printf (which in some C libraries
+> + * has large external dependencies) by implementing its own
+> + * strlen(), number output and print() routines.
+> + */
+> +
+> +#include <sys/sysinfo.h>
+> +#include <unistd.h>
+> +
+> +#define STDOUT_FILENO 1
+> +
+> +int my_strlen(const char *s)
+> +{
+> +	int len = 0;
+> +
+> +	while (*s++)
+> +		len++;
+> +	return len;
+> +}
+> +
+> +/*
+> + * num_to_str - put digits from num into *s, left to right
+> + *   do this by dividing the number by powers of 10
+> + *   the tricky part is to omit leading zeros
+> + *   don't print zeros until we've started printing any numbers at all
+> + */
+> +void num_to_str(unsigned long num, char *s)
+> +{
+> +	unsigned long long temp, div;
+> +	int started;
+> +
+> +	temp = num;
+> +	div = 1000000000000000000LL;
+> +	started = 0;
+> +	while (div) {
+> +		if (temp/div || started) {
+> +			*s++ = (unsigned char)(temp/div + '0');
+> +			started = 1;
+> +		}
+> +		temp -= (temp/div)*div;
+> +		div /= 10;
+> +	}
+> +	*s = 0;
+> +}
+> +
+> +int print_num(unsigned long num)
+> +{
+> +	char num_buf[30];
+> +
+> +	num_to_str(num, num_buf);
+> +	return write(STDOUT_FILENO, num_buf, my_strlen(num_buf));
+> +}
+> +
+> +int print(char *s)
+> +{
+> +	return write(STDOUT_FILENO, s, my_strlen(s));
+> +}
+> +
+> +void main(int argc, char **argv)
+> +{
+> +	int ccode;
+> +	unsigned long used;
+> +	struct sysinfo info;
+> +	unsigned long long temp;
+> +
+> +	print("Testing system size.\n");
+> +	print("1..1\n");
+
+I ran this test and the reporting could be improved.
+Could you change the above to say
+
+System RAM in use instead of system size. Also can you also
+print total RAM and other information you already have:
+
+Maybe something along the lines of:
+
+System RAM report (units Kilobytes):
+   Total:
+   Free:
+   Bufferram:
+   In use:
+
+I would remove the print("1..1\n");
+
+> +
+> +	ccode = sysinfo(&info);
+> +	if (ccode < 0) {
+> +		print("not ok 1 get size runtime size\n");
+> +		print("# could not get sysinfo\n");
+> +		_exit(ccode);
+> +	}
+> +
+> +	/* ignore cache complexities for now */
+> +	temp = info.totalram - info.freeram - info.bufferram;
+> +	temp = temp * info.mem_unit;
+> +	temp = temp / 1024;
+> +
+> +	used = temp;
+> +
+> +	print("ok 1 get runtime size # size = ");
+> +	print_num(used);
+> +	print(" K\n");
+
+Please see above. You can get rid of print(" K\n"); at the end.
+
+Sorry for not giving this feedback earlier. The not so clear
+reporting aspect stood out for me after running the test.
+
+thanks,
+-- Shuah
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
