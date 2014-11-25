@@ -1,38 +1,50 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v3 0/5] Add Spreadtrum Sharkl64 Platform support
-Date: Tue, 25 Nov 2014 13:59:42 +0100
-Message-ID: <5003189.80rNq67D5Z@wuerfel>
-References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a timeslice
+ (was: Pre-emption control for userspace)
+Date: Tue, 25 Nov 2014 08:38:02 -0500
+Message-ID: <5474863A.6010307@redhat.com>
+References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>	 <5473E388.6000605@redhat.com> <1416897050.20575.18.camel@linux-t7sj.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
-Cc: grant.likely@linaro.org, robh+dt@kernel.org, catalin.marinas@arm.com, gregkh@linuxfoundation.org, ijc+devicetree@hellion.org.uk, jslaby@suse.cz, galak@codeaurora.org, broonie@linaro.org, mark.rutland@arm.com, m-karicheri2@ti.com, pawel.moll@arm.com, artagnon@gmail.com, rrichter@cavium.com, will.deacon@arm.com, gnomes@lxorguk.ukuu.org.uk, corbet@lwn.net, jason@lakedaemon.net, broonie@kernel.org, heiko@sntech.de, shawn.guo@freescale.com, florian.vaussard@epfl.ch, andrew@lunn.ch, hytszk@gmail.com, orsonzhai@gmail.com, geng.ren@spreadtrum.com, zhizhou.zhang@spreadtrum.com, lanqing.liu@spreadtrum.com, zhang.lyra@gmail.com, wei.qiao@spreadtrum.com, devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, sprdlinux@freelists.org, linux-doc@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1416897050.20575.18.camel@linux-t7sj.site>
+Sender: linux-doc-owner@vger.kernel.org
+To: Davidlohr Bueso <dave@stgolabs.net>
+Cc: Khalid Aziz <khalid.aziz@oracle.com>, tglx@linutronix.de, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 25 November 2014 20:16:53 Chunyan Zhang wrote:
-> Spreadtrum is a rapid growing chip vendor providing smart phone total solutions.
-> 
-> Sharkl64 Platform is nominated as a SoC infrastructure that supports 4G/3G/2G
-> standards based on ARMv8 multiple core architecture.Now we have only one
-> SoC(SC9836) based on this Platform in developing.
-> 
-> This patchset adds Sharkl64 support in arm64 device tree and the serial driver
-> of SC9836-UART.
-> 
-> This patchset also has patches which address "sprd" prefix and DT compatible
-> strings for nodes which appear un-documented.
-> 
-> This version code was tesed on Fast Mode.
-> We use boot-wrapper-aarch64 as the bootloader.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Looks very good overall. I have two small comments to individual patches,
-but I think we can still merge them for 3.19. Please send the serial
-driver to Greg for inclusion, unless you get further comments, and send
-the updated version of the other patches to arm@kernel.org and ask
-for including them in the cover letter.
+On 11/25/2014 01:30 AM, Davidlohr Bueso wrote:
+> On Mon, 2014-11-24 at 21:03 -0500, Rik van Riel wrote:
+>> I can see this "solution" help mostly with userspace spinlocks, 
+>> which are relics of a past era that need to die. There is no way
+>> userspace spinlocks will not fail miserably on virtual machines,
+>> and it is time to get rid of them.
+> 
+> No, not really. Spinlocks are still very useful on bare metal. 
+> Virtualization is not the only thing out there.
 
-	Arnd
+How many people are going to build two different binaries,
+one for bare metal, and one for virtualized environments?
+
+I suspect the vast majority of applications will only be
+built once, and it would be nice if it wasn't using a
+locking scheme that broke horribly on a significant part
+of the deployments...
+
+- -- 
+All rights reversed
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQEcBAEBAgAGBQJUdIY6AAoJEM553pKExN6DaisH+wWzTc+onHTsPUXs6EU/s+sa
+lp3KFWmRQACPjiWSyIfg7aWFxakiS8BQ4ypbXdC/55lHuX/KMm/1k3zZF/lHiyYA
+vIwfPUX7TnZxgYGVGk++nrCTffQImAc5RXlCBU6Hp6dHxV5Pead6S9afO8dfOeVu
+80cpsqCyUqX+jhMDKq6NkIE0mCMb/U4L0cqo7m67h7PTlWmj8V64PKJjvkDu48O1
+tPd+6jj4xDoEl8dde00EMaYETA6Utngt8+LslV1hMB1nxn82aNIGJnEqQco4WGXH
+gE8Pkn+iToBe1hPF63MVZFJHRzXPUOAoaBCTgu7+l9LLDkfBgv2A/ckh5NLUrd8=
+=41Jl
+-----END PGP SIGNATURE-----
