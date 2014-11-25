@@ -1,310 +1,134 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a timeslice
- (was: Pre-emption control for userspace)
-Date: Tue, 25 Nov 2014 00:35:44 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1411242317380.6439@nanos>
-References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
+From: Josh Triplett <josh@joshtriplett.org>
+Subject: Re: [PATCH v4 3/7] fs/splice: support compiling out splice-family
+ syscalls
+Date: Mon, 24 Nov 2014 16:49:45 -0800
+Message-ID: <20141125004945.GA21653@thin>
+References: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
+ <1416870079-15254-4-git-send-email-pieter@boesman.nl>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Khalid Aziz <khalid.aziz@oracle.com>
-Cc: corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, riel@redhat.com, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1416870079-15254-4-git-send-email-pieter@boesman.nl>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Pieter Smith <pieter@boesman.nl>
+Cc: Alexander Duyck <alexander.h.duyck@intel.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@plumgrid.com>, Andrew Morton <akpm@linux-foundation.org>, Bertrand Jacquin <beber@meleeweb.net>, Catalina Mocanu <catalina.mocanu@gmail.com>, Daniel Borkmann <dborkman@redhat.com>, "David S. Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Fabian Frederick <fabf@skynet.be>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, Geert Uytterhoeven <geert@linux-m68k.org>, Hugh Dickins <hughd@google.com>, Iulia Manda <iulia.manda21@gmail.com>, Jan Beulich <JBeulich@suse.com>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, open list <linux-kernel@vger.kernel.org>open
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 24 Nov 2014, Khalid Aziz wrote:
-> sched/fair: Add advisory flag for borrowing a timeslice
+On Tue, Nov 25, 2014 at 12:01:02AM +0100, Pieter Smith wrote:
+> Many embedded systems will not need the splice-family syscalls (splice,
+> vmsplice, tee and sendfile). Omitting them saves space.  This adds a new EXPERT
+> config option CONFIG_SYSCALL_SPLICE (default y) to support compiling them out.
 > 
-> This patch adds a way for a task to request to borrow one timeslice
-> from future if it is about to be preempted, so it could delay
-> preemption and complete any critical task it is in the middle of.
+> The goal is to completely compile out fs/splice along with the syscalls. To
+> achieve this, the remaining patch-set will deal with fs/splice exports. As far
+> as possible, the impact on other device drivers will be minimized so as to
+> reduce the overal maintenance burden of CONFIG_SYSCALL_SPLICE.
 > 
-> This feature helps with performance on databases and has been
-> used for many years on other OSs by the databases. This feature
-> helps in situation where a task acquires a lock before performing a
-> critical operation on the database and happens to get preempted before
-> it completes its task.  This lock being held causes all other tasks
-> that also acquire the same lock to perform their critical operation
-> on the database, to start queueing up and causing large number of
-> context switches.  This queueing problem can be avoided if the task
-> that acquires lock first could request scheduler to let it borrow one
-> timeslice once it enters its critical section and hence allow it to
-> complete its critical section without causing queueing problem. If
+> The use of exported functions will be solved by transparently mocking them out
+> with static inlines. Uses of the exported pipe_buf_operations struct however
+> require direct modification in fs/fuse and net/core. The next two patches will
+> deal with this. A macro is defined that will assist with NULL'ing out callbacks
+> when CONFIG_SYSCALL_SPLICE is undefined: __splice_p().
 
-While you are niftily avoiding to talk about the nature of the lock, I
-can take it for granted that you are talking about user space
-spinlocks, right?
+This message needs updating, since the patch series doesn't introduce or
+use __splice_p anymore.
 
-Simply if you would talk about futexes and pthread_mutexes then it
-would have occured to you while implementing that feature, that the
-kernel already has a mechanism to record a reference to a user space
-data structure (robust_list_head) which is updated when a futex is
-acquired in user space, i.e. when a critical section is entered. It's
-not the same as you need, but it would be relatively simple to convey
-that information there.
-
-So what are the actual lock types and use cases and why can't you
-combine that with the existing robust list mechanism?
-
-> critical section completes before the task is due for preemption,
-> the task can simply desassert its request. A task sends the
-
-And that deassertion has which consequences before the next preempt
-check happens?
-
-> +config SCHED_PREEMPT_DELAY
-> +	def_bool n
-> +	prompt "Scheduler preemption delay support"
-> +	depends on PROC_FS
-
-Why so?
-
-> @@ -1324,6 +1325,13 @@ struct task_struct {
->  	/* Revert to default priority/policy when forking */
->  	unsigned sched_reset_on_fork:1;
->  	unsigned sched_contributes_to_load:1;
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> +	struct preempt_delay {
-> +		u32 __user *delay_req;		/* delay request flag pointer */
-> +		unsigned char delay_granted;	/* currently in delay */
-> +		unsigned char yield_penalty;	/* failure to yield penalty */
-> +	} sched_preempt_delay;
-
-No. First of all this wants to be a proper struct declaration outside
-of task_struct.
-
-Aside of that your user space side is actually a structure and not a
-opaque u32 pointer, so this should be an explicit data type and not
-something randomly defined in the guts of task_struct.
-
-> +#if defined(CONFIG_SCHED_PREEMPT_DELAY) && defined(CONFIG_PROC_FS)
-> +extern void sched_preempt_delay_show(struct seq_file *m,
-> +					struct task_struct *task);
-> +extern void sched_preempt_delay_set(struct task_struct *task,
-> +					unsigned char *val);
-> +#endif
-
-Can you please get rid of the leftovers of your previous patches
-yourself and before posting? It's annoying as hell to review patches
-which contain stale code.
-
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 9b7d746..7f0d843 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1671,6 +1671,11 @@ long do_fork(unsigned long clone_flags,
->  			init_completion(&vfork);
->  			get_task_struct(p);
->  		}
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> +		p->sched_preempt_delay.delay_req = NULL;
-> +		p->sched_preempt_delay.delay_granted = 0;
-> +		p->sched_preempt_delay.yield_penalty = 0;
-> +#endif
-
-Sigh. We do not sprinkle that kind of #ifdef crap all over the
-place. That's what inline functions in header files are for.
-
-> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-> index 240157c..38cb515 100644
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -4230,6 +4230,14 @@ SYSCALL_DEFINE0(sched_yield)
->  {
->  	struct rq *rq = this_rq_lock();
+> Once all exports are solved, fs/splice can be compiled out.
+> 
+> The bloat benefit of this patch given a tinyconfig is:
+> 
+> add/remove: 0/16 grow/shrink: 2/5 up/down: 114/-3693 (-3579)
+> function                                     old     new   delta
+> splice_direct_to_actor                       348     416     +68
+> splice_to_pipe                               371     417     +46
+> splice_from_pipe_next                        107     106      -1
+> fdput                                         11       -     -11
+> signal_pending                                39      26     -13
+> fdget                                         56      42     -14
+> user_page_pipe_buf_ops                        20       -     -20
+> user_page_pipe_buf_steal                      25       -     -25
+> file_end_write                                58      29     -29
+> file_start_write                              68      34     -34
+> pipe_to_user                                  43       -     -43
+> wakeup_pipe_readers                           54       -     -54
+> do_splice_to                                  87       -     -87
+> ipipe_prep.part                               92       -     -92
+> opipe_prep.part                              119       -    -119
+> sys_sendfile                                 122       -    -122
+> sys_sendfile64                               126       -    -126
+> sys_vmsplice                                 137       -    -137
+> vmsplice_to_user                             205       -    -205
+> sys_tee                                      491       -    -491
+> do_sendfile                                  492       -    -492
+> vmsplice_to_pipe                             558       -    -558
+> sys_splice                                  1020       -   -1020
+> 
+> Signed-off-by: Pieter Smith <pieter@boesman.nl>
+> ---
+>  fs/splice.c     |  2 ++
+>  init/Kconfig    | 10 ++++++++++
+>  kernel/sys_ni.c |  8 ++++++++
+>  3 files changed, 20 insertions(+)
+> 
+> diff --git a/fs/splice.c b/fs/splice.c
+> index 44b201b..7c4c695 100644
+> --- a/fs/splice.c
+> +++ b/fs/splice.c
+> @@ -1316,6 +1316,7 @@ long do_splice_direct(struct file *in, loff_t *ppos, struct file *out,
+>  	return ret;
+>  }
 >  
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> +	/*
-> +	 * Clear the penalty flag for current task to reward it for
-> +	 * palying by the rules
-
-Looking at that mess makes me palying^Wpale.
-
-> +	 */
-> +	current->sched_preempt_delay.yield_penalty = 0;
+> +#ifdef CONFIG_SYSCALL_SPLICE
+>  static int splice_pipe_to_pipe(struct pipe_inode_info *ipipe,
+>  			       struct pipe_inode_info *opipe,
+>  			       size_t len, unsigned int flags);
+> @@ -2200,4 +2201,5 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+>  	return do_sendfile(out_fd, in_fd, NULL, count, 0);
+>  }
+>  #endif
 > +#endif
+>  
+> diff --git a/init/Kconfig b/init/Kconfig
+> index d811d5f..dec9819 100644
+> --- a/init/Kconfig
+> +++ b/init/Kconfig
+> @@ -1571,6 +1571,16 @@ config NTP
+>  	  system clock to an NTP server, you can disable this option to save
+>  	  space.
+>  
+> +config SYSCALL_SPLICE
+> +	bool "Enable splice/vmsplice/tee/sendfile syscalls" if EXPERT
+> +	default y
+> +	help
+> +	  This option enables the splice, vmsplice, tee and sendfile syscalls. These
+> +	  are used by applications to: move data between buffers and arbitrary file
+> +	  descriptors; "copy" data between buffers; or copy data from userspace into
+> +	  buffers. If building an embedded system where no applications use these
+> +	  syscalls, you can disable this option to save space.
 > +
->  	schedstat_inc(rq, yld_count);
->  	current->sched_class->yield_task(rq);
-  
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-> +/*
-> + * delay_resched_rq(): Check if the task about to be preempted has
-> + *	requested an additional time slice. If it has, grant it additional
-> + *	timeslice once.
-> + */
-> +static void
-> +delay_resched_rq(struct rq *rq)
-> +{
-> +	struct task_struct *curr = rq->curr;
-> +	struct sched_entity *se;
-> +	int cpu = task_cpu(curr);
-> +	u32 __user *delay_req;
-> +	unsigned int delay_req_flag;
-> +	unsigned char *delay_flag;
-> +
-> +	/*
-> +	 * Check if task is using pre-emption delay feature. If address
-> +	 * for preemption delay request flag is not set, this task is
-> +	 * not using preemption delay feature, we can reschedule without
-> +	 * any delay
-
-So what happens if:
-
-   kernel.preempt_delay_available = 1;
-   
-   prctl(PR_SET_PREEMPT_DELAY, ...);
-
-   kernel.preempt_delay_available = 0;
-
-Nothing happens at all because you fail to give the sysop control over
-the feature once you unleashed it.
-
-The proper solution for this is to use a static key to control the
-feature itself. That also reduces the overhead for those who are not
-interested in that.
-
-> +	 */
-> +	delay_req = curr->sched_preempt_delay.delay_req;
-> +
-> +	if ((delay_req == NULL) || (cpu != smp_processor_id()))
-
-check_preempt_tick() clearly does not care about that, but you inflict
-a smp_processor_id() on every caller. I can see that you really care
-about performance.
-
-> +		goto resched_now;
-> +
-> +	/*
-> +	 * Pre-emption delay will  be granted only once. If this task
-> +	 * has already been granted delay, rechedule now
-> +	 */
-> +	if (curr->sched_preempt_delay.delay_granted) {
-> +		curr->sched_preempt_delay.delay_granted = 0;
-> +		goto resched_now;
-> +	}
-> +	/*
-> +	 * Get the value of preemption delay request flag from userspace.
-> +	 * Task had already passed us the address where the flag is stored
-> +	 * in userspace earlier. This flag is just like the PROCESS_PRIVATE
-> +	 * futex, leverage the futex code here to read the flag. If there
-> +	 * is a page fault accessing this flag in userspace, that means
-> +	 * userspace has not touched this flag recently and we can
-> +	 * assume no preemption delay is needed.
-> +	 *
-> +	 * If task is not requesting additional timeslice, resched now
-> +	 */
-> +	if (delay_req) {
-
-Surely we need to recheck delay_req here.
-
-> +		int ret;
-> +
-> +		pagefault_disable();
-> +		ret = __copy_from_user_inatomic(&delay_req_flag, delay_req,
-> +				sizeof(u32));
-> +		pagefault_enable();
-> +		delay_flag = &delay_req_flag;
-> +		if (ret || !delay_flag[0])
-
-This is really a well designed kernel/user space interface. NOT.
-
-> +			goto resched_now;
-> +	} else {
-> +		goto resched_now;
-> +	}
-> +
-> +	/*
-> +	 * Current thread has requested preemption delay and has not
-> +	 * been granted an extension yet. If this thread failed to yield
-> +	 * processor after being granted amnesty last time, penalize it
-> +	 * by not granting this delay request, otherwise give it an extra
-> +	 * timeslice.
-> +	 */
-> +	if (curr->sched_preempt_delay.yield_penalty) {
-> +		curr->sched_preempt_delay.yield_penalty = 0;
-> +		goto resched_now;
-> +	}
-> +
-> +	se = &curr->se;
-> +	curr->sched_preempt_delay.delay_granted = 1;
-> +	/*
-> +	 * Set the penalty flag for failing to yield the processor after
-> +	 * being granted immunity. This flag will be cleared in
-> +	 * sched_yield() if the thread indeed calls sched_yield
-> +	 */
-> +	curr->sched_preempt_delay.yield_penalty = 1;
-
-Why on earth do we need two flags here? Just because we can create
-more code in the guts of the scheduler hot pathes that way?
-
-And surely we want to put them into two adjacent u8 to make life
-easier for all architectures.
-
-> +	/*
-> +	 * Let the thread know it got amnesty and it should call
-> +	 * sched_yield() when it is done to avoid penalty next time
-> +	 * it wants amnesty. We need to write to userspace location.
-> +	 * Since we just read from this location, chances are extremley
-> +	 * low we might page fault. If we do page fault, we will ignore
-> +	 * it and accept the cost of failed write in form of unnecessary
-> +	 * penalty for userspace task for not yielding processor.
-
-This is the completely wrong argument. We know that the task was
-asking for an extra time slice because the copy from user above
-succeeded. So we are better of to let the task actually handle its
-pagefault than scheduling it out.
-
-> +	 * This is a highly unlikely scenario.
-> +	 */
-> +	delay_flag[0] = 0;
-> +	delay_flag[1] = 1;
-
-Sigh.
-
-> +#ifdef CONFIG_SCHED_PREEMPT_DELAY
-
-And all of this needs to be in kernel/sys.c just because...
-
-> +int sysctl_preempt_delay_available;
-> +
-> +static int
-> +preempt_delay_write(struct task_struct *task, unsigned long preempt_delay_addr)
-> +{
-> +	/*
-> +	 * Do not allow write if pointer is currently set
-> +	 */
-> +	if (task->sched_preempt_delay.delay_req &&
-> +			((void *)preempt_delay_addr != NULL))
-> +		return -EINVAL;
-> +	/*
-> +	 * Validate the pointer. It should be aligned to 4-byte boundary.
-
-So 4 bytes is a perfect boundary for everyone, right? Pulled that
-number out of thin air or what?
-
-> +	 */
-> +	if (unlikely(!IS_ALIGNED(preempt_delay_addr, 4)))
-> +		return -EFAULT;
-> +	if (unlikely(!access_ok(rw, preempt_delay_addr, sizeof(u32))))
-> +		return -EFAULT;
-> +
-> +	task->sched_preempt_delay.delay_req = (u32 __user *) preempt_delay_addr;
-> +
-> +	/* zero out flags */
-
-Brilliant comment. I can see what the code is doing. What's way more
-interesting and of course undocumented is why you are ignoring the
-return value of put_user() ..
-
-> +	put_user(0, (uint32_t *)preempt_delay_addr);
-
-Aside of the general issues I have with this (see the inline replies
-to your changelog) the overall impression of this patch is that it is
-a half baken and carelessly cobbled together extract of some data base
-specific kernel hackery, which I prefer not to see at all.
-
-Thanks,
-
-	tglx
+>  config PCI_QUIRKS
+>  	default y
+>  	bool "Enable PCI quirk workarounds" if EXPERT
+> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> index d2f5b00..25d5551 100644
+> --- a/kernel/sys_ni.c
+> +++ b/kernel/sys_ni.c
+> @@ -170,6 +170,14 @@ cond_syscall(sys_fstat);
+>  cond_syscall(sys_stat);
+>  cond_syscall(sys_uname);
+>  cond_syscall(sys_olduname);
+> +cond_syscall(sys_vmsplice);
+> +cond_syscall(sys_splice);
+> +cond_syscall(sys_tee);
+> +cond_syscall(sys_sendfile);
+> +cond_syscall(sys_sendfile64);
+> +cond_syscall(compat_sys_vmsplice);
+> +cond_syscall(compat_sys_sendfile);
+> +cond_syscall(compat_sys_sendfile64);
+>  
+>  /* arch-specific weak syscall entries */
+>  cond_syscall(sys_pciconfig_read);
+> -- 
+> 2.1.0
+> 
