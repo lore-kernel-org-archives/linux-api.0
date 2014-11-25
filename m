@@ -1,198 +1,78 @@
-From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v7 09/10] tpm: TPM 2.0 FIFO Interface
-Date: Tue, 25 Nov 2014 16:52:07 -0500
-Message-ID: <5474FA07.6060204@linux.vnet.ibm.com>
-References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-10-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
+Subject: Re: [PATCH v4 0/7] kernel tinification: optionally compile out
+ splice family of syscalls (splice, vmsplice, tee and sendfile)
+Date: Tue, 25 Nov 2014 14:08:41 -0800
+Message-ID: <20141125220841.GB25683@cloud>
+References: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
+ <5474ABB6.3030400@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1415713513-16524-10-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
-Cc: christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5474ABB6.3030400-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>, Alexander Duyck <alexander.h.duyck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Bertrand Jacquin <beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org>, Catalina Mocanu <catalina.mocanu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, "open list:FUSE: FILESYSTEM..." <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Iulia Manda <iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Beulich <JBeulich-IBi9RG/b67k@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, open list <linux-kernel-u79uwXL29TasMV2rI37PzA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
-> From: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
->
-> Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2.0,
-> instead of calling tpm_get_timeouts(), assign duration and timeout
-> values defined in the TPM 2.0 PTP specification.
->
-> Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> ---
->   drivers/char/tpm/tpm_tis.c | 71 ++++++++++++++++++++++++++++++++++++----------
->   1 file changed, 56 insertions(+), 15 deletions(-)
->
-> diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
-> index 7a2c59b..0b3c089 100644
-> --- a/drivers/char/tpm/tpm_tis.c
-> +++ b/drivers/char/tpm/tpm_tis.c
-> @@ -1,5 +1,6 @@
->   /*
->    * Copyright (C) 2005, 2006 IBM Corporation
-> + * Copyright (C) 2014 Intel Corporation
->    *
->    * Authors:
->    * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
-> @@ -44,6 +45,10 @@ enum tis_status {
->   	TPM_STS_DATA_EXPECT = 0x08,
->   };
->
-> +enum tis_status3 {
-> +	TPM_STS3_TPM2_FAM = 0x04,
-> +};
-> +
->   enum tis_int_flags {
->   	TPM_GLOBAL_INT_ENABLE = 0x80000000,
->   	TPM_INTF_BURST_COUNT_STATIC = 0x100,
-> @@ -70,6 +75,7 @@ enum tis_defaults {
->   #define	TPM_INT_STATUS(l)		(0x0010 | ((l) << 12))
->   #define	TPM_INTF_CAPS(l)		(0x0014 | ((l) << 12))
->   #define	TPM_STS(l)			(0x0018 | ((l) << 12))
-> +#define	TPM_STS3(l)			(0x001b | ((l) << 12))
->   #define	TPM_DATA_FIFO(l)		(0x0024 | ((l) << 12))
->
->   #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
-> @@ -344,6 +350,7 @@ static int tpm_tis_send(struct tpm_chip *chip, u8 *buf, size_t len)
->   {
->   	int rc;
->   	u32 ordinal;
-> +	unsigned long dur;
->
->   	rc = tpm_tis_send_data(chip, buf, len);
->   	if (rc < 0)
-> @@ -355,9 +362,14 @@ static int tpm_tis_send(struct tpm_chip *chip, u8 *buf, size_t len)
->
->   	if (chip->vendor.irq) {
->   		ordinal = be32_to_cpu(*((__be32 *) (buf + 6)));
-> +
-> +		if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +			dur = tpm_calc_ordinal_duration(chip, ordinal);
-> +		else
-> +			dur = tpm_calc_ordinal_duration(chip, ordinal);
-> +
+[Resending this mail due to some email encoding brokenness that
+prevented it from reaching LKML the first time; sorry to anyone who
+receives two copies.]
 
-Is this right? Shouldn't you call tpm2_calc_ordinal_duration for TPM2? 
-If not don't check the flag but leave comment for why the same function 
-can be called for both TPM versions.
+On Tue, Nov 25, 2014 at 08:17:58AM -0800, Randy Dunlap wrote:
+> On 11/24/2014 03:00 PM, Pieter Smith wrote:
+> >REPO: https://github.com/smipi1/linux-tinification.git
+> >
+> >BRANCH: tiny/config-syscall-splice
+> >
+> >BACKGROUND: This patch-set forms part of the Linux Kernel Tinification effort (
+> >   https://tiny.wiki.kernel.org/).
+> >
+> >GOAL: Support compiling out the splice family of syscalls (splice, vmsplice,
+> >   tee and sendfile) along with all supporting infrastructure if not needed.
+> >   Many embedded systems will not need the splice-family syscalls. Omitting them
+> >   saves space.
+> 
+> Hi,
+> 
+> Is the splice family of syscalls the only one that tiny has identified
+> for optional building or can we expect similar treatment for other
+> syscalls?
 
+Pretty much any system call that you could conceive of writing a
+userspace without.
 
->   		if (wait_for_tpm_stat
-> -		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-> -		     tpm_calc_ordinal_duration(chip, ordinal),
-> +		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID, dur,
->   		     &chip->vendor.read_queue, false) < 0) {
->   			rc = -ETIME;
->   			goto out_err;
-> @@ -543,6 +555,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->   	u32 vendor, intfcaps, intmask;
->   	int rc, i, irq_s, irq_e, probe;
->   	struct tpm_chip *chip;
-> +	u8 sts3;
->
->   	chip = tpmm_chip_alloc(dev, &tpm_tis);
->   	if (IS_ERR(chip))
-> @@ -554,11 +567,28 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->   	if (!chip->vendor.iobase)
->   		return -EIO;
->
-> +	sts3 = ioread8(chip->vendor.iobase + TPM_STS3(1));
-> +	if (sts3 & TPM_STS3_TPM2_FAM)
-> +		chip->flags = TPM_CHIP_FLAG_TPM2;
-> +
->   	/* Default timeouts */
-> -	chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> -	chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
-> -	chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> -	chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
-> +		chip->vendor.timeout_a = usecs_to_jiffies(TPM2_TIMEOUT_A);
-> +		chip->vendor.timeout_b = usecs_to_jiffies(TPM2_TIMEOUT_B);
-> +		chip->vendor.timeout_c = usecs_to_jiffies(TPM2_TIMEOUT_C);
-> +		chip->vendor.timeout_d = usecs_to_jiffies(TPM2_TIMEOUT_D);
-> +		chip->vendor.duration[TPM_SHORT] =
-> +			usecs_to_jiffies(TPM2_DURATION_SHORT);
-> +		chip->vendor.duration[TPM_MEDIUM] =
-> +			usecs_to_jiffies(TPM2_DURATION_MEDIUM);
-> +		chip->vendor.duration[TPM_LONG] =
-> +			usecs_to_jiffies(TPM2_DURATION_LONG);
-> +	} else {
-> +		chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +		chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
-> +		chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +		chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +	}
->
->   	if (wait_startup(chip, 0) != 0) {
->   		rc = -ENODEV;
-> @@ -573,8 +603,8 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->   	vendor = ioread32(chip->vendor.iobase + TPM_DID_VID(0));
->   	chip->vendor.manufacturer_id = vendor;
->
-> -	dev_info(dev,
-> -		 "1.2 TPM (device-id 0x%X, rev-id %d)\n",
-> +	dev_info(dev, "%s TPM (device-id 0x%X, rev-id %d)\n",
-> +		 (chip->flags & TPM_CHIP_FLAG_TPM2) ? "2.0" : "1.2",
->   		 vendor >> 16, ioread8(chip->vendor.iobase + TPM_RID(0)));
->
->   	if (!itpm) {
-> @@ -616,13 +646,17 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->   		dev_dbg(dev, "\tData Avail Int Support\n");
->
->   	/* get the timeouts before testing for irqs */
-> -	if (tpm_get_timeouts(chip)) {
-> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2) && tpm_get_timeouts(chip)) {
->   		dev_err(dev, "Could not get TPM timeouts and durations\n");
->   		rc = -ENODEV;
->   		goto out_err;
->   	}
->
-> -	if (tpm_do_selftest(chip)) {
-> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +		rc = tpm2_do_selftest(chip);
-> +	else
-> +		rc = tpm_do_selftest(chip);
-> +	if (rc) {
->   		dev_err(dev, "TPM self test failed\n");
->   		rc = -ENODEV;
->   		goto out_err;
-> @@ -683,7 +717,10 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->   			chip->vendor.probed_irq = 0;
->
->   			/* Generate Interrupts */
-> -			tpm_gen_interrupt(chip);
-> +			if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +				tpm2_gen_interrupt(chip);
-> +			else
-> +				tpm_gen_interrupt(chip);
->
->   			chip->vendor.irq = chip->vendor.probed_irq;
->
-> @@ -759,14 +796,18 @@ static void tpm_tis_reenable_interrupts(struct tpm_chip *chip)
->   static int tpm_tis_resume(struct device *dev)
->   {
->   	struct tpm_chip *chip = dev_get_drvdata(dev);
-> -	int ret;
-> +	int ret = 0;
->
->   	if (chip->vendor.irq)
->   		tpm_tis_reenable_interrupts(chip);
->
-> -	ret = tpm_pm_resume(dev);
-> -	if (!ret)
-> -		tpm_do_selftest(chip);
-> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +		tpm2_do_selftest(chip);
-> +	else {
-> +		ret = tpm_pm_resume(dev);
-> +		if (!ret)
-> +			tpm_do_selftest(chip);
-> +	}
+There's a partial project list at https://tiny.wiki.kernel.org/projects.
 
-Only a self test necessary for TPM2 if resuming from ACPI sleep?
+> Why will many embedded systems not need these syscalls?  You know
+> exactly what apps they run and you are positive that those apps do
+> not use splice?
 
-Other parts look good to me.
-    Stefan
+Yes, precisely.  We're talking about embedded systems small enough that
+you're booting with init=/your/app and don't even call fork(), where you
+know exactly what code you're putting in and what libraries you use.
+And they're almost certainly not running glibc.
+
+> >RESULTS: A tinyconfig bloat-o-meter score for the entire patch-set:
+> >
+> >add/remove: 0/41 grow/shrink: 5/7 up/down: 23/-8422 (-8399)
+> 
+> The summary is that this patch saves around 8 KB of code space --
+> is that correct?
+
+Right.  For reference, we're talking about kernels where the *total*
+size is a few hundred kB.
+
+> How much storage space do embedded systems have nowadays?
+
+For the embedded systems we're targeting for the tinification effort, in
+a first pass: 512k-2M of storage (often for an *uncompressed* kernel, to
+support execute-in-place), and 128k-512k of memory.  We've successfully
+built useful kernels and userspaces for such environments, and we'd like
+to go even smaller.
+
+- Josh Triplett
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
