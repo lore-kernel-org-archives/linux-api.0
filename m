@@ -1,31 +1,49 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a
- timeslice
-Date: Tue, 25 Nov 2014 10:46:04 -0700
-Message-ID: <1416937564.3512.15.camel@maggy.simpson.net>
-References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com>
-	 <alpine.DEB.2.11.1411242317380.6439@nanos>
-	 <1416889208.4335.127.camel@maggy.simpson.net> <54749725.3050307@oracle.com>
+From: Cornelia Huck <cornelia.huck@de.ibm.com>
+Subject: Re: [PATCH v4 09/42] virtio: set FEATURES_OK
+Date: Tue, 25 Nov 2014 18:48:11 +0100
+Message-ID: <20141125184811.3191f8db.cornelia.huck@de.ibm.com>
+References: <1416933600-21398-1-git-send-email-mst@redhat.com>
+	<1416933600-21398-10-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54749725.3050307@oracle.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Khalid Aziz <khalid.aziz@oracle.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, riel@redhat.com, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <1416933600-21398-10-git-send-email-mst@redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: rusty@au1.ibm.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, pbonzini@redhat.com, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2014-11-25 at 07:50 -0700, Khalid Aziz wrote:
+On Tue, 25 Nov 2014 18:42:01 +0200
+"Michael S. Tsirkin" <mst@redhat.com> wrote:
 
-> It is definitely not an attempt to solve any kind of RT problem.
+> set FEATURES_OK as per virtio 1.0 spec
+> 
+> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> ---
+>  include/uapi/linux/virtio_config.h |  2 ++
+>  drivers/virtio/virtio.c            | 29 ++++++++++++++++++++++-------
+>  2 files changed, 24 insertions(+), 7 deletions(-)
+> 
 
-No no, I'm saying that giving certain tasks special dispensations
-effectively elevates them.  Temporarily or otherwise, they play by
-different rules, will block more deserving tasks, and it's not cut and
-dried that that blocking will not do more harm than good.
+> +	if (virtio_has_feature(dev, VIRTIO_F_VERSION_1)) {
+> +		add_status(dev, VIRTIO_CONFIG_S_FEATURES_OK);
+> +		status = dev->config->get_status(dev);
+> +		if (!(status & VIRTIO_CONFIG_S_FEATURES_OK)) {
+> +			printk(KERN_ERR "virtio: device refuses features: %x\n",
+> +			       status);
 
-Is it a clear win to make say some kworker or other global asset wait
-when it could have preempted and been gone in usecs?  Nope.
+Can you use dev_err() to include the information which device failed?
 
-	-Mike
+> +			err = -ENODEV;
+> +			goto err;
+> +		}
+> +	}
