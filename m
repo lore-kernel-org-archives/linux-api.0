@@ -1,158 +1,36 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v4 40/42] virtio_scsi: export to userspace
-Date: Tue, 25 Nov 2014 18:44:16 +0200
-Message-ID: <1416933600-21398-41-git-send-email-mst@redhat.com>
-References: <1416933600-21398-1-git-send-email-mst@redhat.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH v4 0/7] kernel tinification: optionally compile out
+ splice family of syscalls (splice, vmsplice, tee and sendfile)
+Date: Tue, 25 Nov 2014 12:13:05 -0500 (EST)
+Message-ID: <20141125.121305.2094097848188324942.davem@davemloft.net>
+References: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
+	<5474ABB6.3030400@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1416933600-21398-1-git-send-email-mst@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, Rusty Russell <rusty@rustcorp.com.au>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexei Starovoitov <ast@plumgrid.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, =?us-ascii?B?PT9VVEYtOD9xP1Bpb3RyPTIwS3I9QzM9QjNsPz0=?= <piotr.krol@3mdeb.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Andy Grover <agrover@redhat.com>, stephen hemminger <stephen@networkplumber.org>, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5474ABB6.3030400-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Cc: pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, alexander.h.duyck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org, catalina.mocanu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, JBeulich-IBi9RG/b67k@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mcgrof-IBi9RG/b67k@public.gmane.org, mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul.Durrant-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org, tgraf-G/eBtMaohhA@public.gmane.org, therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, xiaoguangrong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zhe
 List-Id: linux-api@vger.kernel.org
 
-Replace uXX by __uXX and _packed by __attribute((packed))
-as seems to be the norm for userspace headers.
+From: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Date: Tue, 25 Nov 2014 08:17:58 -0800
 
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
----
- include/uapi/linux/virtio_scsi.h | 74 ++++++++++++++++++++--------------------
- include/uapi/linux/Kbuild        |  1 +
- 2 files changed, 38 insertions(+), 37 deletions(-)
+> Is the splice family of syscalls the only one that tiny has identified
+> for optional building or can we expect similar treatment for other
+> syscalls?
+> 
+> Why will many embedded systems not need these syscalls?  You know
+> exactly what apps they run and you are positive that those apps do
+> not use splice?
 
-diff --git a/include/uapi/linux/virtio_scsi.h b/include/uapi/linux/virtio_scsi.h
-index af44864..42b9370 100644
---- a/include/uapi/linux/virtio_scsi.h
-+++ b/include/uapi/linux/virtio_scsi.h
-@@ -34,78 +34,78 @@
- 
- /* SCSI command request, followed by data-out */
- struct virtio_scsi_cmd_req {
--	u8 lun[8];		/* Logical Unit Number */
-+	__u8 lun[8];		/* Logical Unit Number */
- 	__virtio64 tag;		/* Command identifier */
--	u8 task_attr;		/* Task attribute */
--	u8 prio;		/* SAM command priority field */
--	u8 crn;
--	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
--} __packed;
-+	__u8 task_attr;		/* Task attribute */
-+	__u8 prio;		/* SAM command priority field */
-+	__u8 crn;
-+	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
-+} __attribute__((packed));
- 
- /* SCSI command request, followed by protection information */
- struct virtio_scsi_cmd_req_pi {
--	u8 lun[8];		/* Logical Unit Number */
-+	__u8 lun[8];		/* Logical Unit Number */
- 	__virtio64 tag;		/* Command identifier */
--	u8 task_attr;		/* Task attribute */
--	u8 prio;		/* SAM command priority field */
--	u8 crn;
-+	__u8 task_attr;		/* Task attribute */
-+	__u8 prio;		/* SAM command priority field */
-+	__u8 crn;
- 	__virtio32 pi_bytesout;	/* DataOUT PI Number of bytes */
- 	__virtio32 pi_bytesin;		/* DataIN PI Number of bytes */
--	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
--} __packed;
-+	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
-+} __attribute__((packed));
- 
- /* Response, followed by sense data and data-in */
- struct virtio_scsi_cmd_resp {
- 	__virtio32 sense_len;		/* Sense data length */
- 	__virtio32 resid;		/* Residual bytes in data buffer */
- 	__virtio16 status_qualifier;	/* Status qualifier */
--	u8 status;		/* Command completion status */
--	u8 response;		/* Response values */
--	u8 sense[VIRTIO_SCSI_SENSE_SIZE];
--} __packed;
-+	__u8 status;		/* Command completion status */
-+	__u8 response;		/* Response values */
-+	__u8 sense[VIRTIO_SCSI_SENSE_SIZE];
-+} __attribute__((packed));
- 
- /* Task Management Request */
- struct virtio_scsi_ctrl_tmf_req {
- 	__virtio32 type;
- 	__virtio32 subtype;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio64 tag;
--} __packed;
-+} __attribute__((packed));
- 
- struct virtio_scsi_ctrl_tmf_resp {
--	u8 response;
--} __packed;
-+	__u8 response;
-+} __attribute__((packed));
- 
- /* Asynchronous notification query/subscription */
- struct virtio_scsi_ctrl_an_req {
- 	__virtio32 type;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio32 event_requested;
--} __packed;
-+} __attribute__((packed));
- 
- struct virtio_scsi_ctrl_an_resp {
- 	__virtio32 event_actual;
--	u8 response;
--} __packed;
-+	__u8 response;
-+} __attribute__((packed));
- 
- struct virtio_scsi_event {
- 	__virtio32 event;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio32 reason;
--} __packed;
-+} __attribute__((packed));
- 
- struct virtio_scsi_config {
--	u32 num_queues;
--	u32 seg_max;
--	u32 max_sectors;
--	u32 cmd_per_lun;
--	u32 event_info_size;
--	u32 sense_size;
--	u32 cdb_size;
--	u16 max_channel;
--	u16 max_target;
--	u32 max_lun;
--} __packed;
-+	__u32 num_queues;
-+	__u32 seg_max;
-+	__u32 max_sectors;
-+	__u32 cmd_per_lun;
-+	__u32 event_info_size;
-+	__u32 sense_size;
-+	__u32 cdb_size;
-+	__u16 max_channel;
-+	__u16 max_target;
-+	__u32 max_lun;
-+} __attribute__((packed));
- 
- /* Feature Bits */
- #define VIRTIO_SCSI_F_INOUT                    0
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 44a5581..e61947c 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -428,6 +428,7 @@ header-y += virtio_net.h
- header-y += virtio_pci.h
- header-y += virtio_ring.h
- header-y += virtio_rng.h
-+header-y += virtio_scsi.h
- header=y += vm_sockets.h
- header-y += vt.h
- header-y += wait.h
--- 
-MST
+I think starting to compile out system calls is a very slippery
+slope we should not begin the journey down.
+
+This changes the forward facing interface to userspace.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
