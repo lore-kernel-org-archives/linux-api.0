@@ -1,50 +1,35 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a timeslice
-Date: Tue, 25 Nov 2014 10:25:43 -0500
-Message-ID: <54749F77.50905@redhat.com>
-References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com> <5473E388.6000605@redhat.com> <547497A9.1080800@oracle.com>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH 1/7] KVM: add commentary for kvm_debug_exit_arch struct
+Date: Tue, 25 Nov 2014 16:09:59 +0000
+Message-ID: <1416931805-23223-2-git-send-email-alex.bennee@linaro.org>
+References: <1416931805-23223-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <547497A9.1080800@oracle.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Khalid Aziz <khalid.aziz@oracle.com>, tglx@linutronix.de, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, peterz@infradead.org, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, liwanp@linux.vnet.ibm.com, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com
-Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <1416931805-23223-1-git-send-email-alex.bennee@linaro.org>
+Sender: kvm-owner@vger.kernel.org
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de
+Cc: jan.kiszka@siemens.com, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de, pbonzini@redhat.com, =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>, Gleb Natapov <gleb@kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/25/2014 09:52 AM, Khalid Aziz wrote:
-> On 11/24/2014 07:03 PM, Rik van Riel wrote:
->> -----BEGIN PGP SIGNED MESSAGE-----
->> Hash: SHA1
->>
->> On 11/24/2014 03:56 PM, Khalid Aziz wrote:
->>> sched/fair: Add advisory flag for borrowing a timeslice
->>>
->>> This patch adds a way for a task to request to borrow one
->>> timeslice from future if it is about to be preempted, so it could
->>> delay preemption and complete any critical task it is in the middle
->>> of.
->>>
->>> This feature helps with performance on databases and has been used
->>> for many years on other OSs by the databases. This feature helps in
->>> situation where a task acquires a lock before performing a critical
->>> operation on the database and happens to get preempted
->>
->> Why don't the other tasks that want the lock sleep on the
->> lock?
->>
->> I can see this "solution" help mostly with userspace spinlocks,
->> which are relics of a past era that need to die. There is no
->> way userspace spinlocks will not fail miserably on virtual
->> machines, and it is time to get rid of them.
-> 
-> This solution indeed is for userspace spinlocks. Database code has been
-> written with all critical locking implemented in userspace (as I have
-> been told by database folks. I am not a database guy).
+Bring into line with the commentary for the other structures and their
+KVM_EXIT_* cases.
 
-They should fix that.
+Signed-off-by: Alex Benn=C3=A9e <alex.bennee@linaro.org>
 
-The scheme you propose can really only work on bare metal,
-and not on virtual machines. That improves the problem for,
-what, 60% of new installs (and dropping)?
+diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
+index 6076882..523f476 100644
+--- a/include/uapi/linux/kvm.h
++++ b/include/uapi/linux/kvm.h
+@@ -226,6 +226,7 @@ struct kvm_run {
+ 			__u32 count;
+ 			__u64 data_offset; /* relative to kvm_run start */
+ 		} io;
++		/* KVM_EXIT_DEBUG */
+ 		struct {
+ 			struct kvm_debug_exit_arch arch;
+ 		} debug;
+--=20
+2.1.3
+
