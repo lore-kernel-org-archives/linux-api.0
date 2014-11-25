@@ -1,236 +1,257 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v3] selftest: size: Add size test for Linux kernel
-Date: Tue, 25 Nov 2014 13:39:18 -0700
-Message-ID: <5474E8F6.8010307@osg.samsung.com>
-References: <546D084D.20002@sonymobile.com> <546D321F.2080405@sonymobile.com> <547376D3.7070709@sonymobile.com>
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Subject: Re: [tpmdd-devel] [PATCH v7 01/10] tpm: merge duplicate transmit_cmd()
+ functions
+Date: Tue, 25 Nov 2014 16:18:39 -0500
+Message-ID: <5474F22F.1030301@linux.vnet.ibm.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-2-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <547376D3.7070709-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1415713513-16524-2-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>
+Cc: christophe.ricard@gmail.com, josh.triplett@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, tpmdd-devel@lists.sourceforge.net, jason.gunthorpe@obsidianresearch.com, trousers-tech@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-On 11/24/2014 11:20 AM, Tim Bird wrote:
-> 
-> This test shows the amount of memory used by the system.
-> Note that this is dependent on the user-space that is loaded
-> when this program runs.  Optimally, this program would be
-> run as the init program itself.
-> 
-> The program is optimized for size itself, to avoid conflating
-> its own execution with that of the system software.
-> The code is compiled statically, with no stdlibs. On my x86_64 system,
-> this results in a statically linked binary of less than 5K.
-> 
-
-This following version information shouldn't be part of changelog.
-
-> Changes from v2:
->   - add return values to print routines
->   - add .gitignore file
-> 
-> Changes from v1:
->   - use more correct Copyright string in get_size.c
-> 
-> Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
+> Merged transmit_cmd() functions in tpm-interface.c and tpm-sysfs.c.
+> Added "tpm_" prefix for consistency sake. Changed cmd parameter as
+> opaque. This enables to use separate command structures for TPM1
+> and TPM2 commands in future. Loose coupling works fine here.
+>
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 > ---
+>   drivers/char/tpm/tpm-interface.c | 49 +++++++++++++++++++++-------------------
+>   drivers/char/tpm/tpm-sysfs.c     | 23 ++-----------------
+>   drivers/char/tpm/tpm.h           |  3 ++-
+>   3 files changed, 30 insertions(+), 45 deletions(-)
+>
+> diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
+> index 6af1700..0150b7c 100644
+> --- a/drivers/char/tpm/tpm-interface.c
+> +++ b/drivers/char/tpm/tpm-interface.c
+> @@ -398,9 +398,10 @@ out:
+>   #define TPM_DIGEST_SIZE 20
+>   #define TPM_RET_CODE_IDX 6
+>
+> -static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+> -			    int len, const char *desc)
+> +ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd,
+> +			 int len, const char *desc)
+>   {
+> +	struct tpm_output_header *header;
+>   	int err;
+>
+>   	len = tpm_transmit(chip, (u8 *) cmd, len);
+> @@ -409,7 +410,9 @@ static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+>   	else if (len < TPM_HEADER_SIZE)
+>   		return -EFAULT;
+>
+> -	err = be32_to_cpu(cmd->header.out.return_code);
+> +	header = (struct tpm_output_header *) cmd;
 
-Goes here.
+The cast should not be necessary -- and this change doesn't buy much...
 
->  tools/testing/selftests/Makefile        |   1 +
->  tools/testing/selftests/size/.gitignore |   1 +
->  tools/testing/selftests/size/Makefile   |  21 +++++++
->  tools/testing/selftests/size/get_size.c | 105 ++++++++++++++++++++++++++++++++
->  4 files changed, 128 insertions(+)
->  create mode 100644 tools/testing/selftests/size/.gitignore
->  create mode 100644 tools/testing/selftests/size/Makefile
->  create mode 100644 tools/testing/selftests/size/get_size.c
-> 
-> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-> index 45f145c..fa91aef 100644
-> --- a/tools/testing/selftests/Makefile
-> +++ b/tools/testing/selftests/Makefile
-> @@ -15,6 +15,7 @@ TARGETS += user
->  TARGETS += sysctl
->  TARGETS += firmware
->  TARGETS += ftrace
-> +TARGETS += size
->  
->  TARGETS_HOTPLUG = cpu-hotplug
->  TARGETS_HOTPLUG += memory-hotplug
-> diff --git a/tools/testing/selftests/size/.gitignore b/tools/testing/selftests/size/.gitignore
-> new file mode 100644
-> index 0000000..189b781
-> --- /dev/null
-> +++ b/tools/testing/selftests/size/.gitignore
-> @@ -0,0 +1 @@
-> +get_size
-> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
-> new file mode 100644
-> index 0000000..51e5fbd
-> --- /dev/null
-> +++ b/tools/testing/selftests/size/Makefile
-> @@ -0,0 +1,21 @@
-> +#ifndef CC
-> +	CC = $(CROSS_COMPILE)gcc
-> +#endif
-> +
-> +#ifndef STRIP
-> +	STRIP = $(CROSS_COMPILE)strip
-> +#endif
-> +
-> +all: get_size
-> +
-> +get_size: get_size.c
-> +	$(CC) --static -ffreestanding -nostartfiles \
-> +		-Wl,--entry=main get_size.c -o get_size \
-> +		`cc -print-libgcc-file-name`
-> +	$(STRIP) -s get_size
-> +
-> +run_tests: all
-> +	./get_size
-> +
-> +clean:
-> +	$(RM) get_size
-> diff --git a/tools/testing/selftests/size/get_size.c b/tools/testing/selftests/size/get_size.c
-> new file mode 100644
-> index 0000000..9c8d3cd
-> --- /dev/null
-> +++ b/tools/testing/selftests/size/get_size.c
-> @@ -0,0 +1,105 @@
-> +/*
-> + * Copyright 2014 Sony
-> + *
-> + * Licensed under the terms of the GNU GPL License version 2
-> + *
-> + * Selftest for runtime system size
-> + *
-> + * Prints the amount of RAM that the currently running system is using.
-> + *
-> + * This program tries to be as small as possible itself, to
-> + * avoid perturbing the system memory utilization with its
-> + * own execution.  It also attempts to have as few dependencies
-> + * on kernel features as possible.
-> + *
-> + * It should be statically linked, with startup libs avoided.
-> + * It uses no library calls, and only the following 3 syscalls:
-> + *   sysinfo(), write(), and _exit()
-> + *
-> + * For output, it avoids printf (which in some C libraries
-> + * has large external dependencies) by implementing its own
-> + * strlen(), number output and print() routines.
-> + */
-> +
-> +#include <sys/sysinfo.h>
-> +#include <unistd.h>
-> +
-> +#define STDOUT_FILENO 1
-> +
-> +int my_strlen(const char *s)
-> +{
-> +	int len = 0;
-> +
-> +	while (*s++)
-> +		len++;
-> +	return len;
-> +}
-> +
-> +/*
-> + * num_to_str - put digits from num into *s, left to right
-> + *   do this by dividing the number by powers of 10
-> + *   the tricky part is to omit leading zeros
-> + *   don't print zeros until we've started printing any numbers at all
-> + */
-> +void num_to_str(unsigned long num, char *s)
-> +{
-> +	unsigned long long temp, div;
-> +	int started;
-> +
-> +	temp = num;
-> +	div = 1000000000000000000LL;
-> +	started = 0;
-> +	while (div) {
-> +		if (temp/div || started) {
-> +			*s++ = (unsigned char)(temp/div + '0');
-> +			started = 1;
-> +		}
-> +		temp -= (temp/div)*div;
-> +		div /= 10;
-> +	}
-> +	*s = 0;
-> +}
-> +
-> +int print_num(unsigned long num)
-> +{
-> +	char num_buf[30];
-> +
-> +	num_to_str(num, num_buf);
-> +	return write(STDOUT_FILENO, num_buf, my_strlen(num_buf));
-> +}
-> +
-> +int print(char *s)
-> +{
-> +	return write(STDOUT_FILENO, s, my_strlen(s));
-> +}
-> +
-> +void main(int argc, char **argv)
-> +{
-> +	int ccode;
-> +	unsigned long used;
-> +	struct sysinfo info;
-> +	unsigned long long temp;
-> +
-> +	print("Testing system size.\n");
-> +	print("1..1\n");
+header = &cmd->header.out;
 
-I ran this test and the reporting could be improved.
-Could you change the above to say
+Should do the trick without cast.
 
-System RAM in use instead of system size. Also can you also
-print total RAM and other information you already have:
-
-Maybe something along the lines of:
-
-System RAM report (units Kilobytes):
-   Total:
-   Free:
-   Bufferram:
-   In use:
-
-I would remove the print("1..1\n");
 
 > +
-> +	ccode = sysinfo(&info);
-> +	if (ccode < 0) {
-> +		print("not ok 1 get size runtime size\n");
-> +		print("# could not get sysinfo\n");
-> +		_exit(ccode);
-> +	}
-> +
-> +	/* ignore cache complexities for now */
-> +	temp = info.totalram - info.freeram - info.bufferram;
-> +	temp = temp * info.mem_unit;
-> +	temp = temp / 1024;
-> +
-> +	used = temp;
-> +
-> +	print("ok 1 get runtime size # size = ");
-> +	print_num(used);
-> +	print(" K\n");
+> +	err = be32_to_cpu(header->return_code);
+>   	if (err != 0 && desc)
+>   		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
+>
+> @@ -448,7 +451,7 @@ ssize_t tpm_getcap(struct device *dev, __be32 subcap_id, cap_t *cap,
+>   		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+>   		tpm_cmd.params.getcap_in.subcap = subcap_id;
+>   	}
+> -	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
+> +	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
+>   	if (!rc)
+>   		*cap = tpm_cmd.params.getcap_out.cap;
+>   	return rc;
+> @@ -464,8 +467,8 @@ void tpm_gen_interrupt(struct tpm_chip *chip)
+>   	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+>   	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+>
+> -	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> -			"attempting to determine the timeouts");
+> +	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> +			      "attempting to determine the timeouts");
+>   }
+>   EXPORT_SYMBOL_GPL(tpm_gen_interrupt);
+>
+> @@ -484,8 +487,8 @@ static int tpm_startup(struct tpm_chip *chip, __be16 startup_type)
+>   	struct tpm_cmd_t start_cmd;
+>   	start_cmd.header.in = tpm_startup_header;
+>   	start_cmd.params.startup_in.startup_type = startup_type;
+> -	return transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
+> -			    "attempting to start the TPM");
+> +	return tpm_transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
+> +				"attempting to start the TPM");
+>   }
+>
+>   int tpm_get_timeouts(struct tpm_chip *chip)
+> @@ -500,7 +503,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+>   	tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
+>   	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+>   	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+> -	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
+> +	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
+>
+>   	if (rc == TPM_ERR_INVALID_POSTINIT) {
+>   		/* The TPM is not started, we are the first to talk to it.
+> @@ -513,7 +516,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+>   		tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
+>   		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+>   		tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+> -		rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> +		rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+>   				  NULL);
+>   	}
+>   	if (rc) {
+> @@ -575,8 +578,8 @@ duration:
+>   	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+>   	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_DURATION;
+>
+> -	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> -			"attempting to determine the durations");
+> +	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> +			      "attempting to determine the durations");
+>   	if (rc)
+>   		return rc;
+>
+> @@ -631,8 +634,8 @@ static int tpm_continue_selftest(struct tpm_chip *chip)
+>   	struct tpm_cmd_t cmd;
+>
+>   	cmd.header.in = continue_selftest_header;
+> -	rc = transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
+> -			  "continue selftest");
+> +	rc = tpm_transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
+> +			      "continue selftest");
+>   	return rc;
+>   }
+>
+> @@ -672,8 +675,8 @@ int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
+>
+>   	cmd.header.in = pcrread_header;
+>   	cmd.params.pcrread_in.pcr_idx = cpu_to_be32(pcr_idx);
+> -	rc = transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
+> -			  "attempting to read a pcr value");
+> +	rc = tpm_transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
+> +			      "attempting to read a pcr value");
+>
+>   	if (rc == 0)
+>   		memcpy(res_buf, cmd.params.pcrread_out.pcr_result,
+> @@ -737,8 +740,8 @@ int tpm_pcr_extend(u32 chip_num, int pcr_idx, const u8 *hash)
+>   	cmd.header.in = pcrextend_header;
+>   	cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(pcr_idx);
+>   	memcpy(cmd.params.pcrextend_in.hash, hash, TPM_DIGEST_SIZE);
+> -	rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> -			  "attempting extend a PCR value");
+> +	rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> +			      "attempting extend a PCR value");
+>
+>   	tpm_chip_put(chip);
+>   	return rc;
+> @@ -817,7 +820,7 @@ int tpm_send(u32 chip_num, void *cmd, size_t buflen)
+>   	if (chip == NULL)
+>   		return -ENODEV;
+>
+> -	rc = transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
+> +	rc = tpm_transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
+>
+>   	tpm_chip_put(chip);
+>   	return rc;
+> @@ -938,14 +941,14 @@ int tpm_pm_suspend(struct device *dev)
+>   		cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(tpm_suspend_pcr);
+>   		memcpy(cmd.params.pcrextend_in.hash, dummy_hash,
+>   		       TPM_DIGEST_SIZE);
+> -		rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> -				  "extending dummy pcr before suspend");
+> +		rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> +				      "extending dummy pcr before suspend");
+>   	}
+>
+>   	/* now do the actual savestate */
+>   	for (try = 0; try < TPM_RETRY; try++) {
+>   		cmd.header.in = savestate_header;
+> -		rc = transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
+> +		rc = tpm_transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
+>
+>   		/*
+>   		 * If the TPM indicates that it is too busy to respond to
+> @@ -1022,7 +1025,7 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
+>   		tpm_cmd.header.in = tpm_getrandom_header;
+>   		tpm_cmd.params.getrandom_in.num_bytes = cpu_to_be32(num_bytes);
+>
+> -		err = transmit_cmd(chip, &tpm_cmd,
+> +		err = tpm_transmit_cmd(chip, &tpm_cmd,
+>   				   TPM_GETRANDOM_RESULT_SIZE + num_bytes,
+>   				   "attempting get random");
+>   		if (err)
+> diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
+> index 01730a2..8ecb052 100644
+> --- a/drivers/char/tpm/tpm-sysfs.c
+> +++ b/drivers/char/tpm/tpm-sysfs.c
+> @@ -20,25 +20,6 @@
+>   #include <linux/device.h>
+>   #include "tpm.h"
+>
+> -/* XXX for now this helper is duplicated in tpm-interface.c */
+> -static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+> -			    int len, const char *desc)
+> -{
+> -	int err;
+> -
+> -	len = tpm_transmit(chip, (u8 *) cmd, len);
+> -	if (len <  0)
+> -		return len;
+> -	else if (len < TPM_HEADER_SIZE)
+> -		return -EFAULT;
+> -
+> -	err = be32_to_cpu(cmd->header.out.return_code);
+> -	if (err != 0 && desc)
+> -		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
+> -
+> -	return err;
+> -}
+> -
+>   #define READ_PUBEK_RESULT_SIZE 314
+>   #define TPM_ORD_READPUBEK cpu_to_be32(124)
+>   static struct tpm_input_header tpm_readpubek_header = {
+> @@ -58,8 +39,8 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
+>   	struct tpm_chip *chip = dev_get_drvdata(dev);
+>
+>   	tpm_cmd.header.in = tpm_readpubek_header;
+> -	err = transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
+> -			   "attempting to read the PUBEK");
+> +	err = tpm_transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
+> +			       "attempting to read the PUBEK");
+>   	if (err)
+>   		goto out;
+>
+> diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+> index e4d0888..e638eb0 100644
+> --- a/drivers/char/tpm/tpm.h
+> +++ b/drivers/char/tpm/tpm.h
+> @@ -314,9 +314,10 @@ struct tpm_cmd_t {
+>   } __packed;
+>
+>   ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
+> -
+>   ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+>   		     size_t bufsiz);
 
-Please see above. You can get rid of print(" K\n"); at the end.
+Delete this prototype ?
 
-Sorry for not giving this feedback earlier. The not so clear
-reporting aspect stood out for me after running the test.
+> +ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd, int len,
+> +			 const char *desc);
+>   extern int tpm_get_timeouts(struct tpm_chip *);
+>   extern void tpm_gen_interrupt(struct tpm_chip *);
+>   extern int tpm_do_selftest(struct tpm_chip *);
 
-thanks,
--- Shuah
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+    Stefan
