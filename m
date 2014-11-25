@@ -1,164 +1,57 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 33/42] tun: move internal flag defines out of uapi
-Date: Tue, 25 Nov 2014 18:43:43 +0200
-Message-ID: <1416933600-21398-34-git-send-email-mst@redhat.com>
-References: <1416933600-21398-1-git-send-email-mst@redhat.com>
+From: Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3] sched/fair: Add advisory flag for borrowing a timeslice
+Date: Tue, 25 Nov 2014 10:22:36 -0700
+Message-ID: <5474BADC.5030808@oracle.com>
+References: <1416862595-24513-1-git-send-email-khalid.aziz@oracle.com> <5473E388.6000605@redhat.com> <547497A9.1080800@oracle.com> <54749F77.50905@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1416933600-21398-1-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <54749F77.50905-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Zhi Yong Wu <wuzhy-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Tom Herbert <therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Xi Wang <xii-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, raistlin-k2GhghHVRtY@public.gmane.org, kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, atomlin-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org, athorlton-sJ/iWh9BUns@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, daeseok.youn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, yangds.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, sbauer-F61uvSdQLzf2fBVCVOL8/A@public.gmane.org, vishnu.ps-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-TUN_ flags are internal and never exposed
-to userspace. Any application using it is almost
-certainly buggy.
+On 11/25/2014 08:25 AM, Rik van Riel wrote:
+> On 11/25/2014 09:52 AM, Khalid Aziz wrote:
+>> On 11/24/2014 07:03 PM, Rik van Riel wrote:
+>>> -----BEGIN PGP SIGNED MESSAGE-----
+>>> Hash: SHA1
+>>>
+>>> On 11/24/2014 03:56 PM, Khalid Aziz wrote:
+>>>> sched/fair: Add advisory flag for borrowing a timeslice
+>>>>
+>>>> This patch adds a way for a task to request to borrow one
+>>>> timeslice from future if it is about to be preempted, so it could
+>>>> delay preemption and complete any critical task it is in the middle
+>>>> of.
+>>>>
+>>>> This feature helps with performance on databases and has been used
+>>>> for many years on other OSs by the databases. This feature helps in
+>>>> situation where a task acquires a lock before performing a critical
+>>>> operation on the database and happens to get preempted
+>>>
+>>> Why don't the other tasks that want the lock sleep on the
+>>> lock?
+>>>
+>>> I can see this "solution" help mostly with userspace spinlocks,
+>>> which are relics of a past era that need to die. There is no
+>>> way userspace spinlocks will not fail miserably on virtual
+>>> machines, and it is time to get rid of them.
+>>
+>> This solution indeed is for userspace spinlocks. Database code has been
+>> written with all critical locking implemented in userspace (as I have
+>> been told by database folks. I am not a database guy).
+>
+> They should fix that.
 
-Move them out to tun.c, we'll remove them in follow-up patches.
+Agreed, but that is a very large task for databases for sure and 
+potentially for java as well (think exhaustive testing as well besides 
+code re-write). I do not see this happening except as part of major 
+re-architecture. In the mean time, if we can give them help without 
+impacting kernel significantly for other users, it only makes Linux a 
+more usable platform for them.
 
-Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- include/uapi/linux/if_tun.h | 16 ++--------
- drivers/net/tun.c           | 74 ++++++++++++++-------------------------------
- 2 files changed, 26 insertions(+), 64 deletions(-)
-
-diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
-index e9502dd..277a260 100644
---- a/include/uapi/linux/if_tun.h
-+++ b/include/uapi/linux/if_tun.h
-@@ -22,21 +22,11 @@
- 
- /* Read queue size */
- #define TUN_READQ_SIZE	500
--
--/* TUN device flags */
--#define TUN_TUN_DEV 	0x0001	
--#define TUN_TAP_DEV	0x0002
-+/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
-+#define TUN_TUN_DEV 	IFF_TUN
-+#define TUN_TAP_DEV	IFF_TAP
- #define TUN_TYPE_MASK   0x000f
- 
--#define TUN_FASYNC	0x0010
--#define TUN_NOCHECKSUM	0x0020
--#define TUN_NO_PI	0x0040
--/* This flag has no real effect */
--#define TUN_ONE_QUEUE	0x0080
--#define TUN_PERSIST 	0x0100	
--#define TUN_VNET_HDR 	0x0200
--#define TUN_TAP_MQ      0x0400
--
- /* Ioctl defines */
- #define TUNSETNOCSUM  _IOW('T', 200, int) 
- #define TUNSETDEBUG   _IOW('T', 201, int) 
-diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-index 9dd3746..bc89d07 100644
---- a/drivers/net/tun.c
-+++ b/drivers/net/tun.c
-@@ -103,6 +103,21 @@ do {								\
- } while (0)
- #endif
- 
-+/* TUN device flags */
-+
-+/* IFF_ATTACH_QUEUE is never stored in device flags,
-+ * overload it to mean fasync when stored there.
-+ */
-+#define TUN_FASYNC	IFF_ATTACH_QUEUE
-+#define TUN_NO_PI	IFF_NO_PI
-+/* This flag has no real effect */
-+#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
-+#define TUN_PERSIST 	IFF_PERSIST
-+#define TUN_VNET_HDR 	IFF_VNET_HDR
-+#define TUN_TAP_MQ      IFF_MULTI_QUEUE
-+
-+#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
-+		      IFF_MULTI_QUEUE)
- #define GOODCOPY_LEN 128
- 
- #define FLT_EXACT_COUNT 8
-@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
- 
- static int tun_flags(struct tun_struct *tun)
- {
--	int flags = 0;
--
--	if (tun->flags & TUN_TUN_DEV)
--		flags |= IFF_TUN;
--	else
--		flags |= IFF_TAP;
--
--	if (tun->flags & TUN_NO_PI)
--		flags |= IFF_NO_PI;
--
--	/* This flag has no real effect.  We track the value for backwards
--	 * compatibility.
--	 */
--	if (tun->flags & TUN_ONE_QUEUE)
--		flags |= IFF_ONE_QUEUE;
--
--	if (tun->flags & TUN_VNET_HDR)
--		flags |= IFF_VNET_HDR;
--
--	if (tun->flags & TUN_TAP_MQ)
--		flags |= IFF_MULTI_QUEUE;
--
--	if (tun->flags & TUN_PERSIST)
--		flags |= IFF_PERSIST;
--
--	return flags;
-+	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
- }
- 
- static ssize_t tun_show_flags(struct device *dev, struct device_attribute *attr,
-@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
- 
- 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
- 
--	if (ifr->ifr_flags & IFF_NO_PI)
--		tun->flags |= TUN_NO_PI;
--	else
--		tun->flags &= ~TUN_NO_PI;
--
--	/* This flag has no real effect.  We track the value for backwards
--	 * compatibility.
--	 */
--	if (ifr->ifr_flags & IFF_ONE_QUEUE)
--		tun->flags |= TUN_ONE_QUEUE;
--	else
--		tun->flags &= ~TUN_ONE_QUEUE;
--
--	if (ifr->ifr_flags & IFF_VNET_HDR)
--		tun->flags |= TUN_VNET_HDR;
--	else
--		tun->flags &= ~TUN_VNET_HDR;
--
--	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
--		tun->flags |= TUN_TAP_MQ;
--	else
--		tun->flags &= ~TUN_TAP_MQ;
-+	tun->flags = (tun->flags & ~TUN_FEATURES) |
-+		(ifr->ifr_flags & TUN_FEATURES);
- 
- 	/* Make sure persistent devices do not get stuck in
- 	 * xoff state.
-@@ -1890,9 +1860,11 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
- 	if (cmd == TUNGETFEATURES) {
- 		/* Currently this just means: "what IFF flags are valid?".
- 		 * This is needed because we never checked for invalid flags on
--		 * TUNSETIFF. */
--		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
--				IFF_VNET_HDR | IFF_MULTI_QUEUE,
-+		 * TUNSETIFF.  Why do we report IFF_TUN and IFF_TAP which are
-+		 * not legal for TUNSETIFF here?  It's probably a bug, but it
-+		 * doesn't seem to be worth fixing.
-+		 */
-+		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
- 				(unsigned int __user*)argp);
- 	} else if (cmd == TUNSETQUEUE)
- 		return tun_set_queue(file, &ifr);
--- 
-MST
+Thanks,
+Khalid
