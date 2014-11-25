@@ -1,99 +1,164 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v4 09/42] virtio: set FEATURES_OK
-Date: Tue, 25 Nov 2014 18:42:01 +0200
-Message-ID: <1416933600-21398-10-git-send-email-mst@redhat.com>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v4 33/42] tun: move internal flag defines out of uapi
+Date: Tue, 25 Nov 2014 18:43:43 +0200
+Message-ID: <1416933600-21398-34-git-send-email-mst@redhat.com>
 References: <1416933600-21398-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1416933600-21398-1-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: linux-kernel@vger.kernel.org
-Cc: rusty@au1.ibm.com, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org, pbonzini@redhat.com, David Miller <davem@davemloft.net>
+In-Reply-To: <1416933600-21398-1-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Zhi Yong Wu <wuzhy-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Tom Herbert <therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Xi Wang <xii-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-set FEATURES_OK as per virtio 1.0 spec
+TUN_ flags are internal and never exposed
+to userspace. Any application using it is almost
+certainly buggy.
 
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Move them out to tun.c, we'll remove them in follow-up patches.
+
+Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- include/uapi/linux/virtio_config.h |  2 ++
- drivers/virtio/virtio.c            | 29 ++++++++++++++++++++++-------
- 2 files changed, 24 insertions(+), 7 deletions(-)
+ include/uapi/linux/if_tun.h | 16 ++--------
+ drivers/net/tun.c           | 74 ++++++++++++++-------------------------------
+ 2 files changed, 26 insertions(+), 64 deletions(-)
 
-diff --git a/include/uapi/linux/virtio_config.h b/include/uapi/linux/virtio_config.h
-index 80e7381..4d05671 100644
---- a/include/uapi/linux/virtio_config.h
-+++ b/include/uapi/linux/virtio_config.h
-@@ -38,6 +38,8 @@
- #define VIRTIO_CONFIG_S_DRIVER		2
- /* Driver has used its parts of the config, and is happy */
- #define VIRTIO_CONFIG_S_DRIVER_OK	4
-+/* Driver has finished configuring features */
-+#define VIRTIO_CONFIG_S_FEATURES_OK	8
- /* We've given up on this device. */
- #define VIRTIO_CONFIG_S_FAILED		0x80
+diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
+index e9502dd..277a260 100644
+--- a/include/uapi/linux/if_tun.h
++++ b/include/uapi/linux/if_tun.h
+@@ -22,21 +22,11 @@
  
-diff --git a/drivers/virtio/virtio.c b/drivers/virtio/virtio.c
-index d213567..a3df817 100644
---- a/drivers/virtio/virtio.c
-+++ b/drivers/virtio/virtio.c
-@@ -160,6 +160,7 @@ static int virtio_dev_probe(struct device *_d)
- 	struct virtio_device *dev = dev_to_virtio(_d);
- 	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
- 	u64 device_features;
-+	unsigned status;
+ /* Read queue size */
+ #define TUN_READQ_SIZE	500
+-
+-/* TUN device flags */
+-#define TUN_TUN_DEV 	0x0001	
+-#define TUN_TAP_DEV	0x0002
++/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
++#define TUN_TUN_DEV 	IFF_TUN
++#define TUN_TAP_DEV	IFF_TAP
+ #define TUN_TYPE_MASK   0x000f
  
- 	/* We have a driver! */
- 	add_status(dev, VIRTIO_CONFIG_S_DRIVER);
-@@ -183,18 +184,32 @@ static int virtio_dev_probe(struct device *_d)
+-#define TUN_FASYNC	0x0010
+-#define TUN_NOCHECKSUM	0x0020
+-#define TUN_NO_PI	0x0040
+-/* This flag has no real effect */
+-#define TUN_ONE_QUEUE	0x0080
+-#define TUN_PERSIST 	0x0100	
+-#define TUN_VNET_HDR 	0x0200
+-#define TUN_TAP_MQ      0x0400
+-
+ /* Ioctl defines */
+ #define TUNSETNOCSUM  _IOW('T', 200, int) 
+ #define TUNSETDEBUG   _IOW('T', 201, int) 
+diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+index 9dd3746..bc89d07 100644
+--- a/drivers/net/tun.c
++++ b/drivers/net/tun.c
+@@ -103,6 +103,21 @@ do {								\
+ } while (0)
+ #endif
  
- 	dev->config->finalize_features(dev);
- 
-+	if (virtio_has_feature(dev, VIRTIO_F_VERSION_1)) {
-+		add_status(dev, VIRTIO_CONFIG_S_FEATURES_OK);
-+		status = dev->config->get_status(dev);
-+		if (!(status & VIRTIO_CONFIG_S_FEATURES_OK)) {
-+			printk(KERN_ERR "virtio: device refuses features: %x\n",
-+			       status);
-+			err = -ENODEV;
-+			goto err;
-+		}
-+	}
++/* TUN device flags */
 +
- 	err = drv->probe(dev);
- 	if (err)
--		add_status(dev, VIRTIO_CONFIG_S_FAILED);
--	else {
--		add_status(dev, VIRTIO_CONFIG_S_DRIVER_OK);
--		if (drv->scan)
--			drv->scan(dev);
-+		goto err;
- 
--		virtio_config_enable(dev);
--	}
-+	add_status(dev, VIRTIO_CONFIG_S_DRIVER_OK);
-+	if (drv->scan)
-+		drv->scan(dev);
++/* IFF_ATTACH_QUEUE is never stored in device flags,
++ * overload it to mean fasync when stored there.
++ */
++#define TUN_FASYNC	IFF_ATTACH_QUEUE
++#define TUN_NO_PI	IFF_NO_PI
++/* This flag has no real effect */
++#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
++#define TUN_PERSIST 	IFF_PERSIST
++#define TUN_VNET_HDR 	IFF_VNET_HDR
++#define TUN_TAP_MQ      IFF_MULTI_QUEUE
 +
-+	virtio_config_enable(dev);
++#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
++		      IFF_MULTI_QUEUE)
+ #define GOODCOPY_LEN 128
  
-+	return 0;
-+err:
-+	add_status(dev, VIRTIO_CONFIG_S_FAILED);
- 	return err;
-+
+ #define FLT_EXACT_COUNT 8
+@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
+ 
+ static int tun_flags(struct tun_struct *tun)
+ {
+-	int flags = 0;
+-
+-	if (tun->flags & TUN_TUN_DEV)
+-		flags |= IFF_TUN;
+-	else
+-		flags |= IFF_TAP;
+-
+-	if (tun->flags & TUN_NO_PI)
+-		flags |= IFF_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (tun->flags & TUN_ONE_QUEUE)
+-		flags |= IFF_ONE_QUEUE;
+-
+-	if (tun->flags & TUN_VNET_HDR)
+-		flags |= IFF_VNET_HDR;
+-
+-	if (tun->flags & TUN_TAP_MQ)
+-		flags |= IFF_MULTI_QUEUE;
+-
+-	if (tun->flags & TUN_PERSIST)
+-		flags |= IFF_PERSIST;
+-
+-	return flags;
++	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
  }
  
- static int virtio_dev_remove(struct device *_d)
+ static ssize_t tun_show_flags(struct device *dev, struct device_attribute *attr,
+@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
+ 
+ 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
+ 
+-	if (ifr->ifr_flags & IFF_NO_PI)
+-		tun->flags |= TUN_NO_PI;
+-	else
+-		tun->flags &= ~TUN_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (ifr->ifr_flags & IFF_ONE_QUEUE)
+-		tun->flags |= TUN_ONE_QUEUE;
+-	else
+-		tun->flags &= ~TUN_ONE_QUEUE;
+-
+-	if (ifr->ifr_flags & IFF_VNET_HDR)
+-		tun->flags |= TUN_VNET_HDR;
+-	else
+-		tun->flags &= ~TUN_VNET_HDR;
+-
+-	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
+-		tun->flags |= TUN_TAP_MQ;
+-	else
+-		tun->flags &= ~TUN_TAP_MQ;
++	tun->flags = (tun->flags & ~TUN_FEATURES) |
++		(ifr->ifr_flags & TUN_FEATURES);
+ 
+ 	/* Make sure persistent devices do not get stuck in
+ 	 * xoff state.
+@@ -1890,9 +1860,11 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
+ 	if (cmd == TUNGETFEATURES) {
+ 		/* Currently this just means: "what IFF flags are valid?".
+ 		 * This is needed because we never checked for invalid flags on
+-		 * TUNSETIFF. */
+-		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
+-				IFF_VNET_HDR | IFF_MULTI_QUEUE,
++		 * TUNSETIFF.  Why do we report IFF_TUN and IFF_TAP which are
++		 * not legal for TUNSETIFF here?  It's probably a bug, but it
++		 * doesn't seem to be worth fixing.
++		 */
++		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
+ 				(unsigned int __user*)argp);
+ 	} else if (cmd == TUNSETQUEUE)
+ 		return tun_set_queue(file, &ifr);
 -- 
 MST
