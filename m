@@ -1,262 +1,387 @@
-From: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Subject: Re: [PATCH v3] selftest: size: Add size test for Linux kernel
-Date: Tue, 25 Nov 2014 15:33:37 -0800
-Message-ID: <547511D1.3050402@sonymobile.com>
-References: <546D084D.20002@sonymobile.com> <546D321F.2080405@sonymobile.com> <547376D3.7070709@sonymobile.com> <5474E8F6.8010307@osg.samsung.com>
+From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v7 10/10] tpm: TPM 2.0 sysfs attributes
+Date: Tue, 25 Nov 2014 18:55:38 -0500
+Message-ID: <547516FA.6060304@linux.vnet.ibm.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-11-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5474E8F6.8010307-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <1415713513-16524-11-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
+Cc: christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
+> Manadatory sysfs attributes for TPM 2.0 devices so that it is easy
+> to check whether storage hierarchies are enabled and use PPI
+> interface.
+>
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> ---
+>   Documentation/ABI/stable/sysfs-class-tpm2 |  57 +++++++++++
+>   drivers/char/tpm/Makefile                 |   2 +-
+>   drivers/char/tpm/tpm-chip.c               |  21 +++--
+>   drivers/char/tpm/tpm.h                    |  19 ++++
+>   drivers/char/tpm/tpm2-sysfs.c             | 152 ++++++++++++++++++++++++++++++
+>   5 files changed, 241 insertions(+), 10 deletions(-)
+>   create mode 100644 Documentation/ABI/stable/sysfs-class-tpm2
+>   create mode 100644 drivers/char/tpm/tpm2-sysfs.c
+>
+> diff --git a/Documentation/ABI/stable/sysfs-class-tpm2 b/Documentation/ABI/stable/sysfs-class-tpm2
+> new file mode 100644
+> index 0000000..301ab2e
+> --- /dev/null
+> +++ b/Documentation/ABI/stable/sysfs-class-tpm2
+> @@ -0,0 +1,57 @@
+> +What:		/sys/class/misc/tpmX/device/
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The device/ directory under a specific TPM instance exposes
+> +		the properties of that TPM chip.
+> +
+> +What:		/sys/class/misc/tpmX/device/family
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The protocol family in the major.minor format.
+> +
+
+What protocol ? The TPM protocol family .. ?
+
+> +What:		/sys/class/misc/tpmX/device/sh_enabled
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The "sh_enabled" property prints a '1' if the Storage Hierarchy
+> +		is enabled, i.e. if PM_PT_STARTUP_CLEAR.shEnable is set.
+
+Why capital letters for storage hierarchy?
+
+> +
+> +What:		/sys/class/misc/tpmX/device/sh_owned
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The "sh_owned" property prints a '1' if the ownership of the
+> +		Storage Hierarchy has been taken, i.e. if
+> +		TPM_PT_PERMANENT.ownerAuthSet is set.
+> +
+
+Same her
+
+> +What:		/sys/class/misc/tpmX/device/eh_enabled
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The "eh_enabled" property prints a '1' if the Endorsement
+> +		Hierarchy is enabled, i.e if PM_PT_STARTUP_CLEAR.ehEnable is
+> +		set.
 
 
-On 11/25/2014 12:39 PM, Shuah Khan wrote:
-> On 11/24/2014 11:20 AM, Tim Bird wrote:
->>
->> This test shows the amount of memory used by the system.
->> Note that this is dependent on the user-space that is loaded
->> when this program runs.  Optimally, this program would be
->> run as the init program itself.
->>
->> The program is optimized for size itself, to avoid conflating
->> its own execution with that of the system software.
->> The code is compiled statically, with no stdlibs. On my x86_64 system,
->> this results in a statically linked binary of less than 5K.
->>
-> 
-> This following version information shouldn't be part of changelog.
-> 
->> Changes from v2:
->>   - add return values to print routines
->>   - add .gitignore file
->>
->> Changes from v1:
->>   - use more correct Copyright string in get_size.c
->>
->> Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
->> ---
-> 
-> Goes here.
+> +
+> +What:		/sys/class/misc/tpmX/device/eh_owned
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The "eh_owned" property prints a '1' if the ownership of the
+> +		Endrosoment Hierarchy has been taken, i.e if
+> +		TPM_PT_PERMANENT.endorsementAuthSet is set.
+> +
+> +What:		/sys/class/misc/tpmX/device/manufacturer
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The "manufacturer" property prints the vendor ID of the TPM
+> +		manufacturer.
+> +
+> +What:		/sys/class/misc/tpmX/device/firmware
+> +Date:		October 2014
+> +KernelVersion:	3.19
+> +Contact:	tpmdd-devel-TtF/mJH4Jtrk1uMJSBkQmQ@public.gmane.org
+> +Description:	The property prints the vendor-specific value indicating the
+> +		version of the firmware.
+> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+> index e6d26dd..15e3b4c 100644
+> --- a/drivers/char/tpm/Makefile
+> +++ b/drivers/char/tpm/Makefile
+> @@ -2,7 +2,7 @@
+>   # Makefile for the kernel tpm device drivers.
+>   #
+>   obj-$(CONFIG_TCG_TPM) += tpm.o
+> -tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o tpm-chip.o tpm2-cmd.o
+> +tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o tpm-chip.o tpm2-cmd.o tpm2-sysfs.o
+>   tpm-$(CONFIG_ACPI) += tpm_ppi.o
+>
+>   ifdef CONFIG_ACPI
+> diff --git a/drivers/char/tpm/tpm-chip.c b/drivers/char/tpm/tpm-chip.c
+> index 4d25b24..accd408 100644
+> --- a/drivers/char/tpm/tpm-chip.c
+> +++ b/drivers/char/tpm/tpm-chip.c
+> @@ -30,6 +30,7 @@
+>   #include "tpm_eventlog.h"
+>
+>   ATTRIBUTE_GROUPS(tpm_dev);
+> +ATTRIBUTE_GROUPS(tpm2_dev);
+>
+>   static DECLARE_BITMAP(dev_mask, TPM_NUM_DEVICES);
+>   static LIST_HEAD(tpm_chip_list);
+> @@ -138,7 +139,10 @@ struct tpm_chip *tpmm_chip_alloc(struct device *dev,
+>   	else
+>   		chip->dev.devt = MKDEV(MAJOR(tpm_devt), chip->dev_num);
+>
+> -	chip->dev.groups = tpm_dev_groups;
+> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> +		chip->dev.groups = tpm2_dev_groups;
+> +	else
+> +		chip->dev.groups = tpm_dev_groups;
+>
+>   	dev_set_name(&chip->dev, chip->devname);
+>
+> @@ -213,14 +217,12 @@ int tpm_chip_register(struct tpm_chip *chip)
+>   	if (rc)
+>   		return rc;
+>
+> -	/* Populate sysfs for TPM1 devices. */
+> -	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
+> -		rc = tpm_add_ppi(chip);
+> -		if (rc)
+> -			goto out_err;
+> +	rc = tpm_add_ppi(chip);
+> +	if (rc)
+> +		goto out_err;
+>
+> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2))
+>   		chip->bios_dir = tpm_bios_log_setup(chip->devname);
+> -	}
+>
+>   	/* Make the chip available. */
+>   	spin_lock(&driver_lock);
+> @@ -251,8 +253,9 @@ void tpm_chip_unregister(struct tpm_chip *chip)
+>   	spin_unlock(&driver_lock);
+>   	synchronize_rcu();
+>
+> -	/* Clean up sysfs for TPM1 devices. */
+> -	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
+> +	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
+> +		tpm_remove_ppi(chip);
 
-OK - I'll change this.
+Take the tpm_remove_ppi(chip) out of the if and else branches into a 
+common path.
 
-> 
->>  tools/testing/selftests/Makefile        |   1 +
->>  tools/testing/selftests/size/.gitignore |   1 +
->>  tools/testing/selftests/size/Makefile   |  21 +++++++
->>  tools/testing/selftests/size/get_size.c | 105 ++++++++++++++++++++++++++++++++
->>  4 files changed, 128 insertions(+)
->>  create mode 100644 tools/testing/selftests/size/.gitignore
->>  create mode 100644 tools/testing/selftests/size/Makefile
->>  create mode 100644 tools/testing/selftests/size/get_size.c
->>
->> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
->> index 45f145c..fa91aef 100644
->> --- a/tools/testing/selftests/Makefile
->> +++ b/tools/testing/selftests/Makefile
->> @@ -15,6 +15,7 @@ TARGETS += user
->>  TARGETS += sysctl
->>  TARGETS += firmware
->>  TARGETS += ftrace
->> +TARGETS += size
->>  
->>  TARGETS_HOTPLUG = cpu-hotplug
->>  TARGETS_HOTPLUG += memory-hotplug
->> diff --git a/tools/testing/selftests/size/.gitignore b/tools/testing/selftests/size/.gitignore
->> new file mode 100644
->> index 0000000..189b781
->> --- /dev/null
->> +++ b/tools/testing/selftests/size/.gitignore
->> @@ -0,0 +1 @@
->> +get_size
->> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
->> new file mode 100644
->> index 0000000..51e5fbd
->> --- /dev/null
->> +++ b/tools/testing/selftests/size/Makefile
->> @@ -0,0 +1,21 @@
->> +#ifndef CC
->> +	CC = $(CROSS_COMPILE)gcc
->> +#endif
->> +
->> +#ifndef STRIP
->> +	STRIP = $(CROSS_COMPILE)strip
->> +#endif
->> +
->> +all: get_size
->> +
->> +get_size: get_size.c
->> +	$(CC) --static -ffreestanding -nostartfiles \
->> +		-Wl,--entry=main get_size.c -o get_size \
->> +		`cc -print-libgcc-file-name`
->> +	$(STRIP) -s get_size
->> +
->> +run_tests: all
->> +	./get_size
->> +
->> +clean:
->> +	$(RM) get_size
->> diff --git a/tools/testing/selftests/size/get_size.c b/tools/testing/selftests/size/get_size.c
->> new file mode 100644
->> index 0000000..9c8d3cd
->> --- /dev/null
->> +++ b/tools/testing/selftests/size/get_size.c
->> @@ -0,0 +1,105 @@
->> +/*
->> + * Copyright 2014 Sony
->> + *
->> + * Licensed under the terms of the GNU GPL License version 2
->> + *
->> + * Selftest for runtime system size
->> + *
->> + * Prints the amount of RAM that the currently running system is using.
->> + *
->> + * This program tries to be as small as possible itself, to
->> + * avoid perturbing the system memory utilization with its
->> + * own execution.  It also attempts to have as few dependencies
->> + * on kernel features as possible.
->> + *
->> + * It should be statically linked, with startup libs avoided.
->> + * It uses no library calls, and only the following 3 syscalls:
->> + *   sysinfo(), write(), and _exit()
->> + *
->> + * For output, it avoids printf (which in some C libraries
->> + * has large external dependencies) by implementing its own
->> + * strlen(), number output and print() routines.
->> + */
->> +
->> +#include <sys/sysinfo.h>
->> +#include <unistd.h>
->> +
->> +#define STDOUT_FILENO 1
->> +
->> +int my_strlen(const char *s)
->> +{
->> +	int len = 0;
->> +
->> +	while (*s++)
->> +		len++;
->> +	return len;
->> +}
->> +
->> +/*
->> + * num_to_str - put digits from num into *s, left to right
->> + *   do this by dividing the number by powers of 10
->> + *   the tricky part is to omit leading zeros
->> + *   don't print zeros until we've started printing any numbers at all
->> + */
->> +void num_to_str(unsigned long num, char *s)
->> +{
->> +	unsigned long long temp, div;
->> +	int started;
->> +
->> +	temp = num;
->> +	div = 1000000000000000000LL;
->> +	started = 0;
->> +	while (div) {
->> +		if (temp/div || started) {
->> +			*s++ = (unsigned char)(temp/div + '0');
->> +			started = 1;
->> +		}
->> +		temp -= (temp/div)*div;
->> +		div /= 10;
->> +	}
->> +	*s = 0;
->> +}
->> +
->> +int print_num(unsigned long num)
->> +{
->> +	char num_buf[30];
->> +
->> +	num_to_str(num, num_buf);
->> +	return write(STDOUT_FILENO, num_buf, my_strlen(num_buf));
->> +}
->> +
->> +int print(char *s)
->> +{
->> +	return write(STDOUT_FILENO, s, my_strlen(s));
->> +}
->> +
->> +void main(int argc, char **argv)
->> +{
->> +	int ccode;
->> +	unsigned long used;
->> +	struct sysinfo info;
->> +	unsigned long long temp;
->> +
->> +	print("Testing system size.\n");
->> +	print("1..1\n");
-> 
-> I ran this test and the reporting could be improved.
-> Could you change the above to say
-> 
-> System RAM in use instead of system size.
-I'll have to think about this.  I'm not sure what the
-correct phrasing would be for XIP systems (for which part of
-the kernel resides in flash, not RAM, maybe "memory"?)
+> +	} else {
+>   		if (chip->bios_dir)
+>   			tpm_bios_log_teardown(chip->bios_dir);
+>   		tpm_remove_ppi(chip);
+> diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+> index 8a434d2..1548182 100644
+> --- a/drivers/char/tpm/tpm.h
+> +++ b/drivers/char/tpm/tpm.h
+> @@ -108,6 +108,24 @@ enum tpm2_capabilities {
+>   	TPM2_CAP_TPM_PROPERTIES = 6,
+>   };
+>
+> +enum tpm2_tpm_properties {
+> +	TPM2_PT_MANUFACTURER		= 0x00000105,
+> +	TPM2_PT_FIRMWARE_VERSION_1	= 0x0000010C,
+> +	TPM2_PT_FIRMWARE_VERSION_2	= 0x0000010D,
+> +	TPM2_PT_PERMANENT		= 0x00000200,
+> +	TPM2_PT_STARTUP_CLEAR		= 0x00000201,
+> +};
+> +
+> +enum tpm2_pt_startup_clear {
+> +	TPM2_PT_SC_SH_ENABLE	= BIT(1),
+> +	TPM2_PT_SC_EH_ENABLE	= BIT(2),
+> +};
+> +
+> +enum tpm2_pt_permanent {
+> +	TPM2_PT_PM_OWNER_AUTH_SET	= BIT(0),
+> +	TPM2_PT_PM_ENDORSEMENT_AUTH_SET	= BIT(1),
+> +};
+> +
+>   enum tpm2_startup_types {
+>   	TPM2_SU_CLEAR	= 0x0000,
+>   	TPM2_SU_STATE	= 0x0001,
+> @@ -382,6 +400,7 @@ extern struct class *tpm_class;
+>   extern dev_t tpm_devt;
+>   extern const struct file_operations tpm_fops;
+>   extern struct attribute *tpm_dev_attrs[];
+> +extern struct attribute *tpm2_dev_attrs[];
+>
+>   ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
+>   ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+> diff --git a/drivers/char/tpm/tpm2-sysfs.c b/drivers/char/tpm/tpm2-sysfs.c
+> new file mode 100644
+> index 0000000..9e5e2e3
+> --- /dev/null
+> +++ b/drivers/char/tpm/tpm2-sysfs.c
+> @@ -0,0 +1,152 @@
+> +/*
+> + * Copyright (C) 2014 Intel Corporation
+> + *
+> + * Authors:
+> + * Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> + *
+> + * TPM2 sysfs attributes
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License as
+> + * published by the Free Software Foundation, version 2 of the
+> + * License.
+> + *
+> + */
+> +#include <linux/device.h>
+> +#include <linux/slab.h>
+> +#include "tpm.h"
+> +
+> +static ssize_t sh_enabled_show(struct device *dev, struct device_attribute *attr,
+> +		     char *buf)
+> +{
+> +	struct tpm_chip *chip = container_of(dev, struct tpm_chip, dev);
+> +	u32 value;
+> +	ssize_t rc;
+> +
+> +	rc = tpm2_get_tpm_pt(chip, TPM2_PT_STARTUP_CLEAR, &value,
+> +			     "could not retrieve STARTUP_CLEAR property");
+> +	if (rc)
+> +		return 0;
+> +
+> +	rc = sprintf(buf, "%d\n", (value & TPM2_PT_SC_SH_ENABLE) > 0);
+> +	return rc;
+> +}
+> +static DEVICE_ATTR_RO(sh_enabled);
+> +
+> +static ssize_t sh_owned_show(struct device *dev, struct device_attribute *attr,
+> +			  char *buf)
+> +{
+> +	struct tpm_chip *chip = container_of(dev, struct tpm_chip, dev);
+> +	u32 value;
+> +	ssize_t rc;
+> +
+> +	rc = tpm2_get_tpm_pt(chip, TPM2_PT_PERMANENT, &value,
+> +			     "could not retrieve PERMANENT property");
+> +	if (rc)
+> +		return 0;
+> +
+> +	rc = sprintf(buf, "%d\n", (value & TPM2_PT_PM_OWNER_AUTH_SET) > 0);
+> +	return rc;
+> +}
+> +static DEVICE_ATTR_RO(sh_owned);
+> +
+> +static ssize_t eh_enabled_show(struct device *dev, struct device_attribute *attr,
+> +		     char *buf)
+> +{
+> +	struct tpm_chip *chip = container_of(dev, struct tpm_chip, dev);
+> +	u32 value;
+> +	ssize_t rc;
+> +
+> +	rc = tpm2_get_tpm_pt(chip, TPM2_PT_STARTUP_CLEAR, &value,
+> +			     "could not retrieve STARTUP_CLEAR property");
+> +	if (rc)
+> +		return 0;
+> +
+> +	rc = sprintf(buf, "%d\n", (value & TPM2_PT_SC_EH_ENABLE) > 0);
+> +	return rc;
+> +}
+> +static DEVICE_ATTR_RO(eh_enabled);
+> +
+> +static ssize_t eh_owned_show(struct device *dev, struct device_attribute *attr,
+> +			  char *buf)
+> +{
+> +	struct tpm_chip *chip = container_of(dev, struct tpm_chip, dev);
+> +	u32 value;
+> +	ssize_t rc;
+> +
+> +	rc = tpm2_get_tpm_pt(chip, TPM2_PT_PERMANENT, &value,
+> +			     "could not retrieve PERMANENT property");
+> +	if (rc)
+> +		return 0;
+> +
+> +	rc = sprintf(buf, "%d\n", (value & TPM2_PT_PM_ENDORSEMENT_AUTH_SET) > 0);
+> +	return rc;
+> +}
+> +static DEVICE_ATTR_RO(eh_owned);
+> +
+> +static ssize_t manufacturer_show(struct device *dev,
+> +				 struct device_attribute *attr,
+> +				 char *buf)
+> +{
+> +	struct tpm_chip *chip = container_of(dev, struct tpm_chip, dev);
+> +	u32 manufacturer;
+> +	ssize_t rc;
+> +	char *str = buf;
+> +
+> +	rc = tpm2_get_tpm_pt(chip, TPM2_PT_MANUFACTURER, (u32 *) &manufacturer,
 
-> Also can you also
-> print total RAM and other information you already have:
-> 
-I can print it as part of total output, but for regression
-testing and automation I want the tool to have a single
-number result as output (well, one number relating to runtime
-size, and I'm considering adding one number relating
-to compile-time size.)
+seems an unnecessary cast.
 
-> Maybe something along the lines of:
-> 
-> System RAM report (units Kilobytes):
->    Total:
->    Free:
->    Bufferram:
->    In use:
-> 
-> I would remove the print("1..1\n");
+> +			     "could not retrieve MANUFACTURER property");
+> +	if (rc)
+> +		return 0;
+> +
+> +	str += sprintf(str, "0x%08x\n", be32_to_cpu(manufacturer));
+> +
+rc = sprintf()
+return rc;
 
-This is part of the TAP output format.
+Like above?
+> +	return str - buf;
+> +}
+> +static DEVICE_ATTR_RO(manufacturer);
+> +
+> +static ssize_t firmware_show(struct device *dev, struct device_attribute *attr,
+> +			 char *buf)
+> +{
+> +	struct tpm_chip *chip = container_of(dev, struct tpm_chip, dev);
+> +	u32 firmware1;
+> +	u32 firmware2;
+> +	ssize_t rc;
+> +	char *str = buf;
+> +
+> +	rc = tpm2_get_tpm_pt(chip, TPM2_PT_FIRMWARE_VERSION_1, (u32 *) &firmware1,
+> +			     "could not retrieve FIRMWARE_VERSION_1 property");
+> +	if (rc)
+> +		return 0;
+> +
+> +	rc = tpm2_get_tpm_pt(chip, TPM2_PT_FIRMWARE_VERSION_2, (u32 *) &firmware2,
+> +			     "could not retrieve FIRMWARE_VERSION_2 property");
+> +	if (rc)
+> +		return 0;
+> +
+> +	str += sprintf(str, "0x%08x.0x%08x\n", firmware1, firmware2);
+> +
+> +	return str - buf;
 
-Is there any (other) output format being standardized for selftest
-programs?
+Same for here, why not again do rc = sprintf .. return rc; ?
 
-TAP allows me to output more human-readable information to go
-along with the "official" result, but I'd like to keep the
-official result in TAP format so it can be handled by automated
-tools.  Maybe it would be best to output both.
+> +}
+> +static DEVICE_ATTR_RO(firmware);
+> +
+> +static ssize_t family_show(struct device *dev, struct device_attribute *attr,
+> +			   char *buf)
+> +{
+> +	char *str = buf;
+> +
+> +	str += sprintf(str, "2.0\n");
+> +
+> +	return str - buf;
 
-I'll try to make a counter-proposal tomorrow that we can discus.
+return sprintf(buf, "2.0\n");
 
->> +
->> +	ccode = sysinfo(&info);
->> +	if (ccode < 0) {
->> +		print("not ok 1 get size runtime size\n");
->> +		print("# could not get sysinfo\n");
->> +		_exit(ccode);
->> +	}
->> +
->> +	/* ignore cache complexities for now */
->> +	temp = info.totalram - info.freeram - info.bufferram;
->> +	temp = temp * info.mem_unit;
->> +	temp = temp / 1024;
->> +
->> +	used = temp;
->> +
->> +	print("ok 1 get runtime size # size = ");
->> +	print_num(used);
->> +	print(" K\n");
-> 
-> Please see above. You can get rid of print(" K\n"); at the end.
-> 
-> Sorry for not giving this feedback earlier. The not so clear
-> reporting aspect stood out for me after running the test.
+> +}
+> +static DEVICE_ATTR_RO(family);
+> +
+> +struct attribute *tpm2_dev_attrs[] = {
+> +	&dev_attr_sh_enabled.attr,
+> +	&dev_attr_sh_owned.attr,
+> +	&dev_attr_eh_enabled.attr,
+> +	&dev_attr_eh_owned.attr,
+> +	&dev_attr_manufacturer.attr,
+> +	&dev_attr_firmware.attr,
+> +	&dev_attr_family.attr,
+> +	NULL,
+> +};
 
-No problem.  Thanks for looking at it.
-I have some additional changes, based on feedback from Josh Triplett,
-so look for a v4 tomorrow.
-
- -- Tim
+     Stefan
