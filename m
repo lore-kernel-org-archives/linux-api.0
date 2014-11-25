@@ -1,18 +1,16 @@
-From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
 Subject: Re: [PATCH v4 0/7] kernel tinification: optionally
  compile out splice family of syscalls (splice, vmsplice, tee and sendfile)
-Date: Tue, 25 Nov 2014 13:58:06 -0500
-Message-ID: <20141125185806.GA28116@thunk.org>
-References: <5474ABB6.3030400@infradead.org>
-	<20141125.121305.2094097848188324942.davem@davemloft.net>
-	<20141125181032.GJ5050@linux.vnet.ibm.com>
-	<20141125.132445.152609149279137368.davem@davemloft.net>
+Date: Tue, 25 Nov 2014 11:00:28 -0800
+Message-ID: <20141125190028.GB24891@cloud>
+References: <1416870079-15254-1-git-send-email-pieter@boesman.nl>
+	<5474ABB6.3030400@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20141125.132445.152609149279137368.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+In-Reply-To: <5474ABB6.3030400-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
 	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=fuse-devel>
@@ -21,36 +19,63 @@ List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gm
 List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
 	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
 Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, zhenglong.cai-TJRtMXcVgQTM1kAEIRd3EQ@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org, pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, xiaoguangrong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, alexander.h.duyck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, mcgrof-IBi9RG/b67k@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, catalina.mocanu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org, tgraf-G/eBtMaohhA@public.gmane.org, Paul.Durrant-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, JBeulich-IBi9RG/b67k@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdeve
+To: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Bertrand Jacquin <beber-2YnHqweIUXrk1uMJSBkQmQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?6JSh5q2j6b6Z?= <zhenglong.cai-TJRtMXcVgQTM1kAEIRd3EQ@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Tom Herbert <therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Peter Foley <pefoley2-lY0TAiDIAFlBDgjK7y7TUQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Xiao Guangrong <xiaoguangrong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Matt Turner <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Alexander Duyck <alexander.h.duyck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Pieter Smith <pieter-qeJ+1H9vRZbz+pZb47iToQ@public.gmane.org>, "open list:FUSE: FILESYSTEM..." <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Luis R. Rod
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 25, 2014 at 01:24:45PM -0500, David Miller wrote:
+On Tue, Nov 25, 2014 at 08:17:58AM -0800, Randy Dunlap wrote:
+> On 11/24/2014 03:00 PM, Pieter Smith wrote:
+> >REPO: https://github.com/smipi1/linux-tinification.git
+> >
+> >BRANCH: tiny/config-syscall-splice
+> >
+> >BACKGROUND: This patch-set forms part of the Linux Kernel Tinification effort (
+> >   https://tiny.wiki.kernel.org/).
+> >
+> >GOAL: Support compiling out the splice family of syscalls (splice, vmsplice,
+> >   tee and sendfile) along with all supporting infrastructure if not needed.
+> >   Many embedded systems will not need the splice-family syscalls. Omitting them
+> >   saves space.
 > 
-> And then if some fundamental part of userland (glibc, klibc, etc.) finds
-> a useful way to use splice for a fundamental operation, we're back to
-> square one.
+> Hi,
+> 
+> Is the splice family of syscalls the only one that tiny has identified
+> for optional building or can we expect similar treatment for other
+> syscalls?
 
-I'll note that the applications for these super-tiny kernels are
-places where it's not likely they would be using glibc at all; think
-very tiny embedded systems.  The userspace tends to be highly
-restricted for the same space reasons why there is an effort to make
-the kernel as small as possible.
+Pretty much any system call that you could conceive of writing a
+userspace without.
 
-In these places, they are using Linux already, but they're using a 2.2
-or 2.4 kernel because 3.0 is just too damned big.  So the goal is to
-try to provide them an alternative which allows them to use a modern,
-but stripped down kernel.  If glibc or klibc isn't going to work
-without splice, then it's not going to work on a pre 2.6 kernel
-anyway, so things are no worse with these systems anyway.
+There's a partial project list at https://tiny.wiki.kernel.org/projects.
 
-After all, if we can get these systems to using a 3.x kernel w/o
-splice, that's surely better than their using a 2.2 or 2.4 kernel w/o
-the splice system, isn't it?
+> Why will many embedded systems not need these syscalls?  You know
+> exactly what apps they run and you are positive that those apps do
+> not use splice?
 
-Cheers,
+Yes, precisely.  We're talking about embedded systems small enough that
+you're booting with init=/your/app and don't even call fork(), where you
+know exactly what code you're putting in and what libraries you use.
+And they're almost certainly not running glibc.
 
-					- Ted
+> >RESULTS: A tinyconfig bloat-o-meter score for the entire patch-set:
+> >
+> >add/remove: 0/41 grow/shrink: 5/7 up/down: 23/-8422 (-8399)
+> 
+> The summary is that this patch saves around 8 KB of code space --
+> is that correct?
+
+Right.  For reference, we're talking about kernels where the *total*
+size is a few hundred kB.
+
+> How much storage space do embedded systems have nowadays?
+
+For the embedded systems we're targeting for the tinification effort, in
+a first pass: 512k-2M of storage (often for an *uncompressed* kernel, to
+support execute-in-place), and 128k-512k of memory.  We've successfully
+built useful kernels and userspaces for such environments, and we'd like
+to go even smaller.
+
+- Josh Triplett
 
 ------------------------------------------------------------------------------
 Download BIRT iHub F-Type - The Free Enterprise-Grade BIRT Server
