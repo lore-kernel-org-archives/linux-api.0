@@ -1,8 +1,8 @@
 From: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
-Subject: [PATCH v3 4/5] arm64: Add support for Spreadtrum's Sharkl64 Platform
- in Kconfig and defconfig
-Date: Tue, 25 Nov 2014 20:16:57 +0800
-Message-ID: <1416917818-10506-5-git-send-email-chunyan.zhang@spreadtrum.com>
+Subject: [PATCH v3 3/5] arm64: dts: Add support for Spreadtrum SC9836 SoC in
+ dts and Makefile
+Date: Tue, 25 Nov 2014 20:16:56 +0800
+Message-ID: <1416917818-10506-4-git-send-email-chunyan.zhang@spreadtrum.com>
 References: <Sharkl64-v3>
  <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
 Mime-Version: 1.0
@@ -25,57 +25,344 @@ List-Id: linux-api@vger.kernel.org
 
 From: Zhizhou Zhang <zhizhou.zhang@spreadtrum.com>
 
-Adds support for Spreadtrum's SoC Platform and its subset Sharkl64
-in the arm64 Kconfig and defconfig files.
+Adds the device tree support for Spreadtrum SC9836 SoC which is based on
+Sharkl64 platform.
+
+Sharkl64 platform contains the common nodes of Spreadtrum's arm64-based SoCs.
 
 Signed-off-by: Zhizhou Zhang <zhizhou.zhang@spreadtrum.com>
 Signed-off-by: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
 Signed-off-by: Orson Zhai <orson.zhai@spreadtrum.com>
 ---
- arch/arm64/Kconfig           |   17 +++++++++++++++++
- arch/arm64/configs/defconfig |    2 ++
- 2 files changed, 19 insertions(+)
+ arch/arm64/boot/dts/Makefile                  |    1 +
+ arch/arm64/boot/dts/sprd-sc9836-openphone.dts |   85 ++++++++++++++++++++
+ arch/arm64/boot/dts/sprd-sc9836.dtsi          |  103 ++++++++++++++++++++++++
+ arch/arm64/boot/dts/sprd-sharkl64.dtsi        |  105 +++++++++++++++++++++++++
+ 4 files changed, 294 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/sprd-sc9836-openphone.dts
+ create mode 100644 arch/arm64/boot/dts/sprd-sc9836.dtsi
+ create mode 100644 arch/arm64/boot/dts/sprd-sharkl64.dtsi
 
-diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 9532f8d..a63ec45 100644
---- a/arch/arm64/Kconfig
-+++ b/arch/arm64/Kconfig
-@@ -147,6 +147,23 @@ config ARCH_THUNDER
- 	help
- 	  This enables support for Cavium's Thunder Family of SoCs.
+diff --git a/arch/arm64/boot/dts/Makefile b/arch/arm64/boot/dts/Makefile
+index f8001a6..d0aff8a 100644
+--- a/arch/arm64/boot/dts/Makefile
++++ b/arch/arm64/boot/dts/Makefile
+@@ -1,4 +1,5 @@
+ dtb-$(CONFIG_ARCH_THUNDER) += thunder-88xx.dtb
++dtb-$(CONFIG_ARCH_SHARKL64) += sprd-sc9836-openphone.dtb
+ dtb-$(CONFIG_ARCH_VEXPRESS) += rtsm_ve-aemv8a.dtb foundation-v8.dtb
+ dtb-$(CONFIG_ARCH_XGENE) += apm-mustang.dtb
  
-+menuconfig ARCH_SPRD
-+	bool "Spreadtrum SoC platform"
-+	depends on ARM64
-+	help
-+	  Support for Spreadtrum ARM based SoCs
+diff --git a/arch/arm64/boot/dts/sprd-sc9836-openphone.dts b/arch/arm64/boot/dts/sprd-sc9836-openphone.dts
+new file mode 100644
+index 0000000..484d714
+--- /dev/null
++++ b/arch/arm64/boot/dts/sprd-sc9836-openphone.dts
+@@ -0,0 +1,85 @@
++/*
++ * Spreadtrum SC9836 openphone board DTS file
++ *
++ * Copyright (C) 2014, Spreadtrum Communications Inc.
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This library is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This library is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
 +
-+if ARCH_SPRD
++/dts-v1/;
 +
-+config ARCH_SHARKL64
-+	bool "Sharkl64 SoC Platform"
-+	help
-+	  Sharkl64 is a Spreadtrum's SoC Platform which is based
-+	  on ARM 64-bit processor core including
-+	    sc9836
++#include "sprd-sc9836.dtsi"
 +
-+endif #ARCH_SPRD
++/ {
++	model = "Spreadtrum,SC9836 Openphone Board";
 +
- config ARCH_VEXPRESS
- 	bool "ARMv8 software model (Versatile Express)"
- 	select ARCH_REQUIRE_GPIOLIB
-diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
-index dd301be..d7934a8 100644
---- a/arch/arm64/configs/defconfig
-+++ b/arch/arm64/configs/defconfig
-@@ -33,6 +33,8 @@ CONFIG_MODULE_UNLOAD=y
- # CONFIG_BLK_DEV_BSG is not set
- # CONFIG_IOSCHED_DEADLINE is not set
- CONFIG_ARCH_THUNDER=y
-+CONFIG_ARCH_SPRD=y
-+CONFIG_ARCH_SHARKL64=y
- CONFIG_ARCH_VEXPRESS=y
- CONFIG_ARCH_XGENE=y
- CONFIG_PCI=y
++	compatible = "sprd,sc9836-openphone", "sprd,sc9836";
++
++	aliases {
++		serial0 = &uart0;
++		serial1 = &uart1;
++		serial2 = &uart2;
++		serial3 = &uart3;
++	};
++
++	memory@80000000 {
++		device_type = "memory";
++		reg = <0 0x80000000 0 0x20000000>;
++	};
++
++	chosen {
++		stdout-path = &uart0;
++	};
++};
++
++&uart0 {
++	status = "okay";
++};
++
++&uart1 {
++	status = "okay";
++};
++
++&uart2 {
++	status = "okay";
++};
++
++&uart3 {
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/sprd-sc9836.dtsi b/arch/arm64/boot/dts/sprd-sc9836.dtsi
+new file mode 100644
+index 0000000..d5fe552
+--- /dev/null
++++ b/arch/arm64/boot/dts/sprd-sc9836.dtsi
+@@ -0,0 +1,103 @@
++/*
++ * Spreadtrum SC9836 SoC DTS file
++ *
++ * Copyright (C) 2014, Spreadtrum Communications Inc.
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This library is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This library is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++#include "sprd-sharkl64.dtsi"
++
++/ {
++	compatible = "sprd,sc9836";
++
++	cpus {
++		#address-cells = <2>;
++		#size-cells = <0>;
++
++		cpu@0 {
++			device_type = "cpu";
++			compatible = "arm,cortex-a53", "arm,armv8";
++			reg = <0x0 0x0>;
++			enable-method = "psci";
++		};
++		cpu@1 {
++			device_type = "cpu";
++			compatible = "arm,cortex-a53", "arm,armv8";
++			reg = <0x0 0x1>;
++			enable-method = "psci";
++		};
++		cpu@2 {
++			device_type = "cpu";
++			compatible = "arm,cortex-a53", "arm,armv8";
++			reg = <0x0 0x2>;
++			enable-method = "psci";
++		};
++		cpu@3 {
++			device_type = "cpu";
++			compatible = "arm,cortex-a53", "arm,armv8";
++			reg = <0x0 0x3>;
++			enable-method = "psci";
++		};
++	};
++
++	gic: interrupt-controller@12001000 {
++		compatible = "arm,cortex-a15-gic", "arm,cortex-a9-gic";
++		#interrupt-cells = <3>;
++		interrupt-controller;
++		reg = <0 0x12001000 0 0x1000>,
++		      <0 0x12002000 0 0x1000>,
++		      <0 0x12004000 0 0x2000>,
++		      <0 0x12006000 0 0x2000>;
++	};
++
++	psci {
++		compatible = "arm,psci-0.2";
++		method = "smc";
++	};
++
++	timer {
++		compatible = "arm,armv8-timer";
++		interrupts = <1 13 0xff01>,
++			     <1 14 0xff01>,
++			     <1 11 0xff01>,
++			     <1 10 0xff01>;
++		clock-frequency = <26000000>;
++	};
++};
+diff --git a/arch/arm64/boot/dts/sprd-sharkl64.dtsi b/arch/arm64/boot/dts/sprd-sharkl64.dtsi
+new file mode 100644
+index 0000000..d9ecfe9
+--- /dev/null
++++ b/arch/arm64/boot/dts/sprd-sharkl64.dtsi
+@@ -0,0 +1,105 @@
++/*
++ * Spreadtrum Sharkl64 platform DTS file
++ *
++ * Copyright (C) 2014, Spreadtrum Communications Inc.
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This library is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This library is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++/ {
++	interrupt-parent = <&gic>;
++	#address-cells = <2>;
++	#size-cells = <2>;
++
++	soc {
++		compatible = "simple-bus";
++		reg = <0x0 0x0 0x0 0x80000000>;
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++
++		ap_apb: apb@70000000 {
++			compatible = "simple-bus";
++			reg = <0x0 0x70000000 0x0 0x10000000>;
++			#address-cells = <2>;
++			#size-cells = <2>;
++			ranges;
++
++			uart0: serial@70000000 {
++				compatible = "sprd,sc9836-uart";
++				reg = <0 0x70000000 0 0x100>;
++				interrupts = <0 2 0xf04>;
++				clocks = <&clk26mhz>;
++				status = "disabled";
++			};
++
++			uart1: serial@70100000 {
++				compatible = "sprd,sc9836-uart";
++				reg = <0 0x70100000 0 0x100>;
++				interrupts = <0 3 0xf04>;
++				clocks = <&clk26mhz>;
++				status = "disabled";
++			};
++
++			uart2: serial@70200000 {
++				compatible = "sprd,sc9836-uart";
++				reg = <0 0x70200000 0 0x100>;
++				interrupts = <0 2 0xf04>;
++				clocks = <&clk26mhz>;
++				status = "disabled";
++			};
++
++			uart3: serial@70300000 {
++				compatible = "sprd,sc9836-uart";
++				reg = <0 0x70300000 0 0x100>;
++				interrupts = <0 3 0xf04>;
++				clocks = <&clk26mhz>;
++				status = "disabled";
++			};
++		};
++	};
++
++	clocks {
++		clk26mhz: clk26mhz {
++			compatible = "fixed-clock";
++			#clock-cells = <0>;
++			clock-frequency = <26000000>;
++		};
++	};
++};
 -- 
 1.7.9.5
