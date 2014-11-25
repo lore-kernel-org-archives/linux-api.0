@@ -1,35 +1,56 @@
-From: Heiko =?ISO-8859-1?Q?St=FCbner?= <heiko@sntech.de>
-Subject: Re: [PATCH v14 0/3] Add drm driver for Rockchip Socs
-Date: Tue, 25 Nov 2014 17:38:27 +0100
-Message-ID: <23617908.6oA5uRuO3l@diego>
-References: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: [PATCH v4 03/42] virtio: add virtio 1.0 feature bit
+Date: Tue, 25 Nov 2014 18:41:30 +0200
+Message-ID: <1416933600-21398-4-git-send-email-mst@redhat.com>
+References: <1416933600-21398-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mark Yao <mark.yao@rock-chips.com>
-Cc: Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, cf@rock-chips.com, xxm@rock-chips.com, huangtao@rock-
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Disposition: inline
+In-Reply-To: <1416933600-21398-1-git-send-email-mst@redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: linux-kernel@vger.kernel.org
+Cc: rusty@au1.ibm.com, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org, pbonzini@redhat.com, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-Mark,
+Based on original patches by Rusty Russell, Thomas Huth
+and Cornelia Huck.
 
-Am Donnerstag, 20. November 2014, 09:46:34 schrieb Mark Yao:
-> This a series of patches is a DRM Driver for Rockchip Socs, add support
-> for vop devices. Future patches will add additional encoders/connectors,
-> such as eDP, HDMI.
-> 
-> The basic "crtc" for rockchip is a "VOP" - Video Output Processor.
-> the vop devices found on Rockchip rk3288 Soc, rk3288 soc have two similar
-> Vop devices. Vop devices support iommu mapping, we use dma-mapping API with
-> ARM_DMA_USE_IOMMU.
+Note: at this time, we do not negotiate this feature bit
+in core, drivers have to declare VERSION_1 support explicitly.
 
-it looks like everybody is more or less happy with this version - in past 
-versions responses voicing concerns where quite swift.
+For this reason we treat this bit as a device bit
+and not as a transport bit for now.
 
-As David requested a pull request the last time, it might be time to do so, so 
-that we maybe still reach 3.19. 
+After all drivers are converted, we will be able to
+move VERSION_1 to core and drop it from all drivers.
 
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Reviewed-by: Cornelia Huck <cornelia.huck@de.ibm.com>
+---
+ include/uapi/linux/virtio_config.h | 3 +++
+ 1 file changed, 3 insertions(+)
 
-Heiko
+diff --git a/include/uapi/linux/virtio_config.h b/include/uapi/linux/virtio_config.h
+index 3ce768c..80e7381 100644
+--- a/include/uapi/linux/virtio_config.h
++++ b/include/uapi/linux/virtio_config.h
+@@ -54,4 +54,7 @@
+ /* Can the device handle any descriptor layout? */
+ #define VIRTIO_F_ANY_LAYOUT		27
+ 
++/* v1.0 compliant. */
++#define VIRTIO_F_VERSION_1		32
++
+ #endif /* _UAPI_LINUX_VIRTIO_CONFIG_H */
+-- 
+MST
