@@ -1,36 +1,57 @@
-From: Dave Airlie <airlied@gmail.com>
-Subject: Re: [PATCH v14 0/3] Add drm driver for Rockchip Socs
-Date: Thu, 27 Nov 2014 08:53:43 +1000
-Message-ID: <CAPM=9tzhZLShA5=ShGTKhyZR6ddKycQDUWBZxXpUBb+1tGp-mQ@mail.gmail.com>
-References: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
-	<23617908.6oA5uRuO3l@diego>
-	<CAPM=9tzvvb5U+8KaCO+K6CJi=rwWOkoW+4ZSFW_Oo9gTncvkWA@mail.gmail.com>
-	<1557742.FTdLsE0bVs@diego>
-	<20141126073430.GD3156@suse.de>
+From: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCHv2 0/7] CGroup Namespaces
+Date: Wed, 26 Nov 2014 23:58:55 +0100
+Message-ID: <CAFLxGvybiem34J3zrtVhW=4itSdczassNt9RcuxnpJQeAz-JVA@mail.gmail.com>
+References: <1414783141-6947-1-git-send-email-adityakali@google.com>
+	<20141104131030.GA2937@redhat.com>
+	<CAGr1F2Hm4+aCUz3RqkgUhbJAQtWvUbb2CRDkW5rJSZkwLM_huw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20141126073430.GD3156@suse.de>
-Sender: linux-doc-owner@vger.kernel.org
-To: Joerg Roedel <jroedel@suse.de>
-Cc: =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, Mark Yao <mark.yao@rock-chips.com>, Boris BREZILLON <boris.brezillon@free-electrons.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dri-devel <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, Douglas Anderson <dianders@chromium.org>, =?UTF-8?Q?S
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <CAGr1F2Hm4+aCUz3RqkgUhbJAQtWvUbb2CRDkW5rJSZkwLM_huw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 26 November 2014 at 17:34, Joerg Roedel <jroedel@suse.de> wrote:
-> On Wed, Nov 26, 2014 at 01:37:51AM +0100, Heiko St=C3=BCbner wrote:
+On Thu, Nov 6, 2014 at 6:33 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> On Tue, Nov 4, 2014 at 5:10 AM, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> On Fri, Oct 31, 2014 at 12:18:54PM -0700, Aditya Kali wrote:
+>> [..]
+>>>  fs/kernfs/dir.c                  | 194 ++++++++++++++++++++++++++++++++++-----
+>>>  fs/kernfs/mount.c                |  48 ++++++++++
+>>>  fs/proc/namespaces.c             |   1 +
+>>>  include/linux/cgroup.h           |  41 ++++++++-
+>>>  include/linux/cgroup_namespace.h |  36 ++++++++
+>>>  include/linux/kernfs.h           |   5 +
+>>>  include/linux/nsproxy.h          |   2 +
+>>>  include/linux/proc_ns.h          |   4 +
+>>>  include/uapi/linux/sched.h       |   3 +-
+>>>  kernel/Makefile                  |   2 +-
+>>>  kernel/cgroup.c                  | 108 +++++++++++++++++-----
+>>>  kernel/cgroup_namespace.c        | 148 +++++++++++++++++++++++++++++
+>>>  kernel/fork.c                    |   2 +-
+>>>  kernel/nsproxy.c                 |  19 +++-
 >>
->> Joerg, is your arm/rockchip branch [0] considered stable?
+>> Hi Aditya,
 >>
->> [0] https://git.kernel.org/cgit/linux/kernel/git/joro/iommu.git/log/=
-?h=3Darm/rockchip
+>> Can we provide a documentation file for cgroup namespace behavior. Say,
+>> Documentation/namespaces/cgroup-namespace.txt.
 >>
->
-> Yes, this branch will not be rebased. It can be pulled into another
-> tree.
+> Yes, definitely. I will add it as soon as we have a consensus on the
+> overall series.
 
-Great, so if we can get a rockchip drm tree based on drm-next with
-that tree pulled into it
-that would be good.
+Do you have a public git repository which contains your patches?
 
-Dave.
+-- 
+Thanks,
+//richard
