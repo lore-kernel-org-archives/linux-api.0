@@ -1,110 +1,53 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver
- support
-Date: Wed, 26 Nov 2014 12:33:13 +0000
-Message-ID: <20141126123313.520ac83f@lxorguk.ukuu.org.uk>
-References: <Sharkl64-v3>
- <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
- <1416917818-10506-6-git-send-email-chunyan.zhang@spreadtrum.com>
+From: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: futex(2) man page update help request
+Date: Wed, 26 Nov 2014 14:41:43 +0100
+Message-ID: <20141126134143.GB2243@rei>
+References: <537346E5.4050407@gmail.com>
+ <CF98E3EF.90564%dvhart@linux.intel.com>
+ <20140515152834.GA6926@rei.Home>
+ <CF9A3521.90ECC%dvhart@linux.intel.com>
+ <20140515163004.GB7959@rei.Home>
+ <CF9A3A75.90F40%dvhart@linux.intel.com>
+ <20140515190529.GA8887@rei.Home>
+ <CF9A658E.91322%dvhart@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1416917818-10506-6-git-send-email-chunyan.zhang@spreadtrum.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
-Cc: mark.rutland@arm.com, andrew@lunn.ch, heiko@sntech.de, broonie@linaro.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-api@vger.kernel.org, jslaby@suse.cz, artagnon@gmail.com, lanqing.liu@spreadtrum.com, arnd@arndb.de, corbet@lwn.net, zhang.lyra@gmail.com, zhizhou.zhang@spreadtrum.com, geng.ren@spreadtrum.com, m-karicheri2@ti.com, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, grant.likely@linaro.org, orsonzhai@gmail.com, florian.vaussard@epfl.ch, devicetree@vger.kernel.org, jason@lakedaemon.net, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, hytszk@gmail.com, rrichter@cavium.com, broonie@kernel.org, wei.qiao@spreadtrum.com, sprdlinux@freelists.org, shawn.guo@freescale.com, gregkh@linuxfoundation.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, robh+dt@kernel.org, galak@codeaurora.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CF9A658E.91322%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <davidlohr.bueso-VXdhtT5mjnY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-> +		 213 = /dev/ttySPX0		SPRD serial port 0
-> +		    ...
-> +		 216 = /dev/ttySPX3		SPRD serial port 3
+Hi!
+> >For this complexity of tests you would just need to call the tst_resm()
+> >interface to report success/failure and, at the end of the test,
+> >tst_exit() to return the stored overall test status.
+> >
+> >And ideally call the standard option parsing code and call the test in
+> >standard loop so that the test can take advantage of standard options as
+> >number of iterations to run, etc.
+> >
+> >Have a look at:
+> >
+> >https://github.com/linux-test-project/ltp/wiki/Test-Writing-Guidelines
+> >
+> >there is simple test example as well as description of the interfaces.
+> 
+> 
+> Thanks Cyril,
+> 
+> I'll follow up with you in a couple weeks most likely. I have some urgent
+> things that will be taking all my time and then some until then. Feel free
+> to poke me though if I lose track of it :-)
 
-Please use dynamic allocation or give a very very good reason why you
-can't
+Do you still plan to work on this?
 
-> +config SERIAL_SPRD_NR
-> +        int "Maximum number of sprd serial ports"
-> +        depends on SERIAL_SPRD
-> +        default "4"
-
-If you are doing dynamic allocation this should pretty much go away
-
-
-> +static int sprd_startup(struct uart_port *port)
-> +{
-> +	int ret = 0;
-> +	unsigned int ien, ctrl1;
-> +	struct sprd_uart_port *sp;
-> +
-> +	serial_out(port, SPRD_CTL2, ((THLD_TX_EMPTY << 8) | THLD_RX_FULL));
-> +
-> +	/* clear rx fifo */
-> +	while (serial_in(port, SPRD_STS1) & 0x00ff)
-> +		serial_in(port, SPRD_RXD);
-> +
-> +	/* clear tx fifo */
-> +	while (serial_in(port, SPRD_STS1) & 0xff00)
-> +		;
-
-Missing a cpu_relax and I would have thought a timeout on both of these.
-
-
-> +static void sprd_set_termios(struct uart_port *port,
-> +				    struct ktermios *termios,
-> +				    struct ktermios *old)
-> +{
-> +	unsigned int baud, quot;
-
-> +	/* calculate parity */
-> +	lcr &= ~SPRD_LCR_PARITY;
-> +	if (termios->c_cflag & PARENB) {
-> +		lcr |= SPRD_LCR_PARITY_EN;
-> +		if (termios->c_cflag & PARODD)
-> +			lcr |= SPRD_LCR_ODD_PAR;
-> +		else
-> +			lcr |= SPRD_LCR_EVEN_PAR;
-> +	}
-
-If you don't support mark/space parity then also clear CMSPAR in
-termios->c_cflag. If you do then it ought to be handled above.
-
-> +
-> +	/* clock divider bit16~bit20 */
-> +	serial_out(port, SPRD_CLKD1, (quot & 0x1f0000) >> 16);
-> +	serial_out(port, SPRD_LCR, lcr);
-> +	fc |= 0x3e00 | THLD_RX_FULL;
-> +	serial_out(port, SPRD_CTL1, fc);
-
-Also set the resulting baud back into the termios (see the 8250 termios
-for an example)
-
-
-> +static int __init sprd_console_setup(struct console *co, char *options)
-> +{
-> +	struct uart_port *port;
-> +	int baud = 115200;
-> +	int bits = 8;
-> +	int parity = 'n';
-> +	int flow = 'n';
-> +
-> +	if (unlikely(co->index >= UART_NR_MAX || co->index < 0))
-> +		co->index = 0;
-> +
-> +	port = (struct uart_port *)sprd_port[co->index];
-> +	if (port == NULL) {
-> +		pr_info("srial port %d not yet initialized\n", co->index);
-
-Typo
-
-Looks basically sound to me
-
-Alan
+-- 
+Cyril Hrubis
+chrubis-AlSwsSmVLrQ@public.gmane.org
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
