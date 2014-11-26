@@ -1,29 +1,36 @@
-From: Lars-Peter Clausen <lars@metafoo.de>
-Subject: Re: [PATCH 1/2] iio: Add support for waveform output
-Date: Wed, 26 Nov 2014 23:06:57 +0100
-Message-ID: <54764F01.20005@metafoo.de>
-References: <1417038344-3801-1-git-send-email-george.mccollister@gmail.com>
+From: Dave Airlie <airlied@gmail.com>
+Subject: Re: [PATCH v14 0/3] Add drm driver for Rockchip Socs
+Date: Thu, 27 Nov 2014 08:53:43 +1000
+Message-ID: <CAPM=9tzhZLShA5=ShGTKhyZR6ddKycQDUWBZxXpUBb+1tGp-mQ@mail.gmail.com>
+References: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
+	<23617908.6oA5uRuO3l@diego>
+	<CAPM=9tzvvb5U+8KaCO+K6CJi=rwWOkoW+4ZSFW_Oo9gTncvkWA@mail.gmail.com>
+	<1557742.FTdLsE0bVs@diego>
+	<20141126073430.GD3156@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <1417038344-3801-1-git-send-email-george.mccollister@gmail.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: George McCollister <george.mccollister@gmail.com>
-Cc: Daniel Baluta <daniel.baluta@intel.com>, STAGING SUBSYSTEM <devel@driverdev.osuosl.org>, list@osuosl.org, Reyad Attiyat <reyad.attiyat@gmail.com>, "open list:IIO SUBSYSTEM AND..." <linux-iio@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Hartmut Knaack <knaack.h@gmx.de>, open list <linux-kernel@vger.kernel.org>, Harald Geyer <harald@ccbib.org>, Sebastian Reichel <sre@debian.org>, Peter Meerwald <pmeerw@pmeerw.net>, Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>, open@osuosl.org, ABI/API <linux-api@vger.kernel.org>, Jonathan Cameron <jic23@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20141126073430.GD3156@suse.de>
+Sender: linux-doc-owner@vger.kernel.org
+To: Joerg Roedel <jroedel@suse.de>
+Cc: =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, Mark Yao <mark.yao@rock-chips.com>, Boris BREZILLON <boris.brezillon@free-electrons.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dri-devel <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, Douglas Anderson <dianders@chromium.org>, =?UTF-8?Q?S
 List-Id: linux-api@vger.kernel.org
 
-On 11/26/2014 10:45 PM, George McCollister wrote:
-> Output can be held high or low for a specified period of time.
-> Support for waveform capture could be added in the future.
+On 26 November 2014 at 17:34, Joerg Roedel <jroedel@suse.de> wrote:
+> On Wed, Nov 26, 2014 at 01:37:51AM +0100, Heiko St=C3=BCbner wrote:
+>>
+>> Joerg, is your arm/rockchip branch [0] considered stable?
+>>
+>> [0] https://git.kernel.org/cgit/linux/kernel/git/joro/iommu.git/log/=
+?h=3Darm/rockchip
+>>
 >
+> Yes, this branch will not be rebased. It can be pulled into another
+> tree.
 
-That's a PWM device?
+Great, so if we can get a rockchip drm tree based on drm-next with
+that tree pulled into it
+that would be good.
+
+Dave.
