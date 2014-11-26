@@ -1,45 +1,112 @@
-From: Peter Maydell <peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 5/7] KVM: arm64: guest debug, add support for single-step
-Date: Wed, 26 Nov 2014 19:27:06 +0000
-Message-ID: <CAFEAcA-cjM9yUXi6tc79UP0fBKAagtFKQgV3iAjz5DWr9yxZUQ@mail.gmail.com>
-References: <1416931805-23223-1-git-send-email-alex.bennee@linaro.org> <1416931805-23223-6-git-send-email-alex.bennee@linaro.org>
+From: George McCollister <george.mccollister@gmail.com>
+Subject: [PATCH 1/2] iio: Add support for waveform output
+Date: Wed, 26 Nov 2014 15:45:40 -0600
+Message-ID: <1417038344-3801-1-git-send-email-george.mccollister@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1416931805-23223-6-git-send-email-alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?B?QWxleCBCZW5uw6ll?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: kvm-devel <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, arm-mail-list <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org" <kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, Alexander Graf <agraf-l3A5Bk7waGM@public.gmane.org>, "J. Kiszka" <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, David Hildenbrand <dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Bharat Bhushan <r65777-KZfg59tc24xl57MIdRCFDg@public.gmane.org>, bp-l3A5Bk7waGM@public.gmane.org, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Lorenzo Pieralisi <lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+Cc: Daniel Baluta <daniel.baluta@intel.com>, "open list:STAGING SUBSYSTEM" <devel@driverdev.osuosl.org>, Lars-Peter Clausen <lars@metafoo.de>, Reyad Attiyat <reyad.attiyat@gmail.com>, "open list:IIO SUBSYSTEM AND..." <linux-iio@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>, open list <linux-kernel@vger.kernel.org>, Harald Geyer <harald@ccbib.org>, George McCollister <george.mccollister@gmail.com>, Sebastian Reichel <sre@debian.org>, Peter Meerwald <pmeerw@pmeerw.net>, Hartmut Knaack <knaack.h@gmx.de>, "open list:ABI/API" <linux-api@vger.kernel.org>, Jonathan Cameron <jic23@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 25 November 2014 at 16:10, Alex Benn=C3=A9e <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>=
- wrote:
-> This adds support for single-stepping the guest. As userspace can and
-> will manipulate guest registers before restarting any tweaking of the
-> registers has to occur just before control is passed back to the gues=
-t.
-> Furthermore while guest debugging is in effect we need to squash the
-> ability of the guest to single-step itself as we have no easy way of
-> re-entering the guest after the exception has been delivered to the
-> hypervisor.
+Output can be held high or low for a specified period of time.
+Support for waveform capture could be added in the future.
 
-A corner case I don't think this patch handles: if the debugger
-tries to single step an insn which is emulated by the
-hypervisor (because it's a load/store which is trapped and
-handled as emulated mmio in userspace) then we won't
-correctly update the single-step state machine (and so we'll end
-up incorrectly stopping after the following insn rather than
-before, I think).
+Signed-off-by: George McCollister <george.mccollister@gmail.com>
+---
+ Documentation/ABI/testing/sysfs-bus-iio               | 7 +++++++
+ drivers/iio/industrialio-core.c                       | 3 +++
+ drivers/staging/iio/Documentation/iio_event_monitor.c | 2 ++
+ include/linux/iio/types.h                             | 5 ++++-
+ 4 files changed, 16 insertions(+), 1 deletion(-)
 
-You should be able to achieve this effect by simply always clearing
-the guest's PSTATE.SS when you advance the PC to skip the emulated
-instruction (cf the comment in the pseudocode SSAdvance() function).
-
-I think we should also be doing this PC advance on return from
-userspace's handling of the mmio rather than before we drop back
-to userspace as we do now, but I can't remember why I think that.
-Christoffer, I don't suppose you recall, do you? I think it was
-you I had this conversation with on IRC a month or so back...
-
--- PMM
+diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
+index d760b02..47df169 100644
+--- a/Documentation/ABI/testing/sysfs-bus-iio
++++ b/Documentation/ABI/testing/sysfs-bus-iio
+@@ -1028,3 +1028,10 @@ Contact:	linux-iio@vger.kernel.org
+ Description:
+ 		Raw value of rotation from true/magnetic north measured with
+ 		or without compensation from tilt sensors.
++
++What:		/sys/bus/iio/devices/iio:deviceX/out_waveformY_hightime_raw
++What:		/sys/bus/iio/devices/iio:deviceX/out_waveformY_lowtime_raw
++KernelVersion:	3.18
++Contact:	linux-iio@vger.kernel.org
++Description:
++		Raw value of time for output to be held high or low.
+diff --git a/drivers/iio/industrialio-core.c b/drivers/iio/industrialio-core.c
+index af3e76d..343e784 100644
+--- a/drivers/iio/industrialio-core.c
++++ b/drivers/iio/industrialio-core.c
+@@ -70,6 +70,7 @@ static const char * const iio_chan_type_name_spec[] = {
+ 	[IIO_CCT] = "cct",
+ 	[IIO_PRESSURE] = "pressure",
+ 	[IIO_HUMIDITYRELATIVE] = "humidityrelative",
++	[IIO_WAVEFORM] = "waveform",
+ };
+ 
+ static const char * const iio_modifier_names[] = {
+@@ -91,6 +92,8 @@ static const char * const iio_modifier_names[] = {
+ 	[IIO_MOD_NORTH_TRUE] = "from_north_true",
+ 	[IIO_MOD_NORTH_MAGN_TILT_COMP] = "from_north_magnetic_tilt_comp",
+ 	[IIO_MOD_NORTH_TRUE_TILT_COMP] = "from_north_true_tilt_comp",
++	[IIO_MOD_HIGHTIME] = "hightime",
++	[IIO_MOD_LOWTIME] = "lowtime",
+ };
+ 
+ /* relies on pairs of these shared then separate */
+diff --git a/drivers/staging/iio/Documentation/iio_event_monitor.c b/drivers/staging/iio/Documentation/iio_event_monitor.c
+index 569d6f8..690f261 100644
+--- a/drivers/staging/iio/Documentation/iio_event_monitor.c
++++ b/drivers/staging/iio/Documentation/iio_event_monitor.c
+@@ -49,6 +49,7 @@ static const char * const iio_chan_type_name_spec[] = {
+ 	[IIO_CCT] = "cct",
+ 	[IIO_PRESSURE] = "pressure",
+ 	[IIO_HUMIDITYRELATIVE] = "humidityrelative",
++	[IIO_WAVEFORM] = "waveform",
+ };
+ 
+ static const char * const iio_ev_type_text[] = {
+@@ -108,6 +109,7 @@ static bool event_is_known(struct iio_event_data *event)
+ 	case IIO_CCT:
+ 	case IIO_PRESSURE:
+ 	case IIO_HUMIDITYRELATIVE:
++	case IIO_WAVEFORM:
+ 		break;
+ 	default:
+ 		return false;
+diff --git a/include/linux/iio/types.h b/include/linux/iio/types.h
+index 4a2af8a..d3b0af1 100644
+--- a/include/linux/iio/types.h
++++ b/include/linux/iio/types.h
+@@ -30,6 +30,7 @@ enum iio_chan_type {
+ 	IIO_CCT,
+ 	IIO_PRESSURE,
+ 	IIO_HUMIDITYRELATIVE,
++	IIO_WAVEFORM,
+ };
+ 
+ enum iio_modifier {
+@@ -59,7 +60,9 @@ enum iio_modifier {
+ 	IIO_MOD_NORTH_MAGN,
+ 	IIO_MOD_NORTH_TRUE,
+ 	IIO_MOD_NORTH_MAGN_TILT_COMP,
+-	IIO_MOD_NORTH_TRUE_TILT_COMP
++	IIO_MOD_NORTH_TRUE_TILT_COMP,
++	IIO_MOD_HIGHTIME,
++	IIO_MOD_LOWTIME,
+ };
+ 
+ enum iio_event_type {
+-- 
+2.1.0
