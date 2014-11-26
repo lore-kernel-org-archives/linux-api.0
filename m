@@ -1,40 +1,353 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH v4 0/7] kernel tinification: optionally compile out
- splice family of syscalls (splice, vmsplice, tee and sendfile)
-Date: Wed, 26 Nov 2014 12:19:03 +0000
-Message-ID: <20141126121903.5231c854@lxorguk.ukuu.org.uk>
-References: <5474ABB6.3030400@infradead.org>
-	<20141125.121305.2094097848188324942.davem@davemloft.net>
-	<20141125185310.GA24891@cloud>
-	<20141125.140441.401150380839514113.davem@davemloft.net>
+From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v7 05/10] tpm: device class for tpm
+Date: Wed, 26 Nov 2014 07:34:07 -0500
+Message-ID: <5475C8BF.8090209@linux.vnet.ibm.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-6-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141125.140441.401150380839514113.davem@davemloft.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Miller <davem@davemloft.net>
-Cc: josh@joshtriplett.org, rdunlap@infradead.org, pieter@boesman.nl, alexander.h.duyck@intel.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, akpm@linux-foundation.org, beber@meleeweb.net, catalina.mocanu@gmail.com, dborkman@redhat.com, edumazet@google.com, ebiederm@xmission.com, fabf@skynet.be, fuse-devel@lists.sourceforge.net, geert@linux-m68k.org, hughd@google.com, iulia.manda21@gmail.com, JBeulich@suse.com, bfields@fieldses.org, jlayton@poochiereds.net, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nfs@vger.kernel.org, mcgrof@suse.com, mattst88@gmail.com, mgorman@suse.de, mst@redhat.com, miklos@szeredi.hu, netdev@vger.kernel.org, oleg@redhat.com, Paul.Durrant@citrix.com, paulmck@linux.vnet.ibm.com, pefoley2@pefoley.com, tgraf@suug.ch, therbert@google.com, trond.myklebust@primarydata.com, willemb@google.com, xiaoguangrong@l
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415713513-16524-6-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
+Cc: christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 25 Nov 2014 14:04:41 -0500 (EST)
-David Miller <davem@davemloft.net> wrote:
+On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
+> Added own device class for TPM. Uses MISC_MAJOR:TPM_MINOR for the
+> first character device in order to retain backwards compatability.
+> Added tpm_dev_release() back attached to the character device.
+> devm now only calls put_device when the platform device is removed.
+>
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> ---
+>   drivers/char/tpm/tpm-chip.c        | 81 ++++++++++++++++++++++++++++++++++----
+>   drivers/char/tpm/tpm-dev.c         | 36 ++---------------
+>   drivers/char/tpm/tpm-interface.c   | 29 ++++++++++++++
+>   drivers/char/tpm/tpm.h             | 12 ++++--
+>   drivers/char/tpm/tpm_i2c_nuvoton.c |  2 +-
+>   drivers/char/tpm/tpm_tis.c         |  4 +-
+>   6 files changed, 116 insertions(+), 48 deletions(-)
+>
+> diff --git a/drivers/char/tpm/tpm-chip.c b/drivers/char/tpm/tpm-chip.c
+> index 96ea8eb..df40eee 100644
+> --- a/drivers/char/tpm/tpm-chip.c
+> +++ b/drivers/char/tpm/tpm-chip.c
+> @@ -25,6 +25,7 @@
+>   #include <linux/mutex.h>
+>   #include <linux/spinlock.h>
+>   #include <linux/freezer.h>
+> +#include <linux/major.h>
+>   #include "tpm.h"
+>   #include "tpm_eventlog.h"
+>
+> @@ -32,6 +33,9 @@ static DECLARE_BITMAP(dev_mask, TPM_NUM_DEVICES);
+>   static LIST_HEAD(tpm_chip_list);
+>   static DEFINE_SPINLOCK(driver_lock);
+>
+> +struct class *tpm_class;
+> +dev_t tpm_devt;
+> +
+>   /*
+>    * tpm_chip_find_get - return tpm_chip for a given chip number
+>    * @chip_num the device number for the chip
+> @@ -55,16 +59,24 @@ struct tpm_chip *tpm_chip_find_get(int chip_num)
+>   }
+>
+>   /**
+> - * tpmm_chip_remove() - free chip memory and device number
+> - * @data: points to struct tpm_chip instance
+> + * tpmm_put_device() - wrap put_device() for devm
+> + * @data: points to the device
+> + */
+> +static void tpmm_put_device(void *data)
+> +{
+> +	struct device *dev = (struct device *) data;
+> +	put_device(dev);
+> +}
+> +
+> +/**
+> + * tpm_dev_release() - free chip memory and the device number
+> + * @dev: the character device for the TPM chip
+>    *
+> - * This is used internally by tpmm_chip_alloc() and called by devres
+> - * when the device is released. This function does the opposite of
+> - * tpmm_chip_alloc() freeing memory and the device number.
+> + * This is used as the release function for the character device.
+>    */
+> -static void tpmm_chip_remove(void *data)
+> +static void tpm_dev_release(struct device *dev)
+>   {
+> -	struct tpm_chip *chip = (struct tpm_chip *) data;
+> +	struct tpm_chip *chip = container_of(dev, struct tpm_chip, dev);
+>
+>   	spin_lock(&driver_lock);
+>   	clear_bit(chip->dev_num, dev_mask);
+> @@ -112,13 +124,66 @@ struct tpm_chip *tpmm_chip_alloc(struct device *dev,
+>   		  chip->dev_num);
+>
+>   	chip->pdev = dev;
+> -	devm_add_action(dev, tpmm_chip_remove, chip);
+> +
+>   	dev_set_drvdata(dev, chip);
+>
+> +	chip->dev.class = tpm_class;
+> +	chip->dev.release = tpm_dev_release;
+> +	chip->dev.parent = chip->pdev;
+> +
+> +	if (chip->dev_num == 0)
+> +		chip->dev.devt = MKDEV(MISC_MAJOR, TPM_MINOR);
+> +	else
+> +		chip->dev.devt = MKDEV(MAJOR(tpm_devt), chip->dev_num);
+> +
+> +	dev_set_name(&chip->dev, chip->devname);
+> +
+> +	device_initialize(&chip->dev);
+> +
+> +	chip->cdev.owner = chip->pdev->driver->owner;
+> +	cdev_init(&chip->cdev, &tpm_fops);
+> +
+> +	devm_add_action(dev, tpmm_put_device, chip);
+>   	return chip;
+>   }
+>   EXPORT_SYMBOL_GPL(tpmm_chip_alloc);
+>
+> +static int tpm_dev_add_device(struct tpm_chip *chip)
+> +{
+> +	int rc;
+> +
+> +	rc = device_add(&chip->dev);
+> +	if (rc) {
+> +		dev_err(&chip->dev,
+> +			"unable to device_register %s, major %d, minor %d " \
+> +			"err=%d\n",
+> +			chip->devname, MAJOR(chip->dev.devt),
+> +			MINOR(chip->dev.devt), rc);
+> +
+> +		return rc;
+> +	}
+> +
+> +	rc = cdev_add(&chip->cdev, chip->dev.devt, 1);
+> +	if (rc) {
+> +		dev_err(&chip->dev,
+> +			"unable to cdev_add %s, major %d, minor %d " \
+> +			"err=%d\n",
+> +			chip->devname, MAJOR(chip->dev.devt),
+> +			MINOR(chip->dev.devt), rc);
+> +
+> +		device_unregister(&chip->dev);
+> +		return rc;
+> +	}
+> +
+> +	return rc;
+> +}
+> +
+> +static void tpm_dev_del_device(struct tpm_chip *chip)
+> +{
+> +	cdev_del(&chip->cdev);
+> +	device_unregister(&chip->dev);
+> +}
+> +
+>   /*
+>    * tpm_chip_register() - create a misc driver for the TPM chip
+>    * @chip: TPM chip to use.
+> diff --git a/drivers/char/tpm/tpm-dev.c b/drivers/char/tpm/tpm-dev.c
+> index 3568321..de0337e 100644
+> --- a/drivers/char/tpm/tpm-dev.c
+> +++ b/drivers/char/tpm/tpm-dev.c
+> @@ -17,7 +17,6 @@
+>    * License.
+>    *
+>    */
+> -#include <linux/miscdevice.h>
+>   #include <linux/slab.h>
+>   #include <linux/uaccess.h>
+>   #include "tpm.h"
+> @@ -54,9 +53,8 @@ static void timeout_work(struct work_struct *work)
+>
+>   static int tpm_open(struct inode *inode, struct file *file)
+>   {
+> -	struct miscdevice *misc = file->private_data;
+> -	struct tpm_chip *chip = container_of(misc, struct tpm_chip,
+> -					     vendor.miscdev);
+> +	struct tpm_chip *chip =
+> +		container_of(inode->i_cdev, struct tpm_chip, cdev);
+>   	struct file_priv *priv;
+>
+>   	/* It's assured that the chip will be opened just once,
+> @@ -173,7 +171,7 @@ static int tpm_release(struct inode *inode, struct file *file)
+>   	return 0;
+>   }
+>
+> -static const struct file_operations tpm_fops = {
+> +const struct file_operations tpm_fops = {
+>   	.owner = THIS_MODULE,
+>   	.llseek = no_llseek,
+>   	.open = tpm_open,
+> @@ -182,32 +180,4 @@ static const struct file_operations tpm_fops = {
+>   	.release = tpm_release,
+>   };
+>
+> -int tpm_dev_add_device(struct tpm_chip *chip)
+> -{
+> -	int rc;
+>
+> -	chip->vendor.miscdev.fops = &tpm_fops;
+> -	if (chip->dev_num == 0)
+> -		chip->vendor.miscdev.minor = TPM_MINOR;
+> -	else
+> -		chip->vendor.miscdev.minor = MISC_DYNAMIC_MINOR;
+> -
+> -	chip->vendor.miscdev.name = chip->devname;
+> -	chip->vendor.miscdev.parent = chip->pdev;
+> -
+> -	rc = misc_register(&chip->vendor.miscdev);
+> -	if (rc) {
+> -		chip->vendor.miscdev.name = NULL;
+> -		dev_err(chip->pdev,
+> -			"unable to misc_register %s, minor %d err=%d\n",
+> -			chip->vendor.miscdev.name,
+> -			chip->vendor.miscdev.minor, rc);
+> -	}
+> -	return rc;
+> -}
+> -
+> -void tpm_dev_del_device(struct tpm_chip *chip)
+> -{
+> -	if (chip->vendor.miscdev.name)
+> -		misc_deregister(&chip->vendor.miscdev);
+> -}
+> diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
+> index e6b08bd..9e4ce4d 100644
+> --- a/drivers/char/tpm/tpm-interface.c
+> +++ b/drivers/char/tpm/tpm-interface.c
+> @@ -997,6 +997,35 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
+>   }
+>   EXPORT_SYMBOL_GPL(tpm_get_random);
+>
+> +static int __init tpm_init(void)
+> +{
+> +	int rc;
+> +
+> +	tpm_class = class_create(THIS_MODULE, "tpm");
+> +	if (IS_ERR(tpm_class)) {
+> +		pr_err("couldn't create tpm class\n");
+> +		return PTR_ERR(tpm_class);
+> +	}
+> +
+> +	rc = alloc_chrdev_region(&tpm_devt, 0, TPM_NUM_DEVICES, "tpm");
+> +	if (rc < 0) {
+> +		pr_err("tpm: failed to allocate char dev region\n");
+> +		class_destroy(tpm_class);
+> +		return rc;
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +static void __exit tpm_exit(void)
+> +{
+> +	class_destroy(tpm_class);
+> +	unregister_chrdev_region(tpm_devt, TPM_NUM_DEVICES);
+> +}
+> +
+> +subsys_initcall(tpm_init);
+> +module_exit(tpm_exit);
+> +
+>   MODULE_AUTHOR("Leendert van Doorn (leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org)");
+>   MODULE_DESCRIPTION("TPM Driver");
+>   MODULE_VERSION("2.0");
+> diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+> index b3a7c76..83103e0 100644
+> --- a/drivers/char/tpm/tpm.h
+> +++ b/drivers/char/tpm/tpm.h
+> @@ -23,11 +23,11 @@
+>   #include <linux/fs.h>
+>   #include <linux/mutex.h>
+>   #include <linux/sched.h>
+> -#include <linux/miscdevice.h>
+>   #include <linux/platform_device.h>
+>   #include <linux/io.h>
+>   #include <linux/tpm.h>
+>   #include <linux/acpi.h>
+> +#include <linux/cdev.h>
+>
+>   enum tpm_const {
+>   	TPM_MINOR = 224,	/* officially assigned */
+> @@ -74,7 +74,6 @@ struct tpm_vendor_specific {
+>   	int region_size;
+>   	int have_region;
+>
+> -	struct miscdevice miscdev;
+>   	struct list_head list;
+>   	int locality;
+>   	unsigned long timeout_a, timeout_b, timeout_c, timeout_d; /* jiffies */
+> @@ -99,6 +98,9 @@ struct tpm_vendor_specific {
+>
+>   struct tpm_chip {
+>   	struct device *pdev;	/* Device stuff */
+> +	struct device dev;
+> +	struct cdev cdev;
+> +
+>   	const struct tpm_class_ops *ops;
+>
+>   	int dev_num;		/* /dev/tpm# */
+> @@ -320,6 +322,10 @@ struct tpm_cmd_t {
+>   	tpm_cmd_params	params;
+>   } __packed;
+>
+> +extern struct class *tpm_class;
+> +extern dev_t tpm_devt;
+> +extern const struct file_operations tpm_fops;
+> +
+>   ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
+>   ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+>   		     size_t bufsiz);
+> @@ -340,8 +346,6 @@ extern struct tpm_chip *tpmm_chip_alloc(struct device *dev,
+>   extern int tpm_chip_register(struct tpm_chip *chip);
+>   extern void tpm_chip_unregister(struct tpm_chip *chip);
+>
+> -int tpm_dev_add_device(struct tpm_chip *chip);
+> -void tpm_dev_del_device(struct tpm_chip *chip);
+>   int tpm_sysfs_add_device(struct tpm_chip *chip);
+>   void tpm_sysfs_del_device(struct tpm_chip *chip);
+>
+> diff --git a/drivers/char/tpm/tpm_i2c_nuvoton.c b/drivers/char/tpm/tpm_i2c_nuvoton.c
+> index 92ee9fa..14246e2 100644
+> --- a/drivers/char/tpm/tpm_i2c_nuvoton.c
+> +++ b/drivers/char/tpm/tpm_i2c_nuvoton.c
+> @@ -557,7 +557,7 @@ static int i2c_nuvoton_probe(struct i2c_client *client,
+>   		rc = devm_request_irq(dev, chip->vendor.irq,
+>   				      i2c_nuvoton_int_handler,
+>   				      IRQF_TRIGGER_LOW,
+> -				      chip->vendor.miscdev.name,
+> +				      chip->devname,
+>   				      chip);
+>   		if (rc) {
+>   			dev_err(dev, "%s() Unable to request irq: %d for use\n",
+> diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+> index 660d9af..7a2c59b 100644
+> --- a/drivers/char/tpm/tpm_tis.c
+> +++ b/drivers/char/tpm/tpm_tis.c
+> @@ -661,7 +661,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   				 TPM_INT_VECTOR(chip->vendor.locality));
+>   			if (devm_request_irq
+>   			    (dev, i, tis_int_probe, IRQF_SHARED,
+> -			     chip->vendor.miscdev.name, chip) != 0) {
+> +			     chip->devname, chip) != 0) {
+>   				dev_info(chip->pdev,
+>   					 "Unable to request irq: %d for probe\n",
+>   					 i);
+> @@ -708,7 +708,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   			 TPM_INT_VECTOR(chip->vendor.locality));
+>   		if (devm_request_irq
+>   		    (dev, chip->vendor.irq, tis_int_handler, IRQF_SHARED,
+> -		     chip->vendor.miscdev.name, chip) != 0) {
+> +		     chip->devname, chip) != 0) {
+>   			dev_info(chip->pdev,
+>   				 "Unable to request irq: %d for use\n",
+>   				 chip->vendor.irq);
 
-> From: josh@joshtriplett.org
-> Date: Tue, 25 Nov 2014 10:53:10 -0800
-> 
-> > It's not a "slippery slope"; it's been our standard practice for ages.
-> 
-> We've never put an entire class of generic system calls behind
-> a config option.
+This looks ok to me.
 
-Try running an original MCC Linux binary and C lib on a current kernel
-
-We've put *entire binary formats* behind a config option. We've put older
-syscalls behind it, we've put sysfs behind it, sysctl behind it, the
-older microcode interfaces behind it, ISA bus as a concept behind
-options. VDSO, IPC, even 32bit support ... the list goes on and on.
-
-I'd say those were far more generic on the whole than splice/sendfile.
-
-Alan
+Reviewed-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
