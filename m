@@ -1,162 +1,207 @@
-From: Alex =?utf-8?Q?Benn=C3=A9e?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 5/7] KVM: arm64: guest debug, add support for single-step
-Date: Wed, 26 Nov 2014 18:00:45 +0000
-Message-ID: <87lhmxlu42.fsf@linaro.org>
-References: <1416931805-23223-1-git-send-email-alex.bennee@linaro.org> <1416931805-23223-6-git-send-email-alex.bennee@linaro.org> <20141126164057.GE3245@hawk.usersys.redhat.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [tpmdd-devel] [PATCH v7 09/10] tpm: TPM 2.0 FIFO Interface
+Date: Wed, 26 Nov 2014 20:10:26 +0200
+Message-ID: <20141126181026.GA17756@intel.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1415713513-16524-10-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <5474FA07.6060204@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <20141126164057.GE3245-EoAxxbxdFnFvD/m4c++uL6fLeoKvNuZc@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Jones <drjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, Lorenzo Pieralisi <lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, r65777-KZfg59tc24xl57MIdRCFDg@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bp-l3A5Bk7waGM@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5474FA07.6060204@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Cc: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>, christophe.ricard@gmail.com, josh.triplett@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Will Arthur <will.c.arthur@intel.com>, tpmdd-devel@lists.sourceforge.net, jason.gunthorpe@obsidianresearch.com, trousers-tech@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Nov 25, 2014 at 04:52:07PM -0500, Stefan Berger wrote:
+> On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
+> >From: Will Arthur <will.c.arthur@intel.com>
+> >
+> >Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2.0,
+> >instead of calling tpm_get_timeouts(), assign duration and timeout
+> >values defined in the TPM 2.0 PTP specification.
+> >
+> >Signed-off-by: Will Arthur <will.c.arthur@intel.com>
+> >Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+> >---
+> >  drivers/char/tpm/tpm_tis.c | 71 ++++++++++++++++++++++++++++++++++++----------
+> >  1 file changed, 56 insertions(+), 15 deletions(-)
+> >
+> >diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+> >index 7a2c59b..0b3c089 100644
+> >--- a/drivers/char/tpm/tpm_tis.c
+> >+++ b/drivers/char/tpm/tpm_tis.c
+> >@@ -1,5 +1,6 @@
+> >  /*
+> >   * Copyright (C) 2005, 2006 IBM Corporation
+> >+ * Copyright (C) 2014 Intel Corporation
+> >   *
+> >   * Authors:
+> >   * Leendert van Doorn <leendert@watson.ibm.com>
+> >@@ -44,6 +45,10 @@ enum tis_status {
+> >  	TPM_STS_DATA_EXPECT = 0x08,
+> >  };
+> >
+> >+enum tis_status3 {
+> >+	TPM_STS3_TPM2_FAM = 0x04,
+> >+};
+> >+
+> >  enum tis_int_flags {
+> >  	TPM_GLOBAL_INT_ENABLE = 0x80000000,
+> >  	TPM_INTF_BURST_COUNT_STATIC = 0x100,
+> >@@ -70,6 +75,7 @@ enum tis_defaults {
+> >  #define	TPM_INT_STATUS(l)		(0x0010 | ((l) << 12))
+> >  #define	TPM_INTF_CAPS(l)		(0x0014 | ((l) << 12))
+> >  #define	TPM_STS(l)			(0x0018 | ((l) << 12))
+> >+#define	TPM_STS3(l)			(0x001b | ((l) << 12))
+> >  #define	TPM_DATA_FIFO(l)		(0x0024 | ((l) << 12))
+> >
+> >  #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
+> >@@ -344,6 +350,7 @@ static int tpm_tis_send(struct tpm_chip *chip, u8 *buf, size_t len)
+> >  {
+> >  	int rc;
+> >  	u32 ordinal;
+> >+	unsigned long dur;
+> >
+> >  	rc = tpm_tis_send_data(chip, buf, len);
+> >  	if (rc < 0)
+> >@@ -355,9 +362,14 @@ static int tpm_tis_send(struct tpm_chip *chip, u8 *buf, size_t len)
+> >
+> >  	if (chip->vendor.irq) {
+> >  		ordinal = be32_to_cpu(*((__be32 *) (buf + 6)));
+> >+
+> >+		if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> >+			dur = tpm_calc_ordinal_duration(chip, ordinal);
+> >+		else
+> >+			dur = tpm_calc_ordinal_duration(chip, ordinal);
+> >+
+> 
+> Is this right? Shouldn't you call tpm2_calc_ordinal_duration for TPM2? If
+> not don't check the flag but leave comment for why the same function can be
+> called for both TPM versions.
 
-Andrew Jones <drjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+No it's not right, it's a mistake. Thanks for noticing this :)
 
-> On Tue, Nov 25, 2014 at 04:10:03PM +0000, Alex Benn=C3=A9e wrote:
->> This adds support for single-stepping the guest. As userspace can an=
-d
->> will manipulate guest registers before restarting any tweaking of th=
-e
->> registers has to occur just before control is passed back to the gue=
-st.
->> Furthermore while guest debugging is in effect we need to squash the
->> ability of the guest to single-step itself as we have no easy way of
->> re-entering the guest after the exception has been delivered to the
->> hypervisor.
->>=20
->> Signed-off-by: Alex Benn=C3=A9e <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>=20
->> diff --git a/arch/arm/kvm/arm.c b/arch/arm/kvm/arm.c
->> index 48d26bb..a76daae 100644
->> --- a/arch/arm/kvm/arm.c
->> +++ b/arch/arm/kvm/arm.c
->> @@ -38,6 +38,7 @@
->>  #include <asm/tlbflush.h>
->>  #include <asm/cacheflush.h>
->>  #include <asm/virt.h>
->> +#include <asm/debug-monitors.h>
->>  #include <asm/kvm_arm.h>
->>  #include <asm/kvm_asm.h>
->>  #include <asm/kvm_mmu.h>
->> @@ -300,6 +301,17 @@ void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu)
->>  	kvm_arm_set_running_vcpu(NULL);
->>  }
->> =20
->> +/**
->> + * kvm_arch_vcpu_ioctl_set_guest_debug - Setup guest debugging
->> + * @kvm:	pointer to the KVM struct
->> + * @kvm_guest_debug: the ioctl data buffer
->> + *
->> + * This sets up the VM for guest debugging. Care has to be taken wh=
-en
->> + * manipulating guest registers as these will be set/cleared by the
->> + * hyper-visor controller, typically before each kvm_run event. As =
-a
->> + * result modification of the guest registers needs to take place
->> + * after they have been restored in the hyp.S trampoline code.
->> + */
->>  int kvm_arch_vcpu_ioctl_set_guest_debug(struct kvm_vcpu *vcpu,
->>  					struct kvm_guest_debug *dbg)
->>  {
->> @@ -317,8 +329,8 @@ int kvm_arch_vcpu_ioctl_set_guest_debug(struct k=
-vm_vcpu *vcpu,
->> =20
->>  	/* Single Step */
->>  	if (vcpu->guest_debug & KVM_GUESTDBG_SINGLESTEP) {
->> -		kvm_info("SS requested, not yet implemented\n");
->> -		return -EINVAL;
->> +		kvm_info("SS requested\n");
->> +		route_el2 =3D true;
->>  	}
->> =20
->>  	/* Software Break Points */
->> diff --git a/arch/arm64/kernel/asm-offsets.c b/arch/arm64/kernel/asm=
--offsets.c
->> index 8da1043..78e5ae1 100644
->> --- a/arch/arm64/kernel/asm-offsets.c
->> +++ b/arch/arm64/kernel/asm-offsets.c
->> @@ -121,6 +121,7 @@ int main(void)
->>    DEFINE(VCPU_FAR_EL2,		offsetof(struct kvm_vcpu, arch.fault.far_el=
-2));
->>    DEFINE(VCPU_HPFAR_EL2,	offsetof(struct kvm_vcpu, arch.fault.hpfar=
-_el2));
->>    DEFINE(VCPU_DEBUG_FLAGS,	offsetof(struct kvm_vcpu, arch.debug_fla=
-gs));
->> +  DEFINE(GUEST_DEBUG,		offsetof(struct kvm_vcpu, guest_debug));
->>    DEFINE(VCPU_HCR_EL2,		offsetof(struct kvm_vcpu, arch.hcr_el2));
->>    DEFINE(VCPU_MDCR_EL2,	offsetof(struct kvm_vcpu, arch.mdcr_el2));
->>    DEFINE(VCPU_IRQ_LINES,	offsetof(struct kvm_vcpu, arch.irq_lines))=
-;
->> diff --git a/arch/arm64/kvm/handle_exit.c b/arch/arm64/kvm/handle_ex=
-it.c
->> index 28dc92b..6def054 100644
->> --- a/arch/arm64/kvm/handle_exit.c
->> +++ b/arch/arm64/kvm/handle_exit.c
->> @@ -91,6 +91,25 @@ static int kvm_handle_bkpt(struct kvm_vcpu *vcpu,=
- struct kvm_run *run)
->>  	return 0;
->>  }
->> =20
->> +/**
->> + * kvm_handle_ss - handle single step exceptions
->> + *
->> + * @vcpu:	the vcpu pointer
->
-> same @run comment as other handler header in previous patch
+> >  		if (wait_for_tpm_stat
+> >-		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
+> >-		     tpm_calc_ordinal_duration(chip, ordinal),
+> >+		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID, dur,
+> >  		     &chip->vendor.read_queue, false) < 0) {
+> >  			rc = -ETIME;
+> >  			goto out_err;
+> >@@ -543,6 +555,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  	u32 vendor, intfcaps, intmask;
+> >  	int rc, i, irq_s, irq_e, probe;
+> >  	struct tpm_chip *chip;
+> >+	u8 sts3;
+> >
+> >  	chip = tpmm_chip_alloc(dev, &tpm_tis);
+> >  	if (IS_ERR(chip))
+> >@@ -554,11 +567,28 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  	if (!chip->vendor.iobase)
+> >  		return -EIO;
+> >
+> >+	sts3 = ioread8(chip->vendor.iobase + TPM_STS3(1));
+> >+	if (sts3 & TPM_STS3_TPM2_FAM)
+> >+		chip->flags = TPM_CHIP_FLAG_TPM2;
+> >+
+> >  	/* Default timeouts */
+> >-	chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> >-	chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
+> >-	chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> >-	chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> >+	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
+> >+		chip->vendor.timeout_a = usecs_to_jiffies(TPM2_TIMEOUT_A);
+> >+		chip->vendor.timeout_b = usecs_to_jiffies(TPM2_TIMEOUT_B);
+> >+		chip->vendor.timeout_c = usecs_to_jiffies(TPM2_TIMEOUT_C);
+> >+		chip->vendor.timeout_d = usecs_to_jiffies(TPM2_TIMEOUT_D);
+> >+		chip->vendor.duration[TPM_SHORT] =
+> >+			usecs_to_jiffies(TPM2_DURATION_SHORT);
+> >+		chip->vendor.duration[TPM_MEDIUM] =
+> >+			usecs_to_jiffies(TPM2_DURATION_MEDIUM);
+> >+		chip->vendor.duration[TPM_LONG] =
+> >+			usecs_to_jiffies(TPM2_DURATION_LONG);
+> >+	} else {
+> >+		chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> >+		chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
+> >+		chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> >+		chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> >+	}
+> >
+> >  	if (wait_startup(chip, 0) != 0) {
+> >  		rc = -ENODEV;
+> >@@ -573,8 +603,8 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  	vendor = ioread32(chip->vendor.iobase + TPM_DID_VID(0));
+> >  	chip->vendor.manufacturer_id = vendor;
+> >
+> >-	dev_info(dev,
+> >-		 "1.2 TPM (device-id 0x%X, rev-id %d)\n",
+> >+	dev_info(dev, "%s TPM (device-id 0x%X, rev-id %d)\n",
+> >+		 (chip->flags & TPM_CHIP_FLAG_TPM2) ? "2.0" : "1.2",
+> >  		 vendor >> 16, ioread8(chip->vendor.iobase + TPM_RID(0)));
+> >
+> >  	if (!itpm) {
+> >@@ -616,13 +646,17 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  		dev_dbg(dev, "\tData Avail Int Support\n");
+> >
+> >  	/* get the timeouts before testing for irqs */
+> >-	if (tpm_get_timeouts(chip)) {
+> >+	if (!(chip->flags & TPM_CHIP_FLAG_TPM2) && tpm_get_timeouts(chip)) {
+> >  		dev_err(dev, "Could not get TPM timeouts and durations\n");
+> >  		rc = -ENODEV;
+> >  		goto out_err;
+> >  	}
+> >
+> >-	if (tpm_do_selftest(chip)) {
+> >+	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> >+		rc = tpm2_do_selftest(chip);
+> >+	else
+> >+		rc = tpm_do_selftest(chip);
+> >+	if (rc) {
+> >  		dev_err(dev, "TPM self test failed\n");
+> >  		rc = -ENODEV;
+> >  		goto out_err;
+> >@@ -683,7 +717,10 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  			chip->vendor.probed_irq = 0;
+> >
+> >  			/* Generate Interrupts */
+> >-			tpm_gen_interrupt(chip);
+> >+			if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> >+				tpm2_gen_interrupt(chip);
+> >+			else
+> >+				tpm_gen_interrupt(chip);
+> >
+> >  			chip->vendor.irq = chip->vendor.probed_irq;
+> >
+> >@@ -759,14 +796,18 @@ static void tpm_tis_reenable_interrupts(struct tpm_chip *chip)
+> >  static int tpm_tis_resume(struct device *dev)
+> >  {
+> >  	struct tpm_chip *chip = dev_get_drvdata(dev);
+> >-	int ret;
+> >+	int ret = 0;
+> >
+> >  	if (chip->vendor.irq)
+> >  		tpm_tis_reenable_interrupts(chip);
+> >
+> >-	ret = tpm_pm_resume(dev);
+> >-	if (!ret)
+> >-		tpm_do_selftest(chip);
+> >+	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> >+		tpm2_do_selftest(chip);
+> >+	else {
+> >+		ret = tpm_pm_resume(dev);
+> >+		if (!ret)
+> >+			tpm_do_selftest(chip);
+> >+	}
+> 
+> Only a self test necessary for TPM2 if resuming from ACPI sleep?
 
-Yeah I think I'll be merging them all together given the comments about
-passing syndrome info directly.
+AFAIK firmware/BIOS should do TPM2_Startup according to the rules in the
+section 12.2.3.2 of the Architecture specification.
 
->> + *
->> + * See: ARM ARM D2.12 for the details. While the host is routing de=
-bug
->> + * exceptions to it's handlers we have to suppress the ability of t=
-he
->> + * guest to trigger exceptions.
->> + */
->> +static int kvm_handle_ss(struct kvm_vcpu *vcpu, struct kvm_run *run=
-)
->> +{
->> +	WARN_ON(!(vcpu->guest_debug & KVM_GUESTDBG_SINGLESTEP));
->
-> I'm not sure about this WARN_ON. Is there some scenario you were
-> thinking of when you put it here? Is there some scenario where this
-> could trigger so frequently we kill the log buffer?
+> Other parts look good to me.
+>    Stefan
 
-The main one I had in mind was not suppressing the guest's attempt to
-step while guest debugging was running.
-
-<snip>
->> =20
->> -/* for KVM_SET_GUEST_DEBUG */
->> -
->> -#define KVM_GUESTDBG_ENABLE		0x00000001
->> -#define KVM_GUESTDBG_SINGLESTEP		0x00000002
->> -
->>  struct kvm_guest_debug {
->>  	__u32 control;
->>  	__u32 pad;
->> @@ -1189,4 +1186,15 @@ struct kvm_assigned_msix_entry {
->>  	__u16 padding[3];
->>  };
->> =20
->> +#endif /* __ASSEMBLY__ */
->> +
->> +/* for KVM_SET_GUEST_DEBUG */
->> +
->> +#define KVM_GUESTDBG_ENABLE_SHIFT	0
->> +#define KVM_GUESTDBG_ENABLE		(1 << KVM_GUESTDBG_ENABLE_SHIFT)
->> +#define KVM_GUESTDBG_SINGLESTEP_SHIFT	1
->> +#define KVM_GUESTDBG_SINGLESTEP	(1 << KVM_GUESTDBG_SINGLESTEP_SHIFT=
-)
->
-> EALIGN: we can tab these defines up better
-
-Sure, I'll clean those up.
-
---=20
-Alex Benn=C3=A9e
+/Jarkko
