@@ -1,164 +1,66 @@
-From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v7 06/10] tpm: fix: move sysfs attributes
- to	the correct place.
-Date: Tue, 25 Nov 2014 19:48:16 -0500
-Message-ID: <54752350.4040002@linux.vnet.ibm.com>
-References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-7-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 4/5] arm64: Add support for Spreadtrum's Sharkl64
+ Platform in Kconfig and defconfig
+Date: Wed, 26 Nov 2014 11:08:01 +0800
+Message-ID: <CAAfSe-uDk-ih2tqU9a3UEzr=BZgU_=+XJm9=zWbE3J4HMOuiog@mail.gmail.com>
+References: <1416917818-10506-5-git-send-email-chunyan.zhang@spreadtrum.com>
+	<3490516.nCDXzA8J8x@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1415713513-16524-7-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <3490516.nCDXzA8J8x@wuerfel>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
-Cc: christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, "robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org" <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, "jslaby-AlSwsSmVLrQ@public.gmane.org" <jslaby-AlSwsSmVLrQ@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, "m-karicheri2-l0cyMroinI0@public.gmane.org" <m-karicheri2-l0cyMroinI0@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Ramkumar Ramachandra <artagnon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org" <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, shawn.guo-KZfg59tc24xl57MIdRCFDg@public.gmane.org, florian.vaussard-p8DiymsW2f8@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Orson Zhai <orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, geng.ren@spreadtrum.
 List-Id: linux-api@vger.kernel.org
 
-On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
-> The sysfs attributes of the TPM device were created to the platform
-> device directory that owns the character device instead of placing
-> them correctly to the directory of the character device,
+2014-11-25 20:57 GMT+08:00 Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>:
 >
-> They were also created in a racy way so that character device might
-> become visible before sysfs attributes become available.
+> On Tuesday 25 November 2014 20:16:57 Chunyan Zhang wrote:
+> >
+> > +menuconfig ARCH_SPRD
+> > +       bool "Spreadtrum SoC platform"
+> > +       depends on ARM64
+> > +       help
+> > +         Support for Spreadtrum ARM based SoCs
+> > +
+> > +if ARCH_SPRD
+> > +
+> > +config ARCH_SHARKL64
+> > +       bool "Sharkl64 SoC Platform"
+> > +       help
+> > +         Sharkl64 is a Spreadtrum's SoC Platform which is based
+> > +         on ARM 64-bit processor core including
+> > +           sc9836
+> > +
+> > +endif #ARCH_SPRD
+> > +
 >
-> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> ---
->   drivers/char/tpm/tpm-chip.c  | 15 ++++++---------
->   drivers/char/tpm/tpm-dev.c   |  2 --
->   drivers/char/tpm/tpm-sysfs.c | 23 +----------------------
->   drivers/char/tpm/tpm.h       |  4 +---
->   4 files changed, 8 insertions(+), 36 deletions(-)
+> I don't think we need multiple levels here, it should be enough to
+> have either ARCH_SPRD or ARCH_SHARKL64, because all device drivers
+> are going to be optional anyway. Typically a Kconfig symbol covers
+> all SoCs that are related, so if you Spreadtrum are doing both
+> phone and server chips and these are designed independently, you
+> would have two symbols, but if you only expect to see phone chips
+> here that are all derived from the same product line, using ARCH_SPRD
+> to refer to all of them should be enough.
 >
-> diff --git a/drivers/char/tpm/tpm-chip.c b/drivers/char/tpm/tpm-chip.c
-> index df40eee..5d268ac 100644
-> --- a/drivers/char/tpm/tpm-chip.c
-> +++ b/drivers/char/tpm/tpm-chip.c
-> @@ -29,6 +29,8 @@
->   #include "tpm.h"
->   #include "tpm_eventlog.h"
->
-> +ATTRIBUTE_GROUPS(tpm_dev);
-> +
->   static DECLARE_BITMAP(dev_mask, TPM_NUM_DEVICES);
->   static LIST_HEAD(tpm_chip_list);
->   static DEFINE_SPINLOCK(driver_lock);
-> @@ -136,6 +138,8 @@ struct tpm_chip *tpmm_chip_alloc(struct device *dev,
->   	else
->   		chip->dev.devt = MKDEV(MAJOR(tpm_devt), chip->dev_num);
->
-> +	chip->dev.groups = tpm_dev_groups;
-> +
->   	dev_set_name(&chip->dev, chip->devname);
->
->   	device_initialize(&chip->dev);
-> @@ -209,13 +213,9 @@ int tpm_chip_register(struct tpm_chip *chip)
->   	if (rc)
->   		return rc;
->
-> -	rc = tpm_sysfs_add_device(chip);
-> -	if (rc)
-> -		goto del_misc;
-> -
->   	rc = tpm_add_ppi(chip);
->   	if (rc)
-> -		goto del_sysfs;
-> +		goto out_err;
->
->   	chip->bios_dir = tpm_bios_log_setup(chip->devname);
->
-> @@ -225,9 +225,7 @@ int tpm_chip_register(struct tpm_chip *chip)
->   	spin_unlock(&driver_lock);
->
->   	return 0;
-> -del_sysfs:
-> -	tpm_sysfs_del_device(chip);
-> -del_misc:
-> +out_err:
->   	tpm_dev_del_device(chip);
->   	return rc;
->   }
-> @@ -250,7 +248,6 @@ void tpm_chip_unregister(struct tpm_chip *chip)
->   	spin_unlock(&driver_lock);
->   	synchronize_rcu();
->
-> -	tpm_sysfs_del_device(chip);
->   	tpm_remove_ppi(chip);
->
->   	if (chip->bios_dir)
-> diff --git a/drivers/char/tpm/tpm-dev.c b/drivers/char/tpm/tpm-dev.c
-> index de0337e..f3f073f 100644
-> --- a/drivers/char/tpm/tpm-dev.c
-> +++ b/drivers/char/tpm/tpm-dev.c
-> @@ -179,5 +179,3 @@ const struct file_operations tpm_fops = {
->   	.write = tpm_write,
->   	.release = tpm_release,
->   };
-> -
-> -
+>         Arnd
 
-Unnecessary changes.
-> diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
-> index ee66fd4..9f5b85a 100644
-> --- a/drivers/char/tpm/tpm-sysfs.c
-> +++ b/drivers/char/tpm/tpm-sysfs.c
-> @@ -263,7 +263,7 @@ static ssize_t timeouts_show(struct device *dev, struct device_attribute *attr,
->   }
->   static DEVICE_ATTR_RO(timeouts);
->
-> -static struct attribute *tpm_dev_attrs[] = {
-> +struct attribute *tpm_dev_attrs[] = {
->   	&dev_attr_pubek.attr,
->   	&dev_attr_pcrs.attr,
->   	&dev_attr_enabled.attr,
-> @@ -276,24 +276,3 @@ static struct attribute *tpm_dev_attrs[] = {
->   	&dev_attr_timeouts.attr,
->   	NULL,
->   };
-> -
-> -static const struct attribute_group tpm_dev_group = {
-> -	.attrs = tpm_dev_attrs,
-> -};
-> -
-> -int tpm_sysfs_add_device(struct tpm_chip *chip)
-> -{
-> -	int err;
-> -	err = sysfs_create_group(&chip->pdev->kobj,
-> -				 &tpm_dev_group);
-> -
-> -	if (err)
-> -		dev_err(chip->pdev,
-> -			"failed to create sysfs attributes, %d\n", err);
-> -	return err;
-> -}
-> -
-> -void tpm_sysfs_del_device(struct tpm_chip *chip)
-> -{
-> -	sysfs_remove_group(&chip->pdev->kobj, &tpm_dev_group);
-> -}
-> diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-> index 83103e0..9d062e6 100644
-> --- a/drivers/char/tpm/tpm.h
-> +++ b/drivers/char/tpm/tpm.h
-> @@ -325,6 +325,7 @@ struct tpm_cmd_t {
->   extern struct class *tpm_class;
->   extern dev_t tpm_devt;
->   extern const struct file_operations tpm_fops;
-> +extern struct attribute *tpm_dev_attrs[];
->
->   ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
->   ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
-> @@ -346,9 +347,6 @@ extern struct tpm_chip *tpmm_chip_alloc(struct device *dev,
->   extern int tpm_chip_register(struct tpm_chip *chip);
->   extern void tpm_chip_unregister(struct tpm_chip *chip);
->
-> -int tpm_sysfs_add_device(struct tpm_chip *chip);
-> -void tpm_sysfs_del_device(struct tpm_chip *chip);
-> -
->   int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf);
->
->   #ifdef CONFIG_ACPI
 
-Other than those stray line deletions, it looks good to me.
+For now, we have only one platform(Sharkl64) based on ARM64 been
+submitted, but we're intending to add support for more our platforms
+based on ARM64 or ARM32 in the future. There are many common devices
+on these platforms, such as serial. Our idea would be that if we had a
+'menuconfig ARCH_SPRD' in the Kconfig, these common devices only need
+to depend on ARCH_SPRD in the respective Kconfig, otherwise they may
+depend on a few Kconfig symbols for every platforms which include
+these common devices.
 
-    Stefan
+So, do you think whether we should define a menuconfig(ARCH_SPRD) in
+the Kconfig for this case ?
+
+Thanks!
+
+Best regards,
+Chunyan
