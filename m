@@ -1,61 +1,35 @@
-From: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [RFC] lsm: namespace hooks
-Date: Thu, 27 Nov 2014 16:24:22 +0100
-Message-ID: <1417101862.1805.23.camel@samsung.com>
-References: <1417096866-25563-1-git-send-email-l.pawelczyk@samsung.com>
-	<1417096866-25563-2-git-send-email-l.pawelczyk@samsung.com>
-	<CAFLxGvzw4N4QFv5Vg1dDf9pdRe+Szbevmqn5QNwjLHN4xrokCg@mail.gmail.com>
-	<1417098928.1805.15.camel@samsung.com> <54773757.8090905@nod.at>
-	<1417099455.1805.17.camel@samsung.com> <54773CE7.5040303@nod.at>
-	<1417101060.1805.21.camel@samsung.com> <547740A0.4040700@nod.at>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
+Date: Thu, 27 Nov 2014 16:36:52 +0100
+Message-ID: <7773522.25QE5ibXJZ@wuerfel>
+References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com> <3400511.2SONqVcoEr@wuerfel> <CAAfSe-uWvn4MX-+GKuvvd=G2MTfLDCFeLRoUGWp7vvc81wfu0w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-reply-to: <547740A0.4040700-/L3Ra7n9ekc@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matthew Dempsky <mdempsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daeseok Youn <daeseok.youn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, Juri Lelli <juri.lelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Nikolay Aleksandrov <nikolay-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dario Faggioli <raistlin-k2GhghHVRtY@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-security-module@vger.
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAAfSe-uWvn4MX-+GKuvvd=G2MTfLDCFeLRoUGWp7vvc81wfu0w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Lyra Zhang <zhang.lyra@gmail.com>
+Cc: Murali Karicheri <m-karicheri2@ti.com>, Chunyan Zhang <chunyan.zhang@spreadtrum.com>, Grant Likely <grant.likely@linaro.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "jslaby@suse.cz" <jslaby@suse.cz>, Kumar Gala <galak@codeaurora.org>, Mark Rutland <mark.rutland@arm.com>, Pawel Moll <pawel.moll@arm.com>, Ramkumar Ramachandra <artagnon@gmail.com>, "rrichter@cavium.com" <rrichter@cavium.com>, Will Deacon <will.deacon@arm.com>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, Jonathan Corbet <corbet@lwn.net>, "jason@lakedaemon.net" <jason@lakedaemon.net>, Mark Brown <broonie@kernel.org>, Heiko =?ISO-8859-1?Q?St=FCbner?= <heiko@sntech.de>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>
 List-Id: linux-api@vger.kernel.org
 
-On czw, 2014-11-27 at 16:17 +0100, Richard Weinberger wrote:
-> Am 27.11.2014 um 16:11 schrieb Lukasz Pawelczyk:
-> > On czw, 2014-11-27 at 16:01 +0100, Richard Weinberger wrote:
-> >> Am 27.11.2014 um 15:44 schrieb Lukasz Pawelczyk:
-> >>> True, the last one is 0x80000000. I did not notice that. Thanks for
-> >>> pointing out.
-> >>
-> >> Isn't this CLONE_IO?
-> > 
-> > Yes, I was merely noticing out loud that it's the last bit of 32bit.
-> > 
-> > After close look though the 0x00001000 appears to be unused
+On Thursday 27 November 2014 23:23:17 Lyra Zhang wrote:
 > 
-> This was CLONE_PID.
-> I'm not sure if we can reuse this. man 2 clone states "It disappeared in Linux 2.5.16.".
-> Maybe one of the CC'd parties can tell more...
+> Yes, I saw this way in other serial drivers.
+> But, if then, there are two questions for me:
+> 1. Why did some serial drivers need an UN_SHARED irq?
 
-Would really like someone to comment on this. I'd like to avoid creating
-a new syscall at this point.
+A lot of drivers were written before we had shared IRQs, or
+were copied from old drivers, or are for hardware that uses
+edge-triggered interrupts instead of level-triggered interrupts.
 
-According to clone(2):
-CLONE_STOPPED has been removed in 2.6.38 and can be reused.
-CLONE_PID as you mentioned has been removed in 2.5.16 but since 2.3.21
-it could only be used by boot process (PID 0).
+Only level-triggered interrupts can be shared.
 
-So this was really long time ago and effectively regular user space
-cannot use it since 2.3.21.
+> 2. How can we choose a right way?
 
+It never hurts to implement a shared interrupt handler. Only
+if you have no way to find out whether the device triggered
+the interrupt or not you have to leave out IRQF_SHARED, and then
+you won't be able to return IRQ_NONE.
 
--- 
-Lukasz Pawelczyk
-Samsung R&D Institute Poland
-Samsung Electronics
+	Arnd
