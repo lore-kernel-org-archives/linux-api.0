@@ -1,137 +1,76 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [PATCH v4] selftest: size: Add size test for Linux kernel
-Date: Wed, 26 Nov 2014 22:04:09 -0800
-Message-ID: <20141127060409.GB2773@thin>
-References: <5476A82B.2060903@sonymobile.com>
+From: Mark yao <mark.yao@rock-chips.com>
+Subject: [GIT PULL] core drm support for Rockchip SoCs v14
+Date: Thu, 27 Nov 2014 15:01:45 +0800
+Message-ID: <5476CC59.6080607@rock-chips.com>
+References: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <5476A82B.2060903-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: heiko@sntech.de, Boris BREZILLON <boris.brezillon@free-electrons.com>, David Airlie <airlied@gmail.com>, Rob Clark <robdclark@gmail.com>, Daniel Vetter <daniel@ffwll.ch>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Randy Dunlap <rdunlap@infradead.org>, Grant Likely <grant.likely@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stultz <john.stultz@linaro.org>, Rom Lemarchand <romlem@google.com>
+Cc: devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org, linux-rockchip@lists.infradead.org, dianders@chromium.org, marcheu@chromium.org, dbehr@chromium.org, olof@lixom.net, djkurtz@chromium.org, cf@rock-chips.com, xxm@rock-chips.com, huangtao@rock-chips.com, kever.yang@rock-chips.com, yxj@rock-chips.com, xw@rock-chips.com, Mark Yao <mark.yao@rock-chips.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 26, 2014 at 08:27:23PM -0800, Tim Bird wrote:
-> --- /dev/null
-> +++ b/tools/testing/selftests/size/Makefile
-[...]
-> +LIBGCC=$(shell $(CC) -print-libgcc-file-name)
-> +
-> +get_size: get_size.c
-> +	$(CC) --static -ffreestanding -nostartfiles \
-> +		-Wl,--entry=_start get_size.c $(LIBGCC) \
-> +		-o get_size
+Hi Dave
 
-You don't need -Wl,--entry=_start; that's the default.
+     this pull request is for rockchip drm v14, based on Joerg's iommu 
+arm/rockchip branch.
 
-You shouldn't need to manually find libgcc, either; the compiler should
-do that for you.  What goes wrong if you don't include that?  If you're
-trying to link libgcc statically, try -static-libgcc.
+The following changes since commit 656d7077d8ffd1c2492d4a0a354367ab2e545059:
 
-Also, static is normally spelled -static, not --static.
+   dt-bindings: iommu: Add documentation for rockchip iommu (2014-11-03 
+17:29:09 +0100)
 
-> --- /dev/null
-> +++ b/tools/testing/selftests/size/get_size.c
-[...]
-> +int print(const char *s)
+are available in the git repository at:
 
-This function, and all the others apart from _start, should be declared
-static.
+   https://github.com/markyzq/kernel-drm-rockchip.git drm_iommu
 
-> +void num_to_str(unsigned long num, char *s)
+for you to fetch changes up to aab18af3a93353bc43897b716fd7e12d5998b9bc:
 
-Likewise, static.
+   dt-bindings: video: Add documentation for rockchip vop (2014-11-27 
+13:38:17 +0800)
 
-> +{
-> +	unsigned long long temp, div;
-> +	int started;
-> +
-> +	temp = num;
-> +	div = 1000000000000000000LL;
-> +	started = 0;
-> +	while (div) {
-> +		if (temp/div || started) {
-> +			*s++ = (unsigned char)(temp/div + '0');
-> +			started = 1;
-> +		}
-> +		temp -= (temp/div)*div;
-> +		div /= 10;
-> +	}
-> +	*s = 0;
-> +}
+----------------------------------------------------------------
+Mark Yao (3):
+       drm: rockchip: Add basic drm driver
+       dt-bindings: video: Add for rockchip display subsytem
+       dt-bindings: video: Add documentation for rockchip vop
 
-You'd probably end up with significantly smaller code (and no divisions,
-and thus no corner cases on architectures that need a special function
-to do unsigned long long division) if you print in hex.  You could also
-drop the "no leading zeros" logic, and just *always* print a 64-bit
-value as 16 hex digits.
+  .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
+  .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
+  drivers/gpu/drm/Kconfig                            |    2 +
+  drivers/gpu/drm/Makefile                           |    1 +
+  drivers/gpu/drm/rockchip/Kconfig                   |   17 +
+  drivers/gpu/drm/rockchip/Makefile                  |    8 +
+  drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  483 +++++++
+  drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |   55 +
+  drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  200 +++
+  drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
+  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  210 +++
+  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   21 +
+  drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  294 ++++
+  drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   54 +
+  drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1459 
+++++++++++++++++++++
+  drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  201 +++
+  16 files changed, 3110 insertions(+)
+  create mode 100644 
+Documentation/devicetree/bindings/video/rockchip-drm.txt
+  create mode 100644 
+Documentation/devicetree/bindings/video/rockchip-vop.txt
+  create mode 100644 drivers/gpu/drm/rockchip/Kconfig
+  create mode 100644 drivers/gpu/drm/rockchip/Makefile
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.h
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.c
+  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.h
 
-> +int print_num(unsigned long num)
 
-Likewise, static.
-
-> +{
-> +	char num_buf[30];
-> +
-> +	num_to_str(num, num_buf);
-> +	return print(num_buf);
-> +}
-> +
-> +int print_k_value(const char *s, unsigned long num, unsigned long units)
-> +{
-> +	unsigned long long temp;
-> +	int ccode;
-> +
-> +	print(s);
-> +
-> +	temp = num;
-> +	temp = (temp * units)/1024;
-> +	num = temp;
-> +	ccode = print_num(num);
-> +	print("\n");
-> +	return ccode;
-> +}
-
-I'd suggest dropping this entirely, and just always printing the exact
-values returned by sysinfo.  Drop the multiply, too, and just print
-info.mem_unit as well.  It's easy to post-process the value in a more
-capable environment.
-
-> +/* this program has no main(), as startup libraries are not used */
-> +void _start(void)
-> +{
-> +	int ccode;
-> +	struct sysinfo info;
-> +	unsigned long used;
-> +
-> +	print("Testing system size.\n");
-> +	print("1..1\n");
-> +
-> +	ccode = sysinfo(&info);
-> +	if (ccode < 0) {
-> +		print("not ok 1 get size runtime size\n");
-
-Shouldn't the "not ok" here and the "ok" below have the same test
-description?
-
-> +		print("# could not get sysinfo\n");
-> +		_exit(ccode);
-> +	}
-> +	/* ignore cache complexities for now */
-> +	used = info.totalram - info.freeram - info.bufferram;
-> +	print_k_value("ok 1 get runtime memory use # size = ", used,
-> +		info.mem_unit);
-> +
-> +	print("# System runtime memory report (units in Kilobytes):\n");
-> +	print_k_value("#   Total:  ", info.totalram, info.mem_unit);
-> +	print_k_value("#   Free:   ", info.freeram, info.mem_unit);
-> +	print_k_value("#   Buffer: ", info.bufferram, info.mem_unit);
-> +	print_k_value("#   In use: ", used, info.mem_unit);
-> +
-> +	_exit(0);
-> +}
-> -- 
-> 1.8.2.2
-> 
