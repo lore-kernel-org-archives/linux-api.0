@@ -1,76 +1,49 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Thu, 27 Nov 2014 15:47:25 +0100
-Message-ID: <20141127144725.GB19157@dhcp22.suse.cz>
-References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
- <1413799924-17946-2-git-send-email-minchan@kernel.org>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v7 04/10] tpm: rename chip->dev to
+ chip->pdev
+Date: Thu, 27 Nov 2014 16:51:31 +0200
+Message-ID: <20141127145111.GC24791@intel.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1415713513-16524-5-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <5474F855.7080207@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1413799924-17946-2-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+In-Reply-To: <5474F855.7080207-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[Late but I didn't get to this soone - I hope this is still up-to-date
-version]
-
-On Mon 20-10-14 19:11:58, Minchan Kim wrote:
-> Linux doesn't have an ability to free pages lazy while other OS
-> already have been supported that named by madvise(MADV_FREE).
+On Tue, Nov 25, 2014 at 04:44:53PM -0500, Stefan Berger wrote:
+> On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
+> >Rename chip->dev to chip->pdev to make it explicit that this not the
+> >character device but actually represents the platform device.
+> >
+> >Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> >
 > 
-> The gain is clear that kernel can discard freed pages rather than
-> swapping out or OOM if memory pressure happens.
 > 
-> Without memory pressure, freed pages would be reused by userspace
-> without another additional overhead(ex, page fault + allocation
-> + zeroing).
+> >diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+> >index 69f4003..b3a7c76 100644
+> >--- a/drivers/char/tpm/tpm.h
+> >+++ b/drivers/char/tpm/tpm.h
+> >@@ -98,7 +98,7 @@ struct tpm_vendor_specific {
+> >  #define TPM_PPI_VERSION_LEN		3
+> >
+> >  struct tpm_chip {
+> >-	struct device *dev;	/* Device stuff */
+> >+	struct device *pdev;	/* Device stuff */
+> >  	const struct tpm_class_ops *ops;
+> >
+> >  	int dev_num;		/* /dev/tpm# */
 > 
-> How to work is following as.
-> 
-> When madvise syscall is called, VM clears dirty bit of ptes of
-> the range. If memory pressure happens, VM checks dirty bit of
-> page table and if it found still "clean", it means it's a
-> "lazyfree pages" so VM could discard the page instead of swapping out.
-> Once there was store operation for the page before VM peek a page
-> to reclaim, dirty bit is set so VM can swap out the page instead of
-> discarding.
+> So this is the core requiring the renamings.  I assume you got them all and
+> none were hidden in #if's or so.
 
-Is there any patch for madvise man page? I guess the semantic will be
-same/similar to FreeBSD:
-http://www.freebsd.org/cgi/man.cgi?query=madvise&sektion=2
+Yup, I basically did :argdo %s/chip->dev/chip->pdev/g for *.[ch].
 
-I guess the changelog should be more specific that this is only for the
-private MAP_ANON mappings (same applies to the patch for man).
+> Reviewed-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 
-> Firstly, heavy users would be general allocators(ex, jemalloc,
-> tcmalloc and hope glibc supports it) and jemalloc/tcmalloc already
-> have supported the feature for other OS(ex, FreeBSD)
-> 
-[...]
-> 
-> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-> Cc: Linux API <linux-api@vger.kernel.org>
-> Cc: Hugh Dickins <hughd@google.com>
-> Cc: Johannes Weiner <hannes@cmpxchg.org>
-> Cc: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
-> Cc: Mel Gorman <mgorman@suse.de>
-> Cc: Jason Evans <je@fb.com>
-> Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-> Acked-by: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
-> Acked-by: Rik van Riel <riel@redhat.com>
-> Signed-off-by: Minchan Kim <minchan@kernel.org>
-
-Reviewed-by: Michal Hocko <mhocko@suse.cz>
-[...]
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+/Jarkko
