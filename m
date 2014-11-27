@@ -1,7 +1,7 @@
 From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Subject: [PATCH v10 02/20] vfio: platform: probe to devices on the platform bus
-Date: Thu, 27 Nov 2014 18:32:42 +0100
-Message-ID: <1417109580-10505-3-git-send-email-a.motakis@virtualopensystems.com>
+Subject: [PATCH v10 04/20] vfio: amba: VFIO support for AMBA devices
+Date: Thu, 27 Nov 2014 18:32:44 +0100
+Message-ID: <1417109580-10505-5-git-send-email-a.motakis@virtualopensystems.com>
 References: <1417109580-10505-1-git-send-email-a.motakis@virtualopensystems.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,22 +21,22 @@ To: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9Q
 Cc: "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, will.deacon-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Driver to bind to Linux platform devices, and callbacks to discover their
-resources to be used by the main VFIO PLATFORM code.
+Add support for discovering AMBA devices with VFIO and handle them
+similarly to Linux platform devices.
 
 Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
 ---
- drivers/vfio/platform/vfio_platform.c | 103 ++++++++++++++++++++++++++++++++++
- include/uapi/linux/vfio.h             |   1 +
- 2 files changed, 104 insertions(+)
- create mode 100644 drivers/vfio/platform/vfio_platform.c
+ drivers/vfio/platform/vfio_amba.c | 110 ++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/vfio.h         |   1 +
+ 2 files changed, 111 insertions(+)
+ create mode 100644 drivers/vfio/platform/vfio_amba.c
 
-diff --git a/drivers/vfio/platform/vfio_platform.c b/drivers/vfio/platform/vfio_platform.c
+diff --git a/drivers/vfio/platform/vfio_amba.c b/drivers/vfio/platform/vfio_amba.c
 new file mode 100644
-index 0000000..cef645c
+index 0000000..be33fb5
 --- /dev/null
-+++ b/drivers/vfio/platform/vfio_platform.c
-@@ -0,0 +1,103 @@
++++ b/drivers/vfio/platform/vfio_amba.c
+@@ -0,0 +1,110 @@
 +/*
 + * Copyright (C) 2013 - Virtual Open Systems
 + * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
@@ -54,43 +54,40 @@ index 0000000..cef645c
 +#include <linux/module.h>
 +#include <linux/slab.h>
 +#include <linux/vfio.h>
-+#include <linux/platform_device.h>
++#include <linux/amba/bus.h>
 +
 +#include "vfio_platform_private.h"
 +
 +#define DRIVER_VERSION  "0.10"
 +#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
-+#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
++#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
 +
-+/* probing devices from the linux platform bus */
++/* probing devices from the AMBA bus */
 +
-+static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
-+					      int num)
++static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
++					  int i)
 +{
-+	struct platform_device *dev = (struct platform_device *) vdev->opaque;
-+	int i;
++	struct amba_device *adev = (struct amba_device *) vdev->opaque;
 +
-+	for (i = 0; i < dev->num_resources; i++) {
-+		struct resource *r = &dev->resource[i];
++	if (i == 0)
++		return &adev->res;
 +
-+		if (resource_type(r) & (IORESOURCE_MEM|IORESOURCE_IO)) {
-+			if (!num)
-+				return r;
-+
-+			num--;
-+		}
-+	}
 +	return NULL;
 +}
 +
-+static int get_platform_irq(struct vfio_platform_device *vdev, int i)
++static int get_amba_irq(struct vfio_platform_device *vdev, int i)
 +{
-+	struct platform_device *pdev = (struct platform_device *) vdev->opaque;
++	struct amba_device *adev = (struct amba_device *) vdev->opaque;
++	int ret = 0;
 +
-+	return platform_get_irq(pdev, i);
++	if (i < AMBA_NR_IRQS)
++		ret = adev->irq[i];
++
++	/* zero is an unset IRQ for AMBA devices */
++	return ret ? ret : -ENXIO;
 +}
 +
-+static int vfio_platform_probe(struct platform_device *pdev)
++static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
 +{
 +	struct vfio_platform_device *vdev;
 +	int ret;
@@ -99,25 +96,28 @@ index 0000000..cef645c
 +	if (!vdev)
 +		return -ENOMEM;
 +
-+	vdev->opaque = (void *) pdev;
-+	vdev->name = pdev->name;
-+	vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
-+	vdev->get_resource = get_platform_resource;
-+	vdev->get_irq = get_platform_irq;
++	vdev->opaque = (void *) adev;
++	vdev->name = kasprintf(GFP_KERNEL, "vfio-amba-%08x", adev->periphid);
++	vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
++	vdev->get_resource = get_amba_resource;
++	vdev->get_irq = get_amba_irq;
 +
-+	ret = vfio_platform_probe_common(vdev, &pdev->dev);
-+	if (ret)
++	ret = vfio_platform_probe_common(vdev, &adev->dev);
++	if (ret) {
++		kfree(vdev->name);
 +		kfree(vdev);
++	}
 +
 +	return ret;
 +}
 +
-+static int vfio_platform_remove(struct platform_device *pdev)
++static int vfio_amba_remove(struct amba_device *adev)
 +{
 +	struct vfio_platform_device *vdev;
 +
-+	vdev = vfio_platform_remove_common(&pdev->dev);
++	vdev = vfio_platform_remove_common(&adev->dev);
 +	if (vdev) {
++		kfree(vdev->name);
 +		kfree(vdev);
 +		return 0;
 +	}
@@ -125,30 +125,37 @@ index 0000000..cef645c
 +	return -EINVAL;
 +}
 +
-+static struct platform_driver vfio_platform_driver = {
-+	.probe		= vfio_platform_probe,
-+	.remove		= vfio_platform_remove,
-+	.driver	= {
-+		.name	= "vfio-platform",
-+		.owner	= THIS_MODULE,
++static struct amba_id pl330_ids[] = {
++	{ 0, 0 },
++};
++
++MODULE_DEVICE_TABLE(amba, pl330_ids);
++
++static struct amba_driver vfio_amba_driver = {
++	.probe = vfio_amba_probe,
++	.remove = vfio_amba_remove,
++	.id_table = pl330_ids,
++	.drv = {
++		.name = "vfio-amba",
++		.owner = THIS_MODULE,
 +	},
 +};
 +
-+module_platform_driver(vfio_platform_driver);
++module_amba_driver(vfio_amba_driver);
 +
 +MODULE_VERSION(DRIVER_VERSION);
 +MODULE_LICENSE("GPL v2");
 +MODULE_AUTHOR(DRIVER_AUTHOR);
 +MODULE_DESCRIPTION(DRIVER_DESC);
 diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-index 9ade02b..4e93a97 100644
+index 4e93a97..544d3d8 100644
 --- a/include/uapi/linux/vfio.h
 +++ b/include/uapi/linux/vfio.h
-@@ -159,6 +159,7 @@ struct vfio_device_info {
- 	__u32	flags;
+@@ -160,6 +160,7 @@ struct vfio_device_info {
  #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
  #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
-+#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
+ #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
++#define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
  	__u32	num_regions;	/* Max region index + 1 */
  	__u32	num_irqs;	/* Max IRQ index + 1 */
  };
