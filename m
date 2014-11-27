@@ -1,63 +1,137 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Subject: Re: [PATCH v2 11/19] selftests/memory-hotplug: add install target
- to enable installing test
-Date: Thu, 27 Nov 2014 14:49:59 +0900
-Message-ID: <5476BB87.6010808@hitachi.com>
-References: <cover.1415735831.git.shuahkh@osg.samsung.com> <8cdb2abb6eaa794801548e04ee6b9f403778e126.1415735831.git.shuahkh@osg.samsung.com>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: Re: [PATCH v4] selftest: size: Add size test for Linux kernel
+Date: Wed, 26 Nov 2014 22:04:09 -0800
+Message-ID: <20141127060409.GB2773@thin>
+References: <5476A82B.2060903@sonymobile.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <8cdb2abb6eaa794801548e04ee6b9f403778e126.1415735831.git.shuahkh@osg.samsung.com>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: gregkh@linuxfoundation.org, akpm@linux-foundation.org, mmarek@suse.cz, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, "yrl.pp-manager.tt@hitachi.com" <yrl.pp-manager.tt@hitachi.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5476A82B.2060903-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-(2014/11/12 5:27), Shuah Khan wrote:
-> Add a new make target to enable installing test. This target
-> installs test in the kselftest install location and add to the
-> kselftest script to run the test. Install target can be run
-> only from top level source dir.
-> 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
-> ---
->  tools/testing/selftests/memory-hotplug/Makefile    |  17 +-
->  .../selftests/memory-hotplug/mem-on-off-test.sh    | 238 +++++++++++++++++++++
->  .../selftests/memory-hotplug/on-off-test.sh        | 238 ---------------------
->  3 files changed, 253 insertions(+), 240 deletions(-)
->  create mode 100644 tools/testing/selftests/memory-hotplug/mem-on-off-test.sh
->  delete mode 100644 tools/testing/selftests/memory-hotplug/on-off-test.sh
-> 
-> diff --git a/tools/testing/selftests/memory-hotplug/Makefile b/tools/testing/selftests/memory-hotplug/Makefile
-> index d46b8d4..8921631 100644
-> --- a/tools/testing/selftests/memory-hotplug/Makefile
-> +++ b/tools/testing/selftests/memory-hotplug/Makefile
-> @@ -1,9 +1,22 @@
-> +TEST_STR=/bin/bash ./mem-on-off-test.sh -r 2 || echo memory-hotplug selftests: [FAIL]
+On Wed, Nov 26, 2014 at 08:27:23PM -0800, Tim Bird wrote:
+> --- /dev/null
+> +++ b/tools/testing/selftests/size/Makefile
+[...]
+> +LIBGCC=$(shell $(CC) -print-libgcc-file-name)
 > +
->  all:
->  
-> +install:
-> +ifdef INSTALL_KSFT_PATH
-> +	install ./mem-on-off-test.sh $(INSTALL_KSFT_PATH)/mem-on-off-test.sh
-> +	@echo echo Start memory hotplug test .... >> $(KSELFTEST)
-> +	@echo "$(TEST_STR)" >> $(KSELFTEST) >> $(KSELFTEST)
-> +	@echo echo End memory hotplug test .... >> $(KSELFTEST)
-> +	@echo echo ============================== >> $(KSELFTEST)
-> +else
-> +	@echo Run make kselftest_install in top level source directory
-> +endif
+> +get_size: get_size.c
+> +	$(CC) --static -ffreestanding -nostartfiles \
+> +		-Wl,--entry=_start get_size.c $(LIBGCC) \
+> +		-o get_size
 
-I saw this pattern repeated many times in this series.
-Can we make it a macro and include it instead of repeating this code?
+You don't need -Wl,--entry=_start; that's the default.
 
-Thank you,
+You shouldn't need to manually find libgcc, either; the compiler should
+do that for you.  What goes wrong if you don't include that?  If you're
+trying to link libgcc statically, try -static-libgcc.
 
--- 
-Masami HIRAMATSU
-Software Platform Research Dept. Linux Technology Research Center
-Hitachi, Ltd., Yokohama Research Laboratory
-E-mail: masami.hiramatsu.pt@hitachi.com
+Also, static is normally spelled -static, not --static.
 
+> --- /dev/null
+> +++ b/tools/testing/selftests/size/get_size.c
+[...]
+> +int print(const char *s)
 
+This function, and all the others apart from _start, should be declared
+static.
+
+> +void num_to_str(unsigned long num, char *s)
+
+Likewise, static.
+
+> +{
+> +	unsigned long long temp, div;
+> +	int started;
+> +
+> +	temp = num;
+> +	div = 1000000000000000000LL;
+> +	started = 0;
+> +	while (div) {
+> +		if (temp/div || started) {
+> +			*s++ = (unsigned char)(temp/div + '0');
+> +			started = 1;
+> +		}
+> +		temp -= (temp/div)*div;
+> +		div /= 10;
+> +	}
+> +	*s = 0;
+> +}
+
+You'd probably end up with significantly smaller code (and no divisions,
+and thus no corner cases on architectures that need a special function
+to do unsigned long long division) if you print in hex.  You could also
+drop the "no leading zeros" logic, and just *always* print a 64-bit
+value as 16 hex digits.
+
+> +int print_num(unsigned long num)
+
+Likewise, static.
+
+> +{
+> +	char num_buf[30];
+> +
+> +	num_to_str(num, num_buf);
+> +	return print(num_buf);
+> +}
+> +
+> +int print_k_value(const char *s, unsigned long num, unsigned long units)
+> +{
+> +	unsigned long long temp;
+> +	int ccode;
+> +
+> +	print(s);
+> +
+> +	temp = num;
+> +	temp = (temp * units)/1024;
+> +	num = temp;
+> +	ccode = print_num(num);
+> +	print("\n");
+> +	return ccode;
+> +}
+
+I'd suggest dropping this entirely, and just always printing the exact
+values returned by sysinfo.  Drop the multiply, too, and just print
+info.mem_unit as well.  It's easy to post-process the value in a more
+capable environment.
+
+> +/* this program has no main(), as startup libraries are not used */
+> +void _start(void)
+> +{
+> +	int ccode;
+> +	struct sysinfo info;
+> +	unsigned long used;
+> +
+> +	print("Testing system size.\n");
+> +	print("1..1\n");
+> +
+> +	ccode = sysinfo(&info);
+> +	if (ccode < 0) {
+> +		print("not ok 1 get size runtime size\n");
+
+Shouldn't the "not ok" here and the "ok" below have the same test
+description?
+
+> +		print("# could not get sysinfo\n");
+> +		_exit(ccode);
+> +	}
+> +	/* ignore cache complexities for now */
+> +	used = info.totalram - info.freeram - info.bufferram;
+> +	print_k_value("ok 1 get runtime memory use # size = ", used,
+> +		info.mem_unit);
+> +
+> +	print("# System runtime memory report (units in Kilobytes):\n");
+> +	print_k_value("#   Total:  ", info.totalram, info.mem_unit);
+> +	print_k_value("#   Free:   ", info.freeram, info.mem_unit);
+> +	print_k_value("#   Buffer: ", info.bufferram, info.mem_unit);
+> +	print_k_value("#   In use: ", used, info.mem_unit);
+> +
+> +	_exit(0);
+> +}
+> -- 
+> 1.8.2.2
+> 
