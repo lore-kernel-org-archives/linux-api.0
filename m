@@ -1,98 +1,46 @@
-From: Lyra Zhang <zhang.lyra@gmail.com>
-Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
-Date: Thu, 27 Nov 2014 19:05:05 +0800
-Message-ID: <CAAfSe-uToEA0duiuQJWSTAOwnmcuz5npKKE+e3_FXxq6p98GsQ@mail.gmail.com>
-References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
-	<1416917818-10506-6-git-send-email-chunyan.zhang@spreadtrum.com>
-	<20141125200353.GA7653@kroah.com>
+From: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v3 1/5] Documentation: DT: Renamed of-serial.txt to
+ 8250.txt
+Date: Thu, 27 Nov 2014 11:38:20 +0000
+Message-ID: <20141127113819.GD857@leverpostej>
+References: <Sharkl64-v3>
+ <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
+ <1416917818-10506-2-git-send-email-chunyan.zhang@spreadtrum.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20141125200353.GA7653@kroah.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, Grant Likely <grant.likely@linaro.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "jslaby@suse.cz" <jslaby@suse.cz>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@linaro.org>, Mark Rutland <mark.rutland@arm.com>, "m-karicheri2@ti.com" <m-karicheri2@ti.com>, Pawel Moll <pawel.moll@arm.com>, Ramkumar Ramachandra <artagnon@gmail.com>, "rrichter@cavium.com" <rrichter@cavium.com>, Will Deacon <will.deacon@arm.com>, Arnd Bergmann <arnd@arndb.de>, gnomes@lxorguk.ukuu.org.uk, Jonathan Corbet <corbet@lwn.net>, jason@lakedaemon.net, Mark Brown <broonie@kernel.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, shawn.guo@freescale.com, florian.vaussard@epfl.ch, andrew@lunn.ch, Hayato Suzuki <hytszk@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1416917818-10506-2-git-send-email-chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+Cc: "grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org" <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Catalin Marinas <Catalin.Marinas-5wv7dgnIgG8@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org" <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, "jslaby-AlSwsSmVLrQ@public.gmane.org" <jslaby-AlSwsSmVLrQ@public.gmane.org>, "galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org" <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "broonie-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org" <broonie-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "m-karicheri2-l0cyMroinI0@public.gmane.org" <m-karicheri2-l0cyMroinI0@public.gmane.org>, Pawel Moll <Pawel.Moll-5wv7dgnIgG8@public.gmane.org>, "artagnon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <artagnon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org" <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, Will Deacon <Will.Deacon-5wv7dgnIgG8@public.gmane.org>, "arnd-r2nGTMty4D4@public.gmane.org" <arnd-r2nGTMty4D4@public.gmane.org>, "gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org" <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, "corbet-T1hC0tSOHrs@public.gmane.org" <corbet-T1hC0tSOHrs@public.gmane.org>, "jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org" <jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org>, "broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org" <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, "shawn.guo-KZfg59tc24xl57MIdRCFDg@public.gmane.org" <shawn.g>
 List-Id: linux-api@vger.kernel.org
 
-2014-11-26 4:03 GMT+08:00 Greg KH <gregkh@linuxfoundation.org>:
-> On Tue, Nov 25, 2014 at 08:16:58PM +0800, Chunyan Zhang wrote:
->> Add a full sc9836-uart driver for SC9836 SoC which is based on the
->> spreadtrum sharkl64 platform.
->> This driver also support earlycon.
->>
->> Signed-off-by: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
->> Signed-off-by: Orson Zhai <orson.zhai@spreadtrum.com>
->> Originally-by: Lanqing Liu <lanqing.liu@spreadtrum.com>
->
-> Some objections:
->
->> +static struct platform_driver sprd_platform_driver = {
->> +     .probe = sprd_probe,
->> +     .remove = sprd_remove,
->> +     .suspend = sprd_suspend,
->> +     .resume = sprd_resume,
->> +     .driver = {
->> +                .name = "sprd_serial",
->> +                .owner = THIS_MODULE,
->
-> platform drivers don't need .owner in them anymore, it's handled by the
-> driver core automatically.
->
-OK, will remove it in v4.
->
->> +                .of_match_table = of_match_ptr(serial_ids),
->> +                },
->> +};
->> +
->> +static int __init sprd_serial_init(void)
->> +{
->> +     int ret = 0;
->> +
->> +     ret = uart_register_driver(&sprd_uart_driver);
->> +     if (unlikely(ret != 0))
->> +             return ret;
->
-> NEVER use unlikely unless you can measure the difference without it.
-> And even then, you better be able to justify it.  For something as dumb
-> as this type of check, youare working against the complier and cpu which
-> already knows that 0 is the usual response.
->
-> So please remove all usages of likely/unlikely in this patch series.
->
-OK, will remove it.
->> +
->> +     ret = platform_driver_register(&sprd_platform_driver);
->> +     if (unlikely(ret != 0))
->> +             uart_unregister_driver(&sprd_uart_driver);
->> +
->> +     return ret;
->> +}
->> +
->> +static void __exit sprd_serial_exit(void)
->> +{
->> +     platform_driver_unregister(&sprd_platform_driver);
->> +     uart_unregister_driver(&sprd_uart_driver);
->> +}
->> +
->> +module_init(sprd_serial_init);
->> +module_exit(sprd_serial_exit);
->> +
->> +MODULE_LICENSE("GPL");
->> +MODULE_DESCRIPTION("Spreadtrum SoC serial driver series");
->> diff --git a/include/uapi/linux/serial_core.h b/include/uapi/linux/serial_core.h
->> index 16ad852..d9a8c88 100644
->> --- a/include/uapi/linux/serial_core.h
->> +++ b/include/uapi/linux/serial_core.h
->> @@ -247,4 +247,7 @@
->>  /* MESON */
->>  #define PORT_MESON   109
->>
->> +/* SPRD SERIAL  */
->> +#define PORT_SPRD   110
->
-> Please use a tab character here.
-OK.
+On Tue, Nov 25, 2014 at 12:16:54PM +0000, Chunyan Zhang wrote:
+> The file of-serial.txt was only for 8250 compatible UART implementations,
+> so renamed it to 8250.txt to avoid confusing other persons.
+> This is recommended by Arnd, see:
+> http://lists.infradead.org/pipermail/linux-arm-kernel/2014-September/291455.html
+> 
+> Signed-off-by: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
 
+My prior Ack [1] still applies (given you've just changed the way the
+patch was generated, as Arnd and I suggested).
 
-Thanks for your comments!
-Chunyan
+Mark.
+
+[1] http://lists.infradead.org/pipermail/linux-arm-kernel/2014-October/295152.html
+
+> ---
+>  .../bindings/serial/{of-serial.txt => 8250.txt}    |    0
+>  1 file changed, 0 insertions(+), 0 deletions(-)
+>  rename Documentation/devicetree/bindings/serial/{of-serial.txt => 8250.txt} (100%)
+> 
+> diff --git a/Documentation/devicetree/bindings/serial/of-serial.txt b/Documentation/devicetree/bindings/serial/8250.txt
+> similarity index 100%
+> rename from Documentation/devicetree/bindings/serial/of-serial.txt
+> rename to Documentation/devicetree/bindings/serial/8250.txt
+> -- 
+> 1.7.9.5
+> 
+> 
