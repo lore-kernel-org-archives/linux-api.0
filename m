@@ -1,7 +1,7 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v6 16/46] virtio_blk: v1.0 support
-Date: Thu, 27 Nov 2014 22:09:08 +0200
-Message-ID: <1417118789-18231-17-git-send-email-mst@redhat.com>
+Subject: [PATCH v6 37/46] tun: move internal flag defines out of uapi
+Date: Thu, 27 Nov 2014 22:10:54 +0200
+Message-ID: <1417118789-18231-38-git-send-email-mst@redhat.com>
 References: <1417118789-18231-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -10,215 +10,155 @@ Content-Disposition: inline
 In-Reply-To: <1417118789-18231-1-git-send-email-mst@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Rusty Russell <rusty@rustcorp.com.au>, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
+Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Jason Wang <jasowang@redhat.com>, Zhi Yong Wu <wuzhy@linux.vnet.ibm.com>, Ben Hutchings <ben@decadent.org.uk>, Herbert Xu <herbert@gondor.apana.org.au>, Tom Herbert <therbert@google.com>, Masatake YAMATO <yamato@redhat.com>, Xi Wang <xii@google.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Based on patch by Cornelia Huck.
+TUN_ flags are internal and never exposed
+to userspace. Any application using it is almost
+certainly buggy.
 
-Note: for consistency, and to avoid sparse errors,
-      convert all fields, even those no longer in use
-      for virtio v1.0.
+Move them out to tun.c, we'll remove them in follow-up patches.
 
-Signed-off-by: Cornelia Huck <cornelia.huck@de.ibm.com>
 Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
 ---
- include/uapi/linux/virtio_blk.h | 15 ++++-----
- drivers/block/virtio_blk.c      | 70 ++++++++++++++++++++++++-----------------
- 2 files changed, 49 insertions(+), 36 deletions(-)
+ include/uapi/linux/if_tun.h | 16 ++--------
+ drivers/net/tun.c           | 74 ++++++++++++++-------------------------------
+ 2 files changed, 26 insertions(+), 64 deletions(-)
 
-diff --git a/include/uapi/linux/virtio_blk.h b/include/uapi/linux/virtio_blk.h
-index 9ad67b2..247c8ba 100644
---- a/include/uapi/linux/virtio_blk.h
-+++ b/include/uapi/linux/virtio_blk.h
-@@ -28,6 +28,7 @@
- #include <linux/types.h>
- #include <linux/virtio_ids.h>
- #include <linux/virtio_config.h>
-+#include <linux/virtio_types.h>
+diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
+index e9502dd..277a260 100644
+--- a/include/uapi/linux/if_tun.h
++++ b/include/uapi/linux/if_tun.h
+@@ -22,21 +22,11 @@
  
- /* Feature bits */
- #define VIRTIO_BLK_F_BARRIER	0	/* Does host support barriers? */
-@@ -114,18 +115,18 @@ struct virtio_blk_config {
- /* This is the first element of the read scatter-gather list. */
- struct virtio_blk_outhdr {
- 	/* VIRTIO_BLK_T* */
--	__u32 type;
-+	__virtio32 type;
- 	/* io priority. */
--	__u32 ioprio;
-+	__virtio32 ioprio;
- 	/* Sector (ie. 512 byte offset) */
--	__u64 sector;
-+	__virtio64 sector;
- };
+ /* Read queue size */
+ #define TUN_READQ_SIZE	500
+-
+-/* TUN device flags */
+-#define TUN_TUN_DEV 	0x0001	
+-#define TUN_TAP_DEV	0x0002
++/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
++#define TUN_TUN_DEV 	IFF_TUN
++#define TUN_TAP_DEV	IFF_TAP
+ #define TUN_TYPE_MASK   0x000f
  
- struct virtio_scsi_inhdr {
--	__u32 errors;
--	__u32 data_len;
--	__u32 sense_len;
--	__u32 residual;
-+	__virtio32 errors;
-+	__virtio32 data_len;
-+	__virtio32 sense_len;
-+	__virtio32 residual;
- };
- 
- /* And this is the final byte of the write scatter-gather list. */
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index c6a27d5..f601f16 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -80,7 +80,7 @@ static int __virtblk_add_req(struct virtqueue *vq,
- {
- 	struct scatterlist hdr, status, cmd, sense, inhdr, *sgs[6];
- 	unsigned int num_out = 0, num_in = 0;
--	int type = vbr->out_hdr.type & ~VIRTIO_BLK_T_OUT;
-+	__virtio32 type = vbr->out_hdr.type & ~cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_OUT);
- 
- 	sg_init_one(&hdr, &vbr->out_hdr, sizeof(vbr->out_hdr));
- 	sgs[num_out++] = &hdr;
-@@ -91,19 +91,19 @@ static int __virtblk_add_req(struct virtqueue *vq,
- 	 * block, and before the normal inhdr we put the sense data and the
- 	 * inhdr with additional status information.
- 	 */
--	if (type == VIRTIO_BLK_T_SCSI_CMD) {
-+	if (type == cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_SCSI_CMD)) {
- 		sg_init_one(&cmd, vbr->req->cmd, vbr->req->cmd_len);
- 		sgs[num_out++] = &cmd;
- 	}
- 
- 	if (have_data) {
--		if (vbr->out_hdr.type & VIRTIO_BLK_T_OUT)
-+		if (vbr->out_hdr.type & cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_OUT))
- 			sgs[num_out++] = data_sg;
- 		else
- 			sgs[num_out + num_in++] = data_sg;
- 	}
- 
--	if (type == VIRTIO_BLK_T_SCSI_CMD) {
-+	if (type == cpu_to_virtio32(vq->vdev, VIRTIO_BLK_T_SCSI_CMD)) {
- 		sg_init_one(&sense, vbr->req->sense, SCSI_SENSE_BUFFERSIZE);
- 		sgs[num_out + num_in++] = &sense;
- 		sg_init_one(&inhdr, &vbr->in_hdr, sizeof(vbr->in_hdr));
-@@ -119,12 +119,13 @@ static int __virtblk_add_req(struct virtqueue *vq,
- static inline void virtblk_request_done(struct request *req)
- {
- 	struct virtblk_req *vbr = blk_mq_rq_to_pdu(req);
-+	struct virtio_blk *vblk = req->q->queuedata;
- 	int error = virtblk_result(vbr);
- 
- 	if (req->cmd_type == REQ_TYPE_BLOCK_PC) {
--		req->resid_len = vbr->in_hdr.residual;
--		req->sense_len = vbr->in_hdr.sense_len;
--		req->errors = vbr->in_hdr.errors;
-+		req->resid_len = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.residual);
-+		req->sense_len = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.sense_len);
-+		req->errors = virtio32_to_cpu(vblk->vdev, vbr->in_hdr.errors);
- 	} else if (req->cmd_type == REQ_TYPE_SPECIAL) {
- 		req->errors = (error != 0);
- 	}
-@@ -173,25 +174,25 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
- 
- 	vbr->req = req;
- 	if (req->cmd_flags & REQ_FLUSH) {
--		vbr->out_hdr.type = VIRTIO_BLK_T_FLUSH;
-+		vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_FLUSH);
- 		vbr->out_hdr.sector = 0;
--		vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+		vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 	} else {
- 		switch (req->cmd_type) {
- 		case REQ_TYPE_FS:
- 			vbr->out_hdr.type = 0;
--			vbr->out_hdr.sector = blk_rq_pos(vbr->req);
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.sector = cpu_to_virtio64(vblk->vdev, blk_rq_pos(vbr->req));
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		case REQ_TYPE_BLOCK_PC:
--			vbr->out_hdr.type = VIRTIO_BLK_T_SCSI_CMD;
-+			vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_SCSI_CMD);
- 			vbr->out_hdr.sector = 0;
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		case REQ_TYPE_SPECIAL:
--			vbr->out_hdr.type = VIRTIO_BLK_T_GET_ID;
-+			vbr->out_hdr.type = cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_GET_ID);
- 			vbr->out_hdr.sector = 0;
--			vbr->out_hdr.ioprio = req_get_ioprio(vbr->req);
-+			vbr->out_hdr.ioprio = cpu_to_virtio32(vblk->vdev, req_get_ioprio(vbr->req));
- 			break;
- 		default:
- 			/* We don't put anything else in the queue. */
-@@ -204,9 +205,9 @@ static int virtio_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *req,
- 	num = blk_rq_map_sg(hctx->queue, vbr->req, vbr->sg);
- 	if (num) {
- 		if (rq_data_dir(vbr->req) == WRITE)
--			vbr->out_hdr.type |= VIRTIO_BLK_T_OUT;
-+			vbr->out_hdr.type |= cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_OUT);
- 		else
--			vbr->out_hdr.type |= VIRTIO_BLK_T_IN;
-+			vbr->out_hdr.type |= cpu_to_virtio32(vblk->vdev, VIRTIO_BLK_T_IN);
- 	}
- 
- 	spin_lock_irqsave(&vblk->vqs[qid].lock, flags);
-@@ -476,7 +477,8 @@ static int virtblk_get_cache_mode(struct virtio_device *vdev)
- 				   struct virtio_blk_config, wce,
- 				   &writeback);
- 	if (err)
--		writeback = virtio_has_feature(vdev, VIRTIO_BLK_F_WCE);
-+		writeback = virtio_has_feature(vdev, VIRTIO_BLK_F_WCE) ||
-+		            virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
- 
- 	return writeback;
- }
-@@ -821,25 +823,35 @@ static const struct virtio_device_id id_table[] = {
- 	{ 0 },
- };
- 
--static unsigned int features[] = {
-+static unsigned int features_legacy[] = {
- 	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
- 	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE, VIRTIO_BLK_F_SCSI,
- 	VIRTIO_BLK_F_WCE, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE,
- 	VIRTIO_BLK_F_MQ,
-+}
-+;
-+static unsigned int features[] = {
-+	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
-+	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
-+	VIRTIO_BLK_F_TOPOLOGY,
-+	VIRTIO_BLK_F_MQ,
-+	VIRTIO_F_VERSION_1,
- };
- 
- static struct virtio_driver virtio_blk = {
--	.feature_table		= features,
--	.feature_table_size	= ARRAY_SIZE(features),
--	.driver.name		= KBUILD_MODNAME,
--	.driver.owner		= THIS_MODULE,
--	.id_table		= id_table,
--	.probe			= virtblk_probe,
--	.remove			= virtblk_remove,
--	.config_changed		= virtblk_config_changed,
-+	.feature_table			= features,
-+	.feature_table_size		= ARRAY_SIZE(features),
-+	.feature_table_legacy		= features_legacy,
-+	.feature_table_size_legacy	= ARRAY_SIZE(features_legacy),
-+	.driver.name			= KBUILD_MODNAME,
-+	.driver.owner			= THIS_MODULE,
-+	.id_table			= id_table,
-+	.probe				= virtblk_probe,
-+	.remove				= virtblk_remove,
-+	.config_changed			= virtblk_config_changed,
- #ifdef CONFIG_PM_SLEEP
--	.freeze			= virtblk_freeze,
--	.restore		= virtblk_restore,
-+	.freeze				= virtblk_freeze,
-+	.restore			= virtblk_restore,
+-#define TUN_FASYNC	0x0010
+-#define TUN_NOCHECKSUM	0x0020
+-#define TUN_NO_PI	0x0040
+-/* This flag has no real effect */
+-#define TUN_ONE_QUEUE	0x0080
+-#define TUN_PERSIST 	0x0100	
+-#define TUN_VNET_HDR 	0x0200
+-#define TUN_TAP_MQ      0x0400
+-
+ /* Ioctl defines */
+ #define TUNSETNOCSUM  _IOW('T', 200, int) 
+ #define TUNSETDEBUG   _IOW('T', 201, int) 
+diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+index 9dd3746..bc89d07 100644
+--- a/drivers/net/tun.c
++++ b/drivers/net/tun.c
+@@ -103,6 +103,21 @@ do {								\
+ } while (0)
  #endif
- };
  
++/* TUN device flags */
++
++/* IFF_ATTACH_QUEUE is never stored in device flags,
++ * overload it to mean fasync when stored there.
++ */
++#define TUN_FASYNC	IFF_ATTACH_QUEUE
++#define TUN_NO_PI	IFF_NO_PI
++/* This flag has no real effect */
++#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
++#define TUN_PERSIST 	IFF_PERSIST
++#define TUN_VNET_HDR 	IFF_VNET_HDR
++#define TUN_TAP_MQ      IFF_MULTI_QUEUE
++
++#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
++		      IFF_MULTI_QUEUE)
+ #define GOODCOPY_LEN 128
+ 
+ #define FLT_EXACT_COUNT 8
+@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
+ 
+ static int tun_flags(struct tun_struct *tun)
+ {
+-	int flags = 0;
+-
+-	if (tun->flags & TUN_TUN_DEV)
+-		flags |= IFF_TUN;
+-	else
+-		flags |= IFF_TAP;
+-
+-	if (tun->flags & TUN_NO_PI)
+-		flags |= IFF_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (tun->flags & TUN_ONE_QUEUE)
+-		flags |= IFF_ONE_QUEUE;
+-
+-	if (tun->flags & TUN_VNET_HDR)
+-		flags |= IFF_VNET_HDR;
+-
+-	if (tun->flags & TUN_TAP_MQ)
+-		flags |= IFF_MULTI_QUEUE;
+-
+-	if (tun->flags & TUN_PERSIST)
+-		flags |= IFF_PERSIST;
+-
+-	return flags;
++	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
+ }
+ 
+ static ssize_t tun_show_flags(struct device *dev, struct device_attribute *attr,
+@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
+ 
+ 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
+ 
+-	if (ifr->ifr_flags & IFF_NO_PI)
+-		tun->flags |= TUN_NO_PI;
+-	else
+-		tun->flags &= ~TUN_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (ifr->ifr_flags & IFF_ONE_QUEUE)
+-		tun->flags |= TUN_ONE_QUEUE;
+-	else
+-		tun->flags &= ~TUN_ONE_QUEUE;
+-
+-	if (ifr->ifr_flags & IFF_VNET_HDR)
+-		tun->flags |= TUN_VNET_HDR;
+-	else
+-		tun->flags &= ~TUN_VNET_HDR;
+-
+-	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
+-		tun->flags |= TUN_TAP_MQ;
+-	else
+-		tun->flags &= ~TUN_TAP_MQ;
++	tun->flags = (tun->flags & ~TUN_FEATURES) |
++		(ifr->ifr_flags & TUN_FEATURES);
+ 
+ 	/* Make sure persistent devices do not get stuck in
+ 	 * xoff state.
+@@ -1890,9 +1860,11 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
+ 	if (cmd == TUNGETFEATURES) {
+ 		/* Currently this just means: "what IFF flags are valid?".
+ 		 * This is needed because we never checked for invalid flags on
+-		 * TUNSETIFF. */
+-		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
+-				IFF_VNET_HDR | IFF_MULTI_QUEUE,
++		 * TUNSETIFF.  Why do we report IFF_TUN and IFF_TAP which are
++		 * not legal for TUNSETIFF here?  It's probably a bug, but it
++		 * doesn't seem to be worth fixing.
++		 */
++		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
+ 				(unsigned int __user*)argp);
+ 	} else if (cmd == TUNSETQUEUE)
+ 		return tun_set_queue(file, &ifr);
 -- 
 MST
