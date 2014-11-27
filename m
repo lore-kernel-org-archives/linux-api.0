@@ -1,75 +1,98 @@
-From: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-Subject: Re: [PATCH v14 0/3] Add drm driver for Rockchip Socs
-Date: Thu, 27 Nov 2014 15:08:39 +0800
-Message-ID: <5476CDF7.60208@rock-chips.com>
-References: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>	<23617908.6oA5uRuO3l@diego>	<CAPM=9tzvvb5U+8KaCO+K6CJi=rwWOkoW+4ZSFW_Oo9gTncvkWA@mail.gmail.com>	<1557742.FTdLsE0bVs@diego>	<20141126073430.GD3156@suse.de>	<CAPM=9tzhZLShA5=ShGTKhyZR6ddKycQDUWBZxXpUBb+1tGp-mQ@mail.gmail.com>	<54768107.2090402@rock-chips.com> <CAPM=9tyZpDEPcipYDq2_qdQ9zK2bnPFYTUL2qDvAd7QoUOm-QQ@mail.gmail.com>
+From: Lyra Zhang <zhang.lyra@gmail.com>
+Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
+Date: Thu, 27 Nov 2014 19:05:05 +0800
+Message-ID: <CAAfSe-uToEA0duiuQJWSTAOwnmcuz5npKKE+e3_FXxq6p98GsQ@mail.gmail.com>
+References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
+	<1416917818-10506-6-git-send-email-chunyan.zhang@spreadtrum.com>
+	<20141125200353.GA7653@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAPM=9tyZpDEPcipYDq2_qdQ9zK2bnPFYTUL2qDvAd7QoUOm-QQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Joerg Roedel <jroedel-l3A5Bk7waGM@public.gmane.org>, =?UTF-8?B?SGVpa28gU3TDvGJuZXI=?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Douglas Anderson <dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, =?UTF-8?B?U3T
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20141125200353.GA7653@kroah.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, Grant Likely <grant.likely@linaro.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "jslaby@suse.cz" <jslaby@suse.cz>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@linaro.org>, Mark Rutland <mark.rutland@arm.com>, "m-karicheri2@ti.com" <m-karicheri2@ti.com>, Pawel Moll <pawel.moll@arm.com>, Ramkumar Ramachandra <artagnon@gmail.com>, "rrichter@cavium.com" <rrichter@cavium.com>, Will Deacon <will.deacon@arm.com>, Arnd Bergmann <arnd@arndb.de>, gnomes@lxorguk.ukuu.org.uk, Jonathan Corbet <corbet@lwn.net>, jason@lakedaemon.net, Mark Brown <broonie@kernel.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, shawn.guo@freescale.com, florian.vaussard@epfl.ch, andrew@lunn.ch, Hayato Suzuki <hytszk@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2014=E5=B9=B411=E6=9C=8827=E6=97=A5 10:12, Dave Airlie wrote:
->>>
->> Hi Dave
->>      Do you mean that I need send you a branch, based on drm-next, m=
-erge with
->> iommu tree and rockchip drm?
-> Yes, grab drm-next, git pull the arm/rockchip branch from Joerg's
-> tree, put rockchip drm
-> patches on top, send me pull request.
+2014-11-26 4:03 GMT+08:00 Greg KH <gregkh@linuxfoundation.org>:
+> On Tue, Nov 25, 2014 at 08:16:58PM +0800, Chunyan Zhang wrote:
+>> Add a full sc9836-uart driver for SC9836 SoC which is based on the
+>> spreadtrum sharkl64 platform.
+>> This driver also support earlycon.
+>>
+>> Signed-off-by: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+>> Signed-off-by: Orson Zhai <orson.zhai@spreadtrum.com>
+>> Originally-by: Lanqing Liu <lanqing.liu@spreadtrum.com>
 >
-> I'll validate it then.
+> Some objections:
 >
-> Dave.
+>> +static struct platform_driver sprd_platform_driver = {
+>> +     .probe = sprd_probe,
+>> +     .remove = sprd_remove,
+>> +     .suspend = sprd_suspend,
+>> +     .resume = sprd_resume,
+>> +     .driver = {
+>> +                .name = "sprd_serial",
+>> +                .owner = THIS_MODULE,
 >
-Hi Dave
-     I have send a pull request to you, with Joerg's iommu arm/rockchip=
-=20
-branch.
+> platform drivers don't need .owner in them anymore, it's handled by the
+> driver core automatically.
+>
+OK, will remove it in v4.
+>
+>> +                .of_match_table = of_match_ptr(serial_ids),
+>> +                },
+>> +};
+>> +
+>> +static int __init sprd_serial_init(void)
+>> +{
+>> +     int ret = 0;
+>> +
+>> +     ret = uart_register_driver(&sprd_uart_driver);
+>> +     if (unlikely(ret != 0))
+>> +             return ret;
+>
+> NEVER use unlikely unless you can measure the difference without it.
+> And even then, you better be able to justify it.  For something as dumb
+> as this type of check, youare working against the complier and cpu which
+> already knows that 0 is the usual response.
+>
+> So please remove all usages of likely/unlikely in this patch series.
+>
+OK, will remove it.
+>> +
+>> +     ret = platform_driver_register(&sprd_platform_driver);
+>> +     if (unlikely(ret != 0))
+>> +             uart_unregister_driver(&sprd_uart_driver);
+>> +
+>> +     return ret;
+>> +}
+>> +
+>> +static void __exit sprd_serial_exit(void)
+>> +{
+>> +     platform_driver_unregister(&sprd_platform_driver);
+>> +     uart_unregister_driver(&sprd_uart_driver);
+>> +}
+>> +
+>> +module_init(sprd_serial_init);
+>> +module_exit(sprd_serial_exit);
+>> +
+>> +MODULE_LICENSE("GPL");
+>> +MODULE_DESCRIPTION("Spreadtrum SoC serial driver series");
+>> diff --git a/include/uapi/linux/serial_core.h b/include/uapi/linux/serial_core.h
+>> index 16ad852..d9a8c88 100644
+>> --- a/include/uapi/linux/serial_core.h
+>> +++ b/include/uapi/linux/serial_core.h
+>> @@ -247,4 +247,7 @@
+>>  /* MESON */
+>>  #define PORT_MESON   109
+>>
+>> +/* SPRD SERIAL  */
+>> +#define PORT_SPRD   110
+>
+> Please use a tab character here.
+OK.
 
-     I got a same problem when use "make multi_v7_defconfig" as Heiko s=
-aid:
-         drivers/video/fbdev/Kconfig:5:error: recursive dependency dete=
-cted!
-         drivers/video/fbdev/Kconfig:5:    symbol FB is selected by=20
-DRM_KMS_FB_HELPER
-         drivers/gpu/drm/Kconfig:34:    symbol DRM_KMS_FB_HELPER is=20
-selected by DRM_ROCKCHIP
-         drivers/gpu/drm/rockchip/Kconfig:1:    symbol DRM_ROCKCHIP=20
-depends on ARM_DMA_USE_IOMMU
-         arch/arm/Kconfig:95:    symbol ARM_DMA_USE_IOMMU is selected b=
-y=20
-VIDEO_OMAP3
-         drivers/media/platform/Kconfig:96:    symbol VIDEO_OMAP3=20
-depends on VIDEO_V4L2
-         drivers/media/v4l2-core/Kconfig:6:    symbol VIDEO_V4L2 depend=
-s=20
-on I2C
-         drivers/i2c/Kconfig:7:    symbol I2C is selected by FB_DDC
-         drivers/video/fbdev/Kconfig:59:    symbol FB_DDC is selected b=
-y=20
-=46B_CYBER2000_DDC
-         drivers/video/fbdev/Kconfig:374:    symbol FB_CYBER2000_DDC=20
-depends on FB_CYBER2000
-         drivers/video/fbdev/Kconfig:362:    symbol FB_CYBER2000 depend=
-s=20
-on FB
 
-     I was confused how to solve the recursive dependency, remove=20
-depends on ARM_DMA_USE_IOMMU & IOMMU_API?
-
-- Mark
-
-
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" i=
-n
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks for your comments!
+Chunyan
