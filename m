@@ -1,91 +1,272 @@
-From: Lyra Zhang <zhang.lyra@gmail.com>
-Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
-Date: Thu, 27 Nov 2014 19:39:36 +0800
-Message-ID: <CAAfSe-sdMVG-JV9DjQ0YYqe++r3MtgADReQHr1x54Z8xjp8pRA@mail.gmail.com>
-References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
-	<1416917818-10506-6-git-send-email-chunyan.zhang@spreadtrum.com>
-	<20141126094838.GB17980@distanz.ch>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v7 01/10] tpm: merge duplicate
+ transmit_cmd() functions
+Date: Thu, 27 Nov 2014 13:43:45 +0200
+Message-ID: <20141127114345.GB24791@intel.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1415713513-16524-2-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <5474F22F.1030301@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20141126094838.GB17980@distanz.ch>
-Sender: linux-doc-owner@vger.kernel.org
-To: Tobias Klauser <tklauser@distanz.ch>
-Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, Grant Likely <grant.likely@linaro.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "jslaby@suse.cz" <jslaby@suse.cz>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@linaro.org>, Mark Rutland <mark.rutland@arm.com>, "m-karicheri2@ti.com" <m-karicheri2@ti.com>, Pawel Moll <pawel.moll@arm.com>, Ramkumar Ramachandra <artagnon@gmail.com>, "rrichter@cavium.com" <rrichter@cavium.com>, Will Deacon <will.deacon@arm.com>, Arnd Bergmann <arnd@arndb.de>, gnomes@lxorguk.ukuu.org.uk, Jonathan Corbet <corbet@lwn.net>, jason@lakedaemon.net, Mark Brown <broonie@kernel.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, shawn.guo@freescale.com, florian.vaussard@
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5474F22F.1030301-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-2014-11-26 17:48 GMT+08:00 Tobias Klauser <tklauser@distanz.ch>:
-> On 2014-11-25 at 13:16:58 +0100, Chunyan Zhang <chunyan.zhang@spreadtrum.com> wrote:
+On Tue, Nov 25, 2014 at 04:18:39PM -0500, Stefan Berger wrote:
+> On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
+> >Merged transmit_cmd() functions in tpm-interface.c and tpm-sysfs.c.
+> >Added "tpm_" prefix for consistency sake. Changed cmd parameter as
+> >opaque. This enables to use separate command structures for TPM1
+> >and TPM2 commands in future. Loose coupling works fine here.
+> >
+> >Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> >---
+> >  drivers/char/tpm/tpm-interface.c | 49 +++++++++++++++++++++-------------------
+> >  drivers/char/tpm/tpm-sysfs.c     | 23 ++-----------------
+> >  drivers/char/tpm/tpm.h           |  3 ++-
+> >  3 files changed, 30 insertions(+), 45 deletions(-)
+> >
+> >diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
+> >index 6af1700..0150b7c 100644
+> >--- a/drivers/char/tpm/tpm-interface.c
+> >+++ b/drivers/char/tpm/tpm-interface.c
+> >@@ -398,9 +398,10 @@ out:
+> >  #define TPM_DIGEST_SIZE 20
+> >  #define TPM_RET_CODE_IDX 6
+> >
+> >-static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+> >-			    int len, const char *desc)
+> >+ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd,
+> >+			 int len, const char *desc)
+> >  {
+> >+	struct tpm_output_header *header;
+> >  	int err;
+> >
+> >  	len = tpm_transmit(chip, (u8 *) cmd, len);
+> >@@ -409,7 +410,9 @@ static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+> >  	else if (len < TPM_HEADER_SIZE)
+> >  		return -EFAULT;
+> >
+> >-	err = be32_to_cpu(cmd->header.out.return_code);
+> >+	header = (struct tpm_output_header *) cmd;
+> 
+> The cast should not be necessary -- and this change doesn't buy much...
+> 
+> header = &cmd->header.out;
+> 
+> Should do the trick without cast.
 
->> ---
-[...]
->> +
->> +config SERIAL_SPRD_CONSOLE
->> +        bool "SPRD UART console support"
->> +        depends on SERIAL_SPRD=y
->> +        select SERIAL_CORE_CONSOLE
->> +     select SERIAL_EARLYCON
->> +        help
->> +       Support for early debug console using Spreadtrum's serial. This enables
->> +       the console before standard serial driver is probed. This is enabled
->> +       with "earlycon" on the kernel command line. The console is
->> +       enabled when early_param is processed.
->> +
->>  endmenu
->
-> Please consistently use tabs instead of spaces for indentation. The help
-> text should be indented by one tabe + 2 spaces.
->
+I changed the cmd parameter opaque to make this function work both with
+TPM1 and TPM2 easily so that I do not have to drop everything to 
+struct tpm_cmd_t.
 
-OK, I will note it later.
-[...]
+I can change this to
 
->> +static inline int handle_lsr_errors(struct uart_port *port,
->> +     unsigned int *flag, unsigned int *lsr)
->
-> This line should be aligned with the opening ( above.
->
-OK, will change.
+header = cmd;
 
->> +static inline void sprd_rx(int irq, void *dev_id)
->> +{
->> +     struct uart_port *port = (struct uart_port *)dev_id;
->
-> No need to cast a void pointer.
->
+> >+
+> >+	err = be32_to_cpu(header->return_code);
+> >  	if (err != 0 && desc)
+> >  		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
+> >
+> >@@ -448,7 +451,7 @@ ssize_t tpm_getcap(struct device *dev, __be32 subcap_id, cap_t *cap,
+> >  		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+> >  		tpm_cmd.params.getcap_in.subcap = subcap_id;
+> >  	}
+> >-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
+> >+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
+> >  	if (!rc)
+> >  		*cap = tpm_cmd.params.getcap_out.cap;
+> >  	return rc;
+> >@@ -464,8 +467,8 @@ void tpm_gen_interrupt(struct tpm_chip *chip)
+> >  	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+> >  	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+> >
+> >-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >-			"attempting to determine the timeouts");
+> >+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >+			      "attempting to determine the timeouts");
+> >  }
+> >  EXPORT_SYMBOL_GPL(tpm_gen_interrupt);
+> >
+> >@@ -484,8 +487,8 @@ static int tpm_startup(struct tpm_chip *chip, __be16 startup_type)
+> >  	struct tpm_cmd_t start_cmd;
+> >  	start_cmd.header.in = tpm_startup_header;
+> >  	start_cmd.params.startup_in.startup_type = startup_type;
+> >-	return transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >-			    "attempting to start the TPM");
+> >+	return tpm_transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >+				"attempting to start the TPM");
+> >  }
+> >
+> >  int tpm_get_timeouts(struct tpm_chip *chip)
+> >@@ -500,7 +503,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+> >  	tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
+> >  	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+> >  	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+> >-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
+> >+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
+> >
+> >  	if (rc == TPM_ERR_INVALID_POSTINIT) {
+> >  		/* The TPM is not started, we are the first to talk to it.
+> >@@ -513,7 +516,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+> >  		tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
+> >  		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+> >  		tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+> >-		rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >+		rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >  				  NULL);
+> >  	}
+> >  	if (rc) {
+> >@@ -575,8 +578,8 @@ duration:
+> >  	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+> >  	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_DURATION;
+> >
+> >-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >-			"attempting to determine the durations");
+> >+	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+> >+			      "attempting to determine the durations");
+> >  	if (rc)
+> >  		return rc;
+> >
+> >@@ -631,8 +634,8 @@ static int tpm_continue_selftest(struct tpm_chip *chip)
+> >  	struct tpm_cmd_t cmd;
+> >
+> >  	cmd.header.in = continue_selftest_header;
+> >-	rc = transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
+> >-			  "continue selftest");
+> >+	rc = tpm_transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
+> >+			      "continue selftest");
+> >  	return rc;
+> >  }
+> >
+> >@@ -672,8 +675,8 @@ int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
+> >
+> >  	cmd.header.in = pcrread_header;
+> >  	cmd.params.pcrread_in.pcr_idx = cpu_to_be32(pcr_idx);
+> >-	rc = transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
+> >-			  "attempting to read a pcr value");
+> >+	rc = tpm_transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
+> >+			      "attempting to read a pcr value");
+> >
+> >  	if (rc == 0)
+> >  		memcpy(res_buf, cmd.params.pcrread_out.pcr_result,
+> >@@ -737,8 +740,8 @@ int tpm_pcr_extend(u32 chip_num, int pcr_idx, const u8 *hash)
+> >  	cmd.header.in = pcrextend_header;
+> >  	cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(pcr_idx);
+> >  	memcpy(cmd.params.pcrextend_in.hash, hash, TPM_DIGEST_SIZE);
+> >-	rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> >-			  "attempting extend a PCR value");
+> >+	rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> >+			      "attempting extend a PCR value");
+> >
+> >  	tpm_chip_put(chip);
+> >  	return rc;
+> >@@ -817,7 +820,7 @@ int tpm_send(u32 chip_num, void *cmd, size_t buflen)
+> >  	if (chip == NULL)
+> >  		return -ENODEV;
+> >
+> >-	rc = transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
+> >+	rc = tpm_transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
+> >
+> >  	tpm_chip_put(chip);
+> >  	return rc;
+> >@@ -938,14 +941,14 @@ int tpm_pm_suspend(struct device *dev)
+> >  		cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(tpm_suspend_pcr);
+> >  		memcpy(cmd.params.pcrextend_in.hash, dummy_hash,
+> >  		       TPM_DIGEST_SIZE);
+> >-		rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> >-				  "extending dummy pcr before suspend");
+> >+		rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+> >+				      "extending dummy pcr before suspend");
+> >  	}
+> >
+> >  	/* now do the actual savestate */
+> >  	for (try = 0; try < TPM_RETRY; try++) {
+> >  		cmd.header.in = savestate_header;
+> >-		rc = transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
+> >+		rc = tpm_transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
+> >
+> >  		/*
+> >  		 * If the TPM indicates that it is too busy to respond to
+> >@@ -1022,7 +1025,7 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
+> >  		tpm_cmd.header.in = tpm_getrandom_header;
+> >  		tpm_cmd.params.getrandom_in.num_bytes = cpu_to_be32(num_bytes);
+> >
+> >-		err = transmit_cmd(chip, &tpm_cmd,
+> >+		err = tpm_transmit_cmd(chip, &tpm_cmd,
+> >  				   TPM_GETRANDOM_RESULT_SIZE + num_bytes,
+> >  				   "attempting get random");
+> >  		if (err)
+> >diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
+> >index 01730a2..8ecb052 100644
+> >--- a/drivers/char/tpm/tpm-sysfs.c
+> >+++ b/drivers/char/tpm/tpm-sysfs.c
+> >@@ -20,25 +20,6 @@
+> >  #include <linux/device.h>
+> >  #include "tpm.h"
+> >
+> >-/* XXX for now this helper is duplicated in tpm-interface.c */
+> >-static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+> >-			    int len, const char *desc)
+> >-{
+> >-	int err;
+> >-
+> >-	len = tpm_transmit(chip, (u8 *) cmd, len);
+> >-	if (len <  0)
+> >-		return len;
+> >-	else if (len < TPM_HEADER_SIZE)
+> >-		return -EFAULT;
+> >-
+> >-	err = be32_to_cpu(cmd->header.out.return_code);
+> >-	if (err != 0 && desc)
+> >-		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
+> >-
+> >-	return err;
+> >-}
+> >-
+> >  #define READ_PUBEK_RESULT_SIZE 314
+> >  #define TPM_ORD_READPUBEK cpu_to_be32(124)
+> >  static struct tpm_input_header tpm_readpubek_header = {
+> >@@ -58,8 +39,8 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
+> >  	struct tpm_chip *chip = dev_get_drvdata(dev);
+> >
+> >  	tpm_cmd.header.in = tpm_readpubek_header;
+> >-	err = transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
+> >-			   "attempting to read the PUBEK");
+> >+	err = tpm_transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
+> >+			       "attempting to read the PUBEK");
+> >  	if (err)
+> >  		goto out;
+> >
+> >diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+> >index e4d0888..e638eb0 100644
+> >--- a/drivers/char/tpm/tpm.h
+> >+++ b/drivers/char/tpm/tpm.h
+> >@@ -314,9 +314,10 @@ struct tpm_cmd_t {
+> >  } __packed;
+> >
+> >  ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
+> >-
+> >  ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+> >  		     size_t bufsiz);
+> 
+> Delete this prototype ?
 
->> +static void sprd_console_write(struct console *co, const char *s,
->> +                                   unsigned int count)
->> +{
->> +     struct uart_port *port = (struct uart_port *)sprd_port[co->index];
->
-> Better explicitly access the .port member of sprd_port[co->index] here
-> instead of casting.
->
+tpm-dev.c uses tpm_transmit() and tpm_transmit_cmd() does unnecessary
+steps for that use.
 
->> +     port = (struct uart_port *)sprd_port[co->index];
->
-> Same here, use the .port member of struct sprd_port[co->index].
->
->> +     if (port == NULL) {
->> +             pr_info("srial port %d not yet initialized\n", co->index);
->
-> Typo: should be serial instead of srial.
->
+> >+ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd, int len,
+> >+			 const char *desc);
+> >  extern int tpm_get_timeouts(struct tpm_chip *);
+> >  extern void tpm_gen_interrupt(struct tpm_chip *);
+> >  extern int tpm_do_selftest(struct tpm_chip *);
+> 
+> 
+>    Stefan
 
->> +     up->mapbase = mem->start;
->> +     up->membase = ioremap(mem->start, resource_size(mem));
->
-> Return value of ioremap() should be checked for NULL.
->
->> +static int sprd_resume(struct platform_device *dev)
->> +{
->> +     int id = dev->id;
->> +     struct uart_port *port = (struct uart_port *)sprd_port[id];
->
-> Access the .port member instead of the cast.
->
-OK, will change all of the problems you pointed out in v4.
-Thanks for your review.
-
-Chunyan
+/Jarkko
