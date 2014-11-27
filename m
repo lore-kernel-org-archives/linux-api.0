@@ -1,57 +1,71 @@
-From: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCHv2 0/7] CGroup Namespaces
-Date: Wed, 26 Nov 2014 23:58:55 +0100
-Message-ID: <CAFLxGvybiem34J3zrtVhW=4itSdczassNt9RcuxnpJQeAz-JVA@mail.gmail.com>
-References: <1414783141-6947-1-git-send-email-adityakali@google.com>
-	<20141104131030.GA2937@redhat.com>
-	<CAGr1F2Hm4+aCUz3RqkgUhbJAQtWvUbb2CRDkW5rJSZkwLM_huw@mail.gmail.com>
+From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v7 09/10] tpm: TPM 2.0 FIFO Interface
+Date: Wed, 26 Nov 2014 20:38:39 -0500
+Message-ID: <5476809F.3090503@linux.vnet.ibm.com>
+References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-10-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CAGr1F2Hm4+aCUz3RqkgUhbJAQtWvUbb2CRDkW5rJSZkwLM_huw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415713513-16524-10-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
+Cc: christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 6, 2014 at 6:33 PM, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> On Tue, Nov 4, 2014 at 5:10 AM, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> On Fri, Oct 31, 2014 at 12:18:54PM -0700, Aditya Kali wrote:
->> [..]
->>>  fs/kernfs/dir.c                  | 194 ++++++++++++++++++++++++++++++++++-----
->>>  fs/kernfs/mount.c                |  48 ++++++++++
->>>  fs/proc/namespaces.c             |   1 +
->>>  include/linux/cgroup.h           |  41 ++++++++-
->>>  include/linux/cgroup_namespace.h |  36 ++++++++
->>>  include/linux/kernfs.h           |   5 +
->>>  include/linux/nsproxy.h          |   2 +
->>>  include/linux/proc_ns.h          |   4 +
->>>  include/uapi/linux/sched.h       |   3 +-
->>>  kernel/Makefile                  |   2 +-
->>>  kernel/cgroup.c                  | 108 +++++++++++++++++-----
->>>  kernel/cgroup_namespace.c        | 148 +++++++++++++++++++++++++++++
->>>  kernel/fork.c                    |   2 +-
->>>  kernel/nsproxy.c                 |  19 +++-
->>
->> Hi Aditya,
->>
->> Can we provide a documentation file for cgroup namespace behavior. Say,
->> Documentation/namespaces/cgroup-namespace.txt.
->>
-> Yes, definitely. I will add it as soon as we have a consensus on the
-> overall series.
+On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
+> From: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+>
+> Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2.0,
+> instead of calling tpm_get_timeouts(), assign duration and timeout
+> values defined in the TPM 2.0 PTP specification.
 
-Do you have a public git repository which contains your patches?
 
--- 
-Thanks,
-//richard
+>
+> Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> ---
+>   drivers/char/tpm/tpm_tis.c | 71 ++++++++++++++++++++++++++++++++++++----------
+>   1 file changed, 56 insertions(+), 15 deletions(-)
+>
+> diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+> index 7a2c59b..0b3c089 100644
+> --- a/drivers/char/tpm/tpm_tis.c
+> +++ b/drivers/char/tpm/tpm_tis.c
+> @@ -1,5 +1,6 @@
+>   /*
+>    * Copyright (C) 2005, 2006 IBM Corporation
+> + * Copyright (C) 2014 Intel Corporation
+>    *
+>    * Authors:
+>    * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
+> @@ -44,6 +45,10 @@ enum tis_status {
+>   	TPM_STS_DATA_EXPECT = 0x08,
+>   };
+>
+> +enum tis_status3 {
+> +	TPM_STS3_TPM2_FAM = 0x04,
+> +};
+> +
+
+I just looked at the specs: You have to define a mask for bits 2 and 3 
+-> 0xc0.
+
+
+> @@ -554,11 +567,28 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+>   	if (!chip->vendor.iobase)
+>   		return -EIO;
+>
+> +	sts3 = ioread8(chip->vendor.iobase + TPM_STS3(1));
+> +	if (sts3 & TPM_STS3_TPM2_FAM)
+> +		chip->flags = TPM_CHIP_FLAG_TPM2;
+
+And use the mask here.
+
+((sts3 & XYZ_MASK) == TPM_STS3_TPM2_FAM)
+     chip->flags = TPM_CHIP_FLAG_TPM2;
+
+Since the bits 00 indicate TPM 1.2, 01 TPM2 and 10 and 11 are reserved!
+
+
+    Stefan
