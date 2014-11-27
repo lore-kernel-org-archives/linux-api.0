@@ -1,56 +1,44 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Subject: Re: [RFC] lsm: namespace hooks
-Date: Thu, 27 Nov 2014 16:01:59 +0100
-Message-ID: <54773CE7.5040303@nod.at>
-References: <1417096866-25563-1-git-send-email-l.pawelczyk@samsung.com>
-	<1417096866-25563-2-git-send-email-l.pawelczyk@samsung.com>
-	<CAFLxGvzw4N4QFv5Vg1dDf9pdRe+Szbevmqn5QNwjLHN4xrokCg@mail.gmail.com>
-	<1417098928.1805.15.camel@samsung.com> <54773757.8090905@nod.at>
-	<1417099455.1805.17.camel@samsung.com>
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v4 1/3] perf: Use monotonic clock as a source for
+ timestamps
+Date: Thu, 27 Nov 2014 15:05:50 +0000
+Message-ID: <1417100750.4371.1.camel@arm.com>
+References: <1415292718-19785-1-git-send-email-pawel.moll@arm.com>
+	 <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1417099455.1805.17.camel-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matthew Dempsky <mdempsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daeseok Youn <daeseok.youn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, Juri Lelli <juri.lelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Nikolay Aleksandrov <nikolay-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dario Faggioli <raistlin-k2GhghHVRtY@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415292718-19785-2-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am 27.11.2014 um 15:44 schrieb Lukasz Pawelczyk:
-> On czw, 2014-11-27 at 15:38 +0100, Richard Weinberger wrote:
->> Am 27.11.2014 um 15:35 schrieb Lukasz Pawelczyk:
->>> On czw, 2014-11-27 at 15:18 +0100, Richard Weinberger wrote:
->>>> On Thu, Nov 27, 2014 at 3:01 PM, Lukasz Pawelczyk
->>>> <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org> wrote:
->>>>> -/* 0x02000000 was previously the unused CLONE_STOPPED (Start in stopped state)
->>>>> -   and is now available for re-use. */
->>>>> +#define CLONE_NEWLSM           0x02000000      /* New LSM namespace */
->>>>
->>>> FYI, CLONE_NEWCGROUP also claims last flag [1].
->>>
->>> Yes, I'm perfectly aware of that. I've seen those patches.
->>> This is RFC for now and CGROUP NS is not merged yet. I'll rebase when
->>> time comes.
->>
->> Just wanted to indicate that we run out of constants. :)
+On Thu, 2014-11-06 at 16:51 +0000, Pawel Moll wrote:
+> Until now, perf framework never defined the meaning of the timestamps
+> captured as PERF_SAMPLE_TIME sample type. The values were obtaining
+> from local (sched) clock, which is unavailable in userspace. This made
+> it impossible to correlate perf data with any other events. Other
+> tracing solutions have the source configurable (ftrace) or just share
+> a common time domain between kernel and userspace (LTTng).
 > 
-> True, the last one is 0x80000000. I did not notice that. Thanks for
-> pointing out.
+> Follow the trend by using monotonic clock, which is readily available
+> as POSIX CLOCK_MONOTONIC.
+> 
+> Also add a sysctl "perf_sample_time_clk_id" attribute which can be used
+> by the user to obtain the clk_id to be used with POSIX clock API (eg.
+> clock_gettime()) to obtain a time value comparable with perf samples.
+> 
+> Old behaviour can be restored by using "perf_use_local_clock" kernel
+> parameter.
+> 
+> Signed-off-by: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
 
-Isn't this CLONE_IO?
+It's been 3 weeks without any negative feedback (no feedback at all, but
+I take the optimistic view :-)...
 
-> Any suggestion on what can be done here? New syscal with flags2?
+How about queuing at least this patch alone for the incoming merge
+window? Or at least getting it into -next, with the view at 3.20?
 
-I'm not sure. But a new syscall would be a candidate.
-
-Thanks,
-//richard
+Pawel
