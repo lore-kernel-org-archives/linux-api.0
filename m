@@ -1,159 +1,61 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v5 43/45] virtio_scsi: export to userspace
-Date: Thu, 27 Nov 2014 14:33:42 +0200
-Message-ID: <1417091078-24611-44-git-send-email-mst@redhat.com>
-References: <1417091078-24611-1-git-send-email-mst@redhat.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
+Date: Thu, 27 Nov 2014 13:57:57 +0100
+Message-ID: <3400511.2SONqVcoEr@wuerfel>
+References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com> <54761BFC.4020705@ti.com> <CAAfSe-uMqy7zwiEK+nDoMPw_oni8L_vq7oW2Me5AY8z8KGpjwQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1417091078-24611-1-git-send-email-mst@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Rusty Russell <rusty@rustcorp.com.au>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexei Starovoitov <ast@plumgrid.com>, Andy Grover <agrover@redhat.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, David Drysdale <drysdale@google.com>, =?us-ascii?B?PT9VVEYtOD9xP1Bpb3RyPTIwS3I9QzM9QjNsPz0=?= <piotr.krol@3mdeb.com>, stephen hemminger <stephen@networkplumber.org>, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAAfSe-uMqy7zwiEK+nDoMPw_oni8L_vq7oW2Me5AY8z8KGpjwQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Murali Karicheri <m-karicheri2-l0cyMroinI0@public.gmane.org>, Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org" <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, "jslaby-AlSwsSmVLrQ@public.gmane.org" <jslaby-AlSwsSmVLrQ@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Ramkumar Ramachandra <artagnon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org" <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Heiko =?ISO-8859-1?Q?St=FCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, florian.vaussard-p8DiymsW2f8@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, Hayato Suzuki <hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Orson Zhai <orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Replace uXX by __uXX and _packed by __attribute((packed))
-as seems to be the norm for userspace headers.
+On Thursday 27 November 2014 19:59:46 Lyra Zhang wrote:
+> 2014-11-27 2:29 GMT+08:00 Murali Karicheri <m-karicheri2-l0cyMroinI0@public.gmane.org>:
+> > On 11/25/2014 07:16 AM, Chunyan Zhang wrote:
+> >>
+> >> Add a full sc9836-uart driver for SC9836 SoC which is based on the
+> 
+> >> +#include<linux/clk.h>
+> >
+> > How about sorting this includes? asm/irq.h go first followed linux/ in
+> > alphabatical order?
+> 
+> >> +static irqreturn_t sprd_handle_irq(int irq, void *dev_id)
+> >> +{
+> >> +       struct uart_port *port = (struct uart_port *)dev_id;
+> >> +       u32 ims;
+> >> +
+> >> +       ims = serial_in(port, SPRD_IMSR);
+> >> +
+> >> +       serial_out(port, SPRD_ICLR, ~0);
+> >> +
+> >> +       if (ims&  (SPRD_IMSR_RX_FIFO_FULL |
+> >> +               SPRD_IMSR_BREAK_DETECT | SPRD_IMSR_TIMEOUT)) {
+> >> +               sprd_rx(irq, port);
+> >> +       }
+> >> +       if (ims&  SPRD_IMSR_TX_FIFO_EMPTY)
+> >> +               sprd_tx(irq, port);
+> >> +
+> >> +       return IRQ_HANDLED;
+> >
+> > You are always returning IRQ_HANDLED and this is registered as a SHARED irq.
+> > Is there a chance this handler is called and the irq event doesn't
+> > belong to this device?
+> >
+> > Murali
+> 
+> You are right, this is not a SHARED irq. I'll pass 0 for irqflags when
+> called 'devm_request_irq' in the next version patch.
 
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
----
- include/uapi/linux/virtio_scsi.h | 74 ++++++++++++++++++++--------------------
- include/uapi/linux/Kbuild        |  1 +
- 2 files changed, 38 insertions(+), 37 deletions(-)
+I think you could also add
 
-diff --git a/include/uapi/linux/virtio_scsi.h b/include/uapi/linux/virtio_scsi.h
-index af44864..42b9370 100644
---- a/include/uapi/linux/virtio_scsi.h
-+++ b/include/uapi/linux/virtio_scsi.h
-@@ -34,78 +34,78 @@
- 
- /* SCSI command request, followed by data-out */
- struct virtio_scsi_cmd_req {
--	u8 lun[8];		/* Logical Unit Number */
-+	__u8 lun[8];		/* Logical Unit Number */
- 	__virtio64 tag;		/* Command identifier */
--	u8 task_attr;		/* Task attribute */
--	u8 prio;		/* SAM command priority field */
--	u8 crn;
--	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
--} __packed;
-+	__u8 task_attr;		/* Task attribute */
-+	__u8 prio;		/* SAM command priority field */
-+	__u8 crn;
-+	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
-+} __attribute__((packed));
- 
- /* SCSI command request, followed by protection information */
- struct virtio_scsi_cmd_req_pi {
--	u8 lun[8];		/* Logical Unit Number */
-+	__u8 lun[8];		/* Logical Unit Number */
- 	__virtio64 tag;		/* Command identifier */
--	u8 task_attr;		/* Task attribute */
--	u8 prio;		/* SAM command priority field */
--	u8 crn;
-+	__u8 task_attr;		/* Task attribute */
-+	__u8 prio;		/* SAM command priority field */
-+	__u8 crn;
- 	__virtio32 pi_bytesout;	/* DataOUT PI Number of bytes */
- 	__virtio32 pi_bytesin;		/* DataIN PI Number of bytes */
--	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
--} __packed;
-+	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
-+} __attribute__((packed));
- 
- /* Response, followed by sense data and data-in */
- struct virtio_scsi_cmd_resp {
- 	__virtio32 sense_len;		/* Sense data length */
- 	__virtio32 resid;		/* Residual bytes in data buffer */
- 	__virtio16 status_qualifier;	/* Status qualifier */
--	u8 status;		/* Command completion status */
--	u8 response;		/* Response values */
--	u8 sense[VIRTIO_SCSI_SENSE_SIZE];
--} __packed;
-+	__u8 status;		/* Command completion status */
-+	__u8 response;		/* Response values */
-+	__u8 sense[VIRTIO_SCSI_SENSE_SIZE];
-+} __attribute__((packed));
- 
- /* Task Management Request */
- struct virtio_scsi_ctrl_tmf_req {
- 	__virtio32 type;
- 	__virtio32 subtype;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio64 tag;
--} __packed;
-+} __attribute__((packed));
- 
- struct virtio_scsi_ctrl_tmf_resp {
--	u8 response;
--} __packed;
-+	__u8 response;
-+} __attribute__((packed));
- 
- /* Asynchronous notification query/subscription */
- struct virtio_scsi_ctrl_an_req {
- 	__virtio32 type;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio32 event_requested;
--} __packed;
-+} __attribute__((packed));
- 
- struct virtio_scsi_ctrl_an_resp {
- 	__virtio32 event_actual;
--	u8 response;
--} __packed;
-+	__u8 response;
-+} __attribute__((packed));
- 
- struct virtio_scsi_event {
- 	__virtio32 event;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio32 reason;
--} __packed;
-+} __attribute__((packed));
- 
- struct virtio_scsi_config {
--	u32 num_queues;
--	u32 seg_max;
--	u32 max_sectors;
--	u32 cmd_per_lun;
--	u32 event_info_size;
--	u32 sense_size;
--	u32 cdb_size;
--	u16 max_channel;
--	u16 max_target;
--	u32 max_lun;
--} __packed;
-+	__u32 num_queues;
-+	__u32 seg_max;
-+	__u32 max_sectors;
-+	__u32 cmd_per_lun;
-+	__u32 event_info_size;
-+	__u32 sense_size;
-+	__u32 cdb_size;
-+	__u16 max_channel;
-+	__u16 max_target;
-+	__u32 max_lun;
-+} __attribute__((packed));
- 
- /* Feature Bits */
- #define VIRTIO_SCSI_F_INOUT                    0
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 44a5581..e61947c 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -428,6 +428,7 @@ header-y += virtio_net.h
- header-y += virtio_pci.h
- header-y += virtio_ring.h
- header-y += virtio_rng.h
-+header-y += virtio_scsi.h
- header=y += vm_sockets.h
- header-y += vt.h
- header-y += wait.h
--- 
-MST
+	if (!ims)
+		return IRQ_NONE;
+
+which would make it work on shared interrupt lines.
+
+	Arnd
