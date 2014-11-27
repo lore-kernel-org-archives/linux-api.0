@@ -1,61 +1,50 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
-Date: Thu, 27 Nov 2014 13:57:57 +0100
-Message-ID: <3400511.2SONqVcoEr@wuerfel>
-References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com> <54761BFC.4020705@ti.com> <CAAfSe-uMqy7zwiEK+nDoMPw_oni8L_vq7oW2Me5AY8z8KGpjwQ@mail.gmail.com>
+From: Mark Rutland <mark.rutland@arm.com>
+Subject: Re: [PATCH v3 3/5] arm64: dts: Add support for Spreadtrum SC9836 SoC
+ in dts and Makefile
+Date: Thu, 27 Nov 2014 13:43:09 +0000
+Message-ID: <20141127134309.GJ857@leverpostej>
+References: <Sharkl64-v3>
+ <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
+ <1416917818-10506-4-git-send-email-chunyan.zhang@spreadtrum.com>
+ <20141127115042.GE857@leverpostej>
+ <20141127121214.GF11511@e104818-lin.cambridge.arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAAfSe-uMqy7zwiEK+nDoMPw_oni8L_vq7oW2Me5AY8z8KGpjwQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Murali Karicheri <m-karicheri2-l0cyMroinI0@public.gmane.org>, Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org" <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, "jslaby-AlSwsSmVLrQ@public.gmane.org" <jslaby-AlSwsSmVLrQ@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Ramkumar Ramachandra <artagnon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org" <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Heiko =?ISO-8859-1?Q?St=FCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, florian.vaussard-p8DiymsW2f8@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, Hayato Suzuki <hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Orson Zhai <orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Disposition: inline
+In-Reply-To: <20141127121214.GF11511@e104818-lin.cambridge.arm.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Catalin Marinas <catalin.marinas@arm.com>
+Cc: "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, "heiko@sntech.de" <heiko@sntech.de>, "broonie@linaro.org" <broonie@linaro.org>, Will Deacon <Will.Deacon@arm.com>, "andrew@lunn.ch" <andrew@lunn.ch>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "artagnon@gmail.com" <artagnon@gmail.com>, "lanqing.liu@spreadtrum.com" <lanqing.liu@spreadtrum.com>, "arnd@arndb.de" <arnd@arndb.de>, "zhang.lyra@gmail.com" <zhang.lyra@gmail.com>, "corbet@lwn.net" <corbet@lwn.net>, "jslaby@suse.cz" <jslaby@suse.cz>, "zhizhou.zhang@spreadtrum.com" <zhizhou.zhang@spreadtrum.com>, "geng.ren@spreadtrum.com" <geng.ren@spreadtrum.com>, "m-karicheri2@ti.com" <m-karicheri2@ti.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, grant.likely@l
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 27 November 2014 19:59:46 Lyra Zhang wrote:
-> 2014-11-27 2:29 GMT+08:00 Murali Karicheri <m-karicheri2-l0cyMroinI0@public.gmane.org>:
-> > On 11/25/2014 07:16 AM, Chunyan Zhang wrote:
-> >>
-> >> Add a full sc9836-uart driver for SC9836 SoC which is based on the
+On Thu, Nov 27, 2014 at 12:12:15PM +0000, Catalin Marinas wrote:
+> On Thu, Nov 27, 2014 at 11:50:43AM +0000, Mark Rutland wrote:
+> > On Tue, Nov 25, 2014 at 12:16:56PM +0000, Chunyan Zhang wrote:
+> > > +
+> > > +       timer {
+> > > +               compatible = "arm,armv8-timer";
+> > > +               interrupts = <1 13 0xff01>,
+> > > +                            <1 14 0xff01>,
+> > > +                            <1 11 0xff01>,
+> > > +                            <1 10 0xff01>;
+> > > +               clock-frequency = <26000000>;
+> > 
+> > Please remove the clock-frequency property. Your FW should initialise
+> > CNTFRQ_EL0 on all CPUs (certainly PSCI 0.2 requires that you do this).
 > 
-> >> +#include<linux/clk.h>
-> >
-> > How about sorting this includes? asm/irq.h go first followed linux/ in
-> > alphabatical order?
-> 
-> >> +static irqreturn_t sprd_handle_irq(int irq, void *dev_id)
-> >> +{
-> >> +       struct uart_port *port = (struct uart_port *)dev_id;
-> >> +       u32 ims;
-> >> +
-> >> +       ims = serial_in(port, SPRD_IMSR);
-> >> +
-> >> +       serial_out(port, SPRD_ICLR, ~0);
-> >> +
-> >> +       if (ims&  (SPRD_IMSR_RX_FIFO_FULL |
-> >> +               SPRD_IMSR_BREAK_DETECT | SPRD_IMSR_TIMEOUT)) {
-> >> +               sprd_rx(irq, port);
-> >> +       }
-> >> +       if (ims&  SPRD_IMSR_TX_FIFO_EMPTY)
-> >> +               sprd_tx(irq, port);
-> >> +
-> >> +       return IRQ_HANDLED;
-> >
-> > You are always returning IRQ_HANDLED and this is registered as a SHARED irq.
-> > Is there a chance this handler is called and the irq event doesn't
-> > belong to this device?
-> >
-> > Murali
-> 
-> You are right, this is not a SHARED irq. I'll pass 0 for irqflags when
-> called 'devm_request_irq' in the next version patch.
+> Since this comes up regularly, I think we need a dev_warn() in the arch
+> timer driver when CONFIG_ARM64.
 
-I think you could also add
+I'll ack such a patch ;)
 
-	if (!ims)
-		return IRQ_NONE;
-
-which would make it work on shared interrupt lines.
-
-	Arnd
+Mark.
