@@ -1,163 +1,101 @@
-From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Subject: [PATCH v10 04/20] vfio: amba: VFIO support for AMBA devices
-Date: Thu, 27 Nov 2014 18:32:44 +0100
-Message-ID: <1417109580-10505-5-git-send-email-a.motakis@virtualopensystems.com>
-References: <1417109580-10505-1-git-send-email-a.motakis@virtualopensystems.com>
+From: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC] lsm: namespace hooks
+Date: Thu, 27 Nov 2014 18:38:31 +0100
+Message-ID: <1417109911.1805.27.camel@samsung.com>
+References: <1417096866-25563-1-git-send-email-l.pawelczyk@samsung.com>
+	<1417096866-25563-2-git-send-email-l.pawelczyk@samsung.com>
+	<CAFLxGvzw4N4QFv5Vg1dDf9pdRe+Szbevmqn5QNwjLHN4xrokCg@mail.gmail.com>
+	<1417098928.1805.15.camel@samsung.com> <54773757.8090905@nod.at>
+	<1417099455.1805.17.camel@samsung.com> <54773CE7.5040303@nod.at>
+	<1417101060.1805.21.camel@samsung.com>
+	<87d288zm3a.fsf@x220.int.ebiederm.org>
+	<1417104439.1805.25.camel@samsung.com>
+	<871tooy4nc.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1417109580-10505-1-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, will.deacon-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-reply-to: <871tooy4nc.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matthew Dempsky <mdempsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Daeseok Youn <daeseok.youn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, Juri Lelli <juri.lelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Nikolay Aleksandrov <nikolay-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dario Faggioli <raistlin-k2GhghHVRtY@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <pmoore@redh>
 List-Id: linux-api@vger.kernel.org
 
-Add support for discovering AMBA devices with VFIO and handle them
-similarly to Linux platform devices.
+On czw, 2014-11-27 at 10:44 -0600, Eric W. Biederman wrote:
+> Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org> writes:
+> 
+> > On czw, 2014-11-27 at 09:42 -0600, Eric W. Biederman wrote:
 
-Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
----
- drivers/vfio/platform/vfio_amba.c | 110 ++++++++++++++++++++++++++++++++++++++
- include/uapi/linux/vfio.h         |   1 +
- 2 files changed, 111 insertions(+)
- create mode 100644 drivers/vfio/platform/vfio_amba.c
+> >> We are probably going to need to go a couple rounds with this but at
+> >> first approximation I think this functionality needs to be tied to the
+> >> user namespace.  This functionality already looks half tied to it.
 
-diff --git a/drivers/vfio/platform/vfio_amba.c b/drivers/vfio/platform/vfio_amba.c
-new file mode 100644
-index 0000000..be33fb5
---- /dev/null
-+++ b/drivers/vfio/platform/vfio_amba.c
-@@ -0,0 +1,110 @@
-+/*
-+ * Copyright (C) 2013 - Virtual Open Systems
-+ * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License, version 2, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/slab.h>
-+#include <linux/vfio.h>
-+#include <linux/amba/bus.h>
-+
-+#include "vfio_platform_private.h"
-+
-+#define DRIVER_VERSION  "0.10"
-+#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
-+#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
-+
-+/* probing devices from the AMBA bus */
-+
-+static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
-+					  int i)
-+{
-+	struct amba_device *adev = (struct amba_device *) vdev->opaque;
-+
-+	if (i == 0)
-+		return &adev->res;
-+
-+	return NULL;
-+}
-+
-+static int get_amba_irq(struct vfio_platform_device *vdev, int i)
-+{
-+	struct amba_device *adev = (struct amba_device *) vdev->opaque;
-+	int ret = 0;
-+
-+	if (i < AMBA_NR_IRQS)
-+		ret = adev->irq[i];
-+
-+	/* zero is an unset IRQ for AMBA devices */
-+	return ret ? ret : -ENXIO;
-+}
-+
-+static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
-+{
-+	struct vfio_platform_device *vdev;
-+	int ret;
-+
-+	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-+	if (!vdev)
-+		return -ENOMEM;
-+
-+	vdev->opaque = (void *) adev;
-+	vdev->name = kasprintf(GFP_KERNEL, "vfio-amba-%08x", adev->periphid);
-+	vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
-+	vdev->get_resource = get_amba_resource;
-+	vdev->get_irq = get_amba_irq;
-+
-+	ret = vfio_platform_probe_common(vdev, &adev->dev);
-+	if (ret) {
-+		kfree(vdev->name);
-+		kfree(vdev);
-+	}
-+
-+	return ret;
-+}
-+
-+static int vfio_amba_remove(struct amba_device *adev)
-+{
-+	struct vfio_platform_device *vdev;
-+
-+	vdev = vfio_platform_remove_common(&adev->dev);
-+	if (vdev) {
-+		kfree(vdev->name);
-+		kfree(vdev);
-+		return 0;
-+	}
-+
-+	return -EINVAL;
-+}
-+
-+static struct amba_id pl330_ids[] = {
-+	{ 0, 0 },
-+};
-+
-+MODULE_DEVICE_TABLE(amba, pl330_ids);
-+
-+static struct amba_driver vfio_amba_driver = {
-+	.probe = vfio_amba_probe,
-+	.remove = vfio_amba_remove,
-+	.id_table = pl330_ids,
-+	.drv = {
-+		.name = "vfio-amba",
-+		.owner = THIS_MODULE,
-+	},
-+};
-+
-+module_amba_driver(vfio_amba_driver);
-+
-+MODULE_VERSION(DRIVER_VERSION);
-+MODULE_LICENSE("GPL v2");
-+MODULE_AUTHOR(DRIVER_AUTHOR);
-+MODULE_DESCRIPTION(DRIVER_DESC);
-diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-index 4e93a97..544d3d8 100644
---- a/include/uapi/linux/vfio.h
-+++ b/include/uapi/linux/vfio.h
-@@ -160,6 +160,7 @@ struct vfio_device_info {
- #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
- #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
- #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
-+#define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
- 	__u32	num_regions;	/* Max region index + 1 */
- 	__u32	num_irqs;	/* Max IRQ index + 1 */
- };
+Actually it's not. You can create LSM/Smack namespace without user
+namespace and it works properly.
+
+> >> When mounting filesystems with user namespaces priveleges matures a
+> >> little more you should be able to use unmapped labels.  In the near term
+> >> we are looking at filesystems such as tmpfs, fuse and posibly extN.
+
+Ok, I get the idea now. But still  think it wouldn't do well with the
+Smack namespace. It would basically allow you to operate on something
+that the administrator did not allowed you to (by filling the labels'
+map).
+
+If the user namespace allows such a thing now I was not aware. I'll have
+a look.
+
+> I had two points.
+> a) Tie the label mapping to the user namespace, then we don't need any
+>    new namespaces.
+> 
+>    Is there a reason not to tie the label mapping to the user namespace?
+
+I remember that I entertained the idea when I started the work on that
+and for some reason went against it.
+
+Right now the major issue I see is that LSM by itself is not defined how
+it's going to behave. It's up to a specific LSM module.
+
+E.g. within the Smack namespace filling the map is a privileged
+operation. So by tying them up you cripple the ability to create a fully
+working user namespace as an unprivileged process.
+
+I want to have Smack namespace be able to map its own label without
+privileges (as user namespace can do with its own UID) but for now it's
+not the case and I'm not sure it will ever be.
+
+With other LSM implementation other limitations might apply.
+
+Besides a use case (with other LSM modules) when someone might not want
+to create an LSM namespace might be valid as well.
+
+> 
+>    Needing to modify every userspace that create containers to know
+>    about every different lsm looks like a maintenance difficulty I would
+>    prefer to avoid.
+
+The LSM namespace is only one, it's not like every LSM modules creates a
+different namespace. The LSM namespace is created for the LSM module
+that is active at the moment. And user space might need to be aware of
+them anyway as e.g. Smack requires you to create labels' map. Other
+modules might require something different.
+
+
+BTW: have you read the Smack-namespace readme I pasted in the cover
+letter? It describes the idea behind namespace implementation in that
+particular module.
+
+
 -- 
-2.1.3
+Lukasz Pawelczyk
+Samsung R&D Institute Poland
+Samsung Electronics
