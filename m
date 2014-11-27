@@ -1,49 +1,56 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v7 04/10] tpm: rename chip->dev to
- chip->pdev
-Date: Thu, 27 Nov 2014 16:51:31 +0200
-Message-ID: <20141127145111.GC24791@intel.com>
-References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com>
- <1415713513-16524-5-git-send-email-jarkko.sakkinen@linux.intel.com>
- <5474F855.7080207@linux.vnet.ibm.com>
+From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+Subject: Re: [RFC] lsm: namespace hooks
+Date: Thu, 27 Nov 2014 16:01:59 +0100
+Message-ID: <54773CE7.5040303@nod.at>
+References: <1417096866-25563-1-git-send-email-l.pawelczyk@samsung.com>
+	<1417096866-25563-2-git-send-email-l.pawelczyk@samsung.com>
+	<CAFLxGvzw4N4QFv5Vg1dDf9pdRe+Szbevmqn5QNwjLHN4xrokCg@mail.gmail.com>
+	<1417098928.1805.15.camel@samsung.com> <54773757.8090905@nod.at>
+	<1417099455.1805.17.camel@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <5474F855.7080207-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1417099455.1805.17.camel-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matthew Dempsky <mdempsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daeseok Youn <daeseok.youn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, Juri Lelli <juri.lelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Nikolay Aleksandrov <nikolay-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dario Faggioli <raistlin-k2GhghHVRtY@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 25, 2014 at 04:44:53PM -0500, Stefan Berger wrote:
-> On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
-> >Rename chip->dev to chip->pdev to make it explicit that this not the
-> >character device but actually represents the platform device.
-> >
-> >Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> >
+Am 27.11.2014 um 15:44 schrieb Lukasz Pawelczyk:
+> On czw, 2014-11-27 at 15:38 +0100, Richard Weinberger wrote:
+>> Am 27.11.2014 um 15:35 schrieb Lukasz Pawelczyk:
+>>> On czw, 2014-11-27 at 15:18 +0100, Richard Weinberger wrote:
+>>>> On Thu, Nov 27, 2014 at 3:01 PM, Lukasz Pawelczyk
+>>>> <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org> wrote:
+>>>>> -/* 0x02000000 was previously the unused CLONE_STOPPED (Start in stopped state)
+>>>>> -   and is now available for re-use. */
+>>>>> +#define CLONE_NEWLSM           0x02000000      /* New LSM namespace */
+>>>>
+>>>> FYI, CLONE_NEWCGROUP also claims last flag [1].
+>>>
+>>> Yes, I'm perfectly aware of that. I've seen those patches.
+>>> This is RFC for now and CGROUP NS is not merged yet. I'll rebase when
+>>> time comes.
+>>
+>> Just wanted to indicate that we run out of constants. :)
 > 
-> 
-> >diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-> >index 69f4003..b3a7c76 100644
-> >--- a/drivers/char/tpm/tpm.h
-> >+++ b/drivers/char/tpm/tpm.h
-> >@@ -98,7 +98,7 @@ struct tpm_vendor_specific {
-> >  #define TPM_PPI_VERSION_LEN		3
-> >
-> >  struct tpm_chip {
-> >-	struct device *dev;	/* Device stuff */
-> >+	struct device *pdev;	/* Device stuff */
-> >  	const struct tpm_class_ops *ops;
-> >
-> >  	int dev_num;		/* /dev/tpm# */
-> 
-> So this is the core requiring the renamings.  I assume you got them all and
-> none were hidden in #if's or so.
+> True, the last one is 0x80000000. I did not notice that. Thanks for
+> pointing out.
 
-Yup, I basically did :argdo %s/chip->dev/chip->pdev/g for *.[ch].
+Isn't this CLONE_IO?
 
-> Reviewed-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> Any suggestion on what can be done here? New syscal with flags2?
 
-/Jarkko
+I'm not sure. But a new syscall would be a candidate.
+
+Thanks,
+//richard
