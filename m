@@ -1,117 +1,124 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v3 3/5] arm64: dts: Add support for Spreadtrum SC9836 SoC
- in dts and Makefile
-Date: Fri, 28 Nov 2014 15:09:12 +0000
-Message-ID: <20141128150912.GI7144@arm.com>
-References: <Sharkl64-v3>
- <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
- <1416917818-10506-4-git-send-email-chunyan.zhang@spreadtrum.com>
- <20141127115042.GE857@leverpostej>
- <20141127121214.GF11511@e104818-lin.cambridge.arm.com>
- <20141127134309.GJ857@leverpostej>
- <20141128142913.GB5393@localhost>
- <20141128143532.GI25883@leverpostej>
- <20141128144412.GG7144@arm.com>
- <20141128150325.GC24370@e104818-lin.cambridge.arm.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [CFT][PATCH] userns: Avoid problems with negative groups
+Date: Fri, 28 Nov 2014 07:11:51 -0800
+Message-ID: <CALCETrX2s-7iaLMEKLQsExTEp3JyoAPQG44p0v5wkeED3-6dQA@mail.gmail.com>
+References: <3ccec8a13019b5e8ce7b1d7889677b778b070dc8.1416041823.git.josh@joshtriplett.org>
+ <0895c1f268bc0b01cc6c8ed4607d7c3953f49728.1416041823.git.josh@joshtriplett.org>
+ <546A3942.5040906@schaufler-ca.com> <CALCETrWy-3C1on3+2wE9aqcChBUCUY0i_4AL_Om8CSZ5QB18sQ@mail.gmail.com>
+ <CALCETrVn4gVXp7F=5h-bkN5VWuRMG9BoxgeQfKhX4+ZXxGE=wQ@mail.gmail.com>
+ <546A43CE.2030706@schaufler-ca.com> <87lhmwwpey.fsf_-_@x220.int.ebiederm.org>
+ <CALCETrUuWDq2akKfb50AiPHeDDWzPW7ijz1QwnuNiskyZbBEfA@mail.gmail.com> <87wq6frjcw.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-serial-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141128150325.GC24370@e104818-lin.cambridge.arm.com>
-Sender: linux-serial-owner@vger.kernel.org
-To: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Mark Rutland <Mark.Rutland@arm.com>, "andrew@lunn.ch" <andrew@lunn.ch>, "heiko@sntech.de" <heiko@sntech.de>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "jslaby@suse.cz" <jslaby@suse.cz>, "jason@lakedaemon.net" <jason@lakedaemon.net>, "lanqing.liu@spreadtrum.com" <lanqing.liu@spreadtrum.com>, Pawel Moll <Pawel.Moll@arm.com>, "corbet@lwn.net" <corbet@lwn.net>, "zhang.lyra@gmail.com" <zhang.lyra@gmail.com>, "zhizhou.zhang@spreadtrum.com" <zhizhou.zhang@spreadtrum.com>, "geng.ren@spreadtrum.com" <geng.ren@spreadtrum.com>, "m-karicheri2@ti.com" <m-karicheri2@ti.com>, "shawn.guo@freescale.com" <shawn.guo@freescale.com>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "grant.likely@linaro.org" <grant.likely@linaro.org>, "orsonzhai@gmail.com" <orsonzhai@gmail.com>, "florian.vaussard@epfl.ch" <flori>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87wq6frjcw.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 28, 2014 at 03:03:26PM +0000, Catalin Marinas wrote:
-> On Fri, Nov 28, 2014 at 02:44:12PM +0000, Will Deacon wrote:
-> > On Fri, Nov 28, 2014 at 02:35:32PM +0000, Mark Rutland wrote:
-> > > On Fri, Nov 28, 2014 at 02:29:13PM +0000, Catalin Marinas wrote:
-> > > > On Thu, Nov 27, 2014 at 01:43:09PM +0000, Mark Rutland wrote:
-> > > > > On Thu, Nov 27, 2014 at 12:12:15PM +0000, Catalin Marinas wrote:
-> > > > > > On Thu, Nov 27, 2014 at 11:50:43AM +0000, Mark Rutland wrote:
-> > > > > > > On Tue, Nov 25, 2014 at 12:16:56PM +0000, Chunyan Zhang wrote:
-> > > > > > > > +
-> > > > > > > > +       timer {
-> > > > > > > > +               compatible = "arm,armv8-timer";
-> > > > > > > > +               interrupts = <1 13 0xff01>,
-> > > > > > > > +                            <1 14 0xff01>,
-> > > > > > > > +                            <1 11 0xff01>,
-> > > > > > > > +                            <1 10 0xff01>;
-> > > > > > > > +               clock-frequency = <26000000>;
-> > > > > > > 
-> > > > > > > Please remove the clock-frequency property. Your FW should initialise
-> > > > > > > CNTFRQ_EL0 on all CPUs (certainly PSCI 0.2 requires that you do this).
-> > > > > > 
-> > > > > > Since this comes up regularly, I think we need a dev_warn() in the arch
-> > > > > > timer driver when CONFIG_ARM64.
-> > > > > 
-> > > > > I'll ack such a patch ;)
-> > > > 
-> > > > How rude would this be?
-> > > > 
-> > > > diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
-> > > > index 2133f9d59d06..aaaf3433ccb9 100644
-> > > > --- a/drivers/clocksource/arm_arch_timer.c
-> > > > +++ b/drivers/clocksource/arm_arch_timer.c
-> > > > @@ -371,7 +371,8 @@ arch_timer_detect_rate(void __iomem *cntbase, struct device_node *np)
-> > > > 		return;
-> > > >  
-> > > > 	/* Try to determine the frequency from the device tree or CNTFRQ */
-> > > > -	if (of_property_read_u32(np, "clock-frequency", &arch_timer_rate)) {
-> > > > +	if (IS_ENABLED(CONFIG_ARM64) ||
-> > > > +	    of_property_read_u32(np, "clock-frequency", &arch_timer_rate)) {
-> > > > 		if (cntbase)
-> > > > 			arch_timer_rate = readl_relaxed(cntbase + CNTFRQ);
-> > > > 		else
-> > > >
-> > > 
-> > > Probably too rude, given it doesn't WARN() the user.
-> > 
-> > We override broken hardware ID registers all the time in device-tree without
-> > dumping stack. Why is this any different?
-> 
-> I'm not for dumping the stack, it's not relevant (just more noise).
-> 
-> > > We should be extremely loud if we see the clock-frequency property on an
-> > > arm64 system. Whether or not we should ignore the property is another
-> > > matter.
-> > 
-> > I don't really see the point in ignoring it. We will see broken hardware
-> > [1] and this is just preventing ourselves from working around it. I'd much
-> > rather have arch-timers with a "clock-frequence" property than have some
-> > other timer instead because the kernel driver is being stubborn.
-> 
-> I agree that sooner or later we'll need a workaround (we already did for
-> Juno). My point is that many consider such overriding behaviour to be
-> the default - i.e. don't bother writing any sane value in CNTFRQ in
-> firmware at boot because Linux can cope without. It gets worse when
-> companies develop their firmware long before starting to upstream kernel
-> patches, so too late to fix it.
-> 
-> > [1] A previous version of the Juno firmware, for example.
-> 
-> What about CONFIG_BROKEN_FIRMWARE, default off?
+On Thu, Nov 27, 2014 at 9:21 PM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+>
+>>> This change should break userspace by the minimal amount needed
+>>> to fix this issue.
+>>>
+>>> This should fix CVE-2014-8989.
+>>
+>> I think this is both unnecessarily restrictive and that it doesn't fix
+>> the bug.
+>
+> You are going to have to work very hard to convince me this is
+> unnecessarily restrictive.
+>
+>>For example, I can exploit CVE-2014-8989 without ever
+>> writing a uid map or a gid map.
+>
+> Yes.  I realized just after I sent the patch that setgroups(0, NULL)
+> would still work without a mapping set.  That is a first glass grade a
+> oversight that resulted in a bug.  None of the other uid or gid changing
+> syscalls without a mapping set, and setgroups was just overlooked
+> because it was different.  Oops.
+>
+> I will send an updated patch that stops setgroups from working without
+> a mapping set shortly.
+>
+>> IIUC, the only real issue is that user namespaces allow groups to be
+>> dropped using setgroups that wouldn't otherwise be dropped.  Can we
+>> get away with adding a per-user-ns flag that determines whether
+>> setgroups can be used?
+>
+> Being able to call setgroups is fundamental to login programs, and login
+> programs are one of the things user namespaces need to support.  So
+> adding an extra flag and an extra place where privilege is required
+> is just noise, and will wind up breaking every user of user namespaces.
+>
+> Further being able to setup uid and gid mappings without privilege is
+> primarily a nice to have.  The original design did not have unprivileged
+> setting of uid and gid maps and if it proves insecure I goofed and the
+> feature isn't safe so it needs to be removed.
 
-I'd rather have a `firmware test' module, which could be as noisy as it
-likes when it finds issues like this. It could also do things like fuzz the
-PSCI interface.
+Being able to set a single-user uid map and gid map is very useful for
+sandboxing.  This lets unprivileged users drop filesystem and network
+access and still run most normal programs.  A surprising number of
+normal unprivileged programs fail if run without a mapping.
 
-> In the meantime I think we can be more tolerant:
-> 
-> diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
-> index 2133f9d59d06..87f67a93fcc7 100644
-> --- a/drivers/clocksource/arm_arch_timer.c
-> +++ b/drivers/clocksource/arm_arch_timer.c
-> @@ -376,6 +376,8 @@ arch_timer_detect_rate(void __iomem *cntbase, struct device_node *np)
->  			arch_timer_rate = readl_relaxed(cntbase + CNTFRQ);
->  		else
->  			arch_timer_rate = arch_timer_get_cntfrq();
-> +	} else if (IS_ENABLED(CONFIG_ARM64)) {
-> +		pr_warn("Architected timer frequency overridden by DT (broken firmware?)\n");
->  	}
+>
+> This does mean that running a system with negative groups and users
+> delegated subordinate gids in /etc/subuid is a bad idea and system
+> administrators shouldn't do that as those negative groups won't prove
+> effective in stopping their users.  But this is all under system
+> administrator control so shrug.  There isn't a way to avoid that
+> fundamental conflict.
+>
+>> setgroups would be unusable until the gid_map has been written and
+>> then it would become usable if and only if the parent userns could use
+>> setgroups and the opener of gid_map was privileged.
+>
+> That proposal sounds a lot more restrictive and a lot more of a pain
+> to use than what I have implemented in my patch.
+>
+>> If we wanted to allow finer-grained control, we could allow writing
+>> control lines like:
+>>
+>> options +setgroups
+>>
+>> or
+>>
+>> options -setgroups
+>>
+>> in gid_map, or we could add user_ns_flags that can only be written
+>> once and only before either uid_map or gid_map is written.
+>
+> Definitely more complicated and I can't imagine a case where I need
+> a gid map without needing to call setgroups.
 
-That looks sensible. It would be interesting to print the value of CNTFRQ
-too.
+I do it all the time.  Unshare, set mappings (with no inner uid 0 at
+all), set no_new_privs, drop caps, and go.
 
-Will
+Can we try the intermediate approach?  If you set gid_map without
+privilege and you have supplementary groups, then let the write to
+gid_map succeed but prevent setgroups from ever working?  That should
+only be a couple of lines of code longer than your patch, and it will
+avoid breaking sandbox use cases.
+
+If we want to get really fancy in the future, we could have a concept
+of pinned groups.  That is, if you're in a userns and you're a member
+of an unmapped group, then you can't drop that group.  (Actually, that
+all by itself might be enough to fix this issue.)
+
+--Andy
+
+>
+> Eric
+
+
+
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
