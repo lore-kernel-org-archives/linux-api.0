@@ -1,193 +1,135 @@
 From: Andy Lutomirski <luto@amacapital.net>
-Subject: [RFC PATCH] userns: Disallow setgroups unless the gid_map writer is privileged
-Date: Fri, 28 Nov 2014 14:53:20 -0800
-Message-ID: <81ba656ffbdc62a7f7e94ad17f0238ee063fe6b3.1417214430.git.luto@amacapital.net>
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, kenton@sandstorm.io, Andy Lutomirski <luto@amacapital.net>, stable@vger.kernel.org
+Subject: [RFC PATCH] proc, pidns: Add highpid
+Date: Fri, 28 Nov 2014 15:05:01 -0800
+Message-ID: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <systemd-devel-bounces@lists.freedesktop.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
+List-Post: <mailto:systemd-devel@lists.freedesktop.org>
+List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: systemd-devel-bounces@lists.freedesktop.org
+Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
+To: David Herrmann <dh.herrmann@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-Classic unix permission checks have an interesting feature.  The
-group permissions for a file can be set to less than the other
-permissions on a file.  Occasionally this is used deliberately to
-give a certain group of users fewer permissions than the default.
-
-User namespaces break this usage.  Groups set in rgid or egid are
-unaffected because an unprivileged user namespace creator can only
-map a single group, so setresgid inside and outside the namespace
-have the same effect.  However, an unprivileged user namespace
-creator can currently use setgroups(2) to drop all supplementary
-groups, so, if a supplementary group denies access to some resource,
-user namespaces can be used to bypass that restriction.
-
-To fix this issue without unduly breaking existing user code, this
-introduces a new user namespace flag USERNS_SETGROUPS_ALLOWED.  If
-that flag is not set, then setgroups(2) will fail regardless of the
-caller's capabilities.
-
-USERNS_SETGROUPS_ALLOWED is cleared in a new user namespace.  By
-default, if the writer of gid_map has CAP_SETGID in the parent
-userns and the parent userns has USERNS_SETGROUPS_ALLOWED, then the
-USERNS_SETGROUPS_ALLOWED will be set in the child.
-
-While it could be safe to set USERNS_SETGROUPS_ALLOWED if the user
-namespace creator has no supplementary groups, doing so could be
-surprising and could have unpleasant interactions with setns(2).
-
-The default behavior can be overridden by adding a line of the form
-"setgroups allow" or "setgroups deny" to gid_map.  The former will
-return -EPERM if the caller is not permitted to set
-USERNS_SETGROUPS_ALLOWED, and the latter will clear
-USERNS_SETGROUPS_ALLOWED even if the flag would otherwise be set.
-
-This change should break userspace by the minimal amount needed to
-fix this issue.  Any application that uses newgidmap(1) should be
-unaffected by this fix, and unprivileged users that create user
-namespaces to manipulate mounts or sandbox themselves will also be
-unaffected unless they try to use setgroups(2).
-
-This should fix CVE-2014-8989.
-
-Cc: stable@vger.kernel.org
-Signed-off-by: Andy Lutomirski <luto@amacapital.net>
----
-
-Eric, this is an alternative to your patch.  I think it will cause
-less breakage, and it will keep unprivileged user namespaces
-more or less fully functional.
-
-Kenton, I think that neither run-bundle nor supervisor-main will be
-broken by this patch.
-
- include/linux/user_namespace.h |  3 +++
- kernel/groups.c                |  3 +++
- kernel/user.c                  |  1 +
- kernel/user_namespace.c        | 36 ++++++++++++++++++++++++++++++++++++
- 4 files changed, 43 insertions(+)
-
-diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index e95372654f09..a74c1f3d44fe 100644
---- a/include/linux/user_namespace.h
-+++ b/include/linux/user_namespace.h
-@@ -17,6 +17,8 @@ struct uid_gid_map {	/* 64 bytes -- 1 cache line */
- 	} extent[UID_GID_MAP_MAX_EXTENTS];
- };
- 
-+#define USERNS_SETGROUPS_ALLOWED 1
-+
- struct user_namespace {
- 	struct uid_gid_map	uid_map;
- 	struct uid_gid_map	gid_map;
-@@ -27,6 +29,7 @@ struct user_namespace {
- 	kuid_t			owner;
- 	kgid_t			group;
- 	unsigned int		proc_inum;
-+	unsigned int		flags;
- 
- 	/* Register of per-UID persistent keyrings for this namespace */
- #ifdef CONFIG_PERSISTENT_KEYRINGS
-diff --git a/kernel/groups.c b/kernel/groups.c
-index 451698f86cfa..e27433809978 100644
---- a/kernel/groups.c
-+++ b/kernel/groups.c
-@@ -6,6 +6,7 @@
- #include <linux/slab.h>
- #include <linux/security.h>
- #include <linux/syscalls.h>
-+#include <linux/user_namespace.h>
- #include <asm/uaccess.h>
- 
- /* init to 2 - one for init_task, one to ensure it is never freed */
-@@ -223,6 +224,8 @@ SYSCALL_DEFINE2(setgroups, int, gidsetsize, gid_t __user *, grouplist)
- 	struct group_info *group_info;
- 	int retval;
- 
-+	if (!(current_user_ns()->flags & USERNS_SETGROUPS_ALLOWED))
-+		return -EPERM;
- 	if (!ns_capable(current_user_ns(), CAP_SETGID))
- 		return -EPERM;
- 	if ((unsigned)gidsetsize > NGROUPS_MAX)
-diff --git a/kernel/user.c b/kernel/user.c
-index 4efa39350e44..f8cdb1ec6049 100644
---- a/kernel/user.c
-+++ b/kernel/user.c
-@@ -51,6 +51,7 @@ struct user_namespace init_user_ns = {
- 	.owner = GLOBAL_ROOT_UID,
- 	.group = GLOBAL_ROOT_GID,
- 	.proc_inum = PROC_USER_INIT_INO,
-+	.flags = USERNS_SETGROUPS_ALLOWED,
- #ifdef CONFIG_PERSISTENT_KEYRINGS
- 	.persistent_keyring_register_sem =
- 	__RWSEM_INITIALIZER(init_user_ns.persistent_keyring_register_sem),
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index aa312b0dc3ec..6e7b9ee5bddc 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -600,6 +600,8 @@ static ssize_t map_write(struct file *file, const char __user *buf,
- 	unsigned long page = 0;
- 	char *kbuf, *pos, *next_line;
- 	ssize_t ret = -EINVAL;
-+	unsigned int gid_flags = 0;
-+	bool seen_explicit_gid_flag = false;
- 
- 	/*
- 	 * The id_map_mutex serializes all writes to any given map.
-@@ -633,6 +635,19 @@ static ssize_t map_write(struct file *file, const char __user *buf,
- 	if (cap_valid(cap_setid) && !file_ns_capable(file, ns, CAP_SYS_ADMIN))
- 		goto out;
- 
-+	/* Deal with supplementary groups. */
-+	if (map == &ns->gid_map) {
-+		/*
-+		 * By default, setgroups is allowed inside the userns
-+		 * if the writer has no supplementary groups (making
-+		 * it useless) or if the writer is privileged.
-+		 */
-+		if ((ns->parent->flags & USERNS_SETGROUPS_ALLOWED) &&
-+		    file_ns_capable(file, ns->parent, CAP_SETGID) &&
-+		    ns_capable(ns->parent, CAP_SETGID))
-+			gid_flags = USERNS_SETGROUPS_ALLOWED;
-+	}
-+
- 	/* Get a buffer */
- 	ret = -ENOMEM;
- 	page = __get_free_page(GFP_TEMPORARY);
-@@ -667,6 +682,25 @@ static ssize_t map_write(struct file *file, const char __user *buf,
- 				next_line = NULL;
- 		}
- 
-+		/* Is this line a gid_map option? */
-+		if (map == &ns->gid_map) {
-+			if (!strcmp(pos, "setgroups deny")) {
-+				if (seen_explicit_gid_flag)
-+					goto out;
-+				seen_explicit_gid_flag = 1;
-+				gid_flags = 0;
-+				continue;
-+			} else if (!strcmp(pos, "setgroups allow")) {
-+				if (seen_explicit_gid_flag)
-+					goto out;
-+				if (!(gid_flags & USERNS_SETGROUPS_ALLOWED)) {
-+					ret = -EPERM;
-+					goto out;
-+				}
-+				continue;
-+			}
-+		}
-+
- 		pos = skip_spaces(pos);
- 		extent->first = simple_strtoul(pos, &pos, 10);
- 		if (!isspace(*pos))
-@@ -746,6 +780,8 @@ static ssize_t map_write(struct file *file, const char __user *buf,
- 		new_map.nr_extents*sizeof(new_map.extent[0]));
- 	smp_wmb();
- 	map->nr_extents = new_map.nr_extents;
-+	if (map == &ns->gid_map)
-+		ns->flags |= gid_flags;
- 
- 	*ppos = count;
- 	ret = count;
--- 
-1.9.3
-
+UGlkIHJldXNlIGlzIGNvbW1vbiwgd2hpY2ggbWVhbnMgdGhhdCBpdCdzIGRpZmZpY3VsdCBvciBp
+bXBvc3NpYmxlCnRvIHJlYWQgaW5mb3JtYXRpb24gYWJvdXQgYSBwaWQgZnJvbSAvcHJvYyB3aXRo
+b3V0IHJhY2VzLgoKVGhpcyBpbnRyb2R1Y2VzIGEgc2Vjb25kIG51bWJlciBhc3NvY2lhdGVkIHdp
+dGggZWFjaCAodGFzaywgcGlkbnMpCnBhaXIgY2FsbGVkIGhpZ2hwaWQuICBIaWdocGlkIGlzIGEg
+NjQtYml0IG51bWJlciwgYW5kLCBiYXJyaW5nCmV4dHJlbWVseSB1bmxpa2VseSBjaXJjdW1zdGFu
+Y2VzIG9yIG91dHJpZ2h0IGVycm9yLCBhIChoaWdocGlkLCBwaWQpCndpbGwgbmV2ZXIgYmUgcmV1
+c2VkLgoKV2l0aCBqdXN0IHRoaXMgY2hhbmdlLCBhIHByb2dyYW0gY2FuIG9wZW4gL3Byb2MvUElE
+L3N0YXR1cywgcmVhZCB0aGUKIkhpZ2hwaWQiIGZpZWxkLCBhbmQgY29uZmlybSB0aGF0IGl0IGhh
+cyB0aGUgZXhwZWN0ZWQgdmFsdWUuICBJZiB0aGUKcGlkIGhhcyBiZWVuIHJldXNlZCwgdGhlbiBo
+aWdocGlkIHdpbGwgYmUgZGlmZmVyZW50LgoKVGhlIGluaXRpYWwgaW1wbGVtZW50YXRpb24gaXMg
+c3RyYWlnaHRmb3J3YXJkOiBoaWdocGlkIGlzIHNpbXBseSBhCjY0LWJpdCBjb3VudGVyLiBJZiBh
+IGhpZ2gtZW5kIHN5c3RlbSBjYW4gZm9yayBldmVyeSAzIG5zICh3aGljaAp3b3VsZCBiZSBhbWF6
+aW5nLCBnaXZlbiB0aGF0IGp1c3QgYWxsb2NhdGluZyBhIHBpZCByZXF1aXJlcyBhdAphdG9taWMg
+b3BlcmF0aW9uKSwgaXQgd291bGQgdGFrZSB3ZWxsIG92ZXIgMTAwMCB5ZWFycyBmb3IgaGlnaHBp
+ZCB0bwp3cmFwLgoKRm9yIENSSVUncyBiZW5lZml0LCB0aGUgbmV4dCBoaWdocGlkIGNhbiBiZSBz
+ZXQgYnkgYSBwcml2aWxlZ2VkCnVzZXIuCgpOQjogVGhlIHN5c2N0bCBzdHVmZiBvbmx5IHdvcmtz
+IG9uIDY0LWJpdCBzeXN0ZW1zLiAgSWYgdGhlIGFwcHJvYWNoCmxvb2tzIGdvb2QsIEknbGwgZml4
+IHRoYXQgc29tZWhvdy4KClNpZ25lZC1vZmYtYnk6IEFuZHkgTHV0b21pcnNraSA8bHV0b0BhbWFj
+YXBpdGFsLm5ldD4KLS0tCgpJZiB0aGlzIGdvZXMgaW4sIHRoZXJlJ3MgcGxlbnR5IG9mIHJvb20g
+dG8gYWRkIG5ldyBpbnRlcmZhY2VzIHRvCm1ha2UgdGhpcyBtb3JlIHVzZWZ1bC4gIEZvciBleGFt
+cGxlLCB3ZSBjb3VsZCBhZGQgYSBmYW5jaWVyIHRna2lsbAp0aGF0IGFkZHMgYW5kIHZhbGlkYXRl
+cyBoaWdodGdpZCBhbmQgaGlnaHBpZCwgYW5kIHdlIG1pZ2h0IHdhbnQgdG8KYWRkIGEgc3lzY2Fs
+bCB0byByZWFkIG9uZSdzIG93biBoaWdodGdpZCBhbmQgaGlnaHBpZC4gIFRoZXNlIHdvdWxkCmJl
+IHF1aXRlIHVzZWZ1bCBmb3IgcGlkZmlsZXMuCgpEYXZpZCwgd291bGQgdGhpcyBiZSB1c2VmdWwg
+Zm9yIGtkYnVzPwoKQ1JJVSBwZW9wbGU6IHdpbGwgdGhpcyBiZSB1bmR1bHkgZGlmZmljdWx0IHRv
+IHN1cHBvcnQgaW4gQ1JJVT8KCklmIHlvdSBhbGwgdGhpbmsgdGhpcyBpcyBhIGdvb2QgaWRlYSwg
+SSdsbCBmaXggdGhlIHN5c2N0bCBzdHVmZiBhbmQKZG9jdW1lbnQgaXQuICBJdCBtaWdodCBhbHNv
+IGJlIHdvcnRoIGFkZGluZyAiSGlnaHRnaWQiIHRvIHN0YXR1cy4KCiBmcy9wcm9jL2FycmF5LmMg
+ICAgICAgICAgICAgICB8ICA1ICsrKystCiBpbmNsdWRlL2xpbnV4L3BpZC5oICAgICAgICAgICB8
+ICAyICsrCiBpbmNsdWRlL2xpbnV4L3BpZF9uYW1lc3BhY2UuaCB8ICAxICsKIGtlcm5lbC9waWQu
+YyAgICAgICAgICAgICAgICAgIHwgMTkgKysrKysrKysrKysrKysrLS0tLQoga2VybmVsL3BpZF9u
+YW1lc3BhY2UuYyAgICAgICAgfCAyMiArKysrKysrKysrKysrKysrKysrKysrCiA1IGZpbGVzIGNo
+YW5nZWQsIDQ0IGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvZnMv
+cHJvYy9hcnJheS5jIGIvZnMvcHJvYy9hcnJheS5jCmluZGV4IGNkMzY1M2U0ZjM1Yy4uZjFlMGU2
+OWQxOWY5IDEwMDY0NAotLS0gYS9mcy9wcm9jL2FycmF5LmMKKysrIGIvZnMvcHJvYy9hcnJheS5j
+CkBAIC0xNTksNiArMTU5LDcgQEAgc3RhdGljIGlubGluZSB2b2lkIHRhc2tfc3RhdGUoc3RydWN0
+IHNlcV9maWxlICptLCBzdHJ1Y3QgcGlkX25hbWVzcGFjZSAqbnMsCiAJaW50IGc7CiAJc3RydWN0
+IGZkdGFibGUgKmZkdCA9IE5VTEw7CiAJY29uc3Qgc3RydWN0IGNyZWQgKmNyZWQ7CisJY29uc3Qg
+c3RydWN0IHVwaWQgKnVwaWQ7CiAJcGlkX3QgcHBpZCwgdHBpZDsKIAogCXJjdV9yZWFkX2xvY2so
+KTsKQEAgLTE3MCwxMiArMTcxLDE0IEBAIHN0YXRpYyBpbmxpbmUgdm9pZCB0YXNrX3N0YXRlKHN0
+cnVjdCBzZXFfZmlsZSAqbSwgc3RydWN0IHBpZF9uYW1lc3BhY2UgKm5zLAogCQlpZiAodHJhY2Vy
+KQogCQkJdHBpZCA9IHRhc2tfcGlkX25yX25zKHRyYWNlciwgbnMpOwogCX0KKwl1cGlkID0gcGlk
+X3VwaWRfbnMocGlkLCBucyk7CiAJY3JlZCA9IGdldF90YXNrX2NyZWQocCk7CiAJc2VxX3ByaW50
+ZihtLAogCQkiU3RhdGU6XHQlc1xuIgogCQkiVGdpZDpcdCVkXG4iCiAJCSJOZ2lkOlx0JWRcbiIK
+IAkJIlBpZDpcdCVkXG4iCisJCSJIaWdocGlkOlx0JWxsdVxuIgogCQkiUFBpZDpcdCVkXG4iCiAJ
+CSJUcmFjZXJQaWQ6XHQlZFxuIgogCQkiVWlkOlx0JWRcdCVkXHQlZFx0JWRcbiIKQEAgLTE4Myw3
+ICsxODYsNyBAQCBzdGF0aWMgaW5saW5lIHZvaWQgdGFza19zdGF0ZShzdHJ1Y3Qgc2VxX2ZpbGUg
+Km0sIHN0cnVjdCBwaWRfbmFtZXNwYWNlICpucywKIAkJZ2V0X3Rhc2tfc3RhdGUocCksCiAJCXRh
+c2tfdGdpZF9ucl9ucyhwLCBucyksCiAJCXRhc2tfbnVtYV9ncm91cF9pZChwKSwKLQkJcGlkX25y
+X25zKHBpZCwgbnMpLAorCQl1cGlkID8gdXBpZC0+bnIgOiAwLCB1cGlkID8gdXBpZC0+aGlnaG5y
+IDogMCwKIAkJcHBpZCwgdHBpZCwKIAkJZnJvbV9rdWlkX211bmdlZCh1c2VyX25zLCBjcmVkLT51
+aWQpLAogCQlmcm9tX2t1aWRfbXVuZ2VkKHVzZXJfbnMsIGNyZWQtPmV1aWQpLApkaWZmIC0tZ2l0
+IGEvaW5jbHVkZS9saW51eC9waWQuaCBiL2luY2x1ZGUvbGludXgvcGlkLmgKaW5kZXggMjM3MDVh
+NTNhYmJhLi5lY2U3MGI2NGQwNGMgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvbGludXgvcGlkLmgKKysr
+IGIvaW5jbHVkZS9saW51eC9waWQuaApAQCAtNTEsNiArNTEsNyBAQCBzdHJ1Y3QgdXBpZCB7CiAJ
+LyogVHJ5IHRvIGtlZXAgcGlkX2NoYWluIGluIHRoZSBzYW1lIGNhY2hlbGluZSBhcyBuciBmb3Ig
+ZmluZF92cGlkICovCiAJaW50IG5yOwogCXN0cnVjdCBwaWRfbmFtZXNwYWNlICpuczsKKwl1NjQg
+aGlnaG5yOwogCXN0cnVjdCBobGlzdF9ub2RlIHBpZF9jaGFpbjsKIH07CiAKQEAgLTE3MCw2ICsx
+NzEsNyBAQCBzdGF0aWMgaW5saW5lIHBpZF90IHBpZF9ucihzdHJ1Y3QgcGlkICpwaWQpCiB9CiAK
+IHBpZF90IHBpZF9ucl9ucyhzdHJ1Y3QgcGlkICpwaWQsIHN0cnVjdCBwaWRfbmFtZXNwYWNlICpu
+cyk7Citjb25zdCBzdHJ1Y3QgdXBpZCAqcGlkX3VwaWRfbnMoc3RydWN0IHBpZCAqcGlkLCBzdHJ1
+Y3QgcGlkX25hbWVzcGFjZSAqbnMpOwogcGlkX3QgcGlkX3ZucihzdHJ1Y3QgcGlkICpwaWQpOwog
+CiAjZGVmaW5lIGRvX2VhY2hfcGlkX3Rhc2socGlkLCB0eXBlLCB0YXNrKQkJCQlcCmRpZmYgLS1n
+aXQgYS9pbmNsdWRlL2xpbnV4L3BpZF9uYW1lc3BhY2UuaCBiL2luY2x1ZGUvbGludXgvcGlkX25h
+bWVzcGFjZS5oCmluZGV4IDE5OTdmZmMyOTVhNy4uMWY5ZjA0NTVkN2VmIDEwMDY0NAotLS0gYS9p
+bmNsdWRlL2xpbnV4L3BpZF9uYW1lc3BhY2UuaAorKysgYi9pbmNsdWRlL2xpbnV4L3BpZF9uYW1l
+c3BhY2UuaApAQCAtMjYsNiArMjYsNyBAQCBzdHJ1Y3QgcGlkX25hbWVzcGFjZSB7CiAJc3RydWN0
+IHJjdV9oZWFkIHJjdTsKIAlpbnQgbGFzdF9waWQ7CiAJdW5zaWduZWQgaW50IG5yX2hhc2hlZDsK
+KwlhdG9taWM2NF90IG5leHRfaGlnaHBpZDsKIAlzdHJ1Y3QgdGFza19zdHJ1Y3QgKmNoaWxkX3Jl
+YXBlcjsKIAlzdHJ1Y3Qga21lbV9jYWNoZSAqcGlkX2NhY2hlcDsKIAl1bnNpZ25lZCBpbnQgbGV2
+ZWw7CmRpZmYgLS1naXQgYS9rZXJuZWwvcGlkLmMgYi9rZXJuZWwvcGlkLmMKaW5kZXggOWI5YTI2
+Njk4MTQ0Li44NjNkMTFhOWJmYmYgMTAwNjQ0Ci0tLSBhL2tlcm5lbC9waWQuYworKysgYi9rZXJu
+ZWwvcGlkLmMKQEAgLTMxMiw2ICszMTIsOCBAQCBzdHJ1Y3QgcGlkICphbGxvY19waWQoc3RydWN0
+IHBpZF9uYW1lc3BhY2UgKm5zKQogCiAJCXBpZC0+bnVtYmVyc1tpXS5uciA9IG5yOwogCQlwaWQt
+Pm51bWJlcnNbaV0ubnMgPSB0bXA7CisJCXBpZC0+bnVtYmVyc1tpXS5oaWdobnIgPQorCQkJYXRv
+bWljNjRfaW5jX3JldHVybigmdG1wLT5uZXh0X2hpZ2hwaWQpIC0gMTsKIAkJdG1wID0gdG1wLT5w
+YXJlbnQ7CiAJfQogCkBAIC00OTIsMTcgKzQ5NCwyNiBAQCBzdHJ1Y3QgcGlkICpmaW5kX2dldF9w
+aWQocGlkX3QgbnIpCiB9CiBFWFBPUlRfU1lNQk9MX0dQTChmaW5kX2dldF9waWQpOwogCi1waWRf
+dCBwaWRfbnJfbnMoc3RydWN0IHBpZCAqcGlkLCBzdHJ1Y3QgcGlkX25hbWVzcGFjZSAqbnMpCitj
+b25zdCBzdHJ1Y3QgdXBpZCAqcGlkX3VwaWRfbnMoc3RydWN0IHBpZCAqcGlkLCBzdHJ1Y3QgcGlk
+X25hbWVzcGFjZSAqbnMpCiB7CiAJc3RydWN0IHVwaWQgKnVwaWQ7Ci0JcGlkX3QgbnIgPSAwOwog
+CiAJaWYgKHBpZCAmJiBucy0+bGV2ZWwgPD0gcGlkLT5sZXZlbCkgewogCQl1cGlkID0gJnBpZC0+
+bnVtYmVyc1tucy0+bGV2ZWxdOwogCQlpZiAodXBpZC0+bnMgPT0gbnMpCi0JCQluciA9IHVwaWQt
+Pm5yOworCQkJcmV0dXJuIHVwaWQ7CiAJfQotCXJldHVybiBucjsKKwlyZXR1cm4gTlVMTDsKK30K
+K0VYUE9SVF9TWU1CT0xfR1BMKHBpZF91cGlkX25zKTsKKworcGlkX3QgcGlkX25yX25zKHN0cnVj
+dCBwaWQgKnBpZCwgc3RydWN0IHBpZF9uYW1lc3BhY2UgKm5zKQoreworCWNvbnN0IHN0cnVjdCB1
+cGlkICp1cGlkID0gcGlkX3VwaWRfbnMocGlkLCBucyk7CisKKwlpZiAoIXVwaWQpCisJCXJldHVy
+biAwOworCXJldHVybiB1cGlkLT5ucjsKIH0KIEVYUE9SVF9TWU1CT0xfR1BMKHBpZF9ucl9ucyk7
+CiAKZGlmZiAtLWdpdCBhL2tlcm5lbC9waWRfbmFtZXNwYWNlLmMgYi9rZXJuZWwvcGlkX25hbWVz
+cGFjZS5jCmluZGV4IGRiOTVkOGViNzYxYi4uZTI0NjgwMmI0MzYxIDEwMDY0NAotLS0gYS9rZXJu
+ZWwvcGlkX25hbWVzcGFjZS5jCisrKyBiL2tlcm5lbC9waWRfbmFtZXNwYWNlLmMKQEAgLTI2OCw2
+ICsyNjgsMjIgQEAgc3RhdGljIGludCBwaWRfbnNfY3RsX2hhbmRsZXIoc3RydWN0IGN0bF90YWJs
+ZSAqdGFibGUsIGludCB3cml0ZSwKIAlyZXR1cm4gcHJvY19kb2ludHZlY19taW5tYXgoJnRtcCwg
+d3JpdGUsIGJ1ZmZlciwgbGVucCwgcHBvcyk7CiB9CiAKK3N0YXRpYyBpbnQgcGlkX25zX25leHRf
+aGlnaHBpZF9oYW5kbGVyKHN0cnVjdCBjdGxfdGFibGUgKnRhYmxlLCBpbnQgd3JpdGUsCisJCXZv
+aWQgX191c2VyICpidWZmZXIsIHNpemVfdCAqbGVucCwgbG9mZl90ICpwcG9zKQoreworCXN0cnVj
+dCBwaWRfbmFtZXNwYWNlICpwaWRfbnMgPSB0YXNrX2FjdGl2ZV9waWRfbnMoY3VycmVudCk7CisJ
+c3RydWN0IGN0bF90YWJsZSB0bXAgPSAqdGFibGU7CisKKwlpZiAod3JpdGUgJiYgIW5zX2NhcGFi
+bGUocGlkX25zLT51c2VyX25zLCBDQVBfU1lTX0FETUlOKSkKKwkJcmV0dXJuIC1FUEVSTTsKKwor
+CS8qIFRoaXMgbmVlZHMgdG8gYmUgZml4ZWQuICovCisJQlVJTERfQlVHX09OKHNpemVvZih1NjQp
+ICE9IHNpemVvZih1bnNpZ25lZCBsb25nKSk7CisKKwl0bXAuZGF0YSA9ICZwaWRfbnMtPm5leHRf
+aGlnaHBpZDsKKwlyZXR1cm4gcHJvY19kb2ludHZlYygmdG1wLCB3cml0ZSwgYnVmZmVyLCBsZW5w
+LCBwcG9zKTsKK30KKwogZXh0ZXJuIGludCBwaWRfbWF4Owogc3RhdGljIGludCB6ZXJvID0gMDsK
+IHN0YXRpYyBzdHJ1Y3QgY3RsX3RhYmxlIHBpZF9uc19jdGxfdGFibGVbXSA9IHsKQEAgLTI3OSw2
+ICsyOTUsMTIgQEAgc3RhdGljIHN0cnVjdCBjdGxfdGFibGUgcGlkX25zX2N0bF90YWJsZVtdID0g
+ewogCQkuZXh0cmExID0gJnplcm8sCiAJCS5leHRyYTIgPSAmcGlkX21heCwKIAl9LAorCXsKKwkJ
+LnByb2NuYW1lID0gIm5zX25leHRfaGlnaHBpZCIsCisJCS5tYXhsZW4gPSBzaXplb2YodTY0KSwK
+KwkJLm1vZGUgPSAwNjY2LCAvKiBwZXJtaXNzaW9ucyBhcmUgY2hlY2tlZCBpbiB0aGUgaGFuZGxl
+ciAqLworCQkucHJvY19oYW5kbGVyID0gcGlkX25zX25leHRfaGlnaHBpZF9oYW5kbGVyLAorCX0s
+CiAJeyB9CiB9Owogc3RhdGljIHN0cnVjdCBjdGxfcGF0aCBrZXJuX3BhdGhbXSA9IHsgeyAucHJv
+Y25hbWUgPSAia2VybmVsIiwgfSwgeyB9IH07Ci0tIAoxLjkuMwoKX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX18Kc3lzdGVtZC1kZXZlbCBtYWlsaW5nIGxpc3QK
+c3lzdGVtZC1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNr
+dG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3N5c3RlbWQtZGV2ZWwK
