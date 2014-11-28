@@ -1,182 +1,122 @@
-From: Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v6 37/46] tun: move internal flag defines out of uapi
-Date: Fri, 28 Nov 2014 08:15:32 +0008
-Message-ID: <1417162052.5822.0@smtp.corp.redhat.com>
-References: <1417118789-18231-1-git-send-email-mst@redhat.com>
-	<1417118789-18231-38-git-send-email-mst@redhat.com>
+From: Orson Zhai <orsonzhai@gmail.com>
+Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver
+ support
+Date: Fri, 28 Nov 2014 18:13:50 +0800
+Message-ID: <54784ADE.6010602@gmail.com>
+References: <Sharkl64-v3>	<1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>	<1416917818-10506-6-git-send-email-chunyan.zhang@spreadtrum.com> <20141126123313.520ac83f@lxorguk.ukuu.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417118789-18231-38-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, thuth-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Zhi Yong Wu <wuzhy-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Tom Herbert <therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Xi Wang <xii-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20141126123313.520ac83f@lxorguk.ukuu.org.uk>
+Sender: linux-doc-owner@vger.kernel.org
+To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+Cc: grant.likely@linaro.org, robh+dt@kernel.org, catalin.marinas@arm.com, gregkh@linuxfoundation.org, ijc+devicetree@hellion.org.uk, jslaby@suse.cz, galak@codeaurora.org, broonie@linaro.org, mark.rutland@arm.com, m-karicheri2@ti.com, pawel.moll@arm.com, artagnon@gmail.com, rrichter@cavium.com, will.deacon@arm.com, arnd@arndb.de, corbet@lwn.net, jason@lakedaemon.net, broonie@kernel.org, heiko@sntech.de, shawn.guo@freescale.com, florian.vaussard@epfl.ch, andrew@lunn.ch, hytszk@gmail.com, geng.ren@spreadtrum.com, zhizhou.zhang@spreadtrum.com, lanqing.liu@spreadtrum.com, zhang.lyra@gmail.com, wei.qiao@spreadtrum.com, devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, sprdlinux@freelists.org, linux-doc@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Hi, Alan,
+
+Thanks for your comments!
+Some question for them below,
+
+On 2014=E5=B9=B411=E6=9C=8826=E6=97=A5 20:33, One Thousand Gnomes wrote=
+:
+>> +		 213 =3D /dev/ttySPX0		SPRD serial port 0
+>> +		    ...
+>> +		 216 =3D /dev/ttySPX3		SPRD serial port 3
+> Please use dynamic allocation or give a very very good reason why you
+> can't
+do we just leave the .major & .minor as NULL in struct uart_driver for=20
+dynamic allocation?
+>> +config SERIAL_SPRD_NR
+>> +        int "Maximum number of sprd serial ports"
+>> +        depends on SERIAL_SPRD
+>> +        default "4"
+> If you are doing dynamic allocation this should pretty much go away
+I think you mean getting the number of uarts from dt and dynamically=20
+allocate their port structure?
+>
+>> +static int sprd_startup(struct uart_port *port)
+>> +{
+>> +	int ret =3D 0;
+>> +	unsigned int ien, ctrl1;
+>> +	struct sprd_uart_port *sp;
+>> +
+>> +	serial_out(port, SPRD_CTL2, ((THLD_TX_EMPTY << 8) | THLD_RX_FULL))=
+;
+>> +
+>> +	/* clear rx fifo */
+>> +	while (serial_in(port, SPRD_STS1) & 0x00ff)
+>> +		serial_in(port, SPRD_RXD);
+>> +
+>> +	/* clear tx fifo */
+>> +	while (serial_in(port, SPRD_STS1) & 0xff00)
+>> +		;
+> Missing a cpu_relax and I would have thought a timeout on both of the=
+se.
+We will add in V4
+>
+>
+>> +static void sprd_set_termios(struct uart_port *port,
+>> +				    struct ktermios *termios,
+>> +				    struct ktermios *old)
+>> +{
+>> +	unsigned int baud, quot;
+>> +	/* calculate parity */
+>> +	lcr &=3D ~SPRD_LCR_PARITY;
+>> +	if (termios->c_cflag & PARENB) {
+>> +		lcr |=3D SPRD_LCR_PARITY_EN;
+>> +		if (termios->c_cflag & PARODD)
+>> +			lcr |=3D SPRD_LCR_ODD_PAR;
+>> +		else
+>> +			lcr |=3D SPRD_LCR_EVEN_PAR;
+>> +	}
+> If you don't support mark/space parity then also clear CMSPAR in
+> termios->c_cflag.
+just simply use code like "termios->c_cflag &=3D ~CMSPAR" ?
+
+> If you do then it ought to be handled above.
+>
+>> +
+>> +	/* clock divider bit16~bit20 */
+>> +	serial_out(port, SPRD_CLKD1, (quot & 0x1f0000) >> 16);
+>> +	serial_out(port, SPRD_LCR, lcr);
+>> +	fc |=3D 0x3e00 | THLD_RX_FULL;
+>> +	serial_out(port, SPRD_CTL1, fc);
+> Also set the resulting baud back into the termios (see the 8250 termi=
+os
+> for an example)
+you mean something like this part ?
+
+/* Don't rewrite B0 */
+if (tty_termios_baud_rate(termios))
+tty_termios_encode_baud_rate(termios, baud, baud);
 
 
-On Fri, Nov 28, 2014 at 4:10 AM, Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> 
-wrote:
-> TUN_ flags are internal and never exposed
-> to userspace. Any application using it is almost
-> certainly buggy.
-> 
-> Move them out to tun.c, we'll remove them in follow-up patches.
-> 
-> Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  include/uapi/linux/if_tun.h | 16 ++--------
->  drivers/net/tun.c           | 74 
-> ++++++++++++++-------------------------------
->  2 files changed, 26 insertions(+), 64 deletions(-)
-> 
-> diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
-> index e9502dd..277a260 100644
-> --- a/include/uapi/linux/if_tun.h
-> +++ b/include/uapi/linux/if_tun.h
-> @@ -22,21 +22,11 @@
->  
->  /* Read queue size */
->  #define TUN_READQ_SIZE	500
-> -
-> -/* TUN device flags */
-> -#define TUN_TUN_DEV 	0x0001	
-> -#define TUN_TAP_DEV	0x0002
-> +/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
-> +#define TUN_TUN_DEV 	IFF_TUN
-> +#define TUN_TAP_DEV	IFF_TAP
->  #define TUN_TYPE_MASK   0x000f
->  
-> -#define TUN_FASYNC	0x0010
-> -#define TUN_NOCHECKSUM	0x0020
-> -#define TUN_NO_PI	0x0040
-> -/* This flag has no real effect */
-> -#define TUN_ONE_QUEUE	0x0080
-> -#define TUN_PERSIST 	0x0100	
-> -#define TUN_VNET_HDR 	0x0200
-> -#define TUN_TAP_MQ      0x0400
-> -
->  /* Ioctl defines */
->  #define TUNSETNOCSUM  _IOW('T', 200, int) 
->  #define TUNSETDEBUG   _IOW('T', 201, int) 
-> diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-> index 9dd3746..bc89d07 100644
-> --- a/drivers/net/tun.c
-> +++ b/drivers/net/tun.c
-> @@ -103,6 +103,21 @@ do {								\
->  } while (0)
->  #endif
->  
-> +/* TUN device flags */
-> +
-> +/* IFF_ATTACH_QUEUE is never stored in device flags,
-> + * overload it to mean fasync when stored there.
-> + */
-> +#define TUN_FASYNC	IFF_ATTACH_QUEUE
-> +#define TUN_NO_PI	IFF_NO_PI
-> +/* This flag has no real effect */
-> +#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
-> +#define TUN_PERSIST 	IFF_PERSIST
-> +#define TUN_VNET_HDR 	IFF_VNET_HDR
-> +#define TUN_TAP_MQ      IFF_MULTI_QUEUE
-> +
-> +#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
-> +		      IFF_MULTI_QUEUE)
->  #define GOODCOPY_LEN 128
->  
->  #define FLT_EXACT_COUNT 8
-> @@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
->  
->  static int tun_flags(struct tun_struct *tun)
->  {
-> -	int flags = 0;
-> -
-> -	if (tun->flags & TUN_TUN_DEV)
-> -		flags |= IFF_TUN;
-> -	else
-> -		flags |= IFF_TAP;
-> -
-> -	if (tun->flags & TUN_NO_PI)
-> -		flags |= IFF_NO_PI;
-> -
-> -	/* This flag has no real effect.  We track the value for backwards
-> -	 * compatibility.
-> -	 */
-> -	if (tun->flags & TUN_ONE_QUEUE)
-> -		flags |= IFF_ONE_QUEUE;
-> -
-> -	if (tun->flags & TUN_VNET_HDR)
-> -		flags |= IFF_VNET_HDR;
-> -
-> -	if (tun->flags & TUN_TAP_MQ)
-> -		flags |= IFF_MULTI_QUEUE;
-> -
-> -	if (tun->flags & TUN_PERSIST)
-> -		flags |= IFF_PERSIST;
-> -
-> -	return flags;
-> +	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | 
-> IFF_TAP);
->  }
->  
->  static ssize_t tun_show_flags(struct device *dev, struct 
-> device_attribute *attr,
-> @@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct 
-> file *file, struct ifreq *ifr)
->  
->  	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
->  
-> -	if (ifr->ifr_flags & IFF_NO_PI)
-> -		tun->flags |= TUN_NO_PI;
-> -	else
-> -		tun->flags &= ~TUN_NO_PI;
-> -
-> -	/* This flag has no real effect.  We track the value for backwards
-> -	 * compatibility.
-> -	 */
-> -	if (ifr->ifr_flags & IFF_ONE_QUEUE)
-> -		tun->flags |= TUN_ONE_QUEUE;
-> -	else
-> -		tun->flags &= ~TUN_ONE_QUEUE;
-> -
-> -	if (ifr->ifr_flags & IFF_VNET_HDR)
-> -		tun->flags |= TUN_VNET_HDR;
-> -	else
-> -		tun->flags &= ~TUN_VNET_HDR;
-> -
-> -	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
-> -		tun->flags |= TUN_TAP_MQ;
-> -	else
-> -		tun->flags &= ~TUN_TAP_MQ;
-> +	tun->flags = (tun->flags & ~TUN_FEATURES) |
-> +		(ifr->ifr_flags & TUN_FEATURES);
->  
->  	/* Make sure persistent devices do not get stuck in
->  	 * xoff state.
-> @@ -1890,9 +1860,11 @@ static long __tun_chr_ioctl(struct file *file, 
-> unsigned int cmd,
->  	if (cmd == TUNGETFEATURES) {
->  		/* Currently this just means: "what IFF flags are valid?".
->  		 * This is needed because we never checked for invalid flags on
-> -		 * TUNSETIFF. */
-> -		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
-> -				IFF_VNET_HDR | IFF_MULTI_QUEUE,
-> +		 * TUNSETIFF.  Why do we report IFF_TUN and IFF_TAP which are
-> +		 * not legal for TUNSETIFF here?  It's probably a bug, but it
-> +		 * doesn't seem to be worth fixing.
-> +		 */
+>
+>
+>> +static int __init sprd_console_setup(struct console *co, char *opti=
+ons)
+>> +{
+>> +	struct uart_port *port;
+>> +	int baud =3D 115200;
+>> +	int bits =3D 8;
+>> +	int parity =3D 'n';
+>> +	int flow =3D 'n';
+>> +
+>> +	if (unlikely(co->index >=3D UART_NR_MAX || co->index < 0))
+>> +		co->index =3D 0;
+>> +
+>> +	port =3D (struct uart_port *)sprd_port[co->index];
+>> +	if (port =3D=3D NULL) {
+>> +		pr_info("srial port %d not yet initialized\n", co->index);
+> Typo
+it will be fixed :)
 
-The question is not very clear. IFF_TUN and IFF_TAP are legal for 
- ifr.ifr_flags during TUNSETIFF. No?
-> 
-> +		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
->  				(unsigned int __user*)argp);
->  	} else if (cmd == TUNSETQUEUE)
->  		return tun_set_queue(file, &ifr);
-> -- 
-> MST
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe netdev" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks,
+Orson
+> Looks basically sound to me
+>
+> Alan
+
