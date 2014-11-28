@@ -1,85 +1,56 @@
-From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v7 08/10] tpm: TPM 2.0 CRB Interface
-Date: Fri, 28 Nov 2014 12:23:51 -0500
-Message-ID: <5478AFA7.6040200@linux.vnet.ibm.com>
-References: <1415713513-16524-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1415713513-16524-9-git-send-email-jarkko.sakkinen@linux.intel.com> <5475DE81.50308@linux.vnet.ibm.com> <20141127154023.GD24791@intel.com>
+From: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v3 3/5] arm64: dts: Add support for Spreadtrum SC9836 SoC
+ in dts and Makefile
+Date: Fri, 28 Nov 2014 17:24:31 +0000
+Message-ID: <20141128172431.GA32393@e104818-lin.cambridge.arm.com>
+References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
+ <1416917818-10506-4-git-send-email-chunyan.zhang@spreadtrum.com>
+ <20141127115042.GE857@leverpostej>
+ <20141127121214.GF11511@e104818-lin.cambridge.arm.com>
+ <20141127134309.GJ857@leverpostej>
+ <20141128142913.GB5393@localhost>
+ <20141128143532.GI25883@leverpostej>
+ <20141128144412.GG7144@arm.com>
+ <20141128150325.GC24370@e104818-lin.cambridge.arm.com>
+ <20141128164047.GL25883@leverpostej>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141127154023.GD24791-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20141128164047.GL25883@leverpostej>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>
+Cc: "andrew-g2DYL2Zd6BY@public.gmane.org" <andrew-g2DYL2Zd6BY@public.gmane.org>, "heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org" <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, "gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org" <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Will Deacon <Will.Deacon-5wv7dgnIgG8@public.gmane.org>, Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, "jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org" <jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org>, "lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org" <lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, "arnd-r2nGTMty4D4@public.gmane.org" <arnd-r2nGTMty4D4@public.gmane.org>, "corbet-T1hC0tSOHrs@public.gmane.org" <corbet-T1hC0tSOHrs@public.gmane.org>, "zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "zhizhou.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org" <zhizhou.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, "geng.ren-lxIno14LUO0EEoCn2XhGlw@public.gmane.org" <geng.ren-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, "m-karicheri2-l0cyMroinI0@public.gmane.org" <m-karicheri2-l0cyMroinI0@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org" <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "florian.vaussard-p8DiymsW2f8@public.gmane.org" <florian.vaussard>
 List-Id: linux-api@vger.kernel.org
 
-On 11/27/2014 10:40 AM, Jarkko Sakkinen wrote:
-> On Wed, Nov 26, 2014 at 09:06:57AM -0500, Stefan Berger wrote:
->> On 11/11/2014 08:45 AM, Jarkko Sakkinen wrote:
->>> tpm_crb is a driver for TPM 2.0 Command Response Buffer (CRB) Interface
->>> as defined in PC Client Platform TPM Profile (PTP) Specification.
->>>
->>> Only polling and single locality is supported as these are the limitations
->>> of the available hardware, Platform Trust Techonlogy (PTT) in Haswell
->>> CPUs.
->>>
->>> The driver always applies CRB with ACPI start because PTT reports using
->>> only ACPI start as start method but as a result of my testing it requires
->>> also CRB start.
->>>
->>> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
->>> ---
->>>
-[...]
->>> +static int crb_send(struct tpm_chip *chip, u8 *buf, size_t len)
->>> +{
->>> +	struct crb_priv *priv = chip->vendor.priv;
->>> +	struct crb_control_area *cca;
->>> +	u8 *cmd;
->>> +	int rc = 0;
->>> +
->>> +	cca = priv->cca;
->>> +
->>> +	if (len > le32_to_cpu(cca->cmd_size)) {
->>> +		dev_err(&chip->dev,
->>> +			"invalid command count value %x %zx\n",
->>> +			(unsigned int) len,
->>> +			(size_t) le32_to_cpu(cca->cmd_size));
->>> +		return -E2BIG;
->>> +	}
->>> +
->>> +	cmd = (u8 *) ((unsigned long) cca + le64_to_cpu(cca->cmd_pa) -
->>> +		      priv->cca_pa);
->> cca = priv->cca per statement above     -> cmd = cca + x - cca = x
->>
->> -> cmd = le64_to_cpu(cca->cmd_pa);
->>
->> Should do the trick, no ?
-> Virtual address might be different where CCA is ioremapped.
+On Fri, Nov 28, 2014 at 04:40:47PM +0000, Mark Rutland wrote:
+> [...]
+> 
+> > In the meantime I think we can be more tolerant:
+> > 
+> > diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
+> > index 2133f9d59d06..87f67a93fcc7 100644
+> > --- a/drivers/clocksource/arm_arch_timer.c
+> > +++ b/drivers/clocksource/arm_arch_timer.c
+> > @@ -376,6 +376,8 @@ arch_timer_detect_rate(void __iomem *cntbase, struct device_node *np)
+> >  			arch_timer_rate = readl_relaxed(cntbase + CNTFRQ);
+> >  		else
+> >  			arch_timer_rate = arch_timer_get_cntfrq();
+> > +	} else if (IS_ENABLED(CONFIG_ARM64)) {
+> > +		pr_warn("Architected timer frequency overridden by DT (broken firmware?)\n");
+> >  	}
+> 
+> That looks good to me. On a related note, it looks like my documentation
+> patch [1] from a while back fell by the wayside. Does anyone fancy
+> picking that up to go with this?
 
-My bad. Is the 'Command Address' then guaranteed to lie within the 
-remapped area of the 'Control Area' or should there be a check whether 
-you would need a separate remapping? It's not clear from the specs where 
-it lies (2.1 4th paragraph: "They can all be in system RAM, or all be in 
-device memory, or any combination"). Same is true for the 'Response 
-Address'.  Maybe you should have the ioremapped address for the 'Command 
-Address' calculated elsewhere and simplify the address calculation here 
-to basically cmd = priv->command_address.
+I can put the two together (keeping you as author). Do we still need the
+IS_ENABLED(CONFIG_ARM64) part here or we extend the warning to to arm32
+as well?
 
-Make the address calculations in cbr_recv and crb_send look the same.
-
-[So, (cca - priv->cca_pa)  calculates the offset of the remapping. 
-Adding to this the address of the command buffer gives the ioremapped 
-address of the command buffer, assuming it lies within that remapped area. ]
-
-
-     Stefan
-
->
->>> +	memcpy(cmd, buf, len);
->>> +
->>> +	/* Make sure that cmd is populated before issuing start. */
->>> +	wmb();
->>> +
->>> +	cca->start = cpu_to_le32(1);
->>> +	rc = crb_do_acpi_start(chip);
+-- 
+Catalin
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
