@@ -1,201 +1,179 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH] userns: Disallow setgroups unless the gid_map writer
- is privileged
-Date: Sat, 29 Nov 2014 08:24:28 -0800
-Message-ID: <CALCETrW6FiQP0KKYVSRV=zBY9PcU3xx_qnFW9ead2kYscB4Hvg@mail.gmail.com>
-References: <81ba656ffbdc62a7f7e94ad17f0238ee063fe6b3.1417214430.git.luto@amacapital.net>
- <87vblym17s.fsf@x220.int.ebiederm.org>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v6 37/46] tun: move internal flag defines out of uapi
+Date: Sat, 29 Nov 2014 19:17:18 +0200
+Message-ID: <20141129171718.GA22746@redhat.com>
+References: <1417118789-18231-1-git-send-email-mst@redhat.com>
+ <1417118789-18231-38-git-send-email-mst@redhat.com>
+ <1417162052.5822.0@smtp.corp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87vblym17s.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1417162052.5822.0-LLcwxoN42L4NLKR9yMNcA1aTQe2KTcn/@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, thuth-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Zhi Yong Wu <wuzhy-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Tom Herbert <therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Xi Wang <xii-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 29, 2014 at 8:16 AM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
->
-> The patch is buggy.
->
-> Nacked-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
->
->> ---
->>
->> Eric, this is an alternative to your patch.  I think it will cause
->> less breakage, and it will keep unprivileged user namespaces
->> more or less fully functional.
->>
->> Kenton, I think that neither run-bundle nor supervisor-main will be
->> broken by this patch.
->>
->>  include/linux/user_namespace.h |  3 +++
->>  kernel/groups.c                |  3 +++
->>  kernel/user.c                  |  1 +
->>  kernel/user_namespace.c        | 36 ++++++++++++++++++++++++++++++++++++
->>  4 files changed, 43 insertions(+)
->>
->> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
->> index e95372654f09..a74c1f3d44fe 100644
->> --- a/include/linux/user_namespace.h
->> +++ b/include/linux/user_namespace.h
->> @@ -17,6 +17,8 @@ struct uid_gid_map {        /* 64 bytes -- 1 cache line */
->>       } extent[UID_GID_MAP_MAX_EXTENTS];
->>  };
->>
->> +#define USERNS_SETGROUPS_ALLOWED 1
->> +
->>  struct user_namespace {
->>       struct uid_gid_map      uid_map;
->>       struct uid_gid_map      gid_map;
->> @@ -27,6 +29,7 @@ struct user_namespace {
->>       kuid_t                  owner;
->>       kgid_t                  group;
->>       unsigned int            proc_inum;
->> +     unsigned int            flags;
->
-> If you are going to add a flags field it needs to be atomic as otherwise
-> changing or reading individual flags won't be safe without a lock.
-
-Will fix.
-
->
->>       /* Register of per-UID persistent keyrings for this namespace */
->>  #ifdef CONFIG_PERSISTENT_KEYRINGS
->> diff --git a/kernel/groups.c b/kernel/groups.c
->> index 451698f86cfa..e27433809978 100644
->> --- a/kernel/groups.c
->> +++ b/kernel/groups.c
->> @@ -6,6 +6,7 @@
->>  #include <linux/slab.h>
->>  #include <linux/security.h>
->>  #include <linux/syscalls.h>
->> +#include <linux/user_namespace.h>
->>  #include <asm/uaccess.h>
->>
->>  /* init to 2 - one for init_task, one to ensure it is never freed */
->> @@ -223,6 +224,8 @@ SYSCALL_DEFINE2(setgroups, int, gidsetsize, gid_t __user *, grouplist)
->>       struct group_info *group_info;
->>       int retval;
->>
->> +     if (!(current_user_ns()->flags & USERNS_SETGROUPS_ALLOWED))
->> +             return -EPERM;
->>       if (!ns_capable(current_user_ns(), CAP_SETGID))
->>               return -EPERM;
->>       if ((unsigned)gidsetsize > NGROUPS_MAX)
->> diff --git a/kernel/user.c b/kernel/user.c
->> index 4efa39350e44..f8cdb1ec6049 100644
->> --- a/kernel/user.c
->> +++ b/kernel/user.c
->> @@ -51,6 +51,7 @@ struct user_namespace init_user_ns = {
->>       .owner = GLOBAL_ROOT_UID,
->>       .group = GLOBAL_ROOT_GID,
->>       .proc_inum = PROC_USER_INIT_INO,
->> +     .flags = USERNS_SETGROUPS_ALLOWED,
->>  #ifdef CONFIG_PERSISTENT_KEYRINGS
->>       .persistent_keyring_register_sem =
->>       __RWSEM_INITIALIZER(init_user_ns.persistent_keyring_register_sem),
->> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
->> index aa312b0dc3ec..6e7b9ee5bddc 100644
->> --- a/kernel/user_namespace.c
->> +++ b/kernel/user_namespace.c
->> @@ -600,6 +600,8 @@ static ssize_t map_write(struct file *file, const char __user *buf,
->>       unsigned long page = 0;
->>       char *kbuf, *pos, *next_line;
->>       ssize_t ret = -EINVAL;
->> +     unsigned int gid_flags = 0;
->> +     bool seen_explicit_gid_flag = false;
->>
->>       /*
->>        * The id_map_mutex serializes all writes to any given map.
->> @@ -633,6 +635,19 @@ static ssize_t map_write(struct file *file, const char __user *buf,
->>       if (cap_valid(cap_setid) && !file_ns_capable(file, ns, CAP_SYS_ADMIN))
->>               goto out;
->>
->> +     /* Deal with supplementary groups. */
->> +     if (map == &ns->gid_map) {
->> +             /*
->> +              * By default, setgroups is allowed inside the userns
->> +              * if the writer has no supplementary groups (making
->> +              * it useless) or if the writer is privileged.
->> +              */
->> +             if ((ns->parent->flags & USERNS_SETGROUPS_ALLOWED) &&
->> +                 file_ns_capable(file, ns->parent, CAP_SETGID) &&
->> +                 ns_capable(ns->parent, CAP_SETGID))
->> +                     gid_flags = USERNS_SETGROUPS_ALLOWED;
->
-> We can't do this.
->
-> It is wrong to mix permissions and flags to request functionality.
->
-> That way lies madness, and impossible maintenance, and it will silently
-> break every application that expects setgroups to work if they have
-> CAP_SETGID after a mapping has been established.
-
-We can make writing gid_map fail unless you either have permissions or
-add the "setgroups disallow" option.  Would that be better?  It avoids
-silent creation of a strangely behaving userns.  This would be an easy
-adjustment to this patch.
-
-I don't like the "allow setgroups if there are no supplementary
-groups" because it's weird and unexpected (and will therefore break
-things, I expect) and because it may interact insecurely with setns
-and other such things.
-
---Andy
-
->
->> +     }
->> +
->>       /* Get a buffer */
->>       ret = -ENOMEM;
->>       page = __get_free_page(GFP_TEMPORARY);
->> @@ -667,6 +682,25 @@ static ssize_t map_write(struct file *file, const char __user *buf,
->>                               next_line = NULL;
->>               }
->>
->> +             /* Is this line a gid_map option? */
->> +             if (map == &ns->gid_map) {
->> +                     if (!strcmp(pos, "setgroups deny")) {
->> +                             if (seen_explicit_gid_flag)
->> +                                     goto out;
->> +                             seen_explicit_gid_flag = 1;
->> +                             gid_flags = 0;
->> +                             continue;
->> +                     } else if (!strcmp(pos, "setgroups allow")) {
->> +                             if (seen_explicit_gid_flag)
->> +                                     goto out;
->> +                             if (!(gid_flags & USERNS_SETGROUPS_ALLOWED)) {
->> +                                     ret = -EPERM;
->> +                                     goto out;
->> +                             }
->> +                             continue;
->> +                     }
->> +             }
->> +
->>               pos = skip_spaces(pos);
->>               extent->first = simple_strtoul(pos, &pos, 10);
->>               if (!isspace(*pos))
->> @@ -746,6 +780,8 @@ static ssize_t map_write(struct file *file, const char __user *buf,
->>               new_map.nr_extents*sizeof(new_map.extent[0]));
->>       smp_wmb();
->>       map->nr_extents = new_map.nr_extents;
->> +     if (map == &ns->gid_map)
->> +             ns->flags |= gid_flags;
->>
->>       *ppos = count;
->>       ret = count;
->
-> Eric
+On Fri, Nov 28, 2014 at 08:15:32AM +0008, Jason Wang wrote:
+> 
+> 
+> On Fri, Nov 28, 2014 at 4:10 AM, Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> >TUN_ flags are internal and never exposed
+> >to userspace. Any application using it is almost
+> >certainly buggy.
+> >
+> >Move them out to tun.c, we'll remove them in follow-up patches.
+> >
+> >Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >---
+> > include/uapi/linux/if_tun.h | 16 ++--------
+> > drivers/net/tun.c           | 74
+> >++++++++++++++-------------------------------
+> > 2 files changed, 26 insertions(+), 64 deletions(-)
+> >
+> >diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
+> >index e9502dd..277a260 100644
+> >--- a/include/uapi/linux/if_tun.h
+> >+++ b/include/uapi/linux/if_tun.h
+> >@@ -22,21 +22,11 @@
+> > /* Read queue size */
+> > #define TUN_READQ_SIZE	500
+> >-
+> >-/* TUN device flags */
+> >-#define TUN_TUN_DEV 	0x0001	
+> >-#define TUN_TAP_DEV	0x0002
+> >+/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
+> >+#define TUN_TUN_DEV 	IFF_TUN
+> >+#define TUN_TAP_DEV	IFF_TAP
+> > #define TUN_TYPE_MASK   0x000f
+> >-#define TUN_FASYNC	0x0010
+> >-#define TUN_NOCHECKSUM	0x0020
+> >-#define TUN_NO_PI	0x0040
+> >-/* This flag has no real effect */
+> >-#define TUN_ONE_QUEUE	0x0080
+> >-#define TUN_PERSIST 	0x0100	
+> >-#define TUN_VNET_HDR 	0x0200
+> >-#define TUN_TAP_MQ      0x0400
+> >-
+> > /* Ioctl defines */
+> > #define TUNSETNOCSUM  _IOW('T', 200, int)  #define TUNSETDEBUG
+> >_IOW('T', 201, int) diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+> >index 9dd3746..bc89d07 100644
+> >--- a/drivers/net/tun.c
+> >+++ b/drivers/net/tun.c
+> >@@ -103,6 +103,21 @@ do {								\
+> > } while (0)
+> > #endif
+> >+/* TUN device flags */
+> >+
+> >+/* IFF_ATTACH_QUEUE is never stored in device flags,
+> >+ * overload it to mean fasync when stored there.
+> >+ */
+> >+#define TUN_FASYNC	IFF_ATTACH_QUEUE
+> >+#define TUN_NO_PI	IFF_NO_PI
+> >+/* This flag has no real effect */
+> >+#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
+> >+#define TUN_PERSIST 	IFF_PERSIST
+> >+#define TUN_VNET_HDR 	IFF_VNET_HDR
+> >+#define TUN_TAP_MQ      IFF_MULTI_QUEUE
+> >+
+> >+#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
+> >+		      IFF_MULTI_QUEUE)
+> > #define GOODCOPY_LEN 128
+> > #define FLT_EXACT_COUNT 8
+> >@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
+> > static int tun_flags(struct tun_struct *tun)
+> > {
+> >-	int flags = 0;
+> >-
+> >-	if (tun->flags & TUN_TUN_DEV)
+> >-		flags |= IFF_TUN;
+> >-	else
+> >-		flags |= IFF_TAP;
+> >-
+> >-	if (tun->flags & TUN_NO_PI)
+> >-		flags |= IFF_NO_PI;
+> >-
+> >-	/* This flag has no real effect.  We track the value for backwards
+> >-	 * compatibility.
+> >-	 */
+> >-	if (tun->flags & TUN_ONE_QUEUE)
+> >-		flags |= IFF_ONE_QUEUE;
+> >-
+> >-	if (tun->flags & TUN_VNET_HDR)
+> >-		flags |= IFF_VNET_HDR;
+> >-
+> >-	if (tun->flags & TUN_TAP_MQ)
+> >-		flags |= IFF_MULTI_QUEUE;
+> >-
+> >-	if (tun->flags & TUN_PERSIST)
+> >-		flags |= IFF_PERSIST;
+> >-
+> >-	return flags;
+> >+	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
+> > }
+> >   static ssize_t tun_show_flags(struct device *dev, struct
+> >device_attribute *attr,
+> >@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file
+> >*file, struct ifreq *ifr)
+> > 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
+> >-	if (ifr->ifr_flags & IFF_NO_PI)
+> >-		tun->flags |= TUN_NO_PI;
+> >-	else
+> >-		tun->flags &= ~TUN_NO_PI;
+> >-
+> >-	/* This flag has no real effect.  We track the value for backwards
+> >-	 * compatibility.
+> >-	 */
+> >-	if (ifr->ifr_flags & IFF_ONE_QUEUE)
+> >-		tun->flags |= TUN_ONE_QUEUE;
+> >-	else
+> >-		tun->flags &= ~TUN_ONE_QUEUE;
+> >-
+> >-	if (ifr->ifr_flags & IFF_VNET_HDR)
+> >-		tun->flags |= TUN_VNET_HDR;
+> >-	else
+> >-		tun->flags &= ~TUN_VNET_HDR;
+> >-
+> >-	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
+> >-		tun->flags |= TUN_TAP_MQ;
+> >-	else
+> >-		tun->flags &= ~TUN_TAP_MQ;
+> >+	tun->flags = (tun->flags & ~TUN_FEATURES) |
+> >+		(ifr->ifr_flags & TUN_FEATURES);
+> > 	/* Make sure persistent devices do not get stuck in
+> > 	 * xoff state.
+> >@@ -1890,9 +1860,11 @@ static long __tun_chr_ioctl(struct file *file,
+> >unsigned int cmd,
+> > 	if (cmd == TUNGETFEATURES) {
+> > 		/* Currently this just means: "what IFF flags are valid?".
+> > 		 * This is needed because we never checked for invalid flags on
+> >-		 * TUNSETIFF. */
+> >-		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
+> >-				IFF_VNET_HDR | IFF_MULTI_QUEUE,
+> >+		 * TUNSETIFF.  Why do we report IFF_TUN and IFF_TAP which are
+> >+		 * not legal for TUNSETIFF here?  It's probably a bug, but it
+> >+		 * doesn't seem to be worth fixing.
+> >+		 */
+> 
+> The question is not very clear. IFF_TUN and IFF_TAP are legal for
+> ifr.ifr_flags during TUNSETIFF. No?
 
 
+Absolutely. I'm not sure what I meant anymore. I will drop this chunk -
+either by replacing this patch if I have to post another version, or
+by a separate patch if I don't.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> >
+> >+		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
+> > 				(unsigned int __user*)argp);
+> > 	} else if (cmd == TUNSETQUEUE)
+> > 		return tun_set_queue(file, &ifr);
+> >-- 
+> >MST
+> >
+> >--
+> >To unsubscribe from this list: send the line "unsubscribe netdev" in
+> >the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> >More majordomo info at  http://vger.kernel.org/majordomo-info.html
