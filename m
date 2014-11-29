@@ -1,179 +1,215 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v6 37/46] tun: move internal flag defines out of uapi
-Date: Sat, 29 Nov 2014 19:17:18 +0200
-Message-ID: <20141129171718.GA22746@redhat.com>
-References: <1417118789-18231-1-git-send-email-mst@redhat.com>
- <1417118789-18231-38-git-send-email-mst@redhat.com>
- <1417162052.5822.0@smtp.corp.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1417162052.5822.0-LLcwxoN42L4NLKR9yMNcA1aTQe2KTcn/@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, thuth-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Zhi Yong Wu <wuzhy-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Tom Herbert <therbert-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Xi Wang <xii-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: [PATCH v2] userns: Disallow setgroups unless the gid_map writer is privileged
+Date: Sat, 29 Nov 2014 09:26:37 -0800
+Message-ID: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Sender: linux-security-module-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, kenton@sandstorm.io, Andy Lutomirski <luto@amacapital.net>, stable@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 28, 2014 at 08:15:32AM +0008, Jason Wang wrote:
-> 
-> 
-> On Fri, Nov 28, 2014 at 4:10 AM, Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >TUN_ flags are internal and never exposed
-> >to userspace. Any application using it is almost
-> >certainly buggy.
-> >
-> >Move them out to tun.c, we'll remove them in follow-up patches.
-> >
-> >Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> >---
-> > include/uapi/linux/if_tun.h | 16 ++--------
-> > drivers/net/tun.c           | 74
-> >++++++++++++++-------------------------------
-> > 2 files changed, 26 insertions(+), 64 deletions(-)
-> >
-> >diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
-> >index e9502dd..277a260 100644
-> >--- a/include/uapi/linux/if_tun.h
-> >+++ b/include/uapi/linux/if_tun.h
-> >@@ -22,21 +22,11 @@
-> > /* Read queue size */
-> > #define TUN_READQ_SIZE	500
-> >-
-> >-/* TUN device flags */
-> >-#define TUN_TUN_DEV 	0x0001	
-> >-#define TUN_TAP_DEV	0x0002
-> >+/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
-> >+#define TUN_TUN_DEV 	IFF_TUN
-> >+#define TUN_TAP_DEV	IFF_TAP
-> > #define TUN_TYPE_MASK   0x000f
-> >-#define TUN_FASYNC	0x0010
-> >-#define TUN_NOCHECKSUM	0x0020
-> >-#define TUN_NO_PI	0x0040
-> >-/* This flag has no real effect */
-> >-#define TUN_ONE_QUEUE	0x0080
-> >-#define TUN_PERSIST 	0x0100	
-> >-#define TUN_VNET_HDR 	0x0200
-> >-#define TUN_TAP_MQ      0x0400
-> >-
-> > /* Ioctl defines */
-> > #define TUNSETNOCSUM  _IOW('T', 200, int)  #define TUNSETDEBUG
-> >_IOW('T', 201, int) diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-> >index 9dd3746..bc89d07 100644
-> >--- a/drivers/net/tun.c
-> >+++ b/drivers/net/tun.c
-> >@@ -103,6 +103,21 @@ do {								\
-> > } while (0)
-> > #endif
-> >+/* TUN device flags */
-> >+
-> >+/* IFF_ATTACH_QUEUE is never stored in device flags,
-> >+ * overload it to mean fasync when stored there.
-> >+ */
-> >+#define TUN_FASYNC	IFF_ATTACH_QUEUE
-> >+#define TUN_NO_PI	IFF_NO_PI
-> >+/* This flag has no real effect */
-> >+#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
-> >+#define TUN_PERSIST 	IFF_PERSIST
-> >+#define TUN_VNET_HDR 	IFF_VNET_HDR
-> >+#define TUN_TAP_MQ      IFF_MULTI_QUEUE
-> >+
-> >+#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
-> >+		      IFF_MULTI_QUEUE)
-> > #define GOODCOPY_LEN 128
-> > #define FLT_EXACT_COUNT 8
-> >@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
-> > static int tun_flags(struct tun_struct *tun)
-> > {
-> >-	int flags = 0;
-> >-
-> >-	if (tun->flags & TUN_TUN_DEV)
-> >-		flags |= IFF_TUN;
-> >-	else
-> >-		flags |= IFF_TAP;
-> >-
-> >-	if (tun->flags & TUN_NO_PI)
-> >-		flags |= IFF_NO_PI;
-> >-
-> >-	/* This flag has no real effect.  We track the value for backwards
-> >-	 * compatibility.
-> >-	 */
-> >-	if (tun->flags & TUN_ONE_QUEUE)
-> >-		flags |= IFF_ONE_QUEUE;
-> >-
-> >-	if (tun->flags & TUN_VNET_HDR)
-> >-		flags |= IFF_VNET_HDR;
-> >-
-> >-	if (tun->flags & TUN_TAP_MQ)
-> >-		flags |= IFF_MULTI_QUEUE;
-> >-
-> >-	if (tun->flags & TUN_PERSIST)
-> >-		flags |= IFF_PERSIST;
-> >-
-> >-	return flags;
-> >+	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
-> > }
-> >   static ssize_t tun_show_flags(struct device *dev, struct
-> >device_attribute *attr,
-> >@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file
-> >*file, struct ifreq *ifr)
-> > 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
-> >-	if (ifr->ifr_flags & IFF_NO_PI)
-> >-		tun->flags |= TUN_NO_PI;
-> >-	else
-> >-		tun->flags &= ~TUN_NO_PI;
-> >-
-> >-	/* This flag has no real effect.  We track the value for backwards
-> >-	 * compatibility.
-> >-	 */
-> >-	if (ifr->ifr_flags & IFF_ONE_QUEUE)
-> >-		tun->flags |= TUN_ONE_QUEUE;
-> >-	else
-> >-		tun->flags &= ~TUN_ONE_QUEUE;
-> >-
-> >-	if (ifr->ifr_flags & IFF_VNET_HDR)
-> >-		tun->flags |= TUN_VNET_HDR;
-> >-	else
-> >-		tun->flags &= ~TUN_VNET_HDR;
-> >-
-> >-	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
-> >-		tun->flags |= TUN_TAP_MQ;
-> >-	else
-> >-		tun->flags &= ~TUN_TAP_MQ;
-> >+	tun->flags = (tun->flags & ~TUN_FEATURES) |
-> >+		(ifr->ifr_flags & TUN_FEATURES);
-> > 	/* Make sure persistent devices do not get stuck in
-> > 	 * xoff state.
-> >@@ -1890,9 +1860,11 @@ static long __tun_chr_ioctl(struct file *file,
-> >unsigned int cmd,
-> > 	if (cmd == TUNGETFEATURES) {
-> > 		/* Currently this just means: "what IFF flags are valid?".
-> > 		 * This is needed because we never checked for invalid flags on
-> >-		 * TUNSETIFF. */
-> >-		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
-> >-				IFF_VNET_HDR | IFF_MULTI_QUEUE,
-> >+		 * TUNSETIFF.  Why do we report IFF_TUN and IFF_TAP which are
-> >+		 * not legal for TUNSETIFF here?  It's probably a bug, but it
-> >+		 * doesn't seem to be worth fixing.
-> >+		 */
-> 
-> The question is not very clear. IFF_TUN and IFF_TAP are legal for
-> ifr.ifr_flags during TUNSETIFF. No?
+Classic unix permission checks have an interesting feature.  The
+group permissions for a file can be set to less than the other
+permissions on a file.  Occasionally this is used deliberately to
+give a certain group of users fewer permissions than the default.
 
+User namespaces break this usage.  Groups set in rgid or egid are
+unaffected because an unprivileged user namespace creator can only
+map a single group, so setresgid inside and outside the namespace
+have the same effect.  However, an unprivileged user namespace
+creator can currently use setgroups(2) to drop all supplementary
+groups, so, if a supplementary group denies access to some resource,
+user namespaces can be used to bypass that restriction.
 
-Absolutely. I'm not sure what I meant anymore. I will drop this chunk -
-either by replacing this patch if I have to post another version, or
-by a separate patch if I don't.
+To fix this issue, this introduces a new user namespace flag
+USERNS_SETGROUPS_ALLOWED.  If that flag is not set, then
+setgroups(2) will fail regardless of the caller's capabilities.
 
-> >
-> >+		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
-> > 				(unsigned int __user*)argp);
-> > 	} else if (cmd == TUNSETQUEUE)
-> > 		return tun_set_queue(file, &ifr);
-> >-- 
-> >MST
-> >
-> >--
-> >To unsubscribe from this list: send the line "unsubscribe netdev" in
-> >the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> >More majordomo info at  http://vger.kernel.org/majordomo-info.html
+USERNS_SETGROUPS_ALLOWED is cleared in a new user namespace.  By
+default, if the writer of gid_map has CAP_SETGID in the parent
+userns and the parent userns has USERNS_SETGROUPS_ALLOWED, then the
+USERNS_SETGROUPS_ALLOWED will be set in the child.  If the writer is
+not so privileged, then writing to gid_map will fail unless the
+writer adds "setgroups deny" to gid_map, in which case the check is
+skipped but USERNS_SETGROUPS_ALLOWED will remain cleared.
+
+The full semantics are:
+
+If "setgroups allow" is present or no explicit "setgroups" setting
+is written to gid_map, then writing to gid_map will fail with -EPERM
+unless the opener and writer have CAP_SETGID in the parent namespace
+and the parent namespace has USERNS_SETGROUPS_ALLOWED.
+
+If "setgroups deny" is present, then writing gid_map will work as
+before, but USERNS_SETGROUPS_ALLOWED will remain cleared.  This will
+result in processes in the userns that have CAP_SETGID to be
+nontheless unable to use setgroups(2).  If this breaks something
+inside the userns, then this is okay -- the userns creator
+specifically requested this behavior.
+
+While it could be safe to set USERNS_SETGROUPS_ALLOWED if the user
+namespace creator has no supplementary groups, doing so could be
+surprising and could have unpleasant interactions with setns(2).
+
+Any application that uses newgidmap(1) should be unaffected by this
+fix, but unprivileged users that create user namespaces to
+manipulate mounts or sandbox themselves will break until they start
+using "setgroups deny".
+
+This should fix CVE-2014-8989.
+
+Cc: stable@vger.kernel.org
+Signed-off-by: Andy Lutomirski <luto@amacapital.net>
+---
+
+Unlike v1, this *will* break things like Sandstorm.  Fixing them will be
+easy.  I agree that this will result in better long-term semantics, but
+I'm not so happy about breaking working software.
+
+If this is unpalatable, here's a different option: get rid of all these
+permission checks and just change setgroups.  Specifically, make it so
+that setgroups(2) in a userns will succeed but will silently refuse to
+remove unmapped groups.
+
+Changes from v1:
+ - Userns flags are now properly atomic.
+ - "setgroups allow" is now the default, so legacy unprivileged gid_map
+   writers will start to fail.
+
+ include/linux/user_namespace.h |  3 +++
+ kernel/groups.c                |  3 +++
+ kernel/user.c                  |  1 +
+ kernel/user_namespace.c        | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 49 insertions(+)
+
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index e95372654f09..0ae4a8c97165 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -17,6 +17,8 @@ struct uid_gid_map {	/* 64 bytes -- 1 cache line */
+ 	} extent[UID_GID_MAP_MAX_EXTENTS];
+ };
+ 
++#define USERNS_SETGROUPS_ALLOWED 0
++
+ struct user_namespace {
+ 	struct uid_gid_map	uid_map;
+ 	struct uid_gid_map	gid_map;
+@@ -27,6 +29,7 @@ struct user_namespace {
+ 	kuid_t			owner;
+ 	kgid_t			group;
+ 	unsigned int		proc_inum;
++	unsigned long		flags;
+ 
+ 	/* Register of per-UID persistent keyrings for this namespace */
+ #ifdef CONFIG_PERSISTENT_KEYRINGS
+diff --git a/kernel/groups.c b/kernel/groups.c
+index 451698f86cfa..b5ec42423202 100644
+--- a/kernel/groups.c
++++ b/kernel/groups.c
+@@ -6,6 +6,7 @@
+ #include <linux/slab.h>
+ #include <linux/security.h>
+ #include <linux/syscalls.h>
++#include <linux/user_namespace.h>
+ #include <asm/uaccess.h>
+ 
+ /* init to 2 - one for init_task, one to ensure it is never freed */
+@@ -223,6 +224,8 @@ SYSCALL_DEFINE2(setgroups, int, gidsetsize, gid_t __user *, grouplist)
+ 	struct group_info *group_info;
+ 	int retval;
+ 
++	if (!test_bit(USERNS_SETGROUPS_ALLOWED, &current_user_ns()->flags))
++		return -EPERM;
+ 	if (!ns_capable(current_user_ns(), CAP_SETGID))
+ 		return -EPERM;
+ 	if ((unsigned)gidsetsize > NGROUPS_MAX)
+diff --git a/kernel/user.c b/kernel/user.c
+index 4efa39350e44..58fba8ea0845 100644
+--- a/kernel/user.c
++++ b/kernel/user.c
+@@ -51,6 +51,7 @@ struct user_namespace init_user_ns = {
+ 	.owner = GLOBAL_ROOT_UID,
+ 	.group = GLOBAL_ROOT_GID,
+ 	.proc_inum = PROC_USER_INIT_INO,
++	.flags = (1 << USERNS_SETGROUPS_ALLOWED),
+ #ifdef CONFIG_PERSISTENT_KEYRINGS
+ 	.persistent_keyring_register_sem =
+ 	__RWSEM_INITIALIZER(init_user_ns.persistent_keyring_register_sem),
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index aa312b0dc3ec..1f63935483e9 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -601,6 +601,10 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 	char *kbuf, *pos, *next_line;
+ 	ssize_t ret = -EINVAL;
+ 
++	bool may_setgroups = false;
++	bool setgroups_requested = true;
++	bool seen_explicit_setgroups = false;
++
+ 	/*
+ 	 * The id_map_mutex serializes all writes to any given map.
+ 	 *
+@@ -633,6 +637,18 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 	if (cap_valid(cap_setid) && !file_ns_capable(file, ns, CAP_SYS_ADMIN))
+ 		goto out;
+ 
++	if (map == &ns->gid_map) {
++		/*
++		 * Setgroups is permitted if the writer and the
++		 * parent ns are privileged.
++		 */
++		may_setgroups =
++			test_bit(USERNS_SETGROUPS_ALLOWED,
++				 &ns->parent->flags) &&
++			file_ns_capable(file, ns->parent, CAP_SETGID) &&
++			ns_capable(ns->parent, CAP_SETGID);
++	}
++
+ 	/* Get a buffer */
+ 	ret = -ENOMEM;
+ 	page = __get_free_page(GFP_TEMPORARY);
+@@ -667,6 +683,23 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 				next_line = NULL;
+ 		}
+ 
++		/* Is this line a gid_map option? */
++		if (map == &ns->gid_map) {
++			if (!strcmp(pos, "setgroups deny")) {
++				if (seen_explicit_setgroups)
++					goto out;
++				seen_explicit_setgroups = true;
++				setgroups_requested = false;
++				continue;
++			} else if (!strcmp(pos, "setgroups allow")) {
++				if (seen_explicit_setgroups)
++					goto out;
++				seen_explicit_setgroups = true;
++				setgroups_requested = true;
++				continue;
++			}
++		}
++
+ 		pos = skip_spaces(pos);
+ 		extent->first = simple_strtoul(pos, &pos, 10);
+ 		if (!isspace(*pos))
+@@ -741,6 +774,15 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 		extent->lower_first = lower_first;
+ 	}
+ 
++	/* Validate and install setgroups permission. */
++	if (map == &ns->gid_map && setgroups_requested) {
++		if (!may_setgroups) {
++			ret = -EPERM;
++			goto out;
++		}
++		set_bit(USERNS_SETGROUPS_ALLOWED, &ns->flags);
++	}
++
+ 	/* Install the map */
+ 	memcpy(map->extent, new_map.extent,
+ 		new_map.nr_extents*sizeof(new_map.extent[0]));
+-- 
+1.9.3
+
