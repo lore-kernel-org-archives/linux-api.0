@@ -1,79 +1,95 @@
-From: Richard Yao <ryao-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>
-Subject: Why not make kdbus use CUSE?
-Date: Sat, 29 Nov 2014 06:34:16 +0000
-Message-ID: <20141129063416.GE32286@woodpecker.gentoo.org>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC PATCH] proc, pidns: Add highpid
+Date: Sat, 29 Nov 2014 07:19:10 -0800
+Message-ID: <CALCETrU6y_C=yViojK4sDOO48j_qhDxN9TjmzEmoG=tMDRKDcg@mail.gmail.com>
+References: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
+ <20141129042308.GB30450@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <systemd-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20141129042308.GB30450@kroah.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
+List-Post: <mailto:systemd-devel@lists.freedesktop.org>
+List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: systemd-devel-bounces@lists.freedesktop.org
+Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
+To: Greg KH <greg@kroah.com>
+Cc: systemd Mailing List <systemd-devel@lists.freedesktop.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-I had the opportunity at LinuxCon Europe to chat with Greg and some other kdbus
-developers. A few things stood out from our conversation that I thought I would
-bring to the list for discussion.
-
-The first is that I asked them why we need to add yet another IPC mechanism (and
-quite possibly another exploit target) to the kernel. Apparently, they want to
-use dbus to do multicast and the existing dbus software is not peformant enough.
-There was not much discussion of why the existing network stack is not usable
-for this, but I was not terribly concerned about it, so the remainder of our
-discussion focused on compatibility.
-
-They regard a userland compatibility shim in the systemd repostory to provide
-backward compatibility for applications. Unfortunately, this is insufficient to
-ensure compatibility because dependency trees have multiple levels. If cross
-platform package A depends on cross platform library B, which depends on dbus,
-and cross platform library B decides to switch to kdbus, then it ceases to be
-cross platform and cross platform package A is now dependent on Linux kernels
-with kdbus. Not only does that affect other POSIX systems, but it also affects
-LTS versions of Linux.
-
-It is somewhat tempting to think that being in the kernel is necessary for
-performance, this does not appear to be true from my discussion with Greg and
-others. In specific, a key advantage of being in the kernel is a reduction in
-context switches and consequently, one would expect programs using the old API
-to benefit, but they were quite clear to me that programs using the old API do
-not benefit. At the same time, we had a similar situation where people thought
-that the httpd server had to be inside the kernel until Linux 2.6, when our
-userland APIs improved to the point where we were able to get similar if not
-better performance in userland compared to the implementation of khttpd in Linux
-2.4.y.
-
-Putting daemons in the kernel is always more performant than putting daemons
-into userland, but it has the drawback of violating the principle of least
-privilege. When code is in userland, we can apply security mechanisms to it via
-things like SELinux and seccomp to limit the damage caused by compromise.  With
-an in-kernel component, there is no way of doing that. One might be tempted to
-think that controlling the IPC mechanism is as good as controlling the system,
-but this is not true when we consider things like lxc, where compromise of dbus
-in a container does not give full control over the system.
-
-I started to think that we probably ought to design a way to put kdbus into
-userland and then I realized that we already have one in the form of CUSE. This
-would not only makes kdbus play nicely with SELinux and lxc, but also other
-POSIX systems that currently share dbus with Linux systems, which includes older
-Linux kernels. Greg claimed that the kdbus code was fairly self contained and
-was just a character device, so I assume this is possible and I am curious why
-it is not done.
-
-I should probably mention one other thing that I recall from my discussion with
-Greg and others, which is that the systemd project wants to depend on it. The
-nature of controlling pid 1 means that systemd is more than capable of starting
-dbus before anything that needs it and that includes its own components (aside
-from its pid 1). The systemd project wanting the API is not a valid reason for
-why it should be in the kernel, although it could be a reason to make a CUSE
-version go into systemd's pid 1.
-
-That said, why not make kdbus use CUSE?
-
-P.S. I also mentioned my concern that having the shim in the systemd repository
-would have a negative effect on distributons that use alterntaive libc libraries
-because the systemd developers refuse to support alternative libc libraries. I
-mentioned this to one of the people to whom Greg introduced me (and whose name
-escapes me) as we were walking to Michael Kerrisk's talk on API design. I was
-told quite plainly that such distributions are not worth consideration. If kdbus
-is merged despite concerns about security and backward compatibility, could we
-at least have the shim moved to libc netural place, like Linus' tree?
+T24gTm92IDI4LCAyMDE0IDk6MjQgUE0sICJHcmVnIEtIIiA8Z3JlZ0Brcm9haC5jb20+IHdyb3Rl
+Ogo+Cj4gT24gRnJpLCBOb3YgMjgsIDIwMTQgYXQgMDM6MDU6MDFQTSAtMDgwMCwgQW5keSBMdXRv
+bWlyc2tpIHdyb3RlOgo+ID4gUGlkIHJldXNlIGlzIGNvbW1vbiwgd2hpY2ggbWVhbnMgdGhhdCBp
+dCdzIGRpZmZpY3VsdCBvciBpbXBvc3NpYmxlCj4gPiB0byByZWFkIGluZm9ybWF0aW9uIGFib3V0
+IGEgcGlkIGZyb20gL3Byb2Mgd2l0aG91dCByYWNlcy4KPiA+Cj4gPiBUaGlzIGludHJvZHVjZXMg
+YSBzZWNvbmQgbnVtYmVyIGFzc29jaWF0ZWQgd2l0aCBlYWNoICh0YXNrLCBwaWRucykKPiA+IHBh
+aXIgY2FsbGVkIGhpZ2hwaWQuICBIaWdocGlkIGlzIGEgNjQtYml0IG51bWJlciwgYW5kLCBiYXJy
+aW5nCj4gPiBleHRyZW1lbHkgdW5saWtlbHkgY2lyY3Vtc3RhbmNlcyBvciBvdXRyaWdodCBlcnJv
+ciwgYSAoaGlnaHBpZCwgcGlkKQo+ID4gd2lsbCBuZXZlciBiZSByZXVzZWQuCj4gPgo+ID4gV2l0
+aCBqdXN0IHRoaXMgY2hhbmdlLCBhIHByb2dyYW0gY2FuIG9wZW4gL3Byb2MvUElEL3N0YXR1cywg
+cmVhZCB0aGUKPiA+ICJIaWdocGlkIiBmaWVsZCwgYW5kIGNvbmZpcm0gdGhhdCBpdCBoYXMgdGhl
+IGV4cGVjdGVkIHZhbHVlLiAgSWYgdGhlCj4gPiBwaWQgaGFzIGJlZW4gcmV1c2VkLCB0aGVuIGhp
+Z2hwaWQgd2lsbCBiZSBkaWZmZXJlbnQuCj4gPgo+ID4gVGhlIGluaXRpYWwgaW1wbGVtZW50YXRp
+b24gaXMgc3RyYWlnaHRmb3J3YXJkOiBoaWdocGlkIGlzIHNpbXBseSBhCj4gPiA2NC1iaXQgY291
+bnRlci4gSWYgYSBoaWdoLWVuZCBzeXN0ZW0gY2FuIGZvcmsgZXZlcnkgMyBucyAod2hpY2gKPiA+
+IHdvdWxkIGJlIGFtYXppbmcsIGdpdmVuIHRoYXQganVzdCBhbGxvY2F0aW5nIGEgcGlkIHJlcXVp
+cmVzIGF0Cj4gPiBhdG9taWMgb3BlcmF0aW9uKSwgaXQgd291bGQgdGFrZSB3ZWxsIG92ZXIgMTAw
+MCB5ZWFycyBmb3IgaGlnaHBpZCB0bwo+ID4gd3JhcC4KPiA+Cj4gPiBGb3IgQ1JJVSdzIGJlbmVm
+aXQsIHRoZSBuZXh0IGhpZ2hwaWQgY2FuIGJlIHNldCBieSBhIHByaXZpbGVnZWQKPiA+IHVzZXIu
+Cj4gPgo+ID4gTkI6IFRoZSBzeXNjdGwgc3R1ZmYgb25seSB3b3JrcyBvbiA2NC1iaXQgc3lzdGVt
+cy4gIElmIHRoZSBhcHByb2FjaAo+ID4gbG9va3MgZ29vZCwgSSdsbCBmaXggdGhhdCBzb21laG93
+Lgo+ID4KPiA+IFNpZ25lZC1vZmYtYnk6IEFuZHkgTHV0b21pcnNraSA8bHV0b0BhbWFjYXBpdGFs
+Lm5ldD4KPiA+IC0tLQo+ID4KPiA+IElmIHRoaXMgZ29lcyBpbiwgdGhlcmUncyBwbGVudHkgb2Yg
+cm9vbSB0byBhZGQgbmV3IGludGVyZmFjZXMgdG8KPiA+IG1ha2UgdGhpcyBtb3JlIHVzZWZ1bC4g
+IEZvciBleGFtcGxlLCB3ZSBjb3VsZCBhZGQgYSBmYW5jaWVyIHRna2lsbAo+ID4gdGhhdCBhZGRz
+IGFuZCB2YWxpZGF0ZXMgaGlnaHRnaWQgYW5kIGhpZ2hwaWQsIGFuZCB3ZSBtaWdodCB3YW50IHRv
+Cj4gPiBhZGQgYSBzeXNjYWxsIHRvIHJlYWQgb25lJ3Mgb3duIGhpZ2h0Z2lkIGFuZCBoaWdocGlk
+LiAgVGhlc2Ugd291bGQKPiA+IGJlIHF1aXRlIHVzZWZ1bCBmb3IgcGlkZmlsZXMuCj4gPgo+ID4g
+RGF2aWQsIHdvdWxkIHRoaXMgYmUgdXNlZnVsIGZvciBrZGJ1cz8KPiA+Cj4gPiBDUklVIHBlb3Bs
+ZTogd2lsbCB0aGlzIGJlIHVuZHVseSBkaWZmaWN1bHQgdG8gc3VwcG9ydCBpbiBDUklVPwo+ID4K
+PiA+IElmIHlvdSBhbGwgdGhpbmsgdGhpcyBpcyBhIGdvb2QgaWRlYSwgSSdsbCBmaXggdGhlIHN5
+c2N0bCBzdHVmZiBhbmQKPiA+IGRvY3VtZW50IGl0LiAgSXQgbWlnaHQgYWxzbyBiZSB3b3J0aCBh
+ZGRpbmcgIkhpZ2h0Z2lkIiB0byBzdGF0dXMuCj4gPgo+ID4gIGZzL3Byb2MvYXJyYXkuYyAgICAg
+ICAgICAgICAgIHwgIDUgKysrKy0KPiA+ICBpbmNsdWRlL2xpbnV4L3BpZC5oICAgICAgICAgICB8
+ICAyICsrCj4gPiAgaW5jbHVkZS9saW51eC9waWRfbmFtZXNwYWNlLmggfCAgMSArCj4gPiAga2Vy
+bmVsL3BpZC5jICAgICAgICAgICAgICAgICAgfCAxOSArKysrKysrKysrKysrKystLS0tCj4gPiAg
+a2VybmVsL3BpZF9uYW1lc3BhY2UuYyAgICAgICAgfCAyMiArKysrKysrKysrKysrKysrKysrKysr
+Cj4gPiAgNSBmaWxlcyBjaGFuZ2VkLCA0NCBpbnNlcnRpb25zKCspLCA1IGRlbGV0aW9ucygtKQo+
+ID4KPiA+IGRpZmYgLS1naXQgYS9mcy9wcm9jL2FycmF5LmMgYi9mcy9wcm9jL2FycmF5LmMKPiA+
+IGluZGV4IGNkMzY1M2U0ZjM1Yy4uZjFlMGU2OWQxOWY5IDEwMDY0NAo+ID4gLS0tIGEvZnMvcHJv
+Yy9hcnJheS5jCj4gPiArKysgYi9mcy9wcm9jL2FycmF5LmMKPiA+IEBAIC0xNTksNiArMTU5LDcg
+QEAgc3RhdGljIGlubGluZSB2b2lkIHRhc2tfc3RhdGUoc3RydWN0IHNlcV9maWxlICptLCBzdHJ1
+Y3QgcGlkX25hbWVzcGFjZSAqbnMsCj4gPiAgICAgICBpbnQgZzsKPiA+ICAgICAgIHN0cnVjdCBm
+ZHRhYmxlICpmZHQgPSBOVUxMOwo+ID4gICAgICAgY29uc3Qgc3RydWN0IGNyZWQgKmNyZWQ7Cj4g
+PiArICAgICBjb25zdCBzdHJ1Y3QgdXBpZCAqdXBpZDsKPiA+ICAgICAgIHBpZF90IHBwaWQsIHRw
+aWQ7Cj4gPgo+ID4gICAgICAgcmN1X3JlYWRfbG9jaygpOwo+ID4gQEAgLTE3MCwxMiArMTcxLDE0
+IEBAIHN0YXRpYyBpbmxpbmUgdm9pZCB0YXNrX3N0YXRlKHN0cnVjdCBzZXFfZmlsZSAqbSwgc3Ry
+dWN0IHBpZF9uYW1lc3BhY2UgKm5zLAo+ID4gICAgICAgICAgICAgICBpZiAodHJhY2VyKQo+ID4g
+ICAgICAgICAgICAgICAgICAgICAgIHRwaWQgPSB0YXNrX3BpZF9ucl9ucyh0cmFjZXIsIG5zKTsK
+PiA+ICAgICAgIH0KPiA+ICsgICAgIHVwaWQgPSBwaWRfdXBpZF9ucyhwaWQsIG5zKTsKPiA+ICAg
+ICAgIGNyZWQgPSBnZXRfdGFza19jcmVkKHApOwo+ID4gICAgICAgc2VxX3ByaW50ZihtLAo+ID4g
+ICAgICAgICAgICAgICAiU3RhdGU6XHQlc1xuIgo+ID4gICAgICAgICAgICAgICAiVGdpZDpcdCVk
+XG4iCj4gPiAgICAgICAgICAgICAgICJOZ2lkOlx0JWRcbiIKPiA+ICAgICAgICAgICAgICAgIlBp
+ZDpcdCVkXG4iCj4gPiArICAgICAgICAgICAgICJIaWdocGlkOlx0JWxsdVxuIgo+ID4gICAgICAg
+ICAgICAgICAiUFBpZDpcdCVkXG4iCj4gPiAgICAgICAgICAgICAgICJUcmFjZXJQaWQ6XHQlZFxu
+Igo+ID4gICAgICAgICAgICAgICAiVWlkOlx0JWRcdCVkXHQlZFx0JWRcbiIKPgo+IENoYW5naW5n
+IGV4aXN0aW5nIHByb2MgZmlsZXMgbGlrZSB0aGlzIGlzIGRhbmdlcm91cyBhbmQgY2FuIGNhdXNl
+IGxvdHMKPiBvZiBicmVha2FnZSBpbiB1c2Vyc3BhY2UgcHJvZ3JhbXMgaWYgeW91IGFyZSBub3Qg
+Y2FyZWZ1bC4gIFVzdWFsbHkKPiBhZGRpbmcgZmllbGRzIHRvIHRoZSBlbmQgb2YgdGhlIGZpbGUg
+aXMgYmVzdCwgYnV0IHNvbWV0aW1lcyBldmVuIHRoZW4KPiB0aGluZ3MgY2FuIGJyZWFrIDooCgpQ
+b2ludCB0YWtlbi4gIEkgaGFkIGhvcGVkIHRoYXQgZXZlcnl0aGluZyB3b3VsZCBwYXJzZSAvcHJv
+Yy9QSUQvc3RhdHVzCmJ5IGxvb2tpbmcgZm9yIHRoZSBsYW1lZCBoZWFkZXJzLiAgSSdsbCBzZWUg
+d2hhdCB0aGUgaGlzdG9yeSBvZiBuZXcKZmllbGRzIGluIHRoZXJlIGlzLCBidXQgSSBjYW4gY2hh
+bmdlIHRoaXMgZWFzaWx5IGVub3VnaC4KCi0tQW5keQoKPiAtLQo+IFRvIHVuc3Vic2NyaWJlIGZy
+b20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51eC1hcGkiIGluCj4g
+dGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcKPiBNb3Jl
+IG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZv
+Lmh0bWwKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18Kc3lz
+dGVtZC1kZXZlbCBtYWlsaW5nIGxpc3QKc3lzdGVtZC1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5v
+cmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3N5c3RlbWQt
+ZGV2ZWwK
