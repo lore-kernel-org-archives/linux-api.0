@@ -1,38 +1,80 @@
-From: Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 44/46] virtio_scsi: export to userspace
-Date: Sun, 30 Nov 2014 21:43:23 +0000
-Message-ID: <CA+V-a8t6Gp8XyCAM8DVFrhyJzN5wdEMv8nn59mCP1FP6QQLwXg@mail.gmail.com>
-References: <1417359787-10138-1-git-send-email-mst@redhat.com> <1417359787-10138-45-git-send-email-mst@redhat.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC PATCH] proc, pidns: Add highpid
+Date: Sun, 30 Nov 2014 14:05:49 -0800
+Message-ID: <CALCETrW2wRnZagYrbgHWzpn4+MZV6EcDTA-LDqrfKL2AfCbodA@mail.gmail.com>
+References: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
+ <CANq1E4Qv1pukOr8ocUtE0QzLgWFEb3pT=5JXvERj98m-j9FS3Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417359787-10138-45-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, thuth-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Bjarke Istrup Pedersen <gurligebis-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Andy Grover <agrover-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, stephen hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Anup Patel <anup.patel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <systemd-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <CANq1E4Qv1pukOr8ocUtE0QzLgWFEb3pT=5JXvERj98m-j9FS3Q@mail.gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
+List-Post: <mailto:systemd-devel@lists.freedesktop.org>
+List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: systemd-devel-bounces@lists.freedesktop.org
+Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
-
-Thanks for the patch.
-
-On Sun, Nov 30, 2014 at 3:12 PM, Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Replace uXX by __uXX and _packed by __attribute((packed))
-> as seems to be the norm for userspace headers.
->
-> Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Acked-by: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
-> ---
->  include/uapi/linux/virtio_scsi.h | 74 ++++++++++++++++++++--------------------
->  include/uapi/linux/Kbuild        |  1 +
-
-Probably worth making a separate patch for this ? as it doesnt
-match with patch description aswel.
-
-Apart from that patch looks good.
-
-Acked-by: Lad, Prabhakar <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
-Regards,
---Prabhakar Lad
+T24gTm92IDMwLCAyMDE0IDk6NDUgQU0sICJEYXZpZCBIZXJybWFubiIgPGRoLmhlcnJtYW5uQGdt
+YWlsLmNvbT4gd3JvdGU6Cj4KPiBIaSBBbmR5Cj4KPiBPbiBTYXQsIE5vdiAyOSwgMjAxNCBhdCAx
+MjowNSBBTSwgQW5keSBMdXRvbWlyc2tpIDxsdXRvQGFtYWNhcGl0YWwubmV0PiB3cm90ZToKPiA+
+IFBpZCByZXVzZSBpcyBjb21tb24sIHdoaWNoIG1lYW5zIHRoYXQgaXQncyBkaWZmaWN1bHQgb3Ig
+aW1wb3NzaWJsZQo+ID4gdG8gcmVhZCBpbmZvcm1hdGlvbiBhYm91dCBhIHBpZCBmcm9tIC9wcm9j
+IHdpdGhvdXQgcmFjZXMuCj4gPgo+ID4gVGhpcyBpbnRyb2R1Y2VzIGEgc2Vjb25kIG51bWJlciBh
+c3NvY2lhdGVkIHdpdGggZWFjaCAodGFzaywgcGlkbnMpCj4gPiBwYWlyIGNhbGxlZCBoaWdocGlk
+LiAgSGlnaHBpZCBpcyBhIDY0LWJpdCBudW1iZXIsIGFuZCwgYmFycmluZwo+ID4gZXh0cmVtZWx5
+IHVubGlrZWx5IGNpcmN1bXN0YW5jZXMgb3Igb3V0cmlnaHQgZXJyb3IsIGEgKGhpZ2hwaWQsIHBp
+ZCkKPiA+IHdpbGwgbmV2ZXIgYmUgcmV1c2VkLgo+ID4KPiA+IFdpdGgganVzdCB0aGlzIGNoYW5n
+ZSwgYSBwcm9ncmFtIGNhbiBvcGVuIC9wcm9jL1BJRC9zdGF0dXMsIHJlYWQgdGhlCj4gPiAiSGln
+aHBpZCIgZmllbGQsIGFuZCBjb25maXJtIHRoYXQgaXQgaGFzIHRoZSBleHBlY3RlZCB2YWx1ZS4g
+IElmIHRoZQo+ID4gcGlkIGhhcyBiZWVuIHJldXNlZCwgdGhlbiBoaWdocGlkIHdpbGwgYmUgZGlm
+ZmVyZW50Lgo+ID4KPiA+IFRoZSBpbml0aWFsIGltcGxlbWVudGF0aW9uIGlzIHN0cmFpZ2h0Zm9y
+d2FyZDogaGlnaHBpZCBpcyBzaW1wbHkgYQo+ID4gNjQtYml0IGNvdW50ZXIuIElmIGEgaGlnaC1l
+bmQgc3lzdGVtIGNhbiBmb3JrIGV2ZXJ5IDMgbnMgKHdoaWNoCj4gPiB3b3VsZCBiZSBhbWF6aW5n
+LCBnaXZlbiB0aGF0IGp1c3QgYWxsb2NhdGluZyBhIHBpZCByZXF1aXJlcyBhdAo+ID4gYXRvbWlj
+IG9wZXJhdGlvbiksIGl0IHdvdWxkIHRha2Ugd2VsbCBvdmVyIDEwMDAgeWVhcnMgZm9yIGhpZ2hw
+aWQgdG8KPiA+IHdyYXAuCj4gPgo+ID4gRm9yIENSSVUncyBiZW5lZml0LCB0aGUgbmV4dCBoaWdo
+cGlkIGNhbiBiZSBzZXQgYnkgYSBwcml2aWxlZ2VkCj4gPiB1c2VyLgo+ID4KPiA+IE5COiBUaGUg
+c3lzY3RsIHN0dWZmIG9ubHkgd29ya3Mgb24gNjQtYml0IHN5c3RlbXMuICBJZiB0aGUgYXBwcm9h
+Y2gKPiA+IGxvb2tzIGdvb2QsIEknbGwgZml4IHRoYXQgc29tZWhvdy4KPiA+Cj4gPiBTaWduZWQt
+b2ZmLWJ5OiBBbmR5IEx1dG9taXJza2kgPGx1dG9AYW1hY2FwaXRhbC5uZXQ+Cj4gPiAtLS0KPiA+
+Cj4gPiBJZiB0aGlzIGdvZXMgaW4sIHRoZXJlJ3MgcGxlbnR5IG9mIHJvb20gdG8gYWRkIG5ldyBp
+bnRlcmZhY2VzIHRvCj4gPiBtYWtlIHRoaXMgbW9yZSB1c2VmdWwuICBGb3IgZXhhbXBsZSwgd2Ug
+Y291bGQgYWRkIGEgZmFuY2llciB0Z2tpbGwKPiA+IHRoYXQgYWRkcyBhbmQgdmFsaWRhdGVzIGhp
+Z2h0Z2lkIGFuZCBoaWdocGlkLCBhbmQgd2UgbWlnaHQgd2FudCB0bwo+ID4gYWRkIGEgc3lzY2Fs
+bCB0byByZWFkIG9uZSdzIG93biBoaWdodGdpZCBhbmQgaGlnaHBpZC4gIFRoZXNlIHdvdWxkCj4g
+PiBiZSBxdWl0ZSB1c2VmdWwgZm9yIHBpZGZpbGVzLgo+ID4KPiA+IERhdmlkLCB3b3VsZCB0aGlz
+IGJlIHVzZWZ1bCBmb3Iga2RidXM/Cj4KPiBNdWNoIGFwcHJlY2lhdGVkISBUaGlzIHdvdWxkIHNl
+cnZlIHdlbGwgYXMgcmVwbGFjZW1lbnQgZm9yCj4gJ3N0YXJ0dGltZScuIEknZCBwcmVmZXIgaWYg
+cGlkX3Qgd2FzIDY0Yml0LCBidXQgSSBndWVzcyB0aGF0IHNoaXAKPiBzYWlsZWQgbG9uZyBhZ28u
+IFRob3VnaCwgeW91ciBwYXRjaCBtaWdodCBpbiB0aGUgZW5kIGp1c3QgaW50cm9kdWNlIGEKPiBu
+ZXcgcGlkNjQsIHdoaWNoIHJlcGxhY2VzIHRoZSBvbGQgcGlkIGFuZCBsaXZlcyBpbiBwYXJhbGxl
+bC4KPgo+IEFueXdheSwgY29uc2lkZXJpbmcgdGhhdCB3ZSBhY3R1YWxseSB3YW50IHRoZSBzYW1l
+IHBpZC1yZXVzZQo+IHByb3RlY3Rpb24gZm9yIHRpZCwgdGdpZCwgcHBpZCBhbmQgc28gb24sIHdl
+J2QgaGF2ZSB0byBhZGQgYQo+ICdzdGFydHRpbWUnIGZvciBhbGwgb2YgdGhlbS4gU291bmRzIHVn
+bHkuLiBzbyB3ZSBtaWdodCBqdXN0IGVuZCB1cAo+IGRyb3BwaW5nICdzdGFydHRpbWUnIGFuZCBp
+bnRyb2R1Y2UgS0RCVVNfSVRFTV9QSURTMiB3aGVuZXZlciBhICdmaXgnCj4gaXMgbWVyZ2VkIHVw
+c3RyZWFtLgoKSSBkb24ndCB1bmRlcnN0YW5kICJ3ZSB3YW50Ii4gIERvZXNuJ3Qga2RidXMgY3Vy
+cmVudGx5IG9ubHkgdGhpbmsKYWJvdXQgdGlkIGFuZCB0Z2lkPwoKSW4gYW55IGV2ZW50LCBJIGp1
+c3QgbG9va2VkIGF0IHRoZSBrZGJ1cyBjb2RlCihodHRwczovL2dpdGh1Yi5jb20vZ3JlZ2toL2tk
+YnVzL2Jsb2IvbWFzdGVyL21ldGFkYXRhLmMpLCBhbmQgSSBzZWU6CgptZXRhLT5waWQgPSBnZXRf
+cGlkKHRhc2tfcGlkKGN1cnJlbnQpKTsKbWV0YS0+dGdpZCA9IGdldF9waWQodGFza190Z2lkKGN1
+cnJlbnQpKTsKbWV0YS0+c3RhcnR0aW1lID0gY3VycmVudC0+c3RhcnRfdGltZSwKCkkgZG9uJ3Qg
+dW5kZXJzdGFuZCBob3cgdGhhdCBjb25jZXB0IG9mIHN0YXJ0dGltZSBpcyBwYXJ0aWN1bGFybHkK
+dXNlZnVsLiAgSXNuJ3QgdGhhdCB0aGUgc3RhcnQgdGltZSBhc3NvY2lhdGVkIHdpdGggdGlkPyAg
+SG93IGNhbiB0aGF0CmJlIHVzZWZ1bCB3aGVuIGxvb2tpbmcgdXAgdGdpZD8KClJlZ2FyZGxlc3Ms
+IG15IHBhdGNoIGhlcmUgYXNzb2NpYXRlcyBhIGhpZ2hwaWQgd2l0aCBlYWNoIHN0cnVjdCBwaWQs
+CmFuZCBib3RoIHRpZCBhbmQgdGdpZCBhcmUganVzdCBzdHJ1Y3QgcGlkcywgc28geW91IGdldCBi
+b3RoLiAgSSBhZ3JlZQp0aGF0IGFkZGluZyBIaWdocHBpZCB0byAvcHJvYyBtaWdodCBiZSB1c2Vm
+dWwsIGJ1dCB0aGF0IHNlZW1zIGxpa2UgYQpmdXR1cmUgZXh0ZW5zaW9uIHRoYXQgaGFzIG5vdGhp
+bmcgdG8gZG8gd2l0aCBrZGJ1cy4KCi0tQW5keQpfX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fXwpzeXN0ZW1kLWRldmVsIG1haWxpbmcgbGlzdApzeXN0ZW1kLWRl
+dmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21h
+aWxtYW4vbGlzdGluZm8vc3lzdGVtZC1kZXZlbAo=
