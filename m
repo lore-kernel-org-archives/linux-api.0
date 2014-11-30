@@ -1,78 +1,29 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH net-next 3/6] samples: bpf: example of stateful socket filtering
-Date: Sat, 29 Nov 2014 22:24:28 -0800
-Message-ID: <CAMEtUuw+z61FL81-_aZ0=D5XKm-_gh+Cs1uGL2th+0A+hcYPGQ@mail.gmail.com>
-References: <1417066951-1999-1-git-send-email-ast@plumgrid.com>
-	<1417066951-1999-4-git-send-email-ast@plumgrid.com>
-	<20141129.210158.2021042941461629799.davem@davemloft.net>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: kdbus: add documentation
+Date: Sun, 30 Nov 2014 09:56:43 +0100
+Message-ID: <8761dxysl0.fsf@mid.deneb.enyo.de>
+References: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
+	<1416546149-24799-2-git-send-email-gregkh@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141129.210158.2021042941461629799.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1416546149-24799-2-git-send-email-gregkh@linuxfoundation.org>
+	(Greg Kroah-Hartman's message of "Thu, 20 Nov 2014 21:02:17 -0800")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.no, jkosina@suse.cz, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, daniel@zonque.org, dh.herrmann@gmail.com, tixxdz@opendz.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 29, 2014 at 9:01 PM, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org> wrote:
-> From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-> Date: Wed, 26 Nov 2014 21:42:28 -0800
->
->> this socket filter example does:
->> - creates arraymap in kernel with key 4 bytes and value 8 bytes
->>
->> - loads eBPF program:
->>   r0 = skb[14 + 9]; // load one byte of ip->proto
->  ...
->> +             BPF_LD_ABS(BPF_B, 14 + 9 /* R0 = ip->proto */),
->
-> I do not want anything having to do with fixed offsets from
-> the skb.
->
-> Nothing should know where things are in the SKB structure,
-> especially user facing things.
->
-> That's why we have explicit BPF operations for fetching
-> specific SKB members, so that the layout is completely
-> transparent to the entity generating BPF programs.
->
-> Besides retaining the flexibility of changing the SKB
-> layout arbitrarily without breaking bpf programs, there
-> are also security considerations from allowing bpf
-> programs to load arbitrary offsets.
->
-> Sorry, I do not like this patch series at all.
+* Greg Kroah-Hartman:
 
-sigh.
-You misunderstood one wrong comment in the whole series.
-r0 = skb[14 + 9]; // load one byte of ip->proto
-is saying
-r0 = skb->data[14 + 9]; // load one byte of ip->proto
-it's loading one byte of packet payload and
-not one byte of skb structure.
+> +The focus of this document is an overview of the low-level, native kernel D-Bus
+> +transport called kdbus. Kdbus exposes its functionality via files in a
+> +filesystem called 'kdbusfs'. All communication between processes takes place
+> +via ioctls on files exposed through the mount point of a kdbusfs. The default
+> +mount point of kdbusfs is /sys/fs/kdbus.
 
-There are plenty of other comments where I mentioned that.
-Including cover letter:
-"Though native eBPF programs are way more powerful than classic filters
-(attachable through similar setsockopt() call), they don't have skb field
-accessors yet. Like skb->pkt_type, skb->dev->ifindex are not accessible.
-There are sevaral ways to achieve that. That will be in the next set of patches.
-So in this set native eBPF programs can only read data from packet and
-access maps"
-
-and in patch #2:
-+static bool sock_filter_is_valid_access(int off, int size, enum
-bpf_access_type type)
-+{
-+       /* skb fields cannot be accessed yet */
-+       return false;
-+}
-
-In other words, there is no way to access skb fields yet.
-There are several different ways I've implemented to
-access skb fields, but they all had their cons and pros, so I
-dropped them all to focus on basic things first.
-Which is: read packet data and access maps.
-
-Please let me know if you want me to fix this comment
-in this patch of sample code.
+Does this mean the bus does not enforce the correctness of the D-Bus
+introspection metadata?  That's really unfortunate.  Classic D-Bus
+does not do this, either, and combined with the variety of approaches
+used to implement D-Bus endpoints, it makes it really difficult to
+figure out what D-Bus services, exactly, a process provides.
