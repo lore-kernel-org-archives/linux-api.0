@@ -1,7 +1,7 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v7 44/46] virtio_scsi: export to userspace
-Date: Sun, 30 Nov 2014 17:12:56 +0200
-Message-ID: <1417359787-10138-45-git-send-email-mst@redhat.com>
+Subject: [PATCH v7 37/46] tun: move internal flag defines out of uapi
+Date: Sun, 30 Nov 2014 17:12:18 +0200
+Message-ID: <1417359787-10138-38-git-send-email-mst@redhat.com>
 References: <1417359787-10138-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -10,150 +10,156 @@ Content-Disposition: inline
 In-Reply-To: <1417359787-10138-1-git-send-email-mst@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Rusty Russell <rusty@rustcorp.com.au>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexei Starovoitov <ast@plumgrid.com>, "Lad, Prabhakar" <prabhakar.csengg@gmail.com>, Bjarke Istrup Pedersen <gurligebis@gentoo.org>, Andy Grover <agrover@redhat.com>, stephen hemminger <stephen@networkplumber.org>, Sakari Ailus <sakari.ailus@linux.intel.com>, Anup Patel <anup.patel@linaro.org>, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
+Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Jason Wang <jasowang@redhat.com>, Zhi Yong Wu <wuzhy@linux.vnet.ibm.com>, Herbert Xu <herbert@gondor.apana.org.au>, Tom Herbert <therbert@google.com>, Ben Hutchings <ben@decadent.org.uk>, Masatake YAMATO <yamato@redhat.com>, Xi Wang <xii@google.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Replace uXX by __uXX and _packed by __attribute((packed))
-as seems to be the norm for userspace headers.
+TUN_ flags are internal and never exposed
+to userspace. Any application using it is almost
+certainly buggy.
+
+Move them out to tun.c.
+
+Note: we remove these completely in follow-up patches,
+this code movement is split out for ease of review.
 
 Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
 ---
- include/uapi/linux/virtio_scsi.h | 74 ++++++++++++++++++++--------------------
- include/uapi/linux/Kbuild        |  1 +
- 2 files changed, 38 insertions(+), 37 deletions(-)
+ include/uapi/linux/if_tun.h | 16 ++--------
+ drivers/net/tun.c           | 72 +++++++++++++--------------------------------
+ 2 files changed, 24 insertions(+), 64 deletions(-)
 
-diff --git a/include/uapi/linux/virtio_scsi.h b/include/uapi/linux/virtio_scsi.h
-index af44864..42b9370 100644
---- a/include/uapi/linux/virtio_scsi.h
-+++ b/include/uapi/linux/virtio_scsi.h
-@@ -34,78 +34,78 @@
+diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
+index e9502dd..277a260 100644
+--- a/include/uapi/linux/if_tun.h
++++ b/include/uapi/linux/if_tun.h
+@@ -22,21 +22,11 @@
  
- /* SCSI command request, followed by data-out */
- struct virtio_scsi_cmd_req {
--	u8 lun[8];		/* Logical Unit Number */
-+	__u8 lun[8];		/* Logical Unit Number */
- 	__virtio64 tag;		/* Command identifier */
--	u8 task_attr;		/* Task attribute */
--	u8 prio;		/* SAM command priority field */
--	u8 crn;
--	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
--} __packed;
-+	__u8 task_attr;		/* Task attribute */
-+	__u8 prio;		/* SAM command priority field */
-+	__u8 crn;
-+	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
-+} __attribute__((packed));
+ /* Read queue size */
+ #define TUN_READQ_SIZE	500
+-
+-/* TUN device flags */
+-#define TUN_TUN_DEV 	0x0001	
+-#define TUN_TAP_DEV	0x0002
++/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
++#define TUN_TUN_DEV 	IFF_TUN
++#define TUN_TAP_DEV	IFF_TAP
+ #define TUN_TYPE_MASK   0x000f
  
- /* SCSI command request, followed by protection information */
- struct virtio_scsi_cmd_req_pi {
--	u8 lun[8];		/* Logical Unit Number */
-+	__u8 lun[8];		/* Logical Unit Number */
- 	__virtio64 tag;		/* Command identifier */
--	u8 task_attr;		/* Task attribute */
--	u8 prio;		/* SAM command priority field */
--	u8 crn;
-+	__u8 task_attr;		/* Task attribute */
-+	__u8 prio;		/* SAM command priority field */
-+	__u8 crn;
- 	__virtio32 pi_bytesout;	/* DataOUT PI Number of bytes */
- 	__virtio32 pi_bytesin;		/* DataIN PI Number of bytes */
--	u8 cdb[VIRTIO_SCSI_CDB_SIZE];
--} __packed;
-+	__u8 cdb[VIRTIO_SCSI_CDB_SIZE];
-+} __attribute__((packed));
+-#define TUN_FASYNC	0x0010
+-#define TUN_NOCHECKSUM	0x0020
+-#define TUN_NO_PI	0x0040
+-/* This flag has no real effect */
+-#define TUN_ONE_QUEUE	0x0080
+-#define TUN_PERSIST 	0x0100	
+-#define TUN_VNET_HDR 	0x0200
+-#define TUN_TAP_MQ      0x0400
+-
+ /* Ioctl defines */
+ #define TUNSETNOCSUM  _IOW('T', 200, int) 
+ #define TUNSETDEBUG   _IOW('T', 201, int) 
+diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+index 9dd3746..b4e4ca0 100644
+--- a/drivers/net/tun.c
++++ b/drivers/net/tun.c
+@@ -103,6 +103,21 @@ do {								\
+ } while (0)
+ #endif
  
- /* Response, followed by sense data and data-in */
- struct virtio_scsi_cmd_resp {
- 	__virtio32 sense_len;		/* Sense data length */
- 	__virtio32 resid;		/* Residual bytes in data buffer */
- 	__virtio16 status_qualifier;	/* Status qualifier */
--	u8 status;		/* Command completion status */
--	u8 response;		/* Response values */
--	u8 sense[VIRTIO_SCSI_SENSE_SIZE];
--} __packed;
-+	__u8 status;		/* Command completion status */
-+	__u8 response;		/* Response values */
-+	__u8 sense[VIRTIO_SCSI_SENSE_SIZE];
-+} __attribute__((packed));
++/* TUN device flags */
++
++/* IFF_ATTACH_QUEUE is never stored in device flags,
++ * overload it to mean fasync when stored there.
++ */
++#define TUN_FASYNC	IFF_ATTACH_QUEUE
++#define TUN_NO_PI	IFF_NO_PI
++/* This flag has no real effect */
++#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
++#define TUN_PERSIST 	IFF_PERSIST
++#define TUN_VNET_HDR 	IFF_VNET_HDR
++#define TUN_TAP_MQ      IFF_MULTI_QUEUE
++
++#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
++		      IFF_MULTI_QUEUE)
+ #define GOODCOPY_LEN 128
  
- /* Task Management Request */
- struct virtio_scsi_ctrl_tmf_req {
- 	__virtio32 type;
- 	__virtio32 subtype;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio64 tag;
--} __packed;
-+} __attribute__((packed));
+ #define FLT_EXACT_COUNT 8
+@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
  
- struct virtio_scsi_ctrl_tmf_resp {
--	u8 response;
--} __packed;
-+	__u8 response;
-+} __attribute__((packed));
+ static int tun_flags(struct tun_struct *tun)
+ {
+-	int flags = 0;
+-
+-	if (tun->flags & TUN_TUN_DEV)
+-		flags |= IFF_TUN;
+-	else
+-		flags |= IFF_TAP;
+-
+-	if (tun->flags & TUN_NO_PI)
+-		flags |= IFF_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (tun->flags & TUN_ONE_QUEUE)
+-		flags |= IFF_ONE_QUEUE;
+-
+-	if (tun->flags & TUN_VNET_HDR)
+-		flags |= IFF_VNET_HDR;
+-
+-	if (tun->flags & TUN_TAP_MQ)
+-		flags |= IFF_MULTI_QUEUE;
+-
+-	if (tun->flags & TUN_PERSIST)
+-		flags |= IFF_PERSIST;
+-
+-	return flags;
++	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
+ }
  
- /* Asynchronous notification query/subscription */
- struct virtio_scsi_ctrl_an_req {
- 	__virtio32 type;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio32 event_requested;
--} __packed;
-+} __attribute__((packed));
+ static ssize_t tun_show_flags(struct device *dev, struct device_attribute *attr,
+@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
  
- struct virtio_scsi_ctrl_an_resp {
- 	__virtio32 event_actual;
--	u8 response;
--} __packed;
-+	__u8 response;
-+} __attribute__((packed));
+ 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
  
- struct virtio_scsi_event {
- 	__virtio32 event;
--	u8 lun[8];
-+	__u8 lun[8];
- 	__virtio32 reason;
--} __packed;
-+} __attribute__((packed));
+-	if (ifr->ifr_flags & IFF_NO_PI)
+-		tun->flags |= TUN_NO_PI;
+-	else
+-		tun->flags &= ~TUN_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (ifr->ifr_flags & IFF_ONE_QUEUE)
+-		tun->flags |= TUN_ONE_QUEUE;
+-	else
+-		tun->flags &= ~TUN_ONE_QUEUE;
+-
+-	if (ifr->ifr_flags & IFF_VNET_HDR)
+-		tun->flags |= TUN_VNET_HDR;
+-	else
+-		tun->flags &= ~TUN_VNET_HDR;
+-
+-	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
+-		tun->flags |= TUN_TAP_MQ;
+-	else
+-		tun->flags &= ~TUN_TAP_MQ;
++	tun->flags = (tun->flags & ~TUN_FEATURES) |
++		(ifr->ifr_flags & TUN_FEATURES);
  
- struct virtio_scsi_config {
--	u32 num_queues;
--	u32 seg_max;
--	u32 max_sectors;
--	u32 cmd_per_lun;
--	u32 event_info_size;
--	u32 sense_size;
--	u32 cdb_size;
--	u16 max_channel;
--	u16 max_target;
--	u32 max_lun;
--} __packed;
-+	__u32 num_queues;
-+	__u32 seg_max;
-+	__u32 max_sectors;
-+	__u32 cmd_per_lun;
-+	__u32 event_info_size;
-+	__u32 sense_size;
-+	__u32 cdb_size;
-+	__u16 max_channel;
-+	__u16 max_target;
-+	__u32 max_lun;
-+} __attribute__((packed));
- 
- /* Feature Bits */
- #define VIRTIO_SCSI_F_INOUT                    0
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 44a5581..e61947c 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -428,6 +428,7 @@ header-y += virtio_net.h
- header-y += virtio_pci.h
- header-y += virtio_ring.h
- header-y += virtio_rng.h
-+header-y += virtio_scsi.h
- header=y += vm_sockets.h
- header-y += vt.h
- header-y += wait.h
+ 	/* Make sure persistent devices do not get stuck in
+ 	 * xoff state.
+@@ -1890,9 +1860,9 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
+ 	if (cmd == TUNGETFEATURES) {
+ 		/* Currently this just means: "what IFF flags are valid?".
+ 		 * This is needed because we never checked for invalid flags on
+-		 * TUNSETIFF. */
+-		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
+-				IFF_VNET_HDR | IFF_MULTI_QUEUE,
++		 * TUNSETIFF.
++		 */
++		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
+ 				(unsigned int __user*)argp);
+ 	} else if (cmd == TUNSETQUEUE)
+ 		return tun_set_queue(file, &ifr);
 -- 
 MST
