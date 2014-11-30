@@ -1,50 +1,37 @@
-From: David Herrmann <dh.herrmann@gmail.com>
+From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: kdbus: add documentation
-Date: Sun, 30 Nov 2014 18:12:39 +0100
-Message-ID: <CANq1E4QJhbypbs1PueKdW7AmBPiiYEg1dN-fsAewDJap82feyg@mail.gmail.com>
+Date: Sun, 30 Nov 2014 18:15:14 +0100
+Message-ID: <CANq1E4RjwCVEVT7031CeiKrNvRFkLBZc4-X1uKdrdzpf=EwJ+A@mail.gmail.com>
 References: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
 	<1416546149-24799-2-git-send-email-gregkh@linuxfoundation.org>
-	<CALCETrWUekPq6pquuiVperBihQHgcvCF=WzVJTZziHhUJYsh4Q@mail.gmail.com>
-	<87tx1hxdgy.fsf@mid.deneb.enyo.de>
+	<871tolysbb.fsf@mid.deneb.enyo.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87tx1hxdgy.fsf@mid.deneb.enyo.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>
-Cc: Andy Lutomirski <luto@amacapital.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Daniel Mack <daniel@zonque.org>, Djalal Harouni <tixxdz@opendz.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <871tolysbb.fsf-ZqZwdwZz9NfTBotR3TxKnbNAH6kLmebB@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 Hi
 
-On Sun, Nov 30, 2014 at 10:08 AM, Florian Weimer <fw@deneb.enyo.de> wrote:
-> * Andy Lutomirski:
+On Sun, Nov 30, 2014 at 10:02 AM, Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org> wrote:
+> * Greg Kroah-Hartman:
 >
->> At the risk of opening a can of worms, wouldn't this be much more
->> useful if you could share a pool between multiple connections?
+>> +7.4 Receiving messages
 >
-> They would also be useful to reduce context switches when receiving
-> data from all kinds of descriptors.  At present, when polling, you
-> receive notification, and then you have to call into the kernel,
-> again, to actually fetch the data and associated information.
+>> +Also, if the connection allowed for file descriptor to be passed
+>> +(KDBUS_HELLO_ACCEPT_FD), and if the message contained any, they will be
+>> +installed into the receiving process after the KDBUS_CMD_MSG_RECV ioctl
+>> +returns. The receiving task is obliged to close all of them appropriately.
+>
+> What happens if this is not possible because the file descriptor limit
+> of the processes would be exceeded?  EMFILE, and the message will not
+> be received?
 
-poll(2) and friends cannot return data for changed descriptors. I
-think a single trap for each KDBUS_CMD_MSG_RECV is acceptable. If this
-turns out to be a bottleneck, we can provide bulk-operations in the
-future. Anyway, I don't see how a _shared_ pool would change any of
-this?
-
-> kernel could also queue the data for one specific recipient,
-> addressing the same issue that SO_REUSEPORT tries to solve (on poll
-> notification, the kernel does not know which recipient will eventually
-> retrieve the data, so it has to notify and wake up all of them).
-
-We already queue data only for the addressed recipients. We *do* know
-all recipients of a message at poll-notification time. We only wake up
-recipients that actually got a message queued.
-
-Not sure how this is related to SO_REUSEPORT. Can you elaborate on
-your optimizations?
+The message is returned without installing the FDs. This is signaled
+by EMFILE, but a valid pool offset.
 
 Thanks
 David
