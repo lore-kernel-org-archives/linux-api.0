@@ -1,165 +1,63 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v7 37/46] tun: move internal flag defines out of uapi
-Date: Sun, 30 Nov 2014 17:12:18 +0200
-Message-ID: <1417359787-10138-38-git-send-email-mst@redhat.com>
-References: <1417359787-10138-1-git-send-email-mst@redhat.com>
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: Re: [RFC PATCH] proc, pidns: Add highpid
+Date: Sun, 30 Nov 2014 17:45:31 +0100
+Message-ID: <CANq1E4Qv1pukOr8ocUtE0QzLgWFEb3pT=5JXvERj98m-j9FS3Q@mail.gmail.com>
+References: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1417359787-10138-1-git-send-email-mst@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Jason Wang <jasowang@redhat.com>, Zhi Yong Wu <wuzhy@linux.vnet.ibm.com>, Herbert Xu <herbert@gondor.apana.org.au>, Tom Herbert <therbert@google.com>, Ben Hutchings <ben@decadent.org.uk>, Masatake YAMATO <yamato@redhat.com>, Xi Wang <xii@google.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <systemd-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
+List-Post: <mailto:systemd-devel@lists.freedesktop.org>
+List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: systemd-devel-bounces@lists.freedesktop.org
+Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, linux-kernel <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-TUN_ flags are internal and never exposed
-to userspace. Any application using it is almost
-certainly buggy.
-
-Move them out to tun.c.
-
-Note: we remove these completely in follow-up patches,
-this code movement is split out for ease of review.
-
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
----
- include/uapi/linux/if_tun.h | 16 ++--------
- drivers/net/tun.c           | 72 +++++++++++++--------------------------------
- 2 files changed, 24 insertions(+), 64 deletions(-)
-
-diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
-index e9502dd..277a260 100644
---- a/include/uapi/linux/if_tun.h
-+++ b/include/uapi/linux/if_tun.h
-@@ -22,21 +22,11 @@
- 
- /* Read queue size */
- #define TUN_READQ_SIZE	500
--
--/* TUN device flags */
--#define TUN_TUN_DEV 	0x0001	
--#define TUN_TAP_DEV	0x0002
-+/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
-+#define TUN_TUN_DEV 	IFF_TUN
-+#define TUN_TAP_DEV	IFF_TAP
- #define TUN_TYPE_MASK   0x000f
- 
--#define TUN_FASYNC	0x0010
--#define TUN_NOCHECKSUM	0x0020
--#define TUN_NO_PI	0x0040
--/* This flag has no real effect */
--#define TUN_ONE_QUEUE	0x0080
--#define TUN_PERSIST 	0x0100	
--#define TUN_VNET_HDR 	0x0200
--#define TUN_TAP_MQ      0x0400
--
- /* Ioctl defines */
- #define TUNSETNOCSUM  _IOW('T', 200, int) 
- #define TUNSETDEBUG   _IOW('T', 201, int) 
-diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-index 9dd3746..b4e4ca0 100644
---- a/drivers/net/tun.c
-+++ b/drivers/net/tun.c
-@@ -103,6 +103,21 @@ do {								\
- } while (0)
- #endif
- 
-+/* TUN device flags */
-+
-+/* IFF_ATTACH_QUEUE is never stored in device flags,
-+ * overload it to mean fasync when stored there.
-+ */
-+#define TUN_FASYNC	IFF_ATTACH_QUEUE
-+#define TUN_NO_PI	IFF_NO_PI
-+/* This flag has no real effect */
-+#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
-+#define TUN_PERSIST 	IFF_PERSIST
-+#define TUN_VNET_HDR 	IFF_VNET_HDR
-+#define TUN_TAP_MQ      IFF_MULTI_QUEUE
-+
-+#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
-+		      IFF_MULTI_QUEUE)
- #define GOODCOPY_LEN 128
- 
- #define FLT_EXACT_COUNT 8
-@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
- 
- static int tun_flags(struct tun_struct *tun)
- {
--	int flags = 0;
--
--	if (tun->flags & TUN_TUN_DEV)
--		flags |= IFF_TUN;
--	else
--		flags |= IFF_TAP;
--
--	if (tun->flags & TUN_NO_PI)
--		flags |= IFF_NO_PI;
--
--	/* This flag has no real effect.  We track the value for backwards
--	 * compatibility.
--	 */
--	if (tun->flags & TUN_ONE_QUEUE)
--		flags |= IFF_ONE_QUEUE;
--
--	if (tun->flags & TUN_VNET_HDR)
--		flags |= IFF_VNET_HDR;
--
--	if (tun->flags & TUN_TAP_MQ)
--		flags |= IFF_MULTI_QUEUE;
--
--	if (tun->flags & TUN_PERSIST)
--		flags |= IFF_PERSIST;
--
--	return flags;
-+	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
- }
- 
- static ssize_t tun_show_flags(struct device *dev, struct device_attribute *attr,
-@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
- 
- 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
- 
--	if (ifr->ifr_flags & IFF_NO_PI)
--		tun->flags |= TUN_NO_PI;
--	else
--		tun->flags &= ~TUN_NO_PI;
--
--	/* This flag has no real effect.  We track the value for backwards
--	 * compatibility.
--	 */
--	if (ifr->ifr_flags & IFF_ONE_QUEUE)
--		tun->flags |= TUN_ONE_QUEUE;
--	else
--		tun->flags &= ~TUN_ONE_QUEUE;
--
--	if (ifr->ifr_flags & IFF_VNET_HDR)
--		tun->flags |= TUN_VNET_HDR;
--	else
--		tun->flags &= ~TUN_VNET_HDR;
--
--	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
--		tun->flags |= TUN_TAP_MQ;
--	else
--		tun->flags &= ~TUN_TAP_MQ;
-+	tun->flags = (tun->flags & ~TUN_FEATURES) |
-+		(ifr->ifr_flags & TUN_FEATURES);
- 
- 	/* Make sure persistent devices do not get stuck in
- 	 * xoff state.
-@@ -1890,9 +1860,9 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
- 	if (cmd == TUNGETFEATURES) {
- 		/* Currently this just means: "what IFF flags are valid?".
- 		 * This is needed because we never checked for invalid flags on
--		 * TUNSETIFF. */
--		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
--				IFF_VNET_HDR | IFF_MULTI_QUEUE,
-+		 * TUNSETIFF.
-+		 */
-+		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
- 				(unsigned int __user*)argp);
- 	} else if (cmd == TUNSETQUEUE)
- 		return tun_set_queue(file, &ifr);
--- 
-MST
+SGkgQW5keQoKT24gU2F0LCBOb3YgMjksIDIwMTQgYXQgMTI6MDUgQU0sIEFuZHkgTHV0b21pcnNr
+aSA8bHV0b0BhbWFjYXBpdGFsLm5ldD4gd3JvdGU6Cj4gUGlkIHJldXNlIGlzIGNvbW1vbiwgd2hp
+Y2ggbWVhbnMgdGhhdCBpdCdzIGRpZmZpY3VsdCBvciBpbXBvc3NpYmxlCj4gdG8gcmVhZCBpbmZv
+cm1hdGlvbiBhYm91dCBhIHBpZCBmcm9tIC9wcm9jIHdpdGhvdXQgcmFjZXMuCj4KPiBUaGlzIGlu
+dHJvZHVjZXMgYSBzZWNvbmQgbnVtYmVyIGFzc29jaWF0ZWQgd2l0aCBlYWNoICh0YXNrLCBwaWRu
+cykKPiBwYWlyIGNhbGxlZCBoaWdocGlkLiAgSGlnaHBpZCBpcyBhIDY0LWJpdCBudW1iZXIsIGFu
+ZCwgYmFycmluZwo+IGV4dHJlbWVseSB1bmxpa2VseSBjaXJjdW1zdGFuY2VzIG9yIG91dHJpZ2h0
+IGVycm9yLCBhIChoaWdocGlkLCBwaWQpCj4gd2lsbCBuZXZlciBiZSByZXVzZWQuCj4KPiBXaXRo
+IGp1c3QgdGhpcyBjaGFuZ2UsIGEgcHJvZ3JhbSBjYW4gb3BlbiAvcHJvYy9QSUQvc3RhdHVzLCBy
+ZWFkIHRoZQo+ICJIaWdocGlkIiBmaWVsZCwgYW5kIGNvbmZpcm0gdGhhdCBpdCBoYXMgdGhlIGV4
+cGVjdGVkIHZhbHVlLiAgSWYgdGhlCj4gcGlkIGhhcyBiZWVuIHJldXNlZCwgdGhlbiBoaWdocGlk
+IHdpbGwgYmUgZGlmZmVyZW50Lgo+Cj4gVGhlIGluaXRpYWwgaW1wbGVtZW50YXRpb24gaXMgc3Ry
+YWlnaHRmb3J3YXJkOiBoaWdocGlkIGlzIHNpbXBseSBhCj4gNjQtYml0IGNvdW50ZXIuIElmIGEg
+aGlnaC1lbmQgc3lzdGVtIGNhbiBmb3JrIGV2ZXJ5IDMgbnMgKHdoaWNoCj4gd291bGQgYmUgYW1h
+emluZywgZ2l2ZW4gdGhhdCBqdXN0IGFsbG9jYXRpbmcgYSBwaWQgcmVxdWlyZXMgYXQKPiBhdG9t
+aWMgb3BlcmF0aW9uKSwgaXQgd291bGQgdGFrZSB3ZWxsIG92ZXIgMTAwMCB5ZWFycyBmb3IgaGln
+aHBpZCB0bwo+IHdyYXAuCj4KPiBGb3IgQ1JJVSdzIGJlbmVmaXQsIHRoZSBuZXh0IGhpZ2hwaWQg
+Y2FuIGJlIHNldCBieSBhIHByaXZpbGVnZWQKPiB1c2VyLgo+Cj4gTkI6IFRoZSBzeXNjdGwgc3R1
+ZmYgb25seSB3b3JrcyBvbiA2NC1iaXQgc3lzdGVtcy4gIElmIHRoZSBhcHByb2FjaAo+IGxvb2tz
+IGdvb2QsIEknbGwgZml4IHRoYXQgc29tZWhvdy4KPgo+IFNpZ25lZC1vZmYtYnk6IEFuZHkgTHV0
+b21pcnNraSA8bHV0b0BhbWFjYXBpdGFsLm5ldD4KPiAtLS0KPgo+IElmIHRoaXMgZ29lcyBpbiwg
+dGhlcmUncyBwbGVudHkgb2Ygcm9vbSB0byBhZGQgbmV3IGludGVyZmFjZXMgdG8KPiBtYWtlIHRo
+aXMgbW9yZSB1c2VmdWwuICBGb3IgZXhhbXBsZSwgd2UgY291bGQgYWRkIGEgZmFuY2llciB0Z2tp
+bGwKPiB0aGF0IGFkZHMgYW5kIHZhbGlkYXRlcyBoaWdodGdpZCBhbmQgaGlnaHBpZCwgYW5kIHdl
+IG1pZ2h0IHdhbnQgdG8KPiBhZGQgYSBzeXNjYWxsIHRvIHJlYWQgb25lJ3Mgb3duIGhpZ2h0Z2lk
+IGFuZCBoaWdocGlkLiAgVGhlc2Ugd291bGQKPiBiZSBxdWl0ZSB1c2VmdWwgZm9yIHBpZGZpbGVz
+Lgo+Cj4gRGF2aWQsIHdvdWxkIHRoaXMgYmUgdXNlZnVsIGZvciBrZGJ1cz8KCk11Y2ggYXBwcmVj
+aWF0ZWQhIFRoaXMgd291bGQgc2VydmUgd2VsbCBhcyByZXBsYWNlbWVudCBmb3IKJ3N0YXJ0dGlt
+ZScuIEknZCBwcmVmZXIgaWYgcGlkX3Qgd2FzIDY0Yml0LCBidXQgSSBndWVzcyB0aGF0IHNoaXAK
+c2FpbGVkIGxvbmcgYWdvLiBUaG91Z2gsIHlvdXIgcGF0Y2ggbWlnaHQgaW4gdGhlIGVuZCBqdXN0
+IGludHJvZHVjZSBhCm5ldyBwaWQ2NCwgd2hpY2ggcmVwbGFjZXMgdGhlIG9sZCBwaWQgYW5kIGxp
+dmVzIGluIHBhcmFsbGVsLgoKQW55d2F5LCBjb25zaWRlcmluZyB0aGF0IHdlIGFjdHVhbGx5IHdh
+bnQgdGhlIHNhbWUgcGlkLXJldXNlCnByb3RlY3Rpb24gZm9yIHRpZCwgdGdpZCwgcHBpZCBhbmQg
+c28gb24sIHdlJ2QgaGF2ZSB0byBhZGQgYQonc3RhcnR0aW1lJyBmb3IgYWxsIG9mIHRoZW0uIFNv
+dW5kcyB1Z2x5Li4gc28gd2UgbWlnaHQganVzdCBlbmQgdXAKZHJvcHBpbmcgJ3N0YXJ0dGltZScg
+YW5kIGludHJvZHVjZSBLREJVU19JVEVNX1BJRFMyIHdoZW5ldmVyIGEgJ2ZpeCcKaXMgbWVyZ2Vk
+IHVwc3RyZWFtLgoKVGhhbmtzIGEgbG90IQpEYXZpZApfX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fXwpzeXN0ZW1kLWRldmVsIG1haWxpbmcgbGlzdApzeXN0ZW1k
+LWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3Jn
+L21haWxtYW4vbGlzdGluZm8vc3lzdGVtZC1kZXZlbAo=
