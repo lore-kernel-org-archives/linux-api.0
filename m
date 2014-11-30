@@ -1,63 +1,50 @@
 From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: [RFC PATCH] proc, pidns: Add highpid
-Date: Sun, 30 Nov 2014 17:45:31 +0100
-Message-ID: <CANq1E4Qv1pukOr8ocUtE0QzLgWFEb3pT=5JXvERj98m-j9FS3Q@mail.gmail.com>
-References: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
+Subject: Re: kdbus: add documentation
+Date: Sun, 30 Nov 2014 18:12:39 +0100
+Message-ID: <CANq1E4QJhbypbs1PueKdW7AmBPiiYEg1dN-fsAewDJap82feyg@mail.gmail.com>
+References: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
+	<1416546149-24799-2-git-send-email-gregkh@linuxfoundation.org>
+	<CALCETrWUekPq6pquuiVperBihQHgcvCF=WzVJTZziHhUJYsh4Q@mail.gmail.com>
+	<87tx1hxdgy.fsf@mid.deneb.enyo.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <systemd-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
-List-Post: <mailto:systemd-devel@lists.freedesktop.org>
-List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: systemd-devel-bounces@lists.freedesktop.org
-Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, linux-kernel <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87tx1hxdgy.fsf@mid.deneb.enyo.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Florian Weimer <fw@deneb.enyo.de>
+Cc: Andy Lutomirski <luto@amacapital.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Daniel Mack <daniel@zonque.org>, Djalal Harouni <tixxdz@opendz.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgQW5keQoKT24gU2F0LCBOb3YgMjksIDIwMTQgYXQgMTI6MDUgQU0sIEFuZHkgTHV0b21pcnNr
-aSA8bHV0b0BhbWFjYXBpdGFsLm5ldD4gd3JvdGU6Cj4gUGlkIHJldXNlIGlzIGNvbW1vbiwgd2hp
-Y2ggbWVhbnMgdGhhdCBpdCdzIGRpZmZpY3VsdCBvciBpbXBvc3NpYmxlCj4gdG8gcmVhZCBpbmZv
-cm1hdGlvbiBhYm91dCBhIHBpZCBmcm9tIC9wcm9jIHdpdGhvdXQgcmFjZXMuCj4KPiBUaGlzIGlu
-dHJvZHVjZXMgYSBzZWNvbmQgbnVtYmVyIGFzc29jaWF0ZWQgd2l0aCBlYWNoICh0YXNrLCBwaWRu
-cykKPiBwYWlyIGNhbGxlZCBoaWdocGlkLiAgSGlnaHBpZCBpcyBhIDY0LWJpdCBudW1iZXIsIGFu
-ZCwgYmFycmluZwo+IGV4dHJlbWVseSB1bmxpa2VseSBjaXJjdW1zdGFuY2VzIG9yIG91dHJpZ2h0
-IGVycm9yLCBhIChoaWdocGlkLCBwaWQpCj4gd2lsbCBuZXZlciBiZSByZXVzZWQuCj4KPiBXaXRo
-IGp1c3QgdGhpcyBjaGFuZ2UsIGEgcHJvZ3JhbSBjYW4gb3BlbiAvcHJvYy9QSUQvc3RhdHVzLCBy
-ZWFkIHRoZQo+ICJIaWdocGlkIiBmaWVsZCwgYW5kIGNvbmZpcm0gdGhhdCBpdCBoYXMgdGhlIGV4
-cGVjdGVkIHZhbHVlLiAgSWYgdGhlCj4gcGlkIGhhcyBiZWVuIHJldXNlZCwgdGhlbiBoaWdocGlk
-IHdpbGwgYmUgZGlmZmVyZW50Lgo+Cj4gVGhlIGluaXRpYWwgaW1wbGVtZW50YXRpb24gaXMgc3Ry
-YWlnaHRmb3J3YXJkOiBoaWdocGlkIGlzIHNpbXBseSBhCj4gNjQtYml0IGNvdW50ZXIuIElmIGEg
-aGlnaC1lbmQgc3lzdGVtIGNhbiBmb3JrIGV2ZXJ5IDMgbnMgKHdoaWNoCj4gd291bGQgYmUgYW1h
-emluZywgZ2l2ZW4gdGhhdCBqdXN0IGFsbG9jYXRpbmcgYSBwaWQgcmVxdWlyZXMgYXQKPiBhdG9t
-aWMgb3BlcmF0aW9uKSwgaXQgd291bGQgdGFrZSB3ZWxsIG92ZXIgMTAwMCB5ZWFycyBmb3IgaGln
-aHBpZCB0bwo+IHdyYXAuCj4KPiBGb3IgQ1JJVSdzIGJlbmVmaXQsIHRoZSBuZXh0IGhpZ2hwaWQg
-Y2FuIGJlIHNldCBieSBhIHByaXZpbGVnZWQKPiB1c2VyLgo+Cj4gTkI6IFRoZSBzeXNjdGwgc3R1
-ZmYgb25seSB3b3JrcyBvbiA2NC1iaXQgc3lzdGVtcy4gIElmIHRoZSBhcHByb2FjaAo+IGxvb2tz
-IGdvb2QsIEknbGwgZml4IHRoYXQgc29tZWhvdy4KPgo+IFNpZ25lZC1vZmYtYnk6IEFuZHkgTHV0
-b21pcnNraSA8bHV0b0BhbWFjYXBpdGFsLm5ldD4KPiAtLS0KPgo+IElmIHRoaXMgZ29lcyBpbiwg
-dGhlcmUncyBwbGVudHkgb2Ygcm9vbSB0byBhZGQgbmV3IGludGVyZmFjZXMgdG8KPiBtYWtlIHRo
-aXMgbW9yZSB1c2VmdWwuICBGb3IgZXhhbXBsZSwgd2UgY291bGQgYWRkIGEgZmFuY2llciB0Z2tp
-bGwKPiB0aGF0IGFkZHMgYW5kIHZhbGlkYXRlcyBoaWdodGdpZCBhbmQgaGlnaHBpZCwgYW5kIHdl
-IG1pZ2h0IHdhbnQgdG8KPiBhZGQgYSBzeXNjYWxsIHRvIHJlYWQgb25lJ3Mgb3duIGhpZ2h0Z2lk
-IGFuZCBoaWdocGlkLiAgVGhlc2Ugd291bGQKPiBiZSBxdWl0ZSB1c2VmdWwgZm9yIHBpZGZpbGVz
-Lgo+Cj4gRGF2aWQsIHdvdWxkIHRoaXMgYmUgdXNlZnVsIGZvciBrZGJ1cz8KCk11Y2ggYXBwcmVj
-aWF0ZWQhIFRoaXMgd291bGQgc2VydmUgd2VsbCBhcyByZXBsYWNlbWVudCBmb3IKJ3N0YXJ0dGlt
-ZScuIEknZCBwcmVmZXIgaWYgcGlkX3Qgd2FzIDY0Yml0LCBidXQgSSBndWVzcyB0aGF0IHNoaXAK
-c2FpbGVkIGxvbmcgYWdvLiBUaG91Z2gsIHlvdXIgcGF0Y2ggbWlnaHQgaW4gdGhlIGVuZCBqdXN0
-IGludHJvZHVjZSBhCm5ldyBwaWQ2NCwgd2hpY2ggcmVwbGFjZXMgdGhlIG9sZCBwaWQgYW5kIGxp
-dmVzIGluIHBhcmFsbGVsLgoKQW55d2F5LCBjb25zaWRlcmluZyB0aGF0IHdlIGFjdHVhbGx5IHdh
-bnQgdGhlIHNhbWUgcGlkLXJldXNlCnByb3RlY3Rpb24gZm9yIHRpZCwgdGdpZCwgcHBpZCBhbmQg
-c28gb24sIHdlJ2QgaGF2ZSB0byBhZGQgYQonc3RhcnR0aW1lJyBmb3IgYWxsIG9mIHRoZW0uIFNv
-dW5kcyB1Z2x5Li4gc28gd2UgbWlnaHQganVzdCBlbmQgdXAKZHJvcHBpbmcgJ3N0YXJ0dGltZScg
-YW5kIGludHJvZHVjZSBLREJVU19JVEVNX1BJRFMyIHdoZW5ldmVyIGEgJ2ZpeCcKaXMgbWVyZ2Vk
-IHVwc3RyZWFtLgoKVGhhbmtzIGEgbG90IQpEYXZpZApfX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fXwpzeXN0ZW1kLWRldmVsIG1haWxpbmcgbGlzdApzeXN0ZW1k
-LWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3Jn
-L21haWxtYW4vbGlzdGluZm8vc3lzdGVtZC1kZXZlbAo=
+Hi
+
+On Sun, Nov 30, 2014 at 10:08 AM, Florian Weimer <fw@deneb.enyo.de> wrote:
+> * Andy Lutomirski:
+>
+>> At the risk of opening a can of worms, wouldn't this be much more
+>> useful if you could share a pool between multiple connections?
+>
+> They would also be useful to reduce context switches when receiving
+> data from all kinds of descriptors.  At present, when polling, you
+> receive notification, and then you have to call into the kernel,
+> again, to actually fetch the data and associated information.
+
+poll(2) and friends cannot return data for changed descriptors. I
+think a single trap for each KDBUS_CMD_MSG_RECV is acceptable. If this
+turns out to be a bottleneck, we can provide bulk-operations in the
+future. Anyway, I don't see how a _shared_ pool would change any of
+this?
+
+> kernel could also queue the data for one specific recipient,
+> addressing the same issue that SO_REUSEPORT tries to solve (on poll
+> notification, the kernel does not know which recipient will eventually
+> retrieve the data, so it has to notify and wake up all of them).
+
+We already queue data only for the addressed recipients. We *do* know
+all recipients of a message at poll-notification time. We only wake up
+recipients that actually got a message queued.
+
+Not sure how this is related to SO_REUSEPORT. Can you elaborate on
+your optimizations?
+
+Thanks
+David
