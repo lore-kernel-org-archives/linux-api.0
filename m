@@ -1,337 +1,195 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v7 08/46] virtio: memory access APIs
-Date: Sun, 30 Nov 2014 17:09:50 +0200
-Message-ID: <1417359787-10138-9-git-send-email-mst@redhat.com>
+Subject: [PATCH v7 15/46] virtio_net: v1.0 endianness
+Date: Sun, 30 Nov 2014 17:10:31 +0200
+Message-ID: <1417359787-10138-16-git-send-email-mst@redhat.com>
 References: <1417359787-10138-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <1417359787-10138-1-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Bjarke Istrup Pedersen <gurligebis@gentoo.org>, thuth@linux.vnet.ibm.com, Anup Patel <anup.patel@linaro.org>, rusty@au1.ibm.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Drysdale <drysdale@google.com>, dahi@linux.vnet.ibm.com, Ashwin Chaugule <ashwin.chaugule@linaro.org>, Sakari Ailus <sakari.ailus@linux.intel.com>, linux-api@vger.kernel.org, pbonzini@redhat.com, Andy Grover <agrover@redhat.com>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, Alexei Starovoitov <ast@plumgrid.com>
+Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Rusty Russell <rusty@rustcorp.com.au>, virtualization@lists.linux-foundation.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-virtio 1.0 makes all memory structures LE, so
-we need APIs to conditionally do a byteswap on BE
-architectures.
+Based on patches by Rusty Russell, Cornelia Huck.
+Note: more code changes are needed for 1.0 support
+(due to different header size).
+So we don't advertize support for 1.0 yet.
 
-To make it easier to check code statically,
-add virtio specific types for multi-byte integers
-in memory.
-
-Add low level wrappers that do a byteswap conditionally, these will be
-useful e.g. for vhost.  Add high level wrappers that
-query device endian-ness and act accordingly.
-
+Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
+Signed-off-by: Cornelia Huck <cornelia.huck@de.ibm.com>
 Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
 ---
- include/linux/virtio_byteorder.h  | 59 +++++++++++++++++++++++++++++++++++++++
- include/linux/virtio_config.h     | 32 +++++++++++++++++++++
- include/uapi/linux/virtio_ring.h  | 45 ++++++++++++++---------------
- include/uapi/linux/virtio_types.h | 46 ++++++++++++++++++++++++++++++
- include/uapi/linux/Kbuild         |  1 +
- 5 files changed, 161 insertions(+), 22 deletions(-)
- create mode 100644 include/linux/virtio_byteorder.h
- create mode 100644 include/uapi/linux/virtio_types.h
+ include/uapi/linux/virtio_net.h | 15 ++++++++-------
+ drivers/net/virtio_net.c        | 33 ++++++++++++++++++++-------------
+ 2 files changed, 28 insertions(+), 20 deletions(-)
 
-diff --git a/include/linux/virtio_byteorder.h b/include/linux/virtio_byteorder.h
-new file mode 100644
-index 0000000..51865d0
---- /dev/null
-+++ b/include/linux/virtio_byteorder.h
-@@ -0,0 +1,59 @@
-+#ifndef _LINUX_VIRTIO_BYTEORDER_H
-+#define _LINUX_VIRTIO_BYTEORDER_H
-+#include <linux/types.h>
-+#include <uapi/linux/virtio_types.h>
-+
-+/*
-+ * Low-level memory accessors for handling virtio in modern little endian and in
-+ * compatibility native endian format.
-+ */
-+
-+static inline u16 __virtio16_to_cpu(bool little_endian, __virtio16 val)
-+{
-+	if (little_endian)
-+		return le16_to_cpu((__force __le16)val);
-+	else
-+		return (__force u16)val;
-+}
-+
-+static inline __virtio16 __cpu_to_virtio16(bool little_endian, u16 val)
-+{
-+	if (little_endian)
-+		return (__force __virtio16)cpu_to_le16(val);
-+	else
-+		return (__force __virtio16)val;
-+}
-+
-+static inline u32 __virtio32_to_cpu(bool little_endian, __virtio32 val)
-+{
-+	if (little_endian)
-+		return le32_to_cpu((__force __le32)val);
-+	else
-+		return (__force u32)val;
-+}
-+
-+static inline __virtio32 __cpu_to_virtio32(bool little_endian, u32 val)
-+{
-+	if (little_endian)
-+		return (__force __virtio32)cpu_to_le32(val);
-+	else
-+		return (__force __virtio32)val;
-+}
-+
-+static inline u64 __virtio64_to_cpu(bool little_endian, __virtio64 val)
-+{
-+	if (little_endian)
-+		return le64_to_cpu((__force __le64)val);
-+	else
-+		return (__force u64)val;
-+}
-+
-+static inline __virtio64 __cpu_to_virtio64(bool little_endian, u64 val)
-+{
-+	if (little_endian)
-+		return (__force __virtio64)cpu_to_le64(val);
-+	else
-+		return (__force __virtio64)val;
-+}
-+
-+#endif /* _LINUX_VIRTIO_BYTEORDER */
-diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
-index f517884..02f0acb 100644
---- a/include/linux/virtio_config.h
-+++ b/include/linux/virtio_config.h
-@@ -4,6 +4,7 @@
- #include <linux/err.h>
- #include <linux/bug.h>
- #include <linux/virtio.h>
-+#include <linux/virtio_byteorder.h>
- #include <uapi/linux/virtio_config.h>
- 
- /**
-@@ -199,6 +200,37 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
- 	return 0;
- }
- 
-+/* Memory accessors */
-+static inline u16 virtio16_to_cpu(struct virtio_device *vdev, __virtio16 val)
-+{
-+	return __virtio16_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+}
-+
-+static inline __virtio16 cpu_to_virtio16(struct virtio_device *vdev, u16 val)
-+{
-+	return __cpu_to_virtio16(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+}
-+
-+static inline u32 virtio32_to_cpu(struct virtio_device *vdev, __virtio32 val)
-+{
-+	return __virtio32_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+}
-+
-+static inline __virtio32 cpu_to_virtio32(struct virtio_device *vdev, u32 val)
-+{
-+	return __cpu_to_virtio32(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+}
-+
-+static inline u64 virtio64_to_cpu(struct virtio_device *vdev, __virtio64 val)
-+{
-+	return __virtio64_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+}
-+
-+static inline __virtio64 cpu_to_virtio64(struct virtio_device *vdev, u64 val)
-+{
-+	return __cpu_to_virtio64(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+}
-+
- /* Config space accessors. */
- #define virtio_cread(vdev, structname, member, ptr)			\
- 	do {								\
-diff --git a/include/uapi/linux/virtio_ring.h b/include/uapi/linux/virtio_ring.h
-index a99f9b7..61c818a 100644
---- a/include/uapi/linux/virtio_ring.h
-+++ b/include/uapi/linux/virtio_ring.h
-@@ -32,6 +32,7 @@
-  *
-  * Copyright Rusty Russell IBM Corporation 2007. */
+diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
+index 172a7f0..b5f1677 100644
+--- a/include/uapi/linux/virtio_net.h
++++ b/include/uapi/linux/virtio_net.h
+@@ -28,6 +28,7 @@
  #include <linux/types.h>
+ #include <linux/virtio_ids.h>
+ #include <linux/virtio_config.h>
 +#include <linux/virtio_types.h>
+ #include <linux/if_ether.h>
  
- /* This marks a buffer as continuing via the next field. */
- #define VRING_DESC_F_NEXT	1
-@@ -61,32 +62,32 @@
- /* Virtio ring descriptors: 16 bytes.  These can chain together via "next". */
- struct vring_desc {
- 	/* Address (guest-physical). */
--	__u64 addr;
-+	__virtio64 addr;
- 	/* Length. */
--	__u32 len;
-+	__virtio32 len;
- 	/* The flags as indicated above. */
--	__u16 flags;
-+	__virtio16 flags;
- 	/* We chain unused descriptors via this, too */
--	__u16 next;
-+	__virtio16 next;
+ /* The feature bitmap for virtio net */
+@@ -84,17 +85,17 @@ struct virtio_net_hdr {
+ #define VIRTIO_NET_HDR_GSO_TCPV6	4	// GSO frame, IPv6 TCP
+ #define VIRTIO_NET_HDR_GSO_ECN		0x80	// TCP has ECN set
+ 	__u8 gso_type;
+-	__u16 hdr_len;		/* Ethernet + IP + tcp/udp hdrs */
+-	__u16 gso_size;		/* Bytes to append to hdr_len per frame */
+-	__u16 csum_start;	/* Position to start checksumming from */
+-	__u16 csum_offset;	/* Offset after that to place checksum */
++	__virtio16 hdr_len;		/* Ethernet + IP + tcp/udp hdrs */
++	__virtio16 gso_size;		/* Bytes to append to hdr_len per frame */
++	__virtio16 csum_start;	/* Position to start checksumming from */
++	__virtio16 csum_offset;	/* Offset after that to place checksum */
  };
  
- struct vring_avail {
--	__u16 flags;
--	__u16 idx;
--	__u16 ring[];
-+	__virtio16 flags;
-+	__virtio16 idx;
-+	__virtio16 ring[];
+ /* This is the version of the header to use when the MRG_RXBUF
+  * feature has been negotiated. */
+ struct virtio_net_hdr_mrg_rxbuf {
+ 	struct virtio_net_hdr hdr;
+-	__u16 num_buffers;	/* Number of merged rx buffers */
++	__virtio16 num_buffers;	/* Number of merged rx buffers */
  };
  
- /* u32 is used here for ids for padding reasons. */
- struct vring_used_elem {
- 	/* Index of start of used descriptor chain. */
--	__u32 id;
-+	__virtio32 id;
- 	/* Total length of the descriptor chain which was used (written to) */
--	__u32 len;
-+	__virtio32 len;
- };
- 
- struct vring_used {
--	__u16 flags;
--	__u16 idx;
-+	__virtio16 flags;
-+	__virtio16 idx;
- 	struct vring_used_elem ring[];
- };
- 
-@@ -109,25 +110,25 @@ struct vring {
-  *	struct vring_desc desc[num];
-  *
-  *	// A ring of available descriptor heads with free-running index.
-- *	__u16 avail_flags;
-- *	__u16 avail_idx;
-- *	__u16 available[num];
-- *	__u16 used_event_idx;
-+ *	__virtio16 avail_flags;
-+ *	__virtio16 avail_idx;
-+ *	__virtio16 available[num];
-+ *	__virtio16 used_event_idx;
-  *
-  *	// Padding to the next align boundary.
-  *	char pad[];
-  *
-  *	// A ring of used descriptor heads with free-running index.
-- *	__u16 used_flags;
-- *	__u16 used_idx;
-+ *	__virtio16 used_flags;
-+ *	__virtio16 used_idx;
-  *	struct vring_used_elem used[num];
-- *	__u16 avail_event_idx;
-+ *	__virtio16 avail_event_idx;
-  * };
+ /*
+@@ -149,7 +150,7 @@ typedef __u8 virtio_net_ctrl_ack;
+  * VIRTIO_NET_F_CTRL_MAC_ADDR feature is available.
   */
- /* We publish the used event index at the end of the available ring, and vice
-  * versa. They are at the end for backwards compatibility. */
- #define vring_used_event(vr) ((vr)->avail->ring[(vr)->num])
--#define vring_avail_event(vr) (*(__u16 *)&(vr)->used->ring[(vr)->num])
-+#define vring_avail_event(vr) (*(__virtio16 *)&(vr)->used->ring[(vr)->num])
+ struct virtio_net_ctrl_mac {
+-	__u32 entries;
++	__virtio32 entries;
+ 	__u8 macs[][ETH_ALEN];
+ } __attribute__((packed));
  
- static inline void vring_init(struct vring *vr, unsigned int num, void *p,
- 			      unsigned long align)
-@@ -135,15 +136,15 @@ static inline void vring_init(struct vring *vr, unsigned int num, void *p,
- 	vr->num = num;
- 	vr->desc = p;
- 	vr->avail = p + num*sizeof(struct vring_desc);
--	vr->used = (void *)(((unsigned long)&vr->avail->ring[num] + sizeof(__u16)
-+	vr->used = (void *)(((unsigned long)&vr->avail->ring[num] + sizeof(__virtio16)
- 		+ align-1) & ~(align - 1));
+@@ -193,7 +194,7 @@ struct virtio_net_ctrl_mac {
+  * specified.
+  */
+ struct virtio_net_ctrl_mq {
+-	__u16 virtqueue_pairs;
++	__virtio16 virtqueue_pairs;
+ };
+ 
+ #define VIRTIO_NET_CTRL_MQ   4
+diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
+index b0bc8ea..c07e030 100644
+--- a/drivers/net/virtio_net.c
++++ b/drivers/net/virtio_net.c
+@@ -347,13 +347,14 @@ err:
  }
  
- static inline unsigned vring_size(unsigned int num, unsigned long align)
+ static struct sk_buff *receive_mergeable(struct net_device *dev,
++					 struct virtnet_info *vi,
+ 					 struct receive_queue *rq,
+ 					 unsigned long ctx,
+ 					 unsigned int len)
  {
--	return ((sizeof(struct vring_desc) * num + sizeof(__u16) * (3 + num)
-+	return ((sizeof(struct vring_desc) * num + sizeof(__virtio16) * (3 + num)
- 		 + align - 1) & ~(align - 1))
--		+ sizeof(__u16) * 3 + sizeof(struct vring_used_elem) * num;
-+		+ sizeof(__virtio16) * 3 + sizeof(struct vring_used_elem) * num;
- }
+ 	void *buf = mergeable_ctx_to_buf_address(ctx);
+ 	struct skb_vnet_hdr *hdr = buf;
+-	int num_buf = hdr->mhdr.num_buffers;
++	u16 num_buf = virtio16_to_cpu(rq->vq->vdev, hdr->mhdr.num_buffers);
+ 	struct page *page = virt_to_head_page(buf);
+ 	int offset = buf - page_address(page);
+ 	unsigned int truesize = max(len, mergeable_ctx_to_buf_truesize(ctx));
+@@ -369,7 +370,9 @@ static struct sk_buff *receive_mergeable(struct net_device *dev,
+ 		ctx = (unsigned long)virtqueue_get_buf(rq->vq, &len);
+ 		if (unlikely(!ctx)) {
+ 			pr_debug("%s: rx error: %d buffers out of %d missing\n",
+-				 dev->name, num_buf, hdr->mhdr.num_buffers);
++				 dev->name, num_buf,
++				 virtio16_to_cpu(rq->vq->vdev,
++						 hdr->mhdr.num_buffers));
+ 			dev->stats.rx_length_errors++;
+ 			goto err_buf;
+ 		}
+@@ -454,7 +457,7 @@ static void receive_buf(struct receive_queue *rq, void *buf, unsigned int len)
+ 	}
  
- /* The following is used with USED_EVENT_IDX and AVAIL_EVENT_IDX */
-diff --git a/include/uapi/linux/virtio_types.h b/include/uapi/linux/virtio_types.h
-new file mode 100644
-index 0000000..e845e8c
---- /dev/null
-+++ b/include/uapi/linux/virtio_types.h
-@@ -0,0 +1,46 @@
-+#ifndef _UAPI_LINUX_VIRTIO_TYPES_H
-+#define _UAPI_LINUX_VIRTIO_TYPES_H
-+/* Type definitions for virtio implementations.
-+ *
-+ * This header is BSD licensed so anyone can use the definitions to implement
-+ * compatible drivers/servers.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ * 3. Neither the name of IBM nor the names of its contributors
-+ *    may be used to endorse or promote products derived from this software
-+ *    without specific prior written permission.
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS'' AND
-+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-+ * ARE DISCLAIMED.  IN NO EVENT SHALL IBM OR CONTRIBUTORS BE LIABLE
-+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-+ * SUCH DAMAGE.
-+ *
-+ * Copyright (C) 2014 Red Hat, Inc.
-+ * Author: Michael S. Tsirkin <mst@redhat.com>
-+ */
-+#include <linux/types.h>
-+
-+/*
-+ * __virtio{16,32,64} have the following meaning:
-+ * - __u{16,32,64} for virtio devices in legacy mode, accessed in native endian
-+ * - __le{16,32,64} for standard-compliant virtio devices
-+ */
-+
-+typedef __u16 __bitwise__ __virtio16;
-+typedef __u32 __bitwise__ __virtio32;
-+typedef __u64 __bitwise__ __virtio64;
-+
-+#endif /* _UAPI_LINUX_VIRTIO_TYPES_H */
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 4c94f31..44a5581 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -423,6 +423,7 @@ header-y += virtio_blk.h
- header-y += virtio_config.h
- header-y += virtio_console.h
- header-y += virtio_ids.h
-+header-y += virtio_types.h
- header-y += virtio_net.h
- header-y += virtio_pci.h
- header-y += virtio_ring.h
+ 	if (vi->mergeable_rx_bufs)
+-		skb = receive_mergeable(dev, rq, (unsigned long)buf, len);
++		skb = receive_mergeable(dev, vi, rq, (unsigned long)buf, len);
+ 	else if (vi->big_packets)
+ 		skb = receive_big(dev, rq, buf, len);
+ 	else
+@@ -473,8 +476,8 @@ static void receive_buf(struct receive_queue *rq, void *buf, unsigned int len)
+ 	if (hdr->hdr.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) {
+ 		pr_debug("Needs csum!\n");
+ 		if (!skb_partial_csum_set(skb,
+-					  hdr->hdr.csum_start,
+-					  hdr->hdr.csum_offset))
++			  virtio16_to_cpu(vi->vdev, hdr->hdr.csum_start),
++			  virtio16_to_cpu(vi->vdev, hdr->hdr.csum_offset)))
+ 			goto frame_err;
+ 	} else if (hdr->hdr.flags & VIRTIO_NET_HDR_F_DATA_VALID) {
+ 		skb->ip_summed = CHECKSUM_UNNECESSARY;
+@@ -514,7 +517,8 @@ static void receive_buf(struct receive_queue *rq, void *buf, unsigned int len)
+ 		if (hdr->hdr.gso_type & VIRTIO_NET_HDR_GSO_ECN)
+ 			skb_shinfo(skb)->gso_type |= SKB_GSO_TCP_ECN;
+ 
+-		skb_shinfo(skb)->gso_size = hdr->hdr.gso_size;
++		skb_shinfo(skb)->gso_size = virtio16_to_cpu(vi->vdev,
++							    hdr->hdr.gso_size);
+ 		if (skb_shinfo(skb)->gso_size == 0) {
+ 			net_warn_ratelimited("%s: zero gso size.\n", dev->name);
+ 			goto frame_err;
+@@ -876,16 +880,19 @@ static int xmit_skb(struct send_queue *sq, struct sk_buff *skb)
+ 
+ 	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+ 		hdr->hdr.flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
+-		hdr->hdr.csum_start = skb_checksum_start_offset(skb);
+-		hdr->hdr.csum_offset = skb->csum_offset;
++		hdr->hdr.csum_start = cpu_to_virtio16(vi->vdev,
++						skb_checksum_start_offset(skb));
++		hdr->hdr.csum_offset = cpu_to_virtio16(vi->vdev,
++							 skb->csum_offset);
+ 	} else {
+ 		hdr->hdr.flags = 0;
+ 		hdr->hdr.csum_offset = hdr->hdr.csum_start = 0;
+ 	}
+ 
+ 	if (skb_is_gso(skb)) {
+-		hdr->hdr.hdr_len = skb_headlen(skb);
+-		hdr->hdr.gso_size = skb_shinfo(skb)->gso_size;
++		hdr->hdr.hdr_len = cpu_to_virtio16(vi->vdev, skb_headlen(skb));
++		hdr->hdr.gso_size = cpu_to_virtio16(vi->vdev,
++						    skb_shinfo(skb)->gso_size);
+ 		if (skb_shinfo(skb)->gso_type & SKB_GSO_TCPV4)
+ 			hdr->hdr.gso_type = VIRTIO_NET_HDR_GSO_TCPV4;
+ 		else if (skb_shinfo(skb)->gso_type & SKB_GSO_TCPV6)
+@@ -1112,7 +1119,7 @@ static int virtnet_set_queues(struct virtnet_info *vi, u16 queue_pairs)
+ 	if (!vi->has_cvq || !virtio_has_feature(vi->vdev, VIRTIO_NET_F_MQ))
+ 		return 0;
+ 
+-	s.virtqueue_pairs = queue_pairs;
++	s.virtqueue_pairs = cpu_to_virtio16(vi->vdev, queue_pairs);
+ 	sg_init_one(&sg, &s, sizeof(s));
+ 
+ 	if (!virtnet_send_command(vi, VIRTIO_NET_CTRL_MQ,
+@@ -1189,7 +1196,7 @@ static void virtnet_set_rx_mode(struct net_device *dev)
+ 	sg_init_table(sg, 2);
+ 
+ 	/* Store the unicast list and count in the front of the buffer */
+-	mac_data->entries = uc_count;
++	mac_data->entries = cpu_to_virtio32(vi->vdev, uc_count);
+ 	i = 0;
+ 	netdev_for_each_uc_addr(ha, dev)
+ 		memcpy(&mac_data->macs[i++][0], ha->addr, ETH_ALEN);
+@@ -1200,7 +1207,7 @@ static void virtnet_set_rx_mode(struct net_device *dev)
+ 	/* multicast list and count fill the end */
+ 	mac_data = (void *)&mac_data->macs[uc_count][0];
+ 
+-	mac_data->entries = mc_count;
++	mac_data->entries = cpu_to_virtio32(vi->vdev, mc_count);
+ 	i = 0;
+ 	netdev_for_each_mc_addr(ha, dev)
+ 		memcpy(&mac_data->macs[i++][0], ha->addr, ETH_ALEN);
 -- 
 MST
