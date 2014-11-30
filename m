@@ -1,25 +1,30 @@
-From: Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org>
-Subject: Re: [RFC PATCH] proc, pidns: Add highpid
-Date: Sun, 30 Nov 2014 09:47:50 +0100
-Message-ID: <87k32d13d5.fsf@mid.deneb.enyo.de>
-References: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: kdbus: add documentation
+Date: Sun, 30 Nov 2014 10:08:29 +0100
+Message-ID: <87tx1hxdgy.fsf@mid.deneb.enyo.de>
+References: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
+	<1416546149-24799-2-git-send-email-gregkh@linuxfoundation.org>
+	<CALCETrWUekPq6pquuiVperBihQHgcvCF=WzVJTZziHhUJYsh4Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-	(Andy Lutomirski's message of "Fri, 28 Nov 2014 15:05:01 -0800")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, systemd Mailing List <systemd-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrWUekPq6pquuiVperBihQHgcvCF=WzVJTZziHhUJYsh4Q@mail.gmail.com>
+	(Andy Lutomirski's message of "Fri, 21 Nov 2014 09:12:39 -0800")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@gmail.com>, Djalal Harouni <tixxdz@opendz.org>
 List-Id: linux-api@vger.kernel.org
 
 * Andy Lutomirski:
 
-> The initial implementation is straightforward: highpid is simply a
-> 64-bit counter. If a high-end system can fork every 3 ns (which
-> would be amazing, given that just allocating a pid requires at
-> atomic operation), it would take well over 1000 years for highpid to
-> wrap.
+> At the risk of opening a can of worms, wouldn't this be much more
+> useful if you could share a pool between multiple connections?
 
-I'm not sure if I'm reading the patch correctly, but is the counter
-namespaced?  If yes, why?
+They would also be useful to reduce context switches when receiving
+data from all kinds of descriptors.  At present, when polling, you
+receive notification, and then you have to call into the kernel,
+again, to actually fetch the data and associated information.  The
+kernel could also queue the data for one specific recipient,
+addressing the same issue that SO_REUSEPORT tries to solve (on poll
+notification, the kernel does not know which recipient will eventually
+retrieve the data, so it has to notify and wake up all of them).
