@@ -1,35 +1,36 @@
-From: Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>
-Subject: [PATCH] uapi: fix to export linux/vm_sockets.h
-Date: Mon,  1 Dec 2014 10:16:17 +0900
-Message-ID: <1417396577-32499-1-git-send-email-yamada.m@jp.panasonic.com>
+From: Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org>
+Subject: Re: [RFC PATCH] proc, pidns: Add highpid
+Date: Mon, 01 Dec 2014 07:47:26 +0100
+Message-ID: <87egsjrhmp.fsf@mid.deneb.enyo.de>
+References: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>
+	<87k32d13d5.fsf@mid.deneb.enyo.de>
+	<CALCETrV_aArOr7v4AqLHdyGGNU-5XBPmvBXEqbVU36EJ_G26uQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrV_aArOr7v4AqLHdyGGNU-5XBPmvBXEqbVU36EJ_G26uQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Sun, 30 Nov 2014 14:08:13 -0800")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, =?UTF-8?q?Piotr=20Kr=C3=B3l?= <piotr.krol-zILERgsGILsAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, systemd Mailing List <systemd-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-A typo "header=y" was introduced by commit 7071cf7fc435
-(uapi: add missing network related headers to kbuild).
+* Andy Lutomirski:
 
-Signed-off-by: Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>
-Cc: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
----
+> On Nov 30, 2014 1:47 AM, "Florian Weimer" <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org> wrote:
+>>
+>> * Andy Lutomirski:
+>>
+>> > The initial implementation is straightforward: highpid is simply a
+>> > 64-bit counter. If a high-end system can fork every 3 ns (which
+>> > would be amazing, given that just allocating a pid requires at
+>> > atomic operation), it would take well over 1000 years for highpid to
+>> > wrap.
+>>
+>> I'm not sure if I'm reading the patch correctly, but is the counter
+>> namespaced?  If yes, why?
+>
+> It's namespaced so that CRIU can migrate/restore a whole pid namespace.
 
- include/uapi/linux/Kbuild | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 4c94f31..8523f9b 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -427,7 +427,7 @@ header-y += virtio_net.h
- header-y += virtio_pci.h
- header-y += virtio_ring.h
- header-y += virtio_rng.h
--header=y += vm_sockets.h
-+header-y += vm_sockets.h
- header-y += vt.h
- header-y += wait.h
- header-y += wanrouter.h
--- 
-1.9.1
+Oh well, this requirement is at odds with system-wide uniqueness.  Is
+CRIU really that important? :-)
