@@ -1,7 +1,7 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
 Subject: Re: [PATCH v7 16/46] virtio_blk: v1.0 support
-Date: Mon, 1 Dec 2014 11:26:58 +0200
-Message-ID: <20141201092658.GC15607@redhat.com>
+Date: Mon, 1 Dec 2014 11:28:50 +0200
+Message-ID: <20141201092850.GD15607@redhat.com>
 References: <1417359787-10138-1-git-send-email-mst@redhat.com>
 	<1417359787-10138-17-git-send-email-mst@redhat.com>
 	<20141201091641.3085e682@thinkpad-w530>
@@ -51,23 +51,14 @@ On Mon, Dec 01, 2014 at 09:16:41AM +0100, David Hildenbrand wrote:
 > > +	VIRTIO_F_VERSION_1,
 > 
 > We can fit this into less lines, like done for features_legacy.
-> 
+
+Wrt packing code more tightly, I did it like this to
+make it easier to compare the arrays.
+Each flag is on the same line in original and new array.
+
 > I was asking myself if we could do the conversion of the statical values
 > somehow upfront, to reduce the patch size and avoid cpu_to_virtio.* at those
 > places.
 > 
 > Otherwise looks good to me.
 > 
-
-I don't see how we can reduce the patch size.
-For BE architectures it's dynamic, so at best the values
-will become macros/incline functions taking a flag.
-
-For some places on data path, it might be worth it
-to cache the correct value e.g. as part of device
-structure. This replaces a branch with a memory load,
-so the gain would have to be measured, best done
-separately?
-
--- 
-MST
