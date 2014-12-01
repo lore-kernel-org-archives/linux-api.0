@@ -1,72 +1,165 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH v2 02/19] kbuild: kselftest_install - add a new make target
- to install selftests
-Date: Mon, 01 Dec 2014 09:27:40 -0700
-Message-ID: <547C96FC.6020100@osg.samsung.com>
-References: <cover.1415735831.git.shuahkh@osg.samsung.com> <a2344d4df903d673afe1631118f40917f773cc9a.1415735831.git.shuahkh@osg.samsung.com> <5476B763.1030701@hitachi.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: [PATCH v8 37/50] tun: move internal flag defines out of uapi
+Date: Mon, 1 Dec 2014 18:05:49 +0200
+Message-ID: <1417449619-24896-38-git-send-email-mst@redhat.com>
+References: <1417449619-24896-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-2022-jp
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5476B763.1030701@hitachi.com>
+Content-Disposition: inline
+In-Reply-To: <1417449619-24896-1-git-send-email-mst@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Cc: gregkh@linuxfoundation.org, akpm@linux-foundation.org, mmarek@suse.cz, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>
+To: linux-kernel@vger.kernel.org
+Cc: David Miller <davem@davemloft.net>, cornelia.huck@de.ibm.com, rusty@au1.ibm.com, nab@linux-iscsi.org, pbonzini@redhat.com, thuth@linux.vnet.ibm.com, dahi@linux.vnet.ibm.com, Jason Wang <jasowang@redhat.com>, Zhi Yong Wu <wuzhy@linux.vnet.ibm.com>, Tom Herbert <therbert@google.com>, Herbert Xu <herbert@gondor.apana.org.au>, Masatake YAMATO <yamato@redhat.com>, Xi Wang <xii@google.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/26/2014 10:32 PM, Masami Hiramatsu wrote:
-> (2014/11/12 5:27), Shuah Khan wrote:
->> Add a new make target to install to install kernel selftests.
->> This new target will build and install selftests. kselftest
->> target now depends on kselftest_install and runs the generated
->> kselftest script to reduce duplicate work and for common look
->> and feel when running tests.
->>
->> Approach:
->>
->> make kselftest_target:
-> 
-> kselftest_install?
+TUN_ flags are internal and never exposed
+to userspace. Any application using it is almost
+certainly buggy.
 
-Thanks for catching this. Will fix it.
+Move them out to tun.c.
 
-> 
->> -- exports kselftest INSTALL_KSFT_PATH
->>    default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
->> -- exports path for ksefltest.sh
->> -- runs selftests make install target:
-> 
-> This direction is OK to me.
-> 
-> BTW, I've found another path to make selftest in Makefile,
-> Actually you can do
-> 
-> make -C tools/ selftest
-> 
-> And there are selftest_install and selftest_clean targets (but
-> currently it has a bug and doesn't work, anyway)
+Note: we remove these completely in follow-up patches,
+this code movement is split out for ease of review.
 
-Thanks for pointing this out. I didn't know this existed. kind of
-hidden.
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+---
+ include/uapi/linux/if_tun.h | 16 ++--------
+ drivers/net/tun.c           | 72 +++++++++++++--------------------------------
+ 2 files changed, 24 insertions(+), 64 deletions(-)
 
-> 
-> I think we'd better do subdir make instead of adding these targets.
-> This means that "make kselftest*" should be an alias of "make -C tools/ selftest*"
-> 
-
-Yes that would be a good way to go and helps leverage these options
-at tools/Makefile level.
-
-> Also, I'd like to request passing some options like as O=$(objtree)
-> so that we can make test kmodules in selftests.
-
-Sounds good. I will look into it.
-
-thanks,
--- Shuah
-
+diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
+index e9502dd..277a260 100644
+--- a/include/uapi/linux/if_tun.h
++++ b/include/uapi/linux/if_tun.h
+@@ -22,21 +22,11 @@
+ 
+ /* Read queue size */
+ #define TUN_READQ_SIZE	500
+-
+-/* TUN device flags */
+-#define TUN_TUN_DEV 	0x0001	
+-#define TUN_TAP_DEV	0x0002
++/* TUN device type flags: deprecated. Use IFF_TUN/IFF_TAP instead. */
++#define TUN_TUN_DEV 	IFF_TUN
++#define TUN_TAP_DEV	IFF_TAP
+ #define TUN_TYPE_MASK   0x000f
+ 
+-#define TUN_FASYNC	0x0010
+-#define TUN_NOCHECKSUM	0x0020
+-#define TUN_NO_PI	0x0040
+-/* This flag has no real effect */
+-#define TUN_ONE_QUEUE	0x0080
+-#define TUN_PERSIST 	0x0100	
+-#define TUN_VNET_HDR 	0x0200
+-#define TUN_TAP_MQ      0x0400
+-
+ /* Ioctl defines */
+ #define TUNSETNOCSUM  _IOW('T', 200, int) 
+ #define TUNSETDEBUG   _IOW('T', 201, int) 
+diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+index 9dd3746..b4e4ca0 100644
+--- a/drivers/net/tun.c
++++ b/drivers/net/tun.c
+@@ -103,6 +103,21 @@ do {								\
+ } while (0)
+ #endif
+ 
++/* TUN device flags */
++
++/* IFF_ATTACH_QUEUE is never stored in device flags,
++ * overload it to mean fasync when stored there.
++ */
++#define TUN_FASYNC	IFF_ATTACH_QUEUE
++#define TUN_NO_PI	IFF_NO_PI
++/* This flag has no real effect */
++#define TUN_ONE_QUEUE	IFF_ONE_QUEUE
++#define TUN_PERSIST 	IFF_PERSIST
++#define TUN_VNET_HDR 	IFF_VNET_HDR
++#define TUN_TAP_MQ      IFF_MULTI_QUEUE
++
++#define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
++		      IFF_MULTI_QUEUE)
+ #define GOODCOPY_LEN 128
+ 
+ #define FLT_EXACT_COUNT 8
+@@ -1521,32 +1536,7 @@ static struct proto tun_proto = {
+ 
+ static int tun_flags(struct tun_struct *tun)
+ {
+-	int flags = 0;
+-
+-	if (tun->flags & TUN_TUN_DEV)
+-		flags |= IFF_TUN;
+-	else
+-		flags |= IFF_TAP;
+-
+-	if (tun->flags & TUN_NO_PI)
+-		flags |= IFF_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (tun->flags & TUN_ONE_QUEUE)
+-		flags |= IFF_ONE_QUEUE;
+-
+-	if (tun->flags & TUN_VNET_HDR)
+-		flags |= IFF_VNET_HDR;
+-
+-	if (tun->flags & TUN_TAP_MQ)
+-		flags |= IFF_MULTI_QUEUE;
+-
+-	if (tun->flags & TUN_PERSIST)
+-		flags |= IFF_PERSIST;
+-
+-	return flags;
++	return tun->flags & (TUN_FEATURES | IFF_PERSIST | IFF_TUN | IFF_TAP);
+ }
+ 
+ static ssize_t tun_show_flags(struct device *dev, struct device_attribute *attr,
+@@ -1706,28 +1696,8 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
+ 
+ 	tun_debug(KERN_INFO, tun, "tun_set_iff\n");
+ 
+-	if (ifr->ifr_flags & IFF_NO_PI)
+-		tun->flags |= TUN_NO_PI;
+-	else
+-		tun->flags &= ~TUN_NO_PI;
+-
+-	/* This flag has no real effect.  We track the value for backwards
+-	 * compatibility.
+-	 */
+-	if (ifr->ifr_flags & IFF_ONE_QUEUE)
+-		tun->flags |= TUN_ONE_QUEUE;
+-	else
+-		tun->flags &= ~TUN_ONE_QUEUE;
+-
+-	if (ifr->ifr_flags & IFF_VNET_HDR)
+-		tun->flags |= TUN_VNET_HDR;
+-	else
+-		tun->flags &= ~TUN_VNET_HDR;
+-
+-	if (ifr->ifr_flags & IFF_MULTI_QUEUE)
+-		tun->flags |= TUN_TAP_MQ;
+-	else
+-		tun->flags &= ~TUN_TAP_MQ;
++	tun->flags = (tun->flags & ~TUN_FEATURES) |
++		(ifr->ifr_flags & TUN_FEATURES);
+ 
+ 	/* Make sure persistent devices do not get stuck in
+ 	 * xoff state.
+@@ -1890,9 +1860,9 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
+ 	if (cmd == TUNGETFEATURES) {
+ 		/* Currently this just means: "what IFF flags are valid?".
+ 		 * This is needed because we never checked for invalid flags on
+-		 * TUNSETIFF. */
+-		return put_user(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
+-				IFF_VNET_HDR | IFF_MULTI_QUEUE,
++		 * TUNSETIFF.
++		 */
++		return put_user(IFF_TUN | IFF_TAP | TUN_FEATURES,
+ 				(unsigned int __user*)argp);
+ 	} else if (cmd == TUNSETQUEUE)
+ 		return tun_set_queue(file, &ifr);
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+MST
