@@ -1,44 +1,72 @@
-From: Pavel Emelyanov <xemul@parallels.com>
-Subject: Re: [RFC PATCH] proc, pidns: Add highpid
-Date: Mon, 1 Dec 2014 15:33:38 +0300
-Message-ID: <547C6022.1030904@parallels.com>
-References: <b0f6c4df0e8ef8afcc7b786edecb4be8c752941e.1417215468.git.luto@amacapital.net>	<87k32d13d5.fsf@mid.deneb.enyo.de>	<CALCETrV_aArOr7v4AqLHdyGGNU-5XBPmvBXEqbVU36EJ_G26uQ@mail.gmail.com> <87egsjrhmp.fsf@mid.deneb.enyo.de>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH v7 16/46] virtio_blk: v1.0 support
+Date: Mon, 1 Dec 2014 14:34:55 +0200
+Message-ID: <20141201123455.GA17958@redhat.com>
+References: <1417359787-10138-1-git-send-email-mst@redhat.com>
+	<1417359787-10138-17-git-send-email-mst@redhat.com>
+	<20141201091641.3085e682@thinkpad-w530>
+	<20141201092658.GC15607@redhat.com>
+	<20141201123315.1b95d06f.cornelia.huck@de.ibm.com>
+	<20141201114645.GA17505@redhat.com>
+	<20141201130258.6f01c1e3.cornelia.huck@de.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87egsjrhmp.fsf@mid.deneb.enyo.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>, Andy Lutomirski <luto@amacapital.net>
-Cc: criu@openvz.org, Cyrill Gorcunov <gorcunov@openvz.org>, Andrew Morton <akpm@linux-foundation.org>, "Eric W. Biederman" <ebiederm@xmission.com>, David Herrmann <dh.herrmann@gmail.com>, systemd Mailing List <systemd-devel@lists.freedesktop.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Disposition: inline
+In-Reply-To: <20141201130258.6f01c1e3.cornelia.huck@de.ibm.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Cornelia Huck <cornelia.huck@de.ibm.com>
+Cc: thuth@linux.vnet.ibm.com, rusty@au1.ibm.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, David Hildenbrand <dahi@linux.vnet.ibm.com>, pbonzini@redhat.com, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-On 12/01/2014 09:47 AM, Florian Weimer wrote:
-> * Andy Lutomirski:
+On Mon, Dec 01, 2014 at 01:02:58PM +0100, Cornelia Huck wrote:
+> On Mon, 1 Dec 2014 13:46:45 +0200
+> "Michael S. Tsirkin" <mst@redhat.com> wrote:
 > 
->> On Nov 30, 2014 1:47 AM, "Florian Weimer" <fw@deneb.enyo.de> wrote:
->>>
->>> * Andy Lutomirski:
->>>
->>>> The initial implementation is straightforward: highpid is simply a
->>>> 64-bit counter. If a high-end system can fork every 3 ns (which
->>>> would be amazing, given that just allocating a pid requires at
->>>> atomic operation), it would take well over 1000 years for highpid to
->>>> wrap.
->>>
->>> I'm not sure if I'm reading the patch correctly, but is the counter
->>> namespaced?  If yes, why?
->>
->> It's namespaced so that CRIU can migrate/restore a whole pid namespace.
+> > On Mon, Dec 01, 2014 at 12:33:15PM +0100, Cornelia Huck wrote:
+> > > On Mon, 1 Dec 2014 11:26:58 +0200
+> > > "Michael S. Tsirkin" <mst@redhat.com> wrote:
+> > > 
+> > > > For some places on data path, it might be worth it
+> > > > to cache the correct value e.g. as part of device
+> > > > structure. This replaces a branch with a memory load,
+> > > > so the gain would have to be measured, best done
+> > > > separately?
+> > > 
+> > > I think we'll want to do some measuring once the basic structure is
+> > > in place anyway.
+> > 
+> > What's meant by in place here?
 > 
-> Oh well, this requirement is at odds with system-wide uniqueness.  Is
-> CRIU really that important? :-)
+> That this patchset is ready :)
 
-Well, in this context it is. Since the main (if not the only) use-case for
-highpid is to read one, remember, then compare to new value, restoring it
-to wrong/arbitrary value will break the using applications in 100% cases.
+Also it's ready to the level where benchmarking is possible, right?  I
+don't think you should wait until we finish polishing up commit
+messages.
 
-Thus we really need the ability to restore this value.
-
-Thanks,
-Pavel
+> > 
+> > > We should make sure that e.g. s390 only takes minor
+> > > hit due to all that swapping that is needed for standard-compliant
+> > > devices. Caching the value might certainly help in some paths.
+> > 
+> > Well, this is queued in linux-next for 3.19, so
+> > now's the time to do it :)
+> 
+> So much to do, so little time...
+> 
+> I'm still feeling a bit uncomfortable with some of the changes
+> (virtio-scsi etc.) as I have not been able to test them yet (as there's
+> no converted qemu for these yet). The virtio-net and virtio-blk changes
+> seem sane, though, and virtio-ccw should be fine as well.
+> 
+> OTOH, it's not like we're introducing new external interfaces, so later
+> rework should be fine.
