@@ -1,66 +1,39 @@
 From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 3/3] selftests/kcmp: Always try to build the test
-Date: Mon, 01 Dec 2014 09:58:21 -0700
-Message-ID: <547C9E2D.3090207@osg.samsung.com>
-References: <1414040834-30209-1-git-send-email-mpe@ellerman.id.au> <1414040834-30209-3-git-send-email-mpe@ellerman.id.au> <5448FD72.9040301@codeaurora.org> <54490832.7040906@osg.samsung.com>
+Subject: Re: [PATCH 1/3] kcmp: Move kcmp.h into uapi
+Date: Mon, 01 Dec 2014 10:00:02 -0700
+Message-ID: <547C9E92.8010606@osg.samsung.com>
+References: <1414040834-30209-1-git-send-email-mpe@ellerman.id.au> <1417141122.6694.5.camel@concordia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54490832.7040906-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <1417141122.6694.5.camel@concordia>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-3NddpPZAyC0@public.gmane.org>, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-3NddpPZAyC0@public.gmane.org>, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/23/2014 07:52 AM, Shuah Khan wrote:
-> On 10/23/2014 07:06 AM, Christopher Covington wrote:
->> Hi Michael,
->>
->> On 10/23/2014 01:07 AM, Michael Ellerman wrote:
->>> Don't prevent the test building on non-x86. Just try and build it and
->>> let the chips fall where they may.
->>
->> As a user of kcmp via CRIU on arm and arm64, thanks!
->>
->>> diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
->>> index 4f00c0524501..cda9cc4004c9 100644
->>> --- a/tools/testing/selftests/kcmp/Makefile
->>> +++ b/tools/testing/selftests/kcmp/Makefile
->>> @@ -1,21 +1,7 @@
->>> -uname_M := $(shell uname -m 2>/dev/null || echo not)
->>> -ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
->>> -ifeq ($(ARCH),i386)
->>> -        ARCH := x86
->>> -	CFLAGS := -DCONFIG_X86_32 -D__i386__
->>> -endif
->>> -ifeq ($(ARCH),x86_64)
->>> -	ARCH := x86
->>> -	CFLAGS := -DCONFIG_X86_64 -D__x86_64__
->>> -endif
->>>  CFLAGS += -I../../../../usr/include/
->>>  
->>>  all:
->>> -ifeq ($(ARCH),x86)
->>>  	gcc $(CFLAGS) kcmp_test.c -o kcmp_test
->>
->> Not that this needs to be addressed in this patch, but this looks broken for
->> cross compilation. It looks like some of the other selftests use:
->>
->> CC = $(CROSS_COMPILE)gcc
->>
+On 11/27/2014 07:18 PM, Michael Ellerman wrote:
+> On Thu, 2014-10-23 at 16:07 +1100, Michael Ellerman wrote:
+>> kcmp.h appears to be part of the API, it's documented in kcmp(2), and
+>> the selftests/kcmp code uses it. So move it to uapi so it's actually
+>> exported.
 > 
-> It makes sense to fix the cross-compile problem now, since
-> this patch is extending the support to other archs.
+> Looks like this series fell through the cracks?
 > 
-> thanks,
-> -- Shuah
+> It still applies on rc6. Should I resend?
 > 
+> cheers
 > 
+>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 
-Please address the cross-compile problems in your next patch version.
+I am expecting a patch v2 for the series based on the comments
+on the series. Please see my responses to the individual patch
+threads.
 
+thanks,
 -- Shuah
+
 
 -- 
 Shuah Khan
