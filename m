@@ -1,223 +1,108 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: kdbus: add code to gather metadata
-Date: Mon, 1 Dec 2014 06:46:04 -0800
-Message-ID: <CALCETrVcMxLZg1QLWYJEaCsUiDH6Uo7-EqEijHckbfJs_nQf4A@mail.gmail.com>
-References: <1416546149-24799-1-git-send-email-gregkh@linuxfoundation.org>
- <1416546149-24799-8-git-send-email-gregkh@linuxfoundation.org>
- <546F977B.7040500@amacapital.net> <547C723C.6020305@zonque.org>
+From: Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2 02/19] kbuild: kselftest_install - add a new make target
+ to install selftests
+Date: Mon, 01 Dec 2014 16:47:13 +0100
+Message-ID: <547C8D81.1030605@suse.cz>
+References: <cover.1415735831.git.shuahkh@osg.samsung.com> <a2344d4df903d673afe1631118f40917f773cc9a.1415735831.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <547C723C.6020305@zonque.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Mack <daniel@zonque.org>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, David Herrmann <dh.herrmann@gmail.com>, Djalal Harouni <tixxdz@opendz.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <a2344d4df903d673afe1631118f40917f773cc9a.1415735831.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Cc: linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 1, 2014 at 5:50 AM, Daniel Mack <daniel@zonque.org> wrote:
-> Hi Andy,
->
-> Sorry for the late response.
->
-> On 11/21/2014 08:50 PM, Andy Lutomirski wrote:
->>> +static int kdbus_meta_append_cred(struct kdbus_meta *meta,
->>> +                              const struct kdbus_domain *domain)
->>> +{
->>> +    struct kdbus_creds creds = {
->>> +            .uid = from_kuid_munged(domain->user_namespace, current_uid()),
->>> +            .gid = from_kgid_munged(domain->user_namespace, current_gid()),
->>> +            .pid = task_pid_nr_ns(current, domain->pid_namespace),
->>> +            .tid = task_tgid_nr_ns(current, domain->pid_namespace),
->>
->> This is better than before -- at least it gets translation right part of
->> the way.  But it's still wrong if the receiver's namespace doesn't match
->> the domain.
->
-> Alright. The code now translates the items into each receiver's
-> namespaces individually, so we can also take possible chroot()
-> environments into account to do path translations.
+On 2014-11-11 21:27, Shuah Khan wrote:
+> Add a new make target to install to install kernel selftests.
+> This new target will build and install selftests. kselftest
+> target now depends on kselftest_install and runs the generated
+> kselftest script to reduce duplicate work and for common look
+> and feel when running tests.
+> 
+> Approach:
+> 
+> make kselftest_target:
+> -- exports kselftest INSTALL_KSFT_PATH
+>    default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
+> -- exports path for ksefltest.sh
+> -- runs selftests make install target:
+> 
+> selftests make install target
+> -- creates kselftest.sh script in install install dir
+> -- runs install targets for all INSTALL_TARGETS
+>    (Note: ftrace and powerpc aren't included in INSTALL_TARGETS,
+>           to not add more content to patch v1 series. This work
+>           will happen soon. In this series these two targets are
+>           run after running the generated kselftest script, without
+>           any regression in the way these tests are run with
+>           "make kselftest" prior to this work.)
+> -- install target can be run only from top level source dir.
+> 
+> Individual test make install targets:
+> -- install test programs and/or scripts in install dir
+> -- append to the ksefltest.sh file to add commands to run test
+> -- install target can be run only from top level source dir.
+> 
+> Adds the following new ways to initiate selftests:
+> -- Installing and running kselftest from install directory
+>    by running  "make kselftest"
+> -- Running kselftest script from install directory
+> 
+> Maintains the following ways to run tests:
+> -- make -C tools/testing/selftests run_tests
+> -- make -C tools/testing/selftests TARGETS=target run_tests
+>    Ability specify targets: e.g TARGETS=net
+> -- make run_tests from tools/testing/selftests
+> -- make run_tests from individual test directories:
+>    e.g: make run_tests in tools/testing/selftests/breakpoints
+> 
+> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> ---
+>  Makefile | 21 +++++++++++++++++++--
+>  1 file changed, 19 insertions(+), 2 deletions(-)
+> 
+> diff --git a/Makefile b/Makefile
+> index 05d67af..ccbd2e1 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -1071,12 +1071,26 @@ headers_check: headers_install
+>  	$(Q)$(MAKE) $(hdr-inst)=arch/$(hdr-arch)/include/uapi/asm $(hdr-dst) HDRCHECK=1
+>  
+>  # ---------------------------------------------------------------------------
+> -# Kernel selftest
+> +# Kernel selftest targets
+> +
+> +PHONY += __kselftest_configure
+> +INSTALL_KSFT_PATH=$(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
+> +export INSTALL_KSFT_PATH
+> +KSELFTEST=$(INSTALL_KSFT_PATH)/kselftest.sh
+> +export KSELFTEST
 
-Thanks!
-
-I suspect you'll get a lot of "(unreachable)/foo/bar".
-
->
->> Also, please move pid and tgid into their own item.  They suck for
->> reasons that have been beaten to death.  Let's make it possible to
->> deprecate them separately in the future.
->
-> Ok, done now. As mentioned in the highpid thread, we can easily add
-> another item once we have a better source of information.
-
-I'll see if I can get highpid in soon enough that starttime can be
-dropped entirely.  Once it shows up, there will be an API that can
-probably never be removed that isn't namespaced correctly and can't be
-checkpointed.
-
->
->>> +static int kdbus_meta_append_caps(struct kdbus_meta *meta)
->>> +{
->>> +    struct caps {
->>> +            u32 last_cap;
->>> +            struct {
->>> +                    u32 caps[_KERNEL_CAPABILITY_U32S];
->>> +            } set[4];
->>> +    } caps;
->>> +    unsigned int i;
->>> +    const struct cred *cred = current_cred();
->>> +
->>> +    caps.last_cap = CAP_LAST_CAP;
->>> +
->>> +    for (i = 0; i < _KERNEL_CAPABILITY_U32S; i++) {
->>> +            caps.set[0].caps[i] = cred->cap_inheritable.cap[i];
->>> +            caps.set[1].caps[i] = cred->cap_permitted.cap[i];
->>> +            caps.set[2].caps[i] = cred->cap_effective.cap[i];
->>> +            caps.set[3].caps[i] = cred->cap_bset.cap[i];
->>> +    }
->>
->> Please leave this in so that I can root every single kdbus-using system.
->>  It'll be lots of fun.
->>
->> Snark aside, the correct fix is IMO to delete this function entirely.
->> Even if you could find a way to implement it safely (which will be
->> distinctly nontrivial), it seems like a bad idea to begin with.
->
-> Yes, we currently have no way of translating caps from one user
-> namespace to another, which means we cannot allow such an item to cross
-> user namespaces. We can add this functionality later once we have the
-> neccessary APIs.
-
-I still don't expect this metadata item to ever make sense to use.
-The best argument I've heard is that it would enable CAP_SYS_BOOT to
-ask systemd for a reboot.  I think this is bogus:
-
-Realistically, this probably just means that users of /sbin/reboot
-might continue to work as expected.  Except:
-
-1. CAP_SYS_BOOT was never sufficient for /sbin/reboot to reboot
-cleanly -- clean reboots historically went through /dev/initctl.
-
-2. This only makes sense anyway if /sbin/reboot gets updated to speak
-dbus.  So you have a new reboot binary that you want to work as long
-as it ends up with CAP_SYS_BOOT.  But caps are so broken that this
-won't work intelligently no matter what kdbus does.  A user can have
-CAP_SYS_BOOT or not, but whether or not /sbin/reboot inherits that bit
-is almost entirely a function of that user's euid and has very little
-to do with whether that user has CAP_SYS_BOOT.  So you might as well
-just check euid == 0 in the first place.
-
-And setting fscap bits on /sbin/reboot so that a new reboot binary can
-prove to systemd that it has CAP_SYS_BOOT makes no sense.  Either put
-the policy in systemd in the first place, or make /sbin/reboot setuid
-root.
-
-And passing the permitted, inheritable, and bounding sets makes even
-less sense.  Yes, you could pass the entirety of /proc/PID/stat and
-/proc/PID/status, but that's silly, and passing caps around via kdbus
-for diagnostics seems ridiculous.
-
-If you put it in now, it's here to stay even if it proves to be a bad
-idea, whereas if you don't put it in at first, you can always add it
-if a good reason comes up.
-
->
->>> +#ifdef CONFIG_CGROUPS
->>> +static int kdbus_meta_append_cgroup(struct kdbus_meta *meta)
->>> +{
->>> +    char *buf, *path;
->>> +    int ret;
->>> +
->>> +    buf = (char *)__get_free_page(GFP_TEMPORARY | __GFP_ZERO);
->>> +    if (!buf)
->>> +            return -ENOMEM;
->>> +
->>> +    path = task_cgroup_path(current, buf, PAGE_SIZE);
->>
->> This may have strange interactions with cgroupns.  It's fixable, though,
->> but only once you implement translation at receive time, and I think
->> you'll have to do that to get any of this to work right.
->
-> Yes, agreed. We'll add translation to this item once cgroup namespaces
-> are in place. Until then, we'll expose the same information as other
-> parts of the Linux API already do.
-
-I don't expect this to become a problem.
-
->
->>> +#ifdef CONFIG_AUDITSYSCALL
->>> +static int kdbus_meta_append_audit(struct kdbus_meta *meta,
->>> +                               const struct kdbus_domain *domain)
->>> +{
->>> +    struct kdbus_audit audit;
->>> +
->>> +    audit.loginuid = from_kuid_munged(domain->user_namespace,
->>> +                                      audit_get_loginuid(current));
->>> +    audit.sessionid = audit_get_sessionid(current);
->>> +
->>> +    return kdbus_meta_append_data(meta, KDBUS_ITEM_AUDIT,
->>> +                                  &audit, sizeof(audit));
->>
->> So *that's* what audit means.  Please document this and consider
->> renaming it to something like AUDIT_LOGINUID_AND_SESSIONID.
->
-> The documentation was indeed bogus and is fixed now, along with man
-> other details. Thanks for spotting this!
-
-:)
+Can this be moved to tools/testing/selftests/Makefile? It's only used in
+this part of the tree.
 
 
->
->>> +#ifdef CONFIG_SECURITY
->>> +static int kdbus_meta_append_seclabel(struct kdbus_meta *meta)
->>> +{
->>> +    u32 len, sid;
->>> +    char *label;
->>> +    int ret;
->>> +
->>> +    security_task_getsecid(current, &sid);
->>> +    ret = security_secid_to_secctx(sid, &label, &len);
->>> +    if (ret == -EOPNOTSUPP)
->>> +            return 0;
->>> +    if (ret < 0)
->>> +            return ret;
->>> +
->>> +    if (label && len > 0)
->>> +            ret = kdbus_meta_append_data(meta, KDBUS_ITEM_SECLABEL,
->>> +                                         label, len);
->>
->> This thing needs a clear, valid use case.  I think that the use case
->> should document how non-enforcing mode is supposed to work, too.
->
-> kdbus just passes the seclabel along, if people want to use this for
-> security checks, then they need to call into libselinux, and should do
-> that by taking the enforcing mode into consideration. This is already
-> done in a lot of software that way.
->
->> Also, there should be a justification for why the LSM hooks by
->> themselves aren't good enough to remove the need for this.
->
-> SELinux and other MACs might want to do additional per-service security
-> checks. For example, a service manager might want to check the security
-> label of a service file against the security label of the client process
-> using the SELinux database before allow access. For this, we need to be
-> able to pass the client's security label race-free to libselinux so that
-> it can make its decision.
+>  PHONY += kselftest
+> -kselftest:
+> +kselftest: kselftest_install
+>  	$(Q)$(MAKE) -C tools/testing/selftests run_tests
+>  
+> +# Kernel selftest install
+> +
+> +PHONY += kselftest_install
+> +kselftest_install: __kselftest_configure
+> +	@rm -rf $(INSTALL_KSFT_PATH)
+> +	@mkdir -p $(INSTALL_KSFT_PATH)
 
-Yeah, but what happens on systems that use a different LSM?  And isn't
-the point of the new LSM kdbus hooks to do this automatically without
-userspace's help?
+Please use $(Q) insteaf od hardcoding the @.
 
-Admittedly, I don't see much of a problem with this feature existing,
-as long as the non-selinux people are okay with it.
 
->
-> I've added the above to the documentation now.
->
->
->
-> Thanks for your review again - much appreciated!
+> +	$(Q)$(MAKE) -C tools/testing/selftests install
 
-And thanks for addressing most of the issues.  The code is starting to
-look much better to me.
+The install target is only added by the next patch, which in turn
+depends on changes done by later patches. The order (in the current
+numbering) should be 01/19, 04/19, ... 19/19, 03/19 and 02/19.
 
---Andy
+Michal
