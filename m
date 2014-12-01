@@ -1,51 +1,66 @@
-From: Cornelia Huck <cornelia.huck@de.ibm.com>
-Subject: Re: [PATCH v7 08/46] virtio: memory access APIs
-Date: Mon, 1 Dec 2014 10:56:33 +0100
-Message-ID: <20141201105633.63ddff73.cornelia.huck@de.ibm.com>
+From: David Hildenbrand <dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v7 16/46] virtio_blk: v1.0 support
+Date: Mon, 1 Dec 2014 11:01:36 +0100
+Message-ID: <20141201110136.1ff29a67@thinkpad-w530>
 References: <1417359787-10138-1-git-send-email-mst@redhat.com>
-	<1417359787-10138-9-git-send-email-mst@redhat.com>
+	<1417359787-10138-17-git-send-email-mst@redhat.com>
+	<20141201091641.3085e682@thinkpad-w530>
+	<20141201092850.GD15607@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <1417359787-10138-9-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: Bjarke Istrup Pedersen <gurligebis@gentoo.org>, thuth@linux.vnet.ibm.com, Anup Patel <anup.patel@linaro.org>, rusty@au1.ibm.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, David Drysdale <drysdale@google.com>, dahi@linux.vnet.ibm.com, Ashwin Chaugule <ashwin.chaugule@linaro.org>, Sakari Ailus <sakari.ailus@linux.intel.com>, linux-api@vger.kernel.org, pbonzini@redhat.com, Andy Grover <agrover@redhat.com>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, Alexei Starovoitov <ast@plumgrid.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20141201092850.GD15607-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, rusty-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, thuth-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 30 Nov 2014 17:09:50 +0200
-"Michael S. Tsirkin" <mst@redhat.com> wrote:
+> On Mon, Dec 01, 2014 at 09:16:41AM +0100, David Hildenbrand wrote:
+> > > Based on patch by Cornelia Huck.
+> > > 
+> > > Note: for consistency, and to avoid sparse errors,
+> > >       convert all fields, even those no longer in use
+> > >       for virtio v1.0.
+> > > 
+> > > Signed-off-by: Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+> > > Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > ...
+> > > 
+> > > -static unsigned int features[] = {
+> > > +static unsigned int features_legacy[] = {
+> > >  	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
+> > >  	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE, VIRTIO_BLK_F_SCSI,
+> > >  	VIRTIO_BLK_F_WCE, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE,
+> > >  	VIRTIO_BLK_F_MQ,
+> > > +}
+> > > +;
+> > > +static unsigned int features[] = {
+> > > +	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
+> > > +	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
+> > > +	VIRTIO_BLK_F_TOPOLOGY,
+> > > +	VIRTIO_BLK_F_MQ,
+> > > +	VIRTIO_F_VERSION_1,
+> > 
+> > We can fit this into less lines, like done for features_legacy.
+> 
+> Wrt packing code more tightly, I did it like this to
+> make it easier to compare the arrays.
+> Each flag is on the same line in original and new array.
 
-> virtio 1.0 makes all memory structures LE, so
-> we need APIs to conditionally do a byteswap on BE
-> architectures.
-> 
-> To make it easier to check code statically,
-> add virtio specific types for multi-byte integers
-> in memory.
-> 
-> Add low level wrappers that do a byteswap conditionally, these will be
-> useful e.g. for vhost.  Add high level wrappers that
-> query device endian-ness and act accordingly.
-> 
-> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-> ---
->  include/linux/virtio_byteorder.h  | 59 +++++++++++++++++++++++++++++++++++++++
->  include/linux/virtio_config.h     | 32 +++++++++++++++++++++
->  include/uapi/linux/virtio_ring.h  | 45 ++++++++++++++---------------
->  include/uapi/linux/virtio_types.h | 46 ++++++++++++++++++++++++++++++
->  include/uapi/linux/Kbuild         |  1 +
->  5 files changed, 161 insertions(+), 22 deletions(-)
->  create mode 100644 include/linux/virtio_byteorder.h
->  create mode 100644 include/uapi/linux/virtio_types.h
+This just looks inconsistent to me.
 
-Reviewed-by: Cornelia Huck <cornelia.huck@de.ibm.com>
+1. features_legacy is tightly packed
+2. half of features is tightly packed
+
+So either all tightly packed or put every item on a single line. At least
+that's what I would do :)
+
+> 
+> > I was asking myself if we could do the conversion of the statical values
+> > somehow upfront, to reduce the patch size and avoid cpu_to_virtio.* at those
+> > places.
+> > 
+> > Otherwise looks good to me.
+> > 
+> 
