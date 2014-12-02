@@ -1,65 +1,33 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Tue, 2 Dec 2014 14:42:00 -0800
-Message-ID: <20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
-References: <cover.1415636409.git.milosz@adfin.com>
-	<20141125150101.9596a09e.akpm@linux-foundation.org>
-	<CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
+From: Peter =?iso-8859-15?q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Subject: Re: [PATCH v8 0/8] TPM 2.0 support
+Date: Tue, 2 Dec 2014 23:55:34 +0100
+Message-ID: <201412022355.34544.PeterHuewe@gmx.de>
+References: <1417559480-13757-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: Text/Plain;
+  charset="iso-8859-15"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: Milosz Tanski <milosz@adfin.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1417559480-13757-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2 Dec 2014 17:17:42 -0500 Milosz Tanski <milosz@adfin.com> wrote:
+Hi Jarkko,
 
-> > There have been several incomplete attempts to implement fincore().  If
-> > we were to complete those attempts, preadv2() could be implemented
-> > using fincore()+pread().  Plus we get fincore(), which is useful for
-> > other (but probably similar) reasons.  Probably fincore()+pwrite() could
-> > be used to implement pwritev2(), but I don't know what pwritev2() does
-> > yet.
-> >
-> > Implementing fincore() is more flexible, requires less code and is less
-> > likely to have bugs.  So why not go that way?  Yes, it's more CPU
-> > intensive, but how much?  Is the difference sufficient to justify the
-> > preadv2()/pwritev2() approach?
+
+Am Dienstag, 2. Dezember 2014, 23:31:12 schrieb Jarkko Sakkinen:
+> This patch set enables TPM2 protocol and provides drivers for FIFO and
+> CRB interfaces. This patch set does not export any sysfs attributes for
+> TPM 2.0 because existing sysfs attributes have three non-trivial issues:
 > 
-> I would like to see a fincore() functionality (for other reasons) I
-> don't think it does the job here. fincore() + preadv() is inherently
-> racy as there's no guarantee that the data becomes uncached between
-> the two calls.
-
-There will always be holes.  For example find_get_page() could block on
-lock_page() while some other process is doing IO. 
-page_cache_async_readahead() does lots of memory allocation which can
-get blocked for long periods in the page allocator. 
-page_cache_async_readahead() can block on synchronous metadata reads,
-etc.
-
-The question is whether a simpler approach such as fincore() will be
-sufficient.
-
-> This may not matter in some cases, but in others (ones
-> that I'm trying to solve) it will introduce unexpected latency.
-
-Details?
-
-> There's no overlap between prwritev2 and fincore() functionality.
-
-Do we actually need pwritev2()?  What's the justification for that?
 
 
-Please let's examine the alternative(s) seriously.  It would be mistake
-to add preadv2/pwritev2 if fincore+pread would have sufficed.  
+which tree are you basing your patches against?
+Can you use 
+https://github.com/PeterHuewe/linux-tpmdd for-james
+ please?
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Thanks,
+Peter
