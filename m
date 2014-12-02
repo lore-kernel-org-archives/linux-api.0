@@ -1,202 +1,210 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [CFT][PATCH 1/3] userns: Avoid problems with negative groups
-Date: Tue, 2 Dec 2014 14:09:13 -0800
-Message-ID: <CALCETrUJ9Qk553YSsYkjaeE-Qw0u_Pt1eoODUPX-udsO8kf14w@mail.gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [CFT][PATCH 2/3] userns: Add a knob to disable setgroups on a per
+ user namespace basis
+Date: Tue, 2 Dec 2014 14:17:17 -0800
+Message-ID: <CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
-	<87h9xez20g.fsf@x220.int.ebiederm.org>
-	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
-	<87mw75ygwp.fsf@x220.int.ebiederm.org>
-	<CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
-	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
-	<CALCETrXsQbCeQBUo_FrXNVS42mBEFXz1jku9TicVbFhxTmNGmA@mail.gmail.com>
-	<87bnnlvj43.fsf@x220.int.ebiederm.org>
+ <87h9xez20g.fsf@x220.int.ebiederm.org> <CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
+ <87mw75ygwp.fsf@x220.int.ebiederm.org> <CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
+ <87fvcxyf28.fsf_-_@x220.int.ebiederm.org> <874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+ <CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com> <87a935u3nj.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87bnnlvj43.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <87a935u3nj.fsf@x220.int.ebiederm.org>
+Sender: stable-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, stable <stable@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 2, 2014 at 1:26 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+On Tue, Dec 2, 2014 at 1:45 PM, Eric W. Biederman <ebiederm@xmission.com> wrote:
+> Andy Lutomirski <luto@amacapital.net> writes:
 >
->> On Tue, Dec 2, 2014 at 12:25 PM, Eric W. Biederman
->> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>> On Tue, Dec 2, 2014 at 12:28 PM, Eric W. Biederman
+>> <ebiederm@xmission.com> wrote:
 >>>
->>> Classic unix permission checks have an interesting feature, the group
->>> permissions for a file can be set to less than the other permissions
->>> on a file.  Occassionally this is used deliberately to give a certain
->>> group of users fewer permissions than the default.
->>>
->>> Overlooking negative groups has resulted in the permission checks for
->>> setting up a group mapping in a user namespace to be too lax.  Tighten
->>> the permission checks in new_idmap_permitted to ensure that mapping
->>> uids and gids into user namespaces without privilege will not result
->>> in new combinations of credentials being available to the users.
->>>
->>> When setting mappings without privilege only the creator of the user
->>> namespace is interesting as all other users that have CAP_SETUID over
->>> the user namespace will also have CAP_SETUID over the user namespaces
->>> parent.  So the scope of the unprivileged check is reduced to just
->>> the case where cred->euid is the namespace creator.
->>>
->>> For setting a uid mapping without privilege only euid is considered as
->>> setresuid can set uid, suid and fsuid from euid without privielege
->>> making any combination of uids possible with user namespaces already
->>> possible without them.
->>>
->>> For now seeting a gid mapping without privilege is removed.  The only
->>> possible set of credentials that would be safe without a gid mapping
->>> (egid without any supplementary groups) just doesn't happen in practice
->>> so would simply lead to unused untested code.
->>>
->>> setgroups is modified to fail not only when the group ids do not
->>> map but also when there are no gid mappings at all, preventing
->>> setgroups(0, NULL) from succeeding when gid mappings have not been
->>> established.
->>>
->>> For a small class of applications this change breaks userspace
->>> and removes useful functionality.  This small class of applications
->>> includes tools/testing/selftests/mount/unprivileged-remount-test.c
->>>
->>> Most of the removed functionality will be added back with the
->>> addition of a one way knob to disable setgroups.  Once setgroups
->>> is disabled setting the gid_map becomes as safe as setting the uid_map.
->>>
->>> For more common applications that set the uid_map and the gid_map with
->>> privilege this change will have no effect on them.
->>>
->>> This should fix CVE-2014-8989.
->>>
->>> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
->>> ---
+>>> - Expose the knob to user space through a proc file /proc/<pid>/setgroups
 >>
+>> Can you rename this to something clearer, e.g. userns_setgroups_mode?
+>
+> I am not certain that is any clearer.  That just reads as wordier.
+>
+> The userns bit is definitely confusing and wrong.  Why should we need to
+> spell out the scope?
+
+Because it's a property of the process' userns, not a property of the process.
+
+userns_setgroups would be okay.  (Arguably it should've been
+userns_uid_map, too, but at least uid_map sounds obviously
+namespace-related.)
+
+>
+>>>   A value of 0 means the setgroups system call is disabled in the
+>>>   current processes user namespace and can not be enabled in the
+>>>   future in this user namespace.
 >>>
->>> +static inline bool gid_mapping_possible(const struct user_namespace *ns)
->>> +{
->>> +       return ns->gid_map.nr_extents != 0;
->>> +}
->>> +
+>>>   A value of 1 means the segtoups system call is enabled.
 >>
->> Can you rename this to userns_may_setgroups or something like that?
->> To me, gid_mapping_possible sounds like you're allowed to map gids,
->> which sounds like the opposite condition, and it doesn't explain what
->> the point is.
+>> Would it make more sense to put strings like "allow" and "deny" in
+>> here?  That way, future extensions could add additional values.
 >
-> gid_mapping_established?
->
-> What I mean to be testing if is if from_kgid and make_kgid will work
-> because the gid mappings have been set.
+> If the implementation of the write side isn't too bad.  I would love
+> to see precedent elsewhere in the kernel.    What I don't expect to do
+> is have any values except setgroups are enabled and setgroups are
+> disabled.
 
-But why do you care whether from_kgid and make_kgid will work?  If
-they fail, then they fail.  I think that the point is that you're
-checking whether allowing setgroups to drop groups is safe, and that's
-only barely the same condition.
+current_clocksource?  I think there are lots of things like that.
 
 >
-> The userns knob for setgroups is a different test and is added
-> in the next patch.  And yes we really need both or the knob can
-> start out as on, and we need to provent setgroups(0, NULL)
-> before the user namespace is unshared.
+> I am fine with allowing for the possibility (that is just good
+> engineering) but I don't intend to seriously considering or
+> implementing other possibilities.
 
-Do you mean before it's mapped?
-
->
-> Although come to think about it probably makes sense to roll those two
-> test into one function and call that inline function from the setgroups
-> implementation.
-
-That's what I think, too.
+I can imagine a mode where there's a fixed set of groups that are
+forced set but other groups can be added and dropped.  It would be
+complicated to set up right, but someone might want it some day.
 
 >
-> Anyway I will think about it and see what I can do to make it easily
-> comprehensible.
->
->>> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
->>> index aa312b0dc3ec..51d65b444951 100644
->>> --- a/kernel/user_namespace.c
->>> +++ b/kernel/user_namespace.c
->>> @@ -812,16 +812,19 @@ static bool new_idmap_permitted(const struct file *file,
->>>                                 struct user_namespace *ns, int cap_setid,
->>>                                 struct uid_gid_map *new_map)
->>>  {
->>> -       /* Allow mapping to your own filesystem ids */
->>> -       if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
->>> +       const struct cred *cred = file->f_cred;
->>> +
->>> +       /* Allow a mapping without capabilities when allowing the root
->>> +        * of the user namespace capabilities restricted to that id
->>> +        * will not change the set of credentials available to that
->>> +        * user.
->>> +        */
->>> +       if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1) &&
->>> +           uid_eq(ns->owner, cred->euid)) {
+>>> diff --git a/arch/s390/kernel/compat_linux.c b/arch/s390/kernel/compat_linux.c
+>>> index 21c91feeca2d..6d0ee1b089fb 100644
+>>> --- a/arch/s390/kernel/compat_linux.c
+>>> +++ b/arch/s390/kernel/compat_linux.c
+>>> @@ -252,6 +252,7 @@ COMPAT_SYSCALL_DEFINE2(s390_setgroups16, int, gidsetsize, u16 __user *, grouplis
+>>>         int retval;
+>>>
+>>>         if (!gid_mapping_possible(user_ns) ||
+>>> +           !atomic_read(&user_ns->setgroups_allowed) ||
+>>>             !capable(CAP_SETGID))
+>>>                 return -EPERM;
 >>
->> What's uid_eq(ns->owner, cred->euid)) for?  This should already be covered by:
->
-> This means that the only user we attempt to set up unprivileged mappings
-> for is the owner of the user namespace.  Anyone else should already
-> have capabilities in the parent user namespace or shouldn't be able to
-> set the mapping at all.
->
-> In practice it is a clarification to make it easier to think about the code.
-
-But why?  I don't see why this check is necessary or why it's relevant
-to the current issue.
-
->
->>     if (cap_valid(cap_setid) && !file_ns_capable(file, ns, CAP_SYS_ADMIN))
->>         goto out;
+>> This is now incomprehensible because of the gid_mapping_possible
+>> thing.  If you renamed gid_mapping_possible to
+>> userns_setgroup_allowed, then this could be added to the
+>> implementation, and this would all make sense (not to mention avoiding
+>> duplicating this thing).
 >>
->> (except that I don't know why cap_valid(cap_setid) is checked -- this
->> ought to be enforced for projid_map, too, right?)
->
-> What to do with projid_map is entirely different discussion.  In
-> practice it is dead, and either XFS needs to be fixed to use it
-> or that code needs to be removed.  At the time I wrote it XFS
-> did not require any privileges to set project ids.
->
->>>                 u32 id = new_map->extent[0].lower_first;
->>>                 if (cap_setid == CAP_SETUID) {
+>>> @@ -826,6 +827,11 @@ static bool new_idmap_permitted(const struct file *file,
 >>>                         kuid_t uid = make_kuid(ns->parent, id);
->>> -                       if (uid_eq(uid, file->f_cred->fsuid))
->>> -                               return true;
->>> -               } else if (cap_setid == CAP_SETGID) {
->>> -                       kgid_t gid = make_kgid(ns->parent, id);
->>> -                       if (gid_eq(gid, file->f_cred->fsgid))
->>> +                       if (uid_eq(uid, cred->euid))
+>>>                         if (uid_eq(uid, cred->euid))
+>>>                                 return true;
+>>> +               } else if (cap_setid == CAP_SETGID) {
+>>> +                       kgid_t gid = make_kgid(ns->parent, id);
+>>> +                       if (!atomic_read(&ns->setgroups_allowed) &&
+>>> +                           gid_eq(gid, cred->egid))
+>>> +                               return true;
 >>
->> Why'd you change this from fsuid to euid?
+>> I still don't see why egid is any better than fsgid here.
 >
-> Because strangely enough I can set euid to any other uid with
-> setresuid, but the same does not hold with fsuid.
->
-> So strictly speaking fsuid was actually wrong before.  In practice
-> fsuid == euid so I don't think anyone will care.  But I want very much
-> to enforce the rule that user namespaces can't give you any credentials
-> you couldn't get otherwise.
+> Answered in my earlier response fsgid was a goof.
+> I can set any gid to my egid with my existing permissions.
+> Show me how I can do that with fsgid or fsuid and I will be happy to use
+> those.
 
-Fair enough.  Want to split that into a separate patch, then?
+You can use your fsgid to make a setgid file, I think.  But yes, point
+taken, although as mentioned in the other thread, I think it would be
+a lot clearer if it were a separate patch.
+
+
+>>> +
+>>> +ssize_t proc_setgroups_write(struct file *file, const char __user *buf,
+>>> +                            size_t count, loff_t *ppos)
+>>> +{
+>>> +       struct seq_file *seq = file->private_data;
+>>> +       struct user_namespace *ns = seq->private;
+>>> +       char kbuf[3];
+>>> +       int setgroups_allowed;
+>>> +       ssize_t ret;
+>>> +
+>>> +       ret = -EPERM;
+>>> +       if (!file_ns_capable(file, ns, CAP_SETGID))
+>>> +               goto out;
+>>
+>> CAP_SYS_ADMIN?  This isn't setting a gid in the namespace; it's
+>> reconfiguring the namespace.
+>
+> Hmm.  Maybe.  It is an activity that is normally controlled by
+> CAP_SETGID.
+>
+> Frankly I think the entire split up of the capability model is almost
+> totally broken.  But I think CAP_SETGID is a close approximation of the
+> right thing here.
+
+I agree that the cap model is screwy.  But we use CAP_SYS_ADMIN for
+everything else that changes the overall behavior of a namespace.
+
+In any event, the only way it matters is for a non-ns owner in the
+parent ns with CAP_SETGID set but not CAP_SYS_ADMIN.  I'd argue that
+CAP_SETGID should not be usable to make unrelated process' syscalls
+fail.
+
+>
+>>> +       /* Only allow a very narrow range of strings to be written */
+>>> +       ret = -EINVAL;
+>>> +       if ((*ppos != 0) || (count >= sizeof(kbuf)) || (count < 1))
+>>> +               goto out;
+>>> +
+>>> +       /* What was written? */
+>>> +       ret = -EFAULT;
+>>> +       if (copy_from_user(kbuf, buf, count))
+>>> +               goto out;
+>>> +       kbuf[count] = '\0';
+>>> +
+>>> +       /* What is being requested? */
+>>> +       ret = -EINVAL;
+>>> +       if (kbuf[0] == '0')
+>>> +               setgroups_allowed = 0;
+>>> +       else if (kbuf[0] == '1')
+>>> +               setgroups_allowed = 1;
+>>> +       else
+>>> +               goto out;
+>>> +
+>>> +       /* Allow a trailing newline */
+>>> +       ret = -EINVAL;
+>>> +       if ((count == 2) && (kbuf[1] != '\n'))
+>>> +               goto out;
+>>> +
+>>> +
+>>> +       if (setgroups_allowed) {
+>>> +               ret = -EINVAL;
+>>> +               if (atomic_read(&ns->setgroups_allowed) == 0)
+>>> +                       goto out;
+>>> +       } else {
+>>
+>> I would disallow this if gid_map has been written in the interest of
+>> sanity.
+>
+> Not a chance.  That is part of making this an independent knob.  If
+> there is another reason for disabling setgroups you can flip this
+> knob even after mappings are established.
+
+Then you really want CAP_SYS_ADMIN, I think.
+
+>
+>>> +               atomic_set(&ns->setgroups_allowed, 0);
+>>> +               /* sigh memory barriers! */
+>>
+>> I don't think that any barriers are needed.  If you ever observe
+>> setgroups_allowed == 0, it will stay that way forever.
+>
+> Likely.   In practice the code works today.
+>
+> But I need to review things closely to understand if there are barriers
+> needed.  But especially since it is a write once knob we can get away
+> with a lot.
+>
+
+Yeah.
+
+For long-term use, I kind of like the flags approach I added in the
+other patch.  It makes it easy to add more flags in the future.
+
+In any event, I think the only barrier that's needed is when writing gid_map:
+
+atomic_read / test_bit to determine whether unpriv mappings are okay;
+smp_mb() or whatever the current _after_atomic thing is these days;
+write mapping;
+
+Although I'm not sure whether Linux supports any architectures that
+can violate causality in the way that barrier is there to prevent.
 
 --Andy
-
->
-> Eric
-
-
-
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
