@@ -1,104 +1,48 @@
-From: Richard Yao <ryao@gentoo.org>
-Subject: Re: Why not make kdbus use CUSE?
-Date: Tue, 02 Dec 2014 07:22:11 -0500
-Message-ID: <547DAEF3.1090106@gentoo.org>
-References: <20141129063416.GE32286@woodpecker.gentoo.org> <20141129175947.GB32510@kroah.com> <547D50B9.9040909@gentoo.org> <20141202054850.GA17043@kroah.com> <547D7159.2040900@gentoo.org>
+From: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC] lsm: namespace hooks
+Date: Tue, 02 Dec 2014 13:43:13 +0100
+Message-ID: <1417524193.1899.2.camel@samsung.com>
+References: <1417096866-25563-1-git-send-email-l.pawelczyk@samsung.com>
+	<1417096866-25563-2-git-send-email-l.pawelczyk@samsung.com>
+	<CAFLxGvzw4N4QFv5Vg1dDf9pdRe+Szbevmqn5QNwjLHN4xrokCg@mail.gmail.com>
+	<1417098928.1805.15.camel@samsung.com> <54773757.8090905@nod.at>
+	<1417099455.1805.17.camel@samsung.com> <54773CE7.5040303@nod.at>
+	<1417101060.1805.21.camel@samsung.com>
+	<87d288zm3a.fsf@x220.int.ebiederm.org>
+	<1417104439.1805.25.camel@samsung.com>
+	<871tooy4nc.fsf@x220.int.ebiederm.org>
+	<1417109911.1805.27.camel@samsung.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="AouaX40JOEF1LqN14GjkwF9fRUAsH5P92"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <547D7159.2040900@gentoo.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-reply-to: <1417109911.1805.27.camel-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Juri Lelli <juri.lelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Daeseok Youn <daeseok.youn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, Matthew Dempsky <mdempsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Nikolay Aleksandrov <nikolay-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dario Faggioli <raistlin-k2GhghHVRtY@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Moore <pmoore@redha>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---AouaX40JOEF1LqN14GjkwF9fRUAsH5P92
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+On czw, 2014-11-27 at 18:38 +0100, Lukasz Pawelczyk wrote:
+> Right now the major issue I see is that LSM by itself is not defined how
+> it's going to behave. It's up to a specific LSM module.
+> 
+> E.g. within the Smack namespace filling the map is a privileged
+> operation. So by tying them up you cripple the ability to create a fully
+> working user namespace as an unprivileged process.
 
-Dear Greg,
-
-I had hoped that I could avoid reading through the code for yet another
-IPC mechanism when I asked why we needed kdbus at LinuxCon Europe. In
-hindsight, I should have just checked out the code and read it instead
-of asking. However, what I did instead was ask and then do some thinking
-based on that, mean to send an email and then sent it long after I
-should have.
-
-Our conversation now has lead me to realize my mistake and I have tried
-to rectify it. I now see that kdbus is hooking into kernel interface to
-implement KDBUS_ITEM_PAYLOAD_MEMFD in a way that we could only achieve
-from userspace with UNIX domain sockets. I imagine that we could avoid
-putting this code into the kernel through a combination of libev,
-libfuse, memfds and UNIX domain sockets.
-
-A fallback path could be provided by using anonymous files on the FUSE
-filesystem. This could probably by by the sender doing something like
-the following:
-
-void *buf;
-int coookie;
-char *name =3D strdup("/sys/fs/kdbus/tmp/XXXXXX");
-int fd =3D mkstemp(name);
-unlink(name);
-buf =3D mmap(NULL, LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
-// Do your writes here
-cookie =3D ioctl(fd, SEAL);
-close(fd);
-munmap(buf);
-// Send a message via a UNIX domain socket to the server with the
-// cookie, plus whatever XXXXXX became and instructions on where to
-// send the data. If the file had been closed before the message was
-// received, the server should be able to say okay. Otherwise, it can //
-send an error. The server would need to have a timer to handle the
-// case where a process never actually sends a message with the cookie.
-
-Assuming that this dance succeeds, the FUSE process could then make a
-readonly file in itself, open it read only, unlink it, put the data into
-the file and send the file descriptor via UNIX domain socket while
-refusing further writes. If it has its own user/group, the file should
-be safe from prying eyes.
-
-This is not as good as a memfd and also suffers from the race that
-O_TMPFILE was meant to close, but it should be able to function as a
-decent fallback. This would preserve portability across not only
-different versions of Linux, but also other POSIX systems. Keeping the
-code in userspace would allow us to apply SELinux policies to it, which
-is something that we would lose if it were go to into the kernel.
-
-That said, it is still not clear to me that dbus must be inside the
-kernel to be able to perform multicast and zero copy using memfd. Is
-there something that I have missed that make this not the case?
-
-Yours truly,
-Richard Yao
+Entertaining the idea that LSM namespace would be tied to user namespace
+(as you suggested) how do you see the limitation I described above?
 
 
---AouaX40JOEF1LqN14GjkwF9fRUAsH5P92
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-Comment: Using GnuPG with Thunderbird - http://www.enigmail.net/
-
-iQIcBAEBAgAGBQJUfa7/AAoJECDuEZm+6ExkNxcP/0zw9TxwLI8+s+cgwKJ1zTd4
-vna3Zt6dokmzrwLibQC0P/ILuvP0jXSVvHjk995nl9Bn2UFC1XVkb9vu/90L7apP
-46bRPGNDYwDi+VNTurp85cAu0LY6CFZ4qg3XgdYhovngyCQMk34ZefSCeOapV7+o
-mvs1dlJ4Q8gWZ6EIHlSnRwc7Hbqwa6QAYj0gYwHfLdMSyGQqVnRRlazkGk3s9heU
-QSegG4FKxt4IcaQf6UE71sZgES2xqcT2C6GUF9bIIRnqIuYg9DuWDlikcGqXV3vS
-zbzIY5gHzIdshCAb6tHjkfuArX/YSn16P74VWbh5ZUlR/Fq+3z7iA+b7wCpYqDSp
-Zo5/RvCniknWLlMKwOwmhgnAPZovb8zjVJFpEslSLYRC3LQvmG9HshiBWKWcOA/n
-HRtMODt6lsGoNaEsEAh1cG8gs9d5eI+vi3JuDjKLHdmyPm/HcfNiEnbhrXyr/m5h
-aaP9ytyRaN9dWi+9czk6sAuWI/H6JedxIcElWGghdGHWTFrqkve5wCW/bD1Rk0mp
-6RbCOClh+hw0PyuDr2zAtPEbnEuxrHq1wO6BpvKAqg15S7YPALJGZ00dasooKgj6
-9pAFIfOq6nUbhMDIY018Vd+M6CdyGSZVPGq1Ox3rEvXLbcQDkFwt2LgwnQ6NEQJP
-4EmUKVTcM4mADu0ZnjFq
-=bicU
------END PGP SIGNATURE-----
-
---AouaX40JOEF1LqN14GjkwF9fRUAsH5P92--
+-- 
+Lukasz Pawelczyk
+Samsung R&D Institute Poland
+Samsung Electronics
