@@ -1,82 +1,73 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Tue, 2 Dec 2014 11:01:25 +0100
-Message-ID: <20141202100125.GD27014@dhcp22.suse.cz>
-References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
- <1413799924-17946-2-git-send-email-minchan@kernel.org>
- <20141127144725.GB19157@dhcp22.suse.cz>
- <20141130235652.GA10333@bbox>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: [PATCH RFC 1/2] virtio_balloon: convert to virtio 1.0 endian-ness
+Date: Tue, 2 Dec 2014 13:44:06 +0200
+Message-ID: <1417520617-2135-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 Content-Disposition: inline
-In-Reply-To: <20141130235652.GA10333@bbox>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 01-12-14 08:56:52, Minchan Kim wrote:
-[...]
-> From 2edd6890f92fa4943ce3c452194479458582d88c Mon Sep 17 00:00:00 2001
-> From: Minchan Kim <minchan@kernel.org>
-> Date: Mon, 1 Dec 2014 08:53:55 +0900
-> Subject: [PATCH] madvise.2: Document MADV_FREE
-> 
-> Signed-off-by: Minchan Kim <minchan@kernel.org>
-> ---
->  man2/madvise.2 | 13 +++++++++++++
->  1 file changed, 13 insertions(+)
-> 
-> diff --git a/man2/madvise.2 b/man2/madvise.2
-> index 032ead7..33aa936 100644
-> --- a/man2/madvise.2
-> +++ b/man2/madvise.2
-> @@ -265,6 +265,19 @@ file (see
->  .BR MADV_DODUMP " (since Linux 3.4)"
->  Undo the effect of an earlier
->  .BR MADV_DONTDUMP .
-> +.TP
-> +.BR MADV_FREE " (since Linux 3.19)"
-> +Gives the VM system the freedom to free pages, and tells the system that
-> +information in the specified page range is no longer important.
-> +This is an efficient way of allowing
-> +.BR malloc (3)
+balloon device is not part of virtio 1.0 spec.  Still, it's easy enough
+to make it handle endian-ness exactly as other virtio 1.0 devices: what
+we gain from this, is that there's no need to special-case it in virtio
+core.
 
-This might be rather misleading. Only some malloc implementations are
-using this feature (jemalloc, right?). So either be specific about which
-implementation or do not add it at all.
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+---
+ include/uapi/linux/virtio_balloon.h | 5 +++--
+ drivers/virtio/virtio_balloon.c     | 4 ++--
+ 2 files changed, 5 insertions(+), 4 deletions(-)
 
-> +to free pages anywhere in the address space, while keeping the address space
-> +valid. The next time that the page is referenced, the page might be demand
-> +zeroed, or might contain the data that was there before the MADV_FREE call.
-> +References made to that address space range will not make the VM system page the
-> +information back in from backing store until the page is modified again.
-
-I am not sure I understand the last sentence. So say I did MADV_FREE and
-the reclaim has dropped that page. I know that the file backed mappings
-are not supported yet but assume they were for a second... Now, I do
-read from that location again what is the result?
-If we consider anon mappings then the backing store is misleading as
-well because memory was dropped and so always newly allocated.
-I would rather drop the whole sentence and rather see an explanation
-what is the difference between to MADV_DONT_NEED.
-"
-Unlike MADV_DONT_NEED the memory is freed lazily e.g. when the VM system
-is under memory pressure.
-"
-
-> +It works only with private anonymous pages (see
-> +.BR mmap (2)).
->  .SH RETURN VALUE
->  On success
->  .BR madvise ()
+diff --git a/include/uapi/linux/virtio_balloon.h b/include/uapi/linux/virtio_balloon.h
+index 5e26f61..5bee71c 100644
+--- a/include/uapi/linux/virtio_balloon.h
++++ b/include/uapi/linux/virtio_balloon.h
+@@ -27,6 +27,7 @@
+  * SUCH DAMAGE. */
+ #include <linux/virtio_ids.h>
+ #include <linux/virtio_config.h>
++#include <linux/virtio_types.h>
+ 
+ /* The feature bitmap for virtio balloon */
+ #define VIRTIO_BALLOON_F_MUST_TELL_HOST	0 /* Tell before reclaiming pages */
+@@ -52,8 +53,8 @@ struct virtio_balloon_config
+ #define VIRTIO_BALLOON_S_NR       6
+ 
+ struct virtio_balloon_stat {
+-	__u16 tag;
+-	__u64 val;
++	__virtio16 tag;
++	__virtio64 val;
+ } __attribute__((packed));
+ 
+ #endif /* _LINUX_VIRTIO_BALLOON_H */
+diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
+index 4497def..721e32f 100644
+--- a/drivers/virtio/virtio_balloon.c
++++ b/drivers/virtio/virtio_balloon.c
+@@ -201,8 +201,8 @@ static inline void update_stat(struct virtio_balloon *vb, int idx,
+ 			       u16 tag, u64 val)
+ {
+ 	BUG_ON(idx >= VIRTIO_BALLOON_S_NR);
+-	vb->stats[idx].tag = tag;
+-	vb->stats[idx].val = val;
++	vb->stats[idx].tag = cpu_to_virtio16(vb->vdev, tag);
++	vb->stats[idx].val = cpu_to_virtio64(vb->vdev, val);
+ }
+ 
+ #define pages_to_bytes(x) ((u64)(x) << PAGE_SHIFT)
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+MST
