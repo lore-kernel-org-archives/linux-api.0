@@ -1,71 +1,82 @@
-From: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-Subject: [GIT PULL] core drm support for Rockchip SoCs v15
-Date: Tue, 02 Dec 2014 17:39:35 +0800
-Message-ID: <547D88D7.5080005@rock-chips.com>
-References: <1417511600-7054-1-git-send-email-mark.yao@rock-chips.com>
+From: Michal Hocko <mhocko@suse.cz>
+Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
+Date: Tue, 2 Dec 2014 11:01:25 +0100
+Message-ID: <20141202100125.GD27014@dhcp22.suse.cz>
+References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
+ <1413799924-17946-2-git-send-email-minchan@kernel.org>
+ <20141127144725.GB19157@dhcp22.suse.cz>
+ <20141130235652.GA10333@bbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417511600-7054-1-git-send-email-mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, marcheu-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dbehr-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, cf-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xxm-TNX95d0MmH7DzftRWevZcw@public.gmane.org, huangtao-TNX95d0MmH7DzftRWevZcw@public.gmane.org, kever.yang-TNX95d0MmH7DzftRWevZcw@public.gmane.org, yxj-TNX95d0MmH7DzftRWevZcw@public.gmane.org, xw-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Mark Yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20141130235652.GA10333@bbox>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Dave
+On Mon 01-12-14 08:56:52, Minchan Kim wrote:
+[...]
+> From 2edd6890f92fa4943ce3c452194479458582d88c Mon Sep 17 00:00:00 2001
+> From: Minchan Kim <minchan@kernel.org>
+> Date: Mon, 1 Dec 2014 08:53:55 +0900
+> Subject: [PATCH] madvise.2: Document MADV_FREE
+> 
+> Signed-off-by: Minchan Kim <minchan@kernel.org>
+> ---
+>  man2/madvise.2 | 13 +++++++++++++
+>  1 file changed, 13 insertions(+)
+> 
+> diff --git a/man2/madvise.2 b/man2/madvise.2
+> index 032ead7..33aa936 100644
+> --- a/man2/madvise.2
+> +++ b/man2/madvise.2
+> @@ -265,6 +265,19 @@ file (see
+>  .BR MADV_DODUMP " (since Linux 3.4)"
+>  Undo the effect of an earlier
+>  .BR MADV_DONTDUMP .
+> +.TP
+> +.BR MADV_FREE " (since Linux 3.19)"
+> +Gives the VM system the freedom to free pages, and tells the system that
+> +information in the specified page range is no longer important.
+> +This is an efficient way of allowing
+> +.BR malloc (3)
 
-The following changes since commit 656d7077d8ffd1c2492d4a0a354367ab2e545059:
+This might be rather misleading. Only some malloc implementations are
+using this feature (jemalloc, right?). So either be specific about which
+implementation or do not add it at all.
 
-   dt-bindings: iommu: Add documentation for rockchip iommu (2014-11-03 
-17:29:09 +0100)
+> +to free pages anywhere in the address space, while keeping the address space
+> +valid. The next time that the page is referenced, the page might be demand
+> +zeroed, or might contain the data that was there before the MADV_FREE call.
+> +References made to that address space range will not make the VM system page the
+> +information back in from backing store until the page is modified again.
 
-are available in the git repository at:
+I am not sure I understand the last sentence. So say I did MADV_FREE and
+the reclaim has dropped that page. I know that the file backed mappings
+are not supported yet but assume they were for a second... Now, I do
+read from that location again what is the result?
+If we consider anon mappings then the backing store is misleading as
+well because memory was dropped and so always newly allocated.
+I would rather drop the whole sentence and rather see an explanation
+what is the difference between to MADV_DONT_NEED.
+"
+Unlike MADV_DONT_NEED the memory is freed lazily e.g. when the VM system
+is under memory pressure.
+"
 
-   https://github.com/markyzq/kernel-drm-rockchip.git drm_iommu_v15
+> +It works only with private anonymous pages (see
+> +.BR mmap (2)).
+>  .SH RETURN VALUE
+>  On success
+>  .BR madvise ()
+-- 
+Michal Hocko
+SUSE Labs
 
-for you to fetch changes up to 5ac4837b12f533de5d9f8f66b45494c58e805536:
-
-   dt-bindings: video: Add documentation for rockchip vop (2014-12-02 
-17:29:33 +0800)
-
-----------------------------------------------------------------
-Mark Yao (3):
-       drm: rockchip: Add basic drm driver
-       dt-bindings: video: Add for rockchip display subsytem
-       dt-bindings: video: Add documentation for rockchip vop
-
-  .../devicetree/bindings/video/rockchip-drm.txt     |   19 +
-  .../devicetree/bindings/video/rockchip-vop.txt     |   58 +
-  drivers/gpu/drm/Kconfig                            |    2 +
-  drivers/gpu/drm/Makefile                           |    1 +
-  drivers/gpu/drm/rockchip/Kconfig                   |   17 +
-  drivers/gpu/drm/rockchip/Makefile                  |    8 +
-  drivers/gpu/drm/rockchip/rockchip_drm_drv.c        |  551 ++++++++
-  drivers/gpu/drm/rockchip/rockchip_drm_drv.h        |   68 +
-  drivers/gpu/drm/rockchip/rockchip_drm_fb.c         |  201 +++
-  drivers/gpu/drm/rockchip/rockchip_drm_fb.h         |   28 +
-  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c      |  210 +++
-  drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h      |   21 +
-  drivers/gpu/drm/rockchip/rockchip_drm_gem.c        |  294 ++++
-  drivers/gpu/drm/rockchip/rockchip_drm_gem.h        |   54 +
-  drivers/gpu/drm/rockchip/rockchip_drm_vop.c        | 1455 
-++++++++++++++++++++
-  drivers/gpu/drm/rockchip/rockchip_drm_vop.h        |  201 +++
-  16 files changed, 3188 insertions(+)
-  create mode 100644 
-Documentation/devicetree/bindings/video/rockchip-drm.txt
-  create mode 100644 
-Documentation/devicetree/bindings/video/rockchip-vop.txt
-  create mode 100644 drivers/gpu/drm/rockchip/Kconfig
-  create mode 100644 drivers/gpu/drm/rockchip/Makefile
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.c
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_drv.h
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.c
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fb.h
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.c
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_fbdev.h
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.c
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_gem.h
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.c
-  create mode 100644 drivers/gpu/drm/rockchip/rockchip_drm_vop.h
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
