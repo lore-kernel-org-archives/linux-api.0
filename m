@@ -1,51 +1,68 @@
-From: Dave Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [GIT PULL] core drm support for Rockchip SoCs v14
-Date: Tue, 2 Dec 2014 13:53:01 +1000
-Message-ID: <CAPM=9tzaapZr7UoOu0J5F55tWt36f4SShM8bHXdWkGyED5pd5A@mail.gmail.com>
-References: <1416447994-9921-1-git-send-email-mark.yao@rock-chips.com>
-	<5476CC59.6080607@rock-chips.com>
+From: Richard Yao <ryao-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>
+Subject: Re: Why not make kdbus use CUSE?
+Date: Mon, 01 Dec 2014 23:31:27 -0500
+Message-ID: <547D409F.7090004@gentoo.org>
+References: <20141129063416.GE32286@woodpecker.gentoo.org> <20141201142311.37c81ff1@lxorguk.ukuu.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="tS9NJEJItXTghmmhX0AdBmqND2G4KcK7g"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5476CC59.6080607-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
+In-Reply-To: <20141201142311.37c81ff1-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org>
-Cc: =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Boris BREZILLON <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Rom Lemarchand <romlem-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rockchip-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Douglas Anderson <dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, =?UTF-8?Q?St=C3=A9phane_Marchesin?= <marcheu@chr>
+To: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 27 November 2014 at 17:01, Mark yao <mark.yao-TNX95d0MmH7DzftRWevZcw@public.gmane.org> wrote:
-> Hi Dave
->
->     this pull request is for rockchip drm v14, based on Joerg's iommu
-> arm/rockchip branch.
->
-> The following changes since commit 656d7077d8ffd1c2492d4a0a354367ab2e545059:
->
->   dt-bindings: iommu: Add documentation for rockchip iommu (2014-11-03
-> 17:29:09 +0100)
->
-> are available in the git repository at:
->
->   https://github.com/markyzq/kernel-drm-rockchip.git drm_iommu
->
-> for you to fetch changes up to aab18af3a93353bc43897b716fd7e12d5998b9bc:
->
->   dt-bindings: video: Add documentation for rockchip vop (2014-11-27
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--tS9NJEJItXTghmmhX0AdBmqND2G4KcK7g
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-For list prosperity, now that I can build this, I find it can't build
-as a module
+On 12/01/2014 09:23 AM, One Thousand Gnomes wrote:
+>> told quite plainly that such distributions are not worth consideration=
+=2E If kdbus
+>> is merged despite concerns about security and backward compatibility, =
+could we
+>> at least have the shim moved to libc netural place, like Linus' tree?
+>=20
+> I would expect any other libc would fork the shim anyway (or just not
+> bother with systemd in most cases).
 
- LD [M]  drivers/gpu/drm/rockchip/rockchipdrm.o
-drivers/gpu/drm/rockchip/rockchip_drm_vop.o: In function `init_module':
-rockchip_drm_vop.c:(.init.text+0x0): multiple definition of `init_module'
-drivers/gpu/drm/rockchip/rockchip_drm_drv.o:rockchip_drm_drv.c:(.init.text+0x0):
-first defined here
-drivers/gpu/drm/rockchip/rockchip_drm_vop.o: In function `cleanup_module':
-rockchip_drm_vop.c:(.exit.text+0x0): multiple definition of `cleanup_module'
-drivers/gpu/drm/rockchip/rockchip_drm_drv.o:rockchip_drm_drv.c:(.exit.text+0x0):
-first defined here
+If the shim were in glibc, then that would be reasonable, but the shim
+is in systemd. That would make the systemd developers the gate keepers
+ta kernel interface. If we are going to enforce Linus' stable API
+policy, then the shim should be in a repository that has a track record
+for interface stability, which the systemd developers simply do not
+have. It was not that long ago that firmware loading was moved into the
+kernel because they had caused problems. I do not think that the systemd
+developers are the correct ones to assume stewardship over such code. If
+kdbus is merged, I think the best situation would be to move it into
+Linus' tree.
 
-not sure what your plan for the vop.c variant should be, is it an extra module,
-or just part of rockchipdrm?
 
-Dave.
+--tS9NJEJItXTghmmhX0AdBmqND2G4KcK7g
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+Comment: Using GnuPG with Thunderbird - http://www.enigmail.net/
+
+iQIcBAEBAgAGBQJUfUCtAAoJECDuEZm+6ExkSlEQAJqpYK86k19nl/6ETvzkS0Np
+Il9FpkT91xfhQq+Ur35ex7fdrGAgFTk+Fl5zDyQT9goSPN3G2z3wDBpgcsCGlPK9
+JGFWcUOXfccOSpn361UkoYsh0LoNdvO427uHpAw8gLJH+xo19nPJpQqjeQx050gT
+4ricEEFs2RfPwYUBi0/8vSBTaOtTZNBC/TnuuiFDGTj71DguRirmOpeOd+U2KQMm
+s4ztABqMtm7RnCdyAVsjiiKz/c6DNSaQ0hRidQHVPNnzNr6vhJZUFt3Dvw3zmFQq
+YPTy6DCqEMOOd3YligsVf1UNepWWAVsm/BtoNfMBMrcGJbpHjCDw7hC/R5sUfaRB
+1FerHJAOf9Ldk9pFf0V75JyUALvPL3Wb0LJcHt1udBBP2kFdsu/DlZOpL2so16BI
+/jYSdAwkBUaH7T/g0fvem9Nt4daTc+cvwTP6XthCr6vsEZc4C2EyKkZSCUzywcqa
+rBI8kMDEtGStaLKZV+QaFtUi+v22QdYLu9jc1FKkD5Ljaxb3nX0InpxoQGzXC0li
+kfw1PXjbBGj7MDJtoXoByulg5bU/afxU6TolXtSmfD2iJiTUJL5NR2wjJEwWrFaM
+UHCgzvVUdfbS4toiUpTKdMazKNQuzNTSKUY+VwTM9WQyiI8C2hIOfellx0E/timO
+HHtAeSi+JvInBYL9vV5/
+=N/OZ
+-----END PGP SIGNATURE-----
+
+--tS9NJEJItXTghmmhX0AdBmqND2G4KcK7g--
