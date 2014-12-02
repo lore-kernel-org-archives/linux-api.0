@@ -1,113 +1,138 @@
-From: Alex Dubov <alex.dubov@gmail.com>
-Subject: Re: Minimal effort/low overhead file descriptor duplication over
- Posix.1b s
-Date: Wed, 3 Dec 2014 03:15:16 +1100
-Message-ID: <CAPs88r_+yOYTNeKZEq+kPS83-+T4_ehR0Y_5kpTP1LmO2508MQ@mail.gmail.com>
-References: <1417494919-4577-1-git-send-email-oakad@yahoo.com>
-	<20141202102632.6ae37b88@lwn.net>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: Why not make kdbus use CUSE?
+Date: Tue, 2 Dec 2014 09:12:49 -0800
+Message-ID: <20141202171249.GA8326@kroah.com>
+References: <20141129063416.GE32286@woodpecker.gentoo.org>
+ <20141129175947.GB32510@kroah.com>
+ <547D50B9.9040909@gentoo.org>
+ <20141202054850.GA17043@kroah.com>
+ <547D7159.2040900@gentoo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141202102632.6ae37b88@lwn.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Corbet <corbet@lwn.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <547D7159.2040900-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Yao <ryao-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 3, 2014 at 2:26 AM, Jonathan Corbet <corbet@lwn.net> wrote:
-> On Tue,  2 Dec 2014 15:35:17 +1100
-> Alex Dubov <alex.dubov@gmail.com> wrote:
->
->
->  - Messing with another process's file descriptor table without its
->    knowledge looks like a possible source of all kinds problems.  Might
->    there be race conditions with close()/dup() code, for example?  And
->    remember that users can be root in a user namespace; maybe there's no
->    potential for mischief there, but it needs to be considered.
+On Tue, Dec 02, 2014 at 02:59:21AM -0500, Richard Yao wrote:
+> On 12/02/2014 12:48 AM, Greg Kroah-Hartman wrote:
+> > On Tue, Dec 02, 2014 at 12:40:09AM -0500, Richard Yao wrote:
+> >>>> They regard a userland compatibility shim in the systemd repostory to provide
+> >>>> backward compatibility for applications. Unfortunately, this is insufficient to
+> >>>> ensure compatibility because dependency trees have multiple levels. If cross
+> >>>> platform package A depends on cross platform library B, which depends on dbus,
+> >>>> and cross platform library B decides to switch to kdbus, then it ceases to be
+> >>>> cross platform and cross platform package A is now dependent on Linux kernels
+> >>>> with kdbus. Not only does that affect other POSIX systems, but it also affects
+> >>>> LTS versions of Linux.
+> >>>
+> >>> What does LTS versions have anything to do here?  And what specific
+> >>> dependancies are you worried about?
+> >>
+> >> Lets say that you have a Linux 3.10 system and you want some package
+> >> that indirectly depends on the new API due to library dependencies. You
+> >> will have a problem. You could probably install an older version of the
+> >> library, but if the older version has a CVE, most end users will end up
+> >> between a rock and a hard place. This situation should merit some
+> >> consideration because you are taking something that lived previously in
+> >> userland, modifying it so that anything depending on the modifications
+> >> is no longer backward compatible and then tying it to new kernels.
+> > 
+> > Then you need to get a better distro, as any "well run" long-term
+> > enterprise distro handles stuff like this for you.  Otherwise you need
+> > to update systems properly.  There's nothing that I can do here to help
+> > with that, nor do I ever want to, sorry.
+> 
+> Another option is to include KVM-style kernel compatibility code to
+> allow the module to be built against older kernels. If you target
+> 2.6.32.y, 3.2.y, 3.4.y and 3.10.y, the risk of people on older Linux
+> systems being left behind would be minimized.
 
-If process A has sufficient permissions to signal process B, it can
-already do arbitrary mischief, no news there (SIGKILL and SIGSTOP will
-definitely cause more havoc :-).
+If you want to do that for an out-of-tree patch/module, feel free to do
+so, but this has nothing to do with the in-kernel kdbusfs code, sorry.
 
-I don't believe there can be any race conditions as this is not
-different to what happens when dup() is invoked from one of the
-threads in multi-threaded application, whereupon other threads go on
-with their usual file operations. Descriptor duplication happens prior
-to any signal handling activities.
+> >> 1. Debugging kernel code is a pain while debugging user code is
+> >> relatively easy.
+> > 
+> > You have full access to a debugger, what more do you need?  :)
+> 
+> I would prefer not to start bringing userland daemons into the kernel
+> unless there is no other choice. That way, a wider range of people can
+> tackle bugs and the code could be applied to a larger number of systems.
 
->  - Forcing the use of realtime signals seems strange; this isn't a
->    realtime operation by any stretch.
+What exactly do you mean here?  There are thousands of people who know
+how to properly debug Linux kernel code, this isn't an issue at all.
 
-"Real time signals" are merely a misleading name for Posix.1b
-micro-messaging facility. To the best of my knowledge they do not
-affect scheduling any more then SIGIO or SIGALRM would.
+> > And why would you need to debug the kernel kdbus code?  Is something not
+> > working properly in it?  Otherwise just use wireshark to read the kdbus
+> > data stream and all should be fine.
+> 
+> Putting daemons in the kernel means that we further complicate already
+> complex relationships with regard to things like memory utilization and
+> CPU time. It is easier to deal with this in userland where we could
+> better utilize cgroups.
 
-As Posix.1b signals are best handled by signalfd() facility anyway, no
-impact on scheduling compared to any other approach (including the
-existing domain socket approach) is expected at all.
+What does cgroups have to do with dbus userspace libraries here?  In
+fact, I don't think you looked at the code, as we properly tie into
+namespaces and all the stuff you can only do in the kernel, you aren't
+reading my introductory email at all that explains all of this.
 
->
->  - How might the sending process communicate to the recipient what the fd
->    is for?  Even if a process only expects one type of file descriptor,
->    the ability to communicate information other than its number seems
->    like it would often be useful.
+> >> 2. Security vulnerabilities in kernel code give complete access to
+> >> everything while security vulnerabilities in userspace code can be
+> >> limited in scope by SELinux.
+> > 
+> > Kernel code is hard, security matters, yes I know this, we all have been
+> > doing this for a very long time.  Of course bugs happen, but if you look
+> > closely, your "attack surface" is now smaller using kdbus than it was
+> > using old-style dbus.
+> 
+> Lets say that I have a system running LXC containers, someone does full
+> disclosure of proof of concept code for an arbitrary code execution zero
+> day and then someone else tries the exploit in a LXC container on
+> mysystem. With old-style dbus, only the container is affected and if
+> selinux is used, then it is possible to restrict daemon to things in the
+> container using dbus.
 
-There are 32 "real time" signals defined by default in kernel; this
-range can be increased at will with kernel recompilation and glibc
-will pick up the correct range automatically (this is Posix mandated
-behavior and it actually works like that).
+And how exactly does this relate to the kdbusfs code?  Please, stop
+making random statements that have nothing to do with the code being
+proposed.
 
-I have not seen an app yet that relied on more than half a dozen of
-distinct signal numbers. Thus any application can conveniently define
-more than 2 dozens of different fd varieties out of the box, delivered
-to it with dedicated signal ids, whereupon in most practical
-applications only 1 or 2 varieties of file descriptors are ever passed
-around.
+> I heard quite clearly at LinuxCon Europe that there are no expected
+> benefits from using the shim with kdbus such that we have the equivalent
+> of the original dbus daemon in the kernel, but there were plenty of
+> benefits from the protocol. If that is the case, it seems that being in
+> the kernel is not a necessity, but the new protocol is. FUSE might be
+> somewhat slower than an in-kernel filesystem, but it allows us to
+> enforce least privilege like we can do now with the current dbus daemon.
+> We cannot do that with kdbus/kdbusfs. If the reduction in context switch
+> overhead actually mattered, I would understand the desire to put this
+> into the kernel, but I have heard quite consistently that the context
+> switch overhead is not a significant motivation for pushing this code
+> into the kernel.
 
->
-> Some of these concerns might be addressable by requiring the recipient to
-> call acceptfd() (or some such) with the ability to use poll().  As an
-> alternative, I believe kdbus has fd-passing abilities; if kdbus goes in,
-> would you still need this feature?
+You heard wrong, the context switch removal is a big thing, and a major
+issue for a lot of users.  But that's not the only reason this is being
+proposed, again, go read and respond to the 00 patch introduction
+please, or even better yet, read the code and documentation and respond
+to issues you find there.
 
-Any process willing to handle Posix.1b signals must explicitly
-manipulate the signal masks - otherwise it will be killed the moment
-signal is received. Thus, no special "acceptfd()" call is necessary on
-the receiver side - applications usually don't  modify their signal
-masks unless they expect some particular signal to arrive.
+Again, FUSE makes no sense here, sorry.
 
-kdbus has something like it and binder on android has it as well. The
-problem with both of them are the same as with unix domain sockets
-(which implement a whole, rather convoluted, cmsg facility to be ever
-used for that single purpose): they try to solve big problems with
-fancy functionality, whereupon fd passing is a nice side feature
-(which then gets used the most).
+> >> 3. Integration with things like LXC should be easier from userspace,
+> >> where each container can have its own daemon.
+> > 
+> > How does the current implementation not work properly for this?  The
+> > filesystem implementation makes this easier than ever, while sticking
+> > with the character device made this quite difficult in different ways.
+> 
+> As you pointed out, my information was out of date. Making this into a
+> filesystem is an excellent idea that handles container integration quite
+> nicely.
 
-To my understanding, commonly used functionality deserves to have its
-own quick, low overhead path:
+I'm glad you agree with the current implementation, thanks for your
+approval.
 
-1. We've got eventfd() which is neat and all, but to use it we need an
-easy way to pass its fd around.
-
-2. We've got memfd() which is also neat, but to use it..
-
-3. We've got fairly complex (and consequently buggy) functionality
-like SO_REUSEPORT, but I can't avoid a feeling that if there was a low
-overhead transport available to path fds around (like the one
-proposed), the old school approach of having one process running
-tightly around accept() and sending sockets to workers may still rival
-it (pity I don't have google's setup around to test it).
-
-4. Most importantly, when network appliances are concerned (and those
-represent a huge percentage of linux install base), it is desirable to
-have the leanest possible code paths both in kernel and in the user
-space (no functionality - no vulnerabilities to fish for) and still be
-able to rely on multi-process applications (as multi-process
-applications are considerably more reliable then multi-threaded ones,
-for all the obvious reasons). A compact, easily traceable facility
-comprising few hundred LOCs in the kernel, end to end, and very simple
-application code (sigqueue() -> signalfd()) pose a distinct advantage
-in this regard over largish subsystems which may provide similar
-feature (invariable at the expense of unnecessary costs, like
-persistent file system objects, specialized user-space libraries, etc)
-.
+greg k-h
