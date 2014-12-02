@@ -1,21 +1,56 @@
-From: Alexandre Courbot <gnurou-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3] gpio: lib-sysfs: Add 'wakeup' attribute
-Date: Tue, 2 Dec 2014 23:00:00 +0900
-Message-ID: <CAAVeFuKq--w9XzJ9910s166dVxL2Kt0oKQ0xVM_ZRsBhkbxLrQ@mail.gmail.com>
-References: <1414434602-14263-1-git-send-email-soren.brinkmann@xilinx.com> <51327750bb694f229ecb1c229cb80b21@BN1AFFO11FD023.protection.gbl>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: Minimal effort/low overhead file descriptor duplication over
+ Posix.1b s
+Date: Tue, 2 Dec 2014 10:26:32 -0500
+Message-ID: <20141202102632.6ae37b88@lwn.net>
+References: <1417494919-4577-1-git-send-email-oakad@yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <51327750bb694f229ecb1c229cb80b21-reflc3kr++Mk2TTsEbHRquhlVc3/7hDbVaz/vdPVXQ4@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?Q?S=C3=B6ren_Brinkmann?= <soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>
-Cc: Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-gpio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-gpio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1417494919-4577-1-git-send-email-oakad@yahoo.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alex Dubov <alex.dubov@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 2, 2014 at 3:21 AM, S=C3=B6ren Brinkmann
-<soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org> wrote:
-> Another month past. Any updates on this?
+On Tue,  2 Dec 2014 15:35:17 +1100
+Alex Dubov <alex.dubov@gmail.com> wrote:
 
-Thanks for pinging. We are just waiting for Linus' call on this - as
-far as I am concerned, this looks good.
+>     int sendfd(pid_t pid, int sig, int fd)
+> 
+> Given a target process pid, the sendfd() syscall will create a duplicate
+> file descriptor in a target task's (referred by pid) file table pointing to
+> the file references by descriptor fd. Then, it will attempt to notify the
+> target task by issuing a Posix.1b real-time signal (sig), carrying the new
+> file descriptor as integer payload. If real-time signal can not be enqueued
+> at the destination signal queue, the newly created file descriptor will be
+> promptly closed.
+
+[ CC += linux-api ]
+
+So I'm not a syscall API design expert, but this one raises a few
+questions with me.
+
+ - Messing with another process's file descriptor table without its
+   knowledge looks like a possible source of all kinds problems.  Might
+   there be race conditions with close()/dup() code, for example?  And
+   remember that users can be root in a user namespace; maybe there's no
+   potential for mischief there, but it needs to be considered.
+
+ - Forcing the use of realtime signals seems strange; this isn't a
+   realtime operation by any stretch.
+
+ - How might the sending process communicate to the recipient what the fd
+   is for?  Even if a process only expects one type of file descriptor,
+   the ability to communicate information other than its number seems
+   like it would often be useful.
+
+Some of these concerns might be addressable by requiring the recipient to
+call acceptfd() (or some such) with the ability to use poll().  As an
+alternative, I believe kdbus has fd-passing abilities; if kdbus goes in,
+would you still need this feature?
+
+Thanks,
+
+jon
