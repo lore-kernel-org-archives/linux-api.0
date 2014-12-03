@@ -1,69 +1,45 @@
-From: Lyra Zhang <zhang.lyra@gmail.com>
-Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
-Date: Wed, 3 Dec 2014 20:15:48 +0800
-Message-ID: <CAAfSe-smHeyRyaPYD7NsT8WNRhu+5uofc-oZ9rKX9Mkc2WV7Bg@mail.gmail.com>
-References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
-	<54761BFC.4020705@ti.com>
-	<CAAfSe-u+g0mYGi9Adrd+YwwZ=q0-s79yCg_paB1UAVqFoufXEA@mail.gmail.com>
-	<3212776.kDbe7yX4eX@wuerfel>
+From: Thomas Petazzoni <thomas.petazzoni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v5] selftest: size: Add size test for Linux kernel
+Date: Wed, 3 Dec 2014 14:01:36 +0100
+Message-ID: <20141203140136.12997331@free-electrons.com>
+References: <547E854E.5060101@sonymobile.com>
+	<1417578191.16722.11.camel@concordia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3212776.kDbe7yX4eX@wuerfel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Murali Karicheri <m-karicheri2@ti.com>, Chunyan Zhang <chunyan.zhang@spreadtrum.com>, Grant Likely <grant.likely@linaro.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "jslaby@suse.cz" <jslaby@suse.cz>, Kumar Gala <galak@codeaurora.org>, Mark Rutland <mark.rutland@arm.com>, Pawel Moll <pawel.moll@arm.com>, Ramkumar Ramachandra <artagnon@gmail.com>, "rrichter@cavium.com" <rrichter@cavium.com>, Will Deacon <will.deacon@arm.com>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, Jonathan Corbet <corbet@lwn.net>, "jason@lakedaemon.net" <jason@lakedaemon.net>, Mark Brown <broonie@kernel.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1417578191.16722.11.camel@concordia>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2014-12-03 17:50 GMT+08:00 Arnd Bergmann <arnd@arndb.de>:
-> On Wednesday 03 December 2014 17:17:13 Lyra Zhang wrote:
->
->> 2014-11-27 2:29 GMT+08:00 Murali Karicheri <m-karicheri2@ti.com>:
->> > How about sorting this includes? asm/irq.h go first followed linux=
-/ in alphabatical order?
->>
->> There are a few compile warnings if I moved asm/irq.h to the top of
->> all included files.
->
-> The order that Murali meant is
->
-> - first all linux/*.h headers, sorted alphabetically
-> - then all asm/*.h headers, again sorted alphabetically
->
-> This is the recommended style in general.
->
->> Warning details are below:
->>
->> In file included from drivers/tty/serial/sprd_serial.c:14:0:
->> ./arch/arm64/include/asm/irq.h:6:39: warning: =E2=80=98struct pt_reg=
-s=E2=80=99
->> declared inside parameter list [enabled by default]
->>  extern void (*handle_arch_irq)(struct pt_regs *);
->>                                        ^
->> ./arch/arm64/include/asm/irq.h:6:39: warning: its scope is only this
->> definition or declaration, which is probably not what you want
->> [enabled by default]
->> ./arch/arm64/include/asm/irq.h:8:54: warning: =E2=80=98struct pt_reg=
-s=E2=80=99
->> declared inside parameter list [enabled by default]
->>  extern void set_handle_irq(void (*handle_irq)(struct pt_regs *));
->>
->
-> I would consider this a (minor) bug in asm/irq.h. If you don't mind,
-> please submit a patch to add a line with 'struct pt_regs;' to
-> asm/irq.h.
+Michael, Tim,
 
-OK, I would like to send another separate patch for this.
+On Wed, 03 Dec 2014 14:43:11 +1100, Michael Ellerman wrote:
+
+> > diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+> > new file mode 100644
+> > index 0000000..47f8e9c
+> > --- /dev/null
+> > +++ b/tools/testing/selftests/size/Makefile
+> > @@ -0,0 +1,15 @@
+> > +#ifndef CC
+> > +	CC = $(CROSS_COMPILE)gcc
+> > +#endif
+> 
+> I think the following is preferable:
+> 
+>   CC := $(CROSS_COMPILE)$(CC)
+
+It is even more necessary that #ifndef and #endif don't exist in make.
+They are just comments, and therefore, ignored. Seems like Tim does too
+much C :-)
 
 Best regards,
-Chunyan
 
->
->         Arnd
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
-l" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Thomas
+-- 
+Thomas Petazzoni, CTO, Free Electrons
+Embedded Linux, Kernel and Android engineering
+http://free-electrons.com
