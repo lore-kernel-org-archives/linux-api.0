@@ -1,99 +1,129 @@
-From: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Subject: Re: [PATCH v5] selftest: size: Add size test for Linux kernel
-Date: Wed, 3 Dec 2014 08:29:11 -0800
-Message-ID: <547F3A57.7000106@sonymobile.com>
-References: <547E854E.5060101@sonymobile.com> <1417578191.16722.11.camel@concordia>
+From: Milosz Tanski <milosz@adfin.com>
+Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache only)
+Date: Wed, 3 Dec 2014 11:48:28 -0500
+Message-ID: <CANP1eJGVyBOt1rQ8jA4tMrNGX5X61-UWbVy6kKj_ByeTqAEOBQ@mail.gmail.com>
+References: <cover.1415636409.git.milosz@adfin.com>
+	<20141125150101.9596a09e.akpm@linux-foundation.org>
+	<CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
+	<20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417578191.16722.11.camel@concordia>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Dec 2, 2014 at 5:42 PM, Andrew Morton <akpm@linux-foundation.org> wrote:
+>
+> On Tue, 2 Dec 2014 17:17:42 -0500 Milosz Tanski <milosz@adfin.com> wrote:
+>
+> > > There have been several incomplete attempts to implement fincore().  If
+> > > we were to complete those attempts, preadv2() could be implemented
+> > > using fincore()+pread().  Plus we get fincore(), which is useful for
+> > > other (but probably similar) reasons.  Probably fincore()+pwrite() could
+> > > be used to implement pwritev2(), but I don't know what pwritev2() does
+> > > yet.
+> > >
+> > > Implementing fincore() is more flexible, requires less code and is less
+> > > likely to have bugs.  So why not go that way?  Yes, it's more CPU
+> > > intensive, but how much?  Is the difference sufficient to justify the
+> > > preadv2()/pwritev2() approach?
+> >
+> > I would like to see a fincore() functionality (for other reasons) I
+> > don't think it does the job here. fincore() + preadv() is inherently
+> > racy as there's no guarantee that the data becomes uncached between
+> > the two calls.
+>
+> There will always be holes.  For example find_get_page() could block on
+> lock_page() while some other process is doing IO.
+> page_cache_async_readahead() does lots of memory allocation which can
+> get blocked for long periods in the page allocator.
+> page_cache_async_readahead() can block on synchronous metadata reads,
+> etc.
+
+Andrew I think it would helpful if you did read through the patches.
+The first 3 are somewhat uninteresting as it's just wiring up the new
+syscalls and plumbing the flag argument through. The core of the
+RWF_NONBLOCK is patch 4: https://lkml.org/lkml/2014/11/10/463 and if
+you strip away the fs specific changes the core of it is very simple.
+
+The core is mostly contained in do_generic_file_read() in filemap.c,
+and is very short and easy to understand. It boils down to we read as
+much data as we can given what's in the page cache. There's no
+fallback to diskio for readpage() in case of missing pages and we bail
+before any calls to page_cache_async_readahead(). And to the best of
+my knowledge lock_page() does not lock the page, all it does is call
+pagecache_get_page() without the FGP_LOCK flag.
+
+I've spent time a decent amount of time looking at this to make sure
+we cover all our major bases. It's possible I missed something but the
+biggest offenders should be covered and if I missed something I'd love
+to cover that as well.
+
+>
+> The question is whether a simpler approach such as fincore() will be
+> sufficient.
+>
+> > This may not matter in some cases, but in others (ones
+> > that I'm trying to solve) it will introduce unexpected latency.
+>
+> Details?
 
 
-On 12/02/2014 07:43 PM, Michael Ellerman wrote:
-> On Tue, 2014-12-02 at 19:36 -0800, Tim Bird wrote:
->> This test shows the amount of memory used by the system.
->> Note that this is dependent on the user-space that is loaded
->> when this program runs.  Optimally, this program would be
->> run as the init program itself.
-> 
-> Sorry to only chime in at v5.
-> 
->> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
->> new file mode 100644
->> index 0000000..47f8e9c
->> --- /dev/null
->> +++ b/tools/testing/selftests/size/Makefile
->> @@ -0,0 +1,15 @@
->> +#ifndef CC
->> +	CC = $(CROSS_COMPILE)gcc
->> +#endif
-> 
-> I think the following is preferable:
-> 
->   CC := $(CROSS_COMPILE)$(CC)
-> 
-> 
-> It allows optionally setting a custom CC, as well as optionally CROSS_COMPILE.
+Please read my points below and
 
-I'm not sure I follow this.
+>
+>
+> > There's no overlap between prwritev2 and fincore() functionality.
+>
+> Do we actually need pwritev2()?  What's the justification for that?
 
-If CC is unset, you get only the CROSS_COMPILE prefix.
-If CC is set to e.g. 'gcc', then you get a nicely formatted toolchain string.
-But if CC already has the prefix applied, then this will result in
-  having it duplicated, which surely won't work correctly.
 
-In the long run, I would hope that a higher level Makefile or environment setting
-will be setting the toolchain string appropriately (as well as handling build flags)
-which is why I wanted to use an ifndef (which Thomas correctly pointed out is just
-wrong).
+I'm okay with splitting up the pwritev2 and preadv2 into two
+independent patchsets to be considered on their own merits.
 
-Actually, after getting this tiny program accepted, my next task was working on a
-proper fix for handling cross compilation in a more generic (not case-by-case) way.
+>
+>
+>
+> Please let's examine the alternative(s) seriously.  It would be mistake
+> to add preadv2/pwritev2 if fincore+pread would have sufficed.
 
-CROSS_COMPILE prefix usage looks a bit uncoordinated in the tools directory, but most
-tests seem to be favoring $(CROSS_COMPILE)gcc.
 
- $ cd tools ; mgrep CROSS
-./vm/Makefile:CC = $(CROSS_COMPILE)gcc
-./usb/Makefile:CC = $(CROSS_COMPILE)gcc
-./testing/selftests/net/Makefile:CC = $(CROSS_COMPILE)gcc
-./testing/selftests/vm/Makefile:CC = $(CROSS_COMPILE)gcc
-./testing/selftests/efivarfs/Makefile:CC = $(CROSS_COMPILE)gcc
-./testing/selftests/size/Makefile:	CC = $(CROSS_COMPILE)gcc
-./testing/selftests/powerpc/Makefile:CC := $(CROSS_COMPILE)$(CC)
-./hv/Makefile:CC = $(CROSS_COMPILE)gcc
-./perf/config/feature-checks/Makefile:CC := $(CROSS_COMPILE)gcc -MD
-./perf/config/feature-checks/Makefile:PKG_CONFIG := $(CROSS_COMPILE)pkg-config
-./lib/api/Makefile:CC = $(CROSS_COMPILE)gcc
-./lib/api/Makefile:AR = $(CROSS_COMPILE)ar
-./lib/lockdep/Makefile:# Allow setting CC and AR, or setting CROSS_COMPILE as a prefix.
-./lib/lockdep/Makefile:$(call allow-override,CC,$(CROSS_COMPILE)gcc)
-./lib/lockdep/Makefile:$(call allow-override,AR,$(CROSS_COMPILE)ar)
-./lib/lockdep/Makefile:TRACK_CFLAGS = $(subst ','\'',$(CFLAGS)):$(ARCH):$(CROSS_COMPILE)
-./lib/traceevent/Makefile:# Allow setting CC and AR, or setting CROSS_COMPILE as a prefix.
-./lib/traceevent/Makefile:$(call allow-override,CC,$(CROSS_COMPILE)gcc)
-./lib/traceevent/Makefile:$(call allow-override,AR,$(CROSS_COMPILE)ar)
-./lib/traceevent/Makefile:TRACK_CFLAGS = $(subst ','\'',$(CFLAGS)):$(ARCH):$(CROSS_COMPILE)
-./cgroup/Makefile:CC = $(CROSS_COMPILE)gcc
-./power/acpi/Makefile:CROSS = #/usr/i386-linux-uclibc/usr/bin/i386-uclibc-
-./power/acpi/Makefile:CC = $(CROSS)gcc
-./power/acpi/Makefile:LD = $(CROSS)gcc
-./power/acpi/Makefile:STRIP = $(CROSS)strip
-./power/cpupower/Makefile:CROSS = #/usr/i386-linux-uclibc/usr/bin/i386-uclibc-
-./power/cpupower/Makefile:CC = $(CROSS)gcc
-./power/cpupower/Makefile:LD = $(CROSS)gcc
-./power/cpupower/Makefile:AR = $(CROSS)ar
-./power/cpupower/Makefile:STRIP = $(CROSS)strip
-./power/cpupower/Makefile:RANLIB = $(CROSS)ranlib
-./power/cpupower/Makefile:export CROSS CC AR STRIP RANLIB CFLAGS LDFLAGS LIB_OBJS
-./power/x86/turbostat/Makefile:CC		= $(CROSS_COMPILE)gcc
+ What the motivation for my change and also approach is a very common
+pattern to async buffered disk IO in userspace server applications. It
+comes down to having one thread to handle the network and a thread
+pool to perform IO requests. Why a threadpool and not something like a
+sendfile() for reads? Many non-trivial applications perform additional
+processing (ssl, checksuming, transformation). Unfortunately this has
+a inherent increase in average latency due to increased
+synchronization penalties (enqueue and notify) but primarily due to
+fast requests (already in cache) behind stuck behind slow request.
 
-I agree it's desirable not to hardcode gcc, but we seem to be doing it all over
-the place already.
- -- Tim
+Here's the illustration of the common architecture:
+http://i.imgur.com/f8Pla7j.png. In fact, most apps are even simpler
+where they replace the request queue, task worker with a single thread
+doing network IO using epoll or such.
+
+preadv2 with RWF_NONBLOCK is analogous to the kernel recvmsg() with
+the MSG_NOWAIT flag. It's really frustrating that such capacity
+doesn't exist today. As with the user space application design we can
+skip the io threadpool and decrease average request latency in many
+common workloads (linear reads or zipf data accesses).
+
+preadv2 with RWF_NONBLOCK as implemented does not suffer the same
+eviction races as fincore + pread because it's not implemented as two
+syscalls. It also has a much lower surface of possible blocking /
+locking then fincore + pread because it cannot fallback to reading
+from disk, it does not trigger read-ahead, and does not wait for page
+lock.
+
+-- 
+Milosz Tanski
+CTO
+16 East 34th Street, 15th floor
+New York, NY 10016
+
+p: 646-253-9055
+e: milosz@adfin.com
