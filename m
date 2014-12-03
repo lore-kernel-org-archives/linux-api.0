@@ -1,69 +1,57 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH v2 02/19] kbuild: kselftest_install - add a new make target
- to install selftests
-Date: Wed, 03 Dec 2014 07:14:18 -0700
-Message-ID: <547F1ABA.5040601@osg.samsung.com>
-References: <cover.1415735831.git.shuahkh@osg.samsung.com> <a2344d4df903d673afe1631118f40917f773cc9a.1415735831.git.shuahkh@osg.samsung.com> <547C8D81.1030605@suse.cz> <547C99B6.7070903@osg.samsung.com> <547EFD6F.2010204@suse.cz>
+From: Cornelia Huck <cornelia.huck@de.ibm.com>
+Subject: Re: [PATCH RFC 1/2] virtio_balloon: convert to virtio 1.0 endian-ness
+Date: Wed, 3 Dec 2014 15:27:27 +0100
+Message-ID: <20141203152727.5b4d3e34.cornelia.huck@de.ibm.com>
+References: <1417520617-2135-1-git-send-email-mst@redhat.com>
+	<20141202193930.2b8750f7.cornelia.huck@de.ibm.com>
+	<20141203140228.GA12370@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <547EFD6F.2010204@suse.cz>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Michal Marek <mmarek@suse.cz>, gregkh@linuxfoundation.org, akpm@linux-foundation.org, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com
-Cc: linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, masami.hiramatsu.pt@hitachi.com, Shuah Khan <shuahkh@osg.samsung.com>
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20141203140228.GA12370@redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On 12/03/2014 05:09 AM, Michal Marek wrote:
-> On 2014-12-01 17:39, Shuah Khan wrote:
->> On 12/01/2014 08:47 AM, Michal Marek wrote:
->>> On 2014-11-11 21:27, Shuah Khan wrote:
->>>> diff --git a/Makefile b/Makefile
->>>> index 05d67af..ccbd2e1 100644
->>>> --- a/Makefile
->>>> +++ b/Makefile
->>>> @@ -1071,12 +1071,26 @@ headers_check: headers_install
->>>>  	$(Q)$(MAKE) $(hdr-inst)=arch/$(hdr-arch)/include/uapi/asm $(hdr-dst) HDRCHECK=1
->>>>  
->>>>  # ---------------------------------------------------------------------------
->>>> -# Kernel selftest
->>>> +# Kernel selftest targets
->>>> +
->>>> +PHONY += __kselftest_configure
->>>> +INSTALL_KSFT_PATH=$(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
->>>> +export INSTALL_KSFT_PATH
->>>> +KSELFTEST=$(INSTALL_KSFT_PATH)/kselftest.sh
->>>> +export KSELFTEST
->>>
->>> Can this be moved to tools/testing/selftests/Makefile? It's only used in
->>> this part of the tree.
->>
->> I looked into doing that. KERNELRELEASE will have to be exported for
->> tools/testing/selftests/Makefile to use it? Does that sound okay?
+On Wed, 3 Dec 2014 16:02:28 +0200
+"Michael S. Tsirkin" <mst@redhat.com> wrote:
+
+> On Tue, Dec 02, 2014 at 07:39:30PM +0100, Cornelia Huck wrote:
+> > On Tue, 2 Dec 2014 13:44:06 +0200
+> > "Michael S. Tsirkin" <mst@redhat.com> wrote:
+> > 
+> > > balloon device is not part of virtio 1.0 spec.  Still, it's easy enough
+> > > to make it handle endian-ness exactly as other virtio 1.0 devices: what
+> > > we gain from this, is that there's no need to special-case it in virtio
+> > > core.
+> > 
+> > Well, the balloon is weird in a number of ways, including its always
+> > little-endian config space.
 > 
-> In fact, KERNELRELEASE is already exported. So go ahead.
-
-Good.
-
+> Hmm yes, I forgot about that.
 > 
+> > But I'm not quite sure the spec covers this?
 > 
->> Also, it might be easier to get this series in, if you can Ack the main
->> Makefile patch (when we are ready i.e), so I can take it through
->> kselftest tree.
+> The spec does not cover balloon.  It merely includes a reference section
+> about legacy balloon device.  What to do when that device sets VERSION_1
+> is really up to us.
 > 
-> Sure. The Makefile change will only consist of redirecting the
-> kselftest_install target to tools/testing/selftests, right?
-> 
+> Patchset v8 simply makes balloon tell core it's legacy_only.
+> This is I guess fine as far as it goes.
+> I was still looking for the best way that involves minimal noise
+> in core. This looked like the best way: change 4 lines,
+> and drop all special casing in core, but given the config space
+> endian-ness mess, I'm not sure anymore.
+> I guess we'll just stick to what v8 does for now.
 
-Correct. I plan to keep the selftests specific work under the
-selftests related Makefiles.
-
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+I don't think the legacy_only approach is so bad, let's keep it for now.
