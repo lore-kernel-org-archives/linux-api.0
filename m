@@ -1,116 +1,38 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Wed, 3 Dec 2014 09:00:26 +0900
-Message-ID: <20141203000026.GA30217@bbox>
-References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
- <1413799924-17946-2-git-send-email-minchan@kernel.org>
- <20141127144725.GB19157@dhcp22.suse.cz>
- <20141130235652.GA10333@bbox>
- <20141202100125.GD27014@dhcp22.suse.cz>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v8 0/8] TPM 2.0 support
+Date: Wed, 3 Dec 2014 01:03:43 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1412030101400.16275@nanos>
+References: <1417559480-13757-1-git-send-email-jarkko.sakkinen@linux.intel.com> <201412030016.20268.PeterHuewe@gmx.de> <201412030021.07882.PeterHuewe@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-758534258-1417565024=:16275"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20141202100125.GD27014-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+In-Reply-To: <201412030021.07882.PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+To: =?ISO-8859-15?Q?Peter_H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 02, 2014 at 11:01:25AM +0100, Michal Hocko wrote:
-> On Mon 01-12-14 08:56:52, Minchan Kim wrote:
-> [...]
-> > From 2edd6890f92fa4943ce3c452194479458582d88c Mon Sep 17 00:00:00 2001
-> > From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> > Date: Mon, 1 Dec 2014 08:53:55 +0900
-> > Subject: [PATCH] madvise.2: Document MADV_FREE
-> > 
-> > Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> > ---
-> >  man2/madvise.2 | 13 +++++++++++++
-> >  1 file changed, 13 insertions(+)
-> > 
-> > diff --git a/man2/madvise.2 b/man2/madvise.2
-> > index 032ead7..33aa936 100644
-> > --- a/man2/madvise.2
-> > +++ b/man2/madvise.2
-> > @@ -265,6 +265,19 @@ file (see
-> >  .BR MADV_DODUMP " (since Linux 3.4)"
-> >  Undo the effect of an earlier
-> >  .BR MADV_DONTDUMP .
-> > +.TP
-> > +.BR MADV_FREE " (since Linux 3.19)"
-> > +Gives the VM system the freedom to free pages, and tells the system that
-> > +information in the specified page range is no longer important.
-> > +This is an efficient way of allowing
-> > +.BR malloc (3)
-> 
-> This might be rather misleading. Only some malloc implementations are
-> using this feature (jemalloc, right?). So either be specific about which
-> implementation or do not add it at all.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Make sense. I don't think it's a good idea to say specific example
-in man page, which is rather arguable and limit the idea.
+--8323329-758534258-1417565024=:16275
+Content-Type: TEXT/PLAIN; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
 
-> 
-> > +to free pages anywhere in the address space, while keeping the address space
-> > +valid. The next time that the page is referenced, the page might be demand
-> > +zeroed, or might contain the data that was there before the MADV_FREE call.
-> > +References made to that address space range will not make the VM system page the
-> > +information back in from backing store until the page is modified again.
-> 
-> I am not sure I understand the last sentence. So say I did MADV_FREE and
-> the reclaim has dropped that page. I know that the file backed mappings
-> are not supported yet but assume they were for a second... Now, I do
-> read from that location again what is the result?
+On Wed, 3 Dec 2014, Peter Hüwe wrote:
+> From: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>
+> Date: Wed, 3 Dec 2014 00:18:52 +0100
+> Subject: [PATCH] tpm:tpm_i2c_nuvoton: simpyl return statements
 
-Zero page.
+simpyl?
+ 
+> if !rc evals to false it is 0
+> -> we can return rc in both cases
 
-> If we consider anon mappings then the backing store is misleading as
-> well because memory was dropped and so always newly allocated.
+Why assigning rc and returning it when you can return the result of
+tpm_chip_register() right away?
+ 
+Thanks,
 
-When I read the sentence at first, I thought backing store means swap
-so I don't have any trouble to understand it. But I agree your opinion.
-Target for man page is not a kernel developer but application developer.
-
-> I would rather drop the whole sentence and rather see an explanation
-> what is the difference between to MADV_DONT_NEED.
-> "
-> Unlike MADV_DONT_NEED the memory is freed lazily e.g. when the VM system
-> is under memory pressure.
-> "
-
-It's a good idea but I don't think it's enough. At least we should explan
-cancel of delay free logic(ie, write). So, How about this?
-
-MADV_FREE " (since Linux 3.19)"
-
-Gives the VM system the freedom to free pages, and tells the system that
-it's okay to free pages if the VM system has reasons(e.g., memory pressure).
-So, it looks like delayed MADV_DONTNEED.
-The next time that the page is referenced, the page might be demand
-zeroed if the VM system freed the page. Otherwise, it might contain the data
-that was there before the MADV_FREE call if the VM system didn't free the page.
-New write in the page after the MADV_FREE call makes the VM system not free
-the page any more.
-It works only with private anonymous pages (see mmap(2)).
-
-> 
-> > +It works only with private anonymous pages (see
-> > +.BR mmap (2)).
-> >  .SH RETURN VALUE
-> >  On success
-> >  .BR madvise ()
-> -- 
-> Michal Hocko
-> SUSE Labs
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
-
--- 
-Kind regards,
-Minchan Kim
+	tglx
+--8323329-758534258-1417565024=:16275--
