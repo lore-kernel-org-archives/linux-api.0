@@ -1,53 +1,69 @@
-From: Michal Marek <mmarek@suse.cz>
-Subject: Re: [PATCH v2 02/19] kbuild: kselftest_install - add a new make target
- to install selftests
-Date: Wed, 03 Dec 2014 13:09:19 +0100
-Message-ID: <547EFD6F.2010204@suse.cz>
-References: <cover.1415735831.git.shuahkh@osg.samsung.com> <a2344d4df903d673afe1631118f40917f773cc9a.1415735831.git.shuahkh@osg.samsung.com> <547C8D81.1030605@suse.cz> <547C99B6.7070903@osg.samsung.com>
+From: Lyra Zhang <zhang.lyra@gmail.com>
+Subject: Re: [PATCH v3 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
+Date: Wed, 3 Dec 2014 20:15:48 +0800
+Message-ID: <CAAfSe-smHeyRyaPYD7NsT8WNRhu+5uofc-oZ9rKX9Mkc2WV7Bg@mail.gmail.com>
+References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
+	<54761BFC.4020705@ti.com>
+	<CAAfSe-u+g0mYGi9Adrd+YwwZ=q0-s79yCg_paB1UAVqFoufXEA@mail.gmail.com>
+	<3212776.kDbe7yX4eX@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <547C99B6.7070903@osg.samsung.com>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>, gregkh@linuxfoundation.org, akpm@linux-foundation.org, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, ebiederm@xmission.com, serge.hallyn@ubuntu.com
-Cc: linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, "masami.hiramatsu.pt@hitachi.com >> Masami Hiramatsu" <masami.hiramatsu.pt@hitachi.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <3212776.kDbe7yX4eX@wuerfel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Murali Karicheri <m-karicheri2@ti.com>, Chunyan Zhang <chunyan.zhang@spreadtrum.com>, Grant Likely <grant.likely@linaro.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "jslaby@suse.cz" <jslaby@suse.cz>, Kumar Gala <galak@codeaurora.org>, Mark Rutland <mark.rutland@arm.com>, Pawel Moll <pawel.moll@arm.com>, Ramkumar Ramachandra <artagnon@gmail.com>, "rrichter@cavium.com" <rrichter@cavium.com>, Will Deacon <will.deacon@arm.com>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, Jonathan Corbet <corbet@lwn.net>, "jason@lakedaemon.net" <jason@lakedaemon.net>, Mark Brown <broonie@kernel.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>
 List-Id: linux-api@vger.kernel.org
 
-On 2014-12-01 17:39, Shuah Khan wrote:
-> On 12/01/2014 08:47 AM, Michal Marek wrote:
->> On 2014-11-11 21:27, Shuah Khan wrote:
->>> diff --git a/Makefile b/Makefile
->>> index 05d67af..ccbd2e1 100644
->>> --- a/Makefile
->>> +++ b/Makefile
->>> @@ -1071,12 +1071,26 @@ headers_check: headers_install
->>>  	$(Q)$(MAKE) $(hdr-inst)=arch/$(hdr-arch)/include/uapi/asm $(hdr-dst) HDRCHECK=1
->>>  
->>>  # ---------------------------------------------------------------------------
->>> -# Kernel selftest
->>> +# Kernel selftest targets
->>> +
->>> +PHONY += __kselftest_configure
->>> +INSTALL_KSFT_PATH=$(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
->>> +export INSTALL_KSFT_PATH
->>> +KSELFTEST=$(INSTALL_KSFT_PATH)/kselftest.sh
->>> +export KSELFTEST
+2014-12-03 17:50 GMT+08:00 Arnd Bergmann <arnd@arndb.de>:
+> On Wednesday 03 December 2014 17:17:13 Lyra Zhang wrote:
+>
+>> 2014-11-27 2:29 GMT+08:00 Murali Karicheri <m-karicheri2@ti.com>:
+>> > How about sorting this includes? asm/irq.h go first followed linux=
+/ in alphabatical order?
 >>
->> Can this be moved to tools/testing/selftests/Makefile? It's only used in
->> this part of the tree.
-> 
-> I looked into doing that. KERNELRELEASE will have to be exported for
-> tools/testing/selftests/Makefile to use it? Does that sound okay?
+>> There are a few compile warnings if I moved asm/irq.h to the top of
+>> all included files.
+>
+> The order that Murali meant is
+>
+> - first all linux/*.h headers, sorted alphabetically
+> - then all asm/*.h headers, again sorted alphabetically
+>
+> This is the recommended style in general.
+>
+>> Warning details are below:
+>>
+>> In file included from drivers/tty/serial/sprd_serial.c:14:0:
+>> ./arch/arm64/include/asm/irq.h:6:39: warning: =E2=80=98struct pt_reg=
+s=E2=80=99
+>> declared inside parameter list [enabled by default]
+>>  extern void (*handle_arch_irq)(struct pt_regs *);
+>>                                        ^
+>> ./arch/arm64/include/asm/irq.h:6:39: warning: its scope is only this
+>> definition or declaration, which is probably not what you want
+>> [enabled by default]
+>> ./arch/arm64/include/asm/irq.h:8:54: warning: =E2=80=98struct pt_reg=
+s=E2=80=99
+>> declared inside parameter list [enabled by default]
+>>  extern void set_handle_irq(void (*handle_irq)(struct pt_regs *));
+>>
+>
+> I would consider this a (minor) bug in asm/irq.h. If you don't mind,
+> please submit a patch to add a line with 'struct pt_regs;' to
+> asm/irq.h.
 
-In fact, KERNELRELEASE is already exported. So go ahead.
+OK, I would like to send another separate patch for this.
 
+Best regards,
+Chunyan
 
-> Also, it might be easier to get this series in, if you can Ack the main
-> Makefile patch (when we are ready i.e), so I can take it through
-> kselftest tree.
-
-Sure. The Makefile change will only consist of redirecting the
-kselftest_install target to tools/testing/selftests, right?
-
-Michal
+>
+>         Arnd
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
