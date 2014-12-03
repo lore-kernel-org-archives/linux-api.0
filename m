@@ -1,96 +1,72 @@
-From: Gabriele Mazzotta <gabriele.mzt@gmail.com>
-Subject: [PATCH] Documentation: Add entry for dell-laptop sysfs interface
-Date: Wed,  3 Dec 2014 18:41:33 +0100
-Message-ID: <1417628493-29323-1-git-send-email-gabriele.mzt@gmail.com>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Subject: Re: [PATCH v5] selftest: size: Add size test for Linux kernel
+Date: Wed, 3 Dec 2014 19:00:16 +0100
+Message-ID: <CAMuHMdVk9QLDRYDs3q7=51=qTMNRY+MQVhkqGE25XqYOkLbCxg@mail.gmail.com>
+References: <547E854E.5060101@sonymobile.com>
+	<1417578191.16722.11.camel@concordia>
+	<547F3A57.7000106@sonymobile.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <547F3A57.7000106@sonymobile.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dvhart@infradead.org, mjg59@srcf.ucam.org
-Cc: linux-api@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-kernel@vger.kernel.org, libsmbios-devel@lists.us.dell.com, Srinivas_G_Gowda@dell.com, Michael_E_Brown@dell.com, pali.rohar@gmail.com, Gabriele Mazzotta <gabriele.mzt@gmail.com>
+To: Tim Bird <tim.bird@sonymobile.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Shuah Khan <shuahkh@osg.samsung.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Josh Triplett <josh@joshtriplett.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-embedded@vger.kernel.org" <linux-embedded@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Add the documentation for the new sysfs interface of dell-laptop
-that allows to configure the keyboard illumination on Dell systems.
+On Wed, Dec 3, 2014 at 5:29 PM, Tim Bird <tim.bird@sonymobile.com> wrote:
+>>> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+>>> new file mode 100644
+>>> index 0000000..47f8e9c
+>>> --- /dev/null
+>>> +++ b/tools/testing/selftests/size/Makefile
+>>> @@ -0,0 +1,15 @@
+>>> +#ifndef CC
+>>> +    CC = $(CROSS_COMPILE)gcc
+>>> +#endif
+>>
+>> I think the following is preferable:
+>>
+>>   CC := $(CROSS_COMPILE)$(CC)
+>>
+>>
+>> It allows optionally setting a custom CC, as well as optionally CROSS_COMPILE.
+>
+> I'm not sure I follow this.
+>
+> If CC is unset, you get only the CROSS_COMPILE prefix.
+> If CC is set to e.g. 'gcc', then you get a nicely formatted toolchain string.
+> But if CC already has the prefix applied, then this will result in
+>   having it duplicated, which surely won't work correctly.
+>
+> In the long run, I would hope that a higher level Makefile or environment setting
+> will be setting the toolchain string appropriately (as well as handling build flags)
+> which is why I wanted to use an ifndef (which Thomas correctly pointed out is just
+> wrong).
+>
+> Actually, after getting this tiny program accepted, my next task was working on a
+> proper fix for handling cross compilation in a more generic (not case-by-case) way.
+>
+> CROSS_COMPILE prefix usage looks a bit uncoordinated in the tools directory, but most
+> tests seem to be favoring $(CROSS_COMPILE)gcc.
+>
+>  $ cd tools ; mgrep CROSS
 
-Signed-off-by: Gabriele Mazzotta <gabriele.mzt@gmail.com>
-Signed-off-by: Pali Roh=C3=A1r <pali.rohar@gmail.com>
----
- .../ABI/testing/sysfs-platform-dell-laptop         | 60 ++++++++++++++=
-++++++++
- 1 file changed, 60 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-platform-dell-lapto=
-p
+[...]
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-dell-laptop b/Doc=
-umentation/ABI/testing/sysfs-platform-dell-laptop
-new file mode 100644
-index 0000000..7969443
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-platform-dell-laptop
-@@ -0,0 +1,60 @@
-+What:		/sys/class/leds/dell::kbd_backlight/als_setting
-+Date:		December 2014
-+KernelVersion:	3.19
-+Contact:	Gabriele Mazzotta <gabriele.mzt@gmail.com>,
-+		Pali Roh=C3=A1r <pali.rohar@gmail.com>
-+Description:
-+		This file allows to control the automatic keyboard
-+		illumination mode on some systems that have an ambient
-+		light sensor. Write 1 to this file to enable the auto
-+		mode, 0 to disable it.
-+
-+What:		/sys/class/leds/dell::kbd_backlight/start_triggers
-+Date:		December 2014
-+KernelVersion:	3.19
-+Contact:	Gabriele Mazzotta <gabriele.mzt@gmail.com>,
-+		Pali Roh=C3=A1r <pali.rohar@gmail.com>
-+Description:
-+		This file allows to control the input triggers that
-+		turn on the keyboard backlight illumination that is
-+		disabled because of inactivity.
-+		Read the file to see the triggers available. The ones
-+		enabled are preceded by '+', those disabled by '-'.
-+
-+		To enable a trigger, write its name preceded by '+' to
-+		this file. To disable a trigger, write its name preceded
-+		by '-' instead.
-+
-+		For example, to enable the keyboard as trigger run:
-+		    echo +keyboard > /sys/class/leds/dell::kbd_backlight/start_trigg=
-ers
-+		To disable it:
-+		    echo -keyboard > /sys/class/leds/dell::kbd_backlight/start_trigg=
-ers
-+
-+		Note that not all the available triggers can be configured.
-+
-+What:		/sys/class/leds/dell::kbd_backlight/stop_timeout
-+Date:		December 2014
-+KernelVersion:	3.19
-+Contact:	Gabriele Mazzotta <gabriele.mzt@gmail.com>,
-+		Pali Roh=C3=A1r <pali.rohar@gmail.com>
-+Description:
-+		This file allows to specify the interval after which the
-+		keyboard illumination is disabled because of inactivity.
-+		The timeouts are expressed in seconds, minutes, hours and
-+		days, for which the symbols are 's', 'm', 'h' and 'd'
-+		respectively.
-+
-+		To configure the timeout, write to this file a value along
-+		with any the above units. If no unit is specified, the value
-+		is assumed to be expressed in seconds.
-+
-+		For example, to set the timeout to 10 minutes run:
-+		    echo 10m > /sys/class/leds/dell::kbd_backlight/stop_timeout
-+
-+		Note that when this file is read, the returned value might be
-+		expressed in a different unit than the one used when the timeout
-+		was set.
-+
-+		Also note that only some timeouts are supported and that
-+		some systems might fall back to a specific timeout in case
-+		an invalid timeout is written to this file.
---=20
-2.1.3
+> I agree it's desirable not to hardcode gcc, but we seem to be doing it all over
+> the place already.
+
+Seems like it's time to start integrating the tests with the regular Kbuild
+system, which handles cross-compilation fine...
+
+Gr{oetje,eeting}s,
+
+                        Geert
+
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
