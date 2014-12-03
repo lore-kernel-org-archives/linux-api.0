@@ -1,219 +1,45 @@
-From: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Subject: [PATCH v5] selftest: size: Add size test for Linux kernel
-Date: Tue, 2 Dec 2014 19:36:46 -0800
-Message-ID: <547E854E.5060101@sonymobile.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH v5] selftest: size: Add size test for Linux kernel
+Date: Wed, 03 Dec 2014 14:43:11 +1100
+Message-ID: <1417578191.16722.11.camel@concordia>
+References: <547E854E.5060101@sonymobile.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <547E854E.5060101@sonymobile.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tim Bird <tim.bird@sonymobile.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Josh Triplett <josh@joshtriplett.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-embedded@vger.kernel.org" <linux-embedded@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, 2014-12-02 at 19:36 -0800, Tim Bird wrote:
+> This test shows the amount of memory used by the system.
+> Note that this is dependent on the user-space that is loaded
+> when this program runs.  Optimally, this program would be
+> run as the init program itself.
 
-This test shows the amount of memory used by the system.
-Note that this is dependent on the user-space that is loaded
-when this program runs.  Optimally, this program would be
-run as the init program itself.
+Sorry to only chime in at v5.
 
-The program is optimized for size itself, to avoid conflating
-its own execution with that of the system software.
-The code is compiled statically, with no stdlibs. On my x86_64 system,
-this results in a statically linked binary of less than 5K.
+> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+> new file mode 100644
+> index 0000000..47f8e9c
+> --- /dev/null
+> +++ b/tools/testing/selftests/size/Makefile
+> @@ -0,0 +1,15 @@
+> +#ifndef CC
+> +	CC = $(CROSS_COMPILE)gcc
+> +#endif
+
+I think the following is preferable:
+
+  CC := $(CROSS_COMPILE)$(CC)
 
 
-Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
----
-Changes from v5:
-  - make most routines static
-  - replace strip with gcc -s
-  - remove explicit reference to _start
-  - change --static to -static
-  - remove explicit reference to LIBGCC
-  - fix test description for ok and not ok paths, for test 1
+It allows optionally setting a custom CC, as well as optionally CROSS_COMPILE.
 
-Changes from v4:
-  - add more human-readable output
-  - put libgcc reference into a variable in Makefile
+The only thing it doesn't do is choose gcc explicitly, but you shouldn't really
+do that anyway - unless you absolutely require gcc. Let the user choose their
+compiler by choosing where cc points.
 
-Changes from v3:
-  - fix copyright string (again!)
-  - use __builtin_strlen instead of my own strlen
-  - replace main with _start
-
-Changes from v2:
-  - add return values to print routines
-  - add .gitignore file
-
-Changes from v1:
-  - use more correct Copyright string in get_size.c
-
- tools/testing/selftests/Makefile        |   1 +
- tools/testing/selftests/size/.gitignore |   1 +
- tools/testing/selftests/size/Makefile   |  15 +++++
- tools/testing/selftests/size/get_size.c | 111 ++++++++++++++++++++++++++++++++
- 4 files changed, 128 insertions(+)
- create mode 100644 tools/testing/selftests/size/.gitignore
- create mode 100644 tools/testing/selftests/size/Makefile
- create mode 100644 tools/testing/selftests/size/get_size.c
-
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 45f145c..fa91aef 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -15,6 +15,7 @@ TARGETS += user
- TARGETS += sysctl
- TARGETS += firmware
- TARGETS += ftrace
-+TARGETS += size
- 
- TARGETS_HOTPLUG = cpu-hotplug
- TARGETS_HOTPLUG += memory-hotplug
-diff --git a/tools/testing/selftests/size/.gitignore b/tools/testing/selftests/size/.gitignore
-new file mode 100644
-index 0000000..189b781
---- /dev/null
-+++ b/tools/testing/selftests/size/.gitignore
-@@ -0,0 +1 @@
-+get_size
-diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
-new file mode 100644
-index 0000000..47f8e9c
---- /dev/null
-+++ b/tools/testing/selftests/size/Makefile
-@@ -0,0 +1,15 @@
-+#ifndef CC
-+	CC = $(CROSS_COMPILE)gcc
-+#endif
-+
-+all: get_size
-+
-+get_size: get_size.c
-+	$(CC) -static -ffreestanding -nostartfiles \
-+		-s get_size.c -o get_size
-+
-+run_tests: all
-+	./get_size
-+
-+clean:
-+	$(RM) get_size
-diff --git a/tools/testing/selftests/size/get_size.c b/tools/testing/selftests/size/get_size.c
-new file mode 100644
-index 0000000..808e7c6
---- /dev/null
-+++ b/tools/testing/selftests/size/get_size.c
-@@ -0,0 +1,111 @@
-+/*
-+ * Copyright 2014 Sony Mobile Communications Inc.
-+ *
-+ * Licensed under the terms of the GNU GPL License version 2
-+ *
-+ * Selftest for runtime system size
-+ *
-+ * Prints the amount of RAM that the currently running system is using.
-+ *
-+ * This program tries to be as small as possible itself, to
-+ * avoid perturbing the system memory utilization with its
-+ * own execution.  It also attempts to have as few dependencies
-+ * on kernel features as possible.
-+ *
-+ * It should be statically linked, with startup libs avoided.
-+ * It uses no library calls, and only the following 3 syscalls:
-+ *   sysinfo(), write(), and _exit()
-+ *
-+ * For output, it avoids printf (which in some C libraries
-+ * has large external dependencies) by  implementing it's own
-+ * number output and print routines, and using __builtin_strlen()
-+ */
-+
-+#include <sys/sysinfo.h>
-+#include <unistd.h>
-+
-+#define STDOUT_FILENO 1
-+
-+static int print(const char *s)
-+{
-+	return write(STDOUT_FILENO, s, __builtin_strlen(s));
-+}
-+
-+
-+/*
-+ * num_to_str - put digits from num into *s, left to right
-+ *   do this by dividing the number by powers of 10
-+ *   the tricky part is to omit leading zeros
-+ *   don't print zeros until we've started printing any numbers at all
-+ */
-+static void num_to_str(unsigned long num, char *s)
-+{
-+	unsigned long long temp, div;
-+	int started;
-+
-+	temp = num;
-+	div = 1000000000000000000LL;
-+	started = 0;
-+	while (div) {
-+		if (temp/div || started) {
-+			*s++ = (unsigned char)(temp/div + '0');
-+			started = 1;
-+		}
-+		temp -= (temp/div)*div;
-+		div /= 10;
-+	}
-+	*s = 0;
-+}
-+
-+static int print_num(unsigned long num)
-+{
-+	char num_buf[30];
-+
-+	num_to_str(num, num_buf);
-+	return print(num_buf);
-+}
-+
-+static int print_k_value(const char *s, unsigned long num, unsigned long units)
-+{
-+	unsigned long long temp;
-+	int ccode;
-+
-+	print(s);
-+
-+	temp = num;
-+	temp = (temp * units)/1024;
-+	num = temp;
-+	ccode = print_num(num);
-+	print("\n");
-+	return ccode;
-+}
-+
-+/* this program has no main(), as startup libraries are not used */
-+void _start(void)
-+{
-+	int ccode;
-+	struct sysinfo info;
-+	unsigned long used;
-+
-+	print("Testing system size.\n");
-+	print("1..1\n");
-+
-+	ccode = sysinfo(&info);
-+	if (ccode < 0) {
-+		print("not ok 1 get runtime memory use\n");
-+		print("# could not get sysinfo\n");
-+		_exit(ccode);
-+	}
-+	/* ignore cache complexities for now */
-+	used = info.totalram - info.freeram - info.bufferram;
-+	print_k_value("ok 1 get runtime memory use # size = ", used,
-+		info.mem_unit);
-+
-+	print("# System runtime memory report (units in Kilobytes):\n");
-+	print_k_value("#   Total:  ", info.totalram, info.mem_unit);
-+	print_k_value("#   Free:   ", info.freeram, info.mem_unit);
-+	print_k_value("#   Buffer: ", info.bufferram, info.mem_unit);
-+	print_k_value("#   In use: ", used, info.mem_unit);
-+
-+	_exit(0);
-+}
--- 
-1.8.2.2
+cheers
