@@ -1,49 +1,56 @@
-From: Volker Lendecke <Volker.Lendecke@SerNet.DE>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Wed, 3 Dec 2014 10:10:43 +0100
-Message-ID: <E1Xw5xg-00EfRs-CM@intern.SerNet.DE>
-References: <cover.1415636409.git.milosz@adfin.com>
- <20141125150101.9596a09e.akpm@linux-foundation.org>
- <CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
- <20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
-Reply-To: Volker.Lendecke@SerNet.DE
+From: Lyra Zhang <zhang.lyra@gmail.com>
+Subject: Re: [PATCH v3 3/5] arm64: dts: Add support for Spreadtrum SC9836 SoC
+ in dts and Makefile
+Date: Wed, 3 Dec 2014 17:16:52 +0800
+Message-ID: <CAAfSe-tf8WMRPnPZuEsDYbjMjBHnkSud_aX4ksu6yvnEDD-SAw@mail.gmail.com>
+References: <1416917818-10506-1-git-send-email-chunyan.zhang@spreadtrum.com>
+	<1416917818-10506-4-git-send-email-chunyan.zhang@spreadtrum.com>
+	<20141127115042.GE857@leverpostej>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
-Sender: owner-linux-aio@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Milosz Tanski <milosz@adfin.com>, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20141127115042.GE857@leverpostej>
+Sender: linux-doc-owner@vger.kernel.org
+To: Mark Rutland <mark.rutland@arm.com>
+Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "grant.likely@linaro.org" <grant.likely@linaro.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Catalin Marinas <Catalin.Marinas@arm.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "jslaby@suse.cz" <jslaby@suse.cz>, "galak@codeaurora.org" <galak@codeaurora.org>, "broonie@linaro.org" <broonie@linaro.org>, "m-karicheri2@ti.com" <m-karicheri2@ti.com>, Pawel Moll <Pawel.Moll@arm.com>, "artagnon@gmail.com" <artagnon@gmail.com>, "rrichter@cavium.com" <rrichter@cavium.com>, Will Deacon <Will.Deacon@arm.com>, "arnd@arndb.de" <arnd@arndb.de>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, "corbet@lwn.net" <corbet@lwn.net>, "jason@lakedaemon.net" <jason@lakedaemon.net>, "broonie@kernel.org" <broonie@kernel.org>, "heiko@sntech.de" <heiko@>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 02, 2014 at 02:42:00PM -0800, Andrew Morton wrote:
-> The question is whether a simpler approach such as fincore() will be
-> sufficient.
+>
+>> +       gic: interrupt-controller@12001000 {
+>> +               compatible = "arm,cortex-a15-gic", "arm,cortex-a9-gic";
+>> +               #interrupt-cells = <3>;
+>> +               interrupt-controller;
+>> +               reg = <0 0x12001000 0 0x1000>,
+>> +                     <0 0x12002000 0 0x1000>,
+>> +                     <0 0x12004000 0 0x2000>,
+>> +                     <0 0x12006000 0 0x2000>;
+>> +       };
+>
+> I believe GICC should be 8KiB here.
+>
+Yes, I'll correct it in next patch.
+>> +
+>> +       psci {
+>> +               compatible = "arm,psci-0.2";
+>> +               method = "smc";
+>> +       };
+>
+> Do you have a complete PSCI 0.2 implementation (e.g. are all the
+> mandatory functions implemented)?
+>
+I was using the latest boot-wrapper as the bootloader for test,  I'll
+add a compatible string "arm,psci" in v4.
+We'll use u-boot on real hardware, the support for PSCI in our u-boot
+is in progress.
+We're intending to implement psci-0.1 at first, and psci-0.2 for the next step.
 
-For many use cases in Samba, fincore will probably be
-enough. But Windows clients become more and more
-multi-threaded, so Samba sees multiple parallel active read
-requests. Samba's core SMB processing engine is single
-threaded, and if due to that race we get blocked, more than
-one data stream will be affected. We might make it an option
-to use the fincore alternative, but I don't see it as a
-default. The default will be the strict threadpool.
+> I take it CPUs enter the kernel at EL2?
+>
+yes, we've just do like this.
 
-With best regards,
+> How have you tested this?
 
-Volker Lendecke
+I'll test it on the SC9836 FPGA board before next submitting.
 
---=20
-SerNet GmbH, Bahnhofsallee 1b, 37081 G=F6ttingen
-phone: +49-551-370000-0, fax: +49-551-370000-9
-AG G=F6ttingen, HRB 2816, GF: Dr. Johannes Loxen
-http://www.sernet.de, mailto:kontakt@sernet.de
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=3Dmailto:"aart@kvack.org">aart@kvack.org</a>
+Thanks for your patient review.
+Chunyan
