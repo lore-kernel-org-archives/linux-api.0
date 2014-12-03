@@ -1,173 +1,219 @@
 From: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-Subject: Re: [PATCH v4] selftest: size: Add size test for Linux kernel
-Date: Tue, 2 Dec 2014 19:31:58 -0800
-Message-ID: <547E842E.7030202@sonymobile.com>
-References: <5476A82B.2060903@sonymobile.com> <20141127060409.GB2773@thin>
+Subject: [PATCH v5] selftest: size: Add size test for Linux kernel
+Date: Tue, 2 Dec 2014 19:36:46 -0800
+Message-ID: <547E854E.5060101@sonymobile.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141127060409.GB2773@thin>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
+This test shows the amount of memory used by the system.
+Note that this is dependent on the user-space that is loaded
+when this program runs.  Optimally, this program would be
+run as the init program itself.
 
-On 11/26/2014 10:04 PM, Josh Triplett wrote:
-> On Wed, Nov 26, 2014 at 08:27:23PM -0800, Tim Bird wrote:
->> --- /dev/null
->> +++ b/tools/testing/selftests/size/Makefile
-> [...]
->> +LIBGCC=$(shell $(CC) -print-libgcc-file-name)
->> +
->> +get_size: get_size.c
->> +	$(CC) --static -ffreestanding -nostartfiles \
->> +		-Wl,--entry=_start get_size.c $(LIBGCC) \
->> +		-o get_size
-> 
-> You don't need -Wl,--entry=_start; that's the default.
-OK - it works without this.  Thanks.
+The program is optimized for size itself, to avoid conflating
+its own execution with that of the system software.
+The code is compiled statically, with no stdlibs. On my x86_64 system,
+this results in a statically linked binary of less than 5K.
 
-> You shouldn't need to manually find libgcc, either; the compiler should
-> do that for you.  What goes wrong if you don't include that?  If you're
-> trying to link libgcc statically, try -static-libgcc.
-> 
-> Also, static is normally spelled -static, not --static.
 
-Hmm.  Not sure where I got --static from, but it worked.
-But if -static is the norm I'm fine changing to that.
+Signed-off-by: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+---
+Changes from v5:
+  - make most routines static
+  - replace strip with gcc -s
+  - remove explicit reference to _start
+  - change --static to -static
+  - remove explicit reference to LIBGCC
+  - fix test description for ok and not ok paths, for test 1
 
-Upon experimentation, I don't need the explicit libgcc or for that
-matter the -static-libgcc either.
+Changes from v4:
+  - add more human-readable output
+  - put libgcc reference into a variable in Makefile
 
->> --- /dev/null
->> +++ b/tools/testing/selftests/size/get_size.c
-> [...]
->> +int print(const char *s)
-> 
-> This function, and all the others apart from _start, should be declared
-> static.
+Changes from v3:
+  - fix copyright string (again!)
+  - use __builtin_strlen instead of my own strlen
+  - replace main with _start
 
-OK will do.
+Changes from v2:
+  - add return values to print routines
+  - add .gitignore file
 
->> +void num_to_str(unsigned long num, char *s)
-> 
-> Likewise, static.
-OK
+Changes from v1:
+  - use more correct Copyright string in get_size.c
 
->> +{
->> +	unsigned long long temp, div;
->> +	int started;
->> +
->> +	temp = num;
->> +	div = 1000000000000000000LL;
->> +	started = 0;
->> +	while (div) {
->> +		if (temp/div || started) {
->> +			*s++ = (unsigned char)(temp/div + '0');
->> +			started = 1;
->> +		}
->> +		temp -= (temp/div)*div;
->> +		div /= 10;
->> +	}
->> +	*s = 0;
->> +}
-> 
-> You'd probably end up with significantly smaller code (and no divisions,
-> and thus no corner cases on architectures that need a special function
-> to do unsigned long long division) if you print in hex.  You could also
-> drop the "no leading zeros" logic, and just *always* print a 64-bit
-> value as 16 hex digits.
+ tools/testing/selftests/Makefile        |   1 +
+ tools/testing/selftests/size/.gitignore |   1 +
+ tools/testing/selftests/size/Makefile   |  15 +++++
+ tools/testing/selftests/size/get_size.c | 111 ++++++++++++++++++++++++++++++++
+ 4 files changed, 128 insertions(+)
+ create mode 100644 tools/testing/selftests/size/.gitignore
+ create mode 100644 tools/testing/selftests/size/Makefile
+ create mode 100644 tools/testing/selftests/size/get_size.c
 
-I'd like to keep base-10 output.  As far as size is concerned, the
-code is now at well under 2 pages (8k), which is much smaller than
-any actually useful program.  The only noticeable change in size would
-be if I got it under 4096, but I don't want to sacrifice too many
-features to get there (as that's still only 1 page difference in
-memory usage.)
-
-BTW - using sstrip, I can get it to 4096 already, as is.
-
-Unfortunately, 'sstrip -z', which gets it to 2061, makes
-it not work.  I need to check out what the problem is there.
-Also, the ELF file still has an unneeded note section.  I think
-easier reductions, without sacrificing functionality, are available
-by tweaking the ELF header (ie fixing sstrip, for those that
-want to use it).
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 45f145c..fa91aef 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -15,6 +15,7 @@ TARGETS += user
+ TARGETS += sysctl
+ TARGETS += firmware
+ TARGETS += ftrace
++TARGETS += size
  
->> +int print_num(unsigned long num)
-> 
-> Likewise, static.
-
-OK
-
->> +{
->> +	char num_buf[30];
->> +
->> +	num_to_str(num, num_buf);
->> +	return print(num_buf);
->> +}
->> +
->> +int print_k_value(const char *s, unsigned long num, unsigned long units)
->> +{
->> +	unsigned long long temp;
->> +	int ccode;
->> +
->> +	print(s);
->> +
->> +	temp = num;
->> +	temp = (temp * units)/1024;
->> +	num = temp;
->> +	ccode = print_num(num);
->> +	print("\n");
->> +	return ccode;
->> +}
-> 
-> I'd suggest dropping this entirely, and just always printing the exact
-> values returned by sysinfo.  Drop the multiply, too, and just print
-> info.mem_unit as well.  It's easy to post-process the value in a more
-> capable environment.
-
-I'd prefer to keep the output easily human-readable.
- 
->> +/* this program has no main(), as startup libraries are not used */
->> +void _start(void)
->> +{
->> +	int ccode;
->> +	struct sysinfo info;
->> +	unsigned long used;
->> +
->> +	print("Testing system size.\n");
->> +	print("1..1\n");
->> +
->> +	ccode = sysinfo(&info);
->> +	if (ccode < 0) {
->> +		print("not ok 1 get size runtime size\n");
-> 
-> Shouldn't the "not ok" here and the "ok" below have the same test
-> description?
-Yes.  Thanks.  Good catch.
- 
->> +		print("# could not get sysinfo\n");
->> +		_exit(ccode);
->> +	}
->> +	/* ignore cache complexities for now */
->> +	used = info.totalram - info.freeram - info.bufferram;
->> +	print_k_value("ok 1 get runtime memory use # size = ", used,
->> +		info.mem_unit);
->> +
->> +	print("# System runtime memory report (units in Kilobytes):\n");
->> +	print_k_value("#   Total:  ", info.totalram, info.mem_unit);
->> +	print_k_value("#   Free:   ", info.freeram, info.mem_unit);
->> +	print_k_value("#   Buffer: ", info.bufferram, info.mem_unit);
->> +	print_k_value("#   In use: ", used, info.mem_unit);
->> +
->> +	_exit(0);
->> +}
->> -- 
->> 1.8.2.2
-
-OK - look for a new version shortly (maybe not today, though).
- -- Tim
+ TARGETS_HOTPLUG = cpu-hotplug
+ TARGETS_HOTPLUG += memory-hotplug
+diff --git a/tools/testing/selftests/size/.gitignore b/tools/testing/selftests/size/.gitignore
+new file mode 100644
+index 0000000..189b781
+--- /dev/null
++++ b/tools/testing/selftests/size/.gitignore
+@@ -0,0 +1 @@
++get_size
+diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+new file mode 100644
+index 0000000..47f8e9c
+--- /dev/null
++++ b/tools/testing/selftests/size/Makefile
+@@ -0,0 +1,15 @@
++#ifndef CC
++	CC = $(CROSS_COMPILE)gcc
++#endif
++
++all: get_size
++
++get_size: get_size.c
++	$(CC) -static -ffreestanding -nostartfiles \
++		-s get_size.c -o get_size
++
++run_tests: all
++	./get_size
++
++clean:
++	$(RM) get_size
+diff --git a/tools/testing/selftests/size/get_size.c b/tools/testing/selftests/size/get_size.c
+new file mode 100644
+index 0000000..808e7c6
+--- /dev/null
++++ b/tools/testing/selftests/size/get_size.c
+@@ -0,0 +1,111 @@
++/*
++ * Copyright 2014 Sony Mobile Communications Inc.
++ *
++ * Licensed under the terms of the GNU GPL License version 2
++ *
++ * Selftest for runtime system size
++ *
++ * Prints the amount of RAM that the currently running system is using.
++ *
++ * This program tries to be as small as possible itself, to
++ * avoid perturbing the system memory utilization with its
++ * own execution.  It also attempts to have as few dependencies
++ * on kernel features as possible.
++ *
++ * It should be statically linked, with startup libs avoided.
++ * It uses no library calls, and only the following 3 syscalls:
++ *   sysinfo(), write(), and _exit()
++ *
++ * For output, it avoids printf (which in some C libraries
++ * has large external dependencies) by  implementing it's own
++ * number output and print routines, and using __builtin_strlen()
++ */
++
++#include <sys/sysinfo.h>
++#include <unistd.h>
++
++#define STDOUT_FILENO 1
++
++static int print(const char *s)
++{
++	return write(STDOUT_FILENO, s, __builtin_strlen(s));
++}
++
++
++/*
++ * num_to_str - put digits from num into *s, left to right
++ *   do this by dividing the number by powers of 10
++ *   the tricky part is to omit leading zeros
++ *   don't print zeros until we've started printing any numbers at all
++ */
++static void num_to_str(unsigned long num, char *s)
++{
++	unsigned long long temp, div;
++	int started;
++
++	temp = num;
++	div = 1000000000000000000LL;
++	started = 0;
++	while (div) {
++		if (temp/div || started) {
++			*s++ = (unsigned char)(temp/div + '0');
++			started = 1;
++		}
++		temp -= (temp/div)*div;
++		div /= 10;
++	}
++	*s = 0;
++}
++
++static int print_num(unsigned long num)
++{
++	char num_buf[30];
++
++	num_to_str(num, num_buf);
++	return print(num_buf);
++}
++
++static int print_k_value(const char *s, unsigned long num, unsigned long units)
++{
++	unsigned long long temp;
++	int ccode;
++
++	print(s);
++
++	temp = num;
++	temp = (temp * units)/1024;
++	num = temp;
++	ccode = print_num(num);
++	print("\n");
++	return ccode;
++}
++
++/* this program has no main(), as startup libraries are not used */
++void _start(void)
++{
++	int ccode;
++	struct sysinfo info;
++	unsigned long used;
++
++	print("Testing system size.\n");
++	print("1..1\n");
++
++	ccode = sysinfo(&info);
++	if (ccode < 0) {
++		print("not ok 1 get runtime memory use\n");
++		print("# could not get sysinfo\n");
++		_exit(ccode);
++	}
++	/* ignore cache complexities for now */
++	used = info.totalram - info.freeram - info.bufferram;
++	print_k_value("ok 1 get runtime memory use # size = ", used,
++		info.mem_unit);
++
++	print("# System runtime memory report (units in Kilobytes):\n");
++	print_k_value("#   Total:  ", info.totalram, info.mem_unit);
++	print_k_value("#   Free:   ", info.freeram, info.mem_unit);
++	print_k_value("#   Buffer: ", info.bufferram, info.mem_unit);
++	print_k_value("#   In use: ", used, info.mem_unit);
++
++	_exit(0);
++}
+-- 
+1.8.2.2
