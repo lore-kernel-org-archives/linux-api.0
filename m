@@ -1,45 +1,74 @@
-From: Thomas Petazzoni <thomas.petazzoni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v5] selftest: size: Add size test for Linux kernel
-Date: Wed, 3 Dec 2014 14:01:36 +0100
-Message-ID: <20141203140136.12997331@free-electrons.com>
-References: <547E854E.5060101@sonymobile.com>
-	<1417578191.16722.11.camel@concordia>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH RFC 1/2] virtio_balloon: convert to virtio 1.0 endian-ness
+Date: Wed, 3 Dec 2014 16:02:28 +0200
+Message-ID: <20141203140228.GA12370@redhat.com>
+References: <1417520617-2135-1-git-send-email-mst@redhat.com>
+	<20141202193930.2b8750f7.cornelia.huck@de.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417578191.16722.11.camel@concordia>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Disposition: inline
+In-Reply-To: <20141202193930.2b8750f7.cornelia.huck@de.ibm.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Cornelia Huck <cornelia.huck@de.ibm.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-Michael, Tim,
-
-On Wed, 03 Dec 2014 14:43:11 +1100, Michael Ellerman wrote:
-
-> > diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
-> > new file mode 100644
-> > index 0000000..47f8e9c
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/size/Makefile
-> > @@ -0,0 +1,15 @@
-> > +#ifndef CC
-> > +	CC = $(CROSS_COMPILE)gcc
-> > +#endif
+On Tue, Dec 02, 2014 at 07:39:30PM +0100, Cornelia Huck wrote:
+> On Tue, 2 Dec 2014 13:44:06 +0200
+> "Michael S. Tsirkin" <mst@redhat.com> wrote:
 > 
-> I think the following is preferable:
+> > balloon device is not part of virtio 1.0 spec.  Still, it's easy enough
+> > to make it handle endian-ness exactly as other virtio 1.0 devices: what
+> > we gain from this, is that there's no need to special-case it in virtio
+> > core.
 > 
->   CC := $(CROSS_COMPILE)$(CC)
+> Well, the balloon is weird in a number of ways, including its always
+> little-endian config space.
 
-It is even more necessary that #ifndef and #endif don't exist in make.
-They are just comments, and therefore, ignored. Seems like Tim does too
-much C :-)
+Hmm yes, I forgot about that.
 
-Best regards,
+> But I'm not quite sure the spec covers this?
 
-Thomas
--- 
-Thomas Petazzoni, CTO, Free Electrons
-Embedded Linux, Kernel and Android engineering
-http://free-electrons.com
+The spec does not cover balloon.  It merely includes a reference section
+about legacy balloon device.  What to do when that device sets VERSION_1
+is really up to us.
+
+Patchset v8 simply makes balloon tell core it's legacy_only.
+This is I guess fine as far as it goes.
+I was still looking for the best way that involves minimal noise
+in core. This looked like the best way: change 4 lines,
+and drop all special casing in core, but given the config space
+endian-ness mess, I'm not sure anymore.
+I guess we'll just stick to what v8 does for now.
+
+> > 
+> > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> > ---
+> >  include/uapi/linux/virtio_balloon.h | 5 +++--
+> >  drivers/virtio/virtio_balloon.c     | 4 ++--
+> >  2 files changed, 5 insertions(+), 4 deletions(-)
+> > 
+> 
+> >  struct virtio_balloon_stat {
+> > -	__u16 tag;
+> > -	__u64 val;
+> > +	__virtio16 tag;
+> > +	__virtio64 val;
+> >  } __attribute__((packed));
+> 
+> Would the respective fields in the spec need updating? While it is
+> actually talking about legacy requirements, the fields are not
+> specified as __virtio{16,64}.
+> 
+> Also, is changing the stat fields enough? I've not looked into balloon
+> operation, but does the payload need some endianess conversion as well?
