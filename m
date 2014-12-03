@@ -1,45 +1,49 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH v5] selftest: size: Add size test for Linux kernel
-Date: Wed, 03 Dec 2014 14:43:11 +1100
-Message-ID: <1417578191.16722.11.camel@concordia>
-References: <547E854E.5060101@sonymobile.com>
+From: Volker Lendecke <Volker.Lendecke@SerNet.DE>
+Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
+ only)
+Date: Wed, 3 Dec 2014 10:10:43 +0100
+Message-ID: <E1Xw5xg-00EfRs-CM@intern.SerNet.DE>
+References: <cover.1415636409.git.milosz@adfin.com>
+ <20141125150101.9596a09e.akpm@linux-foundation.org>
+ <CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
+ <20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
+Reply-To: Volker.Lendecke@SerNet.DE
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <547E854E.5060101@sonymobile.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tim Bird <tim.bird@sonymobile.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Josh Triplett <josh@joshtriplett.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-embedded@vger.kernel.org" <linux-embedded@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
+Sender: owner-linux-aio@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Milosz Tanski <milosz@adfin.com>, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2014-12-02 at 19:36 -0800, Tim Bird wrote:
-> This test shows the amount of memory used by the system.
-> Note that this is dependent on the user-space that is loaded
-> when this program runs.  Optimally, this program would be
-> run as the init program itself.
+On Tue, Dec 02, 2014 at 02:42:00PM -0800, Andrew Morton wrote:
+> The question is whether a simpler approach such as fincore() will be
+> sufficient.
 
-Sorry to only chime in at v5.
+For many use cases in Samba, fincore will probably be
+enough. But Windows clients become more and more
+multi-threaded, so Samba sees multiple parallel active read
+requests. Samba's core SMB processing engine is single
+threaded, and if due to that race we get blocked, more than
+one data stream will be affected. We might make it an option
+to use the fincore alternative, but I don't see it as a
+default. The default will be the strict threadpool.
 
-> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
-> new file mode 100644
-> index 0000000..47f8e9c
-> --- /dev/null
-> +++ b/tools/testing/selftests/size/Makefile
-> @@ -0,0 +1,15 @@
-> +#ifndef CC
-> +	CC = $(CROSS_COMPILE)gcc
-> +#endif
+With best regards,
 
-I think the following is preferable:
+Volker Lendecke
 
-  CC := $(CROSS_COMPILE)$(CC)
+--=20
+SerNet GmbH, Bahnhofsallee 1b, 37081 G=F6ttingen
+phone: +49-551-370000-0, fax: +49-551-370000-9
+AG G=F6ttingen, HRB 2816, GF: Dr. Johannes Loxen
+http://www.sernet.de, mailto:kontakt@sernet.de
 
-
-It allows optionally setting a custom CC, as well as optionally CROSS_COMPILE.
-
-The only thing it doesn't do is choose gcc explicitly, but you shouldn't really
-do that anyway - unless you absolutely require gcc. Let the user choose their
-compiler by choosing where cc points.
-
-cheers
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=3Dmailto:"aart@kvack.org">aart@kvack.org</a>
