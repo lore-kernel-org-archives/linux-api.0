@@ -1,129 +1,96 @@
-From: Milosz Tanski <milosz@adfin.com>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache only)
-Date: Wed, 3 Dec 2014 11:48:28 -0500
-Message-ID: <CANP1eJGVyBOt1rQ8jA4tMrNGX5X61-UWbVy6kKj_ByeTqAEOBQ@mail.gmail.com>
-References: <cover.1415636409.git.milosz@adfin.com>
-	<20141125150101.9596a09e.akpm@linux-foundation.org>
-	<CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
-	<20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
+From: Gabriele Mazzotta <gabriele.mzt@gmail.com>
+Subject: [PATCH] Documentation: Add entry for dell-laptop sysfs interface
+Date: Wed,  3 Dec 2014 18:41:33 +0100
+Message-ID: <1417628493-29323-1-git-send-email-gabriele.mzt@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dvhart@infradead.org, mjg59@srcf.ucam.org
+Cc: linux-api@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-kernel@vger.kernel.org, libsmbios-devel@lists.us.dell.com, Srinivas_G_Gowda@dell.com, Michael_E_Brown@dell.com, pali.rohar@gmail.com, Gabriele Mazzotta <gabriele.mzt@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 2, 2014 at 5:42 PM, Andrew Morton <akpm@linux-foundation.org> wrote:
->
-> On Tue, 2 Dec 2014 17:17:42 -0500 Milosz Tanski <milosz@adfin.com> wrote:
->
-> > > There have been several incomplete attempts to implement fincore().  If
-> > > we were to complete those attempts, preadv2() could be implemented
-> > > using fincore()+pread().  Plus we get fincore(), which is useful for
-> > > other (but probably similar) reasons.  Probably fincore()+pwrite() could
-> > > be used to implement pwritev2(), but I don't know what pwritev2() does
-> > > yet.
-> > >
-> > > Implementing fincore() is more flexible, requires less code and is less
-> > > likely to have bugs.  So why not go that way?  Yes, it's more CPU
-> > > intensive, but how much?  Is the difference sufficient to justify the
-> > > preadv2()/pwritev2() approach?
-> >
-> > I would like to see a fincore() functionality (for other reasons) I
-> > don't think it does the job here. fincore() + preadv() is inherently
-> > racy as there's no guarantee that the data becomes uncached between
-> > the two calls.
->
-> There will always be holes.  For example find_get_page() could block on
-> lock_page() while some other process is doing IO.
-> page_cache_async_readahead() does lots of memory allocation which can
-> get blocked for long periods in the page allocator.
-> page_cache_async_readahead() can block on synchronous metadata reads,
-> etc.
+Add the documentation for the new sysfs interface of dell-laptop
+that allows to configure the keyboard illumination on Dell systems.
 
-Andrew I think it would helpful if you did read through the patches.
-The first 3 are somewhat uninteresting as it's just wiring up the new
-syscalls and plumbing the flag argument through. The core of the
-RWF_NONBLOCK is patch 4: https://lkml.org/lkml/2014/11/10/463 and if
-you strip away the fs specific changes the core of it is very simple.
+Signed-off-by: Gabriele Mazzotta <gabriele.mzt@gmail.com>
+Signed-off-by: Pali Roh=C3=A1r <pali.rohar@gmail.com>
+---
+ .../ABI/testing/sysfs-platform-dell-laptop         | 60 ++++++++++++++=
+++++++++
+ 1 file changed, 60 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-dell-lapto=
+p
 
-The core is mostly contained in do_generic_file_read() in filemap.c,
-and is very short and easy to understand. It boils down to we read as
-much data as we can given what's in the page cache. There's no
-fallback to diskio for readpage() in case of missing pages and we bail
-before any calls to page_cache_async_readahead(). And to the best of
-my knowledge lock_page() does not lock the page, all it does is call
-pagecache_get_page() without the FGP_LOCK flag.
-
-I've spent time a decent amount of time looking at this to make sure
-we cover all our major bases. It's possible I missed something but the
-biggest offenders should be covered and if I missed something I'd love
-to cover that as well.
-
->
-> The question is whether a simpler approach such as fincore() will be
-> sufficient.
->
-> > This may not matter in some cases, but in others (ones
-> > that I'm trying to solve) it will introduce unexpected latency.
->
-> Details?
-
-
-Please read my points below and
-
->
->
-> > There's no overlap between prwritev2 and fincore() functionality.
->
-> Do we actually need pwritev2()?  What's the justification for that?
-
-
-I'm okay with splitting up the pwritev2 and preadv2 into two
-independent patchsets to be considered on their own merits.
-
->
->
->
-> Please let's examine the alternative(s) seriously.  It would be mistake
-> to add preadv2/pwritev2 if fincore+pread would have sufficed.
-
-
- What the motivation for my change and also approach is a very common
-pattern to async buffered disk IO in userspace server applications. It
-comes down to having one thread to handle the network and a thread
-pool to perform IO requests. Why a threadpool and not something like a
-sendfile() for reads? Many non-trivial applications perform additional
-processing (ssl, checksuming, transformation). Unfortunately this has
-a inherent increase in average latency due to increased
-synchronization penalties (enqueue and notify) but primarily due to
-fast requests (already in cache) behind stuck behind slow request.
-
-Here's the illustration of the common architecture:
-http://i.imgur.com/f8Pla7j.png. In fact, most apps are even simpler
-where they replace the request queue, task worker with a single thread
-doing network IO using epoll or such.
-
-preadv2 with RWF_NONBLOCK is analogous to the kernel recvmsg() with
-the MSG_NOWAIT flag. It's really frustrating that such capacity
-doesn't exist today. As with the user space application design we can
-skip the io threadpool and decrease average request latency in many
-common workloads (linear reads or zipf data accesses).
-
-preadv2 with RWF_NONBLOCK as implemented does not suffer the same
-eviction races as fincore + pread because it's not implemented as two
-syscalls. It also has a much lower surface of possible blocking /
-locking then fincore + pread because it cannot fallback to reading
-from disk, it does not trigger read-ahead, and does not wait for page
-lock.
-
--- 
-Milosz Tanski
-CTO
-16 East 34th Street, 15th floor
-New York, NY 10016
-
-p: 646-253-9055
-e: milosz@adfin.com
+diff --git a/Documentation/ABI/testing/sysfs-platform-dell-laptop b/Doc=
+umentation/ABI/testing/sysfs-platform-dell-laptop
+new file mode 100644
+index 0000000..7969443
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-platform-dell-laptop
+@@ -0,0 +1,60 @@
++What:		/sys/class/leds/dell::kbd_backlight/als_setting
++Date:		December 2014
++KernelVersion:	3.19
++Contact:	Gabriele Mazzotta <gabriele.mzt@gmail.com>,
++		Pali Roh=C3=A1r <pali.rohar@gmail.com>
++Description:
++		This file allows to control the automatic keyboard
++		illumination mode on some systems that have an ambient
++		light sensor. Write 1 to this file to enable the auto
++		mode, 0 to disable it.
++
++What:		/sys/class/leds/dell::kbd_backlight/start_triggers
++Date:		December 2014
++KernelVersion:	3.19
++Contact:	Gabriele Mazzotta <gabriele.mzt@gmail.com>,
++		Pali Roh=C3=A1r <pali.rohar@gmail.com>
++Description:
++		This file allows to control the input triggers that
++		turn on the keyboard backlight illumination that is
++		disabled because of inactivity.
++		Read the file to see the triggers available. The ones
++		enabled are preceded by '+', those disabled by '-'.
++
++		To enable a trigger, write its name preceded by '+' to
++		this file. To disable a trigger, write its name preceded
++		by '-' instead.
++
++		For example, to enable the keyboard as trigger run:
++		    echo +keyboard > /sys/class/leds/dell::kbd_backlight/start_trigg=
+ers
++		To disable it:
++		    echo -keyboard > /sys/class/leds/dell::kbd_backlight/start_trigg=
+ers
++
++		Note that not all the available triggers can be configured.
++
++What:		/sys/class/leds/dell::kbd_backlight/stop_timeout
++Date:		December 2014
++KernelVersion:	3.19
++Contact:	Gabriele Mazzotta <gabriele.mzt@gmail.com>,
++		Pali Roh=C3=A1r <pali.rohar@gmail.com>
++Description:
++		This file allows to specify the interval after which the
++		keyboard illumination is disabled because of inactivity.
++		The timeouts are expressed in seconds, minutes, hours and
++		days, for which the symbols are 's', 'm', 'h' and 'd'
++		respectively.
++
++		To configure the timeout, write to this file a value along
++		with any the above units. If no unit is specified, the value
++		is assumed to be expressed in seconds.
++
++		For example, to set the timeout to 10 minutes run:
++		    echo 10m > /sys/class/leds/dell::kbd_backlight/stop_timeout
++
++		Note that when this file is read, the returned value might be
++		expressed in a different unit than the one used when the timeout
++		was set.
++
++		Also note that only some timeouts are supported and that
++		some systems might fall back to a specific timeout in case
++		an invalid timeout is written to this file.
+--=20
+2.1.3
