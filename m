@@ -1,204 +1,75 @@
-From: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v9 8/8] tpm: TPM 2.0 FIFO Interface
-Date: Thu, 4 Dec 2014 15:25:12 +0000 (UTC)
-Message-ID: <alpine.DEB.2.11.1412041459470.5705@localhost.localdomain>
-References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1417672518-4530-9-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH net-next v4 0/4] netns: allow to identify peer netns
+Date: Thu, 04 Dec 2014 17:21:09 +0100
+Message-ID: <548089F5.30202@6wind.com>
+References: <1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>	<1414682728-4532-1-git-send-email-nicolas.dichtel@6wind.com>	<871tpph03k.fsf@x220.int.ebiederm.org>
+	<54535B00.5090708@6wind.com> <87wq7g831b.fsf@x220.int.ebiederm.org>
+	<545A32C4.7070108@6wind.com>
+Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417672518-4530-9-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <545A32C4.7070108-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Jarkko,
-
-On Thu, 4 Dec 2014, Jarkko Sakkinen wrote:
-> From: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> 
-> Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2.0,
-> instead of calling tpm_get_timeouts(), assign duration and timeout
-> values defined in the TPM 2.0 PTP specification.
-> 
-> Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> ---
->  drivers/char/tpm/tpm_tis.c | 80 ++++++++++++++++++++++++++++++++++++++--------
->  1 file changed, 67 insertions(+), 13 deletions(-)
-> 
-> diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
-> index 89e1abb..71cbb2d 100644
-> --- a/drivers/char/tpm/tpm_tis.c
-> +++ b/drivers/char/tpm/tpm_tis.c
-> @@ -1,5 +1,6 @@
->  /*
->   * Copyright (C) 2005, 2006 IBM Corporation
-> + * Copyright (C) 2014 Intel Corporation
->   *
->   * Authors:
->   * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
-> @@ -44,6 +45,10 @@ enum tis_status {
->  	TPM_STS_DATA_EXPECT = 0x08,
->  };
->  
-> +enum tis_status3 {
-> +	TPM_STS3_TPM2_FAM = 0x04,
-> +};
-> +
->  enum tis_int_flags {
->  	TPM_GLOBAL_INT_ENABLE = 0x80000000,
->  	TPM_INTF_BURST_COUNT_STATIC = 0x100,
-> @@ -70,6 +75,7 @@ enum tis_defaults {
->  #define	TPM_INT_STATUS(l)		(0x0010 | ((l) << 12))
->  #define	TPM_INTF_CAPS(l)		(0x0014 | ((l) << 12))
->  #define	TPM_STS(l)			(0x0018 | ((l) << 12))
-> +#define	TPM_STS3(l)			(0x001b | ((l) << 12))
->  #define	TPM_DATA_FIFO(l)		(0x0024 | ((l) << 12))
->  
->  #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
-> @@ -363,6 +369,7 @@ static int tpm_tis_send_main(struct tpm_chip *chip, u8 *buf, size_t len)
->  {
->  	int rc;
->  	u32 ordinal;
-> +	unsigned long dur;
->  
->  	rc = tpm_tis_send_data(chip, buf, len);
->  	if (rc < 0)
-> @@ -374,9 +381,14 @@ static int tpm_tis_send_main(struct tpm_chip *chip, u8 *buf, size_t len)
->  
->  	if (chip->vendor.irq) {
->  		ordinal = be32_to_cpu(*((__be32 *) (buf + 6)));
-> +
-> +		if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +			dur = tpm2_calc_ordinal_duration(chip, ordinal);
-> +		else
-> +			dur = tpm_calc_ordinal_duration(chip, ordinal);
-> +
->  		if (wait_for_tpm_stat
-> -		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-> -		     tpm_calc_ordinal_duration(chip, ordinal),
-> +		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID, dur,
->  		     &chip->vendor.read_queue, false) < 0) {
->  			rc = -ETIME;
->  			goto out_err;
-> @@ -588,6 +600,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->  	int rc, i, irq_s, irq_e, probe;
->  	struct tpm_chip *chip;
->  	struct priv_data *priv;
-> +	u8 sts3;
->  
->  	priv = devm_kzalloc(dev, sizeof(struct priv_data), GFP_KERNEL);
->  	if (priv == NULL)
-> @@ -604,11 +617,28 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->  	if (!chip->vendor.iobase)
->  		return -EIO;
->  
-> +	sts3 = ioread8(chip->vendor.iobase + TPM_STS3(1));
-> +	if ((sts3 & TPM_STS3_TPM2_FAM) == TPM_STS3_TPM2_FAM)
-> +		chip->flags = TPM_CHIP_FLAG_TPM2;
-> +
->  	/* Default timeouts */
-> -	chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> -	chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
-> -	chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> -	chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
-> +		chip->vendor.timeout_a = usecs_to_jiffies(TPM2_TIMEOUT_A);
-> +		chip->vendor.timeout_b = usecs_to_jiffies(TPM2_TIMEOUT_B);
-> +		chip->vendor.timeout_c = usecs_to_jiffies(TPM2_TIMEOUT_C);
-> +		chip->vendor.timeout_d = usecs_to_jiffies(TPM2_TIMEOUT_D);
-> +		chip->vendor.duration[TPM_SHORT] =
-> +			usecs_to_jiffies(TPM2_DURATION_SHORT);
-> +		chip->vendor.duration[TPM_MEDIUM] =
-> +			usecs_to_jiffies(TPM2_DURATION_MEDIUM);
-> +		chip->vendor.duration[TPM_LONG] =
-> +			usecs_to_jiffies(TPM2_DURATION_LONG);
-> +	} else {
-> +		chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +		chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
-> +		chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +		chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> +	}
->  
->  	if (wait_startup(chip, 0) != 0) {
->  		rc = -ENODEV;
-> @@ -623,8 +653,8 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->  	vendor = ioread32(chip->vendor.iobase + TPM_DID_VID(0));
->  	chip->vendor.manufacturer_id = vendor;
->  
-> -	dev_info(dev,
-> -		 "1.2 TPM (device-id 0x%X, rev-id %d)\n",
-> +	dev_info(dev, "%s TPM (device-id 0x%X, rev-id %d)\n",
-> +		 (chip->flags & TPM_CHIP_FLAG_TPM2) ? "2.0" : "1.2",
->  		 vendor >> 16, ioread8(chip->vendor.iobase + TPM_RID(0)));
->  
->  	if (!itpm) {
-> @@ -665,6 +695,23 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->  	if (intfcaps & TPM_INTF_DATA_AVAIL_INT)
->  		dev_dbg(dev, "\tData Avail Int Support\n");
->  
-> +	/* get the timeouts before testing for irqs */
-> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2) && tpm_get_timeouts(chip)) {
-> +		dev_err(dev, "Could not get TPM timeouts and durations\n");
-> +		rc = -ENODEV;
-> +		goto out_err;
-> +	}
-> +
-> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +		rc = tpm2_do_selftest(chip);
-> +	else
-> +		rc = tpm_do_selftest(chip);
-> +	if (rc) {
-> +		dev_err(dev, "TPM self test failed\n");
-> +		rc = -ENODEV;
-> +		goto out_err;
-> +	}
-> +
->  	/* INTERRUPT Setup */
->  	init_waitqueue_head(&chip->vendor.read_queue);
->  	init_waitqueue_head(&chip->vendor.int_queue);
-
-In Peter's for-james branch, commit 0e6cb01, the v1.2 calls to
-tpm_get_timeouts and tpm_do_selftest were moved toward the end of 
-tpm_tis_init.
-
-
-> @@ -720,7 +767,10 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
->  			chip->vendor.probed_irq = 0;
->  
->  			/* Generate Interrupts */
-> -			tpm_gen_interrupt(chip);
-> +			if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +				tpm2_gen_interrupt(chip);
-> +			else
-> +				tpm_gen_interrupt(chip);
->  
->  			chip->vendor.irq = chip->vendor.probed_irq;
->  
-> @@ -808,14 +858,18 @@ static void tpm_tis_reenable_interrupts(struct tpm_chip *chip)
->  static int tpm_tis_resume(struct device *dev)
->  {
->  	struct tpm_chip *chip = dev_get_drvdata(dev);
-> -	int ret;
-> +	int ret = 0;
->  
->  	if (chip->vendor.irq)
->  		tpm_tis_reenable_interrupts(chip);
->  
-> -	ret = tpm_pm_resume(dev);
-> -	if (!ret)
-> -		tpm_do_selftest(chip);
-> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +		tpm2_do_selftest(chip);
-> +	else {
-> +		ret = tpm_pm_resume(dev);
-> +		if (!ret)
-> +			tpm_do_selftest(chip);
-> +	}
->  
->  	return ret;
->  }
-> -- 
-> 2.1.0
-> 
+TGUgMDUvMTEvMjAxNCAxNToyMywgTmljb2xhcyBEaWNodGVsIGEgw6ljcml0IDoKPiBMZSAzMS8x
+MC8yMDE0IDIwOjE0LCBFcmljIFcuIEJpZWRlcm1hbiBhIMOpY3JpdCA6Cj4+IE5pY29sYXMgRGlj
+aHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JpdGVzOgo+Pgo+Pj4gTGUgMzAvMTAv
+MjAxNCAxOTo0MSwgRXJpYyBXLiBCaWVkZXJtYW4gYSDDqWNyaXQgOgo+Pj4+IE5pY29sYXMgRGlj
+aHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JpdGVzOgo+Pj4+Cj4+Pj4+IFRoZSBn
+b2FsIG9mIHRoaXMgc2VyaWUgaXMgdG8gYmUgYWJsZSB0byBtdWx0aWNhc3QgbmV0bGluayBtZXNz
+YWdlcyB3aXRoIGFuCj4+Pj4+IGF0dHJpYnV0ZSB0aGF0IGlkZW50aWZ5IGEgcGVlciBuZXRucy4K
+Pj4+Pj4gVGhpcyBpcyBuZWVkZWQgYnkgdGhlIHVzZXJsYW5kIHRvIGludGVycHJldCBzb21lIGlu
+Zm9ybWF0aW9ucyBjb250YWluZWQgaW4KPj4+Pj4gbmV0bGluayBtZXNzYWdlcyAobGlrZSBJRkxB
+X0xJTksgdmFsdWUsIGJ1dCBhbHNvIHNvbWUgb3RoZXIgYXR0cmlidXRlcyBpbiBjYXNlCj4+Pj4+
+IG9mIHgtbmV0bnMgbmV0ZGV2aWNlIChzZWUgYWxzbwo+Pj4+PiBodHRwOi8vdGhyZWFkLmdtYW5l
+Lm9yZy9nbWFuZS5saW51eC5uZXR3b3JrLzMxNTkzMy9mb2N1cz0zMTYwNjQgYW5kCj4+Pj4+IGh0
+dHA6Ly90aHJlYWQuZ21hbmUub3JnL2dtYW5lLmxpbnV4Lmtlcm5lbC5jb250YWluZXJzLzI4MzAx
+L2ZvY3VzPTQyMzkpKS4KPj4+Pj4KPj4+Pj4gSWRzIG9mIHBlZXIgbmV0bnMgYXJlIHNldCBieSB1
+c2VybGFuZCB2aWEgYSBuZXcgZ2VubCBtZXNzYWdlcy4gVGhlc2UgaWRzIGFyZQo+Pj4+PiBzdG9y
+ZWQgcGVyIG5ldG5zIGFuZCBhcmUgbG9jYWwgKGllIG9ubHkgdmFsaWQgaW4gdGhlIG5ldG5zIHdo
+ZXJlIHRoZXkgYXJlCj4+Pj4+IHNldCkuCj4+Pj4+IFRvIGF2b2lkIGFsbG9jYXRpbmcgYW4gaW50
+IGZvciBlYWNoIHBlZXIgbmV0bnMsIEkgdXNlIGlkcl9mb3JfZWFjaCgpIHRvCj4+Pj4+IHJldHJp
+ZXZlCj4+Pj4+IHRoZSBpZCBvZiBhIHBlZXIgbmV0bnMuIE5vdGUgdGhhdCBpdCB3aWxsIGJlIHBv
+c3NpYmxlIHRvIGFkZCBhIHRhYmxlCj4+Pj4+IChzdHJ1Y3QgbmV0Cj4+Pj4+IC0+IGlkKSBsYXRl
+ciB0byBvcHRpbWl6ZSB0aGlzIGxvb2t1cCBpZiBuZWVkZWQuCj4+Pj4+Cj4+Pj4+IFBhdGNoIDEv
+NCBpbnRyb2R1Y2VzIHRoZSBuZXRsaW5rIEFQSSBtZWNoYW5pc20gdG8gc2V0IGFuZCBnZXQgdGhl
+c2UgaWRzLgo+Pj4+PiBQYXRjaCAyLzQgYW5kIDMvNCBpbXBsZW1lbnRzIGFuIGV4YW1wbGUgb2Yg
+aG93IHRvIHVzZSB0aGVzZSBpZHMgaW4gcnRuZXRsaW5rCj4+Pj4+IG1lc3NhZ2VzLiBBbmQgcGF0
+Y2ggNC80IHNob3dzIHRoYXQgdGhlIG5ldGxpbmsgbWVzc2FnZXMgY2FuIGJlIHN5bWV0cmljCj4+
+Pj4+IGJldHdlZW4KPj4+Pj4gYSBHRVQgYW5kIGEgU0VULgo+Pj4+Pgo+Pj4+PiBpcHJvdXRlMiBw
+YXRjaGVzIGFyZSBhdmFpbGFibGUsIEkgY2FuIHNlbmQgdGhlbSBvbiBkZW1hbmQuCj4+Pj4KPj4+
+PiBBIHF1aWNrIHJlcGx5LiAgSSB0aGluayB0aGlzIHBhdGNoc2V0IGlzIGluIHRoZSByaWdodCBn
+ZW5lcmFsIGRpcmVjdGlvbi4KPj4+PiBUaGVyZSBhcmUgc29tZSBvZGRiYWxsIGRldGFpbHMgdGhh
+dCBzZWVtIG9kZC9hd2t3YXJkIHRvIG1lIHN1Y2ggYXMgdXNpbmcKPj4+PiBnZW5ldGxpbmsgaW5z
+dGVhZCBvZiBydG5ldGxpbmsgdG8gZ2V0IGFuZCBzZXQgdGhlIGlkcywgYW5kIG5vdCBoYXZpbmcK
+Pj4+PiBpZHMgaWYgdGhleSBhcmUgbm90IHNldCAodGhhdCBmZWVscyBsaWtlIGEgbWFpbnRlbmFu
+Y2UvdXNhYmlsaXR5IGNoYWxsZW5nZSkuCj4+PiBObyBwcm9ibGVtIHRvIHVzZSBydG5ldGxpbmss
+IGluIGZhY3QsIEkgaGVzaXRhdGVkLgo+Pj4KPj4+IEZvciB0aGUgc2Vjb25kIHBvaW50LCBJJ20g
+bm90IHN1cmUgdG8gZm9sbG93IHlvdTogaG93IHRvIGhhdmUgYW4gaWQsIHdoaWNoIHdpbGwKPj4+
+IG5vdCBicmVhayBtaWdyYXRpb24sIHdpdGhvdXQgYXNraW5nIHRoZSB1c2VyIHRvIHNldCBpdD8K
+Pj4KPj4gV2UgaGF2ZSB0aGF0IHNpdHV0YXRpb24gd2l0aCBpZmluZGV4IGFscmVhZHkuICBCYXNp
+Y2FsbHkgdGhlIHRob3VnaHQgaXMKPj4gdG8gYWxsb3cgYW4gaWQgdG8gYmUgc2V0LCBidXQgYWxz
+byBhbGxvdyBhbiBpZCB0byBiZSBhdXRvLWdlbmVyYXRlZCBpZgo+PiB3ZSB1c2UgYW4gbmFtZXNw
+YWNlIHdpdGhvdXQgYW4gaWQgYmVpbmcgc2V0Lgo+IElmIG15IHVuZGVyc3RhbmRpbmcgaXMgY29y
+cmVjdCwgdGhlIGRpZmZlcmVuY2UgaXMgdGhhdCB3ZSB3YW50IHRvIGhpZGUgc29tZQo+IG5ldG5z
+Lgo+IERvIHlvdSB0aGluayB3ZSBjYW4gZ2VuZXJhdGUgYW4gaWQgZm9yIGVhY2ggbmV0bnMgdGhh
+dCBkb2VzIG5vdCBoYXZlIG9uZSBhbmQKPiByZWx5aW5nIG9uIHRoZSBmYWN0IHRoYXQgdGhpcyBp
+ZCBoYXMgbm8gbWVhbmluZyB1bmxlc3MgeW91IGhhdmUgYSBuZXRucyBmaWxlCj4gZGVzY3JpcHRv
+ciB0aGF0IGFsbG93IHlvdSB0byBnZXQgdGhlIGlkIG9mIHRoaXMgbmV0bnM/CkFueSBjb21tZW50
+IEVyaWMgPwoKClRoYW5rIHlvdSwKTmljb2xhcwpfX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxp
+c3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9y
+Zy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
