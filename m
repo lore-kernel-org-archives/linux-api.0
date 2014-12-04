@@ -1,75 +1,81 @@
-From: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next v4 0/4] netns: allow to identify peer netns
-Date: Thu, 04 Dec 2014 17:21:09 +0100
-Message-ID: <548089F5.30202@6wind.com>
-References: <1412257690-31253-1-git-send-email-nicolas.dichtel@6wind.com>	<1414682728-4532-1-git-send-email-nicolas.dichtel@6wind.com>	<871tpph03k.fsf@x220.int.ebiederm.org>
-	<54535B00.5090708@6wind.com> <87wq7g831b.fsf@x220.int.ebiederm.org>
-	<545A32C4.7070108@6wind.com>
-Reply-To: nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org
+From: Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+Subject: Re: [PATCH v5] selftest: size: Add size test for Linux kernel
+Date: Thu, 4 Dec 2014 08:39:33 -0800
+Message-ID: <54808E45.3010806@sonymobile.com>
+References: <547E854E.5060101@sonymobile.com>	 <1417578191.16722.11.camel@concordia> <547F3A57.7000106@sonymobile.com> <1417651707.9123.1.camel@concordia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <545A32C4.7070108-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, cwang-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1417651707.9123.1.camel@concordia>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-embedded-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-TGUgMDUvMTEvMjAxNCAxNToyMywgTmljb2xhcyBEaWNodGVsIGEgw6ljcml0IDoKPiBMZSAzMS8x
-MC8yMDE0IDIwOjE0LCBFcmljIFcuIEJpZWRlcm1hbiBhIMOpY3JpdCA6Cj4+IE5pY29sYXMgRGlj
-aHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JpdGVzOgo+Pgo+Pj4gTGUgMzAvMTAv
-MjAxNCAxOTo0MSwgRXJpYyBXLiBCaWVkZXJtYW4gYSDDqWNyaXQgOgo+Pj4+IE5pY29sYXMgRGlj
-aHRlbCA8bmljb2xhcy5kaWNodGVsQDZ3aW5kLmNvbT4gd3JpdGVzOgo+Pj4+Cj4+Pj4+IFRoZSBn
-b2FsIG9mIHRoaXMgc2VyaWUgaXMgdG8gYmUgYWJsZSB0byBtdWx0aWNhc3QgbmV0bGluayBtZXNz
-YWdlcyB3aXRoIGFuCj4+Pj4+IGF0dHJpYnV0ZSB0aGF0IGlkZW50aWZ5IGEgcGVlciBuZXRucy4K
-Pj4+Pj4gVGhpcyBpcyBuZWVkZWQgYnkgdGhlIHVzZXJsYW5kIHRvIGludGVycHJldCBzb21lIGlu
-Zm9ybWF0aW9ucyBjb250YWluZWQgaW4KPj4+Pj4gbmV0bGluayBtZXNzYWdlcyAobGlrZSBJRkxB
-X0xJTksgdmFsdWUsIGJ1dCBhbHNvIHNvbWUgb3RoZXIgYXR0cmlidXRlcyBpbiBjYXNlCj4+Pj4+
-IG9mIHgtbmV0bnMgbmV0ZGV2aWNlIChzZWUgYWxzbwo+Pj4+PiBodHRwOi8vdGhyZWFkLmdtYW5l
-Lm9yZy9nbWFuZS5saW51eC5uZXR3b3JrLzMxNTkzMy9mb2N1cz0zMTYwNjQgYW5kCj4+Pj4+IGh0
-dHA6Ly90aHJlYWQuZ21hbmUub3JnL2dtYW5lLmxpbnV4Lmtlcm5lbC5jb250YWluZXJzLzI4MzAx
-L2ZvY3VzPTQyMzkpKS4KPj4+Pj4KPj4+Pj4gSWRzIG9mIHBlZXIgbmV0bnMgYXJlIHNldCBieSB1
-c2VybGFuZCB2aWEgYSBuZXcgZ2VubCBtZXNzYWdlcy4gVGhlc2UgaWRzIGFyZQo+Pj4+PiBzdG9y
-ZWQgcGVyIG5ldG5zIGFuZCBhcmUgbG9jYWwgKGllIG9ubHkgdmFsaWQgaW4gdGhlIG5ldG5zIHdo
-ZXJlIHRoZXkgYXJlCj4+Pj4+IHNldCkuCj4+Pj4+IFRvIGF2b2lkIGFsbG9jYXRpbmcgYW4gaW50
-IGZvciBlYWNoIHBlZXIgbmV0bnMsIEkgdXNlIGlkcl9mb3JfZWFjaCgpIHRvCj4+Pj4+IHJldHJp
-ZXZlCj4+Pj4+IHRoZSBpZCBvZiBhIHBlZXIgbmV0bnMuIE5vdGUgdGhhdCBpdCB3aWxsIGJlIHBv
-c3NpYmxlIHRvIGFkZCBhIHRhYmxlCj4+Pj4+IChzdHJ1Y3QgbmV0Cj4+Pj4+IC0+IGlkKSBsYXRl
-ciB0byBvcHRpbWl6ZSB0aGlzIGxvb2t1cCBpZiBuZWVkZWQuCj4+Pj4+Cj4+Pj4+IFBhdGNoIDEv
-NCBpbnRyb2R1Y2VzIHRoZSBuZXRsaW5rIEFQSSBtZWNoYW5pc20gdG8gc2V0IGFuZCBnZXQgdGhl
-c2UgaWRzLgo+Pj4+PiBQYXRjaCAyLzQgYW5kIDMvNCBpbXBsZW1lbnRzIGFuIGV4YW1wbGUgb2Yg
-aG93IHRvIHVzZSB0aGVzZSBpZHMgaW4gcnRuZXRsaW5rCj4+Pj4+IG1lc3NhZ2VzLiBBbmQgcGF0
-Y2ggNC80IHNob3dzIHRoYXQgdGhlIG5ldGxpbmsgbWVzc2FnZXMgY2FuIGJlIHN5bWV0cmljCj4+
-Pj4+IGJldHdlZW4KPj4+Pj4gYSBHRVQgYW5kIGEgU0VULgo+Pj4+Pgo+Pj4+PiBpcHJvdXRlMiBw
-YXRjaGVzIGFyZSBhdmFpbGFibGUsIEkgY2FuIHNlbmQgdGhlbSBvbiBkZW1hbmQuCj4+Pj4KPj4+
-PiBBIHF1aWNrIHJlcGx5LiAgSSB0aGluayB0aGlzIHBhdGNoc2V0IGlzIGluIHRoZSByaWdodCBn
-ZW5lcmFsIGRpcmVjdGlvbi4KPj4+PiBUaGVyZSBhcmUgc29tZSBvZGRiYWxsIGRldGFpbHMgdGhh
-dCBzZWVtIG9kZC9hd2t3YXJkIHRvIG1lIHN1Y2ggYXMgdXNpbmcKPj4+PiBnZW5ldGxpbmsgaW5z
-dGVhZCBvZiBydG5ldGxpbmsgdG8gZ2V0IGFuZCBzZXQgdGhlIGlkcywgYW5kIG5vdCBoYXZpbmcK
-Pj4+PiBpZHMgaWYgdGhleSBhcmUgbm90IHNldCAodGhhdCBmZWVscyBsaWtlIGEgbWFpbnRlbmFu
-Y2UvdXNhYmlsaXR5IGNoYWxsZW5nZSkuCj4+PiBObyBwcm9ibGVtIHRvIHVzZSBydG5ldGxpbmss
-IGluIGZhY3QsIEkgaGVzaXRhdGVkLgo+Pj4KPj4+IEZvciB0aGUgc2Vjb25kIHBvaW50LCBJJ20g
-bm90IHN1cmUgdG8gZm9sbG93IHlvdTogaG93IHRvIGhhdmUgYW4gaWQsIHdoaWNoIHdpbGwKPj4+
-IG5vdCBicmVhayBtaWdyYXRpb24sIHdpdGhvdXQgYXNraW5nIHRoZSB1c2VyIHRvIHNldCBpdD8K
-Pj4KPj4gV2UgaGF2ZSB0aGF0IHNpdHV0YXRpb24gd2l0aCBpZmluZGV4IGFscmVhZHkuICBCYXNp
-Y2FsbHkgdGhlIHRob3VnaHQgaXMKPj4gdG8gYWxsb3cgYW4gaWQgdG8gYmUgc2V0LCBidXQgYWxz
-byBhbGxvdyBhbiBpZCB0byBiZSBhdXRvLWdlbmVyYXRlZCBpZgo+PiB3ZSB1c2UgYW4gbmFtZXNw
-YWNlIHdpdGhvdXQgYW4gaWQgYmVpbmcgc2V0Lgo+IElmIG15IHVuZGVyc3RhbmRpbmcgaXMgY29y
-cmVjdCwgdGhlIGRpZmZlcmVuY2UgaXMgdGhhdCB3ZSB3YW50IHRvIGhpZGUgc29tZQo+IG5ldG5z
-Lgo+IERvIHlvdSB0aGluayB3ZSBjYW4gZ2VuZXJhdGUgYW4gaWQgZm9yIGVhY2ggbmV0bnMgdGhh
-dCBkb2VzIG5vdCBoYXZlIG9uZSBhbmQKPiByZWx5aW5nIG9uIHRoZSBmYWN0IHRoYXQgdGhpcyBp
-ZCBoYXMgbm8gbWVhbmluZyB1bmxlc3MgeW91IGhhdmUgYSBuZXRucyBmaWxlCj4gZGVzY3JpcHRv
-ciB0aGF0IGFsbG93IHlvdSB0byBnZXQgdGhlIGlkIG9mIHRoaXMgbmV0bnM/CkFueSBjb21tZW50
-IEVyaWMgPwoKClRoYW5rIHlvdSwKTmljb2xhcwpfX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxp
-c3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9y
-Zy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
+On 12/03/2014 04:08 PM, Michael Ellerman wrote:
+> On Wed, 2014-12-03 at 08:29 -0800, Tim Bird wrote:
+>>
+>> On 12/02/2014 07:43 PM, Michael Ellerman wrote:
+>>> On Tue, 2014-12-02 at 19:36 -0800, Tim Bird wrote:
+>>>> This test shows the amount of memory used by the system.
+>>>> Note that this is dependent on the user-space that is loaded
+>>>> when this program runs.  Optimally, this program would be
+>>>> run as the init program itself.
+>>>
+>>> Sorry to only chime in at v5.
+>>>
+>>>> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+>>>> new file mode 100644
+>>>> index 0000000..47f8e9c
+>>>> --- /dev/null
+>>>> +++ b/tools/testing/selftests/size/Makefile
+>>>> @@ -0,0 +1,15 @@
+>>>> +#ifndef CC
+>>>> +	CC = $(CROSS_COMPILE)gcc
+>>>> +#endif
+>>>
+>>> I think the following is preferable:
+>>>
+>>>   CC := $(CROSS_COMPILE)$(CC)
+>>>
+>>>
+>>> It allows optionally setting a custom CC, as well as optionally CROSS_COMPILE.
+>>
+>> I'm not sure I follow this.
+>>
+>> If CC is unset, you get only the CROSS_COMPILE prefix.
+> 
+> CC is never unset. The default value is 'cc'.
+
+Yeah - I found that out by experimentation yesterday.  So my whole
+idea for configuring it based on an unset CC was misguided.
+
+> 
+>> If CC is set to e.g. 'gcc', then you get a nicely formatted toolchain string.
+> 
+> Right.
+> 
+>> But if CC already has the prefix applied, then this will result in
+>>   having it duplicated, which surely won't work correctly.
+> 
+> That's just PEBKAC. Don't specify CROSS_COMPILE and also a fully specified CC.
+> Try it with the kernel Makefile and see how well it works.
+> 
+>> CROSS_COMPILE prefix usage looks a bit uncoordinated in the tools directory, but most
+>> tests seem to be favoring $(CROSS_COMPILE)gcc.
+> 
+> That doesn't make it right :)
+
+Agreed. I'd like to separate this issue from the rest of the patch.
+Shuah has accepted the patch as it currently is, but I'd like
+to start working on the best way to support cross compilation
+throughout the kselftest suite.
+
+Ideally we can have CC set properly in a higher-level Makefile,
+and not reference CROSS_COMPILE at all in the sub-directory Makefiles.
+This may involve copying how CROSS_COMPILE and CFLAGS work in
+the rest of the kernel tree, or making some kselftest-specific
+modifications.
+
+ -- Tim
