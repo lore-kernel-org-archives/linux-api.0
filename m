@@ -1,214 +1,185 @@
-From: Peter =?iso-8859-1?q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v9 8/8] tpm: TPM 2.0 FIFO Interface
-Date: Thu, 4 Dec 2014 23:28:29 +0100
-Message-ID: <201412042328.29578.PeterHuewe@gmx.de>
-References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1417672518-4530-9-git-send-email-jarkko.sakkinen@linux.intel.com> <201412042318.33889.PeterHuewe@gmx.de>
+From: Peter =?iso-8859-15?q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Subject: Re: [PATCH v9 7/8] tpm: TPM 2.0 CRB Interface
+Date: Thu, 4 Dec 2014 23:55:14 +0100
+Message-ID: <201412042355.15131.PeterHuewe@gmx.de>
+References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1417672518-4530-8-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: Text/Plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201412042318.33889.PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+In-Reply-To: <1417672518-4530-8-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Am Donnerstag, 4. Dezember 2014, 23:18:33 schrieb Peter H=FCwe:
-> Hi Jarkko,
->=20
-> Am Donnerstag, 4. Dezember 2014, 06:55:18 schrieb Jarkko Sakkinen:
-> > From: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> >=20
-> > Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2=
-=2E0,
-> > instead of calling tpm_get_timeouts(), assign duration and timeout
-> > values defined in the TPM 2.0 PTP specification.
-> >=20
-> > Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > ---
-> >=20
-> >  drivers/char/tpm/tpm_tis.c | 80
-> >=20
-> > ++++++++++++++++++++++++++++++++++++++-------- 1 file changed, 67
-> > insertions(+), 13 deletions(-)
-> >=20
-> > diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.=
-c
-> > index 89e1abb..71cbb2d 100644
-> > --- a/drivers/char/tpm/tpm_tis.c
-> > +++ b/drivers/char/tpm/tpm_tis.c
-> > @@ -1,5 +1,6 @@
-> >=20
-> >  /*
-> > =20
-> >   * Copyright (C) 2005, 2006 IBM Corporation
-> >=20
-> > + * Copyright (C) 2014 Intel Corporation
-> >=20
-> >   *
-> >   * Authors:
-> >   * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
-> >=20
-> > @@ -44,6 +45,10 @@ enum tis_status {
-> >=20
-> >  	TPM_STS_DATA_EXPECT =3D 0x08,
-> > =20
-> >  };
-> >=20
-> > +enum tis_status3 {
-> > +	TPM_STS3_TPM2_FAM =3D 0x04,
-> > +};
-> > +
-> >=20
-> >  enum tis_int_flags {
-> > =20
-> >  	TPM_GLOBAL_INT_ENABLE =3D 0x80000000,
-> >  	TPM_INTF_BURST_COUNT_STATIC =3D 0x100,
-> >=20
-> > @@ -70,6 +75,7 @@ enum tis_defaults {
-> >=20
-> >  #define	TPM_INT_STATUS(l)		(0x0010 | ((l) << 12))
-> >  #define	TPM_INTF_CAPS(l)		(0x0014 | ((l) << 12))
-> >  #define	TPM_STS(l)			(0x0018 | ((l) << 12))
-> >=20
-> > +#define	TPM_STS3(l)			(0x001b | ((l) << 12))
-> >=20
-> >  #define	TPM_DATA_FIFO(l)		(0x0024 | ((l) << 12))
-> > =20
-> >  #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
-> >=20
-> > @@ -363,6 +369,7 @@ static int tpm_tis_send_main(struct tpm_chip *c=
-hip,
-> > u8 *buf, size_t len) {
-> >=20
-> >  	int rc;
-> >  	u32 ordinal;
-> >=20
-> > +	unsigned long dur;
-> >=20
-> >  	rc =3D tpm_tis_send_data(chip, buf, len);
-> >  	if (rc < 0)
-> >=20
-> > @@ -374,9 +381,14 @@ static int tpm_tis_send_main(struct tpm_chip *=
-chip,
-> > u8 *buf, size_t len)
-> >=20
-> >  	if (chip->vendor.irq) {
-> >  =09
-> >  		ordinal =3D be32_to_cpu(*((__be32 *) (buf + 6)));
-> >=20
-> > +
-> > +		if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> > +			dur =3D tpm2_calc_ordinal_duration(chip, ordinal);
-> > +		else
-> > +			dur =3D tpm_calc_ordinal_duration(chip, ordinal);
-> > +
-> >=20
-> >  		if (wait_for_tpm_stat
-> >=20
-> > -		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-> > -		     tpm_calc_ordinal_duration(chip, ordinal),
-> > +		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID, dur,
-> >=20
-> >  		     &chip->vendor.read_queue, false) < 0) {
-> >  		=09
-> >  			rc =3D -ETIME;
-> >  			goto out_err;
-> >=20
-> > @@ -588,6 +600,7 @@ static int tpm_tis_init(struct device *dev,
-> > acpi_handle acpi_dev_handle, int rc, i, irq_s, irq_e, probe;
-> >=20
-> >  	struct tpm_chip *chip;
-> >  	struct priv_data *priv;
-> >=20
-> > +	u8 sts3;
-> >=20
-> >  	priv =3D devm_kzalloc(dev, sizeof(struct priv_data), GFP_KERNEL);
-> >  	if (priv =3D=3D NULL)
-> >=20
-> > @@ -604,11 +617,28 @@ static int tpm_tis_init(struct device *dev,
-> > acpi_handle acpi_dev_handle, if (!chip->vendor.iobase)
-> >=20
-> >  		return -EIO;
-> >=20
-> > +	sts3 =3D ioread8(chip->vendor.iobase + TPM_STS3(1));
-> > +	if ((sts3 & TPM_STS3_TPM2_FAM) =3D=3D TPM_STS3_TPM2_FAM)
-> > +		chip->flags =3D TPM_CHIP_FLAG_TPM2;
-> > +
-> >=20
-> >  	/* Default timeouts */
-> >=20
-> > -	chip->vendor.timeout_a =3D msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> > -	chip->vendor.timeout_b =3D msecs_to_jiffies(TIS_LONG_TIMEOUT);
-> > -	chip->vendor.timeout_c =3D msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> > -	chip->vendor.timeout_d =3D msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> > +	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
-> > +		chip->vendor.timeout_a =3D usecs_to_jiffies(TPM2_TIMEOUT_A);
-> > +		chip->vendor.timeout_b =3D usecs_to_jiffies(TPM2_TIMEOUT_B);
-> > +		chip->vendor.timeout_c =3D usecs_to_jiffies(TPM2_TIMEOUT_C);
-> > +		chip->vendor.timeout_d =3D usecs_to_jiffies(TPM2_TIMEOUT_D);
-> > +		chip->vendor.duration[TPM_SHORT] =3D
-> > +			usecs_to_jiffies(TPM2_DURATION_SHORT);
-> > +		chip->vendor.duration[TPM_MEDIUM] =3D
-> > +			usecs_to_jiffies(TPM2_DURATION_MEDIUM);
-> > +		chip->vendor.duration[TPM_LONG] =3D
-> > +			usecs_to_jiffies(TPM2_DURATION_LONG);
-> > +	} else {
-> > +		chip->vendor.timeout_a =3D msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> > +		chip->vendor.timeout_b =3D msecs_to_jiffies(TIS_LONG_TIMEOUT);
-> > +		chip->vendor.timeout_c =3D msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> > +		chip->vendor.timeout_d =3D msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-> > +	}
-> >=20
-> >  	if (wait_startup(chip, 0) !=3D 0) {
-> >  =09
-> >  		rc =3D -ENODEV;
-> >=20
-> > @@ -623,8 +653,8 @@ static int tpm_tis_init(struct device *dev,
-> > acpi_handle acpi_dev_handle, vendor =3D ioread32(chip->vendor.iobas=
-e +
-> > TPM_DID_VID(0));
-> >=20
-> >  	chip->vendor.manufacturer_id =3D vendor;
-> >=20
-> > -	dev_info(dev,
-> > -		 "1.2 TPM (device-id 0x%X, rev-id %d)\n",
-> > +	dev_info(dev, "%s TPM (device-id 0x%X, rev-id %d)\n",
-> > +		 (chip->flags & TPM_CHIP_FLAG_TPM2) ? "2.0" : "1.2",
-> >=20
-> >  		 vendor >> 16, ioread8(chip->vendor.iobase + TPM_RID(0)));
->=20
-> When loading tpm_tis force=3D1 with my tpm1.2 chip on a machine witho=
-ut bios
-> integration, it fets detected as a TPM2.0 chip :/
->=20
-> sudo rmmod tpm_tis
-> # modprobe tpm_tis force=3D1
-> modprobe: ERROR: could not insert 'tpm_tis': No such device
-> # dmesg
-> [  263.903828] tpm_tis tpm_tis: 2.0 TPM (device-id 0xB, rev-id 16)
-> [  263.948049] tpm_tis tpm_tis: A TPM error (10) occurred continue se=
-lftest
-> [  263.948120] tpm_tis tpm_tis: TPM self test failed
->=20
->=20
-> sts3 is reported as 0xff from my TPM1.2
->=20
-
-
-Hmm,
-my TPM2.0 chip also reports sts3 as 0xff (when loading with force=3D1 o=
-n a=20
-machine without bios integration)
-
-[  307.095344] sts3 ff
-[  307.095366] tpm_tis tpm_tis: 2.0 TPM (device-id 0x1A, rev-id 16)
-[  307.140047] tpm_tis tpm_tis: A TPM error (256) occurred continue sel=
-ftest
-[  307.140056] tpm_tis tpm_tis: TPM self test failed
-
-
-
+Am Donnerstag, 4. Dezember 2014, 06:55:17 schrieb Jarkko Sakkinen:
+> tpm_crb is a driver for TPM 2.0 Command Response Buffer (CRB) Interface
+> as defined in PC Client Platform TPM Profile (PTP) Specification.
+> 
+> Only polling and single locality is supported as these are the limitations
+> of the available hardware, Platform Trust Techonlogy (PTT) in Haswell
+> CPUs.
+> 
+> The driver always applies CRB with ACPI start because PTT reports using
+> only ACPI start as start method but as a result of my testing it requires
+> also CRB start.
+> 
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> ---
+>  drivers/char/tpm/Kconfig   |   9 ++
+>  drivers/char/tpm/Makefile  |   1 +
+>  drivers/char/tpm/tpm_crb.c | 356
+> +++++++++++++++++++++++++++++++++++++++++++++ 3 files changed, 366
+> insertions(+)
+>  create mode 100644 drivers/char/tpm/tpm_crb.c
+> 
+> diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
+> index 3d0873b..9d4e375 100644
+> --- a/drivers/char/tpm/Kconfig
+> +++ b/drivers/char/tpm/Kconfig
+> @@ -122,4 +122,13 @@ config TCG_XEN
+>  	  To compile this driver as a module, choose M here; the module
+>  	  will be called xen-tpmfront.
+> 
+> +config TCG_CRB
+> +	tristate "TPM 2.0 CRB Interface"
+> +	depends on X86 && ACPI
+> +	---help---
+> +	  If you have a TPM security chip that is compliant with the
+> +	  TCG CRB 2.0 TPM specification say Yes and it will be accessible
+> +	  from within Linux.  To compile this driver as a module, choose
+> +	  M here; the module will be called tpm_crb.
+> +
+>  endif # TCG_TPM
+> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+> index 88848ed..990cf18 100644
+> --- a/drivers/char/tpm/Makefile
+> +++ b/drivers/char/tpm/Makefile
+> @@ -22,3 +22,4 @@ obj-$(CONFIG_TCG_INFINEON) += tpm_infineon.o
+>  obj-$(CONFIG_TCG_IBMVTPM) += tpm_ibmvtpm.o
+>  obj-$(CONFIG_TCG_TIS_I2C_ST33) += tpm_i2c_stm_st33.o
+>  obj-$(CONFIG_TCG_XEN) += xen-tpmfront.o
+> +obj-$(CONFIG_TCG_CRB) += tpm_crb.o
+> diff --git a/drivers/char/tpm/tpm_crb.c b/drivers/char/tpm/tpm_crb.c
+> new file mode 100644
+> index 0000000..eb78f93
+> --- /dev/null
+> +++ b/drivers/char/tpm/tpm_crb.c
+> @@ -0,0 +1,356 @@
+> +/*
+> + * Copyright (C) 2014 Intel Corporation
+> + *
+> + * Authors:
+> + * Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> + *
+> + * Maintained by: <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+> + *
+> + * This device driver implements the TPM interface as defined in
+> + * the TCG CRB 2.0 TPM specification.
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License
+> + * as published by the Free Software Foundation; version 2
+> + * of the License.
+> + */
+> +
+> +#include <linux/acpi.h>
+> +#include <linux/highmem.h>
+> +#include <linux/rculist.h>
+> +#include <linux/module.h>
+> +#include <linux/platform_device.h>
+> +#include "tpm.h"
+> +
+> +#define ACPI_SIG_TPM2 "TPM2"
+> +
+> +static const u8 CRB_ACPI_START_UUID[] = {
+> +	/* 0000 */ 0xAB, 0x6C, 0xBF, 0x6B, 0x63, 0x54, 0x14, 0x47,
+> +	/* 0008 */ 0xB7, 0xCD, 0xF0, 0x20, 0x3C, 0x03, 0x68, 0xD4
+> +};
+> +
+> +enum crb_defaults {
+> +	CRB_ACPI_START_REVISION_ID = 1,
+> +	CRB_ACPI_START_INDEX = 1,
+> +};
+> +
+> +enum crb_start_method {
+> +	CRB_SM_ACPI_START = 2,
+> +	CRB_SM_CRB = 7,
+> +	CRB_SM_CRB_WITH_ACPI_START = 8,
+> +};
+> +
+> +struct acpi_tpm2 {
+> +	struct acpi_table_header hdr;
+> +	u16 platform_class;
+> +	u16 reserved;
+> +	u64 control_area_pa;
+> +	u32 start_method;
+> +} __packed;
+> +
+> +enum crb_ca_request {
+> +	CRB_CA_REQ_GO_IDLE	= BIT(0),
+> +	CRB_CA_REQ_CMD_READY	= BIT(1),
+> +};
+> +
+> +enum crb_ca_status {
+> +	CRB_CA_STS_ERROR	= BIT(0),
+> +	CRB_CA_STS_TPM_IDLE	= BIT(1),
+> +};
+> +
+> +enum crb_start {
+> +	CRB_START_INVOKE	= BIT(0),
+> +};
+> +
+> +enum crb_cancel {
+> +	CRB_CANCEL_INVOKE	= BIT(0),
+> +};
+> +
+> +struct crb_control_area {
+> +	u32 req;
+> +	u32 sts;
+> +	u32 cancel;
+> +	u32 start;
+> +	u32 int_enable;
+> +	u32 int_sts;
+> +	u32 cmd_size;
+> +	u64 cmd_pa;
+> +	u32 rsp_size;
+> +	u64 rsp_pa;
+> +} __packed;
+> +
+> +enum crb_status {
+> +	CRB_STS_COMPLETE	= BIT(0),
+> +};
+> +
+> +enum crb_flags {
+> +	CRB_FL_ACPI_START	= BIT(0),
+> +	CRB_FL_CRB_START	= BIT(1),
+> +};
+> +
+> +struct crb_priv {
+> +	unsigned int flags;
+> +	struct crb_control_area *cca;
+> +	u8 *cmd;
+> +	u8 *rsp;
+> +};
+> +
+> +#ifdef CONFIG_PM_SLEEP
+> +int crb_suspend(struct device *dev)
+> +{
+> +	return 0;
+> +}
+> +
+> +static int crb_resume(struct device *dev)
+> +{
+> +	struct tpm_chip *chip = dev_get_drvdata(dev);
+> +
+> +	(void) tpm2_do_selftest(chip);
+     ^^^^^ ??????? What's this?
+> +
+> +	return 0;
+> +}
+> +#endif
 
 Peter
