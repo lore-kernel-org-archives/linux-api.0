@@ -1,135 +1,147 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Thu, 4 Dec 2014 15:11:02 -0800
-Message-ID: <20141204151102.2d7e11dca39f130c2dff2294@linux-foundation.org>
-References: <cover.1415636409.git.milosz@adfin.com>
-	<20141125150101.9596a09e.akpm@linux-foundation.org>
-	<CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
-	<20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
-	<CANP1eJGVyBOt1rQ8jA4tMrNGX5X61-UWbVy6kKj_ByeTqAEOBQ@mail.gmail.com>
+From: Peter =?iso-8859-15?q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Subject: Re: [PATCH v9 6/8] tpm: TPM 2.0 baseline support
+Date: Fri, 5 Dec 2014 00:17:40 +0100
+Message-ID: <201412050017.40668.PeterHuewe@gmx.de>
+References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1417672518-4530-7-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: Text/Plain;
+  charset="iso-8859-15"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANP1eJGVyBOt1rQ8jA4tMrNGX5X61-UWbVy6kKj_ByeTqAEOBQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1417672518-4530-7-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Volker Lendecke <Volker.Lendecke-3ekOc4rQMZmzQB+pC5nmwQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 3 Dec 2014 11:48:28 -0500 Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org> wrote:
-
-> On Tue, Dec 2, 2014 at 5:42 PM, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> >
-> > On Tue, 2 Dec 2014 17:17:42 -0500 Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org> wrote:
-> >
-> > > > There have been several incomplete attempts to implement fincore().  If
-> > > > we were to complete those attempts, preadv2() could be implemented
-> > > > using fincore()+pread().  Plus we get fincore(), which is useful for
-> > > > other (but probably similar) reasons.  Probably fincore()+pwrite() could
-> > > > be used to implement pwritev2(), but I don't know what pwritev2() does
-> > > > yet.
-> > > >
-> > > > Implementing fincore() is more flexible, requires less code and is less
-> > > > likely to have bugs.  So why not go that way?  Yes, it's more CPU
-> > > > intensive, but how much?  Is the difference sufficient to justify the
-> > > > preadv2()/pwritev2() approach?
-> > >
-> > > I would like to see a fincore() functionality (for other reasons) I
-> > > don't think it does the job here. fincore() + preadv() is inherently
-> > > racy as there's no guarantee that the data becomes uncached between
-> > > the two calls.
-> >
-> > There will always be holes.  For example find_get_page() could block on
-> > lock_page() while some other process is doing IO.
-> > page_cache_async_readahead() does lots of memory allocation which can
-> > get blocked for long periods in the page allocator.
-> > page_cache_async_readahead() can block on synchronous metadata reads,
-> > etc.
+Am Donnerstag, 4. Dezember 2014, 06:55:16 schrieb Jarkko Sakkinen:
+> TPM 2.0 devices are separated by adding a field 'flags' to struct
+> tpm_chip and defining a flag TPM_CHIP_FLAG_TPM2 for tagging them.
 > 
-> Andrew I think it would helpful if you did read through the patches.
-> The first 3 are somewhat uninteresting as it's just wiring up the new
-> syscalls and plumbing the flag argument through. The core of the
-> RWF_NONBLOCK is patch 4: https://lkml.org/lkml/2014/11/10/463 and if
-> you strip away the fs specific changes the core of it is very simple.
+> This patch adds the following internal functions:
 > 
-> The core is mostly contained in do_generic_file_read() in filemap.c,
-> and is very short and easy to understand. It boils down to we read as
-> much data as we can given what's in the page cache. There's no
-> fallback to diskio for readpage() in case of missing pages and we bail
-> before any calls to page_cache_async_readahead(). And to the best of
-> my knowledge lock_page() does not lock the page, all it does is call
-> pagecache_get_page() without the FGP_LOCK flag.
+> - tpm2_get_random()
+> - tpm2_get_tpm_pt()
+> - tpm2_pcr_extend()
+> - tpm2_pcr_read()
+> - tpm2_startup()
 > 
-> I've spent time a decent amount of time looking at this to make sure
-> we cover all our major bases. It's possible I missed something but the
-> biggest offenders should be covered and if I missed something I'd love
-> to cover that as well.
-
-OK.
-
-> >
-> >
-> > > There's no overlap between prwritev2 and fincore() functionality.
-> >
-> > Do we actually need pwritev2()?  What's the justification for that?
+> Additionally, the following exported functions are implemented for
+> implementing TPM 2.0 device drivers:
 > 
+> - tpm2_do_selftest()
+> - tpm2_calc_ordinal_durations()
+> - tpm2_gen_interrupt()
 > 
-> I'm okay with splitting up the pwritev2 and preadv2 into two
-> independent patchsets to be considered on their own merits.
-
-Well, we can do both together if both are wanted.  The changelogs are
-very skimpy on pwritev2().  A full description and careful
-justification in the [0/n] changelog would be useful - something that
-tells us "what's wrong with O_DSYNC+pwrite".
-
-
-> >
-> >
-> >
-> > Please let's examine the alternative(s) seriously.  It would be mistake
-> > to add preadv2/pwritev2 if fincore+pread would have sufficed.
+> The existing functions that are exported for the use for existing
+> subsystems have been changed to check the flags field in struct
+> tpm_chip and use appropriate TPM 2.0 counterpart if
+> TPM_CHIP_FLAG_TPM2 is est.
 > 
+> The code for tpm2_calc_ordinal_duration() and tpm2_startup() were
+> originally written by Will Arthur.
 > 
->  What the motivation for my change and also approach is a very common
-> pattern to async buffered disk IO in userspace server applications. It
-> comes down to having one thread to handle the network and a thread
-> pool to perform IO requests. Why a threadpool and not something like a
-> sendfile() for reads? Many non-trivial applications perform additional
-> processing (ssl, checksuming, transformation). Unfortunately this has
-> a inherent increase in average latency due to increased
-> synchronization penalties (enqueue and notify) but primarily due to
-> fast requests (already in cache) behind stuck behind slow request.
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+>  drivers/char/tpm/Makefile        |   2 +-
+>  drivers/char/tpm/tpm-chip.c      |  27 +-
+>  drivers/char/tpm/tpm-interface.c |  24 +-
+>  drivers/char/tpm/tpm.h           |  61 +++++
+>  drivers/char/tpm/tpm2-cmd.c      | 542
+> +++++++++++++++++++++++++++++++++++++++ 5 files changed, 641
+> insertions(+), 15 deletions(-)
+>  create mode 100644 drivers/char/tpm/tpm2-cmd.c
 > 
-> Here's the illustration of the common architecture:
-> http://i.imgur.com/f8Pla7j.png. In fact, most apps are even simpler
-> where they replace the request queue, task worker with a single thread
-> doing network IO using epoll or such.
+> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+> index c715596..88848ed 100644
+> --- a/drivers/char/tpm/Makefile
+> +++ b/drivers/char/tpm/Makefile
+> @@ -2,7 +2,7 @@
+>  # Makefile for the kernel tpm device drivers.
+>  #
+>  obj-$(CONFIG_TCG_TPM) += tpm.o
+> -tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o tpm-chip.o
+> +tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o tpm-chip.o tpm2-cmd.o
+>  tpm-$(CONFIG_ACPI) += tpm_ppi.o
 > 
-> preadv2 with RWF_NONBLOCK is analogous to the kernel recvmsg() with
-> the MSG_NOWAIT flag. It's really frustrating that such capacity
-> doesn't exist today. As with the user space application design we can
-> skip the io threadpool and decrease average request latency in many
-> common workloads (linear reads or zipf data accesses).
+>  ifdef CONFIG_ACPI
+> diff --git a/drivers/char/tpm/tpm-chip.c b/drivers/char/tpm/tpm-chip.c
+> index 7741e28..3f3f2de 100644
+> --- a/drivers/char/tpm/tpm-chip.c
+> +++ b/drivers/char/tpm/tpm-chip.c
+> @@ -195,15 +195,18 @@ int tpm_chip_register(struct tpm_chip *chip)
+>  	if (rc)
+>  		return rc;
 > 
-> preadv2 with RWF_NONBLOCK as implemented does not suffer the same
-> eviction races as fincore + pread because it's not implemented as two
-> syscalls. It also has a much lower surface of possible blocking /
-> locking then fincore + pread because it cannot fallback to reading
-> from disk, it does not trigger read-ahead, and does not wait for page
-> lock.
+> -	rc = tpm_sysfs_add_device(chip);
+> -	if (rc)
+> -		goto del_misc;
+> +	/* Populate sysfs for TPM1 devices. */
+> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
+> +		rc = tpm_sysfs_add_device(chip);
+> +		if (rc)
+> +			goto del_misc;
+> 
+> -	rc = tpm_add_ppi(chip);
+> -	if (rc)
+> -		goto del_sysfs;
+> +		rc = tpm_add_ppi(chip);
+> +		if (rc)
+> +			goto del_sysfs;
+> 
+> -	chip->bios_dir = tpm_bios_log_setup(chip->devname);
+> +		chip->bios_dir = tpm_bios_log_setup(chip->devname);
+> +	}
+> 
+>  	/* Make the chip available. */
+>  	spin_lock(&driver_lock);
+> @@ -236,10 +239,12 @@ void tpm_chip_unregister(struct tpm_chip *chip)
+>  	spin_unlock(&driver_lock);
+>  	synchronize_rcu();
+> 
+> -	if (chip->bios_dir)
+> -		tpm_bios_log_teardown(chip->bios_dir);
+> -	tpm_remove_ppi(chip);
+> -	tpm_sysfs_del_device(chip);
+> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
+> +		if (chip->bios_dir)
+> +			tpm_bios_log_teardown(chip->bios_dir);
+> +		tpm_remove_ppi(chip);
+> +		tpm_sysfs_del_device(chip);
+> +	}
+> 
+>  	tpm_dev_del_device(chip);
+>  }
+> diff --git a/drivers/char/tpm/tpm-interface.c
+> b/drivers/char/tpm/tpm-interface.c index b6f6b17..8a14887 100644
+> --- a/drivers/char/tpm/tpm-interface.c
+> +++ b/drivers/char/tpm/tpm-interface.c
+> @@ -360,7 +360,10 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char
+> *buf, if (chip->vendor.irq)
+>  		goto out_recv;
+> 
+> -	stop = jiffies + tpm_calc_ordinal_duration(chip, ordinal);
+> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> +		stop = jiffies + tpm2_calc_ordinal_duration(chip, ordinal);
+> +	else
+> +		stop = jiffies + tpm_calc_ordinal_duration(chip, ordinal);
+>  	do {
+>  		u8 status = chip->ops->status(chip);
+>  		if ((status & chip->ops->req_complete_mask) ==
+> @@ -483,7 +486,7 @@ static const struct tpm_input_header tpm_startup_header
+> = { static int tpm_startup(struct tpm_chip *chip, __be16 startup_type) {
+>  	struct tpm_cmd_t start_cmd;
+> -	start_cmd.header.in = tpm_startup_header;
+> +
+WHY?!? This renders tpm_startup useless.
 
-I can see all that, but it's handwaving.  Yes, preadv2() will perform
-better in some circumstances than fincore+pread.  But how much better? 
-Enough to justify this approach, or not?
+So NACK for this part.
+>  	start_cmd.params.startup_in.startup_type = startup_type;
+>  	return tpm_transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
+>  				"attempting to start the TPM");
 
-Alas, the only way to really settle that is to implement fincore() and
-to subject it to a decent amount of realistic quantitative testing.
+I'll get you an TPM1.2 :)
 
-Ho hum.
-
-Could you please hunt down some libuv developers, see if we can solicit
-some quality input from them?  As I said, we really don't want to merge
-this then find that people don't use it for some reason, or that it
-needs changes.
+Thanks
+Peter
