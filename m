@@ -1,855 +1,422 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v9 4/8] tpm: rename chip->dev to chip->pdev
-Date: Thu,  4 Dec 2014 07:55:14 +0200
-Message-ID: <1417672518-4530-5-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v9 7/8] tpm: TPM 2.0 CRB Interface
+Date: Thu,  4 Dec 2014 07:55:17 +0200
+Message-ID: <1417672518-4530-8-git-send-email-jarkko.sakkinen@linux.intel.com>
 References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417672518-4530-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
-Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, josh.triplett@intel.com, christophe.ricard@gmail.com, jason.gunthorpe@obsidianresearch.com, linux-api@vger.kernel.org, trousers-tech@lists.sourceforge.net, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Rename chip->dev to chip->pdev to make it explicit that this not the
-character device but actually represents the platform device.
+tpm_crb is a driver for TPM 2.0 Command Response Buffer (CRB) Interface
+as defined in PC Client Platform TPM Profile (PTP) Specification.
 
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Only polling and single locality is supported as these are the limitations
+of the available hardware, Platform Trust Techonlogy (PTT) in Haswell
+CPUs.
+
+The driver always applies CRB with ACPI start because PTT reports using
+only ACPI start as start method but as a result of my testing it requires
+also CRB start.
+
+Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 ---
- drivers/char/tpm/tpm-chip.c         |  4 ++--
- drivers/char/tpm/tpm-dev.c          | 10 +++++-----
- drivers/char/tpm/tpm-interface.c    | 29 +++++++++++++++--------------
- drivers/char/tpm/tpm-sysfs.c        |  6 +++---
- drivers/char/tpm/tpm.h              |  4 ++--
- drivers/char/tpm/tpm_atmel.c        | 14 +++++++-------
- drivers/char/tpm/tpm_i2c_atmel.c    | 16 ++++++++--------
- drivers/char/tpm/tpm_i2c_infineon.c |  6 +++---
- drivers/char/tpm/tpm_i2c_nuvoton.c  | 22 +++++++++++-----------
- drivers/char/tpm/tpm_i2c_stm_st33.c | 14 +++++++-------
- drivers/char/tpm/tpm_infineon.c     | 22 +++++++++++-----------
- drivers/char/tpm/tpm_nsc.c          | 20 ++++++++++----------
- drivers/char/tpm/tpm_ppi.c          |  4 ++--
- drivers/char/tpm/tpm_tis.c          | 14 +++++++-------
- 14 files changed, 93 insertions(+), 92 deletions(-)
+ drivers/char/tpm/Kconfig   |   9 ++
+ drivers/char/tpm/Makefile  |   1 +
+ drivers/char/tpm/tpm_crb.c | 356 +++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 366 insertions(+)
+ create mode 100644 drivers/char/tpm/tpm_crb.c
 
-diff --git a/drivers/char/tpm/tpm-chip.c b/drivers/char/tpm/tpm-chip.c
-index 543939b..c584161 100644
---- a/drivers/char/tpm/tpm-chip.c
-+++ b/drivers/char/tpm/tpm-chip.c
-@@ -45,7 +45,7 @@ struct tpm_chip *tpm_chip_find_get(int chip_num)
- 		if (chip_num != TPM_ANY_NUM && chip_num != pos->dev_num)
- 			continue;
- 
--		if (try_module_get(pos->dev->driver->owner)) {
-+		if (try_module_get(pos->pdev->driver->owner)) {
- 			chip = pos;
- 			break;
- 		}
-@@ -110,7 +110,7 @@ struct tpm_chip *tpmm_chip_alloc(struct device *dev,
- 
- 	scnprintf(chip->devname, sizeof(chip->devname), "tpm%d", chip->dev_num);
- 
--	chip->dev = dev;
-+	chip->pdev = dev;
- 	devm_add_action(dev, tpmm_chip_remove, chip);
- 	dev_set_drvdata(dev, chip);
- 
-diff --git a/drivers/char/tpm/tpm-dev.c b/drivers/char/tpm/tpm-dev.c
-index d9b774e..3568321 100644
---- a/drivers/char/tpm/tpm-dev.c
-+++ b/drivers/char/tpm/tpm-dev.c
-@@ -63,7 +63,7 @@ static int tpm_open(struct inode *inode, struct file *file)
- 	 * by the check of is_open variable, which is protected
- 	 * by driver_lock. */
- 	if (test_and_set_bit(0, &chip->is_open)) {
--		dev_dbg(chip->dev, "Another process owns this TPM\n");
-+		dev_dbg(chip->pdev, "Another process owns this TPM\n");
- 		return -EBUSY;
- 	}
- 
-@@ -81,7 +81,7 @@ static int tpm_open(struct inode *inode, struct file *file)
- 	INIT_WORK(&priv->work, timeout_work);
- 
- 	file->private_data = priv;
--	get_device(chip->dev);
-+	get_device(chip->pdev);
- 	return 0;
- }
- 
-@@ -168,7 +168,7 @@ static int tpm_release(struct inode *inode, struct file *file)
- 	file->private_data = NULL;
- 	atomic_set(&priv->data_pending, 0);
- 	clear_bit(0, &priv->chip->is_open);
--	put_device(priv->chip->dev);
-+	put_device(priv->chip->pdev);
- 	kfree(priv);
- 	return 0;
- }
-@@ -193,12 +193,12 @@ int tpm_dev_add_device(struct tpm_chip *chip)
- 		chip->vendor.miscdev.minor = MISC_DYNAMIC_MINOR;
- 
- 	chip->vendor.miscdev.name = chip->devname;
--	chip->vendor.miscdev.parent = chip->dev;
-+	chip->vendor.miscdev.parent = chip->pdev;
- 
- 	rc = misc_register(&chip->vendor.miscdev);
- 	if (rc) {
- 		chip->vendor.miscdev.name = NULL;
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"unable to misc_register %s, minor %d err=%d\n",
- 			chip->vendor.miscdev.name,
- 			chip->vendor.miscdev.minor, rc);
-diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
-index 4dbed1e..e2af28f 100644
---- a/drivers/char/tpm/tpm-interface.c
-+++ b/drivers/char/tpm/tpm-interface.c
-@@ -343,7 +343,7 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
- 	if (count == 0)
- 		return -ENODATA;
- 	if (count > bufsiz) {
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"invalid count value %x %zx\n", count, bufsiz);
- 		return -E2BIG;
- 	}
-@@ -352,7 +352,7 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
- 
- 	rc = chip->ops->send(chip, (u8 *) buf, count);
- 	if (rc < 0) {
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"tpm_transmit: tpm_send: error %zd\n", rc);
- 		goto out;
- 	}
-@@ -368,7 +368,7 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
- 			goto out_recv;
- 
- 		if (chip->ops->req_canceled(chip, status)) {
--			dev_err(chip->dev, "Operation Canceled\n");
-+			dev_err(chip->pdev, "Operation Canceled\n");
- 			rc = -ECANCELED;
- 			goto out;
- 		}
-@@ -378,14 +378,14 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
- 	} while (time_before(jiffies, stop));
- 
- 	chip->ops->cancel(chip);
--	dev_err(chip->dev, "Operation Timed out\n");
-+	dev_err(chip->pdev, "Operation Timed out\n");
- 	rc = -ETIME;
- 	goto out;
- 
- out_recv:
- 	rc = chip->ops->recv(chip, (u8 *) buf, bufsiz);
- 	if (rc < 0)
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"tpm_transmit: tpm_recv: error %zd\n", rc);
- out:
- 	mutex_unlock(&chip->tpm_mutex);
-@@ -411,7 +411,8 @@ ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd,
- 
- 	err = be32_to_cpu(header->return_code);
- 	if (err != 0 && desc)
--		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
-+		dev_err(chip->pdev, "A TPM error (%d) occurred %s\n", err,
-+			desc);
- 
- 	return err;
- }
-@@ -505,7 +506,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
- 	if (rc == TPM_ERR_INVALID_POSTINIT) {
- 		/* The TPM is not started, we are the first to talk to it.
- 		   Execute a startup command. */
--		dev_info(chip->dev, "Issuing TPM_STARTUP");
-+		dev_info(chip->pdev, "Issuing TPM_STARTUP");
- 		if (tpm_startup(chip, TPM_ST_CLEAR))
- 			return rc;
- 
-@@ -517,7 +518,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
- 				  NULL);
- 	}
- 	if (rc) {
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"A TPM error (%zd) occurred attempting to determine the timeouts\n",
- 			rc);
- 		goto duration;
-@@ -556,7 +557,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
- 
- 	/* Report adjusted timeouts */
- 	if (chip->vendor.timeout_adjusted) {
--		dev_info(chip->dev,
-+		dev_info(chip->pdev,
- 			 HW_ERR "Adjusting reported timeouts: A %lu->%luus B %lu->%luus C %lu->%luus D %lu->%luus\n",
- 			 old_timeout[0], new_timeout[0],
- 			 old_timeout[1], new_timeout[1],
-@@ -603,7 +604,7 @@ duration:
- 		chip->vendor.duration[TPM_MEDIUM] *= 1000;
- 		chip->vendor.duration[TPM_LONG] *= 1000;
- 		chip->vendor.duration_adjusted = true;
--		dev_info(chip->dev, "Adjusting TPM timeout parameters.");
-+		dev_info(chip->pdev, "Adjusting TPM timeout parameters.");
- 	}
- 	return 0;
- }
-@@ -760,7 +761,7 @@ int tpm_do_selftest(struct tpm_chip *chip)
- 		 * around 300ms while the self test is ongoing, keep trying
- 		 * until the self test duration expires. */
- 		if (rc == -ETIME) {
--			dev_info(chip->dev, HW_ERR "TPM command timed out during continue self test");
-+			dev_info(chip->pdev, HW_ERR "TPM command timed out during continue self test");
- 			msleep(delay_msec);
- 			continue;
- 		}
-@@ -770,7 +771,7 @@ int tpm_do_selftest(struct tpm_chip *chip)
- 
- 		rc = be32_to_cpu(cmd.header.out.return_code);
- 		if (rc == TPM_ERR_DISABLED || rc == TPM_ERR_DEACTIVATED) {
--			dev_info(chip->dev,
-+			dev_info(chip->pdev,
- 				 "TPM is disabled/deactivated (0x%X)\n", rc);
- 			/* TPM is disabled and/or deactivated; driver can
- 			 * proceed and TPM does handle commands for
-@@ -918,10 +919,10 @@ int tpm_pm_suspend(struct device *dev)
- 	}
- 
- 	if (rc)
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"Error (%d) sending savestate before suspend\n", rc);
- 	else if (try > 0)
--		dev_warn(chip->dev, "TPM savestate took %dms\n",
-+		dev_warn(chip->pdev, "TPM savestate took %dms\n",
- 			 try * TPM_TIMEOUT_RETRY);
- 
- 	return rc;
-diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
-index 8ecb052..ee66fd4 100644
---- a/drivers/char/tpm/tpm-sysfs.c
-+++ b/drivers/char/tpm/tpm-sysfs.c
-@@ -284,16 +284,16 @@ static const struct attribute_group tpm_dev_group = {
- int tpm_sysfs_add_device(struct tpm_chip *chip)
- {
- 	int err;
--	err = sysfs_create_group(&chip->dev->kobj,
-+	err = sysfs_create_group(&chip->pdev->kobj,
- 				 &tpm_dev_group);
- 
- 	if (err)
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"failed to create sysfs attributes, %d\n", err);
- 	return err;
- }
- 
- void tpm_sysfs_del_device(struct tpm_chip *chip)
- {
--	sysfs_remove_group(&chip->dev->kobj, &tpm_dev_group);
-+	sysfs_remove_group(&chip->pdev->kobj, &tpm_dev_group);
- }
-diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-index 69f4003..b3a7c76 100644
---- a/drivers/char/tpm/tpm.h
-+++ b/drivers/char/tpm/tpm.h
-@@ -98,7 +98,7 @@ struct tpm_vendor_specific {
- #define TPM_PPI_VERSION_LEN		3
- 
- struct tpm_chip {
--	struct device *dev;	/* Device stuff */
-+	struct device *pdev;	/* Device stuff */
- 	const struct tpm_class_ops *ops;
- 
- 	int dev_num;		/* /dev/tpm# */
-@@ -124,7 +124,7 @@ struct tpm_chip {
- 
- static inline void tpm_chip_put(struct tpm_chip *chip)
- {
--	module_put(chip->dev->driver->owner);
-+	module_put(chip->pdev->driver->owner);
- }
- 
- static inline int tpm_read_index(int base, int index)
-diff --git a/drivers/char/tpm/tpm_atmel.c b/drivers/char/tpm/tpm_atmel.c
-index 8e2576a..8a52ebe 100644
---- a/drivers/char/tpm/tpm_atmel.c
-+++ b/drivers/char/tpm/tpm_atmel.c
-@@ -49,7 +49,7 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	for (i = 0; i < 6; i++) {
- 		status = ioread8(chip->vendor.iobase + 1);
- 		if ((status & ATML_STATUS_DATA_AVAIL) == 0) {
--			dev_err(chip->dev, "error reading header\n");
-+			dev_err(chip->pdev, "error reading header\n");
- 			return -EIO;
- 		}
- 		*buf++ = ioread8(chip->vendor.iobase);
-@@ -60,12 +60,12 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	size = be32_to_cpu(*native_size);
- 
- 	if (count < size) {
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"Recv size(%d) less than available space\n", size);
- 		for (; i < size; i++) {	/* clear the waiting data anyway */
- 			status = ioread8(chip->vendor.iobase + 1);
- 			if ((status & ATML_STATUS_DATA_AVAIL) == 0) {
--				dev_err(chip->dev, "error reading data\n");
-+				dev_err(chip->pdev, "error reading data\n");
- 				return -EIO;
- 			}
- 		}
-@@ -76,7 +76,7 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	for (; i < size; i++) {
- 		status = ioread8(chip->vendor.iobase + 1);
- 		if ((status & ATML_STATUS_DATA_AVAIL) == 0) {
--			dev_err(chip->dev, "error reading data\n");
-+			dev_err(chip->pdev, "error reading data\n");
- 			return -EIO;
- 		}
- 		*buf++ = ioread8(chip->vendor.iobase);
-@@ -86,7 +86,7 @@ static int tpm_atml_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	status = ioread8(chip->vendor.iobase + 1);
- 
- 	if (status & ATML_STATUS_DATA_AVAIL) {
--		dev_err(chip->dev, "data available is stuck\n");
-+		dev_err(chip->pdev, "data available is stuck\n");
- 		return -EIO;
- 	}
- 
-@@ -97,9 +97,9 @@ static int tpm_atml_send(struct tpm_chip *chip, u8 *buf, size_t count)
- {
- 	int i;
- 
--	dev_dbg(chip->dev, "tpm_atml_send:\n");
-+	dev_dbg(chip->pdev, "tpm_atml_send:\n");
- 	for (i = 0; i < count; i++) {
--		dev_dbg(chip->dev, "%d 0x%x(%d)\n",  i, buf[i], buf[i]);
-+		dev_dbg(chip->pdev, "%d 0x%x(%d)\n",  i, buf[i], buf[i]);
-  		iowrite8(buf[i], chip->vendor.iobase);
- 	}
- 
-diff --git a/drivers/char/tpm/tpm_i2c_atmel.c b/drivers/char/tpm/tpm_i2c_atmel.c
-index 643a940..7a0ca78 100644
---- a/drivers/char/tpm/tpm_i2c_atmel.c
-+++ b/drivers/char/tpm/tpm_i2c_atmel.c
-@@ -52,7 +52,7 @@ struct priv_data {
- static int i2c_atmel_send(struct tpm_chip *chip, u8 *buf, size_t len)
- {
- 	struct priv_data *priv = chip->vendor.priv;
--	struct i2c_client *client = to_i2c_client(chip->dev);
-+	struct i2c_client *client = to_i2c_client(chip->pdev);
- 	s32 status;
- 
- 	priv->len = 0;
-@@ -62,7 +62,7 @@ static int i2c_atmel_send(struct tpm_chip *chip, u8 *buf, size_t len)
- 
- 	status = i2c_master_send(client, buf, len);
- 
--	dev_dbg(chip->dev,
-+	dev_dbg(chip->pdev,
- 		"%s(buf=%*ph len=%0zx) -> sts=%d\n", __func__,
- 		(int)min_t(size_t, 64, len), buf, len, status);
- 	return status;
-@@ -71,7 +71,7 @@ static int i2c_atmel_send(struct tpm_chip *chip, u8 *buf, size_t len)
- static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- {
- 	struct priv_data *priv = chip->vendor.priv;
--	struct i2c_client *client = to_i2c_client(chip->dev);
-+	struct i2c_client *client = to_i2c_client(chip->pdev);
- 	struct tpm_output_header *hdr =
- 		(struct tpm_output_header *)priv->buffer;
- 	u32 expected_len;
-@@ -88,7 +88,7 @@ static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 		return -ENOMEM;
- 
- 	if (priv->len >= expected_len) {
--		dev_dbg(chip->dev,
-+		dev_dbg(chip->pdev,
- 			"%s early(buf=%*ph count=%0zx) -> ret=%d\n", __func__,
- 			(int)min_t(size_t, 64, expected_len), buf, count,
- 			expected_len);
-@@ -97,7 +97,7 @@ static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	}
- 
- 	rc = i2c_master_recv(client, buf, expected_len);
--	dev_dbg(chip->dev,
-+	dev_dbg(chip->pdev,
- 		"%s reread(buf=%*ph count=%0zx) -> ret=%d\n", __func__,
- 		(int)min_t(size_t, 64, expected_len), buf, count,
- 		expected_len);
-@@ -106,13 +106,13 @@ static int i2c_atmel_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 
- static void i2c_atmel_cancel(struct tpm_chip *chip)
- {
--	dev_err(chip->dev, "TPM operation cancellation was requested, but is not supported");
-+	dev_err(chip->pdev, "TPM operation cancellation was requested, but is not supported");
- }
- 
- static u8 i2c_atmel_read_status(struct tpm_chip *chip)
- {
- 	struct priv_data *priv = chip->vendor.priv;
--	struct i2c_client *client = to_i2c_client(chip->dev);
-+	struct i2c_client *client = to_i2c_client(chip->pdev);
- 	int rc;
- 
- 	/* The TPM fails the I2C read until it is ready, so we do the entire
-@@ -125,7 +125,7 @@ static u8 i2c_atmel_read_status(struct tpm_chip *chip)
- 	/* Once the TPM has completed the command the command remains readable
- 	 * until another command is issued. */
- 	rc = i2c_master_recv(client, priv->buffer, sizeof(priv->buffer));
--	dev_dbg(chip->dev,
-+	dev_dbg(chip->pdev,
- 		"%s: sts=%d", __func__, rc);
- 	if (rc <= 0)
- 		return 0;
-diff --git a/drivers/char/tpm/tpm_i2c_infineon.c b/drivers/char/tpm/tpm_i2c_infineon.c
-index 03708e6..33c5f36 100644
---- a/drivers/char/tpm/tpm_i2c_infineon.c
-+++ b/drivers/char/tpm/tpm_i2c_infineon.c
-@@ -446,7 +446,7 @@ static int tpm_tis_i2c_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	/* read first 10 bytes, including tag, paramsize, and result */
- 	size = recv_data(chip, buf, TPM_HEADER_SIZE);
- 	if (size < TPM_HEADER_SIZE) {
--		dev_err(chip->dev, "Unable to read header\n");
-+		dev_err(chip->pdev, "Unable to read header\n");
- 		goto out;
- 	}
- 
-@@ -459,14 +459,14 @@ static int tpm_tis_i2c_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	size += recv_data(chip, &buf[TPM_HEADER_SIZE],
- 			  expected - TPM_HEADER_SIZE);
- 	if (size < expected) {
--		dev_err(chip->dev, "Unable to read remainder of result\n");
-+		dev_err(chip->pdev, "Unable to read remainder of result\n");
- 		size = -ETIME;
- 		goto out;
- 	}
- 
- 	wait_for_stat(chip, TPM_STS_VALID, chip->vendor.timeout_c, &status);
- 	if (status & TPM_STS_DATA_AVAIL) {	/* retry? */
--		dev_err(chip->dev, "Error left over data\n");
-+		dev_err(chip->pdev, "Error left over data\n");
- 		size = -EIO;
- 		goto out;
- 	}
-diff --git a/drivers/char/tpm/tpm_i2c_nuvoton.c b/drivers/char/tpm/tpm_i2c_nuvoton.c
-index 8c23088..e1eadb0 100644
---- a/drivers/char/tpm/tpm_i2c_nuvoton.c
-+++ b/drivers/char/tpm/tpm_i2c_nuvoton.c
-@@ -96,13 +96,13 @@ static s32 i2c_nuvoton_write_buf(struct i2c_client *client, u8 offset, u8 size,
- /* read TPM_STS register */
- static u8 i2c_nuvoton_read_status(struct tpm_chip *chip)
- {
--	struct i2c_client *client = to_i2c_client(chip->dev);
-+	struct i2c_client *client = to_i2c_client(chip->pdev);
- 	s32 status;
- 	u8 data;
- 
- 	status = i2c_nuvoton_read_buf(client, TPM_STS, 1, &data);
- 	if (status <= 0) {
--		dev_err(chip->dev, "%s() error return %d\n", __func__,
-+		dev_err(chip->pdev, "%s() error return %d\n", __func__,
- 			status);
- 		data = TPM_STS_ERR_VAL;
- 	}
-@@ -127,13 +127,13 @@ static s32 i2c_nuvoton_write_status(struct i2c_client *client, u8 data)
- /* write commandReady to TPM_STS register */
- static void i2c_nuvoton_ready(struct tpm_chip *chip)
- {
--	struct i2c_client *client = to_i2c_client(chip->dev);
-+	struct i2c_client *client = to_i2c_client(chip->pdev);
- 	s32 status;
- 
- 	/* this causes the current command to be aborted */
- 	status = i2c_nuvoton_write_status(client, TPM_STS_COMMAND_READY);
- 	if (status < 0)
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"%s() fail to write TPM_STS.commandReady\n", __func__);
- }
- 
-@@ -212,7 +212,7 @@ static int i2c_nuvoton_wait_for_stat(struct tpm_chip *chip, u8 mask, u8 value,
- 				return 0;
- 		} while (time_before(jiffies, stop));
- 	}
--	dev_err(chip->dev, "%s(%02x, %02x) -> timeout\n", __func__, mask,
-+	dev_err(chip->pdev, "%s(%02x, %02x) -> timeout\n", __func__, mask,
- 		value);
- 	return -ETIMEDOUT;
- }
-@@ -240,7 +240,7 @@ static int i2c_nuvoton_recv_data(struct i2c_client *client,
- 					       &chip->vendor.read_queue) == 0) {
- 		burst_count = i2c_nuvoton_get_burstcount(client, chip);
- 		if (burst_count < 0) {
--			dev_err(chip->dev,
-+			dev_err(chip->pdev,
- 				"%s() fail to read burstCount=%d\n", __func__,
- 				burst_count);
- 			return -EIO;
-@@ -249,12 +249,12 @@ static int i2c_nuvoton_recv_data(struct i2c_client *client,
- 		rc = i2c_nuvoton_read_buf(client, TPM_DATA_FIFO_R,
- 					  bytes2read, &buf[size]);
- 		if (rc < 0) {
--			dev_err(chip->dev,
-+			dev_err(chip->pdev,
- 				"%s() fail on i2c_nuvoton_read_buf()=%d\n",
- 				__func__, rc);
- 			return -EIO;
- 		}
--		dev_dbg(chip->dev, "%s(%d):", __func__, bytes2read);
-+		dev_dbg(chip->pdev, "%s(%d):", __func__, bytes2read);
- 		size += bytes2read;
- 	}
- 
-@@ -264,7 +264,7 @@ static int i2c_nuvoton_recv_data(struct i2c_client *client,
- /* Read TPM command results */
- static int i2c_nuvoton_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- {
--	struct device *dev = chip->dev;
-+	struct device *dev = chip->pdev;
- 	struct i2c_client *client = to_i2c_client(dev);
- 	s32 rc;
- 	int expected, status, burst_count, retries, size = 0;
-@@ -334,7 +334,7 @@ static int i2c_nuvoton_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 		break;
- 	}
- 	i2c_nuvoton_ready(chip);
--	dev_dbg(chip->dev, "%s() -> %d\n", __func__, size);
-+	dev_dbg(chip->pdev, "%s() -> %d\n", __func__, size);
- 	return size;
- }
- 
-@@ -347,7 +347,7 @@ static int i2c_nuvoton_recv(struct tpm_chip *chip, u8 *buf, size_t count)
-  */
- static int i2c_nuvoton_send(struct tpm_chip *chip, u8 *buf, size_t len)
- {
--	struct device *dev = chip->dev;
-+	struct device *dev = chip->pdev;
- 	struct i2c_client *client = to_i2c_client(dev);
- 	u32 ordinal;
- 	size_t count = 0;
-diff --git a/drivers/char/tpm/tpm_i2c_stm_st33.c b/drivers/char/tpm/tpm_i2c_stm_st33.c
-index 9a96d37..fc824ae 100644
---- a/drivers/char/tpm/tpm_i2c_stm_st33.c
-+++ b/drivers/char/tpm/tpm_i2c_stm_st33.c
-@@ -588,7 +588,7 @@ static int tpm_stm_i2c_recv(struct tpm_chip *chip, unsigned char *buf,
- 
- 	size = recv_data(chip, buf, TPM_HEADER_SIZE);
- 	if (size < TPM_HEADER_SIZE) {
--		dev_err(chip->dev, "Unable to read header\n");
-+		dev_err(chip->pdev, "Unable to read header\n");
- 		goto out;
- 	}
- 
-@@ -601,7 +601,7 @@ static int tpm_stm_i2c_recv(struct tpm_chip *chip, unsigned char *buf,
- 	size += recv_data(chip, &buf[TPM_HEADER_SIZE],
- 			expected - TPM_HEADER_SIZE);
- 	if (size < expected) {
--		dev_err(chip->dev, "Unable to read remainder of result\n");
-+		dev_err(chip->pdev, "Unable to read remainder of result\n");
- 		size = -ETIME;
- 		goto out;
- 	}
-@@ -639,7 +639,7 @@ static int tpm_stm_i2c_of_request_resources(struct tpm_chip *chip)
- 
- 	pp = client->dev.of_node;
- 	if (!pp) {
--		dev_err(chip->dev, "No platform data\n");
-+		dev_err(chip->pdev, "No platform data\n");
- 		return -ENODEV;
- 	}
- 
-@@ -682,7 +682,7 @@ static int tpm_stm_i2c_request_resources(struct i2c_client *client,
- 
- 	pdata = client->dev.platform_data;
- 	if (!pdata) {
--		dev_err(chip->dev, "No platform data\n");
-+		dev_err(chip->pdev, "No platform data\n");
- 		return -ENODEV;
- 	}
- 
-@@ -694,7 +694,7 @@ static int tpm_stm_i2c_request_resources(struct i2c_client *client,
- 				pdata->io_lpcpd, GPIOF_OUT_INIT_HIGH,
- 				"TPM IO_LPCPD");
- 		if (ret) {
--			dev_err(chip->dev, "%s : reset gpio_request failed\n",
-+			dev_err(chip->pdev, "%s : reset gpio_request failed\n",
- 				__FILE__);
- 			return ret;
- 		}
-@@ -776,7 +776,7 @@ tpm_stm_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
- 				IRQF_TRIGGER_HIGH,
- 				"TPM SERIRQ management", chip);
- 		if (ret < 0) {
--			dev_err(chip->dev , "TPM SERIRQ signals %d not available\n",
-+			dev_err(chip->pdev , "TPM SERIRQ signals %d not available\n",
- 				client->irq);
- 			goto _tpm_clean_answer;
- 		}
-@@ -807,7 +807,7 @@ tpm_stm_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
- 
- 	return tpm_chip_register(chip);
- _tpm_clean_answer:
--	dev_info(chip->dev, "TPM I2C initialisation fail\n");
-+	dev_info(chip->pdev, "TPM I2C initialisation fail\n");
- 	return ret;
- }
- 
-diff --git a/drivers/char/tpm/tpm_infineon.c b/drivers/char/tpm/tpm_infineon.c
-index dcdb671..6d49213 100644
---- a/drivers/char/tpm/tpm_infineon.c
-+++ b/drivers/char/tpm/tpm_infineon.c
-@@ -195,9 +195,9 @@ static int wait(struct tpm_chip *chip, int wait_for_bit)
- 	}
- 	if (i == TPM_MAX_TRIES) {	/* timeout occurs */
- 		if (wait_for_bit == STAT_XFE)
--			dev_err(chip->dev, "Timeout in wait(STAT_XFE)\n");
-+			dev_err(chip->pdev, "Timeout in wait(STAT_XFE)\n");
- 		if (wait_for_bit == STAT_RDA)
--			dev_err(chip->dev, "Timeout in wait(STAT_RDA)\n");
-+			dev_err(chip->pdev, "Timeout in wait(STAT_RDA)\n");
- 		return -EIO;
- 	}
- 	return 0;
-@@ -220,7 +220,7 @@ static void wait_and_send(struct tpm_chip *chip, u8 sendbyte)
- static void tpm_wtx(struct tpm_chip *chip)
- {
- 	number_of_wtx++;
--	dev_info(chip->dev, "Granting WTX (%02d / %02d)\n",
-+	dev_info(chip->pdev, "Granting WTX (%02d / %02d)\n",
- 		 number_of_wtx, TPM_MAX_WTX_PACKAGES);
- 	wait_and_send(chip, TPM_VL_VER);
- 	wait_and_send(chip, TPM_CTRL_WTX);
-@@ -231,7 +231,7 @@ static void tpm_wtx(struct tpm_chip *chip)
- 
- static void tpm_wtx_abort(struct tpm_chip *chip)
- {
--	dev_info(chip->dev, "Aborting WTX\n");
-+	dev_info(chip->pdev, "Aborting WTX\n");
- 	wait_and_send(chip, TPM_VL_VER);
- 	wait_and_send(chip, TPM_CTRL_WTX_ABORT);
- 	wait_and_send(chip, 0x00);
-@@ -257,7 +257,7 @@ recv_begin:
- 	}
- 
- 	if (buf[0] != TPM_VL_VER) {
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"Wrong transport protocol implementation!\n");
- 		return -EIO;
- 	}
-@@ -272,7 +272,7 @@ recv_begin:
- 		}
- 
- 		if ((size == 0x6D00) && (buf[1] == 0x80)) {
--			dev_err(chip->dev, "Error handling on vendor layer!\n");
-+			dev_err(chip->pdev, "Error handling on vendor layer!\n");
- 			return -EIO;
- 		}
- 
-@@ -284,7 +284,7 @@ recv_begin:
- 	}
- 
- 	if (buf[1] == TPM_CTRL_WTX) {
--		dev_info(chip->dev, "WTX-package received\n");
-+		dev_info(chip->pdev, "WTX-package received\n");
- 		if (number_of_wtx < TPM_MAX_WTX_PACKAGES) {
- 			tpm_wtx(chip);
- 			goto recv_begin;
-@@ -295,14 +295,14 @@ recv_begin:
- 	}
- 
- 	if (buf[1] == TPM_CTRL_WTX_ABORT_ACK) {
--		dev_info(chip->dev, "WTX-abort acknowledged\n");
-+		dev_info(chip->pdev, "WTX-abort acknowledged\n");
- 		return size;
- 	}
- 
- 	if (buf[1] == TPM_CTRL_ERROR) {
--		dev_err(chip->dev, "ERROR-package received:\n");
-+		dev_err(chip->pdev, "ERROR-package received:\n");
- 		if (buf[4] == TPM_INF_NAK)
--			dev_err(chip->dev,
-+			dev_err(chip->pdev,
- 				"-> Negative acknowledgement"
- 				" - retransmit command!\n");
- 		return -EIO;
-@@ -321,7 +321,7 @@ static int tpm_inf_send(struct tpm_chip *chip, u8 * buf, size_t count)
- 
- 	ret = empty_fifo(chip, 1);
- 	if (ret) {
--		dev_err(chip->dev, "Timeout while clearing FIFO\n");
-+		dev_err(chip->pdev, "Timeout while clearing FIFO\n");
- 		return -EIO;
- 	}
- 
-diff --git a/drivers/char/tpm/tpm_nsc.c b/drivers/char/tpm/tpm_nsc.c
-index 00c5470..072c298 100644
---- a/drivers/char/tpm/tpm_nsc.c
-+++ b/drivers/char/tpm/tpm_nsc.c
-@@ -113,7 +113,7 @@ static int nsc_wait_for_ready(struct tpm_chip *chip)
- 	}
- 	while (time_before(jiffies, stop));
- 
--	dev_info(chip->dev, "wait for ready failed\n");
-+	dev_info(chip->pdev, "wait for ready failed\n");
- 	return -EBUSY;
- }
- 
-@@ -129,12 +129,12 @@ static int tpm_nsc_recv(struct tpm_chip *chip, u8 * buf, size_t count)
- 		return -EIO;
- 
- 	if (wait_for_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0) {
--		dev_err(chip->dev, "F0 timeout\n");
-+		dev_err(chip->pdev, "F0 timeout\n");
- 		return -EIO;
- 	}
- 	if ((data =
- 	     inb(chip->vendor.base + NSC_DATA)) != NSC_COMMAND_NORMAL) {
--		dev_err(chip->dev, "not in normal mode (0x%x)\n",
-+		dev_err(chip->pdev, "not in normal mode (0x%x)\n",
- 			data);
- 		return -EIO;
- 	}
-@@ -143,7 +143,7 @@ static int tpm_nsc_recv(struct tpm_chip *chip, u8 * buf, size_t count)
- 	for (p = buffer; p < &buffer[count]; p++) {
- 		if (wait_for_stat
- 		    (chip, NSC_STATUS_OBF, NSC_STATUS_OBF, &data) < 0) {
--			dev_err(chip->dev,
-+			dev_err(chip->pdev,
- 				"OBF timeout (while reading data)\n");
- 			return -EIO;
- 		}
-@@ -154,11 +154,11 @@ static int tpm_nsc_recv(struct tpm_chip *chip, u8 * buf, size_t count)
- 
- 	if ((data & NSC_STATUS_F0) == 0 &&
- 	(wait_for_stat(chip, NSC_STATUS_F0, NSC_STATUS_F0, &data) < 0)) {
--		dev_err(chip->dev, "F0 not set\n");
-+		dev_err(chip->pdev, "F0 not set\n");
- 		return -EIO;
- 	}
- 	if ((data = inb(chip->vendor.base + NSC_DATA)) != NSC_COMMAND_EOC) {
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			"expected end of command(0x%x)\n", data);
- 		return -EIO;
- 	}
-@@ -189,19 +189,19 @@ static int tpm_nsc_send(struct tpm_chip *chip, u8 * buf, size_t count)
- 		return -EIO;
- 
- 	if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
--		dev_err(chip->dev, "IBF timeout\n");
-+		dev_err(chip->pdev, "IBF timeout\n");
- 		return -EIO;
- 	}
- 
- 	outb(NSC_COMMAND_NORMAL, chip->vendor.base + NSC_COMMAND);
- 	if (wait_for_stat(chip, NSC_STATUS_IBR, NSC_STATUS_IBR, &data) < 0) {
--		dev_err(chip->dev, "IBR timeout\n");
-+		dev_err(chip->pdev, "IBR timeout\n");
- 		return -EIO;
- 	}
- 
- 	for (i = 0; i < count; i++) {
- 		if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
--			dev_err(chip->dev,
-+			dev_err(chip->pdev,
- 				"IBF timeout (while writing data)\n");
- 			return -EIO;
- 		}
-@@ -209,7 +209,7 @@ static int tpm_nsc_send(struct tpm_chip *chip, u8 * buf, size_t count)
- 	}
- 
- 	if (wait_for_stat(chip, NSC_STATUS_IBF, 0, &data) < 0) {
--		dev_err(chip->dev, "IBF timeout\n");
-+		dev_err(chip->pdev, "IBF timeout\n");
- 		return -EIO;
- 	}
- 	outb(NSC_COMMAND_EOC, chip->vendor.base + NSC_COMMAND);
-diff --git a/drivers/char/tpm/tpm_ppi.c b/drivers/char/tpm/tpm_ppi.c
-index 6652025..d8d51ff 100644
---- a/drivers/char/tpm/tpm_ppi.c
-+++ b/drivers/char/tpm/tpm_ppi.c
-@@ -357,11 +357,11 @@ int tpm_add_ppi(struct tpm_chip *chip)
- 
- 	ACPI_FREE(obj);
- 
--	return sysfs_create_group(&chip->dev->kobj, &ppi_attr_grp);
-+	return sysfs_create_group(&chip->pdev->kobj, &ppi_attr_grp);
- }
- 
- void tpm_remove_ppi(struct tpm_chip *chip)
- {
- 	if (chip->ppi_version[0] != '\0')
--		sysfs_remove_group(&chip->dev->kobj, &ppi_attr_grp);
-+		sysfs_remove_group(&chip->pdev->kobj, &ppi_attr_grp);
- }
-diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
-index e4a3b9c..6b15545 100644
---- a/drivers/char/tpm/tpm_tis.c
-+++ b/drivers/char/tpm/tpm_tis.c
-@@ -242,7 +242,7 @@ static int tpm_tis_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	/* read first 10 bytes, including tag, paramsize, and result */
- 	if ((size =
- 	     recv_data(chip, buf, TPM_HEADER_SIZE)) < TPM_HEADER_SIZE) {
--		dev_err(chip->dev, "Unable to read header\n");
-+		dev_err(chip->pdev, "Unable to read header\n");
- 		goto out;
- 	}
- 
-@@ -255,7 +255,7 @@ static int tpm_tis_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 	if ((size +=
- 	     recv_data(chip, &buf[TPM_HEADER_SIZE],
- 		       expected - TPM_HEADER_SIZE)) < expected) {
--		dev_err(chip->dev, "Unable to read remainder of result\n");
-+		dev_err(chip->pdev, "Unable to read remainder of result\n");
- 		size = -ETIME;
- 		goto out;
- 	}
-@@ -264,7 +264,7 @@ static int tpm_tis_recv(struct tpm_chip *chip, u8 *buf, size_t count)
- 			  &chip->vendor.int_queue, false);
- 	status = tpm_tis_status(chip);
- 	if (status & TPM_STS_DATA_AVAIL) {	/* retry? */
--		dev_err(chip->dev, "Error left over data\n");
-+		dev_err(chip->pdev, "Error left over data\n");
- 		size = -EIO;
- 		goto out;
- 	}
-@@ -406,7 +406,7 @@ static int tpm_tis_send(struct tpm_chip *chip, u8 *buf, size_t len)
- 		msleep(1);
- 	if (!priv->irq_tested) {
- 		disable_interrupts(chip);
--		dev_err(chip->dev,
-+		dev_err(chip->pdev,
- 			FW_BUG "TPM interrupt not working, polling instead\n");
- 	}
- 	priv->irq_tested = true;
-@@ -476,7 +476,7 @@ static int probe_itpm(struct tpm_chip *chip)
- 
- 	rc = tpm_tis_send_data(chip, cmd_getticks, len);
- 	if (rc == 0) {
--		dev_info(chip->dev, "Detected an iTPM.\n");
-+		dev_info(chip->pdev, "Detected an iTPM.\n");
- 		rc = 1;
- 	} else
- 		rc = -EFAULT;
-@@ -699,7 +699,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
- 			if (devm_request_irq
- 			    (dev, i, tis_int_probe, IRQF_SHARED,
- 			     chip->vendor.miscdev.name, chip) != 0) {
--				dev_info(chip->dev,
-+				dev_info(chip->pdev,
- 					 "Unable to request irq: %d for probe\n",
- 					 i);
- 				continue;
-@@ -746,7 +746,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
- 		if (devm_request_irq
- 		    (dev, chip->vendor.irq, tis_int_handler, IRQF_SHARED,
- 		     chip->vendor.miscdev.name, chip) != 0) {
--			dev_info(chip->dev,
-+			dev_info(chip->pdev,
- 				 "Unable to request irq: %d for use\n",
- 				 chip->vendor.irq);
- 			chip->vendor.irq = 0;
+diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
+index 3d0873b..9d4e375 100644
+--- a/drivers/char/tpm/Kconfig
++++ b/drivers/char/tpm/Kconfig
+@@ -122,4 +122,13 @@ config TCG_XEN
+ 	  To compile this driver as a module, choose M here; the module
+ 	  will be called xen-tpmfront.
+ 
++config TCG_CRB
++	tristate "TPM 2.0 CRB Interface"
++	depends on X86 && ACPI
++	---help---
++	  If you have a TPM security chip that is compliant with the
++	  TCG CRB 2.0 TPM specification say Yes and it will be accessible
++	  from within Linux.  To compile this driver as a module, choose
++	  M here; the module will be called tpm_crb.
++
+ endif # TCG_TPM
+diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+index 88848ed..990cf18 100644
+--- a/drivers/char/tpm/Makefile
++++ b/drivers/char/tpm/Makefile
+@@ -22,3 +22,4 @@ obj-$(CONFIG_TCG_INFINEON) += tpm_infineon.o
+ obj-$(CONFIG_TCG_IBMVTPM) += tpm_ibmvtpm.o
+ obj-$(CONFIG_TCG_TIS_I2C_ST33) += tpm_i2c_stm_st33.o
+ obj-$(CONFIG_TCG_XEN) += xen-tpmfront.o
++obj-$(CONFIG_TCG_CRB) += tpm_crb.o
+diff --git a/drivers/char/tpm/tpm_crb.c b/drivers/char/tpm/tpm_crb.c
+new file mode 100644
+index 0000000..eb78f93
+--- /dev/null
++++ b/drivers/char/tpm/tpm_crb.c
+@@ -0,0 +1,356 @@
++/*
++ * Copyright (C) 2014 Intel Corporation
++ *
++ * Authors:
++ * Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
++ *
++ * Maintained by: <tpmdd-devel@lists.sourceforge.net>
++ *
++ * This device driver implements the TPM interface as defined in
++ * the TCG CRB 2.0 TPM specification.
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; version 2
++ * of the License.
++ */
++
++#include <linux/acpi.h>
++#include <linux/highmem.h>
++#include <linux/rculist.h>
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include "tpm.h"
++
++#define ACPI_SIG_TPM2 "TPM2"
++
++static const u8 CRB_ACPI_START_UUID[] = {
++	/* 0000 */ 0xAB, 0x6C, 0xBF, 0x6B, 0x63, 0x54, 0x14, 0x47,
++	/* 0008 */ 0xB7, 0xCD, 0xF0, 0x20, 0x3C, 0x03, 0x68, 0xD4
++};
++
++enum crb_defaults {
++	CRB_ACPI_START_REVISION_ID = 1,
++	CRB_ACPI_START_INDEX = 1,
++};
++
++enum crb_start_method {
++	CRB_SM_ACPI_START = 2,
++	CRB_SM_CRB = 7,
++	CRB_SM_CRB_WITH_ACPI_START = 8,
++};
++
++struct acpi_tpm2 {
++	struct acpi_table_header hdr;
++	u16 platform_class;
++	u16 reserved;
++	u64 control_area_pa;
++	u32 start_method;
++} __packed;
++
++enum crb_ca_request {
++	CRB_CA_REQ_GO_IDLE	= BIT(0),
++	CRB_CA_REQ_CMD_READY	= BIT(1),
++};
++
++enum crb_ca_status {
++	CRB_CA_STS_ERROR	= BIT(0),
++	CRB_CA_STS_TPM_IDLE	= BIT(1),
++};
++
++enum crb_start {
++	CRB_START_INVOKE	= BIT(0),
++};
++
++enum crb_cancel {
++	CRB_CANCEL_INVOKE	= BIT(0),
++};
++
++struct crb_control_area {
++	u32 req;
++	u32 sts;
++	u32 cancel;
++	u32 start;
++	u32 int_enable;
++	u32 int_sts;
++	u32 cmd_size;
++	u64 cmd_pa;
++	u32 rsp_size;
++	u64 rsp_pa;
++} __packed;
++
++enum crb_status {
++	CRB_STS_COMPLETE	= BIT(0),
++};
++
++enum crb_flags {
++	CRB_FL_ACPI_START	= BIT(0),
++	CRB_FL_CRB_START	= BIT(1),
++};
++
++struct crb_priv {
++	unsigned int flags;
++	struct crb_control_area *cca;
++	u8 *cmd;
++	u8 *rsp;
++};
++
++#ifdef CONFIG_PM_SLEEP
++int crb_suspend(struct device *dev)
++{
++	return 0;
++}
++
++static int crb_resume(struct device *dev)
++{
++	struct tpm_chip *chip = dev_get_drvdata(dev);
++
++	(void) tpm2_do_selftest(chip);
++
++	return 0;
++}
++#endif
++
++static SIMPLE_DEV_PM_OPS(crb_pm, crb_suspend, crb_resume);
++
++static u8 crb_status(struct tpm_chip *chip)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	u8 sts = 0;
++
++	if ((le32_to_cpu(ioread32(&priv->cca->start)) & CRB_START_INVOKE) !=
++	    CRB_START_INVOKE)
++		sts |= CRB_STS_COMPLETE;
++
++	return sts;
++}
++
++static int crb_recv(struct tpm_chip *chip, u8 *buf, size_t count)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	unsigned int expected;
++
++	/* sanity check */
++	if (count < 6)
++		return -EIO;
++
++	if (le32_to_cpu(ioread32(&priv->cca->sts)) & CRB_CA_STS_ERROR)
++		return -EIO;
++
++	memcpy(buf, priv->rsp, 6);
++	expected = be32_to_cpup((__be32 *) &buf[2]);
++
++	if (expected > count)
++		return -EIO;
++
++	memcpy(&buf[6], &priv->rsp[6], expected - 6);
++
++	return expected;
++}
++
++static int crb_do_acpi_start(struct tpm_chip *chip)
++{
++	union acpi_object *obj;
++	int rc;
++
++	obj = acpi_evaluate_dsm(chip->acpi_dev_handle,
++				CRB_ACPI_START_UUID,
++				CRB_ACPI_START_REVISION_ID,
++				CRB_ACPI_START_INDEX,
++				NULL);
++	if (!obj)
++		return -ENXIO;
++	rc = obj->integer.value == 0 ? 0 : -ENXIO;
++	ACPI_FREE(obj);
++	return rc;
++}
++
++static int crb_send(struct tpm_chip *chip, u8 *buf, size_t len)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++	int rc = 0;
++
++	if (len > le32_to_cpu(ioread32(&priv->cca->cmd_size))) {
++		dev_err(&chip->dev,
++			"invalid command count value %x %zx\n",
++			(unsigned int) len,
++			(size_t) le32_to_cpu(ioread32(&priv->cca->cmd_size)));
++		return -E2BIG;
++	}
++
++	memcpy(priv->cmd, buf, len);
++
++	/* Make sure that cmd is populated before issuing start. */
++	wmb();
++
++	if (priv->flags & CRB_FL_CRB_START)
++		iowrite32(cpu_to_le32(CRB_START_INVOKE), &priv->cca->start);
++
++	if (priv->flags & CRB_FL_ACPI_START)
++		rc = crb_do_acpi_start(chip);
++
++	return rc;
++}
++
++static void crb_cancel(struct tpm_chip *chip)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++
++	iowrite32(cpu_to_le32(CRB_CANCEL_INVOKE), &priv->cca->cancel);
++
++	/* Make sure that cmd is populated before issuing cancel. */
++	wmb();
++
++	if ((priv->flags & CRB_FL_ACPI_START) && crb_do_acpi_start(chip))
++		dev_err(&chip->dev, "ACPI Start failed\n");
++
++	iowrite32(0, &priv->cca->cancel);
++}
++
++static bool crb_req_canceled(struct tpm_chip *chip, u8 status)
++{
++	struct crb_priv *priv = chip->vendor.priv;
++
++	return (le32_to_cpu(priv->cca->cancel) & CRB_CANCEL_INVOKE) ==
++		CRB_CANCEL_INVOKE;
++}
++
++static const struct tpm_class_ops tpm_crb = {
++	.status = crb_status,
++	.recv = crb_recv,
++	.send = crb_send,
++	.cancel = crb_cancel,
++	.req_canceled = crb_req_canceled,
++	.req_complete_mask = CRB_STS_COMPLETE,
++	.req_complete_val = CRB_STS_COMPLETE,
++};
++
++static int crb_acpi_add(struct acpi_device *device)
++{
++	struct tpm_chip *chip;
++	struct acpi_tpm2 *buf;
++	struct crb_priv *priv;
++	struct device *dev = &device->dev;
++	acpi_status status;
++	u32 sm;
++	u64 pa;
++	int rc;
++
++	chip = tpmm_chip_alloc(dev, &tpm_crb);
++	if (IS_ERR(chip))
++		return PTR_ERR(chip);
++
++	chip->flags = TPM_CHIP_FLAG_TPM2;
++
++	status = acpi_get_table(ACPI_SIG_TPM2, 1,
++				(struct acpi_table_header **) &buf);
++	if (ACPI_FAILURE(status)) {
++		dev_err(dev, "failed to get TPM2 ACPI table\n");
++		return -ENODEV;
++	}
++
++	if (buf->hdr.length < sizeof(struct acpi_tpm2)) {
++		dev_err(dev, "TPM2 ACPI table has wrong size");
++		return -EINVAL;
++	}
++
++	priv = (struct crb_priv *) devm_kzalloc(dev, sizeof(struct crb_priv),
++						GFP_KERNEL);
++	if (!priv) {
++		dev_err(dev, "failed to devm_kzalloc for private data\n");
++		return -ENOMEM;
++	}
++
++	sm = le32_to_cpu(buf->start_method);
++
++	/* The reason for the extra quirk is that the PTT in 4th Gen Core CPUs
++	 * report only ACPI start but in practice seems to require both
++	 * ACPI start and CRB start.
++	 */
++	if (sm == CRB_SM_CRB || sm == CRB_SM_CRB_WITH_ACPI_START ||
++	    !strcmp(acpi_device_hid(device), "MSFT0101"))
++		priv->flags |= CRB_FL_CRB_START;
++
++	if (sm == CRB_SM_ACPI_START || sm == CRB_SM_CRB_WITH_ACPI_START)
++		priv->flags |= CRB_FL_ACPI_START;
++
++	priv->cca = (struct crb_control_area *)
++		devm_ioremap_nocache(dev, buf->control_area_pa, 0x1000);
++	if (!priv->cca) {
++		dev_err(dev, "ioremap of the control area failed\n");
++		return -ENOMEM;
++	}
++
++	memcpy_fromio(&pa, &priv->cca->cmd_pa, 8);
++	pa = le64_to_cpu(pa);
++	priv->cmd = devm_ioremap_nocache(dev, le64_to_cpu(pa),
++					 ioread32(&priv->cca->cmd_size));
++	if (!priv->cmd) {
++		dev_err(dev, "ioremap of the command buffer failed\n");
++		return -ENOMEM;
++	}
++
++	memcpy_fromio(&pa, &priv->cca->rsp_pa, 8);
++	pa = le64_to_cpu(pa);
++	priv->rsp = devm_ioremap_nocache(dev, le64_to_cpu(pa),
++					 ioread32(&priv->cca->rsp_size));
++	if (!priv->rsp) {
++		dev_err(dev, "ioremap of the response buffer failed\n");
++		return -ENOMEM;
++	}
++
++	chip->vendor.priv = priv;
++
++	/* Default timeouts and durations */
++	chip->vendor.timeout_a = usecs_to_jiffies(TPM2_TIMEOUT_A);
++	chip->vendor.timeout_b = usecs_to_jiffies(TPM2_TIMEOUT_B);
++	chip->vendor.timeout_c = usecs_to_jiffies(TPM2_TIMEOUT_C);
++	chip->vendor.timeout_d = usecs_to_jiffies(TPM2_TIMEOUT_D);
++	chip->vendor.duration[TPM_SHORT] =
++		usecs_to_jiffies(TPM2_DURATION_SHORT);
++	chip->vendor.duration[TPM_MEDIUM] =
++		usecs_to_jiffies(TPM2_DURATION_MEDIUM);
++	chip->vendor.duration[TPM_LONG] =
++		usecs_to_jiffies(TPM2_DURATION_LONG);
++
++	chip->acpi_dev_handle = device->handle;
++
++	rc = tpm2_do_selftest(chip);
++	if (rc)
++		return rc;
++
++	return tpm_chip_register(chip);
++}
++
++int crb_acpi_remove(struct acpi_device *device)
++{
++	struct device *dev = &device->dev;
++	struct tpm_chip *chip = dev_get_drvdata(dev);
++
++	tpm_chip_unregister(chip);
++	return 0;
++}
++
++static struct acpi_device_id crb_device_ids[] = {
++	{"MSFT0101", 0},
++	{"", 0},
++};
++MODULE_DEVICE_TABLE(acpi, crb_device_ids);
++
++static struct acpi_driver crb_acpi_driver = {
++	.name = "tpm_crb",
++	.ids = crb_device_ids,
++	.ops = {
++		.add = crb_acpi_add,
++		.remove = crb_acpi_remove,
++	},
++	.drv = {
++		.pm = &crb_pm,
++	},
++};
++
++module_acpi_driver(crb_acpi_driver);
++MODULE_AUTHOR("Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>");
++MODULE_DESCRIPTION("TPM2 Driver");
++MODULE_VERSION("0.1");
++MODULE_LICENSE("GPL");
 -- 
 2.1.0
