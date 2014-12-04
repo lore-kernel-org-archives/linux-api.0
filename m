@@ -1,126 +1,240 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v9 0/8] TPM 2.0 support
-Date: Thu,  4 Dec 2014 07:55:10 +0200
-Message-ID: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
-Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v9 1/8] tpm: merge duplicate transmit_cmd() functions
+Date: Thu,  4 Dec 2014 07:55:11 +0200
+Message-ID: <1417672518-4530-2-git-send-email-jarkko.sakkinen@linux.intel.com>
+References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, josh.triplett@intel.com, christophe.ricard@gmail.com, jason.gunthorpe@obsidianresearch.com, linux-api@vger.kernel.org, trousers-tech@lists.sourceforge.net, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch set enables TPM2 protocol and provides drivers for FIFO and
-CRB interfaces. This patch set does not export any sysfs attributes for
-TPM 2.0 because existing sysfs attributes have three non-trivial issues:
+Merged transmit_cmd() functions in tpm-interface.c and tpm-sysfs.c.
+Added "tpm_" prefix for consistency sake. Changed cmd parameter as
+opaque. This enables to use separate command structures for TPM1
+and TPM2 commands in future. Loose coupling works fine here.
 
-- They are associated with the platform device instead of character
-  device.
-- They are are not trivial key-value pairs but contain text that is
-  not easily parsed by a computer.
-- Raciness as described in
-  http://kroah.com/log/blog/2013/06/26/how-to-create-a-sysfs-file-correctly/
+Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+---
+ drivers/char/tpm/tpm-interface.c | 49 +++++++++++++++++++++-------------------
+ drivers/char/tpm/tpm-sysfs.c     | 23 ++-----------------
+ drivers/char/tpm/tpm.h           |  3 ++-
+ 3 files changed, 30 insertions(+), 45 deletions(-)
 
-This is too big effort to be included into this patch set and requires
-more discussion.
-
-v2:
-- Improved struct tpm_chip life-cycle by taking advantage of devres
-  API.
-- Refined sysfs attributes as simple key-values thereby not repeating
-  mistakes in TPM1 sysfs attributes.
-- Documented functions in tpm-chip.c and tpm2-cmd.c.
-- Documented sysfs attributes.
-
-v3:
-- Lots of fixes in calling order in device drivers (thanks to Jason
-  Gunthorpe for pointing these out!).
-- Attach sysfs attributes to the misc device because it represents
-  TPM device to the user space.
-
-v4:
-- Disable sysfs attibutes for TPM 2.0 for until we can sort out the 
-  best approach for them.
-- Fixed all the style issues found with checkpatch.pl.
-
-v5:
-- missing EXPORT_SYMBOL_GPL()
-- own class for TPM devices used for TPM 2.0 devices and onwards.
-
-v6:
-- Non-racy initialization for sysfs attributes using struct device's
-  groups field.
-- The class 'tpm' is used now for all TPM devices. For the first device
-  node major MISC_MAJOR and minor TPM_MINOR is used in order to retain
-  backwards compatability.
-
-v7:
-- Release device number and free struct tpm_chip memory inside
-  tpm_dev_release callback.
-- Moved code from tpm-interface.c and tpm_dev.c to tpm-chip.c.
-
-v8:
-- Cleaned up unneeded cast from tpm_transmit_cmd().
-- Cleaned up redundant PPI_VERSION_LEN constant from tpm_ppi.c.
-- Fixed tpm_tis to use tpm2_calc_ordinal_duration() for TPM2 devices.
-- tpm_crb: in crb_recv, check that count can hold the TPM header at
-  minimum.
-- tpm_crb: add enumerations for bit flags in start and cancel fields
-  of the control area.
-- tpm_crb: use ioremap() for command and response buffer because
-  they might be anywhere.
-- tpm_crb: use IO access functions for reading ioremapped buffers
-  because using direct pointers is not portable.
-- tpm_crb: only apply ACPI start if start method reported by the
-  TPM2 ACPI table allows it.
-- In tpm2_pcr_read() just calculate index and bit and get rid of
-  hacky loop.
-- Do not add sysfs attributes for TPM 2.0 devices.
-
-v9:
-- Fixed compilation issues in v8 (sorry for not using the correct
-  tree).
-- Just do "return tpm_chip_register();" instead of copying return
-  value to a variable.
-- Removed unused tpm2_startup().
-- In the CRB driver ACPI TPM2 table could contain platform specific
-  and therefore inequality test does not work. Fixed in this patch
-  set.
-
-Jarkko Sakkinen (7):
-  tpm: merge duplicate transmit_cmd() functions
-  tpm: two-phase chip management functions
-  tpm: fix raciness of PPI interface lookup
-  tpm: rename chip->dev to chip->pdev
-  tpm: device class for tpm
-  tpm: TPM 2.0 baseline support
-  tpm: TPM 2.0 CRB Interface
-
-Will Arthur (1):
-  tpm: TPM 2.0 FIFO Interface
-
- drivers/char/tpm/Kconfig            |   9 +
- drivers/char/tpm/Makefile           |   3 +-
- drivers/char/tpm/tpm-chip.c         | 251 +++++++++++++++++
- drivers/char/tpm/tpm-dev.c          |  42 +--
- drivers/char/tpm/tpm-interface.c    | 261 ++++++-----------
- drivers/char/tpm/tpm-sysfs.c        |  29 +-
- drivers/char/tpm/tpm.h              | 107 +++++--
- drivers/char/tpm/tpm2-cmd.c         | 542 ++++++++++++++++++++++++++++++++++++
- drivers/char/tpm/tpm_atmel.c        |  25 +-
- drivers/char/tpm/tpm_crb.c          | 356 +++++++++++++++++++++++
- drivers/char/tpm/tpm_i2c_atmel.c    |  55 ++--
- drivers/char/tpm/tpm_i2c_infineon.c |  43 +--
- drivers/char/tpm/tpm_i2c_nuvoton.c  |  71 ++---
- drivers/char/tpm/tpm_i2c_stm_st33.c |  28 +-
- drivers/char/tpm/tpm_ibmvtpm.c      |  17 +-
- drivers/char/tpm/tpm_infineon.c     |  51 ++--
- drivers/char/tpm/tpm_nsc.c          |  34 ++-
- drivers/char/tpm/tpm_ppi.c          | 137 +++++----
- drivers/char/tpm/tpm_tis.c          | 192 ++++++++-----
- drivers/char/tpm/xen-tpmfront.c     |  14 +-
- 20 files changed, 1689 insertions(+), 578 deletions(-)
- create mode 100644 drivers/char/tpm/tpm-chip.c
- create mode 100644 drivers/char/tpm/tpm2-cmd.c
- create mode 100644 drivers/char/tpm/tpm_crb.c
-
+diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-interface.c
+index cfb9089..c17aa45 100644
+--- a/drivers/char/tpm/tpm-interface.c
++++ b/drivers/char/tpm/tpm-interface.c
+@@ -398,9 +398,10 @@ out:
+ #define TPM_DIGEST_SIZE 20
+ #define TPM_RET_CODE_IDX 6
+ 
+-static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+-			    int len, const char *desc)
++ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd,
++			 int len, const char *desc)
+ {
++	struct tpm_output_header *header;
+ 	int err;
+ 
+ 	len = tpm_transmit(chip, (u8 *) cmd, len);
+@@ -409,7 +410,9 @@ static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+ 	else if (len < TPM_HEADER_SIZE)
+ 		return -EFAULT;
+ 
+-	err = be32_to_cpu(cmd->header.out.return_code);
++	header = cmd;
++
++	err = be32_to_cpu(header->return_code);
+ 	if (err != 0 && desc)
+ 		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
+ 
+@@ -448,7 +451,7 @@ ssize_t tpm_getcap(struct device *dev, __be32 subcap_id, cap_t *cap,
+ 		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+ 		tpm_cmd.params.getcap_in.subcap = subcap_id;
+ 	}
+-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
++	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, desc);
+ 	if (!rc)
+ 		*cap = tpm_cmd.params.getcap_out.cap;
+ 	return rc;
+@@ -464,8 +467,8 @@ void tpm_gen_interrupt(struct tpm_chip *chip)
+ 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+ 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+ 
+-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+-			"attempting to determine the timeouts");
++	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
++			      "attempting to determine the timeouts");
+ }
+ EXPORT_SYMBOL_GPL(tpm_gen_interrupt);
+ 
+@@ -484,8 +487,8 @@ static int tpm_startup(struct tpm_chip *chip, __be16 startup_type)
+ 	struct tpm_cmd_t start_cmd;
+ 	start_cmd.header.in = tpm_startup_header;
+ 	start_cmd.params.startup_in.startup_type = startup_type;
+-	return transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
+-			    "attempting to start the TPM");
++	return tpm_transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
++				"attempting to start the TPM");
+ }
+ 
+ int tpm_get_timeouts(struct tpm_chip *chip)
+@@ -500,7 +503,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+ 	tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
+ 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+ 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
++	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE, NULL);
+ 
+ 	if (rc == TPM_ERR_INVALID_POSTINIT) {
+ 		/* The TPM is not started, we are the first to talk to it.
+@@ -513,7 +516,7 @@ int tpm_get_timeouts(struct tpm_chip *chip)
+ 		tpm_cmd.params.getcap_in.cap = TPM_CAP_PROP;
+ 		tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+ 		tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_TIMEOUT;
+-		rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
++		rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+ 				  NULL);
+ 	}
+ 	if (rc) {
+@@ -575,8 +578,8 @@ duration:
+ 	tpm_cmd.params.getcap_in.subcap_size = cpu_to_be32(4);
+ 	tpm_cmd.params.getcap_in.subcap = TPM_CAP_PROP_TIS_DURATION;
+ 
+-	rc = transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
+-			"attempting to determine the durations");
++	rc = tpm_transmit_cmd(chip, &tpm_cmd, TPM_INTERNAL_RESULT_SIZE,
++			      "attempting to determine the durations");
+ 	if (rc)
+ 		return rc;
+ 
+@@ -631,8 +634,8 @@ static int tpm_continue_selftest(struct tpm_chip *chip)
+ 	struct tpm_cmd_t cmd;
+ 
+ 	cmd.header.in = continue_selftest_header;
+-	rc = transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
+-			  "continue selftest");
++	rc = tpm_transmit_cmd(chip, &cmd, CONTINUE_SELFTEST_RESULT_SIZE,
++			      "continue selftest");
+ 	return rc;
+ }
+ 
+@@ -672,8 +675,8 @@ int tpm_pcr_read_dev(struct tpm_chip *chip, int pcr_idx, u8 *res_buf)
+ 
+ 	cmd.header.in = pcrread_header;
+ 	cmd.params.pcrread_in.pcr_idx = cpu_to_be32(pcr_idx);
+-	rc = transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
+-			  "attempting to read a pcr value");
++	rc = tpm_transmit_cmd(chip, &cmd, READ_PCR_RESULT_SIZE,
++			      "attempting to read a pcr value");
+ 
+ 	if (rc == 0)
+ 		memcpy(res_buf, cmd.params.pcrread_out.pcr_result,
+@@ -737,8 +740,8 @@ int tpm_pcr_extend(u32 chip_num, int pcr_idx, const u8 *hash)
+ 	cmd.header.in = pcrextend_header;
+ 	cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(pcr_idx);
+ 	memcpy(cmd.params.pcrextend_in.hash, hash, TPM_DIGEST_SIZE);
+-	rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+-			  "attempting extend a PCR value");
++	rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
++			      "attempting extend a PCR value");
+ 
+ 	tpm_chip_put(chip);
+ 	return rc;
+@@ -817,7 +820,7 @@ int tpm_send(u32 chip_num, void *cmd, size_t buflen)
+ 	if (chip == NULL)
+ 		return -ENODEV;
+ 
+-	rc = transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
++	rc = tpm_transmit_cmd(chip, cmd, buflen, "attempting tpm_cmd");
+ 
+ 	tpm_chip_put(chip);
+ 	return rc;
+@@ -938,14 +941,14 @@ int tpm_pm_suspend(struct device *dev)
+ 		cmd.params.pcrextend_in.pcr_idx = cpu_to_be32(tpm_suspend_pcr);
+ 		memcpy(cmd.params.pcrextend_in.hash, dummy_hash,
+ 		       TPM_DIGEST_SIZE);
+-		rc = transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
+-				  "extending dummy pcr before suspend");
++		rc = tpm_transmit_cmd(chip, &cmd, EXTEND_PCR_RESULT_SIZE,
++				      "extending dummy pcr before suspend");
+ 	}
+ 
+ 	/* now do the actual savestate */
+ 	for (try = 0; try < TPM_RETRY; try++) {
+ 		cmd.header.in = savestate_header;
+-		rc = transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
++		rc = tpm_transmit_cmd(chip, &cmd, SAVESTATE_RESULT_SIZE, NULL);
+ 
+ 		/*
+ 		 * If the TPM indicates that it is too busy to respond to
+@@ -1022,7 +1025,7 @@ int tpm_get_random(u32 chip_num, u8 *out, size_t max)
+ 		tpm_cmd.header.in = tpm_getrandom_header;
+ 		tpm_cmd.params.getrandom_in.num_bytes = cpu_to_be32(num_bytes);
+ 
+-		err = transmit_cmd(chip, &tpm_cmd,
++		err = tpm_transmit_cmd(chip, &tpm_cmd,
+ 				   TPM_GETRANDOM_RESULT_SIZE + num_bytes,
+ 				   "attempting get random");
+ 		if (err)
+diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
+index 01730a2..8ecb052 100644
+--- a/drivers/char/tpm/tpm-sysfs.c
++++ b/drivers/char/tpm/tpm-sysfs.c
+@@ -20,25 +20,6 @@
+ #include <linux/device.h>
+ #include "tpm.h"
+ 
+-/* XXX for now this helper is duplicated in tpm-interface.c */
+-static ssize_t transmit_cmd(struct tpm_chip *chip, struct tpm_cmd_t *cmd,
+-			    int len, const char *desc)
+-{
+-	int err;
+-
+-	len = tpm_transmit(chip, (u8 *) cmd, len);
+-	if (len <  0)
+-		return len;
+-	else if (len < TPM_HEADER_SIZE)
+-		return -EFAULT;
+-
+-	err = be32_to_cpu(cmd->header.out.return_code);
+-	if (err != 0 && desc)
+-		dev_err(chip->dev, "A TPM error (%d) occurred %s\n", err, desc);
+-
+-	return err;
+-}
+-
+ #define READ_PUBEK_RESULT_SIZE 314
+ #define TPM_ORD_READPUBEK cpu_to_be32(124)
+ static struct tpm_input_header tpm_readpubek_header = {
+@@ -58,8 +39,8 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
+ 	struct tpm_chip *chip = dev_get_drvdata(dev);
+ 
+ 	tpm_cmd.header.in = tpm_readpubek_header;
+-	err = transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
+-			   "attempting to read the PUBEK");
++	err = tpm_transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
++			       "attempting to read the PUBEK");
+ 	if (err)
+ 		goto out;
+ 
+diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+index e4d0888..e638eb0 100644
+--- a/drivers/char/tpm/tpm.h
++++ b/drivers/char/tpm/tpm.h
+@@ -314,9 +314,10 @@ struct tpm_cmd_t {
+ } __packed;
+ 
+ ssize_t	tpm_getcap(struct device *, __be32, cap_t *, const char *);
+-
+ ssize_t tpm_transmit(struct tpm_chip *chip, const char *buf,
+ 		     size_t bufsiz);
++ssize_t tpm_transmit_cmd(struct tpm_chip *chip, void *cmd, int len,
++			 const char *desc);
+ extern int tpm_get_timeouts(struct tpm_chip *);
+ extern void tpm_gen_interrupt(struct tpm_chip *);
+ extern int tpm_do_selftest(struct tpm_chip *);
 -- 
 2.1.0
