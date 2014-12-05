@@ -1,48 +1,76 @@
 From: "Peter Huewe" <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
-Subject: Aw: Re: [PATCH v9 6/8] tpm: TPM 2.0 baseline support
-Date: Fri, 5 Dec 2014 15:35:49 +0100
-Message-ID: <trinity-78b59db8-b937-4ee0-989b-557fcbf612db-1417790149807@3capp-gmx-bs52>
+Subject: Aw: Re: [tpmdd-devel] [PATCH v9 8/8] tpm: TPM 2.0 FIFO Interface
+Date: Fri, 5 Dec 2014 16:01:01 +0100
+Message-ID: <trinity-0fea8cea-4011-4d04-af4a-e7583a7184b4-1417791661803@3capp-gmx-bs52>
 References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com>
- <1417672518-4530-7-git-send-email-jarkko.sakkinen@linux.intel.com>
- <201412050017.40668.PeterHuewe@gmx.de>, <20141205141303.GF6993@intel.com>
+ <1417672518-4530-9-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <201412042318.33889.PeterHuewe@gmx.de>,
+ <201412042328.29578.PeterHuewe@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141205141303.GF6993-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <201412042328.29578.PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+To: =?UTF-8?Q?=22Peter_H=C3=BCwe=22?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Jarkko,
-=C2=A0=C2=A0
+> 
+> > Am Donnerstag, 4. Dezember 2014, 06:55:18 schrieb Jarkko Sakkinen:
+> > > From: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > >
+> > > Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2.0,
+> > > instead of calling tpm_get_timeouts(), assign duration and timeout
+> > > values defined in the TPM 2.0 PTP specification.
+> > >
+> > > Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > > Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> 
+> > >
+> > > + sts3 = ioread8(chip->vendor.iobase + TPM_STS3(1));
+> > > + if ((sts3 & TPM_STS3_TPM2_FAM) == TPM_STS3_TPM2_FAM)
+> > > + chip->flags = TPM_CHIP_FLAG_TPM2;
+> > > +
+> > >
+> 
+> >
+> > When loading tpm_tis force=1 with my tpm1.2 chip on a machine without bios
+> > integration, it fets detected as a TPM2.0 chip :/
+> >
+> > sudo rmmod tpm_tis
+> > # modprobe tpm_tis force=1
+> > modprobe: ERROR: could not insert 'tpm_tis': No such device
+> > # dmesg
+> > [ 263.903828] tpm_tis tpm_tis: 2.0 TPM (device-id 0xB, rev-id 16)
+> > [ 263.948049] tpm_tis tpm_tis: A TPM error (10) occurred continue selftest
+> > [ 263.948120] tpm_tis tpm_tis: TPM self test failed
+> >
+> >
+> > sts3 is reported as 0xff from my TPM1.2
+> >
+> 
+> 
+> Hmm,
+> my TPM2.0 chip also reports sts3 as 0xff (when loading with force=1 on a
+> machine without bios integration)
+> 
+> [ 307.095344] sts3 ff
+> [ 307.095366] tpm_tis tpm_tis: 2.0 TPM (device-id 0x1A, rev-id 16)
+> [ 307.140047] tpm_tis tpm_tis: A TPM error (256) occurred continue selftest
+> [ 307.140056] tpm_tis tpm_tis: TPM self test failed
 
->is it cool if I prepare a separate set of fixes for all issues
->in v9? I do not see any problem that could not be fixed without
->major structural changes.
 
-=C2=A0
-
-to be honest - I would prefer a v10 with the fixes included, especially=
- since there were quite a few issues/remarks.
-If you already have fixes post them as patches on top of v9 so we can t=
-est, and then squash them in.
+You are reading "sts3" - before requesting the locality and thus it returns 0xff for a TPM20 chip as well.
+--> You have to have an active locality first.
 
 
+For a TPM2.0 0xFF is not a valid value (if active locality is set), since reading commandCancel and resetEstablishment bit always return 0 on reads (according to spec).
+
+--> 0xFF should be treated as a TPM1.2 (older tpms with TIS 1.2)
+--> 0x04 should be treated as TPM 2.0
+--> 0x08 should be treated as TPM1.2 (newer tpms with TIS1.3 enhanced)
 
 
-I think we are still in schedule if you do fixes over the weekend - so =
-we hopefully have a _great_ v10 on monday/tuesday
-=C2=A0
-I'll send out the first pull request without TPM2.0 support later this =
-evening,
-and then send out another one by next week - this should be fine.
-=C2=A0
-The next testing slot is Sunday evening since I'm travelling myself (an=
-d don't have TPM hardware with me).
-=C2=A0
-=C2=A0
+
 Thanks,
 Peter
-=C2=A0
