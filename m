@@ -1,224 +1,212 @@
-From: Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3] media: platform: add VPFE capture driver support for AM437X
-Date: Fri, 5 Dec 2014 12:54:35 +0000
-Message-ID: <CA+V-a8ui4Ur3Z7CwWXHf-xg101U=OJcMhOUxbqp4dWkcdF6U8Q@mail.gmail.com>
-References: <1417648378-18271-1-git-send-email-prabhakar.csengg@gmail.com> <5481A3EC.8020803@xs4all.nl>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v9 8/8] tpm: TPM 2.0 FIFO Interface
+Date: Fri, 5 Dec 2014 15:05:33 +0200
+Message-ID: <20141205130533.GA6993@intel.com>
+References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1417672518-4530-9-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <alpine.DEB.2.11.1412041459470.5705@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5481A3EC.8020803-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1412041459470.5705-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: LMML <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+To: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+Cc: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Hans,
+On Thu, Dec 04, 2014 at 03:25:12PM +0000, Scot Doyle wrote:
+> Hi Jarkko,
+> 
+> On Thu, 4 Dec 2014, Jarkko Sakkinen wrote:
+> > From: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > 
+> > Detect TPM 2.0 by using the extended STS (STS3) register. For TPM 2.0,
+> > instead of calling tpm_get_timeouts(), assign duration and timeout
+> > values defined in the TPM 2.0 PTP specification.
+> > 
+> > Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > ---
+> >  drivers/char/tpm/tpm_tis.c | 80 ++++++++++++++++++++++++++++++++++++++--------
+> >  1 file changed, 67 insertions(+), 13 deletions(-)
+> > 
+> > diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+> > index 89e1abb..71cbb2d 100644
+> > --- a/drivers/char/tpm/tpm_tis.c
+> > +++ b/drivers/char/tpm/tpm_tis.c
+> > @@ -1,5 +1,6 @@
+> >  /*
+> >   * Copyright (C) 2005, 2006 IBM Corporation
+> > + * Copyright (C) 2014 Intel Corporation
+> >   *
+> >   * Authors:
+> >   * Leendert van Doorn <leendert-aZOuKsOsJu3MbYB6QlFGEg@public.gmane.org>
+> > @@ -44,6 +45,10 @@ enum tis_status {
+> >  	TPM_STS_DATA_EXPECT = 0x08,
+> >  };
+> >  
+> > +enum tis_status3 {
+> > +	TPM_STS3_TPM2_FAM = 0x04,
+> > +};
+> > +
+> >  enum tis_int_flags {
+> >  	TPM_GLOBAL_INT_ENABLE = 0x80000000,
+> >  	TPM_INTF_BURST_COUNT_STATIC = 0x100,
+> > @@ -70,6 +75,7 @@ enum tis_defaults {
+> >  #define	TPM_INT_STATUS(l)		(0x0010 | ((l) << 12))
+> >  #define	TPM_INTF_CAPS(l)		(0x0014 | ((l) << 12))
+> >  #define	TPM_STS(l)			(0x0018 | ((l) << 12))
+> > +#define	TPM_STS3(l)			(0x001b | ((l) << 12))
+> >  #define	TPM_DATA_FIFO(l)		(0x0024 | ((l) << 12))
+> >  
+> >  #define	TPM_DID_VID(l)			(0x0F00 | ((l) << 12))
+> > @@ -363,6 +369,7 @@ static int tpm_tis_send_main(struct tpm_chip *chip, u8 *buf, size_t len)
+> >  {
+> >  	int rc;
+> >  	u32 ordinal;
+> > +	unsigned long dur;
+> >  
+> >  	rc = tpm_tis_send_data(chip, buf, len);
+> >  	if (rc < 0)
+> > @@ -374,9 +381,14 @@ static int tpm_tis_send_main(struct tpm_chip *chip, u8 *buf, size_t len)
+> >  
+> >  	if (chip->vendor.irq) {
+> >  		ordinal = be32_to_cpu(*((__be32 *) (buf + 6)));
+> > +
+> > +		if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> > +			dur = tpm2_calc_ordinal_duration(chip, ordinal);
+> > +		else
+> > +			dur = tpm_calc_ordinal_duration(chip, ordinal);
+> > +
+> >  		if (wait_for_tpm_stat
+> > -		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
+> > -		     tpm_calc_ordinal_duration(chip, ordinal),
+> > +		    (chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID, dur,
+> >  		     &chip->vendor.read_queue, false) < 0) {
+> >  			rc = -ETIME;
+> >  			goto out_err;
+> > @@ -588,6 +600,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  	int rc, i, irq_s, irq_e, probe;
+> >  	struct tpm_chip *chip;
+> >  	struct priv_data *priv;
+> > +	u8 sts3;
+> >  
+> >  	priv = devm_kzalloc(dev, sizeof(struct priv_data), GFP_KERNEL);
+> >  	if (priv == NULL)
+> > @@ -604,11 +617,28 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  	if (!chip->vendor.iobase)
+> >  		return -EIO;
+> >  
+> > +	sts3 = ioread8(chip->vendor.iobase + TPM_STS3(1));
+> > +	if ((sts3 & TPM_STS3_TPM2_FAM) == TPM_STS3_TPM2_FAM)
+> > +		chip->flags = TPM_CHIP_FLAG_TPM2;
+> > +
+> >  	/* Default timeouts */
+> > -	chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> > -	chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
+> > -	chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> > -	chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> > +	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
+> > +		chip->vendor.timeout_a = usecs_to_jiffies(TPM2_TIMEOUT_A);
+> > +		chip->vendor.timeout_b = usecs_to_jiffies(TPM2_TIMEOUT_B);
+> > +		chip->vendor.timeout_c = usecs_to_jiffies(TPM2_TIMEOUT_C);
+> > +		chip->vendor.timeout_d = usecs_to_jiffies(TPM2_TIMEOUT_D);
+> > +		chip->vendor.duration[TPM_SHORT] =
+> > +			usecs_to_jiffies(TPM2_DURATION_SHORT);
+> > +		chip->vendor.duration[TPM_MEDIUM] =
+> > +			usecs_to_jiffies(TPM2_DURATION_MEDIUM);
+> > +		chip->vendor.duration[TPM_LONG] =
+> > +			usecs_to_jiffies(TPM2_DURATION_LONG);
+> > +	} else {
+> > +		chip->vendor.timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> > +		chip->vendor.timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
+> > +		chip->vendor.timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> > +		chip->vendor.timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+> > +	}
+> >  
+> >  	if (wait_startup(chip, 0) != 0) {
+> >  		rc = -ENODEV;
+> > @@ -623,8 +653,8 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  	vendor = ioread32(chip->vendor.iobase + TPM_DID_VID(0));
+> >  	chip->vendor.manufacturer_id = vendor;
+> >  
+> > -	dev_info(dev,
+> > -		 "1.2 TPM (device-id 0x%X, rev-id %d)\n",
+> > +	dev_info(dev, "%s TPM (device-id 0x%X, rev-id %d)\n",
+> > +		 (chip->flags & TPM_CHIP_FLAG_TPM2) ? "2.0" : "1.2",
+> >  		 vendor >> 16, ioread8(chip->vendor.iobase + TPM_RID(0)));
+> >  
+> >  	if (!itpm) {
+> > @@ -665,6 +695,23 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  	if (intfcaps & TPM_INTF_DATA_AVAIL_INT)
+> >  		dev_dbg(dev, "\tData Avail Int Support\n");
+> >  
+> > +	/* get the timeouts before testing for irqs */
+> > +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2) && tpm_get_timeouts(chip)) {
+> > +		dev_err(dev, "Could not get TPM timeouts and durations\n");
+> > +		rc = -ENODEV;
+> > +		goto out_err;
+> > +	}
+> > +
+> > +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> > +		rc = tpm2_do_selftest(chip);
+> > +	else
+> > +		rc = tpm_do_selftest(chip);
+> > +	if (rc) {
+> > +		dev_err(dev, "TPM self test failed\n");
+> > +		rc = -ENODEV;
+> > +		goto out_err;
+> > +	}
+> > +
+> >  	/* INTERRUPT Setup */
+> >  	init_waitqueue_head(&chip->vendor.read_queue);
+> >  	init_waitqueue_head(&chip->vendor.int_queue);
+> 
+> In Peter's for-james branch, commit 0e6cb01, the v1.2 calls to
+> tpm_get_timeouts and tpm_do_selftest were moved toward the end of 
+> tpm_tis_init.
 
-On Fri, Dec 5, 2014 at 12:24 PM, Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> wrote:
-> Hi Prabhakar,
->
-> Sorry, there are still a few items that need to be fixed.
-> If you can make a v4 with these issues addressed, then I can still make a
-> pull request, although it depends on Mauro whether it is still accepted for
-> 3.19.
->
-OK will post a v4 tonight fixing all the below issues.
+Right. My bad. Could this be reverted with a separate fix or do
+I prepare a new patch set? I would propose the former...
 
-FYI: Looking at the response of Mauro on 'soc-camera: 1st set for 3.19'
-he wont accept it!
+> > @@ -720,7 +767,10 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+> >  			chip->vendor.probed_irq = 0;
+> >  
+> >  			/* Generate Interrupts */
+> > -			tpm_gen_interrupt(chip);
+> > +			if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> > +				tpm2_gen_interrupt(chip);
+> > +			else
+> > +				tpm_gen_interrupt(chip);
+> >  
+> >  			chip->vendor.irq = chip->vendor.probed_irq;
+> >  
+> > @@ -808,14 +858,18 @@ static void tpm_tis_reenable_interrupts(struct tpm_chip *chip)
+> >  static int tpm_tis_resume(struct device *dev)
+> >  {
+> >  	struct tpm_chip *chip = dev_get_drvdata(dev);
+> > -	int ret;
+> > +	int ret = 0;
+> >  
+> >  	if (chip->vendor.irq)
+> >  		tpm_tis_reenable_interrupts(chip);
+> >  
+> > -	ret = tpm_pm_resume(dev);
+> > -	if (!ret)
+> > -		tpm_do_selftest(chip);
+> > +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> > +		tpm2_do_selftest(chip);
+> > +	else {
+> > +		ret = tpm_pm_resume(dev);
+> > +		if (!ret)
+> > +			tpm_do_selftest(chip);
+> > +	}
+> >  
+> >  	return ret;
+> >  }
+> > -- 
+> > 2.1.0
+> > 
 
-Thanks,
---Prabhakar Lad
-
-> On 12/04/2014 12:12 AM, Lad, Prabhakar wrote:
->> From: Benoit Parrot <bparrot-l0cyMroinI0@public.gmane.org>
->>
->> This patch adds Video Processing Front End (VPFE) driver for
->> AM437X family of devices
->> Driver supports the following:
->> - V4L2 API using MMAP buffer access based on videobuf2 api
->> - Asynchronous sensor/decoder sub device registration
->> - DT support
->
-> Just to confirm: this driver only supports SDTV formats? No HDTV?
-> I didn't see any VIDIOC_*_DV_TIMINGS support, so I assume it really
-> isn't supported.
->
->>
->> Signed-off-by: Benoit Parrot <bparrot-l0cyMroinI0@public.gmane.org>
->> Signed-off-by: Darren Etheridge <detheridge-l0cyMroinI0@public.gmane.org>
->> Signed-off-by: Lad, Prabhakar <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> ---
->
-> <snip>
->
->> diff --git a/drivers/media/platform/am437x/am437x-vpfe.c b/drivers/media/platform/am437x/am437x-vpfe.c
->> new file mode 100644
->> index 0000000..25863e8
->> --- /dev/null
->> +++ b/drivers/media/platform/am437x/am437x-vpfe.c
->
-> <snip>
->
->> +
->> +static int
->> +cmp_v4l2_format(const struct v4l2_format *lhs, const struct v4l2_format *rhs)
->> +{
->> +     return lhs->type == rhs->type &&
->> +             lhs->fmt.pix.width == rhs->fmt.pix.width &&
->> +             lhs->fmt.pix.height == rhs->fmt.pix.height &&
->> +             lhs->fmt.pix.pixelformat == rhs->fmt.pix.pixelformat &&
->> +             lhs->fmt.pix.field == rhs->fmt.pix.field &&
->> +             lhs->fmt.pix.colorspace == rhs->fmt.pix.colorspace;
->
-> Add a check for pix.ycbcr_enc and pix.quantization.
->
-OK
-
-> <snip>
->
->> +/*
->> + * vpfe_release : This function is based on the vb2_fop_release
->> + * helper function.
->> + * It has been augmented to handle module power management,
->> + * by disabling/enabling h/w module fcntl clock when necessary.
->> + */
->> +static int vpfe_release(struct file *file)
->> +{
->> +     struct vpfe_device *vpfe = video_drvdata(file);
->> +     int ret;
->> +
->> +     vpfe_dbg(2, vpfe, "vpfe_release\n");
->> +
->> +     ret = _vb2_fop_release(file, NULL);
->
-> This isn't going to work. _vb2_fop_release calls v4l2_fh_release(), so
-> the v4l2_fh_is_singular_file(file) will be wrong and you release the fh
-> once too many.
->
-> I would do this:
->
->         if (!v4l2_fh_is_singular_file(file))
->                 return vb2_fop_release(file);
->         mutex_lock(&vpfe->lock);
->         ret = _vb2_fop_release(file, NULL);
->         vpfe_ccdc_close(&vpfe->ccdc, vpfe->pdev);
->         mutex_unlock(&vpfe->lock);
->         return ret;
->
->> +
->> +     if (v4l2_fh_is_singular_file(file)) {
->> +             mutex_lock(&vpfe->lock);
->> +             vpfe_ccdc_close(&vpfe->ccdc, vpfe->pdev);
->> +             v4l2_fh_release(file);
->> +             mutex_unlock(&vpfe->lock);
->> +     }
->> +
->> +     return ret;
->> +}
->
-> <snip>
->
->> +static int vpfe_enum_size(struct file *file, void  *priv,
->> +                       struct v4l2_frmsizeenum *fsize)
->> +{
->> +     struct vpfe_device *vpfe = video_drvdata(file);
->> +     struct v4l2_subdev_frame_size_enum fse;
->> +     struct vpfe_subdev_info *sdinfo;
->> +     struct v4l2_mbus_framefmt mbus;
->> +     struct v4l2_pix_format pix;
->> +     struct vpfe_fmt *fmt;
->> +     int ret;
->> +
->> +     vpfe_dbg(2, vpfe, "vpfe_enum_size\n");
->> +
->> +     /* check for valid format */
->> +     fmt = find_format_by_pix(fsize->pixel_format);
->> +     if (!fmt) {
->> +             vpfe_dbg(3, vpfe, "Invalid pixel code: %x, default used instead\n",
->> +                     fsize->pixel_format);
->> +             return -EINVAL;
->> +     }
->> +
->> +     memset(fsize->reserved, 0x0, sizeof(fsize->reserved));
->> +
->> +     sdinfo = vpfe->current_subdev;
->> +     if (!sdinfo->sd)
->> +             return -EINVAL;
->> +
->> +     memset(&pix, 0x0, sizeof(pix));
->> +     /* Construct pix from parameter and use default for the rest */
->> +     pix.pixelformat = fsize->pixel_format;
->> +     pix.width = 640;
->> +     pix.height = 480;
->> +     pix.colorspace = V4L2_COLORSPACE_SRGB;
->> +     pix.field = V4L2_FIELD_NONE;
->> +     pix_to_mbus(vpfe, &pix, &mbus);
->> +
->> +     memset(&fse, 0x0, sizeof(fse));
->> +     fse.index = fsize->index;
->> +     fse.pad = 0;
->> +     fse.code = mbus.code;
->> +     ret = v4l2_subdev_call(sdinfo->sd, pad, enum_frame_size, NULL, &fse);
->
-> FYI: strictly speaking this is wrong since this op theoretically expects a
-> v4l2_subdev_fh pointer instead of a NULL argument. However, you do not have
-> an alternative right now. As you know, I've been working on fixing this, so
-> if that gets accepted, then you need to update this code as well in a later
-> patch.
->
->> +     if (ret)
->> +             return -EINVAL;
->> +
->> +     vpfe_dbg(1, vpfe, "vpfe_enum_size: index: %d code: %x W:[%d,%d] H:[%d,%d]\n",
->> +             fse.index, fse.code, fse.min_width, fse.max_width,
->> +             fse.min_height, fse.max_height);
->> +
->> +     fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
->> +     fsize->discrete.width = fse.max_width;
->> +     fsize->discrete.height = fse.max_height;
->> +
->> +     vpfe_dbg(1, vpfe, "vpfe_enum_size: index: %d pixformat: %s size: %dx%d\n",
->> +             fsize->index, print_fourcc(fsize->pixel_format),
->> +             fsize->discrete.width, fsize->discrete.height);
->> +
->> +     return 0;
->> +}
->> +
->
-> <snip>
->
->> +static int
->> +vpfe_g_selection(struct file *file, void *fh, struct v4l2_selection *s)
->> +{
->> +     struct vpfe_device *vpfe = video_drvdata(file);
->> +
->> +     switch (s->target) {
->> +     case V4L2_SEL_TGT_COMPOSE_DEFAULT:
->> +     case V4L2_SEL_TGT_COMPOSE_BOUNDS:
->
-> These two COMPOSE cases should be dropped, since there is no compose support!
->
->> +     case V4L2_SEL_TGT_CROP_BOUNDS:
->> +     case V4L2_SEL_TGT_CROP_DEFAULT:
->> +             s->r.left = s->r.top = 0;
->> +             s->r.width = vpfe->crop.width;
->> +             s->r.height = vpfe->crop.height;
->> +             break;
->> +
->> +     case V4L2_SEL_TGT_CROP:
->> +             s->r = vpfe->crop;
->> +             break;
->> +
->> +     default:
->> +             return -EINVAL;
->> +     }
->> +
->> +     return 0;
->> +}
->
-> <snip>
->
-> Regards,
->
->         Hans
+/Jarkko
