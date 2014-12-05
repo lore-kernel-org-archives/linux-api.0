@@ -1,41 +1,53 @@
-From: Olof Johansson <olof@lixom.net>
-Subject: Re: [PATCH v4 0/5] Add Spreadtrum Sharkl64 Platform support
-Date: Thu, 4 Dec 2014 23:24:02 -0800
-Message-ID: <20141205072402.GC29274@quad.lixom.net>
-References: <sc9836v4>
- <1417692860-18841-1-git-send-email-chunyan.zhang@spreadtrum.com>
+From: Dave Airlie <airlied@gmail.com>
+Subject: Re: [PATCH v15 0/3] Add drm driver for Rockchip Socs
+Date: Fri, 5 Dec 2014 17:26:04 +1000
+Message-ID: <CAPM=9tzcB0XaenK1RjJoOBpJjrq84atJP59=kh6WMA2-OcFpEA@mail.gmail.com>
+References: <1417511600-7054-1-git-send-email-mark.yao@rock-chips.com>
+	<2556534.qktPW9tbxy@diego>
+	<CAGS+omAqkQaK99OX_uAf2Z6-fep2Euwn112Oj5gFpRca8ZAgew@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1417692860-18841-1-git-send-email-chunyan.zhang@spreadtrum.com>
+In-Reply-To: <CAGS+omAqkQaK99OX_uAf2Z6-fep2Euwn112Oj5gFpRca8ZAgew@mail.gmail.com>
 Sender: linux-doc-owner@vger.kernel.org
-To: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
-Cc: gregkh@linuxfoundation.org, mark.rutland@arm.com, arnd@arndb.de, gnomes@lxorguk.ukuu.org.uk, broonie@kernel.org, robh+dt@kernel.org, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, will.deacon@arm.com, catalin.marinas@arm.com, jslaby@suse.cz, jason@lakedaemon.net, heiko@sntech.de, florian.vaussard@epfl.ch, andrew@lunn.ch, rrichter@cavium.com, hytszk@gmail.com, grant.likely@linaro.org, orsonzhai@gmail.com, geng.ren@spreadtrum.com, zhizhou.zhang@spreadtrum.com, lanqing.liu@spreadtrum.com, zhang.lyra@gmail.com, wei.qiao@spreadtrum.com, devicetree@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, arm@kernel.org, linux-serial@vger.kernel.org, sprdlinux@freelists.org, linux-arm-kernel@lists.infradead.org
+To: Daniel Kurtz <djkurtz@chromium.org>
+Cc: =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, Mark Yao <mark.yao@rock-chips.com>, Mark Rutland <mark.rutland@arm.com>, linux-doc@vger.kernel.org, Kever Yang <kever.yang@rock-chips.com>, dri-devel <dri-devel@lists.freedesktop.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Boris BREZILLON <boris.brezillon@free-electrons.com>, simon xue <xxm@rock-chips.com>, "open list:ARM/Rockchip SoC..." <linux-rockchip@lists.infradead.org>, Grant Likely <grant.likely@linaro.org>, Tao Huang <huangtao@rock-chips.com>, "open list:OPEN FIRMWARE AND..." <devicetree@vger.kernel.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Dominik Behr <dbehr@chromium.org>, =?UTF-8?B?6Zer5a2d5Yab?= <yxj@rock-chips.com>, Eddie Cai <cf@rock-chips.com>, Rob Herring <robh+dt@kernel.org>, John Stultz <john.stultz@linar>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 04, 2014 at 07:34:15PM +0800, Chunyan Zhang wrote:
-> Spreadtrum is a rapid growing chip vendor providing smart phone total solutions.
-> 
-> Sharkl64 Platform is nominated as a SoC infrastructure that supports 4G/3G/2G
-> standards based on ARMv8 multiple core architecture.Now we have only one
-> SoC(SC9836) based on this Platform in developing.
-> 
-> This patchset adds Sharkl64 support in arm64 device tree and the serial driver
-> of SC9836-UART.
-> 
-> This patchset also has patches which address "sprd" prefix and DT compatible
-> strings for nodes which appear un-documented.
-> 
-> This version code was tesed both on Fast Mode and sc9836-fpga board.
-> We use the latest boot-wrapper-aarch64 as the bootloader.
+On 5 December 2014 at 05:29, Daniel Kurtz <djkurtz@chromium.org> wrote:
+> On Tue, Dec 2, 2014 at 1:31 AM, Heiko St=C3=BCbner <heiko@sntech.de> =
+wrote:
+>> Hi Mark,
+>>
+>> Am Dienstag, 2. Dezember 2014, 17:13:20 schrieb Mark Yao:
+>>> This a series of patches is a DRM Driver for Rockchip Socs, add sup=
+port
+>>> for vop devices. Future patches will add additional encoders/connec=
+tors,
+>>> such as eDP, HDMI.
+>>>
+>>> The basic "crtc" for rockchip is a "VOP" - Video Output Processor.
+>>> the vop devices found on Rockchip rk3288 Soc, rk3288 soc have two s=
+imilar
+>>> Vop devices. Vop devices support iommu mapping, we use dma-mapping =
+API with
+>>> ARM_DMA_USE_IOMMU.
+>>
+>> [...]
+>>
+>>> Changes in v15:
+>>> - remove depends on ARM_DMA_USE_IOMMU & IOMMU_API which cause
+>>>   recursive dependency problem
+>
+> I thought the recommended solution for this was to fix OMAP3 to not
+> select  ARM_DMA_USE_IOMMU and OMAP_IOMMU, not to drop the 'depends on=
+'
+> in drm/rockchip?
 
-Hi,
+Lets fix that up once we get this merged, if I had a tree based on the
+iommu I'd have
+it -next now.
 
-We only got 3 of the 5 patches of this version (1, 2 and 4). Can you
-resend the dts patch to us (I'm guessing the serial one will go through Greg).
-
-
-Thanks,
-
--Olof
+can I get a pull for that?
+Dave.
