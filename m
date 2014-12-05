@@ -1,147 +1,124 @@
-From: Peter =?iso-8859-15?q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
-Subject: Re: [PATCH v9 6/8] tpm: TPM 2.0 baseline support
-Date: Fri, 5 Dec 2014 00:17:40 +0100
-Message-ID: <201412050017.40668.PeterHuewe@gmx.de>
-References: <1417672518-4530-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1417672518-4530-7-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same value
+ for all architectures
+Date: Thu, 4 Dec 2014 16:14:46 -0800
+Message-ID: <20141205001446.GC10064@birch.djwong.org>
+References: <5480E715.3020900@gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-15"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417672518-4530-7-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5480E715.3020900@gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Chen Gang <gang.chen.5i5j@gmail.com>
+Cc: "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "rth@twiddle.net" <rth@twiddle.net>, "ink@jurassic.park.msu.ru" <ink@jurassic.park.msu.ru>, "mattst88@gmail.com" <mattst88@gmail.com>, Ralf Baechle <ralf@linux-mips.org>, "jejb@parisc-linux.org" <jejb@parisc-linux.org>, "deller@gmx.de" <deller@gmx.de>, "chris@zankel.net" <chris@zankel.net>, "jcmvbkbc@gmail.com" <jcmvbkbc@gmail.com>, Arnd Bergmann <arnd@arndb.de>, minchan@kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Am Donnerstag, 4. Dezember 2014, 06:55:16 schrieb Jarkko Sakkinen:
-> TPM 2.0 devices are separated by adding a field 'flags' to struct
-> tpm_chip and defining a flag TPM_CHIP_FLAG_TPM2 for tagging them.
+On Fri, Dec 05, 2014 at 06:58:29AM +0800, Chen Gang wrote:
+> For uapi, need try to let all macros have same value, and MADV_FREE is
+> added into main branch recently, so need redefine MADV_FREE for it.
 > 
-> This patch adds the following internal functions:
+> At present, '8' can be shared with all architectures, so redefine it to
+> '8'.
+
+Hmmm... you might want to talk to the dietlibc people if you do this:
+
+$ grep -rn MADV_FREE /usr/include/
+/usr/include/diet/sys/mman.h:101:#define MADV_FREE      0x5             /* (Solaris) contents can be freed */
+
+Though the sole definition only exists on sparc/powerpc/powerpc64, so who
+knows...
+
+--D
+
 > 
-> - tpm2_get_random()
-> - tpm2_get_tpm_pt()
-> - tpm2_pcr_extend()
-> - tpm2_pcr_read()
-> - tpm2_startup()
-> 
-> Additionally, the following exported functions are implemented for
-> implementing TPM 2.0 device drivers:
-> 
-> - tpm2_do_selftest()
-> - tpm2_calc_ordinal_durations()
-> - tpm2_gen_interrupt()
-> 
-> The existing functions that are exported for the use for existing
-> subsystems have been changed to check the flags field in struct
-> tpm_chip and use appropriate TPM 2.0 counterpart if
-> TPM_CHIP_FLAG_TPM2 is est.
-> 
-> The code for tpm2_calc_ordinal_duration() and tpm2_startup() were
-> originally written by Will Arthur.
-> 
-> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Signed-off-by: Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Chen Gang <gang.chen.5i5j@gmail.com>
 > ---
->  drivers/char/tpm/Makefile        |   2 +-
->  drivers/char/tpm/tpm-chip.c      |  27 +-
->  drivers/char/tpm/tpm-interface.c |  24 +-
->  drivers/char/tpm/tpm.h           |  61 +++++
->  drivers/char/tpm/tpm2-cmd.c      | 542
-> +++++++++++++++++++++++++++++++++++++++ 5 files changed, 641
-> insertions(+), 15 deletions(-)
->  create mode 100644 drivers/char/tpm/tpm2-cmd.c
+>  arch/alpha/include/uapi/asm/mman.h     | 2 +-
+>  arch/mips/include/uapi/asm/mman.h      | 2 +-
+>  arch/parisc/include/uapi/asm/mman.h    | 2 +-
+>  arch/xtensa/include/uapi/asm/mman.h    | 2 +-
+>  include/uapi/asm-generic/mman-common.h | 2 +-
+>  5 files changed, 5 insertions(+), 5 deletions(-)
 > 
-> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
-> index c715596..88848ed 100644
-> --- a/drivers/char/tpm/Makefile
-> +++ b/drivers/char/tpm/Makefile
-> @@ -2,7 +2,7 @@
->  # Makefile for the kernel tpm device drivers.
->  #
->  obj-$(CONFIG_TCG_TPM) += tpm.o
-> -tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o tpm-chip.o
-> +tpm-y := tpm-interface.o tpm-dev.o tpm-sysfs.o tpm-chip.o tpm2-cmd.o
->  tpm-$(CONFIG_ACPI) += tpm_ppi.o
-> 
->  ifdef CONFIG_ACPI
-> diff --git a/drivers/char/tpm/tpm-chip.c b/drivers/char/tpm/tpm-chip.c
-> index 7741e28..3f3f2de 100644
-> --- a/drivers/char/tpm/tpm-chip.c
-> +++ b/drivers/char/tpm/tpm-chip.c
-> @@ -195,15 +195,18 @@ int tpm_chip_register(struct tpm_chip *chip)
->  	if (rc)
->  		return rc;
-> 
-> -	rc = tpm_sysfs_add_device(chip);
-> -	if (rc)
-> -		goto del_misc;
-> +	/* Populate sysfs for TPM1 devices. */
-> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
-> +		rc = tpm_sysfs_add_device(chip);
-> +		if (rc)
-> +			goto del_misc;
-> 
-> -	rc = tpm_add_ppi(chip);
-> -	if (rc)
-> -		goto del_sysfs;
-> +		rc = tpm_add_ppi(chip);
-> +		if (rc)
-> +			goto del_sysfs;
-> 
-> -	chip->bios_dir = tpm_bios_log_setup(chip->devname);
-> +		chip->bios_dir = tpm_bios_log_setup(chip->devname);
-> +	}
-> 
->  	/* Make the chip available. */
->  	spin_lock(&driver_lock);
-> @@ -236,10 +239,12 @@ void tpm_chip_unregister(struct tpm_chip *chip)
->  	spin_unlock(&driver_lock);
->  	synchronize_rcu();
-> 
-> -	if (chip->bios_dir)
-> -		tpm_bios_log_teardown(chip->bios_dir);
-> -	tpm_remove_ppi(chip);
-> -	tpm_sysfs_del_device(chip);
-> +	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
-> +		if (chip->bios_dir)
-> +			tpm_bios_log_teardown(chip->bios_dir);
-> +		tpm_remove_ppi(chip);
-> +		tpm_sysfs_del_device(chip);
-> +	}
-> 
->  	tpm_dev_del_device(chip);
->  }
-> diff --git a/drivers/char/tpm/tpm-interface.c
-> b/drivers/char/tpm/tpm-interface.c index b6f6b17..8a14887 100644
-> --- a/drivers/char/tpm/tpm-interface.c
-> +++ b/drivers/char/tpm/tpm-interface.c
-> @@ -360,7 +360,10 @@ ssize_t tpm_transmit(struct tpm_chip *chip, const char
-> *buf, if (chip->vendor.irq)
->  		goto out_recv;
-> 
-> -	stop = jiffies + tpm_calc_ordinal_duration(chip, ordinal);
-> +	if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> +		stop = jiffies + tpm2_calc_ordinal_duration(chip, ordinal);
-> +	else
-> +		stop = jiffies + tpm_calc_ordinal_duration(chip, ordinal);
->  	do {
->  		u8 status = chip->ops->status(chip);
->  		if ((status & chip->ops->req_complete_mask) ==
-> @@ -483,7 +486,7 @@ static const struct tpm_input_header tpm_startup_header
-> = { static int tpm_startup(struct tpm_chip *chip, __be16 startup_type) {
->  	struct tpm_cmd_t start_cmd;
-> -	start_cmd.header.in = tpm_startup_header;
-> +
-WHY?!? This renders tpm_startup useless.
-
-So NACK for this part.
->  	start_cmd.params.startup_in.startup_type = startup_type;
->  	return tpm_transmit_cmd(chip, &start_cmd, TPM_INTERNAL_RESULT_SIZE,
->  				"attempting to start the TPM");
-
-I'll get you an TPM1.2 :)
-
-Thanks
-Peter
+> diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+> index 836fbd4..0b8a5de 100644
+> --- a/arch/alpha/include/uapi/asm/mman.h
+> +++ b/arch/alpha/include/uapi/asm/mman.h
+> @@ -44,9 +44,9 @@
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
+>  #define MADV_DONTNEED	6		/* don't need these pages */
+> -#define MADV_FREE	7		/* free pages only if memory pressure */
+>  
+>  /* common/generic parameters */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+> index 106e741..d247f54 100644
+> --- a/arch/mips/include/uapi/asm/mman.h
+> +++ b/arch/mips/include/uapi/asm/mman.h
+> @@ -67,9 +67,9 @@
+>  #define MADV_SEQUENTIAL 2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+> index 6cb8db7..700d83f 100644
+> --- a/arch/parisc/include/uapi/asm/mman.h
+> +++ b/arch/parisc/include/uapi/asm/mman.h
+> @@ -40,9 +40,9 @@
+>  #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
+>  #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
+>  #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
+> -#define MADV_FREE	8		/* free pages only if memory pressure */
+>  
+>  /* common/generic parameters */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+> index 1b19f25..77eaca4 100644
+> --- a/arch/xtensa/include/uapi/asm/mman.h
+> +++ b/arch/xtensa/include/uapi/asm/mman.h
+> @@ -80,9 +80,9 @@
+>  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+> index 7a94102..8695959 100644
+> --- a/include/uapi/asm-generic/mman-common.h
+> +++ b/include/uapi/asm-generic/mman-common.h
+> @@ -34,9 +34,9 @@
+>  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> -- 
+> 1.9.3
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
