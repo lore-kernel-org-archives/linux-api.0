@@ -1,8 +1,7 @@
 From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCHv3 2/8] sched: new clone flag CLONE_NEWCGROUP for cgroup
-	namespace
-Date: Thu,  4 Dec 2014 17:55:44 -0800
-Message-ID: <1417744550-6461-3-git-send-email-adityakali@google.com>
+Subject: [PATCHv3 4/8] cgroup: export cgroup_get() and cgroup_put()
+Date: Thu,  4 Dec 2014 17:55:46 -0800
+Message-ID: <1417744550-6461-5-git-send-email-adityakali@google.com>
 References: <adityakali-cgroupns>
 	<1417744550-6461-1-git-send-email-adityakali@google.com>
 Mime-Version: 1.0
@@ -23,27 +22,88 @@ To: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@p
 Cc: richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-CLONE_NEWCGROUP will be used to create new cgroup namespace.
+move cgroup_get() and cgroup_put() into cgroup.h so that
+they can be called from other places.
 
 Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- include/uapi/linux/sched.h | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ include/linux/cgroup.h | 22 ++++++++++++++++++++++
+ kernel/cgroup.c        | 22 ----------------------
+ 2 files changed, 22 insertions(+), 22 deletions(-)
 
-diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
-index 34f9d73..2f90d00 100644
---- a/include/uapi/linux/sched.h
-+++ b/include/uapi/linux/sched.h
-@@ -21,8 +21,7 @@
- #define CLONE_DETACHED		0x00400000	/* Unused, ignored */
- #define CLONE_UNTRACED		0x00800000	/* set if the tracing process can't force CLONE_PTRACE on this clone */
- #define CLONE_CHILD_SETTID	0x01000000	/* set the TID in the child */
--/* 0x02000000 was previously the unused CLONE_STOPPED (Start in stopped state)
--   and is now available for re-use. */
-+#define CLONE_NEWCGROUP		0x02000000	/* New cgroup namespace */
- #define CLONE_NEWUTS		0x04000000	/* New utsname group? */
- #define CLONE_NEWIPC		0x08000000	/* New ipcs */
- #define CLONE_NEWUSER		0x10000000	/* New user namespace */
+diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+index d6930de..6e7533b 100644
+--- a/include/linux/cgroup.h
++++ b/include/linux/cgroup.h
+@@ -521,6 +521,28 @@ static inline bool cgroup_on_dfl(const struct cgroup *cgrp)
+ 	return cgrp->root == &cgrp_dfl_root;
+ }
+ 
++/* convenient tests for these bits */
++static inline bool cgroup_is_dead(const struct cgroup *cgrp)
++{
++	return !(cgrp->self.flags & CSS_ONLINE);
++}
++
++static inline void cgroup_get(struct cgroup *cgrp)
++{
++	WARN_ON_ONCE(cgroup_is_dead(cgrp));
++	css_get(&cgrp->self);
++}
++
++static inline bool cgroup_tryget(struct cgroup *cgrp)
++{
++	return css_tryget(&cgrp->self);
++}
++
++static inline void cgroup_put(struct cgroup *cgrp)
++{
++	css_put(&cgrp->self);
++}
++
+ /* no synchronization, the result can only be used as a hint */
+ static inline bool cgroup_has_tasks(struct cgroup *cgrp)
+ {
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index 5d8fc84..e12d36e 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -321,12 +321,6 @@ out_unlock:
+ 	return css;
+ }
+ 
+-/* convenient tests for these bits */
+-static inline bool cgroup_is_dead(const struct cgroup *cgrp)
+-{
+-	return !(cgrp->self.flags & CSS_ONLINE);
+-}
+-
+ struct cgroup_subsys_state *of_css(struct kernfs_open_file *of)
+ {
+ 	struct cgroup *cgrp = of->kn->parent->priv;
+@@ -1039,22 +1033,6 @@ static umode_t cgroup_file_mode(const struct cftype *cft)
+ 	return mode;
+ }
+ 
+-static void cgroup_get(struct cgroup *cgrp)
+-{
+-	WARN_ON_ONCE(cgroup_is_dead(cgrp));
+-	css_get(&cgrp->self);
+-}
+-
+-static bool cgroup_tryget(struct cgroup *cgrp)
+-{
+-	return css_tryget(&cgrp->self);
+-}
+-
+-static void cgroup_put(struct cgroup *cgrp)
+-{
+-	css_put(&cgrp->self);
+-}
+-
+ /**
+  * cgroup_calc_child_subsys_mask - calculate child_subsys_mask
+  * @cgrp: the target cgroup
 -- 
 2.2.0.rc0.207.ga3a616c
