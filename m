@@ -1,482 +1,199 @@
 From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCHv3 5/8] cgroup: introduce cgroup namespaces
-Date: Thu,  4 Dec 2014 17:55:47 -0800
-Message-ID: <1417744550-6461-6-git-send-email-adityakali@google.com>
+Subject: [PATCHv3 7/8] cgroup: mount cgroupns-root when inside non-init cgroupns
+Date: Thu,  4 Dec 2014 17:55:49 -0800
+Message-ID: <1417744550-6461-8-git-send-email-adityakali@google.com>
 References: <adityakali-cgroupns>
-	<1417744550-6461-1-git-send-email-adityakali@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+ <1417744550-6461-1-git-send-email-adityakali@google.com>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1417744550-6461-1-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Introduce the ability to create new cgroup namespace. The newly created
-cgroup namespace remembers the cgroup of the process at the point
-of creation of the cgroup namespace (referred as cgroupns-root).
-The main purpose of cgroup namespace is to virtualize the contents
-of /proc/self/cgroup file. Processes inside a cgroup namespace
-are only able to see paths relative to their namespace root
-(unless they are moved outside of their cgroupns-root, at which point
- they will see a relative path from their cgroupns-root).
-For a correctly setup container this enables container-tools
-(like libcontainer, lxc, lmctfy, etc.) to create completely virtualized
-containers without leaking system level cgroup hierarchy to the task.
-This patch only implements the 'unshare' part of the cgroupns.
+This patch enables cgroup mounting inside userns when a process
+as appropriate privileges. The cgroup filesystem mounted is
+rooted at the cgroupns-root. Thus, in a container-setup, only
+the hierarchy under the cgroupns-root is exposed inside the container.
+This allows container management tools to run inside the containers
+without depending on any global state.
+In order to support this, a new kernfs api is added to lookup the
+dentry for the cgroupns-root.
 
 Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- fs/proc/namespaces.c             |   1 +
- include/linux/cgroup.h           |  29 ++++++++-
- include/linux/cgroup_namespace.h |  36 +++++++++++
- include/linux/nsproxy.h          |   2 +
- include/linux/proc_ns.h          |   4 ++
- kernel/Makefile                  |   2 +-
- kernel/cgroup.c                  |  13 ++++
- kernel/cgroup_namespace.c        | 127 +++++++++++++++++++++++++++++++++++++++
- kernel/fork.c                    |   2 +-
- kernel/nsproxy.c                 |  19 +++++-
- 10 files changed, 230 insertions(+), 5 deletions(-)
+ fs/kernfs/mount.c      | 48 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/kernfs.h |  2 ++
+ kernel/cgroup.c        | 46 +++++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 95 insertions(+), 1 deletion(-)
 
-diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
-index 8902609..55bc5da 100644
---- a/fs/proc/namespaces.c
-+++ b/fs/proc/namespaces.c
-@@ -32,6 +32,7 @@ static const struct proc_ns_operations *ns_entries[] = {
- 	&userns_operations,
- #endif
- 	&mntns_operations,
-+	&cgroupns_operations,
- };
- 
- static const struct file_operations ns_file_operations = {
-diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
-index 6e7533b..94a5a0c 100644
---- a/include/linux/cgroup.h
-+++ b/include/linux/cgroup.h
-@@ -22,6 +22,8 @@
- #include <linux/seq_file.h>
- #include <linux/kernfs.h>
- #include <linux/wait.h>
-+#include <linux/nsproxy.h>
-+#include <linux/types.h>
- 
- #ifdef CONFIG_CGROUPS
- 
-@@ -460,6 +462,13 @@ struct cftype {
- #endif
- };
- 
-+struct cgroup_namespace {
-+	atomic_t		count;
-+	unsigned int		proc_inum;
-+	struct user_namespace	*user_ns;
-+	struct cgroup		*root_cgrp;
-+};
-+
- extern struct cgroup_root cgrp_dfl_root;
- extern struct css_set init_css_set;
- 
-@@ -584,10 +593,28 @@ static inline int cgroup_name(struct cgroup *cgrp, char *buf, size_t buflen)
- 	return kernfs_name(cgrp->kn, buf, buflen);
+diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
+index f973ae9..efe5e15 100644
+--- a/fs/kernfs/mount.c
++++ b/fs/kernfs/mount.c
+@@ -62,6 +62,54 @@ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
+ 	return NULL;
  }
  
-+static inline char * __must_check cgroup_path_ns(struct cgroup_namespace *ns,
-+						 struct cgroup *cgrp, char *buf,
-+						 size_t buflen)
++/**
++ * kernfs_obtain_root - get a dentry for the given kernfs_node
++ * @sb: the kernfs super_block
++ * @kn: kernfs_node for which a dentry is needed
++ *
++ * This can used used by callers which want to mount only a part of the kernfs
++ * as root of the filesystem.
++ */
++struct dentry *kernfs_obtain_root(struct super_block *sb,
++				  struct kernfs_node *kn)
 +{
-+	if (ns) {
-+		BUG_ON(!cgroup_on_dfl(cgrp));
-+		return kernfs_path_from_node(ns->root_cgrp->kn, cgrp->kn, buf,
-+					     buflen);
-+	} else {
-+		return kernfs_path(cgrp->kn, buf, buflen);
++	struct dentry *dentry;
++	struct inode *inode;
++
++	BUG_ON(sb->s_op != &kernfs_sops);
++
++	/* inode for the given kernfs_node should already exist. */
++	inode = ilookup(sb, kn->ino);
++	if (!inode) {
++		pr_debug("kernfs: could not get inode for '");
++		pr_cont_kernfs_path(kn);
++		pr_cont("'.\n");
++		return ERR_PTR(-EINVAL);
 +	}
++
++	/* instantiate and link root dentry */
++	dentry = d_obtain_root(inode);
++	if (!dentry) {
++		pr_debug("kernfs: could not get dentry for '");
++		pr_cont_kernfs_path(kn);
++		pr_cont("'.\n");
++		return ERR_PTR(-ENOMEM);
++	}
++
++	/* If this is a new dentry, set it up. We need kernfs_mutex because this
++	 * may be called by callers other than kernfs_fill_super. */
++	mutex_lock(&kernfs_mutex);
++	if (!dentry->d_fsdata) {
++		kernfs_get(kn);
++		dentry->d_fsdata = kn;
++	} else {
++		WARN_ON(dentry->d_fsdata != kn);
++	}
++	mutex_unlock(&kernfs_mutex);
++
++	return dentry;
 +}
 +
- static inline char * __must_check cgroup_path(struct cgroup *cgrp, char *buf,
- 					      size_t buflen)
+ static int kernfs_fill_super(struct super_block *sb, unsigned long magic)
  {
--	return kernfs_path(cgrp->kn, buf, buflen);
-+	if (cgroup_on_dfl(cgrp)) {
-+		return cgroup_path_ns(current->nsproxy->cgroup_ns, cgrp, buf,
-+				      buflen);
-+	} else {
-+		return cgroup_path_ns(NULL, cgrp, buf, buflen);
-+	}
- }
+ 	struct kernfs_super_info *info = kernfs_info(sb);
+diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
+index 3c2be75..b9538e0 100644
+--- a/include/linux/kernfs.h
++++ b/include/linux/kernfs.h
+@@ -274,6 +274,8 @@ void kernfs_put(struct kernfs_node *kn);
+ struct kernfs_node *kernfs_node_from_dentry(struct dentry *dentry);
+ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb);
  
- static inline void pr_cont_cgroup_name(struct cgroup *cgrp)
-diff --git a/include/linux/cgroup_namespace.h b/include/linux/cgroup_namespace.h
-new file mode 100644
-index 0000000..0b97b8d
---- /dev/null
-+++ b/include/linux/cgroup_namespace.h
-@@ -0,0 +1,36 @@
-+#ifndef _LINUX_CGROUP_NAMESPACE_H
-+#define _LINUX_CGROUP_NAMESPACE_H
-+
-+#include <linux/nsproxy.h>
-+#include <linux/cgroup.h>
-+#include <linux/types.h>
-+#include <linux/user_namespace.h>
-+
-+extern struct cgroup_namespace init_cgroup_ns;
-+
-+static inline struct cgroup *current_cgroupns_root(void)
-+{
-+	return current->nsproxy->cgroup_ns->root_cgrp;
-+}
-+
-+extern void free_cgroup_ns(struct cgroup_namespace *ns);
-+
-+static inline struct cgroup_namespace *get_cgroup_ns(
-+		struct cgroup_namespace *ns)
-+{
-+	if (ns)
-+		atomic_inc(&ns->count);
-+	return ns;
-+}
-+
-+static inline void put_cgroup_ns(struct cgroup_namespace *ns)
-+{
-+	if (ns && atomic_dec_and_test(&ns->count))
-+		free_cgroup_ns(ns);
-+}
-+
-+extern struct cgroup_namespace *copy_cgroup_ns(unsigned long flags,
-+					       struct user_namespace *user_ns,
-+					       struct cgroup_namespace *old_ns);
-+
-+#endif  /* _LINUX_CGROUP_NAMESPACE_H */
-diff --git a/include/linux/nsproxy.h b/include/linux/nsproxy.h
-index 35fa08f..ac0d65b 100644
---- a/include/linux/nsproxy.h
-+++ b/include/linux/nsproxy.h
-@@ -8,6 +8,7 @@ struct mnt_namespace;
- struct uts_namespace;
- struct ipc_namespace;
- struct pid_namespace;
-+struct cgroup_namespace;
- struct fs_struct;
- 
- /*
-@@ -33,6 +34,7 @@ struct nsproxy {
- 	struct mnt_namespace *mnt_ns;
- 	struct pid_namespace *pid_ns_for_children;
- 	struct net 	     *net_ns;
-+	struct cgroup_namespace *cgroup_ns;
- };
- extern struct nsproxy init_nsproxy;
- 
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 34a1e10..e56dd73 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -6,6 +6,8 @@
- 
- struct pid_namespace;
- struct nsproxy;
-+struct task_struct;
-+struct inode;
- 
- struct proc_ns_operations {
- 	const char *name;
-@@ -27,6 +29,7 @@ extern const struct proc_ns_operations ipcns_operations;
- extern const struct proc_ns_operations pidns_operations;
- extern const struct proc_ns_operations userns_operations;
- extern const struct proc_ns_operations mntns_operations;
-+extern const struct proc_ns_operations cgroupns_operations;
- 
- /*
-  * We always define these enumerators
-@@ -37,6 +40,7 @@ enum {
- 	PROC_UTS_INIT_INO	= 0xEFFFFFFEU,
- 	PROC_USER_INIT_INO	= 0xEFFFFFFDU,
- 	PROC_PID_INIT_INO	= 0xEFFFFFFCU,
-+	PROC_CGROUP_INIT_INO	= 0xEFFFFFFBU,
- };
- 
- #ifdef CONFIG_PROC_FS
-diff --git a/kernel/Makefile b/kernel/Makefile
-index dc5c775..d9731e2 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -50,7 +50,7 @@ obj-$(CONFIG_BSD_PROCESS_ACCT) += acct.o
- obj-$(CONFIG_KEXEC) += kexec.o
- obj-$(CONFIG_BACKTRACE_SELF_TEST) += backtracetest.o
- obj-$(CONFIG_COMPAT) += compat.o
--obj-$(CONFIG_CGROUPS) += cgroup.o
-+obj-$(CONFIG_CGROUPS) += cgroup.o cgroup_namespace.o
- obj-$(CONFIG_CGROUP_FREEZER) += cgroup_freezer.o
- obj-$(CONFIG_CPUSETS) += cpuset.o
- obj-$(CONFIG_UTS_NS) += utsname.o
++struct dentry *kernfs_obtain_root(struct super_block *sb,
++				  struct kernfs_node *kn);
+ struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
+ 				       unsigned int flags, void *priv);
+ void kernfs_destroy_root(struct kernfs_root *root);
 diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index e12d36e..b1ae6d9 100644
+index b1ae6d9..e779890 100644
 --- a/kernel/cgroup.c
 +++ b/kernel/cgroup.c
-@@ -57,6 +57,8 @@
- #include <linux/vmalloc.h> /* TODO: replace with more sophisticated array */
- #include <linux/kthread.h>
- #include <linux/delay.h>
-+#include <linux/proc_ns.h>
-+#include <linux/cgroup_namespace.h>
+@@ -1438,6 +1438,14 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
+ 			return -ENOENT;
+ 	}
  
- #include <linux/atomic.h>
- 
-@@ -195,6 +197,15 @@ static void kill_css(struct cgroup_subsys_state *css);
- static int cgroup_addrm_files(struct cgroup *cgrp, struct cftype cfts[],
- 			      bool is_add);
- 
-+struct cgroup_namespace init_cgroup_ns = {
-+	.count = {
-+		.counter = 1,
-+	},
-+	.proc_inum = PROC_CGROUP_INIT_INO,
-+	.user_ns = &init_user_ns,
-+	.root_cgrp = &cgrp_dfl_root.cgrp,
-+};
-+
- /* IDR wrappers which synchronize using cgroup_idr_lock */
- static int cgroup_idr_alloc(struct idr *idr, void *ptr, int start, int end,
- 			    gfp_t gfp_mask)
-@@ -4989,6 +5000,8 @@ int __init cgroup_init(void)
- 	unsigned long key;
- 	int ssid, err;
- 
-+	get_user_ns(init_cgroup_ns.user_ns);
-+
- 	BUG_ON(cgroup_init_cftypes(NULL, cgroup_dfl_base_files));
- 	BUG_ON(cgroup_init_cftypes(NULL, cgroup_legacy_base_files));
- 
-diff --git a/kernel/cgroup_namespace.c b/kernel/cgroup_namespace.c
-new file mode 100644
-index 0000000..0e0ef3a
---- /dev/null
-+++ b/kernel/cgroup_namespace.c
-@@ -0,0 +1,127 @@
-+/*
-+ *  Copyright (C) 2014 Google Inc.
-+ *
-+ *  Author: Aditya Kali (adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org)
-+ *
-+ *  This program is free software; you can redistribute it and/or modify it
-+ *  under the terms of the GNU General Public License as published by the Free
-+ *  Software Foundation, version 2 of the License.
-+ */
-+
-+#include <linux/cgroup.h>
-+#include <linux/cgroup_namespace.h>
-+#include <linux/sched.h>
-+#include <linux/slab.h>
-+#include <linux/nsproxy.h>
-+#include <linux/proc_ns.h>
-+
-+static struct cgroup_namespace *alloc_cgroup_ns(void)
-+{
-+	struct cgroup_namespace *new_ns;
-+
-+	new_ns = kzalloc(sizeof(struct cgroup_namespace), GFP_KERNEL);
-+	if (new_ns)
-+		atomic_set(&new_ns->count, 1);
-+	return new_ns;
-+}
-+
-+void free_cgroup_ns(struct cgroup_namespace *ns)
-+{
-+	cgroup_put(ns->root_cgrp);
-+	put_user_ns(ns->user_ns);
-+	proc_free_inum(ns->proc_inum);
-+	kfree(ns);
-+}
-+EXPORT_SYMBOL(free_cgroup_ns);
-+
-+struct cgroup_namespace *copy_cgroup_ns(unsigned long flags,
-+					struct user_namespace *user_ns,
-+					struct cgroup_namespace *old_ns)
-+{
-+	struct cgroup_namespace *new_ns = NULL;
-+	struct cgroup *cgrp = NULL;
-+	int err;
-+
-+	BUG_ON(!old_ns);
-+
-+	if (!(flags & CLONE_NEWCGROUP))
-+		return get_cgroup_ns(old_ns);
-+
-+	/* Allow only sysadmin to create cgroup namespace. */
-+	err = -EPERM;
-+	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
-+		goto err_out;
-+
-+	/* CGROUPNS only virtualizes the cgroup path on the unified hierarchy.
++	/* If inside a non-init cgroup namespace, only allow default hierarchy
++	 * to be mounted.
 +	 */
-+	cgrp = get_task_cgroup(current);
-+
-+	err = -ENOMEM;
-+	new_ns = alloc_cgroup_ns();
-+	if (!new_ns)
-+		goto err_out;
-+
-+	err = proc_alloc_inum(&new_ns->proc_inum);
-+	if (err)
-+		goto err_out;
-+
-+	new_ns->user_ns = get_user_ns(user_ns);
-+	new_ns->root_cgrp = cgrp;
-+
-+	return new_ns;
-+
-+err_out:
-+	if (cgrp)
-+		cgroup_put(cgrp);
-+	kfree(new_ns);
-+	return ERR_PTR(err);
-+}
-+
-+static int cgroupns_install(struct nsproxy *nsproxy, void *ns)
-+{
-+	pr_info("setns not supported for cgroup namespace");
-+	return -EINVAL;
-+}
-+
-+static void *cgroupns_get(struct task_struct *task)
-+{
-+	struct cgroup_namespace *ns = NULL;
-+	struct nsproxy *nsproxy;
-+
-+	task_lock(task);
-+	nsproxy = task->nsproxy;
-+	if (nsproxy) {
-+		ns = nsproxy->cgroup_ns;
-+		get_cgroup_ns(ns);
++	if ((current->nsproxy->cgroup_ns != &init_cgroup_ns) &&
++	    !(opts->flags & CGRP_ROOT_SANE_BEHAVIOR)) {
++		return -EINVAL;
 +	}
-+	task_unlock(task);
 +
-+	return ns;
-+}
-+
-+static void cgroupns_put(void *ns)
+ 	if (opts->flags & CGRP_ROOT_SANE_BEHAVIOR) {
+ 		pr_warn("sane_behavior: this is still under development and its behaviors will change, proceed at your own risk\n");
+ 		if (nr_opts != 1) {
+@@ -1630,6 +1638,15 @@ static void init_cgroup_root(struct cgroup_root *root,
+ 		set_bit(CGRP_CPUSET_CLONE_CHILDREN, &root->cgrp.flags);
+ }
+ 
++struct dentry *cgroupns_get_root(struct super_block *sb,
++				 struct cgroup_namespace *ns)
 +{
-+	put_cgroup_ns(ns);
++	struct dentry *nsdentry;
++
++	nsdentry = kernfs_obtain_root(sb, ns->root_cgrp->kn);
++	return nsdentry;
 +}
 +
-+static unsigned int cgroupns_inum(void *ns)
-+{
-+	struct cgroup_namespace *cgroup_ns = ns;
+ static int cgroup_setup_root(struct cgroup_root *root, unsigned int ss_mask)
+ {
+ 	LIST_HEAD(tmp_links);
+@@ -1734,6 +1751,14 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ 	int ret;
+ 	int i;
+ 	bool new_sb;
++	struct cgroup_namespace *ns =
++		get_cgroup_ns(current->nsproxy->cgroup_ns);
 +
-+	return cgroup_ns->proc_inum;
-+}
-+
-+const struct proc_ns_operations cgroupns_operations = {
-+	.name		= "cgroup",
-+	.type		= CLONE_NEWCGROUP,
-+	.get		= cgroupns_get,
-+	.put		= cgroupns_put,
-+	.install	= cgroupns_install,
-+	.inum		= cgroupns_inum,
-+};
-+
-+static __init int cgroup_namespaces_init(void)
-+{
-+	return 0;
-+}
-+subsys_initcall(cgroup_namespaces_init);
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 9b7d746..d22d793 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1797,7 +1797,7 @@ static int check_unshare_flags(unsigned long unshare_flags)
- 	if (unshare_flags & ~(CLONE_THREAD|CLONE_FS|CLONE_NEWNS|CLONE_SIGHAND|
- 				CLONE_VM|CLONE_FILES|CLONE_SYSVSEM|
- 				CLONE_NEWUTS|CLONE_NEWIPC|CLONE_NEWNET|
--				CLONE_NEWUSER|CLONE_NEWPID))
-+				CLONE_NEWUSER|CLONE_NEWPID|CLONE_NEWCGROUP))
- 		return -EINVAL;
++	/* Check if the caller has permission to mount. */
++	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
++		put_cgroup_ns(ns);
++		return ERR_PTR(-EPERM);
++	}
+ 
  	/*
- 	 * Not implemented, but pretend it works if there is nothing to
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index ef42d0a..a8b1970 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -25,6 +25,7 @@
- #include <linux/proc_ns.h>
- #include <linux/file.h>
- #include <linux/syscalls.h>
-+#include <linux/cgroup_namespace.h>
+ 	 * The first time anyone tries to mount a cgroup, enable the list
+@@ -1866,11 +1891,28 @@ out_free:
+ 	kfree(opts.release_agent);
+ 	kfree(opts.name);
  
- static struct kmem_cache *nsproxy_cachep;
+-	if (ret)
++	if (ret) {
++		put_cgroup_ns(ns);
+ 		return ERR_PTR(ret);
++	}
  
-@@ -39,6 +40,7 @@ struct nsproxy init_nsproxy = {
- #ifdef CONFIG_NET
- 	.net_ns			= &init_net,
- #endif
-+	.cgroup_ns		= &init_cgroup_ns,
+ 	dentry = kernfs_mount(fs_type, flags, root->kf_root,
+ 				CGROUP_SUPER_MAGIC, &new_sb);
++
++	if (!IS_ERR(dentry) && (root == &cgrp_dfl_root)) {
++		/* If this mount is for the default hierarchy in non-init cgroup
++		 * namespace, then instead of root cgroup's dentry, we return
++		 * the dentry corresponding to the cgroupns->root_cgrp.
++		 */
++		if (ns != &init_cgroup_ns) {
++			struct dentry *nsdentry;
++
++			nsdentry = cgroupns_get_root(dentry->d_sb, ns);
++			dput(dentry);
++			dentry = nsdentry;
++		}
++	}
++
+ 	if (IS_ERR(dentry) || !new_sb)
+ 		cgroup_put(&root->cgrp);
+ 
+@@ -1883,6 +1925,7 @@ out_free:
+ 		deactivate_super(pinned_sb);
+ 	}
+ 
++	put_cgroup_ns(ns);
+ 	return dentry;
+ }
+ 
+@@ -1911,6 +1954,7 @@ static struct file_system_type cgroup_fs_type = {
+ 	.name = "cgroup",
+ 	.mount = cgroup_mount,
+ 	.kill_sb = cgroup_kill_sb,
++	.fs_flags = FS_USERNS_MOUNT,
  };
  
- static inline struct nsproxy *create_nsproxy(void)
-@@ -92,6 +94,13 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
- 		goto out_pid;
- 	}
- 
-+	new_nsp->cgroup_ns = copy_cgroup_ns(flags, user_ns,
-+					    tsk->nsproxy->cgroup_ns);
-+	if (IS_ERR(new_nsp->cgroup_ns)) {
-+		err = PTR_ERR(new_nsp->cgroup_ns);
-+		goto out_cgroup;
-+	}
-+
- 	new_nsp->net_ns = copy_net_ns(flags, user_ns, tsk->nsproxy->net_ns);
- 	if (IS_ERR(new_nsp->net_ns)) {
- 		err = PTR_ERR(new_nsp->net_ns);
-@@ -101,6 +110,9 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
- 	return new_nsp;
- 
- out_net:
-+	if (new_nsp->cgroup_ns)
-+		put_cgroup_ns(new_nsp->cgroup_ns);
-+out_cgroup:
- 	if (new_nsp->pid_ns_for_children)
- 		put_pid_ns(new_nsp->pid_ns_for_children);
- out_pid:
-@@ -128,7 +140,8 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
- 	struct nsproxy *new_ns;
- 
- 	if (likely(!(flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
--			      CLONE_NEWPID | CLONE_NEWNET)))) {
-+			      CLONE_NEWPID | CLONE_NEWNET |
-+			      CLONE_NEWCGROUP)))) {
- 		get_nsproxy(old_ns);
- 		return 0;
- 	}
-@@ -165,6 +178,8 @@ void free_nsproxy(struct nsproxy *ns)
- 		put_ipc_ns(ns->ipc_ns);
- 	if (ns->pid_ns_for_children)
- 		put_pid_ns(ns->pid_ns_for_children);
-+	if (ns->cgroup_ns)
-+		put_cgroup_ns(ns->cgroup_ns);
- 	put_net(ns->net_ns);
- 	kmem_cache_free(nsproxy_cachep, ns);
- }
-@@ -180,7 +195,7 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
- 	int err = 0;
- 
- 	if (!(unshare_flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
--			       CLONE_NEWNET | CLONE_NEWPID)))
-+			       CLONE_NEWNET | CLONE_NEWPID | CLONE_NEWCGROUP)))
- 		return 0;
- 
- 	user_ns = new_cred ? new_cred->user_ns : current_user_ns();
+ static struct kobject *cgroup_kobj;
 -- 
 2.2.0.rc0.207.ga3a616c
