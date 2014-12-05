@@ -1,213 +1,73 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH v3] media: platform: add VPFE capture driver support for
- AM437X
-Date: Fri, 05 Dec 2014 13:24:12 +0100
-Message-ID: <5481A3EC.8020803@xs4all.nl>
-References: <1417648378-18271-1-git-send-email-prabhakar.csengg@gmail.com>
+From: Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 0/5] Add Spreadtrum Sharkl64 Platform support
+Date: Fri, 5 Dec 2014 20:27:23 +0800
+Message-ID: <CAAfSe-uz534FiZufojKa8MdBi=VFqhuoFLwof7K+FqXG--AGaw@mail.gmail.com>
+References: <1417692860-18841-1-git-send-email-chunyan.zhang@spreadtrum.com>
+	<20141205104009.GE11889@leverpostej>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417648378-18271-1-git-send-email-prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20141205104009.GE11889@leverpostej>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Lad, Prabhakar" <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LMML <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+To: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>
+Cc: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "arnd-r2nGTMty4D4@public.gmane.org" <arnd-r2nGTMty4D4@public.gmane.org>, "gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org" <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, "broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <Pawel.Moll-5wv7dgnIgG8@public.gmane.org>, "ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org" <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, "galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org" <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Will Deacon <Will.Deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <Catalin.Marinas-5wv7dgnIgG8@public.gmane.org>, "jslaby-AlSwsSmVLrQ@public.gmane.org" <jslaby-AlSwsSmVLrQ@public.gmane.org>, "jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org" <jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org>, "heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org" <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, "florian.vaussard-p8DiymsW2f8@public.gmane.org" <florian.vaussard-p8DiymsW2f8@public.gmane.org>, "andrew-g2DYL2Zd6BY@public.gmane.org" <andrew-g2DYL2Zd6BY@public.gmane.org>, "rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org" <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, "hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org" <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>"orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <or>
 List-Id: linux-api@vger.kernel.org
 
-Hi Prabhakar,
+On Fri, Dec 5, 2014 at 6:40 PM, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org> wrote:
+> Hi,
+>
+> On Thu, Dec 04, 2014 at 11:34:15AM +0000, Chunyan Zhang wrote:
+>> Spreadtrum is a rapid growing chip vendor providing smart phone total solutions.
+>>
+>> Sharkl64 Platform is nominated as a SoC infrastructure that supports 4G/3G/2G
+>> standards based on ARMv8 multiple core architecture.Now we have only one
+>> SoC(SC9836) based on this Platform in developing.
+>>
+>> This patchset adds Sharkl64 support in arm64 device tree and the serial driver
+>> of SC9836-UART.
+>>
+>> This patchset also has patches which address "sprd" prefix and DT compatible
+>> strings for nodes which appear un-documented.
+>>
+>> This version code was tesed both on Fast Mode and sc9836-fpga board.
+>> We use the latest boot-wrapper-aarch64 as the bootloader.
+>>
+>> Changes from v3:
+>> * Addressed review comments:
+>>       - Added the description of clock property for sc9836-uart
+>>       - Revised the size of GICC to be 8KiB
+>>       - Added another compatible string for psci-0.1
+>
+> I had open questions on v3 regarding your PSCI imlpementation. You
+> mentioned that you are using the aarch64 bootwrapper, but your DT
+> describes PSCI 0.2, and the (upstream) bootwrapper does not implement
+> PSCI 0.2. Adding the old PSCI compatible string is _not_ sufficient if
+> you do not have a full PSCI 0.2 implementation.
+>
+> Given that PSCI 0.2 requires more functionality to be implemented, I'd
+> like to know that your implementation is spec-compliant (implementing
+> the mandatory functions, nters the kernel in the correct state, etc),
+> and that it has been tested.
+>
+> Would you be able to look at my comments from the last posting please?
+>
+> Thanks,
+> Mark.
+> --
 
-Sorry, there are still a few items that need to be fixed.
-If you can make a v4 with these issues addressed, then I can still make a
-pull request, although it depends on Mauro whether it is still accepted for
-3.19.
+Hi, Mark
 
-On 12/04/2014 12:12 AM, Lad, Prabhakar wrote:
-> From: Benoit Parrot <bparrot-l0cyMroinI0@public.gmane.org>
-> 
-> This patch adds Video Processing Front End (VPFE) driver for
-> AM437X family of devices
-> Driver supports the following:
-> - V4L2 API using MMAP buffer access based on videobuf2 api
-> - Asynchronous sensor/decoder sub device registration
-> - DT support
+Ok, I'll check it again with our related engineers.
 
-Just to confirm: this driver only supports SDTV formats? No HDTV?
-I didn't see any VIDIOC_*_DV_TIMINGS support, so I assume it really
-isn't supported.
+Actually, I had read all of your comments carefully before sending
+each version of patches, and I replied you a few days early, I guess
+you may miss it :)
 
-> 
-> Signed-off-by: Benoit Parrot <bparrot-l0cyMroinI0@public.gmane.org>
-> Signed-off-by: Darren Etheridge <detheridge-l0cyMroinI0@public.gmane.org>
-> Signed-off-by: Lad, Prabhakar <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
+If we just implemented psci-0.1 until now, can we submit this path
+without "compatible = "arm,psci-0.2"", but only with " compatible =
+"arm,psci" ".
 
-<snip>
 
-> diff --git a/drivers/media/platform/am437x/am437x-vpfe.c b/drivers/media/platform/am437x/am437x-vpfe.c
-> new file mode 100644
-> index 0000000..25863e8
-> --- /dev/null
-> +++ b/drivers/media/platform/am437x/am437x-vpfe.c
 
-<snip>
-
-> +
-> +static int
-> +cmp_v4l2_format(const struct v4l2_format *lhs, const struct v4l2_format *rhs)
-> +{
-> +	return lhs->type == rhs->type &&
-> +		lhs->fmt.pix.width == rhs->fmt.pix.width &&
-> +		lhs->fmt.pix.height == rhs->fmt.pix.height &&
-> +		lhs->fmt.pix.pixelformat == rhs->fmt.pix.pixelformat &&
-> +		lhs->fmt.pix.field == rhs->fmt.pix.field &&
-> +		lhs->fmt.pix.colorspace == rhs->fmt.pix.colorspace;
-
-Add a check for pix.ycbcr_enc and pix.quantization.
-
-<snip>
-
-> +/*
-> + * vpfe_release : This function is based on the vb2_fop_release
-> + * helper function.
-> + * It has been augmented to handle module power management,
-> + * by disabling/enabling h/w module fcntl clock when necessary.
-> + */
-> +static int vpfe_release(struct file *file)
-> +{
-> +	struct vpfe_device *vpfe = video_drvdata(file);
-> +	int ret;
-> +
-> +	vpfe_dbg(2, vpfe, "vpfe_release\n");
-> +
-> +	ret = _vb2_fop_release(file, NULL);
-
-This isn't going to work. _vb2_fop_release calls v4l2_fh_release(), so
-the v4l2_fh_is_singular_file(file) will be wrong and you release the fh
-once too many.
-
-I would do this:
-
-	if (!v4l2_fh_is_singular_file(file))
-		return vb2_fop_release(file);
-	mutex_lock(&vpfe->lock);
-	ret = _vb2_fop_release(file, NULL);
-	vpfe_ccdc_close(&vpfe->ccdc, vpfe->pdev);
-	mutex_unlock(&vpfe->lock);
-	return ret;
-
-> +
-> +	if (v4l2_fh_is_singular_file(file)) {
-> +		mutex_lock(&vpfe->lock);
-> +		vpfe_ccdc_close(&vpfe->ccdc, vpfe->pdev);
-> +		v4l2_fh_release(file);
-> +		mutex_unlock(&vpfe->lock);
-> +	}
-> +
-> +	return ret;
-> +}
-
-<snip>
-
-> +static int vpfe_enum_size(struct file *file, void  *priv,
-> +			  struct v4l2_frmsizeenum *fsize)
-> +{
-> +	struct vpfe_device *vpfe = video_drvdata(file);
-> +	struct v4l2_subdev_frame_size_enum fse;
-> +	struct vpfe_subdev_info *sdinfo;
-> +	struct v4l2_mbus_framefmt mbus;
-> +	struct v4l2_pix_format pix;
-> +	struct vpfe_fmt *fmt;
-> +	int ret;
-> +
-> +	vpfe_dbg(2, vpfe, "vpfe_enum_size\n");
-> +
-> +	/* check for valid format */
-> +	fmt = find_format_by_pix(fsize->pixel_format);
-> +	if (!fmt) {
-> +		vpfe_dbg(3, vpfe, "Invalid pixel code: %x, default used instead\n",
-> +			fsize->pixel_format);
-> +		return -EINVAL;
-> +	}
-> +
-> +	memset(fsize->reserved, 0x0, sizeof(fsize->reserved));
-> +
-> +	sdinfo = vpfe->current_subdev;
-> +	if (!sdinfo->sd)
-> +		return -EINVAL;
-> +
-> +	memset(&pix, 0x0, sizeof(pix));
-> +	/* Construct pix from parameter and use default for the rest */
-> +	pix.pixelformat = fsize->pixel_format;
-> +	pix.width = 640;
-> +	pix.height = 480;
-> +	pix.colorspace = V4L2_COLORSPACE_SRGB;
-> +	pix.field = V4L2_FIELD_NONE;
-> +	pix_to_mbus(vpfe, &pix, &mbus);
-> +
-> +	memset(&fse, 0x0, sizeof(fse));
-> +	fse.index = fsize->index;
-> +	fse.pad = 0;
-> +	fse.code = mbus.code;
-> +	ret = v4l2_subdev_call(sdinfo->sd, pad, enum_frame_size, NULL, &fse);
-
-FYI: strictly speaking this is wrong since this op theoretically expects a
-v4l2_subdev_fh pointer instead of a NULL argument. However, you do not have
-an alternative right now. As you know, I've been working on fixing this, so
-if that gets accepted, then you need to update this code as well in a later
-patch.
-
-> +	if (ret)
-> +		return -EINVAL;
-> +
-> +	vpfe_dbg(1, vpfe, "vpfe_enum_size: index: %d code: %x W:[%d,%d] H:[%d,%d]\n",
-> +		fse.index, fse.code, fse.min_width, fse.max_width,
-> +		fse.min_height, fse.max_height);
-> +
-> +	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-> +	fsize->discrete.width = fse.max_width;
-> +	fsize->discrete.height = fse.max_height;
-> +
-> +	vpfe_dbg(1, vpfe, "vpfe_enum_size: index: %d pixformat: %s size: %dx%d\n",
-> +		fsize->index, print_fourcc(fsize->pixel_format),
-> +		fsize->discrete.width, fsize->discrete.height);
-> +
-> +	return 0;
-> +}
-> +
-
-<snip>
-
-> +static int
-> +vpfe_g_selection(struct file *file, void *fh, struct v4l2_selection *s)
-> +{
-> +	struct vpfe_device *vpfe = video_drvdata(file);
-> +
-> +	switch (s->target) {
-> +	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
-> +	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
-
-These two COMPOSE cases should be dropped, since there is no compose support!
-
-> +	case V4L2_SEL_TGT_CROP_BOUNDS:
-> +	case V4L2_SEL_TGT_CROP_DEFAULT:
-> +		s->r.left = s->r.top = 0;
-> +		s->r.width = vpfe->crop.width;
-> +		s->r.height = vpfe->crop.height;
-> +		break;
-> +
-> +	case V4L2_SEL_TGT_CROP:
-> +		s->r = vpfe->crop;
-> +		break;
-> +
-> +	default:
-> +		return -EINVAL;
-> +	}
-> +
-> +	return 0;
-> +}
-
-<snip>
-
-Regards,
-
-	Hans
+Thanks,
+Chunyan
