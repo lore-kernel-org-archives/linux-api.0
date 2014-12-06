@@ -1,66 +1,25 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v4 4/5] crypto: AF_ALG: add random number generator support
-Date: Fri, 05 Dec 2014 23:02:59 +0100
-Message-ID: <7181491.MIJ5ay4MmI@tachyon.chronox.de>
-References: <2105559.EmODblLYuY@tachyon.chronox.de> <1480776.TeURZV8VLa@tachyon.chronox.de> <20141205155359.GA30224@gondor.apana.org.au>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH] uapi: fix to export linux/vm_sockets.h
+Date: Fri, 05 Dec 2014 21:36:08 -0800 (PST)
+Message-ID: <20141205.213608.2021435677853280312.davem@davemloft.net>
+References: <1417396577-32499-1-git-send-email-yamada.m@jp.panasonic.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141205155359.GA30224-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+In-Reply-To: <1417396577-32499-1-git-send-email-yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, piotr.krol-zILERgsGILsAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Am Freitag, 5. Dezember 2014, 23:53:59 schrieb Herbert Xu:
+From: Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>
+Date: Mon,  1 Dec 2014 10:16:17 +0900
 
-Hi Herbert,
-
-> On Wed, Dec 03, 2014 at 08:59:01PM +0100, Stephan Mueller wrote:
-> > +static int rng_recvmsg(struct kiocb *unused, struct socket *sock,
-> > +		       struct msghdr *msg, size_t len, int flags)
-> > +{
-> > +	struct sock *sk = sock->sk;
-> > +	struct alg_sock *ask = alg_sk(sk);
-> > +	struct rng_ctx *ctx = ask->private;
-> > +	int err = -EFAULT;
-> > +
-> > +	if (len == 0)
-> > +		return 0;
-> > +	if (len > MAXSIZE)
-> > +		len = MAXSIZE;
-> > +
-> > +	lock_sock(sk);
+> A typo "header=y" was introduced by commit 7071cf7fc435
+> (uapi: add missing network related headers to kbuild).
 > 
-> This lock simply protects ctx->result.  Since you're using a
-> tiny buffer why not just put it on the stack?
+> Signed-off-by: Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>
+> Cc: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
 
-When I developed the DRBG code, I got comments that 128 byte variables shall 
-not be on the stack in kernel code.
-
-But if you agree that I can put a 128 byte variable on the stack, I will see 
-it done.
-
-> 
-> > +		u8 *buf = kmalloc(seedsize, GFP_KERNEL);
-> > +		if (!buf)
-> > +			goto err;
-> > +		get_random_bytes(buf, seedsize);
-> > +		ret = crypto_rng_reset(private, buf, len);
-> 
-> I think you should leave the seeding and the seed to the user.
-> Perhaps do it through setsockopt (on the parent socket).
-
-Sure. But please note that the seeding happens only when seedsize > 0. Such 
-seeding therefore is not performed for krng, and the DRBG because both seed 
-automatically.
-
-Therefore, may I propose the following: We offer a setsockopt for (re)seeding. 
-For all RNGs with seedsize > 0, we return EAGAIN for recvmsg until a 
-setsockopt for at least seedsize is provided. That would imply that krng and 
-DRBG would be usable without seeding from user space.
-
--- 
-Ciao
-Stephan
+Applied.
