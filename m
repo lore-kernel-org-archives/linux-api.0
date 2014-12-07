@@ -1,66 +1,46 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v4 2/5] crypto: AF_ALG: add AEAD support
-Date: Sun, 07 Dec 2014 13:56:18 +0100
-Message-ID: <7942347.xfhvIblSTf@tachyon.chronox.de>
-References: <2105559.EmODblLYuY@tachyon.chronox.de> <4875720.jRoMDtjHB4@tachyon.chronox.de> <20141205154606.GA30180@gondor.apana.org.au>
+From: Pieter Smith <pieter@boesman.nl>
+Subject: Re: [PATCH v6 4/7] fs/fuse: support compiling out splice
+Date: Sun, 7 Dec 2014 14:00:40 +0100
+Message-ID: <20141207130040.GA8267@smipidev>
+References: <1417715473-24110-1-git-send-email-pieter@boesman.nl>
+ <1417715473-24110-5-git-send-email-pieter@boesman.nl>
+ <CAJfpegu+NQQ_+af=6UXi2=fyTJK1CsQBZ2++Nysu4mume4UEOQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141205154606.GA30180-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAJfpegu+NQQ_+af=6UXi2=fyTJK1CsQBZ2++Nysu4mume4UEOQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Miklos Szeredi <miklos@szeredi.hu>
+Cc: Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, "open list:ABI/API" <linux-api@vger.kernel.org>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Freitag, 5. Dezember 2014, 23:46:06 schrieb Herbert Xu:
-
-Hi Herbert,
-
-> > +static struct proto_ops algif_aead_ops = {
-> > +	.family		=	PF_ALG,
-> > +
-> > +	.connect	=	sock_no_connect,
-> > +	.socketpair	=	sock_no_socketpair,
-> > +	.getname	=	sock_no_getname,
-> > +	.ioctl		=	sock_no_ioctl,
-> > +	.listen		=	sock_no_listen,
-> > +	.shutdown	=	sock_no_shutdown,
-> > +	.getsockopt	=	sock_no_getsockopt,
-> > +	.mmap		=	sock_no_mmap,
-> > +	.bind		=	sock_no_bind,
-> > +	.accept		=	sock_no_accept,
-> > +
-> > +	.release	=	af_alg_release,
-> > +	.sendmsg	=	aead_sendmsg,
-> > +	.sendpage	=	aead_sendpage,
-> > +	.recvmsg	=	aead_recvmsg,
-> > +	.poll		=	aead_poll,
-> > +	.setsockopt	=	aead_setsockopt,
+On Fri, Dec 05, 2014 at 11:44:36AM +0100, Miklos Szeredi wrote:
+> On Thu, Dec 4, 2014 at 6:50 PM, Pieter Smith <pieter@boesman.nl> wrote:
+> > To implement splice support, fs/fuse makes use of nosteal_pipe_buf_ops. This
+> > struct is exported by fs/splice. The goal of the larger patch set is to
+> > completely compile out fs/splice, so uses of the exported struct need to be
+> > compiled out along with fs/splice.
+> >
+> > This patch therefore compiles out splice support in fs/fuse when
+> > CONFIG_SYSCALL_SPLICE is undefined.
+> >
+> > Signed-off-by: Pieter Smith <pieter@boesman.nl>
 > 
-> No it should go into the parent setsockopt.  Perhaps add a setsockopt
-> to af_alg_type in order to keep this out of the generic code.
+> 
+> In the future could you PLEASE PLEASE cut the fuse-devel Cc from the
+> non-fuse specific patches (and I guess that goes for any other
+> subsystem specific lists and persons as well)?
+> 
+> Otherwise:
+> 
+> Acked-by: Miklos Szeredi <mszeredi@suse.cz>
+> 
+> Thanks,
+> Miklos
 
-What about adding a setauthsize to af_alg_type that is called from the parent 
-setsockopt? I would like to keep all user space interfaces as close together 
-as possible. With a new setsockopt callback, I fear that user space interface 
-handling may be scattered around.
+I added your Acked-by and removed you and fuse-dev from postings on future
+versions of this patch-set.
 
-Currently I am simply thinking about the following:
-
-partent setsockopt:
-
-        case ALG_SET_AEAD_AUTHSIZE:
-                if (sock->state == SS_CONNECTED)
-                        goto unlock;
-                if (!type->setauthsize)
-                        goto unlock;
-                err = type->setauthsize(ask->private, optlen);
-
-af_alg_type:
-
-int (*setauthsize)(void *private, unsigned int authsize);
-
--- 
-Ciao
-Stephan
+Thanks,
+Pieter
