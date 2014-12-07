@@ -1,46 +1,50 @@
-From: Pieter Smith <pieter@boesman.nl>
-Subject: Re: [PATCH v6 4/7] fs/fuse: support compiling out splice
-Date: Sun, 7 Dec 2014 14:00:40 +0100
-Message-ID: <20141207130040.GA8267@smipidev>
-References: <1417715473-24110-1-git-send-email-pieter@boesman.nl>
- <1417715473-24110-5-git-send-email-pieter@boesman.nl>
- <CAJfpegu+NQQ_+af=6UXi2=fyTJK1CsQBZ2++Nysu4mume4UEOQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAJfpegu+NQQ_+af=6UXi2=fyTJK1CsQBZ2++Nysu4mume4UEOQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:FUSE: FILESYSTEM..." <fuse-devel@lists.sourceforge.net>, "open list:ABI/API" <linux-api@vger.kernel.org>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>
+From: Rickard Strandqvist <rickard_strandqvist-IW2WV5XWFqGZkjO+N0TKoMugMpMbD5Xr@public.gmane.org>
+Subject: [PATCH] tools: testing: selftests: powerpc: pmu: ebb: ebb.c:  Remove unused function
+Date: Sun,  7 Dec 2014 21:50:59 +0100
+Message-ID: <1417985459-16501-1-git-send-email-rickard_strandqvist@spectrumdigital.se>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>
+Cc: Rickard Strandqvist <rickard_strandqvist-IW2WV5XWFqGZkjO+N0TKoMugMpMbD5Xr@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 05, 2014 at 11:44:36AM +0100, Miklos Szeredi wrote:
-> On Thu, Dec 4, 2014 at 6:50 PM, Pieter Smith <pieter@boesman.nl> wrote:
-> > To implement splice support, fs/fuse makes use of nosteal_pipe_buf_ops. This
-> > struct is exported by fs/splice. The goal of the larger patch set is to
-> > completely compile out fs/splice, so uses of the exported struct need to be
-> > compiled out along with fs/splice.
-> >
-> > This patch therefore compiles out splice support in fs/fuse when
-> > CONFIG_SYSCALL_SPLICE is undefined.
-> >
-> > Signed-off-by: Pieter Smith <pieter@boesman.nl>
-> 
-> 
-> In the future could you PLEASE PLEASE cut the fuse-devel Cc from the
-> non-fuse specific patches (and I guess that goes for any other
-> subsystem specific lists and persons as well)?
-> 
-> Otherwise:
-> 
-> Acked-by: Miklos Szeredi <mszeredi@suse.cz>
-> 
-> Thanks,
-> Miklos
+Remove the function event_bhrb_init() that is not used anywhere.
 
-I added your Acked-by and removed you and fuse-dev from postings on future
-versions of this patch-set.
+This was partially found by using a static code analysis program called cppcheck.
 
-Thanks,
-Pieter
+Signed-off-by: Rickard Strandqvist <rickard_strandqvist-IW2WV5XWFqGZkjO+N0TKoMugMpMbD5Xr@public.gmane.org>
+---
+ tools/testing/selftests/powerpc/pmu/ebb/ebb.c |    5 -----
+ tools/testing/selftests/powerpc/pmu/ebb/ebb.h |    1 -
+ 2 files changed, 6 deletions(-)
+
+diff --git a/tools/testing/selftests/powerpc/pmu/ebb/ebb.c b/tools/testing/selftests/powerpc/pmu/ebb/ebb.c
+index d7a72ce..75af212 100644
+--- a/tools/testing/selftests/powerpc/pmu/ebb/ebb.c
++++ b/tools/testing/selftests/powerpc/pmu/ebb/ebb.c
+@@ -324,11 +324,6 @@ void event_ebb_init(struct event *e)
+ 	e->attr.config |= (1ull << 63);
+ }
+ 
+-void event_bhrb_init(struct event *e, unsigned ifm)
+-{
+-	e->attr.config |= (1ull << 62) | ((u64)ifm << 60);
+-}
+-
+ void event_leader_ebb_init(struct event *e)
+ {
+ 	event_ebb_init(e);
+diff --git a/tools/testing/selftests/powerpc/pmu/ebb/ebb.h b/tools/testing/selftests/powerpc/pmu/ebb/ebb.h
+index e44eee5..a71596a 100644
+--- a/tools/testing/selftests/powerpc/pmu/ebb/ebb.h
++++ b/tools/testing/selftests/powerpc/pmu/ebb/ebb.h
+@@ -46,7 +46,6 @@ static inline void ebb_enable_pmc_counting(int pmc)
+ bool ebb_check_count(int pmc, u64 sample_period, int fudge);
+ void event_leader_ebb_init(struct event *e);
+ void event_ebb_init(struct event *e);
+-void event_bhrb_init(struct event *e, unsigned ifm);
+ void setup_ebb_handler(void (*callee)(void));
+ void standard_ebb_callee(void);
+ int ebb_event_enable(struct event *e);
+-- 
+1.7.10.4
