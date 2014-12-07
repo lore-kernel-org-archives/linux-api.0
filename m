@@ -1,7 +1,7 @@
 From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: [PATCH v5 8/8] crypto: AF_ALG: enable RNG interface compilation
-Date: Sun, 07 Dec 2014 23:25:46 +0100
-Message-ID: <5331628.CHFtYQ1joT@tachyon.chronox.de>
+Subject: [PATCH v5 6/8] crypto: AF_ALG: zeroize key / seed data
+Date: Sun, 07 Dec 2014 23:24:36 +0100
+Message-ID: <2737258.UUWqeH5oOM@tachyon.chronox.de>
 References: <56740432.V2v4gLHrzS@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,46 +13,25 @@ To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
 Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Enable compilation of the RNG AF_ALG support and provide a Kconfig
-option to compile the RNG AF_ALG support.
+alg_setop shall zeroize the sensitive data after use.
 
 Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
 ---
- crypto/Kconfig  | 9 +++++++++
- crypto/Makefile | 1 +
- 2 files changed, 10 insertions(+)
+ crypto/af_alg.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 0b2affc..8e968dc 100644
---- a/crypto/Kconfig
-+++ b/crypto/Kconfig
-@@ -1514,6 +1514,15 @@ config CRYPTO_USER_API_AEAD
- 	  This option enables the user-spaces interface for AEAD
- 	  cipher algorithms.
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index d1eb1e9..836fa4a 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -189,7 +189,7 @@ static int alg_setop(struct sock *sk, char __user *udata,
+ 	err = handler(ask->private, data, datalen);
  
-+config CRYPTO_USER_API_RNG
-+	tristate "User-space interface for random number generator algorithms"
-+	depends on NET
-+	select CRYPTO_RNG
-+	select CRYPTO_USER_API
-+	help
-+	  This option enables the user-spaces interface for random
-+	  number generator algorithms.
-+
- config CRYPTO_HASH_INFO
- 	bool
+ out:
+-	sock_kfree_s(sk, data, datalen);
++	sock_kzfree_s(sk, data, datalen);
  
-diff --git a/crypto/Makefile b/crypto/Makefile
-index 593fd3c..c109df5 100644
---- a/crypto/Makefile
-+++ b/crypto/Makefile
-@@ -100,6 +100,7 @@ obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
- obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
- obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
- obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
-+obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
- 
- #
- # generic algorithms and the async_tx api
+ 	return err;
+ }
 -- 
 2.1.0
