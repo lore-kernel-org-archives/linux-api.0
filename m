@@ -1,84 +1,70 @@
-From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Subject: Re: [PATCH V3] powerpc: add little endian flag to syscall_get_arch()
-Date: Mon, 08 Dec 2014 11:16:01 -0800 (PST)
-Message-ID: <1643683.8UjTltLcbW@sifl>
-References: <c1adfab2633f57a745f3e2e1b13b5a8f283c888a.1418055157.git.rgb@redhat.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: [CFT][PATCH 1/7] userns: Document what the invariant required for safe unprivileged mappings.
+Date: Mon, 08 Dec 2014 16:06:06 -0600
+Message-ID: <87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
+	<87h9xez20g.fsf@x220.int.ebiederm.org>
+	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
+	<87mw75ygwp.fsf@x220.int.ebiederm.org>
+	<CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
+	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
+	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
+	<87a935u3nj.fsf@x220.int.ebiederm.org>
+	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
+	<87388xodlj.fsf@x220.int.ebiederm.org>
+	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <c1adfab2633f57a745f3e2e1b13b5a8f283c888a.1418055157.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, tonyj-l3A5Bk7waGM@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+	(Andy Lutomirski's message of "Tue, 2 Dec 2014 15:17:32 -0800")
+Sender: linux-security-module-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, stable <stable@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Monday, December 08, 2014 12:59:32 PM Richard Guy Briggs wrote:
-> Since both ppc and ppc64 have LE variants which are now reported by uname,
-> add that flag (__AUDIT_ARCH_LE) to syscall_get_arch() and add
-> AUDIT_ARCH_PPC*LE variants.
-> 
-> Without this,  perf trace and auditctl fail.
-> 
-> Mainline kernel reports ppc64le (per a058801) but there is no matching
-> AUDIT_ARCH_PPC64LE.
-> 
-> Since 32-bit PPC LE is not supported, throw a compiler error rather than
-> return a bogus architecture to audit.
-> 
-> See:
-> 	https://www.redhat.com/archives/linux-audit/2014-August/msg00082.html
-> 	https://www.redhat.com/archives/linux-audit/2014-December/msg00004.html
-> 
-> v2 -> v3:
-> 	Throw a compiler error on 32-bit LE.
-> 
-> v1 -> v2:
-> 	Added ";" at the end of the #ifdef-protected line so it actually compiles
-> 
-> Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  arch/powerpc/include/asm/syscall.h |    7 +++++++
->  include/uapi/linux/audit.h         |    1 +
->  2 files changed, 8 insertions(+), 0 deletions(-)
 
-Looks reasonable to me from an audit perspective, but I'll let the ppc folks 
-merge this patch into their tree.
+The rule is simple.  Don't allow anything that wouldn't be allowed
+without unprivileged mappings.
 
-Acked-by: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+It was previously overlooked that establishing gid mappings would
+allow dropping groups and potentially gaining permission to files and
+directories that had lesser permissions for a specific group than for
+all other users.
 
-> diff --git a/arch/powerpc/include/asm/syscall.h
-> b/arch/powerpc/include/asm/syscall.h index 6fa2708..cf7fcab 100644
-> --- a/arch/powerpc/include/asm/syscall.h
-> +++ b/arch/powerpc/include/asm/syscall.h
-> @@ -90,6 +90,13 @@ static inline void syscall_set_arguments(struct
-> task_struct *task,
-> 
->  static inline int syscall_get_arch(void)
->  {
-> +#ifdef __LITTLE_ENDIAN__
-> +	return AUDIT_ARCH_PPC64LE;
-> +#ifndef CONFIG_64BIT
-> +#error PPC 32-bit Little Endian architecture not supported.
-> +#endif /* CONFIG_64BIT */
-> +#else /* __LITTLE_ENDIAN__ */
->  	return is_32bit_task() ? AUDIT_ARCH_PPC : AUDIT_ARCH_PPC64;
-> +#endif /* __LITTLE_ENDIAN__ */
->  }
->  #endif	/* _ASM_SYSCALL_H */
-> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-> index 4d100c8..fa2a6af 100644
-> --- a/include/uapi/linux/audit.h
-> +++ b/include/uapi/linux/audit.h
-> @@ -365,6 +365,7 @@ enum {
->  #define AUDIT_ARCH_PARISC64	(EM_PARISC|__AUDIT_ARCH_64BIT)
->  #define AUDIT_ARCH_PPC		(EM_PPC)
->  #define AUDIT_ARCH_PPC64	(EM_PPC64|__AUDIT_ARCH_64BIT)
-> +#define AUDIT_ARCH_PPC64LE	(EM_PPC64|__AUDIT_ARCH_64BIT|__AUDIT_ARCH_LE)
->  #define AUDIT_ARCH_S390		(EM_S390)
->  #define AUDIT_ARCH_S390X	(EM_S390|__AUDIT_ARCH_64BIT)
->  #define AUDIT_ARCH_SH		(EM_SH)
+This is the rule needed to fix CVE-2014-8989 and prevent any other
+security issues with new_idmap_permitted.
 
+The reason for this rule is that the unix permission model is old and
+there are programs out there somewhere that take advantage of every
+little corner of it.  So allowing a uid or gid mapping to be
+established without privielge that would allow anything that would not
+be allowed without that mapping will result in expectations from some
+code somewhere being violated.  Violated expectations about the
+behavior of the OS is a long way to say a security issue.
+
+Cc: stable@vger.kernel.org
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+---
+ kernel/user_namespace.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index aa312b0dc3ec..b99c862a2e3f 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -812,7 +812,9 @@ static bool new_idmap_permitted(const struct file *file,
+ 				struct user_namespace *ns, int cap_setid,
+ 				struct uid_gid_map *new_map)
+ {
+-	/* Allow mapping to your own filesystem ids */
++	/* Don't allow mappings that would allow anything that wouldn't
++	 * be allowed without the establishment of unprivileged mappings.
++	 */
+ 	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
+ 		u32 id = new_map->extent[0].lower_first;
+ 		if (cap_setid == CAP_SETUID) {
 -- 
-paul moore
-www.paul-moore.com
+1.9.1
+
