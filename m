@@ -1,33 +1,79 @@
-From: "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
-Subject: RE: [PATCH v4 3/8] iio: Add support for DA9150 GPADC
-Date: Mon, 8 Dec 2014 13:23:07 +0000
-Message-ID: <2E89032DDAA8B9408CB92943514A0337AB52290B@SW-EX-MBX01.diasemi.com>
-References: <cover.1416938054.git.Adam.Thomson.Opensource@diasemi.com>
- <377be6cf23ba23dac0b21fe2a449307ec5bac63a.1416938054.git.Adam.Thomson.Opensource@diasemi.com>
- <5480E7F4.7090808@gmx.de>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [tpmdd-devel] [PATCH v8 6/8] tpm: TPM 2.0 baseline support
+Date: Mon, 8 Dec 2014 14:56:15 +0100
+Message-ID: <20141208135615.GC30303@intel.com>
+References: <1417559480-13757-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <1417559480-13757-7-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <547E7553.2050608@linux.vnet.ibm.com>
+ <201412050013.19082.PeterHuewe@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5480E7F4.7090808-Mmb7MZpHnFY@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <201412050013.19082.PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Support Opensource <Support.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
+To: Peter =?iso-8859-1?Q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Cc: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gRGVjZW1iZXIgMDQsIDIwMTQgMjM6MDIsIEhhcnRtdXQgS25hYWNrIHdyb3RlOg0KDQo+ID4g
-KwlpbmRpb19kZXYgPSBkZXZtX2lpb19kZXZpY2VfYWxsb2MoJnBkZXYtPmRldiwNCj4gPiArCQkJ
-CQkgIHNpemVvZihzdHJ1Y3QgZGE5MTUwX2dwYWRjKSk7DQo+IEJUVzogSWYgeW91IHVzZSBzaXpl
-b2YoKmdwYWRjKSBpbnN0ZWFkIChsaWtlIGl0IGlzIHVzdWFsbHkgZG9uZSBhcyB3ZWxsKSwNCj4g
-aXQgd2lsbCBwZXJmZWN0bHkgZml0IGluIG9uZSBsaW5lLg0KDQpJIHByZWZlcnJlZCB0byBiZSBl
-eHBsaWNpdCB0aGF0IHRoZSBpdGVtIGlzIGEgc3RydWN0LCBidXQgcmVhbGx5IG5vdCB0aGF0IGZ1
-c3NlZA0KZWl0aGVyIHdheS4gQWxzbyBoYXZlIGJlZW4gYXNrZWQgcHJldmlvdXNseSBpbiBhIHNl
-cGFyYXRlIGRyaXZlciB0byBtYWtlIHRoZQ0Kc2FtZSBtb2QgeW91IG1lbnRpb24gc28gd2lsbCB1
-cGRhdGUgYWNjb3JkaW5nbHkuDQoNCj4gPiArCXJldCA9IGRldm1fcmVxdWVzdF90aHJlYWRlZF9p
-cnEoZGV2LCBpcnEsIE5VTEwsIGRhOTE1MF9ncGFkY19pcnEsDQo+ID4gKwkJCQkJSVJRRl9PTkVT
-SE9ULCAiR1BBREMiLCBncGFkYyk7DQo+ID4gKwlpZiAocmV0KSB7DQo+ID4gKwkJZGV2X2Vycihk
-ZXYsICJGYWlsZWQgdG8gcmVxdWVzdCBJUlEgJWQ6ICVkXG4iLCBpcnEsIHJldCk7DQo+ID4gKwkJ
-Z290byBpaW9fbWFwX3VucmVnOw0KPiBZb3UgbmVlZCB0byByZXR1cm4gcmV0IGhlcmUsIG5vIGp1
-bXAgdG8gZXJyb3Igb3V0IHBhdGguDQoNClllcywgdGhhbmtzLiBBbm5veWVkIEkgbWlzc2VkIHRo
-YXQgaW4gdGhlIHJlLWZhY3Rvci4gV2lsbCBmaXggaXQuDQo=
+On Fri, Dec 05, 2014 at 12:13:18AM +0100, Peter H=FCwe wrote:
+> Am Mittwoch, 3. Dezember 2014, 03:28:35 schrieb Stefan Berger:
+> > On 12/02/2014 05:31 PM, Jarkko Sakkinen wrote:
+> > > +
+> > > +/**
+> > > + * tpm2_startup() - send startup command to the TPM chip
+> > > + * @chip:		TPM chip to use.
+> > > + * @startup_type	startup type. The value is either
+> > > + *			TPM_SU_CLEAR or TPM_SU_STATE.
+> > > + *
+> > > + * 0 is returned when the operation is successful. If a negative=
+ number
+> > > is + * returned it remarks a POSIX error code. If a positive numb=
+er is
+> > > returned + * it remarks a TPM error.
+> > > + */
+> > > +int tpm2_startup(struct tpm_chip *chip, __be16 startup_type)
+> > > +{
+> > > +	struct tpm2_cmd cmd;
+> > > +
+> > > +	cmd.header.in =3D tpm2_startup_header;
+> > > +
+> > > +	cmd.params.startup_in.startup_type =3D startup_type;
+> > > +	return tpm_transmit_cmd(chip, &cmd, sizeof(cmd),
+> > > +				"attempting to start the TPM");
+> > > +}
+> >=20
+> > I suppose you need to send this command because your firmware does =
+not
+> > do it ?Following TPM1.2 I guess the BIOS / UEFI should send this in=
+stead
+> > and sending it later would actually be wrong. Hm, I don't find from
+> > where you are calling this... do you need it ? Can you remove it?
+> >=20
+> >     Stefan
+>=20
+> Hi,
+>=20
+> I think it would be good to send a TPM2_Startup if the TPM sends a=20
+> TPM_RC_INITIALIZE (0x100) - so it becomes atleast usable.
+> Of course the BIOS/UEFI/Firmware should send the TPM2_Startup, but if=
+ there is=20
+> no such thing, I would prefer Linux to do it, rather than nobody.
+> (analog: This was done for embedded platforms with TPM1.2).
+>=20
+> In the current situation (v9) it is not possible to use the TPM2 on a=
+ machine=20
+> without bios integration. :( (so I cannot test here :( )
+
+Should the place be if sending self-test fails? I think the type should
+be TPM2_SU_CLEAR. Do you agree?
+
+All other issues are now fixed except this and STS3 bit issue that I=20
+look for next. In my github there is tpm2-v10 branch now with fixes
+on top. I squash the fixes right after these two remaining issues are
+fixed.
+
+> Peter
+
+/Jarkko
