@@ -1,7 +1,8 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: [CFT][PATCH 1/7] userns: Document what the invariant required for safe unprivileged mappings.
-Date: Mon, 08 Dec 2014 16:06:06 -0600
-Message-ID: <87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [CFT][PATCH 2/7] userns: Don't allow setgroups until a gid mapping
+	has been setablished
+Date: Mon, 08 Dec 2014 16:07:02 -0600
+Message-ID: <87bnndre2h.fsf_-_@x220.int.ebiederm.org>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
 	<87h9xez20g.fsf@x220.int.ebiederm.org>
 	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
@@ -14,57 +15,89 @@ References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacap
 	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
 	<87388xodlj.fsf@x220.int.ebiederm.org>
 	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
-	(Andy Lutomirski's message of "Tue, 2 Dec 2014 15:17:32 -0800")
-Sender: linux-security-module-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, stable <stable@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87h9x5re41.fsf_-_-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
+	message of "Mon, 08 Dec 2014 16:06:06 -0600")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
-The rule is simple.  Don't allow anything that wouldn't be allowed
-without unprivileged mappings.
+setgroups is unique in not needing a valid mapping before it can be called,
+in the case of setgroups(0, NULL) which drops all supplemental groups.
 
-It was previously overlooked that establishing gid mappings would
-allow dropping groups and potentially gaining permission to files and
-directories that had lesser permissions for a specific group than for
-all other users.
+The design of the user namespace assumes that CAP_SETGID can not actually
+be used until a gid mapping is established.  Therefore add a helper function
+to see if the user namespace gid mapping has been established and call
+that function in the setgroups permission check.
 
-This is the rule needed to fix CVE-2014-8989 and prevent any other
-security issues with new_idmap_permitted.
+This is part of the fix for CVE-2014-8989, being able to drop groups
+without privilege using user namespaces.
 
-The reason for this rule is that the unix permission model is old and
-there are programs out there somewhere that take advantage of every
-little corner of it.  So allowing a uid or gid mapping to be
-established without privielge that would allow anything that would not
-be allowed without that mapping will result in expectations from some
-code somewhere being violated.  Violated expectations about the
-behavior of the OS is a long way to say a security issue.
-
-Cc: stable@vger.kernel.org
-Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/user_namespace.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ include/linux/user_namespace.h | 9 +++++++++
+ kernel/groups.c                | 7 ++++++-
+ 2 files changed, 15 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index aa312b0dc3ec..b99c862a2e3f 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -812,7 +812,9 @@ static bool new_idmap_permitted(const struct file *file,
- 				struct user_namespace *ns, int cap_setid,
- 				struct uid_gid_map *new_map)
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index e95372654f09..41cc26e5a350 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -37,6 +37,15 @@ struct user_namespace {
+ 
+ extern struct user_namespace init_user_ns;
+ 
++static inline bool userns_gid_mappings_established(const struct user_namespace *ns)
++{
++	bool established;
++	smp_mb__before_atomic();
++	established = ACCESS_ONCE(ns->gid_map.nr_extents) != 0;
++	smp_mb__after_atomic();
++	return established;
++}
++
+ #ifdef CONFIG_USER_NS
+ 
+ static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
+diff --git a/kernel/groups.c b/kernel/groups.c
+index 02d8a251c476..e0335e44f76a 100644
+--- a/kernel/groups.c
++++ b/kernel/groups.c
+@@ -6,6 +6,7 @@
+ #include <linux/slab.h>
+ #include <linux/security.h>
+ #include <linux/syscalls.h>
++#include <linux/user_namespace.h>
+ #include <asm/uaccess.h>
+ 
+ /* init to 2 - one for init_task, one to ensure it is never freed */
+@@ -217,7 +218,11 @@ bool may_setgroups(void)
  {
--	/* Allow mapping to your own filesystem ids */
-+	/* Don't allow mappings that would allow anything that wouldn't
-+	 * be allowed without the establishment of unprivileged mappings.
+ 	struct user_namespace *user_ns = current_user_ns();
+ 
+-	return ns_capable(user_ns, CAP_SETGID);
++	/* It is not safe to use setgroups until a gid mapping in
++	 * the user namespace has been established.
 +	 */
- 	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
- 		u32 id = new_map->extent[0].lower_first;
- 		if (cap_setid == CAP_SETUID) {
++	return userns_gid_mappings_established(user_ns) &&
++		ns_capable(user_ns, CAP_SETGID);
+ }
+ 
+ /*
 -- 
 1.9.1
-
