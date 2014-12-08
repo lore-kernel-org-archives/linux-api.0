@@ -1,86 +1,33 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: Re: [PATCH v5 1/8] crypto: AF_ALG: add user space interface for AEAD
-Date: Mon, 08 Dec 2014 07:50:36 +0100
-Message-ID: <26757433.nY9erqHdir@tachyon.chronox.de>
-References: <56740432.V2v4gLHrzS@tachyon.chronox.de> <2166020.BKWmrnVj2j@tachyon.chronox.de>
+From: "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
+Subject: RE: [PATCH v4 3/8] iio: Add support for DA9150 GPADC
+Date: Mon, 8 Dec 2014 13:23:07 +0000
+Message-ID: <2E89032DDAA8B9408CB92943514A0337AB52290B@SW-EX-MBX01.diasemi.com>
+References: <cover.1416938054.git.Adam.Thomson.Opensource@diasemi.com>
+ <377be6cf23ba23dac0b21fe2a449307ec5bac63a.1416938054.git.Adam.Thomson.Opensource@diasemi.com>
+ <5480E7F4.7090808@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2166020.BKWmrnVj2j@tachyon.chronox.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, 'LKML' <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5480E7F4.7090808-Mmb7MZpHnFY@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, "Opensource [Adam Thomson]" <Adam.Thomson.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Support Opensource <Support.Opensource-WBD+wuPFNBhBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Sonntag, 7. Dezember 2014, 23:21:09 schrieb Stephan Mueller:
-
-Hi Herbert,
-
-FYI: you mentioned that you applied that patch already. However, I do not see 
-it in the cryptodev-2.6 tree. Therefore I resent it. In case it was applied, 
-please disregard this patch.
-
-> AEAD requires the caller to specify the following information separate
-> from the data stream. This information allows the AEAD interface handler
-> to identify the AAD, ciphertext/plaintext and the authentication tag:
-> 
->         * Associated authentication data of arbitrary length and
->           length
-> 
->         * Length of authentication tag for encryption
-> 
-> Signed-off-by: Stephan Mueller <smueller@chronox.de>
-> ---
->  crypto/af_alg.c             | 6 ++++++
->  include/crypto/if_alg.h     | 1 +
->  include/uapi/linux/if_alg.h | 2 ++
->  3 files changed, 9 insertions(+)
-> 
-> diff --git a/crypto/af_alg.c b/crypto/af_alg.c
-> index 6a3ad80..68ff113 100644
-> --- a/crypto/af_alg.c
-> +++ b/crypto/af_alg.c
-> @@ -421,6 +421,12 @@ int af_alg_cmsg_send(struct msghdr *msg, struct
-> af_alg_control *con) con->op = *(u32 *)CMSG_DATA(cmsg);
->  			break;
-> 
-> +		case ALG_SET_AEAD_ASSOCLEN:
-> +			if (cmsg->cmsg_len < CMSG_LEN(sizeof(u32)))
-> +				return -EINVAL;
-> +			con->aead_assoclen = *(u32 *)CMSG_DATA(cmsg);
-> +			break;
-> +
->  		default:
->  			return -EINVAL;
->  		}
-> diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
-> index d61c111..cd62bf4 100644
-> --- a/include/crypto/if_alg.h
-> +++ b/include/crypto/if_alg.h
-> @@ -42,6 +42,7 @@ struct af_alg_completion {
->  struct af_alg_control {
->  	struct af_alg_iv *iv;
->  	int op;
-> +	unsigned int aead_assoclen;
->  };
-> 
->  struct af_alg_type {
-> diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
-> index 0f9acce..f2acd2f 100644
-> --- a/include/uapi/linux/if_alg.h
-> +++ b/include/uapi/linux/if_alg.h
-> @@ -32,6 +32,8 @@ struct af_alg_iv {
->  #define ALG_SET_KEY			1
->  #define ALG_SET_IV			2
->  #define ALG_SET_OP			3
-> +#define ALG_SET_AEAD_ASSOCLEN		4
-> +#define ALG_SET_AEAD_AUTHSIZE		5
-> 
->  /* Operations */
->  #define ALG_OP_DECRYPT			0
-
-
--- 
-Ciao
-Stephan
+T24gRGVjZW1iZXIgMDQsIDIwMTQgMjM6MDIsIEhhcnRtdXQgS25hYWNrIHdyb3RlOg0KDQo+ID4g
+KwlpbmRpb19kZXYgPSBkZXZtX2lpb19kZXZpY2VfYWxsb2MoJnBkZXYtPmRldiwNCj4gPiArCQkJ
+CQkgIHNpemVvZihzdHJ1Y3QgZGE5MTUwX2dwYWRjKSk7DQo+IEJUVzogSWYgeW91IHVzZSBzaXpl
+b2YoKmdwYWRjKSBpbnN0ZWFkIChsaWtlIGl0IGlzIHVzdWFsbHkgZG9uZSBhcyB3ZWxsKSwNCj4g
+aXQgd2lsbCBwZXJmZWN0bHkgZml0IGluIG9uZSBsaW5lLg0KDQpJIHByZWZlcnJlZCB0byBiZSBl
+eHBsaWNpdCB0aGF0IHRoZSBpdGVtIGlzIGEgc3RydWN0LCBidXQgcmVhbGx5IG5vdCB0aGF0IGZ1
+c3NlZA0KZWl0aGVyIHdheS4gQWxzbyBoYXZlIGJlZW4gYXNrZWQgcHJldmlvdXNseSBpbiBhIHNl
+cGFyYXRlIGRyaXZlciB0byBtYWtlIHRoZQ0Kc2FtZSBtb2QgeW91IG1lbnRpb24gc28gd2lsbCB1
+cGRhdGUgYWNjb3JkaW5nbHkuDQoNCj4gPiArCXJldCA9IGRldm1fcmVxdWVzdF90aHJlYWRlZF9p
+cnEoZGV2LCBpcnEsIE5VTEwsIGRhOTE1MF9ncGFkY19pcnEsDQo+ID4gKwkJCQkJSVJRRl9PTkVT
+SE9ULCAiR1BBREMiLCBncGFkYyk7DQo+ID4gKwlpZiAocmV0KSB7DQo+ID4gKwkJZGV2X2Vycihk
+ZXYsICJGYWlsZWQgdG8gcmVxdWVzdCBJUlEgJWQ6ICVkXG4iLCBpcnEsIHJldCk7DQo+ID4gKwkJ
+Z290byBpaW9fbWFwX3VucmVnOw0KPiBZb3UgbmVlZCB0byByZXR1cm4gcmV0IGhlcmUsIG5vIGp1
+bXAgdG8gZXJyb3Igb3V0IHBhdGguDQoNClllcywgdGhhbmtzLiBBbm5veWVkIEkgbWlzc2VkIHRo
+YXQgaW4gdGhlIHJlLWZhY3Rvci4gV2lsbCBmaXggaXQuDQo=
