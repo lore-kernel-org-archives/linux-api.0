@@ -1,8 +1,8 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 3/7] userns: Don't allow unprivileged creation of gid
-	mappings
-Date: Mon, 08 Dec 2014 16:07:42 -0600
-Message-ID: <8761dlre1d.fsf_-_@x220.int.ebiederm.org>
+Subject: [CFT][PATCH 4/7] userns: Check euid no fsuid when establishing an
+	unprivileged uid mapping
+Date: Mon, 08 Dec 2014 16:08:32 -0600
+Message-ID: <87y4qhpzfj.fsf_-_@x220.int.ebiederm.org>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
 	<87h9xez20g.fsf@x220.int.ebiederm.org>
 	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
@@ -36,43 +36,35 @@ Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <ke
 List-Id: linux-api@vger.kernel.org
 
 
-As any gid mapping will allow and must allow for backwards
-compatibility dropping groups don't allow any gid mappings to be
-established without CAP_SETGID in the parent user namespace.
+setresuid allows the euid to be set to any of uid, euid, suid, and
+fsuid.  Therefor it is safe to allow an unprivileged user to map their
+euid and use CAP_SETUID privileged with exactly that uid, as no new
+credentials can be obtained.
 
-For a small class of applications this change breaks userspace
-and removes useful functionality.  This small class of applications
-includes tools/testing/selftests/mount/unprivilged-remount-test.c
-
-Most of the removed functionality will be added back with the addition
-of a one way knob to disable setgroups.  Once setgroups is disabled
-setting the gid_map becomes as safe as setting the uid_map.
-
-For more common applications that set the uid_map and the gid_map
-with privilege this change will have no affect.
+I can not find a combination of existing system calls that allows
+setting uid, euid, suid, and fsuid from the fsuid making the previous
+use of fsuid for allowing unprivileged mappings a bug.
 
 This is part of a fix for CVE-2014-8989.
 
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/user_namespace.c | 4 ----
- 1 file changed, 4 deletions(-)
+ kernel/user_namespace.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index b99c862a2e3f..8e7c87162171 100644
+index 8e7c87162171..da1eeb927b21 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
-@@ -821,10 +821,6 @@ static bool new_idmap_permitted(const struct file *file,
+@@ -819,7 +819,7 @@ static bool new_idmap_permitted(const struct file *file,
+ 		u32 id = new_map->extent[0].lower_first;
+ 		if (cap_setid == CAP_SETUID) {
  			kuid_t uid = make_kuid(ns->parent, id);
- 			if (uid_eq(uid, file->f_cred->fsuid))
+-			if (uid_eq(uid, file->f_cred->fsuid))
++			if (uid_eq(uid, file->f_cred->euid))
  				return true;
--		} else if (cap_setid == CAP_SETGID) {
--			kgid_t gid = make_kgid(ns->parent, id);
--			if (gid_eq(gid, file->f_cred->fsgid))
--				return true;
  		}
  	}
- 
 -- 
 1.9.1
