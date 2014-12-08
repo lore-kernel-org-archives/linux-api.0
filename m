@@ -1,101 +1,64 @@
-From: peterhuewe-Mmb7MZpHnFY@public.gmane.org
-Subject: Re: [tpmdd-devel] [PATCH v8 6/8] tpm: TPM 2.0 baseline support
-Date: Mon, 08 Dec 2014 17:18:06 +0100
-Message-ID: <279e9a5e-05a9-4826-ada1-899fdcd11cea@email.android.com>
-References: <1417559480-13757-1-git-send-email-jarkko.sakkinen@linux.intel.com> <1417559480-13757-7-git-send-email-jarkko.sakkinen@linux.intel.com> <547E7553.2050608@linux.vnet.ibm.com> <201412050013.19082.PeterHuewe@gmx.de> <20141208135615.GC30303@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH V2] powerpc: add little endian flag to syscall_get_arch()
+Date: Mon,  8 Dec 2014 12:58:07 -0500
+Message-ID: <b167bdd159027f5cc27f86b96d07018689999bed.1417626494.git.rgb@redhat.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141208135615.GC30303-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tonyj-l3A5Bk7waGM@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi=20
+Since both ppc and ppc64 have LE variants which are now reported by uname, add
+that flag (__AUDIT_ARCH_LE) to syscall_get_arch() and add AUDIT_ARCH_PPC*LE
+variants.
 
-On 8. Dezember 2014 14:56:15 MEZ, Jarkko Sakkinen <jarkko.sakkinen@linu=
-x.intel.com> wrote:
->On Fri, Dec 05, 2014 at 12:13:18AM +0100, Peter H=C3=BCwe wrote:
->> Am Mittwoch, 3. Dezember 2014, 03:28:35 schrieb Stefan Berger:
->> > On 12/02/2014 05:31 PM, Jarkko Sakkinen wrote:
->> > > +
->> > > +/**
->> > > + * tpm2_startup() - send startup command to the TPM chip
->> > > + * @chip:		TPM chip to use.
->> > > + * @startup_type	startup type. The value is either
->> > > + *			TPM_SU_CLEAR or TPM_SU_STATE.
->> > > + *
->> > > + * 0 is returned when the operation is successful. If a negativ=
-e
->number
->> > > is + * returned it remarks a POSIX error code. If a positive
->number is
->> > > returned + * it remarks a TPM error.
->> > > + */
->> > > +int tpm2_startup(struct tpm_chip *chip, __be16 startup_type)
->> > > +{
->> > > +	struct tpm2_cmd cmd;
->> > > +
->> > > +	cmd.header.in =3D tpm2_startup_header;
->> > > +
->> > > +	cmd.params.startup_in.startup_type =3D startup_type;
->> > > +	return tpm_transmit_cmd(chip, &cmd, sizeof(cmd),
->> > > +				"attempting to start the TPM");
->> > > +}
->> >=20
->> > I suppose you need to send this command because your firmware does
->not
->> > do it ?Following TPM1.2 I guess the BIOS / UEFI should send this
->instead
->> > and sending it later would actually be wrong. Hm, I don't find fro=
-m
->> > where you are calling this... do you need it ? Can you remove it?
->> >=20
->> >     Stefan
->>=20
->> Hi,
->>=20
->> I think it would be good to send a TPM2_Startup if the TPM sends a=20
->> TPM_RC_INITIALIZE (0x100) - so it becomes atleast usable.
->> Of course the BIOS/UEFI/Firmware should send the TPM2_Startup, but i=
-f
->there is=20
->> no such thing, I would prefer Linux to do it, rather than nobody.
->> (analog: This was done for embedded platforms with TPM1.2).
->>=20
->> In the current situation (v9) it is not possible to use the TPM2 on =
-a
->machine=20
->> without bios integration. :( (so I cannot test here :( )
->
->Should the place be if sending self-test fails? I think the type shoul=
-d
->be TPM2_SU_CLEAR. Do you agree?
->
+Without this,  perf trace and auditctl fail.
 
-Yes. If the first command returns "invalid post init" or whatever it is=
- called in tpm20 speech the driver should send the startup clear.
+Mainline kernel reports ppc64le (per a058801) but there is no matching
+AUDIT_ARCH_PPC64LE.
 
+See:
+	https://www.redhat.com/archives/linux-audit/2014-August/msg00082.html
+	https://www.redhat.com/archives/linux-audit/2014-December/msg00004.html
 
-Not sure if we should send a startup state in the resume case (like on =
-tpm1.2)
+v1 -> v2:
+	Added ";" at the end of the #ifdef-protected line so it actually compiles
 
-And also it might make sense to send a tpm_shutdown? (If we aren't alre=
-ady) I think even on a machine with bios integration we have to send th=
-is?
+Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ arch/powerpc/include/asm/syscall.h |    6 +++++-
+ include/uapi/linux/audit.h         |    2 ++
+ 2 files changed, 7 insertions(+), 1 deletions(-)
 
-
->All other issues are now fixed except this and STS3 bit issue that I=20
->look for next. In my github there is tpm2-v10 branch now with fixes
->on top. I squash the fixes right after these two remaining issues are
->fixed.
->
->> Peter
->
->/Jarkko
-
-Peter
---=20
-Sent from my mobile.
+diff --git a/arch/powerpc/include/asm/syscall.h b/arch/powerpc/include/asm/syscall.h
+index 6fa2708..d1934e5 100644
+--- a/arch/powerpc/include/asm/syscall.h
++++ b/arch/powerpc/include/asm/syscall.h
+@@ -90,6 +90,10 @@ static inline void syscall_set_arguments(struct task_struct *task,
+ 
+ static inline int syscall_get_arch(void)
+ {
+-	return is_32bit_task() ? AUDIT_ARCH_PPC : AUDIT_ARCH_PPC64;
++	int arch = is_32bit_task() ? AUDIT_ARCH_PPC : AUDIT_ARCH_PPC64;
++#ifdef __LITTLE_ENDIAN__
++	arch |= __AUDIT_ARCH_LE;
++#endif
++	return arch;
+ }
+ #endif	/* _ASM_SYSCALL_H */
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index 4d100c8..fe29a99 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -364,7 +364,9 @@ enum {
+ #define AUDIT_ARCH_PARISC	(EM_PARISC)
+ #define AUDIT_ARCH_PARISC64	(EM_PARISC|__AUDIT_ARCH_64BIT)
+ #define AUDIT_ARCH_PPC		(EM_PPC)
++#define AUDIT_ARCH_PPCLE	(EM_PPC|__AUDIT_ARCH_LE)
+ #define AUDIT_ARCH_PPC64	(EM_PPC64|__AUDIT_ARCH_64BIT)
++#define AUDIT_ARCH_PPC64LE	(EM_PPC64|__AUDIT_ARCH_64BIT|__AUDIT_ARCH_LE)
+ #define AUDIT_ARCH_S390		(EM_S390)
+ #define AUDIT_ARCH_S390X	(EM_S390|__AUDIT_ARCH_64BIT)
+ #define AUDIT_ARCH_SH		(EM_SH)
+-- 
+1.7.1
