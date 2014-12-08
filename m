@@ -1,84 +1,69 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 5/7] userns: Only allow the creator of the userns
-	unprivileged mappings
-Date: Mon, 08 Dec 2014 16:10:22 -0600
-Message-ID: <87sigppzch.fsf_-_@x220.int.ebiederm.org>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [CFT][PATCH 4/7] userns: Check euid no fsuid when establishing an
+ unprivileged uid mapping
+Date: Mon, 8 Dec 2014 14:12:34 -0800
+Message-ID: <CALCETrUR2F+EoiOxO56Z0Fr3BZre3-0hQrORjjk9pa-JPZPodA@mail.gmail.com>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
-	<87h9xez20g.fsf@x220.int.ebiederm.org>
-	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
-	<87mw75ygwp.fsf@x220.int.ebiederm.org>
-	<CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
-	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
-	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
-	<CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
-	<87a935u3nj.fsf@x220.int.ebiederm.org>
-	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
-	<87388xodlj.fsf@x220.int.ebiederm.org>
-	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
-	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+ <87h9xez20g.fsf@x220.int.ebiederm.org> <CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
+ <87mw75ygwp.fsf@x220.int.ebiederm.org> <CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
+ <87fvcxyf28.fsf_-_@x220.int.ebiederm.org> <874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+ <CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
+ <87a935u3nj.fsf@x220.int.ebiederm.org> <CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
+ <87388xodlj.fsf@x220.int.ebiederm.org> <CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+ <87h9x5re41.fsf_-_@x220.int.ebiederm.org> <87y4qhpzfj.fsf_-_@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87h9x5re41.fsf_-_-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
-	message of "Mon, 08 Dec 2014 16:06:06 -0600")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <87y4qhpzfj.fsf_-_@x220.int.ebiederm.org>
+Sender: linux-security-module-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, stable <stable@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Dec 8, 2014 at 2:08 PM, Eric W. Biederman <ebiederm@xmission.com> wrote:
+>
+> setresuid allows the euid to be set to any of uid, euid, suid, and
+> fsuid.  Therefor it is safe to allow an unprivileged user to map their
+> euid and use CAP_SETUID privileged with exactly that uid, as no new
+> credentials can be obtained.
+>
+> I can not find a combination of existing system calls that allows
+> setting uid, euid, suid, and fsuid from the fsuid making the previous
+> use of fsuid for allowing unprivileged mappings a bug.
 
-If you did not create the user namespace and are allowed
-to write to uid_map or gid_map you should already have the necessary
-privilege in the parent user namespace to establish any mapping
-you want so this will not affect userspace in practice.
+Right.
 
-Limiting unprivileged uid mapping establishment to the creator of the
-user namespace reduces the set of credentials that must be verified
-can be obtained without privielge, making code verification simpler.
+>
+> This is part of a fix for CVE-2014-8989.
 
-Limiting unprivileged gid mapping establishment (which is temporarily
-absent) to the creator of the user namespace also ensures that the
-combination of uid and gid can already be obtained without privilege.
+Reviewed-by: Andy Lutomirski <luto@amacapital.net>
 
-This is part of the fix for CVE-2014-8989.
+>
+> Cc: stable@vger.kernel.org
+> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+> ---
+>  kernel/user_namespace.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+> index 8e7c87162171..da1eeb927b21 100644
+> --- a/kernel/user_namespace.c
+> +++ b/kernel/user_namespace.c
+> @@ -819,7 +819,7 @@ static bool new_idmap_permitted(const struct file *file,
+>                 u32 id = new_map->extent[0].lower_first;
+>                 if (cap_setid == CAP_SETUID) {
+>                         kuid_t uid = make_kuid(ns->parent, id);
+> -                       if (uid_eq(uid, file->f_cred->fsuid))
+> +                       if (uid_eq(uid, file->f_cred->euid))
+>                                 return true;
+>                 }
+>         }
+> --
+> 1.9.1
+>
 
-Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
----
- kernel/user_namespace.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index da1eeb927b21..413f60fd5983 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -812,14 +812,16 @@ static bool new_idmap_permitted(const struct file *file,
- 				struct user_namespace *ns, int cap_setid,
- 				struct uid_gid_map *new_map)
- {
-+	const struct cred *cred = file->f_cred;
- 	/* Don't allow mappings that would allow anything that wouldn't
- 	 * be allowed without the establishment of unprivileged mappings.
- 	 */
--	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
-+	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1) &&
-+	    uid_eq(ns->owner, cred->euid)) {
- 		u32 id = new_map->extent[0].lower_first;
- 		if (cap_setid == CAP_SETUID) {
- 			kuid_t uid = make_kuid(ns->parent, id);
--			if (uid_eq(uid, file->f_cred->euid))
-+			if (uid_eq(uid, cred->euid))
- 				return true;
- 		}
- 	}
+
 -- 
-1.9.1
+Andy Lutomirski
+AMA Capital Management, LLC
