@@ -1,79 +1,123 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH v8 6/8] tpm: TPM 2.0 baseline support
-Date: Mon, 8 Dec 2014 14:56:15 +0100
-Message-ID: <20141208135615.GC30303@intel.com>
-References: <1417559480-13757-1-git-send-email-jarkko.sakkinen@linux.intel.com>
- <1417559480-13757-7-git-send-email-jarkko.sakkinen@linux.intel.com>
- <547E7553.2050608@linux.vnet.ibm.com>
- <201412050013.19082.PeterHuewe@gmx.de>
+From: Hans Verkuil <hverkuil@xs4all.nl>
+Subject: Re: [PATCH v4] media: platform: add VPFE capture driver support for
+ AM437X
+Date: Mon, 08 Dec 2014 15:13:40 +0100
+Message-ID: <5485B214.3090805@xs4all.nl>
+References: <1417871242-23797-1-git-send-email-prabhakar.csengg@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <201412050013.19082.PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter =?iso-8859-1?Q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
-Cc: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh.triplett-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Arthur <will.c.arthur-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1417871242-23797-1-git-send-email-prabhakar.csengg@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Lad, Prabhakar" <prabhakar.csengg@gmail.com>, LMML <linux-media@vger.kernel.org>, devicetree@vger.kernel.org, linux-api <linux-api@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, Hans Verkuil <hans.verkuil@cisco.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 05, 2014 at 12:13:18AM +0100, Peter H=FCwe wrote:
-> Am Mittwoch, 3. Dezember 2014, 03:28:35 schrieb Stefan Berger:
-> > On 12/02/2014 05:31 PM, Jarkko Sakkinen wrote:
-> > > +
-> > > +/**
-> > > + * tpm2_startup() - send startup command to the TPM chip
-> > > + * @chip:		TPM chip to use.
-> > > + * @startup_type	startup type. The value is either
-> > > + *			TPM_SU_CLEAR or TPM_SU_STATE.
-> > > + *
-> > > + * 0 is returned when the operation is successful. If a negative=
- number
-> > > is + * returned it remarks a POSIX error code. If a positive numb=
-er is
-> > > returned + * it remarks a TPM error.
-> > > + */
-> > > +int tpm2_startup(struct tpm_chip *chip, __be16 startup_type)
-> > > +{
-> > > +	struct tpm2_cmd cmd;
-> > > +
-> > > +	cmd.header.in =3D tpm2_startup_header;
-> > > +
-> > > +	cmd.params.startup_in.startup_type =3D startup_type;
-> > > +	return tpm_transmit_cmd(chip, &cmd, sizeof(cmd),
-> > > +				"attempting to start the TPM");
-> > > +}
-> >=20
-> > I suppose you need to send this command because your firmware does =
-not
-> > do it ?Following TPM1.2 I guess the BIOS / UEFI should send this in=
-stead
-> > and sending it later would actually be wrong. Hm, I don't find from
-> > where you are calling this... do you need it ? Can you remove it?
-> >=20
-> >     Stefan
->=20
-> Hi,
->=20
-> I think it would be good to send a TPM2_Startup if the TPM sends a=20
-> TPM_RC_INITIALIZE (0x100) - so it becomes atleast usable.
-> Of course the BIOS/UEFI/Firmware should send the TPM2_Startup, but if=
- there is=20
-> no such thing, I would prefer Linux to do it, rather than nobody.
-> (analog: This was done for embedded platforms with TPM1.2).
->=20
-> In the current situation (v9) it is not possible to use the TPM2 on a=
- machine=20
-> without bios integration. :( (so I cannot test here :( )
+On 12/06/2014 02:07 PM, Lad, Prabhakar wrote:
+> From: Benoit Parrot <bparrot@ti.com>
+> 
+> This patch adds Video Processing Front End (VPFE) driver for
+> AM437X family of devices
+> Driver supports the following:
+> - V4L2 API using MMAP buffer access based on videobuf2 api
+> - Asynchronous sensor/decoder sub device registration
+> - DT support
+> 
+> Signed-off-by: Benoit Parrot <bparrot@ti.com>
+> Signed-off-by: Darren Etheridge <detheridge@ti.com>
+> Signed-off-by: Lad, Prabhakar <prabhakar.csengg@gmail.com>
+> ---
+>  Changes for v4:
+>  1: Fixed review comments pointed by Hans to check
+>     ycbcr_enc and quantization while comparing formats,
+>     fixed the release function and dropped compose cases
+>     for vpfe_g_selection as compose isn't supported.
+> 
+>  .../devicetree/bindings/media/ti-am437x-vpfe.txt   |   61 +
+>  MAINTAINERS                                        |    9 +
+>  drivers/media/platform/Kconfig                     |    1 +
+>  drivers/media/platform/Makefile                    |    2 +
+>  drivers/media/platform/am437x/Kconfig              |   11 +
+>  drivers/media/platform/am437x/Makefile             |    3 +
+>  drivers/media/platform/am437x/am437x-vpfe.c        | 2778 ++++++++++++++++++++
+>  drivers/media/platform/am437x/am437x-vpfe.h        |  283 ++
+>  drivers/media/platform/am437x/am437x-vpfe_regs.h   |  140 +
+>  include/uapi/linux/Kbuild                          |    1 +
+>  include/uapi/linux/am437x-vpfe.h                   |  122 +
+>  11 files changed, 3411 insertions(+)
+>  create mode 100644 Documentation/devicetree/bindings/media/ti-am437x-vpfe.txt
+>  create mode 100644 drivers/media/platform/am437x/Kconfig
+>  create mode 100644 drivers/media/platform/am437x/Makefile
+>  create mode 100644 drivers/media/platform/am437x/am437x-vpfe.c
+>  create mode 100644 drivers/media/platform/am437x/am437x-vpfe.h
+>  create mode 100644 drivers/media/platform/am437x/am437x-vpfe_regs.h
+>  create mode 100644 include/uapi/linux/am437x-vpfe.h
+> 
 
-Should the place be if sending self-test fails? I think the type should
-be TPM2_SU_CLEAR. Do you agree?
+<snip>
 
-All other issues are now fixed except this and STS3 bit issue that I=20
-look for next. In my github there is tpm2-v10 branch now with fixes
-on top. I squash the fixes right after these two remaining issues are
-fixed.
+> +/*
+> + * vpfe_release : This function is based on the vb2_fop_release
+> + * helper function.
+> + * It has been augmented to handle module power management,
+> + * by disabling/enabling h/w module fcntl clock when necessary.
+> + */
+> +static int vpfe_release(struct file *file)
+> +{
+> +	struct vpfe_device *vpfe = video_drvdata(file);
+> +	int ret;
+> +
+> +	vpfe_dbg(2, vpfe, "vpfe_release\n");
+> +
+> +	if (!v4l2_fh_is_singular_file(file))
+> +		return vb2_fop_release(file);
+> +
+> +	mutex_lock(&vpfe->lock);
 
-> Peter
+This should be moved up to before the if. Otherwise there will be a
+race between open and release w.r.t. to v4l2_fh_is_singular_file().
 
-/Jarkko
+> +	ret = _vb2_fop_release(file, NULL);
+> +	vpfe_ccdc_close(&vpfe->ccdc, vpfe->pdev);
+> +	mutex_unlock(&vpfe->lock);
+> +
+> +	return ret;
+> +}
+> +
+> +/*
+> + * vpfe_open : This function is based on the v4l2_fh_open helper function.
+> + * It has been augmented to handle module power management,
+> + * by disabling/enabling h/w module fcntl clock when necessary.
+> + */
+> +static int vpfe_open(struct file *file)
+> +{
+> +	struct vpfe_device *vpfe = video_drvdata(file);
+> +	int ret;
+> +
+> +	ret = v4l2_fh_open(file);
+> +	if (ret) {
+> +		vpfe_err(vpfe, "v4l2_fh_open failed\n");
+> +		return ret;
+> +	}
+> +
+> +	if (!v4l2_fh_is_singular_file(file))
+> +		return 0;
+> +
+> +	mutex_lock(&vpfe->lock);
+
+Same here: the lock should move to before the v4l2_fh_open call.
+
+> +	if (vpfe_initialize_device(vpfe)) {
+> +		mutex_unlock(&vpfe->lock);
+> +		v4l2_fh_release(file);
+> +		return -ENODEV;
+> +	}
+> +	mutex_unlock(&vpfe->lock);
+> +
+> +	return 0;
+> +}
+
+Regards,
+
+	Hans
