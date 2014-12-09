@@ -1,37 +1,43 @@
-From: Shuah Khan <shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: selftests: question about git repos containing selftest.
-Date: Tue, 9 Dec 2014 13:34:06 -0700
-Message-ID: <CAKocOOMiaUDaP=PJ7R9dtsg001eP68hNLyryVQV=yLMC92aeyg@mail.gmail.com>
+From: "Young, David" <dayoung-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: RE: selftests: question about git repos containing selftest.
+Date: Tue, 9 Dec 2014 15:25:42 -0500
+Message-ID: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C21@USMBX1.msg.corp.akamai.com>
 References: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796BF2@USMBX1.msg.corp.akamai.com>
 	<20141209194602.GB20166@kroah.com>
-	<CAKocOOMGoCtDjG24cJhkrJ=EyhbW-qy6=v5pJaRBeSPZuvZWfA@mail.gmail.com>
-	<7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C21@USMBX1.msg.corp.akamai.com>
+ <CAKocOOMGoCtDjG24cJhkrJ=EyhbW-qy6=v5pJaRBeSPZuvZWfA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C21-/aPJBeqlRkAyyULh10xnlCahX2Nl78RV0E9HWUfgJXw@public.gmane.org>
+In-Reply-To: <CAKocOOMGoCtDjG24cJhkrJ=EyhbW-qy6=v5pJaRBeSPZuvZWfA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Young, David" <dayoung-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Shuah Khan <shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 9, 2014 at 1:25 PM, Young, David <dayoung-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
-> Thanks, I was definitely looking at the master branch of linux-kselftest.
->
-> There are still more changes in linux-next repo, should those be considered as "in progress"?
->
-
-Patches in linux-kselftest fixes branch are the ones I included in my
-pull request
-I just sent out. linux-next might have some selftest patches that are part of a
-series that depend on a sub-system API. Maybe that is what you are seeing
-in linux-next.
-
-For example there are ftrace selftest patches in linux-next that
-depend on ftrace
-sub-system, hence they funnel through ftrace. Same thing happens with mm
-related things.
-
-Do you have specific patches in linux-next that you have questions about?
-
--- Shuah
+VGhhbmtzLCBJIHdhcyBkZWZpbml0ZWx5IGxvb2tpbmcgYXQgdGhlIG1hc3RlciBicmFuY2ggb2Yg
+bGludXgta3NlbGZ0ZXN0Lg0KDQpUaGVyZSBhcmUgc3RpbGwgbW9yZSBjaGFuZ2VzIGluIGxpbnV4
+LW5leHQgcmVwbywgc2hvdWxkIHRob3NlIGJlIGNvbnNpZGVyZWQgYXMgImluIHByb2dyZXNzIj8N
+Cg0KLWRhdmUNCg0KLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IFNodWFoIEtoYW4g
+W21haWx0bzpzaHVhaGtoYW5AZ21haWwuY29tXSANClNlbnQ6IFR1ZXNkYXksIERlY2VtYmVyIDA5
+LCAyMDE0IDM6MjEgUE0NClRvOiBHcmVnIEtIDQpDYzogWW91bmcsIERhdmlkOyBsaW51eC1hcGlA
+dmdlci5rZXJuZWwub3JnOyBzaHVhaGtoQG9zZy5zYW1zdW5nLmNvbTsgbGludXgta2VybmVsQHZn
+ZXIua2VybmVsLm9yZw0KU3ViamVjdDogUmU6IHNlbGZ0ZXN0czogcXVlc3Rpb24gYWJvdXQgZ2l0
+IHJlcG9zIGNvbnRhaW5pbmcgc2VsZnRlc3QuDQoNCk9uIFR1ZSwgRGVjIDksIDIwMTQgYXQgMTI6
+NDYgUE0sIEdyZWcgS0ggPGdyZWdraEBsaW51eGZvdW5kYXRpb24ub3JnPiB3cm90ZToNCj4gT24g
+VHVlLCBEZWMgMDksIDIwMTQgYXQgMDI6MjI6NDJQTSAtMDUwMCwgWW91bmcsIERhdmlkIHdyb3Rl
+Og0KPj4gR3JlZXRpbmdzLA0KPj4NCj4+IEknbSB0cnlpbmcgb3V0IHRoZSBuZXcga2VybmVsIHNl
+bGZ0ZXN0cyBhbmQgd2FzIGxvb2tpbmcgZm9yIHRoZSAiYmxlZWRpbmcgZWRnZSIgcmVwb3NpdG9y
+eSB0byBjbG9uZS4gIEFjY29yZGluZyB0byB0aGUgd2lraSBodHRwczovL2tzZWxmdGVzdC53aWtp
+Lmtlcm5lbC5vcmcvIHRoaXMgaXMgdGhlIGFwcHJvcHJpYXRlIHJlcG86DQo+PiBnaXQ6Ly9naXQu
+a2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvc2h1YWgvbGludXgta3NlbGZ0ZXN0
+LmcNCj4+IGl0DQo+Pg0KPj4gSG93ZXZlciwgSSBhbSBmaW5kaW5nIG5ld2VyIGFuZCBtb3JlIGZy
+ZXF1ZW50IGNoYW5nZXMgYXJlIGluIGxpbnV4LW5leHQuDQo+PiBodHRwczovL2dpdC5rZXJuZWwu
+b3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9uZXh0L2xpbnV4LW5leHQuZ2l0DQo+Pg0KPj4g
+V2hpY2ggc2hvdWxkIEkgY2xvbmUgZm9yIHRoZSBtb3N0IGZyZXNoIGNoYW5nZXM/DQo+DQo+IEFy
+ZSB5b3Ugc3VyZSB5b3UgYXJlIGxvb2tpbmcgYXQgdGhlIGNvcnJlY3QgYnJhbmNoIGZvciB0aGF0
+IGdpdCByZXBvPw0KPiBXaGljaCBvbmUgd2VyZSB5b3UgdXNpbmc/DQo+DQoNClBsZWFzZSBmaW5k
+IHRoZSBwYXRjaGVzIHNsYXRlZCBmb3IgMy4xOS0tcmMxIGluIGZpeGVzIGJyYW5jaC4gVGhlc2Ug
+YXJlIHRoZSBvbmVzIHRoYXQgZ2V0IHB1bGxlZCBpbnRvIGxpbnV4LW5leHQgZm9yIGludGVncmF0
+aW9uIHRlc3RpbmcuDQoNCi0tIFNodWFoDQo=
