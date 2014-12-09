@@ -1,43 +1,86 @@
-From: "Young, David" <dayoung-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: RE: selftests: question about git repos containing selftest.
-Date: Tue, 9 Dec 2014 15:25:42 -0500
-Message-ID: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C21@USMBX1.msg.corp.akamai.com>
-References: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796BF2@USMBX1.msg.corp.akamai.com>
-	<20141209194602.GB20166@kroah.com>
- <CAKocOOMGoCtDjG24cJhkrJ=EyhbW-qy6=v5pJaRBeSPZuvZWfA@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [CFT][PATCH 1/8] userns: Document what the invariant required for
+	safe unprivileged mappings.
+Date: Tue, 09 Dec 2014 14:36:48 -0600
+Message-ID: <87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
+	<87h9xez20g.fsf@x220.int.ebiederm.org>
+	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
+	<87mw75ygwp.fsf@x220.int.ebiederm.org>
+	<CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
+	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
+	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
+	<87a935u3nj.fsf@x220.int.ebiederm.org>
+	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
+	<87388xodlj.fsf@x220.int.ebiederm.org>
+	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+	<87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
+	<87ppbtn4mv.fsf@x220.int.ebiederm.org>
+	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
+	<87a92xn2io.fsf@x220.int.ebiederm.org>
+	<87r3w8liw4.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKocOOMGoCtDjG24cJhkrJ=EyhbW-qy6=v5pJaRBeSPZuvZWfA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87r3w8liw4.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
+	message of "Tue, 09 Dec 2014 13:31:39 -0600")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-VGhhbmtzLCBJIHdhcyBkZWZpbml0ZWx5IGxvb2tpbmcgYXQgdGhlIG1hc3RlciBicmFuY2ggb2Yg
-bGludXgta3NlbGZ0ZXN0Lg0KDQpUaGVyZSBhcmUgc3RpbGwgbW9yZSBjaGFuZ2VzIGluIGxpbnV4
-LW5leHQgcmVwbywgc2hvdWxkIHRob3NlIGJlIGNvbnNpZGVyZWQgYXMgImluIHByb2dyZXNzIj8N
-Cg0KLWRhdmUNCg0KLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IFNodWFoIEtoYW4g
-W21haWx0bzpzaHVhaGtoYW5AZ21haWwuY29tXSANClNlbnQ6IFR1ZXNkYXksIERlY2VtYmVyIDA5
-LCAyMDE0IDM6MjEgUE0NClRvOiBHcmVnIEtIDQpDYzogWW91bmcsIERhdmlkOyBsaW51eC1hcGlA
-dmdlci5rZXJuZWwub3JnOyBzaHVhaGtoQG9zZy5zYW1zdW5nLmNvbTsgbGludXgta2VybmVsQHZn
-ZXIua2VybmVsLm9yZw0KU3ViamVjdDogUmU6IHNlbGZ0ZXN0czogcXVlc3Rpb24gYWJvdXQgZ2l0
-IHJlcG9zIGNvbnRhaW5pbmcgc2VsZnRlc3QuDQoNCk9uIFR1ZSwgRGVjIDksIDIwMTQgYXQgMTI6
-NDYgUE0sIEdyZWcgS0ggPGdyZWdraEBsaW51eGZvdW5kYXRpb24ub3JnPiB3cm90ZToNCj4gT24g
-VHVlLCBEZWMgMDksIDIwMTQgYXQgMDI6MjI6NDJQTSAtMDUwMCwgWW91bmcsIERhdmlkIHdyb3Rl
-Og0KPj4gR3JlZXRpbmdzLA0KPj4NCj4+IEknbSB0cnlpbmcgb3V0IHRoZSBuZXcga2VybmVsIHNl
-bGZ0ZXN0cyBhbmQgd2FzIGxvb2tpbmcgZm9yIHRoZSAiYmxlZWRpbmcgZWRnZSIgcmVwb3NpdG9y
-eSB0byBjbG9uZS4gIEFjY29yZGluZyB0byB0aGUgd2lraSBodHRwczovL2tzZWxmdGVzdC53aWtp
-Lmtlcm5lbC5vcmcvIHRoaXMgaXMgdGhlIGFwcHJvcHJpYXRlIHJlcG86DQo+PiBnaXQ6Ly9naXQu
-a2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvc2h1YWgvbGludXgta3NlbGZ0ZXN0
-LmcNCj4+IGl0DQo+Pg0KPj4gSG93ZXZlciwgSSBhbSBmaW5kaW5nIG5ld2VyIGFuZCBtb3JlIGZy
-ZXF1ZW50IGNoYW5nZXMgYXJlIGluIGxpbnV4LW5leHQuDQo+PiBodHRwczovL2dpdC5rZXJuZWwu
-b3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9uZXh0L2xpbnV4LW5leHQuZ2l0DQo+Pg0KPj4g
-V2hpY2ggc2hvdWxkIEkgY2xvbmUgZm9yIHRoZSBtb3N0IGZyZXNoIGNoYW5nZXM/DQo+DQo+IEFy
-ZSB5b3Ugc3VyZSB5b3UgYXJlIGxvb2tpbmcgYXQgdGhlIGNvcnJlY3QgYnJhbmNoIGZvciB0aGF0
-IGdpdCByZXBvPw0KPiBXaGljaCBvbmUgd2VyZSB5b3UgdXNpbmc/DQo+DQoNClBsZWFzZSBmaW5k
-IHRoZSBwYXRjaGVzIHNsYXRlZCBmb3IgMy4xOS0tcmMxIGluIGZpeGVzIGJyYW5jaC4gVGhlc2Ug
-YXJlIHRoZSBvbmVzIHRoYXQgZ2V0IHB1bGxlZCBpbnRvIGxpbnV4LW5leHQgZm9yIGludGVncmF0
-aW9uIHRlc3RpbmcuDQoNCi0tIFNodWFoDQo=
+
+The rule is simple.  Don't allow anything that wouldn't be allowed
+without unprivileged mappings.
+
+It was previously overlooked that establishing gid mappings would
+allow dropping groups and potentially gaining permission to files and
+directories that had lesser permissions for a specific group than for
+all other users.
+
+This is the rule needed to fix CVE-2014-8989 and prevent any other
+security issues with new_idmap_permitted.
+
+The reason for this rule is that the unix permission model is old and
+there are programs out there somewhere that take advantage of every
+little corner of it.  So allowing a uid or gid mapping to be
+established without privielge that would allow anything that would not
+be allowed without that mapping will result in expectations from some
+code somewhere being violated.  Violated expectations about the
+behavior of the OS is a long way to say a security issue.
+
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+---
+ kernel/user_namespace.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index aa312b0dc3ec..b99c862a2e3f 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -812,7 +812,9 @@ static bool new_idmap_permitted(const struct file *file,
+ 				struct user_namespace *ns, int cap_setid,
+ 				struct uid_gid_map *new_map)
+ {
+-	/* Allow mapping to your own filesystem ids */
++	/* Don't allow mappings that would allow anything that wouldn't
++	 * be allowed without the establishment of unprivileged mappings.
++	 */
+ 	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
+ 		u32 id = new_map->extent[0].lower_first;
+ 		if (cap_setid == CAP_SETUID) {
+-- 
+1.9.1
