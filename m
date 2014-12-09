@@ -1,8 +1,7 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 5/8] userns: Only allow the creator of the userns
-	unprivileged mappings
-Date: Tue, 09 Dec 2014 14:41:21 -0600
-Message-ID: <87sigok13i.fsf_-_@x220.int.ebiederm.org>
+Subject: [CFT][PATCH 6/8] userns: Rename id_map_mutex to userns_state_mutex
+Date: Tue, 09 Dec 2014 14:41:57 -0600
+Message-ID: <87mw6wk12i.fsf_-_@x220.int.ebiederm.org>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
 	<87h9xez20g.fsf@x220.int.ebiederm.org>
 	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
@@ -43,51 +42,77 @@ Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <ke
 List-Id: linux-api@vger.kernel.org
 
 
-If you did not create the user namespace and are allowed
-to write to uid_map or gid_map you should already have the necessary
-privilege in the parent user namespace to establish any mapping
-you want so this will not affect userspace in practice.
-
-Limiting unprivileged uid mapping establishment to the creator of the
-user namespace makes it easier to verify all credentials obtained with
-the uid mapping can be obtained without the uid mapping without
-privilege.
-
-Limiting unprivileged gid mapping establishment (which is temporarily
-absent) to the creator of the user namespace also ensures that the
-combination of uid and gid can already be obtained without privilege.
-
-This is part of the fix for CVE-2014-8989.
+Generalize id_map_mutex so it can be used for more state of a user namespace.
 
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/user_namespace.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ kernel/user_namespace.c | 14 ++++++--------
+ 1 file changed, 6 insertions(+), 8 deletions(-)
 
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 9451b12a9b6c..1e34de2fbd60 100644
+index 1e34de2fbd60..44a555ac6104 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
-@@ -812,14 +812,16 @@ static bool new_idmap_permitted(const struct file *file,
+@@ -24,6 +24,7 @@
+ #include <linux/fs_struct.h>
+ 
+ static struct kmem_cache *user_ns_cachep __read_mostly;
++static DEFINE_MUTEX(userns_state_mutex);
+ 
+ static bool new_idmap_permitted(const struct file *file,
  				struct user_namespace *ns, int cap_setid,
- 				struct uid_gid_map *new_map)
- {
-+	const struct cred *cred = file->f_cred;
- 	/* Don't allow mappings that would allow anything that wouldn't
- 	 * be allowed without the establishment of unprivileged mappings.
+@@ -583,9 +584,6 @@ static bool mappings_overlap(struct uid_gid_map *new_map,
+ 	return false;
+ }
+ 
+-
+-static DEFINE_MUTEX(id_map_mutex);
+-
+ static ssize_t map_write(struct file *file, const char __user *buf,
+ 			 size_t count, loff_t *ppos,
+ 			 int cap_setid,
+@@ -602,7 +600,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 	ssize_t ret = -EINVAL;
+ 
+ 	/*
+-	 * The id_map_mutex serializes all writes to any given map.
++	 * The userns_state_mutex serializes all writes to any given map.
+ 	 *
+ 	 * Any map is only ever written once.
+ 	 *
+@@ -620,7 +618,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 	 * order and smp_rmb() is guaranteed that we don't have crazy
+ 	 * architectures returning stale data.
  	 */
--	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
-+	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1) &&
-+	    uid_eq(ns->owner, cred->euid)) {
- 		u32 id = new_map->extent[0].lower_first;
- 		if (cap_setid == CAP_SETUID) {
- 			kuid_t uid = make_kuid(ns->parent, id);
--			if (uid_eq(uid, file->f_cred->euid))
-+			if (uid_eq(uid, cred->euid))
- 				return true;
- 		}
- 	}
+-	mutex_lock(&id_map_mutex);
++	mutex_lock(&userns_state_mutex);
+ 
+ 	ret = -EPERM;
+ 	/* Only allow one successful write to the map */
+@@ -750,7 +748,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 	*ppos = count;
+ 	ret = count;
+ out:
+-	mutex_unlock(&id_map_mutex);
++	mutex_unlock(&userns_state_mutex);
+ 	if (page)
+ 		free_page(page);
+ 	return ret;
+@@ -845,12 +843,12 @@ bool userns_may_setgroups(const struct user_namespace *ns)
+ {
+ 	bool allowed;
+ 
+-	mutex_lock(&id_map_mutex);
++	mutex_lock(&userns_state_mutex);
+ 	/* It is not safe to use setgroups until a gid mapping in
+ 	 * the user namespace has been established.
+ 	 */
+ 	allowed = ns->gid_map.nr_extents != 0;
+-	mutex_unlock(&id_map_mutex);
++	mutex_unlock(&userns_state_mutex);
+ 
+ 	return allowed;
+ }
 -- 
 1.9.1
