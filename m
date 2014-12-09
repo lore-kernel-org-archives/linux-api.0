@@ -1,157 +1,125 @@
-From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Subject: [PATCH v10 04/20] vfio: amba: VFIO support for AMBA devices
-Date: Tue,  9 Dec 2014 15:18:57 +0100
-Message-ID: <1418134742-16259-1-git-send-email-a.motakis@virtualopensystems.com>
-References: <1417109580-10505-5-git-send-email-a.motakis@virtualopensystems.com>
+From: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Fwd: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same value
+ for all architectures
+Date: Tue, 09 Dec 2014 22:46:14 +0800
+Message-ID: <54870B36.3000901@gmail.com>
+References: <5480E715.3020900@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1417109580-10505-5-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+In-Reply-To: <5480E715.3020900-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: will.deacon-5wv7dgnIgG8@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, kim.phillips-KZfg59tc24xl57MIdRCFDg@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: dietlibc-a6ha8lKT7ZQ@public.gmane.org
+Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add support for discovering AMBA devices with VFIO and handle them
-similarly to Linux platform devices.
+Hello dietlibc members:
 
-Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+When I sent a Linux kernel patch for uapi, some members suggest me to
+Cc dietlibc members, so I forward the related mail to dietlibc mailing
+list.
+
+Please check, and welcome any ideas, suggestions, or completions.
+
+Thanks.
+
+-------- Forwarded Message --------
+Subject: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same value for all architectures
+Date: Fri, 05 Dec 2014 06:58:29 +0800
+From: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>, ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>, mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>, deller-Mmb7MZpHnFY@public.gmane.org <deller-Mmb7MZpHnFY@public.gmane.org>, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org <chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org>, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org <jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+For uapi, need try to let all macros have same value, and MADV_FREE is
+added into main branch recently, so need redefine MADV_FREE for it.
+
+At present, '8' can be shared with all architectures, so redefine it to
+'8'.
+
+Signed-off-by: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- drivers/vfio/platform/vfio_amba.c | 115 ++++++++++++++++++++++++++++++++++++++
- include/uapi/linux/vfio.h         |   1 +
- 2 files changed, 116 insertions(+)
- create mode 100644 drivers/vfio/platform/vfio_amba.c
+ arch/alpha/include/uapi/asm/mman.h     | 2 +-
+ arch/mips/include/uapi/asm/mman.h      | 2 +-
+ arch/parisc/include/uapi/asm/mman.h    | 2 +-
+ arch/xtensa/include/uapi/asm/mman.h    | 2 +-
+ include/uapi/asm-generic/mman-common.h | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/vfio/platform/vfio_amba.c b/drivers/vfio/platform/vfio_amba.c
-new file mode 100644
-index 0000000..ff0331f
---- /dev/null
-+++ b/drivers/vfio/platform/vfio_amba.c
-@@ -0,0 +1,115 @@
-+/*
-+ * Copyright (C) 2013 - Virtual Open Systems
-+ * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License, version 2, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/slab.h>
-+#include <linux/vfio.h>
-+#include <linux/amba/bus.h>
-+
-+#include "vfio_platform_private.h"
-+
-+#define DRIVER_VERSION  "0.10"
-+#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
-+#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
-+
-+/* probing devices from the AMBA bus */
-+
-+static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
-+					  int i)
-+{
-+	struct amba_device *adev = (struct amba_device *) vdev->opaque;
-+
-+	if (i == 0)
-+		return &adev->res;
-+
-+	return NULL;
-+}
-+
-+static int get_amba_irq(struct vfio_platform_device *vdev, int i)
-+{
-+	struct amba_device *adev = (struct amba_device *) vdev->opaque;
-+	int ret = 0;
-+
-+	if (i < AMBA_NR_IRQS)
-+		ret = adev->irq[i];
-+
-+	/* zero is an unset IRQ for AMBA devices */
-+	return ret ? ret : -ENXIO;
-+}
-+
-+static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
-+{
-+	struct vfio_platform_device *vdev;
-+	int ret;
-+
-+	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-+	if (!vdev)
-+		return -ENOMEM;
-+
-+	vdev->name = kasprintf(GFP_KERNEL, "vfio-amba-%08x", adev->periphid);
-+	if (!vdev->name) {
-+		kfree(vdev);
-+		return -ENOMEM;
-+	}
-+
-+	vdev->opaque = (void *) adev;
-+	vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
-+	vdev->get_resource = get_amba_resource;
-+	vdev->get_irq = get_amba_irq;
-+
-+	ret = vfio_platform_probe_common(vdev, &adev->dev);
-+	if (ret) {
-+		kfree(vdev->name);
-+		kfree(vdev);
-+	}
-+
-+	return ret;
-+}
-+
-+static int vfio_amba_remove(struct amba_device *adev)
-+{
-+	struct vfio_platform_device *vdev;
-+
-+	vdev = vfio_platform_remove_common(&adev->dev);
-+	if (vdev) {
-+		kfree(vdev->name);
-+		kfree(vdev);
-+		return 0;
-+	}
-+
-+	return -EINVAL;
-+}
-+
-+static struct amba_id pl330_ids[] = {
-+	{ 0, 0 },
-+};
-+
-+MODULE_DEVICE_TABLE(amba, pl330_ids);
-+
-+static struct amba_driver vfio_amba_driver = {
-+	.probe = vfio_amba_probe,
-+	.remove = vfio_amba_remove,
-+	.id_table = pl330_ids,
-+	.drv = {
-+		.name = "vfio-amba",
-+		.owner = THIS_MODULE,
-+	},
-+};
-+
-+module_amba_driver(vfio_amba_driver);
-+
-+MODULE_VERSION(DRIVER_VERSION);
-+MODULE_LICENSE("GPL v2");
-+MODULE_AUTHOR(DRIVER_AUTHOR);
-+MODULE_DESCRIPTION(DRIVER_DESC);
-diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-index 4e93a97..544d3d8 100644
---- a/include/uapi/linux/vfio.h
-+++ b/include/uapi/linux/vfio.h
-@@ -160,6 +160,7 @@ struct vfio_device_info {
- #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
- #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
- #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
-+#define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
- 	__u32	num_regions;	/* Max region index + 1 */
- 	__u32	num_irqs;	/* Max IRQ index + 1 */
- };
+diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+index 836fbd4..0b8a5de 100644
+--- a/arch/alpha/include/uapi/asm/mman.h
++++ b/arch/alpha/include/uapi/asm/mman.h
+@@ -44,9 +44,9 @@
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
+ #define MADV_DONTNEED	6		/* don't need these pages */
+-#define MADV_FREE	7		/* free pages only if memory pressure */
+ 
+ /* common/generic parameters */
++#define MADV_FREE	8		/* free pages only if memory pressure */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+ #define MADV_DONTFORK	10		/* don't inherit across fork */
+ #define MADV_DOFORK	11		/* do inherit across fork */
+diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+index 106e741..d247f54 100644
+--- a/arch/mips/include/uapi/asm/mman.h
++++ b/arch/mips/include/uapi/asm/mman.h
+@@ -67,9 +67,9 @@
+ #define MADV_SEQUENTIAL 2		/* expect sequential page references */
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define MADV_DONTNEED	4		/* don't need these pages */
+-#define MADV_FREE	5		/* free pages only if memory pressure */
+ 
+ /* common parameters: try to keep these consistent across architectures */
++#define MADV_FREE	8		/* free pages only if memory pressure */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+ #define MADV_DONTFORK	10		/* don't inherit across fork */
+ #define MADV_DOFORK	11		/* do inherit across fork */
+diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+index 6cb8db7..700d83f 100644
+--- a/arch/parisc/include/uapi/asm/mman.h
++++ b/arch/parisc/include/uapi/asm/mman.h
+@@ -40,9 +40,9 @@
+ #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
+ #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
+ #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
+-#define MADV_FREE	8		/* free pages only if memory pressure */
+ 
+ /* common/generic parameters */
++#define MADV_FREE	8		/* free pages only if memory pressure */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+ #define MADV_DONTFORK	10		/* don't inherit across fork */
+ #define MADV_DOFORK	11		/* do inherit across fork */
+diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+index 1b19f25..77eaca4 100644
+--- a/arch/xtensa/include/uapi/asm/mman.h
++++ b/arch/xtensa/include/uapi/asm/mman.h
+@@ -80,9 +80,9 @@
+ #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define MADV_DONTNEED	4		/* don't need these pages */
+-#define MADV_FREE	5		/* free pages only if memory pressure */
+ 
+ /* common parameters: try to keep these consistent across architectures */
++#define MADV_FREE	8		/* free pages only if memory pressure */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+ #define MADV_DONTFORK	10		/* don't inherit across fork */
+ #define MADV_DOFORK	11		/* do inherit across fork */
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index 7a94102..8695959 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -34,9 +34,9 @@
+ #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define MADV_DONTNEED	4		/* don't need these pages */
+-#define MADV_FREE	5		/* free pages only if memory pressure */
+ 
+ /* common parameters: try to keep these consistent across architectures */
++#define MADV_FREE	8		/* free pages only if memory pressure */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+ #define MADV_DONTFORK	10		/* don't inherit across fork */
+ #define MADV_DOFORK	11		/* do inherit across fork */
 -- 
-2.1.3
+1.9.3
