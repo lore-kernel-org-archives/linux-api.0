@@ -1,14 +1,14 @@
 From: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Fwd: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same value
- for all architectures
-Date: Tue, 09 Dec 2014 22:46:14 +0800
-Message-ID: <54870B36.3000901@gmail.com>
-References: <5480E715.3020900@gmail.com>
+Subject: Fwd: Fwd: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same
+ value for all architectures
+Date: Tue, 09 Dec 2014 22:51:02 +0800
+Message-ID: <54870C56.80306@gmail.com>
+References: <54870B36.3000901@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5480E715.3020900-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <54870B36.3000901-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: dietlibc-a6ha8lKT7ZQ@public.gmane.org
 Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
