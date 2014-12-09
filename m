@@ -1,37 +1,46 @@
-From: Shuah Khan <shuahkhan@gmail.com>
-Subject: Re: selftests: question about git repos containing selftest.
-Date: Tue, 9 Dec 2014 14:27:18 -0700
-Message-ID: <CAKocOOMNS3tZq3nFg7rTFnPRZwV0U-y4=34Yph+qTYN0kqTuQA@mail.gmail.com>
+From: "Young, David" <dayoung-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: RE: selftests: question about git repos containing selftest.
+Date: Tue, 9 Dec 2014 16:29:57 -0500
+Message-ID: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C79@USMBX1.msg.corp.akamai.com>
 References: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796BF2@USMBX1.msg.corp.akamai.com>
 	<20141209194602.GB20166@kroah.com>
 	<CAKocOOMGoCtDjG24cJhkrJ=EyhbW-qy6=v5pJaRBeSPZuvZWfA@mail.gmail.com>
 	<7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C21@USMBX1.msg.corp.akamai.com>
 	<CAKocOOMiaUDaP=PJ7R9dtsg001eP68hNLyryVQV=yLMC92aeyg@mail.gmail.com>
 	<7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C56@USMBX1.msg.corp.akamai.com>
+ <CAKocOOMNS3tZq3nFg7rTFnPRZwV0U-y4=34Yph+qTYN0kqTuQA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3D796C56@USMBX1.msg.corp.akamai.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Young, David" <dayoung@akamai.com>
-Cc: Greg KH <gregkh@linuxfoundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "shuahkh@osg.samsung.com" <shuahkh@osg.samsung.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKocOOMNS3tZq3nFg7rTFnPRZwV0U-y4=34Yph+qTYN0kqTuQA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 9, 2014 at 2:08 PM, Young, David <dayoung@akamai.com> wrote:
->
->> Do you have specific patches in linux-next that you have questions about?
->
-> Mostly I am interested in executing kselftests via something like autotest or Hudson/jenkins as a quick smoketest.  I understand it's still very much an in-progress feature, but would like the closest thing to a stable set of tests to regularly clone and use.  I suppose I could just wait for whatever makes it into mainline, but I'm interested in seeing the planned test coverage and test output so that I can write appropriate "glue" for use with a continuous-integration test system.
->
-
-David,
-
-Please follow fixes branch for patches that are going to be in the next mainline
-release. I am planning to create devel or experimental branch to make my next
-revision install target patches available for early testing for people
-that want to
-play with work in progress. Hope this is helpful.
-
-thanks,
--- Shuah
+VGhhbmtzIGZvciBjbGVhcmluZyB0aGlzIHVwLCB2ZXJ5IGhlbHBmdWwhDQoNCi1kYXZlDQoNCi0t
+LS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQpGcm9tOiBTaHVhaCBLaGFuIFttYWlsdG86c2h1YWhr
+aGFuQGdtYWlsLmNvbV0gDQpTZW50OiBUdWVzZGF5LCBEZWNlbWJlciAwOSwgMjAxNCA0OjI3IFBN
+DQpUbzogWW91bmcsIERhdmlkDQpDYzogR3JlZyBLSDsgbGludXgtYXBpQHZnZXIua2VybmVsLm9y
+Zzsgc2h1YWhraEBvc2cuc2Ftc3VuZy5jb207IGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmcN
+ClN1YmplY3Q6IFJlOiBzZWxmdGVzdHM6IHF1ZXN0aW9uIGFib3V0IGdpdCByZXBvcyBjb250YWlu
+aW5nIHNlbGZ0ZXN0Lg0KDQpPbiBUdWUsIERlYyA5LCAyMDE0IGF0IDI6MDggUE0sIFlvdW5nLCBE
+YXZpZCA8ZGF5b3VuZ0Bha2FtYWkuY29tPiB3cm90ZToNCj4NCj4+IERvIHlvdSBoYXZlIHNwZWNp
+ZmljIHBhdGNoZXMgaW4gbGludXgtbmV4dCB0aGF0IHlvdSBoYXZlIHF1ZXN0aW9ucyBhYm91dD8N
+Cj4NCj4gTW9zdGx5IEkgYW0gaW50ZXJlc3RlZCBpbiBleGVjdXRpbmcga3NlbGZ0ZXN0cyB2aWEg
+c29tZXRoaW5nIGxpa2UgYXV0b3Rlc3Qgb3IgSHVkc29uL2plbmtpbnMgYXMgYSBxdWljayBzbW9r
+ZXRlc3QuICBJIHVuZGVyc3RhbmQgaXQncyBzdGlsbCB2ZXJ5IG11Y2ggYW4gaW4tcHJvZ3Jlc3Mg
+ZmVhdHVyZSwgYnV0IHdvdWxkIGxpa2UgdGhlIGNsb3Nlc3QgdGhpbmcgdG8gYSBzdGFibGUgc2V0
+IG9mIHRlc3RzIHRvIHJlZ3VsYXJseSBjbG9uZSBhbmQgdXNlLiAgSSBzdXBwb3NlIEkgY291bGQg
+anVzdCB3YWl0IGZvciB3aGF0ZXZlciBtYWtlcyBpdCBpbnRvIG1haW5saW5lLCBidXQgSSdtIGlu
+dGVyZXN0ZWQgaW4gc2VlaW5nIHRoZSBwbGFubmVkIHRlc3QgY292ZXJhZ2UgYW5kIHRlc3Qgb3V0
+cHV0IHNvIHRoYXQgSSBjYW4gd3JpdGUgYXBwcm9wcmlhdGUgImdsdWUiIGZvciB1c2Ugd2l0aCBh
+IGNvbnRpbnVvdXMtaW50ZWdyYXRpb24gdGVzdCBzeXN0ZW0uDQo+DQoNCkRhdmlkLA0KDQpQbGVh
+c2UgZm9sbG93IGZpeGVzIGJyYW5jaCBmb3IgcGF0Y2hlcyB0aGF0IGFyZSBnb2luZyB0byBiZSBp
+biB0aGUgbmV4dCBtYWlubGluZSByZWxlYXNlLiBJIGFtIHBsYW5uaW5nIHRvIGNyZWF0ZSBkZXZl
+bCBvciBleHBlcmltZW50YWwgYnJhbmNoIHRvIG1ha2UgbXkgbmV4dCByZXZpc2lvbiBpbnN0YWxs
+IHRhcmdldCBwYXRjaGVzIGF2YWlsYWJsZSBmb3IgZWFybHkgdGVzdGluZyBmb3IgcGVvcGxlIHRo
+YXQgd2FudCB0byBwbGF5IHdpdGggd29yayBpbiBwcm9ncmVzcy4gSG9wZSB0aGlzIGlzIGhlbHBm
+dWwuDQoNCnRoYW5rcywNCi0tIFNodWFoDQo=
