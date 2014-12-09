@@ -1,8 +1,8 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 4/8] userns: Check euid no fsuid when establishing an
-	unprivileged uid mapping
-Date: Tue, 09 Dec 2014 14:39:59 -0600
-Message-ID: <87y4qgk15s.fsf_-_@x220.int.ebiederm.org>
+Subject: [CFT][PATCH 5/8] userns: Only allow the creator of the userns
+	unprivileged mappings
+Date: Tue, 09 Dec 2014 14:41:21 -0600
+Message-ID: <87sigok13i.fsf_-_@x220.int.ebiederm.org>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
 	<87h9xez20g.fsf@x220.int.ebiederm.org>
 	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
@@ -43,34 +43,49 @@ Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <ke
 List-Id: linux-api@vger.kernel.org
 
 
-setresuid allows the euid to be set to any of uid, euid, suid, and
-fsuid.  Therefor it is safe to allow an unprivileged user to map
-their euid and use CAP_SETUID privileged with exactly that uid,
-as no new credentials can be obtained.
+If you did not create the user namespace and are allowed
+to write to uid_map or gid_map you should already have the necessary
+privilege in the parent user namespace to establish any mapping
+you want so this will not affect userspace in practice.
 
-I can not find a combination of existing system calls that allows setting
-uid, euid, suid, and fsuid from the fsuid making the previous use
-of fsuid for allowing unprivileged mappings a bug.
+Limiting unprivileged uid mapping establishment to the creator of the
+user namespace makes it easier to verify all credentials obtained with
+the uid mapping can be obtained without the uid mapping without
+privilege.
 
-This is part of a fix for CVE-2014-8989.
+Limiting unprivileged gid mapping establishment (which is temporarily
+absent) to the creator of the user namespace also ensures that the
+combination of uid and gid can already be obtained without privilege.
+
+This is part of the fix for CVE-2014-8989.
 
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/user_namespace.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/user_namespace.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 1ce6d67c07b7..9451b12a9b6c 100644
+index 9451b12a9b6c..1e34de2fbd60 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
-@@ -819,7 +819,7 @@ static bool new_idmap_permitted(const struct file *file,
+@@ -812,14 +812,16 @@ static bool new_idmap_permitted(const struct file *file,
+ 				struct user_namespace *ns, int cap_setid,
+ 				struct uid_gid_map *new_map)
+ {
++	const struct cred *cred = file->f_cred;
+ 	/* Don't allow mappings that would allow anything that wouldn't
+ 	 * be allowed without the establishment of unprivileged mappings.
+ 	 */
+-	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
++	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1) &&
++	    uid_eq(ns->owner, cred->euid)) {
  		u32 id = new_map->extent[0].lower_first;
  		if (cap_setid == CAP_SETUID) {
  			kuid_t uid = make_kuid(ns->parent, id);
--			if (uid_eq(uid, file->f_cred->fsuid))
-+			if (uid_eq(uid, file->f_cred->euid))
+-			if (uid_eq(uid, file->f_cred->euid))
++			if (uid_eq(uid, cred->euid))
  				return true;
  		}
  	}
