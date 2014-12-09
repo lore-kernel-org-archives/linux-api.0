@@ -1,8 +1,8 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 1/8] userns: Document what the invariant required for
-	safe unprivileged mappings.
-Date: Tue, 09 Dec 2014 14:36:48 -0600
-Message-ID: <87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+Subject: [CFT][PATCH 2/8] userns: Don't allow setgroups until a gid mapping
+	has been setablished
+Date: Tue, 09 Dec 2014 14:38:23 -0600
+Message-ID: <87d27slfsw.fsf_-_@x220.int.ebiederm.org>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
 	<87h9xez20g.fsf@x220.int.ebiederm.org>
 	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
@@ -22,12 +22,13 @@ References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacap
 	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
 	<87a92xn2io.fsf@x220.int.ebiederm.org>
 	<87r3w8liw4.fsf@x220.int.ebiederm.org>
+	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87r3w8liw4.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
-	message of "Tue, 09 Dec 2014 13:31:39 -0600")
+In-Reply-To: <87iohklfvj.fsf_-_-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
+	message of "Tue, 09 Dec 2014 14:36:48 -0600")
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -42,45 +43,94 @@ Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <ke
 List-Id: linux-api@vger.kernel.org
 
 
-The rule is simple.  Don't allow anything that wouldn't be allowed
-without unprivileged mappings.
+setgroups is unique in not needing a valid mapping before it can be called,
+in the case of setgroups(0, NULL) which drops all supplemental groups.
 
-It was previously overlooked that establishing gid mappings would
-allow dropping groups and potentially gaining permission to files and
-directories that had lesser permissions for a specific group than for
-all other users.
+The design of the user namespace assumes that CAP_SETGID can not actually
+be used until a gid mapping is established.  Therefore add a helper function
+to see if the user namespace gid mapping has been established and call
+that function in the setgroups permission check.
 
-This is the rule needed to fix CVE-2014-8989 and prevent any other
-security issues with new_idmap_permitted.
-
-The reason for this rule is that the unix permission model is old and
-there are programs out there somewhere that take advantage of every
-little corner of it.  So allowing a uid or gid mapping to be
-established without privielge that would allow anything that would not
-be allowed without that mapping will result in expectations from some
-code somewhere being violated.  Violated expectations about the
-behavior of the OS is a long way to say a security issue.
+This is part of the fix for CVE-2014-8989, being able to drop groups
+without privilege using user namespaces.
 
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/user_namespace.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ include/linux/user_namespace.h |  5 +++++
+ kernel/groups.c                |  4 +++-
+ kernel/user_namespace.c        | 14 ++++++++++++++
+ 3 files changed, 22 insertions(+), 1 deletion(-)
 
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index e95372654f09..8d493083486a 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -63,6 +63,7 @@ extern const struct seq_operations proc_projid_seq_operations;
+ extern ssize_t proc_uid_map_write(struct file *, const char __user *, size_t, loff_t *);
+ extern ssize_t proc_gid_map_write(struct file *, const char __user *, size_t, loff_t *);
+ extern ssize_t proc_projid_map_write(struct file *, const char __user *, size_t, loff_t *);
++extern bool userns_may_setgroups(const struct user_namespace *ns);
+ #else
+ 
+ static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
+@@ -87,6 +88,10 @@ static inline void put_user_ns(struct user_namespace *ns)
+ {
+ }
+ 
++static inline bool userns_may_setgroups(const struct user_namespace *ns)
++{
++	return true;
++}
+ #endif
+ 
+ #endif /* _LINUX_USER_H */
+diff --git a/kernel/groups.c b/kernel/groups.c
+index 02d8a251c476..664411f171b5 100644
+--- a/kernel/groups.c
++++ b/kernel/groups.c
+@@ -6,6 +6,7 @@
+ #include <linux/slab.h>
+ #include <linux/security.h>
+ #include <linux/syscalls.h>
++#include <linux/user_namespace.h>
+ #include <asm/uaccess.h>
+ 
+ /* init to 2 - one for init_task, one to ensure it is never freed */
+@@ -217,7 +218,8 @@ bool may_setgroups(void)
+ {
+ 	struct user_namespace *user_ns = current_user_ns();
+ 
+-	return ns_capable(user_ns, CAP_SETGID);
++	return ns_capable(user_ns, CAP_SETGID) &&
++		userns_may_setgroups(user_ns);
+ }
+ 
+ /*
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index aa312b0dc3ec..b99c862a2e3f 100644
+index b99c862a2e3f..27c8dab48c07 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
-@@ -812,7 +812,9 @@ static bool new_idmap_permitted(const struct file *file,
- 				struct user_namespace *ns, int cap_setid,
- 				struct uid_gid_map *new_map)
- {
--	/* Allow mapping to your own filesystem ids */
-+	/* Don't allow mappings that would allow anything that wouldn't
-+	 * be allowed without the establishment of unprivileged mappings.
+@@ -843,6 +843,20 @@ static bool new_idmap_permitted(const struct file *file,
+ 	return false;
+ }
+ 
++bool userns_may_setgroups(const struct user_namespace *ns)
++{
++	bool allowed;
++
++	mutex_lock(&id_map_mutex);
++	/* It is not safe to use setgroups until a gid mapping in
++	 * the user namespace has been established.
 +	 */
- 	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1)) {
- 		u32 id = new_map->extent[0].lower_first;
- 		if (cap_setid == CAP_SETUID) {
++	allowed = ns->gid_map.nr_extents != 0;
++	mutex_unlock(&id_map_mutex);
++
++	return allowed;
++}
++
+ static void *userns_get(struct task_struct *task)
+ {
+ 	struct user_namespace *user_ns;
 -- 
 1.9.1
