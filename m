@@ -1,124 +1,157 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH v5] media: platform: add VPFE capture driver support for
- AM437X
-Date: Tue, 09 Dec 2014 12:13:20 +0100
-Message-ID: <5486D950.6050108@xs4all.nl>
-References: <1418077306-2493-1-git-send-email-prabhakar.csengg@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Subject: [PATCH v10 04/20] vfio: amba: VFIO support for AMBA devices
+Date: Tue,  9 Dec 2014 15:18:57 +0100
+Message-ID: <1418134742-16259-1-git-send-email-a.motakis@virtualopensystems.com>
+References: <1417109580-10505-5-git-send-email-a.motakis@virtualopensystems.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1418077306-2493-1-git-send-email-prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1417109580-10505-5-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Lad, Prabhakar" <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LMML <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+To: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: will.deacon-5wv7dgnIgG8@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, kim.phillips-KZfg59tc24xl57MIdRCFDg@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12/08/14 23:21, Lad, Prabhakar wrote:
-> From: Benoit Parrot <bparrot-l0cyMroinI0@public.gmane.org>
-> 
-> This patch adds Video Processing Front End (VPFE) driver for
-> AM437X family of devices
-> Driver supports the following:
-> - V4L2 API using MMAP buffer access based on videobuf2 api
-> - Asynchronous sensor/decoder sub device registration
-> - DT support
-> 
-> Signed-off-by: Benoit Parrot <bparrot-l0cyMroinI0@public.gmane.org>
-> Signed-off-by: Darren Etheridge <detheridge-l0cyMroinI0@public.gmane.org>
-> Signed-off-by: Lad, Prabhakar <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  Changes for v5:
->  1: Fixed review comments pointed out by Hans, fixing race condition.
-> 
->  v4l2-compliance output:
+Add support for discovering AMBA devices with VFIO and handle them
+similarly to Linux platform devices.
 
-Thanks!
+Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+---
+ drivers/vfio/platform/vfio_amba.c | 115 ++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/vfio.h         |   1 +
+ 2 files changed, 116 insertions(+)
+ create mode 100644 drivers/vfio/platform/vfio_amba.c
 
-<snip>
-
->  ----------------------
-> 
-> diff --git a/drivers/media/platform/am437x/am437x-vpfe.c b/drivers/media/platform/am437x/am437x-vpfe.c
-> new file mode 100644
-> index 0000000..c2b29a2
-> --- /dev/null
-> +++ b/drivers/media/platform/am437x/am437x-vpfe.c
-> +/*
-> + * vpfe_release : This function is based on the vb2_fop_release
-> + * helper function.
-> + * It has been augmented to handle module power management,
-> + * by disabling/enabling h/w module fcntl clock when necessary.
-> + */
-> +static int vpfe_release(struct file *file)
-> +{
-> +	struct vpfe_device *vpfe = video_drvdata(file);
-> +	bool close = v4l2_fh_is_singular_file(file);
-> +	int ret;
-> +
-> +	vpfe_dbg(2, vpfe, "vpfe_release\n");
-> +
-> +	mutex_lock(&vpfe->lock);
-
-The v4l2_fh_is_singular_file() call should be inside the lock as well.
-So:
-
-	close = v4l2_fh_is_singular_file(file);
-
-> +
-> +	ret = _vb2_fop_release(file, NULL);
-> +	if (close)
-> +		vpfe_ccdc_close(&vpfe->ccdc, vpfe->pdev);
-> +
-> +	mutex_unlock(&vpfe->lock);
-> +
-> +	return ret;
-> +}
-> +
-> +/*
-> + * vpfe_open : This function is based on the v4l2_fh_open helper function.
-> + * It has been augmented to handle module power management,
-> + * by disabling/enabling h/w module fcntl clock when necessary.
-> + */
-> +static int vpfe_open(struct file *file)
-> +{
-> +	struct vpfe_device *vpfe = video_drvdata(file);
-> +	int ret;
-> +
-> +	ret = v4l2_fh_open(file);
-
-Same here, v4l2_fh_open should be inside the lock.
-
-> +	if (ret) {
-> +		vpfe_err(vpfe, "v4l2_fh_open failed\n");
-> +		return ret;
-> +	}
-> +
-> +	mutex_lock(&vpfe->lock);
-
-So:
-
-	ret = v4l2_fh_open(file);
-	if (ret) {
-		vpfe_err(vpfe, "v4l2_fh_open failed\n");
-		goto unlock;
-	}
-
-	
-> +
-> +	if (!v4l2_fh_is_singular_file(file))
-> +		goto unlock;
-> +
-> +	if (vpfe_initialize_device(vpfe)) {
-> +		v4l2_fh_release(file);
-> +		ret = -ENODEV;
-> +	}
-> +
-> +unlock:
-> +	mutex_unlock(&vpfe->lock);
-> +	return ret;
-> +}
-
-Regards,
-
-	Hans
+diff --git a/drivers/vfio/platform/vfio_amba.c b/drivers/vfio/platform/vfio_amba.c
+new file mode 100644
+index 0000000..ff0331f
+--- /dev/null
++++ b/drivers/vfio/platform/vfio_amba.c
+@@ -0,0 +1,115 @@
++/*
++ * Copyright (C) 2013 - Virtual Open Systems
++ * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License, version 2, as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <linux/module.h>
++#include <linux/slab.h>
++#include <linux/vfio.h>
++#include <linux/amba/bus.h>
++
++#include "vfio_platform_private.h"
++
++#define DRIVER_VERSION  "0.10"
++#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
++#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
++
++/* probing devices from the AMBA bus */
++
++static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
++					  int i)
++{
++	struct amba_device *adev = (struct amba_device *) vdev->opaque;
++
++	if (i == 0)
++		return &adev->res;
++
++	return NULL;
++}
++
++static int get_amba_irq(struct vfio_platform_device *vdev, int i)
++{
++	struct amba_device *adev = (struct amba_device *) vdev->opaque;
++	int ret = 0;
++
++	if (i < AMBA_NR_IRQS)
++		ret = adev->irq[i];
++
++	/* zero is an unset IRQ for AMBA devices */
++	return ret ? ret : -ENXIO;
++}
++
++static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
++{
++	struct vfio_platform_device *vdev;
++	int ret;
++
++	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
++	if (!vdev)
++		return -ENOMEM;
++
++	vdev->name = kasprintf(GFP_KERNEL, "vfio-amba-%08x", adev->periphid);
++	if (!vdev->name) {
++		kfree(vdev);
++		return -ENOMEM;
++	}
++
++	vdev->opaque = (void *) adev;
++	vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
++	vdev->get_resource = get_amba_resource;
++	vdev->get_irq = get_amba_irq;
++
++	ret = vfio_platform_probe_common(vdev, &adev->dev);
++	if (ret) {
++		kfree(vdev->name);
++		kfree(vdev);
++	}
++
++	return ret;
++}
++
++static int vfio_amba_remove(struct amba_device *adev)
++{
++	struct vfio_platform_device *vdev;
++
++	vdev = vfio_platform_remove_common(&adev->dev);
++	if (vdev) {
++		kfree(vdev->name);
++		kfree(vdev);
++		return 0;
++	}
++
++	return -EINVAL;
++}
++
++static struct amba_id pl330_ids[] = {
++	{ 0, 0 },
++};
++
++MODULE_DEVICE_TABLE(amba, pl330_ids);
++
++static struct amba_driver vfio_amba_driver = {
++	.probe = vfio_amba_probe,
++	.remove = vfio_amba_remove,
++	.id_table = pl330_ids,
++	.drv = {
++		.name = "vfio-amba",
++		.owner = THIS_MODULE,
++	},
++};
++
++module_amba_driver(vfio_amba_driver);
++
++MODULE_VERSION(DRIVER_VERSION);
++MODULE_LICENSE("GPL v2");
++MODULE_AUTHOR(DRIVER_AUTHOR);
++MODULE_DESCRIPTION(DRIVER_DESC);
+diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+index 4e93a97..544d3d8 100644
+--- a/include/uapi/linux/vfio.h
++++ b/include/uapi/linux/vfio.h
+@@ -160,6 +160,7 @@ struct vfio_device_info {
+ #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
+ #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
+ #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
++#define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
+ 	__u32	num_regions;	/* Max region index + 1 */
+ 	__u32	num_irqs;	/* Max IRQ index + 1 */
+ };
+-- 
+2.1.3
