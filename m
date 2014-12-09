@@ -1,190 +1,97 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [v8 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
- interface support
-Date: Wed, 10 Dec 2014 09:57:58 +1100
-Message-ID: <20141209225758.GB9756@dastard>
-References: <1418102548-5469-1-git-send-email-lixi@ddn.com>
- <1418102548-5469-5-git-send-email-lixi@ddn.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [CFT][PATCH 3/8] userns: Don't allow unprivileged creation of gid
+	mappings
+Date: Tue, 9 Dec 2014 15:00:24 -0800
+Message-ID: <CALCETrU+xU3N+kPW1Mf2MV6QF2_cJFmatR2x_Mq7RTDJLcM68A@mail.gmail.com>
+References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
+	<87h9xez20g.fsf@x220.int.ebiederm.org>
+	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
+	<87mw75ygwp.fsf@x220.int.ebiederm.org>
+	<CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
+	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
+	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
+	<87a935u3nj.fsf@x220.int.ebiederm.org>
+	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
+	<87388xodlj.fsf@x220.int.ebiederm.org>
+	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+	<87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
+	<87ppbtn4mv.fsf@x220.int.ebiederm.org>
+	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
+	<87a92xn2io.fsf@x220.int.ebiederm.org>
+	<87r3w8liw4.fsf@x220.int.ebiederm.org>
+	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+	<874mt4lfr6.fsf_-_@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1418102548-5469-5-git-send-email-lixi@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Li Xi <pkuelelixi@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <874mt4lfr6.fsf_-_-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 09, 2014 at 01:22:27PM +0800, Li Xi wrote:
-> This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
-> support for ext4. The interface is kept consistent with
-> XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
-> 
-> Signed-off-by: Li Xi <lixi@ddn.com>
+On Tue, Dec 9, 2014 at 12:39 PM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>
+> As any gid mapping will allow and must allow for backwards
+> compatibility dropping groups don't allow any gid mappings to be
+> established without CAP_SETGID in the parent user namespace.
+>
+> For a small class of applications this change breaks userspace
+> and removes useful functionality.  This small class of applications
+> includes tools/testing/selftests/mount/unprivilged-remount-test.c
+>
+> Most of the removed functionality will be added back with the addition
+> of a one way knob to disable setgroups.  Once setgroups is disabled
+> setting the gid_map becomes as safe as setting the uid_map.
+>
+> For more common applications that set the uid_map and the gid_map
+> with privilege this change will have no affect.
+>
+
+Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+
+> This is part of a fix for CVE-2014-8989.
+>
+> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 > ---
->  fs/ext4/ext4.h          |  111 ++++++++++++++++
->  fs/ext4/ioctl.c         |  330 +++++++++++++++++++++++++++++++++--------------
->  fs/xfs/xfs_fs.h         |   47 +++-----
->  include/uapi/linux/fs.h |   58 ++++++++
->  4 files changed, 418 insertions(+), 128 deletions(-)
-> 
-> diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-> index 136e18c..43a2a88 100644
-> --- a/fs/ext4/ext4.h
-> +++ b/fs/ext4/ext4.h
-> @@ -384,6 +384,115 @@ struct flex_groups {
->  #define EXT4_FL_USER_VISIBLE		0x204BDFFF /* User visible flags */
->  #define EXT4_FL_USER_MODIFIABLE		0x204380FF /* User modifiable flags */
->  
-> +/* Transfer internal flags to xflags */
-> +static inline __u32 ext4_iflags_to_xflags(unsigned long iflags)
-> +{
-> +	__u32 xflags = 0;
-> +
-> +	if (iflags & EXT4_SECRM_FL)
-> +		xflags |= FS_XFLAG_SECRM;
-> +	if (iflags & EXT4_UNRM_FL)
-> +		xflags |= FS_XFLAG_UNRM;
-> +	if (iflags & EXT4_COMPR_FL)
-> +		xflags |= FS_XFLAG_COMPR;
-....
-
-NACK.
-
-> +	if (iflags & EXT4_SYNC_FL)
-> +		xflags |= FS_XFLAG_SYNC;
-> +	if (iflags & EXT4_IMMUTABLE_FL)
-> +		xflags |= FS_XFLAG_IMMUTABLE;
-> +	if (iflags & EXT4_APPEND_FL)
-> +		xflags |= FS_XFLAG_APPEND;
-> +	if (iflags & EXT4_NODUMP_FL)
-> +		xflags |= FS_XFLAG_NODUMP;
-> +	if (iflags & EXT4_NOATIME_FL)
-> +		xflags |= FS_XFLAG_NOATIME;
-
-These are OK because they already exist in the interface, but all
-the ext4 specific flags you've added have no place in this patchset.
+>  kernel/user_namespace.c | 4 ----
+>  1 file changed, 4 deletions(-)
+>
+> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+> index 27c8dab48c07..1ce6d67c07b7 100644
+> --- a/kernel/user_namespace.c
+> +++ b/kernel/user_namespace.c
+> @@ -821,10 +821,6 @@ static bool new_idmap_permitted(const struct file *file,
+>                         kuid_t uid = make_kuid(ns->parent, id);
+>                         if (uid_eq(uid, file->f_cred->fsuid))
+>                                 return true;
+> -               } else if (cap_setid == CAP_SETGID) {
+> -                       kgid_t gid = make_kgid(ns->parent, id);
+> -                       if (gid_eq(gid, file->f_cred->fsgid))
+> -                               return true;
+>                 }
+>         }
+>
+> --
+> 1.9.1
+>
 
 
-> +
->  /* Flags that should be inherited by new inodes from their parent. */
->  #define EXT4_FL_INHERITED (EXT4_SECRM_FL | EXT4_UNRM_FL | EXT4_COMPR_FL |\
->  			   EXT4_SYNC_FL | EXT4_NODUMP_FL | EXT4_NOATIME_FL |\
-> @@ -606,6 +715,8 @@ enum {
->  #define EXT4_IOC_RESIZE_FS		_IOW('f', 16, __u64)
->  #define EXT4_IOC_SWAP_BOOT		_IO('f', 17)
->  #define EXT4_IOC_PRECACHE_EXTENTS	_IO('f', 18)
-> +#define EXT4_IOC_FSGETXATTR		FS_IOC_FSGETXATTR
-> +#define EXT4_IOC_FSSETXATTR		FS_IOC_FSSETXATTR
 
-NACK. Userspace only needs FS_IOC_FS[GS]ETXATTR so that it works across
-all filesystems. We need to retain XFS_IOC_FS[GS]ETXATTR so we
-don't break existing userspace tools, but we do not need new
-filesystem specific definitions anywhere.
-
-> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> index fcbf647..872fed5 100644
-> --- a/include/uapi/linux/fs.h
-> +++ b/include/uapi/linux/fs.h
-> @@ -58,6 +58,62 @@ struct inodes_stat_t {
->  	long dummy[5];		/* padding for sysctl ABI compatibility */
->  };
->  
-> +/*
-> + * Extend attribute flags. These should be or-ed together to figure out what
-> + * is valid.
-> + */
-> +#define FSX_XFLAGS	(1 << 0)
-> +#define FSX_EXTSIZE	(1 << 1)
-> +#define FSX_NEXTENTS	(1 << 2)
-> +#define FSX_PROJID	(1 << 3)
-
-NACK.
-
-I've said this more than once: these are *private to XFS's
-implementation* and are not be part of the user interface. Do not
-move them from their existing location.
-
-
-> +
-> +/*
-> + * Structure for FS_IOC_FSGETXATTR and FS_IOC_FSSETXATTR.
-> + */
-> +struct fsxattr {
-> +	__u32		fsx_xflags;	/* xflags field value (get/set) */
-> +	__u32		fsx_extsize;	/* extsize field value (get/set)*/
-> +	__u32		fsx_nextents;	/* nextents field value (get)	*/
-> +	__u32		fsx_projid;	/* project identifier (get/set) */
-> +	unsigned char	fsx_pad[12];
-> +};
-> +
-> +/*
-> + * Flags for the fsx_xflags field
-> + */
-> +#define FS_XFLAG_REALTIME	0x00000001	/* data in realtime volume */
-> +#define FS_XFLAG_PREALLOC	0x00000002	/* preallocated file extents */
-> +#define FS_XFLAG_SECRM		0x00000004	/* secure deletion */
-
-NACK - ext4 specific.
-
-> +#define FS_XFLAG_IMMUTABLE	0x00000008	/* file cannot be modified */
-> +#define FS_XFLAG_APPEND		0x00000010	/* all writes append */
-> +#define FS_XFLAG_SYNC		0x00000020	/* all writes synchronous */
-> +#define FS_XFLAG_NOATIME	0x00000040	/* do not update access time */
-> +#define FS_XFLAG_NODUMP		0x00000080	/* do not include in backups */
-> +#define FS_XFLAG_RTINHERIT	0x00000100	/* create with rt bit set */
-> +#define FS_XFLAG_PROJINHERIT	0x00000200	/* create with parents projid */
-> +#define FS_XFLAG_NOSYMLINKS	0x00000400	/* disallow symlink creation */
-> +#define FS_XFLAG_EXTSIZE	0x00000800	/* extent size allocator hint */
-> +#define FS_XFLAG_EXTSZINHERIT	0x00001000	/* inherit inode extent size */
-> +#define FS_XFLAG_NODEFRAG	0x00002000  	/* do not defragment */
-> +#define FS_XFLAG_FILESTREAM	0x00004000	/* use filestream allocator */
-
-existing flags.
-
-> +#define FS_XFLAG_UNRM		0x00008000	/* undelete */
-> +#define FS_XFLAG_COMPR		0x00010000	/* compress file */
-> +#define FS_XFLAG_COMPRBLK	0x00020000	/* one or more compressed clusters */
-> +#define FS_XFLAG_NOCOMPR	0x00040000	/* don't compress */
-> +#define FS_XFLAG_ECOMPR		0x00080000	/* compression error */
-> +#define FS_XFLAG_INDEX		0x00100000	/* hash-indexed directory */
-> +#define FS_XFLAG_IMAGIC		0x00200000	/* AFS directory */
-> +#define FS_XFLAG_JOURNAL_DATA	0x00400000	/* file data should be journaled */
-> +#define FS_XFLAG_NOTAIL		0x00800000	/* file tail should not be merged */
-> +#define FS_XFLAG_DIRSYNC	0x01000000	/* dirsync behaviour (directories only) */
-> +#define FS_XFLAG_TOPDIR		0x02000000	/* top of directory hierarchies*/
-> +#define FS_XFLAG_HUGE_FILE	0x04000000	/* set to each huge file */
-> +#define FS_XFLAG_EXTENTS	0x08000000	/* inode uses extents */
-> +#define FS_XFLAG_EA_INODE	0x10000000	/* inode used for large EA */
-> +#define FS_XFLAG_EOFBLOCKS	0x20000000	/* blocks allocated beyond EOF */
-> +#define FS_XFLAG_INLINE_DATA	0x40000000	/* inode has inline data. */
-
-And a bunch more ext4 specific flags that *uses all the remaining
-flag space*.  At minimum, we need to keep space in this existing
-flags field for flags to future indication of how the padding is
-used, so that's yet another NACK.
-
-Further, none of these have any relevance to project quotas so
-should not be a part of this patchset. Nor are they relevant to any
-other filesystem, and many are duplicated by information you can get
-from FIEMAP and other interfaces. NACK, again.
-
-Because I'm getting annoyed at being repeatedly ignored about what
-needs to be done here, I'm now going to shout a bit. DO NOT CHANGE
-THE INTERFACE.  DO NOT ADD any new flags to the interface. DO NOT
-REDEFINE how the interface works. DO NOT "ext4-ise" the interface.
-
-The only changes to the interface code should be moving the XFS
-definitions and renaming them so as to provide the new generic
-ioctl definition as well as the historic XFS definitions. The ext4
-implementation needs to be done in a separate patch to the interface
-rename, and it must only implement the functionality the interface
-already provides. Anything else is outside the scope of this
-patchset and requires separate discussion.
-
-Cheers,
-
-Dave.
 -- 
-Dave Chinner
-david@fromorbit.com
+Andy Lutomirski
+AMA Capital Management, LLC
