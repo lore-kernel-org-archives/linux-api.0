@@ -1,66 +1,93 @@
-From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V4] powerpc: add little endian flag to syscall_get_arch()
-Date: Tue, 9 Dec 2014 21:43:19 -0500
-Message-ID: <20141210024319.GI29175@madcap2.tricolour.ca>
-References: <24fcd2ea2c7633152e74a7a92abab1dd1782745d.1418157273.git.rgb@redhat.com>
- <1557787.lOBez6GG22@sifl>
- <1418178015.30244.5.camel@concordia>
+From: Jesper Dangaard Brouer <brouer@redhat.com>
+Subject: [RFC PATCH 0/3] Faster than SLAB caching of SKBs with qmempool
+	(backed by alf_queue)
+Date: Wed, 10 Dec 2014 15:15:07 +0100
+Message-ID: <20141210141332.31779.56391.stgit@dragon>
+References: <20141210033902.2114.68658.stgit@ahduyck-vm-fedora20>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1418178015.30244.5.camel@concordia>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, tonyj-l3A5Bk7waGM@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20141210033902.2114.68658.stgit@ahduyck-vm-fedora20>
+Sender: owner-linux-mm@kvack.org
+To: Jesper Dangaard Brouer <brouer@redhat.com>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Christoph Lameter <cl@linux.com>
+Cc: linux-api@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, "David S. Miller" <davem@davemloft.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Alexander Duyck <alexander.duyck@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Steven Rostedt <rostedt@goodmis.org>
 List-Id: linux-api@vger.kernel.org
 
-On 14/12/10, Michael Ellerman wrote:
-> On Tue, 2014-12-09 at 21:11 -0500, Paul Moore wrote:
-> > On Tuesday, December 09, 2014 03:37:07 PM Richard Guy Briggs wrote:
-> > > Since both ppc and ppc64 have LE variants which are now reported by uname,
-> > > add that flag (__AUDIT_ARCH_LE) to syscall_get_arch() and add
-> > > AUDIT_ARCH_PPC64LE variant.
-> > > 
-> > > Without this,  perf trace and auditctl fail.
-> > > 
-> > > Mainline kernel reports ppc64le (per a058801) but there is no matching
-> > > AUDIT_ARCH_PPC64LE.
-> > > 
-> > > Since 32-bit PPC LE is not supported by audit, don't advertise it in
-> > > AUDIT_ARCH_PPC* variants.
-> > > 
-> > > See:
-> > > 	https://www.redhat.com/archives/linux-audit/2014-August/msg00082.html
-> > > 	https://www.redhat.com/archives/linux-audit/2014-December/msg00004.html
-> > > 
-> > > Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > > ---
-> > >  arch/powerpc/include/asm/syscall.h |    6 +++++-
-> > >  include/uapi/linux/audit.h         |    2 ++
-> > >  2 files changed, 7 insertions(+), 1 deletions(-)
-> > 
-> > The audit changes look fine to me, but as I mentioned earlier, this should go 
-> > in via the ppc tree and not the audit tree.
-> > 
-> > Acked-by: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-> 
-> Thanks.
-> 
-> Yep I'll take it via the powerpc tree, I'll CC stable as well as presumably we
-> want this to work in all versions that had LE support.
+The network stack have some use-cases that puts some extreme demands
+on the memory allocator.  One use-case, 10Gbit/s wirespeed at smallest
+packet size[1], requires handling a packet every 67.2 ns (nanosec).
 
-Yes, please!
+Micro benchmarking[2] the SLUB allocator (with skb size 256bytes
+elements), show "fast-path" instant reuse only costs 19 ns, but a
+closer to network usage pattern show the cost rise to 45 ns.
 
-(I was very tempted to change the #error to #warning, but figured the
-placeholder comment in the uapi file was sufficient.)
+This patchset introduce a quick mempool (qmempool), which when used
+in-front of the SKB (sk_buff) kmem_cache, saves 12 ns on "fast-path"
+drop in iptables "raw" table, but more importantly saves 40 ns with
+IP-forwarding, which were hitting the slower SLUB use-case.
 
-> cheers
 
-- RGB
+One of the building blocks for achieving this speedup is a cmpxchg
+based Lock-Free queue that supports bulking, named alf_queue for
+Array-based Lock-Free queue.  By bulking elements (pointers) from the
+queue, the cost of the cmpxchg (approx 8 ns) is amortized over several
+elements.
+
+ Patch1: alf_queue (Lock-Free queue)
+
+ Patch2: qmempool using alf_queue
+
+ Patch3: usage of qmempool for SKB caching
+
+
+Notice, this patchset depend on introduction of napi_alloc_skb(),
+which is part of Alexander Duyck's work patchset [3].
+
+Different correctness tests and micro benchmarks are avail via my
+github repo "prototype-kernel"[4], where the alf_queue and qmempool is
+also kept in sync with this patchset.
+
+Links:
+ [1]: http://netoptimizer.blogspot.dk/2014/05/the-calculations-10gbits-wirespeed.html
+ [2]: https://github.com/netoptimizer/prototype-kernel/blob/master/kernel/mm/qmempool_bench.c
+ [3]: http://thread.gmane.org/gmane.linux.network/342347
+ [4]: https://github.com/netoptimizer/prototype-kernel
+
+---
+
+Jesper Dangaard Brouer (3):
+      net: use qmempool in-front of sk_buff kmem_cache
+      mm: qmempool - quick queue based memory pool
+      lib: adding an Array-based Lock-Free (ALF) queue
+
+
+ include/linux/alf_queue.h |  303 ++++++++++++++++++++++++++++++++++++++++++
+ include/linux/qmempool.h  |  205 +++++++++++++++++++++++++++++
+ include/linux/skbuff.h    |    4 -
+ lib/Kconfig               |   13 ++
+ lib/Makefile              |    2 
+ lib/alf_queue.c           |   47 +++++++
+ mm/Kconfig                |   12 ++
+ mm/Makefile               |    1 
+ mm/qmempool.c             |  322 +++++++++++++++++++++++++++++++++++++++++++++
+ net/core/dev.c            |    5 +
+ net/core/skbuff.c         |   43 +++++-
+ 11 files changed, 950 insertions(+), 7 deletions(-)
+ create mode 100644 include/linux/alf_queue.h
+ create mode 100644 include/linux/qmempool.h
+ create mode 100644 lib/alf_queue.c
+ create mode 100644 mm/qmempool.c
+
+-- 
+Best regards,
+  Jesper Dangaard Brouer
+  MSc.CS, Sr. Network Kernel Developer at Red Hat
+  Author of http://www.iptv-analyzer.org
+  LinkedIn: http://www.linkedin.com/in/brouer
 
 --
-Richard Guy Briggs <rbriggs-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
-Remote, Ottawa, Canada
-Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
