@@ -1,45 +1,62 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [RFC PATCH 0/3] Faster than SLAB caching of SKBs with qmempool
-	(backed by alf_queue)
-Date: Wed, 10 Dec 2014 14:22:22 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1CA0A193@AcuExch.aculab.com>
+From: Jesper Dangaard Brouer <brouer@redhat.com>
+Subject: Re: [RFC PATCH 0/3] Faster than SLAB caching of SKBs with qmempool
+ (backed by alf_queue)
+Date: Wed, 10 Dec 2014 15:40:19 +0100
+Message-ID: <20141210154019.598da6d8@redhat.com>
 References: <20141210033902.2114.68658.stgit@ahduyck-vm-fedora20>
- <20141210141332.31779.56391.stgit@dragon>
+	<20141210141332.31779.56391.stgit@dragon>
+	<063D6719AE5E284EB5DD2968C1650D6D1CA0A193@AcuExch.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20141210141332.31779.56391.stgit@dragon>
-Content-Language: en-US
+In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6D1CA0A193@AcuExch.aculab.com>
 Sender: owner-linux-mm@kvack.org
-To: 'Jesper Dangaard Brouer' <brouer@redhat.com>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Christoph Lameter <cl@linux.com>
-Cc: "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Eric Dumazet <eric.dumazet@gmail.com>, "David S. Miller" <davem@davemloft.net>, Hannes
- Frederic Sowa <hannes@stressinduktion.org>, Alexander Duyck <alexander.duyck@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, "Paul E.
- McKenney" <paulmck@linux.vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Steven Rostedt <rostedt@goodmis.org>
+To: David Laight <David.Laight@ACULAB.COM>
+Cc: brouer@redhat.com, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Christoph Lameter <cl@linux.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Eric Dumazet <eric.dumazet@gmail.com>, "David S. Miller" <davem@davemloft.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Alexander Duyck <alexander.duyck@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Steven Rostedt <rostedt@goodmis.org>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogSmVzcGVyIERhbmdhYXJkIEJyb3Vlcg0KPiBUaGUgbmV0d29yayBzdGFjayBoYXZlIHNv
-bWUgdXNlLWNhc2VzIHRoYXQgcHV0cyBzb21lIGV4dHJlbWUgZGVtYW5kcw0KPiBvbiB0aGUgbWVt
-b3J5IGFsbG9jYXRvci4gIE9uZSB1c2UtY2FzZSwgMTBHYml0L3Mgd2lyZXNwZWVkIGF0IHNtYWxs
-ZXN0DQo+IHBhY2tldCBzaXplWzFdLCByZXF1aXJlcyBoYW5kbGluZyBhIHBhY2tldCBldmVyeSA2
-Ny4yIG5zIChuYW5vc2VjKS4NCj4gDQo+IE1pY3JvIGJlbmNobWFya2luZ1syXSB0aGUgU0xVQiBh
-bGxvY2F0b3IgKHdpdGggc2tiIHNpemUgMjU2Ynl0ZXMNCj4gZWxlbWVudHMpLCBzaG93ICJmYXN0
-LXBhdGgiIGluc3RhbnQgcmV1c2Ugb25seSBjb3N0cyAxOSBucywgYnV0IGENCj4gY2xvc2VyIHRv
-IG5ldHdvcmsgdXNhZ2UgcGF0dGVybiBzaG93IHRoZSBjb3N0IHJpc2UgdG8gNDUgbnMuDQo+IA0K
-PiBUaGlzIHBhdGNoc2V0IGludHJvZHVjZSBhIHF1aWNrIG1lbXBvb2wgKHFtZW1wb29sKSwgd2hp
-Y2ggd2hlbiB1c2VkDQo+IGluLWZyb250IG9mIHRoZSBTS0IgKHNrX2J1ZmYpIGttZW1fY2FjaGUs
-IHNhdmVzIDEyIG5zIG9uICJmYXN0LXBhdGgiDQo+IGRyb3AgaW4gaXB0YWJsZXMgInJhdyIgdGFi
-bGUsIGJ1dCBtb3JlIGltcG9ydGFudGx5IHNhdmVzIDQwIG5zIHdpdGgNCj4gSVAtZm9yd2FyZGlu
-Zywgd2hpY2ggd2VyZSBoaXR0aW5nIHRoZSBzbG93ZXIgU0xVQiB1c2UtY2FzZS4NCj4gDQo+IA0K
-PiBPbmUgb2YgdGhlIGJ1aWxkaW5nIGJsb2NrcyBmb3IgYWNoaWV2aW5nIHRoaXMgc3BlZWR1cCBp
-cyBhIGNtcHhjaGcNCj4gYmFzZWQgTG9jay1GcmVlIHF1ZXVlIHRoYXQgc3VwcG9ydHMgYnVsa2lu
-ZywgbmFtZWQgYWxmX3F1ZXVlIGZvcg0KPiBBcnJheS1iYXNlZCBMb2NrLUZyZWUgcXVldWUuICBC
-eSBidWxraW5nIGVsZW1lbnRzIChwb2ludGVycykgZnJvbSB0aGUNCj4gcXVldWUsIHRoZSBjb3N0
-IG9mIHRoZSBjbXB4Y2hnIChhcHByb3ggOCBucykgaXMgYW1vcnRpemVkIG92ZXIgc2V2ZXJhbA0K
-PiBlbGVtZW50cy4NCg0KSXQgc2VlbXMgdG8gbWUgdGhhdCB0aGVzZSBpbXByb3ZlbWVudHMgY291
-bGQgYmUgYWRkZWQgdG8gdGhlDQp1bmRlcmx5aW5nIGFsbG9jYXRvciBpdHNlbGYuDQpOZXN0aW5n
-IGFsbG9jYXRvcnMgZG9lc24ndCByZWFsbHkgc2VlbSByaWdodCB0byBtZS4NCg0KCURhdmlkDQoN
-Cg==
+On Wed, 10 Dec 2014 14:22:22 +0000
+David Laight <David.Laight@ACULAB.COM> wrote:
+
+> From: Jesper Dangaard Brouer
+> > The network stack have some use-cases that puts some extreme demands
+> > on the memory allocator.  One use-case, 10Gbit/s wirespeed at smallest
+> > packet size[1], requires handling a packet every 67.2 ns (nanosec).
+> > 
+> > Micro benchmarking[2] the SLUB allocator (with skb size 256bytes
+> > elements), show "fast-path" instant reuse only costs 19 ns, but a
+> > closer to network usage pattern show the cost rise to 45 ns.
+> > 
+> > This patchset introduce a quick mempool (qmempool), which when used
+> > in-front of the SKB (sk_buff) kmem_cache, saves 12 ns on "fast-path"
+> > drop in iptables "raw" table, but more importantly saves 40 ns with
+> > IP-forwarding, which were hitting the slower SLUB use-case.
+> > 
+> > 
+> > One of the building blocks for achieving this speedup is a cmpxchg
+> > based Lock-Free queue that supports bulking, named alf_queue for
+> > Array-based Lock-Free queue.  By bulking elements (pointers) from the
+> > queue, the cost of the cmpxchg (approx 8 ns) is amortized over several
+> > elements.
+> 
+> It seems to me that these improvements could be added to the
+> underlying allocator itself.
+> Nesting allocators doesn't really seem right to me.
+
+Yes, I would very much like to see these ideas integrated into the
+underlying allocators (hence addressing the mm-list).
+
+This patchset demonstrates that it is possible to do something faster
+than the existing SLUB allocator.  Which the network stack have a need
+for.
+
+-- 
+Best regards,
+  Jesper Dangaard Brouer
+  MSc.CS, Sr. Network Kernel Developer at Red Hat
+  Author of http://www.iptv-analyzer.org
+  LinkedIn: http://www.linkedin.com/in/brouer
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
