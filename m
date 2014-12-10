@@ -1,58 +1,78 @@
-From: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same value
- for all architectures
-Date: Wed, 10 Dec 2014 09:45:16 +0800
-Message-ID: <5487A5AC.8050503@gmail.com>
-References: <5480E715.3020900@gmail.com> <20141205065417.GA3358@bbox> <54822B19.2070804@gmail.com>
+From: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH V4] powerpc: add little endian flag to syscall_get_arch()
+Date: Tue, 09 Dec 2014 21:11:19 -0500
+Message-ID: <1557787.lOBez6GG22@sifl>
+References: <24fcd2ea2c7633152e74a7a92abab1dd1782745d.1418157273.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54822B19.2070804-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <24fcd2ea2c7633152e74a7a92abab1dd1782745d.1418157273.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org" <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>, "ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org" <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>, "mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, "jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>, "deller-Mmb7MZpHnFY@public.gmane.org" <deller-Mmb7MZpHnFY@public.gmane.org>, "chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org" <chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org>, "jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Carlos O'Donell <carlos-v2tUB8YBRSi3e3T8WW9gsA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, dietlibc-a6ha8lKT7ZQ@public.gmane.org, Felix von Leitner <felix-a6ha8lKT7ZQ@public.gmane.org>
+To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, tonyj-l3A5Bk7waGM@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Andrew:
-
-Could you help check this patch, when you have time. And apply it if
-possible.
-
-I guess, this patch is a little urgent, since it changes uapi, if wait
-a little longer, more user mode programs (e.g. libc) may use MADV_FREE
-as various values.
-
-Thanks.
-
-On 12/6/14 06:00, Chen Gang wrote:
-> On 12/05/2014 02:54 PM, Minchan Kim wrote:
->> On Fri, Dec 05, 2014 at 06:58:29AM +0800, Chen Gang wrote:
->>> For uapi, need try to let all macros have same value, and MADV_FREE is
->>> added into main branch recently, so need redefine MADV_FREE for it.
->>>
->>> At present, '8' can be shared with all architectures, so redefine it to
->>> '8'.
->>>
->>> Signed-off-by: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>
->>
->> Hello Chen,
->>
->> Thanks for looking at this.
->> Feel free to add my sign.
->>
->> Acked-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->>
+On Tuesday, December 09, 2014 03:37:07 PM Richard Guy Briggs wrote:
+> Since both ppc and ppc64 have LE variants which are now reported by uname,
+> add that flag (__AUDIT_ARCH_LE) to syscall_get_arch() and add
+> AUDIT_ARCH_PPC64LE variant.
 > 
-> OK, thanks.
+> Without this,  perf trace and auditctl fail.
 > 
-> Originally I sent the same patch like you sent (but later than yours).
-> Geert suggested to use same value for MADV_FREE, and Carlos confirmed
-> it and suggested more things (sorry, I forgot to Cc them in this mail).
+> Mainline kernel reports ppc64le (per a058801) but there is no matching
+> AUDIT_ARCH_PPC64LE.
 > 
+> Since 32-bit PPC LE is not supported by audit, don't advertise it in
+> AUDIT_ARCH_PPC* variants.
+> 
+> See:
+> 	https://www.redhat.com/archives/linux-audit/2014-August/msg00082.html
+> 	https://www.redhat.com/archives/linux-audit/2014-December/msg00004.html
+> 
+> Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  arch/powerpc/include/asm/syscall.h |    6 +++++-
+>  include/uapi/linux/audit.h         |    2 ++
+>  2 files changed, 7 insertions(+), 1 deletions(-)
+
+The audit changes look fine to me, but as I mentioned earlier, this should go 
+in via the ppc tree and not the audit tree.
+
+Acked-by: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+
+> diff --git a/arch/powerpc/include/asm/syscall.h
+> b/arch/powerpc/include/asm/syscall.h index 6fa2708..d1934e5 100644
+> --- a/arch/powerpc/include/asm/syscall.h
+> +++ b/arch/powerpc/include/asm/syscall.h
+> @@ -90,6 +90,10 @@ static inline void syscall_set_arguments(struct
+> task_struct *task,
+> 
+>  static inline int syscall_get_arch(void)
+>  {
+> -	return is_32bit_task() ? AUDIT_ARCH_PPC : AUDIT_ARCH_PPC64;
+> +	int arch = is_32bit_task() ? AUDIT_ARCH_PPC : AUDIT_ARCH_PPC64;
+> +#ifdef __LITTLE_ENDIAN__
+> +	arch |= __AUDIT_ARCH_LE;
+> +#endif
+> +	return arch;
+>  }
+>  #endif	/* _ASM_SYSCALL_H */
+> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> index 4d100c8..d82beec 100644
+> --- a/include/uapi/linux/audit.h
+> +++ b/include/uapi/linux/audit.h
+> @@ -364,7 +364,9 @@ enum {
+>  #define AUDIT_ARCH_PARISC	(EM_PARISC)
+>  #define AUDIT_ARCH_PARISC64	(EM_PARISC|__AUDIT_ARCH_64BIT)
+>  #define AUDIT_ARCH_PPC		(EM_PPC)
+> +/* do not define AUDIT_ARCH_PPCLE since it is not supported by audit */
+>  #define AUDIT_ARCH_PPC64	(EM_PPC64|__AUDIT_ARCH_64BIT)
+> +#define AUDIT_ARCH_PPC64LE	(EM_PPC64|__AUDIT_ARCH_64BIT|__AUDIT_ARCH_LE)
+>  #define AUDIT_ARCH_S390		(EM_S390)
+>  #define AUDIT_ARCH_S390X	(EM_S390|__AUDIT_ARCH_64BIT)
+>  #define AUDIT_ARCH_SH		(EM_SH)
 
 -- 
-Chen Gang
-
-Open, share, and attitude like air, water, and life which God blessed
+paul moore
+security and virtualization @ redhat
