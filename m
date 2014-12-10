@@ -1,173 +1,471 @@
-From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Subject: Re: [REPORT PATCH] driver core: amba: add device binding path
-	'driver_override'
-Date: Wed, 10 Dec 2014 15:47:35 +0100
-Message-ID: <CAG8rG2w=0C=r9WjsyxrGG=6i=Ww1-tD7Q2sLvHWYCN9xwnz1AA@mail.gmail.com>
-References: <1417109154-10331-1-git-send-email-a.motakis@virtualopensystems.com>
+From: Jesper Dangaard Brouer <brouer@redhat.com>
+Subject: [RFC PATCH 1/3] lib: adding an Array-based Lock-Free (ALF) queue
+Date: Wed, 10 Dec 2014 15:15:26 +0100
+Message-ID: <20141210141512.31779.96487.stgit@dragon>
+References: <20141210141332.31779.56391.stgit@dragon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1417109154-10331-1-git-send-email-a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-Cc: Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux IOMMU <iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, VirtualOpenSystems Technical Team <tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, kvm-arm <kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org>, Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20141210141332.31779.56391.stgit@dragon>
+Sender: owner-linux-mm@kvack.org
+To: Jesper Dangaard Brouer <brouer@redhat.com>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Christoph Lameter <cl@linux.com>
+Cc: linux-api@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, "David S. Miller" <davem@davemloft.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Alexander Duyck <alexander.duyck@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Steven Rostedt <rostedt@goodmis.org>
 List-Id: linux-api@vger.kernel.org
 
-Dear Russel,
+This Array-based Lock-Free (ALF) queue, is a very fast bounded
+Producer-Consumer queue, supporting bulking.  The MPMC
+(Multi-Producer/Multi-Consumer) variant uses a locked cmpxchg, but the
+cost can be amorized by utilizing bulk enqueue/dequeue.
 
-Do you think this patch can be included eventually?
+Results on x86_64 CPU E5-2695, for variants:
+ MPMC = Multi-Producer-Multi-Consumer
+ SPSC = Single-Producer-Single-Consumer
 
-If not, what would we still need to change, or is there another
-approach you would accept?
+(none-bulking):  per element cost MPMC and SPSC
+                   MPMC     -- SPSC
+ simple         :  9.519 ns -- 1.282 ns
+ multi(step:128): 12.905 ns -- 2.240 ns
 
-Thanks and best regards,
-Antonios
+The majority of the cost is associated with the locked cmpxchg in the
+MPMC variant.  Bulking helps amortize this cost:
 
-On Thu, Nov 27, 2014 at 6:25 PM, Antonios Motakis
-<a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org> wrote:
-> As already demonstrated with PCI [1] and the platform bus [2], a
-> driver_override property in sysfs can be used to bypass the id matching
-> of a device to a AMBA driver. This can be used by VFIO to bind to any AMBA
-> device requested by the user.
->
-> [1] http://lists-archives.com/linux-kernel/28030441-pci-introduce-new-device-binding-path-using-pci_dev-driver_override.html
-> [2] https://www.redhat.com/archives/libvir-list/2014-April/msg00382.html
->
-> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> Reviewed-by: Kim Phillips <kim.phillips-KZfg59tc24xl57MIdRCFDg@public.gmane.org>
-> ---
->  Documentation/ABI/testing/sysfs-bus-amba | 20 ++++++++++++++
->  drivers/amba/bus.c                       | 47 ++++++++++++++++++++++++++++++++
->  include/linux/amba/bus.h                 |  1 +
->  3 files changed, 68 insertions(+)
->  create mode 100644 Documentation/ABI/testing/sysfs-bus-amba
->
-> diff --git a/Documentation/ABI/testing/sysfs-bus-amba b/Documentation/ABI/testing/sysfs-bus-amba
-> new file mode 100644
-> index 0000000..e7b5467
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-bus-amba
-> @@ -0,0 +1,20 @@
-> +What:          /sys/bus/amba/devices/.../driver_override
-> +Date:          September 2014
-> +Contact:       Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> +Description:
-> +               This file allows the driver for a device to be specified which
-> +               will override standard OF, ACPI, ID table, and name matching.
-> +               When specified, only a driver with a name matching the value
-> +               written to driver_override will have an opportunity to bind to
-> +               the device. The override is specified by writing a string to the
-> +               driver_override file (echo vfio-amba > driver_override) and may
-> +               be cleared with an empty string (echo > driver_override).
-> +               This returns the device to standard matching rules binding.
-> +               Writing to driver_override does not automatically unbind the
-> +               device from its current driver or make any attempt to
-> +               automatically load the specified driver. If no driver with a
-> +               matching name is currently loaded in the kernel, the device will
-> +               not bind to any driver. This also allows devices to opt-out of
-> +               driver binding using a driver_override name such as "none".
-> +               Only a single driver may be specified in the override, there is
-> +               no support for parsing delimiters.
-> diff --git a/drivers/amba/bus.c b/drivers/amba/bus.c
-> index 47bbdc1..14bb08b 100644
-> --- a/drivers/amba/bus.c
-> +++ b/drivers/amba/bus.c
-> @@ -18,6 +18,7 @@
->  #include <linux/pm_domain.h>
->  #include <linux/amba/bus.h>
->  #include <linux/sizes.h>
-> +#include <linux/limits.h>
->
->  #include <asm/irq.h>
->
-> @@ -43,6 +44,10 @@ static int amba_match(struct device *dev, struct device_driver *drv)
->         struct amba_device *pcdev = to_amba_device(dev);
->         struct amba_driver *pcdrv = to_amba_driver(drv);
->
-> +       /* When driver_override is set, only bind to the matching driver */
-> +       if (pcdev->driver_override)
-> +               return !strcmp(pcdev->driver_override, drv->name);
-> +
->         return amba_lookup(pcdrv->id_table, pcdev) != NULL;
->  }
->
-> @@ -59,6 +64,47 @@ static int amba_uevent(struct device *dev, struct kobj_uevent_env *env)
->         return retval;
->  }
->
-> +static ssize_t driver_override_show(struct device *_dev,
-> +                                   struct device_attribute *attr, char *buf)
-> +{
-> +       struct amba_device *dev = to_amba_device(_dev);
-> +
-> +       if (!dev->driver_override)
-> +               return 0;
-> +
-> +       return sprintf(buf, "%s\n", dev->driver_override);
-> +}
-> +
-> +static ssize_t driver_override_store(struct device *_dev,
-> +                                    struct device_attribute *attr,
-> +                                    const char *buf, size_t count)
-> +{
-> +       struct amba_device *dev = to_amba_device(_dev);
-> +       char *driver_override, *old = dev->driver_override, *cp;
-> +
-> +       if (count > PATH_MAX)
-> +               return -EINVAL;
-> +
-> +       driver_override = kstrndup(buf, count, GFP_KERNEL);
-> +       if (!driver_override)
-> +               return -ENOMEM;
-> +
-> +       cp = strchr(driver_override, '\n');
-> +       if (cp)
-> +               *cp = '\0';
-> +
-> +       if (strlen(driver_override)) {
-> +               dev->driver_override = driver_override;
-> +       } else {
-> +              kfree(driver_override);
-> +              dev->driver_override = NULL;
-> +       }
-> +
-> +       kfree(old);
-> +
-> +       return count;
-> +}
-> +
->  #define amba_attr_func(name,fmt,arg...)                                        \
->  static ssize_t name##_show(struct device *_dev,                                \
->                            struct device_attribute *attr, char *buf)    \
-> @@ -81,6 +127,7 @@ amba_attr_func(resource, "\t%016llx\t%016llx\t%016lx\n",
->  static struct device_attribute amba_dev_attrs[] = {
->         __ATTR_RO(id),
->         __ATTR_RO(resource),
-> +       __ATTR_RW(driver_override),
->         __ATTR_NULL,
->  };
->
-> diff --git a/include/linux/amba/bus.h b/include/linux/amba/bus.h
-> index c324f57..34a7004 100644
-> --- a/include/linux/amba/bus.h
-> +++ b/include/linux/amba/bus.h
-> @@ -32,6 +32,7 @@ struct amba_device {
->         struct clk              *pclk;
->         unsigned int            periphid;
->         unsigned int            irq[AMBA_NR_IRQS];
-> +       char                    *driver_override;
->  };
->
->  struct amba_driver {
-> --
-> 2.1.3
->
+(bulking) cost per element comparing MPMC -> SPSC:
+         MPMC     -- SPSC
+ bulk2 : 5.849 ns -- 1.748 ns
+ bulk3 : 4.102 ns -- 1.531 ns
+ bulk4 : 3.281 ns -- 1.383 ns
+ bulk6 : 2.530 ns -- 1.238 ns
+ bulk8 : 2.125 ns -- 1.196 ns
+ bulk16: 1.552 ns -- 1.109 ns
+
+Joint work with Hannes Frederic Sowa.
+
+Signed-off-by: Jesper Dangaard Brouer <brouer@redhat.com>
+Signed-off-by: Hannes Frederic Sowa <hannes@stressinduktion.org>
+---
+
+Correctness of memory barries on different arch's need to be evaluated.
+
+The API might need some adjustments/discussions regarding:
+
+1) the semantics of enq/deq when doing bulking, choosing what
+to do when e.g. a bulk enqueue cannot fit fully.
+
+2) some better way to detect miss-use of API, e.g. using
+single-enqueue variant function call on a multi-enqueue variant data
+structure.  Now no detection happens.
+
+ include/linux/alf_queue.h |  303 +++++++++++++++++++++++++++++++++++++++++++++
+ lib/Kconfig               |   13 ++
+ lib/Makefile              |    2 
+ lib/alf_queue.c           |   47 +++++++
+ 4 files changed, 365 insertions(+), 0 deletions(-)
+ create mode 100644 include/linux/alf_queue.h
+ create mode 100644 lib/alf_queue.c
+
+diff --git a/include/linux/alf_queue.h b/include/linux/alf_queue.h
+new file mode 100644
+index 0000000..fb1a774
+--- /dev/null
++++ b/include/linux/alf_queue.h
+@@ -0,0 +1,303 @@
++#ifndef _LINUX_ALF_QUEUE_H
++#define _LINUX_ALF_QUEUE_H
++/* linux/alf_queue.h
++ *
++ * ALF: Array-based Lock-Free queue
++ *
++ * Queue properties
++ *  - Array based for cache-line optimization
++ *  - Bounded by the array size
++ *  - FIFO Producer/Consumer queue, no queue traversal supported
++ *  - Very fast
++ *  - Designed as a queue for pointers to objects
++ *  - Bulk enqueue and dequeue support
++ *  - Supports combinations of Multi and Single Producer/Consumer
++ *
++ * Copyright (C) 2014, Red Hat, Inc.,
++ *  by Jesper Dangaard Brouer and Hannes Frederic Sowa
++ *  for licensing details see kernel-base/COPYING
++ */
++#include <linux/compiler.h>
++#include <linux/kernel.h>
++
++struct alf_actor {
++	u32 head;
++	u32 tail;
++};
++
++struct alf_queue {
++	u32 size;
++	u32 mask;
++	u32 flags;
++	struct alf_actor producer ____cacheline_aligned_in_smp;
++	struct alf_actor consumer ____cacheline_aligned_in_smp;
++	void *ring[0] ____cacheline_aligned_in_smp;
++};
++
++struct alf_queue *alf_queue_alloc(u32 size, gfp_t gfp);
++void		  alf_queue_free(struct alf_queue *q);
++
++/* Helpers for LOAD and STORE of elements, have been split-out because:
++ *  1. They can be reused for both "Single" and "Multi" variants
++ *  2. Allow us to experiment with (pipeline) optimizations in this area.
++ */
++static inline void
++__helper_alf_enqueue_store(u32 p_head, struct alf_queue *q,
++			   void **ptr, const u32 n)
++{
++	int i, index = p_head;
++
++	for (i = 0; i < n; i++, index++)
++		q->ring[index & q->mask] = ptr[i];
++}
++
++static inline void
++__helper_alf_dequeue_load(u32 c_head, struct alf_queue *q,
++			  void **ptr, const u32 elems)
++{
++	int i, index = c_head;
++
++	for (i = 0; i < elems; i++, index++)
++		ptr[i] = q->ring[index & q->mask];
++}
++
++/* Main Multi-Producer ENQUEUE
++ *
++ * Even-though current API have a "fixed" semantics of aborting if it
++ * cannot enqueue the full bulk size.  Users of this API should check
++ * on the returned number of enqueue elements match, to verify enqueue
++ * was successful.  This allow us to introduce a "variable" enqueue
++ * scheme later.
++ *
++ * Not preemption safe. Multiple CPUs can enqueue elements, but the
++ * same CPU is not allowed to be preempted and access the same
++ * queue. Due to how the tail is updated, this can result in a soft
++ * lock-up. (Same goes for alf_mc_dequeue).
++ */
++static inline int
++alf_mp_enqueue(const u32 n;
++	       struct alf_queue *q, void *ptr[n], const u32 n)
++{
++	u32 p_head, p_next, c_tail, space;
++
++	/* Reserve part of the array for enqueue STORE/WRITE */
++	do {
++		p_head = ACCESS_ONCE(q->producer.head);
++		c_tail = ACCESS_ONCE(q->consumer.tail);
++
++		space = q->size + c_tail - p_head;
++		if (n > space)
++			return 0;
++
++		p_next = p_head + n;
++	}
++	while (unlikely(cmpxchg(&q->producer.head, p_head, p_next) != p_head));
++
++	/* STORE the elems into the queue array */
++	__helper_alf_enqueue_store(p_head, q, ptr, n);
++	smp_wmb(); /* Write-Memory-Barrier matching dequeue LOADs */
++
++	/* Wait for other concurrent preceding enqueues not yet done,
++	 * this part make us none-wait-free and could be problematic
++	 * in case of congestion with many CPUs
++	 */
++	while (unlikely(ACCESS_ONCE(q->producer.tail) != p_head))
++		cpu_relax();
++	/* Mark this enq done and avail for consumption */
++	ACCESS_ONCE(q->producer.tail) = p_next;
++
++	return n;
++}
++
++/* Main Multi-Consumer DEQUEUE */
++static inline int
++alf_mc_dequeue(const u32 n;
++	       struct alf_queue *q, void *ptr[n], const u32 n)
++{
++	u32 c_head, c_next, p_tail, elems;
++
++	/* Reserve part of the array for dequeue LOAD/READ */
++	do {
++		c_head = ACCESS_ONCE(q->consumer.head);
++		p_tail = ACCESS_ONCE(q->producer.tail);
++
++		elems = p_tail - c_head;
++
++		if (elems == 0)
++			return 0;
++		else
++			elems = min(elems, n);
++
++		c_next = c_head + elems;
++	}
++	while (unlikely(cmpxchg(&q->consumer.head, c_head, c_next) != c_head));
++
++	/* LOAD the elems from the queue array.
++	 *   We don't need a smb_rmb() Read-Memory-Barrier here because
++	 *   the above cmpxchg is an implied full Memory-Barrier.
++	 */
++	__helper_alf_dequeue_load(c_head, q, ptr, elems);
++
++	/* Archs with weak Memory Ordering need a memory barrier here.
++	 * As the STORE to q->consumer.tail, must happen after the
++	 * dequeue LOADs. Dequeue LOADs have a dependent STORE into
++	 * ptr, thus a smp_wmb() is enough. Paired with enqueue
++	 * implicit full-MB in cmpxchg.
++	 */
++	smp_wmb();
++
++	/* Wait for other concurrent preceding dequeues not yet done */
++	while (unlikely(ACCESS_ONCE(q->consumer.tail) != c_head))
++		cpu_relax();
++	/* Mark this deq done and avail for producers */
++	ACCESS_ONCE(q->consumer.tail) = c_next;
++
++	return elems;
++}
++
++/* #define ASSERT_DEBUG_SPSC 1 */
++#ifndef ASSERT_DEBUG_SPSC
++#define ASSERT(x) do { } while (0)
++#else
++#define ASSERT(x)							\
++	do {								\
++		if (unlikely(!(x))) {					\
++			pr_crit("Assertion failed %s:%d: \"%s\"\n",	\
++				__FILE__, __LINE__, #x);		\
++			BUG();						\
++		}							\
++	} while (0)
++#endif
++
++/* Main SINGLE Producer ENQUEUE
++ *  caller MUST make sure preemption is disabled
++ */
++static inline int
++alf_sp_enqueue(const u32 n;
++	       struct alf_queue *q, void *ptr[n], const u32 n)
++{
++	u32 p_head, p_next, c_tail, space;
++
++	/* Reserve part of the array for enqueue STORE/WRITE */
++	p_head = q->producer.head;
++	smp_rmb(); /* for consumer.tail write, making sure deq loads are done */
++	c_tail = ACCESS_ONCE(q->consumer.tail);
++
++	space = q->size + c_tail - p_head;
++	if (n > space)
++		return 0;
++
++	p_next = p_head + n;
++	ASSERT(ACCESS_ONCE(q->producer.head) == p_head);
++	q->producer.head = p_next;
++
++	/* STORE the elems into the queue array */
++	__helper_alf_enqueue_store(p_head, q, ptr, n);
++	smp_wmb(); /* Write-Memory-Barrier matching dequeue LOADs */
++
++	/* Assert no other CPU (or same CPU via preemption) changed queue */
++	ASSERT(ACCESS_ONCE(q->producer.tail) == p_head);
++
++	/* Mark this enq done and avail for consumption */
++	ACCESS_ONCE(q->producer.tail) = p_next;
++
++	return n;
++}
++
++/* Main SINGLE Consumer DEQUEUE
++ *  caller MUST make sure preemption is disabled
++ */
++static inline int
++alf_sc_dequeue(const u32 n;
++	       struct alf_queue *q, void *ptr[n], const u32 n)
++{
++	u32 c_head, c_next, p_tail, elems;
++
++	/* Reserve part of the array for dequeue LOAD/READ */
++	c_head = q->consumer.head;
++	p_tail = ACCESS_ONCE(q->producer.tail);
++
++	elems = p_tail - c_head;
++
++	if (elems == 0)
++		return 0;
++	else
++		elems = min(elems, n);
++
++	c_next = c_head + elems;
++	ASSERT(ACCESS_ONCE(q->consumer.head) == c_head);
++	q->consumer.head = c_next;
++
++	smp_rmb(); /* Read-Memory-Barrier matching enq STOREs */
++	__helper_alf_dequeue_load(c_head, q, ptr, elems);
++
++	/* Archs with weak Memory Ordering need a memory barrier here.
++	 * As the STORE to q->consumer.tail, must happen after the
++	 * dequeue LOADs. Dequeue LOADs have a dependent STORE into
++	 * ptr, thus a smp_wmb() is enough.
++	 */
++	smp_wmb();
++
++	/* Assert no other CPU (or same CPU via preemption) changed queue */
++	ASSERT(ACCESS_ONCE(q->consumer.tail) == c_head);
++
++	/* Mark this deq done and avail for producers */
++	ACCESS_ONCE(q->consumer.tail) = c_next;
++
++	return elems;
++}
++
++static inline bool
++alf_queue_empty(struct alf_queue *q)
++{
++	u32 c_tail = ACCESS_ONCE(q->consumer.tail);
++	u32 p_tail = ACCESS_ONCE(q->producer.tail);
++
++	/* The empty (and initial state) is when consumer have reached
++	 * up with producer.
++	 *
++	 * DOUBLE-CHECK: Should we use producer.head, as this indicate
++	 * a producer is in-progress(?)
++	 */
++	return c_tail == p_tail;
++}
++
++static inline int
++alf_queue_count(struct alf_queue *q)
++{
++	u32 c_head = ACCESS_ONCE(q->consumer.head);
++	u32 p_tail = ACCESS_ONCE(q->producer.tail);
++	u32 elems;
++
++	/* Due to u32 arithmetic the values are implicitly
++	 * masked/modulo 32-bit, thus saving one mask operation
++	 */
++	elems = p_tail - c_head;
++	/* Thus, same as:
++	 *  elems = (p_tail - c_head) & q->mask;
++	 */
++	return elems;
++}
++
++static inline int
++alf_queue_avail_space(struct alf_queue *q)
++{
++	u32 p_head = ACCESS_ONCE(q->producer.head);
++	u32 c_tail = ACCESS_ONCE(q->consumer.tail);
++	u32 space;
++
++	/* The max avail space is q->size and
++	 * the empty state is when (consumer == producer)
++	 */
++
++	/* Due to u32 arithmetic the values are implicitly
++	 * masked/modulo 32-bit, thus saving one mask operation
++	 */
++	space = q->size + c_tail - p_head;
++	/* Thus, same as:
++	 *  space = (q->size + c_tail - p_head) & q->mask;
++	 */
++	return space;
++}
++
++#endif /* _LINUX_ALF_QUEUE_H */
+diff --git a/lib/Kconfig b/lib/Kconfig
+index 54cf309..3c0cd58 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -439,6 +439,19 @@ config NLATTR
+ 	bool
+ 
+ #
++# ALF queue
++#
++config ALF_QUEUE
++	bool "ALF: Array-based Lock-Free (Producer-Consumer) queue"
++	default y
++	help
++	  This Array-based Lock-Free (ALF) queue, is a very fast
++	  bounded Producer-Consumer queue, supporting bulking.  The
++	  MPMC (Multi-Producer/Multi-Consumer) variant uses a locked
++	  cmpxchg, but the cost can be amorized by utilizing bulk
++	  enqueue/dequeue.
++
++#
+ # Generic 64-bit atomic support is selected if needed
+ #
+ config GENERIC_ATOMIC64
+diff --git a/lib/Makefile b/lib/Makefile
+index 0211d2b..cd3a2d0 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -119,6 +119,8 @@ obj-$(CONFIG_DYNAMIC_DEBUG) += dynamic_debug.o
+ 
+ obj-$(CONFIG_NLATTR) += nlattr.o
+ 
++obj-$(CONFIG_ALF_QUEUE) += alf_queue.o
++
+ obj-$(CONFIG_LRU_CACHE) += lru_cache.o
+ 
+ obj-$(CONFIG_DMA_API_DEBUG) += dma-debug.o
+diff --git a/lib/alf_queue.c b/lib/alf_queue.c
+new file mode 100644
+index 0000000..d6c9b69
+--- /dev/null
++++ b/lib/alf_queue.c
+@@ -0,0 +1,47 @@
++/*
++ * lib/alf_queue.c
++ *
++ * ALF: Array-based Lock-Free queue
++ *  - Main implementation in: include/linux/alf_queue.h
++ *
++ * Copyright (C) 2014, Red Hat, Inc.,
++ *  by Jesper Dangaard Brouer and Hannes Frederic Sowa
++ *  for licensing details see kernel-base/COPYING
++ */
++#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
++
++#include <linux/module.h>
++#include <linux/slab.h> /* kzalloc */
++#include <linux/alf_queue.h>
++#include <linux/log2.h>
++
++struct alf_queue *alf_queue_alloc(u32 size, gfp_t gfp)
++{
++	struct alf_queue *q;
++	size_t mem_size;
++
++	if (!(is_power_of_2(size)) || size > 65536)
++		return ERR_PTR(-EINVAL);
++
++	/* The ring array is allocated together with the queue struct */
++	mem_size = size * sizeof(void *) + sizeof(struct alf_queue);
++	q = kzalloc(mem_size, gfp);
++	if (!q)
++		return ERR_PTR(-ENOMEM);
++
++	q->size = size;
++	q->mask = size - 1;
++
++	return q;
++}
++EXPORT_SYMBOL_GPL(alf_queue_alloc);
++
++void alf_queue_free(struct alf_queue *q)
++{
++	kfree(q);
++}
++EXPORT_SYMBOL_GPL(alf_queue_free);
++
++MODULE_DESCRIPTION("ALF: Array-based Lock-Free queue");
++MODULE_AUTHOR("Jesper Dangaard Brouer <netoptimizer@brouer.com>");
++MODULE_LICENSE("GPL");
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
