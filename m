@@ -1,65 +1,100 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [RFC PATCH 0/3] Faster than SLAB caching of SKBs with qmempool
- (backed by alf_queue)
-Date: Wed, 10 Dec 2014 13:51:32 -0600 (CST)
-Message-ID: <alpine.DEB.2.11.1412101339480.22982@gentwo.org>
-References: <20141210033902.2114.68658.stgit@ahduyck-vm-fedora20> <20141210141332.31779.56391.stgit@dragon>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20141210141332.31779.56391.stgit@dragon>
-Sender: owner-linux-mm@kvack.org
-To: Jesper Dangaard Brouer <brouer@redhat.com>
-Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, "David S. Miller" <davem@davemloft.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Alexander Duyck <alexander.duyck@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Steven Rostedt <rostedt@goodmis.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [CFT][PATCH 7/8] userns: Add a knob to disable setgroups on a per
+	user namespace basis
+Date: Wed, 10 Dec 2014 16:33:26 -0600
+Message-ID: <87wq5zf83t.fsf@x220.int.ebiederm.org>
+References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
+	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
+	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
+	<87a935u3nj.fsf@x220.int.ebiederm.org>
+	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
+	<87388xodlj.fsf@x220.int.ebiederm.org>
+	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+	<87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
+	<87ppbtn4mv.fsf@x220.int.ebiederm.org>
+	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
+	<87a92xn2io.fsf@x220.int.ebiederm.org>
+	<87r3w8liw4.fsf@x220.int.ebiederm.org>
+	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+	<87fvcok11h.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrVfKiXuY=KY_=nHpkTyLWgpy_3DK=4Mr2mhpyX9z1TzrA@mail.gmail.com>
+	<971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com>
+	<CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Tue, 9 Dec 2014 16:21:23 -0800")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 10 Dec 2014, Jesper Dangaard Brouer wrote:
+Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 
-> One of the building blocks for achieving this speedup is a cmpxchg
-> based Lock-Free queue that supports bulking, named alf_queue for
-> Array-based Lock-Free queue.  By bulking elements (pointers) from the
-> queue, the cost of the cmpxchg (approx 8 ns) is amortized over several
-> elements.
+> On Tue, Dec 9, 2014 at 4:04 PM, Eric W.Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>
+>>
+>> On December 9, 2014 4:28:38 PM CST, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>On Tue, Dec 9, 2014 at 12:42 PM, Eric W. Biederman
+>>><ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>>>
+>>>> - Expose the knob to user space through a proc file
+>>>/proc/<pid>/setgroups
+>>>>
+>>>>   A value of "deny" means the setgroups system call is disabled in
+>>>the
+>>>>   current processes user namespace and can not be enabled in the
+>>>>   future in this user namespace.
+>>>>
+>>>>   A value of "allow" means the segtoups system call is enabled.
+>>>>
+>>>> - Descendant user namespaces inherit the value of setgroups from
+>>>>   their parents.
+>>>>
+>>>> - A proc file is used (instead of a sysctl) as sysctls
+>>>>   currently do not pass in a struct file so file_ns_capable
+>>>>   is unusable.
+>>>
+>>>Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+>>>
+>>>But I still don't like the name "setgroups".  People may look at that
+>>>and have no clue what the scope of the setting is.  And anyone who, as
+>>>root, writes "deny" to /proc/self/setgroups, thinking that it acts on
+>>>self, will be in for a surprise.
+>>
+>> True setgroups isn't perfect.  Documenting it in a manpage may have to be enough. The only real improvement I can think of would be to make the setting a sysctl.   But I think pursuing that approaches the point where perfection is the enemy of getting this problem fixed.
+>>
+>
+> Would "userns_setgroups" be okay?
 
-This is a bit of an issue since the design of the SLUB allocator is such
-that you should pick up an object, apply some processing and then take the
-next one. The fetching of an object warms up the first cacheline and this
-is tied into the way free objects are linked in SLUB.
+Maybe.
 
-So a bulk fetch from SLUB will not that effective and cause the touching
-of many cachelines if we are dealing with just a few objects. If we are
-looking at whole slab pages with all objects then SLUB can be effective
-since we do not have to build up the linked pointer structure in each
-page. SLAB has a different architecture there and a bulk fetch there is
-possible without touching objects even for small sets since the freelist
-management is separate from the objects.
+I just played with this and this is a much bigger booby trap than I had
+realized.  Disabling setgroups disables the possibility of logging in the
+future and since it is a one way switch the only way out is to reboot.
 
-If you do this bulking then you will later access cache cold objects?
-Doesnt that negate the benefit that you gain? Or are these objects written
-to by hardware and therefore by necessity cache cold?
+Hooray our software checks the returns of setgroups.  Booh.  This is a
+really nasty knob to have anywhere.
 
-We could provide a faster bulk alloc/free function.
+I need to think about this a little bit.  Giving root the power to shoot
+himself in the foot is one thing.  Giving root a loaded gun pointed at
+his foot with the hammer pulled back, and a sign that says I dare you to
+pull the trigger, seems like a bad idea.
 
-	int kmem_cache_alloc_array(struct kmem_cache *s, gfp_t flags,
-		size_t objects, void **array)
+I think I need to reduce when that knob can be used.  Grr.
+Back to the drawing board!
 
-and this could be optimized by each slab allocator to provide fast
-population of objects in that array. We then assume that the number of
-objects is in the hundreds or so right?
-
-The corresponding free function
-
-	void kmem_cache_free_array(struct kmem_cache *s,
-		size_t objects, void **array)
-
-
-I think the queue management of the array can be improved by using a
-similar technique as used the SLUB allocator using the cmpxchg_local.
-cmpxchg_local is much faster than a full cmpxchg and we are operating on
-per cpu structures anyways. So the overhead could still be reduced.
-
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Eric
