@@ -1,105 +1,62 @@
-From: Jesper Dangaard Brouer <brouer@redhat.com>
-Subject: Re: [RFC PATCH 0/3] Faster than SLAB caching of SKBs with qmempool
- (backed by alf_queue)
-Date: Thu, 11 Dec 2014 11:18:59 +0100
-Message-ID: <20141211111859.21e23e90@redhat.com>
-References: <20141210033902.2114.68658.stgit@ahduyck-vm-fedora20>
-	<20141210141332.31779.56391.stgit@dragon>
-	<alpine.DEB.2.11.1412101339480.22982@gentwo.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.DEB.2.11.1412101339480.22982@gentwo.org>
-Sender: owner-linux-mm@kvack.org
-To: Christoph Lameter <cl@linux.com>
-Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, "David S. Miller" <davem@davemloft.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Alexander Duyck <alexander.duyck@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, "Paul
- E. McKenney" <paulmck@linux.vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Steven Rostedt <rostedt@goodmis.org>, brouer@redhat.com
+From: Jarkko Nikula <jarkko.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH 4/4] sound: oss: Remove dead sound card number definitions part #2
+Date: Thu, 11 Dec 2014 14:19:13 +0200
+Message-ID: <1418300353-13243-4-git-send-email-jarkko.nikula@linux.intel.com>
+References: <1418300353-13243-1-git-send-email-jarkko.nikula@linux.intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1418300353-13243-1-git-send-email-jarkko.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org
+Cc: Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>, Jarkko Nikula <jarkko.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 10 Dec 2014 13:51:32 -0600 (CST)
-Christoph Lameter <cl@linux.com> wrote:
+None of these is used in kernel tree.
 
-> On Wed, 10 Dec 2014, Jesper Dangaard Brouer wrote:
-> 
-> > One of the building blocks for achieving this speedup is a cmpxchg
-> > based Lock-Free queue that supports bulking, named alf_queue for
-> > Array-based Lock-Free queue.  By bulking elements (pointers) from the
-> > queue, the cost of the cmpxchg (approx 8 ns) is amortized over several
-> > elements.
-> 
-> This is a bit of an issue since the design of the SLUB allocator is such
-> that you should pick up an object, apply some processing and then take the
-> next one. The fetching of an object warms up the first cacheline and this
-> is tied into the way free objects are linked in SLUB.
-> 
-> So a bulk fetch from SLUB will not that effective and cause the touching
-> of many cachelines if we are dealing with just a few objects. If we are
-> looking at whole slab pages with all objects then SLUB can be effective
-> since we do not have to build up the linked pointer structure in each
-> page. SLAB has a different architecture there and a bulk fetch there is
-> possible without touching objects even for small sets since the freelist
-> management is separate from the objects.
-> 
-> If you do this bulking then you will later access cache cold objects?
-> Doesnt that negate the benefit that you gain? Or are these objects written
-> to by hardware and therefore by necessity cache cold?
+Signed-off-by: Jarkko Nikula <jarkko.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+RFC, I don't know can these be used in user-space?
+---
+ include/uapi/linux/soundcard.h | 22 ----------------------
+ 1 file changed, 22 deletions(-)
 
-Cache warmup is a concern, but perhaps it's the callers responsibility
-to prefetch for their use-case.  For qmempool I do have patches that
-prefetch elems when going from the sharedq to the localq (per CPU), but
-I didn't see much gain, and I could prove my point (of being faster than
-slab) without it.  And I would use/need the slab bulk interface to add
-elems to sharedq which I consider semi-cache cold.
-
-
-> We could provide a faster bulk alloc/free function.
-> 
-> 	int kmem_cache_alloc_array(struct kmem_cache *s, gfp_t flags,
-> 		size_t objects, void **array)
-
-I like it :-)
-
-> and this could be optimized by each slab allocator to provide fast
-> population of objects in that array. We then assume that the number of
-> objects is in the hundreds or so right?
-
-I'm already seeing a benefit with 16 packets alloc/free "bulking".
-
-On RX we have a "budget" of 64 packets/descriptors (taken from the NIC
-RX ring) that need SKBs.
-
-On TX packets are put into the TX ring, and later at TX completion the
-TX ring is cleaned up, as many as 256 (as e.g. in the ixgbe driver).
-
-Scientific articles on userspace networking (like netmap) report that
-they need at least 8 packet bulking to see wirespeed 10G at 64 bytes.
-
-
-> The corresponding free function
-> 
-> 	void kmem_cache_free_array(struct kmem_cache *s,
-> 		size_t objects, void **array)
-> 
-> 
-> I think the queue management of the array can be improved by using a
-> similar technique as used the SLUB allocator using the cmpxchg_local.
-> cmpxchg_local is much faster than a full cmpxchg and we are operating on
-> per cpu structures anyways. So the overhead could still be reduced.
-
-I think you missed that the per cpu localq is already not using cmpxchg
-(it is a SPSC queue).  The sharedq (MPMC queue) does need and use the
-locked cmpxchg.
-
+diff --git a/include/uapi/linux/soundcard.h b/include/uapi/linux/soundcard.h
+index f3b21f989872..d2256bf4bdd8 100644
+--- a/include/uapi/linux/soundcard.h
++++ b/include/uapi/linux/soundcard.h
+@@ -48,32 +48,10 @@
+  *	Supported card ID numbers (Should be somewhere else?)
+  */
+ 
+-#define SNDCARD_ADLIB		1
+ #define SNDCARD_SB		2
+ #define SNDCARD_PAS		3
+-#define SNDCARD_GUS		4
+ #define SNDCARD_MPU401		5
+-#define SNDCARD_SB16		6
+-#define SNDCARD_SB16MIDI	7
+ #define SNDCARD_UART6850	8
+-#define SNDCARD_GUS16		9
+-#define SNDCARD_MSS		10
+-#define SNDCARD_PSS     	11
+-#define SNDCARD_SSCAPE		12
+-#define SNDCARD_PSS_MPU     	13
+-#define SNDCARD_PSS_MSS     	14
+-#define SNDCARD_SSCAPE_MSS	15
+-#define SNDCARD_TRXPRO		16
+-#define SNDCARD_TRXPRO_SB	17
+-#define SNDCARD_TRXPRO_MPU	18
+-#define SNDCARD_MAD16		19
+-#define SNDCARD_MAD16_MPU	20
+-#define SNDCARD_CS4232		21
+-#define SNDCARD_CS4232_MPU	22
+-#define SNDCARD_MAUI		23
+-#define SNDCARD_PSEUDO_MSS	24
+-#define SNDCARD_GUSPNP		25
+-#define SNDCARD_UART401		26
+ /* Sound card numbers 27 to N are reserved. Don't add more numbers here. */
+ 
+ /***********************************
 -- 
-Best regards,
-  Jesper Dangaard Brouer
-  MSc.CS, Sr. Network Kernel Developer at Red Hat
-  Author of http://www.iptv-analyzer.org
-  LinkedIn: http://www.linkedin.com/in/brouer
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+2.1.3
