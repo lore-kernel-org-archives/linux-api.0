@@ -1,81 +1,118 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCHv2 2/3] selftests: Add test of O_BENEATH & openat(2)
-Date: Fri, 12 Dec 2014 11:05:25 +1100
-Message-ID: <20141212000524.GI24183@dastard>
-References: <1415094884-18349-1-git-send-email-drysdale@google.com>
- <1415094884-18349-3-git-send-email-drysdale@google.com>
- <20141111053641.GR23575@dastard>
- <CAHse=S9OwP8tSErW59Hd3VPbKVrE9VJM=5gMgZQwsv3kB9Ax0w@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [CFT][PATCH 7/8] userns: Add a knob to disable setgroups on a per
+	user namespace basis
+Date: Thu, 11 Dec 2014 19:09:03 -0600
+Message-ID: <87iohh3c9c.fsf@x220.int.ebiederm.org>
+References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
+	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
+	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
+	<87a935u3nj.fsf@x220.int.ebiederm.org>
+	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
+	<87388xodlj.fsf@x220.int.ebiederm.org>
+	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+	<87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
+	<87ppbtn4mv.fsf@x220.int.ebiederm.org>
+	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
+	<87a92xn2io.fsf@x220.int.ebiederm.org>
+	<87r3w8liw4.fsf@x220.int.ebiederm.org>
+	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+	<87fvcok11h.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrVfKiXuY=KY_=nHpkTyLWgpy_3DK=4Mr2mhpyX9z1TzrA@mail.gmail.com>
+	<971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com>
+	<CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>
+	<87wq5zf83t.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHse=S9OwP8tSErW59Hd3VPbKVrE9VJM=5gMgZQwsv3kB9Ax0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jorge Lucangeli Obes <jorgelo-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ricky Zhou <rickyz-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lee Campbell <leecam-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Depinet <mdepinet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87wq5zf83t.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
+	message of "Wed, 10 Dec 2014 16:33:26 -0600")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 21, 2014 at 02:19:41PM +0000, David Drysdale wrote:
-> On Tue, Nov 11, 2014 at 5:36 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> > [cc fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org]
-> >
-> > On Tue, Nov 04, 2014 at 09:54:43AM +0000, David Drysdale wrote:
-> >> Add simple tests of openat(2) variations, including examples that
-> >> check the new O_BENEATH flag.
-> >>
-> >> Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> >
-> > Wouldn't this be better added to fstests? That's the regression
-> > test suite used by filesystem developers and most distro QA
-> > organisations and where the fs developers aggregate all their new
-> > regression tests.
-> >
-> > IMO, the fewer places we aggregate VFS/filesystem tests the better.
-> > I really don't think the kernel tree is the best place for adding
-> > VFS behavioural tests because it has none of the infrastructure
-> > around it to test arbitrary filesystems and configurations and hence
-> > is not particularly useful to the people whoa re likely to notice
-> > and care about fs regression tests suddenly breaking.
-> >
-> > As an example, the recent renameat() syscall additions (e.g.
-> > RENAME_EXCHANGE, RENAME_NOREPLACE) have unit tests in fstests, so
-> > these new O_BENEATH tests should really follow the same model...
-> 
-> Fair enough, that makes sense -- I've now got a version of the selftest
-> running within xfstests (git://oss.sgi.com/xfs/cmds/xfstests.git is the
-> master repo, right?).
+ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
 
-Or git://git.kernel.org/pub/scm/fs/xfs/xfstests-dev.git, which is
-where I typically update first and push dev branches to.
+> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+>
+>> On Tue, Dec 9, 2014 at 4:04 PM, Eric W.Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>>
+>>>
+>>> On December 9, 2014 4:28:38 PM CST, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>>On Tue, Dec 9, 2014 at 12:42 PM, Eric W. Biederman
+>>>><ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>>>>
+>>>>> - Expose the knob to user space through a proc file
+>>>>/proc/<pid>/setgroups
+>>>>>
+>>>>>   A value of "deny" means the setgroups system call is disabled in
+>>>>the
+>>>>>   current processes user namespace and can not be enabled in the
+>>>>>   future in this user namespace.
+>>>>>
+>>>>>   A value of "allow" means the segtoups system call is enabled.
+>>>>>
+>>>>> - Descendant user namespaces inherit the value of setgroups from
+>>>>>   their parents.
+>>>>>
+>>>>> - A proc file is used (instead of a sysctl) as sysctls
+>>>>>   currently do not pass in a struct file so file_ns_capable
+>>>>>   is unusable.
+>>>>
+>>>>Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+>>>>
+>>>>But I still don't like the name "setgroups".  People may look at that
+>>>>and have no clue what the scope of the setting is.  And anyone who, as
+>>>>root, writes "deny" to /proc/self/setgroups, thinking that it acts on
+>>>>self, will be in for a surprise.
+>>>
+>>> True setgroups isn't perfect.  Documenting it in a manpage may have to be enough. The only real improvement I can think of would be to make the setting a sysctl.   But I think pursuing that approaches the point where perfection is the enemy of getting this problem fixed.
+>>>
+>>
+>> Would "userns_setgroups" be okay?
+>
+> Maybe.
+>
+> I just played with this and this is a much bigger booby trap than I had
+> realized.  Disabling setgroups disables the possibility of logging in the
+> future and since it is a one way switch the only way out is to reboot.
+>
+> Hooray our software checks the returns of setgroups.  Booh.  This is a
+> really nasty knob to have anywhere.
+>
+> I need to think about this a little bit.  Giving root the power to shoot
+> himself in the foot is one thing.  Giving root a loaded gun pointed at
+> his foot with the hammer pulled back, and a sign that says I dare you to
+> pull the trigger, seems like a bad idea.
+>
+> I think I need to reduce when that knob can be used.  Grr.
+> Back to the drawing board!
 
-> Given that xfstests is independent of the kernel, what's the expected
-> way to deal with flags (or syscalls) that are only in specific kernel
-> versions?  At the moment I've just got a primitive override at
-> compile time (#ifndef O_BENEATH #define O_BENEATH ...), and
-> then the test will fail at run-time against an older kernel -- is there a
-> need for anything more sophisticated?  (And if so, are there any
-> examples I can crib from?)
+I tried out a bunch of things and finally found a simple rule.  Don't
+allow setgroups to be disabled after setgroups has been enabled in a
+user namespace.  Or in practical terms don't allow setgroups to be
+disabled after the gid_map has been set.
 
-See the code in the src/renameat2.c for an example of how syscalls
-and their flags are added prior to their being kernel and userspace
-header support.
+Which in practice pretty nearly means that we are only allowing writes
+to setgroups when it is a single process and it's eventual children that
+can be affected.
 
-Also, note the "-t" CLI option for the "test" option in that little
-program.  This is used by the _require_renameat2 function that the
-tests that make use of this functionality call to determine if th
-etest shoul dbe run on this kernel or not.
+At which point I don't think a name change would make things any
+clearer.
 
-> Also, is there an archive of the fstests@ mailing list somewhere?
+I have also updated the code to move the permission checks to open
+where they belong (doh!).  Patch follows.
 
-I wish. I've tried to get it archived on all the major sites like
-marc, spinics, etc repeatedly since the list was created and not a
-single one of them have responded to any of my requests, let alone
-started to archive the list....
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Eric
