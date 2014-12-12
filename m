@@ -1,8 +1,8 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Subject: Re: [CFT][PATCH 7/8] userns: Add a knob to disable setgroups on a per
 	user namespace basis
-Date: Thu, 11 Dec 2014 19:09:03 -0600
-Message-ID: <87iohh3c9c.fsf@x220.int.ebiederm.org>
+Date: Thu, 11 Dec 2014 17:30:15 -0800
+Message-ID: <CALCETrV-nqDwa09pHC76uE6OMe3D7zZMGYqyUf98WUtZbXUXdw@mail.gmail.com>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
 	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
 	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
@@ -24,12 +24,12 @@ References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacap
 	<971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com>
 	<CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>
 	<87wq5zf83t.fsf@x220.int.ebiederm.org>
+	<87iohh3c9c.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87wq5zf83t.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
-	message of "Wed, 10 Dec 2014 16:33:26 -0600")
+In-Reply-To: <87iohh3c9c.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -39,80 +39,104 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
-
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+On Thu, Dec 11, 2014 at 5:09 PM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
 >
->> On Tue, Dec 9, 2014 at 4:04 PM, Eric W.Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>>
->>>
->>> On December 9, 2014 4:28:38 PM CST, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>>>On Tue, Dec 9, 2014 at 12:42 PM, Eric W. Biederman
->>>><ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>>>>
->>>>> - Expose the knob to user space through a proc file
->>>>/proc/<pid>/setgroups
->>>>>
->>>>>   A value of "deny" means the setgroups system call is disabled in
->>>>the
->>>>>   current processes user namespace and can not be enabled in the
->>>>>   future in this user namespace.
->>>>>
->>>>>   A value of "allow" means the segtoups system call is enabled.
->>>>>
->>>>> - Descendant user namespaces inherit the value of setgroups from
->>>>>   their parents.
->>>>>
->>>>> - A proc file is used (instead of a sysctl) as sysctls
->>>>>   currently do not pass in a struct file so file_ns_capable
->>>>>   is unusable.
->>>>
->>>>Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
->>>>
->>>>But I still don't like the name "setgroups".  People may look at that
->>>>and have no clue what the scope of the setting is.  And anyone who, as
->>>>root, writes "deny" to /proc/self/setgroups, thinking that it acts on
->>>>self, will be in for a surprise.
->>>
->>> True setgroups isn't perfect.  Documenting it in a manpage may have to be enough. The only real improvement I can think of would be to make the setting a sysctl.   But I think pursuing that approaches the point where perfection is the enemy of getting this problem fixed.
->>>
+>> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 >>
->> Would "userns_setgroups" be okay?
+>>> On Tue, Dec 9, 2014 at 4:04 PM, Eric W.Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>>>
+>>>>
+>>>> On December 9, 2014 4:28:38 PM CST, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>>>On Tue, Dec 9, 2014 at 12:42 PM, Eric W. Biederman
+>>>>><ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>>>>>
+>>>>>> - Expose the knob to user space through a proc file
+>>>>>/proc/<pid>/setgroups
+>>>>>>
+>>>>>>   A value of "deny" means the setgroups system call is disabled in
+>>>>>the
+>>>>>>   current processes user namespace and can not be enabled in the
+>>>>>>   future in this user namespace.
+>>>>>>
+>>>>>>   A value of "allow" means the segtoups system call is enabled.
+>>>>>>
+>>>>>> - Descendant user namespaces inherit the value of setgroups from
+>>>>>>   their parents.
+>>>>>>
+>>>>>> - A proc file is used (instead of a sysctl) as sysctls
+>>>>>>   currently do not pass in a struct file so file_ns_capable
+>>>>>>   is unusable.
+>>>>>
+>>>>>Reviewed-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+>>>>>
+>>>>>But I still don't like the name "setgroups".  People may look at that
+>>>>>and have no clue what the scope of the setting is.  And anyone who, as
+>>>>>root, writes "deny" to /proc/self/setgroups, thinking that it acts on
+>>>>>self, will be in for a surprise.
+>>>>
+>>>> True setgroups isn't perfect.  Documenting it in a manpage may have to be enough. The only real improvement I can think of would be to make the setting a sysctl.   But I think pursuing that approaches the point where perfection is the enemy of getting this problem fixed.
+>>>>
+>>>
+>>> Would "userns_setgroups" be okay?
+>>
+>> Maybe.
+>>
+>> I just played with this and this is a much bigger booby trap than I had
+>> realized.  Disabling setgroups disables the possibility of logging in the
+>> future and since it is a one way switch the only way out is to reboot.
+>>
+>> Hooray our software checks the returns of setgroups.  Booh.  This is a
+>> really nasty knob to have anywhere.
+>>
+>> I need to think about this a little bit.  Giving root the power to shoot
+>> himself in the foot is one thing.  Giving root a loaded gun pointed at
+>> his foot with the hammer pulled back, and a sign that says I dare you to
+>> pull the trigger, seems like a bad idea.
+>>
+>> I think I need to reduce when that knob can be used.  Grr.
+>> Back to the drawing board!
 >
-> Maybe.
+> I tried out a bunch of things and finally found a simple rule.  Don't
+> allow setgroups to be disabled after setgroups has been enabled in a
+> user namespace.  Or in practical terms don't allow setgroups to be
+> disabled after the gid_map has been set.
 >
-> I just played with this and this is a much bigger booby trap than I had
-> realized.  Disabling setgroups disables the possibility of logging in the
-> future and since it is a one way switch the only way out is to reboot.
+> Which in practice pretty nearly means that we are only allowing writes
+> to setgroups when it is a single process and it's eventual children that
+> can be affected.
 >
-> Hooray our software checks the returns of setgroups.  Booh.  This is a
-> really nasty knob to have anywhere.
+> At which point I don't think a name change would make things any
+> clearer.
+
+The name change still helps the user to does:
+
+$ ls /proc/self
+
+"setgroups?  what's that?"
+
 >
-> I need to think about this a little bit.  Giving root the power to shoot
-> himself in the foot is one thing.  Giving root a loaded gun pointed at
-> his foot with the hammer pulled back, and a sign that says I dare you to
-> pull the trigger, seems like a bad idea.
+> I have also updated the code to move the permission checks to open
+> where they belong (doh!).  Patch follows.
+
+Will review and test.
+
 >
-> I think I need to reduce when that knob can be used.  Grr.
-> Back to the drawing board!
+> Eric
+>
+>
+>
+>
+>
+>
 
-I tried out a bunch of things and finally found a simple rule.  Don't
-allow setgroups to be disabled after setgroups has been enabled in a
-user namespace.  Or in practical terms don't allow setgroups to be
-disabled after the gid_map has been set.
 
-Which in practice pretty nearly means that we are only allowing writes
-to setgroups when it is a single process and it's eventual children that
-can be affected.
 
-At which point I don't think a name change would make things any
-clearer.
-
-I have also updated the code to move the permission checks to open
-where they belong (doh!).  Patch follows.
-
-Eric
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
