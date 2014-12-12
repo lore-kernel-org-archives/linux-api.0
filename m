@@ -1,25 +1,15 @@
-From: "Chen, Hanxiao" <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Subject: RE: [CFT] Can I get some Tested-By's on this series?
-Date: Fri, 12 Dec 2014 06:56:13 +0000
-Message-ID: <5871495633F38949900D2BF2DC04883E737908F5@G08CNEXMBPEKD02.g08.fujitsu.local>
-References: <CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
-	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
-	<87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
-	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
-	<87ppbtn4mv.fsf@x220.int.ebiederm.org>
-	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
-	<87a92xn2io.fsf@x220.int.ebiederm.org>
-	<87r3w8liw4.fsf@x220.int.ebiederm.org>
-	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
-	<87mw6vh31e.fsf_-_@x220.int.ebiederm.org>
-	<20141210224822.GG20012@ubuntumail> <5488CE4D.1000606@nod.at>
-	<87r3w7f5yc.fsf@x220.int.ebiederm.org>
+From: Zefan Li <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
+Date: Fri, 12 Dec 2014 16:54:26 +0800
+Message-ID: <548AAD42.5010002@huawei.com>
+References: <adityakali-cgroupns>
+	<1417744550-6461-1-git-send-email-adityakali@google.com>
+	<1417744550-6461-9-git-send-email-adityakali@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87r3w7f5yc.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Content-Language: zh-CN
+In-Reply-To: <1417744550-6461-9-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -29,58 +19,101 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+> +In its current form, the cgroup namespaces patcheset provides following
+> +behavior:
+> +
+> +(1) The 'cgroupns-root' for a cgroup namespace is the cgroup in which
+> +    the process calling unshare is running.
+> +    For ex. if a process in /batchjobs/container_id1 cgroup calls unshare,
+> +    cgroup /batchjobs/container_id1 becomes the cgroupns-root.
+> +    For the init_cgroup_ns, this is the real root ('/') cgroup
+> +    (identified in code as cgrp_dfl_root.cgrp).
+> +
+> +(2) The cgroupns-root cgroup does not change even if the namespace
+> +    creator process later moves to a different cgroup.
+> +    $ ~/unshare -c # unshare cgroupns in some cgroup
+> +    [ns]$ cat /proc/self/cgroup
+> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/
+> +    [ns]$ mkdir sub_cgrp_1
+> +    [ns]$ echo 0 > sub_cgrp_1/cgroup.procs
+> +    [ns]$ cat /proc/self/cgroup
+> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/sub_cgrp_1
+> +
+> +(3) Each process gets its CGROUPNS specific view of /proc/<pid>/cgroup
+> +(a) Processes running inside the cgroup namespace will be able to see
+> +    cgroup paths (in /proc/self/cgroup) only inside their root cgroup
+> +    [ns]$ sleep 100000 &  # From within unshared cgroupns
+> +    [1] 7353
+> +    [ns]$ echo 7353 > sub_cgrp_1/cgroup.procs
+> +    [ns]$ cat /proc/7353/cgroup
+> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/sub_cgrp_1
+> +
+> +(b) From global cgroupns, the real cgroup path will be visible:
+> +    $ cat /proc/7353/cgroup
+> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1/sub_cgrp_1
+> +
+> +(c) From a sibling cgroupns (cgroupns root-ed at a different cgroup), cgroup
+> +    path relative to its own cgroupns-root will be shown:
+> +    # ns2's cgroupns-root is at '/batchjobs/container_id2'
+> +    [ns2]$ cat /proc/7353/cgroup
+> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/../container_id2/sub_cgrp_1
 
+Should be ../container_id1/sub_cgrp_1 ?
 
-> -----Original Message-----
-> From: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> [mailto:containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org] On Behalf Of Eric W.
-> Biederman
-> Sent: Thursday, December 11, 2014 7:20 AM
-> To: Richard Weinberger
-> Cc: linux-man; Kees Cook; Linux API; Linux Containers; Serge Hallyn; Josh Triplett;
-> stable; Andy Lutomirski; Kenton Varda; LSM; Michael Kerrisk-manpages; Casey
-> Schaufler; Andrew Morton; linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Subject: Re: [CFT] Can I get some Tested-By's on this series?
-> 
-> Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
-> 
-> > Am 10.12.2014 um 23:48 schrieb Serge Hallyn:
-> >> Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> >>>
-> >>> Will people please test these patches with their container project?
-> >>>
-> >>> These changes break container userspace (hopefully in a minimal way) if
-> >>> I could have that confirmed by testing I would really appreciate it.  I
-> >>> really don't want to send out a bug fix that accidentally breaks
-> >>> userspace again.
-> >>>
-> >>> The only issue sort of under discussion is if there is a better name for
-> >>> /proc/<pid>/setgroups, and the name of the file will not affect the
-> >>> functionality of the patchset.
-> >>>
-> >>> With the code reviewed and written in simple obviously correct, easily
-> >>> reviewable ways I am hoping/planning to send this to Linus ASAP.
-> >>>
-> >>> Eric
-> >>
-> >> Is there a git tree we can clone?
-> >
-> > I was about to ask that too.
-> > Hopefully I can tomorrow find some time for testing.
-> 
-> git pull git.kernel.org:/pub/scm/linux/kernel/git/ebiederm/user-namespace.git
-> for-testing
-> 
-> That holds my entire queue of fixes against 3.18-rc6
-> 
+> +
+> +    Note that the relative path always starts with '/' to indicate that its
+> +    relative to the cgroupns-root of the caller.
 
-Tested on Fedora20 with libvirt 1.2.11, works fine.
+If a path doesn't start with '/', then it's a relative path, so why make it start with '/'?
 
-Tested-by: Chen Hanxiao <chenhanxiao-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+> +
+> +(4) Processes inside a cgroupns can move in-and-out of the cgroupns-root
+> +    (if they have proper access to external cgroups).
+> +    # From inside cgroupns (with cgroupns-root at /batchjobs/container_id1), and
+> +    # assuming that the global hierarchy is still accessible inside cgroupns:
+> +    $ cat /proc/7353/cgroup
+> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/sub_cgrp_1
+> +    $ echo 7353 > batchjobs/container_id2/cgroup.procs
+> +    $ cat /proc/7353/cgroup
+> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/../container_id2
+> +
+> +    Note that this kind of setup is not encouraged. A task inside cgroupns
+> +    should only be exposed to its own cgroupns hierarchy. Otherwise it makes
+> +    the virtualization of /proc/<pid>/cgroup less useful.
+> +
+> +(5) Setns to another cgroup namespace is allowed when:
+> +    (a) the process has CAP_SYS_ADMIN in its current userns
+> +    (b) the process has CAP_SYS_ADMIN in the target cgroupns' userns
+> +    No implicit cgroup changes happen with attaching to another cgroupns. It
+> +    is expected that the somone moves the attaching process under the target
+> +    cgroupns-root.
+> +
 
-Thanks,
-- Chen
+s/the somone/someone
+
+> +(6) When some thread from a multi-threaded process unshares its
+> +    cgroup-namespace, the new cgroupns gets applied to the entire
+> +    process (all the threads). This should be OK since
+> +    unified-hierarchy only allows process-level containerization. So
+> +    all the threads in the process will have the same cgroup.
+> +
+> +(7) The cgroup namespace is alive as long as there is atleast 1
+
+s/atelast/at least
+
+> +    process inside it. When the last process exits, the cgroup
+> +    namespace is destroyed. The cgroupns-root and the actual cgroups
+> +    remain though.
+> +
+> +(8) Namespace specific cgroup hierarchy can be mounted by a process running
+> +    inside cgroupns:
+> +    $ mount -t cgroup -o __DEVEL__sane_behavior cgroup $MOUNT_POINT
+> +
+> +    This will mount the unified cgroup hierarchy with cgroupns-root as the
+> +    filesystem root. The process needs CAP_SYS_ADMIN in its userns and mntns.
+> +
+> 
