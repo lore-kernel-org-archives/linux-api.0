@@ -1,149 +1,127 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH v10 0/8] TPM 2.0 support
-Date: Mon, 15 Dec 2014 22:17:57 +0200
-Message-ID: <20141215201757.GA27923@intel.com>
-References: <1418413600-5400-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [CFT] Can I get some Tested-By's on this series?
+Date: Mon, 15 Dec 2014 20:49:30 +0000
+Message-ID: <20141215204930.GD28877@ubuntumail>
+References: <87a92xn2io.fsf@x220.int.ebiederm.org>
+ <87r3w8liw4.fsf@x220.int.ebiederm.org>
+ <87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+ <87mw6vh31e.fsf_-_@x220.int.ebiederm.org>
+ <20141210224822.GG20012@ubuntumail>
+ <87lhmcy2et.fsf@x220.int.ebiederm.org>
+ <20141212220840.GF22091@castiana.ipv6.teksavvy.com>
+ <8761dgze56.fsf@x220.int.ebiederm.org>
+ <20141215193838.GB28375@ubuntumail>
+ <8761dcwu40.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1418413600-5400-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
-Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+In-Reply-To: <8761dcwu40.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-So, what do you think? Are we now settled with this?
+Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+>=20
+> > Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> >> St=E9phane Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+> >>=20
+> >> > On Fri, Dec 12, 2014 at 03:38:18PM -0600, Eric W. Biederman wrot=
+e:
+> >> >> Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+> >> >>=20
+> >> >> > Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> >> >> >>=20
+> >> >> >> Will people please test these patches with their container p=
+roject?
+> >> >> >>=20
+> >> >> >> These changes break container userspace (hopefully in a mini=
+mal way) if
+> >> >> >> I could have that confirmed by testing I would really apprec=
+iate it.  I
+> >> >> >> really don't want to send out a bug fix that accidentally br=
+eaks
+> >> >> >> userspace again.
+> >> >> >>=20
+> >> >> >> The only issue sort of under discussion is if there is a bet=
+ter name for
+> >> >> >> /proc/<pid>/setgroups, and the name of the file will not aff=
+ect the
+> >> >> >> functionality of the patchset.
+> >> >> >>=20
+> >> >> >> With the code reviewed and written in simple obviously corre=
+ct, easily
+> >> >> >> reviewable ways I am hoping/planning to send this to Linus A=
+SAP.
+> >> >> >>=20
+> >> >> >> Eric
+> >> >> >
+> >> >> > Is there a git tree we can clone?
+> >> >>=20
+> >> >> Have either of you been able to check to see if any of my chang=
+es
+> >> >> affects lxc?
+> >> >>=20
+> >> >> I am trying to gauge how hard and how fast I should push to Lin=
+us.  lxc
+> >> >> being the largest adopter of unprivileged user namespaces for g=
+eneral
+> >> >> purpose containers.
+> >> >>=20
+> >> >> I expect you just call newuidmap and newgidmap and don't actual=
+ly care
+> >> >> about not being able to set gid_map without privilege.  But I r=
+eally
+> >> >> want to avoid pushing a security fix and then being surprised t=
+hat
+> >> >> things like lxc break.
+> >> >>=20
+> >> >> Eric
+> >> >
+> >> > Hi Eric,
+> >> >
+> >> > I've unfortunately been pretty busy this week as I was (well, st=
+ill am)
+> >> > travelling to South Africa for a meeting. I don't have a full ke=
+rnel
+> >> > tree around here and a full git clone isn't really doable over t=
+he kind
+> >> > of Internet I've got here :)
+> >> >
+> >> > Hopefully Serge can give it a quick try, otherwise I should be a=
+ble to
+> >> > do some tests on Tuesday when I'm back home.
+> >>=20
+> >> I thought Serge was going to but I haven't heard yet so I am prodd=
+ing ;-)
+> >
+> > Ok, thanks - yes, unprivileged lxc is working fine with your kernel=
+s.
+> > Just to be sure I was testing the right thing I also tested using
+> > my unprivileged nsexec testcases, and they failed on setgroup/setgi=
+d
+> > as now expected, and succeeded there without your patches.
+>=20
+> Thanks.
+>=20
+> Serge unless you object will add your Tested-By to my pull message to=
+ Linus.
 
-/Jarkko
+Sounds good.
 
-On Fri, Dec 12, 2014 at 11:46:32AM -0800, Jarkko Sakkinen wrote:
-> This patch set enables TPM2 protocol and provides drivers for FIFO and
-> CRB interfaces. This patch set does not export any sysfs attributes for
-> TPM 2.0 because existing sysfs attributes have three non-trivial issues:
-> 
-> - They are associated with the platform device instead of character
->   device.
-> - They are are not trivial key-value pairs but contain text that is
->   not easily parsed by a computer.
-> - Raciness as described in
->   http://kroah.com/log/blog/2013/06/26/how-to-create-a-sysfs-file-correctly/
-> 
-> v2:
-> - Improved struct tpm_chip life-cycle by taking advantage of devres
->   API.
-> - Refined sysfs attributes as simple key-values thereby not repeating
->   mistakes in TPM1 sysfs attributes.
-> - Documented functions in tpm-chip.c and tpm2-cmd.c.
-> - Documented sysfs attributes.
-> 
-> v3:
-> - Lots of fixes in calling order in device drivers (thanks to Jason
->   Gunthorpe for pointing these out!).
-> - Attach sysfs attributes to the misc device because it represents
->   TPM device to the user space.
-> 
-> v4:
-> - Disable sysfs attibutes for TPM 2.0 for until we can sort out the 
->   best approach for them.
-> - Fixed all the style issues found with checkpatch.pl.
-> 
-> v5:
-> - missing EXPORT_SYMBOL_GPL()
-> - own class for TPM devices used for TPM 2.0 devices and onwards.
-> 
-> v6:
-> - Non-racy initialization for sysfs attributes using struct device's
->   groups field.
-> - The class 'tpm' is used now for all TPM devices. For the first device
->   node major MISC_MAJOR and minor TPM_MINOR is used in order to retain
->   backwards compatability.
-> 
-> v7:
-> - Release device number and free struct tpm_chip memory inside
->   tpm_dev_release callback.
-> - Moved code from tpm-interface.c and tpm_dev.c to tpm-chip.c.
-> 
-> v8:
-> - Cleaned up unneeded cast from tpm_transmit_cmd().
-> - Cleaned up redundant PPI_VERSION_LEN constant from tpm_ppi.c.
-> - Fixed tpm_tis to use tpm2_calc_ordinal_duration() for TPM2 devices.
-> - tpm_crb: in crb_recv, check that count can hold the TPM header at
->   minimum.
-> - tpm_crb: add enumerations for bit flags in start and cancel fields
->   of the control area.
-> - tpm_crb: use ioremap() for command and response buffer because
->   they might be anywhere.
-> - tpm_crb: use IO access functions for reading ioremapped buffers
->   because using direct pointers is not portable.
-> - tpm_crb: only apply ACPI start if start method reported by the
->   TPM2 ACPI table allows it.
-> - In tpm2_pcr_read() just calculate index and bit and get rid of
->   hacky loop.
-> - Do not add sysfs attributes for TPM 2.0 devices.
-> 
-> v9:
-> - Fixed compilation issues in v8 (sorry for not using the correct
->   tree).
-> - Just do "return tpm_chip_register();" instead of copying return
->   value to a variable.
-> - Removed unused tpm2_startup().
-> - In the CRB driver ACPI TPM2 table could contain platform specific
->   and therefore inequality test does not work. Fixed in this patch
->   set.
-> 
-> v10:
-> - Fixed coccicheck and sparse errors and other reported style errors.
-> - Fixed build errors without CONFIG_ACPI.
-> - Fixed build error with CONFIG_OF.
-> - Added TPM_CHIP_FLAG_REGISTERED to mark successful tpm_chip_register().
->   It is checked in the beginning of tpm_chip_unregister(), which is 
->   called even when "attach" callback for a device fails because "detach"
->   callback is always called.
-> - Added TPM_CHIP_FLAG_PPI to mark successful PPI interface lookup because 
->   in older TPM chips version string might be non-existent.
-> - Check TPM version from the 4th byte of STS register after requesting 
->   the locality because otherwise the read will return bogus data.
-> - Some TPM chips just give 0xff as the 4th byte so using that for detecting
->   TPM family is unstable. Instead I chose the approach of using idempotent 
->   TPM 2.x command to detect such case.
-> 
-> Jarkko Sakkinen (8):
->   tpm: merge duplicate transmit_cmd() functions
->   tpm: two-phase chip management functions
->   tpm: fix raciness of PPI interface lookup
->   tpm: rename chip->dev to chip->pdev
->   tpm: device class for tpm
->   tpm: TPM 2.0 baseline support
->   tpm: TPM 2.0 CRB Interface
->   tpm: TPM 2.0 FIFO Interface
-> 
->  Documentation/ABI/stable/sysfs-class-tpm |  22 +-
->  drivers/char/tpm/Kconfig                 |   9 +
->  drivers/char/tpm/Makefile                |   3 +-
->  drivers/char/tpm/tpm-chip.c              | 256 +++++++++++++
->  drivers/char/tpm/tpm-dev.c               |  42 +--
->  drivers/char/tpm/tpm-interface.c         | 263 +++++--------
->  drivers/char/tpm/tpm-sysfs.c             |  29 +-
->  drivers/char/tpm/tpm.h                   | 118 +++++-
->  drivers/char/tpm/tpm2-cmd.c              | 617 +++++++++++++++++++++++++++++++
->  drivers/char/tpm/tpm_atmel.c             |  25 +-
->  drivers/char/tpm/tpm_crb.c               | 354 ++++++++++++++++++
->  drivers/char/tpm/tpm_i2c_atmel.c         |  55 +--
->  drivers/char/tpm/tpm_i2c_infineon.c      |  43 +--
->  drivers/char/tpm/tpm_i2c_nuvoton.c       |  71 ++--
->  drivers/char/tpm/tpm_i2c_stm_st33.c      |  32 +-
->  drivers/char/tpm/tpm_ibmvtpm.c           |  17 +-
->  drivers/char/tpm/tpm_infineon.c          |  51 +--
->  drivers/char/tpm/tpm_nsc.c               |  34 +-
->  drivers/char/tpm/tpm_ppi.c               | 141 ++++---
->  drivers/char/tpm/tpm_tis.c               | 224 ++++++-----
->  drivers/char/tpm/xen-tpmfront.c          |  14 +-
->  21 files changed, 1820 insertions(+), 600 deletions(-)
->  create mode 100644 drivers/char/tpm/tpm-chip.c
->  create mode 100644 drivers/char/tpm/tpm2-cmd.c
->  create mode 100644 drivers/char/tpm/tpm_crb.c
-> 
-> -- 
-> 2.1.0
-> 
+> Minor question do you runprivileged nsexec test cases test to see if =
+the
+> write to gid_map succeeds?  I would have expected the gid_map write t=
+o
+> fail before the setgroups setgid system calls came into play.
+
+Yes, I did that by hand, and it failed (with your kernel).
+
+-serge
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
