@@ -1,86 +1,149 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [CFT] Can I get some Tested-By's on this series?
-Date: Mon, 15 Dec 2014 14:11:59 -0600
-Message-ID: <8761dcwu40.fsf@x220.int.ebiederm.org>
-References: <87ppbtn4mv.fsf@x220.int.ebiederm.org>
-	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
-	<87a92xn2io.fsf@x220.int.ebiederm.org>
-	<87r3w8liw4.fsf@x220.int.ebiederm.org>
-	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
-	<87mw6vh31e.fsf_-_@x220.int.ebiederm.org>
-	<20141210224822.GG20012@ubuntumail>
-	<87lhmcy2et.fsf@x220.int.ebiederm.org>
-	<20141212220840.GF22091@castiana.ipv6.teksavvy.com>
-	<8761dgze56.fsf@x220.int.ebiederm.org>
-	<20141215193838.GB28375@ubuntumail>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v10 0/8] TPM 2.0 support
+Date: Mon, 15 Dec 2014 22:17:57 +0200
+Message-ID: <20141215201757.GA27923@intel.com>
+References: <1418413600-5400-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20141215193838.GB28375@ubuntumail> (Serge Hallyn's message of
-	"Mon, 15 Dec 2014 19:38:38 +0000")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1418413600-5400-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-U2VyZ2UgSGFsbHluIDxzZXJnZS5oYWxseW5AdWJ1bnR1LmNvbT4gd3JpdGVzOgoKPiBRdW90aW5n
-IEVyaWMgVy4gQmllZGVybWFuIChlYmllZGVybUB4bWlzc2lvbi5jb20pOgo+PiBTdMOpcGhhbmUg
-R3JhYmVyIDxzdGdyYWJlckB1YnVudHUuY29tPiB3cml0ZXM6Cj4+IAo+PiA+IE9uIEZyaSwgRGVj
-IDEyLCAyMDE0IGF0IDAzOjM4OjE4UE0gLTA2MDAsIEVyaWMgVy4gQmllZGVybWFuIHdyb3RlOgo+
-PiA+PiBTZXJnZSBIYWxseW4gPHNlcmdlLmhhbGx5bkB1YnVudHUuY29tPiB3cml0ZXM6Cj4+ID4+
-IAo+PiA+PiA+IFF1b3RpbmcgRXJpYyBXLiBCaWVkZXJtYW4gKGViaWVkZXJtQHhtaXNzaW9uLmNv
-bSk6Cj4+ID4+ID4+IAo+PiA+PiA+PiBXaWxsIHBlb3BsZSBwbGVhc2UgdGVzdCB0aGVzZSBwYXRj
-aGVzIHdpdGggdGhlaXIgY29udGFpbmVyIHByb2plY3Q/Cj4+ID4+ID4+IAo+PiA+PiA+PiBUaGVz
-ZSBjaGFuZ2VzIGJyZWFrIGNvbnRhaW5lciB1c2Vyc3BhY2UgKGhvcGVmdWxseSBpbiBhIG1pbmlt
-YWwgd2F5KSBpZgo+PiA+PiA+PiBJIGNvdWxkIGhhdmUgdGhhdCBjb25maXJtZWQgYnkgdGVzdGlu
-ZyBJIHdvdWxkIHJlYWxseSBhcHByZWNpYXRlIGl0LiAgSQo+PiA+PiA+PiByZWFsbHkgZG9uJ3Qg
-d2FudCB0byBzZW5kIG91dCBhIGJ1ZyBmaXggdGhhdCBhY2NpZGVudGFsbHkgYnJlYWtzCj4+ID4+
-ID4+IHVzZXJzcGFjZSBhZ2Fpbi4KPj4gPj4gPj4gCj4+ID4+ID4+IFRoZSBvbmx5IGlzc3VlIHNv
-cnQgb2YgdW5kZXIgZGlzY3Vzc2lvbiBpcyBpZiB0aGVyZSBpcyBhIGJldHRlciBuYW1lIGZvcgo+
-PiA+PiA+PiAvcHJvYy88cGlkPi9zZXRncm91cHMsIGFuZCB0aGUgbmFtZSBvZiB0aGUgZmlsZSB3
-aWxsIG5vdCBhZmZlY3QgdGhlCj4+ID4+ID4+IGZ1bmN0aW9uYWxpdHkgb2YgdGhlIHBhdGNoc2V0
-Lgo+PiA+PiA+PiAKPj4gPj4gPj4gV2l0aCB0aGUgY29kZSByZXZpZXdlZCBhbmQgd3JpdHRlbiBp
-biBzaW1wbGUgb2J2aW91c2x5IGNvcnJlY3QsIGVhc2lseQo+PiA+PiA+PiByZXZpZXdhYmxlIHdh
-eXMgSSBhbSBob3BpbmcvcGxhbm5pbmcgdG8gc2VuZCB0aGlzIHRvIExpbnVzIEFTQVAuCj4+ID4+
-ID4+IAo+PiA+PiA+PiBFcmljCj4+ID4+ID4KPj4gPj4gPiBJcyB0aGVyZSBhIGdpdCB0cmVlIHdl
-IGNhbiBjbG9uZT8KPj4gPj4gCj4+ID4+IEhhdmUgZWl0aGVyIG9mIHlvdSBiZWVuIGFibGUgdG8g
-Y2hlY2sgdG8gc2VlIGlmIGFueSBvZiBteSBjaGFuZ2VzCj4+ID4+IGFmZmVjdHMgbHhjPwo+PiA+
-PiAKPj4gPj4gSSBhbSB0cnlpbmcgdG8gZ2F1Z2UgaG93IGhhcmQgYW5kIGhvdyBmYXN0IEkgc2hv
-dWxkIHB1c2ggdG8gTGludXMuICBseGMKPj4gPj4gYmVpbmcgdGhlIGxhcmdlc3QgYWRvcHRlciBv
-ZiB1bnByaXZpbGVnZWQgdXNlciBuYW1lc3BhY2VzIGZvciBnZW5lcmFsCj4+ID4+IHB1cnBvc2Ug
-Y29udGFpbmVycy4KPj4gPj4gCj4+ID4+IEkgZXhwZWN0IHlvdSBqdXN0IGNhbGwgbmV3dWlkbWFw
-IGFuZCBuZXdnaWRtYXAgYW5kIGRvbid0IGFjdHVhbGx5IGNhcmUKPj4gPj4gYWJvdXQgbm90IGJl
-aW5nIGFibGUgdG8gc2V0IGdpZF9tYXAgd2l0aG91dCBwcml2aWxlZ2UuICBCdXQgSSByZWFsbHkK
-Pj4gPj4gd2FudCB0byBhdm9pZCBwdXNoaW5nIGEgc2VjdXJpdHkgZml4IGFuZCB0aGVuIGJlaW5n
-IHN1cnByaXNlZCB0aGF0Cj4+ID4+IHRoaW5ncyBsaWtlIGx4YyBicmVhay4KPj4gPj4gCj4+ID4+
-IEVyaWMKPj4gPgo+PiA+IEhpIEVyaWMsCj4+ID4KPj4gPiBJJ3ZlIHVuZm9ydHVuYXRlbHkgYmVl
-biBwcmV0dHkgYnVzeSB0aGlzIHdlZWsgYXMgSSB3YXMgKHdlbGwsIHN0aWxsIGFtKQo+PiA+IHRy
-YXZlbGxpbmcgdG8gU291dGggQWZyaWNhIGZvciBhIG1lZXRpbmcuIEkgZG9uJ3QgaGF2ZSBhIGZ1
-bGwga2VybmVsCj4+ID4gdHJlZSBhcm91bmQgaGVyZSBhbmQgYSBmdWxsIGdpdCBjbG9uZSBpc24n
-dCByZWFsbHkgZG9hYmxlIG92ZXIgdGhlIGtpbmQKPj4gPiBvZiBJbnRlcm5ldCBJJ3ZlIGdvdCBo
-ZXJlIDopCj4+ID4KPj4gPiBIb3BlZnVsbHkgU2VyZ2UgY2FuIGdpdmUgaXQgYSBxdWljayB0cnks
-IG90aGVyd2lzZSBJIHNob3VsZCBiZSBhYmxlIHRvCj4+ID4gZG8gc29tZSB0ZXN0cyBvbiBUdWVz
-ZGF5IHdoZW4gSSdtIGJhY2sgaG9tZS4KPj4gCj4+IEkgdGhvdWdodCBTZXJnZSB3YXMgZ29pbmcg
-dG8gYnV0IEkgaGF2ZW4ndCBoZWFyZCB5ZXQgc28gSSBhbSBwcm9kZGluZyA7LSkKPgo+IE9rLCB0
-aGFua3MgLSB5ZXMsIHVucHJpdmlsZWdlZCBseGMgaXMgd29ya2luZyBmaW5lIHdpdGggeW91ciBr
-ZXJuZWxzLgo+IEp1c3QgdG8gYmUgc3VyZSBJIHdhcyB0ZXN0aW5nIHRoZSByaWdodCB0aGluZyBJ
-IGFsc28gdGVzdGVkIHVzaW5nCj4gbXkgdW5wcml2aWxlZ2VkIG5zZXhlYyB0ZXN0Y2FzZXMsIGFu
-ZCB0aGV5IGZhaWxlZCBvbiBzZXRncm91cC9zZXRnaWQKPiBhcyBub3cgZXhwZWN0ZWQsIGFuZCBz
-dWNjZWVkZWQgdGhlcmUgd2l0aG91dCB5b3VyIHBhdGNoZXMuCgpUaGFua3MuCgpTZXJnZSB1bmxl
-c3MgeW91IG9iamVjdCB3aWxsIGFkZCB5b3VyIFRlc3RlZC1CeSB0byBteSBwdWxsIG1lc3NhZ2Ug
-dG8gTGludXMuCgpNaW5vciBxdWVzdGlvbiBkbyB5b3UgcnVucHJpdmlsZWdlZCBuc2V4ZWMgdGVz
-dCBjYXNlcyB0ZXN0IHRvIHNlZSBpZiB0aGUKd3JpdGUgdG8gZ2lkX21hcCBzdWNjZWVkcz8gIEkg
-d291bGQgaGF2ZSBleHBlY3RlZCB0aGUgZ2lkX21hcCB3cml0ZSB0bwpmYWlsIGJlZm9yZSB0aGUg
-c2V0Z3JvdXBzIHNldGdpZCBzeXN0ZW0gY2FsbHMgY2FtZSBpbnRvIHBsYXkuCgpFcmljCgpfX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1h
-aWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8v
-bGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
+So, what do you think? Are we now settled with this?
+
+/Jarkko
+
+On Fri, Dec 12, 2014 at 11:46:32AM -0800, Jarkko Sakkinen wrote:
+> This patch set enables TPM2 protocol and provides drivers for FIFO and
+> CRB interfaces. This patch set does not export any sysfs attributes for
+> TPM 2.0 because existing sysfs attributes have three non-trivial issues:
+> 
+> - They are associated with the platform device instead of character
+>   device.
+> - They are are not trivial key-value pairs but contain text that is
+>   not easily parsed by a computer.
+> - Raciness as described in
+>   http://kroah.com/log/blog/2013/06/26/how-to-create-a-sysfs-file-correctly/
+> 
+> v2:
+> - Improved struct tpm_chip life-cycle by taking advantage of devres
+>   API.
+> - Refined sysfs attributes as simple key-values thereby not repeating
+>   mistakes in TPM1 sysfs attributes.
+> - Documented functions in tpm-chip.c and tpm2-cmd.c.
+> - Documented sysfs attributes.
+> 
+> v3:
+> - Lots of fixes in calling order in device drivers (thanks to Jason
+>   Gunthorpe for pointing these out!).
+> - Attach sysfs attributes to the misc device because it represents
+>   TPM device to the user space.
+> 
+> v4:
+> - Disable sysfs attibutes for TPM 2.0 for until we can sort out the 
+>   best approach for them.
+> - Fixed all the style issues found with checkpatch.pl.
+> 
+> v5:
+> - missing EXPORT_SYMBOL_GPL()
+> - own class for TPM devices used for TPM 2.0 devices and onwards.
+> 
+> v6:
+> - Non-racy initialization for sysfs attributes using struct device's
+>   groups field.
+> - The class 'tpm' is used now for all TPM devices. For the first device
+>   node major MISC_MAJOR and minor TPM_MINOR is used in order to retain
+>   backwards compatability.
+> 
+> v7:
+> - Release device number and free struct tpm_chip memory inside
+>   tpm_dev_release callback.
+> - Moved code from tpm-interface.c and tpm_dev.c to tpm-chip.c.
+> 
+> v8:
+> - Cleaned up unneeded cast from tpm_transmit_cmd().
+> - Cleaned up redundant PPI_VERSION_LEN constant from tpm_ppi.c.
+> - Fixed tpm_tis to use tpm2_calc_ordinal_duration() for TPM2 devices.
+> - tpm_crb: in crb_recv, check that count can hold the TPM header at
+>   minimum.
+> - tpm_crb: add enumerations for bit flags in start and cancel fields
+>   of the control area.
+> - tpm_crb: use ioremap() for command and response buffer because
+>   they might be anywhere.
+> - tpm_crb: use IO access functions for reading ioremapped buffers
+>   because using direct pointers is not portable.
+> - tpm_crb: only apply ACPI start if start method reported by the
+>   TPM2 ACPI table allows it.
+> - In tpm2_pcr_read() just calculate index and bit and get rid of
+>   hacky loop.
+> - Do not add sysfs attributes for TPM 2.0 devices.
+> 
+> v9:
+> - Fixed compilation issues in v8 (sorry for not using the correct
+>   tree).
+> - Just do "return tpm_chip_register();" instead of copying return
+>   value to a variable.
+> - Removed unused tpm2_startup().
+> - In the CRB driver ACPI TPM2 table could contain platform specific
+>   and therefore inequality test does not work. Fixed in this patch
+>   set.
+> 
+> v10:
+> - Fixed coccicheck and sparse errors and other reported style errors.
+> - Fixed build errors without CONFIG_ACPI.
+> - Fixed build error with CONFIG_OF.
+> - Added TPM_CHIP_FLAG_REGISTERED to mark successful tpm_chip_register().
+>   It is checked in the beginning of tpm_chip_unregister(), which is 
+>   called even when "attach" callback for a device fails because "detach"
+>   callback is always called.
+> - Added TPM_CHIP_FLAG_PPI to mark successful PPI interface lookup because 
+>   in older TPM chips version string might be non-existent.
+> - Check TPM version from the 4th byte of STS register after requesting 
+>   the locality because otherwise the read will return bogus data.
+> - Some TPM chips just give 0xff as the 4th byte so using that for detecting
+>   TPM family is unstable. Instead I chose the approach of using idempotent 
+>   TPM 2.x command to detect such case.
+> 
+> Jarkko Sakkinen (8):
+>   tpm: merge duplicate transmit_cmd() functions
+>   tpm: two-phase chip management functions
+>   tpm: fix raciness of PPI interface lookup
+>   tpm: rename chip->dev to chip->pdev
+>   tpm: device class for tpm
+>   tpm: TPM 2.0 baseline support
+>   tpm: TPM 2.0 CRB Interface
+>   tpm: TPM 2.0 FIFO Interface
+> 
+>  Documentation/ABI/stable/sysfs-class-tpm |  22 +-
+>  drivers/char/tpm/Kconfig                 |   9 +
+>  drivers/char/tpm/Makefile                |   3 +-
+>  drivers/char/tpm/tpm-chip.c              | 256 +++++++++++++
+>  drivers/char/tpm/tpm-dev.c               |  42 +--
+>  drivers/char/tpm/tpm-interface.c         | 263 +++++--------
+>  drivers/char/tpm/tpm-sysfs.c             |  29 +-
+>  drivers/char/tpm/tpm.h                   | 118 +++++-
+>  drivers/char/tpm/tpm2-cmd.c              | 617 +++++++++++++++++++++++++++++++
+>  drivers/char/tpm/tpm_atmel.c             |  25 +-
+>  drivers/char/tpm/tpm_crb.c               | 354 ++++++++++++++++++
+>  drivers/char/tpm/tpm_i2c_atmel.c         |  55 +--
+>  drivers/char/tpm/tpm_i2c_infineon.c      |  43 +--
+>  drivers/char/tpm/tpm_i2c_nuvoton.c       |  71 ++--
+>  drivers/char/tpm/tpm_i2c_stm_st33.c      |  32 +-
+>  drivers/char/tpm/tpm_ibmvtpm.c           |  17 +-
+>  drivers/char/tpm/tpm_infineon.c          |  51 +--
+>  drivers/char/tpm/tpm_nsc.c               |  34 +-
+>  drivers/char/tpm/tpm_ppi.c               | 141 ++++---
+>  drivers/char/tpm/tpm_tis.c               | 224 ++++++-----
+>  drivers/char/tpm/xen-tpmfront.c          |  14 +-
+>  21 files changed, 1820 insertions(+), 600 deletions(-)
+>  create mode 100644 drivers/char/tpm/tpm-chip.c
+>  create mode 100644 drivers/char/tpm/tpm2-cmd.c
+>  create mode 100644 drivers/char/tpm/tpm_crb.c
+> 
+> -- 
+> 2.1.0
+> 
