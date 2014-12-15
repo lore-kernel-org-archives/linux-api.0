@@ -1,7 +1,7 @@
-From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
 Subject: Re: [CFT] Can I get some Tested-By's on this series?
-Date: Mon, 15 Dec 2014 19:38:38 +0000
-Message-ID: <20141215193838.GB28375@ubuntumail>
+Date: Mon, 15 Dec 2014 14:11:59 -0600
+Message-ID: <8761dcwu40.fsf@x220.int.ebiederm.org>
 References: <87ppbtn4mv.fsf@x220.int.ebiederm.org>
 	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
 	<87a92xn2io.fsf@x220.int.ebiederm.org>
@@ -12,12 +12,13 @@ References: <87ppbtn4mv.fsf@x220.int.ebiederm.org>
 	<87lhmcy2et.fsf@x220.int.ebiederm.org>
 	<20141212220840.GF22091@castiana.ipv6.teksavvy.com>
 	<8761dgze56.fsf@x220.int.ebiederm.org>
+	<20141215193838.GB28375@ubuntumail>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <8761dgze56.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+In-Reply-To: <20141215193838.GB28375@ubuntumail> (Serge Hallyn's message of
+	"Mon, 15 Dec 2014 19:38:38 +0000")
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -27,82 +28,59 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> St=E9phane Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
-> =
-
-> > On Fri, Dec 12, 2014 at 03:38:18PM -0600, Eric W. Biederman wrote:
-> >> Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
-> >> =
-
-> >> > Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> >> >> =
-
-> >> >> Will people please test these patches with their container project?
-> >> >> =
-
-> >> >> These changes break container userspace (hopefully in a minimal way=
-) if
-> >> >> I could have that confirmed by testing I would really appreciate it=
-.  I
-> >> >> really don't want to send out a bug fix that accidentally breaks
-> >> >> userspace again.
-> >> >> =
-
-> >> >> The only issue sort of under discussion is if there is a better nam=
-e for
-> >> >> /proc/<pid>/setgroups, and the name of the file will not affect the
-> >> >> functionality of the patchset.
-> >> >> =
-
-> >> >> With the code reviewed and written in simple obviously correct, eas=
-ily
-> >> >> reviewable ways I am hoping/planning to send this to Linus ASAP.
-> >> >> =
-
-> >> >> Eric
-> >> >
-> >> > Is there a git tree we can clone?
-> >> =
-
-> >> Have either of you been able to check to see if any of my changes
-> >> affects lxc?
-> >> =
-
-> >> I am trying to gauge how hard and how fast I should push to Linus.  lxc
-> >> being the largest adopter of unprivileged user namespaces for general
-> >> purpose containers.
-> >> =
-
-> >> I expect you just call newuidmap and newgidmap and don't actually care
-> >> about not being able to set gid_map without privilege.  But I really
-> >> want to avoid pushing a security fix and then being surprised that
-> >> things like lxc break.
-> >> =
-
-> >> Eric
-> >
-> > Hi Eric,
-> >
-> > I've unfortunately been pretty busy this week as I was (well, still am)
-> > travelling to South Africa for a meeting. I don't have a full kernel
-> > tree around here and a full git clone isn't really doable over the kind
-> > of Internet I've got here :)
-> >
-> > Hopefully Serge can give it a quick try, otherwise I should be able to
-> > do some tests on Tuesday when I'm back home.
-> =
-
-> I thought Serge was going to but I haven't heard yet so I am prodding ;-)
-
-Ok, thanks - yes, unprivileged lxc is working fine with your kernels.
-Just to be sure I was testing the right thing I also tested using
-my unprivileged nsexec testcases, and they failed on setgroup/setgid
-as now expected, and succeeded there without your patches.
-
-thanks,
--serge
+U2VyZ2UgSGFsbHluIDxzZXJnZS5oYWxseW5AdWJ1bnR1LmNvbT4gd3JpdGVzOgoKPiBRdW90aW5n
+IEVyaWMgVy4gQmllZGVybWFuIChlYmllZGVybUB4bWlzc2lvbi5jb20pOgo+PiBTdMOpcGhhbmUg
+R3JhYmVyIDxzdGdyYWJlckB1YnVudHUuY29tPiB3cml0ZXM6Cj4+IAo+PiA+IE9uIEZyaSwgRGVj
+IDEyLCAyMDE0IGF0IDAzOjM4OjE4UE0gLTA2MDAsIEVyaWMgVy4gQmllZGVybWFuIHdyb3RlOgo+
+PiA+PiBTZXJnZSBIYWxseW4gPHNlcmdlLmhhbGx5bkB1YnVudHUuY29tPiB3cml0ZXM6Cj4+ID4+
+IAo+PiA+PiA+IFF1b3RpbmcgRXJpYyBXLiBCaWVkZXJtYW4gKGViaWVkZXJtQHhtaXNzaW9uLmNv
+bSk6Cj4+ID4+ID4+IAo+PiA+PiA+PiBXaWxsIHBlb3BsZSBwbGVhc2UgdGVzdCB0aGVzZSBwYXRj
+aGVzIHdpdGggdGhlaXIgY29udGFpbmVyIHByb2plY3Q/Cj4+ID4+ID4+IAo+PiA+PiA+PiBUaGVz
+ZSBjaGFuZ2VzIGJyZWFrIGNvbnRhaW5lciB1c2Vyc3BhY2UgKGhvcGVmdWxseSBpbiBhIG1pbmlt
+YWwgd2F5KSBpZgo+PiA+PiA+PiBJIGNvdWxkIGhhdmUgdGhhdCBjb25maXJtZWQgYnkgdGVzdGlu
+ZyBJIHdvdWxkIHJlYWxseSBhcHByZWNpYXRlIGl0LiAgSQo+PiA+PiA+PiByZWFsbHkgZG9uJ3Qg
+d2FudCB0byBzZW5kIG91dCBhIGJ1ZyBmaXggdGhhdCBhY2NpZGVudGFsbHkgYnJlYWtzCj4+ID4+
+ID4+IHVzZXJzcGFjZSBhZ2Fpbi4KPj4gPj4gPj4gCj4+ID4+ID4+IFRoZSBvbmx5IGlzc3VlIHNv
+cnQgb2YgdW5kZXIgZGlzY3Vzc2lvbiBpcyBpZiB0aGVyZSBpcyBhIGJldHRlciBuYW1lIGZvcgo+
+PiA+PiA+PiAvcHJvYy88cGlkPi9zZXRncm91cHMsIGFuZCB0aGUgbmFtZSBvZiB0aGUgZmlsZSB3
+aWxsIG5vdCBhZmZlY3QgdGhlCj4+ID4+ID4+IGZ1bmN0aW9uYWxpdHkgb2YgdGhlIHBhdGNoc2V0
+Lgo+PiA+PiA+PiAKPj4gPj4gPj4gV2l0aCB0aGUgY29kZSByZXZpZXdlZCBhbmQgd3JpdHRlbiBp
+biBzaW1wbGUgb2J2aW91c2x5IGNvcnJlY3QsIGVhc2lseQo+PiA+PiA+PiByZXZpZXdhYmxlIHdh
+eXMgSSBhbSBob3BpbmcvcGxhbm5pbmcgdG8gc2VuZCB0aGlzIHRvIExpbnVzIEFTQVAuCj4+ID4+
+ID4+IAo+PiA+PiA+PiBFcmljCj4+ID4+ID4KPj4gPj4gPiBJcyB0aGVyZSBhIGdpdCB0cmVlIHdl
+IGNhbiBjbG9uZT8KPj4gPj4gCj4+ID4+IEhhdmUgZWl0aGVyIG9mIHlvdSBiZWVuIGFibGUgdG8g
+Y2hlY2sgdG8gc2VlIGlmIGFueSBvZiBteSBjaGFuZ2VzCj4+ID4+IGFmZmVjdHMgbHhjPwo+PiA+
+PiAKPj4gPj4gSSBhbSB0cnlpbmcgdG8gZ2F1Z2UgaG93IGhhcmQgYW5kIGhvdyBmYXN0IEkgc2hv
+dWxkIHB1c2ggdG8gTGludXMuICBseGMKPj4gPj4gYmVpbmcgdGhlIGxhcmdlc3QgYWRvcHRlciBv
+ZiB1bnByaXZpbGVnZWQgdXNlciBuYW1lc3BhY2VzIGZvciBnZW5lcmFsCj4+ID4+IHB1cnBvc2Ug
+Y29udGFpbmVycy4KPj4gPj4gCj4+ID4+IEkgZXhwZWN0IHlvdSBqdXN0IGNhbGwgbmV3dWlkbWFw
+IGFuZCBuZXdnaWRtYXAgYW5kIGRvbid0IGFjdHVhbGx5IGNhcmUKPj4gPj4gYWJvdXQgbm90IGJl
+aW5nIGFibGUgdG8gc2V0IGdpZF9tYXAgd2l0aG91dCBwcml2aWxlZ2UuICBCdXQgSSByZWFsbHkK
+Pj4gPj4gd2FudCB0byBhdm9pZCBwdXNoaW5nIGEgc2VjdXJpdHkgZml4IGFuZCB0aGVuIGJlaW5n
+IHN1cnByaXNlZCB0aGF0Cj4+ID4+IHRoaW5ncyBsaWtlIGx4YyBicmVhay4KPj4gPj4gCj4+ID4+
+IEVyaWMKPj4gPgo+PiA+IEhpIEVyaWMsCj4+ID4KPj4gPiBJJ3ZlIHVuZm9ydHVuYXRlbHkgYmVl
+biBwcmV0dHkgYnVzeSB0aGlzIHdlZWsgYXMgSSB3YXMgKHdlbGwsIHN0aWxsIGFtKQo+PiA+IHRy
+YXZlbGxpbmcgdG8gU291dGggQWZyaWNhIGZvciBhIG1lZXRpbmcuIEkgZG9uJ3QgaGF2ZSBhIGZ1
+bGwga2VybmVsCj4+ID4gdHJlZSBhcm91bmQgaGVyZSBhbmQgYSBmdWxsIGdpdCBjbG9uZSBpc24n
+dCByZWFsbHkgZG9hYmxlIG92ZXIgdGhlIGtpbmQKPj4gPiBvZiBJbnRlcm5ldCBJJ3ZlIGdvdCBo
+ZXJlIDopCj4+ID4KPj4gPiBIb3BlZnVsbHkgU2VyZ2UgY2FuIGdpdmUgaXQgYSBxdWljayB0cnks
+IG90aGVyd2lzZSBJIHNob3VsZCBiZSBhYmxlIHRvCj4+ID4gZG8gc29tZSB0ZXN0cyBvbiBUdWVz
+ZGF5IHdoZW4gSSdtIGJhY2sgaG9tZS4KPj4gCj4+IEkgdGhvdWdodCBTZXJnZSB3YXMgZ29pbmcg
+dG8gYnV0IEkgaGF2ZW4ndCBoZWFyZCB5ZXQgc28gSSBhbSBwcm9kZGluZyA7LSkKPgo+IE9rLCB0
+aGFua3MgLSB5ZXMsIHVucHJpdmlsZWdlZCBseGMgaXMgd29ya2luZyBmaW5lIHdpdGggeW91ciBr
+ZXJuZWxzLgo+IEp1c3QgdG8gYmUgc3VyZSBJIHdhcyB0ZXN0aW5nIHRoZSByaWdodCB0aGluZyBJ
+IGFsc28gdGVzdGVkIHVzaW5nCj4gbXkgdW5wcml2aWxlZ2VkIG5zZXhlYyB0ZXN0Y2FzZXMsIGFu
+ZCB0aGV5IGZhaWxlZCBvbiBzZXRncm91cC9zZXRnaWQKPiBhcyBub3cgZXhwZWN0ZWQsIGFuZCBz
+dWNjZWVkZWQgdGhlcmUgd2l0aG91dCB5b3VyIHBhdGNoZXMuCgpUaGFua3MuCgpTZXJnZSB1bmxl
+c3MgeW91IG9iamVjdCB3aWxsIGFkZCB5b3VyIFRlc3RlZC1CeSB0byBteSBwdWxsIG1lc3NhZ2Ug
+dG8gTGludXMuCgpNaW5vciBxdWVzdGlvbiBkbyB5b3UgcnVucHJpdmlsZWdlZCBuc2V4ZWMgdGVz
+dCBjYXNlcyB0ZXN0IHRvIHNlZSBpZiB0aGUKd3JpdGUgdG8gZ2lkX21hcCBzdWNjZWVkcz8gIEkg
+d291bGQgaGF2ZSBleHBlY3RlZCB0aGUgZ2lkX21hcCB3cml0ZSB0bwpmYWlsIGJlZm9yZSB0aGUg
+c2V0Z3JvdXBzIHNldGdpZCBzeXN0ZW0gY2FsbHMgY2FtZSBpbnRvIHBsYXkuCgpFcmljCgpfX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1h
+aWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8v
+bGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
