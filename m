@@ -1,147 +1,103 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH RFC 5/5] virtio_pci: macros for PCI layout offsets.
-Date: Mon, 15 Dec 2014 23:33:24 +0200
-Message-ID: <1418679168-1011-6-git-send-email-mst@redhat.com>
-References: <1418679168-1011-1-git-send-email-mst@redhat.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [GIT PULL RESEND] kselftest-3.19-rc1
+Date: Mon, 15 Dec 2014 14:51:20 -0700
+Message-ID: <548F57D8.4080809@osg.samsung.com>
+References: <548750AD.6090201@osg.samsung.com> <CA+55aFx2DSXuikfd-RyEN3V+OaLSYhWub92=NJsNXGUhVnKKFQ@mail.gmail.com> <548EEA88.2060206@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1418679168-1011-1-git-send-email-mst@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Rusty Russell <rusty@rustcorp.com.au>, virtualization@lists.linux-foundation.org, linux-sh@vger.kernel.org, cornelia.huck@de.ibm.com, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <548EEA88.2060206-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuah.kh-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-QEMU wants it, so why not?  Trust, but verify.
+Hi Linus,
 
-Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
----
- include/uapi/linux/virtio_pci.h    | 30 ++++++++++++++++++
- drivers/virtio/virtio_pci_modern.c | 63 ++++++++++++++++++++++++++++++++++++++
- 2 files changed, 93 insertions(+)
+Please pull the following Kselftest updates for 3.19-rc1. Hope
+I have this right this time. Sorry again for the messed up
+first request.
 
-diff --git a/include/uapi/linux/virtio_pci.h b/include/uapi/linux/virtio_pci.h
-index 28c2ce0..5d546c6 100644
---- a/include/uapi/linux/virtio_pci.h
-+++ b/include/uapi/linux/virtio_pci.h
-@@ -159,6 +159,36 @@ struct virtio_pci_common_cfg {
- 	__le32 queue_used_hi;		/* read-write */
- };
- 
-+/* Macro versions of offsets for the Old Timers! */
-+#define VIRTIO_PCI_CAP_VNDR		0
-+#define VIRTIO_PCI_CAP_NEXT		1
-+#define VIRTIO_PCI_CAP_LEN		2
-+#define VIRTIO_PCI_CAP_TYPE_AND_BAR	3
-+#define VIRTIO_PCI_CAP_OFFSET		4
-+#define VIRTIO_PCI_CAP_LENGTH		8
-+
-+#define VIRTIO_PCI_NOTIFY_CAP_MULT	12
-+
-+#define VIRTIO_PCI_COMMON_DFSELECT	0
-+#define VIRTIO_PCI_COMMON_DF		4
-+#define VIRTIO_PCI_COMMON_GFSELECT	8
-+#define VIRTIO_PCI_COMMON_GF		12
-+#define VIRTIO_PCI_COMMON_MSIX		16
-+#define VIRTIO_PCI_COMMON_NUMQ		18
-+#define VIRTIO_PCI_COMMON_STATUS	20
-+#define VIRTIO_PCI_COMMON_CFGGENERATION	21
-+#define VIRTIO_PCI_COMMON_Q_SELECT	22
-+#define VIRTIO_PCI_COMMON_Q_SIZE	24
-+#define VIRTIO_PCI_COMMON_Q_MSIX	26
-+#define VIRTIO_PCI_COMMON_Q_ENABLE	28
-+#define VIRTIO_PCI_COMMON_Q_NOFF	30
-+#define VIRTIO_PCI_COMMON_Q_DESCLO	32
-+#define VIRTIO_PCI_COMMON_Q_DESCHI	36
-+#define VIRTIO_PCI_COMMON_Q_AVAILLO	40
-+#define VIRTIO_PCI_COMMON_Q_AVAILHI	44
-+#define VIRTIO_PCI_COMMON_Q_USEDLO	48
-+#define VIRTIO_PCI_COMMON_Q_USEDHI	52
-+
- #endif /* VIRTIO_PCI_NO_MODERN */
- 
- #endif
-diff --git a/drivers/virtio/virtio_pci_modern.c b/drivers/virtio/virtio_pci_modern.c
-index 636666c..5b0c012 100644
---- a/drivers/virtio/virtio_pci_modern.c
-+++ b/drivers/virtio/virtio_pci_modern.c
-@@ -446,6 +446,67 @@ static inline int virtio_pci_find_capability(struct pci_dev *dev, u8 cfg_type,
- 	return 0;
- }
- 
-+/* This is part of the ABI.  Don't screw with it. */
-+static inline void check_offsets(void)
-+{
-+	/* Note: disk space was harmed in compilation of this function. */
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_VNDR !=
-+		     offsetof(struct virtio_pci_cap, cap_vndr));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_NEXT !=
-+		     offsetof(struct virtio_pci_cap, cap_next));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_LEN !=
-+		     offsetof(struct virtio_pci_cap, cap_len));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_TYPE_AND_BAR !=
-+		     offsetof(struct virtio_pci_cap, type_and_bar));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_OFFSET !=
-+		     offsetof(struct virtio_pci_cap, offset));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_LENGTH !=
-+		     offsetof(struct virtio_pci_cap, length));
-+	BUILD_BUG_ON(VIRTIO_PCI_NOTIFY_CAP_MULT !=
-+		     offsetof(struct virtio_pci_notify_cap,
-+			      notify_off_multiplier));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_DFSELECT !=
-+		     offsetof(struct virtio_pci_common_cfg,
-+			      device_feature_select));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_DF !=
-+		     offsetof(struct virtio_pci_common_cfg, device_feature));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_GFSELECT !=
-+		     offsetof(struct virtio_pci_common_cfg,
-+			      guest_feature_select));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_GF !=
-+		     offsetof(struct virtio_pci_common_cfg, guest_feature));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_MSIX !=
-+		     offsetof(struct virtio_pci_common_cfg, msix_config));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_NUMQ !=
-+		     offsetof(struct virtio_pci_common_cfg, num_queues));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_STATUS !=
-+		     offsetof(struct virtio_pci_common_cfg, device_status));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_CFGGENERATION !=
-+		     offsetof(struct virtio_pci_common_cfg, config_generation));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_SELECT !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_select));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_SIZE !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_size));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_MSIX !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_msix_vector));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_ENABLE !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_enable));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_NOFF !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_notify_off));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_DESCLO !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_desc_lo));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_DESCHI !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_desc_hi));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_AVAILLO !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_avail_lo));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_AVAILHI !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_avail_hi));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_USEDLO !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_used_lo));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_USEDHI !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_used_hi));
-+}
-+
- /* the PCI probing function */
- int virtio_pci_modern_probe(struct pci_dev *pci_dev,
- 			    const struct pci_device_id *id)
-@@ -455,6 +516,8 @@ int virtio_pci_modern_probe(struct pci_dev *pci_dev,
- 	struct virtio_device_id virtio_id;
- 	u32 notify_length;
- 
-+	check_offsets();
-+
- 	/* We only own devices >= 0x1000 and <= 0x107f: leave the rest. */
- 	if (pci_dev->device < 0x1000 || pci_dev->device > 0x107f)
- 		return -ENODEV;
+thanks,
+-- Shuah
+
+The following changes since commit 0df1f2487d2f0d04703f142813d53615d62a1da4:
+
+  Linux 3.18-rc3 (2014-11-02 15:01:51 -0800)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-3.19-rc1
+
+for you to fetch changes up to 3ce51050fadd63737c03627293ca2dc4be238891:
+
+  selftest: size: Add size test for Linux kernel (2014-12-03 19:27:47 -0700)
+
+----------------------------------------------------------------
+kselftest updates for 3.19-rc1
+
+----------------------------------------------------------------
+Michael Ellerman (3):
+      kcmp: Move kcmp.h into uapi
+      selftests/kcmp: Don't include kernel headers
+      selftests/kcmp: Always try to build the test
+
+Shuah Khan (7):
+      selftests/net: move test out of Makefile into a shell script
+      selftests/user: move test out of Makefile into a shell script
+      selftests: add kselftest framework for uniform test reporting
+      selftests/breakpoints: change test to use ksft framework
+      selftests/ipc: change test to use ksft framework
+      selftests/kcmp: change test to use ksft framework
+      selftests/timers: change test to use ksft framework
+
+Tim Bird (1):
+      selftest: size: Add size test for Linux kernel
+
+ include/uapi/linux/Kbuild                          |   1 +
+ include/{ => uapi}/linux/kcmp.h                    |   6 +-
+ tools/testing/selftests/Makefile                   |   1 +
+ .../selftests/breakpoints/breakpoint_test.c        |  10 ++-
+ tools/testing/selftests/ipc/msgque.c               |  26 +++---
+ tools/testing/selftests/kcmp/Makefile              |  22 +----
+ tools/testing/selftests/kcmp/kcmp_test.c           |  27 ++++--
+ tools/testing/selftests/kselftest.h                |  62 +++++++++++++
+ tools/testing/selftests/net/Makefile               |   8 +-
+ tools/testing/selftests/net/test_bpf.sh            |  10 +++
+ tools/testing/selftests/size/.gitignore            |   1 +
+ tools/testing/selftests/size/Makefile              |  12 +++
+ tools/testing/selftests/size/get_size.c            | 100
++++++++++++++++++++++
+ tools/testing/selftests/timers/posix_timers.c      |  14 +--
+ tools/testing/selftests/user/Makefile              |   8 +-
+ tools/testing/selftests/user/test_user_copy.sh     |  10 +++
+ 16 files changed, 252 insertions(+), 66 deletions(-)
+ rename include/{ => uapi}/linux/kcmp.h (62%)
+ create mode 100644 tools/testing/selftests/kselftest.h
+tools/testing/selftests/net/Makefile               |   8 +-
+ tools/testing/selftests/net/test_bpf.sh            |  10 +++
+ tools/testing/selftests/size/.gitignore            |   1 +
+ tools/testing/selftests/size/Makefile              |  12 +++
+ tools/testing/selftests/size/get_size.c            | 100
++++++++++++++++++++++
+ tools/testing/selftests/timers/posix_timers.c      |  14 +--
+ tools/testing/selftests/user/Makefile              |   8 +-
+ tools/testing/selftests/user/test_user_copy.sh     |  10 +++
+ 16 files changed, 252 insertions(+), 66 deletions(-)
+ rename include/{ => uapi}/linux/kcmp.h (62%)
+ create mode 100644 tools/testing/selftests/kselftest.h
+ create mode 100755 tools/testing/selftests/net/test_bpf.sh
+ create mode 100644 tools/testing/selftests/size/.gitignore
+ create mode 100644 tools/testing/selftests/size/Makefile
+ create mode 100644 tools/testing/selftests/size/get_size.c
+ create mode 100755 tools/testing/selftests/user/test_user_copy.sh
+
+
 -- 
-MST
+Shuah Khan
+Sr. Linux Kernel Developer
+Samsung Open Source Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
