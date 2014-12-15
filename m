@@ -1,154 +1,82 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
-Date: Mon, 15 Dec 2014 00:05:50 +0100
-Message-ID: <548E17CE.8010704@nod.at>
-References: <adityakali-cgroupns>
-	<1417744550-6461-1-git-send-email-adityakali@google.com>
-	<1417744550-6461-9-git-send-email-adityakali@google.com>
+From: Mark Rutland <mark.rutland@arm.com>
+Subject: Re: [PATCH v4 0/5] Add Spreadtrum Sharkl64 Platform support
+Date: Mon, 15 Dec 2014 13:38:17 +0000
+Message-ID: <20141215133817.GD8264@leverpostej>
+References: <1417692860-18841-1-git-send-email-chunyan.zhang@spreadtrum.com>
+ <20141205104009.GE11889@leverpostej>
+ <CAAfSe-uz534FiZufojKa8MdBi=VFqhuoFLwof7K+FqXG--AGaw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1417744550-6461-9-git-send-email-adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAAfSe-uz534FiZufojKa8MdBi=VFqhuoFLwof7K+FqXG--AGaw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Lyra Zhang <zhang.lyra@gmail.com>
+Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "arnd@arndb.de" <arnd@arndb.de>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, "broonie@kernel.org" <broonie@kernel.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Pawel Moll <Pawel.Moll@arm.com>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "galak@codeaurora.org" <galak@codeaurora.org>, Will Deacon <Will.Deacon@arm.com>, Catalin Marinas <Catalin.Marinas@arm.com>, "jslaby@suse.cz" <jslaby@suse.cz>, "jason@lakedaemon.net" <jason@lakedaemon.net>, "heiko@sntech.de" <heiko@sntech.de>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>, "andrew@lunn.ch" <andrew@lunn.ch>, "rrichter@cavium.com" <rrichter@cavium.com>, "hytszk@gmail.com" <hytszk@gmail.com>, "grant.likely@linaro.org" <grant.likely@linaro.org>"orsonzhai@gmail.com" <or>
 List-Id: linux-api@vger.kernel.org
 
-Aditya,
-
-I gave your patch set a try but it does not work for me.
-Maybe you can bring some light into the issues I'm facing.
-Sadly I still had no time to dig into your code.
-
-Am 05.12.2014 um 02:55 schrieb Aditya Kali:
-> Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> ---
->  Documentation/cgroups/namespace.txt | 147 ++++++++++++++++++++++++++++++++++++
->  1 file changed, 147 insertions(+)
->  create mode 100644 Documentation/cgroups/namespace.txt
+On Fri, Dec 05, 2014 at 12:27:23PM +0000, Lyra Zhang wrote:
+> On Fri, Dec 5, 2014 at 6:40 PM, Mark Rutland <mark.rutland@arm.com> wrote:
+> > Hi,
+> >
+> > On Thu, Dec 04, 2014 at 11:34:15AM +0000, Chunyan Zhang wrote:
+> >> Spreadtrum is a rapid growing chip vendor providing smart phone total solutions.
+> >>
+> >> Sharkl64 Platform is nominated as a SoC infrastructure that supports 4G/3G/2G
+> >> standards based on ARMv8 multiple core architecture.Now we have only one
+> >> SoC(SC9836) based on this Platform in developing.
+> >>
+> >> This patchset adds Sharkl64 support in arm64 device tree and the serial driver
+> >> of SC9836-UART.
+> >>
+> >> This patchset also has patches which address "sprd" prefix and DT compatible
+> >> strings for nodes which appear un-documented.
+> >>
+> >> This version code was tesed both on Fast Mode and sc9836-fpga board.
+> >> We use the latest boot-wrapper-aarch64 as the bootloader.
+> >>
+> >> Changes from v3:
+> >> * Addressed review comments:
+> >>       - Added the description of clock property for sc9836-uart
+> >>       - Revised the size of GICC to be 8KiB
+> >>       - Added another compatible string for psci-0.1
+> >
+> > I had open questions on v3 regarding your PSCI imlpementation. You
+> > mentioned that you are using the aarch64 bootwrapper, but your DT
+> > describes PSCI 0.2, and the (upstream) bootwrapper does not implement
+> > PSCI 0.2. Adding the old PSCI compatible string is _not_ sufficient if
+> > you do not have a full PSCI 0.2 implementation.
+> >
+> > Given that PSCI 0.2 requires more functionality to be implemented, I'd
+> > like to know that your implementation is spec-compliant (implementing
+> > the mandatory functions, nters the kernel in the correct state, etc),
+> > and that it has been tested.
+> >
+> > Would you be able to look at my comments from the last posting please?
+> >
+> > Thanks,
+> > Mark.
+> > --
 > 
-> diff --git a/Documentation/cgroups/namespace.txt b/Documentation/cgroups/namespace.txt
-> new file mode 100644
-> index 0000000..6480379
-> --- /dev/null
-> +++ b/Documentation/cgroups/namespace.txt
-> @@ -0,0 +1,147 @@
-> +			CGroup Namespaces
-> +
-> +CGroup Namespace provides a mechanism to virtualize the view of the
-> +/proc/<pid>/cgroup file. The CLONE_NEWCGROUP clone-flag can be used with
-> +clone() and unshare() syscalls to create a new cgroup namespace.
-> +The process running inside the cgroup namespace will have its /proc/<pid>/cgroup
-> +output restricted to cgroupns-root. cgroupns-root is the cgroup of the process
-> +at the time of creation of the cgroup namespace.
-> +
-> +Prior to CGroup Namespace, the /proc/<pid>/cgroup file used to show complete
-> +path of the cgroup of a process. In a container setup (where a set of cgroups
-> +and namespaces are intended to isolate processes), the /proc/<pid>/cgroup file
-> +may leak potential system level information to the isolated processes.
-> +
-> +For Example:
-> +  $ cat /proc/self/cgroup
-> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1
-> +
-> +The path '/batchjobs/container_id1' can generally be considered as system-data
-> +and its desirable to not expose it to the isolated process.
-> +
-> +CGroup Namespaces can be used to restrict visibility of this path.
-> +For Example:
-> +  # Before creating cgroup namespace
-> +  $ ls -l /proc/self/ns/cgroup
-> +  lrwxrwxrwx 1 root root 0 2014-07-15 10:37 /proc/self/ns/cgroup -> cgroup:[4026531835]
-> +  $ cat /proc/self/cgroup
-> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1
-> +
-> +  # unshare(CLONE_NEWCGROUP) and exec /bin/bash
-> +  $ ~/unshare -c
-> +  [ns]$ ls -l /proc/self/ns/cgroup
-> +  lrwxrwxrwx 1 root root 0 2014-07-15 10:35 /proc/self/ns/cgroup -> cgroup:[4026532183]
-> +  # From within new cgroupns, process sees that its in the root cgroup
-> +  [ns]$ cat /proc/self/cgroup
-> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/
-> +
-> +  # From global cgroupns:
-> +  $ cat /proc/<pid>/cgroup
-> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1
-> +
-> +  # Unshare cgroupns along with userns and mountns
-> +  # Following calls unshare(CLONE_NEWCGROUP|CLONE_NEWUSER|CLONE_NEWNS), then
-> +  # sets up uid/gid map and execs /bin/bash
-> +  $ ~/unshare -c -u -m
+> Hi, Mark
+> 
+> Ok, I'll check it again with our related engineers.
+> 
+> Actually, I had read all of your comments carefully before sending
+> each version of patches, and I replied you a few days early, I guess
+> you may miss it :)
+> 
+> If we just implemented psci-0.1 until now, can we submit this path
+> without "compatible = "arm,psci-0.2"", but only with " compatible =
+> "arm,psci" ".
 
-This command does not issue CLONE_NEWUSER, -U does.
+Elsewhere I've recommended such things are placed in the DTB by the
+bootloader (at least for those cases where the bootlaoder is tied to the
+firmware), as it can fill in the appropriate enable-method (and add any
+other nodes as required).
 
-> +  # Originally, we were in /batchjobs/container_id1 cgroup. Mount our own cgroup
-> +  # hierarchy.
-> +  [ns]$ mount -t cgroup cgroup /tmp/cgroup
-> +  [ns]$ ls -l /tmp/cgroup
-> +  total 0
-> +  -r--r--r-- 1 root root 0 2014-10-13 09:32 cgroup.controllers
-> +  -r--r--r-- 1 root root 0 2014-10-13 09:32 cgroup.populated
-> +  -rw-r--r-- 1 root root 0 2014-10-13 09:25 cgroup.procs
-> +  -rw-r--r-- 1 root root 0 2014-10-13 09:32 cgroup.subtree_control
-
-I've patched libvirt-lxc to issue CLONE_NEWCGROUP and not bind mount cgroupfs into a container.
-But I'm unable to mount cgroupfs within the container, mount(2) is failing with EINVAL.
-And /proc/self/cgroup still shows the cgroup from outside.
-
----cut---
-container:/ # ls /sys/fs/cgroup/
-container:/ # mount -t cgroup none /sys/fs/cgroup/
-mount: wrong fs type, bad option, bad superblock on none,
-       missing codepage or helper program, or other error
-
-       In some cases useful info is found in syslog - try
-       dmesg | tail or so.
-container:/ # cat /proc/self/cgroup
-8:memory:/machine/test00.libvirt-lxc
-7:devices:/machine/test00.libvirt-lxc
-6:hugetlb:/
-5:cpuset:/machine/test00.libvirt-lxc
-4:blkio:/machine/test00.libvirt-lxc
-3:cpu,cpuacct:/machine/test00.libvirt-lxc
-2:freezer:/machine/test00.libvirt-lxc
-1:name=systemd:/user.slice/user-0.slice/session-c2.scope
-container:/ # ls -la /proc/self/ns
-total 0
-dr-x--x--x 2 root root 0 Dec 14 23:02 .
-dr-xr-xr-x 8 root root 0 Dec 14 23:02 ..
-lrwxrwxrwx 1 root root 0 Dec 14 23:02 cgroup -> cgroup:[4026532240]
-lrwxrwxrwx 1 root root 0 Dec 14 23:02 ipc -> ipc:[4026532238]
-lrwxrwxrwx 1 root root 0 Dec 14 23:02 mnt -> mnt:[4026532235]
-lrwxrwxrwx 1 root root 0 Dec 14 23:02 net -> net:[4026532242]
-lrwxrwxrwx 1 root root 0 Dec 14 23:02 pid -> pid:[4026532239]
-lrwxrwxrwx 1 root root 0 Dec 14 23:02 user -> user:[4026532234]
-lrwxrwxrwx 1 root root 0 Dec 14 23:02 uts -> uts:[4026532236]
-container:/ #
-
-#host side
-lxc-os132:~ # ls -la /proc/self/ns
-total 0
-dr-x--x--x 2 root root 0 Dec 14 23:56 .
-dr-xr-xr-x 8 root root 0 Dec 14 23:56 ..
-lrwxrwxrwx 1 root root 0 Dec 14 23:56 cgroup -> cgroup:[4026531835]
-lrwxrwxrwx 1 root root 0 Dec 14 23:56 ipc -> ipc:[4026531839]
-lrwxrwxrwx 1 root root 0 Dec 14 23:56 mnt -> mnt:[4026531840]
-lrwxrwxrwx 1 root root 0 Dec 14 23:56 net -> net:[4026531957]
-lrwxrwxrwx 1 root root 0 Dec 14 23:56 pid -> pid:[4026531836]
-lrwxrwxrwx 1 root root 0 Dec 14 23:56 user -> user:[4026531837]
-lrwxrwxrwx 1 root root 0 Dec 14 23:56 uts -> uts:[4026531838]
----cut---
-
-Any ideas?
+Having compatible = "arm,psci", and a couple of other properties for now
+is certainly preferable to describing a not-yet-implemented PSCI 0.2.
 
 Thanks,
-//richard
+Mark.
