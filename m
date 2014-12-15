@@ -1,49 +1,108 @@
-From: "Young, David" <dayoung-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: selftests: standardized results output?
-Date: Mon, 15 Dec 2014 11:42:12 -0500
-Message-ID: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3DABAC24@USMBX1.msg.corp.akamai.com>
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [CFT] Can I get some Tested-By's on this series?
+Date: Mon, 15 Dec 2014 19:38:38 +0000
+Message-ID: <20141215193838.GB28375@ubuntumail>
+References: <87ppbtn4mv.fsf@x220.int.ebiederm.org>
+	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
+	<87a92xn2io.fsf@x220.int.ebiederm.org>
+	<87r3w8liw4.fsf@x220.int.ebiederm.org>
+	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+	<87mw6vh31e.fsf_-_@x220.int.ebiederm.org>
+	<20141210224822.GG20012@ubuntumail>
+	<87lhmcy2et.fsf@x220.int.ebiederm.org>
+	<20141212220840.GF22091@castiana.ipv6.teksavvy.com>
+	<8761dgze56.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Shuah Khan (shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org)" <shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org" <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <8761dgze56.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,  I'm looking into what sorts of tools can consume the selftest output, and
-found this on the wikipage:
+Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> St=E9phane Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+> =
 
-https://kselftest.wiki.kernel.org/standardize_the_test_output
+> > On Fri, Dec 12, 2014 at 03:38:18PM -0600, Eric W. Biederman wrote:
+> >> Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+> >> =
 
-The current suggestion (as of the last-modified date on that wiki page for
-October) is to use the Test Anything Protocol [TAP] for standard output.  I
-notice that there is at least one test that conforms to TAP output, but
-the majority of the tests are not using it.
+> >> > Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> >> >> =
 
-There's also the kselftest.h file that suggests exit codes for the individual
-test applications.
+> >> >> Will people please test these patches with their container project?
+> >> >> =
 
-I'm interested in knowing what is the intention of this standardization, so
-that I can put some work into a "glue" layer for a tool like buildbot,
-autotest, or Jenkins for executing and consuming the results of these
-selftests.
+> >> >> These changes break container userspace (hopefully in a minimal way=
+) if
+> >> >> I could have that confirmed by testing I would really appreciate it=
+.  I
+> >> >> really don't want to send out a bug fix that accidentally breaks
+> >> >> userspace again.
+> >> >> =
 
-1) Is this output standard a "nice to have" that won't be much enforced?
-2) Will the exit codes be utilized outside of the current makefile-based
-   approach for executing the tests?  The current make target just runs all the
-   tests without really concerning itself with the exit values of the
-   individual tests.  It's simple, which isn't a bad thing, but it lacks a
-   summarized result.  Is the intention to use a different harness to consume
-   and report results?
-3) Are the TAP results intended to be the exclusive (std)output of the tests,
-   or will the tests report in a hybrid fashion?
-   Such an example would be a test that produces some verbose stdout to the
-   console, while simultaneously creating a TAP-compliant results.tap file as
-   well... or vice versa with the stdout being TAP and a more verbose but
-   free-form log.txt 
+> >> >> The only issue sort of under discussion is if there is a better nam=
+e for
+> >> >> /proc/<pid>/setgroups, and the name of the file will not affect the
+> >> >> functionality of the patchset.
+> >> >> =
 
-Thanks,
+> >> >> With the code reviewed and written in simple obviously correct, eas=
+ily
+> >> >> reviewable ways I am hoping/planning to send this to Linus ASAP.
+> >> >> =
 
-- David Young
+> >> >> Eric
+> >> >
+> >> > Is there a git tree we can clone?
+> >> =
+
+> >> Have either of you been able to check to see if any of my changes
+> >> affects lxc?
+> >> =
+
+> >> I am trying to gauge how hard and how fast I should push to Linus.  lxc
+> >> being the largest adopter of unprivileged user namespaces for general
+> >> purpose containers.
+> >> =
+
+> >> I expect you just call newuidmap and newgidmap and don't actually care
+> >> about not being able to set gid_map without privilege.  But I really
+> >> want to avoid pushing a security fix and then being surprised that
+> >> things like lxc break.
+> >> =
+
+> >> Eric
+> >
+> > Hi Eric,
+> >
+> > I've unfortunately been pretty busy this week as I was (well, still am)
+> > travelling to South Africa for a meeting. I don't have a full kernel
+> > tree around here and a full git clone isn't really doable over the kind
+> > of Internet I've got here :)
+> >
+> > Hopefully Serge can give it a quick try, otherwise I should be able to
+> > do some tests on Tuesday when I'm back home.
+> =
+
+> I thought Serge was going to but I haven't heard yet so I am prodding ;-)
+
+Ok, thanks - yes, unprivileged lxc is working fine with your kernels.
+Just to be sure I was testing the right thing I also tested using
+my unprivileged nsexec testcases, and they failed on setgroup/setgid
+as now expected, and succeeded there without your patches.
+
+thanks,
+-serge
