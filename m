@@ -1,103 +1,78 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [GIT PULL RESEND] kselftest-3.19-rc1
-Date: Mon, 15 Dec 2014 14:51:20 -0700
-Message-ID: <548F57D8.4080809@osg.samsung.com>
-References: <548750AD.6090201@osg.samsung.com> <CA+55aFx2DSXuikfd-RyEN3V+OaLSYhWub92=NJsNXGUhVnKKFQ@mail.gmail.com> <548EEA88.2060206@osg.samsung.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [CFT] Can I get some Tested-By's on this series?
+Date: Mon, 15 Dec 2014 18:05:48 -0800
+Message-ID: <CALCETrWXp3eq2O068NZcd+KPCg+N2y0T57Q0JzHcZLjzq+mXLA@mail.gmail.com>
+References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
+	<87h9xez20g.fsf@x220.int.ebiederm.org>
+	<CALCETrXOz4C7Tu8mggBtR=k47ZmkuAhinVUxWJSFyS1Ep0HvRw@mail.gmail.com>
+	<87mw75ygwp.fsf@x220.int.ebiederm.org>
+	<CALCETrVfO4sBdZcQiZXsofPZMj7pqKeVbX+4g3dAj6WjUca+1w@mail.gmail.com>
+	<87fvcxyf28.fsf_-_@x220.int.ebiederm.org>
+	<874mtdyexp.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrXyC7XPaqj6oe-TmyypOVc_CkZbF6UAAx8YfkyD=gEMOQ@mail.gmail.com>
+	<87a935u3nj.fsf@x220.int.ebiederm.org>
+	<CALCETrXkEOiyzpvqtXtk1f4sL+M1Q-Y6rV=K91ez3yv2nb4Y0Q@mail.gmail.com>
+	<87388xodlj.fsf@x220.int.ebiederm.org>
+	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
+	<87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
+	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
+	<87ppbtn4mv.fsf@x220.int.ebiederm.org>
+	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
+	<87a92xn2io.fsf@x220.int.ebiederm.org>
+	<87r3w8liw4.fsf@x220.int.ebiederm.org>
+	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
+	<87mw6vh31e.fsf_-_@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <548EEA88.2060206-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuah.kh-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87mw6vh31e.fsf_-_-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus,
+On Wed, Dec 10, 2014 at 8:39 AM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>
+> Will people please test these patches with their container project?
+>
+> These changes break container userspace (hopefully in a minimal way) if
+> I could have that confirmed by testing I would really appreciate it.  I
+> really don't want to send out a bug fix that accidentally breaks
+> userspace again.
+>
+> The only issue sort of under discussion is if there is a better name for
+> /proc/<pid>/setgroups, and the name of the file will not affect the
+> functionality of the patchset.
+>
+> With the code reviewed and written in simple obviously correct, easily
+> reviewable ways I am hoping/planning to send this to Linus ASAP.
 
-Please pull the following Kselftest updates for 3.19-rc1. Hope
-I have this right this time. Sorry again for the messed up
-first request.
 
-thanks,
--- Shuah
+I tested this with Sandstorm.  It breaks as is and it works if I add
+the setgroups thing.
 
-The following changes since commit 0df1f2487d2f0d04703f142813d53615d62a1da4:
+Tested-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> # breaks things as designed :(
 
-  Linux 3.18-rc3 (2014-11-02 15:01:51 -0800)
+I still don't like the name "setgroups".
 
-are available in the git repository at:
+--Andy
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
-tags/linux-kselftest-3.19-rc1
+>
+> Eric
 
-for you to fetch changes up to 3ce51050fadd63737c03627293ca2dc4be238891:
-
-  selftest: size: Add size test for Linux kernel (2014-12-03 19:27:47 -0700)
-
-----------------------------------------------------------------
-kselftest updates for 3.19-rc1
-
-----------------------------------------------------------------
-Michael Ellerman (3):
-      kcmp: Move kcmp.h into uapi
-      selftests/kcmp: Don't include kernel headers
-      selftests/kcmp: Always try to build the test
-
-Shuah Khan (7):
-      selftests/net: move test out of Makefile into a shell script
-      selftests/user: move test out of Makefile into a shell script
-      selftests: add kselftest framework for uniform test reporting
-      selftests/breakpoints: change test to use ksft framework
-      selftests/ipc: change test to use ksft framework
-      selftests/kcmp: change test to use ksft framework
-      selftests/timers: change test to use ksft framework
-
-Tim Bird (1):
-      selftest: size: Add size test for Linux kernel
-
- include/uapi/linux/Kbuild                          |   1 +
- include/{ => uapi}/linux/kcmp.h                    |   6 +-
- tools/testing/selftests/Makefile                   |   1 +
- .../selftests/breakpoints/breakpoint_test.c        |  10 ++-
- tools/testing/selftests/ipc/msgque.c               |  26 +++---
- tools/testing/selftests/kcmp/Makefile              |  22 +----
- tools/testing/selftests/kcmp/kcmp_test.c           |  27 ++++--
- tools/testing/selftests/kselftest.h                |  62 +++++++++++++
- tools/testing/selftests/net/Makefile               |   8 +-
- tools/testing/selftests/net/test_bpf.sh            |  10 +++
- tools/testing/selftests/size/.gitignore            |   1 +
- tools/testing/selftests/size/Makefile              |  12 +++
- tools/testing/selftests/size/get_size.c            | 100
-+++++++++++++++++++++
- tools/testing/selftests/timers/posix_timers.c      |  14 +--
- tools/testing/selftests/user/Makefile              |   8 +-
- tools/testing/selftests/user/test_user_copy.sh     |  10 +++
- 16 files changed, 252 insertions(+), 66 deletions(-)
- rename include/{ => uapi}/linux/kcmp.h (62%)
- create mode 100644 tools/testing/selftests/kselftest.h
-tools/testing/selftests/net/Makefile               |   8 +-
- tools/testing/selftests/net/test_bpf.sh            |  10 +++
- tools/testing/selftests/size/.gitignore            |   1 +
- tools/testing/selftests/size/Makefile              |  12 +++
- tools/testing/selftests/size/get_size.c            | 100
-+++++++++++++++++++++
- tools/testing/selftests/timers/posix_timers.c      |  14 +--
- tools/testing/selftests/user/Makefile              |   8 +-
- tools/testing/selftests/user/test_user_copy.sh     |  10 +++
- 16 files changed, 252 insertions(+), 66 deletions(-)
- rename include/{ => uapi}/linux/kcmp.h (62%)
- create mode 100644 tools/testing/selftests/kselftest.h
- create mode 100755 tools/testing/selftests/net/test_bpf.sh
- create mode 100644 tools/testing/selftests/size/.gitignore
- create mode 100644 tools/testing/selftests/size/Makefile
- create mode 100644 tools/testing/selftests/size/get_size.c
- create mode 100755 tools/testing/selftests/user/test_user_copy.sh
 
 
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Samsung Open Source Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Andy Lutomirski
+AMA Capital Management, LLC
