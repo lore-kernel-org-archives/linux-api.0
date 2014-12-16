@@ -1,109 +1,78 @@
-From: Gabriele Mazzotta <gabriele.mzt@gmail.com>
-Subject: Re: [PATCH] Documentation: Add entry for dell-laptop sysfs interface
-Date: Wed, 31 Dec 2014 12:20:59 +0100
-Message-ID: <1636595.UbTko9mUNA@xps13>
-References: <1417628493-29323-1-git-send-email-gabriele.mzt@gmail.com> <20141231053149.GA3764@norris-Latitude-E6410>
+From: "Peter Huewe" <PeterHuewe@gmx.de>
+Subject: Re: [tpmdd-devel] [PATCH v10 0/8] TPM 2.0 support
+Date: Tue, 16 Dec 2014 22:32:18 +0100
+Message-ID: <trinity-c704c9fe-b92f-48bd-80cc-a452bd18cc28-1418765537847@3capp-gmx-bs15>
+References: <1418413600-5400-1-git-send-email-jarkko.sakkinen@linux.intel.com>,
+	<20141215201757.GA27923@intel.com>,
+	<trinity-c582edfe-4951-4a31-911d-db0c6f723157-1418764766771@3capp-gmx-bs15>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <platform-driver-x86-owner@vger.kernel.org>
-In-Reply-To: <20141231053149.GA3764@norris-Latitude-E6410>
-Sender: platform-driver-x86-owner@vger.kernel.org
-To: Brian Norris <computersforpeace@gmail.com>
-Cc: dvhart@infradead.org, mjg59@srcf.ucam.org, linux-api@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-kernel@vger.kernel.org, libsmbios-devel@lists.us.dell.com, Srinivas_G_Gowda@dell.com, Michael_E_Brown@dell.com, pali.rohar@gmail.com, A.Sloman@cs.bham.ac.uk
+Content-Type: multipart/mixed; boundary="===============1763522383400985834=="
+Return-path: <trousers-tech-bounces@lists.sourceforge.net>
+In-Reply-To: <trinity-c582edfe-4951-4a31-911d-db0c6f723157-1418764766771@3capp-gmx-bs15>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/trousers-tech>,
+	<mailto:trousers-tech-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=trousers-tech>
+List-Post: <mailto:trousers-tech@lists.sourceforge.net>
+List-Help: <mailto:trousers-tech-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/trousers-tech>,
+	<mailto:trousers-tech-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: trousers-tech-bounces@lists.sourceforge.net
+To: Peter Huewe <PeterHuewe@gmx.de>
+Cc: christophe.ricard@gmail.com, linux-api@vger.kernel.org, Ashley Lai <ashley@ashleylai.com>, linux-kernel@vger.kernel.org, josh@joshtriplett.org, tpmdd-devel@lists.sourceforge.net, jason.gunthorpe@obsidianresearch.com, trousers-tech@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 30 December 2014 21:31:49 Brian Norris wrote:
-> Hi,
->=20
-> On Wed, Dec 03, 2014 at 06:41:33PM +0100, Gabriele Mazzotta wrote:
-> > Add the documentation for the new sysfs interface of dell-laptop
-> > that allows to configure the keyboard illumination on Dell systems.
-> >=20
-> > Signed-off-by: Gabriele Mazzotta <gabriele.mzt@gmail.com>
-> > Signed-off-by: Pali Roh=E1r <pali.rohar@gmail.com>
-> > ---
-> >  .../ABI/testing/sysfs-platform-dell-laptop         | 60 ++++++++++=
-++++++++++++
-> >  1 file changed, 60 insertions(+)
-> >  create mode 100644 Documentation/ABI/testing/sysfs-platform-dell-l=
-aptop
-> >=20
-> > diff --git a/Documentation/ABI/testing/sysfs-platform-dell-laptop b=
-/Documentation/ABI/testing/sysfs-platform-dell-laptop
-> > new file mode 100644
-> > index 0000000..7969443
-> > --- /dev/null
-> > +++ b/Documentation/ABI/testing/sysfs-platform-dell-laptop
-> > @@ -0,0 +1,60 @@
-> > +What:		/sys/class/leds/dell::kbd_backlight/als_setting
-> > +Date:		December 2014
-> > +KernelVersion:	3.19
-> > +Contact:	Gabriele Mazzotta <gabriele.mzt@gmail.com>,
-> > +		Pali Roh=E1r <pali.rohar@gmail.com>
-> > +Description:
-> > +		This file allows to control the automatic keyboard
-> > +		illumination mode on some systems that have an ambient
-> > +		light sensor. Write 1 to this file to enable the auto
-> > +		mode, 0 to disable it.
-> [...]
->=20
-> This entry appears wrong, or at least incomplete. My system boots wit=
-h a
-> default value of 18, and the 'set' implementation accepts any value f=
-rom
-> 0 to 255.
->=20
-> According to the comments in dell-laptop.c, the value actually means
-> something different than on/off:
->=20
->   cbArg3, byte0  Desired setting of ALS value that turns the light on=
- or off.
->=20
-> Admittedly, I'm not clear on what the intended interface is, as I've
-> never had the ALS / keyboard backlight controls all working properly =
-on
-> my laptop in the first place, but I thought this would be the right
-> place to ask about getting the documentation and driver in sync.
+--===============1763522383400985834==
+Content-Type: text/html; charset=UTF-8
 
-Hi,
+<html><head></head><body><div style="font-family: Verdana;font-size: 12.0px;"><div>Hi,</div>
 
-You are perfectly right, the documentation is wrong and I'm sorry for
-that. als_setting should allow you to define when the keyboard
-backlight has to be turned on or off depending on the value reported
-by the ambient light sensor.
+<div>if I fix this (already adressed issue)&nbsp;</div>
 
-Please note that not everything that is in libsmbios [1] is implemented
-in the kernel driver. Take a look at it, recently there have been few
-changes related to the ALS settings. Probably they are not needed given
-that you are able to set the threshold with the current kernel driver,
-but you might find something interesting.
+<div>
+<div>&nbsp;#define TPM2_STARTUP_IN_SIZE &#92;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (sizeof(struct tpm_input_header) + &#92;<br/>
+-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sizeof(struct tpm2_pcr_read_in))<br/>
++&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sizeof(struct tpm2_startup_in))</div>
 
-I'll submit a patch to correct the documentation, thanks for reporting.
+<div>&nbsp;</div>
 
-[1] http://linux.dell.com/git/libsmbios.git
+<div>it gets detected correctly.</div>
 
-> NB: I came across this because
->=20
->    (1) I'd really like to be able to turn the keyboard backlight on, =
-the
->    timeout off, and the ALS off; and
->=20
->    (2) I noticed there was a new driver patch in 3.19 (nice! thanks!)=
-,
->    where previously there must have been some kind of half-functional
->    working driver -- I could get backlight control, but it always tim=
-ed
->    out too quickly.
->=20
-> It seems like /sys/.../als_setting is documented to handle the latter
-> part of (1), but its implementation does not match.
->=20
-> Thanks,
-> Brian
->=20
-> P.S. The author of this page [1] might be interested in these new dri=
-ver
-> additions.
->=20
-> [1] http://www.cs.bham.ac.uk/~axs/laptop/dell-e6410-fn-keys.html
+<div>&nbsp;</div>
+
+<div>I&#39;ll fix it, no updated patch needed.</div>
+
+<div>&nbsp;</div>
+
+<div>Not sure however if I think to reuse tpm2_startup_in also for shutdown, simply because it has&nbsp; the same size, but ok.</div>
+
+<div>&nbsp;</div>
+
+<div>Peter</div>
+</div></div></body></html>
+
+
+--===============1763522383400985834==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+------------------------------------------------------------------------------
+Dive into the World of Parallel Programming! The Go Parallel Website,
+sponsored by Intel and developed in partnership with Slashdot Media, is your
+hub for all things parallel software development, from weekly thought
+leadership blogs to news, videos, case studies, tutorials and more. Take a
+look and join the conversation now. http://goparallel.sourceforge.net
+--===============1763522383400985834==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+TrouSerS-tech mailing list
+TrouSerS-tech@lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/trousers-tech
+
+--===============1763522383400985834==--
