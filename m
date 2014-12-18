@@ -1,95 +1,94 @@
-From: Lyra Zhang <zhang.lyra@gmail.com>
-Subject: Re: [PATCH v4 0/5] Add Spreadtrum Sharkl64 Platform support
-Date: Wed, 17 Dec 2014 14:16:47 +0800
-Message-ID: <CAAfSe-u1PXP1KS5qGRKboCyJ7k-eDRizC76Xs3uwCsNyk7XZ9g@mail.gmail.com>
-References: <1417692860-18841-1-git-send-email-chunyan.zhang@spreadtrum.com>
-	<20141205104009.GE11889@leverpostej>
-	<CAAfSe-uz534FiZufojKa8MdBi=VFqhuoFLwof7K+FqXG--AGaw@mail.gmail.com>
-	<20141215133817.GD8264@leverpostej>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: selftests: standardized results output?
+Date: Thu, 18 Dec 2014 14:28:36 +1100
+Message-ID: <1418873316.13333.1.camel@ellerman.id.au>
+References: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3DABAC24@USMBX1.msg.corp.akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20141215133817.GD8264@leverpostej>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mark Rutland <mark.rutland@arm.com>
-Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "arnd@arndb.de" <arnd@arndb.de>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, "broonie@kernel.org" <broonie@kernel.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Pawel Moll <Pawel.Moll@arm.com>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, "galak@codeaurora.org" <galak@codeaurora.org>, Will Deacon <Will.Deacon@arm.com>, Catalin Marinas <Catalin.Marinas@arm.com>, "jslaby@suse.cz" <jslaby@suse.cz>, "jason@lakedaemon.net" <jason@lakedaemon.net>, "heiko@sntech.de" <heiko@sntech.de>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>, "andrew@lunn.ch" <andrew@lunn.ch>, "rrichter@cavium.com" <rrichter@cavium.com>, "hytszk@gmail.com" <hytszk@gmail.com>, "grant.likely@linaro.org" <grant.likely@linaro.org>"orsonzhai@gmail.com" <or>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <7F8EB1E5A1A71643ACAD0928E03FFDE90E3DABAC24-/aPJBeqlRkAyyULh10xnlCahX2Nl78RV0E9HWUfgJXw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Young, David" <dayoung-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Shuah Khan (shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org)" <shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org" <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi, Mark
+On Mon, 2014-12-15 at 11:42 -0500, Young, David wrote:
+> Hi,  I'm looking into what sorts of tools can consume the selftest output, and
+> found this on the wikipage:
+> 
+> https://kselftest.wiki.kernel.org/standardize_the_test_output
+> 
+> The current suggestion (as of the last-modified date on that wiki page for
+> October) is to use the Test Anything Protocol [TAP] for standard output.  I
+> notice that there is at least one test that conforms to TAP output, but
+> the majority of the tests are not using it.
+> 
+> There's also the kselftest.h file that suggests exit codes for the individual
+> test applications.
+> 
+> I'm interested in knowing what is the intention of this standardization, so
+> that I can put some work into a "glue" layer for a tool like buildbot,
+> autotest, or Jenkins for executing and consuming the results of these
+> selftests.
 
-On Mon, Dec 15, 2014 at 9:38 PM, Mark Rutland <mark.rutland@arm.com> wrote:
-> On Fri, Dec 05, 2014 at 12:27:23PM +0000, Lyra Zhang wrote:
->> On Fri, Dec 5, 2014 at 6:40 PM, Mark Rutland <mark.rutland@arm.com> wrote:
->> > Hi,
->> >
->> > On Thu, Dec 04, 2014 at 11:34:15AM +0000, Chunyan Zhang wrote:
->> >> Spreadtrum is a rapid growing chip vendor providing smart phone total solutions.
->> >>
->> >> Sharkl64 Platform is nominated as a SoC infrastructure that supports 4G/3G/2G
->> >> standards based on ARMv8 multiple core architecture.Now we have only one
->> >> SoC(SC9836) based on this Platform in developing.
->> >>
->> >> This patchset adds Sharkl64 support in arm64 device tree and the serial driver
->> >> of SC9836-UART.
->> >>
->> >> This patchset also has patches which address "sprd" prefix and DT compatible
->> >> strings for nodes which appear un-documented.
->> >>
->> >> This version code was tesed both on Fast Mode and sc9836-fpga board.
->> >> We use the latest boot-wrapper-aarch64 as the bootloader.
->> >>
->> >> Changes from v3:
->> >> * Addressed review comments:
->> >>       - Added the description of clock property for sc9836-uart
->> >>       - Revised the size of GICC to be 8KiB
->> >>       - Added another compatible string for psci-0.1
->> >
->> > I had open questions on v3 regarding your PSCI imlpementation. You
->> > mentioned that you are using the aarch64 bootwrapper, but your DT
->> > describes PSCI 0.2, and the (upstream) bootwrapper does not implement
->> > PSCI 0.2. Adding the old PSCI compatible string is _not_ sufficient if
->> > you do not have a full PSCI 0.2 implementation.
->> >
->> > Given that PSCI 0.2 requires more functionality to be implemented, I'd
->> > like to know that your implementation is spec-compliant (implementing
->> > the mandatory functions, nters the kernel in the correct state, etc),
->> > and that it has been tested.
->> >
->> > Would you be able to look at my comments from the last posting please?
->> >
->> > Thanks,
->> > Mark.
->> > --
->>
->> Hi, Mark
->>
->> Ok, I'll check it again with our related engineers.
->>
->> Actually, I had read all of your comments carefully before sending
->> each version of patches, and I replied you a few days early, I guess
->> you may miss it :)
->>
->> If we just implemented psci-0.1 until now, can we submit this path
->> without "compatible = "arm,psci-0.2"", but only with " compatible =
->> "arm,psci" ".
->
-> Elsewhere I've recommended such things are placed in the DTB by the
-> bootloader (at least for those cases where the bootlaoder is tied to the
-> firmware), as it can fill in the appropriate enable-method (and add any
-> other nodes as required).
->
-> Having compatible = "arm,psci", and a couple of other properties for now
-> is certainly preferable to describing a not-yet-implemented PSCI 0.2.
->
-> Thanks,
-> Mark.
-> --
+I'm not the selftests "maintainer", but I have written a bunch of code under
+selftests, so the following is my 2c.
 
-Thank you for the replay.
-I'll still ping my colleagues to implement PSCI 0.2, and test it.
-But it perhaps would not be finished soon, because our internal
-developing code right now is based on a little old version Linux
-kernel which doesn't support  PSCI-0.2
+The barrier for entry to selftests should be as low as we can make it. Our
+preference should always be for more tests, even if some of them start out a
+bit crufty.
 
-Thanks again,
-Chunyan
+As such, requiring tests to produce perfectly formatted output or error codes
+is the wrong approach in my opinion.
+
+So ..
+
+> 1) Is this output standard a "nice to have" that won't be much enforced?
+
+Yes I think so. I think at best we would hope for tests to converge on the
+standard over time, but there will always be new tests arriving that are not so
+well behaved.
+
+> 2) Will the exit codes be utilized outside of the current makefile-based
+>    approach for executing the tests?  The current make target just runs all the
+>    tests without really concerning itself with the exit values of the
+>    individual tests.  It's simple, which isn't a bad thing, but it lacks a
+>    summarized result.  Is the intention to use a different harness to consume
+>    and report results?
+
+One of the advantages of producing TAP or some other standard format would be
+to avoid needing our own harness just to produce a summary.
+
+> 3) Are the TAP results intended to be the exclusive (std)output of the tests,
+>    or will the tests report in a hybrid fashion?
+>    Such an example would be a test that produces some verbose stdout to the
+>    console, while simultaneously creating a TAP-compliant results.tap file as
+>    well... or vice versa with the stdout being TAP and a more verbose but
+>    free-form log.txt 
+
+We probably want to be able to do both of those.
+
+
+FWIW, (most of) the tests under tools/testing/selftests/powerpc produce subunit
+v1 output (https://pypi.python.org/pypi/python-subunit).
+
+So you can do:
+
+ $ cd tools/testing/selftests/powerpc
+ $ make run_tests 2>&1 | subunit-1to2 | subunit-stats --no-passthrough
+ Total tests:      32
+ Passed tests:     32
+ Failed tests:      0
+ Skipped tests:     0
+ Seen tags: git_version:next-20141209-0-g5348e33
+
+
+subunit has the advantage over TAP IMO that it uses "success", "failure" and
+"error" rather than "ok", "not ok".
+
+There is now a subunit v2, which is a binary protocol. I don't think we want
+a binary protocol, but it does have the advantage of being much more robust
+than text based output.
+
+cheers
