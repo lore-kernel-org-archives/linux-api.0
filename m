@@ -1,55 +1,70 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RESEND v4] sched/fair: Add advisory flag for borrowing
- a timeslice
-Date: Sat, 20 Dec 2014 00:57:31 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1412200041220.17382@nanos>
-References: <1418928259-6311-1-git-send-email-khalid.aziz@oracle.com> <20141218222846.GH30905@twins.programming.kicks-ass.net> <54935842.5020507@oracle.com> <alpine.DEB.2.11.1412182355020.17382@nanos> <54936562.5070502@oracle.com> <alpine.DEB.2.11.1412190045590.17382@nanos>
- <54949BF0.8030403@oracle.com>
+From: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
+Subject: [PATCH net] in6: fix conflict with glibc
+Date: Sat, 20 Dec 2014 12:15:49 -0800
+Message-ID: <20141220121549.7c1b8aad@urahara>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <54949BF0.8030403@oracle.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Khalid Aziz <khalid.aziz@oracle.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, riel@redhat.com, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Florent Fourcot <florent.fourcot-Pj3lBMu8rt9bbU8NOSLlsg@public.gmane.org>
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 19 Dec 2014, Khalid Aziz wrote:
-> The queuing problem caused by a task taking a contended lock just before its
-> current timeslice is up which userspace app wouldn't know about, is a real
-> problem nevertheless.
+Resolve conflicts between glibc definition of IPV6 socket options
+and those defined in Linux headers. Looks like earlier efforts to
+solve this did not cover all the definitions.
 
-We know that already.
+It resolves warnings during iproute2 build. 
+Please consider for stable as well.
 
-> My patch attempts to avoid the contention in the first
-> place. futex with adaptive spinning is a post-contention solution that tries
-> to minimize the cost of contention but does nothing to avoid the contention.
+Signed-off-by: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
 
-I never said that adaptive spinning can solve that problem. 
+---
+Patch against -net tree
 
-If you would have carefuly read what I wrote, you might have noticed,
-that I said: 
-
-     a proper futex like spin mechanism
-
-Can you spot the subtle difference between that phrase and 'futex with
-adaptive spinning'?
-
-> Solving this problem using futex can help only if the userspace lock uses
-> futex.
-
-A really fundamentally new and earth shattering insight.
-
-If you would spend your time to actually digest what maintainers are
-telling you, we might make progress on that matter.
-
-But you prefer to spend your time by repeating yourself and providing
-completely useless information.
-
-What you are missing completely here is that neither me nor other
-maintainers involved care about how you spend your time. But we very
-much care about the time WE waste with your behaviour.
-
-Thanks,
-
-	tglx
+--- a/include/uapi/linux/in6.h	2014-08-28 08:23:29.981240723 -0700
++++ b/include/uapi/linux/in6.h	2014-12-20 12:00:31.973120787 -0800
+@@ -149,7 +149,7 @@ struct in6_flowlabel_req {
+ /*
+  *	IPV6 socket options
+  */
+-
++#if __UAPI_DEF_IPV6_OPTIONS
+ #define IPV6_ADDRFORM		1
+ #define IPV6_2292PKTINFO	2
+ #define IPV6_2292HOPOPTS	3
+@@ -196,6 +196,7 @@ struct in6_flowlabel_req {
+ 
+ #define IPV6_IPSEC_POLICY	34
+ #define IPV6_XFRM_POLICY	35
++#endif
+ 
+ /*
+  * Multicast:
+--- a/include/uapi/linux/libc-compat.h	2014-04-08 22:12:24.316054847 -0700
++++ b/include/uapi/linux/libc-compat.h	2014-12-20 12:10:29.960213758 -0800
+@@ -69,6 +69,7 @@
+ #define __UAPI_DEF_SOCKADDR_IN6		0
+ #define __UAPI_DEF_IPV6_MREQ		0
+ #define __UAPI_DEF_IPPROTO_V6		0
++#define __UAPI_DEF_IPV6_OPTIONS		0
+ 
+ #else
+ 
+@@ -82,6 +83,7 @@
+ #define __UAPI_DEF_SOCKADDR_IN6		1
+ #define __UAPI_DEF_IPV6_MREQ		1
+ #define __UAPI_DEF_IPPROTO_V6		1
++#define __UAPI_DEF_IPV6_OPTIONS		1
+ 
+ #endif /* _NETINET_IN_H */
+ 
+@@ -103,6 +105,7 @@
+ #define __UAPI_DEF_SOCKADDR_IN6		1
+ #define __UAPI_DEF_IPV6_MREQ		1
+ #define __UAPI_DEF_IPPROTO_V6		1
++#define __UAPI_DEF_IPV6_OPTIONS		1
+ 
+ /* Definitions for xattr.h */
+ #define __UAPI_DEF_XATTR		1
