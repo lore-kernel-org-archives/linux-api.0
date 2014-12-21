@@ -1,26 +1,31 @@
-From: Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH net] in6: fix conflict with glibc
-Date: Sun, 21 Dec 2014 14:56:55 +0100
-Message-ID: <1419170215.3663.15.camel@stressinduktion.org>
-References: <20141220121549.7c1b8aad@urahara>
+From: Andreas Schwab <schwab@linux-m68k.org>
+Subject: Re: [PATCH selftest fails!] m68k: Wire up execveat
+Date: Sun, 21 Dec 2014 15:37:36 +0100
+Message-ID: <874msp3w7j.fsf@igel.home>
+References: <alpine.DEB.2.10.1412211159410.7624@ayla.of.borg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141220121549.7c1b8aad@urahara>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
-Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Florent Fourcot <florent.fourcot-Pj3lBMu8rt9bbU8NOSLlsg@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-m68k-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.10.1412211159410.7624@ayla.of.borg> (Geert
+	Uytterhoeven's message of "Sun, 21 Dec 2014 12:02:11 +0100 (CET)")
+Sender: linux-m68k-owner@vger.kernel.org
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: David Drysdale <drysdale@google.com>, Shuah Khan <shuahkh@osg.samsung.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, Linux/m68k <linux-m68k@lists.linux-m68k.org>, Linux Kernel Development <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sa, 2014-12-20 at 12:15 -0800, Stephen Hemminger wrote:
-> Resolve conflicts between glibc definition of IPV6 socket options
-> and those defined in Linux headers. Looks like earlier efforts to
-> solve this did not cover all the definitions.
-> 
-> It resolves warnings during iproute2 build. 
-> Please consider for stable as well.
-> 
-> Signed-off-by: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
+Geert Uytterhoeven <geert@linux-m68k.org> writes:
 
-Acked-by: Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>
+> Check success of execveat(5, 'xxxxxxxxxxxxxxxxxxxx...yyyyyyyyyyyyyyyyyyyy', 0)... [FAIL] (child 792 exited with 126 not 127)
+
+POSIX says (http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_08_02):
+
+    If a command is not found, the exit status shall be 127. If the
+    command name is found, but it is not an executable utility, the exit
+    status shall be 126.
+
+Andreas.
+
+-- 
+Andreas Schwab, schwab@linux-m68k.org
+GPG Key fingerprint = 58CA 54C7 6D53 942B 1756  01D3 44D5 214B 8276 4ED5
+"And now for something completely different."
