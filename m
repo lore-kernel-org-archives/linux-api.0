@@ -1,70 +1,41 @@
-From: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
-Subject: [PATCH net] in6: fix conflict with glibc
-Date: Sat, 20 Dec 2014 12:15:49 -0800
-Message-ID: <20141220121549.7c1b8aad@urahara>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: [PATCH] selftests/exec: Use %zu to format size_t
+Date: Sun, 21 Dec 2014 11:58:16 +0100
+Message-ID: <1419159496-11558-1-git-send-email-geert@linux-m68k.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Florent Fourcot <florent.fourcot-Pj3lBMu8rt9bbU8NOSLlsg@public.gmane.org>
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Resolve conflicts between glibc definition of IPV6 socket options
-and those defined in Linux headers. Looks like earlier efforts to
-solve this did not cover all the definitions.
+On 32-bit:
 
-It resolves warnings during iproute2 build. 
-Please consider for stable as well.
+execveat.c: In function 'check_execveat_pathmax':
+execveat.c:183: warning: format '%lu' expects type 'long unsigned int', but argument 3 has type 'size_t'
+execveat.c:187: warning: format '%lu' expects type 'long unsigned int', but argument 2 has type 'size_t'
 
-Signed-off-by: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
-
+Signed-off-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
 ---
-Patch against -net tree
+ tools/testing/selftests/exec/execveat.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
---- a/include/uapi/linux/in6.h	2014-08-28 08:23:29.981240723 -0700
-+++ b/include/uapi/linux/in6.h	2014-12-20 12:00:31.973120787 -0800
-@@ -149,7 +149,7 @@ struct in6_flowlabel_req {
- /*
-  *	IPV6 socket options
-  */
--
-+#if __UAPI_DEF_IPV6_OPTIONS
- #define IPV6_ADDRFORM		1
- #define IPV6_2292PKTINFO	2
- #define IPV6_2292HOPOPTS	3
-@@ -196,6 +196,7 @@ struct in6_flowlabel_req {
- 
- #define IPV6_IPSEC_POLICY	34
- #define IPV6_XFRM_POLICY	35
-+#endif
- 
- /*
-  * Multicast:
---- a/include/uapi/linux/libc-compat.h	2014-04-08 22:12:24.316054847 -0700
-+++ b/include/uapi/linux/libc-compat.h	2014-12-20 12:10:29.960213758 -0800
-@@ -69,6 +69,7 @@
- #define __UAPI_DEF_SOCKADDR_IN6		0
- #define __UAPI_DEF_IPV6_MREQ		0
- #define __UAPI_DEF_IPPROTO_V6		0
-+#define __UAPI_DEF_IPV6_OPTIONS		0
- 
- #else
- 
-@@ -82,6 +83,7 @@
- #define __UAPI_DEF_SOCKADDR_IN6		1
- #define __UAPI_DEF_IPV6_MREQ		1
- #define __UAPI_DEF_IPPROTO_V6		1
-+#define __UAPI_DEF_IPV6_OPTIONS		1
- 
- #endif /* _NETINET_IN_H */
- 
-@@ -103,6 +105,7 @@
- #define __UAPI_DEF_SOCKADDR_IN6		1
- #define __UAPI_DEF_IPV6_MREQ		1
- #define __UAPI_DEF_IPPROTO_V6		1
-+#define __UAPI_DEF_IPV6_OPTIONS		1
- 
- /* Definitions for xattr.h */
- #define __UAPI_DEF_XATTR		1
+diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
+index 33a5c06d95caa038..d273624c93a64254 100644
+--- a/tools/testing/selftests/exec/execveat.c
++++ b/tools/testing/selftests/exec/execveat.c
+@@ -179,11 +179,11 @@ static int check_execveat_pathmax(int dot_dfd, const char *src, int is_script)
+ 	 */
+ 	fd = open(longpath, O_RDONLY);
+ 	if (fd > 0) {
+-		printf("Invoke copy of '%s' via filename of length %lu:\n",
++		printf("Invoke copy of '%s' via filename of length %zu:\n",
+ 			src, strlen(longpath));
+ 		fail += check_execveat(fd, "", AT_EMPTY_PATH);
+ 	} else {
+-		printf("Failed to open length %lu filename, errno=%d (%s)\n",
++		printf("Failed to open length %zu filename, errno=%d (%s)\n",
+ 			strlen(longpath), errno, strerror(errno));
+ 		fail++;
+ 	}
+-- 
+1.9.1
