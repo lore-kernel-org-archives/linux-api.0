@@ -1,31 +1,45 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [PATCH net] in6: fix conflict with glibc
-Date: Mon, 22 Dec 2014 16:13:04 -0500 (EST)
-Message-ID: <20141222.161304.335677296258096079.davem@davemloft.net>
-References: <20141220121549.7c1b8aad@urahara>
+From: David Drysdale <dmd@lurklurk.org>
+Subject: Re: [PATCH selftest fails!] m68k: Wire up execveat
+Date: Mon, 22 Dec 2014 17:54:47 -0500
+Message-ID: <5498A137.6020707@lurklurk.org>
+References: <alpine.DEB.2.10.1412211159410.7624@ayla.of.borg>	<874msp3w7j.fsf@igel.home> <CAHse=S-KzC5y8eC_ZFrbUJo0Ub5Qv8WeeXHdY1-F=HckAX=L=A@mail.gmail.com>
+Reply-To: David Drysdale <drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141220121549.7c1b8aad@urahara>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org
-Cc: hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, florent.fourcot-Pj3lBMu8rt9bbU8NOSLlsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-m68k-owner@vger.kernel.org>
+In-Reply-To: <CAHse=S-KzC5y8eC_ZFrbUJo0Ub5Qv8WeeXHdY1-F=HckAX=L=A@mail.gmail.com>
+Sender: linux-m68k-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>, schwab@linux-m68k.org, geert@linux-m68k.org
+Cc: shuahkh@osg.samsung.com, akpm@linux-foundation.org, linux-api@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
-Date: Sat, 20 Dec 2014 12:15:49 -0800
+[Re-send from a different email address because I apparently can't send 
+plaintext from gMail on my phone.]
 
-> Resolve conflicts between glibc definition of IPV6 socket options
-> and those defined in Linux headers. Looks like earlier efforts to
-> solve this did not cover all the definitions.
-> 
-> It resolves warnings during iproute2 build. 
-> Please consider for stable as well.
-> 
-> Signed-off-by: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
-> 
-> ---
-> Patch against -net tree
+On 21 Dec 2014 09:37, "Andreas Schwab" <schwab@linux-m68k.org> wrote:
+ >
+> Geert Uytterhoeven <geert@linux-m68k.org> writes:
+>
+>  > Check success of execveat(5,
+> 'xxxxxxxxxxxxxxxxxxxx...yyyyyyyyyyyyyyyyyyyy', 0)... [FAIL] (child 792
+> exited with 126 not 127)
+>
+> POSIX says
+> (http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_08_02):
+>
+>      If a command is not found, the exit status shall be 127. If the
+>      command name is found, but it is not an executable utility, the exit
+>      status shall be 126.
+>
+ > Andreas.
+ >
 
-Applied and queued up for -stable, thanks Stephen.
+That sounds like a bit of a grey area -- is ENAMETOOLONG nearer to 
+ENOENT or EACCES?   Maybe it's best to make the test allow either (given 
+that it's not a test of shell behaviour).
+
+I can update the test to do that, but it probably won't be until the new 
+year I'm afraid.
+
+David
