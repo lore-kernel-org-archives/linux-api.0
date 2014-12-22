@@ -1,31 +1,45 @@
-From: Andreas Schwab <schwab@linux-m68k.org>
-Subject: Re: [PATCH selftest fails!] m68k: Wire up execveat
-Date: Sun, 21 Dec 2014 15:37:36 +0100
-Message-ID: <874msp3w7j.fsf@igel.home>
-References: <alpine.DEB.2.10.1412211159410.7624@ayla.of.borg>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v5 3/8] crypto: AF_ALG: add AEAD support
+Date: Mon, 22 Dec 2014 22:23:41 +1100
+Message-ID: <20141222112341.GA19532@gondor.apana.org.au>
+References: <56740432.V2v4gLHrzS@tachyon.chronox.de>
+ <3151022.sz5v21Vqeg@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-m68k-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.10.1412211159410.7624@ayla.of.borg> (Geert
-	Uytterhoeven's message of "Sun, 21 Dec 2014 12:02:11 +0100 (CET)")
-Sender: linux-m68k-owner@vger.kernel.org
-To: Geert Uytterhoeven <geert@linux-m68k.org>
-Cc: David Drysdale <drysdale@google.com>, Shuah Khan <shuahkh@osg.samsung.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, Linux/m68k <linux-m68k@lists.linux-m68k.org>, Linux Kernel Development <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <3151022.sz5v21Vqeg@tachyon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>
+Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, 'LKML' <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Geert Uytterhoeven <geert@linux-m68k.org> writes:
+On Sun, Dec 07, 2014 at 11:22:30PM +0100, Stephan Mueller wrote:
+>
+> +static inline bool aead_sufficient_data(struct aead_ctx *ctx)
+> +{
+> +	unsigned as = crypto_aead_authsize(crypto_aead_reqtfm(&ctx->aead_req));
+> +
+> +	return (ctx->used >= (ctx->aead_assoclen + ctx->enc ? : as ));
 
-> Check success of execveat(5, 'xxxxxxxxxxxxxxxxxxxx...yyyyyyyyyyyyyyyyyyyy', 0)... [FAIL] (child 792 exited with 126 not 127)
+Is this supposed to be
 
-POSIX says (http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_08_02):
+	return (ctx->used >= (ctx->aead_assoclen + (ctx->enc ?: as)));
 
-    If a command is not found, the exit status shall be 127. If the
-    command name is found, but it is not an executable utility, the exit
-    status shall be 126.
+> +static int aead_recvmsg(struct kiocb *unused, struct socket *sock,
+> +			    struct msghdr *msg, size_t ignored, int flags)
+> +{
 
-Andreas.
+...
 
+> +	err = -ENOMEM;
+> +	if (!aead_sufficient_data(ctx))
+> +		goto unlock;
+
+You should just block if there is insufficient input.
+
+Cheers,
 -- 
-Andreas Schwab, schwab@linux-m68k.org
-GPG Key fingerprint = 58CA 54C7 6D53 942B 1756  01D3 44D5 214B 8276 4ED5
-"And now for something completely different."
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
