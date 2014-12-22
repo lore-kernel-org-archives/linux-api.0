@@ -1,62 +1,60 @@
-From: Khalid Aziz <khalid.aziz@oracle.com>
-Subject: Re: [PATCH RESEND v4] sched/fair: Add advisory flag for borrowing
- a timeslice
-Date: Mon, 22 Dec 2014 09:40:43 -0700
-Message-ID: <5498498B.90703@oracle.com>
-References: <1418928259-6311-1-git-send-email-khalid.aziz@oracle.com> <20141218222846.GH30905@twins.programming.kicks-ass.net> <54935842.5020507@oracle.com> <alpine.DEB.2.11.1412182355020.17382@nanos> <54936562.5070502@oracle.com> <alpine.DEB.2.11.1412190045590.17382@nanos> <54949BF0.8030403@oracle.com> <alpine.DEB.2.11.1412200041220.17382@nanos>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH] selftests/exec: Use %zu to format size_t
+Date: Mon, 22 Dec 2014 11:14:06 -0700
+Message-ID: <54985F6E.2010205@osg.samsung.com>
+References: <1419159496-11558-1-git-send-email-geert@linux-m68k.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.11.1412200041220.17382@nanos>
-Sender: linux-doc-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>, corbet@lwn.net, mingo@redhat.com, hpa@zytor.com, riel@redhat.com, akpm@linux-foundation.org, rientjes@google.com, ak@linux.intel.com, mgorman@suse.de, raistlin@linux.it, kirill.shutemov@linux.intel.com, atomlin@redhat.com, avagin@openvz.org, gorcunov@openvz.org, serge.hallyn@canonical.com, athorlton@sgi.com, oleg@redhat.com, vdavydov@parallels.com, daeseok.youn@gmail.com, keescook@chromium.org, yangds.fnst@cn.fujitsu.com, sbauer@eng.utah.edu, vishnu.ps@samsung.com, axboe@fb.com, paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1419159496-11558-1-git-send-email-geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 12/19/2014 04:57 PM, Thomas Gleixner wrote:
-> On Fri, 19 Dec 2014, Khalid Aziz wrote:
->> The queuing problem caused by a task taking a contended lock just before its
->> current timeslice is up which userspace app wouldn't know about, is a real
->> problem nevertheless.
->
-> We know that already.
->
->> My patch attempts to avoid the contention in the first
->> place. futex with adaptive spinning is a post-contention solution that tries
->> to minimize the cost of contention but does nothing to avoid the contention.
->
-> I never said that adaptive spinning can solve that problem.
->
-> If you would have carefuly read what I wrote, you might have noticed,
-> that I said:
->
->       a proper futex like spin mechanism
->
-> Can you spot the subtle difference between that phrase and 'futex with
-> adaptive spinning'?
->
->> Solving this problem using futex can help only if the userspace lock uses
->> futex.
->
-> A really fundamentally new and earth shattering insight.
->
-> If you would spend your time to actually digest what maintainers are
-> telling you, we might make progress on that matter.
->
-> But you prefer to spend your time by repeating yourself and providing
-> completely useless information.
->
-> What you are missing completely here is that neither me nor other
-> maintainers involved care about how you spend your time. But we very
-> much care about the time WE waste with your behaviour.
+On 12/21/2014 03:58 AM, Geert Uytterhoeven wrote:
+> On 32-bit:
+> 
+> execveat.c: In function 'check_execveat_pathmax':
+> execveat.c:183: warning: format '%lu' expects type 'long unsigned int', but argument 3 has type 'size_t'
+> execveat.c:187: warning: format '%lu' expects type 'long unsigned int', but argument 2 has type 'size_t'
+> 
+> Signed-off-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+> ---
+>  tools/testing/selftests/exec/execveat.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
+> index 33a5c06d95caa038..d273624c93a64254 100644
+> --- a/tools/testing/selftests/exec/execveat.c
+> +++ b/tools/testing/selftests/exec/execveat.c
+> @@ -179,11 +179,11 @@ static int check_execveat_pathmax(int dot_dfd, const char *src, int is_script)
+>  	 */
+>  	fd = open(longpath, O_RDONLY);
+>  	if (fd > 0) {
+> -		printf("Invoke copy of '%s' via filename of length %lu:\n",
+> +		printf("Invoke copy of '%s' via filename of length %zu:\n",
+>  			src, strlen(longpath));
+>  		fail += check_execveat(fd, "", AT_EMPTY_PATH);
+>  	} else {
+> -		printf("Failed to open length %lu filename, errno=%d (%s)\n",
+> +		printf("Failed to open length %zu filename, errno=%d (%s)\n",
+>  			strlen(longpath), errno, strerror(errno));
+>  		fail++;
+>  	}
+> 
 
-I am sorry that you feel the need to continue to resort to personal 
-attacks even after I made it clear in my last response that I was not 
-going to pursue this patch. There is no possibility of a productive 
-discussion of a solution at this point. I hope someone else can find a 
-solution you find acceptable.
 
-Thanks,
-Khalid
+Applied to kernel/git/shuah/linux-kselftest.git fixes
+for 3.19-rc2
 
+thanks,
+-- Shuah
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
