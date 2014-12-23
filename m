@@ -1,45 +1,58 @@
-From: David Drysdale <dmd@lurklurk.org>
-Subject: Re: [PATCH selftest fails!] m68k: Wire up execveat
-Date: Mon, 22 Dec 2014 17:54:47 -0500
-Message-ID: <5498A137.6020707@lurklurk.org>
-References: <alpine.DEB.2.10.1412211159410.7624@ayla.of.borg>	<874msp3w7j.fsf@igel.home> <CAHse=S-KzC5y8eC_ZFrbUJo0Ub5Qv8WeeXHdY1-F=HckAX=L=A@mail.gmail.com>
-Reply-To: David Drysdale <drysdale@google.com>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: [PATCH v5 3/8] crypto: AF_ALG: add AEAD support
+Date: Tue, 23 Dec 2014 09:14:43 +0100
+Message-ID: <101382546.xjTjAHLGAb@tachyon.chronox.de>
+References: <56740432.V2v4gLHrzS@tachyon.chronox.de> <3151022.sz5v21Vqeg@tachyon.chronox.de> <20141222112341.GA19532@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-m68k-owner@vger.kernel.org>
-In-Reply-To: <CAHse=S-KzC5y8eC_ZFrbUJo0Ub5Qv8WeeXHdY1-F=HckAX=L=A@mail.gmail.com>
-Sender: linux-m68k-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>, schwab@linux-m68k.org, geert@linux-m68k.org
-Cc: shuahkh@osg.samsung.com, akpm@linux-foundation.org, linux-api@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141222112341.GA19532@gondor.apana.org.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, 'LKML' <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-[Re-send from a different email address because I apparently can't send 
-plaintext from gMail on my phone.]
+Am Montag, 22. Dezember 2014, 22:23:41 schrieb Herbert Xu:
 
-On 21 Dec 2014 09:37, "Andreas Schwab" <schwab@linux-m68k.org> wrote:
- >
-> Geert Uytterhoeven <geert@linux-m68k.org> writes:
->
->  > Check success of execveat(5,
-> 'xxxxxxxxxxxxxxxxxxxx...yyyyyyyyyyyyyyyyyyyy', 0)... [FAIL] (child 792
-> exited with 126 not 127)
->
-> POSIX says
-> (http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_08_02):
->
->      If a command is not found, the exit status shall be 127. If the
->      command name is found, but it is not an executable utility, the exit
->      status shall be 126.
->
- > Andreas.
- >
+Hi Herbert,
 
-That sounds like a bit of a grey area -- is ENAMETOOLONG nearer to 
-ENOENT or EACCES?   Maybe it's best to make the test allow either (given 
-that it's not a test of shell behaviour).
+> On Sun, Dec 07, 2014 at 11:22:30PM +0100, Stephan Mueller wrote:
+> > +static inline bool aead_sufficient_data(struct aead_ctx *ctx)
+> > +{
+> > +	unsigned as = crypto_aead_authsize(crypto_aead_reqtfm(&ctx-
+>aead_req));
+> > +
+> > +	return (ctx->used >= (ctx->aead_assoclen + ctx->enc ? : as ));
+> 
+> Is this supposed to be
+> 
+> 	return (ctx->used >= (ctx->aead_assoclen + (ctx->enc ?: as)));
 
-I can update the test to do that, but it probably won't be until the new 
-year I'm afraid.
+Thanks, will be fixed in the next iteration
+> 
+> > +static int aead_recvmsg(struct kiocb *unused, struct socket *sock,
+> > +			    struct msghdr *msg, size_t ignored, int flags)
+> > +{
+> 
+> ...
+> 
+> > +	err = -ENOMEM;
+> > +	if (!aead_sufficient_data(ctx))
+> > +		goto unlock;
+> 
+> You should just block if there is insufficient input.
+> 
+I do not concur here due to the following:
 
-David
+- the check aead_readable() immediately before this check implements the 
+blocking if we do not have sufficient data *and* more data is to be expected
+
+- this very check for aead_sufficient_data() comes into play if the caller 
+does not have more data (i.e. ctx->more is zero). In this case, more data is 
+not to be expected and we cannot wait as this would be a deadlock in user 
+space.
+
+-- 
+Ciao
+Stephan
