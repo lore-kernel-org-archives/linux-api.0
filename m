@@ -1,62 +1,58 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v5 3/8] crypto: AF_ALG: add AEAD support
-Date: Wed, 24 Dec 2014 09:54:33 +0100
-Message-ID: <2159528.zCJB0y2Cap@tachyon.chronox.de>
-References: <56740432.V2v4gLHrzS@tachyon.chronox.de> <4537021.IXSvIIgcH4@tachyon.chronox.de> <20141223202401.GA2474@gondor.apana.org.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141223202401.GA2474-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [PATCH v3 02/20] selftests/cpu-hotplug: add install target to enable test install
+Date: Wed, 24 Dec 2014 09:27:38 -0700
+Message-ID: <7c68362e79fa107dea168d94255228280114689e.1419387513.git.shuahkh@osg.samsung.com>
+References: <cover.1419387513.git.shuahkh@osg.samsung.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1419387513.git.shuahkh@osg.samsung.com>
+In-Reply-To: <cover.1419387513.git.shuahkh@osg.samsung.com>
+References: <cover.1419387513.git.shuahkh@osg.samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Am Mittwoch, 24. Dezember 2014, 07:24:01 schrieb Herbert Xu:
+Add a new make target to enable installing test. This target
+installs test in the kselftest install location and add to the
+kselftest script to run the test. Install target can be run
+only from top level kernel source directory.
 
-Hi Herbert,
+Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+---
+ tools/testing/selftests/cpu-hotplug/Makefile               | 14 ++++++++++++--
+ .../cpu-hotplug/{on-off-test.sh => cpu-on-off-test.sh}     |  0
+ 2 files changed, 12 insertions(+), 2 deletions(-)
+ rename tools/testing/selftests/cpu-hotplug/{on-off-test.sh => cpu-on-off-test.sh} (100%)
 
-> On Tue, Dec 23, 2014 at 03:52:27PM +0100, Stephan Mueller wrote:
-> > Am Dienstag, 23. Dezember 2014, 22:56:26 schrieb Herbert Xu:
-> > > In fact AEAD is rather awkward because you need to do everything
-> > > in one go.  Perhaps we could adapt our kernel interface to allow
-> > > partial AEAD operations?
-> > 
-> > I am not sure what you are referring to. The invocation does not need to
-> > be in one go. You can have arbitrary number of sendmsg calls. But all
-> > input data needs to be supplied before you call recvmsg.
-> 
-> What I mean is that unlike skcipher we cannot precede until we
-> have the complete input.  So you cannot begin recvmsg until all
-> input has been sent.
-
-That is right, but isn't that the nature of AEAD ciphers in general? Even if 
-you are in the kernel, you need to have all scatter lists together for one 
-invocation of the AEAD cipher.
-
-In case of a threaded application, the recvmsg does not start until all data 
-is in, marked with the missing MSG_MORE -- see aead_readable.
-
-All we can do is allow the user to use multiple system calls to collect all 
-data before the AEAD operation takes place.
-
-Or do you see another way on how to invoke the AEAD operation in a different 
-manner?
-
-The only item that I see that could be made better is the output side: 
-currently the code allows only one and exactly one iovec to point to the 
-output buffer. I would like to allow multiple iovec buffers that are filled 
-with the output of one invocation of the AEAD operation. However, to avoid 
-making a kernel-internal scratch buffer, I would need to somehow link the 
-kernel-internal scatter lists with the iovec buffers. That only works when 
-walking the iovec lists first and call af_alg_make_sg with every iovec entry 
-and create the kernel-internal scatterlist representation. That is followed by 
-the AEAD operation on the scatterlist.
-
-If we agree on walking the iovec list first, then the question arises how many 
-iovec list entries we allow at max. Is 16 entries a sensible value?
-
+diff --git a/tools/testing/selftests/cpu-hotplug/Makefile b/tools/testing/selftests/cpu-hotplug/Makefile
+index e9c28d8..c9e15ee 100644
+--- a/tools/testing/selftests/cpu-hotplug/Makefile
++++ b/tools/testing/selftests/cpu-hotplug/Makefile
+@@ -1,9 +1,19 @@
++TEST_STR=/bin/bash ./cpu-on-off-test.sh || echo cpu-hotplug selftests: [FAIL]
++
+ all:
+ 
++install:
++ifdef INSTALL_KSFT_PATH
++	install ./cpu-on-off-test.sh $(INSTALL_KSFT_PATH)/cpu-on-off-test.sh
++	@echo "$(TEST_STR)" >> $(KSELFTEST)
++else
++	@echo Run make kselftest_install in top level source directory
++endif
++
+ run_tests:
+-	@/bin/bash ./on-off-test.sh || echo "cpu-hotplug selftests: [FAIL]"
++	@$(TEST_STR)
+ 
+ run_full_test:
+-	@/bin/bash ./on-off-test.sh -a || echo "cpu-hotplug selftests: [FAIL]"
++	@/bin/bash ./cpu-on-off-test.sh -a || echo "cpu-hotplug selftests: [FAIL]"
+ 
+ clean:
+diff --git a/tools/testing/selftests/cpu-hotplug/on-off-test.sh b/tools/testing/selftests/cpu-hotplug/cpu-on-off-test.sh
+similarity index 100%
+rename from tools/testing/selftests/cpu-hotplug/on-off-test.sh
+rename to tools/testing/selftests/cpu-hotplug/cpu-on-off-test.sh
 -- 
-Ciao
-Stephan
+2.1.0
