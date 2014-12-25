@@ -1,37 +1,58 @@
-From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Subject: Re: [PATCH v5 3/8] crypto: AF_ALG: add AEAD support
-Date: Fri, 26 Dec 2014 07:28:31 +1100
-Message-ID: <20141225202830.GA18794@gondor.apana.org.au>
-References: <56740432.V2v4gLHrzS@tachyon.chronox.de>
- <4537021.IXSvIIgcH4@tachyon.chronox.de>
- <20141223202401.GA2474@gondor.apana.org.au>
- <2159528.zCJB0y2Cap@tachyon.chronox.de>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: [PATCH v6 4/4] crypto: AF_ALG: enable RNG interface compilation
+Date: Thu, 25 Dec 2014 23:00:39 +0100
+Message-ID: <1531939.gTKbxagG6Z@tachyon.chronox.de>
+References: <5682082.ffPqvQlSqN@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <2159528.zCJB0y2Cap-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <5682082.ffPqvQlSqN@tachyon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: 'Herbert Xu' <herbert@gondor.apana.org.au>
+Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, 'LKML' <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 24, 2014 at 09:54:33AM +0100, Stephan Mueller wrote:
-> 
-> That is right, but isn't that the nature of AEAD ciphers in general? Even if 
-> you are in the kernel, you need to have all scatter lists together for one 
-> invocation of the AEAD cipher.
+Enable compilation of the RNG AF_ALG support and provide a Kconfig
+option to compile the RNG AF_ALG support.
 
-It's actually only the nature of certain algorithms like CCM which
-requires the total length to start the operation.  Most AEAD
-algorithms can be implemented in a way that allows piecemeal
-operation.  However, as the only users of AEAD is IPsec, it's
-probably not worth adding more complexity for now.
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+---
+ crypto/Kconfig  | 9 +++++++++
+ crypto/Makefile | 1 +
+ 2 files changed, 10 insertions(+)
 
-So let's proceed with your current solution.
-
-Thanks,
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index cd3e6fd..f2d434b 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1523,6 +1523,15 @@ config CRYPTO_USER_API_AEAD
+ 	  This option enables the user-spaces interface for AEAD
+ 	  cipher algorithms.
+ 
++config CRYPTO_USER_API_RNG
++	tristate "User-space interface for random number generator algorithms"
++	depends on NET
++	select CRYPTO_RNG
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for random
++	  number generator algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
+ 
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 593fd3c..c109df5 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -100,6 +100,7 @@ obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
+ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
+ obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
++obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
+ 
+ #
+ # generic algorithms and the async_tx api
 -- 
-Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.1.0
