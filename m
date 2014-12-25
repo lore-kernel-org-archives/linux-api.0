@@ -1,261 +1,119 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v6 3/4] crypto: AF_ALG: add random number generator support
-Date: Thu, 25 Dec 2014 23:00:06 +0100
-Message-ID: <2323421.LJnyPUDp59@tachyon.chronox.de>
-References: <5682082.ffPqvQlSqN@tachyon.chronox.de>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: [PATCH v6 0/4] crypto: AF_ALG: add AEAD and RNG support
+Date: Thu, 25 Dec 2014 22:58:01 +0100
+Message-ID: <5682082.ffPqvQlSqN@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <5682082.ffPqvQlSqN@tachyon.chronox.de>
-Sender: linux-crypto-owner@vger.kernel.org
-To: 'Herbert Xu' <herbert@gondor.apana.org.au>
-Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, 'LKML' <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Herbert Xu' <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the random number generator support for AF_ALG.
+Hi,
 
-A random number generator's purpose is to generate data without
-requiring the caller to provide any data. Therefore, the AF_ALG
-interface handler for RNGs only implements a callback handler for
-recvmsg.
+This patch set adds AEAD and RNG support to the AF_ALG interface
+exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
+support, all cipher types the kernel crypto API allows access to are
+now accessible from userspace.
 
-The following parameters provided with a recvmsg are processed by the
-RNG callback handler:
+Both, AEAD and RNG implementations are stand-alone and do not depend
+other AF_ALG interfaces (like hash or skcipher).
 
-	* sock - to resolve the RNG context data structure accessing the
-	  RNG instance private to the socket
+The AEAD implementation uses the same approach as provided with
+skcipher by offering the following interfaces:
 
-	* len - this parameter allows userspace callers to specify how
-	  many random bytes the RNG shall produce and return. As the
-	  kernel context for the RNG allocates a buffer of 128 bytes to
-	  store random numbers before copying them to userspace, the len
-	  parameter is checked that it is not larger than 128. If a
-	  caller wants more random numbers, a new request for recvmsg
-	  shall be made.
+	* sendmsg and recvmsg interfaces allowing multiple
+	  invocations supporting a threaded user space. To support
+	  multi-threaded user space, kernel-side buffering
+	  is implemented similarly to skcipher.
 
-The size of 128 bytes is chose because of the following considerations:
+	* splice / vmsplice interfaces allowing a zero-copy
+	  invocation
 
-	* to increase the memory footprint of the kernel too much (note,
-	  that would be 128 bytes per open socket)
+The RNG interface only implements the recvmsg interface as
+zero-copy is not applicable.
 
-	* 128 is divisible by any typical cryptographic block size an
-	  RNG may have
+The new AEAD and RNG interfaces are fully tested with the test application
+provided at [1]. That test application exercises all newly added user space
+interfaces. The testing covers:
 
-	* A request for random numbers typically only shall supply small
-	  amount of data like for keys or IVs that should only require
-	  one invocation of the recvmsg function.
+	* use of the sendmsg/recvmsg interface
 
-Note, during instantiation of the RNG, the code checks whether the RNG
-implementation requires seeding. If so, the RNG is seeded with output
-from get_random_bytes.
+	* use of the splice / vmsplice interface
 
-A fully working example using all aspects of the RNG interface is
-provided at http://www.chronox.de/libkcapi.html
+	* invocation of all AF_ALG types (aead, rng, skcipher, hash)
 
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
----
- crypto/algif_rng.c | 192 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 192 insertions(+)
+	* using all types of operation (encryption, decryption, keyed MD,
+	  MD, random numbers, AEAD decryption with positive and negative
+	  authentication verification)
+
+	* stress testing by running all tests for 30 minutes in an
+	  endless loop
+
+	* test execution on 64 bit and 32 bit
+
+[1] http://www.chronox.de/libkcapi.html
+
+Changes v2:
+* rebase to current cryptodev-2.6 tree
+* use memzero_explicit to zeroize AEAD associated data
+* use sizeof for determining length of AEAD associated data
+* update algif_rng.c covering all suggestions from Daniel Borkmann
+  <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+* addition of patch 9: add digestsize interface for hashes
+* addition of patch to update documentation covering the userspace interface
+* change numbers of getsockopt options: separate them from sendmsg interface
+  definitions
+
+Changes v3:
+* remove getsockopt interface
+* AEAD: associated data is set prepended to the plain/ciphertext
+* AEAD: allowing arbitrary associated data lengths
+* remove setkey patch as protection was already in the existing code
+
+Changes v4:
+* stand-alone implementation of AEAD
+* testing of all interfaces offered by AEAD
+* stress testing of AEAD and RNG
+
+Changes v5:
+* AEAD: add outer while(size) loop in aead_sendmsg to ensure all data is
+  copied into the kernel (reporter Herbert Xu)
+* AEAD: aead_sendmsg bug fix: change size -= len; to size -= plen;
+* AF_ALG / AEAD: add aead_setauthsize and associated extension to
+  struct af_alg_type as well as alg_setsockopt (reporter Herbert Xu)
+* RNG: rng_recvmsg: use 128 byte stack variable for output of RNG instead
+  of ctx->result (reporter Herbert Xu)
+* RNG / AF_ALG: allow user space to seed RNG via setsockopt
+* RNG: rng_recvmsg bug fix: use genlen as result variable for
+  crypto_rng_get_bytes as previously no negative errors were obtained
+* AF_ALG: alg_setop: zeroize buffer before free
+
+Changes v6:
+* AEAD/RNG: port to 3.19-rc1 with the iov_iter handling
+* RNG: use the setkey interface to obtain the seed and drop the patch adding
+  a separate reseeding interface
+* extract the zeroization patch for alg_setkey into a stand-alone patch
+  submission
+* fix bug in aead_sufficient_data (reporter Herbert Xu)
+* testing of all interfaces with test application provided with libkcapi version
+  0.6.2
+
+Stephan Mueller (4):
+  crypto: AF_ALG: add AEAD support
+  crypto: AF_ALG: enable AEAD interface compilation
+  crypto: AF_ALG: add random number generator support
+  crypto: AF_ALG: enable RNG interface compilation
+
+ crypto/Kconfig      |  18 ++
+ crypto/Makefile     |   2 +
+ crypto/algif_aead.c | 651 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ crypto/algif_rng.c  | 192 ++++++++++++++++
+ 4 files changed, 863 insertions(+)
+ create mode 100644 crypto/algif_aead.c
  create mode 100644 crypto/algif_rng.c
 
-diff --git a/crypto/algif_rng.c b/crypto/algif_rng.c
-new file mode 100644
-index 0000000..91c06f5
---- /dev/null
-+++ b/crypto/algif_rng.c
-@@ -0,0 +1,192 @@
-+/*
-+ * algif_rng: User-space interface for random number generators
-+ *
-+ * This file provides the user-space API for random number generators.
-+ *
-+ * Copyright (C) 2014, Stephan Mueller <smueller@chronox.de>
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, and the entire permission notice in its entirety,
-+ *    including the disclaimer of warranties.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ * 3. The name of the author may not be used to endorse or promote
-+ *    products derived from this software without specific prior
-+ *    written permission.
-+ *
-+ * ALTERNATIVELY, this product may be distributed under the terms of
-+ * the GNU General Public License, in which case the provisions of the GPL2
-+ * are required INSTEAD OF the above restrictions.  (This clause is
-+ * necessary due to a potential bad interaction between the GPL and
-+ * the restrictions contained in a BSD-style copyright.)
-+ *
-+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
-+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ALL OF
-+ * WHICH ARE HEREBY DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE
-+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
-+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-+ * USE OF THIS SOFTWARE, EVEN IF NOT ADVISED OF THE POSSIBILITY OF SUCH
-+ * DAMAGE.
-+ */
-+
-+#include <linux/module.h>
-+#include <crypto/rng.h>
-+#include <linux/random.h>
-+#include <crypto/if_alg.h>
-+#include <linux/net.h>
-+#include <net/sock.h>
-+
-+MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
-+MODULE_DESCRIPTION("User-space interface for random number generators");
-+
-+struct rng_ctx {
-+#define MAXSIZE 128
-+	unsigned int len;
-+	struct crypto_rng *drng;
-+};
-+
-+static int rng_recvmsg(struct kiocb *unused, struct socket *sock,
-+		       struct msghdr *msg, size_t len, int flags)
-+{
-+	struct sock *sk = sock->sk;
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct rng_ctx *ctx = ask->private;
-+	int err = -EFAULT;
-+	int genlen = 0;
-+	u8 result[MAXSIZE];
-+
-+	if (len == 0)
-+		return 0;
-+	if (len > MAXSIZE)
-+		len = MAXSIZE;
-+
-+	/*
-+	 * although not strictly needed, this is a precaution against coding
-+	 * errors
-+	 */
-+	memset(result, 0, len);
-+
-+	/*
-+	 * The enforcement of a proper seeding of an RNG is done within an
-+	 * RNG implementation. Some RNGs (DRBG, krng) do not need specific
-+	 * seeding as they automatically seed. The X9.31 DRNG will return
-+	 * an error if it was not seeded properly.
-+	 */
-+	genlen = crypto_rng_get_bytes(ctx->drng, result, len);
-+	if (genlen < 0)
-+		return genlen;
-+
-+	err = memcpy_to_msg(msg, result, len);
-+	memzero_explicit(result, genlen);
-+
-+	return err ? err : len;
-+}
-+
-+static struct proto_ops algif_rng_ops = {
-+	.family		=	PF_ALG,
-+
-+	.connect	=	sock_no_connect,
-+	.socketpair	=	sock_no_socketpair,
-+	.getname	=	sock_no_getname,
-+	.ioctl		=	sock_no_ioctl,
-+	.listen		=	sock_no_listen,
-+	.shutdown	=	sock_no_shutdown,
-+	.getsockopt	=	sock_no_getsockopt,
-+	.mmap		=	sock_no_mmap,
-+	.bind		=	sock_no_bind,
-+	.accept		=	sock_no_accept,
-+	.setsockopt	=	sock_no_setsockopt,
-+	.poll		=	sock_no_poll,
-+	.sendmsg	=	sock_no_sendmsg,
-+	.sendpage	=	sock_no_sendpage,
-+
-+	.release	=	af_alg_release,
-+	.recvmsg	=	rng_recvmsg,
-+};
-+
-+static void *rng_bind(const char *name, u32 type, u32 mask)
-+{
-+	return crypto_alloc_rng(name, type, mask);
-+}
-+
-+static void rng_release(void *private)
-+{
-+	crypto_free_rng(private);
-+}
-+
-+static void rng_sock_destruct(struct sock *sk)
-+{
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct rng_ctx *ctx = ask->private;
-+
-+	sock_kfree_s(sk, ctx, ctx->len);
-+	af_alg_release_parent(sk);
-+}
-+
-+static int rng_accept_parent(void *private, struct sock *sk)
-+{
-+	struct rng_ctx *ctx;
-+	struct alg_sock *ask = alg_sk(sk);
-+	unsigned int len = sizeof(*ctx);
-+
-+	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
-+	if (!ctx)
-+		return -ENOMEM;
-+
-+	ctx->len = len;
-+
-+	/*
-+	 * No seeding done at that point -- if multiple accepts are
-+	 * done on one RNG instance, each resulting FD points to the same
-+	 * state of the RNG.
-+	 */
-+
-+	ctx->drng = private;
-+	ask->private = ctx;
-+	sk->sk_destruct = rng_sock_destruct;
-+
-+	return 0;
-+}
-+
-+static int rng_setkey(void *private, const u8 *seed, unsigned int seedlen)
-+{
-+	/*
-+	 * Check whether seedlen is of sufficient size is done in RNG
-+	 * implementations.
-+	 */
-+	return crypto_rng_reset(private, (u8 *)seed, seedlen);
-+}
-+
-+static const struct af_alg_type algif_type_rng = {
-+	.bind		=	rng_bind,
-+	.release	=	rng_release,
-+	.accept		=	rng_accept_parent,
-+	.setkey		=	rng_setkey,
-+	.ops		=	&algif_rng_ops,
-+	.name		=	"rng",
-+	.owner		=	THIS_MODULE
-+};
-+
-+static int __init rng_init(void)
-+{
-+	return af_alg_register_type(&algif_type_rng);
-+}
-+
-+void __exit rng_exit(void)
-+{
-+	int err = af_alg_unregister_type(&algif_type_rng);
-+	BUG_ON(err);
-+}
-+
-+module_init(rng_init);
-+module_exit(rng_exit);
 -- 
 2.1.0
