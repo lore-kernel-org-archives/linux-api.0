@@ -1,48 +1,51 @@
-From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Subject: Re: [PATCH v6 1/4] crypto: AF_ALG: add AEAD support
-Date: Tue, 30 Dec 2014 04:33:41 +1100
-Message-ID: <20141229173340.GA15790@gondor.apana.org.au>
-References: <5682082.ffPqvQlSqN@tachyon.chronox.de>
- <5002301.TQO37u96dE@tachyon.chronox.de>
- <20141229103319.GB13334@gondor.apana.org.au>
- <29582980.qoHS2EjmLy@tachyon.chronox.de>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [GIT PULL] kselftest fixes for 3.19
+Date: Mon, 29 Dec 2014 12:42:09 -0700
+Message-ID: <54A1AE91.4020909@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <29582980.qoHS2EjmLy-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: torvalds@linux-foundation.org
+Cc: linux-kernel@vger.kernel.org, "open list:KERNEL SELFTEST F..." <linux-api@vger.kernel.org>, shuahkh@osg.samsung.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 29, 2014 at 04:05:40PM +0100, Stephan Mueller wrote:
->
-> This would mean that the check must stay in recvmsg as only here we know that 
-> the caller wants data to be processed.
+Hi Linus,
 
-On the send side you would do the check when MSG_MORE is unset.
-On the receive side you should stop waiting only when ctx->more
-is false and the send-side check succeeded.
+Please pull the following kselftest fix for 3.19.
 
-Perhaps rename ctx->more to ctx->done and then you can use it
-to indicate to the receive side that we're ready and have valid
-data for it.  The receive side can then simply wait for ctx->done
-to become true.
+thanks,
+-- Shuah
 
-> > PS we should add a length check for missing/partial auth tags
-> > to crypto_aead_decrypt.  We can then remove such checks from
-> > individual implementations.
-> 
-> I agree in full here. Shall I create such a patch together with the AEAD 
-> AF_ALG interface, or can we merge the AEAD without that patch now and create a 
-> separate patch later?
+The following changes since commit 97bf6af1f928216fd6c5a66e8a57bfa95a659672:
 
-We should at least add a check in crypto_aead_decrypt first so as
-to guarantee nothing slips through.
+  Linux 3.19-rc1 (2014-12-20 17:08:50 -0800)
 
-Thanks,
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-3.19-fixes
+
+for you to fetch changes up to 6898b627aab6ba553e6d8b40a0b1ddc43c48d42f:
+
+  selftests/exec: Use %zu to format size_t (2014-12-22 11:11:36 -0700)
+
+----------------------------------------------------------------
+kselftest fixes for: 3.19
+
+Fix exec test compile warnings.
+
+----------------------------------------------------------------
+Geert Uytterhoeven (1):
+      selftests/exec: Use %zu to format size_t
+
+ tools/testing/selftests/exec/execveat.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
 -- 
-Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
