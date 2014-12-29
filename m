@@ -1,85 +1,77 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v6 1/4] crypto: AF_ALG: add AEAD support
-Date: Mon, 29 Dec 2014 16:05:40 +0100
-Message-ID: <29582980.qoHS2EjmLy@tachyon.chronox.de>
-References: <5682082.ffPqvQlSqN@tachyon.chronox.de> <5002301.TQO37u96dE@tachyon.chronox.de> <20141229103319.GB13334@gondor.apana.org.au>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v3 00/20] kselftest install target feature
+Date: Mon, 29 Dec 2014 08:24:46 -0700
+Message-ID: <54A1723E.5040206@osg.samsung.com>
+References: <cover.1419387513.git.shuahkh@osg.samsung.com> <1419828790.26911.3.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141229103319.GB13334-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+In-Reply-To: <1419828790.26911.3.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: mmarek-AlSwsSmVLrQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Am Montag, 29. Dezember 2014, 21:33:19 schrieb Herbert Xu:
-
-Hi Herbert,
-
-> On Thu, Dec 25, 2014 at 11:01:47PM +0100, Stephan Mueller wrote:
-> > +	err = -ENOMEM;
+On 12/28/2014 09:53 PM, Michael Ellerman wrote:
+> On Wed, 2014-12-24 at 09:27 -0700, Shuah Khan wrote:
+>> This patch series adds a new kselftest_install make target
+>> to enable selftest install. When make kselftest_install is
+>> run, selftests are installed on the system. A new install
+>> target is added to selftests Makefile which will install
+>> targets for the tests that are specified in INSTALL_TARGETS.
+>> During install, a script is generated to run tests that are
+>> installed. This script will be installed in the selftest install
+>> directory. Individual test Makefiles are changed to add to the
+>> script. This will allow new tests to add install and run test
+>> commands to the generated kselftest script. kselftest target
+>> now depends on kselftest_install and runs the generated kselftest
+>> script to reduce duplicate work and for common look and feel when
+>> running tests.
+>>
+>> This approach leverages and extends the existing framework that
+>> uses makefile targets to implement run_tests and adds install
+>> target. This will scale well as new tests get added and makes
+>> it easier for test writers to add install target at the same
+>> time new test gets added.
+>>
+>> This v3 series reduces duplicate code to generate script
+>> in indiviual test Makefiles and consolidates support in
+>> selftests main Makefile. In the main Makefile, it does
+>> minimal work to set and export install path. In this
+>> series exec and powerpc tests are not included in the
+>> install, this work will be done in future patches. exec
+>> and powerpc are still run when make kselftest is invoked.
 > 
-> This should be EINVAL.
+> Any particular reason you excluded the powerpc tests? Going by a quick count,
+> powerpc has 32 of the 54 self tests, ie. more than half.
 
-Changed
-> 
-> > +	if (!aead_sufficient_data(ctx))
-> > +		goto unlock;
-> 
-> So we're checking two things here, one that we have enough data
-> for AD and two we have the authentication tag.  The latter is
-> redundant as the underlying implementation should be able to cope
-> with short input so we should only check the assoclen here.
-
-Agreed, will change it to
-
-if (ctx->used < ctx->aead_assoclen)
-
-> 
-> Also this check should be moved to the sendmsg side as that'll
-> make it more obvious as to what went wrong.
-
-I would be a bit uneasy about that as this would open up a potential kernel 
-crasher: the sleep in aead_readable() can wake up recvmsg in two conditions: 
-either we received sufficient data or we do not expect more data (due to !ctx-
->more). If the latter triggers, we still may have insufficient AD data. Yet, 
-the following code now sets the AD with aead_request_set_assoc using the 
-initially expected data. So, the data buffer provided to  
-aead_request_set_assoc is not long enough. The mentioned check shall prevent 
-this problem.
-
-In addition, I do not see how we can move that check to the sendmsg/sendpage 
-side: the code currently allows the caller to freely invoke the syscall 
-arbitrary amount of times. Thus, one particular invocation of sendmsg/sendpage 
-does not mean we receive all AD.
-
-Again, to allow the caller the greatest degree of freedom, you can call 
-sendmsg with an arbitrary amount of bytes as often as you want (until we fill 
-up all buffers) before the recvmsg is triggered. So, there is no need to send 
-the entire AD (or even AD+message) buffer in one sendmsg call. Compare the 
-AEAD interface with a hash interface:
-
-- the AEAD sendmsg/sendpage is logically equivalent to a hash update that you 
-can call an arbitrary number of times with an arbitrary number of bytes.
-
-- the AEAD recvmsg is logically equivalent to the hash final.
-
-This would mean that the check must stay in recvmsg as only here we know that 
-the caller wants data to be processed.
+No particular reason other than not having a good way to test the
+changes I need to make. It does have sub-directory structure with
+multiple makefiles underneath. I would like to work on this after
+this patch series gets in or maybe you can help out on powerpc
+changes if you like.
 
 > 
-> PS we should add a length check for missing/partial auth tags
-> to crypto_aead_decrypt.  We can then remove such checks from
-> individual implementations.
+> Sorry I didn't get a chance to review v1 or v2, but is this really the best
+> solution we can come up with? It seems to involve a lot of boiler plate getting
+> repeated in every Makefile.
 
-I agree in full here. Shall I create such a patch together with the AEAD 
-AF_ALG interface, or can we merge the AEAD without that patch now and create a 
-separate patch later?
-> 
-> Thanks,
+This approach extends the existing approach to use makefile targets as
+a means to support running tests. Also it gives full control to the
+individual test developer in making changes to the targets as needed
+without conflicts with work that is in progress on other tests.
+
+There isn't a whole lot of boiler plating code repeated as such in
+individual makefiles. They all add their specific targets to the
+main script.
+
+-- Shuah
 
 
 -- 
-Ciao
-Stephan
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
