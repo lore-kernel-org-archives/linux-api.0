@@ -1,68 +1,55 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Andoid Binder sneaking in [was Re: [GIT PULL] Staging driver patches
- for 3.19-rc1]
-Date: Sun, 28 Dec 2014 18:53:16 +0100
-Message-ID: <20141228175316.GC3922@amd>
-References: <20141215175535.GA4665@kroah.com>
- <CAFLxGvwvj_ihWQQV3yY8Czxt0F2ieP=CRBrPMKqUatpjj9zdvQ@mail.gmail.com>
- <20141215183915.GA15554@infradead.org>
- <20141215184103.GA6761@kroah.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH v3 00/20] kselftest install target feature
+Date: Mon, 29 Dec 2014 15:53:10 +1100
+Message-ID: <1419828790.26911.3.camel@ellerman.id.au>
+References: <cover.1419387513.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <20141215184103.GA6761@kroah.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: Richard Weinberger <richard.weinberger@gmail.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, arve@android.com, john.stultz@linaro.org, viro@zeniv.linux.org.uk, "devel@linuxdriverproject.org" <devel@linuxdriverproject.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1419387513.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: mmarek-AlSwsSmVLrQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2014-12-15 10:41:03, Greg KH wrote:
-> On Mon, Dec 15, 2014 at 10:39:15AM -0800, Christoph Hellwig wrote:
-> > On Mon, Dec 15, 2014 at 07:23:35PM +0100, Richard Weinberger wrote:
-> > > I don't understand this kind of logic.
-> > > a) Binder is considered a piece of shite.
-> > > b) Google is working on a (hopefully sane) replacement.
-> > > 
-> > > Why moving it out of staging then? What is the benefit?
-> > 
-> > There is none, and Greg didn't even bother addressing the various
-> > comments when this first came up.
+On Wed, 2014-12-24 at 09:27 -0700, Shuah Khan wrote:
+> This patch series adds a new kselftest_install make target
+> to enable selftest install. When make kselftest_install is
+> run, selftests are installed on the system. A new install
+> target is added to selftests Makefile which will install
+> targets for the tests that are specified in INSTALL_TARGETS.
+> During install, a script is generated to run tests that are
+> installed. This script will be installed in the selftest install
+> directory. Individual test Makefiles are changed to add to the
+> script. This will allow new tests to add install and run test
+> commands to the generated kselftest script. kselftest target
+> now depends on kselftest_install and runs the generated kselftest
+> script to reduce duplicate work and for common look and feel when
+> running tests.
 > 
-> I thought I did, it was a long thread at the time, and I was on the road
-> for 3 weeks, sorry if I missed something.
-
-I pointed quite a lot of simple cleanups that could be done, but got
-no feedback...
-
-You should really post new version for review to people that commented
-on the old one.
-
-Plus "I set a rule that code must be cleaned in staging, and this is
-not happening here, so it has to be moved to mainline, ignoring all
-the usual rules" is quite interesting justification.
-
-> > So a clear NAK from me on this one.
+> This approach leverages and extends the existing framework that
+> uses makefile targets to implement run_tests and adds install
+> target. This will scale well as new tests get added and makes
+> it easier for test writers to add install target at the same
+> time new test gets added.
 > 
-> You don't have to maintain it, I do, so why does it concern you?
+> This v3 series reduces duplicate code to generate script
+> in indiviual test Makefiles and consolidates support in
+> selftests main Makefile. In the main Makefile, it does
+> minimal work to set and export install path. In this
+> series exec and powerpc tests are not included in the
+> install, this work will be done in future patches. exec
+> and powerpc are still run when make kselftest is invoked.
 
-You ignored even NAKs from people that maintain stuff this interfaces with.
+Any particular reason you excluded the powerpc tests? Going by a quick count,
+powerpc has 32 of the 54 self tests, ie. more than half.
 
-Late NAK here, too, FWIW. Because it is going to be used as an
-argument "it is in mainline, so it must be ok". You are willing to
-ignore mainline rules for this; it should be way easier to ignore
-single staging rule for this one.
-									
-									Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+Sorry I didn't get a chance to review v1 or v2, but is this really the best
+solution we can come up with? It seems to involve a lot of boiler plate getting
+repeated in every Makefile.
+
+I'm off this week so I can't immediately come up with something better, I'll
+try in the new year.
+
+cheers
