@@ -1,7 +1,7 @@
 From: Stephan Mueller <smueller@chronox.de>
 Subject: Re: [PATCH v6 1/4] crypto: AF_ALG: add AEAD support
-Date: Tue, 30 Dec 2014 22:03:33 +0100
-Message-ID: <2836726.omC5yx5ZyR@tachyon.chronox.de>
+Date: Tue, 30 Dec 2014 22:30:28 +0100
+Message-ID: <2502404.xd4K6Vrf3P@tachyon.chronox.de>
 References: <5682082.ffPqvQlSqN@tachyon.chronox.de> <29582980.qoHS2EjmLy@tachyon.chronox.de> <20141229173340.GA15790@gondor.apana.org.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,6 +17,32 @@ Am Dienstag, 30. Dezember 2014, 04:33:41 schrieb Herbert Xu:
 
 Hi Herbert,
 
+> On Mon, Dec 29, 2014 at 04:05:40PM +0100, Stephan Mueller wrote:
+> > This would mean that the check must stay in recvmsg as only here we know
+> > that the caller wants data to be processed.
+> 
+> On the send side you would do the check when MSG_MORE is unset.
+> On the receive side you should stop waiting only when ctx->more
+> is false and the send-side check succeeded.
+> 
+> Perhaps rename ctx->more to ctx->done and then you can use it
+> to indicate to the receive side that we're ready and have valid
+> data for it.  The receive side can then simply wait for ctx->done
+> to become true.
+
+I followed your advise and changed the sleep to wait for !ctx->more. Together 
+with the patch suggested below that was just released, I removed aead_readable 
+and aead_sufficient_data.
+
+Though, I did not rename ctx->more to ctx->done due to the following:
+
+- other AF_ALG implementations use ctx->more -- to aid code reviewers, I want 
+to keep the logic as close together as possible
+
+- I do not want to negate the check for MSG_MORE -- at least for me, negating 
+flags always twists my mind when reading code.
+
+The patch will come shortly after I tested all thoroughly.
 > 
 > > > PS we should add a length check for missing/partial auth tags
 > > > to crypto_aead_decrypt.  We can then remove such checks from
@@ -28,23 +54,10 @@ Hi Herbert,
 > 
 > We should at least add a check in crypto_aead_decrypt first so as
 > to guarantee nothing slips through.
+> 
+> Thanks,
 
-I have prepared a patch for this which I will release shortly. IMHO that patch 
-should not have any significant performance penalty. I will also remove the 
-respective check from the algif_aead implementation.
 
-In addition, I would suggest to add a similar check for the encryption 
-operation to verify that the ciphertext buffer is at least as large as the 
-blocks needed for plaintext plus the memory needed for the auth tag (note, my 
-first attempts working with AEAD lead to days of debugging of kernel crashers 
-as I did not understand I had too little memory allocated for the ciphertext 
-buffer). However, such check needs to traverse all plaintext scatterlist 
-entries which may have a noticeable performance hit.
-
-Do you see the need for such check? If yes, do you see a way to avoid 
-traversing all plaintext scatterlist entries?
-
-Thanks
 -- 
 Ciao
 Stephan
