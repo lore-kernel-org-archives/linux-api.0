@@ -1,65 +1,125 @@
-From: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] selftests/exec: Use %zu to format size_t
-Date: Fri, 2 Jan 2015 13:46:08 +0000
-Message-ID: <CAHse=S-DZwvreXMS6gLc5CiWsEVC_4-6hgzrr1nbG8H_Ab8Sug@mail.gmail.com>
-References: <1419159496-11558-1-git-send-email-geert@linux-m68k.org> <54985F6E.2010205@osg.samsung.com>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: [PATCH v7 0/2] crypto: AF_ALG: add AEAD and RNG support
+Date: Fri, 02 Jan 2015 15:40:51 +0100
+Message-ID: <6964260.mNa1jtPz7Z@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54985F6E.2010205-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: 'Herbert Xu' <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 22, 2014 at 6:14 PM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->
-> On 12/21/2014 03:58 AM, Geert Uytterhoeven wrote:
-> > On 32-bit:
-> >
-> > execveat.c: In function 'check_execveat_pathmax':
-> > execveat.c:183: warning: format '%lu' expects type 'long unsigned int', but argument 3 has type 'size_t'
-> > execveat.c:187: warning: format '%lu' expects type 'long unsigned int', but argument 2 has type 'size_t'
-> >
-> > Signed-off-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
-> > ---
-> >  tools/testing/selftests/exec/execveat.c | 4 ++--
-> >  1 file changed, 2 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
-> > index 33a5c06d95caa038..d273624c93a64254 100644
-> > --- a/tools/testing/selftests/exec/execveat.c
-> > +++ b/tools/testing/selftests/exec/execveat.c
-> > @@ -179,11 +179,11 @@ static int check_execveat_pathmax(int dot_dfd, const char *src, int is_script)
-> >        */
-> >       fd = open(longpath, O_RDONLY);
-> >       if (fd > 0) {
-> > -             printf("Invoke copy of '%s' via filename of length %lu:\n",
-> > +             printf("Invoke copy of '%s' via filename of length %zu:\n",
-> >                       src, strlen(longpath));
-> >               fail += check_execveat(fd, "", AT_EMPTY_PATH);
-> >       } else {
-> > -             printf("Failed to open length %lu filename, errno=%d (%s)\n",
-> > +             printf("Failed to open length %zu filename, errno=%d (%s)\n",
-> >                       strlen(longpath), errno, strerror(errno));
-> >               fail++;
-> >       }
-> >
->
->
-> Applied to kernel/git/shuah/linux-kselftest.git fixes
-> for 3.19-rc2
->
-> thanks,
-> -- Shuah
+Hi,
 
-Thanks for fixing, and apologies for the delay in responding.
+This patch set adds AEAD and RNG support to the AF_ALG interface
+exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
+support, all cipher types the kernel crypto API allows access to are
+now accessible from userspace.
 
-Acked-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Both, AEAD and RNG implementations are stand-alone and do not depend
+other AF_ALG interfaces (like hash or skcipher).
 
-> --
-> Shuah Khan
-> Sr. Linux Kernel Developer
-> Open Source Innovation Group
-> Samsung Research America (Silicon Valley)
-> shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+The AEAD implementation uses the same approach as provided with
+skcipher by offering the following interfaces:
+
+	* sendmsg and recvmsg interfaces allowing multiple
+	  invocations supporting a threaded user space. To support
+	  multi-threaded user space, kernel-side buffering
+	  is implemented similarly to skcipher.
+
+	* splice / vmsplice interfaces allowing a zero-copy
+	  invocation
+
+The RNG interface only implements the recvmsg interface as
+zero-copy is not applicable.
+
+The new AEAD and RNG interfaces are fully tested with the test application
+provided at [1]. That test application exercises all newly added user space
+interfaces. The testing covers:
+
+	* use of the sendmsg/recvmsg interface
+
+	* use of the splice / vmsplice interface
+
+	* invocation of all AF_ALG types (aead, rng, skcipher, hash)
+
+	* using all types of operation (encryption, decryption, keyed MD,
+	  MD, random numbers, AEAD decryption with positive and negative
+	  authentication verification)
+
+	* stress testing by running all tests for 30 minutes in an
+	  endless loop
+
+	* test execution on 64 bit and 32 bit
+
+[1] http://www.chronox.de/libkcapi.html
+
+Changes v2:
+* rebase to current cryptodev-2.6 tree
+* use memzero_explicit to zeroize AEAD associated data
+* use sizeof for determining length of AEAD associated data
+* update algif_rng.c covering all suggestions from Daniel Borkmann
+  <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+* addition of patch 9: add digestsize interface for hashes
+* addition of patch to update documentation covering the userspace interface
+* change numbers of getsockopt options: separate them from sendmsg interface
+  definitions
+
+Changes v3:
+* remove getsockopt interface
+* AEAD: associated data is set prepended to the plain/ciphertext
+* AEAD: allowing arbitrary associated data lengths
+* remove setkey patch as protection was already in the existing code
+
+Changes v4:
+* stand-alone implementation of AEAD
+* testing of all interfaces offered by AEAD
+* stress testing of AEAD and RNG
+
+Changes v5:
+* AEAD: add outer while(size) loop in aead_sendmsg to ensure all data is
+  copied into the kernel (reporter Herbert Xu)
+* AEAD: aead_sendmsg bug fix: change size -= len; to size -= plen;
+* AF_ALG / AEAD: add aead_setauthsize and associated extension to
+  struct af_alg_type as well as alg_setsockopt (reporter Herbert Xu)
+* RNG: rng_recvmsg: use 128 byte stack variable for output of RNG instead
+  of ctx->result (reporter Herbert Xu)
+* RNG / AF_ALG: allow user space to seed RNG via setsockopt
+* RNG: rng_recvmsg bug fix: use genlen as result variable for
+  crypto_rng_get_bytes as previously no negative errors were obtained
+* AF_ALG: alg_setop: zeroize buffer before free
+
+Changes v6:
+* AEAD/RNG: port to 3.19-rc1 with the iov_iter handling
+* RNG: use the setkey interface to obtain the seed and drop the patch adding
+  a separate reseeding interface
+* extract the zeroization patch for alg_setkey into a stand-alone patch
+  submission
+* fix bug in aead_sufficient_data (reporter Herbert Xu)
+* testing of all interfaces with test application provided with libkcapi version
+  0.6.2
+
+Changes v7:
+* AEAD: aead_recvmsg: change error code from ENOMEM to EINVAL
+* AEAD: drop aead_readable/aead_sufficient_data and only use ctx->more to decide
+  whether the read side shall become active. This change requires that the
+  patch for crypto_aead_decrypt ensuring that the ciphertext contains the
+  authentication tag was added -- see https://lkml.org/lkml/2014/12/30/200.
+  Otherwise, user space can trigger a kernel crash.
+* RNG: patch dropped as it was applied
+* AEAD: port Kconfig/Makefile patch forward to current code base
+
+Stephan Mueller (2):
+  crypto: AF_ALG: add AEAD support
+  crypto: AF_ALG: enable AEAD interface compilation
+
+ crypto/Kconfig      |   9 +
+ crypto/Makefile     |   1 +
+ crypto/algif_aead.c | 631 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 641 insertions(+)
+ create mode 100644 crypto/algif_aead.c
+
+-- 
+2.1.0
