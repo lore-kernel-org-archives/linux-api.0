@@ -1,64 +1,62 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v3 05/20] selftests/ftrace: add install target to enable
- test install
-Date: Fri, 2 Jan 2015 10:45:26 -0500
-Message-ID: <20150102104526.29df5641@gandalf.local.home>
-References: <cover.1419387513.git.shuahkh@osg.samsung.com>
-	<e84eeeecde70ecb3ab82c5f825fec359f9e967ff.1419387513.git.shuahkh@osg.samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <e84eeeecde70ecb3ab82c5f825fec359f9e967ff.1419387513.git.shuahkh@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: [PATCH 1/7] media: Fix DVB representation at media controller API
+Date: Sat,  3 Jan 2015 00:04:34 -0200
+Message-ID: <ea1dd8e443b34e2047468866ec423d4334f54eba.1420250453.git.mchehab@osg.samsung.com>
+References: <cover.1420250453.git.mchehab@osg.samsung.com>
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <cover.1420250453.git.mchehab@osg.samsung.com>
+In-Reply-To: <cover.1420250453.git.mchehab@osg.samsung.com>
+References: <cover.1420250453.git.mchehab@osg.samsung.com>
+Sender: linux-media-owner@vger.kernel.org
+To: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 24 Dec 2014 09:27:41 -0700
-Shuah Khan <shuahkh@osg.samsung.com> wrote:
+The DVB devices are identified via a (major, minor) tuple,
+and not by a random id. Fix it, before we start using it.
 
-> Add a new make target to enable installing test. This target
-> installs test in the kselftest install location and add to the
-> kselftest script to run the test. Install target can be run
-> only from top level kernel source directory.
-> 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
-> ---
->  tools/testing/selftests/ftrace/Makefile | 11 ++++++++++-
->  1 file changed, 10 insertions(+), 1 deletion(-)
-> 
-> diff --git a/tools/testing/selftests/ftrace/Makefile b/tools/testing/selftests/ftrace/Makefile
-> index 76cc9f1..7c7cf42 100644
-> --- a/tools/testing/selftests/ftrace/Makefile
-> +++ b/tools/testing/selftests/ftrace/Makefile
-> @@ -1,7 +1,16 @@
-> +TEST_STR = /bin/sh ./ftracetest || echo ftrace selftests: [FAIL]
+Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 
-Is it ok that this removes the quotes around the echo string? I don't
-see anything wrong about it, but I don't know if there's a shell out
-there that will fail due to it.
-
-Other than than,
-
-Acked-by: Steven Rostedt <rostedt@goodmis.org>
-
--- Steve
-
-
-> +
->  all:
->  
-> +install:
-> +ifdef INSTALL_KSFT_PATH
-> +	install ./ftracetest $(INSTALL_KSFT_PATH)
-> +	@cp -r test.d $(INSTALL_KSFT_PATH)
-> +	echo "$(TEST_STR)" >> $(KSELFTEST)
-> +endif
-> +
->  run_tests:
-> -	@/bin/sh ./ftracetest || echo "ftrace selftests: [FAIL]"
-> +	@$(TEST_STR)
->  
->  clean:
->  	rm -rf logs/*
+diff --git a/include/media/media-entity.h b/include/media/media-entity.h
+index e00459185d20..de333cc8261b 100644
+--- a/include/media/media-entity.h
++++ b/include/media/media-entity.h
+@@ -97,7 +97,10 @@ struct media_entity {
+ 			u32 device;
+ 			u32 subdevice;
+ 		} alsa;
+-		int dvb;
++		struct {
++			u32 major;
++			u32 minor;
++		} dvb;
+ 
+ 		/* Sub-device specifications */
+ 		/* Nothing needed yet */
+diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+index d847c760e8f0..7902e800f019 100644
+--- a/include/uapi/linux/media.h
++++ b/include/uapi/linux/media.h
+@@ -27,7 +27,7 @@
+ #include <linux/types.h>
+ #include <linux/version.h>
+ 
+-#define MEDIA_API_VERSION	KERNEL_VERSION(0, 1, 0)
++#define MEDIA_API_VERSION	KERNEL_VERSION(0, 1, 1)
+ 
+ struct media_device_info {
+ 	char driver[16];
+@@ -88,7 +88,10 @@ struct media_entity_desc {
+ 			__u32 device;
+ 			__u32 subdevice;
+ 		} alsa;
+-		int dvb;
++		struct {
++			__u32 major;
++			__u32 minor;
++		} dvb;
+ 
+ 		/* Sub-device specifications */
+ 		/* Nothing needed yet */
+-- 
+2.1.0
