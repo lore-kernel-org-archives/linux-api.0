@@ -1,90 +1,70 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Subject: Re: Re: [PATCH v3 05/20] selftests/ftrace: add install target
- to enable test install
-Date: Sun, 04 Jan 2015 14:29:34 +0900
-Message-ID: <54A8CFBE.2010209@hitachi.com>
-References: <cover.1419387513.git.shuahkh@osg.samsung.com> <e84eeeecde70ecb3ab82c5f825fec359f9e967ff.1419387513.git.shuahkh@osg.samsung.com> <20150102104526.29df5641@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <20150102104526.29df5641@gandalf.local.home>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, "yrl.pp-manager.tt@hitachi.com" <yrl.pp-manager.tt@hitachi.com>
+From: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH net-next v1 0/7] net: extend ethtool link mode bitmaps to 48 bits
+Date: Sun,  4 Jan 2015 12:56:50 -0800
+Message-ID: <1420405017-23278-1-git-send-email-ddecotig@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Amir Vadai <amirv-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Florian Fainelli <f.fainelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Masatake YAMATO <yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Xi Wang <xii-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>, WANG Cong <xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Flavio Leitner <fbl-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Vlad Yasevich <vyasevic-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-(2015/01/03 0:45), Steven Rostedt wrote:
-> On Wed, 24 Dec 2014 09:27:41 -0700
-> Shuah Khan <shuahkh@osg.samsung.com> wrote:
-> 
->> Add a new make target to enable installing test. This target
->> installs test in the kselftest install location and add to the
->> kselftest script to run the test. Install target can be run
->> only from top level kernel source directory.
->>
->> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
->> ---
->>  tools/testing/selftests/ftrace/Makefile | 11 ++++++++++-
->>  1 file changed, 10 insertions(+), 1 deletion(-)
->>
->> diff --git a/tools/testing/selftests/ftrace/Makefile b/tools/testing/selftests/ftrace/Makefile
->> index 76cc9f1..7c7cf42 100644
->> --- a/tools/testing/selftests/ftrace/Makefile
->> +++ b/tools/testing/selftests/ftrace/Makefile
->> @@ -1,7 +1,16 @@
->> +TEST_STR = /bin/sh ./ftracetest || echo ftrace selftests: [FAIL]
-> 
-> Is it ok that this removes the quotes around the echo string? I don't
-> see anything wrong about it, but I don't know if there's a shell out
-> there that will fail due to it.
+From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 
-Agreed, if possible, we'd better add quotes around the echo string
-as you did in 2/20 in this series.
+This patch series increases the width of the supported/advertising
+ethtool masks from 32 bits to 48. This should allow to breathe for a
+couple more years (or... months?).
 
-Anyway, you can also add my ack to this patch.
+It should not cause any backward compatibility issues for now, as long
+as non-updated drivers don't depend on link modes beyond bit 31. But
+it is recommended we gradually adopt the new get/set API in order to
+correctly support future link modes. See ethtool.h for details.
 
-Acked-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+I updated a couple drivers (mlx4, veth, tun), and some shared code in
+drivers/net (phy, mii, mdio). It might be overkill for phy/mii/mdio,
+and I might have missed other shared code in drivers/net. Please let
+me know.
 
-Thank you!
+I used the compiler on my private copy to 1/ track where the
+ethtool_cmd/ethtool_eee link mode fields were used 2/ track where the
+link mode bitmaps are used and updated. So I believe that there is
+some sort of transitive closure for the code I updated. Maybe tools
+like coccinelle or clang could allow to automate these processes (1/
+would probably be easy-ish, but 2/ seems a bit more complex)? I
+reverted these internal "tracking" tricks for this version to minimize
+impact on uapi/ethtool.h. The main resulting visible artifact of those
+tricks is the new ethtool_link_mode_mask_t typedef (aka. u64). I kept
+this trivial typedef here to help future refactoring, but I'd be happy
+to rename it as plain "u64" if you prefer.
 
-> 
-> Other than than,
-> 
-> Acked-by: Steven Rostedt <rostedt@goodmis.org>
-> 
-> -- Steve
-> 
-> 
->> +
->>  all:
->>  
->> +install:
->> +ifdef INSTALL_KSFT_PATH
->> +	install ./ftracetest $(INSTALL_KSFT_PATH)
->> +	@cp -r test.d $(INSTALL_KSFT_PATH)
->> +	echo "$(TEST_STR)" >> $(KSELFTEST)
->> +endif
->> +
->>  run_tests:
->> -	@/bin/sh ./ftracetest || echo "ftrace selftests: [FAIL]"
->> +	@$(TEST_STR)
->>  
->>  clean:
->>  	rm -rf logs/*
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
-> 
+I can send updates to other drivers, even though it's rather pointless
+to update 1G drivers at this point for example. Please let me know,
+but I'd prefer to do this in follow-up patches outside this first
+patch series.
 
+############################################
+# Patch Set Summary:
+
+David Decotigny (7):
+  net: ethtool: extend link mode support to 48 bits
+  net: phy: extend link mode support to 48 bits
+  net: mii: extend link mode support to 48 bits
+  net: mdio: extend link mode support to 48 bits
+  net: veth: extend link mode support to 48 bits
+  net: tun: extend link mode support to 48 bits
+  net: mlx4_en: extend link mode support to 48 bits
+
+ drivers/net/ethernet/mellanox/mlx4/en_ethtool.c |  67 +++++++-----
+ drivers/net/mdio.c                              |  59 ++++++-----
+ drivers/net/mii.c                               |  52 +++++-----
+ drivers/net/phy/phy.c                           |  29 +++---
+ drivers/net/phy/phy_device.c                    |   4 +-
+ drivers/net/tun.c                               |   4 +-
+ drivers/net/veth.c                              |   4 +-
+ include/linux/mdio.h                            |  15 +--
+ include/linux/mii.h                             |  31 +++---
+ include/linux/phy.h                             |  10 +-
+ include/uapi/linux/ethtool.h                    | 130 ++++++++++++++++++++----
+ 11 files changed, 262 insertions(+), 143 deletions(-)
 
 -- 
-Masami HIRAMATSU
-Software Platform Research Dept. Linux Technology Center
-Hitachi, Ltd., Yokohama Research Laboratory
-E-mail: masami.hiramatsu.pt@hitachi.com
-
-
+2.2.0.rc0.207.ga3a616c
