@@ -1,98 +1,88 @@
-From: Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH 1/7] tuner-core: properly initialize media controller subdev
-Date: Sun, 04 Jan 2015 02:39:17 +0200
-Message-ID: <54A88BB5.1030103@linux.intel.com>
-References: <cover.1420315245.git.mchehab@osg.samsung.com> <4ff2de5fce002a6f6f87993440f45e0f198c57cb.1420315245.git.mchehab@osg.samsung.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Re: [PATCH v3 05/20] selftests/ftrace: add install target
+ to enable test install
+Date: Sun, 04 Jan 2015 14:18:06 +0900
+Message-ID: <54A8CD0E.1030609@hitachi.com>
+References: <cover.1419387513.git.shuahkh@osg.samsung.com> <e84eeeecde70ecb3ab82c5f825fec359f9e967ff.1419387513.git.shuahkh@osg.samsung.com> <20150102104526.29df5641@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4ff2de5fce002a6f6f87993440f45e0f198c57cb.1420315245.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <20150102104526.29df5641-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, mmarek-AlSwsSmVLrQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Mauro,
+(2015/01/03 0:45), Steven Rostedt wrote:
+> On Wed, 24 Dec 2014 09:27:41 -0700
+> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+> 
+>> Add a new make target to enable installing test. This target
+>> installs test in the kselftest install location and add to the
+>> kselftest script to run the test. Install target can be run
+>> only from top level kernel source directory.
+>>
+>> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>> ---
+>>  tools/testing/selftests/ftrace/Makefile | 11 ++++++++++-
+>>  1 file changed, 10 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/tools/testing/selftests/ftrace/Makefile b/tools/testing/selftests/ftrace/Makefile
+>> index 76cc9f1..7c7cf42 100644
+>> --- a/tools/testing/selftests/ftrace/Makefile
+>> +++ b/tools/testing/selftests/ftrace/Makefile
+>> @@ -1,7 +1,16 @@
+>> +TEST_STR = /bin/sh ./ftracetest || echo ftrace selftests: [FAIL]
+> 
+> Is it ok that this removes the quotes around the echo string? I don't
+> see anything wrong about it, but I don't know if there's a shell out
+> there that will fail due to it.
 
-Mauro Carvalho Chehab wrote:
-> Properly initialize tuner core subdev at the media controller.
->
-> That requires a new subtype at the media controller API.
->
-> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->
-> diff --git a/drivers/media/v4l2-core/tuner-core.c b/drivers/media/v4l2-core/tuner-core.c
-> index 559f8372e2eb..114715ed0110 100644
-> --- a/drivers/media/v4l2-core/tuner-core.c
-> +++ b/drivers/media/v4l2-core/tuner-core.c
-> @@ -134,6 +134,9 @@ struct tuner {
->   	unsigned int        type; /* chip type id */
->   	void                *config;
->   	const char          *name;
-> +#if defined(CONFIG_MEDIA_CONTROLLER)
-> +	struct media_pad	pad;
-> +#endif
->   };
->
->   /*
-> @@ -434,6 +437,8 @@ static void set_type(struct i2c_client *c, unsigned int type,
->   		t->name = analog_ops->info.name;
->   	}
->
-> +	t->sd.entity.name = t->name;
-> +
->   	tuner_dbg("type set to %s\n", t->name);
->
->   	t->mode_mask = new_mode_mask;
-> @@ -592,6 +597,7 @@ static int tuner_probe(struct i2c_client *client,
->   	struct tuner *t;
->   	struct tuner *radio;
->   	struct tuner *tv;
-> +	int ret;
+Agreed, if possible, we'd better add quotes around the echo string
+as you did in 2/20 in this series.
 
-This will emit a compiler warning if CONFIG_MEDIA_CONTROLLER isn't defined.
+Anyway, you can also add my ack to this patch.
 
->   	t = kzalloc(sizeof(struct tuner), GFP_KERNEL);
->   	if (NULL == t)
-> @@ -696,6 +702,15 @@ register_client:
->   		   t->type,
->   		   t->mode_mask & T_RADIO ? " Radio" : "",
->   		   t->mode_mask & T_ANALOG_TV ? " TV" : "");
-> +#if defined(CONFIG_MEDIA_CONTROLLER)
-> +	t->pad.flags = MEDIA_PAD_FL_SOURCE;
-> +	t->sd.entity.type = MEDIA_ENT_T_V4L2_SUBDEV_TUNER;
-> +	t->sd.entity.name = t->name;
-> +
-> +	ret = media_entity_init(&t->sd.entity, 1, &t->pad, 0);
-> +	if (ret < 0)
-> +		tuner_err("failed to initialize media entity!\n");
+Acked-by: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
 
-I might return the error back to the caller. The failing initialisation 
-of a media entity itself might not be a fatal problem, but someone later 
-assuming it has been initialised might be.
+Thank you!
 
-> +#endif
->   	return 0;
->   }
->
-> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> index 707db275f92b..5ffde035789b 100644
-> --- a/include/uapi/linux/media.h
-> +++ b/include/uapi/linux/media.h
-> @@ -66,6 +66,8 @@ struct media_device_info {
->   /* A converter of analogue video to its digital representation. */
->   #define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV + 4)
->
-> +#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV + 5)
-> +
->   #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
->
->   struct media_entity_desc {
->
+> 
+> Other than than,
+> 
+> Acked-by: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+> 
+> -- Steve
+> 
+> 
+>> +
+>>  all:
+>>  
+>> +install:
+>> +ifdef INSTALL_KSFT_PATH
+>> +	install ./ftracetest $(INSTALL_KSFT_PATH)
+>> +	@cp -r test.d $(INSTALL_KSFT_PATH)
+>> +	echo "$(TEST_STR)" >> $(KSELFTEST)
+>> +endif
+>> +
+>>  run_tests:
+>> -	@/bin/sh ./ftracetest || echo "ftrace selftests: [FAIL]"
+>> +	@$(TEST_STR)
+>>  
+>>  clean:
+>>  	rm -rf logs/*
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+> 
+
 
 -- 
-Kind regards,
-
-Sakari Ailus
-sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
