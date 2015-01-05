@@ -1,86 +1,75 @@
-From: David Drysdale <drysdale@google.com>
-Subject: [PATCH] selftests/exec: allow shell return code of 126
-Date: Mon,  5 Jan 2015 11:19:46 +0000
-Message-ID: <1420456786-5989-1-git-send-email-drysdale@google.com>
-Return-path: <linux-m68k-owner@vger.kernel.org>
-Sender: linux-m68k-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, Geert Uytterhoeven <geert@linux-m68k.org>, Andreas Schwab <schwab@linux-m68k.org>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Andrew Morton <akpm@linux-foundation.org>, linux-m68k@lists.linux-m68k.org, linux-api@vger.kernel.org, David Drysdale <drysdale@google.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v4 1/3] perf: Use monotonic clock as a source for
+ timestamps
+Date: Mon, 5 Jan 2015 14:00:35 +0100
+Message-ID: <20150105130035.GP30905@twins.programming.kicks-ass.net>
+References: <1415292718-19785-1-git-send-email-pawel.moll@arm.com>
+ <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pawel Moll <pawel.moll@arm.com>
+Cc: Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Christopher Covington <cov@codeaurora.org>, Namhyung Kim <namhyung@kernel.org>, David Ahern <dsahern@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Tomeu Vizoso <tomeu@tomeuvizoso.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-When the shell fails to invoke a script because its path name
-is too long (ENAMETOOLONG), most shells return 127 to indicate
-command not found.  However, some systems report 126 (which POSIX
-suggests should indicate a non-executable file) for this case,
-so allow that too.
+On Thu, Nov 06, 2014 at 04:51:56PM +0000, Pawel Moll wrote:
+>  Documentation/kernel-parameters.txt |  9 +++++++++
+>  kernel/events/core.c                | 37 +++++++++++++++++++++++++++++++++++++
+>  2 files changed, 46 insertions(+)
 
-Reported-by: Geert Uytterhoeven <geert@linux-m68k.org>
-Signed-off-by: David Drysdale <drysdale@google.com>
----
- tools/testing/selftests/exec/execveat.c | 28 ++++++++++++++++++++++------
- 1 file changed, 22 insertions(+), 6 deletions(-)
+> diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
+> index 4c81a86..8ead8d8 100644
+> --- a/Documentation/kernel-parameters.txt
+> +++ b/Documentation/kernel-parameters.txt
 
-diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
-index d273624c93a6..0d940c6e26bd 100644
---- a/tools/testing/selftests/exec/execveat.c
-+++ b/tools/testing/selftests/exec/execveat.c
-@@ -62,7 +62,7 @@ static int _check_execveat_fail(int fd, const char *path, int flags,
- }
- 
- static int check_execveat_invoked_rc(int fd, const char *path, int flags,
--				     int expected_rc)
-+				     int expected_rc, int expected_rc2)
- {
- 	int status;
- 	int rc;
-@@ -99,9 +99,19 @@ static int check_execveat_invoked_rc(int fd, const char *path, int flags,
- 		return 1;
- 	}
- 	if (WEXITSTATUS(status) != expected_rc) {
--		printf("[FAIL] (child %d exited with %d not %d)\n",
--			child, WEXITSTATUS(status), expected_rc);
--		return 1;
-+		if (expected_rc != expected_rc2) {
-+			if (WEXITSTATUS(status) != expected_rc2) {
-+				printf("[FAIL] (child %d exited with %d;"
-+					" not %d nor %d)\n",
-+					child, WEXITSTATUS(status),
-+					expected_rc, expected_rc2);
-+				return 1;
-+			}
-+		} else {
-+			printf("[FAIL] (child %d exited with %d not %d)\n",
-+				child, WEXITSTATUS(status), expected_rc);
-+			return 1;
-+		}
- 	}
- 	printf("[OK]\n");
- 	return 0;
-@@ -109,7 +119,7 @@ static int check_execveat_invoked_rc(int fd, const char *path, int flags,
- 
- static int check_execveat(int fd, const char *path, int flags)
- {
--	return check_execveat_invoked_rc(fd, path, flags, 99);
-+	return check_execveat_invoked_rc(fd, path, flags, 99, 99);
- }
- 
- static char *concat(const char *left, const char *right)
-@@ -192,9 +202,15 @@ static int check_execveat_pathmax(int dot_dfd, const char *src, int is_script)
- 	 * Execute as a long pathname relative to ".".  If this is a script,
- 	 * the interpreter will launch but fail to open the script because its
- 	 * name ("/dev/fd/5/xxx....") is bigger than PATH_MAX.
-+	 *
-+	 * The failure code is usually 127 (POSIX: "If a command is not found,
-+	 * the exit status shall be 127."), but some systems give 126 (POSIX:
-+	 * "If the command name is found, but it is not an executable utility,
-+	 * the exit status shall be 126."), so allow either.
- 	 */
- 	if (is_script)
--		fail += check_execveat_invoked_rc(dot_dfd, longpath, 0, 127);
-+		fail += check_execveat_invoked_rc(dot_dfd, longpath, 0,
-+						  127, 126);
- 	else
- 		fail += check_execveat(dot_dfd, longpath, 0);
- 
--- 
-2.2.0.rc0.207.ga3a616c
+> @@ -2763,6 +2764,14 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
+>  			allocator.  This parameter is primarily	for debugging
+>  			and performance comparison.
+>  
+> +	perf_use_local_clock
+> +			[PERF]
+> +			Use local_clock() as a source for perf timestamps
+> +			generation. This was be the default behaviour and
+> +			this parameter can be used to maintain backward
+> +			compatibility or on older hardware with expensive
+> +			monotonic clock source.
+> +
+>  	pf.		[PARIDE]
+>  			See Documentation/blockdev/paride.txt.
+
+So I'm always terminally confused on the naming of kernel parameters,
+sometimes things are modules (even when they're not actually =m capable)
+and get a module::foo naming or so and sometimes they're not.
+
+So we want to use the module naming thing or not?
+
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index 2b02c9f..5d0aa03 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+
+> @@ -322,8 +323,41 @@ extern __weak const char *perf_pmu_name(void)
+>  	return "pmu";
+>  }
+>  
+> +static bool perf_use_local_clock;
+> +static int __init perf_use_local_clock_setup(char *__unused)
+> +{
+> +	perf_use_local_clock = true;
+> +	return 1;
+> +}
+> +__setup("perf_use_local_clock", perf_use_local_clock_setup);
+
+>  static inline u64 perf_clock(void)
+>  {
+> +	if (likely(!perf_use_local_clock))
+> +		return ktime_get_mono_fast_ns();
+> +
+>  	return local_clock();
+>  }
+
+Since this all is boot time, should we not use things like static_key
+and avoid the 'pointless' conditional at runtime?
