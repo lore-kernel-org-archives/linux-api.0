@@ -1,75 +1,68 @@
-From: David Decotigny <ddecotig@gmail.com>
-Subject: Re: [PATCH net-next v1 0/7] net: extend ethtool link mode bitmaps to
- 48 bits
-Date: Mon, 5 Jan 2015 10:16:35 -0800
-Message-ID: <CAG88wWZMPNb+mw-T1DNgHn=n8MeimEDY+KJ15KGbvoZMuKeQBw@mail.gmail.com>
-References: <1420405017-23278-1-git-send-email-ddecotig@gmail.com>
- <1420408540.5686.140.camel@decadent.org.uk> <CAHo-Ooxi8V_58b456vePY9_7ChuBe0jxEVHvGkGvRBpAR744yA@mail.gmail.com>
- <1420425003.5686.155.camel@decadent.org.uk>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH] selftests/exec: allow shell return code of 126
+Date: Mon, 05 Jan 2015 12:03:39 -0700
+Message-ID: <54AAE00B.1020809@osg.samsung.com>
+References: <1420456786-5989-1-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1420425003.5686.155.camel@decadent.org.uk>
-Sender: netdev-owner@vger.kernel.org
-To: Ben Hutchings <ben@decadent.org.uk>
-Cc: =?UTF-8?Q?Maciej_=C5=BBenczykowski?= <zenczykowski@gmail.com>, Amir Vadai <amirv@mellanox.com>, Florian Fainelli <f.fainelli@gmail.com>, Linux NetDev <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Jason Wang <jasowang@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Al Viro <viro@zeniv.linux.org.uk>, Masatake YAMATO <yamato@redhat.com>, Xi Wang <xii@google.com>, Neil Horman <nhorman@tuxdriver.com>, WANG Cong <xiyou.wangcong@gmail.com>, Flavio Leitner <fbl@redhat.com>, Tom Gundersen <teg@jklm.no>, Jiri Pirko <jiri@resnulli.us>, Vlad Yasevich <vyasevic@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Saeed Mahameed <saeedm@mellanox.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@emulex.com>, Govindarajulu
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1420456786-5989-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Andreas Schwab <schwab-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-m68k-cunTk1MwBs8S/qaLPR03pWD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Thanks Ben, I will send an updated version.
+On 01/05/2015 04:19 AM, David Drysdale wrote:
+> When the shell fails to invoke a script because its path name
+> is too long (ENAMETOOLONG), most shells return 127 to indicate
+> command not found.  However, some systems report 126 (which POSIX
+> suggests should indicate a non-executable file) for this case,
+> so allow that too.
+> 
+> Reported-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+> Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> ---
+>  tools/testing/selftests/exec/execveat.c | 28 ++++++++++++++++++++++------
+>  1 file changed, 22 insertions(+), 6 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
+> index d273624c93a6..0d940c6e26bd 100644
+> --- a/tools/testing/selftests/exec/execveat.c
+> +++ b/tools/testing/selftests/exec/execveat.c
+> @@ -62,7 +62,7 @@ static int _check_execveat_fail(int fd, const char *path, int flags,
+>  }
+>  
+>  static int check_execveat_invoked_rc(int fd, const char *path, int flags,
+> -				     int expected_rc)
+> +				     int expected_rc, int expected_rc2)
 
-About rejecting high bits in drivers that don't support them: a basic
-fix (in a separate patch series) could be something like follows in
-ethtool_set_settings callbacks:  if (ecmd->advertising_hi) return
--EINVAL; with comments. But I don't find it very nice. Or: allocate a
-new net_device::priv_flags bit and ask net/core/ethtool.c to accept
-high advertising bits only when this flag is set? Any preference/other
-options?
+This logic doesn't scale well if there other expected return
+values to account for. Please think about a re-write to handle
+multiple expected return codes.
 
-Related: lately, each new class of link modes declared =3D=3D 4 new bit=
-s
-allocated. At current pace these 16 new bits buy us only 4 new
-classes, ie. a little more than 5 years if I extrapolate from the
-recent past. Is the longer term plan to create a new ethtool ioctl
-command specialized in link modes with variable length masks? Or to
-switch to a brand new netlink interface altogether and take advantage
-of that to revisit the link mode reporting/configuration with variable
-length masks?
 
-On Sun, Jan 4, 2015 at 6:30 PM, Ben Hutchings <ben@decadent.org.uk> wro=
-te:
-> On Mon, 2015-01-05 at 01:34 +0100, Maciej =C5=BBenczykowski wrote:
->> >> I can send updates to other drivers, even though it's rather poin=
-tless
->> >> to update 1G drivers at this point for example. Please let me kno=
-w,
->> >> but I'd prefer to do this in follow-up patches outside this first
->> >> patch series.
->> > [...]
->> >
->> > They should be changed to ensure they reject setting any of the hi=
-gh
->> > advertising flags, but it's not urgent.
->>
->> if old drivers advertised a get/set_bits function while new drivers
->> advertised a get/set_new_bits function,
->> you could not updated any old drivers, and simply take care of
->> rejecting invalid bits in core, by calling set_new_bits if provided,
->> if not, rejecting bad bits and calling set_bits if no bad bits were
->> set.
->
-> We've never checked that the reserved fields are zero before, and I
-> think there are still drivers that don't fully validate the existing =
-32
-> bits.  So while I think drivers should fully validate the advertising
-> flags, userland generally can't assume they do.  And therefore I don'=
-t
-> think it's worth adding complexity to the ethtool core that only part=
-ly
-> fixes this.
->
-> Ben.
->
-> --
-> Ben Hutchings
-> This sentence contradicts itself - no actually it doesn't.
+>  {
+>  	int status;
+>  	int rc;
+> @@ -99,9 +99,19 @@ static int check_execveat_invoked_rc(int fd, const char *path, int flags,
+>  		return 1;
+>  	}
+>  	if (WEXITSTATUS(status) != expected_rc) {
+> -		printf("[FAIL] (child %d exited with %d not %d)\n",
+> -			child, WEXITSTATUS(status), expected_rc);
+> -		return 1;
+> +		if (expected_rc != expected_rc2) {
+
+Please collapse expected_rc and expected_rc2 checks. You can rephrase
+the error message to work for both cases.
+
+thanks,
+-- Shuah
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
