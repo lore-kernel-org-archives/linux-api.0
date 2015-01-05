@@ -1,82 +1,168 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH v3 05/20] selftests/ftrace: add install target to enable
- test install
-Date: Mon, 05 Jan 2015 11:06:13 -0700
-Message-ID: <54AAD295.6040208@osg.samsung.com>
-References: <cover.1419387513.git.shuahkh@osg.samsung.com> <e84eeeecde70ecb3ab82c5f825fec359f9e967ff.1419387513.git.shuahkh@osg.samsung.com> <20150102104526.29df5641@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20150102104526.29df5641@gandalf.local.home>
-Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>
+From: Soren Brinkmann <soren.brinkmann@xilinx.com>
+Subject: [PATCH RESEND v3] gpio: lib-sysfs: Add 'wakeup' attribute
+Date: Mon,  5 Jan 2015 10:16:19 -0800
+Message-ID: <1420481779-22841-1-git-send-email-soren.brinkmann@xilinx.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Linus Walleij <linus.walleij@linaro.org>
+Cc: Alexandre Courbot <gnurou@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-gpio@vger.kernel.org, linux-doc@vger.kernel.org, Soren Brinkmann <soren.brinkmann@xilinx.com>
 List-Id: linux-api@vger.kernel.org
 
-On 01/02/2015 08:45 AM, Steven Rostedt wrote:
-> On Wed, 24 Dec 2014 09:27:41 -0700
-> Shuah Khan <shuahkh@osg.samsung.com> wrote:
-> 
->> Add a new make target to enable installing test. This target
->> installs test in the kselftest install location and add to the
->> kselftest script to run the test. Install target can be run
->> only from top level kernel source directory.
->>
->> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
->> ---
->>  tools/testing/selftests/ftrace/Makefile | 11 ++++++++++-
->>  1 file changed, 10 insertions(+), 1 deletion(-)
->>
->> diff --git a/tools/testing/selftests/ftrace/Makefile b/tools/testing/selftests/ftrace/Makefile
->> index 76cc9f1..7c7cf42 100644
->> --- a/tools/testing/selftests/ftrace/Makefile
->> +++ b/tools/testing/selftests/ftrace/Makefile
->> @@ -1,7 +1,16 @@
->> +TEST_STR = /bin/sh ./ftracetest || echo ftrace selftests: [FAIL]
-> 
-> Is it ok that this removes the quotes around the echo string? I don't
-> see anything wrong about it, but I don't know if there's a shell out
-> there that will fail due to it.
+Add an attribute 'wakeup' to the GPIO sysfs interface which allows
+marking/unmarking a GPIO as wake IRQ.
+The file 'wakeup' is created in each exported GPIOs directory, if an IRQ
+is associated with that GPIO and the irqchip implements set_wake().
+Writing 'enabled' to that file will enable wake for that GPIO, while
+writing 'disabled' will disable wake.
+Reading that file will return either 'disabled' or 'enabled' depening on
+the currently set flag for the GPIO's IRQ.
 
-Right. both sh and bash are fine without the quotes. In this case there
-are no variables to interpret, so quotes don't do anything. I might as
-well play it safe. I will have to fix a few other tests to address this
-comment. Will generate v4s for a few tests in this series.
+Signed-off-by: Soren Brinkmann <soren.brinkmann@xilinx.com>
+Reviewed-by: Alexandre Courbot <acourbot@nvidia.com>
+---
+v3:
+ - add documentation
+v2:
+ - fix error path to unlock mutex before return
+---
+ Documentation/ABI/testing/sysfs-gpio |  1 +
+ Documentation/gpio/sysfs.txt         |  8 ++++
+ drivers/gpio/gpiolib-sysfs.c         | 77 +++++++++++++++++++++++++++++++++---
+ 3 files changed, 80 insertions(+), 6 deletions(-)
 
-Thanks,
--- Shuah
-
-> 
-> Other than than,
-> 
-> Acked-by: Steven Rostedt <rostedt@goodmis.org>
-> 
-> -- Steve
-> 
-> 
->> +
->>  all:
->>  
->> +install:
->> +ifdef INSTALL_KSFT_PATH
->> +	install ./ftracetest $(INSTALL_KSFT_PATH)
->> +	@cp -r test.d $(INSTALL_KSFT_PATH)
->> +	echo "$(TEST_STR)" >> $(KSELFTEST)
->> +endif
->> +
->>  run_tests:
->> -	@/bin/sh ./ftracetest || echo "ftrace selftests: [FAIL]"
->> +	@$(TEST_STR)
->>  
->>  clean:
->>  	rm -rf logs/*
-> 
-
-
+diff --git a/Documentation/ABI/testing/sysfs-gpio b/Documentation/ABI/testing/sysfs-gpio
+index 80f4c94c7bef..4cc7f4b3f724 100644
+--- a/Documentation/ABI/testing/sysfs-gpio
++++ b/Documentation/ABI/testing/sysfs-gpio
+@@ -20,6 +20,7 @@ Description:
+ 	    /value ... always readable, writes fail for input GPIOs
+ 	    /direction ... r/w as: in, out (default low); write: high, low
+ 	    /edge ... r/w as: none, falling, rising, both
++	    /wakeup ... r/w as: enabled, disabled
+ 	/gpiochipN ... for each gpiochip; #N is its first GPIO
+ 	    /base ... (r/o) same as N
+ 	    /label ... (r/o) descriptive, not necessarily unique
+diff --git a/Documentation/gpio/sysfs.txt b/Documentation/gpio/sysfs.txt
+index c2c3a97f8ff7..f703377d528f 100644
+--- a/Documentation/gpio/sysfs.txt
++++ b/Documentation/gpio/sysfs.txt
+@@ -97,6 +97,14 @@ and have the following read/write attributes:
+ 		for "rising" and "falling" edges will follow this
+ 		setting.
+ 
++	"wakeup" ... reads as either "enabled" or "disabled". Write these
++		strings to set/clear the 'wakeup' flag of the IRQ associated
++		with this GPIO. If the IRQ has the 'wakeup' flag set, it can
++		wake the system from sleep states.
++
++		This file exists only if the pin can generate interrupts and
++		the driver implements the required infrastructure.
++
+ GPIO controllers have paths like /sys/class/gpio/gpiochip42/ (for the
+ controller implementing GPIOs starting at #42) and have the following
+ read-only attributes:
+diff --git a/drivers/gpio/gpiolib-sysfs.c b/drivers/gpio/gpiolib-sysfs.c
+index 2ac1800b58bb..05a5fc9503bd 100644
+--- a/drivers/gpio/gpiolib-sysfs.c
++++ b/drivers/gpio/gpiolib-sysfs.c
+@@ -286,6 +286,58 @@ found:
+ 
+ static DEVICE_ATTR(edge, 0644, gpio_edge_show, gpio_edge_store);
+ 
++static ssize_t gpio_wakeup_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	ssize_t			status;
++	const struct gpio_desc	*desc = dev_get_drvdata(dev);
++	int			irq = gpiod_to_irq(desc);
++	struct irq_desc		*irq_desc = irq_to_desc(irq);
++
++	mutex_lock(&sysfs_lock);
++
++	if (irqd_is_wakeup_set(&irq_desc->irq_data))
++		status = sprintf(buf, "enabled\n");
++	else
++		status = sprintf(buf, "disabled\n");
++
++	mutex_unlock(&sysfs_lock);
++
++	return status;
++}
++
++static ssize_t gpio_wakeup_store(struct device *dev,
++		struct device_attribute *attr, const char *buf, size_t size)
++{
++	int			ret;
++	unsigned int		on;
++	struct gpio_desc	*desc = dev_get_drvdata(dev);
++	int			irq = gpiod_to_irq(desc);
++
++	mutex_lock(&sysfs_lock);
++
++	if (sysfs_streq("enabled", buf)) {
++		on = true;
++	} else if (sysfs_streq("disabled", buf)) {
++		on = false;
++	} else {
++		mutex_unlock(&sysfs_lock);
++		return -EINVAL;
++	}
++
++	ret = irq_set_irq_wake(irq, on);
++
++	mutex_unlock(&sysfs_lock);
++
++	if (ret)
++		pr_warn("%s: failed to %s wake\n", __func__,
++				on ? "enable" : "disable");
++
++	return size;
++}
++
++static DEVICE_ATTR(wakeup, 0644, gpio_wakeup_show, gpio_wakeup_store);
++
+ static int sysfs_set_active_low(struct gpio_desc *desc, struct device *dev,
+ 				int value)
+ {
+@@ -526,7 +578,7 @@ static struct class gpio_class = {
+ int gpiod_export(struct gpio_desc *desc, bool direction_may_change)
+ {
+ 	unsigned long		flags;
+-	int			status;
++	int			status, irq;
+ 	const char		*ioname = NULL;
+ 	struct device		*dev;
+ 	int			offset;
+@@ -582,11 +634,24 @@ int gpiod_export(struct gpio_desc *desc, bool direction_may_change)
+ 			goto fail_unregister_device;
+ 	}
+ 
+-	if (gpiod_to_irq(desc) >= 0 && (direction_may_change ||
+-				       !test_bit(FLAG_IS_OUT, &desc->flags))) {
+-		status = device_create_file(dev, &dev_attr_edge);
+-		if (status)
+-			goto fail_unregister_device;
++	irq = gpiod_to_irq(desc);
++	if (irq >= 0) {
++		struct irq_desc *irq_desc = irq_to_desc(irq);
++		struct irq_chip	*irqchip = irq_desc_get_chip(irq_desc);
++
++		if (direction_may_change ||
++				!test_bit(FLAG_IS_OUT, &desc->flags)) {
++			status = device_create_file(dev, &dev_attr_edge);
++			if (status)
++				goto fail_unregister_device;
++		}
++
++		if (irqchip->flags & IRQCHIP_SKIP_SET_WAKE ||
++				irqchip->irq_set_wake) {
++			status = device_create_file(dev, &dev_attr_wakeup);
++			if (status)
++				goto fail_unregister_device;
++		}
+ 	}
+ 
+ 	set_bit(FLAG_EXPORT, &desc->flags);
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+2.2.1.1.gb42cc81
+
