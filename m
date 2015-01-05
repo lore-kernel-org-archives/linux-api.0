@@ -1,16 +1,16 @@
-From: Stephan Mueller <smueller@chronox.de>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
 Subject: Re: [PATCH v7 1/2] crypto: AF_ALG: add AEAD support
-Date: Mon, 05 Jan 2015 11:54:13 +0100
-Message-ID: <1732600.iOtRA28Mku@tachyon.chronox.de>
+Date: Mon, 05 Jan 2015 12:14:24 +0100
+Message-ID: <4229997.MZP3tP9eGb@tachyon.chronox.de>
 References: <6964260.mNa1jtPz7Z@tachyon.chronox.de> <6798882.ly1QjqTYep@tachyon.chronox.de> <20150105105105.GA25517@gondor.apana.org.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150105105105.GA25517@gondor.apana.org.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, ABI/API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150105105105.GA25517-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 Am Montag, 5. Januar 2015, 21:51:06 schrieb Herbert Xu:
@@ -48,7 +48,9 @@ Hi Herbert,
 > There is no such limit in the kernel interface and we shouldn't
 > be adding one here.
 
-Ok, will do.
+One question: are you aware of an existing mechanism to split one scatterlist 
+into two at a given offset?
+
 > 
 > Cheers,
 
