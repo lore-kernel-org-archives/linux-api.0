@@ -1,146 +1,177 @@
-From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
 Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
-Date: Mon, 5 Jan 2015 14:54:13 -0800
-Message-ID: <CAGr1F2Eej949PiJSUy6wzJR28igK7XbD7dD=E3K_D=JbhapAtQ@mail.gmail.com>
+Date: Mon, 05 Jan 2015 17:53:11 -0600
+Message-ID: <87lhlgpyxk.fsf@x220.int.ebiederm.org>
 References: <1417744550-6461-1-git-send-email-adityakali@google.com>
 	<1417744550-6461-9-git-send-email-adityakali@google.com>
-	<548AAD42.5010002@huawei.com>
+	<548E17CE.8010704@nod.at>
+	<CAGr1F2HA6mzFwgp5ngX8P7=198-5CmCjLmuCJ8j3eQ08J2d9Qw@mail.gmail.com>
+	<54AB15BD.8020007@nod.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <548AAD42.5010002-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Zefan Li <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54AB15BD.8020007-/L3Ra7n9ekc@public.gmane.org> (Richard Weinberger's message of "Mon,
+	05 Jan 2015 23:52:45 +0100")
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+Cc: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Rohit Jnagal <jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Thanks for the review. I have made the suggested fixes. Regarding
-relative path, please see inline.
+Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
 
-On Fri, Dec 12, 2014 at 12:54 AM, Zefan Li <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
->> +In its current form, the cgroup namespaces patcheset provides following
->> +behavior:
->> +
->> +(1) The 'cgroupns-root' for a cgroup namespace is the cgroup in which
->> +    the process calling unshare is running.
->> +    For ex. if a process in /batchjobs/container_id1 cgroup calls unshare,
->> +    cgroup /batchjobs/container_id1 becomes the cgroupns-root.
->> +    For the init_cgroup_ns, this is the real root ('/') cgroup
->> +    (identified in code as cgrp_dfl_root.cgrp).
->> +
->> +(2) The cgroupns-root cgroup does not change even if the namespace
->> +    creator process later moves to a different cgroup.
->> +    $ ~/unshare -c # unshare cgroupns in some cgroup
->> +    [ns]$ cat /proc/self/cgroup
->> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/
->> +    [ns]$ mkdir sub_cgrp_1
->> +    [ns]$ echo 0 > sub_cgrp_1/cgroup.procs
->> +    [ns]$ cat /proc/self/cgroup
->> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/sub_cgrp_1
->> +
->> +(3) Each process gets its CGROUPNS specific view of /proc/<pid>/cgroup
->> +(a) Processes running inside the cgroup namespace will be able to see
->> +    cgroup paths (in /proc/self/cgroup) only inside their root cgroup
->> +    [ns]$ sleep 100000 &  # From within unshared cgroupns
->> +    [1] 7353
->> +    [ns]$ echo 7353 > sub_cgrp_1/cgroup.procs
->> +    [ns]$ cat /proc/7353/cgroup
->> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/sub_cgrp_1
->> +
->> +(b) From global cgroupns, the real cgroup path will be visible:
->> +    $ cat /proc/7353/cgroup
->> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1/sub_cgrp_1
->> +
->> +(c) From a sibling cgroupns (cgroupns root-ed at a different cgroup), cgroup
->> +    path relative to its own cgroupns-root will be shown:
->> +    # ns2's cgroupns-root is at '/batchjobs/container_id2'
->> +    [ns2]$ cat /proc/7353/cgroup
->> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/../container_id2/sub_cgrp_1
+> Am 05.01.2015 um 23:48 schrieb Aditya Kali:
+>> On Sun, Dec 14, 2014 at 3:05 PM, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> wrote:
+>>> Aditya,
+>>>
+>>> I gave your patch set a try but it does not work for me.
+>>> Maybe you can bring some light into the issues I'm facing.
+>>> Sadly I still had no time to dig into your code.
+>>>
+>>> Am 05.12.2014 um 02:55 schrieb Aditya Kali:
+>>>> Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>>>> ---
+>>>>  Documentation/cgroups/namespace.txt | 147 ++++++++++++++++++++++++++++++++++++
+>>>>  1 file changed, 147 insertions(+)
+>>>>  create mode 100644 Documentation/cgroups/namespace.txt
+>>>>
+>>>> diff --git a/Documentation/cgroups/namespace.txt b/Documentation/cgroups/namespace.txt
+>>>> new file mode 100644
+>>>> index 0000000..6480379
+>>>> --- /dev/null
+>>>> +++ b/Documentation/cgroups/namespace.txt
+>>>> @@ -0,0 +1,147 @@
+>>>> +                     CGroup Namespaces
+>>>> +
+>>>> +CGroup Namespace provides a mechanism to virtualize the view of the
+>>>> +/proc/<pid>/cgroup file. The CLONE_NEWCGROUP clone-flag can be used with
+>>>> +clone() and unshare() syscalls to create a new cgroup namespace.
+>>>> +The process running inside the cgroup namespace will have its /proc/<pid>/cgroup
+>>>> +output restricted to cgroupns-root. cgroupns-root is the cgroup of the process
+>>>> +at the time of creation of the cgroup namespace.
+>>>> +
+>>>> +Prior to CGroup Namespace, the /proc/<pid>/cgroup file used to show complete
+>>>> +path of the cgroup of a process. In a container setup (where a set of cgroups
+>>>> +and namespaces are intended to isolate processes), the /proc/<pid>/cgroup file
+>>>> +may leak potential system level information to the isolated processes.
+>>>> +
+>>>> +For Example:
+>>>> +  $ cat /proc/self/cgroup
+>>>> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1
+>>>> +
+>>>> +The path '/batchjobs/container_id1' can generally be considered as system-data
+>>>> +and its desirable to not expose it to the isolated process.
+>>>> +
+>>>> +CGroup Namespaces can be used to restrict visibility of this path.
+>>>> +For Example:
+>>>> +  # Before creating cgroup namespace
+>>>> +  $ ls -l /proc/self/ns/cgroup
+>>>> +  lrwxrwxrwx 1 root root 0 2014-07-15 10:37 /proc/self/ns/cgroup -> cgroup:[4026531835]
+>>>> +  $ cat /proc/self/cgroup
+>>>> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1
+>>>> +
+>>>> +  # unshare(CLONE_NEWCGROUP) and exec /bin/bash
+>>>> +  $ ~/unshare -c
+>>>> +  [ns]$ ls -l /proc/self/ns/cgroup
+>>>> +  lrwxrwxrwx 1 root root 0 2014-07-15 10:35 /proc/self/ns/cgroup -> cgroup:[4026532183]
+>>>> +  # From within new cgroupns, process sees that its in the root cgroup
+>>>> +  [ns]$ cat /proc/self/cgroup
+>>>> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/
+>>>> +
+>>>> +  # From global cgroupns:
+>>>> +  $ cat /proc/<pid>/cgroup
+>>>> +  0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/batchjobs/container_id1
+>>>> +
+>>>> +  # Unshare cgroupns along with userns and mountns
+>>>> +  # Following calls unshare(CLONE_NEWCGROUP|CLONE_NEWUSER|CLONE_NEWNS), then
+>>>> +  # sets up uid/gid map and execs /bin/bash
+>>>> +  $ ~/unshare -c -u -m
+>>>
+>>> This command does not issue CLONE_NEWUSER, -U does.
+>>>
+>> I was using a custom unshare binary. But I will update the command
+>> line to be similar to the one in util-linux.
+>> 
+>>>> +  # Originally, we were in /batchjobs/container_id1 cgroup. Mount our own cgroup
+>>>> +  # hierarchy.
+>>>> +  [ns]$ mount -t cgroup cgroup /tmp/cgroup
+>>>> +  [ns]$ ls -l /tmp/cgroup
+>>>> +  total 0
+>>>> +  -r--r--r-- 1 root root 0 2014-10-13 09:32 cgroup.controllers
+>>>> +  -r--r--r-- 1 root root 0 2014-10-13 09:32 cgroup.populated
+>>>> +  -rw-r--r-- 1 root root 0 2014-10-13 09:25 cgroup.procs
+>>>> +  -rw-r--r-- 1 root root 0 2014-10-13 09:32 cgroup.subtree_control
+>>>
+>>> I've patched libvirt-lxc to issue CLONE_NEWCGROUP and not bind mount cgroupfs into a container.
+>>> But I'm unable to mount cgroupfs within the container, mount(2) is failing with EINVAL.
+>>> And /proc/self/cgroup still shows the cgroup from outside.
+>>>
+>>> ---cut---
+>>> container:/ # ls /sys/fs/cgroup/
+>>> container:/ # mount -t cgroup none /sys/fs/cgroup/
+>> 
+>> You need to provide "-o __DEVEL_sane_behavior" flag. Inside the
+>> container, only unified hierarchy can be mounted. So, for now, that
+>> flag is needed. I will fix the documentation too.
+>> 
+>>> mount: wrong fs type, bad option, bad superblock on none,
+>>>        missing codepage or helper program, or other error
+>>>
+>>>        In some cases useful info is found in syslog - try
+>>>        dmesg | tail or so.
+>>> container:/ # cat /proc/self/cgroup
+>>> 8:memory:/machine/test00.libvirt-lxc
+>>> 7:devices:/machine/test00.libvirt-lxc
+>>> 6:hugetlb:/
+>>> 5:cpuset:/machine/test00.libvirt-lxc
+>>> 4:blkio:/machine/test00.libvirt-lxc
+>>> 3:cpu,cpuacct:/machine/test00.libvirt-lxc
+>>> 2:freezer:/machine/test00.libvirt-lxc
+>>> 1:name=systemd:/user.slice/user-0.slice/session-c2.scope
+>>> container:/ # ls -la /proc/self/ns
+>>> total 0
+>>> dr-x--x--x 2 root root 0 Dec 14 23:02 .
+>>> dr-xr-xr-x 8 root root 0 Dec 14 23:02 ..
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:02 cgroup -> cgroup:[4026532240]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:02 ipc -> ipc:[4026532238]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:02 mnt -> mnt:[4026532235]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:02 net -> net:[4026532242]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:02 pid -> pid:[4026532239]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:02 user -> user:[4026532234]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:02 uts -> uts:[4026532236]
+>>> container:/ #
+>>>
+>>> #host side
+>>> lxc-os132:~ # ls -la /proc/self/ns
+>>> total 0
+>>> dr-x--x--x 2 root root 0 Dec 14 23:56 .
+>>> dr-xr-xr-x 8 root root 0 Dec 14 23:56 ..
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:56 cgroup -> cgroup:[4026531835]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:56 ipc -> ipc:[4026531839]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:56 mnt -> mnt:[4026531840]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:56 net -> net:[4026531957]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:56 pid -> pid:[4026531836]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:56 user -> user:[4026531837]
+>>> lrwxrwxrwx 1 root root 0 Dec 14 23:56 uts -> uts:[4026531838]
+>>> ---cut---
+>>>
+>>> Any ideas?
+>>>
+>> 
+>> Please try with "-o __DEVEL_sane_behavior" flag to the mount command.
 >
-> Should be ../container_id1/sub_cgrp_1 ?
->
+> Ohh, this renders the whole patch useless for me as systemd needs the "old/default" behavior of cgroups. :-(
+> I really hoped that cgroup namespaces will help me running systemd in a sane way within Linux containers.
 
-Starting with '/' was deliberate.
+Ugh.  It sounds like there is a real mess here.  At the very least there
+is misunderstanding.
 
->> +
->> +    Note that the relative path always starts with '/' to indicate that its
->> +    relative to the cgroupns-root of the caller.
->
-> If a path doesn't start with '/', then it's a relative path, so why make it start with '/'?
->
+I have a memory that systemd should have been able to use a unified
+hierarchy.  As you could still mount the different controllers
+independently (they just use the same directory structure on each
+mount).
 
-This is so as not to surprise the apps parsing /proc/<pid>/cgroup
-files and using the path in it as absolute path. The existing paths
-there always start with '/' right now. Retaining the '/' means path
-generated by userspace continuous to work. Does this makes sense?
+That said from a practical standpoint I am not certain that a cgroup
+namespace is viable if it can not support the behavior of cgroupsfs
+that everyone is using.
 
->> +
->> +(4) Processes inside a cgroupns can move in-and-out of the cgroupns-root
->> +    (if they have proper access to external cgroups).
->> +    # From inside cgroupns (with cgroupns-root at /batchjobs/container_id1), and
->> +    # assuming that the global hierarchy is still accessible inside cgroupns:
->> +    $ cat /proc/7353/cgroup
->> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/sub_cgrp_1
->> +    $ echo 7353 > batchjobs/container_id2/cgroup.procs
->> +    $ cat /proc/7353/cgroup
->> +    0:cpuset,cpu,cpuacct,memory,devices,freezer,hugetlb:/../container_id2
->> +
->> +    Note that this kind of setup is not encouraged. A task inside cgroupns
->> +    should only be exposed to its own cgroupns hierarchy. Otherwise it makes
->> +    the virtualization of /proc/<pid>/cgroup less useful.
->> +
->> +(5) Setns to another cgroup namespace is allowed when:
->> +    (a) the process has CAP_SYS_ADMIN in its current userns
->> +    (b) the process has CAP_SYS_ADMIN in the target cgroupns' userns
->> +    No implicit cgroup changes happen with attaching to another cgroupns. It
->> +    is expected that the somone moves the attaching process under the target
->> +    cgroupns-root.
->> +
->
-> s/the somone/someone
->
-fixed.
-
->> +(6) When some thread from a multi-threaded process unshares its
->> +    cgroup-namespace, the new cgroupns gets applied to the entire
->> +    process (all the threads). This should be OK since
->> +    unified-hierarchy only allows process-level containerization. So
->> +    all the threads in the process will have the same cgroup.
->> +
->> +(7) The cgroup namespace is alive as long as there is atleast 1
->
-> s/atelast/at least
->
-fixed.
-
->> +    process inside it. When the last process exits, the cgroup
->> +    namespace is destroyed. The cgroupns-root and the actual cgroups
->> +    remain though.
->> +
->> +(8) Namespace specific cgroup hierarchy can be mounted by a process running
->> +    inside cgroupns:
->> +    $ mount -t cgroup -o __DEVEL__sane_behavior cgroup $MOUNT_POINT
->> +
->> +    This will mount the unified cgroup hierarchy with cgroupns-root as the
->> +    filesystem root. The process needs CAP_SYS_ADMIN in its userns and mntns.
->> +
->>
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe cgroups" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
-Thanks!
--- 
-Aditya
+Eric
