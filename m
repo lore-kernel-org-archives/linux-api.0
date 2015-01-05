@@ -1,8 +1,8 @@
 From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v4 1/4] devicetree: power/mfd: max77693: Document new bindings
- for charger
-Date: Mon, 05 Jan 2015 11:16:56 +0100
-Message-ID: <1420453019-28614-2-git-send-email-k.kozlowski@samsung.com>
+Subject: [PATCH v4 4/4] Documentation: power: max77693-charger: Document
+ exported sysfs entry
+Date: Mon, 05 Jan 2015 11:16:59 +0100
+Message-ID: <1420453019-28614-5-git-send-email-k.kozlowski@samsung.com>
 References: <1420453019-28614-1-git-send-email-k.kozlowski@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1420453019-28614-1-git-send-email-k.kozlowski@samsung.com>
@@ -11,73 +11,66 @@ To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmai
 Cc: Krzysztof Kozlowski <k.kozlowski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Document new device tree bindings for Maxim 77693 charger driver.
+Document the settings exported by max77693 charger driver through sysfs
+entries:
+ - fast_charge_timer
+ - top_off_threshold_current
+ - top_off_timer
 
 Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
 ---
- Documentation/devicetree/bindings/mfd/max77693.txt | 45 ++++++++++++++++++++++
- 1 file changed, 45 insertions(+)
+ Documentation/ABI/testing/sysfs-class-power | 42 +++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-diff --git a/Documentation/devicetree/bindings/mfd/max77693.txt b/Documentation/devicetree/bindings/mfd/max77693.txt
-index 01e9f30fe678..38e64405e98d 100644
---- a/Documentation/devicetree/bindings/mfd/max77693.txt
-+++ b/Documentation/devicetree/bindings/mfd/max77693.txt
-@@ -41,6 +41,41 @@ Optional properties:
- 	 To get more informations, please refer to documentaion.
- 	[*] refer Documentation/devicetree/bindings/pwm/pwm.txt
- 
-+- charger : Node configuring the charger driver.
-+  If present, required properties:
-+  - compatible : Must be "maxim,max77693-charger".
+diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
+index 909e7602c717..369d2a2d7d3e 100644
+--- a/Documentation/ABI/testing/sysfs-class-power
++++ b/Documentation/ABI/testing/sysfs-class-power
+@@ -32,3 +32,45 @@ Description:
+ 		Valid values:
+ 		- 5, 6 or 7 (hours),
+ 		- 0: disabled.
 +
-+  Optional properties (if not set, defaults will be used):
-+  - maxim,constant-microvolt : Battery constant voltage in uV. The charger
-+    will operate in fast charge constant current mode till battery voltage
-+    reaches this level. Then the charger will switch to fast charge constant
-+    voltage mode. Also vsys (system voltage) will be set to this value when
-+    DC power is supplied but charger is not enabled.
-+    Valid values: 3650000 - 4400000, step by 25000 (rounded down)
-+    Default: 4200000
++What:		/sys/class/power_supply/max77693-charger/device/fast_charge_timer
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the maximum time the max77693
++		charger operates in fast-charge mode. When the timer expires
++		the device will terminate fast-charge mode (charging current
++		will drop to 0 A) and will trigger interrupt.
 +
-+  - maxim,min-system-microvolt : Minimal system voltage in uV.
-+    Valid values: 3000000 - 3700000, step by 100000 (rounded down)
-+    Default: 3600000
++		Valid values:
++		- 4 - 16 (hours), step by 2 (rounded down)
++		- 0: disabled.
 +
-+  - maxim,thermal-regulation-celsius : Temperature in Celsius for entering
-+    high temperature charging mode. If die temperature exceeds this value
-+    the charging current will be reduced by 105 mA/Celsius.
-+    Valid values: 70, 85, 100, 115
-+    Default: 100
++What:		/sys/class/power_supply/max77693-charger/device/top_off_threshold_current
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the charging current threshold for
++		entering top-off charging mode. When charging current in fast
++		charge mode drops below this value, the charger will trigger
++		interrupt and start top-off charging mode.
 +
-+  - maxim,battery-overcurrent-microamp : Overcurrent protection threshold
-+    in uA (current from battery to system).
-+    Valid values: 2000000 - 3500000, step by 250000 (rounded down)
-+    Default: 3500000
++		Valid values:
++		- 100000 - 200000 (microamps), step by 25000 (rounded down)
++		- 200000 - 350000 (microamps), step by 50000 (rounded down)
++		- 0: disabled.
 +
-+  - maxim,charge-input-threshold-microvolt : Threshold voltage in uV for
-+    triggering input voltage regulation loop. If input voltage decreases
-+    below this value, the input current will be reduced to reach the
-+    threshold voltage.
-+    Valid values: 4300000, 4700000, 4800000, 4900000
-+    Default: 4300000
++What:		/sys/class/power_supply/max77693-charger/device/top_off_timer
++Date:		January 2015
++KernelVersion:	3.19.0
++Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
++Description:
++		This entry shows and sets the maximum time the max77693
++		charger operates in top-off charge mode. When the timer expires
++		the device will terminate top-off charge mode (charging current
++		will drop to 0 A) and will trigger interrupt.
 +
- Example:
- 	max77693@66 {
- 		compatible = "maxim,max77693";
-@@ -73,4 +108,14 @@ Example:
- 			pwms = <&pwm 0 40000 0>;
- 			pwm-names = "haptic";
- 		};
-+
-+		charger {
-+			compatible = "maxim,max77693-charger";
-+
-+			maxim,constant-microvolt = <4200000>;
-+			maxim,min-system-microvolt = <3600000>;
-+			maxim,thermal-regulation-celsius = <75>;
-+			maxim,battery-overcurrent-microamp = <3000000>;
-+			maxim,charge-input-threshold-microvolt = <4300000>;
-+		};
- 	};
++		Valid values:
++		- 0 - 70 (minutes), step by 10 (rounded down)
 -- 
 1.9.1
