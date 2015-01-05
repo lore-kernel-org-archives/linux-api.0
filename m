@@ -1,60 +1,39 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v7 1/2] crypto: AF_ALG: add AEAD support
-Date: Mon, 05 Jan 2015 12:14:24 +0100
-Message-ID: <4229997.MZP3tP9eGb@tachyon.chronox.de>
-References: <6964260.mNa1jtPz7Z@tachyon.chronox.de> <6798882.ly1QjqTYep@tachyon.chronox.de> <20150105105105.GA25517@gondor.apana.org.au>
+From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: Re: [PATCH] selftests/exec: allow shell return code of 126
+Date: Mon, 5 Jan 2015 12:35:04 +0100
+Message-ID: <CAMuHMdWFoSKB9F969_jUhwHQdPiid8QcjeYOSoE8cS9wHewH7A@mail.gmail.com>
+References: <1420456786-5989-1-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150105105105.GA25517-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+In-Reply-To: <1420456786-5989-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andreas Schwab <schwab-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-m68k <linux-m68k-cunTk1MwBs8S/qaLPR03pWD2FQJk+8+b@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Montag, 5. Januar 2015, 21:51:06 schrieb Herbert Xu:
+On Mon, Jan 5, 2015 at 12:19 PM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> When the shell fails to invoke a script because its path name
+> is too long (ENAMETOOLONG), most shells return 127 to indicate
+> command not found.  However, some systems report 126 (which POSIX
+> suggests should indicate a non-executable file) for this case,
+> so allow that too.
 
-Hi Herbert,
+Thanks, after this patch, the execveat selftest succeeds on m68k with
+Debian 4.0.
 
-> On Mon, Jan 05, 2015 at 11:46:50AM +0100, Stephan Mueller wrote:
-> > The need for that check lies in aead_recvmsg:
-> >         /*
-> >         
-> >          * first chunk of input is AD -- one scatterlist entry is one
-> >          page,
-> >          * and we process only one scatterlist, the maximum size of AD is
-> >          * one page
-> >          */
-> >         
-> >         sg_init_table(&assoc, 1);
-> >         sg_set_page(&assoc, sg_page(sg), ctx->aead_assoclen, sg->offset);
-> >         aead_request_set_assoc(&ctx->aead_req, &assoc,
-> >         ctx->aead_assoclen);
-> > 
-> > There you see that I only create an sg table with one entry for the AD. If
-> > we would allow an arbitrary AD size, I would see the need of a for loop
-> > in addition to the one directly beneath this AD scatterlist setting: one
-> > for identifying how many sg entries I need to allocate and one for the
-> > actual assignment.
-> > 
-> > As I felt that one page should be sufficient for the AD, I wanted to avoid
-> > the extra overhead for another for loop.
-> 
-> Please remove the limit as otherwise we would never be able to
-> add support for this in a future kernel as appliations won't be
-> able to rely on it.
-> 
-> There is no such limit in the kernel interface and we shouldn't
-> be adding one here.
+> Reported-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+> Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-One question: are you aware of an existing mechanism to split one scatterlist 
-into two at a given offset?
+Tested-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
 
-> 
-> Cheers,
+Gr{oetje,eeting}s,
 
+                        Geert
 
--- 
-Ciao
-Stephan
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
