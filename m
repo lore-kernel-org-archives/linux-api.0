@@ -1,51 +1,68 @@
-From: John Stultz <john.stultz@linaro.org>
-Subject: Re: [PATCH v4 3/3] perf: Sample additional clock value
-Date: Mon, 5 Jan 2015 11:17:39 -0800
-Message-ID: <CALAqxLV+-XXqvOnKsuyBGD3ak7X8KJ05trW_kRT3WQi5sYzKJQ@mail.gmail.com>
-References: <1415292718-19785-1-git-send-email-pawel.moll@arm.com>
-	<1415292718-19785-4-git-send-email-pawel.moll@arm.com>
-	<20150105134514.GS30905@twins.programming.kicks-ass.net>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: Edited seccomp.2 man page for review [v2]
+Date: Mon, 5 Jan 2015 12:25:40 -0800
+Message-ID: <CAGXu5jKCR8ft=2XNX+SsCOokEqCt9sZizKj4wfAGrXVzf6adcg@mail.gmail.com>
+References: <54A29722.1010901@gmail.com>
+	<CAGXu5j+C0SWQ+CeOb2ADXdsLWorUHahX4UhUg+UGbT6UuWiQFQ@mail.gmail.com>
+	<54A300D0.7090802@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150105134514.GS30905@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Pawel Moll <pawel.moll@arm.com>, Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Christopher Covington <cov@codeaurora.org>, Namhyung Kim <namhyung@kernel.org>, David Ahern <dsahern@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Tomeu Vizoso <tomeu@tomeuvizoso.net>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54A300D0.7090802-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 5, 2015 at 5:45 AM, Peter Zijlstra <peterz@infradead.org> wrote:
-> On Thu, Nov 06, 2014 at 04:51:58PM +0000, Pawel Moll wrote:
->> Currently three clocks are implemented: CLOCK_REALITME = 0,
->> CLOCK_MONOTONIC = 1 and CLOCK_MONOTONIC_RAW = 2. The clock field is
->> 5 bits wide to allow for future extension to custom, non-POSIX clock
->> sources(MAX_CLOCK for those is 16, see include/uapi/linux/time.h) like
->> ARM CoreSight (hardware trace) timestamp generator.
->
->> @@ -304,7 +305,16 @@ struct perf_event_attr {
->>                               mmap2          :  1, /* include mmap with inode data     */
->>                               comm_exec      :  1, /* flag comm events that are due to an exec */
->>                               uevents        :  1, /* allow uevents into the buffer */
->> -                             __reserved_1   : 38;
->> +
->> +                             /*
->> +                              * clock: one of the POSIX clock IDs:
->> +                              *
->> +                              * 0 - CLOCK_REALTIME
->> +                              * 1 - CLOCK_MONOTONIC
->> +                              * 4 - CLOCK_MONOTONIC_RAW
->> +                              */
->> +                             clock          :  5, /* clock type */
->> +                             __reserved_1   : 33;
+On Tue, Dec 30, 2014 at 11:45 AM, Michael Kerrisk (man-pages)
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>> The program counter will be as though the system call happened
+>>> (i.e., it will not point to the system call instruction).
+>>> The return value register will contain an architecture\-dependent value;
+>>> if resuming execution, set it to something sensible.
+>>> .\" FIXME Regarding the preceding line, can you give an example(s)
+>>> .\"       of "something sensible"? (Depending on the answer, maybe it
+>>> .\"       might be useful to add some text on this point.)
 >>
->>       union {
->>               __u32           wakeup_events;    /* wakeup every n events */
+>> This means sensible in the context of the syscall made, or the desired
+>> behavior. For example, setting the return value to ELOOP for something
+>> like a "bind" syscall isn't very sensible.
 >
-> This would put a constraint on actually changing MAX_CLOCKS, are the
-> time people OK with that? Thomas, John?
+> Okay -- I did s/sensible/appropriate for the system call/
 
-Yea, I'd not want to enshrine MAX_CLOCKS if we can avoid it. We're
-getting a bit close to it these days.
+Yes, perfect. That captures it nicely.
 
-thanks
--john
+>>> .\"
+>>> .\" FIXME Please check:
+>>> .\"     In an attempt to make the text clearer, I changed
+>>> .\"     "replacing it with" to "setting the return value register to"
+>>> .\"     Okay?
+>>> (The architecture dependency is because setting the return value register to
+>>> .BR ENOSYS
+>>> could overwrite some useful information.)
+>>
+>> Well, the arch dependency is really because _how_ to change the
+>> register, and the register itself, is different between architectures.
+>> (i.e. which ptrace call is needed, and which register is being
+>> changed.) The overwriting of useful information is certainly true too,
+>> though.
+>
+> So, revert to the previous wording? Or do you have a suggested
+> better wording?
+
+I think the previous wording is better. I'm struggling to produce
+language that makes more sense here.
+
+> Thanks. We're getting close now.
+
+Excellent! :)
+
+-Kees
+
+-- 
+Kees Cook
+Chrome OS Security
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
