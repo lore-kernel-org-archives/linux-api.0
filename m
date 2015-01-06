@@ -1,138 +1,54 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v4 19/20] selftests: add install target to enable test install
-Date: Tue,  6 Jan 2015 12:43:33 -0700
-Message-ID: <5cca2e663023be7e3cc89aab34ffc62012e90045.1420571615.git.shuahkh@osg.samsung.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH v4 13/20] selftests/ptrace: add install target to enable test install
+Date: Tue,  6 Jan 2015 12:43:27 -0700
+Message-ID: <e6e0602db98043998a0059355e4500d0c559953a.1420571615.git.shuahkh@osg.samsung.com>
 References: <cover.1420571615.git.shuahkh@osg.samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1420571615.git.shuahkh@osg.samsung.com>
-In-Reply-To: <cover.1420571615.git.shuahkh@osg.samsung.com>
-References: <cover.1420571615.git.shuahkh@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, masami.hiramatsu.pt@hitachi.com
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1420571615.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1420571615.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1420571615.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mmarek-AlSwsSmVLrQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add a new make target to enable installing selftests. This
-new target will call install targets for the tests that are
-specified in INSTALL_TARGETS. During install, a script is
-generated to run tests that are installed. This script will
-be installed in the selftest install directory. Individual
-test Makefiles are changed to add to the script. This will
-allow new tests to add install and run test commands to the
-generated kselftest script. run_tests target runs the
-generated kselftest script to run tests when it is initiated
-from from "make kselftest" from top level source directory.
+Add a new make target to enable installing test. This target
+installs test in the kselftest install location and add to the
+kselftest script to run the test. Install target can be run
+only from top level kernel source directory.
 
-Approach:
-
-Add a new kselftest_install target:
--- exports kselftest INSTALL_KSFT_PATH
-   default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
--- exports INSTALL_KSFT_PATH
--- runs selftests make kselftest_install target:
-
-selftests make install target
--- Sets up environment for sub-makefiles
--- creates kselftest.sh script in install install dir
--- runs install targets for INSTALL_TARGETS
--- install target can be run only from top level source dir.
-
-Individual test make install targets:
--- install test programs and/or scripts in install dir
--- append to the ksefltest.sh file to add commands to run test
--- install target can be run only from top level source dir.
-
-Adds the following new ways to initiate selftests:
--- Installing and running kselftest from install directory
-   by running  "make kselftest"
--- Running kselftest script from install directory
-
-Maintains the following ways to run tests:
--- make TARGETS=net kselftest
--- make -C tools/testing/selftests run_tests
--- make -C tools/testing/selftests TARGETS=target run_tests
-   Ability specify targets: e.g TARGETS=net
--- make run_tests from tools/testing/selftests
--- make run_tests from individual test directories:
-   e.g: make run_tests in tools/testing/selftests/net
-
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 ---
- tools/testing/selftests/Makefile | 54 +++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 53 insertions(+), 1 deletion(-)
+ tools/testing/selftests/ptrace/Makefile | 16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 4e51122..45661ce 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -22,15 +22,67 @@ TARGETS += vm
- TARGETS_HOTPLUG = cpu-hotplug
- TARGETS_HOTPLUG += memory-hotplug
+diff --git a/tools/testing/selftests/ptrace/Makefile b/tools/testing/selftests/ptrace/Makefile
+index 47ae2d3..6fc352c 100644
+--- a/tools/testing/selftests/ptrace/Makefile
++++ b/tools/testing/selftests/ptrace/Makefile
+@@ -1,10 +1,20 @@
+ CFLAGS += -iquote../../../../include/uapi -Wall
+-peeksiginfo: peeksiginfo.c
  
-+# Used in only run_tests target when make kselftest is run in
-+# top level source directory
-+ifeq "$(origin TARGETS)" "command line"
-+no_install_run=1
-+endif
+-all: peeksiginfo
++TEST_STR = ./peeksiginfo || echo 'peeksiginfo selftests: [FAIL]'
 +
-+ifdef INSTALL_KSFT_PATH
-+KSELFTEST=$(INSTALL_KSFT_PATH)/kselftest.sh
-+export KSELFTEST
-+# TODO add install target for SKIP_INSTALL_TARGETS
-+SKIP_INSTALL_TARGETS = exec powerpc
-+INSTALL_TARGETS = $(filter-out $(SKIP_INSTALL_TARGETS),$(TARGETS)) ipc
-+else
-+no_install_run=1
-+endif
++all:
++	gcc peeksiginfo.c -o peeksiginfo
 +
-+INSTALL_KSFT_ERR = "Run make kselftest_install in top level source directory"
-+
- all:
- 	for TARGET in $(TARGETS); do \
- 		make -C $$TARGET; \
- 	done;
- 
--run_tests: all
 +install:
 +ifdef INSTALL_KSFT_PATH
-+	rm -rf $(INSTALL_KSFT_PATH)
-+	mkdir -p $(INSTALL_KSFT_PATH)
-+
-+	make all
-+	@echo "#!/bin/sh\n# Kselftest Run Tests ...." >> $(KSELFTEST)
-+	@echo "# This file is generated by kselftest_install" >> $(KSELFTEST)
-+	@echo "# Please don't change it !!\n"  >> $(KSELFTEST)
-+	@echo "echo \"============================\"" >> $(KSELFTEST)
-+	for TARGET in $(INSTALL_TARGETS); do \
-+		echo "Installing $$TARGET"; \
-+		echo "echo \"Start $$TARGET test ....\"" >> $(KSELFTEST); \
-+		make -C $$TARGET install; \
-+		echo "echo \"End $$TARGET test ....\"" >> $(KSELFTEST); \
-+		echo "echo \"============================\"" >> $(KSELFTEST); \
-+	done;
-+	chmod +x $(KSELFTEST)
++	install ./peeksiginfo $(INSTALL_KSFT_PATH)
++	@echo "$(TEST_STR)" >> $(KSELFTEST)
 +else
-+	@echo $(INSTALL_KSFT_ERR)
-+endif
-+
-+run_tests:
-+ifndef no_install_run
-+# ifdef INSTALL_KSFT_PATH
-+	make install
-+	@cd $(INSTALL_KSFT_PATH); ./kselftest.sh; cd -
-+# invoke run_tests for SKIP_INSTALL_TARGETS
-+	for TARGET in $(SKIP_INSTALL_TARGETS); do \
-+		make -C $$TARGET run_tests; \
-+	done;
-+# endif
-+else
-+	make all
- 	for TARGET in $(TARGETS); do \
- 		make -C $$TARGET run_tests; \
- 	done;
++	@echo "Run make kselftest_install in top level source directory"
 +endif
  
- hotplug:
- 	for TARGET in $(TARGETS_HOTPLUG); do \
+ clean:
+ 	rm -f peeksiginfo
+ 
+ run_tests: all
+-	@./peeksiginfo || echo "peeksiginfo selftests: [FAIL]"
++	@$(TEST_STR)
 -- 
 2.1.0
