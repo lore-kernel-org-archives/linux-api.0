@@ -1,13 +1,13 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v4 02/20] selftests/cpu-hotplug: add install target to enable test install
-Date: Tue,  6 Jan 2015 12:43:16 -0700
-Message-ID: <83e299d0172fa4487f8cd6db6c529fbbc8ff2ca5.1420571615.git.shuahkh@osg.samsung.com>
+Subject: [PATCH v4 07/20] selftests/kcmp: add install target to enable test install
+Date: Tue,  6 Jan 2015 12:43:21 -0700
+Message-ID: <0ef6535b2984b1aa16144dbd06b0779d40bb2dc4.1420571615.git.shuahkh@osg.samsung.com>
 References: <cover.1420571615.git.shuahkh@osg.samsung.com>
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kbuild-owner@vger.kernel.org>
 In-Reply-To: <cover.1420571615.git.shuahkh@osg.samsung.com>
 In-Reply-To: <cover.1420571615.git.shuahkh@osg.samsung.com>
 References: <cover.1420571615.git.shuahkh@osg.samsung.com>
-Sender: netdev-owner@vger.kernel.org
+Sender: linux-kbuild-owner@vger.kernel.org
 To: mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, masami.hiramatsu.pt@hitachi.com
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
@@ -19,40 +19,36 @@ only from top level kernel source directory.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- tools/testing/selftests/cpu-hotplug/Makefile               | 14 ++++++++++++--
- .../cpu-hotplug/{on-off-test.sh => cpu-on-off-test.sh}     |  0
- 2 files changed, 12 insertions(+), 2 deletions(-)
- rename tools/testing/selftests/cpu-hotplug/{on-off-test.sh => cpu-on-off-test.sh} (100%)
+ tools/testing/selftests/kcmp/Makefile | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/cpu-hotplug/Makefile b/tools/testing/selftests/cpu-hotplug/Makefile
-index e9c28d8..c168033 100644
---- a/tools/testing/selftests/cpu-hotplug/Makefile
-+++ b/tools/testing/selftests/cpu-hotplug/Makefile
-@@ -1,9 +1,19 @@
-+TEST_STR=/bin/bash ./cpu-on-off-test.sh || echo 'cpu-hotplug selftests: [FAIL]'
+diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+index ff0eefd..46267c1 100644
+--- a/tools/testing/selftests/kcmp/Makefile
++++ b/tools/testing/selftests/kcmp/Makefile
+@@ -1,10 +1,21 @@
+ CC := $(CROSS_COMPILE)$(CC)
+ CFLAGS += -I../../../../usr/include/
+ 
++TEST_STR = ./kcmp_test || echo 'kcmp_test: [FAIL]'
 +
- all:
+ all: kcmp_test
  
 +install:
 +ifdef INSTALL_KSFT_PATH
-+	install ./cpu-on-off-test.sh $(INSTALL_KSFT_PATH)/cpu-on-off-test.sh
++	install ./kcmp_test $(INSTALL_KSFT_PATH)
 +	@echo "$(TEST_STR)" >> $(KSELFTEST)
++	@echo rm -f kcmp-test-file >> $(KSELFTEST)
 +else
 +	@echo "Run make kselftest_install in top level source directory"
 +endif
 +
- run_tests:
--	@/bin/bash ./on-off-test.sh || echo "cpu-hotplug selftests: [FAIL]"
+ run_tests: all
+-	@./kcmp_test || echo "kcmp_test: [FAIL]"
 +	@$(TEST_STR)
  
- run_full_test:
--	@/bin/bash ./on-off-test.sh -a || echo "cpu-hotplug selftests: [FAIL]"
-+	@/bin/bash ./cpu-on-off-test.sh -a || echo "cpu-hotplug selftests: [FAIL]"
- 
  clean:
-diff --git a/tools/testing/selftests/cpu-hotplug/on-off-test.sh b/tools/testing/selftests/cpu-hotplug/cpu-on-off-test.sh
-similarity index 100%
-rename from tools/testing/selftests/cpu-hotplug/on-off-test.sh
-rename to tools/testing/selftests/cpu-hotplug/cpu-on-off-test.sh
+ 	$(RM) kcmp_test kcmp-test-file
 -- 
 2.1.0
+
