@@ -1,37 +1,72 @@
-From: dann frazier <dann.frazier-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH] tools: testing: selftests: mq_perf_tests: Fix infinite loop on ARM
-Date: Mon,  5 Jan 2015 19:54:40 -0700
-Message-ID: <1420512880-392-1-git-send-email-dann.frazier@canonical.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuah.kh-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCH] selftests/exec: allow shell return code of 126
+Date: Tue, 6 Jan 2015 08:23:25 +0000
+Message-ID: <CAHse=S-v3T1nA8HpZOzsOqD5WZr8QTpcEy_kV=yk8uVJBOTGnw@mail.gmail.com>
+References: <1420456786-5989-1-git-send-email-drysdale@google.com> <54AAE00B.1020809@osg.samsung.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-m68k-owner@vger.kernel.org>
+In-Reply-To: <54AAE00B.1020809@osg.samsung.com>
+Sender: linux-m68k-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Andreas Schwab <schwab@linux-m68k.org>, Andrew Morton <akpm@linux-foundation.org>, Linux/m68k <linux-m68k@lists.linux-m68k.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-We can't use a char type to check for a negative return value since char
-isn't guaranteed to be signed. Indeed, the char type tends to be unsigned on
-ARM.
+On Mon, Jan 5, 2015 at 7:03 PM, Shuah Khan <shuahkh@osg.samsung.com> wrote:
+> On 01/05/2015 04:19 AM, David Drysdale wrote:
+>> When the shell fails to invoke a script because its path name
+>> is too long (ENAMETOOLONG), most shells return 127 to indicate
+>> command not found.  However, some systems report 126 (which POSIX
+>> suggests should indicate a non-executable file) for this case,
+>> so allow that too.
+>>
+>> Reported-by: Geert Uytterhoeven <geert@linux-m68k.org>
+>> Signed-off-by: David Drysdale <drysdale@google.com>
+>> ---
+>>  tools/testing/selftests/exec/execveat.c | 28 ++++++++++++++++++++++------
+>>  1 file changed, 22 insertions(+), 6 deletions(-)
+>>
+>> diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/selftests/exec/execveat.c
+>> index d273624c93a6..0d940c6e26bd 100644
+>> --- a/tools/testing/selftests/exec/execveat.c
+>> +++ b/tools/testing/selftests/exec/execveat.c
+>> @@ -62,7 +62,7 @@ static int _check_execveat_fail(int fd, const char *path, int flags,
+>>  }
+>>
+>>  static int check_execveat_invoked_rc(int fd, const char *path, int flags,
+>> -                                  int expected_rc)
+>> +                                  int expected_rc, int expected_rc2)
+>
+> This logic doesn't scale well if there other expected return
+> values to account for. Please think about a re-write to handle
+> multiple expected return codes.
 
-Signed-off-by: dann frazier <dann.frazier-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
----
- tools/testing/selftests/mqueue/mq_perf_tests.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+I don't think it needs to scale -- even having a second possible return
+code was a bit of a surprise.
 
-diff --git a/tools/testing/selftests/mqueue/mq_perf_tests.c b/tools/testing/selftests/mqueue/mq_perf_tests.c
-index 94dae65..8519e9e 100644
---- a/tools/testing/selftests/mqueue/mq_perf_tests.c
-+++ b/tools/testing/selftests/mqueue/mq_perf_tests.c
-@@ -536,10 +536,9 @@ int main(int argc, char *argv[])
- {
- 	struct mq_attr attr;
- 	char *option, *next_option;
--	int i, cpu;
-+	int i, cpu, rc;
- 	struct sigaction sa;
- 	poptContext popt_context;
--	char rc;
- 	void *retval;
- 
- 	main_thread = pthread_self();
--- 
-2.1.4
+>>  {
+>>       int status;
+>>       int rc;
+>> @@ -99,9 +99,19 @@ static int check_execveat_invoked_rc(int fd, const char *path, int flags,
+>>               return 1;
+>>       }
+>>       if (WEXITSTATUS(status) != expected_rc) {
+>> -             printf("[FAIL] (child %d exited with %d not %d)\n",
+>> -                     child, WEXITSTATUS(status), expected_rc);
+>> -             return 1;
+>> +             if (expected_rc != expected_rc2) {
+>
+> Please collapse expected_rc and expected_rc2 checks. You can rephrase
+> the error message to work for both cases.
+
+OK, will do.
+
+> thanks,
+> -- Shuah
+>
+> --
+> Shuah Khan
+> Sr. Linux Kernel Developer
+> Open Source Innovation Group
+> Samsung Research America (Silicon Valley)
+> shuahkh@osg.samsung.com | (970) 217-8978
