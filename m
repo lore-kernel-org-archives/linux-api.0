@@ -1,30 +1,23 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
-Date: Tue, 06 Jan 2015 01:07:04 +0100
-Message-ID: <54AB2728.60403@nod.at>
-References: <1417744550-6461-1-git-send-email-adityakali@google.com>	<1417744550-6461-9-git-send-email-adityakali@google.com>	<548E17CE.8010704@nod.at>	<CAGr1F2HA6mzFwgp5ngX8P7=198-5CmCjLmuCJ8j3eQ08J2d9Qw@mail.gmail.com>	<54AB15BD.8020007@nod.at>
-	<87lhlgpyxk.fsf@x220.int.ebiederm.org>
+Date: Mon, 5 Jan 2015 16:10:16 -0800
+Message-ID: <CAGr1F2HSi_D07r2c5CKOsjSR1+58k9G2MrtACsd+HV6XKvJ7cA@mail.gmail.com>
+References: <1417744550-6461-1-git-send-email-adityakali@google.com>
+ <1417744550-6461-9-git-send-email-adityakali@google.com> <548E17CE.8010704@nod.at>
+ <CAGr1F2HA6mzFwgp5ngX8P7=198-5CmCjLmuCJ8j3eQ08J2d9Qw@mail.gmail.com>
+ <54AB15BD.8020007@nod.at> <87lhlgpyxk.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <87lhlgpyxk.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Rohit Jnagal <jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am 06.01.2015 um 00:53 schrieb Eric W. Biederman:
+On Mon, Jan 5, 2015 at 3:53 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
 > Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
-> 
+>
 >> Am 05.01.2015 um 23:48 schrieb Aditya Kali:
 >>> On Sun, Dec 14, 2014 at 3:05 PM, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> wrote:
 >>>> Aditya,
@@ -167,32 +160,35 @@ Am 06.01.2015 um 00:53 schrieb Eric W. Biederman:
 >>
 >> Ohh, this renders the whole patch useless for me as systemd needs the "old/default" behavior of cgroups. :-(
 >> I really hoped that cgroup namespaces will help me running systemd in a sane way within Linux containers.
-> 
+>
 > Ugh.  It sounds like there is a real mess here.  At the very least there
 > is misunderstanding.
-> 
+>
 > I have a memory that systemd should have been able to use a unified
 > hierarchy.  As you could still mount the different controllers
 > independently (they just use the same directory structure on each
 > mount).
-
-Luckily systemd folks want to move to the unified but as of now it does not work.
-Please see this mail from Lennart:
-https://www.redhat.com/archives/libvir-list/2014-November/msg01090.html
-
-Maybe the porting is easy. Dunno.
-I had no time yet to look into that.
+>
+In theory, if you boot kernel with
+"cgroup__DEVEL__legacy_files_on_dfl" command-line parameter, and mount
+cgroups with sane-behavior flag, then it should be more-or-less
+similar to mounting all hierarchies together at the same mount-point
+(mount -t cgroup -o __DEVEL_sane_behavior none $mntpt). I haven't
+tried this, but systemd should be able to work with it and you can
+enable cgroup-namespace too.
 
 > That said from a practical standpoint I am not certain that a cgroup
 > namespace is viable if it can not support the behavior of cgroupsfs
 > that everyone is using.
+>
 
-Yep.
+Since the old/default behavior is on its way out, I didn't invest time
+in fixing that. Also, some of the properties that make
+cgroup-namespace simpler are only provided by unified hierarchy (for
+example: a single root-cgroup per container).
 
-systemd *really* wants to own cgroupfs, so it has to mount it within the container.
-Currently libvirt does nasty hacks using bind mounts which are also problematic.
-My hope was that with cgroup namespaces I can simply cheat systemd and give it
-a cgroupfs to mess with.
 
-Thanks,
-//richard
+> Eric
+
+-- 
+Aditya
