@@ -1,33 +1,94 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
-Date: Tue, 06 Jan 2015 01:17:22 +0100
-Message-ID: <54AB2992.6060707@nod.at>
-References: <1417744550-6461-1-git-send-email-adityakali@google.com> <1417744550-6461-9-git-send-email-adityakali@google.com> <548E17CE.8010704@nod.at> <CAGr1F2HA6mzFwgp5ngX8P7=198-5CmCjLmuCJ8j3eQ08J2d9Qw@mail.gmail.com> <54AB15BD.8020007@nod.at> <87lhlgpyxk.fsf@x220.int.ebiederm.org> <CAGr1F2HSi_D07r2c5CKOsjSR1+58k9G2MrtACsd+HV6XKvJ7cA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGr1F2HSi_D07r2c5CKOsjSR1+58k9G2MrtACsd+HV6XKvJ7cA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Rohit Jnagal <jnagal-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: David Decotigny <ddecotig@gmail.com>
+Subject: [PATCH net-next v2 0/8] net: extend ethtool link mode bitmaps to 48 bits
+Date: Mon,  5 Jan 2015 18:54:02 -0800
+Message-ID: <1420512850-24699-1-git-send-email-ddecotig@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Amir Vadai <amirv@mellanox.com>, Florian Fainelli <f.fainelli@gmail.com>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: David Decotigny <decot@googlers.com>, "David S. Miller" <davem@davemloft.net>, Jason Wang <jasowang@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Al Viro <viro@zeniv.linux.org.uk>, Ben Hutchings <ben@decadent.org.uk>, Masatake YAMATO <yamato@redhat.com>, Xi Wang <xii@google.com>, Neil Horman <nhorman@tuxdriver.com>, WANG Cong <xiyou.wangcong@gmail.com>, Flavio Leitner <fbl@redhat.com>, Tom Gundersen <teg@jklm.no>, Jiri Pirko <jiri@resnulli.us>, Vlad Yasevich <vyasevic@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Saeed Mahameed <saeedm@mellanox.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Govindarajulu Varadarajan <_govind@gmx.com>
 List-Id: linux-api@vger.kernel.org
 
-Am 06.01.2015 um 01:10 schrieb Aditya Kali:
-> Since the old/default behavior is on its way out, I didn't invest time
-> in fixing that. Also, some of the properties that make
-> cgroup-namespace simpler are only provided by unified hierarchy (for
-> example: a single root-cgroup per container).
+From: David Decotigny <decot@googlers.com>
 
-Does the new sane cgroupfs behavior even have a single real world user?
-I always thought it isn't stable yet.
+History:
+  v2:
+    - added ethtool_ops::get_compat_flags() to be able to check user
+      parameters in generic ethtool layer when a driver does not
+      support a new feature.
+    - in generic ethtool code, EINVAL when userspace sets a link mode
+      with bits 32..47 set, unless driver explicitly indicates that it
+      supports it (get_compat_flags). also print a warning once (per
+      lifetime, not per-interface) if driver sets bits 32..47 of link
+      mode, unless it explicitly indicated that it supports 48bit link
+      modes.
+    - don't update phydev->advertising too early (ie. keep original behavior)
+  v1:
+    initial draft
 
-Linux distros currently use systemd v210. They don't dare to use a newer one.
-Even *if* systemd would support the sane sane cgroupfs behavior in the most recent
-version it will take 1-2 years until it would hit a recent distro.
+This patch series increases the width of the supported/advertising
+ethtool masks from 32 bits to 48. This should allow to breathe for a
+couple more years (or... months?).
 
-So please support also the old and nasty behavior such that one day we can run current
-systemd distros in Linux containers.
+It should not cause any backward compatibility issues for
+now. However, if user-space passed non-0 to previously-reserved fields
+to ethtool_set_settings or ethtool_set_eee, they will be rejected by
+non-updated (ie. no get_compat_flags) drivers. Updated drivers will
+handle the new expanded link mode masks appropriately. It is
+recommended we gradually adopt the new get/set API, and provide the
+associated get_compat_flags(), in order to correctly support future
+link modes. See ethtool.h for details.
 
-Thanks,
-//richard
+I updated a couple drivers (mlx4, veth, tun), and some shared code in
+drivers/net (phy, mii, mdio). It might be overkill for phy/mii/mdio,
+and I might have missed other shared code in drivers/net. Please let
+me know.
+
+I used the compiler on my private copy to 1/ track where the
+ethtool_cmd/ethtool_eee link mode fields were used 2/ track where the
+link mode bitmaps are used and updated. So I believe that there is
+some sort of transitive closure for the code I updated. Maybe tools
+like coccinelle or clang could allow to automate these processes (1/
+would probably be easy-ish, but 2/ seems a bit more complex)? I
+reverted these internal "tracking" tricks for this version to minimize
+impact on uapi/ethtool.h. The main resulting visible artifact of those
+tricks is the new ethtool_link_mode_mask_t typedef (aka. u64). I kept
+this trivial typedef here to help future refactoring, but I'd be happy
+to rename it as plain "u64" if you prefer.
+
+I can send updates to other drivers, even though it's rather pointless
+to update 1G drivers at this point for example. Please let me know,
+but I'd prefer to do this in follow-up patches outside this first
+patch series.
+
+
+############################################
+# Patch Set Summary:
+
+David Decotigny (8):
+  net: ethtool: internal compatibility flags to reject non-zero reserved
+    fields
+  net: ethtool: extend link mode support to 48 bits
+  net: phy: extend link mode support to 48 bits
+  net: mii: extend link mode support to 48 bits
+  net: mdio: extend link mode support to 48 bits
+  net: veth: extend link mode support to 48 bits
+  net: tun: extend link mode support to 48 bits
+  net: mlx4_en: extend link mode support to 48 bits
+
+ drivers/net/ethernet/mellanox/mlx4/en_ethtool.c |  73 ++++++++-----
+ drivers/net/mdio.c                              |  59 +++++-----
+ drivers/net/mii.c                               |  52 +++++----
+ drivers/net/phy/phy.c                           |  30 +++---
+ drivers/net/phy/phy_device.c                    |   4 +-
+ drivers/net/tun.c                               |   4 +-
+ drivers/net/veth.c                              |   4 +-
+ include/linux/ethtool.h                         |  25 ++++-
+ include/linux/mdio.h                            |  15 +--
+ include/linux/mii.h                             |  31 +++---
+ include/linux/phy.h                             |  10 +-
+ include/uapi/linux/ethtool.h                    | 137 ++++++++++++++++++++----
+ net/core/ethtool.c                              |  44 ++++++++
+ 13 files changed, 343 insertions(+), 145 deletions(-)
+
+-- 
+2.2.0.rc0.207.ga3a616c
