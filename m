@@ -1,39 +1,55 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCHv2] selftests/exec: allow shell return code of 126
-Date: Tue, 06 Jan 2015 13:02:16 -0700
-Message-ID: <54AC3F48.5010803@osg.samsung.com>
-References: <1420532636-7317-1-git-send-email-drysdale@google.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH] tools: testing: selftests: mq_perf_tests: Fix infinite
+ loop on ARM
+Date: Tue, 06 Jan 2015 13:03:12 -0700
+Message-ID: <54AC3F80.5060406@osg.samsung.com>
+References: <1420512880-392-1-git-send-email-dann.frazier@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-m68k-owner@vger.kernel.org>
-In-Reply-To: <1420532636-7317-1-git-send-email-drysdale@google.com>
-Sender: linux-m68k-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>, linux-kernel@vger.kernel.org, Geert Uytterhoeven <geert@linux-m68k.org>
-Cc: Andreas Schwab <schwab@linux-m68k.org>, Andrew Morton <akpm@linux-foundation.org>, linux-m68k@lists.linux-m68k.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1420512880-392-1-git-send-email-dann.frazier-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dann frazier <dann.frazier-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuah.kh-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/06/2015 01:23 AM, David Drysdale wrote:
-> When the shell fails to invoke a script because its path name
-> is too long (ENAMETOOLONG), most shells return 127 to indicate
-> command not found.  However, some systems report 126 (which POSIX
-> suggests should indicate a non-executable file) for this case,
-> so allow that too.
+On 01/05/2015 07:54 PM, dann frazier wrote:
+> We can't use a char type to check for a negative return value since char
+> isn't guaranteed to be signed. Indeed, the char type tends to be unsigned on
+> ARM.
 > 
-> Reported-by: Geert Uytterhoeven <geert@linux-m68k.org>
-> Signed-off-by: David Drysdale <drysdale@google.com>
-> Tested-by: Geert Uytterhoeven <geert@linux-m68k.org>
+> Signed-off-by: dann frazier <dann.frazier-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 > ---
->  tools/testing/selftests/exec/execveat.c | 19 +++++++++++++------
->  1 file changed, 13 insertions(+), 6 deletions(-)
+>  tools/testing/selftests/mqueue/mq_perf_tests.c | 3 +--
+>  1 file changed, 1 insertion(+), 2 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/mqueue/mq_perf_tests.c b/tools/testing/selftests/mqueue/mq_perf_tests.c
+> index 94dae65..8519e9e 100644
+> --- a/tools/testing/selftests/mqueue/mq_perf_tests.c
+> +++ b/tools/testing/selftests/mqueue/mq_perf_tests.c
+> @@ -536,10 +536,9 @@ int main(int argc, char *argv[])
+>  {
+>  	struct mq_attr attr;
+>  	char *option, *next_option;
+> -	int i, cpu;
+> +	int i, cpu, rc;
+>  	struct sigaction sa;
+>  	poptContext popt_context;
+> -	char rc;
+>  	void *retval;
+>  
+>  	main_thread = pthread_self();
+> 
 
 Thanks. Applied to kernel/git/shuah/linux-kselftest fixes branch
 
 -- Shuah
+
 
 -- 
 Shuah Khan
 Sr. Linux Kernel Developer
 Open Source Innovation Group
 Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
