@@ -1,73 +1,33 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [v8 3/5] ext4: adds project quota support
-Date: Tue, 6 Jan 2015 22:52:51 +0100
-Message-ID: <20150106215251.GA30687@quack.suse.cz>
-References: <1418102548-5469-1-git-send-email-lixi@ddn.com>
- <1418102548-5469-4-git-send-email-lixi@ddn.com>
- <1D4A37F3-9BA1-42E9-97ED-8F7515FC5E8D@dilger.ca>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH net-next v2 0/8] net: extend ethtool link mode bitmaps
+ to 48 bits
+Date: Tue, 06 Jan 2015 17:29:18 -0500 (EST)
+Message-ID: <20150106.172918.70204012105519766.davem@davemloft.net>
+References: <1420512850-24699-1-git-send-email-ddecotig@gmail.com>
+	<54ABE991.3040107@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1D4A37F3-9BA1-42E9-97ED-8F7515FC5E8D@dilger.ca>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: Li Xi <pkuelelixi@gmail.com>, Linux Filesystem Development List <linux-fsdevel@vger.kernel.org>, ext4 development <linux-ext4@vger.kernel.org>, linux-api@vger.kernel.org, tytso@mit.edu, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54ABE991.3040107-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: amirv-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org
+Cc: ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, f.fainelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org, jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org, yamato-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xii-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org, xiyou.wangcong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, fbl-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, vyasevic-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org, _govind-KK0ffGbhmjU@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 06-01-15 13:01:21, Andreas Dilger wrote:
-> On Dec 8, 2014, at 10:22 PM, Li Xi <pkuelelixi@gmail.com> wrote:
-> > 
-> > This patch adds mount options for enabling/disabling project quota
-> > accounting and enforcement. A new specific inode is also used for
-> > project quota accounting.
-> 
-> Judy looking through these patches again and saw a minor issue:
-> 
-> > @@ -1128,10 +1128,11 @@ enum {
-> > 	Opt_journal_path, Opt_journal_checksum, Opt_journal_async_commit,
-> > 	Opt_abort, Opt_data_journal, Opt_data_ordered, Opt_data_writeback,
-> > 	Opt_data_err_abort, Opt_data_err_ignore,
-> > -	Opt_usrjquota, Opt_grpjquota, Opt_offusrjquota, Opt_offgrpjquota,
-> > +	Opt_usrjquota, Opt_grpjquota, Opt_prjjquota,
-> > +	Opt_offusrjquota, Opt_offgrpjquota, Opt_offprjjquota,
-> > 	Opt_jqfmt_vfsold, Opt_jqfmt_vfsv0, Opt_jqfmt_vfsv1, Opt_quota,
-> > 	Opt_noquota, Opt_barrier, Opt_nobarrier, Opt_err,
-> > -	Opt_usrquota, Opt_grpquota, Opt_i_version,
-> > +	Opt_usrquota, Opt_grpquota, Opt_prjquota, Opt_i_version,
-> > 	Opt_stripe, Opt_delalloc, Opt_nodelalloc, Opt_mblk_io_submit,
-> > 	Opt_nomblk_io_submit, Opt_block_validity, Opt_noblock_validity,
-> > 	Opt_inode_readahead_blks, Opt_journal_ioprio,
-> > @@ -1183,6 +1184,8 @@ static const match_table_t tokens = {
-> > 	{Opt_usrjquota, "usrjquota=%s"},
-> > 	{Opt_offgrpjquota, "grpjquota="},
-> > 	{Opt_grpjquota, "grpjquota=%s"},
-> > +	{Opt_offprjjquota, "prjjquota="},
-> > +	{Opt_prjjquota, "prjjquota=%s"},
-> 
-> We don't need to be able to specify the project quota inodes on the
-> mount command line.  This was only needed for supporting old (non-
-> journaled) user and group quotas, but there is no chance of having
-> old project quotas.
-> 
-> > 	{Opt_jqfmt_vfsold, "jqfmt=vfsold"},
-> > 	{Opt_jqfmt_vfsv0, "jqfmt=vfsv0"},
-> > 	{Opt_jqfmt_vfsv1, "jqfmt=vfsv1"},
-> > @@ -1190,6 +1193,7 @@ static const match_table_t tokens = {
-> > 	{Opt_noquota, "noquota"},
-> > 	{Opt_quota, "quota"},
-> > 	{Opt_usrquota, "usrquota"},
-> > +	{Opt_prjquota, "prjquota"},
-> 
-> Do we want to allow non-journaled project quota at all?  I don't
-> see that as a benefit, and it was only allowed for user/group
-> quota for compatibility reasons.  Since the project quota support
-> will need an updated e2fsprogs anyway, it may as well be journaled
-> from the start.
-  Yeah, probably you are right that it doesn't make a whole lot of sense to
-support project quotas in user visible files. So these could be removed.
+From: Amir Vadai <amirv-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Date: Tue, 6 Jan 2015 15:56:33 +0200
 
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+> Mellanox is about to release next month a driver for a new NIC, with 3
+> new speeds * few link modes for each + new link modes for 10G.
+> It seems that we will need to consume almost all the new bits.
+
+This tells me that the approach to this problem needs to be rethought.
+
+Maybe we just need to bite the bullet and make a new ETHTOOL_GSET_2
+and ETHTOOL_SSET_2 or whatever you want to name them.
+
+Then we can define a completely new structure, with 64-bit bitmaps
+for link modes or whatever.  The ethtool_op callbacks work using
+this structure, and only the net/core/ethtool.c code knows about
+the older structure and translates to/from for ETHTOOL_{GSET,SSET}.
