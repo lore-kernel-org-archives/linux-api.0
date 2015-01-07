@@ -1,61 +1,83 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
-Date: Wed, 07 Jan 2015 10:28:24 +0100
-Message-ID: <54ACFC38.5070007@nod.at>
-References: <1417744550-6461-1-git-send-email-adityakali@google.com>
-	<1417744550-6461-9-git-send-email-adityakali@google.com>
-	<548E17CE.8010704@nod.at>
-	<CAGr1F2HA6mzFwgp5ngX8P7=198-5CmCjLmuCJ8j3eQ08J2d9Qw@mail.gmail.com>
-	<54AB15BD.8020007@nod.at> <87lhlgpyxk.fsf@x220.int.ebiederm.org>
-	<CAGr1F2HSi_D07r2c5CKOsjSR1+58k9G2MrtACsd+HV6XKvJ7cA@mail.gmail.com>
-	<54AB2992.6060707@nod.at>
-	<CAGr1F2EGOUSEd3-G4PS0mq=9kU1nWG4CwHUOQaNUATepc11_Sw@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Edited seccomp.2 man page for review [v2]
+Date: Wed, 07 Jan 2015 12:53:27 +0100
+Message-ID: <54AD1E37.8020509@gmail.com>
+References: <54A29722.1010901@gmail.com>	<CAGXu5j+C0SWQ+CeOb2ADXdsLWorUHahX4UhUg+UGbT6UuWiQFQ@mail.gmail.com>	<54A300D0.7090802@gmail.com> <CAGXu5jKCR8ft=2XNX+SsCOokEqCt9sZizKj4wfAGrXVzf6adcg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CAGr1F2EGOUSEd3-G4PS0mq=9kU1nWG4CwHUOQaNUATepc11_Sw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGXu5jKCR8ft=2XNX+SsCOokEqCt9sZizKj4wfAGrXVzf6adcg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am 07.01.2015 um 00:20 schrieb Aditya Kali:
-> I understand your point. But it will add some complexity to the code.
+Hi Kees,
+
+On 01/05/2015 09:25 PM, Kees Cook wrote:
+> On Tue, Dec 30, 2014 at 11:45 AM, Michael Kerrisk (man-pages)
+> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>>> The program counter will be as though the system call happened
+>>>> (i.e., it will not point to the system call instruction).
+>>>> The return value register will contain an architecture\-dependent value;
+>>>> if resuming execution, set it to something sensible.
+>>>> .\" FIXME Regarding the preceding line, can you give an example(s)
+>>>> .\"       of "something sensible"? (Depending on the answer, maybe it
+>>>> .\"       might be useful to add some text on this point.)
+>>>
+>>> This means sensible in the context of the syscall made, or the desired
+>>> behavior. For example, setting the return value to ELOOP for something
+>>> like a "bind" syscall isn't very sensible.
+>>
+>> Okay -- I did s/sensible/appropriate for the system call/
 > 
-> Before trying to make it work for non-unified hierarchy cases, I would
-> like to get a clearer idea.
-> What do you expect to be mounted when you run:
->   container:/ # mount -t cgroup none /sys/fs/cgroup/
-> from inside the container?
+> Yes, perfect. That captures it nicely.
+
+Okay.
+
+>>>> .\"
+>>>> .\" FIXME Please check:
+>>>> .\"     In an attempt to make the text clearer, I changed
+>>>> .\"     "replacing it with" to "setting the return value register to"
+>>>> .\"     Okay?
+>>>> (The architecture dependency is because setting the return value register to
+>>>> .BR ENOSYS
+>>>> could overwrite some useful information.)
+>>>
+>>> Well, the arch dependency is really because _how_ to change the
+>>> register, and the register itself, is different between architectures.
+>>> (i.e. which ptrace call is needed, and which register is being
+>>> changed.) The overwriting of useful information is certainly true too,
+>>> though.
+>>
+>> So, revert to the previous wording? Or do you have a suggested
+>> better wording?
 > 
-> Note that cgroup-namespace wont be able to change the way cgroups are
-> mounted .. i.e., if say cpu and cpuacct subsystems are mounted
-> together at a single mount-point, then we cannot mount them any other
-> way (inside a container or outside). This restriction exists today and
-> cgroup-namespaces won't change that.
+> I think the previous wording is better. I'm struggling to produce
+> language that makes more sense here.
 
-I wondered why cgroup namespaces won't change that and looked at your patches
-in more detail.
-What you propose as cgroup namespace is much more a cgroup chroot() than
-a namespace.
-As you pass relative paths into the namespace you depend on the mount structure
-of the host side.
-Hence, the abstraction between namespaces happens on the mount paths of the initial
-cgroupfs. But we really want a new cgroupfs instance within a container and not just
-a cut out of the initial cgroupfs mount.
+Okay -- reverted.
 
-I fear you approach is over simplified and won't work for all cases. It may work
-for your specific use case at Google but we really want something generic.
-Eric, what do you think?
+>> Thanks. We're getting close now.
+> 
+> Excellent! :)
 
-Thanks,
-//richard
+Still hoping to hear from Will Drewy regarding this FIXME in the 
+page source:
+
+.\" FIXME What is the significance of the line
+.\"           ftest->code = BPF_LDX | BPF_W | BPF_ABS;
+.\"       in kernel/seccomp.c::seccomp_check_filter()?
+
+Do you know if he's about?
+
+Cheers,
+
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
