@@ -1,116 +1,50 @@
-From: Andrey Skvortsov <andrej.skvortzov@gmail.com>
-Subject: Re: [PATCH] selftests/vm: fix link error for transhuge-stress test
-Date: Wed, 7 Jan 2015 23:10:45 +0300
-Message-ID: <20150107201045.GA5704@yulia-desktop>
-References: <1420655754-10076-1-git-send-email-Andrej.Skvortzov@gmail.com>
- <54AD872E.9060802@osg.samsung.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
+Date: Wed, 07 Jan 2015 16:14:40 -0600
+Message-ID: <87bnma6xwv.fsf@x220.int.ebiederm.org>
+References: <1417744550-6461-9-git-send-email-adityakali@google.com>
+	<548E17CE.8010704@nod.at>
+	<CAGr1F2HA6mzFwgp5ngX8P7=198-5CmCjLmuCJ8j3eQ08J2d9Qw@mail.gmail.com>
+	<54AB15BD.8020007@nod.at> <87lhlgpyxk.fsf@x220.int.ebiederm.org>
+	<CAGr1F2HSi_D07r2c5CKOsjSR1+58k9G2MrtACsd+HV6XKvJ7cA@mail.gmail.com>
+	<54AB2992.6060707@nod.at>
+	<CAGr1F2EGOUSEd3-G4PS0mq=9kU1nWG4CwHUOQaNUATepc11_Sw@mail.gmail.com>
+	<54ACFC38.5070007@nod.at> <87fvbmir9q.fsf@x220.int.ebiederm.org>
+	<20150107193059.GA1857@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="AhhlLboLdkugWU4S"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <54AD872E.9060802@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150107193059.GA1857-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org> (Serge E. Hallyn's
+	message of "Wed, 7 Jan 2015 20:30:59 +0100")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+"Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
 
---AhhlLboLdkugWU4S
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+>>   By unified hierarchy I mean that  every mount of cgroupfs has the
+>> same directories with the same processes in each directory.
+>
+> No, my reading of Documentation/cgroups/unified-hierarchy.txt is that
+> unified hierarchy means that all (sane) controllers are co-mounted into
+> one hierarchy.
 
-On Wed, Jan 07, 2015 at 12:21:18PM -0700, Shuah Khan wrote:
-> On 01/07/2015 11:35 AM, Andrey Skvortsov wrote:
-> > add -lrt to fix undefined reference to `clock_gettime'
-> >=20
-> > Signed-off-by: Andrey Skvortsov <andrej.skvortzov@gmail.com>
-> > ---
-> >  tools/testing/selftests/vm/Makefile |    2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> >=20
-> > diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selfte=
-sts/vm/Makefile
-> > index 4c4b1f6..077828c 100644
-> > --- a/tools/testing/selftests/vm/Makefile
-> > +++ b/tools/testing/selftests/vm/Makefile
-> > @@ -7,7 +7,7 @@ BINARIES +=3D transhuge-stress
-> > =20
-> >  all: $(BINARIES)
-> >  %: %.c
-> > -	$(CC) $(CFLAGS) -o $@ $^
-> > +	$(CC) $(CFLAGS) -o $@ $^ -lrt
-> > =20
-> >  run_tests: all
-> >  	@/bin/sh ./run_vmtests || (echo "vmtests: [FAIL]"; exit 1)
-> >=20
->=20
-> Andrey,
->=20
-> I don't see any undefined references when I build. Curious if it is
-> specific to your env??
->=20
-> Please include the warning in the change log
-> when you fix warnings in the future.
->=20
+I see what you mean.  If it is indeed the case than a mount of cgroupfs
+using the unified hiearchy and can not specify which controllers are
+present under that mount that very significant bug and presents a very
+significant regression in user space flexibility.
 
-thanks for the comment.=20
+I think you can still mount the unified hierarchy and select which
+controls you want to see.  If you can not that is a change significantly
+past what was agreed to and a regression fix needs to be applied.
 
-Here is what I get without a patch:
+With a unified hierarchy and separate controllers per mount many cgroup
+using applications will continue to work as before without changes, or
+with minimal changes.  That is what was agreed to and what I expect has
+been actually implemented and it is what needs to be implemented in any
+case.
 
-linux-next/tools/testing/selftests/vm $ make
-gcc -Wall -o hugepage-mmap hugepage-mmap.c
-gcc -Wall -o hugepage-shm hugepage-shm.c
-gcc -Wall -o map_hugetlb map_hugetlb.c
-gcc -Wall -o thuge-gen thuge-gen.c
-gcc -Wall -o hugetlbfstest hugetlbfstest.c
-gcc -Wall -o transhuge-stress transhuge-stress.c
-/tmp/ccpWoqkG.o: In function `main':
-transhuge-stress.c:(.text+0x3a3): undefined reference to
-`clock_gettime'
-transhuge-stress.c:(.text+0x4dc): undefined reference to
-`clock_gettime'
-collect2: ld returned 1 exit status
-make: *** [transhuge-stress] Error 1
+I will see about making time to see where things are really at.
 
-
-$ gcc --version
-gcc (Ubuntu/Linaro 4.6.4-1ubuntu1~12.04) 4.6.4.
-The same error I get on my other Debian system.
-
-man page for clock_gettime says 'Link with -lrt'. So I think the error
-message is correct.
-
---=20
-Best regards,
-Andrey Skvortsov
-
-Secure e-mail with gnupg: See http://www.gnupg.org/
-PGP Key ID: 0x57A3AEAD
-
-
-
---AhhlLboLdkugWU4S
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iQIcBAEBCgAGBQJUrZLFAAoJEAF8y6L1SLCt200P/33rCLSp3P9scxETIOrv6nAy
-zwAFw4dm2q3xitTRI+ON1o4otHPUenddiZlzQyQajLBF1esapOqka+ncLR+qMpck
-m/XKgdiDgHrCeEs+2eT+nHIAiTRGfNXShb55VRIjWmHVsyJlYNlTdrJlVJARl/o2
-1XNLX1TdkmaVJcS1p3Oqif2VjgLJ9mNUHsMmySLE1K5ctk4WUOwRKHS5lpHvhIrd
-btT5Ef1OeI0Ts6po8Wi3WLP5Ux7LOvRXH57HkpXVxJynE+A2Yh1o3hbrrxGZK2nX
-QfOvfj6ARkOUnwjS9PTSIzBQyLQz0dk91+Px3tXFfiSufA+ycuIlEUKRCZW7AcWB
-q75oxwiLcfez9rpTnkdhM84tjhg4k+iDuyU0uT5l9IBGSvOYfge1H53j1+gRVxNm
-EqBkzsHzxAJA3sH5PzqRWIWeGplAgQds1zQjDJUQjjeaJQ1+Zdv3T+dmjr71TZl4
-prUPFkUO2K9fUL2uj/IxnSIjJPzCb7TVCXccXJp8NBRVhcJJ+TNggvVsu9x/JBkd
-TW3a9UQt2Q316UMPoSy+GAYS8S1MtaR629KS/oUYqlEpnXv570pImVgdhIUluVGt
-OZx52ytFj1O6Tckl59JIqVTPRILeWiSUy/KIyh3/QXkNcC9WlxLxnJGjrPGf17qV
-crRLI+BbesqcX/OAj1Om
-=RAVD
------END PGP SIGNATURE-----
-
---AhhlLboLdkugWU4S--
+Eric
