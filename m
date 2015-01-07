@@ -1,127 +1,116 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
-Date: Wed, 7 Jan 2015 20:30:59 +0100
-Message-ID: <20150107193059.GA1857@mail.hallyn.com>
-References: <1417744550-6461-9-git-send-email-adityakali@google.com>
- <548E17CE.8010704@nod.at>
- <CAGr1F2HA6mzFwgp5ngX8P7=198-5CmCjLmuCJ8j3eQ08J2d9Qw@mail.gmail.com>
- <54AB15BD.8020007@nod.at>
- <87lhlgpyxk.fsf@x220.int.ebiederm.org>
- <CAGr1F2HSi_D07r2c5CKOsjSR1+58k9G2MrtACsd+HV6XKvJ7cA@mail.gmail.com>
- <54AB2992.6060707@nod.at>
- <CAGr1F2EGOUSEd3-G4PS0mq=9kU1nWG4CwHUOQaNUATepc11_Sw@mail.gmail.com>
- <54ACFC38.5070007@nod.at>
- <87fvbmir9q.fsf@x220.int.ebiederm.org>
+From: Andrey Skvortsov <andrej.skvortzov@gmail.com>
+Subject: Re: [PATCH] selftests/vm: fix link error for transhuge-stress test
+Date: Wed, 7 Jan 2015 23:10:45 +0300
+Message-ID: <20150107201045.GA5704@yulia-desktop>
+References: <1420655754-10076-1-git-send-email-Andrej.Skvortzov@gmail.com>
+ <54AD872E.9060802@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="AhhlLboLdkugWU4S"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87fvbmir9q.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <54AD872E.9060802@osg.samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
-> 
-> > Am 07.01.2015 um 00:20 schrieb Aditya Kali:
-> >> I understand your point. But it will add some complexity to the code.
-> >> 
-> >> Before trying to make it work for non-unified hierarchy cases, I would
-> >> like to get a clearer idea.
-> >> What do you expect to be mounted when you run:
-> >>   container:/ # mount -t cgroup none /sys/fs/cgroup/
-> >> from inside the container?
-> >> 
-> >> Note that cgroup-namespace wont be able to change the way cgroups are
-> >> mounted .. i.e., if say cpu and cpuacct subsystems are mounted
-> >> together at a single mount-point, then we cannot mount them any other
-> >> way (inside a container or outside). This restriction exists today and
-> >> cgroup-namespaces won't change that.
-> >
-> > I wondered why cgroup namespaces won't change that and looked at your patches
-> > in more detail.
-> > What you propose as cgroup namespace is much more a cgroup chroot() than
-> > a namespace.
-> > As you pass relative paths into the namespace you depend on the mount structure
-> > of the host side.
-> > Hence, the abstraction between namespaces happens on the mount paths of the initial
-> > cgroupfs. But we really want a new cgroupfs instance within a container and not just
-> > a cut out of the initial cgroupfs mount.
-> >
-> > I fear you approach is over simplified and won't work for all cases. It may work
-> > for your specific use case at Google but we really want something generic.
-> > Eric, what do you think?
-> 
-> I think I probably need to go back upthread and read the patches.
-> 
-> I think it is a reasonable practical requirement that a widely used long
-> term supported distribution like RHEL 7 needs to be able to run in a linux
-> container bizarre init system and all.  And that we the abstractions
-> should be that that we should be able to migrate such a beast.
 
-Userspace should be able to deal with however cgroups are mounted for
-it.  The only case I've heard of where it really made a meaningful
-difference was google's advanced grid usage.  In fact, the whole
-justification of the unified cgroup stuff was that it was claimed (and
-argued against by google) that that sufficed for any users.
+--AhhlLboLdkugWU4S
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Now yes, until now userspace could cache its info on how cgroups were
-mounted and assume that wouldn't change (because the kernel wouldn't
-let it), and migration will break that.  But if the cgroup roadmap
-is to obsolete anything but unified hierarchy, then this was going
-to happen regardless of what the cgroupns patchset did.
+On Wed, Jan 07, 2015 at 12:21:18PM -0700, Shuah Khan wrote:
+> On 01/07/2015 11:35 AM, Andrey Skvortsov wrote:
+> > add -lrt to fix undefined reference to `clock_gettime'
+> >=20
+> > Signed-off-by: Andrey Skvortsov <andrej.skvortzov@gmail.com>
+> > ---
+> >  tools/testing/selftests/vm/Makefile |    2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >=20
+> > diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selfte=
+sts/vm/Makefile
+> > index 4c4b1f6..077828c 100644
+> > --- a/tools/testing/selftests/vm/Makefile
+> > +++ b/tools/testing/selftests/vm/Makefile
+> > @@ -7,7 +7,7 @@ BINARIES +=3D transhuge-stress
+> > =20
+> >  all: $(BINARIES)
+> >  %: %.c
+> > -	$(CC) $(CFLAGS) -o $@ $^
+> > +	$(CC) $(CFLAGS) -o $@ $^ -lrt
+> > =20
+> >  run_tests: all
+> >  	@/bin/sh ./run_vmtests || (echo "vmtests: [FAIL]"; exit 1)
+> >=20
+>=20
+> Andrey,
+>=20
+> I don't see any undefined references when I build. Curious if it is
+> specific to your env??
+>=20
+> Please include the warning in the change log
+> when you fix warnings in the future.
+>=20
 
-I agree with Aditya.  So long as the proclaimed direction of cgroups is
-to only support unified cgroup hierarchy, there's no point in having
-cgroupns do anything more than the chrooting.
+thanks for the comment.=20
 
-> There are a couple of issues in play and I think we need actual testing
-> rather than reports that something shouldn't work before we reject a set
-> of patches.    Aditya in one of his replies to me has reported a
-> configuration that he expects will work.  So I think that configuration
-> needs to be tested.
-> 
-> cgroups is a weird beast and the problems tend not to lie where a person
-> would first expect.
-> 
-> I suspect no one strongly cares if the cgroup hierarchy is unified or
-> not.
+Here is what I get without a patch:
 
-Well, google does.  There are cases that were either much more complicated
-or impossible to represent with unified hierarchy.  But complicating cgroupns
-to support something which Tejun has said is explicitly not going to be
-supported in the future would be ill-advised.
+linux-next/tools/testing/selftests/vm $ make
+gcc -Wall -o hugepage-mmap hugepage-mmap.c
+gcc -Wall -o hugepage-shm hugepage-shm.c
+gcc -Wall -o map_hugetlb map_hugetlb.c
+gcc -Wall -o thuge-gen thuge-gen.c
+gcc -Wall -o hugetlbfstest hugetlbfstest.c
+gcc -Wall -o transhuge-stress transhuge-stress.c
+/tmp/ccpWoqkG.o: In function `main':
+transhuge-stress.c:(.text+0x3a3): undefined reference to
+`clock_gettime'
+transhuge-stress.c:(.text+0x4dc): undefined reference to
+`clock_gettime'
+collect2: ld returned 1 exit status
+make: *** [transhuge-stress] Error 1
 
->   By unified hierarchy I mean that  every mount of cgroupfs has the
-> same directories with the same processes in each directory.
 
-No, my reading of Documentation/cgroups/unified-hierarchy.txt is that
-unified hierarchy means that all (sane) controllers are co-mounted into
-one hierarchy.
+$ gcc --version
+gcc (Ubuntu/Linaro 4.6.4-1ubuntu1~12.04) 4.6.4.
+The same error I get on my other Debian system.
 
-> I do think people will care which controllers will show up in differ
-> mounts of cgroupfs, and I think that is relevant to process migration.
-> 
-> 
-> 
-> 
-> I am going to segway into scope of what is achievable with a cgroup namespace.
-> 
-> - If there are files in cgroupfs that are not safe to delegate we can
->   not support those files in a container. 
-> 
->   Last I looked there were such files and systemd used them.
-> 
-> - Which controllers share hierarchies of processes to track resources is
->   a core cgroup issue and not a cgroup namespace issue.
-> 
->   If we find problems with using a unified hierarchy support we need to
->   go fix cgroups in general not cgroupfs.
-> 
-> Eric
-> _______________________________________________
-> Containers mailing list
-> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> https://lists.linuxfoundation.org/mailman/listinfo/containers
+man page for clock_gettime says 'Link with -lrt'. So I think the error
+message is correct.
+
+--=20
+Best regards,
+Andrey Skvortsov
+
+Secure e-mail with gnupg: See http://www.gnupg.org/
+PGP Key ID: 0x57A3AEAD
+
+
+
+--AhhlLboLdkugWU4S
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iQIcBAEBCgAGBQJUrZLFAAoJEAF8y6L1SLCt200P/33rCLSp3P9scxETIOrv6nAy
+zwAFw4dm2q3xitTRI+ON1o4otHPUenddiZlzQyQajLBF1esapOqka+ncLR+qMpck
+m/XKgdiDgHrCeEs+2eT+nHIAiTRGfNXShb55VRIjWmHVsyJlYNlTdrJlVJARl/o2
+1XNLX1TdkmaVJcS1p3Oqif2VjgLJ9mNUHsMmySLE1K5ctk4WUOwRKHS5lpHvhIrd
+btT5Ef1OeI0Ts6po8Wi3WLP5Ux7LOvRXH57HkpXVxJynE+A2Yh1o3hbrrxGZK2nX
+QfOvfj6ARkOUnwjS9PTSIzBQyLQz0dk91+Px3tXFfiSufA+ycuIlEUKRCZW7AcWB
+q75oxwiLcfez9rpTnkdhM84tjhg4k+iDuyU0uT5l9IBGSvOYfge1H53j1+gRVxNm
+EqBkzsHzxAJA3sH5PzqRWIWeGplAgQds1zQjDJUQjjeaJQ1+Zdv3T+dmjr71TZl4
+prUPFkUO2K9fUL2uj/IxnSIjJPzCb7TVCXccXJp8NBRVhcJJ+TNggvVsu9x/JBkd
+TW3a9UQt2Q316UMPoSy+GAYS8S1MtaR629KS/oUYqlEpnXv570pImVgdhIUluVGt
+OZx52ytFj1O6Tckl59JIqVTPRILeWiSUy/KIyh3/QXkNcC9WlxLxnJGjrPGf17qV
+crRLI+BbesqcX/OAj1Om
+=RAVD
+-----END PGP SIGNATURE-----
+
+--AhhlLboLdkugWU4S--
