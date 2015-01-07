@@ -1,58 +1,42 @@
-From: Tim Bird <tim.bird@sonymobile.com>
-Subject: Re: [PATCH v4 14/20] selftests/size: add install target to enable
- test install
-Date: Wed, 7 Jan 2015 15:05:44 -0800
-Message-ID: <54ADBBC8.30802@sonymobile.com>
-References: <cover.1420571615.git.shuahkh@osg.samsung.com> <5861e16e1b533cae37471a8cf18597d3e9e6b6f6.1420571615.git.shuahkh@osg.samsung.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
+Date: Wed, 7 Jan 2015 18:06:15 -0500
+Message-ID: <20150107230615.GA28630@htj.dyndns.org>
+References: <87lhlgpyxk.fsf@x220.int.ebiederm.org>
+	<CAGr1F2HSi_D07r2c5CKOsjSR1+58k9G2MrtACsd+HV6XKvJ7cA@mail.gmail.com>
+	<54AB2992.6060707@nod.at>
+	<CAGr1F2EGOUSEd3-G4PS0mq=9kU1nWG4CwHUOQaNUATepc11_Sw@mail.gmail.com>
+	<54ACFC38.5070007@nod.at> <87fvbmir9q.fsf@x220.int.ebiederm.org>
+	<20150107193059.GA1857@mail.hallyn.com>
+	<87bnma6xwv.fsf@x220.int.ebiederm.org>
+	<20150107224430.GA28414@htj.dyndns.org>
+	<878uhe42km.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5861e16e1b533cae37471a8cf18597d3e9e6b6f6.1420571615.git.shuahkh@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>, "mmarek@suse.cz" <mmarek@suse.cz>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "mingo@redhat.com" <mingo@redhat.com>, "davem@davemloft.net" <davem@davemloft.net>, "keescook@chromium.org" <keescook@chromium.org>, "tranmanphong@gmail.com" <tranmanphong@gmail.com>, "mpe@ellerman.id.au" <mpe@ellerman.id.au>, "cov@codeaurora.org" <cov@codeaurora.org>, "dh.herrmann@gmail.com" <dh.herrmann@gmail.com>, "hughd@google.com" <hughd@google.com>, "bobby.prani@gmail.com" <bobby.prani@gmail.com>, "serge.hallyn@ubuntu.com" <serge.hallyn@ubuntu.com>, "ebiederm@xmission.com" <ebiederm@xmission.com>, "josh@joshtriplett.org" <josh@joshtriplett.org>, "koct9i@gmail.com" <koct9i@gmail.com>, "masami.hiramatsu.pt@hitachi.com" <masami.hiram>
-Cc: "linux-kbuild@vger.kernel.org" <linux-kbuild@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <878uhe42km.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/06/2015 11:43 AM, Shuah Khan wrote:
-> Add a new make target to enable installing test. This target
-> installs test in the kselftest install location and add to the
-> kselftest script to run the test. Install target can be run
-> only from top level kernel source directory.
-> 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
-> ---
->  tools/testing/selftests/size/Makefile | 12 +++++++++++-
->  1 file changed, 11 insertions(+), 1 deletion(-)
-> 
-> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
-> index 04dc25e..a1478fa 100644
-> --- a/tools/testing/selftests/size/Makefile
-> +++ b/tools/testing/selftests/size/Makefile
-> @@ -1,12 +1,22 @@
->  CC = $(CROSS_COMPILE)gcc
->  
-> +TEST_STR = ./get_size || echo 'get_size selftests: [FAIL]'
-> +
->  all: get_size
->  
->  get_size: get_size.c
->  	$(CC) -static -ffreestanding -nostartfiles -s $< -o $@
->  
-> +install:
-> +ifdef INSTALL_KSFT_PATH
-> +	install ./get_size $(INSTALL_KSFT_PATH)
-> +	@echo "$(TEST_STR)" >> $(KSELFTEST)
-> +else
-> +	@echo "Run make kselftest_install in top level source directory"
-> +endif
-> +
->  run_tests: all
-> -	./get_size
-> +	@$(TEST_STR)
->  
->  clean:
->  	$(RM) get_size
-> 
+On Wed, Jan 07, 2015 at 05:02:17PM -0600, Eric W. Biederman wrote:
+> Ignoring namespace details for a moment. The following should be
+> possible with a unified hierarchy.  If it is not it is a show stopper
+> of a regression.
 
-Acked-by: Tim Bird <tim.bird@sonymobile.com>
+The -o SUBSYS option doesn't exist.  Jesus, at least get yourself
+familiar with the basics before claiming random stuff.
+
+-- 
+tejun
