@@ -1,52 +1,68 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [v8 2/5] ext4: adds project ID support
-Date: Thu, 8 Jan 2015 09:51:05 +0100
-Message-ID: <20150108085105.GC14705@quack.suse.cz>
-References: <1418102548-5469-1-git-send-email-lixi@ddn.com>
- <1418102548-5469-3-git-send-email-lixi@ddn.com>
- <0F8FAF43-54EB-4202-8120-C1D70CF330F0@dilger.ca>
+From: Miklos Szeredi <mszeredi@suse.cz>
+Subject: Re: [PATCH 0/3] epoll: Add epoll_pwait1 syscall
+Date: Thu, 08 Jan 2015 10:12:52 +0100
+Message-ID: <1420708372.18399.15.camel@suse.cz>
+References: <1420705550-24245-1-git-send-email-famz@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <0F8FAF43-54EB-4202-8120-C1D70CF330F0@dilger.ca>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1420705550-24245-1-git-send-email-famz@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Fam Zheng <famz@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Juri Lelli <juri.lelli@gmail.com>, Zach Brown <zab@zabbo.net>, David Drysdale <drysdale@google.com>, Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@plumgrid.com>, David Herrmann <dh.herrmann@gmail.com>, Dario Faggioli <raistlin@linux.it>, Theodore Ts'o <tytso@mit.edu>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Oleg Nesterov <oleg@redhat.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Fabian Frederick <fabf@skynet.be>, Josh Triplett <josh@joshtriplett.org>D
 List-Id: linux-api@vger.kernel.org
 
-On Wed 07-01-15 16:11:16, Andreas Dilger wrote:
-> On Dec 8, 2014, at 10:22 PM, Li Xi <pkuelelixi@gmail.com> wrote:
-> > This patch adds a new internal field of ext4 inode to save project
-> > identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
-> > inheriting project ID from parent directory.
-> > 
-> > Signed-off-by: Li Xi <lixi@ddn.com>
-> > Reviewed-by: Jan Kara <jack@suse.cz>
-> > ---
-...
-> > @@ -4249,6 +4266,18 @@ static int ext4_do_update_inode(handle_t *handle,
-> > 		}
-> > 	}
-> > 
-> > +	BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb,
-> > +			EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-> > +	       i_projid != EXT4_DEF_PROJID);
-> > +	if (i_projid != EXT4_DEF_PROJID &&
-> > +	    (EXT4_INODE_SIZE(inode->i_sb) <= EXT4_GOOD_OLD_INODE_SIZE ||
-> > +	     (!EXT4_FITS_IN_INODE(raw_inode, ei, i_projid)))) {
-> > +		spin_unlock(&ei->i_raw_lock);
-> > +		err = -EFBIG;
+On Thu, 2015-01-08 at 16:25 +0800, Fam Zheng wrote:
+> Applications could use epoll interface when then need to poll a big number of
+> files in their main loops, to achieve better performance than ppoll(2). Except
+> for one concern: epoll only takes timeout parameters in microseconds, rather
+> than nanoseconds.
 > 
-> I'm not sure if -EFBIG is the best error case, since that is a common
-> filesystem error.  Maybe -EOVERFLOW would be better?
-  So my thought has been that this is mostly a sanity check and we would
-check in tune2fs whether all inodes have enough space when setting
-EXT4_FEATURE_RO_COMPAT_PROJECT feature... Because sudden errors (regardless
-whether it will be EFBIG or EOVERFLOW) when renaming files will be hard to
-understand for sysadmins IMHO.
+> That is a drawback we should address. For a real case in QEMU, we run into a
+> scalability issue with ppoll(2) when many devices are attached to guest, in
+> which case many host fds, such as virtual disk images and sockets, need to be
+> polled by the main loop. As a result we are looking at switching to epoll, but
+> the coarse timeout precision is a trouble, as explained below. 
+> 
+> We're already using prctl(PR_SET_TIMERSLACK, 1) which is necessary to implement
+> timers in the main loop; and we call ppoll(2) with the next firing timer as
+> timeout, so when ppoll(2) returns, we know that we have more work to do (either
+> handling IO events, or fire a timer callback). This is natual and efficient,
+> except that ppoll(2) itself is slow.
+> 
+> Now that we want to switch to epoll, to speed up the polling. However the timer
+> slack setting will be effectively undone, because that way we will have to
+> round up the timeout to microseconds honoring timer contract. But consequently,
+> this hurts the general responsiveness.
+> 
+> Note: there are two alternatives, without changing kernel:
+> 
+> 1) Leading ppoll(2), with the epollfd only and a nanosecond timeout. It won't
+> be slow as one fd is polled. No more scalability issue. And if there are
+> events, we know from ppoll(2)'s return, then we do the epoll_wait(2) with
+> timeout=0; otherwise, there can't be events for the epoll, skip the following
+> epoll_wait and just continue with other work.
+> 
+> 2) Setup and add a timerfd to epoll, then we do epoll_wait(..., timeout=-1).
+> The timerfd will hopefully force epoll_wait to return when it timeouts, even if
+> no other events have arrived. This will inheritly give us timerfd's precision.
+> Note that for each poll, the desired timeout is different because the next
+> timer is different, so that, before each epoll_wait(2), there will be a
+> timerfd_settime syscall to set it to a proper value.
+> 
+> Unfortunately, both approaches require one more syscall per iteration, compared
+> to the original single ppoll(2), cost of which is unneglectable when we talk
+> about nanosecond granularity.
 
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+Please consider adding a "flags" argument to the new syscall (and
+returning EINVAL if non-zero).  See this article, which shows that
+extended syscalls almost always want flags, and they often get it only
+on the second try:
+
+http://lwn.net/Articles/585415/
+
+Thanks,
+Miklos
+
+P.S. stray apostrophes in To: and Cc: lines seems to be causing trouble.
