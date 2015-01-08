@@ -1,97 +1,89 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH] selftests/vm: fix link error for transhuge-stress test
-Date: Thu, 08 Jan 2015 08:55:25 -0700
-Message-ID: <54AEA86D.60709@osg.samsung.com>
-References: <1420655754-10076-1-git-send-email-Andrej.Skvortzov@gmail.com> <54AD872E.9060802@osg.samsung.com> <20150107201045.GA5704@yulia-desktop>
+From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Subject: Re: [PATCHv3 01/20] media: add new types for DVB devnodes
+Date: Thu, 08 Jan 2015 18:10:13 +0200
+Message-ID: <39466944.7lEGPfqsct@avalon>
+References: <cover.1420578087.git.mchehab@osg.samsung.com> <54AD3E00.5070208@linux.intel.com> <20150107122239.232d1f56@concha.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150107201045.GA5704@yulia-desktop>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrey Skvortsov <Andrej.Skvortzov@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150107122239.232d1f56-iErKd7e5oVp+urZeOPWqwQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Hi Mauro,
 
-On 01/07/2015 01:10 PM, Andrey Skvortsov wrote:
-> On Wed, Jan 07, 2015 at 12:21:18PM -0700, Shuah Khan wrote:
->> On 01/07/2015 11:35 AM, Andrey Skvortsov wrote:
->>> add -lrt to fix undefined reference to `clock_gettime'
->>> 
->>> Signed-off-by: Andrey Skvortsov <andrej.skvortzov@gmail.com> 
->>> --- tools/testing/selftests/vm/Makefile |    2 +- 1 file
->>> changed, 1 insertion(+), 1 deletion(-)
->>> 
->>> diff --git a/tools/testing/selftests/vm/Makefile
->>> b/tools/testing/selftests/vm/Makefile index 4c4b1f6..077828c
->>> 100644 --- a/tools/testing/selftests/vm/Makefile +++
->>> b/tools/testing/selftests/vm/Makefile @@ -7,7 +7,7 @@ BINARIES
->>> += transhuge-stress
->>> 
->>> all: $(BINARIES) %: %.c -	$(CC) $(CFLAGS) -o $@ $^ +	$(CC)
->>> $(CFLAGS) -o $@ $^ -lrt
->>> 
->>> run_tests: all @/bin/sh ./run_vmtests || (echo "vmtests:
->>> [FAIL]"; exit 1)
->>> 
->> 
->> Andrey,
->> 
->> I don't see any undefined references when I build. Curious if it
->> is specific to your env??
->> 
->> Please include the warning in the change log when you fix
->> warnings in the future.
->> 
+On Wednesday 07 January 2015 12:22:39 Mauro Carvalho Chehab wrote:
+> Em Wed, 07 Jan 2015 16:09:04 +0200 Sakari Ailus escreveu:
+> > Mauro Carvalho Chehab wrote:
+> > > Most of the DVB subdevs have already their own devnode.
+> > > 
+> > > Add support for them at the media controller API.
+> > > 
+> > > Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> > > 
+> > > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> > > index 7902e800f019..707db275f92b 100644
+> > > --- a/include/uapi/linux/media.h
+> > > +++ b/include/uapi/linux/media.h
+> > > @@ -50,7 +50,14 @@ struct media_device_info {
+> > > 
+> > >   #define MEDIA_ENT_T_DEVNODE_V4L		(MEDIA_ENT_T_DEVNODE + 1)
+> > >   #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
+> > >   #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
+> > > 
+> > > -#define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
+> > > +#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE + 4)
+> > > +#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE + 5)
+> > > +#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE + 6)
+> > > +#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE + 7)
+> > > +#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE + 8)
+> > 
+> > I'd create another type for the DVB sub-type devices, as there is for
+> > V4L2 sub-devices. I wonder what Laurent thinks.
 > 
-> thanks for the comment.
+> I discussed this quickly with Laurent on IRC.
 > 
-> Here is what I get without a patch:
+> There are some concept differences between V4L2 and DVB.
 > 
-> linux-next/tools/testing/selftests/vm $ make gcc -Wall -o
-> hugepage-mmap hugepage-mmap.c gcc -Wall -o hugepage-shm
-> hugepage-shm.c gcc -Wall -o map_hugetlb map_hugetlb.c gcc -Wall -o
-> thuge-gen thuge-gen.c gcc -Wall -o hugetlbfstest hugetlbfstest.c 
-> gcc -Wall -o transhuge-stress transhuge-stress.c /tmp/ccpWoqkG.o:
-> In function `main': transhuge-stress.c:(.text+0x3a3): undefined
-> reference to `clock_gettime' transhuge-stress.c:(.text+0x4dc):
-> undefined reference to `clock_gettime' collect2: ld returned 1 exit
-> status make: *** [transhuge-stress] Error 1
+> At v4l2:
+> - the spec is one monolitic header (videodev2.h);
+> - one devnode is used to control everyhing (/dev/video?)
+> - there is one v4l core for all types of devices
 > 
+> At DVB:
+> - each different DVB API has its own header;
+> - each DVB device type has its own core (ok, they're
+>   linked into one module, but internally they're almost independent);
+> - each different DVB API has its own devnode.
 > 
-> $ gcc --version gcc (Ubuntu/Linaro 4.6.4-1ubuntu1~12.04) 4.6.4. The
-> same error I get on my other Debian system.
+> So, using "SUBDEV" for DVB (or at least for the devnodes) don't
+> make much sense.
 > 
-> man page for clock_gettime says 'Link with -lrt'. So I think the
-> error message is correct.
+> Ok, there are still some things at DVB side that could be mapped as
+> subdev. The clear example is the tuner. However, in this case, the
+> same tuner can be either V4L, DVB or both. So, we need to define just
+> one subdev type for the tuner.
 > 
+> Also, each DVB device can be identified via major/minor pairs.
+> 
+> I wrote already (and submitted upstream) the patches for media-ctl to
+> recognize them. They're also on my experimental v4l-utils tree:
+> 	http://git.linuxtv.org/cgit.cgi/mchehab/experimental-v4l-> 	utils.git/log/?h=dvb-media-ctl
 
-Thanks for fixing it. Applied to linux-kselftest fixes branch
+As I've mentioned in a previous discussion, the media_entity type field is too 
+restrictive. Not only does this use case show that we need a type, sub-type 
+and sub-sub-type, there are also entities that implement several distinct 
+types. I thus believe we need a new ioctl is needed to expose detailed 
+information about entities. This topic has been discussed numerous times in 
+the past, it "just" requires someone to implement it.
 
-- -- Shuah
+I'm not opposed to a short-term solution like the one proposed here, but maybe 
+we should instead decide it's time to implement the new ioctl instead.
 
-- -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+-- 
+Regards,
 
-iQIcBAEBAgAGBQJUrqhtAAoJEAsCRMQNDUMcVkgP/if69SGYILLnnj+7oBIuXJGl
-8QZVJRHKdN/8Tny7PVBDmerv8kTxbDfaJpJyHg8nSSFRyTmOKChNkO9mcR7TIXcP
-KxQn5BjYYUvcPM9jZESTAOIdEcaKbsMjj2Yknf49o7ij9YgCBPvFbDOZtfk/oMtF
-no3wGSuZPF4cRBvhfHJQdLMc87VeLSdz4eDBWZ7LX6EXlfWc8QH8iJhbLzmPp3pJ
-ofFKKeoaOrlcb/tQPdfSbWvVXZmWpJa8YdDGc2V+w6gahjPeWffe3ZTSyS4dwKZ+
-Ayt4F2ptxu+/1fbOb9ZSFCrST2q+yavvXR5D/guK1EqIi1iRHJzq9QSNO8VJksG1
-g+aCCTxI5qxHmmq2NandZ/UTttdxsUhPVO32IAFZcrq49gdPQqa/QuB0iI3fDevp
-kqueiQj96wHr6zBFMgO6O+Vw/bmOjNdFOQUIv6iEJt1SbRtouBa4VVSRsbJijwGU
-3jDZBmBhV/ntGuydqsPE1IAjQPO9nKk2rF7RZkx2OGx6Lc6kOk6BQ0eHnA/FgmcG
-vZiHAIK99K9dEd926C+nV6pYK9UfPU/UKtmxIa/Z5At4oxN3SUKeZokmCFC7f2Ff
-ueM0hLvEmfNTjSzGkx72RsdxE/6nU2kgYfNOGsJh4QuePrph9+orgHtb5qzZXmiA
-Mf3pjHSWH0sqAXKfZZmF
-=zsvn
------END PGP SIGNATURE-----
+Laurent Pinchart
