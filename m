@@ -1,57 +1,97 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RESEND PATCH 2/3] epoll: Add implementation for epoll_pwait1
-Date: Thu, 8 Jan 2015 12:48:27 +0100
-Message-ID: <CAKgNAkiKz1pdt_uYpFDsCNLPr6UBJHZs72o3iAh57+7uG1uksQ@mail.gmail.com>
-References: <1420708563-21743-1-git-send-email-famz@redhat.com>
- <1420708563-21743-3-git-send-email-famz@redhat.com> <54AE65BB.1020707@redhat.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH] selftests/vm: fix link error for transhuge-stress test
+Date: Thu, 08 Jan 2015 08:55:25 -0700
+Message-ID: <54AEA86D.60709@osg.samsung.com>
+References: <1420655754-10076-1-git-send-email-Andrej.Skvortzov@gmail.com> <54AD872E.9060802@osg.samsung.com> <20150107201045.GA5704@yulia-desktop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54AE65BB.1020707-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Juri Lelli <juri.lelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dario Faggioli <raistlin-k2GhghHVRtY@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150107201045.GA5704@yulia-desktop>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrey Skvortsov <Andrej.Skvortzov@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <koct9i@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 8 January 2015 at 12:10, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->
->
-> On 08/01/2015 10:16, Fam Zheng wrote:
->> Unlike ppoll(2), which accepts a timespec argument "timeout_ts" to
->> specify the timeout, epoll_wait(2) and epoll_pwait(2) expect a
->> microsecond timeout in int type.
->>
->> This is an obstacle for applications in switching from ppoll to epoll,
->> if they want nanosecond resolution in their event loops.
->>
->> Therefore, adding this variation of epoll wait interface, giving user an
->> option with *both* advantages, is a reasonable move: there could be
->> constantly scalable performance polling many fds, while having a
->> nanosecond timeout precision (assuming it has properly set up timer
->> slack with prctl(2)).
->>
->> Signed-off-by: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> ---
->>  fs/eventpoll.c           | 24 ++++++++++++++++++++++++
->>  include/linux/syscalls.h |  4 ++++
->>  kernel/sys_ni.c          |  3 +++
->>  3 files changed, 31 insertions(+)
->
-> As mentioned by Miklos in the non-resent version, please add a flags
-> argument.  Invalid flags should return -EINVAL.
->
-> In fact, we could already use the flags argument to specify an absolute
-> timeout, which is a nice thing to have for QEMU too.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Nice! It looks like we found this iteration of "failure to include a
-flags argument is a mistake" already!
+On 01/07/2015 01:10 PM, Andrey Skvortsov wrote:
+> On Wed, Jan 07, 2015 at 12:21:18PM -0700, Shuah Khan wrote:
+>> On 01/07/2015 11:35 AM, Andrey Skvortsov wrote:
+>>> add -lrt to fix undefined reference to `clock_gettime'
+>>> 
+>>> Signed-off-by: Andrey Skvortsov <andrej.skvortzov@gmail.com> 
+>>> --- tools/testing/selftests/vm/Makefile |    2 +- 1 file
+>>> changed, 1 insertion(+), 1 deletion(-)
+>>> 
+>>> diff --git a/tools/testing/selftests/vm/Makefile
+>>> b/tools/testing/selftests/vm/Makefile index 4c4b1f6..077828c
+>>> 100644 --- a/tools/testing/selftests/vm/Makefile +++
+>>> b/tools/testing/selftests/vm/Makefile @@ -7,7 +7,7 @@ BINARIES
+>>> += transhuge-stress
+>>> 
+>>> all: $(BINARIES) %: %.c -	$(CC) $(CFLAGS) -o $@ $^ +	$(CC)
+>>> $(CFLAGS) -o $@ $^ -lrt
+>>> 
+>>> run_tests: all @/bin/sh ./run_vmtests || (echo "vmtests:
+>>> [FAIL]"; exit 1)
+>>> 
+>> 
+>> Andrey,
+>> 
+>> I don't see any undefined references when I build. Curious if it
+>> is specific to your env??
+>> 
+>> Please include the warning in the change log when you fix
+>> warnings in the future.
+>> 
+> 
+> thanks for the comment.
+> 
+> Here is what I get without a patch:
+> 
+> linux-next/tools/testing/selftests/vm $ make gcc -Wall -o
+> hugepage-mmap hugepage-mmap.c gcc -Wall -o hugepage-shm
+> hugepage-shm.c gcc -Wall -o map_hugetlb map_hugetlb.c gcc -Wall -o
+> thuge-gen thuge-gen.c gcc -Wall -o hugetlbfstest hugetlbfstest.c 
+> gcc -Wall -o transhuge-stress transhuge-stress.c /tmp/ccpWoqkG.o:
+> In function `main': transhuge-stress.c:(.text+0x3a3): undefined
+> reference to `clock_gettime' transhuge-stress.c:(.text+0x4dc):
+> undefined reference to `clock_gettime' collect2: ld returned 1 exit
+> status make: *** [transhuge-stress] Error 1
+> 
+> 
+> $ gcc --version gcc (Ubuntu/Linaro 4.6.4-1ubuntu1~12.04) 4.6.4. The
+> same error I get on my other Debian system.
+> 
+> man page for clock_gettime says 'Link with -lrt'. So I think the
+> error message is correct.
+> 
 
-Cheers,
+Thanks for fixing it. Applied to linux-kselftest fixes branch
 
-Michael
+- -- Shuah
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+- -- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJUrqhtAAoJEAsCRMQNDUMcVkgP/if69SGYILLnnj+7oBIuXJGl
+8QZVJRHKdN/8Tny7PVBDmerv8kTxbDfaJpJyHg8nSSFRyTmOKChNkO9mcR7TIXcP
+KxQn5BjYYUvcPM9jZESTAOIdEcaKbsMjj2Yknf49o7ij9YgCBPvFbDOZtfk/oMtF
+no3wGSuZPF4cRBvhfHJQdLMc87VeLSdz4eDBWZ7LX6EXlfWc8QH8iJhbLzmPp3pJ
+ofFKKeoaOrlcb/tQPdfSbWvVXZmWpJa8YdDGc2V+w6gahjPeWffe3ZTSyS4dwKZ+
+Ayt4F2ptxu+/1fbOb9ZSFCrST2q+yavvXR5D/guK1EqIi1iRHJzq9QSNO8VJksG1
+g+aCCTxI5qxHmmq2NandZ/UTttdxsUhPVO32IAFZcrq49gdPQqa/QuB0iI3fDevp
+kqueiQj96wHr6zBFMgO6O+Vw/bmOjNdFOQUIv6iEJt1SbRtouBa4VVSRsbJijwGU
+3jDZBmBhV/ntGuydqsPE1IAjQPO9nKk2rF7RZkx2OGx6Lc6kOk6BQ0eHnA/FgmcG
+vZiHAIK99K9dEd926C+nV6pYK9UfPU/UKtmxIa/Z5At4oxN3SUKeZokmCFC7f2Ff
+ueM0hLvEmfNTjSzGkx72RsdxE/6nU2kgYfNOGsJh4QuePrph9+orgHtb5qzZXmiA
+Mf3pjHSWH0sqAXKfZZmF
+=zsvn
+-----END PGP SIGNATURE-----
