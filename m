@@ -1,8 +1,8 @@
-From: Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org>
+From: Al Viro <viro@ZenIV.linux.org.uk>
 Subject: Re: [PATCHv10 man-pages 5/5] execveat.2: initial man page for
  execveat(2)
-Date: Fri, 9 Jan 2015 16:31:18 -0500
-Message-ID: <20150109213118.GV4574@brightrain.aerifal.cx>
+Date: Fri, 9 Jan 2015 21:50:42 +0000
+Message-ID: <20150109215042.GM22149@ZenIV.linux.org.uk>
 References: <1416830039-21952-1-git-send-email-drysdale@google.com>
  <1416830039-21952-6-git-send-email-drysdale@google.com>
  <54AFF813.7050604@gmail.com>
@@ -11,55 +11,36 @@ References: <1416830039-21952-1-git-send-email-drysdale@google.com>
  <20150109204815.GR4574@brightrain.aerifal.cx>
  <20150109205626.GK22149@ZenIV.linux.org.uk>
  <20150109205926.GT4574@brightrain.aerifal.cx>
- <877fwvy7ln.fsf@x220.int.ebiederm.org>
+ <20150109210941.GL22149@ZenIV.linux.org.uk>
+ <20150109212852.GU4574@brightrain.aerifal.cx>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <877fwvy7ln.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20150109212852.GU4574@brightrain.aerifal.cx>
+Sender: linux-arch-owner@vger.kernel.org
+To: Rich Felker <dalias@aerifal.cx>
+Cc: David Drysdale <drysdale@google.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 09, 2015 at 03:20:04PM -0600, Eric W. Biederman wrote:
-> Rich Felker <dalias-/miJ2pyFWUyWIDz0JBNUog@public.gmane.org> writes:
-> 
-> > On Fri, Jan 09, 2015 at 08:56:26PM +0000, Al Viro wrote:
-> >> On Fri, Jan 09, 2015 at 03:48:15PM -0500, Rich Felker wrote:
-> >> > I think this is a case that needs to be fixed, though it's hard. The
-> >> > normal correct usage for fexecve is to always pass an O_CLOEXEC file
-> >> > descriptor, and the caller can't really be expected to know whether
-> >> > the file is a script or not. We discussed workarounds before and one
-> >> > idea I proposed was having fexecve provide a "one open only" magic
-> >> > symlink in /proc/self/ to pass to the interpreter. It would behave
-> >> > like an O_PATH file descriptor magic symlink in /proc/self/fd, but
-> >> > would automatically cease to exist on the first open (at which point
-> >> > the interpreter would have a real O_RDONLY file descriptor for the
-> >> > underlying file).
-> >> 
-> >> For fsck sake, folks, if you have bloody /proc, you don't need that shite
-> >> at all!  Just do execve on /proc/self/fd/n, and be done with that.
-> >> 
-> >> The sole excuse for merging that thing in the first place had been
-> >> "would anybody think of children^Wsclerotic^Whardened environments
-> >> where they have no /proc at all".
-> >
-> > That doesn't work. With O_CLOEXEC, /proc/self/fd/n is already gone at
-> > the time the interpreter runs, whether you're using fexecveat or
-> > execve with "/proc/self/fd/n" to implement POSIX fexecve(). That's the
-> > problem. This breaks the intended idiom for fexecve.
-> 
-> O_CLOEXEC with a #! intepreter can not work.  If the file descriptor is
-> closed a #! interpreter can not open it.   So I don't know why or how
-> you want that to work but it is nonsense.
+On Fri, Jan 09, 2015 at 04:28:52PM -0500, Rich Felker wrote:
 
-The why is simple: fexecve always expects a close-on-exec file
-descriptor. Otherwise the program being executed would need to take a
-special option telling it to close the spurious fd it inherits. Most
-programs don't have such an option, and there's no way to do it
-without application-specific knowledge.
+> The "magic open-once magic symlink" approach is really the cleanest
+> solution I can find. In the case where the interpreter does not open
+> the script, nothing terribly bad happens; the magic symlink just
+> sticks around until _exit or exec. In the case where the interpreter
+> opens it more than once, you get a failure, but as far as I know
+> existing interpreters don't do this, and it's arguably bad design. In
+> any case it's a caught error.
 
-The how is difficult, but it can be done.
+You know what's cleaner than that?  git revert 27d6ec7ad
+It has just been merged; until 3.19 it's fair game for removal.
 
-Rich
+And yes, I should've NAKed the damn thing loud and clear, rather than
+asking questions back then, getting no answers and letting it slip.
+Mea culpa.
+
+Back then the procfs-free environments had been pushed as a serious argument
+in favour of merging the damn thing.  Now you guys turn around and say that
+we not only need procfs mounted, we need a yet-to-be-added kludge in there
+to cope with the actual intended uses.
