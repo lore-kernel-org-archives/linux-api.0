@@ -1,55 +1,33 @@
-From: Rich Felker <dalias@aerifal.cx>
-Subject: Re: [PATCHv10 man-pages 5/5] execveat.2: initial man page for
- execveat(2)
-Date: Fri, 9 Jan 2015 17:17:28 -0500
-Message-ID: <20150109221728.GW4574@brightrain.aerifal.cx>
-References: <1416830039-21952-6-git-send-email-drysdale@google.com>
- <54AFF813.7050604@gmail.com>
- <20150109161302.GQ4574@brightrain.aerifal.cx>
- <CAHse=S88Jy5ZKM_VY5onfvxX7dTMngnxuHfuLeSuzvKvQNP19A@mail.gmail.com>
- <20150109204815.GR4574@brightrain.aerifal.cx>
- <20150109205626.GK22149@ZenIV.linux.org.uk>
- <20150109205926.GT4574@brightrain.aerifal.cx>
- <20150109210941.GL22149@ZenIV.linux.org.uk>
- <20150109212852.GU4574@brightrain.aerifal.cx>
- <20150109215042.GM22149@ZenIV.linux.org.uk>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v4 5/5] tty/serial: Add Spreadtrum sc9836-uart driver
+ support
+Date: Fri, 9 Jan 2015 14:25:01 -0800
+Message-ID: <20150109222501.GA10102@kroah.com>
+References: <sc9836v4>
+ <1417692860-18841-1-git-send-email-chunyan.zhang@spreadtrum.com>
+ <1417692860-18841-6-git-send-email-chunyan.zhang@spreadtrum.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <sparclinux-owner@vger.kernel.org>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150109215042.GM22149@ZenIV.linux.org.uk>
-Sender: sparclinux-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: David Drysdale <drysdale@google.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, sparclinux@vger.kernel.org
+In-Reply-To: <1417692860-18841-6-git-send-email-chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+Cc: mark.rutland-5wv7dgnIgG8@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, catalin.marinas-5wv7dgnIgG8@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, florian.vaussard-p8DiymsW2f8@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org, hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, geng.ren-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, zhizhou.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, wei.qiao-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sprdlinux-uGLqWuYN4qMgsBAKwltoeQ@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arm-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 09, 2015 at 09:50:42PM +0000, Al Viro wrote:
-> On Fri, Jan 09, 2015 at 04:28:52PM -0500, Rich Felker wrote:
-> 
-> > The "magic open-once magic symlink" approach is really the cleanest
-> > solution I can find. In the case where the interpreter does not open
-> > the script, nothing terribly bad happens; the magic symlink just
-> > sticks around until _exit or exec. In the case where the interpreter
-> > opens it more than once, you get a failure, but as far as I know
-> > existing interpreters don't do this, and it's arguably bad design. In
-> > any case it's a caught error.
-> 
-> You know what's cleaner than that?  git revert 27d6ec7ad
-> It has just been merged; until 3.19 it's fair game for removal.
-> 
-> And yes, I should've NAKed the damn thing loud and clear, rather than
-> asking questions back then, getting no answers and letting it slip.
-> Mea culpa.
-> 
-> Back then the procfs-free environments had been pushed as a serious argument
-> in favour of merging the damn thing.  Now you guys turn around and say that
-> we not only need procfs mounted, we need a yet-to-be-added kludge in there
-> to cope with the actual intended uses.
+On Thu, Dec 04, 2014 at 07:34:20PM +0800, Chunyan Zhang wrote:
+> --- a/include/uapi/linux/serial_core.h
+> +++ b/include/uapi/linux/serial_core.h
+> @@ -247,4 +247,7 @@
+>  /* MESON */
+>  #define PORT_MESON	109
+>  
+> +/* SPRD SERIAL  */
+> +#define PORT_SPRD       110
 
-Reverting does not fix the problem. There is no way to make fexecve
-work for scripts without kernel support, and the needed kernel support
-without fexecve would be even nastier, since handling of /proc/self/fd
-magic-symlinks would need to be special-cased. The added fexecveat
-syscall supports fully /proc-less operation for non-scripts.
-
-Rich
+Please use a tab here, like all other entries have.
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
