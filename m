@@ -1,77 +1,36 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCHv10 man-pages 5/5] execveat.2: initial man page for execveat(2)
-Date: Sat, 10 Jan 2015 09:27:46 +0100
-Message-ID: <54B0E282.7090203@gmail.com>
-References: <1416830039-21952-1-git-send-email-drysdale@google.com> <1416830039-21952-6-git-send-email-drysdale@google.com> <54AFF813.7050604@gmail.com> <20150109161302.GQ4574@brightrain.aerifal.cx> <CAHse=S88Jy5ZKM_VY5onfvxX7dTMngnxuHfuLeSuzvKvQNP19A@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <sparclinux-owner@vger.kernel.org>
-In-Reply-To: <CAHse=S88Jy5ZKM_VY5onfvxX7dTMngnxuHfuLeSuzvKvQNP19A@mail.gmail.com>
-Sender: sparclinux-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>, Rich Felker <dalias@aerifal.cx>
-Cc: mtk.manpages@gmail.com, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, sparclinux@vger.kernel.org
+From: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Subject: [PATCH 2/2] Input: uinput - fix ioctl nr overflow for UI_GET_VERSION
+Date: Sat, 10 Jan 2015 13:43:36 +0100
+Message-ID: <1420893816-11620-3-git-send-email-gabriel@lse.epita.fr>
+References: <1420893816-11620-1-git-send-email-gabriel@lse.epita.fr>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1420893816-11620-1-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Hutterer <peter.hutterer-Pf4JEFdB4epeoWH0uzbU5w@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/09/2015 06:46 PM, David Drysdale wrote:
-> On Fri, Jan 9, 2015 at 4:13 PM, Rich Felker <dalias@aerifal.cx> wrote:
->> On Fri, Jan 09, 2015 at 04:47:31PM +0100, Michael Kerrisk (man-pages) wrote:
->>> On 11/24/2014 12:53 PM, David Drysdale wrote:
->>>> Signed-off-by: David Drysdale <drysdale@google.com>
->>>> ---
->>>>  man2/execveat.2 | 153 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->>>>  1 file changed, 153 insertions(+)
->>>>  create mode 100644 man2/execveat.2
->>>
->>> David,
->>>
->>> Thanks for the very nicely prepared man page. I've done
->>> a few very light edits, and will release the version below
->>> with the next man-pages release.
->>>
->>> I have one question. In the message accompanying
->>> commit 51f39a1f0cea1cacf8c787f652f26dfee9611874 you wrote:
->>>
->>>   The filename fed to the executed program as argv[0] (or the name of the
->>>   script fed to a script interpreter) will be of the form "/dev/fd/<fd>"
->>>   (for an empty filename) or "/dev/fd/<fd>/<filename>", effectively
->>>   reflecting how the executable was found.  This does however mean that
->>>   execution of a script in a /proc-less environment won't work; also, script
->>>   execution via an O_CLOEXEC file descriptor fails (as the file will not be
->>>   accessible after exec).
->>>
->>> How does one produce this situation where the execed program sees
->>> argv[0] as a /dev/fd path? (i.e., what would the execveat()
->>> call look like?) I tried to produce this scenario, but could not.
->>
->> I think this is wrong. argv[0] is an arbitrary string provided by the
->> caller and would never be derived from the fd passed.
-> 
-> Yeah, I think I just wrote that wrong, it's only relevant for scripts.
-> As Rich says, for normal binaries argv[0] is just the argv[0] that
-> was passed into the execve[at] call.  For a script, the code in
-> fs/binfmt_script.c will remove the original argv[0] and put the
-> interpreter name and the script filename (e.g. "/bin/sh",
-> "/dev/fd/6/script") in as 2 arguments in its place.
+Request number for ioctls are encoded on 8bit. Values for are superior
+to 255. The effective value is 0x2d. The effective ioctl number is still
+the same one, it will not change the api in anyway.
 
-So, on reflection, I think it's worth saying something about this, and 
-I added the following text to the man page:
+Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+---
+ include/uapi/linux/uinput.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-   NOTES
-       When asked to execute a script file, the argv[0] that  is  passed
-       to  the  script  interpreter is a string of the form /dev/fd/N or
-       /dev/fd/N/P, where N is the number of the file descriptor  passed
-       via  the  dirfd argument.  A string of the first form occurs when
-       AT_EMPTY_PATH is employed.  A string of the  second  form  occurs
-       when the script is specified via both dirfd and pathname; in this
-       case, P is the value given in pathname.
-
-Thanks,
-
-Michael
-
-
+diff --git a/include/uapi/linux/uinput.h b/include/uapi/linux/uinput.h
+index 358f7d9..e1daf2e 100644
+--- a/include/uapi/linux/uinput.h
++++ b/include/uapi/linux/uinput.h
+@@ -91,7 +91,7 @@ struct uinput_ff_erase {
+  * the integer pointed to by the ioctl argument. The protocol version
+  * is hard-coded in the kernel and is independent of the uinput device.
+  */
+-#define UI_GET_VERSION		_IOR(UINPUT_IOCTL_BASE, 301, unsigned int)
++#define UI_GET_VERSION		_IOR(UINPUT_IOCTL_BASE, 0x2d, unsigned int)
+ 
+ /*
+  * To write a force-feedback-capable driver, the upload_effect
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+2.2.1
