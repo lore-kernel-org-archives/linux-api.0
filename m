@@ -1,76 +1,42 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [v8 2/5] ext4: adds project ID support
-Date: Sat, 10 Jan 2015 10:46:27 +1100
-Message-ID: <20150109234627.GN31508@dastard>
-References: <1418102548-5469-1-git-send-email-lixi@ddn.com>
- <1418102548-5469-3-git-send-email-lixi@ddn.com>
- <20150108082625.GA15339@quack.suse.cz>
- <2EE35986-B398-432E-92D4-EEF875381319@dilger.ca>
- <20150109094758.GA2576@quack.suse.cz>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [PATCHv10 man-pages 5/5] execveat.2: initial man page for
+ execveat(2)
+Date: Sat, 10 Jan 2015 00:01:08 +0000
+Message-ID: <20150110000108.GT22149@ZenIV.linux.org.uk>
+References: <20150109205926.GT4574@brightrain.aerifal.cx>
+ <20150109210941.GL22149@ZenIV.linux.org.uk>
+ <20150109212852.GU4574@brightrain.aerifal.cx>
+ <20150109215042.GM22149@ZenIV.linux.org.uk>
+ <20150109221728.GW4574@brightrain.aerifal.cx>
+ <20150109223300.GO22149@ZenIV.linux.org.uk>
+ <20150109224252.GY4574@brightrain.aerifal.cx>
+ <20150109225743.GP22149@ZenIV.linux.org.uk>
+ <20150109231248.GZ4574@brightrain.aerifal.cx>
+ <CALCETrUpr5kqNm5M5z=RxM9T7DOQB3-Le2gxGM=D7+cpWVRQaQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150109094758.GA2576-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Filesystem Development List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ext4 development <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <CALCETrUpr5kqNm5M5z=RxM9T7DOQB3-Le2gxGM=D7+cpWVRQaQ@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Rich Felker <dalias@aerifal.cx>, David Drysdale <drysdale@google.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 09, 2015 at 10:47:58AM +0100, Jan Kara wrote:
-> On Thu 08-01-15 15:20:21, Andreas Dilger wrote:
-> > On Jan 8, 2015, at 1:26 AM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > > On Tue 09-12-14 13:22:25, Li Xi wrote:
-> > >> This patch adds a new internal field of ext4 inode to save project
-> > >> identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
-> > >> inheriting project ID from parent directory.
-> > >  I have noticed one thing you apparently changed in v7 of the patch set.
-> > > See below.
-> > > 
-> > >> diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-> > >> index 29c43e7..8bd1da9 100644
-> > >> --- a/fs/ext4/ext4.h
-> > >> +++ b/fs/ext4/ext4.h
-> > >> @@ -377,16 +377,18 @@ struct flex_groups {
-> > >> #define EXT4_EA_INODE_FL	        0x00200000 /* Inode used for large EA */
-> > >> #define EXT4_EOFBLOCKS_FL		0x00400000 /* Blocks allocated beyond EOF */
-> > >> #define EXT4_INLINE_DATA_FL		0x10000000 /* Inode has inline data. */
-> > >> +#define EXT4_PROJINHERIT_FL		FS_PROJINHERIT_FL /* Create with parents projid */
-> > >  How did FS_PROJINHERIT_FL get here? There used to be 0x20000000 in older
-> > > version of the patch set which is correct - this definition is defining
-> > > ext4 on-disk format. As such it is an ext4 specific flag and should be
-> > > definined to a fixed constant independed of any other filesystem. It seems
-> > > you are somewhat mixing what is an on-disk format flag value and what is a
-> > > flag value passed from userspace. These two may be different things and
-> > > you need to convert between the values when getting / setting flags...
-> > 
-> > Currently the EXT4_*_FL and FS_*_FL values are all identical, and there
-> > is no reason to change that before it is actually needed.  Since the
-> > FS_PROJINHERIT_FL is used via chattr/lsattr from userspace, this value
-> > must also be kept the same in the future to avoid API breakage, so there
-> > is no reason to worry about incompatibilities.
->   Agreed. I was somewhat worried about having on-disk flag defined through
-> the external non-ext4 define but you are right that neither can really
-> change once we ship a kernel with it.
-> 
-> > See also the [v8 5/5] patch, which is changing the EXT4_*_FL values to
-> > use FS_*_FL constants, where applicable, so that it is more clear that
-> > these values need to be the same.
->   OK, I've missed that. So if things will be consistent again, I'm fine
-> with the change.
+On Fri, Jan 09, 2015 at 03:24:12PM -0800, Andy Lutomirski wrote:
 
-Except that I NACK'd that change (i.e patch 4/5) because it's out of
-scope of a "support project quota" patchset. not to mention that it
-is broken because it exhausts the flags space with ext4 specific
-flags and prevents future expansion of the ioctl structure.
+> I think that, if we really want to support clean fexecve on O_CLOEXEC
+> scripts some day, the right way to do it is to fix the script
+> interface for real.  Have a special flag in the headers of script
+> interpreters that support a new interface that says "when I'm a script
+> interpreter, I expect an auxv entry AT_SCRIPT_FD with an  open fd with
+> CLOEXEC set".  Then we can directly exec scripts by fd, even with
+> O_CLOEXEC set, without any races.
 
-Any extension to the ioctl needs to be done in a spearate patch set,
-with separate justification. This patch set should only implement
-the very minimum needed to use the project quota ioctl flags....
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Amazing.  Let me see if I got it straight - you want a magical Linux-only
+flag to mark the binaries that might be used as interpreters.  _Plus_ the
+Linux-only logics in their source to go with that.  With corresponding kludges
+to parsing the command line (you know, like #!/usr/bin/make -f as the first
+line in a script - somehow it should recognize the deep magic of the oh
+so fucking superior interface and suppress the normal behaviour).  Maintained
+by hell knows whom.  Onna stick.  Inna bun.  CMOT Dibbler would be proud...
