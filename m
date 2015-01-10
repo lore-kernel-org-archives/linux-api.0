@@ -1,110 +1,93 @@
-From: Gabriele Mazzotta <gabriele.mzt-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] Documentation: Add entry for dell-laptop sysfs interface
-Date: Sat, 10 Jan 2015 14:08:11 +0100
-Message-ID: <2495157.bRb6NIzxPV@xps13>
-References: <1417628493-29323-1-git-send-email-gabriele.mzt@gmail.com> <1636595.UbTko9mUNA@xps13> <20150110065714.GB104814@vmdeb7>
+From: Rich Felker <dalias@aerifal.cx>
+Subject: Re: [PATCHv10 man-pages 5/5] execveat.2: initial man page for
+ execveat(2)
+Date: Sat, 10 Jan 2015 08:31:20 -0500
+Message-ID: <20150110133120.GF4574@brightrain.aerifal.cx>
+References: <1416830039-21952-1-git-send-email-drysdale@google.com>
+ <1416830039-21952-6-git-send-email-drysdale@google.com>
+ <54AFF813.7050604@gmail.com>
+ <20150109161302.GQ4574@brightrain.aerifal.cx>
+ <CAHse=S88Jy5ZKM_VY5onfvxX7dTMngnxuHfuLeSuzvKvQNP19A@mail.gmail.com>
+ <54B0E282.7090203@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150110065714.GB104814@vmdeb7>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libsmbios-devel-XtjxT7Vmt5ZskZv2Y/7f+AC/G2K4zDHf@public.gmane.org, Srinivas_G_Gowda-8PEkshWhKlo@public.gmane.org, Michael_E_Brown-8PEkshWhKlo@public.gmane.org, pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, A.Sloman-dxBOTFGcEFw2EctHIo1CcQ@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <54B0E282.7090203@gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: David Drysdale <drysdale@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@amacapital.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday 09 January 2015 22:57:14 Darren Hart wrote:
-> On Wed, Dec 31, 2014 at 12:20:59PM +0100, Gabriele Mazzotta wrote:
-> > On Tuesday 30 December 2014 21:31:49 Brian Norris wrote:
-> > > Hi,
-> > >=20
-> > > On Wed, Dec 03, 2014 at 06:41:33PM +0100, Gabriele Mazzotta wrote=
-:
-> > > > Add the documentation for the new sysfs interface of dell-lapto=
-p
-> > > > that allows to configure the keyboard illumination on Dell syst=
-ems.
-> > > >=20
-> > > > Signed-off-by: Gabriele Mazzotta <gabriele.mzt-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> > > > Signed-off-by: Pali Roh=E1r <pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> > > > ---
-> > > >  .../ABI/testing/sysfs-platform-dell-laptop         | 60 ++++++=
-++++++++++++++++
-> > > >  1 file changed, 60 insertions(+)
-> > > >  create mode 100644 Documentation/ABI/testing/sysfs-platform-de=
-ll-laptop
-> > > >=20
-> > > > diff --git a/Documentation/ABI/testing/sysfs-platform-dell-lapt=
-op b/Documentation/ABI/testing/sysfs-platform-dell-laptop
-> > > > new file mode 100644
-> > > > index 0000000..7969443
-> > > > --- /dev/null
-> > > > +++ b/Documentation/ABI/testing/sysfs-platform-dell-laptop
-> > > > @@ -0,0 +1,60 @@
-> > > > +What:		/sys/class/leds/dell::kbd_backlight/als_setting
-> > > > +Date:		December 2014
-> > > > +KernelVersion:	3.19
-> > > > +Contact:	Gabriele Mazzotta <gabriele.mzt-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
-> > > > +		Pali Roh=E1r <pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> > > > +Description:
-> > > > +		This file allows to control the automatic keyboard
-> > > > +		illumination mode on some systems that have an ambient
-> > > > +		light sensor. Write 1 to this file to enable the auto
-> > > > +		mode, 0 to disable it.
-> > > [...]
-> > >=20
-> > > This entry appears wrong, or at least incomplete. My system boots=
- with a
-> > > default value of 18, and the 'set' implementation accepts any val=
-ue from
-> > > 0 to 255.
-> > >=20
-> > > According to the comments in dell-laptop.c, the value actually me=
-ans
-> > > something different than on/off:
-> > >=20
-> > >   cbArg3, byte0  Desired setting of ALS value that turns the ligh=
-t on or off.
-> > >=20
-> > > Admittedly, I'm not clear on what the intended interface is, as I=
-'ve
-> > > never had the ALS / keyboard backlight controls all working prope=
-rly on
-> > > my laptop in the first place, but I thought this would be the rig=
-ht
-> > > place to ask about getting the documentation and driver in sync.
-> >=20
-> > Hi,
-> >=20
-> > You are perfectly right, the documentation is wrong and I'm sorry f=
-or
-> > that. als_setting should allow you to define when the keyboard
-> > backlight has to be turned on or off depending on the value reporte=
-d
-> > by the ambient light sensor.
-> >=20
-> > Please note that not everything that is in libsmbios [1] is impleme=
-nted
-> > in the kernel driver. Take a look at it, recently there have been f=
-ew
-> > changes related to the ALS settings. Probably they are not needed g=
-iven
-> > that you are able to set the threshold with the current kernel driv=
-er,
-> > but you might find something interesting.
-> >=20
-> > I'll submit a patch to correct the documentation, thanks for report=
-ing.
->=20
-> Hi Gabriele,
->=20
-> Have I missed a patch from you for this? I'd like to see this correct=
-ed in the
-> 3.19 rc cycle.
->=20
-> Thanks,
+On Sat, Jan 10, 2015 at 09:27:46AM +0100, Michael Kerrisk (man-pages) wrote:
+> On 01/09/2015 06:46 PM, David Drysdale wrote:
+> > On Fri, Jan 9, 2015 at 4:13 PM, Rich Felker <dalias@aerifal.cx> wrote:
+> >> On Fri, Jan 09, 2015 at 04:47:31PM +0100, Michael Kerrisk (man-pages) wrote:
+> >>> On 11/24/2014 12:53 PM, David Drysdale wrote:
+> >>>> Signed-off-by: David Drysdale <drysdale@google.com>
+> >>>> ---
+> >>>>  man2/execveat.2 | 153 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+> >>>>  1 file changed, 153 insertions(+)
+> >>>>  create mode 100644 man2/execveat.2
+> >>>
+> >>> David,
+> >>>
+> >>> Thanks for the very nicely prepared man page. I've done
+> >>> a few very light edits, and will release the version below
+> >>> with the next man-pages release.
+> >>>
+> >>> I have one question. In the message accompanying
+> >>> commit 51f39a1f0cea1cacf8c787f652f26dfee9611874 you wrote:
+> >>>
+> >>>   The filename fed to the executed program as argv[0] (or the name of the
+> >>>   script fed to a script interpreter) will be of the form "/dev/fd/<fd>"
+> >>>   (for an empty filename) or "/dev/fd/<fd>/<filename>", effectively
+> >>>   reflecting how the executable was found.  This does however mean that
+> >>>   execution of a script in a /proc-less environment won't work; also, script
+> >>>   execution via an O_CLOEXEC file descriptor fails (as the file will not be
+> >>>   accessible after exec).
+> >>>
+> >>> How does one produce this situation where the execed program sees
+> >>> argv[0] as a /dev/fd path? (i.e., what would the execveat()
+> >>> call look like?) I tried to produce this scenario, but could not.
+> >>
+> >> I think this is wrong. argv[0] is an arbitrary string provided by the
+> >> caller and would never be derived from the fd passed.
+> > 
+> > Yeah, I think I just wrote that wrong, it's only relevant for scripts.
+> > As Rich says, for normal binaries argv[0] is just the argv[0] that
+> > was passed into the execve[at] call.  For a script, the code in
+> > fs/binfmt_script.c will remove the original argv[0] and put the
+> > interpreter name and the script filename (e.g. "/bin/sh",
+> > "/dev/fd/6/script") in as 2 arguments in its place.
+> 
+> So, on reflection, I think it's worth saying something about this, and 
+> I added the following text to the man page:
+> 
+>    NOTES
+>        When asked to execute a script file, the argv[0] that  is  passed
+>        to  the  script  interpreter is a string of the form /dev/fd/N or
+>        /dev/fd/N/P, where N is the number of the file descriptor  passed
+>        via  the  dirfd argument.  A string of the first form occurs when
+>        AT_EMPTY_PATH is employed.  A string of the  second  form  occurs
+>        when the script is specified via both dirfd and pathname; in this
+>        case, P is the value given in pathname.
 
-I'm sorry, I must have done something wrong when I sent the patch, the
-CC list is not complete.
+While I'm aware that you're simply documenting, it seems unnecessary
+to me (and unnecessarily complicating of the cloexec issue) to have
+the /dev/fd/N/P form. This could always be resolved by the kernel to a
+single temp fd for the new process to use, and in fact it's probably
+preferable to always get a "temp fd" in case the fd passed to fexecve
+is NOT a throwaway one (e.g. if the original fd was stdin or
+something); the program being executed should not have to use ugly and
+error-prone heuristics to decide if it should close the exec fd.
 
-Thanks for the link Brian.
+On the other hand, this resolution could be done by userspace (open
+with O_PATH|O_CLOEXEC prior to making the fexecveat syscall, and
+always passing AT_EMPTY_PATH to the kernel) if desirable, so maybe it
+doesn't make sense to have the kernel do it. In this sense the whole
+"at" part of fexecveat becomes vestigial, though.
+
+Any thoughts?
+
+Rich
