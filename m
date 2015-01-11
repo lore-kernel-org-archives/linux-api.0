@@ -1,66 +1,58 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCHv10 man-pages 5/5] execveat.2: initial man page for execveat(2)
-Date: Sat, 10 Jan 2015 20:09:10 -0600
-Message-ID: <87oaq6oypl.fsf@x220.int.ebiederm.org>
-References: <20150109223300.GO22149@ZenIV.linux.org.uk>
-	<20150109224252.GY4574@brightrain.aerifal.cx>
-	<20150109225743.GP22149@ZenIV.linux.org.uk>
-	<20150109231248.GZ4574@brightrain.aerifal.cx>
-	<20150109233644.GR22149@ZenIV.linux.org.uk>
-	<20150110030300.GU22149@ZenIV.linux.org.uk>
-	<20150110034144.GC4574@brightrain.aerifal.cx>
-	<20150110041457.GV22149@ZenIV.linux.org.uk>
-	<20150110055713.GE4574@brightrain.aerifal.cx>
-	<878uhaqnjo.fsf@x220.int.ebiederm.org>
-	<20150111011559.GG4574@brightrain.aerifal.cx>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: [PATCH v9 2/2] crypto: AF_ALG: enable AEAD interface compilation
+Date: Sun, 11 Jan 2015 04:46:28 +0100
+Message-ID: <10606386.qlbgldSs02@tachyon.chronox.de>
+References: <41794881.9gBey4al6X@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150111011559.GG4574@brightrain.aerifal.cx> (Rich Felker's
-	message of "Sat, 10 Jan 2015 20:15:59 -0500")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rich Felker <dalias@aerifal.cx>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, David Drysdale <drysdale@google.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Meredydd Luff <meredydd@senatehouse.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, sparclinux@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <41794881.9gBey4al6X-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Herbert Xu' <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Rich Felker <dalias@aerifal.cx> writes:
+Enable compilation of the AEAD AF_ALG support and provide a Kconfig
+option to compile the AEAD AF_ALG support.
 
-> On Sat, Jan 10, 2015 at 04:27:23PM -0600, Eric W. Biederman wrote:
->> Rich Felker <dalias@aerifal.cx> writes:
->> 
->> > On Sat, Jan 10, 2015 at 04:14:57AM +0000, Al Viro wrote:
->> 
->> >> Except that if your interpreter does stat(2) (or access(2), or getxattr(2),
->> >> etc.) before bothering with open(2), you'll get screwed.
->> >
->> > Yes, but I think that would be very bad interpreter design.
->> > stat/getxattr/access/whatever followed by open is always a TOCTOU
->> > race. The correct sequence of actions is always open followed by
->> > fstat/fgetxattr/...
->> 
->> Sigh.  I think everyone who has looked at this has been blind.
->> 
->> If userspace is reasonable all we have to do is fix /proc/self/exe
->> for shell scripts to point at the actual script,
->> and then pass /proc/self/exe on the shell scripts command line.
->> 
->> At a practical level we have to worry about backwards compability and
->> chroot jails.  But the existence of a clean implementation with
->> /proc/self/exe serves a proof of concept that it would not be too
->> difficult.  When someone cares enough to implement it.
->
-> Is /proc/self/exe a "magic symlink" that's bound to the inode, or just
-> a regular symlink? In the latter case it defeats the whole purpose of
-> using O_EXEC fds and fexecve rather than pathnames.
+Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+---
+ crypto/Kconfig  | 9 +++++++++
+ crypto/Makefile | 1 +
+ 2 files changed, 10 insertions(+)
 
-In implementation /proc/self/exe is a named rather than a numbered file
-descriptor.  Essentially when loading an elf executable the file
-descriptor is duped to the name /proc/self/exe.  The implementation
-otherwise is the same as /proc/self/fd/N.
-
-The downside of course is that I expect if we were actually to change
-/proc/self/exe from to point at the script instead of the shell some
-piece of software somewhere would come melting down.  I am totally not
-ready to consider that kind of mine field today.
-
-Eric
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 50f4da4..41a3fc5 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1523,6 +1523,15 @@ config CRYPTO_USER_API_RNG
+ 	  This option enables the user-spaces interface for random
+ 	  number generator algorithms.
+ 
++config CRYPTO_USER_API_AEAD
++	tristate "User-space interface for AEAD cipher algorithms"
++	depends on NET
++	select CRYPTO_AEAD
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for AEAD
++	  cipher algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
+ 
+diff --git a/crypto/Makefile b/crypto/Makefile
+index ba19465..97b7d3a 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -100,6 +100,7 @@ obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
+ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
+ obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
++obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
+ 
+ #
+ # generic algorithms and the async_tx api
+-- 
+2.1.0
