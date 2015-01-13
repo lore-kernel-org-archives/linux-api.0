@@ -1,70 +1,63 @@
-From: Paul Bolle <pebolle@tiscali.nl>
-Subject: Re: [PATCH] headers_check: don't warn about kexec.h
-Date: Tue, 13 Jan 2015 18:13:32 +0100
-Message-ID: <1421169212.15397.22.camel@x220>
-References: <12825174.7oxZXDxNhV@wuerfel>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [GIT PULL] kselftest fixes for 3.19-rc5
+Date: Tue, 13 Jan 2015 11:07:12 -0700
+Message-ID: <54B55ED0.5000607@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <12825174.7oxZXDxNhV@wuerfel>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Geoff Levand <geoff@infradead.org>, Michal Marek <mmarek@suse.cz>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
+Hi Linus,
 
-On Tue, 2015-01-13 at 17:19 +0100, Arnd Bergmann wrote:
-> We've been getting this warning for ages:
-> 
-> ./usr/include/linux/kexec.h:61: userspace cannot reference function or variable defined in the kernel
-> 
-> There is no proper fix for this file, as the declaration is meant for
-> user space, not for the kernel, so we should work around it the
-> same way that we treat the seqbuf_dump() definition.
+Please pull the following ksefltest fixes for 3.19-rc5
 
-For the seqbuf_dump() stuff there are apparently users. I forgot the
-details, but the sound people wanted to keep that declaration (and some
-related ancient things) in the header involved to keep some really
-ancient stuff buildable.
+thanks,
+-- Shuah
 
-But the kexec_load declaration isn't very useful for userspace, see the
-patch I submitted in
-http://lkml.kernel.org/r/1389791824.17407.9.camel@x220 . And After my
-attempt the export of that declaration has also been discussed in
-http://lkml.kernel.org/r/115373b6ac68ee7a305975896e1c4971e8e51d4c.1408731991.git.geoff@infradead.org 
+The following changes since commit 6898b627aab6ba553e6d8b40a0b1ddc43c48d42f:
 
-In that last discussion no one has been able to point to an actual user
-of it. So, as far as I can tell, no one actually uses it. Which makes
-sense, because including this header by itself doesn't give one access
-to a useful definition of kexec_load. So why bother with the
-declaration?
+  selftests/exec: Use %zu to format size_t (2014-12-22 11:11:36 -0700)
 
-The last time that Geoff has been trying to get that patch applied
-should be
-http://lkml.kernel.org/r/b0702fc4186db21820d686e89afd6480560823db.1415837218.git.geoff@infradead.org  I'd rather see that go in.
+are available in the git repository at:
 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> 
-> diff --git a/scripts/headers_check.pl b/scripts/headers_check.pl
-> index 62320f93e903..fb051848667c 100755
-> --- a/scripts/headers_check.pl
-> +++ b/scripts/headers_check.pl
-> @@ -69,6 +69,10 @@ sub check_declarations
->  	if ($line =~ m/^void seqbuf_dump\(void\);/) {
->  		return;
->  	}
-> +	# user-only declaration from kexec.h
-> +	if ($line =~ m/^extern int kexec_load/) {
-> +		return;
-> +	}
->  	if ($line =~ m/^(\s*extern|unsigned|char|short|int|long|void)\b/) {
->  		printf STDERR "$filename:$lineno: " .
->  			      "userspace cannot reference function or " .
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-3.19-rc-5
 
-Regards,
+for you to fetch changes up to f5db310d77ef1742e40bfc303b8625584c55f9e3:
+
+  selftests/vm: fix link error for transhuge-stress test (2015-01-08
+09:01:00 -0700)
+
+----------------------------------------------------------------
+kselftest fixes for: 3.19-rc5
+
+This update contains 3 patches to fix one compile error,
+and two run-time bugs. One of them fixes infinite loop
+on ARM.
+
+----------------------------------------------------------------
+Andrey Skvortsov (1):
+      selftests/vm: fix link error for transhuge-stress test
+
+David Drysdale (1):
+      selftests/exec: allow shell return code of 126
+
+dann frazier (1):
+      tools: testing: selftests: mq_perf_tests: Fix infinite loop on ARM
+
+ tools/testing/selftests/exec/execveat.c        | 19 +++++++++++++------
+ tools/testing/selftests/mqueue/mq_perf_tests.c |  3 +--
+ tools/testing/selftests/vm/Makefile            |  2 +-
+ 3 files changed, 15 insertions(+), 9 deletions(-)
 
 
-Paul Bolle
-
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
