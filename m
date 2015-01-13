@@ -1,38 +1,54 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH] headers_check: don't warn about kexec.h
-Date: Tue, 13 Jan 2015 17:19:19 +0100
-Message-ID: <12825174.7oxZXDxNhV@wuerfel>
+From: Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>
+Subject: Re: [PATCH 1/7] tuner-core: properly initialize media controller
+ subdev
+Date: Tue, 13 Jan 2015 18:35:08 +0200
+Message-ID: <54B5493C.5030102@iki.fi>
+References: <cover.1420315245.git.mchehab@osg.samsung.com>	<4ff2de5fce002a6f6f87993440f45e0f198c57cb.1420315245.git.mchehab@osg.samsung.com>	<3223125.oELRrvBOf4@avalon> <20150111122553.76394653@recife.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Marek <mmarek@suse.cz>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150111122553.76394653-+RedX5hVuTR+urZeOPWqwQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-We've been getting this warning for ages:
+On 01/11/2015 04:25 PM, Mauro Carvalho Chehab wrote:
+> Em Sun, 11 Jan 2015 16:02:41 +0200
+> Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org> escreveu:
 
-./usr/include/linux/kexec.h:61: userspace cannot reference function or variable defined in the kernel
+>> I'm not too familiar with tuners, do they all have a single output only and no
+>> input ?
+>
+> They have an input: the antenna connector. However, I don't see any need
+> to map it for most tuners, as there's generally just one input, hardwired
+> into the tuner chip.
+>
+> There are some hardware with 2 antenna connectors, but for different
+> functions (FM and TV). They're selected automatically when the V4L2
+> driver switches between FM and TV.
+>
+> In any case, the tuner-core doesn't provide any way to select the
+> antenna input.
+>
+> So, if a driver would need to select the input, it would either need
+> to not use tuner-core or some patch will be required to add such
+> functionality inside tuner-core.
 
-There is no proper fix for this file, as the declaration is meant for
-user space, not for the kernel, so we should work around it the
-same way that we treat the seqbuf_dump() definition.
+Tuner has antenna as a input and output is intermediate frequency or 
+baseband (IF/BB (zero-IF)).
 
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+I think most modern silicon tuners actually has more than one physical 
+antenna inputs - but those are left unused or same physical antenna 
+connector is wired to all those inputs.
 
-diff --git a/scripts/headers_check.pl b/scripts/headers_check.pl
-index 62320f93e903..fb051848667c 100755
---- a/scripts/headers_check.pl
-+++ b/scripts/headers_check.pl
-@@ -69,6 +69,10 @@ sub check_declarations
- 	if ($line =~ m/^void seqbuf_dump\(void\);/) {
- 		return;
- 	}
-+	# user-only declaration from kexec.h
-+	if ($line =~ m/^extern int kexec_load/) {
-+		return;
-+	}
- 	if ($line =~ m/^(\s*extern|unsigned|char|short|int|long|void)\b/) {
- 		printf STDERR "$filename:$lineno: " .
- 			      "userspace cannot reference function or " .
+Sooner or later there will be receiver having multiple antenna 
+connectors which are selectable by software. So let it be at least 
+option easy to add later.
+
+regards
+Antti
+
+-- 
+http://palosaari.fi/
