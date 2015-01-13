@@ -1,63 +1,43 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [GIT PULL] kselftest fixes for 3.19-rc5
-Date: Tue, 13 Jan 2015 11:07:12 -0700
-Message-ID: <54B55ED0.5000607@osg.samsung.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH] headers_check: don't warn about kexec.h
+Date: Tue, 13 Jan 2015 21:27:08 +0100
+Message-ID: <2363197.VbAKlSiQLX@wuerfel>
+References: <12825174.7oxZXDxNhV@wuerfel> <1421169212.15397.22.camel@x220>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1421169212.15397.22.camel@x220>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
+To: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Cc: Geoff Levand <geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus,
+On Tuesday 13 January 2015 18:13:32 Paul Bolle wrote:
+> 
+> For the seqbuf_dump() stuff there are apparently users. I forgot the
+> details, but the sound people wanted to keep that declaration (and some
+> related ancient things) in the header involved to keep some really
+> ancient stuff buildable.
+> 
+> But the kexec_load declaration isn't very useful for userspace, see the
+> patch I submitted in
+> http://lkml.kernel.org/r/1389791824.17407.9.camel@x220 . And After my
+> attempt the export of that declaration has also been discussed in
+> http://lkml.kernel.org/r/115373b6ac68ee7a305975896e1c4971e8e51d4c.1408731991.git.geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org 
+> 
+> In that last discussion no one has been able to point to an actual user
+> of it. So, as far as I can tell, no one actually uses it. Which makes
+> sense, because including this header by itself doesn't give one access
+> to a useful definition of kexec_load. So why bother with the
+> declaration?
+> 
+> The last time that Geoff has been trying to get that patch applied
+> should be
+> http://lkml.kernel.org/r/b0702fc4186db21820d686e89afd6480560823db.1415837218.git.geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org  I'd rather see that go in.
+> 
 
-Please pull the following ksefltest fixes for 3.19-rc5
+Fine with me as well. As long as we can find someone to take one of 
+the patches, I'm happy.
 
-thanks,
--- Shuah
-
-The following changes since commit 6898b627aab6ba553e6d8b40a0b1ddc43c48d42f:
-
-  selftests/exec: Use %zu to format size_t (2014-12-22 11:11:36 -0700)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
-tags/linux-kselftest-3.19-rc-5
-
-for you to fetch changes up to f5db310d77ef1742e40bfc303b8625584c55f9e3:
-
-  selftests/vm: fix link error for transhuge-stress test (2015-01-08
-09:01:00 -0700)
-
-----------------------------------------------------------------
-kselftest fixes for: 3.19-rc5
-
-This update contains 3 patches to fix one compile error,
-and two run-time bugs. One of them fixes infinite loop
-on ARM.
-
-----------------------------------------------------------------
-Andrey Skvortsov (1):
-      selftests/vm: fix link error for transhuge-stress test
-
-David Drysdale (1):
-      selftests/exec: allow shell return code of 126
-
-dann frazier (1):
-      tools: testing: selftests: mq_perf_tests: Fix infinite loop on ARM
-
- tools/testing/selftests/exec/execveat.c        | 19 +++++++++++++------
- tools/testing/selftests/mqueue/mq_perf_tests.c |  3 +--
- tools/testing/selftests/vm/Makefile            |  2 +-
- 3 files changed, 15 insertions(+), 9 deletions(-)
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+	Arnd
