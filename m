@@ -1,53 +1,49 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: Re: [PATCH v10 0/2] crypto: AF_ALG: add AEAD and RNG support
-Date: Wed, 14 Jan 2015 16:31:44 +0100
-Message-ID: <5006702.rWOQQ5L1VO@tachyon.chronox.de>
-References: <5489736.JvWhZNrmuD@tachyon.chronox.de> <20150114094631.GB15294@localhost.localdomain> <20150114110011.GA18099@gondor.apana.org.au>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH v4 20/20] kbuild: add a new kselftest_install make target
+ to install selftests
+Date: Wed, 14 Jan 2015 09:32:27 -0700
+Message-ID: <54B69A1B.80006@osg.samsung.com>
+References: <cover.1420571615.git.shuahkh@osg.samsung.com> <2c5a28faaa79d9c2415854a08817ada509fcb943.1420571615.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20150114110011.GA18099@gondor.apana.org.au>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Neil Horman <nhorman@tuxdriver.com>, Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, 'LKML' <linux-kernel@vger.kernel.org>, ABI/API <linux-api@vger.kernel.org>, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <2c5a28faaa79d9c2415854a08817ada509fcb943.1420571615.git.shuahkh@osg.samsung.com>
+Sender: netdev-owner@vger.kernel.org
+To: mmarek@suse.cz, masami.hiramatsu.pt@hitachi.com
+Cc: gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Am Mittwoch, 14. Januar 2015, 22:00:11 schrieb Herbert Xu:
-
-Hi Herbert,
-
-> On Wed, Jan 14, 2015 at 04:46:31AM -0500, Neil Horman wrote:
-> > On Wed, Jan 14, 2015 at 04:52:29AM +0100, Stephan Mueller wrote:
-> > > Hi,
-> > > 
-> > > This patch set adds AEAD and RNG support to the AF_ALG interface
-> > > exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
-> > > support, all cipher types the kernel crypto API allows access to are
-> > > now accessible from userspace.
-> > > 
-> > >  crypto/Kconfig      |   9 +
-> > >  crypto/Makefile     |   1 +
-> > >  crypto/algif_aead.c | 680
-> > >  ++++++++++++++++++++++++++++++++++++++++++++++++++++ 3 files changed,
-> > >  690 insertions(+)
-> > >  create mode 100644 crypto/algif_aead.c
-> > 
-> > Where are the RNG bits?
+On 01/06/2015 12:43 PM, Shuah Khan wrote:
+> Add a new make target to install to install kernel selftests.
+> This new target will build and install selftests. kselftest
+> target now depends on kselftest_install and runs the generated
+> kselftest script to reduce duplicate work and for common look
+> and feel when running tests.
 > 
-> They've already been merged.
-
-Please also see my change log for v7:
-...
-* RNG: patch dropped as it was applied
-...
-
-To ensure consistency, I did not change the intro part of my description.
-
+> make kselftest_target:
+> -- exports kselftest INSTALL_KSFT_PATH
+>    default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
+> -- exports INSTALL_KSFT_PATH
+> -- runs selftests make install target
 > 
-> Cheers,
+> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+> ---
+>  Makefile | 14 +++++++++++++-
+>  1 file changed, 13 insertions(+), 1 deletion(-)
+
+Hi Marek,
+
+Could you please Ack this patch, if this version looks good,
+so I can take this through ksefltest tree.
+
+thanks,
+-- Shuah
 
 
 -- 
-Ciao
-Stephan
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
