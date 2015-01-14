@@ -1,78 +1,49 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Should mmap MAP_LOCKED fail if mm_poppulate fails?
-Date: Wed, 14 Jan 2015 10:50:19 +0100
-Message-ID: <20150114095019.GC4706@dhcp22.suse.cz>
+From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Subject: Re: [PATCH v10 0/2] crypto: AF_ALG: add AEAD and RNG support
+Date: Wed, 14 Jan 2015 22:00:11 +1100
+Message-ID: <20150114110011.GA18099@gondor.apana.org.au>
+References: <5489736.JvWhZNrmuD@tachyon.chronox.de>
+ <20150114094631.GB15294@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-Sender: owner-linux-mm@kvack.org
-To: linux-mm@kvack.org
-Cc: Cyril Hrubis <chrubis@suse.cz>, Hugh Dickins <hughd@google.com>, Michel Lespinasse <walken@google.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Rik van Riel <riel@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+In-Reply-To: <20150114094631.GB15294-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
+Cc: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-Cyril has encountered one of the LTP tests failing after 3.12 kernel.
-To quote him:
-"
-What the test does is to set memory limit inside of memcg to PAGESIZE by
-writing to memory.limit_in_bytes, then runs a subprocess that uses
-mmap() with MAP_LOCKED which allocates 2 * PAGESIZE and expects that
-it's killed by OOM. This does not happen and the call to mmap() returns
-a correct pointer to a memory region, that when accessed finally causes
-the OOM.
-"
+On Wed, Jan 14, 2015 at 04:46:31AM -0500, Neil Horman wrote:
+> On Wed, Jan 14, 2015 at 04:52:29AM +0100, Stephan Mueller wrote:
+> > Hi,
+> > 
+> > This patch set adds AEAD and RNG support to the AF_ALG interface
+> > exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
+> > support, all cipher types the kernel crypto API allows access to are
+> > now accessible from userspace.
+> > 
+> >  crypto/Kconfig      |   9 +
+> >  crypto/Makefile     |   1 +
+> >  crypto/algif_aead.c | 680 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+> >  3 files changed, 690 insertions(+)
+> >  create mode 100644 crypto/algif_aead.c
+> > 
+> > -- 
+> > 2.1.0
+> > 
+> > 
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-crypto" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > 
+> Where are the RNG bits?
 
-The difference came from the memcg OOM killer rework because OOM killer
-is triggered only from the page fault path since 519e52473ebe (mm:
-memcg: enable memcg OOM killer only for user faults). The rationale is
-described in 3812c8c8f395 (mm: memcg: do not trap chargers with full
-callstack on OOM).
+They've already been merged.
 
-This is _not_ the primary _issue_, though. It has just made a long
-standing issue more visible, the same is possible even without memcg but
-it is much less likely (it might get more visible once we start failing
-GFP_KERNEL allocations more often). The primary issue is that mmap
-doesn't report a failure if MAP_LOCKED fails to populate the area. Is
-this the correct/expected behavior?
-
-The man page says
-"
-MAP_LOCKED (since Linux 2.5.37)
-      Lock the pages of the mapped region into memory in the manner of
-      mlock(2).  This flag is ignored in older kernels.
-"
-
-and mlock is required to fail if the population fails.
-"
-       mlock() locks pages in the address range starting at addr and
-       continuing for len bytes.  All pages that contain a part of the
-       specified address range are guaranteed to be resident in RAM when
-       the call returns successfully; the pages are guaranteed to stay
-       in RAM until later unlocked.
-"
-
-I have checked the history and it seems we never reported an error, at
-least not during git era.
-
-FWIW mlock behaves correctly and reports the error to the userspace.
-
-I am not sure this is something to be fixed or rather documented in the
-man page. I can imagine users who would prefer ENOMEM rather than seeing
-a page fault later on - I would expect RT - but do those run inside memcg
-controller or on heavily overcommited systems?
-
-On the other hand the fix sound quite easy, we just have to use
-__mm_populate and unmap the area on failure for VM_LOCKED vmas. Maybe
-there are some historical reason for not doing that though.
-
-Thanks!
+Cheers,
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
