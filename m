@@ -1,109 +1,42 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH v3 12/16] virtio-pci: define layout for virtio 1.0
-Date: Wed, 14 Jan 2015 19:28:09 +0200
-Message-ID: <1421256142-11512-13-git-send-email-mst@redhat.com>
-References: <1421256142-11512-1-git-send-email-mst@redhat.com>
+From: Tadeusz Struk <tadeusz.struk@intel.com>
+Subject: Re: [PATCH] crypto: algif - change algif_skcipher to be asynchronous
+Date: Wed, 14 Jan 2015 09:36:57 -0800
+Message-ID: <54B6A939.4070207@intel.com>
+References: <20150113202823.32244.45456.stgit@tstruk-mobl1> <20150114053805.GA15204@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <1421256142-11512-1-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20150114053805.GA15204@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: davem@davemloft.net, linux-crypto@vger.kernel.org, qat-linux@intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Rusty Russell <rusty@rustcorp.com.au>
+Hi Herbert,
+On 01/13/2015 09:38 PM, Herbert Xu wrote:
+> What you want is AIO so we should try to use that interface rather
+> than creating some funky crypto-specific interface.
+> 
+> Dave, the AIO hooks in net/socket.c is currently simply pointing
+> to the sync implementation.  What are you thoughts on allowing
+> socket implementations to supply these hooks?
+> 
+> The algif interface can then use these hooks to implement AIO
+> which is useful for maximising the hardware performance without
+> resorting to loads of threads.
 
-Based on patches by Michael S. Tsirkin <mst@redhat.com>, but I found it
-hard to follow so changed to use structures which are more
-self-documenting.
+But then would you like to extend AIO interface to take the IV and
+something that would indicate the encrypt/decrypt operation on
+aio_write()? Also as far as I can see AIO doesn't support splice()
+operation for zero copy, which is the main thing here.
 
-Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
----
- include/uapi/linux/virtio_pci.h | 62 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 62 insertions(+)
+>From the other hand it shouldn't be a problem to add crypto specific
+stuff to include/uapi/linux/if_alg.h, because it is all about crypto
+anyway, is it not?
 
-diff --git a/include/uapi/linux/virtio_pci.h b/include/uapi/linux/virtio_pci.h
-index 509d630..4e05423 100644
---- a/include/uapi/linux/virtio_pci.h
-+++ b/include/uapi/linux/virtio_pci.h
-@@ -99,4 +99,66 @@
- /* Vector value used to disable MSI for queue */
- #define VIRTIO_MSI_NO_VECTOR            0xffff
- 
-+#ifndef VIRTIO_PCI_NO_MODERN
-+
-+/* IDs for different capabilities.  Must all exist. */
-+
-+/* Common configuration */
-+#define VIRTIO_PCI_CAP_COMMON_CFG	1
-+/* Notifications */
-+#define VIRTIO_PCI_CAP_NOTIFY_CFG	2
-+/* ISR access */
-+#define VIRTIO_PCI_CAP_ISR_CFG		3
-+/* Device specific confiuration */
-+#define VIRTIO_PCI_CAP_DEVICE_CFG	4
-+
-+/* This is the PCI capability header: */
-+struct virtio_pci_cap {
-+	__u8 cap_vndr;		/* Generic PCI field: PCI_CAP_ID_VNDR */
-+	__u8 cap_next;		/* Generic PCI field: next ptr. */
-+	__u8 cap_len;		/* Generic PCI field: capability length */
-+	__u8 type_and_bar;	/* Upper 3 bits: bar.
-+				 * Lower 3 is VIRTIO_PCI_CAP_*_CFG. */
-+	__le32 offset;		/* Offset within bar. */
-+	__le32 length;		/* Length. */
-+};
-+
-+#define VIRTIO_PCI_CAP_BAR_SHIFT	5
-+#define VIRTIO_PCI_CAP_BAR_MASK		0x7
-+#define VIRTIO_PCI_CAP_TYPE_SHIFT	0
-+#define VIRTIO_PCI_CAP_TYPE_MASK	0x7
-+
-+struct virtio_pci_notify_cap {
-+	struct virtio_pci_cap cap;
-+	__le32 notify_off_multiplier;	/* Multiplier for queue_notify_off. */
-+};
-+
-+/* Fields in VIRTIO_PCI_CAP_COMMON_CFG: */
-+struct virtio_pci_common_cfg {
-+	/* About the whole device. */
-+	__le32 device_feature_select;	/* read-write */
-+	__le32 device_feature;		/* read-only */
-+	__le32 guest_feature_select;	/* read-write */
-+	__le32 guest_feature;		/* read-write */
-+	__le16 msix_config;		/* read-write */
-+	__le16 num_queues;		/* read-only */
-+	__u8 device_status;		/* read-write */
-+	__u8 config_generation;		/* read-only */
-+
-+	/* About a specific virtqueue. */
-+	__le16 queue_select;		/* read-write */
-+	__le16 queue_size;		/* read-write, power of 2. */
-+	__le16 queue_msix_vector;	/* read-write */
-+	__le16 queue_enable;		/* read-write */
-+	__le16 queue_notify_off;	/* read-only */
-+	__le32 queue_desc_lo;		/* read-write */
-+	__le32 queue_desc_hi;		/* read-write */
-+	__le32 queue_avail_lo;		/* read-write */
-+	__le32 queue_avail_hi;		/* read-write */
-+	__le32 queue_used_lo;		/* read-write */
-+	__le32 queue_used_hi;		/* read-write */
-+};
-+
-+#endif /* VIRTIO_PCI_NO_MODERN */
-+
- #endif
--- 
-MST
+If you have a better way how to indicate that data processing should
+start on the last page in sendpage() instead of ALG_OP_IN_PLACE I would
+be happy to use it.
+Thanks,
+Tadeusz
