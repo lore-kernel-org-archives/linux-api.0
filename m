@@ -1,49 +1,65 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH v4 20/20] kbuild: add a new kselftest_install make target
- to install selftests
-Date: Wed, 14 Jan 2015 09:32:27 -0700
-Message-ID: <54B69A1B.80006@osg.samsung.com>
-References: <cover.1420571615.git.shuahkh@osg.samsung.com> <2c5a28faaa79d9c2415854a08817ada509fcb943.1420571615.git.shuahkh@osg.samsung.com>
+From: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
+Subject: Re: [PATCH v10 0/2] crypto: AF_ALG: add AEAD and RNG support
+Date: Wed, 14 Jan 2015 12:26:32 -0500
+Message-ID: <20150114172632.GB24512@localhost.localdomain>
+References: <5489736.JvWhZNrmuD@tachyon.chronox.de>
+ <20150114094631.GB15294@localhost.localdomain>
+ <20150114110011.GA18099@gondor.apana.org.au>
+ <5006702.rWOQQ5L1VO@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <2c5a28faaa79d9c2415854a08817ada509fcb943.1420571615.git.shuahkh@osg.samsung.com>
-Sender: netdev-owner@vger.kernel.org
-To: mmarek@suse.cz, masami.hiramatsu.pt@hitachi.com
-Cc: gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, mpe@ellerman.id.au, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5006702.rWOQQ5L1VO-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/06/2015 12:43 PM, Shuah Khan wrote:
-> Add a new make target to install to install kernel selftests.
-> This new target will build and install selftests. kselftest
-> target now depends on kselftest_install and runs the generated
-> kselftest script to reduce duplicate work and for common look
-> and feel when running tests.
+On Wed, Jan 14, 2015 at 04:31:44PM +0100, Stephan Mueller wrote:
+> Am Mittwoch, 14. Januar 2015, 22:00:11 schrieb Herbert Xu:
 > 
-> make kselftest_target:
-> -- exports kselftest INSTALL_KSFT_PATH
->    default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
-> -- exports INSTALL_KSFT_PATH
-> -- runs selftests make install target
+> Hi Herbert,
 > 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
-> ---
->  Makefile | 14 +++++++++++++-
->  1 file changed, 13 insertions(+), 1 deletion(-)
+> > On Wed, Jan 14, 2015 at 04:46:31AM -0500, Neil Horman wrote:
+> > > On Wed, Jan 14, 2015 at 04:52:29AM +0100, Stephan Mueller wrote:
+> > > > Hi,
+> > > > 
+> > > > This patch set adds AEAD and RNG support to the AF_ALG interface
+> > > > exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
+> > > > support, all cipher types the kernel crypto API allows access to are
+> > > > now accessible from userspace.
+> > > > 
+> > > >  crypto/Kconfig      |   9 +
+> > > >  crypto/Makefile     |   1 +
+> > > >  crypto/algif_aead.c | 680
+> > > >  ++++++++++++++++++++++++++++++++++++++++++++++++++++ 3 files changed,
+> > > >  690 insertions(+)
+> > > >  create mode 100644 crypto/algif_aead.c
+> > > 
+> > > Where are the RNG bits?
+> > 
+> > They've already been merged.
+> 
+> Please also see my change log for v7:
+> ...
+> * RNG: patch dropped as it was applied
+> ...
+> 
+> To ensure consistency, I did not change the intro part of my description.
+Ah, thanks for the clarification
+Acked-by: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
 
-Hi Marek,
-
-Could you please Ack this patch, if this version looks good,
-so I can take this through ksefltest tree.
-
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+> 
+> > 
+> > Cheers,
+> 
+> 
+> -- 
+> Ciao
+> Stephan
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-crypto" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
