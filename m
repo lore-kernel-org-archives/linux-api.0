@@ -1,53 +1,40 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH] crypto: algif - change algif_skcipher to be asynchronous
-Date: Wed, 14 Jan 2015 16:38:05 +1100
-Message-ID: <20150114053805.GA15204@gondor.apana.org.au>
-References: <20150113202823.32244.45456.stgit@tstruk-mobl1>
+From: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
+Subject: Re: [PATCH v10 0/2] crypto: AF_ALG: add AEAD and RNG support
+Date: Wed, 14 Jan 2015 04:46:31 -0500
+Message-ID: <20150114094631.GB15294@localhost.localdomain>
+References: <5489736.JvWhZNrmuD@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150113202823.32244.45456.stgit@tstruk-mobl1>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Tadeusz Struk <tadeusz.struk@intel.com>
-Cc: davem@davemloft.net, linux-crypto@vger.kernel.org, qat-linux@intel.com, linux-api@vger.kernel.org
+In-Reply-To: <5489736.JvWhZNrmuD-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Cc: 'Herbert Xu' <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 13, 2015 at 12:28:23PM -0800, Tadeusz Struk wrote:
-> The way the algif_skcipher works currently is that on sendmsg/sendpage it
-> builds an sgl for the input data and then on read/recvmsg it sends the job
-> for encryption putting the user to sleep till the data is processed.
-> This way it can only handle one job at a given time.
-> This patch changes it to be asynchronous.
-> The idea is to allow enqueue multiple jobs to get most of available crypto HW
-> accelerators and then read when the data is processed without blocking.
-> To allow that both the input and output sgl need to be know at sendmsg/sendpage
-> or the operation needs to happen "in place" in the input sgl. The approach here
-> is to use the "in place" operation and process the data in the sgl provided in
-> sendmsg. To allow that new user visible flags are introduced:
-> ALG_SET_OP_TYPE
-> ALG_OP_OUTOF_PLACE
-> ALG_OP_IN_PLACE
-> By default the operation type is ALG_OP_OUTOF_PLACE, which works the same way as
-> without the change and allows existing application working without any update.
+On Wed, Jan 14, 2015 at 04:52:29AM +0100, Stephan Mueller wrote:
+> Hi,
 > 
-> Using the test application from https://lkml.org/lkml/2011/8/28/87 with small
-> modification to support in place operation, and reading after every 16th
-> sendmsg these are the results:
-
-What you want is AIO so we should try to use that interface rather
-than creating some funky crypto-specific interface.
-
-Dave, the AIO hooks in net/socket.c is currently simply pointing
-to the sync implementation.  What are you thoughts on allowing
-socket implementations to supply these hooks?
-
-The algif interface can then use these hooks to implement AIO
-which is useful for maximising the hardware performance without
-resorting to loads of threads.
-
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+> This patch set adds AEAD and RNG support to the AF_ALG interface
+> exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
+> support, all cipher types the kernel crypto API allows access to are
+> now accessible from userspace.
+> 
+>  crypto/Kconfig      |   9 +
+>  crypto/Makefile     |   1 +
+>  crypto/algif_aead.c | 680 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 690 insertions(+)
+>  create mode 100644 crypto/algif_aead.c
+> 
+> -- 
+> 2.1.0
+> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-crypto" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+Where are the RNG bits?
+Neil
