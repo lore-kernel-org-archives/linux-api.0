@@ -1,48 +1,96 @@
-From: =?utf-8?B?U8O2cmVu?= Brinkmann <soren.brinkmann@xilinx.com>
-Subject: Re: [PATCH RESEND v3] gpio: lib-sysfs: Add 'wakeup' attribute
-Date: Thu, 15 Jan 2015 08:37:36 -0800
-Message-ID: <3ac0072cbc4a4efaa7eaf071bbc321a1@BL2FFO11FD055.protection.gbl>
-References: <1420481779-22841-1-git-send-email-soren.brinkmann@xilinx.com>
- <CACRpkdYJ_kZw3UfYc5vGd0cxwDJD5WR69c6Q5xTvmFnb7NOfkA@mail.gmail.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH] virtio_balloon: coding style fixes
+Date: Thu, 15 Jan 2015 20:50:18 +0200
+Message-ID: <20150115185018.GA31068@redhat.com>
+References: <1421321941-21111-1-git-send-email-mst@redhat.com>
+	<20150115130642.GC7008@dhcp22.suse.cz>
+	<20150115134412.GA23874@redhat.com>
+	<20150115141308.GH7000@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 Content-Disposition: inline
-In-Reply-To: <CACRpkdYJ_kZw3UfYc5vGd0cxwDJD5WR69c6Q5xTvmFnb7NOfkA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Walleij <linus.walleij@linaro.org>
-Cc: Johan Hovold <johan@kernel.org>, Alexandre Courbot <gnurou@gmail.com>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
+In-Reply-To: <20150115141308.GH7000@dhcp22.suse.cz>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Michal Hocko <mhocko@suse.cz>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2015-01-15 at 05:34PM +0100, Linus Walleij wrote:
-> On Mon, Jan 5, 2015 at 7:16 PM, Soren Brinkmann
-> <soren.brinkmann@xilinx.com> wrote:
->=20
-> > Add an attribute 'wakeup' to the GPIO sysfs interface which allows
-> > marking/unmarking a GPIO as wake IRQ.
-> > The file 'wakeup' is created in each exported GPIOs directory, if a=
-n IRQ
-> > is associated with that GPIO and the irqchip implements set_wake().
-> > Writing 'enabled' to that file will enable wake for that GPIO, whil=
-e
-> > writing 'disabled' will disable wake.
-> > Reading that file will return either 'disabled' or 'enabled' depeni=
-ng on
-> > the currently set flag for the GPIO's IRQ.
-> >
-> > Signed-off-by: Soren Brinkmann <soren.brinkmann@xilinx.com>
-> > Reviewed-by: Alexandre Courbot <acourbot@nvidia.com>
-> > ---
-> > v3:
-> >  - add documentation
->=20
-> As per discussion with Johan Hovold I have had to remove this patch
-> from the development tree.
->=20
-> Please rebase as indicated on the "fixes" branch, fix any resource
-> leaks, include Johan Hovold on CC for review and resend.
+On Thu, Jan 15, 2015 at 03:13:08PM +0100, Michal Hocko wrote:
+> On Thu 15-01-15 15:44:12, Michael S. Tsirkin wrote:
+> > On Thu, Jan 15, 2015 at 02:06:42PM +0100, Michal Hocko wrote:
+> > > On Thu 15-01-15 13:39:06, Michael S. Tsirkin wrote:
+> > > > Most of our code has
+> > > > struct foo {
+> > > > }
+> > > > 
+> > > > Fix two instances where balloon is inconsistent.
+> > > 
+> > > I hate to complain but is it really necessary to post such patches to
+> > > linux-api?
+> > 
+> > Well it's human to err, so it seems wise to copy parties
+> > interested in the ABI/API whenever we are changing files under include/uapi.
+> > Whitespace changes should mostly be safe, but it's not unknown
+> > e.g. to include unrelated changes in the same commit by mistake.
+> > 
+> > > I thought the list was primarily for API related discussions.
+> > 
+> > Basically this line in MAINTAINERS
+> > 
+> > ABI/API
+> > L:      linux-api@vger.kernel.org
+> > F:      Documentation/ABI/
+> > F:      include/linux/syscalls.h
+> > F:      include/uapi/
+> > F:      kernel/sys_ni.c
+> > 
+> > normally means "send all patches affecting files under include/uapi/ to
+> > this list", does it not?
+> 
+> Well, this should always be taken as a hint not a hard rule. So if there
+> is a change which is adding/removing or changing signature then sure but
+> not everything falls into that category.
 
-Is that public somewhere? What are the issues?
+At least for code I maintain, I really wish people would just Cc me in
+any case.  There's been a bunch of cases where people don't Cc me, and
+then another maintainer assumes my silence implies agreement, and
+applies.  Not nice. OTOH it's easy to ignore an irrelevant patch.
 
-	S=C3=B6ren
+> > Wasn't this the intent?
+> > 
+> > > This is not the only mail sent here which doesn't fall into that
+> > > category IMO. It is far from low volume list for quite some time.
+> > > 
+> > > Please let's get back low volume and API only discussion!
+> > 
+> > Maybe send patch dropping include/uapi/ from there,
+> > should help drive the volumes down?
+> 
+> This would be an overkill IMO. It would be much more preferable if
+> people actually think about who from the suggested list (either from
+> MAINTAINERS or ./scripts/get_maintainer.pl) should be really added.
+> 
+> [...]
+
+Yea, think about it, then what?  I've no idea what is linux-abi for, and
+what people subscribed there are interested in. How should I? All I know
+is what's in MAINTAINERS, which say "ABI/API". So I copy all ABI/API
+patches there.
+
+> -- 
+> Michal Hocko
+> SUSE Labs
+> _______________________________________________
+> Virtualization mailing list
+> Virtualization@lists.linux-foundation.org
+> https://lists.linuxfoundation.org/mailman/listinfo/virtualization
