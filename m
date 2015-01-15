@@ -1,14 +1,15 @@
-From: Michal Hocko <mhocko@suse.cz>
+From: "Michael S. Tsirkin" <mst@redhat.com>
 Subject: Re: [PATCH] virtio_balloon: coding style fixes
-Date: Thu, 15 Jan 2015 14:06:42 +0100
-Message-ID: <20150115130642.GC7008@dhcp22.suse.cz>
+Date: Thu, 15 Jan 2015 15:44:12 +0200
+Message-ID: <20150115134412.GA23874@redhat.com>
 References: <1421321941-21111-1-git-send-email-mst@redhat.com>
+	<20150115130642.GC7008@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <virtualization-bounces@lists.linux-foundation.org>
 Content-Disposition: inline
-In-Reply-To: <1421321941-21111-1-git-send-email-mst@redhat.com>
+In-Reply-To: <20150115130642.GC7008@dhcp22.suse.cz>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
 	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
@@ -18,68 +19,92 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualizati
 	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
 Sender: virtualization-bounces@lists.linux-foundation.org
 Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
+To: Michal Hocko <mhocko@suse.cz>
 Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu 15-01-15 13:39:06, Michael S. Tsirkin wrote:
-> Most of our code has
-> struct foo {
-> }
+On Thu, Jan 15, 2015 at 02:06:42PM +0100, Michal Hocko wrote:
+> On Thu 15-01-15 13:39:06, Michael S. Tsirkin wrote:
+> > Most of our code has
+> > struct foo {
+> > }
+> > 
+> > Fix two instances where balloon is inconsistent.
 > 
-> Fix two instances where balloon is inconsistent.
+> I hate to complain but is it really necessary to post such patches to
+> linux-api?
 
-I hate to complain but is it really necessary to post such patches to
-linux-api?
+Well it's human to err, so it seems wise to copy parties
+interested in the ABI/API whenever we are changing files under include/uapi.
+Whitespace changes should mostly be safe, but it's not unknown
+e.g. to include unrelated changes in the same commit by mistake.
 
-I thought the list was primarily for API related discussions.
-This is not the only mail sent here which doesn't fall into that
-category IMO. It is far from low volume list for quite some time.
+> I thought the list was primarily for API related discussions.
 
-Please let's get back low volume and API only discussion!
+Basically this line in MAINTAINERS
 
-> Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-> ---
->  include/uapi/linux/virtio_balloon.h | 3 +--
->  drivers/virtio/virtio_balloon.c     | 3 +--
->  2 files changed, 2 insertions(+), 4 deletions(-)
+ABI/API
+L:      linux-api@vger.kernel.org
+F:      Documentation/ABI/
+F:      include/linux/syscalls.h
+F:      include/uapi/
+F:      kernel/sys_ni.c
+
+normally means "send all patches affecting files under include/uapi/ to
+this list", does it not?
+
+Wasn't this the intent?
+
+> This is not the only mail sent here which doesn't fall into that
+> category IMO. It is far from low volume list for quite some time.
 > 
-> diff --git a/include/uapi/linux/virtio_balloon.h b/include/uapi/linux/virtio_balloon.h
-> index be40f70..4b0488f 100644
-> --- a/include/uapi/linux/virtio_balloon.h
-> +++ b/include/uapi/linux/virtio_balloon.h
-> @@ -36,8 +36,7 @@
->  /* Size of a PFN in the balloon interface. */
->  #define VIRTIO_BALLOON_PFN_SHIFT 12
->  
-> -struct virtio_balloon_config
-> -{
-> +struct virtio_balloon_config {
->  	/* Number of pages host wants Guest to give up. */
->  	__le32 num_pages;
->  	/* Number of pages we've actually got in balloon. */
-> diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
-> index 3176ea4..0413157 100644
-> --- a/drivers/virtio/virtio_balloon.c
-> +++ b/drivers/virtio/virtio_balloon.c
-> @@ -44,8 +44,7 @@ static int oom_pages = OOM_VBALLOON_DEFAULT_PAGES;
->  module_param(oom_pages, int, S_IRUSR | S_IWUSR);
->  MODULE_PARM_DESC(oom_pages, "pages to free on OOM");
->  
-> -struct virtio_balloon
-> -{
-> +struct virtio_balloon {
->  	struct virtio_device *vdev;
->  	struct virtqueue *inflate_vq, *deflate_vq, *stats_vq;
->  
+> Please let's get back low volume and API only discussion!
+
+Maybe send patch dropping include/uapi/ from there,
+should help drive the volumes down?
+
+> > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> > ---
+> >  include/uapi/linux/virtio_balloon.h | 3 +--
+> >  drivers/virtio/virtio_balloon.c     | 3 +--
+> >  2 files changed, 2 insertions(+), 4 deletions(-)
+> > 
+> > diff --git a/include/uapi/linux/virtio_balloon.h b/include/uapi/linux/virtio_balloon.h
+> > index be40f70..4b0488f 100644
+> > --- a/include/uapi/linux/virtio_balloon.h
+> > +++ b/include/uapi/linux/virtio_balloon.h
+> > @@ -36,8 +36,7 @@
+> >  /* Size of a PFN in the balloon interface. */
+> >  #define VIRTIO_BALLOON_PFN_SHIFT 12
+> >  
+> > -struct virtio_balloon_config
+> > -{
+> > +struct virtio_balloon_config {
+> >  	/* Number of pages host wants Guest to give up. */
+> >  	__le32 num_pages;
+> >  	/* Number of pages we've actually got in balloon. */
+> > diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
+> > index 3176ea4..0413157 100644
+> > --- a/drivers/virtio/virtio_balloon.c
+> > +++ b/drivers/virtio/virtio_balloon.c
+> > @@ -44,8 +44,7 @@ static int oom_pages = OOM_VBALLOON_DEFAULT_PAGES;
+> >  module_param(oom_pages, int, S_IRUSR | S_IWUSR);
+> >  MODULE_PARM_DESC(oom_pages, "pages to free on OOM");
+> >  
+> > -struct virtio_balloon
+> > -{
+> > +struct virtio_balloon {
+> >  	struct virtio_device *vdev;
+> >  	struct virtqueue *inflate_vq, *deflate_vq, *stats_vq;
+> >  
+> > -- 
+> > MST
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > Please read the FAQ at  http://www.tux.org/lkml/
+> 
 > -- 
-> MST
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
-
--- 
-Michal Hocko
-SUSE Labs
+> Michal Hocko
+> SUSE Labs
