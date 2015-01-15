@@ -1,45 +1,64 @@
-From: Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v4 20/20] kbuild: add a new kselftest_install make target
- to install selftests
-Date: Thu, 15 Jan 2015 12:39:02 +0100
-Message-ID: <54B7A6D6.6090006@suse.cz>
-References: <cover.1420571615.git.shuahkh@osg.samsung.com> <2c5a28faaa79d9c2415854a08817ada509fcb943.1420571615.git.shuahkh@osg.samsung.com> <54B69A1B.80006@osg.samsung.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: [PATCH] virtio_balloon: coding style fixes
+Date: Thu, 15 Jan 2015 13:39:06 +0200
+Message-ID: <1421321941-21111-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54B69A1B.80006-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Disposition: inline
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On 2015-01-14 17:32, Shuah Khan wrote:
-> On 01/06/2015 12:43 PM, Shuah Khan wrote:
->> Add a new make target to install to install kernel selftests.
->> This new target will build and install selftests. kselftest
->> target now depends on kselftest_install and runs the generated
->> kselftest script to reduce duplicate work and for common look
->> and feel when running tests.
->>
->> make kselftest_target:
->> -- exports kselftest INSTALL_KSFT_PATH
->>    default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
->> -- exports INSTALL_KSFT_PATH
->> -- runs selftests make install target
->>
->> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->> ---
->>  Makefile | 14 +++++++++++++-
->>  1 file changed, 13 insertions(+), 1 deletion(-)
-> 
-> Hi Marek,
-> 
-> Could you please Ack this patch, if this version looks good,
-> so I can take this through ksefltest tree.
+Most of our code has
+struct foo {
+}
 
-Sorry, I thought I had acked v3.
+Fix two instances where balloon is inconsistent.
 
-Acked-by: Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+---
+ include/uapi/linux/virtio_balloon.h | 3 +--
+ drivers/virtio/virtio_balloon.c     | 3 +--
+ 2 files changed, 2 insertions(+), 4 deletions(-)
 
-Michal
+diff --git a/include/uapi/linux/virtio_balloon.h b/include/uapi/linux/virtio_balloon.h
+index be40f70..4b0488f 100644
+--- a/include/uapi/linux/virtio_balloon.h
++++ b/include/uapi/linux/virtio_balloon.h
+@@ -36,8 +36,7 @@
+ /* Size of a PFN in the balloon interface. */
+ #define VIRTIO_BALLOON_PFN_SHIFT 12
+ 
+-struct virtio_balloon_config
+-{
++struct virtio_balloon_config {
+ 	/* Number of pages host wants Guest to give up. */
+ 	__le32 num_pages;
+ 	/* Number of pages we've actually got in balloon. */
+diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
+index 3176ea4..0413157 100644
+--- a/drivers/virtio/virtio_balloon.c
++++ b/drivers/virtio/virtio_balloon.c
+@@ -44,8 +44,7 @@ static int oom_pages = OOM_VBALLOON_DEFAULT_PAGES;
+ module_param(oom_pages, int, S_IRUSR | S_IWUSR);
+ MODULE_PARM_DESC(oom_pages, "pages to free on OOM");
+ 
+-struct virtio_balloon
+-{
++struct virtio_balloon {
+ 	struct virtio_device *vdev;
+ 	struct virtqueue *inflate_vq, *deflate_vq, *stats_vq;
+ 
+-- 
+MST
