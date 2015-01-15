@@ -1,59 +1,45 @@
-From: Pavel Emelyanov <xemul@parallels.com>
-Subject: Re: [LSF/MM TOPIC] userfaultfd
-Date: Thu, 15 Jan 2015 12:01:45 +0300
-Message-ID: <54B781F9.8050703@parallels.com>
-References: <20150114230130.GR6103@redhat.com>
+From: Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v4 20/20] kbuild: add a new kselftest_install make target
+ to install selftests
+Date: Thu, 15 Jan 2015 12:39:02 +0100
+Message-ID: <54B7A6D6.6090006@suse.cz>
+References: <cover.1420571615.git.shuahkh@osg.samsung.com> <2c5a28faaa79d9c2415854a08817ada509fcb943.1420571615.git.shuahkh@osg.samsung.com> <54B69A1B.80006@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150114230130.GR6103@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>, lsf-pc@lists.linux-foundation.org
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54B69A1B.80006-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/15/2015 02:01 AM, Andrea Arcangeli wrote:
-> Hello,
+On 2015-01-14 17:32, Shuah Khan wrote:
+> On 01/06/2015 12:43 PM, Shuah Khan wrote:
+>> Add a new make target to install to install kernel selftests.
+>> This new target will build and install selftests. kselftest
+>> target now depends on kselftest_install and runs the generated
+>> kselftest script to reduce duplicate work and for common look
+>> and feel when running tests.
+>>
+>> make kselftest_target:
+>> -- exports kselftest INSTALL_KSFT_PATH
+>>    default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
+>> -- exports INSTALL_KSFT_PATH
+>> -- runs selftests make install target
+>>
+>> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>> ---
+>>  Makefile | 14 +++++++++++++-
+>>  1 file changed, 13 insertions(+), 1 deletion(-)
 > 
-> I would like to attend this year (2015) LSF/MM summit. I'm
-> particularly interested about the MM track, in order to get help in
-> finalizing the userfaultfd feature I've been working on lately.
+> Hi Marek,
+> 
+> Could you please Ack this patch, if this version looks good,
+> so I can take this through ksefltest tree.
 
-I'd like the +1 this. I'm also interested in this topic, especially
-in the item 5 below.
+Sorry, I thought I had acked v3.
 
-> 5) postcopy live migration of binaries inside linux containers
->    (provided there is a userfaultfd command [not an external syscall
->    like the original implementation] that allows to copy memory
->    atomically in the userfaultfd "mm" and not in the manager "mm",
->    hence the main reason the external syscalls are going away, and in
->    turn MADV_USERFAULT fd-less is going away as well).
+Acked-by: Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>
 
-We've started to play with the userfaultfd in the CRIU project [1] to 
-do the post-copy live migration of whole containers (and their parts).
-
-One more use case I've seen on CRIU mailing list is the restore of
-container from on-disk images w/o getting the whole memory in at the
-restore time. The memory is to be put into tasks' address space in
-n-demand manner later. It's claimed that such restore decreases the 
-restore time significantly.
-
-
-One more thing that userfaultfd can help with is restoring COW areas.
-Right now, if we have two tasks, that share a phys page, but have one
-RO mapped to do the COW later we do complex tricks with restoring the
-page in common ancestor, then inheriting one on fork()-s and mremap-ing
-it. Probably it's an API misuse, but it seems to be much simpler if
-the page could be just "sent" to the remote mm via userfaultfd.
-
-[1] http://criu.org/Main_Page
-
-Thanks,
-Pavel
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Michal
