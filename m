@@ -1,81 +1,151 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 6/6] selftests: Set CC using CROSS_COMPILE once in lib.mk
-Date: Fri, 16 Jan 2015 09:37:04 -0700
-Message-ID: <54B93E30.3060002@osg.samsung.com>
-References: <1420794375-31881-1-git-send-email-mpe@ellerman.id.au> <1420794375-31881-6-git-send-email-mpe@ellerman.id.au>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v5 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
+Date: Fri, 16 Jan 2015 10:41:13 -0600
+Message-ID: <CAL_JsqJg=BtanmR_rhYthCUhKbErs8viZ7MMMXr-PmPjUV4BRQ@mail.gmail.com>
+References: <1421402411-3479-1-git-send-email-chunyan.zhang@spreadtrum.com> <1421402411-3479-6-git-send-email-chunyan.zhang@spreadtrum.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <1420794375-31881-6-git-send-email-mpe@ellerman.id.au>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>, linux-kernel@vger.kernel.org
-Cc: mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1421402411-3479-6-git-send-email-chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jason Cooper <jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Florian Vaussard <florian.vaussard-p8DiymsW2f8@public.gmane.org>, Andrew Lunn <andrew-g2DYL2Zd6BY@public.gmane.org>, Robert Richter <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, Hayato Suzuki <hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Antony Pavlov <antonynpavlov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Joel Schopp <Joel.Schopp-5C7GfCeVMHo@public.gmane.org>, Suravee Suthikulanit <Suravee.Suthikulpanit-5C7GfCeVMHo@public.gmane.org>, Shawn Guo <shaw>
 List-Id: linux-api@vger.kernel.org
 
-On 01/09/2015 02:06 AM, Michael Ellerman wrote:
-
-Missing commit log. Please make sure your future include
-a meaningful commit log that describes what the patch does.
-
-> Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
+On Fri, Jan 16, 2015 at 4:00 AM, Chunyan Zhang
+<chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org> wrote:
+> Add a full sc9836-uart driver for SC9836 SoC which is based on the
+> spreadtrum sharkl64 platform.
+> This driver also support earlycon.
+> This patch also replaced the spaces between the macros and their
+> values with the tabs in serial_core.h
+>
+> Signed-off-by: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+> Signed-off-by: Orson Zhai <orson.zhai-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
+> Originally-by: Lanqing Liu <lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
 > ---
->  tools/testing/selftests/efivarfs/Makefile | 1 -
->  tools/testing/selftests/exec/Makefile     | 1 -
->  tools/testing/selftests/kcmp/Makefile     | 1 -
->  tools/testing/selftests/lib.mk            | 6 ++++++
->  tools/testing/selftests/net/Makefile      | 1 -
->  tools/testing/selftests/powerpc/Makefile  | 3 +--
->  tools/testing/selftests/size/Makefile     | 2 --
->  tools/testing/selftests/vm/Makefile       | 1 -
->  8 files changed, 7 insertions(+), 9 deletions(-)
-> 
-> diff --git a/tools/testing/selftests/efivarfs/Makefile b/tools/testing/selftests/efivarfs/Makefile
-> index 3052d0bda24b..d683486a859b 100644
-> --- a/tools/testing/selftests/efivarfs/Makefile
-> +++ b/tools/testing/selftests/efivarfs/Makefile
-> @@ -1,4 +1,3 @@
-> -CC = $(CROSS_COMPILE)gcc
->  CFLAGS = -Wall
->  
->  test_objs = open-unlink create-read
-> diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
-> index 886cabe307b1..4edb7d0da29b 100644
-> --- a/tools/testing/selftests/exec/Makefile
-> +++ b/tools/testing/selftests/exec/Makefile
-> @@ -1,4 +1,3 @@
-> -CC = $(CROSS_COMPILE)gcc
->  CFLAGS = -Wall
->  BINARIES = execveat
->  DEPS = execveat.symlink execveat.denatured script subdir
-> diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
-> index 0eecd183058c..2ae7450a9a89 100644
-> --- a/tools/testing/selftests/kcmp/Makefile
-> +++ b/tools/testing/selftests/kcmp/Makefile
-> @@ -1,4 +1,3 @@
-> -CC := $(CROSS_COMPILE)$(CC)
->  CFLAGS += -I../../../../usr/include/
->  
->  all: kcmp_test
-> diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-> index 7bd3dabe2846..abae16396c43 100644
-> --- a/tools/testing/selftests/lib.mk
-> +++ b/tools/testing/selftests/lib.mk
-> @@ -1,3 +1,9 @@
-> +# When we're called from kbuild $(CC) already contains $(CROSS_COMPILE), so
-> +# here we need to use "cc", otherwise we'll get $(CROSS_COMPILE) twice. The
-> +# only downside is it breaks someone overriding $(CC), but that's probably OK,
-> +# they can probably cope by changing their path.
+>  drivers/tty/serial/Kconfig       |   18 +
+>  drivers/tty/serial/Makefile      |    1 +
+>  drivers/tty/serial/sprd_serial.c |  772 ++++++++++++++++++++++++++++++++++++++
+>  include/uapi/linux/serial_core.h |    3 +
+>  4 files changed, 794 insertions(+)
+>  create mode 100644 drivers/tty/serial/sprd_serial.c
+>
+> diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
+> index c79b43c..969d3cd 100644
+> --- a/drivers/tty/serial/Kconfig
+> +++ b/drivers/tty/serial/Kconfig
+> @@ -1577,6 +1577,24 @@ config SERIAL_MEN_Z135
+>           This driver can also be build as a module. If so, the module will be called
+>           men_z135_uart.ko
+>
+> +config SERIAL_SPRD
+> +       tristate "Support for SPRD serial"
 
-I don't want to see the compiles broken and users needing to
-work-around. Pleas find a way to not break the compiles.
+Can the menu text spell out Spreadtrum. What SPRD means is not obvious.
 
-thanks,
--- Shuah
+> +       depends on ARCH_SPRD
+> +       select SERIAL_CORE
+> +       help
+> +         This enables the driver for the Spreadtrum's serial.
+> +
+> +config SERIAL_SPRD_CONSOLE
+> +       bool "SPRD UART console support"
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Same here.
+
+> +       depends on SERIAL_SPRD=y
+> +       select SERIAL_CORE_CONSOLE
+> +       select SERIAL_EARLYCON
+> +       help
+> +         Support for early debug console using Spreadtrum's serial. This enables
+> +         the console before standard serial driver is probed. This is enabled
+> +         with "earlycon" on the kernel command line. The console is
+> +         enabled when early_param is processed.
+> +
+>  endmenu
+>
+>  config SERIAL_MCTRL_GPIO
+> diff --git a/drivers/tty/serial/Makefile b/drivers/tty/serial/Makefile
+> index 9a548ac..4801aca 100644
+> --- a/drivers/tty/serial/Makefile
+> +++ b/drivers/tty/serial/Makefile
+> @@ -93,6 +93,7 @@ obj-$(CONFIG_SERIAL_ARC)      += arc_uart.o
+>  obj-$(CONFIG_SERIAL_RP2)       += rp2.o
+>  obj-$(CONFIG_SERIAL_FSL_LPUART)        += fsl_lpuart.o
+>  obj-$(CONFIG_SERIAL_MEN_Z135)  += men_z135_uart.o
+> +obj-$(CONFIG_SERIAL_SPRD) += sprd_serial.o
+>
+>  # GPIOLIB helpers for modem control lines
+>  obj-$(CONFIG_SERIAL_MCTRL_GPIO)        += serial_mctrl_gpio.o
+> diff --git a/drivers/tty/serial/sprd_serial.c b/drivers/tty/serial/sprd_serial.c
+> new file mode 100644
+> index 0000000..81839e4
+> --- /dev/null
+> +++ b/drivers/tty/serial/sprd_serial.c
+> @@ -0,0 +1,772 @@
+> +/*
+> + * Copyright (C) 2012 Spreadtrum Communications Inc.
+
+This is unchanged in 3 years?
+
+> + *
+> + * This software is licensed under the terms of the GNU General Public
+> + * License version 2, as published by the Free Software Foundation, and
+> + * may be copied, distributed, and modified under those terms.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + */
+> +
+> +#include <linux/clk.h>
+> +#include <linux/console.h>
+> +#include <linux/delay.h>
+> +#include <linux/io.h>
+> +#include <linux/ioport.h>
+> +#include <linux/kernel.h>
+> +#include <linux/module.h>
+> +#include <linux/of.h>
+> +#include <linux/platform_device.h>
+> +#include <linux/serial_core.h>
+> +#include <linux/serial.h>
+> +#include <linux/slab.h>
+> +#include <linux/tty.h>
+> +#include <linux/tty_flip.h>
+> +
+> +/* device name */
+> +#define UART_NR_MAX            8
+> +#define SPRD_TTY_NAME          "ttySPX"
+
+We really want to get away from per SOC serial names and use ttyS for
+serial port /dev names. There's issues switching existing drivers
+because this creates an ABI, so we can only have new drivers follow
+this.
+
+[...]
+
+> +static struct platform_driver sprd_platform_driver = {
+> +       .probe          = sprd_probe,
+> +       .remove         = sprd_remove,
+> +       .driver         = {
+> +               .name   = "sprd_serial",
+> +               .of_match_table = of_match_ptr(serial_ids),
+> +               .pm     = &sprd_pm_ops,
+> +       },
+> +};
+> +
+> +static int __init sprd_serial_init(void)
+> +{
+> +       int ret = 0;
+> +
+> +       ret = uart_register_driver(&sprd_uart_driver);
+
+This can be done in probe now. Then you can use module_platform_driver().
+
+Rob
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
