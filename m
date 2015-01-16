@@ -1,87 +1,65 @@
-From: Lyra Zhang <zhang.lyra@gmail.com>
-Subject: Re: [PATCH v5 4/5] arm64: Add support for Spreadtrum's Sharkl64
- Platform in Kconfig and defconfig
-Date: Fri, 16 Jan 2015 19:50:18 +0800
-Message-ID: <CAAfSe-vuSgwH2PHQdYLyfJ+KZ0C8a7D6Ry=mHaBrjpbuksaKvQ@mail.gmail.com>
-References: <1421402411-3479-1-git-send-email-chunyan.zhang@spreadtrum.com>
- <1421402411-3479-5-git-send-email-chunyan.zhang@spreadtrum.com>
- <20150116104842.GE21809@leverpostej>
+From: Adrian Hunter <adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 1/3] perf: Use monotonic clock as a source for timestamps
+Date: Fri, 16 Jan 2015 14:41:55 +0200
+Message-ID: <54B90713.1090503@intel.com>
+References: <1415292718-19785-1-git-send-email-pawel.moll@arm.com> <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20150116104842.GE21809@leverpostej>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Mark Rutland <mark.rutland@arm.com>
-Cc: "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, "heiko@sntech.de" <heiko@sntech.de>, "andrew@lunn.ch" <andrew@lunn.ch>, Catalin Marinas <Catalin.Marinas@arm.com>, Will Deacon <Will.Deacon@arm.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "jslaby@suse.cz" <jslaby@suse.cz>, "lanqing.liu@spreadtrum.com" <lanqing.liu@spreadtrum.com>, "arnd@arndb.de" <arnd@arndb.de>, Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "zhizhou.zhang@spreadtrum.com" <zhizhou.zhang@spreadtrum.com>, "geng.ren@spreadtrum.com" <geng.ren@spreadtrum.com>, "antonynpavlov@gmail.com" <antonynpavlov@gmail.com>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "grant.likely@linaro.org" <grant.likely@linaro.org>, "orsonzhai@gmail.com" <orsonzhai@gmail.com>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1415292718-19785-2-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi, Mark
+On 06/11/14 18:51, Pawel Moll wrote:
+> Until now, perf framework never defined the meaning of the timestamps
+> captured as PERF_SAMPLE_TIME sample type. The values were obtaining
+> from local (sched) clock, which is unavailable in userspace. This made
+> it impossible to correlate perf data with any other events. Other
+> tracing solutions have the source configurable (ftrace) or just share
+> a common time domain between kernel and userspace (LTTng).
+> 
+> Follow the trend by using monotonic clock, which is readily available
+> as POSIX CLOCK_MONOTONIC.
+> 
+> Also add a sysctl "perf_sample_time_clk_id" attribute which can be used
+> by the user to obtain the clk_id to be used with POSIX clock API (eg.
+> clock_gettime()) to obtain a time value comparable with perf samples.
+> 
+> Old behaviour can be restored by using "perf_use_local_clock" kernel
+> parameter.
+> 
 
-On Fri, Jan 16, 2015 at 6:48 PM, Mark Rutland <mark.rutland@arm.com> wrote:
-> On Fri, Jan 16, 2015 at 10:00:10AM +0000, Chunyan Zhang wrote:
->> From: Zhizhou Zhang <zhizhou.zhang@spreadtrum.com>
->>
->> Adds support for Spreadtrum's SoC Platform in the arm64 Kconfig and
->> defconfig files.
->>
->> Signed-off-by: Zhizhou Zhang <zhizhou.zhang@spreadtrum.com>
->> Signed-off-by: Orson Zhai <orson.zhai@spreadtrum.com>
->> Signed-off-by: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
->> ---
->>  arch/arm64/Kconfig           |    5 +++++
->>  arch/arm64/configs/defconfig |    1 +
->>  2 files changed, 6 insertions(+)
->>
->> diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
->> index b1f9a20..885c1f4 100644
->> --- a/arch/arm64/Kconfig
->> +++ b/arch/arm64/Kconfig
->> @@ -153,6 +153,11 @@ config ARCH_SEATTLE
->>       help
->>         This enables support for AMD Seattle SOC Family
->>
->> +config ARCH_SPRD
->
-> This should presumably be ARCH_SHARKL64, so you can add other SoC
-> families later. The other entries in here are already formatted that
-> way.
->
-> I wonder if we should have these of the form ARCH_${VENDOR}_${FAMILY}
-> (e.g. ARCH_SPRD_SHARKL64) rather than just ARCH_${FAMILY} to save
-> ourselves from name conflicts in future (and to make it easier to grep
-> for a particular vendor's config options).
->
+Don't forget this breaks the relationship to TSC. So you will need something
+like below. Also patch 3 needs to be done first and extended to cover TSC so
+there is no gap when we cannot get TSC.
 
-actually we've discussed this question before[1], and I think Arnd's
-suggestion is suitable for our case, so I changed this to use
-ARCH_SPRD instead of ARCH_SHARKL64.
+diff --git a/arch/x86/kernel/cpu/perf_event.c b/arch/x86/kernel/cpu/perf_event.c
+index 143e5f5..b6e833d 100644
+--- a/arch/x86/kernel/cpu/perf_event.c
++++ b/arch/x86/kernel/cpu/perf_event.c
+@@ -1922,21 +1922,6 @@ void arch_perf_update_userpage(struct
+perf_event_mmap_page *userpg, u64 now)
+        userpg->cap_user_time_zero = 0;
+        userpg->cap_user_rdpmc = x86_pmu.attr_rdpmc;
+        userpg->pmc_width = x86_pmu.cntval_bits;
+-
+-       if (!sched_clock_stable())
+-               return;
+-
+-       data = cyc2ns_read_begin();
+-
+-       userpg->cap_user_time = 1;
+-       userpg->time_mult = data->cyc2ns_mul;
+-       userpg->time_shift = data->cyc2ns_shift;
+-       userpg->time_offset = data->cyc2ns_offset - now;
+-
+-       userpg->cap_user_time_zero = 1;
+-       userpg->time_zero = data->cyc2ns_offset;
+-
+-       cyc2ns_read_end(data);
+ }
 
-[1] http://lists.infradead.org/pipermail/linux-arm-kernel/2014-November/306246.html
-
-anyway, thank you very much!
-
-Chunyan
-
->> +     bool "Spreadtrum SoC platform"
->
-> bool "Spreadtrun Sharkl64 SoC Family"
->
->> +     help
->> +       Support for Spreadtrum ARM based SoCs
->
->
-> Support for the Spreadtrum Sharkl64 SoC family.
->
-> Thanks,
-> Mark.
->
->> +
+ /*
