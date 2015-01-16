@@ -1,47 +1,47 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 2/6] selftests: Add install target
-Date: Fri, 16 Jan 2015 10:46:29 -0700
-Message-ID: <54B94E75.8030504@osg.samsung.com>
-References: <1420794375-31881-1-git-send-email-mpe@ellerman.id.au> <1420794375-31881-2-git-send-email-mpe@ellerman.id.au>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 1/6] selftests: Introduce minimal shared logic for running
+ tests
+Date: Fri, 16 Jan 2015 10:53:10 -0700
+Message-ID: <54B95006.3080502@osg.samsung.com>
+References: <1420794375-31881-1-git-send-email-mpe@ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <1420794375-31881-2-git-send-email-mpe@ellerman.id.au>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>, linux-kernel@vger.kernel.org
-Cc: mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1420794375-31881-1-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mmarek-AlSwsSmVLrQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On 01/09/2015 02:06 AM, Michael Ellerman wrote:
-> This adds make install support to selftests. The basic usage is:
+> This adds a Make include file which most selftests can then include to
+> get the run_tests logic.
 > 
-> $ cd tools/testing/selftests
-> $ make install
+> On its own this has the advantage of some reduction in repetition, and
+> also means the pass/fail message is defined in fewer places.
 > 
-> That installs into tools/testing/selftests/install, which can then be
-> copied where ever necessary.
+> However the key advantage is it will allow us to implement install very
+> simply in a subsequent patch.
 > 
-> The install destination is also configurable using eg:
+> The default implementation just executes each program in $(TEST_PROGS).
 > 
-> $ INSTALL_PATH=/mnt/selftests make install
+> We use a variable to hold the default implementation of $(RUN_TESTS)
+> because that gives us a clean way to override it if necessary, ie. using
+> override. The mount, memory-hotplug and mqueue tests use that to provide
+> a different implementation.
+> 
+> Tests are not run via /bin/bash, so if they are scripts they must be
+> executable, we add u+x to several.
+> 
+> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 
-Please see my response to [PATCH 4/6] kbuild: add a new
-kselftest_install make target to install selftests
+I like the shared logic approach in general provided it leaves the
+flexibility to not use the shared logic if a test have the need to
+do so. This series requires some patch planning. shared logic patch
+followed by individual test patches as opposed a single patch.
 
-These are addressed by the current approach to use existing
-INSTALL_MOD_PATH.
-
-> 
-> The implementation uses two targets in the child makefiles. The first
-> "install" is expected to install all files into $(INSTALL_PATH).
-> 
-> The second, "emit_tests", is expected to emit the test instructions (ie.
-> bash script) on stdout. Separating this from install means the child
-> makefiles need no knowledge of the location of the test script.
-
-Yes. Removing the need for individual makefiles to know the install
-path details would be a good improvement to make on top of my patch v4
+I would like to see the shared logic work done on top of my patch v4
 series.
 
 thanks,
@@ -53,4 +53,4 @@ Shuah Khan
 Sr. Linux Kernel Developer
 Open Source Innovation Group
 Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
