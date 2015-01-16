@@ -1,46 +1,67 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH] crypto: algif - change algif_skcipher to be asynchronous
-Date: Fri, 16 Jan 2015 13:00:52 +1100
-Message-ID: <20150116020052.GB5851@gondor.apana.org.au>
-References: <20150113202823.32244.45456.stgit@tstruk-mobl1>
- <20150114053805.GA15204@gondor.apana.org.au>
- <54B6A939.4070207@intel.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH v4 20/20] kbuild: add a new kselftest_install make
+ target to install selftests
+Date: Fri, 16 Jan 2015 13:59:31 +1100
+Message-ID: <1421377171.18166.1.camel@ellerman.id.au>
+References: <cover.1420571615.git.shuahkh@osg.samsung.com>
+	 <2c5a28faaa79d9c2415854a08817ada509fcb943.1420571615.git.shuahkh@osg.samsung.com>
+	 <54B69A1B.80006@osg.samsung.com> <1421362698.23332.6.camel@ellerman.id.au>
+	 <54B8502C.2040708@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <54B6A939.4070207@intel.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Tadeusz Struk <tadeusz.struk@intel.com>
-Cc: davem@davemloft.net, linux-crypto@vger.kernel.org, qat-linux@intel.com, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <54B8502C.2040708@osg.samsung.com>
+Sender: linux-kbuild-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: mmarek@suse.cz, masami.hiramatsu.pt@hitachi.com, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 14, 2015 at 09:36:57AM -0800, Tadeusz Struk wrote:
+On Thu, 2015-01-15 at 16:41 -0700, Shuah Khan wrote:
+> On 01/15/2015 03:58 PM, Michael Ellerman wrote:
+> > On Wed, 2015-01-14 at 09:32 -0700, Shuah Khan wrote:
+> >> On 01/06/2015 12:43 PM, Shuah Khan wrote:
+> >>> Add a new make target to install to install kernel selftests.
+> >>> This new target will build and install selftests. kselftest
+> >>> target now depends on kselftest_install and runs the generated
+> >>> kselftest script to reduce duplicate work and for common look
+> >>> and feel when running tests.
+> >>>
+> >>> make kselftest_target:
+> >>> -- exports kselftest INSTALL_KSFT_PATH
+> >>>    default $(INSTALL_MOD_PATH)/lib/kselftest/$(KERNELRELEASE)
+> >>> -- exports INSTALL_KSFT_PATH
+> >>> -- runs selftests make install target
+> >>>
+> >>> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+> >>
+> >> Hi Marek,
+> >>
+> >> Could you please Ack this patch, if this version looks good,
+> >> so I can take this through ksefltest tree.
+> > 
+> > Hi Shuah,
+> > 
+> > I posted what I think is a better approach last week. It's less code and less
+> > repetition, and installs the majority of tests this series missed - ie. the
+> > powerpc ones.
+> > 
+> > Please at least respond to it before you put this series into next.
+> > 
+> > https://lkml.org/lkml/2015/1/9/45
 > 
-> But then would you like to extend AIO interface to take the IV and
-> something that would indicate the encrypt/decrypt operation on
-> aio_write()? Also as far as I can see AIO doesn't support splice()
+> Michael,
+> 
+> I didn't get a chance to review your patches yet. I plan to
+> review and give you feedback by end of this week. 
 
-Any metadata such as the IV can still go through the existing
-sendmsg interface, just as you would do a sendmsg before a sendfile
-to set things up.
+Thanks. My week ends quite soon (.au time zone), so early next week is fine.
 
-> operation for zero copy, which is the main thing here.
+> This patch is needed in any case for either approach.
 
-The AIO interface itself can accomodate zero-copy.  It's just that
-we currently don't have any support for it in the network socket
-API.
+The version in my series is slightly different, but probably similar enough. I
+CC'ed Michal on my series also.
 
-> >From the other hand it shouldn't be a problem to add crypto specific
-> stuff to include/uapi/linux/if_alg.h, because it is all about crypto
-> anyway, is it not?
+cheers
 
-Yes but you're violating the meaning of sendpage().  The latter
-is not crypto-specific so you shouldn't be adding things that
-prevent future optimisations to it.
 
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
