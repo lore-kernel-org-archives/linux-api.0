@@ -1,7 +1,7 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 07/13] kdbus: add code to gather metadata
-Date: Fri, 16 Jan 2015 11:16:11 -0800
-Message-ID: <1421435777-25306-8-git-send-email-gregkh@linuxfoundation.org>
+Subject: [PATCH 04/13] kdbus: add connection pool implementation
+Date: Fri, 16 Jan 2015 11:16:08 -0800
+Message-ID: <1421435777-25306-5-git-send-email-gregkh@linuxfoundation.org>
 References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
@@ -12,34 +12,44 @@ List-Id: linux-api@vger.kernel.org
 
 From: Daniel Mack <daniel@zonque.org>
 
-A connection chooses which metadata it wants to have attached to each
-message it receives with kdbus_cmd_hello.attach_flags. The metadata
-will be attached as items to the messages. All metadata refers to
-information about the sending task at sending time, unless otherwise
-stated. Also, the metadata is copied, not referenced, so even if the
-sending task doesn't exist anymore at the time the message is received,
-the information is still preserved.
+A pool for data received from the kernel is installed for every
+connection of the bus, and it is used to copy data from the kernel to
+userspace clients, for messages and other information.
 
-See kdbus.txt for more details on which metadata can currently be
-attached to messages.
+It is accessed when one of the following ioctls is issued:
+
+  * KDBUS_CMD_MSG_RECV, to receive a message
+  * KDBUS_CMD_NAME_LIST, to dump the name registry
+  * KDBUS_CMD_CONN_INFO, to retrieve information on a connection
+
+The offsets returned by either one of the aforementioned ioctls
+describe offsets inside the pool. Internally, the pool is organized in
+slices, that are dynamically allocated on demand. The overall size of
+the pool is chosen by the connection when it connects to the bus with
+KDBUS_CMD_HELLO.
+
+In order to make the slice available for subsequent calls,
+KDBUS_CMD_FREE has to be called on the offset.
+
+To access the memory, the caller is expected to mmap() it to its task.
 
 Signed-off-by: Daniel Mack <daniel@zonque.org>
 Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
 Signed-off-by: Djalal Harouni <tixxdz@opendz.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- ipc/kdbus/metadata.c | 1066 ++++++++++++++++++++++++++++++++++++++++++++++++++
- ipc/kdbus/metadata.h |   52 +++
- 2 files changed, 1118 insertions(+)
- create mode 100644 ipc/kdbus/metadata.c
- create mode 100644 ipc/kdbus/metadata.h
+ ipc/kdbus/pool.c | 784 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ipc/kdbus/pool.h |  47 ++++
+ 2 files changed, 831 insertions(+)
+ create mode 100644 ipc/kdbus/pool.c
+ create mode 100644 ipc/kdbus/pool.h
 
-diff --git a/ipc/kdbus/metadata.c b/ipc/kdbus/metadata.c
+diff --git a/ipc/kdbus/pool.c b/ipc/kdbus/pool.c
 new file mode 100644
-index 000000000000..101561dfe5ac
+index 000000000000..2bdb645518ea
 --- /dev/null
-+++ b/ipc/kdbus/metadata.c
-@@ -0,0 +1,1066 @@
++++ b/ipc/kdbus/pool.c
+@@ -0,0 +1,784 @@
 +/*
 + * Copyright (C) 2013-2014 Kay Sievers
 + * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
@@ -54,1071 +64,789 @@ index 000000000000..101561dfe5ac
 + * your option) any later version.
 + */
 +
-+#include <linux/audit.h>
-+#include <linux/capability.h>
-+#include <linux/cgroup.h>
-+#include <linux/cred.h>
++#include <linux/aio.h>
 +#include <linux/file.h>
-+#include <linux/fs_struct.h>
++#include <linux/fs.h>
++#include <linux/highmem.h>
 +#include <linux/init.h>
-+#include <linux/kref.h>
-+#include <linux/mutex.h>
++#include <linux/mm.h>
++#include <linux/module.h>
++#include <linux/pagemap.h>
++#include <linux/rbtree.h>
 +#include <linux/sched.h>
-+#include <linux/security.h>
++#include <linux/shmem_fs.h>
 +#include <linux/sizes.h>
 +#include <linux/slab.h>
 +#include <linux/uaccess.h>
-+#include <linux/user_namespace.h>
-+#include <linux/version.h>
++#include <linux/uio.h>
 +
-+#include "bus.h"
-+#include "connection.h"
-+#include "item.h"
-+#include "message.h"
-+#include "metadata.h"
-+#include "names.h"
++#include "pool.h"
++#include "util.h"
 +
 +/**
-+ * struct kdbus_meta_proc - Process metadata
-+ * @kref:		Reference counting
-+ * @lock:		Object lock
-+ * @collected:		Bitmask of collected items
-+ * @valid:		Bitmask of collected and valid items
-+ * @uid:		UID of process
-+ * @euid:		EUID of process
-+ * @suid:		SUID of process
-+ * @fsuid:		FSUID of process
-+ * @gid:		GID of process
-+ * @egid:		EGID of process
-+ * @sgid:		SGID of process
-+ * @fsgid:		FSGID of process
-+ * @pid:		PID of process
-+ * @tgid:		TGID of process
-+ * @ppid:		PPID of process
-+ * @auxgrps:		Auxiliary groups
-+ * @n_auxgrps:		Number of items in @auxgrps
-+ * @tid_comm:		TID comm line
-+ * @pid_comm:		PID comm line
-+ * @exe_path:		Executable path
-+ * @root_path:		Root-FS path
-+ * @cmdline:		Command-line
-+ * @cgroup:		Full cgroup path
-+ * @caps:		Capabilities
-+ * @caps_namespace:	User-namespace of @caps
-+ * @seclabel:		Seclabel
-+ * @audit_loginuid:	Audit login-UID
-+ * @audit_sessionid:	Audit session-ID
++ * struct kdbus_pool - the receiver's buffer
++ * @f:			The backing shmem file
++ * @size:		The size of the file
++ * @busy:		The currently used size
++ * @lock:		Pool data lock
++ * @slices:		All slices sorted by address
++ * @slices_busy:	Tree of allocated slices
++ * @slices_free:	Tree of free slices
++ *
++ * The receiver's buffer, managed as a pool of allocated and free
++ * slices containing the queued messages.
++ *
++ * Messages sent with KDBUS_CMD_SEND are copied direcly by the
++ * sending process into the receiver's pool.
++ *
++ * Messages received with KDBUS_CMD_RECV just return the offset
++ * to the data placed in the pool.
++ *
++ * The internally allocated memory needs to be returned by the receiver
++ * with KDBUS_CMD_FREE.
 + */
-+struct kdbus_meta_proc {
-+	struct kref kref;
++struct kdbus_pool {
++	struct file *f;
++	size_t size;
++	size_t busy;
 +	struct mutex lock;
-+	u64 collected;
-+	u64 valid;
 +
-+	/* KDBUS_ITEM_CREDS */
-+	kuid_t uid, euid, suid, fsuid;
-+	kgid_t gid, egid, sgid, fsgid;
-+
-+	/* KDBUS_ITEM_PIDS */
-+	struct pid *pid;
-+	struct pid *tgid;
-+	struct pid *ppid;
-+
-+	/* KDBUS_ITEM_AUXGROUPS */
-+	kgid_t *auxgrps;
-+	size_t n_auxgrps;
-+
-+	/* KDBUS_ITEM_TID_COMM */
-+	char tid_comm[TASK_COMM_LEN];
-+	/* KDBUS_ITEM_PID_COMM */
-+	char pid_comm[TASK_COMM_LEN];
-+
-+	/* KDBUS_ITEM_EXE */
-+	struct path exe_path;
-+	struct path root_path;
-+
-+	/* KDBUS_ITEM_CMDLINE */
-+	char *cmdline;
-+
-+	/* KDBUS_ITEM_CGROUP */
-+	char *cgroup;
-+
-+	/* KDBUS_ITEM_CAPS */
-+	struct caps {
-+		/* binary compatible to kdbus_caps */
-+		u32 last_cap;
-+		struct {
-+			u32 caps[_KERNEL_CAPABILITY_U32S];
-+		} set[4];
-+	} caps;
-+	struct user_namespace *caps_namespace;
-+
-+	/* KDBUS_ITEM_SECLABEL */
-+	char *seclabel;
-+
-+	/* KDBUS_ITEM_AUDIT */
-+	kuid_t audit_loginuid;
-+	unsigned int audit_sessionid;
++	struct list_head slices;
++	struct rb_root slices_busy;
++	struct rb_root slices_free;
 +};
 +
 +/**
-+ * struct kdbus_meta_conn
-+ * @kref:		Reference counting
-+ * @lock:		Object lock
-+ * @collected:		Bitmask of collected items
-+ * @valid:		Bitmask of collected and valid items
-+ * @ts:			Timestamp values
-+ * @owned_names_items:	Serialized items for owned names
-+ * @owned_names_size:	Size of @owned_names_items
-+ * @conn_description:	Connection description
++ * struct kdbus_pool_slice - allocated element in kdbus_pool
++ * @pool:		Pool this slice belongs to
++ * @off:		Offset of slice in the shmem file
++ * @size:		Size of slice
++ * @entry:		Entry in "all slices" list
++ * @rb_node:		Entry in free or busy list
++ * @child:		Child slice
++ * @free:		Unused slice
++ * @ref_kernel:		Kernel holds a reference
++ * @ref_user:		Userspace holds a reference
++ *
++ * The pool has one or more slices, always spanning the entire size of the
++ * pool.
++ *
++ * Every slice is an element in a list sorted by the buffer address, to
++ * provide access to the next neighbor slice.
++ *
++ * Every slice is member in either the busy or the free tree. The free
++ * tree is organized by slice size, the busy tree organized by buffer
++ * offset.
 + */
-+struct kdbus_meta_conn {
-+	struct kref kref;
-+	struct mutex lock;
-+	u64 collected;
-+	u64 valid;
++struct kdbus_pool_slice {
++	struct kdbus_pool *pool;
++	size_t off;
++	size_t size;
 +
-+	/* KDBUS_ITEM_TIMESTAMP */
-+	struct kdbus_timestamp ts;
++	struct list_head entry;
++	struct rb_node rb_node;
++	struct kdbus_pool_slice *child;
 +
-+	/* KDBUS_ITEM_OWNED_NAME */
-+	struct kdbus_item *owned_names_items;
-+	size_t owned_names_size;
-+
-+	/* KDBUS_ITEM_CONN_DESCRIPTION */
-+	char *conn_description;
++	bool free:1;
++	bool ref_kernel:1;
++	bool ref_user:1;
 +};
 +
-+/**
-+ * kdbus_meta_proc_new() - Create process metadata object
-+ *
-+ * Return: Pointer to new object on success, ERR_PTR on failure.
-+ */
-+struct kdbus_meta_proc *kdbus_meta_proc_new(void)
++static struct kdbus_pool_slice *kdbus_pool_slice_new(struct kdbus_pool *pool,
++						     size_t off, size_t size)
 +{
-+	struct kdbus_meta_proc *mp;
++	struct kdbus_pool_slice *slice;
 +
-+	mp = kzalloc(sizeof(*mp), GFP_KERNEL);
-+	if (!mp)
-+		return ERR_PTR(-ENOMEM);
++	slice = kzalloc(sizeof(*slice), GFP_KERNEL);
++	if (!slice)
++		return NULL;
 +
-+	kref_init(&mp->kref);
-+	mutex_init(&mp->lock);
-+
-+	return mp;
++	slice->pool = pool;
++	slice->off = off;
++	slice->size = size;
++	slice->free = true;
++	return slice;
 +}
 +
-+static void kdbus_meta_proc_free(struct kref *kref)
++/* insert a slice into the free tree */
++static void kdbus_pool_add_free_slice(struct kdbus_pool *pool,
++				      struct kdbus_pool_slice *slice)
 +{
-+	struct kdbus_meta_proc *mp = container_of(kref, struct kdbus_meta_proc,
-+						  kref);
++	struct rb_node **n;
++	struct rb_node *pn = NULL;
 +
-+	path_put(&mp->exe_path);
-+	path_put(&mp->root_path);
-+	put_user_ns(mp->caps_namespace);
-+	put_pid(mp->ppid);
-+	put_pid(mp->tgid);
-+	put_pid(mp->pid);
++	n = &pool->slices_free.rb_node;
++	while (*n) {
++		struct kdbus_pool_slice *pslice;
 +
-+	kfree(mp->seclabel);
-+	kfree(mp->auxgrps);
-+	kfree(mp->cmdline);
-+	kfree(mp->cgroup);
-+	kfree(mp);
++		pn = *n;
++		pslice = rb_entry(pn, struct kdbus_pool_slice, rb_node);
++		if (slice->size < pslice->size)
++			n = &pn->rb_left;
++		else
++			n = &pn->rb_right;
++	}
++
++	rb_link_node(&slice->rb_node, pn, n);
++	rb_insert_color(&slice->rb_node, &pool->slices_free);
 +}
 +
-+/**
-+ * kdbus_meta_proc_ref() - Gain reference
-+ * @mp:		Process metadata object
-+ *
-+ * Return: @mp is returned
-+ */
-+struct kdbus_meta_proc *kdbus_meta_proc_ref(struct kdbus_meta_proc *mp)
++/* insert a slice into the busy tree */
++static void kdbus_pool_add_busy_slice(struct kdbus_pool *pool,
++				      struct kdbus_pool_slice *slice)
 +{
-+	if (mp)
-+		kref_get(&mp->kref);
-+	return mp;
++	struct rb_node **n;
++	struct rb_node *pn = NULL;
++
++	n = &pool->slices_busy.rb_node;
++	while (*n) {
++		struct kdbus_pool_slice *pslice;
++
++		pn = *n;
++		pslice = rb_entry(pn, struct kdbus_pool_slice, rb_node);
++		if (slice->off < pslice->off)
++			n = &pn->rb_left;
++		else if (slice->off > pslice->off)
++			n = &pn->rb_right;
++		else
++			BUG();
++	}
++
++	rb_link_node(&slice->rb_node, pn, n);
++	rb_insert_color(&slice->rb_node, &pool->slices_busy);
 +}
 +
-+/**
-+ * kdbus_meta_proc_unref() - Drop reference
-+ * @mp:		Process metadata object
-+ *
-+ * Return: NULL
-+ */
-+struct kdbus_meta_proc *kdbus_meta_proc_unref(struct kdbus_meta_proc *mp)
++static struct kdbus_pool_slice *kdbus_pool_find_slice(struct kdbus_pool *pool,
++						      size_t off)
 +{
-+	if (mp)
-+		kref_put(&mp->kref, kdbus_meta_proc_free);
++	struct rb_node *n;
++
++	n = pool->slices_busy.rb_node;
++	while (n) {
++		struct kdbus_pool_slice *s;
++
++		s = rb_entry(n, struct kdbus_pool_slice, rb_node);
++		if (off < s->off)
++			n = n->rb_left;
++		else if (off > s->off)
++			n = n->rb_right;
++		else
++			return s;
++	}
++
 +	return NULL;
 +}
 +
-+static void kdbus_meta_proc_collect_creds(struct kdbus_meta_proc *mp)
-+{
-+	mp->uid		= current_uid();
-+	mp->euid	= current_euid();
-+	mp->suid	= current_suid();
-+	mp->fsuid	= current_fsuid();
-+
-+	mp->gid		= current_gid();
-+	mp->egid	= current_egid();
-+	mp->sgid	= current_sgid();
-+	mp->fsgid	= current_fsgid();
-+
-+	mp->valid |= KDBUS_ATTACH_CREDS;
-+}
-+
-+static void kdbus_meta_proc_collect_pids(struct kdbus_meta_proc *mp)
-+{
-+	struct task_struct *parent;
-+
-+	mp->pid = get_pid(task_pid(current));
-+	mp->tgid = get_pid(task_tgid(current));
-+
-+	rcu_read_lock();
-+	parent = rcu_dereference(current->real_parent);
-+	mp->ppid = get_pid(task_tgid(parent));
-+	rcu_read_unlock();
-+
-+	mp->valid |= KDBUS_ATTACH_PIDS;
-+}
-+
-+static int kdbus_meta_proc_collect_auxgroups(struct kdbus_meta_proc *mp)
-+{
-+	struct group_info *info;
-+	size_t i;
-+
-+	info = get_current_groups();
-+
-+	if (info->ngroups > 0) {
-+		mp->auxgrps = kmalloc_array(info->ngroups, sizeof(kgid_t),
-+					    GFP_KERNEL);
-+		if (!mp->auxgrps) {
-+			put_group_info(info);
-+			return -ENOMEM;
-+		}
-+
-+		for (i = 0; i < info->ngroups; i++)
-+			mp->auxgrps[i] = GROUP_AT(info, i);
-+	}
-+
-+	mp->n_auxgrps = info->ngroups;
-+	put_group_info(info);
-+	mp->valid |= KDBUS_ATTACH_AUXGROUPS;
-+
-+	return 0;
-+}
-+
-+static void kdbus_meta_proc_collect_tid_comm(struct kdbus_meta_proc *mp)
-+{
-+	get_task_comm(mp->tid_comm, current);
-+	mp->valid |= KDBUS_ATTACH_TID_COMM;
-+}
-+
-+static void kdbus_meta_proc_collect_pid_comm(struct kdbus_meta_proc *mp)
-+{
-+	get_task_comm(mp->pid_comm, current->group_leader);
-+	mp->valid |= KDBUS_ATTACH_PID_COMM;
-+}
-+
-+static void kdbus_meta_proc_collect_exe(struct kdbus_meta_proc *mp)
-+{
-+	struct mm_struct *mm;
-+
-+	mm = get_task_mm(current);
-+	if (!mm)
-+		return;
-+
-+	down_read(&mm->mmap_sem);
-+	if (mm->exe_file) {
-+		mp->exe_path = mm->exe_file->f_path;
-+		path_get(&mp->exe_path);
-+		get_fs_root(current->fs, &mp->root_path);
-+		mp->valid |= KDBUS_ATTACH_EXE;
-+	}
-+	up_read(&mm->mmap_sem);
-+
-+	mmput(mm);
-+}
-+
-+static int kdbus_meta_proc_collect_cmdline(struct kdbus_meta_proc *mp)
-+{
-+	struct mm_struct *mm;
-+	char *cmdline;
-+
-+	mm = get_task_mm(current);
-+	if (!mm)
-+		return 0;
-+
-+	if (!mm->arg_end) {
-+		mmput(mm);
-+		return 0;
-+	}
-+
-+	cmdline = strndup_user((const char __user *)mm->arg_start,
-+			       mm->arg_end - mm->arg_start);
-+	mmput(mm);
-+
-+	if (IS_ERR(cmdline))
-+		return PTR_ERR(cmdline);
-+
-+	mp->cmdline = cmdline;
-+	mp->valid |= KDBUS_ATTACH_CMDLINE;
-+
-+	return 0;
-+}
-+
-+static int kdbus_meta_proc_collect_cgroup(struct kdbus_meta_proc *mp)
-+{
-+#ifdef CONFIG_CGROUPS
-+	void *page;
-+	char *s;
-+
-+	page = (void *)__get_free_page(GFP_TEMPORARY);
-+	if (!page)
-+		return -ENOMEM;
-+
-+	s = task_cgroup_path(current, page, PAGE_SIZE);
-+	if (s) {
-+		mp->cgroup = kstrdup(s, GFP_KERNEL);
-+		if (!mp->cgroup) {
-+			free_page((unsigned long)page);
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	free_page((unsigned long)page);
-+	mp->valid |= KDBUS_ATTACH_CGROUP;
-+#endif
-+
-+	return 0;
-+}
-+
-+static void kdbus_meta_proc_collect_caps(struct kdbus_meta_proc *mp)
-+{
-+	const struct cred *c = current_cred();
-+	int i;
-+
-+	/* ABI: "last_cap" equals /proc/sys/kernel/cap_last_cap */
-+	mp->caps.last_cap = CAP_LAST_CAP;
-+	mp->caps_namespace = get_user_ns(current_user_ns());
-+
-+	CAP_FOR_EACH_U32(i) {
-+		mp->caps.set[0].caps[i] = c->cap_inheritable.cap[i];
-+		mp->caps.set[1].caps[i] = c->cap_permitted.cap[i];
-+		mp->caps.set[2].caps[i] = c->cap_effective.cap[i];
-+		mp->caps.set[3].caps[i] = c->cap_bset.cap[i];
-+	}
-+
-+	/* clear unused bits */
-+	for (i = 0; i < 4; i++)
-+		mp->caps.set[i].caps[CAP_TO_INDEX(CAP_LAST_CAP)] &=
-+						CAP_LAST_U32_VALID_MASK;
-+
-+	mp->valid |= KDBUS_ATTACH_CAPS;
-+}
-+
-+static int kdbus_meta_proc_collect_seclabel(struct kdbus_meta_proc *mp)
-+{
-+#ifdef CONFIG_SECURITY
-+	char *ctx = NULL;
-+	u32 sid, len;
-+	int ret;
-+
-+	security_task_getsecid(current, &sid);
-+	ret = security_secid_to_secctx(sid, &ctx, &len);
-+	if (ret < 0) {
-+		/*
-+		 * EOPNOTSUPP means no security module is active,
-+		 * lets skip adding the seclabel then. This effectively
-+		 * drops the SECLABEL item.
-+		 */
-+		return (ret == -EOPNOTSUPP) ? 0 : ret;
-+	}
-+
-+	mp->seclabel = kstrdup(ctx, GFP_KERNEL);
-+	security_release_secctx(ctx, len);
-+	if (!mp->seclabel)
-+		return -ENOMEM;
-+
-+	mp->valid |= KDBUS_ATTACH_SECLABEL;
-+#endif
-+
-+	return 0;
-+}
-+
-+static void kdbus_meta_proc_collect_audit(struct kdbus_meta_proc *mp)
-+{
-+#ifdef CONFIG_AUDITSYSCALL
-+	mp->audit_loginuid = audit_get_loginuid(current);
-+	mp->audit_sessionid = audit_get_sessionid(current);
-+	mp->valid |= KDBUS_ATTACH_AUDIT;
-+#endif
-+}
-+
 +/**
-+ * kdbus_meta_proc_collect() - Collect process metadata
-+ * @mp:		Process metadata object
-+ * @what:	Attach flags to collect
++ * kdbus_pool_slice_alloc() - allocate memory from a pool
++ * @pool:	The receiver's pool
++ * @size:	The number of bytes to allocate
++ * @kvec:	kvec to copy into the new slice, may be %NULL
++ * @iovec:	iovec to copy into the new slice, may be %NULL
++ * @vec_count:	Number of elements in @kvec or @iovec
 + *
-+ * This collects process metadata from current and saves it in @mp.
++ * The returned slice is used for kdbus_pool_slice_release() to
++ * free the allocated memory. If either @kvec or @iovec is non-NULL, the data
++ * will be copied from kernel or userspace memory into the new slice at
++ * offset 0.
 + *
-+ * Return: 0 on success, negative error code on failure.
++ * Return: the allocated slice on success, ERR_PTR on failure.
 + */
-+int kdbus_meta_proc_collect(struct kdbus_meta_proc *mp, u64 what)
++struct kdbus_pool_slice *kdbus_pool_slice_alloc(struct kdbus_pool *pool,
++						size_t size,
++						struct kvec *kvec,
++						struct iovec *iovec,
++						size_t vec_count)
 +{
-+	int ret;
++	size_t slice_size = KDBUS_ALIGN8(size);
++	struct rb_node *n, *found = NULL;
++	struct kdbus_pool_slice *s;
++	int ret = 0;
 +
-+	if (!mp)
-+		return 0;
++	if (WARN_ON(kvec && iovec))
++		return ERR_PTR(-EINVAL);
 +
-+	mutex_lock(&mp->lock);
-+
-+	if ((what & KDBUS_ATTACH_CREDS) &&
-+	    !(mp->collected & KDBUS_ATTACH_CREDS)) {
-+		kdbus_meta_proc_collect_creds(mp);
-+		mp->collected |= KDBUS_ATTACH_CREDS;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_PIDS) &&
-+	    !(mp->collected & KDBUS_ATTACH_PIDS)) {
-+		kdbus_meta_proc_collect_pids(mp);
-+		mp->collected |= KDBUS_ATTACH_PIDS;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_AUXGROUPS) &&
-+	    !(mp->collected & KDBUS_ATTACH_AUXGROUPS)) {
-+		ret = kdbus_meta_proc_collect_auxgroups(mp);
-+		if (ret < 0)
-+			goto exit_unlock;
-+		mp->collected |= KDBUS_ATTACH_AUXGROUPS;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_TID_COMM) &&
-+	    !(mp->collected & KDBUS_ATTACH_TID_COMM)) {
-+		kdbus_meta_proc_collect_tid_comm(mp);
-+		mp->collected |= KDBUS_ATTACH_TID_COMM;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_PID_COMM) &&
-+	    !(mp->collected & KDBUS_ATTACH_PID_COMM)) {
-+		kdbus_meta_proc_collect_pid_comm(mp);
-+		mp->collected |= KDBUS_ATTACH_PID_COMM;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_EXE) &&
-+	    !(mp->collected & KDBUS_ATTACH_EXE)) {
-+		kdbus_meta_proc_collect_exe(mp);
-+		mp->collected |= KDBUS_ATTACH_EXE;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_CMDLINE) &&
-+	    !(mp->collected & KDBUS_ATTACH_CMDLINE)) {
-+		ret = kdbus_meta_proc_collect_cmdline(mp);
-+		if (ret < 0)
-+			goto exit_unlock;
-+		mp->collected |= KDBUS_ATTACH_CMDLINE;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_CGROUP) &&
-+	    !(mp->collected & KDBUS_ATTACH_CGROUP)) {
-+		ret = kdbus_meta_proc_collect_cgroup(mp);
-+		if (ret < 0)
-+			goto exit_unlock;
-+		mp->collected |= KDBUS_ATTACH_CGROUP;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_CAPS) &&
-+	    !(mp->collected & KDBUS_ATTACH_CAPS)) {
-+		kdbus_meta_proc_collect_caps(mp);
-+		mp->collected |= KDBUS_ATTACH_CAPS;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_SECLABEL) &&
-+	    !(mp->collected & KDBUS_ATTACH_SECLABEL)) {
-+		ret = kdbus_meta_proc_collect_seclabel(mp);
-+		if (ret < 0)
-+			goto exit_unlock;
-+		mp->collected |= KDBUS_ATTACH_SECLABEL;
-+	}
-+
-+	if ((what & KDBUS_ATTACH_AUDIT) &&
-+	    !(mp->collected & KDBUS_ATTACH_AUDIT)) {
-+		kdbus_meta_proc_collect_audit(mp);
-+		mp->collected |= KDBUS_ATTACH_AUDIT;
-+	}
-+
-+	ret = 0;
-+
-+exit_unlock:
-+	mutex_unlock(&mp->lock);
-+	return ret;
-+}
-+
-+/**
-+ * kdbus_meta_proc_fake() - Fill process metadata from faked credentials
-+ * @mp:		Metadata
-+ * @creds:	Creds to set, may be %NULL
-+ * @pids:	PIDs to set, may be %NULL
-+ * @seclabel:	Seclabel to set, may be %NULL
-+ *
-+ * This function takes information stored in @creds, @pids and @seclabel and
-+ * resolves them to kernel-representations, if possible. A call to this function
-+ * is considered an alternative to calling kdbus_meta_add_current(), which
-+ * derives the same information from the 'current' task.
-+ *
-+ * This call uses the current task's namespaces to resolve the given
-+ * information.
-+ *
-+ * Return: 0 on success, negative error number otherwise.
-+ */
-+int kdbus_meta_proc_fake(struct kdbus_meta_proc *mp,
-+			 const struct kdbus_creds *creds,
-+			 const struct kdbus_pids *pids,
-+			 const char *seclabel)
-+{
-+	int ret;
-+
-+	if (!mp)
-+		return 0;
-+
-+	mutex_lock(&mp->lock);
-+
-+	if (creds && !(mp->collected & KDBUS_ATTACH_CREDS)) {
-+		struct user_namespace *ns = current_user_ns();
-+
-+		mp->uid		= make_kuid(ns, creds->uid);
-+		mp->euid	= make_kuid(ns, creds->euid);
-+		mp->suid	= make_kuid(ns, creds->suid);
-+		mp->fsuid	= make_kuid(ns, creds->fsuid);
-+
-+		mp->gid		= make_kgid(ns, creds->gid);
-+		mp->egid	= make_kgid(ns, creds->egid);
-+		mp->sgid	= make_kgid(ns, creds->sgid);
-+		mp->fsgid	= make_kgid(ns, creds->fsgid);
-+
-+		if ((creds->uid   != (uid_t)-1 && !uid_valid(mp->uid))   ||
-+		    (creds->euid  != (uid_t)-1 && !uid_valid(mp->euid))  ||
-+		    (creds->suid  != (uid_t)-1 && !uid_valid(mp->suid))  ||
-+		    (creds->fsuid != (uid_t)-1 && !uid_valid(mp->fsuid)) ||
-+		    (creds->gid   != (gid_t)-1 && !gid_valid(mp->gid))   ||
-+		    (creds->egid  != (gid_t)-1 && !gid_valid(mp->egid))  ||
-+		    (creds->sgid  != (gid_t)-1 && !gid_valid(mp->sgid))  ||
-+		    (creds->fsgid != (gid_t)-1 && !gid_valid(mp->fsgid))) {
-+			ret = -EINVAL;
-+			goto exit_unlock;
++	/* search a free slice with the closest matching size */
++	mutex_lock(&pool->lock);
++	n = pool->slices_free.rb_node;
++	while (n) {
++		s = rb_entry(n, struct kdbus_pool_slice, rb_node);
++		if (slice_size < s->size) {
++			found = n;
++			n = n->rb_left;
++		} else if (slice_size > s->size) {
++			n = n->rb_right;
++		} else {
++			found = n;
++			break;
 +		}
-+
-+		mp->valid |= KDBUS_ATTACH_CREDS;
-+		mp->collected |= KDBUS_ATTACH_CREDS;
 +	}
 +
-+	if (pids && !(mp->collected & KDBUS_ATTACH_PIDS)) {
-+		mp->pid = get_pid(find_vpid(pids->tid));
-+		mp->tgid = get_pid(find_vpid(pids->pid));
-+		mp->ppid = get_pid(find_vpid(pids->ppid));
-+
-+		if ((pids->tid != 0 && !mp->pid) ||
-+		    (pids->pid != 0 && !mp->tgid) ||
-+		    (pids->ppid != 0 && !mp->ppid)) {
-+			put_pid(mp->pid);
-+			put_pid(mp->tgid);
-+			put_pid(mp->ppid);
-+			mp->pid = NULL;
-+			mp->tgid = NULL;
-+			mp->ppid = NULL;
-+			ret = -EINVAL;
-+			goto exit_unlock;
-+		}
-+
-+		mp->valid |= KDBUS_ATTACH_PIDS;
-+		mp->collected |= KDBUS_ATTACH_PIDS;
++	/* no slice with the minimum size found in the pool */
++	if (!found) {
++		ret = -ENOBUFS;
++		goto exit_unlock;
 +	}
 +
-+	if (seclabel && !(mp->collected & KDBUS_ATTACH_SECLABEL)) {
-+		mp->seclabel = kstrdup(seclabel, GFP_KERNEL);
-+		if (!mp->seclabel) {
++	/* no exact match, use the closest one */
++	if (!n) {
++		struct kdbus_pool_slice *s_new;
++
++		s = rb_entry(found, struct kdbus_pool_slice, rb_node);
++
++		/* split-off the remainder of the size to its own slice */
++		s_new = kdbus_pool_slice_new(pool, s->off + slice_size,
++					     s->size - slice_size);
++		if (!s_new) {
 +			ret = -ENOMEM;
 +			goto exit_unlock;
 +		}
 +
-+		mp->valid |= KDBUS_ATTACH_SECLABEL;
-+		mp->collected |= KDBUS_ATTACH_SECLABEL;
++		list_add(&s_new->entry, &s->entry);
++		kdbus_pool_add_free_slice(pool, s_new);
++
++		/* adjust our size now that we split-off another slice */
++		s->size = slice_size;
 +	}
 +
-+	ret = 0;
++	/* move slice from free to the busy tree */
++	rb_erase(found, &pool->slices_free);
++	kdbus_pool_add_busy_slice(pool, s);
++
++	WARN_ON(s->ref_kernel || s->ref_user);
++	WARN_ON(s->child);
++
++	s->ref_kernel = true;
++	s->free = false;
++	pool->busy += s->size;
++	mutex_unlock(&pool->lock);
++
++	if (kvec)
++		ret = kdbus_pool_slice_copy_kvec(s, 0, kvec, vec_count, size);
++
++	if (iovec)
++		ret = kdbus_pool_slice_copy_iovec(s, 0, iovec, vec_count, size);
++
++	if (ret < 0) {
++		kdbus_pool_slice_release(s);
++		return ERR_PTR(ret);
++	}
++
++	return s;
 +
 +exit_unlock:
-+	mutex_unlock(&mp->lock);
++	mutex_unlock(&pool->lock);
++	return ERR_PTR(ret);
++}
++
++static void __kdbus_pool_slice_release(struct kdbus_pool_slice *slice)
++{
++	struct kdbus_pool *pool = slice->pool;
++	struct kdbus_pool_slice *child = slice->child;
++
++	/* don't free the slice if either has a reference */
++	if (slice->ref_kernel || slice->ref_user)
++		return;
++
++	if (WARN_ON(slice->free))
++		return;
++
++	rb_erase(&slice->rb_node, &pool->slices_busy);
++	pool->busy -= slice->size;
++
++	/* merge with the next free slice */
++	if (!list_is_last(&slice->entry, &pool->slices)) {
++		struct kdbus_pool_slice *s;
++
++		s = list_entry(slice->entry.next,
++			       struct kdbus_pool_slice, entry);
++		if (s->free) {
++			rb_erase(&s->rb_node, &pool->slices_free);
++			list_del(&s->entry);
++			slice->size += s->size;
++			kfree(s);
++		}
++	}
++
++	/* merge with previous free slice */
++	if (pool->slices.next != &slice->entry) {
++		struct kdbus_pool_slice *s;
++
++		s = list_entry(slice->entry.prev,
++			       struct kdbus_pool_slice, entry);
++		if (s->free) {
++			rb_erase(&s->rb_node, &pool->slices_free);
++			list_del(&slice->entry);
++			s->size += slice->size;
++			kfree(slice);
++			slice = s;
++		}
++	}
++
++	slice->free = true;
++	slice->child = NULL;
++	kdbus_pool_add_free_slice(pool, slice);
++
++	if (child) {
++		/* Only allow one level of recursion */
++		WARN_ON(child->child);
++		WARN_ON(!child->ref_kernel);
++		child->ref_kernel = false;
++		__kdbus_pool_slice_release(child);
++	}
++}
++
++/**
++ * kdbus_pool_slice_release() - drop kernel-reference on allocated slice
++ * @slice:		Slice allocated from the the pool
++ *
++ * This releases the kernel-reference on the given slice. If the
++ * kernel-reference and the user-reference on a slice are dropped, the slice is
++ * returned to the pool.
++ *
++ * So far, we do not implement full ref-counting on slices. Each, kernel and
++ * user-space can have exactly one reference to a slice. If both are dropped at
++ * the same time, the slice is released.
++ */
++void kdbus_pool_slice_release(struct kdbus_pool_slice *slice)
++{
++	struct kdbus_pool *pool;
++
++	if (!slice)
++		return;
++
++	/* @slice may be freed, so keep local ptr to @pool */
++	pool = slice->pool;
++
++	mutex_lock(&pool->lock);
++	/* kernel must own a ref to @slice to drop it */
++	WARN_ON(!slice->ref_kernel);
++	slice->ref_kernel = false;
++	__kdbus_pool_slice_release(slice);
++	mutex_unlock(&pool->lock);
++}
++
++/**
++ * kdbus_pool_release_offset() - release a public offset
++ * @pool:		pool to operate on
++ * @off:		offset to release
++ *
++ * This should be called whenever user-space frees a slice given to them. It
++ * verifies the slice is available and public, and then drops it. It ensures
++ * correct locking and barriers against queues.
++ *
++ * Return: 0 on success, ENXIO if the offset is invalid or not public.
++ */
++int kdbus_pool_release_offset(struct kdbus_pool *pool, size_t off)
++{
++	struct kdbus_pool_slice *slice;
++	int ret = 0;
++
++	mutex_lock(&pool->lock);
++	slice = kdbus_pool_find_slice(pool, off);
++	if (slice && slice->ref_user) {
++		slice->ref_user = false;
++		__kdbus_pool_slice_release(slice);
++	} else {
++		ret = -ENXIO;
++	}
++	mutex_unlock(&pool->lock);
++
 +	return ret;
 +}
 +
 +/**
-+ * kdbus_meta_conn_new() - Create connection metadata object
++ * kdbus_pool_slice_publish() - publish slice to user-space
++ * @slice:		The slice
++ * @out_offset:		Output storage for offset, or NULL
++ * @out_size:		Output storage for size, or NULL
 + *
-+ * Return: Pointer to new object on success, ERR_PTR on failure.
++ * This prepares a slice to be published to user-space.
++ *
++ * This call combines the following operations:
++ *   * the memory region is flushed so the user's memory view is consistent
++ *   * the slice is marked as referenced by user-space, so user-space has to
++ *     call KDBUS_CMD_FREE to release it
++ *   * the offset and size of the slice are written to the given output
++ *     arguments, if non-NULL
 + */
-+struct kdbus_meta_conn *kdbus_meta_conn_new(void)
++void kdbus_pool_slice_publish(struct kdbus_pool_slice *slice,
++			      u64 *out_offset, u64 *out_size)
 +{
-+	struct kdbus_meta_conn *mc;
++	mutex_lock(&slice->pool->lock);
++	/* kernel must own a ref to @slice to gain a user-space ref */
++	WARN_ON(!slice->ref_kernel);
++	slice->ref_user = true;
++	mutex_unlock(&slice->pool->lock);
 +
-+	mc = kzalloc(sizeof(*mc), GFP_KERNEL);
-+	if (!mc)
++	if (out_offset)
++		*out_offset = slice->off;
++	if (out_size)
++		*out_size = slice->size;
++}
++
++/**
++ * kdbus_pool_slice_offset() - Get a slice's offset inside the pool
++ * @slice:	Slice to return the offset of
++ *
++ * Return: The internal offset @slice inside the pool.
++ */
++off_t kdbus_pool_slice_offset(const struct kdbus_pool_slice *slice)
++{
++	return slice->off;
++}
++
++/**
++ * kdbus_pool_slice_set_child() - Set child of a slice
++ * @slice:	Slice to add a child to
++ * @child:	Child to set, may be %NULL
++ *
++ * Set @child as child of @slice, so it will be freed automatically when
++ * @slice goes away.
++ */
++void kdbus_pool_slice_set_child(struct kdbus_pool_slice *slice,
++				struct kdbus_pool_slice *child)
++{
++	if (WARN_ON(child && slice->pool != child->pool))
++		return;
++
++	WARN_ON(slice->child);
++	slice->child = child;
++}
++
++/**
++ * kdbus_pool_new() - create a new pool
++ * @name:		Name of the (deleted) file which shows up in
++ *			/proc, used for debugging
++ * @size:		Maximum size of the pool
++ *
++ * Return: a new kdbus_pool on success, ERR_PTR on failure.
++ */
++struct kdbus_pool *kdbus_pool_new(const char *name, size_t size)
++{
++	struct kdbus_pool_slice *s;
++	struct kdbus_pool *p;
++	struct file *f;
++	char *n = NULL;
++	int ret;
++
++	p = kzalloc(sizeof(*p), GFP_KERNEL);
++	if (!p)
 +		return ERR_PTR(-ENOMEM);
 +
-+	kref_init(&mc->kref);
-+	mutex_init(&mc->lock);
-+
-+	return mc;
-+}
-+
-+static void kdbus_meta_conn_free(struct kref *kref)
-+{
-+	struct kdbus_meta_conn *mc = container_of(kref, struct kdbus_meta_conn,
-+						  kref);
-+
-+	kfree(mc->conn_description);
-+	kfree(mc->owned_names_items);
-+	kfree(mc);
-+}
-+
-+/**
-+ * kdbus_meta_conn_ref() - Gain reference
-+ * @mc:		Connection metadata object
-+ */
-+struct kdbus_meta_conn *kdbus_meta_conn_ref(struct kdbus_meta_conn *mc)
-+{
-+	if (mc)
-+		kref_get(&mc->kref);
-+	return mc;
-+}
-+
-+/**
-+ * kdbus_meta_conn_unref() - Drop reference
-+ * @mc:		Connection metadata object
-+ */
-+struct kdbus_meta_conn *kdbus_meta_conn_unref(struct kdbus_meta_conn *mc)
-+{
-+	if (mc)
-+		kref_put(&mc->kref, kdbus_meta_conn_free);
-+	return NULL;
-+}
-+
-+static void kdbus_meta_conn_collect_timestamp(struct kdbus_meta_conn *mc,
-+					      struct kdbus_kmsg *kmsg)
-+{
-+	struct timespec ts;
-+
-+	ktime_get_ts(&ts);
-+	mc->ts.monotonic_ns = timespec_to_ns(&ts);
-+
-+	ktime_get_real_ts(&ts);
-+	mc->ts.realtime_ns = timespec_to_ns(&ts);
-+
-+	if (kmsg)
-+		mc->ts.seqnum = kmsg->seq;
-+
-+	mc->valid |= KDBUS_ATTACH_TIMESTAMP;
-+}
-+
-+static int kdbus_meta_conn_collect_names(struct kdbus_meta_conn *mc,
-+					 struct kdbus_conn *conn)
-+{
-+	const struct kdbus_name_entry *e;
-+	struct kdbus_item *item;
-+	size_t slen, size;
-+
-+	size = 0;
-+	list_for_each_entry(e, &conn->names_list, conn_entry)
-+		size += KDBUS_ITEM_SIZE(sizeof(struct kdbus_name) +
-+					strlen(e->name) + 1);
-+
-+	if (!size)
-+		return 0;
-+
-+	item = kmalloc(size, GFP_KERNEL);
-+	if (!item)
-+		return -ENOMEM;
-+
-+	mc->owned_names_items = item;
-+	mc->owned_names_size = size;
-+
-+	list_for_each_entry(e, &conn->names_list, conn_entry) {
-+		slen = strlen(e->name) + 1;
-+		kdbus_item_set(item, KDBUS_ITEM_OWNED_NAME, NULL,
-+			       sizeof(struct kdbus_name) + slen);
-+		item->name.flags = e->flags;
-+		memcpy(item->name.name, e->name, slen);
-+		item = KDBUS_ITEM_NEXT(item);
++	if (name) {
++		n = kasprintf(GFP_KERNEL, KBUILD_MODNAME "-conn:%s", name);
++		if (!n) {
++			ret = -ENOMEM;
++			goto exit_free;
++		}
 +	}
 +
-+	/* sanity check: the buffer should be completely written now */
-+	WARN_ON((u8 *)item != (u8 *)mc->owned_names_items + size);
++	f = shmem_file_setup(n ?: KBUILD_MODNAME "-conn", size, VM_NORESERVE);
++	kfree(n);
 +
-+	mc->valid |= KDBUS_ATTACH_NAMES;
-+	return 0;
-+}
++	if (IS_ERR(f)) {
++		ret = PTR_ERR(f);
++		goto exit_free;
++	}
 +
-+static int kdbus_meta_conn_collect_description(struct kdbus_meta_conn *mc,
-+					       struct kdbus_conn *conn)
-+{
-+	if (!conn->description)
-+		return 0;
++	ret = get_write_access(file_inode(f));
++	if (ret < 0)
++		goto exit_put_shmem;
 +
-+	mc->conn_description = kstrdup(conn->description, GFP_KERNEL);
-+	if (!mc->conn_description)
-+		return -ENOMEM;
++	/* allocate first slice spanning the entire pool */
++	s = kdbus_pool_slice_new(p, 0, size);
++	if (!s) {
++		ret = -ENOMEM;
++		goto exit_put_write;
++	}
 +
-+	mc->valid |= KDBUS_ATTACH_CONN_DESCRIPTION;
-+	return 0;
++	p->f = f;
++	p->size = size;
++	p->busy = 0;
++	p->slices_free = RB_ROOT;
++	p->slices_busy = RB_ROOT;
++	mutex_init(&p->lock);
++
++	INIT_LIST_HEAD(&p->slices);
++	list_add(&s->entry, &p->slices);
++
++	kdbus_pool_add_free_slice(p, s);
++	return p;
++
++exit_put_write:
++	put_write_access(file_inode(f));
++exit_put_shmem:
++	fput(f);
++exit_free:
++	kfree(p);
++	return ERR_PTR(ret);
 +}
 +
 +/**
-+ * kdbus_meta_conn_collect() - Collect connection metadata
-+ * @mc:		Message metadata object
-+ * @kmsg:	Kmsg to collect data from
-+ * @conn:	Connection to collect data from
-+ * @what:	Attach flags to collect
++ * kdbus_pool_free() - destroy pool
++ * @pool:		The receiver's pool
++ */
++void kdbus_pool_free(struct kdbus_pool *pool)
++{
++	struct kdbus_pool_slice *s, *tmp;
++
++	if (!pool)
++		return;
++
++	list_for_each_entry_safe(s, tmp, &pool->slices, entry) {
++		list_del(&s->entry);
++		kfree(s);
++	}
++
++	put_write_access(file_inode(pool->f));
++	fput(pool->f);
++	kfree(pool);
++}
++
++/**
++ * kdbus_pool_remain() - the number of free bytes in the pool
++ * @pool:		The receiver's pool
 + *
-+ * This collects connection metadata from @kmsg and @conn and saves it in @mc.
-+ *
-+ * Return: 0 on success, negative error code on failure.
++ * Return: the number of unallocated bytes in the pool
 + */
-+int kdbus_meta_conn_collect(struct kdbus_meta_conn *mc,
-+			    struct kdbus_kmsg *kmsg,
-+			    struct kdbus_conn *conn,
-+			    u64 what)
++size_t kdbus_pool_remain(struct kdbus_pool *pool)
 +{
-+	int ret;
++	size_t size;
 +
-+	if (!mc)
-+		return 0;
++	mutex_lock(&pool->lock);
++	size = pool->size - pool->busy;
++	mutex_unlock(&pool->lock);
 +
-+	if (conn)
-+		mutex_lock(&conn->lock);
-+	mutex_lock(&mc->lock);
++	return size;
++}
 +
-+	if (kmsg && (what & KDBUS_ATTACH_TIMESTAMP) &&
-+	    !(mc->collected & KDBUS_ATTACH_TIMESTAMP)) {
-+		kdbus_meta_conn_collect_timestamp(mc, kmsg);
-+		mc->collected |= KDBUS_ATTACH_TIMESTAMP;
++/**
++ * kdbus_pool_slice_copy_iovec() - copy user memory to a slice
++ * @slice:		The slice to write to
++ * @off:		Offset in the slice to write to
++ * @iov:		iovec array, pointing to data to copy
++ * @iov_len:		Number of elements in @iov
++ * @total_len:		Total number of bytes described in members of @iov
++ *
++ * User memory referenced by @iov will be copied into @slice at offset @off.
++ *
++ * Return: the numbers of bytes copied, negative errno on failure.
++ */
++ssize_t
++kdbus_pool_slice_copy_iovec(const struct kdbus_pool_slice *slice, size_t off,
++			    struct iovec *iov, size_t iov_len, size_t total_len)
++{
++	struct file *f = slice->pool->f;
++	struct iov_iter iter;
++	struct kiocb kiocb;
++	ssize_t len;
++
++	BUG_ON(off + total_len > slice->size);
++
++	init_sync_kiocb(&kiocb, f);
++	kiocb.ki_pos = slice->off + off;
++	kiocb.ki_nbytes = total_len;
++	iov_iter_init(&iter, WRITE, iov, iov_len, total_len);
++
++	len = f->f_op->write_iter(&kiocb, &iter);
++	if (len < 0)
++		return len;
++
++	if (len != total_len)
++		return -EFAULT;
++
++	return len;
++}
++
++/**
++ * kdbus_pool_slice_copy_kvec() - copy kernel memory to a slice
++ * @slice:		The slice to write to
++ * @off:		Offset in the slice to write to
++ * @kvec:		kvec array, pointing to data to copy
++ * @kvec_len:		Number of elements in @kvec
++ * @total_len:		Total number of bytes described in members of @kvec
++ *
++ * Kernel memory referenced by @kvec will be copied into @slice at offset @off.
++ *
++ * Return: the numbers of bytes copied, negative errno on failure.
++ */
++ssize_t kdbus_pool_slice_copy_kvec(const struct kdbus_pool_slice *slice,
++				   size_t off, struct kvec *kvec,
++				   size_t kvec_len, size_t total_len)
++{
++	struct file *f = slice->pool->f;
++	struct iov_iter iter;
++	mm_segment_t old_fs;
++	struct kiocb kiocb;
++	ssize_t len;
++
++	BUG_ON(off + total_len > slice->size);
++
++	old_fs = get_fs();
++	set_fs(get_ds());
++
++	init_sync_kiocb(&kiocb, f);
++	kiocb.ki_pos = slice->off + off;
++	kiocb.ki_nbytes = total_len;
++	iov_iter_kvec(&iter, WRITE | ITER_KVEC, kvec, kvec_len, total_len);
++	len = f->f_op->write_iter(&kiocb, &iter);
++	set_fs(old_fs);
++
++	if (len < 0)
++		return len;
++
++	if (len != total_len)
++		return -EFAULT;
++
++	return len;
++}
++
++static int kdbus_pool_copy(const struct kdbus_pool_slice *slice_dst,
++			   const struct kdbus_pool_slice *slice_src)
++{
++	struct file *f_src = slice_src->pool->f;
++	struct file *f_dst = slice_dst->pool->f;
++	struct inode *i_dst = file_inode(f_dst);
++	struct address_space *mapping_dst = f_dst->f_mapping;
++	const struct address_space_operations *aops = mapping_dst->a_ops;
++	unsigned long len = slice_src->size;
++	loff_t off_src = slice_src->off;
++	loff_t off_dst = slice_dst->off;
++	int ret = 0;
++
++	BUG_ON(slice_src->size != slice_dst->size);
++	BUG_ON(slice_src->free || slice_dst->free);
++
++	mutex_lock(&i_dst->i_mutex);
++
++	while (len > 0) {
++		unsigned long page_off;
++		unsigned long copy_len;
++		char __user *kaddr;
++		struct page *page;
++		ssize_t n_read;
++		void *fsdata;
++		long status;
++
++		page_off = off_dst & (PAGE_CACHE_SIZE - 1);
++		copy_len = min_t(unsigned long,
++				 PAGE_CACHE_SIZE - page_off, len);
++
++		status = aops->write_begin(f_dst, mapping_dst, off_dst,
++					   copy_len, 0, &page, &fsdata);
++		if (unlikely(status < 0)) {
++			ret = status;
++			break;
++		}
++
++		kaddr = (char __force __user *)kmap(page) + page_off;
++		n_read = f_src->f_op->read(f_src, kaddr, copy_len, &off_src);
++		kunmap(page);
++		mark_page_accessed(page);
++		flush_dcache_page(page);
++
++		if (unlikely(n_read != copy_len)) {
++			ret = -EFAULT;
++			break;
++		}
++
++		status = aops->write_end(f_dst, mapping_dst, off_dst,
++					 copy_len, copy_len, page, fsdata);
++		if (unlikely(status != copy_len)) {
++			ret = -EFAULT;
++			break;
++		}
++
++		off_dst += copy_len;
++		len -= copy_len;
 +	}
 +
++	mutex_unlock(&i_dst->i_mutex);
 +
-+	if (conn && (what & KDBUS_ATTACH_NAMES) &&
-+	    !(mc->collected & KDBUS_ATTACH_NAMES)) {
-+		ret = kdbus_meta_conn_collect_names(mc, conn);
-+		if (ret < 0)
-+			goto exit_unlock;
-+		mc->collected |= KDBUS_ATTACH_NAMES;
-+	}
-+
-+	if (conn && (what & KDBUS_ATTACH_CONN_DESCRIPTION) &&
-+	    !(mc->collected & KDBUS_ATTACH_CONN_DESCRIPTION)) {
-+		ret = kdbus_meta_conn_collect_description(mc, conn);
-+		if (ret < 0)
-+			goto exit_unlock;
-+		mc->collected |= KDBUS_ATTACH_CONN_DESCRIPTION;
-+	}
-+
-+	ret = 0;
-+
-+exit_unlock:
-+	mutex_unlock(&mc->lock);
-+	if (conn)
-+		mutex_unlock(&conn->lock);
 +	return ret;
 +}
 +
 +/**
-+ * kdbus_meta_export() - export information from metadata into buffer
-+ * @mp:		Process metadata, or NULL
-+ * @mc:		Connection metadata, or NULL
-+ * @mask:	Mask of KDBUS_ATTACH_* flags to export
-+ * @sz:		Pointer to return the buffer size
++ * kdbus_pool_slice_move() - move memory from one pool into another one
++ * @pool_dst:		The receiver's pool to copy to
++ * @slice:		Reference to the slice to copy from the source;
++ *			updated with the newly allocated slice in the
++ *			destination
 + *
-+ * This function exports information from metadata to allocated buffer.
-+ * Only information that is requested in @mask and that has been collected
-+ * before is exported.
++ * Move memory from one pool to another. A slice will be allocated in the
++ * destination pool, the original memory from the existing slice is copied
++ * over, and the existing slice will be released.
 + *
-+ * All information will be translated using the current namespaces.
-+ *
-+ * Return: An array of items on success, ERR_PTR value on errors. On success,
-+ * @sz is also set to the number of bytes returned in the items array. The
-+ * caller must release the buffer via kfree().
++ * Return: 0 on success, negative error number on failure.
 + */
-+struct kdbus_item *kdbus_meta_export(struct kdbus_meta_proc *mp,
-+				     struct kdbus_meta_conn *mc,
-+				     u64 mask,
-+				     size_t *sz)
++int kdbus_pool_slice_move(struct kdbus_pool *pool_dst,
++			  struct kdbus_pool_slice **slice)
 +{
-+	struct user_namespace *user_ns = current_user_ns();
-+	struct kdbus_item *item, *items = NULL;
-+	char *exe_pathname = NULL;
-+	void *exe_page = NULL;
-+	size_t size = 0;
-+	u64 valid = 0;
++	mm_segment_t old_fs;
++	struct kdbus_pool_slice *slice_new;
 +	int ret;
 +
-+	if (WARN_ON(!sz))
-+		return ERR_PTR(-EINVAL);
++	slice_new = kdbus_pool_slice_alloc(pool_dst, (*slice)->size,
++					   NULL, NULL, 0);
++	if (IS_ERR(slice_new))
++		return PTR_ERR(slice_new);
 +
-+	if (mp) {
-+		mutex_lock(&mp->lock);
-+		valid |= mp ? mp->valid : 0;
-+		mutex_unlock(&mp->lock);
-+	}
++	old_fs = get_fs();
++	set_fs(get_ds());
++	ret = kdbus_pool_copy(slice_new, *slice);
++	set_fs(old_fs);
++	if (ret < 0)
++		goto exit_free;
 +
-+	if (mc) {
-+		mutex_lock(&mc->lock);
-+		valid |= mc ? mc->valid : 0;
-+		mutex_unlock(&mc->lock);
-+	}
++	kdbus_pool_slice_release(*slice);
 +
-+	mask &= valid;
-+	mask &= kdbus_meta_attach_mask;
++	*slice = slice_new;
++	return 0;
 +
-+	/*
-+	 * TODO: We currently have no sane way of translating a set of caps
-+	 * between different user namespaces. Until that changes, we have
-+	 * to drop such items.
-+	 */
-+	if (mp && mp->caps_namespace != user_ns)
-+		mask &= ~KDBUS_ATTACH_CAPS;
-+
-+	if (!mask) {
-+		*sz = 0;
-+		return NULL;
-+	}
-+
-+	/* process metadata */
-+
-+	if (mp && (mask & KDBUS_ATTACH_CREDS))
-+		size += KDBUS_ITEM_SIZE(sizeof(struct kdbus_creds));
-+
-+	if (mp && (mask & KDBUS_ATTACH_PIDS))
-+		size += KDBUS_ITEM_SIZE(sizeof(struct kdbus_pids));
-+
-+	if (mp && (mask & KDBUS_ATTACH_AUXGROUPS))
-+		size += KDBUS_ITEM_SIZE(mp->n_auxgrps * sizeof(u32));
-+
-+	if (mp && (mask & KDBUS_ATTACH_TID_COMM))
-+		size += KDBUS_ITEM_SIZE(strlen(mp->tid_comm) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_PID_COMM))
-+		size += KDBUS_ITEM_SIZE(strlen(mp->pid_comm) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_EXE)) {
-+		struct path p;
-+
-+		/*
-+		 * TODO: We need access to __d_path() so we can write the path
-+		 * relative to conn->root_path. Once upstream, we need
-+		 * EXPORT_SYMBOL(__d_path) or an equivalent of d_path() that
-+		 * takes the root path directly. Until then, we drop this item
-+		 * if the root-paths differ.
-+		 */
-+
-+		get_fs_root(current->fs, &p);
-+		if (path_equal(&p, &mp->root_path)) {
-+			exe_page = (void *)__get_free_page(GFP_TEMPORARY);
-+			if (!exe_page) {
-+				path_put(&p);
-+				ret = -ENOMEM;
-+				goto exit;
-+			}
-+
-+			exe_pathname = d_path(&mp->exe_path, exe_page,
-+					      PAGE_SIZE);
-+			if (IS_ERR(exe_pathname)) {
-+				path_put(&p);
-+				ret = PTR_ERR(exe_pathname);
-+				goto exit;
-+			}
-+
-+			size += KDBUS_ITEM_SIZE(strlen(exe_pathname) + 1);
-+		} else {
-+			mask &= ~KDBUS_ATTACH_EXE;
-+		}
-+		path_put(&p);
-+	}
-+
-+	if (mp && (mask & KDBUS_ATTACH_CMDLINE))
-+		size += KDBUS_ITEM_SIZE(strlen(mp->cmdline) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_CGROUP))
-+		size += KDBUS_ITEM_SIZE(strlen(mp->cgroup) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_CAPS))
-+		size += KDBUS_ITEM_SIZE(sizeof(mp->caps));
-+
-+	if (mp && (mask & KDBUS_ATTACH_SECLABEL))
-+		size += KDBUS_ITEM_SIZE(strlen(mp->seclabel) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_AUDIT))
-+		size += KDBUS_ITEM_SIZE(sizeof(struct kdbus_audit));
-+
-+	/* connection metadata */
-+
-+	if (mc && (mask & KDBUS_ATTACH_NAMES))
-+		size += mc->owned_names_size;
-+
-+	if (mc && (mask & KDBUS_ATTACH_CONN_DESCRIPTION))
-+		size += KDBUS_ITEM_SIZE(strlen(mc->conn_description) + 1);
-+
-+	if (mc && (mask & KDBUS_ATTACH_TIMESTAMP))
-+		size += KDBUS_ITEM_SIZE(sizeof(struct kdbus_timestamp));
-+
-+	if (!size) {
-+		*sz = 0;
-+		ret = 0;
-+		goto exit;
-+	}
-+
-+	items = kzalloc(size, GFP_KERNEL);
-+	if (!items) {
-+		ret = -ENOMEM;
-+		goto exit;
-+	}
-+
-+	item = items;
-+
-+	/* process metadata */
-+
-+	if (mp && (mask & KDBUS_ATTACH_CREDS)) {
-+		struct kdbus_creds creds = {
-+			.uid	= kdbus_from_kuid_keep(mp->uid),
-+			.euid	= kdbus_from_kuid_keep(mp->euid),
-+			.suid	= kdbus_from_kuid_keep(mp->suid),
-+			.fsuid	= kdbus_from_kuid_keep(mp->fsuid),
-+			.gid	= kdbus_from_kgid_keep(mp->gid),
-+			.egid	= kdbus_from_kgid_keep(mp->egid),
-+			.sgid	= kdbus_from_kgid_keep(mp->sgid),
-+			.fsgid	= kdbus_from_kgid_keep(mp->fsgid),
-+		};
-+
-+		item = kdbus_item_set(item, KDBUS_ITEM_CREDS, &creds,
-+				      sizeof(creds));
-+	}
-+
-+	if (mp && (mask & KDBUS_ATTACH_PIDS)) {
-+		struct kdbus_pids pids = {
-+			.pid = pid_vnr(mp->tgid),
-+			.tid = pid_vnr(mp->pid),
-+			.ppid = pid_vnr(mp->ppid),
-+		};
-+
-+		item = kdbus_item_set(item, KDBUS_ITEM_PIDS, &pids,
-+				      sizeof(pids));
-+	}
-+
-+	if (mp && (mask & KDBUS_ATTACH_AUXGROUPS)) {
-+		int i;
-+
-+		kdbus_item_set(item, KDBUS_ITEM_AUXGROUPS, NULL,
-+			       mp->n_auxgrps * sizeof(u32));
-+
-+		for (i = 0; i < mp->n_auxgrps; i++)
-+			item->data32[i] = from_kgid_munged(user_ns,
-+							   mp->auxgrps[i]);
-+
-+		item = KDBUS_ITEM_NEXT(item);
-+	}
-+
-+	if (mp && (mask & KDBUS_ATTACH_TID_COMM))
-+		item = kdbus_item_set(item, KDBUS_ITEM_TID_COMM, mp->tid_comm,
-+				      strlen(mp->tid_comm) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_PID_COMM))
-+		item = kdbus_item_set(item, KDBUS_ITEM_PID_COMM, mp->pid_comm,
-+				      strlen(mp->pid_comm) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_EXE))
-+		item = kdbus_item_set(item, KDBUS_ITEM_EXE, exe_pathname,
-+				      strlen(exe_pathname) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_CMDLINE))
-+		item = kdbus_item_set(item, KDBUS_ITEM_CMDLINE, mp->cmdline,
-+				      strlen(mp->cmdline) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_CGROUP))
-+		item = kdbus_item_set(item, KDBUS_ITEM_CGROUP, mp->cgroup,
-+				      strlen(mp->cgroup) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_CAPS))
-+		item = kdbus_item_set(item, KDBUS_ITEM_CAPS, &mp->caps,
-+				      sizeof(mp->caps));
-+
-+	if (mp && (mask & KDBUS_ATTACH_SECLABEL))
-+		item = kdbus_item_set(item, KDBUS_ITEM_SECLABEL, mp->seclabel,
-+				      strlen(mp->seclabel) + 1);
-+
-+	if (mp && (mask & KDBUS_ATTACH_AUDIT)) {
-+		struct kdbus_audit a = {
-+			.loginuid = from_kuid(user_ns, mp->audit_loginuid),
-+			.sessionid = mp->audit_sessionid,
-+		};
-+
-+		item = kdbus_item_set(item, KDBUS_ITEM_AUDIT, &a, sizeof(a));
-+	}
-+
-+	/* connection metadata */
-+
-+	if (mc && (mask & KDBUS_ATTACH_NAMES)) {
-+		memcpy(item, mc->owned_names_items, mc->owned_names_size);
-+		item = (struct kdbus_item *)
-+				((u8 *)item + mc->owned_names_size);
-+	}
-+
-+	if (mc && (mask & KDBUS_ATTACH_CONN_DESCRIPTION))
-+		item = kdbus_item_set(item, KDBUS_ITEM_CONN_DESCRIPTION,
-+				      mc->conn_description,
-+				      strlen(mc->conn_description) + 1);
-+
-+	if (mc && (mask & KDBUS_ATTACH_TIMESTAMP))
-+		item = kdbus_item_set(item, KDBUS_ITEM_TIMESTAMP, &mc->ts,
-+				      sizeof(mc->ts));
-+
-+	/* sanity check: the buffer should be completely written now */
-+	WARN_ON((u8 *)item != (u8 *)items + size);
-+
-+	*sz = size;
-+	ret = 0;
-+
-+exit:
-+	if (exe_page)
-+		free_page((unsigned long)exe_page);
-+	return ret < 0 ? ERR_PTR(ret) : items;
++exit_free:
++	kdbus_pool_slice_release(slice_new);
++	return ret;
 +}
 +
 +/**
-+ * kdbus_meta_calc_attach_flags() - calculate attach flags for a sender
-+ *				    and a receiver
-+ * @sender:		Sending connection
-+ * @receiver:		Receiving connection
++ * kdbus_pool_mmap() -  map the pool into the process
++ * @pool:		The receiver's pool
++ * @vma:		passed by mmap() syscall
 + *
-+ * Return: the attach flags both the sender and the receiver have opted-in
-+ * for.
++ * Return: the result of the mmap() call, negative errno on failure.
 + */
-+u64 kdbus_meta_calc_attach_flags(const struct kdbus_conn *sender,
-+				 const struct kdbus_conn *receiver)
++int kdbus_pool_mmap(const struct kdbus_pool *pool, struct vm_area_struct *vma)
 +{
-+	return atomic64_read(&sender->attach_flags_send) &
-+	       atomic64_read(&receiver->attach_flags_recv);
++	/* deny write access to the pool */
++	if (vma->vm_flags & VM_WRITE)
++		return -EPERM;
++	vma->vm_flags &= ~VM_MAYWRITE;
++
++	/* do not allow to map more than the size of the file */
++	if ((vma->vm_end - vma->vm_start) > pool->size)
++		return -EFAULT;
++
++	/* replace the connection file with our shmem file */
++	if (vma->vm_file)
++		fput(vma->vm_file);
++	vma->vm_file = get_file(pool->f);
++
++	return pool->f->f_op->mmap(pool->f, vma);
 +}
-diff --git a/ipc/kdbus/metadata.h b/ipc/kdbus/metadata.h
+diff --git a/ipc/kdbus/pool.h b/ipc/kdbus/pool.h
 new file mode 100644
-index 000000000000..4ddac7bf630d
+index 000000000000..7c6fce2241de
 --- /dev/null
-+++ b/ipc/kdbus/metadata.h
-@@ -0,0 +1,52 @@
++++ b/ipc/kdbus/pool.h
+@@ -0,0 +1,47 @@
 +/*
 + * Copyright (C) 2013-2014 Kay Sievers
 + * Copyright (C) 2013-2014 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 + * Copyright (C) 2013-2014 Daniel Mack <daniel@zonque.org>
 + * Copyright (C) 2013-2014 David Herrmann <dh.herrmann@gmail.com>
 + * Copyright (C) 2013-2014 Linux Foundation
-+ * Copyright (C) 2014 Djalal Harouni
++ * Copyright (C) 2014 Djalal Harouni <tixxdz@opendz.org>
 + *
 + * kdbus is free software; you can redistribute it and/or modify it under
 + * the terms of the GNU Lesser General Public License as published by the
@@ -1126,42 +854,37 @@ index 000000000000..4ddac7bf630d
 + * your option) any later version.
 + */
 +
-+#ifndef __KDBUS_METADATA_H
-+#define __KDBUS_METADATA_H
++#ifndef __KDBUS_POOL_H
++#define __KDBUS_POOL_H
 +
-+struct kdbus_conn;
-+struct kdbus_domain;
-+struct kdbus_kmsg;
++struct kdbus_pool;
 +struct kdbus_pool_slice;
 +
-+struct kdbus_meta_proc;
-+struct kdbus_meta_conn;
++struct kdbus_pool *kdbus_pool_new(const char *name, size_t size);
++void kdbus_pool_free(struct kdbus_pool *pool);
++size_t kdbus_pool_remain(struct kdbus_pool *pool);
++int kdbus_pool_mmap(const struct kdbus_pool *pool, struct vm_area_struct *vma);
++int kdbus_pool_release_offset(struct kdbus_pool *pool, size_t off);
 +
-+extern unsigned long long kdbus_meta_attach_mask;
-+
-+struct kdbus_meta_proc *kdbus_meta_proc_new(void);
-+struct kdbus_meta_proc *kdbus_meta_proc_ref(struct kdbus_meta_proc *mp);
-+struct kdbus_meta_proc *kdbus_meta_proc_unref(struct kdbus_meta_proc *mp);
-+int kdbus_meta_proc_collect(struct kdbus_meta_proc *mp, u64 what);
-+int kdbus_meta_proc_fake(struct kdbus_meta_proc *mp,
-+			 const struct kdbus_creds *creds,
-+			 const struct kdbus_pids *pids,
-+			 const char *seclabel);
-+
-+struct kdbus_meta_conn *kdbus_meta_conn_new(void);
-+struct kdbus_meta_conn *kdbus_meta_conn_ref(struct kdbus_meta_conn *mc);
-+struct kdbus_meta_conn *kdbus_meta_conn_unref(struct kdbus_meta_conn *mc);
-+int kdbus_meta_conn_collect(struct kdbus_meta_conn *mc,
-+			    struct kdbus_kmsg *kmsg,
-+			    struct kdbus_conn *conn,
-+			    u64 what);
-+
-+struct kdbus_item *kdbus_meta_export(struct kdbus_meta_proc *mp,
-+				     struct kdbus_meta_conn *mc,
-+				     u64 mask,
-+				     size_t *sz);
-+u64 kdbus_meta_calc_attach_flags(const struct kdbus_conn *sender,
-+				 const struct kdbus_conn *receiver);
++struct kdbus_pool_slice *kdbus_pool_slice_alloc(struct kdbus_pool *pool,
++						size_t size,
++						struct kvec *kvec,
++						struct iovec *iovec,
++						size_t vec_count);
++void kdbus_pool_slice_release(struct kdbus_pool_slice *slice);
++void kdbus_pool_slice_publish(struct kdbus_pool_slice *slice,
++			      u64 *out_offset, u64 *out_size);
++off_t kdbus_pool_slice_offset(const struct kdbus_pool_slice *slice);
++void kdbus_pool_slice_set_child(struct kdbus_pool_slice *slice,
++				struct kdbus_pool_slice *child);
++int kdbus_pool_slice_move(struct kdbus_pool *pool_dst,
++			  struct kdbus_pool_slice **slice);
++ssize_t kdbus_pool_slice_copy_kvec(const struct kdbus_pool_slice *slice,
++				   size_t off, struct kvec *kvec,
++				   size_t kvec_count, size_t total_len);
++ssize_t kdbus_pool_slice_copy_iovec(const struct kdbus_pool_slice *slice,
++				    size_t off, struct iovec *iov,
++				    size_t iov_count, size_t total_len);
 +
 +#endif
 -- 
