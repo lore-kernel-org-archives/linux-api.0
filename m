@@ -1,61 +1,80 @@
-From: Josh Boyer <jwboyer-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>
-Subject: Re: [PATCH v3 00/13] Add kdbus implementation
-Date: Fri, 16 Jan 2015 19:41:20 -0500
-Message-ID: <CA+5PVA4sLgTFBgdfgBKzXeWbXOkPVCDwOOVDrefUSCU_srm8Kw@mail.gmail.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
-	<CA+5PVA7idthaLM_VTLdLEU=z=mbYnEkdQOSGSXqdJHJTNAHkzA@mail.gmail.com>
-	<20150116221824.GA512@kroah.com>
-	<54B9AC3E.9070105@zonque.org>
+From: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: futex(2) man page update help request
+Date: Fri, 16 Jan 2015 16:46:39 -0800
+Message-ID: <D0DEECA2.B7EAD%dvhart@linux.intel.com>
+References: <537346E5.4050407@gmail.com>
+ <CF98E3EF.90564%dvhart@linux.intel.com>
+ <CAKgNAkh+PWzT2SByaLk_OtiAXeZSkWoMgu+ivDOt1dTWVtaatQ@mail.gmail.com>
+ <5373D0CA.2050204@redhat.com>
+ <alpine.DEB.2.02.1405150121230.6261@ionos.tec.linutronix.de>
+ <CAKgNAkjQ5Dd_U9OojXdgeforpRevvPHNFAw99kBFPCwHgf7Ggg@mail.gmail.com>
+ <alpine.DEB.2.02.1405151144390.6261@ionos.tec.linutronix.de>
+ <54B7D87C.3090901@gmail.com>
+ <alpine.DEB.2.11.1501152313330.5526@nanos>
+ <54B92B71.2090509@gmail.com>
+ <alpine.DEB.2.11.1501161618080.5526@nanos>
+ <54B97A72.2050205@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54B9AC3E.9070105-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <54B97A72.2050205-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <davidlohr.bueso-VXdhtT5mjnY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Petr Baudis <pasky-AlSwsSmVLrQ@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 16, 2015 at 7:26 PM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
-> Hi Josh,
->
-> On 01/16/2015 11:18 PM, Greg Kroah-Hartman wrote:
->> On Fri, Jan 16, 2015 at 05:07:25PM -0500, Josh Boyer wrote:
->>> The code.google.com tree has commits
->>> from 2 days ago, but it still calls d_materialise_unique in fs.c
->>> whereas the patchset you've posted uses the correct d_splice_alias.
->>> So the code.google.com tree doesn't actually compile against 3.19-rcX.
+
+
+
+
+On 1/16/15, 12:54 PM, "Michael Kerrisk (man-pages)"
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+
+>On 01/16/2015 04:20 PM, Thomas Gleixner wrote:
+>> On Fri, 16 Jan 2015, Michael Kerrisk (man-pages) wrote:
+>> 
+>>> Hello Thomas,
 >>>
->>> I'm confused where we're supposed to track things now.
+>>> On 01/15/2015 11:23 PM, Thomas Gleixner wrote:
+>>>> On Thu, 15 Jan 2015, Michael Kerrisk (man-pages) wrote:
+>>>>>> [EINVAL] uaddr equal uaddr2. Requeue to same futex.
+>>>>>
+>>>>> ??? I added this, but does this error not occur only for PI requeues?
+>>>>
+>>>> It's equally wrong for normal futexes. And its actually the same code
+>>>> checking for this for all variants.
+>>>
+>>> I don't understand "equally wrong" in your reply, I'm sorry. Do you
+>>> mean:
+>>>
+>>> a) This error text should be there for both normal and PI requeues
+>> 
+>> It is there for both. The requeue code has that check independent of
+>> the requeue type (normal/pi). It never makes sense to requeue
+>> something to itself whether normal or pi futex. We added this for PI,
+>> because there it is harmful, but we did not special case it. So normal
+>> futexes get the same treatment.
 >
-> The code.google.com repository is where we do all the development, and
-> the code is made to build external kernel modules for 3.18. The patches
-> sent in this series are meant for 3.19 and 3.20 kernels, and while they
-> are based on the exact same sources, the patches differ in the following
-> minor details:
+>Hello Thomas, 
 >
->  * Code is moved to appropriate locations, such as ipc/kdbus,
->    include/uapi, tools/testing/selftests/kdbus/, Documentation/ etc.
+>Color me stupid, but I can't see this in futex_requeue(). Where is that
+>check that is "independent of the requeue type (normal/pi)"?
 >
->  * Include file location amendments, "kdbus.h" vs. <uapi/linux/kdbus.h>
->
->  * Added iov_iter_kvec() usage, as that's a new API in v3.19
->
->  * The file system magic number is moved to include/uapi/linux/magic.h
->
->  * d_materialise_unique() is renamed to d_splice_alias() to catch up
->    with changes in 3.19
->
->
-> The commit this patch set is based on is tagged as "lkml-v3" in the
-> upstream repository now.
+>When I look through futex_requeue(), all the likely looking sources
+>of EINVAL are governed by a check on the 'requeue_pi' argument.
 
-OK, thanks for the explanation.
 
-I wonder if it would be possible to have branches for each kernel
-version in the code.google.com repo?  I build kdbus against a number
-of kernels and trying to chase down different repos and patch sets to
-match might get to be a chore.  I mean, I'm all for doing closet
-development to get stuff ready for upstream but it's hard for others
-to keep up when the closet keeps moving :)
+Right, in the non-PI case, I believe there are valid use cases: move to
+the back of the FIFO, for example (OK, maybe the only example?). Both
+tests ensuring uaddr1 != uaddr2 are under the requeue_pi conditional
+block. The second compares the keys in case they are not FUTEX_PRIVATE
+(uaddrs would be different, but still the same backing store).
 
-josh
+Thomas, am I missing a test for this someplace else?
+
+
+-- 
+Darren Hart
+Intel Open Source Technology Center
