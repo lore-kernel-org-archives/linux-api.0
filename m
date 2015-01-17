@@ -1,45 +1,51 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
 Subject: Re: [PATCH v3 00/13] Add kdbus implementation
-Date: Fri, 16 Jan 2015 14:18:24 -0800
-Message-ID: <20150116221824.GA512@kroah.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
- <CA+5PVA7idthaLM_VTLdLEU=z=mbYnEkdQOSGSXqdJHJTNAHkzA@mail.gmail.com>
+Date: Sat, 17 Jan 2015 01:26:38 +0100
+Message-ID: <54B9AC3E.9070105@zonque.org>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org> <CA+5PVA7idthaLM_VTLdLEU=z=mbYnEkdQOSGSXqdJHJTNAHkzA@mail.gmail.com> <20150116221824.GA512@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+5PVA7idthaLM_VTLdLEU=z=mbYnEkdQOSGSXqdJHJTNAHkzA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Boyer <jwboyer@fedoraproject.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Andy Lutomirski <luto@amacapital.net>, linux-api@vger.kernel.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, daniel@zonque.org, David Herrmann <dh.herrmann@gmail.com>, tixxdz@opendz.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150116221824.GA512-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Josh Boyer <jwboyer-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 16, 2015 at 05:07:25PM -0500, Josh Boyer wrote:
-> On Fri, Jan 16, 2015 at 2:16 PM, Greg Kroah-Hartman
-> <gregkh@linuxfoundation.org> wrote:
-> > This can also be found in a git tree, the kdbus branch of char-misc.git at:
-> >         https://git.kernel.org/cgit/linux/kernel/git/gregkh/char-misc.git/
-> 
-> Is this now the canonical tree?  I ask because the github tree hasn't
-> been updated in quite some time.
+Hi Josh,
 
-That's my fault, it's just a mirror of the code.google.com tree for
-people who like to use github.  It's now updated.
+On 01/16/2015 11:18 PM, Greg Kroah-Hartman wrote:
+> On Fri, Jan 16, 2015 at 05:07:25PM -0500, Josh Boyer wrote:
+>> The code.google.com tree has commits
+>> from 2 days ago, but it still calls d_materialise_unique in fs.c
+>> whereas the patchset you've posted uses the correct d_splice_alias.
+>> So the code.google.com tree doesn't actually compile against 3.19-rcX.
+>>
+>> I'm confused where we're supposed to track things now.
 
-> The code.google.com tree has commits
-> from 2 days ago, but it still calls d_materialise_unique in fs.c
-> whereas the patchset you've posted uses the correct d_splice_alias.
-> So the code.google.com tree doesn't actually compile against 3.19-rcX.
-> 
-> I'm confused where we're supposed to track things now.
+The code.google.com repository is where we do all the development, and
+the code is made to build external kernel modules for 3.18. The patches
+sent in this series are meant for 3.19 and 3.20 kernels, and while they
+are based on the exact same sources, the patches differ in the following
+minor details:
 
-I think the google tree is the "correct" one, but when generating
-patches, apis are tweaked to work properly with the latest -rc kernel
-for submission.
+ * Code is moved to appropriate locations, such as ipc/kdbus,
+   include/uapi, tools/testing/selftests/kdbus/, Documentation/ etc.
 
-Daniel knows more though, he's the one generating the patchsets, I don't
-know how he's doing it exactly.
+ * Include file location amendments, "kdbus.h" vs. <uapi/linux/kdbus.h>
 
-thanks,
+ * Added iov_iter_kvec() usage, as that's a new API in v3.19
 
-greg k-h
+ * The file system magic number is moved to include/uapi/linux/magic.h
+
+ * d_materialise_unique() is renamed to d_splice_alias() to catch up
+   with changes in 3.19
+
+
+The commit this patch set is based on is tagged as "lkml-v3" in the
+upstream repository now.
+
+
+Thanks,
+Daniel
