@@ -1,57 +1,73 @@
-From: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
-Subject: Re: [PATCH v3 00/13] Add kdbus implementation
-Date: Mon, 19 Jan 2015 21:19:06 +0100
-Message-ID: <20150119201906.GA337@sig21.net>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
- <20150119180642.GA27957@sig21.net>
- <20150119183806.GA8479@kroah.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH tip 0/9] tracing: attach eBPF programs to tracepoints/syscalls/kprobe
+Date: Mon, 19 Jan 2015 12:48:50 -0800
+Message-ID: <CAMEtUuwzx-HZqEaTS30JFfF_RX5kGaZfsgE8wmogzcb2k5=k1g@mail.gmail.com>
+References: <1421381770-4866-1-git-send-email-ast@plumgrid.com> <54BCD3CF.9040205@hitachi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150119183806.GA8479-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <54BCD3CF.9040205@hitachi.com>
+Sender: netdev-owner@vger.kernel.org
+To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <dborkman@redhat.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Brendan Gregg <brendan.d.gregg@gmail.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 20, 2015 at 02:38:06AM +0800, Greg Kroah-Hartman wrote:
-> Yes, I do agree, there are lots of existing ipc solutions today that
-> kdbus is not designed for, nor would it be good to use it for.  The
-> majority of them being IPC that crosses the network layer, as there are
-> lots of good solutions today for that problem.  That being said, I do
-> know one research group that has kdbus working cross-network, just "to
-> try it out", but I don't know what ever came of it.
-...
-> Everyone uses D-Bus today for everything on their system, so by
-> replacing the underlying library with kdbus, they will continue to use
-> it for everything without having to change any application or library
-> code at all.
+On Mon, Jan 19, 2015 at 1:52 AM, Masami Hiramatsu
+<masami.hiramatsu.pt@hitachi.com> wrote:
+> If we can write the script as
+>
+> int bpf_prog4(s64 write_size)
+> {
+>    ...
+> }
+>
+> This will be much easier to play with.
 
-These two statements somehow contradict. From my admittedly very
-limited experience, I never used D-Bus because it did not
-fit my usage scenarios: I never needed a bus, only point-to-point
-links like pipes or sockets.
+yes. that's the intent for user space to do.
 
-Let me rephrase my previous, lengthy mail: Will kdbus only
-support the same IPC model as D-Bus (just with higher
-performance and some bells and whistles), or will it
-be useful for other scenarios?  Like, can two programs
-use it to communicate directly without the need of
-any daemon?  (And if so, would there be any advantage
-compared to traditional UNIX IPC methods?)
+>>   The example of this arbitrary pointer walking is tracex1_kern.c
+>>   which does skb->dev->name == "lo" filtering.
+>
+> At least I would like to see this way on kprobes event too, since it should be
+> treated as a traceevent.
 
-You were comparing kdbus and Binder.  Why?
-So far my impression is that D-Bus and Binder are
-completely seperate things, not just because of
-the thread vs. event-loop programming model but
-also because Binder is not a bus (i.e. no multicast messaging).
+it's done already... one can do the same skb->dev->name logic
+in kprobe attached program... so from bpf program point of view,
+tracepoints and kprobes feature-wise are exactly the same.
+Only input is different.
 
-> Hope this helps,
+>> - kprobe programs are architecture dependent and need user scripting
+>>   language like ktap/stap/dtrace/perf that will dynamically generate
+>>   them based on debug info in vmlinux
+>
+> If we can use kprobe event as a normal traceevent, user scripting can be
+> architecture independent too. Only perf-probe fills the gap. All other
+> userspace tools can collaborate with perf-probe to setup the events.
+> If so, we can avoid redundant works on debuginfo. That is my point.
 
-Well, it made your intentions a bit clearer, but it does
-not help to sell kdbus to me, sorry ;-/
-
-
-Thanks,
-Johannes
+yes. perf already has infra to read debug info and it can be extended
+to understand C like script as:
+int kprobe:sys_write(int fd, char *buf, size_t count)
+{
+   // do stuff with 'count'
+}
+perf can be made to parse this text, recognize that it wants
+to create kprobe on 'sys_write' function. Then based on
+debuginfo figure out where 'count' is (either register or stack)
+and generate corresponding bpf program either
+using llvm/gcc backends or directly.
+perf facility of extracting debug info can be made into
+library too and used by ktap/dtrace tools for their
+languages.
+User space can innovate in many directions.
+and, yes, once we have a scripting language whether
+it's C like with perf or else, this language hides architecture
+depend things from users.
+Such scripting language will also hide the kernel
+side differences between tracepoint and kprobe.
+Just look how ktap scripts look alike for kprobes and tracepoints.
+Whether ktap syntax becomes part of perf or perf invents
+its own language, it's going to be good for users regardless.
+The C examples here are just examples. Something
+users can play with already until more user friendly
+tools are being worked on.
