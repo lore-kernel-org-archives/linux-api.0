@@ -1,101 +1,34 @@
-From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v4 0/4] power: Add max77693 charger driver
-Date: Mon, 19 Jan 2015 08:40:26 +0100
-Message-ID: <1421653226.4247.5.camel@AMDC1943>
-References: <1420453019-28614-1-git-send-email-k.kozlowski@samsung.com>
- <20150118180002.GJ3574@x1>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH] tpm, tpm_crb: fix build error
+Date: Mon, 19 Jan 2015 10:43:40 +0200
+Message-ID: <1421657020-18418-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <20150118180002.GJ3574@x1>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On nie, 2015-01-18 at 18:00 +0000, Lee Jones wrote:
-> Tell us what you need?
+SIMPLE_DEV_PM_OPS() was inside #ifdef CONFIG_PM_SLEEP.
 
-Hi Lee,
+Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ drivers/char/tpm/tpm_crb.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-All I need is... acks or applying of patchset by Sebastian. Sebastian
-acked main patch (3/4) but then I changed it [1].
-
-You already acked the MFD change (patch 2/4: mfd: max77693: Add defines
-for MAX77693 charger driver).
-
-The patch with bindings (1/4: devicetree: power/mfd: max77693: Document
-new bindings for charger) actually adds bindings for charger so rather
-Sebastian's opinion is needed.
-
-Other patches are from power supply subsystem.
-Thanks for asking!
-
-
-Dear Sebastian,
-
-You already looked at the patchset [1], so maybe you could pick it up?
-
-[1] https://lkml.org/lkml/2014/10/27/774
-
-Best regards,
-Krzysztof
-
-> 
-> > Changes since v3
-> > ================
-> > 1. Patch 3/4: Don't create platform data structure for charger settings
-> >    because driver won't be used on non-DT SoCs (its for Exynos based
-> >    Trats2).
-> > 2. Patch 3/4: Drop Sebastian's ack [1] because of change above.
-> > 
-> > Changes since v2
-> > ================
-> > 1. Add ack from Sebastian Reichel (charger driver).
-> > 2. Drop patch "mfd: max77693: Map charger device to its own of_node"
-> >    (applied by Lee Jones).
-> > 
-> > 
-> > Changes since v1
-> > ================
-> > 1. Add patch 2/5: mfd: max77693: Map charger device to its own of_node
-> >    (forgot to send it in v1)
-> > 2. Remove patches for DTS and configs. I'll send them later.
-> > 3. Add ack from Lee Jones (patch 3/5).
-> > 
-> > 
-> > Description
-> > ===========
-> > The patchset adds max77693 charger driver present on Trats2 board
-> > (and Galaxy S III). The driver configures battery charger and exposes
-> > power supply interface.
-> > 
-> > Driver is necessary to provide full charging stack on Trats2 device
-> > (extcon, charger-manager etc.).
-> > 
-> > [1] https://lkml.org/lkml/2014/10/27/774
-> > 
-> > 
-> > Best regards,
-> > Krzysztof
-> > 
-> > 
-> > 
-> > Krzysztof Kozlowski (4):
-> >   devicetree: power/mfd: max77693: Document new bindings for charger
-> >   mfd: max77693: Add defines for MAX77693 charger driver
-> >   power: max77693: Add charger driver for Maxim 77693
-> >   Documentation: power: max77693-charger: Document exported sysfs entry
-> > 
-> >  Documentation/ABI/testing/sysfs-class-power        |  42 ++
-> >  Documentation/devicetree/bindings/mfd/max77693.txt |  45 ++
-> >  drivers/power/Kconfig                              |   6 +
-> >  drivers/power/Makefile                             |   1 +
-> >  drivers/power/max77693_charger.c                   | 758 +++++++++++++++++++++
-> >  include/linux/mfd/max77693-private.h               | 108 +++
-> >  6 files changed, 960 insertions(+)
-> >  create mode 100644 drivers/power/max77693_charger.c
-> > 
-> 
+diff --git a/drivers/char/tpm/tpm_crb.c b/drivers/char/tpm/tpm_crb.c
+index c248a35..3dd23cf 100644
+--- a/drivers/char/tpm/tpm_crb.c
++++ b/drivers/char/tpm/tpm_crb.c
+@@ -107,9 +107,9 @@ static int crb_resume(struct device *dev)
+ 
+ 	return rc;
+ }
++#endif
+ 
+ static SIMPLE_DEV_PM_OPS(crb_pm, tpm_pm_suspend, crb_resume);
+-#endif
+ 
+ static u8 crb_status(struct tpm_chip *chip)
+ {
+-- 
+2.1.0
