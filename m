@@ -1,75 +1,106 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 1/6] selftests: Introduce minimal shared logic for running
- tests
-Date: Mon, 19 Jan 2015 09:39:09 -0700
-Message-ID: <54BD332D.6010907@osg.samsung.com>
-References: <1420794375-31881-1-git-send-email-mpe@ellerman.id.au> <54B95006.3080502@osg.samsung.com> <1421627742.3787.6.camel@ellerman.id.au>
+From: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
+Subject: Re: [PATCH v3 00/13] Add kdbus implementation
+Date: Mon, 19 Jan 2015 19:06:42 +0100
+Message-ID: <20150119180642.GA27957@sig21.net>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <1421627742.3787.6.camel@ellerman.id.au>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: linux-kernel@vger.kernel.org, mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1421435777-25306-1-git-send-email-gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZooxQFI55V6+gNQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/18/2015 05:35 PM, Michael Ellerman wrote:
-> On Fri, 2015-01-16 at 10:53 -0700, Shuah Khan wrote:
->> On 01/09/2015 02:06 AM, Michael Ellerman wrote:
->>> This adds a Make include file which most selftests can then include to
->>> get the run_tests logic.
->>>
->>> On its own this has the advantage of some reduction in repetition, and
->>> also means the pass/fail message is defined in fewer places.
->>>
->>> However the key advantage is it will allow us to implement install very
->>> simply in a subsequent patch.
->>>
->>> The default implementation just executes each program in $(TEST_PROGS).
->>>
->>> We use a variable to hold the default implementation of $(RUN_TESTS)
->>> because that gives us a clean way to override it if necessary, ie. using
->>> override. The mount, memory-hotplug and mqueue tests use that to provide
->>> a different implementation.
->>>
->>> Tests are not run via /bin/bash, so if they are scripts they must be
->>> executable, we add u+x to several.
->>>
->>> Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
->>
->> I like the shared logic approach in general provided it leaves the
->> flexibility to not use the shared logic if a test have the need to
->> do so.
-> 
-> Yes of course it does, it's entirely optional to include lib.mk.
-> 
->> This series requires some patch planning. shared logic patch
->> followed by individual test patches as opposed a single patch.
-> 
-> It could be a single patch too, but there's no reason to do it that way. The
-> series works fine as I sent it.
-> 
->> I would like to see the shared logic work done on top of my patch v4
->> series.
-> 
-> That's a waste of time. This series replaces your v4. Doing this "on top" of
-> your v4 would just mean reverting your v4 series and then applying this.
-> 
+Hi Greg and Daniel,
 
-No necessarily if the work is done as evolutionary step. In any case,
-I want the first step install target support going into the upcoming
-release and then make improvements to it. Please send separate patch
-for the shared logic and individual test patches that use the shared
-logic if you would like to make the improvements.
+I don't have a clue so I need to ask some stupid questions...
 
-thanks,
--- Shuah
+On Fri, Jan 16, 2015 at 11:16:04AM -0800, Greg Kroah-Hartman wrote:
+> kdbus is a kernel-level IPC implementation that aims for resemblance =
+to
+> the the protocol layer with the existing userspace D-Bus daemon while
+> enabling some features that couldn't be implemented before in userspa=
+ce.
+>=20
+> The documentation in the first patch in this series explains the
+> protocol and the API details.
+
+How about the big picture?
+
+> Reasons why this should be done in the kernel, instead of userspace a=
+s
+> it is currently done today include the following:
+[abbreviated]
+> - performance
+> - security
+> - semantics for apps with heavy data payloads
 
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+=46irst of all I wonder about the relationship with D-Bus.
+http://dbus.freedesktop.org/doc/dbus-specification.html says:
+
+   D-Bus is designed for two specific use cases:
+
+       A "system bus" for notifications from the system to user
+       sessions, and to allow the system to request input from
+       user sessions.
+
+       A "session bus" used to implement desktop environments such
+       as GNOME and KDE.=20
+
+   D-Bus is not intended to be a generic IPC system for any
+   possible application, and intentionally omits many features
+   found in other IPC systems for this reason.=20
+
+Does this also apply to kdbus?  If not, what are the
+suggested uses of kdbus beyond those where D-Bus is
+currently used?
+
+Another related quote by Havoc Pennington:
+http://lists.freedesktop.org/archives/dbus/2012-March/015024.html
+
+   In general, reading this, I think in some cases there are
+   problems that make sense to fix in dbus, and in other cases
+   there are problems that are best solved by not using dbus.
+   ...
+   there are about 10000 IPC solutions already, from ICE (both of
+   them) to ZeroMQ to AMQP to CORBA to X11 to HTTP to SOAP to
+   WebSockets to SUN-RPC to whatever-the-heck. To me, trying to
+   make dbus configurable so that it can substitute for any of
+   these is a Bad Idea (tm).
+
+Do you think it also applies to kdbus?
+
+
+Wrt the performance improvement achieved by kdbus, my impression
+about D-Bus is that the number of messages on my system is
+about a dozen per minute.  Are there actually any existing
+applications using D-Bus that have a performance issue?
+Or is this only about future possible uses?
+
+
+Linked from http://kroah.com/log/blog/2014/01/15/kdbus-details/,
+http://lwn.net/Articles/580194/ "The unveiling of kdbus" says:
+
+   Unlike most other kernels, Linux has never had a well-designed
+   IPC mechanism. Windows and Mac OS have this feature; even
+   Android, based on Linux, has one in the form of the "binder"
+   subsystem. Linux, instead, has only had the primitives =E2=80=94
+   sockets, FIFOs, and shared memory =E2=80=94 but those have never bee=
+n
+   knitted together into a reasonable application-level API. Kdbus
+   is an attempt to do that knitting and create something that is
+   at least as good as the mechanisms found on other systems.
+
+These are bold words. I'm not sure what Windows and Mac OS
+have in terms of IPC, but the above suggests that kdbus
+is *the* new Linux IPC that everyone will use for everything,
+rather than a special purpose facility.
+True?
+
+
+Thanks,
+Johannes
