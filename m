@@ -1,183 +1,124 @@
-From: Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v5 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
-Date: Mon, 19 Jan 2015 17:55:07 +0800
-Message-ID: <CAAfSe-vqqpvbYe0bEeD-3_QsLYz4r7pxMuA1-L4cYRw9TY=NgA@mail.gmail.com>
-References: <1421402411-3479-1-git-send-email-chunyan.zhang@spreadtrum.com>
-	<1421402411-3479-6-git-send-email-chunyan.zhang@spreadtrum.com>
-	<CAL_JsqJg=BtanmR_rhYthCUhKbErs8viZ7MMMXr-PmPjUV4BRQ@mail.gmail.com>
+From: Johan Hovold <johan@kernel.org>
+Subject: Re: [PATCH v4] gpio: lib-sysfs: Add 'wakeup' attribute
+Date: Mon, 19 Jan 2015 11:10:06 +0100
+Message-ID: <20150119101006.GM30960@localhost>
+References: <1421351389-11660-1-git-send-email-soren.brinkmann@xilinx.com>
+ <20150116111108.GG30960@localhost>
+ <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAL_JsqJg=BtanmR_rhYthCUhKbErs8viZ7MMMXr-PmPjUV4BRQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jason Cooper <jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Florian Vaussard <florian.vaussard-p8DiymsW2f8@public.gmane.org>, Andrew Lunn <andrew-g2DYL2Zd6BY@public.gmane.org>, Robert Richter <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, Hayato Suzuki <hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Antony Pavlov <antonynpavlov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Joel Schopp <Joel.Schopp-5C7GfCeVMHo@public.gmane.org>Suravee Suthikulanit <S>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
+Sender: linux-doc-owner@vger.kernel.org
+To: =?iso-8859-1?Q?S=F6ren?= Brinkmann <soren.brinkmann@xilinx.com>
+Cc: Johan Hovold <johan@kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Alexandre Courbot <gnurou@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-gpio@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jan 17, 2015 at 12:41 AM, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Fri, Jan 16, 2015 at 4:00 AM, Chunyan Zhang
-> <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org> wrote:
->> Add a full sc9836-uart driver for SC9836 SoC which is based on the
->> spreadtrum sharkl64 platform.
->> This driver also support earlycon.
->> This patch also replaced the spaces between the macros and their
->> values with the tabs in serial_core.h
->>
->> Signed-off-by: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
->> Signed-off-by: Orson Zhai <orson.zhai-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
->> Originally-by: Lanqing Liu <lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
->> ---
->>  drivers/tty/serial/Kconfig       |   18 +
->>  drivers/tty/serial/Makefile      |    1 +
->>  drivers/tty/serial/sprd_serial.c |  772 ++++++++++++++++++++++++++++++++++++++
->>  include/uapi/linux/serial_core.h |    3 +
->>  4 files changed, 794 insertions(+)
->>  create mode 100644 drivers/tty/serial/sprd_serial.c
->>
->> diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
->> index c79b43c..969d3cd 100644
->> --- a/drivers/tty/serial/Kconfig
->> +++ b/drivers/tty/serial/Kconfig
->> @@ -1577,6 +1577,24 @@ config SERIAL_MEN_Z135
->>           This driver can also be build as a module. If so, the module will be called
->>           men_z135_uart.ko
->>
->> +config SERIAL_SPRD
->> +       tristate "Support for SPRD serial"
->
-> Can the menu text spell out Spreadtrum. What SPRD means is not obvious.
->
+On Fri, Jan 16, 2015 at 08:49:17AM -0800, S=F6ren Brinkmann wrote:
+> On Fri, 2015-01-16 at 12:11PM +0100, Johan Hovold wrote:
+> > On Thu, Jan 15, 2015 at 11:49:49AM -0800, Soren Brinkmann wrote:
+> > > Add an attribute 'wakeup' to the GPIO sysfs interface which allow=
+s
+> > > marking/unmarking a GPIO as wake IRQ.
+> > > The file 'wakeup' is created in each exported GPIOs directory, if=
+ an IRQ
+> > > is associated with that GPIO and the irqchip implements set_wake(=
+).
+> > > Writing 'enabled' to that file will enable wake for that GPIO, wh=
+ile
+> > > writing 'disabled' will disable wake.
+> > > Reading that file will return either 'disabled' or 'enabled' depe=
+ning on
+> > > the currently set flag for the GPIO's IRQ.
+> > >=20
+> > > Signed-off-by: Soren Brinkmann <soren.brinkmann@xilinx.com>
+> > > Reviewed-by: Alexandre Courbot <acourbot@nvidia.com>
+> > > ---
+> > > Hi Linus, Johan,
+> > >=20
+> > > I rebased my patch. And things look good.
+> >=20
+> > I took at closer look at this patch now and I really don't think it
+> > should be merged at all.
+> >=20
+> > We have a mechanism for handling wake-up sources (documented in
+> > Documentation/power/devices.txt) as well as an ABI to enable/disabl=
+e
+> > them using the power/wakeup device attribute from userspace.
+>=20
+> Doesn't work for GPIOs AFAIK.
 
-Ok, I'll address it.
+Not today no, that's why I said it would take some work.
 
->> +       depends on ARCH_SPRD
->> +       select SERIAL_CORE
->> +       help
->> +         This enables the driver for the Spreadtrum's serial.
->> +
->> +config SERIAL_SPRD_CONSOLE
->> +       bool "SPRD UART console support"
->
-> Same here.
->
->> +       depends on SERIAL_SPRD=y
->> +       select SERIAL_CORE_CONSOLE
->> +       select SERIAL_EARLYCON
->> +       help
->> +         Support for early debug console using Spreadtrum's serial. This enables
->> +         the console before standard serial driver is probed. This is enabled
->> +         with "earlycon" on the kernel command line. The console is
->> +         enabled when early_param is processed.
->> +
->>  endmenu
->>
->>  config SERIAL_MCTRL_GPIO
->> diff --git a/drivers/tty/serial/Makefile b/drivers/tty/serial/Makefile
->> index 9a548ac..4801aca 100644
->> --- a/drivers/tty/serial/Makefile
->> +++ b/drivers/tty/serial/Makefile
->> @@ -93,6 +93,7 @@ obj-$(CONFIG_SERIAL_ARC)      += arc_uart.o
->>  obj-$(CONFIG_SERIAL_RP2)       += rp2.o
->>  obj-$(CONFIG_SERIAL_FSL_LPUART)        += fsl_lpuart.o
->>  obj-$(CONFIG_SERIAL_MEN_Z135)  += men_z135_uart.o
->> +obj-$(CONFIG_SERIAL_SPRD) += sprd_serial.o
->>
->>  # GPIOLIB helpers for modem control lines
->>  obj-$(CONFIG_SERIAL_MCTRL_GPIO)        += serial_mctrl_gpio.o
->> diff --git a/drivers/tty/serial/sprd_serial.c b/drivers/tty/serial/sprd_serial.c
->> new file mode 100644
->> index 0000000..81839e4
->> --- /dev/null
->> +++ b/drivers/tty/serial/sprd_serial.c
->> @@ -0,0 +1,772 @@
->> +/*
->> + * Copyright (C) 2012 Spreadtrum Communications Inc.
->
-> This is unchanged in 3 years?
->
+> > Implementing proper wakeup support for unclaimed GPIOs would take s=
+ome
+> > work (if at all desired), but that is not a reason to be adding cus=
+tom
+> > implementations that violates the kernel's power policies and new A=
+BIs
+> > that would need to be maintained forever.
+>=20
+> These are claimed, by the sysfs interface.
 
-ok, I'll change it to 2012-2015.
+Unclaimed by a proper device and driver in the driver model.
 
->> + *
->> + * This software is licensed under the terms of the GNU General Public
->> + * License version 2, as published by the Free Software Foundation, and
->> + * may be copied, distributed, and modified under those terms.
->> + *
->> + * This program is distributed in the hope that it will be useful,
->> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
->> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
->> + * GNU General Public License for more details.
->> + */
->> +
->> +#include <linux/clk.h>
->> +#include <linux/console.h>
->> +#include <linux/delay.h>
->> +#include <linux/io.h>
->> +#include <linux/ioport.h>
->> +#include <linux/kernel.h>
->> +#include <linux/module.h>
->> +#include <linux/of.h>
->> +#include <linux/platform_device.h>
->> +#include <linux/serial_core.h>
->> +#include <linux/serial.h>
->> +#include <linux/slab.h>
->> +#include <linux/tty.h>
->> +#include <linux/tty_flip.h>
->> +
->> +/* device name */
->> +#define UART_NR_MAX            8
->> +#define SPRD_TTY_NAME          "ttySPX"
->
-> We really want to get away from per SOC serial names and use ttyS for
-> serial port /dev names. There's issues switching existing drivers
-> because this creates an ABI, so we can only have new drivers follow
-> this.
->
+> > [ And we really shouldn't be adding anything to the broken gpio sys=
+fs
+> > interface until it's been redesigned. ]
+> >=20
+> > Meanwhile you can (should) use gpio-keys if you need to wake your s=
+ystem
+> > on gpio events.
+>=20
+> We had that discussion and I don't think GPIO keys is the right solut=
+ion
+> for every use-case.
 
-ok. i see. I'll convert it to ttyS in the next version.
+I can see that, but this still needs to be implemented properly and not
+just as a quick hack on top of the already fragile gpio sysfs-interface=
+=2E
 
-> [...]
->
->> +static struct platform_driver sprd_platform_driver = {
->> +       .probe          = sprd_probe,
->> +       .remove         = sprd_remove,
->> +       .driver         = {
->> +               .name   = "sprd_serial",
->> +               .of_match_table = of_match_ptr(serial_ids),
->> +               .pm     = &sprd_pm_ops,
->> +       },
->> +};
->> +
->> +static int __init sprd_serial_init(void)
->> +{
->> +       int ret = 0;
->> +
->> +       ret = uart_register_driver(&sprd_uart_driver);
->
-> This can be done in probe now. Then you can use module_platform_driver().
->
+Since pretty much everyone agrees that the current interface needs to b=
+e
+replaced, we really shouldn't be adding more stuff to the broken
+interface before that happens.
 
-Question:
-1. there are 4 uart ports configured in dt for sprd_serial, so probe
-will be called 4 times, but uart_register_driver only needs to be
-called one time, so can we use uart_driver.state to check if
-uart_register_driver has already been called ?
+> > > But the 'is_visible' things does not behave the way I expected it=
+ to.
+> > > It seems to be only triggered on an export but not when attribute=
+s
+> > > change. Hence, in my case, everything was visiible since the init=
+al
+> > > state matches that, but even when changing the direction or thing=
+s
+> > > like that, attributes don't disappear. Is that something still wo=
+rked
+> > > on? Expected
+> >=20
+> > That's expected. We generally don't want attributes to appear or
+> > disappear after the device has been registered (although there is a
+> > mechanism for cases were it makes sense). This is no different from
+> > how your v3 patch worked either.
+>=20
+> Sure, but the is_visible thing is effectively broken for GPIO. I thin=
+k a
+> GPIO is in a defined state when exported and the checks all work on t=
+hat
+> state during export. But then this state can be changed through the
+> sysfs interface. So, if the initial state hides something it becomes
+> unavailable for all times and, vice versa, if the initial state makes
+> something visible, it will stay even when it is no longer a valid
+> property to change.
 
-2. if I use module_platform_driver() instead of
-module_init(sprd_serial_init)  and  module_exit(sprd_serial_exit) , I
-must move uart_unregister_driver() which is now processed in
-sprd_serial_exit() to sprd_remove(), there is a similar problem with
-probe(), sprd_remove() will also be called 4 times, and actually it
-should be called only one time. How can we deal with this case?
+Again, this is exactly how the interface has always worked, and that's
+exactly how your v3, which added the attributes manually, also worked.
 
-3. for the second question, we can check the platform_device->id, if
-it is equal to the index of last port (e.g. 4 for this case), then
-uart_unregister_driver() can be called. Does it work correctly? since
-for this case, we must keep the order of releasing ports.
+The group-visibility mechanism is not broken. What's broken is interfac=
+e
+designs based on attributes magically disappearing and reappearing afte=
+r
+the device has been created.
 
-
-Thanks,
-Chunyan
-
-
-> Rob
+Johan
