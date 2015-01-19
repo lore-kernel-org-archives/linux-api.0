@@ -1,124 +1,68 @@
-From: Johan Hovold <johan@kernel.org>
-Subject: Re: [PATCH v4] gpio: lib-sysfs: Add 'wakeup' attribute
-Date: Mon, 19 Jan 2015 11:10:06 +0100
-Message-ID: <20150119101006.GM30960@localhost>
-References: <1421351389-11660-1-git-send-email-soren.brinkmann@xilinx.com>
- <20150116111108.GG30960@localhost>
- <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: futex(2) man page update help request
+Date: Mon, 19 Jan 2015 11:45:48 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1501191144320.5526@nanos>
+References: <537346E5.4050407@gmail.com> <CF98E3EF.90564%dvhart@linux.intel.com> <CAKgNAkh+PWzT2SByaLk_OtiAXeZSkWoMgu+ivDOt1dTWVtaatQ@mail.gmail.com> <5373D0CA.2050204@redhat.com> <alpine.DEB.2.02.1405150121230.6261@ionos.tec.linutronix.de>
+ <CAKgNAkjQ5Dd_U9OojXdgeforpRevvPHNFAw99kBFPCwHgf7Ggg@mail.gmail.com> <alpine.DEB.2.02.1405151144390.6261@ionos.tec.linutronix.de> <54B7D87C.3090901@gmail.com> <alpine.DEB.2.11.1501152313330.5526@nanos> <54B92B71.2090509@gmail.com> <alpine.DEB.2.11.1501161618080.5526@nanos>
+ <54B97A72.2050205@gmail.com> <D0DEECA2.B7EAD%dvhart@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
-Sender: linux-doc-owner@vger.kernel.org
-To: =?iso-8859-1?Q?S=F6ren?= Brinkmann <soren.brinkmann@xilinx.com>
-Cc: Johan Hovold <johan@kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Alexandre Courbot <gnurou@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-gpio@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <D0DEECA2.B7EAD%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <davidlohr.bueso-VXdhtT5mjnY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Petr Baudis <pasky-AlSwsSmVLrQ@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 16, 2015 at 08:49:17AM -0800, S=F6ren Brinkmann wrote:
-> On Fri, 2015-01-16 at 12:11PM +0100, Johan Hovold wrote:
-> > On Thu, Jan 15, 2015 at 11:49:49AM -0800, Soren Brinkmann wrote:
-> > > Add an attribute 'wakeup' to the GPIO sysfs interface which allow=
-s
-> > > marking/unmarking a GPIO as wake IRQ.
-> > > The file 'wakeup' is created in each exported GPIOs directory, if=
- an IRQ
-> > > is associated with that GPIO and the irqchip implements set_wake(=
-).
-> > > Writing 'enabled' to that file will enable wake for that GPIO, wh=
-ile
-> > > writing 'disabled' will disable wake.
-> > > Reading that file will return either 'disabled' or 'enabled' depe=
-ning on
-> > > the currently set flag for the GPIO's IRQ.
-> > >=20
-> > > Signed-off-by: Soren Brinkmann <soren.brinkmann@xilinx.com>
-> > > Reviewed-by: Alexandre Courbot <acourbot@nvidia.com>
-> > > ---
-> > > Hi Linus, Johan,
-> > >=20
-> > > I rebased my patch. And things look good.
-> >=20
-> > I took at closer look at this patch now and I really don't think it
-> > should be merged at all.
-> >=20
-> > We have a mechanism for handling wake-up sources (documented in
-> > Documentation/power/devices.txt) as well as an ABI to enable/disabl=
-e
-> > them using the power/wakeup device attribute from userspace.
->=20
-> Doesn't work for GPIOs AFAIK.
+On Fri, 16 Jan 2015, Darren Hart wrote:
+> On 1/16/15, 12:54 PM, "Michael Kerrisk (man-pages)"
+> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> 
+> >On 01/16/2015 04:20 PM, Thomas Gleixner wrote:
+> >> On Fri, 16 Jan 2015, Michael Kerrisk (man-pages) wrote:
+> >> 
+> >>> Hello Thomas,
+> >>>
+> >>> On 01/15/2015 11:23 PM, Thomas Gleixner wrote:
+> >>>> On Thu, 15 Jan 2015, Michael Kerrisk (man-pages) wrote:
+> >>>>>> [EINVAL] uaddr equal uaddr2. Requeue to same futex.
+> >>>>>
+> >>>>> ??? I added this, but does this error not occur only for PI requeues?
+> >>>>
+> >>>> It's equally wrong for normal futexes. And its actually the same code
+> >>>> checking for this for all variants.
+> >>>
+> >>> I don't understand "equally wrong" in your reply, I'm sorry. Do you
+> >>> mean:
+> >>>
+> >>> a) This error text should be there for both normal and PI requeues
+> >> 
+> >> It is there for both. The requeue code has that check independent of
+> >> the requeue type (normal/pi). It never makes sense to requeue
+> >> something to itself whether normal or pi futex. We added this for PI,
+> >> because there it is harmful, but we did not special case it. So normal
+> >> futexes get the same treatment.
+> >
+> >Hello Thomas, 
+> >
+> >Color me stupid, but I can't see this in futex_requeue(). Where is that
+> >check that is "independent of the requeue type (normal/pi)"?
+> >
+> >When I look through futex_requeue(), all the likely looking sources
+> >of EINVAL are governed by a check on the 'requeue_pi' argument.
+> 
+> 
+> Right, in the non-PI case, I believe there are valid use cases: move to
+> the back of the FIFO, for example (OK, maybe the only example?). Both
+> tests ensuring uaddr1 != uaddr2 are under the requeue_pi conditional
+> block. The second compares the keys in case they are not FUTEX_PRIVATE
+> (uaddrs would be different, but still the same backing store).
+> 
+> Thomas, am I missing a test for this someplace else?
 
-Not today no, that's why I said it would take some work.
+No, I had a short look at the code misread it. So, yes, it's a valid
+operation for the non PI case. Sorry for the confusion.
 
-> > Implementing proper wakeup support for unclaimed GPIOs would take s=
-ome
-> > work (if at all desired), but that is not a reason to be adding cus=
-tom
-> > implementations that violates the kernel's power policies and new A=
-BIs
-> > that would need to be maintained forever.
->=20
-> These are claimed, by the sysfs interface.
+Thanks,
 
-Unclaimed by a proper device and driver in the driver model.
-
-> > [ And we really shouldn't be adding anything to the broken gpio sys=
-fs
-> > interface until it's been redesigned. ]
-> >=20
-> > Meanwhile you can (should) use gpio-keys if you need to wake your s=
-ystem
-> > on gpio events.
->=20
-> We had that discussion and I don't think GPIO keys is the right solut=
-ion
-> for every use-case.
-
-I can see that, but this still needs to be implemented properly and not
-just as a quick hack on top of the already fragile gpio sysfs-interface=
-=2E
-
-Since pretty much everyone agrees that the current interface needs to b=
-e
-replaced, we really shouldn't be adding more stuff to the broken
-interface before that happens.
-
-> > > But the 'is_visible' things does not behave the way I expected it=
- to.
-> > > It seems to be only triggered on an export but not when attribute=
-s
-> > > change. Hence, in my case, everything was visiible since the init=
-al
-> > > state matches that, but even when changing the direction or thing=
-s
-> > > like that, attributes don't disappear. Is that something still wo=
-rked
-> > > on? Expected
-> >=20
-> > That's expected. We generally don't want attributes to appear or
-> > disappear after the device has been registered (although there is a
-> > mechanism for cases were it makes sense). This is no different from
-> > how your v3 patch worked either.
->=20
-> Sure, but the is_visible thing is effectively broken for GPIO. I thin=
-k a
-> GPIO is in a defined state when exported and the checks all work on t=
-hat
-> state during export. But then this state can be changed through the
-> sysfs interface. So, if the initial state hides something it becomes
-> unavailable for all times and, vice versa, if the initial state makes
-> something visible, it will stay even when it is no longer a valid
-> property to change.
-
-Again, this is exactly how the interface has always worked, and that's
-exactly how your v3, which added the attributes manually, also worked.
-
-The group-visibility mechanism is not broken. What's broken is interfac=
-e
-designs based on attributes magically disappearing and reappearing afte=
-r
-the device has been created.
-
-Johan
+	tglx
