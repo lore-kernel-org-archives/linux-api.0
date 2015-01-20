@@ -1,65 +1,103 @@
-From: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC 0/6] epoll: Introduce new syscall "epoll_mod_wait"
-Date: Tue, 20 Jan 2015 18:53:38 +0800
-Message-ID: <20150120105338.GA4040@ad.nay.redhat.com>
-References: <1421747878-30744-1-git-send-email-famz@redhat.com>
- <874mrl3fh9.fsf@rasmusvillemoes.dk>
+From: Johannes Stezenbach <js@sig21.net>
+Subject: Re: [PATCH v3 00/13] Add kdbus implementation
+Date: Tue, 20 Jan 2015 11:57:12 +0100
+Message-ID: <20150120105712.GA6260@sig21.net>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <20150119180642.GA27957@sig21.net>
+ <20150119183806.GA8479@kroah.com>
+ <20150119201906.GA337@sig21.net>
+ <20150119203155.GA15441@kroah.com>
+ <20150119233812.GA1874@sig21.net>
+ <20150120011359.GE865@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <874mrl3fh9.fsf-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TbrhsbdSgBK9A@public.gmane.org
+In-Reply-To: <20150120011359.GE865@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.no, jkosina@suse.cz, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, daniel@zonque.org, dh.herrmann@gmail.com, tixxdz@opendz.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 01/20 11:37, Rasmus Villemoes wrote:
-> On Tue, Jan 20 2015, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Tue, Jan 20, 2015 at 09:13:59AM +0800, Greg Kroah-Hartman wrote:
+> On Tue, Jan 20, 2015 at 12:38:12AM +0100, Johannes Stezenbach wrote:
+> > Those automotive applications you
+> > were talking about, what was the OS they were ported from
+> > and what was the messaging API they used?
 > 
-> > DESCRIPTION
-> >
-> >        The epoll_mod_wait() system call can be seen as an enhanced combination
-> >        of several epoll_ctl(2) calls, which are followed by an epoll_pwait(2)
-> >        call. It is superior in two cases:
-> >        
-> >        1) When epoll_ctl(2) are followed by epoll_wait(2), using epoll_mod_wait
-> >        will save context switches between user mode and kernel mode;
-> >        
-> >        2) When you need higher precision than microsecond for wait timeout.
-> 
-> You probably want to say millisecond.
+> They were ported from QNX and I don't know the exact api, it is wrapped
+> up in a library layer for them to use.  And typically, they run about
+> 40 thousand messages in the first few seconds of startup time.  Or was
+> it 400 thousand?  Something huge and crazy to be doing on tiny ARM
+> chips, but that's the IVI industry for you :(
 
-Yes, you see that I just can't make this right. :)
+So I did some googling and found in QNX servers create a channel
+to receive messages, and clients connect to this channel.
+Multiple clients can connect to the channel.
+But it is not a bus -- no multicast/broadcast, and no name
+service or policy rules like D-Bus has.  To me it looks
+to be similar in functionality to UNIX domain sockets.
 
-> 
-> >            struct epoll_mod_cmd {
-> [...]
-> >            };
-> 
-> 
-> >            struct epoll_wait_spec {
-> [...]
-> >            } EPOLL_PACKED;
-> 
-> Either both or none of these should mention that EPOLL_PACKED is in fact
-> part of the actual definition. The changelog for 3/6 sorta mentions
-> that it's not really needed for epoll_mod_cmd. Why is it necessary for
-> either struct?
+My guess is that the people porting from QNX were just confused
+and their use of D-Bus was in error.  Maybe they should've used
+plain sockets, capnproto, ZeroMQ or whatever.
 
-Yeah. it's probably not really necessary.
 
+> > As I said before, I'm seeing about a dozen D-Bus messages per minute,
+> > nothing that would justify adding kdbus to the kernel for
+> > performance reasons.  Wrt security I'm also not aware of any
+> > open issues with D-Bus.  Thus I doubt normal users of D-Bus
+> > would see any benefit from kdbus.  I also think none of the
+> > applications I can install from my distribution has any performance
+> > issue with D-Bus.
 > 
-> > RETURN VALUE
-> >
-> >        When successful, epoll_mod_wait() returns the number of file
-> >        descriptors ready for the requested I/O, or zero if no file descriptor
-> >        became ready during the requested timeout milliseconds.
+> That's because people have not done anything really needing performance
+> on the desktop over D-Bus in the past due to how slow the current
+> implementation is.  Now that this is being resolved, that can change,
+> and there are demos out there of even streaming audio over kdbus with no
+> problems.
 > 
-> And here, it doesn't make sense to mention a unit, since the new timeout
-> is given using struct timespec (this was the whole point, right?).
+> But performance is not just the only reason we want this in the kernel,
+> I listed a whole long range of them.  Sure, it's great to now be faster,
+> cutting down the number of context switches and copies by a huge amount,
+> but the other things are equally important for future development
+> (namespaces, containers, security, early-boot, etc.)
+> 
+> > And this is the point where I ask myself if I missed something.
+> 
+> Don't focus purely on performance for your existing desktop system,
+> that's not the only use case here.  There are lots of others, as I
+> document, that can benefit and want this.
+> 
+> One "fun" thing I've been talking to someone about is the ability to
+> even port binder to be on top of kdbus.  But that's just a research
+> project, and requires some API changes on the userspace binder side, but
+> it shows real promise, and would then mean that we could deprecate the
+> old binder code and a few hundred million devices could then use kdbus
+> instead.  But that's long-term goals, not really all that relevant here,
+> but it shows that having a solid bus IPC mechanism is a powerful thing
+> that we have been missing in the past from Linux.
 
-Right!
+Well, IMHO you got it backwards.  Before adding a complex new IPC
+API to the kernel you should do the homework and gather some
+evidence that there will be enough users to justify the addition.
+
+But maybe I misunderstood the purpose of this thread and you're
+just advertising it to find possible users instead of already
+suggesting to merge it?  If someone has some convincing story
+to share why kdbus would solve their IPC needs, I'm all ears.
+
+(I'm sorry this implies your responses so far were not convincing:
+not verifiable facts, no numbers, no testimonials etc.)
+
+FWIW, my gut feeling was that the earlier attempts to add a new
+IPC primitve like multicast UNIX domain sockets
+http://thread.gmane.org/gmane.linux.kernel/1255575/focus=1257999
+were a much saner approach.  But now I think the comments
+from this old thread have not been addressed, instead the
+new approach just made the thing more complex and
+put in ipc/ instead of net/ to bypass the guards.
+
 
 Thanks,
-Fam
+Johannes
