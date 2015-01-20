@@ -1,55 +1,71 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH 2/6] selftests: Add install target
-Date: Tue, 20 Jan 2015 14:13:15 +1100
-Message-ID: <1421723595.10632.2.camel@ellerman.id.au>
-References: <1420794375-31881-1-git-send-email-mpe@ellerman.id.au>
-	 <1420794375-31881-2-git-send-email-mpe@ellerman.id.au>
-	 <54B94E75.8030504@osg.samsung.com> <1421627752.3787.8.camel@ellerman.id.au>
-	 <54BD326A.6030409@osg.samsung.com>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: Re: [PATCH v8 1/2] crypto: AF_ALG: add AEAD support
+Date: Tue, 20 Jan 2015 04:08:48 +0100
+Message-ID: <2322046.U2aPs8NjYq@tauon>
+References: <33040723.pAXIT3fl8h@tachyon.chronox.de> <1639027.yRSjDuRfFC@tachyon.chronox.de> <20150120030017.GA10475@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54BD326A.6030409@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: linux-kernel@vger.kernel.org, mmarek@suse.cz, gregkh@linuxfoundation.org, akpm@linux-foundation.org, rostedt@goodmis.org, mingo@redhat.com, davem@davemloft.net, keescook@chromium.org, tranmanphong@gmail.com, cov@codeaurora.org, dh.herrmann@gmail.com, hughd@google.com, bobby.prani@gmail.com, serge.hallyn@ubuntu.com, ebiederm@xmission.com, tim.bird@sonymobile.com, josh@joshtriplett.org, koct9i@gmail.com, linux-kbuild@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150120030017.GA10475-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-01-19 at 09:35 -0700, Shuah Khan wrote:
-> On 01/18/2015 05:35 PM, Michael Ellerman wrote:
-> > On Fri, 2015-01-16 at 10:46 -0700, Shuah Khan wrote:
-> >> On 01/09/2015 02:06 AM, Michael Ellerman wrote:
-> >>> This adds make install support to selftests. The basic usage is:
-> >>>
-> >>> $ cd tools/testing/selftests
-> >>> $ make install
-> >>>
-> >>> That installs into tools/testing/selftests/install, which can then be
-> >>> copied where ever necessary.
-> >>>
-> >>> The install destination is also configurable using eg:
-> >>>
-> >>> $ INSTALL_PATH=/mnt/selftests make install
-> >>
-> >> Please see my response to [PATCH 4/6] kbuild: add a new
-> >> kselftest_install make target to install selftests
-> >>
-> >> These are addressed by the current approach to use existing
-> >> INSTALL_MOD_PATH.
-> > 
-> > No that's a separate issue.
-> > 
-> > This patch adds install support for tools/testing/selftests, *completely
-> > separate* from the kbuild infrastructure. 
-> 
-> What's the use-case for this feature? I don't see why we need multiple
-> ways to do the install?
+Am Dienstag, 20. Januar 2015, 14:00:17 schrieb Herbert Xu:
 
-Exactly the use case I described in the sentence above.
+Hi Herbert,
 
-Currently the selftests directory is usable on its own. You can copy the
-selftests directory somewhere and it is functional. That is a useful feature,
-and there's no reason to break it.
+>On Fri, Jan 09, 2015 at 04:30:45AM +0100, Stephan Mueller wrote:
+>> Am Donnerstag, 8. Januar 2015, 22:09:31 schrieb Herbert Xu:
+>> 
+>> Hi Herbert,
+>> 
+>> > On Wed, Jan 07, 2015 at 04:51:38PM +0100, Stephan Mueller wrote:
+>> > > +		if (!aead_writable(sk)) {
+>> > > +			/*
+>> > > +			 * If there is more data to be expected, 
+but we cannot
+>> > > +			 * write more data, forcefully define 
+that we do not
+>> > > +			 * expect more data to invoke the AEAD 
+operation. This
+>> > > +			 * prevents a deadlock in user space.
+>> > > +			 */
+>> > > +			ctx->more = 0;
+>> > 
+>> > We should return EMSGSIZE here.  Also we should clear out the
+>> > existing data so that the socket may be reused again.
+>> 
+>> Is this really wise considering that we want to support a threaded
+>> caller? For example, one thread sends data and another reads data.
+>> For some reason, the reading thread is throttled or slower than the
+>> sender. Now, with the current solution, the sender is put on hold
+>> (i.e. throttled) until the reader can catch up. I.e. we have an
+>> automated synchronization between sender/receiver.
+>> 
+>> Thus, when we remove the wait here and return an error, the sender
+>> will be shut down and there is no synchronization of the
+>> reader/writer any more.
+>> 
+>> Note, the same applies to the very similar code in aead_sendpage too.
+>
+>No, if we're in this case then something seriously wrong has
+>happened.  IOW the application writer has screwed up.  We're
+>not able to carry out the wish of user-space because of resource
+>limits on the socket.  Attempting to continue at this point will
+>only cause confusion.
+>
+>So we should loudly declare that there was an error.
 
-cheers
+Ok. Your suggestion implies that it needs to be removed in aead_sendmsg 
+and aead_sendpage. That in turn implies aead_wait_for_wmem can go as 
+well.
+
+Also, my previous suggestion with MSG_TRUNC can be removed as well.
+
+I will do that with my next installment.
+
+Ciao
+Stephan
