@@ -1,83 +1,54 @@
-From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v5 1/5] devicetree: power/mfd: max77693: Document new bindings
- for charger
-Date: Tue, 20 Jan 2015 11:00:52 +0100
-Message-ID: <1421748056-25735-2-git-send-email-k.kozlowski@samsung.com>
-References: <1421748056-25735-1-git-send-email-k.kozlowski@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1421748056-25735-1-git-send-email-k.kozlowski@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Samuel Ortiz <sameo@linux.intel.com>, Lee Jones <lee.jones@linaro.org>, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Kyungmin Park <kyungmin.park@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+From: Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>
+Subject: Re: [PATCH RFC 0/6] epoll: Introduce new syscall "epoll_mod_wait"
+Date: Tue, 20 Jan 2015 11:37:22 +0100
+Message-ID: <874mrl3fh9.fsf@rasmusvillemoes.dk>
+References: <1421747878-30744-1-git-send-email-famz@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1421747878-30744-1-git-send-email-famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> (Fam Zheng's
+	message of "Tue, 20 Jan 2015 17:57:52 +0800")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TbrhsbdSgBK9A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Document new device tree bindings for Maxim 77693 charger driver.
+On Tue, Jan 20 2015, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
----
- Documentation/devicetree/bindings/mfd/max77693.txt | 45 ++++++++++++++++++++++
- 1 file changed, 45 insertions(+)
+> DESCRIPTION
+>
+>        The epoll_mod_wait() system call can be seen as an enhanced combination
+>        of several epoll_ctl(2) calls, which are followed by an epoll_pwait(2)
+>        call. It is superior in two cases:
+>        
+>        1) When epoll_ctl(2) are followed by epoll_wait(2), using epoll_mod_wait
+>        will save context switches between user mode and kernel mode;
+>        
+>        2) When you need higher precision than microsecond for wait timeout.
 
-diff --git a/Documentation/devicetree/bindings/mfd/max77693.txt b/Documentation/devicetree/bindings/mfd/max77693.txt
-index 01e9f30fe678..38e64405e98d 100644
---- a/Documentation/devicetree/bindings/mfd/max77693.txt
-+++ b/Documentation/devicetree/bindings/mfd/max77693.txt
-@@ -41,6 +41,41 @@ Optional properties:
- 	 To get more informations, please refer to documentaion.
- 	[*] refer Documentation/devicetree/bindings/pwm/pwm.txt
- 
-+- charger : Node configuring the charger driver.
-+  If present, required properties:
-+  - compatible : Must be "maxim,max77693-charger".
-+
-+  Optional properties (if not set, defaults will be used):
-+  - maxim,constant-microvolt : Battery constant voltage in uV. The charger
-+    will operate in fast charge constant current mode till battery voltage
-+    reaches this level. Then the charger will switch to fast charge constant
-+    voltage mode. Also vsys (system voltage) will be set to this value when
-+    DC power is supplied but charger is not enabled.
-+    Valid values: 3650000 - 4400000, step by 25000 (rounded down)
-+    Default: 4200000
-+
-+  - maxim,min-system-microvolt : Minimal system voltage in uV.
-+    Valid values: 3000000 - 3700000, step by 100000 (rounded down)
-+    Default: 3600000
-+
-+  - maxim,thermal-regulation-celsius : Temperature in Celsius for entering
-+    high temperature charging mode. If die temperature exceeds this value
-+    the charging current will be reduced by 105 mA/Celsius.
-+    Valid values: 70, 85, 100, 115
-+    Default: 100
-+
-+  - maxim,battery-overcurrent-microamp : Overcurrent protection threshold
-+    in uA (current from battery to system).
-+    Valid values: 2000000 - 3500000, step by 250000 (rounded down)
-+    Default: 3500000
-+
-+  - maxim,charge-input-threshold-microvolt : Threshold voltage in uV for
-+    triggering input voltage regulation loop. If input voltage decreases
-+    below this value, the input current will be reduced to reach the
-+    threshold voltage.
-+    Valid values: 4300000, 4700000, 4800000, 4900000
-+    Default: 4300000
-+
- Example:
- 	max77693@66 {
- 		compatible = "maxim,max77693";
-@@ -73,4 +108,14 @@ Example:
- 			pwms = <&pwm 0 40000 0>;
- 			pwm-names = "haptic";
- 		};
-+
-+		charger {
-+			compatible = "maxim,max77693-charger";
-+
-+			maxim,constant-microvolt = <4200000>;
-+			maxim,min-system-microvolt = <3600000>;
-+			maxim,thermal-regulation-celsius = <75>;
-+			maxim,battery-overcurrent-microamp = <3000000>;
-+			maxim,charge-input-threshold-microvolt = <4300000>;
-+		};
- 	};
--- 
-1.9.1
+You probably want to say millisecond.
+
+>            struct epoll_mod_cmd {
+[...]
+>            };
+
+
+>            struct epoll_wait_spec {
+[...]
+>            } EPOLL_PACKED;
+
+Either both or none of these should mention that EPOLL_PACKED is in fact
+part of the actual definition. The changelog for 3/6 sorta mentions
+that it's not really needed for epoll_mod_cmd. Why is it necessary for
+either struct?
+
+> RETURN VALUE
+>
+>        When successful, epoll_mod_wait() returns the number of file
+>        descriptors ready for the requested I/O, or zero if no file descriptor
+>        became ready during the requested timeout milliseconds.
+
+And here, it doesn't make sense to mention a unit, since the new timeout
+is given using struct timespec (this was the whole point, right?).
+
+Rasmus
