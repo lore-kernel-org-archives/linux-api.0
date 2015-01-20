@@ -1,129 +1,99 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: Re: [PATCH tip 0/9] tracing: attach eBPF programs to tracepoints/syscalls/kprobe
-Date: Mon, 19 Jan 2015 19:55:18 -0800
-Message-ID: <CAMEtUuwrpqRG4a=Hqnj3JBKuLbC4yV+trVAZhevKLbCsm_6U4Q@mail.gmail.com>
+From: Lyra Zhang <zhang.lyra@gmail.com>
+Subject: Re: [PATCH v5 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
+Date: Tue, 20 Jan 2015 15:37:38 +0800
+Message-ID: <CAAfSe-tAwURc_P+-0+m22ao9r+Fud6Ae89JF8FGsWgg_49Mdhg@mail.gmail.com>
+References: <1421402411-3479-1-git-send-email-chunyan.zhang@spreadtrum.com>
+	<1421402411-3479-6-git-send-email-chunyan.zhang@spreadtrum.com>
+	<CAL_JsqJg=BtanmR_rhYthCUhKbErs8viZ7MMMXr-PmPjUV4BRQ@mail.gmail.com>
+	<CAAfSe-vqqpvbYe0bEeD-3_QsLYz4r7pxMuA1-L4cYRw9TY=NgA@mail.gmail.com>
+	<CAL_JsqLTArm1v8ka39_KLq2jMKkK2ZXQ6-an=JSWVgTK1LWmOg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Brendan Gregg <brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "zhangwei(Jovi)" <jovi.zhangwei-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, "yrl.pp-manager.tt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org" <yrl.pp-manager.tt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAL_JsqLTArm1v8ka39_KLq2jMKkK2ZXQ6-an=JSWVgTK1LWmOg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rob Herring <robherring2@gmail.com>
+Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Mark Rutland <mark.rutland@arm.com>, Arnd Bergmann <arnd@arndb.de>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Mark Brown <broonie@kernel.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Jiri Slaby <jslaby@suse.cz>, Jason Cooper <jason@lakedaemon.net>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, Florian Vaussard <florian.vaussard@epfl.ch>, Andrew Lunn <andrew@lunn.ch>, Robert Richter <rrichter@cavium.com>, Hayato Suzuki <hytszk@gmail.com>, Grant Likely <grant.likely@linaro.org>, Antony Pavlov <antonynpavlov@gmail.com>, Joel Schopp <Joel.Schopp@amd.com>Suravee Suthikulanit <S>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 19, 2015 at 6:58 PM, Masami Hiramatsu
-<masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org> wrote:
+Hi, Rob
+
+I still have a question to be conform, specific describes below:
+
+On Mon, Jan 19, 2015 at 10:11 PM, Rob Herring <robherring2@gmail.com> wrote:
+> On Mon, Jan 19, 2015 at 3:55 AM, Lyra Zhang <zhang.lyra@gmail.com> wrote:
+>> On Sat, Jan 17, 2015 at 12:41 AM, Rob Herring <robherring2@gmail.com> wrote:
+>>> On Fri, Jan 16, 2015 at 4:00 AM, Chunyan Zhang
+>>> <chunyan.zhang@spreadtrum.com> wrote:
+>>>> Add a full sc9836-uart driver for SC9836 SoC which is based on the
+>>>> spreadtrum sharkl64 platform.
+>>>> This driver also support earlycon.
+>>>> This patch also replaced the spaces between the macros and their
+>>>> values with the tabs in serial_core.h
+>
+> [...]
+>
+>>>> +static int __init sprd_serial_init(void)
+>>>> +{
+>>>> +       int ret = 0;
+>>>> +
+>>>> +       ret = uart_register_driver(&sprd_uart_driver);
+>>>
+>>> This can be done in probe now. Then you can use module_platform_driver().
+>>>
 >>
->> it's done already... one can do the same skb->dev->name logic
->> in kprobe attached program... so from bpf program point of view,
->> tracepoints and kprobes feature-wise are exactly the same.
->> Only input is different.
+>> Question:
+>> 1. there are 4 uart ports configured in dt for sprd_serial, so probe
+>> will be called 4 times, but uart_register_driver only needs to be
+>> called one time, so can we use uart_driver.state to check if
+>> uart_register_driver has already been called ?
 >
-> No, I meant that the input should also be same, at least for the first step.
-> I guess it is easy to hook the ring buffer committing and fetch arguments
-> from the event entry.
-
-No. That would be very slow. See my comment to Steven
-and more detailed numbers below.
-Allocating ring buffer takes too much time.
-
-> And what I expected scenario was
+> Yes.
 >
-> 1. setup kprobe traceevent with fd, buf, count by using perf-probe.
-> 2. load bpf module
-> 3. the module processes given event arguments.
-
-from ring buffer? that's too slow.
-It's not usable for high frequency events which
-need this in-kernel aggregation.
-If events are rare, then just dumping everything
-into trace buffer is just fine. No in-kernel program is needed.
-
-> Hmm, it sounds making another systemtap on top of tracepoint and kprobes.
-> Why don't you just reuse the existing facilities (perftools and ftrace)
-> instead of co-exist?
-
-hmm. I don't think we're on the same page yet...
-ring buffer and tracing interface is fully reused.
-programs are run as soon as event triggers.
-They can return non-zero and kernel will allocate ring
-buffer which user space will consume.
-Please take a look at tracex1
-
->> Just look how ktap scripts look alike for kprobes and tracepoints.
+>> 2. if I use module_platform_driver() instead of
+>> module_init(sprd_serial_init)  and  module_exit(sprd_serial_exit) , I
+>> must move uart_unregister_driver() which is now processed in
+>> sprd_serial_exit() to sprd_remove(), there is a similar problem with
+>> probe(), sprd_remove() will also be called 4 times, and actually it
+>> should be called only one time. How can we deal with this case?
 >
-> Ktap is a good example, it provides only a language parser and a runtime engine.
-> Actually, currently it lacks a feature to execute "perf-probe" helper from
-> script, but it is easy to add such feature.
-...
-> For this usecase, I've made --output option for perf probe
-> https://lkml.org/lkml/2014/10/31/210
+> Look at pl01x or Samsung UART drivers which have done this conversion.
 
-you're proposing to call perf binary from ktap binary?
-I think packaging headaches and error conditions
-will make such approach very hard to use.
-it would be much cleaner to have ktap as part of perf
-generating bpf on the fly and feeding into kernel.
-'perf probe' parsing and functions don't belong in kernel
-when userspace can generate them in more efficient way.
+Samsung UART does use module_platform_driver, but pl010/pl011 doesn't.
+In the Samsung UART driver, uart_unregister_driver is processed in
+remove(), like below:
 
-Speaking of performance...
-I've added temporary tracepoint like this:
-TRACE_EVENT(sys_write,
-        TP_PROTO(int count),
-        TP_fast_assign(
-                __entry->cnt = count;
-        ),
-and call it from SYSCALL_DEFINE3(write,..., count):
- trace_sys_write(count);
+static int s3c24xx_serial_remove(struct platform_device *dev)
+{
+    struct uart_port *port = s3c24xx_dev_to_port(&dev->dev);
 
-and run the following test:
-dd if=/dev/zero of=/dev/null count=5000000
+    if (port) {
+        s3c24xx_serial_cpufreq_deregister(to_ourport(port));
+        uart_remove_one_port(&s3c24xx_uart_drv, port);
+    }
 
-1.19343 s, 2.1 GB/s - raw base line
-1.53301 s, 1.7 GB/s - echo 1 > enable
-1.62742 s, 1.6 GB/s - echo cnt==1234 > filter
-and profile looks like:
-     6.23%  dd       [kernel.vmlinux]  [k] __clear_user
-     6.19%  dd       [kernel.vmlinux]  [k] __srcu_read_lock
-     5.94%  dd       [kernel.vmlinux]  [k] system_call
-     4.54%  dd       [kernel.vmlinux]  [k] __srcu_read_unlock
-     4.14%  dd       [kernel.vmlinux]  [k] system_call_after_swapgs
-     3.96%  dd       [kernel.vmlinux]  [k] fsnotify
-     3.74%  dd       [kernel.vmlinux]  [k] ring_buffer_discard_commit
-     3.18%  dd       [kernel.vmlinux]  [k] rb_reserve_next_event
-     1.69%  dd       [kernel.vmlinux]  [k] rb_add_time_stamp
+    uart_unregister_driver(&s3c24xx_uart_drv);
+}
 
-the slowdown due to unconditional buffer allocation
-is too high to use this in production for aggregation
-of high frequency events.
-There is little reason to run bpf program in kernel after
-such penalty. User space can just read trace_pipe_raw
-and process data there.
+if this serial has more than one ports, uart_unregister_driver() must
+be called multiple times when the device need to be removed.
+I think there may be a problem because that uart_unregister_driver()
+will do kfree(drv->state) every time when it's called.
 
-Now if program is run right after tracepoint fires
-the profile will look like:
-    10.01%  dd             [kernel.vmlinux]            [k] __clear_user
-     7.50%  dd             [kernel.vmlinux]            [k] system_call
-     6.95%  dd             [kernel.vmlinux]            [k] __srcu_read_lock
-     6.02%  dd             [kernel.vmlinux]            [k] __srcu_read_unlock
-...
-     1.15%  dd             [kernel.vmlinux]            [k]
-ftrace_raw_event_sys_write
-     0.90%  dd             [kernel.vmlinux]            [k] __bpf_prog_run
-this is much more usable.
-For empty bpf program that does 'return 0':
-1.23418 s, 2.1 GB/s
-For full tracex4 example that does map[log2(count)]++
-1.2589 s, 2.0 GB/s
+Thanks,
+Chunyan
 
-so the cost of doing such in-kernel aggregation is
-1.19/1.25 is ~ 5%
-which makes the whole solution usable as live
-monitoring/analytics tool.
-We would only need good set of tracepoints.
-kprobe via fentry overhead is also not cheap.
-Same tracex4 example via kprobe (instead of tracepoint)
-1.45673 s, 1.8 GB/s
-So tracepoints are 1.45/1.25 ~ 15% faster than kprobes.
-which is huge when the cost of running bpf program
-is just 5%.
+>
+>> 3. for the second question, we can check the platform_device->id, if
+>> it is equal to the index of last port (e.g. 4 for this case), then
+>> uart_unregister_driver() can be called. Does it work correctly? since
+>> for this case, we must keep the order of releasing ports.
+>
+> The id will not be the line index in the DT case. I don't think you
+> can guarantee the order either.
+>
+> It would be better to make uart_{un}register_driver deal with being
+> called multiple times so drivers don't have to deal with getting this
+> correct. I'm not sure if that is feasible though.
+>
+> Rob
