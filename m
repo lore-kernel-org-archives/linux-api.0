@@ -1,124 +1,88 @@
-From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Daniel Mack <daniel@zonque.org>
 Subject: Re: [PATCH 01/13] kdbus: add documentation
-Date: Tue, 20 Jan 2015 18:00:28 +0100
-Message-ID: <CANq1E4Q9m7JRXNYFY4okh3brM-kHVoVGOdF_SWjNoNURX930HQ@mail.gmail.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
-	<1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
-	<54BE5DC8.70706@gmail.com>
-	<CANq1E4SjfZOKqTsdkt519vKc1Poeah5McVJBb_spdHjbKv4=7g@mail.gmail.com>
-	<CA+5PVA46wVa-L9K1zgHzt=Fwn6YFBYhxJUjiozSH4XBY03WMVw@mail.gmail.com>
-	<20150120145353.GA8124@dztty>
-	<20150120160842.GA9474@sig21.net>
+Date: Tue, 20 Jan 2015 18:50:50 +0100
+Message-ID: <54BE957A.60305@zonque.org>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org> <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org> <54BE5F1F.8070703@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150120160842.GA9474-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
-Cc: Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Josh Boyer <jwboyer-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <54BE5F1F.8070703@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.no, jkosina@suse.cz, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: daniel@zonque.or, dh.herrmann@gmail.com, tixxdz@opendz.org
 List-Id: linux-api@vger.kernel.org
 
-Hi
+Hi Michael,
 
-On Tue, Jan 20, 2015 at 5:08 PM, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org> wrote:
-> However, let me repeat and rephrase my previous questions:
-> Is there a noticable or measurable improvement from using kdbus?
-> IOW, is the added complexity of kdbus worth the result?
->
-> I have stated my believe that current usage of D-Bus is not
-> performance sensitive and the number of messages exchanged
-> is low.  I would love it if you would prove me wrong.
-> Or if you could show that any D-Bus related bug in Gnome3
-> is fixed by kdbus.
+Thanks a lot for for intense review of the documentation. Much appreciated.
 
-DBus is not used for performance sensitive applications because DBus
-is slow. We want to make it fast so we can finally use it for
-low-latency, high-throughput applications. A simple DBus
-method-call+reply takes 200us here, with kdbus it takes 8us (with UDS
-about 2us). If I increase the packet size from 8k to 128k, kdbus even
-tops UDS thanks to single-copy transfers.
-The fact that there is no performance-critical application using DBus
-is, imho, an argument *pro* kdbus. People haven't been capable of
-making classic dbus1 fast enough for low-latency audio, thus, we
-present kdbus.
-
-Starting up 'gdm' sends ~5k dbus messages on my machine. It takes >1s
-to transmit the messages alone. Each dbus1 message has to be copied 4
-times for each direction. With kdbus, each message is copied only once
-for each transmission (or not at all, if you use memfds, though that
-doesn't mean it's necessarily faster). No intermediate context-switch
-is needed. This makes kdbus capable to transmit low-latency audio data
-*inline*.
-
-DBus marshaling is the de-facto standard in all major(!) linux desktop
-systems. It is well established and accepted by many DEs. It also
-solves many other problems, including: policy,
-authentication/authorization, well-known name registry, efficient
-broadcasts/multicasts, peer discovery, bus discovery, metadata
-transmission, and more.
-It is a shame that we cannot use this well-established protocol for
-low-latency applications. We, effectively, have to duplicate all this
-code on custom UDS and other transports just because DBus is too slow.
-
-kdbus tries to unify those efforts, so that we don't need multiple
-policy implementations, name registries and peer discovery mechanisms.
-Furthermore, kdbus implements comprehensive, yet optional, metadata
-transmission that allows to identify and authenticate peers in a
-race-free manner (which is *not* possible with UDS).
-Also, kdbus provides a single transport bus with sequential message
-numbering. If you use multiple channels, you cannot give any ordering
-guarantees across peers (for instance, regarding parallel
-name-registry changes).
+I've addressed all but the below issues, following your suggestions.
 
 
-Given these theoretical advantages, here're some examples:
+On 01/20/2015 02:58 PM, Michael Kerrisk (man-pages) wrote:
+>> +    and KDBUS_CMD_ENDPOINT_MAKE (see above).
+>> +
+>> +    Following items are expected for KDBUS_CMD_BUS_MAKE:
+>> +    KDBUS_ITEM_MAKE_NAME
+>> +      Contains a string to identify the bus name.
+> 
+> So, up to here, I've seen no definition of 'kdbus_item', which leaves me 
+> asking questions like: what subfield is KDBUS_ITEM_MAKE_NAME stored in?
+> which subfield holds the pointer to the string?
+> 
+> Somewhere earlier,  kdbus_item needs to be exaplained in more detail, 
+> I think.
 
-*) The Tizen developers have been complaining about the high latency
-of DBus for polkit'ish policy queries. That's why their authentication
-framework uses custom UDS sockets (called 'Cynara'). If a
-UI-interaction needs multiple authentication-queries, you don't want
-it to take multiple milliseconds, given that you usually want to
-render the result in the same frame.
+Hmm, you're quoting text from section 5, and section 4 actually
+describes the concept of items quite well I believe?
 
-*) PulseAudio doesn't use DBus for data transmission. They had to
-implement their own marshaling code, transport layer and so on, just
-because DBus1-latency is horrible. With kdbus, we can basically drop
-this code-duplication and unify the IPC layer. Same is true for
-Wayland, btw.
+>> +  __s64 priority;
+>> +    With KDBUS_RECV_USE_PRIORITY set in flags, receive the next message in
+>> +    the queue with at least the given priority. If no such message is waiting
+>> +    in the queue, -ENOMSG is returned.
+> 
+> ###
+> How do I simply select the highest priority message, without knowing what 
+> its priority is?
 
-*) By moving broadcast-transmission into the kernel, we can use the
-time-slices of the sender to perform heavy operations. This is also
-true for policy decisions, etc. With a userspace daemon, we cannot
-perform operations in a time-slice of the caller. This makes DoS
-attacks much harder.
+The wording is indeed unclear here. KDBUS_RECV_USE_PRIORITY causes the
+messages to be dequeued by their priority. The 'priority' field is
+simply a filter that request a minimum priority. By setting this field
+to the highest possible value, you effectively bypass the filter. I've
+added a better description now.
 
-*) With priority-inheritance, we can do synchronous calls into trusted
-peers and let them optionally use our time-slice to perform the
-action. This allows syscall-like/binder-like method-calls into other
-processes. Without priority-inheritance, this is not possible in a
-secure manner (see 'priority-inheritance').
+>> +  -ENOMEM	The kernel memory is exhausted
+>> +  -ENOTTY	Illegal ioctl command issued for the file descriptor
+> 
+> Why ENOTTY here, rather than EINVAL? The latter is, I beleive, the usual 
+> ioctl() error for invalid commands, I believe (If you keep ENOTTY, add an
+> explanation in this document.)
 
-*) Logging-daemons often want to attach metadata to log-messages so
-debugging/filtering gets easier. If short-lived programs send
-log-messages, the destination peer might not be able to read such
-metadata from /proc, as the process might no longer be available at
-that time. Same is true for policy-decisions like polkit does. You
-cannot send off method-calls and exit. You have to wait for a reply,
-even though you might not even care for it. If you don't wait, the
-other side might not be able to verify your identity and as such
-reject the request.
+Hmm, no. -ENOTTY is commonly used as return code when calling ioctls
+that can't be handled by the FDs they're called on. 'man errno(3)' even
+states: "ENOTTY   Inappropriate I/O control operation (POSIX.1)".
 
-*) Even though the dbus traffic on idle-systems might be low, this
-doesn't mean it's not significant at boot-times or under high-load. If
-you run a dbus-monitor of your choice, you will see there is an
-significant number of messages exchanged during VT-switches, startup,
-shutdown, suspend, wakeup, hotplugging and similar situations where
-lots of control-messages are exchanged. We don't want to spend
-hundreds of ms just to transmit those messages.
+>> +  -EINVAL	Unsupported item attached to command
+>> +
+>> +For all ioctls that carry a struct as payload:
+>> +
+>> +  -EFAULT	The supplied data pointer was not 64-bit aligned, or was
+>> +		inaccessible from the kernel side.
+>> +  -EINVAL	The size inside the supplied struct was smaller than expected
+>> +  -EMSGSIZE	The size inside the supplied struct was bigger than expected
+> 
+> Why two different errors for smaller and larger than expected? (If you keep things this
+> way, pelase explain the reason in this document.)
 
-*) dbus-daemon is not available during early-boot or shutdown.
+Providing a struct that is smaller than the minimum doesn't give the
+ioctl a valid set of information to process the request. Hence, I think
+-EINVAL is appropriate. However, -EMSGSIZE is something that users might
+hit when they make message payloads too big, and I think it's good to
+have a change to distinguish the two cases in error handling. I added
+something in the document now.
 
 
-These are just examples off the top of my head, but I think they're
-already pretty convincing.
-David
+Again, thanks a lot for reading the documentation so accurately!
+
+Daniel
