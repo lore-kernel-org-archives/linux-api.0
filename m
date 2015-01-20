@@ -1,80 +1,124 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v3 00/13] Add kdbus implementation
-Date: Tue, 20 Jan 2015 19:26:09 +0800
-Message-ID: <20150120112609.GA17198@kroah.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
- <20150119180642.GA27957@sig21.net>
- <20150119183806.GA8479@kroah.com>
- <20150119201906.GA337@sig21.net>
- <20150119203155.GA15441@kroah.com>
- <20150119233812.GA1874@sig21.net>
- <20150120011359.GE865@kroah.com>
- <20150120105712.GA6260@sig21.net>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: Re: Re: [PATCH tip 0/9] tracing: attach eBPF programs to tracepoints/syscalls/kprobe
+Date: Tue, 20 Jan 2015 20:57:18 +0900
+Message-ID: <54BE429E.9020108@hitachi.com>
+References: <CAMEtUuwrpqRG4a=Hqnj3JBKuLbC4yV+trVAZhevKLbCsm_6U4Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150120105712.GA6260-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
-Cc: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAMEtUuwrpqRG4a=Hqnj3JBKuLbC4yV+trVAZhevKLbCsm_6U4Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <dborkman@redhat.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Brendan Gregg <brendan.d.gregg@gmail.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "zhangwei(Jovi)" <jovi.zhangwei@huawei.com>, "yrl.pp-manager.tt@hitachi.com" <yrl.pp-manager.tt@hitachi.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 20, 2015 at 11:57:12AM +0100, Johannes Stezenbach wrote:
-> On Tue, Jan 20, 2015 at 09:13:59AM +0800, Greg Kroah-Hartman wrote:
-> > On Tue, Jan 20, 2015 at 12:38:12AM +0100, Johannes Stezenbach wrote:
-> > > Those automotive applications you
-> > > were talking about, what was the OS they were ported from
-> > > and what was the messaging API they used?
-> > 
-> > They were ported from QNX and I don't know the exact api, it is wrapped
-> > up in a library layer for them to use.  And typically, they run about
-> > 40 thousand messages in the first few seconds of startup time.  Or was
-> > it 400 thousand?  Something huge and crazy to be doing on tiny ARM
-> > chips, but that's the IVI industry for you :(
+(2015/01/20 12:55), Alexei Starovoitov wrote:
+> On Mon, Jan 19, 2015 at 6:58 PM, Masami Hiramatsu
+> <masami.hiramatsu.pt@hitachi.com> wrote:
+>>>
+>>> it's done already... one can do the same skb->dev->name logic
+>>> in kprobe attached program... so from bpf program point of view,
+>>> tracepoints and kprobes feature-wise are exactly the same.
+>>> Only input is different.
+>>
+>> No, I meant that the input should also be same, at least for the first step.
+>> I guess it is easy to hook the ring buffer committing and fetch arguments
+>> from the event entry.
 > 
-> So I did some googling and found in QNX servers create a channel
-> to receive messages, and clients connect to this channel.
-> Multiple clients can connect to the channel.
+> No. That would be very slow. See my comment to Steven
+> and more detailed numbers below.
 
-Hence, a bus :)
+Thank you for measuring the performance differences.
+Indeed, the ring buffer looks slow.
 
-> But it is not a bus -- no multicast/broadcast, and no name
-> service or policy rules like D-Bus has.  To me it looks
-> to be similar in functionality to UNIX domain sockets.
+> Allocating ring buffer takes too much time.
+> 
+>> And what I expected scenario was
+>>
+>> 1. setup kprobe traceevent with fd, buf, count by using perf-probe.
+>> 2. load bpf module
+>> 3. the module processes given event arguments.
+> 
+> from ring buffer? that's too slow.
 
-It's not as complex as D-Bus, but it's still subscribing to things and
-getting messages.
+Ok, BTW, would you think is it possible to use a reusable small scratchpad
+memory for passing arguments? (just a thought)
 
-> My guess is that the people porting from QNX were just confused
-> and their use of D-Bus was in error.  Maybe they should've used
-> plain sockets, capnproto, ZeroMQ or whatever.
+> It's not usable for high frequency events which
+> need this in-kernel aggregation.
+> If events are rare, then just dumping everything
+> into trace buffer is just fine. No in-kernel program is needed.
 
-I tend to trust that they knew what they were doing, they wouldn't have
-picked D-Bus for no good reason.
+Hmm, let me ensure your point, the performance number is the reason why
+we need to do it in the kernel, right? Not mainly for the flexibility but speed.
 
-> Well, IMHO you got it backwards.  Before adding a complex new IPC
-> API to the kernel you should do the homework and gather some
-> evidence that there will be enough users to justify the addition.
+>> Hmm, it sounds making another systemtap on top of tracepoint and kprobes.
+>> Why don't you just reuse the existing facilities (perftools and ftrace)
+>> instead of co-exist?
+> 
+> hmm. I don't think we're on the same page yet...
+> ring buffer and tracing interface is fully reused.
+> programs are run as soon as event triggers.
+> They can return non-zero and kernel will allocate ring
+> buffer which user space will consume.
+> Please take a look at tracex1
 
-systemd wants this today for early boot.  It will remove lots of code
-and enable a lot of good things to happen.  The first email in this
-thread describes this quite well, is that not sufficient?
+I see, this code itself is not a destructive change.
 
-> FWIW, my gut feeling was that the earlier attempts to add a new
-> IPC primitve like multicast UNIX domain sockets
-> http://thread.gmane.org/gmane.linux.kernel/1255575/focus=1257999
-> were a much saner approach.  But now I think the comments
-> from this old thread have not been addressed, instead the
-> new approach just made the thing more complex and
-> put in ipc/ instead of net/ to bypass the guards.
+>>> Just look how ktap scripts look alike for kprobes and tracepoints.
+>>
+>> Ktap is a good example, it provides only a language parser and a runtime engine.
+>> Actually, currently it lacks a feature to execute "perf-probe" helper from
+>> script, but it is easy to add such feature.
+> ...
+>> For this usecase, I've made --output option for perf probe
+>> https://lkml.org/lkml/2014/10/31/210
+> 
+> you're proposing to call perf binary from ktap binary?
 
-Not at all, the networking maintainers said that that proposal was not
-acceptable to them at all and it should not be done in the networking
-stack at all.  So this was solution was created instead, which provides
-a lot more things than the old networking patches did, which shows that
-the networking developers were right to reject it.
+Yes, that's right :)
 
-thanks,
+> I think packaging headaches and error conditions
+> will make such approach very hard to use.
 
-greg k-h
+No, I don't think so. perf can be a "buffer" from the kernel API
+and command-line API. If you need to get clearer error, you also
+can join the upstream development.
+
+> it would be much cleaner to have ktap as part of perf
+> generating bpf on the fly and feeding into kernel.
+> 'perf probe' parsing and functions don't belong in kernel
+> when userspace can generate them in more efficient way.
+
+No, perf probe still be needed to users who don't choose "injecting
+binary blob" tracing. Efficiency is NOT only one index.
+
+- perf probe and kprobe-event gives us a complete understandable
+ interface for what will be recorded at where.
+ (we can see the event definitions via kprobe_events interface,
+  without any tools)
+- kprobe-event gives a completely same interface as other tracepoint
+  events.
+- it also doesn't require any build-binary parts :) nor special tools.
+  We can play with ftrace on just a small busybox.
+
+However, this does NOT interfere your patch upstreaming. I just said current
+ftrace method is also meaningful for some reasons :)
+
+
+By the way, I concern about that bpf compiler can become another systemtap,
+especially if you build it on llvm. Would you plan to develop it on kernel
+tree? or apart from the kernel-side development?
+I think it is hard to sync the development if you do it out-of-tree.
+
+
+Thank you,
+
+
+
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
