@@ -1,95 +1,122 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v3 00/13] Add kdbus implementation
-Date: Tue, 20 Jan 2015 09:13:59 +0800
-Message-ID: <20150120011359.GE865@kroah.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
- <20150119180642.GA27957@sig21.net>
- <20150119183806.GA8479@kroah.com>
- <20150119201906.GA337@sig21.net>
- <20150119203155.GA15441@kroah.com>
- <20150119233812.GA1874@sig21.net>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: Re: [PATCH tip 0/9] tracing: attach eBPF programs to tracepoints/syscalls/kprobe
+Date: Tue, 20 Jan 2015 11:58:51 +0900
+Message-ID: <54BDC46B.5080109@hitachi.com>
+References: <1421381770-4866-1-git-send-email-ast@plumgrid.com> <54BCD3CF.9040205@hitachi.com> <CAMEtUuwzx-HZqEaTS30JFfF_RX5kGaZfsgE8wmogzcb2k5=k1g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150119233812.GA1874-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
-Cc: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAMEtUuwzx-HZqEaTS30JFfF_RX5kGaZfsgE8wmogzcb2k5=k1g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <dborkman@redhat.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Brendan Gregg <brendan.d.gregg@gmail.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "zhangwei(Jovi)" <jovi.zhangwei@huawei.com>, "yrl.pp-manager.tt@hitachi.com" <yrl.pp-manager.tt@hitachi.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 20, 2015 at 12:38:12AM +0100, Johannes Stezenbach wrote:
-> On Tue, Jan 20, 2015 at 04:31:55AM +0800, Greg Kroah-Hartman wrote:
-> > On Mon, Jan 19, 2015 at 09:19:06PM +0100, Johannes Stezenbach wrote:
-> > > These two statements somehow contradict. From my admittedly very
-> > > limited experience, I never used D-Bus because it did not
-> > > fit my usage scenarios: I never needed a bus, only point-to-point
-> > > links like pipes or sockets.
-> > 
-> > Great, then you don't need this, no need to worry about it at all, why
-> > are we having this conversation? :)
+(2015/01/20 5:48), Alexei Starovoitov wrote:
+> On Mon, Jan 19, 2015 at 1:52 AM, Masami Hiramatsu
+> <masami.hiramatsu.pt@hitachi.com> wrote:
+>> If we can write the script as
+>>
+>> int bpf_prog4(s64 write_size)
+>> {
+>>    ...
+>> }
+>>
+>> This will be much easier to play with.
 > 
-> Well, for one because that's what I wanted to find out...
+> yes. that's the intent for user space to do.
 > 
-> > > Well, it made your intentions a bit clearer, but it does
-> > > not help to sell kdbus to me, sorry ;-/
-> > 
-> > It's not my "goal" to sell kdbus to you, if you don't want it, great,
+>>>   The example of this arbitrary pointer walking is tracex1_kern.c
+>>>   which does skb->dev->name == "lo" filtering.
+>>
+>> At least I would like to see this way on kprobes event too, since it should be
+>> treated as a traceevent.
 > 
-> I used this language because I think you're not providing
-> the facts that would allow me to judge for myself whether
-> kdbus is a good idea.  Those automotive applications you
-> were talking about, what was the OS they were ported from
-> and what was the messaging API they used?
+> it's done already... one can do the same skb->dev->name logic
+> in kprobe attached program... so from bpf program point of view,
+> tracepoints and kprobes feature-wise are exactly the same.
+> Only input is different.
 
-They were ported from QNX and I don't know the exact api, it is wrapped
-up in a library layer for them to use.  And typically, they run about
-40 thousand messages in the first few seconds of startup time.  Or was
-it 400 thousand?  Something huge and crazy to be doing on tiny ARM
-chips, but that's the IVI industry for you :(
+No, I meant that the input should also be same, at least for the first step.
+I guess it is easy to hook the ring buffer committing and fetch arguments
+from the event entry.
 
-> > But odds are, you are using a system with D-Bus today, if not, then you
-> > are using Linux in a very specific and limited manner, which is
-> > wonderful, in that case this whole thread isn't really pertinent.
-> > 
-> > Lots of people do use D-Bus, and for those users, that is what this
-> > patchset is for.
+>>> - kprobe programs are architecture dependent and need user scripting
+>>>   language like ktap/stap/dtrace/perf that will dynamically generate
+>>>   them based on debug info in vmlinux
+>>
+>> If we can use kprobe event as a normal traceevent, user scripting can be
+>> architecture independent too. Only perf-probe fills the gap. All other
+>> userspace tools can collaborate with perf-probe to setup the events.
+>> If so, we can avoid redundant works on debuginfo. That is my point.
 > 
-> As I said before, I'm seeing about a dozen D-Bus messages per minute,
-> nothing that would justify adding kdbus to the kernel for
-> performance reasons.  Wrt security I'm also not aware of any
-> open issues with D-Bus.  Thus I doubt normal users of D-Bus
-> would see any benefit from kdbus.  I also think none of the
-> applications I can install from my distribution has any performance
-> issue with D-Bus.
+> yes. perf already has infra to read debug info and it can be extended
+> to understand C like script as:
+> int kprobe:sys_write(int fd, char *buf, size_t count)
+> {
+>    // do stuff with 'count'
+> }
+> perf can be made to parse this text, recognize that it wants
+> to create kprobe on 'sys_write' function. Then based on
+> debuginfo figure out where 'count' is (either register or stack)
+> and generate corresponding bpf program either
+> using llvm/gcc backends or directly.
 
-That's because people have not done anything really needing performance
-on the desktop over D-Bus in the past due to how slow the current
-implementation is.  Now that this is being resolved, that can change,
-and there are demos out there of even streaming audio over kdbus with no
-problems.
+And what I expected scenario was
 
-But performance is not just the only reason we want this in the kernel,
-I listed a whole long range of them.  Sure, it's great to now be faster,
-cutting down the number of context switches and copies by a huge amount,
-but the other things are equally important for future development
-(namespaces, containers, security, early-boot, etc.)
+1. setup kprobe traceevent with fd, buf, count by using perf-probe.
+2. load bpf module
+3. the module processes given event arguments.
 
-> And this is the point where I ask myself if I missed something.
+> perf facility of extracting debug info can be made into
+> library too and used by ktap/dtrace tools for their
+> languages.
+> User space can innovate in many directions.
+> and, yes, once we have a scripting language whether
+> it's C like with perf or else, this language hides architecture
+> depend things from users.
+> Such scripting language will also hide the kernel
+> side differences between tracepoint and kprobe.
 
-Don't focus purely on performance for your existing desktop system,
-that's not the only use case here.  There are lots of others, as I
-document, that can benefit and want this.
+Hmm, it sounds making another systemtap on top of tracepoint and kprobes.
+Why don't you just reuse the existing facilities (perftools and ftrace)
+instead of co-exist?
 
-One "fun" thing I've been talking to someone about is the ability to
-even port binder to be on top of kdbus.  But that's just a research
-project, and requires some API changes on the userspace binder side, but
-it shows real promise, and would then mean that we could deprecate the
-old binder code and a few hundred million devices could then use kdbus
-instead.  But that's long-term goals, not really all that relevant here,
-but it shows that having a solid bus IPC mechanism is a powerful thing
-that we have been missing in the past from Linux.
+> Just look how ktap scripts look alike for kprobes and tracepoints.
 
-thanks,
+Ktap is a good example, it provides only a language parser and a runtime engine.
+Actually, currently it lacks a feature to execute "perf-probe" helper from
+script, but it is easy to add such feature.
 
-greg k-h
+Jovi, if you hire perf-probe helper, you could do
+
+trace probe:do_sys_open dfd fname flags mode {
+...
+}
+
+instead of
+
+trace probe:do_sys_open dfd=%di fname=%dx flags=%cx mode=+4($stack) {
+...
+}
+
+For this usecase, I've made --output option for perf probe
+https://lkml.org/lkml/2014/10/31/210
+
+It currently stopped, but easy to resume on the latest perf.
+
+Thank you,
+
+> Whether ktap syntax becomes part of perf or perf invents
+> its own language, it's going to be good for users regardless.
+> The C examples here are just examples. Something
+> users can play with already until more user friendly
+> tools are being worked on.
+
+
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
