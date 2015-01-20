@@ -1,7 +1,7 @@
-From: Johannes Stezenbach <js@sig21.net>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 Subject: Re: [PATCH v3 00/13] Add kdbus implementation
-Date: Tue, 20 Jan 2015 11:57:12 +0100
-Message-ID: <20150120105712.GA6260@sig21.net>
+Date: Tue, 20 Jan 2015 19:26:09 +0800
+Message-ID: <20150120112609.GA17198@kroah.com>
 References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
  <20150119180642.GA27957@sig21.net>
  <20150119183806.GA8479@kroah.com>
@@ -9,95 +9,72 @@ References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
  <20150119203155.GA15441@kroah.com>
  <20150119233812.GA1874@sig21.net>
  <20150120011359.GE865@kroah.com>
+ <20150120105712.GA6260@sig21.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150120011359.GE865@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.no, jkosina@suse.cz, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, daniel@zonque.org, dh.herrmann@gmail.com, tixxdz@opendz.org
+In-Reply-To: <20150120105712.GA6260-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 20, 2015 at 09:13:59AM +0800, Greg Kroah-Hartman wrote:
-> On Tue, Jan 20, 2015 at 12:38:12AM +0100, Johannes Stezenbach wrote:
-> > Those automotive applications you
-> > were talking about, what was the OS they were ported from
-> > and what was the messaging API they used?
+On Tue, Jan 20, 2015 at 11:57:12AM +0100, Johannes Stezenbach wrote:
+> On Tue, Jan 20, 2015 at 09:13:59AM +0800, Greg Kroah-Hartman wrote:
+> > On Tue, Jan 20, 2015 at 12:38:12AM +0100, Johannes Stezenbach wrote:
+> > > Those automotive applications you
+> > > were talking about, what was the OS they were ported from
+> > > and what was the messaging API they used?
+> > 
+> > They were ported from QNX and I don't know the exact api, it is wrapped
+> > up in a library layer for them to use.  And typically, they run about
+> > 40 thousand messages in the first few seconds of startup time.  Or was
+> > it 400 thousand?  Something huge and crazy to be doing on tiny ARM
+> > chips, but that's the IVI industry for you :(
 > 
-> They were ported from QNX and I don't know the exact api, it is wrapped
-> up in a library layer for them to use.  And typically, they run about
-> 40 thousand messages in the first few seconds of startup time.  Or was
-> it 400 thousand?  Something huge and crazy to be doing on tiny ARM
-> chips, but that's the IVI industry for you :(
+> So I did some googling and found in QNX servers create a channel
+> to receive messages, and clients connect to this channel.
+> Multiple clients can connect to the channel.
 
-So I did some googling and found in QNX servers create a channel
-to receive messages, and clients connect to this channel.
-Multiple clients can connect to the channel.
-But it is not a bus -- no multicast/broadcast, and no name
-service or policy rules like D-Bus has.  To me it looks
-to be similar in functionality to UNIX domain sockets.
+Hence, a bus :)
 
-My guess is that the people porting from QNX were just confused
-and their use of D-Bus was in error.  Maybe they should've used
-plain sockets, capnproto, ZeroMQ or whatever.
+> But it is not a bus -- no multicast/broadcast, and no name
+> service or policy rules like D-Bus has.  To me it looks
+> to be similar in functionality to UNIX domain sockets.
 
+It's not as complex as D-Bus, but it's still subscribing to things and
+getting messages.
 
-> > As I said before, I'm seeing about a dozen D-Bus messages per minute,
-> > nothing that would justify adding kdbus to the kernel for
-> > performance reasons.  Wrt security I'm also not aware of any
-> > open issues with D-Bus.  Thus I doubt normal users of D-Bus
-> > would see any benefit from kdbus.  I also think none of the
-> > applications I can install from my distribution has any performance
-> > issue with D-Bus.
-> 
-> That's because people have not done anything really needing performance
-> on the desktop over D-Bus in the past due to how slow the current
-> implementation is.  Now that this is being resolved, that can change,
-> and there are demos out there of even streaming audio over kdbus with no
-> problems.
-> 
-> But performance is not just the only reason we want this in the kernel,
-> I listed a whole long range of them.  Sure, it's great to now be faster,
-> cutting down the number of context switches and copies by a huge amount,
-> but the other things are equally important for future development
-> (namespaces, containers, security, early-boot, etc.)
-> 
-> > And this is the point where I ask myself if I missed something.
-> 
-> Don't focus purely on performance for your existing desktop system,
-> that's not the only use case here.  There are lots of others, as I
-> document, that can benefit and want this.
-> 
-> One "fun" thing I've been talking to someone about is the ability to
-> even port binder to be on top of kdbus.  But that's just a research
-> project, and requires some API changes on the userspace binder side, but
-> it shows real promise, and would then mean that we could deprecate the
-> old binder code and a few hundred million devices could then use kdbus
-> instead.  But that's long-term goals, not really all that relevant here,
-> but it shows that having a solid bus IPC mechanism is a powerful thing
-> that we have been missing in the past from Linux.
+> My guess is that the people porting from QNX were just confused
+> and their use of D-Bus was in error.  Maybe they should've used
+> plain sockets, capnproto, ZeroMQ or whatever.
 
-Well, IMHO you got it backwards.  Before adding a complex new IPC
-API to the kernel you should do the homework and gather some
-evidence that there will be enough users to justify the addition.
+I tend to trust that they knew what they were doing, they wouldn't have
+picked D-Bus for no good reason.
 
-But maybe I misunderstood the purpose of this thread and you're
-just advertising it to find possible users instead of already
-suggesting to merge it?  If someone has some convincing story
-to share why kdbus would solve their IPC needs, I'm all ears.
+> Well, IMHO you got it backwards.  Before adding a complex new IPC
+> API to the kernel you should do the homework and gather some
+> evidence that there will be enough users to justify the addition.
 
-(I'm sorry this implies your responses so far were not convincing:
-not verifiable facts, no numbers, no testimonials etc.)
+systemd wants this today for early boot.  It will remove lots of code
+and enable a lot of good things to happen.  The first email in this
+thread describes this quite well, is that not sufficient?
 
-FWIW, my gut feeling was that the earlier attempts to add a new
-IPC primitve like multicast UNIX domain sockets
-http://thread.gmane.org/gmane.linux.kernel/1255575/focus=1257999
-were a much saner approach.  But now I think the comments
-from this old thread have not been addressed, instead the
-new approach just made the thing more complex and
-put in ipc/ instead of net/ to bypass the guards.
+> FWIW, my gut feeling was that the earlier attempts to add a new
+> IPC primitve like multicast UNIX domain sockets
+> http://thread.gmane.org/gmane.linux.kernel/1255575/focus=1257999
+> were a much saner approach.  But now I think the comments
+> from this old thread have not been addressed, instead the
+> new approach just made the thing more complex and
+> put in ipc/ instead of net/ to bypass the guards.
 
+Not at all, the networking maintainers said that that proposal was not
+acceptable to them at all and it should not be done in the networking
+stack at all.  So this was solution was created instead, which provides
+a lot more things than the old networking patches did, which shows that
+the networking developers were right to reject it.
 
-Thanks,
-Johannes
+thanks,
+
+greg k-h
