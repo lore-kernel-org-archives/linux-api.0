@@ -1,76 +1,51 @@
-From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: [PATCH v5 4/5] Documentation: power: max77693-charger: Document
- exported sysfs entry
-Date: Tue, 20 Jan 2015 11:00:55 +0100
-Message-ID: <1421748056-25735-5-git-send-email-k.kozlowski@samsung.com>
+From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v5 5/5] MAINTAINERS: Add entry for Maxim chargers on Samsung
+ boards
+Date: Tue, 20 Jan 2015 11:00:56 +0100
+Message-ID: <1421748056-25735-6-git-send-email-k.kozlowski@samsung.com>
 References: <1421748056-25735-1-git-send-email-k.kozlowski@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1421748056-25735-1-git-send-email-k.kozlowski@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Samuel Ortiz <sameo@linux.intel.com>, Lee Jones <lee.jones@linaro.org>, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Kyungmin Park <kyungmin.park@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1421748056-25735-1-git-send-email-k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Document the settings exported by max77693 charger driver through sysfs
-entries:
- - fast_charge_timer
- - top_off_threshold_current
- - top_off_timer
+Add myself as supporter to help in reviewing patches for Maxim 14577 and
+77693 MUIC charger drivers. These are used on Exynos-based boards
+(Trats 2, Gear 1 and Gear 2).
 
-Signed-off-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Signed-off-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Acked-By: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- Documentation/ABI/testing/sysfs-class-power | 42 +++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
+ MAINTAINERS | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
-index 909e7602c717..369d2a2d7d3e 100644
---- a/Documentation/ABI/testing/sysfs-class-power
-+++ b/Documentation/ABI/testing/sysfs-class-power
-@@ -32,3 +32,45 @@ Description:
- 		Valid values:
- 		- 5, 6 or 7 (hours),
- 		- 0: disabled.
+diff --git a/MAINTAINERS b/MAINTAINERS
+index dbc17b3b51d4..c6fbb8cb58de 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -6152,6 +6152,13 @@ F:	Documentation/devicetree/bindings/i2c/max6697.txt
+ F:	drivers/hwmon/max6697.c
+ F:	include/linux/platform_data/max6697.h
+ 
++MAXIM MUIC CHARGER DRIVERS FOR EXYNOS BASED BOARDS
++M:	Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
++L:	linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
++S:	Supported
++F:	drivers/power/max14577_charger.c
++F:	drivers/power/max77693_charger.c
 +
-+What:		/sys/class/power_supply/max77693-charger/device/fast_charge_timer
-+Date:		January 2015
-+KernelVersion:	3.19.0
-+Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
-+Description:
-+		This entry shows and sets the maximum time the max77693
-+		charger operates in fast-charge mode. When the timer expires
-+		the device will terminate fast-charge mode (charging current
-+		will drop to 0 A) and will trigger interrupt.
-+
-+		Valid values:
-+		- 4 - 16 (hours), step by 2 (rounded down)
-+		- 0: disabled.
-+
-+What:		/sys/class/power_supply/max77693-charger/device/top_off_threshold_current
-+Date:		January 2015
-+KernelVersion:	3.19.0
-+Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
-+Description:
-+		This entry shows and sets the charging current threshold for
-+		entering top-off charging mode. When charging current in fast
-+		charge mode drops below this value, the charger will trigger
-+		interrupt and start top-off charging mode.
-+
-+		Valid values:
-+		- 100000 - 200000 (microamps), step by 25000 (rounded down)
-+		- 200000 - 350000 (microamps), step by 50000 (rounded down)
-+		- 0: disabled.
-+
-+What:		/sys/class/power_supply/max77693-charger/device/top_off_timer
-+Date:		January 2015
-+KernelVersion:	3.19.0
-+Contact:	Krzysztof Kozlowski <k.kozlowski@samsung.com>
-+Description:
-+		This entry shows and sets the maximum time the max77693
-+		charger operates in top-off charge mode. When the timer expires
-+		the device will terminate top-off charge mode (charging current
-+		will drop to 0 A) and will trigger interrupt.
-+
-+		Valid values:
-+		- 0 - 70 (minutes), step by 10 (rounded down)
+ MAXIRADIO FM RADIO RECEIVER DRIVER
+ M:	Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+ L:	linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 -- 
 1.9.1
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
