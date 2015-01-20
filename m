@@ -1,93 +1,127 @@
-From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v5 5/5] tty/serial: Add Spreadtrum sc9836-uart driver support
-Date: Tue, 20 Jan 2015 14:17:56 -0600
-Message-ID: <CAL_JsqJz+G6WjBSf=ye9rTLBUD9bw54szhZJROD5WTKMG99NHQ@mail.gmail.com>
-References: <1421402411-3479-1-git-send-email-chunyan.zhang@spreadtrum.com>
- <1421402411-3479-6-git-send-email-chunyan.zhang@spreadtrum.com>
- <CAL_JsqJg=BtanmR_rhYthCUhKbErs8viZ7MMMXr-PmPjUV4BRQ@mail.gmail.com>
- <CAAfSe-vqqpvbYe0bEeD-3_QsLYz4r7pxMuA1-L4cYRw9TY=NgA@mail.gmail.com>
- <CAL_JsqLTArm1v8ka39_KLq2jMKkK2ZXQ6-an=JSWVgTK1LWmOg@mail.gmail.com> <CAAfSe-tAwURc_P+-0+m22ao9r+Fud6Ae89JF8FGsWgg_49Mdhg@mail.gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: Re: Re: [PATCH tip 0/9] tracing: attach eBPF programs to tracepoints/syscalls/kprobe
+Date: Tue, 20 Jan 2015 12:33:03 -0800
+Message-ID: <CAMEtUuxGxCHc0ifdEeKXr=aq-znwGZ2g22+RdJ9SzWmYeSEnuA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAAfSe-tAwURc_P+-0+m22ao9r+Fud6Ae89JF8FGsWgg_49Mdhg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jason Cooper <jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org>, Florian Vaussard <florian.vaussard-p8DiymsW2f8@public.gmane.org>, Andrew Lunn <andrew-g2DYL2Zd6BY@public.gmane.org>, Robert Richter <rrichter-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>, Hayato Suzuki <hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Antony Pavlov <antonynpavlov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Joel Schopp <Joel.Schopp-5C7GfCeVMHo@public.gmane.org>Suravee Suthikulanit <S>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <dborkman@redhat.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Brendan Gregg <brendan.d.gregg@gmail.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "yrl.pp-manager.tt@hitachi.com" <yrl.pp-manager.tt@hitachi.com>, Jovi Zhangwei <jovi.zhangwei@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 20, 2015 at 1:37 AM, Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hi, Rob
+On Tue, Jan 20, 2015 at 3:57 AM, Masami Hiramatsu
+<masami.hiramatsu.pt@hitachi.com> wrote:
 >
-> I still have a question to be conform, specific describes below:
->
-> On Mon, Jan 19, 2015 at 10:11 PM, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On Mon, Jan 19, 2015 at 3:55 AM, Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>> On Sat, Jan 17, 2015 at 12:41 AM, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>>> On Fri, Jan 16, 2015 at 4:00 AM, Chunyan Zhang
->>>> <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org> wrote:
->>>>> Add a full sc9836-uart driver for SC9836 SoC which is based on the
->>>>> spreadtrum sharkl64 platform.
->>>>> This driver also support earlycon.
->>>>> This patch also replaced the spaces between the macros and their
->>>>> values with the tabs in serial_core.h
->>
->> [...]
->>
->>>>> +static int __init sprd_serial_init(void)
->>>>> +{
->>>>> +       int ret = 0;
->>>>> +
->>>>> +       ret = uart_register_driver(&sprd_uart_driver);
->>>>
->>>> This can be done in probe now. Then you can use module_platform_driver().
->>>>
->>>
->>> Question:
->>> 1. there are 4 uart ports configured in dt for sprd_serial, so probe
->>> will be called 4 times, but uart_register_driver only needs to be
->>> called one time, so can we use uart_driver.state to check if
->>> uart_register_driver has already been called ?
->>
->> Yes.
->>
->>> 2. if I use module_platform_driver() instead of
->>> module_init(sprd_serial_init)  and  module_exit(sprd_serial_exit) , I
->>> must move uart_unregister_driver() which is now processed in
->>> sprd_serial_exit() to sprd_remove(), there is a similar problem with
->>> probe(), sprd_remove() will also be called 4 times, and actually it
->>> should be called only one time. How can we deal with this case?
->>
->> Look at pl01x or Samsung UART drivers which have done this conversion.
->
-> Samsung UART does use module_platform_driver, but pl010/pl011 doesn't.
+> Ok, BTW, would you think is it possible to use a reusable small scratchpad
+> memory for passing arguments? (just a thought)
 
-That is because pl011 is an amba_device rather than a platform_device
-and there is not an equivalent macro for this boilerplate (although I
-think one has been posted recently).
+sure. doable, but what's the use case?
 
-> In the Samsung UART driver, uart_unregister_driver is processed in
-> remove(), like below:
+>> It's not usable for high frequency events which
+>> need this in-kernel aggregation.
+>> If events are rare, then just dumping everything
+>> into trace buffer is just fine. No in-kernel program is needed.
 >
-> static int s3c24xx_serial_remove(struct platform_device *dev)
-> {
->     struct uart_port *port = s3c24xx_dev_to_port(&dev->dev);
->
->     if (port) {
->         s3c24xx_serial_cpufreq_deregister(to_ourport(port));
->         uart_remove_one_port(&s3c24xx_uart_drv, port);
->     }
->
->     uart_unregister_driver(&s3c24xx_uart_drv);
-> }
->
-> if this serial has more than one ports, uart_unregister_driver() must
-> be called multiple times when the device need to be removed.
-> I think there may be a problem because that uart_unregister_driver()
-> will do kfree(drv->state) every time when it's called.
+> Hmm, let me ensure your point, the performance number is the reason why
+> we need to do it in the kernel, right? Not mainly for the flexibility but speed.
 
-Yes. Looks like a bug still in the Samsung driver. So follow what the
-pl01x driver does. It had the same problem, but there is a follow-up
-commit to fix it.
+if user space can do X at the same speed as kernel,
+then user space is a better choice and more flexible.
+In case of bpf programs two things user space cannot do:
+- fast aggregation without adding penalty to things being traced
+- access to in-kernel data structures
+And often both used together.
+Say, we want to monitor amount of network traffic per user.
+So we'd use trace_net_dev_xmit() tracepoint and do
+map[current_uid()] += skb_len
+as part of the program.
+Overhead will be tiny and users won't notice any slowdown.
+Trying to do the same in user space by enabling
+this tracepoint has two problems:
+high overhead and events are hard to aggregate
+per user, since trace has 'pid', but short lived
+processes will have dead pids in trace output.
 
-Rob
+> - perf probe and kprobe-event gives us a complete understandable
+>  interface for what will be recorded at where.
+>  (we can see the event definitions via kprobe_events interface,
+>   without any tools)
+> - kprobe-event gives a completely same interface as other tracepoint
+>   events.
+> - it also doesn't require any build-binary parts :) nor special tools.
+>   We can play with ftrace on just a small busybox.
+
+yeah, when debugging in busybox is the goal
+and 'cat' and 'echo' are your only tools, then
+debugfs interface is the only choice :)
+
+> However, this does NOT interfere your patch upstreaming. I just said current
+> ftrace method is also meaningful for some reasons :)
+
+of course :)
+To emphasize the point I was trying to make with tracex1:
+The program is a filter/aggregator. The bpf maps
+are not suitable for streaming the events. That's the job
+of ring buffer/trace_pipe. The program may choose
+to aggregate some events and discard them (by
+returning 0 from the program), and the rest of
+the events will be streamed to user space via
+ring buffer in the format statically defined by tracepoint
+or by kprobe arguments.
+The tracex1 example loads the program and then
+reads /sys/kernel/debugfs/tracing/trace_pipe...
+
+That part I was trying to improve with bpf_trace_printk:
+to give ability to programs to stream data in a format
+different from the one statically defined by tracepoints.
+But trace_printk has its disadvantages, so probably
+something cleaner is needed.
+Like in my earlier example of trace_net_dev_xmit,
+if the program could add printing of uid to arguments
+already printed, it would have helped user space.
+
+> By the way, I concern about that bpf compiler can become another systemtap,
+> especially if you build it on llvm.
+> Would you plan to develop it on kernel
+> tree? or apart from the kernel-side development?
+
+I'm not sure I completely understand the concern.
+perf is using a bunch of out-of-tree libraries.
+mcjit of llvm or libgccjit are another libraries.
+Or may be eventually eBPF can be generated
+by something like libpcap.
+
+Ideally I would like to see 'perf run script.txt'
+where script.txt is a program in a language suited
+for tracing. The tracing language not necessary
+will fit networking use cases. Currently I'm
+using C for both and it's the most convenient,
+but some folks complained that 'restricted'
+nature of this C is hard to grasp, so I can only
+encourage Jovi to do ktap language to bpf
+translator. If it generates bpf directly that's great,
+if it uses gcc or llvm backend that's fine too.
+
+> I think it is hard to sync the development if you do it out-of-tree.
+
+I think some pieces would have to be out of tree.
+I've kept standalone llvm backend across 3.2, 3.3 and 3.4
+but it gets polluted with ifdefs and not really a long term
+solution, so now I'm working on upstreaming it
+and feedback/codereviews I got, definitely improved
+the quality of the bpf backend.
+In case of backends the only bit to sync is instruction
+set itself, which is stable. New instructions may be
+added, but that's not a concern.
+llvm backend doesn't care what language is
+used in front-end or how programs are attached
+to tracepoints or what set of bpf helper
+functions is available.
+All such bits and the main interface for
+dynamic tracer, imo, should be in perf binary.
+What it does underneath and how
+many times it calls into llvm/gcc lib, won't be visible.
+In case of systemtap compile time, for whatever
+reason, is slow to the point of being annoying,
+but here it should be instant.
