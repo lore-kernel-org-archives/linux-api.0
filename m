@@ -1,222 +1,98 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH RFC 5/6] epoll: Add implementation for epoll_mod_wait
-Date: Tue, 20 Jan 2015 13:50:37 +0100
-Message-ID: <54BE4F1D.7090807@gmail.com>
-References: <1421747878-30744-1-git-send-email-famz@redhat.com> <1421747878-30744-6-git-send-email-famz@redhat.com>
+From: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
+Subject: Re: [PATCH v3 00/13] Add kdbus implementation
+Date: Tue, 20 Jan 2015 14:24:37 +0100
+Message-ID: <20150120132437.GB7545@sig21.net>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <20150119180642.GA27957@sig21.net>
+ <20150119183806.GA8479@kroah.com>
+ <20150119201906.GA337@sig21.net>
+ <20150119203155.GA15441@kroah.com>
+ <20150119233812.GA1874@sig21.net>
+ <20150120011359.GE865@kroah.com>
+ <20150120105712.GA6260@sig21.net>
+ <20150120112609.GA17198@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1421747878-30744-6-git-send-email-famz@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Fam Zheng <famz@redhat.com>, linux-kernel@vger.kernel.org
-Cc: mtk.manpages@gmail.com, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infrad>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150120112609.GA17198-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Fam Zheng,
-
-On 01/20/2015 10:57 AM, Fam Zheng wrote:
-> This syscall is a sequence of
+On Tue, Jan 20, 2015 at 07:26:09PM +0800, Greg Kroah-Hartman wrote:
+> On Tue, Jan 20, 2015 at 11:57:12AM +0100, Johannes Stezenbach wrote:
+> > 
+> > So I did some googling and found in QNX servers create a channel
+> > to receive messages, and clients connect to this channel.
+> > Multiple clients can connect to the channel.
 > 
-> 1) a number of epoll_ctl calls
-> 2) a epoll_pwait, with timeout enhancement.
+> Hence, a bus :)
 > 
-> The epoll_ctl operations are embeded so that application doesn't have to use
-> separate syscalls to insert/delete/update the fds before poll. It is more
-> efficient if the set of fds varies from one poll to another, which is the
-> common pattern for certain applications. 
-
-Which applications? Could we have some specific examples? This is a 
-complex API, and it needs good justification.
-
-> For example, depending on the input
-> buffer status, a data reading program may decide to temporarily not polling an
-> fd.
+> > But it is not a bus -- no multicast/broadcast, and no name
+> > service or policy rules like D-Bus has.  To me it looks
+> > to be similar in functionality to UNIX domain sockets.
 > 
-> Because the enablement of batching in this interface, even that regular
-> epoll_ctl call sequence, which manipulates several fds, can be optimized to one
-> single epoll_ctl_wait (while specifying spec=NULL to skip the poll part).
-         ^^^^^^^^^^^^^^ should be epoll_mod_wait
+> It's not as complex as D-Bus, but it's still subscribing to things and
+> getting messages.
 
-I think you mean to say:
+Apparently you don't read what I write, probably you're not interested
+in this discussion anymore...
+QNX uses the term "channel" but it does not refer to a bus
+or subscription facility, it is more like a socket in listening state.
 
-    The ability to batch multiple "epoll_ctl" operations into a single call
-    means that even when no wait events are requested (i.e., spec == NULL),
-    poll_mod_wait() provides a performance optimization over using multiple
-    epoll_ctl() calls.
-
-Right? If yes, please amend the commit message, and this text should
-also make its way into the revised man page under a heading "NOTES".
-
-> The only complexity is returning the result of each operation.  For each
-> epoll_mod_cmd in cmds, the field "error" is an output field that will be stored
-> the return code *iff* the command is executed (0 for success and -errno of the
-> equivalent epoll_ctl call), and will be left unchanged if the command is not
-> executed because some earlier error, for example due to failure of
-> copy_from_user to copy the array.
+> > My guess is that the people porting from QNX were just confused
+> > and their use of D-Bus was in error.  Maybe they should've used
+> > plain sockets, capnproto, ZeroMQ or whatever.
 > 
-> Applications can utilize this fact to do error handling: they could initialize
-> all the epoll_mod_wait.error to a positive value, which is by definition not a
-> possible output value from epoll_mod_wait. Then when the syscall returned, they
-> know whether or not the command is executed by comparing each error with the
-> init value, if they're different, they have the result of the command.
-> More roughly, they can put any non-zero and not distinguish "not run" from
-> failure.
+> I tend to trust that they knew what they were doing, they wouldn't have
+> picked D-Bus for no good reason.
 
-The "cmds' are not executed in a specified order plus the need to
-initialize the 'errors' fields to a positive value feels a bit ugly.
-And indeed the whole "command list was only partially run" case
-is not pretty. Am I correct to understand that if an error is found
-during execution of one of the "epoll_ctl" commands in 'cmds' then
-the system call will return -1 with errno set, indicating an error,
-even though the epoll interest list may have changed because some
-of the earlier 'cmds' executed successfully? This all seems a bit of
-a headache for user space.
+The automotive developers I had the pleasure to work with would
+use anything which is available via a mouse click in the
+commercial Embedded Linux SDK IDE of their choice :)
+Let's face it: QNX has a single IPC solution while Linux has
+a confusing multitude of possibilities.
 
-I have a couple of questions:
-
-Q1. I can see that batching "epoll_ctl" commands might be useful,
-since it results in fewer systems calls. But, does it really
-need to be bound together with the "epoll_pwait" functionality?
-(Perhaps this point was covered in previous discussions, but
-neither the message accompanying this patch nor the 0/6 man page
-provide a compelling rationale for the need to bind these two
-operations together.)
-
-Yes, I realize you might save a system call, but it makes for a
-cumbersome API that has the above headache, and also forces the 
-need for double pointer indirection in the 'spec' argument (i.e., 
-spec is a pointer to an array of structures where each element
-in turn includes an 'events' pointer that points to another array).
-
-Why not a simpler API with two syscalls such as:
-
-epoll_ctl_batch(int epfd, int flags,
-                int ncmds, struct epoll_mod_cmd *cmds);
-
-epoll_pwait1(int epfd, struct epoll_event *events, int maxevents, 
-             struct timespec *timeout, int clock_id, 
-             const sigset_t *sigmask, size_t sigsetsize);
-
-This gives us much of the benefit of reducing system calls, but 
-with greater simplicity. And epoll_ctl_batch() could simply return
-the number of 'cmds' that were successfully executed.)
-
-Q2. In the man page in 0/6 you said that the 'cmds' were not 
-guaranteed to be executed in order. Why not? If you did provide
-such a guarantee, then, when using your current epoll_mod_wait(),
-user space could do the following:
-
-1. Initialize the cmd.errors fields to zero.
-2. Call epoll_ctl_mod()
-3. Iterate through cmd.errors looking for the first nonzero 
-   field.
-
-> Also, timeout parameter is enhanced: timespec is used, compared to the old ms
-> scalar. This provides higher precision. 
-
-Yes, that change seemed inevitable. It slightly puzzled me at the time when
-Davide Libenzi added epoll_wait() that the timeout was milliseconds, even
-though pselect() already had demonstrated the need for higher precision.
-I should have called it out way back then :-{.
-
-> The parameter field in struct
-> epoll_wait_spec, "clockid", also makes it possible for users to use a different
-> clock than the default when it makes more sense.
+> > Well, IMHO you got it backwards.  Before adding a complex new IPC
+> > API to the kernel you should do the homework and gather some
+> > evidence that there will be enough users to justify the addition.
 > 
-> Signed-off-by: Fam Zheng <famz@redhat.com>
-> ---
->  fs/eventpoll.c           | 60 ++++++++++++++++++++++++++++++++++++++++++++++++
->  include/linux/syscalls.h |  5 ++++
->  2 files changed, 65 insertions(+)
+> systemd wants this today for early boot.  It will remove lots of code
+> and enable a lot of good things to happen.  The first email in this
+> thread describes this quite well, is that not sufficient?
+
+The first mail in this thread doesn't even mention systemd,
+instead it has a lot of "marketing" buzzwords.
+Of course it is no secret that systemd is the driving force
+behind kdbus, but no public record exists to explain why
+kdbus was chosen and designed the way it is, what alternatives
+were considered and rejected etc.  (or if there is, please send a link)
+
+> > FWIW, my gut feeling was that the earlier attempts to add a new
+> > IPC primitve like multicast UNIX domain sockets
+> > http://thread.gmane.org/gmane.linux.kernel/1255575/focus=1257999
+> > were a much saner approach.  But now I think the comments
+> > from this old thread have not been addressed, instead the
+> > new approach just made the thing more complex and
+> > put in ipc/ instead of net/ to bypass the guards.
 > 
-> diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-> index e7a116d..2cc22c9 100644
-> --- a/fs/eventpoll.c
-> +++ b/fs/eventpoll.c
-> @@ -2067,6 +2067,66 @@ SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
->  			      sigmask ? &ksigmask : NULL);
->  }
->  
-> +SYSCALL_DEFINE5(epoll_mod_wait, int, epfd, int, flags,
-> +		int, ncmds, struct epoll_mod_cmd __user *, cmds,
-> +		struct epoll_wait_spec __user *, spec)
-> +{
-> +	struct epoll_mod_cmd *kcmds = NULL;
-> +	int i, ret = 0;
-> +	int cmd_size = sizeof(struct epoll_mod_cmd) * ncmds;
-> +
-> +	if (flags)
-> +		return -EINVAL;
-> +	if (ncmds) {
-> +		if (!cmds)
-> +			return -EINVAL;
-> +		kcmds = kmalloc(cmd_size, GFP_KERNEL);
-> +		if (!kcmds)
-> +			return -ENOMEM;
-> +		if (copy_from_user(kcmds, cmds, cmd_size)) {
-> +			ret = -EFAULT;
-> +			goto out;
-> +		}
-> +	}
-> +	for (i = 0; i < ncmds; i++) {
-> +		struct epoll_event ev = (struct epoll_event) {
-> +			.events = kcmds[i].events,
-> +			.data = kcmds[i].data,
-> +		};
-> +		if (kcmds[i].flags) {
-> +			kcmds[i].error = ret = -EINVAL;
+> Not at all, the networking maintainers said that that proposal was not
+> acceptable to them at all and it should not be done in the networking
+> stack at all.  So this was solution was created instead, which provides
+> a lot more things than the old networking patches did, which shows that
+> the networking developers were right to reject it.
 
-To make the 'ret' change a little more obvious, maybe it's better to write
+Please read the gmane thread to the end.  It seems there were
+several indications that D-Bus can be improved in userspace
+using existing kernel facilities.  Havoc Pennington's mail
+I quoted in my first response also contains some hints
+about it.  I have no idea if any of this has ever been
+pursued.  While adding complexity to critical net/ code paths
+is probematic and a good reason to reject it, this was not
+the only reason, the major one being "not neccessary".
 
-			ret = kcmds[i].error = -EINVAL;
-
-> +			goto out;
-> +		}
-> +		kcmds[i].error = ret = ep_ctl_do(epfd, kcmds[i].op, kcmds[i].fd, ev);
-
-Likewise:
-		ret = kcmds[i].error = ep_ctl_do(epfd, kcmds[i].op, kcmds[i].fd, ev);
-
-> +		if (ret)
-> +			goto out;
-> +	}
-> +	if (spec) {
-> +		sigset_t ksigmask;
-> +		struct epoll_wait_spec kspec;
-> +		ktime_t timeout;
-> +
-> +		if(copy_from_user(&kspec, spec, sizeof(struct epoll_wait_spec)))
-
-Cosmetic point: s/if(/if (/
-
-> +			return -EFAULT;
-> +		if (kspec.sigmask) {
-> +			if (kspec.sigsetsize != sizeof(sigset_t))
-> +				return -EINVAL;
-> +			if (copy_from_user(&ksigmask, kspec.sigmask, sizeof(ksigmask)))
-> +				return -EFAULT;
-> +		}
-> +		timeout = timespec_to_ktime(kspec.timeout);
-> +		ret = epoll_pwait_do(epfd, kspec.events, kspec.maxevents,
-> +				     kspec.clockid, timeout,
-> +				     kspec.sigmask ? &ksigmask : NULL);
-
-If I understand correctly, the implementation means that the
-'size_t sigsetsize' field will probably need to be exposed to 
-applications. In the existing epoll_pwait() call (as in  ppoll()
-and pselect()) the 'size_t sigsetsize' argument is hidden by glibc.
-However, unless we expect glibc to do some structure copying to/from
-a structure that hides this field, then we're going end up exposing
-'size_t sigsetsize' to applications. (This could be avoided, if we
-split the API as I suggest above. glibc would do the same thing 
-in epoll_pwait1() that it currently does in epoll_pwait().)
 
 Thanks,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Johannes
