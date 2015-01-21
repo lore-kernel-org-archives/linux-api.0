@@ -1,148 +1,128 @@
-From: Baptiste Reynal <b.reynal@virtualopensystems.com>
-Subject: [PATCH v12 02/18] vfio: platform: probe to devices on the platform bus
-Date: Wed, 21 Jan 2015 13:49:50 +0100
-Message-ID: <1421844606-24751-3-git-send-email-b.reynal@virtualopensystems.com>
-References: <1421844606-24751-1-git-send-email-b.reynal@virtualopensystems.com>
-Return-path: <kvm-owner@vger.kernel.org>
-In-Reply-To: <1421844606-24751-1-git-send-email-b.reynal@virtualopensystems.com>
-Sender: kvm-owner@vger.kernel.org
-To: kvmarm@lists.cs.columbia.edu, iommu@lists.linux-fundation.org, alex.williamson@redhat.com
-Cc: will.deacon@arm.com, tech@virtualopensystems.com, christoffer.dall@linaro.org, eric.auger@linaro.org, kim.phillips@freescale.com, marc.zyngier@arm.com, Antonios Motakis <a.motakis@virtualopensystems.com>, open list <linux-kernel@vger.kernel.org>, "open list:VFIO DRIVER" <kvm@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+From: Milosz Tanski <milosz@adfin.com>
+Subject: Re: [PATCH v6 0/7] vfs: Non-blockling buffered fs read (page cache only)
+Date: Wed, 21 Jan 2015 09:55:20 -0500
+Message-ID: <CANP1eJEwYFKvCcPpzeRnXqeLTRf1qFs194ubMcQcsksCuEbpMQ@mail.gmail.com>
+References: <cover.1415636409.git.milosz@adfin.com>
+	<20141125150101.9596a09e.akpm@linux-foundation.org>
+	<CANP1eJEALZTwMv0Z1udmPWKhfGmpe+idtdRASp62Jm_V0N2HcQ@mail.gmail.com>
+	<20141202144200.a4ca81a46a43563a8874fd8e@linux-foundation.org>
+	<CANP1eJGVyBOt1rQ8jA4tMrNGX5X61-UWbVy6kKj_ByeTqAEOBQ@mail.gmail.com>
+	<20141204151102.2d7e11dca39f130c2dff2294@linux-foundation.org>
+	<E1Xwo5O-00GRl4-Cc@intern.SerNet.DE>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <E1Xwo5O-00GRl4-Cc@intern.SerNet.DE>
+Sender: owner-linux-aio@kvack.org
+To: Volker Lendecke <Volker.Lendecke@sernet.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Antonios Motakis <a.motakis@virtualopensystems.com>
+On Fri, Dec 5, 2014 at 3:17 AM, Volker Lendecke
+<Volker.Lendecke@sernet.de> wrote:
+>
+> On Thu, Dec 04, 2014 at 03:11:02PM -0800, Andrew Morton wrote:
+> > I can see all that, but it's handwaving.  Yes, preadv2() will perform
+> > better in some circumstances than fincore+pread.  But how much better?
+> > Enough to justify this approach, or not?
+> >
+> > Alas, the only way to really settle that is to implement fincore() and
+> > to subject it to a decent amount of realistic quantitative testing.
+> >
+> > Ho hum.
+> >
+> > Could you please hunt down some libuv developers, see if we can solicit
+> > some quality input from them?  As I said, we really don't want to merge
+> > this then find that people don't use it for some reason, or that it
+> > needs changes.
+>
+> All I can say from a Samba perspective is that none of the ARM based
+> Storage boxes I have seen so far do AIO because of the base footprint
+> for every read. For sequential reads kernel-level readahead could kick
+> in properly and we should be able to give them the best of both worlds:
+> No context switches in the default case but also good parallel behaviour
+> for other workloads.  The most important benchmark for those guys is to
+> read a DVD image, whether it makes sense or not.
 
-Driver to bind to Linux platform devices, and callbacks to discover their
-resources to be used by the main VFIO PLATFORM code.
 
-Signed-off-by: Antonios Motakis <a.motakis@virtualopensystems.com>
----
- drivers/vfio/platform/vfio_platform.c | 103 ++++++++++++++++++++++++++++++++++
- include/uapi/linux/vfio.h             |   1 +
- 2 files changed, 104 insertions(+)
- create mode 100644 drivers/vfio/platform/vfio_platform.c
+I just made wanted to share some progress on this. And I apologize for
+for all these different threads (this, LSF/FS and then Jermey and
+Volker).
 
-diff --git a/drivers/vfio/platform/vfio_platform.c b/drivers/vfio/platform/vfio_platform.c
-new file mode 100644
-index 0000000..cef645c
---- /dev/null
-+++ b/drivers/vfio/platform/vfio_platform.c
-@@ -0,0 +1,103 @@
-+/*
-+ * Copyright (C) 2013 - Virtual Open Systems
-+ * Author: Antonios Motakis <a.motakis@virtualopensystems.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License, version 2, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
+I recently implemented cifs support (via libsmbcli) for FIO so I can
+have some hard numbers on the benchmarks. So all you guys will be
+seeing more data soon enough. It's going to take a bit of time to put
+it together because it takes a lot of time to benchmark to make sure
+we have correct and non-noisy numbers.
+
+In the meantime I have some numbers from my first run here:
+http://i.imgur.com/05SMu8d.jpg
+
+Sorry for the link to the image, it was easier. The test case is a
+single FIO client doing 4K random reads, on localhost smbd server, on
+a fully cached file for 10 minutes with a 1 minute warm up.
+
+Threadpool + preadv2 for fast read does much better in terms of
+bandwidth and a bit better in terms of latency. Sync is still the
+fastest, but the gap is narrowed. Not a bad improvement for (Volker's)
+9 line change to samba code.
+
+Also, I look into why the gap between sync and threadpool + preadv2 is
+not even smaller. From my preliminary investigation it looks like the
+async threadpool code path does a lot more work then the sync call...
+even in the case we do the fast read. According to perf the hotest
+code userspace (smbd+ library) is malloc + free. So I imagine the
+optimizing the fast read case to avoid a bunch of extra request
+allocations will bring us even closer to sync.
+
+Again, I'll have and more complex test cases soon just wanted to share
+progress. I imagine that they'll the gap between threadpool + preadv2
+and just threadpool is going to get wider as add more blocking calls
+into the queue. I'll have number on that as soon as week can.
+
+
+diff --git a/source3/modules/vfs_default.c b/source3/modules/vfs_default.c
+index 5634cc0..90348d8 100644
+--- a/source3/modules/vfs_default.c
++++ b/source3/modules/vfs_default.c
+@@ -718,6 +741,7 @@ static struct tevent_req
+*vfswrap_pread_send(struct vfs_handle_struct *handle,
+        struct tevent_req *req;
+        struct vfswrap_asys_state *state;
+        int ret;
++       ssize_t nread;
+
+        req = tevent_req_create(mem_ctx, &state, struct vfswrap_asys_state);
+        if (req == NULL) {
+@@ -730,6 +754,14 @@ static struct tevent_req
+*vfswrap_pread_send(struct vfs_handle_struct *handle,
+        state->asys_ctx = handle->conn->sconn->asys_ctx;
+        state->req = req;
+
++       nread = pread2(fsp->fh->fd, data, n, offset, RWF_NONBLOCK);
++       // TODO: partial reads
++       if (nread == n) {
++               state->ret = nread;
++               tevent_req_done(req);
++               return tevent_req_post(req, ev);
++       }
 +
-+#include <linux/module.h>
-+#include <linux/slab.h>
-+#include <linux/vfio.h>
-+#include <linux/platform_device.h>
-+
-+#include "vfio_platform_private.h"
-+
-+#define DRIVER_VERSION  "0.10"
-+#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis@virtualopensystems.com>"
-+#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
-+
-+/* probing devices from the linux platform bus */
-+
-+static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
-+					      int num)
-+{
-+	struct platform_device *dev = (struct platform_device *) vdev->opaque;
-+	int i;
-+
-+	for (i = 0; i < dev->num_resources; i++) {
-+		struct resource *r = &dev->resource[i];
-+
-+		if (resource_type(r) & (IORESOURCE_MEM|IORESOURCE_IO)) {
-+			if (!num)
-+				return r;
-+
-+			num--;
-+		}
-+	}
-+	return NULL;
-+}
-+
-+static int get_platform_irq(struct vfio_platform_device *vdev, int i)
-+{
-+	struct platform_device *pdev = (struct platform_device *) vdev->opaque;
-+
-+	return platform_get_irq(pdev, i);
-+}
-+
-+static int vfio_platform_probe(struct platform_device *pdev)
-+{
-+	struct vfio_platform_device *vdev;
-+	int ret;
-+
-+	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-+	if (!vdev)
-+		return -ENOMEM;
-+
-+	vdev->opaque = (void *) pdev;
-+	vdev->name = pdev->name;
-+	vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
-+	vdev->get_resource = get_platform_resource;
-+	vdev->get_irq = get_platform_irq;
-+
-+	ret = vfio_platform_probe_common(vdev, &pdev->dev);
-+	if (ret)
-+		kfree(vdev);
-+
-+	return ret;
-+}
-+
-+static int vfio_platform_remove(struct platform_device *pdev)
-+{
-+	struct vfio_platform_device *vdev;
-+
-+	vdev = vfio_platform_remove_common(&pdev->dev);
-+	if (vdev) {
-+		kfree(vdev);
-+		return 0;
-+	}
-+
-+	return -EINVAL;
-+}
-+
-+static struct platform_driver vfio_platform_driver = {
-+	.probe		= vfio_platform_probe,
-+	.remove		= vfio_platform_remove,
-+	.driver	= {
-+		.name	= "vfio-platform",
-+		.owner	= THIS_MODULE,
-+	},
-+};
-+
-+module_platform_driver(vfio_platform_driver);
-+
-+MODULE_VERSION(DRIVER_VERSION);
-+MODULE_LICENSE("GPL v2");
-+MODULE_AUTHOR(DRIVER_AUTHOR);
-+MODULE_DESCRIPTION(DRIVER_DESC);
-diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-index 9ade02b..4e93a97 100644
---- a/include/uapi/linux/vfio.h
-+++ b/include/uapi/linux/vfio.h
-@@ -159,6 +159,7 @@ struct vfio_device_info {
- 	__u32	flags;
- #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
- #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
-+#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
- 	__u32	num_regions;	/* Max region index + 1 */
- 	__u32	num_irqs;	/* Max IRQ index + 1 */
- };
+        SMBPROFILE_BYTES_ASYNC_START(syscall_asys_pread, profile_p,
+                                     state->profile_bytes, n);
+        ret = asys_pread(state->asys_ctx, fsp->fh->fd, data, n, offset, req);
+
+
 -- 
-2.2.2
+Milosz Tanski
+CTO
+16 East 34th Street, 15th floor
+New York, NY 10016
 
+p: 646-253-9055
+e: milosz@adfin.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
