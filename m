@@ -1,177 +1,111 @@
-From: Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH RFC 5/6] epoll: Add implementation for epoll_mod_wait
-Date: Tue, 20 Jan 2015 23:56:17 -0800
-Message-ID: <20150121075617.GA21266@mew>
-References: <1421747878-30744-1-git-send-email-famz@redhat.com>
- <1421747878-30744-6-git-send-email-famz@redhat.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Wed, 21 Jan 2015 09:57:55 +0100
+Message-ID: <54BF6A13.2090008@gmail.com>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org> <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org> <54BE5F1F.8070703@gmail.com> <54BE957A.60305@zonque.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1421747878-30744-6-git-send-email-famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <54BE957A.60305-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz@>
+To: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZooxQFI55V6+gNQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 20, 2015 at 05:57:57PM +0800, Fam Zheng wrote:
-> This syscall is a sequence of
-> 
-> 1) a number of epoll_ctl calls
-> 2) a epoll_pwait, with timeout enhancement.
-> 
-> The epoll_ctl operations are embeded so that application doesn't have to use
-> separate syscalls to insert/delete/update the fds before poll. It is more
-> efficient if the set of fds varies from one poll to another, which is the
-> common pattern for certain applications. For example, depending on the input
-> buffer status, a data reading program may decide to temporarily not polling an
-> fd.
-> 
-> Because the enablement of batching in this interface, even that regular
-> epoll_ctl call sequence, which manipulates several fds, can be optimized to one
-> single epoll_ctl_wait (while specifying spec=NULL to skip the poll part).
-> 
-> The only complexity is returning the result of each operation.  For each
-> epoll_mod_cmd in cmds, the field "error" is an output field that will be stored
-> the return code *iff* the command is executed (0 for success and -errno of the
-> equivalent epoll_ctl call), and will be left unchanged if the command is not
-> executed because some earlier error, for example due to failure of
-> copy_from_user to copy the array.
-> 
-> Applications can utilize this fact to do error handling: they could initialize
-> all the epoll_mod_wait.error to a positive value, which is by definition not a
-> possible output value from epoll_mod_wait. Then when the syscall returned, they
-> know whether or not the command is executed by comparing each error with the
-> init value, if they're different, they have the result of the command.
-> More roughly, they can put any non-zero and not distinguish "not run" from
-> failure.
-> 
-> Also, timeout parameter is enhanced: timespec is used, compared to the old ms
-> scalar. This provides higher precision. The parameter field in struct
-> epoll_wait_spec, "clockid", also makes it possible for users to use a different
-> clock than the default when it makes more sense.
-> 
-> Signed-off-by: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  fs/eventpoll.c           | 60 ++++++++++++++++++++++++++++++++++++++++++++++++
->  include/linux/syscalls.h |  5 ++++
->  2 files changed, 65 insertions(+)
-> 
-> diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-> index e7a116d..2cc22c9 100644
-> --- a/fs/eventpoll.c
-> +++ b/fs/eventpoll.c
-> @@ -2067,6 +2067,66 @@ SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
->  			      sigmask ? &ksigmask : NULL);
->  }
->  
-> +SYSCALL_DEFINE5(epoll_mod_wait, int, epfd, int, flags,
-> +		int, ncmds, struct epoll_mod_cmd __user *, cmds,
-> +		struct epoll_wait_spec __user *, spec)
-> +{
-> +	struct epoll_mod_cmd *kcmds = NULL;
-> +	int i, ret = 0;
-> +	int cmd_size = sizeof(struct epoll_mod_cmd) * ncmds;
-> +
-> +	if (flags)
-> +		return -EINVAL;
-> +	if (ncmds) {
-> +		if (!cmds)
-> +			return -EINVAL;
-> +		kcmds = kmalloc(cmd_size, GFP_KERNEL);
-> +		if (!kcmds)
-> +			return -ENOMEM;
-> +		if (copy_from_user(kcmds, cmds, cmd_size)) {
-> +			ret = -EFAULT;
-> +			goto out;
-> +		}
-> +	}
-> +	for (i = 0; i < ncmds; i++) {
-> +		struct epoll_event ev = (struct epoll_event) {
-> +			.events = kcmds[i].events,
-> +			.data = kcmds[i].data,
-> +		};
-> +		if (kcmds[i].flags) {
-> +			kcmds[i].error = ret = -EINVAL;
-> +			goto out;
-> +		}
-> +		kcmds[i].error = ret = ep_ctl_do(epfd, kcmds[i].op, kcmds[i].fd, ev);
-> +		if (ret)
-> +			goto out;
-> +	}
-> +	if (spec) {
-> +		sigset_t ksigmask;
-> +		struct epoll_wait_spec kspec;
-> +		ktime_t timeout;
-> +
-> +		if(copy_from_user(&kspec, spec, sizeof(struct epoll_wait_spec)))
-> +			return -EFAULT;
-This should probably be goto out, or you'll leak kcmds.
+Hi Daniel,
 
-> +		if (kspec.sigmask) {
-> +			if (kspec.sigsetsize != sizeof(sigset_t))
-> +				return -EINVAL;
-Same here...
-
-> +			if (copy_from_user(&ksigmask, kspec.sigmask, sizeof(ksigmask)))
-> +				return -EFAULT;
-and here.
-
-> +		}
-> +		timeout = timespec_to_ktime(kspec.timeout);
-> +		ret = epoll_pwait_do(epfd, kspec.events, kspec.maxevents,
-> +				     kspec.clockid, timeout,
-> +				     kspec.sigmask ? &ksigmask : NULL);
-> +	}
-> +
-> +out:
-> +	if (ncmds && copy_to_user(cmds, kcmds, cmd_size))
-> +		return -EFAULT;
-This will also leak kcmds, it should be ret = -EFAULT. This case, however, seems
-to lead to a weird corner case: if cmds is read-only, we'll end up executing
-every command but fail to copy out the return values, so when userspace gets the
-EFAULT, it won't know whether anything was executed. But, getting an EFAULT here
-means you're probably doing something wrong anyways, so maybe not the biggest
-concern.
-
-> +	kfree(kcmds);
-> +	return ret;
-> +}
-> +
->  #ifdef CONFIG_COMPAT
->  COMPAT_SYSCALL_DEFINE6(epoll_pwait, int, epfd,
->  		       struct epoll_event __user *, events,
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index 85893d7..7156c80 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -12,6 +12,8 @@
->  #define _LINUX_SYSCALLS_H
->  
->  struct epoll_event;
-> +struct epoll_mod_cmd;
-> +struct epoll_wait_spec;
->  struct iattr;
->  struct inode;
->  struct iocb;
-> @@ -630,6 +632,9 @@ asmlinkage long sys_epoll_pwait(int epfd, struct epoll_event __user *events,
->  				int maxevents, int timeout,
->  				const sigset_t __user *sigmask,
->  				size_t sigsetsize);
-> +asmlinkage long sys_epoll_mod_wait(int epfd, int flags,
-> +				   int ncmds, struct epoll_mod_cmd __user * cmds,
-> +				   struct epoll_wait_spec __user * spec);
->  asmlinkage long sys_gethostname(char __user *name, int len);
->  asmlinkage long sys_sethostname(char __user *name, int len);
->  asmlinkage long sys_setdomainname(char __user *name, int len);
-> -- 
-> 1.9.3
+On 01/20/2015 06:50 PM, Daniel Mack wrote:
+> Hi Michael,
 > 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+> Thanks a lot for for intense review of the documentation. Much appreciated.
+> 
+> I've addressed all but the below issues, following your suggestions.
+
+Are your changes already visible somewhere?
+
+> On 01/20/2015 02:58 PM, Michael Kerrisk (man-pages) wrote:
+>>> +    and KDBUS_CMD_ENDPOINT_MAKE (see above).
+>>> +
+>>> +    Following items are expected for KDBUS_CMD_BUS_MAKE:
+>>> +    KDBUS_ITEM_MAKE_NAME
+>>> +      Contains a string to identify the bus name.
+>>
+>> So, up to here, I've seen no definition of 'kdbus_item', which leaves me 
+>> asking questions like: what subfield is KDBUS_ITEM_MAKE_NAME stored in?
+>> which subfield holds the pointer to the string?
+>>
+>> Somewhere earlier,  kdbus_item needs to be exaplained in more detail, 
+>> I think.
+> 
+> Hmm, you're quoting text from section 5, and section 4 actually
+> describes the concept of items quite well I believe?
+
+Well, Section 4 is pretty short. My point is that most of the various 
+blob formats (e.g., kdbus_pids, kdbus_caps, kdbus_memfd) are not
+documented in kdbus.txt. They all should be, IMO.
+
+>>> +  __s64 priority;
+>>> +    With KDBUS_RECV_USE_PRIORITY set in flags, receive the next message in
+>>> +    the queue with at least the given priority. If no such message is waiting
+>>> +    in the queue, -ENOMSG is returned.
+>>
+>> ###
+>> How do I simply select the highest priority message, without knowing what 
+>> its priority is?
+> 
+> The wording is indeed unclear here. KDBUS_RECV_USE_PRIORITY causes the
+> messages to be dequeued by their priority. The 'priority' field is
+> simply a filter that request a minimum priority. By setting this field
+> to the highest possible value, you effectively bypass the filter. I've
+> added a better description now.
+
+Thanks for the clarification.
+
+>>> +  -ENOMEM	The kernel memory is exhausted
+>>> +  -ENOTTY	Illegal ioctl command issued for the file descriptor
+>>
+>> Why ENOTTY here, rather than EINVAL? The latter is, I beleive, the usual 
+>> ioctl() error for invalid commands, I believe (If you keep ENOTTY, add an
+>> explanation in this document.)
+> 
+> Hmm, no. -ENOTTY is commonly used as return code when calling ioctls
+> that can't be handled by the FDs they're called on. 'man errno(3)' even
+> states: "ENOTTY   Inappropriate I/O control operation (POSIX.1)".
+
+Okay.
+
+>>> +  -EINVAL	Unsupported item attached to command
+>>> +
+>>> +For all ioctls that carry a struct as payload:
+>>> +
+>>> +  -EFAULT	The supplied data pointer was not 64-bit aligned, or was
+>>> +		inaccessible from the kernel side.
+>>> +  -EINVAL	The size inside the supplied struct was smaller than expected
+>>> +  -EMSGSIZE	The size inside the supplied struct was bigger than expected
+>>
+>> Why two different errors for smaller and larger than expected? (If you keep things this
+>> way, pelase explain the reason in this document.)
+> 
+> Providing a struct that is smaller than the minimum doesn't give the
+> ioctl a valid set of information to process the request. Hence, I think
+> -EINVAL is appropriate. However, -EMSGSIZE is something that users might
+> hit when they make message payloads too big, and I think it's good to
+> have a change to distinguish the two cases in error handling. I added
+> something in the document now.
+
+Thanks.
+
+> Again, thanks a lot for reading the documentation so accurately!
+
+You're welcome.
+
+Cheers,
+
+Michael
+
 
 -- 
-Omar
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
