@@ -1,184 +1,218 @@
-From: Fam Zheng <famz@redhat.com>
-Subject: Re: [PATCH RFC 5/6] epoll: Add implementation for epoll_mod_wait
-Date: Wed, 21 Jan 2015 16:59:00 +0800
-Message-ID: <20150121085900.GA25434@ad.nay.redhat.com>
+From: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC 0/6] epoll: Introduce new syscall "epoll_mod_wait"
+Date: Wed, 21 Jan 2015 17:05:53 +0800
+Message-ID: <20150121090553.GC23024@ad.nay.redhat.com>
 References: <1421747878-30744-1-git-send-email-famz@redhat.com>
- <1421747878-30744-6-git-send-email-famz@redhat.com>
- <20150121075617.GA21266@mew>
+ <54BE4EA4.6080901@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150121075617.GA21266@mew>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Omar Sandoval <osandov@osandov.com>
-Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peter>
+In-Reply-To: <54BE4EA4.6080901-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peter>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 01/20 23:56, Omar Sandoval wrote:
-> On Tue, Jan 20, 2015 at 05:57:57PM +0800, Fam Zheng wrote:
-> > This syscall is a sequence of
-> > 
-> > 1) a number of epoll_ctl calls
-> > 2) a epoll_pwait, with timeout enhancement.
-> > 
-> > The epoll_ctl operations are embeded so that application doesn't have to use
-> > separate syscalls to insert/delete/update the fds before poll. It is more
-> > efficient if the set of fds varies from one poll to another, which is the
-> > common pattern for certain applications. For example, depending on the input
-> > buffer status, a data reading program may decide to temporarily not polling an
-> > fd.
-> > 
-> > Because the enablement of batching in this interface, even that regular
-> > epoll_ctl call sequence, which manipulates several fds, can be optimized to one
-> > single epoll_ctl_wait (while specifying spec=NULL to skip the poll part).
-> > 
-> > The only complexity is returning the result of each operation.  For each
-> > epoll_mod_cmd in cmds, the field "error" is an output field that will be stored
-> > the return code *iff* the command is executed (0 for success and -errno of the
-> > equivalent epoll_ctl call), and will be left unchanged if the command is not
-> > executed because some earlier error, for example due to failure of
-> > copy_from_user to copy the array.
-> > 
-> > Applications can utilize this fact to do error handling: they could initialize
-> > all the epoll_mod_wait.error to a positive value, which is by definition not a
-> > possible output value from epoll_mod_wait. Then when the syscall returned, they
-> > know whether or not the command is executed by comparing each error with the
-> > init value, if they're different, they have the result of the command.
-> > More roughly, they can put any non-zero and not distinguish "not run" from
-> > failure.
-> > 
-> > Also, timeout parameter is enhanced: timespec is used, compared to the old ms
-> > scalar. This provides higher precision. The parameter field in struct
-> > epoll_wait_spec, "clockid", also makes it possible for users to use a different
-> > clock than the default when it makes more sense.
-> > 
-> > Signed-off-by: Fam Zheng <famz@redhat.com>
-> > ---
-> >  fs/eventpoll.c           | 60 ++++++++++++++++++++++++++++++++++++++++++++++++
-> >  include/linux/syscalls.h |  5 ++++
-> >  2 files changed, 65 insertions(+)
-> > 
-> > diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-> > index e7a116d..2cc22c9 100644
-> > --- a/fs/eventpoll.c
-> > +++ b/fs/eventpoll.c
-> > @@ -2067,6 +2067,66 @@ SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
-> >  			      sigmask ? &ksigmask : NULL);
-> >  }
-> >  
-> > +SYSCALL_DEFINE5(epoll_mod_wait, int, epfd, int, flags,
-> > +		int, ncmds, struct epoll_mod_cmd __user *, cmds,
-> > +		struct epoll_wait_spec __user *, spec)
-> > +{
-> > +	struct epoll_mod_cmd *kcmds = NULL;
-> > +	int i, ret = 0;
-> > +	int cmd_size = sizeof(struct epoll_mod_cmd) * ncmds;
-> > +
-> > +	if (flags)
-> > +		return -EINVAL;
-> > +	if (ncmds) {
-> > +		if (!cmds)
-> > +			return -EINVAL;
-> > +		kcmds = kmalloc(cmd_size, GFP_KERNEL);
-> > +		if (!kcmds)
-> > +			return -ENOMEM;
-> > +		if (copy_from_user(kcmds, cmds, cmd_size)) {
-> > +			ret = -EFAULT;
-> > +			goto out;
-> > +		}
-> > +	}
-> > +	for (i = 0; i < ncmds; i++) {
-> > +		struct epoll_event ev = (struct epoll_event) {
-> > +			.events = kcmds[i].events,
-> > +			.data = kcmds[i].data,
-> > +		};
-> > +		if (kcmds[i].flags) {
-> > +			kcmds[i].error = ret = -EINVAL;
-> > +			goto out;
-> > +		}
-> > +		kcmds[i].error = ret = ep_ctl_do(epfd, kcmds[i].op, kcmds[i].fd, ev);
-> > +		if (ret)
-> > +			goto out;
-> > +	}
-> > +	if (spec) {
-> > +		sigset_t ksigmask;
-> > +		struct epoll_wait_spec kspec;
-> > +		ktime_t timeout;
-> > +
-> > +		if(copy_from_user(&kspec, spec, sizeof(struct epoll_wait_spec)))
-> > +			return -EFAULT;
-> This should probably be goto out, or you'll leak kcmds.
+On Tue, 01/20 13:48, Michael Kerrisk (man-pages) wrote:
+> Hello Fam Zheng,
 > 
-> > +		if (kspec.sigmask) {
-> > +			if (kspec.sigsetsize != sizeof(sigset_t))
-> > +				return -EINVAL;
-> Same here...
+> I know this API has been through a number of iterations, and there were 
+> discussions about the design that led to it becoming more complex.
+> But, let us assume that someone has not seen those discussions,
+> or forgotten them, or is too lazy to go hunting list archives.
 > 
-> > +			if (copy_from_user(&ksigmask, kspec.sigmask, sizeof(ksigmask)))
-> > +				return -EFAULT;
-> and here.
+> Then: this patch series should somewhere have an explanation of
+> why the API is what it is, ideally with links to previous relevant
+> discussions. I see that you do part of that in
 > 
-> > +		}
-> > +		timeout = timespec_to_ktime(kspec.timeout);
-> > +		ret = epoll_pwait_do(epfd, kspec.events, kspec.maxevents,
-> > +				     kspec.clockid, timeout,
-> > +				     kspec.sigmask ? &ksigmask : NULL);
-> > +	}
-> > +
-> > +out:
-> > +	if (ncmds && copy_to_user(cmds, kcmds, cmd_size))
-> > +		return -EFAULT;
-> This will also leak kcmds, it should be ret = -EFAULT. This case, however, seems
-> to lead to a weird corner case: if cmds is read-only, we'll end up executing
-> every command but fail to copy out the return values, so when userspace gets the
-> EFAULT, it won't know whether anything was executed. But, getting an EFAULT here
-> means you're probably doing something wrong anyways, so maybe not the biggest
-> concern.
+>     [PATCH RFC 5/6] epoll: Add implementation for epoll_mod_wait
+> 
+> There are however no links to previous discussions in that mail (I guess
+> http://thread.gmane.org/gmane.linux.kernel/1861430/focus=91591 is most
+> relevant, nor is there any sort of change log in the commit message 
+> that explains the evolution of the API. Having those would ease the 
+> task of reviewers.
+> 
+> Coming back to THIS mail, this man page should also include an
+> explanation of why the API is what it is. That would include much
+> of the detail from the 5/6 patch, and probably more info besides.
+> 
+> Some specific points below.
+> 
+> On 01/20/2015 10:57 AM, Fam Zheng wrote:
+> > This adds a new system call, epoll_mod_wait. It's described as below:
+> > 
+> > NAME
+> >        epoll_mod_wait - modify and wait for I/O events on an epoll file
+> >                         descriptor
+> > 
+> > SYNOPSIS
+> > 
+> >        int epoll_mod_wait(int epfd, int flags,
+> >                           int ncmds, struct epoll_mod_cmd *cmds,
+> >                           struct epoll_wait_spec *spec);
+> > 
+> > DESCRIPTION
+> > 
+> >        The epoll_mod_wait() system call can be seen as an enhanced combination
+> >        of several epoll_ctl(2) calls, which are followed by an epoll_pwait(2)
+> >        call. It is superior in two cases:
+> >        
+> >        1) When epoll_ctl(2) are followed by epoll_wait(2), using epoll_mod_wait
+> >        will save context switches between user mode and kernel mode;
+> >
+> >        2) When you need higher precision than microsecond for wait timeout.
+> 
+> s/microsecond/millisecond/
 
-Yes, thanks! Will fix this.
+Yes, thanks for pointing out.
+
+> >        if all the commands are successfully executed (all the error fields are
+> >        set to 0), events are polled.
+> 
+> Does the operation execute all commands, or stop when it encounters the first 
+> error? In other words, when looping over the returned 'error' fields, what
+> is the termination condition for the user-space application?
+> 
+> (Yes, I know I can trivially inspect the patch 5/6 to answer this question, 
+> but the man page should explicitly state this so that I don't have to 
+> read the source, and also because it is only if you explicitly document 
+> the intended behavior that I can tell whether the actual implementation 
+> matches the intention.)
+
+
+> 
+> >        The last parameter "spec" is a pointer to struct epoll_wait_spec, which
+> >        contains the information about how to poll the events. If it's NULL, this
+> >        call will immediately return after running all the commands in cmds.
+> > 
+> >        The structure is defined as below:
+> > 
+> >            struct epoll_wait_spec {
+> > 
+> >                   /* The same as "maxevents" in epoll_pwait() */
+> >                   int maxevents;
+> > 
+> >                   /* The same as "events" in epoll_pwait() */
+> >                   struct epoll_event *events;
+> > 
+> >                   /* Which clock to use for timeout */
+> >                   int clockid;
+> 
+> Which clocks can be specified here?
+> CLOCK_MONOTONIC?
+> CLOCK_REALTIME?
+> CLOCK_PROCESS_CPUTIME_ID?
+> clock_getcpuclockid()?
+> others?
+
+At the moment we can limit it to CLOCK_MONOTONIC and CLOCK_REALTIME, I'm not
+sure any application care about others. It's not checked in this series, but
+should be done in v2.
+
+> 
+> >                   /* Maximum time to wait if there is no event */
+> >                   struct timespec timeout;
+> 
+> Is this timeout relative or absolute?
+
+Relative. I'll document it. Absolute timeout can be added later with new flags.
+
+> 
+> >                   /* The same as "sigmask" in epoll_pwait() */
+> >                   sigset_t *sigmask;
+> 
+> I just want to confirm here that 'sigmask' can be NULL, meaning
+> that we degenerate to epoll_wait() functionality, right?
+
+Yes. Will document explicitly.
+
+> 
+> >                   /* The same as "sigsetsize" in epoll_pwait() */
+> >                   size_t sigsetsize;
+> >            } EPOLL_PACKED;
+> 
+> What is the "EPOLL_PACKED" here for?
+
+Copy paste error. :)
+
+> 
+> > RETURN VALUE
+> > 
+> >        When any error occurs, epoll_mod_wait() returns -1 and errno is set
+> >        appropriately. All the "error" fields in cmds are unchanged before they
+> >        are executed, and if any cmds are executed, the "error" fields are set
+> >        to a return code accordingly. See also epoll_ctl for more details of the
+> >        return code.
+> > 
+> >        When successful, epoll_mod_wait() returns the number of file
+> >        descriptors ready for the requested I/O, or zero if no file descriptor
+> >        became ready during the requested timeout milliseconds.
+> 
+> s/milliseconds//
+
+OK.
+
+> 
+> > 
+> >        If spec is NULL, it returns 0 if all the commands are successful, and -1
+> >        if an error occured.
+> 
+> s/occured/occurred/
+
+OK, thanks.
+
+> 
+> > ERRORS
+> > 
+> >        These errors apply on either the return value of epoll_mod_wait or error
+> >        status for each command, respectively.
+> >
+> >        EBADF  epfd or fd is not a valid file descriptor.
+> > 
+> >        EFAULT The memory area pointed to by events is not accessible with write
+> >               permissions.
+> > 
+> >        EINTR  The call was interrupted by a signal handler before either any of
+> >               the requested events occurred or the timeout expired; see
+> >               signal(7).
+> > 
+> >        EINVAL epfd is not an epoll file descriptor, or maxevents is less than
+> >               or equal to zero, or fd is the same as epfd, or the requested
+> >               operation op is not supported by this interface.
+> 
+> Add: Or 'flags' is nonzero. Or a 'cmds.flags' field is nonzero.
+
+Yes.
+
+> 
+> >        EEXIST op was EPOLL_CTL_ADD, and the supplied file descriptor fd is
+> >               already registered with this epoll instance.
+> > 
+> >        ENOENT op was EPOLL_CTL_MOD or EPOLL_CTL_DEL, and fd is not registered
+> >               with this epoll instance.
+> > 
+> >        ENOMEM There was insufficient memory to handle the requested op control
+> >               operation.
+> > 
+> >        ENOSPC The limit imposed by /proc/sys/fs/epoll/max_user_watches was
+> >               encountered while trying to register (EPOLL_CTL_ADD) a new file
+> >               descriptor on an epoll instance.  See epoll(7) for further
+> >               details.
+> > 
+> >        EPERM  The target file fd does not support epoll.
+> > 
+> > CONFORMING TO
+> > 
+> >        epoll_mod_wait() is Linux-specific.
+> > 
+> > SEE ALSO
+> > 
+> >        epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
+> 
+> Please add sigprocmask(2).
+
+OK! Thanks for reviewing this.
 
 Fam
-
-> 
-> > +	kfree(kcmds);
-> > +	return ret;
-> > +}
-> > +
-> >  #ifdef CONFIG_COMPAT
-> >  COMPAT_SYSCALL_DEFINE6(epoll_pwait, int, epfd,
-> >  		       struct epoll_event __user *, events,
-> > diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> > index 85893d7..7156c80 100644
-> > --- a/include/linux/syscalls.h
-> > +++ b/include/linux/syscalls.h
-> > @@ -12,6 +12,8 @@
-> >  #define _LINUX_SYSCALLS_H
-> >  
-> >  struct epoll_event;
-> > +struct epoll_mod_cmd;
-> > +struct epoll_wait_spec;
-> >  struct iattr;
-> >  struct inode;
-> >  struct iocb;
-> > @@ -630,6 +632,9 @@ asmlinkage long sys_epoll_pwait(int epfd, struct epoll_event __user *events,
-> >  				int maxevents, int timeout,
-> >  				const sigset_t __user *sigmask,
-> >  				size_t sigsetsize);
-> > +asmlinkage long sys_epoll_mod_wait(int epfd, int flags,
-> > +				   int ncmds, struct epoll_mod_cmd __user * cmds,
-> > +				   struct epoll_wait_spec __user * spec);
-> >  asmlinkage long sys_gethostname(char __user *name, int len);
-> >  asmlinkage long sys_sethostname(char __user *name, int len);
-> >  asmlinkage long sys_setdomainname(char __user *name, int len);
-> > -- 
-> > 1.9.3
-> > 
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> > Please read the FAQ at  http://www.tux.org/lkml/
-> 
-> -- 
-> Omar
