@@ -1,330 +1,184 @@
 From: Fam Zheng <famz@redhat.com>
 Subject: Re: [PATCH RFC 5/6] epoll: Add implementation for epoll_mod_wait
-Date: Wed, 21 Jan 2015 16:58:27 +0800
-Message-ID: <20150121085827.GB23024@ad.nay.redhat.com>
+Date: Wed, 21 Jan 2015 16:59:00 +0800
+Message-ID: <20150121085900.GA25434@ad.nay.redhat.com>
 References: <1421747878-30744-1-git-send-email-famz@redhat.com>
  <1421747878-30744-6-git-send-email-famz@redhat.com>
- <54BE4F1D.7090807@gmail.com>
- <20150121045903.GA2858@fam-t430.nay.redhat.com>
- <54BF5ACE.6030206@gmail.com>
+ <20150121075617.GA21266@mew>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <54BF5ACE.6030206@gmail.com>
+In-Reply-To: <20150121075617.GA21266@mew>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, linux-fsdevel@vger.ke
+To: Omar Sandoval <osandov@osandov.com>
+Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peter>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 01/21 08:52, Michael Kerrisk (man-pages) wrote:
-> Hello Fam Zheng,
-> 
-> On 01/21/2015 05:59 AM, Fam Zheng wrote:
-> > On Tue, 01/20 13:50, Michael Kerrisk (man-pages) wrote:
-> >> Hello Fam Zheng,
-> >>
-> >> On 01/20/2015 10:57 AM, Fam Zheng wrote:
-> >>> This syscall is a sequence of
-> >>>
-> >>> 1) a number of epoll_ctl calls
-> >>> 2) a epoll_pwait, with timeout enhancement.
-> >>>
-> >>> The epoll_ctl operations are embeded so that application doesn't have to use
-> >>> separate syscalls to insert/delete/update the fds before poll. It is more
-> >>> efficient if the set of fds varies from one poll to another, which is the
-> >>> common pattern for certain applications. 
-> >>
-> >> Which applications? Could we have some specific examples? This is a 
-> >> complex API, and it needs good justification.
+On Tue, 01/20 23:56, Omar Sandoval wrote:
+> On Tue, Jan 20, 2015 at 05:57:57PM +0800, Fam Zheng wrote:
+> > This syscall is a sequence of
 > > 
-> > OK, I'll explain more in v2.
-> 
-> Okay.
-> 
-> [...]
-> 
-> >>> The only complexity is returning the result of each operation.  For each
-> >>> epoll_mod_cmd in cmds, the field "error" is an output field that will be stored
-> >>> the return code *iff* the command is executed (0 for success and -errno of the
-> >>> equivalent epoll_ctl call), and will be left unchanged if the command is not
-> >>> executed because some earlier error, for example due to failure of
-> >>> copy_from_user to copy the array.
-> >>>
-> >>> Applications can utilize this fact to do error handling: they could initialize
-> >>> all the epoll_mod_wait.error to a positive value, which is by definition not a
-> >>> possible output value from epoll_mod_wait. Then when the syscall returned, they
-> >>> know whether or not the command is executed by comparing each error with the
-> >>> init value, if they're different, they have the result of the command.
-> >>> More roughly, they can put any non-zero and not distinguish "not run" from
-> >>> failure.
-> >>
-> >> The "cmds' are not executed in a specified order plus the need to
-> >> initialize the 'errors' fields to a positive value feels a bit ugly.
-> >> And indeed the whole "command list was only partially run" case
-> >> is not pretty. Am I correct to understand that if an error is found
-> >> during execution of one of the "epoll_ctl" commands in 'cmds' then
-> >> the system call will return -1 with errno set, indicating an error,
-> >> even though the epoll interest list may have changed because some
-> >> of the earlier 'cmds' executed successfully? This all seems a bit of
-> >> a headache for user space.
+> > 1) a number of epoll_ctl calls
+> > 2) a epoll_pwait, with timeout enhancement.
 > > 
-> > This is the trade-off for batching. The best we can do is probably make this
-> > transactional: none or all of the commands succeeds. It will require a much
-> > more complex implementation, though. 
-> 
-> Transactional would be more comfortable for user-space, and while I 
-> can see that it would be complex to implement, perhaps the greater
-> point might be that the implementation is CPU expensive.
-
-Good point.
-
-> 
-> > But even with that, the error reporting on
-> > which command failed is a complication.
-> 
-> My suggestions below could make the error reporting much simpler...
-> 
-> >> I have a couple of questions:
-> >>
-> >> Q1. I can see that batching "epoll_ctl" commands might be useful,
-> >> since it results in fewer systems calls. But, does it really
-> >> need to be bound together with the "epoll_pwait" functionality?
-> >> (Perhaps this point was covered in previous discussions, but
-> >> neither the message accompanying this patch nor the 0/6 man page
-> >> provide a compelling rationale for the need to bind these two
-> >> operations together.)
-> >>
-> >> Yes, I realize you might save a system call, but it makes for a
-> >> cumbersome API that has the above headache, and also forces the 
-> >> need for double pointer indirection in the 'spec' argument (i.e., 
-> >> spec is a pointer to an array of structures where each element
-> >> in turn includes an 'events' pointer that points to another array).
-> >>
-> >> Why not a simpler API with two syscalls such as:
-> >>
-> >> epoll_ctl_batch(int epfd, int flags,
-> >>                 int ncmds, struct epoll_mod_cmd *cmds);
-> >>
-> >> epoll_pwait1(int epfd, struct epoll_event *events, int maxevents, 
-> >>              struct timespec *timeout, int clock_id, 
-> >>              const sigset_t *sigmask, size_t sigsetsize);
+> > The epoll_ctl operations are embeded so that application doesn't have to use
+> > separate syscalls to insert/delete/update the fds before poll. It is more
+> > efficient if the set of fds varies from one poll to another, which is the
+> > common pattern for certain applications. For example, depending on the input
+> > buffer status, a data reading program may decide to temporarily not polling an
+> > fd.
 > > 
-> > The problem is that there is no room for flags field in epoll_pwait1, which is
-> > asked for, in previous discussion thread [1].
-> 
-> Ahh yes, I certainly should not have forgotten that. But that's easily solved.
-> Do as for pselect6():
-> 
-> strcut sigargs {
->     const sigset_t *ss;
->     size_t          ss_len; /* Size (in bytes) of object pointed
->                                to by 'ss' */
-> }
-> 
-> epoll_pwait1(int epfd, struct epoll_event *events, int maxevents, 
->              struct timespec *timeout, int clock_id, int flags,
->              int timeout,
->              const struct sigargs *sargs);
-> 
-> > I don't see epoll_mod_wait as a *significantly more* complicated interface
-> > compared to epoll_ctl_batch and epoll_pwait1 above. 
-> 
-> My biggest problem with epoll_ctl_wait() is the complexity of error 
-> handling. epoll_ctl_batch and epoll_pwait1 would simplify that, as I 
-> note below.
-> 
-> Aside from that, I do think that epoll_ctl_wait() passes a certain
-> threshold of complexity that warrants good justification, which
-> I haven't really seen yet.
-
-OK, see below.
-
-> 
-> > In epoll_mod_wait, if you
-> > leave out ncmds and cmds, it is effectively a poll without batch; and if
-> > leaving out spec, it is effectively a batch without poll.
+> > Because the enablement of batching in this interface, even that regular
+> > epoll_ctl call sequence, which manipulates several fds, can be optimized to one
+> > single epoll_ctl_wait (while specifying spec=NULL to skip the poll part).
 > > 
-> > The most important change here is the timeout. IMO I wouldn't mind leaving out
-> > batching. Integrating it is requested by Andy:
+> > The only complexity is returning the result of each operation.  For each
+> > epoll_mod_cmd in cmds, the field "error" is an output field that will be stored
+> > the return code *iff* the command is executed (0 for success and -errno of the
+> > equivalent epoll_ctl call), and will be left unchanged if the command is not
+> > executed because some earlier error, for example due to failure of
+> > copy_from_user to copy the array.
 > > 
-> > [1]: http://thread.gmane.org/gmane.linux.kernel/1861430/focus=91591
+> > Applications can utilize this fact to do error handling: they could initialize
+> > all the epoll_mod_wait.error to a positive value, which is by definition not a
+> > possible output value from epoll_mod_wait. Then when the syscall returned, they
+> > know whether or not the command is executed by comparing each error with the
+> > init value, if they're different, they have the result of the command.
+> > More roughly, they can put any non-zero and not distinguish "not run" from
+> > failure.
 > > 
-> > which also made sense to me; I do have a patch in QEMU to call epoll_ctl for a
-> > number of times right before epoll_wait.
+> > Also, timeout parameter is enhanced: timespec is used, compared to the old ms
+> > scalar. This provides higher precision. The parameter field in struct
+> > epoll_wait_spec, "clockid", also makes it possible for users to use a different
+> > clock than the default when it makes more sense.
 > > 
-> > [Sorry for not putting anything into cover letter changelog, but it is also
-> > interesting to see people's reaction on the patch itself without bias of
-> > others' opinions. This indeed brings in more points. :]
-> 
-> But it also has the downside that the same discussions
-> may be repeated.
-
-Yes, that's why I definitely do it for any version that is > v1.
-
-> 
-> >> This gives us much of the benefit of reducing system calls, but 
-> >> with greater simplicity. And epoll_ctl_batch() could simply return
-> >> the number of 'cmds' that were successfully executed.)
-> >>
-> >> Q2. In the man page in 0/6 you said that the 'cmds' were not 
-> >> guaranteed to be executed in order. Why not? If you did provide
-> >> such a guarantee, then, when using your current epoll_mod_wait(),
-> >> user space could do the following:
+> > Signed-off-by: Fam Zheng <famz@redhat.com>
+> > ---
+> >  fs/eventpoll.c           | 60 ++++++++++++++++++++++++++++++++++++++++++++++++
+> >  include/linux/syscalls.h |  5 ++++
+> >  2 files changed, 65 insertions(+)
 > > 
-> > I guess we can make a guarentee on that.
+> > diff --git a/fs/eventpoll.c b/fs/eventpoll.c
+> > index e7a116d..2cc22c9 100644
+> > --- a/fs/eventpoll.c
+> > +++ b/fs/eventpoll.c
+> > @@ -2067,6 +2067,66 @@ SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
+> >  			      sigmask ? &ksigmask : NULL);
+> >  }
+> >  
+> > +SYSCALL_DEFINE5(epoll_mod_wait, int, epfd, int, flags,
+> > +		int, ncmds, struct epoll_mod_cmd __user *, cmds,
+> > +		struct epoll_wait_spec __user *, spec)
+> > +{
+> > +	struct epoll_mod_cmd *kcmds = NULL;
+> > +	int i, ret = 0;
+> > +	int cmd_size = sizeof(struct epoll_mod_cmd) * ncmds;
+> > +
+> > +	if (flags)
+> > +		return -EINVAL;
+> > +	if (ncmds) {
+> > +		if (!cmds)
+> > +			return -EINVAL;
+> > +		kcmds = kmalloc(cmd_size, GFP_KERNEL);
+> > +		if (!kcmds)
+> > +			return -ENOMEM;
+> > +		if (copy_from_user(kcmds, cmds, cmd_size)) {
+> > +			ret = -EFAULT;
+> > +			goto out;
+> > +		}
+> > +	}
+> > +	for (i = 0; i < ncmds; i++) {
+> > +		struct epoll_event ev = (struct epoll_event) {
+> > +			.events = kcmds[i].events,
+> > +			.data = kcmds[i].data,
+> > +		};
+> > +		if (kcmds[i].flags) {
+> > +			kcmds[i].error = ret = -EINVAL;
+> > +			goto out;
+> > +		}
+> > +		kcmds[i].error = ret = ep_ctl_do(epfd, kcmds[i].op, kcmds[i].fd, ev);
+> > +		if (ret)
+> > +			goto out;
+> > +	}
+> > +	if (spec) {
+> > +		sigset_t ksigmask;
+> > +		struct epoll_wait_spec kspec;
+> > +		ktime_t timeout;
+> > +
+> > +		if(copy_from_user(&kspec, spec, sizeof(struct epoll_wait_spec)))
+> > +			return -EFAULT;
+> This should probably be goto out, or you'll leak kcmds.
 > 
-> I'm puzzled by that response. Surely you *must* guarantee it.
-> If there's no defined order, then if the batch includes multiple 
-> commands that operate on the same FD, the result is undefined 
-> unless you provide that guarantee. (Unless, of course, you want to
-> explicitly specify that using the same FD multiple times in the
-> batch gives undefined behavior.)
-
-OK. Then let's guarentee it.
-
+> > +		if (kspec.sigmask) {
+> > +			if (kspec.sigsetsize != sizeof(sigset_t))
+> > +				return -EINVAL;
+> Same here...
 > 
-> >> 1. Initialize the cmd.errors fields to zero.
-> >> 2. Call epoll_ctl_mod()
-> >> 3. Iterate through cmd.errors looking for the first nonzero 
-> >>    field.
-> > 
-> > It's close, but zero is not good enough, if copy_from_user of cmds failed in
-> > the first place. Impossible value, or error value, will be safer.
+> > +			if (copy_from_user(&ksigmask, kspec.sigmask, sizeof(ksigmask)))
+> > +				return -EFAULT;
+> and here.
 > 
-> See my comment in the earlier mail. If you split this into two 
-> APIs, and epoll_ctl_batch() is guaranteed to execute 'cmds' in order, 
-> then the return value of epoll_ctl_batch() could be used to tell
-> user space how many commands succeeded. Much simpler!
+> > +		}
+> > +		timeout = timespec_to_ktime(kspec.timeout);
+> > +		ret = epoll_pwait_do(epfd, kspec.events, kspec.maxevents,
+> > +				     kspec.clockid, timeout,
+> > +				     kspec.sigmask ? &ksigmask : NULL);
+> > +	}
+> > +
+> > +out:
+> > +	if (ncmds && copy_to_user(cmds, kcmds, cmd_size))
+> > +		return -EFAULT;
+> This will also leak kcmds, it should be ret = -EFAULT. This case, however, seems
+> to lead to a weird corner case: if cmds is read-only, we'll end up executing
+> every command but fail to copy out the return values, so when userspace gets the
+> EFAULT, it won't know whether anything was executed. But, getting an EFAULT here
+> means you're probably doing something wrong anyways, so maybe not the biggest
+> concern.
 
-Yes it is much simpler. However the reason to add batching in the first place is
-to make epoll faster, by reducing syscalls. Splitting makes the result
-sub-optimal: we still need at least 2 calls instead of 1.  Each one of the three
-proposed new call *is* a step forward, but I don't think we will have everything
-solved even by implementing them all. Compromise needed between performance or
-complexity.
+Yes, thanks! Will fix this.
 
-My take for simplicity will be leaving epoll_ctl as-is, and my take for
-performance will be epoll_pwait1. And I don't really like putting my time on
-epoll_ctl_batch, thinking it as a ambivalent compromise in between.
-
-Andy, will you be OK with the above epoll_pwait1? Or do you have more
-justifications for epoll_mod_and_wait?
-
-> 
-> >>> Also, timeout parameter is enhanced: timespec is used, compared to the old ms
-> >>> scalar. This provides higher precision. 
-> >>
-> >> Yes, that change seemed inevitable. It slightly puzzled me at the time when
-> >> Davide Libenzi added epoll_wait() that the timeout was milliseconds, even
-> >> though pselect() already had demonstrated the need for higher precision.
-> >> I should have called it out way back then :-{.
-> >>
-> >>> The parameter field in struct
-> >>> epoll_wait_spec, "clockid", also makes it possible for users to use a different
-> >>> clock than the default when it makes more sense.
-> >>>
-> >>> Signed-off-by: Fam Zheng <famz@redhat.com>
-> >>> ---
-> >>>  fs/eventpoll.c           | 60 ++++++++++++++++++++++++++++++++++++++++++++++++
-> >>>  include/linux/syscalls.h |  5 ++++
-> >>>  2 files changed, 65 insertions(+)
-> >>>
-> >>> diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-> >>> index e7a116d..2cc22c9 100644
-> >>> --- a/fs/eventpoll.c
-> >>> +++ b/fs/eventpoll.c
-> >>> @@ -2067,6 +2067,66 @@ SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
-> >>>  			      sigmask ? &ksigmask : NULL);
-> >>>  }
-> >>>  
-> >>> +SYSCALL_DEFINE5(epoll_mod_wait, int, epfd, int, flags,
-> >>> +		int, ncmds, struct epoll_mod_cmd __user *, cmds,
-> >>> +		struct epoll_wait_spec __user *, spec)
-> >>> +{
-> >>> +	struct epoll_mod_cmd *kcmds = NULL;
-> >>> +	int i, ret = 0;
-> >>> +	int cmd_size = sizeof(struct epoll_mod_cmd) * ncmds;
-> >>> +
-> >>> +	if (flags)
-> >>> +		return -EINVAL;
-> >>> +	if (ncmds) {
-> >>> +		if (!cmds)
-> >>> +			return -EINVAL;
-> >>> +		kcmds = kmalloc(cmd_size, GFP_KERNEL);
-> >>> +		if (!kcmds)
-> >>> +			return -ENOMEM;
-> >>> +		if (copy_from_user(kcmds, cmds, cmd_size)) {
-> >>> +			ret = -EFAULT;
-> >>> +			goto out;
-> >>> +		}
-> >>> +	}
-> >>> +	for (i = 0; i < ncmds; i++) {
-> >>> +		struct epoll_event ev = (struct epoll_event) {
-> >>> +			.events = kcmds[i].events,
-> >>> +			.data = kcmds[i].data,
-> >>> +		};
-> >>> +		if (kcmds[i].flags) {
-> >>> +			kcmds[i].error = ret = -EINVAL;
-> >>
-> >> To make the 'ret' change a little more obvious, maybe it's better to write
-> >>
-> >> 			ret = kcmds[i].error = -EINVAL;
-> >>
-> >>> +			goto out;
-> >>> +		}
-> >>> +		kcmds[i].error = ret = ep_ctl_do(epfd, kcmds[i].op, kcmds[i].fd, ev);
-> >>
-> >> Likewise:
-> >> 		ret = kcmds[i].error = ep_ctl_do(epfd, kcmds[i].op, kcmds[i].fd, ev);
-> >>
-> >>> +		if (ret)
-> >>> +			goto out;
-> >>> +	}
-> >>> +	if (spec) {
-> >>> +		sigset_t ksigmask;
-> >>> +		struct epoll_wait_spec kspec;
-> >>> +		ktime_t timeout;
-> >>> +
-> >>> +		if(copy_from_user(&kspec, spec, sizeof(struct epoll_wait_spec)))
-> >>
-> >> Cosmetic point: s/if(/if (/
-> >>
-> >>> +			return -EFAULT;
-> >>> +		if (kspec.sigmask) {
-> >>> +			if (kspec.sigsetsize != sizeof(sigset_t))
-> >>> +				return -EINVAL;
-> >>> +			if (copy_from_user(&ksigmask, kspec.sigmask, sizeof(ksigmask)))
-> >>> +				return -EFAULT;
-> >>> +		}
-> >>> +		timeout = timespec_to_ktime(kspec.timeout);
-> >>> +		ret = epoll_pwait_do(epfd, kspec.events, kspec.maxevents,
-> >>> +				     kspec.clockid, timeout,
-> >>> +				     kspec.sigmask ? &ksigmask : NULL);
-> >>
-> >> If I understand correctly, the implementation means that the
-> >> 'size_t sigsetsize' field will probably need to be exposed to 
-> >> applications. In the existing epoll_pwait() call (as in  ppoll()
-> >> and pselect()) the 'size_t sigsetsize' argument is hidden by glibc.
-> >> However, unless we expect glibc to do some structure copying to/from
-> >> a structure that hides this field, then we're going end up exposing
-> >> 'size_t sigsetsize' to applications. (This could be avoided, if we
-> >> split the API as I suggest above. glibc would do the same thing 
-> >> in epoll_pwait1() that it currently does in epoll_pwait().)
-> 
-> You missed responding to this point; I think it matters.
-> (There were also some other points to consider in my reply 
-> to your 0/6 mail.)
-> 
-
-My bad, something I typed when replying went into /dev/null for unknown reasons,
-what I had was:
-
-This should be easy to solve: glibc can be responsible for building spec, and
-applications will do something like:
-
-	epoll_mod_wait(epfd, ncmds, cmds, maxevents, events, clockid,
-		       timeout, sigmask);
-
-Thanks,
 Fam
+
+> 
+> > +	kfree(kcmds);
+> > +	return ret;
+> > +}
+> > +
+> >  #ifdef CONFIG_COMPAT
+> >  COMPAT_SYSCALL_DEFINE6(epoll_pwait, int, epfd,
+> >  		       struct epoll_event __user *, events,
+> > diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> > index 85893d7..7156c80 100644
+> > --- a/include/linux/syscalls.h
+> > +++ b/include/linux/syscalls.h
+> > @@ -12,6 +12,8 @@
+> >  #define _LINUX_SYSCALLS_H
+> >  
+> >  struct epoll_event;
+> > +struct epoll_mod_cmd;
+> > +struct epoll_wait_spec;
+> >  struct iattr;
+> >  struct inode;
+> >  struct iocb;
+> > @@ -630,6 +632,9 @@ asmlinkage long sys_epoll_pwait(int epfd, struct epoll_event __user *events,
+> >  				int maxevents, int timeout,
+> >  				const sigset_t __user *sigmask,
+> >  				size_t sigsetsize);
+> > +asmlinkage long sys_epoll_mod_wait(int epfd, int flags,
+> > +				   int ncmds, struct epoll_mod_cmd __user * cmds,
+> > +				   struct epoll_wait_spec __user * spec);
+> >  asmlinkage long sys_gethostname(char __user *name, int len);
+> >  asmlinkage long sys_sethostname(char __user *name, int len);
+> >  asmlinkage long sys_setdomainname(char __user *name, int len);
+> > -- 
+> > 1.9.3
+> > 
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > Please read the FAQ at  http://www.tux.org/lkml/
+> 
+> -- 
+> Omar
