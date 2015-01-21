@@ -1,33 +1,148 @@
-From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC 5/6] epoll: Add implementation for epoll_mod_wait
-Date: Wed, 21 Jan 2015 12:50:44 +0100
-Message-ID: <54BF9294.3070902@redhat.com>
-References: <1421747878-30744-1-git-send-email-famz@redhat.com> <1421747878-30744-6-git-send-email-famz@redhat.com> <54BE4F1D.7090807@gmail.com> <20150121045903.GA2858@fam-t430.nay.redhat.com> <54BF5ACE.6030206@gmail.com> <20150121085827.GB23024@ad.nay.redhat.com> <54BF814F.7090703@redhat.com> <20150121111404.GA3804@ad.nay.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150121111404.GA3804-ZfWej9ACyHUXGNroddHbYwC/G2K4zDHf@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu
+From: Baptiste Reynal <b.reynal@virtualopensystems.com>
+Subject: [PATCH v12 02/18] vfio: platform: probe to devices on the platform bus
+Date: Wed, 21 Jan 2015 13:49:50 +0100
+Message-ID: <1421844606-24751-3-git-send-email-b.reynal@virtualopensystems.com>
+References: <1421844606-24751-1-git-send-email-b.reynal@virtualopensystems.com>
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <1421844606-24751-1-git-send-email-b.reynal@virtualopensystems.com>
+Sender: kvm-owner@vger.kernel.org
+To: kvmarm@lists.cs.columbia.edu, iommu@lists.linux-fundation.org, alex.williamson@redhat.com
+Cc: will.deacon@arm.com, tech@virtualopensystems.com, christoffer.dall@linaro.org, eric.auger@linaro.org, kim.phillips@freescale.com, marc.zyngier@arm.com, Antonios Motakis <a.motakis@virtualopensystems.com>, open list <linux-kernel@vger.kernel.org>, "open list:VFIO DRIVER" <kvm@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+From: Antonios Motakis <a.motakis@virtualopensystems.com>
 
+Driver to bind to Linux platform devices, and callbacks to discover their
+resources to be used by the main VFIO PLATFORM code.
 
-On 21/01/2015 12:14, Fam Zheng wrote:
-> > My take for simplicity will be leaving epoll_ctl as-is, and my take for
-> > performance will be epoll_pwait1. And I don't really like putting my time on
-> > epoll_ctl_batch, thinking it as a ambivalent compromise in between.
-> 
-> > I agree with Michael actually.  The big change is going from O(n)
-> > epoll_ctl calls to O(1), and epoll_ctl_batch achieves that just fine.
-> > Changing 2 syscalls to 1 is the icing on the cake, but we're talking of
-> > a fraction of a microsecond.
-> 
-> Maybe I'm missing something, but in common cases, the set of fds for epoll_wait
-> doesn't change that radically from one iteration to another, does it?
+Signed-off-by: Antonios Motakis <a.motakis@virtualopensystems.com>
+---
+ drivers/vfio/platform/vfio_platform.c | 103 ++++++++++++++++++++++++++++++++++
+ include/uapi/linux/vfio.h             |   1 +
+ 2 files changed, 104 insertions(+)
+ create mode 100644 drivers/vfio/platform/vfio_platform.c
 
-That depends on the application.
+diff --git a/drivers/vfio/platform/vfio_platform.c b/drivers/vfio/platform/vfio_platform.c
+new file mode 100644
+index 0000000..cef645c
+--- /dev/null
++++ b/drivers/vfio/platform/vfio_platform.c
+@@ -0,0 +1,103 @@
++/*
++ * Copyright (C) 2013 - Virtual Open Systems
++ * Author: Antonios Motakis <a.motakis@virtualopensystems.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License, version 2, as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <linux/module.h>
++#include <linux/slab.h>
++#include <linux/vfio.h>
++#include <linux/platform_device.h>
++
++#include "vfio_platform_private.h"
++
++#define DRIVER_VERSION  "0.10"
++#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis@virtualopensystems.com>"
++#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
++
++/* probing devices from the linux platform bus */
++
++static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
++					      int num)
++{
++	struct platform_device *dev = (struct platform_device *) vdev->opaque;
++	int i;
++
++	for (i = 0; i < dev->num_resources; i++) {
++		struct resource *r = &dev->resource[i];
++
++		if (resource_type(r) & (IORESOURCE_MEM|IORESOURCE_IO)) {
++			if (!num)
++				return r;
++
++			num--;
++		}
++	}
++	return NULL;
++}
++
++static int get_platform_irq(struct vfio_platform_device *vdev, int i)
++{
++	struct platform_device *pdev = (struct platform_device *) vdev->opaque;
++
++	return platform_get_irq(pdev, i);
++}
++
++static int vfio_platform_probe(struct platform_device *pdev)
++{
++	struct vfio_platform_device *vdev;
++	int ret;
++
++	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
++	if (!vdev)
++		return -ENOMEM;
++
++	vdev->opaque = (void *) pdev;
++	vdev->name = pdev->name;
++	vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
++	vdev->get_resource = get_platform_resource;
++	vdev->get_irq = get_platform_irq;
++
++	ret = vfio_platform_probe_common(vdev, &pdev->dev);
++	if (ret)
++		kfree(vdev);
++
++	return ret;
++}
++
++static int vfio_platform_remove(struct platform_device *pdev)
++{
++	struct vfio_platform_device *vdev;
++
++	vdev = vfio_platform_remove_common(&pdev->dev);
++	if (vdev) {
++		kfree(vdev);
++		return 0;
++	}
++
++	return -EINVAL;
++}
++
++static struct platform_driver vfio_platform_driver = {
++	.probe		= vfio_platform_probe,
++	.remove		= vfio_platform_remove,
++	.driver	= {
++		.name	= "vfio-platform",
++		.owner	= THIS_MODULE,
++	},
++};
++
++module_platform_driver(vfio_platform_driver);
++
++MODULE_VERSION(DRIVER_VERSION);
++MODULE_LICENSE("GPL v2");
++MODULE_AUTHOR(DRIVER_AUTHOR);
++MODULE_DESCRIPTION(DRIVER_DESC);
+diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+index 9ade02b..4e93a97 100644
+--- a/include/uapi/linux/vfio.h
++++ b/include/uapi/linux/vfio.h
+@@ -159,6 +159,7 @@ struct vfio_device_info {
+ 	__u32	flags;
+ #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
+ #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
++#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
+ 	__u32	num_regions;	/* Max region index + 1 */
+ 	__u32	num_irqs;	/* Max IRQ index + 1 */
+ };
+-- 
+2.2.2
 
-Paolo
