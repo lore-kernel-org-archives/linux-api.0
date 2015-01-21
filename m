@@ -1,41 +1,42 @@
-From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Subject: Re: [PATCH 01/13] kdbus: add documentation
-Date: Wed, 21 Jan 2015 10:19:13 -0500
-Message-ID: <20150121151913.GA4798@thunk.org>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
- <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
- <54BE5DC8.70706@gmail.com>
- <54BE9D08.7010804@zonque.org>
- <54BF805B.4000609@gmail.com>
+From: Pawel Moll <pawel.moll@arm.com>
+Subject: Re: [PATCH v4 1/3] perf: Use monotonic clock as a source for
+ timestamps
+Date: Wed, 21 Jan 2015 15:47:24 +0000
+Message-ID: <1421855244.14076.63.camel@arm.com>
+References: <1415292718-19785-1-git-send-email-pawel.moll@arm.com>
+	 <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
+	 <1417100750.4371.1.camel@arm.com> <1418305153.4037.1.camel@arm.com>
+	 <20150105130141.GQ30905@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54BF805B.4000609-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150105130141.GQ30905@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Ingo Molnar <mingo@redhat.com>, Richard Cochran <richardcochran@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, John Stultz <john.stultz@linaro.org>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Christopher Covington <cov@codeaurora.org>, Namhyung Kim <namhyung@kernel.org>, David Ahern <dsahern@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Tomeu Vizoso <tomeu@tomeuvizoso.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 21, 2015 at 11:32:59AM +0100, Michael Kerrisk (man-pages) wrote:
-> It's rather an optional driver than a core kernel feature.
+On Mon, 2015-01-05 at 13:01 +0000, Peter Zijlstra wrote:
+> On Thu, Dec 11, 2014 at 01:39:13PM +0000, Pawel Moll wrote:
+> > On Thu, 2014-11-27 at 15:05 +0000, Pawel Moll wrote:
+> > > It's been 3 weeks without any negative feedback (no feedback at all, but
+> > > I take the optimistic view :-)...
+> > > 
+> > > How about queuing at least this patch alone for the incoming merge
+> > > window? Or at least getting it into -next, with the view at 3.20?
+> > 
+> > It's been another two weeks... How about getting it queued for v3.20
+> > then?
 > 
-> Given the various things that I've seen said about kdbus, the
-> preceding sentence makes little sense to me:
-> 
-> * kdbus will be the framework supporting user-space D-Bus in the
->   future, and also used by systemd, and so on pretty much every 
->   desktop system.
+> Yes sorry about that, I had me a kid and took a wee bit of time away
+> from computers, then xmas and new years happened.
 
-I have to agree with Michael here; it's really, **really**
-disengenuous to say that that if you don't want kdbus, you can just
-#ifconfig it out.  The fact that it systemd will be using it means
-that it will very shortly become a core kernel feature which is
-absolutely mandatory.  Sure, maybe it can be configured out for "tiny
-kernels", just as in theory we can configure out the VM system for
-really tiny embedded systems.  But we should be treating this as
-something that is not optional, because the reality is that's the way
-it's going to be in very short order.  So if that means to use proper
-system calls instead of ioctls, we should do that.
+"a kid" as in: you have forked? :-) It will happen to me in 1.5 month
+time (or earlier). All the best luck, we'll both need it ;-)
 
-       	     	     		   - Ted
+> In any case, best wishes for the new year to all.
+
+Indeed.
+
+Pawel
