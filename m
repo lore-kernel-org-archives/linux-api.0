@@ -1,164 +1,689 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v11 0/2] crypto: AF_ALG: add AEAD and RNG support
-Date: Wed, 21 Jan 2015 02:18:44 +0100
-Message-ID: <1923793.K38mGRD6eo@tachyon.chronox.de>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: [PATCH v11 1/2] crypto: AF_ALG: add AEAD support
+Date: Wed, 21 Jan 2015 02:19:17 +0100
+Message-ID: <6238416.vGUni1CI4i@tachyon.chronox.de>
+References: <1923793.K38mGRD6eo@tachyon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Herbert Xu' <herbert@gondor.apana.org.au>
-Cc: Daniel Borkmann <dborkman@redhat.com>, 'Quentin Gouchet' <quentin.gouchet@gmail.com>, 'LKML' <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org, Neil Horman <nhorman@tuxdriver.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1923793.K38mGRD6eo-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Herbert Xu' <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+This patch adds the AEAD support for AF_ALG.
 
-This patch set adds AEAD and RNG support to the AF_ALG interface
-exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
-support, all cipher types the kernel crypto API allows access to are
-now accessible from userspace.
+The implementation is based on algif_skcipher, but contains heavy
+modifications to streamline the interface for AEAD uses.
 
-Both, AEAD and RNG implementations are stand-alone and do not depend
-other AF_ALG interfaces (like hash or skcipher).
+To use AEAD, the user space consumer has to use the salg_type named
+"aead".
 
-The AEAD implementation uses the same approach as provided with
-skcipher by offering the following interfaces:
+The AEAD implementation includes some overhead to calculate the size of
+the ciphertext, because the AEAD implementation of the kernel crypto API
+makes implied assumption on the location of the authentication tag. When
+performing an encryption, the tag will be added to the created
+ciphertext (note, the tag is placed adjacent to the ciphertext). For
+decryption, the caller must hand in the ciphertext with the tag appended
+to the ciphertext. Therefore, the selection of the used memory
+needs to add/subtract the tag size from the source/destination buffers
+depending on the encryption type. The code is provided with comments
+explaining when and how that operation is performed.
 
-	* sendmsg and recvmsg interfaces allowing multiple
-	  invocations supporting a threaded user space. To support
-	  multi-threaded user space, kernel-side buffering
-	  is implemented similarly to skcipher.
+A fully working example using all aspects of AEAD is provided at
+http://www.chronox.de/libkcapi.html
 
-	* splice / vmsplice interfaces allowing a zero-copy
-	  invocation
-
-The RNG interface only implements the recvmsg interface as
-zero-copy is not applicable.
-
-The new AEAD and RNG interfaces are fully tested with the test application
-provided at [1]. That test application exercises all newly added user space
-interfaces. The testing covers:
-
-	* use of the sendmsg/recvmsg interface
-
-	* use of the splice / vmsplice interface
-
-	* invocation of all AF_ALG types (aead, rng, skcipher, hash)
-
-	* using all types of operation (encryption, decryption, keyed MD,
-	  MD, random numbers, AEAD decryption with positive and negative
-	  authentication verification)
-
-	* stress testing by running all tests for 30 minutes in an
-	  endless loop
-
-	* test execution on 64 bit and 32 bit
-
-[1] http://www.chronox.de/libkcapi.html
-
-Changes v2:
-* rebase to current cryptodev-2.6 tree
-* use memzero_explicit to zeroize AEAD associated data
-* use sizeof for determining length of AEAD associated data
-* update algif_rng.c covering all suggestions from Daniel Borkmann
-  <dborkman@redhat.com>
-* addition of patch 9: add digestsize interface for hashes
-* addition of patch to update documentation covering the userspace interface
-* change numbers of getsockopt options: separate them from sendmsg interface
-  definitions
-
-Changes v3:
-* remove getsockopt interface
-* AEAD: associated data is set prepended to the plain/ciphertext
-* AEAD: allowing arbitrary associated data lengths
-* remove setkey patch as protection was already in the existing code
-
-Changes v4:
-* stand-alone implementation of AEAD
-* testing of all interfaces offered by AEAD
-* stress testing of AEAD and RNG
-
-Changes v5:
-* AEAD: add outer while(size) loop in aead_sendmsg to ensure all data is
-  copied into the kernel (reporter Herbert Xu)
-* AEAD: aead_sendmsg bug fix: change size -= len; to size -= plen;
-* AF_ALG / AEAD: add aead_setauthsize and associated extension to
-  struct af_alg_type as well as alg_setsockopt (reporter Herbert Xu)
-* RNG: rng_recvmsg: use 128 byte stack variable for output of RNG instead
-  of ctx->result (reporter Herbert Xu)
-* RNG / AF_ALG: allow user space to seed RNG via setsockopt
-* RNG: rng_recvmsg bug fix: use genlen as result variable for
-  crypto_rng_get_bytes as previously no negative errors were obtained
-* AF_ALG: alg_setop: zeroize buffer before free
-
-Changes v6:
-* AEAD/RNG: port to 3.19-rc1 with the iov_iter handling
-* RNG: use the setkey interface to obtain the seed and drop the patch adding
-  a separate reseeding interface
-* extract the zeroization patch for alg_setkey into a stand-alone patch
-  submission
-* fix bug in aead_sufficient_data (reporter Herbert Xu)
-* testing of all interfaces with test application provided with libkcapi version
-  0.6.2
-
-Changes v7:
-* AEAD: aead_recvmsg: change error code from ENOMEM to EINVAL
-* AEAD: drop aead_readable/aead_sufficient_data and only use ctx->more to decide
-  whether the read side shall become active. This change requires that the
-  patch for crypto_aead_decrypt ensuring that the ciphertext contains the
-  authentication tag was added -- see https://lkml.org/lkml/2014/12/30/200.
-  Otherwise, user space can trigger a kernel crash.
-* RNG: patch dropped as it was applied
-* AEAD: port Kconfig/Makefile patch forward to current code base
-
-Changes v8:
-* Removed check for aead_assoclen in aead_sendmsg
-* Fix endless loop bug in aead_sendmsg (check for sgl->cur > ALG_MAX_PAGES in
-  while condition removed -- this condition is checked within the loop already)
-* Resurrect aead_sufficient_data and call it in aead_sendmsg, aead_sendpage to
-  notify caller about wrong invocation
-* Re-add aead_sufficient_data to aead_recvmsg to verify user input data before
-  using them to ensure the kernel protects against malicious parameters
-* Allow arbitrary size of AD (i.e. up to the maximum buffer size of
-  ALG_MAX_PAGES)
-* When aead_recvmsg receives an error from decryption, release all pages if the
-  error is EBADMSG -- this error implies that a proper decryption was performed
-  but the integrity of the message is lost. This error is considered to be a
-  valid decryption result.
-* Add test cases for sendmsg and splice interface to test large AD sizes (in
-  case of sendmsg, use 65504 bytes AD and 32 bytes plaintext; in case of splice
-  use 15 pages AD and 32 bytes in the 16th page for plaintext). See [1] for
-  updated test case.
-
-Changes v9:
-* if socket is not writable during sendmsg/sendpage due to insufficient memory
-  and a recvmsg operation is forced, inform userspace about truncated operation
-  via MSG_TRUNC
-* use -EMSGSIZE in case insufficient data was provided in sendmsg/sendpage
-* release all buffers in case insufficient data was provided in sendmsg/sendpage
-* bug fix in sendmsg: when a new page is allocated, reset sg->offset to 0 --
-  the error is visible with the new tests in [1] when using the -d flag
-  with the test application
-
-Changes v10:
-* initialize ctx->trunc in aead_accept_parent to zero
-* fix one line with code formatting problems
-
-Changes v11:
-* return an error if user space sends too much data instead of waiting until
-  reader side catches up with operation (suggested by Herbert Xu)
-* remove now unneeded aead_wait_for_wmem service function
-* remove now unneeded ctx->trunc and MSG_TRUNC error return
-
-Stephan Mueller (2):
-  crypto: AF_ALG: add AEAD support
-  crypto: AF_ALG: enable AEAD interface compilation
-
- crypto/Kconfig      |   9 +
- crypto/Makefile     |   1 +
+Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+---
  crypto/algif_aead.c | 638 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 648 insertions(+)
+ 1 file changed, 638 insertions(+)
  create mode 100644 crypto/algif_aead.c
 
+diff --git a/crypto/algif_aead.c b/crypto/algif_aead.c
+new file mode 100644
+index 0000000..5a667fb
+--- /dev/null
++++ b/crypto/algif_aead.c
+@@ -0,0 +1,638 @@
++/*
++ * algif_aead: User-space interface for AEAD algorithms
++ *
++ * Copyright (C) 2014, Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
++ *
++ * This file provides the user-space API for AEAD ciphers.
++ *
++ * This file is derived from algif_skcipher.c.
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the Free
++ * Software Foundation; either version 2 of the License, or (at your option)
++ * any later version.
++ */
++
++#include <crypto/scatterwalk.h>
++#include <crypto/if_alg.h>
++#include <linux/init.h>
++#include <linux/list.h>
++#include <linux/kernel.h>
++#include <linux/mm.h>
++#include <linux/module.h>
++#include <linux/net.h>
++#include <net/sock.h>
++
++struct aead_sg_list {
++	unsigned int cur;
++	struct scatterlist sg[ALG_MAX_PAGES];
++};
++
++struct aead_ctx {
++	struct aead_sg_list tsgl;
++	struct af_alg_sgl rsgl;
++
++	void *iv;
++
++	struct af_alg_completion completion;
++
++	unsigned long used;
++
++	unsigned int len;
++	bool more;
++	bool merge;
++	bool enc;
++
++	size_t aead_assoclen;
++	struct aead_request aead_req;
++};
++
++static inline int aead_sndbuf(struct sock *sk)
++{
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++
++	return max_t(int, max_t(int, sk->sk_sndbuf & PAGE_MASK, PAGE_SIZE) -
++			  ctx->used, 0);
++}
++
++static inline bool aead_writable(struct sock *sk)
++{
++	return PAGE_SIZE <= aead_sndbuf(sk);
++}
++
++static inline bool aead_sufficient_data(struct aead_ctx *ctx)
++{
++	unsigned as = crypto_aead_authsize(crypto_aead_reqtfm(&ctx->aead_req));
++
++	return (ctx->used >= (ctx->aead_assoclen + (ctx->enc ? 0 : as)));
++}
++
++static void aead_put_sgl(struct sock *sk)
++{
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	struct aead_sg_list *sgl = &ctx->tsgl;
++	struct scatterlist *sg = sgl->sg;
++	unsigned int i;
++
++	for (i = 0; i < sgl->cur; i++) {
++		if (!sg_page(sg + i))
++			continue;
++
++		put_page(sg_page(sg + i));
++		sg_assign_page(sg + i, NULL);
++	}
++	sgl->cur = 0;
++	ctx->used = 0;
++	ctx->more = 0;
++	ctx->merge = 0;
++}
++
++static void aead_wmem_wakeup(struct sock *sk)
++{
++	struct socket_wq *wq;
++
++	if (!aead_writable(sk))
++		return;
++
++	rcu_read_lock();
++	wq = rcu_dereference(sk->sk_wq);
++	if (wq_has_sleeper(wq))
++		wake_up_interruptible_sync_poll(&wq->wait, POLLIN |
++							   POLLRDNORM |
++							   POLLRDBAND);
++	sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_IN);
++	rcu_read_unlock();
++}
++
++static int aead_wait_for_data(struct sock *sk, unsigned flags)
++{
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	long timeout;
++	DEFINE_WAIT(wait);
++	int err = -ERESTARTSYS;
++
++	if (flags & MSG_DONTWAIT) {
++		return -EAGAIN;
++	}
++
++	set_bit(SOCK_ASYNC_WAITDATA, &sk->sk_socket->flags);
++
++	for (;;) {
++		if (signal_pending(current))
++			break;
++		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
++		timeout = MAX_SCHEDULE_TIMEOUT;
++		if (sk_wait_event(sk, &timeout, !ctx->more)) {
++			err = 0;
++			break;
++		}
++	}
++	finish_wait(sk_sleep(sk), &wait);
++
++	clear_bit(SOCK_ASYNC_WAITDATA, &sk->sk_socket->flags);
++
++	return err;
++}
++
++static void aead_data_wakeup(struct sock *sk)
++{
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	struct socket_wq *wq;
++
++	if (ctx->more)
++		return;
++
++	rcu_read_lock();
++	wq = rcu_dereference(sk->sk_wq);
++	if (wq_has_sleeper(wq))
++		wake_up_interruptible_sync_poll(&wq->wait, POLLOUT |
++							   POLLRDNORM |
++							   POLLRDBAND);
++	sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
++	rcu_read_unlock();
++}
++
++static int aead_sendmsg(struct kiocb *unused, struct socket *sock,
++		        struct msghdr *msg, size_t size)
++{
++	struct sock *sk = sock->sk;
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	unsigned ivsize =
++		crypto_aead_ivsize(crypto_aead_reqtfm(&ctx->aead_req));
++	struct aead_sg_list *sgl = &ctx->tsgl;
++	struct af_alg_control con = {};
++	long copied = 0;
++	bool enc = 0;
++	bool init = 0;
++	int err = -EINVAL;
++
++	if (msg->msg_controllen) {
++		err = af_alg_cmsg_send(msg, &con);
++		if (err)
++			return err;
++
++		init = 1;
++		switch (con.op) {
++		case ALG_OP_ENCRYPT:
++			enc = 1;
++			break;
++		case ALG_OP_DECRYPT:
++			enc = 0;
++			break;
++		default:
++			return -EINVAL;
++		}
++
++		if (con.iv && con.iv->ivlen != ivsize)
++			return -EINVAL;
++	}
++
++	lock_sock(sk);
++	if (!ctx->more && ctx->used)
++		goto unlock;
++
++	if (init) {
++		ctx->enc = enc;
++		if (con.iv)
++			memcpy(ctx->iv, con.iv->iv, ivsize);
++
++		ctx->aead_assoclen = con.aead_assoclen;
++	}
++
++	while (size) {
++		unsigned long len = size;
++		struct scatterlist *sg = NULL;
++
++		/* use the existing memory in an allocated page */
++		if (ctx->merge) {
++			sg = sgl->sg + sgl->cur - 1;
++			len = min_t(unsigned long, len,
++				    PAGE_SIZE - sg->offset - sg->length);
++			err = memcpy_from_msg(page_address(sg_page(sg)) +
++					      sg->offset + sg->length,
++					      msg, len);
++			if (err)
++				goto unlock;
++
++			sg->length += len;
++			ctx->merge = (sg->offset + sg->length) &
++				     (PAGE_SIZE - 1);
++
++			ctx->used += len;
++			copied += len;
++			size -= len;
++		}
++
++		if (!aead_writable(sk)) {
++			/* user space sent too much data */
++			aead_put_sgl(sk);
++			err = -EMSGSIZE;
++			goto unlock;
++		}
++
++		/* allocate a new page */
++		len = min_t(unsigned long, size, aead_sndbuf(sk));
++		while (len) {
++			int plen = 0;
++
++			if (sgl->cur >= ALG_MAX_PAGES) {
++				err = -E2BIG;
++				goto unlock;
++			}
++
++			sg = sgl->sg + sgl->cur;
++			plen = min_t(int, len, PAGE_SIZE);
++
++			sg_assign_page(sg, alloc_page(GFP_KERNEL));
++			err = -ENOMEM;
++			if (!sg_page(sg))
++				goto unlock;
++
++			err = memcpy_from_msg(page_address(sg_page(sg)),
++					      msg, plen);
++			if (err) {
++				__free_page(sg_page(sg));
++				sg_assign_page(sg, NULL);
++				goto unlock;
++			}
++
++			sg->offset = 0;
++			sg->length = plen;
++			len -= plen;
++			ctx->used += plen;
++			copied += plen;
++			sgl->cur++;
++			size -= plen;
++			ctx->merge = plen & (PAGE_SIZE - 1);
++		}
++	}
++
++	err = 0;
++
++	ctx->more = msg->msg_flags & MSG_MORE;
++	if (!ctx->more && !aead_sufficient_data(ctx)) {
++		aead_put_sgl(sk);
++		err = -EMSGSIZE;
++	}
++
++unlock:
++	aead_data_wakeup(sk);
++	release_sock(sk);
++
++	return err ?: copied;
++}
++
++static ssize_t aead_sendpage(struct socket *sock, struct page *page,
++			     int offset, size_t size, int flags)
++{
++	struct sock *sk = sock->sk;
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	struct aead_sg_list *sgl = &ctx->tsgl;
++	int err = -EINVAL;
++
++	if (flags & MSG_SENDPAGE_NOTLAST)
++		flags |= MSG_MORE;
++
++	if (sgl->cur >= ALG_MAX_PAGES)
++		return -E2BIG;
++
++	lock_sock(sk);
++	if (!ctx->more && ctx->used)
++		goto unlock;
++
++	if (!size)
++		goto done;
++
++	if (!aead_writable(sk)) {
++		/* user space sent too much data */
++		aead_put_sgl(sk);
++		err = -EMSGSIZE;
++		goto unlock;
++	}
++
++	ctx->merge = 0;
++
++	get_page(page);
++	sg_set_page(sgl->sg + sgl->cur, page, size, offset);
++	sgl->cur++;
++	ctx->used += size;
++
++	err = 0;
++
++done:
++	ctx->more = flags & MSG_MORE;
++	if (!ctx->more && !aead_sufficient_data(ctx)) {
++		aead_put_sgl(sk);
++		err = -EMSGSIZE;
++	}
++
++unlock:
++	aead_data_wakeup(sk);
++	release_sock(sk);
++
++	return err ?: size;
++}
++
++static int aead_recvmsg(struct kiocb *unused, struct socket *sock,
++			struct msghdr *msg, size_t ignored, int flags)
++{
++	struct sock *sk = sock->sk;
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	unsigned bs = crypto_aead_blocksize(crypto_aead_reqtfm(&ctx->aead_req));
++	unsigned as = crypto_aead_authsize(crypto_aead_reqtfm(&ctx->aead_req));
++	struct aead_sg_list *sgl = &ctx->tsgl;
++	struct scatterlist *sg = sgl->sg;
++	struct scatterlist assoc[ALG_MAX_PAGES];
++	size_t assoclen = 0;
++	unsigned int i = 0;
++	int err = -EINVAL;
++	unsigned long used = 0;
++	unsigned long outlen = 0;
++
++	/*
++	 * Require exactly one IOV block as the AEAD operation is a one shot
++	 * due to the authentication tag.
++	 */
++	if (msg->msg_iter.nr_segs != 1)
++		return -ENOMSG;
++
++	lock_sock(sk);
++	/*
++	* AEAD memory structure: For encryption, the tag is appended to the
++	* ciphertext which implies that the memory allocated for the ciphertext
++	* must be increased by the tag length. For decryption, the tag
++	* is expected to be concatenated to the ciphertext. The plaintext
++	* therefore has a memory size of the ciphertext minus the tag length.
++	*
++	* The memory structure for cipher operation has the following
++	* structure:
++	*	AEAD encryption input:  assoc data || plaintext
++	*	AEAD encryption output: cipherntext || auth tag
++	*	AEAD decryption input:  assoc data || ciphertext || auth tag
++	*	AEAD decryption output: plaintext
++	*/
++
++	if (ctx->more) {
++		err = aead_wait_for_data(sk, flags);
++		if (err)
++			goto unlock;
++	}
++
++	used = ctx->used;
++
++	/*
++	 * Make sure sufficient data is present -- note, the same check is
++	 * is also present in sendmsg/sendpage. The checks in sendpage/sendmsg
++	 * shall provide an information to the data sender that something is
++	 * wrong, but they are irrelevant to maintain the kernel integrity.
++	 * We need this check here too in case user space decides to not honor
++	 * the error message in sendmsg/sendpage and still call recvmsg. This
++	 * check here protects the kernel integrity.
++	 */
++	if (!aead_sufficient_data(ctx))
++		goto unlock;
++
++	/*
++	 * The cipher operation input data is reduced by the associated data
++	 * length as this data is processed separately later on.
++	 */
++	used -= ctx->aead_assoclen;
++
++	if (ctx->enc) {
++		/* round up output buffer to multiple of block size */
++		outlen = ((used + bs - 1) / bs * bs);
++		/* add the size needed for the auth tag to be created */
++		outlen += as;
++	} else {
++		/* output data size is input without the authentication tag */
++		outlen = used - as;
++		/* round up output buffer to multiple of block size */
++		outlen = ((outlen + bs - 1) / bs * bs);
++	}
++
++	/* ensure output buffer is sufficiently large */
++	if (msg->msg_iter.iov->iov_len < outlen)
++		goto unlock;
++
++	outlen = af_alg_make_sg(&ctx->rsgl, msg->msg_iter.iov->iov_base,
++				outlen, 1);
++	err = outlen;
++	if (err < 0)
++		goto unlock;
++
++	err = -EINVAL;
++	sg_init_table(assoc, ALG_MAX_PAGES);
++	assoclen = ctx->aead_assoclen;
++	/*
++	 * Split scatterlist into two: first part becomes AD, second part
++	 * is plaintext / ciphertext. The first part is assigned to assoc
++	 * scatterlist. When this loop finishes, sg points to the start of the
++	 * plaintext / ciphertext.
++	 */
++	for (i = 0; i < ctx->tsgl.cur; i++) {
++		sg = sgl->sg + i;
++		if (sg->length <= assoclen) {
++			/* AD is larger than one page */
++			sg_set_page(assoc + i, sg_page(sg),
++				    sg->length, sg->offset);
++			assoclen -= sg->length;
++			if (i >= ctx->tsgl.cur)
++				goto unlock;
++		} else if (!assoclen) {
++			/* current page is to start of plaintext / ciphertext */
++			if (i)
++				/* AD terminates at page boundary */
++				sg_mark_end(assoc + i - 1);
++			else
++				/* AD size is zero */
++				sg_mark_end(assoc);
++			break;
++		} else {
++			/* AD does not terminate at page boundary */
++			sg_set_page(assoc + i, sg_page(sg),
++				    assoclen, sg->offset);
++			sg_mark_end(assoc + i);
++			/* plaintext / ciphertext starts after AD */
++			sg->length -= assoclen;
++			sg->offset += assoclen;
++			break;
++		}
++	}
++
++	aead_request_set_assoc(&ctx->aead_req, assoc, ctx->aead_assoclen);
++	aead_request_set_crypt(&ctx->aead_req, sg, ctx->rsgl.sg, used, ctx->iv);
++
++	err = af_alg_wait_for_completion(ctx->enc ?
++					 crypto_aead_encrypt(&ctx->aead_req) :
++					 crypto_aead_decrypt(&ctx->aead_req),
++					 &ctx->completion);
++
++	af_alg_free_sg(&ctx->rsgl);
++
++	if (err) {
++		/* EBADMSG implies a valid cipher operation took place */
++		if (err == -EBADMSG)
++			aead_put_sgl(sk);
++		goto unlock;
++	}
++
++	aead_put_sgl(sk);
++
++	err = 0;
++
++unlock:
++	aead_wmem_wakeup(sk);
++	release_sock(sk);
++
++	return err ? err : outlen;
++}
++
++static unsigned int aead_poll(struct file *file, struct socket *sock,
++			      poll_table *wait)
++{
++	struct sock *sk = sock->sk;
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	unsigned int mask;
++
++	sock_poll_wait(file, sk_sleep(sk), wait);
++	mask = 0;
++
++	if (!ctx->more)
++		mask |= POLLIN | POLLRDNORM;
++
++	if (aead_writable(sk))
++		mask |= POLLOUT | POLLWRNORM | POLLWRBAND;
++
++	return mask;
++}
++
++static struct proto_ops algif_aead_ops = {
++	.family		=	PF_ALG,
++
++	.connect	=	sock_no_connect,
++	.socketpair	=	sock_no_socketpair,
++	.getname	=	sock_no_getname,
++	.ioctl		=	sock_no_ioctl,
++	.listen		=	sock_no_listen,
++	.shutdown	=	sock_no_shutdown,
++	.getsockopt	=	sock_no_getsockopt,
++	.mmap		=	sock_no_mmap,
++	.bind		=	sock_no_bind,
++	.accept		=	sock_no_accept,
++	.setsockopt	=	sock_no_setsockopt,
++
++	.release	=	af_alg_release,
++	.sendmsg	=	aead_sendmsg,
++	.sendpage	=	aead_sendpage,
++	.recvmsg	=	aead_recvmsg,
++	.poll		=	aead_poll,
++};
++
++static void *aead_bind(const char *name, u32 type, u32 mask)
++{
++	return crypto_alloc_aead(name, type, mask);
++}
++
++static void aead_release(void *private)
++{
++	crypto_free_aead(private);
++}
++
++static int aead_setauthsize(void *private, unsigned int authsize)
++{
++	return crypto_aead_setauthsize(private, authsize);
++}
++
++static int aead_setkey(void *private, const u8 *key, unsigned int keylen)
++{
++	return crypto_aead_setkey(private, key, keylen);
++}
++
++static void aead_sock_destruct(struct sock *sk)
++{
++	struct alg_sock *ask = alg_sk(sk);
++	struct aead_ctx *ctx = ask->private;
++	unsigned int ivlen = crypto_aead_ivsize(
++				crypto_aead_reqtfm(&ctx->aead_req));
++
++	aead_put_sgl(sk);
++	sock_kzfree_s(sk, ctx->iv, ivlen);
++	sock_kfree_s(sk, ctx, ctx->len);
++	af_alg_release_parent(sk);
++}
++
++static int aead_accept_parent(void *private, struct sock *sk)
++{
++	struct aead_ctx *ctx;
++	struct alg_sock *ask = alg_sk(sk);
++	unsigned int len = sizeof(*ctx) + crypto_aead_reqsize(private);
++	unsigned int ivlen = crypto_aead_ivsize(private);
++
++	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
++	if (!ctx)
++		return -ENOMEM;
++	memset(ctx, 0, len);
++
++	ctx->iv = sock_kmalloc(sk, ivlen, GFP_KERNEL);
++	if (!ctx->iv) {
++		sock_kfree_s(sk, ctx, len);
++		return -ENOMEM;
++	}
++	memset(ctx->iv, 0, ivlen);
++
++	ctx->len = len;
++	ctx->used = 0;
++	ctx->more = 0;
++	ctx->merge = 0;
++	ctx->enc = 0;
++	ctx->tsgl.cur = 0;
++	ctx->aead_assoclen = 0;
++	af_alg_init_completion(&ctx->completion);
++	sg_init_table(ctx->tsgl.sg, ALG_MAX_PAGES);
++
++	ask->private = ctx;
++
++	aead_request_set_tfm(&ctx->aead_req, private);
++	aead_request_set_callback(&ctx->aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
++				  af_alg_complete, &ctx->completion);
++
++	sk->sk_destruct = aead_sock_destruct;
++
++	return 0;
++}
++
++static const struct af_alg_type algif_type_aead = {
++	.bind		=	aead_bind,
++	.release	=	aead_release,
++	.setkey		=	aead_setkey,
++	.setauthsize	=	aead_setauthsize,
++	.accept		=	aead_accept_parent,
++	.ops		=	&algif_aead_ops,
++	.name		=	"aead",
++	.owner		=	THIS_MODULE
++};
++
++static int __init algif_aead_init(void)
++{
++	return af_alg_register_type(&algif_type_aead);
++}
++
++static void __exit algif_aead_exit(void)
++{
++	int err = af_alg_unregister_type(&algif_type_aead);
++	BUG_ON(err);
++}
++
++module_init(algif_aead_init);
++module_exit(algif_aead_exit);
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>");
++MODULE_DESCRIPTION("AEAD kernel crypto API user space interface");
 -- 
 2.1.0
