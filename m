@@ -1,165 +1,41 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: [PATCH post-squash 4/9] virtio_pci: macros for PCI layout offsets
-Date: Wed, 21 Jan 2015 17:05:20 +0200
-Message-ID: <1421852670-23742-5-git-send-email-mst@redhat.com>
-References: <1421852670-23742-1-git-send-email-mst@redhat.com>
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Wed, 21 Jan 2015 10:19:13 -0500
+Message-ID: <20150121151913.GA4798@thunk.org>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
+ <54BE5DC8.70706@gmail.com>
+ <54BE9D08.7010804@zonque.org>
+ <54BF805B.4000609@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1421852670-23742-1-git-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
+In-Reply-To: <54BF805B.4000609-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Rusty Russell <rusty@rustcorp.com.au>
+On Wed, Jan 21, 2015 at 11:32:59AM +0100, Michael Kerrisk (man-pages) wrote:
+> It's rather an optional driver than a core kernel feature.
+> 
+> Given the various things that I've seen said about kdbus, the
+> preceding sentence makes little sense to me:
+> 
+> * kdbus will be the framework supporting user-space D-Bus in the
+>   future, and also used by systemd, and so on pretty much every 
+>   desktop system.
 
-QEMU wants it, so why not?  Trust, but verify.
+I have to agree with Michael here; it's really, **really**
+disengenuous to say that that if you don't want kdbus, you can just
+#ifconfig it out.  The fact that it systemd will be using it means
+that it will very shortly become a core kernel feature which is
+absolutely mandatory.  Sure, maybe it can be configured out for "tiny
+kernels", just as in theory we can configure out the VM system for
+really tiny embedded systems.  But we should be treating this as
+something that is not optional, because the reality is that's the way
+it's going to be in very short order.  So if that means to use proper
+system calls instead of ioctls, we should do that.
 
-Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
-Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-Tested-by: Gerd Hoffmann <kraxel@redhat.com>
----
- include/uapi/linux/virtio_pci.h    | 36 +++++++++++++++++++----
- drivers/virtio/virtio_pci_modern.c | 60 +++++++++++++++++++++++++++++++++++++-
- 2 files changed, 90 insertions(+), 6 deletions(-)
-
-diff --git a/include/uapi/linux/virtio_pci.h b/include/uapi/linux/virtio_pci.h
-index a2b2e13..3b7e4d2 100644
---- a/include/uapi/linux/virtio_pci.h
-+++ b/include/uapi/linux/virtio_pci.h
-@@ -124,11 +124,6 @@ struct virtio_pci_cap {
- 	__le32 length;		/* Length of the structure, in bytes. */
- };
- 
--#define VIRTIO_PCI_CAP_BAR_SHIFT	5
--#define VIRTIO_PCI_CAP_BAR_MASK		0x7
--#define VIRTIO_PCI_CAP_TYPE_SHIFT	0
--#define VIRTIO_PCI_CAP_TYPE_MASK	0x7
--
- struct virtio_pci_notify_cap {
- 	struct virtio_pci_cap cap;
- 	__le32 notify_off_multiplier;	/* Multiplier for queue_notify_off. */
-@@ -160,6 +155,37 @@ struct virtio_pci_common_cfg {
- 	__le32 queue_used_hi;		/* read-write */
- };
- 
-+/* Macro versions of offsets for the Old Timers! */
-+#define VIRTIO_PCI_CAP_VNDR		0
-+#define VIRTIO_PCI_CAP_NEXT		1
-+#define VIRTIO_PCI_CAP_LEN		2
-+#define VIRTIO_PCI_CAP_CFG_TYPE		3
-+#define VIRTIO_PCI_CAP_BAR		4
-+#define VIRTIO_PCI_CAP_OFFSET		8
-+#define VIRTIO_PCI_CAP_LENGTH		12
-+
-+#define VIRTIO_PCI_NOTIFY_CAP_MULT	16
-+
-+#define VIRTIO_PCI_COMMON_DFSELECT	0
-+#define VIRTIO_PCI_COMMON_DF		4
-+#define VIRTIO_PCI_COMMON_GFSELECT	8
-+#define VIRTIO_PCI_COMMON_GF		12
-+#define VIRTIO_PCI_COMMON_MSIX		16
-+#define VIRTIO_PCI_COMMON_NUMQ		18
-+#define VIRTIO_PCI_COMMON_STATUS	20
-+#define VIRTIO_PCI_COMMON_CFGGENERATION	21
-+#define VIRTIO_PCI_COMMON_Q_SELECT	22
-+#define VIRTIO_PCI_COMMON_Q_SIZE	24
-+#define VIRTIO_PCI_COMMON_Q_MSIX	26
-+#define VIRTIO_PCI_COMMON_Q_ENABLE	28
-+#define VIRTIO_PCI_COMMON_Q_NOFF	30
-+#define VIRTIO_PCI_COMMON_Q_DESCLO	32
-+#define VIRTIO_PCI_COMMON_Q_DESCHI	36
-+#define VIRTIO_PCI_COMMON_Q_AVAILLO	40
-+#define VIRTIO_PCI_COMMON_Q_AVAILHI	44
-+#define VIRTIO_PCI_COMMON_Q_USEDLO	48
-+#define VIRTIO_PCI_COMMON_Q_USEDHI	52
-+
- #endif /* VIRTIO_PCI_NO_MODERN */
- 
- #endif
-diff --git a/drivers/virtio/virtio_pci_modern.c b/drivers/virtio/virtio_pci_modern.c
-index a3d8101..b2e707ad 100644
---- a/drivers/virtio/virtio_pci_modern.c
-+++ b/drivers/virtio/virtio_pci_modern.c
-@@ -464,9 +464,67 @@ static void virtio_pci_release_dev(struct device *_d)
- 	kfree(vp_dev);
- }
- 
--/* TODO: validate the ABI statically. */
-+/* This is part of the ABI.  Don't screw with it. */
- static inline void check_offsets(void)
- {
-+	/* Note: disk space was harmed in compilation of this function. */
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_VNDR !=
-+		     offsetof(struct virtio_pci_cap, cap_vndr));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_NEXT !=
-+		     offsetof(struct virtio_pci_cap, cap_next));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_LEN !=
-+		     offsetof(struct virtio_pci_cap, cap_len));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_CFG_TYPE !=
-+		     offsetof(struct virtio_pci_cap, cfg_type));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_BAR !=
-+		     offsetof(struct virtio_pci_cap, bar));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_OFFSET !=
-+		     offsetof(struct virtio_pci_cap, offset));
-+	BUILD_BUG_ON(VIRTIO_PCI_CAP_LENGTH !=
-+		     offsetof(struct virtio_pci_cap, length));
-+	BUILD_BUG_ON(VIRTIO_PCI_NOTIFY_CAP_MULT !=
-+		     offsetof(struct virtio_pci_notify_cap,
-+			      notify_off_multiplier));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_DFSELECT !=
-+		     offsetof(struct virtio_pci_common_cfg,
-+			      device_feature_select));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_DF !=
-+		     offsetof(struct virtio_pci_common_cfg, device_feature));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_GFSELECT !=
-+		     offsetof(struct virtio_pci_common_cfg,
-+			      guest_feature_select));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_GF !=
-+		     offsetof(struct virtio_pci_common_cfg, guest_feature));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_MSIX !=
-+		     offsetof(struct virtio_pci_common_cfg, msix_config));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_NUMQ !=
-+		     offsetof(struct virtio_pci_common_cfg, num_queues));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_STATUS !=
-+		     offsetof(struct virtio_pci_common_cfg, device_status));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_CFGGENERATION !=
-+		     offsetof(struct virtio_pci_common_cfg, config_generation));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_SELECT !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_select));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_SIZE !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_size));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_MSIX !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_msix_vector));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_ENABLE !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_enable));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_NOFF !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_notify_off));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_DESCLO !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_desc_lo));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_DESCHI !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_desc_hi));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_AVAILLO !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_avail_lo));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_AVAILHI !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_avail_hi));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_USEDLO !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_used_lo));
-+	BUILD_BUG_ON(VIRTIO_PCI_COMMON_Q_USEDHI !=
-+		     offsetof(struct virtio_pci_common_cfg, queue_used_hi));
- }
- 
- /* the PCI probing function */
--- 
-MST
+       	     	     		   - Ted
