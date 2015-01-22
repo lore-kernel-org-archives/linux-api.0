@@ -1,183 +1,103 @@
-From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Austin S Hemmelgarn <ahferroin7@gmail.com>
 Subject: Re: [PATCH 01/13] kdbus: add documentation
-Date: Thu, 22 Jan 2015 14:46:41 +0100
-Message-ID: <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
-	<1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
-	<54BE5DC8.70706@gmail.com>
-	<54BE9D08.7010804@zonque.org>
-	<54BF805B.4000609@gmail.com>
-	<54BFDAAA.50203@zonque.org>
-	<54C0CE8A.5080805@gmail.com>
+Date: Thu, 22 Jan 2015 09:49:00 -0500
+Message-ID: <54C10DDC.9000503@gmail.com>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>	<1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>	<54BE5DC8.70706@gmail.com>	<54BE9D08.7010804@zonque.org>	<54BF805B.4000609@gmail.com>	<54BFDAAA.50203@zonque.org>	<54C0CE8A.5080805@gmail.com> <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54C0CE8A.5080805-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Theodore T'so <tytso-3s7WtUTddSA@public.gmane.org>
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha1; boundary="------------ms010005020709040000080309"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Herrmann <dh.herrmann@gmail.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Daniel Mack <daniel@zonque.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Djalal Harouni <tixxdz@opendz.org>, Johannes Stezenbach <js@sig21.net>, Theodore T'so <tytso@mit.edu>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael
+This is a cryptographically signed message in MIME format.
 
-On Thu, Jan 22, 2015 at 11:18 AM, Michael Kerrisk (man-pages)
-<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On 01/21/2015 05:58 PM, Daniel Mack wrote:
->>>> Also, the context the kdbus commands operate on originate from a
->>>> mountable special-purpose file system.
->>>
->>> It's not clear to me how this point implies any particular API design
->>> choice.
->>
->> It emphasizes the fact that our ioctl API can only be used with the
->> nodes exposed by kdbusfs, and vice versa. I think operations on
->> driver-specific files do not justify a new 'generic' syscall API.
+--------------ms010005020709040000080309
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
+
+On 2015-01-22 08:46, David Herrmann wrote:
+> Hi Michael
 >
-> I see your (repeated) use of words like "driver" as just a distraction,
-> I'm sorry. "Driver-specific files" is an implementation detail. The
-> point is that kdbus provides a complex, general-purpose feature for all
-> of userland. It is core infrastructure that will be used by key pieces
-> of the plumbing layer, and likely by many other applications as well.
-> *Please* stop suggesting that it is not core infrastructure: kdbus
-> has the potential to be a great IPC that will be very useful to many,
-> many user-space developers.
-
-We called it an 'ipc driver' so far. It is in no way meant as
-distraction. Feel free to call it 'core infrastructure'. I think we
-can agree that we want it to be generically useful, like other ipc
-mechanisms, including UDS and netlink.
-
-> (By the way, we have precedents for device/filesystem-specific system
-> calls. Even a recent one, in memfd_create().)
-
-memfd_create() is in no way file-system specific. Internally, it uses
-shmem, but that's an implementation detail. The API does not expose
-this in any way. If you were referring to sealing, it's implemented as
-fcntl(), not as a separate syscall. Furthermore, sealing is only
-limited to shmem as it's the only volatile storage. It's not an API
-restriction. Other volatile file-systems are free to implement
-sealing.
-
->>> ioctl() is a get-out-of-jail free card when it comes to API design.
->>
->> And how are syscalls different in that regard when they would both
->> transport the same data structures?
+> On Thu, Jan 22, 2015 at 11:18 AM, Michael Kerrisk (man-pages)
+> <mtk.manpages@gmail.com> wrote:
+>> * API oddities such as the 'kernel_flags' fields. Why do I need to
+>>    be told what flags the kernel supports on *every* operation?
 >
-> My general impression is that when it comes to system calls,
-> there's usually a lot more up front thought about API design.
-
-This is no technical reason why to use syscalls over ioctls. Imho,
-it's rather a reason to improve the kernel's ioctl-review process.
-
->> Also note that all kdbus ioctls
->> necessarily operate on a file descriptor context, which an ioctl passes
->> along by default.
+> If we only returned EINVAL on invalid arguments, user-space had to
+> probe for each flag to see whether it's supported. By returning the
+> set of supported flags, user-space can cache those and _reliably_ know
+> which flags are supported.
+> We decided the overhead of a single u64 copy on each ioctl is
+> preferred over a separate syscall/ioctl to query kernel flags. If you
+> disagree, please elaborate (preferably with a suggestion how to do it
+> better).
 >
-> I fail to see your point here. The same statement applies to multiple
-> special-purpose system calls (epoll, inotify, various shared memory APIs,
-> and so on).
+While I agree that there should be a way for userspace to get the list=20
+of supported operations, userspace apps will only actually care about=20
+that once, when they begin talking to kdbus, because (ignoring the live=20
+kernel patching that people have been working on recently) the list of=20
+supported operations isn't going to change while the system is running.=20
+  While a u64 copy has relatively low overhead, it does have overhead,=20
+and that is very significant when you consider part of the reason some=20
+people want kdbus is for the performance gain.  Especially for those=20
+automotive applications that have been mentioned which fire off=20
+thousands of messages during start-up, every little bit of performance=20
+is significant.
 
-epoll and inotify don't have a 'parent' object living in the
-file-system. They *need* an entry-point. We can use open() for that.
 
-You're right, from a technical viewpoint, there's no restriction.
-There're examples for both (eg., see Solaris /dev/poll, as
-ioctl()-based 'epoll').
+--------------ms010005020709040000080309
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
 
->>> Rather
->>> than thinking carefully and long about a set of coherent, stable APIs that
->>> provide some degree of type-safety to user-space, one just adds/changes/removes
->>> an ioctl.
->>
->> Adding another ioctl in the future for cases we didn't think about
->> earlier would of course be considered a workaround; and even though such
->> things happen all the time, it's certainly something we'd like to avoid.
->>
->> However, we would also need to add another syscall in such cases, which
->> is even worse IMO. So that's really not an argument against ioctls after
->> all. What fundamental difference between a raw syscall and a ioctl,
->> especially with regards to type safety, is there which would help us here?
->
-> Type safety helps user-space application developers. System calls have
-> it, ioctl() does not.
-
-This is simply not true. There is no type-safety in:
-    syscall(__NR_xyz, some, random, arguments)
-
-The only way a syscall gets 'type-safe', is to provide a wrapper
-function. Same applies to ioctls. But people tend to not do that for
-ioctls, which is, again, not a technical argument against ioctls. It's
-a matter of psychology, though.
-
-I still don't see a technical reason to use syscalls. API proposals welcome!
-
-We're now working on a small kdbus helper library, which provides
-type-safe ioctl wrappers, item-iterators and documented examples. But,
-like syscalls, nobody is forced to use the wrappers. The API design is
-not affected by this.
-
->>> And that process seems to be frequent and ongoing even now. (And
->>> it's to your great credit that the API/ABI breaks are clearly and honestly
->>> marked in the kdbus.h changelog.) All of this lightens the burden of API
->>> design for kernel developers, but I'm concerned that the long-term pain
->>> for user-space developers who use an API which (in my estimation) may
->>> come to be widely used will be enormous.
->>
->> Yes, we've jointly reviewed the API details again until just recently to
->> unify structs and enums etc, and added fields to make the ioctls structs
->> more versatile for possible future additions. By that, we effectively
->> broke the ABI, but we did that because we know we can't do such things
->> again in the future.
->>
->> But again - I don't see how this would be different when using syscalls
->> rather than ioctls to transport information between the driver and
->> userspace. Could you elaborate?
->
-> My suspicion is that not nearly enough thinking has yet been done about
-> the design of the API. That's based on these observations:
->
-> * Documentation that is, considering the size of the API, *way* too thin.
-
-Ok, working on that.
-
-> * Some parts of the API not documented at all (various kdbus_item blobs)
-
-All public structures have documentation in kdbus.h. It may need
-improvements, though.
-
-> * ABI changes happening even quite recently
-
-Please elaborate why 'recent ABI-changes' are a sign of a premature API.
-
-I seriously doubt any API can be called 'perfect'. On the contrary, I
-believe that all APIs could be improved continuously. The fact that
-we, at one point, settle on an API is an admission of
-backwards-compatibility. I in no way think it's a sign of
-'perfection'.
-With kdbus our plan is to give API-guarantees starting with upstream
-inclusion. We know, that our API will not be perfect, none is. But we
-will try hard to fix anything that comes up, as long as we can. And
-this effort will manifest in ABI-breaks.
-
-> * API oddities such as the 'kernel_flags' fields. Why do I need to
->   be told what flags the kernel supports on *every* operation?
-
-If we only returned EINVAL on invalid arguments, user-space had to
-probe for each flag to see whether it's supported. By returning the
-set of supported flags, user-space can cache those and _reliably_ know
-which flags are supported.
-We decided the overhead of a single u64 copy on each ioctl is
-preferred over a separate syscall/ioctl to query kernel flags. If you
-disagree, please elaborate (preferably with a suggestion how to do it
-better).
-
-> The above is just after a day of looking hard at kdbus.txt. I strongly
-> suspect I'd find a lot of other issues if I spent more time on kdbus.
-
-If you find the time, please do! Any hints how a specific part of the
-API could be done better, is highly appreciated. A lot of the more or
-less recent changes were done due to reviews from glib developers.
-More help is always welcome!
-
-Thanks
-David
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIFuDCC
+BbQwggOcoAMCAQICAw9gVDANBgkqhkiG9w0BAQ0FADB5MRAwDgYDVQQKEwdSb290IENBMR4w
+HAYDVQQLExVodHRwOi8vd3d3LmNhY2VydC5vcmcxIjAgBgNVBAMTGUNBIENlcnQgU2lnbmlu
+ZyBBdXRob3JpdHkxITAfBgkqhkiG9w0BCQEWEnN1cHBvcnRAY2FjZXJ0Lm9yZzAeFw0xNDA4
+MDgxMTMwNDRaFw0xNTAyMDQxMTMwNDRaMGMxGDAWBgNVBAMTD0NBY2VydCBXb1QgVXNlcjEj
+MCEGCSqGSIb3DQEJARYUYWhmZXJyb2luN0BnbWFpbC5jb20xIjAgBgkqhkiG9w0BCQEWE2Fo
+ZW1tZWxnQG9oaW9ndC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDdmm8R
+BM5D6fGiB6rpogPZbLYu6CkU6834rcJepfmxKnLarYUYM593/VGygfaaHAyuc8qLaRA3u1M0
+Qp29flqmhv1VDTBZ+zFu6JgHjTDniBii1KOZRo0qV3jC5NvaS8KUM67+eQBjm29LhBWVi3+e
+a8jLxmogFXV0NGej+GHIr5zA9qKz2WJOEoGh0EfqZ2MQTmozcGI43/oqIYhRj8fRMkWXLUAF
+WsLzPQMpK19hD8fqwlxQWhBV8gsGRG54K5pyaQsjne7m89SF5M8JkNJPH39tHEvfv2Vhf7EM
+Y4WGyhLAULSlym1AI1uUHR1FfJaj3AChaEJZli/AdajYsqc7AgMBAAGjggFZMIIBVTAMBgNV
+HRMBAf8EAjAAMFYGCWCGSAGG+EIBDQRJFkdUbyBnZXQgeW91ciBvd24gY2VydGlmaWNhdGUg
+Zm9yIEZSRUUgaGVhZCBvdmVyIHRvIGh0dHA6Ly93d3cuQ0FjZXJ0Lm9yZzAOBgNVHQ8BAf8E
+BAMCA6gwQAYDVR0lBDkwNwYIKwYBBQUHAwQGCCsGAQUFBwMCBgorBgEEAYI3CgMEBgorBgEE
+AYI3CgMDBglghkgBhvhCBAEwMgYIKwYBBQUHAQEEJjAkMCIGCCsGAQUFBzABhhZodHRwOi8v
+b2NzcC5jYWNlcnQub3JnMDEGA1UdHwQqMCgwJqAkoCKGIGh0dHA6Ly9jcmwuY2FjZXJ0Lm9y
+Zy9yZXZva2UuY3JsMDQGA1UdEQQtMCuBFGFoZmVycm9pbjdAZ21haWwuY29tgRNhaGVtbWVs
+Z0BvaGlvZ3QuY29tMA0GCSqGSIb3DQEBDQUAA4ICAQCr4klxcZU/PDRBpUtlb+d6JXl2dfto
+OUP/6g19dpx6Ekt2pV1eujpIj5whh5KlCSPUgtHZI7BcksLSczQbxNDvRu6LNKqGJGvcp99k
+cWL1Z6BsgtvxWKkOmy1vB+2aPfDiQQiMCCLAqXwHiNDZhSkwmGsJ7KHMWgF/dRVDnsl6aOQZ
+jAcBMpUZxzA/bv4nY2PylVdqJWp9N7x86TF9sda1zRZiyUwy83eFTDNzefYPtc4MLppcaD4g
+Wt8U6T2ffQfCWVzDirhg4WmDH3MybDItjkSB2/+pgGOS4lgtEBMHzAGQqQ+5PojTHRyqu9Jc
+O59oIGrTaOtKV9nDeDtzNaQZgygJItJi9GoAl68AmIHxpS1rZUNV6X8ydFrEweFdRTVWhUEL
+70Cnx84YBojXv01LYBSZaq18K8cERPLaIrUD2go+2ffjdE9ejvYDhNBllY+ufvRizIjQA1uC
+OdktVAN6auQob94kOOsWpoMSrzHHvOvVW/kbokmKzaLtcs9+nJoL+vPi2AyzbaoQASVZYOGW
+pE3daA0F5FJfcPZKCwd5wdnmT3dU1IRUxa5vMmgjP20lkfP8tCPtvZv2mmI2Nw5SaXNY4gVu
+WQrvkV2in+TnGqgEIwUrLVbx9G6PSYZZs07czhO+Q1iVuKdAwjL/AYK0Us9v50acIzbl5CWw
+ZGj3wjGCA6EwggOdAgEBMIGAMHkxEDAOBgNVBAoTB1Jvb3QgQ0ExHjAcBgNVBAsTFWh0dHA6
+Ly93d3cuY2FjZXJ0Lm9yZzEiMCAGA1UEAxMZQ0EgQ2VydCBTaWduaW5nIEF1dGhvcml0eTEh
+MB8GCSqGSIb3DQEJARYSc3VwcG9ydEBjYWNlcnQub3JnAgMPYFQwCQYFKw4DAhoFAKCCAfUw
+GAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMTUwMTIyMTQ0OTAw
+WjAjBgkqhkiG9w0BCQQxFgQUEdvBYr83A67v9dopVIzsDhSDCIcwbAYJKoZIhvcNAQkPMV8w
+XTALBglghkgBZQMEASowCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMA4GCCqGSIb3DQMCAgIA
+gDANBggqhkiG9w0DAgIBQDAHBgUrDgMCBzANBggqhkiG9w0DAgIBKDCBkQYJKwYBBAGCNxAE
+MYGDMIGAMHkxEDAOBgNVBAoTB1Jvb3QgQ0ExHjAcBgNVBAsTFWh0dHA6Ly93d3cuY2FjZXJ0
+Lm9yZzEiMCAGA1UEAxMZQ0EgQ2VydCBTaWduaW5nIEF1dGhvcml0eTEhMB8GCSqGSIb3DQEJ
+ARYSc3VwcG9ydEBjYWNlcnQub3JnAgMPYFQwgZMGCyqGSIb3DQEJEAILMYGDoIGAMHkxEDAO
+BgNVBAoTB1Jvb3QgQ0ExHjAcBgNVBAsTFWh0dHA6Ly93d3cuY2FjZXJ0Lm9yZzEiMCAGA1UE
+AxMZQ0EgQ2VydCBTaWduaW5nIEF1dGhvcml0eTEhMB8GCSqGSIb3DQEJARYSc3VwcG9ydEBj
+YWNlcnQub3JnAgMPYFQwDQYJKoZIhvcNAQEBBQAEggEAJJkCzgIBUD56mva3SXbVhefL769C
+BSfUg5tNtqMwJ5PrZsEx12UqLfi1ahUoR0MMoyOC+6n8HwyghT9XywNOC+jr8t0kD7uPC1Vv
+P5pAiKNl3CNNL7LtcuumaqmwUpFc5PRECxpsvOPPzjA0yJcqGPf5WrnD+IiF6FqeczWue3Hb
+H2qNqkOdeAmcUXCZE7sKjrY42S/oXAVjL2lFBymVWTj9Gp3y1L6fiE/nM3e4eCTidkg1QoOz
+ecs39yt97Ow78mhAVSeBfRYwLxyg8+QBXN5BCEu/Wf0LSu6GInOlGgVn2xLJwN5+s+BjvTAe
+JxIt7Kzd+n7w9RvujxqVZAKDmQAAAAAAAA==
+--------------ms010005020709040000080309--
