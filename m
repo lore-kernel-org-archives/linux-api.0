@@ -1,37 +1,97 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH tip 0/9] tracing: attach eBPF programs to tracepoints/syscalls/kprobe
-Date: Wed, 21 Jan 2015 18:13:23 -0800
-Message-ID: <CAMEtUuz9bcaYN0if1w1O01vwc593P2ACUX-KK++6Jeqz7MwFsg@mail.gmail.com>
-References: <CAMEtUux8v2LDtLcgpT9hCvJgnrCwT2fkzsSvAPFSuEUx+itxyQ@mail.gmail.com>
- <20150121205643.4d8a3516@gandalf.local.home>
+From: Michael Kerrisk <mtk.manpages@gmail.com>
+Subject: Re: [PATCH v9 0/11] fs: Introduce FALLOC_FL_INSERT_RANGE for fallocate
+Date: Thu, 22 Jan 2015 09:16:34 +0100
+Message-ID: <CAHO5Pa3HnzP=KcBQOWDEkBqppMGXJ2kzfNKj21ruQ5SvWnms2g@mail.gmail.com>
+References: <1421853126-4505-1-git-send-email-linkinjeon@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150121205643.4d8a3516-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Brendan Gregg <brendan.d.gregg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <1421853126-4505-1-git-send-email-linkinjeon@gmail.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Namjae Jeon <linkinjeon@gmail.com>
+Cc: Theodore Ts'o <tytso@mit.edu>, Namjae Jeon <namjae.jeon@samsung.com>, Linux API <linux-api@vger.kernel.org>, bfoster@redhat.com, Linux Kernel <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, a.sangwan@samsung.com, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 21, 2015 at 5:56 PM, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> wrote:
-> On Wed, 21 Jan 2015 17:49:08 -0800
-> Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
->
->
->> > This also makes it keeping events in the soft-disabled state.
->>
->> I was never able to figure out the use case for soft-disabled state.
->> Probably historical before static_key was done.
->
-> No, it's not historical at all. The "soft-disable" is a way to enable
-> from any context. You can't enable a static key from NMI or interrupt
-> context, but you can enable a "soft-disable" there.
->
-> As you can enable or disable events from any function that the function
-> tracer may trace, I needed a way to enable them (make the tracepoint
-> active), but do nothing until something else turns them on.
+[CC += linux-api]
 
-Thanks for explanation. Makes sense.
-Speaking of nmi... I think I will add a check that if (in_nmi())
-just skip running the program, since supporting this use
-case is not needed at the moment.
+Hello Namjae
+
+Please, all patches such as this that touch the user-space ABI must CC
+linux-api@. (The kernel source file Documentation/SubmitChecklist
+notes that all Linux kernel patches that change userspace interfaces
+should be CCed to linux-api@vger.kernel.org.  See also
+https://www.kernel.org/doc/man-pages/linux-api-ml.html )
+
+Thanks,
+
+Michael
+
+
+On Wed, Jan 21, 2015 at 4:11 PM, Namjae Jeon <linkinjeon@gmail.com> wrote:
+> From: Namjae Jeon <namjae.jeon@samsung.com>
+>
+> In continuation of the work of making the process of non linear editing of
+> media files faster, we introduce here the new flag FALLOC_FL_INSERT_RANGE
+> for fallocate.
+>
+> This flag will work opposite to the FALLOC_FL_COLLAPSE_RANGE flag.
+> As such, specifying FALLOC_FL_INSERT_RANGE flag will create new space inside file
+> by inserting a hole within the range specified by offset and len.
+> User can write new data in this space. e.g. ads.
+> Like collapse range, currently we have the limitation that offset and len should
+> be block size aligned for both XFS and Ext4.
+>
+> The semantics of the flag are :
+> 1) It creates space within file by inserting a hole of  len bytes starting
+>    at offset byte without overwriting any existing data. All the data blocks
+>    from offset to EOF are shifted towards right to make hole space.
+> 2) It should be used exclusively. No other fallocate flag in combination.
+> 3) Offset and length supplied to fallocate should be fs block size aligned
+>    in case of xfs and ext4.
+> 4) Insert range does not work for the case when offset is overlapping/beyond
+>    i_size. If the user wants to insert space at the end of file they are
+>    advised to use either ftruncate(2) or fallocate(2) with mode 0.
+> 5) It increses the size of file by len bytes.
+>
+>
+> Namjae Jeon (11):
+>  fs: Add support FALLOC_FL_INSERT_RANGE for fallocate
+>  xfs: Add support FALLOC_FL_INSERT_RANGE for fallocate
+>  ext4: Add support FALLOC_FL_INSERT_RANGE for fallocate
+>  xfsprogs: xfs_io: add finsert command for insert range via fallocate
+>  xfstests: generic/039: Standard insert range tests
+>  xfstests: generic/040: Delayed allocation insert range
+>  xfstests: generic/041: Multi insert range tests
+>  xfstests: generic/042: Delayed allocation multi insert
+>  xfstests: generic/043: Test multiple fallocate insert/collapse range calls
+>  xfstests: fsstress: Add fallocate insert range operation
+>  xfstests: fsx: Add fallocate insert range operation
+> --
+> 1.7.9.5
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+
+
+
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
