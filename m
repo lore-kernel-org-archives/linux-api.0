@@ -1,139 +1,68 @@
-From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Subject: [PATCH v5] perf: Use monotonic clock as a source for timestamps
-Date: Wed, 21 Jan 2015 20:27:17 +0000
-Message-ID: <1421872037-12559-1-git-send-email-pawel.moll@arm.com>
-References: <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1415292718-19785-2-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH tip 0/9] tracing: attach eBPF programs to
+ tracepoints/syscalls/kprobe
+Date: Thu, 22 Jan 2015 10:03:16 +0900
+Message-ID: <20150122010316.GA15871@sejong>
+References: <CAMEtUuxhjef+9QaFccfSyA3DbVJ3H6qP=eu-uZCkku1rVWViSQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAMEtUuxhjef+9QaFccfSyA3DbVJ3H6qP=eu-uZCkku1rVWViSQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <dborkman@redhat.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Brendan Gregg <brendan.d.gregg@gmail.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Until now, perf framework never defined the meaning of the timestamps
-captured as PERF_SAMPLE_TIME sample type. The values were obtaining
-from local (sched) clock, which is unavailable in userspace. This made
-it impossible to correlate perf data with any other events. Other
-tracing solutions have the source configurable (ftrace) or just share
-a common time domain between kernel and userspace (LTTng).
+Hi Alexei,
 
-Follow the trend by using monotonic clock, which is readily available
-as POSIX CLOCK_MONOTONIC.
+On Fri, Jan 16, 2015 at 10:57:15AM -0800, Alexei Starovoitov wrote:
+> On Fri, Jan 16, 2015 at 7:02 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> > One last thing. If the ebpf is used for anything but filtering, it
+> > should go into the trigger file. The filtering is only a way to say if
+> > the event should be recorded or not. But the trigger could do something
+> > else (a printk, a stacktrace, etc).
+> 
+> it does way more than just filtering, but
+> invoking program as a trigger is too slow.
+> When program is called as soon as tracepoint fires,
+> it can fetch other fields, evaluate them, printk some of them,
+> optionally dump stack, aggregate into maps.
+> We can let it call triggers too, so that user program will
+> be able to enable/disable other events.
+> I'm not against invoking programs as a trigger, but I don't
+> see a use case for it. It's just too slow for production
+> analytics that needs to act on huge number of events
+> per second.
 
-Also add a sysctl "perf_sample_time_clk_id" attribute (usually available
-as "/proc/sys/kernel/perf_sample_time_clk_id") which can be used by the
-user to obtain the clk_id to be used with POSIX clock API (eg.
-clock_gettime()) to obtain a time value comparable with perf samples.
+AFAIK a trigger can be fired before allocating a ring buffer if it
+doesn't use the event record (i.e. has filter) or ->post_trigger bit
+set (stacktrace).  Please see ftrace_trigger_soft_disabled().
 
-Old behaviour can be restored by using "perf_use_local_clock" kernel
-parameter.
+This also makes it keeping events in the soft-disabled state.
 
-Signed-off-by: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
----
-Changes since v4:
+Thanks,
+Namhyung
 
-- using jump labels to reduce runtime overhead of the local/mono check
 
- Documentation/kernel-parameters.txt |  9 ++++++++
- kernel/events/core.c                | 43 ++++++++++++++++++++++++++++++++++++-
- 2 files changed, 51 insertions(+), 1 deletion(-)
-
-diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
-index 4df73da..3cccd0e 100644
---- a/Documentation/kernel-parameters.txt
-+++ b/Documentation/kernel-parameters.txt
-@@ -91,6 +91,7 @@ parameter is applicable:
- 	NUMA	NUMA support is enabled.
- 	NFS	Appropriate NFS support is enabled.
- 	OSS	OSS sound support is enabled.
-+	PERF	Performance events and counters support is enabled.
- 	PV_OPS	A paravirtualized kernel is enabled.
- 	PARIDE	The ParIDE (parallel port IDE) subsystem is enabled.
- 	PARISC	The PA-RISC architecture is enabled.
-@@ -2795,6 +2796,14 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
- 			allocator.  This parameter is primarily	for debugging
- 			and performance comparison.
- 
-+	perf_use_local_clock
-+			[PERF]
-+			Use local_clock() as a source for perf timestamps
-+			generation. This was be the default behaviour and
-+			this parameter can be used to maintain backward
-+			compatibility or on older hardware with expensive
-+			monotonic clock source.
-+
- 	pf.		[PARIDE]
- 			See Documentation/blockdev/paride.txt.
- 
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 882f835..f45434d 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -42,6 +42,8 @@
- #include <linux/module.h>
- #include <linux/mman.h>
- #include <linux/compat.h>
-+#include <linux/sysctl.h>
-+#include <linux/jump_label.h>
- 
- #include "internal.h"
- 
-@@ -322,9 +324,43 @@ extern __weak const char *perf_pmu_name(void)
- 	return "pmu";
- }
- 
-+static struct static_key perf_use_local_clock_key = STATIC_KEY_INIT_FALSE;
-+static bool perf_use_local_clock_param __initdata;
-+static int __init perf_use_local_clock_setup(char *__unused)
-+{
-+	perf_use_local_clock_param = true;
-+	return 1;
-+}
-+__setup("perf_use_local_clock", perf_use_local_clock_setup);
-+
-+static int sysctl_perf_sample_time_clk_id = CLOCK_MONOTONIC;
-+
-+static struct ctl_table perf_sample_time_kern_table[] = {
-+	{
-+		.procname       = "perf_sample_time_clk_id",
-+		.data           = &sysctl_perf_sample_time_clk_id,
-+		.maxlen         = sizeof(int),
-+		.mode           = 0444,
-+		.proc_handler   = proc_dointvec,
-+	},
-+	{}
-+};
-+
-+static struct ctl_table perf_sample_time_root_table[] = {
-+	{
-+		.procname	= "kernel",
-+		.mode		= 0555,
-+		.child		= perf_sample_time_kern_table,
-+	},
-+	{}
-+};
-+
- static inline u64 perf_clock(void)
- {
--	return local_clock();
-+	if (static_key_false(&perf_use_local_clock_key))
-+		return local_clock();
-+	else
-+		return ktime_get_mono_fast_ns();
- }
- 
- static inline struct perf_cpu_context *
-@@ -8271,6 +8307,11 @@ void __init perf_event_init(void)
- 	 */
- 	BUILD_BUG_ON((offsetof(struct perf_event_mmap_page, data_head))
- 		     != 1024);
-+
-+	if (perf_use_local_clock_param)
-+		static_key_slow_inc(&perf_use_local_clock_key);
-+	else
-+		register_sysctl_table(perf_sample_time_root_table);
- }
- 
- static int __init perf_event_sysfs_init(void)
--- 
-2.1.0
+> We must minimize the overhead between tracepoint
+> firing and program executing, so that programs can
+> be used on events like packet receive which will be
+> in millions per second. Every nsec counts.
+> For example:
+> - raw dd if=/dev/zero of=/dev/null
+>   does 760 MB/s (on my debug kernel)
+> - echo 1 > events/syscalls/sys_enter_write/enable
+>   drops it to 400 MB/s
+> - echo "echo "count == 123 " > events/syscalls/sys_enter_write/filter
+>   drops it even further down to 388 MB/s
+> This slowdown is too high for this to be used on a live system.
+> - tracex4 that computes histogram of sys_write sizes
+>   and stores log2(count) into a map does 580 MB/s
+>   This is still not great, but this slowdown is now usable
+>   and we can work further on minimizing the overhead.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
