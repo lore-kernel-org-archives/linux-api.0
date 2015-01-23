@@ -1,158 +1,69 @@
-From: Peter Hurley <peter@hurleysoftware.com>
-Subject: Re: [PATCH v6 2/2] tty/serial: Add Spreadtrum sc9836-uart driver
- support
-Date: Fri, 23 Jan 2015 08:12:55 -0500
-Message-ID: <54C248D7.6040901@hurleysoftware.com>
-References: <1421933706-4277-1-git-send-email-chunyan.zhang@spreadtrum.com>	<1421933706-4277-3-git-send-email-chunyan.zhang@spreadtrum.com>	<54C1C69B.6010100@hurleysoftware.com> <CAAfSe-s2Y_JSiR+HX4OOF_62q3JYN5k81JZuNe9CP9=shBpZzA@mail.gmail.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Fri, 23 Jan 2015 21:19:46 +0800
+Message-ID: <20150123131946.GA26302@kroah.com>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
+ <20150123062820.GB7949@Darwish.PC>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAAfSe-s2Y_JSiR+HX4OOF_62q3JYN5k81JZuNe9CP9=shBpZzA@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20150123062820.GB7949@Darwish.PC>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Lyra Zhang <zhang.lyra@gmail.com>
-Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Mark Rutland <mark.rutland@arm.com>, Arnd Bergmann <arnd@arndb.de>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, Shawn Guo <shawn.guo@linaro.org>, Pawel Moll <pawel.moll@arm.com>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, "jslaby@suse.cz" <jslaby@suse.cz>, Grant Likely <grant.likely@linaro.org>, =?UTF-8?B?SGVpa28gU3TDvGJuZXI=?= <heiko@sntech.de>, "jason@lakedaemon.net" <jason@lakedaemon.net>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>, "andrew@lunn.ch" <andrew@lunn.ch>, Hayato Suzuki <hytszk@gmail.com>, "antonynpavlov@gmail.com" <antonynpavlov@gmail.com>, Orson Zhai <orsonzhai@gmail.com>, "geng.ren@spreadtrum.com" <geng.ren@spreadtrum.com>
+To: "Ahmed S. Darwish" <darwish.07@gmail.com>
+Cc: arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.no, jkosina@suse.cz, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, daniel@zonque.or, dh.herrmann@gmail.com, tixxdz@opendz.org, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel Mack <daniel@zonque.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/23/2015 02:23 AM, Lyra Zhang wrote:
-> Hi, Peter
+On Fri, Jan 23, 2015 at 08:28:20AM +0200, Ahmed S. Darwish wrote:
+> On Fri, Jan 16, 2015 at 11:16:05AM -0800, Greg Kroah-Hartman wrote:
+> > From: Daniel Mack <daniel@zonque.org>
+> > 
+> > kdbus is a system for low-latency, low-overhead, easy to use
+> > interprocess communication (IPC).
+> > 
+> > The interface to all functions in this driver is implemented via ioctls
+> > on files exposed through a filesystem called 'kdbusfs'. The default
+> > mount point of kdbusfs is /sys/fs/kdbus.
 > 
-> Many thanks to you for reviewing so carefully and giving us so many
-> suggestions and so clear explanations.
-
-:)
-
-> I'll address all of your comments and send an updated patch soon.
+> Pardon my ignorance, but we've always been told that adding
+> new ioctl()s to the kernel is a very big no-no.  But given
+> the seniority of the folks stewarding this kdbus effort,
+> there must be a good rationale ;-)
 > 
-> On Fri, Jan 23, 2015 at 11:57 AM, Peter Hurley <peter@hurleysoftware.com> wrote:
+> So, can the rationale behind introducing new ioctl()s be
+> further explained? It would be even better if it's included
+> in the documentation patch itself.
 
-[...]
+The main reason to use an ioctl is that you want to atomically set
+and/or get something "complex" through the user/kernel boundary.  For
+simple device attributes, sysfs works great, for configuring devices,
+configfs works great, but for data streams / structures / etc. an ioctl
+is the correct thing to use.
 
->>> +static void sprd_set_termios(struct uart_port *port,
->>> +                                 struct ktermios *termios,
->>> +                                 struct ktermios *old)
->>> +{
->>> +     unsigned int baud, quot;
->>> +     unsigned int lcr, fc;
->>> +     unsigned long flags;
->>> +
->>> +     /* ask the core to calculate the divisor for us */
->>> +     baud = uart_get_baud_rate(port, termios, old, 1200, 3000000);
->>                                                       ^^^^   ^^^^^^
->>                                            mabye derive these from uartclk?
-> 
-> I'm afraid I can't understand very clearly, Could you explain more
-> details please?
+Examples of new ioctls being added to the kernel are all over the
+place, look at all of the special-purpose ioctls the filesystems keep
+creating (they aren't adding new syscalls), look at the monstrosity that
+is the DRM layer, look at other complex things like openvswitch, or
+"simpler" device-specific interfaces like the MEI one, or even more
+complex ones like the MMC interface.  These are all valid uses of ioctls
+as they are device/filesystem specific ways to interact with the kernel.
 
-Is the fixed clock divider == 8 and the uartclk == 26000000 ?
-If so,
-	baud = uartclk / 8 = 3250000
+The thing is, almost no one pays attention to these new ioctls as they
+are domain-specific interfaces, with open userspace programs talking to
+them, and they work well.  ioctl is a powerful and useful interface, and
+if we were to suddenly require no new ioctls, and require everything to
+be a syscall, we would do nothing except make apis more complex (hint,
+you now have to do extra validation on your file descriptor passed to
+you to determine if it really is what you can properly operate your
+ioctl on), and cause no real benefit at all.
 
-I see now this is clamping baud inside the maximum, so this is fine.
-Please disregard my comment.
+Yes, people abuse ioctls at times, but really, they are needed.
 
-[...]
+And remember, I was one of the people who long ago thought we should not
+be adding more ioctls, but I have seen the folly of my ways, and chalk
+it up to youthful ignorance :)
 
+Hope this helps explain things better,
 
->>> +static int sprd_probe(struct platform_device *pdev)
->>> +{
->>> +     struct resource *res;
->>> +     struct uart_port *up;
->>> +     struct clk *clk;
->>> +     int irq;
->>> +     int index;
->>> +     int ret;
->>> +
->>> +     for (index = 0; index < ARRAY_SIZE(sprd_port); index++)
->>> +             if (sprd_port[index] == NULL)
->>> +                     break;
->>> +
->>> +     if (index == ARRAY_SIZE(sprd_port))
->>> +             return -EBUSY;
->>> +
->>> +     index = sprd_probe_dt_alias(index, &pdev->dev);
->>> +
->>> +     sprd_port[index] = devm_kzalloc(&pdev->dev,
->>> +             sizeof(*sprd_port[index]), GFP_KERNEL);
->>> +     if (!sprd_port[index])
->>> +             return -ENOMEM;
->>> +
->>> +     up = &sprd_port[index]->port;
->>> +     up->dev = &pdev->dev;
->>> +     up->line = index;
->>> +     up->type = PORT_SPRD;
->>> +     up->iotype = SERIAL_IO_PORT;
->>> +     up->uartclk = SPRD_DEF_RATE;
->>> +     up->fifosize = SPRD_FIFO_SIZE;
->>> +     up->ops = &serial_sprd_ops;
->>> +     up->flags = ASYNC_BOOT_AUTOCONF;
->>                     ^^^^^^^^^
->>                     UPF_BOOT_AUTOCONF
->>
->> sparse will catch errors like this. See Documentation/sparse.txt
-> 
-> you mean we should use UPF_BOOT_AUTOCONF, right?
-
-Yes. Only UPF_* flag definitions should be used with the uart_port.flags
-field.
-
-My comment regarding the sparse tool and documentation is because the
-flags field and UPF_* definitions use a type mechanism to generate
-warnings using the sparse tool if regular integer values are used
-with the flags field.
-
-The type mechanism was specifically introduced to catch using ASYNC_*
-definitions with the uart_port.flags field.
-
-[...]
-
->>> +static int sprd_suspend(struct device *dev)
->>> +{
->>> +     int id = to_platform_device(dev)->id;
->>> +     struct uart_port *port = &sprd_port[id]->port;
->>
->> I'm a little confused regarding the port indexing;
->> is platform_device->id == line ?  Where did that happen?
->>
-> 
-> Oh, I'll change to assign platform_device->id with port->line in probe()
-
-I apologize; I should have made my comment clearer.
-
-The ->id should not be assigned.
-
-Replace
-
-	int id = to_platform_device(dev)->id;
-	struct uart_port *port = &sprd_port[id]->port;
-
-	uart_suspend_port(&sprd_uart_driver, port);
-
-with
-
-	struct sprd_uart_port *sup = dev_get_drvdata(dev);
-
-	uart_suspend_port(&sprd_uart_driver, &sup->port);
-
-
-I know it's not obvious but platform_get/set_drvdata() is really
-dev_get/set_drvdata() using the embedded struct device dev.
-
-> 
->>
->>> +
->>> +     uart_suspend_port(&sprd_uart_driver, port);
->>> +
->>> +     return 0;
->>> +}
->>> +
->>> +static int sprd_resume(struct device *dev)
->>> +{
->>> +     int id = to_platform_device(dev)->id;
->>> +     struct uart_port *port = &sprd_port[id]->port;
->>> +
->>> +     uart_resume_port(&sprd_uart_driver, port);
-
-same here
-
->>> +     return 0;
+greg k-h
