@@ -1,42 +1,46 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH RFC 5/6] epoll: Add implementation for epoll_mod_wait
-Date: Thu, 22 Jan 2015 13:12:59 -0800
-Message-ID: <CALCETrWwuJpFK+38mBxxTQCu7Oig22Nr+mAuO++Y+0CdAhfzkw@mail.gmail.com>
-References: <1421747878-30744-1-git-send-email-famz@redhat.com>
- <1421747878-30744-6-git-send-email-famz@redhat.com> <54BE4F1D.7090807@gmail.com>
- <20150121045903.GA2858@fam-t430.nay.redhat.com> <54BF5ACE.6030206@gmail.com>
- <20150121085827.GB23024@ad.nay.redhat.com> <54BF814F.7090703@redhat.com>
- <20150121111404.GA3804@ad.nay.redhat.com> <54BF9294.3070902@redhat.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [v8 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
+ interface support
+Date: Fri, 23 Jan 2015 12:39:32 +1100
+Message-ID: <20150123013932.GC24722@dastard>
+References: <1418102548-5469-1-git-send-email-lixi@ddn.com>
+ <1418102548-5469-5-git-send-email-lixi@ddn.com>
+ <20141209225758.GB9756@dastard>
+ <54C1152F.1080101@yandex-team.ru>
+ <20150122155900.GB3062@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54BF9294.3070902@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paolo Bonzini <pbonzini@redhat.com>
-Cc: Fam Zheng <famz@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, X86 ML <x86@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hugh>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150122155900.GB3062-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 21, 2015 at 3:50 AM, Paolo Bonzini <pbonzini@redhat.com> wrote:
->
->
-> On 21/01/2015 12:14, Fam Zheng wrote:
->> > My take for simplicity will be leaving epoll_ctl as-is, and my take for
->> > performance will be epoll_pwait1. And I don't really like putting my time on
->> > epoll_ctl_batch, thinking it as a ambivalent compromise in between.
->>
->> > I agree with Michael actually.  The big change is going from O(n)
->> > epoll_ctl calls to O(1), and epoll_ctl_batch achieves that just fine.
->> > Changing 2 syscalls to 1 is the icing on the cake, but we're talking of
->> > a fraction of a microsecond.
->>
->> Maybe I'm missing something, but in common cases, the set of fds for epoll_wait
->> doesn't change that radically from one iteration to another, does it?
->
-> That depends on the application.
+On Thu, Jan 22, 2015 at 04:59:00PM +0100, Jan Kara wrote:
+> On Thu 22-01-15 18:20:15, Konstantin Khlebnikov wrote:
+> > Also: is quota for project-id '0' really required for something?
+> > It adds overhead but I don't see any use-cases for that.
+>   But only if filesystem has project quota feature enabled, no? That
+> doesn't concern me too much since the overhead doesn't seem to big and when
+> you enable project quotas you likely want to use them ;-). But if you are
+> concerned, I'm not strictly opposed to special casing of project id 0. But
+> I'd like to see how much speed you gain by that before complicating the
+> code...
 
-In my application, the set of fds almost never changes, but the set of
-events I want changes all the time.  The main thing that changes is
-whether I care about EPOLLOUT.  If I'm ready to send something, then I
-want EPOLLOUT.  If I'm not ready, then I don't want EPOLLOUT.
+Except that doing so will result in different behaviour between
+filesystems. XFS always *accounts* inodes when quotas are enabled,
+but does not allow limits to be placed on quota ID 0.  Hence projid
+= 0 accounts all the space not used by other project groups so
+admins can easily see how much uncontrolled space is being used.
+I've had admins tell me this is one of the features they liked most
+about using project quotas because you can't hide from it, even as
+root....
 
---Andy
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
