@@ -1,73 +1,76 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: futex(2) man page update help request
-Date: Sat, 24 Jan 2015 17:25:05 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1501241719550.5526@nanos>
-References: <537346E5.4050407@gmail.com>  <CF98E3EF.90564%dvhart@linux.intel.com>  <CAKgNAkh+PWzT2SByaLk_OtiAXeZSkWoMgu+ivDOt1dTWVtaatQ@mail.gmail.com>  <5373D0CA.2050204@redhat.com>  <alpine.DEB.2.02.1405150121230.6261@ionos.tec.linutronix.de>
- <CAKgNAkjQ5Dd_U9OojXdgeforpRevvPHNFAw99kBFPCwHgf7Ggg@mail.gmail.com>  <alpine.DEB.2.02.1405151144390.6261@ionos.tec.linutronix.de>  <54B7D87C.3090901@gmail.com> <alpine.DEB.2.11.1501152313330.5526@nanos>  <54B92B71.2090509@gmail.com> <alpine.DEB.2.11.1501161618080.5526@nanos>
-  <54B97A72.2050205@gmail.com>  <D0DEECA2.B7EAD%dvhart@linux.intel.com>  <1422037145.27573.0.camel@triegel.csb>  <alpine.DEB.2.11.1501241102450.5526@nanos> <1422104287.29655.13.camel@triegel.csb>
+From: "Ahmed S. Darwish" <darwish.07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Sun, 25 Jan 2015 05:30:50 +0200
+Message-ID: <20150125033050.GC6621@Darwish.PC>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
+ <20150123062820.GB7949@Darwish.PC>
+ <20150123131946.GA26302@kroah.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1422104287.29655.13.camel-I2ZjUw8blINjztcc/or7kQ@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150123131946.GA26302-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZooxQFI55V6+gNQ@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 24 Jan 2015, Torvald Riegel wrote:
-> On Sat, 2015-01-24 at 11:05 +0100, Thomas Gleixner wrote:
-> > On Fri, 23 Jan 2015, Torvald Riegel wrote:
-> > 
-> > > On Fri, 2015-01-16 at 16:46 -0800, Darren Hart wrote:
-> > > > On 1/16/15, 12:54 PM, "Michael Kerrisk (man-pages)"
-> > > > <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > > 
-> > > > >Color me stupid, but I can't see this in futex_requeue(). Where is that
-> > > > >check that is "independent of the requeue type (normal/pi)"?
-> > > > >
-> > > > >When I look through futex_requeue(), all the likely looking sources
-> > > > >of EINVAL are governed by a check on the 'requeue_pi' argument.
-> > > > 
-> > > > 
-> > > > Right, in the non-PI case, I believe there are valid use cases: move to
-> > > > the back of the FIFO, for example (OK, maybe the only example?).
+On Fri, Jan 23, 2015 at 09:19:46PM +0800, Greg Kroah-Hartman wrote:
+> On Fri, Jan 23, 2015 at 08:28:20AM +0200, Ahmed S. Darwish wrote:
+> > On Fri, Jan 16, 2015 at 11:16:05AM -0800, Greg Kroah-Hartman wrote:
+> > > From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
 > > > 
-> > > But we never guarantee a futex is a FIFO, or do we?  If we don't, then
-> > > such a requeue could be implemented as a no-op by the kernel, which
-> > > would sort of invalidate the use case.
+> > > kdbus is a system for low-latency, low-overhead, easy to use
+> > > interprocess communication (IPC).
 > > > 
-> > > (And I guess we don't want to guarantee FIFO behavior for futexes.)
+> > > The interface to all functions in this driver is implemented via ioctls
+> > > on files exposed through a filesystem called 'kdbusfs'. The default
+> > > mount point of kdbusfs is /sys/fs/kdbus.
 > > 
-> > The (current) behaviour is:
+> > Pardon my ignorance, but we've always been told that adding
+> > new ioctl()s to the kernel is a very big no-no.  But given
+> > the seniority of the folks stewarding this kdbus effort,
+> > there must be a good rationale ;-)
 > > 
-> >     real-time threads:   FIFO per priority level
-> >     sched-other threads: FIFO independent of nice level
-> > 
-> > The wakeup is priority ordered. Highest priority level first.
+> > So, can the rationale behind introducing new ioctl()s be
+> > further explained? It would be even better if it's included
+> > in the documentation patch itself.
 > 
-> OK.
+> The main reason to use an ioctl is that you want to atomically set
+> and/or get something "complex" through the user/kernel boundary.  For
+> simple device attributes, sysfs works great, for configuring devices,
+> configfs works great, but for data streams / structures / etc. an ioctl
+> is the correct thing to use.
 > 
-> But, just to be clear, do I correctly understand that you do not want to
-> guarantee FIFO behavior in the specified futex semantics?  I think there
-> are cases where being able to *rely* on FIFO (now and on all future
-> kernels) would be helpful for users (e.g., on POSIX/C++11 condvars and I
-> assume in other ordered-wakeup cases too) -- but at the same time, this
-> would constrain future futex implementations.
+> Examples of new ioctls being added to the kernel are all over the
+> place, look at all of the special-purpose ioctls the filesystems keep
+> creating (they aren't adding new syscalls), look at the monstrosity that
+> is the DRM layer, look at other complex things like openvswitch, or
+> "simpler" device-specific interfaces like the MEI one, or even more
+> complex ones like the MMC interface.  These are all valid uses of ioctls
+> as they are device/filesystem specific ways to interact with the kernel.
+> 
+> The thing is, almost no one pays attention to these new ioctls as they
+> are domain-specific interfaces, with open userspace programs talking to
+> them, and they work well.  ioctl is a powerful and useful interface, and
+> if we were to suddenly require no new ioctls, and require everything to
+> be a syscall, we would do nothing except make apis more complex (hint,
+> you now have to do extra validation on your file descriptor passed to
+> you to determine if it really is what you can properly operate your
+> ioctl on), and cause no real benefit at all.
+> 
+> Yes, people abuse ioctls at times, but really, they are needed.
+> 
+> And remember, I was one of the people who long ago thought we should not
+> be adding more ioctls, but I have seen the folly of my ways, and chalk
+> it up to youthful ignorance :)
+> 
 
-It would be a constraint, but I don't think it would be a horrible
-one. Though I have my doubts, that we can actually guarantee it under
-all circumstances.
+Exactly, and that's why I wondered about the sudden change
+of heart ;-)
 
-One thing comes to my mind right away: spurious wakeups. There is no
-way that we can guarantee FIFO ordering in the context of those. And
-we cannot prevent them either.
+Thanks for taking the time to write this.
 
-Thanks,
-
-	tglx
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Regards,
+Darwish
