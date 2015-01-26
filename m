@@ -1,101 +1,36 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+From: Devin Heitmueller <dheitmueller-eb9eJ82Ua7k9XoPSrs7Ehg@public.gmane.org>
 Subject: Re: [PATCH 1/3] media: Fix ALSA and DVB representation at media
  controller API
-Date: Mon, 26 Jan 2015 12:31:29 -0200
-Message-ID: <20150126123129.2076b9f8@recife.lan>
+Date: Mon, 26 Jan 2015 09:41:41 -0500
+Message-ID: <CAGoCfiwi0nj_9sYNzEFOp5BvedFe+HphJ2bVtx_bnBw3d-Bsyw@mail.gmail.com>
 References: <cover.1422273497.git.mchehab@osg.samsung.com>
 	<cb0517f150942a2d3657c1f2e55754061bfae2c4.1422273497.git.mchehab@osg.samsung.com>
 	<54C63D16.3070607@xs4all.nl>
 	<20150126113416.311fb376@recife.lan>
 	<CAGoCfixoSxspEzpCB95BVPXBrZr2gpDVWHbaikESsuB1V=WM1g@mail.gmail.com>
+	<20150126123129.2076b9f8@recife.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <CAGoCfixoSxspEzpCB95BVPXBrZr2gpDVWHbaikESsuB1V=WM1g@mail.gmail.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Devin Heitmueller <dheitmueller@kernellabs.com>
-Cc: Hans Verkuil <hverkuil@xs4all.nl>, Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Hans Verkuil <hans.verkuil@cisco.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, Antti Palosaari <crope@iki.fi>, Ricardo Ribalda <ricardo.ribalda@gmail.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Ramakrishnan Muthukrishnan <ramakrmu@cisco.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150126123129.2076b9f8-+RedX5hVuTR+urZeOPWqwQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Ricardo Ribalda <ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishnan Muthukrishnan <ramakrmu-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Em Mon, 26 Jan 2015 09:00:46 -0500
-Devin Heitmueller <dheitmueller@kernellabs.com> escreveu:
+> It is actually trivial to get the device nodes once you have the
+> major/minor. The media-ctl library does that for you. See:
 
-> > For media-ctl, it is easier to handle major/minor, in order to identify
-> > the associated devnode name. Btw, media-ctl currently assumes that all
-> > devnode devices are specified by v4l.major/v4l.minor.
-> 
-> I suspect part of the motivation for the "id" that corresponds to the
-> adapter field was to make it easier to find the actual underlying
-> device node. 
+No objection then.
 
-Yes, that was the reason why, back in 2007, we believed that just id
-would be enough. Yet, we never tried to implement it, until the end
-of the last year.
+On a related note, you would be very well served to consider testing
+your dvb changes with a device that has more than one DVB tuner (such
+as the hvr-2200/2250).  That will help you shake out any edge cases
+related to ensuring that the different DVB nodes appear in different
+groups.
 
-> While it's trivial to convert a V4L device node from
-> major/minor to the device node (since for major number is constant and
-> the minor corresponds to the X in /dev/videoX), that's tougher with
-> DVB adapters because of the hierarchical nature of the DVB device
-> nodes.  Having the adapter number makes it trivial to open
-> /dev/dvb/adapterX.
-> 
-> Perhaps my POSIX is rusty -- is there a way to identify the device
-> node based on major minor without having to traverse the entire /dev
-> tree?
+Devin
 
-It is actually trivial to get the device nodes once you have the
-major/minor. The media-ctl library does that for you. See:
-
-$ media-ctl --print-dot
-digraph board {
-	rankdir=TB
-	n00000001 [label="{{<port0> 0} | cx25840 19-0044 | {<port1> 1 | <port2> 2}}", shape=Mrecord, style=filled, fillcolor=green]
-	n00000001:port1 -> n00000003
-	n00000001:port2 -> n00000004
-	n00000002 [label="{{} | NXP TDA18271HD | {<port0> 0}}", shape=Mrecord, style=filled, fillcolor=green]
-	n00000002:port0 -> n00000005 [style=dashed]
-	n00000002:port0 -> n00000001:port0
-	n00000003 [label="cx231xx #0 video\n/dev/video0", shape=box, style=filled, fillcolor=yellow]
-	n00000004 [label="cx231xx #0 vbi\n/dev/vbi0", shape=box, style=filled, fillcolor=yellow]
-	n00000005 [label="Fujitsu mb86A20s\n/dev/dvb/adapter0/frontend0", shape=box, style=filled, fillcolor=yellow]
-	n00000005 -> n00000006
-	n00000006 [label="demux\n/dev/dvb/adapter0/demux0", shape=box, style=filled, fillcolor=yellow]
-	n00000006 -> n00000007
-	n00000007 [label="dvr\n/dev/dvb/adapter0/dvr0", shape=box, style=filled, fillcolor=yellow]
-	n00000008 [label="dvb net\n/dev/dvb/adapter0/net0", shape=box, style=filled, fillcolor=yellow]
-}
-
-There are two routines inside the media-ctl libraries to convert from
-major/minor into a devnode name like: /dev/dvb/adapter0/demux0.
-
-The first one uses sysfs:
-
- $ ls -la /sys/dev/char|grep dvb
-lrwxrwxrwx. 1 root root 0 Jan 26 10:32 212:0 -> ../../devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.1/dvb/dvb0.frontend0
-lrwxrwxrwx. 1 root root 0 Jan 26 10:32 212:1 -> ../../devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.1/dvb/dvb0.demux0
-lrwxrwxrwx. 1 root root 0 Jan 26 10:32 212:2 -> ../../devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.1/dvb/dvb0.dvr0
-lrwxrwxrwx. 1 root root 0 Jan 26 10:32 212:3 -> ../../devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.1/dvb/dvb0.net0
-
-Unfortunately, the sysfs nodes are "dvb0" for adapter0, so a patch is needed 
-to fix it:
-	http://git.linuxtv.org/cgit.cgi/mchehab/experimental-v4l-utils.git/commit/?h=dvb-media-ctl&id=d854a9bb24706dbfc878484e4538d79b1ac52aae
-
-The second (and better) approach is to require udev to return the name of the
-devnode. The logic, implemented at utils/media-ctl/libmediactl.c, inside
-v4l-utils, is:
-
-	devnum = makedev(entity->info.v4l.major, entity->info.v4l.minor);
-	media_dbg(entity->media, "looking up device: %u:%u\n",
-		  major(devnum), minor(devnum));
-	device = udev_device_new_from_devnum(udev, 'c', devnum);
-
-Right now, by default, media-ctl will use the sysfs approach, except
-if an extra option is called at ./configure, in order to enable it to
-use the udev library.
-
-IMHO, we should make udev the default behavior, if libudev-dev(el) is 
-there at compilation time.
-
-Regards,
-Mauro
+-- 
+Devin J. Heitmueller - Kernel Labs
+http://www.kernellabs.com
