@@ -1,41 +1,31 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC][PATCH v2] procfs: Always expose /proc/<pid>/map_files/ and
- make it readable
-Date: Tue, 27 Jan 2015 00:00:54 +0300
-Message-ID: <20150126210054.GG651@moon>
-References: <1421194829-28696-1-git-send-email-calvinowens@fb.com>
- <20150114152501.GB9820@node.dhcp.inet.fi>
- <20150114153323.GF2253@moon>
- <20150114204653.GA26698@mail.thefacebook.com>
- <20150114211613.GH2253@moon>
- <20150122024554.GB23762@mail.thefacebook.com>
- <20150124031544.GA1992748@mail.thefacebook.com>
- <20150126124731.GA26916@node.dhcp.inet.fi>
+From: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+Subject: Re: [PATCH v3 00/13] Add kdbus implementation
+Date: Mon, 26 Jan 2015 21:32:40 +0000
+Message-ID: <20150126213240.63d07005@lxorguk.ukuu.org.uk>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+	<20150119180642.GA27957@sig21.net>
+	<20150119183806.GA8479@kroah.com>
+	<20150119201906.GA337@sig21.net>
+	<20150119203155.GA15441@kroah.com>
+	<20150119233812.GA1874@sig21.net>
+	<20150120011359.GE865@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150126124731.GA26916-nhfs4B5ZimeFUdmeq17FyvUpdFzICT1y@public.gmane.org>
+In-Reply-To: <20150120011359.GE865-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Siddhesh Poyarekar <siddhesh.poyarekar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 26, 2015 at 02:47:31PM +0200, Kirill A. Shutemov wrote:
-> On Fri, Jan 23, 2015 at 07:15:44PM -0800, Calvin Owens wrote:
-> > Currently, /proc/<pid>/map_files/ is restricted to CAP_SYS_ADMIN, and
-> > is only exposed if CONFIG_CHECKPOINT_RESTORE is set. This interface
-> > is very useful for enumerating the files mapped into a process when
-> > the more verbose information in /proc/<pid>/maps is not needed.
-> > 
-> > This patch moves the folder out from behind CHECKPOINT_RESTORE, and
-> > removes the CAP_SYS_ADMIN restrictions. Following the links requires
-> > the ability to ptrace the process in question, so this doesn't allow
-> > an attacker to do anything they couldn't already do before.
-> > 
-> > Signed-off-by: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
-> 
-> Cc +linux-api@
+On Tue, 20 Jan 2015 09:13:59 +0800
+> That's because people have not done anything really needing performance
+> on the desktop over D-Bus in the past due to how slow the current
+> implementation is. 
 
-Looks good to me, thanks! Though I would really appreciate if someone
-from security camp take a look as well.
+The desktop is a performance critical environment, even though certain
+desktop developers think 2GB is a bit small to run an application and
+5000 dbus transactions to start something is "ok"
+
+Alan
