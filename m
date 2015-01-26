@@ -1,7 +1,7 @@
 From: Herbert Xu <herbert@gondor.apana.org.au>
 Subject: Re: [PATCH v11 1/2] crypto: AF_ALG: add AEAD support
-Date: Mon, 26 Jan 2015 10:59:08 +1100
-Message-ID: <20150125235908.GC18212@gondor.apana.org.au>
+Date: Mon, 26 Jan 2015 11:06:31 +1100
+Message-ID: <20150126000631.GA18350@gondor.apana.org.au>
 References: <1923793.K38mGRD6eo@tachyon.chronox.de>
  <6238416.vGUni1CI4i@tachyon.chronox.de>
 Mime-Version: 1.0
@@ -16,22 +16,15 @@ List-Id: linux-api@vger.kernel.org
 
 On Wed, Jan 21, 2015 at 02:19:17AM +0100, Stephan Mueller wrote:
 >
-> +		if (!aead_writable(sk)) {
-> +			/* user space sent too much data */
-> +			aead_put_sgl(sk);
-> +			err = -EMSGSIZE;
-> +			goto unlock;
-> +		}
-> +
-> +		/* allocate a new page */
-> +		len = min_t(unsigned long, size, aead_sndbuf(sk));
-> +		while (len) {
-> +			int plen = 0;
-> +
-> +			if (sgl->cur >= ALG_MAX_PAGES) {
-> +				err = -E2BIG;
+> +	/*
+> +	 * Require exactly one IOV block as the AEAD operation is a one shot
+> +	 * due to the authentication tag.
+> +	 */
+> +	if (msg->msg_iter.nr_segs != 1)
+> +		return -ENOMSG;
 
-Should reset the socket just like EMSGSIZE above.
+Why does limit exist? The fact that you have to do it in one go does
+not limit the number of receive IOVs, at least not to one.
 
 Cheers,
 -- 
