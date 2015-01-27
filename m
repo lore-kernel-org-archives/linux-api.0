@@ -1,152 +1,131 @@
-From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Subject: Re: [v8 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface
- support
-Date: Tue, 27 Jan 2015 13:45:17 +0300
-Message-ID: <54C76C3D.4070404@yandex-team.ru>
-References: <1418102548-5469-1-git-send-email-lixi@ddn.com> <1418102548-5469-5-git-send-email-lixi@ddn.com> <54C11733.7080801@yandex-team.ru> <20150123015307.GD24722@dastard> <54C23751.7000009@yandex-team.ru> <20150123233026.GP16552@dastard> <CALCETrXPCrOTrkoAMuW2os=z6anaEfv4F4D2yDxo6VtCuEtRZw@mail.gmail.com> <20150127080239.GQ16552@dastard>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH] tpm: fix suspend/resume paths for TPM 2.0
+Date: Tue, 27 Jan 2015 13:02:44 +0200
+Message-ID: <1422356564-17312-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150127080239.GQ16552@dastard>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 27.01.2015 11:02, Dave Chinner wrote:
-> On Fri, Jan 23, 2015 at 03:59:04PM -0800, Andy Lutomirski wrote:
->> On Fri, Jan 23, 2015 at 3:30 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
->>> On Fri, Jan 23, 2015 at 02:58:09PM +0300, Konstantin Khlebnikov wrote:
->>>> On 23.01.2015 04:53, Dave Chinner wrote:
->>>>> On Thu, Jan 22, 2015 at 06:28:51PM +0300, Konstantin Khlebnikov wrote:
->>>>>>> +  kprojid = make_kprojid(&init_user_ns, (projid_t)projid);
->>>>>>
->>>>>> Maybe current_user_ns()?
->>>>>> This code should be user-namespace aware from the beginning.
->>>>>
->>>>> No, the code is correct. Project quotas have nothing to do with
->>>>> UIDs and so should never have been included in the uid/gid
->>>>> namespace mapping infrastructure in the first place.
->>>>
->>>> Right, but user-namespace provides id mapping for project-id too.
->>>> This infrastructure adds support for nested project quotas with
->>>> virtualized ids in sub-containers. I couldn't say that this is
->>>> must have feature but implementation is trivial because whole
->>>> infrastructure is already here.
->>>
->>> This is an extremely common misunderstanding of project IDs. Project
->>> IDs are completely separate to the UID/GID namespace.  Project
->>> quotas were originally designed specifically for
->>> accounting/enforcing quotas in situations where uid/gid
->>> accounting/enforcing is not possible. This design intent goes back
->>> 25 years - it predates XFS...
->>>
->>> IOWs, mapping prids via user namespaces defeats the purpose
->>> for which prids were originally intended for.
->>>
->>>>> Point in case: directory subtree quotas can be used as a resource
->>>>> controller for limiting space usage within separate containers that
->>>>> share the same underlying (large) filesystem via mount namespaces.
->>>>
->>>> That's exactly my use-case: 'sub-volumes' for containers with
->>>> quota for space usage/inodes count.
->>>
->>> That doesn't require mapped project IDs. Hard container space limits
->>> can only be controlled by the init namespace, and because inodes can
->>> hold only one project ID the current ns cannot be allowed to change
->>> the project ID on the inode because that allows them to escape the
->>> resource limits set on the project ID associated with the sub-mount
->>> set up by the init namespace...
->>>
->>> i.e.
->>>
->>> /mnt                    prid = 0, default for entire fs.
->>> /mnt/container1/        prid = 1, inherit, 10GB space limit
->>> /mnt/container2/        prid = 2, inherit, 50GB space limit
->>> .....
->>> /mnt/containerN/        prid = N, inherit, 20GB space limit
->>>
->>> And you clone the mount namespace for each container so the root is
->>> at the appropriate /mnt/containerX/.  Now the containers have a
->>> fixed amount of space they can use in the parent filesystem they
->>> know nothing about, and it is enforced by directory subquotas
->>> controlled by the init namespace.  This "fixed amount of space" is
->>> reflected in the container namespace when "df" is run as it will
->>> report the project quota space limits. Adding or removing space to a
->>> container is as simple as changing the project quota limits from the
->>> init namespace. i.e. an admin operation controlled by the host, not
->>> the container....
->>>
->>> Allowing the container to modify the prid and/or the inherit bit of
->>> inodes in it's namespace then means the user can define their own
->>> space usage limits, even turn them off. It's not a resource
->>> container at that point because the user can define their own
->>> limits.  Hence, only if the current_ns cannot change project quotas
->>> will we have a hard fence on space usage that the container *cannot
->>> exceed*.
->>
->> I think I must be missing something simple here.  In a hypothetical
->> world where the code used nsown_capable, if an admin wants to stick a
->> container in /mnt/container1 with associated prid 1 and a userns,
->> shouldn't it just map only prid 1 into the user ns?  Then a user in
->> that userns can't try to change the prid of a file to 2 because the
->> number "2" is unmapped for that user and translation will fail.
->
-> You've effectively said "yes, project quotas are enabled, but you
-> only have a single ID, it's always turned on and you can't change it
-> to anything else.
->
-> So, why do they need to be mapped via user namespaces to enable
-> this? Think about it a little harder:
->
-> 	- Project IDs are not user IDs.
-> 	- Project IDs are not a security/permission mechanism.
-> 	- Project quotas only provide a mechanism for
-> 	  resource usage control.
->
-> Think about that last one some more. Perhaps, as a hint, I should
-> relate it to control groups? :) i.e:
->
-> 	- Project quotas can be used as an effective mount ns space
-> 	  usage controller.
->
-> But this can only be safely and reliably by keeping the project IDs
-> inaccessible from the containers themselves. I don't see why a
-> mechanism that controls the amount of filesystem space used by a
-> container should be considered any differently to a memory control
-> group that limits the amount of memory the container can use.
->
-> However, nobody on the container side of things would answer any of
-> my questions about how project quotas were going to be used,
-> limited, managed, etc back when we had to make a decision to enable
-> XFS user ns support, I did what was needed to support the obvious
-> container use case and close any possible loop hole that containers
-> might be able to use to subvert that use case.
+=46ixed suspend/resume paths for TPM 2.0 and consolidated all the
+associated code to the tpm_pm_suspend() and tpm_pm_resume()
+functions. Resume path should be handled by the firmware, i.e.
+Startup(CLEAR) for hibernate and Startup(STATE) for suspend.
 
-I have a solution: Hierarchical Project Quota! Each project might have
-parent project and so on. Each level keeps usage, limits and also keeps
-some preallocation from parent level to reduce count of quota updates.
+There might be some non-PC embedded devices in the future where
+Startup() is not the handled by the FW but fixing the code for
+those IMHO should be postponed until there is hardware available
+to test the fixes although extra Startup in the driver code is
+essentially a NOP.
 
-This might be useful even without containers : normal user quota has
-two levels and admins might classify users into groups and set group
-quota for them. Project quota is flat and cannot provide any control
-if we want classify projects.
+Reported-by: Peter H=C3=BCwe <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ drivers/char/tpm/tpm-interface.c | 10 ++++++++--
+ drivers/char/tpm/tpm_crb.c       | 16 +---------------
+ drivers/char/tpm/tpm_tis.c       | 22 ++++++++++------------
+ 3 files changed, 19 insertions(+), 29 deletions(-)
 
-For containers hierarchy provide full virtualization: user-namespace
-maps maps second-level and projects into subset of real projects.
-
-Changing limits and other managing for second-level project quotas
-could be done in user-space by system service (systemd I suppose. lol),
-so we don't have to manage this stuff inside the kernel.
-
-[ I'm already working on prototype for ext4 ]
-
->
-> If we want to do anything different, then there's a *lot* of
-> userns aware regression tests needed to be written for xfstests....
->
-> Cheers,
->
-> Dave.
->
+diff --git a/drivers/char/tpm/tpm-interface.c b/drivers/char/tpm/tpm-in=
+terface.c
+index bf53a37..93c8b90fd 100644
+--- a/drivers/char/tpm/tpm-interface.c
++++ b/drivers/char/tpm/tpm-interface.c
+@@ -901,8 +901,13 @@ int tpm_pm_suspend(struct device *dev)
+ 	if (chip =3D=3D NULL)
+ 		return -ENODEV;
+=20
+-	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+-		return tpm2_shutdown(chip, TPM2_SU_CLEAR);
++	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
++		rc =3D tpm2_shutdown(chip, TPM2_SU_STATE);
++		if (rc < 0)
++			return rc;
++
++		return 0;
++	}
+=20
+ 	/* for buggy tpm, flush pcrs with extend to selected dummy */
+ 	if (tpm_suspend_pcr) {
+@@ -952,6 +957,7 @@ EXPORT_SYMBOL_GPL(tpm_pm_suspend);
+ int tpm_pm_resume(struct device *dev)
+ {
+ 	struct tpm_chip *chip =3D dev_get_drvdata(dev);
++	int ret;
+=20
+ 	if (chip =3D=3D NULL)
+ 		return -ENODEV;
+diff --git a/drivers/char/tpm/tpm_crb.c b/drivers/char/tpm/tpm_crb.c
+index 3dd23cf..3e080f5 100644
+--- a/drivers/char/tpm/tpm_crb.c
++++ b/drivers/char/tpm/tpm_crb.c
+@@ -95,21 +95,7 @@ struct crb_priv {
+ 	u8 __iomem *rsp;
+ };
+=20
+-#ifdef CONFIG_PM_SLEEP
+-static int crb_resume(struct device *dev)
+-{
+-	int rc;
+-	struct tpm_chip *chip =3D dev_get_drvdata(dev);
+-
+-	rc =3D tpm2_shutdown(chip, TPM2_SU_STATE);
+-	if (!rc)
+-		rc =3D tpm2_do_selftest(chip);
+-
+-	return rc;
+-}
+-#endif
+-
+-static SIMPLE_DEV_PM_OPS(crb_pm, tpm_pm_suspend, crb_resume);
++static SIMPLE_DEV_PM_OPS(crb_pm, tpm_pm_suspend, tpm_pm_resume);
+=20
+ static u8 crb_status(struct tpm_chip *chip)
+ {
+diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+index 6725bef..c105eb7 100644
+--- a/drivers/char/tpm/tpm_tis.c
++++ b/drivers/char/tpm/tpm_tis.c
+@@ -865,25 +865,23 @@ static void tpm_tis_reenable_interrupts(struct tp=
+m_chip *chip)
+ static int tpm_tis_resume(struct device *dev)
+ {
+ 	struct tpm_chip *chip =3D dev_get_drvdata(dev);
+-	int ret =3D 0;
++	int ret;
+=20
+ 	if (chip->vendor.irq)
+ 		tpm_tis_reenable_interrupts(chip);
+=20
+-	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
+-		/* NOP if firmware properly does this. */
+-		tpm2_startup(chip, TPM2_SU_STATE);
++	ret =3D tpm_pm_resume(dev);
++	if (ret)
++		return ret;
+=20
+-		ret =3D tpm2_shutdown(chip, TPM2_SU_STATE);
+-		if (!ret)
+-			ret =3D tpm2_do_selftest(chip);
+-	} else {
+-		ret =3D tpm_pm_resume(dev);
+-		if (!ret)
+-			tpm_do_selftest(chip);
++	/* TPM 1.2 requires self-test on resume. */
++	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
++		ret =3D tpm_do_selftest(chip);
++		if (ret < 0)
++			return ret;
+ 	}
+=20
+-	return ret;
++	return 0;
+ }
+ #endif
+=20
+--=20
+2.1.4
