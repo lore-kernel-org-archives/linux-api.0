@@ -1,21 +1,73 @@
-From: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next v1 05/18] net: tx4939: use __ethtool_get_ksettings
-Date: Tue, 27 Jan 2015 09:38:11 -0800
-Message-ID: <CAG88wWaLxH9qyNDw4jVYBvcx-mQw-2iriS5uvt_A_5ThoETG5A@mail.gmail.com>
-References: <1422322574-6188-1-git-send-email-ddecotig@gmail.com>
- <1422322574-6188-6-git-send-email-ddecotig@gmail.com> <54C78540.6080404@cogentembedded.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Tue, 27 Jan 2015 18:53:39 +0100
+Message-ID: <54C7D0A3.4000900@gmail.com>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>	<1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>	<54BE5DC8.70706@gmail.com>	<54BE9D08.7010804@zonque.org>	<54BF805B.4000609@gmail.com>	<54BFDAAA.50203@zonque.org>	<54C0CE8A.5080805@gmail.com>	<20150123155402.GB2159@kroah.com>	<54C65267.7090905@gmail.com>	<CAG-2HqUCZjc4Ucc-L21uG6e-di4UcLJAT5mW_-5-c-uqmoJyzA@mail.gmail.com>	<54C66F30.8050108@gmail.com> <CANq1E4TtBhA6Ygu9qMU8xVxbL9q+ZBqnfdU0ceeTTfam9aT+=w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54C78540.6080404-M4DtvfQ/ZS1MRgGoP+s0PdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sergei Shtylyov <sergei.shtylyov-M4DtvfQ/ZS1MRgGoP+s0PdBPR1lH4CV8@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Amir Vadai <amirv-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-laKkSmNT4hbQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eyal Perry <eyalpe-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CANq1E4TtBhA6Ygu9qMU8xVxbL9q+ZBqnfdU0ceeTTfam9aT+=w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: mtk.manpages@gmail.com, Tom Gundersen <teg@jklm.no>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Jiri Kosina <jkosina@suse.cz>, Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Djalal Harouni <tixxdz@opendz.org>, Johannes Stezenbach <js@sig21.net>, Theodore T'so <tytso@mit.edu>, christoph Hellwig <hch@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 27, 2015 at 4:32 AM, Sergei Shtylyov
-<sergei.shtylyov-M4DtvfQ/ZS1MRgGoP+s0PdBPR1lH4CV8@public.gmane.org> wrote:
-> linux-mips-6z/3iImG2C/i7sgoIIk9UQ@public.gmane.org
+On 01/27/2015 04:23 PM, David Herrmann wrote:
+> Hi
+> 
+> On Mon, Jan 26, 2015 at 5:45 PM, Michael Kerrisk (man-pages)
+> <mtk.manpages@gmail.com> wrote:
+>> On 01/26/2015 04:26 PM, Tom Gundersen wrote:
+>>> On Mon, Jan 26, 2015 at 3:42 PM, Michael Kerrisk (man-pages)
+>>> <mtk.manpages@gmail.com> wrote:
+>>>> 2. Is the API to be invoked directly by applications or is intended to
+>>>>    be used only behind specific libraries? You seem to be saying that
+>>>>    the latter is the case (here, I'm referring to your comment above
+>>>>    about sd-bus). However, when I asked David Herrmann a similar
+>>>>    question I got this responser:
+>>>>
+>>>>       "kdbus is in no way bound to systemd. There are ongoing efforts
+>>>>        to port glib and qt to kdbus natively. The API is pretty simple
+>>>>        and I don't see how a libkdbus would simplify things. In fact,
+>>>>        even our tests only have slim wrappers around the ioctls to
+>>>>        simplify error-handling in test-scenarios."
+>>>>
+>>>>    To me, that implies that users will employ the raw kernel API.
+>>>
+>>> The way I read this is that there will (probably) be a handful of
+>>> users, namely the existing dbus libraries: libdus, sd-bus, glib, Qt,
+>>> ell, and maybe a few others. However, third-party developers will not
+>>> know/care about the details of kdbus, they'll just be coding against
+>>> the dbus libraries as before (might be minor changes, but they
+>>> certainly won't need to know anything about the kernel API). Similarly
+>>> to how userspace developers now code against their libc of choice,
+>>> rather than use kernel syscalls directly.
+>>
+>> Thanks, Tom, for the input. I'm still confused though, since elsewhere
+>> in this thread David Herrmann said in response to a question of mine:
+>>
+>>     I think we can agree that we want it to be generically useful,
+>>     like other ipc mechanisms, including UDS and netlink.
+>>
+>> Again, that sounds to me like the vision is not "a handful of users".
+>> Hopefully Greg and David can clarify.
+> 
+> I only expect a handful of users to call the ioctls directly. The
+> libraries that implement the payload-marshaling, in particular. It's a
+> similar situation with netlink.
 
-Thanks, added mips + usnic + fcoe in my copy for the next wave of
-reviews. Also updated the subject line.
+Thanks, David, for the clarification. I think it would have been helpful
+to have that more clearly stated up front, especially as some comments 
+in this thread, such as the above, could be interpreted to mean quite 
+the opposite. Can I suggest that some text on this point be added to 
+kdbus.txt?
+
+Thanks,
+
+Michael
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
