@@ -1,30 +1,32 @@
-From: Sergei Shtylyov <sergei.shtylyov-M4DtvfQ/ZS1MRgGoP+s0PdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH net-next v1 05/18] net: tx4939: use __ethtool_get_ksettings
-Date: Tue, 27 Jan 2015 15:32:00 +0300
-Message-ID: <54C78540.6080404@cogentembedded.com>
-References: <1422322574-6188-1-git-send-email-ddecotig@gmail.com> <1422322574-6188-6-git-send-email-ddecotig@gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v8 0/2] Add Spreadtrum SoC bindings and serial driver support
+Date: Tue, 27 Jan 2015 14:24:02 +0100
+Message-ID: <2196748.ag4UzqF1Px@wuerfel>
+References: <1422345407-10037-1-git-send-email-chunyan.zhang@spreadtrum.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1422322574-6188-6-git-send-email-ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Amir Vadai <amirv-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eyal Perry <eyalpe-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1422345407-10037-1-git-send-email-chunyan.zhang@spreadtrum.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+Cc: gregkh@linuxfoundation.org, robh+dt@kernel.org, mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, grant.likely@linaro.org, jslaby@suse.cz, heiko@sntech.de, jason@lakedaemon.net, florian.vaussard@epfl.ch, andrew@lunn.ch, hytszk@gmail.com, antonynpavlov@gmail.com, shawn.guo@linaro.org, orsonzhai@gmail.com, geng.ren@spreadtrum.com, zhizhou.zhang@spreadtrum.com, lanqing.liu@spreadtrum.com, zhang.lyra@gmail.com, wei.qiao@spreadtrum.com, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Hello.
+On Tuesday 27 January 2015 15:56:45 Chunyan Zhang wrote:
+> This patch-set split the last version, and addressed the review comments from
+> last version on serial driver code.
+> 
+> Changes from v7:
+> * Addressed review comments from Peter:
+>         - Initialized the stack local with zero in sprd_set_termios()
+>         - Used dev_get_drvdata() to get sprd_uart_port
+> 
 
-On 1/27/2015 4:36 AM, David Decotigny wrote:
+Looks good to me, but you still have too many people on 'To', so Greg
+might be missing that you expect him to merge it.
 
-> From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
+Greg, if there are no further comments, can you take both patches through
+the tty git?
 
-> Signed-off-by: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
-> ---
->   arch/mips/txx9/generic/setup_tx4939.c | 7 ++++---
->   1 file changed, 4 insertions(+), 3 deletions(-)
-
-    I don't think "net: " prefix applies here.
-    And you should have CC'ed linux-mips-6z/3iImG2C/i7sgoIIk9UQ@public.gmane.org
-
-WBR, Sergei
+	Arnd
