@@ -1,193 +1,114 @@
-From: Lyra Zhang <zhang.lyra@gmail.com>
-Subject: Re: [PATCH v8 2/2] tty/serial: Add Spreadtrum sc9836-uart driver support
-Date: Tue, 27 Jan 2015 23:51:55 +0800
-Message-ID: <CAAfSe-v3jnR7O0KFp-c_fBer6KyPbLZ-HS8c+Lsf4uA1-TXXtA@mail.gmail.com>
-References: <1422345407-10037-1-git-send-email-chunyan.zhang@spreadtrum.com>
-	<1422345407-10037-3-git-send-email-chunyan.zhang@spreadtrum.com>
-	<54C7A514.6090206@hurleysoftware.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Tue, 27 Jan 2015 08:03:23 -0800
+Message-ID: <CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
+ <54BE5DC8.70706@gmail.com> <54BE9D08.7010804@zonque.org> <54BF805B.4000609@gmail.com>
+ <54BFDAAA.50203@zonque.org> <54C0CE8A.5080805@gmail.com> <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
+ <54C10DDC.9000503@gmail.com> <20150123160854.GA5210@kroah.com>
+ <54C65346.5070504@gmail.com> <CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54C7A514.6090206@hurleysoftware.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Hurley <peter@hurleysoftware.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>
-Cc: Chunyan Zhang <chunyan.zhang@spreadtrum.com>, "robh+dt@kernel.org" <robh+dt@kernel.org>, Mark Rutland <mark.rutland@arm.com>, Arnd Bergmann <arnd@arndb.de>, "gnomes@lxorguk.ukuu.org.uk" <gnomes@lxorguk.ukuu.org.uk>, Pawel Moll <pawel.moll@arm.com>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Grant Likely <grant.likely@linaro.org>, "jslaby@suse.cz" <jslaby@suse.cz>, =?UTF-8?Q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, "jason@lakedaemon.net" <jason@lakedaemon.net>, "florian.vaussard@epfl.ch" <florian.vaussard@epfl.ch>, "andrew@lunn.ch" <andrew@lunn.ch>, Hayato Suzuki <hytszk@gmail.com>, "antonynpavlov@gmail.com" <antonynpavlov@gmail.com>, Shawn Guo <shawn.guo@linaro.org>, Orson Zhai <orsonzhai@gmail.com>, "geng.ren@spreadtrum.com" <geng.ren@spreadtrum.com>, "zhizhou.zhang" <zhizhou.zhang@spreadtrum.com>, lanqing.
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Theodore T'so <tytso-3s7WtUTddSA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 27, 2015 at 10:47 PM, Peter Hurley <peter@hurleysoftware.com> wrote:
-> Hi Chunyan,
+On Tue, Jan 27, 2015 at 7:05 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>=
+ wrote:
+> Hi
 >
-> Minor but important fixes below.
+> On Mon, Jan 26, 2015 at 3:46 PM, Michael Kerrisk (man-pages)
+> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> Hello Greg,
+>>
+>> On 01/23/2015 05:08 PM, Greg Kroah-Hartman wrote:
+>>> On Thu, Jan 22, 2015 at 09:49:00AM -0500, Austin S Hemmelgarn wrote=
+:
+>>>> While I agree that there should be a way for userspace to get the =
+list of
+>>>> supported operations, userspace apps will only actually care about=
+ that
+>>>> once, when they begin talking to kdbus, because (ignoring the live=
+ kernel
+>>>> patching that people have been working on recently) the list of su=
+pported
+>>>> operations isn't going to change while the system is running.  Whi=
+le a u64
+>>>> copy has relatively low overhead, it does have overhead, and that =
+is very
+>>>> significant when you consider part of the reason some people want =
+kdbus is
+>>>> for the performance gain.  Especially for those automotive applica=
+tions that
+>>>> have been mentioned which fire off thousands of messages during st=
+art-up,
+>>>> every little bit of performance is significant.
+>>>
+>>> A single u64 in a structure is not going to be measurable at all,
+>>> processors just copy memory too fast these days for 4 extra bytes t=
+o be
+>>> noticable.
+>>
+>> It depends on the definition of measurable, I suppose, but this stat=
+ement
+>> appears incorrect to me. In some cases (e.g., kdbus_msg_info) we're =
+talking
+>> about *two* u64 fields (kernel_gs, kernel_msg_flags) being used to p=
+ass back
+>> sets of valid flags. That's 16 bytes, and it definitely makes a diff=
+erence.
+>> Simply running a loop that does a naive memcpy() in a tight user-spa=
+ce
+>> loop (code below), I see the following for the execution of 1e9 loop=
+s:
+>>
+>>     Including the two extra u64 fields: 3.2 sec
+>>     Without the two extra u64 fields:   2.6 sec
+>>
+>> On the same box, doing 1e9 calls to getppid() (i.e., pretty much the
+>> simplest syscall, giving us a rough measure of the context switch) t=
+akes
+>> 68 seconds. In other words, the cost of copying those 16 bytes is ab=
+out 1%
+>> of the base context switch/syscall cost. I assume the costs of copyi=
+ng
+>> those 16 bytes across the kernel-user-space boundary would not be ch=
+eaper,
+>> but have not tested that. If my assumption is correct, then 1% seems=
+ a
+>> significant figure to me in an API whose raison d'=C3=AAtre is speed=
+=2E
 >
-> And for the v9 version, please only use "To:" for
-> "Greg Kroah-Hartman <gregkh@linuxfoundation.org>"
+> I have no idea how this is related to any kdbus ioctl?
+>
+> A 16byte copy does not affect the performance of kdbus message
+> transactions in any way that matters.
 >
 
-Ok, thank you, I'll address your comments below and send the v9 to Greg.
+Sorry for jumping in so late.  Since this version of kdbus was sent,
+I've been on vacation for part of the time and I had the flu for the
+rest of the time.
 
-Greg,
-sorry, I'll send you a updated version tomorrow.
+What are the performance goals of kdbus?  How fast is it ever intended
+to be?  The reason I ask is that, in the current design, kdbus
+collects "metadata" (credentials and other identifying information,
+collected in kdbus_meta_proc_collect) from the sender of every message
+*at send time*. [1]  This is slow, and it will always be slow.  The
+slowness of this operation will, in my personal system performance
+crystal ball, overshadow the cost of a 16 byte copy by several orders
+of magnitude.
 
-> All other recipients should only be Cc:
->
-> Regards,
-> Peter Hurley
->
->
-> On 01/27/2015 02:56 AM, Chunyan Zhang wrote:
->> Add a full sc9836-uart driver for SC9836 SoC which is based on the
->> spreadtrum sharkl64 platform.
->> This driver also support earlycon.
->
-> [...]
->
->> +static int sprd_probe_dt_alias(int index, struct device *dev)
->> +{
->> +     struct device_node *np;
->> +     static bool seen_dev_with_alias;
->> +     static bool seen_dev_without_alias;
->         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
->
-> delete these two lines; these were used for the message deleted in a
-> previous patch version.
->
->> +     int ret = index;
->> +
->> +     if (!IS_ENABLED(CONFIG_OF))
->> +             return ret;
->> +
->> +     np = dev->of_node;
->> +     if (!np)
->> +             return ret;
->> +
->> +     ret = of_alias_get_id(np, "serial");
->> +     if (IS_ERR_VALUE(ret)) {
->> +             seen_dev_without_alias = true;
->                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> delete this line.
->
->> +             ret = index;
->> +     } else {
->> +             seen_dev_with_alias = true;
->                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> delete this line.
->
->> +             if (ret >= ARRAY_SIZE(sprd_port) || sprd_port[ret] != NULL) {
->> +                     dev_warn(dev, "requested serial port %d  not available.\n", ret);
->> +                     ret = index;
->> +             }
->> +     }
->
-> Simplify the entire "if (IS_ERR_VALUE(ret))" statement to:
->
->         if (IS_ERR_VALUE(ret))
->                 ret = index;
->         else if (ret >= ..................) {
->                 dev_warn(.....);
->                 ret = index;
->         }
->
->
->> +
->> +     return ret;
->> +}
->> +
->> +static int sprd_remove(struct platform_device *dev)
->> +{
->> +     struct sprd_uart_port *sup = platform_get_drvdata(dev);
->> +
->> +     if (sup) {
->> +             uart_remove_one_port(&sprd_uart_driver, &sup->port);
->> +             sprd_port[sup->port.line] = NULL;
->> +             sprd_ports_num--;
->> +     }
->> +
->> +     if (!sprd_ports_num)
->> +             uart_unregister_driver(&sprd_uart_driver);
->> +
->> +     return 0;
->> +}
->> +
->> +static int sprd_probe(struct platform_device *pdev)
->> +{
->> +     struct resource *res;
->> +     struct uart_port *up;
->> +     struct clk *clk;
->> +     int irq;
->> +     int index;
->> +     int ret;
->> +
->> +     for (index = 0; index < ARRAY_SIZE(sprd_port); index++)
->> +             if (sprd_port[index] == NULL)
->> +                     break;
->> +
->> +     if (index == ARRAY_SIZE(sprd_port))
->> +             return -EBUSY;
->> +
->> +     index = sprd_probe_dt_alias(index, &pdev->dev);
->> +
->> +     sprd_port[index] = devm_kzalloc(&pdev->dev,
->> +             sizeof(*sprd_port[index]), GFP_KERNEL);
->> +     if (!sprd_port[index])
->> +             return -ENOMEM;
->> +
->> +     pdev->id = index;
->         ^^^^^^^^^^^^^^^^
-> delete this line.
->
-> The platform device id cannot be assigned by the driver.
-> (This was left over from trying to fix sprd_suspend/sprd_resume
-> but that's fixed correctly now.)
->
->> +
->> +     up = &sprd_port[index]->port;
->> +     up->dev = &pdev->dev;
->> +     up->line = index;
->> +     up->type = PORT_SPRD;
->> +     up->iotype = SERIAL_IO_PORT;
->> +     up->uartclk = SPRD_DEF_RATE;
->> +     up->fifosize = SPRD_FIFO_SIZE;
->> +     up->ops = &serial_sprd_ops;
->> +     up->flags = UPF_BOOT_AUTOCONF;
->> +
->> +     clk = devm_clk_get(&pdev->dev, NULL);
->> +     if (!IS_ERR(clk))
->> +             up->uartclk = clk_get_rate(clk);
->> +
->> +     res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
->> +     if (!res) {
->> +             dev_err(&pdev->dev, "not provide mem resource\n");
->> +             return -ENODEV;
->> +     }
->> +     up->mapbase = res->start;
->> +     up->membase = devm_ioremap_resource(&pdev->dev, res);
->> +     if (IS_ERR(up->membase))
->> +             return PTR_ERR(up->membase);
->> +
->> +     irq = platform_get_irq(pdev, 0);
->> +     if (irq < 0) {
->> +             dev_err(&pdev->dev, "not provide irq resource\n");
->> +             return -ENODEV;
->> +     }
->> +     up->irq = irq;
->> +
->> +     if (!sprd_ports_num) {
->> +             ret = uart_register_driver(&sprd_uart_driver);
->> +             if (ret < 0) {
->> +                     pr_err("Failed to register SPRD-UART driver\n");
->> +                     return ret;
->> +             }
->> +     }
->> +     sprd_ports_num++;
->> +
->> +     ret = uart_add_one_port(&sprd_uart_driver, up);
->> +     if (ret) {
->> +             sprd_port[index] = NULL;
->> +             sprd_remove(pdev);
->> +     }
->> +
->> +     platform_set_drvdata(pdev, up);
->> +
->> +     return ret;
->> +}
->
+[1] After much discussion last time around, I'm at least convinced
+that the kdbus people have reasons to like the idea of capturing
+metadata for each message.  I still think the design is wrong even
+from a security standpoint, but right now I'm talking about
+performance.  If you want the data plane to be fast, it should be
+separated from the control plane as much as possible, and this design
+is the opposite.
+
+--Andy
