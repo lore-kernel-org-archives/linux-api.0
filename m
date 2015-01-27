@@ -1,186 +1,152 @@
-From: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH] arm: sunxi: input: RFC: Add sysfs voltage for
- sun4i-lradc driver
-Date: Tue, 27 Jan 2015 10:18:29 +0100
-Message-ID: <20150127091829.GD7200@lukather>
-References: <1422291516-24895-1-git-send-email-plaes@plaes.org>
+From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Subject: Re: [v8 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface
+ support
+Date: Tue, 27 Jan 2015 13:45:17 +0300
+Message-ID: <54C76C3D.4070404@yandex-team.ru>
+References: <1418102548-5469-1-git-send-email-lixi@ddn.com> <1418102548-5469-5-git-send-email-lixi@ddn.com> <54C11733.7080801@yandex-team.ru> <20150123015307.GD24722@dastard> <54C23751.7000009@yandex-team.ru> <20150123233026.GP16552@dastard> <CALCETrXPCrOTrkoAMuW2os=z6anaEfv4F4D2yDxo6VtCuEtRZw@mail.gmail.com> <20150127080239.GQ16552@dastard>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="TybLhxa8M7aNoW+V"
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1422291516-24895-1-git-send-email-plaes-q/aMd4JkU83YtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <20150127080239.GQ16552@dastard>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Priit Laes <plaes-q/aMd4JkU83YtjvyW6yDsg@public.gmane.org>
-Cc: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "moderated list:ARM/Allwinner A1X..." <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:SUN4I LOW RES ADC..." <linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On 27.01.2015 11:02, Dave Chinner wrote:
+> On Fri, Jan 23, 2015 at 03:59:04PM -0800, Andy Lutomirski wrote:
+>> On Fri, Jan 23, 2015 at 3:30 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+>>> On Fri, Jan 23, 2015 at 02:58:09PM +0300, Konstantin Khlebnikov wrote:
+>>>> On 23.01.2015 04:53, Dave Chinner wrote:
+>>>>> On Thu, Jan 22, 2015 at 06:28:51PM +0300, Konstantin Khlebnikov wrote:
+>>>>>>> +  kprojid = make_kprojid(&init_user_ns, (projid_t)projid);
+>>>>>>
+>>>>>> Maybe current_user_ns()?
+>>>>>> This code should be user-namespace aware from the beginning.
+>>>>>
+>>>>> No, the code is correct. Project quotas have nothing to do with
+>>>>> UIDs and so should never have been included in the uid/gid
+>>>>> namespace mapping infrastructure in the first place.
+>>>>
+>>>> Right, but user-namespace provides id mapping for project-id too.
+>>>> This infrastructure adds support for nested project quotas with
+>>>> virtualized ids in sub-containers. I couldn't say that this is
+>>>> must have feature but implementation is trivial because whole
+>>>> infrastructure is already here.
+>>>
+>>> This is an extremely common misunderstanding of project IDs. Project
+>>> IDs are completely separate to the UID/GID namespace.  Project
+>>> quotas were originally designed specifically for
+>>> accounting/enforcing quotas in situations where uid/gid
+>>> accounting/enforcing is not possible. This design intent goes back
+>>> 25 years - it predates XFS...
+>>>
+>>> IOWs, mapping prids via user namespaces defeats the purpose
+>>> for which prids were originally intended for.
+>>>
+>>>>> Point in case: directory subtree quotas can be used as a resource
+>>>>> controller for limiting space usage within separate containers that
+>>>>> share the same underlying (large) filesystem via mount namespaces.
+>>>>
+>>>> That's exactly my use-case: 'sub-volumes' for containers with
+>>>> quota for space usage/inodes count.
+>>>
+>>> That doesn't require mapped project IDs. Hard container space limits
+>>> can only be controlled by the init namespace, and because inodes can
+>>> hold only one project ID the current ns cannot be allowed to change
+>>> the project ID on the inode because that allows them to escape the
+>>> resource limits set on the project ID associated with the sub-mount
+>>> set up by the init namespace...
+>>>
+>>> i.e.
+>>>
+>>> /mnt                    prid = 0, default for entire fs.
+>>> /mnt/container1/        prid = 1, inherit, 10GB space limit
+>>> /mnt/container2/        prid = 2, inherit, 50GB space limit
+>>> .....
+>>> /mnt/containerN/        prid = N, inherit, 20GB space limit
+>>>
+>>> And you clone the mount namespace for each container so the root is
+>>> at the appropriate /mnt/containerX/.  Now the containers have a
+>>> fixed amount of space they can use in the parent filesystem they
+>>> know nothing about, and it is enforced by directory subquotas
+>>> controlled by the init namespace.  This "fixed amount of space" is
+>>> reflected in the container namespace when "df" is run as it will
+>>> report the project quota space limits. Adding or removing space to a
+>>> container is as simple as changing the project quota limits from the
+>>> init namespace. i.e. an admin operation controlled by the host, not
+>>> the container....
+>>>
+>>> Allowing the container to modify the prid and/or the inherit bit of
+>>> inodes in it's namespace then means the user can define their own
+>>> space usage limits, even turn them off. It's not a resource
+>>> container at that point because the user can define their own
+>>> limits.  Hence, only if the current_ns cannot change project quotas
+>>> will we have a hard fence on space usage that the container *cannot
+>>> exceed*.
+>>
+>> I think I must be missing something simple here.  In a hypothetical
+>> world where the code used nsown_capable, if an admin wants to stick a
+>> container in /mnt/container1 with associated prid 1 and a userns,
+>> shouldn't it just map only prid 1 into the user ns?  Then a user in
+>> that userns can't try to change the prid of a file to 2 because the
+>> number "2" is unmapped for that user and translation will fail.
+>
+> You've effectively said "yes, project quotas are enabled, but you
+> only have a single ID, it's always turned on and you can't change it
+> to anything else.
+>
+> So, why do they need to be mapped via user namespaces to enable
+> this? Think about it a little harder:
+>
+> 	- Project IDs are not user IDs.
+> 	- Project IDs are not a security/permission mechanism.
+> 	- Project quotas only provide a mechanism for
+> 	  resource usage control.
+>
+> Think about that last one some more. Perhaps, as a hint, I should
+> relate it to control groups? :) i.e:
+>
+> 	- Project quotas can be used as an effective mount ns space
+> 	  usage controller.
+>
+> But this can only be safely and reliably by keeping the project IDs
+> inaccessible from the containers themselves. I don't see why a
+> mechanism that controls the amount of filesystem space used by a
+> container should be considered any differently to a memory control
+> group that limits the amount of memory the container can use.
+>
+> However, nobody on the container side of things would answer any of
+> my questions about how project quotas were going to be used,
+> limited, managed, etc back when we had to make a decision to enable
+> XFS user ns support, I did what was needed to support the obvious
+> container use case and close any possible loop hole that containers
+> might be able to use to subvert that use case.
 
---TybLhxa8M7aNoW+V
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I have a solution: Hierarchical Project Quota! Each project might have
+parent project and so on. Each level keeps usage, limits and also keeps
+some preallocation from parent level to reduce count of quota updates.
 
-Hi,
+This might be useful even without containers : normal user quota has
+two levels and admins might classify users into groups and set group
+quota for them. Project quota is flat and cannot provide any control
+if we want classify projects.
 
-On Mon, Jan 26, 2015 at 06:58:32PM +0200, Priit Laes wrote:
-> ---
+For containers hierarchy provide full virtualization: user-namespace
+maps maps second-level and projects into subset of real projects.
 
-Like Hans was pointing out, commit log and signed-off-by please
+Changing limits and other managing for second-level project quotas
+could be done in user-space by system service (systemd I suppose. lol),
+so we don't have to manage this stuff inside the kernel.
 
->  .../ABI/testing/sysfs-driver-input-sun4i-lradc     |  4 ++
->  drivers/input/keyboard/sun4i-lradc-keys.c          | 49 ++++++++++++++++=
-+-----
->  2 files changed, 43 insertions(+), 10 deletions(-)
->  create mode 100644 Documentation/ABI/testing/sysfs-driver-input-sun4i-lr=
-adc
->=20
-> diff --git a/Documentation/ABI/testing/sysfs-driver-input-sun4i-lradc b/D=
-ocumentation/ABI/testing/sysfs-driver-input-sun4i-lradc
-> new file mode 100644
-> index 0000000..e4e6448
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-driver-input-sun4i-lradc
-> @@ -0,0 +1,4 @@
-> +What:		/sys/class/input/input(x)/device/voltage
-> +Date:		February 2015
-> +Contact:	Priit Laes <plaes-q/aMd4JkU83YtjvyW6yDsg@public.gmane.org>
-> +Description:	ADC output voltage in microvolts or 0 if device is not open=
-ed.
+[ I'm already working on prototype for ext4 ]
 
-Why is it returning 0 when "device is not opened" ? What does that
-even mean? You can't read that file without opening it.
-
-> diff --git a/drivers/input/keyboard/sun4i-lradc-keys.c b/drivers/input/ke=
-yboard/sun4i-lradc-keys.c
-> index cc8f7dd..c0ab8ec 100644
-> --- a/drivers/input/keyboard/sun4i-lradc-keys.c
-> +++ b/drivers/input/keyboard/sun4i-lradc-keys.c
-> @@ -79,10 +79,27 @@ struct sun4i_lradc_data {
->  	u32 vref;
->  };
-> =20
-> +static u32 sun4i_lradc_read_voltage(struct sun4i_lradc_data *lradc)
-> +{
-> +	u32 val =3D readl(lradc->base + LRADC_DATA0) & 0x3f;
-> +	return val * lradc->vref / 63;
-> +};
-> +
-> +static ssize_t
-> +sun4i_lradc_dev_voltage_show(struct device *dev,
-> +			struct device_attribute *attr, char *buf)
-> +{
-> +	struct sun4i_lradc_data *lradc =3D dev_get_drvdata(dev);
-> +
-> +	return sprintf(buf, "%u\n", sun4i_lradc_read_voltage(lradc));
-> +}
-> +
-> +static const DEVICE_ATTR(voltage, S_IRUGO, sun4i_lradc_dev_voltage_show,=
- NULL);
-> +
->  static irqreturn_t sun4i_lradc_irq(int irq, void *dev_id)
->  {
->  	struct sun4i_lradc_data *lradc =3D dev_id;
-> -	u32 i, ints, val, voltage, diff, keycode =3D 0, closest =3D 0xffffffff;
-> +	u32 i, ints, voltage, diff, keycode =3D 0, closest =3D 0xffffffff;
-> =20
->  	ints  =3D readl(lradc->base + LRADC_INTS);
-> =20
-> @@ -97,8 +114,7 @@ static irqreturn_t sun4i_lradc_irq(int irq, void *dev_=
-id)
->  	}
-> =20
->  	if ((ints & CHAN0_KEYDOWN_IRQ) && lradc->chan0_keycode =3D=3D 0) {
-> -		val =3D readl(lradc->base + LRADC_DATA0) & 0x3f;
-> -		voltage =3D val * lradc->vref / 63;
-> +		voltage =3D sun4i_lradc_read_voltage(lradc);
-> =20
->  		for (i =3D 0; i < lradc->chan0_map_count; i++) {
->  			diff =3D abs(lradc->chan0_map[i].voltage - voltage);
-> @@ -156,7 +172,7 @@ static void sun4i_lradc_close(struct input_dev *dev)
->  }
-> =20
->  static int sun4i_lradc_load_dt_keymap(struct device *dev,
-> -				      struct sun4i_lradc_data *lradc)
-> +				    struct sun4i_lradc_data *lradc)
->  {
->  	struct device_node *np, *pp;
->  	int i;
-> @@ -168,8 +184,8 @@ static int sun4i_lradc_load_dt_keymap(struct device *=
-dev,
-> =20
->  	lradc->chan0_map_count =3D of_get_child_count(np);
->  	if (lradc->chan0_map_count =3D=3D 0) {
-> -		dev_err(dev, "keymap is missing in device tree\n");
-> -		return -EINVAL;
-> +		dev_info(dev, "keymap is missing in device tree\n");
-> +		return 0;
->  	}
-> =20
->  	lradc->chan0_map =3D devm_kmalloc_array(dev, lradc->chan0_map_count,
-> @@ -185,19 +201,19 @@ static int sun4i_lradc_load_dt_keymap(struct device=
- *dev,
-> =20
->  		error =3D of_property_read_u32(pp, "channel", &channel);
->  		if (error || channel !=3D 0) {
-> -			dev_err(dev, "%s: Inval channel prop\n", pp->name);
-> +			dev_err(dev, "%s: Invalid 'channel' property\n", pp->name);
->  			return -EINVAL;
->  		}
-> =20
->  		error =3D of_property_read_u32(pp, "voltage", &map->voltage);
->  		if (error) {
-> -			dev_err(dev, "%s: Inval voltage prop\n", pp->name);
-> +			dev_err(dev, "%s: Invalid 'voltage' property\n", pp->name);
->  			return -EINVAL;
->  		}
-> =20
->  		error =3D of_property_read_u32(pp, "linux,code", &map->keycode);
->  		if (error) {
-> -			dev_err(dev, "%s: Inval linux,code prop\n", pp->name);
-> +			dev_err(dev, "%s: Invalid 'linux,code' property\n", pp->name);
->  			return -EINVAL;
->  		}
-> =20
-> @@ -257,14 +273,26 @@ static int sun4i_lradc_probe(struct platform_device=
- *pdev)
->  	if (error)
->  		return error;
-> =20
-> -	error =3D input_register_device(lradc->input);
-> +	error =3D device_create_file(dev, &dev_attr_voltage);
-
-As I told you already, if you're going to expose this an ADC in the
-end, the proper solution is to use the IIO framework, not adding a
-custom sysfs file.
-
-Maxime
-
---=20
-Maxime Ripard, Free Electrons
-Embedded Linux, Kernel and Android engineering
-http://free-electrons.com
-
---TybLhxa8M7aNoW+V
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJUx1flAAoJEBx+YmzsjxAgiWQP/1ayv3bVxxZbpJvu4909x0Ls
-UO8f5eE/MiFhCc3Bwdg9cCxa2M/9waDSR2/j0QHe2xagNeQ1pCzl/SZ7MT3AGe7s
-kQ67kuo8+SJ8g0KFBmHoQWZp1XhR8YnyJMEfDecGwn7fW2Nmo1K6MvYocIcKa8gt
-geUqNpNkLX3mqs44DD0U1DrxPGc2F7ICRbexXxpTEEb/cqMFeqtuMtDaAbO4AQLj
-feULJZI2IxKyrVLWvKNUz2QY7yKiTg8KUBawaejHjHQULk4lS1uLDW3+KoijiQfD
-WVcViFiIfz0hrAMwgisdei3xHV+Wr7T/p+UZAklDnARdSwBVLaKkEEKmOG5OLUnu
-DFQ0J1VvzSGQzECyS3EergD4wG3RNPKreFMT7QM0A/rMUCmMGGy5V57E3aOqwJug
-uDAXkqhkYZJ+6XUL4xkd/erei4TmHJySDvZR/pp2kxYol9KTAF3g3snP+IZAMU/I
-YoN3l9ejWbKpvkKDu6rd3t16RvoH6UnCPEWg20lrUARQKcHhRrUW++CKV9g1yraj
-aY28y1NdqzCqrYkEOAECxLzVLEVq2HONo4xGjiqyEqh/M3TyYPZAQ6DpgNjKEvfM
-BpVKSdgBrusA1kaXvm9MhSadx0U7QF41ZZJHEwdy62Af2WzHZqGPmDV+R167L1uk
-YiefwoNmYDmcZcb/RCJP
-=zl8g
------END PGP SIGNATURE-----
-
---TybLhxa8M7aNoW+V--
+>
+> If we want to do anything different, then there's a *lot* of
+> userns aware regression tests needed to be written for xfstests....
+>
+> Cheers,
+>
+> Dave.
+>
