@@ -1,44 +1,201 @@
-From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 01/13] kdbus: add documentation
-Date: Tue, 27 Jan 2015 19:14:11 +0100
-Message-ID: <54C7D573.7080809@zonque.org>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>	<1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>	<54BE5DC8.70706@gmail.com>	<54BE9D08.7010804@zonque.org>	<54BF805B.4000609@gmail.com>	<54BFDAAA.50203@zonque.org>	<54C0CE8A.5080805@gmail.com>	<20150123155402.GB2159@kroah.com>	<54C65267.7090905@gmail.com>	<CAG-2HqUCZjc4Ucc-L21uG6e-di4UcLJAT5mW_-5-c-uqmoJyzA@mail.gmail.com>	<54C66F30.8050108@gmail.com> <CANq1E4TtBhA6Ygu9qMU8xVxbL9q+ZBqnfdU0ceeTTfam9aT+=w@mail.gmail.com> <54C7D0A3.4000900@gmail.com>
+From: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] arm: sunxi: input: RFC: Add sysfs voltage
+ for sun4i-lradc driver
+Date: Tue, 27 Jan 2015 11:31:26 -0800
+Message-ID: <20150127193126.GA29637@dtor-glaptop>
+References: <1422291516-24895-1-git-send-email-plaes@plaes.org>
+ <54C6955D.403@redhat.com>
+ <20150126220622.GA16941@dtor-ws>
+ <54C75467.7010909@redhat.com>
+Reply-To: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54C7D0A3.4000900-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Theodore T'so <tytso-3s7WtUTddSA@public.gmane.org>, christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-sunxi+bncBDP6N55ZUYDRBEWPT6TAKGQEBEKWBFA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54C75467.7010909-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Post: <http://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <http://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <http://groups.google.com/group/linux-sunxi
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+List-Subscribe: <http://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <http://groups.google.com/group/linux-sunxi/subscribe>
+To: Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Priit Laes <plaes-q/aMd4JkU83YtjvyW6yDsg@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, ABI/API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "moderated list:ARM/Allwinner A1X..." <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:SUN4I LOW RES ADC..." <linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
-
-On 01/27/2015 06:53 PM, Michael Kerrisk (man-pages) wrote:
-> On 01/27/2015 04:23 PM, David Herrmann wrote:
-
->> I only expect a handful of users to call the ioctls directly. The
->> libraries that implement the payload-marshaling, in particular. It's a
->> similar situation with netlink.
+On Tue, Jan 27, 2015 at 10:03:35AM +0100, Hans de Goede wrote:
+> Hi,
 > 
-> Thanks, David, for the clarification. I think it would have been helpful
-> to have that more clearly stated up front, especially as some comments 
-> in this thread, such as the above, could be interpreted to mean quite 
-> the opposite. Can I suggest that some text on this point be added to 
-> kdbus.txt?
+> On 26-01-15 23:06, Dmitry Torokhov wrote:
+> >On Mon, Jan 26, 2015 at 08:28:29PM +0100, Hans de Goede wrote:
+> >>Hi,
+> >>
+> >>On 26-01-15 17:58, Priit Laes wrote:
+> >>
+> >>No commit message? Please write an informative commit msg, like why we want this patch,
+> >>I guess it is to help figuring out the voltage levels for various buttons when creating
+> >>a dts, but I would prefer to not guess, which is where a good commit message would
+> >>come in handy ...
+> >>
+> >>>---
+> >>>  .../ABI/testing/sysfs-driver-input-sun4i-lradc     |  4 ++
+> >>>  drivers/input/keyboard/sun4i-lradc-keys.c          | 49 +++++++++++++++++-----
+> >>>  2 files changed, 43 insertions(+), 10 deletions(-)
+> >>>  create mode 100644 Documentation/ABI/testing/sysfs-driver-input-sun4i-lradc
+> >>>
+> >>>diff --git a/Documentation/ABI/testing/sysfs-driver-input-sun4i-lradc b/Documentation/ABI/testing/sysfs-driver-input-sun4i-lradc
+> >>>new file mode 100644
+> >>>index 0000000..e4e6448
+> >>>--- /dev/null
+> >>>+++ b/Documentation/ABI/testing/sysfs-driver-input-sun4i-lradc
+> >>>@@ -0,0 +1,4 @@
+> >>>+What:		/sys/class/input/input(x)/device/voltage
+> >>>+Date:		February 2015
+> >>>+Contact:	Priit Laes <plaes-q/aMd4JkU83YtjvyW6yDsg@public.gmane.org>
+> >>>+Description:	ADC output voltage in microvolts or 0 if device is not opened.
+> >>>diff --git a/drivers/input/keyboard/sun4i-lradc-keys.c b/drivers/input/keyboard/sun4i-lradc-keys.c
+> >>>index cc8f7dd..c0ab8ec 100644
+> >>>--- a/drivers/input/keyboard/sun4i-lradc-keys.c
+> >>>+++ b/drivers/input/keyboard/sun4i-lradc-keys.c
+> >>>@@ -79,10 +79,27 @@ struct sun4i_lradc_data {
+> >>>  	u32 vref;
+> >>>  };
+> >>>
+> >>>+static u32 sun4i_lradc_read_voltage(struct sun4i_lradc_data *lradc)
+> >>>+{
+> >>>+	u32 val = readl(lradc->base + LRADC_DATA0) & 0x3f;
+> >>>+	return val * lradc->vref / 63;
+> >>>+};
+> >>>+
+> >>>+static ssize_t
+> >>>+sun4i_lradc_dev_voltage_show(struct device *dev,
+> >>>+			struct device_attribute *attr, char *buf)
+> >>>+{
+> >>>+	struct sun4i_lradc_data *lradc = dev_get_drvdata(dev);
+> >>>+
+> >>>+	return sprintf(buf, "%u\n", sun4i_lradc_read_voltage(lradc));
+> >>>+}
+> >>>+
+> >>>+static const DEVICE_ATTR(voltage, S_IRUGO, sun4i_lradc_dev_voltage_show, NULL);
+> >>>+
+> >>>  static irqreturn_t sun4i_lradc_irq(int irq, void *dev_id)
+> >>>  {
+> >>>  	struct sun4i_lradc_data *lradc = dev_id;
+> >>>-	u32 i, ints, val, voltage, diff, keycode = 0, closest = 0xffffffff;
+> >>>+	u32 i, ints, voltage, diff, keycode = 0, closest = 0xffffffff;
+> >>>
+> >>>  	ints  = readl(lradc->base + LRADC_INTS);
+> >>>
+> >>>@@ -97,8 +114,7 @@ static irqreturn_t sun4i_lradc_irq(int irq, void *dev_id)
+> >>>  	}
+> >>>
+> >>>  	if ((ints & CHAN0_KEYDOWN_IRQ) && lradc->chan0_keycode == 0) {
+> >>>-		val = readl(lradc->base + LRADC_DATA0) & 0x3f;
+> >>>-		voltage = val * lradc->vref / 63;
+> >>>+		voltage = sun4i_lradc_read_voltage(lradc);
+> >>>
+> >>>  		for (i = 0; i < lradc->chan0_map_count; i++) {
+> >>>  			diff = abs(lradc->chan0_map[i].voltage - voltage);
+> >>>@@ -156,7 +172,7 @@ static void sun4i_lradc_close(struct input_dev *dev)
+> >>>  }
+> >>>
+> >>>  static int sun4i_lradc_load_dt_keymap(struct device *dev,
+> >>>-				      struct sun4i_lradc_data *lradc)
+> >>>+				    struct sun4i_lradc_data *lradc)
+> >>>  {
+> >>>  	struct device_node *np, *pp;
+> >>>  	int i;
+> >>
+> >>Why this identation change ?
+> >>
+> >>>@@ -168,8 +184,8 @@ static int sun4i_lradc_load_dt_keymap(struct device *dev,
+> >>>
+> >>>  	lradc->chan0_map_count = of_get_child_count(np);
+> >>>  	if (lradc->chan0_map_count == 0) {
+> >>>-		dev_err(dev, "keymap is missing in device tree\n");
+> >>>-		return -EINVAL;
+> >>>+		dev_info(dev, "keymap is missing in device tree\n");
+> >>>+		return 0;
+> >>>  	}
+> >>>
+> >>>  	lradc->chan0_map = devm_kmalloc_array(dev, lradc->chan0_map_count,
+> >>
+> >>I assume this is so that people can still use the sysfs node, to create a dts, right
+> >>not sure I like this, might be better to document to simple create a dts with
+> >>a single button mapping for 200 mV (most board use 200 mV steps between the buttons).
+> >>
+> >>>@@ -185,19 +201,19 @@ static int sun4i_lradc_load_dt_keymap(struct device *dev,
+> >>>
+> >>>  		error = of_property_read_u32(pp, "channel", &channel);
+> >>>  		if (error || channel != 0) {
+> >>>-			dev_err(dev, "%s: Inval channel prop\n", pp->name);
+> >>>+			dev_err(dev, "%s: Invalid 'channel' property\n", pp->name);
+> >>>  			return -EINVAL;
+> >>>  		}
+> >>>
+> >>>  		error = of_property_read_u32(pp, "voltage", &map->voltage);
+> >>>  		if (error) {
+> >>>-			dev_err(dev, "%s: Inval voltage prop\n", pp->name);
+> >>>+			dev_err(dev, "%s: Invalid 'voltage' property\n", pp->name);
+> >>>  			return -EINVAL;
+> >>>  		}
+> >>>
+> >>>  		error = of_property_read_u32(pp, "linux,code", &map->keycode);
+> >>>  		if (error) {
+> >>>-			dev_err(dev, "%s: Inval linux,code prop\n", pp->name);
+> >>>+			dev_err(dev, "%s: Invalid 'linux,code' property\n", pp->name);
+> >>>  			return -EINVAL;
+> >>>  		}
+> >>>
+> >>
+> >>This hunk / 3 changes belong in a separate patch. Also please run checkpatch, I think
+> >>you're running over 80 chars here.
+> >>
+> >>
+> >>>@@ -257,14 +273,26 @@ static int sun4i_lradc_probe(struct platform_device *pdev)
+> >>>  	if (error)
+> >>>  		return error;
+> >>>
+> >>>-	error = input_register_device(lradc->input);
+> >>>+	error = device_create_file(dev, &dev_attr_voltage);
+> >>>  	if (error)
+> >>>  		return error;
+> >>>
+> >>>+	error = input_register_device(lradc->input);
+> >>>+	if (error) {
+> >>>+		device_remove_file(&pdev->dev, &dev_attr_voltage);
+> >>>+		return error;
+> >>>+	}
+> >>>+
+> >>>  	platform_set_drvdata(pdev, lradc);
+> >>>  	return 0;
+> >>>  }
+> >>>
+> >>>+static int sun4i_lradc_remove(struct platform_device *pdev)
+> >>>+{
+> >>>+	device_remove_file(&pdev->dev, &dev_attr_voltage);
+> >>>+	return 0;
+> >>>+}
+> >>>+
+> >>
+> >>This looks wrong, I think (*) that we've a bug here because we're not
+> >>unregistering the input device, so maybe do 2 patches, 1 fixing the
+> >>not unregistering bug, and then just add the device_remove_file()
+> >>in the sysfs patch.
+> >
+> >The unregister was not necessary since the input device is managed.
+> 
+> Ah right, looking at the code again I see we use devm_input_allocate_device()
+> is there no devm_create_file for creating sysfs entries ?
 
-We're currently working on an a set of comprehensive man pages to
-document all the commands in the API, along with every struct, enum etc.
-We do that so that developers are able to actually understand every
-detail of the API, even though most people - as David explained - will
-not use that interface directly in the first place but let one of the
-high-level libraries help them integrate D-Bus functionality into their
-applications.
+Greg was pushing the viewpoint that no drivers should create device attributes
+manually (since it is somewhat racy - attributes are created after devices show
+up) but I do not think he's gonna win that ever. So if someone were to add
+devm_create_attribute_group() API I think that would be great. In absence of
+this there is always devm_add_action().
 
-If you want, have a look at the upstream repository for a 	preliminary
-version of the new docs.
+Thanks.
 
-
-Thanks,
-Daniel
+-- 
+Dmitry
