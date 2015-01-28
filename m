@@ -1,152 +1,63 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v2 linux-trace 1/8] tracing: attach eBPF programs to
- tracepoints and syscalls
-Date: Thu, 29 Jan 2015 09:46:31 +0900
-Message-ID: <20150129004631.GA24182@sejong>
+From: Arnaldo Carvalho de Melo <acme@kernel.org>
+Subject: Re: [PATCH v2 linux-trace 4/8] samples: bpf: simple tracing example
+ in C
+Date: Wed, 28 Jan 2015 13:24:15 -0300
+Message-ID: <20150128162415.GO7220@kernel.org>
 References: <1422417973-10195-1-git-send-email-ast@plumgrid.com>
- <1422417973-10195-2-git-send-email-ast@plumgrid.com>
+ <1422417973-10195-5-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1422417973-10195-2-git-send-email-ast@plumgrid.com>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <1422417973-10195-5-git-send-email-ast@plumgrid.com>
+Sender: netdev-owner@vger.kernel.org
 To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Namhyung Kim <namhyung@kernel.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Alexei,
-
-On Tue, Jan 27, 2015 at 08:06:06PM -0800, Alexei Starovoitov wrote:
-> User interface:
-> fd = open("/sys/kernel/debug/tracing/__event__/filter")
-> 
-> write(fd, "bpf_123")
-> 
-> where 123 is process local FD associated with eBPF program previously loaded.
-> __event__ is static tracepoint event or syscall.
-> (kprobe support is in next patch)
-> Once program is successfully attached to tracepoint event, the tracepoint
-> will be auto-enabled
-> 
-> close(fd)
-> auto-disables tracepoint event and detaches eBPF program from it
-> 
-> eBPF programs can call in-kernel helper functions to:
-> - lookup/update/delete elements in maps
-> - memcmp
-> - fetch_ptr/u64/u32/u16/u8 values from unsafe address via probe_kernel_read(),
->   so that eBPF program can walk any kernel data structures
-> 
-> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
-> ---
-
-[SNIP]
-> diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-> index b03a0ea77b99..70482817231a 100644
-> --- a/kernel/trace/trace_events.c
-> +++ b/kernel/trace/trace_events.c
-> @@ -1084,6 +1084,26 @@ event_filter_read(struct file *filp, char __user *ubuf, size_t cnt,
->  	return r;
->  }
->  
-> +static int event_filter_release(struct inode *inode, struct file *filp)
+Em Tue, Jan 27, 2015 at 08:06:09PM -0800, Alexei Starovoitov escreveu:
+> diff --git a/samples/bpf/tracex1_kern.c b/samples/bpf/tracex1_kern.c
+> new file mode 100644
+> index 000000000000..7849ceb4bce6
+> --- /dev/null
+> +++ b/samples/bpf/tracex1_kern.c
+> @@ -0,0 +1,28 @@
+> +#include <linux/skbuff.h>
+> +#include <linux/netdevice.h>
+> +#include <uapi/linux/bpf.h>
+> +#include <trace/bpf_trace.h>
+> +#include "bpf_helpers.h"
+> +
+> +SEC("events/net/netif_receive_skb")
+> +int bpf_prog1(struct bpf_context *ctx)
 > +{
-> +	struct ftrace_event_file *file;
-> +	char buf[2] = "0";
+> +	/*
+> +	 * attaches to /sys/kernel/debug/tracing/events/net/netif_receive_skb
+> +	 * prints events for loobpack device only
+> +	 */
+> +	char devname[] = "lo";
+> +	struct net_device *dev;
+> +	struct sk_buff *skb = 0;
 > +
-> +	mutex_lock(&event_mutex);
-> +	file = event_file_data(filp);
-> +	if (file) {
-> +		if (file->flags & TRACE_EVENT_FL_BPF) {
-> +			/* auto-disable the filter */
-> +			ftrace_event_enable_disable(file, 0);
+> +	skb = (struct sk_buff *) ctx->arg1;
+> +	dev = bpf_fetch_ptr(&skb->dev);
+> +	if (bpf_memcmp(dev->name, devname, 2) == 0)
 
-Hmm.. what if user already enabled an event, attached a bpf filter and
-then detached the filter - I'm not sure we can always auto-disable
-it..
+I'm only starting to look at all this, so bear with me... But why do we
+need to have it as "bpf_memcmp"? Can't we simply use it as "memcmp" and
+have it use the right function?
 
+Less typing, perhaps we would need to have a:
 
+#define memcmp bpf_memcmp(s1, s2, n) bpf_memcmp(s1, s2, n)
+
+in bpf_helpers.h to have it work?
+
+- Arnaldo
+
+> +		/* print event using default tracepoint format */
+> +		return 1;
 > +
-> +			/* if BPF filter was used, clear it on fd close */
-> +			apply_event_filter(file, buf);
-> +		}
-> +	}
-> +	mutex_unlock(&event_mutex);
+> +	/* drop event */
 > +	return 0;
 > +}
-> +
->  static ssize_t
->  event_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
->  		   loff_t *ppos)
-> @@ -1107,8 +1127,18 @@ event_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
->  
->  	mutex_lock(&event_mutex);
->  	file = event_file_data(filp);
-> -	if (file)
-> +	if (file) {
-> +		/*
-> +		 * note to user space tools:
-> +		 * write() into debugfs/tracing/events/xxx/filter file
-> +		 * must be done with the same privilege level as open()
-> +		 */
->  		err = apply_event_filter(file, buf);
-> +		if (!err && file->flags & TRACE_EVENT_FL_BPF)
-> +			/* once filter is applied, auto-enable it */
-> +			ftrace_event_enable_disable(file, 1);
-> +	}
-> +
->  	mutex_unlock(&event_mutex);
->  
->  	free_page((unsigned long) buf);
-> @@ -1363,6 +1393,7 @@ static const struct file_operations ftrace_event_filter_fops = {
->  	.open = tracing_open_generic,
->  	.read = event_filter_read,
->  	.write = event_filter_write,
-> +	.release = event_filter_release,
->  	.llseek = default_llseek,
->  };
->  
-> diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
-> index ced69da0ff55..e0303b3cc9fb 100644
-> --- a/kernel/trace/trace_events_filter.c
-> +++ b/kernel/trace/trace_events_filter.c
-> @@ -23,6 +23,9 @@
->  #include <linux/mutex.h>
->  #include <linux/perf_event.h>
->  #include <linux/slab.h>
-> +#include <linux/bpf.h>
-> +#include <trace/bpf_trace.h>
-> +#include <linux/filter.h>
->  
->  #include "trace.h"
->  #include "trace_output.h"
-> @@ -541,6 +544,21 @@ static int filter_match_preds_cb(enum move_type move, struct filter_pred *pred,
->  	return WALK_PRED_DEFAULT;
->  }
->  
-> +unsigned int trace_filter_call_bpf(struct event_filter *filter, void *ctx)
-> +{
-> +	unsigned int ret;
-> +
-> +	if (in_nmi()) /* not supported yet */
-> +		return 0;
-
-But doesn't this mean to auto-disable all attached events during NMI
-as returning 0 will prevent the event going to ring buffer?
-
-I think it'd be better to keep an attached event in a soft-disabled
-state like event trigger and give control of enabling to users..
-
-Thanks,
-Namhyung
-
-
-> +
-> +	rcu_read_lock();
-> +	ret = BPF_PROG_RUN(filter->prog, ctx);
-> +	rcu_read_unlock();
-> +
-> +	return ret;
-> +}
-> +EXPORT_SYMBOL_GPL(trace_filter_call_bpf);
